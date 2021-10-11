@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.dataflow_source_nodes as dtfsn
+import core.dataflow_source_nodes as cdtfsonod
 """
 
 import logging
@@ -11,10 +11,10 @@ import pandas as pd
 
 # This file can use `core.dataflow` package since it's an external client.
 import core.dataflow as cdataf
-import core.finance as cfinan
-import helpers.datetime_ as hdatetime
-import helpers.dbg as dbg
-import helpers.printing as hprint
+import core.finance as cfin
+import helpers.datetime_ as hdatetim
+import helpers.dbg as hdbg
+import helpers.printing as hprintin
 import im.kibot as vkibot
 
 _LOG = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ def data_source_node_factory(
     :param source_node_kwargs: kwargs for data source node
     :return: data source node of appropriate type instantiated with kwargs
     """
-    dbg.dassert(source_node_name)
+    hdbg.dassert(source_node_name)
     # TODO(gp): To simplify we can use the name of the class (e.g., "ArmaGenerator"
     #  instead of "arma"), so we don't have to use another level of mnemonics.
     if source_node_name == "arma":
@@ -58,10 +58,6 @@ def data_source_node_factory(
         ret = cdataf.DataLoader(nid, **source_node_kwargs)
     elif source_node_name == "multivariate_normal":
         ret = cdataf.MultivariateNormalGenerator(nid, **source_node_kwargs)
-    elif source_node_name == "SimulatedTimeDataSource":
-        ret = cdataf.SimulatedTimeDataSource(nid, **source_node_kwargs)
-    elif source_node_name == "ReplayedTimeDataSource":
-        ret = cdataf.ReplayedTimeDataSource(nid, **source_node_kwargs)
     elif source_node_name == "RealTimeDataSource":
         ret = cdataf.RealTimeDataSource(nid, **source_node_kwargs)
     else:
@@ -79,13 +75,13 @@ def data_source_node_factory(
 
 
 def _process_timestamp(
-    timestamp: Optional[hdatetime.Datetime],
+    timestamp: Optional[hdatetim.Datetime],
 ) -> Optional[pd.Timestamp]:
     if timestamp is pd.NaT:
         timestamp = None
     if timestamp is not None:
         timestamp = pd.Timestamp(timestamp)
-        dbg.dassert_is(timestamp.tz, None)
+        hdbg.dassert_is(timestamp.tz, None)
     return timestamp
 
 
@@ -93,8 +89,8 @@ def load_kibot_data(
     symbol: str,
     frequency: Union[str, vkibot.Frequency],
     contract_type: Union[str, vkibot.ContractType],
-    start_date: Optional[hdatetime.Datetime] = None,
-    end_date: Optional[hdatetime.Datetime] = None,
+    start_date: Optional[hdatetim.Datetime] = None,
+    end_date: Optional[hdatetim.Datetime] = None,
     nrows: Optional[int] = None,
 ) -> pd.DataFrame:
     frequency = (
@@ -129,8 +125,8 @@ class KibotDataReader(cdataf.DataSource):
         symbol: str,
         frequency: Union[str, vkibot.Frequency],
         contract_type: Union[str, vkibot.ContractType],
-        start_date: Optional[hdatetime.Datetime] = None,
-        end_date: Optional[hdatetime.Datetime] = None,
+        start_date: Optional[hdatetim.Datetime] = None,
+        end_date: Optional[hdatetim.Datetime] = None,
         nrows: Optional[int] = None,
     ) -> None:
         """
@@ -188,8 +184,8 @@ class KibotColumnReader(cdataf.DataSource):
         frequency: Union[str, vkibot.Frequency],
         contract_type: Union[str, vkibot.ContractType],
         col: str,
-        start_date: Optional[hdatetime.Datetime] = None,
-        end_date: Optional[hdatetime.Datetime] = None,
+        start_date: Optional[hdatetim.Datetime] = None,
+        end_date: Optional[hdatetim.Datetime] = None,
         nrows: Optional[int] = None,
     ) -> None:
         """
@@ -233,7 +229,7 @@ class KibotColumnReader(cdataf.DataSource):
                 symbol=s,
                 nrows=self._nrows,
             )[self._col]
-            data = data.loc[self._start_date : self._end_date]  # type: ignore[misc]
+            data = data.loc[self._start_date : self._end_date]
             dict_df[s] = data
         self.df = pd.DataFrame.from_dict(dict_df)
 
@@ -247,15 +243,15 @@ class KibotEquityReader(cdataf.DataSource):
         nid: cdataf.NodeId,
         symbols: List[str],
         frequency: Union[str, vkibot.Frequency],
-        start_date: Optional[hdatetime.Datetime] = None,
-        end_date: Optional[hdatetime.Datetime] = None,
+        start_date: Optional[hdatetim.Datetime] = None,
+        end_date: Optional[hdatetim.Datetime] = None,
         nrows: Optional[int] = None,
     ) -> None:
         """
         Read equity OHLCV data.
         """
         super().__init__(nid)
-        dbg.dassert_isinstance(symbols, list)
+        hdbg.dassert_isinstance(symbols, list)
         self._symbols = symbols
         self._frequency = (
             vkibot.Frequency(frequency)
@@ -291,22 +287,22 @@ class KibotEquityReader(cdataf.DataSource):
             )
             n_rows = data.shape[0]
             _LOG.debug("Read %d rows for symbol=%s", n_rows, symbol)
-            data = data.loc[self._start_date : self._end_date]  # type: ignore[misc]
+            data = data.loc[self._start_date : self._end_date]
             _LOG.debug(
                 "Retained %s rows for symbol=%s after time filtering (%.2f)",
                 data.shape[0],
                 symbol,
                 data.shape[0] / n_rows,
             )
-            dbg.dassert(
+            hdbg.dassert(
                 not data.empty, "No data for %s in requested time range", symbol
             )
             # Rename column for volume so that it adheres with our conventions.
             data = data.rename(columns={"vol": "volume"})
             # Print some info about the data.
-            _LOG.debug(hprint.df_to_short_str("data", data))
+            _LOG.debug(hprintin.df_to_short_str("data", data))
             # Ensure data is on a uniform frequency grid.
-            data = cfinan.resample_ohlcv_bars(data, rule=self._frequency.value)
+            data = cfin.resample_ohlcv_bars(data, rule=self._frequency.value)
             dfs[symbol] = data
         # Create a dataframe with multiindexed columns.
         df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())

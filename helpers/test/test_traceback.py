@@ -30,21 +30,21 @@ class Test_Traceback1(huntes.TestCase):
         NameError: name 'repo_short_name' is not defined
             TEST TEST TEST
         """
-        purify_from_client = True
+        purify_from_client = False
         # pylint: disable=line-too-long
         exp_cfile = [
             (
-                "helpers/test/test_lib_tasks.py",
+                "$GIT_ROOT/helpers/test/test_lib_tasks.py",
                 27,
                 "test_get_gh_issue_title2:act = ltasks._get_gh_issue_title(issue_id, repo)",
             ),
             (
-                "helpers/lib_tasks.py",
+                "$GIT_ROOT/helpers/lib_tasks.py",
                 1265,
                 "_get_gh_issue_title:task_prefix = hgit.get_task_prefix_from_repo_short_name(repo_short_name)",
             ),
             (
-                "helpers/git.py",
+                "$GIT_ROOT/helpers/git.py",
                 397,
                 'get_task_prefix_from_repo_short_name:if repo_short_name == "amp":',
             ),
@@ -75,7 +75,7 @@ class Test_Traceback1(huntes.TestCase):
             TEST TEST TEST
         """
         purify_from_client = True
-        exp_cfile: List[htrhel.CFILE_ROW] = []
+        exp_cfile: List[htrhel.CfileRow] = []
         exp_cfile = htrhel.cfile_to_str(exp_cfile)
         exp_traceback = "None"
         self._parse_traceback_helper(
@@ -179,6 +179,58 @@ class Test_Traceback1(huntes.TestCase):
             dfatal(dfatal_txt)
           File "$GIT_ROOT/helpers/dbg.py", line 63, in dfatal
             raise assertion_type(ret)"""
+        self._parse_traceback_helper(
+            txt, purify_from_client, exp_cfile, exp_traceback
+        )
+
+    def test_parse4(self) -> None:
+        """
+        Parse a traceback file with both files from Docker and local files.
+        """
+        # pylint: disable=line-too-long
+        txt = """
+        =================================== FAILURES ===================================
+        ____________ TestEgSingleInstrumentDataReader2.test_true_real_time1 ____________
+        Traceback (most recent call last):
+          File "/app/core_lime/dataflow/nodes/test/test_core_lime_dataflow_nodes.py", line 182, in test_true_real_time1
+            self._execute_node(node)
+          File "/app/core_lime/dataflow/nodes/test/test_core_lime_dataflow_nodes.py", line 238, in _execute_node
+            dict_ = node.fit()
+          File "/app/amp/core/dataflow/nodes/sources.py", line 385, in fit
+            self.df = self._get_data_until_current_time()
+          File "/app/amp/core/dataflow/nodes/sources.py", line 429, in _get_data_until_current_time
+            df = self._get_data()
+          File "/app/amp/core/dataflow/nodes/sources.py", line 574, in _get_data
+            hdbg.dassert_lte(df.index.max(), current_time)
+          File "/app/amp/helpers/dbg.py", line 172, in dassert_lte
+            cond = val1 <= val2
+          TypeError: '<=' not supported between instances of 'float' and 'Timestamp'
+        ============================= slowest 3 durations ==============================
+        """
+        purify_from_client = False
+        exp_cfile = r"""
+        $GIT_ROOT/core_lime/dataflow/nodes/test/test_core_lime_dataflow_nodes.py:182:test_true_real_time1:self._execute_node(node)
+        $GIT_ROOT/core_lime/dataflow/nodes/test/test_core_lime_dataflow_nodes.py:238:_execute_node:dict_ = node.fit()
+        $GIT_ROOT/core/dataflow/nodes/sources.py:385:fit:self.df = self._get_data_until_current_time()
+        $GIT_ROOT/core/dataflow/nodes/sources.py:429:_get_data_until_current_time:df = self._get_data()
+        $GIT_ROOT/core/dataflow/nodes/sources.py:574:_get_data:hdbg.dassert_lte(df.index.max(), current_time)
+        $GIT_ROOT/helpers/dbg.py:172:dassert_lte:cond = val1 <= val2/TypeError: '<=' not supported between instances of 'float' and 'Timestamp'"""
+        exp_traceback = r"""
+        Traceback (most recent call last):
+          File "$GIT_ROOT/core_lime/dataflow/nodes/test/test_core_lime_dataflow_nodes.py", line 182, in test_true_real_time1
+            self._execute_node(node)
+          File "$GIT_ROOT/core_lime/dataflow/nodes/test/test_core_lime_dataflow_nodes.py", line 238, in _execute_node
+            dict_ = node.fit()
+          File "$GIT_ROOT/core/dataflow/nodes/sources.py", line 385, in fit
+            self.df = self._get_data_until_current_time()
+          File "$GIT_ROOT/core/dataflow/nodes/sources.py", line 429, in _get_data_until_current_time
+            df = self._get_data()
+          File "$GIT_ROOT/core/dataflow/nodes/sources.py", line 574, in _get_data
+            hdbg.dassert_lte(df.index.max(), current_time)
+          File "$GIT_ROOT/helpers/dbg.py", line 172, in dassert_lte
+            cond = val1 <= val2
+          TypeError: '<=' not supported between instances of 'float' and 'Timestamp'"""
+        # pylint: enable=line-too-long
         self._parse_traceback_helper(
             txt, purify_from_client, exp_cfile, exp_traceback
         )

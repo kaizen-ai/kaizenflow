@@ -22,26 +22,27 @@ _LOG = logging.getLogger(__name__)
 #    27,
 #    "test_get_gh_issue_title2:act = ltasks._get_gh_issue_title(issue_id, repo)"
 #    )
-CFILE_ROW = Tuple[str, int, str]
+CfileRow = Tuple[str, int, str]
 
 
-def cfile_row_to_str(cfile_row: CFILE_ROW) -> str:
+def cfile_row_to_str(cfile_row: CfileRow) -> str:
     # helpers/git.py:295:def get_repo_long_name_from_client(super_module
     hdbg.dassert_isinstance(cfile_row, tuple)
     return ":".join(list(map(str, cfile_row)))
 
 
-def cfile_to_str(cfile: List[CFILE_ROW]) -> str:
+def cfile_to_str(cfile: List[CfileRow]) -> str:
     hdbg.dassert_isinstance(cfile, list)
     return "\n".join(map(cfile_row_to_str, cfile))
 
 
 def parse_traceback(
-    txt: str, purify_from_client: bool = True
-) -> Tuple[List[CFILE_ROW], Optional[str]]:
+    txt: str, *, purify_from_client: bool = True
+) -> Tuple[List[CfileRow], Optional[str]]:
     """
     Parse a string containing text including a Python traceback.
 
+    :param purify_from_client: express the files with respect to the Git root
     :return:
     - a list of `CFILE_ROW`, e.g.,
       ```
@@ -63,7 +64,7 @@ def parse_traceback(
     """
     lines = txt.split("\n")
     state = "look_for"
-    cfile: List[CFILE_ROW] = []
+    cfile: List[CfileRow] = []
     i = 0
     start_idx = end_idx = 0
     while i < len(lines):
@@ -140,20 +141,28 @@ def parse_traceback(
     else:
         raise ValueError("Invalid state='%s'" % state)
     _LOG.debug("traceback=\n%s", traceback)
-    _LOG.debug("# Before purifying from client")
     _LOG.debug("cfile=\n%s", cfile_to_str(cfile))
     # Purify filenames from client so that refer to files in this client.
     if cfile and purify_from_client:
+        _LOG.debug("# Purifying from client")
         cfile_tmp = []
         for cfile_row in cfile:
             file_name, line_num, text = cfile_row
             # Leave the files relative to the current dir.
-            super_module = None
+            root_dir = hgit.get_client_root(super_module=False)
             mode = "return_all_results"
-            _, file_name = hgit.purify_docker_file_from_git_client(
-                file_name, super_module=super_module, mode=mode
+            file_names = hgit.find_docker_file(
+                file_name, root_dir=root_dir, mode=mode
             )
-            cfile_tmp.append((file_name, line_num, text))
+            if len(file_names) == 0:
+                _LOG.warning("Can't find file corresponding to '%s'", file_name)
+            elif len(file_names) > 1:
+                _LOG.warning(
+                    "Found multiple potential files corresponding to '%s'", file_name
+                )
+            else:
+                file_name = file_names[0]
+                cfile_tmp.append((file_name, line_num, text))
         cfile = cfile_tmp
         _LOG.debug("# After purifying from client")
         _LOG.debug("cfile=\n%s", cfile_to_str(cfile))

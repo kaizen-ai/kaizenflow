@@ -14,7 +14,8 @@ import helpers.dbg as hdbg
 # TODO(gp): -> return_single_element, return_single_element_or_assert?
 def assert_single_element_and_return(list_: List[Any]) -> Any:
     """
-    Assert that the passed list has a single element and return that single element.
+    Assert that the passed list has a single element and return that single
+    element.
 
     :return: return the unique element in the list
     """
@@ -50,7 +51,9 @@ def remove_duplicates(list_: List[Any]) -> List[Any]:
     return list_out
 
 
-def extract(list_: List[Any], start_idx: Optional[int], end_idx: Optional[int]) -> List[Any]:
+def extract(
+    list_: List[Any], start_idx: Optional[int], end_idx: Optional[int]
+) -> List[Any]:
     """
     Filter the list using [start_idx, end_idx).
     """
@@ -72,4 +75,6 @@ def chunk(list_: List[Any], n: int) -> List[Any]:
     hdbg.dassert_lte(1, n)
     hdbg.dassert_lte(n, len(list_))
     k, m = divmod(len(list_), n)
-    return list(list_[i*k+min(i, m):(i+1)*k+min(i+1, m)] for i in range(n))
+    return list(
+        list_[i * k + min(i, m) : (i + 1) * k + min(i + 1, m)] for i in range(n)
+    )
