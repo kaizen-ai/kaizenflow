@@ -920,6 +920,46 @@ datetime,order_book_imbalance
         expected = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
         np.testing.assert_allclose(actual, expected)
 
+    def test_centered_order_book_imbalance(self) -> None:
+        df = self._get_df()
+        actual = fin.process_bid_ask(
+            df,
+            "bid",
+            "ask",
+            "bid_volume",
+            "ask_volume",
+            ["centered_order_book_imbalance"],
+        )
+        txt = """
+datetime,centered_order_book_imbalance
+2016-01-04 12:00:00,0.0
+2016-01-04 12:01:00,-0.1999999999
+2016-01-04 12:02:00,0.0
+2016-01-04 12:03:00,-0.3333333333
+"""
+        expected = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        np.testing.assert_allclose(actual, expected)
+
+    def test_centered_order_book_imbalance(self) -> None:
+        df = self._get_df()
+        actual = fin.process_bid_ask(
+            df,
+            "bid",
+            "ask",
+            "bid_volume",
+            "ask_volume",
+            ["log_order_book_imbalance"],
+        )
+        txt = """
+datetime,centered_order_book_imbalance
+2016-01-04 12:00:00,0.0
+2016-01-04 12:01:00,-0.405465108
+2016-01-04 12:02:00,0.0
+2016-01-04 12:03:00,-0.693147181
+"""
+        expected = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        np.testing.assert_allclose(actual, expected)
+
     def test_bid_value(self) -> None:
         df = self._get_df()
         actual = fin.process_bid_ask(

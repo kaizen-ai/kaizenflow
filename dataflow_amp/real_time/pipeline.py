@@ -1,15 +1,15 @@
 """
 Import as:
 
-import dataflow_amp.real_time.pipeline as dtfartp
+import dataflow_amp.real_time.pipeline as dtfamretipip
 """
 
 import logging
 
 import core.config as cconfig
 import core.dataflow as dtf
-import dataflow_amp.returns.pipeline as darp
-import helpers.dbg as dbg
+import dataflow_amp.returns.pipeline as dtfamrepip
+import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -53,15 +53,12 @@ class RealTimeReturnPipeline(dtf.DagBuilder):
 
     def __init__(self) -> None:
         super().__init__()
-        self._dag_builder = darp.ReturnsPipeline()
+        self._dag_builder = dtfamrepip.ReturnsPipeline()
 
     def get_config_template(self) -> cconfig.Config:
         """
         Return a template configuration for this pipeline.
-
-        :return: reference config
         """
-        # Get the DAG builder and the config template.
         config = self._dag_builder.get_config_template()
         return config
 
@@ -79,4 +76,4 @@ class RealTimeReturnPipeline(dtf.DagBuilder):
 
         :param config: config object to validate
         """
-        dbg.dassert(cconfig.check_no_dummy_values(config))
+        hdbg.dassert(cconfig.check_no_dummy_values(config))
