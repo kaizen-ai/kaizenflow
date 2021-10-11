@@ -14,10 +14,11 @@ import logging
 import operator
 from typing import Any, Dict, Optional, Tuple, Union
 
-import helpers.dbg as hdbg
-import helpers.printing as hprintin
 import numpy as np
 import pandas as pd
+
+import helpers.dbg as hdbg
+import helpers.printing as hprintin
 
 _LOG = logging.getLogger(__name__)
 
