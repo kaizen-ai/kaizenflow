@@ -80,7 +80,7 @@ class CcxtLoader:
 
     @staticmethod
     def read_db_data(table_name: str) -> pd.DataFrame:
-        sql_query = "SELECT * FROM '%s'" % table_name
+        sql_query = "SELECT * FROM %s" % table_name
         connection, _ = imcodbcrsch.get_db_connection_from_environment()
         table = pd.read_sql(sql_query, connection)
         return table
