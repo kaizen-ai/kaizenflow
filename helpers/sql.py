@@ -226,6 +226,7 @@ def create_database(
 # #############################################################################
 
 
+# TODO(gp): Rename it execute_pandas_query
 def execute_query(
     connection: DbConnection,
     query: str,
@@ -258,7 +259,7 @@ def execute_query(
         try:
             cursor.execute(query)
         except psycop.Error as e:
-            print((e.pgerror))
+            print(e.pgerror)
             raise psycop.Error
     if use_timer:
         htimer.dtimer_stop(idx)

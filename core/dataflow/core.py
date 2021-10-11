@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.dataflow.core as cdtfc
+import core.dataflow.core as cdtfcor
 """
 import abc
 import itertools
@@ -11,7 +11,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import networkx as networ
 from tqdm.autonotebook import tqdm
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
+import helpers.printing as hprintin
 import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
@@ -65,8 +66,8 @@ class NodeInterface(abc.ABC):
         :param inputs: list-like string names of `input_names`. `None` for no names.
         :param outputs: list-like string names of `output_names`. `None` for no names.
         """
-        dbg.dassert_isinstance(nid, NodeId)
-        dbg.dassert(nid, "Empty string chosen for unique nid!")
+        hdbg.dassert_isinstance(nid, NodeId)
+        hdbg.dassert(nid, "Empty string chosen for unique nid!")
         self._nid = nid
         self._input_names = self._init_validation_helper(inputs)
         self._output_names = self._init_validation_helper(outputs)
@@ -94,9 +95,9 @@ class NodeInterface(abc.ABC):
             return []
         # Make sure the items are all non-empty strings.
         for item in items:
-            dbg.dassert_isinstance(item, str)
-            dbg.dassert_ne(item, "")
-        dbg.dassert_no_duplicates(items)
+            hdbg.dassert_isinstance(item, str)
+            hdbg.dassert_ne(item, "")
+        hdbg.dassert_no_duplicates(items)
         return items
 
 
@@ -127,14 +128,14 @@ class Node(NodeInterface):
         """
         Return the value of output `name` for the requested `method`.
         """
-        dbg.dassert_in(
+        hdbg.dassert_in(
             method,
             self._output_vals.keys(),
             "%s of node %s has no output!",
             method,
             self.nid,
         )
-        dbg.dassert_in(
+        hdbg.dassert_in(
             name,
             self.output_names,
             "%s is not an output of node %s!",
@@ -149,7 +150,7 @@ class Node(NodeInterface):
 
         E.g., for a method "fit" it returns, "df_out" -> pd.DataFrame
         """
-        dbg.dassert_in(method, self._output_vals.keys())
+        hdbg.dassert_in(method, self._output_vals.keys())
         return self._output_vals[method]
 
     # TODO(gp): name -> output_name
@@ -157,7 +158,7 @@ class Node(NodeInterface):
         """
         Store the output for `name` and the specific `method`.
         """
-        dbg.dassert_in(
+        hdbg.dassert_in(
             name,
             self.output_names,
             "%s is not an output of node %s!",
@@ -206,12 +207,12 @@ class DAG:
         self._dag = networ.DiGraph()
         #
         if name is not None:
-            dbg.dassert_isinstance(name, str)
+            hdbg.dassert_isinstance(name, str)
         self._name = name
         #
         if mode is None:
             mode = "strict"
-        dbg.dassert_in(
+        hdbg.dassert_in(
             mode, ["strict", "loose"], "Unsupported mode %s requested!", mode
         )
         self._mode = mode
@@ -241,7 +242,7 @@ class DAG:
         """
         # In principle, `NodeInterface` could be supported; however, to do so,
         # the `run` methods below would need to be suitably modified.
-        dbg.dassert_issubclass(
+        hdbg.dassert_issubclass(
             node, Node, "Only DAGs of class `Node` are supported!"
         )
         # NetworkX requires that nodes be hashable and uses hashes for
@@ -253,7 +254,7 @@ class DAG:
         # Note that this usage requires that nid's be unique within a given
         # DAG.
         if self.mode == "strict":
-            dbg.dassert(
+            hdbg.dassert(
                 not self._dag.has_node(node.nid),
                 "A node with nid=%s already belongs to the DAG!",
                 node.nid,
@@ -279,7 +280,7 @@ class DAG:
                 _LOG.warning("Removing nid=%s", node.nid)
                 self.remove_node(node.nid)
         else:
-            dbg.dfatal("Invalid mode='%s'", self.mode)
+            hdbg.dfatal("Invalid mode='%s'", self.mode)
         # Add node.
         self._dag.add_node(node.nid, stage=node)
 
@@ -289,15 +290,15 @@ class DAG:
 
         :param nid: unique node id
         """
-        dbg.dassert_isinstance(nid, NodeId)
-        dbg.dassert(self._dag.has_node(nid), "Node `%s` is not in DAG!", nid)
+        hdbg.dassert_isinstance(nid, NodeId)
+        hdbg.dassert(self._dag.has_node(nid), "Node `%s` is not in DAG!", nid)
         return self._dag.nodes[nid]["stage"]  # type: ignore
 
     def remove_node(self, nid: NodeId) -> None:
         """
         Remove node from DAG and clear any connected edges.
         """
-        dbg.dassert(self._dag.has_node(nid), "Node `%s` is not in DAG!", nid)
+        hdbg.dassert(self._dag.has_node(nid), "Node `%s` is not in DAG!", nid)
         self._dag.remove_node(nid)
 
     def connect(
@@ -328,7 +329,7 @@ class DAG:
             parent_out = hlist.assert_single_element_and_return(
                 self.get_node(parent_nid).output_names
             )
-        dbg.dassert_in(parent_out, self.get_node(parent_nid).output_names)
+        hdbg.dassert_in(parent_out, self.get_node(parent_nid).output_names)
         # Automatically infer input name when the child has only one input.
         # Ensure that child node belongs to DAG (through `get_node` call).
         if isinstance(child, tuple):
@@ -338,10 +339,10 @@ class DAG:
             child_in = hlist.assert_single_element_and_return(
                 self.get_node(child_nid).input_names
             )
-        dbg.dassert_in(child_in, self.get_node(child_nid).input_names)
+        hdbg.dassert_in(child_in, self.get_node(child_nid).input_names)
         # Ensure that `child_in` is not already hooked up to an output.
         for nid in self._dag.predecessors(child_nid):
-            dbg.dassert_not_in(
+            hdbg.dassert_not_in(
                 child_in,
                 self._dag.get_edge_data(nid, child_nid),
                 "`%s` already receiving input from node %s",
@@ -356,7 +357,7 @@ class DAG:
         # edge and raise an error.
         if not networ.is_directed_acyclic_graph(self._dag):
             self._dag.remove_edge(parent_nid, child_nid)
-            dbg.dfatal(
+            hdbg.dfatal(
                 f"Creating edge {parent_nid} -> {child_nid} introduces a cycle!"
             )
 
@@ -385,7 +386,7 @@ class DAG:
         Return the only sink node, asserting if there is more than one.
         """
         sinks = self.get_sinks()
-        dbg.dassert_eq(
+        hdbg.dassert_eq(
             len(sinks),
             1,
             "There is more than one sink node %s in DAG",
@@ -443,7 +444,12 @@ class DAG:
 
         This method DOES NOT run (or re-run) ancestors of `nid`.
         """
-        _LOG.debug("Node nid=`%s` executing method `%s`...", nid, method)
+        _LOG.debug(
+            "\n%s",
+            hprintin.frame(
+                "Node nid=`%s` executing method `%s`..." % (nid, method)
+            ),
+        )
         kwargs = {}
         for pre in self._dag.predecessors(nid):
             kvs = self._dag.edges[[pre, nid]]

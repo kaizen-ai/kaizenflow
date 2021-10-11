@@ -18,12 +18,15 @@ import helpers.dbg as hdbg
 
 # TODO(gp): We could make this a mixin and add this behavior to both asyncio and
 #  async_solipsism event loop.
+# TODO(gp): -> _AsyncSolipsismEventLoop
 class _EventLoop(async_solipsism.EventLoop):
     """
     An `async_solipsism.EventLoop` returning also the wall-clock time.
     """
 
-    def __init__(self):
+    # TODO(gp): If we pass an `initial_replayed_dt` we could incorporate here also
+    #  the replayed time approach and can remove `ReplayedTime` object.
+    def __init__(self) -> None:
         super().__init__()
         self._initial_dt = datetime.datetime.utcnow()
 
@@ -52,9 +55,7 @@ def solipsism_context() -> Iterator:
 # TODO(gp): For some reason `asyncio.run()` doesn't seem to pick up the new event
 #  loop. So we use a re-implementation of `run` that does that.
 def run(
-    coroutine: Coroutine,
-    *,
-    event_loop: Optional[asyncio.AbstractEventLoop] = None
+    coroutine: Coroutine, event_loop: Optional[asyncio.AbstractEventLoop]
 ) -> Any:
     """
     `asyncio.run()` wrapper that allows to use a specified `EventLoop`.

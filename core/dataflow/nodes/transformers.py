@@ -228,7 +228,7 @@ class SeriesTransformer(cdnb.Transformer, cdnb.ColModeMixin):
         info["func_info"] = collections.OrderedDict()
         func_info = info["func_info"]
         srs_list = []
-        for col in self._leaf_cols:
+        for col in self._fit_cols:
             srs, col_info = _apply_func_to_series(
                 df[col],
                 self._nan_mode,

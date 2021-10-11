@@ -1,5 +1,11 @@
+import os
+
+import helpers.s3 as hs3
 import helpers.unit_test as hut
 import im.ccxt.data.load.loader as cdlloa
+
+
+_AM_S3_ROOT_DIR = os.path.join(hs3.get_path(), "data")
 
 
 class TestGetFilePath(hut.TestCase):
@@ -21,6 +27,9 @@ class TestGetFilePath(hut.TestCase):
         """
         exchange_id = "unsupported exchange"
         currency_pair = "ADA/USDT"
+        # TODO(gp): We should throw a different exception, like
+        # `UnsupportedExchane`.
+        # TODO(gp): Same change also for CDD test_loader.py
         with self.assertRaises(AssertionError):
             cdlloa._get_file_path(
                 cdlloa._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
@@ -39,11 +48,14 @@ class TestGetFilePath(hut.TestCase):
 
 
 class TestCcxtLoader(hut.TestCase):
+
     def test1(self) -> None:
         """
         Test files on S3 are being read correctly.
         """
-        ccxt_loader = cdlloa.CcxtLoader("s3://alphamatic-data/data", "am")
+        # TODO(gp): We could factor out these 2 lines in a `def _get_loader()`.
+        aws_profile = "am"
+        ccxt_loader = cdlloa.CcxtLoader(_AM_S3_ROOT_DIR, aws_profile)
         actual = ccxt_loader.read_data("binance", "BTC/USDT", "OHLCV")
         # Check the output values.
         actual_string = hut.convert_df_to_json_string(actual)
@@ -53,7 +65,8 @@ class TestCcxtLoader(hut.TestCase):
         """
         Test unsupported exchange id.
         """
-        ccxt_loader = cdlloa.CcxtLoader("s3://alphamatic-data/data", "am")
+        aws_profile = "am"
+        ccxt_loader = cdlloa.CcxtLoader(_AM_S3_ROOT_DIR, aws_profile)
         with self.assertRaises(AssertionError):
             ccxt_loader.read_data("unsupported_exchange_id", "BTC/USDT", "OHLCV")
 
@@ -61,7 +74,8 @@ class TestCcxtLoader(hut.TestCase):
         """
         Test unsupported currency pair.
         """
-        ccxt_loader = cdlloa.CcxtLoader("s3://alphamatic-data/data", "am")
+        aws_profile = "am"
+        ccxt_loader = cdlloa.CcxtLoader(_AM_S3_ROOT_DIR, aws_profile)
         with self.assertRaises(AssertionError):
             ccxt_loader.read_data("binance", "unsupported_currency_pair", "OHLCV")
 
@@ -69,6 +83,7 @@ class TestCcxtLoader(hut.TestCase):
         """
         Test unsupported data type.
         """
-        ccxt_loader = cdlloa.CcxtLoader("s3://alphamatic-data/data", "am")
+        aws_profile = "am"
+        ccxt_loader = cdlloa.CcxtLoader(_AM_S3_ROOT_DIR, aws_profile)
         with self.assertRaises(AssertionError):
             ccxt_loader.read_data("binance", "BTC/USDT", "unsupported_data_type")
