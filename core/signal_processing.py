@@ -189,17 +189,17 @@ def calculate_pseudoinverse(
 # #############################################################################
 
 
-def squash(
+def compress_tails(
     signal: Union[pd.DataFrame, pd.Series], scale: int = 1
 ) -> Union[pd.DataFrame, pd.Series]:
     """
-    Apply squashing function to data.
+    Apply compression to data.
 
     :param signal: data
-    :param scale: Divide data by scale and multiply squashed output by scale.
+    :param scale: Divide data by scale and multiply compressed output by scale.
         Rescaling approximately preserves behavior in a neighborhood of the
-        origin where the squashing function is approximately linear.
-    :return: squashed data
+        origin where the compression function is approximately linear.
+    :return: compressed data
     """
     hdbg.dassert_lt(0, scale)
     return scale * np.tanh(signal / scale)
@@ -1786,6 +1786,64 @@ def compute_swt_sum(
     srs = -1 * df.sum(axis=1, skipna=False)
     srs.name = "swt_sum"
     return srs.to_frame()
+
+
+def compute_fir_zscore(
+    signal: Union[pd.DataFrame, pd.Series],
+    dyadic_tau: int,
+    variance_dyadic_tau: Optional[int] = None,
+    delay: int = 0,
+    variance_delay: Optional[int] = None,
+) -> pd.Series:
+    """
+    Z-score with a FIR filter.
+    """
+    if variance_dyadic_tau is None:
+        variance_dyadic_tau = dyadic_tau
+    if variance_delay is None:
+        variance_delay = delay
+    if isinstance(signal, pd.DataFrame):
+        hdbg.dassert_eq(
+            signal.shape[1], 1, "Input dataframe must have a single column."
+        )
+        signal = signal.squeeze()
+    mean = get_swt(signal, depth=dyadic_tau, output_mode="smooth")[
+        dyadic_tau
+    ].shift(delay)
+    demeaned = signal - mean
+    var = get_swt(
+        demeaned ** 2,
+        depth=variance_dyadic_tau,
+        output_mode="smooth",
+    )[variance_dyadic_tau].shift(variance_delay)
+    # TODO(Paul): Maybe add delay-based rescaling.
+    srs = demeaned / np.sqrt(var)
+    srs.name = signal.name
+    srs = srs.replace([-np.inf, np.inf], np.nan)
+    return srs
+
+
+def compute_fir_var_normalization(
+    signal: Union[pd.DataFrame, pd.Series],
+    dyadic_tau: int,
+    delay: int = 0,
+) -> pd.Series:
+    """
+    Variance normalize a centered signal with a FIR filter.
+    """
+    if isinstance(signal, pd.DataFrame):
+        hdbg.dassert_eq(
+            signal.shape[1], 1, "Input dataframe must have a single column."
+        )
+        signal = signal.squeeze()
+    var = compute_swt_var(signal, depth=dyadic_tau)[
+        "swt_var"
+    ].shift(delay)
+    # TODO(Paul): Maybe add delay-based rescaling.
+    srs = signal / np.sqrt(var)
+    srs.name = signal.name
+    srs = srs.replace([-np.inf, np.inf], np.nan)
+    return srs
 
 
 def get_dyadic_zscored(

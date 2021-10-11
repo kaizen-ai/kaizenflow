@@ -812,7 +812,7 @@ def _get_logging_format(
     force_verbose_format: bool,
     force_no_warning: bool,
     report_resource_usage: bool,
-    date_format_mode: str = "date_time",
+    date_format_mode: str = "time",
 ) -> Tuple[str, str]:
     """
     Compute the logging format depending whether running on notebook or in a
@@ -880,7 +880,7 @@ def _get_logging_format(
                 " %(message)s"
             )
         if date_format_mode == "time":
-            date_fmt = "%H:%M"
+            date_fmt = "%H:%M:%S"
         elif date_format_mode == "date_time":
             date_fmt = "%m-%d_%H:%M"
         elif date_format_mode == "date_timestamp":
@@ -1047,7 +1047,7 @@ def get_all_loggers() -> List:
     """
     Return list of all registered loggers.
     """
-    logger_dict = logging.root.manager.loggerDict  # type: ignore
+    logger_dict = logging.root.manager.loggerDict  # type: ignore  # pylint: disable=no-member
     loggers = [logging.getLogger(name) for name in logger_dict]
     return loggers
 

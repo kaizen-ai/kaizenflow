@@ -1,14 +1,11 @@
 import logging
 import os
-import time
 from typing import Any, Optional
 
 import pandas as pd
 
 import core.dataflow as dtf
-import core.dataflow.test.test_real_time as cdtfttrt
-import helpers.datetime_ as hdatetime
-import helpers.unit_test as hut  # pylint: disable=no-name-in-module
+import helpers.unit_test as huntes  # pylint: disable=no-name-in-module
 
 _LOG = logging.getLogger(__name__)
 
@@ -16,7 +13,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class TestDiskDataSource(hut.TestCase):
+class TestDiskDataSource(huntes.TestCase):
     def test_datetime_index_csv1(self) -> None:
         """
         Test CSV file using timestamps in the index.
@@ -141,7 +138,7 @@ class TestDiskDataSource(hut.TestCase):
 # #############################################################################
 
 
-class TestArmaGenerator(hut.TestCase):
+class TestArmaGenerator(huntes.TestCase):
     def test1(self) -> None:
         node = dtf.ArmaGenerator(  # pylint: disable=no-member
             nid="source",
@@ -155,14 +152,14 @@ class TestArmaGenerator(hut.TestCase):
             seed=0,
         )
         df = node.fit()["df_out"]
-        act = hut.convert_df_to_string(df, index=True, decimals=2)
+        act = huntes.convert_df_to_string(df, index=True, decimals=2)
         self.check_string(act)
 
 
 # #############################################################################
 
 
-class TestMultivariateNormalGenerator(hut.TestCase):
+class TestMultivariateNormalGenerator(huntes.TestCase):
     def test1(self) -> None:
         node = dtf.MultivariateNormalGenerator(  # pylint: disable=no-member
             nid="source",
@@ -174,105 +171,5 @@ class TestMultivariateNormalGenerator(hut.TestCase):
             seed=1,
         )
         df = node.fit()["df_out"]
-        act = hut.convert_df_to_string(df, index=True, decimals=2)
+        act = huntes.convert_df_to_string(df, index=True, decimals=2)
         self.check_string(act)
-
-
-# #############################################################################
-
-
-class TestRealTimeDataSource1(hut.TestCase):
-    def test_simulated_time1(self) -> None:
-        """
-        Setting the current time to a specific datetime, the node generates
-        values up and including that datetime.
-        """
-        # Build the node.
-        nid = "rtds"
-        delay_in_secs = 0.0
-        # No external clock, but set the clock through an explicit call to
-        # `set_current_time()`.
-        data_builder, data_builder_kwargs = cdtfttrt.get_test_data_builder1()
-        rtds = dtf.SimulatedTimeDataSource(
-            nid,
-            delay_in_secs=delay_in_secs,
-            data_builder=data_builder,
-            data_builder_kwargs=data_builder_kwargs,
-        )
-        # Execute.
-        current_time = pd.Timestamp("2010-01-04 09:30:05")
-        rtds.set_current_time(current_time)
-        self._helper(rtds)
-
-    def test_replayed_time1(self) -> None:
-        # Build the node.
-        nid = "rtds"
-        delay_in_secs = 0.0
-        # Use a replayed real-time starting at the same time as the data.
-        initial_replayed_dt = pd.Timestamp("2010-01-04 09:30:00")
-        get_wall_clock_time = lambda: hdatetime.get_current_time("naive_ET")
-        #
-        data_builder, data_builder_kwargs = cdtfttrt.get_test_data_builder1()
-        rtds = dtf.ReplayedTimeDataSource(  # pylint: disable=no-member
-            nid,
-            delay_in_secs=delay_in_secs,
-            initial_replayed_dt=initial_replayed_dt,
-            get_wall_clock_time=get_wall_clock_time,
-            data_builder=data_builder,
-            data_builder_kwargs=data_builder_kwargs,
-        )
-        # Execute right away.
-        dict_ = rtds.fit()
-        # Check.
-        df = dict_["df_out"]
-        act = list(map(str, df.index.tolist()))
-        exp = [
-            "2010-01-04 09:30:00",
-        ]
-        self.assert_equal(str(act), str(exp))
-        # Execute after a replayed second that corresponds to a minute.
-        time.sleep(1)
-        dict_ = rtds.fit()
-        # Check.
-        df = dict_["df_out"]
-        act = list(map(str, df.index.tolist()))
-        exp = [
-            "2010-01-04 09:30:00",
-            "2010-01-04 09:30:01",
-        ]
-        self.assert_equal(str(act), str(exp))
-
-    # TODO(gp): Add a test_simulated_replayed_time using async_solipsism.
-
-    def test_real_time1(self) -> None:
-        # Build the node.
-        nid = "rtds"
-        # Return always the same time.
-        get_wall_clock_time = lambda: pd.Timestamp("2010-01-04 09:30:05")
-        data_builder, data_builder_kwargs = cdtfttrt.get_test_data_builder2()
-        rtds = dtf.RealTimeDataSource(  # pylint: disable=no-member
-            nid,
-            get_wall_clock_time=get_wall_clock_time,
-            data_builder=data_builder,
-            data_builder_kwargs=data_builder_kwargs,
-        )
-        # Execute.
-        self._helper(rtds)
-
-    def _helper(self, rtds: dtf.AbstractRealTimeDataSource) -> None:
-        # Execute.
-        dict_ = rtds.fit()
-        # Check.
-        df = dict_["df_out"]
-        act = list(map(str, df.index.tolist()))
-        exp = [
-            "2010-01-04 09:30:00",
-            "2010-01-04 09:30:01",
-            "2010-01-04 09:30:02",
-            "2010-01-04 09:30:03",
-            "2010-01-04 09:30:04",
-            "2010-01-04 09:30:05",
-        ]
-        self.assert_equal(str(act), str(exp))
-
-    # TODO(gp): Add a test with delay_in_secs
