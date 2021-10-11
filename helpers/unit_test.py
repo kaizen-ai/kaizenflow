@@ -1123,6 +1123,8 @@ class TestCase(unittest.TestCase):
         project_dirname = hgit.get_project_dirname()
         dir_name = f"{user_name}.{server_name}.{project_dirname}"
         # Assemble everything in a single path.
+        import helpers.s3 as hs3
+
         s3_bucket = hs3.get_path()
         scratch_dir = f"{s3_bucket}/tmp/cache.unit_test/{dir_name}.{test_path}"
         return scratch_dir
