@@ -1453,9 +1453,13 @@ def _get_build_tag(code_ver: str) -> str:
 
 # DEV image flow:
 # - A "local" image (which is a release candidate for the DEV image) is built
+#   ```
+#   > docker_build_local_image
+#   ```
+#   This creates the image `dev_tools:local`
 # - A qualification process (e.g., running all tests) is performed on the "local"
 #   image (e.g., through GitHub actions)
-# - If qualification is passed, it becomes "latest".
+# - If qualification is passed, it becomes `dev`.
 
 
 # For base_image, we use "" as default instead None since pyinvoke can only infer
@@ -1548,6 +1552,13 @@ def docker_release_dev_image(  # type: ignore
     This can be used to test the entire flow from scratch by building an image,
     running the tests, but not necessarily pushing.
 
+    Phases:
+    - Build local image
+    - Run the tests
+    - Mark local as dev image
+    - Push dev image to the repo
+
+    :param cache: use the cache
     :param skip_tests: skip all the tests and release the dev image
     :param push_to_repo: push the image to the repo_short_name
     :param update_poetry: update package dependencies using poetry
@@ -1591,6 +1602,12 @@ def docker_release_dev_image(  # type: ignore
 def docker_build_prod_image(ctx, cache=True, base_image=""):  # type: ignore
     """
     (ONLY CI/CD) Build a prod image.
+
+    Phases:
+    - Build the prod image on top of the dev image
+
+    :param cache: note that often the prod image is just a copy of the dev
+        image so caching makes no difference
     """
     _report_task()
     image_prod = get_image("prod", base_image)
@@ -1644,6 +1661,10 @@ def docker_release_prod_image(  # type: ignore
     (ONLY CI/CD) Build, test, and release to ECR the prod image.
 
     Same options as `docker_release_dev_image`.
+
+    - Build prod image
+    - Run the tests
+    - Push the prod image repo
     """
     _report_task()
     # 1) Build prod image.
@@ -1671,6 +1692,10 @@ def docker_release_prod_image(  # type: ignore
 def docker_release_all(ctx):  # type: ignore
     """
     (ONLY CI/CD) Release both dev and prod image to ECR.
+
+    This includes:
+    - docker_release_dev_image
+    - docker_release_prod_image
     """
     _report_task()
     docker_release_dev_image(ctx)
@@ -2453,7 +2478,7 @@ def pytest_failed(  # type: ignore
 # #############################################################################
 
 
-def _get_lint_docker_cmd(precommit_opts: str, run_bash: bool) -> str:
+def _get_lint_docker_cmd(precommit_opts: str, run_bash: bool, stage: str) -> str:
     superproject_path, submodule_path = hgit.get_path_from_supermodule()
     if superproject_path:
         # We are running in a Git submodule.
@@ -2467,7 +2492,7 @@ def _get_lint_docker_cmd(precommit_opts: str, run_bash: bool) -> str:
     # image = get_default_param("DEV_TOOLS_IMAGE_PROD")
     # image="*****.dkr.ecr.us-east-1.amazonaws.com/dev_tools:local"
     ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
-    image = f"{ecr_base_path}/dev_tools:prod"
+    image = f"{ecr_base_path}/dev_tools:{stage}"
     docker_cmd_ = ["docker run", "--rm"]
     if run_bash:
         docker_cmd_.append("-it")
@@ -2538,6 +2563,7 @@ def lint(  # type: ignore
     run_bash=False,
     run_linter_step=True,
     parse_linter_output=True,
+    stage="prod",
 ):
     """
     Lint files.
@@ -2551,6 +2577,7 @@ def lint(  # type: ignore
     :param run_bash: instead of running pre-commit, run bash to debug
     :param run_linter_step: run linter step
     :param parse_linter_output: parse linter output and generate vim cfile
+    :param stage: the image stage to use
     """
     _report_task()
     lint_file_name = "linter_output.txt"
@@ -2597,7 +2624,7 @@ def lint(  # type: ignore
             ]
             precommit_opts = _to_single_line_cmd(precommit_opts)
             # Execute command line.
-            cmd = _get_lint_docker_cmd(precommit_opts, run_bash)
+            cmd = _get_lint_docker_cmd(precommit_opts, run_bash, stage)
             cmd = f"({cmd}) 2>&1 | tee -a {lint_file_name}"
             if run_bash:
                 # We don't execute this command since pty=True corrupts the terminal

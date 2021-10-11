@@ -27,7 +27,7 @@ echo "python version="$(python3 --version)
 PWD=$(pwd)
 AMP_DIR=$PWD
 if [[ ! -d $AMP_DIR ]]; then
-    echo "The amp dir '$AMP_DIR' doesn' exist"
+    echo "The amp dir '$AMP_DIR' doesn't exist"
     return -1
 fi;
 export PYTHONPATH=$PYTHONPATH:$AMP_DIR
