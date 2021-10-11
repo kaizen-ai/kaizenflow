@@ -9,7 +9,7 @@ Use example:
 
 Import as:
 
-import im.devops.docker_scripts.create_table as imddosccretab
+import im.ccxt.db.create_table as imccdbcrtab
 """
 
 import argparse
