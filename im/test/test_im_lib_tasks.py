@@ -5,9 +5,9 @@ import helpers.unit_test as huntes
 import im.im_lib_tasks as imimlitas  # pylint: disable=no-name-in-module
 
 
+@pytest.mark.skip()
 class TestGetImDockerCmd(huntes.TestCase):
 
-    @pytest.mark.skip()
     def test1(self) -> None:
         """
         Test the `bash` command.
@@ -22,7 +22,6 @@ class TestGetImDockerCmd(huntes.TestCase):
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
-    @pytest.mark.skip()
     def test2(self) -> None:
         """
         Test the Python script.
@@ -38,6 +37,7 @@ class TestGetImDockerCmd(huntes.TestCase):
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
+@pytest.mark.skip()
 class TestGetImDockerDown(huntes.TestCase):
 
     @staticmethod
@@ -47,7 +47,6 @@ class TestGetImDockerDown(huntes.TestCase):
                 "im/devops/compose/docker-compose.yml")
         return file_name
 
-    @pytest.mark.skip()
     def test1(self) -> None:
         """
         Check the command line to only remove containers.
@@ -60,7 +59,6 @@ class TestGetImDockerDown(huntes.TestCase):
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
-    @pytest.mark.skip()
     def test2(self) -> None:
         """
         Check the command line to remove containers and volumes.
