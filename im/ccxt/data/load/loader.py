@@ -80,6 +80,12 @@ class CcxtLoader:
 
     @staticmethod
     def read_db_data(table_name: str) -> pd.DataFrame:
+        """
+        Load CCXT data from DB.
+
+        :param: table_name: table name to load (e.g., "ccxt_ohlcv")
+        :return: table
+        """
         sql_query = "SELECT * FROM %s" % table_name
         connection, _ = imcodbcrsch.get_db_connection_from_environment()
         table = pd.read_sql(sql_query, connection)
