@@ -12,7 +12,7 @@ import collections
 import functools
 import logging
 import operator
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -268,4 +268,5 @@ def compute_count_per_year(data: Union[pd.Series, pd.DataFrame]) -> float:
     span_in_years = data.size / points_per_year
     # Determine the number of non-NaN/inf/etc. data points per year.
     count_per_year = data.count() / span_in_years
+    count_per_year = cast(float, count_per_year)
     return count_per_year

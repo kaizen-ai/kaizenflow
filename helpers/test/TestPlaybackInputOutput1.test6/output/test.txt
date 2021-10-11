@@ -1,12 +1,12 @@
 # Test created for helpers.test.test_playback.get_result_ae.
 
-import helpers.unit_test as hut
+import helpers.unit_test as huntes
 import jsonpickle
 import pandas as pd
 import core.config as cconfi
 
 
-class TestGetResultAe(hut.TestCase):
+class TestGetResultAe(huntes.TestCase):
     def test1(self) -> None:
         # Define input variables.
         a = r'{"py/object": "datetime.date", "__reduce__": [{"py/type": "datetime.date"}, ["B98BAQ=="]]}'

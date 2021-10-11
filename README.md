@@ -42,9 +42,9 @@
 ## Cloning the repo
 - Path to the local repo folder should look like this:
    ```bash
-   ~/src/{DIR_PREFIX}{IDX}
+   ~/src/amp{IDX}
    ```
-where `DIR_PREFIX` is "amp" or "cmamp", depending on the working repository, and `IDX` is an integer, e.g. "1", "2".
+where `IDX` is an integer, e.g. `~/src/amp1`, `~/src/amp2`
    - This is required to run `go_amp.sh` script
    - To clone a repo, use SSH cloning command described [here in Github official documentation](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository-from-github/cloning-a-repository).
       ```bash
@@ -79,13 +79,3 @@ where `DIR_PREFIX` is "amp" or "cmamp", depending on the working repository, and
   ```bash
   > invoke run_fast_tests
   ```
-
-# AWS credentials
-
-- AWS credentials are passed from the user `~/.aws` directory that is
-  bind-mounted to the Docker container
-- The container passes also through the env vars "AWS_ACCESS_KEY_ID",
-  "AWS_SECRET_ACCESS_KEY", "AWS_DEFAULT_REGION"
-  - These env vars are empty by default
-  - For GitHub Actions we pass the credentials through the env vars and GH
-    secrets

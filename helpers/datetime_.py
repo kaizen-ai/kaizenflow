@@ -1,11 +1,12 @@
 """
 Import as:
 
-import helpers.datetime_ as hdatet
+import helpers.datetime_ as hdatetim
 """
 
 # TODO(gp): -> hdatetime
 
+import asyncio
 import calendar
 import datetime
 import logging
@@ -33,24 +34,27 @@ except ModuleNotFoundError:
     print(_WARNING + f": Can't find {_module}: continuing")
 
 
-import helpers.dbg as dbg  # noqa: E402 # pylint: disable=wrong-import-position
+import helpers.dbg as hdbg  # noqa: E402 # pylint: disable=wrong-import-position
 
 _LOG = logging.getLogger(__name__)
 
-# We use this type to allow flexibility in the interface exposed to client.
-# Typically as soon as we enter functions exposed to users, we call `to_datetime()`
-# to convert the user-provided datetime into a `datetime.datetime` and use only
-# this type in private interfaces.
-# In general it's worth to import this file even for just the type `Datetime`,
+# We use the type `Datetime` to allow flexibility in the interface exposed to client.
+# The typical pattern is:
+# - we call `to_datetime()`, as soon as we enter functions exposed to users,
+#   to convert the user-provided datetime into a `datetime.datetime`
+# - we use only `datetime.datetime` in the private interfaces
+#
+# It's often worth to import this file even for just the type `Datetime`,
 # since typically as soon as the caller uses this type, they also want to use
 # `to_datetime()` and `dassert_*()` functions.
-# TODO(gp): It would be better to call this `UserFriendlyDateTime` or
-#  `GeneralDateTime` and rename `StrictDateTime` -> `DateTime`.
+# TODO(gp): It would be better to call this `GeneralDateTime`, `FlexibleDateTime`,
+#  and rename `StrictDateTime` -> `DateTime`.
 Datetime = Union[str, pd.Timestamp, datetime.datetime]
 
-# This type is for stricter interfaces, although it is a bit of a compromise.
-# Either one wants to be flexible and allow everything that can be interpreted as
-# a datetime, or strict and then only the Python type `datetime.datetime` is used.
+# The type `StrictDateTime` is for stricter interfaces, although it is a bit of a
+# compromise.
+# Either one wants to allow everything that can be interpreted as a datetime (and
+# then use `Datetime`), or strict (and then use only `datetime.datetime`).
 StrictDatetime = Union[pd.Timestamp, datetime.datetime]
 
 
@@ -58,7 +62,7 @@ def dassert_is_datetime(datetime_: Datetime) -> None:
     """
     Assert that `datetime_` is of type `Datetime`.
     """
-    dbg.dassert_isinstance(
+    hdbg.dassert_isinstance(
         datetime_,
         (str, pd.Timestamp, datetime.datetime),
         "datetime_='%s' of type '%s' is not a DateTimeType",
@@ -71,7 +75,7 @@ def dassert_is_strict_datetime(datetime_: StrictDatetime) -> None:
     """
     Assert that `datetime_` is of type `StrictDatetime`.
     """
-    dbg.dassert_isinstance(
+    hdbg.dassert_isinstance(
         datetime_,
         (pd.Timestamp, datetime.datetime),
         "datetime_='%s' of type '%s' is not a StrictDateTimeType",
@@ -99,7 +103,7 @@ def dassert_is_tz_naive(datetime_: StrictDatetime) -> None:
     Assert that the passed timestamp is tz-naive, i.e., doesn't have timezone
     info.
     """
-    dbg.dassert_is(
+    hdbg.dassert_is(
         datetime_.tzinfo, None, "datetime_='%s' is not tz naive", datetime_
     )
 
@@ -108,7 +112,7 @@ def dassert_has_tz(datetime_: StrictDatetime) -> None:
     """
     Assert that the passed timestamp has timezone info.
     """
-    dbg.dassert_is_not(
+    hdbg.dassert_is_not(
         datetime_.tzinfo,
         None,
         "datetime_='%s' doesn't have timezone info",
@@ -128,7 +132,7 @@ def _dassert_has_specified_tz(
     tz_info = datetime_.tzinfo
     tz_zone = tz_info.zone  # type: ignore
     has_expected_tz = tz_zone in tz_zones
-    dbg.dassert(
+    hdbg.dassert(
         has_expected_tz,
         "datetime_=%s (type=%s) tz_info=%s tz_info.zone=%s instead of tz_zones=%s",
         datetime_,
@@ -168,7 +172,7 @@ def dassert_tz_compatible(
     dassert_is_strict_datetime(datetime2)
     has_tz1 = datetime1.tzinfo is not None
     has_tz2 = datetime2.tzinfo is not None
-    dbg.dassert_eq(
+    hdbg.dassert_eq(
         has_tz1,
         has_tz2,
         "datetime1='%s' and datetime2='%s' are not compatible",
@@ -178,18 +182,26 @@ def dassert_tz_compatible(
 
 
 def dassert_tz_compatible_timestamp_with_df(
-    datetime_: StrictDatetime, df: pd.DataFrame
+    datetime_: StrictDatetime,
+    df: pd.DataFrame,
+    col_name: Optional[str],
 ) -> None:
     """
-    Assert that timestamp and df.index are both naive or both have timezone
+    Assert that timestamp and a df column are both naive or both have timezone
     info.
+
+    :param col_name: col_name. `None` represents the index.
     """
     dassert_is_strict_datetime(datetime_)
-    dbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert_isinstance(df, pd.DataFrame)
     if df.empty:
         return
-    # We assume that the first element in the index is representative.
-    df_datetime = df.index[0]
+    if col_name is None:
+        # We assume that the first element in the index is representative.
+        df_datetime = df.index[0]
+    else:
+        hdbg.dassert_in(col_name, df.columns)
+        df_datetime = df[col_name].iloc[0]
     dassert_tz_compatible(df_datetime, datetime_)
 
 
@@ -216,23 +228,28 @@ GetWallClockTime = Callable[[], pd.Timestamp]
 
 
 # TODO(gp): -> get_wall_clock_time
-def get_current_time(tz: str, loop=None) -> pd.Timestamp:
+def get_current_time(
+    tz: str, event_loop: Optional[asyncio.AbstractEventLoop] = None
+) -> pd.Timestamp:
     """
     Return current time in UTC / ET timezone or as a naive time.
 
     This should be the only way to get the current wall-clock time,
     since it handles both wall-clock time and "simulated" wall-clock
-    time through async-
-    """
-    if loop is not None:
-        # We accept only hasyncio.EventLoop here. If we are using asyncio
-        # EventLoop we rely on wall-clock time instead of `loop.time()`.
-        import asyncio
+    time through asyncio.
 
-        dbg.dassert_isinstance(loop, asyncio.AbstractEventLoop)
-        timestamp = loop.get_current_time()
+    :param tz: how to represent the returned time (e.g., "UTC", "ET", "naive")
+    :param event_loop: use
+    """
+    if event_loop is not None:
+        # We accept only `hasyncio.EventLoop` here. If we are using standard asyncio
+        # EventLoop we rely on wall-clock time instead of `loop.time()`.
+        hdbg.dassert_isinstance(event_loop, asyncio.AbstractEventLoop)
+        timestamp = event_loop.get_current_time()
     else:
+        # Use true real-time.
         timestamp = datetime.datetime.utcnow()
+    # Convert it into the right
     timestamp = pd.Timestamp(timestamp, tz=get_UTC_tz())
     if tz == "UTC":
         pass
@@ -282,8 +299,8 @@ def to_generalized_datetime(
     :return: datetime dates
     """
     # This function doesn't deal with mixed formats.
-    dbg.dassert_isinstance(dates, Iterable)
-    dbg.dassert(not isinstance(dates, str))
+    hdbg.dassert_isinstance(dates, Iterable)
+    hdbg.dassert(not isinstance(dates, str))
     # Try converting to datetime using `pd.to_datetime`.
     format_example_index = -1
     date_example = dates.tolist()[format_example_index]

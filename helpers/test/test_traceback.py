@@ -1,15 +1,15 @@
 import logging
 from typing import List
 
-import helpers.dbg as dbg
-import helpers.printing as hprint
-import helpers.traceback_helper as htrace
-import helpers.unit_test as hut
+import helpers.dbg as hdbg
+import helpers.printing as hprintin
+import helpers.traceback_helper as htrhel
+import helpers.unit_test as huntes
 
 _LOG = logging.getLogger(__name__)
 
 
-class Test_Traceback1(hut.TestCase):
+class Test_Traceback1(huntes.TestCase):
     def test_parse1(self) -> None:
         """
         Parse traceback with all files from Docker that actually exist in the
@@ -24,39 +24,39 @@ class Test_Traceback1(hut.TestCase):
           File "/app/amp/helpers/test/test_lib_tasks.py", line 27, in test_get_gh_issue_title2
             act = ltasks._get_gh_issue_title(issue_id, repo)
           File "/app/amp/helpers/lib_tasks.py", line 1265, in _get_gh_issue_title
-            task_prefix = git.get_task_prefix_from_repo_short_name(repo_short_name)
+            task_prefix = hgit.get_task_prefix_from_repo_short_name(repo_short_name)
           File "/app/amp/helpers/git.py", line 397, in get_task_prefix_from_repo_short_name
             if repo_short_name == "amp":
         NameError: name 'repo_short_name' is not defined
             TEST TEST TEST
         """
-        purify_from_client = True
+        purify_from_client = False
         # pylint: disable=line-too-long
         exp_cfile = [
             (
-                "helpers/test/test_lib_tasks.py",
+                "$GIT_ROOT/helpers/test/test_lib_tasks.py",
                 27,
                 "test_get_gh_issue_title2:act = ltasks._get_gh_issue_title(issue_id, repo)",
             ),
             (
-                "helpers/lib_tasks.py",
+                "$GIT_ROOT/helpers/lib_tasks.py",
                 1265,
-                "_get_gh_issue_title:task_prefix = git.get_task_prefix_from_repo_short_name(repo_short_name)",
+                "_get_gh_issue_title:task_prefix = hgit.get_task_prefix_from_repo_short_name(repo_short_name)",
             ),
             (
-                "helpers/git.py",
+                "$GIT_ROOT/helpers/git.py",
                 397,
                 'get_task_prefix_from_repo_short_name:if repo_short_name == "amp":',
             ),
         ]
-        exp_cfile = htrace.cfile_to_str(exp_cfile)
+        exp_cfile = htrhel.cfile_to_str(exp_cfile)
         # pylint: enable=line-too-long
         exp_traceback = """
         Traceback (most recent call last):
           File "$GIT_ROOT/helpers/test/test_lib_tasks.py", line 27, in test_get_gh_issue_title2
             act = ltasks._get_gh_issue_title(issue_id, repo)
           File "$GIT_ROOT/helpers/lib_tasks.py", line 1265, in _get_gh_issue_title
-            task_prefix = git.get_task_prefix_from_repo_short_name(repo_short_name)
+            task_prefix = hgit.get_task_prefix_from_repo_short_name(repo_short_name)
           File "$GIT_ROOT/helpers/git.py", line 397, in get_task_prefix_from_repo_short_name
             if repo_short_name == "amp":
         """
@@ -75,8 +75,8 @@ class Test_Traceback1(hut.TestCase):
             TEST TEST TEST
         """
         purify_from_client = True
-        exp_cfile: List[htrace.CFILE_ROW] = []
-        exp_cfile = htrace.cfile_to_str(exp_cfile)
+        exp_cfile: List[htrhel.CfileRow] = []
+        exp_cfile = htrhel.cfile_to_str(exp_cfile)
         exp_traceback = "None"
         self._parse_traceback_helper(
             txt, purify_from_client, exp_cfile, exp_traceback
@@ -140,7 +140,7 @@ class Test_Traceback1(hut.TestCase):
           File "/venv/lib/python3.8/site-packages/invoke/tasks.py", line 127, in __call__
             result = self.body(*args, **kwargs)
           File "/app/amp/helpers/lib_tasks.py", line 2140, in pytest_failed
-            dbg.dassert(m, "Invalid test='%s'", test)
+            hdbg.dassert(m, "Invalid test='%s'", test)
           File "/app/amp/helpers/dbg.py", line 129, in dassert
             _dfatal(txt, msg, *args)
           File "/app/amp/helpers/dbg.py", line 117, in _dfatal
@@ -159,7 +159,7 @@ class Test_Traceback1(hut.TestCase):
         $GIT_ROOT/helpers/test/test_lib_tasks.py:1460:test_classes1:self._helper(file_name, target_type, exp)
         $GIT_ROOT/helpers/test/test_lib_tasks.py:1440:_helper:act = ltasks.pytest_failed(ctx, use_frozen_list=use_frozen_list,
         /venv/lib/python3.8/site-packages/invoke/tasks.py:127:__call__:result = self.body(*args, **kwargs)
-        $GIT_ROOT/helpers/lib_tasks.py:2140:pytest_failed:dbg.dassert(m, "Invalid test='%s'", test)
+        $GIT_ROOT/helpers/lib_tasks.py:2140:pytest_failed:hdbg.dassert(m, "Invalid test='%s'", test)
         $GIT_ROOT/helpers/dbg.py:129:dassert:_dfatal(txt, msg, *args)
         $GIT_ROOT/helpers/dbg.py:117:_dfatal:dfatal(dfatal_txt)
         $GIT_ROOT/helpers/dbg.py:63:dfatal:raise assertion_type(ret)"""
@@ -172,13 +172,65 @@ class Test_Traceback1(hut.TestCase):
           File "/venv/lib/python3.8/site-packages/invoke/tasks.py", line 127, in __call__
             result = self.body(*args, **kwargs)
           File "$GIT_ROOT/helpers/lib_tasks.py", line 2140, in pytest_failed
-            dbg.dassert(m, "Invalid test='%s'", test)
+            hdbg.dassert(m, "Invalid test='%s'", test)
           File "$GIT_ROOT/helpers/dbg.py", line 129, in dassert
             _dfatal(txt, msg, *args)
           File "$GIT_ROOT/helpers/dbg.py", line 117, in _dfatal
             dfatal(dfatal_txt)
           File "$GIT_ROOT/helpers/dbg.py", line 63, in dfatal
             raise assertion_type(ret)"""
+        self._parse_traceback_helper(
+            txt, purify_from_client, exp_cfile, exp_traceback
+        )
+
+    def test_parse4(self) -> None:
+        """
+        Parse a traceback file with both files from Docker and local files.
+        """
+        # pylint: disable=line-too-long
+        txt = """
+        =================================== FAILURES ===================================
+        ____________ TestEgSingleInstrumentDataReader2.test_true_real_time1 ____________
+        Traceback (most recent call last):
+          File "/app/core_lime/dataflow/nodes/test/test_core_lime_dataflow_nodes.py", line 182, in test_true_real_time1
+            self._execute_node(node)
+          File "/app/core_lime/dataflow/nodes/test/test_core_lime_dataflow_nodes.py", line 238, in _execute_node
+            dict_ = node.fit()
+          File "/app/amp/core/dataflow/nodes/sources.py", line 385, in fit
+            self.df = self._get_data_until_current_time()
+          File "/app/amp/core/dataflow/nodes/sources.py", line 429, in _get_data_until_current_time
+            df = self._get_data()
+          File "/app/amp/core/dataflow/nodes/sources.py", line 574, in _get_data
+            hdbg.dassert_lte(df.index.max(), current_time)
+          File "/app/amp/helpers/dbg.py", line 172, in dassert_lte
+            cond = val1 <= val2
+          TypeError: '<=' not supported between instances of 'float' and 'Timestamp'
+        ============================= slowest 3 durations ==============================
+        """
+        purify_from_client = False
+        exp_cfile = r"""
+        $GIT_ROOT/core_lime/dataflow/nodes/test/test_core_lime_dataflow_nodes.py:182:test_true_real_time1:self._execute_node(node)
+        $GIT_ROOT/core_lime/dataflow/nodes/test/test_core_lime_dataflow_nodes.py:238:_execute_node:dict_ = node.fit()
+        $GIT_ROOT/core/dataflow/nodes/sources.py:385:fit:self.df = self._get_data_until_current_time()
+        $GIT_ROOT/core/dataflow/nodes/sources.py:429:_get_data_until_current_time:df = self._get_data()
+        $GIT_ROOT/core/dataflow/nodes/sources.py:574:_get_data:hdbg.dassert_lte(df.index.max(), current_time)
+        $GIT_ROOT/helpers/dbg.py:172:dassert_lte:cond = val1 <= val2/TypeError: '<=' not supported between instances of 'float' and 'Timestamp'"""
+        exp_traceback = r"""
+        Traceback (most recent call last):
+          File "$GIT_ROOT/core_lime/dataflow/nodes/test/test_core_lime_dataflow_nodes.py", line 182, in test_true_real_time1
+            self._execute_node(node)
+          File "$GIT_ROOT/core_lime/dataflow/nodes/test/test_core_lime_dataflow_nodes.py", line 238, in _execute_node
+            dict_ = node.fit()
+          File "$GIT_ROOT/core/dataflow/nodes/sources.py", line 385, in fit
+            self.df = self._get_data_until_current_time()
+          File "$GIT_ROOT/core/dataflow/nodes/sources.py", line 429, in _get_data_until_current_time
+            df = self._get_data()
+          File "$GIT_ROOT/core/dataflow/nodes/sources.py", line 574, in _get_data
+            hdbg.dassert_lte(df.index.max(), current_time)
+          File "$GIT_ROOT/helpers/dbg.py", line 172, in dassert_lte
+            cond = val1 <= val2
+          TypeError: '<=' not supported between instances of 'float' and 'Timestamp'"""
+        # pylint: enable=line-too-long
         self._parse_traceback_helper(
             txt, purify_from_client, exp_cfile, exp_traceback
         )
@@ -207,22 +259,21 @@ class Test_Traceback1(hut.TestCase):
     #   File "/Users/saggese/src/lem1/amp/tasks.py", line 8, in <module>
     #     from helpers.lib_tasks import set_default_params  # This is not an invoke target.
     #   File "/Users/saggese/src/lem1/amp/helpers/lib_tasks.py", line 23, in <module>
-    #     import helpers.git as git
+    #     import helpers.git as hgit
     #   File "/Users/saggese/src/lem1/amp/helpers/git.py", line 16, in <module>
-    #     import helpers.system_interaction as hsinte
+    #     import helpers.system_interaction as hsyint
     #   File "/Users/saggese/src/lem1/amp/helpers/system_interaction.py", line 529
     #     signature2 = _compute_file_signature(file_name, dir_depth)
     #     ^
     # SyntaxError: invalid syntax
     # Traceback (most recent call last):
     #   File "/Users/saggese/src/lem1/amp/dev_scripts/tg.py", line 21, in <module>
-    #     import helpers.system_interaction as hsinte
+    #     import helpers.system_interaction as hsyint
     #   File "/Users/saggese/src/lem1/amp/helpers/system_interaction.py", line 529
     #     signature2 = _compute_file_signature(file_name, dir_depth)
     #     ^
     # SyntaxError: invalid syntax
     # pylint: enable=line-too-long
-
 
     def _parse_traceback_helper(
         self,
@@ -231,26 +282,26 @@ class Test_Traceback1(hut.TestCase):
         exp_cfile: str,
         exp_traceback: str,
     ) -> None:
-        dbg.dassert_isinstance(txt, str)
-        dbg.dassert_isinstance(exp_cfile, str)
-        dbg.dassert_isinstance(exp_traceback, str)
-        txt = hprint.dedent(txt)
+        hdbg.dassert_isinstance(txt, str)
+        hdbg.dassert_isinstance(exp_cfile, str)
+        hdbg.dassert_isinstance(exp_traceback, str)
+        txt = hprintin.dedent(txt)
         # Run the function under test.
-        act_cfile, act_traceback = htrace.parse_traceback(
+        act_cfile, act_traceback = htrhel.parse_traceback(
             txt, purify_from_client=purify_from_client
         )
         _LOG.debug("act_cfile=\n%s", act_cfile)
         _LOG.debug("act_traceback=\n%s", act_traceback)
         # Compare cfile.
-        act_cfile = htrace.cfile_to_str(act_cfile)
-        exp_cfile = hprint.dedent(exp_cfile)
+        act_cfile = htrhel.cfile_to_str(act_cfile)
+        exp_cfile = hprintin.dedent(exp_cfile)
         self.assert_equal(
             act_cfile, exp_cfile, fuzzy_match=True, purify_text=True
         )
         # Compare traceback.
         # Handle `None`.
         act_traceback = str(act_traceback)
-        exp_traceback = hprint.dedent(exp_traceback)
+        exp_traceback = hprintin.dedent(exp_traceback)
         self.assert_equal(
             act_traceback, exp_traceback, fuzzy_match=True, purify_text=True
         )

@@ -529,7 +529,8 @@ def git_create_branch(  # type: ignore
         hdbg.dassert_eq(
             branch_name, "", "You can't specify both --issue and --branch_name"
         )
-        branch_name = _get_gh_issue_title(issue_id, repo_short_name)
+        title, _ = _get_gh_issue_title(issue_id, repo_short_name)
+        branch_name = title
         _LOG.info(
             "Issue %d in %s repo_short_name corresponds to '%s'",
             issue_id,
@@ -1278,11 +1279,11 @@ def _get_docker_cmd(
         --rm"""
     )
     # - Handle the user.
-    if False:
-        hsyint.get_user_name()
+    if True:
+        user_name = hsyint.get_user_name()
         docker_cmd_.append(
             rf"""
-            --user $(id -u):$(id -g)"""
+        --user $(id -u):$(id -g)"""
         )
     # - Handle the extra docker options.
     if extra_docker_run_opts:
@@ -1634,6 +1635,19 @@ def docker_build_prod_image(ctx, cache=True, base_image=""):  # type: ignore
 
 
 @task
+def docker_push_prod_image(ctx, base_image=""):  # type: ignore
+    """
+    (ONLY CI/CD) Push the "prod" image to ECR.
+    """
+    _report_task()
+    docker_login(ctx)
+    #
+    image_prod = get_image("prod", base_image)
+    cmd = f"docker push {image_prod}"
+    _run(ctx, cmd, pty=True)
+
+
+@task
 def docker_release_prod_image(  # type: ignore
     ctx,
     cache=True,
@@ -1641,7 +1655,6 @@ def docker_release_prod_image(  # type: ignore
     run_fast=True,
     run_slow=True,
     run_superslow=False,
-    base_image="",
     push_to_repo=True,
 ):
     """
@@ -1669,9 +1682,7 @@ def docker_release_prod_image(  # type: ignore
         run_superslow_tests(ctx, stage=stage)
     # 3) Push prod image.
     if push_to_repo:
-        image_prod = get_image("prod", base_image)
-        cmd = f"docker push {image_prod}"
-        _run(ctx, cmd, pty=True)
+        docker_push_prod_image(ctx)
     else:
         _LOG.warning("Skipping pushing image to repo_short_name as requested")
     _LOG.info("==> SUCCESS <==")
@@ -2326,9 +2337,9 @@ def _get_failed_tests_from_file(file_name: str) -> List[str]:
 
 
 def _get_failed_tests_from_clipboard() -> List[str]:
+    # pylint: disable=line-too-long
     """
     ```
-
     FAILED core/dataflow/nodes/test/test_sources.py::TestRealTimeDataSource1::test_replayed_real_time1 - TypeError: __init__() got an unexpected keyword argument 'speed_up_factor'
     FAILED helpers/test/test_lib_tasks.py::Test_find_check_string_output1::test1 - TypeError: check_string() takes 2 positional arguments but 3 were given
     FAILED helpers/test/test_lib_tasks.py::Test_find_check_string_output1::test2 - TypeError: check_string() takes 2 positional arguments but 3 were given
@@ -2338,6 +2349,7 @@ def _get_failed_tests_from_clipboard() -> List[str]:
     FAILED helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal4 - NameError: name 'dedent' is not defined
     ```
     """
+    # pylint: enable=line-too-long
     hsyint.system_to_string("pbpaste")
     # TODO(gp): Finish this.
 
@@ -2783,7 +2795,7 @@ def _get_repo_full_name_from_cmd(repo_short_name: str) -> Tuple[str, str]:
     return repo_full_name_with_host, ret_repo_short_name
 
 
-def _get_gh_issue_title(issue_id: int, repo_short_name: str) -> str:
+def _get_gh_issue_title(issue_id: int, repo_short_name: str) -> Tuple[str, str]:
     """
     Get the title of a GitHub issue.
 
@@ -2793,12 +2805,10 @@ def _get_gh_issue_title(issue_id: int, repo_short_name: str) -> str:
     repo_full_name_with_host, repo_short_name = _get_repo_full_name_from_cmd(
         repo_short_name
     )
-    # > (export NO_COLOR=1; gh issue view 1251 --json title )
+    # > (export NO_COLOR=1; gh issue view 1251 --json title)
     # {"title":"Update GH actions for amp"}
     hdbg.dassert_lte(1, issue_id)
-    cmd = (
-        f"gh issue view {issue_id} --repo {repo_full_name_with_host} --json title"
-    )
+    cmd = f"gh issue view {issue_id} --repo {repo_full_name_with_host} --json title,url"
     _, txt = hsyint.system_to_string(cmd)
     _LOG.debug("txt=\n%s", txt)
     # Parse json.
@@ -2806,6 +2816,8 @@ def _get_gh_issue_title(issue_id: int, repo_short_name: str) -> str:
     _LOG.debug("dict_=\n%s", dict_)
     title = dict_["title"]
     _LOG.debug("title=%s", title)
+    url = dict_["url"]
+    _LOG.debug("url=%s", url)
     # Remove some annoying chars.
     for char in ": + ( ) / ` *".split():
         title = title.replace(char, "")
@@ -2818,7 +2830,7 @@ def _get_gh_issue_title(issue_id: int, repo_short_name: str) -> str:
     task_prefix = hgit.get_task_prefix_from_repo_short_name(repo_short_name)
     _LOG.debug("task_prefix=%s", task_prefix)
     title = "%s%d_%s" % (task_prefix, issue_id, title)
-    return title
+    return title, url
 
 
 @task
@@ -2833,9 +2845,10 @@ def gh_issue_title(ctx, issue_id, repo_short_name="current", pbcopy=True):  # ty
     _ = ctx
     issue_id = int(issue_id)
     hdbg.dassert_lte(1, issue_id)
-    res = _get_gh_issue_title(issue_id, repo_short_name)
+    title, url = _get_gh_issue_title(issue_id, repo_short_name)
     # Print or copy to clipboard.
-    _to_pbcopy(res, pbcopy)
+    msg = f"{title}: {url}"
+    _to_pbcopy(msg, pbcopy)
 
 
 # TODO(gp): Add unit test for
@@ -2887,3 +2900,13 @@ def gh_create_pr(  # type: ignore
 # TODO(gp): Add gh_open_pr to jump to the PR from this branch.
 
 # TODO(gp): Add ./dev_scripts/testing/pytest_count_files.sh
+
+
+# From https://stackoverflow.com/questions/34878808/finding-docker-container-processes-from-host-point-of-view
+# Convert Docker container to processes id
+# for i in $(docker container ls --format "{{.ID}}"); do docker inspect -f '{{.State.Pid}} {{.Name}}' $i; done
+# 7444 /compose_app_run_d386dc360071
+# 8857 /compose_jupyter_server_run_7575f1652032
+# 1767 /compose_app_run_6782c2bd6999
+# 25163 /compose_app_run_ab27e17f2c47
+# 18721 /compose_app_run_de23819a6bc2

@@ -1,9 +1,10 @@
 """
 Import as:
 
-import helpers.joblib_helpers as hjoblib
+import helpers.joblib_helpers as hjoh
 """
 
+import concurrent.futures
 import logging
 import os
 import pprint
@@ -14,10 +15,11 @@ import joblib
 from joblib._store_backends import StoreBackendBase, StoreBackendMixin
 from tqdm.autonotebook import tqdm
 
-import helpers.datetime_ as hdatetime
-import helpers.dbg as dbg
+import helpers.datetime_ as hdatetim
+import helpers.dbg as hdbg
+import helpers.htqdm as hhtqdm
 import helpers.io_ as hio
-import helpers.printing as hprint
+import helpers.printing as hprintin
 import helpers.timer as htimer
 
 _LOG = logging.getLogger(__name__)
@@ -35,18 +37,18 @@ def validate_task(task: Task) -> bool:
     """
     Assert if the task is malformed, otherwise return True.
     """
-    dbg.dassert_isinstance(task, tuple)
-    dbg.dassert_eq(len(task), 2)
+    hdbg.dassert_isinstance(task, tuple)
+    hdbg.dassert_eq(len(task), 2)
     args, kwargs = task
     _LOG.debug("task[0]=%s", str(args))
-    dbg.dassert_isinstance(args, tuple)
+    hdbg.dassert_isinstance(args, tuple)
     _LOG.debug("task[1]=%s", str(kwargs))
-    dbg.dassert_isinstance(kwargs, dict)
+    hdbg.dassert_isinstance(kwargs, dict)
     return True
 
 
 def task_to_string(task: Task) -> str:
-    dbg.dassert(validate_task(task))
+    hdbg.dassert(validate_task(task))
     args, kwargs = task
     txt = []
     txt.append("args=%s" % pprint.pformat(args))
@@ -81,15 +83,15 @@ def validate_workload(workload: Workload) -> bool:
     """
     Assert if the workload is malformed, otherwise return True.
     """
-    dbg.dassert_isinstance(workload, tuple)
-    dbg.dassert_eq(len(workload), 3)
+    hdbg.dassert_isinstance(workload, tuple)
+    hdbg.dassert_eq(len(workload), 3)
     # Parse workload.
     workload_func, func_name, tasks = workload
     # Check each component.
-    dbg.dassert_isinstance(workload_func, Callable)
-    dbg.dassert_isinstance(func_name, str)
-    dbg.dassert_container_type(tasks, List, tuple)
-    dbg.dassert(all(validate_task(task) for task in tasks))
+    hdbg.dassert_isinstance(workload_func, Callable)
+    hdbg.dassert_isinstance(func_name, str)
+    hdbg.dassert_container_type(tasks, List, tuple)
+    hdbg.dassert(all(validate_task(task) for task in tasks))
     return True
 
 
@@ -113,7 +115,7 @@ def workload_to_string(workload: Workload) -> str:
     txt.append("workload_func=%s" % workload_func.__name__)
     txt.append("func_name=%s" % func_name)
     for i, task in enumerate(tasks):
-        txt.append("\n" + hprint.frame("Task %s / %s" % (i + 1, len(tasks))))
+        txt.append("\n" + hprintin.frame("Task %s / %s" % (i + 1, len(tasks))))
         txt.append(task_to_string(task))
     txt = "\n".join(txt)
     return txt
@@ -138,7 +140,8 @@ def _workload_function(*args: Any, **kwargs: Any) -> str:
     """
     _ = args
     incremental = kwargs.pop("incremental")
-    _ = incremental
+    num_attempts = kwargs.pop("num_attempts")
+    _ = incremental, num_attempts
     func_output: List[str] = []
     func_output = "\n".join(func_output)
     return func_output
@@ -159,75 +162,70 @@ def _get_workload(
 # #############################################################################
 
 
-def _parallel_execute_decorator(func: Callable) -> Callable:
+def _parallel_execute_decorator(
+    task_idx: int,
+    task_len: int,
+    incremental: bool,
+    abort_on_error: bool,
+    num_attempts: int,
+    log_file: str,
+    #
+    workload_func: Callable,
+    func_name: str,
+    task: Task,
+) -> Any:
     """
-    Decorator to handle execution logging of the function.
+    :param abort_on_error: control whether to abort on `workload_func` function
+        that is failing and asserting
+        - If `workload_func` fails:
+            - if `abort_on_error=True` the exception from `workload_func` is
+              propagated and the return value is `None`
+            - if `abort_on_error=False` the exception is not propagated, but the
+              return value is the string representation of the exception
+
+    :return: the return value of the workload function or the exception string
     """
-
-    def wrapper(
-        task_idx: int,
-        task_len: int,
-        incremental: bool,
-        abort_on_error: bool,
-        num_attempts: int,
-        log_file: str,
-        #
-        workload_func: Callable,
-        func_name: str,
-        task: Task,
-    ) -> Any:
-        """
-        :param abort_on_error: control whether to abort on `workload_func` function
-            that is failing and asserting
-            - If `workload_func` fails:
-                - if `abort_on_error=True` the exception from `workload_func` is
-                  propagated and the return value is `None`
-                - if `abort_on_error=False` the exception is not propagated, but the
-                  return value is the string representation of the exception
-
-        :return: the return value of the workload function or the exception string
-        """
-        # Validate very carefully all the parameters.
-        dbg.dassert_lte(0, task_idx)
-        dbg.dassert_lt(task_idx, task_len)
-        dbg.dassert_isinstance(incremental, bool)
-        dbg.dassert_isinstance(abort_on_error, bool)
-        dbg.dassert_lte(1, num_attempts)
-        dbg.dassert_isinstance(log_file, str)
-        dbg.dassert_isinstance(workload_func, Callable)
-        dbg.dassert_isinstance(func_name, str)
-        dbg.dassert(validate_task(task))
-        # Redirect the logging output of each task to a different file.
-        # TODO(gp): This file should go in the `task_dst_dir`.
-        # log_to_file = True
-        log_to_file = False
-        if log_to_file:
-            dst_dir = os.path.dirname(os.path.abspath(log_file))
-            print(dst_dir)
-            hio.create_dir(dst_dir, incremental=True)
-            file_name = os.path.join(
-                dst_dir, f"{func_name}.{task_idx + 1}_{task_len}.log"
-            )
-            _LOG.warning("Logging to %s", file_name)
-            file_handler = logging.FileHandler(file_name)
-            root_logger = logging.getLogger()
-            root_logger.addHandler(file_handler)
-
-        # Save some information about the function execution.
-        txt = []
-        # `start_ts` needs to be before running the function.
-        start_ts = hdatetime.get_timestamp("naive_ET")
-        tag = "%s/%s (%s)" % (task_idx + 1, task_len, start_ts)
-        txt.append(hprint.frame(tag) + "\n")
-        txt.append("tag=%s" % tag)
-        txt.append("workload_func=%s" % workload_func.__name__)
-        txt.append("func_name=%s" % func_name)
-        txt.append(task_to_string(task))
-        args, kwargs = task
-        kwargs.update({"incremental": incremental, "num_attempts": num_attempts})
-        memento = htimer.dtimer_start(
-            logging.DEBUG, "Execute '%s'" % workload_func.__name__
+    # Validate very carefully all the parameters.
+    hdbg.dassert_lte(0, task_idx)
+    hdbg.dassert_lt(task_idx, task_len)
+    hdbg.dassert_isinstance(incremental, bool)
+    hdbg.dassert_isinstance(abort_on_error, bool)
+    hdbg.dassert_lte(1, num_attempts)
+    hdbg.dassert_isinstance(log_file, str)
+    hdbg.dassert_isinstance(workload_func, Callable)
+    hdbg.dassert_isinstance(func_name, str)
+    hdbg.dassert(validate_task(task))
+    # Redirect the logging output of each task to a different file.
+    # TODO(gp): This file should go in the `task_dst_dir`.
+    # log_to_file = True
+    log_to_file = False
+    if log_to_file:
+        dst_dir = os.path.dirname(os.path.abspath(log_file))
+        print(dst_dir)
+        hio.create_dir(dst_dir, incremental=True)
+        file_name = os.path.join(
+            dst_dir, f"{func_name}.{task_idx + 1}_{task_len}.log"
         )
+        _LOG.warning("Logging to %s", file_name)
+        file_handler = logging.FileHandler(file_name)
+        root_logger = logging.getLogger()
+        root_logger.addHandler(file_handler)
+
+    # Save some information about the function execution.
+    txt = []
+    # `start_ts` needs to be before running the function.
+    start_ts = hdatetim.get_timestamp("naive_ET")
+    tag = "%s/%s (%s)" % (task_idx + 1, task_len, start_ts)
+    txt.append("\n" + hprintin.frame(tag) + "\n")
+    txt.append("tag=%s" % tag)
+    txt.append("workload_func=%s" % workload_func.__name__)
+    txt.append("func_name=%s" % func_name)
+    txt.append(task_to_string(task))
+    args, kwargs = task
+    kwargs.update({"incremental": incremental, "num_attempts": num_attempts})
+    with htimer.TimedScope(
+        logging.DEBUG, "Execute '%s'" % workload_func.__name__
+    ) as ts:
         try:
             res = workload_func(*args, **kwargs)
             error = False
@@ -237,40 +235,29 @@ def _parallel_execute_decorator(func: Callable) -> Callable:
             res = None
             error = True
             _LOG.error("Execution failed")
-        msg, elapsed_time = htimer.dtimer_stop(memento)
-        _ = msg
-        txt.append("func_res=\n%s" % hprint.indent(str(res)))
-        txt.append("elapsed_time_in_secs=%s" % elapsed_time)
-        txt.append("start_ts=%s" % start_ts)
-        end_ts = hdatetime.get_timestamp("naive_ET")
-        txt.append("end_ts=%s" % end_ts)
-        txt.append("error=%s" % error)
-        # Update log file.
-        txt = "\n".join(txt)
-        _LOG.debug("txt=\n%s", hprint.indent(txt))
-        hio.to_file(log_file, txt, mode="a")
-        if error:
-            # The execution wasn't successful.
-            _LOG.error(txt)
-            if abort_on_error:
-                _LOG.error("Aborting since abort_on_error=%s", abort_on_error)
-                raise exception  # noqa: F821
-            _LOG.error(
-                "Continuing execution since abort_on_error=%s", abort_on_error
-            )
-            res = str(exception)
-        else:
-            # The execution was successful.
-            pass
-        return res
-
-    # TODO(gp): For some reason `@functools.wraps` reports an error like:
-    #   File "/app/amp/helpers/joblib_helpers.py", line 136, in parallel_execute
-    #     res_tmp = wrapped_func(
-    #   TypeError: update_wrapper() got multiple values for argument 'wrapped'
-    wrapper.__name__ = func.__name__
-    wrapper.__doc__ = func.__doc__
-    return wrapper
+    elapsed_time = ts.elapsed_time
+    txt.append("func_res=\n%s" % hprintin.indent(str(res)))
+    txt.append("elapsed_time_in_secs=%s" % elapsed_time)
+    txt.append("start_ts=%s" % start_ts)
+    end_ts = hdatetim.get_timestamp("naive_ET")
+    txt.append("end_ts=%s" % end_ts)
+    txt.append("error=%s" % error)
+    # Update log file.
+    txt = "\n".join(txt)
+    _LOG.debug("txt=\n%s", hprintin.indent(txt))
+    hio.to_file(log_file, txt, mode="a")
+    if error:
+        # The execution wasn't successful.
+        _LOG.error(txt)
+        if abort_on_error:
+            _LOG.error("Aborting since abort_on_error=%s", abort_on_error)
+            raise exception  # noqa: F821
+        _LOG.error("Continuing execution since abort_on_error=%s", abort_on_error)
+        res = str(exception)
+    else:
+        # The execution was successful.
+        pass
+    return res
 
 
 # TODO(gp): Pass a `task_dst_dir` to each task so it can write there.
@@ -285,6 +272,8 @@ def parallel_execute(
     abort_on_error: bool,
     num_attempts: int,
     log_file: str,
+    *,
+    backend: str = "loky",
 ) -> Optional[List[Any]]:
     """
     Run a workload in parallel.
@@ -301,6 +290,8 @@ def parallel_execute(
     :param num_attempts: number of times to attempt running a function before
         declaring an error
     :param log_file: file used to log information about the execution
+    :param backend: specify the backend type (e.g., joblib `loky` or
+        `asyncio_process_executor`)
 
     :return: list with the results from executing `func` or the exception of the
         failing function
@@ -312,7 +303,7 @@ def parallel_execute(
     workload_func, func_name, tasks = workload
     #
     _LOG.info(
-        hprint.to_str(
+        hprintin.to_str(
             "dry_run num_threads incremental num_attempts abort_on_error"
         )
     )
@@ -322,20 +313,23 @@ def parallel_execute(
         return None
     _LOG.info("Saving log info in '%s'", log_file)
     _LOG.info("Number of tasks=%s", len(tasks))
-    # Apply the wrapper that handles logging of the function.
-    wrapped_func = _parallel_execute_decorator(workload_func)
     # Run.
     task_len = len(tasks)
+    tqdm_out = hhtqdm.TqdmToLogger(_LOG, level=logging.INFO)
+    tqdm_iter = tqdm(
+        enumerate(tasks),
+        total=task_len,
+        file=tqdm_out,
+        desc=f"num_threads={num_threads} backend={backend}",
+    )
     if num_threads == "serial":
         res = []
-        for task_idx, task in tqdm(
-            enumerate(tasks), total=len(tasks), desc="Running serial tasks"
-        ):
+        for task_idx, task in tqdm_iter:
             _LOG.debug(
-                "\n%s", hprint.frame("Task %s / %s" % (task_idx + 1, task_len))
+                "\n%s", hprintin.frame("Task %s / %s" % (task_idx + 1, task_len))
             )
             # Execute.
-            res_tmp = wrapped_func(
+            res_tmp = _parallel_execute_decorator(
                 task_idx,
                 task_len,
                 incremental,
@@ -349,20 +343,42 @@ def parallel_execute(
             )
             res.append(res_tmp)
     else:
-        num_threads = int(num_threads)
         # -1 is interpreted by joblib like for all cores.
-        _LOG.info("Using %d threads", num_threads)
-        # From https://stackoverflow.com/questions/24983493
-        # TODO(gp): It doesn't seem to work.
-        tqdm_ = tqdm(
-            enumerate(tasks), total=len(tasks), desc="Running parallel tasks"
-        )
-        # backend = "threading"
-        # backend = "multiprocessing"
-        backend = "loky"
-        res = joblib.Parallel(n_jobs=num_threads, backend=backend, verbose=200)(
-            joblib.delayed(wrapped_func)(
-                task_idx,
+        num_threads = int(num_threads)
+        _LOG.info("Using %d threads, backend='%s'", num_threads, backend)
+        if backend in ("loky", "threading", "multiprocessing"):
+            # from joblib.externals.loky import set_loky_pickler
+            # set_loky_pickler('cloudpickle')
+            # backend = "threading"
+            # backend = "multiprocessing"
+            res = joblib.Parallel(
+                n_jobs=num_threads, backend=backend, verbose=200
+            )(
+                joblib.delayed(_parallel_execute_decorator)(
+                    task_idx,
+                    task_len,
+                    incremental,
+                    abort_on_error,
+                    num_attempts,
+                    log_file,
+                    #
+                    workload_func,
+                    func_name,
+                    task,
+                )
+                # We can't use `tqdm_iter` since this only shows the submission of
+                # the jobs but not their completion.
+                for task_idx, task in enumerate(tasks)
+            )
+        elif backend in ("asyncio_threading", "asyncio_multiprocessing"):
+            if backend == "asyncio_threading":
+                executor = concurrent.futures.ThreadPoolExecutor
+            elif backend == "asyncio_multiprocessing":
+                executor = concurrent.futures.ProcessPoolExecutor
+            else:
+                raise ValueError("Invalid backend='%s'" % backend)
+            func = lambda args_: _parallel_execute_decorator(
+                args_[0],
                 task_len,
                 incremental,
                 abort_on_error,
@@ -371,10 +387,29 @@ def parallel_execute(
                 #
                 workload_func,
                 func_name,
-                task,
+                args_[1],
             )
-            for task_idx, task in tqdm_
-        )
+            args = list(enumerate(tasks))
+            use_progress_bar = True
+            if not use_progress_bar:
+                # Implementation without progress bar.
+                with executor(max_workers=num_threads) as executor_:
+                    res = list(executor_.map(func, args))
+            else:
+                # Implementation with progress bar.
+                res = []
+                with tqdm_iter as pbar:
+                    with executor(max_workers=num_threads) as executor_:
+                        futures = {
+                            executor_.submit(func, arg): arg for arg in args
+                        }
+                        _LOG.debug("done submitting")
+                        for future in concurrent.futures.as_completed(futures):
+                            res_tmp = future.result()
+                            res.append(res_tmp)
+                            pbar.update(1)
+        else:
+            raise ValueError("Invalid backend='%s'" % backend)
     _LOG.info("Saved log info in '%s'", log_file)
     return res
 
@@ -426,9 +461,9 @@ class _S3FSStoreBackend(StoreBackendBase, StoreBackendMixin):
         Configure the store backend.
         """
         options = backend_options
-        dbg.dassert_in("s3fs", options)
+        hdbg.dassert_in("s3fs", options)
         self.storage = options["s3fs"]
-        dbg.dassert_in("bucket", options)
+        hdbg.dassert_in("bucket", options)
         bucket = options["bucket"]
         # Ensure the given bucket exists.
         root_bucket = os.path.join("s3://", bucket)
@@ -445,10 +480,10 @@ class _S3FSStoreBackend(StoreBackendBase, StoreBackendMixin):
         self.mmap_mode = None
 
     def _flush(self) -> None:
+        _ = self
         # TODO(gp): No need to flush for now.
-        return
-        for fd in self._objs:
-            fd.flush(force=True)
+        # for fd in self._objs:
+        #    fd.flush(force=True)
 
     def _open_item(self, fd: Any, mode: str) -> Any:
         self._objs.append(fd)

@@ -19,12 +19,12 @@ import time
 import uuid
 from typing import Any, List, Optional, cast
 
-import helpers.dbg as dbg
-import helpers.printing as hprint
+import helpers.dbg as hdbg
+import helpers.printing as hprintin
 
 # TODO(gp): Enable this after the linter has been updated.
 # import helpers.s3 as hs3
-import helpers.system_interaction as hsinte
+import helpers.system_interaction as hsyint
 
 _LOG = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ def find_files(directory: str, pattern: str) -> List[str]:
 # TODO(gp): Seems equivalent to `find_files`. Let's keep this.
 def find_regex_files(src_dir: str, regex: str) -> List[str]:
     cmd = 'find %s -name "%s"' % (src_dir, regex)
-    _, output = hsinte.system_to_string(cmd)
+    _, output = hsyint.system_to_string(cmd)
     # TODO(gp): -> system_to_files
     file_names = [f for f in output.split("\n") if f != ""]
     _LOG.debug("Found %s files in %s", len(file_names), src_dir)
@@ -69,7 +69,7 @@ def find_all_files(dir_name: str) -> List[str]:
     Find all files (not directory) under `dir_name`, skipping `.git`.
     """
     cmd = fr'''cd {dir_name} && find . -type f -name "*" -not -path "*/\.git/*"'''
-    file_names = hsinte.system_to_files(cmd)
+    file_names = hsyint.system_to_files(cmd)
     file_names = cast(List[str], file_names)
     _LOG.debug("Found %s files", len(file_names))
     return file_names
@@ -79,10 +79,10 @@ def is_paired_jupytext_python_file(py_filename: str) -> bool:
     """
     Return if a Python file has a paired Jupyter notebook.
     """
-    dbg.dassert(
+    hdbg.dassert(
         py_filename.endswith("py"), "Invalid python filename='%s'", py_filename
     )
-    dbg.dassert_file_exists(py_filename)
+    hdbg.dassert_file_exists(py_filename)
     # Check if a corresponding ipynb file exists.
     ipynb_filename = change_filename_extension(py_filename, "py", "ipynb")
     is_paired = os.path.exists(ipynb_filename)
@@ -104,7 +104,7 @@ def keep_python_files(
     :param exclude_paired_jupytext: exclude Python file that are associated to
         notebooks (i.e., that have a corresponding `.ipynb` file)
     """
-    dbg.dassert_isinstance(file_names, list)
+    hdbg.dassert_isinstance(file_names, list)
     # Check all the files.
     py_file_names = []
     for file_name in file_names:
@@ -148,7 +148,7 @@ def create_soft_link(src: str, dst: str) -> None:
     # Create the link. Note that the link source needs to be an absolute path.
     src = os.path.abspath(src)
     cmd = "ln -s %s %s" % (src, dst)
-    hsinte.system(cmd)
+    hsyint.system(cmd)
 
 
 def delete_file(file_name: str) -> None:
@@ -194,7 +194,7 @@ def delete_dir(
         return
     if change_perms and os.path.isdir(dir_):
         cmd = "chmod -R +rwx " + dir_
-        hsinte.system(cmd)
+        hsyint.system(cmd)
     i = 1
     while True:
         try:
@@ -210,7 +210,7 @@ def delete_dir(
                 )
                 i += 1
                 if i > num_retries:
-                    dbg.dfatal(
+                    hdbg.dfatal(
                         "Couldn't delete %s after %s attempts (%s)"
                         % (dir_, num_retries, str(e))
                     )
@@ -237,17 +237,17 @@ def create_dir(
         asks before deleting
     """
     _LOG.debug(
-        hprint.to_str("dir_name incremental abort_if_exists ask_to_delete")
+        hprintin.to_str("dir_name incremental abort_if_exists ask_to_delete")
     )
-    dbg.dassert_is_not(dir_name, None)
+    hdbg.dassert_is_not(dir_name, None)
     dir_name = os.path.normpath(dir_name)
     if os.path.normpath(dir_name) == ".":
         _LOG.debug("Can't create dir '%s'", dir_name)
     exists = os.path.exists(dir_name)
     is_dir = os.path.isdir(dir_name)
-    _LOG.debug(hprint.to_str("dir_name exists is_dir"))
+    _LOG.debug(hprintin.to_str("dir_name exists is_dir"))
     if abort_if_exists:
-        dbg.dassert_not_exists(dir_name)
+        hdbg.dassert_not_exists(dir_name)
     #                   dir exists / dir does not exist
     # incremental       no-op        mkdir
     # not incremental   rm+mkdir     mkdir
@@ -261,7 +261,7 @@ def create_dir(
             )
             return
         if ask_to_delete:
-            hsinte.query_yes_no(
+            hsyint.query_yes_no(
                 "Do you really want to delete dir '%s'?" % dir_name,
                 abort_on_no=True,
             )
@@ -291,10 +291,10 @@ def create_dir(
 
 
 def _dassert_is_valid_file_name(file_name: str) -> None:
-    # dbg.dassert_in(type(file_name), (str, unicode))
-    dbg.dassert_in(type(file_name), [str])
-    dbg.dassert_is_not(file_name, None)
-    dbg.dassert_ne(file_name, "")
+    # hdbg.dassert_in(type(file_name), (str, unicode))
+    hdbg.dassert_in(type(file_name), [str])
+    hdbg.dassert_is_not(file_name, None)
+    hdbg.dassert_ne(file_name, "")
 
 
 # TODO(gp): Don't use default incremental.
@@ -304,18 +304,18 @@ def create_enclosing_dir(file_name: str, incremental: bool = False) -> str:
 
     :param incremental: same meaning as in `create_dir()`
     """
-    _LOG.debug(hprint.to_str("file_name incremental"))
+    _LOG.debug(hprintin.to_str("file_name incremental"))
     _dassert_is_valid_file_name(file_name)
     # hs3.dassert_is_not_s3_path(file_name)
     #
     dir_name = os.path.dirname(file_name)
-    _LOG.debug(hprint.to_str("dir_name"))
+    _LOG.debug(hprintin.to_str("dir_name"))
     if dir_name != "":
         _LOG.debug(
             "Creating dir_name='%s' for file_name='%s'", dir_name, file_name
         )
         create_dir(dir_name, incremental=incremental)
-    dbg.dassert_dir_exists(dir_name, "file_name='%s'", file_name)
+    hdbg.dassert_dir_exists(dir_name, "file_name='%s'", file_name)
     return dir_name
 
 
@@ -342,7 +342,7 @@ def to_file(
     :param mode: file writing mode
     :param force_flush: whether to forcibly clear the file buffer
     """
-    _LOG.debug(hprint.to_str("file_name use_gzip mode force_flush"))
+    _LOG.debug(hprintin.to_str("file_name use_gzip mode force_flush"))
     _dassert_is_valid_file_name(file_name)
     # Choose default writing mode based on compression.
     if mode is None:
@@ -402,9 +402,9 @@ def from_file(
     :param encoding: encoding to use when reading the string
     :return: contents of file as string
     """
-    dbg.dassert_ne(file_name, "")
+    hdbg.dassert_ne(file_name, "")
     _dassert_is_valid_file_name(file_name)
-    dbg.dassert_exists(file_name)
+    hdbg.dassert_exists(file_name)
     if use_gzip:
         # Check if user provided correct file name.
         if not file_name.endswith(("gz", "gzip")):
@@ -424,7 +424,7 @@ def from_file(
         _raise_file_decode_error(e, file_name)
     finally:
         f.close()
-    dbg.dassert_isinstance(data, str)
+    hdbg.dassert_isinstance(data, str)
     return data
 
 
@@ -465,13 +465,13 @@ def change_filename_extension(filename: str, old_ext: str, new_ext: str) -> str:
     :param new_ext: the extension to replace the old extension
     :return: a filename with the new extension
     """
-    dbg.dassert(
+    hdbg.dassert(
         is_valid_filename_extension(old_ext), "Invalid extension '%s'", old_ext
     )
-    dbg.dassert(
+    hdbg.dassert(
         is_valid_filename_extension(new_ext), "Invalid extension '%s'", new_ext
     )
-    dbg.dassert(
+    hdbg.dassert(
         filename.endswith(old_ext),
         "Extension '%s' doesn't match file '%s'",
         old_ext,
@@ -480,7 +480,7 @@ def change_filename_extension(filename: str, old_ext: str, new_ext: str) -> str:
     # Remove the old extension.
     len_ext = len(old_ext)
     new_filename = filename[:-len_ext]
-    dbg.dassert(new_filename.endswith("."), "new_filename='%s'", new_filename)
+    hdbg.dassert(new_filename.endswith("."), "new_filename='%s'", new_filename)
     # Add the new extension.
     new_filename += new_ext
     return new_filename
@@ -554,7 +554,7 @@ def from_json(file_name: str) -> dict:
     """
     if not file_name.endswith(".json"):
         _LOG.warning("The file '%s' doesn't end in .json", file_name)
-    dbg.dassert_file_exists(file_name)
+    hdbg.dassert_file_exists(file_name)
     with open(file_name, "r") as f:
         data: dict = json.loads(f.read())
     return data

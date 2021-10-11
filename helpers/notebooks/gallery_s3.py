@@ -20,7 +20,6 @@
 # %autoreload 3
 
 # %%
-import s3fs
 
 import helpers.s3 as hs3
 
@@ -28,7 +27,7 @@ import helpers.s3 as hs3
 profile = "am"
 
 # %%
-#s3 = s3fs.S3FileSystem(anon=False, key=aws_access_key_id, secret=aws_secret_access_key)
+# s3 = s3fs.S3FileSystem(anon=False, key=aws_access_key_id, secret=aws_secret_access_key)
 
 s3 = hs3.get_s3fs(profile)
 
@@ -42,4 +41,5 @@ s3.ls(bucket)
 
 # %%
 import os
+
 print(os.environ["AWS_DEFAULT_REGION"])

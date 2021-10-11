@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.introspection as hintro
+import helpers.introspection as hintrosp
 """
 
 import collections.abc as cabc
@@ -9,7 +9,7 @@ import inspect
 import sys
 from typing import Any, List, Optional
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 
 
 def is_iterable(obj: object) -> bool:
@@ -33,7 +33,7 @@ def get_function_name(count: int = 0) -> str:
     # step walking the call stack.
     count += 1
     for _ in range(count):
-        dbg.dassert_is_not(ptr, None)
+        hdbg.dassert_is_not(ptr, None)
         ptr = ptr.f_back  # type: ignore
     func_name = ptr.f_code.co_name  # type: ignore
     return func_name
@@ -44,6 +44,7 @@ def get_function_name(count: int = 0) -> str:
 
 # https://code.activestate.com/recipes/577504/
 # https://stackoverflow.com/questions/449560/how-do-i-determine-the-size-of-an-object-in-python
+
 
 def get_size_in_bytes(obj: object, seen: Optional[set] = None) -> int:
     """
@@ -57,7 +58,7 @@ def get_size_in_bytes(obj: object, seen: Optional[set] = None) -> int:
     obj_id = id(obj)
     if obj_id in seen:
         return 0
-    # Important mark as seen *before* entering recursion to gracefully handle
+    # Mark as seen *before* entering recursion to gracefully handle
     # self-referential objects.
     seen.add(obj_id)
     if hasattr(obj, "__dict__"):
@@ -83,6 +84,7 @@ def get_size_in_bytes(obj: object, seen: Optional[set] = None) -> int:
     return size
 
 
+# TODO(gp): -> move to helpers/hprint.py
 def format_size(num: float) -> str:
     """
     Return a human-readable string for a filesize (e.g., "3.5 MB").

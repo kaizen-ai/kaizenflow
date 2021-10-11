@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 r"""
-Run an experiment consisting of multiple model runs based on the passed
+Run an experiment consisting of multiple model runs based on the passed:
 - `config_builder`, which describes DAG and configs
 - `experiment_builder`, which describes the model driver
 
@@ -10,6 +10,10 @@ Run an experiment consisting of multiple model runs based on the passed
     --config_builder "dataflow_lm.RH1E.config.build_15min_model_configs()" \
     --dst_dir experiment1 \
     --num_threads 2
+
+Import as:
+
+import core.dataflow_model.run_experiment as cdtfmoruexp
 """
 import argparse
 import logging
@@ -17,15 +21,15 @@ import os
 from typing import cast
 
 import core.config as cconfig
-import core.dataflow_model.utils as cdtfut
-import helpers.datetime_ as hdatetime
-import helpers.dbg as dbg
-import helpers.git as git
-import helpers.joblib_helpers as hjoblib
-import helpers.parser as prsr
-import helpers.printing as hprint
+import core.dataflow_model.utils as cdtfmouti
+import helpers.datetime_ as hdatetim
+import helpers.dbg as hdbg
+import helpers.git as hgit
+import helpers.joblib_helpers as hjoh
+import helpers.parser as hparser
+import helpers.printing as hprintin
 import helpers.s3 as hs3
-import helpers.system_interaction as hsinte
+import helpers.system_interaction as hsyint
 
 _LOG = logging.getLogger(__name__)
 
@@ -47,14 +51,14 @@ def _run_experiment(
         notebook
     :return: rc from executing the pipeline
     """
-    dbg.dassert_eq(1, num_attempts, "Multiple attempts not supported yet")
+    hdbg.dassert_eq(1, num_attempts, "Multiple attempts not supported yet")
     _ = incremental
-    cdtfut.setup_experiment_dir(config)
+    cdtfmouti.setup_experiment_dir(config)
     # Execute experiment.
     # TODO(gp): Rename id -> idx everywhere
     #  jackpy "meta" | grep id | grep config
     idx = config[("meta", "id")]
-    _LOG.info("\n%s", hprint.frame(f"Executing experiment for config {idx}"))
+    _LOG.info("\n%s", hprintin.frame(f"Executing experiment for config {idx}"))
     _LOG.info("config=\n%s", config)
     dst_dir = config[("meta", "dst_dir")]
     # Prepare the log file.
@@ -66,7 +70,7 @@ def _run_experiment(
     experiment_builder = config[("meta", "experiment_builder")]
     config_builder = config[("meta", "config_builder")]
     file_name = "run_experiment_stub.py"
-    exec_name = git.find_file_in_git_tree(file_name, super_module=True)
+    exec_name = hgit.find_file_in_git_tree(file_name, super_module=True)
     cmd = [
         exec_name,
         f"--experiment_builder '{experiment_builder}'",
@@ -78,7 +82,7 @@ def _run_experiment(
     cmd = " ".join(cmd)
     # Execute.
     _LOG.info("Executing '%s'", cmd)
-    rc = hsinte.system(
+    rc = hsyint.system(
         cmd, output_file=log_file, suppress_output=False, abort_on_error=False
     )
     _LOG.info("Executed cmd")
@@ -90,21 +94,21 @@ def _run_experiment(
         _LOG.error(msg)
         raise RuntimeError(msg)
     # Mark as success.
-    cdtfut.mark_config_as_success(experiment_result_dir)
+    cdtfmouti.mark_config_as_success(experiment_result_dir)
     rc = cast(int, rc)
     return rc
 
 
-def _get_workload(args: argparse.Namespace) -> hjoblib.Workload:
+def _get_workload(args: argparse.Namespace) -> hjoh.Workload:
     """
     Prepare the workload using the parameters from command line.
     """
     # Get the configs to run.
-    configs = cdtfut.get_configs_from_command_line(args)
+    configs = cdtfmouti.get_configs_from_command_line(args)
     # Prepare the tasks.
     tasks = []
     for config in configs:
-        task: hjoblib.Task = (
+        task: hjoh.Task = (
             # args.
             (config,),
             # kwargs.
@@ -114,7 +118,7 @@ def _get_workload(args: argparse.Namespace) -> hjoblib.Workload:
     #
     func_name = "_run_experiment"
     workload = (_run_experiment, func_name, tasks)
-    hjoblib.validate_workload(workload)
+    hjoh.validate_workload(workload)
     return workload
 
 
@@ -126,7 +130,7 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     # Add common experiment options.
-    parser = cdtfut.add_experiment_arg(parser, dst_dir_required=True)
+    parser = cdtfmouti.add_experiment_arg(parser, dst_dir_required=True)
     # Add pipeline options.
     parser.add_argument(
         "--experiment_builder",
@@ -136,22 +140,21 @@ def _parse() -> argparse.ArgumentParser:
         help="File storing the pipeline to iterate over",
     )
     parser.add_argument(
-        "--skip_archive_on_S3",
+        "--archive_on_S3",
         action="store_true",
-        help="Do not archive the results on S3",
+        help="Archive the results on S3",
     )
     parser = hs3.add_s3_args(parser)
-    parser = prsr.add_json_output_metadata_args(parser)
-    parser = prsr.add_verbosity_arg(parser)
+    parser = hparser.add_json_output_metadata_args(parser)
+    parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Create the dst dir.
-    dst_dir, clean_dst_dir = prsr.parse_dst_dir_arg(args)
+    dst_dir, clean_dst_dir = hparser.parse_dst_dir_arg(args)
     _ = clean_dst_dir
     # Prepare the workload.
     workload = _get_workload(args)
@@ -162,11 +165,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     abort_on_error = not args.skip_on_error
     num_attempts = args.num_attempts
     # Prepare the log file.
-    timestamp = hdatetime.get_timestamp("naive_ET")
+    timestamp = hdatetim.get_timestamp("naive_ET")
     log_file = os.path.join(dst_dir, f"log.{timestamp}.txt")
     _LOG.info("log_file='%s'", log_file)
     # Execute.
-    hjoblib.parallel_execute(
+    # backend = "loky"
+    backend = "asyncio_threading"
+    hjoh.parallel_execute(
         workload,
         dry_run,
         num_threads,
@@ -174,15 +179,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
         abort_on_error,
         num_attempts,
         log_file,
+        backend=backend,
     )
     #
     _LOG.info("dst_dir='%s'", dst_dir)
     _LOG.info("log_file='%s'", log_file)
     # Archive on S3.
-    if args.skip_archive_on_S3:
-        _LOG.warning("Skipping archiving results on S3 as per user request")
-        s3_path = None
-    else:
+    if args.archive_on_S3:
         _LOG.info("Archiving results to S3")
         aws_profile = hs3.get_aws_profile(args.aws_profile)
         _LOG.debug("aws_profile='%s'", aws_profile)
@@ -194,14 +197,17 @@ def _main(parser: argparse.ArgumentParser) -> None:
             # credentials or from the env vars.
             _LOG.debug("Getting s3_path from credentials file")
             s3_path = hs3.get_key_value(aws_profile, "aws_s3_bucket")
-            dbg.dassert(not s3_path.startswith("s3://"), "Invalid value '%s'")
+            hdbg.dassert(not s3_path.startswith("s3://"), "Invalid value '%s'")
             s3_path = "s3://" + s3_path + "/experiments"
         hs3.is_s3_path(s3_path)
         # Archive on S3.
         s3_path = hs3.archive_data_on_s3(dst_dir, s3_path, aws_profile)
+    else:
+        _LOG.warning("To archive results on S3 use --archive_on_S3")
+        s3_path = None
     # Save the metadata.
     output_metadata = {"s3_path": s3_path}
-    ouput_metadata_file = prsr.process_json_output_metadata_args(
+    ouput_metadata_file = hparser.process_json_output_metadata_args(
         args, output_metadata
     )
     _ = ouput_metadata_file

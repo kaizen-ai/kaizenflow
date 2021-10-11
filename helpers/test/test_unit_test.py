@@ -15,23 +15,21 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import helpers.dbg as dbg
-import helpers.git as git
+import helpers.dbg as hdbg
+import helpers.git as hgit
 import helpers.io_ as hio
-import helpers.printing as hprint
-import helpers.system_interaction as hsinte
-import helpers.unit_test as hut
+import helpers.printing as hprintin
+import helpers.system_interaction as hsyint
+import helpers.unit_test as huntes
 
 _LOG = logging.getLogger(__name__)
 
 
 def _git_add(file_name: str) -> None:
-    # TODO(gp): Not sure this is needed. If not, delete the calls to this.
-    return
     # pylint: disable=unreachable
     cmd = "git add -u %s" % file_name
     _LOG.debug("> %s", cmd)
-    rc = hsinte.system(cmd, abort_on_error=False)
+    rc = hsyint.system(cmd, abort_on_error=False)
     if rc:
         _LOG.warning(
             "Can't run '%s': you need to add the file manually",
@@ -44,12 +42,12 @@ def _to_skip_on_update_outcomes() -> bool:
     Some tests can't pass with `--update_outcomes`, since they exercise the
     logic in `--update_outcomes` itself.
 
-    We can't always use `@pytest.mark.skipif(hut.get_update_tests)`
+    We can't always use `@pytest.mark.skipif(huntes.get_update_tests)`
     since pytest decides which tests need to be run before the variable
     is actually set.
     """
     to_skip = False
-    if hut.get_update_tests():
+    if huntes.get_update_tests():
         _LOG.warning(
             "Skip this test since it exercises the logic for --update_outcomes"
         )
@@ -60,17 +58,17 @@ def _to_skip_on_update_outcomes() -> bool:
 # #############################################################################
 
 
-class TestTestCase1(hut.TestCase):
+class TestTestCase1(huntes.TestCase):
     """
     Test free-standing functions in unit_test.py.
     """
 
     def test_get_input_dir1(self) -> None:
         """
-        Test hut.get_input_dir().
+        Test huntes.get_input_dir().
         """
         act = self.get_input_dir()
-        act = hut.purify_txt_from_client(act)
+        act = huntes.purify_txt_from_client(act)
         exp = "$GIT_ROOT/helpers/test/TestTestCase1.test_get_input_dir1/input"
         self.assertEqual(act, exp)
 
@@ -78,8 +76,10 @@ class TestTestCase1(hut.TestCase):
         use_only_test_class = False
         test_class_name = "test_class"
         test_method_name = "test_method"
-        act = self.get_input_dir(use_only_test_class, test_class_name, test_method_name)
-        act = hut.purify_txt_from_client(act)
+        act = self.get_input_dir(
+            use_only_test_class, test_class_name, test_method_name
+        )
+        act = huntes.purify_txt_from_client(act)
         #
         exp = "$GIT_ROOT/helpers/test/test_class.test_method/input"
         self.assertEqual(act, exp)
@@ -88,8 +88,10 @@ class TestTestCase1(hut.TestCase):
         use_only_test_class = False
         test_class_name = None
         test_method_name = None
-        act = self.get_input_dir(use_only_test_class, test_class_name, test_method_name)
-        act = hut.purify_txt_from_client(act)
+        act = self.get_input_dir(
+            use_only_test_class, test_class_name, test_method_name
+        )
+        act = huntes.purify_txt_from_client(act)
         #
         exp = "$GIT_ROOT/helpers/test/TestTestCase1.test_get_input_dir3/input"
         self.assertEqual(act, exp)
@@ -98,27 +100,29 @@ class TestTestCase1(hut.TestCase):
         use_only_test_class = True
         test_class_name = None
         test_method_name = None
-        act = self.get_input_dir(use_only_test_class, test_class_name, test_method_name)
-        act = hut.purify_txt_from_client(act)
+        act = self.get_input_dir(
+            use_only_test_class, test_class_name, test_method_name
+        )
+        act = huntes.purify_txt_from_client(act)
         #
         exp = "$GIT_ROOT/helpers/test/TestTestCase1/input"
         self.assertEqual(act, exp)
 
     def test_get_output_dir1(self) -> None:
         """
-        Test hut.get_output_dir().
+        Test huntes.get_output_dir().
         """
         act = self.get_output_dir()
-        act = hut.purify_txt_from_client(act)
+        act = huntes.purify_txt_from_client(act)
         exp = "$GIT_ROOT/helpers/test/TestTestCase1.test_get_output_dir1/output"
         self.assertEqual(act, exp)
 
     def test_get_scratch_space1(self) -> None:
         """
-        Test hut.get_scratch_space().
+        Test huntes.get_scratch_space().
         """
         act = self.get_scratch_space()
-        act = hut.purify_txt_from_client(act)
+        act = huntes.purify_txt_from_client(act)
         exp = (
             "$GIT_ROOT/helpers/test/TestTestCase1.test_get_scratch_space1"
             "/tmp.scratch"
@@ -129,7 +133,7 @@ class TestTestCase1(hut.TestCase):
         test_class_name = "test_class"
         test_method_name = "test_method"
         act = self.get_scratch_space(test_class_name, test_method_name)
-        act = hut.purify_txt_from_client(act)
+        act = huntes.purify_txt_from_client(act)
         exp = "$GIT_ROOT/helpers/test/test_class.test_method/tmp.scratch"
         self.assertEqual(act, exp)
 
@@ -137,9 +141,10 @@ class TestTestCase1(hut.TestCase):
         test_class_name = "test_class"
         test_method_name = "test_method"
         use_absolute_path = False
-        act = self.get_scratch_space(test_class_name, test_method_name,
-                                     use_absolute_path)
-        act = hut.purify_txt_from_client(act)
+        act = self.get_scratch_space(
+            test_class_name, test_method_name, use_absolute_path
+        )
+        act = huntes.purify_txt_from_client(act)
         exp = "test_class.test_method/tmp.scratch"
         self.assertEqual(act, exp)
 
@@ -174,10 +179,10 @@ class TestTestCase1(hut.TestCase):
         tmp_dir = tempfile.mkdtemp()
         self.assert_equal(actual, expected, abort_on_error=False, dst_dir=tmp_dir)
         # Compute the signature from the dir.
-        act = hut.get_dir_signature(
+        act = huntes.get_dir_signature(
             tmp_dir, include_file_content=True, num_lines=None
         )
-        act = hut.purify_txt_from_client(act)
+        act = huntes.purify_txt_from_client(act)
         act = act.replace(tmp_dir, "$TMP_DIR")
         # pylint: disable=line-too-long
         exp = """
@@ -218,7 +223,7 @@ class TestTestCase1(hut.TestCase):
         # #####################################################################
         # #####################################################################
         """
-        act = hut._remove_spaces(txt)
+        act = huntes._remove_spaces(txt)
         exp = r"""
         * Failed assertion *
         'in1' not in '{'in1': 'out1'}'
@@ -232,7 +237,7 @@ class TestTestCase1(hut.TestCase):
 # #############################################################################
 
 
-class Test_AssertEqual1(hut.TestCase):
+class Test_AssertEqual1(huntes.TestCase):
     def test_equal1(self) -> None:
         """
         Matching act and exp without fuzzy matching.
@@ -249,8 +254,8 @@ completed       success Lint    Slow_tests
 """
         test_name = self._get_test_name()
         test_dir = self.get_scratch_space()
-        is_equal = hut._assert_equal(act, exp, test_name, test_dir)
-        _LOG.debug(hprint.to_str("is_equal"))
+        is_equal = huntes._assert_equal(act, exp, test_name, test_dir)
+        _LOG.debug(hprintin.to_str("is_equal"))
         self.assertTrue(is_equal)
 
     def test_equal2(self) -> None:
@@ -270,10 +275,10 @@ completed       success Lint    Slow_tests
         test_name = self._get_test_name()
         test_dir = self.get_scratch_space()
         fuzzy_match = True
-        is_equal = hut._assert_equal(
+        is_equal = huntes._assert_equal(
             act, exp, test_name, test_dir, fuzzy_match=fuzzy_match
         )
-        _LOG.debug(hprint.to_str("is_equal"))
+        _LOG.debug(hprintin.to_str("is_equal"))
         self.assertTrue(is_equal)
 
     def test_not_equal1(self) -> None:
@@ -294,12 +299,12 @@ completed       success Lint    Slow_tests
         test_dir = self.get_scratch_space()
         fuzzy_match = False
         with self.assertRaises(RuntimeError) as cm:
-            hut._assert_equal(
+            huntes._assert_equal(
                 act, exp, test_name, test_dir, fuzzy_match=fuzzy_match
             )
         # Check that the assertion is what expected.
         act = str(cm.exception)
-        act = hut.purify_txt_from_client(act)
+        act = huntes.purify_txt_from_client(act)
         exp = '''
 --------------------------------------------------------------------------------
 ACTUAL vs EXPECTED: Test_AssertEqual1.test_not_equal1
@@ -354,7 +359,7 @@ end
 # #############################################################################
 
 
-class TestCheckString1(hut.TestCase):
+class TestCheckString1(huntes.TestCase):
     def test_check_string1(self) -> None:
         """
         Compare the actual value to a matching golden outcome.
@@ -483,7 +488,7 @@ class TestCheckString1(hut.TestCase):
             outcome_updated, file_exists, is_equal = self.check_string(
                 act, abort_on_error=False
             )
-            dbg.dassert_file_exists(file_name)
+            hdbg.dassert_file_exists(file_name)
             new_golden = hio.from_file(file_name)
         finally:
             # Clean up.
@@ -514,7 +519,7 @@ class TestCheckString1(hut.TestCase):
             outcome_updated, file_exists, is_equal = self.check_string(
                 act, abort_on_error=False, action_on_missing_golden="assert"
             )
-            dbg.dassert_file_exists(file_name + ".tmp")
+            hdbg.dassert_file_exists(file_name + ".tmp")
             new_golden = hio.from_file(file_name + ".tmp")
         finally:
             # Clean up.
@@ -544,7 +549,7 @@ class TestCheckString1(hut.TestCase):
             outcome_updated, file_exists, is_equal = self.check_string(
                 act, abort_on_error=False, action_on_missing_golden="update"
             )
-            dbg.dassert_file_exists(file_name)
+            hdbg.dassert_file_exists(file_name)
             new_golden = hio.from_file(file_name)
         finally:
             # Clean up.
@@ -560,7 +565,7 @@ class TestCheckString1(hut.TestCase):
 # #############################################################################
 
 
-class TestCheckDataFrame1(hut.TestCase):
+class TestCheckDataFrame1(huntes.TestCase):
     """
     Some of these tests can't pass with `--update_outcomes`, since they
     exercise the logic in `--update_outcomes` itself.
@@ -733,7 +738,7 @@ class TestCheckDataFrame1(hut.TestCase):
         self.mock_update_tests()
         tag = "test_df"
         _, file_name = self._get_golden_outcome_file_name(tag)
-        _LOG.debug(hprint.to_str("file_name"))
+        _LOG.debug(hprintin.to_str("file_name"))
         try:
             # Remove the golden.
             hio.delete_file(file_name)
@@ -741,7 +746,7 @@ class TestCheckDataFrame1(hut.TestCase):
             outcome_updated, file_exists, is_equal = self.check_dataframe(
                 act, abort_on_error=False
             )
-            dbg.dassert_file_exists(file_name)
+            hdbg.dassert_file_exists(file_name)
             new_golden = pd.read_csv(file_name, index_col=0)
         finally:
             # Clean up.
@@ -772,9 +777,9 @@ class TestCheckDataFrame1(hut.TestCase):
             outcome_updated, file_exists, is_equal = self.check_dataframe(
                 act, abort_on_error=False, action_on_missing_golden="assert"
             )
-            dbg.dassert_file_exists(file_name + ".tmp")
+            hdbg.dassert_file_exists(file_name + ".tmp")
             new_golden = pd.read_csv(file_name + ".tmp", index_col=0)
-            dbg.dassert_not_exists(file_name)
+            hdbg.dassert_not_exists(file_name)
         finally:
             # Clean up.
             hio.delete_file(file_name)
@@ -803,7 +808,7 @@ class TestCheckDataFrame1(hut.TestCase):
             outcome_updated, file_exists, is_equal = self.check_dataframe(
                 act, abort_on_error=False, action_on_missing_golden="update"
             )
-            dbg.dassert_file_exists(file_name)
+            hdbg.dassert_file_exists(file_name)
             new_golden = pd.read_csv(file_name, index_col=0)
         finally:
             # Clean up.
@@ -841,7 +846,7 @@ class TestCheckDataFrame1(hut.TestCase):
 # #############################################################################
 
 
-class Test_check_string_debug1(hut.TestCase):
+class Test_check_string_debug1(huntes.TestCase):
     def test1(self) -> None:
         act = "hello"
         # action_on_missing_golden = "assert"
@@ -860,9 +865,9 @@ class Test_check_string_debug1(hut.TestCase):
 # #############################################################################
 
 
-class Test_unit_test1(hut.TestCase):
+class Test_unit_test1(huntes.TestCase):
     def test_purify_txt_from_client1(self) -> None:
-        super_module_path = git.get_client_root(super_module=True)
+        super_module_path = hgit.get_client_root(super_module=True)
         # TODO(gp): We should remove the current path.
         # pylint: disable=line-too-long
         txt = r"""
@@ -887,7 +892,7 @@ dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: [W1401(ano
 dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Name 're' is not defined [mypy]
 """
         # pylint: enable=line-too-long
-        act = hut.purify_txt_from_client(txt)
+        act = huntes.purify_txt_from_client(txt)
         self.assert_equal(act, exp)
 
     def test_purify_txt_from_client2(self) -> None:
@@ -895,24 +900,26 @@ dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Nam
         Test case when client root path is equal to `/`
         """
         # pylint: disable=redefined-outer-name
-        git = umock.Mock()
-        git.get_client_root.return_value = "/"
+        hgit = umock.Mock()
+        hgit.get_client_root.return_value = "/"
         txt = "/tmp/subdir1"
         exp = txt
-        act = hut.purify_txt_from_client(txt)
+        act = huntes.purify_txt_from_client(txt)
         self.assertEqual(act, exp)
 
 
 # #############################################################################
 
 
-class TestSubsetDf1(hut.TestCase):
+class TestSubsetDf1(huntes.TestCase):
     def test1(self) -> None:
         # Generate some random data.
         np.random.seed(42)
-        df = pd.DataFrame(np.random.randint(0,100,size=(20, 4)), columns=list('ABCD'))
+        df = pd.DataFrame(
+            np.random.randint(0, 100, size=(20, 4)), columns=list("ABCD")
+        )
         # Subset.
-        df2 = hut.subset_df(df, nrows = 5, seed = 43)
+        df2 = huntes.subset_df(df, nrows=5, seed=43)
         # Check.
         act = []
         act.append("df=")
@@ -923,7 +930,7 @@ class TestSubsetDf1(hut.TestCase):
         self.check_string(act)
 
 
-class TestDataframeToJson(hut.TestCase):
+class TestDataframeToJson(huntes.TestCase):
     def test_dataframe_to_json(self) -> None:
         """
         Verify correctness of dataframe to JSON transformation.
@@ -936,7 +943,7 @@ class TestDataframeToJson(hut.TestCase):
             }
         )
         # Convert dataframe to JSON.
-        output_str = hut.convert_df_to_json_string(
+        output_str = huntes.convert_df_to_json_string(
             test_dataframe, n_head=3, n_tail=3
         )
         self.check_string(output_str)
@@ -956,7 +963,7 @@ class TestDataframeToJson(hut.TestCase):
             }
         )
         # Convert dataframe to JSON.
-        output_str = hut.convert_df_to_json_string(
+        output_str = huntes.convert_df_to_json_string(
             test_dataframe, n_head=None, n_tail=None
         )
         self.check_string(output_str)
@@ -973,7 +980,7 @@ class TestDataframeToJson(hut.TestCase):
             }
         )
         # Convert dataframe to JSON.
-        output_str = hut.convert_df_to_json_string(
+        output_str = huntes.convert_df_to_json_string(
             test_dataframe, n_head=None, n_tail=None
         )
         self.check_string(output_str)
@@ -993,7 +1000,7 @@ class TestDataframeToJson(hut.TestCase):
             }
         )
         # Convert dataframe to JSON.
-        output_str = hut.convert_df_to_json_string(
+        output_str = huntes.convert_df_to_json_string(
             test_dataframe, n_head=None, n_tail=None
         )
         self.check_string(output_str)
@@ -1002,7 +1009,7 @@ class TestDataframeToJson(hut.TestCase):
 # #############################################################################
 
 
-class Test_get_dir_signature1(hut.TestCase):
+class Test_get_dir_signature1(huntes.TestCase):
     def test1(self) -> None:
         """
         Test dir signature excluding the file content.
@@ -1036,15 +1043,17 @@ class Test_get_dir_signature1(hut.TestCase):
 
     def _helper(self, include_file_content: bool) -> str:
         in_dir = self.get_input_dir()
-        act = hut.get_dir_signature(in_dir, include_file_content, num_lines=None)
-        act = hut.purify_txt_from_client(act)
+        act = huntes.get_dir_signature(
+            in_dir, include_file_content, num_lines=None
+        )
+        act = huntes.purify_txt_from_client(act)
         return act  # type: ignore[no-any-return]
 
 
 # #############################################################################
 
 
-class Test_purify_txt_from_client1(hut.TestCase):
+class Test_purify_txt_from_client1(huntes.TestCase):
     def test1(self) -> None:
         txt = "amp/helpers/test/test_system_interaction.py"
         exp = "helpers/test/test_system_interaction.py"
@@ -1061,5 +1070,5 @@ class Test_purify_txt_from_client1(hut.TestCase):
         self._helper(txt, exp)
 
     def _helper(self, txt: str, exp: str) -> None:
-        act = hut.purify_txt_from_client(txt)
+        act = huntes.purify_txt_from_client(txt)
         self.assertEqual(act, exp)

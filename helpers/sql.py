@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import helpers.sql as hsql
+"""
+
 import logging
 from typing import List, Optional, Tuple, Union
 
@@ -10,6 +16,10 @@ import helpers.timer as htimer
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): mypy doesn't like this.
+DbConnection = psycop.extensions.connection
+
+
 def get_connection(
     dbname: str,
     host: str,
@@ -17,7 +27,7 @@ def get_connection(
     port: int,
     password: str,
     autocommit: bool = True,
-) -> Tuple[psycop.extensions.connection, psycop.extensions.cursor]:
+) -> Tuple[DbConnection, psycop.extensions.cursor]:
     """
     Create a connection and cursor for a SQL database.
     """
@@ -33,7 +43,7 @@ def get_connection(
 def get_connection_from_string(
     conn_as_str: str,
     autocommit: bool = True,
-) -> Tuple[psycop.extensions.connection, psycop.extensions.cursor]:
+) -> Tuple[DbConnection, psycop.extensions.cursor]:
     """
     Create a connection from a string.
     """
@@ -47,15 +57,12 @@ def get_connection_from_string(
 # #############################################################################
 
 
-def get_engine_version(connection: psycop.extensions.connection) -> str:
+def get_engine_version(connection: DbConnection) -> str:
     """
     Report information on the SQL engine.
 
-    E.g.,
-    ```
-    PostgreSQL 11.5 on x86_64-pc-linux-gnu
-    compiled by gcc (GCC) 4.8.3 20140911 (Red Hat 4.8.3-9), 64-bit
-    ```
+    E.g., ``` PostgreSQL 11.5 on x86_64-pc-linux-gnu compiled by gcc
+    (GCC) 4.8.3 20140911 (Red Hat 4.8.3-9), 64-bit ```
     """
     query = "SELECT version();"
     df = pd.read_sql_query(query, connection)
@@ -64,9 +71,9 @@ def get_engine_version(connection: psycop.extensions.connection) -> str:
     return info
 
 
-def get_db_names(connection: psycop.extensions.connection) -> List[str]:
+def get_db_names(connection: DbConnection) -> List[str]:
     """
-    Return the names of the available DBs.
+    DbConnection  Return the names of the available DBs.
 
     E.g., ['postgres', 'rdsadmin', 'template0', 'template1']
     """
@@ -78,7 +85,7 @@ def get_db_names(connection: psycop.extensions.connection) -> List[str]:
     return dbs
 
 
-def get_table_names(connection: psycop.extensions.connection) -> List[str]:
+def get_table_names(connection: DbConnection) -> List[str]:
     """
     Report the name of the tables.
 
@@ -97,7 +104,7 @@ def get_table_names(connection: psycop.extensions.connection) -> List[str]:
 
 
 def get_table_size(
-    connection: psycop.extensions.connection,
+    connection: DbConnection,
     only_public: bool = True,
     summary: bool = True,
 ) -> pd.DataFrame:
@@ -139,7 +146,7 @@ def get_table_size(
 
 
 # TODO(gp): Test / fix this.
-def get_indexes(connection: psycop.extensions.connection) -> pd.DataFrame:
+def get_indexes(connection: DbConnection) -> pd.DataFrame:
     res = []
     tables = get_table_names(connection)
     cursor = connection.cursor()
@@ -169,16 +176,17 @@ def get_indexes(connection: psycop.extensions.connection) -> pd.DataFrame:
     return tmp
 
 
-def get_columns(
-    connection: psycop.extensions.connection, table_name: str
-) -> list:
+def get_columns(connection: DbConnection, table_name: str) -> list:
+    """
+    Get column names for given table.
+    """
     query = (
         """SELECT column_name
             FROM information_schema.columns
             WHERE TABLE_NAME = '%s' """
         % table_name
     )
-    cursor = connection.get_cursor()
+    cursor = connection.cursor()
     cursor.execute(query)
     columns = [x[0] for x in cursor.fetchall()]
     return columns
@@ -189,7 +197,7 @@ def get_columns(
 # TODO(plyq): Add tests.
 # TODO(*): Rename force -> overwrite or not_incremental.
 def create_database(
-    connection: psycop.extensions.connection,
+    connection: DbConnection,
     db: str,
     force: Optional[bool] = None,
 ) -> None:
@@ -218,8 +226,9 @@ def create_database(
 # #############################################################################
 
 
+# TODO(gp): Rename it execute_pandas_query
 def execute_query(
-    connection: psycop.extensions.connection,
+    connection: DbConnection,
     query: str,
     limit: Optional[int] = None,
     offset: Optional[int] = None,
@@ -250,7 +259,7 @@ def execute_query(
         try:
             cursor.execute(query)
         except psycop.Error as e:
-            print((e.pgerror))
+            print(e.pgerror)
             raise psycop.Error
     if use_timer:
         htimer.dtimer_stop(idx)
@@ -261,7 +270,7 @@ def execute_query(
 
 
 def head_table(
-    connection: psycop.extensions.connection,
+    connection: DbConnection,
     table: str,
     limit: int = 5,
 ) -> str:
@@ -279,7 +288,7 @@ def head_table(
 
 
 def head_tables(
-    connection: psycop.extensions.connection,
+    connection: DbConnection,
     tables: Optional[List[str]] = None,
     limit: int = 5,
 ) -> str:
@@ -295,7 +304,7 @@ def head_tables(
 
 
 def find_common_columns(
-    connection: psycop.extensions.connection,
+    connection: DbConnection,
     tables: List[str],
     as_df: bool = False,
 ) -> Union[None, pd.DataFrame]:

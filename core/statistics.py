@@ -308,7 +308,7 @@ def compute_dyadic_scale(num: float) -> int:
 
 
 # #############################################################################
-# Summary statistics: location, spread, shape
+# Summary statistics: location, spread, shape, diversity, cardinality, entropy
 # #############################################################################
 
 
@@ -456,6 +456,139 @@ def compute_t_distribution_j_2(nu: float):
     return jensen_2
 
 
+def _check_alpha_and_normalize_data(data: pd.Series, alpha: float) -> pd.Series:
+    """
+    Check assumptions used in surprise, diversity, and entropy functions.
+
+    :param data: series of nonnegative numbers
+    :param alpha: parameter in [0, np.inf]
+    """
+    dbg.dassert_lte(
+        0, alpha, "Parameter `alpha` must be greater than or equal to 0."
+    )
+    dbg.dassert_isinstance(data, pd.Series)
+    dbg.dassert(
+        (data >= 0).all(), "Series `data` must have only nonnegative values."
+    )
+    # Normalize nonnegative data so that it sums to one.
+    normalized_data = data / data.sum()
+    return normalized_data
+
+
+def compute_surprise(data: pd.Series, alpha: float) -> float:
+    """
+    Compute the alpha-surprise per entry after probability normalizing `data`.
+
+    This treats `data` as a probability space. All values of `data` must be
+    nonnegative. Before calculating surprise, the data is renormalized so that
+    its sum is one.
+
+    See the following for details:
+    https://golem.ph.utexas.edu/category/2008/11/entropy_diversity_and_cardinal_1.html
+
+    :param data: series of nonnegative numbers
+    :param alpha: parameter in [0, np.inf]
+    """
+    dbg.dassert_ne(
+        1, alpha, "The special case `alpha=1` must be handled separately."
+    )
+    normalized_data = _check_alpha_and_normalize_data(data, alpha)
+    surprise = (1 - normalized_data ** (alpha - 1)) / (alpha - 1)
+    return surprise
+
+
+def compute_diversity(data: pd.Series, alpha: float) -> float:
+    """
+    Compute the alpha-diversity of `data` after probability normalizing.
+
+    Special cases:
+      - alpha = 0: `data.count() - 1`
+      - alpha = 1: Shannon entropy
+      - alpha = 2: Simpson diversity
+      - alpha = np.inf: 0
+
+    Conceptually, this can be calculated by
+        ```
+        surpise = compute_surprise(data, alpha)
+        normalized_data = data / data.sum()
+        diversity = (normalized_data * surprise).sum()
+        ```
+    We implement the function differently so as to avoid numerical instability.
+
+    :param data: series of nonnegative numbers
+    :param alpha: parameter in [0, np.inf]
+    :return: a number between 0 and the surprise of `1 / data.count()`.
+    """
+    normalized_data = _check_alpha_and_normalize_data(data, alpha)
+    if alpha == 1:
+        log_normalized_data = np.log(normalized_data)
+        entropy = -(normalized_data * log_normalized_data).sum()
+        diversity = np.exp(entropy)
+    else:
+        sum_of_powers = (normalized_data ** alpha).sum()
+        diversity = (1 - sum_of_powers) / (alpha - 1)
+    return diversity
+
+
+def compute_cardinality(data: pd.Series, alpha: float) -> float:
+    """
+    Compute the alpha-cardinality of `data` after probability normalizing.
+
+    Special cases:
+      - alpha = 0: `data.count()`
+      - alpha = 1: exp(Shannon entropy)
+      - alpha = 2: reciprocal Simpson
+      - alpha = np.inf: 1 / max(normalized data)
+
+    This is the exponential of the alpha-entropy.
+
+    Conceptually, this can be calculated by
+        ```
+        diversity = compute_diversity(data, alpha)
+        inverse_surprise = (1 - (alpha - 1) * diversity) ** (1 / (alpha - 1))
+        cardinality = 1 / inverse_surprise
+        ```
+    We implement the function differently so as to avoid numerical instability.
+
+    :param data: series of nonnegative numbers
+    :param alpha: parameter in [0, np.inf]
+    :return: a number between 1 and `data.count()`
+    """
+    normalized_data = _check_alpha_and_normalize_data(data, alpha)
+    if np.isinf(alpha):
+        cardinality = 1 / normalized_data.max()
+    elif alpha == 1:
+        log_normalized_data = np.log(normalized_data)
+        entropy = -(normalized_data * log_normalized_data).sum()
+        cardinality = np.exp(entropy)
+    else:
+        sum_of_powers = (normalized_data ** alpha).sum()
+        cardinality = sum_of_powers ** (1 / (1 - alpha))
+    return cardinality
+
+
+def compute_entropy(data: pd.Series, alpha: float) -> float:
+    """
+    Compute the alpha-entropy of `data` after probability normalizing.
+
+    Special cases:
+      - alpha = 0: `log(data.count())`
+      - alpha = 1: Shannon entropy
+      - alpha = 2: log reciprocal Simpson
+      - alpha = np.inf: log reciprocal Berger-Parker
+
+    This is the log of of the alpha-cardinality.
+
+    :param data: series of nonnegative numbers
+    :param alpha: parameter in [0, np.inf]
+    :return: a number between 0 and `log(data.count())`
+    """
+    cardinality = compute_cardinality(data, alpha)
+    entropy = np.log(cardinality)
+    return entropy
+
+
+# TODO(Paul): Deprecate and replace with `compute_cardinality()`.
 def compute_hill_number(data: pd.Series, q: float) -> float:
     """
     Compute the Hill number as a measure of diversity.
@@ -484,18 +617,8 @@ def compute_hill_number(data: pd.Series, q: float) -> float:
     dbg.dassert(
         (data >= 0).all(), "Series `data` must have only nonnegative values."
     )
-    # Normalize nonnegative data so that its sums to one.
-    normalized_data = data / data.sum()
-    # Treat boundary points of `q` specially.
-    if np.isinf(q):
-        diversity = 1 / normalized_data.max()
-    elif q > 1:
-        diversity = (normalized_data ** q).sum() ** (1 / (1 - q))
-    elif q == 1:
-        log_normalized_data = np.log(normalized_data)
-        entropy = -(normalized_data * log_normalized_data).sum()
-        diversity = np.exp(entropy)
-    return diversity
+    hill_number = compute_cardinality(data, q)
+    return hill_number
 
 
 def get_symmetric_normal_quantiles(bin_width: float) -> list:
@@ -790,7 +913,7 @@ def compute_centered_gaussian_total_log_likelihood(
 
 
 # #############################################################################
-# Autocorrelation statistics
+# Autocorrelation and cross-correlation statistics
 # #############################################################################
 
 
@@ -849,6 +972,41 @@ def apply_ljung_box_test(
         df_result = pd.DataFrame(result).T
     df_result.columns = columns
     return df_result
+
+
+def compute_cross_correlation(
+    df: pd.DataFrame,
+    x_cols: List[Union[int, str]],
+    y_col: Union[int, str],
+    lags: List[int],
+) -> pd.DataFrame:
+    """
+    Compute cross-correlations between `x_cols` and `y_col` at `lags`.
+
+    :param df: data dataframe
+    :param x_cols: x variable columns
+    :param y_col: y variable column
+    :param lags: list of integer lags to shift `x_cols` by
+    :return: dataframe of cross correlation at lags
+    """
+    dbg.dassert(not df.empty, msg="Dataframe must be nonempty")
+    dbg.dassert_isinstance(x_cols, list)
+    dbg.dassert_is_subset(x_cols, df.columns)
+    dbg.dassert_isinstance(y_col, (int, str))
+    dbg.dassert_in(y_col, df.columns)
+    dbg.dassert_isinstance(lags, list)
+    # Drop rows with no y value.
+    _LOG.debug("y_col=`%s` count=%i", y_col, df[y_col].count())
+    df = df.dropna(subset=[y_col])
+    x_vars = df[x_cols]
+    y_var = df[y_col]
+    correlations = []
+    for lag in lags:
+        corr = x_vars.shift(lag).apply(lambda x: x.corr(y_var))
+        corr.name = lag
+        correlations.append(corr)
+    corr_df = pd.concat(correlations, axis=1)
+    return corr_df.transpose()
 
 
 # #############################################################################
@@ -1085,6 +1243,7 @@ def compute_annualized_sharpe_ratio(
     :param log_rets: time series of log returns
     :return: annualized Sharpe ratio
     """
+    log_rets = cfinan.maybe_resample(log_rets)
     points_per_year = hdataf.infer_sampling_points_per_year(log_rets)
     if isinstance(log_rets, pd.Series):
         log_rets = hdataf.apply_nan_mode(log_rets, mode="fill_with_zero")
@@ -1107,6 +1266,7 @@ def compute_annualized_sharpe_ratio_standard_error(
     :param log_rets: time series of log returns
     :return: standard error estimate of annualized Sharpe ratio
     """
+    log_rets = cfinan.maybe_resample(log_rets)
     points_per_year = hdataf.infer_sampling_points_per_year(log_rets)
     log_rets = hdataf.apply_nan_mode(log_rets, mode="fill_with_zero")
     se_sr = compute_sharpe_ratio_standard_error(log_rets, points_per_year)
@@ -1542,7 +1702,6 @@ def compute_annualized_return_and_volatility(
 def compute_bet_stats(
     positions: pd.Series,
     log_rets: pd.Series,
-    nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.Series:
     """
@@ -1550,7 +1709,6 @@ def compute_bet_stats(
 
     :param positions: series of long/short positions
     :param log_rets: log returns
-    :param nan_mode: argument for hdataf.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
     :return: series of average returns for winning/losing and long/short bets,
         number of positions and bets. In `average_num_bets_per_year`, "year" is
@@ -1558,17 +1716,18 @@ def compute_bet_stats(
         year
     """
     prefix = prefix or ""
-    bet_lengths = cfinan.compute_signed_bet_lengths(positions, nan_mode=nan_mode)
-    log_rets_per_bet = cfinan.compute_returns_per_bet(
-        positions, log_rets, nan_mode=nan_mode
-    )
+    bet_lengths = cfinan.compute_signed_bet_lengths(positions)
+    log_rets_per_bet = cfinan.compute_returns_per_bet(positions, log_rets)
     #
     stats = dict()
     stats["num_positions"] = int(bet_lengths.abs().sum())
     stats["num_bets"] = bet_lengths.size
     stats["long_bets_(%)"] = 100 * (bet_lengths > 0).sum() / bet_lengths.size
-    n_years = positions.size / hdataf.infer_sampling_points_per_year(positions)
-    stats["avg_num_bets_per_year"] = bet_lengths.size / n_years
+    if positions.index.freq is not None:
+        n_years = positions.size / hdataf.infer_sampling_points_per_year(
+            positions
+        )
+        stats["avg_num_bets_per_year"] = bet_lengths.size / n_years
     # Format index.freq outcome to the word that represents its frequency.
     #    E.g. if `srs.index.freq` is equal to `<MonthEnd>` then
     #    this line will convert it to the string "Month".
@@ -1901,6 +2060,7 @@ def compute_regression_coefficients(
     df: pd.DataFrame,
     x_cols: List[Union[int, str]],
     y_col: Union[int, str],
+    sample_weight_col: Optional[Union[int, str]] = None,
 ) -> pd.DataFrame:
     """
     Regresses `y_col` on each `x_col` independently.
@@ -1911,6 +2071,9 @@ def compute_regression_coefficients(
     :param df: data dataframe
     :param x_cols: x variable columns
     :param y_col: y variable column
+    :param sample_weight_col: optional nonnegative sample observation weights.
+        If `None`, then equal weights are used. Weights do not need to be
+        normalized.
     :return: dataframe of regression coefficients and related stats
     """
     dbg.dassert(not df.empty, msg="Dataframe must be nonempty")
@@ -1918,23 +2081,59 @@ def compute_regression_coefficients(
     dbg.dassert_is_subset(x_cols, df.columns)
     dbg.dassert_isinstance(y_col, (int, str))
     dbg.dassert_in(y_col, df.columns)
+    # Sanity check weight column, if available. Set weights uniformly to 1 if
+    # not specified.
+    if sample_weight_col is not None:
+        dbg.dassert_in(sample_weight_col, df.columns)
+        weights = df[sample_weight_col].rename("weight")
+    else:
+        weights = pd.Series(index=df.index, data=1, name="weight")
+    # Ensure that no weights are negative.
+    dbg.dassert(not (weights < 0).any())
+    # Ensure that the total weight is positive.
+    dbg.dassert((weights > 0).any())
     # Drop rows with no y value.
     _LOG.debug("y_col=`%s` count=%i", y_col, df[y_col].count())
     df = df.dropna(subset=[y_col])
+    # Reindex weights to reflect any dropped y values.
+    weights = weights.reindex(df.index)
     # Extract x variables.
     x_vars = df[x_cols]
     x_var_counts = x_vars.count().rename("count")
+    # Create a per-`x_col` weight dataframe to reflect possibly different NaN
+    # positions. This is used to generate accurate weighted sums and effective
+    # sample sizes.
+    weight_df = pd.DataFrame(index=x_vars.index, columns=x_cols)
+    for col in x_cols:
+        weight_df[col] = weights.reindex(x_vars[col].dropna().index)
+    weight_sums = weight_df.sum(axis=0)
+    # We use the 2-cardinality of the weights. This is equivalent to using
+    # Kish's effective sample size.
+    x_var_eff_counts = weight_df.apply(
+        lambda x: compute_cardinality(x.dropna(), 2)
+    ).rename("eff_count")
     # Calculate variance assuming x variables are centered at zero.
-    x_variance = x_vars.pow(2).sum().divide(x_var_counts).rename("var")
+    x_variance = (
+        x_vars.pow(2)
+        .multiply(weight_df, axis=0)
+        .sum(axis=0)
+        .divide(weight_sums)
+        .rename("var")
+    )
     # Calculate covariance assuming x variables and y variable are centered.
     covariance = (
         x_vars.multiply(df[y_col], axis=0)
+        .multiply(weight_df, axis=0)
         .sum(axis=0)
-        .divide(x_var_counts, axis=0)
+        .divide(weight_sums)
         .rename("covar")
     )
     # Calculate y variance assuming variable is centered.
-    y_variance = df[y_col].pow(2).sum() / df[y_col].count()
+    # NOTE: We calculate only one estimate of the variance of y, using all
+    #     available data (regardless of whether a particular `x_col` is NaN or
+    #     not). If samples of `x_cols` are not substantially aligned, then this
+    #     may be undesirable.
+    y_variance = df[y_col].pow(2).multiply(weights).sum() / weights.sum()
     _LOG.debug("y_col=`%s` variance=%f", y_col, y_variance)
     # Calculate correlation from covariances and variances.
     rho = covariance.divide(np.sqrt(x_variance) * np.sqrt(y_variance)).rename(
@@ -1942,33 +2141,68 @@ def compute_regression_coefficients(
     )
     # Calculate beta coefficients and associated statistics.
     beta = covariance.divide(x_variance).rename("beta")
-    beta_se = np.sqrt(y_variance / x_variance.multiply(x_var_counts)).rename(
-        "SE(beta)"
-    )
+    # The `x_var_eff_counts` term makes this invariant with respect to
+    # rescalings of the weight column.
+    beta_se = np.sqrt(
+        y_variance / (x_variance.multiply(x_var_eff_counts))
+    ).rename("SE(beta)")
     z_scores = beta.divide(beta_se).rename("beta_z_scored")
+    # Calculate two-sided p-values.
+    p_val_array = 2 * sp.stats.norm.sf(z_scores.abs())
+    p_val = pd.Series(index=z_scores.index, data=p_val_array, name="p_val_2s")
     # Calculate autocovariance-related stats of x variables.
     autocovariance = (
         x_vars.multiply(x_vars.shift(1), axis=0)
+        .multiply(weight_df, axis=0)
         .sum(axis=0)
-        .divide(x_var_counts)
+        .divide(weight_sums)
         .rename("autocovar")
     )
+    # Normalize autocovariance to get autocorrelation.
     autocorrelation = autocovariance.divide(x_variance).rename("autocorr")
     turn = np.sqrt(2 * (1 - autocorrelation)).rename("turn")
     # Consolidate stats.
     coefficients = [
         x_var_counts,
+        x_var_eff_counts,
         x_variance,
         covariance,
         rho,
         beta,
         beta_se,
         z_scores,
+        p_val,
         autocovariance,
         autocorrelation,
         turn,
     ]
     return pd.concat(coefficients, axis=1)
+
+
+def apply_smoothing_parameters(
+    rho: pd.Series, turn: pd.Series, parameters: List[float]
+) -> pd.DataFrame:
+    """
+    Estimate smoothing effects.
+
+    :param parameters: corresponds to (inverse) exponent of `turn`
+    """
+    rhos = []
+    turns = []
+    tsq = turn ** 2
+    for param in parameters:
+        rho_num = np.square(np.linalg.norm(tsq.pow(-1 * param / 4).multiply(rho)))
+        # TODO(Paul): Cross-check.
+        turn_num = np.linalg.norm(tsq.pow(0.5 - 2 * param / 4).multiply(rho))
+        denom = np.linalg.norm(tsq.pow(-2 * param / 4).multiply(rho))
+        rhos.append(rho_num / denom)
+        turns.append(turn_num / denom)
+    rho_srs = pd.Series(index=parameters, data=rhos, name="rho")
+    rho_frac = (rho_srs / rho_srs.max()).rename("rho_frac")
+    turn_srs = pd.Series(index=parameters, data=turns, name="turn")
+    rho_to_turn = (rho_srs / turn_srs).rename("rho_to_turn")
+    df = pd.concat([rho_srs, rho_frac, turn_srs, rho_to_turn], axis=1)
+    return df
 
 
 def compute_local_level_model_stats(

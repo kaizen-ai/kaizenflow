@@ -63,6 +63,9 @@ apt-get install $APT_GET_OPTS libgraphviz-dev
 # This is needed to install dot.
 apt-get install $APT_GET_OPTS graphviz
 
+# This is needed for Postgres DB.
+apt-get install $APT_GET_OPTS postgresql-client
+
 # Clean up.
 if [[ $CLEAN_UP_INSTALLATION ]]; then
     echo "Cleaning up installation..."

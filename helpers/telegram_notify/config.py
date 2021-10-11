@@ -1,8 +1,14 @@
+"""
+Import as:
+
+import helpers.telegram_notify.config as htenocon
+"""
+
 import getpass
 import os
 from typing import Tuple
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 
 NOTIFY_JUPYTER_TOKEN = os.environ["AM_TELEGRAM_TOKEN"]
 
@@ -20,5 +26,5 @@ def get_info() -> Tuple[str, str]:
         telegram_token = NOTIFY_JUPYTER_TOKEN
         chat_id = "967103049"
     else:
-        dbg.dfatal("User `%s` is not in the config.py" % user)
+        hdbg.dfatal("User `%s` is not in the config.py" % user)
     return telegram_token, chat_id

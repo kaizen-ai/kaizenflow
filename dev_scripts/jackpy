@@ -9,5 +9,7 @@ source helpers.sh
 parse_jack_cmd_opts "$@"
 
 # --follow: follow the links
-cmd="ack $ACK_OPTS --follow --type=python '$regex' $dir | grep -v ipynb_checkpoints"
+#cmd="ack $ACK_OPTS --follow --type=python '$regex' $dir | grep -v ipynb_checkpoints"
+
+cmd="find $dir \( -name '*.py' \) -print0 | xargs -0 ack $ACK_OPTS '$regex'"
 execute_with_verbose $cmd

@@ -1,19 +1,31 @@
-#
-# Base compose for all the stages.
-#
 version: '3'
 
 services:
+  # Docker container running code that talks to the DB.
   app:
-    image: ${IMAGE}
+    # TODO(Grisha): use environment variable for image.
+    image: 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:dev
     restart: "no"
+    depends_on:
+      - im_postgres_local
     volumes:
       - ../../../:/app
-      # TODO(gp): Remove the stuff below?
-      - ../../../devops/docker_build/fstab:/etc/fstab
-      - ~/.aws:/root/.aws
-      - ~/.config/gspread_pandas/:/root/.config/gspread_pandas/
+      - ~/.aws:/app/home/.aws
+    env_file:
+      - ../env/local.im_db_config.env
     working_dir: /app
-    privileged: true
-    cap_add:
-      - SYS_ADMIN
+    entrypoint: /app/devops/docker_build/entrypoint.sh
+
+  # Docker container running Postgres DB.
+  im_postgres_local:
+    image: postgres:13
+    restart: "no"
+    volumes:
+      - im_postgres_data_local:/var/lib/postgresql/data
+    ports:
+      - 5432
+    env_file:
+      - ../env/local.im_db_config.env
+
+volumes:
+  im_postgres_data_local: {}

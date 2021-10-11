@@ -4,7 +4,7 @@ system commands, env vars, ...
 
 Import as:
 
-import helpers.system_interaction as hsinte
+import helpers.system_interaction as hsyint
 """
 
 import getpass
@@ -17,9 +17,9 @@ import sys
 import time
 from typing import Any, Callable, List, Match, Optional, Tuple, Union, cast
 
-import helpers.dbg as dbg
-import helpers.introspection as hintro
-import helpers.printing as hprint
+import helpers.dbg as hdbg
+import helpers.introspection as hintrosp
+import helpers.printing as hprintin
 
 _LOG = logging.getLogger(__name__)
 
@@ -155,14 +155,14 @@ def _system(
     """
     _LOG.debug("##> %s", cmd)
     _LOG.debug(
-        hprint.to_str(
+        hprintin.to_str(
             "abort_on_error suppress_error suppress_output "
             "blocking wrapper output_file num_error_lines tee dry_run log_level"
         )
     )
     orig_cmd = cmd[:]
     # Handle `suppress_output`.
-    dbg.dassert_in(suppress_output, ("ON_DEBUG_LEVEL", True, False))
+    hdbg.dassert_in(suppress_output, ("ON_DEBUG_LEVEL", True, False))
     if suppress_output == "ON_DEBUG_LEVEL":
         # print("eff_lev=%s" % eff_level)
         # print("lev=%s" % logging.DEBUG)
@@ -170,16 +170,16 @@ def _system(
         # Suppress the output if the verbosity level is higher than DEBUG,
         # otherwise print.
         suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
-    _LOG.debug(hprint.to_str("suppress_output"))
+    _LOG.debug(hprintin.to_str("suppress_output"))
     # Prepare the command line.
     cmd = "(%s)" % cmd
-    dbg.dassert_imply(tee, output_file is not None)
+    hdbg.dassert_imply(tee, output_file is not None)
     if output_file is not None:
         # Redirect to a file.
         dir_name = os.path.dirname(output_file)
         if not os.path.exists(dir_name):
             _LOG.debug("Dir '%s' doesn't exist: creating", dir_name)
-            dbg.dassert(bool(dir_name), "dir_name='%s'", dir_name)
+            hdbg.dassert(bool(dir_name), "dir_name='%s'", dir_name)
             os.makedirs(dir_name)
         if tee:
             cmd += " 2>&1 | tee %s" % output_file
@@ -195,7 +195,7 @@ def _system(
     # TODO(gp): Add a check for the valid values.
     # TODO(gp): Make it "ECHO".
     if isinstance(log_level, str):
-        dbg.dassert_eq(log_level, "echo")
+        hdbg.dassert_eq(log_level, "echo")
         print("> %s" % orig_cmd)
         _LOG.debug("> %s", cmd)
     else:
@@ -210,6 +210,8 @@ def _system(
     try:
         stdout = subprocess.PIPE
         stderr = subprocess.STDOUT
+        # Only for debug.
+        # print("  ==> cmd=%s" % cmd)
         with subprocess.Popen(
             cmd, shell=True, executable="/bin/bash", stdout=stdout, stderr=stderr
         ) as p:
@@ -243,7 +245,7 @@ def _system(
                 else:
                     rc = p.returncode
         if suppress_error is not None:
-            dbg.dassert_isinstance(suppress_error, set)
+            hdbg.dassert_isinstance(suppress_error, set)
             if rc in suppress_error:
                 rc = 0
     except OSError as e:
@@ -253,9 +255,9 @@ def _system(
     if abort_on_error and rc != 0:
         msg = (
             "\n"
-            + hprint.frame("cmd='%s' failed with rc='%s'" % (cmd, rc))
+            + hprintin.frame("cmd='%s' failed with rc='%s'" % (cmd, rc))
             + "\nOutput of the failing command is:\n%s\n%s\n%s"
-            % (hprint.line(">"), output, hprint.line("<"))
+            % (hprintin.line(">"), output, hprintin.line("<"))
         )
         _LOG.error("%s", msg)
         # Report the first `num_error_lines` of the output.
@@ -265,7 +267,7 @@ def _system(
             "cmd='%s' failed with rc='%s'\ntruncated output=\n%s"
             % (cmd, rc, output_error)
         )
-    # dbg.dassert_type_in(output, (str, ))
+    # hdbg.dassert_type_in(output, (str, ))
     return rc, output
 
 
@@ -313,7 +315,7 @@ def system(
 #     else:
 #         raise RuntimeError("Invalid py_ver=%s" % py_ver)
 #     txt = [f for f in txt.split("\n") if f]
-#     dbg.dassert_eq(len(txt), 1)
+#     hdbg.dassert_eq(len(txt), 1)
 #     return txt[0]
 
 
@@ -359,9 +361,9 @@ def get_first_line(output: str) -> str:
     This is used when calling system_to_string() and expecting a single
     line output.
     """
-    output = hprint.remove_empty_lines(output)
+    output = hprintin.remove_empty_lines(output)
     output_as_arr: List[str] = output.split("\n")
-    dbg.dassert_eq(len(output_as_arr), 1, "output='%s'", output)
+    hdbg.dassert_eq(len(output_as_arr), 1, "output='%s'", output)
     output = output_as_arr[0]
     output = output.rstrip().lstrip()
     return output
@@ -449,9 +451,9 @@ def select_result_file_from_list(files: List[str], mode: str) -> List[str]:
     if mode == "assert_unless_one_result":
         # Expect to have a single result and return that.
         if len(files) == 0:
-            dbg.dfatal("mode=%s: didn't find file" % mode)
+            hdbg.dfatal("mode=%s: didn't find file" % mode)
         elif len(files) > 1:
-            dbg.dfatal(
+            hdbg.dfatal(
                 "mode=%s: found multiple files:\n%s" % (mode, "\n".join(files))
             )
         res = [files[0]]
@@ -459,7 +461,7 @@ def select_result_file_from_list(files: List[str], mode: str) -> List[str]:
         # Return all files.
         res = files
     else:
-        dbg.dfatal("Invalid mode='%s'" % mode)
+        hdbg.dfatal("Invalid mode='%s'" % mode)
     return res
 
 
@@ -478,7 +480,7 @@ def system_to_files(
     """
     if dir_name is None:
         dir_name = "."
-    dbg.dassert_dir_exists(dir_name)
+    hdbg.dassert_dir_exists(dir_name)
     cmd = f"cd {dir_name} && {cmd}"
     _, output = system_to_string(cmd)
     # Remove empty lines.
@@ -575,7 +577,7 @@ def kill_process(
         if not pids:
             break
     pids, txt = get_pids()
-    dbg.dassert_eq(len(pids), 0, "Processes are still alive:%s", "\n".join(txt))
+    hdbg.dassert_eq(len(pids), 0, "Processes are still alive:%s", "\n".join(txt))
     _LOG.info("Processes dead")
 
 
@@ -592,8 +594,8 @@ def query_yes_no(question: str, abort_on_no: bool = True) -> bool:
     :param abort_on_no: exit if the user answers "no"
     :return: True for "yes" or False for "no"
     """
-    dbg.dassert_isinstance(question, str)
-    dbg.dassert_isinstance(abort_on_no, bool)
+    hdbg.dassert_isinstance(question, str)
+    hdbg.dassert_isinstance(abort_on_no, bool)
     valid = {
         "yes": True,
         "y": True,
@@ -643,7 +645,7 @@ def create_executable_script(file_name: str, content: str) -> None:
     # To avoid circular dependencies.
     import helpers.io_ as hio
 
-    dbg.dassert_isinstance(content, str)
+    hdbg.dassert_isinstance(content, str)
     hio.to_file(file_name, content)
     # Make it executable.
     cmd = "chmod +x " + file_name
@@ -659,7 +661,7 @@ def du(path_name: str, human_format: bool = False) -> Union[int, str]:
     if not os.path.exists(path_name):
         _LOG.warning("Path '%s' doesn't exist", path_name)
         return 0
-    dbg.dassert_exists(path_name)
+    hdbg.dassert_exists(path_name)
     cmd = f"du -d 0 {path_name}" + " | awk '{print $1}'"
     # > du -d 0 core
     # 20    core
@@ -669,7 +671,7 @@ def du(path_name: str, human_format: bool = False) -> Union[int, str]:
     size_in_bytes = int(txt) * 1024
     size: Union[int, str]
     if human_format:
-        size = hintro.format_size(size_in_bytes)
+        size = hintrosp.format_size(size_in_bytes)
     else:
         size = size_in_bytes
     return size
@@ -690,8 +692,8 @@ def _compute_file_signature(file_name: str, dir_depth: int) -> Optional[List]:
     #   'TestCheckSameConfigs.test_check_same_configs_error', 'output', 'test.txt']
     path = os.path.normpath(file_name)
     paths = path.split(os.sep)
-    dbg.dassert_lte(1, dir_depth)
-    if dir_depth + 1 > len(paths):
+    hdbg.dassert_lte(1, dir_depth)
+    if dir_depth > len(paths):
         _LOG.warning(
             "Can't compute signature of file_name='%s' with"
             " dir_depth=%s, len(paths)=%s",
@@ -708,9 +710,11 @@ def _compute_file_signature(file_name: str, dir_depth: int) -> Optional[List]:
 # TODO(gp): -> io_.py
 def find_file_with_dir(
     file_name: str,
+    *,
     root_dir: str = ".",
-    dir_depth: int = 1,
+    dir_depth: int = -1,
     mode: str = "return_all_results",
+    candidate_files: Optional[List[str]] = None,
 ) -> List[str]:
     """
     Find a file matching basename and several enclosing dir name starting from
@@ -719,35 +723,56 @@ def find_file_with_dir(
     E.g., find a file matching `amp/core/dataflow_model/utils.py` with `dir_depth=1`
     means looking for a file with basename 'utils.py' under a dir 'dataflow_model'.
 
-    :param dir_depth: how many enclosing dirs in order to declare a match
+    :param dir_depth: how many enclosing dirs in order to declare a match.
+        - `-1` to use as many enclosing dirs as possible. E.g.,
+          `/app/amp/core/dataflow/utils.py` will use 3 levels, since `/app` is
+          removed
     :param mode: control the returned list of files, like in
         `select_result_file_from_list()`
+    :param candidate_files: list of results from the `find` command for unit test
+        mocking
     :return: list of files found
     """
-    _LOG.debug(hprint.to_str("file_name root_dir"))
+    _LOG.debug(hprintin.to_str("file_name root_dir dir_depth mode"))
     # Find all the files in the dir with the same basename.
-    base_name = os.path.basename(file_name)
-    cmd = rf"find . -name '{base_name}' -not -path '*/\.git/*'"
-    # > find . -name "utils.py"
-    # ./amp/core/dataflow/utils.py
-    # ./amp/core/dataflow_model/utils.py
-    # ./amp/im/common/test/utils.py
-    mode_ = "return_all_results"
-    candidate_files = system_to_files(cmd, dir_name=root_dir, mode=mode_)
-    _LOG.debug("files=\n%s", "\n".join(candidate_files))
+    if candidate_files is None:
+        base_name = os.path.basename(file_name)
+        cmd = rf"find . -name '{base_name}' -not -path '*/\.git/*'"
+        # > find . -name "utils.py"
+        # ./amp/core/dataflow/utils.py
+        # ./amp/core/dataflow_model/utils.py
+        # ./amp/im/common/test/utils.py
+        mode_ = "return_all_results"
+        candidate_files = system_to_files(cmd, dir_name=root_dir, mode=mode_)
+    _LOG.debug("candidate files=\n%s", "\n".join(candidate_files))
+    #
+    if dir_depth == -1:
+        # Remove "/app" if present.
+        prefix = "/app/"
+        if file_name.startswith(prefix):
+            file_name = file_name[len(prefix) :]
+        # Remove "amp" if present.
+        prefix = "amp/"
+        if file_name.startswith(prefix):
+            file_name = file_name[len(prefix) :]
+        # Count how many dirs levels there are.
+        dir_depth = len(os.path.normpath(file_name).split("/")) - 1
+        _LOG.debug("inferred dir_depth=%s for file_name=%s", dir_depth, file_name)
+    # Check the matching files.
     matching_files = []
-    for file in sorted(candidate_files):
-        signature1 = _compute_file_signature(file, dir_depth)
+    for candidate_file_name in sorted(candidate_files):
+        signature1 = _compute_file_signature(candidate_file_name, dir_depth)
         signature2 = _compute_file_signature(file_name, dir_depth)
         is_equal = signature1 == signature2
-        _LOG.debug("found_file=%s -> is_equal=%s", file, is_equal)
+        _LOG.debug("found_file=%s -> is_equal=%s", candidate_file_name, is_equal)
         if is_equal:
-            matching_files.append(file)
+            matching_files.append(candidate_file_name)
     _LOG.debug(
         "Found %d files:\n%s", len(matching_files), "\n".join(matching_files)
     )
     # Select the result based on mode.
     res = select_result_file_from_list(matching_files, mode)
+    _LOG.debug("-> res=%s", str(res))
     return res
 
 
@@ -771,7 +796,7 @@ def has_timestamp(file_name: str) -> bool:
     regex = sep.join([r"\d{4}", r"\d{2}", r"\d{2}", r"\d{2}", r"\d{2}", r"\d{2}"])
     _LOG.debug("regex=%s", regex)
     occurrences = re.findall(regex, file_name)
-    dbg.dassert_lte(
+    hdbg.dassert_lte(
         len(occurrences), 1, "Found more than one timestamp", str(occurrences)
     )
     m = re.search("(" + regex + ")", file_name)
@@ -794,13 +819,13 @@ def append_timestamp_tag(file_name: str, tag: str) -> str:
     tag_ = ""
     # E.g., 20210723-20_52_00
     if not has_timestamp(file_name):
-        import helpers.datetime_ as hdatetime
+        import helpers.datetime_ as hdatetim
 
-        tag_ += "." + hdatetime.get_timestamp(tz="ET")
+        tag_ += "." + hdatetim.get_timestamp(tz="ET")
     # Add tag, if specified.
     if tag:
         # If the tag is specified prepend a `.` in the filename.
         tag_ += "." + tag
     new_file_name = os.path.join(dir_name, "".join([name, tag_, extension]))
-    _LOG.debug(hprint.to_str("file_name new_file_name"))
+    _LOG.debug(hprintin.to_str("file_name new_file_name"))
     return new_file_name

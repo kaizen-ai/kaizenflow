@@ -60,6 +60,55 @@ datetime,open,high,low,close,vol
         return df
 
 
+class Test_remove_times_outside_window(hut.TestCase):
+    def test_remove(self) -> None:
+        df = self._get_df()
+        start_time = datetime.time(9, 29)
+        end_time = datetime.time(16, 0)
+        actual = fin.remove_times_outside_window(df, start_time, end_time)
+        expected_txt = """
+datetime,open,high,low,close,vol
+2016-01-05 09:30:00,98.14,98.24,97.79,98.01,751857
+2016-01-05 09:31:00,98.01,98.19,98.0,98.0,172584
+2016-01-05 09:32:00,97.99,98.04,97.77,97.77,189058
+2016-01-05 15:58:00,95.31,95.32,95.22,95.27,456235
+2016-01-05 15:59:00,95.28,95.36,95.22,95.32,729315
+2016-01-05 16:00:00,95.32,95.4,95.32,95.4,3255752
+        """
+        expected = pd.read_csv(
+            io.StringIO(expected_txt), index_col=0, parse_dates=True
+        )
+        self.assert_dfs_close(actual, expected)
+
+    def test_bypass(self) -> None:
+        df = self._get_df()
+        start_time = datetime.time(9, 29)
+        end_time = datetime.time(16, 0)
+        actual = fin.remove_times_outside_window(
+            df, start_time, end_time, bypass=True
+        )
+        self.assert_dfs_close(actual, df)
+
+    @staticmethod
+    def _get_df() -> pd.DataFrame:
+        # From `s3://*****-data/data/kibot/all_stocks_1min/AAPL.csv.gz`.
+        txt = """
+datetime,open,high,low,close,vol
+2016-01-05 09:28:00,98.0,98.05,97.99,98.05,2241
+2016-01-05 09:29:00,98.04,98.13,97.97,98.13,14174
+2016-01-05 09:30:00,98.14,98.24,97.79,98.01,751857
+2016-01-05 09:31:00,98.01,98.19,98.0,98.0,172584
+2016-01-05 09:32:00,97.99,98.04,97.77,97.77,189058
+2016-01-05 15:58:00,95.31,95.32,95.22,95.27,456235
+2016-01-05 15:59:00,95.28,95.36,95.22,95.32,729315
+2016-01-05 16:00:00,95.32,95.4,95.32,95.4,3255752
+2016-01-05 16:01:00,95.4,95.42,95.4,95.42,4635
+2016-01-05 16:02:00,95.41,95.41,95.37,95.4,3926
+"""
+        df = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        return df
+
+
 class Test_set_weekends_to_nan(hut.TestCase):
     def test1(self) -> None:
         """
@@ -86,6 +135,52 @@ class Test_set_weekends_to_nan(hut.TestCase):
         actual = fin.set_weekends_to_nan(df)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
+
+
+class Test_remove_weekends(hut.TestCase):
+    def test_remove(self) -> None:
+        df = self._get_df()
+        actual = fin.remove_weekends(df)
+        expected_txt = """
+datetime,close,volume
+2016-01-01,NaN,NaN
+2016-01-04,100.00,100000
+2016-01-05,100.00,100000
+2016-01-06,100.00,100000
+2016-01-07,100.00,100000
+2016-01-08,100.00,100000
+2016-01-11,100.00,100000
+2016-01-12,100.00,100000
+"""
+        expected = pd.read_csv(
+            io.StringIO(expected_txt), index_col=0, parse_dates=True
+        )
+        self.assert_dfs_close(actual, expected)
+
+    def test_bypass(self) -> None:
+        df = self._get_df()
+        actual = fin.remove_weekends(df, bypass=True)
+        self.assert_dfs_close(actual, df)
+
+    @staticmethod
+    def _get_df() -> pd.DataFrame:
+        txt = """
+datetime,close,volume
+2016-01-01,NaN,NaN
+2016-01-02,NaN,NaN
+2016-01-03,NaN,NaN
+2016-01-04,100.00,100000
+2016-01-05,100.00,100000
+2016-01-06,100.00,100000
+2016-01-07,100.00,100000
+2016-01-08,100.00,100000
+2016-01-09,100.00,100000
+2016-01-10,100.00,100000
+2016-01-11,100.00,100000
+2016-01-12,100.00,100000
+"""
+        df = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        return df
 
 
 class Test_resample_time_bars1(hut.TestCase):
@@ -719,6 +814,291 @@ datetime,close,vol
         return act
 
 
+class Test_process_bid_ask(hut.TestCase):
+    def test_mid(self) -> None:
+        df = self._get_df()
+        actual = fin.process_bid_ask(
+            df, "bid", "ask", "bid_volume", "ask_volume", ["mid"]
+        )
+        txt = """
+datetime,mid
+2016-01-04 12:00:00,100.015
+2016-01-04 12:01:00,100.015
+2016-01-04 12:02:00,100.000
+2016-01-04 12:03:00,100.000
+"""
+        expected = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        np.testing.assert_allclose(actual, expected)
+
+    def test_geometric_mid(self) -> None:
+        df = self._get_df()
+        actual = fin.process_bid_ask(
+            df, "bid", "ask", "bid_volume", "ask_volume", ["geometric_mid"]
+        )
+        txt = """
+datetime,geometric_mid
+2016-01-04 12:00:00,100.01499987501875
+2016-01-04 12:01:00,100.01499987501875
+2016-01-04 12:02:00,99.9999995
+2016-01-04 12:03:00,99.99999799999998
+"""
+        expected = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        np.testing.assert_allclose(actual, expected)
+
+    def test_quoted_spread(self) -> None:
+        df = self._get_df()
+        actual = fin.process_bid_ask(
+            df, "bid", "ask", "bid_volume", "ask_volume", ["quoted_spread"]
+        )
+        txt = """
+datetime,quoted_spread
+2016-01-04 12:00:00,0.01
+2016-01-04 12:01:00,0.01
+2016-01-04 12:02:00,0.02
+2016-01-05 12:02:00,0.04
+"""
+        expected = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        np.testing.assert_allclose(actual, expected)
+
+    def test_relative_spread(self) -> None:
+        df = self._get_df()
+        actual = fin.process_bid_ask(
+            df, "bid", "ask", "bid_volume", "ask_volume", ["relative_spread"]
+        )
+        txt = """
+datetime,relative_spread
+2016-01-04 12:00:00,9.998500224957161e-05
+2016-01-04 12:01:00,9.998500224957161e-05
+2016-01-04 12:02:00,0.00020000000000010233
+2016-01-04 12:03:00,0.00039999999999992044
+"""
+        expected = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        np.testing.assert_allclose(actual, expected)
+
+    def test_log_relative_spread(self) -> None:
+        df = self._get_df()
+        actual = fin.process_bid_ask(
+            df, "bid", "ask", "bid_volume", "ask_volume", ["log_relative_spread"]
+        )
+        txt = """
+datetime,log_relative_spread
+2016-01-04 12:00:00,9.998500233265872e-05
+2016-01-04 12:01:00,9.998500233265872e-05
+2016-01-04 12:02:00,0.00020000000066744406
+2016-01-04 12:03:00,0.00040000000533346736
+"""
+        expected = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        np.testing.assert_allclose(actual, expected)
+
+    def test_weighted_mid(self) -> None:
+        df = self._get_df()
+        actual = fin.process_bid_ask(
+            df, "bid", "ask", "bid_volume", "ask_volume", ["weighted_mid"]
+        )
+        txt = """
+datetime,weighted_mid
+2016-01-04 12:00:00,100.015
+2016-01-04 12:01:00,100.014
+2016-01-04 12:02:00,100.000
+2016-01-04 12:03:00,99.993333
+"""
+        expected = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        np.testing.assert_allclose(actual, expected)
+
+    def test_order_book_imbalance(self) -> None:
+        df = self._get_df()
+        actual = fin.process_bid_ask(
+            df, "bid", "ask", "bid_volume", "ask_volume", ["order_book_imbalance"]
+        )
+        txt = """
+datetime,order_book_imbalance
+2016-01-04 12:00:00,0.5
+2016-01-04 12:01:00,0.4
+2016-01-04 12:02:00,0.5
+2016-01-04 12:03:00,0.3333333333
+"""
+        expected = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        np.testing.assert_allclose(actual, expected)
+
+    def test_centered_order_book_imbalance(self) -> None:
+        df = self._get_df()
+        actual = fin.process_bid_ask(
+            df,
+            "bid",
+            "ask",
+            "bid_volume",
+            "ask_volume",
+            ["centered_order_book_imbalance"],
+        )
+        txt = """
+datetime,centered_order_book_imbalance
+2016-01-04 12:00:00,0.0
+2016-01-04 12:01:00,-0.1999999999
+2016-01-04 12:02:00,0.0
+2016-01-04 12:03:00,-0.3333333333
+"""
+        expected = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        np.testing.assert_allclose(actual, expected)
+
+    def test_centered_order_book_imbalance(self) -> None:
+        df = self._get_df()
+        actual = fin.process_bid_ask(
+            df,
+            "bid",
+            "ask",
+            "bid_volume",
+            "ask_volume",
+            ["log_order_book_imbalance"],
+        )
+        txt = """
+datetime,centered_order_book_imbalance
+2016-01-04 12:00:00,0.0
+2016-01-04 12:01:00,-0.405465108
+2016-01-04 12:02:00,0.0
+2016-01-04 12:03:00,-0.693147181
+"""
+        expected = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        np.testing.assert_allclose(actual, expected)
+
+    def test_bid_value(self) -> None:
+        df = self._get_df()
+        actual = fin.process_bid_ask(
+            df, "bid", "ask", "bid_volume", "ask_volume", ["bid_value"]
+        )
+        txt = """
+datetime,bid_value
+2016-01-04 12:00:00,20002.0
+2016-01-04 12:01:00,20002.0
+2016-01-04 12:02:00,29997.0
+2016-01-04 12:03:00,19996.0
+"""
+        expected = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        np.testing.assert_allclose(actual, expected)
+
+    def test_ask_value(self) -> None:
+        df = self._get_df()
+        actual = fin.process_bid_ask(
+            df, "bid", "ask", "bid_volume", "ask_volume", ["ask_value"]
+        )
+        txt = """
+datetime,ask_value
+2016-01-04 12:00:00,20004.0
+2016-01-04 12:01:00,30006.0
+2016-01-04 12:02:00,30003.0
+2016-01-04 12:03:00,40008.0
+"""
+        expected = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        np.testing.assert_allclose(actual, expected)
+
+    def test_mid_value(self) -> None:
+        df = self._get_df()
+        actual = fin.process_bid_ask(
+            df, "bid", "ask", "bid_volume", "ask_volume", ["mid_value"]
+        )
+        txt = """
+datetime,mid_value
+2016-01-04 12:00:00,20003.0
+2016-01-04 12:01:00,25004.0
+2016-01-04 12:02:00,30000.0
+2016-01-04 12:03:00,30002.0
+"""
+        expected = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        np.testing.assert_allclose(actual, expected)
+
+    @staticmethod
+    def _get_df() -> pd.DataFrame:
+        txt = """
+datetime,bid,ask,bid_volume,ask_volume
+2016-01-04 12:00:00,100.01,100.02,200,200
+2016-01-04 12:01:00,100.01,100.02,200,300
+2016-01-04 12:02:00,99.99,100.01,300,300
+2016-01-04 12:03:00,99.98,100.02,200,400
+"""
+        df = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        return df
+
+
+class Test_compute_spread_cost(hut.TestCase):
+    def test_one_half_spread(self) -> None:
+        df = self._get_df()
+        actual = fin.compute_spread_cost(
+            df,
+            target_position_col="position",
+            spread_col="spread",
+            spread_fraction_paid=0.5,
+        )
+        txt = """
+datetime,spread_cost
+2016-01-04 12:00:00,NaN
+2016-01-04 12:01:00,NaN
+2016-01-04 12:02:00,0.01
+2016-01-04 12:03:00,0.06
+"""
+        expected = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        np.testing.assert_allclose(actual, expected)
+
+    def test_one_third_spread(self) -> None:
+        df = self._get_df()
+        actual = fin.compute_spread_cost(
+            df,
+            target_position_col="position",
+            spread_col="spread",
+            spread_fraction_paid=0.33,
+        )
+        txt = """
+datetime,spread_cost
+2016-01-04 12:00:00,NaN
+2016-01-04 12:01:00,NaN
+2016-01-04 12:02:00,0.0066
+2016-01-04 12:03:00,0.0396
+"""
+        expected = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        np.testing.assert_allclose(actual, expected)
+
+    @staticmethod
+    def _get_df() -> pd.DataFrame:
+        txt = """
+datetime,spread,position
+2016-01-04 12:00:00,0.0001,100
+2016-01-04 12:01:00,0.0001,200
+2016-01-04 12:02:00,0.0002,-100
+2016-01-04 12:03:00,0.0004,100
+"""
+        df = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        return df
+
+
+class Test_compute_pnl(hut.TestCase):
+    def test1(self) -> None:
+        df = self._get_df()
+        actual = fin.compute_pnl(
+            df,
+            position_intent_col="position_intent_1",
+            return_col="ret_0",
+        )
+        txt = """
+datetime,pnl
+2016-01-04 12:00:00,NaN
+2016-01-04 12:01:00,NaN
+2016-01-04 12:02:00,0.06
+2016-01-04 12:03:00,0.24
+"""
+        expected = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        np.testing.assert_allclose(actual, expected)
+
+    @staticmethod
+    def _get_df() -> pd.DataFrame:
+        txt = """
+datetime,ret_0,position_intent_1
+2016-01-04 12:00:00,0.0010,100
+2016-01-04 12:01:00,-0.0008,200
+2016-01-04 12:02:00,0.0006,-100
+2016-01-04 12:03:00,0.0012,100
+"""
+        df = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        return df
+
+
 class Test_compute_inverse_volatility_weights(hut.TestCase):
     def test1(self) -> None:
         """
@@ -1113,83 +1493,6 @@ class Test_compute_average_holding_period(hut.TestCase):
         return series
 
 
-class Test_compute_bet_runs(hut.TestCase):
-    def test1(self) -> None:
-        positions = Test_compute_bet_runs._get_series(42)
-        actual = fin.compute_bet_runs(positions)
-        output_str = (
-            f"{prnt.frame('positions')}\n"
-            f"{hut.convert_df_to_string(positions, index=True)}\n"
-            f"{prnt.frame('bet_runs')}\n"
-            f"{hut.convert_df_to_string(actual, index=True)}"
-        )
-        self.check_string(output_str)
-
-    def test2(self) -> None:
-        positions = Test_compute_bet_runs._get_series(42)
-        positions.iloc[:4] = np.nan
-        positions.iloc[10:15] = np.nan
-        positions.iloc[-4:] = np.nan
-        actual = fin.compute_bet_runs(positions)
-        output_str = (
-            f"{prnt.frame('positions')}\n"
-            f"{hut.convert_df_to_string(positions, index=True)}\n"
-            f"{prnt.frame('bet_runs')}\n"
-            f"{hut.convert_df_to_string(actual, index=True)}"
-        )
-        self.check_string(output_str)
-
-    def test3(self) -> None:
-        """
-        Test leading zeros.
-        """
-        idx = pd.date_range(start="2010-01-01", periods=4, freq="D")
-        positions = pd.Series([0, 0, 0, 1], index=idx)
-        expected = pd.Series([0, 0, 0, 1], index=idx, dtype=float)
-        actual = fin.compute_bet_runs(positions)
-        pd.testing.assert_series_equal(actual, expected)
-
-    def test4(self) -> None:
-        """
-        Test all zeros.
-        """
-        idx = pd.date_range(start="2010-01-01", periods=2, freq="D")
-        positions = pd.Series([0, 0], index=idx)
-        expected = pd.Series([0, 0], index=idx, dtype=float)
-        actual = fin.compute_bet_runs(positions)
-        pd.testing.assert_series_equal(actual, expected)
-
-    def test5(self) -> None:
-        """
-        Test leading NaNs.
-        """
-        idx = pd.date_range(start="2010-01-01", periods=4, freq="D")
-        positions = pd.Series([np.nan, np.nan, 0, 1], index=idx)
-        expected = pd.Series([np.nan, np.nan, 0, 1], index=idx, dtype=float)
-        actual = fin.compute_bet_runs(positions)
-        pd.testing.assert_series_equal(actual, expected)
-
-    def test6(self) -> None:
-        """
-        Test series with a single value.
-        """
-        positions = pd.Series([10], index=[pd.Timestamp("2010-01-01")])
-        expected = pd.Series([1], index=[pd.Timestamp("2010-01-01")], dtype=float)
-        actual = fin.compute_bet_runs(positions)
-        pd.testing.assert_series_equal(actual, expected)
-
-    @staticmethod
-    def _get_series(seed: int) -> pd.Series:
-        arparams = np.array([0.75, -0.25])
-        maparams = np.array([0.65, 0.35])
-        arma_process = sig_gen.ArmaProcess(arparams, maparams)
-        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
-        series = arma_process.generate_sample(
-            date_range_kwargs=date_range, seed=seed
-        )
-        return series
-
-
 class Test_compute_bet_starts(hut.TestCase):
     def test1(self) -> None:
         positions = Test_compute_bet_starts._get_series(42)
@@ -1256,7 +1559,7 @@ class Test_compute_bet_starts(hut.TestCase):
             {
                 pd.Timestamp("2010-01-01"): np.nan,
                 pd.Timestamp("2010-01-02"): 1,
-                pd.Timestamp("2010-01-03"): 0,
+                pd.Timestamp("2010-01-03"): np.nan,
                 pd.Timestamp("2010-01-04"): -1,
             },
             dtype=float,
@@ -1347,6 +1650,7 @@ class Test_compute_bet_ends(hut.TestCase):
             },
             dtype=float,
         )
+        # TODO(*): This is testing the wrong function!
         actual = fin.compute_bet_starts(positions)
         pd.testing.assert_series_equal(actual, expected)
 
@@ -1366,11 +1670,12 @@ class Test_compute_bet_ends(hut.TestCase):
             {
                 pd.Timestamp("2010-01-01"): np.nan,
                 pd.Timestamp("2010-01-02"): 1,
-                pd.Timestamp("2010-01-03"): 0,
+                pd.Timestamp("2010-01-03"): np.nan,
                 pd.Timestamp("2010-01-04"): -1,
             },
             dtype=float,
         )
+        # TODO(*): This is testing the wrong function!
         actual = fin.compute_bet_starts(positions)
         pd.testing.assert_series_equal(actual, expected)
 
@@ -1395,6 +1700,7 @@ class Test_compute_bet_ends(hut.TestCase):
             },
             dtype=float,
         )
+        # TODO(*): This is testing the wrong function!
         actual = fin.compute_bet_starts(positions)
         pd.testing.assert_series_equal(actual, expected)
 
@@ -1475,7 +1781,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         idx = pd.to_datetime(["2010-01-01", "2010-01-02", "2010-01-03"])
         positions = pd.Series([1, np.nan, 0], index=idx)
         expected = pd.Series(
-            [2], index=pd.to_datetime(["2010-01-02"]), dtype=float
+            [1], index=pd.to_datetime(["2010-01-01"]), dtype=float
         )
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
@@ -1487,7 +1793,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         idx = pd.to_datetime(["2010-01-01", "2010-01-02", "2010-01-03"])
         positions = pd.Series([1, np.nan, np.nan], index=idx)
         expected = pd.Series(
-            [3], index=pd.to_datetime(["2010-01-03"]), dtype=float
+            [1], index=pd.to_datetime(["2010-01-01"]), dtype=float
         )
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)

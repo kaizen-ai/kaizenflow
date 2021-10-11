@@ -16,7 +16,7 @@ import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 # Mute this module unless we want to debug it.
-_LOG.setLevel(logging.INFO)
+# _LOG.setLevel(logging.INFO)
 
 
 # #############################################################################
@@ -637,32 +637,6 @@ def obj_to_str(
     return "\n".join(ret)
 
 
-# TODO(gp): This seems redundant with hut.convert_df_to_string.
-# TODO(gp): Move to pandas_helpers.
-def dataframe_to_str(
-    df: Any,
-    max_columns: int = 10000,
-    max_colwidth: int = 2000,
-    max_rows: int = 500,
-    display_width: int = 10000,
-) -> str:
-    import pandas as pd
-
-    with pd.option_context(
-        "display.max_colwidth",
-        max_colwidth,
-        #'display.height', 1000,
-        "display.max_rows",
-        max_rows,
-        "display.max_columns",
-        max_columns,
-        "display.width",
-        display_width,
-    ):
-        res = str(df)
-    return res
-
-
 def remove_non_printable_chars(txt: str) -> str:
     # From https://stackoverflow.com/questions/14693701
     # 7-bit and 8-bit C1 ANSI sequences
@@ -712,18 +686,55 @@ def to_pretty_str(obj: Any) -> str:
     return res
 
 
+# TODO(gp): This seems redundant with hut.convert_df_to_string.
 # TODO(gp): Move to pandas_helpers.
-def df_to_short_str(tag: str, df: "pd.DataFrame") -> str:
+def dataframe_to_str(
+    df: Any,
+    max_columns: int = 10000,
+    max_colwidth: int = 2000,
+    max_rows: int = 500,
+    display_width: int = 10000,
+) -> str:
+    import pandas as pd
+
+    with pd.option_context(
+        "display.max_colwidth",
+        max_colwidth,
+        #'display.height', 1000,
+        "display.max_rows",
+        max_rows,
+        "display.max_columns",
+        max_columns,
+        "display.width",
+        display_width,
+    ):
+        res = str(df)
+    return res
+
+
+# TODO(gp): Move to pandas_helpers.
+# TODO(gp): -> df_to_str(df, tag, ...
+def df_to_short_str(tag: str, df: "pd.DataFrame", *, n: int = 3) -> str:
     out = []
     tag = tag or "df"
     out.append(f"# {tag}=")
-    out.append(dataframe_to_str(df.head(3)))
-    out.append("...")
-    out.append(dataframe_to_str(df.tail(3)))
     if not df.empty:
         out.append("df.index in [%s, %s]" % (df.index.min(), df.index.max()))
         out.append("df.columns=%s" % ",".join(map(str, df.columns)))
     out.append("df.shape=%s" % str(df.shape))
+    if df.shape[0] <= n:
+        out.append(dataframe_to_str(df))
+    else:
+        # Print top and bottom of df.
+        out.append(dataframe_to_str(df.head(n)))
+        out.append("...")
+        tail_str = dataframe_to_str(df.tail(n))
+        # Remove index and columns.
+        skipped_rows = 1
+        if df.index.name:
+            skipped_rows += 1
+        tail_str = "\n".join(tail_str.split("\n")[skipped_rows:])
+        out.append(tail_str)
     # txt += "\n# dtypes=\n%s" % str(df.dtypes)
     txt = "\n".join(out)
     return txt
@@ -815,4 +826,4 @@ def config_notebook(sns_set: bool = True) -> None:
     import helpers.warnings_helpers as hwah
 
     # Force the linter to keep this import.
-    _ = hwarnings
+    _ = hwah

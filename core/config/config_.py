@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import core.config.config_ as ccocon
+"""
+
 # This file is called `config_.py` and not `config.py` to avoid circular
 # imports from the fact that also the package `core/config` can be imported as
 # `import config`.
@@ -5,17 +11,20 @@
 import collections
 import copy
 import logging
+import os
 import re
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 
-import helpers.dbg as dbg
-import helpers.dict as dct
-import helpers.introspection as intr
-import helpers.printing as pri
+import helpers.dbg as hdbg
+import helpers.dict as hdict
+import helpers.introspection as hintrosp
+import helpers.printing as hprintin
 
 _LOG = logging.getLogger(__name__)
+
+_LOG.debug = lambda *_: 0
 
 
 # Placeholder value used in configs, when configs are built in multiple phases.
@@ -56,7 +65,7 @@ class Config:
         ] = collections.OrderedDict()
         if array is not None:
             for k, v in array:
-                dbg.dassert_isinstance(k, str)
+                hdbg.dassert_isinstance(k, str)
                 self._config[k] = v
 
     def __setitem__(self, key: Key, val: Any) -> None:
@@ -67,7 +76,7 @@ class Config:
         navigated/created and the leaf value added/updated with `val`.
         """
         _LOG.debug("key=%s, config=%s", key, self)
-        if intr.is_iterable(key):
+        if hintrosp.is_iterable(key):
             head_key, tail_key = self._parse_compound_key(key)
             if not tail_key:
                 # Tuple of a single element, then set the value.
@@ -80,11 +89,11 @@ class Config:
                 subconfig = self.get(head_key, None) or self.add_subconfig(
                     head_key
                 )
-                dbg.dassert_isinstance(subconfig, Config)
+                hdbg.dassert_isinstance(subconfig, Config)
                 subconfig.__setitem__(tail_key, val)
             return
         # Base case: key is a string, config is a dict.
-        dbg.dassert(self._check_base_case(key))
+        hdbg.dassert(self._check_base_case(key))
         self._config[key] = val  # type: ignore
 
     def __getitem__(self, key: Key) -> Any:
@@ -104,7 +113,7 @@ class Config:
         """
         _LOG.debug("key=%s, config=%s", key, self)
         # Check if the key is nested.
-        if intr.is_iterable(key):
+        if hintrosp.is_iterable(key):
             head_key, tail_key = self._parse_compound_key(key)
             if not tail_key:
                 # Tuple of a single element, then return the value.
@@ -126,7 +135,7 @@ class Config:
                     raise KeyError(f"tail_key='{tail_key}' not in '{subconfig}'")
             return ret
         # Base case: key is a string, config is a dict.
-        dbg.dassert(self._check_base_case(key))
+        hdbg.dassert(self._check_base_case(key))
         if key not in self._config:
             raise KeyError(f"key='{key}' not in '{list(self._config.keys())}'")
         ret = self._config[key]  # type: ignore
@@ -159,7 +168,7 @@ class Config:
         for k, v in self._config.items():
             if isinstance(v, Config):
                 txt_tmp = str(v)
-                txt.append("%s:\n%s" % (k, pri.indent(txt_tmp)))
+                txt.append("%s:\n%s" % (k, hprintin.indent(txt_tmp)))
             else:
                 txt.append("%s: %s" % (k, v))
         ret = "\n".join(txt)
@@ -192,7 +201,7 @@ class Config:
         return len(self._config)
 
     def add_subconfig(self, key: str) -> "Config":
-        dbg.dassert_not_in(key, self._config.keys(), "Key already present")
+        hdbg.dassert_not_in(key, self._config.keys(), "Key already present")
         config = Config()
         self._config[key] = config
         return config
@@ -224,7 +233,7 @@ class Config:
             _LOG.debug("e=%s", e)
             if args:
                 # There should be only one element.
-                dbg.dassert_eq(
+                hdbg.dassert_eq(
                     len(args),
                     1,
                     "There should be only one parameter passed, instead there is %s",
@@ -249,19 +258,25 @@ class Config:
         return copy.deepcopy(self)
 
     @classmethod
-    def from_python(cls, code: str) -> "Config":
+    def from_python(cls, code: str) -> Optional["Config"]:
         """
         Create an object from the code returned by `to_python()`.
         """
-        dbg.dassert_isinstance(code, str)
-        # eval function need unknown globals to be set.
-        val = eval(code, {"nan": np.nan, "Config": Config})
-        dbg.dassert_isinstance(val, Config)
+        hdbg.dassert_isinstance(code, str)
+        try:
+            # eval function need unknown globals to be set.
+            val = eval(code, {"nan": np.nan, "Config": Config})
+            hdbg.dassert_isinstance(val, Config)
+        except SyntaxError as e:
+            _LOG.error("Error deserializing: %s", str(e))
+            return None
         return val  # type: ignore
 
     def to_python(self, check: bool = True) -> str:
         """
         Return python code that builds, when executed, the current object.
+
+        :param check: check that the Config can be serialized/deserialized correctly.
         """
         config_as_str = str(self.to_dict())
         # We don't need `cconfig.` since we are inside the config module.
@@ -270,8 +285,21 @@ class Config:
             # Check that the object can be reconstructed.
             config_tmp = Config.from_python(config_as_str)
             # Compare.
-            dbg.dassert_eq(str(self), str(config_tmp))
+            hdbg.dassert_eq(str(self), str(config_tmp))
         return config_as_str
+
+    @classmethod
+    def from_env_var(cls, env_var: str) -> Optional["Config"]:
+        if env_var in os.environ:
+            python_code = os.environ[env_var]
+            config = cls.from_python(python_code)
+        else:
+            _LOG.warning(
+                "Environment variable '%s' not defined: no config retrieved",
+                env_var,
+            )
+            config = None
+        return config
 
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -289,12 +317,21 @@ class Config:
                 dict_[k] = v
         return dict_
 
+    def is_serializable(self) -> bool:
+        """
+        Make sure the config can be serialized and deserialized correctly.
+        """
+        code = self.to_python(check=False)
+        config = self.from_python(code)
+        ret = str(config) == str(self)
+        return ret
+
     def flatten(self) -> Dict[Tuple[str], Any]:
         """
         Key leaves by tuple representing path to leaf.
         """
         dict_ = self._to_dict_except_for_leaves()
-        iter_ = dct.get_nested_dict_iterator(dict_)
+        iter_ = hdict.get_nested_dict_iterator(dict_)
         return collections.OrderedDict(iter_)
 
     def check_params(self, keys: Iterable[str]) -> None:
@@ -336,23 +373,23 @@ class Config:
         """
         raise ValueError(
             "Invalid %s='%s' in config=\n%s"
-            % (key, self._config[key], pri.indent(str(self)))
+            % (key, self._config[key], hprintin.indent(str(self)))
         )
 
     @staticmethod
     def _parse_compound_key(key: Key) -> Tuple[str, Iterable[str]]:
-        dbg.dassert(intr.is_iterable(key), "Key='%s' is not iterable", key)
+        hdbg.dassert(hintrosp.is_iterable(key), "Key='%s' is not iterable", key)
         head_key, tail_key = key[0], key[1:]  # type: ignore
         _LOG.debug(
             "key='%s' -> head_key='%s', tail_key='%s'", key, head_key, tail_key
         )
-        dbg.dassert_isinstance(head_key, str, "Keys can only be string")
+        hdbg.dassert_isinstance(head_key, str, "Keys can only be string")
         return head_key, tail_key
 
     def _check_base_case(self, key: Key) -> bool:
         _LOG.debug("key=%s", key)
-        dbg.dassert_isinstance(key, str, "Keys can only be string")
-        dbg.dassert_isinstance(self._config, dict)
+        hdbg.dassert_isinstance(key, str, "Keys can only be string")
+        hdbg.dassert_isinstance(self._config, dict)
         return True
 
     def _to_dict_except_for_leaves(self) -> Dict[str, Any]:

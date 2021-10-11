@@ -9,12 +9,12 @@ from typing import Dict, List
 import invoke
 import pytest
 
-import helpers.git as git
+import helpers.git as hgit
 import helpers.io_ as hio
-import helpers.lib_tasks as ltasks
-import helpers.printing as hprint
-import helpers.system_interaction as hsinte
-import helpers.unit_test as hut
+import helpers.lib_tasks as hlitas
+import helpers.printing as hprintin
+import helpers.system_interaction as hsyint
+import helpers.unit_test as huntes
 
 _LOG = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ def _get_default_params() -> Dict[str, str]:
     return default_params
 
 
-class _LibTasksTestCase(hut.TestCase):
+class _LibTasksTestCase(huntes.TestCase):
     """
     Test class injecting default parameters in the `lib_tasks` singleton on
     `setUp()` and cleaning up the singleton on `tearDown()`.
@@ -42,10 +42,10 @@ class _LibTasksTestCase(hut.TestCase):
     def setUp(self) -> None:
         super().setUp()
         params = _get_default_params()
-        ltasks.set_default_params(params)
+        hlitas.set_default_params(params)
 
     def tearDown(self) -> None:
-        ltasks.reset_default_params()
+        hlitas.reset_default_params()
         super().tearDown()
 
 
@@ -59,7 +59,7 @@ def _build_mock_context_returning_ok() -> invoke.MockContext:
     return ctx
 
 
-class _CheckDryRunTestCase(hut.TestCase):
+class _CheckDryRunTestCase(huntes.TestCase):
     """
     Test class running a invoke target with/without dry-run and checking that
     the issued commands are what is expected.
@@ -70,7 +70,7 @@ class _CheckDryRunTestCase(hut.TestCase):
         `check_string()` the sequence of commands issued in the context.
         """
         act = "\n".join(map(str, ctx.run.mock_calls))
-        act = hprint.remove_non_printable_chars(act)
+        act = hprintin.remove_non_printable_chars(act)
         self.check_string(act)
 
     def _check_output(self, target: str, check: bool = True) -> None:
@@ -80,7 +80,7 @@ class _CheckDryRunTestCase(hut.TestCase):
         """
         ctx = _build_mock_context_returning_ok()
         # pylint: disable=exec-used
-        exec(f"ltasks.{target}")
+        exec(f"hlitas.{target}")
         # pylint: enable=exec-used
         # Check the outcome.
         if check:
@@ -98,10 +98,10 @@ def _gh_login() -> None:
         # If the env var exists and it's not None.
         _LOG.warning("Using env var '%s' to log in GitHub", env_var)
         cmd = "echo $GH_ACTION_ACCESS_TOKEN | gh auth login --with-token"
-        hsinte.system(cmd)
+        hsyint.system(cmd)
     # Check that we are logged in.
     cmd = "gh auth status"
-    hsinte.system(cmd)
+    hsyint.system(cmd)
 
 
 # #############################################################################
@@ -109,7 +109,7 @@ def _gh_login() -> None:
 
 # TODO(gp): We should introspect `lib_tasks.py` and find all the functions decorated
 #  with `@tasks`, instead of maintaining a (incomplete) list of tasks.
-class TestDryRunTasks1(hut.TestCase):
+class TestDryRunTasks1(huntes.TestCase):
     """
     - Run invoke in dry-run mode from command line
     - Compare the output to the golden outcomes
@@ -132,7 +132,7 @@ class TestDryRunTasks1(hut.TestCase):
         self._dry_run(target)
 
     @pytest.mark.skipif(
-        hsinte.is_inside_ci(), reason="In CI the output is different"
+        hsyint.is_inside_ci(), reason="In CI the output is different"
     )
     def test_docker_images_ls_repo(self) -> None:
         target = "docker_images_ls_repo"
@@ -175,8 +175,8 @@ class TestDryRunTasks1(hut.TestCase):
         """
         opts = "--dry" if dry_run else ""
         cmd = f"invoke {opts} {target} | grep -v INFO | grep -v '>>ENV<<:'"
-        _, act = hsinte.system_to_string(cmd)
-        act = hprint.remove_non_printable_chars(act)
+        _, act = hsyint.system_to_string(cmd)
+        act = hprintin.remove_non_printable_chars(act)
         self.check_string(act)
 
 
@@ -268,7 +268,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "gh_issue_title(ctx, 1)"
         self._check_output(target)
 
-    @pytest.mark.skipif(not git.is_amp(), reason="Only run in amp")
+    @pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
     def test_gh_workflow_list(self) -> None:
         _gh_login()
         target = "gh_workflow_list(ctx, branch='master')"
@@ -281,7 +281,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
 
     def test_git_branch_files(self) -> None:
         # This test needs a reference to Git master branch.
-        git.fetch_origin_master_if_needed()
+        hgit.fetch_origin_master_if_needed()
         #
         target = "git_branch_files(ctx)"
         self._check_output(target)
@@ -353,7 +353,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     # #########################################################################
 
     @pytest.mark.skipif(
-        hsinte.is_inside_ci(), reason="In CI the output is different"
+        hsyint.is_inside_ci(), reason="In CI the output is different"
     )
     def test_docker_login(self) -> None:
         """
@@ -368,7 +368,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
                 re.compile("^eval"): invoke.Result(exited=0),
             }
         )
-        ltasks.docker_login(ctx)
+        hlitas.docker_login(ctx)
         # Check the outcome.
         self._check_calls(ctx)
 
@@ -391,7 +391,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
 # #############################################################################
 
 
-class TestLibTasks1(hut.TestCase):
+class TestLibTasks1(huntes.TestCase):
     """
     Test some auxiliary functions, e.g., `_get_build_tag`,
     `_get_gh_issue_title()`.
@@ -399,37 +399,43 @@ class TestLibTasks1(hut.TestCase):
 
     def test_get_build_tag1(self) -> None:
         code_ver = "amp-1.0.0"
-        build_tag = ltasks._get_build_tag(code_ver)
+        build_tag = hlitas._get_build_tag(code_ver)
         _LOG.debug("build_tag=%s", build_tag)
 
     def test_get_gh_issue_title1(self) -> None:
         _gh_login()
         issue_id = 1
         repo = "amp"
-        act = ltasks._get_gh_issue_title(issue_id, repo)
-        exp = "AmpTask1_Bridge_Python_and_R"
-        self.assert_equal(act, exp)
+        act = hlitas._get_gh_issue_title(issue_id, repo)
+        exp = (
+            "AmpTask1_Bridge_Python_and_R",
+            "https://github.com/alphamatic/amp/issues/1",
+        )
+        self.assert_equal(str(act), str(exp))
 
     # TODO(gp): This test should be moved to `dev_tools`.
     def test_get_gh_issue_title3(self) -> None:
         _gh_login()
         issue_id = 1
         repo = "dev_tools"
-        act = ltasks._get_gh_issue_title(issue_id, repo)
-        exp = "DevToolsTask1_Migration_from_amp"
-        self.assert_equal(act, exp)
+        act = hlitas._get_gh_issue_title(issue_id, repo)
+        exp = (
+            "DevToolsTask1_Migration_from_amp",
+            "https://github.com/alphamatic/dev_tools/issues/1",
+        )
+        self.assert_equal(str(act), str(exp))
 
     def test_get_gh_issue_title4(self) -> None:
         _gh_login()
         issue_id = 1
         repo = "current"
-        _ = ltasks._get_gh_issue_title(issue_id, repo)
+        _ = hlitas._get_gh_issue_title(issue_id, repo)
 
 
 # #############################################################################
 
 
-class TestLibTasksRemoveSpaces1(hut.TestCase):
+class TestLibTasksRemoveSpaces1(huntes.TestCase):
     def test1(self) -> None:
         txt = r"""
             IMAGE=*****.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
@@ -441,7 +447,7 @@ class TestLibTasksRemoveSpaces1(hut.TestCase):
                 --entrypoint bash \
                 user_space
             """
-        act = ltasks._to_single_line_cmd(txt)
+        act = hlitas._to_single_line_cmd(txt)
         exp = (
             "IMAGE=*****.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev"
             " docker-compose --file"
@@ -460,7 +466,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
     """
 
     @pytest.mark.skipif(
-        not git.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
+        not hgit.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
     )
     def test_docker_bash1(self) -> None:
         """
@@ -472,7 +478,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         service_name = "app"
         entrypoint = False
         print_docker_config = False
-        act = ltasks._get_docker_cmd(
+        act = hlitas._get_docker_cmd(
             stage,
             base_image,
             cmd,
@@ -480,7 +486,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             entrypoint=entrypoint,
             print_docker_config=print_docker_config,
         )
-        act = hut.purify_txt_from_client(act)
+        act = huntes.purify_txt_from_client(act)
         exp = r"""
         IMAGE=*****/amp_test:dev \
             docker-compose \
@@ -495,7 +501,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         self.assert_equal(act, exp, fuzzy_match=True)
 
     @pytest.mark.skipif(
-        not git.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
+        not hgit.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
     )
     def test_docker_bash2(self) -> None:
         """
@@ -505,10 +511,10 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         base_image = ""
         cmd = "bash"
         print_docker_config = False
-        act = ltasks._get_docker_cmd(
+        act = hlitas._get_docker_cmd(
             stage, base_image, cmd, print_docker_config=print_docker_config
         )
-        act = hut.purify_txt_from_client(act)
+        act = huntes.purify_txt_from_client(act)
         exp = r"""
         IMAGE=*****/amp_test:local \
             docker-compose \
@@ -523,7 +529,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         self.assert_equal(act, exp, fuzzy_match=True)
 
     @pytest.mark.skipif(
-        not git.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
+        not hgit.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
     )
     def test_docker_bash3(self) -> None:
         """
@@ -534,14 +540,14 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         cmd = "bash"
         extra_env_vars = ["PORT=9999", "SKIP_RUN=1"]
         print_docker_config = False
-        act = ltasks._get_docker_cmd(
+        act = hlitas._get_docker_cmd(
             stage,
             base_image,
             cmd,
             extra_env_vars=extra_env_vars,
             print_docker_config=print_docker_config,
         )
-        act = hut.purify_txt_from_client(act)
+        act = huntes.purify_txt_from_client(act)
         exp = r"""
         IMAGE=*****/amp_test:local \
         PORT=9999 \
@@ -558,7 +564,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         self.assert_equal(act, exp, fuzzy_match=True)
 
     @pytest.mark.skipif(
-        not git.is_in_amp_as_supermodule(),
+        not hgit.is_in_amp_as_supermodule(),
         reason="Only run in amp as supermodule",
     )
     def test_docker_bash4(self) -> None:
@@ -567,14 +573,14 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         cmd = "bash"
         entrypoint = False
         print_docker_config = False
-        act = ltasks._get_docker_cmd(
+        act = hlitas._get_docker_cmd(
             stage,
             base_image,
             cmd,
             entrypoint=entrypoint,
             print_docker_config=print_docker_config,
         )
-        act = hut.purify_txt_from_client(act)
+        act = huntes.purify_txt_from_client(act)
         exp = r"""
         IMAGE=*****/amp_test:dev \
             docker-compose \
@@ -589,7 +595,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         self.assert_equal(act, exp, fuzzy_match=True)
 
     @pytest.mark.skipif(
-        not git.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
+        not hgit.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
     )
     def test_docker_jupyter1(self) -> None:
         stage = "dev"
@@ -597,14 +603,14 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         port = 9999
         self_test = True
         print_docker_config = False
-        act = ltasks._get_docker_jupyter_cmd(
+        act = hlitas._get_docker_jupyter_cmd(
             stage,
             base_image,
             port,
             self_test,
             print_docker_config=print_docker_config,
         )
-        act = hut.purify_txt_from_client(act)
+        act = huntes.purify_txt_from_client(act)
         exp = r"""
         IMAGE=*****/amp_test:dev \
         PORT=9999 \
@@ -623,7 +629,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
 # #############################################################################
 
 
-class Test_build_run_command_line1(hut.TestCase):
+class Test_build_run_command_line1(huntes.TestCase):
     def test_run_fast_tests1(self) -> None:
         """
         Basic run fast tests.
@@ -637,7 +643,7 @@ class Test_build_run_command_line1(hut.TestCase):
         tee_to_file = False
         #
         skipped_tests = "not slow and not superslow"
-        act = ltasks._build_run_command_line(
+        act = hlitas._build_run_command_line(
             pytest_opts,
             pytest_mark,
             dir_name,
@@ -664,7 +670,7 @@ class Test_build_run_command_line1(hut.TestCase):
         tee_to_file = False
         #
         skipped_tests = "not slow and not superslow"
-        act = ltasks._build_run_command_line(
+        act = hlitas._build_run_command_line(
             pytest_opts,
             pytest_mark,
             dir_name,
@@ -681,7 +687,7 @@ class Test_build_run_command_line1(hut.TestCase):
         )
         self.assert_equal(act, exp)
 
-    @pytest.mark.skipif(not git.is_amp(), reason="Only run in amp")
+    @pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
     def test_run_fast_tests4(self) -> None:
         """
         Select pytest_mark.
@@ -689,27 +695,27 @@ class Test_build_run_command_line1(hut.TestCase):
         scratch_space = self.get_scratch_space(use_absolute_path=False)
         dir_name = os.path.join(scratch_space, "test")
         file_dict = {
-            "test_this.py": hprint.dedent(
+            "test_this.py": hprintin.dedent(
                 """
                     foo
 
-                    class TestHelloWorld(hut.TestCase):
+                    class TestHelloWorld(huntes.TestCase):
                         bar
                     """
             ),
-            "test_that.py": hprint.dedent(
+            "test_that.py": hprintin.dedent(
                 """
                     foo
                     baz
 
                     @pytest.mark.no_container
-                    class TestHello_World(hut.):
+                    class TestHello_World(huntes.):
                         bar
                     """
             ),
         }
         incremental = True
-        hut.create_test_dir(dir_name, incremental, file_dict)
+        huntes.create_test_dir(dir_name, incremental, file_dict)
         #
         pytest_opts = ""
         pytest_mark = "no_container"
@@ -720,7 +726,7 @@ class Test_build_run_command_line1(hut.TestCase):
         tee_to_file = False
         #
         skipped_tests = ""
-        act = ltasks._build_run_command_line(
+        act = hlitas._build_run_command_line(
             pytest_opts,
             pytest_mark,
             dir_name,
@@ -749,7 +755,7 @@ class Test_build_run_command_line1(hut.TestCase):
         tee_to_file = True
         #
         skipped_tests = "not slow and not superslow"
-        act = ltasks._build_run_command_line(
+        act = hlitas._build_run_command_line(
             pytest_opts,
             pytest_mark,
             dir_name,
@@ -767,7 +773,7 @@ class Test_build_run_command_line1(hut.TestCase):
 # #############################################################################
 
 
-class TestLibTasksRunTests1(hut.TestCase):
+class TestLibTasksRunTests1(huntes.TestCase):
     """
     Test `_find_test_files()`, `_find_test_decorator()`.
     """
@@ -776,7 +782,7 @@ class TestLibTasksRunTests1(hut.TestCase):
         """
         Find all the test files in the current dir.
         """
-        files = ltasks._find_test_files()
+        files = hlitas._find_test_files()
         # For sure there are more than 1 test files: at least this one.
         self.assertGreater(len(files), 1)
 
@@ -784,8 +790,8 @@ class TestLibTasksRunTests1(hut.TestCase):
         """
         Find all the test files from the top of the super module root.
         """
-        git_root = git.get_client_root(super_module=True)
-        files = ltasks._find_test_files(git_root)
+        git_root = hgit.get_client_root(super_module=True)
+        files = hlitas._find_test_files(git_root)
         # For sure there are more than 1 test files: at least this one.
         self.assertGreater(len(files), 1)
 
@@ -793,11 +799,11 @@ class TestLibTasksRunTests1(hut.TestCase):
         """
         Find the current test class.
         """
-        git_root = git.get_client_root(super_module=True)
-        file_names = ltasks._find_test_files(git_root)
+        git_root = hgit.get_client_root(super_module=True)
+        file_names = hlitas._find_test_files(git_root)
         #
-        file_names = ltasks._find_test_class("TestLibTasksRunTests1", file_names)
-        act = hut.purify_file_names(file_names)
+        file_names = hlitas._find_test_class("TestLibTasksRunTests1", file_names)
+        act = huntes.purify_file_names(file_names)
         exp = ["helpers/test/test_lib_tasks.py::TestLibTasksRunTests1"]
         self.assert_equal(str(act), str(exp))
 
@@ -807,8 +813,8 @@ class TestLibTasksRunTests1(hut.TestCase):
         """
         file_names = [__file__]
         #
-        file_names = ltasks._find_test_class("TestLibTasksRunTests1", file_names)
-        act = hut.purify_file_names(file_names)
+        file_names = hlitas._find_test_class("TestLibTasksRunTests1", file_names)
+        act = huntes.purify_file_names(file_names)
         exp = ["helpers/test/test_lib_tasks.py::TestLibTasksRunTests1"]
         self.assert_equal(str(act), str(exp))
 
@@ -819,34 +825,34 @@ class TestLibTasksRunTests1(hut.TestCase):
         scratch_space = self.get_scratch_space()
         dir_name = os.path.join(scratch_space, "test")
         file_dict = {
-            "test_this.py": hprint.dedent(
+            "test_this.py": hprintin.dedent(
                 """
                     foo
 
-                    class TestHelloWorld(hut.TestCase):
+                    class TestHelloWorld(huntes.TestCase):
                         bar
                     """
             ),
-            "test_that.py": hprint.dedent(
+            "test_that.py": hprintin.dedent(
                 """
                     foo
                     baz
 
-                    class TestHello_World(hut.):
+                    class TestHello_World(huntes.):
                         bar
                     """
             ),
         }
         incremental = True
-        hut.create_test_dir(dir_name, incremental, file_dict)
+        huntes.create_test_dir(dir_name, incremental, file_dict)
         #
-        file_names = ltasks._find_test_files(dir_name)
+        file_names = hlitas._find_test_files(dir_name)
         act_file_names = [os.path.relpath(d, scratch_space) for d in file_names]
         exp_file_names = ["test/test_that.py", "test/test_this.py"]
         self.assert_equal(str(act_file_names), str(exp_file_names))
         #
-        act = ltasks._find_test_class("TestHelloWorld", file_names)
-        act = hut.purify_file_names(act)
+        act = hlitas._find_test_class("TestHelloWorld", file_names)
+        act = huntes.purify_file_names(act)
         exp = [
             "helpers/test/TestLibTasksRunTests1.test_find_test_class3/tmp.scratch/"
             "test/test_this.py::TestHelloWorld"
@@ -860,45 +866,45 @@ class TestLibTasksRunTests1(hut.TestCase):
         scratch_space = self.get_scratch_space()
         dir_name = os.path.join(scratch_space, "test")
         file_dict = {
-            "test_this.py": hprint.dedent(
+            "test_this.py": hprintin.dedent(
                 """
                     foo
 
-                    class TestHelloWorld(hut.TestCase):
+                    class TestHelloWorld(huntes.TestCase):
                         bar
                     """
             ),
-            "test_that.py": hprint.dedent(
+            "test_that.py": hprintin.dedent(
                 """
                     foo
                     baz
 
                     @pytest.mark.no_container
-                    class TestHello_World(hut.):
+                    class TestHello_World(huntes.):
                         bar
                     """
             ),
         }
         incremental = True
-        hut.create_test_dir(dir_name, incremental, file_dict)
+        huntes.create_test_dir(dir_name, incremental, file_dict)
         #
-        file_names = ltasks._find_test_files(dir_name)
-        act = ltasks._find_test_decorator("no_container", file_names)
-        act = hut.purify_file_names(act)
+        file_names = hlitas._find_test_files(dir_name)
+        act = hlitas._find_test_decorator("no_container", file_names)
+        act = huntes.purify_file_names(act)
         exp = [
             "helpers/test/TestLibTasksRunTests1.test_find_test_decorator1/"
             "tmp.scratch/test/test_that.py"
         ]
         self.assert_equal(str(act), str(exp))
 
-    @pytest.mark.skipif(not git.is_amp(), reason="Only run in amp")
+    @pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
     def test_find_test_decorator2(self) -> None:
         """
         Find test functions in the "no_container" test list.
         """
         file_names = ["test/test_tasks.py"]
-        act = ltasks._find_test_decorator("no_container", file_names)
-        act = hut.purify_file_names(act)
+        act = hlitas._find_test_decorator("no_container", file_names)
+        act = huntes.purify_file_names(act)
         exp = ["test/test_tasks.py"]
         self.assert_equal(str(act), str(exp))
 
@@ -906,7 +912,7 @@ class TestLibTasksRunTests1(hut.TestCase):
 # #############################################################################
 
 
-class TestLibTasksGitCreatePatch1(hut.TestCase):
+class TestLibTasksGitCreatePatch1(huntes.TestCase):
     """
     Test `git_create_patch()`.
     """
@@ -918,7 +924,7 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
         > invoke git_create_patch ... --branch
         """
         # This test needs a reference to Git master branch.
-        git.fetch_origin_master_if_needed()
+        hgit.fetch_origin_master_if_needed()
         #
         modified = True
         branch = False
@@ -945,7 +951,7 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
         > invoke git_create_patch ... --last-commit
         """
         # This test needs a reference to Git master branch.
-        git.fetch_origin_master_if_needed()
+        hgit.fetch_origin_master_if_needed()
         #
         modified = False
         branch = False
@@ -963,7 +969,7 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
                 --modified
         """
         # This test needs a reference to Git master branch.
-        git.fetch_origin_master_if_needed()
+        hgit.fetch_origin_master_if_needed()
         #
         ctx = _build_mock_context_returning_ok()
         mode = "tar"
@@ -971,7 +977,7 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
         branch = False
         last_commit = False
         files = __file__
-        ltasks.git_create_patch(ctx, mode, modified, branch, last_commit, files)
+        hlitas.git_create_patch(ctx, mode, modified, branch, last_commit, files)
 
     def test_diff_files_abort1(self) -> None:
         """
@@ -983,7 +989,7 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
         --last-commit option.
         """
         # This test needs a reference to Git master branch.
-        git.fetch_origin_master_if_needed()
+        hgit.fetch_origin_master_if_needed()
         #
         ctx = _build_mock_context_returning_ok()
         mode = "diff"
@@ -992,7 +998,7 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
         last_commit = False
         files = __file__
         with self.assertRaises(AssertionError) as cm:
-            ltasks.git_create_patch(
+            hlitas.git_create_patch(
                 ctx, mode, modified, branch, last_commit, files
             )
         act = str(cm.exception)
@@ -1012,16 +1018,16 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
         ctx = _build_mock_context_returning_ok()
         #
         mode = "tar"
-        ltasks.git_create_patch(ctx, mode, modified, branch, last_commit, files)
+        hlitas.git_create_patch(ctx, mode, modified, branch, last_commit, files)
         #
         mode = "diff"
-        ltasks.git_create_patch(ctx, mode, modified, branch, last_commit, files)
+        hlitas.git_create_patch(ctx, mode, modified, branch, last_commit, files)
 
 
 # #############################################################################
 
 
-class Test_parse_linter_output1(hut.TestCase):
+class Test_parse_linter_output1(huntes.TestCase):
     """
     Test `_parse_linter_output()`.
     """
@@ -1066,7 +1072,7 @@ doc_formatter............................................................Passed
 pylint...................................................................
 """
         # pylint: enable=line-too-long
-        act = ltasks._parse_linter_output(txt)
+        act = hlitas._parse_linter_output(txt)
         # pylint: disable=line-too-long
         exp = r"""
 core/dataflow/nodes.py:601:9:[flake8] F821 undefined name '_check_col_names'
@@ -1135,7 +1141,7 @@ core/dataflow/builders.py:195: error: Argument 2 of "get_dag" is incompatible wi
 core/dataflow/builders.py:195: note: This violates the Liskov substitution principle
         """
         # pylint: enable=line-too-long
-        act = ltasks._parse_linter_output(txt)
+        act = hlitas._parse_linter_output(txt)
         # pylint: disable=line-too-long
         exp = r"""
 core/dataflow/builders.py:104:[pylint] [R1711(useless-return), DagBuilder.get_column_to_tags_mapping] Useless return at end of function or method
@@ -1151,7 +1157,7 @@ core/dataflow/builders.py:195:[pylint] [W0221(arguments-differ), ArmaReturnsBuil
 # #############################################################################
 
 
-class Test_find_check_string_output1(hut.TestCase):
+class Test_find_check_string_output1(huntes.TestCase):
     def test1(self) -> None:
         """
         Test `find_check_string_output()` by searching the `check_string` of
@@ -1195,7 +1201,7 @@ A fake check_string output to use for test2
         as_python = True
         # We don't want to copy but just print.
         pbcopy = False
-        act = ltasks.find_check_string_output(
+        act = hlitas.find_check_string_output(
             ctx, class_name, method_name, as_python, fuzzy_match, pbcopy
         )
         # Check that it matches exactly.
@@ -1205,7 +1211,7 @@ A fake check_string output to use for test2
 # #############################################################################
 
 
-class Test_get_files_to_process1(hut.TestCase):
+class Test_get_files_to_process1(huntes.TestCase):
     """
     We can't check the outcome so we just execute the code.
     """
@@ -1221,7 +1227,7 @@ class Test_get_files_to_process1(hut.TestCase):
         files_from_user = ""
         mutually_exclusive = True
         remove_dirs = True
-        _ = ltasks._get_files_to_process(
+        _ = hlitas._get_files_to_process(
             modified,
             branch,
             last_commit,
@@ -1232,7 +1238,7 @@ class Test_get_files_to_process1(hut.TestCase):
         )
 
     @pytest.mark.skipif(
-        git.get_branch_name() != "master",
+        hgit.get_branch_name() != "master",
         reason="This test makes sense for a branch",
     )
     def test_branch1(self) -> None:
@@ -1240,7 +1246,7 @@ class Test_get_files_to_process1(hut.TestCase):
         Retrieved files modified in this client.
         """
         # This test needs a reference to Git master branch.
-        git.fetch_origin_master_if_needed()
+        hgit.fetch_origin_master_if_needed()
         #
         modified = False
         branch = True
@@ -1249,7 +1255,7 @@ class Test_get_files_to_process1(hut.TestCase):
         files_from_user = ""
         mutually_exclusive = True
         remove_dirs = True
-        _ = ltasks._get_files_to_process(
+        _ = hlitas._get_files_to_process(
             modified,
             branch,
             last_commit,
@@ -1270,7 +1276,7 @@ class Test_get_files_to_process1(hut.TestCase):
         files_from_user = ""
         mutually_exclusive = True
         remove_dirs = True
-        _ = ltasks._get_files_to_process(
+        _ = hlitas._get_files_to_process(
             modified,
             branch,
             last_commit,
@@ -1291,7 +1297,7 @@ class Test_get_files_to_process1(hut.TestCase):
         files_from_user = __file__
         mutually_exclusive = True
         remove_dirs = True
-        files = ltasks._get_files_to_process(
+        files = hlitas._get_files_to_process(
             modified,
             branch,
             last_commit,
@@ -1314,7 +1320,7 @@ class Test_get_files_to_process1(hut.TestCase):
         mutually_exclusive = True
         remove_dirs = True
         with self.assertRaises(AssertionError) as cm:
-            ltasks._get_files_to_process(
+            hlitas._get_files_to_process(
                 modified,
                 branch,
                 last_commit,
@@ -1346,7 +1352,7 @@ class Test_get_files_to_process1(hut.TestCase):
         mutually_exclusive = True
         remove_dirs = True
         with self.assertRaises(AssertionError) as cm:
-            ltasks._get_files_to_process(
+            hlitas._get_files_to_process(
                 modified,
                 branch,
                 last_commit,
@@ -1377,7 +1383,7 @@ class Test_get_files_to_process1(hut.TestCase):
         files_from_user = __file__
         mutually_exclusive = False
         remove_dirs = True
-        files = ltasks._get_files_to_process(
+        files = hlitas._get_files_to_process(
             modified,
             branch,
             last_commit,
@@ -1392,7 +1398,7 @@ class Test_get_files_to_process1(hut.TestCase):
 # #############################################################################
 
 
-class Test_pytest_failed1(hut.TestCase):
+class Test_pytest_failed1(huntes.TestCase):
     def test_tests1(self) -> None:
         file_name = self._build_pytest_file1()
         target_type = "tests"
@@ -1535,7 +1541,7 @@ class Test_pytest_failed1(hut.TestCase):
     # #########################################################################
 
     def _build_pytest_file_helper(self, txt: str) -> str:
-        txt = hprint.dedent(txt)
+        txt = hprintin.dedent(txt)
         file_name = os.path.join(self.get_scratch_space(), "input.txt")
         hio.to_file(file_name, txt)
         return file_name
@@ -1615,7 +1621,7 @@ class Test_pytest_failed1(hut.TestCase):
         ctx = _build_mock_context_returning_ok()
         # It is a dummy parameter when `file_name` is specified.
         use_frozen_list = True
-        act = ltasks.pytest_failed(
+        act = hlitas.pytest_failed(
             ctx,
             use_frozen_list=use_frozen_list,
             target_type=target_type,

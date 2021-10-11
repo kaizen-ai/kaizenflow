@@ -9,8 +9,8 @@ import csv
 import logging
 from typing import List, Tuple
 
-import helpers.dbg as dbg
-import helpers.printing as hprint
+import helpers.dbg as hdbg
+import helpers.printing as hprintin
 
 _LOG = logging.getLogger(__name__)
 
@@ -42,10 +42,10 @@ class Table:
         table_as_str = [[str(cell) for cell in row] for row in table]
         # Find the length of each columns.
         lengths = [max(map(len, col)) for col in zip(*table_as_str)]
-        _LOG.debug(hprint.to_str("lengths"))
+        _LOG.debug(hprintin.to_str("lengths"))
         # Compute format for the columns.
         fmt = " ".join("{{:{}}} |".format(x) for x in lengths)
-        _LOG.debug(hprint.to_str("fmt"))
+        _LOG.debug(hprintin.to_str("fmt"))
         # Add the row separating the column names.
         row_sep = ["-" * lenght for lenght in lengths]
         table.insert(1, row_sep)
@@ -68,7 +68,7 @@ class Table:
 
     @classmethod
     def from_text(cls, cols: List[str], txt: str, delimiter: str) -> "Table":
-        dbg.dassert_isinstance(txt, str)
+        hdbg.dassert_isinstance(txt, str)
         table = [
             line for line in csv.reader(txt.split("\n"), delimiter=delimiter)
         ]
@@ -88,11 +88,11 @@ class Table:
         """
         _LOG.debug("self=\n%s", repr(self))
         # Filter the rows.
-        dbg.dassert_in(field, self._col_to_idx.keys())
+        hdbg.dassert_in(field, self._col_to_idx.keys())
         rows_filter = [
             row for row in self._table if row[self._col_to_idx[field]] == value
         ]
-        _LOG.debug(hprint.to_str("rows_filter"))
+        _LOG.debug(hprintin.to_str("rows_filter"))
         # Build the resulting table.
         table_filter = Table(rows_filter, self._cols)
         _LOG.debug("table_filter=\n%s", repr(table_filter))
@@ -104,15 +104,15 @@ class Table:
         Check that the table is wellformed (e.g., the list of lists is
         rectangular).
         """
-        dbg.dassert_isinstance(table, list)
-        dbg.dassert_isinstance(cols, list)
-        dbg.dassert_no_duplicates(cols)
+        hdbg.dassert_isinstance(table, list)
+        hdbg.dassert_isinstance(cols, list)
+        hdbg.dassert_no_duplicates(cols)
         # Columns have no leading or trailing spaces.
         for col in cols:
-            dbg.dassert_eq(col, col.rstrip().lstrip())
+            hdbg.dassert_eq(col, col.rstrip().lstrip())
         # Check that the list of lists is rectangular.
         for row in table:
-            dbg.dassert_isinstance(table, list)
-            dbg.dassert_eq(
+            hdbg.dassert_isinstance(table, list)
+            hdbg.dassert_eq(
                 len(row), len(cols), "Invalid row='%s' for cols='%s'", row, cols
             )

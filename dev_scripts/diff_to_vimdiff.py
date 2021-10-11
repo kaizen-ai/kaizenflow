@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-"""
-Transform the output of `diff -r --brief dir1 dir2` into a script using
+""" Transform the output of `diff -r --brief dir1 dir2` into a script using
 vimdiff.
 
 # To clean up the crap in the dirs:
@@ -29,48 +28,58 @@ _LOG = logging.getLogger(__name__)
 
 def _diff(dir1: str, dir2: str) -> str:
     """
-    Run a diff command between the two dirs and save the output in a file.
+    Diff the file list between two dirs, run `diff -r --brief` and save the
+    output in a file.
+
+    :return: path of the file with the output of `diff -r --brief`
     """
-    _LOG.info(
-        "\n%s",
-        prnt.frame("Comparing file list in dirs '%s' vs '%s'" % (dir1, dir2)),
-    )
+    print(prnt.frame("Compare file list in dirs '%s' vs '%s'" % (dir1, dir2)))
     dbg.dassert_exists(dir1)
     dbg.dassert_exists(dir2)
     # Find all the files in both dirs.
     cmd = ""
-    cmd += '(cd %s && find %s -name "*" | sort >/tmp/dir1) && ' % (
-        os.path.dirname(dir1),
-        os.path.basename(dir1),
+    remove_cmd = "| grep -v .git | grep -v .idea | grep -v '[/ ]tmp.'"
+    cmd += '(cd %s && find %s -name "*" %s | sort >/tmp/dir1) && ' % (
+        #os.path.dirname(dir1),
+        #os.path.basename(dir1),
+        dir1,
+        dir2,
+        remove_cmd,
     )
-    cmd += '(cd %s && find %s -name "*" | sort >/tmp/dir2)' % (
-        os.path.dirname(dir2),
-        os.path.basename(dir2),
+    cmd += '(cd %s && find %s -name "*" %s | sort >/tmp/dir2)' % (
+        #os.path.dirname(dir2),
+        #os.path.basename(dir2),
+        dir1,
+        dir2,
+        remove_cmd,
     )
+    print(cmd)
     si.system(cmd, abort_on_error=True)
     # Compare the file listings.
-    cmd = "sdiff /tmp/dir1 /tmp/dir2"
-    si.system(cmd, abort_on_error=False, suppress_output=False)
-    #
-    cmd = "vimdiff /tmp/dir1 /tmp/dir2"
+    opts = []
+    opts.append("--suppress-common-lines")
+    opts.append("--expand-tabs")
+    opts = " ".join(opts)
+    cmd = f"sdiff {opts} /tmp/dir1 /tmp/dir2"
     print("# Diff file listing with:\n> " + cmd)
+    si.system(cmd, abort_on_error=False, suppress_output=False)
+    # 
+    print(prnt.frame("Diff dirs '%s' vs '%s'" % (dir1, dir2)))
     dst_file = "./tmp.diff_file_listings.txt"
-    cmd = "diff --brief -r %s %s >%s" % (dir1, dir2, dst_file)
+    cmd = f"diff --brief -r {dir1} {dir2} {remove_cmd} >{dst_file}"
     # We don't abort since rc != 0 in case of differences, which is a valid outcome.
     si.system(cmd, abort_on_error=False)
-    print(
-        "# To see the original file with the listing difference:\n> vi %s"
-        % dst_file
-    )
+    cmd = f"cat {dst_file}"
+    print(f"# To see diff of the dirs:\n> {cmd}")
+    si.system(cmd, abort_on_error=False, suppress_output=False)
+
     input_file = dst_file
-    #
     return input_file
 
 
 def _get_symbolic_filepath(dir1: str, dir2: str, file_name: str) -> str:
     """
     Transform a path like:
-
         /Users/saggese/src/...2/amp/vendors/first_rate/utils.py
     into:
         $DIR1/amp/vendors/first_rate/utils.py
@@ -80,22 +89,27 @@ def _get_symbolic_filepath(dir1: str, dir2: str, file_name: str) -> str:
     return file_name
 
 
-def _parse_diff_output(input_file: str, dir1: str, dir2: str, args) -> None:
+# TODO(gp): We should use the `sdiff` between files, instead of the output of
+# `diff -r --brief` to compare, since the second doesn't work for dirs that are
+# present only on one side.
+def _parse_diff_output(input_file: str, dir1: str, dir2: str, args: argparse.Namespace) -> None:
     """
-    Process the output of diff and creates a script to diff the diffenrent
+    Process the output of diff and create a script to diff the diffenrent
     files.
+
+    :param input_file: the output of `diff -r --brief`, e.g.,
+        ```
+        Only in /Users/saggese/src/amp1/dataflow_amp: features
+        Only in /Users/saggese/src/amp1/dataflow_amp/real_time/test: TestRealTimeReturnPipeline1.test1
+        ```
     """
-    _LOG.info(
-        "\n%s",
-        prnt.frame("Comparing file content in dirs '%s' vs '%s'" % (dir1, dir2)),
-    )
-    output_file = args.output_file
-    # Read.
+    print(prnt.frame("Compare file content in dirs '%s' vs '%s'" % (dir1, dir2)))
+    # Read the output from `diff -r --brief`.
     dbg.dassert_exists(input_file)
     _LOG.info("Reading '%s'", input_file)
     txt = io_.from_file(input_file)
     txt = txt.split("\n")
-    # Process.
+    # Process the output.
     out = []
     for line in txt:
         _LOG.debug("# line='%s'", line)
@@ -194,8 +208,9 @@ def _parse_diff_output(input_file: str, dir1: str, dir2: str, args) -> None:
                 if skip:
                     out_line = "# " + out_line
                 out.append(out_line)
-    #
+    # Write the output.
     out = "\n".join(out)
+    output_file = args.output_file
     if output_file is None:
         print(out)
     else:
@@ -266,7 +281,7 @@ def _parse() -> argparse.ArgumentParser:
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=False)
     #
     dir1 = os.path.abspath(args.dir1)
     dir2 = os.path.abspath(args.dir2)

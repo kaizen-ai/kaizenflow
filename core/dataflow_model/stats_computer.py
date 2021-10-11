@@ -6,7 +6,7 @@ import core.stats_computer as cstats
 
 import functools
 import logging
-from typing import Optional
+from typing import Callable, List, Optional
 
 import pandas as pd
 
@@ -17,30 +17,33 @@ import helpers.timer as htimer
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): Add unit test.
 class StatsComputer:
     """
-    Allows to get particular piece of stats instead of the whole stats table.
+    Compute a particular piece of stats instead of the whole stats table.
     """
 
     def compute_time_series_stats(self, srs: pd.Series) -> pd.Series:
+        """
+        Compute statistics for a non-necessarily financial time series.
+        """
+        # List of pd.Series each with various metrics.
         stats = []
-        with htimer.TimedScope(logging.DEBUG, "Computing samplings stats") as ts:
+        with htimer.TimedScope(logging.DEBUG, "Computing samplings stats"):
             stats.append(self.compute_sampling_stats(srs))
-        with htimer.TimedScope(logging.DEBUG, "Computing summary stats") as ts:
+        with htimer.TimedScope(logging.DEBUG, "Computing summary stats"):
             stats.append(self.compute_summary_stats(srs))
-        with htimer.TimedScope(
-            logging.DEBUG, "Computing stationarity stats"
-        ) as ts:
+        with htimer.TimedScope(logging.DEBUG, "Computing stationarity stats"):
             stats.append(self.compute_stationarity_stats(srs))
-        with htimer.TimedScope(logging.DEBUG, "Computing normality stats") as ts:
+        with htimer.TimedScope(logging.DEBUG, "Computing normality stats"):
             stats.append(self.compute_normality_stats(srs))
+        # This seems to be slow.
         # stats.append(self.compute_autocorrelation_stats(srs))
-        with htimer.TimedScope(logging.DEBUG, "Computing spectral stats") as ts:
+        with htimer.TimedScope(logging.DEBUG, "Computing spectral stats"):
             stats.append(self.compute_spectral_stats(srs))
-        with htimer.TimedScope(
-            logging.DEBUG, "Computing signal quality stats"
-        ) as ts:
+        with htimer.TimedScope(logging.DEBUG, "Computing signal quality stats"):
             stats.append(self.compute_signal_quality_stats(srs))
+        # Concatenate the resulting series into a single multi-index series.
         names = [stat.name for stat in stats]
         result = pd.concat(stats, axis=0, keys=names)
         result.name = srs.name
@@ -119,7 +122,6 @@ class StatsComputer:
         result = self._compute_stat_functions(srs, name, functions)
         kratio = pd.Series(cfinan.compute_kratio(srs), index=["kratio"])
         kratio.name = name
-        #
         return pd.concat([result, kratio])
 
     def compute_finance_stats(
@@ -131,16 +133,24 @@ class StatsComputer:
         positions_col: Optional[str] = None,
         pnl_col: Optional[str] = None,
     ) -> pd.DataFrame:
+        """
+        Compute financially meaningful statistics.
+        """
         results = []
+        # Compute stats related to positions.
         if positions_col is not None:
             positions = df[positions_col]
+            #
             name = "finance"
             functions = [cstati.compute_avg_turnover_and_holding_period]
             stats = self._compute_stat_functions(positions, name, functions)
             results.append(pd.concat([stats], keys=["finance"]))
+        # Compute stats related to PnL.
         if pnl_col is not None:
             pnl = df[pnl_col]
+            #
             results.append(self.compute_time_series_stats(pnl))
+            #
             name = "pnl"
             functions = [
                 cstati.compute_annualized_return_and_volatility,
@@ -149,6 +159,7 @@ class StatsComputer:
             ]
             stats = self._compute_stat_functions(pnl, name, functions)
             results.append(pd.concat([stats], keys=["finance"]))
+            #
             corr = pd.Series(
                 cstati.compute_implied_correlation(pnl),
                 index=["prediction_corr_implied_by_pnl"],
@@ -160,17 +171,20 @@ class StatsComputer:
             name = "pnl"
             returns = df[returns_col]
             predictions = df[predictions_col]
+            #
             prediction_corr = predictions.corr(returns)
             corr = pd.Series(
                 prediction_corr, index=["prediction_corr"], name=name
             )
             results.append(pd.concat([corr], keys=["correlation"]))
-            sr = pd.Series(
+            #
+            srs = pd.Series(
                 cstati.compute_implied_sharpe_ratio(predictions, prediction_corr),
                 index=["sr_implied_by_prediction_corr"],
                 name=name,
             )
-            results.append(pd.concat([sr], keys=["signal_quality"]))
+            results.append(pd.concat([srs], keys=["signal_quality"]))
+            #
             j_ratio = cstati.compute_jensen_ratio(returns)["jensen_ratio"]
             hit_rate = pd.Series(
                 cstati.compute_hit_rate_implied_by_correlation(
@@ -180,6 +194,7 @@ class StatsComputer:
                 name=name,
             )
             results.append(pd.concat([hit_rate], keys=["finance"]))
+            #
             hit_rate = cstati.calculate_hit_rate(returns * predictions)
             hit_rate = hit_rate["hit_rate_point_est_(%)"] / 100
             corr2 = pd.Series(
@@ -191,6 +206,7 @@ class StatsComputer:
         if returns_col is not None and positions_col is not None:
             returns = df[returns_col]
             positions = df[positions_col]
+            #
             name = "pnl"
             bets = cstati.compute_bet_stats(positions, returns)
             bets.name = name
@@ -198,6 +214,7 @@ class StatsComputer:
         if returns_col is not None and pnl_col is not None:
             returns = df[returns_col]
             pnl = df[pnl_col]
+            #
             corr = pd.Series(
                 pnl.corr(returns), index=["pnl_corr_to_underlying"], name=name
             )
@@ -211,7 +228,13 @@ class StatsComputer:
     def _compute_stat_functions(
         srs: pd.Series,
         name: str,
-        functions: list,
+        functions: List[Callable],
     ) -> pd.Series:
+        """
+        Apply a list of functions to a series.
+        """
+        # Apply the functions.
         stats = [function(srs).rename(name) for function in functions]
-        return pd.concat(stats)
+        # Concat the list of series in a single one.
+        srs_out = pd.concat(stats)
+        return srs_out

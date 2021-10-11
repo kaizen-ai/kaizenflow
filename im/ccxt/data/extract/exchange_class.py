@@ -8,10 +8,10 @@ import logging
 import time
 from typing import Dict, List, Optional, Union
 
-import ccxt
 import pandas as pd
 import tqdm
 
+import ccxt
 import helpers.dbg as dbg
 import helpers.io_ as hio
 
@@ -77,19 +77,19 @@ class CcxtExchange:
 
     def download_ohlcv_data(
         self,
-        start_datetime: pd.Timestamp,
-        end_datetime: pd.Timestamp,
         curr_symbol: str,
+        start_datetime: Optional[pd.Timestamp] = None,
+        end_datetime: Optional[pd.Timestamp] = None,
         step: Optional[int] = None,
         sleep_time: int = 1,
     ) -> pd.DataFrame:
         """
-        Download minute OHLCV candles.
+        Download minute OHLCV bars.
 
-        :param start_datetime: starting point for data
-        :param end_datetime: end point for data
         :param curr_symbol: a currency pair, e.g. "BTC/USDT"
-        :param step: a number of candles per iteration
+        :param start_datetime: starting point for data
+        :param end_datetime: end point for data (included)
+        :param step: number of bars per iteration
         :param sleep_time: time in seconds between iterations
         :return: OHLCV data from ccxt
         """
@@ -97,26 +97,39 @@ class CcxtExchange:
         dbg.dassert(self._exchange.has["fetchOHLCV"])
         # Verify that the provided currency pair is present in exchange.
         dbg.dassert_in(curr_symbol, self.currency_pairs)
+        # Make the minimal limit of 500 a default step.
+        step = step or 500
+        # Get latest bars if no datetime is provided.
+        if end_datetime is None and start_datetime is None:
+            all_bars = self._exchange.fetch_ohlcv(
+                curr_symbol, timeframe="1m", limit=step
+            )
+            all_bars = pd.DataFrame(
+                all_bars,
+                columns=["timestamp", "open", "high", "low", "close", "volume"],
+            )
+            return all_bars
         # Verify that date parameters are of correct format.
-        dbg.dassert_isinstance(
-            start_datetime,
-            pd.Timestamp,
-            msg="Type of start_datetime param is incorrect.",
-        )
         dbg.dassert_isinstance(
             end_datetime,
             pd.Timestamp,
             msg="Type of end_datetime param is incorrect.",
         )
-        # Make the minimal limit of 500 a default step.
-        step = step or 500
+        dbg.dassert_isinstance(
+            start_datetime,
+            pd.Timestamp,
+            msg="Type of start_datetime param is incorrect.",
+        )
+        dbg.dassert_lte(
+            start_datetime,
+            end_datetime,
+            msg="Start datetime should be less or equal to end datetime!",
+        )
         # Convert datetime into ms.
         start_datetime = start_datetime.asm8.astype(int) // 1000000
-        # Convert datetime into ms.
         end_datetime = end_datetime.asm8.astype(int) // 1000000
-        # Get 1m timeframe as ms.
         duration = self._exchange.parse_timeframe("1m") * 1000
-        all_candles = []
+        all_bars = []
         # Iterate over the time period.
         #  Note: the iteration goes from start date to end date in
         # milliseconds, with the step defined by `step` parameter.
@@ -124,14 +137,14 @@ class CcxtExchange:
         for t in tqdm.tqdm(
             range(start_datetime, end_datetime + duration, duration * step)
         ):
-            # Fetch OHLCV candles for 1m since current datetime.
-            candles = self._exchange.fetch_ohlcv(
+            # Fetch OHLCV bars for 1m since current datetime.
+            bars = self._exchange.fetch_ohlcv(
                 curr_symbol, timeframe="1m", since=t, limit=step
             )
-            all_candles += candles
+            all_bars += bars
             time.sleep(sleep_time)
-        all_candles = pd.DataFrame(
-            all_candles,
-            columns=["timestamp", "open", "high", "low", "close", "volume"],
-        )
-        return all_candles
+            all_bars = pd.DataFrame(
+                all_bars,
+                columns=["timestamp", "open", "high", "low", "close", "volume"],
+            )
+            return all_bars

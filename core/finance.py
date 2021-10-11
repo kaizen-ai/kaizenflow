@@ -8,7 +8,7 @@ import core.finance as fin
 
 import datetime
 import logging
-from typing import Dict, List, Optional, Union, cast
+from typing import Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -109,6 +109,29 @@ def set_non_ath_to_nan(
     return df
 
 
+def remove_times_outside_window(
+    df: pd.DataFrame,
+    start_time: datetime.time,
+    end_time: datetime.time,
+    bypass: bool = False,
+) -> pd.DataFrame:
+    """
+    Remove times outside of (start_time, end_time].
+    """
+    # Perform sanity checks.
+    dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
+    hpandas.dassert_strictly_increasing_index(df)
+    dbg.dassert_isinstance(start_time, datetime.time)
+    dbg.dassert_isinstance(end_time, datetime.time)
+    dbg.dassert_lte(start_time, end_time)
+    if bypass:
+        return df
+    # Compute the indices to remove.
+    times = df.index.time
+    to_remove_mask = (times <= start_time) | (end_time < times)
+    return df[~to_remove_mask]
+
+
 def set_weekends_to_nan(df: pd.DataFrame) -> pd.DataFrame:
     """
     Filter out weekends setting the corresponding values to `np.nan`.
@@ -121,11 +144,70 @@ def set_weekends_to_nan(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def remove_weekends(df: pd.DataFrame, bypass: bool = False) -> pd.DataFrame:
+    """
+    Remove weekends from `df`.
+    """
+    dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
+    # 5 = Saturday, 6 = Sunday.
+    if bypass:
+        return df
+    to_remove_mask = df.index.dayofweek.isin([5, 6])
+    return df[~to_remove_mask]
+
+
 # #############################################################################
 # Resampling.
 # #############################################################################
 
 # TODO(Paul): Consider moving resampling code to a new `resampling.py`
+
+
+def compute_vwap(
+    df: pd.DataFrame,
+    *,
+    rule: str,
+    price_col: str,
+    volume_col: str,
+    offset: Optional[str] = None,
+) -> pd.Series:
+    """
+    Compute VWAP from price and volume columns.
+
+    :param df: input dataframe with datetime index
+    :param rule: resampling frequency and VWAP aggregation window
+    :param price_col: price for bar
+    :param volume_col: volume for bar
+    :param offset: offset in the Pandas format (e.g., `1T`) used to shift the
+        sampling
+    :return: vwap price series
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    dbg.dassert_in(price_col, df.columns)
+    dbg.dassert_in(volume_col, df.columns)
+    # Only use rows where both price and volume are non-NaN.
+    non_nan_idx = df[[price_col, volume_col]].dropna().index
+    nan_idx = df.index.difference(non_nan_idx)
+    price = df[price_col]
+    price.loc[nan_idx] = np.nan
+    volume = df[volume_col]
+    volume.loc[nan_idx] = np.nan
+    # Weight price according to volume.
+    volume_weighted_price = price.multiply(volume)
+    resampled_volume_weighted_price = csigna.resample(
+        volume_weighted_price,
+        rule=rule,
+        offset=offset,
+    ).sum(min_count=1)
+    resampled_volume = csigna.resample(volume, rule=rule, offset=offset).sum(
+        min_count=1
+    )
+    # Complete the VWAP calculation.
+    vwap = resampled_volume_weighted_price.divide(resampled_volume)
+    # Replace infs with NaNs.
+    vwap = vwap.replace([-np.inf, np.inf], np.nan)
+    vwap.name = "vwap"
+    return vwap
 
 
 def _resample_with_aggregate_function(
@@ -147,12 +229,49 @@ def _resample_with_aggregate_function(
     return resampled
 
 
-def _merge(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame:
-    result_df = df1.merge(df2, how="outer", left_index=True, right_index=True)
-    dbg.dassert(result_df.index.freq)
-    return result_df
+def resample_bars(
+    df: pd.DataFrame,
+    rule: str,
+    resampling_groups: List[Tuple[Dict[str, str], str, htypes.Kwargs]],
+    vwap_groups: List[Tuple[str, str, str]],
+) -> pd.DataFrame:
+    """
+    Resampling with optional VWAP.
+
+    Output column names must not collide.
+
+    :param resampling_groups: list of tuples of the following form:
+        (col_dict, aggregation function, aggregation kwargs)
+    :param vwap_groups: list of tuples of the following form:
+        (in_price_col_name, in_vol_col_name, vwap_col_name)
+    """
+    results = []
+    for col_dict, agg_func, agg_func_kwargs in resampling_groups:
+        resampled = _resample_with_aggregate_function(
+            df,
+            rule=rule,
+            cols=list(col_dict.keys()),
+            agg_func=agg_func,
+            agg_func_kwargs=agg_func_kwargs,
+        )
+        resampled = resampled.rename(columns=col_dict)
+        dbg.dassert(not resampled.columns.has_duplicates)
+        results.append(resampled)
+    for price_col, volume_col, vwap_col in vwap_groups:
+        vwap = compute_vwap(
+            df, rule=rule, price_col=price_col, volume_col=volume_col
+        )
+        vwap.name = vwap_col
+        results.append(vwap)
+    out_df = pd.concat(results, axis=1)
+    dbg.dassert(not out_df.columns.has_duplicates)
+    dbg.dassert(out_df.index.freq)
+    return out_df
 
 
+# TODO(Paul): Consider deprecating.
+# This provides some sensible defaults for `resample_bars()`, but may not be
+# worth the additional complexity.
 def resample_time_bars(
     df: pd.DataFrame,
     rule: str,
@@ -195,36 +314,31 @@ def resample_time_bars(
         although not in the same order as passed
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
-    result_df = pd.DataFrame()
-    # Maybe resample returns.
-    # TODO(gp): Consider refactoring this chunk of code in a separate helper
-    #  or merge the common code in _resample_with_aggregate_function().
-    #  The only differences between the 3 resampling of returns, prices, and volume
-    #  is the default value and _kwargs.
+    resampling_groups = []
     if return_cols:
-        return_agg_func = return_agg_func or "sum"
-        return_agg_func_kwargs = return_agg_func_kwargs or {"min_count": 1}
-        return_df = _resample_with_aggregate_function(
-            df, rule, return_cols, return_agg_func, return_agg_func_kwargs
-        )
-        result_df = _merge(result_df, return_df)
-    # Maybe resample prices.
+        col_mapping = {col: col for col in return_cols}
+        agg_func = return_agg_func or "sum"
+        agg_func_kwargs = return_agg_func_kwargs or {"min_count": 1}
+        group = (col_mapping, agg_func, agg_func_kwargs)
+        resampling_groups.append(group)
     if price_cols:
-        price_agg_func = price_agg_func or "mean"
-        # TODO(*): Explain the rationale of not using `min_count` for `mean`.
-        price_agg_func_kwargs = price_agg_func_kwargs or {}
-        price_df = _resample_with_aggregate_function(
-            df, rule, price_cols, price_agg_func, price_agg_func_kwargs
-        )
-        result_df = _merge(result_df, price_df)
-    # Maybe resample volume.
+        col_mapping = {col: col for col in price_cols}
+        agg_func = price_agg_func or "mean"
+        agg_func_kwargs = price_agg_func_kwargs or {}
+        group = (col_mapping, agg_func, agg_func_kwargs)
+        resampling_groups.append(group)
     if volume_cols:
-        volume_agg_func = volume_agg_func or "sum"
-        volume_agg_func_kwargs = volume_agg_func_kwargs or {"min_count": 1}
-        volume_df = _resample_with_aggregate_function(
-            df, rule, volume_cols, volume_agg_func, volume_agg_func_kwargs
-        )
-        result_df = _merge(result_df, volume_df)
+        col_mapping = {col: col for col in volume_cols}
+        agg_func = volume_agg_func or "sum"
+        agg_func_kwargs = volume_agg_func_kwargs or {"min_count": 1}
+        group = (col_mapping, agg_func, agg_func_kwargs)
+        resampling_groups.append(group)
+    result_df = resample_bars(
+        df,
+        rule=rule,
+        resampling_groups=resampling_groups,
+        vwap_groups=[],
+    )
     return result_df
 
 
@@ -260,42 +374,30 @@ def resample_ohlcv_bars(
     for col in [open_col, high_col, low_col, close_col, volume_col]:
         if col is not None:
             dbg.dassert_in(col, df.columns)
-    # Process each requested OHLCV column.
-    result_df = pd.DataFrame()
+    resampling_groups = []
     if open_col:
-        open_df = resample_time_bars(
-            df[[open_col]],
-            rule=rule,
-            price_cols=[open_col],
-            price_agg_func="first",
-        )
-        result_df = _merge(result_df, open_df)
+        group = ({open_col: open_col}, "first", {})
+        resampling_groups.append(group)
     if high_col:
-        high_df = resample_time_bars(
-            df[[high_col]], rule=rule, price_cols=[high_col], price_agg_func="max"
-        )
-        result_df = _merge(result_df, high_df)
+        group = ({high_col: high_col}, "max", {})
+        resampling_groups.append(group)
     if low_col:
-        low_df = resample_time_bars(
-            df[[low_col]], rule=rule, price_cols=[low_col], price_agg_func="min"
-        )
-        result_df = _merge(result_df, low_df)
+        group = ({low_col: low_col}, "min", {})
+        resampling_groups.append(group)
     if close_col:
-        close_df = resample_time_bars(
-            df[[close_col]],
-            rule=rule,
-            price_cols=[close_col],
-            price_agg_func="last",
-        )
-        result_df = _merge(result_df, close_df)
+        group = ({close_col: close_col}, "last", {})
+        resampling_groups.append(group)
     if volume_col:
-        # We rely on the default behavior of accumulating the volume.
-        volume_df = resample_time_bars(
-            df[[volume_col]],
-            rule=rule,
-            volume_cols=[volume_col],
-        )
-        result_df = _merge(result_df, volume_df)
+        group = ({volume_col: volume_col}, "sum", {"min_count": 1})
+        resampling_groups.append(group)
+    result_df = resample_bars(
+        df,
+        rule=rule,
+        resampling_groups=resampling_groups,
+        vwap_groups=[],
+    )
+    # TODO(Paul): Refactor this so that we do not call `compute_twap_vwap()`
+    #  directly.
     # Add TWAP / VWAP prices, if needed.
     if add_twap_vwap:
         close_col = cast(str, close_col)
@@ -303,10 +405,15 @@ def resample_ohlcv_bars(
         twap_vwap_df = compute_twap_vwap(
             df, rule=rule, price_col=close_col, volume_col=volume_col
         )
-        result_df = _merge(result_df, twap_vwap_df)
+        result_df = result_df.merge(
+            twap_vwap_df, how="outer", left_index=True, right_index=True
+        )
+        dbg.dassert(result_df.index.freq)
     return result_df
 
 
+# TODO(Paul): Deprecate this function. The bells and whistles do not really
+# fit, and the core functionality can be accessed through the above functions.
 def compute_twap_vwap(
     df: pd.DataFrame,
     rule: str,
@@ -335,54 +442,28 @@ def compute_twap_vwap(
     #  accommodate data that is not perfectly aligned with a pandas freq
     #  (e.g., Kibot).
     # dbg.dassert(df.index.freq)
-    dbg.dassert_in(price_col, df.columns)
-    dbg.dassert_in(volume_col, df.columns)
-    # Only use rows where both price and volume are non-NaN.
-    non_nan_idx = df[[price_col, volume_col]].dropna().index
-    nan_idx = df.index.difference(non_nan_idx)
+    vwap = compute_vwap(
+        df, rule=rule, price_col=price_col, volume_col=volume_col, offset=offset
+    )
     price = df[price_col]
+    # Calculate TWAP, but preserve NaNs for all-NaN bars.
+    twap = csigna.resample(price, rule=rule, offset=offset).mean()
+    twap.name = "twap"
+    dfs = [vwap, twap]
     if add_last_price:
         # Calculate last price (regardless of whether we have volume data).
         last_price = csigna.resample(price, rule=rule, offset=offset).last(
             min_count=1
         )
         last_price.name = "last"
-    price.loc[nan_idx] = np.nan
-    volume = df[volume_col]
+        dfs.append(last_price)
     if add_bar_volume:
+        volume = df[volume_col]
         # Calculate bar volume (regardless of whether we have price data).
         bar_volume = csigna.resample(volume, rule=rule, offset=offset).sum(
             min_count=1
         )
         bar_volume.name = "volume"
-    volume.loc[nan_idx] = np.nan
-    # Weight price according to volume.
-    volume_weighted_price = price.multiply(volume)
-    # Resample using `rule`.
-    resampled_volume_weighted_price = csigna.resample(
-        volume_weighted_price,
-        rule=rule,
-        offset=offset,
-    ).sum(min_count=1)
-    resampled_volume = csigna.resample(volume, rule=rule, offset=offset).sum(
-        min_count=1
-    )
-    # Complete the VWAP calculation.
-    vwap = resampled_volume_weighted_price.divide(resampled_volume)
-    # Replace infs with NaNs.
-    vwap = vwap.replace([-np.inf, np.inf], np.nan)
-    vwap.name = "vwap"
-    # Calculate TWAP, but preserve NaNs for all-NaN bars.
-    twap = csigna.resample(price, rule=rule, offset=offset).mean()
-    twap.loc[resampled_volume_weighted_price.isna()] = np.nan
-    twap.name = "twap"
-    # Make sure columns are not overwritten by the new ones.
-    dbg.dassert_not_in(vwap.name, df.columns)
-    dbg.dassert_not_in(twap.name, df.columns)
-    dfs = [vwap, twap]
-    if add_last_price:
-        dfs.append(last_price)
-    if add_bar_volume:
         dfs.append(bar_volume)
     if add_bar_start_timestamps:
         bar_start_timestamps = compute_bar_start_timestamps(vwap)
@@ -447,6 +528,189 @@ def compute_epoch(
     if isinstance(data, pd.DataFrame):
         return srs.to_frame()
     return srs
+
+
+# #############################################################################
+# Bid-ask processing.
+# #############################################################################
+
+
+def process_bid_ask(
+    df: pd.DataFrame,
+    bid_col: str,
+    ask_col: str,
+    bid_volume_col: str,
+    ask_volume_col: str,
+    requested_cols: Optional[List[str]] = None,
+    join_output_with_input: bool = False,
+) -> pd.DataFrame:
+    """
+    Process top-of-book bid/ask quotes.
+
+    :param df: dataframe with columns for top-of-book bid/ask info
+    :param bid_col: bid price column
+    :param ask_col: ask price column
+    :param bid_volume_col: column with quoted volume at bid
+    :param ask_volume_col: column with quoted volume at ask
+    :param requested_cols: the requested output columns; `None` returns all
+        available.
+    :param join_output_with_input: whether to only return the requested columns
+        or to join the requested columns to the input dataframe
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    dbg.dassert_in(bid_col, df.columns)
+    dbg.dassert_in(ask_col, df.columns)
+    dbg.dassert_in(bid_volume_col, df.columns)
+    dbg.dassert_in(ask_volume_col, df.columns)
+    dbg.dassert(not (df[bid_col] > df[ask_col]).any())
+    supported_cols = [
+        "mid",
+        "geometric_mid",
+        "quoted_spread",
+        "relative_spread",
+        "log_relative_spread",
+        "weighted_mid",
+        # These imbalances are with respect to shares.
+        "order_book_imbalance",
+        "centered_order_book_imbalance",
+        "log_order_book_imbalance",
+        # TODO: use `notional` instead of `value`.
+        "bid_value",
+        "ask_value",
+        "mid_value",
+    ]
+    requested_cols = requested_cols or supported_cols
+    dbg.dassert_is_subset(
+        requested_cols,
+        supported_cols,
+        "The available columns to request are %s",
+        supported_cols,
+    )
+    dbg.dassert(requested_cols)
+    requested_cols = set(requested_cols)
+    results = []
+    if "mid" in requested_cols:
+        srs = ((df[bid_col] + df[ask_col]) / 2).rename("mid")
+        results.append(srs)
+    if "geometric_mid" in requested_cols:
+        srs = np.sqrt(df[bid_col] * df[ask_col]).rename("geometric_mid")
+        results.append(srs)
+    if "quoted_spread" in requested_cols:
+        srs = (df[ask_col] - df[bid_col]).rename("quoted_spread")
+        results.append(srs)
+    if "relative_spread" in requested_cols:
+        srs = 2 * (df[ask_col] - df[bid_col]) / (df[ask_col] + df[bid_col])
+        srs = srs.rename("relative_spread")
+        results.append(srs)
+    if "log_relative_spread" in requested_cols:
+        srs = (np.log(df[ask_col]) - np.log(df[bid_col])).rename(
+            "log_relative_spread"
+        )
+        results.append(srs)
+    if "weighted_mid" in requested_cols:
+        srs = (
+            df[bid_col] * df[ask_volume_col] + df[ask_col] * df[bid_volume_col]
+        ) / (df[ask_volume_col] + df[bid_volume_col])
+        srs = srs.rename("weighted_mid")
+        results.append(srs)
+    if "order_book_imbalance" in requested_cols:
+        srs = df[bid_volume_col] / (df[bid_volume_col] + df[ask_volume_col])
+        srs = srs.rename("order_book_imbalance")
+        results.append(srs)
+    if "centered_order_book_imbalance" in requested_cols:
+        srs = (df[bid_volume_col] - df[ask_volume_col]) / (
+            df[bid_volume_col] + df[ask_volume_col]
+        )
+        srs = srs.rename("centered_order_book_imbalance")
+        results.append(srs)
+    if "log_order_book_imbalance" in requested_cols:
+        srs = np.log(df[bid_volume_col]) - np.log(df[ask_volume_col])
+        srs = srs.rename("log_order_book_imbalance")
+        results.append(srs)
+    if "bid_value" in requested_cols:
+        srs = (df[bid_col] * df[bid_volume_col]).rename("bid_value")
+        results.append(srs)
+    if "ask_value" in requested_cols:
+        srs = (df[ask_col] * df[ask_volume_col]).rename("ask_value")
+        results.append(srs)
+    if "mid_value" in requested_cols:
+        srs = (
+            df[bid_col] * df[bid_volume_col] + df[ask_col] * df[ask_volume_col]
+        ) / 2
+        srs = srs.rename("mid_value")
+        results.append(srs)
+    out_df = pd.concat(results, axis=1)
+    # TODO(gp): Maybe factor out this in a `_maybe_join_output_with_input` since
+    #  it seems a common idiom.
+    if join_output_with_input:
+        out_df = out_df.merge(df, left_index=True, right_index=True, how="outer")
+        dbg.dassert(not out_df.columns.has_duplicates)
+    return out_df
+
+
+def compute_spread_cost(
+    df: pd.DataFrame,
+    # TODO(gp): -> position_intent_1_col or position_intent_col ?
+    target_position_col: str,
+    spread_col: str,
+    spread_fraction_paid: float,
+    *,
+    join_output_with_input: bool = False,
+) -> pd.DataFrame:
+    """
+    Compute spread costs incurred by changing position values.
+
+    The columns are aligned so that
+
+    :param target_position_col: series of one-step-ahead target positions
+    :param spread_col: series of spreads
+    :param spread_fraction_paid: number indicating the fraction of the spread
+        paid, e.g., `0.5` means that 50% of the spread is paid
+    """
+    # TODO(gp): Clarify / make uniform the spread nomenclature. If `spread_col` is
+    #  `quoted_spread` then midpoint corresponds to 0.5.
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    dbg.dassert_in(target_position_col, df.columns)
+    dbg.dassert_in(spread_col, df.columns)
+    # if spread_fraction_paid < 0:
+    #    _LOG.warning("spread_fraction_paid=%f", spread_fraction_paid)
+    # dbg.dassert_lte(0, spread_fraction_paid)
+    dbg.dassert_lte(spread_fraction_paid, 1)
+    # TODO(gp): adjusted_spread -> spread_paid?
+    adjusted_spread = spread_fraction_paid * df[spread_col]
+    # Since target_
+    target_position_delta = df[target_position_col].diff().shift(1)
+    spread_costs = target_position_delta.abs().multiply(adjusted_spread)
+    out_df = spread_costs.rename("spread_cost").to_frame()
+    if join_output_with_input:
+        out_df = out_df.merge(df, left_index=True, right_index=True, how="outer")
+        dbg.dassert(not out_df.columns.has_duplicates)
+    return out_df
+
+
+def compute_pnl(
+    df: pd.DataFrame,
+    position_intent_col: str,
+    return_col: str,
+    *,
+    join_output_with_input: bool = False,
+) -> pd.DataFrame:
+    """
+    Compute PnL from a stream of position intents and returns.
+
+    :param position_intent_col: series of one-step-ahead target positions
+    :param return_col: series of returns
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    dbg.dassert_in(position_intent_col, df.columns)
+    dbg.dassert_in(return_col, df.columns)
+    #
+    pnl = df[position_intent_col].shift(2).multiply(df[return_col])
+    out_df = pnl.rename("pnl").to_frame()
+    if join_output_with_input:
+        out_df = out_df.merge(df, left_index=True, right_index=True, how="outer")
+        dbg.dassert(not out_df.columns.has_duplicates)
+    return out_df
 
 
 # #############################################################################
@@ -627,6 +891,7 @@ def compute_volatility_normalization_factor(
     :return: scale factor
     """
     dbg.dassert_isinstance(srs, pd.Series)
+    # TODO(Paul): Determine how to deal with no `freq`.
     ppy = hdataf.infer_sampling_points_per_year(srs)
     srs = hdataf.apply_nan_mode(srs, mode="fill_with_zero")
     scale_factor: float = target_volatility / (np.sqrt(ppy) * srs.std())
@@ -648,7 +913,7 @@ def compute_kratio(log_rets: pd.Series) -> float:
     :return: K-Ratio
     """
     dbg.dassert_isinstance(log_rets, pd.Series)
-    dbg.dassert(log_rets.index.freq)
+    log_rets = maybe_resample(log_rets)
     log_rets = hdataf.apply_nan_mode(log_rets, mode="fill_with_zero")
     cum_rets = log_rets.cumsum()
     # Fit the best line to the daily rets.
@@ -734,7 +999,6 @@ def compute_turnover(
     :return: turnover
     """
     dbg.dassert_isinstance(pos, pd.Series)
-    dbg.dassert(pos.index.freq)
     nan_mode = nan_mode or "drop"
     pos = hdataf.apply_nan_mode(pos, mode=nan_mode)
     numerator = pos.diff().abs()
@@ -762,6 +1026,7 @@ def compute_average_holding_period(
     """
     unit = unit or "B"
     dbg.dassert_isinstance(pos, pd.Series)
+    # TODO(Paul): Determine how to deal with no `freq`.
     dbg.dassert(pos.index.freq)
     pos_freq_in_year = hdataf.infer_sampling_points_per_year(pos)
     unit_freq_in_year = hdataf.infer_sampling_points_per_year(
@@ -781,89 +1046,58 @@ def compute_average_holding_period(
     return average_holding_period
 
 
-def compute_bet_runs(
-    positions: pd.Series, nan_mode: Optional[str] = None
-) -> pd.Series:
-    """
-    Calculate runs of long/short bets.
-
-    A bet "run" is a (maximal) series of positions on the same "side", e.g.,
-    long or short.
-
-    :param positions: series of long/short positions
-    :return: series of -1/0/1 with 1's indicating long bets and -1 indicating
-        short bets
-    """
-    hpandas.dassert_monotonic_index(positions)
-    # Forward fill NaN positions by default (e.g., do not assume they are
-    # closed out).
-    nan_mode = nan_mode or "ffill"
-    positions = hdataf.apply_nan_mode(positions, mode=nan_mode)
-    bet_runs = csigna.sign_normalize(positions)
-    return bet_runs
-
-
-def compute_bet_starts(
-    positions: pd.Series, nan_mode: Optional[str] = None
-) -> pd.Series:
+# TODO(*): Rename `compute_signed_run_starts()`.
+def compute_bet_starts(positions: pd.Series) -> pd.Series:
     """
     Calculate the start of each new bet.
 
     :param positions: series of long/short positions
     :return: a series with a +1 at the start of each new long bet and a -1 at
-        the start of each new short bet; 0 indicates continuation of bet and
-        `NaN` indicates absence of bet.
+        the start of each new short bet; NaNs are ignored
     """
-    bet_runs = compute_bet_runs(positions, nan_mode)
+    # Drop NaNs before determining bet starts.
+    bet_runs = csigna.sign_normalize(positions).dropna()
     # Determine start of bets.
-    bet_starts = bet_runs.subtract(bet_runs.shift(1, fill_value=0), fill_value=0)
-    bet_starts = csigna.sign_normalize(bet_starts)
-    # Set zero bet runs to `NaN`.
-    bet_runs_zero_mask = bet_runs == 0
-    bet_starts.loc[bet_runs_zero_mask] = np.nan
-    bet_starts.loc[bet_runs.isna()] = np.nan
-    return bet_starts
+    # A new bet starts at position j if and only if
+    # - the signed value at `j` is +1 or -1 and
+    # - the value at `j - 1` is different from the value at `j`
+    is_nonzero = bet_runs != 0
+    is_diff = bet_runs.diff() != 0
+    bet_starts = bet_runs[is_nonzero & is_diff]
+    return bet_starts.reindex(positions.index)
 
 
-def compute_bet_ends(
-    positions: pd.Series, nan_mode: Optional[str] = None
-) -> pd.Series:
+def compute_bet_ends(positions: pd.Series) -> pd.Series:
     """
     Calculate the end of each bet.
 
     NOTE: This function is not casual (because of our choice of indexing).
 
     :param positions: as in `compute_bet_starts()`
-    :param nan_mode: as in `compute_bet_starts()`
     :return: as in `compute_bet_starts()`, but with long/short bet indicator at
         the last time of the bet. Note that this is not casual.
     """
-    # Apply the NaN mode casually (e.g., `ffill` is not time reversible).
-    nan_mode = nan_mode or "ffill"
-    positions = hdataf.apply_nan_mode(positions, mode=nan_mode)
     # Calculate bet ends by calculating the bet starts of the reversed series.
     reversed_positions = positions.iloc[::-1]
-    reversed_bet_starts = compute_bet_starts(reversed_positions, nan_mode=None)
+    reversed_bet_starts = compute_bet_starts(reversed_positions)
     bet_ends = reversed_bet_starts.iloc[::-1]
     return bet_ends
 
 
 def compute_signed_bet_lengths(
     positions: pd.Series,
-    nan_mode: Optional[str] = None,
 ) -> pd.Series:
     """
     Calculate lengths of bets (in sampling freq).
 
     :param positions: series of long/short positions
-    :param nan_mode: argument for hdataf.apply_nan_mode()
     :return: signed lengths of bets, i.e., the sign indicates whether the
         length corresponds to a long bet or a short bet. Index corresponds to
         end of bet (not causal).
     """
-    bet_runs = compute_bet_runs(positions, nan_mode)
-    bet_starts = compute_bet_starts(positions, nan_mode)
-    bet_ends = compute_bet_ends(positions, nan_mode)
+    bet_runs = csigna.sign_normalize(positions)
+    bet_starts = compute_bet_starts(positions)
+    bet_ends = compute_bet_ends(positions)
     # Sanity check indices.
     dbg.dassert(bet_runs.index.equals(bet_starts.index))
     dbg.dassert(bet_starts.index.equals(bet_ends.index))
@@ -891,21 +1125,21 @@ def compute_signed_bet_lengths(
     return bet_length_srs
 
 
+# TODO(Paul): Revisit this function and add more test coverage.
 def compute_returns_per_bet(
-    positions: pd.Series, log_rets: pd.Series, nan_mode: Optional[str] = None
+    positions: pd.Series, log_rets: pd.Series
 ) -> pd.Series:
     """
     Calculate returns for each bet.
 
     :param positions: series of long/short positions
     :param log_rets: log returns
-    :param nan_mode: argument for hdataf.apply_nan_mode()
     :return: signed returns for each bet, index corresponds to the last date of
         bet
     """
     dbg.dassert(positions.index.equals(log_rets.index))
     hpandas.dassert_strictly_increasing_index(log_rets)
-    bet_ends = compute_bet_ends(positions, nan_mode)
+    bet_ends = compute_bet_ends(positions)
     # Retrieve locations of bet starts and bet ends.
     bet_ends_idx = bet_ends.loc[bet_ends != 0].dropna().index
     pnl_bets = log_rets * positions
@@ -934,6 +1168,7 @@ def compute_annualized_return(srs: pd.Series) -> float:
     :return: annualized return; pct rets if `srs` consists of pct rets,
         log rets if `srs` consists of log rets.
     """
+    srs = maybe_resample(srs)
     srs = hdataf.apply_nan_mode(srs, mode="fill_with_zero")
     ppy = hdataf.infer_sampling_points_per_year(srs)
     mean_rets = srs.mean()
@@ -949,9 +1184,23 @@ def compute_annualized_volatility(srs: pd.Series) -> float:
     :param srs: series with datetimeindex with `freq`
     :return: annualized volatility (stdev)
     """
+    srs = maybe_resample(srs)
     srs = hdataf.apply_nan_mode(srs, mode="fill_with_zero")
     ppy = hdataf.infer_sampling_points_per_year(srs)
     std = srs.std()
     annualized_volatility = np.sqrt(ppy) * std
     annualized_volatility = cast(float, annualized_volatility)
     return annualized_volatility
+
+
+def maybe_resample(srs: pd.Series) -> pd.Series:
+    """
+    Return `srs` resampled to "B" `srs.index.freq` if is `None`.
+
+    This is a no-op if `srs.index.freq` is not `None`.
+    """
+    dbg.dassert_isinstance(srs.index, pd.DatetimeIndex)
+    if srs.index.freq is None:
+        _LOG.debug("No `freq` detected; resampling to 'B'.")
+        srs = srs.resample("B").sum(min_count=1)
+    return srs

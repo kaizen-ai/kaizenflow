@@ -18,19 +18,21 @@ import joblib
 import joblib.func_inspect as jfunci
 import joblib.memory as jmemor
 
-import helpers.dbg as dbg
-import helpers.git as git
-import helpers.introspection as hintro
+import helpers.datetime_ as hdatetim
+import helpers.dbg as hdbg
+import helpers.git as hgit
+import helpers.introspection as hintrosp
 import helpers.io_ as hio
-import helpers.printing as hprint
+import helpers.printing as hprintin
 import helpers.s3 as hs3
-import helpers.system_interaction as hsyste
+import helpers.system_interaction as hsyint
 
 _LOG = logging.getLogger(__name__)
 
 # TODO(gp): Do not commit this.
-#_LOG.debug = _LOG.info
+# _LOG.debug = _LOG.info
 
+_TRACE_FUNCS = True
 
 # #############################################################################
 
@@ -38,12 +40,13 @@ _LOG = logging.getLogger(__name__)
 _IS_CACHE_ENABLED: bool = True
 
 
-def set_caching(val: bool) -> None:
+def enable_caching(val: bool) -> None:
     """
     Enable or disable all caching, i.e., global, tagged global, function-
     specific.
     """
     global _IS_CACHE_ENABLED
+    if _TRACE_FUNCS: _LOG.debug("")
     _LOG.warning("Setting caching to %s -> %s", _IS_CACHE_ENABLED, val)
     _IS_CACHE_ENABLED = val
 
@@ -54,7 +57,22 @@ def is_caching_enabled() -> bool:
 
     :return: whether the cache is enabled or not
     """
+    if _TRACE_FUNCS: _LOG.debug("")
     return _IS_CACHE_ENABLED
+
+
+# Global switch to allow or prevent clearing the cache.
+_IS_CLEAR_CACHE_ENABLED: bool = True
+
+
+def enable_clear_cache(val: bool) -> None:
+    """
+    Enable or disable clearing a cache (both global and function-specific).
+    """
+    global _IS_CLEAR_CACHE_ENABLED
+    if _TRACE_FUNCS: _LOG.debug("")
+    _LOG.warning("Enabling clear cache to %s -> %s", _IS_CLEAR_CACHE_ENABLED, val)
+    _IS_CLEAR_CACHE_ENABLED = val
 
 
 def get_global_cache_info(
@@ -63,9 +81,10 @@ def get_global_cache_info(
     """
     Report information on global cache.
     """
+    if _TRACE_FUNCS: _LOG.debug("")
     txt = []
     if add_banner:
-        txt.append(hprint.frame("get_global_cache_info()", char1="<"))
+        txt.append(hprintin.frame("get_global_cache_info()", char1="<"))
     txt.append("is global cache enabled=%s" % is_caching_enabled())
     #
     cache_types = _get_cache_types()
@@ -95,7 +114,7 @@ def _dassert_is_valid_cache_type(cache_type: str) -> None:
     """
     Assert that `cache_type` is a valid cache type.
     """
-    dbg.dassert_in(cache_type, _get_cache_types())
+    hdbg.dassert_in(cache_type, _get_cache_types())
 
 
 def _get_global_cache_name(cache_type: str, tag: Optional[str] = None) -> str:
@@ -125,15 +144,18 @@ def _get_global_cache_path(cache_type: str, tag: Optional[str] = None) -> str:
 
     :return: the file system path to the cache
     """
+    if _TRACE_FUNCS: _LOG.debug("")
     _dassert_is_valid_cache_type(cache_type)
     # Get the cache name.
     cache_name = _get_global_cache_name(cache_type, tag)
     # Get the enclosing directory path.
     if cache_type == "mem":
-        tmpfs_path = "/tmp" if hsyste.get_os_name() == "Darwin" else "/mnt/tmpfs"
-        root_path = tmpfs_path
+        if hsyint.get_os_name() == "Darwin":
+            root_path = "/tmp"
+        else:
+            root_path = "/mnt/tmpfs"
     elif cache_type == "disk":
-        root_path = git.get_client_root(super_module=True)
+        root_path = hgit.get_client_root(super_module=True)
     # Compute path.
     file_name = os.path.join(root_path, cache_name)
     file_name = os.path.abspath(file_name)
@@ -145,12 +167,13 @@ def _get_cache_size(path: str, description: str) -> str:
     Report information about a cache (global or function) stored at a given
     path.
     """
+    if _TRACE_FUNCS: _LOG.debug("")
     if path is None:
         txt = "'%s' cache: path='%s' doesn't exist yet" % (description, path)
     else:
         if os.path.exists(path):
-            size_in_bytes = hsyste.du(path)
-            size_as_str = hintro.format_size(size_in_bytes)
+            size_in_bytes = hsyint.du(path)
+            size_as_str = hintrosp.format_size(size_in_bytes)
         else:
             size_as_str = "nan"
         # TODO(gp): Compute number of files.
@@ -174,18 +197,27 @@ def _create_global_cache_backend(
 
     :return: cache backend object
     """
+    if _TRACE_FUNCS: _LOG.debug("")
     _dassert_is_valid_cache_type(cache_type)
-    file_name = _get_global_cache_path(cache_type, tag)
-    cache_backend = joblib.Memory(file_name, verbose=0, compress=True)
+    dir_name = _get_global_cache_path(cache_type, tag)
+    _LOG.debug(
+        "Creating cache for cache_type='%s' and tag='%s' at '%s'",
+        cache_type,
+        tag,
+        dir_name,
+    )
+    cache_backend = joblib.Memory(dir_name, verbose=0, compress=True)
     return cache_backend
 
 
+# TODO(gp): -> _get_global_cache
 def get_global_cache(cache_type: str, tag: Optional[str] = None) -> joblib.Memory:
     """
     Get global cache by cache type.
 
     :return: caching backend
     """
+    if _TRACE_FUNCS: _LOG.debug("")
     _dassert_is_valid_cache_type(cache_type)
     global _MEMORY_CACHE
     global _DISK_CACHE
@@ -213,6 +245,7 @@ def set_global_cache(cache_type: str, cache_backend: joblib.Memory) -> None:
     :param cache_type: type of a cache
     :param cache_backend: caching backend
     """
+    if _TRACE_FUNCS: _LOG.debug("")
     _dassert_is_valid_cache_type(cache_type)
     global _MEMORY_CACHE
     global _DISK_CACHE
@@ -232,6 +265,7 @@ def clear_global_cache(
     :param tag: optional unique tag of the cache, empty by default
     :param destroy: remove physical directory
     """
+    if _TRACE_FUNCS: _LOG.debug("")
     if cache_type == "all":
         for cache_type_tmp in _get_cache_types():
             clear_global_cache(cache_type_tmp, tag=tag, destroy=destroy)
@@ -239,14 +273,16 @@ def clear_global_cache(
     _dassert_is_valid_cache_type(cache_type)
     # Clear and / or destroy the cache `cache_type` with the given `tag`.
     cache_path = _get_global_cache_path(cache_type, tag)
+    if not _IS_CLEAR_CACHE_ENABLED:
+        hdbg.dfatal("Trying to delete cache '%s'" % cache_path)
     description = f"global {cache_type}"
     info_before = _get_cache_size(cache_path, description)
     _LOG.info("Before clear_global_cache: %s", info_before)
     _LOG.warning("Resetting 'global %s' cache '%s'", cache_type, cache_path)
     if hs3.is_s3_path(cache_path):
         # For now we only allow to delete caches under the unit test path.
-        bucket, abs_path = hs3.split_path(cache_path)
-        dbg.dassert(
+        _, abs_path = hs3.split_path(cache_path)
+        hdbg.dassert(
             abs_path.startswith("/tmp/cache.unit_test/"),
             "The path '%s' is not valid",
             abs_path,
@@ -263,6 +299,23 @@ def clear_global_cache(
 
 
 # #############################################################################
+
+
+class CachedValueException(RuntimeError):
+    """
+    A cached function is run for a value present in the cache.
+
+    This exception is thrown when the `check_only_if_present` mode is
+    used.
+    """
+
+
+class NotCachedValueException(RuntimeError):
+    """
+    A cached function is run for a value not present in the cache.
+
+    This exception is thrown when the `enable_read_only` mode is used.
+    """
 
 
 class _Cached:
@@ -314,8 +367,9 @@ class _Cached:
         # Make the class have the same attributes (e.g., `__name__`, `__doc__`,
         # `__dict__`) as the called function.
         functools.update_wrapper(self, func)
+        if _TRACE_FUNCS: _LOG.debug("")
         # Save interface parameters.
-        dbg.dassert_callable(func)
+        hdbg.dassert_callable(func)
         self._func = func
         self._use_mem_cache = use_mem_cache
         self._use_disk_cache = use_disk_cache
@@ -335,6 +389,12 @@ class _Cached:
             self._disk_cache,
             self._disk_cached_func,
         ) = self._create_function_disk_cache()
+        # Enable a mode where an exception `NotCachedValueException` is thrown if
+        # the value is not in the cache.
+        self._enable_read_only = False
+        # Enable a mode where an exception `NotCachedValueException` is thrown if
+        # the value is in the cache, instead of accessing the value.
+        self._check_only_if_present = False
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """
@@ -342,6 +402,7 @@ class _Cached:
 
         :return: object returned by the wrapped function
         """
+        if _TRACE_FUNCS: _LOG.debug("")
         perf_counter_start: float
         if self._is_verbose:
             perf_counter_start = time.perf_counter()
@@ -368,15 +429,19 @@ class _Cached:
             # Get time.
             elapsed_time = time.perf_counter() - perf_counter_start
             # Get memory.
-            obj_size = hintro.get_size_in_bytes(obj)
-            obj_size_as_str = hintro.format_size(obj_size)
+            obj_size = hintrosp.get_size_in_bytes(obj)
+            obj_size_as_str = hintrosp.format_size(obj_size)
+            last_cache = self.get_last_cache_accessed()
+            cache_dir = self._get_cache_dir(last_cache, self._tag)
             _LOG.info(
-                "  --> Cache data for '%s' was retrieved from '%s' cache "
-                "(size=%s time=%.2f s)",
+                "  --> Cache data for '%s' from '%s' cache "
+                "(size=%s, time=%.2f s, tag=%s, loc=%s)",
                 self._func.__name__,
-                self.get_last_cache_accessed(),
+                last_cache,
                 obj_size_as_str,
                 elapsed_time,
+                self._tag,
+                cache_dir,
             )
         return obj
 
@@ -384,10 +449,11 @@ class _Cached:
         """
         Return info about the caching properties for this function.
         """
+        if _TRACE_FUNCS: _LOG.debug("")
         txt = []
         if add_banner:
-            txt.append(hprint.frame("get_global_cache_info()", char1="<"))
-        has_func_cache = self.has_function_specific_cache()
+            txt.append(hprintin.frame("get_global_cache_info()", char1="<"))
+        has_func_cache = self.has_function_cache()
         txt.append("has function-specific cache=%s" % has_func_cache)
         if has_func_cache:
             # Function-specific cache: print the paths of the local cache.
@@ -404,28 +470,92 @@ class _Cached:
 
         :return: type of cache used in the last call
         """
+        if _TRACE_FUNCS: _LOG.debug("")
         if self._last_used_mem_cache:
             ret = "mem"
         elif self._last_used_disk_cache:
             # If the disk cache was used, then the memory cache should not been used.
-            dbg.dassert(not self._last_used_mem_cache)
+            hdbg.dassert(not self._last_used_mem_cache)
             ret = "disk"
         else:
             ret = "no_cache"
         return ret
 
+    def enable_read_only(self, val: bool) -> None:
+        """
+        If set to True, the cached function can only read from the cache but
+        not execute for new values.
+
+        Otherwise a `NotCachedValueException` is thrown.
+        """
+        if _TRACE_FUNCS: _LOG.debug("")
+        _LOG.warning(
+            "Setting enable_read_only to %s -> %s", self._enable_read_only, val
+        )
+        self._enable_read_only = val
+
+    def enable_check_only_if_present(self, val: bool) -> None:
+        """
+        If set to True, the cached function a `CachedValueException` is thrown
+        if a function invocation was cached, instead of executing it.
+
+        This can be used to check if a value was already cached without
+        triggering retrieving the value from the cache, e.g., when
+        probing the content of the cache.
+        """
+        _LOG.warning(
+            "Setting check_only_if_present to %s -> %s",
+            self._check_only_if_present,
+            val,
+        )
+        self._check_only_if_present = val
+
+    def update_func_code_without_invalidating_cache(self) -> None:
+        """
+        Update the Python code stored in the cache.
+
+        This is used when we make changes to the cached function but we don't want
+        to invalidate the cache.
+
+        NOTE: here the caller must guarantee that the new function yields exactly
+        the same results than the previous ones. Use carefully.
+        """
+        if _TRACE_FUNCS: _LOG.debug("")
+        hdbg.dassert(
+            self.has_function_cache(),
+            "This is used only for function-specific caches",
+        )
+        # From `store_cached_func_code` in
+        # https://github.com/joblib/joblib/tree/master/joblib/_store_backends.py
+        func_path = self._get_function_specific_code_path()
+        # Archive old code.
+        new_func_path = func_path + "." + hdatetim.get_timestamp(tz="ET")
+        _LOG.debug("new_func_path='%s'", new_func_path)
+        # Get the store backend.
+        cache_type = "disk"
+        memorized_result = self._get_memorized_result(cache_type)
+        store_backend = memorized_result.store_backend
+        hdbg.dassert(
+            not store_backend._item_exists(new_func_path),
+            "'%s' already exists",
+            new_func_path,
+        )
+        store_backend._move_item(func_path, new_func_path)
+        # Write out function code to the cache.
+        func_code, _, first_line = jfunci.get_func_code(memorized_result.func)
+        memorized_result._write_func_code(func_code, first_line)
+        _LOG.debug("Updated func_path='%s'", func_path)
+
     # ///////////////////////////////////////////////////////////////////////////
     # Function-specific cache.
     # ///////////////////////////////////////////////////////////////////////////
 
-    # TODO(gp): In the end, only disk cache makes sense for function-specific cache.
-    #  The memory one is always in memory.
-
-    def has_function_specific_cache(self) -> bool:
+    def has_function_cache(self) -> bool:
         """
         Return whether this function has a function-specific cache or uses the
         global cache.
         """
+        if _TRACE_FUNCS: _LOG.debug("")
         has_func_cache = self._disk_cache_path is not None
         return has_func_cache
 
@@ -434,14 +564,17 @@ class _Cached:
         """
         Clear a function-specific cache.
         """
-        dbg.dassert(
-            self.has_function_specific_cache(),
+        if _TRACE_FUNCS: _LOG.debug("")
+        hdbg.dassert(
+            self.has_function_cache(),
             "This function has no function-specific cache",
         )
         # Get the path for the disk cache.
         cache_path = self._disk_cache_path
-        dbg.dassert_is_not(cache_path, None)
+        hdbg.dassert_is_not(cache_path, None)
         cache_path = cast(str, cache_path)
+        if not _IS_CLEAR_CACHE_ENABLED:
+            hdbg.dfatal("Trying to delete function cache '%s'" % cache_path)
         # Collect info before.
         cache_type = "disk"
         description = f"function {cache_type}"
@@ -456,9 +589,9 @@ class _Cached:
         )
         if hs3.is_s3_path(cache_path):
             # For now we only allow to delete caches under the unit test path.
-            bucket, abs_path = hs3.split_path(cache_path)
-            dbg.dassert(
-                abs_path.startswith("/tmp/cache.unit_test/"),
+            _, abs_path = hs3.split_path(cache_path)
+            hdbg.dassert(
+                abs_path.startswith("/tmp/"),
                 "The path '%s' is not valid",
                 abs_path,
             )
@@ -477,6 +610,7 @@ class _Cached:
 
         :param cache_path: cache directory or `None` to use global cache
         """
+        if _TRACE_FUNCS: _LOG.debug("")
         # We need to disable the memory cache.
         if cache_path:
             self._use_mem_cache = False
@@ -488,12 +622,27 @@ class _Cached:
             self._disk_cached_func,
         ) = self._create_function_disk_cache()
 
-    # ///////////////////////////////////////////////////////////////////////////
+    def _get_function_specific_code_path(self) -> str:
+        if _TRACE_FUNCS: _LOG.debug("")
+        # Get the store backend.
+        cache_type = "disk"
+        memorized_result = self._get_memorized_result(cache_type)
+        store_backend = memorized_result.store_backend
+        # Get the function id (which is the full path).
+        func_id = jmemor._build_func_identifier(self._func)
+        # Assemble the path.
+        func_path = os.path.join(store_backend.location, func_id, "func_code.py")
+        _LOG.debug("func_path='%s'", func_path)
+        hdbg.dassert(
+            store_backend._item_exists(func_path), "Can't find '%s'", func_path
+        )
+        return func_path
 
     def _create_function_memory_cache(self) -> joblib.Memory:
         """
         Initialize Joblib object storing a memory cache for this function.
         """
+        if _TRACE_FUNCS: _LOG.debug("")
         _LOG.debug("Create memory cache")
         # For memory always use the global cache.
         cache_type = "mem"
@@ -507,8 +656,9 @@ class _Cached:
         """
         Initialize Joblib object storing a disk cache for this function.
         """
-        if self._disk_cache_path:
-            dbg.dassert(
+        if _TRACE_FUNCS: _LOG.debug("")
+        if self.has_function_cache():
+            hdbg.dassert(
                 not self._use_mem_cache,
                 "When using function cache the memory cache needs to be disabled",
             )
@@ -518,10 +668,10 @@ class _Cached:
                 "compress": True,
             }
             if hs3.is_s3_path(self._disk_cache_path):
-                import helpers.joblib_helpers as hjoblib
+                import helpers.joblib_helpers as hjoh
 
                 # Register the S3 backend.
-                hjoblib.register_s3fs_store_backend()
+                hjoh.register_s3fs_store_backend()
                 # Use the default profile, unless it was explicitly passed.
                 if self._aws_profile is None:
                     aws_profile = hs3.get_aws_profile()
@@ -532,7 +682,7 @@ class _Cached:
                 # Remove the initial `/` from the path that makes the path
                 # absolute, since `Joblib.Memory` wants a path relative to the
                 # bucket.
-                dbg.dassert(
+                hdbg.dassert(
                     path.startswith("/"),
                     "The path should be absolute instead of %s",
                     path,
@@ -556,19 +706,41 @@ class _Cached:
         disk_cached_func = disk_cache.cache(self._func)
         return disk_cache, disk_cached_func
 
-    def _get_function_cache(self, cache_type: str) -> joblib.MemorizedResult:
+    # ///////////////////////////////////////////////////////////////////////////
+
+    # TODO(gp): We should use the actual stored dir.
+    def _get_cache_dir(self, cache_type: str, tag: Optional[str]) -> str:
+        """
+        Return the dir of the cache corresponding to `cache_type` and `tag`.
+        """
+        if _TRACE_FUNCS: _LOG.debug("")
+        if cache_type == "no_cache":
+            return "no_cache"
+        if self.has_function_cache():
+            hdbg.dassert_eq(cache_type, "disk")
+            ret = self._disk_cache_path
+        else:
+            ret = _get_global_cache_path(cache_type, tag=tag)
+        return ret
+
+    def _get_memorized_result(self, cache_type: str) -> joblib.MemorizedResult:
         """
         Get the instance of a cache by type.
+
+        From https://github.com/joblib/joblib/blob/master/joblib/memory.py
+        A `MemorizedResult` is an object representing a cached value
 
         :param cache_type: type of a cache
         :return: instance of the Joblib cache
         """
+        if _TRACE_FUNCS: _LOG.debug("")
         _dassert_is_valid_cache_type(cache_type)
         if cache_type == "mem":
-            cache_backend = self._memory_cached_func
+            memorized_result = self._memory_cached_func
         elif cache_type == "disk":
-            cache_backend = self._disk_cached_func
-        return cache_backend
+            memorized_result = self._disk_cached_func
+        _LOG.debug("memorized_result=%s", memorized_result)
+        return memorized_result
 
     def _get_identifiers(
         self, cache_type: str, *args: Any, **kwargs: Dict[str, Any]
@@ -581,14 +753,18 @@ class _Cached:
         :param kwargs: original kw-arguments of the call
         :return: digests of the function and current arguments
         """
-        cache_backend = self._get_function_cache(cache_type)
-        dbg.dassert_is_not(
-            cache_backend,
+        memorized_result = self._get_memorized_result(cache_type)
+        _LOG.debug("memorized_result=%s", memorized_result)
+        hdbg.dassert_is_not(
+            memorized_result,
             None,
             "Cache backend not initialized for %s",
             cache_type,
         )
-        func_id, args_id = cache_backend._get_output_identifiers(*args, **kwargs)
+        func_id, args_id = memorized_result._get_output_identifiers(
+            *args, **kwargs
+        )
+        _LOG.debug("func_id=%s args_id=%s", func_id, args_id)
         return func_id, args_id
 
     def _has_cached_version(
@@ -603,22 +779,24 @@ class _Cached:
         :param args_id: digest of arguments obtained from _get_identifiers
         :return: whether there is an entry in a cache
         """
-        cache_backend = self._get_function_cache(cache_type)
-        has_cached_version = cache_backend.store_backend.contains_item(
+        if _TRACE_FUNCS: _LOG.debug("")
+        memorized_result = self._get_memorized_result(cache_type)
+        has_cached_version = memorized_result.store_backend.contains_item(
             [func_id, args_id]
         )
+        _LOG.debug("has_cached_version=%s", has_cached_version)
         if has_cached_version:
             # We must check that the source of the function is the same, otherwise,
             # cache tracing will not be correct.
             # First, try faster check via joblib hash.
             if self._func in jmemor._FUNCTION_HASHES:
-                func_hash = cache_backend._hash_func()
+                func_hash = memorized_result._hash_func()
                 if func_hash == jmemor._FUNCTION_HASHES[self._func]:
                     return True
             # Otherwise, check the the source of the function is still the same.
             func_code, _, _ = jmemor.get_func_code(self._func)
             old_func_code_cache = (
-                cache_backend.store_backend.get_cached_func_code([func_id])
+                memorized_result.store_backend.get_cached_func_code([func_id])
             )
             old_func_code, _ = jmemor.extract_first_line(old_func_code_cache)
             if func_code == old_func_code:
@@ -636,12 +814,19 @@ class _Cached:
         :param args_id: digest of arguments obtained from `_get_identifiers()`
         :param obj: return value of the intrinsic function
         """
-        cache_backend = self._get_function_cache(cache_type)
+        if _TRACE_FUNCS: _LOG.debug("")
+        # This corresponds to
+        # /venv/lib/python3.8/site-packages/joblib/memory.py
+        # __call__
+        if self._enable_read_only:
+            raise NotCachedValueException
+        memorized_result = self._get_memorized_result(cache_type)
         # Write out function code to the cache.
-        func_code, _, first_line = jfunci.get_func_code(cache_backend.func)
-        cache_backend._write_func_code(func_code, first_line)
+        func_code, _, first_line = jfunci.get_func_code(memorized_result.func)
+        memorized_result._write_func_code(func_code, first_line)
         # Store the returned value into the cache.
-        cache_backend.store_backend.dump_item([func_id, args_id], obj)
+        memorized_result.store_backend.dump_item([func_id, args_id], obj)
+        #
 
     # ///////////////////////////////////////////////////////////////////////////
 
@@ -650,84 +835,129 @@ class _Cached:
         Reset the values used to track which cache we are hitting when
         executing the cached function.
         """
+        if _TRACE_FUNCS: _LOG.debug("")
         # The reset values depend on which caches are enabled.
         self._last_used_disk_cache = self._use_disk_cache
         self._last_used_mem_cache = self._use_mem_cache
 
+    def _execute_func_from_disk_cache(self, *args: Any, **kwargs: Any) -> Any:
+        if _TRACE_FUNCS: _LOG.debug("")
+        func_info = "%s(args=%s kwargs=%s)" % (
+            self._func.__name__,
+            str(args),
+            str(kwargs),
+        )
+        # Get the function signature.
+        func_id, args_id = self._get_identifiers("disk", *args, **kwargs)
+        if self._has_cached_version("disk", func_id, args_id):
+            _LOG.debug("There is a disk cached version")
+            obj = self._disk_cached_func(*args, **kwargs)
+            if self._check_only_if_present:
+                raise CachedValueException(func_info)
+        else:
+            # INV: we didn't hit neither memory nor the disk cache.
+            self._last_used_disk_cache = False
+            #
+            _LOG.debug(
+                "%s: execute the intrinsic function",
+                func_info,
+            )
+            # If the cache was read-only, then assert.
+            if self._enable_read_only:
+                msg = f"{func_info}: trying to execute"
+                raise NotCachedValueException(msg)
+            obj = self._disk_cached_func(*args, **kwargs)
+            # obj = self._execute_intrinsic_function(*args, **kwargs)
+            # The function was not cached in disk, so now we need to update the
+            # memory cache.
+            # self._store_cached_version("disk", func_id, args_id, obj)
+        return obj
+
     def _execute_func_from_mem_cache(self, *args: Any, **kwargs: Any) -> Any:
         """
-        Execute the function.
+        Execute the function from memory cache and if not possible try the
+        lower cache levels.
         """
+        if _TRACE_FUNCS: _LOG.debug("")
+        func_info = "%s(args=%s kwargs=%s)" % (
+            self._func.__name__,
+            str(args),
+            str(kwargs),
+        )
         # Get the function signature.
         func_id, args_id = self._get_identifiers("mem", *args, **kwargs)
         if self._has_cached_version("mem", func_id, args_id):
+            _LOG.debug("There is a mem cached version")
+            if self._check_only_if_present:
+                raise CachedValueException(func_info)
             # The function execution was cached in the mem cache.
             obj = self._memory_cached_func(*args, **kwargs)
         else:
-            # If we get here, we know that we didn't hit the memory cache,
-            # but we don't know about the disk cache.
+            # INV: we know that we didn't hit the memory cache, but we don't know
+            # about the disk cache.
+            _LOG.debug("There is not a mem cached version")
             self._last_used_mem_cache = False
             #
             if self._use_disk_cache:
                 # Try the disk cache.
                 _LOG.debug(
-                    "%s(args=%s kwargs=%s): trying to retrieve from disk",
-                    self._func.__name__,
-                    args,
-                    kwargs,
+                    "Trying to retrieve from disk",
                 )
                 obj = self._execute_func_from_disk_cache(*args, **kwargs)
             else:
                 _LOG.warning("Skipping disk cache")
-                obj = self._memory_cached_func(*args, **kwargs)
+                obj = self._execute_intrinsic_function(*args, **kwargs)
             # The function was not cached in memory, so now we need to update the
             # memory cache.
             self._store_cached_version("mem", func_id, args_id, obj)
         return obj
 
-    def _execute_func_from_disk_cache(self, *args: Any, **kwargs: Any) -> Any:
-        # Get the function signature.
-        func_id, args_id = self._get_identifiers("disk", *args, **kwargs)
-        if not self._has_cached_version("disk", func_id, args_id):
-            # If we get here, we didn't hit neither memory nor the disk cache.
-            self._last_used_disk_cache = False
-            #
-            _LOG.debug(
-                "%s(args=%s kwargs=%s): execute the intrinsic function",
-                self._func.__name__,
-                args,
-                kwargs,
-            )
-        obj = self._disk_cached_func(*args, **kwargs)
+    def _execute_intrinsic_function(self, *args: Any, **kwargs: Any) -> Any:
+        if _TRACE_FUNCS: _LOG.debug("")
+        func_info = "%s(args=%s kwargs=%s)" % (
+            self._func.__name__,
+            str(args),
+            str(kwargs),
+        )
+        _LOG.debug("%s: execute intrinsic function", func_info)
+        if self._enable_read_only:
+            msg = f"{func_info}: trying to execute"
+            raise NotCachedValueException(msg)
+        obj = self._func(*args, **kwargs)
         return obj
 
     def _execute_func(self, *args: Any, **kwargs: Any) -> Any:
+        if _TRACE_FUNCS: _LOG.debug("")
+        func_info = "%s(args=%s kwargs=%s)" % (
+            self._func.__name__,
+            str(args),
+            str(kwargs),
+        )
         _LOG.debug(
             "%s: use_mem_cache=%s use_disk_cache=%s",
-            self._func.__name__,
+            func_info,
             self._use_mem_cache,
             self._use_disk_cache,
         )
         if self._use_mem_cache:
-            _LOG.debug(
-                "%s(args=%s kwargs=%s): trying to retrieve from memory",
-                self._func.__name__,
-                args,
-                kwargs,
-            )
+            _LOG.debug("Trying to retrieve from memory")
             obj = self._execute_func_from_mem_cache(*args, **kwargs)
         else:
-            _LOG.warning("Skipping memory cache")
+            if self.has_function_cache():
+                # For function-specific cache, skipping the memory cache is the
+                # normal behavior.
+                _LOG.debug(
+                    "Function has function-specific cache: skipping memory cache"
+                )
+            else:
+                _LOG.warning("Skipping memory cache")
             self._last_used_mem_cache = False
             if self._use_disk_cache:
                 obj = self._execute_func_from_disk_cache(*args, **kwargs)
             else:
                 _LOG.warning("Skipping disk cache")
                 self._last_used_disk_cache = False
-                # We shouldn't use either the mem or the disk cache: in practice
-                # we have disabled caching completely. Thus we just call the
-                # intrinsic function.
-                obj = self._func(*args, **kwargs)
+                obj = self._execute_intrinsic_function(*args, **kwargs)
         return obj
 
 

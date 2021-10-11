@@ -6,138 +6,129 @@ import im.cryptodatadownload.data.load.loader as crdall
 
 import logging
 import os
+from typing import Optional
 
 import pandas as pd
 
 import core.pandas_helpers as cphelp
 import helpers.datetime_ as hdatet
 import helpers.dbg as dbg
+import helpers.io_ as hio
 import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(Dan): Fill the lists and decide whether to put them outside of the file.
-# List from the spreadsheet:
-# https://docs.google.com/spreadsheets/d/1qIw4AvPr3Ykh5zlRsNNEVzzPuyq-F3JMh_UZQS0kRhA/edit#gid=0
-_DOWNLOADED_EXCHANGES_TIMEFRAMES_CURRENCIES = {
-    "binance": {
-        "minute": [
-            "ADA/USDT",
-            "AVAX/USDT",
-            "BNB/USDT",
-            "BTC/USDT",
-            "DOGE/USDT",
-            "EOS/USDT",
-            "ETH/USDT",
-            "LINK/USDT",
-            "SOL/USDT",
-        ],
-    },
-    "kucoin": {
-        "minute": [
-            "ADA/USDT",
-            "AVAX/USDT",
-            "BNB/USDT",
-            "BTC/USDT",
-            "DOGE/USDT",
-            "EOS/USDT",
-            "ETH/USDT",
-            "FIL/USDT",
-            "LINK/USDT",
-            "SOL/USDT",
-            "XPR/USDT",
-        ],
-    },
-}
+# Path to the data about downloaded currencies from the spreadsheet in CMTask41.
+_DOWNLOADED_CURRENCIES_PATH = "im/data/downloaded_currencies.json"
+# Latest historical data snapsot.
+_LATEST_DATA_SNAPSHOT = "20210924"
 
 
-def _get_file_name(exchange_id: str, currency_pair: str, timeframe: str) -> str:
+def _get_file_path(
+    data_snapshot: str,
+    exchange_id: str,
+    currency_pair: str,
+) -> str:
     """
-    Get name for a file with CDD data.
+    Get path to a file with CDD data from a content root.
 
-    File name is constructed in the following way:
-    `<Exchange_id>_<currency1><currency2>_<timeframe>.csv.gz`.
+    File path is constructed in the following way:
+    `cryptodatadownload/<snapshot>/<exchange_id>/<currency_pair>.csv.gz`.
 
-    :param exchange_id: CDD exchange id (e.g. "binance")
-    :param currency_pair: currency pair `<currency1>/<currency2>` (e.g. "BTC/USDT")
-    :param timeframe: timeframe of the data to load. Possible values:
-        'minute', 'hourly', 'daily'.
-    :return: name for a file with CDD data
+    :param data_snapshot: snapshot of datetime when data was loaded, e.g. "20210924"
+    :param exchange_id: CDD exchange id, e.g. "binance"
+    :param currency_pair: currency pair `<currency1>/<currency2>`, e.g. "BTC/USDT"
+    :return: path to a file with CDD data
     """
-    # Make sure that data for the input exchange id was downloaded.
+    # Extract data about downloaded currencies for CDD.
+    downloaded_currencies_info = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)["CDD"]
+    # Verify that data for the input exchange id was downloaded.
     dbg.dassert_in(
         exchange_id,
-        _DOWNLOADED_EXCHANGES_TIMEFRAMES_CURRENCIES.keys(),
+        downloaded_currencies_info.keys(),
         msg="Data for exchange id='%s' was not downloaded" % exchange_id,
     )
-    # Make sure that data for the input exchange id and timeframe was
+    # Verify that data for the input exchange id and currency pair was
     # downloaded.
-    downloaded_timeframes = _DOWNLOADED_EXCHANGES_TIMEFRAMES_CURRENCIES[
-        exchange_id
-    ]
-    dbg.dassert_in(
-        timeframe,
-        downloaded_timeframes,
-        msg="Data for exchange id='%s', timeframe='%s' was not downloaded"
-        % (exchange_id, timeframe),
-    )
-    # Make sure that data for the input exchange id, timeframe, and currency
-    # pair was downloaded.
-    downloaded_currencies = _DOWNLOADED_EXCHANGES_TIMEFRAMES_CURRENCIES[
-        exchange_id
-    ][timeframe]
+    downloaded_currencies = downloaded_currencies_info[exchange_id]
     dbg.dassert_in(
         currency_pair,
         downloaded_currencies,
-        msg="Data for exchange id='%s', timeframe='%s', currency pair='%s' was not downloaded"
-        % (exchange_id, timeframe, currency_pair),
+        msg="Data for exchange id='%s', currency pair='%s' was not downloaded"
+        % (exchange_id, currency_pair),
     )
-    # TODO(Dan): Discuss unification of file names logic on S3 for CCXT and CDD.
-    file_name = f"{exchange_id.capitalize()}_{currency_pair.replace('/', '')}_{timeframe}.csv.gz"
-    return file_name
+    file_path = f"cryptodatadownload/{data_snapshot}/{exchange_id}/{currency_pair.replace('/', '_')}.csv.gz"
+    return file_path
 
 
 class CddLoader:
-    """
-    Load CDD data.
-    """
+    def __init__(self, root_dir: str, aws_profile: Optional[str] = None) -> None:
+        """
+        Load CDD data.
+
+        :param: root_dir: either a local root path (e.g., "/app/im") or
+            an S3 root path ("s3://alphamatic-data/data) to CDD data
+        :param: aws_profile: AWS profile name (e.g., "am")
+        """
+        self._root_dir = root_dir
+        self._aws_profile = aws_profile
+        # Specify supported data types to load.
+        self._data_types = ["ohlcv"]
 
     def read_data(
-        self, exchange_id: str, currency_pair: str, timeframe: str, data_type: str
+        self,
+        exchange_id: str,
+        currency_pair: str,
+        data_type: str,
+        data_snapshot: Optional[str] = None,
     ) -> pd.DataFrame:
         """
-        Load data from S3 and process it in the common format used by the
-        models.
+        Load data from S3 and process it for use downstream.
 
-        :param exchange_id: CDD exchange id
-        :param currency_pair: currency pair (e.g. "BTC/USDT")
-        :param timeframe: timeframe of the data to load. Possible values:
-            'minute', 'hourly', 'daily'.
+        :param exchange_id: CDD exchange id, e.g. "binance"
+        :param currency_pair: currency pair, e.g. "BTC/USDT"
         :param data_type: OHLCV or trade, bid/ask data
+        :param data_snapshot: snapshot of datetime when data was loaded, e.g. "20210924"
         :return: processed CDD data
         """
-        # Get file path for a CDD file.
-        file_name = _get_file_name(exchange_id, currency_pair, timeframe)
-        s3_bucket_path = hs3.get_path()
-        file_path = os.path.join(s3_bucket_path, file_name)
-        # Make sure that the file exists.
-        s3fs = hs3.get_s3fs("am")
-        hs3.dassert_s3_exists(file_path, s3fs)
-        # Read raw CDD data from S3.
+        data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
+        # Verify that requested data type is valid.
+        dbg.dassert_in(
+            data_type.lower(),
+            self._data_types,
+            msg="Incorrect data type: '%s'. Acceptable types: '%s'"
+                % (data_type.lower(), self._data_types),
+        )
+        # Get absolute file path for a CDD file.
+        file_path = os.path.join(
+            self._root_dir,
+            _get_file_path(data_snapshot, exchange_id, currency_pair),
+        )
+        # Initialize kwargs dict for further CDD data reading.
+        # Add "skiprows" to kwargs in order to skip a row with the file name.
+        read_csv_kwargs = {"skiprows": 1}
+        # TODO(Dan): Remove asserts below after CMTask108 is resolved.
+        # Verify that the file exists and fill kwargs if needed.
+        if hs3.is_s3_path(file_path):
+            s3fs = hs3.get_s3fs(self._aws_profile)
+            hs3.dassert_s3_exists(file_path, s3fs)
+            # Add s3fs argument to kwargs.
+            read_csv_kwargs["s3fs"] = s3fs
+        else:
+            dbg.dassert_file_exists(file_path)
+        # Read raw CDD data.
         _LOG.info(
-            "Reading CDD data for exchange id='%s', currencies='%s', timeframe='%s' from file='%s'...",
+            "Reading CDD data for exchange id='%s', currencies='%s', from file='%s'...",
             exchange_id,
             currency_pair,
-            timeframe,
             file_path,
         )
-        data = cphelp.read_csv(file_path, s3fs)
+        data = cphelp.read_csv(file_path, **read_csv_kwargs)
         # Apply transformation to raw data.
         _LOG.info(
-            "Processing CDD data for exchange id='%s', currencies='%s', timeframe='%s'...",
+            "Processing CDD data for exchange id='%s', currencies='%s'...",
             exchange_id,
             currency_pair,
-            timeframe,
         )
         transformed_data = self._transform(
             data, exchange_id, currency_pair, data_type
@@ -145,7 +136,6 @@ class CddLoader:
         return transformed_data
 
     # TODO(*): Consider making `exchange_id` a class member.
-    # TODO(Dan): Decide whether `timestamp` col should contain "+00:00" at the end (compare with CCXT).
     def _transform(
         self,
         data: pd.DataFrame,
@@ -163,10 +153,10 @@ class CddLoader:
             1631145720000  2021-09-09 00:02:00  ETH/USDT  3501.59  3513.10  3499.89  3513.09  579.5656    2032108      1118
 
         Output data example:
-            timestamp            open     high     low      close    volume    epoch          currency_pair exchange_id
-            2021-09-09 00:00:00  3499.01  3499.49  3496.17  3496.36  346.4812  1631145600000  ETH/USDT      binance
-            2021-09-09 00:01:00  3496.36  3501.59  3495.69  3501.59  401.9576  1631145660000  ETH/USDT      binance
-            2021-09-09 00:02:00  3501.59  3513.10  3499.89  3513.09  579.5656  1631145720000  ETH/USDT      binance
+            timestamp                  open     high     low      close    volume    epoch          currency_pair exchange_id
+            2021-09-08 20:00:00-04:00  3499.01  3499.49  3496.17  3496.36  346.4812  1631145600000  ETH/USDT      binance
+            2021-09-08 20:01:00-04:00  3496.36  3501.59  3495.69  3501.59  401.9576  1631145660000  ETH/USDT      binance
+            2021-09-08 20:02:00-04:00  3501.59  3513.10  3499.89  3513.09  579.5656  1631145720000  ETH/USDT      binance
 
         :param data: dataframe with CDD data from S3
         :param exchange_id: CDD exchange id, e.g. "binance"
@@ -180,7 +170,10 @@ class CddLoader:
         if data_type.lower() == "ohlcv":
             transformed_data = self._apply_ohlcv_transformation(transformed_data)
         else:
-            dbg.dfatal("Incorrect data type. Acceptable types: ohlcv")
+            dbg.dfatal(
+                "Incorrect data type: '%s'. Acceptable types: '%s'"
+                % (data_type.lower(), self._data_types)
+            )
         return transformed_data
 
     def _apply_common_transformation(
@@ -196,7 +189,7 @@ class CddLoader:
         - Adding exchange_id and currency_pair columns
 
         :param data: raw data from S3
-        :param exchange_id: name of exchange, e.g. "binance"
+        :param exchange_id: CDD exchange id, e.g. "binance"
         :param currency_pair: currency pair, e.g. "BTC/USDT"
         :return: transformed CDD data
         """
@@ -206,8 +199,8 @@ class CddLoader:
         )
         # Rename col with original Unix ms epoch.
         data = data.rename({"unix": "epoch"}, axis=1)
-        # Transform dates into standard timestamps.
-        data["timestamp"] = hdatet.to_generalized_datetime(data["date"])
+        # Transform Unix epoch into ET timestamp.
+        data["timestamp"] = self._convert_epochs_to_timestamp(data["epoch"])
         # Rename col with traded volume in amount of the 1st currency in pair.
         data = data.rename(
             {"Volume " + currency_pair.split("/")[0]: "volume"}, axis=1
@@ -217,6 +210,22 @@ class CddLoader:
         # Add a col with exchange id.
         data["exchange_id"] = exchange_id
         return data
+
+    @staticmethod
+    def _convert_epochs_to_timestamp(epoch_col: pd.Series) -> pd.Series:
+        """
+        Convert Unix epoch to timestamp in ET.
+
+        All Unix time epochs in CDD are provided in ms and in UTC tz.
+
+        :param epoch_col: Series with Unix time epochs
+        :return: Series with epochs converted to timestamps in ET
+        """
+        # Convert to timestamp in UTC tz.
+        timestamp_col = pd.to_datetime(epoch_col, unit="ms", utc=True)
+        # Convert to ET tz.
+        timestamp_col = timestamp_col.dt.tz_convert(hdatet.get_ET_tz())
+        return timestamp_col
 
     @staticmethod
     def _apply_ohlcv_transformation(data: pd.DataFrame) -> pd.DataFrame:

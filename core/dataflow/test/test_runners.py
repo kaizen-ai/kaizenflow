@@ -3,16 +3,21 @@ import logging
 from typing import List, Optional, Tuple
 
 import numpy as np
+import pandas as pd
+import pytest
 
 # TODO(gp): We should import only the strict dependencies.
+import core.config as cconfig
 import core.dataflow as dtf
-import core.dataflow.real_time as cdtfrt
-import core.dataflow.result_bundle as cdtfrb
-import core.dataflow.runners as cdtfr
+import core.dataflow.real_time as cdtfretim
+import core.dataflow.result_bundle as cdtfrebun
+import core.dataflow.runners as cdtfrun
 import core.dataflow.test.test_builders as cdtfnttd
+import core.dataflow.test.test_db_interface as dartttdi
 import core.dataflow.test.test_real_time as cdtfttrt
-import helpers.hasyncio as hasyncio
-import helpers.unit_test as hut
+import dataflow_amp.real_time.pipeline as dtfamretipip
+import helpers.hasyncio as hhasynci
+import helpers.unit_test as huntes
 
 _LOG = logging.getLogger(__name__)
 
@@ -20,7 +25,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class TestRollingFitPredictDagRunner1(hut.TestCase):
+class TestRollingFitPredictDagRunner1(huntes.TestCase):
     def test1(self) -> None:
         """
         Test the DagRunner using `ArmaReturnsBuilder`
@@ -44,7 +49,7 @@ class TestRollingFitPredictDagRunner1(hut.TestCase):
 # #############################################################################
 
 
-class TestIncrementalDagRunner1(hut.TestCase):
+class TestIncrementalDagRunner1(huntes.TestCase):
     def test1(self) -> None:
         """
         Test the DagRunner using `ArmaReturnsBuilder`.
@@ -80,29 +85,42 @@ class TestIncrementalDagRunner1(hut.TestCase):
 # #############################################################################
 
 
-class TestRealTimeDagRunner1(hut.TestCase):
-    def test_replayed_time1(self) -> None:
-        """
-        Use replayed real-time.
-        """
-        dtf.align_on_even_second()
-        loop = None
-        events, result_bundles = self._helper(loop)
-        # It's difficult to check the output of any real-time test.
-        _ = events, result_bundles
+class TestRealTimeDagRunner1(huntes.TestCase):
+    """
+    - Create a naive DAG pipeline with a node generating random data and
+      processing the data through a pass-through node
+    - Create an event loop replaying time
+    - Run the DAG with a `RealTimeDagRunner`
+    - Check that the output is what is expected
+
+    We simulate this in real and simulated time.
+    """
 
     def test_simulated_replayed_time1(self) -> None:
         """
         Use simulated replayed time.
         """
-        with hasyncio.solipsism_context() as loop:
-            events, result_bundles = self._helper(loop)
+        with hhasynci.solipsism_context() as event_loop:
+            events, result_bundles = self._helper(event_loop)
         self._check(events, result_bundles)
+
+    # TODO(gp): Enable this but make it trigger more often.
+    @pytest.mark.skip(reason="Too slow for real time")
+    def test_replayed_time1(self) -> None:
+        """
+        Use replayed time.
+        """
+        dtf.align_on_even_second()
+        event_loop = None
+        events, result_bundles = self._helper(event_loop)
+        # It's difficult to check the output of any real-time test, so we don't
+        # verify the output.
+        _ = events, result_bundles
 
     @staticmethod
     def _helper(
-        loop: Optional[asyncio.AbstractEventLoop],
-    ) -> Tuple[cdtfrt.Events, List[cdtfrb.ResultBundle]]:
+        event_loop: Optional[asyncio.AbstractEventLoop],
+    ) -> Tuple[cdtfretim.Events, List[cdtfrebun.ResultBundle]]:
         """
         Test `RealTimeDagRunner` using a simple DAG triggering every 2 seconds.
         """
@@ -110,29 +128,33 @@ class TestRealTimeDagRunner1(hut.TestCase):
         dag_builder = cdtfnttd._NaivePipeline()
         config = dag_builder.get_config_template()
         # Set up the event loop.
+        sleep_interval_in_secs = 1.0
         execute_rt_loop_kwargs = (
-            cdtfttrt.get_replayed_time_execute_rt_loop_kwargs(loop)
+            cdtfttrt.get_replayed_time_execute_rt_loop_kwargs(
+                sleep_interval_in_secs, event_loop=event_loop
+            )
         )
-        kwargs = {
+        dag_runner_kwargs = {
             "config": config,
             "dag_builder": dag_builder,
             "fit_state": None,
-            #
             "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
-            #
             "dst_dir": None,
         }
         # Run.
-        dag_runner = cdtfr.RealTimeDagRunner(**kwargs)
-        result_bundles = hasyncio.run(dag_runner.predict(), loop)
+        dag_runner = cdtfrun.RealTimeDagRunner(**dag_runner_kwargs)
+        result_bundles = hhasynci.run(dag_runner.predict(), event_loop=event_loop)
         events = dag_runner.events
         #
         _LOG.debug("events=\n%s", events)
         _LOG.debug("result_bundles=\n%s", result_bundles)
         return events, result_bundles
 
+    # TODO(gp): Centralize this.
     def _check(
-        self, events: cdtfrt.Events, result_bundles: List[cdtfrb.ResultBundle]
+        self,
+        events: cdtfretim.Events,
+        result_bundles: List[cdtfrebun.ResultBundle],
     ) -> None:
         # Check the events.
         actual = "\n".join(

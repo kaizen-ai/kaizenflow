@@ -18,11 +18,11 @@ rets/filter_ath:
 rets/resample:
   rule: 1T
   price_cols: ['close']
-  volume_cols: ['vol']
+  volume_cols: ['volume']
 rets/compute_wap:
   rule: 5T
   price_col: close
-  volume_col: vol
+  volume_col: volume
 rets/compute_ret_0:
   cols: ['twap', 'vwap']
   col_mode: merge_all

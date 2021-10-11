@@ -1,35 +1,98 @@
 import logging
+from typing import Callable, Tuple
+
+import pandas as pd
+
+import core.config as cconfig
+import core.dataflow.real_time as cdtfretim
+import core.dataflow.runners as cdtfrun
+import core.dataflow.test.test_real_time as cdtfttrt
+import core.dataflow.test.test_db_interface as dartttdi
+import dataflow_amp.real_time.pipeline as dtfamretipip
+import helpers.datetime_ as hdatetim
+import helpers.hasyncio as hhasynci
+import helpers.htypes as hhtypes
+import helpers.unit_test as huntes
 
 _LOG = logging.getLogger(__name__)
 
 
-# class TestRealTimeReturnPipeline1(hut.TestCase):
-#    def test1(self) -> None:
-#        """
-#        Test `RealTimeReturnPipeline` using synthetic data.
-#        """
-#        # Create the pipeline.
-#        dag_builder = dtfart.RealTimeReturnPipeline()
-#        config = dag_builder.get_config_template()
-#        _LOG.debug("\n# config=\n%s", config)
-#
-#        start_datetime = pd.Timestamp("2010-01-04 09:30:00")
-#        end_datetime = pd.Timestamp("2010-01-04 11:30:00")
-#
-#        dag_builder.validate_config(config)
-#        # Create the DAG runner.
-#        execute_rt_loop_kwargs = cdtfttrt.get_replayed_time_execute_rt_loop_kwargs()
-#        kwargs = {
-#            "config": config,
-#            "dag_builder": dag_builder,
-#            "fit_state": None,
-#            #
-#            "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
-#            #
-#            "dst_dir": None,
-#        }
-#        dag_runner = cdtf.RealTimeDagRunner(**kwargs)
-#        # Run.
-#        dtf.align_on_even_second()
-#        dag_runner.predict()
-#        # TODO(gp): Check.
+class TestRealTimeReturnPipeline1(huntes.TestCase):
+    """
+    This test is similar to `TestRealTimeDagRunner1` but using a real DAG
+    (`ReturnPipeline`) together with real-time data source node.
+    """
+
+    def test1(self) -> None:
+        """
+        Test `RealTimeReturnPipeline` using synthetic data.
+        """
+        with hhasynci.solipsism_context() as event_loop:
+            # Create the pipeline.
+            dag_builder = dtfamretipip.RealTimeReturnPipeline()
+            config = dag_builder.get_config_template()
+            # Inject the real-time node.
+            start_datetime = pd.Timestamp("2000-01-01 09:30:00-05:00")
+            end_datetime = pd.Timestamp("2000-01-01 10:30:00-05:00")
+            columns = ["close", "vol"]
+            df = dartttdi.generate_synthetic_db_data(
+                start_datetime, end_datetime, columns
+            )
+            initial_replayed_delay = 5
+            rtdi = dartttdi.get_replayed_time_db_interface_example1(
+                event_loop,
+                start_datetime,
+                end_datetime,
+                initial_replayed_delay,
+                df=df,
+            )
+            period = "last_5mins"
+            source_node_kwargs = {
+                "real_time_db_interface": rtdi,
+                "period": period,
+            }
+            config["load_prices"] = cconfig.get_config_from_nested_dict(
+                {
+                    "source_node_name": "RealTimeDataSource",
+                    "source_node_kwargs": source_node_kwargs,
+                }
+            )
+            # Set up the event loop.
+            sleep_interval_in_secs = 60 * 5
+            execute_rt_loop_kwargs = (
+                cdtfttrt.get_replayed_time_execute_rt_loop_kwargs(
+                    sleep_interval_in_secs, event_loop=event_loop
+                )
+            )
+            dag_runner_kwargs = {
+                "config": config,
+                "dag_builder": dag_builder,
+                "fit_state": None,
+                "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
+                "dst_dir": None,
+            }
+            # Run.
+            dag_runner = cdtfrun.RealTimeDagRunner(**dag_runner_kwargs)
+            result_bundles = hhasynci.run(
+                dag_runner.predict(), event_loop=event_loop
+            )
+            events = dag_runner.events
+            # Check.
+            # TODO(gp): Factor this out.
+            actual = []
+            events_as_str = "\n".join(
+                [
+                    event.to_str(
+                        include_tenths_of_secs=False,
+                        include_wall_clock_time=False,
+                    )
+                    for event in events
+                ]
+            )
+            actual.append("events_as_str=\n%s" % events_as_str)
+            #
+            result_bundles_as_str = "\n".join(map(str, result_bundles))
+            actual.append("result_bundles=\n%s" % result_bundles_as_str)
+            #
+            actual = "\n".join(map(str, actual))
+            self.check_string(actual)

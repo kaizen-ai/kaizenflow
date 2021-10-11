@@ -9,7 +9,7 @@ import logging
 
 import helpers.dbg as dbg
 import helpers.parser as prsr
-import im.common.db.init as init
+import im.common.db.create_schema as icdcrsch
 
 _LOG = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    conn = init.get_db_connection()
+    conn = icdcrsch.get_db_connection_from_environment()
     print(conn)
 
 

@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.dataflow.runners as cdtfr
+import core.dataflow.runners as cdtfrun
 """
 
 import abc
@@ -11,12 +11,13 @@ from typing import Any, Dict, Generator, List, Optional, Tuple
 import pandas as pd
 
 import core.config as cconfig
-import core.dataflow.core as cdtfc
-import core.dataflow.real_time as cdtfrt
-import core.dataflow.utils as cdtfu
-import core.dataflow.visitors as cdtfv
-import helpers.datetime_ as hdatetime
-import helpers.dbg as dbg
+import core.dataflow.core as cdtfcor
+import core.dataflow.nodes.sources as cdtfnosou
+import core.dataflow.real_time as cdtfretim
+import core.dataflow.utils as cdtfuti
+import core.dataflow.visitors as cdtfvis
+import helpers.datetime_ as hdatetim
+import helpers.dbg as hdbg
 
 # TODO(gp): Use the standard imports.
 from core.dataflow.builders import DagBuilder
@@ -58,8 +59,8 @@ class _AbstractDagRunner(abc.ABC):
         # Check that the DAG has the required methods.
         methods = self._dag_builder.methods
         _LOG.debug("methods=%s", methods)
-        dbg.dassert_in("fit", methods)
-        dbg.dassert_in("predict", methods)
+        hdbg.dassert_in("fit", methods)
+        hdbg.dassert_in("predict", methods)
         # Get the mapping from columns to tags.
         self._column_to_tags_mapping = (
             self._dag_builder.get_column_to_tags_mapping(self.config)
@@ -70,7 +71,7 @@ class _AbstractDagRunner(abc.ABC):
         _LOG.debug("_result_nid=%s", self._result_nid)
 
     def _set_fit_predict_intervals(
-        self, method: cdtfc.Method, intervals: Optional[cdtfu.Intervals]
+        self, method: cdtfcor.Method, intervals: Optional[cdtfuti.Intervals]
     ) -> None:
         """
         Set fit or predict intervals for all the source nodes.
@@ -91,8 +92,8 @@ class _AbstractDagRunner(abc.ABC):
                 raise ValueError("Invalid method='%s'" % method)
 
     def _run_dag_helper(
-        self, method: cdtfc.Method
-    ) -> Tuple[pd.DataFrame, cdtfv.NodeInfo]:
+        self, method: cdtfcor.Method
+    ) -> Tuple[pd.DataFrame, cdtfvis.NodeInfo]:
         """
         Run the DAG for the given method.
 
@@ -107,7 +108,7 @@ class _AbstractDagRunner(abc.ABC):
     # TODO(gp): This could be folded into `_run_dag_helper()` if we collapse
     #  `ResultBundle` and `PredictionResultBundle`.
     def _to_result_bundle(
-        self, method: cdtfc.Method, df_out: pd.DataFrame, info: cdtfv.NodeInfo
+        self, method: cdtfcor.Method, df_out: pd.DataFrame, info: cdtfvis.NodeInfo
     ) -> ResultBundle:
         """
         Package the result of a DAG execution into a ResultBundle.
@@ -130,7 +131,7 @@ class FitPredictDagRunner(_AbstractDagRunner):
     Run DAGs that have fit / predict methods.
     """
 
-    def set_fit_intervals(self, intervals: Optional[cdtfu.Intervals]) -> None:
+    def set_fit_intervals(self, intervals: Optional[cdtfuti.Intervals]) -> None:
         """
         Set fit intervals for all the source nodes.
 
@@ -139,7 +140,9 @@ class FitPredictDagRunner(_AbstractDagRunner):
         method = "fit"
         self._set_fit_predict_intervals(method, intervals)
 
-    def set_predict_intervals(self, intervals: Optional[cdtfu.Intervals]) -> None:
+    def set_predict_intervals(
+        self, intervals: Optional[cdtfuti.Intervals]
+    ) -> None:
         """
         Set predict intervals for all the source nodes.
 
@@ -163,7 +166,7 @@ class FitPredictDagRunner(_AbstractDagRunner):
         method = "predict"
         return self._run_dag(method)
 
-    def _run_dag(self, method: cdtfc.Method) -> ResultBundle:
+    def _run_dag(self, method: cdtfcor.Method) -> ResultBundle:
         df_out, info = self._run_dag_helper(method)
         return self._to_result_bundle(method, df_out, info)
 
@@ -179,7 +182,7 @@ class PredictionDagRunner(FitPredictDagRunner):
     `PredictionResultBundle`.
     """
 
-    def _run_dag(self, method: cdtfc.Method) -> PredictionResultBundle:
+    def _run_dag(self, method: cdtfcor.Method) -> PredictionResultBundle:
         """
         Same as super class but return a `PredictionResultBundle`.
         """
@@ -207,8 +210,8 @@ class RollingFitPredictDagRunner(_AbstractDagRunner):
         self,
         config: cconfig.Config,
         dag_builder: DagBuilder,
-        start: hdatetime.Datetime,
-        end: hdatetime.Datetime,
+        start: hdatetim.Datetime,
+        end: hdatetim.Datetime,
         retraining_freq: str,
         retraining_lookback: int,
     ) -> None:
@@ -254,7 +257,7 @@ class RollingFitPredictDagRunner(_AbstractDagRunner):
 
     def fit_predict_at_datetime(
         self,
-        datetime_: hdatetime.Datetime,
+        datetime_: hdatetim.Datetime,
     ) -> Tuple[ResultBundle, ResultBundle]:
         """
         Fit with all the history up and including `datetime` and then predict
@@ -284,7 +287,7 @@ class RollingFitPredictDagRunner(_AbstractDagRunner):
 
     # TODO(gp): -> _fit for symmetry with the rest of the code.
     def _run_fit(
-        self, interval: Tuple[hdatetime.Datetime, hdatetime.Datetime]
+        self, interval: Tuple[hdatetim.Datetime, hdatetim.Datetime]
     ) -> ResultBundle:
         # Set fit interval on all source nodes of the DAG.
         for input_nid in self.dag.get_sources():
@@ -298,8 +301,8 @@ class RollingFitPredictDagRunner(_AbstractDagRunner):
     def _run_predict(
         self,
         # TODO(gp): Use Interval
-        interval: Tuple[hdatetime.Datetime, hdatetime.Datetime],
-        oos_start: hdatetime.Datetime,
+        interval: Tuple[hdatetim.Datetime, hdatetim.Datetime],
+        oos_start: hdatetim.Datetime,
     ) -> ResultBundle:
         # Set predict interval on all source nodes of the DAG.
         for input_nid in self.dag.get_sources():
@@ -313,8 +316,8 @@ class RollingFitPredictDagRunner(_AbstractDagRunner):
 
     @staticmethod
     def _generate_retraining_datetimes(
-        start: hdatetime.Datetime,
-        end: hdatetime.Datetime,
+        start: hdatetim.Datetime,
+        end: hdatetim.Datetime,
         retraining_freq: str,
         retraining_lookback: int,
     ) -> pd.DatetimeIndex:
@@ -328,12 +331,12 @@ class RollingFitPredictDagRunner(_AbstractDagRunner):
         # Populate an initial index of candidate retraining dates.
         grid = pd.date_range(start=start, end=end, freq=retraining_freq)
         # The ability to compute a nonempty `idx` is the first sanity-check.
-        dbg.dassert(
+        hdbg.dassert(
             not grid.empty, msg="Not enough data for requested training schedule!"
         )
-        dbg.dassert_isinstance(retraining_lookback, int)
+        hdbg.dassert_isinstance(retraining_lookback, int)
         # Ensure that `grid` has enough lookback points.
-        dbg.dassert_lt(
+        hdbg.dassert_lt(
             retraining_lookback,
             grid.size,
             msg="Input data does not have %i periods" % retraining_lookback,
@@ -348,10 +351,10 @@ class RollingFitPredictDagRunner(_AbstractDagRunner):
         # TODO(Paul): Add back `end` for a fit-only step.
         idx = idx[idx < end]
         #
-        dbg.dassert(not idx.empty)
+        hdbg.dassert(not idx.empty)
         return idx
 
-    def _run_dag(self, method: cdtfc.Method) -> ResultBundle:
+    def _run_dag(self, method: cdtfcor.Method) -> ResultBundle:
         """
         Run DAG and return a ResultBundle.
         """
@@ -373,8 +376,8 @@ class IncrementalDagRunner(_AbstractDagRunner):
         self,
         config: cconfig.Config,
         dag_builder: DagBuilder,
-        start: hdatetime.Datetime,
-        end: hdatetime.Datetime,
+        start: hdatetim.Datetime,
+        end: hdatetim.Datetime,
         freq: str,
         fit_state: cconfig.Config,
     ) -> None:
@@ -419,7 +422,7 @@ class IncrementalDagRunner(_AbstractDagRunner):
             yield result_bundle
 
     # TODO(gp): dt -> datetime_ as used elsewhere.
-    def predict_at_datetime(self, dt: hdatetime.Datetime) -> ResultBundle:
+    def predict_at_datetime(self, dt: hdatetim.Datetime) -> ResultBundle:
         """
         Generate a prediction as of `dt` (for a future point in time).
 
@@ -435,7 +438,7 @@ class IncrementalDagRunner(_AbstractDagRunner):
         result_bundle = self._run_dag("predict")
         return result_bundle
 
-    def _run_dag(self, method: cdtfc.Method) -> ResultBundle:
+    def _run_dag(self, method: cdtfcor.Method) -> ResultBundle:
         """
         Run DAG and return a ResultBundle.
         """
@@ -473,11 +476,11 @@ class RealTimeDagRunner(_AbstractDagRunner):
         self._execute_rt_loop_kwargs = execute_rt_loop_kwargs
         self._dst_dir = dst_dir
         # Store information about the real-time execution.
-        self._events: cdtfrt.Events = []
+        self._events: cdtfretim.Events = []
 
     async def predict(self) -> List[ResultBundle]:
         """
-        Execute the DAG until there are events.
+        Execute the DAG for all the events.
 
         This adapts the asynchronous generator to a synchronous
         semantic.
@@ -497,16 +500,24 @@ class RealTimeDagRunner(_AbstractDagRunner):
         # Adapt `_dag_workload()` to the expected call back signature.
         workload = lambda current_time: self._run_dag(method)
         # Call the event loop.
-        async for event, result_bundle in cdtfrt.execute_with_real_time_loop(
+        async for event, result_bundle in cdtfretim.execute_with_real_time_loop(
             **self._execute_rt_loop_kwargs, workload=workload
         ):
             self._events.append(event)
             yield result_bundle
 
     @property
-    def events(self) -> Optional[cdtfrt.Events]:
+    def events(self) -> Optional[cdtfretim.Events]:
         return self._events
 
-    async def _run_dag(self, method: cdtfc.Method) -> ResultBundle:
+    async def _run_dag(self, method: cdtfcor.Method) -> ResultBundle:
+        # Wait until all the source nodes are ready to compute.
+        sources = self.dag.get_sources()
+        for source in sources:
+            if isinstance(source, cdtfnosou.RealTimeDataSource):
+                _LOG.debug("Waiting on node '%s' ...", str(source))
+                await source.wait_for_latest_data()
+                _LOG.debug("Waiting on node '%s' done", str(source))
+        #
         df_out, info = self._run_dag_helper(method)
         return self._to_result_bundle(method, df_out, info)

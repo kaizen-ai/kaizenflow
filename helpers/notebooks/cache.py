@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.11.5
+#       jupytext_version: 1.12.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -24,16 +24,16 @@ import logging
 
 import joblib
 
-import helpers.cache as hcac
-import helpers.dbg as dbg
-import helpers.printing as prnt
+import helpers.cache as hcache
+import helpers.dbg as hdbg
+import helpers.printing as hprintin
 import helpers.s3 as hs3
 
-prnt.config_notebook()
+hprintin.config_notebook()
 
-# dbg.init_logger(verbosity=logging.DEBUG)
-dbg.init_logger(verbosity=logging.INFO)
-# dbg.test_logger()
+# hdbg.init_logger(verbosity=logging.DEBUG)
+hdbg.init_logger(verbosity=logging.INFO)
+# hdbg.test_logger()
 _LOG = logging.getLogger(__name__)
 
 
@@ -162,7 +162,7 @@ def f(x):
 f(1)
 
 # %%
-hcac.cache(set_verbose_mode=True)
+hcache.cache(set_verbose_mode=True)
 
 
 def hello():
@@ -181,18 +181,20 @@ hello()
 # !ls /mnt/tmpfs/tmp.cache.mem/joblib/lib
 
 # %% pycharm={"name": "#%%\n"}
-memory_cached_func = hcac._Cached(func, use_mem_cache=True, use_disk_cache=False)
+memory_cached_func = hcache._Cached(
+    func, use_mem_cache=True, use_disk_cache=False
+)
 
 print(memory_cached_func.get_function_cache_info())
 
 # cache_type = None
 # memory_cached_func.clear_function_cache(cache_type)
 
-dbg.dassert_eq(memory_cached_func(*inputs), exp_output)
-dbg.dassert_eq(memory_cached_func.get_last_cache_accessed(), "no_cache")
+hdbg.dassert_eq(memory_cached_func(*inputs), exp_output)
+hdbg.dassert_eq(memory_cached_func.get_last_cache_accessed(), "no_cache")
 
-dbg.dassert_eq(memory_cached_func(*inputs), exp_output)
-dbg.dassert_eq(memory_cached_func.get_last_cache_accessed(), "mem")
+hdbg.dassert_eq(memory_cached_func(*inputs), exp_output)
+hdbg.dassert_eq(memory_cached_func.get_last_cache_accessed(), "mem")
 
 print("memory caching checks passed")
 
@@ -209,24 +211,24 @@ def computation_function(a, b):
 inputs = (1, 2)
 exp_output = 2
 
-dbg.dassert_eq(memory_cached_computation(*inputs), exp_output)
-dbg.dassert_eq(memory_cached_computation.get_last_cache_accessed(), "mem")
+hdbg.dassert_eq(memory_cached_computation(*inputs), exp_output)
+hdbg.dassert_eq(memory_cached_computation.get_last_cache_accessed(), "mem")
 
 # %% [markdown]
 # ## Disk cache
 
 # %% pycharm={"name": "#%%\n"}
-disk_cached_computation = hcac._Cached(
+disk_cached_computation = hcache._Cached(
     computation_function, use_mem_cache=False, use_disk_cache=True
 )
 
 disk_cached_computation.clear_function_cache("disk")
 
-dbg.dassert_eq(disk_cached_computation(*inputs), exp_output)
-dbg.dassert_eq(disk_cached_computation.get_last_cache_accessed(), "no_cache")
+hdbg.dassert_eq(disk_cached_computation(*inputs), exp_output)
+hdbg.dassert_eq(disk_cached_computation.get_last_cache_accessed(), "no_cache")
 
-dbg.dassert_eq(disk_cached_computation(*inputs), exp_output)
-dbg.dassert_eq(disk_cached_computation.get_last_cache_accessed(), "disk")
+hdbg.dassert_eq(disk_cached_computation(*inputs), exp_output)
+hdbg.dassert_eq(disk_cached_computation.get_last_cache_accessed(), "disk")
 
 print("disk caching checks passed")
 
@@ -234,38 +236,38 @@ print("disk caching checks passed")
 # ## Full cache
 
 # %% pycharm={"name": "#%%\n"}
-fully_cached_computation = hcac._Cached(
+fully_cached_computation = hcache._Cached(
     computation_function, use_mem_cache=True, use_disk_cache=True
 )
 
 fully_cached_computation.clear_function_cache()
 
-dbg.dassert_eq(fully_cached_computation(*inputs), exp_output)
-dbg.dassert_eq(fully_cached_computation.get_last_cache_accessed(), "no_cache")
+hdbg.dassert_eq(fully_cached_computation(*inputs), exp_output)
+hdbg.dassert_eq(fully_cached_computation.get_last_cache_accessed(), "no_cache")
 
-dbg.dassert_eq(fully_cached_computation(*inputs), exp_output)
-dbg.dassert_eq(fully_cached_computation.get_last_cache_accessed(), "mem")
+hdbg.dassert_eq(fully_cached_computation(*inputs), exp_output)
+hdbg.dassert_eq(fully_cached_computation.get_last_cache_accessed(), "mem")
 
-dbg.dassert_eq(fully_cached_computation(*inputs), exp_output)
-dbg.dassert_eq(fully_cached_computation.get_last_cache_accessed(), "mem")
+hdbg.dassert_eq(fully_cached_computation(*inputs), exp_output)
+hdbg.dassert_eq(fully_cached_computation.get_last_cache_accessed(), "mem")
 
 print("Clear mem cache")
 fully_cached_computation.clear_function_cache("mem")
 
-dbg.dassert_eq(fully_cached_computation(*inputs), exp_output)
-dbg.dassert_eq(fully_cached_computation.get_last_cache_accessed(), "disk")
+hdbg.dassert_eq(fully_cached_computation(*inputs), exp_output)
+hdbg.dassert_eq(fully_cached_computation.get_last_cache_accessed(), "disk")
 
-dbg.dassert_eq(fully_cached_computation(*inputs), exp_output)
-dbg.dassert_eq(fully_cached_computation.get_last_cache_accessed(), "mem")
+hdbg.dassert_eq(fully_cached_computation(*inputs), exp_output)
+hdbg.dassert_eq(fully_cached_computation.get_last_cache_accessed(), "mem")
 
 print("full caching checks passed")
 
 # %%
-dbg.dassert_eq(fully_cached_computation(*inputs), exp_output)
-dbg.dassert_eq(fully_cached_computation.get_last_cache_accessed(), "mem")
+hdbg.dassert_eq(fully_cached_computation(*inputs), exp_output)
+hdbg.dassert_eq(fully_cached_computation.get_last_cache_accessed(), "mem")
 
 # %%
 # This should fail all the times, because we clear the memory cache.
 fully_cached_computation.clear_function_cache("mem")
-dbg.dassert_eq(fully_cached_computation(*inputs), exp_output)
-dbg.dassert_eq(fully_cached_computation.get_last_cache_accessed(), "mem")
+hdbg.dassert_eq(fully_cached_computation(*inputs), exp_output)
+hdbg.dassert_eq(fully_cached_computation.get_last_cache_accessed(), "mem")
