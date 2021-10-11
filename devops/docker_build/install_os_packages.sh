@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 #
-# Install packages.
+# Install OS level packages.
 #
 
 set -ex
 
-FILE_NAME="devops/docker_build/install_packages.sh"
+FILE_NAME="devops/docker_build/install_os_packages.sh"
+echo "#############################################################################"
 echo "##> $FILE_NAME"
+echo "#############################################################################"
 
 DEBIAN_FRONTEND=noninteractive
 

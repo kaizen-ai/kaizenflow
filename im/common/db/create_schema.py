@@ -72,24 +72,22 @@ def get_db_connection_details_from_environment() -> str:
     return txt
 
 
-def check_db_connection() -> None:
+def check_db_connection(db, port, host) -> None:
     """
     Verify that the database is available.
     """
-    _LOG.info(
-        "Checking the database connection:\n%s",
-        get_db_connection_details_from_environment(),
-    )
+    #_LOG.info(
+    #    "Checking the database connection:\n%s",
+    #j    get_db_connection_details_from_environment(),
+    #)
     while True:
         _LOG.info("Waiting for PostgreSQL to become available...")
         cmd = "pg_isready -d %s -p %s -h %s"
         rc = hsyint.system(
             cmd
-            % (
-                os.environ["POSTGRES_DB"],
-                os.environ["POSTGRES_PORT"],
-                os.environ["POSTGRES_HOST"],
-            )
+            % (db, port, host
+            ),
+            abort_on_error=False,
         )
         time.sleep(1)
         if rc == 0:

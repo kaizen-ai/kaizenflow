@@ -6,7 +6,9 @@
 set -ex
 
 FILE_NAME="devops/docker_build/install_jupyter_extensions.sh"
+echo "#############################################################################"
 echo "##> $FILE_NAME"
+echo "#############################################################################"
 
 # This is run while building Docker after the packages have been executed so we
 # need to activate the environment.
