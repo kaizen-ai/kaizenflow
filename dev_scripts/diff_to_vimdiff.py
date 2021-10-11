@@ -38,23 +38,31 @@ def _diff(dir1: str, dir2: str) -> str:
     dbg.dassert_exists(dir2)
     # Find all the files in both dirs.
     cmd = ""
-    remove_cmd = "| grep -v .git | grep -v .idea"
+    remove_cmd = "| grep -v .git | grep -v .idea | grep -v '[/ ]tmp.'"
     cmd += '(cd %s && find %s -name "*" %s | sort >/tmp/dir1) && ' % (
-        os.path.dirname(dir1),
-        os.path.basename(dir1),
+        #os.path.dirname(dir1),
+        #os.path.basename(dir1),
+        dir1,
+        dir2,
         remove_cmd,
     )
     cmd += '(cd %s && find %s -name "*" %s | sort >/tmp/dir2)' % (
-        os.path.dirname(dir2),
-        os.path.basename(dir2),
+        #os.path.dirname(dir2),
+        #os.path.basename(dir2),
+        dir1,
+        dir2,
         remove_cmd,
     )
+    print(cmd)
     si.system(cmd, abort_on_error=True)
     # Compare the file listings.
-    cmd = "sdiff -t /tmp/dir1 /tmp/dir2"
-    si.system(cmd, abort_on_error=False, suppress_output=False)
-    cmd = "vimdiff /tmp/dir1 /tmp/dir2"
+    opts = []
+    opts.append("--suppress-common-lines")
+    opts.append("--expand-tabs")
+    opts = " ".join(opts)
+    cmd = f"sdiff {opts} /tmp/dir1 /tmp/dir2"
     print("# Diff file listing with:\n> " + cmd)
+    si.system(cmd, abort_on_error=False, suppress_output=False)
     # 
     print(prnt.frame("Diff dirs '%s' vs '%s'" % (dir1, dir2)))
     dst_file = "./tmp.diff_file_listings.txt"
@@ -273,7 +281,7 @@ def _parse() -> argparse.ArgumentParser:
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=False)
     #
     dir1 = os.path.abspath(args.dir1)
     dir2 = os.path.abspath(args.dir2)

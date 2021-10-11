@@ -1,5 +1,6 @@
 import logging
-from typing import Optional
+import os
+from typing import List, Optional
 
 import pytest
 
@@ -209,10 +210,56 @@ class Test_git_repo_name1(huntes.TestCase):
 
 
 class Test_git_path1(huntes.TestCase):
+    @pytest.mark.skipif(
+        not hgit.is_in_amp_as_supermodule(),
+        reason="Run only in amp as super-module",
+    )
     def test_get_path_from_git_root1(self) -> None:
-        file_name = "helpers/test/test_git.py"
-        act = hgit.get_path_from_git_root(file_name, super_module=False)
+        file_name = "/app/helpers/test/test_git.py"
+        act = hgit.get_path_from_git_root(file_name, super_module=True)
         _LOG.debug("get_path_from_git_root()=%s", act)
+        # Check.
+        exp = "helpers/test/test_git.py"
+        self.assert_equal(act, exp)
+
+    @pytest.mark.skipif(
+        not hgit.is_in_amp_as_submodule(), reason="Run only in amp as sub-module"
+    )
+    def test_get_path_from_git_root2(self) -> None:
+        file_name = "/app/amp/helpers/test/test_git.py"
+        act = hgit.get_path_from_git_root(file_name, super_module=True)
+        _LOG.debug("get_path_from_git_root()=%s", act)
+        # Check.
+        exp = "amp/helpers/test/test_git.py"
+        self.assert_equal(act, exp)
+
+    def test_get_path_from_git_root3(self) -> None:
+        file_name = "/app/amp/helpers/test/test_git.py"
+        git_root = "/app"
+        act = hgit.get_path_from_git_root(
+            file_name, super_module=False, git_root=git_root
+        )
+        # Check.
+        exp = "amp/helpers/test/test_git.py"
+        self.assert_equal(act, exp)
+
+    def test_get_path_from_git_root4(self) -> None:
+        file_name = "/app/amp/helpers/test/test_git.py"
+        git_root = "/app/amp"
+        act = hgit.get_path_from_git_root(
+            file_name, super_module=False, git_root=git_root
+        )
+        # Check.
+        exp = "helpers/test/test_git.py"
+        self.assert_equal(act, exp)
+
+    def test_get_path_from_git_root5(self) -> None:
+        file_name = "helpers/test/test_git.py"
+        git_root = "/app/amp"
+        with self.assertRaises(ValueError):
+            hgit.get_path_from_git_root(
+                file_name, super_module=False, git_root=git_root
+            )
 
 
 class Test_git_modified_files1(huntes.TestCase):
@@ -244,107 +291,93 @@ class Test_git_modified_files1(huntes.TestCase):
         _execute_func_call(func_call)
 
 
-class Test_purify_docker_file_from_git_client1(huntes.TestCase):
-    """
-    Test for a file that:
+# #############################################################################
 
-    - is not from Docker (e.g., it doesn't start with `/app`)
-    - exists in the repo
-    """
 
-    @pytest.mark.skipif(
-        not hgit.is_in_amp_as_supermodule(),
-        reason="Run only in amp as super-module",
-    )
+class Test_find_docker_file1(huntes.TestCase):
     def test1(self) -> None:
         """
-        Test for a file in the repo with respect to the super-module.
+        Test for a file `amp/helpers/test/test_git.py` that is not from Docker
+        (i.e., it doesn't start with `/app`) and exists in the repo.
         """
-        super_module = True
-        exp_found = True
-        exp = "helpers/test/test_git.py"
-        self._helper(super_module, exp_found, exp)
-
-    @pytest.mark.skipif(
-        not hgit.is_in_amp_as_submodule(), reason="Run only in amp as sub-module"
-    )
-    def test2(self) -> None:
-        """
-        Test for a file in the repo with respect to the internal sub-module.
-        """
-        super_module = False
-        exp_found = True
-        exp = "helpers/test/test_git.py"
-        self._helper(super_module, exp_found, exp)
-
-    def _helper(self, super_module: bool, exp_found: bool, exp: str) -> None:
-        # Use this file since `purify_docker_file_from_git_client()` needs to do
-        # a `find` in the repo so we need to have a fixed file structure.
-        file_name = "amp/helpers/test/test_git.py"
-        act_found, act = hgit.purify_docker_file_from_git_client(
-            file_name, super_module
-        )
-        self.assertEqual(act_found, exp_found)
-        self.assertEqual(act_found, exp_found)
-        self.assertEqual(act, exp)
-
-
-class Test_purify_docker_file_from_git_client2(huntes.TestCase):
-    """
-    Test for a file that is from Docker (e.g., it starts with `/app`)
-    """
-
-    @pytest.mark.skipif(
-        not hgit.is_in_amp_as_supermodule(),
-        reason="Run only in amp as super-module",
-    )
-    def test1(self) -> None:
-        """
-        Test for a file in the repo with respect to the super-module.
-        """
-        super_module = True
-        exp_found = True
-        exp = "helpers/test/test_git.py"
-        self._helper(super_module, exp_found, exp)
-
-    @pytest.mark.skipif(
-        not hgit.is_in_amp_as_submodule(), reason="Run only in amp as sub-module"
-    )
-    def test2(self) -> None:
-        """
-        Test for a file in the repo with respect to the internal sub-module.
-        """
-        super_module = False
-        exp_found = True
-        exp = "helpers/test/test_git.py"
-        self._helper(super_module, exp_found, exp)
-
-    def _helper(self, super_module: bool, exp_found: bool, exp: str) -> None:
-        # Use this file since `purify_docker_file_from_git_client()` needs to do
-        # a `find` in the repo so we need to have a fixed file structure.
+        amp_dir = hgit.get_amp_abs_path()
+        # Use this file since `find_docker_file()` needs to do a `find` in the repo
+        # so we need to have a fixed file structure.
         file_name = "/app/amp/helpers/test/test_git.py"
-        act_found, act = hgit.purify_docker_file_from_git_client(
-            file_name, super_module
+        actual = hgit.find_docker_file(
+            file_name,
+            root_dir=amp_dir,
         )
-        self.assertEqual(act_found, exp_found)
-        self.assertEqual(act, exp)
+        expected = ["helpers/test/test_git.py"]
+        self.assertEqual(actual, expected)
 
+    def test2(self) -> None:
+        """
+        Test for a file `/app/amp/helpers/test/test_git.py` that is from Docker
+        (i.e., it starts with `/app`) and exists in the repo.
+        """
+        amp_dir = hgit.get_amp_abs_path()
+        # Use this file since `find_docker_file()` needs to do a `find` in the repo
+        # so we need to have a fixed file structure.
+        file_name = "/app/amp/helpers/test/test_git.py"
+        expected = ["helpers/test/test_git.py"]
+        actual = hgit.find_docker_file(
+            file_name,
+            root_dir=amp_dir,
+        )
+        self.assertEqual(actual, expected)
 
-class Test_purify_docker_file_from_git_client3(huntes.TestCase):
-    """
-    Test for a file that is from Docker (e.g., it starts with `/app`)
-    """
-
-    def test1(self) -> None:
+    def test3(self) -> None:
+        """
+        Test for a file `/venv/lib/python3.8/site-packages/invoke/tasks.py`
+        that is from Docker (e.g., it starts with `/app`), but doesn't exist in
+        the repo.
+        """
         file_name = "/venv/lib/python3.8/site-packages/invoke/tasks.py"
-        super_module = False
-        act_found, act = hgit.purify_docker_file_from_git_client(
-            file_name, super_module
+        actual = hgit.find_docker_file(file_name)
+        expected: List[str] = []
+        self.assertEqual(actual, expected)
+
+    def test4(self) -> None:
+        """
+        Test for a file `./core/dataflow/utils.py` that is from Docker (i.e.,
+        it starts with `/app`), but has multiple copies in the repo.
+        """
+        amp_dir = hgit.get_amp_abs_path()
+        file_name = "/app/amp/core/dataflow/utils.py"
+        dir_depth = 1
+        candidate_files = [
+            "core/dataflow/utils.py",
+            "core/foo/utils.py",
+            "core/bar/utils.py",
+        ]
+        candidate_files = [os.path.join(amp_dir, f) for f in candidate_files]
+        actual = hgit.find_docker_file(
+            file_name,
+            root_dir=amp_dir,
+            dir_depth=dir_depth,
+            candidate_files=candidate_files,
         )
-        exp_found = False
-        exp = "/venv/lib/python3.8/site-packages/invoke/tasks.py"
-        self.assertEqual(act_found, exp_found)
-        exp_found = False
-        exp = "/venv/lib/python3.8/site-packages/invoke/tasks.py"
-        self.assertEqual(act_found, exp_found)
-        self.assertEqual(act, exp)
+        # Only one candidate file matches basename and one dirname.
+        expected = ["core/dataflow/utils.py"]
+        self.assertEqual(actual, expected)
+
+    def test5(self) -> None:
+        amp_dir = hgit.get_amp_abs_path()
+        file_name = "/app/amp/core/dataflow/utils.py"
+        dir_depth = -1
+        candidate_files = [
+            "core/dataflow/utils.py",
+            "bar/dataflow/utils.py",
+            "core/foo/utils.py",
+        ]
+        candidate_files = [os.path.join(amp_dir, f) for f in candidate_files]
+        actual = hgit.find_docker_file(
+            file_name,
+            root_dir=amp_dir,
+            dir_depth=dir_depth,
+            candidate_files=candidate_files,
+        )
+        # Only one file matches `utils.py` using all the 3 dir levels.
+        expected = ["core/dataflow/utils.py"]
+        self.assertEqual(actual, expected)
