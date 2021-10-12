@@ -9,7 +9,7 @@ import im.common.db.create_schema as imcodbcrsch
 import logging
 import os
 import time
-from typing import Optional, Tuple
+from typing import Optional
 
 import psycopg2 as psycop
 import psycopg2.sql as psql
@@ -24,32 +24,9 @@ _LOG = logging.getLogger(__name__)
 # TODO(Grisha): convert the code into a class.
 
 
-def get_db_connection_from_environment() -> Tuple[
-    hsql.DbConnection, psycop.extensions.cursor
-]:
-    """
-    Get connection and cursor for a SQL database using environment variables.
-
-    Environment variables include:
-        - Database name
-        - Host
-        - Port
-        - Username
-        - Password
-
-    :return: connection and cursor for a SQL database
-    """
-    connection, cursor = hsql.get_connection(
-        dbname=os.environ["POSTGRES_DB"],
-        host=os.environ["POSTGRES_HOST"],
-        port=int(os.environ["POSTGRES_PORT"]),
-        user=os.environ["POSTGRES_USER"],
-        password=os.environ["POSTGRES_PASSWORD"],
-    )
-    return connection, cursor
-
-
-def get_db_connection_details_from_environment() -> str:
+def get_db_connection_details(
+    dbname: str, host: str, user: str, port: int, password: str
+) -> str:
     """
     Get database connection details using environment variables.
 
@@ -63,22 +40,30 @@ def get_db_connection_details_from_environment() -> str:
     :return: database connection details
     """
     txt = []
-    txt.append("dbname='%s'" % os.environ["POSTGRES_DB"])
-    txt.append("host='%s'" % os.environ["POSTGRES_HOST"])
-    txt.append("port='%s'" % os.environ["POSTGRES_PORT"])
-    txt.append("user='%s'" % os.environ["POSTGRES_USER"])
-    txt.append("password='%s'" % os.environ["POSTGRES_PASSWORD"])
+    txt.append("dbname='%s'" % dbname)
+    txt.append("host='%s'" % host)
+    txt.append("port='%s'" % port)
+    txt.append("user='%s'" % user)
+    txt.append("password='%s'" % password)
     txt = "\n".join(txt)
     return txt
 
 
-def check_db_connection() -> None:
+def check_db_connection(
+    dbname: str,
+    host: str,
+    user: str,
+    port: int,
+    password: str,
+) -> None:
     """
     Verify that the database is available.
     """
     _LOG.info(
         "Checking the database connection:\n%s",
-        get_db_connection_details_from_environment(),
+        get_db_connection_details(
+            dbname=dbname, host=host, user=user, port=port, password=password
+        ),
     )
     while True:
         _LOG.info("Waiting for PostgreSQL to become available...")
@@ -86,9 +71,9 @@ def check_db_connection() -> None:
         rc = hsyint.system(
             cmd
             % (
-                os.environ["POSTGRES_DB"],
-                os.environ["POSTGRES_PORT"],
-                os.environ["POSTGRES_HOST"],
+                dbname,
+                port,
+                host,
             )
         )
         time.sleep(1)
@@ -314,7 +299,13 @@ def test_tables(
     cursor.execute(test_query)
 
 
-def create_schema() -> None:
+def create_schema(
+    dbname: str,
+    host: str,
+    user: str,
+    port: int,
+    password: str,
+) -> None:
     """
     Create SQL schema.
 
@@ -323,9 +314,20 @@ def create_schema() -> None:
         - Creating new tables
         - Testing that tables are created
     """
-    _LOG.info("DB connection:\n%s", get_db_connection_details_from_environment())
+    _LOG.info(
+        "DB connection:\n%s",
+        get_db_connection_details(
+            dbname=dbname, host=host, user=user, port=port, password=password
+        ),
+    )
     # Get database connection and cursor.
-    connection, cursor = get_db_connection_from_environment()
+    connection, cursor = hsql.get_connection(
+        dbname=dbname,
+        host=host,
+        port=port,
+        user=user,
+        password=password,
+    )
     # Define data types.
     define_data_types(cursor)
     # Create tables.
@@ -337,35 +339,65 @@ def create_schema() -> None:
 
 
 def create_database(
-    dbname: str,
+    new_db: str,
+    conn_db: str,
+    host: str,
+    user: str,
+    port: int,
+    password: str,
     force: Optional[bool] = None,
 ) -> None:
     """
     Create database and SQL schema inside it.
 
-    :param dbname: database name, e.g. `im_db_local`
+    :param new_db: name of database to connect to, e.g. `im_db_local`
+    :param conn_db: name of database to create, e.g. `im_db_local`
+    :param host: host name to connect to db
+    :param user: user name to connect to db
+    :param port: port to connect to db
+    :param password: password to connect to db
     :param force: overwrite existing database
     """
     # Initialize connection.
-    connection, _ = get_db_connection_from_environment()
+    connection, _ = hsql.get_connection(
+        dbname=conn_db, host=host, user=user, port=port, password=password
+    )
     _LOG.debug("connection=%s", connection)
     # Create database.
-    hsql.create_database(connection, db=dbname, force=force)
+    hsql.create_database(connection, db=new_db, force=force)
     connection.close()
     # Create SQL schema.
-    create_schema()
+    create_schema(
+        dbname=conn_db, host=host, user=user, port=port, password=password
+    )
 
 
-def remove_database(dbname: str) -> None:
+def remove_database(
+    db_to_drop: str,
+    conn_db: str,
+    host: str,
+    user: str,
+    port: int,
+    password: str,
+) -> None:
     """
     Remove database in current environment.
 
-    :param dbname: database name, e.g. `im_db_local`
+    :param db_to_drop: database name to drop, e.g. `im_db_local`
+    :param conn_db: name of database to connect, e.g. `im_db_local`
+    :param host: host name to connect to db
+    :param user: user name to connect to db
+    :param port: port to connect to db
+    :param password: password to connect to db
     """
     # Initialize connection.
-    connection, cursor = get_db_connection_from_environment()
+    connection, cursor = hsql.get_connection(
+        dbname=conn_db, host=host, user=user, port=port, password=password
+    )
     # Drop database.
-    cursor.execute(psql.SQL("DROP DATABASE {};").format(psql.Identifier(dbname)))
+    cursor.execute(
+        psql.SQL("DROP DATABASE {};").format(psql.Identifier(db_to_drop))
+    )
     # Close connection.
     connection.close()
 

@@ -23,6 +23,7 @@ class TestSqlDataLoader1(hut.TestCase):
     def setUp(self) -> None:
         super().setUp()
         # Get PostgreSQL connection parameters.
+        conn_db = os.environ["POSTGRES_DB"]
         host = os.environ["POSTGRES_HOST"]
         port = int(os.environ["POSTGRES_PORT"])
         user = os.environ["POSTGRES_USER"]
@@ -30,7 +31,12 @@ class TestSqlDataLoader1(hut.TestCase):
         self.dbname = self._get_test_name().replace("/", "").replace(".", "")
         # Create database for test.
         icdcrsch.create_database(
-            self.dbname,
+            new_db=self.dbname,
+            conn_db=conn_db,
+            host=host,
+            port=port,
+            user=user,
+            password=password,
             force=True,
         )
         # Initialize writer class to test.
@@ -46,10 +52,21 @@ class TestSqlDataLoader1(hut.TestCase):
         )
 
     def tearDown(self) -> None:
+        # Get PostgreSQL connection parameters.
+        conn_db = os.environ["POSTGRES_DB"]
+        host = os.environ["POSTGRES_HOST"]
+        port = int(os.environ["POSTGRES_PORT"])
+        user = os.environ["POSTGRES_USER"]
+        password = os.environ["POSTGRES_PASSWORD"]
         # Close connection.
         self._loader.conn.close()
         # Remove created database.
-        icdini.remove_database(self.dbname)
+        icdcrsch.remove_database(db_to_drop=self.dbname,
+                                 conn_db=conn_db,
+                                 host=host,
+                                 port=port,
+                                 user=user,
+                                 password=password)
         super().tearDown()
 
     def test_get_symbol_id1(self) -> None:
