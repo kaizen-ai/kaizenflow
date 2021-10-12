@@ -2,7 +2,7 @@
 """
 Script to download data from CCXT in real-time.
 
-Use as:
+Use example:
 
 - Download all currency pairs for Binance, Kucoin,
   FTX exchanges:
@@ -27,6 +27,7 @@ import helpers.io_ as hio
 import helpers.parser as hparser
 import im.ccxt.data.extract.exchange_class as imcdaexexccla
 from helpers import dbg
+import im.common.db.create_schema as imcodbcrsch
 
 _LOG = logging.getLogger(__name__)
 
@@ -71,8 +72,6 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--db",
         action="store",
-        # TODO(Danya): set db connections, if needed, as labels that are used to
-        #  set db connection afterwards. Includes DB name and stage.
         default="from_env",
         type=str,
         help="db to connect to."
@@ -107,11 +106,6 @@ def _parse() -> argparse.ArgumentParser:
         help="Currency pairs to download data for, separated by spaces, e.g. 'BTC/USD ETH/USD',"
         " 'all' for each currency pair in exchange",
     )
-    parser.add_argument(
-        # TODO(Danya): remove after adding the SQL connection.
-        "--incremental",
-        action="store_true",
-    )
     parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
 
@@ -119,7 +113,9 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    hio.create_dir(args.dst_dir, incremental=args.incremental)
+    # TODO (Danya): Add "test_db" value for testing.
+    if args.db == "from_env":
+        conn = imcodbcrsch.get_db_connection_from_environment()
     # Get exchange ids.
     if args.exchange_ids == "all":
         exchange_ids = ["binance", "kucoin"]
@@ -138,18 +134,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
             for pair in exchange.pairs:
                 # Download latest 5 minutes for the currency pair and exchange.
                 pair_data = exchange.instance.download_ohlcv_data(
-                    curr_symbol=pair, step=5
+                    curr_symbol=pair, step=2
                 )
                 # Save data with timestamp.
-                # TODO(Danya): replace saving with DB update.
-                file_name = (
-                    f"{exchange.id}_"
-                    f"{pair.replace('/', '_')}_"
-                    f"{hdatetim.get_timestamp('ET')}"
-                    f".csv.gz"
-                )
-                file_path = os.path.join(args.dst_dir, file_name)
-                pair_data.to_csv(file_path, index=False, compression="gzip")
+                latest_pair = pair_data.tail(1)
+                execute_insert_query(conn, latest_pair, args.table_name)
         time.sleep(60)
 
 
