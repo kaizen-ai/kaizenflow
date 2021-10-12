@@ -46,7 +46,7 @@ for v in $extensions; do
 done;
 
 # Disable configuration for nbextensions without explicit compatibility.
-echo "{\"nbext_hide_incompat\": false}" > /root/.jupyter/nbconfig/common.json
+echo "{\"nbext_hide_incompat\": false}" > /$HOME/.jupyter/nbconfig/common.json
 
 # Fix vim plugin extension (from dev_scripts/notebooks/fix_vim_plugin.sh).
 DIR=$(jupyter --data-dir)/nbextensions

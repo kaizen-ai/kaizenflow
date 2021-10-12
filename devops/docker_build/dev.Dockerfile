@@ -7,15 +7,16 @@ FROM ubuntu:20.04 AS builder
 # Name of the virtual environment to create.
 ENV ENV_NAME="venv"
 ENV APP_DIR=/app
-ENV HOME=/root
+ENV HOME=/home
 
 # Where to copy the installation files.
 ENV INSTALL_DIR=/install
 WORKDIR $INSTALL_DIR
 
 # Clean up the installation.
+# To disable the clean up stage, comment out the variable, instead of setting
+# to False.
 #ENV CLEAN_UP_INSTALLATION=True
-ENV CLEAN_UP_INSTALLATION=False
 
 # Pass the build variables to the environment.
 ARG CONTAINER_VERSION
