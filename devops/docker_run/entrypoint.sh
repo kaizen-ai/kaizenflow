@@ -19,8 +19,10 @@ source devops/docker_run/setenv.sh
 #umask 000
 
 # Start Docker Engine.
-/etc/init.d/docker start
-/etc/init.d/docker status
+sudo /etc/init.d/docker start
+sudo /etc/init.d/docker status
+
+# sudo change perms to /mnt/tmpfs
 
 # Check set-up.
 ./devops/docker_run/test_setup.sh

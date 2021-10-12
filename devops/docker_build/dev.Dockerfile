@@ -14,7 +14,8 @@ ENV INSTALL_DIR=/install
 WORKDIR $INSTALL_DIR
 
 # Clean up the installation.
-ENV CLEAN_UP_INSTALLATION=True
+#ENV CLEAN_UP_INSTALLATION=True
+ENV CLEAN_UP_INSTALLATION=False
 
 # Pass the build variables to the environment.
 ARG CONTAINER_VERSION
@@ -41,6 +42,11 @@ RUN /bin/sh -c "./install_jupyter_extensions.sh"
 # - Install Docker-in-docker.
 COPY devops/docker_build/install_dind.sh .
 RUN /bin/bash -c "./install_dind.sh"
+
+# - Create users and set permissions.
+COPY devops/docker_build/create_users.sh .
+RUN /bin/bash -c "./create_users.sh"
+COPY devops/docker_build/etc_sudoers /etc/sudoers
 
 # Mount external filesystems.
 #RUN mkdir -p /s3/alphamatic-data

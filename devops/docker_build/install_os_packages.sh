@@ -68,6 +68,9 @@ apt-get install $APT_GET_OPTS graphviz
 # This is needed for Postgres DB.
 apt-get install $APT_GET_OPTS postgresql-client
 
+# Install sudo.
+apt-get install $APT_GET_OPTS sudo
+
 # Clean up.
 if [[ $CLEAN_UP_INSTALLATION ]]; then
     echo "Cleaning up installation..."
