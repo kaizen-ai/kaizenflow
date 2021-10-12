@@ -16,7 +16,6 @@ import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.s3 as hs3
 import helpers.sql as hsql
-import im.common.db.create_schema as imcodbcrsch
 
 _LOG = logging.getLogger(__name__)
 
