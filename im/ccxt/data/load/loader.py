@@ -15,6 +15,7 @@ import helpers.datetime_ as hdatet
 import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.s3 as hs3
+import helpers.sql as hsql
 
 _LOG = logging.getLogger(__name__)
 
@@ -76,6 +77,25 @@ class CcxtLoader:
         self._aws_profile = aws_profile
         # Specify supported data types to load.
         self._data_types = ["ohlcv"]
+
+    @staticmethod
+    def read_db_data(
+        connection: hsql.DbConnection,
+        table_name: str,
+    ) -> pd.DataFrame:
+        """
+        Load CCXT data from database.
+
+        :param connection: DB connection
+        :param table_name: name of the table to load (e.g., "ccxt_ohlcv")
+        :return: table
+        """
+        dbg.dassert_in(
+            table_name, hsql.get_table_names(connection)
+        )
+        sql_query = "SELECT * FROM %s" % table_name
+        table = pd.read_sql(sql_query, connection)
+        return table
 
     def read_data(
         self,
