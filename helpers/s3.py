@@ -218,7 +218,8 @@ def _get_aws_config(file_name: str) -> configparser.RawConfigParser:
     """
     Return a parser to the config in `~/.aws/{file_name]}`.
     """
-    file_name = os.path.join(os.path.expanduser("~"), ".aws", file_name)
+    # file_name = os.path.join(os.path.expanduser("~"), ".aws", file_name)
+    file_name = os.path.join("/root", ".aws", file_name)
     hdbg.dassert_file_exists(file_name)
     # Read the config.
     config = configparser.RawConfigParser()
