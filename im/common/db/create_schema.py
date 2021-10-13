@@ -1,10 +1,16 @@
 """
-Create and handle the Postgres DB.
+Create and manage the Postgres DB.
+
+Since there is coupling between the data providers (e.g., Kibot and IB share some
+tables) we keep all the schema initialized here.
 
 Import as:
 
 import im.common.db.create_schema as imcodbcrsch
 """
+
+# TODO(gp): This file should become `create_db` since it creates the DB and its
+#  schema.
 
 import logging
 import os
@@ -24,6 +30,8 @@ _LOG = logging.getLogger(__name__)
 # TODO(Grisha): convert the code into a class.
 
 
+# TODO(gp): -> db_connection_to_str() and move to utils.py
+# TODO(gp): It should get a DbConnection.
 def get_db_connection_details(
     db_name: str, host: str, user: str, port: int, password: str
 ) -> str:
@@ -54,6 +62,8 @@ def get_db_connection_details(
     return txt
 
 
+# TODO(gp): Move to utils.py
+# TODO(gp): It should get a DbConnection.
 def check_db_connection(
     db_name: str,
     host: str,
@@ -122,10 +132,12 @@ def get_common_create_table_query() -> str:
     return sql_query
 
 
+# TODO(gp): This should go in IB.
 def get_ib_create_table_query() -> str:
     """
-    Get SQL query that is used to create tables for `ib`.
+    Get SQL query that is used to create tables for IB.
     """
+    # TODO(*): barCount -> bar_count
     sql_query = """
     CREATE TABLE IF NOT EXISTS IbDailyData (
         id integer PRIMARY KEY DEFAULT nextval('serial'),
@@ -137,7 +149,6 @@ def get_ib_create_table_query() -> str:
         close numeric,
         volume bigint,
         average numeric,
-        -- TODO(*): barCount -> bar_count
         barCount integer,
         UNIQUE (trade_symbol_id, date)
     );
@@ -176,6 +187,7 @@ def get_ib_create_table_query() -> str:
     return sql_query
 
 
+# TODO(gp): This should go in Kibot.
 def get_kibot_create_table_query() -> str:
     """
     Get SQL query that is used to create tables for `kibot`.
@@ -225,15 +237,11 @@ def get_kibot_create_table_query() -> str:
     return sql_query
 
 
-def define_data_types(cursor: psycop.extensions.cursor) -> None:
+def get_data_types_query() -> str:
     """
     Define custom data types inside a database.
-
-    :param cursor: a database cursor
     """
-    _LOG.info("Defining data types...")
-    # Define data types.
-    define_types_query = """
+    sql_query = """
     /* TODO: Futures -> futures */
     CREATE TYPE AssetClass AS ENUM ('Futures', 'etfs', 'forex', 'stocks', 'sp_500');
     /* TODO: T -> minute, D -> daily */
@@ -241,12 +249,11 @@ def define_data_types(cursor: psycop.extensions.cursor) -> None:
     CREATE TYPE ContractType AS ENUM ('continuous', 'expiry');
     CREATE SEQUENCE serial START 1;
     """
-    try:
-        cursor.execute(define_types_query)
-    except psycop.errors.DuplicateObject:
-        _LOG.warning("Specified data types already exist: skipping.")
+    return sql_query
 
 
+# TODO(gp): -> create_all_tables
+# TODO(gp): It should get a DbConnection
 def create_tables(
     cursor: psycop.extensions.cursor,
 ) -> None:
@@ -255,22 +262,15 @@ def create_tables(
 
     :param cursor: a database cursor
     """
-    # Get SQL query to create the common tables.
-    common_query = get_common_create_table_query()
-    # Get SQL query to create the `kibot` tables.
-    kibot_query = get_kibot_create_table_query()
-    # Get SQL query to create the `ib` tables.
-    ib_query = get_ib_create_table_query()
-    # Collect the queries.
-    provider_to_query = {
-        "common": common_query,
-        "kibot": kibot_query,
-        "ib": ib_query,
-    }
+    queries = [
+        get_data_types_query(),
+        get_common_create_table_query(),
+        get_kibot_create_table_query(),
+        get_ib_create_table_query(),
+    ]
     # Create tables.
-    for provider, query in provider_to_query.items():
+    for query in queries:
         try:
-            _LOG.info("Creating `%s` tables...", provider)
             cursor.execute(query)
         except psycop.errors.DuplicateObject:
             _LOG.warning(
@@ -278,6 +278,7 @@ def create_tables(
             )
 
 
+# TODO(gp): This is a unit test and should be split into IB and Kibot at some point.
 def test_tables(
     connection: hsql.DbConnection,
     cursor: psycop.extensions.cursor,
@@ -291,6 +292,7 @@ def test_tables(
     _LOG.info("Testing created tables...")
     # Check tables list.
     actual_tables = hsql.get_table_names(connection)
+    # TODO(gp): These names are difficult to read: they should be like "ib_minute_data".
     expected_tables = [
         "exchange",
         "ibdailydata",
@@ -310,51 +312,7 @@ def test_tables(
     cursor.execute(test_query)
 
 
-def create_schema(
-    db_name: str,
-    host: str,
-    user: str,
-    port: int,
-    password: str,
-) -> None:
-    """
-    Create SQL schema.
-
-    Creating schema includes:
-        - Defining custom data types
-        - Creating new tables
-        - Testing that tables are created
-
-    :param db_name: name of database to connect to, e.g. `im_db_local`
-    :param host: host name to connect to db
-    :param user: user name to connect to db
-    :param port: port to connect to db
-    :param password: password to connect to db
-    """
-    _LOG.info(
-        "DB connection:\n%s",
-        get_db_connection_details(
-            db_name=db_name, host=host, user=user, port=port, password=password
-        ),
-    )
-    # Get database connection and cursor.
-    connection, cursor = hsql.get_connection(
-        dbname=db_name,
-        host=host,
-        port=port,
-        user=user,
-        password=password,
-    )
-    # Define data types.
-    define_data_types(cursor)
-    # Create tables.
-    create_tables(cursor)
-    # Test the db.
-    test_tables(connection, cursor)
-    # Close connection.
-    connection.close()
-
-
+# TODO(gp): This should get a DbConnection object.
 def create_database(
     new_db: str,
     conn_db: str,
@@ -384,11 +342,10 @@ def create_database(
     hsql.create_database(connection, db=new_db, force=force)
     connection.close()
     # Create SQL schema.
-    create_schema(
-        db_name=conn_db, host=host, user=user, port=port, password=password
-    )
+    create_tables()
 
 
+# TODO(gp): This should get a DbConnection object.
 def remove_database(
     db_to_drop: str,
     conn_db: str,
