@@ -28,5 +28,7 @@ root    ALL=(ALL:ALL) ALL
 # See sudoers(5) for more information on "#include" directives:
 user_1001 ALL=(ALL) NOPASSWD:ALL
 user_1002 ALL=(ALL) NOPASSWD:ALL
+user_1003 ALL=(ALL) NOPASSWD:ALL
+user_1004 ALL=(ALL) NOPASSWD:ALL
 
 #includedir /etc/sudoers.d
