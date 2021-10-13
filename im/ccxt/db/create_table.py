@@ -12,6 +12,10 @@ Import as:
 import im.ccxt.db.create_table as imccdbcrtab
 """
 
+# TODO(gp): I am not sure this script is needed anymore, since the unit test will
+#  call into im/common/db/create_schema.py::create_tables and the invoke task that
+#  creates the Dev DB calls create_tables.
+
 import argparse
 import logging
 
@@ -23,62 +27,63 @@ import os
 _LOG = logging.getLogger(__name__)
 
 
-def _get_create_table_sql_command(table_name: str) -> str:
+# TODO(gp): Move to im/common/db/create_schema.py
+def _get_ccxt_ohlcv_create_table_query(table_name: str) -> str:
     """
     Build a CREATE TABLE command based on table name.
+
+    Example of OHLCV data from CCXT:
+    ```
+    timestamp,open,high,low,close,volume,currency_pair,exchange
+    1632745560000,43480.71,43489.87,43435.0,43460.31,18.85418,BTC/USDT,binance
+    1632745620000,43460.32,43467.68,43420.59,43445.21,39.4702,BTC/USDT,binance
+    ```
 
     :param table_name: name of the table
     :return: CREATE TABLE command
     """
-    if table_name == "ccxt_ohlcv":
-        command = """CREATE TABLE ccxt_ohlcv(
-                id SERIAL PRIMARY KEY,
-                timestamp INTEGER NOT NULL,
-                open NUMERIC,
-                high NUMERIC,
-                low NUMERIC,
-                close NUMERIC,
-                volume NUMERIC,
-                currency_pair VARCHAR(255) NOT NULL,
-                exchange_id VARCHAR(255) NOT NULL
-                )
-                """
-    else:
-        raise ValueError("Table '%s' is not valid" % table_name)
-    _LOG.debug("command=%s", command)
-    return command
+    sql_query = """CREATE TABLE ccxt_ohlcv(
+            id SERIAL PRIMARY KEY,
+            timestamp INTEGER NOT NULL,
+            open NUMERIC,
+            high NUMERIC,
+            low NUMERIC,
+            close NUMERIC,
+            volume NUMERIC,
+            currency_pair VARCHAR(255) NOT NULL,
+            exchange_id VARCHAR(255) NOT NULL
+            )
+            """
+    return sql_query
 
 
-def create_table(conn: hsql.DbConnection, table_name: str) -> None:
-    """
-    Create a new table in the database.
-
-    Accepts a table name and creates a table
-    with preset schema.
-
-    Currently available tables:
-        - 'ccxt_ohlcv': OHLCV table with CCXT data
-
-    Example of OHLCV data from CCXT:
-    timestamp,open,high,low,close,volume,currency_pair,exchange
-    1632745560000,43480.71,43489.87,43435.0,43460.31,18.85418,BTC/USDT,binance
-    1632745620000,43460.32,43467.68,43420.59,43445.21,39.4702,BTC/USDT,binance
-
-    :param conn: DB connection
-    :param table_name: name of the table
-    """
-    hdbg.dassert_not_in(
-        table_name,
-        hsql.get_table_names(conn),
-        msg="Table %s already exists!" % table_name,
-    )
-    cursor = conn.cursor()
-    # Build a CREATE TABLE command from name.
-    command = _get_create_table_sql_command(table_name)
-    cursor.execute(command)
-    cursor.close()
-    # TODO(Danya): Remove closing from function.
-    conn.close()
+# TODO(gp): This is useless since `create_tables` will call `_get_ccxt_ohlcv_create_table_query`
+# def create_table(conn: hsql.DbConnection, table_name: str) -> None:
+#     """
+#     Create a new table in the database.
+#
+#     Accepts a table name and creates a table
+#     with preset schema.
+#
+#     Currently available tables:
+#         - 'ccxt_ohlcv': OHLCV table with CCXT data
+#
+#
+#     :param conn: DB connection
+#     :param table_name: name of the table
+#     """
+#     hdbg.dassert_not_in(
+#         table_name,
+#         hsql.get_table_names(conn),
+#         msg="Table %s already exists!" % table_name,
+#     )
+#     cursor = conn.cursor()
+#     # Build a CREATE TABLE command from name.
+#     command = _get_create_table_sql_command(table_name)
+#     cursor.execute(command)
+#     cursor.close()
+#     # TODO(Danya): Remove closing from function.
+#     conn.close()
 
 
 def _parse() -> argparse.ArgumentParser:
