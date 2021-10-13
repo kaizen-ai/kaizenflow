@@ -21,4 +21,5 @@ sudo chmod -R 777 /home
 sudo chmod 777 /mnt
 
 # Allow users to access /tmp.cache.disk.
+mkdir /tmp.cache.disk
 sudo chmod 777 /tmp.cache.disk
