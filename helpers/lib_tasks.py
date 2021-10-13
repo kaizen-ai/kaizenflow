@@ -1279,7 +1279,7 @@ def _get_docker_cmd(
         --rm"""
     )
     # - Handle the user.
-    if False:
+    if True:
         user_name = hsyint.get_user_name()
         docker_cmd_.append(
             rf"""
