@@ -25,7 +25,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def get_db_connection_details(
-    dbname: str, host: str, user: str, port: int, password: str
+    db_name: str, host: str, user: str, port: int, password: str
 ) -> str:
     """
     Get database connection details using environment variables.
@@ -37,10 +37,15 @@ def get_db_connection_details(
         - Username
         - Password
 
+    :param db_name: name of database to connect to, e.g. `im_db_local`
+    :param host: host name to connect to db
+    :param user: user name to connect to db
+    :param port: port to connect to db
+    :param password: password to connect to db
     :return: database connection details
     """
     txt = []
-    txt.append("dbname='%s'" % dbname)
+    txt.append("dbname='%s'" % db_name)
     txt.append("host='%s'" % host)
     txt.append("port='%s'" % port)
     txt.append("user='%s'" % user)
@@ -50,7 +55,7 @@ def get_db_connection_details(
 
 
 def check_db_connection(
-    dbname: str,
+    db_name: str,
     host: str,
     user: str,
     port: int,
@@ -58,11 +63,17 @@ def check_db_connection(
 ) -> None:
     """
     Verify that the database is available.
+
+    :param db_name: name of database to connect to, e.g. `im_db_local`
+    :param host: host name to connect to db
+    :param user: user name to connect to db
+    :param port: port to connect to db
+    :param password: password to connect to db
     """
     _LOG.info(
         "Checking the database connection:\n%s",
         get_db_connection_details(
-            dbname=dbname, host=host, user=user, port=port, password=password
+            db_name=db_name, host=host, user=user, port=port, password=password
         ),
     )
     while True:
@@ -71,7 +82,7 @@ def check_db_connection(
         rc = hsyint.system(
             cmd
             % (
-                dbname,
+                db_name,
                 port,
                 host,
             )
@@ -300,7 +311,7 @@ def test_tables(
 
 
 def create_schema(
-    dbname: str,
+    db_name: str,
     host: str,
     user: str,
     port: int,
@@ -313,16 +324,22 @@ def create_schema(
         - Defining custom data types
         - Creating new tables
         - Testing that tables are created
+
+    :param db_name: name of database to connect to, e.g. `im_db_local`
+    :param host: host name to connect to db
+    :param user: user name to connect to db
+    :param port: port to connect to db
+    :param password: password to connect to db
     """
     _LOG.info(
         "DB connection:\n%s",
         get_db_connection_details(
-            dbname=dbname, host=host, user=user, port=port, password=password
+            db_name=db_name, host=host, user=user, port=port, password=password
         ),
     )
     # Get database connection and cursor.
     connection, cursor = hsql.get_connection(
-        dbname=dbname,
+        dbname=db_name,
         host=host,
         port=port,
         user=user,
@@ -368,7 +385,7 @@ def create_database(
     connection.close()
     # Create SQL schema.
     create_schema(
-        dbname=conn_db, host=host, user=user, port=port, password=password
+        db_name=conn_db, host=host, user=user, port=port, password=password
     )
 
 
