@@ -4,8 +4,7 @@ Script to download data from CCXT in real-time.
 
 Use as:
 
-- Download all currency pairs for Binance, Kucoin,
-  FTX exchanges:
+# Download all currency pairs for Binance, Kucoin, FTX exchanges:
 > python im/ccxt/data/extract/download_realtime.py \
     --dst_dir test1 \
     --exchange_ids 'binance kucoin ftx' \
@@ -41,6 +40,7 @@ def _instantiate_exchange(
     :param currency_pairs: space-delimited currencies, e.g. 'BTC/USDT ETH/USDT'
     :return: named tuple with exchange id and currencies
     """
+    # TODO(gp): This can be a type and moved outside.
     exchange_to_currency = collections.namedtuple(
         "ExchangeToCurrency", ["id", "instance", "pairs"]
     )

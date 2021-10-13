@@ -4,7 +4,7 @@ Script to download historical data from CCXT.
 
 Use as:
 
-- Download Binance BTC/USDT data from 2019-01-01 to 2019-01-02:
+# Download Binance BTC/USDT data from 2019-01-01 to 2019-01-02:
 > download_historical.py \
      --dst_dir test \
      --exchange_ids "binance" \
@@ -12,24 +12,22 @@ Use as:
      --start_datetime "2019-01-01" \
      --end_datetime "2019-01-02"
 
-- Download Binance data from 2019-01-01 to now,
-  for all currency pairs:
+# Download Binance data from 2019-01-01 to now, for all currency pairs:
 > download_historical.py \
      --dst_dir test \
      --exchange_ids "binance" \
      --currency_pairs "all" \
      --start_datetime "2019-01-01" \
 
-- Download data for all exchanges, BTC/USDT and ETH/USDT currency pairs,
-  from 2019-01-01 to now:
+# Download data for all exchanges, BTC/USDT and ETH/USDT currency pairs, from
+  2019-01-01 to now:
 > download_historical.py \
      --dst_dir test \
      --exchange_ids "all" \
      --currency_pairs "BTC/USDT ETH/USDT" \
      --start_datetime "2019-01-01" \
 
-- Download data for all exchanges and all pairs,
-from 2019-01-01 to 2019-01-02:
+# Download data for all exchanges and all pairs, from 2019-01-01 to 2019-01-02:
 > download_historical.py \
      --dst_dir test \
      --exchange_ids "all" \
@@ -52,6 +50,7 @@ import im.ccxt.data.extract.exchange_class as deecla
 
 _LOG = logging.getLogger(__name__)
 
+_ALL_EXCHANGE_IDS = ["binance", "kucoin"]
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -77,16 +76,16 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="CCXT names of exchanges to download data for, separated by spaces, e.g. 'binance gemini',"
-        "'all' for each exchange (currently includes Binance and Kucoin by default)",
+        help="CCXT names of exchanges to download data for, separated by spaces, "
+            "e.g. 'binance gemini', 'all' for all the supported exchanges"
     )
     parser.add_argument(
         "--currency_pairs",
         action="store",
         required=True,
         type=str,
-        help="Name of the currency pair to download data for, separated by spaces, e.g. 'BTC/USD ETH/USD',"
-        " 'all' for each currency pair in exchange",
+        help="Name of the currency pair to download data for, separated by spaces, "
+            "e.g. 'BTC/USD ETH/USD', 'all' for all the currency pairs in the exchange",
     )
     parser.add_argument(
         "--start_datetime",
@@ -101,7 +100,7 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         default=None,
         help="End date of download in iso8601 format, e.g. '2021-10-08T00:00:00.000Z'."
-        "Optional, defaults to datetime.now())",
+            "None means `datetime.now()`",
     )
     parser.add_argument(
         "--step",
@@ -127,28 +126,30 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Create the directory.
     hio.create_dir(args.dst_dir, incremental=args.incremental)
+    # Pick start and end datetime.
     start_datetime = pd.Timestamp(args.start_datetime)
-    # If end_date is not provided, get current time.
     if not args.end_datetime:
+        # If the end datetime is not provided, get current time.
         end_datetime = pd.Timestamp.now()
     else:
         end_datetime = pd.Timestamp(args.end_datetime)
+    # Pick the exchanges.
     if args.exchange_ids == "all":
-        # Iterate over all available exchanges.
-        exchange_ids = ["binance", "kucoin"]
+        # Iterate over all the available exchanges.
+        exchange_ids = _ALL_EXCHANGE_IDS
     else:
-        # Get a single exchange.
+        # Get the requested exchanges.
         exchange_ids = args.exchange_ids.split()
+    # Process.
     _LOG.info("Getting data for exchanges %s", ", ".join(exchange_ids))
     for exchange_id in exchange_ids:
-        pass
         # Initialize the exchange class.
         exchange = deecla.CcxtExchange(exchange_id, api_keys_path=args.api_keys)
         if args.currency_pairs == "all":
             # Iterate over all currencies available for exchange.
             present_pairs = exchange.currency_pairs
         else:
-            # Iterate over provided currency.
+            # Iterate over the provided currency.
             currency_pairs = args.currency_pairs.split()
             # Leave only currencies present in exchange.
             present_pairs = [
@@ -170,9 +171,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 end_datetime=end_datetime,
                 step=args.step,
             )
-            # Set up sleep time between iterations.
+            # Sleep a bit between iterations.
             time.sleep(args.sleep_time)
-            # Create file name based on exchange and pair, replacing '/' with '_'.
+            # Create file name based on exchange and pair.
+            # TODO(gp): Add an example of file_name.
             file_name = f"{exchange_id}_{pair.replace('/', '_')}.csv.gz"
             full_path = os.path.join(args.dst_dir, file_name)
             # Save file.
@@ -181,8 +183,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 index=False,
                 compression="gzip",
             )
-            _LOG.debug("Saved to %s", file_name)
-    return None
+            _LOG.debug("Saved data to %s", file_name)
 
 
 if __name__ == "__main__":
