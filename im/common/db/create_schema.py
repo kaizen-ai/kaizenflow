@@ -32,11 +32,11 @@ def get_db_connection() -> psycop.extensions.connection:
 
 def get_connection_details() -> str:
     txt = []
-    txt.append("dbname='%s'" % os.environ["POSTGRES_DB"])
-    txt.append("host='%s'" % os.environ["POSTGRES_HOST"])
-    txt.append("port='%s'" % os.environ["POSTGRES_PORT"])
-    txt.append("user='%s'" % os.environ["POSTGRES_USER"])
-    txt.append("password='%s'" % os.environ["POSTGRES_PASSWORD"])
+    txt.append("dbname='%s'" % db_name)
+    txt.append("host='%s'" % host)
+    txt.append("port='%s'" % port)
+    txt.append("user='%s'" % user)
+    txt.append("password='%s'" % password)
     txt = "\n".join(txt)
     return txt
 
@@ -132,7 +132,9 @@ def remove_database(dbname: str) -> None:
         password=os.environ["POSTGRES_PASSWORD"],
     )
     # Drop database.
-    cursor.execute(psql.SQL("DROP DATABASE {};").format(psql.Identifier(dbname)))
+    cursor.execute(
+        psql.SQL("DROP DATABASE {};").format(psql.Identifier(db_to_drop))
+    )
     # Close connection.
     connection.close()
 
