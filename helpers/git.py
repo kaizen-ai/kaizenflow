@@ -592,20 +592,45 @@ def find_file_in_git_tree(file_name: str, super_module: bool = True) -> str:
     return file_name
 
 
-def get_path_from_git_root(file_name: str, super_module: bool) -> str:
+def get_path_from_git_root(
+    file_name: str,
+    super_module: bool,
+    *,
+    git_root: Optional[str] = None,
+) -> str:
     """
-    Get the git path from the root of the tree.
+    Get the path of `file_name` from the root of the Git client.
+
+    E.g., in Docker:
+        - `super_module=True` -> git_root=/app
+        - `super_module=False` -> git_root=/app/amp
 
     :param super_module: like get_client_root()
     """
-    # Get Git root.
-    git_root = get_client_root(super_module) + "/"
-    # TODO(gp): Use os.path.relpath()
-    # abs_path = os.path.abspath(file_name)
-    # hdbg.dassert(abs_path.startswith(git_root))
-    # end_idx = len(git_root)
-    # ret = abs_path[end_idx:]
-    ret = os.path.relpath(file_name, git_root)
+    # Get the root of the Git client.
+    if git_root is None:
+        git_root = get_client_root(super_module)
+    #
+    git_root = os.path.normpath(git_root)
+    _LOG.debug("git_root=%s", git_root)
+    file_name = os.path.normpath(file_name)
+    _LOG.debug("file_name=%s", file_name)
+    if file_name.startswith(git_root):
+        # Remove the `git_root` from file_name.
+        ret = os.path.relpath(file_name, git_root)
+    else:
+        # If the file is not under the root, we can't normalize it.
+        raise ValueError(
+            "Can't normalize file_name='%s' for git_root='%s'"
+            % (file_name, git_root)
+        )
+    _LOG.debug(
+        "file_name=%s, git_root=%s (super_module=%s) -> ret=%s",
+        file_name,
+        git_root,
+        super_module,
+        ret,
+    )
     return ret
 
 
@@ -644,12 +669,14 @@ def get_repo_dirs() -> List[str]:
     return dir_names
 
 
-def purify_docker_file_from_git_client(
+def find_docker_file(
     file_name: str,
-    super_module: Optional[bool],
-    dir_depth: int = 1,
+    *,
+    root_dir: str = ".",
+    dir_depth: int = -1,
     mode: str = "return_all_results",
-) -> Tuple[bool, str]:
+    candidate_files: Optional[List[str]] = None,
+) -> List[str]:
     """
     Convert a file or dir that was generated inside Docker to a file in the
     current Git client.
@@ -664,11 +691,10 @@ def purify_docker_file_from_git_client(
       for the file 'dataflow_model/utils.py' in the current client and then normalize
       with respect to the
 
-    :param super_module:
-        - True/False: the file is with respect to a Git repo
-        - `None`: the file is returned as relative to current dir
     :param dir_depth: same meaning as in `find_file_with_dir()`
     :param mode: same as `system_interaction.select_result_file_from_list()`
+    :param candidate_files: list of results from the `find` command for unit
+        test mocking
     :return: the best guess for the file name corresponding to `file_name`
     """
     _LOG.debug("# Processing file_name='%s'", file_name)
@@ -676,31 +702,20 @@ def purify_docker_file_from_git_client(
     # Clean up file name.
     file_name = os.path.normpath(file_name)
     _LOG.debug("file_name=%s", file_name)
+    # Find the file in the dir.
     file_names = hsyint.find_file_with_dir(
-        file_name, ".", dir_depth=dir_depth, mode=mode
+        file_name,
+        root_dir=root_dir,
+        dir_depth=dir_depth,
+        mode=mode,
+        candidate_files=candidate_files,
     )
-    _LOG.debug("file_names=%s", file_names)
-    if len(file_names) == 0:
-        # We didn't find the file in the current client: leave the file as it was.
-        _LOG.warning("Can't find file corresponding to '%s'", file_name)
-        found = False
-    elif len(file_names) == 1:
-        # We have found the file.
-        file_name = file_names[0]
-        _LOG.debug("file_name=%s", file_name)
-        #
-        if super_module is not None:
-            file_name = get_path_from_git_root(file_name, super_module)
-        file_name = os.path.normpath(file_name)
-        found = True
-    else:
-        _LOG.warning(
-            "Found multiple potential files corresponding to '%s'", file_name
-        )
-        file_name = ",".join(file_names)
-        found = False
-    _LOG.debug("-> found=%s file_name='%s'", found, file_name)
-    return (found, file_name)
+    # Purify.
+    _LOG.debug("Purifying file_names=%s", file_names)
+    file_names = [
+        os.path.relpath(file_name, root_dir) for file_name in file_names
+    ]
+    return file_names
 
 
 # #############################################################################
