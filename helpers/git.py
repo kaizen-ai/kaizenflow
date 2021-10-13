@@ -615,7 +615,7 @@ def get_amp_abs_path() -> str:
     Return the absolute path of `amp` dir.
     """
     repo_sym_name = get_repo_full_name_from_client(super_module=False)
-    if repo_sym_name == "alphamatic/amp":
+    if repo_sym_name in ["alphamatic/amp", "cryptomtc/cmamp"]:
         # If we are in the amp repo, then the git client root is the amp
         # directory.
         git_root = get_client_root(super_module=False)
