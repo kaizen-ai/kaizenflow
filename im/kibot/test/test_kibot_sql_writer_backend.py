@@ -9,9 +9,10 @@ import im.kibot.kibot_sql_writer_backend as ikkibo
 
 
 # TODO(*): -> TestKibotSqlWriterBackend1
-#@pytest.mark.skipif(
-#    not icdcrsch.is_inside_im_container(), #    reason="Testable only inside IM container",
-#)
+@pytest.mark.skipif(
+    not icdcrsch.is_inside_im_container(),
+    reason="Testable only inside IM container",
+)
 class TestSqlWriterBackend1(ictuti.SqlWriterBackendTestCase):
     """
     Test writing operation to PostgreSQL DB.
