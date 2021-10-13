@@ -35,19 +35,19 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level)
-    dbname = os.environ["POSTGRES_DB"]
+    db_name = os.environ["POSTGRES_DB"]
     host = os.environ["POSTGRES_HOST"]
     port = int(os.environ["POSTGRES_PORT"])
     user = os.environ["POSTGRES_USER"]
     password = os.environ["POSTGRES_PASSWORD"]
     # Verify that the database is available.
     imcodbcrsch.check_db_connection(
-        dbname=dbname, host=host, port=port, user=user, password=password
+        db_name=db_name, host=host, port=port, user=user, password=password
     )
     # Set schema for the database.
     _LOG.info("Setting schema for DB `%s`...", os.environ["POSTGRES_DB"])
     imcodbcrsch.create_schema(
-        dbname=dbname,
+        db_name=db_name,
         host=host,
         port=port,
         user=user,
