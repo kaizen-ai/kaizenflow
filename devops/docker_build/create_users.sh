@@ -19,3 +19,6 @@ sudo chmod -R 777 /home
 # Allow users to access /mnt/tmpfs.
 # TODO(gp): We could change the permissions in fstab.
 sudo chmod 777 /mnt
+
+# Allow users to access /tmp.cache.disk.
+sudo chmod 777 /tmp.cache.disk
