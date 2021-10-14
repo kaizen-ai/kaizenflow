@@ -113,7 +113,7 @@ class CcxtLoader:
             table_name, hsql.get_table_names(connection)
         )
         #
-        sql_query = "SELECT * FROM (%s)"
+        sql_query = "SELECT * FROM %s"
         query_params = [table_name, ]
         #
         query_conditions = []
