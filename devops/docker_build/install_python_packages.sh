@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 #
-# Install python packages.
+# Install Python packages.
 #
 
 set -ex
 
-FILE_NAME="devops/docker_build/install_requirements.sh"
+FILE_NAME="devops/docker_build/install_python_packages.sh"
+echo "#############################################################################"
 echo "##> $FILE_NAME"
+echo "#############################################################################"
 
 echo "# Installing ${ENV_NAME}"
 

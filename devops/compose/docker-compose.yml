@@ -20,14 +20,14 @@ services:
       # This env var is used by GH Action to signal that we are inside the CI.
       - CI=$CI
     image: ${IMAGE}
-    # TODO(gp): I think this is needed only when mounting fstab.
-    #privileged: true
+    # This is needed for dind (Docker-in-docker). It is also needed if one
+    # wants to mount fstabs.
+    privileged: true
     restart: "no"
     volumes:
-      # TODO(gp): Ideally we should use an env var DOCKER_USER_HOME=/app/home
-      - ~/.aws:/app/home/.aws
-      - ~/.config/gspread_pandas/:/app/home/.config/gspread_pandas/
-      - ~/.config/gh:/app/home/.config/gh
+      - ~/.aws:/root/.aws
+      - ~/.config/gspread_pandas/:/root/.config/gspread_pandas/
+      - ~/.config/gh:/root/.config/gh
       # No need to mount file systems.
       #- ../docker_build/fstab:/etc/fstab
 
@@ -39,7 +39,7 @@ services:
       - ../../:/app
 
   jupyter_server:
-    command: devops/docker_scripts/run_jupyter_server.sh
+    command: devops/docker_run/run_jupyter_server.sh
     environment:
       - PORT=${PORT}
     extends:
