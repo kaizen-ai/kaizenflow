@@ -137,9 +137,10 @@ class CcxtLoader:
         #
         query_params = tuple(query_params)
         #
-        cursor.execute(sql_query, query_params)
-        table = cursor.fetchall()
-        table = pd.DataFrame(table)
+        table = pd.reqd_sql(sql_query, connection, query_params)
+        #cursor.execute(sql_query, query_params)
+        #table = cursor.fetchall()
+        #table = pd.DataFrame(table)
         return table
 
     def read_data(
