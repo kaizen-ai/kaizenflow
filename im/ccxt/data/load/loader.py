@@ -135,12 +135,12 @@ class CcxtLoader:
             query_conditions = " AND ".join(query_conditions)
             sql_query = " WHERE ".join([sql_query, query_conditions])
         #
-        query_params = tuple(query_params)
+        _ = cursor.execute(sql_query, tuple(query_params))
         #
-        table = pd.read_sql(sql_query, connection, query_params)
-        #cursor.execute(sql_query, query_params)
-        #table = cursor.fetchall()
-        #table = pd.DataFrame(table)
+        table_data = cursor.fetchall()
+        col_names = [desc[0] for desc in cursor.description]
+        #
+        table = pd.DataFrame(data=table_data, columns=col_names)
         return table
 
     def read_data(
