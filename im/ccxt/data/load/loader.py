@@ -119,16 +119,16 @@ class CcxtLoader:
         query_conditions = []
         #
         if exchange_ids:
-            query_conditions.append("exchange_id IN (%s)")
+            query_conditions.append("exchange_id IN %s")
             query_params.append(exchange_ids)
         if currency_pairs:
-            query_conditions.append("currency_pair IN (%s)")
+            query_conditions.append("currency_pair IN %s")
             query_params.append(currency_pairs)
         if start_date:
-            query_conditions.append("timestamp > (%s)")
+            query_conditions.append("timestamp > %s")
             query_params.append(start_date)
         if end_date:
-            query_conditions.append("timestamp < (%s)")
+            query_conditions.append("timestamp < %s")
             query_params.append(end_date)
         #
         if query_conditions:
