@@ -28,9 +28,6 @@ class TestSqlWriterBackend1(ictuti.SqlWriterBackendTestCase):
             host=self._host,
             port=self._port,
         )
-        # TODO(gp): Create a container with docker-compose up postgres
-        cmd = "cd im/devops; docker-compose --file compose/docker-compose.yml up im_postgres_local"
-        hsi.system(
 
     def test_ensure_symbol_exist1(self) -> None:
         """
