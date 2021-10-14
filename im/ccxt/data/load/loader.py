@@ -6,9 +6,10 @@ import im.ccxt.data.load.loader as cdlloa
 
 import logging
 import os
-from typing import Optional
+from typing import Optional, Tuple
 
 import pandas as pd
+import psycopg2 as psycop
 
 import core.pandas_helpers as cphelp
 import helpers.datetime_ as hdatet
@@ -16,6 +17,8 @@ import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.s3 as hs3
 import helpers.sql as hsql
+
+import im.common.db.create_schema as imcodbcrsch
 
 _LOG = logging.getLogger(__name__)
 
@@ -81,20 +84,62 @@ class CcxtLoader:
     @staticmethod
     def read_db_data(
         connection: hsql.DbConnection,
+        cursor: psycop.extensions.cursor,
         table_name: str,
+        exchange_ids: Optional[Tuple[str]] = None,
+        currency_pairs: Optional[Tuple[str]] = None,
+        start_date: Optional[int] = None,
+        end_date: Optional[int] = None,
     ) -> pd.DataFrame:
         """
         Load CCXT data from database.
 
-        :param connection: DB connection
+        :param connection: connection for a SQL database
+        :param cursor: cursor for a SQL database
         :param table_name: name of the table to load (e.g., "ccxt_ohlcv")
+        :param exchange_ids: exchange ids to load data for
+        :param currency_pairs: currency pairs to load data for
+        :param start_date: the earliest data to load data for
+        :param end_date: the latest date to load data for
         :return: table
         """
+        #
+        exchange_ids = exchange_ids or None
+        currency_pairs = currency_pairs or None
+        start_date = start_date or None
+        end_date = end_date or None
+        #
         dbg.dassert_in(
             table_name, hsql.get_table_names(connection)
         )
-        sql_query = "SELECT * FROM %s" % table_name
-        table = pd.read_sql(sql_query, connection)
+        #
+        sql_query = "SELECT * FROM (%s)"
+        query_params = [table_name, ]
+        #
+        query_conditions = []
+        #
+        if exchange_ids:
+            query_conditions.append("exchange_id IN (%s)")
+            query_params.append(exchange_ids)
+        if currency_pairs:
+            query_conditions.append("currency_pair IN (%s)")
+            query_params.append(currency_pairs)
+        if start_date:
+            query_conditions.append("timestamp > (%s)")
+            query_params.append(start_date)
+        if end_date:
+            query_conditions.append("timestamp < (%s)")
+            query_params.append(end_date)
+        #
+        if query_conditions:
+            query_conditions = " AND ".join(query_conditions)
+            sql_query = " WHERE ".join([sql_query, query_conditions])
+        #
+        query_params = tuple(query_params)
+        #
+        cursor.execute(sql_query, query_params)
+        table = cursor.fetchall()
+        table = pd.DataFrame(table)
         return table
 
     def read_data(
