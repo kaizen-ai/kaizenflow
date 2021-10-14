@@ -17,6 +17,7 @@ import psycopg2.sql as psql
 import helpers.dbg as hdbg
 import helpers.sql as hsql
 import helpers.system_interaction as hsyint
+import im.ib.ib_sql_writer_backend as imiibsqwribac
 
 _LOG = logging.getLogger(__name__)
 
@@ -260,7 +261,7 @@ def create_tables(
     # Get SQL query to create the `kibot` tables.
     kibot_query = get_kibot_create_table_query()
     # Get SQL query to create the `ib` tables.
-    ib_query = get_ib_create_table_query()
+    ib_query = imiibsqwribac.IbSqlWriterBackend().get_create_table_query()
     # Collect the queries.
     provider_to_query = {
         "common": common_query,

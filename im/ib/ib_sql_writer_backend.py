@@ -1,29 +1,89 @@
+"""
+Import as:
+
+import im.ib.ib_sql_writer_backend as imiibsqwribac
+"""
+
 import pandas as pd
 import psycopg2.extras as pextra
 
-import im.common.data.types as icdtyp
-import im.common.sql_writer_backend as icsqlw
+import im.common.data.types as imcodatyp
+import im.common.sql_writer_backend as imcosqwrbac
 
 
-class IbSqlWriterBackend(icsqlw.AbstractSqlWriterBackend):
+class IbSqlWriterBackend(imcosqwrbac.AbstractSqlWriterBackend):
     """
     Manager of CRUD operations on a database defined in db.sql.
     """
 
     FREQ_ATTR_MAPPING = {
-        icdtyp.Frequency.Daily: {
+        imcodatyp.Frequency.Daily: {
             "table_name": "IbDailyData",
             "datetime_field_name": "date",
         },
-        icdtyp.Frequency.Minutely: {
+        imcodatyp.Frequency.Minutely: {
             "table_name": "IbMinuteData",
             "datetime_field_name": "datetime",
         },
-        icdtyp.Frequency.Tick: {
+        imcodatyp.Frequency.Tick: {
             "table_name": "IbTickData",
             "datetime_field_name": "datetime",
         },
     }
+
+    @staticmethod
+    def get_create_table_query() -> str:
+        """
+        Get SQL query that is used to create tables for `ib`.
+        """
+        sql_query = """
+           CREATE TABLE IF NOT EXISTS IbDailyData (
+               id integer PRIMARY KEY DEFAULT nextval('serial'),
+               trade_symbol_id integer REFERENCES TradeSymbol,
+               date date,
+               open numeric,
+               high numeric,
+               low numeric,
+               close numeric,
+               volume bigint,
+               average numeric,
+               -- TODO(*): barCount -> bar_count
+               barCount integer,
+               UNIQUE (trade_symbol_id, date)
+           );
+
+           CREATE TABLE IF NOT EXISTS IbMinuteData (
+               id integer PRIMARY KEY DEFAULT nextval('serial'),
+               trade_symbol_id integer REFERENCES TradeSymbol,
+               datetime timestamptz,
+               open numeric,
+               high numeric,
+               low numeric,
+               close numeric,
+               volume bigint,
+               average numeric,
+               barCount integer,
+               UNIQUE (trade_symbol_id, datetime)
+           );
+
+           CREATE TABLE IF NOT EXISTS IbTickBidAskData (
+               id integer PRIMARY KEY DEFAULT nextval('serial'),
+               trade_symbol_id integer REFERENCES TradeSymbol,
+               datetime timestamp,
+               bid numeric,
+               ask numeric,
+               volume bigint
+           );
+
+           CREATE TABLE IF NOT EXISTS IbTickData (
+               id integer PRIMARY KEY DEFAULT nextval('serial'),
+               trade_symbol_id integer REFERENCES TradeSymbol,
+               datetime timestamp,
+               price numeric,
+               size bigint
+           );
+           """
+        return sql_query
 
     def insert_bulk_daily_data(
         self,
