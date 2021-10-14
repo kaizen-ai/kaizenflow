@@ -8,7 +8,6 @@ import im.common.db.create_schema as imcodbcrsch
 
 import logging
 import os
-import time
 from typing import Optional
 
 import psycopg2 as psycop
@@ -16,7 +15,7 @@ import psycopg2.sql as psql
 
 import helpers.dbg as hdbg
 import helpers.sql as hsql
-import helpers.system_interaction as hsyint
+import im.common.db.utils as imcodbuti
 import im.ib.sql_writer as imibsqwri
 import im.kibot.sql_writer as imkisqwri
 
@@ -56,45 +55,6 @@ def get_db_connection_details(
     return txt
 
 
-def check_db_connection(
-    db_name: str,
-    host: str,
-    user: str,
-    port: int,
-    password: str,
-) -> None:
-    """
-    Verify that the database is available.
-
-    :param db_name: name of database to connect to, e.g. `im_db_local`
-    :param host: host name to connect to db
-    :param user: user name to connect to db
-    :param port: port to connect to db
-    :param password: password to connect to db
-    """
-    _LOG.info(
-        "Checking the database connection:\n%s",
-        get_db_connection_details(
-            db_name=db_name, host=host, user=user, port=port, password=password
-        ),
-    )
-    while True:
-        _LOG.info("Waiting for PostgreSQL to become available...")
-        cmd = "pg_isready -d %s -p %s -h %s"
-        rc = hsyint.system(
-            cmd
-            % (
-                db_name,
-                port,
-                host,
-            )
-        )
-        time.sleep(1)
-        if rc == 0:
-            _LOG.info("PostgreSQL is available")
-            break
-
-
 def get_common_create_table_query() -> str:
     """
     Get SQL query that is used to create tables for common usage.
@@ -124,60 +84,6 @@ def get_common_create_table_query() -> str:
     return sql_query
 
 
-def get_ib_create_table_query() -> str:
-    """
-    Get SQL query that is used to create tables for `ib`.
-    """
-    sql_query = """
-    CREATE TABLE IF NOT EXISTS IbDailyData (
-        id integer PRIMARY KEY DEFAULT nextval('serial'),
-        trade_symbol_id integer REFERENCES TradeSymbol,
-        date date,
-        open numeric,
-        high numeric,
-        low numeric,
-        close numeric,
-        volume bigint,
-        average numeric,
-        -- TODO(*): barCount -> bar_count
-        barCount integer,
-        UNIQUE (trade_symbol_id, date)
-    );
-
-    CREATE TABLE IF NOT EXISTS IbMinuteData (
-        id integer PRIMARY KEY DEFAULT nextval('serial'),
-        trade_symbol_id integer REFERENCES TradeSymbol,
-        datetime timestamptz,
-        open numeric,
-        high numeric,
-        low numeric,
-        close numeric,
-        volume bigint,
-        average numeric,
-        barCount integer,
-        UNIQUE (trade_symbol_id, datetime)
-    );
-
-    CREATE TABLE IF NOT EXISTS IbTickBidAskData (
-        id integer PRIMARY KEY DEFAULT nextval('serial'),
-        trade_symbol_id integer REFERENCES TradeSymbol,
-        datetime timestamp,
-        bid numeric,
-        ask numeric,
-        volume bigint
-    );
-
-    CREATE TABLE IF NOT EXISTS IbTickData (
-        id integer PRIMARY KEY DEFAULT nextval('serial'),
-        trade_symbol_id integer REFERENCES TradeSymbol,
-        datetime timestamp,
-        price numeric,
-        size bigint
-    );
-    """
-    return sql_query
-
-
 def define_data_types(cursor: psycop.extensions.cursor) -> None:
     """
     Define custom data types inside a database.
@@ -200,7 +106,7 @@ def define_data_types(cursor: psycop.extensions.cursor) -> None:
         _LOG.warning("Specified data types already exist: skipping.")
 
 
-def create_tables(
+def create_all_tables(
     cursor: psycop.extensions.cursor,
 ) -> None:
     """
@@ -286,7 +192,7 @@ def create_schema(
     """
     _LOG.info(
         "DB connection:\n%s",
-        get_db_connection_details(
+        imcodbuti.db_connection_to_str(
             db_name=db_name, host=host, user=user, port=port, password=password
         ),
     )
@@ -301,7 +207,7 @@ def create_schema(
     # Define data types.
     define_data_types(cursor)
     # Create tables.
-    create_tables(cursor)
+    create_all_tables(cursor)
     # Test the db.
     test_tables(connection, cursor)
     # Close connection.

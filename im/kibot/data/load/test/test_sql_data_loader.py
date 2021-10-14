@@ -6,7 +6,7 @@ import pytest
 
 import helpers.unit_test as hut
 import im.common.data.types as icdtyp
-import im.common.db.create_schema as icdcrsch
+import im.common.db.create_db as icdcrsch
 import im.kibot.data.load.kibot_sql_data_loader as ikdlki
 import im.kibot.sql_writer as ikkibo
 
