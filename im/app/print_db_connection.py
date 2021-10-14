@@ -6,10 +6,11 @@ Print the IM DB connection.
 
 import argparse
 import logging
+import os
 
 import helpers.dbg as dbg
 import helpers.parser as prsr
-import im.common.db.create_schema as icdcrsch
+import helpers.sql as hsql
 
 _LOG = logging.getLogger(__name__)
 
@@ -27,7 +28,13 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    conn = icdcrsch.get_db_connection_from_environment()
+    conn = hsql.get_connection(
+        dbname=os.environ["POSTGRES_DB"],
+        host=os.environ["POSTGRES_HOST"],
+        port=int(os.environ["POSTGRES_PORT"]),
+        user=os.environ["POSTGRES_USER"],
+        password=os.environ["POSTGRES_PASSWORD"],
+    )
     print(conn)
 
 
