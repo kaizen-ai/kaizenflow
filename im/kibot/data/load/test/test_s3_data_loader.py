@@ -3,7 +3,7 @@ import pytest
 
 import helpers.unit_test as hut
 import im.common.data.types as icdtyp
-import im.kibot.data.load as vkdloa
+import im.kibot.data.load.kibot_s3_data_loader as vkdloa
 
 
 class TestKibotS3DataLoader(hut.TestCase):
