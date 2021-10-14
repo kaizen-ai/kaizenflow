@@ -84,15 +84,14 @@ def get_common_create_table_query() -> str:
     return sql_query
 
 
-def define_data_types(cursor: psycop.extensions.cursor) -> None:
+def get_data_types_query(cursor: psycop.extensions.cursor) -> None:
     """
     Define custom data types inside a database.
 
     :param cursor: a database cursor
     """
-    _LOG.info("Defining data types...")
     # Define data types.
-    define_types_query = """
+    query = """
     /* TODO: Futures -> futures */
     CREATE TYPE AssetClass AS ENUM ('Futures', 'etfs', 'forex', 'stocks', 'sp_500');
     /* TODO: T -> minute, D -> daily */
@@ -101,7 +100,7 @@ def define_data_types(cursor: psycop.extensions.cursor) -> None:
     CREATE SEQUENCE serial START 1;
     """
     try:
-        cursor.execute(define_types_query)
+        cursor.execute(query)
     except psycop.errors.DuplicateObject:
         _LOG.warning("Specified data types already exist: skipping.")
 
@@ -114,27 +113,14 @@ def create_all_tables(
 
     :param cursor: a database cursor
     """
-    # Get SQL query to create the common tables.
-    common_query = get_common_create_table_query()
-    # Get SQL query to create the `kibot` tables.
-    kibot_query = imkisqwri.get_create_table_query()
-    # Get SQL query to create the `ib` tables.
-    ib_query = imibsqwri.get_create_table_query()
-    # Collect the queries.
-    provider_to_query = {
-        "common": common_query,
-        "kibot": kibot_query,
-        "ib": ib_query,
-    }
-    # Create tables.
-    for provider, query in provider_to_query.items():
-        try:
-            _LOG.info("Creating `%s` tables...", provider)
-            cursor.execute(query)
-        except psycop.errors.DuplicateObject:
-            _LOG.warning(
-                "The `%s` tables are already created: skipping.", provider
-            )
+    queries = [
+        get_data_types_query(cursor),
+        get_common_create_table_query(),
+        imkisqwri.get_create_table_query(),
+        imibsqwri.get_create_table_query()
+    ]
+    for query in queries:
+        cursor.execute(query)
 
 
 def test_tables(
@@ -205,7 +191,7 @@ def create_schema(
         password=password,
     )
     # Define data types.
-    define_data_types(cursor)
+    get_data_types_query(cursor)
     # Create tables.
     create_all_tables(cursor)
     # Test the db.
