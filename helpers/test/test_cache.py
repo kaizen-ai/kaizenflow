@@ -5,6 +5,7 @@ from typing import Any, Callable, Tuple
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import helpers.cache as hcache
 import helpers.dbg as hdbg
@@ -717,7 +718,7 @@ class TestAmpTask1407(_ResetGlobalCacheHelper):
 
 # #############################################################################
 
-
+@pytest.mark.skip(reason="Cmamp #179.")
 class TestCachingOnS3(_ResetFunctionSpecificCacheHelper):
     def setUp(self) -> None:
         super().setUp()
