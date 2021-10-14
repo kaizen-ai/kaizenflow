@@ -4,7 +4,7 @@
 
 set -e
 
-FILE_NAME="devops/docker_build/entrypoint/patch_environment_variables.sh"
+FILE_NAME="devops/docker_run/setenv.sh"
 echo "##> $FILE_NAME"
 
 PWD=$(pwd)
