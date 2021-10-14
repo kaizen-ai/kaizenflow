@@ -17,7 +17,8 @@ import psycopg2.sql as psql
 import helpers.dbg as hdbg
 import helpers.sql as hsql
 import helpers.system_interaction as hsyint
-import im.ib.ib_sql_writer_backend as imiibsqwribac
+import im.ib.sql_writer as imibsqwri
+import im.kibot.sql_writer as imkisqwri
 
 _LOG = logging.getLogger(__name__)
 
@@ -177,55 +178,6 @@ def get_ib_create_table_query() -> str:
     return sql_query
 
 
-def get_kibot_create_table_query() -> str:
-    """
-    Get SQL query that is used to create tables for `kibot`.
-    """
-    sql_query = """
-    CREATE TABLE IF NOT EXISTS KibotDailyData (
-        id integer PRIMARY KEY DEFAULT nextval('serial'),
-        trade_symbol_id integer REFERENCES TradeSymbol,
-        date date,
-        open numeric,
-        high numeric,
-        low numeric,
-        close numeric,
-        volume bigint,
-        UNIQUE (trade_symbol_id, date)
-    );
-
-    CREATE TABLE IF NOT EXISTS KibotMinuteData (
-        id integer PRIMARY KEY DEFAULT nextval('serial'),
-        trade_symbol_id integer REFERENCES TradeSymbol,
-        datetime timestamp,
-        open numeric,
-        high numeric,
-        low numeric,
-        close numeric,
-        volume bigint,
-        UNIQUE (trade_symbol_id, datetime)
-    );
-
-    CREATE TABLE IF NOT EXISTS KibotTickBidAskData (
-        id integer PRIMARY KEY DEFAULT nextval('serial'),
-        trade_symbol_id integer REFERENCES TradeSymbol,
-        datetime timestamp,
-        bid numeric,
-        ask numeric,
-        volume bigint
-    );
-
-    CREATE TABLE IF NOT EXISTS KibotTickData (
-        id integer PRIMARY KEY DEFAULT nextval('serial'),
-        trade_symbol_id integer REFERENCES TradeSymbol,
-        datetime timestamp,
-        price numeric,
-        size bigint
-    );
-    """
-    return sql_query
-
-
 def define_data_types(cursor: psycop.extensions.cursor) -> None:
     """
     Define custom data types inside a database.
@@ -259,9 +211,9 @@ def create_tables(
     # Get SQL query to create the common tables.
     common_query = get_common_create_table_query()
     # Get SQL query to create the `kibot` tables.
-    kibot_query = get_kibot_create_table_query()
+    kibot_query = imkisqwri.get_create_table_query()
     # Get SQL query to create the `ib` tables.
-    ib_query = imiibsqwribac.IbSqlWriterBackend().get_create_table_query()
+    ib_query = imibsqwri.get_create_table_query()
     # Collect the queries.
     provider_to_query = {
         "common": common_query,

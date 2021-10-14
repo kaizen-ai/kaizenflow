@@ -5,7 +5,7 @@ import helpers.unit_test as hut
 import im.common.data.types as icdtyp
 import im.common.db.create_schema as icdcrsch
 import im.common.test.utils as ictuti
-import im.ib.ib_sql_writer_backend as iiibsq
+import im.ib.sql_writer as iiibsq
 
 
 @pytest.mark.skipif(
@@ -20,7 +20,7 @@ class TestIbSqlWriterBackend1(ictuti.SqlWriterBackendTestCase):
     def setUp(self) -> None:
         super().setUp()
         # Initialize writer class to test.
-        self._writer = iiibsq.IbSqlWriterBackend(
+        self._writer = iiibsq.IbSqlWriter(
             dbname=self._dbname,
             user=self._user,
             password=self._password,
