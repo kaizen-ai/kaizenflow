@@ -113,10 +113,10 @@ class CcxtLoader:
             table_name, hsql.get_table_names(connection)
         )
         #
-        sql_query = "SELECT * FROM %s"
-        query_params = [table_name, ]
+        sql_query = "SELECT * FROM %s" % table_name
         #
         query_conditions = []
+        query_params = []
         #
         if exchange_ids:
             query_conditions.append("exchange_id IN %s")
