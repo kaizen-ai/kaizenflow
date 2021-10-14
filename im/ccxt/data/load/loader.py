@@ -101,23 +101,25 @@ class CcxtLoader:
         :param currency_pairs: currency pairs to load data for
         :param start_date: the earliest data to load data for
         :param end_date: the latest date to load data for
-        :return: table
+        :return: table from database
         """
-        #
+        # Set optional parameters.
         exchange_ids = exchange_ids or None
         currency_pairs = currency_pairs or None
         start_date = start_date or None
         end_date = end_date or None
-        #
+        # Verify that table with specified name exists.
         dbg.dassert_in(
             table_name, hsql.get_table_names(connection)
         )
-        #
+        # Initialize SQL query.
         sql_query = "SELECT * FROM %s" % table_name
-        #
+        # Initialize lists for query condition strings and parameters to insert.
         query_conditions = []
         query_params = []
-        #
+        # For every conditional parameter if it is provided, append
+        # a corresponding query string to the query conditions list and
+        # the corresponding parameter to the query parameters list.
         if exchange_ids:
             query_conditions.append("exchange_id IN %s")
             query_params.append(exchange_ids)
@@ -130,16 +132,15 @@ class CcxtLoader:
         if end_date:
             query_conditions.append("timestamp < %s")
             query_params.append(end_date)
-        #
         if query_conditions:
+            # Append all the provided query conditions to the main SQL query.
             query_conditions = " AND ".join(query_conditions)
             sql_query = " WHERE ".join([sql_query, query_conditions])
-        #
+        # Execute SQL query.
         _ = cursor.execute(sql_query, tuple(query_params))
-        #
+        # Combine resulting data in a dataframe.
         table_data = cursor.fetchall()
         col_names = [desc[0] for desc in cursor.description]
-        #
         table = pd.DataFrame(data=table_data, columns=col_names)
         return table
 
