@@ -4,14 +4,14 @@ import os
 import pandas as pd
 
 import helpers.sql as hsql
-import helpers.unit_test as hut
-import im.common.db.create_schema as icdcrsch
-import im.common.sql_writer_backend as vcsqlw
+import helpers.unit_test as huntes
+import im.common.db.create_schema as imcodbcrsch
+import im.common.sql_writer_backend as imcosqwrbac
 
 _LOG = logging.getLogger(__name__)
 
 
-class SqlWriterBackendTestCase(hut.TestCase):
+class SqlWriterBackendTestCase(huntes.TestCase):
     """
     Helper class to test writing data to IM PostgreSQL DB.
     """
@@ -19,14 +19,20 @@ class SqlWriterBackendTestCase(hut.TestCase):
     def setUp(self) -> None:
         super().setUp()
         # Get PostgreSQL connection parameters.
+        self._conn_db = os.environ["POSTGRES_DB"]
         self._host = os.environ["POSTGRES_HOST"]
         self._port = os.environ["POSTGRES_PORT"]
         self._user = os.environ["POSTGRES_USER"]
         self._password = os.environ["POSTGRES_PASSWORD"]
-        self._dbname = self._get_test_string()
+        self._new_db = self._get_test_string()
         # Create database for each test.
-        icdcrsch.create_database(
-            self._dbname,
+        imcodbcrsch.create_database(
+            new_db=self._new_db,
+            conn_db=self._conn_db,
+            host=self._host,
+            user=self._user,
+            port=int(self._port),
+            password=self._password,
             force=True,
         )
         # Define constant IDs for records across the test.
@@ -34,13 +40,20 @@ class SqlWriterBackendTestCase(hut.TestCase):
         self._exchange_id = 20
         self._trade_symbol_id = 30
         # Create a placeholder for self._writer.
-        self._writer: vcsqlw.AbstractSqlWriterBackend
+        self._writer: imcosqwrbac.AbstractSqlWriterBackend
 
     def tearDown(self) -> None:
         # Close connection.
         self._writer.close()
         # Remove created database.
-        icdcrsch.remove_database(self._dbname)
+        imcodbcrsch.remove_database(
+            db_to_drop=self._new_db,
+            conn_db=self._conn_db,
+            host=self._host,
+            user=self._user,
+            port=int(self._port),
+            password=self._password,
+        )
         super().tearDown()
 
     def _prepare_tables(
@@ -110,6 +123,6 @@ class SqlWriterBackendTestCase(hut.TestCase):
             if column_to_remove in columns_to_check:
                 columns_to_check.remove(column_to_remove)
         # Convert dataframe to string.
-        txt = hut.convert_df_to_string(res[columns_to_check])
+        txt = huntes.convert_df_to_string(res[columns_to_check])
         # Check the output against the golden.
         self.check_string(txt, fuzzy_match=True)

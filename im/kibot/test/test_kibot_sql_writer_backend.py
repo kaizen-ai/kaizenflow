@@ -9,10 +9,9 @@ import im.kibot.kibot_sql_writer_backend as ikkibo
 
 
 # TODO(*): -> TestKibotSqlWriterBackend1
-@pytest.mark.skipif(
-    not icdcrsch.is_inside_im_container(),
-    reason="Testable only inside IM container",
-)
+#@pytest.mark.skipif(
+#    not icdcrsch.is_inside_im_container(), #    reason="Testable only inside IM container",
+#)
 class TestSqlWriterBackend1(ictuti.SqlWriterBackendTestCase):
     """
     Test writing operation to PostgreSQL DB.
@@ -28,6 +27,9 @@ class TestSqlWriterBackend1(ictuti.SqlWriterBackendTestCase):
             host=self._host,
             port=self._port,
         )
+        # TODO(gp): Create a container with docker-compose up postgres
+        cmd = "cd im/devops; docker-compose --file compose/docker-compose.yml up im_postgres_local"
+        hsi.system(
 
     def test_ensure_symbol_exist1(self) -> None:
         """
