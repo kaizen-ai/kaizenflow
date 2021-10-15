@@ -44,8 +44,8 @@ def check_db_connection(
                 db_name,
                 port,
                 host,
-            )
-        )
+            ),
+            abort_on_error=False)
         time.sleep(1)
         if rc == 0:
             _LOG.info("PostgreSQL is available")
@@ -56,9 +56,9 @@ def db_connection_to_str(
     db_name: str, host: str, user: str, port: int, password: str
 ) -> str:
     """
-    Get database connection details using environment variables.
+    Get database connection details using environment variables. Connection
+    details include:
 
-    Connection details include:
         - Database name
         - Host
         - Port
