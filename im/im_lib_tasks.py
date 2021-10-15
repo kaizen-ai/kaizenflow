@@ -25,7 +25,9 @@ def _get_im_docker_compose_path() -> str:
     # Get `docker-compose` file path.
     docker_compose_dir = "im/devops/compose"
     compose_file_name = "docker-compose.yml"
-    docker_compose_path = os.path.join(amp_path, docker_compose_dir, compose_file_name)
+    docker_compose_path = os.path.join(
+        amp_path, docker_compose_dir, compose_file_name
+    )
     # Get absolute version of a file path.
     docker_compose_abs_path = os.path.abspath(docker_compose_path)
     # Verify that the file exists.

@@ -1,5 +1,6 @@
-import pytest
 import os
+
+import pytest
 
 import helpers.git as hgit
 import helpers.system_interaction as hsyint
