@@ -5,7 +5,7 @@ import pandas as pd
 
 import helpers.sql as hsql
 import helpers.unit_test as huntes
-import im.common.db.create_schema as imcodbcrsch
+import im.common.db.create_db as imcodbcrsch
 import im.common.sql_writer_backend as imcosqwrbac
 
 _LOG = logging.getLogger(__name__)
