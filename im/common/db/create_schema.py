@@ -1,3 +1,4 @@
+# %%
 """
 Create and handle the Postgres DB.
 
@@ -8,60 +9,18 @@ import im.common.db.create_schema as imcodbcrsch
 
 import logging
 import os
-import time
 from typing import Optional
 
+# %%
 import psycopg2 as psycop
 import psycopg2.sql as psql
 
+# %%
 import helpers.dbg as hdbg
 import helpers.sql as hsql
-import helpers.system_interaction as hsyint
-import im.common.db.utils as imcodbuti
 
+# %%
 _LOG = logging.getLogger(__name__)
-
-
-# TODO(Grisha): convert the code into a class.
-
-
-def check_db_connection(
-    db_name: str,
-    host: str,
-    user: str,
-    port: int,
-    password: str,
-) -> None:
-    """
-    Verify that the database is available.
-
-    :param db_name: name of database to connect to, e.g. `im_db_local`
-    :param host: host name to connect to db
-    :param user: user name to connect to db
-    :param port: port to connect to db
-    :param password: password to connect to db
-    """
-    _LOG.info(
-        "Checking the database connection:\n%s",
-        imcodbuti.db_connection_to_str(
-            db_name=db_name, host=host, user=user, port=port, password=password
-        ),
-    )
-    while True:
-        _LOG.info("Waiting for PostgreSQL to become available...")
-        cmd = "pg_isready -d %s -p %s -h %s"
-        rc = hsyint.system(
-            cmd
-            % (
-                db_name,
-                port,
-                host,
-            )
-        )
-        time.sleep(1)
-        if rc == 0:
-            _LOG.info("PostgreSQL is available")
-            break
 
 
 def get_common_create_table_query() -> str:
@@ -196,15 +155,12 @@ def get_kibot_create_table_query() -> str:
     return sql_query
 
 
-def define_data_types(cursor: psycop.extensions.cursor) -> None:
+def get_data_types_query() -> str:
     """
     Define custom data types inside a database.
-
-    :param cursor: a database cursor
     """
-    _LOG.info("Defining data types...")
     # Define data types.
-    define_types_query = """
+    query = """
     /* TODO: Futures -> futures */
     CREATE TYPE AssetClass AS ENUM ('Futures', 'etfs', 'forex', 'stocks', 'sp_500');
     /* TODO: T -> minute, D -> daily */
@@ -212,13 +168,10 @@ def define_data_types(cursor: psycop.extensions.cursor) -> None:
     CREATE TYPE ContractType AS ENUM ('continuous', 'expiry');
     CREATE SEQUENCE serial START 1;
     """
-    try:
-        cursor.execute(define_types_query)
-    except psycop.errors.DuplicateObject:
-        _LOG.warning("Specified data types already exist: skipping.")
+    return query
 
 
-def create_tables(
+def create_all_tables(
     cursor: psycop.extensions.cursor,
 ) -> None:
     """
@@ -226,27 +179,19 @@ def create_tables(
 
     :param cursor: a database cursor
     """
-    # Get SQL query to create the common tables.
-    common_query = get_common_create_table_query()
-    # Get SQL query to create the `kibot` tables.
-    kibot_query = get_kibot_create_table_query()
-    # Get SQL query to create the `ib` tables.
-    ib_query = get_ib_create_table_query()
-    # Collect the queries.
-    provider_to_query = {
-        "common": common_query,
-        "kibot": kibot_query,
-        "ib": ib_query,
-    }
+    queries = [
+        get_data_types_query(),
+        get_common_create_table_query(),
+        get_ib_create_table_query(),
+        get_kibot_create_table_query(),
+    ]
+
     # Create tables.
-    for provider, query in provider_to_query.items():
+    for query in queries:
         try:
-            _LOG.info("Creating `%s` tables...", provider)
             cursor.execute(query)
         except psycop.errors.DuplicateObject:
-            _LOG.warning(
-                "The `%s` tables are already created: skipping.", provider
-            )
+            _LOG.warning("Duplicate table created, skipping.")
 
 
 def test_tables(
@@ -281,51 +226,6 @@ def test_tables(
     cursor.execute(test_query)
 
 
-def create_schema(
-    db_name: str,
-    host: str,
-    user: str,
-    port: int,
-    password: str,
-) -> None:
-    """
-    Create SQL schema.
-
-    Creating schema includes:
-        - Defining custom data types
-        - Creating new tables
-        - Testing that tables are created
-
-    :param db_name: name of database to connect to, e.g. `im_db_local`
-    :param host: host name to connect to db
-    :param user: user name to connect to db
-    :param port: port to connect to db
-    :param password: password to connect to db
-    """
-    _LOG.info(
-        "DB connection:\n%s",
-        imcodbuti.db_connection_to_str(
-            db_name=db_name, host=host, user=user, port=port, password=password
-        ),
-    )
-    # Get database connection and cursor.
-    connection, cursor = hsql.get_connection(
-        dbname=db_name,
-        host=host,
-        port=port,
-        user=user,
-        password=password,
-    )
-    # Define data types.
-    define_data_types(cursor)
-    # Create tables.
-    create_tables(cursor)
-    # Test the db.
-    test_tables(connection, cursor)
-    # Close connection.
-    connection.close()
-
-
 def create_database(
     new_db: str,
     conn_db: str,
@@ -347,7 +247,7 @@ def create_database(
     :param force: overwrite existing database
     """
     # Initialize connection.
-    connection, _ = hsql.get_connection(
+    connection, cursor = hsql.get_connection(
         dbname=conn_db, host=host, user=user, port=port, password=password
     )
     _LOG.debug("connection=%s", connection)
@@ -355,9 +255,8 @@ def create_database(
     hsql.create_database(connection, db=new_db, force=force)
     connection.close()
     # Create SQL schema.
-    create_schema(
-        db_name=conn_db, host=host, user=user, port=port, password=password
-    )
+    # TODO(Danya): remove cursor and pass connection (#169).
+    create_all_tables(cursor)
 
 
 def remove_database(
