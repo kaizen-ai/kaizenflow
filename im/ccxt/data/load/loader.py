@@ -9,7 +9,6 @@ import os
 from typing import Optional, Tuple
 
 import pandas as pd
-import psycopg2 as psycop
 
 import core.pandas_helpers as cphelp
 import helpers.datetime_ as hdatet
@@ -68,23 +67,30 @@ def _get_file_path(
 
 
 class CcxtLoader:
-    def __init__(self, root_dir: str, aws_profile: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        connection: Optional[hsql.DbConnection] = None,
+        root_dir: Optional[str] = None,
+        aws_profile: Optional[str] = None,
+    ) -> None:
         """
         Load CCXT data.
 
+        :param connection: connection for a SQL database
         :param: root_dir: either a local root path (e.g., "/app/im") or
             an S3 root path ("s3://alphamatic-data/data) to CCXT data
         :param: aws_profile: AWS profile name (e.g., "am")
         """
+        self._connection = connection
         self._root_dir = root_dir
         self._aws_profile = aws_profile
         # Specify supported data types to load.
         self._data_types = ["ohlcv"]
 
+    # TODO(Dan): Refactor in #183.
     @staticmethod
     def read_db_data(
         connection: hsql.DbConnection,
-        cursor: psycop.extensions.cursor,
         table_name: str,
         exchange_ids: Optional[Tuple[str]] = None,
         currency_pairs: Optional[Tuple[str]] = None,
@@ -95,19 +101,15 @@ class CcxtLoader:
         Load CCXT data from database.
 
         :param connection: connection for a SQL database
-        :param cursor: cursor for a SQL database
         :param table_name: name of the table to load (e.g., "ccxt_ohlcv")
         :param exchange_ids: exchange ids to load data for
         :param currency_pairs: currency pairs to load data for
-        :param start_date: the earliest data to load data for
-        :param end_date: the latest date to load data for
+        :param start_date: the earliest data to load data for as unix epoch (e.g., 1631145600000)
+        :param end_date: the latest date to load data for as unix epoch (e.g., 1631145600000)
         :return: table from database
         """
-        # Set optional parameters.
-        exchange_ids = exchange_ids or None
-        currency_pairs = currency_pairs or None
-        start_date = start_date or None
-        end_date = end_date or None
+        # Verify that DB connection is provided.
+        dbg.dassert_is_not(self._connection, None)
         # Verify that table with specified name exists.
         dbg.dassert_in(
             table_name, hsql.get_table_names(connection)
@@ -137,6 +139,7 @@ class CcxtLoader:
             query_conditions = " AND ".join(query_conditions)
             sql_query = " WHERE ".join([sql_query, query_conditions])
         # Execute SQL query.
+        cursor = connection.cursor()
         _ = cursor.execute(sql_query, tuple(query_params))
         # Combine resulting data in a dataframe.
         table_data = cursor.fetchall()
@@ -161,6 +164,8 @@ class CcxtLoader:
         :return: processed CCXT data
         """
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
+        # Verify that root dir is provided.
+        dbg.dassert_is_not(self._root_dir, None)
         # Verify that requested data type is valid.
         dbg.dassert_in(
             data_type.lower(),
