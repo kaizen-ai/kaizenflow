@@ -138,18 +138,12 @@ class CcxtLoader:
             # Append all the provided query conditions to the main SQL query.
             query_conditions = " AND ".join(query_conditions)
             sql_query = " WHERE ".join([sql_query, query_conditions])
-        # Add gathered query parameters to kwargs for the call.
+        # Add a tuple of gathered query parameters to kwargs as `params`.
         read_sql_kwargs["params"] = tuple(query_params)
         # Execute SQL query.
         table = pd.read_sql(
             sql_query, self._connection, **read_sql_kwargs
         )
-        # cursor = self._connection.cursor()
-        # _ = cursor.execute(sql_query, tuple(query_params))
-        # Combine resulting data in a dataframe.
-        # table_data = cursor.fetchall()
-        # col_names = [desc[0] for desc in cursor.description]
-        # table = pd.DataFrame(data=table_data, columns=col_names)
         return table
 
     def read_data(
