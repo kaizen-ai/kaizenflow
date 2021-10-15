@@ -1,25 +1,21 @@
-# %%
 """
 Create and handle the Postgres DB.
 
 Import as:
 
-import im.common.db.create_schema as imcodbcrsch
+import im.common.db.create_db as imcodbcrdb
 """
 
 import logging
 import os
 from typing import Optional
 
-# %%
 import psycopg2 as psycop
 import psycopg2.sql as psql
 
-# %%
 import helpers.dbg as hdbg
 import helpers.sql as hsql
 
-# %%
 _LOG = logging.getLogger(__name__)
 
 
