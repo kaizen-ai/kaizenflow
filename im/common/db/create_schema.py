@@ -293,16 +293,16 @@ def test_tables(
     actual_tables = hsql.get_table_names(connection)
     expected_tables = [
         "exchange",
-        "ibdailydata",
-        "ibminutedata",
-        "ibtickbidaskdata",
-        "ibtickdata",
-        "kibotdailydata",
-        "kibotminutedata",
-        "kibottickbidaskdata",
-        "kibottickdata",
+        "ib_daily_data",
+        "ib_minute_data",
+        "ib_tick_bid_ask_data",
+        "ib_tick_data",
+        "kibot_daily_data",
+        "kibot_minute_data",
+        "kibot_tick_bid_ask_data",
+        "kibot_tick_data",
         "symbol",
-        "tradesymbol",
+        "trade_symbol",
     ]
     hdbg.dassert_set_eq(actual_tables, expected_tables)
     # Execute the test query.
