@@ -3,13 +3,13 @@ import pytest
 
 import helpers.unit_test as hut
 import im.common.data.types as icdtyp
-import im.common.db.create_schema as icdcrsch
+import im.common.db.utils as imcodbuti
 import im.common.test.utils as ictuti
 import im.ib.ib_sql_writer_backend as iiibsq
 
 
 @pytest.mark.skipif(
-    not icdcrsch.is_inside_im_container(),
+    not imcodbuti.is_inside_im_container(),
     reason="Testable only inside IM container",
 )
 class TestIbSqlWriterBackend1(ictuti.SqlWriterBackendTestCase):

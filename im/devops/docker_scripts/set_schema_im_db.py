@@ -20,6 +20,7 @@ import os
 import helpers.dbg as hdbg
 import helpers.parser as hparser
 import im.common.db.create_schema as imcodbcrsch
+import im.common.db.utils as imcodbuti
 
 _LOG = logging.getLogger(__name__)
 
@@ -41,7 +42,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     user = os.environ["POSTGRES_USER"]
     password = os.environ["POSTGRES_PASSWORD"]
     # Verify that the database is available.
-    imcodbcrsch.check_db_connection(
+    imcodbuti.check_db_connection(
         db_name=db_name, host=host, port=port, user=user, password=password
     )
     # Set schema for the database.
