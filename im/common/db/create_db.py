@@ -15,10 +15,8 @@ import psycopg2.sql as psql
 
 import helpers.dbg as hdbg
 import helpers.sql as hsql
-import helpers.system_interaction as hsyint
-import im.common.db.utils as imcodbuti
 import im.kibot.sql_writer as imkkisqwribac
-
+import im.ib.sql_writer as imiibsqwribac
 
 _LOG = logging.getLogger(__name__)
 
@@ -52,60 +50,6 @@ def get_common_create_table_query() -> str:
     return sql_query
 
 
-def get_ib_create_table_query() -> str:
-    """
-    Get SQL query that is used to create tables for `ib`.
-    """
-    sql_query = """
-    CREATE TABLE IF NOT EXISTS IB_DAILY_DATA (
-        id integer PRIMARY KEY DEFAULT nextval('serial'),
-        trade_symbol_id integer REFERENCES TradeSymbol,
-        date date,
-        open numeric,
-        high numeric,
-        low numeric,
-        close numeric,
-        volume bigint,
-        average numeric,
-        -- TODO(*): barCount -> bar_count
-        barCount integer,
-        UNIQUE (trade_symbol_id, date)
-    );
-
-    CREATE TABLE IF NOT EXISTS IB_MINUTE_DATA (
-        id integer PRIMARY KEY DEFAULT nextval('serial'),
-        trade_symbol_id integer REFERENCES TradeSymbol,
-        datetime timestamptz,
-        open numeric,
-        high numeric,
-        low numeric,
-        close numeric,
-        volume bigint,
-        average numeric,
-        barCount integer,
-        UNIQUE (trade_symbol_id, datetime)
-    );
-
-    CREATE TABLE IF NOT EXISTS IB_TICK_BID_ASK_DATA (
-        id integer PRIMARY KEY DEFAULT nextval('serial'),
-        trade_symbol_id integer REFERENCES TradeSymbol,
-        datetime timestamp,
-        bid numeric,
-        ask numeric,
-        volume bigint
-    );
-
-    CREATE TABLE IF NOT EXISTS IB_TICK_DATA (
-        id integer PRIMARY KEY DEFAULT nextval('serial'),
-        trade_symbol_id integer REFERENCES TradeSymbol,
-        datetime timestamp,
-        price numeric,
-        size bigint
-    );
-    """
-    return sql_query
-
-
 def get_data_types_query() -> str:
     """
     Define custom data types inside a database.
@@ -133,10 +77,9 @@ def create_all_tables(
     queries = [
         get_data_types_query(),
         get_common_create_table_query(),
-        get_ib_create_table_query(),
+        imiibsqwribac.get_create_table_query(),
         imkkisqwribac.get_create_table_query(),
     ]
-
     # Create tables.
     for query in queries:
         try:

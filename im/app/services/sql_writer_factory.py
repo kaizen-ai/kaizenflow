@@ -30,9 +30,9 @@ class SqlWriterFactory:
                 dbname=dbname, user=user, password=password, host=host, port=port
             )
         elif provider == "ib":
-            import im.ib.ib_sql_writer_backend as iiibsq
+            import im.ib.sql_writer as iiibsq
 
-            transformer = iiibsq.IbSqlWriterBackend(
+            transformer = iiibsq.IbSqlWriter(
                 dbname=dbname, user=user, password=password, host=host, port=port
             )
         else:
