@@ -7,12 +7,13 @@ import pytest
 import helpers.unit_test as hut
 import im.common.data.types as icdtyp
 import im.common.db.create_db as icdcrsch
+import im.common.db.utils as imcodbuti
 import im.kibot.data.load.kibot_sql_data_loader as ikdlki
 import im.kibot.kibot_sql_writer_backend as ikkibo
 
 
 @pytest.mark.skipif(
-    not icdcrsch.is_inside_im_container(),
+    not imcodbuti.is_inside_im_container(),
     reason="Testable only inside IM container",
 )
 class TestSqlDataLoader1(hut.TestCase):
