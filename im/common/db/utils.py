@@ -21,6 +21,7 @@ def check_db_connection(
 ) -> None:
     """
     Verify that the database is available.
+
     :param db_name: name of database to connect to, e.g. `im_db_local`
     :param host: host name to connect to db
     :param user: user name to connect to db
@@ -54,8 +55,9 @@ def db_connection_to_str(
     db_name: str, host: str, user: str, port: int, password: str
 ) -> str:
     """
-    Get database connection details using environment variables.
-    Connection details include:
+    Get database connection details using environment variables. Connection
+    details include:
+
         - Database name
         - Host
         - Port

@@ -7,7 +7,7 @@ except ModuleNotFoundError:
 import pandas as pd
 import pytest
 
-import im.common.db.create_schema as icdcrsch
+import im.common.db.create_db as icdcrsch
 import im.ib.data.extract.gateway.test.utils as iidegt
 
 _LOG = logging.getLogger(__name__)

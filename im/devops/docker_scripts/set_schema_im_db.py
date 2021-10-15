@@ -20,7 +20,7 @@ import os
 import helpers.dbg as hdbg
 import helpers.parser as hparser
 import helpers.sql as hsql
-import im.common.db.create_schema as imcodbcrsch
+import im.common.db.create_db as imcodbcrsch
 import im.common.db.utils as imcodbuti
 
 _LOG = logging.getLogger(__name__)
