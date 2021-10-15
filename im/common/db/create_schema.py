@@ -17,41 +17,12 @@ import psycopg2.sql as psql
 import helpers.dbg as hdbg
 import helpers.sql as hsql
 import helpers.system_interaction as hsyint
+import im.common.db.utils as imcodbuti
 
 _LOG = logging.getLogger(__name__)
 
 
 # TODO(Grisha): convert the code into a class.
-
-
-def get_db_connection_details(
-    db_name: str, host: str, user: str, port: int, password: str
-) -> str:
-    """
-    Get database connection details using environment variables.
-
-    Connection details include:
-        - Database name
-        - Host
-        - Port
-        - Username
-        - Password
-
-    :param db_name: name of database to connect to, e.g. `im_db_local`
-    :param host: host name to connect to db
-    :param user: user name to connect to db
-    :param port: port to connect to db
-    :param password: password to connect to db
-    :return: database connection details
-    """
-    txt = []
-    txt.append("dbname='%s'" % db_name)
-    txt.append("host='%s'" % host)
-    txt.append("port='%s'" % port)
-    txt.append("user='%s'" % user)
-    txt.append("password='%s'" % password)
-    txt = "\n".join(txt)
-    return txt
 
 
 def check_db_connection(
@@ -72,7 +43,7 @@ def check_db_connection(
     """
     _LOG.info(
         "Checking the database connection:\n%s",
-        get_db_connection_details(
+        imcodbuti.db_connection_to_str(
             db_name=db_name, host=host, user=user, port=port, password=password
         ),
     )
@@ -333,7 +304,7 @@ def create_schema(
     """
     _LOG.info(
         "DB connection:\n%s",
-        get_db_connection_details(
+        imcodbuti.db_connection_to_str(
             db_name=db_name, host=host, user=user, port=port, password=password
         ),
     )
