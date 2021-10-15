@@ -44,8 +44,8 @@ def check_db_connection(
                 db_name,
                 port,
                 host,
-            )
-        )
+            ),
+            abort_on_error=False)
         time.sleep(1)
         if rc == 0:
             _LOG.info("PostgreSQL is available")

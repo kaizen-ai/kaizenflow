@@ -40,7 +40,7 @@ def get_common_create_table_query() -> str:
         symbol_base text
     );
 
-    CREATE TABLE IF NOT EXISTS TradeSymbol (
+    CREATE TABLE IF NOT EXISTS TRADE_SYMBOL (
         id integer PRIMARY KEY DEFAULT nextval('serial'),
         exchange_id integer REFERENCES Exchange,
         symbol_id integer REFERENCES Symbol,
@@ -55,7 +55,7 @@ def get_ib_create_table_query() -> str:
     Get SQL query that is used to create tables for `ib`.
     """
     sql_query = """
-    CREATE TABLE IF NOT EXISTS IbDailyData (
+    CREATE TABLE IF NOT EXISTS IB_DAILY_DATA (
         id integer PRIMARY KEY DEFAULT nextval('serial'),
         trade_symbol_id integer REFERENCES TradeSymbol,
         date date,
@@ -70,7 +70,7 @@ def get_ib_create_table_query() -> str:
         UNIQUE (trade_symbol_id, date)
     );
 
-    CREATE TABLE IF NOT EXISTS IbMinuteData (
+    CREATE TABLE IF NOT EXISTS IB_MINUTE_DATA (
         id integer PRIMARY KEY DEFAULT nextval('serial'),
         trade_symbol_id integer REFERENCES TradeSymbol,
         datetime timestamptz,
@@ -84,7 +84,7 @@ def get_ib_create_table_query() -> str:
         UNIQUE (trade_symbol_id, datetime)
     );
 
-    CREATE TABLE IF NOT EXISTS IbTickBidAskData (
+    CREATE TABLE IF NOT EXISTS IB_TICK_BID_ASK_DATA (
         id integer PRIMARY KEY DEFAULT nextval('serial'),
         trade_symbol_id integer REFERENCES TradeSymbol,
         datetime timestamp,
@@ -93,7 +93,7 @@ def get_ib_create_table_query() -> str:
         volume bigint
     );
 
-    CREATE TABLE IF NOT EXISTS IbTickData (
+    CREATE TABLE IF NOT EXISTS IB_TICK_DATA (
         id integer PRIMARY KEY DEFAULT nextval('serial'),
         trade_symbol_id integer REFERENCES TradeSymbol,
         datetime timestamp,
@@ -109,7 +109,7 @@ def get_kibot_create_table_query() -> str:
     Get SQL query that is used to create tables for `kibot`.
     """
     sql_query = """
-    CREATE TABLE IF NOT EXISTS KibotDailyData (
+    CREATE TABLE IF NOT EXISTS KIBOT_DAILY_DATA (
         id integer PRIMARY KEY DEFAULT nextval('serial'),
         trade_symbol_id integer REFERENCES TradeSymbol,
         date date,
@@ -121,7 +121,7 @@ def get_kibot_create_table_query() -> str:
         UNIQUE (trade_symbol_id, date)
     );
 
-    CREATE TABLE IF NOT EXISTS KibotMinuteData (
+    CREATE TABLE IF NOT EXISTS KIBOT_MINUTE_DATA (
         id integer PRIMARY KEY DEFAULT nextval('serial'),
         trade_symbol_id integer REFERENCES TradeSymbol,
         datetime timestamp,
@@ -133,7 +133,7 @@ def get_kibot_create_table_query() -> str:
         UNIQUE (trade_symbol_id, datetime)
     );
 
-    CREATE TABLE IF NOT EXISTS KibotTickBidAskData (
+    CREATE TABLE IF NOT EXISTS KIBOT_TICK_BID_ASK_DATA (
         id integer PRIMARY KEY DEFAULT nextval('serial'),
         trade_symbol_id integer REFERENCES TradeSymbol,
         datetime timestamp,
@@ -142,7 +142,7 @@ def get_kibot_create_table_query() -> str:
         volume bigint
     );
 
-    CREATE TABLE IF NOT EXISTS KibotTickData (
+    CREATE TABLE IF NOT EXISTS KIBOT_TICK_DATA (
         id integer PRIMARY KEY DEFAULT nextval('serial'),
         trade_symbol_id integer REFERENCES TradeSymbol,
         datetime timestamp,
