@@ -14,7 +14,7 @@ import helpers.printing as hprint
 import im.common.data.load.abstract_data_loader as icdlab
 import im.common.data.transform.s3_to_sql_transformer as icdts3
 import im.common.data.types as icdtyp
-import im.common.sql_writer_backend as icsqlw
+import im.common.sql_writer as icsqlw
 
 _LOG = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ def convert_s3_to_sql(
     symbol: str,
     exchange: str,
     s3_data_loader: icdlab.AbstractS3DataLoader,
-    sql_writer_backend: icsqlw.AbstractSqlWriterBackend,
+    sql_writer_backend: icsqlw.AbstractSqlWriter,
     sql_data_loader: icdlab.AbstractSqlDataLoader,
     s3_to_sql_transformer: icdts3.AbstractS3ToSqlTransformer,
     asset_class: icdtyp.AssetClass,

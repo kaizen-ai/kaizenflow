@@ -7,7 +7,6 @@ import im.common.db.create_db as imcodbcrdb
 """
 
 import logging
-import os
 from typing import Optional
 
 import psycopg2 as psycop
@@ -15,8 +14,8 @@ import psycopg2.sql as psql
 
 import helpers.dbg as hdbg
 import helpers.sql as hsql
-import im.kibot.sql_writer as imkkisqwribac
-import im.ib.sql_writer as imiibsqwribac
+import im.ib.sql_writer as imibsqwri
+import im.kibot.sql_writer as imkisqwri
 
 _LOG = logging.getLogger(__name__)
 
@@ -77,8 +76,8 @@ def create_all_tables(
     queries = [
         get_data_types_query(),
         get_common_create_table_query(),
-        imiibsqwribac.get_create_table_query(),
-        imkkisqwribac.get_create_table_query(),
+        imibsqwri.get_create_table_query(),
+        imkisqwri.get_create_table_query(),
     ]
     # Create tables.
     for query in queries:

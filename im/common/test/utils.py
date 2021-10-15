@@ -6,7 +6,7 @@ import pandas as pd
 import helpers.sql as hsql
 import helpers.unit_test as huntes
 import im.common.db.create_db as imcodbcrsch
-import im.common.sql_writer_backend as imcosqwrbac
+import im.common.sql_writer as imcosqwrbac
 
 _LOG = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ class SqlWriterBackendTestCase(huntes.TestCase):
         self._exchange_id = 20
         self._trade_symbol_id = 30
         # Create a placeholder for self._writer.
-        self._writer: imcosqwrbac.AbstractSqlWriterBackend
+        self._writer: imcosqwrbac.AbstractSqlWriter
 
     def tearDown(self) -> None:
         # Close connection.

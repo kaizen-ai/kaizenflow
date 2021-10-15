@@ -17,8 +17,6 @@ import helpers.io_ as hio
 import helpers.s3 as hs3
 import helpers.sql as hsql
 
-import im.common.db.create_schema as imcodbcrsch
-
 _LOG = logging.getLogger(__name__)
 
 # Path to the data about downloaded currencies from the spreadsheet in CMTask41.
