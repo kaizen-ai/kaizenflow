@@ -6,7 +6,7 @@ import im.ccxt.data.load.loader as cdlloa
 
 import logging
 import os
-from typing import Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
 
@@ -95,6 +95,7 @@ class CcxtLoader:
         currency_pairs: Optional[Tuple[str]] = None,
         start_date: Optional[int] = None,
         end_date: Optional[int] = None,
+        **read_sql_kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
         Load CCXT data from database.
@@ -104,6 +105,7 @@ class CcxtLoader:
         :param currency_pairs: currency pairs to load data for
         :param start_date: the earliest data to load data for as unix epoch (e.g., 1631145600000)
         :param end_date: the latest date to load data for as unix epoch (e.g., 1631145600000)
+        :param read_sql_kwargs: kwargs for `pd.read_sql()` query
         :return: table from database
         """
         # Verify that DB connection is provided.
@@ -136,13 +138,18 @@ class CcxtLoader:
             # Append all the provided query conditions to the main SQL query.
             query_conditions = " AND ".join(query_conditions)
             sql_query = " WHERE ".join([sql_query, query_conditions])
+        # Add gathered query parameters to kwargs for the call.
+        read_sql_kwargs["params"] = tuple(query_params)
         # Execute SQL query.
-        cursor = self._connection.cursor()
-        _ = cursor.execute(sql_query, tuple(query_params))
+        table = pd.read_sql(
+            sql_query, self._connection, **read_sql_kwargs
+        )
+        # cursor = self._connection.cursor()
+        # _ = cursor.execute(sql_query, tuple(query_params))
         # Combine resulting data in a dataframe.
-        table_data = cursor.fetchall()
-        col_names = [desc[0] for desc in cursor.description]
-        table = pd.DataFrame(data=table_data, columns=col_names)
+        # table_data = cursor.fetchall()
+        # col_names = [desc[0] for desc in cursor.description]
+        # table = pd.DataFrame(data=table_data, columns=col_names)
         return table
 
     def read_data(
