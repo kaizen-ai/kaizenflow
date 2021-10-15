@@ -24,46 +24,6 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(Grisha): convert the code into a class.
 
-
-def check_db_connection(
-    db_name: str,
-    host: str,
-    user: str,
-    port: int,
-    password: str,
-) -> None:
-    """
-    Verify that the database is available.
-
-    :param db_name: name of database to connect to, e.g. `im_db_local`
-    :param host: host name to connect to db
-    :param user: user name to connect to db
-    :param port: port to connect to db
-    :param password: password to connect to db
-    """
-    _LOG.info(
-        "Checking the database connection:\n%s",
-        imcodbuti.db_connection_to_str(
-            db_name=db_name, host=host, user=user, port=port, password=password
-        ),
-    )
-    while True:
-        _LOG.info("Waiting for PostgreSQL to become available...")
-        cmd = "pg_isready -d %s -p %s -h %s"
-        rc = hsyint.system(
-            cmd
-            % (
-                db_name,
-                port,
-                host,
-            )
-        )
-        time.sleep(1)
-        if rc == 0:
-            _LOG.info("PostgreSQL is available")
-            break
-
-
 def get_common_create_table_query() -> str:
     """
     Get SQL query that is used to create tables for common usage.
