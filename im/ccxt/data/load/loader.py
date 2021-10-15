@@ -90,7 +90,6 @@ class CcxtLoader:
     # TODO(Dan): Refactor in #183.
     @staticmethod
     def read_db_data(
-        connection: hsql.DbConnection,
         table_name: str,
         exchange_ids: Optional[Tuple[str]] = None,
         currency_pairs: Optional[Tuple[str]] = None,
@@ -100,7 +99,6 @@ class CcxtLoader:
         """
         Load CCXT data from database.
 
-        :param connection: connection for a SQL database
         :param table_name: name of the table to load (e.g., "ccxt_ohlcv")
         :param exchange_ids: exchange ids to load data for
         :param currency_pairs: currency pairs to load data for
@@ -112,7 +110,7 @@ class CcxtLoader:
         dbg.dassert_is_not(self._connection, None)
         # Verify that table with specified name exists.
         dbg.dassert_in(
-            table_name, hsql.get_table_names(connection)
+            table_name, hsql.get_table_names(self._connection)
         )
         # Initialize SQL query.
         sql_query = "SELECT * FROM %s" % table_name
@@ -139,7 +137,7 @@ class CcxtLoader:
             query_conditions = " AND ".join(query_conditions)
             sql_query = " WHERE ".join([sql_query, query_conditions])
         # Execute SQL query.
-        cursor = connection.cursor()
+        cursor = self._connection.cursor()
         _ = cursor.execute(sql_query, tuple(query_params))
         # Combine resulting data in a dataframe.
         table_data = cursor.fetchall()
