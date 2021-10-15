@@ -5,8 +5,9 @@
 
 set -e
 
+# Check AWS setup.
+
 AWS_VOLUME="${HOME}/.aws/"
-GSPREAD_PANDAS_VOLUME="${HOME}/.config/gspread_pandas/"
 
 test_aws() {
   local _aws_cred_file="${AWS_VOLUME}credentials"
@@ -21,6 +22,12 @@ test_aws() {
   fi
 }
 
+test_aws
+
+# Check gspread.
+
+GSPREAD_PANDAS_VOLUME="${HOME}/.config/gspread_pandas/"
+
 test_gspread_pandas() {
   local _google_secret_file="${GSPREAD_PANDAS_VOLUME}google_secret.json"
   local _google_cred_file="${GSPREAD_PANDAS_VOLUME}creds/default"
@@ -33,5 +40,22 @@ test_gspread_pandas() {
   fi
 }
 
-test_aws
-test_gspread_pandas
+#test_gspread_pandas
+
+# Check FSX, if needed.
+
+if [[ 0 == 1 ]]; then
+    MOUNT_POINT="/fsx/research"
+    if [ "$(mount | grep -c $MOUNT_POINT)" -lt 1 ]; then
+      echo -e """\e[33mWARNING\e[0m: $MOUNT_POINT not mounted."""
+    fi
+fi;
+
+# Check S3.
+
+if [[ 0 == 1 ]]; then
+    MOUNT_POINT="/s3/default00-bucket"
+    if [ "$(mount | grep -c $MOUNT_POINT)" -lt 1 ]; then
+      echo -e """\e[33mWARNING\e[0m: $MOUNT_POINT not mounted."""
+    fi
+fi;

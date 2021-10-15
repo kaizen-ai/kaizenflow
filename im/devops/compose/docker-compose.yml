@@ -3,8 +3,10 @@ version: '3'
 services:
   # Docker container running code that talks to the DB.
   app:
-    # TODO(Grisha): use environment variable for image.
+    # TODO(Grisha): Use image env var.
     image: 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:dev
+    environment:
+      - ENV_NAME=venv
     restart: "no"
     depends_on:
       - im_postgres_local
@@ -23,7 +25,7 @@ services:
     volumes:
       - im_postgres_data_local:/var/lib/postgresql/data
     ports:
-      - 5432
+      - 5432:5432
     env_file:
       - ../env/local.im_db_config.env
 
