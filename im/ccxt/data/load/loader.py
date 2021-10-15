@@ -88,8 +88,8 @@ class CcxtLoader:
         self._data_types = ["ohlcv"]
 
     # TODO(Dan): Refactor in #183.
-    @staticmethod
     def read_db_data(
+        self,
         table_name: str,
         exchange_ids: Optional[Tuple[str]] = None,
         currency_pairs: Optional[Tuple[str]] = None,
