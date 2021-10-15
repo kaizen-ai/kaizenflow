@@ -12,11 +12,11 @@ services:
       - im_postgres_local
     volumes:
       - ../../../:/app
-      - ~/.aws:/app/home/.aws
+      - ~/.aws:/home/.aws
     env_file:
       - ../env/local.im_db_config.env
     working_dir: /app
-    entrypoint: /app/devops/docker_build/entrypoint.sh
+    entrypoint: /app/devops/docker_run/entrypoint.sh
 
   # Docker container running Postgres DB.
   im_postgres_local:
