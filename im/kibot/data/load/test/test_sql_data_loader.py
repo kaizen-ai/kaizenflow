@@ -9,7 +9,7 @@ import im.common.data.types as icdtyp
 import im.common.db.create_db as icdcrsch
 import im.common.db.utils as imcodbuti
 import im.kibot.data.load.kibot_sql_data_loader as ikdlki
-import im.kibot.kibot_sql_writer_backend as ikkibo
+import im.kibot.sql_writer as ikkibo
 
 
 @pytest.mark.skipif(
@@ -41,7 +41,7 @@ class TestSqlDataLoader1(hut.TestCase):
             force=True,
         )
         # Initialize writer class to test.
-        writer = ikkibo.KibotSqlWriterBackend(
+        writer = ikkibo.KibotSqlWriter(
             self.dbname, user, password, host, port
         )
         # Add data to database.
@@ -155,7 +155,7 @@ class TestSqlDataLoader1(hut.TestCase):
             self._loader._read_data("CME", "", icdtyp.Frequency.Minutely)
 
     @classmethod
-    def _prepare_tables(cls, writer: ikkibo.KibotSqlWriterBackend) -> None:
+    def _prepare_tables(cls, writer: ikkibo.KibotSqlWriter) -> None:
         """
         Insert Symbol, Exchange and TradeSymbol entries to make test work.
 

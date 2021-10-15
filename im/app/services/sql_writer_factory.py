@@ -24,9 +24,9 @@ class SqlWriterFactory:
         """
         transformer: icsqlw.AbstractSqlWriterBackend
         if provider == "kibot":
-            import im.kibot.kibot_sql_writer_backend as ikkibo
+            import im.kibot.sql_writer as ikkibo
 
-            transformer = ikkibo.KibotSqlWriterBackend(
+            transformer = ikkibo.KibotSqlWriter(
                 dbname=dbname, user=user, password=password, host=host, port=port
             )
         elif provider == "ib":
