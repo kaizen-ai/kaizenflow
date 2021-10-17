@@ -130,7 +130,7 @@ class CcxtLoader:
         # Verify that requested data type is valid.
         dbg.dassert_in(data_type.lower(), self._data_types)
         # Get absolute file path for a CCXT file.
-        file_name = self._get_file_path(data_snapshot, exchange_id, currency_pair),
+        file_name = self._get_file_path(data_snapshot, exchange_id, currency_pair)
         file_path = os.path.join(self._root_dir, file_name)
         # Initialize kwargs dict for further CCXT data reading.
         read_csv_kwargs = {}
