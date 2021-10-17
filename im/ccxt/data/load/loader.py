@@ -22,7 +22,7 @@ _LOG = logging.getLogger(__name__)
 # Path to the data about downloaded currencies from the spreadsheet in CMTask41.
 _DOWNLOADED_CURRENCIES_PATH = "im/data/downloaded_currencies.json"
 
-# Latest historical data snapsot.
+# Latest historical data snapshot.
 _LATEST_DATA_SNAPSHOT = "20210924"
 
 
