@@ -50,6 +50,7 @@ class TestGetFilePath(hut.TestCase):
             )
 
 
+# TODO(*): Consider to factor out the class calling in a `def _get_loader()`.
 class TestCcxtLoader(hut.TestCase):
 
     def test1(self) -> None:
