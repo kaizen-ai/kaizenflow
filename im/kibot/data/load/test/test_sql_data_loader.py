@@ -25,51 +25,42 @@ class TestSqlDataLoader1(hut.TestCase):
     def setUp(self) -> None:
         super().setUp()
         # Get PostgreSQL connection parameters.
-        conn_db = os.environ["POSTGRES_DB"]
-        host = os.environ["POSTGRES_HOST"]
-        port = int(os.environ["POSTGRES_PORT"])
-        user = os.environ["POSTGRES_USER"]
-        password = os.environ["POSTGRES_PASSWORD"]
+        self._conn_db = os.environ["POSTGRES_DB"]
+        self._host = os.environ["POSTGRES_HOST"]
+        self._port = int(os.environ["POSTGRES_PORT"])
+        self._user = os.environ["POSTGRES_USER"]
+        self._password = os.environ["POSTGRES_PASSWORD"]
         self._connection = hsql.get_connection(dbname=self._conn_db,
                                                host=self._host,
                                                port=int(self._port),
                                                user=self._user,
                                                password=self._password)
-        self.dbname = self._get_test_name().replace("/", "").replace(".", "")
+        self._new_db = self._get_test_name().replace("/", "").replace(".", "")
         # Create database for test.
         icdcrsch.create_database(
             connection=self._connection,
-            new_db=self.dbname,
+            new_db=self._new_db,
             force=True,
         )
         # Initialize writer class to test.
         writer = ikkibo.KibotSqlWriter(
-            self.dbname, user, password, host, port
+            self._new_db, self._user, self._password, self._host, self._port
         )
         # Add data to database.
         self._prepare_tables(writer)
         writer.close()
         # Create loader.
         self._loader = ikdlki.KibotSqlDataLoader(
-            self.dbname, user, password, host, port
+            self._new_db, self._user, self._password, self._host, self._port
         )
 
     def tearDown(self) -> None:
-        # Get PostgreSQL connection parameters.
-        conn_db = os.environ["POSTGRES_DB"]
-        host = os.environ["POSTGRES_HOST"]
-        port = int(os.environ["POSTGRES_PORT"])
-        user = os.environ["POSTGRES_USER"]
-        password = os.environ["POSTGRES_PASSWORD"]
         # Close connection.
         self._loader.conn.close()
         # Remove created database.
-        icdcrsch.remove_database(db_to_drop=self.dbname,
-                                 conn_db=conn_db,
-                                 host=host,
-                                 port=port,
-                                 user=user,
-                                 password=password)
+        icdcrsch.remove_database(
+            connection=self._connection,
+            db_to_drop=self._new_db)
         super().tearDown()
 
     def test_get_symbol_id1(self) -> None:

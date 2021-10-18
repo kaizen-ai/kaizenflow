@@ -135,35 +135,20 @@ def create_database(
     # Create database.
     hsql.create_database(connection, db=new_db, force=force)
     # Create SQL schema.
-    # TODO(Danya): remove cursor and pass connection (#169).
     create_all_tables(connection)
 
 
 def remove_database(
-    db_to_drop: str,
-    conn_db: str,
-    host: str,
-    user: str,
-    port: int,
-    password: str,
+    connection: hsql.DbConnection,
+    db_to_drop: str
 ) -> None:
     """
     Remove database in current environment.
 
+    :param connection: a database connection
     :param db_to_drop: database name to drop, e.g. `im_db_local`
-    :param conn_db: name of database to connect, e.g. `im_db_local`
-    :param host: host name to connect to db
-    :param user: user name to connect to db
-    :param port: port to connect to db
-    :param password: password to connect to db
     """
-    # Initialize connection.
-    connection, cursor = hsql.get_connection(
-        dbname=conn_db, host=host, user=user, port=port, password=password
-    )
     # Drop database.
-    cursor.execute(
+    connection.cursor().execute(
         psql.SQL("DROP DATABASE {};").format(psql.Identifier(db_to_drop))
     )
-    # Close connection.
-    connection.close()

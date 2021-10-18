@@ -48,12 +48,8 @@ class SqlWriterBackendTestCase(huntes.TestCase):
         self._writer.close()
         # Remove created database.
         imcodbcrsch.remove_database(
+            connection=self._connection,
             db_to_drop=self._new_db,
-            conn_db=self._conn_db,
-            host=self._host,
-            user=self._user,
-            port=int(self._port),
-            password=self._password,
         )
         super().tearDown()
 
