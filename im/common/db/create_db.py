@@ -65,9 +65,7 @@ def get_data_types_query() -> str:
     return query
 
 
-def create_all_tables(
-        connection: hsql.DbConnection
-) -> None:
+def create_all_tables(connection: hsql.DbConnection) -> None:
     """
     Create tables inside a database.
 
@@ -138,10 +136,7 @@ def create_database(
     create_all_tables(connection)
 
 
-def remove_database(
-    connection: hsql.DbConnection,
-    db_to_drop: str
-) -> None:
+def remove_database(connection: hsql.DbConnection, db_to_drop: str) -> None:
     """
     Remove database in current environment.
 

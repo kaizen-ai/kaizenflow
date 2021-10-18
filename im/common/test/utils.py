@@ -5,8 +5,8 @@ import pandas as pd
 
 import helpers.sql as hsql
 import helpers.unit_test as huntes
-import im.common.db.create_db as imcodbcrsch
-import im.common.sql_writer as imcosqwrbac
+import im.common.db.create_db as imcodbcrdb
+import im.common.sql_writer as imcosqwri
 
 _LOG = logging.getLogger(__name__)
 
@@ -24,14 +24,16 @@ class SqlWriterBackendTestCase(huntes.TestCase):
         self._port = os.environ["POSTGRES_PORT"]
         self._user = os.environ["POSTGRES_USER"]
         self._password = os.environ["POSTGRES_PASSWORD"]
-        self._connection = hsql.get_connection(dbname=self._conn_db,
-                                               host=self._host,
-                                               port=int(self._port),
-                                               user=self._user,
-                                               password=self._password)
+        self._connection = hsql.get_connection(
+            dbname=self._conn_db,
+            host=self._host,
+            port=int(self._port),
+            user=self._user,
+            password=self._password,
+        )
         self._new_db = self._get_test_string()
         # Create database for each test.
-        imcodbcrsch.create_database(
+        imcodbcrdb.create_database(
             connection=self._connection,
             new_db=self._new_db,
             force=True,
@@ -41,13 +43,13 @@ class SqlWriterBackendTestCase(huntes.TestCase):
         self._exchange_id = 20
         self._trade_symbol_id = 30
         # Create a placeholder for self._writer.
-        self._writer: imcosqwrbac.AbstractSqlWriter
+        self._writer: imcosqwri.AbstractSqlWriter
 
     def tearDown(self) -> None:
         # Close connection.
         self._writer.close()
         # Remove created database.
-        imcodbcrsch.remove_database(
+        imcodbcrdb.remove_database(
             connection=self._connection,
             db_to_drop=self._new_db,
         )
