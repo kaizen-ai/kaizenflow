@@ -18,19 +18,8 @@ class SqlWriterBackendTestCase(huntes.TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        # Get PostgreSQL connection parameters.
-        self._conn_db = os.environ["POSTGRES_DB"]
-        self._host = os.environ["POSTGRES_HOST"]
-        self._port = os.environ["POSTGRES_PORT"]
-        self._user = os.environ["POSTGRES_USER"]
-        self._password = os.environ["POSTGRES_PASSWORD"]
-        self._connection = hsql.get_connection(
-            dbname=self._conn_db,
-            host=self._host,
-            port=int(self._port),
-            user=self._user,
-            password=self._password,
-        )
+        # Get PostgreSQL connection.
+        self._connection = hsql.get_connection_from_env_vars()[0]
         self._new_db = self._get_test_string()
         # Create database for each test.
         imcodbcrdb.create_database(
