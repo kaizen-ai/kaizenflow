@@ -132,7 +132,7 @@ def remove_database(dbname: str) -> None:
         password=os.environ["POSTGRES_PASSWORD"],
     )
     # Drop database.
-    cursor.execute(
+    connection.cursor().execute(
         psql.SQL("DROP DATABASE {};").format(psql.Identifier(db_to_drop))
     )
     # Close connection.

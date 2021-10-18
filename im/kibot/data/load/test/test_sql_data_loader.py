@@ -44,12 +44,6 @@ class TestSqlDataLoader1(hunitest.TestCase):
         )
 
     def tearDown(self) -> None:
-        # Get PostgreSQL connection parameters.
-        conn_db = os.environ["POSTGRES_DB"]
-        host = os.environ["POSTGRES_HOST"]
-        port = int(os.environ["POSTGRES_PORT"])
-        user = os.environ["POSTGRES_USER"]
-        password = os.environ["POSTGRES_PASSWORD"]
         # Close connection.
         self._loader.conn.close()
         # Remove created database.
