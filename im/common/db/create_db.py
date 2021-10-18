@@ -90,13 +90,11 @@ def create_all_tables(
 
 def test_tables(
     connection: hsql.DbConnection,
-    cursor: psycop.extensions.cursor,
 ) -> None:
     """
     Test that tables are created.
 
     :param connection: a database connection
-    :param cursor: a database cursor
     """
     _LOG.info("Testing created tables...")
     # Check tables list.
@@ -117,6 +115,7 @@ def test_tables(
     hdbg.dassert_set_eq(actual_tables, expected_tables)
     # Execute the test query.
     test_query = "INSERT INTO Exchange (name) VALUES ('TestExchange');"
+    cursor = connection.cursor()
     cursor.execute(test_query)
 
 
