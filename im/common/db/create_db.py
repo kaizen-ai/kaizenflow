@@ -65,13 +65,11 @@ def get_data_types_query() -> str:
     return query
 
 
-def create_all_tables(
-    cursor: psycop.extensions.cursor,
-) -> None:
+def create_all_tables(connection: hsql.DbConnection) -> None:
     """
     Create tables inside a database.
 
-    :param cursor: a database cursor
+    :param connection: a database connection
     """
     queries = [
         get_data_types_query(),
@@ -82,6 +80,7 @@ def create_all_tables(
     # Create tables.
     for query in queries:
         try:
+            cursor = connection.cursor()
             cursor.execute(query)
         except psycop.errors.DuplicateObject:
             _LOG.warning("Duplicate table created, skipping.")
@@ -89,13 +88,11 @@ def create_all_tables(
 
 def test_tables(
     connection: hsql.DbConnection,
-    cursor: psycop.extensions.cursor,
 ) -> None:
     """
     Test that tables are created.
 
     :param connection: a database connection
-    :param cursor: a database cursor
     """
     _LOG.info("Testing created tables...")
     # Check tables list.
@@ -116,67 +113,37 @@ def test_tables(
     hdbg.dassert_set_eq(actual_tables, expected_tables)
     # Execute the test query.
     test_query = "INSERT INTO Exchange (name) VALUES ('TestExchange');"
+    cursor = connection.cursor()
     cursor.execute(test_query)
 
 
 def create_database(
+    connection: hsql.DbConnection,
     new_db: str,
-    conn_db: str,
-    host: str,
-    user: str,
-    port: int,
-    password: str,
     force: Optional[bool] = None,
 ) -> None:
     """
     Create database and SQL schema inside it.
 
+    :param connection: a database connection
     :param new_db: name of database to connect to, e.g. `im_db_local`
-    :param conn_db: name of database to create, e.g. `im_db_local`
-    :param host: host name to connect to db
-    :param user: user name to connect to db
-    :param port: port to connect to db
-    :param password: password to connect to db
     :param force: overwrite existing database
     """
-    # Initialize connection.
-    connection, cursor = hsql.get_connection(
-        dbname=conn_db, host=host, user=user, port=port, password=password
-    )
     _LOG.debug("connection=%s", connection)
     # Create database.
     hsql.create_database(connection, db=new_db, force=force)
-    connection.close()
     # Create SQL schema.
-    # TODO(Danya): remove cursor and pass connection (#169).
-    create_all_tables(cursor)
+    create_all_tables(connection)
 
 
-def remove_database(
-    db_to_drop: str,
-    conn_db: str,
-    host: str,
-    user: str,
-    port: int,
-    password: str,
-) -> None:
+def remove_database(connection: hsql.DbConnection, db_to_drop: str) -> None:
     """
     Remove database in current environment.
 
+    :param connection: a database connection
     :param db_to_drop: database name to drop, e.g. `im_db_local`
-    :param conn_db: name of database to connect, e.g. `im_db_local`
-    :param host: host name to connect to db
-    :param user: user name to connect to db
-    :param port: port to connect to db
-    :param password: password to connect to db
     """
-    # Initialize connection.
-    connection, cursor = hsql.get_connection(
-        dbname=conn_db, host=host, user=user, port=port, password=password
-    )
     # Drop database.
-    cursor.execute(
+    connection.cursor().execute(
         psql.SQL("DROP DATABASE {};").format(psql.Identifier(db_to_drop))
     )
-    # Close connection.
-    connection.close()
