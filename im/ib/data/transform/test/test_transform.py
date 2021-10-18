@@ -8,7 +8,7 @@ import im.common.test.utils as ictuti
 import im.ib.data.load.ib_s3_data_loader as iidlib3
 import im.ib.data.load.ib_sql_data_loader as iidlib
 import im.ib.data.transform.ib_s3_to_sql_transformer as iidtib
-import im.ib.ib_sql_writer_backend as iiibsq
+import im.ib.sql_writer as iiibsq
 
 
 @pytest.mark.skipif(
@@ -23,7 +23,7 @@ class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
     def setUp(self) -> None:
         super().setUp()
         # Initialize writer class to test.
-        self._writer = iiibsq.IbSqlWriterBackend(
+        self._writer = iiibsq.IbSqlWriter(
             dbname=self._dbname,
             user=self._user,
             password=self._password,

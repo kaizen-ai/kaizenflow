@@ -1,27 +1,82 @@
+"""
+Import as:
+
+import im.kibot.kibot_sql_writer_backend as imkkisqwribac
+"""
+
 from typing import Optional
 
 import pandas as pd
 import psycopg2.extras as pextra
 
-import im.common.data.types as icdtyp
-import im.common.sql_writer_backend as icsqlw
+import im.common.data.types as imcodatyp
+import im.common.sql_writer as imcosqwrbac
 
 
-class KibotSqlWriterBackend(icsqlw.AbstractSqlWriterBackend):
+def get_create_table_query() -> str:
+    """
+    Get SQL query that is used to create tables for `kibot`.
+    """
+    sql_query = """
+    CREATE TABLE IF NOT EXISTS KIBOT_DAILY_DATA (
+        id integer PRIMARY KEY DEFAULT nextval('serial'),
+        trade_symbol_id integer REFERENCES TradeSymbol,
+        date date,
+        open numeric,
+        high numeric,
+        low numeric,
+        close numeric,
+        volume bigint,
+        UNIQUE (trade_symbol_id, date)
+    );
+
+    CREATE TABLE IF NOT EXISTS KIBOT_MINUTE_DATA (
+        id integer PRIMARY KEY DEFAULT nextval('serial'),
+        trade_symbol_id integer REFERENCES TradeSymbol,
+        datetime timestamp,
+        open numeric,
+        high numeric,
+        low numeric,
+        close numeric,
+        volume bigint,
+        UNIQUE (trade_symbol_id, datetime)
+    );
+
+    CREATE TABLE IF NOT EXISTS KIBOT_TICK_BID_ASK_DATA (
+        id integer PRIMARY KEY DEFAULT nextval('serial'),
+        trade_symbol_id integer REFERENCES TradeSymbol,
+        datetime timestamp,
+        bid numeric,
+        ask numeric,
+        volume bigint
+    );
+
+    CREATE TABLE IF NOT EXISTS KIBOT_TICK_DATA (
+        id integer PRIMARY KEY DEFAULT nextval('serial'),
+        trade_symbol_id integer REFERENCES TradeSymbol,
+        datetime timestamp,
+        price numeric,
+        size bigint
+    );
+    """
+    return sql_query
+
+
+class KibotSqlWriter(imcosqwrbac.AbstractSqlWriter):
     """
     Manager of CRUD operations on a database defined in `im/db`.
     """
 
     FREQ_ATTR_MAPPING = {
-        icdtyp.Frequency.Daily: {
+        imcodatyp.Frequency.Daily: {
             "table_name": "KibotDailyData",
             "datetime_field_name": "date",
         },
-        icdtyp.Frequency.Minutely: {
+        imcodatyp.Frequency.Minutely: {
             "table_name": "KibotMinuteData",
             "datetime_field_name": "datetime",
         },
-        icdtyp.Frequency.Tick: {
+        imcodatyp.Frequency.Tick: {
             "table_name": "KibotTickData",
             "datetime_field_name": "datetime",
         },
