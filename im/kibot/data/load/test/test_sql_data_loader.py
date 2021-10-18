@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 import helpers.unit_test as hut
+import helpers.sql as hsql
 import im.common.data.types as icdtyp
 import im.common.db.create_db as icdcrsch
 import im.common.db.utils as imcodbuti
@@ -29,15 +30,16 @@ class TestSqlDataLoader1(hut.TestCase):
         port = int(os.environ["POSTGRES_PORT"])
         user = os.environ["POSTGRES_USER"]
         password = os.environ["POSTGRES_PASSWORD"]
+        self._connection = hsql.get_connection(dbname=self._conn_db,
+                                               host=self._host,
+                                               port=int(self._port),
+                                               user=self._user,
+                                               password=self._password)
         self.dbname = self._get_test_name().replace("/", "").replace(".", "")
         # Create database for test.
         icdcrsch.create_database(
+            connection=self._connection,
             new_db=self.dbname,
-            conn_db=conn_db,
-            host=host,
-            port=port,
-            user=user,
-            password=password,
             force=True,
         )
         # Initialize writer class to test.

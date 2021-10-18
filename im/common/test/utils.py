@@ -24,15 +24,16 @@ class SqlWriterBackendTestCase(huntes.TestCase):
         self._port = os.environ["POSTGRES_PORT"]
         self._user = os.environ["POSTGRES_USER"]
         self._password = os.environ["POSTGRES_PASSWORD"]
+        self._connection = hsql.get_connection(dbname=self._conn_db,
+                                               host=self._host,
+                                               port=int(self._port),
+                                               user=self._user,
+                                               password=self._password)
         self._new_db = self._get_test_string()
         # Create database for each test.
         imcodbcrsch.create_database(
+            connection=self._connection,
             new_db=self._new_db,
-            conn_db=self._conn_db,
-            host=self._host,
-            user=self._user,
-            port=int(self._port),
-            password=self._password,
             force=True,
         )
         # Define constant IDs for records across the test.

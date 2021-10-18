@@ -120,29 +120,17 @@ def test_tables(
 
 
 def create_database(
+    connection: hsql.DbConnection,
     new_db: str,
-    conn_db: str,
-    host: str,
-    user: str,
-    port: int,
-    password: str,
     force: Optional[bool] = None,
 ) -> None:
     """
     Create database and SQL schema inside it.
 
+    :param connection: a database connection
     :param new_db: name of database to connect to, e.g. `im_db_local`
-    :param conn_db: name of database to create, e.g. `im_db_local`
-    :param host: host name to connect to db
-    :param user: user name to connect to db
-    :param port: port to connect to db
-    :param password: password to connect to db
     :param force: overwrite existing database
     """
-    # Initialize connection.
-    connection, _ = hsql.get_connection(
-        dbname=conn_db, host=host, user=user, port=port, password=password
-    )
     _LOG.debug("connection=%s", connection)
     # Create database.
     hsql.create_database(connection, db=new_db, force=force)
