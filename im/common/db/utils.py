@@ -8,31 +8,24 @@ import logging
 import time
 
 import os
+import helpers.sql as hsql
 import helpers.system_interaction as hsyint
 
 _LOG = logging.getLogger(__name__)
 
 
 def check_db_connection(
-    db_name: str,
-    host: str,
-    user: str,
-    port: int,
-    password: str,
+    connection: hsql.DbConnection
 ) -> None:
     """
     Verify that the database is available.
 
-    :param db_name: name of database to connect to, e.g. `im_db_local`
-    :param host: host name to connect to db
-    :param user: user name to connect to db
-    :param port: port to connect to db
-    :param password: password to connect to db
+    :param connection: a database connection
     """
     _LOG.info(
         "Checking the database connection:\n%s",
         db_connection_to_str(
-            db_name=db_name, host=host, user=user, port=port, password=password
+            connection=connection
         ),
     )
     while True:
@@ -41,9 +34,9 @@ def check_db_connection(
         rc = hsyint.system(
             cmd
             % (
-                db_name,
-                port,
-                host,
+                connection.info.dbname,
+                connection.info.port,
+                connection.info.host,
             ),
             abort_on_error=False)
         time.sleep(1)
@@ -53,7 +46,7 @@ def check_db_connection(
 
 
 def db_connection_to_str(
-    db_name: str, host: str, user: str, port: int, password: str
+    connection: hsql.DbConnection
 ) -> str:
     """
     Get database connection details using environment variables. Connection
@@ -65,19 +58,16 @@ def db_connection_to_str(
         - Username
         - Password
 
-    :param db_name: name of database to connect to, e.g. `im_db_local`
-    :param host: host name to connect to db
-    :param user: user name to connect to db
-    :param port: port to connect to db
-    :param password: password to connect to db
+    :param connection: a database connection
     :return: database connection details
     """
+    info = connection.info
     txt = []
-    txt.append("dbname='%s'" % db_name)
-    txt.append("host='%s'" % host)
-    txt.append("port='%s'" % port)
-    txt.append("user='%s'" % user)
-    txt.append("password='%s'" % password)
+    txt.append("dbname='%s'" % info.dbname)
+    txt.append("host='%s'" % info.host)
+    txt.append("port='%s'" % info.port)
+    txt.append("user='%s'" % info.user)
+    txt.append("password='%s'" % info.password)
     txt = "\n".join(txt)
     return txt
 
