@@ -66,12 +66,12 @@ def get_data_types_query() -> str:
 
 
 def create_all_tables(
-    cursor: psycop.extensions.cursor,
+        connection: hsql.DbConnection
 ) -> None:
     """
     Create tables inside a database.
 
-    :param cursor: a database cursor
+    :param connection: a database connection
     """
     queries = [
         get_data_types_query(),
@@ -82,6 +82,7 @@ def create_all_tables(
     # Create tables.
     for query in queries:
         try:
+            cursor = connection.cursor()
             cursor.execute(query)
         except psycop.errors.DuplicateObject:
             _LOG.warning("Duplicate table created, skipping.")
@@ -140,16 +141,15 @@ def create_database(
     :param force: overwrite existing database
     """
     # Initialize connection.
-    connection, cursor = hsql.get_connection(
+    connection, _ = hsql.get_connection(
         dbname=conn_db, host=host, user=user, port=port, password=password
     )
     _LOG.debug("connection=%s", connection)
     # Create database.
     hsql.create_database(connection, db=new_db, force=force)
-    connection.close()
     # Create SQL schema.
     # TODO(Danya): remove cursor and pass connection (#169).
-    create_all_tables(cursor)
+    create_all_tables(connection)
 
 
 def remove_database(

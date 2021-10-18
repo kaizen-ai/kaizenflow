@@ -46,7 +46,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     imcodbuti.check_db_connection(
         db_name=db_name, host=host, port=port, user=user, password=password
     )
-    conn, cursor = hsql.get_connection(
+    connection, _ = hsql.get_connection(
         dbname=db_name,
         host=host,
         port=port,
@@ -56,8 +56,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Set schema for the database.
     _LOG.info("Setting schema for DB `%s`...", os.environ["POSTGRES_DB"])
     # TODO(Danya): remove cursor and pass connection (#169).
-    imcodbcrsch.create_all_tables(cursor)
-    imcodbcrsch.test_tables(conn, cursor)
+    imcodbcrsch.create_all_tables(connection)
+    imcodbcrsch.test_tables(connection)
     _LOG.info("Database `%s` is ready to use.", os.environ["POSTGRES_DB"])
 
 
