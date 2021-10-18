@@ -15,6 +15,7 @@ def get_create_table_query() -> str:
     """
     Get SQL query that is used to create tables for `ib`.
     """
+    # TODO(*): barCount -> bar_count
     sql_query = """
     CREATE TABLE IF NOT EXISTS IB_DAILY_DATA (
         id integer PRIMARY KEY DEFAULT nextval('serial'),
@@ -26,7 +27,6 @@ def get_create_table_query() -> str:
         close numeric,
         volume bigint,
         average numeric,
-        -- TODO(*): barCount -> bar_count
         barCount integer,
         UNIQUE (trade_symbol_id, date)
     );
