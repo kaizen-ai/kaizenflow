@@ -417,7 +417,7 @@ class Test_convert_unix_epoch_to_timestamp(huntes.TestCase):
         epoch = 1631145600000
         actual = hdatetim.convert_unix_epoch_to_timestamp(epoch=epoch)
         expected = pd.Timestamp("2021-09-09T00:00:00", tz="UTC")
-        self.assert_equal(actual, expected)
+        self.assert_equal(str(actual), str(expected))
 
     def test2(self) -> None:
         """
@@ -429,7 +429,7 @@ class Test_convert_unix_epoch_to_timestamp(huntes.TestCase):
             epoch=epoch, unit=unit
         )
         expected = pd.Timestamp("2021-09-09T00:00:00", tz="UTC")
-        self.assert_equal(actual, expected)
+        self.assert_equal(str(actual), str(expected))
 
     def test3(self) -> None:
         """
@@ -439,7 +439,7 @@ class Test_convert_unix_epoch_to_timestamp(huntes.TestCase):
         tz = "US/Pacific"
         actual = hdatetim.convert_unix_epoch_to_timestamp(epoch=epoch, tz=tz)
         expected = pd.Timestamp("2021-09-08T17:00:00", tz="US/Pacific")
-        self.assert_equal(actual, expected)
+        self.assert_equal(str(actual), str(expected))
 
 
 class Test_convert_timestamp_to_unix_epoch(huntes.TestCase):
@@ -450,7 +450,7 @@ class Test_convert_timestamp_to_unix_epoch(huntes.TestCase):
         timestamp = pd.Timestamp("2021-09-09")
         actual = hdatetim.convert_timestamp_to_unix_epoch(timestamp=timestamp)
         expected = 1631145600000
-        self.assert_equal(actual, expected)
+        self.assert_equal(str(actual), str(expected))
 
     def test2(self) -> None:
         """
@@ -462,7 +462,7 @@ class Test_convert_timestamp_to_unix_epoch(huntes.TestCase):
             timestamp=timestamp, unit=unit
         )
         expected = 1631145600
-        self.assert_equal(actual, expected)
+        self.assert_equal(str(actual), str(expected))
 
     def test3(self) -> None:
         """
@@ -471,4 +471,4 @@ class Test_convert_timestamp_to_unix_epoch(huntes.TestCase):
         timestamp = pd.Timestamp("2021-09-08T17:00:00", tz="US/Pacific")
         actual = hdatetim.convert_timestamp_to_unix_epoch(timestamp=timestamp)
         expected = 1631145600000
-        self.assert_equal(actual, expected)
+        self.assert_equal(str(actual), str(expected))
