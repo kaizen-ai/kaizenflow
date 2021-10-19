@@ -543,11 +543,15 @@ def convert_timestamp_to_unix_epoch(
     timestamp: pd.Timestamp, unit: str = "ms"
 ) -> int:
     """
-    Convert timestamp in UTC to Unix epoch.
+    Convert timestamp to Unix epoch.
 
-    :param timestamp: timestamp in UTC
+    :param timestamp: timestamp
     :param unit: epoch's time unit
-    :return: Unix epoch
+    :return: Unix time epoch
     """
+    # Make timestamp tz-naive if it is not. UTC timezone is set automatically.
+    if timestamp.tz:
+        timestamp = timestamp.tz_convert(None)
+    # Convert to epoch.
     epoch = (timestamp - pd.Timestamp("1970-01-01")) // pd.Timedelta("1" + unit)
     return epoch
