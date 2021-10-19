@@ -532,7 +532,7 @@ def convert_unix_epoch_to_timestamp(
 
     :param epoch: Unix time epoch
     :param unit: epoch's time unit
-    :param tz: resulting timestamp time zone
+    :param tz: resulting timestamp timezone
     :return: timestamp
     """
     timestamp = pd.Timestamp(epoch, unit=unit, tz=tz)
@@ -549,7 +549,8 @@ def convert_timestamp_to_unix_epoch(
     :param unit: epoch's time unit
     :return: Unix time epoch
     """
-    # Make timestamp tz-naive if it is not. UTC timezone is set automatically.
+    # Make timestamp tz-naive if it is not. Converted to UTC tz before becoming
+    # naive automatically.
     if timestamp.tz:
         timestamp = timestamp.tz_convert(None)
     # Convert to epoch.
