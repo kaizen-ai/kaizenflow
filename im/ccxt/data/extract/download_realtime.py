@@ -2,7 +2,7 @@
 """
 Script to download data from CCXT in real-time.
 
-Use example:
+Use as:
 
 # Download all currency pairs for Binance, Kucoin,
   FTX exchanges:
@@ -18,18 +18,19 @@ import im.ccxt.data.extract.download_realtime as imcdaexdowrea
 import argparse
 import collections
 import logging
-import os
 import time
 from typing import NamedTuple, Optional
 
-import helpers.datetime_ as hdatetim
-import helpers.io_ as hio
+import helpers.dbg as hdbg
 import helpers.parser as hparser
+import helpers.sql as hsql
 import im.ccxt.data.extract.exchange_class as imcdaexexccla
-from helpers import dbg
-import im.common.db.create_schema as imcodbcrsch
+import im.ccxt.db.insert_data as imccdbindat
 
 _LOG = logging.getLogger(__name__)
+
+_ALL_EXCHANGE_IDS = ["binance", "kucoin"]
+
 
 # TODO(Danya): Create a type and move outside.
 def _instantiate_exchange(
@@ -70,18 +71,17 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--db",
+        "--db_connection",
         action="store",
         default="from_env",
         type=str,
-        help="db to connect to."
+        help="Connection to database to upload to",
     )
     parser.add_argument(
         "--table_name",
         action="store",
-        required=True,
         type=str,
-        help="Name of the table to update",
+        help="Name of the table to upload to"
     )
     parser.add_argument(
         "--api_keys",
@@ -112,13 +112,14 @@ def _parse() -> argparse.ArgumentParser:
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # TODO (Danya): Add "test_db" value for testing.
-    if args.db == "from_env":
-        conn = imcodbcrsch.get_db_connection_from_environment()
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    if args.db_connection == "from_env":
+        connection, _ = hsql.get_connection_from_env_vars()
+    else:
+        hdbg.dfatal("Unknown db connection: %s" % args.db_connection)
     # Get exchange ids.
     if args.exchange_ids == "all":
-        exchange_ids = ["binance", "kucoin"]
+        exchange_ids = _ALL_EXCHANGE_IDS
     else:
         # Get exchanges provided by the user.
         exchange_ids = args.exchange_ids.split()
@@ -136,9 +137,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 pair_data = exchange.instance.download_ohlcv_data(
                     curr_symbol=pair, step=2
                 )
-                # Save data with timestamp.
-                latest_pair = pair_data.tail(1)
-                execute_insert_query(conn, latest_pair, args.table_name)
+                imccdbindat.execute_insert_query(connection=connection,
+                                                 df=pair_data,
+                                                 table_name=args.table_name)
+                return pair_data
         time.sleep(60)
 
 
