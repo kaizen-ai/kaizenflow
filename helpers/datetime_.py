@@ -519,3 +519,35 @@ def _determine_date_format(
         _LOG.error("This format is not supported: '%s'", date)
         return None
     return format_, date_modification_func
+
+
+# #############################################################################
+
+
+def convert_unix_epoch_to_timestamp(
+    epoch: int, unit: str = "ms", tz: str = "UTC"
+) -> pd.Timestamp:
+    """
+    Convert Unix epoch to timestamp.
+
+    :param epoch: Unix time epoch
+    :param unit: epoch's time unit
+    :param tz: resulting timestamp time zone
+    :return: timestamp
+    """
+    timestamp = pd.Timestamp(epoch, unit=unit, tz=tz)
+    return timestamp
+
+
+def convert_timestamp_to_unix_epoch(
+    timestamp: pd.Timestamp, unit: str = "ms"
+) -> int:
+    """
+    Convert timestamp in UTC to Unix epoch.
+
+    :param timestamp: timestamp in UTC
+    :param unit: epoch's time unit
+    :return: Unix epoch
+    """
+    epoch = (timestamp - pd.Timestamp("1970-01-01")) // pd.Timedelta("1" + unit)
+    return epoch
