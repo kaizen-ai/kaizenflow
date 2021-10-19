@@ -1,5 +1,7 @@
 import os
 
+import pytest
+
 import helpers.s3 as hs3
 import helpers.unit_test as hut
 import im.ccxt.data.load.loader as cdlloa
@@ -52,7 +54,7 @@ class TestGetFilePath(hut.TestCase):
 
 # TODO(*): Consider to factor out the class calling in a `def _get_loader()`.
 class TestCcxtLoader(hut.TestCase):
-
+    @pytest.mark.slow
     def test1(self) -> None:
         """
         Test files on S3 are being read correctly.
@@ -96,8 +98,8 @@ class TestCcxtLoader(hut.TestCase):
         Test unsupported data type.
         """
         ccxt_loader = cdlloa.CcxtLoader(
-            root_dir=_AM_S3_ROOT_DIR, aws_profile="am")
-
+            root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+        )
         with self.assertRaises(AssertionError):
             ccxt_loader.read_data_from_filesystem(
                 "binance", "BTC/USDT", "unsupported_data_type"
