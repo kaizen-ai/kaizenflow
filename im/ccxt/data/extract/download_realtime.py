@@ -4,7 +4,7 @@ Script to download data from CCXT in real-time.
 
 Use example:
 
-- Download all currency pairs for Binance, Kucoin,
+# Download all currency pairs for Binance, Kucoin,
   FTX exchanges:
 > python im/ccxt/data/extract/download_realtime.py \
     --dst_dir test1 \
@@ -31,7 +31,7 @@ import im.common.db.create_schema as imcodbcrsch
 
 _LOG = logging.getLogger(__name__)
 
-
+# TODO(Danya): Create a type and move outside.
 def _instantiate_exchange(
     exchange_id: str, currency_pairs: str, api_keys: Optional[str] = None
 ) -> NamedTuple:
@@ -95,16 +95,16 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="CCXT names of exchanges to download from, separated by spaces, e.g. 'binance gemini',"
-        "'all' for each exchange (currently includes Binance and Kucoin by default)",
+        help="CCXT exchange ids to download data for separated by spaces, e.g. 'binance gemini',"
+        "'all' for all supported exchanges",
     )
     parser.add_argument(
         "--currency_pairs",
         action="store",
         required=True,
         type=str,
-        help="Currency pairs to download data for, separated by spaces, e.g. 'BTC/USD ETH/USD',"
-        " 'all' for each currency pair in exchange",
+        help="Name of the currency pair to download data for, separated by spaces,"
+        " e.g. 'BTC/USD ETH/USD','all' for all the currency pairs in exchange",
     )
     parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]

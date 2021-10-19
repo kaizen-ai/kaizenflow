@@ -6,7 +6,7 @@ import im.ccxt.data.load.loader as cdlloa
 
 import logging
 import os
-from typing import Optional
+from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
 
@@ -65,36 +65,83 @@ def _get_file_path(
 
 
 class CcxtLoader:
-    def __init__(self, root_dir: str, aws_profile: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        connection: Optional[hsql.DbConnection] = None,
+        root_dir: Optional[str] = None,
+        aws_profile: Optional[str] = None,
+    ) -> None:
         """
         Load CCXT data.
 
+        :param connection: connection for a SQL database
         :param: root_dir: either a local root path (e.g., "/app/im") or
             an S3 root path ("s3://alphamatic-data/data) to CCXT data
         :param: aws_profile: AWS profile name (e.g., "am")
         """
+        self._connection = connection
         self._root_dir = root_dir
         self._aws_profile = aws_profile
         # Specify supported data types to load.
         self._data_types = ["ohlcv"]
 
-    @staticmethod
+    # TODO(Dan): Refactor in #183.
     def read_db_data(
-        connection: hsql.DbConnection,
+        self,
         table_name: str,
+        exchange_ids: Optional[Tuple[str]] = None,
+        currency_pairs: Optional[Tuple[str]] = None,
+        start_date: Optional[int] = None,
+        end_date: Optional[int] = None,
+        **read_sql_kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
         Load CCXT data from database.
 
-        :param connection: DB connection
         :param table_name: name of the table to load (e.g., "ccxt_ohlcv")
-        :return: table
+        :param exchange_ids: exchange ids to load data for
+        :param currency_pairs: currency pairs to load data for
+        :param start_date: the earliest data to load data for as unix epoch (e.g., 1631145600000)
+        :param end_date: the latest date to load data for as unix epoch (e.g., 1631145600000)
+        :param read_sql_kwargs: kwargs for `pd.read_sql()` query
+        :return: table from database
         """
+        # Verify that DB connection is provided.
+        dbg.dassert_is_not(self._connection, None)
+        # Verify that table with specified name exists.
         dbg.dassert_in(
-            table_name, hsql.get_table_names(connection)
+            table_name, hsql.get_table_names(self._connection)
         )
+        # Initialize SQL query.
         sql_query = "SELECT * FROM %s" % table_name
-        table = pd.read_sql(sql_query, connection)
+        # Initialize lists for query condition strings and parameters to insert.
+        query_conditions = []
+        query_params = []
+        # For every conditional parameter if it is provided, append
+        # a corresponding query string to the query conditions list and
+        # the corresponding parameter to the query parameters list.
+        if exchange_ids:
+            query_conditions.append("exchange_id IN %s")
+            query_params.append(exchange_ids)
+        if currency_pairs:
+            query_conditions.append("currency_pair IN %s")
+            query_params.append(currency_pairs)
+        if start_date:
+            query_conditions.append("timestamp > %s")
+            query_params.append(start_date)
+        if end_date:
+            query_conditions.append("timestamp < %s")
+            query_params.append(end_date)
+        if query_conditions:
+            # Append all the provided query conditions to the main SQL query.
+            query_conditions = " AND ".join(query_conditions)
+            sql_query = " WHERE ".join([sql_query, query_conditions])
+        # Add a tuple of gathered query parameters to kwargs as `params`.
+        read_sql_kwargs["params"] = tuple(query_params)
+        # Execute SQL query.
+        table = pd.read_sql(
+            sql_query, self._connection, **read_sql_kwargs
+        )
         return table
 
     def read_data(
@@ -114,6 +161,8 @@ class CcxtLoader:
         :return: processed CCXT data
         """
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
+        # Verify that root dir is provided.
+        dbg.dassert_is_not(self._root_dir, None)
         # Verify that requested data type is valid.
         dbg.dassert_in(
             data_type.lower(),

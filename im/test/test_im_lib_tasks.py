@@ -1,8 +1,23 @@
+import os
+
 import pytest
 
+import helpers.git as hgit
 import helpers.system_interaction as hsyint
 import helpers.unit_test as huntes
 import im.im_lib_tasks as imimlitas  # pylint: disable=no-name-in-module
+
+
+def _get_docker_compose_file_path() -> str:
+    """
+    Get file path to `docker-compose.yml` file.
+
+    :return: `docker-compose.yml` file path
+    """
+    amp_path = hgit.get_amp_abs_path()
+    file_path = "im/devops/compose/docker-compose.yml"
+    full_file_path = os.path.join(amp_path, file_path)
+    return full_file_path
 
 
 class TestGetImDockerCmd(huntes.TestCase):
@@ -12,9 +27,10 @@ class TestGetImDockerCmd(huntes.TestCase):
         """
         cmd = "bash"
         actual = imimlitas._get_im_docker_cmd(cmd)
-        expected = r"""
+        docker_compose_path = _get_docker_compose_file_path()
+        expected = fr"""
         docker-compose \
-            --file /app/im/devops/compose/docker-compose.yml \
+            --file {docker_compose_path} \
             run --rm app \
             bash
         """
@@ -26,9 +42,10 @@ class TestGetImDockerCmd(huntes.TestCase):
         """
         cmd = "im/devops/docker_scripts/set_shema_im_db.py"
         actual = imimlitas._get_im_docker_cmd(cmd)
-        expected = r"""
+        docker_compose_path = _get_docker_compose_file_path()
+        expected = fr"""
         docker-compose \
-            --file /app/im/devops/compose/docker-compose.yml \
+            --file {docker_compose_path} \
             run --rm app \
             im/devops/docker_scripts/set_shema_im_db.py
         """
@@ -41,9 +58,10 @@ class TestGetImDockerDown(huntes.TestCase):
         Check the command line to only remove containers.
         """
         actual = imimlitas._get_im_docker_down(volumes_remove=False)
-        expected = r"""
+        docker_compose_path = _get_docker_compose_file_path()
+        expected = fr"""
         docker-compose \
-            --file /app/im/devops/compose/docker-compose.yml \
+            --file {docker_compose_path} \
             down
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
@@ -53,9 +71,10 @@ class TestGetImDockerDown(huntes.TestCase):
         Check the command line to remove containers and volumes.
         """
         actual = imimlitas._get_im_docker_down(volumes_remove=True)
-        expected = r"""
+        docker_compose_path = _get_docker_compose_file_path()
+        expected = fr"""
         docker-compose \
-            --file /app/im/devops/compose/docker-compose.yml \
+            --file {docker_compose_path} \
             down \
             -v
         """

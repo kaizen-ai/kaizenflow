@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import im.common.sql_writer as imcosqwri
+"""
+
 import abc
 from typing import Dict, Optional
 
@@ -5,11 +11,10 @@ import pandas as pd
 import psycopg2
 import psycopg2.extensions as pexten
 
-import im.common.data.types as icdtyp
+import im.common.data.types as imcodatyp
 
 
-# TODO(*): -> Why not AbstractSqlWriter?
-class AbstractSqlWriterBackend(abc.ABC):
+class AbstractSqlWriter(abc.ABC):
     """
     Interface for manager of CRUD operations on a database defined in db/sql.
     """
@@ -17,12 +22,12 @@ class AbstractSqlWriterBackend(abc.ABC):
     # Provider-specific constant. Map frequency to table name and datetime field.
     # E.g.:
     # {
-    #      icdtyp.Frequency.Daily: {
+    #      imcodatyp.Frequency.Daily: {
     #         "table_name": "KibotDailyData",
     #         "datetime_field_name": "date",
     #     }
     # }
-    FREQ_ATTR_MAPPING: Dict[icdtyp.Frequency, Dict[str, str]]
+    FREQ_ATTR_MAPPING: Dict[imcodatyp.Frequency, Dict[str, str]]
 
     def __init__(
         self, dbname: str, user: str, password: str, host: str, port: int
@@ -38,7 +43,7 @@ class AbstractSqlWriterBackend(abc.ABC):
     def ensure_symbol_exists(
         self,
         symbol: str,
-        asset_class: icdtyp.AssetClass,
+        asset_class: imcodatyp.AssetClass,
     ) -> None:
         """
         Insert new symbol entry, if it does not exist.
@@ -156,7 +161,7 @@ class AbstractSqlWriterBackend(abc.ABC):
         self.conn.close()
 
     def get_remaining_data_to_load(
-        self, df: pd.DataFrame, trade_symbol_id: int, frequency: icdtyp.Frequency
+        self, df: pd.DataFrame, trade_symbol_id: int, frequency: imcodatyp.Frequency
     ) -> pd.DataFrame:
         """
         Trim `df` based on what data was already loaded in the database.
@@ -190,7 +195,7 @@ class AbstractSqlWriterBackend(abc.ABC):
         return df
 
     def delete_data_by_trade_symbol_id(
-        self, trade_symbol_id: int, frequency: icdtyp.Frequency
+        self, trade_symbol_id: int, frequency: imcodatyp.Frequency
     ) -> None:
         """
         Delete all data from table corresponding to `trade_symbol_id` and
