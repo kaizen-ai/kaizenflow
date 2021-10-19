@@ -62,11 +62,13 @@ class CcxtLoader:
 
         This code path is used for the real-time data.
 
-        :param table_name: name of the table to load (e.g., "ccxt_ohlcv")
+        :param table_name: name of the table to load, e.g., "ccxt_ohlcv"
         :param exchange_ids: exchange ids to load data for
         :param currency_pairs: currency pairs to load data for
-        :param start_date: the earliest data to load data for as unix epoch (e.g., 1631145600000)
-        :param end_date: the latest date to load data for as unix epoch (e.g., 1631145600000)
+        :param start_date: the earliest data to load data for as unix epoch,
+            e.g., 1631145600000
+        :param end_date: the latest date to load data for as unix epoch,
+            e.g., 1631145600000
         :param read_sql_kwargs: kwargs for `pd.read_sql()` query
         :return: table from database
         """
@@ -121,7 +123,8 @@ class CcxtLoader:
         :param exchange_id: CCXT exchange id, e.g. "binance"
         :param currency_pair: currency pair, e.g. "BTC/USDT"
         :param data_type: OHLCV or trade, bid/ask data
-        :param data_snapshot: snapshot of datetime when data was loaded, e.g. "20210924"
+        :param data_snapshot: snapshot of datetime when data was loaded,
+            e.g. "20210924"
         :return: processed CCXT data
         """
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
@@ -130,8 +133,9 @@ class CcxtLoader:
         # Verify that requested data type is valid.
         dbg.dassert_in(data_type.lower(), self._data_types)
         # Get absolute file path for a CCXT file.
-        file_name = self._get_file_path(data_snapshot, exchange_id, currency_pair)
-        file_path = os.path.join(self._root_dir, file_name)
+        file_path = self._get_file_path(
+            data_snapshot, exchange_id, currency_pair
+        )
         # Initialize kwargs dict for further CCXT data reading.
         read_csv_kwargs = {}
         # TODO(Dan): Remove asserts below after CMTask108 is resolved.
@@ -161,6 +165,51 @@ class CcxtLoader:
             data, exchange_id, currency_pair, data_type
         )
         return transformed_data
+
+    def _get_file_path(
+        self,
+        data_snapshot: str,
+        exchange_id: str,
+        currency_pair: str,
+    ) -> str:
+        """
+        Get the absolute path to a file with CCXT data.
+
+        The file path is constructed in the following way:
+        `<root_dir>/ccxt/<snapshot>/<exchange_id>/<currency_pair>.csv.gz`.
+
+        :param data_snapshot: snapshot of datetime when data was loaded,
+            e.g. "20210924"
+        :param exchange_id: CCXT exchange id, e.g. "binance"
+        :param currency_pair: currency pair `<currency1>/<currency2>`,
+            e.g. "BTC/USDT"
+        :return: absolute path to a file with CCXT data
+        """
+        # Extract data about downloaded currencies for CCXT.
+        downloaded_currencies_info = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)[
+            "CCXT"
+        ]
+        # Verify that data for the input exchange id was downloaded.
+        dbg.dassert_in(
+            exchange_id,
+            downloaded_currencies_info.keys(),
+            msg="Data for exchange id='%s' was not downloaded" % exchange_id,
+        )
+        # Verify that data for the input exchange id and currency pair was
+        # downloaded.
+        downloaded_currencies = downloaded_currencies_info[exchange_id]
+        dbg.dassert_in(
+            currency_pair,
+            downloaded_currencies,
+            msg="Data for exchange id='%s', currency pair='%s' was not downloaded"
+                % (exchange_id, currency_pair),
+        )
+        # Get absolute file path.
+        file_name = currency_pair.replace('/', '_') + ".csv.gz"
+        file_path = os.path.join(
+            self._root_dir, "ccxt", data_snapshot, exchange_id, file_name
+        )
+        return file_path
 
     # TODO(*): Consider making `exchange_id` a class member.
     def _transform(
@@ -286,43 +335,3 @@ class CcxtLoader:
         # Rearrange the columns.
         data = data[ohlcv_columns].copy()
         return data
-
-    @staticmethod
-    def _get_file_path(
-        data_snapshot: str,
-        exchange_id: str,
-        currency_pair: str,
-    ) -> str:
-        """
-        Get the path to a file with CCXT data from a content root.
-
-        The file path is constructed in the following way:
-        `ccxt/<snapshot>/<exchange_id>/<currency_pair>.csv.gz`.
-
-        :param data_snapshot: snapshot of datetime when data was loaded, e.g. "20210924"
-        :param exchange_id: CCXT exchange id, e.g. "binance"
-        :param currency_pair: currency pair `<currency1>/<currency2>`, e.g. "BTC/USDT"
-        :return: path to a file with CCXT data
-        """
-        # Extract data about downloaded currencies for CCXT.
-        downloaded_currencies_info = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)[
-            "CCXT"
-        ]
-        # Verify that data for the input exchange id was downloaded.
-        dbg.dassert_in(
-            exchange_id,
-            downloaded_currencies_info.keys(),
-            msg="Data for exchange id='%s' was not downloaded" % exchange_id,
-        )
-        # Verify that data for the input exchange id and currency pair was
-        # downloaded.
-        downloaded_currencies = downloaded_currencies_info[exchange_id]
-        dbg.dassert_in(
-            currency_pair,
-            downloaded_currencies,
-            msg="Data for exchange id='%s', currency pair='%s' was not downloaded"
-                % (exchange_id, currency_pair),
-        )
-        file_name = currency_pair.replace('/', '_') + ".csv.gz"
-        file_path = os.path.join("ccxt", data_snapshot, exchange_id, file_name)
-        return file_path
