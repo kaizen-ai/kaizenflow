@@ -44,6 +44,9 @@ _LOG.info("%s", henv.get_system_signature()[0])
 hprint.config_notebook()
 
 
+# %% [markdown]
+# # Config
+
 # %%
 def get_eda_config() -> ccocon.Config:
     """
@@ -52,17 +55,17 @@ def get_eda_config() -> ccocon.Config:
     :return: config object
     """
     config = ccocon.Config()
-    # Load data.
+    # Load parameters.
     config.add_subconfig("load")
     config["load"]["aws_profile"] = "am"
     config["load"]["data_dir"] = "s3://alphamatic-data/data"
-    # Data.
+    # Data parameters.
     config.add_subconfig("data")
     config["data"]["close_price_col_name"] = "close"
     config["data"]["datetime_col_name"] = "timestamp"
     config["data"]["frequency"] = "T"
     config["data"]["timezone"] = "US/Eastern"
-    # Statistics. 
+    # Statistics parameters.
     config.add_subconfig("statistics")
     config["statistics"]["z_score_boundary"] = 3
     config["statistics"]["z_score_window"] = "D"
@@ -71,9 +74,15 @@ def get_eda_config() -> ccocon.Config:
 config = get_eda_config()
 print(config)
 
+# %% [markdown]
+# # Load data
+
 # %%
-root_dir = "s3://alphamatic-data/data"
-ccxt_loader = cdlloa.CcxtLoader(root_dir=root_dir, aws_profile="am")
+# TODO(Grisha): potentially read data from the db.
+ccxt_loader = cdlloa.CcxtLoader(
+    root_dir=config["load"]["data_dir"],
+    aws_profile=config["load"]["aws_profile"]
+)
 ccxt_data = ccxt_loader.read_data(exchange_id="binance", currency_pair="BTC/USDT", data_type="OHLCV")
 print(ccxt_data.shape[0])
 ccxt_data.head(3)
@@ -84,30 +93,58 @@ ccxt_data["timestamp"].iloc[0]
 
 # %%
 # TODO(*): change tz in `CcxtLoader`.
-ccxt_data["timestamp"] = ccxt_data["timestamp"].dt.tz_convert("US/Eastern")
+ccxt_data["timestamp"] = ccxt_data["timestamp"].dt.tz_convert(config["data"]["timezone"])
 ccxt_data["timestamp"].iloc[0]
 
 # %%
+# TODO(*): set index in the `CcxtLoader`: either read from db or add
+# `pandas.read_csv` kwargs to the `CcxtLoader.read_data()`.
 ccxt_data = ccxt_data.set_index("timestamp")
 ccxt_data.head(3)
 
 # %%
-ccxt_data = ccxt_data[["close"]]
+ccxt_data = ccxt_data[[config["data"]["close_price_col_name"]]]
 ccxt_data.head(3)
 
+
 # %%
-min_date = ccxt_data.index.min()
-max_date = ccxt_data.index.max()
-one_minute_index = pd.date_range(min_date, max_date, freq="T")
-ccxt_data_reindex = ccxt_data.reindex(one_minute_index)
+def resample_index(index: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
+    """
+    Resample `DatetimeIndex`.
+    
+    :param index: `DatetimeIndex` to resample
+    :param frequency: frequency from `pd.date_range()` to resample to 
+    :return: resampled `DatetimeIndex`
+    """
+    dbg.dassert_isinstance(index, pd.DatetimeIndex)
+    min_date = index.min()
+    max_date = index.max()
+    resampled_index = pd.date_range(
+        start = min_date, 
+        end = max_date, 
+        freq=frequency,
+    )
+    return resampled_index
+
+resampled_index = resample_index(ccxt_data.index, config["data"]["frequency"])
+ccxt_data_reindex = ccxt_data.reindex(resampled_index)    
 print(ccxt_data_reindex.shape[0])
 ccxt_data_reindex.head(3)
 
 
 # %%
-def filter_by_date(df, start_date, end_date):
-    filter_start_date = pd.Timestamp(start_date, tz="US/Eastern")
-    filter_end_date = pd.Timestamp(end_date, tz="US/Eastern")
+def filter_by_date(df: pd.DataFrame, start_date: str, end_date: str) -> pd.DataFrame:
+    """
+    Filter data by date [start_date, end_date).
+    
+    :param df: data
+    :param start_date: lower bound
+    :param end_date: upper bound
+    :return: filtered data
+    """
+    # Convert dates to timestamps.
+    filter_start_date = pd.Timestamp(start_date, tz=config["data"]["timezone"])
+    filter_end_date = pd.Timestamp(end_date, tz=config["data"]["timezone"])
     mask = (df.index >= filter_start_date) & (df.index < filter_end_date)
     _LOG.info(
         "Filtering in [%s; %s), selected rows=%s",
