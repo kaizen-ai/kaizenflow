@@ -12,7 +12,9 @@
 #     name: python3
 # ---
 
-# %%
+# %% [markdown]
+# # Imports
+
 # %%
 # # %load_ext autoreload
 # # %autoreload 2
@@ -23,7 +25,9 @@ import logging
 
 import pandas as pd
 
+import core.config.config_ as ccocon
 import core.explore as cexplore
+import core.plotting as cplot
 import helpers.dbg as dbg
 import helpers.env as henv
 import helpers.git as hgit
@@ -38,6 +42,34 @@ _LOG = logging.getLogger(__name__)
 _LOG.info("%s", henv.get_system_signature()[0])
 
 hprint.config_notebook()
+
+
+# %%
+def get_eda_config() -> ccocon.Config:
+    """
+    Get config that controls EDA parameters.
+    
+    :return: config object
+    """
+    config = ccocon.Config()
+    # Load data.
+    config.add_subconfig("load")
+    config["load"]["aws_profile"] = "am"
+    config["load"]["data_dir"] = "s3://alphamatic-data/data"
+    # Data.
+    config.add_subconfig("data")
+    config["data"]["close_price_col_name"] = "close"
+    config["data"]["datetime_col_name"] = "timestamp"
+    config["data"]["frequency"] = "T"
+    config["data"]["timezone"] = "US/Eastern"
+    # Statistics. 
+    config.add_subconfig("statistics")
+    config["statistics"]["z_score_boundary"] = 3
+    config["statistics"]["z_score_window"] = "D"
+    return config
+
+config = get_eda_config()
+print(config)
 
 # %%
 root_dir = "s3://alphamatic-data/data"
@@ -98,4 +130,16 @@ nan_data = ccxt_data_filtered[ccxt_data_filtered["close"].isna()]
 nan_data.groupby(nan_data.index.date).apply(lambda x: x.isnull().sum()).sort_values(by="close", ascending=False)
 
 # %%
-ccxt_data_filtered["close"].plot()
+not_nan = ccxt_data_filtered[~ccxt_data_filtered["close"].isna()]
+cplot.plot_timeseries_distribution(not_nan["close"], datetime_types = ["day"])
+
+
+# %%
+def detect_outliers(df, z_score_boundary):
+    df_copy = df.copy()
+    roll = df_copy["close"].rolling(window="D")
+    df_copy["z-score"] = (df_copy["close"] - roll.mean()) / roll.std()
+    df_outliers = df_copy[abs(df_copy["z-score"]) > z_score_boundary]
+    return df_outliers
+
+detect_outliers(ccxt_data_filtered, 10)
