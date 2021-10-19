@@ -5,7 +5,7 @@ import helpers.unit_test as hut
 import im.common.data.types as icdtyp
 import im.common.db.utils as imcodbuti
 import im.common.test.utils as ictuti
-import im.kibot.kibot_sql_writer_backend as ikkibo
+import im.kibot.sql_writer as ikkibo
 
 
 # TODO(*): -> TestKibotSqlWriterBackend1
@@ -21,7 +21,7 @@ class TestSqlWriterBackend1(ictuti.SqlWriterBackendTestCase):
     def setUp(self) -> None:
         super().setUp()
         # Initialize writer class to test.
-        self._writer = ikkibo.KibotSqlWriterBackend(
+        self._writer = ikkibo.KibotSqlWriter(
             dbname=self._dbname,
             user=self._user,
             password=self._password,

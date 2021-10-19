@@ -37,7 +37,7 @@ import im.kibot.data.load as ikdloa
 import im.kibot.data.load.dataset_name_parser as ikdlda
 import im.kibot.data.load.kibot_sql_data_loader as ikdlki
 import im.kibot.data.transform.kibot_s3_to_sql_transformer as ikdtki
-import im.kibot.kibot_sql_writer_backend as ikkibo
+import im.kibot.sql_writer as ikkibo
 import im.kibot.metadata.load.s3_backend as ikmls3
 
 _LOG = logging.getLogger(__name__)
@@ -138,7 +138,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     #
     dataset_name_parser = ikdlda.DatasetNameParser()
     #
-    sql_writer_backed = ikkibo.KibotSqlWriterBackend(
+    sql_writer_backed = ikkibo.KibotSqlWriter(
         dbname=args.dbname,
         user=args.dbuser,
         password=args.dbpass,
