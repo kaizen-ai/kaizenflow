@@ -50,13 +50,15 @@ class TestGetFilePath(hut.TestCase):
 
 class TestCcxtLoader(hut.TestCase):
 
+    @pytest.mark.slow
     def test1(self) -> None:
         """
         Test files on S3 are being read correctly.
         """
         # TODO(gp): We could factor out these 2 lines in a `def _get_loader()`.
-        aws_profile = "am"
-        ccxt_loader = cdlloa.CcxtLoader(_AM_S3_ROOT_DIR, aws_profile)
+        ccxt_loader = cdlloa.CcxtLoader(
+            root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+        )
         actual = ccxt_loader.read_data("binance", "BTC/USDT", "OHLCV")
         # Check the output values.
         actual_string = hut.convert_df_to_json_string(actual)
@@ -66,8 +68,9 @@ class TestCcxtLoader(hut.TestCase):
         """
         Test unsupported exchange id.
         """
-        aws_profile = "am"
-        ccxt_loader = cdlloa.CcxtLoader(_AM_S3_ROOT_DIR, aws_profile)
+        ccxt_loader = cdlloa.CcxtLoader(
+            root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+        )
         with self.assertRaises(AssertionError):
             ccxt_loader.read_data("unsupported_exchange_id", "BTC/USDT", "OHLCV")
 
@@ -75,8 +78,9 @@ class TestCcxtLoader(hut.TestCase):
         """
         Test unsupported currency pair.
         """
-        aws_profile = "am"
-        ccxt_loader = cdlloa.CcxtLoader(_AM_S3_ROOT_DIR, aws_profile)
+        ccxt_loader = cdlloa.CcxtLoader(
+            root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+        )
         with self.assertRaises(AssertionError):
             ccxt_loader.read_data("binance", "unsupported_currency_pair", "OHLCV")
 
@@ -84,7 +88,8 @@ class TestCcxtLoader(hut.TestCase):
         """
         Test unsupported data type.
         """
-        aws_profile = "am"
-        ccxt_loader = cdlloa.CcxtLoader(_AM_S3_ROOT_DIR, aws_profile)
+        ccxt_loader = cdlloa.CcxtLoader(
+            root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+        )
         with self.assertRaises(AssertionError):
             ccxt_loader.read_data("binance", "BTC/USDT", "unsupported_data_type")
