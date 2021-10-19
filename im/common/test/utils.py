@@ -5,8 +5,8 @@ import pandas as pd
 
 import helpers.sql as hsql
 import helpers.unit_test as huntes
-import im.common.db.create_db as imcodbcrsch
-import im.common.sql_writer as imcosqwrbac
+import im.common.db.create_db as imcodbcrdb
+import im.common.sql_writer as imcosqwri
 
 _LOG = logging.getLogger(__name__)
 
@@ -18,21 +18,13 @@ class SqlWriterBackendTestCase(huntes.TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        # Get PostgreSQL connection parameters.
-        self._conn_db = os.environ["POSTGRES_DB"]
-        self._host = os.environ["POSTGRES_HOST"]
-        self._port = os.environ["POSTGRES_PORT"]
-        self._user = os.environ["POSTGRES_USER"]
-        self._password = os.environ["POSTGRES_PASSWORD"]
+        # Get PostgreSQL connection.
+        self._connection = hsql.get_connection_from_env_vars()[0]
         self._new_db = self._get_test_string()
         # Create database for each test.
-        imcodbcrsch.create_database(
+        imcodbcrdb.create_database(
+            connection=self._connection,
             new_db=self._new_db,
-            conn_db=self._conn_db,
-            host=self._host,
-            user=self._user,
-            port=int(self._port),
-            password=self._password,
             force=True,
         )
         # Define constant IDs for records across the test.
@@ -40,19 +32,15 @@ class SqlWriterBackendTestCase(huntes.TestCase):
         self._exchange_id = 20
         self._trade_symbol_id = 30
         # Create a placeholder for self._writer.
-        self._writer: imcosqwrbac.AbstractSqlWriter
+        self._writer: imcosqwri.AbstractSqlWriter
 
     def tearDown(self) -> None:
         # Close connection.
         self._writer.close()
         # Remove created database.
-        imcodbcrsch.remove_database(
+        imcodbcrdb.remove_database(
+            connection=self._connection,
             db_to_drop=self._new_db,
-            conn_db=self._conn_db,
-            host=self._host,
-            user=self._user,
-            port=int(self._port),
-            password=self._password,
         )
         super().tearDown()
 

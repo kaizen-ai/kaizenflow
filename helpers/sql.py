@@ -5,6 +5,7 @@ import helpers.sql as hsql
 """
 
 import logging
+import os
 from typing import List, Optional, Tuple, Union
 
 import pandas as pd
@@ -37,6 +38,28 @@ def get_connection(
     cursor = connection.cursor()
     if autocommit:
         connection.autocommit = True
+    return connection, cursor
+
+
+def get_connection_from_env_vars() -> Tuple[
+    DbConnection, psycop.extensions.cursor
+]:
+    """
+    Create a SQL connection using environment variables.
+    """
+    # Get environment variables
+    db_name = os.environ["POSTGRES_DB"]
+    host = os.environ["POSTGRES_HOST"]
+    port = int(os.environ["POSTGRES_PORT"])
+    user = os.environ["POSTGRES_USER"]
+    password = os.environ["POSTGRES_PASSWORD"]
+    connection, cursor = get_connection(
+        dbname=db_name,
+        host=host,
+        port=port,
+        user=user,
+        password=password,
+    )
     return connection, cursor
 
 

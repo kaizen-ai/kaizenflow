@@ -20,7 +20,7 @@ import os
 import helpers.dbg as hdbg
 import helpers.parser as hparser
 import helpers.sql as hsql
-import im.common.db.create_db as imcodbcrsch
+import im.common.db.create_db as imcodbcrdb
 import im.common.db.utils as imcodbuti
 
 _LOG = logging.getLogger(__name__)
@@ -37,27 +37,13 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level)
-    db_name = os.environ["POSTGRES_DB"]
-    host = os.environ["POSTGRES_HOST"]
-    port = int(os.environ["POSTGRES_PORT"])
-    user = os.environ["POSTGRES_USER"]
-    password = os.environ["POSTGRES_PASSWORD"]
+    connection, _ = hsql.get_connection_from_env_vars()
     # Verify that the database is available.
-    imcodbuti.check_db_connection(
-        db_name=db_name, host=host, port=port, user=user, password=password
-    )
-    conn, cursor = hsql.get_connection(
-        dbname=db_name,
-        host=host,
-        port=port,
-        user=user,
-        password=password,
-    )
+    imcodbuti.check_db_connection(connection=connection)
     # Set schema for the database.
     _LOG.info("Setting schema for DB `%s`...", os.environ["POSTGRES_DB"])
-    # TODO(Danya): remove cursor and pass connection (#169).
-    imcodbcrsch.create_all_tables(cursor)
-    imcodbcrsch.test_tables(conn, cursor)
+    imcodbcrdb.create_all_tables(connection)
+    imcodbcrdb.test_tables(connection)
     _LOG.info("Database `%s` is ready to use.", os.environ["POSTGRES_DB"])
 
 
