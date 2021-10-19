@@ -1,5 +1,7 @@
 import os
 
+import pytest
+
 import helpers.s3 as hs3
 import helpers.unit_test as hut
 import im.ccxt.data.load.loader as cdlloa
@@ -49,6 +51,7 @@ class TestGetFilePath(hut.TestCase):
 
 class TestCcxtLoader(hut.TestCase):
 
+    @pytest.mark.slow
     def test1(self) -> None:
         """
         Test files on S3 are being read correctly.
