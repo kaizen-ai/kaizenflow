@@ -178,7 +178,6 @@ def filter_by_date(
     Filter data by date [start_date, end_date).
 
     :param df: data
-    :param config: config object
     :param start_date: lower bound
     :param end_date: upper bound
     :return: filtered data
@@ -244,7 +243,6 @@ def count_nans_by_period(
     Count NaNs by period.
 
     :param df: data
-    :param config: config object
     :param period: time period, e.g. "D" - to group by day
     :param top_n: display top N counts
     :return: table with NaN counts by period
@@ -277,10 +275,12 @@ nan_counts
 # TODO(Grisha): add support for other approaches, e.g. IQR-based approach.
 def detect_outliers(df: pd.DataFrame, config: ccocon.Config) -> pd.DataFrame:
     """
-    Detect outliers in a rolling fashion.
+    Detect outliers in a rolling fashion using z-score.
+    
+    If an observation has abs(z-score) > `z_score_boundary` it is considered
+    an outlier. To compute a `z-score` rolling mean and rolling std are used.
 
     :param df: data
-    :param config: config object
     :return: outliers
     """
     df_copy = df.copy()
