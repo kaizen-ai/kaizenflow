@@ -27,6 +27,8 @@
 # # %matplotlib inline
 
 # %%
+# TODO(Grisha): move to `core/notebooks` in #205.
+
 import logging
 import os
 
@@ -69,7 +71,7 @@ def get_eda_config() -> ccocon.Config:
     # Data parameters.
     config.add_subconfig("data")
     # TODO(Grisha): maybe we want to have a convention about column names so
-    # that we do not need to pass it via config.
+    # that we do not need to pass them via config.
     config["data"]["close_price_col_name"] = "close"
     config["data"]["datetime_col_name"] = "timestamp"
     config["data"]["frequency"] = "T"
@@ -86,6 +88,9 @@ print(config)
 
 # %% [markdown]
 # # Load data
+
+# %%
+# TODO(Grisha): allow loading multiple assets/exchanges/currencies.
 
 # %%
 # TODO(Grisha): potentially read data from the db.
@@ -127,6 +132,9 @@ ccxt_data_subset.head(3)
 # # Resample index
 
 # %%
+# TODO(Grisha): somehow merge it with `core.pandas_helpers.resample_index`.
+# The problem with `resample_index` in `pandas_helpers` is that it does not
+# generate empty rows for missing timestamps.
 def resample_index(index: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
     """
     Resample `DatetimeIndex`.
@@ -158,6 +166,12 @@ ccxt_data_reindex.head(3)
 # # Filter data
 
 # %%
+# TODO(Grisha): add support for filtering by exchange, currency, asset class.
+
+# %%
+# TODO(Grisha): potentially could be merged with `core.explore.filter_around_time`.
+# The problem is that the function in `core.explore` filters by column rather than
+# by index and the filter is [timestamp - delta; timestamp + delta].
 def filter_by_date(
     df: pd.DataFrame, config: ccocon.Config, start_date: str, end_date: str
 ) -> pd.DataFrame:
@@ -220,6 +234,7 @@ nan_stats_df
 # %%
 # TODO(Grisha): pretify the function: add assertions, logging.
 # TODO(Grisha): add support for zeros, infinities.
+# TODO(Grisha): also count NaNs by exchange, currency, asset class.
 def count_nans_by_period(
     df: pd.DataFrame,
     config: ccocon.Config,
