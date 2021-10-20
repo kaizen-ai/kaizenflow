@@ -32,6 +32,7 @@ from typing import BinaryIO, List, Tuple
 import requests
 
 import helpers.dbg as dbg
+import helpers.git as hgit
 import helpers.io_ as hio
 import helpers.open as opn
 import helpers.parser as prsr
@@ -129,8 +130,10 @@ def _export_notebook_to_dir(ipynb_file_name: str, tag: str, dst_dir: str) -> str
     # Move HTML.
     _LOG.debug("Export '%s' to '%s'", html_src_path, html_dst_path)
     hio.create_dir(dst_dir, incremental=True)
-    cmd = f"mv {html_src_path} {html_dst_path}"
-    hsyste.system(cmd)
+    if html_src_path != html_dst_path:
+        # Move the file to the `dst_dir`.
+        cmd = f"mv {html_src_path} {html_dst_path}"
+        hsyste.system(cmd)
     # Print info.
     _LOG.info("Generated HTML file '%s'", html_dst_path)
     cmd = f"""
@@ -276,7 +279,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Process the action.
     if args.action == "convert":
         # Convert to HTML.
-        dst_dir = "."
+        dst_dir = hgit.get_client_root(False)
         html_file_name = _export_notebook_to_dir(src_file_name, args.tag, dst_dir)
         # Try to open.
         opn.open_file(html_file_name)
@@ -295,7 +298,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _export_notebook_to_dir(src_file_name, args.tag, dst_dir)
     elif args.action == "publish_on_s3":
         # Convert to HTML.
-        dst_dir = "."
+        dst_dir = hgit.get_client_root(False)
         html_file_name = _export_notebook_to_dir(src_file_name, args.tag, dst_dir)
         # Copy to S3.
         aws_profile = hs3.get_aws_profile(args.aws_profile)
