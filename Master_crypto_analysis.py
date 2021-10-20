@@ -27,12 +27,13 @@
 # # %matplotlib inline
 
 # %%
-# TODO(Grisha): move to `core/notebooks` in #205.
+# TODO(Grisha): move to `core/dataflow_model/notebooks` in #205.
 
 import logging
 import os
 
 import pandas as pd
+import pytz
 
 import core.config.config_ as ccocon
 import core.explore as cexp
@@ -60,8 +61,6 @@ hprintin.config_notebook()
 def get_eda_config() -> ccocon.Config:
     """
     Get config that controls EDA parameters.
-
-    :return: config object
     """
     config = ccocon.Config()
     # Load parameters.
@@ -70,8 +69,6 @@ def get_eda_config() -> ccocon.Config:
     config["load"]["data_dir"] = os.path.join(hs3.get_path(), "data")
     # Data parameters.
     config.add_subconfig("data")
-    # TODO(Grisha): maybe we want to have a convention about column names so
-    # that we do not need to pass them via config.
     config["data"]["close_price_col_name"] = "close"
     config["data"]["datetime_col_name"] = "timestamp"
     config["data"]["frequency"] = "T"
@@ -90,7 +87,7 @@ print(config)
 # # Load data
 
 # %%
-# TODO(Grisha): allow loading multiple assets/exchanges/currencies.
+# TODO(Grisha): allow loading multiple assets/exchanges/currencies #219.
 
 # %%
 # TODO(Grisha): potentially read data from the db.
@@ -100,23 +97,25 @@ ccxt_loader = imccdaloloa.CcxtLoader(
 ccxt_data = ccxt_loader.read_data(
     exchange_id="binance", currency_pair="BTC/USDT", data_type="OHLCV"
 )
-print(ccxt_data.shape[0])
+_LOG.info("shape=%s", ccxt_data.shape[0])
 ccxt_data.head(3)
 
 # %%
 # Check the timezone info.
-ccxt_data[config["data"]["datetime_col_name"]].iloc[0]
+hdbg.dassert_eq(
+    ccxt_data[config["data"]["datetime_col_name"]].iloc[0].tzinfo, 
+    pytz.timezone("US/Eastern"),
+)
 
 # %%
-# TODO(*): change tz in `CcxtLoader`.
+# TODO(Grisha): change tz in `CcxtLoader` #217.
 ccxt_data[config["data"]["datetime_col_name"]] = ccxt_data[
     config["data"]["datetime_col_name"]
 ].dt.tz_convert(config["data"]["timezone"])
 ccxt_data[config["data"]["datetime_col_name"]].iloc[0]
 
 # %%
-# TODO(*): set index in the `CcxtLoader`: either read from db or add
-# `pandas.read_csv` kwargs to the `CcxtLoader.read_data()`.
+# TODO(Grisha): set index in the `CcxtLoader` #218.
 ccxt_data = ccxt_data.set_index(config["data"]["datetime_col_name"])
 ccxt_data.head(3)
 
@@ -132,7 +131,7 @@ ccxt_data_subset.head(3)
 # # Resample index
 
 # %%
-# TODO(Grisha): somehow merge it with `core.pandas_helpers.resample_index`.
+# TODO(Grisha): do we want to merge it with `core.pandas_helpers.resample_index`?
 # The problem with `resample_index` in `pandas_helpers` is that it does not
 # generate empty rows for missing timestamps.
 def resample_index(index: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
@@ -158,7 +157,7 @@ resampled_index = resample_index(
     ccxt_data_subset.index, config["data"]["frequency"]
 )
 ccxt_data_reindex = ccxt_data_subset.reindex(resampled_index)
-print(ccxt_data_reindex.shape[0])
+_LOG.info("shape=%s", ccxt_data_reindex.shape[0])
 ccxt_data_reindex.head(3)
 
 
@@ -300,5 +299,5 @@ def detect_outliers(df: pd.DataFrame, config: ccocon.Config) -> pd.DataFrame:
 
 
 outliers = detect_outliers(ccxt_data_filtered, config)
-print(outliers.shape[0])
+_LOG.info("shape=%s", outliers.shape[0])
 outliers.head(3)
