@@ -127,11 +127,10 @@ def _export_notebook_to_dir(ipynb_file_name: str, tag: str, dst_dir: str) -> str
     #
     html_file_name = os.path.basename(html_src_path)
     html_dst_path = os.path.join(dst_dir, html_file_name)
-    # Move HTML.
-    _LOG.debug("Export '%s' to '%s'", html_src_path, html_dst_path)
-    hio.create_dir(dst_dir, incremental=True)
     if html_src_path != html_dst_path:
-        # Move the file to the `dst_dir`.
+        # Move the HTML file to the `dst_dir`.
+        _LOG.debug("Export '%s' to '%s'", html_src_path, html_dst_path)
+        hio.create_dir(dst_dir, incremental=True)
         cmd = f"mv {html_src_path} {html_dst_path}"
         hsyste.system(cmd)
     # Print info.
