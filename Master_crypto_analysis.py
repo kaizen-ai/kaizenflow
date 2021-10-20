@@ -28,6 +28,7 @@
 
 # %%
 import logging
+import os
 
 import pandas as pd
 
@@ -38,6 +39,7 @@ import helpers.dbg as dbg
 import helpers.env as henv
 import helpers.git as hgit
 import helpers.printing as hprint
+import helpers.s3 as hs3
 import im.ccxt.data.load.loader as cdlloa
 
 # %%
@@ -64,7 +66,7 @@ def get_eda_config() -> ccocon.Config:
     # Load parameters.
     config.add_subconfig("load")
     config["load"]["aws_profile"] = "am"
-    config["load"]["data_dir"] = "s3://alphamatic-data/data"
+    config["load"]["data_dir"] = os.path.join(hs3.get_path() ,"data")
     # Data parameters.
     config.add_subconfig("data")
     # TODO(Grisha): maybe we want to have a convention about column names so
