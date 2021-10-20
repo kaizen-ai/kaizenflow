@@ -33,23 +33,22 @@ import os
 import pandas as pd
 
 import core.config.config_ as ccocon
-import core.explore as cexplore
-import core.plotting as cplot
-import helpers.dbg as dbg
+import core.explore as cexp
+import core.plotting as cplo
+import helpers.dbg as hdbg
 import helpers.env as henv
-import helpers.git as hgit
-import helpers.printing as hprint
+import helpers.printing as hprintin
 import helpers.s3 as hs3
-import im.ccxt.data.load.loader as cdlloa
+import im.ccxt.data.load.loader as imccdaloloa
 
 # %%
-dbg.init_logger(verbosity=logging.INFO)
+hdbg.init_logger(verbosity=logging.INFO)
 
 _LOG = logging.getLogger(__name__)
 
 _LOG.info("%s", henv.get_system_signature()[0])
 
-hprint.config_notebook()
+hprintin.config_notebook()
 
 
 # %% [markdown]
@@ -59,14 +58,14 @@ hprint.config_notebook()
 def get_eda_config() -> ccocon.Config:
     """
     Get config that controls EDA parameters.
-    
+
     :return: config object
     """
     config = ccocon.Config()
     # Load parameters.
     config.add_subconfig("load")
     config["load"]["aws_profile"] = "am"
-    config["load"]["data_dir"] = os.path.join(hs3.get_path() ,"data")
+    config["load"]["data_dir"] = os.path.join(hs3.get_path(), "data")
     # Data parameters.
     config.add_subconfig("data")
     # TODO(Grisha): maybe we want to have a convention about column names so
@@ -81,6 +80,7 @@ def get_eda_config() -> ccocon.Config:
     config["stats"]["z_score_window"] = "D"
     return config
 
+
 config = get_eda_config()
 print(config)
 
@@ -89,11 +89,12 @@ print(config)
 
 # %%
 # TODO(Grisha): potentially read data from the db.
-ccxt_loader = cdlloa.CcxtLoader(
-    root_dir=config["load"]["data_dir"],
-    aws_profile=config["load"]["aws_profile"]
+ccxt_loader = imccdaloloa.CcxtLoader(
+    root_dir=config["load"]["data_dir"], aws_profile=config["load"]["aws_profile"]
 )
-ccxt_data = ccxt_loader.read_data(exchange_id="binance", currency_pair="BTC/USDT", data_type="OHLCV")
+ccxt_data = ccxt_loader.read_data(
+    exchange_id="binance", currency_pair="BTC/USDT", data_type="OHLCV"
+)
 print(ccxt_data.shape[0])
 ccxt_data.head(3)
 
@@ -103,7 +104,9 @@ ccxt_data[config["data"]["datetime_col_name"]].iloc[0]
 
 # %%
 # TODO(*): change tz in `CcxtLoader`.
-ccxt_data[config["data"]["datetime_col_name"]] = ccxt_data[config["data"]["datetime_col_name"]].dt.tz_convert(config["data"]["timezone"])
+ccxt_data[config["data"]["datetime_col_name"]] = ccxt_data[
+    config["data"]["datetime_col_name"]
+].dt.tz_convert(config["data"]["timezone"])
 ccxt_data[config["data"]["datetime_col_name"]].iloc[0]
 
 # %%
@@ -113,7 +116,7 @@ ccxt_data = ccxt_data.set_index(config["data"]["datetime_col_name"])
 ccxt_data.head(3)
 
 # %% [markdown]
-# # Select subset 
+# # Select subset
 
 # %%
 ccxt_data_subset = ccxt_data[[config["data"]["close_price_col_name"]]]
@@ -127,23 +130,26 @@ ccxt_data_subset.head(3)
 def resample_index(index: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
     """
     Resample `DatetimeIndex`.
-    
+
     :param index: `DatetimeIndex` to resample
-    :param frequency: frequency from `pd.date_range()` to resample to 
+    :param frequency: frequency from `pd.date_range()` to resample to
     :return: resampled `DatetimeIndex`
     """
-    dbg.dassert_isinstance(index, pd.DatetimeIndex)
+    hdbg.dassert_isinstance(index, pd.DatetimeIndex)
     min_date = index.min()
     max_date = index.max()
     resampled_index = pd.date_range(
-        start = min_date, 
-        end = max_date, 
+        start=min_date,
+        end=max_date,
         freq=frequency,
     )
     return resampled_index
 
-resampled_index = resample_index(ccxt_data_subset.index, config["data"]["frequency"])
-ccxt_data_reindex = ccxt_data_subset.reindex(resampled_index)    
+
+resampled_index = resample_index(
+    ccxt_data_subset.index, config["data"]["frequency"]
+)
+ccxt_data_reindex = ccxt_data_subset.reindex(resampled_index)
 print(ccxt_data_reindex.shape[0])
 ccxt_data_reindex.head(3)
 
@@ -152,10 +158,12 @@ ccxt_data_reindex.head(3)
 # # Filter data
 
 # %%
-def filter_by_date(df: pd.DataFrame, config: ccocon.Config, start_date: str, end_date: str) -> pd.DataFrame:
+def filter_by_date(
+    df: pd.DataFrame, config: ccocon.Config, start_date: str, end_date: str
+) -> pd.DataFrame:
     """
     Filter data by date [start_date, end_date).
-    
+
     :param df: data
     :param config: config object
     :param start_date: lower bound
@@ -170,12 +178,15 @@ def filter_by_date(df: pd.DataFrame, config: ccocon.Config, start_date: str, end
         "Filtering in [%s; %s), selected rows=%s",
         start_date,
         end_date,
-        hprint.perc(mask.sum(), df.shape[0]),
+        hprintin.perc(mask.sum(), df.shape[0]),
     )
     ccxt_data_filtered = ccxt_data_reindex[mask]
     return ccxt_data_filtered
 
-ccxt_data_filtered = filter_by_date(ccxt_data_reindex, config, "2019-01-01", "2020-01-01")
+
+ccxt_data_filtered = filter_by_date(
+    ccxt_data_reindex, config, "2019-01-01", "2020-01-01"
+)
 ccxt_data_filtered.head(3)
 
 # %% [markdown]
@@ -185,7 +196,7 @@ ccxt_data_filtered.head(3)
 # ## Plot timeseries
 
 # %%
-# TODO(Grisha): replace with a function that does the plotting. 
+# TODO(Grisha): replace with a function that does the plotting.
 ccxt_data_filtered[config["data"]["close_price_col_name"]].plot()
 
 # %% [markdown]
@@ -193,31 +204,31 @@ ccxt_data_filtered[config["data"]["close_price_col_name"]].plot()
 
 # %%
 # TODO(Grisha): fix the function behavior in #204.
-cplot.plot_timeseries_distribution(
+cplo.plot_timeseries_distribution(
     ccxt_data_filtered[config["data"]["close_price_col_name"]],
-    datetime_types = ["hour"],
+    datetime_types=["hour"],
 )
 
 # %% [markdown]
 # ## NaN statistics
 
 # %%
-nan_stats_df = cexplore.report_zero_nan_inf_stats(ccxt_data_filtered)
+nan_stats_df = cexp.report_zero_nan_inf_stats(ccxt_data_filtered)
 nan_stats_df
 
 
 # %%
-# TODO(Grisha): pretify the function: add assertions, logging. 
+# TODO(Grisha): pretify the function: add assertions, logging.
 # TODO(Grisha): add support for zeros, infinities.
 def count_nans_by_period(
     df: pd.DataFrame,
     config: ccocon.Config,
     period: str,
-    top_n: int=10,
+    top_n: int = 10,
 ) -> pd.DataFrame:
     """
     Count NaNs by period.
-    
+
     :param df: data
     :param config: config object
     :param period: time period, e.g. "D" - to group by day
@@ -231,8 +242,11 @@ def count_nans_by_period(
     # Count NaNs.
     nan_grouped_counts = nan_grouped.apply(lambda x: x.isnull().sum())
     nan_grouped_counts.columns = ["nan_count"]
-    nan_grouped_counts_sorted = nan_grouped_counts.sort_values(by=["nan_count"], ascending=False)
+    nan_grouped_counts_sorted = nan_grouped_counts.sort_values(
+        by=["nan_count"], ascending=False
+    )
     return nan_grouped_counts_sorted.head(top_n)
+
 
 nan_counts = count_nans_by_period(
     ccxt_data_filtered,
@@ -250,18 +264,25 @@ nan_counts
 def detect_outliers(df: pd.DataFrame, config: ccocon.Config) -> pd.DataFrame:
     """
     Detect outliers in a rolling fashion.
-    
+
     :param df: data
     :param config: config object
     :return: outliers
     """
     df_copy = df.copy()
-    roll = df_copy[config["data"]["close_price_col_name"]].rolling(window=config["stats"]["z_score_window"])
+    roll = df_copy[config["data"]["close_price_col_name"]].rolling(
+        window=config["stats"]["z_score_window"]
+    )
     # Compute z-score for a rolling window.
-    df_copy["z-score"] = (df_copy[config["data"]["close_price_col_name"]] - roll.mean()) / roll.std()
+    df_copy["z-score"] = (
+        df_copy[config["data"]["close_price_col_name"]] - roll.mean()
+    ) / roll.std()
     # Select outliers based on the z-score.
-    df_outliers = df_copy[abs(df_copy["z-score"]) > config["stats"]["z_score_boundary"]]
+    df_outliers = df_copy[
+        abs(df_copy["z-score"]) > config["stats"]["z_score_boundary"]
+    ]
     return df_outliers
+
 
 outliers = detect_outliers(ccxt_data_filtered, config)
 print(outliers.shape[0])
