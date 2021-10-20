@@ -32,6 +32,9 @@ class TestGetFilePath(hut.TestCase):
         """
         exchange_id = "unsupported exchange"
         currency_pair = "ADA/USDT"
+        ccxt_loader = cdlloa.CcxtLoader(
+            root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+        )
         # TODO(gp): We should throw a different exception, like
         # `UnsupportedExchane`.
         # TODO(gp): Same change also for CDD test_loader.py
@@ -44,22 +47,26 @@ class TestGetFilePath(hut.TestCase):
         """
         exchange_id = "binance"
         currency_pair = "unsupported_currency"
+        ccxt_loader = cdlloa.CcxtLoader(
+            root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+        )
         with self.assertRaises(AssertionError):
             icdloloa.get_file_name(exchange, currency)
 
 
+# TODO(*): Consider to factor out the class calling in a `def _get_loader()`.
 class TestCcxtLoader(hut.TestCase):
-
     @pytest.mark.slow
     def test1(self) -> None:
         """
         Test files on S3 are being read correctly.
         """
-        # TODO(gp): We could factor out these 2 lines in a `def _get_loader()`.
         ccxt_loader = cdlloa.CcxtLoader(
             root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
-        actual = ccxt_loader.read_data("binance", "BTC/USDT", "OHLCV")
+        actual = ccxt_loader.read_data_from_filesystem(
+            "binance", "BTC/USDT", "OHLCV"
+        )
         # Check the output values.
         actual_string = hut.convert_df_to_json_string(actual)
         self.check_string(actual_string)
@@ -72,7 +79,9 @@ class TestCcxtLoader(hut.TestCase):
             root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         with self.assertRaises(AssertionError):
-            ccxt_loader.read_data("unsupported_exchange_id", "BTC/USDT", "OHLCV")
+            ccxt_loader.read_data_from_filesystem(
+                "unsupported_exchange_id", "BTC/USDT", "OHLCV"
+            )
 
     def test3(self) -> None:
         """
@@ -82,7 +91,9 @@ class TestCcxtLoader(hut.TestCase):
             root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         with self.assertRaises(AssertionError):
-            ccxt_loader.read_data("binance", "unsupported_currency_pair", "OHLCV")
+            ccxt_loader.read_data_from_filesystem(
+                "binance", "unsupported_currency_pair", "OHLCV"
+            )
 
     def test4(self) -> None:
         """
@@ -92,4 +103,6 @@ class TestCcxtLoader(hut.TestCase):
             root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         with self.assertRaises(AssertionError):
-            ccxt_loader.read_data("binance", "BTC/USDT", "unsupported_data_type")
+            ccxt_loader.read_data_from_filesystem(
+                "binance", "BTC/USDT", "unsupported_data_type"
+            )
