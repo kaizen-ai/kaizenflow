@@ -140,8 +140,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 imccdbindat.execute_insert_query(connection=connection,
                                                  df=pair_data,
                                                  table_name=args.table_name)
-                connection.close()
         time.sleep(60)
+    connection.close()
 
 
 if __name__ == "__main__":
