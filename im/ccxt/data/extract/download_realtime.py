@@ -7,7 +7,7 @@ Use as:
 # Download all currency pairs for Binance, Kucoin,
   FTX exchanges:
 > python im/ccxt/data/extract/download_realtime.py \
-    --dst_dir test1 \
+    --table_name 'ccxt_ohlcv' \
     --exchange_ids 'binance kucoin ftx' \
     --currency_pairs 'all'
 
@@ -140,7 +140,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 imccdbindat.execute_insert_query(connection=connection,
                                                  df=pair_data,
                                                  table_name=args.table_name)
-                return pair_data
+                connection.close()
         time.sleep(60)
 
 
