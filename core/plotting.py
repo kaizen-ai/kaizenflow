@@ -530,14 +530,14 @@ def plot_timeseries_distribution(
     """
     dbg.dassert_isinstance(srs, pd.Series)
     dbg.dassert_isinstance(srs.index, pd.DatetimeIndex)
+    if datetime_types is None:
+        datetime_types = _DATETIME_TYPES
     if axes is None:
         _, axes = get_multiple_plots(num_plots=len(datetime_types), num_cols=1)
     else:
         dbg.dassert_eq(len(datetime_types), len(axes))
     srs = hdataf.apply_nan_mode(srs, mode="drop")
     index_series = pd.Series(srs.index)
-    if datetime_types is None:
-        datetime_types = _DATETIME_TYPES
     for datetime_type, ax in zip(datetime_types, axes):
         sns.countplot(getattr(index_series.dt, datetime_type))
         ax.set_title(f"Distribution by {datetime_type}")
