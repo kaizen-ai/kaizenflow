@@ -23,7 +23,6 @@ import os
 
 import pandas as pd
 
-import im.ccxt.data.load.loader as cdlloa
 import im.ccxt.db.insert_data as imccdbindat
 import im.ccxt.db.create_table as imccdbcrtab
 
