@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.ccxt.data.extract.exchange_class as deecla
+import im.ccxt.data.extract.exchange_class as imcdaexexccla
 """
 
 import logging
@@ -12,7 +12,7 @@ import pandas as pd
 import tqdm
 
 import ccxt
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.io_ as hio
 
 _LOG = logging.getLogger(__name__)
@@ -41,20 +41,21 @@ class CcxtExchange:
 
         :return: JSON file with API credentials
         """
-        dbg.dassert_file_extension(self.api_keys_path, "json")
+        hdbg.dassert_file_extension(self.api_keys_path, "json")
         all_credentials = hio.from_json(self.api_keys_path)
         return all_credentials
 
     def log_into_exchange(self) -> ccxt.Exchange:
         """
-        Log into exchange via CCXT, returning the corresponding Exchange object.
+        Log into exchange via CCXT, returning the corresponding Exchange
+        object.
         """
         # Load all the exchange credentials.
         all_credentials = self.load_api_credentials()
-        dbg.dassert_in(
+        hdbg.dassert_in(
             self.exchange_id,
             all_credentials,
-            msg="Exchange ID `%s` is incorrect." % self.exchange_id
+            msg="Exchange ID `%s` is incorrect." % self.exchange_id,
         )
         # Select credentials for provided exchange.
         credentials = all_credentials[self.exchange_id]
@@ -63,7 +64,7 @@ class CcxtExchange:
         exchange_class = getattr(ccxt, self.exchange_id)
         # Create a CCXT Exchange class object.
         exchange = exchange_class(credentials)
-        dbg.dassert(
+        hdbg.dassert(
             exchange.checkRequiredCredentials(),
             msg="Required credentials not passed",
         )
@@ -94,9 +95,9 @@ class CcxtExchange:
         :return: OHLCV data from CCXT
         """
         # Verify that the exchange has fetch_ohlcv method.
-        dbg.dassert(self._exchange.has["fetchOHLCV"])
+        hdbg.dassert(self._exchange.has["fetchOHLCV"])
         # Verify that the provided currency pair is present in exchange.
-        dbg.dassert_in(curr_symbol, self.currency_pairs)
+        hdbg.dassert_in(curr_symbol, self.currency_pairs)
         # Make the minimal limit of 500 a default step.
         step = step or 500
         # Get latest bars if no datetime is provided.
@@ -110,15 +111,15 @@ class CcxtExchange:
             )
             return all_bars
         # Verify that date parameters are of correct format.
-        dbg.dassert_isinstance(
+        hdbg.dassert_isinstance(
             end_datetime,
             pd.Timestamp,
         )
-        dbg.dassert_isinstance(
+        hdbg.dassert_isinstance(
             start_datetime,
             pd.Timestamp,
         )
-        dbg.dassert_lte(
+        hdbg.dassert_lte(
             start_datetime,
             end_datetime,
         )
