@@ -1,8 +1,7 @@
-original shape=(1057890, 9)
+original shape=(1057890, 8)
 Head:
 {
-    "0":{
-        "timestamp":"2021-09-16T01:35:00Z",
+    "2021-09-16T01:35:00Z":{
         "open":47922.7,
         "high":47924.61,
         "low":47920.89,
@@ -12,8 +11,7 @@ Head:
         "currency_pair":"BTC\/USDT",
         "exchange_id":"binance"
     },
-    "1":{
-        "timestamp":"2021-09-16T01:34:00Z",
+    "2021-09-16T01:34:00Z":{
         "open":47939.99,
         "high":47946.8,
         "low":47922.69,
@@ -23,8 +21,7 @@ Head:
         "currency_pair":"BTC\/USDT",
         "exchange_id":"binance"
     },
-    "2":{
-        "timestamp":"2021-09-16T01:33:00Z",
+    "2021-09-16T01:33:00Z":{
         "open":47948.11,
         "high":47962.64,
         "low":47938.97,
@@ -34,8 +31,7 @@ Head:
         "currency_pair":"BTC\/USDT",
         "exchange_id":"binance"
     },
-    "3":{
-        "timestamp":"2021-09-16T01:32:00Z",
+    "2021-09-16T01:32:00Z":{
         "open":47955.19,
         "high":47957.47,
         "low":47947.92,
@@ -45,8 +41,7 @@ Head:
         "currency_pair":"BTC\/USDT",
         "exchange_id":"binance"
     },
-    "4":{
-        "timestamp":"2021-09-16T01:31:00Z",
+    "2021-09-16T01:31:00Z":{
         "open":47965.15,
         "high":47966.05,
         "low":47954.02,
@@ -56,8 +51,7 @@ Head:
         "currency_pair":"BTC\/USDT",
         "exchange_id":"binance"
     },
-    "5":{
-        "timestamp":"2021-09-16T01:30:00Z",
+    "2021-09-16T01:30:00Z":{
         "open":47975.1,
         "high":47989.34,
         "low":47965.13,
@@ -67,8 +61,7 @@ Head:
         "currency_pair":"BTC\/USDT",
         "exchange_id":"binance"
     },
-    "6":{
-        "timestamp":"2021-09-16T01:29:00Z",
+    "2021-09-16T01:29:00Z":{
         "open":47961.02,
         "high":47977.16,
         "low":47954.32,
@@ -78,8 +71,7 @@ Head:
         "currency_pair":"BTC\/USDT",
         "exchange_id":"binance"
     },
-    "7":{
-        "timestamp":"2021-09-16T01:28:00Z",
+    "2021-09-16T01:28:00Z":{
         "open":47965.13,
         "high":47965.14,
         "low":47961.0,
@@ -89,8 +81,7 @@ Head:
         "currency_pair":"BTC\/USDT",
         "exchange_id":"binance"
     },
-    "8":{
-        "timestamp":"2021-09-16T01:27:00Z",
+    "2021-09-16T01:27:00Z":{
         "open":47975.85,
         "high":47977.16,
         "low":47961.43,
@@ -100,8 +91,7 @@ Head:
         "currency_pair":"BTC\/USDT",
         "exchange_id":"binance"
     },
-    "9":{
-        "timestamp":"2021-09-16T01:26:00Z",
+    "2021-09-16T01:26:00Z":{
         "open":47992.57,
         "high":47992.57,
         "low":47974.21,
@@ -114,8 +104,7 @@ Head:
 }
 Tail:
 {
-    "1057880":{
-        "timestamp":"2019-09-08T18:06:00Z",
+    "2019-09-08T18:06:00Z":{
         "open":10000.0,
         "high":10000.0,
         "low":10000.0,
@@ -125,8 +114,7 @@ Tail:
         "currency_pair":"BTC\/USDT",
         "exchange_id":"binance"
     },
-    "1057881":{
-        "timestamp":"2019-09-08T18:05:00Z",
+    "2019-09-08T18:05:00Z":{
         "open":10000.0,
         "high":10000.0,
         "low":10000.0,
@@ -136,8 +124,7 @@ Tail:
         "currency_pair":"BTC\/USDT",
         "exchange_id":"binance"
     },
-    "1057882":{
-        "timestamp":"2019-09-08T18:04:00Z",
+    "2019-09-08T18:04:00Z":{
         "open":10000.0,
         "high":10000.0,
         "low":10000.0,
@@ -147,8 +134,7 @@ Tail:
         "currency_pair":"BTC\/USDT",
         "exchange_id":"binance"
     },
-    "1057883":{
-        "timestamp":"2019-09-08T18:03:00Z",
+    "2019-09-08T18:03:00Z":{
         "open":10000.0,
         "high":10000.0,
         "low":10000.0,
@@ -158,8 +144,7 @@ Tail:
         "currency_pair":"BTC\/USDT",
         "exchange_id":"binance"
     },
-    "1057884":{
-        "timestamp":"2019-09-08T18:02:00Z",
+    "2019-09-08T18:02:00Z":{
         "open":10000.0,
         "high":10000.0,
         "low":10000.0,
@@ -169,8 +154,7 @@ Tail:
         "currency_pair":"BTC\/USDT",
         "exchange_id":"binance"
     },
-    "1057885":{
-        "timestamp":"2019-09-08T18:01:00Z",
+    "2019-09-08T18:01:00Z":{
         "open":10000.0,
         "high":10000.0,
         "low":10000.0,
@@ -180,8 +164,7 @@ Tail:
         "currency_pair":"BTC\/USDT",
         "exchange_id":"binance"
     },
-    "1057886":{
-        "timestamp":"2019-09-08T18:00:00Z",
+    "2019-09-08T18:00:00Z":{
         "open":10000.0,
         "high":10000.0,
         "low":10000.0,
@@ -191,8 +174,7 @@ Tail:
         "currency_pair":"BTC\/USDT",
         "exchange_id":"binance"
     },
-    "1057887":{
-        "timestamp":"2019-09-08T17:59:00Z",
+    "2019-09-08T17:59:00Z":{
         "open":10000.0,
         "high":10000.0,
         "low":10000.0,
@@ -202,8 +184,7 @@ Tail:
         "currency_pair":"BTC\/USDT",
         "exchange_id":"binance"
     },
-    "1057888":{
-        "timestamp":"2019-09-08T17:58:00Z",
+    "2019-09-08T17:58:00Z":{
         "open":10000.0,
         "high":10000.0,
         "low":10000.0,
@@ -213,8 +194,7 @@ Tail:
         "currency_pair":"BTC\/USDT",
         "exchange_id":"binance"
     },
-    "1057889":{
-        "timestamp":"2019-09-08T17:57:00Z",
+    "2019-09-08T17:57:00Z":{
         "open":10000.0,
         "high":10000.0,
         "low":10000.0,
