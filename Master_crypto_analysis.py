@@ -70,7 +70,6 @@ def get_eda_config() -> ccocon.Config:
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["close_price_col_name"] = "close"
-    config["data"]["datetime_col_name"] = "timestamp"
     config["data"]["frequency"] = "T"
     config["data"]["timezone"] = "US/Eastern"
     # Statistics parameters.
@@ -94,7 +93,7 @@ print(config)
 ccxt_loader = imccdaloloa.CcxtLoader(
     root_dir=config["load"]["data_dir"], aws_profile=config["load"]["aws_profile"]
 )
-ccxt_data = ccxt_loader.read_data(
+ccxt_data = ccxt_loader.read_data_from_filesystem(
     exchange_id="binance", currency_pair="BTC/USDT", data_type="OHLCV"
 )
 _LOG.info("shape=%s", ccxt_data.shape[0])
@@ -103,21 +102,14 @@ ccxt_data.head(3)
 # %%
 # Check the timezone info.
 hdbg.dassert_eq(
-    ccxt_data[config["data"]["datetime_col_name"]].iloc[0].tzinfo, 
+    ccxt_data.index.tzinfo, 
     pytz.timezone("US/Eastern"),
 )
 
 # %%
 # TODO(Grisha): change tz in `CcxtLoader` #217.
-ccxt_data[config["data"]["datetime_col_name"]] = ccxt_data[
-    config["data"]["datetime_col_name"]
-].dt.tz_convert(config["data"]["timezone"])
-ccxt_data[config["data"]["datetime_col_name"]].iloc[0]
-
-# %%
-# TODO(Grisha): set index in the `CcxtLoader` #218.
-ccxt_data = ccxt_data.set_index(config["data"]["datetime_col_name"])
-ccxt_data.head(3)
+ccxt_data.index = ccxt_data.index.tz_convert(config["data"]["timezone"])
+ccxt_data.index.tzinfo
 
 # %% [markdown]
 # # Select subset
@@ -160,7 +152,6 @@ ccxt_data_reindex = ccxt_data_subset.reindex(resampled_index)
 _LOG.info("shape=%s", ccxt_data_reindex.shape[0])
 ccxt_data_reindex.head(3)
 
-
 # %% [markdown]
 # # Filter data
 
@@ -168,36 +159,8 @@ ccxt_data_reindex.head(3)
 # TODO(Grisha): add support for filtering by exchange, currency, asset class.
 
 # %%
-# TODO(Grisha): potentially could be merged with `core.explore.filter_around_time`.
-# The problem is that the function in `core.explore` filters by column rather than
-# by index and the filter is [timestamp - delta; timestamp + delta].
-def filter_by_date(
-    df: pd.DataFrame, config: ccocon.Config, start_date: str, end_date: str
-) -> pd.DataFrame:
-    """
-    Filter data by date [start_date, end_date).
-
-    :param df: data
-    :param start_date: lower bound
-    :param end_date: upper bound
-    :return: filtered data
-    """
-    # Convert dates to timestamps.
-    filter_start_date = pd.Timestamp(start_date, tz=config["data"]["timezone"])
-    filter_end_date = pd.Timestamp(end_date, tz=config["data"]["timezone"])
-    mask = (df.index >= filter_start_date) & (df.index < filter_end_date)
-    _LOG.info(
-        "Filtering in [%s; %s), selected rows=%s",
-        start_date,
-        end_date,
-        hprintin.perc(mask.sum(), df.shape[0]),
-    )
-    ccxt_data_filtered = ccxt_data_reindex[mask]
-    return ccxt_data_filtered
-
-
-ccxt_data_filtered = filter_by_date(
-    ccxt_data_reindex, config, "2019-01-01", "2020-01-01"
+ccxt_data_filtered = cexp.filter_by_time(
+    ccxt_data_reindex, "index", pd.Timestamp("2019-01-01", tz="US/Eastern"), pd.Timestamp("2020-01-01", tz="US/Eastern"), logging.INFO
 )
 ccxt_data_filtered.head(3)
 

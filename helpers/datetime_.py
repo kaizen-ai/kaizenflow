@@ -58,6 +58,7 @@ Datetime = Union[str, pd.Timestamp, datetime.datetime]
 StrictDatetime = Union[pd.Timestamp, datetime.datetime]
 
 
+# TODO(Grisha): move to `helpers.dbg`?
 def dassert_is_datetime(datetime_: Datetime) -> None:
     """
     Assert that `datetime_` is of type `Datetime`.
@@ -90,6 +91,7 @@ def to_datetime(datetime_: Datetime) -> datetime.datetime:
 
     :return: tz-aware or naive datetime.datetime
     """
+    # TODO(Grisha): also pass timezone.
     dassert_is_datetime(datetime_)
     if isinstance(datetime_, str):
         datetime_ = pd.Timestamp(datetime_)
@@ -219,6 +221,7 @@ def get_ET_tz() -> datetime.tzinfo:
     """
     Return the US Eastern Time timezone.
     """
+    # TODO(Grisha): -> `US/Eastern`?
     return pytz.timezone("America/New_York")
 
 

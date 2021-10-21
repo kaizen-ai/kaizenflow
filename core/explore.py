@@ -35,6 +35,7 @@ import statsmodels.api
 import tqdm.autonotebook as tauton
 
 import core.plotting as cplott
+import helpers.datetime_ as hdatetim
 import helpers.dbg as dbg
 import helpers.hpandas as hpandas
 import helpers.list as hlist
@@ -554,29 +555,38 @@ def filter_with_df(
 
 def filter_by_time(
     df: pd.DataFrame,
-    # TODO(Grisha): allow also to filter by index.
-    col_name: str,
-    lower_close_interval: pd.Timestamp,
-    upper_close_interval: pd.Timestamp,
+    ts_col_name: str,
+    lower_close_interval: hdatetim.StrictDatetime,
+    upper_close_interval: hdatetim.StrictDatetime,
     log_level: int = logging.DEBUG,
 ) -> pd.DataFrame:
     """
-    Filter data by time like so [lower_close_interval, upper_close_interval).
+    Filter data by time like so `[lower_close_interval, upper_close_interval)`.
 
-    :param df: ...
-    :param col_name: name of a datetime column to filter
+    Pass "index" to `ts_col_name` to filter by `DatetimeIndex`.
+
+    :param df: data to filter
+    :param ts_col_name: name of a timestamp column to filter with
     :param lower_close_interval: left limit point of the time interval
     :param upper_close_interval: right limit point of the time interval
-    :param log_level: ...
-    :return:
+    :param log_level: the level of logging, e.g. `DEBUG`
+    :return: data filtered by time
     """
-    dbg.dassert_in(col_name, df)
-    # TODO(Grisha): assert that `col_name`, `lower_close_interval`, `upper_close_interval` are timestamps.
-    mask = (df[col_name] >= lower_close_interval) & (df[col_name] <= upper_close_interval)
+    hdatetim.dassert_is_strict_datetime(lower_close_interval)
+    hdatetim.dassert_is_strict_datetime(upper_close_interval)
+    #
+    if ts_col_name == "index":
+        # Filter data by index.
+        dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
+        mask = (df.index >= lower_close_interval) & (df.index < upper_close_interval)
+    else:
+        # Filter data by a specified column.
+        dbg.dassert_in(ts_col_name, df.columns)
+        mask = (df[ts_col_name] >= lower_close_interval) & (df[ts_col_name] < upper_close_interval)
     #
     _LOG.log(
         log_level,
-        "Filtering in [%s, %s] selected rows=%s",
+        "Filtering in [%s, %s), selected rows=%s",
         lower_close_interval,
         upper_close_interval,
         hprint.perc(mask.sum(), df.shape[0]),
