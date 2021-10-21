@@ -43,6 +43,18 @@ def _get_create_table_sql_command(table_name: str) -> str:
                 exchange_id VARCHAR(255) NOT NULL
                 )
                 """
+    elif table_name == "exchange_name":
+        command = """CREATE TABLE exchange_name(
+                exchange_id SERIAL PRIMARY KEY,
+                exchange_name VARCHAR(255) NOT NULL
+                )
+                """
+    elif table_name == "currency_pair":
+        command = """CREATE TABLE currency_pair(
+                currency_pair_id SERIAL PRIMARY KEY,
+                currency_pair VARCHAR(255) NOT NULL
+                )
+                """
     else:
         raise ValueError("Table '%s' is not valid" % table_name)
     _LOG.debug("command=%s", command)
@@ -77,8 +89,6 @@ def create_table(conn: hsql.DbConnection, table_name: str) -> None:
     command = _get_create_table_sql_command(table_name)
     cursor.execute(command)
     cursor.close()
-    # TODO(Danya): Remove closing from function.
-    conn.close()
 
 
 def _parse() -> argparse.ArgumentParser:
