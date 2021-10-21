@@ -8,46 +8,27 @@ Use example:
 
 Import as:
 
-import im.ccxt.db.create_foreign_keys_tables as imcdcfkta
+import im.ccxt.db.create_foreign_keys_tables as imcdbcrfokeytab
 """
 
 
 import argparse
 import logging
 
+import pandas as pd
+import psycopg2 as psycop
+
 import ccxt
 import helpers.dbg as hdbg
 import helpers.parser as hparser
 import helpers.sql as hsql
-import os
-
-import pandas as pd
-
 import im.ccxt.db.insert_data as imccdbindat
-import im.ccxt.db.create_table as imccdbcrtab
+import im.common.db.create_db as imcodbcrdb
 
 _LOG = logging.getLogger(__name__)
 
 
-def create_empty_table(conn: hsql.DbConnection, table_name: str) -> None:
-    """
-    Create empty table in the database.
-
-    :param conn: DB connection
-    :param table_name: name of the table
-    """
-    cursor = conn.cursor()
-    # Extract all table names.
-    all_table_names = hsql.get_table_names(conn)
-    if table_name in all_table_names:
-        # Clear table content if it is already in DB.
-        delete_query = "DELETE FROM %s" % table_name
-        cursor.execute(delete_query)
-    else:
-        # Create an empty table if it is not present in DB.
-        imccdbcrtab.create_table(conn, table_name)
-
-
+# TODO(Dan): Move this in #220.
 def populate_exchange_currency_tables(conn: hsql.DbConnection) -> None:
     """
     Populate exchange name and currency pair tables with data.
@@ -91,13 +72,21 @@ def _parse() -> argparse.ArgumentParser:
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
+    # TODO(Dan): Remove this script completely and use `create_im_schema` instead.
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Get connection using env variables.
     conn, _ = hsql.get_connection_from_env_vars()
-    # Create new or clear existing required tables.
-    for table_name in ["exchange_name", "currency_pair"]:
-        create_empty_table(conn, table_name)
+    queries = [
+        imcodbcrdb.get_exchange_name_create_table_query,
+        imcodbcrdb.get_currency_pair_create_table_query,
+    ]
+    for query in queries:
+        try:
+            cursor = conn.cursor()
+            cursor.execute(query)
+        except psycop.errors.DuplicateObject:
+            _LOG.warning("Duplicate table created, skipping.")
     # Populate tables with data.
     populate_exchange_currency_tables(conn)
 
