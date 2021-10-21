@@ -563,11 +563,11 @@ def filter_by_time(
     """
     Filter data by time like so [lower_close_interval, upper_close_interval).
 
-    :param df:
-    :param col_name:
-    :param lower_close_interval:
-    :param upper_close_interval:
-    :param log_level:
+    :param df: ...
+    :param col_name: name of a datetime column to filter
+    :param lower_close_interval: left limit point of the time interval
+    :param upper_close_interval: right limit point of the time interval
+    :param log_level: ...
     :return:
     """
     dbg.dassert_in(col_name, df)
