@@ -303,8 +303,7 @@ class CcxtLoader:
         - Assertion of present columns
         - Assertion of data types
         - Renaming and rearranging of OHLCV columns, namely:
-            ["timestamp",
-             "open",
+            ["open",
              "high",
              "low",
              "close"
@@ -317,7 +316,6 @@ class CcxtLoader:
         :return: transformed OHLCV dataframe
         """
         ohlcv_columns = [
-            "timestamp",
             "open",
             "high",
             "low",
