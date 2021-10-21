@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.ccxt.data.extract.exchange_class as deecla
+import im.ccxt.data.extract.exchange_class as imcdaexexccla
 """
 
 import logging
@@ -12,10 +12,9 @@ import pandas as pd
 import tqdm
 
 import ccxt
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.io_ as hio
 
-dbg.init_logger(verbosity=logging.INFO)
 _LOG = logging.getLogger(__name__)
 
 API_KEYS_PATH = "/data/shared/data/API_keys.json"
@@ -26,10 +25,10 @@ class CcxtExchange:
         self, exchange_id: str, api_keys_path: Optional[str] = None
     ) -> None:
         """
-        Create a class for accessing ccxt exchange data.
+        Create a class for accessing CCXT exchange data.
 
-        :param: exchange_id: ccxt exchange id
-        :param: api_keys_path: path to json file with API credentials
+        :param: exchange_id: CCXT exchange id
+        :param: api_keys_path: path to JSON file with API credentials
         """
         self.exchange_id = exchange_id
         self.api_keys_path = api_keys_path or API_KEYS_PATH
@@ -38,32 +37,34 @@ class CcxtExchange:
 
     def load_api_credentials(self) -> Dict[str, Dict[str, Union[str, bool]]]:
         """
-        Load JSON file with available ccxt credentials
+        Load JSON file with available CCXT credentials.
+
         :return: JSON file with API credentials
         """
-        dbg.dassert_file_extension(self.api_keys_path, "json")
+        hdbg.dassert_file_extension(self.api_keys_path, "json")
         all_credentials = hio.from_json(self.api_keys_path)
         return all_credentials
 
     def log_into_exchange(self) -> ccxt.Exchange:
         """
-        Log into exchange via ccxt.
+        Log into exchange via CCXT, returning the corresponding Exchange
+        object.
         """
-        # Load all exchange credentials.
+        # Load all the exchange credentials.
         all_credentials = self.load_api_credentials()
-        dbg.dassert_in(
+        hdbg.dassert_in(
             self.exchange_id,
             all_credentials,
-            msg="'%s' exchange ID is incorrect.",
+            msg="Exchange ID `%s` is incorrect." % self.exchange_id,
         )
         # Select credentials for provided exchange.
         credentials = all_credentials[self.exchange_id]
         # Enable rate limit.
         credentials["rateLimit"] = True
         exchange_class = getattr(ccxt, self.exchange_id)
-        # Create a `ccxt` exchange class.
+        # Create a CCXT Exchange class object.
         exchange = exchange_class(credentials)
-        dbg.dassert(
+        hdbg.dassert(
             exchange.checkRequiredCredentials(),
             msg="Required credentials not passed",
         )
@@ -71,7 +72,7 @@ class CcxtExchange:
 
     def get_exchange_currencies(self) -> List[str]:
         """
-        Get all currency pairs available for exchange.
+        Get all the currency pairs available for exchange.
         """
         return list(self._exchange.load_markets().keys())
 
@@ -91,12 +92,12 @@ class CcxtExchange:
         :param end_datetime: end point for data
         :param step: a number of candles per iteration
         :param sleep_time: time in seconds between iterations
-        :return: OHLCV data from ccxt
+        :return: OHLCV data from CCXT
         """
         # Verify that the exchange has fetch_ohlcv method.
-        dbg.dassert(self._exchange.has["fetchOHLCV"])
+        hdbg.dassert(self._exchange.has["fetchOHLCV"])
         # Verify that the provided currency pair is present in exchange.
-        dbg.dassert_in(curr_symbol, self.currency_pairs)
+        hdbg.dassert_in(curr_symbol, self.currency_pairs)
         # Make the minimal limit of 500 a default step.
         step = step or 500
         # Get latest bars if no datetime is provided.
@@ -106,15 +107,13 @@ class CcxtExchange:
             )
             return all_candles
         # Verify that date parameters are of correct format.
-        dbg.dassert_isinstance(
+        hdbg.dassert_isinstance(
             end_datetime,
             pd.Timestamp,
-            msg="Type of end_datetime param is incorrect.",
         )
-        dbg.dassert_isinstance(
+        hdbg.dassert_isinstance(
             start_datetime,
             pd.Timestamp,
-            msg="Type of start_datetime param is incorrect.",
         )
         # Convert datetime into ms.
         start_datetime = start_datetime.asm8.astype(int) // 1000000
@@ -122,9 +121,9 @@ class CcxtExchange:
         duration = self._exchange.parse_timeframe("1m") * 1000
         all_bars = []
         # Iterate over the time period.
-        #  Note: the iteration goes from start date to end date in
-        # milliseconds, with the step defined by `step` parameter.
-        # Because of that, output can go slightly over the end_date.
+        # Note: the iteration goes from start date to end date in milliseconds,
+        # with the step defined by `step` parameter. Because of this, the output
+        # can go slightly over the end date.
         for t in tqdm.tqdm(
             range(start_datetime, end_datetime + duration, duration * step)
         ):
