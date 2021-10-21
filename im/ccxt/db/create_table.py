@@ -72,9 +72,11 @@ def create_table(conn: hsql.DbConnection, table_name: str) -> None:
         - 'ccxt_ohlcv': OHLCV table with CCXT data
 
     Example of OHLCV data from CCXT:
+    ```
     timestamp,open,high,low,close,volume,currency_pair,exchange
     1632745560000,43480.71,43489.87,43435.0,43460.31,18.85418,BTC/USDT,binance
     1632745620000,43460.32,43467.68,43420.59,43445.21,39.4702,BTC/USDT,binance
+    ```
 
     :param conn: DB connection
     :param table_name: name of the table
