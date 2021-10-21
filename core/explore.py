@@ -552,29 +552,33 @@ def filter_with_df(
     return mask
 
 
-def filter_around_time(
+def filter_by_time(
     df: pd.DataFrame,
+    # TODO(Grisha): allow also to filter by index.
     col_name: str,
-    timestamp: Union[datetime.datetime, pd.Timestamp],
-    timedelta_before: pd.Timedelta,
-    timedelta_after: Optional[pd.Timedelta] = None,
+    lower_close_interval: pd.Timestamp,
+    upper_close_interval: pd.Timestamp,
     log_level: int = logging.DEBUG,
 ) -> pd.DataFrame:
+    """
+    Filter data by time like so [lower_close_interval, upper_close_interval).
+
+    :param df:
+    :param col_name:
+    :param lower_close_interval:
+    :param upper_close_interval:
+    :param log_level:
+    :return:
+    """
     dbg.dassert_in(col_name, df)
-    dbg.dassert_lte(pd.Timedelta(0), timedelta_before)
-    if timedelta_after is None:
-        timedelta_after = timedelta_before
-    dbg.dassert_lte(pd.Timedelta(0), timedelta_after)
-    #
-    lower_bound = timestamp - timedelta_before
-    upper_bound = timestamp + timedelta_after
-    mask = (df[col_name] >= lower_bound) & (df[col_name] <= upper_bound)
+    # TODO(Grisha): assert that `col_name`, `lower_close_interval`, `upper_close_interval` are timestamps.
+    mask = (df[col_name] >= lower_close_interval) & (df[col_name] <= upper_close_interval)
     #
     _LOG.log(
         log_level,
         "Filtering in [%s, %s] selected rows=%s",
-        lower_bound,
-        upper_bound,
+        lower_close_interval,
+        upper_close_interval,
         hprint.perc(mask.sum(), df.shape[0]),
     )
     return df[mask]
