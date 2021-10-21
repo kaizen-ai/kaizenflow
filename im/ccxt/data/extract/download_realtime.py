@@ -7,7 +7,7 @@ Use as:
 # Download all currency pairs for Binance, Kucoin,
   FTX exchanges:
 > python im/ccxt/data/extract/download_realtime.py \
-    --dst_dir test1 \
+    --table_name 'ccxt_ohlcv' \
     --exchange_ids 'binance kucoin ftx' \
     --currency_pairs 'all'
 
@@ -18,17 +18,19 @@ import im.ccxt.data.extract.download_realtime as imcdaexdowrea
 import argparse
 import collections
 import logging
-import os
 import time
 from typing import NamedTuple, Optional
 
-import helpers.datetime_ as hdatetim
-import helpers.io_ as hio
+import helpers.dbg as hdbg
 import helpers.parser as hparser
+import helpers.sql as hsql
 import im.ccxt.data.extract.exchange_class as imcdaexexccla
-from helpers import dbg
+import im.ccxt.db.insert_data as imccdbindat
 
 _LOG = logging.getLogger(__name__)
+
+_ALL_EXCHANGE_IDS = ["binance", "kucoin"]
+
 
 # TODO(Danya): Create a type and move outside.
 def _instantiate_exchange(
@@ -69,12 +71,17 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        # TODO(Danya): replace dst_dir with SQL connection.
-        "--dst_dir",
+        "--db_connection",
         action="store",
-        required=True,
+        default="from_env",
         type=str,
-        help="Folder to download files to",
+        help="Connection to database to upload to",
+    )
+    parser.add_argument(
+        "--table_name",
+        action="store",
+        type=str,
+        help="Name of the table to upload to"
     )
     parser.add_argument(
         "--api_keys",
@@ -99,22 +106,20 @@ def _parse() -> argparse.ArgumentParser:
         help="Name of the currency pair to download data for, separated by spaces,"
         " e.g. 'BTC/USD ETH/USD','all' for all the currency pairs in exchange",
     )
-    parser.add_argument(
-        # TODO(Danya): remove after adding the SQL connection.
-        "--incremental",
-        action="store_true",
-    )
     parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    hio.create_dir(args.dst_dir, incremental=args.incremental)
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    if args.db_connection == "from_env":
+        connection, _ = hsql.get_connection_from_env_vars()
+    else:
+        hdbg.dfatal("Unknown db connection: %s" % args.db_connection)
     # Get exchange ids.
     if args.exchange_ids == "all":
-        exchange_ids = ["binance", "kucoin"]
+        exchange_ids = _ALL_EXCHANGE_IDS
     else:
         # Get exchanges provided by the user.
         exchange_ids = args.exchange_ids.split()
@@ -130,19 +135,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
             for pair in exchange.pairs:
                 # Download latest 5 minutes for the currency pair and exchange.
                 pair_data = exchange.instance.download_ohlcv_data(
-                    curr_symbol=pair, step=5
+                    curr_symbol=pair, step=2
                 )
-                # Save data with timestamp.
-                # TODO(Danya): replace saving with DB update.
-                file_name = (
-                    f"{exchange.id}_"
-                    f"{pair.replace('/', '_')}_"
-                    f"{hdatetim.get_timestamp('ET')}"
-                    f".csv.gz"
-                )
-                file_path = os.path.join(args.dst_dir, file_name)
-                pair_data.to_csv(file_path, index=False, compression="gzip")
+                imccdbindat.execute_insert_query(connection=connection,
+                                                 df=pair_data,
+                                                 table_name=args.table_name)
         time.sleep(60)
+    connection.close()
 
 
 if __name__ == "__main__":

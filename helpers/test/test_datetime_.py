@@ -404,3 +404,71 @@ class Test_to_generalized_datetime(huntes.TestCase):
             [pd.Timestamp("2021-12-31"), pd.Timestamp("2022-12-31")]
         )
         pd.testing.assert_series_equal(actual, expected)
+
+
+# #############################################################################
+
+
+class Test_convert_unix_epoch_to_timestamp(huntes.TestCase):
+    def test1(self) -> None:
+        """
+        Test with default parameter values.
+        """
+        epoch = 1631145600000
+        actual = hdatetim.convert_unix_epoch_to_timestamp(epoch=epoch)
+        expected = pd.Timestamp("2021-09-09T00:00:00", tz="UTC")
+        self.assert_equal(str(actual), str(expected))
+
+    def test2(self) -> None:
+        """
+        Test with specified unit.
+        """
+        epoch = 1631145600
+        unit = "s"
+        actual = hdatetim.convert_unix_epoch_to_timestamp(
+            epoch=epoch, unit=unit
+        )
+        expected = pd.Timestamp("2021-09-09T00:00:00", tz="UTC")
+        self.assert_equal(str(actual), str(expected))
+
+    def test3(self) -> None:
+        """
+        Test with specified timezone.
+        """
+        epoch = 1631145600000
+        tz = "US/Pacific"
+        actual = hdatetim.convert_unix_epoch_to_timestamp(epoch=epoch, tz=tz)
+        expected = pd.Timestamp("2021-09-08T17:00:00", tz="US/Pacific")
+        self.assert_equal(str(actual), str(expected))
+
+
+class Test_convert_timestamp_to_unix_epoch(huntes.TestCase):
+    def test1(self) -> None:
+        """
+        Test with default parameter values.
+        """
+        timestamp = pd.Timestamp("2021-09-09")
+        actual = hdatetim.convert_timestamp_to_unix_epoch(timestamp=timestamp)
+        expected = 1631145600000
+        self.assert_equal(str(actual), str(expected))
+
+    def test2(self) -> None:
+        """
+        Test with specified unit.
+        """
+        timestamp = pd.Timestamp("2021-09-09")
+        unit = "s"
+        actual = hdatetim.convert_timestamp_to_unix_epoch(
+            timestamp=timestamp, unit=unit
+        )
+        expected = 1631145600
+        self.assert_equal(str(actual), str(expected))
+
+    def test3(self) -> None:
+        """
+        Test for a timestamp with specified timezone.
+        """
+        timestamp = pd.Timestamp("2021-09-08T17:00:00", tz="US/Pacific")
+        actual = hdatetim.convert_timestamp_to_unix_epoch(timestamp=timestamp)
+        expected = 1631145600000
+        self.assert_equal(str(actual), str(expected))
