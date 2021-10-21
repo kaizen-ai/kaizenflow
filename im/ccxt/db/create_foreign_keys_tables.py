@@ -1,6 +1,15 @@
 #!/usr/bin/env python
+"""
+Insert a table into the database.
 
-# docker-compose --file compose/docker-compose.yml --env-file env/local.im_db_config.env run --rm app bash
+Use example:
+
+> create_foreign_keys_tables.py
+
+Import as:
+
+import im.ccxt.db.create_foreign_keys_tables as imcdcfkta
+"""
 
 
 import argparse
@@ -21,45 +30,31 @@ import im.ccxt.db.create_table as imccdbcrtab
 _LOG = logging.getLogger(__name__)
 
 
-def _parse() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawTextHelpFormatter,
-    )
-    parser = hparser.add_verbosity_arg(parser)
-    return parser  # type: ignore[no-any-return]
+def create_empty_table(conn: hsql.DbConnection, table_name: str) -> None:
+    """
+    Create empty table in the database.
 
-
-def _main(parser: argparse.ArgumentParser) -> None:
-    args = parser.parse_args()
-    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Get connection using env variables.
-    conn, cur = hsql.get_connection(
-        dbname=os.environ["POSTGRES_DB"],
-        host=os.environ["POSTGRES_HOST"],
-        port=int(os.environ["POSTGRES_PORT"]),
-        user=os.environ["POSTGRES_USER"],
-        password=os.environ["POSTGRES_PASSWORD"],
-    )
+    :param conn: DB connection
+    :param table_name: name of the table
+    """
+    cursor = conn.cursor()
     # Extract all table names.
     all_table_names = hsql.get_table_names(conn)
-    # Set necessary empty tables in DB.
-    if "exchange_name" in all_table_names:
-        # Clear 'exchange_name' table if it is already in DB.
-        delete_query = """DELETE FROM exchange_name"""
-        cur.execute(delete_query)
-        conn.commit()
+    if table_name in all_table_names:
+        # Clear table content if it is already in DB.
+        delete_query = "DELETE FROM %s" % table_name
+        cursor.execute(delete_query)
     else:
-        # Create an empty 'exchange_name` table if it is not present in DB.
-        imccdbcrtab.create_table(conn, "exchange_name")
-    if "currency_pair" in all_table_names:
-        # Clear 'currency_pair' table if it is already in DB.
-        delete_query = """DELETE FROM currency_pair"""
-        cur.execute(delete_query)
-        conn.commit()
-    else:
-        # Create an empty 'currency_pair` table if it is not present in DB.
-        imccdbcrtab.create_table(conn, "currency_pair")
+        # Create an empty table if it is not present in DB.
+        imccdbcrtab.create_table(conn, table_name)
+
+
+def populate_exchange_currency_tables(conn: hsql.DbConnection) -> None:
+    """
+    Populate exchange name and currency pair tables with data.
+
+    :param conn: DB connection
+    """
     # Extract a list of all CCXT exchange names.
     all_exchange_names = pd.Series(ccxt.exchanges)
     # Create a dataframe with exchange names and ids.
@@ -85,15 +80,27 @@ def _main(parser: argparse.ArgumentParser) -> None:
     df_currency_pairs.columns = ["currency_pair_id", "currency_pair"]
     # Insert currency pairs dataframe in DB.
     imccdbindat.execute_insert_query(conn, df_currency_pairs, "currency_pair")
-    #
-    # Uncomment to see the result in the script run.
-    # ccxt_loader = cdlloa.CcxtLoader(conn)
-    # table_exchange_names = ccxt_loader.read_db_data("exchange_name")
-    # table_currency_pairs = ccxt_loader.read_db_data("currency_pair")
-    # print(len(table_exchange_names))
-    # print(table_exchange_names.head()
-    # print(len(table_currency_pairs))
-    # print(table_currency_pairs.head()
+
+
+def _parse() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    parser = hparser.add_verbosity_arg(parser)
+    return parser  # type: ignore[no-any-return]
+
+
+def _main(parser: argparse.ArgumentParser) -> None:
+    args = parser.parse_args()
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    # Get connection using env variables.
+    conn, _ = hsql.get_connection_from_env_vars()
+    # Create new or clear existing required tables.
+    for table_name in ["exchange_name", "currency_pair"]:
+        create_empty_table(conn, table_name)
+    # Populate tables with data.
+    populate_exchange_currency_tables(conn)
 
 
 if __name__ == "__main__":

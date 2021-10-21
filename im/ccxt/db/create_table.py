@@ -89,8 +89,6 @@ def create_table(conn: hsql.DbConnection, table_name: str) -> None:
     command = _get_create_table_sql_command(table_name)
     cursor.execute(command)
     cursor.close()
-    # TODO(Danya): Remove closing from function.
-    # conn.close()
 
 
 def _parse() -> argparse.ArgumentParser:
