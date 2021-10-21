@@ -201,6 +201,8 @@ class CddLoader:
         data = data.rename({"unix": "epoch"}, axis=1)
         # Transform Unix epoch into ET timestamp.
         data["timestamp"] = self._convert_epochs_to_timestamp(data["epoch"])
+        # Set timestamp as index.
+        data = data.set_index("timestamp")
         # Rename col with traded volume in amount of the 1st currency in pair.
         data = data.rename(
             {"Volume " + currency_pair.split("/")[0]: "volume"}, axis=1
@@ -250,7 +252,6 @@ class CddLoader:
         :return: transformed OHLCV dataframe
         """
         ohlcv_columns = [
-            "timestamp",
             "open",
             "high",
             "low",
