@@ -104,7 +104,7 @@ ccxt_data.head(3)
 # %%
 # Check the timezone info.
 hdbg.dassert_eq(
-    ccxt_data.index.tzinfo, 
+    ccxt_data.index.tzinfo,
     config["data"]["timezone"],
 )
 
@@ -248,7 +248,7 @@ nan_counts
 def detect_outliers(df: pd.DataFrame, config: ccocon.Config) -> pd.DataFrame:
     """
     Detect outliers in a rolling fashion using z-score.
-    
+
     If an observation has abs(z-score) > `z_score_boundary` it is considered
     an outlier. To compute a `z-score` rolling mean and rolling std are used.
 
