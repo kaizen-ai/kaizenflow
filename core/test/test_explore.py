@@ -4,20 +4,20 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import core.explore as exp
-import helpers.unit_test as hut
+import core.explore as cexp
+import helpers.unit_test as huntes
 
 _LOG = logging.getLogger(__name__)
 
 
-class Test_explore1(hut.TestCase):
+class Test_explore1(huntes.TestCase):
     def test_ols_regress_series(self) -> None:
         x = 5 * np.random.randn(100)
         y = x + np.random.randn(*x.shape)
         df = pd.DataFrame()
         df["x"] = x
         df["y"] = y
-        exp.ols_regress_series(
+        cexp.ols_regress_series(
             df["x"], df["y"], intercept=True, print_model_stats=False
         )
 
@@ -26,7 +26,7 @@ class Test_explore1(hut.TestCase):
         np.random.seed(42)
         df = pd.DataFrame(np.random.randn(10, 5))
         df.index = pd.date_range("2017-01-01", periods=10)
-        corr_df, eigval_df, eigvec_df = exp.rolling_pca_over_time(
+        corr_df, eigval_df, eigvec_df = cexp.rolling_pca_over_time(
             df, 0.5, "fill_with_zero"
         )
         txt = (
