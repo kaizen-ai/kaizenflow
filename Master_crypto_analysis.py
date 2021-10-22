@@ -38,6 +38,7 @@ import pytz
 import core.config.config_ as ccocon
 import core.explore as cexp
 import core.plotting as cplo
+import helpers.datetime_ as hdatetim
 import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprintin
@@ -71,7 +72,8 @@ def get_eda_config() -> ccocon.Config:
     config.add_subconfig("data")
     config["data"]["close_price_col_name"] = "close"
     config["data"]["frequency"] = "T"
-    config["data"]["timezone"] = "US/Eastern"
+    # TODO(Grisha): use `hdatetim.get_ET_tz()` once it is fixed.
+    config["data"]["timezone"] = pytz.timezone("US/Eastern")
     # Statistics parameters.
     config.add_subconfig("stats")
     config["stats"]["z_score_boundary"] = 3
@@ -103,7 +105,7 @@ ccxt_data.head(3)
 # Check the timezone info.
 hdbg.dassert_eq(
     ccxt_data.index.tzinfo, 
-    pytz.timezone("US/Eastern"),
+    config["data"]["timezone"],
 )
 
 # %%
@@ -159,8 +161,15 @@ ccxt_data_reindex.head(3)
 # TODO(Grisha): add support for filtering by exchange, currency, asset class.
 
 # %%
+# Get the inputs.
+# TODO(Grisha): pass tz to `hdatetim.to_datetime` once it is fixed.
+lower_bound = hdatetim.to_datetime("2019-01-01")
+lower_bound_ET = config["data"]["timezone"].localize(lower_bound)
+upper_bound = hdatetim.to_datetime("2020-01-01")
+upper_bound_ET = config["data"]["timezone"].localize(upper_bound)
+# Fiter data.
 ccxt_data_filtered = cexp.filter_by_time(
-    ccxt_data_reindex, "index", pd.Timestamp("2019-01-01", tz="US/Eastern"), pd.Timestamp("2020-01-01", tz="US/Eastern"), logging.INFO
+    ccxt_data_reindex, "index", lower_bound_ET, upper_bound_ET, logging.INFO
 )
 ccxt_data_filtered.head(3)
 

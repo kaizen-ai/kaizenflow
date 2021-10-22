@@ -578,10 +578,14 @@ def filter_by_time(
     if ts_col_name == "index":
         # Filter data by index.
         dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
+        hdatetim.dassert_tz_compatible_timestamp_with_df(lower_close_interval, df)
+        hdatetim.dassert_tz_compatible_timestamp_with_df(upper_close_interval, df)
         mask = (df.index >= lower_close_interval) & (df.index < upper_close_interval)
     else:
         # Filter data by a specified column.
         dbg.dassert_in(ts_col_name, df.columns)
+        hdatetim.dassert_tz_compatible_timestamp_with_df(lower_close_interval, df, ts_col_name)
+        hdatetim.dassert_tz_compatible_timestamp_with_df(upper_close_interval, df, ts_col_name)
         mask = (df[ts_col_name] >= lower_close_interval) & (df[ts_col_name] < upper_close_interval)
     #
     _LOG.log(
