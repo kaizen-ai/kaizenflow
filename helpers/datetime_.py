@@ -90,6 +90,7 @@ def to_datetime(datetime_: Datetime) -> datetime.datetime:
 
     :return: tz-aware or naive datetime.datetime
     """
+    # TODO(Grisha): also pass timezone.
     dassert_is_datetime(datetime_)
     if isinstance(datetime_, str):
         datetime_ = pd.Timestamp(datetime_)
@@ -219,6 +220,7 @@ def get_ET_tz() -> datetime.tzinfo:
     """
     Return the US Eastern Time timezone.
     """
+    # TODO(Grisha): -> `US/Eastern`?
     return pytz.timezone("America/New_York")
 
 

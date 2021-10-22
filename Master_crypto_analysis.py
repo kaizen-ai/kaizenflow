@@ -38,6 +38,7 @@ import pytz
 import core.config.config_ as ccocon
 import core.explore as cexp
 import core.plotting as cplo
+import helpers.datetime_ as hdatetim
 import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprintin
@@ -70,9 +71,9 @@ def get_eda_config() -> ccocon.Config:
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["close_price_col_name"] = "close"
-    config["data"]["datetime_col_name"] = "timestamp"
     config["data"]["frequency"] = "T"
-    config["data"]["timezone"] = "US/Eastern"
+    # TODO(Grisha): use `hdatetim.get_ET_tz()` once it is fixed.
+    config["data"]["timezone"] = pytz.timezone("US/Eastern")
     # Statistics parameters.
     config.add_subconfig("stats")
     config["stats"]["z_score_boundary"] = 3
@@ -94,7 +95,7 @@ print(config)
 ccxt_loader = imccdaloloa.CcxtLoader(
     root_dir=config["load"]["data_dir"], aws_profile=config["load"]["aws_profile"]
 )
-ccxt_data = ccxt_loader.read_data(
+ccxt_data = ccxt_loader.read_data_from_filesystem(
     exchange_id="binance", currency_pair="BTC/USDT", data_type="OHLCV"
 )
 _LOG.info("shape=%s", ccxt_data.shape[0])
@@ -103,21 +104,14 @@ ccxt_data.head(3)
 # %%
 # Check the timezone info.
 hdbg.dassert_eq(
-    ccxt_data[config["data"]["datetime_col_name"]].iloc[0].tzinfo, 
-    pytz.timezone("US/Eastern"),
+    ccxt_data.index.tzinfo,
+    config["data"]["timezone"],
 )
 
 # %%
 # TODO(Grisha): change tz in `CcxtLoader` #217.
-ccxt_data[config["data"]["datetime_col_name"]] = ccxt_data[
-    config["data"]["datetime_col_name"]
-].dt.tz_convert(config["data"]["timezone"])
-ccxt_data[config["data"]["datetime_col_name"]].iloc[0]
-
-# %%
-# TODO(Grisha): set index in the `CcxtLoader` #218.
-ccxt_data = ccxt_data.set_index(config["data"]["datetime_col_name"])
-ccxt_data.head(3)
+ccxt_data.index = ccxt_data.index.tz_convert(config["data"]["timezone"])
+ccxt_data.index.tzinfo
 
 # %% [markdown]
 # # Select subset
@@ -160,7 +154,6 @@ ccxt_data_reindex = ccxt_data_subset.reindex(resampled_index)
 _LOG.info("shape=%s", ccxt_data_reindex.shape[0])
 ccxt_data_reindex.head(3)
 
-
 # %% [markdown]
 # # Filter data
 
@@ -168,36 +161,20 @@ ccxt_data_reindex.head(3)
 # TODO(Grisha): add support for filtering by exchange, currency, asset class.
 
 # %%
-# TODO(Grisha): potentially could be merged with `core.explore.filter_around_time`.
-# The problem is that the function in `core.explore` filters by column rather than
-# by index and the filter is [timestamp - delta; timestamp + delta].
-def filter_by_date(
-    df: pd.DataFrame, config: ccocon.Config, start_date: str, end_date: str
-) -> pd.DataFrame:
-    """
-    Filter data by date [start_date, end_date).
-
-    :param df: data
-    :param start_date: lower bound
-    :param end_date: upper bound
-    :return: filtered data
-    """
-    # Convert dates to timestamps.
-    filter_start_date = pd.Timestamp(start_date, tz=config["data"]["timezone"])
-    filter_end_date = pd.Timestamp(end_date, tz=config["data"]["timezone"])
-    mask = (df.index >= filter_start_date) & (df.index < filter_end_date)
-    _LOG.info(
-        "Filtering in [%s; %s), selected rows=%s",
-        start_date,
-        end_date,
-        hprintin.perc(mask.sum(), df.shape[0]),
-    )
-    ccxt_data_filtered = ccxt_data_reindex[mask]
-    return ccxt_data_filtered
-
-
-ccxt_data_filtered = filter_by_date(
-    ccxt_data_reindex, config, "2019-01-01", "2020-01-01"
+# Get the inputs.
+# TODO(Grisha): pass tz to `hdatetim.to_datetime` once it is fixed.
+lower_bound = hdatetim.to_datetime("2019-01-01")
+lower_bound_ET = config["data"]["timezone"].localize(lower_bound)
+upper_bound = hdatetim.to_datetime("2020-01-01")
+upper_bound_ET = config["data"]["timezone"].localize(upper_bound)
+# Fiter data.
+ccxt_data_filtered = cexp.filter_by_time(
+    df=ccxt_data_reindex, 
+    lower_bound=lower_bound_ET,
+    upper_bound=upper_bound_ET,
+    inclusive="left",
+    ts_col_name=None,
+    log_level=logging.INFO,
 )
 ccxt_data_filtered.head(3)
 
@@ -276,7 +253,7 @@ nan_counts
 def detect_outliers(df: pd.DataFrame, config: ccocon.Config) -> pd.DataFrame:
     """
     Detect outliers in a rolling fashion using z-score.
-    
+
     If an observation has abs(z-score) > `z_score_boundary` it is considered
     an outlier. To compute a `z-score` rolling mean and rolling std are used.
 
