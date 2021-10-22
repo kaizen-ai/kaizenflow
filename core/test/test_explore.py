@@ -62,66 +62,138 @@ class TestFilterByTime(huntes.TestCase):
 
     def test_filter_by_index1(self) -> None:
         """
-        Verify that lower bound is included.
-        """
-        df = self._get_test_data()
-        lower_bound = hdatetim.to_datetime("2017-01-02")
-        upper_bound = hdatetim.to_datetime("2017-01-10")
-        actual = cexp.filter_by_time(
-            df=df,
-            ts_col_name=None,
-            lower_bound=lower_bound,
-            upper_bound=upper_bound,
-        )
-        expected = df[1::]
-        self.assert_equal(actual.to_string(), expected.to_string())
-
-    def test_filter_by_index2(self) -> None:
-        """
-        Verify that upper bound is not included.
+        Verify that `[lower_bound, upper_bound)` works.
         """
         df = self._get_test_data()
         lower_bound = hdatetim.to_datetime("2017-01-02")
         upper_bound = hdatetim.to_datetime("2017-01-04")
         actual = cexp.filter_by_time(
             df=df,
-            ts_col_name=None,
             lower_bound=lower_bound,
             upper_bound=upper_bound,
+            inclusive="left",
+            ts_col_name=None,
         )
         expected = df[1:3]
         self.assert_equal(actual.to_string(), expected.to_string())
 
-    def test_filter_by_column1(self) -> None:
+    def test_filter_by_index2(self) -> None:
         """
-        Verify that lower bound is included.
+        Verify that `(lower_bound, upper_bound]` works.
         """
         df = self._get_test_data()
-        lower_bound = hdatetim.to_datetime("2018-04-06")
-        upper_bound = hdatetim.to_datetime("2018-04-10")
+        lower_bound = hdatetim.to_datetime("2017-01-02")
+        upper_bound = hdatetim.to_datetime("2017-01-04")
         actual = cexp.filter_by_time(
             df=df,
-            ts_col_name="col2",
             lower_bound=lower_bound,
             upper_bound=upper_bound,
+            inclusive="right",
+            ts_col_name=None,
         )
-        expected = df[1::]
+        expected = df[2:4]
         self.assert_equal(actual.to_string(), expected.to_string())
 
-    def test_filter_by_column2(self) -> None:
+    def test_filter_by_index3(self) -> None:
         """
-        Verify that upper bound is not included.
+        Verify that `[lower_bound, upper_bound]` works.
+        """
+        df = self._get_test_data()
+        lower_bound = hdatetim.to_datetime("2017-01-02")
+        upper_bound = hdatetim.to_datetime("2017-01-04")
+        actual = cexp.filter_by_time(
+            df=df,
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
+            inclusive="both",
+            ts_col_name=None,
+        )
+        expected = df[1:4]
+        self.assert_equal(actual.to_string(), expected.to_string())
+
+    def test_filter_by_index4(self) -> None:
+        """
+        Verify that `(lower_bound, upper_bound)` works.
+        """
+        df = self._get_test_data()
+        lower_bound = hdatetim.to_datetime("2017-01-02")
+        upper_bound = hdatetim.to_datetime("2017-01-04")
+        actual = cexp.filter_by_time(
+            df=df,
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
+            inclusive="neither",
+            ts_col_name=None,
+        )
+        expected = df[2:3]
+        self.assert_equal(actual.to_string(), expected.to_string())
+
+    def test_filter_by_column1(self) -> None:
+        """
+        Verify that `[lower_bound, upper_bound)` works.
         """
         df = self._get_test_data()
         lower_bound = hdatetim.to_datetime("2018-04-06")
         upper_bound = hdatetim.to_datetime("2018-04-08")
         actual = cexp.filter_by_time(
             df=df,
-            ts_col_name="col2",
             lower_bound=lower_bound,
             upper_bound=upper_bound,
+            inclusive="left",
+            ts_col_name="col2",
         )
         expected = df[1:3]
+        self.assert_equal(actual.to_string(), expected.to_string())
+
+    def test_filter_by_column2(self) -> None:
+        """
+        Verify that `(lower_bound, upper_bound]` works.
+        """
+        df = self._get_test_data()
+        lower_bound = hdatetim.to_datetime("2018-04-06")
+        upper_bound = hdatetim.to_datetime("2018-04-08")
+        actual = cexp.filter_by_time(
+            df=df,
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
+            inclusive="right",
+            ts_col_name="col2",
+        )
+        expected = df[2:4]
+        self.assert_equal(actual.to_string(), expected.to_string())
+
+    def test_filter_by_column3(self) -> None:
+        """
+        Verify that `[lower_bound, upper_bound]` works.
+        """
+        df = self._get_test_data()
+        lower_bound = hdatetim.to_datetime("2018-04-06")
+        upper_bound = hdatetim.to_datetime("2018-04-08")
+        actual = cexp.filter_by_time(
+            df=df,
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
+            inclusive="both",
+            ts_col_name="col2",
+        )
+        expected = df[1:4]
+        self.assert_equal(actual.to_string(), expected.to_string())
+
+    def test_filter_by_column4(self) -> None:
+        """
+        Verify that `(lower_bound, upper_bound)` works.
+        """
+        df = self._get_test_data()
+        lower_bound = hdatetim.to_datetime("2018-04-06")
+        upper_bound = hdatetim.to_datetime("2018-04-08")
+        actual = cexp.filter_by_time(
+            df=df,
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
+            inclusive="neither",
+            ts_col_name="col2",
+        )
+        expected = df[2:3]
         self.assert_equal(actual.to_string(), expected.to_string())
 
     def test_no_intersection(self) -> None:
@@ -134,8 +206,9 @@ class TestFilterByTime(huntes.TestCase):
         upper_bound = hdatetim.to_datetime("2021-04-08")
         actual = cexp.filter_by_time(
             df=df,
-            ts_col_name=None,
             lower_bound=lower_bound,
             upper_bound=upper_bound,
+            inclusive="both",
+            ts_col_name=None,
         )
         self.assertEqual(actual.shape[0], 0)

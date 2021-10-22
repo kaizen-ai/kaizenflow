@@ -559,47 +559,56 @@ def filter_with_df(
 
 def filter_by_time(
     df: pd.DataFrame,
-    ts_col_name: Optional[str],
     lower_bound: hdatetim.StrictDatetime,
     upper_bound: hdatetim.StrictDatetime,
+    inclusive: str,
+    ts_col_name: Optional[str],
     log_level: int = logging.DEBUG,
 ) -> pd.DataFrame:
     """
-    Filter data by time like so `[lower_close_interval, upper_close_interval)`.
+    Filter data by time between `lower_bound` and `upper_bound`.
 
     Pass `None` to `ts_col_name` to filter by `DatetimeIndex`.
 
     :param df: data to filter
-    :param ts_col_name: name of a timestamp column to filter with
     :param lower_bound: left limit point of the time interval
     :param upper_bound: right limit point of the time interval
+    :param inclusive: include boundaries
+        - "both" to `[lower_bound, upper_bound]`
+        - "neither" to `(lower_bound, upper_bound)`
+        - "right" to `(lower_bound, upper_bound]`
+        - "left" to `[lower_bound, upper_bound)`
+    :param ts_col_name: name of a timestamp column to filter with
     :param log_level: the level of logging, e.g. `DEBUG`
     :return: data filtered by time
     """
     hdatetim.dassert_is_strict_datetime(lower_bound)
     hdatetim.dassert_is_strict_datetime(upper_bound)
-    #
-    hdatetim.dassert_tz_compatible_timestamp_with_df(lower_bound, df, ts_col_name)
-    hdatetim.dassert_tz_compatible_timestamp_with_df(upper_bound, df, ts_col_name)
+    # Time filtering is not working if timezones are different.
+    hdatetim.dassert_tz_compatible_timestamp_with_df(
+        lower_bound, df, ts_col_name
+    )
+    hdatetim.dassert_tz_compatible_timestamp_with_df(
+        upper_bound, df, ts_col_name
+    )
     #
     if ts_col_name is None:
         # Filter data by index.
         hdbg.dassert_isinstance(df.index, pd.DatetimeIndex)
-        mask = (df.index >= lower_bound) & (
-            df.index < upper_bound
-        )
+        # Cast index to `pd.Series` to use the `between` method.
+        mask = df.index.to_series().between(lower_bound, upper_bound, inclusive)
     else:
         # Filter data by a specified column.
         hdbg.dassert_in(ts_col_name, df.columns)
-        mask = (df[ts_col_name] >= lower_bound) & (
-            df[ts_col_name] < upper_bound
-        )
+        mask = df[ts_col_name].between(lower_bound, upper_bound, inclusive)
     #
     _LOG.log(
         log_level,
-        "Filtering in [%s, %s), selected rows=%s",
+        "Filtering between %s and %s with inclusive=`%s`, "
+        "selected rows=%s",
         lower_bound,
         upper_bound,
+        inclusive,
         hprintin.perc(mask.sum(), df.shape[0]),
     )
     return df[mask]
