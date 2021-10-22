@@ -1,5 +1,5 @@
 """
-Utilities for inserting data into DB table.
+Utilities for inserting CCXT data into the database.
 
 Import as:
 
@@ -16,6 +16,49 @@ import helpers.dbg as hdbg
 import helpers.sql as hsql
 
 _LOG = logging.getLogger(__name__)
+
+
+def get_ccxt_ohlcv_create_table_query() -> str:
+    """
+    Get SQL query to create CCXT OHLCV table.
+    """
+    query = """CREATE TABLE ccxt_ohlcv(
+                id SERIAL PRIMARY KEY,
+                timestamp BIGINT NOT NULL,
+                open NUMERIC,
+                high NUMERIC,
+                low NUMERIC,
+                close NUMERIC,
+                volume NUMERIC,
+                currency_pair VARCHAR(255) NOT NULL,
+                exchange_id VARCHAR(255) NOT NULL
+                )
+                """
+    return query
+
+
+def get_exchange_name_create_table_query() -> str:
+    """
+    Get SQL query to define CCXT crypto exchange names.
+    """
+    query = """CREATE TABLE exchange_name(
+            exchange_id SERIAL PRIMARY KEY,
+            exchange_name VARCHAR(255) NOT NULL
+            )
+            """
+    return query
+
+
+def get_currency_pair_create_table_query() -> str:
+    """
+    Get SQL query to define CCXT currency pairss.
+    """
+    query = """CREATE TABLE currency_pair(
+            currency_pair_id SERIAL PRIMARY KEY,
+            currency_pair VARCHAR(255) NOT NULL
+            )
+            """
+    return query
 
 
 def _copy_rows_with_copy_from(

@@ -16,6 +16,7 @@ import helpers.dbg as hdbg
 import helpers.sql as hsql
 import im.ib.sql_writer as imibsqwri
 import im.kibot.sql_writer as imkisqwri
+import im.ccxt.db.insert_data as imccdbindat
 
 _LOG = logging.getLogger(__name__)
 
@@ -65,49 +66,6 @@ def get_data_types_query() -> str:
     return query
 
 
-def get_ccxt_ohlcv_create_table_query() -> str:
-    """
-    Get SQL query to create CCXT OHLCV table.
-    """
-    query = """CREATE TABLE ccxt_ohlcv(
-                id SERIAL PRIMARY KEY,
-                timestamp INTEGER NOT NULL,
-                open NUMERIC,
-                high NUMERIC,
-                low NUMERIC,
-                close NUMERIC,
-                volume NUMERIC,
-                currency_pair VARCHAR(255) NOT NULL,
-                exchange_id VARCHAR(255) NOT NULL
-                )
-                """
-    return query
-
-
-def get_exchange_name_create_table_query() -> str:
-    """
-    Get SQL query to define CCXT crypto exchange names.
-    """
-    query = """CREATE TABLE exchange_name(
-            exchange_id SERIAL PRIMARY KEY,
-            exchange_name VARCHAR(255) NOT NULL
-            )
-            """
-    return query
-
-
-def get_currency_pair_create_table_query() -> str:
-    """
-    Get SQL query to define CCXT currency pairss.
-    """
-    query = """CREATE TABLE currency_pair(
-            currency_pair_id SERIAL PRIMARY KEY,
-            currency_pair VARCHAR(255) NOT NULL
-            )
-            """
-    return query
-
-
 def create_all_tables(connection: hsql.DbConnection) -> None:
     """
     Create tables inside a database.
@@ -119,6 +77,9 @@ def create_all_tables(connection: hsql.DbConnection) -> None:
         get_common_create_table_query(),
         imibsqwri.get_create_table_query(),
         imkisqwri.get_create_table_query(),
+        imccdbindat.get_ccxt_ohlcv_create_table_query(),
+        imccdbindat.get_exchange_name_create_table_query(),
+        imccdbindat.get_currency_pair_create_table_query()
     ]
     # Create tables.
     for query in queries:
