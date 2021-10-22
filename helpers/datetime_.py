@@ -58,7 +58,6 @@ Datetime = Union[str, pd.Timestamp, datetime.datetime]
 StrictDatetime = Union[pd.Timestamp, datetime.datetime]
 
 
-# TODO(Grisha): move to `helpers.dbg`?
 def dassert_is_datetime(datetime_: Datetime) -> None:
     """
     Assert that `datetime_` is of type `Datetime`.

@@ -39,6 +39,26 @@ class Test_explore1(huntes.TestCase):
 
 
 class TestFilterByTime(huntes.TestCase):
+    @staticmethod
+    def _get_test_data() -> pd.DataFrame:
+        """
+        Get data for testing.
+
+        :return: data for testing
+        """
+        df = pd.DataFrame(
+            {
+                "col1": [1, 2, 3, 4],
+                "col2": [
+                    hdatetim.to_datetime("2018-04-05"),
+                    hdatetim.to_datetime("2018-04-06"),
+                    hdatetim.to_datetime("2018-04-07"),
+                    hdatetim.to_datetime("2018-04-08"),
+                ],
+            }
+        )
+        df.index = pd.date_range("2017-01-01", periods=4)
+        return df
 
     def test_filter_by_index1(self) -> None:
         """
@@ -49,7 +69,7 @@ class TestFilterByTime(huntes.TestCase):
         upper_bound = hdatetim.to_datetime("2017-01-10")
         actual = cexp.filter_by_time(
             df=df,
-            ts_col_name="index",
+            ts_col_name=None,
             lower_close_interval=lower_bound,
             upper_close_interval=upper_bound,
         )
@@ -65,7 +85,7 @@ class TestFilterByTime(huntes.TestCase):
         upper_bound = hdatetim.to_datetime("2017-01-04")
         actual = cexp.filter_by_time(
             df=df,
-            ts_col_name="index",
+            ts_col_name=None,
             lower_close_interval=lower_bound,
             upper_close_interval=upper_bound,
         )
@@ -114,28 +134,8 @@ class TestFilterByTime(huntes.TestCase):
         upper_bound = hdatetim.to_datetime("2021-04-08")
         actual = cexp.filter_by_time(
             df=df,
-            ts_col_name="index",
+            ts_col_name=None,
             lower_close_interval=lower_bound,
             upper_close_interval=upper_bound,
         )
         self.assertEqual(actual.shape[0], 0)
-    @staticmethod
-    def _get_test_data() -> pd.DataFrame:
-        """
-        Get data for testing.
-
-        :return: data for testing
-        """
-        df = pd.DataFrame(
-            {
-                "col1": [1, 2, 3, 4],
-                "col2": [
-                    hdatetim.to_datetime("2018-04-05"),
-                    hdatetim.to_datetime("2018-04-06"),
-                    hdatetim.to_datetime("2018-04-07"),
-                    hdatetim.to_datetime("2018-04-08"),
-                ],
-            }
-        )
-        df.index = pd.date_range("2017-01-01", periods=4)
-        return df

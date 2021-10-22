@@ -559,7 +559,7 @@ def filter_with_df(
 
 def filter_by_time(
     df: pd.DataFrame,
-    ts_col_name: str,
+    ts_col_name: Optional[str],
     lower_close_interval: hdatetim.StrictDatetime,
     upper_close_interval: hdatetim.StrictDatetime,
     log_level: int = logging.DEBUG,
@@ -567,7 +567,7 @@ def filter_by_time(
     """
     Filter data by time like so `[lower_close_interval, upper_close_interval)`.
 
-    Pass "index" to `ts_col_name` to filter by `DatetimeIndex`.
+    Pass `None` to `ts_col_name` to filter by `DatetimeIndex`.
 
     :param df: data to filter
     :param ts_col_name: name of a timestamp column to filter with
@@ -579,7 +579,7 @@ def filter_by_time(
     hdatetim.dassert_is_strict_datetime(lower_close_interval)
     hdatetim.dassert_is_strict_datetime(upper_close_interval)
     #
-    if ts_col_name == "index":
+    if ts_col_name is None:
         # Filter data by index.
         hdbg.dassert_isinstance(df.index, pd.DatetimeIndex)
         hdatetim.dassert_tz_compatible_timestamp_with_df(lower_close_interval, df)
