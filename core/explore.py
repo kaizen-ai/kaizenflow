@@ -585,12 +585,8 @@ def filter_by_time(
     hdatetim.dassert_is_strict_datetime(lower_bound)
     hdatetim.dassert_is_strict_datetime(upper_bound)
     # Time filtering is not working if timezones are different.
-    hdatetim.dassert_tz_compatible_timestamp_with_df(
-        lower_bound, df, ts_col_name
-    )
-    hdatetim.dassert_tz_compatible_timestamp_with_df(
-        upper_bound, df, ts_col_name
-    )
+    hdatetim.dassert_tz_compatible_timestamp_with_df(lower_bound, df, ts_col_name)
+    hdatetim.dassert_tz_compatible_timestamp_with_df(upper_bound, df, ts_col_name)
     #
     if ts_col_name is None:
         # Filter data by index.
@@ -604,8 +600,7 @@ def filter_by_time(
     #
     _LOG.log(
         log_level,
-        "Filtering between %s and %s with inclusive=`%s`, "
-        "selected rows=%s",
+        "Filtering between %s and %s with inclusive=`%s`, " "selected rows=%s",
         lower_bound,
         upper_bound,
         inclusive,
