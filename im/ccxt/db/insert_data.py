@@ -51,7 +51,7 @@ def get_exchange_name_create_table_query() -> str:
 
 def get_currency_pair_create_table_query() -> str:
     """
-    Get SQL query to define CCXT currency pairss.
+    Get SQL query to define CCXT currency pairs.
     """
     query = """CREATE TABLE currency_pair(
             currency_pair_id SERIAL PRIMARY KEY,
