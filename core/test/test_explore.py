@@ -70,8 +70,8 @@ class TestFilterByTime(huntes.TestCase):
         actual = cexp.filter_by_time(
             df=df,
             ts_col_name=None,
-            lower_close_interval=lower_bound,
-            upper_close_interval=upper_bound,
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
         )
         expected = df[1::]
         self.assert_equal(actual.to_string(), expected.to_string())
@@ -86,8 +86,8 @@ class TestFilterByTime(huntes.TestCase):
         actual = cexp.filter_by_time(
             df=df,
             ts_col_name=None,
-            lower_close_interval=lower_bound,
-            upper_close_interval=upper_bound,
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
         )
         expected = df[1:3]
         self.assert_equal(actual.to_string(), expected.to_string())
@@ -102,8 +102,8 @@ class TestFilterByTime(huntes.TestCase):
         actual = cexp.filter_by_time(
             df=df,
             ts_col_name="col2",
-            lower_close_interval=lower_bound,
-            upper_close_interval=upper_bound,
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
         )
         expected = df[1::]
         self.assert_equal(actual.to_string(), expected.to_string())
@@ -118,8 +118,8 @@ class TestFilterByTime(huntes.TestCase):
         actual = cexp.filter_by_time(
             df=df,
             ts_col_name="col2",
-            lower_close_interval=lower_bound,
-            upper_close_interval=upper_bound,
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
         )
         expected = df[1:3]
         self.assert_equal(actual.to_string(), expected.to_string())
@@ -135,7 +135,7 @@ class TestFilterByTime(huntes.TestCase):
         actual = cexp.filter_by_time(
             df=df,
             ts_col_name=None,
-            lower_close_interval=lower_bound,
-            upper_close_interval=upper_bound,
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
         )
         self.assertEqual(actual.shape[0], 0)

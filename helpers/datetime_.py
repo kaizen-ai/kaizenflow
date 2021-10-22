@@ -185,7 +185,7 @@ def dassert_tz_compatible(
 def dassert_tz_compatible_timestamp_with_df(
     datetime_: StrictDatetime,
     df: pd.DataFrame,
-    col_name: Optional[str] = None,
+    col_name: Optional[str],
 ) -> None:
     """
     Assert that timestamp and a df column are both naive or both have timezone
