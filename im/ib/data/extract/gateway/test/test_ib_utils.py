@@ -14,6 +14,7 @@ import im.common.db.utils as imcodbuti
 _LOG = logging.getLogger(__name__)
 
 
+@pytest.mark.skip(msg="See alphamatic/dev_tools#282")
 class Test_utils1(iidegt.IbExtractionTest):
     def setUp(self) -> None:
         super().setUp()
