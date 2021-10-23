@@ -190,7 +190,7 @@ def calculate_pseudoinverse(
 
 
 def compress_tails(
-    signal: Union[pd.DataFrame, pd.Series], scale: int = 1
+    signal: Union[pd.DataFrame, pd.Series], scale: float = 1
 ) -> Union[pd.DataFrame, pd.Series]:
     """
     Apply compression to data.
@@ -605,6 +605,49 @@ def extract_smooth_moving_average_weights(
         2. relative weights (weight at `index_location` is equal to `1`, and
            prior weights are expressed relative to this value
     """
+    hdbg.dassert_lt(0, tau)
+    range_ = tau * (min_depth + max_depth) / 2.0
+    warmup_length = int(np.round(10 * range_))
+    weights = extract_filter_weights(
+        signal,
+        func=compute_smooth_moving_average,
+        func_kwargs={"tau": tau, "min_depth": min_depth, "max_depth": max_depth},
+        warmup_length=warmup_length,
+        index_location=index_location,
+    )
+    return weights
+
+
+def extract_filter_weights(
+    signal: Union[pd.DataFrame, pd.Series],
+    func: Callable[[pd.Series], pd.Series],
+    func_kwargs: Dict[str, Any],
+    warmup_length: int,
+    index_location: Optional[Any] = None,
+) -> pd.DataFrame:
+    """
+    Return present and historical weights used in SMA up to `index_location`.
+
+    This can be used in isolation to inspect SMA weights, or can be used on
+    data to, e.g., generate training data weights.
+
+    TODO(Paul): Consider generalizing this to also work with other filters.
+
+    :param signal: data that provides an index (for reindexing). No column
+        values used.
+    :param func: a function that transforms a series into a series
+    :param func_kwargs: kwargs to forward to `func`, e.g., smoothing parameters
+    :param warmup_length: a lower bound on the number of points required for
+        properly initializing `func` in generating weights (e.g., if `func` is
+        an EWMA)
+    :param index_location: current and latest value to be considered operated
+        upon by the smooth moving average (e.g., the last in-sample index). If
+        `None`, then use the last index location of `signal`.
+    :return: dataframe with two columns of weights:
+        1. absolute weights (e.g., weights sum to 1)
+        2. relative weights (weight at `index_location` is equal to `1`, and
+           prior weights are expressed relative to this value
+    """
     idx = signal.index
     hdbg.dassert_isinstance(idx, pd.Index)
     hdbg.dassert(not idx.empty, msg="`signal.index` must be nonempty.")
@@ -620,7 +663,7 @@ def extract_smooth_moving_average_weights(
         idx,
         msg="`index_location` must be a member of `signal.index`",
     )
-    hdbg.dassert_lt(0, tau)
+    hdbg.dassert_lt(0, warmup_length)
     # Build a step series.
     # - This is a sequence of ones followed by a sequence of zeros
     # - The length of the ones series is determined by `tau` and is used for
@@ -630,28 +673,21 @@ def extract_smooth_moving_average_weights(
     #   the warm-up length, then we extend the zeros so that we can calculate
     #   reliable absolute weights
     desired_length = signal.loc[:index_location].shape[0]
-    range_ = tau * (min_depth + max_depth) / 2.0
-    warmup_length = int(np.round(10 * range_))
     ones = pd.Series(index=range(0, warmup_length), data=1)
     length = max(desired_length, warmup_length)
     zeros = pd.Series(index=range(warmup_length, warmup_length + length), data=0)
     step = pd.concat([ones, zeros], axis=0)
     # Apply the smooth moving average function to the step function.
-    smoothed_step = compute_smooth_moving_average(
-        step,
-        tau=tau,
-        min_depth=min_depth,
-        max_depth=max_depth,
-    )
+    filtered_step = func(step, **func_kwargs)
     # Drop the warm-up ones from the smoothed series.
-    smoothed_step = smoothed_step.iloc[warmup_length - 1 :]
-    smoothed_step.name = "relative_weight"
+    filtered_step = filtered_step.iloc[warmup_length - 1 :]
+    filtered_step.name = "relative_weight"
     # Calculate absolute weights.
-    absolute_weights = (smoothed_step / smoothed_step.sum()).rename(
+    absolute_weights = (filtered_step / filtered_step.sum()).rename(
         "absolute_weight"
     )
     # Build a `weights` dataframe of relative and absolute kernel weights.
-    weights = pd.concat([smoothed_step, absolute_weights], axis=1).reset_index(
+    weights = pd.concat([filtered_step, absolute_weights], axis=1).reset_index(
         drop=True
     )
     # Truncate to `desired_length`, determined by `signal.index` and
@@ -1788,12 +1824,48 @@ def compute_swt_sum(
     return srs.to_frame()
 
 
+# TODO(*): Make this a decorator.
 def compute_fir_zscore(
     signal: Union[pd.DataFrame, pd.Series],
     dyadic_tau: int,
     variance_dyadic_tau: Optional[int] = None,
     delay: int = 0,
     variance_delay: Optional[int] = None,
+    wavelet: Optional[str] = None,
+    variance_wavelet: Optional[str] = None,
+) -> pd.DataFrame:
+    if isinstance(signal, pd.Series):
+        return _compute_fir_zscore(
+            signal,
+            dyadic_tau,
+            variance_dyadic_tau,
+            delay,
+            variance_delay,
+            wavelet,
+            variance_wavelet,
+        )
+    df = signal.apply(
+        lambda x: _compute_fir_zscore(
+            x,
+            dyadic_tau,
+            variance_dyadic_tau,
+            delay,
+            variance_delay,
+            wavelet,
+            variance_wavelet,
+        )
+    )
+    return df
+
+
+def _compute_fir_zscore(
+    signal: Union[pd.DataFrame, pd.Series],
+    dyadic_tau: int,
+    variance_dyadic_tau: Optional[int] = None,
+    delay: int = 0,
+    variance_delay: Optional[int] = None,
+    wavelet: Optional[str] = None,
+    variance_wavelet: Optional[str] = None,
 ) -> pd.Series:
     """
     Z-score with a FIR filter.
@@ -1802,45 +1874,25 @@ def compute_fir_zscore(
         variance_dyadic_tau = dyadic_tau
     if variance_delay is None:
         variance_delay = delay
+    if variance_wavelet is None:
+        variance_wavelet = wavelet
     if isinstance(signal, pd.DataFrame):
         hdbg.dassert_eq(
             signal.shape[1], 1, "Input dataframe must have a single column."
         )
         signal = signal.squeeze()
-    mean = get_swt(signal, depth=dyadic_tau, output_mode="smooth")[
-        dyadic_tau
-    ].shift(delay)
+    mean = get_swt(
+        signal, wavelet=wavelet, depth=dyadic_tau, output_mode="smooth"
+    )[dyadic_tau].shift(delay)
     demeaned = signal - mean
     var = get_swt(
         demeaned ** 2,
+        wavelet=variance_wavelet,
         depth=variance_dyadic_tau,
         output_mode="smooth",
     )[variance_dyadic_tau].shift(variance_delay)
     # TODO(Paul): Maybe add delay-based rescaling.
     srs = demeaned / np.sqrt(var)
-    srs.name = signal.name
-    srs = srs.replace([-np.inf, np.inf], np.nan)
-    return srs
-
-
-def compute_fir_var_normalization(
-    signal: Union[pd.DataFrame, pd.Series],
-    dyadic_tau: int,
-    delay: int = 0,
-) -> pd.Series:
-    """
-    Variance normalize a centered signal with a FIR filter.
-    """
-    if isinstance(signal, pd.DataFrame):
-        hdbg.dassert_eq(
-            signal.shape[1], 1, "Input dataframe must have a single column."
-        )
-        signal = signal.squeeze()
-    var = compute_swt_var(signal, depth=dyadic_tau)[
-        "swt_var"
-    ].shift(delay)
-    # TODO(Paul): Maybe add delay-based rescaling.
-    srs = signal / np.sqrt(var)
     srs.name = signal.name
     srs = srs.replace([-np.inf, np.inf], np.nan)
     return srs
