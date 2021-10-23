@@ -25,7 +25,7 @@ import helpers.dbg as hdbg
 import helpers.parser as hparser
 import helpers.sql as hsql
 import im.ccxt.data.extract.exchange_class as imcdaexexccla
-import im.ccxt.db.insert_data as imccdbindat
+import im.ccxt.db.utils as imccdbuti
 
 _LOG = logging.getLogger(__name__)
 
@@ -137,7 +137,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 pair_data = exchange.instance.download_ohlcv_data(
                     curr_symbol=pair, step=2
                 )
-                imccdbindat.execute_insert_query(connection=connection,
+                imccdbuti.execute_insert_query(connection=connection,
                                                  df=pair_data,
                                                  table_name=args.table_name)
         time.sleep(60)

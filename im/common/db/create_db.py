@@ -14,7 +14,7 @@ import psycopg2.sql as psql
 
 import helpers.dbg as hdbg
 import helpers.sql as hsql
-import im.ccxt.db.insert_data as imccdbindat
+import im.ccxt.db.utils as imccdbuti
 import im.ib.sql_writer as imibsqwri
 import im.kibot.sql_writer as imkisqwri
 
@@ -77,9 +77,9 @@ def create_all_tables(connection: hsql.DbConnection) -> None:
         get_common_create_table_query(),
         imibsqwri.get_create_table_query(),
         imkisqwri.get_create_table_query(),
-        imccdbindat.get_ccxt_ohlcv_create_table_query(),
-        imccdbindat.get_exchange_name_create_table_query(),
-        imccdbindat.get_currency_pair_create_table_query(),
+        imccdbuti.get_ccxt_ohlcv_create_table_query(),
+        imccdbuti.get_exchange_name_create_table_query(),
+        imccdbuti.get_currency_pair_create_table_query(),
     ]
     # Create tables.
     for query in queries:
