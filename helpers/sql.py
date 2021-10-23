@@ -89,6 +89,28 @@ def get_connection_from_env_vars() -> Tuple[
     return connection
 
 
+def get_connection_from_env_vars() -> Tuple[
+    DbConnection, psycop.extensions.cursor
+]:
+    """
+    Create a SQL connection using environment variables.
+    """
+    # Get environment variables
+    db_name = os.environ["POSTGRES_DB"]
+    host = os.environ["POSTGRES_HOST"]
+    port = int(os.environ["POSTGRES_PORT"])
+    user = os.environ["POSTGRES_USER"]
+    password = os.environ["POSTGRES_PASSWORD"]
+    connection, cursor = get_connection(
+        dbname=db_name,
+        host=host,
+        port=port,
+        user=user,
+        password=password,
+    )
+    return connection, cursor
+
+
 def get_connection_from_string(
     conn_as_str: str,
     autocommit: bool = True,

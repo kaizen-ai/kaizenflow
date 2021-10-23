@@ -8,14 +8,20 @@ Note: IM database is created using environment variables.
 Usage:
 - Set SQL schema for the IM database:
     > set_schema_im_db.py
+
+Import as:
+
+import im.devops.docker_scripts.set_schema_im_db as imddoscsescimdb
 """
 import argparse
 import logging
 import os
 
-import helpers.dbg as dbg
-import helpers.parser as hparse
-import im.common.db.create_schema as icdcrsch
+import helpers.dbg as hdbg
+import helpers.parser as hparser
+import helpers.sql as hsql
+import im.common.db.create_db as imcodbcrdb
+import im.common.db.utils as imcodbuti
 
 _LOG = logging.getLogger(__name__)
 
@@ -24,20 +30,21 @@ def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    hparse.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level)
+    hdbg.init_logger(verbosity=args.log_level)
+    connection, _ = hsql.get_connection_from_env_vars()
     # Verify that the database is available.
-    icdcrsch.check_db_connection()
+    imcodbuti.check_db_connection(connection=connection)
     # Set schema for the database.
-    db_name = os.environ["POSTGRES_DB"]
-    _LOG.info("Setting schema for DB `%s`...", db_name)
-    icdcrsch.create_schema()
-    _LOG.info("Database `%s` is ready to use.", db_name)
+    _LOG.info("Setting schema for DB `%s`...", os.environ["POSTGRES_DB"])
+    imcodbcrdb.create_all_tables(connection)
+    imcodbcrdb.test_tables(connection)
+    _LOG.info("Database `%s` is ready to use.", os.environ["POSTGRES_DB"])
 
 
 if __name__ == "__main__":
