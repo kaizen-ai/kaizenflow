@@ -1,5 +1,7 @@
 import os
 
+import pytest
+
 import helpers.s3 as hs3
 import helpers.unit_test as hut
 import im.ccxt.data.load.loader as cdlloa
@@ -9,6 +11,8 @@ _AM_S3_ROOT_DIR = os.path.join(hs3.get_path(), "data")
 
 
 class TestGetFilePath(hut.TestCase):
+
+    @pytest.mark.skip(reason="Fix in cmamp")
     def test1(self) -> None:
         """
         Test supported exchange id and currency pair.
@@ -49,6 +53,7 @@ class TestGetFilePath(hut.TestCase):
 
 class TestCcxtLoader(hut.TestCase):
 
+    @pytest.mark.skip(reason="Fix in cmamp")
     def test1(self) -> None:
         """
         Test files on S3 are being read correctly.

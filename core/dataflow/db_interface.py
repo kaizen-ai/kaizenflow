@@ -543,12 +543,11 @@ def _process_period(
     _LOG.debug(hprintin.to_str("period current_time"))
     # Period of time.
     if period == "last_day":
-        # TODO(gp): Deprecate this.
-        assert 0
         # Get the data for the last day.
-        # current_time = hdatetim.get_current_time(tz="UTC")
-        current_time.date()
-        # _LOG.debug("today_date=%s", today_date)
+        # TODO(gp): We should use the current time that works for both real and
+        # simulated mode.
+        current_time = hdatetim.get_current_time(tz="UTC")
+        last_start_time = current_time.floor(freq="1D")
     elif period in ("last_10mins", "last_5mins", "last_1min"):
         # Get the data for the last N minutes.
         # current_time = hdatetim.get_current_time(tz="UTC")
