@@ -1,18 +1,17 @@
 """
 Import as:
 
-import dataflow_amp.price.pipeline as dapp
+import dataflow_amp.price.pipeline as dtfamprpip
 """
 
 import datetime
 import logging
-from typing import Optional, cast
 
 import core.config as cconfig
 import core.dataflow as dtf
-import core.dataflow_source_nodes as dsn
-import core.finance as fin
-import helpers.dbg as dbg
+import core.dataflow_source_nodes as cdtfsonod
+import core.finance as cfin
+import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -80,13 +79,13 @@ class PricePipeline(dtf.DagBuilder):
         # Read data.
         stage = "load_prices"
         nid = self._get_nid(stage)
-        node = dsn.data_source_node_factory(nid, **config[nid].to_dict())
+        node = cdtfsonod.data_source_node_factory(nid, **config[nid].to_dict())
         tail_nid = self._append(dag, tail_nid, node)
         # Process bid/ask.
         stage = "process_bid_ask"
         nid = self._get_nid(stage)
         node = dtf.FunctionWrapper(
-            nid, func=fin.process_bid_ask, **config[nid].to_dict()
+            nid, func=cfin.process_bid_ask, **config[nid].to_dict()
         )
         tail_nid = self._append(dag, tail_nid, node)
         # Set weekends to NaN.
@@ -94,7 +93,7 @@ class PricePipeline(dtf.DagBuilder):
         nid = self._get_nid(stage)
         node = dtf.ColumnTransformer(
             nid,
-            transformer_func=fin.set_weekends_to_nan,
+            transformer_func=cfin.set_weekends_to_nan,
             **config[nid].to_dict(),
         )
         tail_nid = self._append(dag, tail_nid, node)
@@ -103,7 +102,7 @@ class PricePipeline(dtf.DagBuilder):
         nid = self._get_nid(stage)
         node = dtf.ColumnTransformer(
             nid,
-            transformer_func=fin.set_non_ath_to_nan,
+            transformer_func=cfin.set_non_ath_to_nan,
             **config[nid].to_dict(),
         )
         tail_nid = self._append(dag, tail_nid, node)
@@ -111,7 +110,7 @@ class PricePipeline(dtf.DagBuilder):
         stage = "resample_prices_to_1min"
         nid = self._get_nid(stage)
         node = dtf.FunctionWrapper(
-            nid, func=fin.resample_time_bars, **config[nid].to_dict()
+            nid, func=cfin.resample_time_bars, **config[nid].to_dict()
         )
         tail_nid = self._append(dag, tail_nid, node)
         #
@@ -125,11 +124,4 @@ class PricePipeline(dtf.DagBuilder):
 
         :param config: config object to validate
         """
-        dbg.dassert(cconfig.check_no_dummy_values(config))
-
-    @staticmethod
-    def _append(dag: dtf.DAG, tail_nid: Optional[str], node: dtf.Node) -> str:
-        dag.add_node(node)
-        if tail_nid is not None:
-            dag.connect(tail_nid, node.nid)
-        return cast(str, node.nid)
+        hdbg.dassert(cconfig.check_no_dummy_values(config))
