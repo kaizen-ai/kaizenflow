@@ -1,5 +1,5 @@
 """
-Utilities for inserting CCXT data into the database.
+Utilities for working with CCXT data in the database.
 
 Import as:
 
