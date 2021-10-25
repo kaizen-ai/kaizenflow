@@ -15,6 +15,7 @@ Import as:
 
 import im.ccxt.data.extract.download_realtime_ohlcv as imcdaexdowrea
 """
+# TODO(Danya): Merge with `download_realtime_orderbook.py`
 import argparse
 import collections
 import logging
@@ -29,9 +30,9 @@ import im.ccxt.db.insert_data as imccdbindat
 
 _LOG = logging.getLogger(__name__)
 
+# TODO(Danya, Dan): Move downloaded universe to a centralized location.
 _ALL_EXCHANGE_IDS = ["binance", "kucoin", "ftx", "gateio", "bitfinex"]
-
-# TODO(Danya): Merge with `download_realtime_orderbook.py`
+_ALL_CURRENCIES = ["ADA/USDT", "AVAX/USDT", "BNB/USDT", "BTC/USDT", "DOGE/USDT", "EOS/USDT", "ETH/USDT", "LINK/USDT", "SOL/USDT", "XRP/USDT"]
 
 # TODO(Danya): Create a type and move outside.
 def _instantiate_exchange(
