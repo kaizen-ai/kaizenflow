@@ -29,7 +29,7 @@ import im.ccxt.db.insert_data as imccdbindat
 
 _LOG = logging.getLogger(__name__)
 
-_ALL_EXCHANGE_IDS = ["binance", "kucoin"]
+_ALL_EXCHANGE_IDS = ["binance", "kucoin", "ftx", "gateio", "bitfinex"]
 
 # TODO(Danya): Merge with `download_realtime_orderbook.py`
 
