@@ -86,7 +86,9 @@ print(config)
 # # Compute start-end-table
 
 # %%
-def compute_start_end_table(data_provider: str, loader: _LOADER, config: ccocon.Config) -> pd.DataFrame:
+def compute_start_end_table(
+    data_provider: str, loader: _LOADER, config: ccocon.Config
+) -> pd.DataFrame:
     """
     Compute data provider specific start-end-table.
 
@@ -121,20 +123,24 @@ def compute_start_end_table(data_provider: str, loader: _LOADER, config: ccocon.
                 config["data"]["data_type"],
             )
             # Compute `start-end-table`.
-            cur_start_end_table = pd.DataFrame({
-                "data_provider": [data_provider],
-                "exchange": [exchange],
-                "currency": [currency_pair],
-                "min_timestamp": [cur_df.index.min()],
-                "max_timestamp": [cur_df.index.max()],
-            })
+            cur_start_end_table = pd.DataFrame(
+                {
+                    "data_provider": [data_provider],
+                    "exchange": [exchange],
+                    "currency": [currency_pair],
+                    "min_timestamp": [cur_df.index.min()],
+                    "max_timestamp": [cur_df.index.max()],
+                }
+            )
             start_end_tables.append(cur_start_end_table)
     # Concatenate the results.
     start_end_table = pd.concat(start_end_tables, ignore_index=True)
     return start_end_table
 
 
-def get_loader_for_data_provider(data_provider: str, config: ccocon.Config) -> _LOADER:
+def get_loader_for_data_provider(
+    data_provider: str, config: ccocon.Config
+) -> _LOADER:
     """
     Get data provider specific loader instance.
 
@@ -143,11 +149,13 @@ def get_loader_for_data_provider(data_provider: str, config: ccocon.Config) -> _
     """
     if data_provider == "CCXT":
         loader = imccdaloloa.CcxtLoader(
-            root_dir=config["load"]["data_dir"], aws_profile=config["load"]["aws_profile"]
+            root_dir=config["load"]["data_dir"],
+            aws_profile=config["load"]["aws_profile"],
         )
     elif data_provider == "CDD":
         loader = imcrdaloloa.CddLoader(
-            root_dir=config["load"]["data_dir"], aws_profile=config["load"]["aws_profile"]
+            root_dir=config["load"]["data_dir"],
+            aws_profile=config["load"]["aws_profile"],
         )
     else:
         raise ValueError(f"Unsupported data provider={data_provider}")
@@ -166,13 +174,22 @@ for data_provider in config["data"]["data_providers"]:
 
 # %%
 start_end_table = pd.concat(start_end_tables, ignore_index=True)
-_LOG.info("The number of unique data provider, exchange, currency pair combinations=%s", start_end_table.shape[0])
+_LOG.info(
+    "The number of unique data provider, exchange, currency pair combinations=%s",
+    start_end_table.shape[0],
+)
 start_end_table
 
 # %% [markdown]
 # ## Per currency pair
 
 # %%
-currency_start_end_table = start_end_table.groupby("currency").agg({"min_timestamp": np.min, "max_timestamp": np.max}).reset_index()
-_LOG.info("The number of unique currency pairs=%s", currency_start_end_table.shape[0])
+currency_start_end_table = (
+    start_end_table.groupby("currency")
+    .agg({"min_timestamp": np.min, "max_timestamp": np.max})
+    .reset_index()
+)
+_LOG.info(
+    "The number of unique currency pairs=%s", currency_start_end_table.shape[0]
+)
 currency_start_end_table
