@@ -136,6 +136,11 @@ def _system(
     """
     Execute a shell command.
 
+    To print the command and see the output call this as:
+    ```
+    _system(cmd, suppress_output=False, log_level="echo")
+    ```
+
     :param cmd: string with command to execute
     :param abort_on_error: whether we should assert in case of error or not
     :param suppress_error: set of error codes to suppress
