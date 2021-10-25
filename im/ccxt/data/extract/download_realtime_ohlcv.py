@@ -1,19 +1,19 @@
 #!/usr/bin/env python
 """
-Script to download data from CCXT in real-time.
+Script to download OHLCV data from CCXT in real-time.
 
 Use as:
 
 # Download all currency pairs for Binance, Kucoin,
   FTX exchanges:
-> python im/ccxt/data/extract/download_realtime.py \
+> python im/ccxt/data/extract/download_realtime_ohlcv.py \
     --table_name 'ccxt_ohlcv' \
     --exchange_ids 'binance kucoin ftx' \
     --currency_pairs 'all'
 
 Import as:
 
-import im.ccxt.data.extract.download_realtime as imcdaexdowrea
+import im.ccxt.data.extract.download_realtime_ohlcv as imcdaexdowrea
 """
 import argparse
 import collections
@@ -31,6 +31,7 @@ _LOG = logging.getLogger(__name__)
 
 _ALL_EXCHANGE_IDS = ["binance", "kucoin"]
 
+# TODO(Danya): Merge with `download_realtime_orderbook.py`
 
 # TODO(Danya): Create a type and move outside.
 def _instantiate_exchange(
