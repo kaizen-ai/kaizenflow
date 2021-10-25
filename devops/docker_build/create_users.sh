@@ -1,3 +1,4 @@
+# This needs to be kept in sync with devops/docker_build/etc_sudoers.
 # TODO(gp): Do a loop instead of copy-paste.
 # TODO(gp): Find a solution where you don't have to specify all the potential
 # users up front.
@@ -19,6 +20,18 @@ usermod -aG docker user_1005
 
 useradd -u 1006 $OPTS user_1006
 usermod -aG docker user_1006
+
+useradd -u 1007 $OPTS user_1007
+usermod -aG docker user_1007
+
+useradd -u 1008 $OPTS user_1008
+usermod -aG docker user_1008
+
+useradd -u 1009 $OPTS user_1009
+usermod -aG docker user_1009
+
+useradd -u 1010 $OPTS user_1010
+usermod -aG docker user_1010
 
 sudo chmod -R 777 /home
 
