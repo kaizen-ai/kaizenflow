@@ -12,6 +12,15 @@
 #     name: python3
 # ---
 
+# %% [markdown]
+# # Description
+
+# %% [markdown]
+# This notebook computes earliest/latest data timestamps available per data provider, exchange, currency pair.
+
+# %% [markdown]
+# # Imports
+
 # %%
 # TODO(Grisha): move to `core/dataflow_model/notebooks` in #205.
 
@@ -44,6 +53,9 @@ hprintin.config_notebook()
 _LOADER = Union[imccdaloloa.CcxtLoader, crdall.CddLoader]
 
 
+# %% [markdown]
+# # Config
+
 # %%
 def get_cmtask232_config() -> ccocon.Config:
     """
@@ -65,8 +77,24 @@ config = get_cmtask232_config()
 print(config)
 
 
+# %% [markdown]
+# # Compute start-end-table
+
 # %%
 def compute_start_end_table(data_provider: str, loader: _LOADER, config: ccocon.Config) -> pd.DataFrame:
+    """
+    Compute data provider specific start-end-table.
+    
+    Start-end-table's structure is:
+        - exchange name
+        - currency pair
+        - minimum observed timestamp
+        - maximum observed timestamp
+        
+    :param data_provider: data provider, e.g. `CCXT`
+    :param loader: provider specific loader instance
+    :return: data provider specific start-end-table
+    """
     # Load the universe.
     universe = hio.from_json(config["data"]["universe_file_path"])
     # TODO(Grisha): fix loading in #244.
@@ -96,6 +124,7 @@ def compute_start_end_table(data_provider: str, loader: _LOADER, config: ccocon.
                 "max_timestamp": [cur_df.index.max()],
             })
             start_end_tables.append(cur_start_end_table)
+    # Concatenate the results.
     start_end_table = pd.concat(start_end_tables, ignore_index=True)
     return start_end_table
 
@@ -119,6 +148,9 @@ def get_loader_for_data_provider(data_provider: str, config: config: ccocon.Conf
     return loader
 
 
+# %% [markdown]
+# ## Per data provider, exchange, currency pair
+
 # %%
 start_end_tables = []
 for data_provider in config["data"]["data_providers"]:
@@ -130,6 +162,9 @@ for data_provider in config["data"]["data_providers"]:
 start_end_table = pd.concat(start_end_tables, ignore_index=True)
 _LOG.info("The number of unique data provider, exchange, currency pair combinations=%s", start_end_table.shape[0])
 start_end_table
+
+# %% [markdown]
+# ## Per currency pair
 
 # %%
 currency_start_end_table = start_end_table.groupby("currency").agg({"min_timestamp": np.min, "max_timestamp": np.max}).reset_index()
