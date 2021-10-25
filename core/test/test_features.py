@@ -480,6 +480,7 @@ class Test_compute_effective_rank(huntes.TestCase):
 
 
 class Test_select_cols_by_greedy_grassmann(huntes.TestCase):
+    @pytest.mark.skip(reason="cmamp issue #242")
     def test1(self) -> None:
         df = self._get_df()
         actual = cfea.select_cols_by_greedy_grassmann(df)
@@ -529,6 +530,7 @@ class Test_select_cols_by_greedy_grassmann(huntes.TestCase):
 
 
 class Test_select_cols_by_greedy_volume(huntes.TestCase):
+    @pytest.mark.skip(reason="cmamp issue #242")
     def test1(self) -> None:
         df = self._get_df()
         actual = cfea.select_cols_by_greedy_volume(df)
