@@ -500,6 +500,7 @@ class Test_select_cols_by_greedy_grassmann(huntes.TestCase):
         expected = ["x3", "x2", "x4", "x1"]
         self._assert_lists_equal(actual, expected)
 
+    @pytest.mark.skip(reason="cmamp issue #242")
     def test4(self) -> None:
         df = self._get_df()
         actual = cfea.select_cols_by_greedy_grassmann(
