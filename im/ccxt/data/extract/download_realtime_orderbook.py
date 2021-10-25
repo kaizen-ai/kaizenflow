@@ -130,7 +130,7 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    hio.create_dir(args.dst_dir, incremental=args.incremental)
+    hio.create_dir(args.dst_dir, incremental=False)
     api_keys = hio.from_json(args.api_keys)
     # Get exchange ids.
     if args.exchange_ids == "all":
@@ -146,25 +146,22 @@ def _main(parser: argparse.ArgumentParser) -> None:
         )
     # Launch an infinite loop.
     while True:
-        # TODO(Danya): Update `exchange_class` to load order book data.
-        exchange_class = getattr(ccxt, exchange.id)
-        exchange_class = exchange_class(api_keys[exchange.id])
         for exchange in exchanges:
+            # TODO(Danya): Update `exchange_class` to load order book data.
+            exchange_class = getattr(ccxt, exchange.id)
+            exchange_class = exchange_class(api_keys[exchange.id])
             for pair in exchange.pairs:
                 # Download latest 5 minutes for the currency pair and exchange.
                 order_book = exchange_class.fetch_order_book(pair)
                 file_name = (
-                    f"{exchange.id}_"
+                    f"orderbook_{exchange.id}_"
                     f"{pair.replace('/', '_')}_"
-                    f"{hdatetim.get_timestamp('Eastern')}.csv.gz"
+                    f"{hdatetim.get_timestamp('ET')}.json"
                 )
                 full_path = os.path.join(args.dst_dir, file_name)
                 # Save file.
-                order_book.to_csv(
-                    full_path,
-                    index=False,
-                    compression="gzip",
-                )
+                hio.to_json(full_path, order_book)
+                _LOG.info("Saved %s", file_name)
         time.sleep(60)
 
 
