@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 """
-Script to download OHLCV data from CCXT in real-time.
+Script to download order book data from CCXT in real-time.
 
 Use as:
 
 # Download all currency pairs for Binance, Kucoin,
   FTX exchanges:
-> python im/ccxt/data/extract/download_realtime_ohlcv.py \
-    --table_name 'ccxt_ohlcv' \
+> python im/ccxt/data/extract/download_realtime_orderbook.py \
+    --dst_dir 'ccxt_test' \
     --exchange_ids 'binance kucoin ftx' \
-    --currency_pairs 'all'
+    --currency_pairs 'universe'
 
 Import as:
 
