@@ -13,7 +13,7 @@ Use as:
 
 Import as:
 
-import im.ccxt.data.extract.download_realtime_ohlcv as imcdaexdowrea
+import im.ccxt.data.extract.download_realtime_ohlcv as imcdaexdoreaohl
 """
 import argparse
 import collections
@@ -82,7 +82,7 @@ def _parse() -> argparse.ArgumentParser:
         "--table_name",
         action="store",
         type=str,
-        help="Name of the table to upload to"
+        help="Name of the table to upload to",
     )
     parser.add_argument(
         "--api_keys",
@@ -138,9 +138,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 pair_data = exchange.instance.download_ohlcv_data(
                     curr_symbol=pair, step=2
                 )
-                imccdbindat.execute_insert_query(connection=connection,
-                                                 df=pair_data,
-                                                 table_name=args.table_name)
+                imccdbindat.execute_insert_query(
+                    connection=connection,
+                    df=pair_data,
+                    table_name=args.table_name,
+                )
         time.sleep(60)
     connection.close()
 
