@@ -75,7 +75,7 @@ class CddLoader:
         # Specify supported data types to load.
         self._data_types = ["ohlcv"]
 
-    def read_data(
+    def read_data_from_filesystem(
         self,
         exchange_id: str,
         currency_pair: str,
