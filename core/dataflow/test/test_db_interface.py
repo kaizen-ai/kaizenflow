@@ -53,7 +53,7 @@ def generate_synthetic_db_data(
 
 
 # TODO(gp): initial_replayed_delay -> initial_replayed_delay_in_mins or
-#  initial_delay_in_mins.
+#  initial_delay_in_mins (or in secs).
 def get_replayed_time_db_interface_example1(
     event_loop: asyncio.AbstractEventLoop,
     start_datetime: pd.Timestamp,
