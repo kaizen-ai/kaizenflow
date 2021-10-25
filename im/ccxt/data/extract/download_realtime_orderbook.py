@@ -32,7 +32,7 @@ import im.ccxt.data.extract.exchange_class as imcdaexexccla
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(Danya, Dan): Move downloaded universe to a centralized location.
+# TODO(Danya,Dan): Move downloaded universe to a centralized location.
 _ALL_EXCHANGE_IDS = ["binance", "kucoin", "ftx", "gateio", "bitfinex"]
 _UNIVERSE_CURRENCY_PAIRS = [
     "ADA/USDT",
@@ -46,6 +46,7 @@ _UNIVERSE_CURRENCY_PAIRS = [
     "SOL/USDT",
     "XRP/USDT",
 ]
+
 
 # TODO(Danya): Create a type and move outside.
 def _instantiate_exchange(
@@ -152,7 +153,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
             for pair in exchange.pairs:
                 # Download latest 5 minutes for the currency pair and exchange.
                 order_book = exchange_class.fetch_order_book(pair)
-                file_name = f"{exchange.id}_{pair.replace('/', '_')}_{hdatetim.get_timestamp('Eastern')}.csv.gz"
+                file_name = (
+                    f"{exchange.id}_"
+                    f"{pair.replace('/', '_')}_"
+                    f"{hdatetim.get_timestamp('Eastern')}.csv.gz"
+                )
                 full_path = os.path.join(args.dst_dir, file_name)
                 # Save file.
                 order_book.to_csv(
@@ -161,7 +166,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
                     compression="gzip",
                 )
         time.sleep(60)
-    connection.close()
 
 
 if __name__ == "__main__":
