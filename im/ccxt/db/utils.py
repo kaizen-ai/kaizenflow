@@ -1,5 +1,5 @@
 """
-Utilities for working with CCXT data in the database.
+Utilities for working with CCXT database.
 
 Import as:
 
@@ -107,7 +107,7 @@ def populate_exchange_currency_tables(conn: hsql.DbConnection) -> None:
             exchange_class = getattr(ccxt, exchange_name)()
             exchange_currency_pairs = list(exchange_class.load_markets().keys())
             currency_pairs.extend(exchange_currency_pairs)
-        except:
+        except(ccxt.AuthenticationError, ccxt.NetworkError, TypeError) as e:
             continue
     # Create a dataframe with currency pairs and ids.
     currency_pairs_srs = pd.Series(sorted(list(set(currency_pairs))))
