@@ -24,21 +24,22 @@
 # %%
 # TODO(Grisha): move to `core/dataflow_model/notebooks` in #205.
 
-import os
 import logging
+import os
 from typing import Union
 
 import numpy as np
 import pandas as pd
 
 import core.config.config_ as ccocon
-import im.ccxt.data.load.loader as imccdaloloa
-import im.cryptodatadownload.data.load.loader as crdall
 import helpers.dbg as hdbg
 import helpers.env as henv
+import helpers.git as hgit
 import helpers.io_ as hio
 import helpers.printing as hprintin
 import helpers.s3 as hs3
+import im.ccxt.data.load.loader as imccdaloloa
+import im.cryptodatadownload.data.load.loader as imcrdaloloa
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -50,7 +51,7 @@ _LOG.info("%s", henv.get_system_signature()[0])
 hprintin.config_notebook()
 
 # %%
-_LOADER = Union[imccdaloloa.CcxtLoader, crdall.CddLoader]
+_LOADER = Union[imccdaloloa.CcxtLoader, imcrdaloloa.CddLoader]
 
 
 # %% [markdown]
@@ -70,8 +71,12 @@ def get_cmtask232_config() -> ccocon.Config:
     config.add_subconfig("data")
     config["data"]["data_providers"] = ["CCXT", "CDD"]
     config["data"]["data_type"] = "OHLCV"
-    config["data"]["universe_file_path"] = "im/data/downloaded_currencies.json"
+    config["data"]["universe_file_path"] = os.path.join(
+        hgit.get_client_root(False),
+        "im/data/downloaded_currencies.json",
+    )
     return config
+
 
 config = get_cmtask232_config()
 print(config)
@@ -84,13 +89,13 @@ print(config)
 def compute_start_end_table(data_provider: str, loader: _LOADER, config: ccocon.Config) -> pd.DataFrame:
     """
     Compute data provider specific start-end-table.
-    
+
     Start-end-table's structure is:
         - exchange name
         - currency pair
         - minimum observed timestamp
         - maximum observed timestamp
-        
+
     :param data_provider: data provider, e.g. `CCXT`
     :param loader: provider specific loader instance
     :return: data provider specific start-end-table
@@ -128,10 +133,11 @@ def compute_start_end_table(data_provider: str, loader: _LOADER, config: ccocon.
     start_end_table = pd.concat(start_end_tables, ignore_index=True)
     return start_end_table
 
-def get_loader_for_data_provider(data_provider: str, config: config: ccocon.Config) -> _LOADER:
+
+def get_loader_for_data_provider(data_provider: str, config: ccocon.Config) -> _LOADER:
     """
-    Get data provider specific loader instance. 
-    
+    Get data provider specific loader instance.
+
     :param data_provider: data provider, e.g. `CCXT`
     :return: loader instance
     """
@@ -140,7 +146,7 @@ def get_loader_for_data_provider(data_provider: str, config: config: ccocon.Conf
             root_dir=config["load"]["data_dir"], aws_profile=config["load"]["aws_profile"]
         )
     elif data_provider == "CDD":
-        loader = crdall.CddLoader(
+        loader = imcrdaloloa.CddLoader(
             root_dir=config["load"]["data_dir"], aws_profile=config["load"]["aws_profile"]
         )
     else:
@@ -154,7 +160,7 @@ def get_loader_for_data_provider(data_provider: str, config: config: ccocon.Conf
 # %%
 start_end_tables = []
 for data_provider in config["data"]["data_providers"]:
-    loader = get_loader(data_provider, config)
+    loader = get_loader_for_data_provider(data_provider, config)
     cur_start_end_table = compute_start_end_table(data_provider, loader, config)
     start_end_tables.append(cur_start_end_table)
 
