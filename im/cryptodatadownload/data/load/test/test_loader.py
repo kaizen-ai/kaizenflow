@@ -1,5 +1,7 @@
 import os
 
+import pytest
+
 import helpers.s3 as hs3
 import helpers.unit_test as hut
 import im.cryptodatadownload.data.load.loader as crdall
@@ -9,6 +11,7 @@ _AM_S3_ROOT_DIR = os.path.join(hs3.get_path(), "data")
 
 
 class TestGetFilePath(hut.TestCase):
+    @pytest.mark.skip(msg="See alphamatic/dev_tools#288")
     def test1(self) -> None:
         """
         Test supported exchange id and currency pair.
@@ -45,6 +48,7 @@ class TestGetFilePath(hut.TestCase):
 
 
 class TestCddLoader(hut.TestCase):
+    @pytest.mark.skip(msg="See alphamatic/dev_tools#288")
     def test1(self) -> None:
         """
         Test files on S3 are being read correctly.
