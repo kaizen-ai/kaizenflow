@@ -6,7 +6,7 @@ import im.ccxt.data.extract.exchange_class as imcdaexexccla
 
 import logging
 import time
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 import tqdm
@@ -146,3 +146,32 @@ class CcxtExchange:
                 columns=["timestamp", "open", "high", "low", "close", "volume"],
             )
             return all_bars
+
+    def download_order_book(self,
+                            curr_pair: str) -> Dict[str, Any]:
+        """
+        Download order book for the currency pair.
+
+        The output is a nested dictionary with order book at the
+        moment of request.
+        Example of an order book:
+        {'symbol': 'BTC/USDT',
+        'bids': [[62715.84, 0.002],
+         [62714.0, 0.002],
+         [62712.55, 0.0094]],
+         'asks': [[62715.85, 0.002],
+         [62717.25, 0.1674]],
+         'timestamp': 1635248738159,
+         'datetime': '2021-10-26T11:45:38.159Z',
+         'nonce': None}
+
+        :param curr_pair: a currency pair, e.g. 'BTC/USDT'
+        :return:
+        """
+        # Verify that the exchange has fetch_order_book method.
+        hdbg.dassert(self._exchange.has["fetchOrderBook"])
+        # Verify that the provided currency pair is present in exchange.
+        hdbg.dassert_in(curr_pair, self.currency_pairs)
+        # Download current order book.
+        order_book = self._exchange.fetch_order_book(curr_pair)
+        return order_book
