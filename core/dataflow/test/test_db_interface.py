@@ -210,10 +210,34 @@ class TestReplayedTimeDbInterface1(huntes.TestCase):
             rtdi, expected_last_end_time, expected_is_online
         )
 
+    def test_get_data_for_minute_1(self) -> None:
+        """
+        The replayed time starts one minute after the data to represent the
+        first minute of trading.
+        """
+        normalize_data = True
+        initial_replayed_delay = 1
+        expected_df_as_str = """# df=
+        df.index in [2000-01-01 09:31:00-05:00, 2000-01-01 09:31:00-05:00]
+        df.columns=id,last_price,start_datetime,timestamp_db
+        df.shape=(1, 4)
+        id  last_price            start_datetime              timestamp_db
+        end_datetime
+        2000-01-01 09:31:00-05:00  1000    -0.12546 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00
+        """
+        rtdi = self._check_get_data(
+            normalize_data, initial_replayed_delay, expected_df_as_str
+        )
+        #
+        expected_last_end_time = pd.Timestamp("2000-01-01 09:31:00-0500")
+        expected_is_online = True
+        self._check_last_end_time(
+            rtdi, expected_last_end_time, expected_is_online
+        )
+
     def test_get_data_for_minute_3(self) -> None:
         """
-        The replayed time starts 3 minutes after the opening of the trading
-        date.
+        The replayed time starts 3 minutes after the opening of the trading day.
         """
         normalize_data = True
         initial_replayed_delay = 3
@@ -240,8 +264,7 @@ class TestReplayedTimeDbInterface1(huntes.TestCase):
 
     def test_get_data_for_minute_6(self) -> None:
         """
-        The replayed time starts at the same time of the data to represent the
-        first minute of trading.
+        The replayed time starts 6 minutes after the opening of the trading day.
         """
         normalize_data = True
         initial_replayed_delay = 6
@@ -272,8 +295,7 @@ class TestReplayedTimeDbInterface1(huntes.TestCase):
 
     def test_get_data_for_minute_63(self) -> None:
         """
-        The replayed time starts at the same time of the data to represent the
-        first minute of trading.
+        The replayed time starts 63 minutes after the opening of the trading day.
         """
         normalize_data = True
         initial_replayed_delay = 63
@@ -291,7 +313,7 @@ class TestReplayedTimeDbInterface1(huntes.TestCase):
             normalize_data, initial_replayed_delay, expected_df_as_str
         )
         #
-        expected_last_end_time = None
+        expected_last_end_time = pd.Timestamp('2000-01-01 10:30:00-0500')
         expected_is_online = False
         self._check_last_end_time(
             rtdi, expected_last_end_time, expected_is_online
@@ -344,6 +366,7 @@ class TestReplayedTimeDbInterface1(huntes.TestCase):
 
 
 class TestReplayedTimeDbInterface2(huntes.TestCase):
+
     def test_is_last_bar_available1(self) -> None:
         """
         Wait for the market to open.

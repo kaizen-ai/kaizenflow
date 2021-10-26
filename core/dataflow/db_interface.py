@@ -152,15 +152,23 @@ class RealTimeDbInterface(abc.ABC):
         #_LOG.debug(hprintin.df_to_short_str("after process_data", df))
         return df
 
-    def get_last_end_time(self) -> pd.Timestamp:
+    def get_last_end_time(self) -> Optional[pd.Timestamp]:
         """
         Return the last `end_time` present in the RT DB.
 
-        We assume that all the bars are inserted together in a single transaction,
-        so we can check for a single id, e.g., AAPL.
-
-        :return: the timestamp is in ET like everything in the RT DB
+        In the actual RT DB there is always some data, so we return a timestamp.
+        We return `None` only for replayed time when there is no time (e.g.,
+        before the market opens).
         """
+        ret = self._get_last_end_time()
+        if ret is not None:
+            # Convert to ET.
+            ret = ret.tz_convert("America/New_York")
+        _LOG.debug("-> ret=%s", ret)
+        return ret
+
+    @abc.abstractmethod
+    def _get_last_end_time(self) -> Optional[pd.Timestamp]:
         ...
 
     def is_online(self) -> bool:
@@ -168,9 +176,24 @@ class RealTimeDbInterface(abc.ABC):
         Return whether the DB is on-line at the current time.
 
         This is useful to avoid to wait on a DB that is off-line.
+        We check this by checking if there was data in the last minute.
         """
         # Check if the data in the last minute is empty.
-        return self.get_last_end_time() is not None
+        _LOG.debug("")
+        # The DB is online if there was data within the last minute.
+        last_db_end_time = self.get_last_end_time()
+        if last_db_end_time is None:
+            ret = False
+        else:
+            _LOG.debug("last_db_end_time=%s -> %s",
+                       last_db_end_time, last_db_end_time.floor("Min"))
+            current_time = self._get_wall_clock_time()
+            _LOG.debug("current_time=%s -> %s",
+                       current_time, current_time.floor("Min"))
+            ret = (last_db_end_time.floor("Min") >= (current_time.floor("Min") -
+                                                     pd.Timedelta(minutes=1)))
+        _LOG.debug("-> ret=%s", ret)
+        return ret
 
     # TODO(gp): -> wait_for_latest_data
     async def is_last_bar_available(
@@ -204,7 +227,7 @@ class RealTimeDbInterface(abc.ABC):
                 ),
             )
             if (last_db_end_time and
-                last_db_end_time.floor("Min") >= current_time.floor("Min")):
+                    (last_db_end_time.floor("Min") >= current_time.floor("Min"))):
                 # Get the current timestamp when the call was finally executed.
                 _LOG.debug("Waiting on last bar: done")
                 end_sampling_time = current_time
@@ -293,10 +316,12 @@ class RealTimeSqlDbInterface(RealTimeDbInterface):
         df = super().process_data(df)
         return df
 
-    def _get_last_end_time(self) -> pd.Timestamp:
+    def _get_last_end_time(self) -> Optional[pd.Timestamp]:
         """
         Return the last `end_time` available in the DB.
         """
+        # We assume that all the bars are inserted together in a single
+        # transaction, so we can check for the max timestamp.
         # Get the latest `start_time` (which is an index) with a query like:
         #   ```
         #   SELECT MAX(start_time)
@@ -506,10 +531,11 @@ class ReplayedTimeDbInterface(RealTimeDbInterface):
         df = super().process_data(df)
         return df
 
-    def get_last_end_time(self) -> Optional[pd.Timestamp]:
-        _LOG.debug("")
-        # We need to find the last timestamp before the current time.
-        period = "last_1min"
+    def _get_last_end_time(self) -> Optional[pd.Timestamp]:
+        # We need to find the last timestamp before the current time. We use
+        # `last_week` but could also use all the data since we don't call the
+        # DB.
+        period = "last_week"
         df = self.get_data(period)
         _LOG.debug(hprintin.df_to_short_str("after get_data", df))
         if df.empty:
