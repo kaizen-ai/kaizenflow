@@ -18,12 +18,9 @@ import helpers.io_ as hio
 import helpers.s3 as hs3
 import helpers.sql as hsql
 
-_LOG = logging.getLogger(__name__)
+import im.data.universe as imdatuniv
 
-# Path to the data about downloaded currencies from the spreadsheet in CMTask41.
-_DOWNLOADED_CURRENCIES_PATH = os.path.join(
-    hgit.get_amp_abs_path(), "im/data/downloaded_currencies.json"
-)
+_LOG = logging.getLogger(__name__)
 
 # Latest historical data snapshot.
 _LATEST_DATA_SNAPSHOT = "20210924"
@@ -184,9 +181,7 @@ class CcxtLoader:
         :return: absolute path to a file with CCXT data
         """
         # Extract data about downloaded currencies for CCXT.
-        downloaded_currencies_info = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)[
-            "CCXT"
-        ]
+        downloaded_currencies_info = imdatuniv.TRADE_UNIVERSE["CCXT"]
         # Verify that data for the input exchange id was downloaded.
         hdbg.dassert_in(
             exchange_id,

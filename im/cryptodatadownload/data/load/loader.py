@@ -17,12 +17,9 @@ import helpers.git as hgit
 import helpers.io_ as hio
 import helpers.s3 as hs3
 
-_LOG = logging.getLogger(__name__)
+import im.data.universe as imdatuniv
 
-# Path to the data about downloaded currencies from the spreadsheet in CMTask41.
-_DOWNLOADED_CURRENCIES_PATH = os.path.join(
-    hgit.get_amp_abs_path(), "im/data/downloaded_currencies.json"
-)
+_LOG = logging.getLogger(__name__)
 
 # Latest historical data snapsot.
 _LATEST_DATA_SNAPSHOT = "20210924"
@@ -45,7 +42,7 @@ def _get_file_path(
     :return: path to a file with CDD data
     """
     # Extract data about downloaded currencies for CDD.
-    downloaded_currencies_info = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)["CDD"]
+    downloaded_currencies_info = imdatuniv.TRADE_UNIVERSE["CDD"]
     # Verify that data for the input exchange id was downloaded.
     dbg.dassert_in(
         exchange_id,
