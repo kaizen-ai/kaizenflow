@@ -60,6 +60,7 @@ from im.im_lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     im_docker_cmd,
     im_docker_down,
 )
+import repo_config as rconf
 
 _LOG = logging.getLogger(__name__)
 
@@ -73,6 +74,7 @@ hversi.check_version("./version.txt")
 
 # TODO(gp): Move it to lib_tasks.
 ECR_BASE_PATH = os.environ["AM_ECR_BASE_PATH"]
+DOCKER_BASE_IMAGE_NAME = rconf.get_docker_base_image_name()
 
 
 default_params = {
@@ -80,7 +82,7 @@ default_params = {
     # When testing a change to the build system in a branch you can use a different
     # image, e.g., `XYZ_tmp` to not interfere with the prod system.
     # "BASE_IMAGE": "amp_tmp",
-    "BASE_IMAGE": "cmamp",
+    "BASE_IMAGE": DOCKER_BASE_IMAGE_NAME,
     "DEV_TOOLS_IMAGE_PROD": f"{ECR_BASE_PATH}/dev_tools:prod",
 }
 
