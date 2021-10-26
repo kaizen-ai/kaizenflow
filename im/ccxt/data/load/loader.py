@@ -22,7 +22,7 @@ _LOG = logging.getLogger(__name__)
 
 # Path to the data about downloaded currencies from the spreadsheet in CMTask41.
 _DOWNLOADED_CURRENCIES_PATH = os.path.join(
-    git.get_amp_abs_path(), "im/data/downloaded_currencies.json"
+    hgit.get_amp_abs_path(), "im/data/downloaded_currencies.json"
 )
 
 # Latest historical data snapshot.
