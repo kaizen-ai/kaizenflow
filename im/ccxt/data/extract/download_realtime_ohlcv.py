@@ -25,7 +25,7 @@ import helpers.dbg as hdbg
 import helpers.parser as hparser
 import helpers.sql as hsql
 import im.ccxt.data.extract.exchange_class as imcdaexexccla
-import im.ccxt.db.insert_data as imccdbindat
+import im.ccxt.db.utils as imccdbuti
 
 _LOG = logging.getLogger(__name__)
 
