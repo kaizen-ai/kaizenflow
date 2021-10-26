@@ -254,7 +254,7 @@ class SeriesTransformer(cdnb.Transformer, cdnb.ColModeMixin):
             df_in,
             df,
             cols=df.columns.tolist(),
-            col_rename_func=None,
+            col_rename_func=self._col_rename_func,
             col_mode=self._col_mode,
         )
         #
