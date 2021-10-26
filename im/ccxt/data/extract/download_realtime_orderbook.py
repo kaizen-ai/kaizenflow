@@ -23,7 +23,6 @@ import os
 import time
 from typing import NamedTuple, Optional
 
-import ccxt
 import helpers.datetime_ as hdatetim
 import helpers.dbg as hdbg
 import helpers.io_ as hio
@@ -131,7 +130,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     hio.create_dir(args.dst_dir, incremental=False)
-    api_keys = hio.from_json(args.api_keys)
     # Get exchange ids.
     if args.exchange_ids == "all":
         exchange_ids = _ALL_EXCHANGE_IDS
@@ -147,12 +145,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Launch an infinite loop.
     while True:
         for exchange in exchanges:
-            # TODO(Danya): Update `exchange_class` to load order book data.
-            exchange_class = getattr(ccxt, exchange.id)
-            exchange_class = exchange_class(api_keys[exchange.id])
             for pair in exchange.pairs:
                 # Download latest 5 minutes for the currency pair and exchange.
-                order_book = exchange_class.fetch_order_book(pair)
+                order_book = exchange.instance.fetch_order_book(pair)
                 file_name = (
                     f"orderbook_{exchange.id}_"
                     f"{pair.replace('/', '_')}_"
