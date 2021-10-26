@@ -107,6 +107,9 @@ def populate_exchange_currency_tables(conn: hsql.DbConnection) -> None:
             exchange_class = getattr(ccxt, exchange_name)()
             exchange_currency_pairs = list(exchange_class.load_markets().keys())
             currency_pairs.extend(exchange_currency_pairs)
+        # Continue cycle if some of the following errors appear since all of
+        # them are related to denied access to the requested data for only 6
+        # exchanges that are far from our scope.
         except(ccxt.AuthenticationError, ccxt.NetworkError, TypeError) as e:
             continue
     # Create a dataframe with currency pairs and ids.
