@@ -2,6 +2,7 @@ import logging
 import os
 
 import pandas as pd
+import pytest
 
 try:
     import ib_insync

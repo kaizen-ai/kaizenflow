@@ -11,6 +11,7 @@ _AM_S3_ROOT_DIR = os.path.join(hs3.get_path(), "data")
 
 
 class TestGetFilePath(hut.TestCase):
+    @pytest.mark.skip(msg="See alphamatic/dev_tools#288")
     def test1(self) -> None:
         """
         Test supported exchange id and currency pair.
@@ -60,6 +61,7 @@ class TestGetFilePath(hut.TestCase):
 
 # TODO(*): Consider to factor out the class calling in a `def _get_loader()`.
 class TestCcxtLoader(hut.TestCase):
+    @pytest.mark.skip(msg="See alphamatic/dev_tools#288")
     @pytest.mark.slow
     def test1(self) -> None:
         """

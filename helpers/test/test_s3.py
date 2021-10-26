@@ -1,6 +1,8 @@
 import logging
 import os
 
+import pytest
+
 import helpers.s3 as hs3
 import helpers.unit_test as huntes
 
@@ -24,6 +26,7 @@ class Test_s3_functions1(huntes.TestCase):
         self.assert_equal(path, "/tmp/TestCachingOnS3.test_with_caching1/joblib")
 
 
+@pytest.mark.skip(msg="See alphamatic/dev_tools#288")
 class Test_s3_1(huntes.TestCase):
     def test_ls1(self) -> None:
         file_path = os.path.join(hs3.get_path(), "README.md")
