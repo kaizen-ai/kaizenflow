@@ -195,6 +195,7 @@ class TestLinearRegression(hunitest.TestCase):
         )
         self.check_string(df_str)
 
+    @pytest.mark.skip(reason="cmamp issue #242")
     def test6(self) -> None:
         """
         Test `fit()` with `p_val_threshold`.
