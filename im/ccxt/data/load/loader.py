@@ -13,6 +13,7 @@ import pandas as pd
 import core.pandas_helpers as cpah
 import helpers.datetime_ as hdatetim
 import helpers.dbg as hdbg
+import helpers.git as hgit
 import helpers.io_ as hio
 import helpers.s3 as hs3
 import helpers.sql as hsql
@@ -20,7 +21,9 @@ import helpers.sql as hsql
 _LOG = logging.getLogger(__name__)
 
 # Path to the data about downloaded currencies from the spreadsheet in CMTask41.
-_DOWNLOADED_CURRENCIES_PATH = "im/data/downloaded_currencies.json"
+_DOWNLOADED_CURRENCIES_PATH = os.path.join(
+    git.get_amp_abs_path(), "im/data/downloaded_currencies.json"
+)
 
 # Latest historical data snapshot.
 _LATEST_DATA_SNAPSHOT = "20210924"
