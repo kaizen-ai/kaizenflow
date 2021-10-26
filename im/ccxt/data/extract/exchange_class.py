@@ -147,8 +147,7 @@ class CcxtExchange:
             )
             return all_bars
 
-    def download_order_book(self,
-                            curr_pair: str) -> Dict[str, Any]:
+    def download_order_book(self, curr_pair: str) -> Dict[str, Any]:
         """
         Download order book for the currency pair.
 
