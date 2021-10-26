@@ -6,6 +6,8 @@ import im.ib.data.load.test.test_file_path_generator as tfpgen
 
 import os
 
+import pytest
+
 import helpers.s3 as hs3
 import helpers.unit_test as hut
 import im.common.data.types as mcdtyp
@@ -25,6 +27,7 @@ class TestIbFilePathGenerator(hut.TestCase):
         super().setUp()
         self._file_path_generator = ifpgen.IbFilePathGenerator()
 
+    @pytest.mark.skip(msg="See alphamatic/dev_tools#288")
     def test_get_latest_symbols_file1(self) -> None:
         """
         Get the latest file with the info.
