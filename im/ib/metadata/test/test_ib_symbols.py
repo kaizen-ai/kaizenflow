@@ -10,7 +10,6 @@ import im.ib.data.load.ib_file_path_generator as iidlib
 import im.ib.metadata.ib_symbols as iimibs
 
 
-@pytest.mark.skip(msg="See alphamatic/dev_tools#288")
 class TestIbSymbolUniverse(hut.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
