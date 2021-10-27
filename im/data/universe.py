@@ -22,7 +22,7 @@ def get_trade_universe(
     :param version: release version
     :return: trade universe
     """
-    file_name = "_".join(["universe", version])
+    file_name = "".join(["universe_", version, ".json"])
     file_path = os.path.join(
         hgit.get_amp_abs_path(), "im/data", file_name
     )
