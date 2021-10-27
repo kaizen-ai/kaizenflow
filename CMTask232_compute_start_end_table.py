@@ -83,16 +83,16 @@ print(config)
 
 
 # %% [markdown]
-# # Compute start-end-table
+# # Compute start-end table
 
 # %%
 def compute_start_end_table(
     data_provider: str, loader: _LOADER, config: ccocon.Config
 ) -> pd.DataFrame:
     """
-    Compute data provider specific start-end-table.
+    Compute data provider specific start-end table.
 
-    Start-end-table's structure is:
+    Start-end table's structure is:
         - exchange name
         - currency pair
         - minimum observed timestamp
@@ -100,7 +100,7 @@ def compute_start_end_table(
 
     :param data_provider: data provider, e.g. `CCXT`
     :param loader: provider specific loader instance
-    :return: data provider specific start-end-table
+    :return: data provider specific start-end table
     """
     # Load the universe.
     universe = hio.from_json(config["data"]["universe_file_path"])
@@ -122,7 +122,7 @@ def compute_start_end_table(
                 currency_pair,
                 config["data"]["data_type"],
             )
-            # Compute `start-end-table`.
+            # Compute `start-end table`.
             cur_start_end_table = pd.DataFrame(
                 {
                     "data_provider": [data_provider],
@@ -161,6 +161,31 @@ def get_loader_for_data_provider(
         raise ValueError(f"Unsupported data provider={data_provider}")
     return loader
 
+
+# %%
+ccxt_loader = get_loader_for_data_provider("CCXT", config)
+ccxt_data = ccxt_loader.read_data_from_filesystem("binance", "BTC/USDT", "OHLCV")
+print(ccxt_data.shape[0])
+ccxt_data.head(3)
+
+
+# %%
+def compute_start_end_table(crypto_data):
+    # Reset `DatetimeIndex` to use it for stats computation.
+    crypto_data_no_index = crypto_data.reset_index()
+    # Group by exchange, currency.
+    crypto_data_grouped = crypto_data_no_index.groupby(["exchange_id", "currency_pair"])
+    # Compute the stats.
+    start_end_table = crypto_data_grouped["timestamp"]
+
+tmp_df = ccxt_data.reset_index().groupby(["exchange_id", "currency_pair"])["timestamp"].agg(
+    min_timestamp=np.min,
+    max_timestamp=np.max,
+    n_data_points="count",
+).reset_index()
+tmp_df["delta"] = (tmp_df["max_timestamp"] - tmp_df["min_timestamp"]).dt.days
+tmp_df["avg"] = tmp_df["n_data_points"] / tmp_df["delta"]
+tmp_df
 
 # %% [markdown]
 # ## Per data provider, exchange, currency pair
