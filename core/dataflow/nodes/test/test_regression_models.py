@@ -185,6 +185,77 @@ class TestLinearRegression(hut.TestCase):
         df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
         self.check_string(df_str)
 
+    @pytest.mark.skip(reason="cmamp issue #242")
+    def test6(self) -> None:
+        """
+        Test `fit()` with `p_val_threshold`.
+        """
+        # Load test data.
+        data = self._get_frozen_input()
+        # Generate node config.
+        config = cconfig.get_config_from_nested_dict(
+            {
+                "x_vars": ["x1", "x2", "x3", "x4"],
+                "y_vars": ["y"],
+                "steps_ahead": 1,
+                "p_val_threshold": 0.2,
+                "col_mode": "merge_all",
+            }
+        )
+        node = cdnrm.LinearRegression(
+            "linear_regression",
+            **config.to_dict(),
+        )
+        #
+        df_out = node.fit(data)["df_out"]
+        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        self.check_string(df_str)
+
+    def test7(self) -> None:
+        """
+        Test `fit()` with `feature_weights`.
+        """
+        # Load test data.
+        data = self._get_frozen_input()
+        # Generate output using a certain regression config but manually
+        # specified feature weights.
+        config1 = cconfig.get_config_from_nested_dict(
+            {
+                "x_vars": ["x1", "x2", "x3", "x4"],
+                "y_vars": ["y"],
+                "steps_ahead": 1,
+                "p_val_threshold": 0.2,
+                "col_mode": "merge_all",
+                "feature_weights": [1, 1, 1, 1],
+            }
+        )
+        node1 = cdnrm.LinearRegression(
+            "linear_regression",
+            **config1.to_dict(),
+        )
+        df_out1 = node1.fit(data)["df_out"]
+        # Generate output using a different regression config but the same
+        # (as above) manually specified feature weights.
+        config2 = cconfig.get_config_from_nested_dict(
+            {
+                "x_vars": ["x1", "x2", "x3", "x4"],
+                "y_vars": ["y"],
+                "steps_ahead": 1,
+                "smoothing": 2,
+                "col_mode": "merge_all",
+                "feature_weights": [1, 1, 1, 1],
+            }
+        )
+        node2 = cdnrm.LinearRegression(
+            "linear_regression",
+            **config2.to_dict(),
+        )
+        df_out2 = node2.fit(data)["df_out"]
+        # The two outputs should agree because the input data and
+        # user-supplied feature weights were the same (even though other
+        # regression parameters were different).
+        self.assert_dfs_close(df_out1, df_out2)
+
     def _get_test_data_file_name(self) -> str:
         """
         Return the name of the file containing the data for testing this class.

@@ -4,7 +4,7 @@ from typing import List
 
 import pytest
 
-import helpers.conda as hco
+import helpers.old.conda as hoco
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as io_
@@ -112,7 +112,7 @@ class Test_install_create_conda_py1(ut.TestCase):
         self._run_create_conda(cmd_opts, cleanup=False)
         #
         cmd = "conda activate %s && conda info --envs" % env_name
-        hco.conda_system(cmd, suppress_output=False)
+        hoco.conda_system(cmd, suppress_output=False)
         # Clean up the env.
         self._run_create_conda(cmd_opts, cleanup=True)
 

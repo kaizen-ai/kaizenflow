@@ -15,3 +15,11 @@ def get_repo_map() -> Dict[str, str]:
 
 def get_host_name() -> str:
     return "github.com"
+
+
+def get_docker_base_image_name() -> str:
+    """
+    Return a base name for docker image.
+    """
+    base_image_name = "cmamp"
+    return base_image_name

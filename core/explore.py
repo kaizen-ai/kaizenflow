@@ -7,6 +7,10 @@ Utility functions for Jupyter notebook to:
 
 These functions are used for both interactive data exploration and to implement
 more complex pipelines. The output is reported through logging.
+
+Import as:
+
+import core.explore as cexp
 """
 
 import datetime
@@ -34,11 +38,12 @@ import statsmodels
 import statsmodels.api
 import tqdm.autonotebook as tauton
 
-import core.plotting as cplott
-import helpers.dbg as dbg
-import helpers.hpandas as hpandas
+import core.plotting as cplo
+import helpers.datetime_ as hdatetim
+import helpers.dbg as hdbg
+import helpers.hpandas as hhpandas
 import helpers.list as hlist
-import helpers.printing as hprint
+import helpers.printing as hprintin
 
 _LOG = logging.getLogger(__name__)
 
@@ -58,7 +63,7 @@ def cast_to_df(obj: Union[pd.Series, pd.DataFrame]) -> pd.DataFrame:
         df = pd.DataFrame(obj)
     else:
         df = obj
-    dbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert_isinstance(df, pd.DataFrame)
     return df
 
 
@@ -67,11 +72,11 @@ def cast_to_series(obj: Union[pd.Series, pd.DataFrame]) -> pd.Series:
     Convert a pandas object into a pd.Series.
     """
     if isinstance(obj, pd.DataFrame):
-        dbg.dassert_eq(obj.shape[1], 1)
+        hdbg.dassert_eq(obj.shape[1], 1)
         srs = obj.iloc[:, 1]
     else:
         srs = obj
-    dbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_isinstance(srs, pd.Series)
     return srs
 
 
@@ -89,7 +94,7 @@ def adapt_to_series(f: Callable) -> Callable:
         if isinstance(obj, pd.Series):
             obj = pd.DataFrame(obj)
             was_series = True
-        dbg.dassert_isinstance(obj, pd.DataFrame)
+        hdbg.dassert_isinstance(obj, pd.DataFrame)
         # Apply the function.
         res = f(obj, *args, **kwargs)
         # Transform the output, if needed.
@@ -131,7 +136,7 @@ def drop_axis_with_all_nans(
     :param drop_infs: remove also +/- np.inf
     :param report_stats: report the stats of the operations
     """
-    dbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert_isinstance(df, pd.DataFrame)
     if drop_infs:
         df = df.replace([np.inf, -np.inf], np.nan)
     if drop_columns:
@@ -142,13 +147,13 @@ def drop_axis_with_all_nans(
             # Report results.
             cols_after = df.columns[:]
             removed_cols = set(cols_before).difference(set(cols_after))
-            pct_removed = hprint.perc(
+            pct_removed = hprintin.perc(
                 len(cols_before) - len(cols_after), len(cols_after)
             )
             _LOG.info(
                 "removed cols with all nans: %s %s",
                 pct_removed,
-                hprint.list_to_str(removed_cols),
+                hprintin.list_to_str(removed_cols),
             )
     if drop_rows:
         # Remove rows with all nans, if any.
@@ -165,7 +170,7 @@ def drop_axis_with_all_nans(
                 # TODO(gp): Report as intervals of dates.
                 min_ts = min(removed_rows)
                 max_ts = max(removed_rows)
-            pct_removed = hprint.perc(
+            pct_removed = hprintin.perc(
                 len(rows_before) - len(rows_after), len(rows_after)
             )
             _LOG.info(
@@ -187,14 +192,14 @@ def drop_na(
     """
     Wrapper around pd.dropna() reporting information about the removed rows.
     """
-    dbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert_isinstance(df, pd.DataFrame)
     num_rows_before = df.shape[0]
     if drop_infs:
         df = df.replace([np.inf, -np.inf], np.nan)
     df = df.dropna(*args, **kwargs)
     if report_stats:
         num_rows_after = df.shape[0]
-        pct_removed = hprint.perc(
+        pct_removed = hprintin.perc(
             num_rows_before - num_rows_after, num_rows_before
         )
         _LOG.info("removed rows with nans: %s", pct_removed)
@@ -214,7 +219,7 @@ def report_zero_nan_inf_stats(
     _LOG.info("index in [%s, %s]", df.index.min(), df.index.max())
     #
     num_rows = df.shape[0]
-    _LOG.info("num_rows=%s", hprint.thousand_separator(num_rows))
+    _LOG.info("num_rows=%s", hprintin.thousand_separator(num_rows))
     _LOG.info("data=")
     display_df(df, max_lines=5, as_txt=as_txt)
     #
@@ -239,28 +244,28 @@ def report_zero_nan_inf_stats(
     if verbose:
         stats_df["num_zeros"] = num_zeros
     stats_df["zeros [%]"] = (100.0 * num_zeros / num_rows).apply(
-        hprint.round_digits
+        hprintin.round_digits
     )
     #
     num_nans = np.isnan(df).sum(axis=0)
     if verbose:
         stats_df["num_nans"] = num_nans
     stats_df["nans [%]"] = (100.0 * num_nans / num_rows).apply(
-        hprint.round_digits
+        hprintin.round_digits
     )
     #
     num_infs = np.isinf(df).sum(axis=0)
     if verbose:
         stats_df["num_infs"] = num_infs
     stats_df["infs [%]"] = (100.0 * num_infs / num_rows).apply(
-        hprint.round_digits
+        hprintin.round_digits
     )
     #
     num_valid = df.shape[0] - num_zeros - num_nans - num_infs
     if verbose:
         stats_df["num_valid"] = num_valid
     stats_df["valid [%]"] = (100.0 * num_valid / num_rows).apply(
-        hprint.round_digits
+        hprintin.round_digits
     )
     #
     display_df(stats_df, as_txt=as_txt)
@@ -283,7 +288,7 @@ def drop_duplicates(
     num_rows_before = df.shape[0]
     df_no_duplicates = df.drop_duplicates(subset=subset)
     num_rows_after = df_no_duplicates.shape[0]
-    pct_removed = hprint.perc(num_rows_before - num_rows_after, num_rows_before)
+    pct_removed = hprintin.perc(num_rows_before - num_rows_after, num_rows_before)
     _LOG.info("Removed duplicated rows: %s", pct_removed)
     return df_no_duplicates
 
@@ -340,10 +345,10 @@ def remove_columns_with_low_variability(
             log_level,
             "  %s: %s",
             col_name,
-            hprint.list_to_str(list(map(str, unique_elems))),
+            hprintin.list_to_str(list(map(str, unique_elems))),
         )
     _LOG.log(log_level, "# Var cols")
-    _LOG.log(log_level, hprint.list_to_str(var_cols))
+    _LOG.log(log_level, hprintin.list_to_str(var_cols))
     return df[var_cols]
 
 
@@ -358,7 +363,7 @@ def print_column_variability(
 
     This is useful to get a sense of which columns are interesting.
     """
-    print(("# df.columns=%s" % hprint.list_to_str(df.columns)))
+    print(("# df.columns=%s" % hprintin.list_to_str(df.columns)))
     res = []
     for c in tauton.tqdm(df.columns, desc="Computing column variability"):
         vals = _get_unique_elements_in_column(df, c)
@@ -405,7 +410,7 @@ def add_pct(
     """
     Add to df a column "dst_col_name" storing the percentage of values in
     column "col_name" with respect to "total". The rest of the parameters are
-    the same as hprint.round_digits().
+    the same as hprintin.round_digits().
 
     :return: updated df
     """
@@ -414,13 +419,13 @@ def add_pct(
     df.insert(pos_col_name + 1, dst_col_name, (100.0 * df[col_name]) / total)
     # Format.
     df[col_name] = [
-        hprint.round_digits(
+        hprintin.round_digits(
             v, num_digits=None, use_thousands_separator=use_thousands_separator
         )
         for v in df[col_name]
     ]
     df[dst_col_name] = [
-        hprint.round_digits(
+        hprintin.round_digits(
             v, num_digits=num_digits, use_thousands_separator=False
         )
         for v in df[dst_col_name]
@@ -443,7 +448,7 @@ def breakdown_table(
 ) -> pd.DataFrame:
     if isinstance(col_name, list):
         for c in col_name:
-            print(("\n" + hprint.frame(c).rstrip("\n")))
+            print(("\n" + hprintin.frame(c).rstrip("\n")))
             res = breakdown_table(df, c)
             print(res)
         return None
@@ -461,20 +466,20 @@ def breakdown_table(
     res["pct"] = (100.0 * res["count"]) / df.shape[0]
     # Format.
     res["count"] = [
-        hprint.round_digits(
+        hprintin.round_digits(
             v, num_digits=None, use_thousands_separator=use_thousands_separator
         )
         for v in res["count"]
     ]
     res["pct"] = [
-        hprint.round_digits(
+        hprintin.round_digits(
             v, num_digits=num_digits, use_thousands_separator=False
         )
         for v in res["pct"]
     ]
     if verbosity:
         for k, df_tmp in df.groupby(col_name):
-            print((hprint.frame("%s=%s" % (col_name, k))))
+            print((hprintin.frame("%s=%s" % (col_name, k))))
             cols = [col_name, "description"]
             with pd.option_context(
                 "display.max_colwidth", 100000, "display.width", 130
@@ -525,10 +530,10 @@ def remove_columns(
     df: pd.DataFrame, cols: Collection[str], log_level: int = logging.DEBUG
 ) -> pd.DataFrame:
     to_remove = set(cols).intersection(set(df.columns))
-    _LOG.log(log_level, "to_remove=%s", hprint.list_to_str(to_remove))
+    _LOG.log(log_level, "to_remove=%s", hprintin.list_to_str(to_remove))
     df.drop(to_remove, axis=1, inplace=True)
     _LOG.debug("df=\n%s", df.head(3))
-    _LOG.log(log_level, hprint.list_to_str(df.columns))
+    _LOG.log(log_level, hprintin.list_to_str(df.columns))
     return df
 
 
@@ -541,41 +546,65 @@ def filter_with_df(
     """
     mask = None
     for c in filter_df:
-        dbg.dassert_in(c, df.columns)
+        hdbg.dassert_in(c, df.columns)
         vals = filter_df[c].unique()
         if mask is None:
             mask = df[c].isin(vals)
         else:
             mask &= df[c].isin(vals)
     mask: pd.DataFrame
-    _LOG.log(log_level, "after filter=%s", hprint.perc(mask.sum(), len(mask)))
+    _LOG.log(log_level, "after filter=%s", hprintin.perc(mask.sum(), len(mask)))
     return mask
 
 
-def filter_around_time(
+def filter_by_time(
     df: pd.DataFrame,
-    col_name: str,
-    timestamp: Union[datetime.datetime, pd.Timestamp],
-    timedelta_before: pd.Timedelta,
-    timedelta_after: Optional[pd.Timedelta] = None,
+    lower_bound: hdatetim.StrictDatetime,
+    upper_bound: hdatetim.StrictDatetime,
+    inclusive: str,
+    ts_col_name: Optional[str],
     log_level: int = logging.DEBUG,
 ) -> pd.DataFrame:
-    dbg.dassert_in(col_name, df)
-    dbg.dassert_lte(pd.Timedelta(0), timedelta_before)
-    if timedelta_after is None:
-        timedelta_after = timedelta_before
-    dbg.dassert_lte(pd.Timedelta(0), timedelta_after)
+    """
+    Filter data by time between `lower_bound` and `upper_bound`.
+
+    Pass `None` to `ts_col_name` to filter by `DatetimeIndex`.
+
+    :param df: data to filter
+    :param lower_bound: left limit point of the time interval
+    :param upper_bound: right limit point of the time interval
+    :param inclusive: include boundaries
+        - "both" to `[lower_bound, upper_bound]`
+        - "neither" to `(lower_bound, upper_bound)`
+        - "right" to `(lower_bound, upper_bound]`
+        - "left" to `[lower_bound, upper_bound)`
+    :param ts_col_name: name of a timestamp column to filter with
+    :param log_level: the level of logging, e.g. `DEBUG`
+    :return: data filtered by time
+    """
+    hdatetim.dassert_is_strict_datetime(lower_bound)
+    hdatetim.dassert_is_strict_datetime(upper_bound)
+    # Time filtering is not working if timezones are different.
+    hdatetim.dassert_tz_compatible_timestamp_with_df(lower_bound, df, ts_col_name)
+    hdatetim.dassert_tz_compatible_timestamp_with_df(upper_bound, df, ts_col_name)
     #
-    lower_bound = timestamp - timedelta_before
-    upper_bound = timestamp + timedelta_after
-    mask = (df[col_name] >= lower_bound) & (df[col_name] <= upper_bound)
+    if ts_col_name is None:
+        # Filter data by index.
+        hdbg.dassert_isinstance(df.index, pd.DatetimeIndex)
+        # Cast index to `pd.Series` to use the `between` method.
+        mask = df.index.to_series().between(lower_bound, upper_bound, inclusive)
+    else:
+        # Filter data by a specified column.
+        hdbg.dassert_in(ts_col_name, df.columns)
+        mask = df[ts_col_name].between(lower_bound, upper_bound, inclusive)
     #
     _LOG.log(
         log_level,
-        "Filtering in [%s, %s] selected rows=%s",
+        "Filtering between %s and %s with inclusive=`%s`, " "selected rows=%s",
         lower_bound,
         upper_bound,
-        hprint.perc(mask.sum(), df.shape[0]),
+        inclusive,
+        hprintin.perc(mask.sum(), df.shape[0]),
     )
     return df[mask]
 
@@ -595,7 +624,7 @@ def filter_by_val(
     # binary search.
     num_rows = df.shape[0]
     if min_val is not None and max_val is not None:
-        dbg.dassert_lte(min_val, max_val)
+        hdbg.dassert_lte(min_val, max_val)
     mask = None
     if min_val is not None:
         mask = min_val <= df[col_name]
@@ -606,16 +635,16 @@ def filter_by_val(
         else:
             mask &= mask2
     res = df[mask]
-    dbg.dassert_lt(0, res.shape[0])
+    hdbg.dassert_lt(0, res.shape[0])
     _LOG.log(
         log_level,
         "Rows kept %s, removed %s rows",
-        hprint.perc(
+        hprintin.perc(
             res.shape[0],
             num_rows,
             use_thousands_separator=use_thousands_separator,
         ),
-        hprint.perc(
+        hprintin.perc(
             num_rows - res.shape[0],
             num_rows,
             use_thousands_separator=use_thousands_separator,
@@ -631,12 +660,12 @@ def filter_by_val(
 
 def _get_num_pcs_to_plot(num_pcs_to_plot: int, max_pcs: int) -> int:
     """
-    Get the number of principal components to cplott.
+    Get the number of principal components to cplo.
     """
     if num_pcs_to_plot == -1:
         num_pcs_to_plot = max_pcs
-    dbg.dassert_lte(0, num_pcs_to_plot)
-    dbg.dassert_lte(num_pcs_to_plot, max_pcs)
+    hdbg.dassert_lte(0, num_pcs_to_plot)
+    hdbg.dassert_lte(num_pcs_to_plot, max_pcs)
     return num_pcs_to_plot
 
 
@@ -685,7 +714,7 @@ def rolling_corr_over_time(
     :return: corr_df is a multi-index df storing correlation matrices with
         labels
     """
-    hpandas.dassert_strictly_increasing_index(df)
+    hhpandas.dassert_strictly_increasing_index(df)
     df = handle_nans(df, nan_mode)
     corr_df = df.ewm(com=com, min_periods=3 * com).corr()
     return corr_df
@@ -694,7 +723,7 @@ def rolling_corr_over_time(
 def _get_eigvals_eigvecs(
     df: pd.DataFrame, dt: datetime.date, sort_eigvals: bool
 ) -> Tuple[np.array, np.array]:
-    dbg.dassert_isinstance(dt, datetime.date)
+    hdbg.dassert_isinstance(dt, datetime.date)
     df_tmp = df.loc[dt].copy()
     # Compute rolling eigenvalues and eigenvectors.
     # TODO(gp): Count and report inf and nans as warning.
@@ -745,8 +774,8 @@ def rolling_pca_over_time(
         eigval[i], eigvec[i] = _get_eigvals_eigvecs(corr_df, dt, sort_eigvals)
     # Package results.
     eigval_df = pd.DataFrame(eigval, index=timestamps)
-    dbg.dassert_eq(eigval_df.shape[0], len(timestamps))
-    hpandas.dassert_strictly_increasing_index(eigval_df)
+    hdbg.dassert_eq(eigval_df.shape[0], len(timestamps))
+    hhpandas.dassert_strictly_increasing_index(eigval_df)
     # Normalize by sum.
     # TODO(gp): Move this up.
     eigval_df = eigval_df.multiply(1 / eigval_df.sum(axis=1), axis="index")
@@ -761,7 +790,7 @@ def rolling_pca_over_time(
     eigvec_df = pd.DataFrame(
         eigvec, index=idx, columns=range(df.shape[1])
     )  # pylint: disable=unsubscriptable-object
-    dbg.dassert_eq(
+    hdbg.dassert_eq(
         len(eigvec_df.index.get_level_values(0).unique()), len(timestamps)
     )
     return corr_df, eigval_df, eigvec_df
@@ -787,7 +816,7 @@ def plot_pca_over_time(
     num_pcs_to_plot = _get_num_pcs_to_plot(num_pcs_to_plot, max_pcs)
     _LOG.info("num_pcs_to_plot=%s", num_pcs_to_plot)
     if num_pcs_to_plot > 0:
-        _, axes = cplott.get_multiple_plots(
+        _, axes = cplo.get_multiple_plots(
             num_pcs_to_plot,
             num_cols=num_cols,
             y_scale=4,
@@ -810,8 +839,8 @@ def plot_time_distributions(
 
     - mode: see below
     """
-    dbg.dassert_type_in(dts[0], (datetime.datetime, pd.Timestamp))
-    dbg.dassert_in(
+    hdbg.dassert_type_in(dts[0], (datetime.datetime, pd.Timestamp))
+    hdbg.dassert_in(
         mode,
         (
             "time_of_the_day",
@@ -882,7 +911,7 @@ def plot_time_distributions(
         yticks = pd.Series(vals).unique().tolist()
     else:
         raise ValueError("Invalid mode='%s'" % mode)
-    dbg.dassert_eq(count.sum(), len(dts))
+    hdbg.dassert_eq(count.sum(), len(dts))
     #
     if density:
         count /= count.sum()
@@ -915,8 +944,8 @@ def jointplot(
     :param predictor_var: x-var
     :param args, kwargs: arguments passed to seaborn.jointplot()
     """
-    dbg.dassert_in(predicted_var, df.columns)
-    dbg.dassert_in(predictor_var, df.columns)
+    hdbg.dassert_in(predicted_var, df.columns)
+    hdbg.dassert_in(predictor_var, df.columns)
     df = df[[predicted_var, predictor_var]]
     # Remove non-finite values.
     # TODO(gp): Use explore.dropna().
@@ -940,20 +969,20 @@ def _preprocess_regression(
     Preprocess data in dataframe form in order to perform a regression.
     """
     # Sanity check vars.
-    dbg.dassert_type_is(df, pd.DataFrame)
-    dbg.dassert_lte(1, df.shape[0])
+    hdbg.dassert_type_is(df, pd.DataFrame)
+    hdbg.dassert_lte(1, df.shape[0])
     if isinstance(predictor_vars, str):
         predictor_vars = [predictor_vars]
-    dbg.dassert_type_is(predictor_vars, list)
-    # dbg.dassert_type_is(predicted_var, str)
-    dbg.dassert_not_in(predicted_var, predictor_vars)
+    hdbg.dassert_type_is(predictor_vars, list)
+    # hdbg.dassert_type_is(predicted_var, str)
+    hdbg.dassert_not_in(predicted_var, predictor_vars)
     if not predictor_vars:
         # No predictors.
         _LOG.warning("No predictor vars: skipping")
         return None
     #
     col_names = [predicted_var] + predictor_vars
-    dbg.dassert_is_subset(col_names, df.columns)
+    hdbg.dassert_is_subset(col_names, df.columns)
     df = df[col_names].copy()
     num_rows = df.shape[0]
     # Shift.
@@ -970,7 +999,7 @@ def _preprocess_regression(
     if num_rows_after_drop_nan_all != num_rows:
         _LOG.info(
             "Removed %s rows with all nans",
-            hprint.perc(num_rows - num_rows_after_drop_nan_all, num_rows),
+            hprintin.perc(num_rows - num_rows_after_drop_nan_all, num_rows),
         )
     #
     df.dropna(how="any", inplace=True)
@@ -978,7 +1007,7 @@ def _preprocess_regression(
     if num_rows_after_drop_nan_any != num_rows_after_drop_nan_all:
         _LOG.warning(
             "Removed %s rows with any nans",
-            hprint.perc(num_rows - num_rows_after_drop_nan_any, num_rows),
+            hprintin.perc(num_rows - num_rows_after_drop_nan_any, num_rows),
         )
     # Prepare data.
     if intercept:
@@ -986,8 +1015,8 @@ def _preprocess_regression(
             df.insert(0, "const", 1.0)
         predictor_vars = ["const"] + predictor_vars[:]
     param_names = predictor_vars[:]
-    dbg.dassert(np.all(np.isfinite(df[predicted_var].values)))
-    dbg.dassert(
+    hdbg.dassert(np.all(np.isfinite(df[predicted_var].values)))
+    hdbg.dassert(
         np.all(np.isfinite(df[predictor_vars].values)),
         msg="predictor_vars=%s" % predictor_vars,
     )
@@ -1040,7 +1069,7 @@ def ols_regress(
     if obj is None:
         return None
     df, param_names, predictor_vars = obj
-    dbg.dassert_lte(1, df.shape[0])
+    hdbg.dassert_lte(1, df.shape[0])
     model = statsmodels.api.OLS(
         df[predicted_var], df[predictor_vars], hasconst=intercept
     ).fit()
@@ -1067,14 +1096,14 @@ def ols_regress(
                 if tsplot:
                     # Plot the data over time.
                     if tsplot_figsize is None:
-                        tsplot_figsize = cplott.FIG_SIZE
+                        tsplot_figsize = cplo.FIG_SIZE
                     df[[predicted_var, predictor_vars[0]]].plot(
                         figsize=tsplot_figsize
                     )
                 if jointplot_:
                     # Perform scatter plot.
                     if jointplot_height is None:
-                        jointplot_height = cplott.FIG_SIZE[1]
+                        jointplot_height = cplo.FIG_SIZE[1]
                     jointplot(
                         df,
                         predicted_var,
@@ -1091,11 +1120,11 @@ def ols_regress(
 # TODO(gp): Redundant with cast_to_series()?
 def to_series(obj: Any) -> pd.Series:
     if isinstance(obj, np.ndarray):
-        dbg.dassert_eq(obj.shape, 1)
+        hdbg.dassert_eq(obj.shape, 1)
         srs = pd.Series(obj)
     else:
         srs = obj
-    dbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_isinstance(srs, pd.Series)
     return srs
 
 
@@ -1121,10 +1150,10 @@ def ols_regress_series(
         srs1.index = [pd.to_datetime(dt).date() for dt in srs1.index]
         srs2.index = [pd.to_datetime(dt).date() for dt in srs2.index]
     #
-    dbg.dassert_array_has_same_type_element(srs1, srs2, only_first_elem=True)
+    hdbg.dassert_array_has_same_type_element(srs1, srs2, only_first_elem=True)
     # Check common indices.
     common_idx = srs1.index.intersection(srs2.index)
-    dbg.dassert_lte(1, len(common_idx))
+    hdbg.dassert_lte(1, len(common_idx))
     # Merge series into a dataframe.
     if srs1_name is None:
         srs1_name = srs1.name if srs1.name is not None else ""
@@ -1146,8 +1175,8 @@ def pvalue_to_stars(pval: Optional[float]) -> str:
     if np.isnan(pval):
         stars = "NA"
     else:
-        dbg.dassert_lte(0.0, pval)
-        dbg.dassert_lte(pval, 1.0)
+        hdbg.dassert_lte(0.0, pval)
+        hdbg.dassert_lte(pval, 1.0)
         pval = cast(float, pval)
         if pval < 0.005:
             # More than 99.5% confidence.
@@ -1206,7 +1235,7 @@ def robust_regression(
     #   plot_robust_fit.html#sphx-glr-auto-examples-linear-model-plot-robust-fit-py
     # TODO(gp): Add also TheilSenRegressor and HuberRegressor.
 
-    dbg.dassert_eq(len(predictor_vars), 1)
+    hdbg.dassert_eq(len(predictor_vars), 1)
     y = df[predicted_var]
     X = df[predictor_vars]
     # Fit line using all data.
@@ -1228,7 +1257,7 @@ def robust_regression(
     _LOG.info("Estimated coef for RANSAC=%s", ransac.estimator_.coef_)
     if jointplot_:
         if jointplot_figsize is None:
-            jointplot_figsize = cplott.FIG_SIZE
+            jointplot_figsize = cplo.FIG_SIZE
         plt.figure(figsize=jointplot_figsize)
         plt.scatter(
             X[inlier_mask],
@@ -1288,8 +1317,8 @@ def display_df(
     if isinstance(df, pd.Series):
         df = pd.DataFrame(df)
     #
-    dbg.dassert_type_is(df, pd.DataFrame)
-    dbg.dassert_eq(
+    hdbg.dassert_type_is(df, pd.DataFrame)
+    hdbg.dassert_eq(
         hlist.find_duplicates(df.columns.tolist()),
         [],
         msg="Find duplicated columns",
@@ -1297,7 +1326,7 @@ def display_df(
     if tag is not None:
         print(tag)
     if max_lines is not None:
-        dbg.dassert_lte(1, max_lines)
+        hdbg.dassert_lte(1, max_lines)
         if df.shape[0] > max_lines:
             # log.error("Printing only top / bottom %s out of %s rows",
             #        max_lines, df.shape[0])

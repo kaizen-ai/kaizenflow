@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.dataflow.builders as cdtfb
+import core.dataflow.builders as cdtfbui
 """
 import abc
 import datetime
@@ -9,7 +9,7 @@ import logging
 from typing import Any, Dict, List, Optional, cast
 
 import core.config as cconfig
-import core.finance as fin
+import core.finance as cfin
 
 # TODO(gp): Use the standard imports.
 from core.dataflow.core import DAG, Node
@@ -120,6 +120,15 @@ class DagBuilder(abc.ABC):
         nid = self._nid_prefix + stage_name
         return nid
 
+    @staticmethod
+    def _append(dag: DAG, tail_nid: Optional[str], node: Node) -> str:
+        dag.add_node(node)
+        if tail_nid is not None:
+            dag.connect(tail_nid, node.nid)
+        nid = node.nid
+        nid = cast(str, nid)
+        return nid
+
 
 class ArmaReturnsBuilder(DagBuilder):
     """
@@ -209,7 +218,7 @@ class ArmaReturnsBuilder(DagBuilder):
         nid = self._get_nid(stage)
         node = ColumnTransformer(
             nid,
-            transformer_func=fin.set_weekends_to_nan,
+            transformer_func=cfin.set_weekends_to_nan,
             col_mode="replace_all",
         )
         tail_nid = self._append(dag, tail_nid, node)
@@ -218,7 +227,7 @@ class ArmaReturnsBuilder(DagBuilder):
         nid = self._get_nid(stage)
         node = ColumnTransformer(
             nid,
-            transformer_func=fin.set_non_ath_to_nan,
+            transformer_func=cfin.set_non_ath_to_nan,
             **config[nid].to_dict(),
         )
         tail_nid = self._append(dag, tail_nid, node)
@@ -240,7 +249,7 @@ class ArmaReturnsBuilder(DagBuilder):
         nid = self._get_nid(stage)
         node = ColumnTransformer(
             nid,
-            transformer_func=fin.compute_ret_0,
+            transformer_func=cfin.compute_ret_0,
             col_rename_func=lambda x: x + "_ret_0",
             **config[nid].to_dict(),
         )
@@ -261,12 +270,3 @@ class ArmaReturnsBuilder(DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         _ = tail_nid
         return dag
-
-    @staticmethod
-    def _append(dag: DAG, tail_nid: Optional[str], node: Node) -> str:
-        dag.add_node(node)
-        if tail_nid is not None:
-            dag.connect(tail_nid, node.nid)
-        nid = node.nid
-        nid = cast(str, nid)
-        return nid

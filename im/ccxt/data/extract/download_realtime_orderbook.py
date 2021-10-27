@@ -1,35 +1,50 @@
 #!/usr/bin/env python
 """
-Script to download data from CCXT in real-time.
+Script to download order book data from CCXT in real-time.
 
 Use as:
 
 # Download all currency pairs for Binance, Kucoin,
   FTX exchanges:
-> python im/ccxt/data/extract/download_realtime.py \
-    --table_name 'ccxt_ohlcv' \
+> python im/ccxt/data/extract/download_realtime_orderbook.py \
+    --dst_dir 'ccxt_test' \
     --exchange_ids 'binance kucoin ftx' \
-    --currency_pairs 'all'
+    --currency_pairs 'universe'
 
 Import as:
 
-import im.ccxt.data.extract.download_realtime as imcdaexdowrea
+import im.ccxt.data.extract.download_realtime_orderbook as imcdaexdoreaord
 """
+# TODO(Danya): Merge with `download_realtime_orderbook.py`
 import argparse
 import collections
 import logging
+import os
 import time
 from typing import NamedTuple, Optional
 
+import helpers.datetime_ as hdatetim
 import helpers.dbg as hdbg
+import helpers.io_ as hio
 import helpers.parser as hparser
-import helpers.sql as hsql
 import im.ccxt.data.extract.exchange_class as imcdaexexccla
-import im.ccxt.db.insert_data as imccdbindat
 
 _LOG = logging.getLogger(__name__)
 
-_ALL_EXCHANGE_IDS = ["binance", "kucoin"]
+# TODO(Danya,Dan): Move downloaded universe to a centralized location.
+_ALL_EXCHANGE_IDS = ["binance", "kucoin", "ftx", "gateio", "bitfinex"]
+_UNIVERSE_CURRENCY_PAIRS = [
+    "ADA/USDT",
+    "AVAX/USDT",
+    "BNB/USDT",
+    "BTC/USDT",
+    "DOGE/USDT",
+    "EOS/USDT",
+    "ETH/USDT",
+    "LINK/USDT",
+    "SOL/USDT",
+    "XRP/USDT",
+]
 
 
 # TODO(Danya): Create a type and move outside.
@@ -54,6 +69,13 @@ def _instantiate_exchange(
         # Store all currency pairs for each exchange.
         currency_pairs = exchange_to_currency.instance.currency_pairs
         exchange_to_currency.pairs = currency_pairs
+    elif currency_pairs == "universe":
+        # Get currency pairs for current universe.
+        exchange_to_currency.pairs = [
+            curr
+            for curr in _UNIVERSE_CURRENCY_PAIRS
+            if curr in exchange_to_currency.instance.currency_pairs
+        ]
     else:
         # Store currency pairs present in provided exchanges.
         provided_pairs = currency_pairs.split()
@@ -71,17 +93,11 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--db_connection",
+        "--dst_dir",
         action="store",
-        default="from_env",
+        required=True,
         type=str,
-        help="Connection to database to upload to",
-    )
-    parser.add_argument(
-        "--table_name",
-        action="store",
-        type=str,
-        help="Name of the table to upload to"
+        help="Folder to download files to",
     )
     parser.add_argument(
         "--api_keys",
@@ -113,10 +129,7 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    if args.db_connection == "from_env":
-        connection, _ = hsql.get_connection_from_env_vars()
-    else:
-        hdbg.dfatal("Unknown db connection: %s" % args.db_connection)
+    hio.create_dir(args.dst_dir, incremental=False)
     # Get exchange ids.
     if args.exchange_ids == "all":
         exchange_ids = _ALL_EXCHANGE_IDS
@@ -134,14 +147,17 @@ def _main(parser: argparse.ArgumentParser) -> None:
         for exchange in exchanges:
             for pair in exchange.pairs:
                 # Download latest 5 minutes for the currency pair and exchange.
-                pair_data = exchange.instance.download_ohlcv_data(
-                    curr_symbol=pair, step=2
+                order_book = exchange.instance.fetch_order_book(pair)
+                file_name = (
+                    f"orderbook_{exchange.id}_"
+                    f"{pair.replace('/', '_')}_"
+                    f"{hdatetim.get_timestamp('ET')}.json"
                 )
-                imccdbindat.execute_insert_query(connection=connection,
-                                                 df=pair_data,
-                                                 table_name=args.table_name)
+                full_path = os.path.join(args.dst_dir, file_name)
+                # Save file.
+                hio.to_json(full_path, order_book)
+                _LOG.info("Saved %s", file_name)
         time.sleep(60)
-    connection.close()
 
 
 if __name__ == "__main__":

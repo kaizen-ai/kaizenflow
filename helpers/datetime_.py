@@ -90,6 +90,7 @@ def to_datetime(datetime_: Datetime) -> datetime.datetime:
 
     :return: tz-aware or naive datetime.datetime
     """
+    # TODO(Grisha): also pass timezone.
     dassert_is_datetime(datetime_)
     if isinstance(datetime_, str):
         datetime_ = pd.Timestamp(datetime_)
@@ -219,6 +220,7 @@ def get_ET_tz() -> datetime.tzinfo:
     """
     Return the US Eastern Time timezone.
     """
+    # TODO(Grisha): -> `US/Eastern`?
     return pytz.timezone("America/New_York")
 
 
@@ -519,3 +521,40 @@ def _determine_date_format(
         _LOG.error("This format is not supported: '%s'", date)
         return None
     return format_, date_modification_func
+
+
+# #############################################################################
+
+
+def convert_unix_epoch_to_timestamp(
+    epoch: int, unit: str = "ms", tz: str = "UTC"
+) -> pd.Timestamp:
+    """
+    Convert Unix epoch to timestamp.
+
+    :param epoch: Unix time epoch
+    :param unit: epoch's time unit
+    :param tz: resulting timestamp timezone
+    :return: timestamp
+    """
+    timestamp = pd.Timestamp(epoch, unit=unit, tz=tz)
+    return timestamp
+
+
+def convert_timestamp_to_unix_epoch(
+    timestamp: pd.Timestamp, unit: str = "ms"
+) -> int:
+    """
+    Convert timestamp to Unix epoch.
+
+    :param timestamp: timestamp
+    :param unit: epoch's time unit
+    :return: Unix time epoch
+    """
+    # Make timestamp tz-naive if it is not. Converted to UTC tz before becoming
+    # naive automatically.
+    if timestamp.tz:
+        timestamp = timestamp.tz_convert(None)
+    # Convert to epoch.
+    epoch = (timestamp - pd.Timestamp("1970-01-01")) // pd.Timedelta("1" + unit)
+    return epoch

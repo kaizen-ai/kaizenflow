@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.ccxt.data.load.loader as cdlloa
+import im.ccxt.data.load.loader as imccdaloloa
 """
 
 import logging
@@ -10,17 +10,14 @@ from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
 
-import core.pandas_helpers as cphelp
-import helpers.datetime_ as hdatet
-import helpers.dbg as dbg
-import helpers.io_ as hio
+import core.pandas_helpers as cpah
+import helpers.datetime_ as hdatetim
+import helpers.dbg as hdbg
 import helpers.s3 as hs3
 import helpers.sql as hsql
+import im.data.universe as imdauni
 
 _LOG = logging.getLogger(__name__)
-
-# Path to the data about downloaded currencies from the spreadsheet in CMTask41.
-_DOWNLOADED_CURRENCIES_PATH = "im/data/downloaded_currencies.json"
 
 # Latest historical data snapshot.
 _LATEST_DATA_SNAPSHOT = "20210924"
@@ -34,7 +31,8 @@ class CcxtLoader:
         aws_profile: Optional[str] = None,
     ) -> None:
         """
-        Load CCXT data from different backends, e.g., DB, local or S3 filesystem.
+        Load CCXT data from different backends, e.g., DB, local or S3
+        filesystem.
 
         :param connection: connection for a SQL database
         :param: root_dir: either a local root path (e.g., "/app/im") or
@@ -73,11 +71,9 @@ class CcxtLoader:
         :return: table from database
         """
         # Verify that DB connection is provided.
-        dbg.dassert_is_not(self._connection, None)
+        hdbg.dassert_is_not(self._connection, None)
         # Verify that table with specified name exists.
-        dbg.dassert_in(
-            table_name, hsql.get_table_names(self._connection)
-        )
+        hdbg.dassert_in(table_name, hsql.get_table_names(self._connection))
         # Initialize SQL query.
         sql_query = "SELECT * FROM %s" % table_name
         # Initialize lists for query condition strings and parameters to insert.
@@ -105,9 +101,7 @@ class CcxtLoader:
         # Add a tuple of gathered query parameters to kwargs as `params`.
         read_sql_kwargs["params"] = tuple(query_params)
         # Execute SQL query.
-        table = pd.read_sql(
-            sql_query, self._connection, **read_sql_kwargs
-        )
+        table = pd.read_sql(sql_query, self._connection, **read_sql_kwargs)
         return table
 
     def read_data_from_filesystem(
@@ -129,13 +123,11 @@ class CcxtLoader:
         """
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
         # Verify that root dir is provided.
-        dbg.dassert_is_not(self._root_dir, None)
+        hdbg.dassert_is_not(self._root_dir, None)
         # Verify that requested data type is valid.
-        dbg.dassert_in(data_type.lower(), self._data_types)
+        hdbg.dassert_in(data_type.lower(), self._data_types)
         # Get absolute file path for a CCXT file.
-        file_path = self._get_file_path(
-            data_snapshot, exchange_id, currency_pair
-        )
+        file_path = self._get_file_path(data_snapshot, exchange_id, currency_pair)
         # Initialize kwargs dict for further CCXT data reading.
         read_csv_kwargs = {}
         # TODO(Dan): Remove asserts below after CMTask108 is resolved.
@@ -146,7 +138,7 @@ class CcxtLoader:
             # Add s3fs argument to kwargs.
             read_csv_kwargs["s3fs"] = s3fs
         else:
-            dbg.dassert_file_exists(file_path)
+            hdbg.dassert_file_exists(file_path)
         # Read raw CCXT data.
         _LOG.info(
             "Reading CCXT data for exchange id='%s', currencies='%s' from file='%s'...",
@@ -154,7 +146,7 @@ class CcxtLoader:
             currency_pair,
             file_path,
         )
-        data = cphelp.read_csv(file_path, **read_csv_kwargs)
+        data = cpah.read_csv(file_path, **read_csv_kwargs)
         # Apply transformation to raw data.
         _LOG.info(
             "Processing CCXT data for exchange id='%s', currencies='%s'...",
@@ -186,11 +178,9 @@ class CcxtLoader:
         :return: absolute path to a file with CCXT data
         """
         # Extract data about downloaded currencies for CCXT.
-        downloaded_currencies_info = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)[
-            "CCXT"
-        ]
+        downloaded_currencies_info = imdauni.get_trade_universe()["CCXT"]
         # Verify that data for the input exchange id was downloaded.
-        dbg.dassert_in(
+        hdbg.dassert_in(
             exchange_id,
             downloaded_currencies_info.keys(),
             msg="Data for exchange id='%s' was not downloaded" % exchange_id,
@@ -198,14 +188,14 @@ class CcxtLoader:
         # Verify that data for the input exchange id and currency pair was
         # downloaded.
         downloaded_currencies = downloaded_currencies_info[exchange_id]
-        dbg.dassert_in(
+        hdbg.dassert_in(
             currency_pair,
             downloaded_currencies,
             msg="Data for exchange id='%s', currency pair='%s' was not downloaded"
-                % (exchange_id, currency_pair),
+            % (exchange_id, currency_pair),
         )
         # Get absolute file path.
-        file_name = currency_pair.replace('/', '_') + ".csv.gz"
+        file_name = currency_pair.replace("/", "_") + ".csv.gz"
         file_path = os.path.join(
             self._root_dir, "ccxt", data_snapshot, exchange_id, file_name
         )
@@ -246,7 +236,7 @@ class CcxtLoader:
         if data_type.lower() == "ohlcv":
             transformed_data = self._apply_ohlcv_transformation(transformed_data)
         else:
-            dbg.dfatal(
+            hdbg.dfatal(
                 "Incorrect data type: '%s'. Acceptable types: '%s'"
                 % (data_type.lower(), self._data_types)
             )
@@ -269,13 +259,15 @@ class CcxtLoader:
         :return: transformed CCXT data
         """
         # Verify that the timestamp data is provided in ms.
-        dbg.dassert_container_type(
+        hdbg.dassert_container_type(
             data["timestamp"], container_type=None, elem_type=int
         )
         # Rename col with original Unix ms epoch.
         data = data.rename({"timestamp": "epoch"}, axis=1)
         # Transform Unix epoch into ET timestamp.
         data["timestamp"] = self._convert_epochs_to_timestamp(data["epoch"])
+        # Set timestamp as index.
+        data = data.set_index("timestamp")
         # Add columns with exchange id and currency pair.
         data["exchange_id"] = exchange_id
         data["currency_pair"] = currency_pair
@@ -294,7 +286,7 @@ class CcxtLoader:
         # Convert to timestamp in UTC tz.
         timestamp_col = pd.to_datetime(epoch_col, unit="ms", utc=True)
         # Convert to ET tz.
-        timestamp_col = timestamp_col.dt.tz_convert(hdatet.get_ET_tz())
+        timestamp_col = timestamp_col.dt.tz_convert(hdatetim.get_ET_tz())
         return timestamp_col
 
     @staticmethod
@@ -306,8 +298,7 @@ class CcxtLoader:
         - Assertion of present columns
         - Assertion of data types
         - Renaming and rearranging of OHLCV columns, namely:
-            ["timestamp",
-             "open",
+            ["open",
              "high",
              "low",
              "close"
@@ -320,7 +311,6 @@ class CcxtLoader:
         :return: transformed OHLCV dataframe
         """
         ohlcv_columns = [
-            "timestamp",
             "open",
             "high",
             "low",
@@ -331,7 +321,7 @@ class CcxtLoader:
             "exchange_id",
         ]
         # Verify that dataframe contains OHLCV columns.
-        dbg.dassert_is_subset(ohlcv_columns, data.columns)
+        hdbg.dassert_is_subset(ohlcv_columns, data.columns)
         # Rearrange the columns.
         data = data[ohlcv_columns].copy()
         return data

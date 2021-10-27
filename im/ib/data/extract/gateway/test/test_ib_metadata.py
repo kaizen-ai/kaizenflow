@@ -2,6 +2,7 @@ import logging
 import os
 
 import pandas as pd
+import pytest
 
 try:
     import ib_insync
@@ -16,6 +17,7 @@ import im.ib.data.extract.gateway.utils as iidegu
 _LOG = logging.getLogger(__name__)
 
 
+@pytest.mark.skip(msg="See alphamatic/dev_tools#282")
 class Test_ib_metadata1(hut.TestCase):
     @classmethod
     def setUpClass(cls):

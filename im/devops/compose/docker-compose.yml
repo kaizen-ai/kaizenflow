@@ -4,8 +4,11 @@ services:
   # Docker container running code that talks to the DB.
   app:
     # TODO(Grisha): Use image env var.
-    image: 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:dev
+    # TODO(Grisha): for image name use `get_docker_base_image_name`() from `repo_config.py`.
+    image: 665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:dev
     environment:
+      - AM_AWS_PROFILE=$AM_AWS_PROFILE
+      - AM_S3_BUCKET=$AM_S3_BUCKET
       - ENV_NAME=venv
     restart: "no"
     depends_on:
