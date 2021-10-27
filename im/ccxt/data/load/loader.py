@@ -13,17 +13,11 @@ import pandas as pd
 import core.pandas_helpers as cpah
 import helpers.datetime_ as hdatetim
 import helpers.dbg as hdbg
-import helpers.git as hgit
-import helpers.io_ as hio
 import helpers.s3 as hs3
 import helpers.sql as hsql
+import im.data.universe as imdauni
 
 _LOG = logging.getLogger(__name__)
-
-# Path to the data about downloaded currencies from the spreadsheet in CMTask41.
-_DOWNLOADED_CURRENCIES_PATH = os.path.join(
-    hgit.get_amp_abs_path(), "im/data/downloaded_currencies.json"
-)
 
 # Latest historical data snapshot.
 _LATEST_DATA_SNAPSHOT = "20210924"
@@ -184,9 +178,7 @@ class CcxtLoader:
         :return: absolute path to a file with CCXT data
         """
         # Extract data about downloaded currencies for CCXT.
-        downloaded_currencies_info = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)[
-            "CCXT"
-        ]
+        downloaded_currencies_info = imdauni.get_trade_universe()["CCXT"]
         # Verify that data for the input exchange id was downloaded.
         hdbg.dassert_in(
             exchange_id,

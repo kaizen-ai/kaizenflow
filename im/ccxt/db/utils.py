@@ -22,7 +22,7 @@ def get_ccxt_ohlcv_create_table_query() -> str:
     """
     Get SQL query to create CCXT OHLCV table.
     """
-    query = """CREATE TABLE ccxt_ohlcv(
+    query = """CREATE TABLE IF NOT EXISTS ccxt_ohlcv(
                 id SERIAL PRIMARY KEY,
                 timestamp BIGINT NOT NULL,
                 open NUMERIC,
@@ -41,7 +41,7 @@ def get_exchange_name_create_table_query() -> str:
     """
     Get SQL query to define CCXT crypto exchange names.
     """
-    query = """CREATE TABLE exchange_name(
+    query = """CREATE TABLE IF NOT EXISTS exchange_name(
             exchange_id SERIAL PRIMARY KEY,
             exchange_name VARCHAR(255) NOT NULL
             )
@@ -53,7 +53,7 @@ def get_currency_pair_create_table_query() -> str:
     """
     Get SQL query to define CCXT currency pairs.
     """
-    query = """CREATE TABLE currency_pair(
+    query = """CREATE TABLE IF NOT EXISTS currency_pair(
             currency_pair_id SERIAL PRIMARY KEY,
             currency_pair VARCHAR(255) NOT NULL
             )
