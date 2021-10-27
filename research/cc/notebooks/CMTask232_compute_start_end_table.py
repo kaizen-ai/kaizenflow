@@ -32,8 +32,6 @@ import pandas as pd
 import core.config.config_ as ccocon
 import helpers.dbg as hdbg
 import helpers.env as henv
-import helpers.git as hgit
-import helpers.io_ as hio
 import helpers.printing as hprintin
 import helpers.s3 as hs3
 import im.ccxt.data.load.loader as imccdaloloa
@@ -81,9 +79,7 @@ print(config)
 # # Compute start-end table
 
 # %%
-def get_loader_for_vendor(
-    vendor: str, config: ccocon.Config
-) -> _LOADER:
+def get_loader_for_vendor(vendor: str, config: ccocon.Config) -> _LOADER:
     """
     Get vendor specific loader instance.
 
@@ -104,8 +100,11 @@ def get_loader_for_vendor(
         raise ValueError(f"Unsupported vendor={vendor}")
     return loader
 
+
 # TODO(Grisha): convert all start-end table related functions into a class.
-def compute_start_end_table(price_data: pd.DataFrame, config: ccocon.Config) -> pd.DataFrame:
+def compute_start_end_table(
+    price_data: pd.DataFrame, config: ccocon.Config
+) -> pd.DataFrame:
     """
     Compute start-end table on exchange-currency level.
 
@@ -117,7 +116,7 @@ def compute_start_end_table(price_data: pd.DataFrame, config: ccocon.Config) -> 
         - the number of data points
         - the number of days for which data is available
         - average number of data points per day
-        - data coverage, which is actual number of observations divided by 
+        - data coverage, which is actual number of observations divided by
           expected number of observations (assuming 1 minute resolution)
           as percentage
 
@@ -127,17 +126,31 @@ def compute_start_end_table(price_data: pd.DataFrame, config: ccocon.Config) -> 
     # Reset `DatetimeIndex` to use it for stats computation.
     price_data_no_index = price_data.reset_index()
     # Group by exchange, currency.
-    price_data_grouped = price_data_no_index.groupby(["exchange_id", "currency_pair"])
+    price_data_grouped = price_data_no_index.groupby(
+        ["exchange_id", "currency_pair"]
+    )
     # Compute the stats.
-    start_end_table = price_data_grouped["timestamp"].agg(
-        min_timestamp=np.min,
-        max_timestamp=np.max,
-        n_data_points="count",
-    ).reset_index()
-    start_end_table["days_available"] = (start_end_table["max_timestamp"] - start_end_table["min_timestamp"]).dt.days
-    start_end_table["avg_data_points_per_day"] = start_end_table["n_data_points"] / start_end_table["days_available"]
+    start_end_table = (
+        price_data_grouped["timestamp"]
+        .agg(
+            min_timestamp=np.min,
+            max_timestamp=np.max,
+            n_data_points="count",
+        )
+        .reset_index()
+    )
+    start_end_table["days_available"] = (
+        start_end_table["max_timestamp"] - start_end_table["min_timestamp"]
+    ).dt.days
+    start_end_table["avg_data_points_per_day"] = (
+        start_end_table["n_data_points"] / start_end_table["days_available"]
+    )
     # One minute resolution is assumed, i.e. 24 * 60 observations per day.
-    start_end_table["coverage"] = round((100 * start_end_table["n_data_points"]) / (start_end_table["days_available"] * 24 * 60), 2) 
+    start_end_table["coverage"] = round(
+        (100 * start_end_table["n_data_points"])
+        / (start_end_table["days_available"] * 24 * 60),
+        2,
+    )
     return start_end_table
 
 
@@ -169,13 +182,16 @@ def compute_start_end_table_for_vendor(
     # Concatenate the results.
     start_end_table = pd.concat(start_end_tables, ignore_index=True)
     # Sort values.
-    start_end_table_sorted = start_end_table.sort_values(by="days_available", ascending=False)
+    start_end_table_sorted = start_end_table.sort_values(
+        by="days_available", ascending=False
+    )
     return start_end_table_sorted
 
 
 def compute_start_end_table_for_vendors(config: ccocon.Config) -> pd.DataFrame:
     """
-    Same as `compute_start_end_table_for_vendor` but for all vendors in the universe.
+    Same as `compute_start_end_table_for_vendor` but for all vendors in the
+    universe.
 
     :return: start-end table for all vendors in the universe
     """
@@ -194,13 +210,17 @@ def compute_start_end_table_for_vendors(config: ccocon.Config) -> pd.DataFrame:
         # Get vendor-specific loader.
         loader = get_loader_for_vendor(vendor, config)
         # Compute start-end table for the current vendor.
-        cur_start_end_table = compute_start_end_table_for_vendor(vendor_universe, loader, config)
+        cur_start_end_table = compute_start_end_table_for_vendor(
+            vendor_universe, loader, config
+        )
         cur_start_end_table["vendor"] = vendor
         start_end_tables.append(cur_start_end_table)
     # Concatenate the results.
     start_end_table = pd.concat(start_end_tables, ignore_index=True)
     # Sort values.
-    start_end_table_sorted = start_end_table.sort_values(by="days_available", ascending=False)
+    start_end_table_sorted = start_end_table.sort_values(
+        by="days_available", ascending=False
+    )
     return start_end_table_sorted
 
 
