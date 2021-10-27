@@ -40,6 +40,7 @@ import helpers.printing as hprintin
 import helpers.s3 as hs3
 import im.ccxt.data.load.loader as imccdaloloa
 import im.cryptodatadownload.data.load.loader as imcrdaloloa
+import im.data.universe as imdauni
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -69,12 +70,8 @@ def get_cmtask232_config() -> ccocon.Config:
     config["load"]["data_dir"] = os.path.join(hs3.get_path(), "data")
     # Data parameters.
     config.add_subconfig("data")
-    config["data"]["data_providers"] = ["CCXT", "CDD"]
     config["data"]["data_type"] = "OHLCV"
-    config["data"]["universe_file_path"] = os.path.join(
-        hgit.get_client_root(False),
-        "im/data/downloaded_currencies.json",
-    )
+    config["data"]["universe_version"] = "01"
     return config
 
 
@@ -86,8 +83,48 @@ print(config)
 # # Compute start-end table
 
 # %%
-def compute_start_end_table(
-    data_provider: str, loader: _LOADER, config: ccocon.Config
+def get_loader_for_vendor(
+    vendor: str, config: ccocon.Config
+) -> _LOADER:
+    """
+    Get vendor specific loader instance.
+
+    :param vendor: data provider, e.g. `CCXT`
+    :return: loader instance
+    """
+    if vendor == "CCXT":
+        loader = imccdaloloa.CcxtLoader(
+            root_dir=config["load"]["data_dir"],
+            aws_profile=config["load"]["aws_profile"],
+        )
+    elif vendor == "CDD":
+        loader = imcrdaloloa.CddLoader(
+            root_dir=config["load"]["data_dir"],
+            aws_profile=config["load"]["aws_profile"],
+        )
+    else:
+        raise ValueError(f"Unsupported vendor={vendor}")
+    return loader
+
+
+def compute_start_end_table(price_data, config):
+    # Reset `DatetimeIndex` to use it for stats computation.
+    price_data_no_index = price_data.reset_index()
+    # Group by exchange, currency.
+    price_data_grouped = price_data_no_index.groupby(["exchange_id", "currency_pair"])
+    # Compute the stats.
+    start_end_table = price_data_grouped["timestamp"].agg(
+        min_timestamp=np.min,
+        max_timestamp=np.max,
+        n_data_points="count",
+    ).reset_index()
+    start_end_table["days_available"] = (start_end_table["max_timestamp"] - start_end_table["min_timestamp"]).dt.days
+    start_end_table["avg_data_points_per_day"] = start_end_table["n_data_points"] / start_end_table["days_available"]
+    return start_end_table
+
+
+def compute_start_end_table_for_vendor(
+    vendor_universe: str, loader, config: ccocon.Config
 ) -> pd.DataFrame:
     """
     Compute data provider specific start-end table.
@@ -98,23 +135,14 @@ def compute_start_end_table(
         - minimum observed timestamp
         - maximum observed timestamp
 
-    :param data_provider: data provider, e.g. `CCXT`
-    :param loader: provider specific loader instance
-    :return: data provider specific start-end table
+    :param vendor: data provider, e.g. `CCXT`
+    :param loader: vendor specific loader instance
+    :return: vendor specific start-end table
     """
-    # Load the universe.
-    universe = hio.from_json(config["data"]["universe_file_path"])
-    # TODO(Grisha): fix loading in #244.
-    universe["CDD"]["binance"].remove("SCU/USDT")
-    # TODO(Grisha): fix timestamps in #253.
-    universe["CDD"].pop("kucoin")
-    hdbg.dassert_in(data_provider, universe.keys())
-    # Get provider-specific universe.
-    provider_universe = universe[data_provider]
     start_end_tables = []
-    for exchange in provider_universe.keys():
+    for exchange in vendor_universe.keys():
         # Get the downloaded currency pairs for a particular exchange.
-        currency_pairs = provider_universe[exchange]
+        currency_pairs = vendor_universe[exchange]
         for currency_pair in currency_pairs:
             # Read data for current data provider, exchange, currency pair.
             cur_df = loader.read_data_from_filesystem(
@@ -123,84 +151,48 @@ def compute_start_end_table(
                 config["data"]["data_type"],
             )
             # Compute `start-end table`.
-            cur_start_end_table = pd.DataFrame(
-                {
-                    "data_provider": [data_provider],
-                    "exchange": [exchange],
-                    "currency": [currency_pair],
-                    "min_timestamp": [cur_df.index.min()],
-                    "max_timestamp": [cur_df.index.max()],
-                }
-            )
+            cur_start_end_table = compute_start_end_table(cur_df, config)
             start_end_tables.append(cur_start_end_table)
     # Concatenate the results.
     start_end_table = pd.concat(start_end_tables, ignore_index=True)
-    return start_end_table
+    start_end_table_sorted = start_end_table.sort_values(by="days_available", ascending=False)
+    return start_end_table_sorted
 
 
-def get_loader_for_data_provider(
-    data_provider: str, config: ccocon.Config
-) -> _LOADER:
-    """
-    Get data provider specific loader instance.
+def compute_start_end_table_for_vendors(config):
+    # Load the universe.
+    universe = imdauni.get_trade_universe(config["data"]["universe_version"])
+    # Exclude CDD for now since there are many problems with data.
+    # TODO(Grisha): file a bug about CDD.
+    universe.pop("CDD")
+    # TODO(Grisha): fix the duplicates problem in #274.
+    universe["CCXT"].pop("bitfinex")
+    #
+    start_end_tables = []
+    for vendor in universe.keys():
+        # Get vendor-specific universe.
+        vendor_universe = universe[vendor]
+        # Get vendor-specific loader.
+        loader = get_loader_for_vendor(vendor, config)
+        # Compute start-end table for the current vendor.
+        cur_start_end_table = compute_start_end_table_for_vendor(vendor_universe, loader, config)
+        cur_start_end_table["vendor"] = vendor
+        start_end_tables.append(cur_start_end_table)
+    # Concatenate the results.
+    start_end_table = pd.concat(start_end_tables, ignore_index=True)
+    start_end_table_sorted = start_end_table.sort_values(by="days_available", ascending=False)
+    return start_end_table_sorted
 
-    :param data_provider: data provider, e.g. `CCXT`
-    :return: loader instance
-    """
-    if data_provider == "CCXT":
-        loader = imccdaloloa.CcxtLoader(
-            root_dir=config["load"]["data_dir"],
-            aws_profile=config["load"]["aws_profile"],
-        )
-    elif data_provider == "CDD":
-        loader = imcrdaloloa.CddLoader(
-            root_dir=config["load"]["data_dir"],
-            aws_profile=config["load"]["aws_profile"],
-        )
-    else:
-        raise ValueError(f"Unsupported data provider={data_provider}")
-    return loader
-
-
-# %%
-ccxt_loader = get_loader_for_data_provider("CCXT", config)
-ccxt_data = ccxt_loader.read_data_from_filesystem("binance", "BTC/USDT", "OHLCV")
-print(ccxt_data.shape[0])
-ccxt_data.head(3)
-
-
-# %%
-def compute_start_end_table(crypto_data):
-    # Reset `DatetimeIndex` to use it for stats computation.
-    crypto_data_no_index = crypto_data.reset_index()
-    # Group by exchange, currency.
-    crypto_data_grouped = crypto_data_no_index.groupby(["exchange_id", "currency_pair"])
-    # Compute the stats.
-    start_end_table = crypto_data_grouped["timestamp"]
-
-tmp_df = ccxt_data.reset_index().groupby(["exchange_id", "currency_pair"])["timestamp"].agg(
-    min_timestamp=np.min,
-    max_timestamp=np.max,
-    n_data_points="count",
-).reset_index()
-tmp_df["delta"] = (tmp_df["max_timestamp"] - tmp_df["min_timestamp"]).dt.days
-tmp_df["avg"] = tmp_df["n_data_points"] / tmp_df["delta"]
-tmp_df
 
 # %% [markdown]
 # ## Per data provider, exchange, currency pair
 
 # %%
-start_end_tables = []
-for data_provider in config["data"]["data_providers"]:
-    loader = get_loader_for_data_provider(data_provider, config)
-    cur_start_end_table = compute_start_end_table(data_provider, loader, config)
-    start_end_tables.append(cur_start_end_table)
+start_end_table = compute_start_end_table_for_vendors(config)
 
 # %%
-start_end_table = pd.concat(start_end_tables, ignore_index=True)
 _LOG.info(
-    "The number of unique data provider, exchange, currency pair combinations=%s",
+    "The number of unique vendor, exchange, currency pair combinations=%s",
     start_end_table.shape[0],
 )
 start_end_table
@@ -210,8 +202,8 @@ start_end_table
 
 # %%
 currency_start_end_table = (
-    start_end_table.groupby("currency")
-    .agg({"min_timestamp": np.min, "max_timestamp": np.max})
+    start_end_table.groupby("currency_pair")
+    .agg({"min_timestamp": np.min, "max_timestamp": np.max, "exchange_id": list})
     .reset_index()
 )
 _LOG.info(
