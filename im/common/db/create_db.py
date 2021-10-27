@@ -55,10 +55,10 @@ def get_data_types_query() -> str:
     Define custom data types inside a database.
     """
     # Define data types.
+    # TODO(Grisha): Futures -> futures.
+    # TODO(Grisha): T -> minute, D -> daily.
     query = """
-    /* TODO: Futures -> futures */
     CREATE TYPE AssetClass AS ENUM ('Futures', 'etfs', 'forex', 'stocks', 'sp_500');
-    /* TODO: T -> minute, D -> daily */
     CREATE TYPE Frequency AS ENUM ('T', 'D', 'tick');
     CREATE TYPE ContractType AS ENUM ('continuous', 'expiry');
     CREATE SEQUENCE serial START 1;
@@ -83,6 +83,7 @@ def create_all_tables(connection: hsql.DbConnection) -> None:
     ]
     # Create tables.
     for query in queries:
+        _LOG.debug("Executing query %s", query)
         try:
             cursor = connection.cursor()
             cursor.execute(query)
@@ -90,6 +91,7 @@ def create_all_tables(connection: hsql.DbConnection) -> None:
             _LOG.warning("Duplicate table created, skipping.")
 
 
+# TODO(Grisha): convert it to test.
 def test_tables(
     connection: hsql.DbConnection,
 ) -> None:
@@ -102,7 +104,10 @@ def test_tables(
     # Check tables list.
     actual_tables = hsql.get_table_names(connection)
     expected_tables = [
+        "ccxt_ohlcv",
+        "currency_pair",
         "exchange",
+        "exchange_name",
         "ib_daily_data",
         "ib_minute_data",
         "ib_tick_bid_ask_data",

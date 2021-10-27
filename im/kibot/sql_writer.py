@@ -20,7 +20,7 @@ def get_create_table_query() -> str:
     sql_query = """
     CREATE TABLE IF NOT EXISTS KIBOT_DAILY_DATA (
         id integer PRIMARY KEY DEFAULT nextval('serial'),
-        trade_symbol_id integer REFERENCES TradeSymbol,
+        trade_symbol_id integer REFERENCES TRADE_SYMBOL,
         date date,
         open numeric,
         high numeric,
@@ -32,7 +32,7 @@ def get_create_table_query() -> str:
 
     CREATE TABLE IF NOT EXISTS KIBOT_MINUTE_DATA (
         id integer PRIMARY KEY DEFAULT nextval('serial'),
-        trade_symbol_id integer REFERENCES TradeSymbol,
+        trade_symbol_id integer REFERENCES TRADE_SYMBOL,
         datetime timestamp,
         open numeric,
         high numeric,
@@ -44,7 +44,7 @@ def get_create_table_query() -> str:
 
     CREATE TABLE IF NOT EXISTS KIBOT_TICK_BID_ASK_DATA (
         id integer PRIMARY KEY DEFAULT nextval('serial'),
-        trade_symbol_id integer REFERENCES TradeSymbol,
+        trade_symbol_id integer REFERENCES TRADE_SYMBOL,
         datetime timestamp,
         bid numeric,
         ask numeric,
@@ -53,7 +53,7 @@ def get_create_table_query() -> str:
 
     CREATE TABLE IF NOT EXISTS KIBOT_TICK_DATA (
         id integer PRIMARY KEY DEFAULT nextval('serial'),
-        trade_symbol_id integer REFERENCES TradeSymbol,
+        trade_symbol_id integer REFERENCES TRADE_SYMBOL,
         datetime timestamp,
         price numeric,
         size bigint
