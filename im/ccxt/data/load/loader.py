@@ -13,8 +13,6 @@ import pandas as pd
 import core.pandas_helpers as cpah
 import helpers.datetime_ as hdatetim
 import helpers.dbg as hdbg
-import helpers.git as hgit
-import helpers.io_ as hio
 import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
@@ -149,9 +147,7 @@ class CcxtLoader:
         :return: absolute path to a file with CCXT data
         """
         # Extract data about downloaded currencies for CCXT.
-        downloaded_currencies_info = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)[
-            "CCXT"
-        ]
+        downloaded_currencies_info = imdauni.get_trade_universe()["CCXT"]
         # Verify that data for the input exchange id was downloaded.
         hdbg.dassert_in(
             exchange_id,
