@@ -181,7 +181,7 @@ class CcxtLoader:
         :return: absolute path to a file with CCXT data
         """
         # Extract data about downloaded currencies for CCXT.
-        downloaded_currencies_info = imdatuniv.TRADE_UNIVERSE["CCXT"]
+        downloaded_currencies_info = imdatuniv.get_trade_universe()["CCXT"]
         # Verify that data for the input exchange id was downloaded.
         hdbg.dassert_in(
             exchange_id,

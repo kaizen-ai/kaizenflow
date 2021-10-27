@@ -42,7 +42,7 @@ def _get_file_path(
     :return: path to a file with CDD data
     """
     # Extract data about downloaded currencies for CDD.
-    downloaded_currencies_info = imdatuniv.TRADE_UNIVERSE["CDD"]
+    downloaded_currencies_info = imdatuniv.get_trade_universe()["CDD"]
     # Verify that data for the input exchange id was downloaded.
     dbg.dassert_in(
         exchange_id,
