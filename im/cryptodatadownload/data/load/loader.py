@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.cryptodatadownload.data.load.loader as crdall
+import im.cryptodatadownload.data.load.loader as imcrdaloloa
 """
 
 import logging
@@ -10,14 +10,11 @@ from typing import Optional
 
 import pandas as pd
 
-import core.pandas_helpers as cphelp
-import helpers.datetime_ as hdatet
-import helpers.dbg as dbg
-import helpers.git as hgit
-import helpers.io_ as hio
+import core.pandas_helpers as cpah
+import helpers.datetime_ as hdatetim
+import helpers.dbg as hdbg
 import helpers.s3 as hs3
-
-import im.data.universe as imdatuniv
+import im.data.universe as imdauni
 
 _LOG = logging.getLogger(__name__)
 
@@ -42,9 +39,9 @@ def _get_file_path(
     :return: path to a file with CDD data
     """
     # Extract data about downloaded currencies for CDD.
-    downloaded_currencies_info = imdatuniv.get_trade_universe()["CDD"]
+    downloaded_currencies_info = imdauni.get_trade_universe()["CDD"]
     # Verify that data for the input exchange id was downloaded.
-    dbg.dassert_in(
+    hdbg.dassert_in(
         exchange_id,
         downloaded_currencies_info.keys(),
         msg="Data for exchange id='%s' was not downloaded" % exchange_id,
@@ -52,7 +49,7 @@ def _get_file_path(
     # Verify that data for the input exchange id and currency pair was
     # downloaded.
     downloaded_currencies = downloaded_currencies_info[exchange_id]
-    dbg.dassert_in(
+    hdbg.dassert_in(
         currency_pair,
         downloaded_currencies,
         msg="Data for exchange id='%s', currency pair='%s' was not downloaded"
@@ -94,11 +91,11 @@ class CddLoader:
         """
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
         # Verify that requested data type is valid.
-        dbg.dassert_in(
+        hdbg.dassert_in(
             data_type.lower(),
             self._data_types,
             msg="Incorrect data type: '%s'. Acceptable types: '%s'"
-                % (data_type.lower(), self._data_types),
+            % (data_type.lower(), self._data_types),
         )
         # Get absolute file path for a CDD file.
         file_path = os.path.join(
@@ -116,7 +113,7 @@ class CddLoader:
             # Add s3fs argument to kwargs.
             read_csv_kwargs["s3fs"] = s3fs
         else:
-            dbg.dassert_file_exists(file_path)
+            hdbg.dassert_file_exists(file_path)
         # Read raw CDD data.
         _LOG.info(
             "Reading CDD data for exchange id='%s', currencies='%s', from file='%s'...",
@@ -124,7 +121,7 @@ class CddLoader:
             currency_pair,
             file_path,
         )
-        data = cphelp.read_csv(file_path, **read_csv_kwargs)
+        data = cpah.read_csv(file_path, **read_csv_kwargs)
         # Apply transformation to raw data.
         _LOG.info(
             "Processing CDD data for exchange id='%s', currencies='%s'...",
@@ -171,7 +168,7 @@ class CddLoader:
         if data_type.lower() == "ohlcv":
             transformed_data = self._apply_ohlcv_transformation(transformed_data)
         else:
-            dbg.dfatal(
+            hdbg.dfatal(
                 "Incorrect data type: '%s'. Acceptable types: '%s'"
                 % (data_type.lower(), self._data_types)
             )
@@ -195,7 +192,7 @@ class CddLoader:
         :return: transformed CDD data
         """
         # Verify that the Unix data is provided in ms.
-        dbg.dassert_container_type(
+        hdbg.dassert_container_type(
             data["unix"], container_type=None, elem_type=int
         )
         # Rename col with original Unix ms epoch.
@@ -227,7 +224,7 @@ class CddLoader:
         # Convert to timestamp in UTC tz.
         timestamp_col = pd.to_datetime(epoch_col, unit="ms", utc=True)
         # Convert to ET tz.
-        timestamp_col = timestamp_col.dt.tz_convert(hdatet.get_ET_tz())
+        timestamp_col = timestamp_col.dt.tz_convert(hdatetim.get_ET_tz())
         return timestamp_col
 
     @staticmethod
@@ -263,7 +260,7 @@ class CddLoader:
             "exchange_id",
         ]
         # Verify that dataframe contains OHLCV columns.
-        dbg.dassert_is_subset(ohlcv_columns, data.columns)
+        hdbg.dassert_is_subset(ohlcv_columns, data.columns)
         # Rearrange the columns.
         data = data[ohlcv_columns].copy()
         return data
