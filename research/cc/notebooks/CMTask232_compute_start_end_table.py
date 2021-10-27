@@ -22,8 +22,6 @@
 # # Imports
 
 # %%
-# TODO(Grisha): move to `core/dataflow_model/notebooks` in #205.
-
 import logging
 import os
 from typing import Union
@@ -106,8 +104,26 @@ def get_loader_for_vendor(
         raise ValueError(f"Unsupported vendor={vendor}")
     return loader
 
+# TODO(Grisha): convert all start-end table related functions into a class.
+def compute_start_end_table(price_data: pd.DataFrame, config: ccocon.Config) -> pd.DataFrame:
+    """
+    Compute start-end table on exchange-currency level.
 
-def compute_start_end_table(price_data, config):
+    Start-end table's structure is:
+        - exchange name
+        - currency pair
+        - minimum observed timestamp
+        - maximum observed timestamp
+        - the number of data points
+        - the number of days for which data is available
+        - average number of data points per day
+        - data coverage, which is actual number of observations divided by 
+          expected number of observations (assuming 1 minute resolution)
+          as percentage
+
+    :param price_data: crypto price data
+    :return: start-end table
+    """
     # Reset `DatetimeIndex` to use it for stats computation.
     price_data_no_index = price_data.reset_index()
     # Group by exchange, currency.
@@ -120,6 +136,8 @@ def compute_start_end_table(price_data, config):
     ).reset_index()
     start_end_table["days_available"] = (start_end_table["max_timestamp"] - start_end_table["min_timestamp"]).dt.days
     start_end_table["avg_data_points_per_day"] = start_end_table["n_data_points"] / start_end_table["days_available"]
+    # One minute resolution is assumed, i.e. 24 * 60 observations per day.
+    start_end_table["coverage"] = round((100 * start_end_table["n_data_points"]) / (start_end_table["days_available"] * 24 * 60), 2) 
     return start_end_table
 
 
@@ -127,15 +145,10 @@ def compute_start_end_table_for_vendor(
     vendor_universe: str, loader, config: ccocon.Config
 ) -> pd.DataFrame:
     """
-    Compute data provider specific start-end table.
+    Same as `compute_start_end_table` but for all exchanges, currency pairs
+    available for a certain vendor.
 
-    Start-end table's structure is:
-        - exchange name
-        - currency pair
-        - minimum observed timestamp
-        - maximum observed timestamp
-
-    :param vendor: data provider, e.g. `CCXT`
+    :param vendor_universe: all exchanges, currency pairs avaiable for a vendor
     :param loader: vendor specific loader instance
     :return: vendor specific start-end table
     """
@@ -155,15 +168,21 @@ def compute_start_end_table_for_vendor(
             start_end_tables.append(cur_start_end_table)
     # Concatenate the results.
     start_end_table = pd.concat(start_end_tables, ignore_index=True)
+    # Sort values.
     start_end_table_sorted = start_end_table.sort_values(by="days_available", ascending=False)
     return start_end_table_sorted
 
 
-def compute_start_end_table_for_vendors(config):
+def compute_start_end_table_for_vendors(config: ccocon.Config) -> pd.DataFrame:
+    """
+    Same as `compute_start_end_table_for_vendor` but for all vendors in the universe.
+
+    :return: start-end table for all vendors in the universe
+    """
     # Load the universe.
     universe = imdauni.get_trade_universe(config["data"]["universe_version"])
     # Exclude CDD for now since there are many problems with data.
-    # TODO(Grisha): file a bug about CDD.
+    # TODO(Grisha): file a bug about CDD data.
     universe.pop("CDD")
     # TODO(Grisha): fix the duplicates problem in #274.
     universe["CCXT"].pop("bitfinex")
@@ -180,6 +199,7 @@ def compute_start_end_table_for_vendors(config):
         start_end_tables.append(cur_start_end_table)
     # Concatenate the results.
     start_end_table = pd.concat(start_end_tables, ignore_index=True)
+    # Sort values.
     start_end_table_sorted = start_end_table.sort_values(by="days_available", ascending=False)
     return start_end_table_sorted
 
