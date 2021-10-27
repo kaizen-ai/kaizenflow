@@ -68,6 +68,11 @@ def get_cmtask232_config() -> ccocon.Config:
     config.add_subconfig("data")
     config["data"]["data_type"] = "OHLCV"
     config["data"]["universe_version"] = "01"
+    # Column names.
+    config.add_subconfig("column_names")
+    config["column_names"]["currency"] = "currency_pair"
+    config["column_names"]["exchange"] = "exchange_id"
+    config["column_names"]["timestamp"] = "timestamp"
     return config
 
 
@@ -127,11 +132,14 @@ def compute_start_end_table(
     price_data_no_index = price_data.reset_index()
     # Group by exchange, currency.
     price_data_grouped = price_data_no_index.groupby(
-        ["exchange_id", "currency_pair"]
+        [
+            config["column_names"]["exchange"],
+            config["column_names"]["currency"],
+        ]
     )
     # Compute the stats.
     start_end_table = (
-        price_data_grouped["timestamp"]
+        price_data_grouped[config["column_names"]["timestamp"]]
         .agg(
             min_timestamp=np.min,
             max_timestamp=np.max,
@@ -246,7 +254,14 @@ currency_start_end_table = (
     .agg({"min_timestamp": np.min, "max_timestamp": np.max, "exchange_id": list})
     .reset_index()
 )
-_LOG.info(
-    "The number of unique currency pairs=%s", currency_start_end_table.shape[0]
+currency_start_end_table["days_available"] = (
+    currency_start_end_table["max_timestamp"] - currency_start_end_table["min_timestamp"]
+).dt.days
+currency_start_end_table_sorted = currency_start_end_table.sort_values(
+    by="days_available",
+    ascending=False,
 )
-currency_start_end_table
+_LOG.info(
+    "The number of unique currency pairs=%s", currency_start_end_table_sorted.shape[0]
+)
+currency_start_end_table_sorted
