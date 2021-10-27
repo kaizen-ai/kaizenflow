@@ -83,7 +83,7 @@ def create_all_tables(connection: hsql.DbConnection) -> None:
     ]
     # Create tables.
     for query in queries:
-        _LOG.info("executing %s", query)
+        _LOG.debug("Executing query %s", query)
         try:
             cursor = connection.cursor()
             cursor.execute(query)
