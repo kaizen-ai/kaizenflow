@@ -87,3 +87,10 @@ def resample_index(index: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
         len(index),
     )
     return resampled_index
+
+
+def resample_df(df: pd.DataFrame, frequency: str) -> pd.DataFrame:
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    resampled_index = resample_index(df.index, frequency)
+    df_reindex = df.reindex(resampled_index)
+    return df_reindex
