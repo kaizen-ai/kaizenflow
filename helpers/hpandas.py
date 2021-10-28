@@ -73,6 +73,10 @@ def resample_index(index: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
     :return: resampled `DatetimeIndex`
     """
     hdbg.dassert_isinstance(index, pd.DatetimeIndex)
+    hdbg.dassert(
+        index.is_unique,
+        msg="Index must have only unique values"
+    )
     min_date = index.min()
     max_date = index.max()
     resampled_index = pd.date_range(
