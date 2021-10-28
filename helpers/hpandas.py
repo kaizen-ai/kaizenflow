@@ -3,12 +3,14 @@ Import as:
 
 import helpers.hpandas as hhpandas
 """
-
+import logging
 from typing import Any, Optional, Union
 
 import pandas as pd
 
 import helpers.dbg as hdbg
+
+_LOG = logging.getLogger(__name__)
 
 
 def dassert_index_is_datetime(
@@ -60,3 +62,28 @@ def dassert_monotonic_index(
     cond = index.is_monotonic_increasing or index.is_monotonic_decreasing
     hdbg.dassert(cond, msg=msg, *args)  # type: ignore
     hdbg.dassert(index.is_unique, msg=msg, *args)  # type: ignore
+
+
+def resample_index(index: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
+    """
+    Resample `DatetimeIndex`.
+
+    :param index: `DatetimeIndex` to resample
+    :param frequency: frequency from `pd.date_range()` to resample to
+    :return: resampled `DatetimeIndex`
+    """
+    hdbg.dassert_isinstance(index, pd.DatetimeIndex)
+    min_date = index.min()
+    max_date = index.max()
+    resampled_index = pd.date_range(
+        start=min_date,
+        end=max_date,
+        freq=frequency,
+    )
+    _LOG.info(
+        "Index length increased by %s = %s - %s",
+        len(index) - len(resampled_index),
+        len(resampled_index),
+        len(index),
+    )
+    return resampled_index
