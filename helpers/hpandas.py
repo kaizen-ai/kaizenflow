@@ -3,12 +3,14 @@ Import as:
 
 import helpers.hpandas as hhpandas
 """
-
+import logging
 from typing import Any, Optional, Union
 
 import pandas as pd
 
 import helpers.dbg as hdbg
+
+_LOG = logging.getLogger(__name__)
 
 
 def dassert_index_is_datetime(
@@ -60,3 +62,63 @@ def dassert_monotonic_index(
     cond = index.is_monotonic_increasing or index.is_monotonic_decreasing
     hdbg.dassert(cond, msg=msg, *args)  # type: ignore
     hdbg.dassert(index.is_unique, msg=msg, *args)  # type: ignore
+
+
+def resample_index(index: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
+    """
+    Resample `DatetimeIndex`.
+
+    :param index: `DatetimeIndex` to resample
+    :param frequency: frequency from `pd.date_range()` to resample to
+    :return: resampled `DatetimeIndex`
+    """
+    hdbg.dassert_isinstance(index, pd.DatetimeIndex)
+    hdbg.dassert(
+        index.is_unique,
+        msg="Index must have only unique values"
+    )
+    min_date = index.min()
+    max_date = index.max()
+    resampled_index = pd.date_range(
+        start=min_date,
+        end=max_date,
+        freq=frequency,
+    )
+    if len(resampled_index) > len(index):
+        # Downsampling case.
+        _LOG.info(
+            "Index length increased by %s = %s - %s",
+            len(resampled_index) - len(index),
+            len(resampled_index),
+            len(index),
+        )
+    elif len(resampled_index) < len(index):
+        # Upsampling case.
+        _LOG.info(
+            "Index length decreased by %s = %s - %s",
+            len(index) - len(resampled_index),
+            len(index),
+            len(resampled_index),
+        )
+    else:
+        _LOG.info(
+            "Index length=%s has not changes",
+            len(index)
+        )
+    return resampled_index
+
+
+def resample_df(df: pd.DataFrame, frequency: str) -> pd.DataFrame:
+    """
+    Resample `DataFrame`.
+
+    Place NaN in locations having no value in the previous index.
+
+    :param df: `DataFrame` to resample
+    :param frequency: frequency from `pd.date_range()` to resample to
+    :return: resampled `DataFrame`
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    resampled_index = resample_index(df.index, frequency)
+    df_reindex = df.reindex(resampled_index)
+    return df_reindex
