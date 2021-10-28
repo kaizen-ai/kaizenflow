@@ -86,7 +86,7 @@ def resample_index(index: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
     )
     _LOG.info(
         "Index length increased by %s = %s - %s",
-        len(index) - len(resampled_index),
+        len(resampled_index) - len(index),
         len(resampled_index),
         len(index),
     )
@@ -94,6 +94,15 @@ def resample_index(index: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
 
 
 def resample_df(df: pd.DataFrame, frequency: str) -> pd.DataFrame:
+    """
+    Resample `DataFrame`.
+
+    Place NaN in locations having no value in the previous index.
+
+    :param df: `DataFrame` to resample
+    :param frequency: frequency from `pd.date_range()` to resample to
+    :return: resampled `DataFrame`
+    """
     hdbg.dassert_isinstance(df, pd.DataFrame)
     resampled_index = resample_index(df.index, frequency)
     df_reindex = df.reindex(resampled_index)
