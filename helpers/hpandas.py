@@ -84,12 +84,27 @@ def resample_index(index: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
         end=max_date,
         freq=frequency,
     )
-    _LOG.info(
-        "Index length increased by %s = %s - %s",
-        len(resampled_index) - len(index),
-        len(resampled_index),
-        len(index),
-    )
+    if len(resampled_index) > len(index):
+        # Downsampling case.
+        _LOG.info(
+            "Index length increased by %s = %s - %s",
+            len(resampled_index) - len(index),
+            len(resampled_index),
+            len(index),
+        )
+    elif len(resampled_index) < len(index):
+        # Upsampling case.
+        _LOG.info(
+            "Index length decreased by %s = %s - %s",
+            len(index) - len(resampled_index),
+            len(index),
+            len(resampled_index),
+        )
+    else:
+        _LOG.info(
+            "Index length=%s has not changes",
+            len(index)
+        )
     return resampled_index
 
 
