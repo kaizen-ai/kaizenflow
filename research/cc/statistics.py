@@ -32,7 +32,7 @@ def compute_start_end_table(
     :param close_price_col:
     :return: start-end table
     """
-    hdbg.dassert_in(group_by_cols, price_data.columns)
+    # hdbg.dassert_is_subset(group_by_cols, price_data.columns)
     hdbg.dassert_in(close_price_col, price_data.columns)
     # ....
     hdbg.dassert_isinstance(price_data.index, pd.DatetimeIndex)
