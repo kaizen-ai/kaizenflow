@@ -11,7 +11,6 @@ class TestKibotS3DataLoader(hunitest.TestCase):
         super().setUp()
         self._s3_data_loader = imkdlksdlo.KibotS3DataLoader()
 
-    @pytest.mark.skip(msg="See alphamatic/dev_tools#288")
     @pytest.mark.slow
     def test1(self) -> None:
         df = self._s3_data_loader._read_data(
