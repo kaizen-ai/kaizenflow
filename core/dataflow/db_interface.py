@@ -175,6 +175,13 @@ class RealTimeDbInterface(abc.ABC):
         _LOG.debug("-> ret=%s", ret)
         return ret
 
+    @abc.abstractmethod
+    def should_be_online(self, current_time: pd.Timestamp) -> bool:
+        """
+        Return whether the interface should be available at the given time.
+        """
+        ...
+
     def is_online(self) -> bool:
         """
         Return whether the DB is on-line at the current time.
@@ -219,7 +226,6 @@ class RealTimeDbInterface(abc.ABC):
             - num_iters: number of iterations
         """
         start_sampling_time = self._get_wall_clock_time()
-        end_sampling_time = None
         _LOG.debug("DB on-line: %s", self.is_online())
         #
         _LOG.debug("Waiting on last bar ...")
@@ -230,6 +236,7 @@ class RealTimeDbInterface(abc.ABC):
             _LOG.debug(
                 "\n%s",
                 hprintin.frame(
+                    "Waiting on last bar: "
                     "num_iter=%s/%s: current_time=%s last_db_end_time=%s"
                     % (num_iter, self._max_iters, current_time, last_db_end_time),
                     char1="-",
@@ -325,6 +332,9 @@ class RealTimeSqlDbInterface(RealTimeDbInterface):
         # Sort in increasing time order and reindex.
         df = super().process_data(df)
         return df
+
+    def should_be_online(self, current_time: pd.Timestamp) -> bool:
+        return True
 
     def _get_data(
         self,
@@ -513,6 +523,9 @@ class ReplayedTimeDbInterface(RealTimeDbInterface):
             [self._end_time_col_name, self._id_col_name], inplace=True
         )
 
+    def should_be_online(self, current_time: pd.Timestamp) -> bool:
+        return True
+
     def process_data(self, df: pd.DataFrame) -> pd.DataFrame:
         _LOG.debug("")
         # Sort in increasing time order and reindex.
@@ -625,7 +638,7 @@ def _process_period(
         # Get the data for the last day.
         last_start_time = current_time.replace(
             hour=0, minute=0, second=0
-        ) - pd.Timedelta(days=6)
+        ) - pd.Timedelta(days=16)
     elif period in ("last_10mins", "last_5mins", "last_1min"):
         # Get the data for the last N minutes.
         if period == "last_10mins":
