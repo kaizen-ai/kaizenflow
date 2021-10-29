@@ -15,7 +15,6 @@ import helpers.unit_test as hut
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skip(msg="See alphamatic/dev_tools#288")
 class TestReturnsBuilder(hut.TestCase):
     """
     Test the ReturnsBuilder pipeline.

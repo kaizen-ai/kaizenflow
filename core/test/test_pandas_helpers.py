@@ -4,7 +4,6 @@ import os
 
 import numpy as np
 import pandas as pd
-import pytest
 
 import core.pandas_helpers as pde
 import helpers.printing as pri
@@ -160,14 +159,12 @@ class TestDfRollingApply(hut.TestCase):
 
 class TestReadDataFromS3(hut.TestCase):
 
-    @pytest.mark.skip(msg="See alphamatic/dev_tools#288")
     def test_read_csv1(self) -> None:
         s3fs = hs3.get_s3fs("am")
         file_name = os.path.join(hs3.get_path(), "data/kibot/all_stocks_1min/RIMG.csv.gz")
         hs3.dassert_s3_exists(file_name, s3fs)
         pde.read_csv(file_name, s3fs=s3fs)
 
-    @pytest.mark.skip(msg="See alphamatic/dev_tools#288")
     def test_read_parquet1(self) -> None:
         s3fs = hs3.get_s3fs("am")
         file_name = os.path.join(hs3.get_path(), "data/kibot/pq/sp_500_1min/AAPL.pq")

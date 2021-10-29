@@ -12,7 +12,6 @@ import im.common.data.types as mcdtyp
 import im.ib.data.load.ib_s3_data_loader as isdloa
 
 
-@pytest.mark.skip(msg="See alphamatic/dev_tools#288")
 class TestS3IbDataLoader1(hut.TestCase):
     """
     Test data loading correctness for Ib from S3.
