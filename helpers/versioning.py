@@ -72,7 +72,7 @@ def check_version(file_name: Optional[str] = None) -> None:
         "AM_AWS_PROFILE",
         "AM_ECR_BASE_PATH",
         "AM_S3_BUCKET",
-        "AM_TELEGRAM_TOKEN",
+        "AM_TG_BUILDBOT_TOKEN",
         "AWS_ACCESS_KEY_ID",
         "AWS_DEFAULT_REGION",
         "AWS_SECRET_ACCESS_KEY",

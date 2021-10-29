@@ -531,7 +531,7 @@ def purify_file_names(file_names: List[str]) -> List[str]:
 
 
 def purify_from_env_vars(txt: str) -> str:
-    for env_var in ["AM_ECR_BASE_PATH", "AM_S3_BUCKET", "AM_TELEGRAM_TOKEN"]:
+    for env_var in ["AM_ECR_BASE_PATH", "AM_S3_BUCKET", "AM_TG_BUILDBOT_TOKEN"]:
         if env_var in os.environ:
             val = os.environ[env_var]
             hdbg.dassert_ne(val, "", "Env var '%s' can't be empty", env_var)

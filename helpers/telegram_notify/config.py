@@ -10,7 +10,7 @@ from typing import Tuple
 
 import helpers.dbg as hdbg
 
-NOTIFY_JUPYTER_TOKEN = os.environ["AM_TELEGRAM_TOKEN"]
+NOTIFY_JUPYTER_TOKEN = os.environ["AM_TG_BUILDBOT_TOKEN"]
 
 
 def get_info() -> Tuple[str, str]:
