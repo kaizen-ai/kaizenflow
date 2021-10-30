@@ -7,9 +7,9 @@ Use as:
 # Download data from 2019-01-01 to now,
   for latest trade universe:
 > download_historical.py \
-     --dst_dir test \
+     --dst_dir 'test' \
      --universe 'latest' \
-     --start_datetime "2019-01-01" \
+     --start_datetime '2019-01-01' \
 
 Import as:
 
@@ -30,8 +30,6 @@ import im.ccxt.data.extract.exchange_class as imcdaexexccla
 import im.data.universe as imdauni
 
 _LOG = logging.getLogger(__name__)
-
-_ALL_EXCHANGE_IDS = ["binance", "kucoin"]
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -107,10 +105,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     else:
         end_datetime = pd.Timestamp(args.end_datetime)
     # Load trading universe.
-    if args.exchange_ids == "latest":
-        trade_universe = imdauni.get_trade_universe()
+    if args.universe == "latest":
+        trade_universe = imdauni.get_trade_universe()["CCXT"]
     else:
-        trade_universe = imdauni.get_trade_universe(args.universe)
+        trade_universe = imdauni.get_trade_universe(args.universe)["CCXT"]
     _LOG.info("Getting data for exchanges %s", ", ".join(trade_universe.keys()))
     for exchange_id in trade_universe:
         # Initialize the exchange class.
@@ -118,6 +116,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             exchange_id, api_keys_path=args.api_keys
         )
         for pair in trade_universe[exchange_id]:
+            _LOG.info(pair)
             # Download OHLCV data.
             pair_data = exchange.download_ohlcv_data(
                 curr_symbol=pair,
