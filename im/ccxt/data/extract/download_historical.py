@@ -114,7 +114,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     _LOG.info("Getting data for exchanges %s", ", ".join(trade_universe.keys()))
     for exchange_id in trade_universe:
         # Initialize the exchange class.
-        exchange = imcdaexexccla.CcxtExchange(exchange_id, api_keys_path=args.api_keys)
+        exchange = imcdaexexccla.CcxtExchange(
+            exchange_id, api_keys_path=args.api_keys
+        )
         for pair in trade_universe[exchange_id]:
             # Download OHLCV data.
             pair_data = exchange.download_ohlcv_data(
