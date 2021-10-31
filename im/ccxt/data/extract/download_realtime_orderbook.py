@@ -35,14 +35,14 @@ _LOG = logging.getLogger(__name__)
 # TODO(Danya): Create a type and move outside.
 def _instantiate_exchange(
     exchange_id: str,
-    universe: Dict[str, Dict[str, List[str]]],
+    ccxt_universe: Dict[str, List[str]],
     api_keys: Optional[str] = None,
 ) -> NamedTuple:
     """
     Create a tuple with exchange id, its class instance and currency pairs.
 
     :param exchange_id: CCXT exchange id
-    :param universe: trade universe
+    :param ccxt_universe: CCXT trade universe
     :return: named tuple with exchange id and currencies
     """
     exchange_to_currency = collections.namedtuple(
@@ -52,7 +52,7 @@ def _instantiate_exchange(
     exchange_to_currency.instance = imcdaexexccla.CcxtExchange(
         exchange_id, api_keys
     )
-    exchange_to_currency.pairs = universe[exchange_id]
+    exchange_to_currency.pairs = ccxt_universe[exchange_id]
     return exchange_to_currency
 
 
@@ -97,7 +97,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     exchanges = []
     for exchange_id in exchange_ids:
         exchanges.append(
-            _instantiate_exchange(exchange_id, universe, args.api_keys)
+            _instantiate_exchange(exchange_id, universe["CCXT"], args.api_keys)
         )
     # Launch an infinite loop.
     while True:
