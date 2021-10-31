@@ -90,13 +90,14 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     hio.create_dir(args.dst_dir, incremental=False)
-    # Get exchange ids.
-    exchange_ids = imdauni.get_trade_universe(args.universe)["CCXT"]
+    # Load universe.
+    universe = imdauni.get_trade_universe(args.universe)
+    exchange_ids = universe["CCXT"].keys()
     # Build mappings from exchange ids to classes and currencies.
     exchanges = []
     for exchange_id in exchange_ids:
         exchanges.append(
-            _instantiate_exchange(exchange_id, args.universe, args.api_keys)
+            _instantiate_exchange(exchange_id, universe, args.api_keys)
         )
     # Launch an infinite loop.
     while True:
