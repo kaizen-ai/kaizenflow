@@ -34,7 +34,9 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(Danya): Create a type and move outside.
 def _instantiate_exchange(
-    exchange_id: str, universe: Dict[str, Dict[str, List[str]]], api_keys: Optional[str] = None
+    exchange_id: str,
+    universe: Dict[str, Dict[str, List[str]]],
+    api_keys: Optional[str] = None,
 ) -> NamedTuple:
     """
     Create a tuple with exchange id, its class instance and currency pairs.
