@@ -138,7 +138,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 pair_data = exchange.instance.download_ohlcv_data(
                     curr_symbol=pair, step=2
                 )
-                imccdbindat.execute_insert_query(
+                pair_data["exchange_id"] = str(exchange_id)
+                pair_data["currency_pair"] = str(pair)
+                imccdbuti.execute_insert_query(
+
                     connection=connection,
                     df=pair_data,
                     table_name=args.table_name,
