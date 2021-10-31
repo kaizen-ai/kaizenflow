@@ -104,7 +104,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         for exchange in exchanges:
             for pair in exchange.pairs:
                 # Download latest 5 minutes for the currency pair and exchange.
-                order_book = exchange.instance.fetch_order_book(pair)
+                order_book = exchange.instance.download_order_book(pair)
                 file_name = (
                     f"orderbook_{exchange.id}_"
                     f"{pair.replace('/', '_')}_"
