@@ -8,8 +8,7 @@ Use as:
   FTX exchanges:
 > python im/ccxt/data/extract/download_realtime_orderbook.py \
     --dst_dir 'ccxt_test' \
-    --exchange_ids 'binance kucoin ftx' \
-    --currency_pairs 'universe'
+    --universe '01'
 
 Import as:
 
@@ -21,41 +20,27 @@ import collections
 import logging
 import os
 import time
-from typing import NamedTuple, Optional
+from typing import Dict, List, NamedTuple, Optional
 
 import helpers.datetime_ as hdatetim
 import helpers.dbg as hdbg
 import helpers.io_ as hio
 import helpers.parser as hparser
 import im.ccxt.data.extract.exchange_class as imcdaexexccla
+import im.data.universe as imdauni
 
 _LOG = logging.getLogger(__name__)
-
-# TODO(Danya,Dan): Move downloaded universe to a centralized location.
-_ALL_EXCHANGE_IDS = ["binance", "kucoin", "ftx", "gateio", "bitfinex"]
-_UNIVERSE_CURRENCY_PAIRS = [
-    "ADA/USDT",
-    "AVAX/USDT",
-    "BNB/USDT",
-    "BTC/USDT",
-    "DOGE/USDT",
-    "EOS/USDT",
-    "ETH/USDT",
-    "LINK/USDT",
-    "SOL/USDT",
-    "XRP/USDT",
-]
 
 
 # TODO(Danya): Create a type and move outside.
 def _instantiate_exchange(
-    exchange_id: str, currency_pairs: str, api_keys: Optional[str] = None
+    exchange_id: str, universe: Dict[str, Dict[str, List[str]]], api_keys: Optional[str] = None
 ) -> NamedTuple:
     """
     Create a tuple with exchange id, its class instance and currency pairs.
 
     :param exchange_id: CCXT exchange id
-    :param currency_pairs: space-delimited currencies, e.g. 'BTC/USDT ETH/USDT'
+    :param universe: trade universe
     :return: named tuple with exchange id and currencies
     """
     exchange_to_currency = collections.namedtuple(
@@ -65,25 +50,7 @@ def _instantiate_exchange(
     exchange_to_currency.instance = imcdaexexccla.CcxtExchange(
         exchange_id, api_keys
     )
-    if currency_pairs == "all":
-        # Store all currency pairs for each exchange.
-        currency_pairs = exchange_to_currency.instance.currency_pairs
-        exchange_to_currency.pairs = currency_pairs
-    elif currency_pairs == "universe":
-        # Get currency pairs for current universe.
-        exchange_to_currency.pairs = [
-            curr
-            for curr in _UNIVERSE_CURRENCY_PAIRS
-            if curr in exchange_to_currency.instance.currency_pairs
-        ]
-    else:
-        # Store currency pairs present in provided exchanges.
-        provided_pairs = currency_pairs.split()
-        exchange_to_currency.pairs = [
-            curr
-            for curr in provided_pairs
-            if curr in exchange_to_currency.instance.currency_pairs
-        ]
+    exchange_to_currency.pairs = universe[exchange_id]
     return exchange_to_currency
 
 
@@ -107,20 +74,11 @@ def _parse() -> argparse.ArgumentParser:
         help="Path to JSON file that contains API keys for exchange access",
     )
     parser.add_argument(
-        "--exchange_ids",
+        "--universe",
         action="store",
         required=True,
         type=str,
-        help="CCXT exchange ids to download data for separated by spaces, e.g. 'binance gemini',"
-        "'all' for all supported exchanges",
-    )
-    parser.add_argument(
-        "--currency_pairs",
-        action="store",
-        required=True,
-        type=str,
-        help="Name of the currency pair to download data for, separated by spaces,"
-        " e.g. 'BTC/USD ETH/USD','all' for all the currency pairs in exchange",
+        help="Trade universe to download data for",
     )
     parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
@@ -131,16 +89,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     hio.create_dir(args.dst_dir, incremental=False)
     # Get exchange ids.
-    if args.exchange_ids == "all":
-        exchange_ids = _ALL_EXCHANGE_IDS
-    else:
-        # Get exchanges provided by the user.
-        exchange_ids = args.exchange_ids.split()
+    exchange_ids = imdauni.get_trade_universe(args.universe)["CCXT"]
     # Build mappings from exchange ids to classes and currencies.
     exchanges = []
     for exchange_id in exchange_ids:
         exchanges.append(
-            _instantiate_exchange(exchange_id, args.currency_pairs, args.api_keys)
+            _instantiate_exchange(exchange_id, args.universe, args.api_keys)
         )
     # Launch an infinite loop.
     while True:
