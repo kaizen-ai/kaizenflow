@@ -1,5 +1,5 @@
 """
-Contains functions that computes crypto-related statistics.
+Compute crypto-related statistics.
 
 Import as:
 
@@ -27,12 +27,11 @@ def compute_start_end_table(
         - currency pair
         - minimum observed timestamp
         - maximum observed timestamp
-        - the number of data points
+        - the number of not NaN data points
         - the number of days for which data is available
-        - average number of data points per day
-        - data coverage, which is actual number of observations divided by
-          expected number of observations (assuming 1 minute resolution)
-          as percentage
+        - average number of not NaN data points per day
+        - data coverage, which is the number of not NaN data points divided
+          by the number of all data points as percentage
 
     :param price_data: crypto price data
     :return: start-end table
@@ -66,7 +65,6 @@ def compute_start_end_table(
         .agg(
             min_timestamp="idxmin",
             max_timestamp="idxmax",
-            # Count only not NaN observations.
             n_data_points="count",
             coverage=lambda x: round((1 - csta.compute_frac_nan(x)) * 100, 2),
         )
