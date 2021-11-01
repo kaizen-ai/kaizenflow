@@ -32,11 +32,13 @@ import pandas as pd
 import core.config.config_ as ccocon
 import helpers.dbg as hdbg
 import helpers.env as henv
+import helpers.hpandas as hpandas
 import helpers.printing as hprintin
 import helpers.s3 as hs3
 import im.ccxt.data.load.loader as imccdaloloa
 import im.cryptodatadownload.data.load.loader as imcrdaloloa
 import im.data.universe as imdauni
+import research.cc.statistics as rccsta
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -67,12 +69,13 @@ def get_cmtask232_config() -> ccocon.Config:
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["data_type"] = "OHLCV"
+    config["data"]["target_frequency"] = "T"
     config["data"]["universe_version"] = "01"
     # Column names.
     config.add_subconfig("column_names")
-    config["column_names"]["currency"] = "currency_pair"
+    config["column_names"]["close_price"] = "close"
+    config["column_names"]["currency_pair"] = "currency_pair"
     config["column_names"]["exchange"] = "exchange_id"
-    config["column_names"]["timestamp"] = "timestamp"
     return config
 
 
@@ -106,62 +109,6 @@ def get_loader_for_vendor(vendor: str, config: ccocon.Config) -> _LOADER:
     return loader
 
 
-# TODO(Grisha): convert all start-end table related functions into a class.
-def compute_start_end_table(
-    price_data: pd.DataFrame, config: ccocon.Config
-) -> pd.DataFrame:
-    """
-    Compute start-end table on exchange-currency level.
-
-    Start-end table's structure is:
-        - exchange name
-        - currency pair
-        - minimum observed timestamp
-        - maximum observed timestamp
-        - the number of data points
-        - the number of days for which data is available
-        - average number of data points per day
-        - data coverage, which is actual number of observations divided by
-          expected number of observations (assuming 1 minute resolution)
-          as percentage
-
-    :param price_data: crypto price data
-    :return: start-end table
-    """
-    # Reset `DatetimeIndex` to use it for stats computation.
-    price_data_no_index = price_data.reset_index()
-    # Group by exchange, currency.
-    price_data_grouped = price_data_no_index.groupby(
-        [
-            config["column_names"]["exchange"],
-            config["column_names"]["currency"],
-        ]
-    )
-    # Compute the stats.
-    start_end_table = (
-        price_data_grouped[config["column_names"]["timestamp"]]
-        .agg(
-            min_timestamp=np.min,
-            max_timestamp=np.max,
-            n_data_points="count",
-        )
-        .reset_index()
-    )
-    start_end_table["days_available"] = (
-        start_end_table["max_timestamp"] - start_end_table["min_timestamp"]
-    ).dt.days
-    start_end_table["avg_data_points_per_day"] = (
-        start_end_table["n_data_points"] / start_end_table["days_available"]
-    )
-    # One minute resolution is assumed, i.e. 24 * 60 observations per day.
-    start_end_table["coverage"] = round(
-        (100 * start_end_table["n_data_points"])
-        / (start_end_table["days_available"] * 24 * 60),
-        2,
-    )
-    return start_end_table
-
-
 def compute_start_end_table_for_vendor(
     vendor_universe: str, loader, config: ccocon.Config
 ) -> pd.DataFrame:
@@ -184,8 +131,13 @@ def compute_start_end_table_for_vendor(
                 currency_pair,
                 config["data"]["data_type"],
             )
+            # Remove duplicates.
+            # TODO(Grisha): move it into the loader.
+            cur_df_no_dups = cur_df.drop_duplicates()
+            # Resample data.
+            cur_df_resampled = hpandas.resample_df(cur_df_no_dups, config["data"]["target_frequency"])
             # Compute `start-end table`.
-            cur_start_end_table = compute_start_end_table(cur_df, config)
+            cur_start_end_table = rccsta.compute_start_end_table(cur_df_resampled, config)
             start_end_tables.append(cur_start_end_table)
     # Concatenate the results.
     start_end_table = pd.concat(start_end_tables, ignore_index=True)
@@ -244,6 +196,30 @@ _LOG.info(
     start_end_table.shape[0],
 )
 start_end_table
+
+# %%
+loader = get_loader_for_vendor("CCXT", config)
+data = loader.read_data_from_filesystem("ftx", "DOGE/USDT", "OHLCV")
+data_no_dups = data.drop_duplicates()
+# Resample data.
+data_resampled = hpandas.resample_df(data_no_dups, config["data"]["target_frequency"])
+data_resampled = data_resampled.reset_index()
+print(data_resampled.shape[0])
+data_resampled.head(3)
+
+# %%
+data_resampled[["exchange_id", "currency_pair"]] = data_resampled[["exchange_id", "currency_pair"]].fillna(method="ffill")
+data_grouped = data_resampled.groupby(["exchange_id", "currency_pair"], dropna=False, as_index=False)
+
+# %%
+import core.statistics as csta
+
+data_grouped.agg(
+    min_ts=("index", "min"),
+    max_ts=("index", "max"),
+    n_data_points=("close", "count"),
+    coverage=("close", lambda x: 1 - csta.compute_frac_nan(x))
+)
 
 # %% [markdown]
 # ## Per currency pair
