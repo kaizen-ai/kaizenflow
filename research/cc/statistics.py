@@ -1,9 +1,16 @@
+"""
+Contains functions that computes crypto-related statistics.
+
+Import as:
+
+import research.cc.statistics as rccsta
+"""
 import pandas as pd
 
 import core.config.config_ as ccocon
-import core.statistics as cstati
+import core.statistics as csta
 import helpers.dbg as hdbg
-import helpers.hpandas as hpandas
+import helpers.hpandas as hhpandas
 
 
 def compute_start_end_table(
@@ -36,17 +43,22 @@ def compute_start_end_table(
             config["column_names"]["currency_pair"],
             config["column_names"]["exchange"],
         ],
-        price_data.columns
+        price_data.columns,
     )
     #
     hdbg.dassert_isinstance(price_data.index, pd.DatetimeIndex)
-    hpandas.dassert_monotonic_index(price_data.index)
+    hhpandas.dassert_monotonic_index(price_data.index)
     #
-    group_by_columns = [config["column_names"]["exchange"], config["column_names"]["currency_pair"]]
+    group_by_columns = [
+        config["column_names"]["exchange"],
+        config["column_names"]["currency_pair"],
+    ]
     # For NaN close prices all the columns are NaN due to resampling, since the
     # analysis is on exchange-currency level, the NaNs are filled with existing
     # exchange name and currency pair.
-    price_data[group_by_columns] = price_data[group_by_columns].fillna(method="ffill")
+    price_data[group_by_columns] = price_data[group_by_columns].fillna(
+        method="ffill"
+    )
     price_data_grouped = price_data.groupby(group_by_columns, dropna=False)
     # Compute the stats.
     start_end_table = (
@@ -56,14 +68,14 @@ def compute_start_end_table(
             max_timestamp="idxmax",
             # Count only not NaN observations.
             n_data_points="count",
-            coverage=lambda x: round((1 - cstati.compute_frac_nan(x)) * 100, 2),
+            coverage=lambda x: round((1 - csta.compute_frac_nan(x)) * 100, 2),
         )
         .reset_index()
     )
     start_end_table["days_available"] = (
         start_end_table["max_timestamp"] - start_end_table["min_timestamp"]
     ).dt.days
-    start_end_table["avg_data_points_per_day"] = round((
-        start_end_table["n_data_points"] / start_end_table["days_available"]
-    ), 2)
+    start_end_table["avg_data_points_per_day"] = round(
+        (start_end_table["n_data_points"] / start_end_table["days_available"]), 2
+    )
     return start_end_table
