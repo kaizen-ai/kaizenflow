@@ -99,6 +99,7 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="Trade universe to download data for",
     )
+    parser.add_argument("--incremental", action="store_true")
     parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
 
