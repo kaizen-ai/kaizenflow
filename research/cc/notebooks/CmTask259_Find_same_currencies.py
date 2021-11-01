@@ -29,6 +29,7 @@ import os
 import numpy as np
 import pandas as pd
 import pytz
+import seaborn as sns
 
 import core.config.config_ as ccocon
 import core.explore as cexp
@@ -36,11 +37,13 @@ import core.plotting as cplo
 import helpers.datetime_ as hdatetim
 import helpers.dbg as hdbg
 import helpers.env as henv
+import helpers.hpandas as hpandas
 import helpers.printing as hprintin
 import helpers.s3 as hs3
 
 import im.data.universe as imdatuni
 import im.ccxt.data.load.loader as imccdaloloa
+import im.cryptodatadownload.data.load.loader as imcrdaloloa
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -68,33 +71,35 @@ def get_config() -> ccocon.Config:
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["close_price_col_name"] = "close"
+    config["data"]["freq"] = "min"
     return config
 
 
 config = get_config()
 print(config)
 
-# %% [markdown]
-# # Find same currencies for CCXT
-
-# %%
-ccxt_loader = imccdaloloa.CcxtLoader(
-    root_dir=config["load"]["data_dir"], aws_profile=config["load"]["aws_profile"]
-)
-
-# %%
-ccxt_universe = imdatuni.get_trade_universe()["CCXT"]
-ccxt_universe
-
 
 # %% [markdown]
-# ## Build a dataframe of returns for CCXT
+# # Functions
 
 # %%
-def get_ccxt_returns(ccxt_universe, ccxt_loader, config):
+def find_longest_not_nan_sequence(data, freq="min"):
+    # Get indices of only not-NaN values.
+    not_nan_index = np.array(data.dropna().index)
+    # Get a mask to distinguish not-NaN values that are further from their
+    # not-NaN precedent than 1 frequency time step. 
+    mask = np.where(np.diff(not_nan_index) != pd.Timedelta(1, freq))[0] + 1
+    # Get the longest monotonically increasing sequence of indices.
+    longest_not_nan_index = max(np.split(not_nan_index, mask), key=len)
+    # Get the longest sequence of not-NaN values.
+    longest_not_nan_seq = data.loc[longest_not_nan_index].copy()
+    return longest_not_nan_seq
+
+
+def get_ccxt_price_df(ccxt_universe, ccxt_loader, config):
     # Initialize lists of column names and returns series.
     colnames = []
-    returns_srs_list = []
+    price_srs_list = []
     # Iterate over exchange ids and currency pairs.
     for exchange_id in ccxt_universe:
         for curr_pair in ccxt_universe[exchange_id]:
@@ -105,39 +110,104 @@ def get_ccxt_returns(ccxt_universe, ccxt_loader, config):
             data = ccxt_loader.read_data_from_filesystem(
                 exchange_id=exchange_id, currency_pair=curr_pair, data_type="OHLCV"
             )
-            # Get series of close prices.
-            close_price_srs = data[config["data"]["close_price_col_name"]]
-            # Remove values with duplicated indices.
-            close_price_srs = close_price_srs[
-                ~close_price_srs.index.duplicated(keep='last')
-            ]
-            # Get series of returns and append to the list.
-            returns_srs = close_price_srs.diff()
-            returns_srs_list.append(returns_srs)
+            # Drop duplicates.
+            data = data.drop_duplicates()
+            # Get series of prices and append to the list.
+            price_srs = data[config["data"]["close_price_col_name"]]
+            price_srs_list.append(price_srs)
     # Construct a dataframe and assign column names.
-    df = pd.concat(returns_srs_list, axis=1)
+    df = pd.concat(price_srs_list, axis=1)
     df.columns = colnames
+    # Resample to the specified frequency.
+    df = hpandas.resample_df(df, config["data"]["freq"])
     return df
 
 
-# %%
-df_returns = get_ccxt_returns(ccxt_universe, ccxt_loader, config)
+# %% [markdown]
+# # Find the longest not NaN sequence in return series and narrow down trade universe
 
 # %%
-df_returns.head()
+ccxt_loader = imccdaloloa.CcxtLoader(
+    root_dir=config["load"]["data_dir"], aws_profile=config["load"]["aws_profile"]
+)
+
+# %%
+ccxt_universe = imdatuni.get_trade_universe()["CCXT"]
+ccxt_universe
+
+# %%
+df_price = get_ccxt_price_df(ccxt_universe, ccxt_loader, config)
+df_price.head(3)
+
+# %%
+df_price.describe()
+
+# %% [markdown]
+# Below is a code chunk that I did not factor out since it rather should be a part of some stats function like `compute_start_end_table()` from `CMTask232_compute_start_end_table.ipynb`.<br>
+#
+# This code is applying `find_longest_not_nan_sequence()` to all the gathered price series and outputs the longest not-NaN sequence time interval, share of its length to the length of original series and coverage.<br>
+#
+# Looking at the results we can see that all the exchanges except for Bitfinex have significantly big longest not-NaN sequence (>13% at least) in combine with high data coverage (>85%). Bitfinex has a very low data coverage and its longest not-NaN sequences are less than 1% compare to the original data length which means that Bitfinex data spottiness is too scattered and we should exclude it from our analysis until we get clearer data for it.
+
+# %%
+# Initiate results dict.
+res_dict = {}
+# Iterate over each series in columns.
+for colname in df_price.columns:
+    price_srs = df_price[colname].copy()
+    # Remove leading and trailing NaNs.
+    first_idx = price_srs.first_valid_index()
+    last_idx = price_srs.last_valid_index()
+    price_srs = price_srs[first_idx:last_idx].copy()
+    # Get the longest not-NaN sequence in a series.
+    longest_not_nan_seq = find_longest_not_nan_sequence(price_srs)
+    # Compute necessary stats and put in a list.
+    stats = [
+        longest_not_nan_seq.index[0],
+        longest_not_nan_seq.index[-1],
+        len(longest_not_nan_seq)/len(price_srs),
+        1 - price_srs.isna().sum()/len(price_srs)
+    ]
+    # Append stats list to the result dict under a column name key.
+    res_dict[colname] = stats
+# Build a dataframe from the result dict.
+res_df = pd.DataFrame.from_dict(
+    res_dict,
+    orient="index",
+    columns=[
+        "longest_seq_start_date",
+        "longest_seq_end_date",
+        "share_of_longest_seq",
+        "coverage",
+    ]
+)
+res_df
+
+# %%
+# Remove observations related to Bitfinex.
+colnames = [col for col in df_price if "bitfinex" not in col]
+df_price = df_price[colnames].copy()
+
+# %% [markdown]
+# # Find same currencies for CCXT
+
+# %%
+df_returns = df_price.pct_change()
+df_returns.head(3)
 
 # %%
 corr_matrix = df_returns.corr()
+_ = cplo.plot_heatmap(corr_matrix)
 
 # %% [markdown]
-# On the heatmap we can clearly see that the same currency pairs at different exchanges are highly correlating.<br>
-# It signifies that such approach can be used further on to find similar or sibling currencies.
+# I tried to use `cluster_and_select()` from `core.plotting.py` to get clusters but it throws the following error.<br>
+# CmTask294 is filed. 
 
 # %%
-cplo.plot_heatmap(corr_matrix)
+_ = cplo.cluster_and_select(df_returns, 10)
 
-# %% [markdown]
-# Below we can see that the most correlated series are those that belong to the same currency pair.
+# %% run_control={"marked": false}
+_ = sns.clustermap(corr_matrix, figsize=(20, 20))
 
 # %% run_control={"marked": false}
 # Display top 10 most correlated series for each currency pair.
@@ -147,133 +217,63 @@ for colname in corr_matrix.columns:
     display(corr_srs_sorted.head(10))
 
 # %% [markdown]
-# # Remarks and possible improvements (for prod)
+# # Calculations on resampled data
 
 # %% [markdown]
-# ## Dealing with bad spottiness
+# ## Resampled to 5 min
+
+# %%
+df_price_5min = hpandas.resample_df(df_price, "5min")
+df_price_5min.head(3)
+
+# %%
+df_returns_5min = df_price_5min.pct_change()
+df_returns_5min.head(3)
+
+# %%
+corr_matrix_5min = df_returns_5min.corr()
+_ = cplo.plot_heatmap(corr_matrix_5min)
 
 # %% [markdown]
-# Despite the results, you could notice that Bitfinex data is correlating weakly compare to the same currencies from other exchanges, even though the duplicated observations have been removed so CmTask274 problem is not directly affecting this.
-#
-# The problem is in the spottiness of Bitfinex data which is just terrible - NaNs are all over the whole historical time period.<br>
-# The problem with Bitfinex data quality is known and was first reflected in `im/ccxt/notebooks/CMTask13_Research_of_OHLCV_fetching_approaches_for_different_exchanges.ipynb`.<br>
-
-# %% [markdown]
-# Below you can find a code that displays it with even more clarity.<br>
-# However, I'm having hard times to explain what I've done clearly - let's discuss it if I fail to deliver it.<br>
-# The code is for prod and discussion, but can be converted to functions if needed.
-#
-# At first we use `.isna()` to convert all the values in the returns dataframe to bool values whether they are NaN or not NaN.<br>
-# Then we convert them to integers so if a cell value was NaN its value becomes 1 and 0 vice verca.<br>
-#
-# Then we apply `.diff()` so each cell value means the following: 1 or -1 if a previous observation was NaN and the current is not NaN or vice verca and 0 if both current and previous observations were NaN or not NaN. In other words, each 1 or -1 will represent situations when a NaN value appears after a valid observations or vice versa. The more 1 or -1 values a column has, the more data gaps it contains so the worse its spottiness is.<br>
-#
-# To compute the amount of such gaps we drop the 1st row (which contains only NaNs after `.diff()`), use `.abs()` so all -1 values become 1 and sum. Resulting sum value will represent the number of data gaps for a currency pair and the higher it is the worse is the data quality.
+# With resampling to 5 minutes the clusters have become more visible.
 
 # %%
-df_returns.isna().astype(int).diff().dropna().abs().sum()
-
-# %% [markdown]
-# And now we see that Bitfinex is just the worst.
-#
-# Kucoin seems to have a lot of gaps too but we know from our previous research that Kucoin has gaps only before 2019-02-18 (see data gallery at https://docs.google.com/spreadsheets/d/1Tiiy1_qlKtq8Ay1qogIZwi55bYhnpGzRvt2RlrQUD00/edit#gid=0)<br>
-#
-# Let's see at data spottiness after this date.
+_ = sns.clustermap(corr_matrix_5min, figsize=(20, 20))
 
 # %%
-# Checking a timezone to use.
-df_returns.index[0]
-
-# %%
-df_returns[
-    df_returns.index > pd.Timestamp("2019-02-20", tz='America/New_York')
-].isna().astype(int).diff().dropna().abs().sum()
-
-# %% [markdown]
-# As you can see, Kucoin spottiness is just perfect after the specified date.<br>
-# This is not the case for Bitfinex though (you can try different dates above - the result will still be disappointing).<br>
-#
-# This leads me to 2 suggestions:
-# - What if we drop Bitfinex from our calculations at all until we research it in detail and clean its data
-# - Replace all the Kucoin data with NaNs before the date when it's spottiness is perfect and probably do it for all the other exchanges
-#
-# What do you think?
-
-# %% [markdown]
-# Below I implement suggested measures (drop Bitfinex and crop Kucoin data) and look for equal currencies again.
-
-# %%
-# Drop Bitfinex data.
-colnames2 = [col for col in df_returns if "bitfinex" not in col]
-#
-df_returns2 = df_returns[colnames2].copy()
-df_returns2.head()
-
-# %%
-# Replace Kucoin data before 2019-02-20 with NaNs.
-kucoin_colnames = [col for col in df_returns2 if "kucoin" in col]
-#
-df_returns2.loc[
-    df_returns2.index < pd.Timestamp("2019-02-20", tz='America/New_York'),
-    kucoin_colnames
-] = np.nan
-
-# %%
-# Compute new spottiness indicator.
-df_returns2.isna().astype(int).diff().dropna().abs().sum()
-
-# %% [markdown]
-# Much better now.
-
-# %%
-corr_matrix2 = df_returns2.corr()
-
-# %%
-cplo.plot_heatmap(corr_matrix2)
-
-# %%
-for colname in corr_matrix2.columns:
-    corr_srs = corr_matrix2[colname]
+# Display top 10 most correlated series for each currency pair.
+for colname in corr_matrix_5min.columns:
+    corr_srs = corr_matrix_5min[colname]
     corr_srs_sorted = corr_srs.sort_values(ascending=False)
     display(corr_srs_sorted.head(10))
 
 # %% [markdown]
-# Now the same currency pairs are clustering more noticeably.
-
-# %% [markdown]
-# However, cleaning Kucoin data did not improve any results - it seems that the period of bad spottiness did not in fast impacted correlation computations much.<br>
-# Therefore, for finding same currency pairs there is no big need to drop periods with bad spottiness if there is a significantly big period with perfect spottiness for a returns series.
+# ## Resampled to 1 day
 
 # %%
-for colname in kucoin_colnames:
-    # Get stats series for raw and cleaned Kucoin data.
-    old_stats = corr_matrix[colname].sort_values(ascending=False)
-    new_stats = corr_matrix2[colname].sort_values(ascending=False)
-    # Combine in df and display.
-    stats_df = pd.concat([old_stats, new_stats], axis = 1)
-    stats_df.columns = ["old_stats", "new_stats"]
-    display(stats_df.head(10))
-
-# %% [markdown]
-# ## Picking cutoff correlation values
-
-# %% [markdown]
-# For the currency pairs chosen for this research it is quite easy to find same ones just by name.<br>
-# Clearly, they have the highest levels of correlation among each other, but I guess we don't want to rely only on names but on certain correlation levels.<br>
-#
-# However, some equal currency pairs at different exchanges have lower levels of correlation between each other than some different stable coins.
-#
-# E.g. the correlation between `binance AVAX/USDT` and `kucoin AVAX/USDT` is 0.72 while the correlation between `binance BTC/USDT` and `binance ETH/USDT` is 0.76.<br>
-#
-# How do we set a cutoff value for a correlation between a pair of currency pair returns to consider them equal?<br>
-# Do we really need it at all?<br>
-#
-# I'll also check my computations for mistakes again but seems that it won't drop the problem. 
+df_price_1day = hpandas.resample_df(df_price, "D")
+df_price_1day.head(3)
 
 # %%
-display(corr_matrix2["binance AVAX/USDT"].sort_values(ascending=False))
+df_returns_1day = df_price_1day.pct_change()
+df_returns_1day.head(3)
 
 # %%
-display(corr_matrix2["binance BTC/USDT"].sort_values(ascending=False))
+corr_matrix_1day = df_returns_1day.corr()
+_ = cplo.plot_heatmap(corr_matrix_1day)
+
+# %% [markdown]
+# Resampling to 1 day makes clusters even more visible. <br>
+# It seems that for detecting similar currencies we'd better use 1 day frequency.
+
+# %%
+_ = sns.clustermap(corr_matrix_1day, figsize=(20, 20))
+
+# %%
+# Display top 10 most correlated series for each currency pair.
+for colname in corr_matrix_1day.columns:
+    corr_srs = corr_matrix_1day[colname]
+    corr_srs_sorted = corr_srs.sort_values(ascending=False)
+    display(corr_srs_sorted.head(10))
 
 # %%
