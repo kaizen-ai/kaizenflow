@@ -7,6 +7,7 @@ Use as:
 # Download all currency pairs for Binance, Kucoin,
   FTX exchanges:
 > python im/ccxt/data/extract/download_realtime_ohlcv.py \
+    --dst_dir 'test_ohlcv_rt' \
     --table_name 'ccxt_ohlcv' \
     --exchange_ids 'binance kucoin ftx' \
     --currency_pairs 'all'
@@ -20,10 +21,13 @@ import collections
 import logging
 import time
 from typing import NamedTuple, Optional
+import os
 
 import helpers.dbg as hdbg
 import helpers.parser as hparser
 import helpers.sql as hsql
+import helpers.io_ as hio
+import helpers.datetime_ as hdatetim
 import im.ccxt.data.extract.exchange_class as imcdaexexccla
 import im.ccxt.db.utils as imccdbuti
 
@@ -79,6 +83,13 @@ def _parse() -> argparse.ArgumentParser:
         help="Connection to database to upload to",
     )
     parser.add_argument(
+        "--dst_dir",
+        action="store",
+        required=True,
+        type=str,
+        help="Folder to save copies of data to",
+    )
+    parser.add_argument(
         "--table_name",
         action="store",
         type=str,
@@ -114,6 +125,8 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    # Create the directory.
+    hio.create_dir(args.dst_dir, incremental=args.incremental)
     if args.db_connection == "from_env":
         connection, _ = hsql.get_connection_from_env_vars()
     else:
@@ -138,13 +151,16 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 pair_data = exchange.instance.download_ohlcv_data(
                     curr_symbol=pair, step=2
                 )
-                imccdbindat.execute_insert_query(
+                datetime = hdatetim.get_current_time("ET")
+                file_name = f"{exchange.id}_{pair.replace('/', '_')}_{datetime}.csv.gz"
+                full_path = os.path.join(args.dst_dir, file_name)
+                pair_data.to_csv(full_path, index=False, compression="gzip")
+                imccdbuti.execute_insert_query(
                     connection=connection,
                     df=pair_data,
                     table_name=args.table_name,
                 )
         time.sleep(60)
-    connection.close()
 
 
 if __name__ == "__main__":
