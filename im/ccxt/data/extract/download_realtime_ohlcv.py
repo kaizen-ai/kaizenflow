@@ -20,7 +20,7 @@ import collections
 import logging
 import os
 import time
-from typing import NamedTuple, Optional, Dict, List
+from typing import Dict, List, NamedTuple, Optional
 
 import helpers.datetime_ as hdatetim
 import helpers.dbg as hdbg
