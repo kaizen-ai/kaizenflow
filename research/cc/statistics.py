@@ -13,6 +13,8 @@ def compute_start_end_table(
     """
     Compute start-end table on exchange-currency level.
 
+    Note: `price_data` must be resampled using NaNs.
+
     Start-end table's structure is:
         - exchange name
         - currency pair
@@ -26,10 +28,9 @@ def compute_start_end_table(
           as percentage
 
     :param price_data: crypto price data
-    :param config:
     :return: start-end table
     """
-    hdbg.dassert_in(
+    hdbg.dassert_is_subset(
         [
             config["column_names"]["close_price"],
             config["column_names"]["currency_pair"],
@@ -37,13 +38,15 @@ def compute_start_end_table(
         ],
         price_data.columns
     )
-    # ....
+    #
     hdbg.dassert_isinstance(price_data.index, pd.DatetimeIndex)
     hpandas.dassert_monotonic_index(price_data.index)
-    # ....
+    #
     group_by_columns = [config["column_names"]["exchange"], config["column_names"]["currency_pair"]]
+    # For NaN close prices all the columns are NaN due to resampling, since the
+    # analysis is on exchange-currency level, the NaNs are filled with existing
+    # exchange name and currency pair.
     price_data[group_by_columns] = price_data[group_by_columns].fillna(method="ffill")
-    # Group by........
     price_data_grouped = price_data.groupby(group_by_columns, dropna=False)
     # Compute the stats.
     start_end_table = (
