@@ -134,10 +134,14 @@ def compute_start_end_table_for_vendor(
             # Remove duplicates.
             # TODO(Grisha): move it into the loader.
             cur_df_no_dups = cur_df.drop_duplicates()
-            # Resample data.
-            cur_df_resampled = hpandas.resample_df(cur_df_no_dups, config["data"]["target_frequency"])
+            # Resample data to target frequency using NaNs.
+            cur_df_resampled = hpandas.resample_df(
+                cur_df_no_dups, config["data"]["target_frequency"]
+            )
             # Compute `start-end table`.
-            cur_start_end_table = rccsta.compute_start_end_table(cur_df_resampled, config)
+            cur_start_end_table = rccsta.compute_start_end_table(
+                cur_df_resampled, config
+            )
             start_end_tables.append(cur_start_end_table)
     # Concatenate the results.
     start_end_table = pd.concat(start_end_tables, ignore_index=True)
@@ -197,34 +201,11 @@ _LOG.info(
 )
 start_end_table
 
-# %%
-loader = get_loader_for_vendor("CCXT", config)
-data = loader.read_data_from_filesystem("ftx", "DOGE/USDT", "OHLCV")
-data_no_dups = data.drop_duplicates()
-# Resample data.
-data_resampled = hpandas.resample_df(data_no_dups, config["data"]["target_frequency"])
-data_resampled = data_resampled.reset_index()
-print(data_resampled.shape[0])
-data_resampled.head(3)
-
-# %%
-data_resampled[["exchange_id", "currency_pair"]] = data_resampled[["exchange_id", "currency_pair"]].fillna(method="ffill")
-data_grouped = data_resampled.groupby(["exchange_id", "currency_pair"], dropna=False, as_index=False)
-
-# %%
-import core.statistics as csta
-
-data_grouped.agg(
-    min_ts=("index", "min"),
-    max_ts=("index", "max"),
-    n_data_points=("close", "count"),
-    coverage=("close", lambda x: 1 - csta.compute_frac_nan(x))
-)
-
 # %% [markdown]
 # ## Per currency pair
 
 # %%
+# TODO(Grisha): Move to a lib.
 currency_start_end_table = (
     start_end_table.groupby("currency_pair")
     .agg({"min_timestamp": np.min, "max_timestamp": np.max, "exchange_id": list})
@@ -236,7 +217,7 @@ currency_start_end_table["days_available"] = (
 currency_start_end_table_sorted = currency_start_end_table.sort_values(
     by="days_available",
     ascending=False,
-)
+).reset_index(drop=True)
 _LOG.info(
     "The number of unique currency pairs=%s", currency_start_end_table_sorted.shape[0]
 )
