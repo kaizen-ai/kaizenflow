@@ -57,19 +57,21 @@ def compute_start_end_table(
     # For NaN close prices all the columns are NaN due to resampling, since the
     # analysis is on exchange-currency level, the NaNs are filled with existing
     # exchange name and currency pair.
-    price_data_reset[group_by_columns] = price_data_reset[group_by_columns].fillna(
-        method="ffill"
+    price_data_reset[group_by_columns] = price_data_reset[
+        group_by_columns
+    ].fillna(method="ffill")
+    price_data_grouped = price_data_reset.groupby(
+        group_by_columns, dropna=False, as_index=False
     )
-    price_data_grouped = price_data_reset.groupby(group_by_columns, dropna=False, as_index=False)
     # Compute the stats.
-    start_end_table = (
-        price_data_grouped
-        .agg(
-            min_timestamp=("index", "min"),
-            max_timestamp=("index", "max"),
-            n_data_points=(config["column_names"]["close_price"], "count"),
-            coverage=(config["column_names"]["close_price"], lambda x: round((1 - csta.compute_frac_nan(x)) * 100, 2)),
-        )
+    start_end_table = price_data_grouped.agg(
+        min_timestamp=("index", "min"),
+        max_timestamp=("index", "max"),
+        n_data_points=(config["column_names"]["close_price"], "count"),
+        coverage=(
+            config["column_names"]["close_price"],
+            lambda x: round((1 - csta.compute_frac_nan(x)) * 100, 2),
+        ),
     )
     start_end_table["days_available"] = (
         start_end_table["max_timestamp"] - start_end_table["min_timestamp"]
