@@ -19,15 +19,15 @@ import im.ccxt.data.extract.download_realtime_ohlcv as imcdaexdoreaohl
 import argparse
 import collections
 import logging
+import os
 import time
 from typing import NamedTuple, Optional
-import os
 
+import helpers.datetime_ as hdatetim
 import helpers.dbg as hdbg
+import helpers.io_ as hio
 import helpers.parser as hparser
 import helpers.sql as hsql
-import helpers.io_ as hio
-import helpers.datetime_ as hdatetim
 import im.ccxt.data.extract.exchange_class as imcdaexexccla
 import im.ccxt.db.utils as imccdbuti
 
@@ -36,6 +36,7 @@ _LOG = logging.getLogger(__name__)
 _ALL_EXCHANGE_IDS = ["binance", "kucoin"]
 
 # TODO(Danya): Merge with `download_realtime_orderbook.py`
+
 
 # TODO(Danya): Create a type and move outside.
 def _instantiate_exchange(
@@ -152,7 +153,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
                     curr_symbol=pair, step=2
                 )
                 datetime = hdatetim.get_current_time("ET")
-                file_name = f"{exchange.id}_{pair.replace('/', '_')}_{datetime}.csv.gz"
+                file_name = (
+                    f"{exchange.id}_{pair.replace('/', '_')}_{datetime}.csv.gz"
+                )
                 full_path = os.path.join(args.dst_dir, file_name)
                 pair_data.to_csv(full_path, index=False, compression="gzip")
                 imccdbuti.execute_insert_query(
