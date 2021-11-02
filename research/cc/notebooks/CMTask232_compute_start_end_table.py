@@ -81,7 +81,7 @@ print(config)
 
 # %%
 start_end_table = rccsta.compute_stats_for_universe(
-    config, rccsta.compute_start_end_table
+    config, rccsta.compute_start_end_table, config
 )
 
 # %%
