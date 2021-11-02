@@ -29,6 +29,7 @@ import os
 import time
 from typing import Any, Dict, List, NamedTuple, Optional, Union
 
+import ccxt
 import pandas as pd
 
 import helpers.datetime_ as hdatetim
@@ -80,13 +81,16 @@ def _download_data(
     :param pair: currency pair, e.g. 'BTC/USDT'
     :return: downloaded data
     """
+    # Download 5 latest OHLCV candles.
     if data_type == "ohlcv":
         pair_data = exchange.instance.download_ohlcv_data(
             curr_symbol=pair, step=5
         )
+        # Assign pair and exchange columns.
         pair_data["currency_pair"] = pair
         pair_data["exchange_id"] = exchange.id
     elif data_type == "orderbook":
+        # Download current state of the orderbook.
         pair_data = exchange.instance.download_order_book(pair)
     else:
         hdbg.dfatal(
@@ -210,8 +214,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     while True:
         for exchange in exchanges:
             for pair in exchange.pairs:
-                # Download latest 5 ohlcv for the currency pair and exchange.
-                pair_data = _download_data(args.data_type, exchange, pair)
+                try:
+                    # Download latest data.
+                    pair_data = _download_data(args.data_type, exchange, pair)
+                except (ccxt.ExchangeError, ccxt.NetworkError) as e:
+                    # Continue the loop if could not connect to exchange.
+                    _LOG.warning("Got an error", type(e).__name__, e.args)
+                    continue
                 # Save to disk.
                 _save_data_on_disk(
                     args.data_type, args.dst_dir, pair_data, exchange, pair
