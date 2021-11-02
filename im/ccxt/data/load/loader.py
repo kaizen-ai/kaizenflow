@@ -27,26 +27,28 @@ _LATEST_DATA_SNAPSHOT = "20210924"
 class CcxtLoader:
     def __init__(
         self,
+        remove_dups: bool = True,
+        resample_to_1_min: bool = True,
         connection: Optional[hsql.DbConnection] = None,
         root_dir: Optional[str] = None,
         aws_profile: Optional[str] = None,
-        remove_dups: bool = True,
-        resample_to_1_min: bool = True,
     ) -> None:
         """
         Load CCXT data from different backends, e.g., DB, local or S3
         filesystem.
 
+        :param remove_dups: whether to remove full duplicates or not
+        :param resample_to_1_min: whether to resample to 1 min or not
         :param connection: connection for a SQL database
         :param: root_dir: either a local root path (e.g., "/app/im") or
             an S3 root path ("s3://alphamatic-data/data") to the CCXT data
         :param: aws_profile: AWS profile name (e.g., "am")
         """
+        self._remove_dups = remove_dups
+        self._resample_to_1_min = resample_to_1_min
         self._connection = connection
         self._root_dir = root_dir
         self._aws_profile = aws_profile
-        self._remove_dups = remove_dups
-        self._resample_to_1_min = resample_to_1_min
         # Specify supported data types to load.
         self._data_types = ["ohlcv"]
 
@@ -256,6 +258,8 @@ class CcxtLoader:
         This includes:
         - Datetime format assertion
         - Converting epoch ms timestamp to pd.Timestamp
+        - Removing full duplicates
+        - Resampling to 1 minute using NaNs
         - Adding exchange_id and currency_pair columns
 
         :param data: raw data from S3
@@ -271,18 +275,20 @@ class CcxtLoader:
         data = data.rename({"timestamp": "epoch"}, axis=1)
         # Transform Unix epoch into ET timestamp.
         data["timestamp"] = self._convert_epochs_to_timestamp(data["epoch"])
-        # Remove full duplicates.
-        data_no_dups = data.drop_duplicates(ignore_index=True)
+        if self._remove_dups:
+            # Remove full duplicates.
+            data = data.drop_duplicates(ignore_index=True)
         # Set timestamp as index.
-        data_no_dups = data_no_dups.set_index("timestamp")
+        data = data.set_index("timestamp")
+        if self._resample_to_1_min:
+            # Resample to 1 minute.
+            data = hpandas.resample_df(
+                data, "T"
+            )
         # Add columns with exchange id and currency pair.
-        data_no_dups["exchange_id"] = exchange_id
-        data_no_dups["currency_pair"] = currency_pair
-        # Resample to 1 minute.
-        data_resampled = hpandas.resample_df(
-            data_no_dups, "T"
-        )
-        return data_no_dups
+        data["exchange_id"] = exchange_id
+        data["currency_pair"] = currency_pair
+        return data
 
     @staticmethod
     def _convert_epochs_to_timestamp(epoch_col: pd.Series) -> pd.Series:

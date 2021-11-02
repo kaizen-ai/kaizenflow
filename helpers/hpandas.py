@@ -126,15 +126,18 @@ def resample_df(df: pd.DataFrame, frequency: str) -> pd.DataFrame:
 
 
 def drop_duplicates(
-    data: Union[pd.Series, pd.DataFrame],
-    *args,
-    **kwargs,
+    data: Union[pd.Series, pd.DataFrame], *args: Any, **kwargs: Any,
 ) -> Union[pd.Series, pd.DataFrame]:
-    _LOG.debug(
-        "args=%s, kwargs=%s",
-        str(args),
-        str(kwargs),
-    )
+    """
+    Wrapper around `pandas.drop_duplicates()`.
+
+    See the official docs:
+        - https://pandas.pydata.org/docs/reference/api/pandas.Series.drop_duplicates.html
+        - https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.drop_duplicates.html
+
+    :return: data w/o duplicates
+    """
+    _LOG.debug("args=%s, kwargs=%s", str(args), str(kwargs))
     num_rows_before = data.shape[0]
     data_no_dups = data.drop_duplicates(*args, **kwargs)
     num_rows_after = data_no_dups.shape[0]
