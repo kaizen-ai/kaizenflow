@@ -85,6 +85,7 @@ def compute_start_end_table(
     return start_end_table
 
 
+# TODO(Grisha): move `get_loader_for_vendor` out in #269.
 def get_loader_for_vendor(vendor: str, config: ccocon.Config) -> _LOADER:
     """
     Get vendor specific loader instance.
@@ -108,23 +109,23 @@ def get_loader_for_vendor(vendor: str, config: ccocon.Config) -> _LOADER:
 
 
 def compute_stats(
-    exchange,
-    currency_pair,
+    price_data,
     config,
-    loader,
     stats_func: Callable,
     *args: Any,
     **kwargs: Any,
-):
-    # Read data for current data provider, exchange, currency pair.
-    data = loader.read_data_from_filesystem(
-        exchange,
-        currency_pair,
-        config["data"]["data_type"],
-    )
+) -> pd.DataFrame:
+    """
+    Compute stats on the exchange-currency level.
+
+    :param price_data: crypto price data
+    :param config: config
+    :param stats_func: function to compute statistics, e.g. `compute_start_end_table`
+    :return: stats table for exchange-currency pair
+    """
     # Remove duplicates.
     # TODO(Grisha): move it into the loader.
-    data_no_dups = data.drop_duplicates()
+    data_no_dups = price_data.drop_duplicates()
     # Resample data to target frequency using NaNs.
     data_resampled = hhpandas.resample_df(
         data_no_dups, config["data"]["target_frequency"]
@@ -136,59 +137,51 @@ def compute_stats(
     return stats_table
 
 
-def compute_stats_for_vendor(
-    vendor_universe: Dict[str, List[str]],
-    loader,
-    config: ccocon.Config
-) -> pd.DataFrame:
-    """
-    Same as `compute_start_end_table` but for all exchanges, currency pairs
-    available for a certain vendor.
-
-    :param vendor_universe: all exchanges, currency pairs avaiable for a vendor
-    :param loader: vendor specific loader instance
-    :return: vendor specific start-end table
-    """
-    stats_data = []
-    for exchange in vendor_universe.keys():
-        # Get the downloaded currency pairs for a particular exchange.
-        currency_pairs = vendor_universe[exchange]
-        for currency_pair in currency_pairs:
-
-            stats_data.append(cur_start_end_table)
-    # Concatenate the results.
-    stats_table = pd.concat(stats_data, ignore_index=True)
-    return stats_table
-
-
 def compute_stats_for_universe(
-    universe: imdauni.UNIVERSE,
     config,
     stats_func: Callable,
+    *args,
+    **kwargs,
 ) -> pd.DataFrame:
     """
     Compute stats on the universe level.
 
-    :return: stats table for all vendors in the universe
+    E.g. to compute start-end-table for the universe do:
+    `compute_stats_for_universe(config, compute_start_end_table)`.
+
+    :param config: config
+    :param stats_func: function to compute statistics, e.g. `compute_start_end_table`
+    :return: stats table for all vendors, exchanges, currencies in the universe
     """
-    # Exclude CDD for now since there are many problems with data.
-    # TODO(Grisha): file a bug about CDD data.
-    universe.pop("CDD")
-    # TODO(Grisha): fix the duplicates problem in #274.
-    universe["CCXT"].pop("bitfinex")
-    #
+    universe = imdauni.get_trade_universe(
+        config["data"]["universe_version"]
+    )
     stats_data = []
     for vendor in universe.keys():
         # Get vendor-specific universe.
         vendor_universe = universe[vendor]
         # Get vendor-specific loader.
         loader = get_loader_for_vendor(vendor, config)
-        # Compute stats for the current vendor.
-        cur_stats_data = compute_stats_for_vendor(
-            vendor_universe, loader, config
-        )
-        cur_stats_data["vendor"] = vendor
-        stats_data.append(cur_stats_data)
+        for exchange in vendor_universe.keys():
+            # Get the downloaded currency pairs for a particular exchange.
+            currency_pairs = vendor_universe[exchange]
+            for currency_pair in currency_pairs:
+                # Read data for current vendor, exchange, currency pair.
+                data = loader.read_data_from_filesystem(
+                    exchange,
+                    currency_pair,
+                    config["data"]["data_type"],
+                )
+                # Compute stats on the exchange-currency level.
+                cur_stats_data = compute_stats(
+                    price_data=data,
+                    config=config,
+                    stats_func=stats_func,
+                    *args,
+                    **kwargs,
+                )
+                cur_stats_data["vendor"] = vendor
+                stats_data.append(cur_stats_data)
     # Concatenate the results.
     stats_table = pd.concat(stats_data, ignore_index=True)
     return stats_table
