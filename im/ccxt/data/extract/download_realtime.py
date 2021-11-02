@@ -59,6 +59,14 @@ def _instantiate_exchange(
     exchange_to_currency.pairs = ccxt_universe[exchange_id]
     return exchange_to_currency
 
+def _download_data(data_type: str) -> None:
+    if data_type == "ohlcv":
+        pass
+    elif data_type == "orderbook":
+        pass
+    else:
+        hdbg.dfatal("'%s' data type is not supported. Supported data types: 'ohlcv', 'orderbook'", data_type)
+
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -78,6 +86,13 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         type=str,
         help="Folder to save copies of data to",
+    )
+    parser.add_argument(
+        "--data_type",
+        action="store",
+        required=True,
+        type=str,
+        help="Type of data to load, 'ohlcv' or 'orderbook'"
     )
     parser.add_argument(
         "--table_name",
