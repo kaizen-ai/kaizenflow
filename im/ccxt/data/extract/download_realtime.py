@@ -80,22 +80,31 @@ def _download_data(data_type: str, exchange: NamedTuple, pair: str):
     return pair_data
 
 
-def _save_data_on_disk(data_type: str, dst_dir: str, exchange: NamedTuple, pair: str) -> None:
+def _save_data_on_disk(data_type: str, dst_dir: str, pair_data, exchange: NamedTuple, pair: str) -> None:
     """
 
     :param data_type:
+    :param dst_dir:
+    :param pair_data:
     :param exchange:
     :param pair:
     :return:
     """
+    current_datetime = hdatetim.get_current_time("ET")
     if data_type == "ohlcv":
-        pair_data = exchange.instance.download_ohlcv_data(
-            curr_symbol=pair, step=5
+        file_name = (
+            f"{exchange.id}_{pair.replace('/', '_')}_{current_datetime}.csv.gz"
         )
-        pair_data["currency_pair"] = pair
-        pair_data["exchange_id"] = exchange.id
+        full_path = os.path.join(dst_dir, file_name)
+        pair_data.to_csv(full_path, index=False, compression="gzip")
     elif data_type == "orderbook":
-        pair_data = exchange.instance.download_order_book(pair)
+        file_name = (
+            f"orderbook_{exchange.id}_"
+            f"{pair.replace('/', '_')}_"
+            f"{hdatetim.get_timestamp('ET')}.json"
+        )
+        full_path = os.path.join(dst_dir, file_name)
+        hio.to_json(full_path, pair_data)
     else:
         hdbg.dfatal("'%s' data type is not supported. Supported data types: 'ohlcv', 'orderbook'", data_type)
 
@@ -175,12 +184,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
             for pair in exchange.pairs:
                 # Download latest 5 ohlcv for the currency pair and exchange.
                 pair_data = _download_data(args.data_type, exchange, pair)
-                current_datetime = hdatetim.get_current_time("ET")
-                file_name = (
-                    f"{exchange.id}_{pair.replace('/', '_')}_{current_datetime}.csv.gz"
-                )
-                full_path = os.path.join(args.dst_dir, file_name)
-                pair_data.to_csv(full_path, index=False, compression="gzip")
+                # Save to disk.
+                _save_data_on_disk(args.data_type, args.dst_dir, pair_data, exchange, pair)
+                # Insert into database.,
                 imccdbuti.execute_insert_query(
                     connection=connection,
                     df=pair_data,
