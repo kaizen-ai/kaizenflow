@@ -14,6 +14,7 @@ import helpers.system_interaction as hsyint
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): -> It should go to hsql.
 def check_db_connection(connection: hsql.DbConnection) -> None:
     """
     Verify that the database is available.
@@ -42,6 +43,7 @@ def check_db_connection(connection: hsql.DbConnection) -> None:
             break
 
 
+# TODO(gp): -> It should go to hsql.
 def db_connection_to_str(connection: hsql.DbConnection) -> str:
     """
     Get database connection details using environment variables. Connection
