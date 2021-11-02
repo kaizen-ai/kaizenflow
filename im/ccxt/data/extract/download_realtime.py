@@ -69,7 +69,7 @@ def _download_data(data_type: str, exchange: NamedTuple, pair: str):
     """
     if data_type == "ohlcv":
         pair_data = exchange.instance.download_ohlcv_data(
-            curr_symbol=pair, step=2
+            curr_symbol=pair, step=5
         )
         pair_data["currency_pair"] = pair
         pair_data["exchange_id"] = exchange.id
@@ -79,6 +79,25 @@ def _download_data(data_type: str, exchange: NamedTuple, pair: str):
         hdbg.dfatal("'%s' data type is not supported. Supported data types: 'ohlcv', 'orderbook'", data_type)
     return pair_data
 
+
+def _save_data_on_disk(data_type: str, exchange: NamedTuple, pair: str) -> None:
+    """
+
+    :param data_type:
+    :param exchange:
+    :param pair:
+    :return:
+    """
+    if data_type == "ohlcv":
+        pair_data = exchange.instance.download_ohlcv_data(
+            curr_symbol=pair, step=5
+        )
+        pair_data["currency_pair"] = pair
+        pair_data["exchange_id"] = exchange.id
+    elif data_type == "orderbook":
+        pair_data = exchange.instance.download_order_book(pair)
+    else:
+        hdbg.dfatal("'%s' data type is not supported. Supported data types: 'ohlcv', 'orderbook'", data_type)
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -153,7 +172,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     while True:
         for exchange in exchanges:
             for pair in exchange.pairs:
-                # Download latest 5 minutes for the currency pair and exchange.
+                # Download latest 5 ohlcv for the currency pair and exchange.
                 pair_data = _download_data(args.data_type, exchange, pair)
                 current_datetime = hdatetim.get_current_time("ET")
                 file_name = (
