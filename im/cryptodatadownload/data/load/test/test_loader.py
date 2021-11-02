@@ -49,8 +49,7 @@ class TestCddLoader(hut.TestCase):
         """
         Test files on S3 are being read correctly.
         """
-        aws_profile = "am"
-        cdd_loader = crdall.CddLoader(_AM_S3_ROOT_DIR, aws_profile)
+        cdd_loader = crdall.CddLoader(root_dir=_AM_S3_ROOT_DIR, aws_profile="am")
         actual = cdd_loader.read_data_from_filesystem("binance", "BTC/USDT", "OHLCV")
         # Check the output values.
         actual_string = hut.convert_df_to_json_string(actual)
@@ -60,8 +59,7 @@ class TestCddLoader(hut.TestCase):
         """
         Test unsupported exchange id.
         """
-        aws_profile = "am"
-        cdd_loader = crdall.CddLoader(_AM_S3_ROOT_DIR, aws_profile)
+        cdd_loader = crdall.CddLoader(root_dir=_AM_S3_ROOT_DIR, aws_profile="am")
         with self.assertRaises(AssertionError):
             cdd_loader.read_data_from_filesystem("unsupported_exchange_id", "BTC/USDT", "OHLCV")
 
@@ -69,8 +67,7 @@ class TestCddLoader(hut.TestCase):
         """
         Test unsupported currency pair.
         """
-        aws_profile = "am"
-        cdd_loader = crdall.CddLoader(_AM_S3_ROOT_DIR, aws_profile)
+        cdd_loader = crdall.CddLoader(root_dir=_AM_S3_ROOT_DIR, aws_profile="am")
         with self.assertRaises(AssertionError):
             cdd_loader.read_data_from_filesystem("binance", "unsupported_currency_pair", "OHLCV")
 
@@ -78,7 +75,6 @@ class TestCddLoader(hut.TestCase):
         """
         Test unsupported data type.
         """
-        aws_profile = "am"
-        cdd_loader = crdall.CddLoader(_AM_S3_ROOT_DIR, aws_profile)
+        cdd_loader = crdall.CddLoader(root_dir=_AM_S3_ROOT_DIR, aws_profile="am")
         with self.assertRaises(AssertionError):
             cdd_loader.read_data_from_filesystem("binance", "BTC/USDT", "unsupported_data_type")
