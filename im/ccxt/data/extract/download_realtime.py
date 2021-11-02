@@ -190,8 +190,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Create the directory.
     hio.create_dir(args.dst_dir, incremental=args.incremental)
+    # Connect to database.
     if args.db_connection == "from_env":
         connection, _ = hsql.get_connection_from_env_vars()
+    elif args.db_connection == "none":
+        connection = None
     else:
         hdbg.dfatal("Unknown db connection: %s" % args.db_connection)
     # Load universe.
@@ -213,12 +216,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 _save_data_on_disk(
                     args.data_type, args.dst_dir, pair_data, exchange, pair
                 )
-                # Insert into database.
-                imccdbuti.execute_insert_query(
-                    connection=connection,
-                    df=pair_data,
-                    table_name=args.table_name,
-                )
+                if connection:
+                    # Insert into database.
+                    imccdbuti.execute_insert_query(
+                        connection=connection,
+                        df=pair_data,
+                        table_name=args.table_name,
+                    )
         time.sleep(60)
 
 
