@@ -4,9 +4,9 @@ Script to download OHLCV data from CCXT in real-time.
 
 Use as:
 
-# Download all currency pairs for Binance, Kucoin,
-  FTX exchanges:
-> python im/ccxt/data/extract/download_realtime_ohlcv.py \
+# Download OHLCV data for universe '01', saving only on disk:
+> python im/ccxt/data/extract/download_realtime.py \
+    --
     --dst_dir 'test_ohlcv_rt' \
     --table_name 'ccxt_ohlcv' \
     --universe '01'
@@ -20,7 +20,9 @@ import collections
 import logging
 import os
 import time
-from typing import Dict, List, NamedTuple, Optional
+from typing import Any, Dict, List, NamedTuple, Optional, Union
+
+import pandas as pd
 
 import helpers.datetime_ as hdatetim
 import helpers.dbg as hdbg
@@ -60,12 +62,16 @@ def _instantiate_exchange(
     return exchange_to_currency
 
 
-def _download_data(data_type: str, exchange: NamedTuple, pair: str):
+def _download_data(
+    data_type: str, exchange: NamedTuple, pair: str
+) -> Union[pd.DataFrame, Dict[str, Any]]:
     """
+    Download order book or OHLCV data.
 
-    :param data_type:
-    :param exchange:
-    :return:
+    :param data_type: 'ohlcv' or 'orderbook'
+    :param exchange: exchange instance
+    :param pair: currency pair, e.g. 'BTC/USDT'
+    :return: downloaded data
     """
     if data_type == "ohlcv":
         pair_data = exchange.instance.download_ohlcv_data(
@@ -84,10 +90,14 @@ def _download_data(data_type: str, exchange: NamedTuple, pair: str):
 
 
 def _save_data_on_disk(
-    data_type: str, dst_dir: str, pair_data, exchange: NamedTuple, pair: str
+    data_type: str,
+    dst_dir: str,
+    pair_data: Union[pd.DataFrame, Dict[str, Any]],
+    exchange: NamedTuple,
+    pair: str,
 ) -> None:
     """
-    Save
+    Save downloaded data to disk.
 
     :param data_type: 'ohlcv' or 'orderbook'
     :param dst_dir: directory to save to
@@ -196,7 +206,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 _save_data_on_disk(
                     args.data_type, args.dst_dir, pair_data, exchange, pair
                 )
-                # Insert into database.,
+                # Insert into database.
                 imccdbuti.execute_insert_query(
                     connection=connection,
                     df=pair_data,
