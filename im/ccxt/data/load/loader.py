@@ -13,6 +13,7 @@ import pandas as pd
 import core.pandas_helpers as cpah
 import helpers.datetime_ as hdatetim
 import helpers.dbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
@@ -69,9 +70,13 @@ class CcxtLoader:
         :param: root_dir: either a local root path (e.g., "/app/im") or
             an S3 root path ("s3://alphamatic-data/data") to the CCXT data
         :param: aws_profile: AWS profile name (e.g., "am")
+        :param remove_dups: whether to remove full duplicates or not
+        :param resample_to_1_min: whether to resample to 1 min or not
         """
         self._root_dir = root_dir
         self._aws_profile = aws_profile
+        self._remove_dups = remove_dups
+        self._resample_to_1_min = resample_to_1_min
         # Specify supported data types to load.
         self._data_types = ["ohlcv"]
 
@@ -220,6 +225,8 @@ class CcxtLoader:
         This includes:
         - Datetime format assertion
         - Converting epoch ms timestamp to pd.Timestamp
+        - Removing full duplicates
+        - Resampling to 1 minute using NaNs
         - Adding exchange_id and currency_pair columns
 
         :param data: raw data from S3
@@ -235,8 +242,18 @@ class CcxtLoader:
         data = data.rename({"timestamp": "epoch"}, axis=1)
         # Transform Unix epoch into ET timestamp.
         data["timestamp"] = self._convert_epochs_to_timestamp(data["epoch"])
+        #
+        if self._remove_dups:
+            # Remove full duplicates.
+            data = hpandas.drop_duplicates(data, ignore_index=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
+        #
+        if self._resample_to_1_min:
+            # Resample to 1 minute.
+            data = hpandas.resample_df(
+                data, "T"
+            )
         # Add columns with exchange id and currency pair.
         data["exchange_id"] = exchange_id
         data["currency_pair"] = currency_pair
