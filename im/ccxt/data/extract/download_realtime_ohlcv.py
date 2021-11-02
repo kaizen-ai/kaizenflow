@@ -130,9 +130,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 pair_data = exchange.instance.download_ohlcv_data(
                     curr_symbol=pair, step=2
                 )
-                datetime = hdatetim.get_current_time("ET")
+                pair_data["currency_pair"] = pair
+                pair_data["exchange_id"] = exchange.id
+                current_datetime = hdatetim.get_current_time("ET")
                 file_name = (
-                    f"{exchange.id}_{pair.replace('/', '_')}_{datetime}.csv.gz"
+                    f"{exchange.id}_{pair.replace('/', '_')}_{current_datetime}.csv.gz"
                 )
                 full_path = os.path.join(args.dst_dir, file_name)
                 pair_data.to_csv(full_path, index=False, compression="gzip")
