@@ -128,9 +128,8 @@ def compute_stats_for_universe(
     Compute stats on the universe level.
 
     E.g., to compute start-end table for the universe do:
-    `compute_stats_for_universe(config, compute_start_end_table)`.
+    `compute_stats_for_universe(config, compute_start_end_table, config)`.
 
-    :param config: config
     :param stats_func: function to compute statistics, e.g. `compute_start_end_table`
     :return: stats table for all vendors, exchanges, currencies in the universe
     """
@@ -162,7 +161,6 @@ def compute_stats_for_universe(
             # Compute stats on the exchange-currency level.
             cur_stats_data = stats_func(
                 data,
-                config,
                 *args,
                 **kwargs,
             )

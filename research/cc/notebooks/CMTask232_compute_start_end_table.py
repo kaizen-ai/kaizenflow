@@ -24,20 +24,14 @@
 # %%
 import logging
 import os
-from typing import Union
 
 import numpy as np
-import pandas as pd
 
 import core.config.config_ as ccocon
 import helpers.dbg as hdbg
 import helpers.env as henv
-import helpers.hpandas as hpandas
 import helpers.printing as hprintin
 import helpers.s3 as hs3
-import im.ccxt.data.load.loader as imccdaloloa
-import im.cryptodatadownload.data.load.loader as imcrdaloloa
-import im.data.universe as imdauni
 import research.cc.statistics as rccsta
 
 # %%
@@ -86,14 +80,18 @@ print(config)
 # ## Per data provider, exchange, currency pair
 
 # %%
-start_end_table = rccsta.compute_stats_for_universe(config, rccsta.compute_start_end_table)
+start_end_table = rccsta.compute_stats_for_universe(
+    config, rccsta.compute_start_end_table
+)
 
 # %%
 _LOG.info(
     "The number of unique vendor, exchange, currency pair combinations=%s",
     start_end_table.shape[0],
 )
-start_end_table.sort_values(by="days_available", ascending=False).reset_index(drop=True)
+start_end_table.sort_values(by="days_available", ascending=False).reset_index(
+    drop=True
+)
 
 # %% [markdown]
 # ## Per currency pair
@@ -106,13 +104,15 @@ currency_start_end_table = (
     .reset_index()
 )
 currency_start_end_table["days_available"] = (
-    currency_start_end_table["max_timestamp"] - currency_start_end_table["min_timestamp"]
+    currency_start_end_table["max_timestamp"]
+    - currency_start_end_table["min_timestamp"]
 ).dt.days
 currency_start_end_table_sorted = currency_start_end_table.sort_values(
     by="days_available",
     ascending=False,
 ).reset_index(drop=True)
 _LOG.info(
-    "The number of unique currency pairs=%s", currency_start_end_table_sorted.shape[0]
+    "The number of unique currency pairs=%s",
+    currency_start_end_table_sorted.shape[0],
 )
 currency_start_end_table_sorted
