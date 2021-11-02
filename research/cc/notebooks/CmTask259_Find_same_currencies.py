@@ -25,6 +25,7 @@
 # %%
 import logging
 import os
+from typing import Dict, List, Union
 
 import numpy as np
 import pandas as pd
@@ -34,6 +35,7 @@ import seaborn as sns
 import core.config.config_ as ccocon
 import core.explore as cexp
 import core.plotting as cplo
+import core.statistics as cstati
 import helpers.datetime_ as hdatetim
 import helpers.dbg as hdbg
 import helpers.env as henv
@@ -71,7 +73,7 @@ def get_config() -> ccocon.Config:
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["close_price_col_name"] = "close"
-    config["data"]["freq"] = "min"
+    config["data"]["freq"] = "T"
     return config
 
 
@@ -83,7 +85,19 @@ print(config)
 # # Functions
 
 # %%
-def find_longest_not_nan_sequence(data, freq="min"):
+def find_longest_not_nan_sequence(data: Union[pd.Series, pd.DataFrame]):
+    """
+    Find the longest sequence of not-NaN values in a series or dataframe.
+    
+    For a dataframe the longest sequence of rows with no NaN values is returned.
+
+    :param data: input series or dataframe
+    :return: longest sequence of not-NaN values 
+    """
+    # Verify that index is monotonically increasing.
+    hpandas.dassert_strictly_increasing_index(data)
+    # Get index frequency.
+    freq = pd.infer_freq(data.index)
     # Get indices of only not-NaN values.
     not_nan_index = np.array(data.dropna().index)
     # Get a mask to distinguish not-NaN values that are further from their
@@ -96,7 +110,19 @@ def find_longest_not_nan_sequence(data, freq="min"):
     return longest_not_nan_seq
 
 
-def get_ccxt_price_df(ccxt_universe, ccxt_loader, config):
+def get_ccxt_price_df(
+    ccxt_universe: Dict[str, List[str]],
+    ccxt_loader: imccdaloloa.CcxtLoader,
+    config: ccocon.Config,
+):
+    """
+    Read price data from CCXT for a given universe using the given loader.
+
+    :param ccxt_universe: CCXT trade universe
+    :param ccxt_loader: CCXT loader
+    :param config: parameters config
+    :return: price data for a given universe
+    """
     # Initialize lists of column names and returns series.
     colnames = []
     price_srs_list = []
@@ -110,6 +136,7 @@ def get_ccxt_price_df(ccxt_universe, ccxt_loader, config):
             data = ccxt_loader.read_data_from_filesystem(
                 exchange_id=exchange_id, currency_pair=curr_pair, data_type="OHLCV"
             )
+            # TODO(Dan): Deprecate after CmTask298 is resolved.
             # Drop duplicates.
             data = data.drop_duplicates()
             # Get series of prices and append to the list.
@@ -140,7 +167,10 @@ df_price = get_ccxt_price_df(ccxt_universe, ccxt_loader, config)
 df_price.head(3)
 
 # %%
-df_price.describe()
+df_price.describe().round(2)
+
+# %%
+df_price.head()
 
 # %% [markdown]
 # Below is a code chunk that I did not factor out since it rather should be a part of some stats function like `compute_start_end_table()` from `CMTask232_compute_start_end_table.ipynb`.<br>
@@ -163,10 +193,11 @@ for colname in df_price.columns:
     longest_not_nan_seq = find_longest_not_nan_sequence(price_srs)
     # Compute necessary stats and put in a list.
     stats = [
+        100 * (1 - cstati.compute_frac_nan(price_srs)),
+        (last_idx - first_idx).days,
+        100 * (len(longest_not_nan_seq) / len(price_srs)),
         longest_not_nan_seq.index[0],
         longest_not_nan_seq.index[-1],
-        len(longest_not_nan_seq)/len(price_srs),
-        1 - price_srs.isna().sum()/len(price_srs)
     ]
     # Append stats list to the result dict under a column name key.
     res_dict[colname] = stats
@@ -175,12 +206,16 @@ res_df = pd.DataFrame.from_dict(
     res_dict,
     orient="index",
     columns=[
+        "coverage",
+        "longest_seq_days_available",
+        "share_of_longest_seq",
         "longest_seq_start_date",
         "longest_seq_end_date",
-        "share_of_longest_seq",
-        "coverage",
     ]
 )
+# Sort by coverage and share of longest not-NaN sequence.
+res_df = res_df.sort_values(by=["coverage", "share_of_longest_seq"])
+#
 res_df
 
 # %%
@@ -217,38 +252,7 @@ for colname in corr_matrix.columns:
     display(corr_srs_sorted.head(10))
 
 # %% [markdown]
-# # Calculations on resampled data
-
-# %% [markdown]
-# ## Resampled to 5 min
-
-# %%
-df_price_5min = hpandas.resample_df(df_price, "5min")
-df_price_5min.head(3)
-
-# %%
-df_returns_5min = df_price_5min.pct_change()
-df_returns_5min.head(3)
-
-# %%
-corr_matrix_5min = df_returns_5min.corr()
-_ = cplo.plot_heatmap(corr_matrix_5min)
-
-# %% [markdown]
-# With resampling to 5 minutes the clusters have become more visible.
-
-# %%
-_ = sns.clustermap(corr_matrix_5min, figsize=(20, 20))
-
-# %%
-# Display top 10 most correlated series for each currency pair.
-for colname in corr_matrix_5min.columns:
-    corr_srs = corr_matrix_5min[colname]
-    corr_srs_sorted = corr_srs.sort_values(ascending=False)
-    display(corr_srs_sorted.head(10))
-
-# %% [markdown]
-# ## Resampled to 1 day
+# # Calculations on data resampled to 1 day
 
 # %%
 df_price_1day = hpandas.resample_df(df_price, "D")
@@ -263,7 +267,7 @@ corr_matrix_1day = df_returns_1day.corr()
 _ = cplo.plot_heatmap(corr_matrix_1day)
 
 # %% [markdown]
-# Resampling to 1 day makes clusters even more visible. <br>
+# Resampling to 1 day makes clusters much more visible. <br>
 # It seems that for detecting similar currencies we'd better use 1 day frequency.
 
 # %%
