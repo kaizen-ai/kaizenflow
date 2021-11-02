@@ -215,7 +215,7 @@ class CddLoader:
         #
         if self._remove_dups:
             # Remove full duplicates.
-            data = data.drop_duplicates(ignore_index=True)
+            data = hpandas.drop_duplicates(data, ignore_index=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
         #
