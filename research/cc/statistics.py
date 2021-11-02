@@ -108,43 +108,16 @@ def get_loader_for_vendor(vendor: str, config: ccocon.Config) -> _LOADER:
     return loader
 
 
-def compute_stats(
-    price_data,
+def compute_stats_for_universe(
     config,
     stats_func: Callable,
     *args: Any,
     **kwargs: Any,
 ) -> pd.DataFrame:
     """
-    Compute stats on the exchange-currency level.
-
-    :param price_data: crypto price data
-    :param config: config
-    :param stats_func: function to compute statistics, e.g. `compute_start_end_table`
-    :return: stats table for exchange-currency pair
-    """
-    # Remove duplicates.
-    # TODO(Grisha): move it into the loader.
-    data_no_dups = price_data.drop_duplicates()
-    # Resample data to target frequency using NaNs.
-    data_resampled = hhpandas.resample_df(
-        data_no_dups, config["data"]["target_frequency"]
-    )
-    # Compute stats.
-    stats_table = stats_func(data_resampled, config, *args, **kwargs)
-    return stats_table
-
-
-def compute_stats_for_universe(
-    config,
-    stats_func: Callable,
-    *args,
-    **kwargs,
-) -> pd.DataFrame:
-    """
     Compute stats on the universe level.
 
-    E.g. to compute start-end-table for the universe do:
+    E.g. to compute start-end table for the universe do:
     `compute_stats_for_universe(config, compute_start_end_table)`.
 
     :param config: config
@@ -169,10 +142,9 @@ def compute_stats_for_universe(
                     config["data"]["data_type"],
                 )
                 # Compute stats on the exchange-currency level.
-                cur_stats_data = compute_stats(
-                    price_data=data,
-                    config=config,
-                    stats_func=stats_func,
+                cur_stats_data = stats_func(
+                    data,
+                    config,
                     *args,
                     **kwargs,
                 )
