@@ -49,9 +49,6 @@ _LOG.info("%s", henv.get_system_signature()[0])
 
 hprintin.config_notebook()
 
-# %%
-_LOADER = Union[imccdaloloa.CcxtLoader, imcrdaloloa.CddLoader]
-
 
 # %% [markdown]
 # # Config
@@ -82,124 +79,21 @@ def get_cmtask232_config() -> ccocon.Config:
 config = get_cmtask232_config()
 print(config)
 
-
 # %% [markdown]
 # # Compute start-end table
-
-# %%
-def get_loader_for_vendor(vendor: str, config: ccocon.Config) -> _LOADER:
-    """
-    Get vendor specific loader instance.
-
-    :param vendor: data provider, e.g. `CCXT`
-    :return: loader instance
-    """
-    if vendor == "CCXT":
-        loader = imccdaloloa.CcxtLoader(
-            root_dir=config["load"]["data_dir"],
-            aws_profile=config["load"]["aws_profile"],
-        )
-    elif vendor == "CDD":
-        loader = imcrdaloloa.CddLoader(
-            root_dir=config["load"]["data_dir"],
-            aws_profile=config["load"]["aws_profile"],
-        )
-    else:
-        raise ValueError(f"Unsupported vendor={vendor}")
-    return loader
-
-
-def compute_start_end_table_for_vendor(
-    vendor_universe: str, loader, config: ccocon.Config
-) -> pd.DataFrame:
-    """
-    Same as `compute_start_end_table` but for all exchanges, currency pairs
-    available for a certain vendor.
-
-    :param vendor_universe: all exchanges, currency pairs avaiable for a vendor
-    :param loader: vendor specific loader instance
-    :return: vendor specific start-end table
-    """
-    start_end_tables = []
-    for exchange in vendor_universe.keys():
-        # Get the downloaded currency pairs for a particular exchange.
-        currency_pairs = vendor_universe[exchange]
-        for currency_pair in currency_pairs:
-            # Read data for current data provider, exchange, currency pair.
-            cur_df = loader.read_data_from_filesystem(
-                exchange,
-                currency_pair,
-                config["data"]["data_type"],
-            )
-            # Remove duplicates.
-            # TODO(Grisha): move it into the loader.
-            cur_df_no_dups = cur_df.drop_duplicates()
-            # Resample data to target frequency using NaNs.
-            cur_df_resampled = hpandas.resample_df(
-                cur_df_no_dups, config["data"]["target_frequency"]
-            )
-            # Compute `start-end table`.
-            cur_start_end_table = rccsta.compute_start_end_table(
-                cur_df_resampled, config
-            )
-            start_end_tables.append(cur_start_end_table)
-    # Concatenate the results.
-    start_end_table = pd.concat(start_end_tables, ignore_index=True)
-    # Sort values.
-    start_end_table_sorted = start_end_table.sort_values(
-        by="days_available", ascending=False
-    )
-    return start_end_table_sorted
-
-
-def compute_start_end_table_for_vendors(config: ccocon.Config) -> pd.DataFrame:
-    """
-    Same as `compute_start_end_table_for_vendor` but for all vendors in the
-    universe.
-
-    :return: start-end table for all vendors in the universe
-    """
-    # Load the universe.
-    universe = imdauni.get_trade_universe(config["data"]["universe_version"])
-    # Exclude CDD for now since there are many problems with data.
-    # TODO(Grisha): file a bug about CDD data.
-    universe.pop("CDD")
-    # TODO(Grisha): fix the duplicates problem in #274.
-    universe["CCXT"].pop("bitfinex")
-    #
-    start_end_tables = []
-    for vendor in universe.keys():
-        # Get vendor-specific universe.
-        vendor_universe = universe[vendor]
-        # Get vendor-specific loader.
-        loader = get_loader_for_vendor(vendor, config)
-        # Compute start-end table for the current vendor.
-        cur_start_end_table = compute_start_end_table_for_vendor(
-            vendor_universe, loader, config
-        )
-        cur_start_end_table["vendor"] = vendor
-        start_end_tables.append(cur_start_end_table)
-    # Concatenate the results.
-    start_end_table = pd.concat(start_end_tables, ignore_index=True)
-    # Sort values.
-    start_end_table_sorted = start_end_table.sort_values(
-        by="days_available", ascending=False
-    )
-    return start_end_table_sorted
-
 
 # %% [markdown]
 # ## Per data provider, exchange, currency pair
 
 # %%
-start_end_table = compute_start_end_table_for_vendors(config)
+start_end_table = rccsta.compute_stats_for_universe(config, rccsta.compute_start_end_table)
 
 # %%
 _LOG.info(
     "The number of unique vendor, exchange, currency pair combinations=%s",
     start_end_table.shape[0],
 )
-start_end_table
+start_end_table.sort_values(by="days_available", ascending=False).reset_index(drop=True)
 
 # %% [markdown]
 # ## Per currency pair

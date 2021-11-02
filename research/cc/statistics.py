@@ -136,6 +136,10 @@ def compute_stats_for_universe(
     """
     _LOG.debug("args=%s, kwargs=%s", str(args), str(kwargs))
     universe = imdauni.get_trade_universe(config["data"]["universe_version"])
+    # TODO(Grisha): remove CDD from the universe, file a bug for it.
+    universe.pop("CDD")
+    # TODO(Grisha): remove `bitfinex` from the universe in #274.
+    universe["CCXT"].pop("bitfinex")
     stats_data = []
     for vendor in universe.keys():
         # Get vendor-specific loader.
@@ -145,10 +149,10 @@ def compute_stats_for_universe(
         # Convert to a list of tuples `(exchange, currency_pair)` to avoid another `for loop`.
         vendor_universe_tuples = [
             (exchange, currency_pair)
-            for currency_pairs, exchange in vendor_universe.items()
+            for exchange, currency_pairs in vendor_universe.items()
             for currency_pair in currency_pairs
         ]
-        for currency_pair, exchange in vendor_universe_tuples:
+        for exchange, currency_pair in vendor_universe_tuples:
             # Read data for current vendor, exchange, currency pair.
             data = loader.read_data_from_filesystem(
                 exchange,

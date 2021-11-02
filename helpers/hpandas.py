@@ -103,7 +103,7 @@ def resample_index(index: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
         )
     else:
         _LOG.info(
-            "Index length=%s has not changes",
+            "Index length=%s has not changed",
             len(index)
         )
     return resampled_index
