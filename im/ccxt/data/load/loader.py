@@ -27,28 +27,28 @@ _LATEST_DATA_SNAPSHOT = "20210924"
 class CcxtLoader:
     def __init__(
         self,
-        remove_dups: bool = True,
-        resample_to_1_min: bool = True,
         connection: Optional[hsql.DbConnection] = None,
         root_dir: Optional[str] = None,
         aws_profile: Optional[str] = None,
+        remove_dups: bool = True,
+        resample_to_1_min: bool = True,
     ) -> None:
         """
         Load CCXT data from different backends, e.g., DB, local or S3
         filesystem.
 
-        :param remove_dups: whether to remove full duplicates or not
-        :param resample_to_1_min: whether to resample to 1 min or not
         :param connection: connection for a SQL database
         :param: root_dir: either a local root path (e.g., "/app/im") or
             an S3 root path ("s3://alphamatic-data/data") to the CCXT data
         :param: aws_profile: AWS profile name (e.g., "am")
+        :param remove_dups: whether to remove full duplicates or not
+        :param resample_to_1_min: whether to resample to 1 min or not
         """
-        self._remove_dups = remove_dups
-        self._resample_to_1_min = resample_to_1_min
         self._connection = connection
         self._root_dir = root_dir
         self._aws_profile = aws_profile
+        self._remove_dups = remove_dups
+        self._resample_to_1_min = resample_to_1_min
         # Specify supported data types to load.
         self._data_types = ["ohlcv"]
 
