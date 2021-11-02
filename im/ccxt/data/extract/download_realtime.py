@@ -4,23 +4,32 @@ Script to download OHLCV data from CCXT in real-time.
 
 Use as:
 
-# Download all currency pairs for Binance, Kucoin,
-  FTX exchanges:
-> python im/ccxt/data/extract/download_realtime_ohlcv.py \
+# Download OHLCV data for universe '01', saving only on disk:
+> python im/ccxt/data/extract/download_realtime.py \
+    --db_connection 'none' \
     --dst_dir 'test_ohlcv_rt' \
-    --table_name 'ccxt_ohlcv' \
+    --data_type 'ohlcv' \
+    --universe '01'
+
+# Download order book data for universe '01', saving only on disk:
+> python im/ccxt/data/extract/download_realtime.py \
+    --db_connection 'none' \
+    --dst_dir 'test_orderbook_rt' \
+    --data_type 'orderbook' \
     --universe '01'
 
 Import as:
 
-import im.ccxt.data.extract.download_realtime_ohlcv as imcdaexdoreaohl
+import im.ccxt.data.extract.download_realtime as imcdaexdowrea
 """
 import argparse
 import collections
 import logging
 import os
 import time
-from typing import Dict, List, NamedTuple, Optional
+from typing import Any, Dict, List, NamedTuple, Optional, Union
+
+import pandas as pd
 
 import helpers.datetime_ as hdatetim
 import helpers.dbg as hdbg
@@ -60,6 +69,71 @@ def _instantiate_exchange(
     return exchange_to_currency
 
 
+def _download_data(
+    data_type: str, exchange: NamedTuple, pair: str
+) -> Union[pd.DataFrame, Dict[str, Any]]:
+    """
+    Download order book or OHLCV data.
+
+    :param data_type: 'ohlcv' or 'orderbook'
+    :param exchange: exchange instance
+    :param pair: currency pair, e.g. 'BTC/USDT'
+    :return: downloaded data
+    """
+    if data_type == "ohlcv":
+        pair_data = exchange.instance.download_ohlcv_data(
+            curr_symbol=pair, step=5
+        )
+        pair_data["currency_pair"] = pair
+        pair_data["exchange_id"] = exchange.id
+    elif data_type == "orderbook":
+        pair_data = exchange.instance.download_order_book(pair)
+    else:
+        hdbg.dfatal(
+            "'%s' data type is not supported. Supported data types: 'ohlcv', 'orderbook'",
+            data_type,
+        )
+    return pair_data
+
+
+def _save_data_on_disk(
+    data_type: str,
+    dst_dir: str,
+    pair_data: Union[pd.DataFrame, Dict[str, Any]],
+    exchange: NamedTuple,
+    pair: str,
+) -> None:
+    """
+    Save downloaded data to disk.
+
+    :param data_type: 'ohlcv' or 'orderbook'
+    :param dst_dir: directory to save to
+    :param pair_data: downloaded data
+    :param exchange: exchange instance
+    :param pair: currency pair, e.g. 'BTC/USDT'
+    """
+    current_datetime = hdatetim.get_current_time("ET")
+    if data_type == "ohlcv":
+        file_name = (
+            f"{exchange.id}_{pair.replace('/', '_')}_{current_datetime}.csv.gz"
+        )
+        full_path = os.path.join(dst_dir, file_name)
+        pair_data.to_csv(full_path, index=False, compression="gzip")
+    elif data_type == "orderbook":
+        file_name = (
+            f"orderbook_{exchange.id}_"
+            f"{pair.replace('/', '_')}_"
+            f"{hdatetim.get_timestamp('ET')}.json"
+        )
+        full_path = os.path.join(dst_dir, file_name)
+        hio.to_json(full_path, pair_data)
+    else:
+        hdbg.dfatal(
+            "'%s' data type is not supported. Supported data types: 'ohlcv', 'orderbook'",
+            data_type,
+        )
+
+
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -78,6 +152,13 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         type=str,
         help="Folder to save copies of data to",
+    )
+    parser.add_argument(
+        "--data_type",
+        action="store",
+        required=True,
+        type=str,
+        help="Type of data to load, 'ohlcv' or 'orderbook'",
     )
     parser.add_argument(
         "--table_name",
@@ -109,8 +190,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Create the directory.
     hio.create_dir(args.dst_dir, incremental=args.incremental)
+    # Connect to database.
     if args.db_connection == "from_env":
         connection, _ = hsql.get_connection_from_env_vars()
+    elif args.db_connection == "none":
+        connection = None
     else:
         hdbg.dfatal("Unknown db connection: %s" % args.db_connection)
     # Load universe.
@@ -126,23 +210,19 @@ def _main(parser: argparse.ArgumentParser) -> None:
     while True:
         for exchange in exchanges:
             for pair in exchange.pairs:
-                # Download latest 5 minutes for the currency pair and exchange.
-                pair_data = exchange.instance.download_ohlcv_data(
-                    curr_symbol=pair, step=2
+                # Download latest 5 ohlcv for the currency pair and exchange.
+                pair_data = _download_data(args.data_type, exchange, pair)
+                # Save to disk.
+                _save_data_on_disk(
+                    args.data_type, args.dst_dir, pair_data, exchange, pair
                 )
-                pair_data["currency_pair"] = pair
-                pair_data["exchange_id"] = exchange.id
-                current_datetime = hdatetim.get_current_time("ET")
-                file_name = (
-                    f"{exchange.id}_{pair.replace('/', '_')}_{current_datetime}.csv.gz"
-                )
-                full_path = os.path.join(args.dst_dir, file_name)
-                pair_data.to_csv(full_path, index=False, compression="gzip")
-                imccdbuti.execute_insert_query(
-                    connection=connection,
-                    df=pair_data,
-                    table_name=args.table_name,
-                )
+                if connection:
+                    # Insert into database.
+                    imccdbuti.execute_insert_query(
+                        connection=connection,
+                        df=pair_data,
+                        table_name=args.table_name,
+                    )
         time.sleep(60)
 
 
