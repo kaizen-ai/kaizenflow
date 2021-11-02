@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.0
+#       jupytext_version: 1.12.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -29,23 +29,18 @@ from typing import Dict, List, Union
 
 import numpy as np
 import pandas as pd
-import pytz
 import seaborn as sns
 
 import core.config.config_ as ccocon
-import core.explore as cexp
 import core.plotting as cplo
-import core.statistics as cstati
-import helpers.datetime_ as hdatetim
+import core.statistics as csta
 import helpers.dbg as hdbg
 import helpers.env as henv
-import helpers.hpandas as hpandas
+import helpers.hpandas as hhpandas
 import helpers.printing as hprintin
 import helpers.s3 as hs3
-
-import im.data.universe as imdatuni
 import im.ccxt.data.load.loader as imccdaloloa
-import im.cryptodatadownload.data.load.loader as imcrdaloloa
+import im.data.universe as imdauni
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -88,20 +83,20 @@ print(config)
 def find_longest_not_nan_sequence(data: Union[pd.Series, pd.DataFrame]):
     """
     Find the longest sequence of not-NaN values in a series or dataframe.
-    
+
     For a dataframe the longest sequence of rows with no NaN values is returned.
 
     :param data: input series or dataframe
-    :return: longest sequence of not-NaN values 
+    :return: longest sequence of not-NaN values
     """
     # Verify that index is monotonically increasing.
-    hpandas.dassert_strictly_increasing_index(data)
+    hhpandas.dassert_strictly_increasing_index(data)
     # Get index frequency.
     freq = pd.infer_freq(data.index)
     # Get indices of only not-NaN values.
     not_nan_index = np.array(data.dropna().index)
     # Get a mask to distinguish not-NaN values that are further from their
-    # not-NaN precedent than 1 frequency time step. 
+    # not-NaN precedent than 1 frequency time step.
     mask = np.where(np.diff(not_nan_index) != pd.Timedelta(1, freq))[0] + 1
     # Get the longest monotonically increasing sequence of indices.
     longest_not_nan_index = max(np.split(not_nan_index, mask), key=len)
@@ -130,7 +125,7 @@ def compute_longest_not_nan_sequence_stats(df: pd.DataFrame):
         longest_not_nan_seq = find_longest_not_nan_sequence(col_srs)
         # Compute necessary stats and put in a list.
         stats = [
-            100 * (1 - cstati.compute_frac_nan(col_srs)),
+            100 * (1 - csta.compute_frac_nan(col_srs)),
             (last_idx - first_idx).days,
             100 * (len(longest_not_nan_seq) / len(col_srs)),
             longest_not_nan_seq.index[0],
@@ -148,7 +143,7 @@ def compute_longest_not_nan_sequence_stats(df: pd.DataFrame):
             "share_of_longest_seq",
             "longest_seq_start_date",
             "longest_seq_end_date",
-        ]
+        ],
     )
     # Sort by coverage and share of longest not-NaN sequence.
     res_df = res_df.sort_values(by=["coverage", "share_of_longest_seq"])
@@ -179,7 +174,9 @@ def get_ccxt_price_df(
             colnames.append(colname)
             # Extract historical data.
             data = ccxt_loader.read_data_from_filesystem(
-                exchange_id=exchange_id, currency_pair=curr_pair, data_type="OHLCV"
+                exchange_id=exchange_id,
+                currency_pair=curr_pair,
+                data_type="OHLCV",
             )
             # TODO(Dan): Deprecate after CmTask298 is resolved.
             # Drop duplicates.
@@ -191,7 +188,7 @@ def get_ccxt_price_df(
     df = pd.concat(price_srs_list, axis=1)
     df.columns = colnames
     # Resample to the specified frequency.
-    df = hpandas.resample_df(df, config["data"]["freq"])
+    df = hhpandas.resample_df(df, config["data"]["freq"])
     return df
 
 
@@ -204,7 +201,7 @@ ccxt_loader = imccdaloloa.CcxtLoader(
 )
 
 # %%
-ccxt_universe = imdatuni.get_trade_universe()["CCXT"]
+ccxt_universe = imdauni.get_trade_universe()["CCXT"]
 ccxt_universe
 
 # %%
@@ -264,7 +261,7 @@ for colname in corr_matrix.columns:
 # # Calculations on data resampled to 1 day
 
 # %%
-df_price_1day = hpandas.resample_df(df_price, "D")
+df_price_1day = hhpandas.resample_df(df_price, "D")
 df_price_1day.head(3)
 
 # %%
