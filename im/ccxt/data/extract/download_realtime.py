@@ -59,13 +59,25 @@ def _instantiate_exchange(
     exchange_to_currency.pairs = ccxt_universe[exchange_id]
     return exchange_to_currency
 
-def _download_data(data_type: str) -> None:
+
+def _download_data(data_type: str, exchange: NamedTuple, pair: str):
+    """
+
+    :param data_type:
+    :param exchange:
+    :return:
+    """
     if data_type == "ohlcv":
-        pass
+        pair_data = exchange.instance.download_ohlcv_data(
+            curr_symbol=pair, step=2
+        )
+        pair_data["currency_pair"] = pair
+        pair_data["exchange_id"] = exchange.id
     elif data_type == "orderbook":
-        pass
+        pair_data = exchange.instance.download_order_book(pair)
     else:
         hdbg.dfatal("'%s' data type is not supported. Supported data types: 'ohlcv', 'orderbook'", data_type)
+    return pair_data
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -142,11 +154,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         for exchange in exchanges:
             for pair in exchange.pairs:
                 # Download latest 5 minutes for the currency pair and exchange.
-                pair_data = exchange.instance.download_ohlcv_data(
-                    curr_symbol=pair, step=2
-                )
-                pair_data["currency_pair"] = pair
-                pair_data["exchange_id"] = exchange.id
+                pair_data = _download_data(args.data_type, exchange, pair)
                 current_datetime = hdatetim.get_current_time("ET")
                 file_name = (
                     f"{exchange.id}_{pair.replace('/', '_')}_{current_datetime}.csv.gz"
