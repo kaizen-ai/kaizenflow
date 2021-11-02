@@ -13,6 +13,7 @@ import pandas as pd
 import core.pandas_helpers as cpah
 import helpers.datetime_ as hdatetim
 import helpers.dbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.s3 as hs3
 import im.data.universe as imdauni
 
@@ -60,16 +61,26 @@ def _get_file_path(
 
 
 class CddLoader:
-    def __init__(self, root_dir: str, aws_profile: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        root_dir: str,
+        aws_profile: Optional[str] = None,
+        remove_dups: bool = True,
+        resample_to_1_min: bool = True,
+    ) -> None:
         """
         Load CDD data.
 
         :param: root_dir: either a local root path (e.g., "/app/im") or
             an S3 root path ("s3://alphamatic-data/data) to CDD data
         :param: aws_profile: AWS profile name (e.g., "am")
+        :param remove_dups: whether to remove full duplicates or not
+        :param resample_to_1_min: whether to resample to 1 min or not
         """
         self._root_dir = root_dir
         self._aws_profile = aws_profile
+        self._remove_dups = remove_dups
+        self._resample_to_1_min = resample_to_1_min
         # Specify supported data types to load.
         self._data_types = ["ohlcv"]
 
@@ -183,6 +194,8 @@ class CddLoader:
         This includes:
         - Datetime format assertion
         - Converting string dates to pd.Timestamp
+        - Removing full duplicates
+        - Resampling to 1 minute using NaNs
         - Name volume and currency pair columns properly
         - Adding exchange_id and currency_pair columns
 
@@ -199,8 +212,18 @@ class CddLoader:
         data = data.rename({"unix": "epoch"}, axis=1)
         # Transform Unix epoch into ET timestamp.
         data["timestamp"] = self._convert_epochs_to_timestamp(data["epoch"])
+        #
+        if self._remove_dups:
+            # Remove full duplicates.
+            data = hpandas.drop_duplicates(data, ignore_index=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
+        #
+        if self._resample_to_1_min:
+            # Resample to 1 minute.
+            data = hpandas.resample_df(
+                data, "T"
+            )
         # Rename col with traded volume in amount of the 1st currency in pair.
         data = data.rename(
             {"Volume " + currency_pair.split("/")[0]: "volume"}, axis=1

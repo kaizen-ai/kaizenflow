@@ -9,6 +9,7 @@ from typing import Any, Optional, Union
 import pandas as pd
 
 import helpers.dbg as hdbg
+import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -122,3 +123,27 @@ def resample_df(df: pd.DataFrame, frequency: str) -> pd.DataFrame:
     resampled_index = resample_index(df.index, frequency)
     df_reindex = df.reindex(resampled_index)
     return df_reindex
+
+
+def drop_duplicates(
+    data: Union[pd.Series, pd.DataFrame], *args: Any, **kwargs: Any,
+) -> Union[pd.Series, pd.DataFrame]:
+    """
+    Wrapper around `pandas.drop_duplicates()`.
+
+    See the official docs:
+        - https://pandas.pydata.org/docs/reference/api/pandas.Series.drop_duplicates.html
+        - https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.drop_duplicates.html
+
+    :return: data w/o duplicates
+    """
+    _LOG.debug("args=%s, kwargs=%s", str(args), str(kwargs))
+    num_rows_before = data.shape[0]
+    data_no_dups = data.drop_duplicates(*args, **kwargs)
+    num_rows_after = data_no_dups.shape[0]
+    if num_rows_before != num_rows_after:
+        _LOG.warning(
+            "Removed %s rows",
+            hprint.perc(num_rows_before - num_rows_after, num_rows_before),
+        )
+    return data_no_dups
