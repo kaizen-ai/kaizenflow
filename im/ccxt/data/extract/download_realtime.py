@@ -80,7 +80,7 @@ def _download_data(data_type: str, exchange: NamedTuple, pair: str):
     return pair_data
 
 
-def _save_data_on_disk(data_type: str, exchange: NamedTuple, pair: str) -> None:
+def _save_data_on_disk(data_type: str, dst_dir: str, exchange: NamedTuple, pair: str) -> None:
     """
 
     :param data_type:
