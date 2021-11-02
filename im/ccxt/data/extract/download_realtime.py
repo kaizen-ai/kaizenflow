@@ -6,9 +6,16 @@ Use as:
 
 # Download OHLCV data for universe '01', saving only on disk:
 > python im/ccxt/data/extract/download_realtime.py \
-    --
+    --db_connection 'none' \
     --dst_dir 'test_ohlcv_rt' \
-    --table_name 'ccxt_ohlcv' \
+    --data_type 'ohlcv' \
+    --universe '01'
+
+# Download order book data for universe '01', saving only on disk:
+> python im/ccxt/data/extract/download_realtime.py \
+    --db_connection 'none' \
+    --dst_dir 'test_orderbook_rt' \
+    --data_type 'orderbook' \
     --universe '01'
 
 Import as:
