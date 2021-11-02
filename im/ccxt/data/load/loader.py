@@ -275,11 +275,13 @@ class CcxtLoader:
         data = data.rename({"timestamp": "epoch"}, axis=1)
         # Transform Unix epoch into ET timestamp.
         data["timestamp"] = self._convert_epochs_to_timestamp(data["epoch"])
+        #
         if self._remove_dups:
             # Remove full duplicates.
             data = data.drop_duplicates(ignore_index=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
+        #
         if self._resample_to_1_min:
             # Resample to 1 minute.
             data = hpandas.resample_df(
