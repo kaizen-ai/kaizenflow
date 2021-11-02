@@ -5,7 +5,7 @@ Import as:
 
 import research.cc.statistics as rccsta
 """
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable
 
 import pandas as pd
 
@@ -131,9 +131,7 @@ def compute_stats(
         data_no_dups, config["data"]["target_frequency"]
     )
     # Compute stats.
-    stats_table = stats_func(
-        data_resampled, config, *args, **kwargs
-    )
+    stats_table = stats_func(data_resampled, config, *args, **kwargs)
     return stats_table
 
 
@@ -153,9 +151,7 @@ def compute_stats_for_universe(
     :param stats_func: function to compute statistics, e.g. `compute_start_end_table`
     :return: stats table for all vendors, exchanges, currencies in the universe
     """
-    universe = imdauni.get_trade_universe(
-        config["data"]["universe_version"]
-    )
+    universe = imdauni.get_trade_universe(config["data"]["universe_version"])
     stats_data = []
     for vendor in universe.keys():
         # Get vendor-specific universe.
