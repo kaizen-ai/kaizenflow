@@ -110,6 +110,51 @@ def find_longest_not_nan_sequence(data: Union[pd.Series, pd.DataFrame]):
     return longest_not_nan_seq
 
 
+def compute_longest_not_nan_sequence_stats(df: pd.DataFrame):
+    """
+    Compute stats about the longest not-NaN sequence in each dataframe column.
+
+    :param df: input dataframe
+    :return: stats dataframe
+    """
+    # Initiate results dict.
+    res_dict = {}
+    # Iterate over each series in columns.
+    for colname in df.columns:
+        col_srs = df[colname].copy()
+        # Remove leading and trailing NaNs.
+        first_idx = col_srs.first_valid_index()
+        last_idx = col_srs.last_valid_index()
+        col_srs = col_srs[first_idx:last_idx].copy()
+        # Get the longest not-NaN sequence in a series.
+        longest_not_nan_seq = find_longest_not_nan_sequence(col_srs)
+        # Compute necessary stats and put in a list.
+        stats = [
+            100 * (1 - cstati.compute_frac_nan(col_srs)),
+            (last_idx - first_idx).days,
+            100 * (len(longest_not_nan_seq) / len(col_srs)),
+            longest_not_nan_seq.index[0],
+            longest_not_nan_seq.index[-1],
+        ]
+        # Append stats list to the result dict under a column name key.
+        res_dict[colname] = stats
+    # Build a dataframe from the result dict.
+    res_df = pd.DataFrame.from_dict(
+        res_dict,
+        orient="index",
+        columns=[
+            "coverage",
+            "longest_seq_days_available",
+            "share_of_longest_seq",
+            "longest_seq_start_date",
+            "longest_seq_end_date",
+        ]
+    )
+    # Sort by coverage and share of longest not-NaN sequence.
+    res_df = res_df.sort_values(by=["coverage", "share_of_longest_seq"])
+    return res_df
+
+
 def get_ccxt_price_df(
     ccxt_universe: Dict[str, List[str]],
     ccxt_loader: imccdaloloa.CcxtLoader,
@@ -180,43 +225,8 @@ df_price.head()
 # Looking at the results we can see that all the exchanges except for Bitfinex have significantly big longest not-NaN sequence (>13% at least) in combine with high data coverage (>85%). Bitfinex has a very low data coverage and its longest not-NaN sequences are less than 1% compare to the original data length which means that Bitfinex data spottiness is too scattered and we should exclude it from our analysis until we get clearer data for it.
 
 # %%
-# Initiate results dict.
-res_dict = {}
-# Iterate over each series in columns.
-for colname in df_price.columns:
-    price_srs = df_price[colname].copy()
-    # Remove leading and trailing NaNs.
-    first_idx = price_srs.first_valid_index()
-    last_idx = price_srs.last_valid_index()
-    price_srs = price_srs[first_idx:last_idx].copy()
-    # Get the longest not-NaN sequence in a series.
-    longest_not_nan_seq = find_longest_not_nan_sequence(price_srs)
-    # Compute necessary stats and put in a list.
-    stats = [
-        100 * (1 - cstati.compute_frac_nan(price_srs)),
-        (last_idx - first_idx).days,
-        100 * (len(longest_not_nan_seq) / len(price_srs)),
-        longest_not_nan_seq.index[0],
-        longest_not_nan_seq.index[-1],
-    ]
-    # Append stats list to the result dict under a column name key.
-    res_dict[colname] = stats
-# Build a dataframe from the result dict.
-res_df = pd.DataFrame.from_dict(
-    res_dict,
-    orient="index",
-    columns=[
-        "coverage",
-        "longest_seq_days_available",
-        "share_of_longest_seq",
-        "longest_seq_start_date",
-        "longest_seq_end_date",
-    ]
-)
-# Sort by coverage and share of longest not-NaN sequence.
-res_df = res_df.sort_values(by=["coverage", "share_of_longest_seq"])
-#
-res_df
+df_stats = compute_longest_not_nan_sequence_stats(df_price)
+df_stats
 
 # %%
 # Remove observations related to Bitfinex.
@@ -235,11 +245,10 @@ corr_matrix = df_returns.corr()
 _ = cplo.plot_heatmap(corr_matrix)
 
 # %% [markdown]
-# I tried to use `cluster_and_select()` from `core.plotting.py` to get clusters but it throws the following error.<br>
-# CmTask294 is filed. 
+# `cluster_and_select()` distinguishes clusters but some very highly correlated stable coins are clustered together so it seems like that we cannot rely on dendrodram and clustering alone.
 
 # %%
-_ = cplo.cluster_and_select(df_returns, 10)
+_ = cplo.cluster_and_select(df_returns, 11)
 
 # %% run_control={"marked": false}
 _ = sns.clustermap(corr_matrix, figsize=(20, 20))
@@ -269,6 +278,9 @@ _ = cplo.plot_heatmap(corr_matrix_1day)
 # %% [markdown]
 # Resampling to 1 day makes clusters much more visible. <br>
 # It seems that for detecting similar currencies we'd better use 1 day frequency.
+
+# %%
+_ = cplo.cluster_and_select(df_returns_1day, 11)
 
 # %%
 _ = sns.clustermap(corr_matrix_1day, figsize=(20, 20))
