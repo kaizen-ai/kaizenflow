@@ -13,7 +13,7 @@ Use as:
 
 Import as:
 
-import im.ccxt.data.extract.download_realtime_ohlcv as imcdaexdoreaohl
+import im.ccxt.data.extract.download_realtime as imcdaexdowrea
 """
 import argparse
 import collections
@@ -76,11 +76,16 @@ def _download_data(data_type: str, exchange: NamedTuple, pair: str):
     elif data_type == "orderbook":
         pair_data = exchange.instance.download_order_book(pair)
     else:
-        hdbg.dfatal("'%s' data type is not supported. Supported data types: 'ohlcv', 'orderbook'", data_type)
+        hdbg.dfatal(
+            "'%s' data type is not supported. Supported data types: 'ohlcv', 'orderbook'",
+            data_type,
+        )
     return pair_data
 
 
-def _save_data_on_disk(data_type: str, dst_dir: str, pair_data, exchange: NamedTuple, pair: str) -> None:
+def _save_data_on_disk(
+    data_type: str, dst_dir: str, pair_data, exchange: NamedTuple, pair: str
+) -> None:
     """
 
     :param data_type:
@@ -106,7 +111,10 @@ def _save_data_on_disk(data_type: str, dst_dir: str, pair_data, exchange: NamedT
         full_path = os.path.join(dst_dir, file_name)
         hio.to_json(full_path, pair_data)
     else:
-        hdbg.dfatal("'%s' data type is not supported. Supported data types: 'ohlcv', 'orderbook'", data_type)
+        hdbg.dfatal(
+            "'%s' data type is not supported. Supported data types: 'ohlcv', 'orderbook'",
+            data_type,
+        )
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -133,7 +141,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="Type of data to load, 'ohlcv' or 'orderbook'"
+        help="Type of data to load, 'ohlcv' or 'orderbook'",
     )
     parser.add_argument(
         "--table_name",
@@ -185,7 +193,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 # Download latest 5 ohlcv for the currency pair and exchange.
                 pair_data = _download_data(args.data_type, exchange, pair)
                 # Save to disk.
-                _save_data_on_disk(args.data_type, args.dst_dir, pair_data, exchange, pair)
+                _save_data_on_disk(
+                    args.data_type, args.dst_dir, pair_data, exchange, pair
+                )
                 # Insert into database.,
                 imccdbuti.execute_insert_query(
                     connection=connection,
