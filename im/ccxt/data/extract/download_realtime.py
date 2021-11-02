@@ -99,6 +99,7 @@ def _save_data_on_disk(data_type: str, dst_dir: str, exchange: NamedTuple, pair:
     else:
         hdbg.dfatal("'%s' data type is not supported. Supported data types: 'ohlcv', 'orderbook'", data_type)
 
+
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__,
