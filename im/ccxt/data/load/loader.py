@@ -13,6 +13,7 @@ import pandas as pd
 import core.pandas_helpers as cpah
 import helpers.datetime_ as hdatetim
 import helpers.dbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.s3 as hs3
 import helpers.sql as hsql
 import im.data.universe as imdauni
@@ -29,6 +30,8 @@ class CcxtLoader:
         connection: Optional[hsql.DbConnection] = None,
         root_dir: Optional[str] = None,
         aws_profile: Optional[str] = None,
+        remove_dups: bool = True,
+        resample_to_1_min: bool = True,
     ) -> None:
         """
         Load CCXT data from different backends, e.g., DB, local or S3
@@ -42,6 +45,8 @@ class CcxtLoader:
         self._connection = connection
         self._root_dir = root_dir
         self._aws_profile = aws_profile
+        self._remove_dups = remove_dups
+        self._resample_to_1_min = resample_to_1_min
         # Specify supported data types to load.
         self._data_types = ["ohlcv"]
 
@@ -266,12 +271,18 @@ class CcxtLoader:
         data = data.rename({"timestamp": "epoch"}, axis=1)
         # Transform Unix epoch into ET timestamp.
         data["timestamp"] = self._convert_epochs_to_timestamp(data["epoch"])
+        # Remove full duplicates.
+        data_no_dups = data.drop_duplicates(ignore_index=True)
         # Set timestamp as index.
-        data = data.set_index("timestamp")
+        data_no_dups = data_no_dups.set_index("timestamp")
         # Add columns with exchange id and currency pair.
-        data["exchange_id"] = exchange_id
-        data["currency_pair"] = currency_pair
-        return data
+        data_no_dups["exchange_id"] = exchange_id
+        data_no_dups["currency_pair"] = currency_pair
+        # Resample to 1 minute.
+        data_resampled = hpandas.resample_df(
+            data_no_dups, "T"
+        )
+        return data_no_dups
 
     @staticmethod
     def _convert_epochs_to_timestamp(epoch_col: pd.Series) -> pd.Series:
