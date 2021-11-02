@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.12.0
+#       jupytext_version: 1.13.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -261,7 +261,7 @@ for colname in corr_matrix.columns:
 # # Calculations on data resampled to 1 day
 
 # %%
-df_price_1day = hhpandas.resample_df(df_price, "D")
+df_price_1day = df_price.resample("D", closed="right", label="right").mean()
 df_price_1day.head(3)
 
 # %%
@@ -274,7 +274,9 @@ _ = cplo.plot_heatmap(corr_matrix_1day)
 
 # %% [markdown]
 # Resampling to 1 day makes clusters much more visible. <br>
-# It seems that for detecting similar currencies we'd better use 1 day frequency.
+# If we take a look at correlation numbers, we can see that equal currencies on different exchanges have a correlation above ~0.94 while different currencies correlate at much less rate.
+#
+# Therefore, it seems that for detecting similar currencies we'd better use 1 day frequency.
 
 # %%
 _ = cplo.cluster_and_select(df_returns_1day, 11)
