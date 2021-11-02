@@ -87,13 +87,13 @@ def _save_data_on_disk(
     data_type: str, dst_dir: str, pair_data, exchange: NamedTuple, pair: str
 ) -> None:
     """
+    Save
 
-    :param data_type:
-    :param dst_dir:
-    :param pair_data:
-    :param exchange:
-    :param pair:
-    :return:
+    :param data_type: 'ohlcv' or 'orderbook'
+    :param dst_dir: directory to save to
+    :param pair_data: downloaded data
+    :param exchange: exchange instance
+    :param pair: currency pair, e.g. 'BTC/USDT'
     """
     current_datetime = hdatetim.get_current_time("ET")
     if data_type == "ohlcv":
