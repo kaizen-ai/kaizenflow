@@ -11,11 +11,12 @@ import helpers.git as hgit
 import helpers.io_ as hio
 
 _LATEST_UNIVERSE_VERSION = "01"
+UNIVERSE = Dict[str, Dict[str, List[str]]]
 
 
 def get_trade_universe(
     version: str = _LATEST_UNIVERSE_VERSION,
-) -> Dict[str, Dict[str, List[str]]]:
+) -> UNIVERSE:
     """
     Load trade universe for which we have historical data on S3.
 
