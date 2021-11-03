@@ -121,8 +121,6 @@ def get_loader_for_vendor(
 def compute_stats_for_universe(
     config: ccocon.Config,
     stats_func: Callable,
-    *args: Any,
-    **kwargs: Any,
 ) -> pd.DataFrame:
     """
     Compute stats on the universe level.
@@ -135,10 +133,6 @@ def compute_stats_for_universe(
     """
     _LOG.debug("args=%s, kwargs=%s", str(args), str(kwargs))
     universe = imdauni.get_trade_universe(config["data"]["universe_version"])
-    # TODO(Grisha): remove CDD from the universe, file a bug for it.
-    universe.pop("CDD")
-    # TODO(Grisha): remove `bitfinex` from the universe in #274.
-    universe["CCXT"].pop("bitfinex")
     stats_data = []
     for vendor in universe.keys():
         # Get vendor-specific loader.
@@ -146,12 +140,12 @@ def compute_stats_for_universe(
         # Get vendor-specific universe.
         vendor_universe = universe[vendor]
         # Convert to a list of tuples `(exchange, currency_pair)` to avoid another `for loop`.
-        vendor_universe_tuples = [
+        exchange_currency_tuples = [
             (exchange, currency_pair)
             for exchange, currency_pairs in vendor_universe.items()
             for currency_pair in currency_pairs
         ]
-        for exchange, currency_pair in vendor_universe_tuples:
+        for exchange, currency_pair in exchange_currency_tuples:
             # Read data for current vendor, exchange, currency pair.
             data = loader.read_data_from_filesystem(
                 exchange,
@@ -159,11 +153,7 @@ def compute_stats_for_universe(
                 config["data"]["data_type"],
             )
             # Compute stats on the exchange-currency level.
-            cur_stats_data = stats_func(
-                data,
-                *args,
-                **kwargs,
-            )
+            cur_stats_data = stats_func()
             cur_stats_data["vendor"] = vendor
             stats_data.append(cur_stats_data)
     # Concatenate the results.
