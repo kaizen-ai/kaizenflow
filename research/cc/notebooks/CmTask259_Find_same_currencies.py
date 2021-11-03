@@ -69,6 +69,7 @@ def get_config() -> ccocon.Config:
     config.add_subconfig("data")
     config["data"]["close_price_col_name"] = "close"
     config["data"]["freq"] = "T"
+    config["data"]["universe_version"] = "v0_1"
     return config
 
 
@@ -201,7 +202,9 @@ ccxt_loader = imccdaloloa.CcxtLoader(
 )
 
 # %%
-ccxt_universe = imdauni.get_trade_universe()["CCXT"]
+ccxt_universe = imdauni.get_trade_universe(
+    config["data"]["universe_version"]
+)["CCXT"]
 ccxt_universe
 
 # %%
