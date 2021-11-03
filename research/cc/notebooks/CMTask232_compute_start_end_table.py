@@ -61,7 +61,7 @@ def get_cmtask232_config() -> ccocon.Config:
     config.add_subconfig("data")
     config["data"]["data_type"] = "OHLCV"
     config["data"]["target_frequency"] = "T"
-    config["data"]["universe_version"] = "02"
+    config["data"]["universe_version"] = "v0_2"
     # Column names.
     config.add_subconfig("column_names")
     config["column_names"]["close_price"] = "close"
