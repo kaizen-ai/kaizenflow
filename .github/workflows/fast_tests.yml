@@ -72,6 +72,11 @@ jobs:
           submodules: true
           token: ${{ secrets.GH_ACTION_ACCESS_TOKEN }}
 
+      - name: Authenticate GH
+        if: github.event.pull_request.draft == false
+        run: |
+          echo "${{ secrets.GH_ACTION_ACCESS_TOKEN }}" | gh auth login --hostname github.com --with-token 
+
       - name: Install dependencies
         if: github.event.pull_request.draft == false
         run: |
