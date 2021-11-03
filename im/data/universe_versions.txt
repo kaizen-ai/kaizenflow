@@ -1,0 +1,7 @@
+v0.2
+- 2021-11-03
+- CCXT-Bitfinex is removed due to CmTask274
+
+v0.1
+- 2021-09-25
+- Initial version
