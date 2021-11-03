@@ -16,7 +16,6 @@ import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.s3 as hs3
 import helpers.sql as hsql
-import im.data.universe as imdauni
 
 _LOG = logging.getLogger(__name__)
 
@@ -49,6 +48,7 @@ class CcxtLoader:
         self._aws_profile = aws_profile
         self._remove_dups = remove_dups
         self._resample_to_1_min = resample_to_1_min
+        self._s3fs = hs3.get_s3fs(self._aws_profile)
         # Specify supported data types to load.
         self._data_types = ["ohlcv"]
 
@@ -140,12 +140,8 @@ class CcxtLoader:
         # TODO(Dan): Remove asserts below after CMTask108 is resolved.
         # Verify that the file exists and fill kwargs if needed.
         if hs3.is_s3_path(file_path):
-            s3fs = hs3.get_s3fs(self._aws_profile)
-            hs3.dassert_s3_exists(file_path, s3fs)
             # Add s3fs argument to kwargs.
-            read_csv_kwargs["s3fs"] = s3fs
-        else:
-            hdbg.dassert_file_exists(file_path)
+            read_csv_kwargs["s3fs"] = self._s3fs
         # Read raw CCXT data.
         _LOG.info(
             "Reading CCXT data for exchange id='%s', currencies='%s' from file='%s'...",
@@ -165,6 +161,7 @@ class CcxtLoader:
         )
         return transformed_data
 
+    # TODO(Grisha): factor out common code from `CddLoader._get_file_path` and `CcxtLoader._get_file_path`.
     def _get_file_path(
         self,
         data_snapshot: str,
@@ -184,28 +181,17 @@ class CcxtLoader:
             e.g. "BTC/USDT"
         :return: absolute path to a file with CCXT data
         """
-        # Extract data about downloaded currencies for CCXT.
-        downloaded_currencies_info = imdauni.get_trade_universe()["CCXT"]
-        # Verify that data for the input exchange id was downloaded.
-        hdbg.dassert_in(
-            exchange_id,
-            downloaded_currencies_info.keys(),
-            msg="Data for exchange id='%s' was not downloaded" % exchange_id,
-        )
-        # Verify that data for the input exchange id and currency pair was
-        # downloaded.
-        downloaded_currencies = downloaded_currencies_info[exchange_id]
-        hdbg.dassert_in(
-            currency_pair,
-            downloaded_currencies,
-            msg="Data for exchange id='%s', currency pair='%s' was not downloaded"
-            % (exchange_id, currency_pair),
-        )
         # Get absolute file path.
         file_name = currency_pair.replace("/", "_") + ".csv.gz"
         file_path = os.path.join(
             self._root_dir, "ccxt", data_snapshot, exchange_id, file_name
         )
+        # TODO(Dan): Remove asserts below after CMTask108 is resolved.
+        # Verify that the file exists.
+        if hs3.is_s3_path(file_path):
+            hs3.dassert_s3_exists(file_path, self._s3fs)
+        else:
+            hdbg.dassert_file_exists(file_path)
         return file_path
 
     # TODO(*): Consider making `exchange_id` a class member.
