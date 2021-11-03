@@ -11,35 +11,10 @@ on:
 
 jobs:
 
-  Mark_commit:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Post status if was triggered manually
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        uses: Sibz/github-status-action@v1
-        with:
-          authToken: ${{ secrets.GITHUB_TOKEN }}
-          context: "Run_linter"
-          description: 'Added to queue, waiting for free runner (manual run)'
-          state: pending
-          sha: ${{ github.sha }}
-          target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
   Run_linter:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Post status if was triggered manually
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        uses: Sibz/github-status-action@v1
-        with:
-          authToken: ${{ secrets.GITHUB_TOKEN }}
-          context: "Run_linter"
-          description: 'Job in progress (manual run)'
-          state: pending
-          sha: ${{ github.sha }}
-          target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:

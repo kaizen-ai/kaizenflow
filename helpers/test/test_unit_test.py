@@ -58,6 +58,7 @@ def _to_skip_on_update_outcomes() -> bool:
 # #############################################################################
 
 
+@pytest.mark.skip(reason="See cryptomtc/cmamp#321")
 class TestTestCase1(huntes.TestCase):
     """
     Test free-standing functions in unit_test.py.
@@ -864,7 +865,7 @@ class Test_check_string_debug1(huntes.TestCase):
 
 # #############################################################################
 
-
+@pytest.mark.skip(reason="See cryptomtc/cmamp#321")
 class Test_unit_test1(huntes.TestCase):
     def test_purify_txt_from_client1(self) -> None:
         super_module_path = hgit.get_client_root(super_module=True)
@@ -1009,6 +1010,7 @@ class TestDataframeToJson(huntes.TestCase):
 # #############################################################################
 
 
+@pytest.mark.skip(reason="See cryptomtc/cmamp#321")
 class Test_get_dir_signature1(huntes.TestCase):
     def test1(self) -> None:
         """

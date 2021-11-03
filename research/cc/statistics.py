@@ -5,12 +5,20 @@ Import as:
 
 import research.cc.statistics as rccsta
 """
+import logging
+from typing import Callable, Union
+
 import pandas as pd
 
 import core.config.config_ as ccocon
 import core.statistics as csta
 import helpers.dbg as hdbg
 import helpers.hpandas as hhpandas
+import im.ccxt.data.load.loader as imccdaloloa
+import im.cryptodatadownload.data.load.loader as imcrdaloloa
+import im.data.universe as imdauni
+
+_LOG = logging.getLogger(__name__)
 
 
 def compute_start_end_table(
@@ -47,6 +55,7 @@ def compute_start_end_table(
     #
     hdbg.dassert_isinstance(price_data.index, pd.DatetimeIndex)
     hhpandas.dassert_monotonic_index(price_data.index)
+    hdbg.dassert_eq(price_data.index.freq, "T")
     # Reset the index to use it for stats computation. The index's new column name
     # will be `index`.
     price_data_reset = price_data.reset_index()
@@ -80,3 +89,73 @@ def compute_start_end_table(
         (start_end_table["n_data_points"] / start_end_table["days_available"]), 2
     )
     return start_end_table
+
+
+# TODO(Grisha): move `get_loader_for_vendor` out in #269.
+# TODO(Grisha): use the abstract class in #313.
+def get_loader_for_vendor(
+    vendor: str, config: ccocon.Config
+) -> Union[imccdaloloa.CcxtLoader, imcrdaloloa.CddLoader]:
+    """
+    Get vendor specific loader instance.
+
+    :param config: config
+    :param vendor: data provider, e.g. `CCXT`
+    :return: loader instance
+    """
+    if vendor == "CCXT":
+        loader = imccdaloloa.CcxtLoader(
+            root_dir=config["load"]["data_dir"],
+            aws_profile=config["load"]["aws_profile"],
+        )
+    elif vendor == "CDD":
+        loader = imcrdaloloa.CddLoader(
+            root_dir=config["load"]["data_dir"],
+            aws_profile=config["load"]["aws_profile"],
+        )
+    else:
+        raise ValueError(f"Unsupported vendor={vendor}")
+    return loader
+
+
+def compute_stats_for_universe(
+    config: ccocon.Config,
+    stats_func: Callable,
+) -> pd.DataFrame:
+    """
+    Compute stats on the universe level.
+
+    E.g., to compute start-end table for the universe do:
+    `compute_stats_for_universe(config, compute_start_end_table, config)`.
+
+    :param stats_func: function to compute statistics, e.g. `compute_start_end_table`
+    :return: stats table for all vendors, exchanges, currencies in the universe
+    """
+    hdbg.dassert_isinstance(stats_func, Callable)
+    universe = imdauni.get_trade_universe(config["data"]["universe_version"])
+    stats_data = []
+    for vendor in universe.keys():
+        # Get vendor-specific loader.
+        loader = get_loader_for_vendor(vendor, config)
+        # Get vendor-specific universe.
+        vendor_universe = universe[vendor]
+        # Convert to a list of tuples `(exchange, currency_pair)` to avoid another `for loop`.
+        exchange_currency_tuples = [
+            (exchange, currency_pair)
+            for exchange, currency_pairs in vendor_universe.items()
+            for currency_pair in currency_pairs
+        ]
+        for exchange, currency_pair in exchange_currency_tuples:
+            # Read data for current vendor, exchange, currency pair.
+            data = loader.read_data_from_filesystem(
+                exchange,
+                currency_pair,
+                config["data"]["data_type"],
+            )
+            # Compute stats on the exchange-currency level.
+            cur_stats_data = stats_func(data)
+            cur_stats_data["vendor"] = vendor
+            stats_data.append(cur_stats_data)
+    # Concatenate the results.
+    stats_table = pd.concat(stats_data, ignore_index=True)
+    return stats_table
