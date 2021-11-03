@@ -25,6 +25,6 @@ def get_trade_universe(
     file_name = "".join(["universe_", version, ".json"])
     file_path = os.path.join(hgit.get_amp_abs_path(), "im/data", file_name)
     universe = hio.from_json(file_path)
-    # TODO(Grisha): remove CDD from the universe, file a bug for it.
+    # TODO(Grisha): remove CDD from the universe #234.
     universe.pop("CDD")
     return universe

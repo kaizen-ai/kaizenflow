@@ -15,7 +15,6 @@ import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.s3 as hs3
-import im.data.universe as imdauni
 
 _LOG = logging.getLogger(__name__)
 
