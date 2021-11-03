@@ -131,7 +131,8 @@ def compute_stats_for_universe(
     :param stats_func: function to compute statistics, e.g. `compute_start_end_table`
     :return: stats table for all vendors, exchanges, currencies in the universe
     """
-    _LOG.debug("args=%s, kwargs=%s", str(args), str(kwargs))
+    hdbg.dassert_isinstance(stats_func, Callable)
+   # _LOG.debug("args=%s, kwargs=%s", str(args), str(kwargs))
     universe = imdauni.get_trade_universe(config["data"]["universe_version"])
     stats_data = []
     for vendor in universe.keys():
@@ -153,7 +154,7 @@ def compute_stats_for_universe(
                 config["data"]["data_type"],
             )
             # Compute stats on the exchange-currency level.
-            cur_stats_data = stats_func()
+            cur_stats_data = stats_func(data)
             cur_stats_data["vendor"] = vendor
             stats_data.append(cur_stats_data)
     # Concatenate the results.

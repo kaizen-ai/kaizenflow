@@ -61,7 +61,7 @@ def get_cmtask232_config() -> ccocon.Config:
     config.add_subconfig("data")
     config["data"]["data_type"] = "OHLCV"
     config["data"]["target_frequency"] = "T"
-    config["data"]["universe_version"] = "01"
+    config["data"]["universe_version"] = "02"
     # Column names.
     config.add_subconfig("column_names")
     config["column_names"]["close_price"] = "close"
@@ -80,8 +80,10 @@ print(config)
 # ## Per data provider, exchange, currency pair
 
 # %%
+compute_start_end_table = lambda data: rccsta.compute_start_end_table(data, config)
+
 start_end_table = rccsta.compute_stats_for_universe(
-    config, rccsta.compute_start_end_table, config
+    config, compute_start_end_table
 )
 
 # %%
