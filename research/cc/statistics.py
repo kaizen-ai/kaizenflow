@@ -6,7 +6,7 @@ Import as:
 import research.cc.statistics as rccsta
 """
 import logging
-from typing import Any, Callable, Union
+from typing import Callable, Union
 
 import pandas as pd
 
@@ -132,7 +132,6 @@ def compute_stats_for_universe(
     :return: stats table for all vendors, exchanges, currencies in the universe
     """
     hdbg.dassert_isinstance(stats_func, Callable)
-   # _LOG.debug("args=%s, kwargs=%s", str(args), str(kwargs))
     universe = imdauni.get_trade_universe(config["data"]["universe_version"])
     stats_data = []
     for vendor in universe.keys():
