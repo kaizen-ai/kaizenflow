@@ -10,7 +10,7 @@ from typing import Dict, List
 import helpers.git as hgit
 import helpers.io_ as hio
 
-_LATEST_UNIVERSE_VERSION = "01"
+_LATEST_UNIVERSE_VERSION = "02"
 
 
 def get_trade_universe(
