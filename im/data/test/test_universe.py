@@ -9,7 +9,7 @@ class TestFilterVendorUniverseAsTuples(hut.TestCase):
         """
         exchange_ids = ["binance", "kucoin"]
         currency_pairs = ["BTC/USDT", "ETH/USDT", "FIL/USDT"]
-        ccxt_universe = imdauni.get_vendor_universe_as_tuples("v0_3")["CCXT"]
+        ccxt_universe = imdauni.get_vendor_universe_as_tuples("v0_3", "CCXT")
         actual = imdauni.filter_vendor_universe_as_tuples(
             ccxt_universe, exchange_ids, currency_pairs
         )
@@ -20,4 +20,4 @@ class TestFilterVendorUniverseAsTuples(hut.TestCase):
             imdauni.ExchangeCurrencyTuple("kucoin", "ETH/USDT"),
             imdauni.ExchangeCurrencyTuple("kucoin", "FIL/USDT"),
         ]
-        self.assert_equal(actual, expected)
+        self.assert_equal(str(actual), str(expected))
