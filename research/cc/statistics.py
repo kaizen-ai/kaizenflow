@@ -162,7 +162,9 @@ def compute_stats_for_universe(
     return stats_table
 
 
-def find_longest_not_nan_sequence(data: Union[pd.Series, pd.DataFrame]):
+def find_longest_not_nan_sequence(
+    data: Union[pd.Series, pd.DataFrame]
+) -> Union[pd.Series, pd.DataFrame]:
     """
     Find the longest sequence of not-NaN values in a series or dataframe.
 
@@ -187,7 +189,9 @@ def find_longest_not_nan_sequence(data: Union[pd.Series, pd.DataFrame]):
     return longest_not_nan_seq
 
 
-def compute_longest_not_nan_sequence_stats(df: pd.DataFrame):
+def compute_longest_not_nan_sequence_stats(
+    df: pd.DataFrame
+) -> pd.DataFrame:
     """
     Compute stats about the longest not-NaN sequence in each dataframe column.
 
@@ -236,7 +240,7 @@ def get_ccxt_price_df(
     ccxt_universe: Dict[str, List[str]],
     ccxt_loader: imccdaloloa.CcxtLoader,
     config: ccocon.Config,
-):
+) -> pd.DataFrame:
     """
     Read price data from CCXT for a given universe using the given loader.
 
