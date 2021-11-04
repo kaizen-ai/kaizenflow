@@ -65,7 +65,7 @@ def filter_vendor_universe_as_tuples(
     vendor_universe: List[ExchangeCurrencyTuple],
     exchange_ids: Optional[List[str]] = None,
     currency_pairs: Optional[List[str]] = None,
-) -> List[Optional[ExchangeCurrencyTuple]]:
+) -> List[ExchangeCurrencyTuple]:
     """
     Filter vendor universe by provided exchange ids and currencies.
 
