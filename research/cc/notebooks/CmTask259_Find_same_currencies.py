@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.0
+#       jupytext_version: 1.12.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -25,18 +25,13 @@
 # %%
 import logging
 import os
-from typing import Dict, List, Union
 
-import numpy as np
-import pandas as pd
 import seaborn as sns
 
 import core.config.config_ as ccocon
 import core.plotting as cplo
-import core.statistics as csta
 import helpers.dbg as hdbg
 import helpers.env as henv
-import helpers.hpandas as hhpandas
 import helpers.printing as hprintin
 import helpers.s3 as hs3
 import im.ccxt.data.load.loader as imccdaloloa
@@ -86,9 +81,9 @@ ccxt_loader = imccdaloloa.CcxtLoader(
 )
 
 # %%
-ccxt_universe = imdauni.get_trade_universe(
-    config["data"]["universe_version"]
-)["CCXT"]
+ccxt_universe = imdauni.get_trade_universe(config["data"]["universe_version"])[
+    "CCXT"
+]
 ccxt_universe
 
 # %%
