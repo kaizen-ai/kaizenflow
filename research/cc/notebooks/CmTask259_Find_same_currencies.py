@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.12.0
+#       jupytext_version: 1.13.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -64,7 +64,6 @@ def get_config() -> ccocon.Config:
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["close_price_col_name"] = "close"
-    config["data"]["freq"] = "T"
     config["data"]["universe_version"] = "v0_1"
     return config
 
