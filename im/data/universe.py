@@ -14,10 +14,6 @@ import helpers.io_ as hio
 
 _LATEST_UNIVERSE_VERSION = "v0_3"
 
-ExchangeCurrencyTuple = collections.namedtuple(
-    "ExchangeCurrencyTuple", "exchange_id currency_pair"
-)
-
 
 def get_trade_universe(
     version: str = _LATEST_UNIVERSE_VERSION,
@@ -32,6 +28,14 @@ def get_trade_universe(
     file_path = os.path.join(hgit.get_amp_abs_path(), "im/data", file_name)
     universe = hio.from_json(file_path)
     return universe
+
+
+# #############################################################################
+
+
+ExchangeCurrencyTuple = collections.namedtuple(
+    "ExchangeCurrencyTuple", "exchange_id currency_pair"
+)
 
 
 def get_vendor_universe_as_tuples(
