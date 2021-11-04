@@ -7,8 +7,8 @@ import helpers.unit_test as huntes
 
 _LOG = logging.getLogger(__name__)
 
-class Test1(huntes.TestCase):
 
+class Test1(huntes.TestCase):
     def setUp(self):
         """
         Bring up the DB.
@@ -20,20 +20,18 @@ class Test1(huntes.TestCase):
         cmd = "sudo docker-compose --file im/devops/compose/docker-compose.yml up -d im_postgres_local"
         hsyint.system(cmd, suppress_output=False)
         #
-        #dbname = "im_postgres_db_local"
-        #host = "localhost"
-        #port = 5432
-        #user = "aljsdalsd"
-        #password = "alsdkqoen"
+        dbname = "im_postgres_db_local"
+        host = "localhost"
+        port = 5432
+        user = "aljsdalsd"
+        password = "alsdkqoen"
         # TODO: Read the env file.
         print("Waiting...")
         # TODO: This guy needs to accept the dbname, ...
-        imcodbuti.check_db_connection(self.connection)
-        _LOG.info("done...")
+        imcodbuti.check_db_connection(dbname, port, host)
+        print("done...")
         #
-        self.connection, _ = hsql.get_connection(dbname, host, user, port,
-                password, autocommit=True,)
-
+        self.connection, _ = hsql.get_connection(dbname, host, user, port, password, autocommit=True,)
 
     def tearDown(self):
         """
@@ -68,3 +66,4 @@ class Test1(huntes.TestCase):
         _LOG.info("after")
         _LOG.info(hsql.get_db_names(self.connection))
         _LOG.info(hsql.get_table_names(self.connection))
+        print("--------DONE------------")
