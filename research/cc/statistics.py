@@ -268,6 +268,4 @@ def get_ccxt_price_df(
     # Construct a dataframe and assign column names.
     df = pd.concat(price_srs_list, axis=1)
     df.columns = colnames
-    # Resample to the specified frequency.
-    df = df.resample(config["data"]["freq"], closed="right", label="right").mean()
     return df
