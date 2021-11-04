@@ -1,8 +1,8 @@
-import helpers.unit_test as hut
+import helpers.unit_test as huntes
 import im.data.universe as imdauni
 
 
-class TestFilterVendorUniverseAsTuples(hut.TestCase):
+class TestFilterVendorUniverseAsTuples(huntes.TestCase):
     def test1(self) -> None:
         """
         Test that filtering works properly.
