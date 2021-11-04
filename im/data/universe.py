@@ -8,6 +8,7 @@ import collections
 import os
 from typing import Dict, List, Optional
 
+import helpers.dbg as hdbg
 import helpers.git as hgit
 import helpers.io_ as hio
 
@@ -70,10 +71,12 @@ def filter_vendor_universe_as_tuples(
     :return: filtered vendor universe
     """
     if exchange_ids:
+        hdbg.dassert_isinstance(exchange_ids, List)
         vendor_universe = [
             e for e in vendor_universe if e.exchange_id in exchange_ids
         ]
     if currency_pairs:
+        hdbg.dassert_isinstance(currency_pairs, List)
         vendor_universe = [
             e for e in vendor_universe if e.currency_pair in currency_pairs
         ]
