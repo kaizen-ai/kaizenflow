@@ -84,4 +84,9 @@ def filter_vendor_universe_as_tuples(
         vendor_universe = [
             e for e in vendor_universe if e.currency_pair in currency_pairs
         ]
+    # Verify that output is not empty.
+    hdbg.dassert(
+        vendor_universe,
+        "No specified exchange ids and currency pairs in the provided universe",
+    )
     return vendor_universe
