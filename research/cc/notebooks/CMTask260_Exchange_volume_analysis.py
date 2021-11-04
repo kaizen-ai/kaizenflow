@@ -16,19 +16,86 @@
 # # Imports
 
 # %%
+import logging
+import os
+
 import pandas as pd
 import seaborn as sns
 
+import core.config.config_ as ccocon
+import helpers.dbg as hdbg
+import helpers.env as henv
+import helpers.printing as hprintin
+import helpers.s3 as hs3
 import im.ccxt.data.load.loader as imccdaloloa
 import im.data.universe as imdauni
+import research.cc.statistics as rccsta
+import research.cc.volume as rccvol
+
+# %%
+hdbg.init_logger(verbosity=logging.INFO)
+
+_LOG = logging.getLogger(__name__)
+
+_LOG.info("%s", henv.get_system_signature()[0])
+
+hprintin.config_notebook()
+
 
 # %% [markdown]
 # # Configs
 
 # %%
+def get_cmtask260_config() -> ccocon.Config:
+    """
+    Get task260-specific config.
+    """
+    config = ccocon.Config()
+    # Load parameters.
+    config.add_subconfig("load")
+    config["load"]["aws_profile"] = "am"
+    config["load"]["data_dir"] = os.path.join(hs3.get_path(), "data")
+    # Data parameters.
+    config.add_subconfig("data")
+    config["data"]["data_type"] = "OHLCV"
+    config["data"]["universe_version"] = "v0_2"
+    # Column names.
+    config.add_subconfig("column_names")
+    config["column_names"]["volume"] = "volume"
+    config["column_names"]["currency_pair"] = "currency_pair"
+    config["column_names"]["exchange"] = "exchange_id"
+    return config
+
+config = get_cmtask260_config()
+print(config)
+
+# %%
 loader = imccdaloloa.CcxtLoader(
     root_dir="s3://alphamatic-data/data", aws_profile="am"
 )
+
+# %%
+data = loader.read_data_from_filesystem("binance", "ADA/USDT", "OHLCV")
+print(data.shape[0])
+data.head(3)
+
+# %%
+data_reset = data.reset_index()
+data_reset = data_reset.groupby("exchange_id", as_index=False)["volume"].sum()
+data_reset["vendor"] = "CCXT"
+data_reset
+
+# %%
+compute_cum_volume = lambda data: rccvol.compute_cum_volume(data, config)
+
+cum_volume = rccsta.compute_stats_for_universe(
+    config, compute_cum_volume
+)
+
+# %%
+import core.plotting as cplot
+
+cplot.plot_barplot(cum_volume.groupby("exchange_id")["volume"].sum(), title="Volume per exchange", figsize=[15,7])
 
 
 # %% [markdown]
