@@ -22,6 +22,7 @@ import os
 import pandas as pd
 import seaborn as sns
 
+import core.plotting as cplot
 import core.config.config_ as ccocon
 import helpers.dbg as hdbg
 import helpers.env as henv
@@ -43,7 +44,7 @@ hprintin.config_notebook()
 
 
 # %% [markdown]
-# # Configs
+# # Config
 
 # %%
 def get_cmtask260_config() -> ccocon.Config:
@@ -64,71 +65,73 @@ def get_cmtask260_config() -> ccocon.Config:
     config["column_names"]["volume"] = "volume"
     config["column_names"]["currency_pair"] = "currency_pair"
     config["column_names"]["exchange"] = "exchange_id"
+    config["column_names"]["avg_daily_volume"] = "avg_daily_volume"
     return config
 
 config = get_cmtask260_config()
 print(config)
 
 # %%
-loader = imccdaloloa.CcxtLoader(
-    root_dir="s3://alphamatic-data/data", aws_profile="am"
-)
+#loader = imccdaloloa.CcxtLoader(
+#    root_dir="s3://alphamatic-data/data", aws_profile="am"
+#)
+
+# %% [markdown]
+# # Load the data
 
 # %%
-data = loader.read_data_from_filesystem("binance", "ADA/USDT", "OHLCV")
-print(data.shape[0])
-data.head(3)
-
-# %%
-data_reset = data.reset_index()
-data_reset = data_reset.groupby("exchange_id", as_index=False)["volume"].sum()
-data_reset["vendor"] = "CCXT"
-data_reset
-
-# %%
-compute_cum_volume = lambda data: rccvol.compute_cum_volume(data, config)
+compute_cum_volume = lambda data: rccvol.compute_cum_volume(data, config, nom_volume=False)
 
 cum_volume = rccsta.compute_stats_for_universe(
     config, compute_cum_volume
 )
 
 # %%
-import core.plotting as cplot
+cum_volume.head(3)
 
-cplot.plot_barplot(cum_volume.groupby("exchange_id")["volume"].sum(), title="Volume per exchange", figsize=[15,7])
+# %% [markdown]
+# # Compute total volume per exchange
+
+# %%
+rccvol.get_total_volume_by_exchange(cum_volume,config,avg_daily=False)
+
+# %% [markdown]
+# # Compute total volume per currency
+
+# %%
+rccvol.get_total_volume_by_coins(cum_volume,config,avg_daily=False)
 
 
 # %% [markdown]
+# # Issue with compute_stats_for_universe() 
+
+# %% [markdown]
+# As one can see, __compute_stats_for_universe()__ returns DataFrame with omitted timestamp values that are necessary to plot graph for rolling volume.
+#
+# What do you think we should do in this case?
+# - We can either add param to your initial function that doesn't drop timestamp values 
+# - Or write the new one that takes into account timestamp values
+
+# %% run_control={"marked": false}
+def stats_func(df):
+    return df
+
+dd = rccsta.compute_stats_for_universe(config,stats_func)
+
+# %%
+dd.head()
+
+
+# %% [markdown]
+# # OLD CODE
+
+# %% [markdown] heading_collapsed=true
 # # Functions
 
-# %%
-def get_volume_df_for_exch_notional(coins, exchange):
-    """
-    Return the DataFrame with a volume of all available coins for a given exchange \
-    with timestamp transformation to one day
-    Parameters: list of coins for a particular exchange, exchange name
-    """
-    result = []
-    for coin in coins:
-        df = loader.read_data_from_filesystem(
-            exchange_id=exchange, currency_pair=coin, data_type="OHLCV"
-        )
-        # transform timestamp into one-day format
-        df["volume"] = df["volume"]*df["close"]
-        volume_df = pd.DataFrame(df.groupby(by=df.index.date)["volume"].sum())
-        volume_df.columns = [
-            col_name + f"_{suffixes[coin]}_{exchange}"
-            for col_name in volume_df.columns
-        ]
-        result.append(volume_df)
-    final_result = pd.concat(result, axis=1)
-    return final_result
-
-
-# %% [markdown]
+# %% [markdown] hidden=true
 # Note: by "volume" I mean the standard output that is nominated in the number of coins
 
-# %%
+# %% hidden=true
 def get_volume_df_for_exch(coins, exchange):
     """
     Return the DataFrame with a volume of all available coins for a given exchange \
@@ -301,10 +304,10 @@ def plot_ath_volumes_comparison(df_list):
     plot_df.plot.bar(figsize=(15,7), logy=True)
 
 
-# %% [markdown]
+# %% [markdown] hidden=true
 # ### Supporting variables
 
-# %% run_control={"marked": false}
+# %% run_control={"marked": false} hidden=true
 # get the list of all coin paires for each exchange
 binance_coins = imdauni.get_trade_universe("v0_1")["CCXT"]["binance"]
 bitfinex_coins = imdauni.get_trade_universe("v0_1")["CCXT"]["bitfinex"]
@@ -334,24 +337,24 @@ coins = [i.split("/")[0].lower() for i in coins]
 
 exch_names = ["binance", "bitfinex", "ftx", "gateio", "kucoin"]
 
-# %% [markdown]
+# %% [markdown] hidden=true
 # ## Load the volumes dataframes
 
-# %%
+# %% hidden=true
 binance = get_volume_df_for_exch_notional(binance_coins, "binance")
 bitfinex = get_volume_df_for_exch_notional(bitfinex_coins, "bitfinex")
 ftx = get_volume_df_for_exch_notional(ftx_coins, "ftx")
 gateio = get_volume_df_for_exch_notional(gateio_coins, "gateio")
 kucoin = get_volume_df_for_exch_notional(kucoin_coins, "kucoin")
 
-# %%
+# %% hidden=true
 binance = get_volume_df_for_exch(binance_coins, "binance")
 bitfinex = get_volume_df_for_exch(bitfinex_coins, "bitfinex")
 ftx = get_volume_df_for_exch(ftx_coins, "ftx")
 gateio = get_volume_df_for_exch(gateio_coins, "gateio")
 kucoin = get_volume_df_for_exch(kucoin_coins, "kucoin")
 
-# %%
+# %% hidden=true
 binance.name = "binance"
 bitfinex.name = "bitfinex"
 ftx.name = "ftx"
@@ -360,60 +363,60 @@ kucoin.name = "kucoin"
 
 exch_list = [binance, bitfinex, ftx, gateio, kucoin]
 
-# %% [markdown]
+# %% [markdown] heading_collapsed=true
 # # Compute total trading volume for each currency
 #
 
-# %%
+# %% hidden=true
 total_trading_vol = get_total_trading_volume_by_coins(coins, exch_list)
 
-# %%
+# %% hidden=true
 total_trading_vol
 
-# %%
+# %% hidden=true
 total_trading_vol["total_trading_volume_in_coins"].plot.bar(figsize=(15, 7), logy=True)
 
-# %%
+# %% hidden=true
 # daily_avg
 total_trading_vol["daily_avg_coin_volume"].sort_values(ascending=False).plot.bar(figsize=(15, 7), logy=True)
 
-# %% [markdown]
+# %% [markdown] heading_collapsed=true
 # # Rolling volume for each currency
 
-# %%
+# %% hidden=true
 plot_rolling_volume_by_coins(coins, exch_list)
 
-# %% [markdown]
+# %% [markdown] heading_collapsed=true
 # # Compute total volume per exchange
 
-# %%
+# %% hidden=true
 exchange_trading_volume = get_total_trading_volume_by_exchange(exch_list)
 
-# %%
+# %% hidden=true
 exchange_trading_volume
 
-# %%
+# %% hidden=true
 exchange_trading_volume["total_trading_volume_in_coins"].plot.bar(
     figsize=(15, 7), logy=True
 )
 
-# %%
+# %% hidden=true
 # normalised
 exchange_trading_volume["daily_avg_coin_volume"].plot.bar(
     figsize=(15, 7), logy=True
 )
 
-# %% [markdown]
+# %% [markdown] heading_collapsed=true
 # # Rolling volume for each exchange
 
-# %%
+# %% hidden=true
 plot_rolling_volume_by_exchange(exch_list, exch_names)
 
 
-# %% [markdown]
+# %% [markdown] heading_collapsed=true
 # # Is volume constant over different days? E.g., weekend vs workdays?
 
-# %% run_control={"marked": false}
+# %% run_control={"marked": false} hidden=true
 def compare_weekdays_volumes(exch_list):
     """
     Return statistics and graphs with working days vs.
@@ -450,16 +453,16 @@ def compare_weekdays_volumes(exch_list):
     )
 
 
-# %%
+# %% hidden=true
 compare_weekdays_volumes(exch_list)
 
-# %% [markdown]
+# %% [markdown] heading_collapsed=true
 # # How does it vary over hours? E.g., US stock times 9:30-16 vs other time
 
-# %% [markdown]
+# %% [markdown] hidden=true
 # ## Binance example
 
-# %%
+# %% hidden=true
 binance_1 = get_initial_df_with_volumes(binance_coins, "binance")
 bitfinex_1 = get_initial_df_with_volumes(bitfinex_coins, "bitfinex")
 ftx_1 = get_initial_df_with_volumes(ftx_coins, "ftx")
@@ -473,7 +476,7 @@ ftx_1.name = "ftx"
 gateio_1.name = "gateio"
 kucoin_1.name = "kucoin"
 
-# %%
+# %% hidden=true
 plot_ath_volumes_comparison(exchange_list)
 
-# %%
+# %% hidden=true
