@@ -189,9 +189,7 @@ def find_longest_not_nan_sequence(
     return longest_not_nan_seq
 
 
-def compute_longest_not_nan_sequence_stats(
-    df: pd.DataFrame
-) -> pd.DataFrame:
+def compute_longest_not_nan_sequence_stats(df: pd.DataFrame) -> pd.DataFrame:
     """
     Compute stats about the longest not-NaN sequence in each dataframe column.
 
