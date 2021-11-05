@@ -17,6 +17,8 @@ import helpers.hpandas as hpandas
 import helpers.s3 as hs3
 import helpers.sql as hsql
 
+import im.data.universe as imdauni
+
 _LOG = logging.getLogger(__name__)
 
 # Latest historical data snapshot.
@@ -110,6 +112,43 @@ class CcxtLoader:
         # Execute SQL query.
         table = pd.read_sql(sql_query, self._connection, **read_sql_kwargs)
         return table
+
+    def read_universe_data_from_filesystem(
+        self,
+        universe: Optional[str, List[imdauni.ExchangeCurrencyTuple]],
+        data_type: str,
+        data_snapshot: Optional[str] = None,
+    ) -> pd.DataFrame:
+        """
+        Load data from S3 for specified universe.
+
+        :param universe: CCXT universe version or a list of exchange-currency
+            tuples to load data for
+        :param data_type: OHLCV or trade, bid/ask data
+        :param data_snapshot: snapshot of datetime when data was loaded,
+            e.g. "20210924"
+        :return: processed CCXT data
+        """
+        # Load all the corresponding exchange-currency tuples if a universe
+        # version is provided.
+        if isinstance(universe, str):
+            universe = imdauni.get_vendor_universe_as_tuples(universe)
+        # Initialize results df.
+        combined_data = pd.DataFrame(dtype="object")
+        # Load data for each exchange-currency tuple and append to results df.
+        for exchange_currency_tuple in universe:
+            data = self.read_universe_data_from_filesystem(
+                exchange_currency_tuple.exchange_id,
+                exchange_currency_tuple.currency_pair,
+                data_type,
+                data_snapshot,
+            )
+            # Verify that the tuple's and already loaded data have equal columns.
+            if combined_data:
+                hdbg.dassert_is(data.columns, combined_data.columns)
+            # Append tuple's data to the results df.
+            combined_data = combined_data.append(data)
+        return combined_data
 
     def read_data_from_filesystem(
         self,
