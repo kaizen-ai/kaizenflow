@@ -1,3 +1,4 @@
+# %%
 """
 Compute crypto-related statistics.
 
@@ -8,8 +9,10 @@ import research.cc.statistics as rccsta
 import logging
 from typing import Callable, Union
 
+# %%
 import pandas as pd
 
+# %%
 import core.config.config_ as ccocon
 import core.statistics as csta
 import helpers.dbg as hdbg
@@ -18,9 +21,11 @@ import im.ccxt.data.load.loader as imccdaloloa
 import im.cryptodatadownload.data.load.loader as imcrdaloloa
 import im.data.universe as imdauni
 
+# %%
 _LOG = logging.getLogger(__name__)
 
 
+# %%
 def compute_start_end_table(
     price_data: pd.DataFrame,
     config: ccocon.Config,
@@ -91,6 +96,7 @@ def compute_start_end_table(
     return start_end_table
 
 
+# %%
 # TODO(Grisha): move `get_loader_for_vendor` out in #269.
 # TODO(Grisha): use the abstract class in #313.
 def get_loader_for_vendor(
@@ -118,6 +124,7 @@ def get_loader_for_vendor(
     return loader
 
 
+# %%
 def compute_stats_for_universe(
     config: ccocon.Config,
     stats_func: Callable,

@@ -22,13 +22,11 @@ import os
 import pandas as pd
 import seaborn as sns
 
-import core.plotting as cplot
 import core.config.config_ as ccocon
 import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprintin
 import helpers.s3 as hs3
-import im.ccxt.data.load.loader as imccdaloloa
 import im.data.universe as imdauni
 import research.cc.statistics as rccsta
 import research.cc.volume as rccvol
@@ -68,23 +66,24 @@ def get_cmtask260_config() -> ccocon.Config:
     config["column_names"]["close"] = "close"
     return config
 
+
 config = get_cmtask260_config()
 print(config)
 
 # %%
-#loader = imccdaloloa.CcxtLoader(
+# loader = imccdaloloa.CcxtLoader(
 #    root_dir="s3://alphamatic-data/data", aws_profile="am"
-#)
+# )
 
 # %% [markdown]
 # # Load the data
 
 # %%
-compute_cum_volume = lambda data: rccvol.compute_cum_volume(data, config, nom_volume=False)
-
-cum_volume = rccsta.compute_stats_for_universe(
-    config, compute_cum_volume
+compute_cum_volume = lambda data: rccvol.compute_cum_volume(
+    data, config, nom_volume=False
 )
+
+cum_volume = rccsta.compute_stats_for_universe(config, compute_cum_volume)
 
 # %%
 _LOG.info("The number of exchanges - currency pairs =%s", cum_volume.shape[0])
@@ -94,32 +93,37 @@ cum_volume.head(3)
 # # Compute total volume per exchange
 
 # %%
-total_volume_by_exchange = rccvol.get_total_volume_by_exchange(cum_volume,config,avg_daily=False,display_plot=True)
+total_volume_by_exchange = rccvol.get_total_volume_by_exchange(
+    cum_volume, config, avg_daily=False, display_plot=True
+)
 print(total_volume_by_exchange)
 
 # %% [markdown]
 # # Compute total volume per currency
 
 # %%
-total_volume_by_coins = rccvol.get_total_volume_by_coins(cum_volume,config,avg_daily=False,display_plot=True)
+total_volume_by_coins = rccvol.get_total_volume_by_coins(
+    cum_volume, config, avg_daily=False, display_plot=True
+)
 print(total_volume_by_coins)
 
 
 # %% [markdown]
-# # Issue with compute_stats_for_universe() 
+# # Issue with compute_stats_for_universe()
 
 # %% [markdown]
 # As one can see, __compute_stats_for_universe()__ returns DataFrame with omitted timestamp values that are necessary to plot graph for rolling volume.
 #
 # What do you think we should do in this case?
-# - We can either add param to your initial function that doesn't drop timestamp values 
+# - We can either add param to your initial function that doesn't drop timestamp values
 # - Or write the new one that takes into account timestamp values
 
 # %% run_control={"marked": false}
 def stats_func(df):
     return df
 
-dd = rccsta.compute_stats_for_universe(config,stats_func)
+
+dd = rccsta.compute_stats_for_universe(config, stats_func)
 
 # %%
 dd.head()
@@ -179,7 +183,9 @@ def get_total_trading_volume_by_coins(coin_list, exch_list):
         volume_df.loc[
             "{}".format(f"{coin}"), ("daily_avg_coin_volume")
         ] = norm_volume_
-    return volume_df.sort_values(by="total_trading_volume_in_coins", ascending=False)
+    return volume_df.sort_values(
+        by="total_trading_volume_in_coins", ascending=False
+    )
 
 
 def get_total_trading_volume_by_exchange(df_list):
@@ -292,19 +298,26 @@ def get_initial_df_with_volumes(coins, exchange):
 
 def plot_ath_volumes_comparison(df_list):
     """
-    Return the graph with the comparison of average minute total trading volume in ATH vs. non-ATH
+    Return the graph with the comparison of average minute total trading volume
+    in ATH vs.
+
+    non-ATH
     Parameters: dataframe with volumes from a given exchange
     """
-    plot_df=[]
+    plot_df = []
     for df in df_list:
         df_ath = df.iloc[df.index.indexer_between_time("09:30", "16:00")]
         df_not_ath = df.loc[~df.index.isin(df_ath.index)]
         ath_stat = pd.DataFrame()
-        ath_stat.loc[f"{df.name}", f"minute_avg_total_volume_ath_{df.name}"] = df_ath.sum().sum()/df_ath.shape[0]
-        ath_stat.loc[f"{df.name}", f"minute_avg_total_volume_not_ath_{df.name}"] = df_not_ath.sum().sum()/df_not_ath.shape[0]
+        ath_stat.loc[f"{df.name}", f"minute_avg_total_volume_ath_{df.name}"] = (
+            df_ath.sum().sum() / df_ath.shape[0]
+        )
+        ath_stat.loc[
+            f"{df.name}", f"minute_avg_total_volume_not_ath_{df.name}"
+        ] = (df_not_ath.sum().sum() / df_not_ath.shape[0])
         plot_df.append(ath_stat)
     plot_df = pd.concat(plot_df)
-    plot_df.plot.bar(figsize=(15,7), logy=True)
+    plot_df.plot.bar(figsize=(15, 7), logy=True)
 
 
 # %% [markdown] hidden=true
@@ -377,11 +390,15 @@ total_trading_vol = get_total_trading_volume_by_coins(coins, exch_list)
 total_trading_vol
 
 # %% hidden=true
-total_trading_vol["total_trading_volume_in_coins"].plot.bar(figsize=(15, 7), logy=True)
+total_trading_vol["total_trading_volume_in_coins"].plot.bar(
+    figsize=(15, 7), logy=True
+)
 
 # %% hidden=true
 # daily_avg
-total_trading_vol["daily_avg_coin_volume"].sort_values(ascending=False).plot.bar(figsize=(15, 7), logy=True)
+total_trading_vol["daily_avg_coin_volume"].sort_values(ascending=False).plot.bar(
+    figsize=(15, 7), logy=True
+)
 
 # %% [markdown] heading_collapsed=true
 # # Rolling volume for each currency
@@ -436,7 +453,9 @@ def compare_weekdays_volumes(exch_list):
     # create column with ids for weekdays
     df["weekday"] = df.index.map(lambda x: x.strftime("%A"))
     # plot total amount of volume for each day
-    df.groupby("weekday").total_volume.sum().sort_values(ascending=False).plot.bar(figsize=(12, 7))
+    df.groupby("weekday").total_volume.sum().sort_values(
+        ascending=False
+    ).plot.bar(figsize=(12, 7))
     # plot working days vs. weekends
     weekends = df[(df["weekday"] == "Saturday") | (df["weekday"] == "Sunday")]
     sns.displot(weekends, x="total_volume")
