@@ -1,3 +1,7 @@
+v0_3
+- 2021-11-04
+- CDD is removed due to CmTask324
+
 v0_2
 - 2021-11-03
 - CCXT-Bitfinex is removed due to CmTask274
