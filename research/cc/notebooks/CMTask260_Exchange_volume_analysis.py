@@ -16,19 +16,112 @@
 # ## Imports
 
 # %%
+import logging
+import os
+
 import pandas as pd
 import seaborn as sns
 
+import core.config.config_ as ccocon
+import helpers.dbg as hdbg
+import helpers.env as henv
+import helpers.printing as hprintin
+import helpers.s3 as hs3
 import im.ccxt.data.load.loader as imccdaloloa
 import im.data.universe as imdauni
+
+# %%
+hdbg.init_logger(verbosity=logging.INFO)
+
+_LOG = logging.getLogger(__name__)
+
+_LOG.info("%s", henv.get_system_signature()[0])
+
+hprintin.config_notebook()
+
 
 # %% [markdown]
 # ## Configs
 
 # %%
-config = imccdaloloa.CcxtLoader(
+def get_cmtask260_config() -> ccocon.Config:
+    """
+    Get task260-specific config.
+    """
+    config = ccocon.Config()
+    # Load parameters.
+    config.add_subconfig("load")
+    config["load"]["aws_profile"] = "am"
+    config["load"]["data_dir"] = os.path.join(hs3.get_path(), "data")
+    # Data parameters.
+    config.add_subconfig("data")
+    config["data"]["data_type"] = "OHLCV"
+    config["data"]["universe_version"] = "v0_3"
+    # Column names.
+    config.add_subconfig("column_names")
+    config["column_names"]["volume"] = "volume"
+    config["column_names"]["currency_pair"] = "currency_pair"
+    config["column_names"]["exchange"] = "exchange_id"
+    config["column_names"]["close"] = "close"
+    return config
+
+config = get_cmtask260_config()
+print(config)
+
+
+# %%
+def get_daily_volume(data):
+    data["date"] = data.index.date
+    data_grouped = data.groupby(["exchange_id", "currency_pair", "date"], as_index=False)
+    cum_daily_volume = data_grouped["volume"].sum()
+    return cum_daily_volume
+
+
+# %%
+import research.cc.statistics as rccsta
+
+compute_daily_volume = lambda data: get_daily_volume(data)
+
+cum_daily_volume = rccsta.compute_stats_for_universe(
+    config, compute_daily_volume
+)
+
+# %%
+cum_daily_volume
+
+
+# %%
+def get_rolling_volume_per_exchange(data, window):
+    data_grouped = data.groupby(["exchange_id", "date"], as_index=False)
+    cum_volume_per_exchange_per_day = data_grouped["volume"].sum()
+    cum_volume_per_exchange_per_day["rolling_volume"] = cum_volume_per_exchange_per_day["volume"].rolling(window).mean()
+    return cum_volume_per_exchange_per_day
+
+
+# %%
+rolling_vol = get_rolling_volume_per_exchange(cum_daily_volume, 90)
+#rolling_vol = rolling_vol.set_index("date")
+rolling_vol
+
+# %%
+import seaborn as sns
+
+sns.lineplot(data=rolling_vol, x='date', y='rolling_volume', hue='exchange_id')
+
+# %%
+loader = imccdaloloa.CcxtLoader(
     root_dir="s3://alphamatic-data/data", aws_profile="am"
 )
+data = loader.read_data_from_filesystem("binance", "BTC/USDT", "OHLCV")
+print(data.shape[0])
+data.head(3)
+
+# %%
+data["date"] = data.index.date
+data_grouped = data.groupby(["exchange_id", "currency_pair", "date"], as_index=False)
+total_volume = data_grouped["volume"].sum()
+#total_volume["rolling_volume"] = total_volume["volume"].rolling(90).mean()
+total_volume
 
 
 # %% [markdown]
