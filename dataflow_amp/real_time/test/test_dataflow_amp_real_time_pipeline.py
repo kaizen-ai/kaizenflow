@@ -1,5 +1,4 @@
 import logging
-from typing import Callable, Tuple
 
 import pandas as pd
 
@@ -80,7 +79,7 @@ class TestRealTimeReturnPipeline1(hunitest.TestCase):
             events = dag_runner.events
             # Check.
             # TODO(gp): Factor this out.
-            # TODO(gp): 
+            # TODO(gp):
             actual = []
             events_as_str = "\n".join(
                 [

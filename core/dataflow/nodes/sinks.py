@@ -208,7 +208,7 @@ def consolidate_dfs(df_iter: Iterable[Tuple[str, pd.DataFrame]]) -> pd.DataFrame
             df_out = df2.combine_first(df1)
         else:
             df_out = df2.combine_first(df_out)
-    hpandas.dassert_strictly_increasing_index(df_out)
+    hhpandas.dassert_strictly_increasing_index(df_out)
     return df_out
 
 

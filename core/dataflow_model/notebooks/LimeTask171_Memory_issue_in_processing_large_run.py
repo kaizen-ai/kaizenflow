@@ -41,7 +41,7 @@ _LOG = logging.getLogger(__name__)
 
 # _LOG.info("%s", env.get_system_signature()[0])
 
-hprint.config_notebook()
+hprintin.config_notebook()
 
 # %% [markdown]
 # # Notebook config
