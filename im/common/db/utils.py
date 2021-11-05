@@ -14,34 +14,6 @@ import helpers.system_interaction as hsyint
 _LOG = logging.getLogger(__name__)
 
 
-def check_db_connection(connection: hsql.DbConnection) -> None:
-    """
-    Verify that the database is available.
-
-    :param connection: a database connection
-    """
-    _LOG.info(
-        "Checking the database connection:\n%s",
-        db_connection_to_str(connection=connection),
-    )
-    while True:
-        _LOG.info("Waiting for PostgreSQL to become available...")
-        cmd = "pg_isready -d %s -p %s -h %s"
-        rc = hsyint.system(
-            cmd
-            % (
-                connection.info.dbname,
-                connection.info.port,
-                connection.info.host,
-            ),
-            abort_on_error=False,
-        )
-        time.sleep(1)
-        if rc == 0:
-            _LOG.info("PostgreSQL is available")
-            break
-
-
 def db_connection_to_str(connection: hsql.DbConnection) -> str:
     """
     Get database connection details using environment variables. Connection
