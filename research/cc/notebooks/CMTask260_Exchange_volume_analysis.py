@@ -94,7 +94,7 @@ cum_volume.head(3)
 
 # %%
 total_volume_by_exchange = rccvol.get_total_volume_by_exchange(
-    cum_volume, config, avg_daily=False, display_plot=True
+    cum_volume, config, avg_daily=False
 )
 print(total_volume_by_exchange)
 
@@ -103,7 +103,7 @@ print(total_volume_by_exchange)
 
 # %%
 total_volume_by_coins = rccvol.get_total_volume_by_coins(
-    cum_volume, config, avg_daily=False, display_plot=True
+    cum_volume, config, avg_daily=False
 )
 print(total_volume_by_coins)
 
@@ -129,7 +129,7 @@ dd = rccsta.compute_stats_for_universe(config, stats_func)
 dd.head()
 
 
-# %% [markdown]
+# %% [markdown] heading_collapsed=true
 # # OLD CODE
 
 # %% [markdown] heading_collapsed=true

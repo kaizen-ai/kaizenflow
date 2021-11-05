@@ -1,4 +1,11 @@
 # %%
+"""
+Compute crypto-related trading volume statistics.
+
+Import as:
+
+import research.cc.volume as rccvol
+"""
 import pandas as pd
 
 # %%
@@ -34,7 +41,7 @@ def compute_cum_volume(
         as_index=False,
     )
     cum_volume = data_grouped[config["column_names"]["volume"]].sum()
-    # avg_daily_returns are now computed incorrectly (prob. minutely)
+    # TODO(Max): Fix incorrectly computed `avg_daily_returns` (probably minutely).
     cum_volume["avg_daily_volume"] = (
         cum_volume[config["column_names"]["volume"]]
         / data_reset[data_reset[config["column_names"]["volume"]].notna()].shape[
@@ -48,7 +55,7 @@ def get_total_volume_by_coins(
     data: pd.DataFrame,
     config: ccocon.Config,
     avg_daily: bool,
-    display_plot: bool,
+    display_plot: bool = True,
 ) -> pd.Series:
     """
     Compute total trading volume by coins values and plot them on barchart.
@@ -82,7 +89,7 @@ def get_total_volume_by_exchange(
     data: pd.DataFrame,
     config: ccocon.Config,
     avg_daily: bool,
-    display_plot: bool,
+    display_plot: bool = True,
 ) -> pd.Series:
     """
     Compute total trading volume by exchange values and plot them on barchart.
