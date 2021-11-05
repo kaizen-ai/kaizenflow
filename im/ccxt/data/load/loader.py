@@ -144,7 +144,7 @@ class CcxtLoader:
                 data_snapshot,
             )
             # Verify that the tuple's and already loaded data have equal columns.
-            if combined_data:
+            if not combined_data.empty():
                 hdbg.dassert_is(data.columns, combined_data.columns)
             # Append tuple's data to the results df.
             combined_data = combined_data.append(data)
