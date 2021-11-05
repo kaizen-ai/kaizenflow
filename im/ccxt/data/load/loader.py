@@ -13,10 +13,9 @@ import pandas as pd
 import core.pandas_helpers as cpah
 import helpers.datetime_ as hdatetim
 import helpers.dbg as hdbg
-import helpers.hpandas as hpandas
+import helpers.hpandas as hhpandas
 import helpers.s3 as hs3
 import helpers.sql as hsql
-
 import im.data.universe as imdauni
 
 _LOG = logging.getLogger(__name__)
@@ -297,15 +296,13 @@ class CcxtLoader:
         #
         if self._remove_dups:
             # Remove full duplicates.
-            data = hpandas.drop_duplicates(data, ignore_index=True)
+            data = hhpandas.drop_duplicates(data, ignore_index=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
         #
         if self._resample_to_1_min:
             # Resample to 1 minute.
-            data = hpandas.resample_df(
-                data, "T"
-            )
+            data = hhpandas.resample_df(data, "T")
         # Add columns with exchange id and currency pair.
         data["exchange_id"] = exchange_id
         data["currency_pair"] = currency_pair
