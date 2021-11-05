@@ -77,6 +77,33 @@ def get_connection_from_string(
     return connection, cursor
 
 
+def check_db_connection(
+    db_name: str,
+    port: str,
+    host: str,
+) -> None:
+    """
+    Verify that the database is available.
+    """
+    _LOG.info("Checking the database connection")
+    while True:
+        _LOG.info("Waiting for PostgreSQL to become available...")
+        cmd = "pg_isready -d %s -p %s -h %s"
+        rc = hsyint.system(
+            cmd
+            % (
+                db_name,
+                port,
+                host,
+            ),
+            abort_on_error=False,
+        )
+        time.sleep(1)
+        if rc == 0:
+            _LOG.info("PostgreSQL is available")
+            break
+
+
 # #############################################################################
 
 
