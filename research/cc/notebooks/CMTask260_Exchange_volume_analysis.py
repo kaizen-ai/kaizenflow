@@ -65,7 +65,7 @@ def get_cmtask260_config() -> ccocon.Config:
     config["column_names"]["volume"] = "volume"
     config["column_names"]["currency_pair"] = "currency_pair"
     config["column_names"]["exchange"] = "exchange_id"
-    config["column_names"]["avg_daily_volume"] = "avg_daily_volume"
+    config["column_names"]["close"] = "close"
     return config
 
 config = get_cmtask260_config()
@@ -87,19 +87,22 @@ cum_volume = rccsta.compute_stats_for_universe(
 )
 
 # %%
+_LOG.info("The number of exchanges - currency pairs =%s", cum_volume.shape[0])
 cum_volume.head(3)
 
 # %% [markdown]
 # # Compute total volume per exchange
 
 # %%
-rccvol.get_total_volume_by_exchange(cum_volume,config,avg_daily=False)
+total_volume_by_exchange = rccvol.get_total_volume_by_exchange(cum_volume,config,avg_daily=False,display_plot=True)
+print(total_volume_by_exchange)
 
 # %% [markdown]
 # # Compute total volume per currency
 
 # %%
-rccvol.get_total_volume_by_coins(cum_volume,config,avg_daily=False)
+total_volume_by_coins = rccvol.get_total_volume_by_coins(cum_volume,config,avg_daily=False,display_plot=True)
+print(total_volume_by_coins)
 
 
 # %% [markdown]
