@@ -90,16 +90,8 @@ def check_db_connection(
     _LOG.debug("db_name=%s, port=%s, host=%s", db_name, port, host)
     while True:
         _LOG.info("Waiting for PostgreSQL to become available...")
-        cmd = "pg_isready -d %s -p %s -h %s"
-        rc = hsyint.system(
-            cmd
-            % (
-                db_name,
-                port,
-                host,
-            ),
-            abort_on_error=False,
-        )
+        cmd = f"pg_isready -d {db_name} -p {port} -h {host}"
+        rc = hsyint.system(cmd,abort_on_error=False)
         time.sleep(1)
         if rc == 0:
             _LOG.info("PostgreSQL is available")
