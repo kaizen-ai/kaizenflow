@@ -13,7 +13,8 @@ import psycopg2 as psycop
 import psycopg2.sql as psql
 
 import helpers.timer as htimer
-
+import helpers.system_interaction as hsyint
+import time
 _LOG = logging.getLogger(__name__)
 
 
@@ -85,7 +86,7 @@ def check_db_connection(
     """
     Verify that the database is available.
     """
-    _LOG.debug("db_name=%s, port=%s, host=%s`", db_name, port, host)
+    _LOG.debug("db_name=%s, port=%s, host=%s", db_name, port, host)
     while True:
         _LOG.info("Waiting for PostgreSQL to become available...")
         cmd = "pg_isready -d %s -p %s -h %s"
