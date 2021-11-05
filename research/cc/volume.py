@@ -1,4 +1,3 @@
-# %%
 """
 Compute crypto-related trading volume statistics.
 
@@ -8,12 +7,10 @@ import research.cc.volume as rccvol
 """
 import pandas as pd
 
-# %%
 import core.config.config_ as ccocon
 import core.plotting as cplot
 
 
-# %%
 def compute_cum_volume(
     data: pd.DataFrame,
     config: ccocon.Config,
