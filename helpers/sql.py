@@ -6,15 +6,16 @@ import helpers.sql as hsql
 
 import logging
 import os
+import time
 from typing import List, Optional, Tuple, Union
 
 import pandas as pd
 import psycopg2 as psycop
 import psycopg2.sql as psql
 
-import helpers.timer as htimer
 import helpers.system_interaction as hsyint
-import time
+import helpers.timer as htimer
+
 _LOG = logging.getLogger(__name__)
 
 

@@ -6,10 +6,8 @@ import im.common.db.utils as imcodbuti
 
 import logging
 import os
-import time
 
 import helpers.sql as hsql
-import helpers.system_interaction as hsyint
 
 _LOG = logging.getLogger(__name__)
 
