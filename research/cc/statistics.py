@@ -1,4 +1,3 @@
-# %%
 """
 Compute crypto-related statistics.
 
@@ -9,11 +8,9 @@ import research.cc.statistics as rccsta
 import logging
 from typing import Callable, Dict, List, Union
 
-# %%
 import numpy as np
 import pandas as pd
 
-# %%
 import core.config.config_ as ccocon
 import core.statistics as csta
 import helpers.dbg as hdbg
@@ -22,11 +19,9 @@ import im.ccxt.data.load.loader as imccdaloloa
 import im.cryptodatadownload.data.load.loader as imcrdaloloa
 import im.data.universe as imdauni
 
-# %%
 _LOG = logging.getLogger(__name__)
 
 
-# %%
 def compute_start_end_table(
     price_data: pd.DataFrame,
     config: ccocon.Config,
@@ -97,7 +92,6 @@ def compute_start_end_table(
     return start_end_table
 
 
-# %%
 # TODO(Grisha): move `get_loader_for_vendor` out in #269.
 # TODO(Grisha): use the abstract class in #313.
 def get_loader_for_vendor(
@@ -125,7 +119,6 @@ def get_loader_for_vendor(
     return loader
 
 
-# %%
 def compute_stats_for_universe(
     config: ccocon.Config,
     stats_func: Callable,
@@ -167,3 +160,112 @@ def compute_stats_for_universe(
     # Concatenate the results.
     stats_table = pd.concat(stats_data, ignore_index=True)
     return stats_table
+
+
+def find_longest_not_nan_sequence(
+    data: Union[pd.Series, pd.DataFrame]
+) -> Union[pd.Series, pd.DataFrame]:
+    """
+    Find the longest sequence of not-NaN values in a series or dataframe.
+
+    For a dataframe the longest sequence of rows with no NaN values is returned.
+
+    :param data: input series or dataframe
+    :return: longest sequence of not-NaN values
+    """
+    # Verify that index is monotonically increasing.
+    hhpandas.dassert_strictly_increasing_index(data)
+    # Get index frequency.
+    freq = pd.infer_freq(data.index)
+    # Get indices of only not-NaN values.
+    not_nan_index = np.array(data.dropna().index)
+    # Get a mask to distinguish not-NaN values that are further from their
+    # not-NaN precedent than 1 frequency time step.
+    mask = np.where(np.diff(not_nan_index) != pd.Timedelta(1, freq))[0] + 1
+    # Get the longest monotonically increasing sequence of indices.
+    longest_not_nan_index = max(np.split(not_nan_index, mask), key=len)
+    # Get the longest sequence of not-NaN values.
+    longest_not_nan_seq = data.loc[longest_not_nan_index].copy()
+    return longest_not_nan_seq
+
+
+def compute_longest_not_nan_sequence_stats(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Compute stats about the longest not-NaN sequence in each dataframe column.
+
+    :param df: input dataframe
+    :return: stats dataframe
+    """
+    # Initiate results dict.
+    res_dict = {}
+    # Iterate over each series in columns.
+    for colname in df.columns:
+        col_srs = df[colname].copy()
+        # Remove leading and trailing NaNs.
+        first_idx = col_srs.first_valid_index()
+        last_idx = col_srs.last_valid_index()
+        col_srs = col_srs[first_idx:last_idx].copy()
+        # Get the longest not-NaN sequence in a series.
+        longest_not_nan_seq = find_longest_not_nan_sequence(col_srs)
+        # Compute necessary stats and put in a list.
+        stats = [
+            100 * (1 - csta.compute_frac_nan(col_srs)),
+            (last_idx - first_idx).days,
+            100 * (len(longest_not_nan_seq) / len(col_srs)),
+            longest_not_nan_seq.index[0],
+            longest_not_nan_seq.index[-1],
+        ]
+        # Append stats list to the result dict under a column name key.
+        res_dict[colname] = stats
+    # Build a dataframe from the result dict.
+    res_df = pd.DataFrame.from_dict(
+        res_dict,
+        orient="index",
+        columns=[
+            "coverage",
+            "longest_seq_days_available",
+            "share_of_longest_seq",
+            "longest_seq_start_date",
+            "longest_seq_end_date",
+        ],
+    )
+    # Sort by coverage and share of longest not-NaN sequence.
+    res_df = res_df.sort_values(by=["coverage", "share_of_longest_seq"])
+    return res_df
+
+
+def get_ccxt_price_df(
+    ccxt_universe: Dict[str, List[str]],
+    ccxt_loader: imccdaloloa.CcxtLoader,
+    config: ccocon.Config,
+) -> pd.DataFrame:
+    """
+    Read price data from CCXT for a given universe using the given loader.
+
+    :param ccxt_universe: CCXT trade universe
+    :param ccxt_loader: CCXT loader
+    :param config: parameters config
+    :return: price data for a given universe
+    """
+    # Initialize lists of column names and returns series.
+    colnames = []
+    price_srs_list = []
+    # Iterate over exchange ids and currency pairs.
+    for exchange_id in ccxt_universe:
+        for curr_pair in ccxt_universe[exchange_id]:
+            # Construct a colname from exchange id and currency pair.
+            colname = " ".join([exchange_id, curr_pair])
+            colnames.append(colname)
+            # Extract historical data.
+            data = ccxt_loader.read_data_from_filesystem(
+                exchange_id=exchange_id,
+                currency_pair=curr_pair,
+                data_type="OHLCV",
+            )
+            # Get series of prices and append to the list.
+            price_srs = data[config["data"]["close_price_col_name"]]
+            price_srs_list.append(price_srs)
+    # Construct a dataframe and assign column names.
+    df = pd.concat(price_srs_list, axis=1)
+    df.columns = colnames
+    return df
