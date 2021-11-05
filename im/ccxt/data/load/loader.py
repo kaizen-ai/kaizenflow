@@ -137,7 +137,7 @@ class CcxtLoader:
         combined_data = pd.DataFrame(dtype="object")
         # Load data for each exchange-currency tuple and append to results df.
         for exchange_currency_tuple in universe:
-            data = self.read_universe_data_from_filesystem(
+            data = self.read_data_from_filesystem(
                 exchange_currency_tuple.exchange_id,
                 exchange_currency_tuple.currency_pair,
                 data_type,
