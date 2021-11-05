@@ -6,7 +6,7 @@ import im.ccxt.data.load.loader as imccdaloloa
 
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -115,7 +115,7 @@ class CcxtLoader:
 
     def read_universe_data_from_filesystem(
         self,
-        universe: Optional[str, List[imdauni.ExchangeCurrencyTuple]],
+        universe: Union[str, List[imdauni.ExchangeCurrencyTuple]],
         data_type: str,
         data_snapshot: Optional[str] = None,
     ) -> pd.DataFrame:
