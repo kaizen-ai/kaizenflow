@@ -132,7 +132,7 @@ class CcxtLoader:
         # Load all the corresponding exchange-currency tuples if a universe
         # version is provided.
         if isinstance(universe, str):
-            universe = imdauni.get_vendor_universe_as_tuples(universe)
+            universe = imdauni.get_vendor_universe_as_tuples(universe, "CCXT")
         # Initialize results df.
         combined_data = pd.DataFrame(dtype="object")
         # Load data for each exchange-currency tuple and append to results df.
