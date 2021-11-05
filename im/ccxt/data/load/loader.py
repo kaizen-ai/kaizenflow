@@ -6,7 +6,7 @@ import im.ccxt.data.load.loader as imccdaloloa
 
 import logging
 import os
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
