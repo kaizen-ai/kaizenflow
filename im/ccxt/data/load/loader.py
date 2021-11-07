@@ -152,7 +152,9 @@ class CcxtLoader:
             )
             combined_data = combined_data.append(data)
         # Sort results by exchange id and currency pair.
-        combined_data.sort_values(by=["exchange_id", "currency_pair"], inplace=True)
+        combined_data.sort_values(
+            by=["exchange_id", "currency_pair"], inplace=True
+        )
         return combined_data
 
     def read_data_from_filesystem(
