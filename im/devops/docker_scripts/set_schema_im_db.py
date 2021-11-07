@@ -37,9 +37,13 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level)
-    connection, _ = hsql.get_connection_from_env_vars()
     # Verify that the database is available.
-    imcodbuti.check_db_connection(connection=connection)
+    hsql.check_db_connection(
+        os.environ["POSTRES_DB"],
+        os.environ["POSTRES_HOST"],
+        os.environ["POSTRES_PORT"],
+    )
+    connection, _ = hsql.get_connection_from_env_vars()
     # Set schema for the database.
     _LOG.info("Setting schema for DB `%s`...", os.environ["POSTGRES_DB"])
     imcodbcrdb.create_all_tables(connection)
