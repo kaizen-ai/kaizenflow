@@ -76,23 +76,26 @@ class TestReadUniverseDataFromFilesystem(huntes.TestCase):
             universe="v0_3", data_type="OHLCV"
         )
         # Check output.
+        expected_length = 28209782
+        expected_exchange_ids = ["binance", "ftx", "gateio", "kucoin"]
+        expected_currency_pairs = [
+            "ADA/USDT",
+            "AVAX/USDT",
+            "BNB/USDT",
+            "BTC/USDT",
+            "DOGE/USDT",
+            "EOS/USDT",
+            "ETH/USDT",
+            "FIL/USDT",
+            "LINK/USDT",
+            "SOL/USDT",
+            "XRP/USDT",
+        ]
         self._check_output(
-            actual=actual,
-            expected_length=28209782,
-            expected_exchange_ids=["binance", "ftx", "gateio", "kucoin"],
-            expected_currency_pairs=[
-                "ADA/USDT",
-                "AVAX/USDT",
-                "BNB/USDT",
-                "BTC/USDT",
-                "DOGE/USDT",
-                "EOS/USDT",
-                "ETH/USDT",
-                "FIL/USDT",
-                "LINK/USDT",
-                "SOL/USDT",
-                "XRP/USDT",
-            ],
+            actual,
+            expected_length,
+            expected_exchange_ids,
+            expected_currency_pairs,
         )
 
     @pytest.mark.slow("About 40 seconds.")
@@ -116,11 +119,14 @@ class TestReadUniverseDataFromFilesystem(huntes.TestCase):
             universe=input_universe, data_type="OHLCV"
         )
         # Check output.
+        expected_length = 6961481
+        expected_exchange_ids = ["binance", "kucoin"]
+        expected_currency_pairs = ["BTC/USDT", "ETH/USDT", "FIL/USDT"]
         self._check_output(
-            actual=actual,
-            expected_length=6961481,
-            expected_exchange_ids=["binance", "kucoin"],
-            expected_currency_pairs=["BTC/USDT", "ETH/USDT", "FIL/USDT"],
+            actual,
+            expected_length,
+            expected_exchange_ids,
+            expected_currency_pairs,
         )
 
     def test3(self) -> None:
@@ -135,11 +141,14 @@ class TestReadUniverseDataFromFilesystem(huntes.TestCase):
             universe="small", data_type="OHLCV"
         )
         # Check output.
+        expected_length = 190046
+        expected_exchange_ids = ["gateio", "kucoin"]
+        expected_currency_pairs = ["SOL/USDT", "XRP/USDT"]
         self._check_output(
-            actual=actual,
-            expected_length=190046,
-            expected_exchange_ids=["gateio", "kucoin"],
-            expected_currency_pairs=["SOL/USDT", "XRP/USDT"],
+            actual,
+            expected_length,
+            expected_exchange_ids,
+            expected_currency_pairs,
         )
 
     def _check_output(
