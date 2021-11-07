@@ -1,5 +1,7 @@
 import os
+from typing import List
 
+import pandas as pd
 import pytest
 
 import helpers.s3 as hs3
@@ -61,7 +63,36 @@ class TestGetFilePath(huntes.TestCase):
 
 
 class TestReadUniverseDataFromFilesystem(huntes.TestCase):
-    @pytest.mark.slow
+    def _check_output(
+        self,
+        actual: pd.DataFrame,
+        expected_length: int,
+        expected_exchange_ids: List[str],
+        expected_currency_pairs: List[str],
+    ) -> None:
+        """
+        Verify that actual outcome dataframe matches the expected one.
+
+        :param actual: actual outcome dataframe
+        :param expected_length: expected outcome dataframe length
+        :param expected_exchange_ids: list of expected exchange ids
+        :param expected_currency_pairs: list of expected currency pairs
+        """
+        # Check output df length.
+        self.assert_equal(str(expected_length), str(actual.shape[0]))
+        # Check unique exchange ids in the output df.
+        actual_exchange_ids = sorted(list(actual["exchange_id"].unique()))
+        self.assert_equal(str(actual_exchange_ids), str(expected_exchange_ids))
+        # Check unique currency pairs in the output df.
+        actual_currency_pairs = sorted(list(actual["currency_pair"].unique()))
+        self.assert_equal(
+            str(actual_currency_pairs), str(expected_currency_pairs)
+        )
+        # Check the output values.
+        actual_string = huntes.convert_df_to_json_string(actual)
+        self.check_string(actual_string)
+
+    @pytest.mark.slow("About 3.5 minutes.")
     def test1(self) -> None:
         """
         Test that all files from universe version are being read correctly.
@@ -73,35 +104,27 @@ class TestReadUniverseDataFromFilesystem(huntes.TestCase):
         actual = ccxt_loader.read_universe_data_from_filesystem(
             universe="v0_3", data_type="OHLCV"
         )
-        # Check output df length.
-        self.assert_equal(str(28209782), str(actual.shape[0]))
-        # Check unique exchange ids in the output df.
-        actual_exchange_ids = sorted(list(actual["exchange_id"].unique()))
-        expected_exchange_ids = ["binance", "ftx", "gateio", "kucoin"]
-        self.assert_equal(str(actual_exchange_ids), str(expected_exchange_ids))
-        # Check unique currency pairs in the output df.
-        actual_currency_pairs = sorted(list(actual["currency_pair"].unique()))
-        expected_currency_pairs = [
-            "ADA/USDT",
-            "AVAX/USDT",
-            "BNB/USDT",
-            "BTC/USDT",
-            "DOGE/USDT",
-            "EOS/USDT",
-            "ETH/USDT",
-            "FIL/USDT",
-            "LINK/USDT",
-            "SOL/USDT",
-            "XRP/USDT",
-        ]
-        self.assert_equal(
-            str(actual_currency_pairs), str(expected_currency_pairs)
+        # Check output.
+        self._check_output(
+            actual=actual,
+            expected_length=28209782,
+            expected_exchange_ids=["binance", "ftx", "gateio", "kucoin"],
+            expected_currency_pairs=[
+                "ADA/USDT",
+                "AVAX/USDT",
+                "BNB/USDT",
+                "BTC/USDT",
+                "DOGE/USDT",
+                "EOS/USDT",
+                "ETH/USDT",
+                "FIL/USDT",
+                "LINK/USDT",
+                "SOL/USDT",
+                "XRP/USDT",
+            ],
         )
-        # Check the output values.
-        actual_string = huntes.convert_df_to_json_string(actual)
-        self.check_string(actual_string)
 
-    @pytest.mark.slow
+    @pytest.mark.slow("About 40 seconds.")
     def test2(self) -> None:
         """
         Test that data for provided list of tuples is being read correctly.
@@ -121,21 +144,32 @@ class TestReadUniverseDataFromFilesystem(huntes.TestCase):
         actual = ccxt_loader.read_universe_data_from_filesystem(
             universe=input_universe, data_type="OHLCV"
         )
-        # Check output df length.
-        self.assert_equal(str(6961481), str(actual.shape[0]))
-        # Check unique exchange ids in the output df.
-        actual_exchange_ids = sorted(list(actual["exchange_id"].unique()))
-        expected_exchange_ids = ["binance", "kucoin"]
-        self.assert_equal(str(actual_exchange_ids), str(expected_exchange_ids))
-        # Check unique currency pairs in the output df.
-        actual_currency_pairs = sorted(list(actual["currency_pair"].unique()))
-        expected_currency_pairs = ["BTC/USDT", "ETH/USDT", "FIL/USDT"]
-        self.assert_equal(
-            str(actual_currency_pairs), str(expected_currency_pairs)
+        # Check output.
+        self._check_output(
+            actual=actual,
+            expected_length=6961481,
+            expected_exchange_ids=["binance", "kucoin"],
+            expected_currency_pairs=["BTC/USDT", "ETH/USDT", "FIL/USDT"],
         )
-        # Check the output values.
-        actual_string = huntes.convert_df_to_json_string(actual)
-        self.check_string(actual_string)
+
+    def test3(self) -> None:
+        """
+        Test that all files from small test universe are being read correctly.
+        """
+        # Initialize loader and get actual result.
+        ccxt_loader = imccdaloloa.CcxtLoader(
+            root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+        )
+        actual = ccxt_loader.read_universe_data_from_filesystem(
+            universe="small", data_type="OHLCV"
+        )
+        # Check output.
+        self._check_output(
+            actual=actual,
+            expected_length=190046,
+            expected_exchange_ids=["gateio", "kucoin"],
+            expected_currency_pairs=["SOL/USDT", "XRP/USDT"],
+        )
 
 
 # TODO(*): Consider to factor out the class calling in a `def _get_loader()`.

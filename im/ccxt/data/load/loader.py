@@ -121,6 +121,14 @@ class CcxtLoader:
         """
         Load data from S3 for specified universe.
 
+        Output data example:
+            timestamp                  open     high     low      close    volume    epoch          currency_pair exchange_id
+            2018-08-16 20:00:00-04:00  6316.01  6319.49  6310.17  6311.36  9.967395  1534464000000  BTC/USDT      binance
+            2018-08-16 20:01:00-04:00  6311.36  6311.59  6301.69  6302.59  16.78126  1534464060000  BTC/USDT      binance
+            ...
+            2021-09-08 20:00:00-04:00  1.10343  1.10387  1.10343  1.10273  31222.1   1631145600000  XRP/USDT      kucoin
+            2021-09-08 20:02:00-04:00  1.10292  1.10446  1.10284  1.10405  9423.76   1631145720000  XRP/USDT      kucoin
+
         :param universe: CCXT universe version or a list of exchange-currency
             tuples to load data for
         :param data_type: OHLCV or trade, bid/ask data
@@ -143,6 +151,8 @@ class CcxtLoader:
                 data_snapshot,
             )
             combined_data = combined_data.append(data)
+        # Sort results by exchange id and currency pair.
+        combined_data.sort_values(by=["exchange_id", "currency_pair"], inplace=True)
         return combined_data
 
     def read_data_from_filesystem(
