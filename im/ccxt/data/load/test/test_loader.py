@@ -63,35 +63,6 @@ class TestGetFilePath(huntes.TestCase):
 
 
 class TestReadUniverseDataFromFilesystem(huntes.TestCase):
-    def _check_output(
-        self,
-        actual: pd.DataFrame,
-        expected_length: int,
-        expected_exchange_ids: List[str],
-        expected_currency_pairs: List[str],
-    ) -> None:
-        """
-        Verify that actual outcome dataframe matches the expected one.
-
-        :param actual: actual outcome dataframe
-        :param expected_length: expected outcome dataframe length
-        :param expected_exchange_ids: list of expected exchange ids
-        :param expected_currency_pairs: list of expected currency pairs
-        """
-        # Check output df length.
-        self.assert_equal(str(expected_length), str(actual.shape[0]))
-        # Check unique exchange ids in the output df.
-        actual_exchange_ids = sorted(list(actual["exchange_id"].unique()))
-        self.assert_equal(str(actual_exchange_ids), str(expected_exchange_ids))
-        # Check unique currency pairs in the output df.
-        actual_currency_pairs = sorted(list(actual["currency_pair"].unique()))
-        self.assert_equal(
-            str(actual_currency_pairs), str(expected_currency_pairs)
-        )
-        # Check the output values.
-        actual_string = huntes.convert_df_to_json_string(actual)
-        self.check_string(actual_string)
-
     @pytest.mark.slow("About 3.5 minutes.")
     def test1(self) -> None:
         """
@@ -170,6 +141,35 @@ class TestReadUniverseDataFromFilesystem(huntes.TestCase):
             expected_exchange_ids=["gateio", "kucoin"],
             expected_currency_pairs=["SOL/USDT", "XRP/USDT"],
         )
+
+    def _check_output(
+        self,
+        actual: pd.DataFrame,
+        expected_length: int,
+        expected_exchange_ids: List[str],
+        expected_currency_pairs: List[str],
+    ) -> None:
+        """
+        Verify that actual outcome dataframe matches the expected one.
+
+        :param actual: actual outcome dataframe
+        :param expected_length: expected outcome dataframe length
+        :param expected_exchange_ids: list of expected exchange ids
+        :param expected_currency_pairs: list of expected currency pairs
+        """
+        # Check output df length.
+        self.assert_equal(str(expected_length), str(actual.shape[0]))
+        # Check unique exchange ids in the output df.
+        actual_exchange_ids = sorted(list(actual["exchange_id"].unique()))
+        self.assert_equal(str(actual_exchange_ids), str(expected_exchange_ids))
+        # Check unique currency pairs in the output df.
+        actual_currency_pairs = sorted(list(actual["currency_pair"].unique()))
+        self.assert_equal(
+            str(actual_currency_pairs), str(expected_currency_pairs)
+        )
+        # Check the output values.
+        actual_string = huntes.convert_df_to_json_string(actual)
+        self.check_string(actual_string)
 
 
 # TODO(*): Consider to factor out the class calling in a `def _get_loader()`.
