@@ -18,7 +18,12 @@ source devops/docker_run/setenv.sh
 # Allow working with files outside a container.
 #umask 000
 
+# Need for database tests.
+sudo mkdir /etc/docker
+sudo echo '{ "storage-driver": "vfs" }' | sudo tee -a /etc/docker/daemon.json
+
 # Start Docker Engine.
+
 sudo /etc/init.d/docker start
 sudo /etc/init.d/docker status
 
