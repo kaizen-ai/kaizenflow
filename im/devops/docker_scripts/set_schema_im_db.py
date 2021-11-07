@@ -43,7 +43,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Set schema for the database.
     _LOG.info("Setting schema for DB `%s`...", os.environ["POSTGRES_DB"])
     imcodbcrdb.create_all_tables(connection)
-    imcodbcrdb.test_tables(connection)
     _LOG.info("Database `%s` is ready to use.", os.environ["POSTGRES_DB"])
 
 
