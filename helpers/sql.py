@@ -98,7 +98,7 @@ def check_db_connection(
             break
 
 
-def db_connection_to_str(connection: hsql.DbConnection) -> str:
+def db_connection_to_str(connection: DbConnection) -> str:
     """
     Get database connection details using connection. Connection
     details include:
