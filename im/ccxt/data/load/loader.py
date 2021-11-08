@@ -77,7 +77,8 @@ class CcxtLoader:
         self._aws_profile = aws_profile
         self._remove_dups = remove_dups
         self._resample_to_1_min = resample_to_1_min
-        self._s3fs = hs3.get_s3fs(self._aws_profile)
+        if self._aws_profile:
+            self._s3fs = hs3.get_s3fs(self._aws_profile)
         # Specify supported data types to load.
         self._data_types = ["ohlcv"]
 
