@@ -1,6 +1,6 @@
 import logging
 
-from psycopg2.errors import InvalidCatalogName
+import psycopg2.errors as perrors
 
 import helpers.sql as hsql
 import helpers.system_interaction as hsyint
@@ -13,11 +13,12 @@ _LOG = logging.getLogger(__name__)
 class TestCreateDB(huntes.TestCase):
     def setUp(self):
         """
-        Bring up the DB.
+        Initialize the test database inside test container 
         """
-
         super().setUp()
-        cmd = "sudo docker-compose --file im/devops/compose/docker-compose.yml up -d im_postgres_local"
+        cmd = ("sudo docker-compose "
+               "--file im/devops/compose/docker-compose.yml "
+               "up -d im_postgres_local")
         hsyint.system(cmd, suppress_output=False)
         dbname = "im_postgres_db_local"
         host = "localhost"
@@ -39,14 +40,18 @@ class TestCreateDB(huntes.TestCase):
 
     def tearDown(self):
         """
-        Bring up the DB.
+        Kill the test database
         """
-        cmd = "sudo docker-compose --file im/devops/compose/docker-compose.yml down -v"
+        cmd = ("sudo docker-compose "
+               "--file im/devops/compose/docker-compose.yml down -v")
         self.connection.close()
         hsyint.system(cmd, suppress_output=False)
         super().tearDown()
 
     def test_create_all_tables1(self):
+        """
+        Verify that all necessary tables are created inside the DB.
+        """
         imcodbcrdb.create_all_tables(self.connection)
         expected = sorted(
             [
@@ -70,15 +75,31 @@ class TestCreateDB(huntes.TestCase):
         self.assertEqual(actual, expected)
 
     def test_remove_database1(self):
+        """
+        Remove random database
+        """
         db_names = hsql.get_db_names(self.connection)
-        before = len(db_names)
-        #later change to env
+        initial_db_num = len(db_names)
+        #TODO(Dan3): Change to using the env file.
         db_names.remove('im_postgres_db_local')
         if db_names:
             imcodbcrdb.remove_database(self.connection, db_names[0])
-            after = len(hsql.get_db_names(self.connection))
-            self.assertLess(after, before)
+            result_db_num = len(hsql.get_db_names(self.connection))
+            self.assertLess(initial_db_num, result_db_num)
+
+    def test_remove_database2(self):
+        """
+        Create db_to_remove and removing it
+        """
+        imcodbcrdb.create_database(self.connection, "db_to_remove")
+        db_list_before = "db_to_remove" in hsql.get_db_names(self.connection)
+        imcodbcrdb.remove_database(self.connection, "db_to_remove")
+        db_list_after = "db_to_remove" not in hsql.get_db_names(self.connection)
+        self.assertEqual(db_list_before, db_list_after)
 
     def test_remove_database_invalid(self):
-        with self.assertRaises(InvalidCatalogName):
+        """
+        Passing invalid db name.
+        """
+        with self.assertRaises(perrors.InvalidCatalogName):
             imcodbcrdb.remove_database(self.connection, "db does not exist")
