@@ -36,7 +36,6 @@ class TestCreateDB(huntes.TestCase):
             password,
             autocommit=True,
         )
-        _LOG.info("done...")
 
     def tearDown(self):
         """
@@ -89,15 +88,12 @@ class TestCreateDB(huntes.TestCase):
 
     def test_remove_database2(self):
         """
-        Create database 'test_db_to_remove' and removing it.
+        Create database 'test_db_to_remove_xqw' and removing it.
         """
-        imcodbcrdb.create_database(self.connection, db="test_db_to_remove", force=force)
-        db_list_before =  hsql.get_db_names(self.connection)
-        is_included_before = "test_db_to_remove" in db_list_before
-        imcodbcrdb.remove_database(self.connection, "test_db_to_remove")
-        db_list_after = hsql.get_db_names(self.connection)
-        is_excluded_after = "test_db_to_remove" not in db_list_after
-        self.assertEqual(is_included_before, is_excluded_after)
+        imcodbcrdb.create_database(self.connection, new_db="test_db_to_remove_xqw")
+        imcodbcrdb.remove_database(self.connection, "test_db_to_remove_xqw")
+        db_list = hsql.get_db_names(self.connection)
+        self.assertNotIn("test_db_to_remove_xqw", db_list)
 
     def test_remove_database_invalid(self):
         """
