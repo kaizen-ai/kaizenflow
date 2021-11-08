@@ -128,7 +128,7 @@ class CcxtLoader:
         Output data is indexed by timestamp and contains the columns open,
         high, low, close, volume, epoch, currency_pair, exchange_id, e.g.,
         ```
-        timestamp                  open        epoch          currency_pair exchange_id
+                                   open        epoch          currency_pair exchange_id
         2018-08-16 20:00:00-04:00  6316.01 ... 1534464000000  BTC/USDT      binance
         2018-08-16 20:01:00-04:00  6311.36     1534464060000  BTC/USDT      binance
         ...
@@ -256,17 +256,23 @@ class CcxtLoader:
         """
         Transform CCXT data loaded from S3.
 
-        Input data example:
-            timestamp      open     high     low      close    volume
-            1631145600000  3499.01  3499.49  3496.17  3496.36  346.4812
-            1631145660000  3496.36  3501.59  3495.69  3501.59  401.9576
-            1631145720000  3501.59  3513.10  3499.89  3513.09  579.5656
+        Input data is indexed with numbers and contains the columns timestamp,
+        open, high, low, close, volume e.g.,
+        ```
+             timestamp      open     high     low      close    volume
+        0    1631145600000  3499.01  3499.49  3496.17  3496.36  346.4812
+        1    1631145660000  3496.36  3501.59  3495.69  3501.59  401.9576
+        2    1631145720000  3501.59  3513.10  3499.89  3513.09  579.5656
+        ```
 
-        Output data example:
-            timestamp                  open     high     low      close    volume    epoch          currency_pair exchange_id
-            2021-09-08 20:00:00-04:00  3499.01  3499.49  3496.17  3496.36  346.4812  1631145600000  ETH/USDT      binance
-            2021-09-08 20:01:00-04:00  3496.36  3501.59  3495.69  3501.59  401.9576  1631145660000  ETH/USDT      binance
-            2021-09-08 20:02:00-04:00  3501.59  3513.10  3499.89  3513.09  579.5656  1631145720000  ETH/USDT      binance
+        Output data is indexed by timestamp and contains the columns open,
+        high, low, close, volume, epoch, currency_pair, exchange_id, e.g.,
+        ```
+                                   open        epoch          currency_pair exchange_id
+        2021-09-08 20:00:00-04:00  3499.01 ... 1631145600000  ETH/USDT      binance
+        2021-09-08 20:01:00-04:00  3496.36     1631145660000  ETH/USDT      binance
+        2021-09-08 20:02:00-04:00  3501.59     1631145720000  ETH/USDT      binance
+        ```
 
         :param data: dataframe with CCXT data from S3
         :param data_type: OHLCV or trade, bid/ask data
