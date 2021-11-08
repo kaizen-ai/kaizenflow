@@ -1,6 +1,8 @@
 import logging
 from typing import List
 
+import pytest
+
 import helpers.dbg as hdbg
 import helpers.printing as hprintin
 import helpers.traceback_helper as htrhel
@@ -9,6 +11,7 @@ import helpers.unit_test as huntes
 _LOG = logging.getLogger(__name__)
 
 
+@pytest.mark.skip(reason="See cryptomtc/cmamp#321")
 class Test_Traceback1(huntes.TestCase):
     def test_parse1(self) -> None:
         """

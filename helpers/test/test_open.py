@@ -1,5 +1,7 @@
 import logging
 
+import pytest
+
 import helpers.open as hopen
 import helpers.unit_test as huntes
 
@@ -34,6 +36,7 @@ class Test_open_unknown(huntes.TestCase):
         self.assertIn("UnknownOS", str(cm.exception))
 
 
+@pytest.mark.skip(reason="See cryptomtc/cmamp#321")
 class Test_open_html(huntes.TestCase):
     """
     Test different command correctness for opening html file.

@@ -1098,7 +1098,7 @@ def compute_linkage(df: pd.DataFrame, method: Optional[str] = None) -> np.ndarra
     method = method or "average"
     corr = df.corr()
     linkage = schier.linkage(corr, method=method)
-    linkage = cast(np.darray, linkage)
+    linkage = cast(np.ndarray, linkage)
     return linkage
 
 

@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.cryptodatadownload.data.load.loader as crdall
+import im.cryptodatadownload.data.load.loader as imcrdaloloa
 """
 
 import logging
@@ -10,72 +10,40 @@ from typing import Optional
 
 import pandas as pd
 
-import core.pandas_helpers as cphelp
-import helpers.datetime_ as hdatet
-import helpers.dbg as dbg
-import helpers.git as hgit
-import helpers.io_ as hio
+import core.pandas_helpers as cpah
+import helpers.datetime_ as hdatetim
+import helpers.dbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
-
-# Path to the data about downloaded currencies from the spreadsheet in CMTask41.
-_DOWNLOADED_CURRENCIES_PATH = os.path.join(
-    hgit.get_amp_abs_path(), "im/data/downloaded_currencies.json"
-)
 
 # Latest historical data snapsot.
 _LATEST_DATA_SNAPSHOT = "20210924"
 
 
-def _get_file_path(
-    data_snapshot: str,
-    exchange_id: str,
-    currency_pair: str,
-) -> str:
-    """
-    Get path to a file with CDD data from a content root.
-
-    File path is constructed in the following way:
-    `cryptodatadownload/<snapshot>/<exchange_id>/<currency_pair>.csv.gz`.
-
-    :param data_snapshot: snapshot of datetime when data was loaded, e.g. "20210924"
-    :param exchange_id: CDD exchange id, e.g. "binance"
-    :param currency_pair: currency pair `<currency1>/<currency2>`, e.g. "BTC/USDT"
-    :return: path to a file with CDD data
-    """
-    # Extract data about downloaded currencies for CDD.
-    downloaded_currencies_info = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)["CDD"]
-    # Verify that data for the input exchange id was downloaded.
-    dbg.dassert_in(
-        exchange_id,
-        downloaded_currencies_info.keys(),
-        msg="Data for exchange id='%s' was not downloaded" % exchange_id,
-    )
-    # Verify that data for the input exchange id and currency pair was
-    # downloaded.
-    downloaded_currencies = downloaded_currencies_info[exchange_id]
-    dbg.dassert_in(
-        currency_pair,
-        downloaded_currencies,
-        msg="Data for exchange id='%s', currency pair='%s' was not downloaded"
-        % (exchange_id, currency_pair),
-    )
-    file_path = f"cryptodatadownload/{data_snapshot}/{exchange_id}/{currency_pair.replace('/', '_')}.csv.gz"
-    return file_path
-
-
 class CddLoader:
-    def __init__(self, root_dir: str, aws_profile: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        root_dir: str,
+        aws_profile: Optional[str] = None,
+        remove_dups: bool = True,
+        resample_to_1_min: bool = True,
+    ) -> None:
         """
         Load CDD data.
 
         :param: root_dir: either a local root path (e.g., "/app/im") or
             an S3 root path ("s3://alphamatic-data/data) to CDD data
         :param: aws_profile: AWS profile name (e.g., "am")
+        :param remove_dups: whether to remove full duplicates or not
+        :param resample_to_1_min: whether to resample to 1 min or not
         """
         self._root_dir = root_dir
         self._aws_profile = aws_profile
+        self._remove_dups = remove_dups
+        self._resample_to_1_min = resample_to_1_min
+        self._s3fs = hs3.get_s3fs(self._aws_profile)
         # Specify supported data types to load.
         self._data_types = ["ohlcv"]
 
@@ -97,29 +65,21 @@ class CddLoader:
         """
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
         # Verify that requested data type is valid.
-        dbg.dassert_in(
+        hdbg.dassert_in(
             data_type.lower(),
             self._data_types,
             msg="Incorrect data type: '%s'. Acceptable types: '%s'"
-                % (data_type.lower(), self._data_types),
+            % (data_type.lower(), self._data_types),
         )
         # Get absolute file path for a CDD file.
-        file_path = os.path.join(
-            self._root_dir,
-            _get_file_path(data_snapshot, exchange_id, currency_pair),
-        )
+        file_path = self._get_file_path(data_snapshot, exchange_id, currency_pair)
         # Initialize kwargs dict for further CDD data reading.
         # Add "skiprows" to kwargs in order to skip a row with the file name.
         read_csv_kwargs = {"skiprows": 1}
-        # TODO(Dan): Remove asserts below after CMTask108 is resolved.
-        # Verify that the file exists and fill kwargs if needed.
+        #
         if hs3.is_s3_path(file_path):
-            s3fs = hs3.get_s3fs(self._aws_profile)
-            hs3.dassert_s3_exists(file_path, s3fs)
             # Add s3fs argument to kwargs.
-            read_csv_kwargs["s3fs"] = s3fs
-        else:
-            dbg.dassert_file_exists(file_path)
+            read_csv_kwargs["s3fs"] = self._s3fs
         # Read raw CDD data.
         _LOG.info(
             "Reading CDD data for exchange id='%s', currencies='%s', from file='%s'...",
@@ -127,7 +87,7 @@ class CddLoader:
             currency_pair,
             file_path,
         )
-        data = cphelp.read_csv(file_path, **read_csv_kwargs)
+        data = cpah.read_csv(file_path, **read_csv_kwargs)
         # Apply transformation to raw data.
         _LOG.info(
             "Processing CDD data for exchange id='%s', currencies='%s'...",
@@ -138,6 +98,39 @@ class CddLoader:
             data, exchange_id, currency_pair, data_type
         )
         return transformed_data
+
+    # TODO(Grisha): factor out common code from `CddLoader._get_file_path` and `CcxtLoader._get_file_path`.
+    def _get_file_path(
+        self,
+        data_snapshot: str,
+        exchange_id: str,
+        currency_pair: str,
+    ) -> str:
+        """
+        Get the absolute path to a file with CDD data.
+
+        The file path is constructed in the following way:
+        `<root_dir>/cryptodatadownload/<snapshot>/<exchange_id>/<currency_pair>.csv.gz`.
+
+        :param data_snapshot: snapshot of datetime when data was loaded,
+            e.g. "20210924"
+        :param exchange_id: CDD exchange id, e.g. "binance"
+        :param currency_pair: currency pair `<currency1>/<currency2>`,
+            e.g. "BTC/USDT"
+        :return: absolute path to a file with CDD data
+        """
+        # Get absolute file path.
+        file_name = currency_pair.replace("/", "_") + ".csv.gz"
+        file_path = os.path.join(
+            self._root_dir, "cryptodatadownload", data_snapshot, exchange_id, file_name
+        )
+        # TODO(Dan): Remove asserts below after CMTask108 is resolved.
+        # Verify that the file exists.
+        if hs3.is_s3_path(file_path):
+            hs3.dassert_s3_exists(file_path, self._s3fs)
+        else:
+            hdbg.dassert_file_exists(file_path)
+        return file_path
 
     # TODO(*): Consider making `exchange_id` a class member.
     def _transform(
@@ -174,7 +167,7 @@ class CddLoader:
         if data_type.lower() == "ohlcv":
             transformed_data = self._apply_ohlcv_transformation(transformed_data)
         else:
-            dbg.dfatal(
+            hdbg.dfatal(
                 "Incorrect data type: '%s'. Acceptable types: '%s'"
                 % (data_type.lower(), self._data_types)
             )
@@ -189,6 +182,8 @@ class CddLoader:
         This includes:
         - Datetime format assertion
         - Converting string dates to pd.Timestamp
+        - Removing full duplicates
+        - Resampling to 1 minute using NaNs
         - Name volume and currency pair columns properly
         - Adding exchange_id and currency_pair columns
 
@@ -198,15 +193,25 @@ class CddLoader:
         :return: transformed CDD data
         """
         # Verify that the Unix data is provided in ms.
-        dbg.dassert_container_type(
+        hdbg.dassert_container_type(
             data["unix"], container_type=None, elem_type=int
         )
         # Rename col with original Unix ms epoch.
         data = data.rename({"unix": "epoch"}, axis=1)
         # Transform Unix epoch into ET timestamp.
         data["timestamp"] = self._convert_epochs_to_timestamp(data["epoch"])
+        #
+        if self._remove_dups:
+            # Remove full duplicates.
+            data = hpandas.drop_duplicates(data, ignore_index=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
+        #
+        if self._resample_to_1_min:
+            # Resample to 1 minute.
+            data = hpandas.resample_df(
+                data, "T"
+            )
         # Rename col with traded volume in amount of the 1st currency in pair.
         data = data.rename(
             {"Volume " + currency_pair.split("/")[0]: "volume"}, axis=1
@@ -230,7 +235,7 @@ class CddLoader:
         # Convert to timestamp in UTC tz.
         timestamp_col = pd.to_datetime(epoch_col, unit="ms", utc=True)
         # Convert to ET tz.
-        timestamp_col = timestamp_col.dt.tz_convert(hdatet.get_ET_tz())
+        timestamp_col = timestamp_col.dt.tz_convert(hdatetim.get_ET_tz())
         return timestamp_col
 
     @staticmethod
@@ -266,7 +271,7 @@ class CddLoader:
             "exchange_id",
         ]
         # Verify that dataframe contains OHLCV columns.
-        dbg.dassert_is_subset(ohlcv_columns, data.columns)
+        hdbg.dassert_is_subset(ohlcv_columns, data.columns)
         # Rearrange the columns.
         data = data[ohlcv_columns].copy()
         return data

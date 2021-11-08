@@ -6,12 +6,14 @@ import helpers.sql as hsql
 
 import logging
 import os
+import time
 from typing import List, Optional, Tuple, Union
 
 import pandas as pd
 import psycopg2 as psycop
 import psycopg2.sql as psql
 
+import helpers.system_interaction as hsyint
 import helpers.timer as htimer
 
 _LOG = logging.getLogger(__name__)
@@ -75,6 +77,25 @@ def get_connection_from_string(
     if autocommit:
         connection.autocommit = True
     return connection, cursor
+
+
+def check_db_connection(
+    db_name: str,
+    port: int,
+    host: str,
+) -> None:
+    """
+    Verify that the database is available.
+    """
+    _LOG.debug("db_name=%s, port=%s, host=%s", db_name, port, host)
+    while True:
+        _LOG.info("Waiting for PostgreSQL to become available...")
+        cmd = f"pg_isready -d {db_name} -p {port} -h {host}"
+        rc = hsyint.system(cmd,abort_on_error=False)
+        time.sleep(1)
+        if rc == 0:
+            _LOG.info("PostgreSQL is available")
+            break
 
 
 # #############################################################################

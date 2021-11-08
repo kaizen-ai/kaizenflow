@@ -11,6 +11,28 @@
       "LINK/USDT",
       "SOL/USDT"
     ],
+    "ftx": [
+      "BNB/USDT",
+      "BTC/USDT",
+      "DOGE/USDT",
+      "ETH/USDT",
+      "LINK/USDT",
+      "SOL/USDT",
+      "XRP/USDT"
+    ],
+    "gateio": [
+      "ADA/USDT",
+      "AVAX/USDT",
+      "BNB/USDT",
+      "BTC/USDT",
+      "DOGE/USDT",
+      "EOS/USDT",
+      "ETH/USDT",
+      "FIL/USDT",
+      "LINK/USDT",
+      "SOL/USDT",
+      "XRP/USDT"
+    ],
     "kucoin": [
       "ADA/USDT",
       "AVAX/USDT",
@@ -64,6 +86,24 @@
       "XMR/USDT",
       "XRP/USDT",
       "ZEC/USDT"
+    ],
+    "ftx": [
+      "BCH/USD",
+      "BCH/USDT",
+      "BNB/USD",
+      "BNB/USDT",
+      "BTC/USD",
+      "BTC/USDT",
+      "ETH/USD",
+      "ETH/USDT",
+      "LINK/USD",
+      "LINK/USDT",
+      "LTC/USD",
+      "LTC/USDT",
+      "TRX/USD",
+      "TRX/USDT",
+      "XRP/USD",
+      "XRP/USDT"
     ],
     "kucoin": [
       "ADA/USDT",

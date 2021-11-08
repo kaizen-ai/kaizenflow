@@ -117,7 +117,10 @@ class TestDryRunTasks1(huntes.TestCase):
 
     def test_print_setup(self) -> None:
         target = "print_setup"
-        self._dry_run(target)
+        opts = "--dry"
+        cmd = f"invoke {opts} {target} | grep -v INFO | grep -v '>>ENV<<:'"
+        rc = hsyint.system(cmd)
+        self.assertEqual(rc, 0)
 
     def test_git_pull(self) -> None:
         target = "git_pull"

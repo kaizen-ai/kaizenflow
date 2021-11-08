@@ -14,7 +14,7 @@ import psycopg2.sql as psql
 
 import helpers.dbg as hdbg
 import helpers.sql as hsql
-import im.ccxt.db.insert_data as imccdbindat
+import im.ccxt.db.utils as imccdbuti
 import im.ib.sql_writer as imibsqwri
 import im.kibot.sql_writer as imkisqwri
 
@@ -55,10 +55,10 @@ def get_data_types_query() -> str:
     Define custom data types inside a database.
     """
     # Define data types.
+    # TODO(Grisha): Futures -> futures.
+    # TODO(Grisha): T -> minute, D -> daily.
     query = """
-    /* TODO: Futures -> futures */
     CREATE TYPE AssetClass AS ENUM ('Futures', 'etfs', 'forex', 'stocks', 'sp_500');
-    /* TODO: T -> minute, D -> daily */
     CREATE TYPE Frequency AS ENUM ('T', 'D', 'tick');
     CREATE TYPE ContractType AS ENUM ('continuous', 'expiry');
     CREATE SEQUENCE serial START 1;
@@ -77,12 +77,13 @@ def create_all_tables(connection: hsql.DbConnection) -> None:
         get_common_create_table_query(),
         imibsqwri.get_create_table_query(),
         imkisqwri.get_create_table_query(),
-        imccdbindat.get_ccxt_ohlcv_create_table_query(),
-        imccdbindat.get_exchange_name_create_table_query(),
-        imccdbindat.get_currency_pair_create_table_query(),
+        imccdbuti.get_ccxt_ohlcv_create_table_query(),
+        imccdbuti.get_exchange_name_create_table_query(),
+        imccdbuti.get_currency_pair_create_table_query(),
     ]
     # Create tables.
     for query in queries:
+        _LOG.debug("Executing query %s", query)
         try:
             cursor = connection.cursor()
             cursor.execute(query)
@@ -90,6 +91,7 @@ def create_all_tables(connection: hsql.DbConnection) -> None:
             _LOG.warning("Duplicate table created, skipping.")
 
 
+# TODO(Grisha): convert it to test.
 def test_tables(
     connection: hsql.DbConnection,
 ) -> None:
@@ -102,7 +104,10 @@ def test_tables(
     # Check tables list.
     actual_tables = hsql.get_table_names(connection)
     expected_tables = [
+        "ccxt_ohlcv",
+        "currency_pair",
         "exchange",
+        "exchange_name",
         "ib_daily_data",
         "ib_minute_data",
         "ib_tick_bid_ask_data",

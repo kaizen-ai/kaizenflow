@@ -126,19 +126,25 @@ def _export_notebook_to_dir(ipynb_file_name: str, tag: str, dst_dir: str) -> str
     #
     html_file_name = os.path.basename(html_src_path)
     html_dst_path = os.path.join(dst_dir, html_file_name)
-    # Move HTML.
-    _LOG.debug("Export '%s' to '%s'", html_src_path, html_dst_path)
-    hio.create_dir(dst_dir, incremental=True)
-    cmd = f"mv {html_src_path} {html_dst_path}"
-    hsyste.system(cmd)
+    # Normalize paths so that they are comparable. E.g., `./file_name.py`
+    # and `/app/file_name.py` are the same when the script is run from
+    # `root`, so they are converted to `/app/file_name.py`.
+    norm_html_src_path = os.path.abspath(html_src_path)
+    norm_html_dst_path = os.path.abspath(html_dst_path)
+    if norm_html_src_path != norm_html_dst_path:
+        # Move the HTML file to the `dst_dir`.
+        _LOG.debug("Export '%s' to '%s'", norm_html_src_path, norm_html_dst_path)
+        hio.create_dir(dst_dir, incremental=True)
+        cmd = f"mv {norm_html_src_path} {norm_html_dst_path}"
+        hsyste.system(cmd)
     # Print info.
-    _LOG.info("Generated HTML file '%s'", html_dst_path)
+    _LOG.info("Generated HTML file '%s'", norm_html_dst_path)
     cmd = f"""
         # To open the notebook run:
-        > publish_notebook.py --file {html_dst_path} --action open
+        > publish_notebook.py --file {norm_html_dst_path} --action open
         """
     print(hprint.dedent(cmd))
-    return html_dst_path
+    return norm_html_dst_path
 
 
 def _post_to_s3(local_src_path: str, s3_path: str, aws_profile: str) -> str:
