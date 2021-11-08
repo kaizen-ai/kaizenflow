@@ -98,7 +98,7 @@ class CcxtLoader:
             query_params.append(currency_pairs)
         if start_date:
             start_date = hdatetim.convert_timestamp_to_unix_epoch(start_date)
-            query_conditions.append("timestamp > %s")
+            query_conditions.append("timestamp >= %s")
             query_params.append(start_date)
         if end_date:
             end_date = hdatetim.convert_timestamp_to_unix_epoch(end_date)
