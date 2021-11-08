@@ -90,10 +90,12 @@ class TestCreateDB(huntes.TestCase):
         """
         Create database 'test_db_to_remove_xqw' and removing it.
         """
-        imcodbcrdb.create_database(self.connection, new_db="test_db_to_remove_xqw")
+        db_list_initial = hsql.get_db_names(self.connection)
+        if "test_db_to_remove_xqw" not in db_list_initial
+            imcodbcrdb.create_database(self.connection, new_db="test_db_to_remove_xqw")
         imcodbcrdb.remove_database(self.connection, "test_db_to_remove_xqw")
-        db_list = hsql.get_db_names(self.connection)
-        self.assertNotIn("test_db_to_remove_xqw", db_list)
+        db_list_updated = hsql.get_db_names(self.connection)
+        self.assertNotIn("test_db_to_remove_xqw", db_list_updated)
 
     def test_remove_database_invalid(self):
         """
