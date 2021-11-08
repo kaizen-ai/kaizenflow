@@ -283,7 +283,7 @@ class CcxtLoader:
         2021-09-08 20:02:00-04:00  3501.59     1631145720000  ETH/USDT      binance
         ```
 
-        :param data: dataframe with CCXT data from S3
+        :param data: dataframe with CCXT data from DB or a filesystem
         :param data_type: OHLCV or trade, bid/ask data
         :param exchange_id: CCXT exchange id, e.g. "binance"
         :param currency_pair: currency pair, e.g. "BTC/USDT"
