@@ -71,10 +71,10 @@ class CcxtLoader:
         :param table_name: name of the table to load, e.g., "ccxt_ohlcv"
         :param exchange_ids: exchange ids to load data for
         :param currency_pairs: currency pairs to load data for
-        :param start_date: the earliest data to load data for as unix epoch,
-            e.g., `pd.Timestamp('2021-09-09')`
-        :param end_date: the latest date to load data for as unix epoch,
-            e.g., `pd.Timestamp('2021-09-09')`
+        :param start_date: the earliest date timestamp to load data for,
+            considered in UTC if tz is not specified
+        :param end_date: the latest date timestamp to load data for,
+            considered in UTC if tz is not specified
         :param read_sql_kwargs: kwargs for `pd.read_sql()` query
         :return: table from database
         """
