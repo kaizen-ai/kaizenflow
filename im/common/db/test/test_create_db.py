@@ -40,7 +40,7 @@ class TestCreateDB(huntes.TestCase):
 
     def tearDown(self):
         """
-        Kill the test database
+        Kill the test database.
         """
         cmd = ("sudo docker-compose "
                "--file im/devops/compose/docker-compose.yml down -v")
@@ -76,7 +76,7 @@ class TestCreateDB(huntes.TestCase):
 
     def test_remove_database1(self):
         """
-        Remove random database
+        Verify that random database removed.
         """
         db_names = hsql.get_db_names(self.connection)
         initial_db_num = len(db_names)
@@ -85,21 +85,23 @@ class TestCreateDB(huntes.TestCase):
         if db_names:
             imcodbcrdb.remove_database(self.connection, db_names[0])
             result_db_num = len(hsql.get_db_names(self.connection))
-            self.assertLess(initial_db_num, result_db_num)
+            self.assertLess(result_db_num, initial_db_num)
 
     def test_remove_database2(self):
         """
-        Create db_to_remove and removing it
+        Create database 'test_db_to_remove' and removing it.
         """
-        imcodbcrdb.create_database(self.connection, "db_to_remove")
-        db_list_before = "db_to_remove" in hsql.get_db_names(self.connection)
-        imcodbcrdb.remove_database(self.connection, "db_to_remove")
-        db_list_after = "db_to_remove" not in hsql.get_db_names(self.connection)
-        self.assertEqual(db_list_before, db_list_after)
+        imcodbcrdb.create_database(self.connection, db="test_db_to_remove", force=force)
+        db_list_before =  hsql.get_db_names(self.connection)
+        is_included_before = "test_db_to_remove" in db_list_before
+        imcodbcrdb.remove_database(self.connection, "test_db_to_remove")
+        db_list_after = hsql.get_db_names(self.connection)
+        is_excluded_after = "test_db_to_remove" not in db_list_after
+        self.assertEqual(is_included_before, is_excluded_after)
 
     def test_remove_database_invalid(self):
         """
-        Passing invalid db name.
+        Test failed assertion for passing db name that don't exist.
         """
         with self.assertRaises(perrors.InvalidCatalogName):
             imcodbcrdb.remove_database(self.connection, "db does not exist")
