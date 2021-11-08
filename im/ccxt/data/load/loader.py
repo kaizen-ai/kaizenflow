@@ -49,7 +49,8 @@ class CcxtLoader:
         self._aws_profile = aws_profile
         self._remove_dups = remove_dups
         self._resample_to_1_min = resample_to_1_min
-        self._s3fs = hs3.get_s3fs(self._aws_profile)
+        if self._aws_profile:
+            self._s3fs = hs3.get_s3fs(self._aws_profile)
         # Specify supported data types to load.
         self._data_types = ["ohlcv"]
 
@@ -96,11 +97,11 @@ class CcxtLoader:
             query_conditions.append("currency_pair IN %s")
             query_params.append(currency_pairs)
         if start_date:
-            start_date = hdatet.convert_timestamp_to_unix_epoch(start_date)
+            start_date = hdatetim.convert_timestamp_to_unix_epoch(start_date)
             query_conditions.append("timestamp > %s")
             query_params.append(start_date)
         if end_date:
-            end_date = hdatet.convert_timestamp_to_unix_epoch(end_date)
+            end_date = hdatetim.convert_timestamp_to_unix_epoch(end_date)
             query_conditions.append("timestamp < %s")
             query_params.append(end_date)
         if query_conditions:

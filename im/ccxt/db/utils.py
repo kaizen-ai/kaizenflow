@@ -3,7 +3,7 @@ Utilities for working with CCXT database.
 
 Import as:
 
-import im.ccxt.db.insert_data as imccdbuti
+import im.ccxt.db.utils as imccdbuti
 """
 
 import io
