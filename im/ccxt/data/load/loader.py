@@ -111,8 +111,10 @@ class CcxtLoader:
         # Add a tuple of gathered query parameters to kwargs as `params`.
         read_sql_kwargs["params"] = tuple(query_params)
         # Execute SQL query.
-        table = pd.read_sql(sql_query, self._connection, **read_sql_kwargs)
-        return table
+        data = pd.read_sql(sql_query, self._connection, **read_sql_kwargs)
+        # Apply transformation to raw data.
+        transformed_data = self._transform(data=data, data_type="ohlcv")
+        return transformed_data
 
     def read_universe_data_from_filesystem(
         self,
@@ -206,7 +208,7 @@ class CcxtLoader:
             currency_pair,
         )
         transformed_data = self._transform(
-            data, exchange_id, currency_pair, data_type
+            data, data_type, exchange_id, currency_pair
         )
         return transformed_data
 
@@ -247,9 +249,9 @@ class CcxtLoader:
     def _transform(
         self,
         data: pd.DataFrame,
-        exchange_id: str,
-        currency_pair: str,
         data_type: str,
+        exchange_id: Optional[str] = None,
+        currency_pair: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Transform CCXT data loaded from S3.
@@ -267,9 +269,9 @@ class CcxtLoader:
             2021-09-08 20:02:00-04:00  3501.59  3513.10  3499.89  3513.09  579.5656  1631145720000  ETH/USDT      binance
 
         :param data: dataframe with CCXT data from S3
+        :param data_type: OHLCV or trade, bid/ask data
         :param exchange_id: CCXT exchange id, e.g. "binance"
         :param currency_pair: currency pair, e.g. "BTC/USDT"
-        :param data_type: OHLCV or trade, bid/ask data
         :return: processed dataframe
         """
         transformed_data = self._apply_common_transformation(
@@ -282,10 +284,17 @@ class CcxtLoader:
                 "Incorrect data type: '%s'. Acceptable types: '%s'"
                 % (data_type.lower(), self._data_types)
             )
+        # Sort transformed data by exchange id and currency pair columns.
+        transformed_data.sort_values(
+            by=["exchange_id", "currency_pair"], inplace=True
+        )
         return transformed_data
 
     def _apply_common_transformation(
-        self, data: pd.DataFrame, exchange_id: str, currency_pair: str
+        self,
+        data: pd.DataFrame,
+        exchange_id: Optional[str] = None,
+        currency_pair: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Apply transform common to all CCXT data.
@@ -295,7 +304,7 @@ class CcxtLoader:
         - Converting epoch ms timestamp to pd.Timestamp
         - Removing full duplicates
         - Resampling to 1 minute using NaNs
-        - Adding exchange_id and currency_pair columns
+        - Adding exchange_id and currency_pair columns is specified
 
         :param data: raw data from S3
         :param exchange_id: CCXT exchange id, e.g. "binance"
@@ -320,9 +329,11 @@ class CcxtLoader:
         if self._resample_to_1_min:
             # Resample to 1 minute.
             data = hhpandas.resample_df(data, "T")
-        # Add columns with exchange id and currency pair.
-        data["exchange_id"] = exchange_id
-        data["currency_pair"] = currency_pair
+        # Add columns with exchange id and currency pair if specified.
+        if exchange_id:
+            data["exchange_id"] = exchange_id
+        if currency_pair:
+            data["currency_pair"] = currency_pair
         return data
 
     @staticmethod
