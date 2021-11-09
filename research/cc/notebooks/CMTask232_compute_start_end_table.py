@@ -62,7 +62,7 @@ def get_cmtask232_config() -> ccocon.Config:
     config.add_subconfig("data")
     config["data"]["data_type"] = "OHLCV"
     config["data"]["target_frequency"] = "T"
-    config["data"]["universe_version"] = "v0_2"
+    config["data"]["universe_version"] = "v0_1"
     config["data"]["vendor"] = "CCXT"
     # Column names.
     config.add_subconfig("column_names")
@@ -93,6 +93,9 @@ compute_start_end_stats = lambda data: rccsta.compute_start_end_stats(data, conf
 start_end_table = rccsta.compute_stats_for_universe(
     vendor_universe, config, compute_start_end_stats
 )
+
+# %% [markdown]
+# Looking at the results we can see that all the exchanges except for Bitfinex have significantly big longest not-NaN sequence (>13% at least) in combine with high data coverage (>85%). Bitfinex has a very low data coverage and its longest not-NaN sequences are less than 1% compare to the original data length which means that Bitfinex data spottiness is too scattered and we should exclude it from our analysis until we get clearer data for it.
 
 # %%
 _LOG.info(
