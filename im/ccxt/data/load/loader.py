@@ -6,16 +6,17 @@ import im.ccxt.data.load.loader as imccdaloloa
 
 import logging
 import os
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 
 import core.pandas_helpers as cpah
 import helpers.datetime_ as hdatetim
 import helpers.dbg as hdbg
-import helpers.hpandas as hpandas
+import helpers.hpandas as hhpandas
 import helpers.s3 as hs3
 import helpers.sql as hsql
+import im.data.universe as imdauni
 
 _LOG = logging.getLogger(__name__)
 
@@ -48,18 +49,18 @@ class CcxtLoader:
         self._aws_profile = aws_profile
         self._remove_dups = remove_dups
         self._resample_to_1_min = resample_to_1_min
-        self._s3fs = hs3.get_s3fs(self._aws_profile)
+        if self._aws_profile:
+            self._s3fs = hs3.get_s3fs(self._aws_profile)
         # Specify supported data types to load.
         self._data_types = ["ohlcv"]
 
-    # TODO(Dan): Refactor in #183.
     def read_data_from_db(
         self,
         table_name: str,
         exchange_ids: Optional[Tuple[str]] = None,
         currency_pairs: Optional[Tuple[str]] = None,
-        start_date: Optional[int] = None,
-        end_date: Optional[int] = None,
+        start_date: Optional[pd.Timestamp] = None,
+        end_date: Optional[pd.Timestamp] = None,
         **read_sql_kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
@@ -70,10 +71,10 @@ class CcxtLoader:
         :param table_name: name of the table to load, e.g., "ccxt_ohlcv"
         :param exchange_ids: exchange ids to load data for
         :param currency_pairs: currency pairs to load data for
-        :param start_date: the earliest data to load data for as unix epoch,
-            e.g., 1631145600000
-        :param end_date: the latest date to load data for as unix epoch,
-            e.g., 1631145600000
+        :param start_date: the earliest date timestamp to load data for,
+            considered in UTC if tz is not specified
+        :param end_date: the latest date timestamp to load data for,
+            considered in UTC if tz is not specified
         :param read_sql_kwargs: kwargs for `pd.read_sql()` query
         :return: table from database
         """
@@ -96,9 +97,11 @@ class CcxtLoader:
             query_conditions.append("currency_pair IN %s")
             query_params.append(currency_pairs)
         if start_date:
-            query_conditions.append("timestamp > %s")
+            start_date = hdatetim.convert_timestamp_to_unix_epoch(start_date)
+            query_conditions.append("timestamp >= %s")
             query_params.append(start_date)
         if end_date:
+            end_date = hdatetim.convert_timestamp_to_unix_epoch(end_date)
             query_conditions.append("timestamp < %s")
             query_params.append(end_date)
         if query_conditions:
@@ -110,6 +113,54 @@ class CcxtLoader:
         # Execute SQL query.
         table = pd.read_sql(sql_query, self._connection, **read_sql_kwargs)
         return table
+
+    def read_universe_data_from_filesystem(
+        self,
+        universe: Union[str, List[imdauni.ExchangeCurrencyTuple]],
+        data_type: str,
+        data_snapshot: Optional[str] = None,
+    ) -> pd.DataFrame:
+        """
+        Load data from S3 for specified universe.
+
+        Output data is indexed by timestamp and contains the columns open,
+        high, low, close, volume, epoch, currency_pair, exchange_id, e.g.,
+        ```
+        timestamp                  open        epoch          currency_pair exchange_id
+        2018-08-16 20:00:00-04:00  6316.01 ... 1534464000000  BTC/USDT      binance
+        2018-08-16 20:01:00-04:00  6311.36     1534464060000  BTC/USDT      binance
+        ...
+        2021-09-08 20:00:00-04:00  1.10343     1631145600000  XRP/USDT      kucoin
+        2021-09-08 20:02:00-04:00  1.10292     1631145720000  XRP/USDT      kucoin
+        ```
+
+        :param universe: CCXT universe version or a list of exchange-currency
+            tuples to load data for
+        :param data_type: OHLCV or trade, bid/ask data
+        :param data_snapshot: snapshot of datetime when data was loaded,
+            e.g. "20210924"
+        :return: processed CCXT data
+        """
+        # Load all the corresponding exchange-currency tuples if a universe
+        # version is provided.
+        if isinstance(universe, str):
+            universe = imdauni.get_vendor_universe_as_tuples(universe, "CCXT")
+        # Initialize results df.
+        combined_data = pd.DataFrame(dtype="object")
+        # Load data for each exchange-currency tuple and append to results df.
+        for exchange_currency_tuple in universe:
+            data = self.read_data_from_filesystem(
+                exchange_currency_tuple.exchange_id,
+                exchange_currency_tuple.currency_pair,
+                data_type,
+                data_snapshot,
+            )
+            combined_data = combined_data.append(data)
+        # Sort results by exchange id and currency pair.
+        combined_data.sort_values(
+            by=["exchange_id", "currency_pair"], inplace=True
+        )
+        return combined_data
 
     def read_data_from_filesystem(
         self,
@@ -262,15 +313,13 @@ class CcxtLoader:
         #
         if self._remove_dups:
             # Remove full duplicates.
-            data = hpandas.drop_duplicates(data, ignore_index=True)
+            data = hhpandas.drop_duplicates(data, ignore_index=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
         #
         if self._resample_to_1_min:
             # Resample to 1 minute.
-            data = hpandas.resample_df(
-                data, "T"
-            )
+            data = hhpandas.resample_df(data, "T")
         # Add columns with exchange id and currency pair.
         data["exchange_id"] = exchange_id
         data["currency_pair"] = currency_pair
