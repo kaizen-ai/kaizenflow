@@ -6,7 +6,7 @@ Import as:
 import research.cc.statistics as rccsta
 """
 import logging
-from typing import Callable, List, Union
+from typing import Callable, List, Optional, Union
 
 import numpy as np
 import pandas as pd
