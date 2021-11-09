@@ -32,6 +32,7 @@ import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprintin
 import helpers.s3 as hs3
+import im.data.universe as imdauni
 import research.cc.statistics as rccsta
 
 # %%
@@ -62,11 +63,12 @@ def get_cmtask232_config() -> ccocon.Config:
     config["data"]["data_type"] = "OHLCV"
     config["data"]["target_frequency"] = "T"
     config["data"]["universe_version"] = "v0_2"
+    config["data"]["vendor"] = "CCXT"
     # Column names.
     config.add_subconfig("column_names")
     config["column_names"]["close_price"] = "close"
     config["column_names"]["currency_pair"] = "currency_pair"
-    config["column_names"]["exchange"] = "exchange_id"
+    config["column_names"]["exchange_id"] = "exchange_id"
     return config
 
 
@@ -77,44 +79,31 @@ print(config)
 # # Compute start-end table
 
 # %% [markdown]
-# ## Per data provider, exchange, currency pair
+# ## Per exchange id and currency pair for a specified vendor
 
 # %%
-compute_start_end_table = lambda data: rccsta.compute_start_end_table(data, config)
+vendor_universe = imdauni.get_vendor_universe_as_tuples(
+    config["data"]["universe_version"], config["data"]["vendor"]
+)
+vendor_universe
+
+# %%
+compute_start_end_stats = lambda data: rccsta.compute_start_end_stats(data, config)
 
 start_end_table = rccsta.compute_stats_for_universe(
-    config, compute_start_end_table
+    vendor_universe, config, compute_start_end_stats
 )
 
 # %%
 _LOG.info(
-    "The number of unique vendor, exchange, currency pair combinations=%s",
+    "The number of unique exchange and currency pair combinations=%s",
     start_end_table.shape[0],
 )
-start_end_table.sort_values(by="days_available", ascending=False).reset_index(
-    drop=True
-)
+start_end_table
 
 # %% [markdown]
 # ## Per currency pair
 
 # %%
-# TODO(Grisha): Move to a lib.
-currency_start_end_table = (
-    start_end_table.groupby("currency_pair")
-    .agg({"min_timestamp": np.min, "max_timestamp": np.max, "exchange_id": list})
-    .reset_index()
-)
-currency_start_end_table["days_available"] = (
-    currency_start_end_table["max_timestamp"]
-    - currency_start_end_table["min_timestamp"]
-).dt.days
-currency_start_end_table_sorted = currency_start_end_table.sort_values(
-    by="days_available",
-    ascending=False,
-).reset_index(drop=True)
-_LOG.info(
-    "The number of unique currency pairs=%s",
-    currency_start_end_table_sorted.shape[0],
-)
-currency_start_end_table_sorted
+currency_start_end_table = rccsta.compute_start_end_table_by_currency(start_end_table)
+currency_start_end_table

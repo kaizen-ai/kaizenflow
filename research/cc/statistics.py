@@ -45,7 +45,7 @@ def compute_stats_for_universe(
     stats_data = []
     # Iterate over vendor universe tuples.
     for exchange_id, currency_pair in vendor_universe:
-        # Read data for current vendor, exchange, currency pair.
+        # Read data for current exchange and currency pair.
         data = loader.read_data_from_filesystem(
             exchange_id,
             currency_pair,
@@ -252,3 +252,39 @@ def find_longest_not_nan_sequence(
     # Get the longest sequence of not-NaN values.
     longest_not_nan_seq = data.loc[longest_not_nan_index].copy()
     return longest_not_nan_seq
+
+
+def get_universe_price_data(
+    vendor_universe: List[imdauni.ExchangeCurrencyTuple],
+    config: ccocon.Config,
+) -> pd.DataFrame:
+    """
+    Get combined price data for a given vendor universe.
+
+    :param vendor_universe: vendor universe as a list of of exchange-currency tuples
+    :param config: parameters config
+    :return: universe price data
+    """
+    # Initialize loader.
+    loader = get_loader_for_vendor(config)
+    # Initialize lists of column names and price data series.
+    colnames = []
+    price_srs_list = []
+    # Iterate exchange ids and currency pairs.
+    for exchange_id, currency_pair in vendor_universe:
+        # Construct a colname from exchange id and currency pair.
+        colname = " ".join([exchange_id, currency_pair])
+        colnames.append(colname)
+        # Read data for current exchange and currency pair.
+        data = loader.read_data_from_filesystem(
+            exchange_id,
+            currency_pair,
+            config["data"]["data_type"],
+        )
+        # Get series of required prices and append to the list.
+        price_srs = data[config["data"]["price_column"]]
+        price_srs_list.append(price_srs)
+    # Construct a dataframe and assign column names.
+    price_data = pd.concat(price_srs_list, axis=1)
+    price_data.columns = colnames
+    return price_data
