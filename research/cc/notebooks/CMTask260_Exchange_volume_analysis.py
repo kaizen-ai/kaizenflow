@@ -140,59 +140,10 @@ print(total_volume_by_weekdays)
 # %% [markdown]
 # # Compare ATH volumes
 
-# %%
-def plot_ath_volumes_comparison(df_list):
-    """
-    Return the graph with the comparison of average minute total trading volume
-    in ATH vs.
-
-    non-ATH
-    Parameters: dataframe with volumes from a given exchange
-    """
-    plot_df = []
-    for df in df_list:
-        df_ath = df.iloc[df.index.indexer_between_time("09:30", "16:00")]
-        df_not_ath = df.loc[~df.index.isin(df_ath.index)]
-        ath_stat = pd.DataFrame()
-        ath_stat.loc[f"{df.name}", f"minute_avg_total_volume_ath_{df.name}"] = (
-            df_ath.sum().sum() / df_ath.shape[0]
-        )
-        ath_stat.loc[
-            f"{df.name}", f"minute_avg_total_volume_not_ath_{df.name}"
-        ] = (df_not_ath.sum().sum() / df_not_ath.shape[0])
-        plot_df.append(ath_stat)
-    plot_df = pd.concat(plot_df)
-    plot_df.plot.bar(figsize=(15, 7), logy=True)
-    
-def get_ath_volume(data, is_nominal_value):
-    if is_nominal_value:
-        data["volume"]=data["volume"]*data["close"]
-    data["date"] = data.index
-    return data
-
-compute_min_volume = lambda data: get_ath_volume(data, is_nominal_value=False)
-
-cumul_min_volume = rccsta.compute_stats_for_universe(
-    config, compute_min_volume
-)
-
-def get_ath_stats(data):
-    df_ath = data.iloc[data.index.indexer_between_time("09:30", "16:00")]
-    df_not_ath = data.loc[~data.index.isin(df_ath.index)]
-    df_ath = df_ath.groupby(["exchange_id"]).volume.mean()
-    df_not_ath = df_not_ath.groupby(["exchange_id"]).volume.mean()
-    result = pd.concat([df_ath, df_not_ath],axis=1)
-    result.columns = ["minute_avg_total_volume_ath", "minute_avg_total_volume_not_ath"]
-    return result
-
-
-# %% [markdown]
-# # Compare ATH volumes (OLD)
-
-# %% [markdown]
+# %% [markdown] heading_collapsed=true
 # ## Functions
 
-# %%
+# %% hidden=true
 def get_initial_df_with_volumes(coins, exchange, is_notional_volume):
     """
     Return DataFrame with the volume of all coins for exchange with initial timestamps
@@ -235,10 +186,10 @@ def plot_ath_volumes_comparison(df_list):
     plot_df.plot.bar(figsize=(15, 7), logy=True)
 
 
-# %% [markdown]
+# %% [markdown] heading_collapsed=true
 # ## Load the data
 
-# %%
+# %% hidden=true
 # get the list of all coin paires for each exchange
 binance_coins = imdauni.get_trade_universe("v0_1")["CCXT"]["binance"]
 ftx_coins = imdauni.get_trade_universe("v0_1")["CCXT"]["ftx"]
