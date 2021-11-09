@@ -49,18 +49,18 @@ class CcxtLoader:
         self._aws_profile = aws_profile
         self._remove_dups = remove_dups
         self._resample_to_1_min = resample_to_1_min
-        self._s3fs = hs3.get_s3fs(self._aws_profile)
+        if self._aws_profile:
+            self._s3fs = hs3.get_s3fs(self._aws_profile)
         # Specify supported data types to load.
         self._data_types = ["ohlcv"]
 
-    # TODO(Dan): Refactor in #183.
     def read_data_from_db(
         self,
         table_name: str,
         exchange_ids: Optional[Tuple[str]] = None,
         currency_pairs: Optional[Tuple[str]] = None,
-        start_date: Optional[int] = None,
-        end_date: Optional[int] = None,
+        start_date: Optional[pd.Timestamp] = None,
+        end_date: Optional[pd.Timestamp] = None,
         **read_sql_kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
@@ -71,10 +71,10 @@ class CcxtLoader:
         :param table_name: name of the table to load, e.g., "ccxt_ohlcv"
         :param exchange_ids: exchange ids to load data for
         :param currency_pairs: currency pairs to load data for
-        :param start_date: the earliest data to load data for as unix epoch,
-            e.g., 1631145600000
-        :param end_date: the latest date to load data for as unix epoch,
-            e.g., 1631145600000
+        :param start_date: the earliest date timestamp to load data for,
+            considered in UTC if tz is not specified
+        :param end_date: the latest date timestamp to load data for,
+            considered in UTC if tz is not specified
         :param read_sql_kwargs: kwargs for `pd.read_sql()` query
         :return: table from database
         """
@@ -97,9 +97,11 @@ class CcxtLoader:
             query_conditions.append("currency_pair IN %s")
             query_params.append(currency_pairs)
         if start_date:
-            query_conditions.append("timestamp > %s")
+            start_date = hdatetim.convert_timestamp_to_unix_epoch(start_date)
+            query_conditions.append("timestamp >= %s")
             query_params.append(start_date)
         if end_date:
+            end_date = hdatetim.convert_timestamp_to_unix_epoch(end_date)
             query_conditions.append("timestamp < %s")
             query_params.append(end_date)
         if query_conditions:
