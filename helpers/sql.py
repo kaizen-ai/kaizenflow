@@ -98,6 +98,29 @@ def check_db_connection(
             break
 
 
+def db_connection_to_str(connection: DbConnection) -> str:
+    """
+    Get database connection details using connection. Connection
+    details include:
+
+        - Database name
+        - Host
+        - Port
+        - Username
+        - Password
+
+    :param connection: a database connection
+    :return: database connection details
+    """
+    info = connection.info
+    txt = (f"dbname={info.dbname}\n"
+           f"host={info.host}\n"
+           f"port={info.port}\n"
+           f"user={info.user}\n"
+           f"password={info.password}")
+    return txt
+
+
 # #############################################################################
 
 
