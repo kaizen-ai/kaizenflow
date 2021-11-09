@@ -1,8 +1,6 @@
 import os
 import logging
 
-from psycopg2.errors import InvalidCatalogName
-
 import helpers.sql as hsql
 import helpers.system_interaction as hsyint
 import helpers.unit_test as huntes
@@ -14,17 +12,20 @@ _LOG = logging.getLogger(__name__)
 class Test_sql(huntes.TestCase):
     def setUp(self):
         """
-        Initialize the test database inside test container 
+        Initialize the test database inside test container.
         """
         super().setUp()
-        cmd = "sudo docker-compose --file im/devops/compose/docker-compose.yml up -d im_postgres_local"
+        cmd = ("sudo docker-compose "
+              "--file im/devops/compose/docker-compose.yml up "
+              "-d im_postgres_local")
         hsyint.system(cmd, suppress_output=False)
         
     def tearDown(self):
         """
         Kill the DB.
         """
-        cmd = "sudo docker-compose --file im/devops/compose/docker-compose.yml down -v"
+        cmd = ("sudo docker-compose "
+               "--file im/devops/compose/docker-compose.yml down -v")
         hsyint.system(cmd, suppress_output=False)
         super().tearDown()
 
@@ -60,8 +61,8 @@ class Test_sql(huntes.TestCase):
         details_from_conn = hsql.db_connection_to_str(self.connection)
         #TODO(Dan3): change to env variables
         expected = (f"dbname={dbname}\n"
-               f"host={host}\n"
-               f"port={port}\n"
-               f"user={user}\n"
-               f"password={password}")
+                    f"host={host}\n"
+                    f"port={port}\n"
+                    f"user={user}\n"
+                    f"password={password}")
         self.assertEqual(details_from_conn, expected) 
