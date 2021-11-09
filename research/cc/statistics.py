@@ -72,8 +72,12 @@ def compute_start_end_stats(
     longest_not_nan_seq = find_longest_not_nan_sequence(close_price_srs)
     # Compute necessary stats and put them in a series.
     res_srs = pd.Series(dtype="object")
-    res_srs["exchange_id"] = config["column_names"]["exchange_id"]
-    res_srs["currency_pair"] = config["column_names"]["currency_pair"]
+    res_srs["exchange_id"] = price_data[
+        config["column_names"]["exchange_id"]
+    ][0]
+    res_srs["currency_pair"] = price_data[
+        config["column_names"]["currency_pair"]
+    ][0]
     res_srs["min_timestamp"] = first_idx
     res_srs["max_timestamp"] = last_idx
     res_srs["n_data_points"] = close_price_srs.count()
