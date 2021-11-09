@@ -137,6 +137,8 @@ def compute_stats_for_universe(
     hdbg.dassert_isinstance(stats_func, Callable)
     # Initialize loader.
     loader = get_loader_for_vendor(config)
+    # Initialize stats data list.
+    stats_data = []
     # Iterate over vendor universe tuples.
     for exchange_id, currency_pair in vendor_universe:
         # Read data for current vendor, exchange, currency pair.
