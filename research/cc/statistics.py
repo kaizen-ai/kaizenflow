@@ -145,14 +145,12 @@ def compute_start_end_stats(
 
 
 def compute_start_end_table_by_currency(
-    start_end_table: pd.DataFrame,
-    config: ccocon.Config,
+    start_end_table: pd.DataFrame
 ) -> pd.DataFrame:
     """
     Compute start end table by currency pair.
 
     :param start_end_table: start end table
-    :param config: parameters config
     :return: start end table table by currency pair
     """
     # Extract currency pair related stats from the original start end table.
