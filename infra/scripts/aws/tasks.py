@@ -45,7 +45,8 @@ def aws_create_instance(
     key_name=DEFAULT_KEYNAME,
     region=DEFAULT_REGION,
     root_device_name="/dev/sda1",
-    root_disk_size=100,
+    root_device_size=100,
+    root_device_type="gp2",
     name_tag=None,
 ):
     """Create chosen EC2 instance type from specified AMI with specified root partition size
@@ -56,11 +57,19 @@ def aws_create_instance(
     :param key_name: public/private key pair which will be used to access the instance, defaults to DEFAULT_KEYNAME
     :param region: geographical region, defaults to DEFAULT_REGION
     :param root_device_name: name of the root device of the instance, defaults to '/dev/sda1'
-    :param root_disk_size: size of the root device in GBs, defaults to 100
+    :param root_device_size: size of the root device in GBs, defaults to 100
+    :param root_device_type: type of storage to use (gp2, gp3, sc1, etc...)
+    :param name_tag: tag with key "Name" added to the instance tags
     """
     aws_manager = AWS_EC2_Manager(region)
     instance_id = aws_manager.create_instance(
-        ami, instance_type, key_name, name_tag, root_device_name, root_disk_size
+        ami,
+        instance_type,
+        key_name,
+        name_tag,
+        root_device_name,
+        root_device_size,
+        root_device_type,
     )
 
 

@@ -68,6 +68,7 @@ class AWS_EC2_Manager:
         name_tag: str,
         root_device_name: str,
         root_device_size: int,
+        root_device_type: str,
     ) -> str:
         """Create EC2 instance
 
@@ -77,6 +78,7 @@ class AWS_EC2_Manager:
         :param name_tag: tag with key "Name" added to the instance tags
         :param root_device_name: name of the root device specific to the provided AMI
         :param root_device_size: size of the root device (in GBs)
+        :param root_device_type: type of storage to use (gp2, gp3, sc1, etc.)
         :return: ID of the newly created instance
         """
 

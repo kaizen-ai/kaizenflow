@@ -34,6 +34,7 @@ class Test_AWSManager(unittest.TestCase):
             name_tag=name_tag,
             root_device_name="/dev/sda1",
             root_device_size=100,
+            root_device_type='gp2'
         )
 
         client = boto3.client("ec2", region_name=DEFAULT_REGION)
