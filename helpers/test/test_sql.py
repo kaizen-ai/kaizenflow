@@ -41,7 +41,7 @@ class Test_sql(huntes.TestCase):
 
     def test_db_connection_to_str(self):
         """
-        Verify connection details from connection.
+        Verify that connection string is correct.
         """
         dbname = "im_postgres_db_local"
         host = "localhost"
@@ -58,11 +58,11 @@ class Test_sql(huntes.TestCase):
             password,
             autocommit=True,
         )
-        details_from_conn = hsql.db_connection_to_str(self.connection)
+        actual_str = hsql.db_connection_to_str(self.connection)
         #TODO(Dan3): change to env variables
         expected = (f"dbname={dbname}\n"
                     f"host={host}\n"
                     f"port={port}\n"
                     f"user={user}\n"
                     f"password={password}")
-        self.assertEqual(details_from_conn, expected) 
+        self.assertEqual(actual_str, expected) 
