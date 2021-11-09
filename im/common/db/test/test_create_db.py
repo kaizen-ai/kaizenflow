@@ -6,6 +6,7 @@ import helpers.sql as hsql
 import helpers.system_interaction as hsyint
 import helpers.unit_test as huntes
 import im.common.db.create_db as imcodbcrdb
+import pytest
 
 _LOG = logging.getLogger(__name__)
 
@@ -26,8 +27,6 @@ class TestCreateDB(huntes.TestCase):
         password = "alsdkqoen"
         user = "aljsdalsd"
         hsql.check_db_connection(dbname, port, host)
-        #TODO(Dan3): Find a way to pass the envfile to docker-compose.
-        # self.connection, _ = hsql.get_connection_from_env_vars()
         self.connection, _ = hsql.get_connection(
             dbname,
             host,
@@ -47,6 +46,7 @@ class TestCreateDB(huntes.TestCase):
         hsyint.system(cmd, suppress_output=False)
         super().tearDown()
 
+    @pytest.mark.slow()
     def test_create_all_tables1(self):
         """
         Verify that all necessary tables are created inside the DB.
@@ -73,36 +73,23 @@ class TestCreateDB(huntes.TestCase):
         actual = sorted(hsql.get_table_names(self.connection))
         self.assertEqual(actual, expected)
 
-    def test_remove_database1(self):
+    @pytest.mark.slow()
+    def test_remove_database(self):
         """
-        Verify that random database removed.
+        Create database 'test_db_to_remove' and remove it.
         """
-        db_names = hsql.get_db_names(self.connection)
-        initial_db_num = len(db_names)
-        #TODO(Dan3): Change to using the env file.
-        db_names.remove('im_postgres_db_local')
-        if db_names:
-            imcodbcrdb.remove_database(self.connection, db_names[0])
-            result_db_num = len(hsql.get_db_names(self.connection))
-            self.assertLess(result_db_num, initial_db_num)
-
-    def test_remove_database2(self):
-        """
-        Create database 'test_db_to_remove_xqw' and removing it.
-        """
-        db_list_initial = hsql.get_db_names(self.connection)
-        if "test_db_to_remove_xqw" not in db_list_initial:
-            imcodbcrdb.create_database(
-                self.connection, 
-                new_db="test_db_to_remove_xqw"
+        imcodbcrdb.create_database(
+                self.connection,
+                new_db="test_db_to_remove",
+                force=True
             )
-        imcodbcrdb.remove_database(self.connection, "test_db_to_remove_xqw")
-        db_list_updated = hsql.get_db_names(self.connection)
-        self.assertNotIn("test_db_to_remove_xqw", db_list_updated)
+        imcodbcrdb.remove_database(self.connection, "test_db_to_remove")
+        db_list = hsql.get_db_names(self.connection)
+        self.assertNotIn("test_db_to_remove", db_list)
 
     def test_remove_database_invalid(self):
         """
-        Test failed assertion for passing db name that don't exist.
+        Test failed assertion for passing db name that does not exist.
         """
         with self.assertRaises(perrors.InvalidCatalogName):
             imcodbcrdb.remove_database(self.connection, "db does not exist")
