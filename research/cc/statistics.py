@@ -272,7 +272,7 @@ def get_universe_price_data(
     price_srs_list = []
     # Iterate exchange ids and currency pairs.
     for exchange_id, currency_pair in vendor_universe:
-        # Construct a colname from exchange id and currency pair.
+        # Construct a column name from exchange id and currency pair.
         colname = " ".join([exchange_id, currency_pair])
         colnames.append(colname)
         # Read data for current exchange and currency pair.
