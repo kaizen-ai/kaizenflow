@@ -34,7 +34,6 @@ import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprintin
 import helpers.s3 as hs3
-import im.ccxt.data.load.loader as imccdaloloa
 import im.data.universe as imdauni
 import research.cc.statistics as rccsta
 

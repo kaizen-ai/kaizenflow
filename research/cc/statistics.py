@@ -60,7 +60,9 @@ def compute_stats_for_universe(
     # Post-process results.
     cols_to_sort_by = ["coverage", "longest_not_nan_seq_perc"]
     cols_to_round = [
-        "coverage", "avg_data_points_per_day", "longest_not_nan_seq_perc"
+        "coverage",
+        "avg_data_points_per_day",
+        "longest_not_nan_seq_perc",
     ]
     stats_table = postprocess_stats_table(
         stats_table, cols_to_sort_by, cols_to_round
@@ -117,18 +119,14 @@ def compute_start_end_stats(
     longest_not_nan_seq = find_longest_not_nan_sequence(close_price_srs)
     # Compute necessary stats and put them in a series.
     res_srs = pd.Series(dtype="object")
-    res_srs["exchange_id"] = price_data[
-        config["column_names"]["exchange_id"]
-    ][0]
+    res_srs["exchange_id"] = price_data[config["column_names"]["exchange_id"]][0]
     res_srs["currency_pair"] = price_data[
         config["column_names"]["currency_pair"]
     ][0]
     res_srs["min_timestamp"] = first_idx
     res_srs["max_timestamp"] = last_idx
     res_srs["n_data_points"] = close_price_srs.count()
-    res_srs["coverage"] = 100 * (
-        1 - csta.compute_frac_nan(close_price_srs)
-    )
+    res_srs["coverage"] = 100 * (1 - csta.compute_frac_nan(close_price_srs))
     res_srs["days_available"] = (last_idx - first_idx).days
     res_srs["avg_data_points_per_day"] = (
         res_srs["n_data_points"] / res_srs["days_available"]
@@ -145,7 +143,7 @@ def compute_start_end_stats(
 
 
 def compute_start_end_table_by_currency(
-    start_end_table: pd.DataFrame
+    start_end_table: pd.DataFrame,
 ) -> pd.DataFrame:
     """
     Compute start end table by currency pair.
@@ -154,20 +152,21 @@ def compute_start_end_table_by_currency(
     :return: start end table table by currency pair
     """
     # Extract currency pair related stats from the original start end table.
-    currency_start_end_table = start_end_table.groupby(
-        "currency_pair"
-    ).agg(
+    currency_start_end_table = (
+        start_end_table.groupby("currency_pair")
+        .agg(
             {
                 "min_timestamp": np.min,
                 "max_timestamp": np.max,
                 "exchange_id": list,
             }
-    ).reset_index()
+        )
+        .reset_index()
+    )
     # Compute the number of available days per currency pair.
     currency_start_end_table["days_available"] = (
-        currency_start_end_table["max_timestamp"] - currency_start_end_table[
-            "min_timestamp"
-        ]
+        currency_start_end_table["max_timestamp"]
+        - currency_start_end_table["min_timestamp"]
     ).dt.days
     # Sort by available days and reset index.
     currency_start_end_table_sorted = currency_start_end_table.sort_values(
@@ -207,7 +206,7 @@ def postprocess_stats_table(
 # TODO(Grisha): move `get_loader_for_vendor` out in #269.
 # TODO(Grisha): use the abstract class in #313.
 def get_loader_for_vendor(
-    config: ccocon.Config
+    config: ccocon.Config,
 ) -> Union[imccdaloloa.CcxtLoader, imcrdaloloa.CddLoader]:
     """
     Get vendor specific loader instance.

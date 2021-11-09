@@ -25,8 +25,6 @@
 import logging
 import os
 
-import numpy as np
-
 import core.config.config_ as ccocon
 import helpers.dbg as hdbg
 import helpers.env as henv
@@ -88,14 +86,16 @@ vendor_universe = imdauni.get_vendor_universe_as_tuples(
 vendor_universe
 
 # %%
-compute_start_end_stats = lambda data: rccsta.compute_start_end_stats(data, config)
+compute_start_end_stats = lambda data: rccsta.compute_start_end_stats(
+    data, config
+)
 
 start_end_table = rccsta.compute_stats_for_universe(
     vendor_universe, config, compute_start_end_stats
 )
 
 # %% [markdown]
-# Looking at the results we can see that all the exchanges except for Bitfinex have significantly big longest not-NaN sequence (>13% at least) in combine with high data coverage (>85%). Bitfinex has a very low data coverage and its longest not-NaN sequences are less than 1% compare to the original data length which means that Bitfinex data spottiness is too scattered and we should exclude it from our analysis until we get clearer data for it.
+# Looking at the results we can see that all the exchanges except for Bitfinex have significantly big longest not-NaN sequence (>13% at least) in combine with high data coverage (>85%). Bitfinex has a very low data coverage and its longest not-NaN sequence lengths are less than 1 day long and comprise less than 1% of the original data. This means that Bitfinex data spottiness is too scattered and we should exclude it from our analysis until we get clearer data for it.
 
 # %%
 _LOG.info(
@@ -108,5 +108,7 @@ start_end_table
 # ## Per currency pair
 
 # %%
-currency_start_end_table = rccsta.compute_start_end_table_by_currency(start_end_table)
+currency_start_end_table = rccsta.compute_start_end_table_by_currency(
+    start_end_table
+)
 currency_start_end_table
