@@ -144,6 +144,46 @@ def compute_start_end_stats(
     return res_srs
 
 
+def compute_start_end_table_by_currency(
+    start_end_table: pd.DataFrame,
+    config: ccocon.Config,
+) -> pd.DataFrame:
+    """
+    Compute start end table by currency pair.
+
+    :param start_end_table: start end table
+    :param config: parameters config
+    :return: start end table table by currency pair
+    """
+    # Extract currency pair related stats from the original start end table.
+    currency_start_end_table = start_end_table.groupby(
+        "currency_pair"
+    ).agg(
+            {
+                "min_timestamp": np.min,
+                "max_timestamp": np.max,
+                "exchange_id": list,
+            }
+    ).reset_index()
+    # Compute the number of available days per currency pair.
+    currency_start_end_table["days_available"] = (
+        currency_start_end_table["max_timestamp"] - currency_start_end_table[
+            "min_timestamp"
+        ]
+    ).dt.days
+    # Sort by available days and reset index.
+    currency_start_end_table_sorted = currency_start_end_table.sort_values(
+        by="days_available",
+        ascending=False,
+    ).reset_index(drop=True)
+    # Report the number of unique currency pairs.
+    _LOG.info(
+        "The number of unique currency pairs=%s",
+        currency_start_end_table_sorted.shape[0],
+    )
+    return currency_start_end_table_sorted
+
+
 def postprocess_stats_table(
     stats_table: pd.DataFrame,
     cols_to_sort_by: List[str],
