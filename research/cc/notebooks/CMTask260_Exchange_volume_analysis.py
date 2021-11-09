@@ -31,6 +31,9 @@ import im.data.universe as imdauni
 import research.cc.statistics as rccsta
 import research.cc.volume as rccvol
 
+import core.plotting as cplot
+
+
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
 
@@ -57,7 +60,7 @@ def get_cmtask260_config() -> ccocon.Config:
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["data_type"] = "OHLCV"
-    config["data"]["universe_version"] = "v0_2"
+    config["data"]["universe_version"] = "v0_3"
     # Column names.
     config.add_subconfig("column_names")
     config["column_names"]["volume"] = "volume"
@@ -79,22 +82,22 @@ print(config)
 # # Load the data
 
 # %%
-compute_cum_volume = lambda data: rccvol.compute_cum_volume(
-    data, config, nom_volume=False
+compute_cumul_volume_ = lambda data: rccvol.compute_cumul_volume(
+    data, config, is_notional_volume=False
 )
 
-cum_volume = rccsta.compute_stats_for_universe(config, compute_cum_volume)
+cumul_volume = rccsta.compute_stats_for_universe(config, compute_cumul_volume_)
 
 # %%
-_LOG.info("The number of exchanges - currency pairs =%s", cum_volume.shape[0])
-cum_volume.head(3)
+_LOG.info("The number of (exchanges, currency pairs) =%s", cumul_volume.shape[0])
+cumul_volume.head(3)
 
 # %% [markdown]
 # # Compute total volume per exchange
 
 # %%
 total_volume_by_exchange = rccvol.get_total_volume_by_exchange(
-    cum_volume, config, avg_daily=False
+    cumul_volume, config, avg_daily=False
 )
 print(total_volume_by_exchange)
 
@@ -103,7 +106,7 @@ print(total_volume_by_exchange)
 
 # %%
 total_volume_by_coins = rccvol.get_total_volume_by_coins(
-    cum_volume, config, avg_daily=False
+    cumul_volume, config, avg_daily=False
 )
 print(total_volume_by_coins)
 
@@ -119,17 +122,141 @@ print(total_volume_by_coins)
 # - Or write the new one that takes into account timestamp values
 
 # %% run_control={"marked": false}
-def stats_func(df):
-    return df
+def get_daily_volume(data, is_nominal_value):
+    if is_nominal_value:
+        data["volume"]=data["volume"]*data["close"]
+    data["date"] = data.index.date
+    data_grouped = data.groupby(["exchange_id", "currency_pair", "date"], as_index=False)
+    cumul_daily_volume = data_grouped["volume"].sum()
+    return cumul_daily_volume
 
+compute_daily_volume = lambda data: get_daily_volume(data, is_nominal_value=True)
 
-dd = rccsta.compute_stats_for_universe(config, stats_func)
+cumul_daily_volume = rccsta.compute_stats_for_universe(
+    config, compute_daily_volume
+)
 
 # %%
-dd.head()
+cumul_daily_volume
 
 
-# %% [markdown] heading_collapsed=true
+# %% [markdown]
+# # Rolling Plots
+
+# %%
+def get_rolling_volume_per_group(data, group, window, display_plot):
+    data_grouped = data.groupby([group, "date"], as_index=False)
+    cum_volume_per_group_per_day = data_grouped["volume"].sum()
+    resampler = cum_volume_per_group_per_day.groupby([group])
+    rolling_volume = resampler["volume"].transform(lambda x: x.rolling(window).mean())
+    cum_volume_per_group_per_day = cum_volume_per_group_per_day.merge(rolling_volume.to_frame(),left_index=True,right_index=True)
+    cum_volume_per_group_per_day.rename(columns={'volume_x':'volume','volume_y':"rolling_volume"}, inplace=True)
+    if display_plot:
+        sns.lineplot(data=cum_volume_per_group_per_day, x='date', y='rolling_volume', hue=group)
+    return cum_volume_per_group_per_day
+
+
+# %%
+rolling_vol_exchange = get_rolling_volume_per_group(cumul_daily_volume, group="exchange_id", window=90, display_plot=True)
+print(rolling_vol_exchange)
+
+# %%
+rolling_vol_coins = get_rolling_volume_per_group(cumul_daily_volume, group="currency_pair", window=90, display_plot=True)
+print(rolling_vol_coins)
+
+
+# %% [markdown]
+# # Compare weekday volumes
+
+# %%
+def compare_weekdays_volumes(df, plot_total_volumes, plot_distr_by_weekdays):
+    df["weekday"] = df["date"].map(lambda x: x.strftime("%A"))
+    total_volume_by_weekdays = df.groupby("weekday")["volume"].sum().sort_values(ascending=False)
+    if plot_total_volumes:
+        cplot.plot_barplot(
+                    total_volume_by_weekdays,
+                    title="Total volume per weekdays",
+                    figsize=[15, 7],
+                )
+    if plot_distr_by_weekdays:
+        weekends = df[(df["weekday"] == "Saturday") | (df["weekday"] == "Sunday")]
+        weekdays = df[(df["weekday"] != "Saturday") & (df["weekday"] != "Sunday")]
+        weekends_volume = weekends.groupby(["date","weekday"])["volume"].sum()
+        weekdays_volume = weekdays.groupby(["date","weekday"])["volume"].sum()
+        sns.displot(weekends_volume).set(title = 'Volume Distribution by weekends')
+        sns.displot(weekdays_volume).set(title = 'Volume Distribution by working days')
+    return total_volume_by_weekdays
+
+
+# %%
+total_volume_by_weekdays = compare_weekdays_volumes(cumul_daily_volume,
+                                                    plot_total_volumes=True,
+                                                    plot_distr_by_weekdays=True)
+print(total_volume_by_weekdays)
+
+
+# %% [markdown]
+# # Compare ATH volumes
+
+# %%
+def plot_ath_volumes_comparison(df_list):
+    """
+    Return the graph with the comparison of average minute total trading volume
+    in ATH vs.
+
+    non-ATH
+    Parameters: dataframe with volumes from a given exchange
+    """
+    plot_df = []
+    for df in df_list:
+        df_ath = df.iloc[df.index.indexer_between_time("09:30", "16:00")]
+        df_not_ath = df.loc[~df.index.isin(df_ath.index)]
+        ath_stat = pd.DataFrame()
+        ath_stat.loc[f"{df.name}", f"minute_avg_total_volume_ath_{df.name}"] = (
+            df_ath.sum().sum() / df_ath.shape[0]
+        )
+        ath_stat.loc[
+            f"{df.name}", f"minute_avg_total_volume_not_ath_{df.name}"
+        ] = (df_not_ath.sum().sum() / df_not_ath.shape[0])
+        plot_df.append(ath_stat)
+    plot_df = pd.concat(plot_df)
+    plot_df.plot.bar(figsize=(15, 7), logy=True)
+
+
+# %%
+def get_ath_volume(data, is_nominal_value):
+    if is_nominal_value:
+        data["volume"]=data["volume"]*data["close"]
+    df_ath = data.iloc[data.index.indexer_between_time("09:30", "16:00")]
+    df_not_ath = data.loc[~data.index.isin(df_ath.index)]
+    ath_stat = pd.DataFrame()
+    ath_stat.loc[f"{df.name}", f"minute_avg_total_volume_ath_{df.name}"] = (
+        df_ath.sum().sum() / df_ath.shape[0]
+    )
+    ath_stat.loc[
+        f"{df.name}", f"minute_avg_total_volume_not_ath_{df.name}"
+    ] = (df_not_ath.sum().sum() / df_not_ath.shape[0])
+    plot_df.append(ath_stat)
+    plot_df = pd.concat(plot_df)
+    plot_df.plot.bar(figsize=(15, 7), logy=True)
+    
+    
+    
+    data["date"] = data.index.date
+    data_grouped = data.groupby(["exchange_id", "currency_pair", "date"], as_index=False)
+    cumul_daily_volume = data_grouped["volume"].sum()
+    return cumul_daily_volume
+
+    compute_ath_volume = lambda data: get_ath_volume(data, is_nominal_value=True)
+
+    compute_ath_volume = rccsta.compute_stats_for_universe(
+        config, compute_ath_volume
+    )
+
+
+# %%
+
+# %% [markdown]
 # # OLD CODE
 
 # %% [markdown] heading_collapsed=true
@@ -478,10 +605,10 @@ def compare_weekdays_volumes(exch_list):
 # %% hidden=true
 compare_weekdays_volumes(exch_list)
 
-# %% [markdown] heading_collapsed=true
+# %% [markdown]
 # # How does it vary over hours? E.g., US stock times 9:30-16 vs other time
 
-# %% [markdown] hidden=true
+# %% [markdown] heading_collapsed=true
 # ## Binance example
 
 # %% hidden=true
