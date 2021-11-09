@@ -133,7 +133,9 @@ def compute_start_end_stats(
     res_srs["avg_data_points_per_day"] = round(
         res_srs["n_data_points"] / res_srs["days_available"], 2
     )
-    res_srs["longest_not_nan_seq_days"] = len(longest_not_nan_seq)
+    res_srs["longest_not_nan_seq_days"] = (
+        longest_not_nan_seq.index[-1] - longest_not_nan_seq.index[0]
+    ).days
     res_srs["longest_not_nan_seq_share"] = round(
         len(longest_not_nan_seq) / len(close_price_srs), 2
     )
