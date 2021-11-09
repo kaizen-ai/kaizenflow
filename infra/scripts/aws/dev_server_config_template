@@ -1,0 +1,17 @@
+# INSTANCE CONFIGURATION
+# Ubuntu Server 20.04 LTS (HVM), SSD Volume Type
+AMI=ami-083654bd07b5da81d
+
+# AWS INSTANCE TYPE (t2.xlarge = 4 vCPUs 16GB RAM)
+INSTANCE_TYPE=t2.xlarge
+
+# DEFAULT REGION (if changed than AMI ID needs to be updated to the coressponding region)
+REGION=us-east-1
+
+ROOT_DEVICE_NAME=/dev/sda1
+# DISK SIZES (IN GBs)
+ROOT_DISK_SIZE=100
+DATA_DISK_SIZE=512
+
+# PUBLIC/PRIVATE KEY PAIR USED TO SSH INTO A CREATED INSTANCE, CAN BE CREATED VIA aws_create_key_pair
+KEY_PAIR_NAME=ec2-key-pair
