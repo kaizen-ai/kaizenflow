@@ -119,6 +119,8 @@ def db_connection_to_str(connection: DbConnection) -> str:
            f"user={info.user}\n"
            f"password={info.password}")
     return txt
+
+
 # #############################################################################
 
 
