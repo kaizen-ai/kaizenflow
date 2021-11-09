@@ -58,9 +58,9 @@ def compute_stats_for_universe(
     # Convert results to a dataframe.
     stats_table = pd.DataFrame(stats_data)
     # Post-process results.
-    cols_to_sort_by = ["coverage", "longest_not_nan_seq_share"]
+    cols_to_sort_by = ["coverage", "longest_not_nan_seq_perc"]
     cols_to_round = [
-        "coverage", "avg_data_points_per_day", "longest_not_nan_seq_share"
+        "coverage", "avg_data_points_per_day", "longest_not_nan_seq_perc"
     ]
     stats_table = postprocess_stats_table(
         stats_table, cols_to_sort_by, cols_to_round
@@ -136,7 +136,7 @@ def compute_start_end_stats(
     res_srs["longest_not_nan_seq_days"] = (
         longest_not_nan_seq.index[-1] - longest_not_nan_seq.index[0]
     ).days
-    res_srs["longest_not_nan_seq_share"] = (
+    res_srs["longest_not_nan_seq_perc"] = 100 * (
         len(longest_not_nan_seq) / len(close_price_srs)
     )
     res_srs["longest_not_nan_seq_start_date"] = longest_not_nan_seq.index[0]
@@ -184,19 +184,23 @@ def compute_start_end_table_by_currency(
 
 def postprocess_stats_table(
     stats_table: pd.DataFrame,
-    cols_to_sort_by: List[str],
-    cols_to_round: List[str],
+    cols_to_sort_by: Optional[List[str]] = None,
+    cols_to_round: Optional[List[str]] = None,
 ) -> pd.DataFrame:
     """
     Post-process start-end stats table.
 
     :param stats_table: stats table
-    :param cols_to_sort_by: columns to sort the table by
-    :param cols_to_round: columns to round up to 2 decimals
+    :param cols_to_sort_by: columns to sort the table by if specified
+    :param cols_to_round: columns to round up to 2 decimals if specified
     :return: post-processed stats table
     """
-    stats_table = stats_table.sort_values(by=cols_to_sort_by)
-    stats_table[cols_to_round] = stats_table[cols_to_round].round(2)
+    if cols_to_sort_by:
+        hdbg.dassert_is_subset(cols_to_sort_by, stats_table.columns)
+        stats_table = stats_table.sort_values(by=cols_to_sort_by)
+    if cols_to_round:
+        hdbg.dassert_is_subset(cols_to_round, stats_table.columns)
+        stats_table[cols_to_round] = stats_table[cols_to_round].round(2)
     return stats_table
 
 
