@@ -16,7 +16,7 @@
 # # Description
 
 # %% [markdown]
-# This notebook computes earliest/latest data timestamps available per data provider, exchange, currency pair.
+# This notebook computes data statistics per exchange id and currency pair for a given vendor universe.
 
 # %% [markdown]
 # # Imports
