@@ -1,4 +1,5 @@
 helpers
 boto3
-python-decouple
+moto
+pytest
 invoke
