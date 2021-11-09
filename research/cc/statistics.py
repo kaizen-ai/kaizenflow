@@ -57,11 +57,14 @@ def compute_stats_for_universe(
         stats_data.append(cur_stats_data)
     # Convert results to a dataframe.
     stats_table = pd.DataFrame(stats_data)
-    # Sort if columns to sort by are specified.
-    if config["column_names"]["columns_to_sort_by"]:
-        stats_table = stats_table.sort_values(
-            by=config["column_names"]["columns_to_sort_by"]
-        )
+    # Post-process results.
+    cols_to_sort_by = ["coverage", "longest_not_nan_seq_share"]
+    cols_to_round = [
+        "coverage", "avg_data_points_per_day", "longest_not_nan_seq_share"
+    ]
+    stats_table = postprocess_stats_table(
+        stats_table, cols_to_sort_by, cols_to_round
+    )
     return stats_table
 
 
@@ -88,7 +91,6 @@ def compute_start_end_stats(
         - the share of the longest not-NaN sequence in data
         - start date of the longest not-NaN sequence
         - end data of the longest not-NaN sequence
-
 
     :param price_data: crypto price data
     :param config: parameters config
@@ -138,6 +140,24 @@ def compute_start_end_stats(
     res_srs["longest_not_nan_seq_start_date"] = longest_not_nan_seq.index[0]
     res_srs["longest_not_nan_seq_end_date"] = longest_not_nan_seq.index[-1]
     return res_srs
+
+
+def postprocess_stats_table(
+    stats_table: pd.DataFrame,
+    cols_to_sort_by: List[str],
+    cols_to_round: List[str],
+) -> pd.DataFrame:
+    """
+    Post-process start-end stats table.
+
+    :param stats_table: stats table
+    :param cols_to_sort_by: columns to sort the table by
+    :param cols_to_round: columns to round up to 2 decimals
+    :return: post-processed stats table
+    """
+    stats_table = stats_table.sort_values(by=cols_to_sort_by)
+    stats_table[cols_to_round] = stats_table[cols_to_round].round(2)
+    return stats_table
 
 
 # TODO(Grisha): move `get_loader_for_vendor` out in #269.
