@@ -91,41 +91,6 @@ def create_all_tables(connection: hsql.DbConnection) -> None:
             _LOG.warning("Duplicate table created, skipping.")
 
 
-# TODO(Grisha): convert it to test.
-def test_tables(
-    connection: hsql.DbConnection,
-) -> None:
-    """
-    Test that tables are created.
-
-    :param connection: a database connection
-    """
-    _LOG.info("Testing created tables...")
-    # Check tables list.
-    actual_tables = hsql.get_table_names(connection)
-    expected_tables = [
-        "ccxt_ohlcv",
-        "currency_pair",
-        "exchange",
-        "exchange_name",
-        "ib_daily_data",
-        "ib_minute_data",
-        "ib_tick_bid_ask_data",
-        "ib_tick_data",
-        "kibot_daily_data",
-        "kibot_minute_data",
-        "kibot_tick_bid_ask_data",
-        "kibot_tick_data",
-        "symbol",
-        "trade_symbol",
-    ]
-    hdbg.dassert_set_eq(actual_tables, expected_tables)
-    # Execute the test query.
-    test_query = "INSERT INTO Exchange (name) VALUES ('TestExchange');"
-    cursor = connection.cursor()
-    cursor.execute(test_query)
-
-
 def create_database(
     connection: hsql.DbConnection,
     new_db: str,
