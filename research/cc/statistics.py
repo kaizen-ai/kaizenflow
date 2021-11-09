@@ -126,18 +126,18 @@ def compute_start_end_stats(
     res_srs["min_timestamp"] = first_idx
     res_srs["max_timestamp"] = last_idx
     res_srs["n_data_points"] = close_price_srs.count()
-    res_srs["coverage"] = round(
-        (1 - csta.compute_frac_nan(close_price_srs)) * 100, 2
+    res_srs["coverage"] = 100 * (
+        1 - csta.compute_frac_nan(close_price_srs)
     )
     res_srs["days_available"] = (last_idx - first_idx).days
-    res_srs["avg_data_points_per_day"] = round(
-        res_srs["n_data_points"] / res_srs["days_available"], 2
+    res_srs["avg_data_points_per_day"] = (
+        res_srs["n_data_points"] / res_srs["days_available"]
     )
     res_srs["longest_not_nan_seq_days"] = (
         longest_not_nan_seq.index[-1] - longest_not_nan_seq.index[0]
     ).days
-    res_srs["longest_not_nan_seq_share"] = round(
-        len(longest_not_nan_seq) / len(close_price_srs), 2
+    res_srs["longest_not_nan_seq_share"] = (
+        len(longest_not_nan_seq) / len(close_price_srs)
     )
     res_srs["longest_not_nan_seq_start_date"] = longest_not_nan_seq.index[0]
     res_srs["longest_not_nan_seq_end_date"] = longest_not_nan_seq.index[-1]
