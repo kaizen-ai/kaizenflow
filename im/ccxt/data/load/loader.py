@@ -285,8 +285,10 @@ class CcxtLoader:
 
         :param data: dataframe with CCXT data from DB or a filesystem
         :param data_type: OHLCV or trade, bid/ask data
-        :param exchange_id: CCXT exchange id, e.g. "binance"
-        :param currency_pair: currency pair, e.g. "BTC/USDT"
+        :param exchange_id: CCXT exchange id to add as a column if specified,
+            e.g. "binance"
+        :param currency_pair: currency pair to add as a column if specified,
+            e.g. "BTC/USDT"
         :return: processed dataframe
         """
         # Apply common transformations.
