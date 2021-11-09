@@ -88,7 +88,7 @@ def compute_start_end_table(
     )
     res_df["longest_not_nan_seq_start_date"] = longest_not_nan_seq.index[0]
     res_df["longest_not_nan_seq_end_date"] = longest_not_nan_seq.index[-1]
-    return start_end_table
+    return res_df
 
 
 # TODO(Grisha): move `get_loader_for_vendor` out in #269.
