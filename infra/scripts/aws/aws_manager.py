@@ -65,6 +65,7 @@ class AWS_EC2_Manager:
         ami: str,
         instance_type: str,
         key_name: str,
+        name_tag: str,
         root_device_name: str,
         root_device_size: int,
     ) -> str:
@@ -73,6 +74,7 @@ class AWS_EC2_Manager:
         :param ami: Amazon Machine Image - ID of a template which contains software configuration of the instance
         :param instance_type: AWS instance type
         :param key_name: name of the public/private key-pair to be used to access the instance after creation
+        :param name_tag: tag with key "Name" added to the instance tags
         :param root_device_name: name of the root device specific to the provided AMI
         :param root_device_size: size of the root device (in GBs)
         :return: ID of the newly created instance
@@ -88,6 +90,17 @@ class AWS_EC2_Manager:
                     "DeviceName": root_device_name,
                     "Ebs": {"VolumeSize": root_device_size},
                 }
+            ],
+            TagSpecifications=[
+                {
+                    'ResourceType': 'instance',
+                    'Tags': [
+                        {
+                            'Key': 'Name',
+                            'Value': name_tag,
+                        },
+                    ],
+                },
             ],
         )
 
