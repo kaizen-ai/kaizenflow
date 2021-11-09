@@ -22,16 +22,16 @@ import im.data.universe as imdauni
 _LOG = logging.getLogger(__name__)
 
 
-def compute_start_end_table(
+def compute_start_end_stats(
     price_data: pd.DataFrame,
     config: ccocon.Config,
-) -> pd.DataFrame:
+) -> pd.Series:
     """
-    Compute start-end table for exchange-currency data.
+    Compute start-end stats for exchange-currency data.
 
     Note: `price_data` must be resampled using NaNs.
 
-    Start-end table's structure is:
+    Start-end stats's structure is:
         - exchange name
         - currency pair
         - minimum observed timestamp
@@ -49,7 +49,7 @@ def compute_start_end_table(
 
     :param price_data: crypto price data
     :param config: parameters config
-    :return: start-end table
+    :return: start-end stats series
     """
     hdbg.dassert_is_subset(
         [
@@ -70,25 +70,27 @@ def compute_start_end_table(
     close_price_srs = close_price_srs[first_idx:last_idx].copy()
     # Get the longest not-NaN sequence in the close price series.
     longest_not_nan_seq = find_longest_not_nan_sequence(close_price_srs)
-    # Compute necessary stats and put them a dataframe.
-    res_df = pd.DataFrame(dtype="object")
-    res_df["min_timestamp"] = first_idx
-    res_df["max_timestamp"] = last_idx
-    res_df["n_data_points"] = close_price_srs.count()
-    res_df["coverage"] = round(
+    # Compute necessary stats and put them in a series.
+    res_srs = pd.Series(dtype="object")
+    res_srs["exchange_id"] = config["column_names"]["exchange_id"]
+    res_srs["currency_pair"] = config["column_names"]["currency_pair"]
+    res_srs["min_timestamp"] = first_idx
+    res_srs["max_timestamp"] = last_idx
+    res_srs["n_data_points"] = close_price_srs.count()
+    res_srs["coverage"] = round(
         (1 - csta.compute_frac_nan(close_price_srs)) * 100, 2
     )
-    res_df["days_available"] = (last_idx - first_idx).days
-    res_df["avg_data_points_per_day"] = round(
-        res_df["n_data_points"] / res_df["days_available"], 2
+    res_srs["days_available"] = (last_idx - first_idx).days
+    res_srs["avg_data_points_per_day"] = round(
+        res_srs["n_data_points"] / res_srs["days_available"], 2
     )
-    res_df["longest_not_nan_seq_days"] = len(longest_not_nan_seq)
-    res_df["longest_not_nan_seq_share"] = round(
+    res_srs["longest_not_nan_seq_days"] = len(longest_not_nan_seq)
+    res_srs["longest_not_nan_seq_share"] = round(
         len(longest_not_nan_seq) / len(close_price_srs), 2
     )
-    res_df["longest_not_nan_seq_start_date"] = longest_not_nan_seq.index[0]
-    res_df["longest_not_nan_seq_end_date"] = longest_not_nan_seq.index[-1]
-    return res_df
+    res_srs["longest_not_nan_seq_start_date"] = longest_not_nan_seq.index[0]
+    res_srs["longest_not_nan_seq_end_date"] = longest_not_nan_seq.index[-1]
+    return res_srs
 
 
 # TODO(Grisha): move `get_loader_for_vendor` out in #269.
@@ -127,11 +129,11 @@ def compute_stats_for_universe(
     Compute stats on the vendor universe level.
 
     E.g., to compute start-end table for the universe do:
-    `compute_stats_for_universe(vendor_universe, config, compute_start_end_table, config)`.
+    `compute_stats_for_universe(vendor_universe, config, compute_start_end_stats, config)`.
 
     :param vendor_universe: vendor universe as a list of of exchange-currency tuples
     :param config: parameters config
-    :param stats_func: function to compute statistics, e.g. `compute_start_end_table`
+    :param stats_func: function to compute statistics, e.g. `compute_start_end_stats`
     :return: stats table for all exchanges and currencies in the vendor universe
     """
     hdbg.dassert_isinstance(stats_func, Callable)
@@ -151,8 +153,8 @@ def compute_stats_for_universe(
         cur_stats_data = stats_func(data)
         cur_stats_data["vendor"] = config["data"]["vendor"]
         stats_data.append(cur_stats_data)
-    # Concatenate the results.
-    stats_table = pd.concat(stats_data, ignore_index=True)
+    # Convert results to a dataframe.
+    stats_table = pd.DataFrame(stats_data)
     # Sort if columns to sort by are specified.
     if config["column_names"]["columns_to_sort_by"]:
         stats_table = stats_table.sort_values(
