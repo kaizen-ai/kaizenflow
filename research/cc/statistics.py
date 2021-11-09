@@ -22,6 +22,49 @@ import im.data.universe as imdauni
 _LOG = logging.getLogger(__name__)
 
 
+def compute_stats_for_universe(
+    vendor_universe: List[imdauni.ExchangeCurrencyTuple],
+    config: ccocon.Config,
+    stats_func: Callable,
+) -> pd.DataFrame:
+    """
+    Compute stats on the vendor universe level.
+
+    E.g., to compute start-end table for the universe do:
+    `compute_stats_for_universe(vendor_universe, config, compute_start_end_stats, config)`.
+
+    :param vendor_universe: vendor universe as a list of of exchange-currency tuples
+    :param config: parameters config
+    :param stats_func: function to compute statistics, e.g. `compute_start_end_stats`
+    :return: stats table for all exchanges and currencies in the vendor universe
+    """
+    hdbg.dassert_isinstance(stats_func, Callable)
+    # Initialize loader.
+    loader = get_loader_for_vendor(config)
+    # Initialize stats data list.
+    stats_data = []
+    # Iterate over vendor universe tuples.
+    for exchange_id, currency_pair in vendor_universe:
+        # Read data for current vendor, exchange, currency pair.
+        data = loader.read_data_from_filesystem(
+            exchange_id,
+            currency_pair,
+            config["data"]["data_type"],
+        )
+        # Compute stats on the exchange-currency level.
+        cur_stats_data = stats_func(data)
+        cur_stats_data["vendor"] = config["data"]["vendor"]
+        stats_data.append(cur_stats_data)
+    # Convert results to a dataframe.
+    stats_table = pd.DataFrame(stats_data)
+    # Sort if columns to sort by are specified.
+    if config["column_names"]["columns_to_sort_by"]:
+        stats_table = stats_table.sort_values(
+            by=config["column_names"]["columns_to_sort_by"]
+        )
+    return stats_table
+
+
 def compute_start_end_stats(
     price_data: pd.DataFrame,
     config: ccocon.Config,
@@ -122,49 +165,6 @@ def get_loader_for_vendor(
     else:
         raise ValueError(f"Unsupported vendor={vendor}")
     return loader
-
-
-def compute_stats_for_universe(
-    vendor_universe: List[imdauni.ExchangeCurrencyTuple],
-    config: ccocon.Config,
-    stats_func: Callable,
-) -> pd.DataFrame:
-    """
-    Compute stats on the vendor universe level.
-
-    E.g., to compute start-end table for the universe do:
-    `compute_stats_for_universe(vendor_universe, config, compute_start_end_stats, config)`.
-
-    :param vendor_universe: vendor universe as a list of of exchange-currency tuples
-    :param config: parameters config
-    :param stats_func: function to compute statistics, e.g. `compute_start_end_stats`
-    :return: stats table for all exchanges and currencies in the vendor universe
-    """
-    hdbg.dassert_isinstance(stats_func, Callable)
-    # Initialize loader.
-    loader = get_loader_for_vendor(config)
-    # Initialize stats data list.
-    stats_data = []
-    # Iterate over vendor universe tuples.
-    for exchange_id, currency_pair in vendor_universe:
-        # Read data for current vendor, exchange, currency pair.
-        data = loader.read_data_from_filesystem(
-            exchange_id,
-            currency_pair,
-            config["data"]["data_type"],
-        )
-        # Compute stats on the exchange-currency level.
-        cur_stats_data = stats_func(data)
-        cur_stats_data["vendor"] = config["data"]["vendor"]
-        stats_data.append(cur_stats_data)
-    # Convert results to a dataframe.
-    stats_table = pd.DataFrame(stats_data)
-    # Sort if columns to sort by are specified.
-    if config["column_names"]["columns_to_sort_by"]:
-        stats_table = stats_table.sort_values(
-            by=config["column_names"]["columns_to_sort_by"]
-        )
-    return stats_table
 
 
 def find_longest_not_nan_sequence(
