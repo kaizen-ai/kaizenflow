@@ -55,7 +55,7 @@ def compute_start_end_table(
         [
             config["column_names"]["close_price"],
             config["column_names"]["currency_pair"],
-            config["column_names"]["exchange"],
+            config["column_names"]["exchange_id"],
         ],
         price_data.columns,
     )
