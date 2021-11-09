@@ -79,6 +79,21 @@ class AWS_EC2_Manager:
         :param root_device_size: size of the root device (in GBs)
         :return: ID of the newly created instance
         """
+
+        tags = []
+        if name_tag:
+            tags.append(
+                {
+                    "ResourceType": "instance",
+                    "Tags": [
+                        {
+                            "Key": "Name",
+                            "Value": name_tag,
+                        },
+                    ],
+                }
+            )
+
         instances = self.client.run_instances(
             ImageId=ami,
             MinCount=1,
@@ -91,17 +106,7 @@ class AWS_EC2_Manager:
                     "Ebs": {"VolumeSize": root_device_size},
                 }
             ],
-            TagSpecifications=[
-                {
-                    'ResourceType': 'instance',
-                    'Tags': [
-                        {
-                            'Key': 'Name',
-                            'Value': name_tag,
-                        },
-                    ],
-                },
-            ],
+            TagSpecifications=tags,
         )
 
         instance_id = instances["Instances"][0]["InstanceId"]

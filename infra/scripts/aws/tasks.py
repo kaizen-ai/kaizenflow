@@ -46,6 +46,7 @@ def aws_create_instance(
     region=DEFAULT_REGION,
     root_device_name="/dev/sda1",
     root_disk_size=100,
+    name_tag=None,
 ):
     """Create chosen EC2 instance type from specified AMI with specified root partition size
 
@@ -59,7 +60,7 @@ def aws_create_instance(
     """
     aws_manager = AWS_EC2_Manager(region)
     instance_id = aws_manager.create_instance(
-        ami, instance_type, key_name, root_device_name, root_disk_size
+        ami, instance_type, key_name, name_tag, root_device_name, root_disk_size
     )
 
 
