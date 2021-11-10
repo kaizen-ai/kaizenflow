@@ -34,7 +34,6 @@ import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprintin
 import helpers.s3 as hs3
-import im.ccxt.data.load.loader as imccdaloloa
 import im.data.universe as imdauni
 import research.cc.statistics as rccsta
 
@@ -63,8 +62,10 @@ def get_config() -> ccocon.Config:
     config["load"]["data_dir"] = os.path.join(hs3.get_path(), "data")
     # Data parameters.
     config.add_subconfig("data")
-    config["data"]["close_price_col_name"] = "close"
-    config["data"]["universe_version"] = "v0_1"
+    config["data"]["universe_version"] = "v0_3"
+    config["data"]["data_type"] = "OHLCV"
+    config["data"]["vendor"] = "CCXT"
+    config["data"]["price_column"] = "close"
     return config
 
 
@@ -72,21 +73,16 @@ config = get_config()
 print(config)
 
 # %% [markdown]
-# # Find the longest not NaN sequence in return series and narrow down trade universe
+# # Get price data for a given universe
 
 # %%
-ccxt_loader = imccdaloloa.CcxtLoader(
-    root_dir=config["load"]["data_dir"], aws_profile=config["load"]["aws_profile"]
+vendor_universe = imdauni.get_vendor_universe_as_tuples(
+    config["data"]["universe_version"], config["data"]["vendor"]
 )
+vendor_universe
 
 # %%
-ccxt_universe = imdauni.get_trade_universe(config["data"]["universe_version"])[
-    "CCXT"
-]
-ccxt_universe
-
-# %%
-df_price = rccsta.get_ccxt_price_df(ccxt_universe, ccxt_loader, config)
+df_price = rccsta.get_universe_price_data(vendor_universe, config)
 df_price.head(3)
 
 # %%
@@ -96,23 +92,7 @@ df_price.describe().round(2)
 df_price.head()
 
 # %% [markdown]
-# Below is a code chunk that I did not factor out since it rather should be a part of some stats function like `compute_start_end_table()` from `CMTask232_compute_start_end_table.ipynb`.<br>
-#
-# This code is applying `find_longest_not_nan_sequence()` to all the gathered price series and outputs the longest not-NaN sequence time interval, share of its length to the length of original series and coverage.<br>
-#
-# Looking at the results we can see that all the exchanges except for Bitfinex have significantly big longest not-NaN sequence (>13% at least) in combine with high data coverage (>85%). Bitfinex has a very low data coverage and its longest not-NaN sequences are less than 1% compare to the original data length which means that Bitfinex data spottiness is too scattered and we should exclude it from our analysis until we get clearer data for it.
-
-# %%
-df_stats = rccsta.compute_longest_not_nan_sequence_stats(df_price)
-df_stats
-
-# %%
-# Remove observations related to Bitfinex.
-colnames = [col for col in df_price if "bitfinex" not in col]
-df_price = df_price[colnames].copy()
-
-# %% [markdown]
-# # Find same currencies for CCXT
+# # Find same currencies
 
 # %%
 df_returns = df_price.pct_change()

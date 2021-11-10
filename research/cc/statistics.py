@@ -6,7 +6,7 @@ Import as:
 import research.cc.statistics as rccsta
 """
 import logging
-from typing import Callable, Dict, List, Union
+from typing import Callable, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -22,88 +22,199 @@ import im.data.universe as imdauni
 _LOG = logging.getLogger(__name__)
 
 
-def compute_start_end_table(
-    price_data: pd.DataFrame,
+def compute_stats_for_universe(
+    vendor_universe: List[imdauni.ExchangeCurrencyTuple],
     config: ccocon.Config,
+    stats_func: Callable,
 ) -> pd.DataFrame:
     """
-    Compute start-end table on exchange-currency level.
+    Compute stats on the vendor universe level.
+
+    E.g., to compute start-end table for the universe do:
+    `compute_stats_for_universe(vendor_universe, config, compute_start_end_stats, config)`.
+
+    :param vendor_universe: vendor universe as a list of of exchange-currency tuples
+    :param config: parameters config
+    :param stats_func: function to compute statistics, e.g. `compute_start_end_stats`
+    :return: stats table for all exchanges and currencies in the vendor universe
+    """
+    hdbg.dassert_isinstance(stats_func, Callable)
+    # Initialize loader.
+    loader = get_loader_for_vendor(config)
+    # Initialize stats data list.
+    stats_data = []
+    # Iterate over vendor universe tuples.
+    for exchange_id, currency_pair in vendor_universe:
+        # Read data for current exchange and currency pair.
+        data = loader.read_data_from_filesystem(
+            exchange_id,
+            currency_pair,
+            config["data"]["data_type"],
+        )
+        # Compute stats on the exchange-currency level.
+        cur_stats_data = stats_func(data)
+        cur_stats_data["vendor"] = config["data"]["vendor"]
+        stats_data.append(cur_stats_data)
+    # Convert results to a dataframe.
+    stats_table = pd.DataFrame(stats_data)
+    # Post-process results.
+    cols_to_sort_by = ["coverage", "longest_not_nan_seq_perc"]
+    cols_to_round = [
+        "coverage",
+        "avg_data_points_per_day",
+        "longest_not_nan_seq_perc",
+    ]
+    stats_table = postprocess_stats_table(
+        stats_table, cols_to_sort_by, cols_to_round
+    )
+    return stats_table
+
+
+def compute_start_end_stats(
+    price_data: pd.DataFrame,
+    config: ccocon.Config,
+) -> pd.Series:
+    """
+    Compute start-end stats for exchange-currency data.
 
     Note: `price_data` must be resampled using NaNs.
 
-    Start-end table's structure is:
+    Start-end stats's structure is:
         - exchange name
         - currency pair
         - minimum observed timestamp
         - maximum observed timestamp
         - the number of not NaN data points
-        - the number of days for which data is available
-        - average number of not NaN data points per day
         - data coverage, which is the number of not NaN data points divided
           by the number of all data points as percentage
+        - the number of days for which data is available
+        - the average number of not NaN data points per day
+        - the number of days of the longest not-NaN sequence
+        - the share of the longest not-NaN sequence in data
+        - start date of the longest not-NaN sequence
+        - end data of the longest not-NaN sequence
 
     :param price_data: crypto price data
-    :return: start-end table
+    :param config: parameters config
+    :return: start-end stats series
     """
     hdbg.dassert_is_subset(
         [
             config["column_names"]["close_price"],
             config["column_names"]["currency_pair"],
-            config["column_names"]["exchange"],
+            config["column_names"]["exchange_id"],
         ],
         price_data.columns,
     )
-    #
     hdbg.dassert_isinstance(price_data.index, pd.DatetimeIndex)
     hhpandas.dassert_monotonic_index(price_data.index)
     hdbg.dassert_eq(price_data.index.freq, "T")
-    # Reset the index to use it for stats computation. The index's new column name
-    # will be `index`.
-    price_data_reset = price_data.reset_index()
-    group_by_columns = [
-        config["column_names"]["exchange"],
-        config["column_names"]["currency_pair"],
-    ]
-    # For NaN close prices all the columns are NaN due to resampling, since the
-    # analysis is on exchange-currency level, the NaNs are filled with existing
-    # exchange name and currency pair.
-    price_data_reset[group_by_columns] = price_data_reset[
-        group_by_columns
-    ].fillna(method="ffill")
-    price_data_grouped = price_data_reset.groupby(
-        group_by_columns, dropna=False, as_index=False
+    # Get series of close price.
+    close_price_srs = price_data[config["column_names"]["close_price"]]
+    # Remove leading and trailing NaNs.
+    first_idx = close_price_srs.first_valid_index()
+    last_idx = close_price_srs.last_valid_index()
+    close_price_srs = close_price_srs[first_idx:last_idx].copy()
+    # Get the longest not-NaN sequence in the close price series.
+    longest_not_nan_seq = find_longest_not_nan_sequence(close_price_srs)
+    # Compute necessary stats and put them in a series.
+    res_srs = pd.Series(dtype="object")
+    res_srs["exchange_id"] = price_data[config["column_names"]["exchange_id"]][0]
+    res_srs["currency_pair"] = price_data[
+        config["column_names"]["currency_pair"]
+    ][0]
+    res_srs["min_timestamp"] = first_idx
+    res_srs["max_timestamp"] = last_idx
+    res_srs["n_data_points"] = close_price_srs.count()
+    res_srs["coverage"] = 100 * (1 - csta.compute_frac_nan(close_price_srs))
+    res_srs["days_available"] = (last_idx - first_idx).days
+    res_srs["avg_data_points_per_day"] = (
+        res_srs["n_data_points"] / res_srs["days_available"]
     )
-    # Compute the stats.
-    start_end_table = price_data_grouped.agg(
-        min_timestamp=("index", "min"),
-        max_timestamp=("index", "max"),
-        n_data_points=(config["column_names"]["close_price"], "count"),
-        coverage=(
-            config["column_names"]["close_price"],
-            lambda x: round((1 - csta.compute_frac_nan(x)) * 100, 2),
-        ),
+    res_srs["longest_not_nan_seq_days"] = (
+        longest_not_nan_seq.index[-1] - longest_not_nan_seq.index[0]
+    ).days
+    res_srs["longest_not_nan_seq_perc"] = 100 * (
+        len(longest_not_nan_seq) / len(close_price_srs)
     )
-    start_end_table["days_available"] = (
-        start_end_table["max_timestamp"] - start_end_table["min_timestamp"]
+    res_srs["longest_not_nan_seq_start_date"] = longest_not_nan_seq.index[0]
+    res_srs["longest_not_nan_seq_end_date"] = longest_not_nan_seq.index[-1]
+    return res_srs
+
+
+def compute_start_end_table_by_currency(
+    start_end_table: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Compute start end table by currency pair.
+
+    :param start_end_table: start end table
+    :return: start end table table by currency pair
+    """
+    # Extract currency pair related stats from the original start end table.
+    currency_start_end_table = (
+        start_end_table.groupby("currency_pair")
+        .agg(
+            {
+                "min_timestamp": np.min,
+                "max_timestamp": np.max,
+                "exchange_id": list,
+            }
+        )
+        .reset_index()
+    )
+    # Compute the number of available days per currency pair.
+    currency_start_end_table["days_available"] = (
+        currency_start_end_table["max_timestamp"]
+        - currency_start_end_table["min_timestamp"]
     ).dt.days
-    start_end_table["avg_data_points_per_day"] = round(
-        (start_end_table["n_data_points"] / start_end_table["days_available"]), 2
+    # Sort by available days and reset index.
+    currency_start_end_table_sorted = currency_start_end_table.sort_values(
+        by="days_available",
+        ascending=False,
+    ).reset_index(drop=True)
+    # Report the number of unique currency pairs.
+    _LOG.info(
+        "The number of unique currency pairs=%s",
+        currency_start_end_table_sorted.shape[0],
     )
-    return start_end_table
+    return currency_start_end_table_sorted
+
+
+def postprocess_stats_table(
+    stats_table: pd.DataFrame,
+    cols_to_sort_by: Optional[List[str]] = None,
+    cols_to_round: Optional[List[str]] = None,
+) -> pd.DataFrame:
+    """
+    Post-process start-end stats table.
+
+    :param stats_table: stats table
+    :param cols_to_sort_by: columns to sort the table by if specified
+    :param cols_to_round: columns to round up to 2 decimals if specified
+    :return: post-processed stats table
+    """
+    if cols_to_sort_by:
+        hdbg.dassert_is_subset(cols_to_sort_by, stats_table.columns)
+        stats_table = stats_table.sort_values(by=cols_to_sort_by)
+    if cols_to_round:
+        hdbg.dassert_is_subset(cols_to_round, stats_table.columns)
+        stats_table[cols_to_round] = stats_table[cols_to_round].round(2)
+    return stats_table
 
 
 # TODO(Grisha): move `get_loader_for_vendor` out in #269.
 # TODO(Grisha): use the abstract class in #313.
 def get_loader_for_vendor(
-    vendor: str, config: ccocon.Config
+    config: ccocon.Config,
 ) -> Union[imccdaloloa.CcxtLoader, imcrdaloloa.CddLoader]:
     """
     Get vendor specific loader instance.
 
     :param config: config
-    :param vendor: data provider, e.g. `CCXT`
     :return: loader instance
     """
+    vendor = config["data"]["vendor"]
     if vendor == "CCXT":
         loader = imccdaloloa.CcxtLoader(
             root_dir=config["load"]["data_dir"],
@@ -117,49 +228,6 @@ def get_loader_for_vendor(
     else:
         raise ValueError(f"Unsupported vendor={vendor}")
     return loader
-
-
-def compute_stats_for_universe(
-    config: ccocon.Config,
-    stats_func: Callable,
-) -> pd.DataFrame:
-    """
-    Compute stats on the universe level.
-
-    E.g., to compute start-end table for the universe do:
-    `compute_stats_for_universe(config, compute_start_end_table, config)`.
-
-    :param stats_func: function to compute statistics, e.g. `compute_start_end_table`
-    :return: stats table for all vendors, exchanges, currencies in the universe
-    """
-    hdbg.dassert_isinstance(stats_func, Callable)
-    universe = imdauni.get_trade_universe(config["data"]["universe_version"])
-    stats_data = []
-    for vendor in universe.keys():
-        # Get vendor-specific loader.
-        loader = get_loader_for_vendor(vendor, config)
-        # Get vendor-specific universe.
-        vendor_universe = universe[vendor]
-        # Convert to a list of tuples `(exchange, currency_pair)` to avoid another `for loop`.
-        exchange_currency_tuples = [
-            (exchange, currency_pair)
-            for exchange, currency_pairs in vendor_universe.items()
-            for currency_pair in currency_pairs
-        ]
-        for exchange, currency_pair in exchange_currency_tuples:
-            # Read data for current vendor, exchange, currency pair.
-            data = loader.read_data_from_filesystem(
-                exchange,
-                currency_pair,
-                config["data"]["data_type"],
-            )
-            # Compute stats on the exchange-currency level.
-            cur_stats_data = stats_func(data)
-            cur_stats_data["vendor"] = vendor
-            stats_data.append(cur_stats_data)
-    # Concatenate the results.
-    stats_table = pd.concat(stats_data, ignore_index=True)
-    return stats_table
 
 
 def find_longest_not_nan_sequence(
@@ -189,83 +257,37 @@ def find_longest_not_nan_sequence(
     return longest_not_nan_seq
 
 
-def compute_longest_not_nan_sequence_stats(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Compute stats about the longest not-NaN sequence in each dataframe column.
-
-    :param df: input dataframe
-    :return: stats dataframe
-    """
-    # Initiate results dict.
-    res_dict = {}
-    # Iterate over each series in columns.
-    for colname in df.columns:
-        col_srs = df[colname].copy()
-        # Remove leading and trailing NaNs.
-        first_idx = col_srs.first_valid_index()
-        last_idx = col_srs.last_valid_index()
-        col_srs = col_srs[first_idx:last_idx].copy()
-        # Get the longest not-NaN sequence in a series.
-        longest_not_nan_seq = find_longest_not_nan_sequence(col_srs)
-        # Compute necessary stats and put in a list.
-        stats = [
-            100 * (1 - csta.compute_frac_nan(col_srs)),
-            (last_idx - first_idx).days,
-            100 * (len(longest_not_nan_seq) / len(col_srs)),
-            longest_not_nan_seq.index[0],
-            longest_not_nan_seq.index[-1],
-        ]
-        # Append stats list to the result dict under a column name key.
-        res_dict[colname] = stats
-    # Build a dataframe from the result dict.
-    res_df = pd.DataFrame.from_dict(
-        res_dict,
-        orient="index",
-        columns=[
-            "coverage",
-            "longest_seq_days_available",
-            "share_of_longest_seq",
-            "longest_seq_start_date",
-            "longest_seq_end_date",
-        ],
-    )
-    # Sort by coverage and share of longest not-NaN sequence.
-    res_df = res_df.sort_values(by=["coverage", "share_of_longest_seq"])
-    return res_df
-
-
-def get_ccxt_price_df(
-    ccxt_universe: Dict[str, List[str]],
-    ccxt_loader: imccdaloloa.CcxtLoader,
+def get_universe_price_data(
+    vendor_universe: List[imdauni.ExchangeCurrencyTuple],
     config: ccocon.Config,
 ) -> pd.DataFrame:
     """
-    Read price data from CCXT for a given universe using the given loader.
+    Get combined price data for a given vendor universe.
 
-    :param ccxt_universe: CCXT trade universe
-    :param ccxt_loader: CCXT loader
+    :param vendor_universe: vendor universe as a list of of exchange-currency tuples
     :param config: parameters config
-    :return: price data for a given universe
+    :return: universe price data
     """
-    # Initialize lists of column names and returns series.
+    # Initialize loader.
+    loader = get_loader_for_vendor(config)
+    # Initialize lists of column names and price data series.
     colnames = []
     price_srs_list = []
-    # Iterate over exchange ids and currency pairs.
-    for exchange_id in ccxt_universe:
-        for curr_pair in ccxt_universe[exchange_id]:
-            # Construct a colname from exchange id and currency pair.
-            colname = " ".join([exchange_id, curr_pair])
-            colnames.append(colname)
-            # Extract historical data.
-            data = ccxt_loader.read_data_from_filesystem(
-                exchange_id=exchange_id,
-                currency_pair=curr_pair,
-                data_type="OHLCV",
-            )
-            # Get series of prices and append to the list.
-            price_srs = data[config["data"]["close_price_col_name"]]
-            price_srs_list.append(price_srs)
+    # Iterate exchange ids and currency pairs.
+    for exchange_id, currency_pair in vendor_universe:
+        # Construct a column name from exchange id and currency pair.
+        colname = " ".join([exchange_id, currency_pair])
+        colnames.append(colname)
+        # Read data for current exchange and currency pair.
+        data = loader.read_data_from_filesystem(
+            exchange_id,
+            currency_pair,
+            config["data"]["data_type"],
+        )
+        # Get series of required prices and append to the list.
+        price_srs = data[config["data"]["price_column"]]
+        price_srs_list.append(price_srs)
     # Construct a dataframe and assign column names.
-    df = pd.concat(price_srs_list, axis=1)
-    df.columns = colnames
-    return df
+    price_data = pd.concat(price_srs_list, axis=1)
+    price_data.columns = colnames
+    return price_data
