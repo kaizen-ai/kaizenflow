@@ -77,6 +77,14 @@ ECR_BASE_PATH = os.environ["AM_ECR_BASE_PATH"]
 DOCKER_BASE_IMAGE_NAME = rconf.get_docker_base_image_name()
 
 
+def docker_release_end_to_end_test(*args, **kwargs):
+    """
+    Dummy no-op function that mimics end-to-end test that always passes.
+    Used in docker_release_dev_image.
+    """
+    return True
+
+
 default_params = {
     "ECR_BASE_PATH": ECR_BASE_PATH,
     # When testing a change to the build system in a branch you can use a different
@@ -84,6 +92,7 @@ default_params = {
     # "BASE_IMAGE": "amp_tmp",
     "BASE_IMAGE": DOCKER_BASE_IMAGE_NAME,
     "DEV_TOOLS_IMAGE_PROD": f"{ECR_BASE_PATH}/dev_tools:prod",
+    "END_TO_END_TEST_FN": docker_release_end_to_end_test,
 }
 
 
