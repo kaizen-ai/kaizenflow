@@ -2,6 +2,7 @@ import logging
 
 import psycopg2.errors as perrors
 
+import helpers.git as hgit
 import helpers.sql as hsql
 import helpers.system_interaction as hsyint
 import helpers.unit_test as huntes
@@ -17,9 +18,15 @@ class TestCreateDB(huntes.TestCase):
         Initialize the test database inside test container 
         """
         super().setUp()
-        cmd = ("sudo docker-compose "
-               "--file im/devops/compose/docker-compose.yml "
-               "up -d im_postgres_local")
+        self.docker_compose_file_path = os.path.join(
+            hgit.get_amp_abs_path(),
+            "im/devops/compose/docker-compose.yml"
+        )
+        cmd = (
+            "sudo docker-compose "
+            f"--file {self.docker_compose_file_path} "
+            "up -d im_postgres_local"
+        )
         hsyint.system(cmd, suppress_output=False)
         dbname = "im_postgres_db_local"
         host = "localhost"
@@ -38,10 +45,12 @@ class TestCreateDB(huntes.TestCase):
 
     def tearDown(self):
         """
-        Kill the test database.
+        Bring down the database inside the test container.
         """
-        cmd = ("sudo docker-compose "
-               "--file im/devops/compose/docker-compose.yml down -v")
+        cmd = (
+            "sudo docker-compose "
+            f"--file {self.docker_compose_file_path} down -v"
+        )
         self.connection.close()
         hsyint.system(cmd, suppress_output=False)
         super().tearDown()
