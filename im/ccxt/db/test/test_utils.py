@@ -11,7 +11,7 @@ import im.ccxt.db.utils as imccdbuti
 _LOG = logging.getLogger(__name__)
 
 
-class Test_sql(huntes.TestCase):
+class TestUtils(huntes.TestCase):
     def setUp(self) -> None:
         """
         Initialize the test database inside test container.
@@ -130,14 +130,13 @@ class Test_sql(huntes.TestCase):
         """
         Verify that dataframe insertion via buffer is correct.
         """
-        expected = self.df_to_insert.to_dict()
         self.cursor.execute(imccdbuti.get_ccxt_ohlcv_create_table_query())
         imccdbuti.copy_rows_with_copy_from(
             self.connection, self.df_to_insert, "ccxt_ohlcv"
         )
         df = hsql.execute_query(self.connection, "SELECT * FROM ccxt_ohlcv")
-        actual = df.to_dict()
-        self.assertEqual(actual, expected)
+        actual = huntes.convert_df_to_json_string(df)
+        self.check_string(actual)
 
     def test_execute_insert_query1(self) -> None:
         """
@@ -149,16 +148,16 @@ class Test_sql(huntes.TestCase):
             self.connection, self.df_to_insert, "ccxt_ohlcv"
         )
         df = hsql.execute_query(self.connection, "SELECT * FROM ccxt_ohlcv")
-        actual = df.to_dict()
-        self.assertEqual(actual, expected)
+        actual = huntes.convert_df_to_json_string(df) 
+        self.check_string(actual)
 
 
-class Test_utils(huntes.TestCase):
+class TestUtils1(huntes.TestCase):
     def test_create_insert_query(self) -> None:
         """
-        Verify that squery is correct.
+        Verify that query is correct.
         """
-        self.df_to_insert = pd.DataFrame(
+        df_to_insert = pd.DataFrame(
             columns=[
                 "id",
                 "timestamp",
@@ -181,60 +180,11 @@ class Test_utils(huntes.TestCase):
                     70.0,
                     "BTC/USDT",
                     "binance",
-                ],
-                [
-                    2,
-                    1631145660000,
-                    31.0,
-                    41.0,
-                    51.0,
-                    61.0,
-                    71.0,
-                    "BTC/USDT",
-                    "binance",
-                ],
-                [
-                    3,
-                    1631145720000,
-                    32.0,
-                    42.0,
-                    52.0,
-                    62.0,
-                    72.0,
-                    "ETH/USDT",
-                    "binance",
-                ],
-                [
-                    4,
-                    1631145780000,
-                    33.0,
-                    43.0,
-                    53.0,
-                    63.0,
-                    73.0,
-                    "BTC/USDT",
-                    "kucoin",
-                ],
-                [
-                    5,
-                    1631145840000,
-                    34.0,
-                    44.0,
-                    54.0,
-                    64.0,
-                    74.0,
-                    "BTC/USDT",
-                    "binance",
-                ],
-            ],
-        )
-        expected_query = (
-            "INSERT INTO ccxt_ohlcv("
-            "id,timestamp,open,high,low,close,volume,"
-            "currency_pair,exchange_id) VALUES %s"
+                ]
+            ]
         )
         actual_query = imccdbuti._create_insert_query(
-            self.df_to_insert,
+            df_to_insert,
             "ccxt_ohlcv"
         )
-        self.assertEqual(actual_query, expected_query)
+        self.check_string(actual_query)
