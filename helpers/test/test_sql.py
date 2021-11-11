@@ -30,7 +30,7 @@ class Test_sql(huntes.TestCase):
         Bring down the database inside the test container.
         """
         cmd = ("sudo docker-compose "
-               f"--file {docker_compose_file_path} down -v")
+               f"--file {self.docker_compose_file_path} down -v")
         hsyint.system(cmd, suppress_output=False)
         super().tearDown()
 
