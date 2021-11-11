@@ -1,4 +1,5 @@
 import logging
+import os
 
 import psycopg2.errors as perrors
 
