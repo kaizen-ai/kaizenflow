@@ -80,7 +80,7 @@ def copy_rows_with_copy_from(
     df.to_csv(buffer, index=False, header=False)
     buffer.seek(0)
     cur = connection.cursor()
-    cur.copy_from(buffer, table_name, header=False)
+    cur.copy_from(buffer, table_name, sep=',')
     connection.commit()
 
 
