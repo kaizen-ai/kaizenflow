@@ -15,12 +15,12 @@ class Test_sql(huntes.TestCase):
         Initialize the test container.
         """
         super().setUp()
-        docker_compose_file_path = os.path.abspath(
+        self.docker_compose_file_path = os.path.abspath(
             "im/devops/compose/docker-compose.yml"
         )
         cmd = (
             "sudo docker-compose "
-            f"--file {docker_compose_file_path} "
+            f"--file {self.docker_compose_file_path} "
             "up -d im_postgres_local"
         )
         hsyint.system(cmd, suppress_output=False)
@@ -30,7 +30,7 @@ class Test_sql(huntes.TestCase):
         Bring down the database inside the test container.
         """
         cmd = ("sudo docker-compose "
-               "--file im/devops/compose/docker-compose.yml down -v")
+               f"--file {docker_compose_file_path} down -v")
         hsyint.system(cmd, suppress_output=False)
         super().tearDown()
 
