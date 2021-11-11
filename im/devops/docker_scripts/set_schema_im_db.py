@@ -21,7 +21,6 @@ import helpers.dbg as hdbg
 import helpers.parser as hparser
 import helpers.sql as hsql
 import im.common.db.create_db as imcodbcrdb
-import im.common.db.utils as imcodbuti
 
 _LOG = logging.getLogger(__name__)
 
@@ -39,9 +38,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hdbg.init_logger(verbosity=args.log_level)
     # Verify that the database is available.
     hsql.check_db_connection(
-        os.environ["POSTRES_DB"],
-        os.environ["POSTRES_HOST"],
-        os.environ["POSTRES_PORT"],
+        os.environ["POSTGRES_DB"],
+        os.environ["POSTGRES_HOST"],
+        os.environ["POSTGRES_PORT"],
     )
     connection, _ = hsql.get_connection_from_env_vars()
     # Set schema for the database.

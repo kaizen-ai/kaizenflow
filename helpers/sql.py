@@ -261,12 +261,11 @@ def get_columns(connection: DbConnection, table_name: str) -> list:
 
 # #############################################################################
 
-# TODO(plyq): Add tests.
-# TODO(*): Rename force -> overwrite or not_incremental.
+
 def create_database(
     connection: DbConnection,
     db: str,
-    force: Optional[bool] = None,
+    overwrite: Optional[bool] = None,
 ) -> None:
     """
     Create empty database.
@@ -277,14 +276,15 @@ def create_database(
     """
     _LOG.debug("connection=%s", connection)
     with connection.cursor() as cursor:
-        if force:
+        if overwrite:
             cursor.execute(
                 psql.SQL("DROP DATABASE IF EXISTS {};").format(
                     psql.Identifier(db)
                 )
             )
         else:
-            raise ValueError("Database %s already exists" % db)
+            if db in get_table_names(connection):
+                raise ValueError(f"Database {db} already exists")
         cursor.execute(
             psql.SQL("CREATE DATABASE {};").format(psql.Identifier(db))
         )

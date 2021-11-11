@@ -1540,9 +1540,10 @@ def docker_release_dev_image(  # type: ignore
     ctx,
     cache=True,
     skip_tests=False,
-    run_fast=True,
-    run_slow=True,
-    run_superslow=False,
+    run_fast_tests=True,
+    run_slow_tests=True,
+    run_superslow_tests=False,
+    run_end_to_end_tests=True,
     push_to_repo=True,
     update_poetry=False,
 ):
@@ -1560,6 +1561,10 @@ def docker_release_dev_image(  # type: ignore
 
     :param cache: use the cache
     :param skip_tests: skip all the tests and release the dev image
+    :param run_fast_tests: run fast tests, unless all tests skipped
+    :param run_slow_tests: run slow tests, unless all tests skipped
+    :param run_superslow_tests: run superslow tests, unless all tests skipped
+    :param run_end_to_end_tests: run end-to-end linter tests, unless all tests skipped
     :param push_to_repo: push the image to the repo_short_name
     :param update_poetry: update package dependencies using poetry
     """
@@ -1569,17 +1574,23 @@ def docker_release_dev_image(  # type: ignore
     # 2) Run tests for the "local" image.
     if skip_tests:
         _LOG.warning("Skipping all tests and releasing")
-        run_fast = run_slow = run_superslow = False
+        run_fast_tests = run_slow_tests = run_superslow_tests = run_end_to_end_tests = False
     stage = "local"
-    if run_fast:
+    if run_fast_tests:
         run_fast_tests(ctx, stage=stage)
-    if run_slow:
+    if run_slow_tests:
         run_slow_tests(ctx, stage=stage)
-    if run_superslow:
+    if run_superslow_tests:
         run_superslow_tests(ctx, stage=stage)
-    # 3) Promote the "local" image to "dev".
+    # 3) Run end-to-end test.
+    if run_end_to_end_tests:
+        end_to_end_test_fn = get_default_param("END_TO_END_TEST_FN")
+        if not end_to_end_test_fn(ctx, stage=stage):
+            _LOG.error("End-to-end test has failed")
+            return
+    # 4) Promote the "local" image to "dev".
     docker_tag_local_image_as_dev(ctx)
-    # 4) Push the "local" image to ECR.
+    # 5) Push the "local" image to ECR.
     if push_to_repo:
         docker_push_dev_image(ctx)
     else:
@@ -1652,9 +1663,9 @@ def docker_release_prod_image(  # type: ignore
     ctx,
     cache=True,
     skip_tests=False,
-    run_fast=True,
-    run_slow=True,
-    run_superslow=False,
+    run_fast_tests=True,
+    run_slow_tests=True,
+    run_superslow_tests=False,
     push_to_repo=True,
 ):
     """
@@ -1672,13 +1683,13 @@ def docker_release_prod_image(  # type: ignore
     # 2) Run tests.
     if skip_tests:
         _LOG.warning("Skipping all tests and releasing")
-        run_fast = run_slow = run_superslow = False
+        run_fast_tests = run_slow_tests = run_superslow_tests = False
     stage = "prod"
-    if run_fast:
+    if run_fast_tests:
         run_fast_tests(ctx, stage=stage)
-    if run_slow:
+    if run_slow_tests:
         run_slow_tests(ctx, stage=stage)
-    if run_superslow:
+    if run_superslow_tests:
         run_superslow_tests(ctx, stage=stage)
     # 3) Push prod image.
     if push_to_repo:
