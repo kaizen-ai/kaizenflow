@@ -54,6 +54,7 @@ class ReturnsPipeline(dtf.DagBuilder):
                     "price_cols": ["close"],
                     # TODO(*): Rename "volume" to adhere with our naming
                     # conventions.
+                    #"volume_cols": ["volume"],
                     "volume_cols": ["vol"],
                 },
             },
@@ -62,6 +63,7 @@ class ReturnsPipeline(dtf.DagBuilder):
                 "func_kwargs": {
                     "rule": "5T",
                     "price_col": "close",
+                    #"volume_col": "volume",
                     "volume_col": "vol",
                     "add_bar_start_timestamps": True,
                     "add_epoch": True,
@@ -80,7 +82,16 @@ class ReturnsPipeline(dtf.DagBuilder):
         config = cconfig.get_config_from_nested_dict(dict_)
         return config
 
-    def get_dag(self, config: cconfig.Config, mode: str = "strict") -> dtf.DAG:
+    @staticmethod
+    def validate_config(config: cconfig.Config) -> None:
+        """
+        Sanity-check config.
+
+        :param config: config object to validate
+        """
+        hdbg.dassert(cconfig.check_no_dummy_values(config))
+
+    def _get_dag(self, config: cconfig.Config, mode: str = "strict") -> dtf.DAG:
         """
         Generate pipeline DAG.
 
@@ -143,12 +154,3 @@ class ReturnsPipeline(dtf.DagBuilder):
         #
         _ = tail_nid
         return dag
-
-    @staticmethod
-    def validate_config(config: cconfig.Config) -> None:
-        """
-        Sanity-check config.
-
-        :param config: config object to validate
-        """
-        hdbg.dassert(cconfig.check_no_dummy_values(config))

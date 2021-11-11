@@ -62,7 +62,7 @@ signal_quality sharpe_ratio                                         8.703546
                kratio                                               7.955832
 finance        annualized_mean_return_(%)                          87.035456
                annualized_volatility_(%)                                10.0
-               max_drawdown_(%)                                    -1.940397
+               max_drawdown                                         0.019595
                hit_rate_point_est_(%)                              69.808429
                hit_rate_97.50%CI_lower_bound_(%)                   68.025947
                hit_rate_97.50%CI_upper_bound_(%)                   71.547007

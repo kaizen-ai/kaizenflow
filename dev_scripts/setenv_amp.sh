@@ -13,9 +13,23 @@ AMP=$PWD
 
 # This needs to be in sync with dev_scripts/client_setup/build.sh
 VENV_DIR="$HOME/src/venv/amp.client_venv"
+if [[ ! -d $VENV_DIR ]]; then
+    echo "Can't find VENV_DIR='$VENV_DIR': checking the container one"
+    # The venv in the container is in a different spot. Check that.
+    VENV_DIR="/venv/amp.client_venv"
+    if [[ ! -d $VENV_DIR ]]; then
+        echo "ERROR: Can't find VENV_DIR='$VENV_DIR'"
+        return -1
+    fi;
+fi;
 
-echo "# Activate virtual env"
-source $VENV_DIR/bin/activate
+ACTIVATE_SCRIPT="$VENV_DIR/bin/activate"
+echo "# Activate virtual env '$ACTIVATE_SCRIPT'"
+if [[ ! -f $ACTIVATE_SCRIPT ]]; then
+    echo "ERROR: Can't find '$ACTIVATE_SCRIPT'"
+    return -1
+fi;
+source $ACTIVATE_SCRIPT
 
 echo "which python="$(which python 2>&1)
 echo "python -v="$(python --version)

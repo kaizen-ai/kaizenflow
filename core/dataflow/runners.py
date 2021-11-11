@@ -18,6 +18,7 @@ import core.dataflow.utils as cdtfuti
 import core.dataflow.visitors as cdtfvis
 import helpers.datetime_ as hdatetim
 import helpers.dbg as hdbg
+import helpers.printing as hprintin
 
 # TODO(gp): Use the standard imports.
 from core.dataflow.builders import DagBuilder
@@ -510,14 +511,34 @@ class RealTimeDagRunner(_AbstractDagRunner):
     def events(self) -> Optional[cdtfretim.Events]:
         return self._events
 
+    def compute_run_signature(self, result_bundles: List[ResultBundle]) -> str:
+        """
+        Compute a signature of an execution in terms of `ResultBundles` and `events`.
+        """
+        ret = []
+        events = self.events
+        hdbg.dassert_eq(len(events), len(result_bundles))
+        for event, result_bundle in zip(events, result_bundles):
+            event_as_str = event.to_str(
+                        include_tenths_of_secs=False,
+                        include_wall_clock_time=False)
+            ret.append(hprintin.frame(event_as_str))
+            ret.append("result_bundle=\n%s" % str(result_bundle))
+        ret = "\n".join(ret)
+        return ret
+
     async def _run_dag(self, method: cdtfcor.Method) -> ResultBundle:
-        # Wait until all the source nodes are ready to compute.
+        # Wait until all the real-time source nodes are ready to compute.
+        _LOG.debug("Waiting for real-time nodes to be ready ...")
         sources = self.dag.get_sources()
-        for source in sources:
-            if isinstance(source, cdtfnosou.RealTimeDataSource):
-                _LOG.debug("Waiting on node '%s' ...", str(source))
-                await source.wait_for_latest_data()
-                _LOG.debug("Waiting on node '%s' done", str(source))
+        for nid in sources:
+            node = self.dag.get_node(nid)
+            _LOG.debug("nid=%s node=%s type=%s", nid, str(node), str(type(node)))
+            if isinstance(node, cdtfnosou.RealTimeDataSource):
+                _LOG.debug("Waiting on node '%s' ...", str(nid))
+                await node.wait_for_latest_data()
+                _LOG.debug("Waiting on node '%s': done", str(nid))
+        _LOG.debug("Waiting for real-time nodes to be ready: done")
         #
         df_out, info = self._run_dag_helper(method)
         return self._to_result_bundle(method, df_out, info)

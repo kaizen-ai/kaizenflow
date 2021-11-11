@@ -1,5 +1,6 @@
 import io
 import logging
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -479,14 +480,32 @@ class Test_compute_effective_rank(huntes.TestCase):
         np.testing.assert_allclose(actual, expected)
 
 
-class Test_select_cols_by_greedy_grassmann(huntes.TestCase):
-    @pytest.mark.skip(reason="cmamp issue #242")
+# #############################################################################
+
+
+class _TestHelper(huntes.TestCase):
+
+    def _assert_lists_equal(self, actual: List[str], expected: List[str]) -> None:
+        self.assert_equal(",".join(actual), ",".join(expected))
+
+    # TODO(gp): For now we allow multiple values due to numerical instability.
+    # Paul will try to make the tests more stable.
+    def _assert_list_in(self, actual: List[str], expected: List[List[str]]) -> None:
+        expected_lists = [",".join(l) for l in expected]
+        self.assertIn(",".join(actual), expected_lists)
+
+
+class Test_select_cols_by_greedy_grassmann(_TestHelper):
+
     def test1(self) -> None:
         df = self._get_df()
         actual = cfea.select_cols_by_greedy_grassmann(df)
-        expected = ["x4", "x1", "x3", "x2"]
-        self._assert_lists_equal(actual, expected)
+        expected = [["x4", "x1", "x3", "x2"],
+            ["x4", "x1", "x2", "x3"]]
+        self._assert_list_in(actual, expected)
 
+    # TODO(gp): Consider enabling the disabled tests due to numerical
+    # instability and use the approach with `_assert_list_in`.
     @pytest.mark.skip(reason="Apparent instability")
     def test2(self) -> None:
         df = self._get_df()
@@ -501,7 +520,7 @@ class Test_select_cols_by_greedy_grassmann(huntes.TestCase):
         expected = ["x3", "x2", "x4", "x1"]
         self._assert_lists_equal(actual, expected)
 
-    @pytest.mark.skip(reason="cmamp issue #242")
+    @pytest.mark.skip(reason="Apparent instability")
     def test4(self) -> None:
         df = self._get_df()
         actual = cfea.select_cols_by_greedy_grassmann(
@@ -525,17 +544,15 @@ class Test_select_cols_by_greedy_grassmann(huntes.TestCase):
         df = pd.DataFrame(mat, columns=["x1", "x2", "x3", "x4"])
         return df
 
-    def _assert_lists_equal(self, actual, expected) -> None:
-        self.assert_equal(",".join(actual), ",".join(expected))
 
+class Test_select_cols_by_greedy_volume(_TestHelper):
 
-class Test_select_cols_by_greedy_volume(huntes.TestCase):
-    @pytest.mark.skip(reason="cmamp issue #242")
     def test1(self) -> None:
         df = self._get_df()
         actual = cfea.select_cols_by_greedy_volume(df)
-        expected = ["x4", "x1", "x3", "x2"]
-        self._assert_lists_equal(actual, expected)
+        expected = [["x4", "x1", "x3", "x2"],
+                ["x4", "x1", "x2", "x3"]]
+        self._assert_list_in(actual, expected)
 
     @pytest.mark.skip(reason="Apparent instability")
     def test2(self) -> None:
@@ -572,6 +589,3 @@ class Test_select_cols_by_greedy_volume(huntes.TestCase):
         )
         df = pd.DataFrame(mat, columns=["x1", "x2", "x3", "x4"])
         return df
-
-    def _assert_lists_equal(self, actual, expected) -> None:
-        self.assert_equal(",".join(actual), ",".join(expected))

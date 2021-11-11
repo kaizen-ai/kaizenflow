@@ -496,16 +496,18 @@ class GroupedColDfToDfColProcessor:
         out_col_names = [col_group[-1] for col_group in col_groups]
         _LOG.debug("out_col_names=%s", out_col_names)
         dbg.dassert_no_duplicates(out_col_names)
+        # Sort before accessing leaf columns.
+        df_out = df.sort_index(axis=1)
         # Determine keys (i.e., leaf column names).
-        keys = df[col_groups[0]].columns.to_list()
+        keys = df_out[col_groups[0]].columns.to_list()
         _LOG.debug("keys=%s", keys)
         # Ensure all groups have the same keys.
         for col_group in col_groups:
-            col_group_keys = df[col_group].columns.to_list()
+            col_group_keys = df_out[col_group].columns.to_list()
             dbg.dassert_set_eq(keys, col_group_keys)
         # Swap levels in `df` so that keys are top level.
-        df_out = df.swaplevel(i=-2, j=-1, axis=1)
-        # Sort by keys for faster selection.
+        df_out = df_out.swaplevel(i=-2, j=-1, axis=1)
+        # Sort by keys for faster selection (needed post `swaplevel()`).
         df_out.sort_index(axis=1, level=-2, inplace=True)
         # To generate a dataframe for each key, generate tuples that key
         # up to the last two levels.
@@ -765,8 +767,9 @@ def preprocess_multiindex_cols(
         "Dataframe multiindex column depth incompatible with config.",
     )
     # Select single-column-level dataframe and return.
-    df = df[col_group].copy()
-    return df
+    df_out = df.sort_index(axis=1)
+    df_out = df_out[col_group].copy()
+    return df_out
 
 
 def _postprocess_dataframe_dict(
@@ -787,18 +790,37 @@ def _postprocess_dataframe_dict(
     dbg.dassert_isinstance(dfs, dict)
     # Ensure that the dictionary is not empty.
     dbg.dassert(dfs)
-    # Perform sanity checks on dataframe.
+    # Obtain a reference index and column set.
+    idx = None
+    cols = None
     for symbol, df in dfs.items():
-        _ = symbol
+        if not df.empty:
+            idx = df.index
+            cols = df.columns
+            _LOG.debug(
+                "Using symbol=`%s` for reference index and columns", symbol
+            )
+            break
+    dbg.dassert(idx is not None)
+    dbg.dassert(cols is not None)
+    # Perform sanity checks on dataframe.
+    empty_dfs = []
+    for symbol, df in dfs.items():
         # Ensure that each values of `dfs` is a nonempty dataframe.
         dbg.dassert_isinstance(df, pd.DataFrame)
-        dbg.dassert(not df.empty)
+        if df.empty:
+            empty_dfs.append(symbol)
+            _LOG.warning("Dataframe empty for symbol=`%s`.", symbol)
         # Ensure that `df` columns do not have duplicates and are single-level.
         dbg.dassert_no_duplicates(df.columns)
         dbg.dassert_eq(
             1,
             df.columns.nlevels,
         )
+    # Make emtpy dfs NaN dfs.
+    for symbol in empty_dfs:
+        _LOG.warning("Imputing NaNs for symbol=`%s`", symbol)
+        dfs[symbol] = pd.DataFrame(index=idx, columns=cols)
     # Ensure that `col_group` is a (possibly empty) tuple.
     dbg.dassert_isinstance(col_group, tuple)
     # Insert symbols as a column level.

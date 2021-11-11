@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.11.4
+#       jupytext_version: 1.13.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -30,20 +30,20 @@
 import logging
 
 import core.config as cconfig
-import core.dataflow_model.model_evaluator as modeval
-import core.dataflow_model.model_plotter as modplot
-import helpers.dbg as dbg
-import helpers.printing as hprint
+import core.dataflow_model.model_evaluator as cdtfmomoeva
+import core.dataflow_model.model_plotter as cdtfmomoplo
+import helpers.dbg as hdbg
+import helpers.printing as hprintin
 
 # %%
-dbg.init_logger(verbosity=logging.INFO)
-# dbg.init_logger(verbosity=logging.DEBUG)
+hdbg.init_logger(verbosity=logging.INFO)
+# hdbg.init_logger(verbosity=logging.DEBUG)
 
 _LOG = logging.getLogger(__name__)
 
 # _LOG.info("%s", env.get_system_signature()[0])
 
-hprint.config_notebook()
+hprintin.config_notebook()
 
 # %% [markdown]
 # # Notebook config
@@ -55,8 +55,8 @@ eval_config = cconfig.Config.from_env_var("AM_CONFIG_CODE")
 # Override config.
 if eval_config is None:
     # experiment_dir = "s3://eglp-spm-sasm/experiments/experiment.RH2Ef.v1_9-all.5T.20210831-004747.run1.tgz"
-    #experiment_dir = "/cache/experiments/oos_experiment.RH1E.v2_0-top100.5T"
-    experiment_dir = "/cache/experiments/experiment.RH4E.v2_0-top10.5T"
+    experiment_dir = "/cache/experiments/oos_experiment.RH1E.v2_0-top100.5T"
+    # experiment_dir = "/app/rc_experiment.RH8Ec.v2_0-top2.5T.2009.run1"
     aws_profile = None
     selected_idxs = None
 
@@ -90,10 +90,10 @@ print(str(eval_config))
 
 # %%
 # Build the ModelEvaluator from the eval config.
-evaluator = modeval.ModelEvaluator.from_eval_config(eval_config)
+evaluator = cdtfmomoeva.ModelEvaluator.from_eval_config(eval_config)
 
 # Build the ModelPlotter.
-plotter = modplot.ModelPlotter(evaluator)
+plotter = cdtfmomoplo.ModelPlotter(evaluator)
 
 # %% [markdown]
 # # Analysis
@@ -121,7 +121,7 @@ col_mask = (
 selected = pnl_stats.loc[:, col_mask].columns.to_list()
 not_selected = pnl_stats.loc[:, ~col_mask].columns.to_list()
 
-print("num model selected=%s" % hprint.perc(len(selected), pnl_stats.shape[1]))
+print("num model selected=%s" % hprintin.perc(len(selected), pnl_stats.shape[1]))
 print("model selected=%s" % selected)
 print("model not selected=%s" % not_selected)
 

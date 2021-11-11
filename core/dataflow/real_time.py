@@ -8,7 +8,6 @@ import asyncio
 import collections
 import datetime
 import logging
-import time
 from typing import (
     Any,
     AsyncGenerator,
@@ -25,6 +24,7 @@ import pandas as pd
 
 import helpers.datetime_ as hdatetim
 import helpers.dbg as hdbg
+import helpers.hasyncio as hhasynci
 import helpers.hnumpy as hhnumpy
 import helpers.printing as hprintin
 
@@ -225,52 +225,63 @@ def get_data_as_of_datetime(
 # #############################################################################
 
 
-def execute_every_2_seconds(datetime_: pd.Timestamp) -> bool:
-    """
-    Return true every other second.
-    """
-    ret = datetime_.second % 2 == 0
-    ret = cast(bool, ret)
-    return ret
+async def _sleep(sleep_in_secs: float) -> None:
+    hdbg.dassert_lte(0, sleep_in_secs)
+    await asyncio.sleep(sleep_in_secs)
 
 
-def execute_every_5_minutes(datetime_: pd.Timestamp) -> bool:
+def align_on_time_grid(
+    get_wall_clock_time: hdatetim.GetWallClockTime,
+    grid_time_in_secs: float,
+    *,
+    event_loop: Optional[asyncio.AbstractEventLoop],
+    use_high_resolution: bool = False,
+) -> None:
     """
-    Return true if `datetime_` is aligned on a 5 minute grid.
+    Wait until the current wall clock time is aligned on `grid_time_in_secs`.
+
+    E.g., for `grid_time_in_secs` = 2, if wall clock time is `2021-07-29 10:45:51`,
+    then this function terminates when the wall clock is `2021-07-29 10:46:00`.
+
+    :param use_high_resolution: `time.sleep()` has low resolution, so by
+        default this function spins on the wall clock until the proper amount of
+        time has elapsed
     """
-    ret = datetime_.minute % 5 == 0
-    ret = cast(bool, ret)
-    return ret
+    _LOG.info("Aligning on %s secs", grid_time_in_secs)
 
+    def _wait(sleep_in_secs: float) -> None:
+        _LOG.debug("wall_clock=%s", get_wall_clock_time())
+        _LOG.debug("wait for %s secs", sleep_in_secs)
+        if sleep_in_secs > 0:
+            coroutine = _sleep(sleep_in_secs)
+            hhasynci.run(coroutine, event_loop=event_loop, close_event_loop=False)
+            _LOG.debug("wall_clock=%s", get_wall_clock_time())
 
-# TODO(gp): We should pass `get_current_time()` so we can also simulate this.
-def align_on_even_second(use_time_sleep: bool = False) -> None:
-    """
-    Wait until the current wall clock time reports an even number of seconds.
-
-    E.g., if wall clock time is `2021-07-29 10:45:51`, then this function
-    terminates when the wall clock is `2021-07-29 10:46:00`.
-
-    :param use_time_sleep: `time.sleep()` has low resolution, so by default this
-        function spins on the wall clock until the proper amount of time has elapsed
-    """
-    current_time = hdatetim.get_current_time(tz="ET")
-    # Align on 2 seconds.
-    target_time = current_time.round("2S")
-    if target_time < current_time:
-        target_time += datetime.timedelta(seconds=2)
-    if use_time_sleep:
-        secs_to_wait = (target_time - current_time).total_seconds()
-        # _LOG.debug(hprintin.to_str("current_time target_time secs_to_wait"))
-        hdbg.dassert_lte(0, secs_to_wait)
-        time.sleep(secs_to_wait)
-    else:
+    _LOG.debug("Aligning at wall_clock=%s ...", get_wall_clock_time())
+    current_time = get_wall_clock_time()
+    # Align on the time grid.
+    hdbg.dassert_lt(0, grid_time_in_secs)
+    freq = f"{grid_time_in_secs}S"
+    target_time = current_time.ceil(freq)
+    hdbg.dassert_lte(current_time, target_time)
+    _LOG.debug("target_time=%s", target_time)
+    secs_to_wait = (target_time - current_time).total_seconds()
+    #
+    if use_high_resolution:
+        # Wait for a bit and then busy wait.
+        hdbg.dassert_eq(
+            event_loop, None, "High resolution sleep works only in real-time"
+        )
+        _wait(secs_to_wait - 1)
         # Busy waiting. OS courses says to never do this, but in this case we need
         # a high-resolution wait.
         while True:
-            current_time = hdatetim.get_current_time(tz="ET")
+            current_time = get_wall_clock_time()
             if current_time >= target_time:
                 break
+    else:
+        _wait(secs_to_wait)
+    _LOG.debug("Aligning done at wall_clock=%s", get_wall_clock_time())
 
 
 class Event(
@@ -341,6 +352,7 @@ async def execute_with_real_time_loop(
         - an execution trace representing the events in the real-time loop; and
         - a list of results returned by the workload function
     """
+    _LOG.debug(hprintin.to_str("sleep_interval_in_secs time_out_in_secs"))
     hdbg.dassert(
         callable(get_wall_clock_time),
         "get_wall_clock_time='%s' is not callable",
@@ -352,6 +364,7 @@ async def execute_with_real_time_loop(
         # TODO(gp): Consider using a real-time check instead of number of iterations.
         num_iterations = int(time_out_in_secs / sleep_interval_in_secs)
         hdbg.dassert_lt(0, num_iterations)
+    _LOG.debug(hprintin.to_str("num_iterations"))
     #
     num_it = 1
     while True:
@@ -359,16 +372,28 @@ async def execute_with_real_time_loop(
         # For the wall clock time, we always use the real one. This is used only for
         # book-keeping.
         real_wall_clock_time = hdatetim.get_current_time(tz="ET")
+        _LOG.debug(
+            "\n%s",
+            hprintin.frame(
+                "Real-time loop: "
+                "num_it=%s / %s: wall_clock_time='%s' real_wall_clock_time='%s'"
+                % (num_it, num_iterations, wall_clock_time, real_wall_clock_time),
+                char1="<",
+            ),
+        )
         # Update the current events.
         event = Event(num_it, wall_clock_time, real_wall_clock_time)
         _LOG.debug("event='%s'", str(event))
         # Execute workload.
+        _LOG.debug("await ...")
+        # TODO(gp): Compensate for drift.
         result = await asyncio.gather(  # type: ignore[var-annotated]
             asyncio.sleep(sleep_interval_in_secs),
             # We need to use the passed `wall_clock_time` since that's what being
             # used as real, simulated, replayed time.
             workload(wall_clock_time),
         )
+        _LOG.debug("await done")
         _, workload_result = result
         yield event, workload_result
         # Exit, if needed.
