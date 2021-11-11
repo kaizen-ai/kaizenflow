@@ -1,4 +1,4 @@
-import os
+import os.path
 import logging
 
 import helpers.sql as hsql
@@ -15,9 +15,14 @@ class Test_sql(huntes.TestCase):
         Initialize the test container.
         """
         super().setUp()
-        cmd = ("sudo docker-compose "
-              "--file im/devops/compose/docker-compose.yml up "
-              "-d im_postgres_local")
+        docker_compose_file_path = os.path.abspath(
+            "im/devops/compose/docker-compose.yml"
+        )
+        cmd = (
+            "sudo docker-compose "
+            f"--file {docker_compose_file_path} "
+            "up -d im_postgres_local"
+        )
         hsyint.system(cmd, suppress_output=False)
         
     def tearDown(self):

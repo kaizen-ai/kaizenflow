@@ -1,12 +1,13 @@
 import logging
+import os
 
 import psycopg2.errors as perrors
+import pytest
 
 import helpers.sql as hsql
 import helpers.system_interaction as hsyint
 import helpers.unit_test as huntes
 import im.common.db.create_db as imcodbcrdb
-import pytest
 
 _LOG = logging.getLogger(__name__)
 
@@ -14,12 +15,17 @@ _LOG = logging.getLogger(__name__)
 class TestCreateDB(huntes.TestCase):
     def setUp(self):
         """
-        Initialize the test database inside test container 
+        Initialize the test database inside test container.
         """
         super().setUp()
-        cmd = ("sudo docker-compose "
-               "--file im/devops/compose/docker-compose.yml "
-               "up -d im_postgres_local")
+        docker_compose_file_path = os.path.abspath(
+            "im/devops/compose/docker-compose.yml"
+        )
+        cmd = (
+            "sudo docker-compose "
+            f"--file {docker_compose_file_path} "
+            "up -d im_postgres_local"
+        )
         hsyint.system(cmd, suppress_output=False)
         dbname = "im_postgres_db_local"
         host = "localhost"
@@ -40,8 +46,10 @@ class TestCreateDB(huntes.TestCase):
         """
         Kill the test database.
         """
-        cmd = ("sudo docker-compose "
-               "--file im/devops/compose/docker-compose.yml down -v")
+        cmd = (
+            "sudo docker-compose "
+            "--file im/devops/compose/docker-compose.yml down -v"
+        )
         self.connection.close()
         hsyint.system(cmd, suppress_output=False)
         super().tearDown()
@@ -79,10 +87,8 @@ class TestCreateDB(huntes.TestCase):
         Create database 'test_db_to_remove' and remove it.
         """
         imcodbcrdb.create_database(
-                self.connection,
-                new_db="test_db_to_remove",
-                force=True
-            )
+            self.connection, new_db="test_db_to_remove", force=True
+        )
         imcodbcrdb.remove_database(self.connection, "test_db_to_remove")
         db_list = hsql.get_db_names(self.connection)
         self.assertNotIn("test_db_to_remove", db_list)
