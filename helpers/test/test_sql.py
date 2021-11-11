@@ -1,10 +1,12 @@
-import os.path
+import os
 import logging
 
+import helpers.git as hgit
 import helpers.sql as hsql
 import helpers.system_interaction as hsyint
 import helpers.unit_test as huntes
 import im.common.db.create_db as imcodbcrdb
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -15,7 +17,8 @@ class Test_sql(huntes.TestCase):
         Initialize the test container.
         """
         super().setUp()
-        self.docker_compose_file_path = os.path.abspath(
+        self.docker_compose_file_path = os.path.join(
+            hgit.get_amp_abs_path(),
             "im/devops/compose/docker-compose.yml"
         )
         cmd = (
