@@ -1,4 +1,5 @@
 import logging
+import os
 
 import pandas as pd
 
@@ -16,11 +17,15 @@ class Test_sql(huntes.TestCase):
         Initialize the test database inside test container.
         """
         super().setUp()
+        self.docker_compose_file_path = os.path.abspath(
+            "im/devops/compose/docker-compose.yml"
+        )
         cmd = (
             "sudo docker-compose "
-            "--file im/devops/compose/docker-compose.yml "
+            f"--file {self.docker_compose_file_path} "
             "up -d im_postgres_local"
         )
+
         hsyint.system(cmd, suppress_output=False)
         dbname = "im_postgres_db_local"
         host = "localhost"
@@ -112,7 +117,12 @@ class Test_sql(huntes.TestCase):
         """
         Bring down the test container.
         """
-        cmd = "sudo docker-compose --file im/devops/compose/docker-compose.yml down -v"
+
+        cmd = (
+            "sudo docker-compose "
+            f"--file {self.docker_compose_file_path} down -v"
+        )
+
         hsyint.system(cmd, suppress_output=False)
         super().tearDown()
 
