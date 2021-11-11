@@ -94,7 +94,7 @@ def create_all_tables(connection: hsql.DbConnection) -> None:
 def create_database(
     connection: hsql.DbConnection,
     new_db: str,
-    force: Optional[bool] = None,
+    overwrite: Optional[bool] = None,
 ) -> None:
     """
     Create database and SQL schema inside it.
@@ -105,7 +105,7 @@ def create_database(
     """
     _LOG.debug("connection=%s", connection)
     # Create database.
-    hsql.create_database(connection, db=new_db, force=force)
+    hsql.create_database(connection, db=new_db, overwrite=overwrite)
     # Create SQL schema.
     create_all_tables(connection)
 

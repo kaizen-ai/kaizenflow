@@ -81,8 +81,7 @@ class TestCreateDB(huntes.TestCase):
         imcodbcrdb.create_database(
                 self.connection,
                 new_db="test_db_to_remove",
-                force=True
-            )
+        )
         imcodbcrdb.remove_database(self.connection, "test_db_to_remove")
         db_list = hsql.get_db_names(self.connection)
         self.assertNotIn("test_db_to_remove", db_list)
