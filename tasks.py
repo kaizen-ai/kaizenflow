@@ -69,7 +69,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-hversi.check_version("./version.txt")
+hversi.check_version()
 
 # TODO(gp): Move it to lib_tasks.
 ECR_BASE_PATH = os.environ["AM_ECR_BASE_PATH"]
