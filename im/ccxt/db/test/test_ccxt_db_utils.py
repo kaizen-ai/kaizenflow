@@ -3,6 +3,7 @@ import os
 
 import pandas as pd
 
+import helpers.git as hgit
 import helpers.sql as hsql
 import helpers.system_interaction as hsyint
 import helpers.unit_test as huntes
@@ -17,7 +18,8 @@ class TestUtils(huntes.TestCase):
         Initialize the test database inside test container.
         """
         super().setUp()
-        self.docker_compose_file_path = os.path.abspath(
+        self.docker_compose_file_path = os.path.join(
+            hgit.get_amp_abs_path(),
             "im/devops/compose/docker-compose.yml"
         )
         cmd = (

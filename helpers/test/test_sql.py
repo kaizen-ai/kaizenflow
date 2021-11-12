@@ -5,6 +5,8 @@ import pandas as pd
 import psycopg2.errors as perrors
 import pytest
 
+import pytest
+
 import helpers.git as hgit
 import helpers.sql as hsql
 import helpers.system_interaction as hsysinte
