@@ -1,6 +1,8 @@
 import os
 import logging
 
+import pytest
+
 import helpers.git as hgit
 import helpers.sql as hsql
 import helpers.system_interaction as hsyint
@@ -11,6 +13,7 @@ import im.common.db.create_db as imcodbcrdb
 _LOG = logging.getLogger(__name__)
 
 
+@pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
 class Test_sql(huntes.TestCase):
     def setUp(self):
         """
