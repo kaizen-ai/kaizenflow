@@ -36,7 +36,6 @@ class TestUtils(huntes.TestCase):
         port = 5432
         password = "alsdkqoen"
         user = "aljsdalsd"
-        hsql.check_db_connection(dbname, port, host)
         self.connection, self.cursor = hsql.get_connection(
             dbname,
             host,
@@ -45,7 +44,7 @@ class TestUtils(huntes.TestCase):
             password,
             autocommit=True,
         )
-
+        hsql.check_db_connection(self.connection)
         self.df_to_insert = pd.DataFrame(
             columns=[
                 "id",

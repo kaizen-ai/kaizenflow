@@ -30,6 +30,19 @@ class Test_sql(huntes.TestCase):
             "up -d im_postgres_local"
         )
         hsyint.system(cmd, suppress_output=False)
+        self.dbname = "im_postgres_db_local"
+        self.host = "localhost"
+        self.port = 5432
+        self.password = "alsdkqoen"
+        self.user = "aljsdalsd"
+        self.connection, _ = hsql.get_connection(
+            self.dbname,
+            self.host,
+            self.user,
+            self.port,
+            self.password,
+            autocommit=True,
+        )
         
     def tearDown(self):
         """
@@ -45,56 +58,26 @@ class Test_sql(huntes.TestCase):
         """
         Smoke test.
         """
-        #TODO(Dan3): change to env
-        dbname = "im_postgres_db_local"
-        host = "localhost"
-        port = 5432
-        hsql.check_db_connection(dbname, port, host)
+        hsql.check_db_connection(self.connection)
 
     def test_db_connection_to_str(self) -> None:
         """
         Verify that connection string is correct.
         """
-        dbname = "im_postgres_db_local"
-        host = "localhost"
-        port = 5432
-        password = "alsdkqoen"
-        user = "aljsdalsd"
-        hsql.check_db_connection(dbname, port, host)
-        self.connection, _ = hsql.get_connection(
-            dbname,
-            host,
-            user,
-            port,
-            password,
-            autocommit=True,
-        )
+        hsql.check_db_connection(self.connection)
         actual_str = hsql.db_connection_to_str(self.connection)
-        expected = (f"dbname={dbname}\n"
-                    f"host={host}\n"
-                    f"port={port}\n"
-                    f"user={user}\n"
-                    f"password={password}")
+        expected = (f"dbname={self.dbname}\n"
+                    f"host={self.host}\n"
+                    f"port={self.port}\n"
+                    f"user={self.user}\n"
+                    f"password={self.password}")
         self.assertEqual(actual_str, expected) 
 
     def test_create_database(self):
         """
-        Verify that db is creating.
+        Verify that db is created.
         """
-        dbname = "im_postgres_db_local"
-        host = "localhost"
-        port = 5432
-        password = "alsdkqoen"
-        user = "aljsdalsd"
-        hsql.check_db_connection(dbname, port, host)
-        self.connection, _ = hsql.get_connection(
-            dbname,
-            host,
-            user,
-            port,
-            password,
-            autocommit=True,
-        )
+        hsql.check_db_connection(self.connection)
         hsql.create_database(
             self.connection,
             db="test_db"

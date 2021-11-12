@@ -35,7 +35,6 @@ class TestCreateDB(huntes.TestCase):
         port = 5432
         password = "alsdkqoen"
         user = "aljsdalsd"
-        hsql.check_db_connection(dbname, port, host)
         self.connection, _ = hsql.get_connection(
             dbname,
             host,
@@ -44,6 +43,7 @@ class TestCreateDB(huntes.TestCase):
             password,
             autocommit=True,
         )
+        hsql.check_db_connection(self.connection)
 
     def tearDown(self):
         """

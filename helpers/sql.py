@@ -80,17 +80,16 @@ def get_connection_from_string(
 
 
 def check_db_connection(
-    db_name: str,
-    port: int,
-    host: str,
+    connection: DbConnection
 ) -> None:
     """
     Verify that the database is available.
     """
-    _LOG.debug("db_name=%s, port=%s, host=%s", db_name, port, host)
     while True:
         _LOG.info("Waiting for PostgreSQL to become available...")
-        cmd = f"pg_isready -d {db_name} -p {port} -h {host}"
+        cmd = f"pg_isready -d {connection.info.db_name} " \
+              f"-p {connection.info.port} " \
+              f"-h {connection.info.host}"
         rc = hsyint.system(cmd, abort_on_error=False)
         time.sleep(1)
         if rc == 0:
