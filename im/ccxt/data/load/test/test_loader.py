@@ -25,6 +25,7 @@ class TestGetFilePath(huntes.TestCase):
         actual = ccxt_loader._get_file_path(
             imccdaloloa._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
         )
+        # TODO(gp): CmampTask413: Use get_bucket()
         expected = (
             "s3://alphamatic-data/data/ccxt/20210924/binance/ETH_USDT.csv.gz"
         )
@@ -40,7 +41,7 @@ class TestGetFilePath(huntes.TestCase):
             root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         # TODO(gp): We should throw a different exception, like
-        # `UnsupportedExchane`.
+        # `UnsupportedExchange`.
         # TODO(gp): Same change also for CDD test_loader.py
         with self.assertRaises(AssertionError):
             ccxt_loader._get_file_path(
@@ -56,6 +57,7 @@ class TestGetFilePath(huntes.TestCase):
         ccxt_loader = imccdaloloa.CcxtLoader(
             root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
+        # TODO(gp): Same change also for CDD test_loader.py
         with self.assertRaises(AssertionError):
             ccxt_loader._get_file_path(
                 imccdaloloa._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair

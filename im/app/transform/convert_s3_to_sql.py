@@ -1,6 +1,10 @@
 #!/usr/bin/env python
+
+# TODO(gp): CmampTask413: This is useful in general it should be generalized 
+# and go in im/scripts
+
 r"""
-Converts data from S3 to SQL and inserts it into DB.
+Convert data from S3 to SQL and inserts it into DB.
 
 Usage examples:
 - Convert daily data for AAPL and provider "kibot":
