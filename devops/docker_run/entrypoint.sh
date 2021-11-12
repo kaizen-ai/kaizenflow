@@ -18,8 +18,10 @@ source devops/docker_run/setenv.sh
 # Allow working with files outside a container.
 #umask 000
 
-# Needed to run database (see CmTask309).
-sudo mkdir /etc/docker
+if [[ ! -d /etc/docker ]]; then
+    sudo mkdir /etc/docker
+fi;
+# This is needed to run the database in dind mode (see CmTask309).
 sudo echo '{ "storage-driver": "vfs" }' | sudo tee -a /etc/docker/daemon.json
 
 # Start Docker Engine.
