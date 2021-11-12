@@ -8,7 +8,7 @@ Use as:
   for latest trade universe:
 > download_historical.py \
      --dst_dir 'test' \
-     --universe 'latest' \
+     --universe 'v03' \
      --start_datetime '2019-01-01' \
 
 Import as:
