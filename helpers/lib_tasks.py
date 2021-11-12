@@ -1109,8 +1109,7 @@ def _get_amp_docker_compose_path() -> Optional[str]:
     """
     Return the docker compose for `amp` as supermodule or as submodule.
 
-    E.g., 
-    `devops/compose/docker-compose_as_submodule.yml` and
+    E.g., `devops/compose/docker-compose_as_submodule.yml` and
     `devops/compose/docker-compose_as_supermodule.yml`
     """
     path, _ = hgit.get_path_from_supermodule()
@@ -1589,7 +1588,10 @@ def docker_release_dev_image(  # type: ignore
     # 2) Run tests for the "local" image.
     if skip_tests:
         _LOG.warning("Skipping all tests and releasing")
-        run_fast_tests = run_slow_tests = run_superslow_tests = run_end_to_end_tests = False
+        run_fast_tests = False
+        run_slow_tests = False
+        run_superslow_tests = False
+        run_end_to_end_tests = False
     stage = "local"
     if run_fast_tests:
         run_fast_tests(ctx, stage=stage)
@@ -2366,6 +2368,7 @@ def _get_failed_tests_from_clipboard() -> List[str]:
     # pylint: disable=line-too-long
     """
     ```
+
     FAILED core/dataflow/nodes/test/test_sources.py::TestRealTimeDataSource1::test_replayed_real_time1 - TypeError: __init__() got an unexpected keyword argument 'speed_up_factor'
     FAILED helpers/test/test_lib_tasks.py::Test_find_check_string_output1::test1 - TypeError: check_string() takes 2 positional arguments but 3 were given
     FAILED helpers/test/test_lib_tasks.py::Test_find_check_string_output1::test2 - TypeError: check_string() takes 2 positional arguments but 3 were given
@@ -2520,6 +2523,9 @@ def _get_lint_docker_cmd(precommit_opts: str, run_bash: bool, stage: str) -> str
     ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
     image = f"{ecr_base_path}/dev_tools:{stage}"
     docker_cmd_ = ["docker run", "--rm"]
+    if stage == "local":
+        # For local stage also map repository root to /app.
+        docker_cmd_.append(f"-v '{repo_root}':/app")
     if run_bash:
         docker_cmd_.append("-it")
     else:
