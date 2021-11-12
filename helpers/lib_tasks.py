@@ -1661,7 +1661,13 @@ def docker_release_dev_image(  # type: ignore
         run_slow_tests(ctx, stage=stage)
     if superslow_tests:
         run_superslow_tests(ctx, stage=stage)
-    # 3) Promote the "local" image to "dev".
+    # 3) Run end-to-end test.
+    if run_end_to_end_tests:
+        end_to_end_test_fn = get_default_param("END_TO_END_TEST_FN")
+        if not end_to_end_test_fn(ctx, stage=stage):
+            _LOG.error("End-to-end test has failed")
+            return
+    # 4) Promote the "local" image to "dev".
     docker_tag_local_image_as_dev(ctx)
     # 4) Run QA tests for the (local version) of the dev image.
     if qa_tests:
@@ -2447,7 +2453,6 @@ def _get_failed_tests_from_clipboard() -> List[str]:
     # pylint: disable=line-too-long
     """
     ```
-
     FAILED core/dataflow/nodes/test/test_sources.py::TestRealTimeDataSource1::test_replayed_real_time1 - TypeError: __init__() got an unexpected keyword argument 'speed_up_factor'
     FAILED helpers/test/test_lib_tasks.py::Test_find_check_string_output1::test1 - TypeError: check_string() takes 2 positional arguments but 3 were given
     FAILED helpers/test/test_lib_tasks.py::Test_find_check_string_output1::test2 - TypeError: check_string() takes 2 positional arguments but 3 were given

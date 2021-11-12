@@ -4,37 +4,12 @@ Script to download historical data from CCXT.
 
 Use as:
 
-# Download Binance BTC/USDT data from 2019-01-01 to 2019-01-02:
+# Download data from 2019-01-01 to now,
+  for latest trade universe:
 > download_historical.py \
-     --dst_dir test \
-     --exchange_ids "binance" \
-     --currency_pairs "BTC/USDT" \
-     --start_datetime "2019-01-01" \
-     --end_datetime "2019-01-02"
-
-# Download Binance data from 2019-01-01 to now,
-  for all currency pairs:
-> download_historical.py \
-     --dst_dir test \
-     --exchange_ids "binance" \
-     --currency_pairs "all" \
-     --start_datetime "2019-01-01" \
-
-# Download data for all exchanges, BTC/USDT and ETH/USDT currency pairs,
-  from 2019-01-01 to now:
-> download_historical.py \
-     --dst_dir test \
-     --exchange_ids "all" \
-     --currency_pairs "BTC/USDT ETH/USDT" \
-     --start_datetime "2019-01-01" \
-
-# Download data for all exchanges and all pairs, from 2019-01-01 to 2019-01-02:
-> download_historical.py \
-     --dst_dir test \
-     --exchange_ids "all" \
-     --currency_pairs "all" \
-     --start_datetime "2019-01-01" \
-     --start_endtime "2019-01-02"
+     --dst_dir 'test' \
+     --universe 'latest' \
+     --start_datetime '2019-01-01' \
 
 Import as:
 
@@ -52,10 +27,9 @@ import helpers.dbg as hdbg
 import helpers.io_ as hio
 import helpers.parser as hparser
 import im.ccxt.data.extract.exchange_class as imcdaexexccla
+import im.data.universe as imdauni
 
 _LOG = logging.getLogger(__name__)
-
-_ALL_EXCHANGE_IDS = ["binance", "kucoin"]
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -78,20 +52,11 @@ def _parse() -> argparse.ArgumentParser:
         help="Path to JSON file that contains API keys for exchange access",
     )
     parser.add_argument(
-        "--exchange_ids",
+        "--universe",
         action="store",
         required=True,
         type=str,
-        help="CCXT exchange ids to download data for separated by spaces, e.g. 'binance gemini',"
-        "'all' for all supported exchanges",
-    )
-    parser.add_argument(
-        "--currency_pairs",
-        action="store",
-        required=True,
-        type=str,
-        help="Name of the currency pair to download data for, separated by spaces,"
-        " e.g. 'BTC/USD ETH/USD','all' for all the currency pairs in exchange",
+        help="Trade universe for which to download data, e.g. 'latest', '01'",
     )
     parser.add_argument(
         "--start_datetime",
@@ -139,36 +104,19 @@ def _main(parser: argparse.ArgumentParser) -> None:
         end_datetime = pd.Timestamp.now()
     else:
         end_datetime = pd.Timestamp(args.end_datetime)
-    # Pick the exchanges.
-    if args.exchange_ids == "all":
-        # Iterate over all the available exchanges.
-        exchange_ids = _ALL_EXCHANGE_IDS
+    # Load trading universe.
+    if args.universe == "latest":
+        trade_universe = imdauni.get_trade_universe()["CCXT"]
     else:
-        # Get a single exchange.
-        exchange_ids = args.exchange_ids.split()
-    _LOG.info("Getting data for exchanges %s", ", ".join(exchange_ids))
-    for exchange_id in exchange_ids:
+        trade_universe = imdauni.get_trade_universe(args.universe)["CCXT"]
+    _LOG.info("Getting data for exchanges %s", ", ".join(trade_universe.keys()))
+    for exchange_id in trade_universe:
         # Initialize the exchange class.
-        exchange = imcdaexexccla.CcxtExchange(exchange_id, api_keys_path=args.api_keys)
-        if args.currency_pairs == "all":
-            # Iterate over all currencies available for exchange.
-            present_pairs = exchange.currency_pairs
-        else:
-            # Iterate over provided currency.
-            currency_pairs = args.currency_pairs.split()
-            # Leave only currencies present in exchange.
-            present_pairs = [
-                curr for curr in currency_pairs if curr in exchange.currency_pairs
-            ]
-            # Warn if not all passed currencies are present.
-            if len(present_pairs) != len(currency_pairs):
-                _LOG.warning(
-                    "Currencies %s not present in exchange %s!",
-                    list(set.difference(set(currency_pairs), set(present_pairs))),
-                    exchange_id,
-                )
-        _LOG.debug("Getting data for currencies %s", ", ".join(present_pairs))
-        for pair in present_pairs:
+        exchange = imcdaexexccla.CcxtExchange(
+            exchange_id, api_keys_path=args.api_keys
+        )
+        for pair in trade_universe[exchange_id]:
+            _LOG.info(pair)
             # Download OHLCV data.
             pair_data = exchange.download_ohlcv_data(
                 curr_symbol=pair,

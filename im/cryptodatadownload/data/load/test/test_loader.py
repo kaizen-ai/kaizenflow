@@ -1,7 +1,5 @@
 import os
 
-import pytest
-
 import helpers.s3 as hs3
 import helpers.unit_test as hunitest
 import im.cryptodatadownload.data.load.loader as icdalolo

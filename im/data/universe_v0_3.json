@@ -1,0 +1,50 @@
+{
+  "CCXT": {
+    "binance": [
+      "ADA/USDT",
+      "AVAX/USDT",
+      "BNB/USDT",
+      "BTC/USDT",
+      "DOGE/USDT",
+      "EOS/USDT",
+      "ETH/USDT",
+      "LINK/USDT",
+      "SOL/USDT"
+    ],
+    "ftx": [
+      "BNB/USDT",
+      "BTC/USDT",
+      "DOGE/USDT",
+      "ETH/USDT",
+      "LINK/USDT",
+      "SOL/USDT",
+      "XRP/USDT"
+    ],
+    "gateio": [
+      "ADA/USDT",
+      "AVAX/USDT",
+      "BNB/USDT",
+      "BTC/USDT",
+      "DOGE/USDT",
+      "EOS/USDT",
+      "ETH/USDT",
+      "FIL/USDT",
+      "LINK/USDT",
+      "SOL/USDT",
+      "XRP/USDT"
+    ],
+    "kucoin": [
+      "ADA/USDT",
+      "AVAX/USDT",
+      "BNB/USDT",
+      "BTC/USDT",
+      "DOGE/USDT",
+      "EOS/USDT",
+      "ETH/USDT",
+      "FIL/USDT",
+      "LINK/USDT",
+      "SOL/USDT",
+      "XRP/USDT"
+    ]
+  }
+}

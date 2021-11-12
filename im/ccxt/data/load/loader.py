@@ -6,21 +6,19 @@ import im.ccxt.data.load.loader as imccdaloloa
 
 import logging
 import os
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 
 import core.pandas_helpers as cpah
 import helpers.datetime_ as hdatetim
 import helpers.dbg as hdbg
-import helpers.io_ as hio
+import helpers.hpandas as hhpandas
 import helpers.s3 as hs3
 import helpers.sql as hsql
+import im.data.universe as imdauni
 
 _LOG = logging.getLogger(__name__)
-
-# Path to the data about downloaded currencies from the spreadsheet in CMTask41.
-_DOWNLOADED_CURRENCIES_PATH = "im/data/downloaded_currencies.json"
 
 # Latest historical data snapshot.
 _LATEST_DATA_SNAPSHOT = "20210924"
@@ -32,6 +30,8 @@ class CcxtLoader:
         connection: Optional[hsql.DbConnection] = None,
         root_dir: Optional[str] = None,
         aws_profile: Optional[str] = None,
+        remove_dups: bool = True,
+        resample_to_1_min: bool = True,
     ) -> None:
         """
         Load CCXT data from different backends, e.g., DB, local or S3
@@ -41,21 +41,34 @@ class CcxtLoader:
         :param: root_dir: either a local root path (e.g., "/app/im") or
             an S3 root path ("s3://alphamatic-data/data") to the CCXT data
         :param: aws_profile: AWS profile name (e.g., "am")
+        :param remove_dups: whether to remove full duplicates or not
+        :param resample_to_1_min: whether to resample to 1 min or not
         """
         self._connection = connection
         self._root_dir = root_dir
         self._aws_profile = aws_profile
+        self._remove_dups = remove_dups
+        self._resample_to_1_min = resample_to_1_min
+        # Set loader mode parameter value.
+        if self._connection:
+            self._mode = "db"
+        else:
+            self._mode = "filesystem"
+            # Verify that root dir is specified if connection is not provided.
+            hdbg.dassert_is_not(self._root_dir, None)
+        # Set s3fs parameter value if aws profile parameter is specified.
+        if self._aws_profile:
+            self._s3fs = hs3.get_s3fs(self._aws_profile)
         # Specify supported data types to load.
         self._data_types = ["ohlcv"]
 
-    # TODO(Dan): Refactor in #183.
     def read_data_from_db(
         self,
         table_name: str,
         exchange_ids: Optional[Tuple[str]] = None,
         currency_pairs: Optional[Tuple[str]] = None,
-        start_date: Optional[int] = None,
-        end_date: Optional[int] = None,
+        start_date: Optional[pd.Timestamp] = None,
+        end_date: Optional[pd.Timestamp] = None,
         **read_sql_kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
@@ -66,15 +79,15 @@ class CcxtLoader:
         :param table_name: name of the table to load, e.g., "ccxt_ohlcv"
         :param exchange_ids: exchange ids to load data for
         :param currency_pairs: currency pairs to load data for
-        :param start_date: the earliest data to load data for as unix epoch,
-            e.g., 1631145600000
-        :param end_date: the latest date to load data for as unix epoch,
-            e.g., 1631145600000
+        :param start_date: the earliest date timestamp to load data for,
+            considered in UTC if tz is not specified
+        :param end_date: the latest date timestamp to load data for,
+            considered in UTC if tz is not specified
         :param read_sql_kwargs: kwargs for `pd.read_sql()` query
         :return: table from database
         """
-        # Verify that DB connection is provided.
-        hdbg.dassert_is_not(self._connection, None)
+        # Verify loader mode.
+        hdbg.dassert_is(self._mode, "db")
         # Verify that table with specified name exists.
         hdbg.dassert_in(table_name, hsql.get_table_names(self._connection))
         # Initialize SQL query.
@@ -92,9 +105,11 @@ class CcxtLoader:
             query_conditions.append("currency_pair IN %s")
             query_params.append(currency_pairs)
         if start_date:
-            query_conditions.append("timestamp > %s")
+            start_date = hdatetim.convert_timestamp_to_unix_epoch(start_date)
+            query_conditions.append("timestamp >= %s")
             query_params.append(start_date)
         if end_date:
+            end_date = hdatetim.convert_timestamp_to_unix_epoch(end_date)
             query_conditions.append("timestamp < %s")
             query_params.append(end_date)
         if query_conditions:
@@ -104,8 +119,58 @@ class CcxtLoader:
         # Add a tuple of gathered query parameters to kwargs as `params`.
         read_sql_kwargs["params"] = tuple(query_params)
         # Execute SQL query.
-        table = pd.read_sql(sql_query, self._connection, **read_sql_kwargs)
-        return table
+        data = pd.read_sql(sql_query, self._connection, **read_sql_kwargs)
+        # Apply transformation to raw data.
+        transformed_data = self._transform(data=data, data_type="ohlcv")
+        return transformed_data
+
+    def read_universe_data_from_filesystem(
+        self,
+        universe: Union[str, List[imdauni.ExchangeCurrencyTuple]],
+        data_type: str,
+        data_snapshot: Optional[str] = None,
+    ) -> pd.DataFrame:
+        """
+        Load data from S3 for specified universe.
+
+        Output data is indexed by timestamp and contains the columns open,
+        high, low, close, volume, epoch, currency_pair, exchange_id, e.g.,
+        ```
+                                   open        epoch          currency_pair exchange_id
+        2018-08-16 20:00:00-04:00  6316.01 ... 1534464000000  BTC/USDT      binance
+        2018-08-16 20:01:00-04:00  6311.36     1534464060000  BTC/USDT      binance
+        ...
+        2021-09-08 20:00:00-04:00  1.10343     1631145600000  XRP/USDT      kucoin
+        2021-09-08 20:02:00-04:00  1.10292     1631145720000  XRP/USDT      kucoin
+        ```
+
+        :param universe: CCXT universe version or a list of exchange-currency
+            tuples to load data for
+        :param data_type: OHLCV or trade, bid/ask data
+        :param data_snapshot: snapshot of datetime when data was loaded,
+            e.g. "20210924"
+        :return: processed CCXT data
+        """
+        # Load all the corresponding exchange-currency tuples if a universe
+        # version is provided.
+        if isinstance(universe, str):
+            universe = imdauni.get_vendor_universe_as_tuples(universe, "CCXT")
+        # Initialize results df.
+        combined_data = pd.DataFrame(dtype="object")
+        # Load data for each exchange-currency tuple and append to results df.
+        for exchange_currency_tuple in universe:
+            data = self.read_data_from_filesystem(
+                exchange_currency_tuple.exchange_id,
+                exchange_currency_tuple.currency_pair,
+                data_type,
+                data_snapshot,
+            )
+            combined_data = combined_data.append(data)
+        # Sort results by exchange id and currency pair.
+        combined_data = combined_data.sort_values(
+            by=["exchange_id", "currency_pair"]
+        )
+        return combined_data
 
     def read_data_from_filesystem(
         self,
@@ -125,23 +190,17 @@ class CcxtLoader:
         :return: processed CCXT data
         """
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
-        # Verify that root dir is provided.
-        hdbg.dassert_is_not(self._root_dir, None)
+        # Verify loader mode.
+        hdbg.dassert_is(self._mode, "filesystem")
         # Verify that requested data type is valid.
         hdbg.dassert_in(data_type.lower(), self._data_types)
         # Get absolute file path for a CCXT file.
         file_path = self._get_file_path(data_snapshot, exchange_id, currency_pair)
         # Initialize kwargs dict for further CCXT data reading.
         read_csv_kwargs = {}
-        # TODO(Dan): Remove asserts below after CMTask108 is resolved.
-        # Verify that the file exists and fill kwargs if needed.
         if hs3.is_s3_path(file_path):
-            s3fs = hs3.get_s3fs(self._aws_profile)
-            hs3.dassert_s3_exists(file_path, s3fs)
             # Add s3fs argument to kwargs.
-            read_csv_kwargs["s3fs"] = s3fs
-        else:
-            hdbg.dassert_file_exists(file_path)
+            read_csv_kwargs["s3fs"] = self._s3fs
         # Read raw CCXT data.
         _LOG.info(
             "Reading CCXT data for exchange id='%s', currencies='%s' from file='%s'...",
@@ -157,10 +216,11 @@ class CcxtLoader:
             currency_pair,
         )
         transformed_data = self._transform(
-            data, exchange_id, currency_pair, data_type
+            data, data_type, exchange_id, currency_pair
         )
         return transformed_data
 
+    # TODO(Grisha): factor out common code from `CddLoader._get_file_path` and `CcxtLoader._get_file_path`.
     def _get_file_path(
         self,
         data_snapshot: str,
@@ -180,64 +240,65 @@ class CcxtLoader:
             e.g. "BTC/USDT"
         :return: absolute path to a file with CCXT data
         """
-        # Extract data about downloaded currencies for CCXT.
-        downloaded_currencies_info = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)[
-            "CCXT"
-        ]
-        # Verify that data for the input exchange id was downloaded.
-        hdbg.dassert_in(
-            exchange_id,
-            downloaded_currencies_info.keys(),
-            msg="Data for exchange id='%s' was not downloaded" % exchange_id,
-        )
-        # Verify that data for the input exchange id and currency pair was
-        # downloaded.
-        downloaded_currencies = downloaded_currencies_info[exchange_id]
-        hdbg.dassert_in(
-            currency_pair,
-            downloaded_currencies,
-            msg="Data for exchange id='%s', currency pair='%s' was not downloaded"
-            % (exchange_id, currency_pair),
-        )
         # Get absolute file path.
         file_name = currency_pair.replace("/", "_") + ".csv.gz"
         file_path = os.path.join(
             self._root_dir, "ccxt", data_snapshot, exchange_id, file_name
         )
+        # TODO(Dan): Remove asserts below after CMTask108 is resolved.
+        # Verify that the file exists.
+        if hs3.is_s3_path(file_path):
+            hs3.dassert_s3_exists(file_path, self._s3fs)
+        else:
+            hdbg.dassert_file_exists(file_path)
         return file_path
 
     # TODO(*): Consider making `exchange_id` a class member.
     def _transform(
         self,
         data: pd.DataFrame,
-        exchange_id: str,
-        currency_pair: str,
         data_type: str,
+        exchange_id: Optional[str] = None,
+        currency_pair: Optional[str] = None,
     ) -> pd.DataFrame:
         """
-        Transform CCXT data loaded from S3.
+        Transform CCXT data loaded from DB or a filesystem.
 
-        Input data example:
-            timestamp      open     high     low      close    volume
-            1631145600000  3499.01  3499.49  3496.17  3496.36  346.4812
-            1631145660000  3496.36  3501.59  3495.69  3501.59  401.9576
-            1631145720000  3501.59  3513.10  3499.89  3513.09  579.5656
+        Input data is indexed with numbers and always contains the columns
+        timestamp, open, high, low, closed, volume; optionally contains
+        columns exchange_id, currency_pair e.g.,
+        ```
+             timestamp      open     high     low      close    volume
+        0    1631145600000  3499.01  3499.49  3496.17  3496.36  346.4812
+        1    1631145660000  3496.36  3501.59  3495.69  3501.59  401.9576
+        2    1631145720000  3501.59  3513.10  3499.89  3513.09  579.5656
+        ```
 
-        Output data example:
-            timestamp                  open     high     low      close    volume    epoch          currency_pair exchange_id
-            2021-09-08 20:00:00-04:00  3499.01  3499.49  3496.17  3496.36  346.4812  1631145600000  ETH/USDT      binance
-            2021-09-08 20:01:00-04:00  3496.36  3501.59  3495.69  3501.59  401.9576  1631145660000  ETH/USDT      binance
-            2021-09-08 20:02:00-04:00  3501.59  3513.10  3499.89  3513.09  579.5656  1631145720000  ETH/USDT      binance
+        Output data is indexed by timestamp and contains the columns open,
+        high, low, close, volume, epoch, currency_pair, exchange_id, e.g.,
+        ```
+                                   open        epoch          currency_pair exchange_id
+        2021-09-08 20:00:00-04:00  3499.01 ... 1631145600000  ETH/USDT      binance
+        2021-09-08 20:01:00-04:00  3496.36     1631145660000  ETH/USDT      binance
+        2021-09-08 20:02:00-04:00  3501.59     1631145720000  ETH/USDT      binance
+        ```
 
-        :param data: dataframe with CCXT data from S3
-        :param exchange_id: CCXT exchange id, e.g. "binance"
-        :param currency_pair: currency pair, e.g. "BTC/USDT"
+        :param data: dataframe with CCXT data from DB or a filesystem
         :param data_type: OHLCV or trade, bid/ask data
+        :param exchange_id: CCXT exchange id to add as a column if specified,
+            e.g. "binance"
+        :param currency_pair: currency pair to add as a column if specified,
+            e.g. "BTC/USDT"
         :return: processed dataframe
         """
-        transformed_data = self._apply_common_transformation(
-            data, exchange_id, currency_pair
-        )
+        # Apply common transformations.
+        transformed_data = self._apply_common_transformation(data)
+        # Apply transformations for filesystem data.
+        if self._mode == "filesystem":
+            transformed_data = self._apply_filesystem_transformation(
+                transformed_data, exchange_id, currency_pair
+            )
+        # Apply transformations for OHLCV data.
         if data_type.lower() == "ohlcv":
             transformed_data = self._apply_ohlcv_transformation(transformed_data)
         else:
@@ -245,20 +306,23 @@ class CcxtLoader:
                 "Incorrect data type: '%s'. Acceptable types: '%s'"
                 % (data_type.lower(), self._data_types)
             )
+        # Sort transformed data by exchange id and currency pair columns.
+        transformed_data = transformed_data.sort_values(
+            by=["exchange_id", "currency_pair"]
+        )
         return transformed_data
 
-    def _apply_common_transformation(
-        self, data: pd.DataFrame, exchange_id: str, currency_pair: str
-    ) -> pd.DataFrame:
+    def _apply_common_transformation(self, data: pd.DataFrame) -> pd.DataFrame:
         """
         Apply transform common to all CCXT data.
 
         This includes:
         - Datetime format assertion
         - Converting epoch ms timestamp to pd.Timestamp
-        - Adding exchange_id and currency_pair columns
+        - Removing full duplicates
+        - Resampling to 1 minute using NaNs
 
-        :param data: raw data from S3
+        :param data: raw CCXT data
         :param exchange_id: CCXT exchange id, e.g. "binance"
         :param currency_pair: currency pair, e.g. "BTC/USDT"
         :return: transformed CCXT data
@@ -271,11 +335,16 @@ class CcxtLoader:
         data = data.rename({"timestamp": "epoch"}, axis=1)
         # Transform Unix epoch into ET timestamp.
         data["timestamp"] = self._convert_epochs_to_timestamp(data["epoch"])
+        #
+        if self._remove_dups:
+            # Remove full duplicates.
+            data = hhpandas.drop_duplicates(data, ignore_index=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
-        # Add columns with exchange id and currency pair.
-        data["exchange_id"] = exchange_id
-        data["currency_pair"] = currency_pair
+        #
+        if self._resample_to_1_min:
+            # Resample to 1 minute.
+            data = hhpandas.resample_df(data, "T")
         return data
 
     @staticmethod
@@ -295,6 +364,29 @@ class CcxtLoader:
         return timestamp_col
 
     @staticmethod
+    def _apply_filesystem_transformation(
+        data: pd.DataFrame, exchange_id: str, currency_pair: str,
+    ) -> pd.DataFrame:
+        """
+        Apply transformations for filesystem data.
+
+        This includes:
+        - Adding exchange_id and currency_pair columns
+
+        :param data: data from a filesystem
+        :param exchange_id: CCXT exchange id, e.g. "binance"
+        :param currency_pair: currency pair, e.g. "BTC/USDT"
+        :return: transformed filesystem data
+        """
+        # Verify that required columns are not already in the dataframe.
+        for col in ["exchange_id", "currency_pair"]:
+            hdbg.dassert_not_in(col, data.columns)
+        # Add required columns.
+        data["exchange_id"] = exchange_id
+        data["currency_pair"] = currency_pair
+        return data
+
+    @staticmethod
     def _apply_ohlcv_transformation(data: pd.DataFrame) -> pd.DataFrame:
         """
         Apply transformations for OHLCV data.
@@ -312,8 +404,8 @@ class CcxtLoader:
              "currency_pair",
              "exchange_id"]
 
-        :param data: data after general CCXT transforms
-        :return: transformed OHLCV dataframe
+        :param data: OHLCV data
+        :return: transformed OHLCV data
         """
         ohlcv_columns = [
             "open",
