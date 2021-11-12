@@ -217,16 +217,21 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 try:
                     # Download latest data.
                     pair_data = _download_data(args.data_type, exchange, pair)
-                except (ccxt.ExchangeError, ccxt.NetworkError) as e:
+                except (
+                    ccxt.ExchangeError,
+                    ccxt.NetworkError,
+                    ccxt.base.errors.RequestTimeout,
+                ) as e:
                     # Continue the loop if could not connect to exchange.
-                    _LOG.warning("Got an error", type(e).__name__, e.args)
+                    _LOG.warning("Got an error: %s", type(e).__name__, e.args)
                     continue
                 except ccxt.base.errors.RateLimitExceeded as e:
-                    _LOG.warning("Got an Exceeded limit error", type(e).__name__, e.args)
+                    _LOG.warning(
+                        "Got an Exceeded limit error: %s",
+                        type(e).__name__,
+                        e.args,
+                    )
                     sleep(60)
-                    continue
-                except ccxt.base.errors.RequestTimeout as e:
-                    _LOG.warning("Got an request timeout error", type(e).__name__, e.args)
                     continue
                 # Save to disk.
                 _save_data_on_disk(
