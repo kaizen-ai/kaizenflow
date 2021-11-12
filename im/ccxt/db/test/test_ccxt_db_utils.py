@@ -2,6 +2,7 @@ import logging
 import os
 
 import pandas as pd
+import pytest
 
 import helpers.git as hgit
 import helpers.sql as hsql
@@ -12,6 +13,7 @@ import im.ccxt.db.utils as imccdbuti
 _LOG = logging.getLogger(__name__)
 
 
+@pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
 class TestUtils(huntes.TestCase):
     def setUp(self) -> None:
         """
