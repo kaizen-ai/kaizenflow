@@ -12,7 +12,7 @@ import helpers.dbg as hdbg
 import helpers.git as hgit
 import helpers.io_ as hio
 
-_LATEST_UNIVERSE_VERSION = "v0_3"
+_LATEST_UNIVERSE_VERSION = "v03"
 
 
 def get_trade_universe(
@@ -26,6 +26,7 @@ def get_trade_universe(
     """
     file_name = "".join(["universe_", version, ".json"])
     file_path = os.path.join(hgit.get_amp_abs_path(), "im/data", file_name)
+    hdbg.dassert_exists(file_path)
     universe = hio.from_json(file_path)
     return universe
 

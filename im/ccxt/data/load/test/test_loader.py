@@ -73,7 +73,7 @@ class TestReadUniverseDataFromFilesystem(huntes.TestCase):
             root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         actual = ccxt_loader.read_universe_data_from_filesystem(
-            universe="v0_3", data_type="OHLCV"
+            universe="v03", data_type="OHLCV"
         )
         # Check output.
         expected_length = 28209782

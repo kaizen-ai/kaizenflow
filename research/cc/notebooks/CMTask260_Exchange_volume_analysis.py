@@ -191,10 +191,10 @@ def plot_ath_volumes_comparison(df_list):
 
 # %% hidden=true
 # get the list of all coin paires for each exchange
-binance_coins = imdauni.get_trade_universe("v0_1")["CCXT"]["binance"]
-ftx_coins = imdauni.get_trade_universe("v0_1")["CCXT"]["ftx"]
-gateio_coins = imdauni.get_trade_universe("v0_1")["CCXT"]["gateio"]
-kucoin_coins = imdauni.get_trade_universe("v0_1")["CCXT"]["kucoin"]
+binance_coins = imdauni.get_trade_universe("v01")["CCXT"]["binance"]
+ftx_coins = imdauni.get_trade_universe("v01")["CCXT"]["ftx"]
+gateio_coins = imdauni.get_trade_universe("v01")["CCXT"]["gateio"]
+kucoin_coins = imdauni.get_trade_universe("v01")["CCXT"]["kucoin"]
 
 # load all the dataframes
 binance_1 = get_initial_df_with_volumes(binance_coins, "binance", is_notional_volume=True)

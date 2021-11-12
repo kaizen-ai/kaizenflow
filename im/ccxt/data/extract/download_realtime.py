@@ -4,19 +4,19 @@ Script to download OHLCV data from CCXT in real-time.
 
 Use as:
 
-# Download OHLCV data for universe '01', saving only on disk:
+# Download OHLCV data for universe 'v03', saving only on disk:
 > python im/ccxt/data/extract/download_realtime.py \
     --db_connection 'none' \
     --dst_dir 'test_ohlcv_rt' \
     --data_type 'ohlcv' \
-    --universe '01'
+    --universe 'v03'
 
-# Download order book data for universe '01', saving only on disk:
+# Download order book data for universe 'v03', saving only on disk:
 > python im/ccxt/data/extract/download_realtime.py \
     --db_connection 'none' \
     --dst_dir 'test_orderbook_rt' \
     --data_type 'orderbook' \
-    --universe '01'
+    --universe 'v03'
 
 Import as:
 
@@ -42,8 +42,6 @@ import im.ccxt.db.utils as imccdbuti
 import im.data.universe as imdauni
 
 _LOG = logging.getLogger(__name__)
-
-# TODO(Danya): Merge with `download_realtime_orderbook.py`
 
 
 # TODO(Danya): Create a type and move outside.
