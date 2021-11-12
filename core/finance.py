@@ -36,7 +36,7 @@ def remove_dates_with_no_data(
     :return: filtered df
     """
     # This is not strictly necessary.
-    hpandas.dassert_strictly_increasing_index(df)
+    hhpandas.dassert_strictly_increasing_index(df)
     # Store the dates of the days removed because of all NaNs.
     removed_days = []
     # Accumulate the df for all the days that are not discarded.
@@ -52,23 +52,23 @@ def remove_dates_with_no_data(
             df_out.append(df_tmp)
         num_days += 1
     df_out = pd.concat(df_out)
-    hpandas.dassert_strictly_increasing_index(df_out)
+    hhpandas.dassert_strictly_increasing_index(df_out)
     #
     if report_stats:
         # Stats for rows.
         _LOG.info("df.index in [%s, %s]", df.index.min(), df.index.max())
-        removed_perc = hprint.perc(df.shape[0] - df_out.shape[0], df.shape[0])
+        removed_perc = hprintin.perc(df.shape[0] - df_out.shape[0], df.shape[0])
         _LOG.info("Rows removed: %s", removed_perc)
         # Stats for all days.
-        removed_perc = hprint.perc(len(removed_days), num_days)
+        removed_perc = hprintin.perc(len(removed_days), num_days)
         _LOG.info("Number of removed days: %s", removed_perc)
         # Find week days.
         removed_weekdays = [d for d in removed_days if d.weekday() < 5]
-        removed_perc = hprint.perc(len(removed_weekdays), len(removed_days))
+        removed_perc = hprintin.perc(len(removed_weekdays), len(removed_days))
         _LOG.info("Number of removed weekdays: %s", removed_perc)
         _LOG.info("Weekdays removed: %s", ", ".join(map(str, removed_weekdays)))
         # Stats for weekend days.
-        removed_perc = hprint.perc(
+        removed_perc = hprintin.perc(
             len(removed_days) - len(removed_weekdays), len(removed_days)
         )
         _LOG.info("Number of removed weekend days: %s", removed_perc)
@@ -215,7 +215,7 @@ def _resample_with_aggregate_function(
     rule: str,
     cols: List[str],
     agg_func: str,
-    agg_func_kwargs: htypes.Kwargs,
+    agg_func_kwargs: hhtypes.Kwargs,
 ) -> pd.DataFrame:
     """
     Resample columns `cols` of `df` using the passed parameters.
@@ -232,7 +232,7 @@ def _resample_with_aggregate_function(
 def resample_bars(
     df: pd.DataFrame,
     rule: str,
-    resampling_groups: List[Tuple[Dict[str, str], str, htypes.Kwargs]],
+    resampling_groups: List[Tuple[Dict[str, str], str, hhtypes.Kwargs]],
     vwap_groups: List[Tuple[str, str, str]],
 ) -> pd.DataFrame:
     """
@@ -279,13 +279,13 @@ def resample_time_bars(
     *,
     return_cols: Optional[List[str]] = None,
     return_agg_func: Optional[str] = None,
-    return_agg_func_kwargs: Optional[htypes.Kwargs] = None,
+    return_agg_func_kwargs: Optional[hhtypes.Kwargs] = None,
     price_cols: Optional[List[str]] = None,
     price_agg_func: Optional[str] = None,
-    price_agg_func_kwargs: Optional[htypes.Kwargs] = None,
+    price_agg_func_kwargs: Optional[hhtypes.Kwargs] = None,
     volume_cols: Optional[List[str]] = None,
     volume_agg_func: Optional[str] = None,
-    volume_agg_func_kwargs: Optional[htypes.Kwargs] = None,
+    volume_agg_func_kwargs: Optional[hhtypes.Kwargs] = None,
 ) -> pd.DataFrame:
     """
     Convenience resampler for time bars.

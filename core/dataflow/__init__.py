@@ -6,7 +6,6 @@ import core.dataflow as cdataf
 
 from core.dataflow.builders import *  # pylint: disable=unused-import # NOQA
 from core.dataflow.core import *  # pylint: disable=unused-import # NOQA
-from core.dataflow.db_interface import *  # pylint: disable=unused-import # NOQA
 from core.dataflow.nodes.base import *  # pylint: disable=unused-import # NOQA
 from core.dataflow.nodes.local_level_model import *  # pylint: disable=unused-import # NOQA
 from core.dataflow.nodes.regression_models import *  # pylint: disable=unused-import # NOQA

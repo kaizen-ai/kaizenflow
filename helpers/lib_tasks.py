@@ -1046,7 +1046,8 @@ def _get_amp_docker_compose_path() -> Optional[str]:
     """
     Return the docker compose for `amp` as supermodule or as submodule.
 
-    E.g., `devops/compose/docker-compose_as_submodule.yml` and
+    E.g., 
+    `devops/compose/docker-compose_as_submodule.yml` and
     `devops/compose/docker-compose_as_supermodule.yml`
     """
     path, _ = hgit.get_path_from_supermodule()
