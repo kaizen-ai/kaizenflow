@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.plotting as cplott
+import core.plotting as cplo
 """
 
 # TODO(gp): Test with a gallery notebook and/or with unit tests.
@@ -27,13 +27,13 @@ import statsmodels as statsm
 import statsmodels.api as sm
 import statsmodels.regression.rolling as srroll
 
-import core.explore as cexplo
-import core.finance as cfinan
-import core.signal_processing as csigna
-import core.statistics as cstati
-import helpers.dataframe as hdataf
-import helpers.dbg as dbg
-import helpers.hpandas as hpandas
+import core.explore as cexp
+import core.finance as cfin
+import core.signal_processing as csipro
+import core.statistics as csta
+import helpers.dataframe as hdatafra
+import helpers.dbg as hdbg
+import helpers.hpandas as hhpandas
 import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
@@ -80,7 +80,7 @@ def plot_non_na_cols(
     """
     # Check that there are no repeated columns.
     # TODO(gp): dassert_no_duplicates
-    dbg.dassert_eq(len(hlist.find_duplicates(df.columns.tolist())), 0)
+    hdbg.dassert_eq(len(hlist.find_duplicates(df.columns.tolist())), 0)
     # Note that the plot assumes that the first column is at the bottom of the
     # Assign 1.0 to all the non-nan value.
     df = df.where(df.isnull(), 1)
@@ -96,7 +96,7 @@ def plot_non_na_cols(
             max_num,
             df.shape[1],
         )
-        dbg.dassert_lte(1, max_num)
+        hdbg.dassert_lte(1, max_num)
         if max_num > df.shape[1]:
             _LOG.warning(
                 "Too many columns requested: %d > %d", max_num, df.shape[1]
@@ -188,11 +188,11 @@ def get_multiple_plots(
         figure equals the default `figsize`
     :return: figure and array of axes
     """
-    dbg.dassert_lte(1, num_plots)
-    dbg.dassert_lte(1, num_cols)
+    hdbg.dassert_lte(1, num_plots)
+    hdbg.dassert_lte(1, num_cols)
     # Heuristic to find the dimension of the fig.
     if y_scale is not None:
-        dbg.dassert_lt(0, y_scale)
+        hdbg.dassert_lt(0, y_scale)
         ysize = math.ceil(num_plots / num_cols) * y_scale
         figsize: Optional[Tuple[float, float]] = (20, ysize)
     else:
@@ -239,8 +239,8 @@ def plot_projection(
     mode = mode or "no-scatter"
     ax = ax or plt.gca()
     ax.set_yticklabels([])
-    hpandas.dassert_strictly_increasing_index(df)
-    dbg.dassert_no_duplicates(df.columns.tolist())
+    hhpandas.dassert_strictly_increasing_index(df)
+    hdbg.dassert_no_duplicates(df.columns.tolist())
     df = df.copy()
     # Get a mask for special values.
     special_val_mask = pd.DataFrame(
@@ -325,7 +325,7 @@ def plot_counts(
     :param figsize: size of the plot
     :param rotation: rotation of xtick labels
     """
-    dbg.dassert_isinstance(counts, pd.Series)
+    hdbg.dassert_isinstance(counts, pd.Series)
     figsize = figsize or FIG_SIZE
     counts = counts.sort_values(ascending=False)
     # Display the top n counts.
@@ -409,7 +409,7 @@ def plot_barplot(
         srs_top_n = srs
     else:
         # Assert N>0.
-        dbg.dassert_lte(1, top_n_to_plot)
+        hdbg.dassert_lte(1, top_n_to_plot)
         # Sort in descending order.
         srs_sorted = srs.sort_values(ascending=False)
         # Select top N.
@@ -433,7 +433,7 @@ def plot_barplot(
     )
     # Choose scale.
     yscale = yscale or "linear"
-    dbg.dassert_in(yscale, ["log", "linear"], f"Invalid scale={yscale}")
+    hdbg.dassert_in(yscale, ["log", "linear"], f"Invalid scale={yscale}")
     ax.set_yscale(yscale)
     # Add annotations to bars.
     # Note: annotations in both modes are taken from
@@ -478,10 +478,10 @@ def plot_time_series_by_period(
         be a `pd.DatetimeIndex` attribute:
         https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DatetimeIndex.html
     """
-    dbg.dassert_isinstance(srs, pd.Series)
-    dbg.dassert_isinstance(srs.index, pd.DatetimeIndex)
-    dbg.dassert_isinstance(period, str)
-    dbg.dassert(
+    hdbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_isinstance(srs.index, pd.DatetimeIndex)
+    hdbg.dassert_isinstance(period, str)
+    hdbg.dassert(
         hasattr(srs.index, period),
         msg="Not an attribute of `pd.DatetimeIndex`, whose attributes are %s"
         % pd.DatetimeIndex._datetimelike_ops,
@@ -495,11 +495,11 @@ def plot_time_series_by_period(
     if period in ["date", "time"]:
         periods = [x.isoformat() for x in periods]
         periods = pd.Index(periods)
-    dbg.dassert_isinstance(
+    hdbg.dassert_isinstance(
         periods, pd.Index, msg="period=%s is not supported" % period
     )
     periods.name = period
-    dbg.dassert_lt(
+    hdbg.dassert_lt(
         1,
         len(periods.unique()),
         msg="The unique period value found is `%s`. Multiple values expected."
@@ -528,15 +528,15 @@ def plot_timeseries_distribution(
     :param srs: timeseries pd.Series to plot
     :param datetime_types: types of pd.datetime, e.g. "month", "quarter"
     """
-    dbg.dassert_isinstance(srs, pd.Series)
-    dbg.dassert_isinstance(srs.index, pd.DatetimeIndex)
+    hdbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_isinstance(srs.index, pd.DatetimeIndex)
     if datetime_types is None:
         datetime_types = _DATETIME_TYPES
     if axes is None:
         _, axes = get_multiple_plots(num_plots=len(datetime_types), num_cols=1)
     else:
-        dbg.dassert_eq(len(datetime_types), len(axes))
-    srs = hdataf.apply_nan_mode(srs, mode="drop")
+        hdbg.dassert_eq(len(datetime_types), len(axes))
+    srs = hdatafra.apply_nan_mode(srs, mode="drop")
     index_series = pd.Series(srs.index)
     for datetime_type, ax in zip(datetime_types, axes):
         sns.countplot(getattr(index_series.dt, datetime_type))
@@ -572,12 +572,12 @@ def plot_timeseries_per_category(
     """
     if not figsize:
         figsize = FIG_SIZE
-    unique_rows = cexplo.drop_duplicates(df=df, subset=[column])
+    unique_rows = cexp.drop_duplicates(df=df, subset=[column])
     if top_n:
         categories = (
             df[category_column].value_counts().iloc[:top_n].index.to_list()
         )
-    dbg.dassert(categories, "No categories found.")
+    hdbg.dassert(categories, "No categories found.")
     if not datetime_types:
         datetime_types = _DATETIME_TYPES
     for datetime_type in datetime_types:
@@ -668,7 +668,7 @@ def plot_autocorrelation(
     axis_pairs = zip(axes[::2], axes[1::2])
     title_prefix = title_prefix or ""
     # Replacing inf with nan to ensure non-empty plots generated.
-    signal = cstati.replace_infs_with_nans(signal)
+    signal = csta.replace_infs_with_nans(signal)
     for col, axis_pair in zip(signal.columns, axis_pairs):
         if nan_mode == "conservative":
             data = signal[col].fillna(0).dropna()
@@ -714,7 +714,7 @@ def plot_seasonal_decomposition(
     https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.STL.html
 
     :param srs: input time series
-    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param nan_mode: argument for hdatafra.apply_nan_mode()
     :param kwargs: kwargs for statsm.tsa.seasonal.STL
     """
     nan_mode = nan_mode or "drop"
@@ -723,7 +723,7 @@ def plot_seasonal_decomposition(
     if isinstance(srs, pd.DataFrame) and srs.shape[1] > 1:
         raise ValueError("Input df should be 1 dim, not %s'" % srs.shape[1])
     srs = srs.squeeze()
-    srs = hdataf.apply_nan_mode(srs, mode=nan_mode)
+    srs = hdatafra.apply_nan_mode(srs, mode=nan_mode)
     stl = statsm.tsa.seasonal.STL(srs, **kwargs).fit()
     if axes is None:
         _, axes = get_multiple_plots(4, 1, y_scale=figsize[1] / 4)
@@ -758,7 +758,7 @@ def plot_spectrum(
     if title_prefix is None:
         title_prefix = ""
     # Replacing inf with nan to ensure non-empty plots generated.
-    signal = cstati.replace_infs_with_nans(signal)
+    signal = csta.replace_infs_with_nans(signal)
     if axes is None:
         _, axes = get_multiple_plots(signal.shape[1] * 2, num_cols=2, y_scale=5)
     axis_pairs = zip(axes[::2], axes[1::2])
@@ -825,7 +825,7 @@ def plot_time_series_dict(
             sharey=sharey,
         )
     else:
-        dbg.dassert_eq(len(axes), num_plots)
+        hdbg.dassert_eq(len(axes), num_plots)
     # Select first `num_plots` series in the dict and plot them.
     keys_to_draw = list(dict_.keys())[:num_plots]
     for i, key in enumerate(keys_to_draw):
@@ -857,14 +857,14 @@ def plot_histograms_and_lagged_scatterplot(
 
     :param axes: flat list of axes or `None`
     """
-    dbg.dassert(isinstance(srs, pd.Series), "Input must be Series")
-    hpandas.dassert_monotonic_index(srs, "Index must be monotonic")
+    hdbg.dassert(isinstance(srs, pd.Series), "Input must be Series")
+    hhpandas.dassert_monotonic_index(srs, "Index must be monotonic")
     hist_kwargs = hist_kwargs or {}
     scatter_kwargs = scatter_kwargs or {}
     # Handle inf and nan.
     srs = srs.replace([-np.inf, np.inf], np.nan)
     nan_mode = nan_mode or "drop"
-    srs = hdataf.apply_nan_mode(srs, mode=nan_mode)
+    srs = hdatafra.apply_nan_mode(srs, mode=nan_mode)
     # Divide timeseries to two parts.
     oos_start = oos_start or srs.index.tolist()[len(srs) // 2]
     srs_first_part = srs[:oos_start]
@@ -963,7 +963,7 @@ def plot_heatmap(
         )
         ax.set_title(title)
     elif mode == "clustermap":
-        dbg.dassert_is(ax, None)
+        hdbg.dassert_is(ax, None)
         g = sns.clustermap(
             corr_df,
             cmap=cmap,
@@ -1030,7 +1030,7 @@ def display_corr_df(df: pd.core.frame.DataFrame) -> None:
     """
     if df is not None:
         df_tmp = df.applymap(lambda x: "%.2f" % x)
-        cexplo.display_df(df_tmp)
+        cexp.display_df(df_tmp)
     else:
         _LOG.warning("Can't display correlation df since it is None")
 
@@ -1051,7 +1051,7 @@ def plot_effective_correlation_rank(
     # - q = np.inf corresponds to "stable rank" and yields the smallest expected
     #   rank
     q_values = q_values or [1, 2, np.inf]
-    dbg.dassert_isinstance(q_values, list)
+    hdbg.dassert_isinstance(q_values, list)
     # Calculate (sample) correlation matrix.
     corr = df.corr()
     # Calculate eigenvalues of sample correlation matrix (i.e., squared
@@ -1061,7 +1061,7 @@ def plot_effective_correlation_rank(
     # Calculate effective rank over q_values.
     effective_ranks = []
     for q in q_values:
-        effective_rank = cstati.compute_hill_number(singular_values, q)
+        effective_rank = csta.compute_hill_number(singular_values, q)
         effective_ranks.append(effective_rank)
     # Plot singular values.
     singular_values.plot(
@@ -1098,7 +1098,7 @@ def compute_linkage(df: pd.DataFrame, method: Optional[str] = None) -> np.ndarra
     method = method or "average"
     corr = df.corr()
     linkage = schier.linkage(corr, method=method)
-    linkage = cast(np.ndarray, linkage)
+    linkage = cast(np.darray, linkage)
     return linkage
 
 
@@ -1340,7 +1340,7 @@ class PCA:
             )
             plt.suptitle("Principal components")
         else:
-            dbg.dassert_eq(len(axes), num_components)
+            hdbg.dassert_eq(len(axes), num_components)
         for i in range(num_components):
             pc = pcs.iloc[i, :]
             pc.plot(
@@ -1370,7 +1370,7 @@ class PCA:
     @staticmethod
     def _get_num_pcs_to_plot(num_pcs_to_plot: Optional[int], max_pcs: int) -> int:
         """
-        Get the number of principal components to cplott.
+        Get the number of principal components to cplo.
         """
         if num_pcs_to_plot is None:
             num_pcs_to_plot = max_pcs
@@ -1381,7 +1381,7 @@ class PCA:
                     "Overall number of components is less than requested"
                 )
                 num_pcs_to_plot = max_pcs
-        dbg.dassert_lte(1, num_pcs_to_plot)
+        hdbg.dassert_lte(1, num_pcs_to_plot)
         return num_pcs_to_plot
 
 
@@ -1400,7 +1400,7 @@ def plot_ipca(
         - Eigenvectors estimates
         - Eigenvector angular distances
     """
-    eigenvalues, eigenvectors = csigna.compute_ipca(df, num_pc=num_pc, tau=tau)
+    eigenvalues, eigenvectors = csipro.compute_ipca(df, num_pc=num_pc, tau=tau)
     eigenvalues.plot(title="Eigenvalues")
     if axes is None:
         _, axes = get_multiple_plots(
@@ -1411,7 +1411,7 @@ def plot_ipca(
         )
     for i in range(num_pc):
         eigenvectors[i].plot(ax=axes[i], title=f"Eigenvectors PC{i}")
-    eigenvector_diffs = csigna.compute_eigenvector_diffs(eigenvectors)
+    eigenvector_diffs = csipro.compute_eigenvector_diffs(eigenvectors)
     eigenvector_diffs.plot(title="Eigenvector angular distances")
 
 
@@ -1502,7 +1502,7 @@ def multipletests_plot(
     """
     if adj_pvals is None:
         pval_series = pvals.dropna().sort_values().reset_index(drop=True)
-        adj_pvals = cstati.multipletests(pval_series, method=method).to_frame()
+        adj_pvals = csta.multipletests(pval_series, method=method).to_frame()
     else:
         pval_series = pvals.dropna()
         if isinstance(adj_pvals, pd.Series):
@@ -1623,11 +1623,11 @@ def plot_rolling_annualized_volatility(
     Plot rolling annualized volatility.
 
     :param srs: input series
-    :param tau: argument as for csigna.compute_rolling_std
-    :param min_periods: argument as for csigna.compute_rolling_std
-    :param min_depth: argument as for csigna.compute_rolling_std
-    :param max_depth: argument as for csigna.compute_rolling_std
-    :param p_moment: argument as for csigna.compute_rolling_std
+    :param tau: argument as for csipro.compute_rolling_std
+    :param min_periods: argument as for csipro.compute_rolling_std
+    :param min_depth: argument as for csipro.compute_rolling_std
+    :param max_depth: argument as for csipro.compute_rolling_std
+    :param p_moment: argument as for csipro.compute_rolling_std
     :param unit: "ratio", "%" or "bps" scaling coefficient
         "Exchange:Kibot_symbol"
         "Exchange:Exchange_symbol"
@@ -1636,13 +1636,13 @@ def plot_rolling_annualized_volatility(
     :param events: list of tuples with dates and labels to point out on the plot
     """
     min_periods = min_periods or tau
-    srs = hdataf.apply_nan_mode(srs, mode="fill_with_zero")
+    srs = hdatafra.apply_nan_mode(srs, mode="fill_with_zero")
     # Calculate rolling volatility.
-    rolling_volatility = csigna.compute_rolling_std(
+    rolling_volatility = csipro.compute_rolling_std(
         srs, tau, min_periods, min_depth, max_depth, p_moment
     )
     # Annualize rolling volatility.
-    ppy = hdataf.infer_sampling_points_per_year(srs)
+    ppy = hdatafra.infer_sampling_points_per_year(srs)
     annualized_rolling_volatility = np.sqrt(ppy) * rolling_volatility
     # Remove leading `NaNs`.
     first_valid_index = annualized_rolling_volatility.first_valid_index()
@@ -1653,7 +1653,7 @@ def plot_rolling_annualized_volatility(
     scale_coeff = _choose_scaling_coefficient(unit)
     annualized_rolling_volatility *= scale_coeff
     # Calculate whole-period target volatility.
-    annualized_volatility = cfinan.compute_annualized_volatility(srs)
+    annualized_volatility = cfin.compute_annualized_volatility(srs)
     annualized_volatility *= scale_coeff
     # Plot.
     ax = ax or plt.gca()
@@ -1700,10 +1700,10 @@ def plot_rolling_annualized_sharpe_ratio(
     Plot rolling annualized Sharpe ratio.
 
     :param srs: input series
-    :param tau: argument as for csigna.compute_smooth_moving_average
-    :param min_depth: argument as for csigna.compute_smooth_moving_average
-    :param max_depth: argument as for csigna.compute_smooth_moving_average
-    :param p_moment: argument as for csigna.compute_smooth_moving_average
+    :param tau: argument as for csipro.compute_smooth_moving_average
+    :param min_depth: argument as for csipro.compute_smooth_moving_average
+    :param max_depth: argument as for csipro.compute_smooth_moving_average
+    :param p_moment: argument as for csipro.compute_smooth_moving_average
     :param ci: confidence interval
     :param title_suffix: suffix added to the title
     :param trim_index: start plot at original index if True
@@ -1711,12 +1711,12 @@ def plot_rolling_annualized_sharpe_ratio(
     :param events: list of tuples with dates and labels to point out on the plot
     """
     title_suffix = title_suffix or ""
-    srs = hdataf.apply_nan_mode(srs, mode="fill_with_zero")
+    srs = hdatafra.apply_nan_mode(srs, mode="fill_with_zero")
     # Resample to business daily time scale.
     srs = srs.resample("B").sum(min_count=1)
-    points_per_year = hdataf.infer_sampling_points_per_year(srs)
+    points_per_year = hdatafra.infer_sampling_points_per_year(srs)
     min_periods = tau * max_depth
-    rolling_sharpe = csigna.compute_rolling_annualized_sharpe_ratio(
+    rolling_sharpe = csipro.compute_rolling_annualized_sharpe_ratio(
         srs,
         tau,
         points_per_year=points_per_year,
@@ -1789,7 +1789,7 @@ def plot_yearly_barplot(
     """
     scale_coeff = _choose_scaling_coefficient(unit)
     yearly_log_returns = log_rets.resample("Y").sum()
-    yearly_pct_returns = cfinan.convert_log_rets_to_pct_rets(yearly_log_returns)
+    yearly_pct_returns = cfin.convert_log_rets_to_pct_rets(yearly_log_returns)
     yearly_returns = yearly_pct_returns * scale_coeff
     yearly_returns.index = yearly_returns.index.year
     ax = ax or plt.gca()
@@ -1855,7 +1855,7 @@ def plot_pnl(
     :param figsize: size of plot
     :param start_date: left limit value of the X axis
     :param end_date: right limit value of the X axis
-    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param nan_mode: argument for hdatafra.apply_nan_mode()
     :param xlabel: label of the X axis
     :param ylabel: label of the Y axis
     :param ax: axes
@@ -1871,7 +1871,7 @@ def plot_pnl(
     pnls_notna = {}
     empty_srs = []
     for key, srs in pnls.items():
-        srs = hdataf.apply_nan_mode(srs, mode=nan_mode)
+        srs = hdatafra.apply_nan_mode(srs, mode=nan_mode)
         if srs.dropna().empty:
             empty_srs.append(key)
         else:
@@ -1884,7 +1884,7 @@ def plot_pnl(
     df_plot = pd.concat(pnls_notna, axis=1)
     # Compute sharpe ratio for every time series.
     sharpe_ratio = {
-        key: cstati.compute_annualized_sharpe_ratio(srs)
+        key: csta.compute_annualized_sharpe_ratio(srs)
         for key, srs in pnls.items()
     }
     sharpe_ratio = pd.Series(sharpe_ratio)
@@ -1918,10 +1918,11 @@ def plot_pnl(
     ax.legend(prop=dict(size=13), loc="upper left")
 
 
+# TODO(*): Reinstate options to change scale based on type of input series.
 def plot_drawdown(
-    log_rets: pd.Series,
+    pnl: pd.Series,
     ylim: Optional[str] = None,
-    unit: str = "%",
+    # unit: str = "%",
     title_suffix: Optional[str] = None,
     ax: Optional[mpl.axes.Axes] = None,
     events: Optional[List[Tuple[str, Optional[str]]]] = None,
@@ -1929,7 +1930,7 @@ def plot_drawdown(
     """
     Plot drawdown.
 
-    :param log_rets: log returns
+    :param pnl: series of per-period PnL
     :param ylim: either "fixed", "scalable" or None. default is None corresponds
         to "scalable". If y_lim is set to "fixed", the axes limit relies on units
         with possible values of -1 for "ratio", -100 for "%" and -10000 for "bps"
@@ -1940,12 +1941,12 @@ def plot_drawdown(
     """
     ylim = ylim or "scalable"
     title_suffix = title_suffix or ""
-    scale_coeff = _choose_scaling_coefficient(unit)
-    drawdown = -scale_coeff * cfinan.compute_perc_loss_from_high_water_mark(
-        log_rets
-    )
+    # scale_coeff = _choose_scaling_coefficient(unit)
+    scale_coeff = 1
+    drawdown = -scale_coeff * cfin.compute_drawdown(pnl)
     label = drawdown.name or "drawdown"
-    title = f"Drawdown ({unit})"
+    # title = f"Drawdown ({unit})"
+    title = "Drawdown"
     ax = ax or plt.gca()
     drawdown.plot(ax=ax, label="_nolegend_", color="b", linewidth=3.5)
     drawdown.plot.area(
@@ -1959,7 +1960,8 @@ def plot_drawdown(
         ax.set_ylim(bottom=-scale_coeff, top=0)
     else:
         raise ValueError("Invalid bottom ylim='%s'" % ylim)
-    ax.set_ylabel(unit)
+    # ax.set_ylabel(unit)
+    ax.set_ylabel("drawdown")
     ax.legend()
 
 
@@ -2036,12 +2038,12 @@ def plot_qq(
     :param srs: data to plot
     :param ax: axes in which to draw the plot
     :param dist: distribution name
-    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param nan_mode: argument for hdatafra.apply_nan_mode()
     """
     dist = dist or "norm"
     ax = ax or plt.gca()
     nan_mode = nan_mode or "drop"
-    x_plot = hdataf.apply_nan_mode(srs, mode=nan_mode)
+    x_plot = hdatafra.apply_nan_mode(srs, mode=nan_mode)
     sp.stats.probplot(x_plot, dist=dist, plot=ax)
     ax.set_title(f"{dist} probability plot")
 
@@ -2062,7 +2064,7 @@ def plot_turnover(
     """
     ax = ax or plt.gca()
     scale_coeff = _choose_scaling_coefficient(unit)
-    turnover = cfinan.compute_turnover(positions)
+    turnover = cfin.compute_turnover(positions)
     turnover = scale_coeff * turnover
     turnover.plot(linewidth=1, ax=ax, label="turnover")
     turnover.resample("M").mean().plot(
@@ -2128,24 +2130,24 @@ def plot_rolling_beta(
     :param rets: returns
     :param benchmark_rets: benchmark returns
     :param window: length of the rolling window
-    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param nan_mode: argument for hdatafra.apply_nan_mode()
     :param ax: axis
     :param events: list of tuples with dates and labels to point out on the plot
     :param kwargs: kwargs for statsmodels.regression.rolling.RollingOLS
     """
-    hpandas.dassert_strictly_increasing_index(rets)
-    hpandas.dassert_strictly_increasing_index(benchmark_rets)
-    dbg.dassert_eq(rets.index.freq, benchmark_rets.index.freq)
+    hhpandas.dassert_strictly_increasing_index(rets)
+    hhpandas.dassert_strictly_increasing_index(benchmark_rets)
+    hdbg.dassert_eq(rets.index.freq, benchmark_rets.index.freq)
     # Assert that the 'rets' index is a subset of the 'benchmark_rets' index.
-    dbg.dassert(rets.index.isin(benchmark_rets.index).all())
-    dbg.dassert_lte(
+    hdbg.dassert(rets.index.isin(benchmark_rets.index).all())
+    hdbg.dassert_lte(
         window,
         min(len(rets), len(benchmark_rets)),
         "`window` should not be larger than inputs' lengths.",
     )
     rets_name = rets.name
     benchmark_name = benchmark_rets.name
-    dbg.dassert_ne(
+    hdbg.dassert_ne(
         rets_name, benchmark_name, "Inputs should have different names."
     )
     nan_mode = nan_mode or "drop"
@@ -2155,10 +2157,10 @@ def plot_rolling_beta(
     all_rets_df.columns = [rets_name, benchmark_name]
     # Extract common index in order to keep NaN periods on the X-axis.
     common_index = all_rets_df.index
-    # Apply `.dropna()` after `hdataf.apply_nan_mode` in oder to drop remaining
+    # Apply `.dropna()` after `hdatafra.apply_nan_mode` in oder to drop remaining
     #     rows with NaNs and calculate rolling beta without NaN gaps in input.
     clean_rets_df = all_rets_df.apply(
-        hdataf.apply_nan_mode, mode=nan_mode
+        hdatafra.apply_nan_mode, mode=nan_mode
     ).dropna()
     # Get copies of rets and benchmark_rets with unified indices and no NaNs.
     rets = clean_rets_df[rets_name]
@@ -2229,11 +2231,11 @@ def plot_rolling_correlation(
     ax = ax or plt.gca()
     # Calculate rolling correlation.
     if mode == "zcorr":
-        roll_correlation = csigna.compute_rolling_zcorr
+        roll_correlation = csipro.compute_rolling_zcorr
         title = "Z Correlation of 2 time series"
         label = "Rolling z correlation"
     elif mode == "corr":
-        roll_correlation = csigna.compute_rolling_corr
+        roll_correlation = csipro.compute_rolling_corr
         title = "Correlation of 2 time series"
         label = "Rolling correlation"
     else:
@@ -2288,14 +2290,14 @@ def plot_sharpe_ratio_panel(
     :param frequencies: frequencies to calculate SR for
     :param ax: axis
     """
-    dbg.dassert_isinstance(log_rets, pd.Series)
+    hdbg.dassert_isinstance(log_rets, pd.Series)
     frequencies = frequencies or ["B", "D", "W", "M", "Q"]
     srs_freq = pd.infer_freq(log_rets.index)
     if not srs_freq:
         _LOG.warning("Input has no frequency and it has been rescaled to 'D'")
         srs_freq = "D"
     # Resample input for assuring input frequency in calculations.
-    log_rets = csigna.resample(log_rets, rule=srs_freq).sum()
+    log_rets = csipro.resample(log_rets, rule=srs_freq).sum()
     # Initiate series for Sharpe ratios of selected frequencies.
     sr_series = pd.Series([], dtype="object")
     # Initiate list for Sharpe ratios' standard errors for error bars.
@@ -2303,9 +2305,11 @@ def plot_sharpe_ratio_panel(
     # Initiate list for frequencies that do not lead to upsampling.
     valid_frequencies = []
     # Compute input frequency points per year for identifying upsampling.
-    input_freq_points_per_year = hdataf.infer_sampling_points_per_year(log_rets)
+    input_freq_points_per_year = hdatafra.infer_sampling_points_per_year(log_rets)
     for freq in frequencies:
-        freq_points_per_year = hdataf.compute_points_per_year_for_given_freq(freq)
+        freq_points_per_year = hdatafra.compute_points_per_year_for_given_freq(
+            freq
+        )
         if freq_points_per_year > input_freq_points_per_year:
             _LOG.warning(
                 "Upsampling from input freq='%s' to freq='%s' is blocked",
@@ -2313,7 +2317,7 @@ def plot_sharpe_ratio_panel(
                 freq,
             )
             continue
-        resampled_log_rets = csigna.resample(log_rets, rule=freq).sum()
+        resampled_log_rets = csipro.resample(log_rets, rule=freq).sum()
         if len(resampled_log_rets) == 1:
             _LOG.warning(
                 "Resampling to freq='%s' is blocked because resampled series "
@@ -2321,8 +2325,8 @@ def plot_sharpe_ratio_panel(
                 freq,
             )
             continue
-        sr = cstati.compute_annualized_sharpe_ratio(resampled_log_rets)
-        se = cstati.compute_annualized_sharpe_ratio_standard_error(
+        sr = csta.compute_annualized_sharpe_ratio(resampled_log_rets)
+        se = csta.compute_annualized_sharpe_ratio_standard_error(
             resampled_log_rets
         )
         sr_series[freq] = sr
@@ -2364,7 +2368,7 @@ def _calculate_year_to_month_spread(log_rets: pd.Series) -> pd.DataFrame:
     log_rets_df["month"] = log_rets_df.index.month
     log_rets_df.reset_index(inplace=True)
     monthly_log_returns = log_rets_df.groupby(["year", "month"])[srs_name].sum()
-    monthly_pct_returns = cfinan.convert_log_rets_to_pct_rets(monthly_log_returns)
+    monthly_pct_returns = cfin.convert_log_rets_to_pct_rets(monthly_log_returns)
     monthly_pct_spread = monthly_pct_returns.unstack()
     monthly_pct_spread.columns = monthly_pct_spread.columns.map(
         lambda x: calendar.month_abbr[x]

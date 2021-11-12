@@ -1,8 +1,9 @@
 """
 Import as:
 
-import core.dataflow.db_interface as cdtfdbint
+import core.dataflow.price_interface as cdtfprint
 """
+
 
 import abc
 import asyncio
@@ -16,6 +17,7 @@ import core.dataflow.real_time as cdtfretim
 import core.pandas_helpers as cpah
 import helpers.datetime_ as hdatetim
 import helpers.dbg as hdbg
+import helpers.hpandas as hhpandas
 import helpers.printing as hprintin
 import helpers.s3 as hs3
 import helpers.sql as hsql
@@ -24,12 +26,12 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
-# RealTimeDbInterface
+# AbstractPriceInterface
 # #############################################################################
 
 
-# TODO(gp): -> Abstract...?
-class RealTimeDbInterface(abc.ABC):
+# TODO(gp): -> AbstractPriceInterface
+class AbstractPriceInterface(abc.ABC):
     """
     Implement an interface to a real-time database with 1-minute bar data.
 
@@ -47,6 +49,7 @@ class RealTimeDbInterface(abc.ABC):
         *,
         sleep_in_secs: float = 1.0,
         time_out_in_secs: int = 60 * 2,
+        column_remap: Optional[Dict[str, str]] = None,
     ):
         """
         Constructor.
@@ -59,6 +62,7 @@ class RealTimeDbInterface(abc.ABC):
         :param get_wall_clock_time, speed_up_factor: like in `ReplayedTime`
         :param sleep_in_secs, time_out_in_secs: sample every `sleep_in_secs`
             seconds waiting up to `time_out_in_secs` seconds
+        :param column_remap: dict of columns to remap or `None`
         """
         _LOG.debug("")
         self._id_col_name = id_col_name
@@ -71,13 +75,18 @@ class RealTimeDbInterface(abc.ABC):
         #
         hdbg.dassert_lt(0, sleep_in_secs)
         self._sleep_in_secs = sleep_in_secs
+        #
+        self._column_remap = column_remap
         # Compute the max number of iterations.
         max_iters = int(time_out_in_secs / sleep_in_secs)
         hdbg.dassert_lte(1, max_iters)
         self._max_iters = max_iters
 
+    @property
+    def get_wall_clock_time(self) -> hdatetim.GetWallClockTime:
+        return self._get_wall_clock_time
+
     # TODO(gp): If the DB supports asyncio this should become async.
-    @abc.abstractmethod
     def get_data(
         self,
         period: str,
@@ -88,11 +97,10 @@ class RealTimeDbInterface(abc.ABC):
         """
         Get data from the real-time DB.
 
-        Without normalization, the returned df is the raw data from the DB and could
-        look like:
+        Without normalization, the returned df is the raw data from the DB and
+        could look like:
         ```
-                id           start_time             end_time     close   volume
-
+               id           start_time             end_time     close   volume
         idx  7085  2021-07-26 13:40:00  2021-07-26 13:41:00  149.0250   575024
           0  7085  2021-07-26 13:41:00  2021-07-26 13:42:00  148.8600   400176
           1  7085  2021-07-26 13:30:00  2021-07-26 13:31:00  148.5300  1407725
@@ -101,14 +109,18 @@ class RealTimeDbInterface(abc.ABC):
 
         After normalization, the returned df looks like:
         ```
-                                     id                start_time    close   volume
+                                     id          start_time    close   volume
         end_time
-        2021-07-20 09:31:00-04:00  7085 2021-07-20 09:30:00-04:00  143.990  1524506
-        2021-07-20 09:32:00-04:00  7085 2021-07-20 09:31:00-04:00  143.310   586654
-        2021-07-20 09:33:00-04:00  7085 2021-07-20 09:32:00-04:00  143.535   667639
+        2021-07-20 09:31:00-04:00  7085 2021-07-20 09:30:00  143.990  1524506
+        2021-07-20 09:32:00-04:00  7085 2021-07-20 09:31:00  143.310   586654
+        2021-07-20 09:33:00-04:00  7085 2021-07-20 09:32:00  143.535   667639
         ```
         """
-        ...
+        df = self._get_data(period, normalize_data=normalize_data, limit=limit)
+        if self._column_remap:
+            hhpandas.dassert_valid_remap(df.columns.tolist(), self._column_remap)
+            df.rename(columns=self._column_remap, inplace=True)
+        return df
 
     # TODO(gp): -> _normalize_bar_data?
     def process_data(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -146,18 +158,49 @@ class RealTimeDbInterface(abc.ABC):
         #     current_time = self._get_current_time()
         #     _LOG.debug(hprintin.to_str("current_time df.index.max()"))
         #     hdbg.dassert_lte(df.index.max(), current_time)
-        _LOG.debug(hprintin.df_to_short_str("after process_data", df))
+        # _LOG.debug(hprintin.df_to_short_str("after process_data", df))
+        return df
+
+    def get_last_end_time(self) -> Optional[pd.Timestamp]:
+        """
+        Return the last `end_time` present in the RT DB.
+
+        In the actual RT DB there is always some data, so we return a
+        timestamp. We return `None` only for replayed time when there is
+        no time (e.g., before the market opens).
+        """
+        ret = self._get_last_end_time()
+        if ret is not None:
+            # Convert to ET.
+            ret = ret.tz_convert("America/New_York")
+        _LOG.debug("-> ret=%s", ret)
+        return ret
+
+    def get_data_at_timestamp(
+        self,
+        ts: pd.Timestamp,
+        asset_ids: Optional[List[int]],
+        *,
+        normalize_data: bool = True,
+    ) -> pd.DataFrame:
+        """
+        Return price data at a specific timestamp.
+
+        :param ids: list of ids to filter on. `None` for all ids.
+        """
+        df = self._get_data_at_timestamp(
+            ts, asset_ids=asset_ids, normalize_data=normalize_data
+        )
+        # TODO(gp): Factor this out.
+        if self._column_remap:
+            hhpandas.dassert_valid_remap(df.columns.tolist(), self._column_remap)
+            df.rename(columns=self._column_remap, inplace=True)
         return df
 
     @abc.abstractmethod
-    def get_last_end_time(self) -> pd.Timestamp:
+    def should_be_online(self, current_time: pd.Timestamp) -> bool:
         """
-        Return the last `end_time` in the RT DB.
-
-        We assume that all the bars are inserted together in a single transaction,
-        so we can check for a single id, e.g., AAPL.
-
-        :return: the timestamp is in ET like everything in the RT DB
+        Return whether the interface should be available at the given time.
         """
         ...
 
@@ -165,10 +208,30 @@ class RealTimeDbInterface(abc.ABC):
         """
         Return whether the DB is on-line at the current time.
 
-        This is useful to avoid to wait on a DB that is off-line.
+        This is useful to avoid to wait on a DB that is off-line. We
+        check this by checking if there was data in the last minute.
         """
         # Check if the data in the last minute is empty.
-        return self.get_last_end_time() is not None
+        _LOG.debug("")
+        # The DB is online if there was data within the last minute.
+        last_db_end_time = self.get_last_end_time()
+        if last_db_end_time is None:
+            ret = False
+        else:
+            _LOG.debug(
+                "last_db_end_time=%s -> %s",
+                last_db_end_time,
+                last_db_end_time.floor("Min"),
+            )
+            current_time = self._get_wall_clock_time()
+            _LOG.debug(
+                "current_time=%s -> %s", current_time, current_time.floor("Min")
+            )
+            ret = last_db_end_time.floor("Min") >= (
+                current_time.floor("Min") - pd.Timedelta(minutes=1)
+            )
+        _LOG.debug("-> ret=%s", ret)
+        return ret
 
     # TODO(gp): -> wait_for_latest_data
     async def is_last_bar_available(
@@ -179,44 +242,77 @@ class RealTimeDbInterface(abc.ABC):
         RT DB.
 
         :return:
-            - start_time: timestamp when the sampling started
-            - current_time: timestamp when the bar ended
+            - start_sampling_time: timestamp when the sampling started
+            - end_sampling_time: timestamp when the sampling ended, since the bar
+              was ready
             - num_iters: number of iterations
         """
-        _LOG.debug("")
-        start_time = self._get_wall_clock_time()
+        start_sampling_time = self._get_wall_clock_time()
         _LOG.debug("DB on-line: %s", self.is_online())
         #
+        _LOG.debug("Waiting on last bar ...")
         num_iter = 0
         while True:
             current_time = self._get_wall_clock_time()
-            last_end_time = self.get_last_end_time()
+            last_db_end_time = self.get_last_end_time()
             _LOG.debug(
                 "\n%s",
                 hprintin.frame(
-                    "current_time=%s: num_iter=%s/%s: last_end_time=%s"
-                    % (current_time, num_iter, self._max_iters, last_end_time)
+                    "Waiting on last bar: "
+                    "num_iter=%s/%s: current_time=%s last_db_end_time=%s"
+                    % (num_iter, self._max_iters, current_time, last_db_end_time),
+                    char1="-",
                 ),
             )
-            if last_end_time and (
-                last_end_time.floor("Min") >= current_time.floor("Min")
+            if last_db_end_time and (
+                last_db_end_time.floor("Min") >= current_time.floor("Min")
             ):
                 # Get the current timestamp when the call was finally executed.
-                _LOG.debug("Done")
+                _LOG.debug("Waiting on last bar: done")
+                end_sampling_time = current_time
                 break
             if num_iter >= self._max_iters:
                 raise TimeoutError
             num_iter += 1
+            _LOG.debug("Sleep for %s secs", self._sleep_in_secs)
             await asyncio.sleep(self._sleep_in_secs)
-        return start_time, current_time, num_iter
+        _LOG.debug(
+            "-> %s",
+            hprintin.to_str("start_sampling_time end_sampling_time num_iter"),
+        )
+        return start_sampling_time, end_sampling_time, num_iter
+
+    @abc.abstractmethod
+    def _get_last_end_time(self) -> Optional[pd.Timestamp]:
+        ...
+
+    # TODO(gp): We could make all params mandatory.
+    @abc.abstractmethod
+    def _get_data(
+        self,
+        period: str,
+        normalize_data: bool = True,
+        limit: Optional[int] = None,
+    ) -> pd.DataFrame:
+        ...
+
+    @abc.abstractmethod
+    def _get_data_at_timestamp(
+        self,
+        ts: pd.Timestamp,
+        asset_ids: Optional[List[int]],
+        *,
+        normalize_data: bool = True,
+    ) -> pd.DataFrame:
+        ...
 
 
 # #############################################################################
-# RealTimeSqlDbInterface
+# SqlPriceInterface
 # #############################################################################
 
 
-class RealTimeSqlDbInterface(RealTimeDbInterface):
+class SqlPriceInterface(AbstractPriceInterface):
     """
     Implement an interface to a real-time SQL database with 1-minute bar data.
     """
@@ -231,7 +327,7 @@ class RealTimeSqlDbInterface(RealTimeDbInterface):
         table_name: str,
         where_clause: Optional[str],
         valid_id: Any,
-        #
+        # Params from `AbstractPriceInterface`.
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
@@ -254,7 +350,25 @@ class RealTimeSqlDbInterface(RealTimeDbInterface):
         self._where_clause = where_clause
         self._valid_id = valid_id
 
-    def get_data(
+    def process_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        # Add new TZ-localized datetime columns for research and readability.
+        for col_name in [self._start_time_col_name, self._end_time_col_name]:
+            if col_name in df.columns:
+                srs = df[col_name]
+                # _LOG.debug("srs=\n%s", str(srs.head(3)))
+                if not srs.empty:
+                    srs = srs.apply(pd.to_datetime)
+                    srs = srs.dt.tz_localize("UTC")
+                    srs = srs.dt.tz_convert("America/New_York")
+                    df[col_name] = srs
+        # Sort in increasing time order and reindex.
+        df = super().process_data(df)
+        return df
+
+    def should_be_online(self, current_time: pd.Timestamp) -> bool:
+        return True
+
+    def _get_data(
         self,
         period: str,
         *,
@@ -271,23 +385,18 @@ class RealTimeSqlDbInterface(RealTimeDbInterface):
             df = self.process_data(df)
         return df
 
-    def process_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        # Add new TZ-localized datetime columns for research and readability.
-        for col_name in [self._start_time_col_name, self._end_time_col_name]:
-            if col_name in df.columns:
-                srs = df[col_name]
-                # _LOG.debug("srs=\n%s", str(srs.head(3)))
-                if not srs.empty:
-                    srs = srs.apply(pd.to_datetime)
-                    srs = srs.dt.tz_localize("UTC")
-                    srs = srs.dt.tz_convert("America/New_York")
-                    df[col_name] = srs
-        # Sort in increasing time order and reindex.
-        df = super().process_data(df)
-        return df
-
-    def get_last_end_time(self) -> pd.Timestamp:
-        # Get the latest `start_time`.
+    def _get_last_end_time(self) -> Optional[pd.Timestamp]:
+        """
+        Return the last `end_time` available in the DB.
+        """
+        # We assume that all the bars are inserted together in a single
+        # transaction, so we can check for the max timestamp.
+        # Get the latest `start_time` (which is an index) with a query like:
+        #   ```
+        #   SELECT MAX(start_time)
+        #     FROM bars_qa
+        #     WHERE interval=60 AND region='AM' AND egid = '17085'
+        #   ```
         query = []
         query.append(f"SELECT MAX({self._start_time_col_name})")
         query.append(f"FROM {self._table_name}")
@@ -296,12 +405,22 @@ class RealTimeSqlDbInterface(RealTimeDbInterface):
             query.append(f"{self._where_clause} AND")
         query.append(f"{self._id_col_name} = '{self._valid_id}'")
         query = " ".join(query)
+        # _LOG.debug("query=%s", query)
         df = hsql.execute_query(self.connection, query)
         # Check that the `start_time` is a single value.
         hdbg.dassert_eq(df.shape, (1, 1))
         start_time = df.iloc[0, 0]
-        _LOG.debug("start_time=%s", start_time)
-        # Get the `end_time` that corresponds to the last `start_time`.
+        # _LOG.debug("start_time from DB=%s", start_time)
+        # Get the `end_time` that corresponds to the last `start_time` with a
+        # query like:
+        #   ```
+        #   SELECT end_time
+        #     FROM bars_qa
+        #     WHERE interval=60 AND
+        #         region='AM' AND
+        #         start_time = '2021-10-07 15:50:00' AND
+        #         egid = '17085'
+        #   ```
         query = []
         query.append(f"SELECT {self._end_time_col_name}")
         query.append(f"FROM {self._table_name}")
@@ -310,21 +429,19 @@ class RealTimeSqlDbInterface(RealTimeDbInterface):
             query.append(f"{self._where_clause} AND")
         query.append(
             f"{self._start_time_col_name} = '{start_time}' AND "
-            + f"{self._where_clause} AND "
             + f"{self._id_col_name} = '{self._valid_id}'"
         )
         query = " ".join(query)
+        # _LOG.debug("query=%s", query)
         df = hsql.execute_query(self.connection, query)
         # Check that the `end_time` is a single value.
         hdbg.dassert_eq(df.shape, (1, 1))
         end_time = df.iloc[0, 0]
-        _LOG.debug("end_time=%s", end_time)
+        # _LOG.debug("end_time from DB=%s", end_time)
         # We know that it should be `end_time = start_time + 1 minute`.
         start_time = pd.Timestamp(start_time, tz="UTC")
         end_time = pd.Timestamp(end_time, tz="UTC")
         hdbg.dassert_eq(end_time, start_time + pd.Timedelta(minutes=1))
-        # Convert to ET.
-        end_time = end_time.tz_convert("America/New_York")
         return end_time
 
     def _get_sql_query(
@@ -390,12 +507,12 @@ class RealTimeSqlDbInterface(RealTimeDbInterface):
 
 
 # #############################################################################
-# ReplayedTimeDbInterface
+# ReplayedTimePriceInterface
 # #############################################################################
 
 
 # TODO(gp): This should have a delay and / or we should use timestamp_db.
-class ReplayedTimeDbInterface(RealTimeDbInterface):
+class ReplayedTimePriceInterface(AbstractPriceInterface):
     """
     Implement an interface to a replayed time database with 1-minute bar data.
     """
@@ -405,7 +522,7 @@ class ReplayedTimeDbInterface(RealTimeDbInterface):
         df: pd.DataFrame,
         knowledge_datetime_col_name: str,
         delay_in_secs: int,
-        #
+        # Params from `AbstractPriceInterface`.
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
@@ -438,7 +555,16 @@ class ReplayedTimeDbInterface(RealTimeDbInterface):
             [self._end_time_col_name, self._id_col_name], inplace=True
         )
 
-    def get_data(
+    def should_be_online(self, current_time: pd.Timestamp) -> bool:
+        return True
+
+    def process_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        _LOG.debug("")
+        # Sort in increasing time order and reindex.
+        df = super().process_data(df)
+        return df
+
+    def _get_data(
         self,
         period: str,
         *,
@@ -477,16 +603,11 @@ class ReplayedTimeDbInterface(RealTimeDbInterface):
             df_tmp = self.process_data(df_tmp)
         return df_tmp
 
-    def process_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        _LOG.debug("")
-        # Sort in increasing time order and reindex.
-        df = super().process_data(df)
-        return df
-
-    def get_last_end_time(self) -> Optional[pd.Timestamp]:
-        _LOG.debug("")
-        # We need to find the last timestamp before the current time.
-        period = "last_1min"
+    def _get_last_end_time(self) -> Optional[pd.Timestamp]:
+        # We need to find the last timestamp before the current time. We use
+        # `last_week` but could also use all the data since we don't call the
+        # DB.
+        period = "last_week"
         df = self.get_data(period)
         _LOG.debug(hprintin.df_to_short_str("after get_data", df))
         if df.empty:
@@ -494,6 +615,16 @@ class ReplayedTimeDbInterface(RealTimeDbInterface):
         else:
             ret = df.index.max()
         return ret
+
+    def _get_data_at_timestamp(
+        self,
+        ts: pd.Timestamp,
+        asset_ids: Optional[List[int]],
+        *,
+        normalize_data: bool = True,
+    ) -> pd.DataFrame:
+        # TODO(gp): Implement
+        raise NotImplementedError
 
 
 # #############################################################################
@@ -543,15 +674,15 @@ def _process_period(
     _LOG.debug(hprintin.to_str("period current_time"))
     # Period of time.
     if period == "last_day":
-        # TODO(gp): Deprecate this.
-        assert 0
         # Get the data for the last day.
-        # current_time = hdatetim.get_current_time(tz="UTC")
-        current_time.date()
-        # _LOG.debug("today_date=%s", today_date)
+        last_start_time = current_time.replace(hour=0, minute=0, second=0)
+    elif period == "last_week":
+        # Get the data for the last day.
+        last_start_time = current_time.replace(
+            hour=0, minute=0, second=0
+        ) - pd.Timedelta(days=16)
     elif period in ("last_10mins", "last_5mins", "last_1min"):
         # Get the data for the last N minutes.
-        # current_time = hdatetim.get_current_time(tz="UTC")
         if period == "last_10mins":
             mins = 10
         elif period == "last_5mins":
@@ -562,11 +693,11 @@ def _process_period(
             raise ValueError("Invalid period='%s'" % period)
         # We condition on `start_time` since it's an index.
         last_start_time = current_time - pd.Timedelta(minutes=mins)
-        _LOG.debug("last_start_time=%s", last_start_time)
     elif period == "all":
         last_start_time = None
     else:
         raise ValueError("Invalid period='%s'" % period)
+    _LOG.debug("last_start_time=%s", last_start_time)
     return last_start_time
 
 
@@ -576,7 +707,7 @@ def _process_period(
 
 
 def save_raw_data(
-    rtdbi: RealTimeDbInterface,
+    rtdbi: AbstractPriceInterface,
     file_name: str,
     period: str,
     limit: int,
@@ -589,33 +720,48 @@ def save_raw_data(
     _LOG.info("Querying DB ...")
     rt_df = rtdbi.get_data(period, normalize_data=normalize_data, limit=limit)
     _LOG.info("Querying DB done")
+    print("rt_df.shape=%s" % str(rt_df.shape))
     print("# head")
     display(rt_df.head(2))
     print("# tail")
     display(rt_df.tail(2))
     #
     _LOG.info("Saving ...")
-    rt_df.to_csv(file_name, compression="gzip", index=False)
+    compression = None
+    if file_name.endswith(".gz"):
+        compression = "gzip"
+    rt_df.to_csv(file_name, compression=compression, index=True)
     _LOG.info("Saving done")
 
 
 def read_data_from_file(
     file_name: str,
     aws_profile: Optional[str] = None,
+    **kwargs: Dict[str, Any],
 ) -> pd.DataFrame:
     """
     Load some example data from the RT DB.
 
     Same interface as `get_real_time_bar_data()`.
+
+    ```
+          start_time          end_time   egid   close    volume         timestamp_db
+    2021-10-05 20:00  2021-10-05 20:01  17085  141.11   5792204  2021-10-05 20:01:03
+    2021-10-05 19:59  2021-10-05 20:00  17085  141.09   1354151  2021-10-05 20:00:05
+    2021-10-05 19:58  2021-10-05 19:59  17085  141.12    620395  2021-10-05 19:59:04
+    2021-10-05 19:57  2021-10-05 19:58  17085  141.2644  341584  2021-10-05 19:58:03
+    2021-10-05 19:56  2021-10-05 19:57  17085  141.185   300822  2021-10-05 19:57:04
+    2021-10-05 19:55  2021-10-05 19:56  17085  141.1551  351527  2021-10-05 19:56:04
+    ```
     """
+    kwargs_tmp = {
+        "index_col": 0,
+        "parse_dates": ["start_time", "end_time", "timestamp_db"],
+    }
     if aws_profile:
         s3fs_ = hs3.get_s3fs(aws_profile)
-    else:
-        s3fs_ = None
-    kwargs = {  # "index_col": 0,
-        "parse_dates": ["start_time", "end_time", "timestamp_db"],
-        "s3fs": s3fs_,
-    }
+        kwargs_tmp["s3fs"] = s3fs_
+    kwargs.update(kwargs_tmp)  # type: ignore[arg-type]
     df = cpah.read_csv(file_name, **kwargs)
     return df
 

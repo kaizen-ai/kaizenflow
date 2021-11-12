@@ -13,42 +13,42 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import core.artificial_signal_generators as casgen
-import core.finance as cfinan
-import core.signal_processing as csproc
-import core.statistics as cstati
+import core.artificial_signal_generators as carsigen
+import core.finance as cfin
+import core.signal_processing as csipro
+import core.statistics as csta
 import helpers.io_ as hio
-import helpers.printing as hprint
-import helpers.unit_test as hut
+import helpers.printing as hprintin
+import helpers.unit_test as huntes
 
 _LOG = logging.getLogger(__name__)
 
 
-class TestComputeMoments(hut.TestCase):
+class TestComputeMoments(huntes.TestCase):
     def test1(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.compute_moments(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.compute_moments(series)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.compute_moments(series, prefix="moments_")
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.compute_moments(series, prefix="moments_")
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     # Smoke test for empty input.
     def test3(self) -> None:
         series = pd.Series([])
-        cstati.compute_moments(series)
+        csta.compute_moments(series)
 
     def test4(self) -> None:
         series = self._get_series(seed=1)
         # Place some `NaN` values in the series.
         series[:5] = np.nan
         series[8:10] = np.nan
-        actual = cstati.compute_moments(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.compute_moments(series)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test5(self) -> None:
@@ -56,14 +56,14 @@ class TestComputeMoments(hut.TestCase):
         # Place some `NaN` values in the series.
         series[:5] = np.nan
         series[8:10] = np.nan
-        actual = cstati.compute_moments(series, nan_mode="ffill_and_drop_leading")
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.compute_moments(series, nan_mode="ffill_and_drop_leading")
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     # Smoke test for input of `np.nan`s.
     def test6(self) -> None:
         series = pd.Series([np.nan for i in range(10)])
-        cstati.compute_moments(series)
+        csta.compute_moments(series)
 
     def test7(self) -> None:
         """
@@ -72,15 +72,15 @@ class TestComputeMoments(hut.TestCase):
         series = self._get_series(seed=1)
         # Place some `NaN` values in the series.
         series[4] = np.inf
-        actual = cstati.compute_moments(series, nan_mode="ffill_and_drop_leading")
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.compute_moments(series, nan_mode="ffill_and_drop_leading")
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = casgen.ArmaProcess(arparams, maparams)
+        arma_process = carsigen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -88,12 +88,12 @@ class TestComputeMoments(hut.TestCase):
         return series
 
 
-class TestComputeFracZero(hut.TestCase):
+class TestComputeFracZero(huntes.TestCase):
     def test1(self) -> None:
         data = [0.466667, 0.2, 0.13333, 0.2, 0.33333]
         index = [0, 1, 2, 3, 4]
         expected = pd.Series(data=data, index=index)
-        actual = cstati.compute_frac_zero(self._get_df(seed=1))
+        actual = csta.compute_frac_zero(self._get_df(seed=1))
         pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
 
     def test2(self) -> None:
@@ -116,31 +116,31 @@ class TestComputeFracZero(hut.TestCase):
         ]
         index = pd.date_range(start="1-04-2018", periods=15, freq="30T")
         expected = pd.Series(data=data, index=index)
-        actual = cstati.compute_frac_zero(self._get_df(seed=1), axis=1)
+        actual = csta.compute_frac_zero(self._get_df(seed=1), axis=1)
         pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
 
     def test3(self) -> None:
         # Equals 20 / 75 = num_zeros / num_points.
         expected = 0.266666
-        actual = cstati.compute_frac_zero(self._get_df(seed=1), axis=None)
+        actual = csta.compute_frac_zero(self._get_df(seed=1), axis=None)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
     def test4(self) -> None:
         series = self._get_df(seed=1)[0]
         expected = 0.466667
-        actual = cstati.compute_frac_zero(series)
+        actual = csta.compute_frac_zero(series)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
     def test5(self) -> None:
         series = self._get_df(seed=1)[0]
         expected = 0.466667
-        actual = cstati.compute_frac_zero(series, axis=0)
+        actual = csta.compute_frac_zero(series, axis=0)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
     # Smoke test for empty input.
     def test6(self) -> None:
         series = pd.Series([])
-        cstati.compute_frac_zero(series)
+        csta.compute_frac_zero(series)
 
     @staticmethod
     def _get_df(seed: int) -> pd.DataFrame:
@@ -162,12 +162,12 @@ class TestComputeFracZero(hut.TestCase):
         return df
 
 
-class TestComputeFracNan(hut.TestCase):
+class TestComputeFracNan(huntes.TestCase):
     def test1(self) -> None:
         data = [0.4, 0.133333, 0.133333, 0.133333, 0.2]
         index = [0, 1, 2, 3, 4]
         expected = pd.Series(data=data, index=index)
-        actual = cstati.compute_frac_nan(self._get_df(seed=1))
+        actual = csta.compute_frac_nan(self._get_df(seed=1))
         pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
 
     def test2(self) -> None:
@@ -190,31 +190,31 @@ class TestComputeFracNan(hut.TestCase):
         ]
         index = pd.date_range(start="1-04-2018", periods=15, freq="30T")
         expected = pd.Series(data=data, index=index)
-        actual = cstati.compute_frac_nan(self._get_df(seed=1), axis=1)
+        actual = csta.compute_frac_nan(self._get_df(seed=1), axis=1)
         pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
 
     def test3(self) -> None:
         # Equals 15 / 75 = num_nans / num_points.
         expected = 0.2
-        actual = cstati.compute_frac_nan(self._get_df(seed=1), axis=None)
+        actual = csta.compute_frac_nan(self._get_df(seed=1), axis=None)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
     def test4(self) -> None:
         series = self._get_df(seed=1)[0]
         expected = 0.4
-        actual = cstati.compute_frac_nan(series)
+        actual = csta.compute_frac_nan(series)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
     def test5(self) -> None:
         series = self._get_df(seed=1)[0]
         expected = 0.4
-        actual = cstati.compute_frac_nan(series, axis=0)
+        actual = csta.compute_frac_nan(series, axis=0)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
     # Smoke test for empty input.
     def test6(self) -> None:
         series = pd.Series([])
-        cstati.compute_frac_nan(series)
+        csta.compute_frac_nan(series)
 
     @staticmethod
     def _get_df(seed: int) -> pd.DataFrame:
@@ -236,44 +236,44 @@ class TestComputeFracNan(hut.TestCase):
         return df
 
 
-class TestComputeNumFiniteSamples(hut.TestCase):
+class TestComputeNumFiniteSamples(huntes.TestCase):
     @staticmethod
     # Smoke test for empty input.
     def test1() -> None:
         series = pd.Series([])
-        cstati.count_num_finite_samples(series)
+        csta.count_num_finite_samples(series)
 
 
-class TestComputeNumUniqueValues(hut.TestCase):
+class TestComputeNumUniqueValues(huntes.TestCase):
     @staticmethod
     # Smoke test for empty input.
     def test1() -> None:
         series = pd.Series([])
-        cstati.count_num_unique_values(series)
+        csta.count_num_unique_values(series)
 
 
-class TestComputeDenominatorAndPackage(hut.TestCase):
+class TestComputeDenominatorAndPackage(huntes.TestCase):
     @staticmethod
     # Smoke test for empty input.
     def test1() -> None:
         series = pd.Series([])
-        cstati._compute_denominator_and_package(reduction=1, data=series)
+        csta._compute_denominator_and_package(reduction=1, data=series)
 
 
-class TestTTest1samp(hut.TestCase):
+class TestTTest1samp(huntes.TestCase):
 
     # Smoke test for empty input.
     def test1(self) -> None:
         series = pd.Series([])
-        cstati.ttest_1samp(series)
+        csta.ttest_1samp(series)
 
     def test2(self) -> None:
         series = self._get_series(seed=1)
         # Place some `NaN` values in the series.
         series[:5] = np.nan
         series[8:10] = np.nan
-        actual = cstati.ttest_1samp(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.ttest_1samp(series)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
@@ -281,20 +281,20 @@ class TestTTest1samp(hut.TestCase):
         # Place some `NaN` values in the series.
         series[:5] = np.nan
         series[8:10] = np.nan
-        actual = cstati.ttest_1samp(series, nan_mode="ffill_and_drop_leading")
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.ttest_1samp(series, nan_mode="ffill_and_drop_leading")
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     # Smoke test for input of `np.nan`s.
     def test4(self) -> None:
         series = pd.Series([np.nan for i in range(10)])
-        cstati.ttest_1samp(series)
+        csta.ttest_1samp(series)
 
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = casgen.ArmaProcess(arparams, maparams)
+        arma_process = carsigen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -302,33 +302,33 @@ class TestTTest1samp(hut.TestCase):
         return series
 
 
-class TestMultipleTests(hut.TestCase):
+class TestMultipleTests(huntes.TestCase):
 
     # Smoke test for empty input.
     def test1(self) -> None:
         series = pd.Series([])
-        cstati.multipletests(series)
+        csta.multipletests(series)
 
     # Test if error is raised with default arguments when input contains NaNs.
     @pytest.mark.xfail()
     def test2(self) -> None:
         series_with_nans = self._get_series(seed=1)
         series_with_nans[0:5] = np.nan
-        actual = cstati.multipletests(series_with_nans)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.multipletests(series_with_nans)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
         series_with_nans = self._get_series(seed=1)
         series_with_nans[0:5] = np.nan
-        actual = cstati.multipletests(series_with_nans, nan_mode="drop")
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.multipletests(series_with_nans, nan_mode="drop")
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
-        series = hut.get_random_df(
+        series = huntes.get_random_df(
             num_cols=1,
             seed=seed,
             date_range_kwargs=date_range,
@@ -336,49 +336,49 @@ class TestMultipleTests(hut.TestCase):
         return series
 
 
-class TestMultiTTest(hut.TestCase):
+class TestMultiTTest(huntes.TestCase):
 
     # Smoke test for empty input.
     def test1(self) -> None:
         df = pd.DataFrame(columns=["series_name"])
-        cstati.multi_ttest(df)
+        csta.multi_ttest(df)
 
     def test2(self) -> None:
         df = self._get_df_of_series(seed=1)
-        actual = cstati.multi_ttest(df)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.multi_ttest(df)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
         df = self._get_df_of_series(seed=1)
-        actual = cstati.multi_ttest(df, prefix="multi_ttest_")
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.multi_ttest(df, prefix="multi_ttest_")
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test4(self) -> None:
         df = self._get_df_of_series(seed=1)
-        actual = cstati.multi_ttest(df, popmean=1)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.multi_ttest(df, popmean=1)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test5(self) -> None:
         df = self._get_df_of_series(seed=1)
-        actual = cstati.multi_ttest(df, nan_mode="fill_with_zero")
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.multi_ttest(df, nan_mode="fill_with_zero")
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test6(self) -> None:
         df = self._get_df_of_series(seed=1)
-        actual = cstati.multi_ttest(df, method="sidak")
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.multi_ttest(df, method="sidak")
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     @pytest.mark.xfail()
     def test7(self) -> None:
         df = self._get_df_of_series(seed=1)
         df.iloc[:, 0] = np.nan
-        actual = cstati.multi_ttest(df)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.multi_ttest(df)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     @staticmethod
@@ -386,7 +386,7 @@ class TestMultiTTest(hut.TestCase):
         n_series = 7
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = casgen.ArmaProcess(arparams, maparams)
+        arma_process = carsigen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         # Generating a dataframe from different series.
         df = pd.DataFrame(
@@ -401,31 +401,31 @@ class TestMultiTTest(hut.TestCase):
         return df
 
 
-class TestApplyNormalityTest(hut.TestCase):
+class TestApplyNormalityTest(huntes.TestCase):
     def test1(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.apply_normality_test(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.apply_normality_test(series)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.apply_normality_test(series, prefix="norm_test_")
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.apply_normality_test(series, prefix="norm_test_")
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     # Smoke test for empty input.
     def test3(self) -> None:
         series = pd.Series([])
-        cstati.apply_normality_test(series)
+        csta.apply_normality_test(series)
 
     def test4(self) -> None:
         series = self._get_series(seed=1)
         # Place some `NaN` values in the series.
         series[:5] = np.nan
         series[8:10] = np.nan
-        actual = cstati.apply_normality_test(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.apply_normality_test(series)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test5(self) -> None:
@@ -433,22 +433,22 @@ class TestApplyNormalityTest(hut.TestCase):
         # Place some `NaN` values in the series.
         series[:5] = np.nan
         series[8:10] = np.nan
-        actual = cstati.apply_normality_test(
+        actual = csta.apply_normality_test(
             series, nan_mode="ffill_and_drop_leading"
         )
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     # Smoke test for input of `np.nan`s.
     def test6(self) -> None:
         series = pd.Series([np.nan for i in range(10)])
-        cstati.apply_normality_test(series)
+        csta.apply_normality_test(series)
 
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = casgen.ArmaProcess(arparams, maparams)
+        arma_process = carsigen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -456,59 +456,59 @@ class TestApplyNormalityTest(hut.TestCase):
         return series
 
 
-class TestApplyAdfTest(hut.TestCase):
+class TestApplyAdfTest(huntes.TestCase):
     def test1(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.apply_adf_test(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.apply_adf_test(series)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.apply_adf_test(series, regression="ctt")
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.apply_adf_test(series, regression="ctt")
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.apply_adf_test(series, maxlag=5)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.apply_adf_test(series, maxlag=5)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test4(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.apply_adf_test(series, autolag="t-stat")
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.apply_adf_test(series, autolag="t-stat")
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test5(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.apply_adf_test(series, prefix="adf_")
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.apply_adf_test(series, prefix="adf_")
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     # Smoke test for empty input.
     def test6(self) -> None:
         series = pd.Series([])
-        cstati.apply_adf_test(series)
+        csta.apply_adf_test(series)
 
     def test7(self) -> None:
         series = self._get_series(seed=1)
         series[3:5] = np.nan
-        actual = cstati.apply_adf_test(series, nan_mode="fill_with_zero")
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.apply_adf_test(series, nan_mode="fill_with_zero")
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     # Smoke test for input of `np.nan`s.
     def test8(self) -> None:
         series = pd.Series([np.nan for i in range(10)])
-        cstati.apply_adf_test(series)
+        csta.apply_adf_test(series)
 
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = casgen.ArmaProcess(arparams, maparams)
+        arma_process = carsigen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -516,59 +516,59 @@ class TestApplyAdfTest(hut.TestCase):
         return series
 
 
-class TestApplyKpssTest(hut.TestCase):
+class TestApplyKpssTest(huntes.TestCase):
     def test1(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.apply_kpss_test(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.apply_kpss_test(series)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.apply_kpss_test(series, regression="ct")
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.apply_kpss_test(series, regression="ct")
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.apply_kpss_test(series, nlags="auto")
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.apply_kpss_test(series, nlags="auto")
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test4(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.apply_kpss_test(series, nlags=5)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.apply_kpss_test(series, nlags=5)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test5(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.apply_kpss_test(series, prefix="kpss_")
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.apply_kpss_test(series, prefix="kpss_")
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     # Smoke test for empty input.
     def test6(self) -> None:
         series = pd.Series([])
-        cstati.apply_kpss_test(series)
+        csta.apply_kpss_test(series)
 
     def test7(self) -> None:
         series = self._get_series(seed=1)
         series[3:5] = np.nan
-        actual = cstati.apply_kpss_test(series, nan_mode="fill_with_zero")
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.apply_kpss_test(series, nan_mode="fill_with_zero")
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     # Smoke test for input of `np.nan`s.
     def test8(self) -> None:
         series = pd.Series([np.nan for i in range(10)])
-        cstati.apply_kpss_test(series)
+        csta.apply_kpss_test(series)
 
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = casgen.ArmaProcess(arparams, maparams)
+        arma_process = carsigen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -576,65 +576,65 @@ class TestApplyKpssTest(hut.TestCase):
         return series
 
 
-class TestApplyLjungBoxTest(hut.TestCase):
+class TestApplyLjungBoxTest(huntes.TestCase):
     def test1(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.apply_ljung_box_test(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.apply_ljung_box_test(series)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.apply_ljung_box_test(series, lags=3)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.apply_ljung_box_test(series, lags=3)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.apply_ljung_box_test(series, model_df=3)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.apply_ljung_box_test(series, model_df=3)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test4(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.apply_ljung_box_test(series, period=5)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.apply_ljung_box_test(series, period=5)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test5(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.apply_ljung_box_test(series, prefix="lb_")
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.apply_ljung_box_test(series, prefix="lb_")
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test6(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.apply_ljung_box_test(series, return_df=False)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.apply_ljung_box_test(series, return_df=False)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     # Smoke test for empty input.
     def test7(self) -> None:
         series = pd.Series([])
-        cstati.apply_ljung_box_test(series)
+        csta.apply_ljung_box_test(series)
 
     def test8(self) -> None:
         series = self._get_series(seed=1)
         series[3:5] = np.nan
-        actual = cstati.apply_ljung_box_test(series, nan_mode="fill_with_zero")
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.apply_ljung_box_test(series, nan_mode="fill_with_zero")
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     # Smoke test for input of `np.nan`s.
     def test9(self) -> None:
         series = pd.Series([np.nan for i in range(10)])
-        cstati.apply_ljung_box_test(series)
+        csta.apply_ljung_box_test(series)
 
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = casgen.ArmaProcess(arparams, maparams)
+        arma_process = carsigen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -642,14 +642,14 @@ class TestApplyLjungBoxTest(hut.TestCase):
         return series
 
 
-class TestComputeSpecialValueStats(hut.TestCase):
+class TestComputeSpecialValueStats(huntes.TestCase):
     def test1(self) -> None:
         """
         Test for default arguments.
         """
         series = self._get_messy_series(seed=1)
-        actual = cstati.compute_special_value_stats(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.compute_special_value_stats(series)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
@@ -657,20 +657,20 @@ class TestComputeSpecialValueStats(hut.TestCase):
         Test for prefix.
         """
         series = self._get_messy_series(seed=1)
-        actual = cstati.compute_special_value_stats(series, prefix="data_")
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.compute_special_value_stats(series, prefix="data_")
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     # Smoke test for empty input.
     def test3(self) -> None:
         series = pd.Series([])
-        cstati.compute_special_value_stats(series)
+        csta.compute_special_value_stats(series)
 
     @staticmethod
     def _get_messy_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = casgen.ArmaProcess(arparams, maparams)
+        arma_process = carsigen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -682,7 +682,7 @@ class TestComputeSpecialValueStats(hut.TestCase):
         return series
 
 
-class TestCalculateHitRate(hut.TestCase):
+class TestCalculateHitRate(huntes.TestCase):
     def test1(self) -> None:
         """
         Test for default parameters.
@@ -693,8 +693,8 @@ class TestCalculateHitRate(hut.TestCase):
         hit_rate_97.50%CI_upper_bound_(%)  82.7032
         """
         series = self._get_test_series()
-        actual = cstati.calculate_hit_rate(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.calculate_hit_rate(series)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
@@ -709,8 +709,8 @@ class TestCalculateHitRate(hut.TestCase):
         series = self._get_test_series()
         nan_series = pd.Series([np.nan for i in range(len(series))])
         series = pd.concat([series, nan_series])
-        actual = cstati.calculate_hit_rate(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.calculate_hit_rate(series)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
@@ -726,8 +726,8 @@ class TestCalculateHitRate(hut.TestCase):
         inf_series = pd.Series([np.inf for i in range(len(series))])
         inf_series[:5] = -np.inf
         series = pd.concat([series, inf_series])
-        actual = cstati.calculate_hit_rate(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.calculate_hit_rate(series)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test4(self) -> None:
@@ -742,8 +742,8 @@ class TestCalculateHitRate(hut.TestCase):
         series = self._get_test_series()
         zero_series = pd.Series([0 for i in range(len(series))])
         series = pd.concat([series, zero_series])
-        actual = cstati.calculate_hit_rate(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.calculate_hit_rate(series)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test5(self) -> None:
@@ -756,8 +756,8 @@ class TestCalculateHitRate(hut.TestCase):
         hit_rate_97.50%CI_upper_bound_(%)  86.1136
         """
         series = self._get_test_series()
-        actual = cstati.calculate_hit_rate(series, threshold=10e-3)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.calculate_hit_rate(series, threshold=10e-3)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test6(self) -> None:
@@ -770,8 +770,8 @@ class TestCalculateHitRate(hut.TestCase):
         hit_rate_95.00%CI_upper_bound_(%)  79.1316
         """
         series = self._get_test_series()
-        actual = cstati.calculate_hit_rate(series, alpha=0.1)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.calculate_hit_rate(series, alpha=0.1)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test7(self) -> None:
@@ -784,8 +784,8 @@ class TestCalculateHitRate(hut.TestCase):
         hit_hit_rate_97.50%CI_upper_bound_(%)  82.7032
         """
         series = self._get_test_series()
-        actual = cstati.calculate_hit_rate(series, prefix="hit_")
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.calculate_hit_rate(series, prefix="hit_")
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test8(self) -> None:
@@ -798,18 +798,18 @@ class TestCalculateHitRate(hut.TestCase):
         hit_rate_97.50%CI_upper_bound_(%)  81.1221
         """
         series = self._get_test_series()
-        actual = cstati.calculate_hit_rate(series, method="wilson")
-        self.check_string(hut.convert_df_to_string(actual, index=True))
+        actual = csta.calculate_hit_rate(series, method="wilson")
+        self.check_string(huntes.convert_df_to_string(actual, index=True))
 
     # Smoke test for empty input.
     def test_smoke(self) -> None:
         series = pd.Series([])
-        cstati.calculate_hit_rate(series)
+        csta.calculate_hit_rate(series)
 
     # Smoke test for input of `np.nan`s.
     def test_nan(self) -> None:
         series = pd.Series([np.nan] * 10)
-        cstati.calculate_hit_rate(series)
+        csta.calculate_hit_rate(series)
 
     @staticmethod
     def _get_test_series() -> pd.Series:
@@ -817,56 +817,56 @@ class TestCalculateHitRate(hut.TestCase):
         return series
 
 
-class Test_compute_jensen_ratio(hut.TestCase):
+class Test_compute_jensen_ratio(huntes.TestCase):
     def test1(self) -> None:
         signal = self._get_signal(seed=1)
-        actual = cstati.compute_jensen_ratio(
+        actual = csta.compute_jensen_ratio(
             signal,
         )
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
         signal = self._get_signal(seed=1)
-        actual = cstati.compute_jensen_ratio(
+        actual = csta.compute_jensen_ratio(
             signal,
             p_norm=3,
         )
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
         signal = self._get_signal(seed=1)
         signal[5:8] = np.inf
-        actual = cstati.compute_jensen_ratio(
+        actual = csta.compute_jensen_ratio(
             signal,
             inf_mode="drop",
         )
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test4(self) -> None:
         signal = self._get_signal(seed=1)
-        actual = cstati.compute_jensen_ratio(
+        actual = csta.compute_jensen_ratio(
             signal,
             nan_mode="ffill",
         )
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test5(self) -> None:
         signal = self._get_signal(seed=1)
-        actual = cstati.compute_jensen_ratio(
+        actual = csta.compute_jensen_ratio(
             signal,
             prefix="commodity_",
         )
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     # Smoke test for empty input.
     def test6(self) -> None:
         signal = pd.Series([])
-        cstati.compute_jensen_ratio(signal)
+        csta.compute_jensen_ratio(signal)
 
     @staticmethod
     def _get_signal(seed: int) -> pd.Series:
@@ -877,103 +877,103 @@ class Test_compute_jensen_ratio(hut.TestCase):
         return signal
 
 
-class Test_compute_t_distribution_j_2(hut.TestCase):
+class Test_compute_t_distribution_j_2(huntes.TestCase):
     def test_almost_normal(self) -> None:
-        actual = cstati.compute_t_distribution_j_2(200)
+        actual = csta.compute_t_distribution_j_2(200)
         np.testing.assert_allclose(actual, np.sqrt(2 / np.pi), atol=1e-2)
 
     def test_4dof(self) -> None:
-        actual = cstati.compute_t_distribution_j_2(4)
+        actual = csta.compute_t_distribution_j_2(4)
         np.testing.assert_allclose(actual, 0.707107, atol=1e-5)
 
     def test_2dof(self) -> None:
-        actual = cstati.compute_t_distribution_j_2(2)
+        actual = csta.compute_t_distribution_j_2(2)
         np.testing.assert_allclose(actual, 0)
 
 
-class Test_compute_hill_number(hut.TestCase):
+class Test_compute_hill_number(huntes.TestCase):
     def test_equally_distributed1(self) -> None:
         length = 10
         data = pd.Series(index=range(0, length), data=1)
-        actual = cstati.compute_hill_number(data, 1)
+        actual = csta.compute_hill_number(data, 1)
         np.testing.assert_allclose(actual, 10)
 
     def test_equally_distributed2(self) -> None:
         length = 10
         data = pd.Series(index=range(0, length), data=1)
-        actual = cstati.compute_hill_number(data, 2)
+        actual = csta.compute_hill_number(data, 2)
         np.testing.assert_allclose(actual, 10)
 
     def test_equally_distributed3(self) -> None:
         length = 10
         data = pd.Series(index=range(0, length), data=1)
-        actual = cstati.compute_hill_number(data, np.inf)
+        actual = csta.compute_hill_number(data, np.inf)
         np.testing.assert_allclose(actual, 10)
 
     def test_scale_invariance1(self) -> None:
         length = 32
         np.random.seed(137)
         data = pd.Series(data=np.random.rand(length, 1).flatten())
-        actual_1 = cstati.compute_hill_number(data, 2)
-        actual_2 = cstati.compute_hill_number(7 * data, 2)
+        actual_1 = csta.compute_hill_number(data, 2)
+        actual_2 = csta.compute_hill_number(7 * data, 2)
         np.testing.assert_allclose(actual_1, actual_2)
 
     def test_exponentially_distributed1(self) -> None:
         data = pd.Series([2 ** j for j in range(10, 0, -1)])
-        actual = cstati.compute_hill_number(data, 1)
+        actual = csta.compute_hill_number(data, 1)
         np.testing.assert_allclose(actual, 3.969109, atol=1e-5)
 
     def test_exponentially_distributed2(self) -> None:
         data = pd.Series([2 ** j for j in range(10, 0, -1)])
-        actual = cstati.compute_hill_number(data, 2)
+        actual = csta.compute_hill_number(data, 2)
         np.testing.assert_allclose(actual, 2.994146, atol=1e-5)
 
     def test_exponentially_distributed3(self) -> None:
         data = pd.Series([2 ** j for j in range(10, 0, -1)])
-        actual = cstati.compute_hill_number(data, np.inf)
+        actual = csta.compute_hill_number(data, np.inf)
         np.testing.assert_allclose(actual, 1.998047, atol=1e-5)
 
 
-class Test_compute_forecastability(hut.TestCase):
+class Test_compute_forecastability(huntes.TestCase):
     def test1(self) -> None:
         signal = self._get_signal(seed=1)
-        actual = cstati.compute_forecastability(
+        actual = csta.compute_forecastability(
             signal,
         )
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
         signal = self._get_signal(seed=1)
-        actual = cstati.compute_forecastability(
+        actual = csta.compute_forecastability(
             signal,
             mode="periodogram",
         )
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
         signal = self._get_signal(seed=1)
-        actual = cstati.compute_forecastability(
+        actual = csta.compute_forecastability(
             signal,
             nan_mode="ffill_and_drop_leading",
         )
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test4(self) -> None:
         signal = self._get_signal(seed=1)
-        actual = cstati.compute_forecastability(
+        actual = csta.compute_forecastability(
             signal,
             prefix="commodity_",
         )
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     # Smoke test for empty input.
     def test5(self) -> None:
         signal = self._get_signal(seed=1)
-        cstati.compute_forecastability(signal)
+        csta.compute_forecastability(signal)
 
     @staticmethod
     def _get_signal(seed: int) -> pd.Series:
@@ -984,14 +984,14 @@ class Test_compute_forecastability(hut.TestCase):
         return signal
 
 
-class Test_compute_annualized_return_and_volatility(hut.TestCase):
+class Test_compute_annualized_return_and_volatility(huntes.TestCase):
     def test1(self) -> None:
         """
         Test for default parameters.
         """
         series = self._get_series(seed=1)
-        actual = cstati.compute_annualized_return_and_volatility(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.compute_annualized_return_and_volatility(series)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
@@ -999,20 +999,20 @@ class Test_compute_annualized_return_and_volatility(hut.TestCase):
         Test prefix.
         """
         series = self._get_series(seed=1)
-        actual = cstati.compute_annualized_return_and_volatility(
+        actual = csta.compute_annualized_return_and_volatility(
             series, prefix="test_"
         )
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     # Smoke test for empty input
     def test3(self) -> None:
         series = pd.Series([])
-        cstati.compute_annualized_return_and_volatility(series)
+        csta.compute_annualized_return_and_volatility(series)
 
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
-        arma_process = casgen.ArmaProcess([0], [0])
+        arma_process = carsigen.ArmaProcess([0], [0])
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, scale=0.1, seed=seed
@@ -1020,29 +1020,37 @@ class Test_compute_annualized_return_and_volatility(hut.TestCase):
         return series
 
 
-class TestComputeMaxDrawdown(hut.TestCase):
+class TestComputeMaxDrawdown(huntes.TestCase):
     def test1(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.compute_max_drawdown(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual = csta.compute_max_drawdown(series)
+        expected_txt = """
+,\"arma(1,1)\"
+max_drawdown,0.784453
+"""
+        expected = pd.read_csv(io.StringIO(expected_txt), index_col=0)
+        self.assert_dfs_close(actual.to_frame(), expected, rtol=1e-5, atol=1e-5)
 
     def test2(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.compute_max_drawdown(series, prefix="new_")
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual = csta.compute_max_drawdown(series, prefix="new_")
+        expected_txt = """
+,\"arma(1,1)\"
+new_max_drawdown,0.784453
+"""
+        expected = pd.read_csv(io.StringIO(expected_txt), index_col=0)
+        self.assert_dfs_close(actual.to_frame(), expected, rtol=1e-5, atol=1e-5)
 
     def test3(self) -> None:
         """
         Smoke test for empty input.
         """
         series = pd.Series([])
-        cstati.compute_max_drawdown(series)
+        csta.compute_max_drawdown(series)
 
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
-        arma_process = casgen.ArmaProcess([0], [0])
+        arma_process = carsigen.ArmaProcess([0], [0])
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, scale=0.1, seed=seed
@@ -1050,12 +1058,12 @@ class TestComputeMaxDrawdown(hut.TestCase):
         return series
 
 
-class Test_compute_bet_stats(hut.TestCase):
+class Test_compute_bet_stats(huntes.TestCase):
     def test1(self) -> None:
         log_rets = Test_compute_bet_stats._get_series(42)
-        positions = csproc.compute_smooth_moving_average(log_rets, 4)
-        actual = cstati.compute_bet_stats(positions, log_rets)
-        bet_rets = cfinan.compute_returns_per_bet(positions, log_rets)
+        positions = csipro.compute_smooth_moving_average(log_rets, 4)
+        actual = csta.compute_bet_stats(positions, log_rets)
+        bet_rets = cfin.compute_returns_per_bet(positions, log_rets)
         rets_pos_bet_rets = pd.concat(
             {"pos": positions, "rets": log_rets, "bet_rets": bet_rets}, axis=1
         )
@@ -1063,10 +1071,10 @@ class Test_compute_bet_stats(hut.TestCase):
 
     def test2(self) -> None:
         log_rets = Test_compute_bet_stats._get_series(42)
-        positions = csproc.compute_smooth_moving_average(log_rets, 4)
+        positions = csipro.compute_smooth_moving_average(log_rets, 4)
         log_rets.iloc[:10] = np.nan
-        actual = cstati.compute_bet_stats(positions, log_rets)
-        bet_rets = cfinan.compute_returns_per_bet(positions, log_rets)
+        actual = csta.compute_bet_stats(positions, log_rets)
+        bet_rets = cfin.compute_returns_per_bet(positions, log_rets)
         rets_pos_bet_rets = pd.concat(
             {"pos": positions, "rets": log_rets, "bet_rets": bet_rets}, axis=1
         )
@@ -1076,8 +1084,8 @@ class Test_compute_bet_stats(hut.TestCase):
         idx = pd.date_range("2010-12-29", freq="D", periods=8)
         log_rets = pd.Series([1, 2, 3, 5, 7, 11, -13, -5], index=idx)
         positions = pd.Series([1, 2, 0, 1, -3, -2, 0, -1], index=idx)
-        actual = cstati.compute_bet_stats(positions, log_rets)
-        bet_rets = cfinan.compute_returns_per_bet(positions, log_rets)
+        actual = csta.compute_bet_stats(positions, log_rets)
+        bet_rets = cfin.compute_returns_per_bet(positions, log_rets)
         rets_pos_bet_rets = pd.concat(
             {"pos": positions, "rets": log_rets, "bet_rets": bet_rets}, axis=1
         )
@@ -1087,18 +1095,18 @@ class Test_compute_bet_stats(hut.TestCase):
         self, rets_pos_bet_rets: pd.DataFrame, actual: pd.Series
     ) -> None:
         act = []
-        act.append(hprint.frame("rets_pos"))
+        act.append(hprintin.frame("rets_pos"))
         act.append(
-            hut.convert_df_to_string(rets_pos_bet_rets, index=True, decimals=3)
+            huntes.convert_df_to_string(rets_pos_bet_rets, index=True, decimals=3)
         )
-        act.append(hprint.frame("stats"))
-        act.append(hut.convert_df_to_string(actual, index=True, decimals=3))
+        act.append(hprintin.frame("stats"))
+        act.append(huntes.convert_df_to_string(actual, index=True, decimals=3))
         act = "\n".join(act)
         self.check_string(act, fuzzy_match=True)
 
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
-        arma_process = casgen.ArmaProcess([], [])
+        arma_process = carsigen.ArmaProcess([], [])
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed, scale=0.1
@@ -1106,35 +1114,35 @@ class Test_compute_bet_stats(hut.TestCase):
         return series
 
 
-class Test_compute_sharpe_ratio(hut.TestCase):
+class Test_compute_sharpe_ratio(huntes.TestCase):
     def test1(self) -> None:
         ar_params: List[float] = []
         ma_params: List[float] = []
-        arma_process = casgen.ArmaProcess(ar_params, ma_params)
+        arma_process = carsigen.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"},
             scale=1,
             burnin=5,
         )
-        sr = cstati.compute_sharpe_ratio(realization)
+        sr = csta.compute_sharpe_ratio(realization)
         np.testing.assert_almost_equal(sr, 0.057670899)
 
 
-class Test_compute_sharpe_ratio_standard_error(hut.TestCase):
+class Test_compute_sharpe_ratio_standard_error(huntes.TestCase):
     def test1(self) -> None:
         ar_params: List[float] = []
         ma_params: List[float] = []
-        arma_process = casgen.ArmaProcess(ar_params, ma_params)
+        arma_process = carsigen.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"},
             scale=1,
             burnin=5,
         )
-        sr_se = cstati.compute_sharpe_ratio_standard_error(realization)
+        sr_se = csta.compute_sharpe_ratio_standard_error(realization)
         np.testing.assert_almost_equal(sr_se, 0.160261242)
 
 
-class Test_compute_annualized_sharpe_ratio(hut.TestCase):
+class Test_compute_annualized_sharpe_ratio(huntes.TestCase):
     def test1(self) -> None:
         """
         Demonstrate the approximate invariance of the annualized SR (at least
@@ -1142,19 +1150,19 @@ class Test_compute_annualized_sharpe_ratio(hut.TestCase):
         """
         srs = self._generate_minutely_series(n_days=100, seed=10)
         # Calculate SR from minutely time series.
-        srs_sr = cstati.compute_annualized_sharpe_ratio(srs)
+        srs_sr = csta.compute_annualized_sharpe_ratio(srs)
         np.testing.assert_almost_equal(srs_sr, -2.6182, decimal=3)
         # Resample to hourly and calculate SR.
-        hourly_srs = csproc.resample(srs, rule="60T").sum()
-        hourly_sr = cstati.compute_annualized_sharpe_ratio(hourly_srs)
+        hourly_srs = csipro.resample(srs, rule="60T").sum()
+        hourly_sr = csta.compute_annualized_sharpe_ratio(hourly_srs)
         np.testing.assert_almost_equal(hourly_sr, -2.6483, decimal=3)
         # Resample to daily and calculate SR.
-        daily_srs = csproc.resample(srs, rule="D").sum()
-        daily_srs_sr = cstati.compute_annualized_sharpe_ratio(daily_srs)
+        daily_srs = csipro.resample(srs, rule="D").sum()
+        daily_srs_sr = csta.compute_annualized_sharpe_ratio(daily_srs)
         np.testing.assert_almost_equal(daily_srs_sr, -2.4890, decimal=3)
         # Resample to weekly and calculate SR.
-        weekly_srs = csproc.resample(srs, rule="W").sum()
-        weekly_srs_sr = cstati.compute_annualized_sharpe_ratio(weekly_srs)
+        weekly_srs = csipro.resample(srs, rule="W").sum()
+        weekly_srs_sr = csta.compute_annualized_sharpe_ratio(weekly_srs)
         np.testing.assert_almost_equal(weekly_srs_sr, -2.7717, decimal=3)
 
     def test2(self) -> None:
@@ -1164,19 +1172,19 @@ class Test_compute_annualized_sharpe_ratio(hut.TestCase):
         """
         srs = self._generate_minutely_series(n_days=100, seed=10)
         # Filter out non-trading time points.
-        filtered_srs = cfinan.set_non_ath_to_nan(srs)
-        filtered_srs = cfinan.set_weekends_to_nan(filtered_srs)
+        filtered_srs = cfin.set_non_ath_to_nan(srs)
+        filtered_srs = cfin.set_weekends_to_nan(filtered_srs)
         filtered_srs = filtered_srs.dropna()
         # Treat srs as an intraday trading day-only series, e.g.,
         # approximately 252 trading days per year, ATH only.
         n_samples = filtered_srs.size
         points_per_year = 2.52 * n_samples
-        filtered_srs_sr = cstati.compute_sharpe_ratio(
+        filtered_srs_sr = csta.compute_sharpe_ratio(
             filtered_srs, time_scaling=points_per_year
         )
         np.testing.assert_almost_equal(filtered_srs_sr, -2.7203, decimal=3)
         # Compare to SR annualized using `freq`.
-        srs_sr = cstati.compute_annualized_sharpe_ratio(srs)
+        srs_sr = csta.compute_annualized_sharpe_ratio(srs)
         np.testing.assert_almost_equal(srs_sr, -2.6182, decimal=3)
 
     def test3(self) -> None:
@@ -1187,14 +1195,14 @@ class Test_compute_annualized_sharpe_ratio(hut.TestCase):
         srs[5:10] = np.nan
         df = pd.DataFrame([srs, srs.shift()]).T
         df.columns = ["Series 1", "Series 2"]
-        actual = cstati.compute_annualized_sharpe_ratio(df)
-        df_string = hut.convert_df_to_string(df, index=True)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.compute_annualized_sharpe_ratio(df)
+        df_string = huntes.convert_df_to_string(df, index=True)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         txt = f"Input:\n{df_string}\n\n" f"Output:\n{actual_string}\n"
         self.check_string(txt)
 
     def _generate_minutely_series(self, n_days: float, seed: int) -> pd.Series:
-        arma_process = casgen.ArmaProcess([], [])
+        arma_process = carsigen.ArmaProcess([], [])
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": n_days * 24 * 60, "freq": "T"},
             scale=1,
@@ -1203,27 +1211,27 @@ class Test_compute_annualized_sharpe_ratio(hut.TestCase):
         return realization
 
 
-class Test_compute_annualized_sharpe_ratio_standard_error(hut.TestCase):
+class Test_compute_annualized_sharpe_ratio_standard_error(huntes.TestCase):
     def test1(self) -> None:
         srs = self._generate_minutely_series(n_days=100, seed=10)
         # Calculate SR from minutely time series.
-        srs_sr_se = cstati.compute_annualized_sharpe_ratio_standard_error(srs)
+        srs_sr_se = csta.compute_annualized_sharpe_ratio_standard_error(srs)
         np.testing.assert_almost_equal(srs_sr_se, 1.9108, decimal=3)
         # Resample to hourly and calculate SR.
-        hourly_srs = csproc.resample(srs, rule="60T").sum()
-        hourly_sr_se = cstati.compute_annualized_sharpe_ratio_standard_error(
+        hourly_srs = csipro.resample(srs, rule="60T").sum()
+        hourly_sr_se = csta.compute_annualized_sharpe_ratio_standard_error(
             hourly_srs
         )
         np.testing.assert_almost_equal(hourly_sr_se, 1.9116, decimal=3)
         # Resample to daily and calculate SR.
-        daily_srs = csproc.resample(srs, rule="D").sum()
-        daily_sr_se_sr = cstati.compute_annualized_sharpe_ratio_standard_error(
+        daily_srs = csipro.resample(srs, rule="D").sum()
+        daily_sr_se_sr = csta.compute_annualized_sharpe_ratio_standard_error(
             daily_srs
         )
         np.testing.assert_almost_equal(daily_sr_se_sr, 1.9192, decimal=3)
         # Resample to weekly and calculate SR.
-        weekly_srs = csproc.resample(srs, rule="W").sum()
-        weekly_sr_se_sr = cstati.compute_annualized_sharpe_ratio_standard_error(
+        weekly_srs = csipro.resample(srs, rule="W").sum()
+        weekly_sr_se_sr = csta.compute_annualized_sharpe_ratio_standard_error(
             weekly_srs
         )
         np.testing.assert_almost_equal(weekly_sr_se_sr, 2.0016, decimal=3)
@@ -1231,23 +1239,23 @@ class Test_compute_annualized_sharpe_ratio_standard_error(hut.TestCase):
     def test2(self) -> None:
         srs = self._generate_minutely_series(n_days=100, seed=10)
         # Filter out non-trading time points.
-        filtered_srs = cfinan.set_non_ath_to_nan(srs)
-        filtered_srs = cfinan.set_weekends_to_nan(filtered_srs)
+        filtered_srs = cfin.set_non_ath_to_nan(srs)
+        filtered_srs = cfin.set_weekends_to_nan(filtered_srs)
         filtered_srs = filtered_srs.dropna()
         # Treat srs as an intraday trading day-only series, e.g.,
         # approximately 252 trading days per year, ATH only.
         n_samples = filtered_srs.size
         points_per_year = 2.52 * n_samples
-        filtered_srs_se = cstati.compute_sharpe_ratio_standard_error(
+        filtered_srs_se = csta.compute_sharpe_ratio_standard_error(
             filtered_srs, time_scaling=points_per_year
         )
         np.testing.assert_almost_equal(filtered_srs_se, 1.5875, decimal=3)
         # Compare to SR annualized using `freq`.
-        srs_sr_se = cstati.compute_annualized_sharpe_ratio_standard_error(srs)
+        srs_sr_se = csta.compute_annualized_sharpe_ratio_standard_error(srs)
         np.testing.assert_almost_equal(srs_sr_se, 1.9108, decimal=3)
 
     def _generate_minutely_series(self, n_days: float, seed: int) -> pd.Series:
-        arma_process = casgen.ArmaProcess([], [])
+        arma_process = carsigen.ArmaProcess([], [])
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": n_days * 24 * 60, "freq": "T"},
             scale=1,
@@ -1256,44 +1264,44 @@ class Test_compute_annualized_sharpe_ratio_standard_error(hut.TestCase):
         return realization
 
 
-class Test_summarize_sharpe_ratio(hut.TestCase):
+class Test_summarize_sharpe_ratio(huntes.TestCase):
     def test1(self) -> None:
         ar_params: List[float] = []
         ma_params: List[float] = []
-        arma_process = casgen.ArmaProcess(ar_params, ma_params)
+        arma_process = carsigen.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"},
             scale=1,
             burnin=5,
         )
-        res = cstati.summarize_sharpe_ratio(realization)
-        self.check_string(hut.convert_df_to_string(res, index=True))
+        res = csta.summarize_sharpe_ratio(realization)
+        self.check_string(huntes.convert_df_to_string(res, index=True))
 
 
-class Test_zscore_oos_sharpe_ratio(hut.TestCase):
+class Test_zscore_oos_sharpe_ratio(huntes.TestCase):
     def test1(self) -> None:
         series = Test_zscore_oos_sharpe_ratio._get_series(42)
         oos_start = "2010-02-25"
-        sr_stats = cstati.zscore_oos_sharpe_ratio(series, oos_start)
+        sr_stats = csta.zscore_oos_sharpe_ratio(series, oos_start)
         output_str = (
             f"OOS start: {oos_start}\n"
-            f"{hprint.frame('input series')}\n"
-            f"{hut.convert_df_to_string(series, index=True)}\n"
-            f"{hprint.frame('output')}\n"
-            f"{hut.convert_df_to_string(sr_stats, index=True)}"
+            f"{hprintin.frame('input series')}\n"
+            f"{huntes.convert_df_to_string(series, index=True)}\n"
+            f"{hprintin.frame('output')}\n"
+            f"{huntes.convert_df_to_string(sr_stats, index=True)}"
         )
         self.check_string(output_str)
 
     def test2(self) -> None:
         series = Test_zscore_oos_sharpe_ratio._get_series(42)
         oos_start = "2010-04-10"
-        sr_stats = cstati.zscore_oos_sharpe_ratio(series, oos_start)
+        sr_stats = csta.zscore_oos_sharpe_ratio(series, oos_start)
         output_str = (
             f"OOS start: {oos_start}\n"
-            f"{hprint.frame('input series')}\n"
-            f"{hut.convert_df_to_string(series, index=True)}\n"
-            f"{hprint.frame('output')}\n"
-            f"{hut.convert_df_to_string(sr_stats, index=True)}"
+            f"{hprintin.frame('input series')}\n"
+            f"{huntes.convert_df_to_string(series, index=True)}\n"
+            f"{hprintin.frame('output')}\n"
+            f"{huntes.convert_df_to_string(sr_stats, index=True)}"
         )
         self.check_string(output_str)
 
@@ -1303,13 +1311,13 @@ class Test_zscore_oos_sharpe_ratio(hut.TestCase):
         series.loc[oos_start:] = series.loc[oos_start:].apply(  # type: ignore
             lambda x: 0.1 * x if x > 0 else x
         )
-        sr_stats = cstati.zscore_oos_sharpe_ratio(series, oos_start)
+        sr_stats = csta.zscore_oos_sharpe_ratio(series, oos_start)
         output_str = (
             f"OOS start: {oos_start}\n"
-            f"{hprint.frame('input series')}\n"
-            f"{hut.convert_df_to_string(series, index=True)}\n"
-            f"{hprint.frame('output')}\n"
-            f"{hut.convert_df_to_string(sr_stats, index=True)}"
+            f"{hprintin.frame('input series')}\n"
+            f"{huntes.convert_df_to_string(series, index=True)}\n"
+            f"{hprintin.frame('output')}\n"
+            f"{huntes.convert_df_to_string(sr_stats, index=True)}"
         )
         self.check_string(output_str)
 
@@ -1319,13 +1327,13 @@ class Test_zscore_oos_sharpe_ratio(hut.TestCase):
         series.loc[oos_start:] = series.loc[oos_start:].apply(  # type: ignore
             lambda x: 0.1 * x if x < 0 else x
         )
-        sr_stats = cstati.zscore_oos_sharpe_ratio(series, oos_start)
+        sr_stats = csta.zscore_oos_sharpe_ratio(series, oos_start)
         output_str = (
             f"OOS start: {oos_start}\n"
-            f"{hprint.frame('input series')}\n"
-            f"{hut.convert_df_to_string(series, index=True)}\n"
-            f"{hprint.frame('output')}\n"
-            f"{hut.convert_df_to_string(sr_stats, index=True)}"
+            f"{hprintin.frame('input series')}\n"
+            f"{huntes.convert_df_to_string(series, index=True)}\n"
+            f"{hprintin.frame('output')}\n"
+            f"{huntes.convert_df_to_string(sr_stats, index=True)}"
         )
         self.check_string(output_str)
 
@@ -1336,13 +1344,13 @@ class Test_zscore_oos_sharpe_ratio(hut.TestCase):
         oos_start = "2010-02-25"
         series.loc[oos_start:"2010-03-03"] = np.nan  # type: ignore
         series.loc["2010-04-01":"2010-04-30"] = np.nan  # type: ignore
-        sr_stats = cstati.zscore_oos_sharpe_ratio(series, oos_start)
+        sr_stats = csta.zscore_oos_sharpe_ratio(series, oos_start)
         output_str = (
             f"OOS start: {oos_start}\n"
-            f"{hprint.frame('input series')}\n"
-            f"{hut.convert_df_to_string(series, index=True)}\n"
-            f"{hprint.frame('output')}\n"
-            f"{hut.convert_df_to_string(sr_stats, index=True)}"
+            f"{hprintin.frame('input series')}\n"
+            f"{huntes.convert_df_to_string(series, index=True)}\n"
+            f"{hprintin.frame('output')}\n"
+            f"{huntes.convert_df_to_string(sr_stats, index=True)}"
         )
         self.check_string(output_str)
 
@@ -1353,24 +1361,24 @@ class Test_zscore_oos_sharpe_ratio(hut.TestCase):
         oos_start = "2010-02-25"
         series.loc[oos_start:"2010-03-03"] = np.nan  # type: ignore
         series.loc["2010-04-01":"2010-04-30"] = np.nan  # type: ignore
-        sr_stats = cstati.zscore_oos_sharpe_ratio(series, oos_start)
+        sr_stats = csta.zscore_oos_sharpe_ratio(series, oos_start)
         output_str = (
             f"OOS start: {oos_start}\n"
-            f"{hprint.frame('input series')}\n"
-            f"{hut.convert_df_to_string(series, index=True)}\n"
-            f"{hprint.frame('output')}\n"
-            f"{hut.convert_df_to_string(sr_stats, index=True)}"
+            f"{hprintin.frame('input series')}\n"
+            f"{huntes.convert_df_to_string(series, index=True)}\n"
+            f"{hprintin.frame('output')}\n"
+            f"{huntes.convert_df_to_string(sr_stats, index=True)}"
         )
         self.check_string(output_str)
 
     def test_oos_not_from_interval1(self) -> None:
         series = Test_zscore_oos_sharpe_ratio._get_series(42)
         with self.assertRaises(AssertionError):
-            _ = cstati.zscore_oos_sharpe_ratio(series, "2012-01-01")
+            _ = csta.zscore_oos_sharpe_ratio(series, "2012-01-01")
 
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
-        arma_process = casgen.ArmaProcess([], [])
+        arma_process = carsigen.ArmaProcess([], [])
         date_range = {"start": "2010-01-01", "periods": 100, "freq": "B"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed, scale=0.1
@@ -1378,59 +1386,59 @@ class Test_zscore_oos_sharpe_ratio(hut.TestCase):
         return series
 
 
-class Test_sharpe_ratio_correlation_conversion(hut.TestCase):
+class Test_sharpe_ratio_correlation_conversion(huntes.TestCase):
     def test1(self) -> None:
-        actual = cstati.apply_sharpe_ratio_correlation_conversion(
+        actual = csta.apply_sharpe_ratio_correlation_conversion(
             points_per_year=252 * 78, sharpe_ratio=3
         )
         np.testing.assert_allclose(actual, 0.0214, atol=0.0001)
 
     def test2(self) -> None:
-        actual = cstati.apply_sharpe_ratio_correlation_conversion(
+        actual = csta.apply_sharpe_ratio_correlation_conversion(
             points_per_year=252 * 78, correlation=0.0214
         )
         np.testing.assert_allclose(actual, 3, atol=0.01)
 
 
-class Test_compute_hit_rate_implied_by_correlation(hut.TestCase):
+class Test_compute_hit_rate_implied_by_correlation(huntes.TestCase):
     def zero_corr(self) -> None:
-        actual = cstati.compute_hit_rate_implied_by_correlation(0)
+        actual = csta.compute_hit_rate_implied_by_correlation(0)
         np.testing.assert_allclose(actual, 0.5)
 
     def one_percent_corr(self) -> None:
-        actual = cstati.compute_hit_rate_implied_by_correlation(0.01)
+        actual = csta.compute_hit_rate_implied_by_correlation(0.01)
         np.testing.assert_allclose(actual, 0.5049999)
 
     def heavy_tails(self) -> None:
-        actual = cstati.compute_hit_rate_implied_by_correlation(0.01, 0.6)
+        actual = csta.compute_hit_rate_implied_by_correlation(0.01, 0.6)
         np.testing.assert_allclose(actual, 0.5066487)
 
 
-class Test_compute_correlation_implied_by_hit_rate(hut.TestCase):
+class Test_compute_correlation_implied_by_hit_rate(huntes.TestCase):
     def zero_hit_rate(self) -> None:
-        actual = cstati.compute_correlation_implied_by_hit_rate(0)
+        actual = csta.compute_correlation_implied_by_hit_rate(0)
         np.testing.assert_allclose(actual, 0)
 
     def small_edge_to_one_percent_corr(self) -> None:
-        actual = cstati.compute_correlation_implied_by_hit_rate(0.5049999)
+        actual = csta.compute_correlation_implied_by_hit_rate(0.5049999)
         np.testing.assert_allclose(actual, 0.0100001)
 
     def heavy_tails(self) -> None:
-        actual = cstati.compute_correlation_implied_by_hit_rate(0.5049999, 0.6)
+        actual = csta.compute_correlation_implied_by_hit_rate(0.5049999, 0.6)
         np.testing.assert_allclose(actual, 0.0075120)
 
     def fifty_one_percent(self) -> None:
-        actual = cstati.compute_correlation_implied_by_hit_rate(0.51)
+        actual = csta.compute_correlation_implied_by_hit_rate(0.51)
         np.testing.assert_allclose(actual, 0.0200002)
 
 
-class Test_compute_drawdown_cdf(hut.TestCase):
+class Test_compute_drawdown_cdf(huntes.TestCase):
     def test1(self) -> None:
         sharpe_ratio = 1
         volatility = 0.15
         drawdown = 0.05
         time = 1
-        probability = cstati.compute_drawdown_cdf(
+        probability = csta.compute_drawdown_cdf(
             sharpe_ratio=sharpe_ratio,
             volatility=volatility,
             drawdown=drawdown,
@@ -1443,7 +1451,7 @@ class Test_compute_drawdown_cdf(hut.TestCase):
         volatility = 0.15
         drawdown = 0.05
         time = 1
-        probalility = cstati.compute_drawdown_cdf(
+        probalility = csta.compute_drawdown_cdf(
             sharpe_ratio=sharpe_ratio,
             volatility=volatility,
             drawdown=drawdown,
@@ -1456,7 +1464,7 @@ class Test_compute_drawdown_cdf(hut.TestCase):
         volatility = 0.15
         drawdown = 0.05
         time = 10
-        probalility = cstati.compute_drawdown_cdf(
+        probalility = csta.compute_drawdown_cdf(
             sharpe_ratio=sharpe_ratio,
             volatility=volatility,
             drawdown=drawdown,
@@ -1465,12 +1473,12 @@ class Test_compute_drawdown_cdf(hut.TestCase):
         np.testing.assert_almost_equal(probalility, 0.86466, decimal=3)
 
 
-class Test_compute_normalized_drawdown_cdf(hut.TestCase):
+class Test_compute_normalized_drawdown_cdf(huntes.TestCase):
     def test1(self) -> None:
         sharpe_ratio = 1
         normalized_drawdown = 0.5
         time = 1
-        probalility = cstati.compute_normalized_drawdown_cdf(
+        probalility = csta.compute_normalized_drawdown_cdf(
             sharpe_ratio=sharpe_ratio,
             normalized_drawdown=normalized_drawdown,
             time=time,
@@ -1481,7 +1489,7 @@ class Test_compute_normalized_drawdown_cdf(hut.TestCase):
         sharpe_ratio = 3
         normalized_drawdown = 1
         time = 1
-        probalility = cstati.compute_normalized_drawdown_cdf(
+        probalility = csta.compute_normalized_drawdown_cdf(
             sharpe_ratio=sharpe_ratio,
             normalized_drawdown=normalized_drawdown,
             time=time,
@@ -1489,13 +1497,13 @@ class Test_compute_normalized_drawdown_cdf(hut.TestCase):
         np.testing.assert_almost_equal(probalility, 0.99754, decimal=3)
 
 
-class Test_compute_max_drawdown_approximate_cdf(hut.TestCase):
+class Test_compute_max_drawdown_approximate_cdf(huntes.TestCase):
     def test1(self) -> None:
         sharpe_ratio = 1
         volatility = 0.15
         max_drawdown = 0.05
         time = 1
-        probalility = cstati.compute_max_drawdown_approximate_cdf(
+        probalility = csta.compute_max_drawdown_approximate_cdf(
             sharpe_ratio=sharpe_ratio,
             volatility=volatility,
             max_drawdown=max_drawdown,
@@ -1508,7 +1516,7 @@ class Test_compute_max_drawdown_approximate_cdf(hut.TestCase):
         volatility = 0.15
         max_drawdown = 0.05
         time = 1
-        probalility = cstati.compute_max_drawdown_approximate_cdf(
+        probalility = csta.compute_max_drawdown_approximate_cdf(
             sharpe_ratio=sharpe_ratio,
             volatility=volatility,
             max_drawdown=max_drawdown,
@@ -1521,7 +1529,7 @@ class Test_compute_max_drawdown_approximate_cdf(hut.TestCase):
         volatility = 0.15
         max_drawdown = 0.05
         time = 10
-        probalility = cstati.compute_max_drawdown_approximate_cdf(
+        probalility = csta.compute_max_drawdown_approximate_cdf(
             sharpe_ratio=sharpe_ratio,
             volatility=volatility,
             max_drawdown=max_drawdown,
@@ -1530,43 +1538,43 @@ class Test_compute_max_drawdown_approximate_cdf(hut.TestCase):
         np.testing.assert_almost_equal(probalility, 0.25837, decimal=3)
 
 
-class TestComputeZeroDiffProportion(hut.TestCase):
+class TestComputeZeroDiffProportion(huntes.TestCase):
     def test1(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.compute_zero_diff_proportion(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.compute_zero_diff_proportion(series)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.compute_zero_diff_proportion(series, atol=1)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.compute_zero_diff_proportion(series, atol=1)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.compute_zero_diff_proportion(series, rtol=0.3)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.compute_zero_diff_proportion(series, rtol=0.3)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test5(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.compute_zero_diff_proportion(
+        actual = csta.compute_zero_diff_proportion(
             series, nan_mode="fill_with_zero"
         )
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test6(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.compute_zero_diff_proportion(series, prefix="prefix_")
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.compute_zero_diff_proportion(series, prefix="prefix_")
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     # Smoke test for empty input.
     def test7(self) -> None:
         series = pd.Series([])
-        cstati.compute_zero_diff_proportion(series)
+        csta.compute_zero_diff_proportion(series)
 
     def test8(self) -> None:
         """
@@ -1576,12 +1584,12 @@ class TestComputeZeroDiffProportion(hut.TestCase):
             [1, np.nan, 1, np.nan],
             index=pd.date_range(start="2010-01-01", periods=4),
         )
-        actual = cstati.compute_zero_diff_proportion(series)
+        actual = csta.compute_zero_diff_proportion(series)
         output_str = (
-            f"{hprint.frame('input')}\n"
-            f"{hut.convert_df_to_string(series, index=True)}\n"
-            f"{hprint.frame('output')}\n"
-            f"{hut.convert_df_to_string(actual, index=True)}"
+            f"{hprintin.frame('input')}\n"
+            f"{huntes.convert_df_to_string(series, index=True)}\n"
+            f"{hprintin.frame('output')}\n"
+            f"{huntes.convert_df_to_string(actual, index=True)}"
         )
         self.check_string(output_str)
 
@@ -1594,12 +1602,12 @@ class TestComputeZeroDiffProportion(hut.TestCase):
             index=pd.date_range(start="2010-01-01", periods=4),
         )
         nan_mode = "drop"
-        actual = cstati.compute_zero_diff_proportion(series, nan_mode=nan_mode)
+        actual = csta.compute_zero_diff_proportion(series, nan_mode=nan_mode)
         output_str = (
-            f"{hprint.frame('input')}\n"
-            f"{hut.convert_df_to_string(series, index=True)}\n"
-            f"{hprint.frame(f'output, `nan_mode`=`{nan_mode}`')}\n"
-            f"{hut.convert_df_to_string(actual, index=True)}"
+            f"{hprintin.frame('input')}\n"
+            f"{huntes.convert_df_to_string(series, index=True)}\n"
+            f"{hprintin.frame(f'output, `nan_mode`=`{nan_mode}`')}\n"
+            f"{huntes.convert_df_to_string(actual, index=True)}"
         )
         self.check_string(output_str)
 
@@ -1612,12 +1620,12 @@ class TestComputeZeroDiffProportion(hut.TestCase):
             index=pd.date_range(start="2010-01-01", periods=5),
         )
         nan_mode = "ffill"
-        actual = cstati.compute_zero_diff_proportion(series, nan_mode=nan_mode)
+        actual = csta.compute_zero_diff_proportion(series, nan_mode=nan_mode)
         output_str = (
-            f"{hprint.frame('input')}\n"
-            f"{hut.convert_df_to_string(series, index=True)}\n"
-            f"{hprint.frame(f'output, `nan_mode`=`{nan_mode}`')}\n"
-            f"{hut.convert_df_to_string(actual, index=True)}"
+            f"{hprintin.frame('input')}\n"
+            f"{huntes.convert_df_to_string(series, index=True)}\n"
+            f"{hprintin.frame(f'output, `nan_mode`=`{nan_mode}`')}\n"
+            f"{huntes.convert_df_to_string(actual, index=True)}"
         )
         self.check_string(output_str)
 
@@ -1630,12 +1638,12 @@ class TestComputeZeroDiffProportion(hut.TestCase):
             index=pd.date_range(start="2010-01-01", periods=4),
         )
         nan_mode = "leave_unchanged"
-        actual = cstati.compute_zero_diff_proportion(series, nan_mode=nan_mode)
+        actual = csta.compute_zero_diff_proportion(series, nan_mode=nan_mode)
         output_str = (
-            f"{hprint.frame('input')}\n"
-            f"{hut.convert_df_to_string(series, index=True)}\n"
-            f"{hprint.frame(f'output, `nan_mode`=`{nan_mode}`')}\n"
-            f"{hut.convert_df_to_string(actual, index=True)}"
+            f"{hprintin.frame('input')}\n"
+            f"{huntes.convert_df_to_string(series, index=True)}\n"
+            f"{hprintin.frame(f'output, `nan_mode`=`{nan_mode}`')}\n"
+            f"{huntes.convert_df_to_string(actual, index=True)}"
         )
         self.check_string(output_str)
 
@@ -1648,12 +1656,12 @@ class TestComputeZeroDiffProportion(hut.TestCase):
             index=pd.date_range(start="2010-01-01", periods=4),
         )
         nan_mode = "ffill"
-        actual = cstati.compute_zero_diff_proportion(series, nan_mode=nan_mode)
+        actual = csta.compute_zero_diff_proportion(series, nan_mode=nan_mode)
         output_str = (
-            f"{hprint.frame('input')}\n"
-            f"{hut.convert_df_to_string(series, index=True)}\n"
-            f"{hprint.frame(f'output, `nan_mode`=`{nan_mode}`')}\n"
-            f"{hut.convert_df_to_string(actual, index=True)}"
+            f"{hprintin.frame('input')}\n"
+            f"{huntes.convert_df_to_string(series, index=True)}\n"
+            f"{hprintin.frame(f'output, `nan_mode`=`{nan_mode}`')}\n"
+            f"{huntes.convert_df_to_string(actual, index=True)}"
         )
         self.check_string(output_str)
 
@@ -1669,7 +1677,7 @@ class TestComputeZeroDiffProportion(hut.TestCase):
         return series
 
 
-class Test_estimate_q_values(hut.TestCase):
+class Test_estimate_q_values(huntes.TestCase):
     def test_small_df(self) -> None:
         p_val_txt = """
 ,id1,id2
@@ -1677,7 +1685,7 @@ exp1,0.1,0.2
 exp2,0.01,0.05
 """
         p_vals = pd.read_csv(io.StringIO(p_val_txt), index_col=0)
-        actual = cstati.estimate_q_values(p_vals)
+        actual = csta.estimate_q_values(p_vals)
         # These values are equivalent to BH-adjusted values.
         q_val_txt = """
 ,id1,id2
@@ -1696,7 +1704,7 @@ p_val
 0.05
 """
         p_vals = pd.read_csv(io.StringIO(p_val_txt)).squeeze()
-        actual = cstati.estimate_q_values(p_vals)
+        actual = csta.estimate_q_values(p_vals)
         q_val_txt = """
 q_val
 0.133333
@@ -1716,7 +1724,7 @@ exp1,0.1,0.2
 exp2,0.01,0.05
 """
         p_vals = pd.read_csv(io.StringIO(p_val_txt), index_col=0)
-        actual = cstati.estimate_q_values(p_vals, pi0=0.8)
+        actual = csta.estimate_q_values(p_vals, pi0=0.8)
         q_val_txt = """
 ,id1,id2
 exp1,0.106667,0.16
@@ -1726,23 +1734,23 @@ exp2,0.032,0.08
         self.assert_dfs_close(actual, expected, rtol=1e-6, atol=1e-6)
 
 
-class TestGetInterarrivalTime(hut.TestCase):
+class TestGetInterarrivalTime(huntes.TestCase):
 
     # Smoke test for empty input.
     def test1(self) -> None:
         series = pd.Series([])
-        cstati.get_interarrival_time(series)
+        csta.get_interarrival_time(series)
 
     def test2(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.get_interarrival_time(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.get_interarrival_time(series)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.get_interarrival_time(series, nan_mode="fill_with_zero")
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.get_interarrival_time(series, nan_mode="fill_with_zero")
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     @staticmethod
@@ -1761,14 +1769,16 @@ class TestGetInterarrivalTime(hut.TestCase):
         return series
 
 
-class Test_compute_avg_turnover_and_holding_period(hut.TestCase):
+class Test_compute_avg_turnover_and_holding_period(huntes.TestCase):
     def test1(self) -> None:
         """
         Test for default parameters.
         """
         pos = self._get_pos(seed=1)
-        actual = cstati.compute_avg_turnover_and_holding_period(pos)
-        actual_string = hut.convert_df_to_string(actual, index=True, decimals=3)
+        actual = csta.compute_avg_turnover_and_holding_period(pos)
+        actual_string = huntes.convert_df_to_string(
+            actual, index=True, decimals=3
+        )
         self.check_string(actual_string)
 
     def test2(self) -> None:
@@ -1776,8 +1786,10 @@ class Test_compute_avg_turnover_and_holding_period(hut.TestCase):
         Test for unit.
         """
         pos = self._get_pos(seed=1)
-        actual = cstati.compute_avg_turnover_and_holding_period(pos, unit="M")
-        actual_string = hut.convert_df_to_string(actual, index=True, decimals=3)
+        actual = csta.compute_avg_turnover_and_holding_period(pos, unit="M")
+        actual_string = huntes.convert_df_to_string(
+            actual, index=True, decimals=3
+        )
         self.check_string(actual_string, fuzzy_match=True)
 
     def test3(self) -> None:
@@ -1786,10 +1798,12 @@ class Test_compute_avg_turnover_and_holding_period(hut.TestCase):
         """
         pos = self._get_pos(seed=1)
         pos[5:10] = np.nan
-        actual = cstati.compute_avg_turnover_and_holding_period(
+        actual = csta.compute_avg_turnover_and_holding_period(
             pos, nan_mode="fill_with_zero"
         )
-        actual_string = hut.convert_df_to_string(actual, index=True, decimals=3)
+        actual_string = huntes.convert_df_to_string(
+            actual, index=True, decimals=3
+        )
         self.check_string(actual_string, fuzzy_match=True)
 
     def test4(self) -> None:
@@ -1797,17 +1811,17 @@ class Test_compute_avg_turnover_and_holding_period(hut.TestCase):
         Test for prefix.
         """
         pos = self._get_pos(seed=1)
-        actual = cstati.compute_avg_turnover_and_holding_period(
-            pos, prefix="test_"
+        actual = csta.compute_avg_turnover_and_holding_period(pos, prefix="test_")
+        actual_string = huntes.convert_df_to_string(
+            actual, index=True, decimals=3
         )
-        actual_string = hut.convert_df_to_string(actual, index=True, decimals=3)
         self.check_string(actual_string, fuzzy_match=True)
 
     @staticmethod
     def _get_pos(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = casgen.ArmaProcess(arparams, maparams)
+        arma_process = carsigen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "D"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -1815,30 +1829,30 @@ class Test_compute_avg_turnover_and_holding_period(hut.TestCase):
         return series
 
 
-class TestComputeInterarrivalTimeStats(hut.TestCase):
+class TestComputeInterarrivalTimeStats(huntes.TestCase):
 
     # Smoke test for empty input.
     def test1(self) -> None:
         series = pd.Series([])
-        cstati.compute_interarrival_time_stats(series)
+        csta.compute_interarrival_time_stats(series)
 
     def test2(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.compute_interarrival_time_stats(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.compute_interarrival_time_stats(series)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
         series = self._get_series(seed=1)
-        actual = cstati.compute_interarrival_time_stats(series, nan_mode="ffill")
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = csta.compute_interarrival_time_stats(series, nan_mode="ffill")
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = casgen.ArmaProcess(arparams, maparams)
+        arma_process = carsigen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -1848,14 +1862,16 @@ class TestComputeInterarrivalTimeStats(hut.TestCase):
         return series
 
 
-class Test_summarize_time_index_info(hut.TestCase):
+class Test_summarize_time_index_info(huntes.TestCase):
     def test1(self) -> None:
         """
         Test for the case when index freq is not None.
         """
         series = self._get_series(seed=1)
-        actual = cstati.summarize_time_index_info(series)
-        actual_string = hut.convert_df_to_string(actual, index=True, decimals=3)
+        actual = csta.summarize_time_index_info(series)
+        actual_string = huntes.convert_df_to_string(
+            actual, index=True, decimals=3
+        )
         self.check_string(actual_string)
 
     def test2(self) -> None:
@@ -1864,8 +1880,10 @@ class Test_summarize_time_index_info(hut.TestCase):
         """
         series = self._get_series(seed=1)
         series = series.drop(series.index[1:3])
-        actual = cstati.summarize_time_index_info(series)
-        actual_string = hut.convert_df_to_string(actual, index=True, decimals=3)
+        actual = csta.summarize_time_index_info(series)
+        actual_string = huntes.convert_df_to_string(
+            actual, index=True, decimals=3
+        )
         self.check_string(actual_string, fuzzy_match=True)
 
     def test3(self) -> None:
@@ -1876,8 +1894,10 @@ class Test_summarize_time_index_info(hut.TestCase):
         series[0] = np.nan
         series[-1] = np.nan
         series[5:25] = np.nan
-        actual = cstati.summarize_time_index_info(series)
-        actual_string = hut.convert_df_to_string(actual, index=True, decimals=3)
+        actual = csta.summarize_time_index_info(series)
+        actual_string = huntes.convert_df_to_string(
+            actual, index=True, decimals=3
+        )
         self.check_string(actual_string, fuzzy_match=True)
 
     def test4(self) -> None:
@@ -1888,10 +1908,10 @@ class Test_summarize_time_index_info(hut.TestCase):
         series[0] = np.nan
         series[-1] = np.nan
         series[5:25] = np.nan
-        actual = cstati.summarize_time_index_info(
-            series, nan_mode="fill_with_zero"
+        actual = csta.summarize_time_index_info(series, nan_mode="fill_with_zero")
+        actual_string = huntes.convert_df_to_string(
+            actual, index=True, decimals=3
         )
-        actual_string = hut.convert_df_to_string(actual, index=True, decimals=3)
         self.check_string(actual_string, fuzzy_match=True)
 
     def test5(self) -> None:
@@ -1899,8 +1919,10 @@ class Test_summarize_time_index_info(hut.TestCase):
         Test for prefix.
         """
         series = self._get_series(seed=1)
-        actual = cstati.summarize_time_index_info(series, prefix="test_")
-        actual_string = hut.convert_df_to_string(actual, index=True, decimals=3)
+        actual = csta.summarize_time_index_info(series, prefix="test_")
+        actual_string = huntes.convert_df_to_string(
+            actual, index=True, decimals=3
+        )
         self.check_string(actual_string, fuzzy_match=True)
 
     def test6(self) -> None:
@@ -1909,8 +1931,10 @@ class Test_summarize_time_index_info(hut.TestCase):
         """
         date_range_kwargs = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = pd.Series(np.nan, index=pd.date_range(**date_range_kwargs))
-        actual = cstati.summarize_time_index_info(series)
-        actual_string = hut.convert_df_to_string(actual, index=True, decimals=3)
+        actual = csta.summarize_time_index_info(series)
+        actual_string = huntes.convert_df_to_string(
+            actual, index=True, decimals=3
+        )
         self.check_string(actual_string, fuzzy_match=True)
 
     def test7(self) -> None:
@@ -1918,14 +1942,16 @@ class Test_summarize_time_index_info(hut.TestCase):
         Test empty series.
         """
         series = pd.Series(index=pd.DatetimeIndex([]))
-        actual = cstati.summarize_time_index_info(series)
-        actual_string = hut.convert_df_to_string(actual, index=True, decimals=3)
+        actual = csta.summarize_time_index_info(series)
+        actual_string = huntes.convert_df_to_string(
+            actual, index=True, decimals=3
+        )
         self.check_string(actual_string, fuzzy_match=True)
 
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
-        series = hut.get_random_df(
+        series = huntes.get_random_df(
             num_cols=1,
             seed=seed,
             date_range_kwargs=date_range,
@@ -1933,7 +1959,7 @@ class Test_summarize_time_index_info(hut.TestCase):
         return series
 
 
-class TestComputeRegressionCoefficients1(hut.TestCase):
+class TestComputeRegressionCoefficients1(huntes.TestCase):
     @pytest.mark.skip(reason="This test generates the input data")
     def test_generate_input_data(self) -> None:
         """
@@ -1976,18 +2002,18 @@ class TestComputeRegressionCoefficients1(hut.TestCase):
         _LOG.debug("Current seed=%s", np.random.get_state()[1][0])
         _LOG.debug("data=\n%s", str(data))
         _LOG.debug("Checking against golden")
-        df_str = hut.convert_df_to_string(data, index=True, decimals=3)
+        df_str = huntes.convert_df_to_string(data, index=True, decimals=3)
         self.check_string(df_str)
 
     def test1(self) -> None:
         # Load test data.
         df = self._get_data_from_disk()
-        actual = cstati.compute_regression_coefficients(
+        actual = csta.compute_regression_coefficients(
             df,
             x_cols=list(range(0, 9)),
             y_col=9,
         )
-        actual_string = hut.convert_df_to_string(
+        actual_string = huntes.convert_df_to_string(
             actual.round(3), index=True, decimals=3
         )
         self.check_string(actual_string, fuzzy_match=True)
@@ -2015,7 +2041,7 @@ class TestComputeRegressionCoefficients1(hut.TestCase):
         """
         Generate multivariate normal returns.
         """
-        mvnp = casgen.MultivariateNormalProcess()
+        mvnp = carsigen.MultivariateNormalProcess()
         mvnp.set_cov_from_inv_wishart_draw(dim=10, seed=1)
         df = mvnp.generate_sample(
             date_range_kwargs={"start": "2010-01-04", "periods": 40, "freq": "B"},
@@ -2024,7 +2050,7 @@ class TestComputeRegressionCoefficients1(hut.TestCase):
         return df
 
 
-class TestComputeRegressionCoefficients2(hut.TestCase):
+class TestComputeRegressionCoefficients2(huntes.TestCase):
     @pytest.mark.skip(reason="This test generates the input data")
     def test_generate_input_data(self) -> None:
         """
@@ -2067,18 +2093,18 @@ class TestComputeRegressionCoefficients2(hut.TestCase):
         _LOG.debug("Current seed=%s", np.random.get_state()[1][0])
         _LOG.debug("data=\n%s", str(data))
         _LOG.debug("Checking against golden")
-        df_str = hut.convert_df_to_string(data, index=True, decimals=3)
+        df_str = huntes.convert_df_to_string(data, index=True, decimals=3)
         self.check_string(df_str)
 
     def test1(self) -> None:
         # Load test data.
         df = self._get_data_from_disk()
-        actual = cstati.compute_regression_coefficients(
+        actual = csta.compute_regression_coefficients(
             df,
             x_cols=list(range(1, 5)),
             y_col=0,
         )
-        actual_string = hut.convert_df_to_string(
+        actual_string = huntes.convert_df_to_string(
             actual.round(3), index=True, decimals=3
         )
         self.check_string(actual_string, fuzzy_match=True)
@@ -2088,20 +2114,20 @@ class TestComputeRegressionCoefficients2(hut.TestCase):
         Ensure that uniform weights give the same result as no weights.
         """
         df_unweighted = self._get_data_from_disk()
-        unweighted_actual = cstati.compute_regression_coefficients(
+        unweighted_actual = csta.compute_regression_coefficients(
             df_unweighted,
             x_cols=list(range(1, 5)),
             y_col=0,
         )
         df_uniform_weights = self._get_data_from_disk()
         df_uniform_weights["weight"] = 1
-        weighted_actual = cstati.compute_regression_coefficients(
+        weighted_actual = csta.compute_regression_coefficients(
             df_uniform_weights,
             x_cols=list(range(1, 5)),
             y_col=0,
             sample_weight_col="weight",
         )
-        hut.compare_df(unweighted_actual, weighted_actual)
+        huntes.compare_df(unweighted_actual, weighted_actual)
 
     def test3(self) -> None:
         """
@@ -2112,7 +2138,7 @@ class TestComputeRegressionCoefficients2(hut.TestCase):
             index=df_weights1.index, data=list(range(1, df_weights1.shape[0] + 1))
         )
         df_weights1["weight"] = weights
-        weights1_actual = cstati.compute_regression_coefficients(
+        weights1_actual = csta.compute_regression_coefficients(
             df_weights1,
             x_cols=list(range(1, 5)),
             y_col=0,
@@ -2121,7 +2147,7 @@ class TestComputeRegressionCoefficients2(hut.TestCase):
         df_weights2 = self._get_data_from_disk()
         # Multiply the weights by a constant factor.
         df_weights2["weight"] = 7.6 * weights
-        weights2_actual = cstati.compute_regression_coefficients(
+        weights2_actual = csta.compute_regression_coefficients(
             df_weights2,
             x_cols=list(range(1, 5)),
             y_col=0,
@@ -2129,7 +2155,7 @@ class TestComputeRegressionCoefficients2(hut.TestCase):
         )
         # This fails, though the values agree to at least six decimal places.
         # The failure appears to be due to floating point error.
-        # hut.compare_df(weights1_actual, weights2_actual)
+        # huntes.compare_df(weights1_actual, weights2_actual)
         np.testing.assert_allclose(
             weights1_actual, weights2_actual, equal_nan=True
         )
@@ -2160,7 +2186,7 @@ class TestComputeRegressionCoefficients2(hut.TestCase):
         """
         Generate multivariate normal returns.
         """
-        mvnp = casgen.MultivariateNormalProcess()
+        mvnp = carsigen.MultivariateNormalProcess()
         mvnp.set_cov_from_inv_wishart_draw(dim=10, seed=1)
         df = mvnp.generate_sample(
             date_range_kwargs={"start": "2010-01-04", "periods": 40, "freq": "B"},

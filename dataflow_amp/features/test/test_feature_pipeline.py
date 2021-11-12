@@ -54,7 +54,6 @@ class TestFeaturePipeline(hut.TestCase):
         }
         #
         _LOG.debug("config after patching=%s", config)
-        dag_builder.validate_config(config)
         # Initialize DAG runner.
         dag_runner = dtf.FitPredictDagRunner(config, dag_builder)
         result_bundle = dag_runner.fit()

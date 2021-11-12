@@ -7,8 +7,9 @@ config:
   load_prices:
     source_node_name: RealTimeDataSource
     source_node_kwargs:
-      real_time_db_interface: <core.dataflow.db_interface.ReplayedTimeDbInterface object>
+      real_time_price_interface: <core.dataflow.price_interface.ReplayedTimePriceInterface object>
       period: last_5mins
+      multiindex_output: False
   filter_weekends:
     col_mode: replace_all
   filter_ath:
@@ -131,8 +132,9 @@ config:
   load_prices:
     source_node_name: RealTimeDataSource
     source_node_kwargs:
-      real_time_db_interface: <core.dataflow.db_interface.ReplayedTimeDbInterface object>
+      real_time_price_interface: <core.dataflow.price_interface.ReplayedTimePriceInterface object>
       period: last_5mins
+      multiindex_output: False
   filter_weekends:
     col_mode: replace_all
   filter_ath:
@@ -255,8 +257,9 @@ config:
   load_prices:
     source_node_name: RealTimeDataSource
     source_node_kwargs:
-      real_time_db_interface: <core.dataflow.db_interface.ReplayedTimeDbInterface object>
+      real_time_price_interface: <core.dataflow.price_interface.ReplayedTimePriceInterface object>
       period: last_5mins
+      multiindex_output: False
   filter_weekends:
     col_mode: replace_all
   filter_ath:

@@ -28,6 +28,7 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     find_check_string_output,
     find_test_class,
     find_test_decorator,
+    fix_perms,
     gh_create_pr,
     gh_issue_title,
     gh_workflow_list,

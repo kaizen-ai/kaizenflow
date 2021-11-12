@@ -1,11 +1,16 @@
+"""
+Import as:
+
+import core.dataflow.pipelines as cdtfpip
+"""
+
 import logging
-from typing import Optional
 
 import sklearn
 
 import core.config as cconfig
 import core.event_study as cevent
-import core.signal_processing as csigna
+import core.signal_processing as csipro
 from core.dataflow.builders import DagBuilder
 from core.dataflow.core import DAG
 from core.dataflow.nodes.base import YConnector
@@ -59,7 +64,7 @@ class EventStudyBuilder(DagBuilder):
         config_kwargs["alpha"] = 0.5
         return config
 
-    def get_dag(self, config: cconfig.Config, mode: str = "strict") -> DAG:
+    def _get_dag(self, config: cconfig.Config, mode: str = "strict") -> DAG:
         """
         Implement a pipeline for running event studies.
 
@@ -70,7 +75,7 @@ class EventStudyBuilder(DagBuilder):
         :param dag: May or may not already contain nodes. If `None`, then
             returns a new DAG.
         """
-        dag = DAG()
+        dag = DAG(mode=mode)
         _LOG.debug("%s", config)
         # Dummy node for grid data input.
         # - The dataframe with timestamps along a frequency should connect to
@@ -158,7 +163,7 @@ class EventStudyBuilder(DagBuilder):
         stage = "generate_event_signal"
         node = ColumnTransformer(
             self._get_nid(stage),
-            transformer_func=csigna.compute_smooth_moving_average,
+            transformer_func=csipro.compute_smooth_moving_average,
             **config[self._get_nid(stage)].to_dict(),
             col_mode="replace_all",
         )

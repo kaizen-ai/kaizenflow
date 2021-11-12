@@ -705,6 +705,8 @@ class _ColoredFormatter(  # type: ignore[misc]
     Logging formatter using colors for different levels.
     """
 
+    _SKIP_DEBUG = True
+
     MAPPING = {
         # White: 37.
         # Blu.
@@ -724,15 +726,18 @@ class _ColoredFormatter(  # type: ignore[misc]
         # `levelname` is the internal name and can't be changed to `level_name`
         # as per our conventions.
         levelname = colored_record.levelname
-        # Use white as default.
-        prefix = "\033["
-        suffix = "\033[0m"
-        assert levelname in self.MAPPING, "Can't find info '%s'"
-        color_code, tag = self.MAPPING[levelname]
-        # Align the level name.
-        colored_levelname = "{0}{1}m{2}{3}".format(
-            prefix, color_code, tag, suffix
-        )
+        if _ColoredFormatter._SKIP_DEBUG and levelname == "DEBUG":
+            colored_levelname = ""
+        else:
+            # Use white as default.
+            prefix = "\033["
+            suffix = "\033[0m"
+            assert levelname in self.MAPPING, "Can't find info '%s'"
+            color_code, tag = self.MAPPING[levelname]
+            # Align the level name.
+            colored_levelname = "{0}{1}m{2}{3}".format(
+                prefix, color_code, tag, suffix
+            )
         colored_record.levelname = colored_levelname
         return logging.Formatter.format(self, colored_record)
 

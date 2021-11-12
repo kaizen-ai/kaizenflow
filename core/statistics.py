@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.statistics as cstati
+import core.statistics as csta
 """
 
 import collections
@@ -19,11 +19,11 @@ import sklearn.model_selection
 import statsmodels
 import statsmodels.api as sm
 
-import core.finance as cfinan
-import core.signal_processing as csigna
-import helpers.dataframe as hdataf
-import helpers.dbg as dbg
-import helpers.hpandas as hpandas
+import core.finance as cfin
+import core.signal_processing as csipro
+import helpers.dataframe as hdatafra
+import helpers.dbg as hdbg
+import helpers.hpandas as hhpandas
 
 _LOG = logging.getLogger(__name__)
 
@@ -42,19 +42,19 @@ def summarize_time_index_info(
     Return summarized information about datetime index of the input.
 
     :param srs: pandas series of floats
-    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param nan_mode: argument for hdatafra.apply_nan_mode()
     :param prefix: optional prefix for output's index
     :return: series with information about input's index
     """
-    dbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_isinstance(srs, pd.Series)
     nan_mode = nan_mode or "drop"
     prefix = prefix or ""
     original_index = srs.index
     # Assert that input series has a sorted datetime index.
-    dbg.dassert_isinstance(original_index, pd.DatetimeIndex)
-    hpandas.dassert_strictly_increasing_index(original_index)
+    hdbg.dassert_isinstance(original_index, pd.DatetimeIndex)
+    hhpandas.dassert_strictly_increasing_index(original_index)
     freq = original_index.freq
-    clear_srs = hdataf.apply_nan_mode(srs, mode=nan_mode)
+    clear_srs = hdatafra.apply_nan_mode(srs, mode=nan_mode)
     clear_index = clear_srs.index
     result = {}
     if clear_srs.empty:
@@ -69,8 +69,8 @@ def summarize_time_index_info(
     if freq is None:
         sampling_points_per_year = clear_srs.resample("Y").count().mean()
     else:
-        sampling_points_per_year = hdataf.compute_points_per_year_for_given_freq(
-            freq
+        sampling_points_per_year = (
+            hdatafra.compute_points_per_year_for_given_freq(freq)
         )
     result["sampling_points_per_year"] = sampling_points_per_year
     # Compute input time span as a number of `freq` units in
@@ -79,7 +79,7 @@ def summarize_time_index_info(
         if freq is None:
             clear_index_time_span = (clear_index[-1] - clear_index[0]).days
             sampling_points_per_year = (
-                hdataf.compute_points_per_year_for_given_freq("D")
+                hdatafra.compute_points_per_year_for_given_freq("D")
             )
         else:
             clear_index_time_span = len(srs[clear_index[0] : clear_index[-1]])
@@ -105,7 +105,7 @@ def compute_special_value_stats(
     :return: series of statistics
     """
     prefix = prefix or ""
-    dbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_isinstance(srs, pd.Series)
     result_index = [
         prefix + "n_rows",
         prefix + "frac_zero",
@@ -248,7 +248,7 @@ def compute_zero_diff_proportion(
     :param srs: pandas series of floats
     :param atol: as in numpy.isclose
     :param rtol: as in numpy.isclose
-    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param nan_mode: argument for hdatafra.apply_nan_mode()
         If `nan_mode` is "leave_unchanged":
           - consecutive `NaN`s are not counted as a constant period
           - repeated values with `NaN` in between are not counted as a constant
@@ -264,13 +264,13 @@ def compute_zero_diff_proportion(
     :param prefix: optional prefix for metrics' outcome
     :return: series with proportion of unvarying periods
     """
-    dbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_isinstance(srs, pd.Series)
     atol = atol or 0
     rtol = rtol or 1e-05
     nan_mode = nan_mode or "leave_unchanged"
     prefix = prefix or ""
     srs = srs.replace([np.inf, -np.inf], np.nan)
-    data = hdataf.apply_nan_mode(srs, mode=nan_mode)
+    data = hdatafra.apply_nan_mode(srs, mode=nan_mode)
     result_index = [
         prefix + "approx_const_count",
         prefix + "approx_const_frac",
@@ -302,7 +302,7 @@ def compute_dyadic_scale(num: float) -> int:
     ** (j + 1)
     """
     abs_num = np.abs(num)
-    dbg.dassert_lt(0, abs_num)
+    hdbg.dassert_lt(0, abs_num)
     j = np.floor(np.log2(abs_num))
     return int(j)
 
@@ -322,15 +322,15 @@ def compute_moments(
     Calculate, mean, standard deviation, skew, and kurtosis.
 
     :param srs: input series for computing moments
-    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param nan_mode: argument for hdatafra.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
     :return: series of computed moments
     """
-    dbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_isinstance(srs, pd.Series)
     nan_mode = nan_mode or "drop"
     prefix = prefix or ""
     data = replace_infs_with_nans(srs)
-    data = hdataf.apply_nan_mode(data, mode=nan_mode)
+    data = hdatafra.apply_nan_mode(data, mode=nan_mode)
     result_index = [
         prefix + "mean",
         prefix + "std",
@@ -387,21 +387,21 @@ def compute_jensen_ratio(
       - For a signal that is t-distributed with 4 dof, the expected value is
         approximately 0.71.
     """
-    dbg.dassert_isinstance(signal, pd.Series)
+    hdbg.dassert_isinstance(signal, pd.Series)
     # Require that we evaluate a norm.
-    dbg.dassert_lte(1, p_norm)
+    hdbg.dassert_lte(1, p_norm)
     # TODO(*): Maybe add l-infinity support. For many stochastic signals, we
     # should not expect a finite value in the continuous limit.
-    dbg.dassert(np.isfinite(p_norm))
+    hdbg.dassert(np.isfinite(p_norm))
     # Set reasonable defaults for inf and nan modes.
     inf_mode = inf_mode or "drop"
     nan_mode = nan_mode or "drop"
     prefix = prefix or ""
-    data = hdataf.apply_nan_mode(signal, mode=nan_mode)
+    data = hdatafra.apply_nan_mode(signal, mode=nan_mode)
     nan_result = pd.Series(
         data=np.nan, index=[prefix + "jensen_ratio"], name=signal.name
     )
-    dbg.dassert(not data.isna().any())
+    hdbg.dassert(not data.isna().any())
     # Handle infs.
     # TODO(*): apply special functions for inf_mode after #2624 is completed.
     has_infs = (~data.apply(np.isfinite)).any()
@@ -415,7 +415,7 @@ def compute_jensen_ratio(
             data = data.replace([-np.inf, np.inf], np.nan).dropna()
         else:
             raise ValueError(f"Unrecognized inf_mode `{inf_mode}")
-    dbg.dassert(data.apply(np.isfinite).all())
+    hdbg.dassert(data.apply(np.isfinite).all())
     # Return NaN if there is no data.
     if data.size == 0:
         _LOG.warning("Empty input signal `%s`", signal.name)
@@ -440,7 +440,7 @@ def compute_t_distribution_j_2(nu: float):
     :return: the theoretical J-ratio for a standard t-distribution with `nu`
         degrees of freedom.
     """
-    dbg.dassert_lte(2, nu, "The Jensen ratio is only well defined for nu >= 2.")
+    hdbg.dassert_lte(2, nu, "The Jensen ratio is only well defined for nu >= 2.")
     if nu == np.inf:
         jensen_2 = np.sqrt(2 / np.pi)
     elif nu == 2:
@@ -463,11 +463,11 @@ def _check_alpha_and_normalize_data(data: pd.Series, alpha: float) -> pd.Series:
     :param data: series of nonnegative numbers
     :param alpha: parameter in [0, np.inf]
     """
-    dbg.dassert_lte(
+    hdbg.dassert_lte(
         0, alpha, "Parameter `alpha` must be greater than or equal to 0."
     )
-    dbg.dassert_isinstance(data, pd.Series)
-    dbg.dassert(
+    hdbg.dassert_isinstance(data, pd.Series)
+    hdbg.dassert(
         (data >= 0).all(), "Series `data` must have only nonnegative values."
     )
     # Normalize nonnegative data so that it sums to one.
@@ -489,7 +489,7 @@ def compute_surprise(data: pd.Series, alpha: float) -> float:
     :param data: series of nonnegative numbers
     :param alpha: parameter in [0, np.inf]
     """
-    dbg.dassert_ne(
+    hdbg.dassert_ne(
         1, alpha, "The special case `alpha=1` must be handled separately."
     )
     normalized_data = _check_alpha_and_normalize_data(data, alpha)
@@ -612,9 +612,9 @@ def compute_hill_number(data: pd.Series, q: float) -> float:
       - increasing q puts more weight on top relative classes
     :return: a float between zero and data.size
     """
-    dbg.dassert_lte(1, q, "Order `q` must be greater than or equal to 1.")
-    dbg.dassert_isinstance(data, pd.Series)
-    dbg.dassert(
+    hdbg.dassert_lte(1, q, "Order `q` must be greater than or equal to 1.")
+    hdbg.dassert_isinstance(data, pd.Series)
+    hdbg.dassert(
         (data >= 0).all(), "Series `data` must have only nonnegative values."
     )
     hill_number = compute_cardinality(data, q)
@@ -633,8 +633,8 @@ def get_symmetric_normal_quantiles(bin_width: float) -> list:
     :param bin_width: percentage of normal distribution to capture in each bin
     :return: ordered endpoints of bins, including `-np.inf` and `np.inf`
     """
-    dbg.dassert_lt(0, bin_width)
-    dbg.dassert_lt(bin_width, 1)
+    hdbg.dassert_lt(0, bin_width)
+    hdbg.dassert_lt(bin_width, 1)
     half_bin_width = bin_width / 2
     positive_bin_boundaries = [
         sp.stats.norm.ppf(x + 0.5)
@@ -710,18 +710,18 @@ def apply_adf_test(
     :param maxlag: as in stattools.adfuller
     :param regression: as in stattools.adfuller
     :param autolag: as in stattools.adfuller
-    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param nan_mode: argument for hdatafra.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
     :return: test statistic, pvalue, and related info
     """
-    dbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_isinstance(srs, pd.Series)
     regression = regression or "c"
     autolag = autolag or "AIC"
     nan_mode = nan_mode or "drop"
     prefix = prefix or ""
     # Hack until we factor out inf handling.
     srs = srs.replace([np.inf, -np.inf], np.nan)
-    data = hdataf.apply_nan_mode(srs, mode=nan_mode)
+    data = hdatafra.apply_nan_mode(srs, mode=nan_mode)
     # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.adfuller.html
     result_index = [
         prefix + "stat",
@@ -789,16 +789,16 @@ def apply_kpss_test(
     :param srs: pandas series of floats
     :param regression: as in stattools.kpss
     :param nlags: as in stattools.kpss
-    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param nan_mode: argument for hdatafra.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
     :return: test statistic, pvalue, and related info
     """
-    dbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_isinstance(srs, pd.Series)
     regression = regression or "c"
     nan_mode = nan_mode or "drop"
     nlags = nlags or "auto"
     prefix = prefix or ""
-    data = hdataf.apply_nan_mode(srs, mode=nan_mode)
+    data = hdatafra.apply_nan_mode(srs, mode=nan_mode)
     # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.kpss.html
     result_index = [
         prefix + "stat",
@@ -857,13 +857,13 @@ def apply_normality_test(
     An omnibus test of normality that combines skew and kurtosis.
 
     :param prefix: optional prefix for metrics' outcome
-    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param nan_mode: argument for hdatafra.apply_nan_mode()
     :return: series with statistics and p-value
     """
-    dbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_isinstance(srs, pd.Series)
     nan_mode = nan_mode or "drop"
     prefix = prefix or ""
-    data = hdataf.apply_nan_mode(srs, mode=nan_mode)
+    data = hdatafra.apply_nan_mode(srs, mode=nan_mode)
     result_index = [
         prefix + "stat",
         prefix + "pval",
@@ -900,7 +900,7 @@ def compute_centered_gaussian_total_log_likelihood(
     name = str(srs.name) + "var"
     var_srs = pd.Series(index=srs.index, data=var, name=name)
     df = pd.concat([srs, var_srs], axis=1)
-    df_out = csigna.compute_centered_gaussian_log_likelihood(
+    df_out = csipro.compute_centered_gaussian_log_likelihood(
         df, observation_col=srs.name, variance_col=name
     )
     log_likelihood = df_out["log_likelihood"].sum()
@@ -934,16 +934,16 @@ def apply_ljung_box_test(
     :param model_df: as in diagnostic.acorr_ljungbox
     :param period: as in diagnostic.acorr_ljungbox
     :param return_df: as in diagnostic.acorr_ljungbox
-    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param nan_mode: argument for hdatafra.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
     :return: test statistic, pvalue
     """
-    dbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_isinstance(srs, pd.Series)
     model_df = model_df or 0
     return_df = return_df or True
     nan_mode = nan_mode or "drop"
     prefix = prefix or ""
-    data = hdataf.apply_nan_mode(srs, mode=nan_mode)
+    data = hdatafra.apply_nan_mode(srs, mode=nan_mode)
     # https://www.statsmodels.org/stable/generated/statsmodels.stats.diagnostic.acorr_ljungbox.html
     columns = [
         prefix + "stat",
@@ -989,12 +989,12 @@ def compute_cross_correlation(
     :param lags: list of integer lags to shift `x_cols` by
     :return: dataframe of cross correlation at lags
     """
-    dbg.dassert(not df.empty, msg="Dataframe must be nonempty")
-    dbg.dassert_isinstance(x_cols, list)
-    dbg.dassert_is_subset(x_cols, df.columns)
-    dbg.dassert_isinstance(y_col, (int, str))
-    dbg.dassert_in(y_col, df.columns)
-    dbg.dassert_isinstance(lags, list)
+    hdbg.dassert(not df.empty, msg="Dataframe must be nonempty")
+    hdbg.dassert_isinstance(x_cols, list)
+    hdbg.dassert_is_subset(x_cols, df.columns)
+    hdbg.dassert_isinstance(y_col, (int, str))
+    hdbg.dassert_in(y_col, df.columns)
+    hdbg.dassert_isinstance(lags, list)
     # Drop rows with no y value.
     _LOG.debug("y_col=`%s` count=%i", y_col, df[y_col].count())
     df = df.dropna(subset=[y_col])
@@ -1038,11 +1038,11 @@ def compute_forecastability(
        if \E(x_t y_s) = 0 for all s, t \in \Z;
        equality iff alpha \in \{0, 1\}.
     """
-    dbg.dassert_isinstance(signal, pd.Series)
+    hdbg.dassert_isinstance(signal, pd.Series)
     nan_mode = nan_mode or "fill_with_zero"
     inf_mode = inf_mode or "drop"
     prefix = prefix or ""
-    data = hdataf.apply_nan_mode(signal, mode=nan_mode)
+    data = hdatafra.apply_nan_mode(signal, mode=nan_mode)
     has_infs = (~data.apply(np.isfinite)).any()
     # Make an output for empty or too short inputs.
     nan_result = pd.Series(
@@ -1058,7 +1058,7 @@ def compute_forecastability(
             data = data.replace([-np.inf, np.inf], np.nan).dropna()
         else:
             raise ValueError(f"Unrecognized inf_mode `{inf_mode}")
-    dbg.dassert(data.apply(np.isfinite).all())
+    hdbg.dassert(data.apply(np.isfinite).all())
     # Return NaN if there is no data.
     if data.size == 0:
         _LOG.warning("Empty input signal `%s`", signal.name)
@@ -1092,13 +1092,13 @@ def compute_swt_var_summary(
     """
     Compute swt var using scales up to `depth`.
 
-    Params as in `csigna.get_swt()`.
+    Params as in `csipro.get_swt()`.
     """
-    swt_var = csigna.compute_swt_var(
+    swt_var = csipro.compute_swt_var(
         sig, wavelet=wavelet, depth=depth, timing_mode=timing_mode, axis=0
     )
-    dbg.dassert_in("swt_var", swt_var.columns)
-    srs = csigna.compute_swt_var(
+    hdbg.dassert_in("swt_var", swt_var.columns)
+    srs = csipro.compute_swt_var(
         sig, wavelet=wavelet, depth=depth, timing_mode=timing_mode, axis=1
     )
     fvi = srs.first_valid_index()
@@ -1120,10 +1120,10 @@ def compute_swt_covar_summary(
     """
     Compute swt var using scales up to `depth`.
 
-    Params as in `csigna.get_swt()`.
+    Params as in `csipro.get_swt()`.
     """
-    dbg.dassert_ne(col1, col2)
-    swt_covar = csigna.compute_swt_covar(
+    hdbg.dassert_ne(col1, col2)
+    swt_covar = csipro.compute_swt_covar(
         df,
         col1,
         col2,
@@ -1132,8 +1132,8 @@ def compute_swt_covar_summary(
         timing_mode=timing_mode,
         axis=0,
     )
-    dbg.dassert_in("swt_covar", swt_covar.columns)
-    srs = csigna.compute_swt_covar(
+    hdbg.dassert_in("swt_covar", swt_covar.columns)
+    srs = csipro.compute_swt_covar(
         df,
         col1,
         col2,
@@ -1146,8 +1146,8 @@ def compute_swt_covar_summary(
     decomp = swt_covar / srs.loc[fvi:].count()
     var1_col = str(col1) + "_swt_var"
     var2_col = str(col2) + "_swt_var"
-    dbg.dassert_in(var1_col, decomp.columns)
-    dbg.dassert_in(var2_col, decomp.columns)
+    hdbg.dassert_in(var1_col, decomp.columns)
+    hdbg.dassert_in(var2_col, decomp.columns)
     decomp["swt_corr"] = decomp["swt_covar"].divide(
         np.sqrt(decomp[var1_col].multiply(decomp[var2_col]))
     )
@@ -1160,7 +1160,7 @@ def compute_swt_covar_summary(
 
 
 def summarize_sharpe_ratio(
-    log_rets: pd.Series,
+    pnl: pd.Series,
     prefix: Optional[str] = None,
 ) -> pd.Series:
     """
@@ -1170,18 +1170,18 @@ def summarize_sharpe_ratio(
         e.g., https://www.twosigma.com/wp-content/uploads/sharpe-tr-1.pdf
     """
     prefix = prefix or ""
-    sr = compute_annualized_sharpe_ratio(log_rets)
-    sr_se_estimate = compute_annualized_sharpe_ratio_standard_error(log_rets)
+    sr = compute_annualized_sharpe_ratio(pnl)
+    sr_se_estimate = compute_annualized_sharpe_ratio_standard_error(pnl)
     res = pd.Series(
         data=[sr, sr_se_estimate],
         index=[prefix + "sharpe_ratio", prefix + "sharpe_ratio_standard_error"],
-        name=log_rets.name,
+        name=pnl.name,
     )
     return res
 
 
 def zscore_oos_sharpe_ratio(
-    log_rets: pd.Series, oos: Any, prefix: Optional[str] = None
+    pnl: pd.Series, oos: Any, prefix: Optional[str] = None
 ) -> pd.Series:
     """
     Z-score the observed OOS SR wrt the INS SR and inflated SE.
@@ -1193,26 +1193,26 @@ def zscore_oos_sharpe_ratio(
 
     TODO(*): Consider factoring out pieces and/or returning more info.
 
-    :param log_rets: log returns over entire period
+    :param pnl: time series of per-period PnL
     :param oos: start of OOS (right endpoint)
     :param prefix: prefix for the output series index
     :return: series of SR stats
     """
     prefix = prefix or ""
     # Create ins/oos masks.
-    ins_mask = log_rets.index < oos
-    dbg.dassert(ins_mask.any())
+    ins_mask = pnl.index < oos
+    hdbg.dassert(ins_mask.any())
     ins_nobs = ins_mask.sum()
-    oos_mask = log_rets.index >= oos
-    dbg.dassert(oos_mask.any())
+    oos_mask = pnl.index >= oos
+    hdbg.dassert(oos_mask.any())
     oos_nobs = oos_mask.sum()
     #
     inflation = compute_sharpe_ratio_prediction_interval_inflation_factor(
         ins_nobs, oos_nobs
     )
     #
-    ins_srs = log_rets.loc[ins_mask].copy()
-    oos_srs = log_rets.loc[oos_mask].copy()
+    ins_srs = pnl.loc[ins_mask].copy()
+    oos_srs = pnl.loc[oos_mask].copy()
     # Compute INS Sharpe ratio and SE.
     ins_sr_and_se = summarize_sharpe_ratio(ins_srs, prefix="INS_")
     # Compute OOS Sharpe ratio and SE.
@@ -1235,26 +1235,26 @@ def zscore_oos_sharpe_ratio(
 
 
 def compute_annualized_sharpe_ratio(
-    log_rets: Union[pd.Series, pd.DataFrame],
+    pnl: Union[pd.Series, pd.DataFrame],
 ) -> Union[float, pd.Series]:
     """
     Compute SR from rets with an index freq and annualize.
 
-    :param log_rets: time series of log returns
+    :param pnl: time series of per-period PnL
     :return: annualized Sharpe ratio
     """
-    log_rets = cfinan.maybe_resample(log_rets)
-    points_per_year = hdataf.infer_sampling_points_per_year(log_rets)
-    if isinstance(log_rets, pd.Series):
-        log_rets = hdataf.apply_nan_mode(log_rets, mode="fill_with_zero")
-    if isinstance(log_rets, pd.DataFrame):
-        log_rets = log_rets.apply(hdataf.apply_nan_mode, mode="fill_with_zero")
-    sr = compute_sharpe_ratio(log_rets, points_per_year)
+    pnl = cfin.maybe_resample(pnl)
+    points_per_year = hdatafra.infer_sampling_points_per_year(pnl)
+    if isinstance(pnl, pd.Series):
+        pnl = hdatafra.apply_nan_mode(pnl, mode="fill_with_zero")
+    if isinstance(pnl, pd.DataFrame):
+        pnl = pnl.apply(hdatafra.apply_nan_mode, mode="fill_with_zero")
+    sr = compute_sharpe_ratio(pnl, points_per_year)
     return sr
 
 
 def compute_annualized_sharpe_ratio_standard_error(
-    log_rets: Union[pd.Series, pd.DataFrame],
+    pnl: Union[pd.Series, pd.DataFrame],
 ) -> Union[float, pd.Series]:
     """
     Compute SE(SR) from rets with an index freq and annualize.
@@ -1263,33 +1263,33 @@ def compute_annualized_sharpe_ratio_standard_error(
     sampling frequency and then rescales to turn it into a standard error
     for the corresponding annualized Sharpe ratio.
 
-    :param log_rets: time series of log returns
+    :param pnl: time series of per-period PnL
     :return: standard error estimate of annualized Sharpe ratio
     """
-    log_rets = cfinan.maybe_resample(log_rets)
-    points_per_year = hdataf.infer_sampling_points_per_year(log_rets)
-    log_rets = hdataf.apply_nan_mode(log_rets, mode="fill_with_zero")
-    se_sr = compute_sharpe_ratio_standard_error(log_rets, points_per_year)
+    pnl = cfin.maybe_resample(pnl)
+    points_per_year = hdatafra.infer_sampling_points_per_year(pnl)
+    pnl = hdatafra.apply_nan_mode(pnl, mode="fill_with_zero")
+    se_sr = compute_sharpe_ratio_standard_error(pnl, points_per_year)
     return se_sr
 
 
 def compute_sharpe_ratio(
-    log_rets: Union[pd.Series, pd.DataFrame], time_scaling: Union[int, float] = 1
+    pnl: Union[pd.Series, pd.DataFrame], time_scaling: Union[int, float] = 1
 ) -> Union[float, pd.Series]:
-    r"""Calculate Sharpe Ratio (SR) from log returns and rescale.
+    r"""Calculate Sharpe Ratio (SR) from pnl and rescale.
 
     For a detailed exploration of SR, see
     http://www.gilgamath.com/pages/ssc.html.
 
-    :param log_rets: time series of log returns
+    :param pnl: time series of per-period PnL
     :param time_scaling: rescales SR by a factor of \sqrt(time_scaling).
         - For SR with respect to the sampling frequency, set equal to 1
         - For annualization, set equal to the number of sampling frequency
           ticks per year (e.g., =252 if daily returns are provided)
     :return: Sharpe Ratio
     """
-    dbg.dassert_lte(1, time_scaling, f"time_scaling=`{time_scaling}`")
-    sr = log_rets.mean() / log_rets.std()
+    hdbg.dassert_lte(1, time_scaling, f"time_scaling=`{time_scaling}`")
+    sr = pnl.mean() / pnl.std()
     sr *= np.sqrt(time_scaling)
     if isinstance(sr, pd.Series):
         sr.name = "SR"
@@ -1297,20 +1297,20 @@ def compute_sharpe_ratio(
 
 
 def compute_sharpe_ratio_standard_error(
-    log_rets: Union[pd.Series, pd.DataFrame], time_scaling: Union[int, float] = 1
+    pnl: Union[pd.Series, pd.DataFrame], time_scaling: Union[int, float] = 1
 ) -> Union[float, pd.Series]:
     """
-    Calculate Sharpe Ratio standard error from log returns and rescale.
+    Calculate Sharpe Ratio standard error from pnl and rescale.
 
-    :param log_rets: time series of log returns
+    :param pnl: time series of per-period PnL
     :param time_scaling: as in `compute_sharpe_ratio`
     :return: Sharpe ratio standard error estimate
     """
-    dbg.dassert_lte(1, time_scaling, f"time_scaling=`{time_scaling}`")
+    hdbg.dassert_lte(1, time_scaling, f"time_scaling=`{time_scaling}`")
     # Compute the Sharpe ratio using the sampling frequency units[
-    sr = compute_sharpe_ratio(log_rets, time_scaling=1)
-    srs_size = hdataf.apply_nan_mode(log_rets, mode="drop").size
-    dbg.dassert_lt(1, srs_size)
+    sr = compute_sharpe_ratio(pnl, time_scaling=1)
+    srs_size = hdatafra.apply_nan_mode(pnl, mode="drop").size
+    hdbg.dassert_lt(1, srs_size)
     sr_var_estimate = (1 + (sr ** 2) / 2) / (srs_size - 1)
     sr_se_estimate = np.sqrt(sr_var_estimate)
     # Rescale.
@@ -1353,10 +1353,10 @@ def apply_ttest_power_rule(
         alpha=alpha, power=power, two_sided=two_sided
     )
     if years is None and sharpe_ratio is not None:
-        dbg.dassert_isinstance(sharpe_ratio, numbers.Number)
+        hdbg.dassert_isinstance(sharpe_ratio, numbers.Number)
         years = const / (sharpe_ratio ** 2)
     elif years is not None and sharpe_ratio is None:
-        dbg.dassert_isinstance(years, numbers.Number)
+        hdbg.dassert_isinstance(years, numbers.Number)
         sharpe_ratio = np.sqrt(const / years)
     else:
         raise ValueError(
@@ -1391,10 +1391,10 @@ def compute_ttest_power_rule_constant(
     :param two_sided: one or two-sided t-test
     :return: constant to use in (one sample) t-test power law
     """
-    dbg.dassert_lt(0, alpha)
-    dbg.dassert_lt(alpha, 1)
-    dbg.dassert_lt(0, power)
-    dbg.dassert_lt(power, 1)
+    hdbg.dassert_lt(0, alpha)
+    hdbg.dassert_lt(alpha, 1)
+    hdbg.dassert_lt(0, power)
+    hdbg.dassert_lt(power, 1)
     if two_sided:
         alpha /= 2
     const: float = (sp.stats.norm.ppf(1 - alpha) + sp.stats.norm.ppf(power)) ** 2
@@ -1424,8 +1424,7 @@ def apply_sharpe_ratio_correlation_conversion(
     """
     Convert annualized SR to correlation or vice-versa.
 
-    :param freq: time series sampling frequency
-    :param participation_rate: fraction of non-NaN values given `freq`
+    :param points_per_year: number of trading periods per year
     :param sharpe_ratio: annualized Sharpe ratio
     :param correlation: correlation coefficient
     :return: annualized Sharpe ratio if correlation is provided; correlation
@@ -1459,7 +1458,7 @@ def compute_implied_correlation(pnl: pd.Series) -> float:
     :return: estimated correlation of the predictions that, when combined with
         returns, generated `pnl`
     """
-    count_per_year = hdataf.compute_count_per_year(pnl)
+    count_per_year = hdatafra.compute_count_per_year(pnl)
     sr = compute_annualized_sharpe_ratio(pnl)
     corr = apply_sharpe_ratio_correlation_conversion(
         count_per_year, sharpe_ratio=sr
@@ -1476,9 +1475,9 @@ def compute_implied_sharpe_ratio(srs: pd.Series, corr: float) -> float:
     used directly, but rather only the knowledge of whether they are
     included in `srs.count()`, e.g., are non-NaN, non-inf, etc.
     """
-    dbg.dassert_lte(-1, corr)
-    dbg.dassert_lte(corr, 1)
-    count_per_year = hdataf.compute_count_per_year(srs)
+    hdbg.dassert_lte(-1, corr)
+    hdbg.dassert_lte(corr, 1)
+    count_per_year = hdatafra.compute_count_per_year(srs)
     sr = apply_sharpe_ratio_correlation_conversion(
         count_per_year, correlation=corr
     )
@@ -1495,10 +1494,10 @@ def compute_hit_rate_implied_by_correlation(
     assumptions.
     """
     j_ratio = j_ratio or np.sqrt(2 / np.pi)
-    dbg.dassert_lt(0, j_ratio)
-    dbg.dassert_lte(j_ratio, 1)
-    dbg.dassert_lte(-1, corr)
-    dbg.dassert_lte(corr, 1)
+    hdbg.dassert_lt(0, j_ratio)
+    hdbg.dassert_lte(j_ratio, 1)
+    hdbg.dassert_lte(-1, corr)
+    hdbg.dassert_lte(corr, 1)
     return sp.stats.norm.sf(-1 * corr / j_ratio)
 
 
@@ -1512,10 +1511,10 @@ def compute_correlation_implied_by_hit_rate(
     similarly only valid under certain distributional assumptions.
     """
     j_ratio = j_ratio or np.sqrt(2 / np.pi)
-    dbg.dassert_lt(0, j_ratio)
-    dbg.dassert_lte(j_ratio, 1)
-    dbg.dassert_lte(0, hit_rate)
-    dbg.dassert_lte(hit_rate, 1)
+    hdbg.dassert_lt(0, j_ratio)
+    hdbg.dassert_lte(j_ratio, 1)
+    hdbg.dassert_lte(0, hit_rate)
+    hdbg.dassert_lte(hit_rate, 1)
     return j_ratio * sp.stats.norm.ppf(hit_rate)
 
 
@@ -1556,10 +1555,10 @@ def compute_drawdown_cdf(
     :return: Prob(drawdown at time `time` <= `drawdown`)
         - If time is `None`, then we use the limiting exponential distribution.
     """
-    dbg.dassert_lt(0, sharpe_ratio)
-    dbg.dassert_lt(0, volatility)
-    dbg.dassert_lt(0, drawdown)
-    dbg.dassert_lt(0, time)
+    hdbg.dassert_lt(0, sharpe_ratio)
+    hdbg.dassert_lt(0, volatility)
+    hdbg.dassert_lt(0, drawdown)
+    hdbg.dassert_lt(0, time)
     normalized_drawdown = drawdown / volatility
     probability = compute_normalized_drawdown_cdf(
         sharpe_ratio=sharpe_ratio,
@@ -1583,9 +1582,9 @@ def compute_normalized_drawdown_cdf(
     :param time: time in units consistent with those of SR
     :return: Prob(normalized drawdown at time `time` <= `normalized_drawdown`)
     """
-    dbg.dassert_lt(0, sharpe_ratio)
-    dbg.dassert_lt(0, normalized_drawdown)
-    dbg.dassert_lt(0, time)
+    hdbg.dassert_lt(0, sharpe_ratio)
+    hdbg.dassert_lt(0, normalized_drawdown)
+    hdbg.dassert_lt(0, time)
     if time is None:
         a = np.inf
         b = np.inf
@@ -1617,10 +1616,10 @@ def compute_max_drawdown_approximate_cdf(
     :return: estimate of
         Prob(max drawdown over time period of length `time` <= `max_drawdown`)
     """
-    dbg.dassert_lt(0, sharpe_ratio)
-    dbg.dassert_lt(0, volatility)
-    dbg.dassert_lt(0, max_drawdown)
-    dbg.dassert_lt(0, time)
+    hdbg.dassert_lt(0, sharpe_ratio)
+    hdbg.dassert_lt(0, volatility)
+    hdbg.dassert_lt(0, max_drawdown)
+    hdbg.dassert_lt(0, time)
     lambda_ = 2 * sharpe_ratio / volatility
     # lambda_ * max_drawdown is the same as
     #     -2 * sharpe_ratio * (max_drawdown / volatility)
@@ -1630,28 +1629,26 @@ def compute_max_drawdown_approximate_cdf(
 
 
 def compute_max_drawdown(
-    log_rets: pd.Series,
+    pnl: pd.Series,
     prefix: Optional[str] = None,
 ) -> pd.Series:
     """
     Calculate max drawdown statistic.
 
-    :param log_rets: pandas series of log returns
+    :param pnl: series of per-period PnL
     :param prefix: optional prefix for metrics' outcome
-    :return: max drawdown as a negative percentage loss
+    :return: max drawdown in units of PnL
     """
-    dbg.dassert_isinstance(log_rets, pd.Series)
+    hdbg.dassert_isinstance(pnl, pd.Series)
     prefix = prefix or ""
-    result_index = [prefix + "max_drawdown_(%)"]
-    nan_result = pd.Series(
-        index=result_index, name=log_rets.name, dtype="float64"
-    )
-    if log_rets.empty:
-        _LOG.warning("Empty input series `%s`", log_rets.name)
+    result_index = [prefix + "max_drawdown"]
+    nan_result = pd.Series(index=result_index, name=pnl.name, dtype="float64")
+    if pnl.empty:
+        _LOG.warning("Empty input series `%s`", pnl.name)
         return nan_result
-    pct_drawdown = cfinan.compute_perc_loss_from_high_water_mark(log_rets)
-    max_drawdown = -100 * (pct_drawdown.max())
-    result = pd.Series(data=max_drawdown, index=result_index, name=log_rets.name)
+    drawdown = cfin.compute_drawdown(pnl)
+    max_drawdown = drawdown.max()
+    result = pd.Series(data=max_drawdown, index=result_index, name=pnl.name)
     return result
 
 
@@ -1672,7 +1669,7 @@ def compute_annualized_return_and_volatility(
     :return: annualized pd.Series with return and volatility in %; pct rets
         if `srs` consists of pct rets, log rets if `srs` consists of log rets.
     """
-    dbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_isinstance(srs, pd.Series)
     prefix = prefix or ""
     result_index = [
         prefix + "annualized_mean_return_(%)",
@@ -1684,8 +1681,8 @@ def compute_annualized_return_and_volatility(
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
-    annualized_mean_return = 100 * cfinan.compute_annualized_return(srs)
-    annualized_volatility = 100 * cfinan.compute_annualized_volatility(srs)
+    annualized_mean_return = 100 * cfin.compute_annualized_return(srs)
+    annualized_volatility = 100 * cfin.compute_annualized_volatility(srs)
     result = pd.Series(
         data=[annualized_mean_return, annualized_volatility],
         index=result_index,
@@ -1716,15 +1713,15 @@ def compute_bet_stats(
         year
     """
     prefix = prefix or ""
-    bet_lengths = cfinan.compute_signed_bet_lengths(positions)
-    log_rets_per_bet = cfinan.compute_returns_per_bet(positions, log_rets)
+    bet_lengths = cfin.compute_signed_bet_lengths(positions)
+    log_rets_per_bet = cfin.compute_returns_per_bet(positions, log_rets)
     #
     stats = dict()
     stats["num_positions"] = int(bet_lengths.abs().sum())
     stats["num_bets"] = bet_lengths.size
     stats["long_bets_(%)"] = 100 * (bet_lengths > 0).sum() / bet_lengths.size
     if positions.index.freq is not None:
-        n_years = positions.size / hdataf.infer_sampling_points_per_year(
+        n_years = positions.size / hdatafra.infer_sampling_points_per_year(
             positions
         )
         stats["avg_num_bets_per_year"] = bet_lengths.size / n_years
@@ -1740,17 +1737,17 @@ def compute_bet_stats(
     avg_ret_winning_bets = log_rets_per_bet.loc[log_rets_per_bet > 0].mean()
     stats[
         "avg_return_winning_bets_(%)"
-    ] = 100 * cfinan.convert_log_rets_to_pct_rets(avg_ret_winning_bets)
+    ] = 100 * cfin.convert_log_rets_to_pct_rets(avg_ret_winning_bets)
     avg_ret_losing_bets = log_rets_per_bet.loc[log_rets_per_bet < 0].mean()
-    stats[
-        "avg_return_losing_bets_(%)"
-    ] = 100 * cfinan.convert_log_rets_to_pct_rets(avg_ret_losing_bets)
+    stats["avg_return_losing_bets_(%)"] = 100 * cfin.convert_log_rets_to_pct_rets(
+        avg_ret_losing_bets
+    )
     avg_ret_long_bet = log_rets_per_bet.loc[bet_lengths > 0].mean()
-    stats["avg_return_long_bet_(%)"] = 100 * cfinan.convert_log_rets_to_pct_rets(
+    stats["avg_return_long_bet_(%)"] = 100 * cfin.convert_log_rets_to_pct_rets(
         avg_ret_long_bet
     )
     avg_ret_short_bet = log_rets_per_bet.loc[bet_lengths < 0].mean()
-    stats["avg_return_short_bet_(%)"] = 100 * cfinan.convert_log_rets_to_pct_rets(
+    stats["avg_return_short_bet_(%)"] = 100 * cfin.convert_log_rets_to_pct_rets(
         avg_ret_short_bet
     )
     #
@@ -1783,11 +1780,11 @@ def calculate_hit_rate(
     """
     alpha = alpha or 0.05
     method = method or "jeffreys"
-    dbg.dassert_lte(0, alpha)
-    dbg.dassert_lte(alpha, 1)
-    dbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_lte(0, alpha)
+    hdbg.dassert_lte(alpha, 1)
+    hdbg.dassert_isinstance(srs, pd.Series)
     threshold = threshold or 0
-    dbg.dassert_lte(0, threshold)
+    hdbg.dassert_lte(0, threshold)
     prefix = prefix or ""
     # Process series.
     conf_alpha = (1 - alpha / 2) * 100
@@ -1802,7 +1799,7 @@ def calculate_hit_rate(
     # Set all the inf values equal to NaN.
     srs = srs.replace([np.inf, -np.inf, 0], np.nan)
     # Drop all the NaN values.
-    srs = hdataf.apply_nan_mode(srs, mode="drop")
+    srs = hdatafra.apply_nan_mode(srs, mode="drop")
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         nan_result = pd.Series(index=result_index, name=srs.name, dtype="float64")
@@ -1834,12 +1831,12 @@ def compute_avg_turnover_and_holding_period(
 
     :param pos: pandas series of positions
     :param unit: desired output holding period unit (e.g. 'B', 'W', 'M', etc.)
-    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param nan_mode: argument for hdatafra.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
     :return: average turnover, holding period and index frequency
     """
-    dbg.dassert_isinstance(pos, pd.Series)
-    dbg.dassert(pos.index.freq)
+    hdbg.dassert_isinstance(pos, pd.Series)
+    hdbg.dassert(pos.index.freq)
     pos_freq = pos.index.freq
     unit = unit or pos_freq
     nan_mode = nan_mode or "drop"
@@ -1850,7 +1847,7 @@ def compute_avg_turnover_and_holding_period(
         prefix + "avg_holding_period",
         prefix + "holding_period_units",
     ]
-    avg_holding_period = cfinan.compute_average_holding_period(
+    avg_holding_period = cfin.compute_average_holding_period(
         pos=pos, unit=unit, nan_mode=nan_mode
     )
     avg_turnover = 100 * (1 / avg_holding_period)
@@ -1876,15 +1873,15 @@ def ttest_1samp(
 
     :param srs: input series for computing statistics
     :param popmean: assumed population mean for test
-    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param nan_mode: argument for hdatafra.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
     :return: series with t-value and p-value
     """
-    dbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_isinstance(srs, pd.Series)
     nan_mode = nan_mode or "drop"
     prefix = prefix or ""
     popmean = popmean or 0
-    data = hdataf.apply_nan_mode(srs, mode=nan_mode)
+    data = hdatafra.apply_nan_mode(srs, mode=nan_mode)
     result_index = [
         prefix + "tval",
         prefix + "pval",
@@ -1927,12 +1924,12 @@ def multipletests(
     :param prefix: optional prefix for metrics' outcome
     :return: Series of adjusted p-values
     """
-    dbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_isinstance(srs, pd.Series)
     method = method or "fdr_bh"
     nan_mode = nan_mode or "strict"
-    dbg.dassert_in(nan_mode, ["strict", "drop"])
+    hdbg.dassert_in(nan_mode, ["strict", "drop"])
     prefix = prefix or ""
-    data = hdataf.apply_nan_mode(srs, mode=nan_mode)
+    data = hdatafra.apply_nan_mode(srs, mode=nan_mode)
     if data.empty:
         _LOG.warning("Empty input series `%s`", data.name)
         return pd.Series([np.nan], name=prefix + "adj_pval")
@@ -1956,7 +1953,7 @@ def multi_ttest(
     nan_mode = nan_mode or "drop"
     method = method or "fdr_bh"
     prefix = prefix or ""
-    dbg.dassert_isinstance(data, pd.DataFrame)
+    hdbg.dassert_isinstance(data, pd.DataFrame)
     if data.empty:
         _LOG.warning("Empty input!")
         return pd.DataFrame(
@@ -1988,10 +1985,10 @@ def estimate_q_values(
     :return: estimated q-values
     """
     # TODO(Paul): Relax the NaN constraint.
-    dbg.dassert(not p_values.isna().any().any())
+    hdbg.dassert(not p_values.isna().any().any())
     # Each p-value must lie in [0, 1].
-    dbg.dassert_lte(0, p_values.min().min())
-    dbg.dassert_lte(p_values.max().max(), 1)
+    hdbg.dassert_lte(0, p_values.min().min())
+    hdbg.dassert_lte(p_values.max().max(), 1)
     #
     pv = p_values.values.ravel()
     #
@@ -2019,8 +2016,8 @@ def estimate_q_values(
         if pi0 > 1:
             _LOG.info("pi0 > 1 (%.3f), clipping to 1" % pi0)
             pi0 = 1.0
-    dbg.dassert_lte(0, pi0)
-    dbg.dassert_lte(pi0, 1)
+    hdbg.dassert_lte(0, pi0)
+    hdbg.dassert_lte(pi0, 1)
     #
     p_ordered = np.argsort(pv)
     pv = pv[p_ordered]
@@ -2061,20 +2058,20 @@ def get_interarrival_time(
     Get interrarival time from index of a time series.
 
     :param srs: pandas series of floats
-    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param nan_mode: argument for hdatafra.apply_nan_mode()
     :return: series with interrarival time
     """
-    dbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_isinstance(srs, pd.Series)
     nan_mode = nan_mode or "drop"
-    data = hdataf.apply_nan_mode(srs, mode=nan_mode)
+    data = hdatafra.apply_nan_mode(srs, mode=nan_mode)
     if data.empty:
         _LOG.warning("Empty input `%s`", srs.name)
         return None
     index = data.index
     # Check index of a series. We require that the input
     #     series have a sorted datetime index.
-    dbg.dassert_isinstance(index, pd.DatetimeIndex)
-    hpandas.dassert_strictly_increasing_index(index)
+    hdbg.dassert_isinstance(index, pd.DatetimeIndex)
+    hhpandas.dassert_strictly_increasing_index(index)
     # Compute a series of interrairival time.
     interrarival_time = pd.Series(index).diff()
     return interrarival_time
@@ -2089,14 +2086,14 @@ def compute_interarrival_time_stats(
     Compute interarrival time statistics.
 
     :param srs: pandas series of interrarival time
-    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param nan_mode: argument for hdatafra.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
     :return: series with statistic and related info
     """
-    dbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_isinstance(srs, pd.Series)
     nan_mode = nan_mode or "drop"
     prefix = prefix or ""
-    data = hdataf.apply_nan_mode(srs, mode=nan_mode)
+    data = hdatafra.apply_nan_mode(srs, mode=nan_mode)
     result_index = [
         prefix + "n_unique",
         prefix + "mean",
@@ -2153,22 +2150,22 @@ def compute_regression_coefficients(
         normalized.
     :return: dataframe of regression coefficients and related stats
     """
-    dbg.dassert(not df.empty, msg="Dataframe must be nonempty")
-    dbg.dassert_isinstance(x_cols, list)
-    dbg.dassert_is_subset(x_cols, df.columns)
-    dbg.dassert_isinstance(y_col, (int, str))
-    dbg.dassert_in(y_col, df.columns)
+    hdbg.dassert(not df.empty, msg="Dataframe must be nonempty")
+    hdbg.dassert_isinstance(x_cols, list)
+    hdbg.dassert_is_subset(x_cols, df.columns)
+    hdbg.dassert_isinstance(y_col, (int, str))
+    hdbg.dassert_in(y_col, df.columns)
     # Sanity check weight column, if available. Set weights uniformly to 1 if
     # not specified.
     if sample_weight_col is not None:
-        dbg.dassert_in(sample_weight_col, df.columns)
+        hdbg.dassert_in(sample_weight_col, df.columns)
         weights = df[sample_weight_col].rename("weight")
     else:
         weights = pd.Series(index=df.index, data=1, name="weight")
     # Ensure that no weights are negative.
-    dbg.dassert(not (weights < 0).any())
+    hdbg.dassert(not (weights < 0).any())
     # Ensure that the total weight is positive.
-    dbg.dassert((weights > 0).any())
+    hdbg.dassert((weights > 0).any())
     # Drop rows with no y value.
     _LOG.debug("y_col=`%s` count=%i", y_col, df[y_col].count())
     df = df.dropna(subset=[y_col])
@@ -2299,17 +2296,17 @@ def compute_local_level_model_stats(
     See Harvey, Section 4.1.2, page 175.
     """
     prefix = prefix or ""
-    dbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_isinstance(srs, pd.Series)
     diff = srs.diff()
     demeaned_diff = diff - diff.mean()
     gamma0 = demeaned_diff.multiply(demeaned_diff).mean()
     gamma1 = demeaned_diff.multiply(demeaned_diff.shift(1)).mean()
     # This is the variance of \epsilon.
     var_epsilon = -1 * gamma1
-    dbg.dassert_lte(0, var_epsilon)
+    hdbg.dassert_lte(0, var_epsilon)
     # This is the variance of \eta.
     var_eta = gamma0 - 2 * var_epsilon
-    dbg.dassert_lte(0, var_eta)
+    hdbg.dassert_lte(0, var_eta)
     # This is the first autocorrelation coefficient.
     rho1 = gamma1 / gamma0
     # The signal-to-noise ratio `snr` is commonly denoted `q`.
@@ -2364,14 +2361,14 @@ def get_rolling_splits(
     A typical use case is where the index is a monotonic increasing datetime
     index. For such cases, causality is respected by the splits.
     """
-    hpandas.dassert_strictly_increasing_index(idx)
+    hhpandas.dassert_strictly_increasing_index(idx)
     n_chunks = n_splits + 1
-    dbg.dassert_lte(1, n_splits)
+    hdbg.dassert_lte(1, n_splits)
     # Split into equal chunks.
     chunk_size = int(math.ceil(idx.size / n_chunks))
-    dbg.dassert_lte(1, chunk_size)
+    hdbg.dassert_lte(1, chunk_size)
     chunks = [idx[i : i + chunk_size] for i in range(0, idx.size, chunk_size)]
-    dbg.dassert_eq(len(chunks), n_chunks)
+    hdbg.dassert_eq(len(chunks), n_chunks)
     #
     splits = list(zip(chunks[:-1], chunks[1:]))
     return splits
@@ -2383,11 +2380,11 @@ def get_oos_start_split(
     """
     Split index using OOS (out-of-sample) start datetime.
     """
-    hpandas.dassert_strictly_increasing_index(idx)
+    hhpandas.dassert_strictly_increasing_index(idx)
     ins_mask = idx < datetime_
-    dbg.dassert_lte(1, ins_mask.sum())
+    hdbg.dassert_lte(1, ins_mask.sum())
     oos_mask = ~ins_mask
-    dbg.dassert_lte(1, oos_mask.sum())
+    hdbg.dassert_lte(1, oos_mask.sum())
     ins = idx[ins_mask]
     oos = idx[oos_mask]
     return [(ins, oos)]
@@ -2400,12 +2397,12 @@ def get_train_test_pct_split(
     """
     Split index into train and test sets by percentage.
     """
-    hpandas.dassert_strictly_increasing_index(idx)
-    dbg.dassert_lt(0.0, train_pct)
-    dbg.dassert_lt(train_pct, 1.0)
+    hhpandas.dassert_strictly_increasing_index(idx)
+    hdbg.dassert_lt(0.0, train_pct)
+    hdbg.dassert_lt(train_pct, 1.0)
     #
     train_size = int(train_pct * idx.size)
-    dbg.dassert_lte(0, train_size)
+    hdbg.dassert_lte(0, train_size)
     train_split = idx[:train_size]
     test_split = idx[train_size:]
     return [(train_split, test_split)]
@@ -2417,8 +2414,8 @@ def get_expanding_window_splits(
     """
     Generate splits with expanding overlapping windows.
     """
-    hpandas.dassert_strictly_increasing_index(idx)
-    dbg.dassert_lte(1, n_splits)
+    hhpandas.dassert_strictly_increasing_index(idx)
+    hdbg.dassert_lte(1, n_splits)
     tscv = sklearn.model_selection.TimeSeriesSplit(n_splits=n_splits)
     locs = list(tscv.split(idx))
     splits = [(idx[loc[0]], idx[loc[1]]) for loc in locs]
@@ -2429,12 +2426,12 @@ def truncate_index(idx: pd.Index, min_idx: Any, max_idx: Any) -> pd.Index:
     """
     Return subset of idx with values >= min_idx and < max_idx.
     """
-    hpandas.dassert_strictly_increasing_index(idx)
+    hhpandas.dassert_strictly_increasing_index(idx)
     # TODO(*): PTask667: Consider using bisection to avoid linear scans.
     min_mask = idx >= min_idx
     max_mask = idx < max_idx
     mask = min_mask & max_mask
-    dbg.dassert_lte(1, mask.sum())
+    hdbg.dassert_lte(1, mask.sum())
     return idx[mask]
 
 
@@ -2448,7 +2445,7 @@ def combine_indices(idxs: Iterable[pd.Index]) -> pd.Index:
     TODO(Paul): Consider supporting multiple behaviors with `mode`.
     """
     for idx in idxs:
-        hpandas.dassert_strictly_increasing_index(idx)
+        hhpandas.dassert_strictly_increasing_index(idx)
     # Find the maximum start/end datetime overlap of all source indices.
     max_min = max([idx.min() for idx in idxs])
     _LOG.debug("Latest start datetime of indices=%s", max_min)
@@ -2521,9 +2518,9 @@ def _compute_denominator_and_package(
     normalized = reduction / denom
     # Return float or pd.Series as appropriate based on dimensions and axis.
     if isinstance(normalized, float):
-        dbg.dassert(not axis)
+        hdbg.dassert(not axis)
         return normalized
-    dbg.dassert_isinstance(normalized, np.ndarray)
+    hdbg.dassert_isinstance(normalized, np.ndarray)
     if axis == 0:
         return pd.Series(data=normalized, index=df.columns)
     if axis == 1:

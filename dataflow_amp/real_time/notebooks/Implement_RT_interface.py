@@ -24,15 +24,15 @@ import os
 
 import pandas as pd
 
-import helpers.dbg as dbg
-import helpers.printing as prnt
+import helpers.dbg as hdbg
+import helpers.printing as hprintin
 
 # %%
-prnt.config_notebook()
+hprintin.config_notebook()
 
-# dbg.init_logger(verbosity=logging.DEBUG)
-dbg.init_logger(verbosity=logging.INFO)
-# dbg.test_logger()
+# hdbg.init_logger(verbosity=logging.DEBUG)
+hdbg.init_logger(verbosity=logging.INFO)
+# hdbg.test_logger()
 _LOG = logging.getLogger(__name__)
 
 # %% [markdown]
@@ -45,10 +45,10 @@ _LOG = logging.getLogger(__name__)
 # %%
 import core.config as cconfig
 import core.dataflow as cdataf
-import core.dataflow.real_time as cdrt
-import dataflow_amp.returns.pipeline as darp
+import core.dataflow.real_time as cdtfretim
+import dataflow_amp.returns.pipeline as dtfamrepip
 
-dag_builder = darp.ReturnsPipeline()
+dag_builder = dtfamrepip.ReturnsPipeline()
 config = dag_builder.get_config_template()
 
 # # Add the source node.
@@ -120,9 +120,9 @@ if False:
 node = dag.get_node("load_prices")
 node.reset_current_time()
 
-for now in cdrt.get_now_time(start_date, end_date):
+for now in cdtfretim.get_now_time(start_date, end_date):
     print("now=", now)
-    execute = cdrt.is_dag_to_execute(now)
+    execute = cdtfretim.is_dag_to_execute(now)
     if execute:
         print("Time to execute the DAG")
         node = dag.get_node("load_prices")
@@ -153,14 +153,14 @@ cdataf.draw(dag)
 
 # %%
 # # Align on a even second.
-# cdrt.align_on_even_second()
+# cdtfretim.align_on_even_second()
 # #
 # sleep_interval_in_secs = 1.0
 # num_iterations = 3
 # get_wall_clock_time = rrt.get_wall_clock_time
-# need_to_execute = cdrt.execute_every_2_seconds
+# need_to_execute = cdtfretim.execute_every_2_seconds
 # #
-# events, results = cdrt.execute_dag_with_real_time_loop(
+# events, results = cdtfretim.execute_dag_with_real_time_loop(
 #     get_wall_clock_time,
 #     sleep_interval_in_secs,
 #     num_iterations,
@@ -173,16 +173,16 @@ results[0][1]["df_out"]
 # %%
 ##
 
-import core.dataflow.real_time as cdrt
+import core.dataflow.real_time as cdtfretim
 
 # %%
-import helpers.datetime_ as hdatetime
+import helpers.datetime_ as hdatetim
 
-start_datetime = pd.Timestamp("2010-01-04 09:30:00", tz=hdatetime.get_ET_tz())
-end_datetime = pd.Timestamp("2010-01-05 09:30:00", tz=hdatetime.get_ET_tz())
+start_datetime = pd.Timestamp("2010-01-04 09:30:00", tz=hdatetim.get_ET_tz())
+end_datetime = pd.Timestamp("2010-01-05 09:30:00", tz=hdatetim.get_ET_tz())
 
 # Use a replayed real-time starting at the same time as the data.
-rrt = cdrt.ReplayedTime(start_datetime, hdatetime.get_current_time(tz="ET"))
+rrt = cdtfretim.ReplayedTime(start_datetime, hdatetim.get_current_time(tz="ET"))
 get_wall_clock_time = rrt.get_wall_clock_time
 
 # %%
@@ -208,7 +208,11 @@ kwargs = {
 dag_runner = cdtf.RealTimeDagRunner(**kwargs)
 
 # Align on a even second.
-cdrt.align_on_even_second()
+grid_time_in_secs = 2
+event_loop = None
+cdtfretim.align_on_time_grid(
+    get_wall_clock_time, grid_time_in_secs, event_loop=event_loop
+)
 result = dag_runner.predict()
 
 # %%
@@ -220,7 +224,7 @@ len(result[1])
 # %%
 import pandas as pd
 
-import helpers.unit_test as hut
+import helpers.unit_test as huntes
 
 num_cols = 2
 seed = 42
@@ -230,7 +234,9 @@ date_range_kwargs = {
     "freq": "1B",
 }
 # pd.date_range(**date_range_kwargs)
-data = hut.get_random_df(num_cols, seed=seed, date_range_kwargs=date_range_kwargs)
+data = huntes.get_random_df(
+    num_cols, seed=seed, date_range_kwargs=date_range_kwargs
+)
 print(data)
 
 
@@ -244,7 +250,7 @@ node = cdnt.Reample("resample", **config)
 df_out = node.fit(data)["df_out"]
 
 # %%
-import core.dataflow.nodes.transformers as cdtfnt
+import core.dataflow.nodes.transformers as cdtfnotra
 
 nid = "nop"
 
@@ -255,7 +261,7 @@ def func(df_in):
 
 func_kwargs = {}
 
-node = cdtfnt.FunctionWrapper(nid, func, func_kwargs)
+node = cdtfnotra.FunctionWrapper(nid, func, func_kwargs)
 
 node.fit(data)
 
