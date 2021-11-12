@@ -13,7 +13,6 @@ import im.common.db.create_db as imcodbcrdb
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
 class TestCreateDB(huntes.TestCase):
     def setUp(self):
         """

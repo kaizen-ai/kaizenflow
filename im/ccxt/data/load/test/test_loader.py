@@ -63,7 +63,7 @@ class TestGetFilePath(huntes.TestCase):
 
 
 class TestReadUniverseDataFromFilesystem(huntes.TestCase):
-    @pytest.mark.slow("About 3.5 minutes.")
+    @pytest.mark.skip("Cmamp390")
     def test1(self) -> None:
         """
         Test that all files from universe version are being read correctly.
@@ -98,7 +98,7 @@ class TestReadUniverseDataFromFilesystem(huntes.TestCase):
             expected_currency_pairs,
         )
 
-    @pytest.mark.slow("About 40 seconds.")
+    @pytest.mark.skip("Cmamp390")
     def test2(self) -> None:
         """
         Test that data for provided list of tuples is being read correctly.
