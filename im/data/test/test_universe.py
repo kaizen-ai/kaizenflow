@@ -9,7 +9,7 @@ class TestFilterVendorUniverseAsTuples(huntes.TestCase):
         """
         exchange_ids = ["binance", "kucoin"]
         currency_pairs = ["BTC/USDT", "ETH/USDT", "FIL/USDT"]
-        ccxt_universe = imdauni.get_vendor_universe_as_tuples("v0_3", "CCXT")
+        ccxt_universe = imdauni.get_vendor_universe_as_tuples("v03", "CCXT")
         actual = imdauni.filter_vendor_universe_as_tuples(
             ccxt_universe, exchange_ids, currency_pairs
         )
@@ -21,3 +21,18 @@ class TestFilterVendorUniverseAsTuples(huntes.TestCase):
             imdauni.ExchangeCurrencyTuple("kucoin", "FIL/USDT"),
         ]
         self.assert_equal(str(actual), str(expected))
+
+
+class TestGetUniverse(huntes.TestCase):
+    def test_get_universe1(self) -> None:
+        """
+        A smoke test to verify that universe loads correctly.
+        """
+        _ = imdauni.get_trade_universe()
+
+    def test_get_universe2(self) -> None:
+        """
+        Verify that incorrect universe name is recognized.
+        """
+        with self.assertRaises(AssertionError):
+            _ = imdauni.get_trade_universe("non-existent")

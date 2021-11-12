@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, cast
 
 import core.config as cconfig
 import core.finance as cfin
+import helpers.dbg as hdbg
 
 # TODO(gp): Use the standard imports.
 from core.dataflow.core import DAG, Node
@@ -76,24 +77,35 @@ class DagBuilder(abc.ABC):
             "dummy" required paths.
         """
 
-    @abc.abstractmethod
-    def get_dag(self, config: cconfig.Config, mode: str = "strict") -> DAG:
+    def get_dag(
+        self, config: cconfig.Config, mode: str = "strict", validate: bool = True
+    ) -> DAG:
         """
         Build DAG given `config`.
-
-        WARNING: This function modifies `dag` in-place.
-        TODO(Paul): Consider supporting deep copies for `dtf.DAG`.
 
         :param config: configures DAG. It is up to the client to guarantee
             compatibility. The result of `self.get_config_template` should
             always be compatible following template completion.
-        :param dag: may or may not have nodes. If the DAG already has nodes,
-            it is up to the client to ensure that there are no `nid` (node id)
-            collisions, which can be ensured through the use of `nid_prefix`.
-            If this parameter is `None`, then a new `dtf.DAG` object is
-            created.
+        :param mode: as in `DAG` constructor
         :return: `dag` with all builder operations applied
         """
+        dag = self._get_dag(config, mode=mode)
+        if validate:
+            self.validate_config_and_dag(config, dag)
+        return dag
+
+    @staticmethod
+    def validate_config_and_dag(config: cconfig.Config, dag: DAG) -> None:
+        """
+        Wraps `get_dag()` with additional sanity-checks.
+
+        - Raises if `config` has a DUMMY value
+        - Raises if `config` has an entry for a node that is not in the DAG
+        """
+        hdbg.dassert(cconfig.check_no_dummy_values(config))
+        for key in config.to_dict().keys():
+            # This raises if the node does not exist.
+            dag.get_node(key)
 
     @property
     def methods(self) -> List[str]:
@@ -115,6 +127,13 @@ class DagBuilder(abc.ABC):
         """
         _ = self, config
         return None
+
+    @abc.abstractmethod
+    def _get_dag(self, config: cconfig.Config, mode: str = "strict"):
+        """
+        Implement the dag.
+        """
+        ...
 
     def _get_nid(self, stage_name: str) -> str:
         nid = self._nid_prefix + stage_name
@@ -197,7 +216,7 @@ class ArmaReturnsBuilder(DagBuilder):
         )
         return config
 
-    def get_dag(self, config: cconfig.Config, mode: str = "strict") -> DAG:
+    def _get_dag(self, config: cconfig.Config, mode: str = "strict") -> DAG:
         """
         Generate pipeline DAG.
 

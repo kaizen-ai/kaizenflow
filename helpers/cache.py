@@ -32,7 +32,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Do not commit this.
 # _LOG.debug = _LOG.info
 
-_TRACE_FUNCS = True
+_TRACE_FUNCS = False
 
 # #############################################################################
 
@@ -611,6 +611,8 @@ class _Cached:
         :param cache_path: cache directory or `None` to use global cache
         """
         if _TRACE_FUNCS: _LOG.debug("")
+        if cache_path:
+            hdbg.dassert_dir_exists(cache_path)
         # We need to disable the memory cache.
         if cache_path:
             self._use_mem_cache = False

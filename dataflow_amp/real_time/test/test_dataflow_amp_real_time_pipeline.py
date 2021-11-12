@@ -1,17 +1,13 @@
 import logging
-from typing import Callable, Tuple
 
 import pandas as pd
 
 import core.config as cconfig
-import core.dataflow.real_time as cdtfretim
 import core.dataflow.runners as cdtfrun
+import core.dataflow.test.test_price_interface as dartttdi
 import core.dataflow.test.test_real_time as cdtfttrt
-import core.dataflow.test.test_db_interface as dartttdi
 import dataflow_amp.real_time.pipeline as dtfamretipip
-import helpers.datetime_ as hdatetim
 import helpers.hasyncio as hhasynci
-import helpers.htypes as hhtypes
 import helpers.unit_test as huntes
 
 _LOG = logging.getLogger(__name__)
@@ -19,8 +15,10 @@ _LOG = logging.getLogger(__name__)
 
 class TestRealTimeReturnPipeline1(huntes.TestCase):
     """
-    This test is similar to `TestRealTimeDagRunner1` but using a real DAG
-    (`ReturnPipeline`) together with real-time data source node.
+    This test is similar to `TestRealTimeDagRunner1`. It uses:
+
+    - a real DAG `ReturnPipeline`
+    - a replayed time data source node using synthetic data
     """
 
     def test1(self) -> None:
@@ -39,7 +37,7 @@ class TestRealTimeReturnPipeline1(huntes.TestCase):
                 start_datetime, end_datetime, columns
             )
             initial_replayed_delay = 5
-            rtdi = dartttdi.get_replayed_time_db_interface_example1(
+            rtpi = dartttdi.get_replayed_time_price_interface_example1(
                 event_loop,
                 start_datetime,
                 end_datetime,
@@ -48,8 +46,9 @@ class TestRealTimeReturnPipeline1(huntes.TestCase):
             )
             period = "last_5mins"
             source_node_kwargs = {
-                "real_time_db_interface": rtdi,
+                "real_time_price_interface": rtpi,
                 "period": period,
+                "multiindex_output": False,
             }
             config["load_prices"] = cconfig.get_config_from_nested_dict(
                 {
@@ -79,6 +78,7 @@ class TestRealTimeReturnPipeline1(huntes.TestCase):
             events = dag_runner.events
             # Check.
             # TODO(gp): Factor this out.
+            # TODO(gp):
             actual = []
             events_as_str = "\n".join(
                 [

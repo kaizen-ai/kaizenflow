@@ -13,7 +13,6 @@ import core.dataflow_source_nodes as cdtfsonod
 import core.features as cfea
 import core.finance as cfin
 import core.signal_processing as csipro
-import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -58,7 +57,7 @@ class FeaturePipeline(dtf.DagBuilder):
         config = cconfig.get_config_from_nested_dict(dict_)
         return config
 
-    def get_dag(self, config: cconfig.Config, mode: str = "strict") -> dtf.DAG:
+    def _get_dag(self, config: cconfig.Config, mode: str = "strict") -> dtf.DAG:
         dag = dtf.DAG(mode=mode)
         _LOG.debug("%s", config)
         tail_nid = None
@@ -134,7 +133,3 @@ class FeaturePipeline(dtf.DagBuilder):
         #
         _ = tail_nid
         return dag
-
-    @staticmethod
-    def validate_config(config: cconfig.Config) -> None:
-        hdbg.dassert(cconfig.check_no_dummy_values(config))

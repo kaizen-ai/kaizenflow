@@ -52,7 +52,6 @@ hprint.config_notebook()
 config = None
 
 if config is None:
-    # exp_dir = "s3://eglp-spm-sasm/experiments/experiment.RH2Ef.v1_9-all.5T.20210831-004747.run1.tgz"
     # exp_dir = "/app/oos_experiment.RH2Eg.v2_0-top10.5T.run1_test"
     exp_dir = "/app/oos_experiment.RH2Eg.v2_0-top10.5T.run1_test"
     aws_profile = None

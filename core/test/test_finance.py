@@ -6,16 +6,16 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-import core.artificial_signal_generators as sig_gen
-import core.finance as fin
-import core.signal_processing as sigp
-import helpers.printing as prnt
-import helpers.unit_test as hut
+import core.artificial_signal_generators as carsigen
+import core.finance as cfin
+import core.signal_processing as csipro
+import helpers.printing as hprintin
+import helpers.unit_test as huntes
 
 _LOG = logging.getLogger(__name__)
 
 
-class Test_set_non_ath_to_nan1(hut.TestCase):
+class Test_set_non_ath_to_nan1(huntes.TestCase):
     def test1(self) -> None:
         """
         Test for active trading hours in [9:30, 16:00].
@@ -23,7 +23,7 @@ class Test_set_non_ath_to_nan1(hut.TestCase):
         df = self._get_df()
         start_time = datetime.time(9, 30)
         end_time = datetime.time(16, 0)
-        act = fin.set_non_ath_to_nan(df, start_time, end_time)
+        act = cfin.set_non_ath_to_nan(df, start_time, end_time)
         exp = """
                               open   high    low  close        vol
         datetime
@@ -60,12 +60,12 @@ datetime,open,high,low,close,vol
         return df
 
 
-class Test_remove_times_outside_window(hut.TestCase):
+class Test_remove_times_outside_window(huntes.TestCase):
     def test_remove(self) -> None:
         df = self._get_df()
         start_time = datetime.time(9, 29)
         end_time = datetime.time(16, 0)
-        actual = fin.remove_times_outside_window(df, start_time, end_time)
+        actual = cfin.remove_times_outside_window(df, start_time, end_time)
         expected_txt = """
 datetime,open,high,low,close,vol
 2016-01-05 09:30:00,98.14,98.24,97.79,98.01,751857
@@ -84,7 +84,7 @@ datetime,open,high,low,close,vol
         df = self._get_df()
         start_time = datetime.time(9, 29)
         end_time = datetime.time(16, 0)
-        actual = fin.remove_times_outside_window(
+        actual = cfin.remove_times_outside_window(
             df, start_time, end_time, bypass=True
         )
         self.assert_dfs_close(actual, df)
@@ -109,38 +109,38 @@ datetime,open,high,low,close,vol
         return df
 
 
-class Test_set_weekends_to_nan(hut.TestCase):
+class Test_set_weekends_to_nan(huntes.TestCase):
     def test1(self) -> None:
         """
         Test for a daily frequency input.
         """
-        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process = carsigen.MultivariateNormalProcess()
         mn_process.set_cov_from_inv_wishart_draw(dim=2, seed=1)
         df = mn_process.generate_sample(
             {"start": "2020-01-01", "periods": 40, "freq": "D"}, seed=1
         )
-        actual = fin.set_weekends_to_nan(df)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = cfin.set_weekends_to_nan(df)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
         """
         Test for a minutely frequency input.
         """
-        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process = carsigen.MultivariateNormalProcess()
         mn_process.set_cov_from_inv_wishart_draw(dim=2, seed=1)
         df = mn_process.generate_sample(
             {"start": "2020-01-05 23:00:00", "periods": 100, "freq": "T"}, seed=1
         )
-        actual = fin.set_weekends_to_nan(df)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = cfin.set_weekends_to_nan(df)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
 
-class Test_remove_weekends(hut.TestCase):
+class Test_remove_weekends(huntes.TestCase):
     def test_remove(self) -> None:
         df = self._get_df()
-        actual = fin.remove_weekends(df)
+        actual = cfin.remove_weekends(df)
         expected_txt = """
 datetime,close,volume
 2016-01-01,NaN,NaN
@@ -159,7 +159,7 @@ datetime,close,volume
 
     def test_bypass(self) -> None:
         df = self._get_df()
-        actual = fin.remove_weekends(df, bypass=True)
+        actual = cfin.remove_weekends(df, bypass=True)
         self.assert_dfs_close(actual, df)
 
     @staticmethod
@@ -183,7 +183,7 @@ datetime,close,volume
         return df
 
 
-class Test_resample_time_bars1(hut.TestCase):
+class Test_resample_time_bars1(huntes.TestCase):
     def test1(self) -> None:
         """
         Resampling with the same frequency of the data should not change
@@ -339,7 +339,7 @@ datetime,close,vol,ret_0
         volume_cols = ["vol"]
         volume_agg_func = None
         volume_agg_func_kwargs = None
-        df_out = fin.resample_time_bars(
+        df_out = cfin.resample_time_bars(
             df,
             rule,
             return_cols=return_cols,
@@ -357,13 +357,15 @@ datetime,close,vol,ret_0
     @staticmethod
     def _compute_actual_output(df: pd.DataFrame, df_out: pd.DataFrame) -> str:
         act = []
-        act.append(hut.convert_df_to_string(df, index=True, title="df"))
-        act.append(hut.convert_df_to_string(df_out, index=True, title="df_out"))
+        act.append(huntes.convert_df_to_string(df, index=True, title="df"))
+        act.append(
+            huntes.convert_df_to_string(df_out, index=True, title="df_out")
+        )
         act = "\n".join(act)
         return act
 
 
-class Test_resample_ohlcv_bars1(hut.TestCase):
+class Test_resample_ohlcv_bars1(huntes.TestCase):
     def test1(self) -> None:
         """
         Compute OHLCV bars at the frequency of the data should not change the
@@ -491,7 +493,7 @@ datetime,open,high,low,close,vol
 
     @staticmethod
     def _helper(df: pd.DataFrame, rule: str) -> pd.DataFrame:
-        df_out = fin.resample_ohlcv_bars(
+        df_out = cfin.resample_ohlcv_bars(
             df,
             rule,
             open_col="open",
@@ -506,12 +508,14 @@ datetime,open,high,low,close,vol
     @staticmethod
     def _compute_actual_output(df_out: pd.DataFrame) -> str:
         act = []
-        act.append(hut.convert_df_to_string(df_out, index=True, title="df_out"))
+        act.append(
+            huntes.convert_df_to_string(df_out, index=True, title="df_out")
+        )
         act = "\n".join(act)
         return act
 
 
-class Test_compute_twap_vwap1(hut.TestCase):
+class Test_compute_twap_vwap1(huntes.TestCase):
     def test_with_no_nans1(self) -> None:
         """
         Compute VWAP/TWAP at the frequency of the data should not change the
@@ -797,7 +801,7 @@ datetime,close,vol
     ) -> pd.DataFrame:
         price_col = "close"
         volume_col = "vol"
-        df_out = fin.compute_twap_vwap(
+        df_out = cfin.compute_twap_vwap(
             df,
             rule,
             price_col=price_col,
@@ -809,15 +813,17 @@ datetime,close,vol
     @staticmethod
     def _compute_actual_output(df_out: pd.DataFrame) -> str:
         act = []
-        act.append(hut.convert_df_to_string(df_out, index=True, title="df_out"))
+        act.append(
+            huntes.convert_df_to_string(df_out, index=True, title="df_out")
+        )
         act = "\n".join(act)
         return act
 
 
-class Test_process_bid_ask(hut.TestCase):
+class Test_process_bid_ask(huntes.TestCase):
     def test_mid(self) -> None:
         df = self._get_df()
-        actual = fin.process_bid_ask(
+        actual = cfin.process_bid_ask(
             df, "bid", "ask", "bid_volume", "ask_volume", ["mid"]
         )
         txt = """
@@ -832,7 +838,7 @@ datetime,mid
 
     def test_geometric_mid(self) -> None:
         df = self._get_df()
-        actual = fin.process_bid_ask(
+        actual = cfin.process_bid_ask(
             df, "bid", "ask", "bid_volume", "ask_volume", ["geometric_mid"]
         )
         txt = """
@@ -847,7 +853,7 @@ datetime,geometric_mid
 
     def test_quoted_spread(self) -> None:
         df = self._get_df()
-        actual = fin.process_bid_ask(
+        actual = cfin.process_bid_ask(
             df, "bid", "ask", "bid_volume", "ask_volume", ["quoted_spread"]
         )
         txt = """
@@ -862,7 +868,7 @@ datetime,quoted_spread
 
     def test_relative_spread(self) -> None:
         df = self._get_df()
-        actual = fin.process_bid_ask(
+        actual = cfin.process_bid_ask(
             df, "bid", "ask", "bid_volume", "ask_volume", ["relative_spread"]
         )
         txt = """
@@ -877,7 +883,7 @@ datetime,relative_spread
 
     def test_log_relative_spread(self) -> None:
         df = self._get_df()
-        actual = fin.process_bid_ask(
+        actual = cfin.process_bid_ask(
             df, "bid", "ask", "bid_volume", "ask_volume", ["log_relative_spread"]
         )
         txt = """
@@ -892,7 +898,7 @@ datetime,log_relative_spread
 
     def test_weighted_mid(self) -> None:
         df = self._get_df()
-        actual = fin.process_bid_ask(
+        actual = cfin.process_bid_ask(
             df, "bid", "ask", "bid_volume", "ask_volume", ["weighted_mid"]
         )
         txt = """
@@ -907,7 +913,7 @@ datetime,weighted_mid
 
     def test_order_book_imbalance(self) -> None:
         df = self._get_df()
-        actual = fin.process_bid_ask(
+        actual = cfin.process_bid_ask(
             df, "bid", "ask", "bid_volume", "ask_volume", ["order_book_imbalance"]
         )
         txt = """
@@ -922,7 +928,7 @@ datetime,order_book_imbalance
 
     def test_centered_order_book_imbalance(self) -> None:
         df = self._get_df()
-        actual = fin.process_bid_ask(
+        actual = cfin.process_bid_ask(
             df,
             "bid",
             "ask",
@@ -942,7 +948,7 @@ datetime,centered_order_book_imbalance
 
     def test_centered_order_book_imbalance(self) -> None:
         df = self._get_df()
-        actual = fin.process_bid_ask(
+        actual = cfin.process_bid_ask(
             df,
             "bid",
             "ask",
@@ -962,7 +968,7 @@ datetime,centered_order_book_imbalance
 
     def test_bid_value(self) -> None:
         df = self._get_df()
-        actual = fin.process_bid_ask(
+        actual = cfin.process_bid_ask(
             df, "bid", "ask", "bid_volume", "ask_volume", ["bid_value"]
         )
         txt = """
@@ -977,7 +983,7 @@ datetime,bid_value
 
     def test_ask_value(self) -> None:
         df = self._get_df()
-        actual = fin.process_bid_ask(
+        actual = cfin.process_bid_ask(
             df, "bid", "ask", "bid_volume", "ask_volume", ["ask_value"]
         )
         txt = """
@@ -992,7 +998,7 @@ datetime,ask_value
 
     def test_mid_value(self) -> None:
         df = self._get_df()
-        actual = fin.process_bid_ask(
+        actual = cfin.process_bid_ask(
             df, "bid", "ask", "bid_volume", "ask_volume", ["mid_value"]
         )
         txt = """
@@ -1018,10 +1024,10 @@ datetime,bid,ask,bid_volume,ask_volume
         return df
 
 
-class Test_compute_spread_cost(hut.TestCase):
+class Test_compute_spread_cost(huntes.TestCase):
     def test_one_half_spread(self) -> None:
         df = self._get_df()
-        actual = fin.compute_spread_cost(
+        actual = cfin.compute_spread_cost(
             df,
             target_position_col="position",
             spread_col="spread",
@@ -1039,7 +1045,7 @@ datetime,spread_cost
 
     def test_one_third_spread(self) -> None:
         df = self._get_df()
-        actual = fin.compute_spread_cost(
+        actual = cfin.compute_spread_cost(
             df,
             target_position_col="position",
             spread_col="spread",
@@ -1068,10 +1074,10 @@ datetime,spread,position
         return df
 
 
-class Test_compute_pnl(hut.TestCase):
+class Test_compute_pnl(huntes.TestCase):
     def test1(self) -> None:
         df = self._get_df()
-        actual = fin.compute_pnl(
+        actual = cfin.compute_pnl(
             df,
             position_intent_col="position_intent_1",
             return_col="ret_0",
@@ -1099,13 +1105,13 @@ datetime,ret_0,position_intent_1
         return df
 
 
-class Test_compute_inverse_volatility_weights(hut.TestCase):
+class Test_compute_inverse_volatility_weights(huntes.TestCase):
     def test1(self) -> None:
         """
         Test for a clean input.
         """
         sample = self._get_sample(seed=1)
-        weights = fin.compute_inverse_volatility_weights(sample)
+        weights = cfin.compute_inverse_volatility_weights(sample)
         output_txt = self._get_output_txt(sample, weights)
         self.check_string(output_txt)
 
@@ -1116,7 +1122,7 @@ class Test_compute_inverse_volatility_weights(hut.TestCase):
         sample = self._get_sample(seed=1)
         sample.iloc[1, 1] = np.nan
         sample.iloc[0:5, 0] = np.nan
-        weights = fin.compute_inverse_volatility_weights(sample)
+        weights = cfin.compute_inverse_volatility_weights(sample)
         output_txt = self._get_output_txt(sample, weights)
         self.check_string(output_txt)
 
@@ -1129,7 +1135,7 @@ class Test_compute_inverse_volatility_weights(hut.TestCase):
         """
         sample = self._get_sample(seed=1)
         sample.iloc[:, 0] = np.nan
-        weights = fin.compute_inverse_volatility_weights(sample)
+        weights = cfin.compute_inverse_volatility_weights(sample)
         output_txt = self._get_output_txt(sample, weights)
         self.check_string(output_txt)
 
@@ -1142,7 +1148,7 @@ class Test_compute_inverse_volatility_weights(hut.TestCase):
         """
         sample = self._get_sample(seed=1)
         sample.iloc[:, :] = np.nan
-        weights = fin.compute_inverse_volatility_weights(sample)
+        weights = cfin.compute_inverse_volatility_weights(sample)
         output_txt = self._get_output_txt(sample, weights)
         self.check_string(output_txt)
 
@@ -1151,15 +1157,15 @@ class Test_compute_inverse_volatility_weights(hut.TestCase):
         mean = pd.Series([1, 2])
         cov = pd.DataFrame([[0.5, 0.2], [0.2, 0.3]])
         date_range = {"start": "2010-01-01", "periods": 40, "freq": "B"}
-        mn_process = sig_gen.MultivariateNormalProcess(mean=mean, cov=cov)
+        mn_process = carsigen.MultivariateNormalProcess(mean=mean, cov=cov)
         sample = mn_process.generate_sample(date_range, seed=seed)
         sample.rename(columns={0: "srs1", 1: "srs2"}, inplace=True)
         return sample
 
     @staticmethod
     def _get_output_txt(sample: pd.DataFrame, weights: pd.Series) -> str:
-        sample_string = hut.convert_df_to_string(sample, index=True)
-        weights_string = hut.convert_df_to_string(weights, index=True)
+        sample_string = huntes.convert_df_to_string(sample, index=True)
+        weights_string = huntes.convert_df_to_string(weights, index=True)
         txt = (
             f"Input sample:\n{sample_string}\n\n"
             f"Output weights:\n{weights_string}\n"
@@ -1167,11 +1173,11 @@ class Test_compute_inverse_volatility_weights(hut.TestCase):
         return txt
 
 
-class Test_compute_prices_from_rets(hut.TestCase):
+class Test_compute_prices_from_rets(huntes.TestCase):
     def test1(self) -> None:
         sample = self._get_sample()
-        sample["rets"] = fin.compute_ret_0(sample.price, mode="pct_change")
-        sample["price_pred"] = fin.compute_prices_from_rets(
+        sample["rets"] = cfin.compute_ret_0(sample.price, mode="pct_change")
+        sample["price_pred"] = cfin.compute_prices_from_rets(
             sample.price, sample.rets, "pct_change"
         )
         sample = sample.dropna()
@@ -1179,8 +1185,8 @@ class Test_compute_prices_from_rets(hut.TestCase):
 
     def test2(self) -> None:
         sample = self._get_sample()
-        sample["rets"] = fin.compute_ret_0(sample.price, mode="log_rets")
-        sample["price_pred"] = fin.compute_prices_from_rets(
+        sample["rets"] = cfin.compute_ret_0(sample.price, mode="log_rets")
+        sample["price_pred"] = cfin.compute_prices_from_rets(
             sample.price, sample.rets, "log_rets"
         )
         sample = sample.dropna()
@@ -1188,8 +1194,8 @@ class Test_compute_prices_from_rets(hut.TestCase):
 
     def test3(self) -> None:
         sample = self._get_sample()
-        sample["rets"] = fin.compute_ret_0(sample.price, mode="diff")
-        sample["price_pred"] = fin.compute_prices_from_rets(
+        sample["rets"] = cfin.compute_ret_0(sample.price, mode="diff")
+        sample["price_pred"] = cfin.compute_prices_from_rets(
             sample.price, sample.rets, "diff"
         )
         sample = sample.dropna()
@@ -1201,7 +1207,7 @@ class Test_compute_prices_from_rets(hut.TestCase):
         """
         sample = pd.DataFrame({"price": [1, 2, 3], "fwd_ret": [1, 0.5, np.nan]})
         sample["ret_0"] = sample.fwd_ret.shift(1)
-        sample["price_pred"] = fin.compute_prices_from_rets(
+        sample["price_pred"] = cfin.compute_prices_from_rets(
             sample.price, sample.ret_0, "pct_change"
         ).shift(1)
         sample = sample.dropna()
@@ -1213,12 +1219,12 @@ class Test_compute_prices_from_rets(hut.TestCase):
         """
         np.random.seed(0)
         sample = self._get_sample()
-        sample["ret_0"] = fin.compute_ret_0(sample.price, mode="log_rets")
+        sample["ret_0"] = cfin.compute_ret_0(sample.price, mode="log_rets")
         sample["ret_1"] = sample["ret_0"].shift(-1)
-        sample["price_pred"] = fin.compute_prices_from_rets(
+        sample["price_pred"] = cfin.compute_prices_from_rets(
             sample.price, sample.ret_1.shift(1), "log_rets"
         )
-        output_txt = hut.convert_df_to_string(sample, index=True)
+        output_txt = huntes.convert_df_to_string(sample, index=True)
         self.check_string(output_txt)
 
     def test6(self) -> None:
@@ -1227,7 +1233,7 @@ class Test_compute_prices_from_rets(hut.TestCase):
         """
         np.random.seed(1)
         sample = self._get_sample()
-        sample["ret_1"] = fin.compute_ret_0(sample.price, mode="log_rets").shift(
+        sample["ret_1"] = cfin.compute_ret_0(sample.price, mode="log_rets").shift(
             -1
         )
         future_price_expected = sample.iloc[-1, 0]
@@ -1236,7 +1242,7 @@ class Test_compute_prices_from_rets(hut.TestCase):
         rets = sample["ret_1"]
         rets.index = rets.index.shift(1)
         # Make future prediction for the dropped price.
-        future_price_actual = fin.compute_prices_from_rets(
+        future_price_actual = cfin.compute_prices_from_rets(
             sample.price, rets, "log_rets"
         )[-1]
         np.testing.assert_almost_equal(future_price_expected, future_price_actual)
@@ -1249,14 +1255,14 @@ class Test_compute_prices_from_rets(hut.TestCase):
         return sample
 
 
-class Test_aggregate_log_rets(hut.TestCase):
+class Test_aggregate_log_rets(huntes.TestCase):
     def test1(self) -> None:
         """
         Test for a clean input.
         """
         sample = self._get_sample(seed=1)
-        weights = fin.compute_inverse_volatility_weights(sample)
-        aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
+        weights = cfin.compute_inverse_volatility_weights(sample)
+        aggregate_log_rets = cfin.aggregate_log_rets(sample, weights)
         output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
         self.check_string(output_txt)
 
@@ -1267,8 +1273,8 @@ class Test_aggregate_log_rets(hut.TestCase):
         sample = self._get_sample(seed=1)
         sample.iloc[1, 1] = np.nan
         sample.iloc[0:5, 0] = np.nan
-        weights = fin.compute_inverse_volatility_weights(sample)
-        aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
+        weights = cfin.compute_inverse_volatility_weights(sample)
+        aggregate_log_rets = cfin.aggregate_log_rets(sample, weights)
         output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
         self.check_string(output_txt)
 
@@ -1279,7 +1285,7 @@ class Test_aggregate_log_rets(hut.TestCase):
         sample = self._get_sample(seed=1)
         sample.iloc[:, 0] = np.nan
         weights = pd.Series([0.5, 0.5], index=["srs1", "srs2"], name="weights")
-        aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
+        aggregate_log_rets = cfin.aggregate_log_rets(sample, weights)
         output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
         self.check_string(output_txt)
 
@@ -1290,7 +1296,7 @@ class Test_aggregate_log_rets(hut.TestCase):
         sample = self._get_sample(seed=1)
         sample.iloc[:, :] = np.nan
         weights = pd.Series([0.5, 0.5], index=["srs1", "srs2"], name="weights")
-        aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
+        aggregate_log_rets = cfin.aggregate_log_rets(sample, weights)
         output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
         self.check_string(output_txt)
 
@@ -1299,7 +1305,7 @@ class Test_aggregate_log_rets(hut.TestCase):
         mean = pd.Series([1, 2])
         cov = pd.DataFrame([[0.5, 0.2], [0.2, 0.3]])
         date_range = {"start": "2010-01-01", "periods": 40, "freq": "B"}
-        mn_process = sig_gen.MultivariateNormalProcess(mean=mean, cov=cov)
+        mn_process = carsigen.MultivariateNormalProcess(mean=mean, cov=cov)
         sample = mn_process.generate_sample(date_range, seed=seed)
         sample.rename(columns={0: "srs1", 1: "srs2"}, inplace=True)
         return sample
@@ -1308,9 +1314,9 @@ class Test_aggregate_log_rets(hut.TestCase):
     def _get_output_txt(
         sample: pd.DataFrame, weights: pd.Series, aggregate_log_rets: pd.Series
     ) -> str:
-        sample_string = hut.convert_df_to_string(sample, index=True)
-        weights_string = hut.convert_df_to_string(weights, index=True)
-        aggregate_log_rets_string = hut.convert_df_to_string(
+        sample_string = huntes.convert_df_to_string(sample, index=True)
+        weights_string = huntes.convert_df_to_string(weights, index=True)
+        aggregate_log_rets_string = huntes.convert_df_to_string(
             aggregate_log_rets, index=True
         )
         txt = (
@@ -1321,13 +1327,13 @@ class Test_aggregate_log_rets(hut.TestCase):
         return txt
 
 
-class Test_compute_kratio(hut.TestCase):
+class Test_compute_kratio(huntes.TestCase):
     def test1(self) -> None:
         """
         Test for an clean input series.
         """
         series = self._get_series(seed=1)
-        actual = fin.compute_kratio(series)
+        actual = cfin.compute_kratio(series)
         expected = -0.84551
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
@@ -1338,7 +1344,7 @@ class Test_compute_kratio(hut.TestCase):
         series = self._get_series(seed=1)
         series[:3] = np.nan
         series[7:10] = np.nan
-        actual = fin.compute_kratio(series)
+        actual = cfin.compute_kratio(series)
         expected = -0.85089
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
@@ -1346,7 +1352,7 @@ class Test_compute_kratio(hut.TestCase):
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        arma_process = carsigen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -1354,18 +1360,18 @@ class Test_compute_kratio(hut.TestCase):
         return series
 
 
-class Test_compute_drawdown(hut.TestCase):
+class Test_compute_drawdown(huntes.TestCase):
     def test1(self) -> None:
         series = self._get_series(1)
-        actual = fin.compute_drawdown(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual = cfin.compute_drawdown(series)
+        actual_string = huntes.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        arma_process = carsigen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -1373,31 +1379,31 @@ class Test_compute_drawdown(hut.TestCase):
         return series
 
 
-class Test_compute_time_under_water(hut.TestCase):
+class Test_compute_time_under_water(huntes.TestCase):
     def test1(self) -> None:
         series = Test_compute_time_under_water._get_series(42)
-        drawdown = fin.compute_drawdown(series).rename("drawdown")
-        time_under_water = fin.compute_time_under_water(series).rename(
+        drawdown = cfin.compute_drawdown(series).rename("drawdown")
+        time_under_water = cfin.compute_time_under_water(series).rename(
             "time_under_water"
         )
         output = pd.concat([series, drawdown, time_under_water], axis=1)
-        self.check_string(hut.convert_df_to_string(output, index=True))
+        self.check_string(huntes.convert_df_to_string(output, index=True))
 
     def test2(self) -> None:
         series = Test_compute_time_under_water._get_series(42)
         series.iloc[:4] = np.nan
         series.iloc[10:15] = np.nan
         series.iloc[-4:] = np.nan
-        drawdown = fin.compute_drawdown(series).rename("drawdown")
-        time_under_water = fin.compute_time_under_water(series).rename(
+        drawdown = cfin.compute_drawdown(series).rename("drawdown")
+        time_under_water = cfin.compute_time_under_water(series).rename(
             "time_under_water"
         )
         output = pd.concat([series, drawdown, time_under_water], axis=1)
-        self.check_string(hut.convert_df_to_string(output, index=True))
+        self.check_string(huntes.convert_df_to_string(output, index=True))
 
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
-        arma_process = sig_gen.ArmaProcess([], [])
+        arma_process = carsigen.ArmaProcess([], [])
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -1405,16 +1411,16 @@ class Test_compute_time_under_water(hut.TestCase):
         return series
 
 
-class Test_compute_turnover(hut.TestCase):
+class Test_compute_turnover(huntes.TestCase):
     def test1(self) -> None:
         """
         Test for default arguments.
         """
         series = self._get_series(seed=1)
         series[5:10] = np.nan
-        actual = fin.compute_turnover(series).rename("output")
+        actual = cfin.compute_turnover(series).rename("output")
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        output_df_string = huntes.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
 
     def test2(self) -> None:
@@ -1422,9 +1428,9 @@ class Test_compute_turnover(hut.TestCase):
         Test for only positive input.
         """
         positive_series = self._get_series(seed=1).abs()
-        actual = fin.compute_turnover(positive_series).rename("output")
+        actual = cfin.compute_turnover(positive_series).rename("output")
         output_df = pd.concat([positive_series, actual], axis=1)
-        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        output_df_string = huntes.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
 
     def test3(self) -> None:
@@ -1433,9 +1439,9 @@ class Test_compute_turnover(hut.TestCase):
         """
         series = self._get_series(seed=1)
         series[5:10] = np.nan
-        actual = fin.compute_turnover(series, nan_mode="ffill").rename("output")
+        actual = cfin.compute_turnover(series, nan_mode="ffill").rename("output")
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        output_df_string = huntes.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
 
     def test4(self) -> None:
@@ -1444,16 +1450,16 @@ class Test_compute_turnover(hut.TestCase):
         """
         series = self._get_series(seed=1)
         series[5:10] = np.nan
-        actual = fin.compute_turnover(series, unit="B").rename("output")
+        actual = cfin.compute_turnover(series, unit="B").rename("output")
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        output_df_string = huntes.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
 
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        arma_process = carsigen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "D"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -1461,23 +1467,23 @@ class Test_compute_turnover(hut.TestCase):
         return series
 
 
-class Test_compute_average_holding_period(hut.TestCase):
+class Test_compute_average_holding_period(huntes.TestCase):
     def test1(self) -> None:
         series = self._get_series_in_unit(seed=1)
         series[5:10] = np.nan
-        actual = fin.compute_average_holding_period(series)
+        actual = cfin.compute_average_holding_period(series)
         expected = 1.08458
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
     def test2(self) -> None:
         positive_series = self._get_series_in_unit(seed=1).abs()
-        actual = fin.compute_average_holding_period(positive_series)
+        actual = cfin.compute_average_holding_period(positive_series)
         expected = 1.23620
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
     def test3(self) -> None:
         series = self._get_series_in_unit(seed=1)
-        actual = fin.compute_average_holding_period(series, unit="M")
+        actual = cfin.compute_average_holding_period(series, unit="M")
         expected = 0.05001
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
@@ -1485,7 +1491,7 @@ class Test_compute_average_holding_period(hut.TestCase):
     def _get_series_in_unit(seed: int, freq: str = "D") -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        arma_process = carsigen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": freq}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -1493,15 +1499,15 @@ class Test_compute_average_holding_period(hut.TestCase):
         return series
 
 
-class Test_compute_bet_starts(hut.TestCase):
+class Test_compute_bet_starts(huntes.TestCase):
     def test1(self) -> None:
         positions = Test_compute_bet_starts._get_series(42)
-        actual = fin.compute_bet_starts(positions)
+        actual = cfin.compute_bet_starts(positions)
         output_str = (
-            f"{prnt.frame('positions')}\n"
-            f"{hut.convert_df_to_string(positions, index=True)}\n"
-            f"{prnt.frame('bet_lengths')}\n"
-            f"{hut.convert_df_to_string(actual, index=True)}"
+            f"{hprintin.frame('positions')}\n"
+            f"{huntes.convert_df_to_string(positions, index=True)}\n"
+            f"{hprintin.frame('bet_lengths')}\n"
+            f"{huntes.convert_df_to_string(actual, index=True)}"
         )
         self.check_string(output_str)
 
@@ -1510,12 +1516,12 @@ class Test_compute_bet_starts(hut.TestCase):
         positions.iloc[:4] = np.nan
         positions.iloc[10:15] = np.nan
         positions.iloc[-4:] = np.nan
-        actual = fin.compute_bet_starts(positions)
+        actual = cfin.compute_bet_starts(positions)
         output_str = (
-            f"{prnt.frame('positions')}\n"
-            f"{hut.convert_df_to_string(positions, index=True)}\n"
-            f"{prnt.frame('bet_lengths')}\n"
-            f"{hut.convert_df_to_string(actual, index=True)}"
+            f"{hprintin.frame('positions')}\n"
+            f"{huntes.convert_df_to_string(positions, index=True)}\n"
+            f"{hprintin.frame('bet_lengths')}\n"
+            f"{huntes.convert_df_to_string(actual, index=True)}"
         )
         self.check_string(output_str)
 
@@ -1540,7 +1546,7 @@ class Test_compute_bet_starts(hut.TestCase):
             },
             dtype=float,
         )
-        actual = fin.compute_bet_starts(positions)
+        actual = cfin.compute_bet_starts(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test4(self) -> None:
@@ -1564,7 +1570,7 @@ class Test_compute_bet_starts(hut.TestCase):
             },
             dtype=float,
         )
-        actual = fin.compute_bet_starts(positions)
+        actual = cfin.compute_bet_starts(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test5(self) -> None:
@@ -1588,14 +1594,14 @@ class Test_compute_bet_starts(hut.TestCase):
             },
             dtype=float,
         )
-        actual = fin.compute_bet_starts(positions)
+        actual = cfin.compute_bet_starts(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        arma_process = carsigen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -1603,15 +1609,15 @@ class Test_compute_bet_starts(hut.TestCase):
         return series
 
 
-class Test_compute_bet_ends(hut.TestCase):
+class Test_compute_bet_ends(huntes.TestCase):
     def test1(self) -> None:
         positions = Test_compute_bet_ends._get_series(42)
-        actual = fin.compute_bet_ends(positions)
+        actual = cfin.compute_bet_ends(positions)
         output_str = (
-            f"{prnt.frame('positions')}\n"
-            f"{hut.convert_df_to_string(positions, index=True)}\n"
-            f"{prnt.frame('bet_lengths')}\n"
-            f"{hut.convert_df_to_string(actual, index=True)}"
+            f"{hprintin.frame('positions')}\n"
+            f"{huntes.convert_df_to_string(positions, index=True)}\n"
+            f"{hprintin.frame('bet_lengths')}\n"
+            f"{huntes.convert_df_to_string(actual, index=True)}"
         )
         self.check_string(output_str)
 
@@ -1620,12 +1626,12 @@ class Test_compute_bet_ends(hut.TestCase):
         positions.iloc[:4] = np.nan
         positions.iloc[10:15] = np.nan
         positions.iloc[-4:] = np.nan
-        actual = fin.compute_bet_ends(positions)
+        actual = cfin.compute_bet_ends(positions)
         output_str = (
-            f"{prnt.frame('positions')}\n"
-            f"{hut.convert_df_to_string(positions, index=True)}\n"
-            f"{prnt.frame('bet_lengths')}\n"
-            f"{hut.convert_df_to_string(actual, index=True)}"
+            f"{hprintin.frame('positions')}\n"
+            f"{huntes.convert_df_to_string(positions, index=True)}\n"
+            f"{hprintin.frame('bet_lengths')}\n"
+            f"{huntes.convert_df_to_string(actual, index=True)}"
         )
         self.check_string(output_str)
 
@@ -1651,7 +1657,7 @@ class Test_compute_bet_ends(hut.TestCase):
             dtype=float,
         )
         # TODO(*): This is testing the wrong function!
-        actual = fin.compute_bet_starts(positions)
+        actual = cfin.compute_bet_starts(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test4(self) -> None:
@@ -1676,7 +1682,7 @@ class Test_compute_bet_ends(hut.TestCase):
             dtype=float,
         )
         # TODO(*): This is testing the wrong function!
-        actual = fin.compute_bet_starts(positions)
+        actual = cfin.compute_bet_starts(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test5(self) -> None:
@@ -1701,14 +1707,14 @@ class Test_compute_bet_ends(hut.TestCase):
             dtype=float,
         )
         # TODO(*): This is testing the wrong function!
-        actual = fin.compute_bet_starts(positions)
+        actual = cfin.compute_bet_starts(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        arma_process = carsigen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -1716,15 +1722,15 @@ class Test_compute_bet_ends(hut.TestCase):
         return series
 
 
-class Test_compute_signed_bet_lengths(hut.TestCase):
+class Test_compute_signed_bet_lengths(huntes.TestCase):
     def test1(self) -> None:
         positions = Test_compute_signed_bet_lengths._get_series(42)
-        actual = fin.compute_signed_bet_lengths(positions)
+        actual = cfin.compute_signed_bet_lengths(positions)
         output_str = (
-            f"{prnt.frame('positions')}\n"
-            f"{hut.convert_df_to_string(positions, index=True)}\n"
-            f"{prnt.frame('bet_lengths')}\n"
-            f"{hut.convert_df_to_string(actual, index=True)}"
+            f"{hprintin.frame('positions')}\n"
+            f"{huntes.convert_df_to_string(positions, index=True)}\n"
+            f"{hprintin.frame('bet_lengths')}\n"
+            f"{huntes.convert_df_to_string(actual, index=True)}"
         )
         self.check_string(output_str)
 
@@ -1733,12 +1739,12 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         positions.iloc[:4] = np.nan
         positions.iloc[10:15] = np.nan
         positions.iloc[-4:] = np.nan
-        actual = fin.compute_signed_bet_lengths(positions)
+        actual = cfin.compute_signed_bet_lengths(positions)
         output_str = (
-            f"{prnt.frame('positions')}\n"
-            f"{hut.convert_df_to_string(positions, index=True)}\n"
-            f"{prnt.frame('bet_lengths')}\n"
-            f"{hut.convert_df_to_string(actual, index=True)}"
+            f"{hprintin.frame('positions')}\n"
+            f"{huntes.convert_df_to_string(positions, index=True)}\n"
+            f"{hprintin.frame('bet_lengths')}\n"
+            f"{huntes.convert_df_to_string(actual, index=True)}"
         )
         self.check_string(output_str)
 
@@ -1751,7 +1757,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
             ["2010-01-04", "2010-01-07", "2010-01-10", "2010-01-12"]
         )
         expected = pd.Series([4, -3, -1, 1], index=expected_bet_ends, dtype=float)
-        actual = fin.compute_signed_bet_lengths(positions)
+        actual = cfin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test4(self) -> None:
@@ -1761,7 +1767,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         positions = pd.Series([1], index=[pd.Timestamp("2010-01-01")])
         # Notice the int to float data type change.
         expected = pd.Series([1], index=[pd.Timestamp("2010-01-01")], dtype=float)
-        actual = fin.compute_signed_bet_lengths(positions)
+        actual = cfin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test5(self) -> None:
@@ -1771,7 +1777,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         idx = pd.to_datetime(["2010-01-01", "2010-01-02"])
         positions = pd.Series([np.nan, np.nan], index=idx)
         expected = pd.Series(index=idx).dropna()
-        actual = fin.compute_signed_bet_lengths(positions)
+        actual = cfin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test6(self) -> None:
@@ -1783,7 +1789,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         expected = pd.Series(
             [1], index=pd.to_datetime(["2010-01-01"]), dtype=float
         )
-        actual = fin.compute_signed_bet_lengths(positions)
+        actual = cfin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test7(self) -> None:
@@ -1795,7 +1801,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         expected = pd.Series(
             [1], index=pd.to_datetime(["2010-01-01"]), dtype=float
         )
-        actual = fin.compute_signed_bet_lengths(positions)
+        actual = cfin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test8(self) -> None:
@@ -1805,7 +1811,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         idx = pd.to_datetime(["2010-01-01", "2010-01-02"])
         positions = pd.Series([0, 0], index=idx)
         expected = pd.Series(index=idx).dropna()
-        actual = fin.compute_signed_bet_lengths(positions)
+        actual = cfin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test9(self) -> None:
@@ -1815,7 +1821,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         idx = pd.to_datetime(["2010-01-01", "2010-01-02", "2010-01-03"])
         positions = pd.Series([0, 1, 0], index=idx)
         expected = pd.Series([1.0], index=[pd.Timestamp("2010-01-02")])
-        actual = fin.compute_signed_bet_lengths(positions)
+        actual = cfin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test10(self) -> None:
@@ -1825,7 +1831,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         idx = pd.to_datetime(["2010-01-01", "2010-01-02", "2010-01-03"])
         positions = pd.Series([1, 0, 0], index=idx)
         expected = pd.Series([1.0], index=[pd.Timestamp("2010-01-01")])
-        actual = fin.compute_signed_bet_lengths(positions)
+        actual = cfin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test11(self) -> None:
@@ -1833,12 +1839,12 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         positions.iloc[:4] = 0
         positions.iloc[10:15] = 0
         positions.iloc[-4:] = 0
-        actual = fin.compute_signed_bet_lengths(positions)
+        actual = cfin.compute_signed_bet_lengths(positions)
         output_str = (
-            f"{prnt.frame('positions')}\n"
-            f"{hut.convert_df_to_string(positions, index=True)}\n"
-            f"{prnt.frame('bet_lengths')}\n"
-            f"{hut.convert_df_to_string(actual, index=True)}"
+            f"{hprintin.frame('positions')}\n"
+            f"{huntes.convert_df_to_string(positions, index=True)}\n"
+            f"{hprintin.frame('bet_lengths')}\n"
+            f"{huntes.convert_df_to_string(actual, index=True)}"
         )
         self.check_string(output_str)
 
@@ -1847,12 +1853,12 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         positions.iloc[:4] = 0
         positions.iloc[10:15] = 0
         positions.iloc[-4:] = 0
-        actual = fin.compute_signed_bet_lengths(positions)
+        actual = cfin.compute_signed_bet_lengths(positions)
         output_str = (
-            f"{prnt.frame('positions')}\n"
-            f"{hut.convert_df_to_string(positions, index=True)}\n"
-            f"{prnt.frame('bet_lengths')}\n"
-            f"{hut.convert_df_to_string(actual, index=True)}"
+            f"{hprintin.frame('positions')}\n"
+            f"{huntes.convert_df_to_string(positions, index=True)}\n"
+            f"{hprintin.frame('bet_lengths')}\n"
+            f"{huntes.convert_df_to_string(actual, index=True)}"
         )
         self.check_string(output_str)
 
@@ -1860,7 +1866,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        arma_process = carsigen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -1868,20 +1874,20 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         return series
 
 
-class Test_compute_returns_per_bet(hut.TestCase):
+class Test_compute_returns_per_bet(huntes.TestCase):
     def test1(self) -> None:
         """
         Test for clean input series.
         """
         log_rets = self._get_series(42)
-        positions = sigp.compute_smooth_moving_average(log_rets, 4)
-        actual = fin.compute_returns_per_bet(positions, log_rets)
+        positions = csipro.compute_smooth_moving_average(log_rets, 4)
+        actual = cfin.compute_returns_per_bet(positions, log_rets)
         rets_pos = pd.concat({"pos": positions, "rets": log_rets}, axis=1)
         output_str = (
-            f"{prnt.frame('rets_pos')}\n"
-            f"{hut.convert_df_to_string(rets_pos, index=True)}\n"
-            f"{prnt.frame('rets_per_bet')}\n"
-            f"{hut.convert_df_to_string(actual, index=True)}"
+            f"{hprintin.frame('rets_pos')}\n"
+            f"{huntes.convert_df_to_string(rets_pos, index=True)}\n"
+            f"{hprintin.frame('rets_per_bet')}\n"
+            f"{huntes.convert_df_to_string(actual, index=True)}"
         )
         self.check_string(output_str)
 
@@ -1891,17 +1897,17 @@ class Test_compute_returns_per_bet(hut.TestCase):
         """
         log_rets = self._get_series(42)
         log_rets.iloc[6:12] = np.nan
-        positions = sigp.compute_smooth_moving_average(log_rets, 4)
+        positions = csipro.compute_smooth_moving_average(log_rets, 4)
         positions.iloc[:4] = 0
         positions.iloc[10:15] = np.nan
         positions.iloc[-4:] = 0
-        actual = fin.compute_returns_per_bet(positions, log_rets)
+        actual = cfin.compute_returns_per_bet(positions, log_rets)
         rets_pos = pd.concat({"pos": positions, "rets": log_rets}, axis=1)
         output_str = (
-            f"{prnt.frame('rets_pos')}\n"
-            f"{hut.convert_df_to_string(rets_pos, index=True)}\n"
-            f"{prnt.frame('rets_per_bet')}\n"
-            f"{hut.convert_df_to_string(actual, index=True)}"
+            f"{hprintin.frame('rets_pos')}\n"
+            f"{huntes.convert_df_to_string(rets_pos, index=True)}\n"
+            f"{hprintin.frame('rets_per_bet')}\n"
+            f"{huntes.convert_df_to_string(actual, index=True)}"
         )
         self.check_string(output_str)
 
@@ -1921,7 +1927,7 @@ class Test_compute_returns_per_bet(hut.TestCase):
         )
         log_rets = pd.Series([1.0, 2.0, 3.0, 5.0, 7.0, 11.0], index=idx)
         positions = pd.Series([1.0, 2.0, 0.0, 1.0, -3.0, -2.0], index=idx)
-        actual = fin.compute_returns_per_bet(positions, log_rets)
+        actual = cfin.compute_returns_per_bet(positions, log_rets)
         expected = pd.Series(
             {
                 pd.Timestamp("2010-01-03"): 5.0,
@@ -1933,9 +1939,58 @@ class Test_compute_returns_per_bet(hut.TestCase):
 
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
-        arma_process = sig_gen.ArmaProcess([], [])
+        arma_process = carsigen.ArmaProcess([], [])
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
         )
         return series
+
+
+class Test_stack_prediction_df(huntes.TestCase):
+    def test1(self) -> None:
+        df = self._get_data()
+        actual = cfin.stack_prediction_df(
+            df,
+            id_col="amid",
+            close_price_col="close",
+            vwap_col="vwap",
+            ret_col="ret",
+            prediction_col="pred",
+            ath_start=datetime.time(9, 30),
+            ath_end=datetime.time(16, 0),
+        )
+        expected_txt = """
+,amid,alpha,eob_close,eob_ret,eob_vwap,eopb_close,minute_index,start_bar_et_ts
+0,MN0,,100.0,,100.0,,24198330,2016-01-04T09:30:00
+1,MN1,,73.25,,73.25,,24198330,2016-01-04T09:30:00
+2,MN0,,100.05,0.0005,100.04,100.0,24198331,2016-01-04T09:31:00
+3,MN1,,73.22,-0.00041,73.24,73.25,24198331,2016-01-04T09:31:00
+4,MN0,1e-05,100.07,0.0002,100.05,100.05,24198332,2016-01-04T09:32:00
+5,MN1,-3e-05,73.22,0.0,73.23,73.22,24198332,2016-01-04T09:32:00
+"""
+        expected = pd.read_csv(
+            io.StringIO(expected_txt),
+            index_col=0,
+        )
+        # NOTE: If the test fails, converting to json strings may make
+        #       debugging easier.
+        # actual_str = huntes.convert_df_to_json_string(actual)
+        # expected_str = huntes.convert_df_to_json_string(expected)
+        # self.assert_equal(actual_str, expected_str)
+        huntes.compare_df(actual, expected)
+
+    @staticmethod
+    def _get_data() -> pd.DataFrame:
+        txt = """
+,close,close,vwap,vwap,ret,ret,pred,pred
+datetime,MN0,MN1,MN0,MN1,MN0,MN1,MN0,MN1
+2016-01-04 09:31:00,100.0,73.25,100.0,73.25,NaN,NaN,NaN,NaN
+2016-01-04 09:32:00,100.05,73.22,100.04,73.24,0.0005,-0.00041,0.00001,-0.00003
+2016-01-04 09:33:00,100.07,73.22,100.05,73.23,0.0002,0.0,0.00001,0.00001
+"""
+        df = pd.read_csv(
+            io.StringIO(txt), index_col=0, parse_dates=True, header=[0, 1]
+        )
+        df.index.freq = "T"
+        return df

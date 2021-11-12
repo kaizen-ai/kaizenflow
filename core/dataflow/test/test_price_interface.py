@@ -1,7 +1,7 @@
 """
 Import as:
 
-import dataflow_amp.real_time.test.test_db_interface as dartttdi
+import dataflow_amp.real_time.test.test_price_interface as dartttdi
 """
 
 import asyncio
@@ -11,7 +11,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
-import core.dataflow.db_interface as cdtfdbint
+import core.dataflow.price_interface as cdtfprint
 import core.dataflow.real_time as cdtfretim
 import helpers.datetime_ as hdatetim
 import helpers.dbg as hdbg
@@ -53,8 +53,8 @@ def generate_synthetic_db_data(
 
 
 # TODO(gp): initial_replayed_delay -> initial_replayed_delay_in_mins or
-#  initial_delay_in_mins.
-def get_replayed_time_db_interface_example1(
+#  initial_delay_in_mins (or in secs).
+def get_replayed_time_price_interface_example1(
     event_loop: asyncio.AbstractEventLoop,
     start_datetime: pd.Timestamp,
     end_datetime: pd.Timestamp,
@@ -64,7 +64,7 @@ def get_replayed_time_db_interface_example1(
     df: Optional[pd.DataFrame] = None,
     sleep_in_secs: float = 1.0,
     time_out_in_secs: int = 60 * 2,
-) -> cdtfdbint.ReplayedTimeDbInterface:
+) -> cdtfprint.ReplayedTimePriceInterface:
     """
     :param initial_replayed_delay: how many minutes after the beginning of the data
         the replayed time starts. This is useful to simulate the beginning / end of
@@ -74,7 +74,7 @@ def get_replayed_time_db_interface_example1(
     if df is None:
         columns_ = ["last_price"]
         df = generate_synthetic_db_data(start_datetime, end_datetime, columns_)
-    # Build the `ReplayedTimeDbInterface` backed by the df.
+    # Build the `ReplayedTimePriceInterface` backed by the df.
     id_col_name = "id"
     ids = [1000]
     start_time_col_name = "start_datetime"
@@ -95,7 +95,7 @@ def get_replayed_time_db_interface_example1(
         speed_up_factor=speed_up_factor,
     )
     #
-    rtdi = cdtfdbint.ReplayedTimeDbInterface(
+    rtpi = cdtfprint.ReplayedTimePriceInterface(
         df,
         knowledge_datetime_col_name,
         delay_in_secs,
@@ -109,27 +109,27 @@ def get_replayed_time_db_interface_example1(
         sleep_in_secs=sleep_in_secs,
         time_out_in_secs=time_out_in_secs,
     )
-    return rtdi
+    return rtpi
 
 
 # #############################################################################
 
 
-class TestReplayedTimeDbInterface1(huntes.TestCase):
+class TestReplayedTimePriceInterface1(huntes.TestCase):
     def test_get_last_end_time1(self) -> None:
         with hhasynci.solipsism_context() as event_loop:
             start_datetime = pd.Timestamp("2000-01-01 09:30:00-05:00")
             end_datetime = pd.Timestamp("2000-01-01 10:30:00-05:00")
             initial_replayed_delay = 5
             delay_in_secs = 0
-            rtdi = get_replayed_time_db_interface_example1(
+            rtpi = get_replayed_time_price_interface_example1(
                 event_loop,
                 start_datetime,
                 end_datetime,
                 initial_replayed_delay,
                 delay_in_secs,
             )
-            last_end_time = rtdi.get_last_end_time()
+            last_end_time = rtpi.get_last_end_time()
             _LOG.info("-> last_end_time=%s", last_end_time)
         self.assertEqual(last_end_time, pd.Timestamp("2000-01-01 09:35:00-05:00"))
 
@@ -151,14 +151,14 @@ class TestReplayedTimeDbInterface1(huntes.TestCase):
         2000-01-01 09:34:00-05:00  1000    0.655907 2000-01-01 09:33:00-05:00 2000-01-01 09:34:00-05:00
         2000-01-01 09:35:00-05:00  1000    0.311925 2000-01-01 09:34:00-05:00 2000-01-01 09:35:00-05:00"""
         # pylint: enable=line-too-long
-        rtdi = self._check_get_data(
+        rtpi = self._check_get_data(
             normalize_data, initial_replayed_delay, expected_df_as_str
         )
         #
         expected_last_end_time = pd.Timestamp("2000-01-01 09:35:00-05:00")
         expected_is_online = True
         self._check_last_end_time(
-            rtdi, expected_last_end_time, expected_is_online
+            rtpi, expected_last_end_time, expected_is_online
         )
 
     def test_get_data2(self) -> None:
@@ -178,14 +178,14 @@ class TestReplayedTimeDbInterface1(huntes.TestCase):
         3 2000-01-01 09:34:00-05:00  1000    0.655907 2000-01-01 09:33:00-05:00 2000-01-01 09:34:00-05:00
         4 2000-01-01 09:35:00-05:00  1000    0.311925 2000-01-01 09:34:00-05:00 2000-01-01 09:35:00-05:00"""
         # pylint: enable=line-too-long
-        rtdi = self._check_get_data(
+        rtpi = self._check_get_data(
             normalize_data, initial_replayed_delay, expected_df_as_str
         )
         #
         expected_last_end_time = pd.Timestamp("2000-01-01 09:35:00-05:00")
         expected_is_online = True
         self._check_last_end_time(
-            rtdi, expected_last_end_time, expected_is_online
+            rtpi, expected_last_end_time, expected_is_online
         )
 
     def test_get_data_for_minute_0(self) -> None:
@@ -200,20 +200,45 @@ class TestReplayedTimeDbInterface1(huntes.TestCase):
         Empty DataFrame
         Columns: [id, last_price, start_datetime, timestamp_db]
         Index: []"""
-        rtdi = self._check_get_data(
+        rtpi = self._check_get_data(
             normalize_data, initial_replayed_delay, expected_df_as_str
         )
         #
         expected_last_end_time = None
         expected_is_online = False
         self._check_last_end_time(
-            rtdi, expected_last_end_time, expected_is_online
+            rtpi, expected_last_end_time, expected_is_online
+        )
+
+    def test_get_data_for_minute_1(self) -> None:
+        """
+        The replayed time starts one minute after the data to represent the
+        first minute of trading.
+        """
+        normalize_data = True
+        initial_replayed_delay = 1
+        expected_df_as_str = """# df=
+        df.index in [2000-01-01 09:31:00-05:00, 2000-01-01 09:31:00-05:00]
+        df.columns=id,last_price,start_datetime,timestamp_db
+        df.shape=(1, 4)
+        id  last_price            start_datetime              timestamp_db
+        end_datetime
+        2000-01-01 09:31:00-05:00  1000    -0.12546 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00
+        """
+        rtpi = self._check_get_data(
+            normalize_data, initial_replayed_delay, expected_df_as_str
+        )
+        #
+        expected_last_end_time = pd.Timestamp("2000-01-01 09:31:00-0500")
+        expected_is_online = True
+        self._check_last_end_time(
+            rtpi, expected_last_end_time, expected_is_online
         )
 
     def test_get_data_for_minute_3(self) -> None:
         """
         The replayed time starts 3 minutes after the opening of the trading
-        date.
+        day.
         """
         normalize_data = True
         initial_replayed_delay = 3
@@ -228,20 +253,20 @@ class TestReplayedTimeDbInterface1(huntes.TestCase):
         2000-01-01 09:32:00-05:00  1000    0.325254 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00
         2000-01-01 09:33:00-05:00  1000    0.557248 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00"""
         # pylint: enable=line-too-long
-        rtdi = self._check_get_data(
+        rtpi = self._check_get_data(
             normalize_data, initial_replayed_delay, expected_df_as_str
         )
         #
         expected_last_end_time = pd.Timestamp("2000-01-01 09:33:00-05:00")
         expected_is_online = True
         self._check_last_end_time(
-            rtdi, expected_last_end_time, expected_is_online
+            rtpi, expected_last_end_time, expected_is_online
         )
 
     def test_get_data_for_minute_6(self) -> None:
         """
-        The replayed time starts at the same time of the data to represent the
-        first minute of trading.
+        The replayed time starts 6 minutes after the opening of the trading
+        day.
         """
         normalize_data = True
         initial_replayed_delay = 6
@@ -260,20 +285,20 @@ class TestReplayedTimeDbInterface1(huntes.TestCase):
         2000-01-01 09:35:00-05:00  1000    0.311925 2000-01-01 09:34:00-05:00 2000-01-01 09:35:00-05:00
         2000-01-01 09:36:00-05:00  1000   -0.032080 2000-01-01 09:35:00-05:00 2000-01-01 09:36:00-05:00"""
         # pylint: enable=line-too-long
-        rtdi = self._check_get_data(
+        rtpi = self._check_get_data(
             normalize_data, initial_replayed_delay, expected_df_as_str
         )
         #
         expected_last_end_time = pd.Timestamp("2000-01-01 09:36:00-05:00")
         expected_is_online = True
         self._check_last_end_time(
-            rtdi, expected_last_end_time, expected_is_online
+            rtpi, expected_last_end_time, expected_is_online
         )
 
     def test_get_data_for_minute_63(self) -> None:
         """
-        The replayed time starts at the same time of the data to represent the
-        first minute of trading.
+        The replayed time starts 63 minutes after the opening of the trading
+        day.
         """
         normalize_data = True
         initial_replayed_delay = 63
@@ -287,14 +312,14 @@ class TestReplayedTimeDbInterface1(huntes.TestCase):
         2000-01-01 10:29:00-05:00  1000   -1.775284 2000-01-01 10:28:00-05:00 2000-01-01 10:29:00-05:00
         2000-01-01 10:30:00-05:00  1000   -1.949954 2000-01-01 10:29:00-05:00 2000-01-01 10:30:00-05:00"""
         # pylint: enable=line-too-long
-        rtdi = self._check_get_data(
+        rtpi = self._check_get_data(
             normalize_data, initial_replayed_delay, expected_df_as_str
         )
         #
-        expected_last_end_time = None
+        expected_last_end_time = pd.Timestamp("2000-01-01 10:30:00-0500")
         expected_is_online = False
         self._check_last_end_time(
-            rtdi, expected_last_end_time, expected_is_online
+            rtpi, expected_last_end_time, expected_is_online
         )
 
     def _check_get_data(
@@ -302,16 +327,16 @@ class TestReplayedTimeDbInterface1(huntes.TestCase):
         normalize_data: bool,
         initial_replayed_delay: int,
         expected_df_as_str: str,
-    ) -> cdtfdbint.ReplayedTimeDbInterface:
+    ) -> cdtfprint.ReplayedTimePriceInterface:
         with hhasynci.solipsism_context() as event_loop:
             start_datetime = pd.Timestamp("2000-01-01 09:30:00-05:00")
             end_datetime = pd.Timestamp("2000-01-01 10:29:00-05:00")
-            rtdi = get_replayed_time_db_interface_example1(
+            rtpi = get_replayed_time_price_interface_example1(
                 event_loop, start_datetime, end_datetime, initial_replayed_delay
             )
             #
             period = "last_5mins"
-            actual_df = rtdi.get_data(period, normalize_data=normalize_data)
+            actual_df = rtpi.get_data(period, normalize_data=normalize_data)
             #
             actual_df = actual_df[sorted(actual_df.columns)]
             actual_df_as_str = hprintin.df_to_short_str("df", actual_df)
@@ -322,20 +347,20 @@ class TestReplayedTimeDbInterface1(huntes.TestCase):
                 dedent=True,
                 fuzzy_match=True,
             )
-        return rtdi
+        return rtpi
 
     def _check_last_end_time(
         self,
-        rtdi: cdtfdbint.ReplayedTimeDbInterface,
+        rtpi: cdtfprint.ReplayedTimePriceInterface,
         expected_last_end_time: pd.Timestamp,
         expected_is_online: bool,
     ) -> None:
         #
-        last_end_time = rtdi.get_last_end_time()
+        last_end_time = rtpi.get_last_end_time()
         _LOG.info("-> last_end_time=%s", last_end_time)
         self.assertEqual(last_end_time, expected_last_end_time)
         #
-        is_online = rtdi.is_online()
+        is_online = rtpi.is_online()
         _LOG.info("-> is_online=%s", is_online)
         self.assertEqual(is_online, expected_is_online)
 
@@ -343,7 +368,7 @@ class TestReplayedTimeDbInterface1(huntes.TestCase):
 # #############################################################################
 
 
-class TestReplayedTimeDbInterface2(huntes.TestCase):
+class TestReplayedTimePriceInterface2(huntes.TestCase):
     def test_is_last_bar_available1(self) -> None:
         """
         Wait for the market to open.
@@ -393,7 +418,7 @@ class TestReplayedTimeDbInterface2(huntes.TestCase):
             delay_in_secs = 0
             sleep_in_secs = 30
             time_out_in_secs = 60 * 5
-            rtdi = get_replayed_time_db_interface_example1(
+            rtpi = get_replayed_time_price_interface_example1(
                 event_loop,
                 start_datetime,
                 end_datetime,
@@ -403,6 +428,6 @@ class TestReplayedTimeDbInterface2(huntes.TestCase):
                 time_out_in_secs=time_out_in_secs,
             )
             start_time, end_time, num_iter = hhasynci.run(
-                rtdi.is_last_bar_available(), event_loop=event_loop
+                rtpi.is_last_bar_available(), event_loop=event_loop
             )
         return start_time, end_time, num_iter

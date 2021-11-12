@@ -73,7 +73,7 @@ class _NaivePipeline(cdtfbui.DagBuilder):
         config = cconfig.get_config_from_nested_dict(dict_)
         return config
 
-    def get_dag(
+    def _get_dag(
         self, config: cconfig.Config, mode: str = "strict"
     ) -> cdtfcor.DAG:
         """
@@ -102,15 +102,6 @@ class _NaivePipeline(cdtfbui.DagBuilder):
         #
         _ = tail_nid
         return dag
-
-    @staticmethod
-    def validate_config(config: cconfig.Config) -> None:
-        """
-        Sanity-check config.
-
-        :param config: config object to validate
-        """
-        dbg.dassert(cconfig.check_no_dummy_values(config))
 
 
 # #############################################################################

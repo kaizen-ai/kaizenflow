@@ -18,6 +18,7 @@ from typing import (
     cast,
 )
 
+import numpy as np
 import pandas as pd
 
 import core.dataflow.core as cdtfc
@@ -280,6 +281,7 @@ class GroupedColDfToDfTransformer(cdnb.Transformer):
         transformer_func: Callable[..., Union[pd.Series, pd.DataFrame]],
         transformer_kwargs: Optional[Dict[str, Any]] = None,
         col_mapping: Optional[Dict[cdtfu.NodeColumn, cdtfu.NodeColumn]] = None,
+        permitted_exceptions: Tuple[Any] = (),
         *,
         drop_nans: bool = False,
         reindex_like_input: bool = True,
@@ -321,6 +323,7 @@ class GroupedColDfToDfTransformer(cdnb.Transformer):
         self._drop_nans = drop_nans
         self._reindex_like_input = reindex_like_input
         self._join_output_with_input = join_output_with_input
+        self._permitted_exceptions = permitted_exceptions
         # The leaf col names are determined from the dataframe at runtime.
         self._leaf_cols = None
 
@@ -346,7 +349,11 @@ class GroupedColDfToDfTransformer(cdnb.Transformer):
                 self._transformer_kwargs,
                 self._drop_nans,
                 self._reindex_like_input,
+                self._permitted_exceptions,
             )
+            if df_out is None:
+                _LOG.warning("No output for key=%s, imputing empty dataframe", key)
+                df_out = pd.DataFrame()
             dbg.dassert_isinstance(df_out, pd.DataFrame)
             if key_info is not None:
                 func_info[key] = key_info
@@ -438,6 +445,9 @@ class SeriesToDfTransformer(cdnb.Transformer):
                 self._drop_nans,
                 self._reindex_like_input,
             )
+            if df_out is None:
+                _LOG.warning("No output for key=%s", key)
+                continue
             dbg.dassert_isinstance(df_out, pd.DataFrame)
             if col_info is not None:
                 func_info[col] = col_info
@@ -494,6 +504,7 @@ class SeriesToSeriesTransformer(cdnb.Transformer):
         out_col_group: Tuple[cdtfu.NodeColumn],
         transformer_func: Callable[..., pd.Series],
         transformer_kwargs: Optional[Dict[str, Any]] = None,
+        permitted_exceptions: Tuple[Any] = (),
         *,
         drop_nans: bool = False,
         reindex_like_input: bool = True,
@@ -533,6 +544,7 @@ class SeriesToSeriesTransformer(cdnb.Transformer):
         self._drop_nans = drop_nans
         self._reindex_like_input = reindex_like_input
         self._join_output_with_input = join_output_with_input
+        self._permitted_exceptions = permitted_exceptions
         # The leaf col names are determined from the dataframe at runtime.
         self._leaf_cols = None
 
@@ -559,7 +571,11 @@ class SeriesToSeriesTransformer(cdnb.Transformer):
                 self._transformer_kwargs,
                 self._drop_nans,
                 self._reindex_like_input,
+                self._permitted_exceptions,
             )
+            if srs is None:
+                _LOG.warning("No output for key=%s, imputing NaNs", col)
+                srs = pd.Series(np.nan, index=df[col].index)
             dbg.dassert_isinstance(srs, pd.Series)
             srs.name = col
             if col_info is not None:
@@ -583,7 +599,10 @@ def _apply_func_to_data(
     func_kwargs: Dict[str, Any],
     drop_nans: bool = False,
     reindex_like_input: bool = True,
-) -> Tuple[Union[pd.Series, pd.DataFrame], Optional[collections.OrderedDict]]:
+    exceptions: Tuple[Any] = (),
+) -> Tuple[
+    Optional[Union[pd.Series, pd.DataFrame]], Optional[collections.OrderedDict]
+]:
     idx = data.index
     if drop_nans:
         data = data.dropna()
@@ -594,13 +613,21 @@ def _apply_func_to_data(
     # `_transformer_func` is executed.
     func_sig = inspect.signature(func)
     if "info" in func_sig.parameters:
-        result = func(
-            data,
-            info=info,
-            **func_kwargs,
-        )
+        try:
+            result = func(
+                data,
+                info=info,
+                **func_kwargs,
+            )
+        except exceptions:
+            _LOG.warning("Exception encountered!")
+            return (None, None)
     else:
-        result = func(data, **func_kwargs)
+        try:
+            result = func(data, **func_kwargs)
+        except exceptions:
+            _LOG.warning("Exception encountered!")
+            return (None, None)
         info = None
     if reindex_like_input:
         result = result.reindex(idx)

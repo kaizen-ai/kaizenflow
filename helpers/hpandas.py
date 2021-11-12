@@ -4,7 +4,7 @@ Import as:
 import helpers.hpandas as hhpandas
 """
 import logging
-from typing import Any, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 
@@ -39,8 +39,8 @@ def dassert_strictly_increasing_index(
         index = obj.index
     # TODO(gp): Understand why mypy reports:
     #   error: "dassert" gets multiple values for keyword argument "msg"
-    hdbg.dassert(index.is_monotonic_increasing, msg=msg, *args)  # type: ignore
-    hdbg.dassert(index.is_unique, msg=msg, *args)  # type: ignore
+    hdbg.dassert(index.is_monotonic_increasing, msg=msg, *args)
+    hdbg.dassert(index.is_unique, msg=msg, *args)
 
 
 # TODO(gp): Factor out common code related to extracting the index from several
@@ -61,8 +61,26 @@ def dassert_monotonic_index(
     # TODO(gp): Understand why mypy reports:
     #   error: "dassert" gets multiple values for keyword argument "msg"
     cond = index.is_monotonic_increasing or index.is_monotonic_decreasing
-    hdbg.dassert(cond, msg=msg, *args)  # type: ignore
-    hdbg.dassert(index.is_unique, msg=msg, *args)  # type: ignore
+    hdbg.dassert(cond, msg=msg, *args)
+    hdbg.dassert(index.is_unique, msg=msg, *args)
+
+
+def dassert_valid_remap(to_remap: List[str], remap_dict: Dict[str, str]) -> None:
+    """
+    Ensure that remapping rows / columns is valid.
+    """
+    hdbg.dassert_isinstance(to_remap, list)
+    hdbg.dassert_isinstance(remap_dict, dict)
+    # All the rows / columns to remap, should exist.
+    hdbg.dassert_is_subset(remap_dict.keys(), to_remap)
+    # The mapping is invertible.
+    hdbg.dassert_no_duplicates(remap_dict.keys())
+    hdbg.dassert_no_duplicates(remap_dict.values())
+    # Rows / columns should not be remapped on existing rows / columns.
+    hdbg.dassert_not_intersection(remap_dict.values(), to_remap)
+
+
+# #############################################################################
 
 
 def resample_index(index: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
