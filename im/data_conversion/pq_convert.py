@@ -70,8 +70,6 @@ def _get_df(date) -> pd.DataFrame:
     return df
 
 
-_PATH = "s3://eglp-core-data/ds/ext/bars/taq/v1.0-prod/60/"
-
 # s3 = s3fs.S3FileSystem(profile="saml-spm-sasm")
 
 # def get_available_dates():

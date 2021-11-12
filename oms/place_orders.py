@@ -7,16 +7,6 @@ import oms.place_orders as oplord
 # We should use a RT graph executed once step at a time.
 # For now we just play back the entire thing.
 
-def get_file_name():
-    trading_mode = "cand"
-
-    dst_dir = "s3://eglp-core-exch/files/spms/SAU1/cand/targets/YYYYMMDD000000/<filename>.csv"
-    # Number of minutes from the beginning of trading day.
-    #idx
-    #file_name = idx.timestamp
-    #file_name = "s3://eglp-core-exch/files/spms/SAU1/cand/targets/YYYYMMDD000000/<filename>.csv"
-
-
 def convert_to_csv():
     # trade_date -- Must be set to the current live trade date.
     #
@@ -43,7 +33,7 @@ def convert_to_csv():
 # #############################################################################
 
 
-# class EgPortfolio:
+# class Portfolio:
 #
 #     def __init__(self, strategy_id: str, account: str):
 #         self._strategy_id = strategy_id
