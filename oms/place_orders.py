@@ -46,6 +46,8 @@ _LOG = logging.getLogger(__name__)
 # - lambda
 # - various misc
 
+# Constraint
+# do not trade
 
 def _compute_target_positions(
     current_timestamp: pd.Timestamp,

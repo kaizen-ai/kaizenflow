@@ -170,6 +170,21 @@ class Portfolio:
     def orders(self) -> pd.DataFrame:
         return self._orders
 
+    @property
+    def holdings(self) -> pd.DataFrame:
+        return self._holdings
+
+    @property
+    def orders(self) -> pd.DataFrame:
+        return self._orders
+
+    def __str__(self) -> str:
+        act = []
+        act.append("# holdings=\n%s" % hprintin.dataframe_to_str(self.holdings))
+        act.append("# orders=\n%s" % hprintin.dataframe_to_str(self.orders))
+        act = "\n".join(act)
+        return act
+
     def get_last_timestamp(self) -> pd.Timestamp:
         """
         Get the last time known to Portfolio (holdings).

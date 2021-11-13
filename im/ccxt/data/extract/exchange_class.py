@@ -8,10 +8,10 @@ import logging
 import time
 from typing import Any, Dict, List, Optional, Union
 
+import ccxt
 import pandas as pd
 import tqdm
 
-import ccxt
 import helpers.dbg as hdbg
 import helpers.io_ as hio
 
