@@ -42,7 +42,7 @@ _LOG = logging.getLogger(__name__)
 
 # _LOG.info("%s", env.get_system_signature()[0])
 
-hprint.config_notebook()
+hprintin.config_notebook()
 
 # %% [markdown]
 # # Notebook config
@@ -381,7 +381,7 @@ col_mask = (
 selected = pnl_stats.loc[:, col_mask].columns.to_list()
 not_selected = pnl_stats.loc[:, ~col_mask].columns.to_list()
 
-print("num model selected=%s" % hprint.perc(len(selected), pnl_stats.shape[1]))
+print("num model selected=%s" % hprintin.perc(len(selected), pnl_stats.shape[1]))
 print("model selected=%s" % selected)
 print("model not selected=%s" % not_selected)
 
