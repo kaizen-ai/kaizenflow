@@ -9,7 +9,6 @@ import helpers.system_interaction as hsyint
 import helpers.unit_test as huntes
 import im.common.db.create_db as imcodbcrdb
 
-
 _LOG = logging.getLogger(__name__)
 
 
@@ -33,7 +32,7 @@ class Test_sql(huntes.TestCase):
         
     def tearDown(self):
         """
-        Bring down the database inside the test container.
+        Bring down the test container.
         """
         cmd = ("sudo docker-compose "
                f"--file {self.docker_compose_file_path} down -v")
@@ -41,6 +40,7 @@ class Test_sql(huntes.TestCase):
 
         super().tearDown()
 
+    @pytest.mark.slow()
     def test_checkdb(self) -> None:
         """
         Smoke test.
@@ -51,7 +51,8 @@ class Test_sql(huntes.TestCase):
         port = 5432
         hsql.check_db_connection(dbname, port, host)
 
-    def test_db_connection_to_str(self) -> None:
+    @pytest.mark.slow()
+    def test_db_connection_to_tuple(self) -> None:
         """
         Verify that connection string is correct.
         """
@@ -69,14 +70,15 @@ class Test_sql(huntes.TestCase):
             password,
             autocommit=True,
         )
-        actual_str = hsql.db_connection_to_str(self.connection)
-        expected = (f"dbname={dbname}\n"
-                    f"host={host}\n"
-                    f"port={port}\n"
-                    f"user={user}\n"
-                    f"password={password}")
-        self.assertEqual(actual_str, expected) 
+        actual_details = hsql.db_connection_to_tuple(self.connection)
+        expected = {'dbname': dbname,
+                    'host' : host,
+                    'port' : port,
+                    'user' : user,
+                    'password' :password}
+        self.assertEqual(actual_details._asdict(), expected) 
 
+    @pytest.mark.slow()
     def test_create_database(self):
         """
         Verify that db is creating.
