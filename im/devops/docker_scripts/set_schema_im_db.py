@@ -8,10 +8,6 @@ Note: IM database is created using environment variables.
 Usage:
 - Set SQL schema for the IM database:
     > set_schema_im_db.py
-
-Import as:
-
-import im.devops.docker_scripts.set_schema_im_db as imddoscsescimdb
 """
 import argparse
 import logging
@@ -26,6 +22,10 @@ import im.common.db.utils as imcodbuti
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): CmampTask413: Pass db credentials through command line like for
+#  im/app/transform/convert_s3_to_sql.py to override env vars.
+#  Probably we want to factor out the parser part like we do in helpers/parser.py
+#  so that all scripts can use the same interface.
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter

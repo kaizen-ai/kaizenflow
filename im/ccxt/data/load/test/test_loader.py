@@ -36,7 +36,7 @@ class TestGetFilePath(huntes.TestCase):
             root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         # TODO(gp): We should throw a different exception, like
-        # `UnsupportedExchane`.
+        # `UnsupportedExchange`.
         # TODO(gp): Same change also for CDD test_loader.py
         with self.assertRaises(AssertionError):
             icdloloa.get_file_name(exchange, currency)
@@ -50,6 +50,7 @@ class TestGetFilePath(huntes.TestCase):
         ccxt_loader = imccdaloloa.CcxtLoader(
             root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
+        # TODO(gp): Same change also for CDD test_loader.py
         with self.assertRaises(AssertionError):
             icdloloa.get_file_name(exchange, currency)
 

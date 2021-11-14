@@ -5,12 +5,14 @@ import pandas as pd
 import pytest
 
 import helpers.unit_test as hut
+
 # TODO(Dan): return to code after CmTask43 is fixed.
 # import im.ccxt.data.extract.exchange_class as deecla
 
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): CmampTask413: Why skip this guy?
 @pytest.mark.skip()
 class Test_CcxtExchange(hut.TestCase):
     def test_initialize_class(self) -> None:

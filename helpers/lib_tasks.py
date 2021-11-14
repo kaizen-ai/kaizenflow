@@ -2150,7 +2150,7 @@ def _build_run_command_line(
     pytest_opts_tmp = [po for po in pytest_opts_tmp if po != ""]
     # TODO(gp): Use _to_multi_line_cmd()
     pytest_opts = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
-    cmd = f"pytest {pytest_opts}"
+    cmd = f"pytest {pytest_opts} {dir_name}"
     if tee_to_file:
         cmd += " 2>&1 | tee tmp.pytest.log"
     return cmd

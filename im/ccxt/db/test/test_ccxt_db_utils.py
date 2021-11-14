@@ -13,22 +13,22 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestUtils(huntes.TestCase):
+    # TODO(gp): CmampTask413. Move into a helper class.
     def setUp(self) -> None:
         """
         Initialize the test database inside test container.
         """
         super().setUp()
         self.docker_compose_file_path = os.path.join(
-            hgit.get_amp_abs_path(),
-            "im/devops/compose/docker-compose.yml"
+            hgit.get_amp_abs_path(), "im/devops/compose/docker-compose.yml"
         )
         cmd = (
             "sudo docker-compose "
             f"--file {self.docker_compose_file_path} "
             "up -d im_postgres_local"
         )
-
         hsyint.system(cmd, suppress_output=False)
+        # TODO(gp): CmampTask413: this info should be read from the env file.
         dbname = "im_postgres_db_local"
         host = "localhost"
         port = 5432
@@ -44,6 +44,7 @@ class TestUtils(huntes.TestCase):
             autocommit=True,
         )
 
+        # TODO(gp): CmampTask413, This should go in a get_df_to_insert() method.
         self.df_to_insert = pd.DataFrame(
             columns=[
                 "id",
@@ -119,12 +120,10 @@ class TestUtils(huntes.TestCase):
         """
         Bring down the test container.
         """
-
         cmd = (
             "sudo docker-compose "
             f"--file {self.docker_compose_file_path} down -v"
         )
-
         hsyint.system(cmd, suppress_output=False)
         super().tearDown()
 
@@ -140,17 +139,18 @@ class TestUtils(huntes.TestCase):
         actual = huntes.convert_df_to_json_string(df)
         self.check_string(actual)
 
+    @pytest.mark.skip("CmapAmp413: 92s, too slow")
     def test_execute_insert_query1(self) -> None:
         """
         Verify that dataframe insertion is correct.
         """
-        expected = self.df_to_insert.to_dict()
+        # TODO(gp): Insert less data.
         self.cursor.execute(imccdbuti.get_ccxt_ohlcv_create_table_query())
         imccdbuti.execute_insert_query(
             self.connection, self.df_to_insert, "ccxt_ohlcv"
         )
         df = hsql.execute_query(self.connection, "SELECT * FROM ccxt_ohlcv")
-        actual = huntes.convert_df_to_json_string(df) 
+        actual = huntes.convert_df_to_json_string(df)
         self.check_string(actual)
 
 
@@ -183,10 +183,7 @@ class TestUtils1(huntes.TestCase):
                     "BTC/USDT",
                     "binance",
                 ]
-            ]
+            ],
         )
-        actual_query = imccdbuti._create_insert_query(
-            df_to_insert,
-            "ccxt_ohlcv"
-        )
+        actual_query = imccdbuti._create_insert_query(df_to_insert, "ccxt_ohlcv")
         self.check_string(actual_query)

@@ -66,11 +66,19 @@ def get_currency_pair_create_table_query() -> str:
 # #############################################################################
 
 
-def populate_exchange_currency_tables(conn: hsql.DbConnection) -> None:
+# #############################################################################
+
+
+def _create_insert_query(df: pd.DataFrame, table_name: str) -> str:
     """
     Populate exchange name and currency pair tables with data from CCXT.
 
-    :param conn: DB connection
+    :param df: data to insert into DB
+    :param table_name: name of the table for insertion
+    :return: sql query, e.g.,
+        ```
+        INSERT INTO ccxt_ohlcv(timestamp,open,high,low,close) VALUES %s
+        ```
     """
     # Extract the list of all CCXT exchange names.
     all_exchange_names = pd.Series(ccxt.exchanges)
