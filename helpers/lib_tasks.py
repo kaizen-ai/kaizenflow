@@ -1387,12 +1387,11 @@ def _docker_cmd(
 
 
 @task
-def docker_bash(ctx, stage=STAGE, version="", entrypoint=True, as_user=True):  # type: ignore
+def docker_bash(ctx, base_image="", stage=STAGE, version="", entrypoint=True, as_user=True):  # type: ignore
     """
     Start a bash shell inside the container corresponding to a stage.
     """
     _report_task()
-    base_image = ""
     cmd = "bash"
     docker_cmd_ = _get_docker_cmd(stage, base_image, version, cmd, entrypoint=entrypoint,
             as_user=as_user)
@@ -1400,13 +1399,12 @@ def docker_bash(ctx, stage=STAGE, version="", entrypoint=True, as_user=True):  #
 
 
 @task
-def docker_cmd(ctx, stage=STAGE, version="", cmd=""):  # type: ignore
+def docker_cmd(ctx, base_image="", stage=STAGE, version="", cmd=""):  # type: ignore
     """
     Execute the command `cmd` inside a container corresponding to a stage.
     """
     _report_task()
     hdbg.dassert_ne(cmd, "")
-    base_image = ""
     # TODO(gp): Do we need to overwrite the entrypoint?
     docker_cmd_ = _get_docker_cmd(stage, base_image, version, cmd)
     _docker_cmd(ctx, docker_cmd_)
@@ -1418,7 +1416,7 @@ def _get_docker_jupyter_cmd(
     version: str,
     port: int,
     self_test: bool,
-    print_docker_config: bool = False,
+    print_docker_config: bool,
 ) -> str:
     cmd = ""
     extra_env_vars = [f"PORT={port}"]
@@ -1441,9 +1439,9 @@ def _get_docker_jupyter_cmd(
 @task
 def docker_jupyter(  # type: ignore
     ctx,
+    base_image="",
     stage=STAGE,
     version="",
-    base_image="",
     auto_assign_port=True,
     port=9999,
     self_test=False,
@@ -1467,7 +1465,9 @@ def docker_jupyter(  # type: ignore
         port = (uid * max_idx_per_user) + git_repo_idx
         _LOG.info("Assigned port is %s", port)
     #
-    docker_cmd_ = _get_docker_jupyter_cmd(stage, base_image, version, port, self_test)
+    print_docker_config = False
+    docker_cmd_ = _get_docker_jupyter_cmd(stage, base_image, version, port, self_test,
+                                          print_docker_config)
     _docker_cmd(ctx, docker_cmd_)
 
 
@@ -2045,12 +2045,11 @@ _COV_PYTEST_OPTS = [
 
 
 @task
-def run_blank_tests(ctx, stage=STAGE, version=""):  # type: ignore
+def run_blank_tests(ctx, base_image="", stage=STAGE, version=""):  # type: ignore
     """
     (ONLY CI/CD) Test that pytest in the container works.
     """
     _report_task()
-    base_image = ""
     cmd = '"pytest -h >/dev/null"'
     docker_cmd_ = _get_docker_cmd(stage, base_image, cmd, version)
     _docker_cmd(ctx, docker_cmd_)
@@ -2114,6 +2113,7 @@ def _build_run_command_line(
 
 def _run_test_cmd(
     ctx: Any,
+    base_image: str,
     stage: str,
     version: str,
     cmd: str,
@@ -2125,7 +2125,6 @@ def _run_test_cmd(
         # Clean files.
         _run(ctx, "rm -rf ./.coverage*")
     # Run.
-    base_image = ""
     # We need to add some " to pass the string as it is to the container.
     cmd = f"'{cmd}'"
     docker_cmd_ = _get_docker_cmd(stage, base_image, cmd, version)
@@ -2153,6 +2152,7 @@ def _run_test_cmd(
 
 def _run_tests(
     ctx: Any,
+    base_image: str,
     stage: str,
     version: str,
     pytest_opts: str,
@@ -2177,13 +2177,14 @@ def _run_tests(
         skipped_tests,
     )
     # Execute the command line.
-    _run_test_cmd(ctx, stage, version, cmd, coverage, collect_only, start_coverage_script)
+    _run_test_cmd(ctx, base_image, stage, version, cmd, coverage, collect_only, start_coverage_script)
 
 
 # TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code.
 @task
 def run_fast_tests(  # type: ignore
     ctx,
+    base_image="",
     stage=STAGE,
     version="",
     pytest_opts="",
@@ -2211,6 +2212,7 @@ def run_fast_tests(  # type: ignore
     start_coverage_script = False
     _run_tests(
         ctx,
+        base_image,
         stage,
         version,
         pytest_opts,
@@ -2228,6 +2230,7 @@ def run_fast_tests(  # type: ignore
 @task
 def run_slow_tests(  # type: ignore
     ctx,
+        base_image="",
     stage=STAGE,
         version="",
     pytest_opts="",
@@ -2248,6 +2251,7 @@ def run_slow_tests(  # type: ignore
     start_coverage_script = False
     _run_tests(
         ctx,
+        base_image,
         stage,
         version,
         pytest_opts,
@@ -2265,6 +2269,7 @@ def run_slow_tests(  # type: ignore
 @task
 def run_superslow_tests(  # type: ignore
     ctx,
+        base_image="",
     stage=STAGE,
         version="",
     pytest_opts="",
@@ -2285,6 +2290,7 @@ def run_superslow_tests(  # type: ignore
     start_coverage_script = False
     _run_tests(
         ctx,
+        base_image,
         stage,
         version,
         pytest_opts,
@@ -2302,6 +2308,7 @@ def run_superslow_tests(  # type: ignore
 @task
 def run_fast_slow_tests(  # type: ignore
     ctx,
+    base_image="",
     stage=STAGE,
     version="",
     pytest_opts="",
@@ -2322,6 +2329,7 @@ def run_fast_slow_tests(  # type: ignore
     start_coverage_script = False
     _run_tests(
         ctx,
+        base_image,
         stage,
         version,
         pytest_opts,
