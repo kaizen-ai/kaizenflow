@@ -12,6 +12,7 @@ import helpers.dbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): CmampTask413: Why skip this guy?
 @pytest.mark.skip()
 class Test_CcxtExchange(hut.TestCase):
     def test_initialize_class(self) -> None:

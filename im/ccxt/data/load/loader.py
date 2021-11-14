@@ -220,7 +220,8 @@ class CcxtLoader:
         )
         return transformed_data
 
-    # TODO(Grisha): factor out common code from `CddLoader._get_file_path` and `CcxtLoader._get_file_path`.
+    # TODO(Grisha): factor out common code from `CddLoader._get_file_path` and
+    # `CcxtLoader._get_file_path`.
     def _get_file_path(
         self,
         data_snapshot: str,

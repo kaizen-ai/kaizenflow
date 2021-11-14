@@ -9,14 +9,14 @@ Ideally the destination directory would contain a timestamp,
 because we want to track the symbols over time.
 
 E.g:
-# download NYSE data to '<current_dir>/08-04-20/NYSE.csv'
-download_eoddata_symbol_list.py --dst_dir $(date +"%m-%d-%y") --exchange_codes NYSE
+# Download NYSE data to '<current_dir>/08-04-20/NYSE.csv'
+> download_eoddata_symbol_list.py --dst_dir $(date +"%m-%d-%y") --exchange_codes NYSE
 
-# download data for multiple exchange codes
-download_eoddata_symbol_list.py --dst_dir $(date +"%m-%d-%y") --exchange_codes NYSE ASX AMEX
+# Download data for multiple exchange codes
+> download_eoddata_symbol_list.py --dst_dir $(date +"%m-%d-%y") --exchange_codes NYSE ASX AMEX
 
-# download data for all exchange codes (omit --exchange_codes)
-download_eoddata_symbol_list.py --dst_dir $(date +"%m-%d-%y")
+# Download data for all exchange codes (omit --exchange_codes)
+> download_eoddata_symbol_list.py --dst_dir $(date +"%m-%d-%y")
 """
 import argparse
 import dataclasses
@@ -135,13 +135,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dbg.dassert_is_not(
         args.dst_dir, None, msg="Must provide a destination directory"
     )
-
     token = _get_token()
-
     exchange_codes = args.exchange_codes or [
         e.Code for e in _get_exchanges(token=token)
     ]
-
     for exchange_code in exchange_codes:
         symbols = _get_symbols(exchange_code=exchange_code, token=token)
         if symbols:

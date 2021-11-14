@@ -2027,14 +2027,14 @@ def _build_run_command_line(
     if skipped_tests != "":
         pytest_opts_tmp.insert(0, f'-m "{skipped_tests}"')
     dir_name = dir_name or "."
-    file_names = _find_test_files(dir_name)
-    _LOG.debug("file_names=%s", file_names)
-    if pytest_mark != "":
-        file_names = _find_test_decorator(pytest_mark, file_names)
-        _LOG.debug(
-            "After pytest_mark='%s': file_names=%s", pytest_mark, file_names
-        )
-        pytest_opts_tmp.extend(file_names)
+    #file_names = _find_test_files(dir_name)
+    #_LOG.debug("file_names=%s", file_names)
+    #if pytest_mark != "":
+    #    file_names = _find_test_decorator(pytest_mark, file_names)
+    #    _LOG.debug(
+    #        "After pytest_mark='%s': file_names=%s", pytest_mark, file_names
+    #    )
+    #    pytest_opts_tmp.extend(file_names)
     if skip_submodules:
         submodule_paths = hgit.get_submodule_paths()
         _LOG.warning(
@@ -2053,7 +2053,7 @@ def _build_run_command_line(
     pytest_opts_tmp = [po for po in pytest_opts_tmp if po != ""]
     # TODO(gp): Use _to_multi_line_cmd()
     pytest_opts = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
-    cmd = f"pytest {pytest_opts}"
+    cmd = f"pytest {pytest_opts} {dir_name}"
     if tee_to_file:
         cmd += " 2>&1 | tee tmp.pytest.log"
     return cmd
