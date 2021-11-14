@@ -1,207 +1,207 @@
-original shape=(6961481, 8)
+original shape=(3239746, 8)
 Head:
 {
     "2018-08-17T00:00:00Z":{
-        "open":6316.0,
-        "high":6319.04,
-        "low":6310.32,
-        "close":6311.64,
-        "volume":9.967395,
+        "open":6325.770051,
+        "high":6325.770051,
+        "low":6325.770051,
+        "close":6325.770051,
+        "volume":0.02507413,
         "epoch":1534464000000.0,
         "currency_pair":"BTC\/USDT",
-        "exchange_id":"binance"
+        "exchange_id":"kucoin"
     },
     "2018-08-17T00:01:00Z":{
-        "open":6311.64,
-        "high":6311.77,
-        "low":6302.81,
-        "close":6302.81,
-        "volume":16.781206,
+        "open":6309.204997,
+        "high":6309.204997,
+        "low":6309.204997,
+        "close":6309.204997,
+        "volume":0.00087112,
         "epoch":1534464060000.0,
         "currency_pair":"BTC\/USDT",
-        "exchange_id":"binance"
+        "exchange_id":"kucoin"
     },
     "2018-08-17T00:02:00Z":{
-        "open":6302.81,
-        "high":6306.0,
-        "low":6292.79,
-        "close":6297.26,
-        "volume":55.373226,
+        "open":6309.204991,
+        "high":6309.204991,
+        "low":6290.531513,
+        "close":6297.333413,
+        "volume":0.01604134,
         "epoch":1534464120000.0,
         "currency_pair":"BTC\/USDT",
-        "exchange_id":"binance"
+        "exchange_id":"kucoin"
     },
     "2018-08-17T00:03:00Z":{
-        "open":6299.97,
-        "high":6299.97,
-        "low":6286.93,
-        "close":6294.52,
-        "volume":34.611797,
+        "open":6297.333413,
+        "high":6303.552636,
+        "low":6297.333413,
+        "close":6303.552635,
+        "volume":0.15631403,
         "epoch":1534464180000.0,
         "currency_pair":"BTC\/USDT",
-        "exchange_id":"binance"
+        "exchange_id":"kucoin"
     },
     "2018-08-17T00:04:00Z":{
-        "open":6294.52,
-        "high":6299.98,
-        "low":6290.0,
-        "close":6296.1,
-        "volume":22.088586,
-        "epoch":1534464240000.0,
+        "open":null,
+        "high":null,
+        "low":null,
+        "close":null,
+        "volume":null,
+        "epoch":null,
         "currency_pair":"BTC\/USDT",
-        "exchange_id":"binance"
+        "exchange_id":"kucoin"
     },
     "2018-08-17T00:05:00Z":{
-        "open":6291.97,
-        "high":6299.32,
-        "low":6285.4,
-        "close":6294.99,
-        "volume":18.986206,
+        "open":6303.602146,
+        "high":6303.602146,
+        "low":6297.333413,
+        "close":6297.333413,
+        "volume":0.0057703,
         "epoch":1534464300000.0,
         "currency_pair":"BTC\/USDT",
-        "exchange_id":"binance"
+        "exchange_id":"kucoin"
     },
     "2018-08-17T00:06:00Z":{
-        "open":6294.83,
-        "high":6301.49,
-        "low":6289.99,
-        "close":6301.49,
-        "volume":17.299411,
-        "epoch":1534464360000.0,
+        "open":null,
+        "high":null,
+        "low":null,
+        "close":null,
+        "volume":null,
+        "epoch":null,
         "currency_pair":"BTC\/USDT",
-        "exchange_id":"binance"
+        "exchange_id":"kucoin"
     },
     "2018-08-17T00:07:00Z":{
-        "open":6300.49,
-        "high":6311.77,
-        "low":6296.49,
-        "close":6306.3,
-        "volume":24.015328,
+        "open":6304.283865,
+        "high":6304.283865,
+        "low":6304.283865,
+        "close":6304.283865,
+        "volume":0.00083259,
         "epoch":1534464420000.0,
         "currency_pair":"BTC\/USDT",
-        "exchange_id":"binance"
+        "exchange_id":"kucoin"
     },
     "2018-08-17T00:08:00Z":{
-        "open":6311.57,
-        "high":6311.58,
-        "low":6305.0,
-        "close":6305.86,
-        "volume":10.895318,
+        "open":6304.283865,
+        "high":6304.283865,
+        "low":6304.283865,
+        "close":6304.283865,
+        "volume":0.00230686,
         "epoch":1534464480000.0,
         "currency_pair":"BTC\/USDT",
-        "exchange_id":"binance"
+        "exchange_id":"kucoin"
     },
     "2018-08-17T00:09:00Z":{
-        "open":6305.86,
-        "high":6311.0,
-        "low":6305.0,
-        "close":6311.0,
-        "volume":7.657041,
-        "epoch":1534464540000.0,
+        "open":null,
+        "high":null,
+        "low":null,
+        "close":null,
+        "volume":null,
+        "epoch":null,
         "currency_pair":"BTC\/USDT",
-        "exchange_id":"binance"
+        "exchange_id":"kucoin"
     }
 }
 Tail:
 {
-    "2021-09-15T14:00:00Z":{
-        "open":85.9585,
-        "high":86.1414,
-        "low":85.9585,
-        "close":86.1414,
-        "volume":20.5959,
-        "epoch":1631714400000.0,
-        "currency_pair":"FIL\/USDT",
+    "2021-09-14T23:11:00Z":{
+        "open":3418.94,
+        "high":3421.27,
+        "low":3417.06,
+        "close":3417.08,
+        "volume":23.91893354,
+        "epoch":1631661060000.0,
+        "currency_pair":"ETH\/USDT",
         "exchange_id":"kucoin"
     },
-    "2021-09-15T14:01:00Z":{
-        "open":86.1179,
-        "high":86.1494,
-        "low":85.9736,
-        "close":85.9736,
-        "volume":10.70631179,
-        "epoch":1631714460000.0,
-        "currency_pair":"FIL\/USDT",
+    "2021-09-14T23:12:00Z":{
+        "open":3416.89,
+        "high":3418.54,
+        "low":3412.12,
+        "close":3412.72,
+        "volume":36.13871917,
+        "epoch":1631661120000.0,
+        "currency_pair":"ETH\/USDT",
         "exchange_id":"kucoin"
     },
-    "2021-09-15T14:02:00Z":{
-        "open":85.9756,
-        "high":85.9756,
-        "low":85.891,
-        "close":85.897,
-        "volume":5.78614005,
-        "epoch":1631714520000.0,
-        "currency_pair":"FIL\/USDT",
+    "2021-09-14T23:13:00Z":{
+        "open":3412.72,
+        "high":3416.94,
+        "low":3412.72,
+        "close":3416.94,
+        "volume":26.35570698,
+        "epoch":1631661180000.0,
+        "currency_pair":"ETH\/USDT",
         "exchange_id":"kucoin"
     },
-    "2021-09-15T14:03:00Z":{
-        "open":85.9948,
-        "high":86.0045,
-        "low":85.8997,
-        "close":86.0045,
-        "volume":68.802,
-        "epoch":1631714580000.0,
-        "currency_pair":"FIL\/USDT",
+    "2021-09-14T23:14:00Z":{
+        "open":3416.96,
+        "high":3420.5,
+        "low":3413.96,
+        "close":3420.1,
+        "volume":58.71239006,
+        "epoch":1631661240000.0,
+        "currency_pair":"ETH\/USDT",
         "exchange_id":"kucoin"
     },
-    "2021-09-15T14:04:00Z":{
-        "open":86.08,
-        "high":86.08,
-        "low":84.4624,
-        "close":84.9412,
-        "volume":1083.35029348,
-        "epoch":1631714640000.0,
-        "currency_pair":"FIL\/USDT",
+    "2021-09-14T23:15:00Z":{
+        "open":3420.09,
+        "high":3420.1,
+        "low":3415.47,
+        "close":3418.18,
+        "volume":15.59989443,
+        "epoch":1631661300000.0,
+        "currency_pair":"ETH\/USDT",
         "exchange_id":"kucoin"
     },
-    "2021-09-15T14:05:00Z":{
-        "open":84.9302,
-        "high":85.18,
-        "low":84.9302,
-        "close":85.1675,
-        "volume":99.0067,
-        "epoch":1631714700000.0,
-        "currency_pair":"FIL\/USDT",
+    "2021-09-14T23:16:00Z":{
+        "open":3418.19,
+        "high":3419.04,
+        "low":3416.32,
+        "close":3416.52,
+        "volume":34.40376894,
+        "epoch":1631661360000.0,
+        "currency_pair":"ETH\/USDT",
         "exchange_id":"kucoin"
     },
-    "2021-09-15T14:06:00Z":{
-        "open":85.1675,
-        "high":85.3268,
-        "low":85.1413,
-        "close":85.3268,
-        "volume":111.53531406,
-        "epoch":1631714760000.0,
-        "currency_pair":"FIL\/USDT",
+    "2021-09-14T23:17:00Z":{
+        "open":3416.65,
+        "high":3417.45,
+        "low":3415.16,
+        "close":3416.83,
+        "volume":8.4854231,
+        "epoch":1631661420000.0,
+        "currency_pair":"ETH\/USDT",
         "exchange_id":"kucoin"
     },
-    "2021-09-15T14:07:00Z":{
-        "open":85.35,
-        "high":85.375,
-        "low":85.1119,
-        "close":85.3272,
-        "volume":137.11759635,
-        "epoch":1631714820000.0,
-        "currency_pair":"FIL\/USDT",
+    "2021-09-14T23:18:00Z":{
+        "open":3416.27,
+        "high":3419.15,
+        "low":3416.27,
+        "close":3419.15,
+        "volume":6.66243853,
+        "epoch":1631661480000.0,
+        "currency_pair":"ETH\/USDT",
         "exchange_id":"kucoin"
     },
-    "2021-09-15T14:08:00Z":{
-        "open":85.3102,
-        "high":85.3102,
-        "low":85.0996,
-        "close":85.1015,
-        "volume":95.27576664,
-        "epoch":1631714880000.0,
-        "currency_pair":"FIL\/USDT",
+    "2021-09-14T23:19:00Z":{
+        "open":3419.15,
+        "high":3421.4,
+        "low":3418.73,
+        "close":3421.37,
+        "volume":7.05831014,
+        "epoch":1631661540000.0,
+        "currency_pair":"ETH\/USDT",
         "exchange_id":"kucoin"
     },
-    "2021-09-15T14:09:00Z":{
-        "open":85.0884,
-        "high":85.2333,
-        "low":84.99,
-        "close":85.2333,
-        "volume":20.6048,
-        "epoch":1631714940000.0,
-        "currency_pair":"FIL\/USDT",
+    "2021-09-14T23:20:00Z":{
+        "open":3421.37,
+        "high":3421.42,
+        "low":3418.84,
+        "close":3419.48,
+        "volume":14.45112598,
+        "epoch":1631661600000.0,
+        "currency_pair":"ETH\/USDT",
         "exchange_id":"kucoin"
     }
 }
