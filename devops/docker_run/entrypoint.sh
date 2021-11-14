@@ -13,11 +13,15 @@ source /${ENV_NAME}/bin/activate
 
 source devops/docker_run/setenv.sh
 
+echo "Testing sudo"
+sudo pwd
+
 #mount -a || true
 
 # Allow working with files outside a container.
 #umask 000
 
+echo "Setting up Docker"
 if [[ ! -d /etc/docker ]]; then
     sudo mkdir /etc/docker
 fi;

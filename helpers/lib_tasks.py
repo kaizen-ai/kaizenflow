@@ -1204,11 +1204,14 @@ def _get_docker_cmd(
     extra_docker_run_opts: Optional[List[str]] = None,
     service_name: str = "app",
     entrypoint: bool = True,
+    as_user: bool = True,
     print_docker_config: bool = False,
 ) -> str:
     """
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     :param extra_env_vars: represent vars to add, e.g., `["PORT=9999", "DRY_RUN=1"]`
+    :param entrypoint: run the entrypoint or go to bash directly
+    :param as_user: pass the user / group id or not
     :param print_config: print the docker config for debugging purposes
     """
     hprintin.log(
@@ -1293,7 +1296,7 @@ def _get_docker_cmd(
         --rm"""
     )
     # - Handle the user.
-    if True:
+    if as_user:
         user_name = hsyint.get_user_name()
         docker_cmd_.append(
             rf"""
@@ -1349,14 +1352,15 @@ def _docker_cmd(
 
 
 @task
-def docker_bash(ctx, stage=STAGE, entrypoint=True):  # type: ignore
+def docker_bash(ctx, stage=STAGE, entrypoint=True, as_user=True):  # type: ignore
     """
     Start a bash shell inside the container corresponding to a stage.
     """
     _report_task()
     base_image = ""
     cmd = "bash"
-    docker_cmd_ = _get_docker_cmd(stage, base_image, cmd, entrypoint=entrypoint)
+    docker_cmd_ = _get_docker_cmd(stage, base_image, cmd, entrypoint=entrypoint,
+            as_user=as_user)
     _docker_cmd(ctx, docker_cmd_)
 
 
