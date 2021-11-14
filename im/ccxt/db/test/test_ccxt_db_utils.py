@@ -22,8 +22,7 @@ class TestUtils(huntes.TestCase):
         """
         super().setUp()
         self.docker_compose_file_path = os.path.join(
-            hgit.get_amp_abs_path(),
-            "im/devops/compose/docker-compose.yml"
+            hgit.get_amp_abs_path(), "im/devops/compose/docker-compose.yml"
         )
         cmd = (
             "sudo docker-compose "
@@ -130,6 +129,35 @@ class TestUtils(huntes.TestCase):
         hsyint.system(cmd, suppress_output=False)
         super().tearDown()
 
+    @pytest.mark.slow()
+    def test_copy_rows_with_copy_from1(self) -> None:
+        """
+        Verify that dataframe insertion via buffer is correct.
+        """
+        self.cursor.execute(imccdbuti.get_ccxt_ohlcv_create_table_query())
+        imccdbuti.copy_rows_with_copy_from(
+            self.connection, self.df_to_insert, "ccxt_ohlcv"
+        )
+        df = hsql.execute_query(self.connection, "SELECT * FROM ccxt_ohlcv")
+        actual = huntes.convert_df_to_json_string(df)
+        self.check_string(actual)
+
+    @pytest.mark.skip("CmapAmp413: 92s, too slow")
+    def test_execute_insert_query1(self) -> None:
+        """
+        Verify that dataframe insertion is correct.
+        """
+        # TODO(gp): Insert less data.
+        self.cursor.execute(imccdbuti.get_ccxt_ohlcv_create_table_query())
+        imccdbuti.execute_insert_query(
+            self.connection, self.df_to_insert, "ccxt_ohlcv"
+        )
+        df = hsql.execute_query(self.connection, "SELECT * FROM ccxt_ohlcv")
+        actual = huntes.convert_df_to_json_string(df)
+        self.check_string(actual)
+
+
+class TestUtils1(huntes.TestCase):
     def test_create_insert_query(self) -> None:
         """
         Verify that generated query is correct.
@@ -158,12 +186,9 @@ class TestUtils(huntes.TestCase):
                     "BTC/USDT",
                     "binance",
                 ]
-            ]
+            ],
         )
-        actual_query = imccdbuti._create_insert_query(
-            df_to_insert,
-            "ccxt_ohlcv"
-        )
+        actual_query = imccdbuti._create_insert_query(df_to_insert, "ccxt_ohlcv")
         self.check_string(actual_query)
 
     def test_copy_rows_with_copy_from1(self) -> None:
@@ -187,5 +212,5 @@ class TestUtils(huntes.TestCase):
             self.connection, self.df_to_insert, "ccxt_ohlcv"
         )
         df = hsql.execute_query(self.connection, "SELECT * FROM ccxt_ohlcv")
-        actual = huntes.convert_df_to_json_string(df) 
+        actual = huntes.convert_df_to_json_string(df)
         self.check_string(actual)

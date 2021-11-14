@@ -366,7 +366,9 @@ class CcxtLoader:
 
     @staticmethod
     def _apply_filesystem_transformation(
-        data: pd.DataFrame, exchange_id: str, currency_pair: str,
+        data: pd.DataFrame,
+        exchange_id: str,
+        currency_pair: str,
     ) -> pd.DataFrame:
         """
         Apply transformations for filesystem data.

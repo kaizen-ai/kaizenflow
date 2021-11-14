@@ -123,7 +123,11 @@ class CddLoader:
         # Get absolute file path.
         file_name = currency_pair.replace("/", "_") + ".csv.gz"
         file_path = os.path.join(
-            self._root_dir, "cryptodatadownload", data_snapshot, exchange_id, file_name
+            self._root_dir,
+            "cryptodatadownload",
+            data_snapshot,
+            exchange_id,
+            file_name,
         )
         # TODO(Dan): Remove asserts below after CMTask108 is resolved.
         # Verify that the file exists.
@@ -214,9 +218,7 @@ class CddLoader:
         #
         if self._resample_to_1_min:
             # Resample to 1 minute.
-            data = hpandas.resample_df(
-                data, "T"
-            )
+            data = hpandas.resample_df(data, "T")
         # Rename col with traded volume in amount of the 1st currency in pair.
         data = data.rename(
             {"Volume " + currency_pair.split("/")[0]: "volume"}, axis=1
