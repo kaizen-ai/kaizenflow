@@ -77,16 +77,14 @@ def copy_rows_with_copy_from(
     :param table_name: name of the table for insertion
     """
     # The target table needs to exist.
-    hdbg.dassert_in(
-        table_name, hsql.get_table_names(connection)
-    )
+    hdbg.dassert_in(table_name, hsql.get_table_names(connection))
     # Read the data.
     buffer = io.StringIO()
     df.to_csv(buffer, index=False, header=False)
     buffer.seek(0)
     # Copy the data to the DB.
     cur = connection.cursor()
-    cur.copy_from(buffer, table_name, sep=',')
+    cur.copy_from(buffer, table_name, sep=",")
     # TODO(gp): CmampTask413, is this still needed because the autocommit.
     connection.commit()
 
@@ -157,7 +155,7 @@ def populate_exchange_currency_tables(conn: hsql.DbConnection) -> None:
             exchange_class = getattr(ccxt, exchange_name)()
             exchange_currency_pairs = list(exchange_class.load_markets().keys())
             currency_pairs.extend(exchange_currency_pairs)
-        except(ccxt.AuthenticationError, ccxt.NetworkError, TypeError) as e:
+        except (ccxt.AuthenticationError, ccxt.NetworkError, TypeError) as e:
             # Continue since these errors are related to denied access for 6
             # exchanges that we ignore.
             _LOG.warning("Skipping exchange_name='%s'", exchange_name)

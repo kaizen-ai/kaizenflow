@@ -22,8 +22,7 @@ class TestUtils(huntes.TestCase):
         """
         super().setUp()
         self.docker_compose_file_path = os.path.join(
-            hgit.get_amp_abs_path(),
-            "im/devops/compose/docker-compose.yml"
+            hgit.get_amp_abs_path(), "im/devops/compose/docker-compose.yml"
         )
         cmd = (
             "sudo docker-compose "
@@ -154,7 +153,7 @@ class TestUtils(huntes.TestCase):
             self.connection, self.df_to_insert, "ccxt_ohlcv"
         )
         df = hsql.execute_query(self.connection, "SELECT * FROM ccxt_ohlcv")
-        actual = huntes.convert_df_to_json_string(df) 
+        actual = huntes.convert_df_to_json_string(df)
         self.check_string(actual)
 
 
@@ -187,10 +186,7 @@ class TestUtils1(huntes.TestCase):
                     "BTC/USDT",
                     "binance",
                 ]
-            ]
+            ],
         )
-        actual_query = imccdbuti._create_insert_query(
-            df_to_insert,
-            "ccxt_ohlcv"
-        )
+        actual_query = imccdbuti._create_insert_query(df_to_insert, "ccxt_ohlcv")
         self.check_string(actual_query)
