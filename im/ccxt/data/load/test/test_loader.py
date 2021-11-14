@@ -65,7 +65,6 @@ class TestGetFilePath(huntes.TestCase):
 
 
 class TestReadUniverseDataFromFilesystem(huntes.TestCase):
-    @pytest.mark.skip("Cmamp390")
     def test1(self) -> None:
         """
         Test that all files from universe version are being read correctly.
@@ -75,43 +74,20 @@ class TestReadUniverseDataFromFilesystem(huntes.TestCase):
             root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         actual = ccxt_loader.read_universe_data_from_filesystem(
-            universe="v03", data_type="OHLCV"
+            universe="small", data_type="OHLCV"
         )
-        # Check output.
-        expected_length = 28209782
-        expected_exchange_ids = ["binance", "ftx", "gateio", "kucoin"]
-        expected_currency_pairs = [
-            "ADA/USDT",
-            "AVAX/USDT",
-            "BNB/USDT",
-            "BTC/USDT",
-            "DOGE/USDT",
-            "EOS/USDT",
-            "ETH/USDT",
-            "FIL/USDT",
-            "LINK/USDT",
-            "SOL/USDT",
-            "XRP/USDT",
-        ]
-        self._check_output(
-            actual,
-            expected_length,
-            expected_exchange_ids,
-            expected_currency_pairs,
-        )
+        actual_json = huntes.convert_df_to_json_string(actual)
+        self.check_string(actual_json)
 
-    @pytest.mark.skip("Cmamp390")
+    @pytest.mark.slow("18 seconds.")
     def test2(self) -> None:
         """
         Test that data for provided list of tuples is being read correctly.
         """
         # Set input universe.
         input_universe = [
-            imdauni.ExchangeCurrencyTuple("binance", "BTC/USDT"),
-            imdauni.ExchangeCurrencyTuple("binance", "ETH/USDT"),
             imdauni.ExchangeCurrencyTuple("kucoin", "BTC/USDT"),
             imdauni.ExchangeCurrencyTuple("kucoin", "ETH/USDT"),
-            imdauni.ExchangeCurrencyTuple("kucoin", "FIL/USDT"),
         ]
         # Initialize loader and get actual result.
         ccxt_loader = imccdaloloa.CcxtLoader(
@@ -120,16 +96,9 @@ class TestReadUniverseDataFromFilesystem(huntes.TestCase):
         actual = ccxt_loader.read_universe_data_from_filesystem(
             universe=input_universe, data_type="OHLCV"
         )
+        actual_json = huntes.convert_df_to_json_string(actual)
         # Check output.
-        expected_length = 6961481
-        expected_exchange_ids = ["binance", "kucoin"]
-        expected_currency_pairs = ["BTC/USDT", "ETH/USDT", "FIL/USDT"]
-        self._check_output(
-            actual,
-            expected_length,
-            expected_exchange_ids,
-            expected_currency_pairs,
-        )
+        self.check_string(actual_json)
 
     def test3(self) -> None:
         """
