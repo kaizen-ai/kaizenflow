@@ -224,7 +224,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                     _LOG.warning("Got an error: %s", type(e).__name__, e.args)
                     continue
                 except ccxt.base.errors.RateLimitExceeded as e:
-                    # Sleep for extra 60 seconds if exceeded rate limit. 
+                    # Sleep for extra 60 seconds if exceeded rate limit.
                     _LOG.warning(
                         "Got an Exceeded limit error: %s",
                         type(e).__name__,

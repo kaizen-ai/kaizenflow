@@ -89,7 +89,10 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
         """
         s3fs = hs3.get_s3fs("am")
         data = pdhelp.read_csv(
-            file_path, s3fs=s3fs, header=None, nrows=nrows,
+            file_path,
+            s3fs=s3fs,
+            header=None,
+            nrows=nrows,
         )
         data = KibotS3DataLoader._filter_by_dates(
             data, frequency=frequency, start_ts=start_ts, end_ts=end_ts

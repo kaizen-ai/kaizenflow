@@ -47,7 +47,9 @@ class TestIbFilePathGenerator(hut.TestCase):
             ext=mcdtyp.Extension.CSV,
         )
         # Compare with expected value.
-        exp = f"s3://{_S3_BUCKET}/data/ib/Futures/GLOBEX/USD/minutely/ESZ21.csv.gz"
+        exp = (
+            f"s3://{_S3_BUCKET}/data/ib/Futures/GLOBEX/USD/minutely/ESZ21.csv.gz"
+        )
         self.assert_equal(act, exp)
 
     def test_generate_file_path2(self) -> None:

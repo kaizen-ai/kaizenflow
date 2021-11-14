@@ -41,18 +41,19 @@ _LOG.info("%s", henv.get_system_signature()[0])
 hprint.config_notebook()
 
 # %%
-ALL_EXCHANGES = ["binance",
-"coinbase",
-"kraken",
-"huobi",
-"ftx",
-"kucoin",
-"bitfinex",
-"gateio",
-# "binanceus" # no API access for these three exchanges.
-# "bithumb"
-# "bitstamp"
-                ]
+ALL_EXCHANGES = [
+    "binance",
+    "coinbase",
+    "kraken",
+    "huobi",
+    "ftx",
+    "kucoin",
+    "bitfinex",
+    "gateio",
+    # "binanceus" # no API access for these three exchanges.
+    # "bithumb"
+    # "bitstamp"
+]
 
 # %%
 credentials = io_.from_json("API_keys.json")
@@ -75,32 +76,36 @@ def log_into_exchange(exchange_id: str):
     credentials["rateLimit"] = True
     exchange_class = getattr(ccxt, exchange_id)
     exchange = exchange_class(credentials)
-    dbg.dassert(exchange.checkRequiredCredentials(), msg="Required credentials not passed.")
+    dbg.dassert(
+        exchange.checkRequiredCredentials(),
+        msg="Required credentials not passed.",
+    )
     return exchange
 
 
 def describe_exchange_data(exchange_id: str):
-    """
-    """
+    """"""
     exchange = log_into_exchange(exchange_id)
     print("%s:" % exchange_id)
-    print ("Has fetchOHLCV: %s" % exchange.has["fetchOHLCV"])
-    print ("Has fetchTrades: %s" % exchange.has["fetchTrades"])
+    print("Has fetchOHLCV: %s" % exchange.has["fetchOHLCV"])
+    print("Has fetchTrades: %s" % exchange.has["fetchTrades"])
     print("Available timeframes:")
-    print (exchange.timeframes)
+    print(exchange.timeframes)
     print("Available currency pairs:")
     print(exchange.load_markets().keys())
-    print("="*50)
+    print("=" * 50)
     return None
 
 
-def download_ohlcv_data(exchange_id,
-                            start_date,
-                            end_date,
-                            curr_symbol,
-                            timeframe="1m",
-                            step=500,
-                            sleep_time=3):
+def download_ohlcv_data(
+    exchange_id,
+    start_date,
+    end_date,
+    curr_symbol,
+    timeframe="1m",
+    step=500,
+    sleep_time=3,
+):
     """
     Download historical OHLCV data for given time period and currency.
     """
@@ -113,25 +118,32 @@ def download_ohlcv_data(exchange_id,
     # Convert to ms.
     duration = exchange.parse_timeframe(timeframe) * 1000
     all_candles = []
-    for t in range(start_date, end_date+duration, duration*step):
+    for t in range(start_date, end_date + duration, duration * step):
         candles = exchange.fetch_ohlcv(curr_symbol, timeframe, t, step)
-        print('Fetched', len(candles), 'candles')
+        print("Fetched", len(candles), "candles")
         if candles:
-            print('From', exchange.iso8601(candles[0][0]), 'to', exchange.iso8601(candles[-1][0]))
+            print(
+                "From",
+                exchange.iso8601(candles[0][0]),
+                "to",
+                exchange.iso8601(candles[-1][0]),
+            )
         all_candles += candles
         total_length = len(all_candles)
-        print('Fetched', total_length, 'candles in total')
+        print("Fetched", total_length, "candles in total")
         time.sleep(sleep_time)
     return all_candles
 
 
-def download_trade_data(exchange_id,
-                            start_date,
-                            end_date,
-                            curr_symbol,
-                            timeframe="1m",
-                            step=500,
-                            sleep_time=3):
+def download_trade_data(
+    exchange_id,
+    start_date,
+    end_date,
+    curr_symbol,
+    timeframe="1m",
+    step=500,
+    sleep_time=3,
+):
     """
     Download historical data for given time period and currency.
     """
@@ -144,14 +156,24 @@ def download_trade_data(exchange_id,
     latest_trade = start_date
     all_trades = []
     while latest_trade <= end_date:
-        trades = exchange.fetch_trades(curr_symbol, since=latest_trade, limit=step, params={"endTime": latest_trade+36000})
-        print('Fetched', len(trades), 'trades')
+        trades = exchange.fetch_trades(
+            curr_symbol,
+            since=latest_trade,
+            limit=step,
+            params={"endTime": latest_trade + 36000},
+        )
+        print("Fetched", len(trades), "trades")
         if trades:
-            print('From', exchange.iso8601(trades[0]["timestamp"]), 'to', exchange.iso8601(trades[-1]["timestamp"]))
+            print(
+                "From",
+                exchange.iso8601(trades[0]["timestamp"]),
+                "to",
+                exchange.iso8601(trades[-1]["timestamp"]),
+            )
             latest_trade = trades[-1]["timestamp"]
         all_trades += trades
         total_length = len(all_trades)
-        print('Fetched', total_length, 'trades in total')
+        print("Fetched", total_length, "trades in total")
         time.sleep(sleep_time)
     return all_trades
 
@@ -188,10 +210,9 @@ coinbase.has
 # Binance data is being loaded correctly with specified functions.
 
 # %%
-binance_data = download_ohlcv_data("binance",
-                                  "2018-01-01T00:00:00Z",
-                                  "2018-02-01T00:00:00Z",
-                                  "BTC/USDT")
+binance_data = download_ohlcv_data(
+    "binance", "2018-01-01T00:00:00Z", "2018-02-01T00:00:00Z", "BTC/USDT"
+)
 
 # %% [markdown]
 # ### Huobi
@@ -200,10 +221,9 @@ binance_data = download_ohlcv_data("binance",
 # For Huobi we see that the data is starting to be loaded from incorrect and a very recent time period that does not belong to the specified time range.
 
 # %%
-huobi_data = download_ohlcv_data("huobi",
-                                  "2021-01-01T00:00:00Z",
-                                  "2021-02-01T00:00:00Z",
-                                  "BTC/USDT")
+huobi_data = download_ohlcv_data(
+    "huobi", "2021-01-01T00:00:00Z", "2021-02-01T00:00:00Z", "BTC/USDT"
+)
 
 # %% [markdown]
 # The reason behind it is that Huobi outputs candles in reverced order.<br>
@@ -256,9 +276,9 @@ print(huobi_last_candle_date3)
 # This is confirmed by calculation of steps between the last and first candles timestamps
 
 # %%
-print((huobi_all_data1[-1][0] - huobi_all_data1[0][0])/60/1000 + 1)
-print((huobi_all_data2[-1][0] - huobi_all_data2[0][0])/60/1000 + 1)
-print((huobi_all_data3[-1][0] - huobi_all_data3[0][0])/60/1000 + 1)
+print((huobi_all_data1[-1][0] - huobi_all_data1[0][0]) / 60 / 1000 + 1)
+print((huobi_all_data2[-1][0] - huobi_all_data2[0][0]) / 60 / 1000 + 1)
+print((huobi_all_data3[-1][0] - huobi_all_data3[0][0]) / 60 / 1000 + 1)
 
 # %% [markdown]
 # Therefore, it seems that Huobi data can be loaded, but additional research is needed to understand, how to do it correctly and it definitely needs a 'personal' approach.
@@ -270,10 +290,9 @@ print((huobi_all_data3[-1][0] - huobi_all_data3[0][0])/60/1000 + 1)
 # FTX data is being loaded correctly, we have it starting from 2020-03-28 14:40:00
 
 # %%
-ftx_data = download_ohlcv_data("ftx",
-                                  "2020-03-28T00:00:00Z",
-                                  "2020-04-01T00:00:00Z",
-                                  "BTC/USDT")
+ftx_data = download_ohlcv_data(
+    "ftx", "2020-03-28T00:00:00Z", "2020-04-01T00:00:00Z", "BTC/USDT"
+)
 
 # %% [markdown]
 # ### Kucoin
@@ -282,19 +301,17 @@ ftx_data = download_ohlcv_data("ftx",
 # Kucoin data is being loaded correctly as well.
 
 # %%
-kucoin_data2021 = download_ohlcv_data("kucoin",
-                                  "2021-01-01T00:00:00Z",
-                                  "2021-01-04T00:00:00Z",
-                                  "BTC/USDT")
+kucoin_data2021 = download_ohlcv_data(
+    "kucoin", "2021-01-01T00:00:00Z", "2021-01-04T00:00:00Z", "BTC/USDT"
+)
 
 # %% [markdown]
 # However, the amount of candles for earlier periods is unstable and timestamps are slipping. Additional research is required to understand if the data is really missing or its some sort of a bug.
 
 # %%
-kucoin_data2018 = download_ohlcv_data("kucoin",
-                                  "2018-01-01T00:00:00Z",
-                                  "2018-01-04T00:00:00Z",
-                                  "BTC/USDT")
+kucoin_data2018 = download_ohlcv_data(
+    "kucoin", "2018-01-01T00:00:00Z", "2018-01-04T00:00:00Z", "BTC/USDT"
+)
 
 # %% [markdown]
 # ### Bitfinex
@@ -303,10 +320,9 @@ kucoin_data2018 = download_ohlcv_data("kucoin",
 # The Bitfinex candles are being loaded with overlapping time periods.
 
 # %%
-bitfinex_data = download_ohlcv_data("bitfinex",
-                                  "2020-01-01T00:00:00Z",
-                                  "2020-02-01T00:00:00Z",
-                                  "BTC/USDT")
+bitfinex_data = download_ohlcv_data(
+    "bitfinex", "2020-01-01T00:00:00Z", "2020-02-01T00:00:00Z", "BTC/USDT"
+)
 
 # %% [markdown]
 # To research this let's check the amount of minute steps between the last candle timestamp and the first one.
@@ -319,9 +335,15 @@ limit2 = 1000
 limit3 = 2000
 
 # %%
-bitfinex_all_data1 = bitfinex_exchange.fetch_ohlcv("BTC/USDT", "1m", start_date, limit1)
-bitfinex_all_data2 = bitfinex_exchange.fetch_ohlcv("BTC/USDT", "1m", start_date, limit2)
-bitfinex_all_data3 = bitfinex_exchange.fetch_ohlcv("BTC/USDT", "1m", start_date, limit3)
+bitfinex_all_data1 = bitfinex_exchange.fetch_ohlcv(
+    "BTC/USDT", "1m", start_date, limit1
+)
+bitfinex_all_data2 = bitfinex_exchange.fetch_ohlcv(
+    "BTC/USDT", "1m", start_date, limit2
+)
+bitfinex_all_data3 = bitfinex_exchange.fetch_ohlcv(
+    "BTC/USDT", "1m", start_date, limit3
+)
 
 # %%
 print(len(bitfinex_all_data1))
@@ -353,9 +375,9 @@ print(bitfinex_last_candle_date3)
 # Thus, this should be researched.
 
 # %%
-print((bitfinex_all_data1[-1][0] - bitfinex_all_data1[0][0])/60/1000 + 1)
-print((bitfinex_all_data2[-1][0] - bitfinex_all_data2[0][0])/60/1000 + 1)
-print((bitfinex_all_data3[-1][0] - bitfinex_all_data3[0][0])/60/1000 + 1)
+print((bitfinex_all_data1[-1][0] - bitfinex_all_data1[0][0]) / 60 / 1000 + 1)
+print((bitfinex_all_data2[-1][0] - bitfinex_all_data2[0][0]) / 60 / 1000 + 1)
+print((bitfinex_all_data3[-1][0] - bitfinex_all_data3[0][0]) / 60 / 1000 + 1)
 
 # %% [markdown]
 # Still, we see that Bitfinex has data and it is more than possible to extract it. Here we wanted to develop a unified approach for loading data from different exchanges. If this doesn't work for Bitfinex, there is and example guide in CCXT library https://github.com/ccxt/ccxt/blob/master/examples/py/fetch-bitfinex-ohlcv-history.py that we can use to develop a 'personal' approach to this exchange. So we're good here.
@@ -367,10 +389,9 @@ print((bitfinex_all_data3[-1][0] - bitfinex_all_data3[0][0])/60/1000 + 1)
 # Gateio data is being loaded correctly, we have it starting from 2021-06-05 13:33:00
 
 # %%
-gateio_data = download_ohlcv_data("gateio",
-                                  "2021-06-05T00:00:00Z",
-                                  "2021-06-10T00:00:00Z",
-                                  "BTC/USDT")
+gateio_data = download_ohlcv_data(
+    "gateio", "2021-06-05T00:00:00Z", "2021-06-10T00:00:00Z", "BTC/USDT"
+)
 
 # %% [markdown]
 # ### Kraken
@@ -402,7 +423,7 @@ kraken_last_candle_date
 # ## Summary
 
 # %% [markdown]
-# - We can apply sort of a unified approach to load all the historical data for Binance, FTX, Kucoin, and Gateio. Although, Kucoin case should be investigated a bit more in order to confirm that there is no bug. 
+# - We can apply sort of a unified approach to load all the historical data for Binance, FTX, Kucoin, and Gateio. Although, Kucoin case should be investigated a bit more in order to confirm that there is no bug.
 # - Huobi and Bitfinex seem to have the data to provide but they require a 'personal' approaches that need to be developed.
 # - Kraken provides only 720 last candles for a specified time step. We may decide to track it from acertain moment or just forget about it in terms of historical data.
 # - Coinbase exchange does not provide any kind of historical data.

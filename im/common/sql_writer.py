@@ -161,7 +161,10 @@ class AbstractSqlWriter(abc.ABC):
         self.conn.close()
 
     def get_remaining_data_to_load(
-        self, df: pd.DataFrame, trade_symbol_id: int, frequency: imcodatyp.Frequency
+        self,
+        df: pd.DataFrame,
+        trade_symbol_id: int,
+        frequency: imcodatyp.Frequency,
     ) -> pd.DataFrame:
         """
         Trim `df` based on what data was already loaded in the database.
