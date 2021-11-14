@@ -858,6 +858,14 @@ def git_rename_branch(ctx, new_branch_name):  # type: ignore
 # #############################################################################
 
 
+def _dassert_is_valid_version(version: str) -> None:
+    """
+    A valid version looks like: `1.0.0`.
+    """
+    data = version.split(".")
+    hdbg.dassert_eq(data, 3, "Invalid version='%s'", version)
+
+
 @task
 def docker_images_ls_repo(ctx):  # type: ignore
     """
@@ -1109,7 +1117,8 @@ def _get_amp_docker_compose_path() -> Optional[str]:
     """
     Return the docker compose for `amp` as supermodule or as submodule.
 
-    E.g., `devops/compose/docker-compose_as_submodule.yml` and
+    E.g., 
+    `devops/compose/docker-compose_as_submodule.yml` and
     `devops/compose/docker-compose_as_supermodule.yml`
     """
     path, _ = hgit.get_path_from_supermodule()
@@ -1178,11 +1187,26 @@ def _get_base_image(base_image: str) -> str:
 
 def get_image(stage: str, base_image: str) -> str:
     """
+    Return the fully qualified image name.
+
+    :param stage: it can be a simple stage (e.g., `local`, `dev`, `prod`)
+        or a version + stage (e.g., `1.0.0-local`)
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
-    :return: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp:local
+    :return: e.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:local or`
+       `*****.dkr.ecr.us-east-1.amazonaws.com/amp_1.0.0:local`
     """
     # Docker refers the default image as "latest", although in our stage
     # nomenclature we call it "dev".
+    #
+    if ":" in stage:
+        # Assume that looks like: `1.0.0:local`.
+        data = stage.split(":")
+        hdbg.dassert_eq(len(data), 2, "Can't parse '%s'", stage)
+        version, stage = data
+        _dassert_is_valid_version(version)
+    else:
+        version = None
+    # TODO(gp): Remove hash.
     hdbg.dassert_in(stage, "local dev prod hash".split())
     if stage == "hash":
         stage = _get_git_hash()
@@ -1190,7 +1214,11 @@ def get_image(stage: str, base_image: str) -> str:
     base_image = _get_base_image(base_image)
     _check_base_image(base_image)
     # Get the full image.
-    image = base_image + ":" + stage
+    #
+    image = base_image
+    if version:
+        image += f"_{version}"
+    image += ":" + stage
     _check_image(image)
     return image
 
@@ -1484,7 +1512,7 @@ def _get_build_tag(code_ver: str) -> str:
 # a single type.
 @task
 def docker_build_local_image(  # type: ignore
-    ctx, cache=True, base_image="", update_poetry=False
+    ctx, cache=True, base_image="", update_poetry=False, version="",
 ):
     """
     Build a local image (i.e., a release candidate "dev" image).
@@ -1497,8 +1525,15 @@ def docker_build_local_image(  # type: ignore
     if update_poetry:
         cmd = "cd devops/docker_build; poetry lock -v"
         _run(ctx, cmd)
-    #
-    image_local = get_image("local", base_image)
+    # Build the image name.
+    stage = ""
+    if version:
+        _dassert_is_valid_version(version)
+        stage += version + ":"
+    stage += "local"
+    image_local = get_image(stage, base_image)
+    _LOG.info("Building image '%s'", image_local)
+    assert 0
     #
     _check_image(image_local)
     dockerfile = "devops/docker_build/dev.Dockerfile"
