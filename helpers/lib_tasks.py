@@ -858,14 +858,6 @@ def git_rename_branch(ctx, new_branch_name):  # type: ignore
 # #############################################################################
 
 
-def _dassert_is_valid_version(version: str) -> None:
-    """
-    A valid version looks like: `1.0.0`.
-    """
-    data = version.split(".")
-    hdbg.dassert_eq(data, 3, "Invalid version='%s'", version)
-
-
 @task
 def docker_images_ls_repo(ctx):  # type: ignore
     """
@@ -1011,7 +1003,7 @@ def docker_kill(  # type: ignore
 # #############################################################################
 
 # TODO(gp): We might want to organize the code in a base class using a Command
-# pattern, so that it's easier to generalize the code for multiple repos.
+#  pattern, so that it's easier to generalize the code for multiple repos.
 #
 # class DockerCommand:
 #   def pull():
@@ -1023,7 +1015,7 @@ def docker_kill(  # type: ignore
 
 
 @task
-def docker_pull(ctx, stage=STAGE, images="all"):  # type: ignore
+def docker_pull(ctx, stage=STAGE, images="all", version=""):  # type: ignore
     """
     Pull images from the registry.
     """
@@ -1041,13 +1033,13 @@ def docker_pull(ctx, stage=STAGE, images="all"):  # type: ignore
             continue
         if token == "current":
             base_image = ""
-            image = get_image(stage, base_image)
+            image = get_image(stage, base_image, version)
         elif token == "dev_tools":
             image = get_default_param("DEV_TOOLS_IMAGE_PROD")
         else:
             raise ValueError("Can't recognize image token '%s'" % token)
         _LOG.info("token='%s': image='%s'", token, image)
-        _check_image(image)
+        _dassert_is_image_name_valid(image)
         cmd = f"docker pull {image}"
         _run(ctx, cmd, pty=True)
 
@@ -1100,6 +1092,9 @@ def docker_login(ctx):  # type: ignore
     _run(ctx, cmd)
 
 
+# ###################################
+
+
 def _get_base_docker_compose_path() -> str:
     """
     Return the base docker compose `devops/compose/docker-compose.yml`.
@@ -1145,22 +1140,37 @@ def _get_git_hash() -> str:
 
 _INTERNET_ADDRESS_RE = r"([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
 _IMAGE_RE = r"[a-z0-9_-]+"
+# A version is like `1.0.0` or `1.0.0-${USER}`.
+_VERSION_RE = r"\d+\.\d+\.\d+(\.[a-z0-9]+)?"
 _TAG_RE = r"[a-z0-9_-]+"
 
 
-def _check_image(image: str) -> None:
+def _dassert_is_version_valid(version: str) -> None:
+    """
+    A valid version looks like: `1.0.0` or `1.0.0.saggese`.
+    """
+    regex = rf"^({_VERSION_RE})$"
+    _LOG.debug("Testing with regex='%s'", regex)
+    m = re.match(regex, version)
+    hdbg.dassert(m, "Invalid version: '%s'", version)
+
+
+def _dassert_is_image_name_valid(image: str) -> None:
     """
     An image should look like:
 
     *****.dkr.ecr.us-east-1.amazonaws.com/amp:local
+    *****.dkr.ecr.us-east-1.amazonaws.com/amp-1.0.0:local
     """
-    m = re.match(rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_RE}:{_TAG_RE}$", image)
+    regex = rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_RE}(-{_VERSION_RE})?:{_TAG_RE}$"
+    _LOG.debug("Testing with regex='%s'", regex)
+    m = re.match(regex, image)
     hdbg.dassert(m, "Invalid image: '%s'", image)
 
 
-def _check_base_image(base_image: str) -> None:
+def _dassert_is_base_image_name_valid(base_image: str) -> None:
     """
-    A base image should look like.
+    A base image should look like:
 
     *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
@@ -1181,51 +1191,48 @@ def _get_base_image(base_image: str) -> str:
             + "/"
             + get_default_param("BASE_IMAGE")
         )
-    _check_base_image(base_image)
+    _dassert_is_base_image_name_valid(base_image)
     return base_image
 
 
-def get_image(stage: str, base_image: str) -> str:
+# TODO(gp): Exchange position of base_image and stage
+def get_image(stage: str, base_image: str, version: str) -> str:
     """
     Return the fully qualified image name.
 
-    :param stage: it can be a simple stage (e.g., `local`, `dev`, `prod`)
-        or a version + stage (e.g., `1.0.0-local`)
+    :param stage: e.g., `local`, `dev`, `prod`
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
+    :param version: e.g., `1.0.0`
     :return: e.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:local or`
-       `*****.dkr.ecr.us-east-1.amazonaws.com/amp_1.0.0:local`
+       `*****.dkr.ecr.us-east-1.amazonaws.com/amp-1.0.0:local`
     """
     # Docker refers the default image as "latest", although in our stage
     # nomenclature we call it "dev".
-    #
-    if ":" in stage:
-        # Assume that looks like: `1.0.0:local`.
-        data = stage.split(":")
-        hdbg.dassert_eq(len(data), 2, "Can't parse '%s'", stage)
-        version, stage = data
-        _dassert_is_valid_version(version)
-    else:
-        version = None
     # TODO(gp): Remove hash.
     hdbg.dassert_in(stage, "local dev prod hash".split())
     if stage == "hash":
         stage = _get_git_hash()
     # Get the base image.
     base_image = _get_base_image(base_image)
-    _check_base_image(base_image)
-    # Get the full image.
-    #
+    _dassert_is_base_image_name_valid(base_image)
+    # Get the full image name.
+    # E.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
     image = base_image
     if version:
-        image += f"_{version}"
+        # E.g., -1.0.0
+        _dassert_is_version_valid(version)
+        image += f"-{version}"
+    # E.g., :local
     image += ":" + stage
-    _check_image(image)
+    # E.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_1.0.0:local
+    _dassert_is_image_name_valid(image)
     return image
 
 
 def _get_docker_cmd(
     stage: str,
     base_image: str,
+    version: str,
     cmd: str,
     extra_env_vars: Optional[List[str]] = None,
     extra_docker_compose_files: Optional[List[str]] = None,
@@ -1251,9 +1258,9 @@ def _get_docker_cmd(
     )
     docker_cmd_: List[str] = []
     # - Handle the image.
-    image = get_image(stage, base_image)
+    image = get_image(stage, base_image, version)
     _LOG.debug("base_image=%s stage=%s -> image=%s", base_image, stage, image)
-    _check_image(image)
+    _dassert_is_image_name_valid(image)
     docker_cmd_.append(f"IMAGE={image}")
     # - Handle extra env vars.
     if extra_env_vars:
@@ -1380,20 +1387,20 @@ def _docker_cmd(
 
 
 @task
-def docker_bash(ctx, stage=STAGE, entrypoint=True, as_user=True):  # type: ignore
+def docker_bash(ctx, stage=STAGE, version="", entrypoint=True, as_user=True):  # type: ignore
     """
     Start a bash shell inside the container corresponding to a stage.
     """
     _report_task()
     base_image = ""
     cmd = "bash"
-    docker_cmd_ = _get_docker_cmd(stage, base_image, cmd, entrypoint=entrypoint,
+    docker_cmd_ = _get_docker_cmd(stage, base_image, version, cmd, entrypoint=entrypoint,
             as_user=as_user)
     _docker_cmd(ctx, docker_cmd_)
 
 
 @task
-def docker_cmd(ctx, stage=STAGE, cmd=""):  # type: ignore
+def docker_cmd(ctx, stage=STAGE, version="", cmd=""):  # type: ignore
     """
     Execute the command `cmd` inside a container corresponding to a stage.
     """
@@ -1401,13 +1408,14 @@ def docker_cmd(ctx, stage=STAGE, cmd=""):  # type: ignore
     hdbg.dassert_ne(cmd, "")
     base_image = ""
     # TODO(gp): Do we need to overwrite the entrypoint?
-    docker_cmd_ = _get_docker_cmd(stage, base_image, cmd)
+    docker_cmd_ = _get_docker_cmd(stage, base_image, version, cmd)
     _docker_cmd(ctx, docker_cmd_)
 
 
 def _get_docker_jupyter_cmd(
     stage: str,
     base_image: str,
+    version: str,
     port: int,
     self_test: bool,
     print_docker_config: bool = False,
@@ -1420,6 +1428,7 @@ def _get_docker_jupyter_cmd(
     docker_cmd_ = _get_docker_cmd(
         stage,
         base_image,
+        version,
         cmd,
         extra_env_vars=extra_env_vars,
         extra_docker_run_opts=extra_docker_run_opts,
@@ -1433,6 +1442,7 @@ def _get_docker_jupyter_cmd(
 def docker_jupyter(  # type: ignore
     ctx,
     stage=STAGE,
+    version="",
     base_image="",
     auto_assign_port=True,
     port=9999,
@@ -1457,7 +1467,7 @@ def docker_jupyter(  # type: ignore
         port = (uid * max_idx_per_user) + git_repo_idx
         _LOG.info("Assigned port is %s", port)
     #
-    docker_cmd_ = _get_docker_jupyter_cmd(stage, base_image, port, self_test)
+    docker_cmd_ = _get_docker_jupyter_cmd(stage, base_image, version, port, self_test)
     _docker_cmd(ctx, docker_cmd_)
 
 
@@ -1519,23 +1529,25 @@ def docker_build_local_image(  # type: ignore
 
     :param cache: use the cache
     :param update_poetry: run poetry lock to update the packages
+    :param version: a version for the local image. E.g., `1.0.0`.
     """
     _report_task()
+    _ = ctx
+    # Build the image name.
+    # E.g.,
+    # 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local
+    # 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp-1.0.0:local
+    stage = "local"
+    if version:
+        _dassert_is_version_valid(version)
+    image_local = get_image(stage, base_image, version)
+    _LOG.info("Building image '%s'", image_local)
+    _dassert_is_image_name_valid(image_local)
     # Update poetry.
     if update_poetry:
         cmd = "cd devops/docker_build; poetry lock -v"
         _run(ctx, cmd)
-    # Build the image name.
-    stage = ""
-    if version:
-        _dassert_is_valid_version(version)
-        stage += version + ":"
-    stage += "local"
-    image_local = get_image(stage, base_image)
-    _LOG.info("Building image '%s'", image_local)
-    assert 0
     #
-    _check_image(image_local)
     dockerfile = "devops/docker_build/dev.Dockerfile"
     dockerfile = _to_abs_path(dockerfile)
     #
@@ -1563,27 +1575,29 @@ def docker_build_local_image(  # type: ignore
 
 
 @task
-def docker_tag_local_image_as_dev(ctx, base_image=""):  # type: ignore
+def docker_tag_local_image_as_dev(ctx, base_image="", version=""):  # type: ignore
     """
     (ONLY CI/CD) Mark the "local" image as "dev".
+
+    :param base_image: override
     """
     _report_task()
     #
-    image_local = get_image("local", base_image)
-    image_dev = get_image("dev", base_image)
+    image_local = get_image("local", base_image, version)
+    image_dev = get_image("dev", base_image, version)
     cmd = f"docker tag {image_local} {image_dev}"
     _run(ctx, cmd)
 
 
 @task
-def docker_push_dev_image(ctx, base_image=""):  # type: ignore
+def docker_push_dev_image(ctx, base_image="", version=""):  # type: ignore
     """
     (ONLY CI/CD) Push the "dev" image to ECR.
     """
     _report_task()
     docker_login(ctx)
     #
-    image_dev = get_image("dev", base_image)
+    image_dev = get_image("dev", base_image, version)
     cmd = f"docker push {image_dev}"
     _run(ctx, cmd, pty=True)
 
@@ -1666,7 +1680,7 @@ def docker_release_dev_image(  # type: ignore
 
 # TODO(gp): Remove redundancy with docker_build_local_image(), if possible.
 @task
-def docker_build_prod_image(ctx, cache=True, base_image=""):  # type: ignore
+def docker_build_prod_image(ctx, cache=True, base_image="", version=""):  # type: ignore
     """
     (ONLY CI/CD) Build a prod image.
 
@@ -1677,9 +1691,9 @@ def docker_build_prod_image(ctx, cache=True, base_image=""):  # type: ignore
         image so caching makes no difference
     """
     _report_task()
-    image_prod = get_image("prod", base_image)
+    image_prod = get_image("prod", base_image, version)
     #
-    _check_image(image_prod)
+    _dassert_is_image_name_valid(image_prod)
     dockerfile = "devops/docker_build/prod.Dockerfile"
     dockerfile = _to_abs_path(dockerfile)
     #
@@ -1702,14 +1716,14 @@ def docker_build_prod_image(ctx, cache=True, base_image=""):  # type: ignore
 
 
 @task
-def docker_push_prod_image(ctx, base_image=""):  # type: ignore
+def docker_push_prod_image(ctx, base_image="", version=""):  # type: ignore
     """
     (ONLY CI/CD) Push the "prod" image to ECR.
     """
     _report_task()
     docker_login(ctx)
     #
-    image_prod = get_image("prod", base_image)
+    image_prod = get_image("prod", base_image, version="")
     cmd = f"docker push {image_prod}"
     _run(ctx, cmd, pty=True)
 
@@ -2031,14 +2045,14 @@ _COV_PYTEST_OPTS = [
 
 
 @task
-def run_blank_tests(ctx, stage=STAGE):  # type: ignore
+def run_blank_tests(ctx, stage=STAGE, version=""):  # type: ignore
     """
     (ONLY CI/CD) Test that pytest in the container works.
     """
     _report_task()
     base_image = ""
     cmd = '"pytest -h >/dev/null"'
-    docker_cmd_ = _get_docker_cmd(stage, base_image, cmd)
+    docker_cmd_ = _get_docker_cmd(stage, base_image, cmd, version)
     _docker_cmd(ctx, docker_cmd_)
 
 
@@ -2101,6 +2115,7 @@ def _build_run_command_line(
 def _run_test_cmd(
     ctx: Any,
     stage: str,
+    version: str,
     cmd: str,
     coverage: bool,
     collect_only: bool,
@@ -2113,7 +2128,7 @@ def _run_test_cmd(
     base_image = ""
     # We need to add some " to pass the string as it is to the container.
     cmd = f"'{cmd}'"
-    docker_cmd_ = _get_docker_cmd(stage, base_image, cmd)
+    docker_cmd_ = _get_docker_cmd(stage, base_image, cmd, version)
     _docker_cmd(ctx, docker_cmd_)
     # Print message about coverage.
     if coverage:
@@ -2139,6 +2154,7 @@ def _run_test_cmd(
 def _run_tests(
     ctx: Any,
     stage: str,
+    version: str,
     pytest_opts: str,
     pytest_mark: str,
     dir_name: str,
@@ -2147,7 +2163,7 @@ def _run_tests(
     collect_only: bool,
     tee_to_file: bool,
     skipped_tests: str,
-    start_coverage_script: bool = True,
+    start_coverage_script: bool,
 ) -> None:
     # Build the command line.
     cmd = _build_run_command_line(
@@ -2161,7 +2177,7 @@ def _run_tests(
         skipped_tests,
     )
     # Execute the command line.
-    _run_test_cmd(ctx, stage, cmd, coverage, collect_only, start_coverage_script)
+    _run_test_cmd(ctx, stage, version, cmd, coverage, collect_only, start_coverage_script)
 
 
 # TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code.
@@ -2169,6 +2185,7 @@ def _run_tests(
 def run_fast_tests(  # type: ignore
     ctx,
     stage=STAGE,
+    version="",
     pytest_opts="",
     pytest_mark="",
     dir_name="",
@@ -2191,9 +2208,11 @@ def run_fast_tests(  # type: ignore
     """
     _report_task()
     skipped_tests = "not slow and not superslow"
+    start_coverage_script = False
     _run_tests(
         ctx,
         stage,
+        version,
         pytest_opts,
         pytest_mark,
         dir_name,
@@ -2202,6 +2221,7 @@ def run_fast_tests(  # type: ignore
         collect_only,
         tee_to_file,
         skipped_tests,
+        start_coverage_script,
     )
 
 
@@ -2209,6 +2229,7 @@ def run_fast_tests(  # type: ignore
 def run_slow_tests(  # type: ignore
     ctx,
     stage=STAGE,
+        version="",
     pytest_opts="",
     pytest_mark="",
     dir_name="",
@@ -2224,9 +2245,11 @@ def run_slow_tests(  # type: ignore
     """
     _report_task()
     skipped_tests = "slow and not superslow"
+    start_coverage_script = False
     _run_tests(
         ctx,
         stage,
+        version,
         pytest_opts,
         pytest_mark,
         dir_name,
@@ -2235,6 +2258,7 @@ def run_slow_tests(  # type: ignore
         collect_only,
         tee_to_file,
         skipped_tests,
+        start_coverage_script,
     )
 
 
@@ -2242,6 +2266,7 @@ def run_slow_tests(  # type: ignore
 def run_superslow_tests(  # type: ignore
     ctx,
     stage=STAGE,
+        version="",
     pytest_opts="",
     pytest_mark="",
     dir_name="",
@@ -2257,9 +2282,11 @@ def run_superslow_tests(  # type: ignore
     """
     _report_task()
     skipped_tests = "not slow and superslow"
+    start_coverage_script = False
     _run_tests(
         ctx,
         stage,
+        version,
         pytest_opts,
         pytest_mark,
         dir_name,
@@ -2268,6 +2295,7 @@ def run_superslow_tests(  # type: ignore
         collect_only,
         tee_to_file,
         skipped_tests,
+        start_coverage_script,
     )
 
 
@@ -2275,6 +2303,7 @@ def run_superslow_tests(  # type: ignore
 def run_fast_slow_tests(  # type: ignore
     ctx,
     stage=STAGE,
+    version="",
     pytest_opts="",
     pytest_mark="",
     dir_name="",
@@ -2290,9 +2319,11 @@ def run_fast_slow_tests(  # type: ignore
     """
     _report_task()
     skipped_tests = "not superslow"
+    start_coverage_script = False
     _run_tests(
         ctx,
         stage,
+        version,
         pytest_opts,
         pytest_mark,
         dir_name,
@@ -2301,6 +2332,7 @@ def run_fast_slow_tests(  # type: ignore
         collect_only,
         tee_to_file,
         skipped_tests,
+        start_coverage_script
     )
 
 
@@ -2403,7 +2435,7 @@ def _get_failed_tests_from_file(file_name: str) -> List[str]:
     return tests
 
 
-def _get_failed_tests_from_clipboard() -> List[str]:
+def _get_failed_tests_from_clipboard() -> None:
     # pylint: disable=line-too-long
     """
     ```
