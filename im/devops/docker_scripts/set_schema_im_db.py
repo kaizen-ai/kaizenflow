@@ -8,6 +8,10 @@ Note: IM database is created using environment variables.
 Usage:
 - Set SQL schema for the IM database:
     > set_schema_im_db.py
+
+Import as:
+
+import im.devops.docker_scripts.set_schema_im_db as imddsssimdb
 """
 import argparse
 import logging
@@ -16,7 +20,7 @@ import os
 import helpers.dbg as hdbg
 import helpers.parser as hparser
 import helpers.sql as hsql
-import im.common.db.create_db as imcodbcrdb
+import im.common.db.create_db as imcdbcrdb
 
 _LOG = logging.getLogger(__name__)
 
@@ -45,7 +49,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     connection, _ = hsql.get_connection_from_env_vars()
     # Set schema for the database.
     _LOG.info("Setting schema for DB `%s`...", os.environ["POSTGRES_DB"])
-    imcodbcrdb.create_all_tables(connection)
+    imcdbcrdb.create_all_tables(connection)
     _LOG.info("Database `%s` is ready to use.", os.environ["POSTGRES_DB"])
 
 

@@ -23,14 +23,14 @@
 
 import logging
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 
 # %%
 
 # %%
-# dbg.init_logger(verbosity=logging.DEBUG)
-dbg.init_logger(verbosity=logging.INFO)
-# dbg.test_logger()
+# hdbg.init_logger(verbosity=logging.DEBUG)
+hdbg.init_logger(verbosity=logging.INFO)
+# hdbg.test_logger()
 _LOG = logging.getLogger(__name__)
 
 # %% run_control={"marked": false}

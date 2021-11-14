@@ -1,6 +1,10 @@
 """
 Download data from IB using the "IB loop" approach (ie starting from the end of
 the interval and moving backwards).
+
+Import as:
+
+import im.ib.data.extract.gateway.download_data_ib_loop as imidegddil
 """
 import datetime
 import logging
@@ -19,10 +23,10 @@ import pandas as pd
 # from tqdm.notebook import tqdm
 from tqdm import tqdm
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.io_ as hio
 import helpers.s3 as hs3
-import im.ib.data.extract.gateway.utils as videgu
+import im.ib.data.extract.gateway.utils as imidegaut
 
 _LOG = logging.getLogger(__name__)
 
@@ -56,12 +60,12 @@ def ib_loop_generator(
     backwards in time. The problem with this approach is that one can't
     parallelize the requests of chunks of data.
     """
-    videgu.check_ib_connected(ib)
+    imidegaut.check_ib_connected(ib)
     _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
-    start_ts = videgu.to_ET(start_ts)
-    end_ts = videgu.to_ET(end_ts)
+    start_ts = imidegaut.to_ET(start_ts)
+    end_ts = imidegaut.to_ET(end_ts)
     _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
-    dbg.dassert_lt(start_ts, end_ts)
+    hdbg.dassert_lt(start_ts, end_ts)
     # Let's start from the end.
     curr_ts = end_ts
     pbar = None
@@ -71,7 +75,7 @@ def ib_loop_generator(
     start_ts_reached = False
     while not start_ts_reached:
         _LOG.debug("Requesting data for curr_ts='%s'", curr_ts)
-        df = videgu.req_historical_data(
+        df = imidegaut.req_historical_data(
             ib,
             contract,
             curr_ts,
@@ -86,8 +90,8 @@ def ib_loop_generator(
             # TODO(gp): Sometimes IB returns an empty df in a chunk although there
             #  is more data later on. Maybe we can just keep going.
             return
-        _LOG.debug("df=%s\n%s", videgu.get_df_signature(df), df.head(3))
-        date_offset = videgu.duration_str_to_pd_dateoffset(duration_str)
+        _LOG.debug("df=%s\n%s", imidegaut.get_df_signature(df), df.head(3))
+        date_offset = imidegaut.duration_str_to_pd_dateoffset(duration_str)
         if df.empty:
             # Sometimes IB returns an empty df in a chunk although there is more
             # data later on: we keep going.
@@ -95,7 +99,7 @@ def ib_loop_generator(
             _LOG.debug("Empty df -> curr_ts=%s", curr_ts)
         else:
             # Move the curr_ts to the beginning of the chuck.
-            next_curr_ts = videgu.to_ET(df.index[0])
+            next_curr_ts = imidegaut.to_ET(df.index[0])
             # Avoid infinite loop if there is only one record in response.
             if next_curr_ts == curr_ts:
                 next_curr_ts -= date_offset
@@ -120,7 +124,7 @@ def ib_loop_generator(
                 curr_ts,
                 start_ts,
             )
-            df = videgu.truncate(df, start_ts=start_ts, end_ts=end_ts)
+            df = imidegaut.truncate(df, start_ts=start_ts, end_ts=end_ts)
             start_ts_reached = True
         if not df.empty:
             yield i, df, ts_seq
@@ -149,9 +153,9 @@ def save_historical_data_by_intervals_IB_loop(
     :param incremental: if the `file_name` already exists, resume downloading
         from the last date
     """
-    start_ts, end_ts = videgu.process_start_end_ts(start_ts, end_ts)
+    start_ts, end_ts = imidegaut.process_start_end_ts(start_ts, end_ts)
     #
-    ib, deallocate_ib = videgu.allocate_ib(ib)
+    ib, deallocate_ib = imidegaut.allocate_ib(ib)
     _LOG.debug("ib=%s", ib)
     generator = ib_loop_generator(
         ib,
@@ -168,8 +172,8 @@ def save_historical_data_by_intervals_IB_loop(
     saved_intervals = set()
     for i, df_tmp, _ in generator:
         # Split data by static intervals.
-        for interval, df_tmp_part in videgu.split_data_by_intervals(
-            df_tmp, videgu.duration_str_to_pd_dateoffset(duration_str)
+        for interval, df_tmp_part in imidegaut.split_data_by_intervals(
+            df_tmp, imidegaut.duration_str_to_pd_dateoffset(duration_str)
         ):
             # Get file name for each part.
             file_name_for_part = historical_data_to_filename(
@@ -183,7 +187,7 @@ def save_historical_data_by_intervals_IB_loop(
                 dst_dir=part_files_dir,
             )
             # There can be already data from previous loop iteration.
-            if videgu.check_file_exists(file_name_for_part):
+            if imidegaut.check_file_exists(file_name_for_part):
                 df_to_write = pd.concat(
                     [df_tmp_part, load_historical_data(file_name_for_part)]
                 )
@@ -191,7 +195,7 @@ def save_historical_data_by_intervals_IB_loop(
                 # First iteration ever.
                 df_to_write = df_tmp_part
             # Force to have index `pd.Timestamp` format.
-            df_to_write.index = df_to_write.index.map(videgu.to_ET)
+            df_to_write.index = df_to_write.index.map(imidegaut.to_ET)
             if incremental:
                 # It is possible that same data was already loaded.
                 df_to_write = df_to_write[
@@ -206,7 +210,7 @@ def save_historical_data_by_intervals_IB_loop(
             df_to_write.to_csv(file_name_for_part, mode="w", header=True)
             _LOG.info("Saved partial data in '%s'", file_name_for_part)
             saved_intervals.add(interval)
-    videgu.deallocate_ib(ib, deallocate_ib)
+    imidegaut.deallocate_ib(ib, deallocate_ib)
     return saved_intervals
 
 
@@ -234,11 +238,11 @@ def get_historical_data_with_IB_loop(
     backwards in time. The problem with this approach is that one can't
     parallelize the requests of chunks of data.
     """
-    start_ts, end_ts = videgu.process_start_end_ts(start_ts, end_ts)
+    start_ts, end_ts = imidegaut.process_start_end_ts(start_ts, end_ts)
     #
     dfs = []
     ts_seq = []
-    ib, deallocate_ib = videgu.allocate_ib(ib)
+    ib, deallocate_ib = imidegaut.allocate_ib(ib)
     generator = ib_loop_generator(
         ib,
         contract,
@@ -252,13 +256,13 @@ def get_historical_data_with_IB_loop(
         num_retry=num_retry,
     )
     # Deallocate.
-    videgu.deallocate_ib(ib, deallocate_ib)
+    imidegaut.deallocate_ib(ib, deallocate_ib)
     for i, df_tmp, ts_seq_tmp in generator:
         ts_seq.append(ts_seq_tmp)
         dfs.insert(0, df_tmp)
     #
     df = pd.concat(dfs)
-    df = videgu.truncate(df, start_ts, end_ts)
+    df = imidegaut.truncate(df, start_ts, end_ts)
     if return_ts_seq:
         return df, ts_seq
     return df
@@ -279,7 +283,7 @@ def historical_data_to_filename(
     symbol = contract.symbol
     bar_size_setting = bar_size_setting.replace(" ", "_")
     duration_str = duration_str.replace(" ", "_")
-    file_name = f"{symbol}.{videgu.to_timestamp_str(start_ts)}.{videgu.to_timestamp_str(end_ts)}.{duration_str}.{bar_size_setting}.{what_to_show}.{use_rth}.csv"
+    file_name = f"{symbol}.{imidegaut.to_timestamp_str(start_ts)}.{imidegaut.to_timestamp_str(end_ts)}.{duration_str}.{bar_size_setting}.{what_to_show}.{use_rth}.csv"
     file_name = os.path.join(dst_dir, file_name)
     return file_name
 
@@ -313,9 +317,9 @@ def save_historical_data_single_file_with_IB_loop(
             end_ts,
         )
     #
-    start_ts, end_ts = videgu.process_start_end_ts(start_ts, end_ts)
+    start_ts, end_ts = imidegaut.process_start_end_ts(start_ts, end_ts)
     #
-    ib, deallocate_ib = videgu.allocate_ib(ib)
+    ib, deallocate_ib = imidegaut.allocate_ib(ib)
     _LOG.debug("ib=%s", ib)
     generator = ib_loop_generator(
         ib,
@@ -347,11 +351,11 @@ def save_historical_data_single_file_with_IB_loop(
             mode = "a"
             header = False
         df_tmp.to_csv(file_name, mode=mode, header=header)
-    videgu.deallocate_ib(ib, deallocate_ib)
+    imidegaut.deallocate_ib(ib, deallocate_ib)
     # Load everything and clean it up.
     df = load_historical_data(file_name)
     df.sort_index(inplace=True)
-    df = videgu.truncate(df, start_ts, end_ts)
+    df = imidegaut.truncate(df, start_ts, end_ts)
     _LOG.info("Saved full data in '%s'", file_name)
     df.to_csv(file_name)
 
@@ -364,7 +368,7 @@ def load_historical_data(file_name: str, verbose: bool = False) -> pd.DataFrame:
     _LOG.debug("file_name=%s", file_name)
     s3fs = hs3.get_s3fs("am")
     df = pdhelp.read_csv(file_name, s3fs=s3fs, parse_dates=True, index_col=0)
-    # dbg.dassert_isinstance(df.index[0], pd.Timestamp)
+    # hdbg.dassert_isinstance(df.index[0], pd.Timestamp)
     if verbose:
         _LOG.info(
             "%s: %d [%s, %s]", file_name, df.shape[0], df.index[0], df.index[-1]

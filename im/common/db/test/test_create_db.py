@@ -6,15 +6,15 @@ import pytest
 
 import helpers.git as hgit
 import helpers.sql as hsql
-import helpers.system_interaction as hsyint
-import helpers.unit_test as huntes
-import im.common.db.create_db as imcodbcrdb
+import helpers.system_interaction as hsysinte
+import helpers.unit_test as hunitest
+import im.common.db.create_db as imcdbcrdb
 
 _LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
-class TestCreateDB(huntes.TestCase):
+class TestCreateDB(hunitest.TestCase):
     def setUp(self):
         """
         Initialize the test database inside test container.
@@ -28,7 +28,7 @@ class TestCreateDB(huntes.TestCase):
             f"--file {self.docker_compose_file_path} "
             "up -d im_postgres_local"
         )
-        hsyint.system(cmd, suppress_output=False)
+        hsysinte.system(cmd, suppress_output=False)
         dbname = "im_postgres_db_local"
         host = "localhost"
         port = 5432
@@ -53,7 +53,7 @@ class TestCreateDB(huntes.TestCase):
             f"--file {self.docker_compose_file_path} down -v"
         )
         self.connection.close()
-        hsyint.system(cmd, suppress_output=False)
+        hsysinte.system(cmd, suppress_output=False)
         super().tearDown()
 
     @pytest.mark.slow()
@@ -61,7 +61,7 @@ class TestCreateDB(huntes.TestCase):
         """
         Verify that all necessary tables are created inside the DB.
         """
-        imcodbcrdb.create_all_tables(self.connection)
+        imcdbcrdb.create_all_tables(self.connection)
         expected = sorted(
             [
                 "ccxt_ohlcv",
@@ -88,11 +88,11 @@ class TestCreateDB(huntes.TestCase):
         """
         Create database 'test_db_to_remove' and remove it.
         """
-        imcodbcrdb.create_database(
+        imcdbcrdb.create_database(
             self.connection,
             new_db="test_db_to_remove",
         )
-        imcodbcrdb.remove_database(self.connection, "test_db_to_remove")
+        imcdbcrdb.remove_database(self.connection, "test_db_to_remove")
         db_list = hsql.get_db_names(self.connection)
         self.assertNotIn("test_db_to_remove", db_list)
 
@@ -101,4 +101,4 @@ class TestCreateDB(huntes.TestCase):
         Test failed assertion for passing db name that does not exist.
         """
         with self.assertRaises(perrors.InvalidCatalogName):
-            imcodbcrdb.remove_database(self.connection, "db does not exist")
+            imcdbcrdb.remove_database(self.connection, "db does not exist")

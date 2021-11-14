@@ -7,30 +7,30 @@ import im.ib.data.load.test.test_file_path_generator as tfpgen
 import os
 
 import helpers.s3 as hs3
-import helpers.unit_test as hut
-import im.common.data.types as mcdtyp
-import im.ib.data.config as midcfg
-import im.ib.data.load.ib_file_path_generator as ifpgen
+import helpers.unit_test as hunitest
+import im.common.data.types as imcodatyp
+import im.ib.data.config as imibdacon
+import im.ib.data.load.ib_file_path_generator as imidlifpge
 
 
 _S3_BUCKET = hs3.get_bucket()
 
 
-class TestIbFilePathGenerator(hut.TestCase):
+class TestIbFilePathGenerator(hunitest.TestCase):
     """
     Test correctness of S3 IB paths.
     """
 
     def setUp(self) -> None:
         super().setUp()
-        self._file_path_generator = ifpgen.IbFilePathGenerator()
+        self._file_path_generator = imidlifpge.IbFilePathGenerator()
 
     def test_get_latest_symbols_file1(self) -> None:
         """
         Get the latest file with the info.
         """
-        latest_file = ifpgen.IbFilePathGenerator.get_latest_symbols_file()
-        self.assertRegex(latest_file, "^%s" % midcfg.S3_PREFIX)
+        latest_file = imidlifpge.IbFilePathGenerator.get_latest_symbols_file()
+        self.assertRegex(latest_file, "^%s" % imibdacon.S3_PREFIX)
 
     def test_generate_file_path1(self) -> None:
         """
@@ -39,12 +39,12 @@ class TestIbFilePathGenerator(hut.TestCase):
         # Generate path to symbol.
         act = self._file_path_generator.generate_file_path(
             symbol="ESZ21",
-            frequency=mcdtyp.Frequency.Minutely,
-            asset_class=mcdtyp.AssetClass.Futures,
-            contract_type=mcdtyp.ContractType.Expiry,
+            frequency=imcodatyp.Frequency.Minutely,
+            asset_class=imcodatyp.AssetClass.Futures,
+            contract_type=imcodatyp.ContractType.Expiry,
             exchange="GLOBEX",
             currency="USD",
-            ext=mcdtyp.Extension.CSV,
+            ext=imcodatyp.Extension.CSV,
         )
         # Compare with expected value.
         exp = (
@@ -59,12 +59,12 @@ class TestIbFilePathGenerator(hut.TestCase):
         # Generate path to symbol.
         act = self._file_path_generator.generate_file_path(
             symbol="TSLA",
-            frequency=mcdtyp.Frequency.Minutely,
-            asset_class=mcdtyp.AssetClass.Stocks,
-            contract_type=mcdtyp.ContractType.Continuous,
+            frequency=imcodatyp.Frequency.Minutely,
+            asset_class=imcodatyp.AssetClass.Stocks,
+            contract_type=imcodatyp.ContractType.Continuous,
             exchange="NSDQ",
             currency="USD",
-            ext=mcdtyp.Extension.CSV,
+            ext=imcodatyp.Extension.CSV,
         )
         # Compare with expected value.
         exp = f"s3://{_S3_BUCKET}/data/ib/stocks/NSDQ/USD/minutely/TSLA.csv.gz"
@@ -77,12 +77,12 @@ class TestIbFilePathGenerator(hut.TestCase):
         # Generate path to symbol.
         act = self._file_path_generator.generate_file_path(
             symbol="CLH21",
-            frequency=mcdtyp.Frequency.Daily,
-            asset_class=mcdtyp.AssetClass.Futures,
-            contract_type=mcdtyp.ContractType.Expiry,
+            frequency=imcodatyp.Frequency.Daily,
+            asset_class=imcodatyp.AssetClass.Futures,
+            contract_type=imcodatyp.ContractType.Expiry,
             exchange="ECBOT",
             currency="EUR",
-            ext=mcdtyp.Extension.CSV,
+            ext=imcodatyp.Extension.CSV,
         )
         # Compare with expected value.
         exp = f"s3://{_S3_BUCKET}/data/ib/Futures/ECBOT/EUR/daily/CLH21.csv.gz"

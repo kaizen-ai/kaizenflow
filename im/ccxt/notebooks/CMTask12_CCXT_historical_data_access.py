@@ -21,9 +21,9 @@
 import logging
 import json
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.env as henv
-import helpers.io_ as io_
+import helpers.io_ as hio
 import helpers.printing as hprint
 from typing import Any
 import time
@@ -32,7 +32,7 @@ import ccxt
 import pandas as pd
 
 # %%
-dbg.init_logger(verbosity=logging.INFO)
+hdbg.init_logger(verbosity=logging.INFO)
 
 _LOG = logging.getLogger(__name__)
 
@@ -64,13 +64,13 @@ def log_into_exchange(exchange_id: str):
     """
     Log into exchange via ccxt.
     """
-    credentials = io_.from_json("API_keys.json")
-    dbg.dassert_in(exchange_id, credentials, msg="%s exchange ID not correct.")
+    credentials = hio.from_json("API_keys.json")
+    hdbg.dassert_in(exchange_id, credentials, msg="%s exchange ID not correct.")
     credentials = credentials[exchange_id]
     credentials["rateLimit"] = True
     exchange_class = getattr(ccxt, exchange_id)
     exchange = exchange_class(credentials)
-    dbg.dassert(
+    hdbg.dassert(
         exchange.checkRequiredCredentials(),
         msg="Required credentials not passed.",
     )
@@ -104,9 +104,9 @@ def download_ohlcv_data(
     Download historical OHLCV data for given time period and currency.
     """
     exchange = log_into_exchange(exchange_id)
-    dbg.dassert_in(timeframe, exchange.timeframes)
-    dbg.dassert(exchange.has["fetchOHLCV"])
-    dbg.dassert_in(curr_symbol, exchange.load_markets().keys())
+    hdbg.dassert_in(timeframe, exchange.timeframes)
+    hdbg.dassert(exchange.has["fetchOHLCV"])
+    hdbg.dassert_in(curr_symbol, exchange.load_markets().keys())
     start_date = exchange.parse8601(start_date)
     end_date = exchange.parse8601(end_date)
     # Convert to ms.
@@ -142,9 +142,9 @@ def download_trade_data(
     Download historical data for given time period and currency.
     """
     exchange = log_into_exchange(exchange_id)
-    dbg.dassert_in(timeframe, exchange.timeframes)
-    dbg.dassert(exchange.has["fetchTrades"])
-    dbg.dassert_in(curr_symbol, exchange.load_markets().keys())
+    hdbg.dassert_in(timeframe, exchange.timeframes)
+    hdbg.dassert(exchange.has["fetchTrades"])
+    hdbg.dassert_in(curr_symbol, exchange.load_markets().keys())
     start_date = exchange.parse8601(start_date)
     end_date = exchange.parse8601(end_date)
     latest_trade = start_date

@@ -17,6 +17,10 @@ E.g:
 
 # Download data for all exchange codes (omit --exchange_codes)
 > download_eoddata_symbol_list.py --dst_dir $(date +"%m-%d-%y")
+
+Import as:
+
+import im.eoddata.metadata.extract.download_symbol_list as imemedsyli
 """
 import argparse
 import dataclasses
@@ -28,11 +32,11 @@ from typing import List
 import pandas as pd
 import zeep
 
-import helpers.dbg as dbg
-import helpers.io_ as io_
-import helpers.parser as prsr
-import helpers.system_interaction as si
-import im.eoddata.metadata.types as mtypes
+import helpers.dbg as hdbg
+import helpers.io_ as hio
+import helpers.parser as hparser
+import helpers.system_interaction as hsysinte
+import im.eoddata.metadata.types as imeometyp
 
 _LOG = logging.getLogger(__name__)
 
@@ -48,20 +52,20 @@ def _get_token() -> str:
     """
     Login to EODData API using credentials in env vars and get a token.
     """
-    username = si.get_env_var("EODDATA_USERNAME")
-    password = si.get_env_var("EODDATA_PASSWORD")
+    username = hsysinte.get_env_var("EODDATA_USERNAME")
+    password = hsysinte.get_env_var("EODDATA_PASSWORD")
 
     _LOG.info("Logging into EODData API ...")
 
     response = get_client().service.Login(Username=username, Password=password)
 
     if response["Token"] is None:
-        dbg.dfatal("Login Failed: '%s'", response["Message"])
+        hdbg.dfatal("Login Failed: '%s'", response["Message"])
 
     return str(response["Token"])
 
 
-def _get_symbols(exchange_code: str, token: str) -> List[mtypes.Symbol]:
+def _get_symbols(exchange_code: str, token: str) -> List[imeometyp.Symbol]:
     """
     Get a list of symbols for a certain exchange.
     """
@@ -75,7 +79,7 @@ def _get_symbols(exchange_code: str, token: str) -> List[mtypes.Symbol]:
         return []
 
     symbols = [
-        mtypes.Symbol.from_dict(d=obj)
+        imeometyp.Symbol.from_dict(d=obj)
         for obj in zeep.helpers.serialize_object(response.SYMBOLS["SYMBOL"])
     ]
 
@@ -84,14 +88,14 @@ def _get_symbols(exchange_code: str, token: str) -> List[mtypes.Symbol]:
 
 
 def _write_symbols_to_csv(
-    exchange_code: str, symbols: List[mtypes.Symbol], dst_dir: str
+    exchange_code: str, symbols: List[imeometyp.Symbol], dst_dir: str
 ) -> None:
     """
     Write symbols to `<exchange_code>.csv` in the dst_dir.
 
     Creates `dst_dir` if it doesn't exist.
     """
-    io_.create_dir(dir_name=dst_dir, incremental=True)
+    hio.create_dir(dir_name=dst_dir, incremental=True)
 
     file_path = os.path.join(dst_dir, exchange_code + ".csv")
     symbols_df = pd.DataFrame([dataclasses.asdict(s) for s in symbols])
@@ -100,7 +104,7 @@ def _write_symbols_to_csv(
     _LOG.info("Wrote Downloaded Symbols to '%s'", file_path)
 
 
-def _get_exchanges(token: str) -> List[mtypes.Exchange]:
+def _get_exchanges(token: str) -> List[imeometyp.Exchange]:
     """
     Get a list of exchange names from EODData.
     """
@@ -108,7 +112,7 @@ def _get_exchanges(token: str) -> List[mtypes.Exchange]:
     response = get_client().service.ExchangeList(Token=token)
 
     exchanges = [
-        mtypes.Exchange.from_dict(d=obj)
+        imeometyp.Exchange.from_dict(d=obj)
         for obj in zeep.helpers.serialize_object(response.EXCHANGES["EXCHANGE"])
     ]
     _LOG.info("Got %s exchanges", len(exchanges))
@@ -125,14 +129,14 @@ def _parse() -> argparse.ArgumentParser:
         help="Codes of the exchanges to download symbols for (defaults to all)",
     )
     parser.add_argument("--dst_dir", action="store", help="Destination dir")
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    dbg.dassert_is_not(
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.dassert_is_not(
         args.dst_dir, None, msg="Must provide a destination directory"
     )
     token = _get_token()

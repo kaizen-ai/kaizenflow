@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+"""
+Import as:
+
+import im.ib.data.extract.gateway.scratch.exercise_ibapi as iidegseib
+"""
+
 import threading
 import time
 

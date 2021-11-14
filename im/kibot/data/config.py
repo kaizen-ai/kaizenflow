@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import im.kibot.data.config as imkidacon
+"""
+
 import os
 
 import helpers.s3 as hs3

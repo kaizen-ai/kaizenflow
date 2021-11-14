@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import im.ib.data.extract.gateway.utils as imidegaut
+"""
+
 import datetime
 import logging
 import os
@@ -13,7 +19,7 @@ except ModuleNotFoundError:
 
 import pandas as pd
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.printing as hprint
 import helpers.s3 as hs3
 
@@ -67,7 +73,7 @@ def to_contract_details(ib, contract):
         "contract_details= (%s)\n\t%s"
         % (type(contract_details), contract_details)
     )
-    dbg.dassert_eq(len(contract_details), 1)
+    hdbg.dassert_eq(len(contract_details), 1)
     return hprint.obj_to_str(contract_details[0])
 
 
@@ -125,7 +131,7 @@ def to_ET(
 
 
 def to_timestamp_str(ts: pd.Timestamp) -> str:
-    dbg.dassert_is_not(ts, None)
+    hdbg.dassert_is_not(ts, None)
     # E.g., 20210723-205200
     ret = ts.strftime("%Y%m%d-%H%M%S")
     cast(str, ret)
@@ -179,10 +185,10 @@ def req_historical_data(
             # Retry.
             _LOG.info("Retry: %s / %s", i + 1, num_retry)
             if i == num_retry:
-                dbg.dfatal("Failed after %s retries", num_retry)
+                hdbg.dfatal("Failed after %s retries", num_retry)
     if bars:
         # Sanity check.
-        dbg.dassert_lte(bars[0].date, bars[-1].date)
+        hdbg.dassert_lte(bars[0].date, bars[-1].date)
         # Organize the data as a dataframe with increasing times.
         df = ib_insync.util.df(bars)
         df.set_index("date", drop=True, inplace=True)
@@ -313,7 +319,7 @@ def process_start_end_ts(
     start_ts = to_ET(start_ts)
     end_ts = to_ET(end_ts)
     _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
-    dbg.dassert_lte(start_ts, end_ts)
+    hdbg.dassert_lte(start_ts, end_ts)
     return start_ts, end_ts
 
 
@@ -324,7 +330,7 @@ def truncate(
     _LOG.debug("df.head=\n%s\ndf.tail=\n%s", df.head(3), df.tail(3))
     if df.empty:
         return df
-    dbg.dassert_in(type(df.index[0]), [datetime.date, pd.Timestamp])
+    hdbg.dassert_in(type(df.index[0]), [datetime.date, pd.Timestamp])
     hpandas.dassert_monotonic_index(df)
     start_ts = pd.Timestamp(start_ts)
     end_ts = pd.Timestamp(end_ts)
@@ -338,8 +344,8 @@ def truncate(
 def check_ib_connected(ib: ib_insync.ib.IB) -> None:
     # Too chatty but useful for debug.
     # _LOG.debug("ib=%s", ib)
-    dbg.dassert_isinstance(ib, ib_insync.ib.IB)
-    dbg.dassert(ib.isConnected())
+    hdbg.dassert_isinstance(ib, ib_insync.ib.IB)
+    hdbg.dassert(ib.isConnected())
 
 
 def allocate_ib(ib: Union[ib_insync.ib.IB, int]) -> Tuple[ib_insync.IB, bool]:
@@ -387,7 +393,7 @@ def select_assets(
         contract = ib_insync.Forex(symbol)
         what_to_show = "MIDPOINT"
     else:
-        dbg.dfatal("Invalid target='%s'" % target)
+        hdbg.dfatal("Invalid target='%s'" % target)
     #
     ib.qualifyContracts(contract)
     if frequency == "intraday":
@@ -400,7 +406,7 @@ def select_assets(
         duration_str = "1 Y"
         bar_size_setting = "1 day"
     else:
-        dbg.dfatal("Invalid frequency='%s'" % frequency)
+        hdbg.dfatal("Invalid frequency='%s'" % frequency)
     return contract, duration_str, bar_size_setting, what_to_show
 
 

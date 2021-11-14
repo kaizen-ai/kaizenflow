@@ -3,12 +3,12 @@ import os
 import pytest
 
 import helpers.io_ as hio
-import helpers.unit_test as hut
+import helpers.unit_test as hunitest
 import im.kibot.metadata.load as vkmloa
-import im.kibot.metadata.types as vkmtyp
+import im.kibot.metadata.types as imkimetyp
 
 
-class TestTickerListLoader(hut.TestCase):
+class TestTickerListLoader(hunitest.TestCase):
     def test_parsing_logic(self) -> None:
         lines = hio.from_file(
             file_name=os.path.join(self.get_input_dir(), "test.txt")
@@ -18,7 +18,7 @@ class TestTickerListLoader(hut.TestCase):
         self.assertEqual(
             listed_tickers,
             [
-                vkmtyp.Ticker(
+                imkimetyp.Ticker(
                     Symbol="AA",
                     StartDate="4/27/2007",
                     Size="68",
@@ -32,7 +32,7 @@ class TestTickerListLoader(hut.TestCase):
         self.assertEqual(
             delisted_tickers,
             [
-                vkmtyp.Ticker(
+                imkimetyp.Ticker(
                     Symbol="XOM",
                     StartDate="12/1/1999",
                     Size="102",
@@ -50,7 +50,7 @@ class TestTickerListLoader(hut.TestCase):
         self.assertEqual(len(tickers), 43)
         self.assertEqual(
             tickers[0],
-            vkmtyp.Ticker(
+            imkimetyp.Ticker(
                 Symbol="AA",
                 StartDate="4/27/2007",
                 Size="68",
@@ -62,14 +62,14 @@ class TestTickerListLoader(hut.TestCase):
         )
 
 
-class TestAdjustmentsLoader(hut.TestCase):
+class TestAdjustmentsLoader(hunitest.TestCase):
     @pytest.mark.skip("Disabled waiting for PTask4139")
     def test_real_call(self) -> None:
         adjustments = vkmloa.AdjustmentsLoader().load(symbol="SPTN")
         self.assertEqual(len(adjustments), 58)
         self.assertEqual(
             adjustments[0],
-            vkmtyp.Adjustment(
+            imkimetyp.Adjustment(
                 Date="2/27/2006",
                 Symbol="SPTN",
                 Company="SpartanNash Company",

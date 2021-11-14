@@ -24,17 +24,17 @@ import logging
 
 import sklearn as sklear
 
-import core.dataframe_modeler as cdataf
-import core.signal_processing as csigna
-import helpers.dbg as dbg
+import core.dataframe_modeler as cdatmode
+import core.signal_processing as csigproc
+import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprint
-import im.kibot.data.load.futures_forward_contracts as vkdlfu
-import im.kibot.data.load.kibot_s3_data_loader as vkdls3
-import im.kibot.metadata.load.kibot_metadata as vkmlki
+import im.kibot.data.load.futures_forward_contracts as imkdlffoco
+import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
+import im.kibot.metadata.load.kibot_metadata as imkmlkime
 
 # %%
-dbg.init_logger(verbosity=logging.INFO)
+hdbg.init_logger(verbosity=logging.INFO)
 
 _LOG = logging.getLogger(__name__)
 
@@ -46,12 +46,12 @@ hprint.config_notebook()
 # ## Map contracts to start and end dates
 
 # %%
-lfc_hc = vkmlki.KibotHardcodedContractLifetimeComputer(365, 7)
+lfc_hc = imkmlkime.KibotHardcodedContractLifetimeComputer(365, 7)
 
 lfc_hc.compute_lifetime("CLJ17")
 
 # %%
-lfc_ta = vkmlki.KibotTradingActivityContractLifetimeComputer()
+lfc_ta = imkmlkime.KibotTradingActivityContractLifetimeComputer()
 
 lfc_ta.compute_lifetime("CLJ17")
 
@@ -60,7 +60,7 @@ symbols = ["ES", "CL", "NG"]
 file = "../contracts.csv"
 
 
-fcl = vkmlki.FuturesContractLifetimes(file, lfc_hc)
+fcl = imkmlkime.FuturesContractLifetimes(file, lfc_hc)
 
 # %%
 fcl.save(["CL", "NG"])
@@ -75,7 +75,7 @@ data["NG"].head()
 # ## Create continuous contracts
 
 # %%
-fcem = vkmlki.FuturesContractExpiryMapper(data)
+fcem = imkmlkime.FuturesContractExpiryMapper(data)
 
 # %%
 fcem.get_nth_contract("NG", "2010-01-01", 1)
@@ -87,10 +87,10 @@ srs = fcem.get_nth_contracts("NG", "2010-01-10", "2010-01-20", freq="B", n=1)
 srs
 
 # %%
-kdl = vkdls3.KibotS3DataLoader()
+kdl = imkdlksdlo.KibotS3DataLoader()
 
 # %%
-ffc_obj = vkdlfu.FuturesForwardContracts(kdl)
+ffc_obj = imkdlffoco.FuturesForwardContracts(kdl)
 
 # %%
 ffc_obj._replace_contracts_with_data(srs)
@@ -114,10 +114,10 @@ price_df.plot()
 
 # %%
 dfm = (
-    cdataf.DataFrameModeler(df=price_df, oos_start="2013-01-01")
+    cdatmode.DataFrameModeler(df=price_df, oos_start="2013-01-01")
     .compute_ret_0(method="predict")
     .apply_column_transformer(
-        transformer_func=csigna.compute_rolling_zscore,
+        transformer_func=csigproc.compute_rolling_zscore,
         transformer_kwargs={
             "tau": 10,
             "min_periods": 20,
@@ -143,7 +143,7 @@ res = dfm.apply_residualizer(
     model_kwargs={"n_components": 2},
     method="predict",
 ).apply_column_transformer(
-    transformer_func=csigna.compute_rolling_zscore,
+    transformer_func=csigproc.compute_rolling_zscore,
     transformer_kwargs={
         "tau": 10,
         "min_periods": 20,

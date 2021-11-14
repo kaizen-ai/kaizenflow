@@ -6,15 +6,15 @@ import pytest
 
 import helpers.git as hgit
 import helpers.sql as hsql
-import helpers.system_interaction as hsyint
-import helpers.unit_test as huntes
+import helpers.system_interaction as hsysinte
+import helpers.unit_test as hunitest
 import im.ccxt.db.utils as imccdbuti
 
 _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): CmampTask413 -> TestUtils1
-class TestUtils(huntes.TestCase):
+class TestUtils(hunitest.TestCase):
     # TODO(gp): CmampTask413. Move into a helper class.
     def setUp(self) -> None:
         """
@@ -29,7 +29,7 @@ class TestUtils(huntes.TestCase):
             f"--file {self.docker_compose_file_path} "
             "up -d im_postgres_local"
         )
-        hsyint.system(cmd, suppress_output=False)
+        hsysinte.system(cmd, suppress_output=False)
         # TODO(gp): CmampTask413: this info should be read from the env file.
         dbname = "im_postgres_db_local"
         host = "localhost"
@@ -126,7 +126,7 @@ class TestUtils(huntes.TestCase):
             "sudo docker-compose "
             f"--file {self.docker_compose_file_path} down -v"
         )
-        hsyint.system(cmd, suppress_output=False)
+        hsysinte.system(cmd, suppress_output=False)
         super().tearDown()
 
     @pytest.mark.slow()
@@ -139,7 +139,7 @@ class TestUtils(huntes.TestCase):
             self.connection, self.df_to_insert, "ccxt_ohlcv"
         )
         df = hsql.execute_query(self.connection, "SELECT * FROM ccxt_ohlcv")
-        actual = huntes.convert_df_to_json_string(df)
+        actual = hunitest.convert_df_to_json_string(df)
         self.check_string(actual)
 
     @pytest.mark.skip("CmapAmp413: 92s, too slow")
@@ -153,11 +153,11 @@ class TestUtils(huntes.TestCase):
             self.connection, self.df_to_insert, "ccxt_ohlcv"
         )
         df = hsql.execute_query(self.connection, "SELECT * FROM ccxt_ohlcv")
-        actual = huntes.convert_df_to_json_string(df)
+        actual = hunitest.convert_df_to_json_string(df)
         self.check_string(actual)
 
 
-class TestUtils1(huntes.TestCase):
+class TestUtils1(hunitest.TestCase):
     def test_create_insert_query(self) -> None:
         """
         Verify that query is correct.

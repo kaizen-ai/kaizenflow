@@ -23,15 +23,15 @@ import ib_insync
 
 print(ib_insync.__all__)
 
-import helpers.dbg as dbg
-import helpers.printing as pri
-import im.ib.data.extract.gateway.utils as ibutils
+import helpers.dbg as hdbg
+import helpers.printing as hprint
+import im.ib.data.extract.gateway.utils as imidegaut
 
 # %% [markdown]
 # # Connect
 
 # %%
-ib = ibutils.ib_connect(client_id=100, is_notebook=True)
+ib = imidegaut.ib_connect(client_id=100, is_notebook=True)
 
 # %% [markdown]
 # # Historical data
@@ -39,8 +39,8 @@ ib = ibutils.ib_connect(client_id=100, is_notebook=True)
 # %%
 import logging
 
-# dbg.init_logger(verbosity=logging.DEBUG)
-dbg.init_logger(verbosity=logging.INFO)
+# hdbg.init_logger(verbosity=logging.DEBUG)
+hdbg.init_logger(verbosity=logging.INFO)
 
 # %%
 
@@ -62,7 +62,7 @@ start_ts = pd.Timestamp("2019-05-28 15:00").tz_localize(tz="America/New_York")
 end_ts = pd.Timestamp("2019-05-29 15:00").tz_localize(tz="America/New_York")
 barSizeSetting = "1 hour"
 
-bars = ibutils.get_data(
+bars = imidegaut.get_data(
     ib, contract, start_ts, end_ts, barSizeSetting, whatToShow, useRTH
 )
 
@@ -71,7 +71,7 @@ start_ts = pd.Timestamp("2019-05-28 15:00").tz_localize(tz="America/New_York")
 end_ts = pd.Timestamp("2019-05-29 15:00").tz_localize(tz="America/New_York")
 barSizeSetting = "1 hour"
 
-bars = ibutils.get_data(
+bars = imidegaut.get_data(
     ib, contract, start_ts, end_ts, barSizeSetting, whatToShow, useRTH
 )
 
@@ -80,7 +80,7 @@ start_ts = pd.Timestamp("2019-05-27").tz_localize(tz="America/New_York")
 end_ts = pd.Timestamp("2019-05-28").tz_localize(tz="America/New_York")
 barSizeSetting = "1 hour"
 
-bars = ibutils.get_data(
+bars = imidegaut.get_data(
     ib, contract, start_ts, end_ts, barSizeSetting, whatToShow, useRTH
 )
 
@@ -89,7 +89,7 @@ start_ts2 = start_ts - pd.DateOffset(days=1)
 end_ts2 = end_ts + pd.DateOffset(days=1)
 barSizeSetting = "1 hour"
 
-bars2 = ibutils.get_data(
+bars2 = imidegaut.get_data(
     ib, contract, start_ts2, end_ts2, barSizeSetting, whatToShow, useRTH
 )
 
@@ -100,7 +100,7 @@ set(bars.index).issubset(bars2.index)
 start_ts = pd.Timestamp("2019-04-01 15:00").tz_localize(tz="America/New_York")
 end_ts = pd.Timestamp("2019-05-01 15:00").tz_localize(tz="America/New_York")
 
-df = ibutils.get_historical_data2(
+df = imidegaut.get_historical_data2(
     ib, contract, start_ts, end_ts, barSizeSetting, whatToShow, useRTH
 )
 
@@ -123,7 +123,7 @@ end_ts = pd.to_datetime(
 # print(start_ts, end_ts)
 print("end_ts=", end_ts)
 
-bars = ibutils.req_historical_data(
+bars = imidegaut.req_historical_data(
     ib, contract, end_ts, durationStr, barSizeSetting, whatToShow, useRTH
 )
 
@@ -206,7 +206,7 @@ ib_insync.IB.RaiseRequestErrors = True
 bars
 
 # %%
-dbg.shutup_chatty_modules(verbose=True)
+hdbg.shutup_chatty_modules(verbose=True)
 
 # %%
 import pandas as pd
@@ -220,12 +220,12 @@ useRTH = False
 start_ts = pd.Timestamp("2018-01-28 15:00").tz_localize(tz="America/New_York")
 end_ts = pd.Timestamp("2018-02-28 15:00").tz_localize(tz="America/New_York")
 
-tasks = ibutils.get_historical_data_workload(
+tasks = imidegaut.get_historical_data_workload(
     contract, start_ts, end_ts, barSizeSetting, whatToShow, useRTH
 )
 print(len(tasks))
 
-ibutils.get_historical_data2(ib, tasks)
+imidegaut.get_historical_data2(ib, tasks)
 
 # %% [markdown]
 # ##
@@ -241,19 +241,19 @@ print(ib_insync.__all__)
 # %%
 import logging
 
-import helpers.dbg as dbg
-import helpers.printing as pri
-import im.ib.data.extract.gateway.utils as ibutils
+import helpers.dbg as hdbg
+import helpers.printing as hprint
+import im.ib.data.extract.gateway.utils as imidegaut
 
-dbg.init_logger(verbosity=logging.DEBUG)
-# dbg.init_logger(verbosity=logging.INFO)
+hdbg.init_logger(verbosity=logging.DEBUG)
+# hdbg.init_logger(verbosity=logging.INFO)
 
 import pandas as pd
 
-dbg.shutup_chatty_modules(verbose=False)
+hdbg.shutup_chatty_modules(verbose=False)
 
 # %%
-ib = ibutils.ib_connect(8, is_notebook=True)
+ib = imidegaut.ib_connect(8, is_notebook=True)
 
 # %%
 # #start_ts = pd.Timestamp("2018-01-28 15:00").tz_localize(tz="America/New_York")
@@ -271,7 +271,7 @@ ib = ibutils.ib_connect(8, is_notebook=True)
 #     start_ts = start_ts.replace(hour=18, minute=18)
 #     start_ts -= pd.DateOffset(days=1)
 
-# dbg.dassert_eq((start_ts.hour, start_ts.minute), (18, 0))
+# hdbg.dassert_eq((start_ts.hour, start_ts.minute), (18, 0))
 # dates += pd.date_range(start=start_ts, end=end_ts, freq='2D').tolist()
 # print(dates)
 
@@ -292,11 +292,11 @@ useRTH = False
 start_ts = pd.Timestamp("2018-01-28 15:00").tz_localize(tz="America/New_York")
 end_ts = pd.Timestamp("2018-02-01 15:00").tz_localize(tz="America/New_York")
 
-tasks = ibutils.get_historical_data_workload(
+tasks = imidegaut.get_historical_data_workload(
     ib, contract, start_ts, end_ts, barSizeSetting, whatToShow, useRTH
 )
 
-df = ibutils.get_historical_data2(tasks)
+df = imidegaut.get_historical_data2(tasks)
 
 # %%
 
@@ -304,7 +304,7 @@ df = ibutils.get_historical_data2(tasks)
 df
 
 # %%
-df2 = ibutils.get_historical_data_with_IB_loop(
+df2 = imidegaut.get_historical_data_with_IB_loop(
     ib,
     contract,
     start_ts,
@@ -316,7 +316,7 @@ df2 = ibutils.get_historical_data_with_IB_loop(
 )
 
 # %%
-pri.print(df.index)
+hprint.print(df.index)
 
 # %%
 contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
@@ -327,7 +327,7 @@ barSizeSetting = "1 hour"
 start_ts = pd.Timestamp("2021-02-17 00:00:00")
 end_ts = pd.Timestamp("2021-02-18 23:59:59")
 useRTH = False
-df, return_ts_seq = ibutils.get_historical_data_with_IB_loop(
+df, return_ts_seq = imidegaut.get_historical_data_with_IB_loop(
     ib,
     contract,
     start_ts,

@@ -1,8 +1,14 @@
+"""
+Import as:
+
+import im.kibot.metadata.load.expiry_contract_mapper as imkmlecoma
+"""
+
 import functools
 import re
 from typing import Iterable, Tuple
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 
 
 class ExpiryContractMapper:
@@ -44,19 +50,19 @@ class ExpiryContractMapper:
     _EXPIRY_TO_MONTH_NUM = {v: k for k, v in _MONTH_TO_EXPIRY_NUM.items()}
 
     def month_to_expiry(self, month: str) -> str:
-        dbg.dassert_in(month, self._MONTH_TO_EXPIRY)
+        hdbg.dassert_in(month, self._MONTH_TO_EXPIRY)
         return self._MONTH_TO_EXPIRY[month]
 
     def expiry_to_month(self, expiry: str) -> str:
-        dbg.dassert_in(expiry, self._EXPIRY_TO_MONTH)
+        hdbg.dassert_in(expiry, self._EXPIRY_TO_MONTH)
         return self._EXPIRY_TO_MONTH[expiry]
 
     def month_to_expiry_num(self, month: int) -> str:
-        dbg.dassert_in(month, self._MONTH_TO_EXPIRY_NUM)
+        hdbg.dassert_in(month, self._MONTH_TO_EXPIRY_NUM)
         return self._MONTH_TO_EXPIRY_NUM[month]
 
     def expiry_to_month_num(self, expiry: str) -> int:
-        dbg.dassert_in(expiry, self._EXPIRY_TO_MONTH_NUM)
+        hdbg.dassert_in(expiry, self._EXPIRY_TO_MONTH_NUM)
         return self._EXPIRY_TO_MONTH_NUM[expiry]
 
     @staticmethod
@@ -71,7 +77,7 @@ class ExpiryContractMapper:
         """
         m = re.match(r"^(\S+)(\S)(\d{2})$", v)
         if m is None:
-            dbg.dassert(m, "Invalid '%s'", v)
+            hdbg.dassert(m, "Invalid '%s'", v)
             return "", "", 0
         base_symbol, month, year = m.groups()
 
@@ -99,7 +105,7 @@ class ExpiryContractMapper:
         base_symbol2, month2, year2 = ExpiryContractMapper.parse_expiry_contract(
             v2
         )
-        dbg.dassert_eq(base_symbol1, base_symbol2)
+        hdbg.dassert_eq(base_symbol1, base_symbol2)
         # Compare.
         if year1 < year2 or (year1 == year2 and month1 < month2):
             res = -1

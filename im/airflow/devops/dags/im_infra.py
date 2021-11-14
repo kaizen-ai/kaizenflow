@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import im.airflow.devops.dags.im_infra as imaddimin
+"""
+
 import os
 
 import airflow

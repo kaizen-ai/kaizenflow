@@ -2,29 +2,29 @@ import os
 
 import pytest
 
-import helpers.unit_test as hut
-import im.common.data.types as icdtyp
-import im.common.metadata.symbols as icmsym
-import im.ib.data.config as iidcon
-import im.ib.data.load.ib_file_path_generator as iidlib
-import im.ib.metadata.ib_symbols as iimibs
+import helpers.unit_test as hunitest
+import im.common.data.types as imcodatyp
+import im.common.metadata.symbols as imcomesym
+import im.ib.data.config as imibdacon
+import im.ib.data.load.ib_file_path_generator as imidlifpge
+import im.ib.metadata.ib_symbols as imimeibsy
 
 
-class TestIbSymbolUniverse(hut.TestCase):
+class TestIbSymbolUniverse(hunitest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         # Disable the chatty modules when debugging with DEBUG verbosity. We need to
         # disable the modules after they have been imported.
-        # import helpers.dbg as dbg
-        # dbg.shutup_chatty_modules(verbose=True)
-        hut.TestCase.setUpClass()
+        # import helpers.dbg as hdbg
+        # hdbg.shutup_chatty_modules(verbose=True)
+        hunitest.TestCase.setUpClass()
 
     def test_parse_symbols_file1(self) -> None:
         """
         Test parsing a file checked in the repo.
         """
         symbols_file = os.path.join(self.get_input_dir(), "test_symbols.csv")
-        symbols = iimibs.IbSymbolUniverse._parse_symbols_file(symbols_file)
+        symbols = imimeibsy.IbSymbolUniverse._parse_symbols_file(symbols_file)
         # Build string to check.
         symbols_str = "\n".join([str(symbol) for symbol in symbols])
         self.check_string(symbols_str)
@@ -35,9 +35,9 @@ class TestIbSymbolUniverse(hut.TestCase):
         Test parsing the real file.
         """
         symbols_file = os.path.join(
-            iidcon.S3_PREFIX, "metadata/symbols-2021-04-01-134738089177.csv"
+            imibdacon.S3_PREFIX, "metadata/symbols-2021-04-01-134738089177.csv"
         )
-        symbols = iimibs.IbSymbolUniverse._parse_symbols_file(symbols_file)
+        symbols = imimeibsy.IbSymbolUniverse._parse_symbols_file(symbols_file)
         # Construct string to check.
         symbols_str = "Total parsed symbols: %i\n" % len(symbols)
         # Add first 5 symbols.
@@ -51,16 +51,16 @@ class TestIbSymbolUniverse(hut.TestCase):
         """
         Test supported stocks symbol converting.
         """
-        act = iimibs.IbSymbolUniverse._convert_df_to_row_to_symbol(
+        act = imimeibsy.IbSymbolUniverse._convert_df_to_row_to_symbol(
             ib_ticker="AA",
             ib_exchange="New York (NYSE)",
             ib_asset_class="Stocks",
             ib_currency="USD",
         )
-        exp = icmsym.Symbol(
+        exp = imcomesym.Symbol(
             ticker="AA",
             exchange="NYSE",
-            asset_class=icdtyp.AssetClass.Stocks,
+            asset_class=imcodatyp.AssetClass.Stocks,
             contract_type=None,
             currency="USD",
         )
@@ -70,17 +70,17 @@ class TestIbSymbolUniverse(hut.TestCase):
         """
         Test supported futures symbol converting.
         """
-        converted_symbol = iimibs.IbSymbolUniverse._convert_df_to_row_to_symbol(
+        converted_symbol = imimeibsy.IbSymbolUniverse._convert_df_to_row_to_symbol(
             ib_ticker="ZC",
             ib_exchange="CME part (ECBOT)",
             ib_asset_class="Futures",
             ib_currency="USD",
         )
-        expected_symbol = icmsym.Symbol(
+        expected_symbol = imcomesym.Symbol(
             ticker="ZC",
             exchange="ECBOT",
-            asset_class=icdtyp.AssetClass.Futures,
-            contract_type=icdtyp.ContractType.Continuous,
+            asset_class=imcodatyp.AssetClass.Futures,
+            contract_type=imcodatyp.ContractType.Continuous,
             currency="USD",
         )
         self.assertEqual(converted_symbol, expected_symbol)
@@ -89,7 +89,7 @@ class TestIbSymbolUniverse(hut.TestCase):
         """
         Test symbol with unsupported exchange.
         """
-        converted_symbol = iimibs.IbSymbolUniverse._convert_df_to_row_to_symbol(
+        converted_symbol = imimeibsy.IbSymbolUniverse._convert_df_to_row_to_symbol(
             ib_ticker="AA",
             ib_exchange="No brackets exchange",
             ib_asset_class="Stocks",
@@ -101,7 +101,7 @@ class TestIbSymbolUniverse(hut.TestCase):
         """
         Test symbol with unsupported asset class.
         """
-        converted_symbol = iimibs.IbSymbolUniverse._convert_df_to_row_to_symbol(
+        converted_symbol = imimeibsy.IbSymbolUniverse._convert_df_to_row_to_symbol(
             ib_ticker="AA",
             ib_exchange="New York (NYSE)",
             ib_asset_class="Warrants",
@@ -114,7 +114,7 @@ class TestIbSymbolUniverse(hut.TestCase):
         Test uppercase name extraction from single brackets.
         """
         extracted_exchange = (
-            iimibs.IbSymbolUniverse._extract_exchange_code_from_full_name(
+            imimeibsy.IbSymbolUniverse._extract_exchange_code_from_full_name(
                 "What a great (NAME)"
             )
         )
@@ -125,7 +125,7 @@ class TestIbSymbolUniverse(hut.TestCase):
         Test uppercase name extraction from no brackets string.
         """
         extracted_exchange = (
-            iimibs.IbSymbolUniverse._extract_exchange_code_from_full_name("NAME")
+            imimeibsy.IbSymbolUniverse._extract_exchange_code_from_full_name("NAME")
         )
         self.assert_equal(extracted_exchange, "NAME")
 
@@ -134,7 +134,7 @@ class TestIbSymbolUniverse(hut.TestCase):
         Test non-uppercase name extraction from single brackets.
         """
         extracted_exchange = (
-            iimibs.IbSymbolUniverse._extract_exchange_code_from_full_name(
+            imimeibsy.IbSymbolUniverse._extract_exchange_code_from_full_name(
                 "What a great (Name)"
             )
         )
@@ -145,7 +145,7 @@ class TestIbSymbolUniverse(hut.TestCase):
         Test non-uppercase name extraction from no brackets string.
         """
         extracted_exchange = (
-            iimibs.IbSymbolUniverse._extract_exchange_code_from_full_name("Name")
+            imimeibsy.IbSymbolUniverse._extract_exchange_code_from_full_name("Name")
         )
         self.assertIsNone(extracted_exchange)
 
@@ -155,7 +155,7 @@ class TestIbSymbolUniverse(hut.TestCase):
         string.
         """
         extracted_exchange = (
-            iimibs.IbSymbolUniverse._extract_exchange_code_from_full_name(
+            imimeibsy.IbSymbolUniverse._extract_exchange_code_from_full_name(
                 "One (NAME) two (NAMES)"
             )
         )
@@ -167,13 +167,13 @@ class TestIbSymbolUniverse(hut.TestCase):
         Test that ES symbol is returned by request.
         """
         # Parse real large file with symbols.
-        file_name = iidlib.IbFilePathGenerator.get_latest_symbols_file()
-        ib_universe = iimibs.IbSymbolUniverse(file_name)
+        file_name = imidlifpge.IbFilePathGenerator.get_latest_symbols_file()
+        ib_universe = imimeibsy.IbSymbolUniverse(file_name)
         matched = ib_universe.get(
             ticker="ES",
             exchange="GLOBEX",
-            asset_class=icdtyp.AssetClass.Futures,
-            contract_type=icdtyp.ContractType.Continuous,
+            asset_class=imcodatyp.AssetClass.Futures,
+            contract_type=imcodatyp.ContractType.Continuous,
             currency="USD",
         )
         # TODO(gp): Use the actual outcome.
@@ -185,13 +185,13 @@ class TestIbSymbolUniverse(hut.TestCase):
         Test that NON_EXISTING symbol is returned by request.
         """
         # Parse real large file with symbols.
-        file_name = iidlib.IbFilePathGenerator.get_latest_symbols_file()
-        ib_universe = iimibs.IbSymbolUniverse(file_name)
+        file_name = imidlifpge.IbFilePathGenerator.get_latest_symbols_file()
+        ib_universe = imimeibsy.IbSymbolUniverse(file_name)
         matched = ib_universe.get(
             ticker="NON_EXISTING",
             exchange="GLOBEX",
-            asset_class=icdtyp.AssetClass.Futures,
-            contract_type=icdtyp.ContractType.Continuous,
+            asset_class=imcodatyp.AssetClass.Futures,
+            contract_type=imcodatyp.ContractType.Continuous,
             currency="USD",
         )
         self.assertEqual(matched, [])
@@ -202,17 +202,17 @@ class TestIbSymbolUniverse(hut.TestCase):
         Test that NG symbol is in downloaded list.
         """
         # Parse real large file with symbols.
-        file_name = iidlib.IbFilePathGenerator.get_latest_symbols_file()
-        ib_universe = iimibs.IbSymbolUniverse(file_name)
+        file_name = imidlifpge.IbFilePathGenerator.get_latest_symbols_file()
+        ib_universe = imimeibsy.IbSymbolUniverse(file_name)
         matched = ib_universe.get(
             ticker="NG",
             exchange="NYMEX",
-            asset_class=icdtyp.AssetClass.Futures,
-            contract_type=icdtyp.ContractType.Continuous,
+            asset_class=imcodatyp.AssetClass.Futures,
+            contract_type=imcodatyp.ContractType.Continuous,
             currency="USD",
             is_downloaded=True,
-            frequency=icdtyp.Frequency.Minutely,
-            path_generator=iidlib.IbFilePathGenerator(),
+            frequency=imcodatyp.Frequency.Minutely,
+            path_generator=imidlifpge.IbFilePathGenerator(),
         )
         # TODO(gp): Use the actual outcome.
         self.assertEqual(len(matched), 1)
@@ -223,16 +223,16 @@ class TestIbSymbolUniverse(hut.TestCase):
         Test that NON_EXISTING symbol is not in the downloaded list.
         """
         # Parse real large file with symbols.
-        file_name = iidlib.IbFilePathGenerator.get_latest_symbols_file()
-        ib_universe = iimibs.IbSymbolUniverse(file_name)
+        file_name = imidlifpge.IbFilePathGenerator.get_latest_symbols_file()
+        ib_universe = imimeibsy.IbSymbolUniverse(file_name)
         matched = ib_universe.get(
             ticker="NON_EXISTING",
             exchange="GLOBEX",
-            asset_class=icdtyp.AssetClass.Futures,
-            contract_type=icdtyp.ContractType.Continuous,
+            asset_class=imcodatyp.AssetClass.Futures,
+            contract_type=imcodatyp.ContractType.Continuous,
             currency="USD",
             is_downloaded=True,
-            frequency=icdtyp.Frequency.Minutely,
-            path_generator=iidlib.IbFilePathGenerator(),
+            frequency=imcodatyp.Frequency.Minutely,
+            path_generator=imidlifpge.IbFilePathGenerator(),
         )
         self.assertEqual(matched, [])

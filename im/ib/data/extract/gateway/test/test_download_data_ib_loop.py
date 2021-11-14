@@ -7,11 +7,11 @@ except ModuleNotFoundError:
 import pandas as pd
 import pytest
 
-import helpers.dbg as dbg
-import im.common.db.create_db as icdcrsch
-import im.ib.data.extract.gateway.download_data_ib_loop as iidegd
+import helpers.dbg as hdbg
+import im.common.db.create_db as imcdbcrdb
+import im.ib.data.extract.gateway.download_data_ib_loop as imidegddil
 import im.ib.data.extract.gateway.test.utils as iidegt
-import im.ib.data.extract.gateway.utils as iidegu
+import im.ib.data.extract.gateway.utils as imidegaut
 import im.common.db.utils as imcodbuti
 
 _LOG = logging.getLogger(__name__)
@@ -398,7 +398,7 @@ class Test_get_historical_data(iidegt.IbExtractionTest):
         currency = "USD"
         start_ts = pd.Timestamp("2020-12-09 18:00:00-05:00")
         end_ts = pd.Timestamp("2020-12-13 18:00:00-05:00")
-        tasks = iidegu.get_tasks(
+        tasks = imidegaut.get_tasks(
             ib=self.ib,
             target=target,
             frequency=frequency,
@@ -414,13 +414,13 @@ class Test_get_historical_data(iidegt.IbExtractionTest):
         num_threads = "serial"
         dst_dir = self.get_scratch_space()
         incremental = False
-        file_names = iidegd.download_ib_data(
+        file_names = imidegddil.download_ib_data(
             client_id_base, tasks, incremental, dst_dir, num_threads
         )
-        dbg.dassert_eq(len(file_names), 1)
+        hdbg.dassert_eq(len(file_names), 1)
         _LOG.debug("file_names=%s", file_names)
         # Load the data.
-        df = iidegd.load_historical_data(file_names[0])
+        df = imidegddil.load_historical_data(file_names[0])
         short_signature, long_signature = self.get_df_signatures(df)
         exp_short_signature = """
         signature=len=48 [2020-12-09 18:00:00-05:00, 2020-12-11 16:30:00-05:00]

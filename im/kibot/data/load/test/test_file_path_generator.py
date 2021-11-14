@@ -1,17 +1,17 @@
-import helpers.unit_test as hut
-import im.common.data.types as icdtyp
-import im.kibot.data.config as ikdcon
-import im.kibot.data.load.kibot_file_path_generator as ikdlki
+import helpers.unit_test as hunitest
+import im.common.data.types as imcodatyp
+import im.kibot.data.config as imkidacon
+import im.kibot.data.load.kibot_file_path_generator as imkdlkfpge
 
 
-class TestFilePathGenerator(hut.TestCase):
+class TestFilePathGenerator(hunitest.TestCase):
     def test1(self) -> None:
         args = dict(
             symbol="TEST",
-            asset_class=icdtyp.AssetClass.Futures,
-            contract_type=icdtyp.ContractType.Continuous,
-            frequency=icdtyp.Frequency.Daily,
-            ext=icdtyp.Extension.CSV,
+            asset_class=imcodatyp.AssetClass.Futures,
+            contract_type=imcodatyp.ContractType.Continuous,
+            frequency=imcodatyp.Frequency.Daily,
+            ext=imcodatyp.Extension.CSV,
         )
         expected_file_path = "all_futures_continuous_contracts_daily/TEST.csv.gz"
         self._assert_file_path(args=args, expected_file_path=expected_file_path)
@@ -19,10 +19,10 @@ class TestFilePathGenerator(hut.TestCase):
     def test2(self) -> None:
         args = dict(
             symbol="TEST",
-            asset_class=icdtyp.AssetClass.Futures,
-            contract_type=icdtyp.ContractType.Continuous,
-            frequency=icdtyp.Frequency.Daily,
-            ext=icdtyp.Extension.Parquet,
+            asset_class=imcodatyp.AssetClass.Futures,
+            contract_type=imcodatyp.ContractType.Continuous,
+            frequency=imcodatyp.Frequency.Daily,
+            ext=imcodatyp.Extension.Parquet,
         )
         expected_file_path = "pq/all_futures_continuous_contracts_daily/TEST.pq"
         self._assert_file_path(args=args, expected_file_path=expected_file_path)
@@ -30,10 +30,10 @@ class TestFilePathGenerator(hut.TestCase):
     def test3(self) -> None:
         args = dict(
             symbol="TEST",
-            asset_class=icdtyp.AssetClass.Futures,
-            contract_type=icdtyp.ContractType.Expiry,
-            frequency=icdtyp.Frequency.Daily,
-            ext=icdtyp.Extension.Parquet,
+            asset_class=imcodatyp.AssetClass.Futures,
+            contract_type=imcodatyp.ContractType.Expiry,
+            frequency=imcodatyp.Frequency.Daily,
+            ext=imcodatyp.Extension.Parquet,
         )
         expected_file_path = "pq/all_futures_contracts_daily/TEST.pq"
         self._assert_file_path(args=args, expected_file_path=expected_file_path)
@@ -41,10 +41,10 @@ class TestFilePathGenerator(hut.TestCase):
     def test4(self) -> None:
         args = dict(
             symbol="TEST",
-            asset_class=icdtyp.AssetClass.Futures,
-            contract_type=icdtyp.ContractType.Expiry,
-            frequency=icdtyp.Frequency.Minutely,
-            ext=icdtyp.Extension.Parquet,
+            asset_class=imcodatyp.AssetClass.Futures,
+            contract_type=imcodatyp.ContractType.Expiry,
+            frequency=imcodatyp.Frequency.Minutely,
+            ext=imcodatyp.Extension.Parquet,
         )
         expected_file_path = "pq/all_futures_contracts_1min/TEST.pq"
         self._assert_file_path(args=args, expected_file_path=expected_file_path)
@@ -56,9 +56,9 @@ class TestFilePathGenerator(hut.TestCase):
         """
         args = dict(
             symbol="TEST",
-            asset_class=icdtyp.AssetClass.Stocks,
-            frequency=icdtyp.Frequency.Minutely,
-            ext=icdtyp.Extension.Parquet,
+            asset_class=imcodatyp.AssetClass.Stocks,
+            frequency=imcodatyp.Frequency.Minutely,
+            ext=imcodatyp.Extension.Parquet,
         )
         expected_file_path = "pq/all_stocks_unadjusted_1min/TEST.pq"
 
@@ -73,10 +73,10 @@ class TestFilePathGenerator(hut.TestCase):
         """
         args = dict(
             symbol="TEST",
-            asset_class=icdtyp.AssetClass.Stocks,
+            asset_class=imcodatyp.AssetClass.Stocks,
             unadjusted=True,
-            frequency=icdtyp.Frequency.Minutely,
-            ext=icdtyp.Extension.Parquet,
+            frequency=imcodatyp.Frequency.Minutely,
+            ext=imcodatyp.Extension.Parquet,
         )
         expected_file_path = "pq/all_stocks_unadjusted_1min/TEST.pq"
         self._assert_file_path(args=args, expected_file_path=expected_file_path)
@@ -87,10 +87,10 @@ class TestFilePathGenerator(hut.TestCase):
         """
         args = dict(
             symbol="TEST",
-            asset_class=icdtyp.AssetClass.ETFs,
+            asset_class=imcodatyp.AssetClass.ETFs,
             unadjusted=True,
-            frequency=icdtyp.Frequency.Minutely,
-            ext=icdtyp.Extension.Parquet,
+            frequency=imcodatyp.Frequency.Minutely,
+            ext=imcodatyp.Extension.Parquet,
         )
         expected_file_path = "pq/all_etfs_unadjusted_1min/TEST.pq"
         self._assert_file_path(args=args, expected_file_path=expected_file_path)
@@ -98,10 +98,10 @@ class TestFilePathGenerator(hut.TestCase):
     def test8(self) -> None:
         args = dict(
             symbol="TEST",
-            asset_class=icdtyp.AssetClass.Futures,
-            contract_type=icdtyp.ContractType.Continuous,
-            frequency=icdtyp.Frequency.Tick,
-            ext=icdtyp.Extension.CSV,
+            asset_class=imcodatyp.AssetClass.Futures,
+            contract_type=imcodatyp.ContractType.Continuous,
+            frequency=imcodatyp.Frequency.Tick,
+            ext=imcodatyp.Extension.CSV,
         )
         expected_file_path = "all_futures_continuous_contracts_tick/TEST.csv.gz"
         self._assert_file_path(args=args, expected_file_path=expected_file_path)
@@ -109,9 +109,9 @@ class TestFilePathGenerator(hut.TestCase):
     def test9(self) -> None:
         args = dict(
             symbol="TEST",
-            asset_class=icdtyp.AssetClass.Forex,
-            frequency=icdtyp.Frequency.Minutely,
-            ext=icdtyp.Extension.CSV,
+            asset_class=imcodatyp.AssetClass.Forex,
+            frequency=imcodatyp.Frequency.Minutely,
+            ext=imcodatyp.Extension.CSV,
         )
         expected_file_path = "all_forex_pairs_1min/TEST.csv.gz"
         self._assert_file_path(args=args, expected_file_path=expected_file_path)
@@ -119,9 +119,9 @@ class TestFilePathGenerator(hut.TestCase):
     def test10(self) -> None:
         args = dict(
             symbol="TEST",
-            asset_class=icdtyp.AssetClass.Forex,
-            frequency=icdtyp.Frequency.Daily,
-            ext=icdtyp.Extension.CSV,
+            asset_class=imcodatyp.AssetClass.Forex,
+            frequency=imcodatyp.Frequency.Daily,
+            ext=imcodatyp.Extension.CSV,
         )
         expected_file_path = "all_forex_pairs_daily/TEST.csv.gz"
         self._assert_file_path(args=args, expected_file_path=expected_file_path)
@@ -129,10 +129,10 @@ class TestFilePathGenerator(hut.TestCase):
     def test11(self) -> None:
         args = dict(
             symbol="TEST",
-            asset_class=icdtyp.AssetClass.Stocks,
+            asset_class=imcodatyp.AssetClass.Stocks,
             unadjusted=False,
-            frequency=icdtyp.Frequency.Minutely,
-            ext=icdtyp.Extension.CSV,
+            frequency=imcodatyp.Frequency.Minutely,
+            ext=imcodatyp.Extension.CSV,
         )
         expected_file_path = "all_stocks_1min/TEST.csv.gz"
         self._assert_file_path(args=args, expected_file_path=expected_file_path)
@@ -140,10 +140,10 @@ class TestFilePathGenerator(hut.TestCase):
     def test12(self) -> None:
         args = dict(
             symbol="TEST",
-            asset_class=icdtyp.AssetClass.ETFs,
+            asset_class=imcodatyp.AssetClass.ETFs,
             unadjusted=False,
-            frequency=icdtyp.Frequency.Minutely,
-            ext=icdtyp.Extension.CSV,
+            frequency=imcodatyp.Frequency.Minutely,
+            ext=imcodatyp.Extension.CSV,
         )
         expected_file_path = "all_etfs_1min/TEST.csv.gz"
         self._assert_file_path(args=args, expected_file_path=expected_file_path)
@@ -151,10 +151,10 @@ class TestFilePathGenerator(hut.TestCase):
     def test13(self) -> None:
         args = dict(
             symbol="TEST",
-            asset_class=icdtyp.AssetClass.SP500,
+            asset_class=imcodatyp.AssetClass.SP500,
             unadjusted=False,
-            frequency=icdtyp.Frequency.Tick,
-            ext=icdtyp.Extension.CSV,
+            frequency=imcodatyp.Frequency.Tick,
+            ext=imcodatyp.Extension.CSV,
         )
         expected_file_path = "sp_500_tick/TEST.csv.gz"
         self._assert_file_path(args=args, expected_file_path=expected_file_path)
@@ -162,16 +162,16 @@ class TestFilePathGenerator(hut.TestCase):
     def test14(self) -> None:
         args = dict(
             symbol="TEST",
-            asset_class=icdtyp.AssetClass.SP500,
+            asset_class=imcodatyp.AssetClass.SP500,
             unadjusted=True,
-            frequency=icdtyp.Frequency.Tick,
-            ext=icdtyp.Extension.CSV,
+            frequency=imcodatyp.Frequency.Tick,
+            ext=imcodatyp.Extension.CSV,
         )
         expected_file_path = "sp_500_unadjusted_tick/TEST.csv.gz"
         self._assert_file_path(args=args, expected_file_path=expected_file_path)
 
     def _assert_file_path(self, args: dict, expected_file_path: str) -> None:
-        generator = ikdlki.KibotFilePathGenerator()
+        generator = imkdlkfpge.KibotFilePathGenerator()
         actual = generator.generate_file_path(**args)
-        expected = f"{ikdcon.S3_PREFIX}/{expected_file_path}"
+        expected = f"{imkidacon.S3_PREFIX}/{expected_file_path}"
         self.assertEqual(actual, expected)

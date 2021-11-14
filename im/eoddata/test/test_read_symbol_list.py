@@ -1,11 +1,11 @@
 import os
 
-import helpers.unit_test as hut
+import helpers.unit_test as hunitest
 import im.eoddata.metadata.load as load
-import im.eoddata.metadata.types as mtypes
+import im.eoddata.metadata.types as imeometyp
 
 
-class Test_read_symbols_from_file(hut.TestCase):
+class Test_read_symbols_from_file(hunitest.TestCase):
     def test1(self) -> None:
         """
         Confirm it reads the symbol, and the exchange code is added to the
@@ -19,7 +19,7 @@ class Test_read_symbols_from_file(hut.TestCase):
         actual = load.MetadataLoader().read_symbols_from_file(file_=input_f)
 
         expected = [
-            mtypes.Symbol(
+            imeometyp.Symbol(
                 Code=f"{exchange_code}:{symbol_code}",
                 Name=symbol_name,
                 LongName=symbol_name,
