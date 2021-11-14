@@ -1112,7 +1112,7 @@ def _get_amp_docker_compose_path() -> Optional[str]:
     """
     Return the docker compose for `amp` as supermodule or as submodule.
 
-    E.g., 
+    E.g.,
     `devops/compose/docker-compose_as_submodule.yml` and
     `devops/compose/docker-compose_as_supermodule.yml`
     """
@@ -1393,8 +1393,9 @@ def docker_bash(ctx, base_image="", stage=STAGE, version="", entrypoint=True, as
     """
     _report_task()
     cmd = "bash"
-    docker_cmd_ = _get_docker_cmd(stage, base_image, version, cmd, entrypoint=entrypoint,
-            as_user=as_user)
+    docker_cmd_ = _get_docker_cmd(
+        stage, base_image, version, cmd, entrypoint=entrypoint, as_user=as_user
+    )
     _docker_cmd(ctx, docker_cmd_)
 
 
@@ -1466,8 +1467,9 @@ def docker_jupyter(  # type: ignore
         _LOG.info("Assigned port is %s", port)
     #
     print_docker_config = False
-    docker_cmd_ = _get_docker_jupyter_cmd(stage, base_image, version, port, self_test,
-                                          print_docker_config)
+    docker_cmd_ = _get_docker_jupyter_cmd(
+        stage, base_image, version, port, self_test, print_docker_config
+    )
     _docker_cmd(ctx, docker_cmd_)
 
 
@@ -1522,7 +1524,11 @@ def _get_build_tag(code_ver: str) -> str:
 # a single type.
 @task
 def docker_build_local_image(  # type: ignore
-    ctx, cache=True, base_image="", update_poetry=False, version="",
+    ctx,
+    cache=True,
+    base_image="",
+    update_poetry=False,
+    version="",
 ):
     """
     Build a local image (i.e., a release candidate "dev" image).
@@ -2177,7 +2183,16 @@ def _run_tests(
         skipped_tests,
     )
     # Execute the command line.
-    _run_test_cmd(ctx, base_image, stage, version, cmd, coverage, collect_only, start_coverage_script)
+    _run_test_cmd(
+        ctx,
+        base_image,
+        stage,
+        version,
+        cmd,
+        coverage,
+        collect_only,
+        start_coverage_script,
+    )
 
 
 # TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code.
@@ -2230,9 +2245,9 @@ def run_fast_tests(  # type: ignore
 @task
 def run_slow_tests(  # type: ignore
     ctx,
-        base_image="",
+    base_image="",
     stage=STAGE,
-        version="",
+    version="",
     pytest_opts="",
     pytest_mark="",
     dir_name="",
@@ -2269,9 +2284,9 @@ def run_slow_tests(  # type: ignore
 @task
 def run_superslow_tests(  # type: ignore
     ctx,
-        base_image="",
+    base_image="",
     stage=STAGE,
-        version="",
+    version="",
     pytest_opts="",
     pytest_mark="",
     dir_name="",
@@ -2340,7 +2355,7 @@ def run_fast_slow_tests(  # type: ignore
         collect_only,
         tee_to_file,
         skipped_tests,
-        start_coverage_script
+        start_coverage_script,
     )
 
 
