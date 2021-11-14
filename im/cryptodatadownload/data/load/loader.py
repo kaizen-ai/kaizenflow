@@ -99,7 +99,8 @@ class CddLoader:
         )
         return transformed_data
 
-    # TODO(Grisha): factor out common code from `CddLoader._get_file_path` and `CcxtLoader._get_file_path`.
+    # TODO(Grisha): factor out common code from `CddLoader._get_file_path` and
+    # `CcxtLoader._get_file_path`.
     def _get_file_path(
         self,
         data_snapshot: str,
@@ -122,7 +123,11 @@ class CddLoader:
         # Get absolute file path.
         file_name = currency_pair.replace("/", "_") + ".csv.gz"
         file_path = os.path.join(
-            self._root_dir, "cryptodatadownload", data_snapshot, exchange_id, file_name
+            self._root_dir,
+            "cryptodatadownload",
+            data_snapshot,
+            exchange_id,
+            file_name,
         )
         # TODO(Dan): Remove asserts below after CMTask108 is resolved.
         # Verify that the file exists.
@@ -144,16 +149,20 @@ class CddLoader:
         Transform CDD data loaded from S3.
 
         Input data example:
-            unix           date                 symbol    open     high     low      close    Volume ETH  Volume USDT  tradecount
-            1631145600000  2021-09-09 00:00:00  ETH/USDT  3499.01  3499.49  3496.17  3496.36  346.4812    1212024      719
-            1631145660000  2021-09-09 00:01:00  ETH/USDT  3496.36  3501.59  3495.69  3501.59  401.9576    1406241      702
-            1631145720000  2021-09-09 00:02:00  ETH/USDT  3501.59  3513.10  3499.89  3513.09  579.5656    2032108      1118
+        ```
+        unix           date                 symbol    open     high     low      close    Volume ETH  Volume USDT  tradecount
+        1631145600000  2021-09-09 00:00:00  ETH/USDT  3499.01  3499.49  3496.17  3496.36  346.4812    1212024      719
+        1631145660000  2021-09-09 00:01:00  ETH/USDT  3496.36  3501.59  3495.69  3501.59  401.9576    1406241      702
+        1631145720000  2021-09-09 00:02:00  ETH/USDT  3501.59  3513.10  3499.89  3513.09  579.5656    2032108      1118
+        ```
 
         Output data example:
-            timestamp                  open     high     low      close    volume    epoch          currency_pair exchange_id
-            2021-09-08 20:00:00-04:00  3499.01  3499.49  3496.17  3496.36  346.4812  1631145600000  ETH/USDT      binance
-            2021-09-08 20:01:00-04:00  3496.36  3501.59  3495.69  3501.59  401.9576  1631145660000  ETH/USDT      binance
-            2021-09-08 20:02:00-04:00  3501.59  3513.10  3499.89  3513.09  579.5656  1631145720000  ETH/USDT      binance
+        ```
+        timestamp                  open     high     low      close    volume    epoch          currency_pair exchange_id
+        2021-09-08 20:00:00-04:00  3499.01  3499.49  3496.17  3496.36  346.4812  1631145600000  ETH/USDT      binance
+        2021-09-08 20:01:00-04:00  3496.36  3501.59  3495.69  3501.59  401.9576  1631145660000  ETH/USDT      binance
+        2021-09-08 20:02:00-04:00  3501.59  3513.10  3499.89  3513.09  579.5656  1631145720000  ETH/USDT      binance
+        ```
 
         :param data: dataframe with CDD data from S3
         :param exchange_id: CDD exchange id, e.g. "binance"
@@ -209,9 +218,7 @@ class CddLoader:
         #
         if self._resample_to_1_min:
             # Resample to 1 minute.
-            data = hpandas.resample_df(
-                data, "T"
-            )
+            data = hpandas.resample_df(data, "T")
         # Rename col with traded volume in amount of the 1st currency in pair.
         data = data.rename(
             {"Volume " + currency_pair.split("/")[0]: "volume"}, axis=1

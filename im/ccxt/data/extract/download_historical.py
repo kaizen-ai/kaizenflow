@@ -4,16 +4,11 @@ Script to download historical data from CCXT.
 
 Use as:
 
-# Download data from 2019-01-01 to now,
-  for latest trade universe:
+# Download data from 2019-01-01 to now, for latest trade universe:
 > download_historical.py \
      --dst_dir 'test' \
      --universe 'v03' \
      --start_datetime '2019-01-01' \
-
-Import as:
-
-import im.ccxt.data.extract.download_historical as imcdaexdowhis
 """
 
 import argparse

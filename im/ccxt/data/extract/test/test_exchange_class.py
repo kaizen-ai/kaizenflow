@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 import helpers.unit_test as hut
+
 # TODO(Dan): return to code after CmTask43 is fixed.
 import im.ccxt.data.extract.exchange_class as imcdaexexccla
 import helpers.dbg as hdbg
@@ -12,6 +13,7 @@ import helpers.dbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): CmampTask413: Why skip this guy?
 @pytest.mark.skip()
 class Test_CcxtExchange(hut.TestCase):
     def test_initialize_class(self) -> None:
@@ -70,5 +72,12 @@ class Test_CcxtExchange(hut.TestCase):
         """
         exchange_class = imcdaexexccla.CcxtExchange("gateio")
         order_book = exchange_class.download_order_book("BTC/USDT")
-        order_book_keys = ["symbol", "bids", "asks", "timestamp", "datetime", "nonce"]
+        order_book_keys = [
+            "symbol",
+            "bids",
+            "asks",
+            "timestamp",
+            "datetime",
+            "nonce",
+        ]
         self.assertListEqual(order_book_keys, list(order_book.keys()))

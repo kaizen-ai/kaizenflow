@@ -220,7 +220,8 @@ class CcxtLoader:
         )
         return transformed_data
 
-    # TODO(Grisha): factor out common code from `CddLoader._get_file_path` and `CcxtLoader._get_file_path`.
+    # TODO(Grisha): factor out common code from `CddLoader._get_file_path` and
+    # `CcxtLoader._get_file_path`.
     def _get_file_path(
         self,
         data_snapshot: str,
@@ -365,7 +366,9 @@ class CcxtLoader:
 
     @staticmethod
     def _apply_filesystem_transformation(
-        data: pd.DataFrame, exchange_id: str, currency_pair: str,
+        data: pd.DataFrame,
+        exchange_id: str,
+        currency_pair: str,
     ) -> pd.DataFrame:
         """
         Apply transformations for filesystem data.

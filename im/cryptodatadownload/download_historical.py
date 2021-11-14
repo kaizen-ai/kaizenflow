@@ -5,19 +5,19 @@ Script to download historical data from CryptoDataDownload.
 
 Use as:
 
-- Download Binance minutely candles:
+- Download Binance minutely bars:
 > download_historical.py \
      --dir_name /app/im/cryptodatadownload/data/binance \
      --exchange_id "binance" \
      --timeframe "minute"
 
-- Download Kucoin minutely candles:
+- Download Kucoin minutely bars:
 > download_historical.py \
      --dir_name /app/im/cryptodatadownload/data/kucoin \
      --exchange_id "kucoin" \
      --timeframe "minute"
 
-- Download Binance hourly candles:
+- Download Binance hourly bars:
 > download_historical.py \
      --dir_name /app/im/cryptodatadownload/data/binance \
      --exchange_id "binance" \
