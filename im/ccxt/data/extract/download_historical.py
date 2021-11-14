@@ -74,7 +74,7 @@ def _parse() -> argparse.ArgumentParser:
         "--api_keys",
         action="store",
         type=str,
-        default=imcdaexexccla.API_KEYS_PATH,
+        default=imcdeexcl.API_KEYS_PATH,
         help="Path to JSON file that contains API keys for exchange access",
     )
     parser.add_argument(

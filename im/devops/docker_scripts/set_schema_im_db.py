@@ -8,6 +8,10 @@ Note: IM database is created using environment variables.
 Usage:
 - Set SQL schema for the IM database:
     > set_schema_im_db.py
+
+Import as:
+
+import im.devops.docker_scripts.set_schema_im_db as imddsssimdb
 """
 import argparse
 import logging

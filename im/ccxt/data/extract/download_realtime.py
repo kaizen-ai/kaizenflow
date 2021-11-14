@@ -13,7 +13,7 @@ Use as:
 
 Import as:
 
-import im.ccxt.data.extract.download_realtime as imcdaexdowrea
+import im.ccxt.data.extract.download_realtime as imcdedore
 """
 import argparse
 import collections
@@ -45,7 +45,7 @@ def _instantiate_exchange(
         "ExchangeToCurrency", ["id", "instance", "pairs"]
     )
     exchange_to_currency.id = exchange_id
-    exchange_to_currency.instance = imcdaexexccla.CcxtExchange(
+    exchange_to_currency.instance = imcdeexcl.CcxtExchange(
         exchange_id, api_keys
     )
     if currency_pairs == "all":

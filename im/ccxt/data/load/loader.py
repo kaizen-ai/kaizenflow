@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.ccxt.data.load.loader as imccdaloloa
+import im.ccxt.data.load.loader as imcdalolo
 """
 
 import logging
@@ -10,10 +10,10 @@ from typing import Optional
 
 import pandas as pd
 
-import core.pandas_helpers as cpah
-import helpers.datetime_ as hdatetim
+import core.pandas_helpers as cpanh
+import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
-import helpers.hpandas as hhpandas
+import helpers.hpandas as hpandas
 import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
@@ -116,7 +116,7 @@ class CcxtLoader:
             currency_pair,
             file_path,
         )
-        data = cpah.read_csv(file_path, **read_csv_kwargs)
+        data = cpanh.read_csv(file_path, **read_csv_kwargs)
         # Apply transformation to raw data.
         _LOG.info(
             "Processing CCXT data for exchange id='%s', currencies='%s'...",
@@ -232,7 +232,7 @@ class CcxtLoader:
         #
         if self._remove_dups:
             # Remove full duplicates.
-            data = hhpandas.drop_duplicates(data, ignore_index=True)
+            data = hpandas.drop_duplicates(data, ignore_index=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
         #

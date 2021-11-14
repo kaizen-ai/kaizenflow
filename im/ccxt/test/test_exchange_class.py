@@ -4,7 +4,7 @@ from typing import Any, List, Optional
 import pandas as pd
 import pytest
 
-import helpers.unit_test as hut
+import helpers.unit_test as hunitest
 
 # TODO(Dan): return to code after CmTask43 is fixed.
 # import im.ccxt.data.extract.exchange_class as deecla
@@ -14,7 +14,7 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): CmampTask413: Why skip this guy?
 @pytest.mark.skip()
-class Test_CcxtExchange(hut.TestCase):
+class Test_CcxtExchange(hunitest.TestCase):
     def test_initialize_class(self) -> None:
         """
         Smoke test that the class is being initialized correctly.
@@ -62,5 +62,5 @@ class Test_CcxtExchange(hut.TestCase):
         self.assertEqual(1631145600000, first_date)
         self.assertEqual(1631235540000, last_date)
         # Check the output values.
-        actual_string = hut.convert_df_to_json_string(actual, n_tail=None)
+        actual_string = hunitest.convert_df_to_json_string(actual, n_tail=None)
         self.check_string(actual_string)
