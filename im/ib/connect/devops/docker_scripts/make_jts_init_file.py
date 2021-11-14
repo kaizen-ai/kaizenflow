@@ -10,14 +10,18 @@ https://github.com/mvberg/ib-gateway-docker/blob/master/ib/jts.ini
 
 # Create config on server (use your local IP instead of 33.3.33.3):
 > make_jts_init_file.py --trusted_ips 127.0.0.1,33.3.33.3
+
+Import as:
+
+import im.ib.connect.devops.docker_scripts.make_jts_init_file as imicddsmjif
 """
 import argparse
 import logging
 from typing import Any, Dict
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.io_ as hio
-import helpers.parser as hparse
+import helpers.parser as hparser
 
 _LOG = logging.getLogger(__name__)
 
@@ -88,14 +92,14 @@ def _parse() -> argparse.ArgumentParser:
         help="Trusted IPs as a string separated by comma",
         action="store",
     )
-    hparse.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    dbg.shutup_chatty_modules()
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.shutup_chatty_modules()
     # Set up config to save.
     params: Dict[str, Dict[str, Any]] = _DEFAULT_CONFIG.copy()
     # Add trusted IP-s.

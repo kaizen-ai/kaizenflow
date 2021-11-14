@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.common.data.load.abstract_data_loader as icdlab
+import im.common.data.load.abstract_data_loader as imcdladalo
 """
 
 import abc
@@ -12,8 +12,8 @@ import pandas as pd
 import psycopg2
 import psycopg2.extensions as pexten
 
-import helpers.dbg as dbg
-import im.common.data.types as icdtyp
+import helpers.dbg as hdbg
+import im.common.data.types as imcodatyp
 
 
 class AbstractDataLoader(abc.ABC):
@@ -26,9 +26,9 @@ class AbstractDataLoader(abc.ABC):
         self,
         exchange: str,
         symbol: str,
-        asset_class: icdtyp.AssetClass,
-        frequency: icdtyp.Frequency,
-        contract_type: Optional[icdtyp.ContractType] = None,
+        asset_class: imcodatyp.AssetClass,
+        frequency: imcodatyp.Frequency,
+        contract_type: Optional[imcodatyp.ContractType] = None,
         currency: Optional[str] = None,
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
@@ -60,13 +60,13 @@ class AbstractS3DataLoader(AbstractDataLoader):
 
     def __init__(self) -> None:
         self._normalizer_dict = {
-            icdtyp.Frequency.Daily: self._normalize_daily,
-            icdtyp.Frequency.Hourly: self._normalize_1_hour,
-            icdtyp.Frequency.Minutely: self._normalize_1_min,
+            imcodatyp.Frequency.Daily: self._normalize_daily,
+            imcodatyp.Frequency.Hourly: self._normalize_1_hour,
+            imcodatyp.Frequency.Minutely: self._normalize_1_min,
         }
 
     def normalize(
-        self, df: pd.DataFrame, frequency: icdtyp.Frequency
+        self, df: pd.DataFrame, frequency: imcodatyp.Frequency
     ) -> pd.DataFrame:
         """
         Apply a normalizer function based on the frequency.
@@ -76,7 +76,7 @@ class AbstractS3DataLoader(AbstractDataLoader):
         :return: the normalized dataframe
         :raises AssertionError: if frequency is not supported
         """
-        dbg.dassert_in(
+        hdbg.dassert_in(
             frequency,
             self._normalizer_dict,
             "Frequency %s is not supported",
@@ -152,7 +152,7 @@ class AbstractSqlDataLoader(AbstractDataLoader):
                     (_symbol_id,) = curs.fetchone()
                     symbol_id = _symbol_id
         if symbol_id == -1:
-            dbg.dfatal(f"Could not find Symbol ${symbol}")
+            hdbg.dfatal(f"Could not find Symbol ${symbol}")
         return symbol_id
 
     def get_exchange_id(
@@ -175,7 +175,7 @@ class AbstractSqlDataLoader(AbstractDataLoader):
                     (_exchange_id,) = curs.fetchone()
                     exchange_id = _exchange_id
         if exchange_id == -1:
-            dbg.dfatal(f"Could not find Exchange ${exchange}")
+            hdbg.dfatal(f"Could not find Exchange ${exchange}")
         return exchange_id
 
     def get_trade_symbol_id(
@@ -203,7 +203,7 @@ class AbstractSqlDataLoader(AbstractDataLoader):
                     (_trade_symbol_id,) = curs.fetchone()
                     trade_symbol_id = _trade_symbol_id
         if trade_symbol_id == -1:
-            dbg.dfatal(
+            hdbg.dfatal(
                 f"Could not find Trade Symbol with "
                 f"symbol_id={symbol_id} and exchange_id={exchange_id}"
             )
@@ -217,9 +217,9 @@ class AbstractSqlDataLoader(AbstractDataLoader):
         self,
         exchange: str,
         symbol: str,
-        asset_class: icdtyp.AssetClass,
-        frequency: icdtyp.Frequency,
-        contract_type: Optional[icdtyp.ContractType] = None,
+        asset_class: imcodatyp.AssetClass,
+        frequency: imcodatyp.Frequency,
+        contract_type: Optional[imcodatyp.ContractType] = None,
         currency: Optional[str] = None,
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
@@ -242,7 +242,7 @@ class AbstractSqlDataLoader(AbstractDataLoader):
 
     @staticmethod
     @abc.abstractmethod
-    def _get_table_name_by_frequency(frequency: icdtyp.Frequency) -> str:
+    def _get_table_name_by_frequency(frequency: imcodatyp.Frequency) -> str:
         """
         Get table name by predefined frequency.
 
@@ -254,7 +254,7 @@ class AbstractSqlDataLoader(AbstractDataLoader):
         self,
         exchange: str,
         symbol: str,
-        frequency: icdtyp.Frequency,
+        frequency: imcodatyp.Frequency,
         nrows: Optional[int] = None,
     ) -> pd.DataFrame:
         exchange_id = self.get_exchange_id(exchange)
@@ -264,7 +264,7 @@ class AbstractSqlDataLoader(AbstractDataLoader):
         limit = pexten.AsIs("ALL")
         # TODO(*): Add LIMIT in SQL query only if nrows is specified.
         if nrows:
-            dbg.dassert_lte(1, nrows)
+            hdbg.dassert_lte(1, nrows)
             limit = nrows
         query = "SELECT * FROM %s WHERE trade_symbol_id = %s LIMIT %s"
         df = pd.read_sql_query(

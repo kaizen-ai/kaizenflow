@@ -26,15 +26,15 @@ import logging
 import matplotlib.pyplot as plt
 import pandas as pd
 
-import core.explore as exp
-import helpers.dbg as dbg
+import core.explore as coexplor
+import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprint
-import im.ib.data.extract.gateway.utils as ibutils
+import im.ib.data.extract.gateway.utils as imidegaut
 import im.kibot as vakibot
 
 # %%
-dbg.init_logger(verbosity=logging.INFO)
+hdbg.init_logger(verbosity=logging.INFO)
 
 _LOG = logging.getLogger(__name__)
 
@@ -140,7 +140,7 @@ for date in dates:
 # %%
 import ib_insync
 
-ib = ibutils.ib_connect(1)
+ib = imidegaut.ib_connect(1)
 
 # %%
 contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
@@ -154,11 +154,11 @@ end_ts = pd.Timestamp("2019-05-29 15:00").tz_localize(tz="America/New_York")
 
 # file_name = "ES.csv"
 # if os.path.exists(file_name):
-# df_ib = ibutils.get_data(ib, contract, start_ts, end_ts, barSizeSetting, whatToShow, useRTH)
+# df_ib = imidegaut.get_data(ib, contract, start_ts, end_ts, barSizeSetting, whatToShow, useRTH)
 # df_ib.to_csv("ES.csv")
 
 durationStr = "1 D"
-df_ib = ibutils.req_historical_data(
+df_ib = imidegaut.req_historical_data(
     ib, contract, end_ts, durationStr, barSizeSetting, whatToShow, useRTH
 )
 
@@ -220,11 +220,11 @@ diff = df[target_col + "_" + ds1] - df[target_col + "_" + ds2]
 
 diff.plot()
 
-exp.drop_na(pd.DataFrame(diff), drop_infs=True).hist(bins=101)
+coexplor.drop_na(pd.DataFrame(diff), drop_infs=True).hist(bins=101)
 
 # %%
 intercept = False
-exp.ols_regress(
+coexplor.ols_regress(
     df,
     target_col + "_" + ds1,
     target_col + "_" + ds2,

@@ -1,7 +1,7 @@
 """
 Import as:
 
-im.ib.data.load.ib_s3_data_loader ibs3
+import im.ib.data.load.ib_s3_data_loader as imidlisdlo
 """
 
 import functools
@@ -10,17 +10,17 @@ from typing import Optional
 
 import pandas as pd
 
-import core.pandas_helpers as pdhelp
-import helpers.dbg as dbg
+import core.pandas_helpers as cpanh
+import helpers.dbg as hdbg
 import helpers.s3 as hs3
-import im.common.data.load.abstract_data_loader as icdlab
-import im.common.data.types as icdtyp
-import im.ib.data.load.ib_file_path_generator as iidlib
+import im.common.data.load.abstract_data_loader as imcdladalo
+import im.common.data.types as imcodatyp
+import im.ib.data.load.ib_file_path_generator as imidlifpge
 
 _LOG = logging.getLogger(__name__)
 
 
-class IbS3DataLoader(icdlab.AbstractS3DataLoader):
+class IbS3DataLoader(imcdladalo.AbstractS3DataLoader):
     """
     Reads IB data from S3.
     """
@@ -45,9 +45,9 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
         self,
         exchange: str,
         symbol: str,
-        asset_class: icdtyp.AssetClass,
-        frequency: icdtyp.Frequency,
-        contract_type: Optional[icdtyp.ContractType] = None,
+        asset_class: imcodatyp.AssetClass,
+        frequency: imcodatyp.Frequency,
+        contract_type: Optional[imcodatyp.ContractType] = None,
         currency: Optional[str] = None,
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
@@ -90,9 +90,9 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
     def _read_data(
         self,
         symbol: str,
-        asset_class: icdtyp.AssetClass,
-        frequency: icdtyp.Frequency,
-        contract_type: Optional[icdtyp.ContractType] = None,
+        asset_class: imcodatyp.AssetClass,
+        frequency: imcodatyp.Frequency,
+        contract_type: Optional[imcodatyp.ContractType] = None,
         exchange: Optional[str] = None,
         currency: Optional[str] = None,
         unadjusted: Optional[bool] = None,
@@ -102,7 +102,7 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
         end_ts: Optional[pd.Timestamp] = None,
     ) -> pd.DataFrame:
         # Generate path to retrieve data.
-        file_path = iidlib.IbFilePathGenerator().generate_file_path(
+        file_path = imidlifpge.IbFilePathGenerator().generate_file_path(
             symbol=symbol,
             asset_class=asset_class,
             frequency=frequency,
@@ -110,18 +110,18 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
             exchange=exchange,
             currency=currency,
             unadjusted=unadjusted,
-            ext=icdtyp.Extension.CSV,
+            ext=imcodatyp.Extension.CSV,
         )
         # Check that file exists.
         aws_profile = "am"
         s3fs = hs3.get_s3fs(aws_profile)
         if hs3.is_s3_path(file_path):
-            dbg.dassert(s3fs.exists(file_path), "S3 key not found: %s", file_path)
+            hdbg.dassert(s3fs.exists(file_path), "S3 key not found: %s", file_path)
         # Read data.
         # cls.S3_COLUMNS.keys() -> list(cls.S3_COLUMNS.keys())
         # https://github.com/pandas-dev/pandas/issues/36928 fixed in Pandas 1.1.4
         names = list(self.S3_COLUMNS.keys())
-        data = pdhelp.read_csv(file_path, s3fs=s3fs, nrows=nrows, names=names)
+        data = cpanh.read_csv(file_path, s3fs=s3fs, nrows=nrows, names=names)
         # TODO(plyq): Reload ES data with a new extractor to have a header.
         # If header was already in data, remove it.
         if list(data.iloc[0]) == list(self.S3_COLUMNS.keys()):

@@ -1,14 +1,20 @@
+"""
+Import as:
+
+import im.kibot.metadata.load.s3_backend as imkmls3ba
+"""
+
 import logging
 import os
 from typing import List, Optional
 
 import pandas as pd
 
-import core.pandas_helpers as pdhelp
-import helpers.dbg as dbg
+import core.pandas_helpers as cpanh
+import helpers.dbg as hdbg
 import helpers.s3 as hs3
-import im.kibot.data.config as vkdcon
-import im.kibot.metadata.config as vkmcon
+import im.kibot.data.config as imkidacon
+import im.kibot.metadata.config as imkimecon
 
 _LOG = logging.getLogger("amp" + __name__)
 
@@ -46,11 +52,11 @@ class S3Backend:
         """
         # pylint: enable=line-too-long
         file_name = os.path.join(
-            vkmcon.S3_PREFIX, "All_Futures_Contracts_1min.csv.gz"
+            imkimecon.S3_PREFIX, "All_Futures_Contracts_1min.csv.gz"
         )
         _LOG.debug("file_name=%s", file_name)
         s3fs = hs3.get_s3fs("am")
-        df = pdhelp.read_csv(
+        df = cpanh.read_csv(
             file_name,
             s3fs=s3fs,
             index_col=0,
@@ -80,12 +86,12 @@ class S3Backend:
         """
         # pylint: enable=line-too-long
         file_name = os.path.join(
-            vkmcon.S3_PREFIX, "All_Futures_Contracts_daily.csv.gz"
+            imkimecon.S3_PREFIX, "All_Futures_Contracts_daily.csv.gz"
         )
         hs3.dassert_is_s3_path(file_name)
         _LOG.debug("file_name=%s", file_name)
         s3fs = hs3.get_s3fs("am")
-        df = pdhelp.read_csv(
+        df = cpanh.read_csv(
             file_name, s3fs=s3fs, index_col=0, nrows=self._max_rows
         )
         df = df.iloc[:, 1:]
@@ -114,11 +120,11 @@ class S3Backend:
         ES            ESH11     4/6/2010     891.0       E-MINI S&P 500 MARCH 2011             Chicago Mercantile Exchange Mini Sized Contrac...
         """
         # pylint: enable=line-too-long
-        file_name = os.path.join(vkmcon.S3_PREFIX, "Futures_tickbidask.txt.gz")
+        file_name = os.path.join(imkimecon.S3_PREFIX, "Futures_tickbidask.txt.gz")
         _LOG.debug("file_name=%s", file_name)
         hs3.dassert_is_s3_path(file_name)
         s3fs = hs3.get_s3fs("am")
-        df = pdhelp.read_csv(
+        df = cpanh.read_csv(
             file_name,
             s3fs=s3fs,
             index_col=0,
@@ -131,7 +137,7 @@ class S3Backend:
             "SymbolBase Symbol StartDate Size(MB) Description Exchange".split()
         )
         df.dropna(inplace=True, how="all")
-        # dbg.dassert_eq(df_shape[0], df_shape_after_dropna[0])
+        # hdbg.dassert_eq(df_shape[0], df_shape_after_dropna[0])
         df.index = df.index.astype(int)
         df.index.name = None
         df["StartDate"] = pd.to_datetime(df["StartDate"])
@@ -162,12 +168,12 @@ class S3Backend:
         """
         # pylint: enable=line-too-long
         file_name = os.path.join(
-            vkmcon.S3_PREFIX, "FuturesContinuous_intraday.txt.gz"
+            imkimecon.S3_PREFIX, "FuturesContinuous_intraday.txt.gz"
         )
         _LOG.debug("file_name=%s", file_name)
         hs3.dassert_is_s3_path(file_name)
         s3fs = hs3.get_s3fs("am")
-        df = pdhelp.read_csv(
+        df = cpanh.read_csv(
             file_name,
             s3fs=s3fs,
             index_col=0,
@@ -182,7 +188,7 @@ class S3Backend:
         df_shape = df.shape
         df.dropna(inplace=True, how="all")
         df_shape_after_dropna = df.shape
-        dbg.dassert_eq(df_shape[0] - 1, df_shape_after_dropna[0])
+        hdbg.dassert_eq(df_shape[0] - 1, df_shape_after_dropna[0])
         df.index = df.index.astype(int)
         df.index.name = None
         df["StartDate"] = pd.to_datetime(df["StartDate"])
@@ -192,10 +198,10 @@ class S3Backend:
 
     @staticmethod
     def read_kibot_exchange_mapping() -> pd.DataFrame:
-        file_name = os.path.join(vkmcon.S3_PREFIX, "kibot_to_exchange.csv")
+        file_name = os.path.join(imkimecon.S3_PREFIX, "kibot_to_exchange.csv")
         hs3.dassert_is_s3_path(file_name)
         s3fs = hs3.get_s3fs("am")
-        kibot_to_cme_mapping = pdhelp.read_csv(
+        kibot_to_cme_mapping = cpanh.read_csv(
             file_name, s3fs=s3fs, index_col="Kibot_symbol"
         )
         return kibot_to_cme_mapping
@@ -222,7 +228,7 @@ class S3Backend:
             filename = filename.replace(".csv.gz", "")
             return filename
 
-        aws_csv_gz_dir = os.path.join(vkdcon.S3_PREFIX, data_type)
+        aws_csv_gz_dir = os.path.join(imkidacon.S3_PREFIX, data_type)
         # List all existing csv gz files on S3.
         s3fs = hs3.get_s3fs("am")
         csv_gz_s3_file_paths = [
@@ -234,6 +240,6 @@ class S3Backend:
         symbols = list(
             map(_extract_filename_without_extension, csv_gz_s3_file_paths)
         )
-        dbg.dassert_no_duplicates(symbols)
+        hdbg.dassert_no_duplicates(symbols)
         symbols = sorted(list(set(symbols)))
         return symbols

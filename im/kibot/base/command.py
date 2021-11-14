@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import im.kibot.base.command as imkibacom
+"""
+
 # TODO(*): Move it one level up and call it kibot_command.py
 import argparse
 import inspect
@@ -5,10 +11,10 @@ import sys
 
 import requests
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.io_ as hio
-import helpers.parser as hparse
-import im.kibot.metadata.config as vkmcon
+import helpers.parser as hparser
+import im.kibot.metadata.config as imkimecon
 
 
 class KibotCommand:
@@ -56,7 +62,7 @@ class KibotCommand:
             formatter_class=argparse.RawDescriptionHelpFormatter,
         )
 
-        hparse.add_verbosity_arg(self.parser)
+        hparser.add_verbosity_arg(self.parser)
 
         if self.supports_tmp_dir:
             self.parser.add_argument(
@@ -90,7 +96,7 @@ class KibotCommand:
 
     def _main(self) -> int:
         self.args = self.parser.parse_args()
-        dbg.init_logger(
+        hdbg.init_logger(
             verbosity=self.args.log_level,
             log_filename=self._file_path + ".log",
         )
@@ -101,7 +107,7 @@ class KibotCommand:
             )
 
         if self.requires_api_login:
-            dbg.dassert_eq(True, self.requires_auth)
+            hdbg.dassert_eq(True, self.requires_auth)
             self._login_to_api()
 
         return self.customize_run()
@@ -112,7 +118,7 @@ class KibotCommand:
         """
 
         response = requests.get(
-            url=vkmcon.API_ENDPOINT,
+            url=imkimecon.API_ENDPOINT,
             params=dict(
                 action="login",
                 user=self.args.username,
@@ -124,7 +130,7 @@ class KibotCommand:
             200,  # login successfuly
             407,  # user already logged in
         ]
-        dbg.dassert_in(
+        hdbg.dassert_in(
             status_code,
             accepted_status_codes,
             msg=f"Failed to login: {response.text}",

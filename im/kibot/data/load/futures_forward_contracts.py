@@ -1,12 +1,18 @@
+"""
+Import as:
+
+import im.kibot.data.load.futures_forward_contracts as imkdlffoco
+"""
+
 import pandas as pd
 from tqdm.auto import tqdm
 
-import core.finance as cfinan
-import helpers.dataframe as hdataf
-import helpers.dbg as dbg
+import core.finance as cofinanc
+import helpers.dataframe as hdatafr
+import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
-import im.common.data.load.abstract_data_loader as icdlab
-import im.common.data.types as vcdtyp
+import im.common.data.load.abstract_data_loader as imcdladalo
+import im.common.data.types as imcodatyp
 
 
 class FuturesForwardContracts:
@@ -15,7 +21,7 @@ class FuturesForwardContracts:
     """
 
     def __init__(
-        self, data_loader: icdlab.AbstractDataLoader, disable_tqdm: bool = False
+        self, data_loader: imcdladalo.AbstractDataLoader, disable_tqdm: bool = False
     ) -> None:
         """
         Initialize by injecting a data loader.
@@ -77,11 +83,11 @@ class FuturesForwardContracts:
                 2010-01-14  79.97  80.75  79.32  79.88  197449
         """
         # Determine whether to use daily or minutely contract data.
-        ppy = hdataf.infer_sampling_points_per_year(srs)
+        ppy = hdatafr.infer_sampling_points_per_year(srs)
         if ppy < 366:
-            freq = vcdtyp.Frequency.Daily
+            freq = imcodatyp.Frequency.Daily
         else:
-            freq = vcdtyp.Frequency.Minutely
+            freq = imcodatyp.Frequency.Minutely
         # Get the list of contracts to extract data for.
         contracts = srs.unique().tolist()
         # Extract relevant data subseries for each contract and put in list.
@@ -96,11 +102,11 @@ class FuturesForwardContracts:
             data = self._data_loader.read_data(
                 "Kibot",
                 contract,
-                vcdtyp.AssetClass.Futures,
+                imcodatyp.AssetClass.Futures,
                 freq,
-                vcdtyp.ContractType.Expiry,
+                imcodatyp.ContractType.Expiry,
             )
-            resampled = cfinan.resample_ohlcv_bars(
+            resampled = cofinanc.resample_ohlcv_bars(
                 data,
                 rule=srs.index.freq,
                 volume_col="vol",
@@ -112,5 +118,5 @@ class FuturesForwardContracts:
         # Merge the contract data over the partitioned srs index.
         df = pd.concat(data_subseries, axis=0)
         hpandas.dassert_strictly_increasing_index(df)
-        dbg.dassert(df.index.equals(srs.index))
+        hdbg.dassert(df.index.equals(srs.index))
         return df

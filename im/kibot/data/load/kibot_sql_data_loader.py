@@ -1,11 +1,17 @@
-import helpers.dbg as dbg
-import im.common.data.load.abstract_data_loader as icdlab
-import im.common.data.types as icdtyp
+"""
+Import as:
+
+import im.kibot.data.load.kibot_sql_data_loader as ikdlksdlo
+"""
+
+import helpers.dbg as hdbg
+import im.common.data.load.abstract_data_loader as imcdladalo
+import im.common.data.types as imcodatyp
 
 
-class KibotSqlDataLoader(icdlab.AbstractSqlDataLoader):
+class KibotSqlDataLoader(imcdladalo.AbstractSqlDataLoader):
     @staticmethod
-    def _get_table_name_by_frequency(frequency: icdtyp.Frequency) -> str:
+    def _get_table_name_by_frequency(frequency: imcodatyp.Frequency) -> str:
         """
         Get table name by predefined frequency.
 
@@ -13,11 +19,11 @@ class KibotSqlDataLoader(icdlab.AbstractSqlDataLoader):
         :return: table name in DB
         """
         table_name = ""
-        if frequency == icdtyp.Frequency.Minutely:
+        if frequency == imcodatyp.Frequency.Minutely:
             table_name = "KibotMinuteData"
-        elif frequency == icdtyp.Frequency.Daily:
+        elif frequency == imcodatyp.Frequency.Daily:
             table_name = "KibotDailyData"
-        elif frequency == icdtyp.Frequency.Tick:
+        elif frequency == imcodatyp.Frequency.Tick:
             table_name = "KibotTickData"
-        dbg.dassert(table_name, f"Unknown frequency {frequency}")
+        hdbg.dassert(table_name, f"Unknown frequency {frequency}")
         return table_name

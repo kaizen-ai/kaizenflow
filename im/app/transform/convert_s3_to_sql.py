@@ -48,6 +48,10 @@ Usage examples:
       --start_ts 20210101000000 \
       --end_ts 20210301000000 \
       --incremental
+
+Import as:
+
+import im.app.transform.convert_s3_to_sql as imatcstosq
 """
 
 import argparse
@@ -57,31 +61,31 @@ from typing import List
 
 import pandas as pd
 
-import helpers.dbg as dbg
-import helpers.parser as hparse
-import im.app.services.file_path_generator_factory as iasfil
-import im.app.services.loader_factory as iasloa
-import im.app.services.sql_writer_factory as iassql
-import im.app.services.symbol_universe_factory as iassym
-import im.app.services.transformer_factory as iastra
-import im.common.data.load.abstract_data_loader as icdlab
-import im.common.data.transform.transform as icdttr
-import im.common.data.types as icdtyp
-import im.common.metadata.symbols as icmsym
+import helpers.dbg as hdbg
+import helpers.parser as hparser
+import im.app.services.file_path_generator_factory as imasfpgefa
+import im.app.services.loader_factory as imaselofa
+import im.app.services.sql_writer_factory as imasswrfa
+import im.app.services.symbol_universe_factory as imassunfa
+import im.app.services.transformer_factory as imasetrfa
+import im.common.data.load.abstract_data_loader as imcdladalo
+import im.common.data.transform.transform as imcdatrtr
+import im.common.data.types as imcodatyp
+import im.common.metadata.symbols as imcomesym
 
 _LOG = logging.getLogger(__name__)
 
 
 # TODO(*): Pass symbol, exchange, ... and add some unit testing to this.
 #  We can use playback for creating unit tests.
-def _get_symbols_from_args(args: argparse.Namespace) -> List[icmsym.Symbol]:
+def _get_symbols_from_args(args: argparse.Namespace) -> List[imcomesym.Symbol]:
     """
     Get list of symbols to extract.
     """
     # If all args are specified to extract only one symbol, return this symbol.
     if args.symbol and args.exchange and args.asset_class and args.currency:
         return [
-            icmsym.Symbol(
+            imcomesym.Symbol(
                 ticker=args_symbol,
                 exchange=args.exchange,
                 asset_class=args.asset_class,
@@ -91,18 +95,18 @@ def _get_symbols_from_args(args: argparse.Namespace) -> List[icmsym.Symbol]:
             for args_symbol in args.symbol
         ]
     # Find all matched symbols otherwise.
-    file_path_generator = iasfil.FilePathGeneratorFactory.get_file_path_generator(
+    file_path_generator = imasfpgefa.FilePathGeneratorFactory.get_file_path_generator(
         args.provider
     )
     latest_symbols_file = file_path_generator.get_latest_symbols_file()
-    symbol_universe = iassym.SymbolUniverseFactory.get_symbol_universe(
+    symbol_universe = imassunfa.SymbolUniverseFactory.get_symbol_universe(
         args.provider, symbols_file=latest_symbols_file
     )
     if args.symbol is None:
         args_symbols = [args.symbol]
     else:
         args_symbols = args.symbol
-    symbols: List[icmsym.Symbol] = []
+    symbols: List[imcomesym.Symbol] = []
     for symbol in args_symbols:
         symbols.extend(
             symbol_universe.get(
@@ -150,7 +154,7 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--asset_class",
-        type=icdtyp.AssetClass,
+        type=imcodatyp.AssetClass,
         help="Asset class (e.g. Futures)",
         required=False,
     )
@@ -162,13 +166,13 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--frequency",
-        type=icdtyp.Frequency,
+        type=imcodatyp.Frequency,
         help="Frequency of data (e.g. Minutely)",
         required=True,
     )
     parser.add_argument(
         "--contract_type",
-        type=icdtyp.ContractType,
+        type=imcodatyp.ContractType,
         help="Contract type (e.g. Expiry)",
         required=False,
     )
@@ -232,24 +236,24 @@ def _parse() -> argparse.ArgumentParser:
         default=None,
         help="Maximum number of rows per asset to copy (for debug)",
     )
-    hparse.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level)
-    dbg.shutup_chatty_modules()
+    hdbg.init_logger(verbosity=args.log_level)
+    hdbg.shutup_chatty_modules()
     # Set up parameters for running.
     provider = args.provider
     symbols = _get_symbols_from_args(args)
-    s3_data_loader: icdlab.AbstractS3DataLoader = iasloa.LoaderFactory.get_loader(
+    s3_data_loader: imcdladalo.AbstractS3DataLoader = imaselofa.LoaderFactory.get_loader(
         storage_type="s3", provider=provider
     )
-    s3_to_sql_transformer = iastra.TransformerFactory.get_s3_to_sql_transformer(
+    s3_to_sql_transformer = imasetrfa.TransformerFactory.get_s3_to_sql_transformer(
         provider=provider
     )
-    sql_writer_backend = iassql.SqlWriterFactory.get_sql_writer_backend(
+    sql_writer_backend = imasswrfa.SqlWriterFactory.get_sql_writer_backend(
         provider=provider,
         dbname=args.dbname,
         user=args.dbuser,
@@ -257,8 +261,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
         host=args.dbhost,
         port=args.dbport,
     )
-    sql_data_loader: icdlab.AbstractSqlDataLoader = (
-        iasloa.LoaderFactory.get_loader(
+    sql_data_loader: imcdladalo.AbstractSqlDataLoader = (
+        imaselofa.LoaderFactory.get_loader(
             storage_type="sql",
             provider=provider,
             dbname=args.dbname,
@@ -276,7 +280,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _LOG.warning(
             "Selected only %d symbols as per user request", args.max_num_assets
         )
-        dbg.dassert_lte(1, args.max_num_assets)
+        hdbg.dassert_lte(1, args.max_num_assets)
         symbols = symbols[: args.max_num_assets]
     # Construct list of parameters.
     params_list = []
@@ -302,7 +306,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             )
         )
     # Run converting.
-    icdttr.convert_s3_to_sql_bulk(serial=args.serial, params_list=params_list)
+    imcdatrtr.convert_s3_to_sql_bulk(serial=args.serial, params_list=params_list)
     _LOG.info("Closing database connection")
     sql_writer_backend.close()
     sql_data_loader.conn.close()

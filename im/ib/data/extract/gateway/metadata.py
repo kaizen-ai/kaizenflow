@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import im.ib.data.extract.gateway.metadata as imidegame
+"""
+
 # TODO(*): Move to ib/medata and rename contract_metadata.py
 import logging
 import os
@@ -7,7 +13,7 @@ import ib_insync
 import pandas as pd
 
 import helpers.io_ as hio
-import im.ib.data.extract.gateway.utils as videgu
+import im.ib.data.extract.gateway.utils as imidegaut
 
 _LOG = logging.getLogger(__name__)
 
@@ -50,7 +56,7 @@ class IbMetadata:
         """
         dfs = []
         for contract in contracts:
-            df_tmp = videgu.get_contract_details(ib, contract)
+            df_tmp = imidegaut.get_contract_details(ib, contract)
             dfs.append(df_tmp)
         df = pd.concat(dfs, axis=0)
         #

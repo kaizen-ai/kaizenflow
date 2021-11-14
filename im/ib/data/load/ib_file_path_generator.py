@@ -1,18 +1,24 @@
+"""
+Import as:
+
+import im.ib.data.load.ib_file_path_generator as imidlifpge
+"""
+
 import functools
 import logging
 import os
 from typing import Optional
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.s3 as hs3
-import im.common.data.load.file_path_generator as icdlfi
-import im.common.data.types as icdtyp
-import im.ib.data.config as iidcon
+import im.common.data.load.file_path_generator as imcdlfpage
+import im.common.data.types as imcodatyp
+import im.ib.data.config as imibdacon
 
 _LOG = logging.getLogger(__name__)
 
 
-class IbFilePathGenerator(icdlfi.FilePathGenerator):
+class IbFilePathGenerator(imcdlfpage.FilePathGenerator):
     """
     Generate file path for a symbol.
 
@@ -20,22 +26,22 @@ class IbFilePathGenerator(icdlfi.FilePathGenerator):
     """
 
     FREQ_PATH_MAPPING = {
-        icdtyp.Frequency.Daily: "daily",
-        icdtyp.Frequency.Hourly: "hourly",
-        icdtyp.Frequency.Minutely: "minutely",
-        icdtyp.Frequency.Tick: "tick",
+        imcodatyp.Frequency.Daily: "daily",
+        imcodatyp.Frequency.Hourly: "hourly",
+        imcodatyp.Frequency.Minutely: "minutely",
+        imcodatyp.Frequency.Tick: "tick",
     }
 
     def generate_file_path(
         self,
         symbol: str,
-        frequency: icdtyp.Frequency,
-        asset_class: icdtyp.AssetClass,
-        contract_type: Optional[icdtyp.ContractType] = None,
+        frequency: imcodatyp.Frequency,
+        asset_class: imcodatyp.AssetClass,
+        contract_type: Optional[imcodatyp.ContractType] = None,
         exchange: Optional[str] = None,
         currency: Optional[str] = None,
         unadjusted: Optional[bool] = None,
-        ext: icdtyp.Extension = icdtyp.Extension.CSV,
+        ext: imcodatyp.Extension = imcodatyp.Extension.CSV,
     ) -> str:
         """
         Get the path to a specific IB dataset on S3.
@@ -47,12 +53,12 @@ class IbFilePathGenerator(icdlfi.FilePathGenerator):
         :raises ValueError: if parameters are incompatible
         """
         # Check parameters.
-        dbg.dassert_is_not(currency, None)
-        dbg.dassert_is_not(exchange, None)
+        hdbg.dassert_is_not(currency, None)
+        hdbg.dassert_is_not(exchange, None)
         # Get asset class part.
         if (
-            contract_type == icdtyp.ContractType.Continuous
-            and asset_class == icdtyp.AssetClass.Futures
+            contract_type == imcodatyp.ContractType.Continuous
+            and asset_class == imcodatyp.AssetClass.Futures
         ):
             asset_part = "continuous_futures"
         else:
@@ -60,7 +66,7 @@ class IbFilePathGenerator(icdlfi.FilePathGenerator):
         # Get frequency part.
         freq_part = self.FREQ_PATH_MAPPING[frequency]
         # Get extension.
-        if ext == icdtyp.Extension.CSV:
+        if ext == imcodatyp.Extension.CSV:
             extension_part = "csv.gz"
         else:
             raise ValueError("Unsupported extension %s" % ext)
@@ -68,7 +74,7 @@ class IbFilePathGenerator(icdlfi.FilePathGenerator):
         file_name = "%s.%s" % (symbol, extension_part)
         # Construct full path.
         file_path = os.path.join(
-            iidcon.S3_PREFIX, asset_part, exchange, currency, freq_part, file_name
+            imibdacon.S3_PREFIX, asset_part, exchange, currency, freq_part, file_name
         )
         return file_path
 
@@ -78,7 +84,7 @@ class IbFilePathGenerator(icdlfi.FilePathGenerator):
         """
         Get the latest available file with symbols on S3.
         """
-        file_prefix = os.path.join(iidcon.S3_METADATA_PREFIX, "symbols-")
+        file_prefix = os.path.join(imibdacon.S3_METADATA_PREFIX, "symbols-")
         s3fs = hs3.get_s3fs("am")
         files = s3fs.glob(file_prefix + "*")
         # E.g., files=
@@ -89,5 +95,5 @@ class IbFilePathGenerator(icdlfi.FilePathGenerator):
         # Add the prefix.
         latest_file = "s3://" + latest_file
         _LOG.debug("latest_file=%s", latest_file)
-        dbg.dassert(s3fs.exists(latest_file))
+        hdbg.dassert(s3fs.exists(latest_file))
         return latest_file

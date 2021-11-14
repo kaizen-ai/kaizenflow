@@ -4,11 +4,11 @@ import pandas as pd
 import pytest
 
 import helpers.sql as hsql
-import helpers.unit_test as huntes
+import helpers.unit_test as hunitest
 import im.common.data.types as imcodatyp
-import im.common.db.create_db as imcodbcrdb
+import im.common.db.create_db as imcdbcrdb
 import im.common.db.utils as imcodbuti
-import im.kibot.data.load.kibot_sql_data_loader as imkdalokisqdatloa
+import im.kibot.data.load.kibot_sql_data_loader as ikdlksdlo
 import im.kibot.sql_writer as imkisqwri
 
 
@@ -16,7 +16,7 @@ import im.kibot.sql_writer as imkisqwri
     not imcodbuti.is_inside_im_container(),
     reason="Testable only inside IM container",
 )
-class TestSqlDataLoader1(huntes.TestCase):
+class TestSqlDataLoader1(hunitest.TestCase):
     """
     Test writing operation to PostgreSQL Kibot DB.
     """
@@ -27,7 +27,7 @@ class TestSqlDataLoader1(huntes.TestCase):
         self._connection = hsql.get_connection_from_env_vars()[0]
         self._new_db = self._get_test_name().replace("/", "").replace(".", "")
         # Create database for test.
-        imcodbcrdb.create_database(
+        imcdbcrdb.create_database(
             connection=self._connection,
             new_db=self._new_db,
             force=True,
@@ -40,7 +40,7 @@ class TestSqlDataLoader1(huntes.TestCase):
         self._prepare_tables(writer)
         writer.close()
         # Create loader.
-        self._loader = imkdalokisqdatloa.KibotSqlDataLoader(
+        self._loader = ikdlksdlo.KibotSqlDataLoader(
             self._new_db, self._user, self._password, self._host, self._port
         )
 
@@ -48,7 +48,7 @@ class TestSqlDataLoader1(huntes.TestCase):
         # Close connection.
         self._loader.conn.close()
         # Remove created database.
-        imcodbcrdb.remove_database(
+        imcdbcrdb.remove_database(
             connection=self._connection, db_to_drop=self._new_db
         )
         super().tearDown()
@@ -108,7 +108,7 @@ class TestSqlDataLoader1(huntes.TestCase):
             "CME", "ZYX9", imcodatyp.Frequency.Minutely
         )
         # Convert to string.
-        actual_string = huntes.convert_df_to_string(actual)
+        actual_string = hunitest.convert_df_to_string(actual)
         # Compare with golden.
         self.check_string(actual_string, fuzzy_match=True)
 
@@ -119,7 +119,7 @@ class TestSqlDataLoader1(huntes.TestCase):
         # Get data.
         actual = self._loader._read_data("LSE", "ZYX9", imcodatyp.Frequency.Daily)
         # Convert to string.
-        actual_string = huntes.convert_df_to_string(actual)
+        actual_string = hunitest.convert_df_to_string(actual)
         # Compare with golden.
         self.check_string(actual_string, fuzzy_match=True)
 

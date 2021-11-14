@@ -2,17 +2,17 @@ from unittest.mock import patch
 
 import pandas as pd
 
-import helpers.unit_test as hut
-import im.kibot.metadata.load.contract_symbol_mapping as csm
+import helpers.unit_test as hunitest
+import im.kibot.metadata.load.contract_symbol_mapping as imkmlcsyma
 
 
-class TestContractSymbolMapper(hut.TestCase):
+class TestContractSymbolMapper(hunitest.TestCase):
     def test_get_contract1(self):
         """
         Valid input returns a valid output.
         """
         with self._mock_csm():
-            cls = csm.ContractSymbolMapping()
+            cls = imkmlcsyma.ContractSymbolMapping()
             inp = "test_symbol"
             exp = "test_exch_abbreviation:test_exch_symbol"
             act = cls.get_contract(inp)
@@ -23,7 +23,7 @@ class TestContractSymbolMapper(hut.TestCase):
         No input returns null.
         """
         with self._mock_csm():
-            cls = csm.ContractSymbolMapping()
+            cls = imkmlcsyma.ContractSymbolMapping()
             inp = ""
             exp = None
             act = cls.get_contract(inp)
@@ -34,7 +34,7 @@ class TestContractSymbolMapper(hut.TestCase):
         Invalid input returns null.
         """
         with self._mock_csm():
-            cls = csm.ContractSymbolMapping()
+            cls = imkmlcsyma.ContractSymbolMapping()
             inp = "non-existent"
             exp = None
             act = cls.get_contract(inp)
@@ -45,7 +45,7 @@ class TestContractSymbolMapper(hut.TestCase):
         Valid input returns valid output.
         """
         with self._mock_csm():
-            cls = csm.ContractSymbolMapping()
+            cls = imkmlcsyma.ContractSymbolMapping()
             inp = "test_exch_abbreviation:test_exch_symbol"
             exp = "test_symbol"
             act = cls.get_kibot_symbol(inp)
@@ -56,7 +56,7 @@ class TestContractSymbolMapper(hut.TestCase):
         No input raises an error.
         """
         with self._mock_csm():
-            cls = csm.ContractSymbolMapping()
+            cls = imkmlcsyma.ContractSymbolMapping()
             inp = ""
             with self.assertRaises(AssertionError):
                 cls.get_kibot_symbol(inp)
@@ -66,7 +66,7 @@ class TestContractSymbolMapper(hut.TestCase):
         Incorrect input raises an error.
         """
         with self._mock_csm():
-            cls = csm.ContractSymbolMapping()
+            cls = imkmlcsyma.ContractSymbolMapping()
             inp = "test2"
             with self.assertRaises(AssertionError):
                 cls.get_kibot_symbol(inp)
@@ -76,7 +76,7 @@ class TestContractSymbolMapper(hut.TestCase):
         Invalid input raises an error.
         """
         with self._mock_csm():
-            cls = csm.ContractSymbolMapping()
+            cls = imkmlcsyma.ContractSymbolMapping()
             inp = "non-existent:non-existent"
             exp = None
             act = cls.get_kibot_symbol(inp)
@@ -85,7 +85,7 @@ class TestContractSymbolMapper(hut.TestCase):
     @staticmethod
     def _mock_csm():
         def mock_test_contract_symbol_mapping_init(
-            self: csm.ContractSymbolMapping,
+            self: imkmlcsyma.ContractSymbolMapping,
         ):
             md = {
                 "Kibot_symbol": ["test_symbol"],
@@ -95,7 +95,7 @@ class TestContractSymbolMapper(hut.TestCase):
             self._metadata = pd.DataFrame.from_dict(md)
 
         return patch.object(
-            csm.ContractSymbolMapping,
+            imkmlcsyma.ContractSymbolMapping,
             "__init__",
             mock_test_contract_symbol_mapping_init,
         )

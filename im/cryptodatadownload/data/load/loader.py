@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.cryptodatadownload.data.load.loader as imcrdaloloa
+import im.cryptodatadownload.data.load.loader as icdalolo
 """
 
 import logging
@@ -10,8 +10,8 @@ from typing import Optional
 
 import pandas as pd
 
-import core.pandas_helpers as cpah
-import helpers.datetime_ as hdatetim
+import core.pandas_helpers as cpanh
+import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.s3 as hs3
@@ -87,7 +87,7 @@ class CddLoader:
             currency_pair,
             file_path,
         )
-        data = cpah.read_csv(file_path, **read_csv_kwargs)
+        data = cpanh.read_csv(file_path, **read_csv_kwargs)
         # Apply transformation to raw data.
         _LOG.info(
             "Processing CDD data for exchange id='%s', currencies='%s'...",
@@ -242,7 +242,7 @@ class CddLoader:
         # Convert to timestamp in UTC tz.
         timestamp_col = pd.to_datetime(epoch_col, unit="ms", utc=True)
         # Convert to ET tz.
-        timestamp_col = timestamp_col.dt.tz_convert(hdatetim.get_ET_tz())
+        timestamp_col = timestamp_col.dt.tz_convert(hdateti.get_ET_tz())
         return timestamp_col
 
     @staticmethod

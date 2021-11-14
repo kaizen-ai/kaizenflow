@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.ccxt.data.extract.exchange_class as imcdaexexccla
+import im.ccxt.data.extract.exchange_class as imcdeexcl
 """
 
 import logging

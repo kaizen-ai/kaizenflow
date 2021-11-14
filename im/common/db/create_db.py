@@ -3,7 +3,7 @@ Create and handle the Postgres DB.
 
 Import as:
 
-import im.common.db.create_db as imcodbcrdb
+import im.common.db.create_db as imcdbcrdb
 """
 
 import logging

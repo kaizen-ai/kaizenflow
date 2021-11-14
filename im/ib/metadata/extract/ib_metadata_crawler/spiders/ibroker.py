@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import im.ib.metadata.extract.ib_metadata_crawler.spiders.ibroker as imimeimcsi
+"""
+
 import csv
 from typing import Generator, Union
 

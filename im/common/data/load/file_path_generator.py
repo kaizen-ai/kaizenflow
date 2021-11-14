@@ -1,12 +1,12 @@
 """
 Import as:
 
-import im.common.data.load.file_path_generator as vcdlfi
+import im.common.data.load.file_path_generator as imcdlfpage
 """
 import abc
 from typing import Optional
 
-import im.common.data.types as vcdtyp
+import im.common.data.types as imcodatyp
 
 
 class FilePathGenerator(abc.ABC):
@@ -19,14 +19,14 @@ class FilePathGenerator(abc.ABC):
     def generate_file_path(
         self,
         symbol: str,
-        frequency: vcdtyp.Frequency,
-        asset_class: vcdtyp.AssetClass,
-        contract_type: Optional[vcdtyp.ContractType] = None,
+        frequency: imcodatyp.Frequency,
+        asset_class: imcodatyp.AssetClass,
+        contract_type: Optional[imcodatyp.ContractType] = None,
         exchange: Optional[str] = None,
         currency: Optional[str] = None,
         unadjusted: Optional[bool] = None,
         # TODO(*): Is this needed?
-        ext: vcdtyp.Extension = vcdtyp.Extension.Parquet,
+        ext: imcodatyp.Extension = imcodatyp.Extension.Parquet,
     ) -> str:
         """
         Get the path to a specific symbol on s3.
