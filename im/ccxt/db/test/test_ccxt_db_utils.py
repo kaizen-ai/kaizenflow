@@ -130,6 +130,7 @@ class TestUtils(huntes.TestCase):
         hsyint.system(cmd, suppress_output=False)
         super().tearDown()
 
+    @pytest.mark.slow()
     def test_copy_rows_with_copy_from1(self) -> None:
         """
         Verify that dataframe insertion via buffer is correct.
