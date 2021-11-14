@@ -117,10 +117,7 @@ class TestDryRunTasks1(huntes.TestCase):
 
     def test_print_setup(self) -> None:
         target = "print_setup"
-        opts = "--dry"
-        cmd = f"invoke {opts} {target} | grep -v INFO | grep -v '>>ENV<<:'"
-        rc = hsyint.system(cmd)
-        self.assertEqual(rc, 0)
+        self._dry_run(target)
 
     def test_git_pull(self) -> None:
         target = "git_pull"
@@ -478,12 +475,14 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         stage = "dev"
         base_image = ""
         cmd = "bash"
+        version = "1.0.0"
         service_name = "app"
         entrypoint = False
         print_docker_config = False
         act = hlitas._get_docker_cmd(
-            stage,
             base_image,
+            stage,
+            version,
             cmd,
             service_name=service_name,
             entrypoint=entrypoint,
@@ -491,16 +490,15 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         )
         act = huntes.purify_txt_from_client(act)
         exp = r"""
-        IMAGE=*****/amp_test:dev \
-            docker-compose \
+        IMAGE=*****/amp_test-1.0.0:dev \
+        docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
             --env-file devops/env/default.env \
             run \
             --rm \
-            -l user=$USER_NAME \
+            --user $(id -u):$(id -g) \
             --entrypoint bash \
-            app
-        """
+            app """
         self.assert_equal(act, exp, fuzzy_match=True)
 
     @pytest.mark.skipif(
@@ -512,23 +510,27 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         """
         stage = "local"
         base_image = ""
+        version = "1.0.0"
         cmd = "bash"
         print_docker_config = False
         act = hlitas._get_docker_cmd(
-            stage, base_image, cmd, print_docker_config=print_docker_config
+            base_image,
+            stage,
+            version,
+            cmd,
+            print_docker_config=print_docker_config,
         )
         act = huntes.purify_txt_from_client(act)
         exp = r"""
-        IMAGE=*****/amp_test:local \
-            docker-compose \
+        IMAGE=*****/amp_test-1.0.0:local \
+        docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
             --env-file devops/env/default.env \
             run \
             --rm \
-            -l user=$USER_NAME \
+            --user $(id -u):$(id -g) \
             app \
-            bash
-        """
+            bash """
         self.assert_equal(act, exp, fuzzy_match=True)
 
     @pytest.mark.skipif(
@@ -540,30 +542,31 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         """
         stage = "local"
         base_image = ""
+        version = "1.0.0"
         cmd = "bash"
         extra_env_vars = ["PORT=9999", "SKIP_RUN=1"]
         print_docker_config = False
         act = hlitas._get_docker_cmd(
-            stage,
             base_image,
+            stage,
+            version,
             cmd,
             extra_env_vars=extra_env_vars,
             print_docker_config=print_docker_config,
         )
         act = huntes.purify_txt_from_client(act)
         exp = r"""
-        IMAGE=*****/amp_test:local \
+        IMAGE=*****/amp_test-1.0.0:local \
         PORT=9999 \
         SKIP_RUN=1 \
-            docker-compose \
+        docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
             --env-file devops/env/default.env \
             run \
             --rm \
-            -l user=$USER_NAME \
+            --user $(id -u):$(id -g) \
             app \
-            bash
-        """
+            bash """
         self.assert_equal(act, exp, fuzzy_match=True)
 
     @pytest.mark.skipif(
@@ -573,12 +576,14 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
     def test_docker_bash4(self) -> None:
         stage = "dev"
         base_image = ""
+        version = "1.0.0"
         cmd = "bash"
         entrypoint = False
         print_docker_config = False
         act = hlitas._get_docker_cmd(
-            stage,
             base_image,
+            stage,
+            version,
             cmd,
             entrypoint=entrypoint,
             print_docker_config=print_docker_config,
@@ -591,7 +596,6 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
-            -l user=$USER_NAME \
             --entrypoint bash \
             app
         """
@@ -603,29 +607,30 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
     def test_docker_jupyter1(self) -> None:
         stage = "dev"
         base_image = ""
+        version = "1.0.0"
         port = 9999
         self_test = True
         print_docker_config = False
         act = hlitas._get_docker_jupyter_cmd(
-            stage,
             base_image,
+            stage,
+            version,
             port,
             self_test,
-            print_docker_config=print_docker_config,
+            print_docker_config,
         )
         act = huntes.purify_txt_from_client(act)
         exp = r"""
-        IMAGE=*****/amp_test:dev \
+        IMAGE=*****/amp_test-1.0.0:dev \
         PORT=9999 \
-            docker-compose \
+        docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
             --env-file devops/env/default.env \
             run \
             --rm \
-            -l user=$USER_NAME \
+            --user $(id -u):$(id -g) \
             --service-ports \
-            jupyter_server_test
-        """
+            jupyter_server_test """
         self.assert_equal(act, exp, fuzzy_match=True)
 
 
