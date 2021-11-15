@@ -4,14 +4,16 @@ Import as:
 import helpers.sql as hsql
 """
 
+import collections
 import logging
 import os
 import time
-from typing import List, Optional, Tuple, Union
+from typing import List, NamedTuple, Optional, Tuple, Union
 
 import pandas as pd
 import psycopg2 as psycop
 import psycopg2.sql as psql
+
 
 import helpers.dbg as hdbg
 import helpers.system_interaction as hsysinte
@@ -23,6 +25,9 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): mypy doesn't like this.
 DbConnection = psycop.extensions.connection
 
+DbConnectionInfo = collections.namedtuple(
+    "DbConnectionInfo", ["dbname", "host", "port", "user", "password"]
+)
 
 # TODO(gp): Return only the connection (CmampTask441).
 def get_connection(
@@ -105,7 +110,7 @@ def wait_db_connection(
         time.sleep(1)
 
 
-def db_connection_to_str(connection: DbConnection) -> str:
+def db_connection_to_tuple(connection: DbConnection) -> NamedTuple:
     """
     Get database connection details using connection. Connection details
     include:
@@ -120,14 +125,15 @@ def db_connection_to_str(connection: DbConnection) -> str:
     :return: database connection details
     """
     info = connection.info
-    txt = (
-        f"dbname={info.dbname}\n"
-        f"host={info.host}\n"
-        f"port={info.port}\n"
-        f"user={info.user}\n"
-        f"password={info.password}"
+    det = DbConnectionInfo(
+        dbname=info.dbname,
+        host=info.host,
+        port=info.port,
+        user=info.user,
+        password=info.password,
     )
-    return txt
+    return det
+
 
 
 # #############################################################################
