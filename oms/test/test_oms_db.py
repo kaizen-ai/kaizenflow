@@ -5,6 +5,7 @@ import helpers.printing as hprint
 import helpers.sql as hsql
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
+import oms.oms_db as oomsdb
 
 _LOG = logging.getLogger(__name__)
 
@@ -71,3 +72,19 @@ class TestOmsDb1(_TestOmsDbHelper):
         """
         db_list = hsql.get_db_names(self.connection)
         _LOG.info("db_list=%s", db_list)
+
+    def test_create_table1(self) -> None:
+        db_tables = hsql.get_table_names(self.connection)
+        _LOG.info("get_table_names=%s", db_tabls)
+        self.assert_equal(db_tables, [])
+        # Create the table.
+        query = oomsdb.get_create_target_files_table_query()
+        _LOG.debug("query=%s", query)
+        self.cursor.execute(query)
+        #
+        db_tables = hsql.get_table_names(self.connection)
+        _LOG.info("get_table_names=%s", db_tables)
+        self.assert_equal(db_tables, ["target_files_processed_candidate_view"])
+
+    def test_wait_for_table1(self):
+        pass

@@ -18,22 +18,24 @@ import helpers.sql as hsql
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): -> get_create_ccxt_ohlcv_table_query()
 def get_ccxt_ohlcv_create_table_query() -> str:
     """
     Get SQL query to create CCXT OHLCV table.
     """
-    query = """CREATE TABLE IF NOT EXISTS ccxt_ohlcv(
-                id SERIAL PRIMARY KEY,
-                timestamp BIGINT NOT NULL,
-                open NUMERIC,
-                high NUMERIC,
-                low NUMERIC,
-                close NUMERIC,
-                volume NUMERIC,
-                currency_pair VARCHAR(255) NOT NULL,
-                exchange_id VARCHAR(255) NOT NULL
-                )
-                """
+    query = """
+    CREATE TABLE IF NOT EXISTS ccxt_ohlcv(
+            id SERIAL PRIMARY KEY,
+            timestamp BIGINT NOT NULL,
+            open NUMERIC,
+            high NUMERIC,
+            low NUMERIC,
+            close NUMERIC,
+            volume NUMERIC,
+            currency_pair VARCHAR(255) NOT NULL,
+            exchange_id VARCHAR(255) NOT NULL
+            )
+            """
     return query
 
 
@@ -41,7 +43,8 @@ def get_exchange_name_create_table_query() -> str:
     """
     Get SQL query to define CCXT crypto exchange names.
     """
-    query = """CREATE TABLE IF NOT EXISTS exchange_name(
+    query = """
+    CREATE TABLE IF NOT EXISTS exchange_name(
             exchange_id SERIAL PRIMARY KEY,
             exchange_name VARCHAR(255) NOT NULL
             )
@@ -53,7 +56,8 @@ def get_currency_pair_create_table_query() -> str:
     """
     Get SQL query to define CCXT currency pairs.
     """
-    query = """CREATE TABLE IF NOT EXISTS currency_pair(
+    query = """
+    CREATE TABLE IF NOT EXISTS currency_pair(
             currency_pair_id SERIAL PRIMARY KEY,
             currency_pair VARCHAR(255) NOT NULL
             )
@@ -92,6 +96,7 @@ def copy_rows_with_copy_from(
 # #############################################################################
 
 
+# TODO(gp): This seems general enough to go to hsql.
 def _create_insert_query(df: pd.DataFrame, table_name: str) -> str:
     """
     Create an INSERT query to insert data into a DB.
