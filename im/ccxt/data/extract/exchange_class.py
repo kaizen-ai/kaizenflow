@@ -8,6 +8,7 @@ import logging
 import time
 from typing import Any, Dict, List, Optional, Union
 
+from datetime import datetime
 import pandas as pd
 import tqdm
 
@@ -17,7 +18,7 @@ import helpers.io_ as hio
 
 _LOG = logging.getLogger(__name__)
 
-API_KEYS_PATH = "/data/shared/data/API_keys.json"
+API_KEYS_PATH = "/app/api_keys.json"
 
 
 class CcxtExchange:
@@ -105,9 +106,14 @@ class CcxtExchange:
             all_bars = self._exchange.fetch_ohlcv(
                 curr_symbol, timeframe="1m", limit=step
             )
+            created_at = datetime.utcnow().isoformat(sep=' ')
+            # ToDo pandas reindex ?
+            all_bars = [[*bar, created_at] for bar in all_bars]
+            columns = ["timestamp", "open", "high", "low", "close", "volume", "created_at"]
+            from pudb import set_trace; set_trace()
             all_bars = pd.DataFrame(
                 all_bars,
-                columns=["timestamp", "open", "high", "low", "close", "volume"],
+                columns=columns,
             )
             return all_bars
         # Verify that date parameters are of correct format.
@@ -132,6 +138,8 @@ class CcxtExchange:
         # Note: the iteration goes from start date to end date in milliseconds,
         # with the step defined by `step` parameter. Because of this, the output
         # can go slightly over the end date.
+        # ToDo unify with no date logic ?
+        #   This seems faulty, it will return on first iteration
         for t in tqdm.tqdm(
             range(start_datetime, end_datetime + duration, duration * step)
         ):

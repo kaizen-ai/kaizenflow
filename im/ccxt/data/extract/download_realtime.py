@@ -205,6 +205,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Build mappings from exchange ids to classes and currencies.
     exchanges = []
     for exchange_id in exchange_ids:
+        from pudb import set_trace; set_trace()
         exchanges.append(
             _instantiate_exchange(exchange_id, universe["CCXT"], args.api_keys)
         )
@@ -220,6 +221,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                     ccxt.NetworkError,
                     ccxt.base.errors.RequestTimeout,
                 ) as e:
+                    # ToDo handle timeouts and network errors differently ?
                     # Continue the loop if could not connect to exchange.
                     _LOG.warning("Got an error: %s", type(e).__name__, e.args)
                     continue
@@ -232,10 +234,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
                     )
                     time.sleep(60)
                     continue
+                # ToDo make it optional ?
                 # Save to disk.
-                _save_data_on_disk(
-                    args.data_type, args.dst_dir, pair_data, exchange, pair
-                )
+                # _save_data_on_disk(
+                #     args.data_type, args.dst_dir, pair_data, exchange, pair
+                # )
+                from pudb import set_trace; set_trace()
                 if connection:
                     # Insert into database.
                     hsql.execute_insert_query(
