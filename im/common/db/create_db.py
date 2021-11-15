@@ -100,7 +100,7 @@ def create_im_database(
 
     :param connection: a database connection
     :param new_db: name of database to connect to, e.g. `im_db_local`
-    :param force: overwrite existing database
+    :param overwrite: overwrite existing database
     """
     _LOG.debug("connection=%s", connection)
     hsql.create_database(connection, db=new_db, overwrite=overwrite)
