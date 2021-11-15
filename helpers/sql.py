@@ -410,3 +410,19 @@ def find_common_columns(
             df, columns=["table1", "table2", "num_comm_cols", "common_cols"]
         )
     return obj
+
+
+def get_remove_duplicates_query(table: str, id_col: str, columns: List[str]):
+    """
+
+    :param table:
+    :param columns:
+    :return:
+    """
+    # TODO(*): Add a "limit" parameter if possible, to check only in top N rows.
+    remove_statement = ["DELETE FROM %s a USING %s b" % table]
+    remove_statement.append("WHERE a.%s < b.%s" % id_col)
+    for c in columns:
+        remove_statement.append("AND a.%s = b.%s" % c)
+    remove_statement = " ".join(remove_statement)
+    return
