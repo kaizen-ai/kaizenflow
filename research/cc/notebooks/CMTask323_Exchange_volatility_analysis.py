@@ -22,20 +22,20 @@ import pandas as pd
 import seaborn as sns
 from statsmodels.tsa.stattools import adfuller
 
-import core.config.config_ as ccocon
+import core.config.config_ as cconconf
 import core.plotting as cplot
 import helpers.s3 as hs3
-import research.cc.statistics as rccsta
+import research.cc.statistics as rccstat
 
 # %% [markdown]
 # # Config
 
 # %%
-def get_cmtask323_config() -> ccocon.Config:
+def get_cmtask323_config() -> cconconf.Config:
     """
     Get task323-specific config.
     """
-    config = ccocon.Config()
+    config = cconconf.Config()
     # Load parameters.
     config.add_subconfig("load")
     config["load"]["aws_profile"] = "am"
@@ -171,7 +171,7 @@ frequency = "1D"
 compute_daily_vix_ema = lambda data: compute_volatility_for_each_coin(
     data, freq=frequency
 )
-daily_vix_ema = rccsta.compute_stats_for_universe(config, compute_daily_vix_ema)
+daily_vix_ema = rccstat.compute_stats_for_universe(config, compute_daily_vix_ema)
 
 # %%
 ema_df_daily = get_df_with_coin_price_volatility(daily_vix_ema, display_plot=True)
@@ -185,7 +185,7 @@ frequency = "5min"
 compute_5min_vix_ema = lambda data: compute_volatility_for_each_coin(
     data, freq=frequency
 )
-vix_ema_5min = rccsta.compute_stats_for_universe(config, compute_5min_vix_ema)
+vix_ema_5min = rccstat.compute_stats_for_universe(config, compute_5min_vix_ema)
 
 # %%
 ema_df_5min = get_df_with_coin_price_volatility(vix_ema_5min, display_plot=True)
@@ -197,7 +197,7 @@ display(ema_df_5min)
 # %%
 frequency = "1D"
 compute_daily_close = lambda data: daily_close(data, freq=frequency)
-daily_close = rccsta.compute_stats_for_universe(config, compute_daily_close)
+daily_close = rccstat.compute_stats_for_universe(config, compute_daily_close)
 
 # %%
 std_df = get_overall_returns_volatility(daily_close, display_plot=True)
