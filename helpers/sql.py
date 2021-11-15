@@ -91,7 +91,7 @@ def check_db_connection(
     while True:
         _LOG.info("Waiting for PostgreSQL to become available...")
         cmd = f"pg_isready -d {db_name} -p {port} -h {host}"
-        rc = hsyint.system(cmd,abort_on_error=False)
+        rc = hsyint.system(cmd, abort_on_error=False)
         time.sleep(1)
         if rc == 0:
             _LOG.info("PostgreSQL is available")
@@ -100,8 +100,8 @@ def check_db_connection(
 
 def db_connection_to_str(connection: DbConnection) -> str:
     """
-    Get database connection details using connection. Connection
-    details include:
+    Get database connection details using connection. Connection details
+    include:
 
         - Database name
         - Host
@@ -113,11 +113,13 @@ def db_connection_to_str(connection: DbConnection) -> str:
     :return: database connection details
     """
     info = connection.info
-    txt = (f"dbname={info.dbname}\n"
-           f"host={info.host}\n"
-           f"port={info.port}\n"
-           f"user={info.user}\n"
-           f"password={info.password}")
+    txt = (
+        f"dbname={info.dbname}\n"
+        f"host={info.host}\n"
+        f"port={info.port}\n"
+        f"user={info.user}\n"
+        f"password={info.password}"
+    )
     return txt
 
 
@@ -412,17 +414,21 @@ def find_common_columns(
     return obj
 
 
-def get_remove_duplicates_query(table: str, id_col: str, columns: List[str]):
+def get_remove_duplicates_query(
+    table: str, id_col: str, columns: List[str]
+) -> str:
     """
 
     :param table:
+    :param id_col:
     :param columns:
     :return:
     """
     # TODO(*): Add a "limit" parameter if possible, to check only in top N rows.
-    remove_statement = ["DELETE FROM %s a USING %s b" % table]
-    remove_statement.append("WHERE a.%s < b.%s" % id_col)
+    remove_statement = []
+    remove_statement.append("DELETE FROM {0} a USING {0} b".format(table))
+    remove_statement.append("WHERE a.{0} < b.{0}".format(id_col))
     for c in columns:
-        remove_statement.append("AND a.%s = b.%s" % c)
+        remove_statement.append("AND a.{0} = b.{0}".format(c))
     remove_statement = " ".join(remove_statement)
-    return
+    return remove_statement
