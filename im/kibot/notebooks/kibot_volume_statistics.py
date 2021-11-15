@@ -28,9 +28,9 @@ from typing import Dict
 import pandas as pd
 
 import helpers.s3 as hs3
-import im.common.data.types as vcdtyp
+import im.common.data.types as imcodatyp
 import im.kibot.data.load as vkdloa
-import im.kibot.data.load.kibot_file_path_generator as vkdlfi
+import im.kibot.data.load.kibot_file_path_generator as imkdlkfpge
 
 # %% [markdown] pycharm={"name": "#%% md\n"}
 # Define helper functions to calculate the report.
@@ -108,7 +108,7 @@ def get_price_data(
 
 # %% pycharm={"name": "#%%\n"}
 def generate_report(
-    contract_type: vcdtyp.ContractType, frequency: vcdtyp.Frequency
+    contract_type: imcodatyp.ContractType, frequency: imcodatyp.Frequency
 ) -> pd.DataFrame:
     """
     Generate a report for a dataset.
@@ -117,8 +117,8 @@ def generate_report(
     :param contract_type: `continuous` or `expiry`
     :return: a dataframe with the report
     """
-    dataset_aws_path = vkdlfi.KibotFilePathGenerator().generate_file_path(
-        frequency, contract_type, "ROOT", ext=vcdtyp.Extension.CSV
+    dataset_aws_path = imkdlkfpge.KibotFilePathGenerator().generate_file_path(
+        frequency, contract_type, "ROOT", ext=imcodatyp.Extension.CSV
     )
     dataset_aws_directory = os.path.dirname(dataset_aws_path)
     # Get a list of payloads (symbols) in format XYZ.csv.gz.
@@ -160,7 +160,7 @@ def generate_report(
 
 # %% pycharm={"name": "#%%\n"}
 dataset_report = generate_report(
-    vcdtyp.ContractType.Expiry, vcdtyp.Frequency.Minutely
+    imcodatyp.ContractType.Expiry, imcodatyp.Frequency.Minutely
 )
 dataset_report
 
@@ -169,7 +169,7 @@ dataset_report
 
 # %% pycharm={"name": "#%%\n"}
 dataset_report = generate_report(
-    vcdtyp.ContractType.Expiry, vcdtyp.Frequency.Daily
+    imcodatyp.ContractType.Expiry, imcodatyp.Frequency.Daily
 )
 dataset_report
 
@@ -178,7 +178,7 @@ dataset_report
 
 # %% pycharm={"name": "#%%\n", "is_executing": true}
 dataset_report = generate_report(
-    vcdtyp.ContractType.Continuous, vcdtyp.Frequency.Minutely
+    imcodatyp.ContractType.Continuous, imcodatyp.Frequency.Minutely
 )
 dataset_report
 
@@ -187,6 +187,6 @@ dataset_report
 
 # %% pycharm={"name": "#%%\n", "is_executing": true}
 dataset_report = generate_report(
-    vcdtyp.ContractType.Continuous, vcdtyp.Frequency.Daily
+    imcodatyp.ContractType.Continuous, imcodatyp.Frequency.Daily
 )
 dataset_report

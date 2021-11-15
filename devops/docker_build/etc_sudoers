@@ -26,6 +26,9 @@ root    ALL=(ALL:ALL) ALL
 %sudo   ALL=(ALL:ALL) ALL
 
 # See sudoers(5) for more information on "#include" directives:
+# Mac user.
+user_501 ALL=(ALL) NOPASSWD:ALL
+# Linux users.
 user_1001 ALL=(ALL) NOPASSWD:ALL
 user_1002 ALL=(ALL) NOPASSWD:ALL
 user_1003 ALL=(ALL) NOPASSWD:ALL

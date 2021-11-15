@@ -20,10 +20,10 @@ import ib_insync
 
 print(ib_insync.__all__)
 
-import im.ib.data.extract.gateway.utils as ibutils
+import im.ib.data.extract.gateway.utils as imidegaut
 
 # %%
-ib = ibutils.ib_connect(client_id=33, is_notebook=True)
+ib = imidegaut.ib_connect(client_id=33, is_notebook=True)
 
 # %%
 # Look for ES.
@@ -32,7 +32,7 @@ ib = ibutils.ib_connect(client_id=33, is_notebook=True)
 symbol = "NG"
 # symbol = "CL"
 contract = ib_insync.Future(symbol, includeExpired=True)
-df = ibutils.get_contract_details(ib, contract, simplify_df=False)
+df = imidegaut.get_contract_details(ib, contract, simplify_df=False)
 
 display(df)
 
@@ -71,10 +71,10 @@ create_contracts(ib, contract, symbols)
 contract2.symbol = "E"
 
 # %%
-import im.ib.data.extract.gateway.metadata as ibmetadata
+import im.ib.data.extract.gateway.metadata as imidegame
 
 file_name = "./metadata.csv"
-ibmeta = ibmetadata.IbMetadata()
+ibmeta = imidegame.IbMetadata()
 
 ibmeta.update(ib, [contract], file_name, reset=True)
 

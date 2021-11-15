@@ -1,11 +1,11 @@
 import pandas as pd
 import pytest
 
-import helpers.unit_test as hut
-import im.common.data.types as icdtyp
+import helpers.unit_test as hunitest
+import im.common.data.types as imcodatyp
 import im.common.db.utils as imcodbuti
 import im.common.test.utils as ictuti
-import im.kibot.sql_writer as ikkibo
+import im.kibot.sql_writer as imkisqwri
 
 
 # TODO(*): -> TestKibotSqlWriterBackend1
@@ -21,7 +21,7 @@ class TestSqlWriterBackend1(ictuti.SqlWriterBackendTestCase):
     def setUp(self) -> None:
         super().setUp()
         # Initialize writer class to test.
-        self._writer = ikkibo.KibotSqlWriter(
+        self._writer = imkisqwri.KibotSqlWriter(
             dbname=self._dbname,
             user=self._user,
             password=self._password,
@@ -34,7 +34,7 @@ class TestSqlWriterBackend1(ictuti.SqlWriterBackendTestCase):
         Test adding a new symbol to symbol table.
         """
         self._writer.ensure_symbol_exists(
-            symbol=self._get_test_string(), asset_class=icdtyp.AssetClass.Futures
+            symbol=self._get_test_string(), asset_class=imcodatyp.AssetClass.Futures
         )
         self._check_saved_data(table="Symbol")
 
@@ -72,10 +72,10 @@ class TestSqlWriterBackend1(ictuti.SqlWriterBackendTestCase):
         df = self._writer.get_remaining_data_to_load(
             df,
             trade_symbol_id=self._trade_symbol_id,
-            frequency=icdtyp.Frequency.Daily,
+            frequency=imcodatyp.Frequency.Daily,
         )
         # Convert dataframe to string.
-        txt = hut.convert_df_to_string(df)
+        txt = hunitest.convert_df_to_string(df)
         # Check the output against the golden.
         self.check_string(txt, fuzzy_match=True)
 

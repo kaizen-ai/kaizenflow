@@ -3,6 +3,10 @@
 """
 Read daily data from S3 in Parquet format and transform it into a different
 Parquet representation.
+
+Import as:
+
+import im.data_conversion.pq_convert as imdcopqco
 """
 
 import argparse
@@ -18,13 +22,13 @@ import pyarrow.dataset as ds
 import pyarrow.parquet as pq
 from tqdm.autonotebook import tqdm
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.io_ as hio
-import helpers.parser as prsr
+import helpers.parser as hparser
 import helpers.printing as hprint
 import helpers.timer as htimer
 
-# import helpers.system_interaction as si
+# import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -174,17 +178,17 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument("--incremental", action="store_true", help="")
     parser.add_argument("--dst_dir", action="store", help="Destination dir")
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Insert your code here.
     # - Use _LOG.info(), _LOG.debug() instead of printing.
-    # - Use dbg.dassert_*() for assertion.
-    # - Use si.system() and si.system_to_string() to issue commands.
+    # - Use hdbg.dassert_*() for assertion.
+    # - Use hsysinte.system() and hsysinte.system_to_string() to issue commands.
     dst_dir = args.dst_dir
     df = read_pq_data(dst_dir)
     print(df_stats(df))
@@ -194,7 +198,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hio.create_dir(dst_dir, incremental=args.incremental)
     # Get all the dates with s3.list
     dates = get_available_dates()
-    # dbg.dassert_strictly_increasing_index(dates)
+    # hdbg.dassert_strictly_increasing_index(dates)
     # _LOG.info("Available dates=%s [%s, %s]", len(dates), min(dates), max(dates))
     # E.g., 20031002
     # Filter dates.
@@ -210,9 +214,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
         end_date = _convert_to_date(end_date)
     else:
         end_date = max(dates)
-    dbg.dassert_lte(start_date, end_date)
+    hdbg.dassert_lte(start_date, end_date)
     dates = [d for d in dates if start_date <= d <= end_date]
-    dbg.dassert_lte(1, len(dates), "No dates were selected")
+    hdbg.dassert_lte(1, len(dates), "No dates were selected")
     _LOG.info("Filtered dates=%s [%s, %s]", len(dates), min(dates), max(dates))
 
     # Scan the dates.

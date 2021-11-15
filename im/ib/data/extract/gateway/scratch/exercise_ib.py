@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+"""
+Import as:
+
+import im.ib.data.extract.gateway.scratch.exercise_ib as imidegseib
+"""
+
 import datetime
 
 import ib_insync

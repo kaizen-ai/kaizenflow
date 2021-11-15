@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import im.ib.metadata.extract.ib_metadata_crawler.middlewares as imimeimcmi
+"""
+
 from scrapy import signals
 
 

@@ -1,17 +1,17 @@
 """
 Import as:
 
-import im.common.metadata.symbols as mcmsym
+import im.common.metadata.symbols as imcomesym
 """
 import abc
 import dataclasses
 import logging
 from typing import List, Optional, Tuple
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.s3 as hs3
-import im.common.data.load.file_path_generator as icdlfi
-import im.common.data.types as icdtyp
+import im.common.data.load.file_path_generator as imcdlfpage
+import im.common.data.types as imcodatyp
 
 _LOG = logging.getLogger(__name__)
 
@@ -35,12 +35,12 @@ class Symbol:
     #  asset_class, contract_type, currency
     ticker: str
     exchange: str
-    asset_class: icdtyp.AssetClass
-    contract_type: Optional[icdtyp.ContractType]
+    asset_class: imcodatyp.AssetClass
+    contract_type: Optional[imcodatyp.ContractType]
     currency: str
 
     def __eq__(self, other: "Symbol") -> bool:
-        dbg.dassert_isinstance(other, Symbol)
+        hdbg.dassert_isinstance(other, Symbol)
         return self._to_string_tuple() == other._to_string_tuple()
 
     def __hash__(self) -> int:
@@ -53,7 +53,7 @@ class Symbol:
         return string
 
     def __lt__(self, other: "Symbol") -> bool:
-        dbg.dassert_isinstance(other, Symbol)
+        hdbg.dassert_isinstance(other, Symbol)
         return self._to_string_tuple() < other._to_string_tuple()
 
     # TODO(*): matches
@@ -61,8 +61,8 @@ class Symbol:
         self,
         ticker: Optional[str],
         exchange: Optional[str],
-        asset_class: Optional[icdtyp.AssetClass],
-        contract_type: Optional[icdtyp.ContractType],
+        asset_class: Optional[imcodatyp.AssetClass],
+        contract_type: Optional[imcodatyp.ContractType],
         currency: Optional[str],
     ) -> bool:
         """
@@ -109,13 +109,13 @@ class SymbolUniverse(abc.ABC):
         self,
         ticker: Optional[str],
         exchange: Optional[str],
-        asset_class: Optional[icdtyp.AssetClass],
-        contract_type: Optional[icdtyp.ContractType],
+        asset_class: Optional[imcodatyp.AssetClass],
+        contract_type: Optional[imcodatyp.ContractType],
         currency: Optional[str],
         # TODO(*): is_data_available
         is_downloaded: Optional[bool] = None,
-        frequency: Optional[icdtyp.Frequency] = None,
-        path_generator: Optional[icdlfi.FilePathGenerator] = None,
+        frequency: Optional[imcodatyp.Frequency] = None,
+        path_generator: Optional[imcdlfpage.FilePathGenerator] = None,
     ) -> List[Symbol]:
         """
         Return all the available symbols based on different selection criteria.
@@ -156,7 +156,7 @@ class SymbolUniverse(abc.ABC):
                     contract_type=symbol.contract_type,
                     exchange=symbol.exchange,
                     currency=symbol.currency,
-                    ext=icdtyp.Extension.CSV,
+                    ext=imcodatyp.Extension.CSV,
                 )
                 # TODO(*): Generalize this so we don't have to rely on S3.
                 s3fs = hs3.get_s3fs("am")

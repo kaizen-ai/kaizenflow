@@ -1,17 +1,17 @@
-import helpers.unit_test as hut
-import im.common.data.types as vcdtyp
-import im.kibot.data.load.dataset_name_parser as vkdlda
+import helpers.unit_test as hunitest
+import im.common.data.types as imcodatyp
+import im.kibot.data.load.dataset_name_parser as imkdldnapa
 
 
-class TestDatasetNameParserExtractAssetClass(hut.TestCase):
+class TestDatasetNameParserExtractAssetClass(hunitest.TestCase):
     def test_all_futures(self) -> None:
         # Define input variables.
         dataset = "all_futures_continuous_contracts_1min"
         # Call function to test.
-        cls = vkdlda.DatasetNameParser()
+        cls = imkdldnapa.DatasetNameParser()
         act = cls._extract_asset_class(dataset=dataset)
         # Define expected output.
-        exp = vcdtyp.AssetClass.Futures
+        exp = imcodatyp.AssetClass.Futures
         # Compare actual and expected output.
         self.assertEqual(act, exp)
 
@@ -19,10 +19,10 @@ class TestDatasetNameParserExtractAssetClass(hut.TestCase):
         # Define input variables.
         dataset = "all_stocks_1min"
         # Call function to test.
-        cls = vkdlda.DatasetNameParser()
+        cls = imkdldnapa.DatasetNameParser()
         act = cls._extract_asset_class(dataset=dataset)
         # Define expected output.
-        exp = vcdtyp.AssetClass.Stocks
+        exp = imcodatyp.AssetClass.Stocks
         # Compare actual and expected output.
         self.assertEqual(act, exp)
 
@@ -30,10 +30,10 @@ class TestDatasetNameParserExtractAssetClass(hut.TestCase):
         # Define input variables.
         dataset = "all_etfs_daily"
         # Call function to test.
-        cls = vkdlda.DatasetNameParser()
+        cls = imkdldnapa.DatasetNameParser()
         act = cls._extract_asset_class(dataset=dataset)
         # Define expected output.
-        exp = vcdtyp.AssetClass.ETFs
+        exp = imcodatyp.AssetClass.ETFs
         # Compare actual and expected output.
         self.assertEqual(act, exp)
 
@@ -41,10 +41,10 @@ class TestDatasetNameParserExtractAssetClass(hut.TestCase):
         # Define input variables.
         dataset = "all_forex_pairs_1min"
         # Call function to test.
-        cls = vkdlda.DatasetNameParser()
+        cls = imkdldnapa.DatasetNameParser()
         act = cls._extract_asset_class(dataset=dataset)
         # Define expected output.
-        exp = vcdtyp.AssetClass.Forex
+        exp = imcodatyp.AssetClass.Forex
         # Compare actual and expected output.
         self.assertEqual(act, exp)
 
@@ -52,23 +52,23 @@ class TestDatasetNameParserExtractAssetClass(hut.TestCase):
         # Define input variables.
         dataset = "sp_500_tickbidask"
         # Call function to test.
-        cls = vkdlda.DatasetNameParser()
+        cls = imkdldnapa.DatasetNameParser()
         act = cls._extract_asset_class(dataset=dataset)
         # Define expected output.
-        exp = vcdtyp.AssetClass.SP500
+        exp = imcodatyp.AssetClass.SP500
         # Compare actual and expected output.
         self.assertEqual(act, exp)
 
 
-class TestDatasetNameParserExtractFrequency(hut.TestCase):
+class TestDatasetNameParserExtractFrequency(hunitest.TestCase):
     def test_daily(self) -> None:
         # Define input variables.
         dataset = "all_futures_continuous_contracts_daily"
         # Call function to test.
-        cls = vkdlda.DatasetNameParser()
+        cls = imkdldnapa.DatasetNameParser()
         act = cls._extract_frequency(dataset=dataset)
         # Define expected output.
-        exp = vcdtyp.Frequency.Daily
+        exp = imcodatyp.Frequency.Daily
         # Compare actual and expected output.
         self.assertEqual(act, exp)
 
@@ -76,10 +76,10 @@ class TestDatasetNameParserExtractFrequency(hut.TestCase):
         # Define input variables.
         dataset = "all_futures_continuous_contracts_1min"
         # Call function to test.
-        cls = vkdlda.DatasetNameParser()
+        cls = imkdldnapa.DatasetNameParser()
         act = cls._extract_frequency(dataset=dataset)
         # Define expected output.
-        exp = vcdtyp.Frequency.Minutely
+        exp = imcodatyp.Frequency.Minutely
         # Compare actual and expected output.
         self.assertEqual(act, exp)
 
@@ -87,23 +87,23 @@ class TestDatasetNameParserExtractFrequency(hut.TestCase):
         # Define input variables.
         dataset = "all_futures_continuous_contracts_tick"
         # Call function to test.
-        cls = vkdlda.DatasetNameParser()
+        cls = imkdldnapa.DatasetNameParser()
         act = cls._extract_frequency(dataset=dataset)
         # Define expected output.
-        exp = vcdtyp.Frequency.Tick
+        exp = imcodatyp.Frequency.Tick
         # Compare actual and expected output.
         self.assertEqual(act, exp)
 
 
-class TestDatasetNameParserExtractContractType(hut.TestCase):
+class TestDatasetNameParserExtractContractType(hunitest.TestCase):
     def test_continuous(self) -> None:
         # Define input variables.
         dataset = "all_futures_continuous_contracts_1min"
         # Call function to test.
-        cls = vkdlda.DatasetNameParser()
+        cls = imkdldnapa.DatasetNameParser()
         act = cls._extract_contract_type(dataset=dataset)
         # Define expected output.
-        exp = vcdtyp.ContractType.Continuous
+        exp = imcodatyp.ContractType.Continuous
         # Compare actual and expected output.
         self.assertEqual(act, exp)
 
@@ -111,9 +111,9 @@ class TestDatasetNameParserExtractContractType(hut.TestCase):
         # Define input variables.
         dataset = "all_futures_contracts_1min"
         # Call function to test.
-        cls = vkdlda.DatasetNameParser()
+        cls = imkdldnapa.DatasetNameParser()
         act = cls._extract_contract_type(dataset=dataset)
         # Define expected output.
-        exp = vcdtyp.ContractType.Expiry
+        exp = imcodatyp.ContractType.Expiry
         # Compare actual and expected output.
         self.assertEqual(act, exp)

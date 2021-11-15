@@ -1,11 +1,11 @@
 """
 Import as:
 
-import im.app.services.loader_factory as iasloa
+import im.app.services.loader_factory as imaselofa
 """
 from typing import Any
 
-import im.common.data.load.abstract_data_loader as icdlab
+import im.common.data.load.abstract_data_loader as imcdladalo
 
 # TODO(*): Move it out to app/
 
@@ -19,7 +19,7 @@ class LoaderFactory:
     @classmethod
     def get_loader(
         cls, storage_type: str, provider: str, **kwargs: Any
-    ) -> icdlab.AbstractDataLoader:
+    ) -> imcdladalo.AbstractDataLoader:
         """
         Return a data loader for the requested `storage_type` and `provider`.
 
@@ -37,22 +37,22 @@ class LoaderFactory:
         return loader
 
     @staticmethod
-    def _get_s3_loader(provider: str) -> icdlab.AbstractS3DataLoader:
+    def _get_s3_loader(provider: str) -> imcdladalo.AbstractS3DataLoader:
         """
         Return a data loader from S3 for the requested `provider`.
 
         :param provider: provider (e.g., kibot)
         :raises ValueError: if loader is not implemented for provider
         """
-        loader: icdlab.AbstractS3DataLoader
+        loader: imcdladalo.AbstractS3DataLoader
         if provider == "kibot":
-            import im.kibot.data.load.kibot_s3_data_loader as ikdlki3
+            import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
 
-            loader = ikdlki3.KibotS3DataLoader()
+            loader = imkdlksdlo.KibotS3DataLoader()
         elif provider == "ib":
-            import im.ib.data.load.ib_s3_data_loader as iidlib3
+            import im.ib.data.load.ib_s3_data_loader as imidlisdlo
 
-            loader = iidlib3.IbS3DataLoader()
+            loader = imidlisdlo.IbS3DataLoader()
         else:
             raise ValueError("S3 loader for %s is not implemented" % provider)
         return loader
@@ -60,7 +60,7 @@ class LoaderFactory:
     @staticmethod
     def _get_sql_loader(
         provider: str, dbname: str, user: str, password: str, host: str, port: int
-    ) -> icdlab.AbstractSqlDataLoader:
+    ) -> imcdladalo.AbstractSqlDataLoader:
         """
         Return a data loader from SQL for the requested `provider`.
 
@@ -72,17 +72,17 @@ class LoaderFactory:
         :param port: database port
         :raises ValueError: if SQL loader is not implemented for provider
         """
-        loader: icdlab.AbstractSqlDataLoader
+        loader: imcdladalo.AbstractSqlDataLoader
         if provider == "kibot":
-            import im.kibot.data.load.kibot_sql_data_loader as ikdlki
+            import im.kibot.data.load.kibot_sql_data_loader as ikdlksdlo
 
-            loader = ikdlki.KibotSqlDataLoader(
+            loader = ikdlksdlo.KibotSqlDataLoader(
                 dbname=dbname, user=user, password=password, host=host, port=port
             )
         elif provider == "ib":
-            import im.ib.data.load.ib_sql_data_loader as iidlib
+            import im.ib.data.load.ib_sql_data_loader as iidlisdlo
 
-            loader = iidlib.IbSqlDataLoader(
+            loader = iidlisdlo.IbSqlDataLoader(
                 dbname=dbname, user=user, password=password, host=host, port=port
             )
         else:

@@ -1,11 +1,17 @@
+"""
+Import as:
+
+import im.kibot.metadata.load.ticker_lists as imkmltili
+"""
+
 import enum
 import os
 from typing import List, Tuple
 
 import pandas as pd
 
-import im.kibot.metadata.config as vkmcon
-import im.kibot.metadata.types as vkmtyp
+import im.kibot.metadata.config as imkimecon
+import im.kibot.metadata.types as imkimetyp
 
 
 class ParsingState(enum.Enum):
@@ -40,10 +46,10 @@ class TickerListsLoader:
     """
     # pylint: enable=line-too-long
 
-    def get(self, ticker_list: str, listed: bool = True) -> List[vkmtyp.Ticker]:
+    def get(self, ticker_list: str, listed: bool = True) -> List[imkimetyp.Ticker]:
         s3_path = os.path.join(
-            vkmcon.S3_PREFIX,
-            vkmcon.TICKER_LISTS_SUB_DIR,
+            imkimecon.S3_PREFIX,
+            imkimecon.TICKER_LISTS_SUB_DIR,
             f"{ticker_list}.txt",
         )
         lines = self._get_lines(s3_path=s3_path)
@@ -62,12 +68,12 @@ class TickerListsLoader:
 
     def _parse_lines(
         self, lines: List[str]
-    ) -> Tuple[List[vkmtyp.Ticker], List[vkmtyp.Ticker]]:
+    ) -> Tuple[List[imkimetyp.Ticker], List[imkimetyp.Ticker]]:
         """
         Get a list of listed & delisted tickers from lines.
         """
-        listed_tickers: List[vkmtyp.Ticker] = []
-        delisted_tickers: List[vkmtyp.Ticker] = []
+        listed_tickers: List[imkimetyp.Ticker] = []
+        delisted_tickers: List[imkimetyp.Ticker] = []
         state = ParsingState.Started
         for line in lines:
             if not line.strip():
@@ -89,7 +95,7 @@ class TickerListsLoader:
         return listed_tickers, delisted_tickers
 
     @staticmethod
-    def _get_ticker_from_line(line: str) -> vkmtyp.Ticker:
+    def _get_ticker_from_line(line: str) -> imkimetyp.Ticker:
         # pylint: disable=line-too-long
         """
         Get a ticker from a line.
@@ -104,5 +110,5 @@ class TickerListsLoader:
         args[-1] = args[-1].strip()
         # Skip index col.
         args = args[1:]
-        ret = vkmtyp.Ticker(*args)
+        ret = imkimetyp.Ticker(*args)
         return ret
