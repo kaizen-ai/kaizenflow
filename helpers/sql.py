@@ -79,7 +79,7 @@ def get_connection_from_string(
     return connection, cursor
 
 
-def check_db_connection(
+def wait_db_connection(
     db_name: str,
     port: int,
     host: str,
