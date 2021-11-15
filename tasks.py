@@ -2,6 +2,7 @@ import logging
 import os
 
 import helpers.versioning as hversi
+import repo_config as rconf
 
 # Expose the pytest targets.
 # Extract with:
@@ -57,12 +58,12 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     run_superslow_tests,
     traceback,
 )
+
 # TODO(gp): We want users to go to the component dir to run to avoid coupling.
 from im.im_lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     im_docker_cmd,
     im_docker_down,
 )
-import repo_config as rconf
 
 _LOG = logging.getLogger(__name__)
 
@@ -82,6 +83,7 @@ DOCKER_BASE_IMAGE_NAME = rconf.get_docker_base_image_name()
 def docker_release_end_to_end_test(*args, **kwargs):
     """
     Dummy no-op function that mimics end-to-end test that always passes.
+
     Used in docker_release_dev_image.
     """
     return True

@@ -1,7 +1,7 @@
 """
 Import as:
 
-import oms.order as oord
+import oms.order as omorder
 """
 import collections
 import copy

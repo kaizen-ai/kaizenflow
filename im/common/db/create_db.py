@@ -13,6 +13,7 @@ import psycopg2 as psycop
 import psycopg2.sql as psql
 
 import helpers.sql as hsql
+
 # TODO(gp): Not sure common should depend on these. Maybe the name of the dir should
 #  be `im_db`.
 import im.ccxt.db.utils as imccdbuti

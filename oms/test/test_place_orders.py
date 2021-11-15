@@ -2,10 +2,9 @@ import logging
 
 import pandas as pd
 
-import core.dataflow.test.test_price_interface as dartttdi
-import helpers.hasyncio as hhasynci
-import helpers.unit_test as huntes
-import oms.place_orders as oplord
+import helpers.hasyncio as hasynci
+import helpers.unit_test as hunitest
+import oms.place_orders as oplaorde
 import oms.test.test_portfolio as ottport
 
 _LOG = logging.getLogger(__name__)
@@ -13,9 +12,9 @@ _LOG = logging.getLogger(__name__)
 import oms.test.test_portfolio as ottport
 
 
-class TestPlaceOrders1(huntes.TestCase):
+class TestPlaceOrders1(hunitest.TestCase):
     def test1(self) -> None:
-        with hhasynci.solipsism_context() as event_loop:
+        with hasynci.solipsism_context() as event_loop:
             config = {}
             # # Build a ReplayedTimePriceInterface.
             # start_datetime = pd.Timestamp("2000-01-01 09:30:00-05:00")
@@ -59,7 +58,7 @@ class TestPlaceOrders1(huntes.TestCase):
             config["order_type"] = "price@twap"
             # Run.
             execution_mode = "batch"
-            oplord.place_orders(
+            oplaorde.place_orders(
                 predictions,
                 execution_mode,
                 config,

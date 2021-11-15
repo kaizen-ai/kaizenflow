@@ -1,7 +1,15 @@
+"""
+Import as:
+
+import oms.oms_db as oomsdb
+"""
+
 # Create a DB with this table
+
 
 def get_create_target_files_table() -> str:
     """
+    ```
     tradedate                                                     2021-11-12
     targetlistid                                                           1
     instanceid                                                          3504
@@ -15,11 +23,13 @@ def get_create_target_files_table() -> str:
     cancel_count                                                           0
     success                                                            False
     reason                 There were a total of 1 malformed requests in ...
+    ```
     """
 
 
 def wait_for_target_ack():
     """
+    
     """
     # Iterate on a query until there is a row coming back.
     # Otherwise time out.

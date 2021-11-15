@@ -1,7 +1,7 @@
 """
 Import as:
 
-import oms.portfolio as opor
+import oms.portfolio as omportfo
 """
 import collections
 import logging
@@ -12,8 +12,8 @@ import pandas as pd
 
 import core.dataflow.price_interface as cdtfprint
 import helpers.dbg as hdbg
-import helpers.printing as hprintin
-import oms.order as oord
+import helpers.printing as hprint
+import oms.order as omorder
 
 _LOG = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ class Portfolio:
         :param price_column: column name used to mark holdings to market
         """
         _LOG.debug(
-            hprintin.to_str(
+            hprint.to_str(
                 "strategy_id account asset_id_column price_column initial_cash initial_ts"
             )
         )
@@ -102,6 +102,13 @@ class Portfolio:
             [], index=[initial_ts], columns=self._order_columns
         )
 
+    def __str__(self) -> str:
+        act = []
+        act.append("# holdings=\n%s" % hprint.dataframe_to_str(self.holdings))
+        act.append("# orders=\n%s" % hprint.dataframe_to_str(self.orders))
+        act = "\n".join(act)
+        return act
+
     @property
     def holdings(self) -> pd.DataFrame:
         return self._holdings
@@ -109,13 +116,6 @@ class Portfolio:
     @property
     def orders(self) -> pd.DataFrame:
         return self._orders
-
-    def __str__(self) -> str:
-        act = []
-        act.append("# holdings=\n%s" % hprintin.dataframe_to_str(self.holdings))
-        act.append("# orders=\n%s" % hprintin.dataframe_to_str(self.orders))
-        act = "\n".join(act)
-        return act
 
     def get_last_timestamp(self) -> pd.Timestamp:
         """
@@ -147,8 +147,8 @@ class Portfolio:
         - empty dataframe if there are no holdings for the requested timestamp
         `ts`
         """
-        _LOG.debug(hprintin.to_str("ts asset_id exclude_cash"))
-        _LOG.debug("holdings=\n%s", hprintin.dataframe_to_str(self._holdings))
+        _LOG.debug(hprint.to_str("ts asset_id exclude_cash"))
+        _LOG.debug("holdings=\n%s", hprint.dataframe_to_str(self._holdings))
         if ts not in self._holdings.index:
             empty_holdings = pd.DataFrame(
                 [], index=[], columns=self._holdings_columns
@@ -208,9 +208,9 @@ class Portfolio:
         """
         _LOG.debug(
             "\n%s",
-            hprintin.frame("mark_holdings_to_market: ts=%s" % ts, char1="<"),
+            hprint.frame("mark_holdings_to_market: ts=%s" % ts, char1="<"),
         )
-        _LOG.debug("holdings=\n%s", hprintin.dataframe_to_str(holdings))
+        _LOG.debug("holdings=\n%s", hprint.dataframe_to_str(holdings))
         # Get the prices for the assets.
         asset_ids = holdings["asset_id"].unique()
         hdbg.dassert(np.isfinite(asset_ids).all())
@@ -223,7 +223,7 @@ class Portfolio:
         hdbg.dassert_eq(
             price_df.shape[0], len(asset_ids), msg="Some assets have no price"
         )
-        _LOG.debug("price_df=\n%s", hprintin.dataframe_to_str(price_df))
+        _LOG.debug("price_df=\n%s", hprint.dataframe_to_str(price_df))
         # Extract subset of price information.
         columns = [self._asset_id_column, self._price_column]
         hdbg.dassert_is_subset(columns, price_df.columns)
@@ -247,7 +247,7 @@ class Portfolio:
         Return the total value of all holdings and cash at time `ts`.
         """
         _LOG.debug(
-            "\n%s", hprintin.frame("get_total_wealth: ts=%s" % ts, char1="<")
+            "\n%s", hprint.frame("get_total_wealth: ts=%s" % ts, char1="<")
         )
         # Mark to market the current holdings.
         asset_id = None
@@ -272,17 +272,17 @@ class Portfolio:
         return total_wealth
 
     def place_orders(
-        self, ts: pd.Timestamp, next_ts: pd.Timestamp, orders: List[oord.Order]
+        self, ts: pd.Timestamp, next_ts: pd.Timestamp, orders: List[omorder.Order]
     ) -> None:
         """
         Change state of the portfolio based on the given orders.
         """
-        _LOG.debug("\n%s", hprintin.frame("place_orders: ts=%s" % ts, char1="<"))
+        _LOG.debug("\n%s", hprint.frame("place_orders: ts=%s" % ts, char1="<"))
         hdbg.dassert_isinstance(ts, pd.Timestamp)
         hdbg.dassert_isinstance(next_ts, pd.Timestamp)
         _LOG.debug(
             "before place_orders: orders=\n%s",
-            hprintin.dataframe_to_str(self._orders),
+            hprint.dataframe_to_str(self._orders),
         )
         # TODO(gp): Check that orders are all for different asset_ids.
         last_ts = self.get_last_timestamp()
@@ -307,7 +307,7 @@ class Portfolio:
             orders_row.update(order.to_dict())
             # Get the current holding for the asset of the order.
             holdings = self.get_holding_as_scalar(last_ts, order.asset_id)
-            _LOG.debug("holdings=\n%s", hprintin.dataframe_to_str(holdings))
+            _LOG.debug("holdings=\n%s", hprint.dataframe_to_str(holdings))
             # Complete fills.
             orders_row["num_shares_filled"] = order.num_shares
             # TODO(gp): Allow partial fills.
@@ -338,18 +338,8 @@ class Portfolio:
         self._holdings = pd.concat([holdings_tmp, self._holdings])
         _LOG.debug(
             "after place_orders: orders=\n%s",
-            hprintin.dataframe_to_str(self._orders),
+            hprint.dataframe_to_str(self._orders),
         )
-
-    @staticmethod
-    def _concat(rows: List[Dict[str, Any]], columns: List[str]) -> pd.DataFrame:
-        df_tmp = pd.DataFrame(rows)
-        _LOG.debug("df_tmp=\n%s", hprintin.dataframe_to_str(df_tmp))
-        df_tmp.set_index("timestamp", drop=True, inplace=True)
-        df_tmp.index.name = None
-        df_tmp.sort_values("asset_id", inplace=True)
-        hdbg.dassert_set_eq(df_tmp.columns, columns)
-        return df_tmp
 
     def get_pnl(self):
         """
@@ -392,3 +382,13 @@ class Portfolio:
         # fx                     1.0
         # TODO(gp): Just implement from get_current_holdings.
         return
+
+    @staticmethod
+    def _concat(rows: List[Dict[str, Any]], columns: List[str]) -> pd.DataFrame:
+        df_tmp = pd.DataFrame(rows)
+        _LOG.debug("df_tmp=\n%s", hprint.dataframe_to_str(df_tmp))
+        df_tmp.set_index("timestamp", drop=True, inplace=True)
+        df_tmp.index.name = None
+        df_tmp.sort_values("asset_id", inplace=True)
+        hdbg.dassert_set_eq(df_tmp.columns, columns)
+        return df_tmp

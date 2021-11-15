@@ -1,7 +1,7 @@
 """
 Import as:
 
-import oms.pnl_simulator as pnlsim
+import oms.pnl_simulator as opnlsimu
 """
 import collections
 import copy
@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from tqdm.autonotebook import tqdm
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.htqdm as htqdm
 import helpers.printing as hprint
 
@@ -26,6 +26,7 @@ _LOG = logging.getLogger(__name__)
 #  uniformity with the rest of the code.
 # TODO(gp): Find a better name for `future_snoop_allocation` that represents the
 #  intent rather than how it's achieve it (e.g., `force_ideal_allocation`).
+
 
 def _ts_to_str(ts: pd.Timestamp) -> str:
     """
@@ -131,8 +132,7 @@ def get_example_market_data2(
 
 
 def compute_pnl_level1(
-    initial_wealth: float, df: pd.DataFrame, df_5mins: pd.DataFrame,
-    prefix="sim1"
+    initial_wealth: float, df: pd.DataFrame, df_5mins: pd.DataFrame, prefix="sim1"
 ) -> Tuple[float, float, pd.DataFrame]:
     """
     In this implementation:
@@ -168,11 +168,11 @@ def compute_pnl_level1(
         _LOG.debug("wealth=%s", wealth)
         #
         ts_5 = ts + pd.DateOffset(minutes=5)
-        dbg.dassert_in(ts_5, df.index)
+        hdbg.dassert_in(ts_5, df.index)
         price_5 = df.loc[ts_5]["price"]
         #
         ts_10 = ts + pd.DateOffset(minutes=10)
-        dbg.dassert_in(ts_10, df.index)
+        hdbg.dassert_in(ts_10, df.index)
         price_10 = df.loc[ts_10]["price"]
         _LOG.debug("pred=%s price_5=%s price_10=%s", pred, price_5, price_10)
         #
@@ -257,7 +257,7 @@ def compute_lag_pnl(df_5mins: pd.DataFrame, prefix: str = "lag") -> pd.DataFrame
 # debug_mode = True
 debug_mode = False
 
-# s/dbg.dassert/if debug_mode: dbg.dassert/
+# s/dbg.dassert/if debug_mode: hdbg.dassert/
 # s/_LOG.debug/if debug_mode: _LOG.debug/
 
 
@@ -269,15 +269,15 @@ class MarketInterface:
         columns: Optional[List[str]] = None,
     ):
         self._use_cache = use_cache
-        dbg.dassert(df.index.is_monotonic)
+        hdbg.dassert(df.index.is_monotonic)
         self._df = df
         if self._use_cache:
             _LOG.info("Caching")
             self._cached = {}
-            dbg.dassert_is_not(columns, None)
+            hdbg.dassert_is_not(columns, None)
             columns = cast(List[str], columns)
             for column in tqdm(columns):
-                dbg.dassert_in(column, df.columns)
+                hdbg.dassert_in(column, df.columns)
                 self._cached[column] = df[column].to_dict()
             _LOG.info("Caching done")
 
@@ -290,11 +290,11 @@ class MarketInterface:
         if self._use_cache:
             price = self._cached[column][ts]
         else:
-            dbg.dassert_in(ts, self._df.index)
+            hdbg.dassert_in(ts, self._df.index)
             price = self._df.loc[ts][column]
             # idx = df.index.searchsorted(ts)
             # price: float = df.iloc[idx][column]
-        dbg.dassert(np.isfinite(price), "price=%s at ts=%s", price, ts)
+        hdbg.dassert(np.isfinite(price), "price=%s at ts=%s", price, ts)
         return price
 
     def get_twap_price(
@@ -308,15 +308,15 @@ class MarketInterface:
         The function should be called `get_twa_price()` or `get_twap()`.
         """
         # TODO(gp): For use_cache=True it's not clear how to speed this up.
-        dbg.dassert_lt(ts_start, ts_end)
+        hdbg.dassert_lt(ts_start, ts_end)
         # Get the slice (ts_start, ts_end] of prices.
         # TODO(gp): Maybe binary search can help.
-        dbg.dassert_in(ts_start, self._df.index)
-        dbg.dassert_in(ts_end, self._df.index)
+        hdbg.dassert_in(ts_start, self._df.index)
+        hdbg.dassert_in(ts_end, self._df.index)
         prices = self._df[ts_start:ts_end][column]
         prices = prices.iloc[1:]
         _LOG.debug("prices=\n%s", prices)
-        dbg.dassert_lte(1, prices.shape[0])
+        hdbg.dassert_lte(1, prices.shape[0])
         price: float = prices.mean()
         return price
 
@@ -351,7 +351,7 @@ class Order:
         #    - "twap"
         #    - "vwap"
         self.type_ = type_
-        dbg.dassert_lt(ts_start, ts_end)
+        hdbg.dassert_lt(ts_start, ts_end)
         self.ts_start = ts_start
         self.ts_end = ts_end
         self.num_shares = num_shares
@@ -376,7 +376,7 @@ class Order:
         """
         # Parse the type.
         config = type_.split("@")
-        dbg.dassert_eq(len(config), 2, "Invalid type_='%s'", type_)
+        hdbg.dassert_eq(len(config), 2, "Invalid type_='%s'", type_)
         price_type, timing = config
         # Get the price depending on the price_type.
         if price_type in ("price", "midpoint"):
@@ -391,8 +391,8 @@ class Order:
             price = Order._get_price(mi, ts_start, ts_end, column, timing)
         elif price_type.startswith("partial_spread"):
             perc = float(price_type.split("_")[2])
-            dbg.dassert_lte(0, perc)
-            dbg.dassert_lte(perc, 1.0)
+            hdbg.dassert_lte(0, perc)
+            hdbg.dassert_lte(perc, 1.0)
             bid_price = Order._get_price(mi, ts_start, ts_end, "bid", timing)
             ask_price = Order._get_price(mi, ts_start, ts_end, "ask", timing)
             if num_shares >= 0:
@@ -444,7 +444,7 @@ class Order:
         """
         # Only orders for the same type / interval, with different num_shares can
         # be merged.
-        dbg.dassert(self.is_mergeable(rhs))
+        hdbg.dassert(self.is_mergeable(rhs))
         num_shares = self.num_shares + rhs.num_shares
         order = Order(
             self._mi, self.type_, self.ts_start, self.ts_end, num_shares
@@ -481,7 +481,7 @@ def get_orders_to_execute(orders: List[Order], ts: pd.Timestamp) -> List[Order]:
     Return the orders from `orders` that can be executed at timestamp `ts`.
     """
     orders.sort(key=lambda x: x.ts_start, reverse=False)
-    dbg.dassert_lte(orders[0].ts_start, ts)
+    hdbg.dassert_lte(orders[0].ts_start, ts)
     # TODO(gp): This is inefficient. Use binary search.
     curr_orders = []
     for order in orders:
@@ -528,8 +528,10 @@ def _append_accounting_df(
         num_vals = len(accounting[key])
         buffer = [np.nan] * (df_5mins.shape[0] - num_vals)
         col_name = _get_col_name(key, prefix)
-        df = pd.DataFrame(value + buffer, index=df_5mins.index, columns=[col_name])
-        dbg.dassert_eq(df.shape[0], df_5mins.shape[0])
+        df = pd.DataFrame(
+            value + buffer, index=df_5mins.index, columns=[col_name]
+        )
+        hdbg.dassert_eq(df.shape[0], df_5mins.shape[0])
         dfs.append(df)
     df_5mins = pd.concat([df_5mins] + dfs, axis=1)
     return df_5mins
@@ -547,8 +549,8 @@ def get_total_wealth(
     Return the value of the portfolio at time ts.
     """
     price = mi.get_instantaneous_price(ts, column)
-    dbg.dassert(np.isfinite(price), "price=%s", price)
-    dbg.dassert(np.isfinite(holdings), "holdings=%s", holdings)
+    hdbg.dassert(np.isfinite(price), "price=%s", price)
+    hdbg.dassert(np.isfinite(holdings), "holdings=%s", holdings)
     holdings_value = holdings * price
     # _LOG.debug(
     #     "Marking at ts=%s holdings=%s at %s -> value=%s",
@@ -568,7 +570,7 @@ def _get_orders_to_execute(ts: pd.Timestamp, orders: List[Order]) -> List[Order]
     if True:
         if orders[0].ts_start == ts:
             return [orders.pop()]
-        # dbg.dassert_eq(len(orders), 1, "%s", orders_to_string(orders))
+        # hdbg.dassert_eq(len(orders), 1, "%s", orders_to_string(orders))
         assert 0
     orders_to_execute = get_orders_to_execute(orders, ts)
     _LOG.debug("orders_to_execute=%s", orders_to_string(orders_to_execute))
@@ -596,10 +598,10 @@ def compute_pnl_level2(
     df_5mins: pd.DataFrame,
     initial_wealth: float,
     config: Dict[str, Any],
-    prefix: str = "sim2"
+    prefix: str = "sim2",
 ) -> pd.DataFrame:
     print(df_5mins)
-    dbg.dassert(df_5mins.index.is_monotonic)
+    hdbg.dassert(df_5mins.index.is_monotonic)
     # Create the accounting data structure.
     columns = [
         "target_n_shares",
@@ -665,11 +667,11 @@ def _compute_pnl_level2(
         # _LOG.debug(hprint.frame("# ts=%s" % _ts_to_str(ts)))
         # 1) Place orders based on the predictions, if needed.
         _LOG.debug("pred=%s", pred)
-        dbg.dassert(np.isfinite(pred), "pred=%s", pred)
+        hdbg.dassert(np.isfinite(pred), "pred=%s", pred)
         # Mark the portfolio to market.
         _LOG.debug("# Mark portfolio to market")
         wealth = get_total_wealth(mi, ts, cash, holdings, price_column)
-        dbg.dassert(np.isfinite(wealth), "wealth=%s", wealth)
+        hdbg.dassert(np.isfinite(wealth), "wealth=%s", wealth)
         _update("wealth", wealth)
         if ts == last_index:
             # For the last timestamp we only need to mark to market, but not post
@@ -693,7 +695,7 @@ def _compute_pnl_level2(
             price_0 = Order.get_price(
                 mi, order_type, ts_start, ts_end, num_shares_proxy
             )
-            dbg.dassert(np.isfinite(price_0), "price_0=%s", pred)
+            hdbg.dassert(np.isfinite(price_0), "price_0=%s", pred)
             wealth_to_allocate = get_total_wealth(
                 mi, ts_end, cash, holdings, price_column
             )
@@ -727,7 +729,7 @@ def _compute_pnl_level2(
         #  A more accurate simulation requires to attach "callbacks" representing
         #  actions to timestamp.
         # TODO(gp): For now there should be at most one order.
-        dbg.dassert_lte(len(merged_orders), 1)
+        hdbg.dassert_lte(len(merged_orders), 1)
         order = merged_orders[0]
         _LOG.debug("order=%s", order)
         num_shares = order.num_shares

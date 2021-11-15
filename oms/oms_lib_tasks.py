@@ -1,5 +1,9 @@
 """
 Tasks related to `oms` project.
+
+Import as:
+
+import oms.oms_lib_tasks as oomlitas
 """
 
 import os
@@ -17,6 +21,7 @@ import helpers.lib_tasks as hlibtask
 def _get_docker_compose_path() -> str:
     """
     Return the absolute path to the docker-compose file for this component.
+
     E.g., `im/devops/compose/docker-compose.yml`.
     """
     # Get `amp` path.
@@ -35,13 +40,13 @@ def _get_docker_compose_path() -> str:
     return docker_compose_abs_path
 
 
-# #########################
+# #############################################################################
 
 
 def _get_docker_cmd(docker_cmd: str) -> str:
     """
-    Construct the `docker-compose' command to run a script inside
-    this container Docker component.
+    Construct the `docker-compose' command to run a script inside this
+    container Docker component.
 
     E.g, to run the `.../devops/set_schema_im_db.py`:
     ```
@@ -80,7 +85,7 @@ def oms_docker_cmd(ctx, cmd):  # type: ignore
     hlibtask._run(ctx, docker_cmd, pty=True)
 
 
-# #########################
+# #############################################################################
 
 
 def _get_docker_up_cmd() -> str:
@@ -120,7 +125,7 @@ def oms_docker_up(ctx):  # type: ignore
     hlibtask._run(ctx, docker_clean_up_cmd, pty=True)
 
 
-# #########################
+# #############################################################################
 
 
 def _get_docker_down_cmd(volumes_remove: bool) -> str:
@@ -145,7 +150,9 @@ def _get_docker_down_cmd(volumes_remove: bool) -> str:
     cmd.append("down")
     if volumes_remove:
         # Use the '-v' option to remove attached volumes.
-        _LOG.warning("Removing the attached volumes resetting the state of the DB")
+        _LOG.warning(
+            "Removing the attached volumes resetting the state of the DB"
+        )
         cmd.append("-v")
     cmd = hlibtask._to_multi_line_cmd(cmd)
     return cmd

@@ -60,7 +60,8 @@ def get_connection_from_env_vars() -> Tuple[
     DbConnection, psycop.extensions.cursor
 ]:
     """
-    Create a SQL connection with the information from the environment variables.
+    Create a SQL connection with the information from the environment
+    variables.
     """
     # Get values from the environment variables.
     # TODO(gp): -> POSTGRES_DBNAME
@@ -115,7 +116,9 @@ def wait_db_connection(
             _LOG.info("PostgreSQL is available (after %s seconds)", elapsed_secs)
             break
         if elapsed_secs > timeout_in_secs:
-            raise RuntimeError(f"Cannot connect to db host={host} db_name={db_name} port={port}")
+            raise RuntimeError(
+                f"Cannot connect to db host={host} db_name={db_name} port={port}"
+            )
         elapsed_secs += 1
         time.sleep(1)
 
@@ -143,7 +146,6 @@ def db_connection_to_tuple(connection: DbConnection) -> NamedTuple:
         password=info.password,
     )
     return det
-
 
 
 # #############################################################################

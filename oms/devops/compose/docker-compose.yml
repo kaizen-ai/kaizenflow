@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  
+
   # Docker container running code that talks to the DB.
   app:
     # TODO(Grisha): Use image env var.

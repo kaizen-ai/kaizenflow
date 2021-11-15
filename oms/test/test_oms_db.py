@@ -1,20 +1,16 @@
 import logging
 import os
 
-import pandas as pd
-import pytest
-
 import helpers.printing as hprint
 import helpers.sql as hsql
-import helpers.system_interaction as hsyint
-import helpers.unit_test as huntes
+import helpers.system_interaction as hsysinte
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): Generalize and move this to hsql.py or hsql_test.py.
-class _TestOmsDbHelper(huntes.TestCase):
-
+class _TestOmsDbHelper(hunitest.TestCase):
     def setUp(self) -> None:
         """
         Initialize the test database inside test container.
@@ -33,7 +29,7 @@ class _TestOmsDbHelper(huntes.TestCase):
         service = "oms_postgres_local"
         cmd.append(f"up -d {service}")
         cmd = " ".join(cmd)
-        hsyint.system(cmd, suppress_output=False)
+        hsysinte.system(cmd, suppress_output=False)
         # TODO(gp): Read the info from env.
         dbname = "oms_postgres_db_local"
         host = "localhost"
@@ -61,15 +57,14 @@ class _TestOmsDbHelper(huntes.TestCase):
             "sudo docker-compose "
             f"--file {self.docker_compose_file_path} down -v"
         )
-        hsyint.system(cmd, suppress_output=False)
+        hsysinte.system(cmd, suppress_output=False)
         super().tearDown()
 
 
-# #################################
+# #############################################################################
 
 
 class TestOmsDb1(_TestOmsDbHelper):
-
     def test_up1(self) -> None:
         """
         Verify that the DB is up.
