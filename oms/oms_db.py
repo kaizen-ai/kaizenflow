@@ -63,11 +63,12 @@ def get_create_target_files_table_query() -> str:
     return query
 
 
-def wait_for_target_ack(connection, query):
+def wait_for_target_ack(connection, query, sleep_in_secs: float,
+                        timeout_in_secs):
     """
     
     """
-    query =
+    query = ""
 
     # Iterate on a query until there is a row coming back.
     # Otherwise time out.
