@@ -4,10 +4,10 @@
 # import pandas as pd
 # import pytest
 #
-# import core.finance as fin
-# import helpers.git as git
-# import helpers.system_interaction as si
-# import helpers.unit_test as hut
+# import core.finance as cofinanc
+# import helpers.git as hgit
+# import helpers.system_interaction as hsysinte
+# import helpers.unit_test as hunitest
 # import vendors.cme.reader as cmer
 # import vendors.core.base_classes as etl_base
 # import vendors.core.config as etl_cfg
@@ -22,7 +22,7 @@
 ## #############################################################################
 #
 #
-# class Test_kibot_utils1(hut.TestCase):
+# class Test_kibot_utils1(hunitest.TestCase):
 #    @pytest.mark.slow
 #    def test_read_data_pq1(self) -> None:
 #        # TODO(gp): Use unit test cache.
@@ -43,7 +43,7 @@
 #        _LOG.debug("df3=%s", df3.head())
 #        pd.testing.assert_frame_equal(df, df3)
 #        #
-#        self.check_string(hut.convert_df_to_string(df, index=True))
+#        self.check_string(hunitest.convert_df_to_string(df, index=True))
 #
 #    @pytest.mark.slow
 #    def test_read_data_csv1(self) -> None:
@@ -65,32 +65,32 @@
 #        _LOG.debug("df3=%s", df3.head())
 #        pd.testing.assert_frame_equal(df, df3)
 #        #
-#        self.check_string(hut.convert_df_to_string(df, index=True))
+#        self.check_string(hunitest.convert_df_to_string(df, index=True))
 #
 #    @pytest.mark.skip(reason="PTask2117")
 #    def test_read_metadata1(self) -> None:
 #        df = kut.read_1min_contract_metadata()
-#        self.check_string(hut.convert_df_to_string(df))
+#        self.check_string(hunitest.convert_df_to_string(df))
 #
 #    @pytest.mark.skip(reason="PTask2117")
 #    def test_read_metadata2(self) -> None:
 #        df = kut.read_daily_contract_metadata()
-#        self.check_string(hut.convert_df_to_string(df))
+#        self.check_string(hunitest.convert_df_to_string(df))
 #
 #    def test_read_metadata3(self) -> None:
 #        df = kut.read_tickbidask_contract_metadata()
-#        self.check_string(hut.convert_df_to_string(df))
+#        self.check_string(hunitest.convert_df_to_string(df))
 #
 #    def test_read_metadata4(self) -> None:
 #        df = kut.read_continuous_contract_metadata()
-#        self.check_string(hut.convert_df_to_string(df))
+#        self.check_string(hunitest.convert_df_to_string(df))
 #
 #
 ## TODO(gp, Julia): Fix this.
 ## TODO(gp, Julia): Remove pylint disable after fix.
 ## pylint: disable=no-member
 # @pytest.mark.skip(reason="# TODO(Julia): Enable this once #532 is fixed.")
-# class Test_kibot_MonthExpiry1(hut.TestCase):
+# class Test_kibot_MonthExpiry1(hunitest.TestCase):
 #    """
 #    Test the logic comparing and processing expiry contracts, e.g., ESH19
 #    """
@@ -111,7 +111,7 @@
 ## pylint: enable=no-member
 #
 #
-# class Test_kibot_utils_ExpiryContractMapper1(hut.TestCase):
+# class Test_kibot_utils_ExpiryContractMapper1(hunitest.TestCase):
 #    """
 #    Test parsing expiry contracts and sorting them.
 #    """
@@ -162,7 +162,7 @@
 #        self.assertListEqual(actual_result, expected_result)
 #
 #
-# class Test_kibot_utils_KibotMetadata(hut.TestCase):
+# class Test_kibot_utils_KibotMetadata(hunitest.TestCase):
 #    @pytest.mark.slow()
 #    def test_get_metadata1(self) -> None:
 #        kmd = kut.KibotMetadata()
@@ -179,7 +179,7 @@
 #    def test_get_metadata_tick1(self) -> None:
 #        kmd = kut.KibotMetadata()
 #        df = kmd.get_metadata("tick-bid-ask")
-#        str_df = hut.convert_df_to_string(df)
+#        str_df = hunitest.convert_df_to_string(df)
 #        self.check_string(str_df)
 #
 #    @pytest.mark.slow()
@@ -193,7 +193,7 @@
 #        self.check_string(" ".join(expiries))
 #
 #
-# class Test_kibot_utils_ContractSymbolMapping(hut.TestCase):
+# class Test_kibot_utils_ContractSymbolMapping(hunitest.TestCase):
 #    def test_get_contract1(self) -> None:
 #        csm = kut.ContractSymbolMapping()
 #        contract = csm.get_contract("CL")
@@ -242,7 +242,7 @@
 #        self.assertListEqual(sorted(symbols), sorted(expected_result))
 #
 #
-# class TestComputeRet0FromMultiplePrices1(hut.TestCase):
+# class TestComputeRet0FromMultiplePrices1(hunitest.TestCase):
 #    def test1(self) -> None:
 #        # Read multiple futures.
 #        symbols = tuple("CL NG RB BZ".split())
@@ -251,7 +251,7 @@
 #        # Calculate returns.
 #        mode = "pct_change"
 #        col_name = "close"
-#        actual_result = fin.compute_ret_0_from_multiple_prices(
+#        actual_result = cofinanc.compute_ret_0_from_multiple_prices(
 #            min_price_dict_df, col_name, mode
 #        )
 #        self.check_string(actual_result.to_string())
@@ -262,10 +262,10 @@
 ## #############################################################################
 #
 #
-# class Test_pandas_datareader_utils1(hut.TestCase):
+# class Test_pandas_datareader_utils1(hunitest.TestCase):
 #    def test_get_multiple_data1(self) -> None:
 #        ydq = pdut.YahooDailyQuotes()
 #        tickers = "SPY IVV".split()
 #        df = ydq.get_multiple_data("Adj Close", tickers)
 #        #
-#        self.check_string(hut.get_df_signature(df))
+#        self.check_string(hunitest.get_df_signature(df))

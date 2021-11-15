@@ -1,13 +1,19 @@
 #!/usr/bin/env python
 
+"""
+Import as:
+
+import im.ib.data.extract.gateway.download_realtime_data as imidegdrda
+"""
+
 import argparse
 import logging
 
 import pandas as pd
 
-import helpers.dbg as dbg
-import helpers.parser as hparse
-import im.ib.data.extract.gateway.utils as iidegu
+import helpers.dbg as hdbg
+import helpers.parser as hparser
+import im.ib.data.extract.gateway.utils as imidegaut
 
 # from tqdm.notebook import tqdm
 
@@ -21,8 +27,8 @@ def on_bar_update(bars, has_new_bar):
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    dbg.shutup_chatty_modules()
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.shutup_chatty_modules()
     #
     if False:
         target = "forex"
@@ -39,7 +45,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     currency = "USD"
     symbols = "ES CL NG".split()
     try:
-        ib = iidegu.ib_connect(0, is_notebook=False)
+        ib = imidegaut.ib_connect(0, is_notebook=False)
         bars = ib.reqRealTimeBars(contract, 5, "MIDPOINT", False)
         bars.updateEvent += onBarUpdate
     finally:
@@ -49,7 +55,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # start_ts = pd.Timestamp("2020-12-13 18:00:00-05:00")
     end_ts = None
     # end_ts = pd.Timestamp("2020-12-23 18:00:00-05:00")
-    tasks = iidegu.get_tasks(
+    tasks = imidegaut.get_tasks(
         ib=ib,
         target=target,
         frequency=frequency,
@@ -64,7 +70,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dst_dir = args.dst_dir
     incremental = not args.not_incremental
     client_id_base = 5
-    file_names = iidegu.download_ib_data(
+    file_names = imidegaut.download_ib_data(
         client_id_base, tasks, incremental, dst_dir, num_threads
     )
     _LOG.info("file_names=%s", file_names)
@@ -82,7 +88,7 @@ def _parse() -> argparse.ArgumentParser:
         help="Destination dir",
     )
     parser.add_argument("--not_incremental", action="store_true", default=False)
-    hparse.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 

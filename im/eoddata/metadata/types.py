@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import im.eoddata.metadata.types as imeometyp
+"""
+
 import dataclasses
 import inspect
 from typing import Dict

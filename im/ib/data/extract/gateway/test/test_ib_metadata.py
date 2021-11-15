@@ -9,20 +9,20 @@ try:
 except ModuleNotFoundError:
     print("Can't find ib_insync")
 
-import helpers.dbg as dbg
-import helpers.unit_test as hut
-import im.ib.data.extract.gateway.metadata as iidegm
-import im.ib.data.extract.gateway.utils as iidegu
+import helpers.dbg as hdbg
+import helpers.unit_test as hunitest
+import im.ib.data.extract.gateway.metadata as imidegame
+import im.ib.data.extract.gateway.utils as imidegaut
 
 _LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.skip(msg="See alphamatic/dev_tools#282")
-class Test_ib_metadata1(hut.TestCase):
+class Test_ib_metadata1(hunitest.TestCase):
     @classmethod
     def setUpClass(cls):
-        dbg.shutup_chatty_modules()
-        cls.ib = iidegu.ib_connect(0, is_notebook=False)
+        hdbg.shutup_chatty_modules()
+        cls.ib = imidegaut.ib_connect(0, is_notebook=False)
 
     @classmethod
     def tearDownClass(cls):
@@ -33,7 +33,7 @@ class Test_ib_metadata1(hut.TestCase):
         Create some metadata for NG.
         """
         file_name = os.path.join(self.get_scratch_space(), "metadata.csv")
-        ibmeta = iidegm.IbMetadata(file_name)
+        ibmeta = imidegame.IbMetadata(file_name)
         #
         symbol = "NG"
         contract = ib_insync.Future(symbol, includeExpired=True)
@@ -48,7 +48,7 @@ class Test_ib_metadata1(hut.TestCase):
         Create some metadata and then update more.
         """
         file_name = os.path.join(self.get_scratch_space(), "metadata.csv")
-        ibmeta = iidegm.IbMetadata(file_name)
+        ibmeta = imidegame.IbMetadata(file_name)
         #
         symbol = "NG"
         contract = ib_insync.Future(symbol, includeExpired=True)
@@ -66,7 +66,7 @@ class Test_ib_metadata1(hut.TestCase):
         Test that append=False cleans up the file.
         """
         file_name = os.path.join(self.get_scratch_space(), "metadata.csv")
-        ibmeta = iidegm.IbMetadata(file_name)
+        ibmeta = imidegame.IbMetadata(file_name)
         #
         symbol = "NG"
         contract = ib_insync.Future(symbol, includeExpired=True)

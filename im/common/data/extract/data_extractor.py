@@ -1,9 +1,15 @@
+"""
+Import as:
+
+import im.common.data.extract.data_extractor as imcdedaex
+"""
+
 import abc
 from typing import Optional
 
 import pandas as pd
 
-import im.common.data.types as vcdtyp
+import im.common.data.types as imcodatyp
 
 
 # TODO(*): Rename file abstract_data_extractor.py
@@ -18,11 +24,11 @@ class AbstractDataExtractor(abc.ABC):
         self,
         exchange: str,
         symbol: str,
-        asset_class: vcdtyp.AssetClass,
-        frequency: vcdtyp.Frequency,
+        asset_class: imcodatyp.AssetClass,
+        frequency: imcodatyp.Frequency,
         # TODO(*): contract_type and currency should come before
         # frequency, since it identifies the Symbol.
-        contract_type: Optional[vcdtyp.ContractType] = None,
+        contract_type: Optional[imcodatyp.ContractType] = None,
         currency: Optional[str] = None,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,

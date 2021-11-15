@@ -7,14 +7,18 @@ https://github.com/ib-controller/ib-controller/blob/master/resources/IBControlle
 
 # Create config with IB user/password:
 > make_ib_controller_init_file.py --user username --password password
+
+Import as:
+
+import im.ib.connect.devops.docker_scripts.make_ib_controller_init_file as imicddsmicif
 """
 import argparse
 import logging
 from typing import Any, Dict
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.io_ as hio
-import helpers.parser as hparse
+import helpers.parser as hparser
 
 DEFAULT_CONFIG = dict(
     LogToConsole="yes",
@@ -88,14 +92,14 @@ def _parse() -> argparse.ArgumentParser:
         help="Stage: LOCAL or PROD",
         action="store",
     )
-    hparse.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    dbg.shutup_chatty_modules()
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.shutup_chatty_modules()
     # Set up config to save.
     params = DEFAULT_CONFIG.copy()
     if args.user is not None:

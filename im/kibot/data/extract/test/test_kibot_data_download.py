@@ -1,10 +1,10 @@
 import os
 
-import helpers.unit_test as hut
-import im.kibot.data.extract.download as vkdedo
+import helpers.unit_test as hunitest
+import im.kibot.data.extract.download as imkdaexdo
 
 
-class TestKibotDownload(hut.TestCase):
+class TestKibotDownload(hunitest.TestCase):
     def test_extract_dataset_links(self) -> None:
         """
         Test that extraction of dataset links from "My account" page works.
@@ -12,7 +12,7 @@ class TestKibotDownload(hut.TestCase):
         file_name = "my_account.html"
         file_name = os.path.join(self.get_input_dir(), file_name)
         file_name = os.path.abspath(file_name)
-        actual = vkdedo.DatasetListExtractor.extract_dataset_links(file_name)
+        actual = imkdaexdo.DatasetListExtractor.extract_dataset_links(file_name)
         self.check_string(actual.to_csv())
 
     def test_extract_payload_links(self) -> None:
@@ -24,5 +24,5 @@ class TestKibotDownload(hut.TestCase):
         file_name = "all_stocks_1min.html"
         file_name = os.path.join(self.get_input_dir(), file_name)
         file_name = os.path.abspath(file_name)
-        actual = vkdedo.DatasetExtractor._extract_payload_links(file_name)
+        actual = imkdaexdo.DatasetExtractor._extract_payload_links(file_name)
         self.check_string(actual.to_csv(), use_gzip=True)

@@ -3,7 +3,7 @@ import logging
 # import ib_insync
 import pytest
 
-import helpers.unit_test as hut
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ _LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.skip
-class TestImTwsStartIbInterface(hut.TestCase):
+class TestImTwsStartIbInterface(hunitest.TestCase):
     def test1(self) -> None:
         # Bring up the interface.
         ib_insync.util.logToConsole(logging.DEBUG)

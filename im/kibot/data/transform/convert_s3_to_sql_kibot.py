@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+"""
+Import as:
+
+import im.kibot.data.transform.convert_s3_to_sql_kibot as imkdtcstsk
+"""
+
 # TODO(*): Is this still needed or superseded by app/convert_s3_to_sql.py
 r"""
 Converts Kibot data on S3 from .csv.gz to SQL and inserts it into DB.
@@ -29,16 +35,16 @@ import argparse
 import logging
 import os
 
-import helpers.dbg as dbg
-import helpers.parser as hparse
-import im.common.data.transform.transform as icdttr
-import im.kibot.data.config as ikdcon
+import helpers.dbg as hdbg
+import helpers.parser as hparser
+import im.common.data.transform.transform as imcdatrtr
+import im.kibot.data.config as imkidacon
 import im.kibot.data.load as ikdloa
-import im.kibot.data.load.dataset_name_parser as ikdlda
-import im.kibot.data.load.kibot_sql_data_loader as ikdlki
-import im.kibot.data.transform.kibot_s3_to_sql_transformer as ikdtki
-import im.kibot.sql_writer as ikkibo
-import im.kibot.metadata.load.s3_backend as ikmls3
+import im.kibot.data.load.dataset_name_parser as imkdldnapa
+import im.kibot.data.load.kibot_sql_data_loader as ikdlksdlo
+import im.kibot.data.transform.kibot_s3_to_sql_transformer as imkdtkstst
+import im.kibot.sql_writer as imkisqwri
+import im.kibot.metadata.load.s3_backend as imkmls3ba
 
 _LOG = logging.getLogger(__name__)
 
@@ -61,7 +67,7 @@ def _parse() -> argparse.ArgumentParser:
         "--dataset",
         type=str,
         help="Process a specific dataset (or all datasets if omitted)",
-        choices=ikdcon.DATASETS,
+        choices=imkidacon.DATASETS,
         action="append",
         default=None,
     )
@@ -121,24 +127,24 @@ def _parse() -> argparse.ArgumentParser:
         action="store_true",
         help="Continue loading from the last interruption point if any.",
     )
-    hparse.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    dbg.shutup_chatty_modules()
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.shutup_chatty_modules()
     #
-    s3_to_sql_transformer = ikdtki.S3ToSqlTransformer()
+    s3_to_sql_transformer = imkdtkstst.S3ToSqlTransformer()
     #
     kibot_data_loader = ikdloa.KibotS3DataLoader()
     #
-    s3_backend = ikmls3.S3Backend()
+    s3_backend = imkmls3ba.S3Backend()
     #
-    dataset_name_parser = ikdlda.DatasetNameParser()
+    dataset_name_parser = imkdldnapa.DatasetNameParser()
     #
-    sql_writer_backed = ikkibo.KibotSqlWriter(
+    sql_writer_backed = imkisqwri.KibotSqlWriter(
         dbname=args.dbname,
         user=args.dbuser,
         password=args.dbpass,
@@ -146,7 +152,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         port=args.dbport,
     )
     #
-    sql_data_loader = ikdlki.KibotSqlDataLoader(
+    sql_data_loader = ikdlksdlo.KibotSqlDataLoader(
         dbname=args.dbname,
         user=args.dbuser,
         password=args.dbpass,
@@ -160,12 +166,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Construct list of parameters to run.
     params_list = []
     # Go over selected datasets or all datasets.
-    datasets_to_process = args.dataset or ikdcon.DATASETS
+    datasets_to_process = args.dataset or imkidacon.DATASETS
     for dataset in datasets_to_process:
         # Get the symbols from S3.
         symbols = s3_backend.get_symbols_for_dataset(dataset)
         if args.max_num_assets is not None:
-            dbg.dassert_lte(1, args.max_num_assets)
+            hdbg.dassert_lte(1, args.max_num_assets)
             symbols = symbols[: args.max_num_assets]
         # Parse dataset name and extract parameters.
         (
@@ -194,7 +200,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             )
     _LOG.info("Found %i items to load to database", len(params_list))
     # Run converting.
-    icdttr.convert_s3_to_sql_bulk(serial=args.serial, params_list=params_list)
+    imcdatrtr.convert_s3_to_sql_bulk(serial=args.serial, params_list=params_list)
     _LOG.info("Closing database connection")
     sql_writer_backed.close()
     sql_data_loader.conn.close()

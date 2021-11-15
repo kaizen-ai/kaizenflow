@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.common.types as icdtyp
+import im.common.data.types as imcodatyp
 """
 import enum
 

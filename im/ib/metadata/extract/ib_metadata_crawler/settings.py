@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import im.ib.metadata.extract.ib_metadata_crawler.settings as imimeimcse
+"""
+
 import datetime as dt
 
 import environs

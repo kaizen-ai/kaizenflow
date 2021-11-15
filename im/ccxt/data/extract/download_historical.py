@@ -4,8 +4,7 @@ Script to download historical data from CCXT.
 
 Use as:
 
-# Download data from 2019-01-01 to now,
-  for latest trade universe:
+# Download data from 2019-01-01 to now, for latest trade universe:
 > download_historical.py \
      --dst_dir 'test' \
      --universe 'v03' \
@@ -13,7 +12,7 @@ Use as:
 
 Import as:
 
-import im.ccxt.data.extract.download_historical as imcdaexdowhis
+import im.ccxt.data.extract.download_historical as imcdedohi
 """
 
 import argparse
@@ -26,8 +25,8 @@ import pandas as pd
 import helpers.dbg as hdbg
 import helpers.io_ as hio
 import helpers.parser as hparser
-import im.ccxt.data.extract.exchange_class as imcdaexexccla
-import im.data.universe as imdauni
+import im.ccxt.data.extract.exchange_class as imcdeexcl
+import im.data.universe as imdatuniv
 
 _LOG = logging.getLogger(__name__)
 
@@ -48,7 +47,7 @@ def _parse() -> argparse.ArgumentParser:
         "--api_keys",
         action="store",
         type=str,
-        default=imcdaexexccla.API_KEYS_PATH,
+        default=imcdeexcl.API_KEYS_PATH,
         help="Path to JSON file that contains API keys for exchange access",
     )
     parser.add_argument(
@@ -106,13 +105,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
         end_datetime = pd.Timestamp(args.end_datetime)
     # Load trading universe.
     if args.universe == "latest":
-        trade_universe = imdauni.get_trade_universe()["CCXT"]
+        trade_universe = imdatuniv.get_trade_universe()["CCXT"]
     else:
-        trade_universe = imdauni.get_trade_universe(args.universe)["CCXT"]
+        trade_universe = imdatuniv.get_trade_universe(args.universe)["CCXT"]
     _LOG.info("Getting data for exchanges %s", ", ".join(trade_universe.keys()))
     for exchange_id in trade_universe:
         # Initialize the exchange class.
-        exchange = imcdaexexccla.CcxtExchange(
+        exchange = imcdeexcl.CcxtExchange(
             exchange_id, api_keys_path=args.api_keys
         )
         for pair in trade_universe[exchange_id]:

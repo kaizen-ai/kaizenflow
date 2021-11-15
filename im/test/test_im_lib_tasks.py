@@ -3,8 +3,8 @@ import os
 import pytest
 
 import helpers.git as hgit
-import helpers.system_interaction as hsyint
-import helpers.unit_test as huntes
+import helpers.system_interaction as hsysinte
+import helpers.unit_test as hunitest
 import im.im_lib_tasks as imimlitas  # pylint: disable=no-name-in-module
 
 
@@ -20,7 +20,7 @@ def _get_docker_compose_file_path() -> str:
     return full_file_path
 
 
-class TestGetImDockerCmd(huntes.TestCase):
+class TestGetImDockerCmd(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test the `bash` command.
@@ -52,7 +52,7 @@ class TestGetImDockerCmd(huntes.TestCase):
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
-class TestGetImDockerDown(huntes.TestCase):
+class TestGetImDockerDown(hunitest.TestCase):
     def test1(self) -> None:
         """
         Check the command line to only remove containers.
@@ -82,11 +82,11 @@ class TestGetImDockerDown(huntes.TestCase):
 
 
 # TODO(Grisha): 'is_inside_docker()' -> 'is_inside_im_container()' in #100.
-@pytest.mark.skipif(hsyint.is_inside_docker(), reason="amp #1189")
-class TestImDockerCmd(huntes.TestCase):
+@pytest.mark.skipif(hsysinte.is_inside_docker(), reason="amp #1189")
+class TestImDockerCmd(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test running a simple command inside `im` container.
         """
         cmd = "invoke im_docker_cmd -c ls"
-        hsyint.system(cmd)
+        hsysinte.system(cmd)

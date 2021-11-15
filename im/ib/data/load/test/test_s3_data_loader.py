@@ -7,19 +7,19 @@ import im.ib.data.load.test.test_s3_data_loader as tsdloa
 import pandas as pd
 import pytest
 
-import helpers.unit_test as hut
-import im.common.data.types as mcdtyp
-import im.ib.data.load.ib_s3_data_loader as isdloa
+import helpers.unit_test as hunitest
+import im.common.data.types as imcodatyp
+import im.ib.data.load.ib_s3_data_loader as imidlisdlo
 
 
-class TestS3IbDataLoader1(hut.TestCase):
+class TestS3IbDataLoader1(hunitest.TestCase):
     """
     Test data loading correctness for Ib from S3.
     """
 
     def setUp(self) -> None:
         super().setUp()
-        self._s3_data_loader = isdloa.IbS3DataLoader()
+        self._s3_data_loader = imidlisdlo.IbS3DataLoader()
 
     def test_dtypes1(self) -> None:
         """
@@ -29,9 +29,9 @@ class TestS3IbDataLoader1(hut.TestCase):
         data = self._s3_data_loader.read_data(
             exchange="GLOBEX",
             symbol="ES",
-            asset_class=mcdtyp.AssetClass.Futures,
-            frequency=mcdtyp.Frequency.Daily,
-            contract_type=mcdtyp.ContractType.Continuous,
+            asset_class=imcodatyp.AssetClass.Futures,
+            frequency=imcodatyp.Frequency.Daily,
+            contract_type=imcodatyp.ContractType.Continuous,
             currency="USD",
             unadjusted=None,
             nrows=1,
@@ -49,15 +49,15 @@ class TestS3IbDataLoader1(hut.TestCase):
         data = self._s3_data_loader.read_data(
             exchange="GLOBEX",
             symbol="ES",
-            asset_class=mcdtyp.AssetClass.Futures,
-            frequency=mcdtyp.Frequency.Minutely,
-            contract_type=mcdtyp.ContractType.Continuous,
+            asset_class=imcodatyp.AssetClass.Futures,
+            frequency=imcodatyp.Frequency.Minutely,
+            contract_type=imcodatyp.ContractType.Continuous,
             currency="USD",
             unadjusted=None,
             nrows=10,
         )
         # Transform dataframe to string.
-        actual_string = hut.convert_df_to_string(data)
+        actual_string = hunitest.convert_df_to_string(data)
         # Compare with expected.
         self.check_string(actual_string, fuzzy_match=True)
 
@@ -69,15 +69,15 @@ class TestS3IbDataLoader1(hut.TestCase):
         data = self._s3_data_loader.read_data(
             exchange="GLOBEX",
             symbol="ES",
-            asset_class=mcdtyp.AssetClass.Futures,
-            frequency=mcdtyp.Frequency.Daily,
-            contract_type=mcdtyp.ContractType.Continuous,
+            asset_class=imcodatyp.AssetClass.Futures,
+            frequency=imcodatyp.Frequency.Daily,
+            contract_type=imcodatyp.ContractType.Continuous,
             currency="USD",
             unadjusted=True,
             nrows=10,
         )
         # Transform dataframe to string.
-        actual_string = hut.convert_df_to_string(data)
+        actual_string = hunitest.convert_df_to_string(data)
         # Compare with expected.
         self.check_string(actual_string, fuzzy_match=True)
 
@@ -89,15 +89,15 @@ class TestS3IbDataLoader1(hut.TestCase):
         data = self._s3_data_loader.read_data(
             exchange="GLOBEX",
             symbol="ES",
-            asset_class=mcdtyp.AssetClass.Futures,
-            frequency=mcdtyp.Frequency.Hourly,
-            contract_type=mcdtyp.ContractType.Continuous,
+            asset_class=imcodatyp.AssetClass.Futures,
+            frequency=imcodatyp.Frequency.Hourly,
+            contract_type=imcodatyp.ContractType.Continuous,
             currency="USD",
             unadjusted=None,
             nrows=10,
         )
         # Transform dataframe to string.
-        actual_string = hut.convert_df_to_string(data)
+        actual_string = hunitest.convert_df_to_string(data)
         # Compare with expected.
         self.check_string(actual_string, fuzzy_match=True)
 
@@ -109,9 +109,9 @@ class TestS3IbDataLoader1(hut.TestCase):
         data = self._s3_data_loader.read_data(
             exchange="GLOBEX",
             symbol="ES",
-            asset_class=mcdtyp.AssetClass.Futures,
-            frequency=mcdtyp.Frequency.Daily,
-            contract_type=mcdtyp.ContractType.Continuous,
+            asset_class=imcodatyp.AssetClass.Futures,
+            frequency=imcodatyp.Frequency.Daily,
+            contract_type=imcodatyp.ContractType.Continuous,
             currency="USD",
             unadjusted=True,
             nrows=10,
@@ -127,15 +127,15 @@ class TestS3IbDataLoader1(hut.TestCase):
         data = self._s3_data_loader.read_data(
             exchange="GLOBEX",
             symbol="ES",
-            asset_class=mcdtyp.AssetClass.Futures,
-            frequency=mcdtyp.Frequency.Hourly,
-            contract_type=mcdtyp.ContractType.Continuous,
+            asset_class=imcodatyp.AssetClass.Futures,
+            frequency=imcodatyp.Frequency.Hourly,
+            contract_type=imcodatyp.ContractType.Continuous,
             currency="USD",
             unadjusted=None,
             start_ts=pd.to_datetime("2021-03-04 22:00:00-05:00"),
             end_ts=pd.to_datetime("2021-03-05 05:00:00-05:00"),
         )
         # Transform dataframe to string.
-        actual_string = hut.convert_df_to_string(data)
+        actual_string = hunitest.convert_df_to_string(data)
         # Compare with expected.
         self.check_string(actual_string, fuzzy_match=True)

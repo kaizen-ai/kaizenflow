@@ -11,7 +11,7 @@ Usage:
 
 Import as:
 
-import im.devops.docker_scripts.set_schema_im_db as imddoscsescimdb
+import im.devops.docker_scripts.set_schema_im_db as imddsssimdb
 """
 import argparse
 import logging
@@ -20,11 +20,15 @@ import os
 import helpers.dbg as hdbg
 import helpers.parser as hparser
 import helpers.sql as hsql
-import im.common.db.create_db as imcodbcrdb
+import im.common.db.create_db as imcdbcrdb
 
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): CmampTask413: Pass db credentials through command line like for
+#  im/app/transform/convert_s3_to_sql.py to override env vars.
+#  Probably we want to factor out the parser part like we do in helpers/parser.py
+#  so that all scripts can use the same interface.
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -45,7 +49,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     connection, _ = hsql.get_connection_from_env_vars()
     # Set schema for the database.
     _LOG.info("Setting schema for DB `%s`...", os.environ["POSTGRES_DB"])
-    imcodbcrdb.create_all_tables(connection)
+    imcdbcrdb.create_all_tables(connection)
     _LOG.info("Database `%s` is ready to use.", os.environ["POSTGRES_DB"])
 
 

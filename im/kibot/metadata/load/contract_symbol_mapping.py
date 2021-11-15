@@ -1,7 +1,13 @@
+"""
+Import as:
+
+import im.kibot.metadata.load.contract_symbol_mapping as imkmlcsyma
+"""
+
 import logging
 from typing import List, Optional, Union
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 
 from .kibot_metadata import KibotMetadata
 
@@ -28,7 +34,7 @@ class ContractSymbolMapping:
         if contract_metadata.empty:
             _LOG.warning("No metadata for %s symbol", symbol)
             return None
-        dbg.dassert_eq(contract_metadata.shape[0], 1)
+        hdbg.dassert_eq(contract_metadata.shape[0], 1)
         exchange = contract_metadata["Exchange_abbreviation"].iloc[0]
         if exchange is None:
             _LOG.warning("Exchange is `None` for %s symbol", symbol)
@@ -47,7 +53,7 @@ class ContractSymbolMapping:
         :return: Kibot symbol
         """
         contract_split = contract.split(":")
-        dbg.dassert_eq(len(contract_split), 2)
+        hdbg.dassert_eq(len(contract_split), 2)
         exchange, exchange_symbol = contract_split
         contract_metadata = self._metadata[
             (self._metadata["Exchange_abbreviation"] == exchange)

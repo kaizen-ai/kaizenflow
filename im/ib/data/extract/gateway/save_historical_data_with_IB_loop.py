@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import im.ib.data.extract.gateway.save_historical_data_with_IB_loop as imidegshdwIl
+"""
+
 import logging
 from typing import Any, Optional
 
@@ -8,10 +14,10 @@ except ModuleNotFoundError:
 
 import pandas as pd
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.io_ as hio
-import im.ib.data.extract.gateway.download_data_ib_loop as videgd
-import im.ib.data.extract.gateway.utils as videgu
+import im.ib.data.extract.gateway.download_data_ib_loop as imidegddil
+import im.ib.data.extract.gateway.utils as imidegaut
 
 # from tqdm.notebook import tqdm
 
@@ -38,12 +44,12 @@ def save_historical_data_with_IB_loop(
     """
     # TODO(gp): Factor this out.
     _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
-    start_ts = videgu.to_ET(start_ts)
-    end_ts = videgu.to_ET(end_ts)
+    start_ts = imidegaut.to_ET(start_ts)
+    end_ts = imidegaut.to_ET(end_ts)
     _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
-    dbg.dassert_lt(start_ts, end_ts)
+    hdbg.dassert_lt(start_ts, end_ts)
     #
-    generator = videgd.ib_loop_generator(
+    generator = imidegddil.ib_loop_generator(
         ib,
         contract,
         start_ts,
@@ -67,12 +73,12 @@ def save_historical_data_with_IB_loop(
     # Go in reverse order to make timestamps ascending.
     df = pd.concat(
         [
-            videgd.load_historical_data(tmp_file_pattern % (file_name, i))
+            imidegddil.load_historical_data(tmp_file_pattern % (file_name, i))
             for i in range(len(tmp_files))[::-1]
         ]
     )
     #
-    df = videgu.truncate(df, start_ts, end_ts)
+    df = imidegaut.truncate(df, start_ts, end_ts)
     #
     df.to_csv(file_name, mode="w")
     # Clean temporary files.

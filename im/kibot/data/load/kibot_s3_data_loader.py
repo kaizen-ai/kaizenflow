@@ -1,27 +1,33 @@
+"""
+Import as:
+
+import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
+"""
+
 import logging
 from typing import Optional
 
 import pandas as pd
 
-import core.pandas_helpers as pdhelp
+import core.pandas_helpers as cpanh
 import helpers.cache as hcache
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.s3 as hs3
-import im.common.data.load.abstract_data_loader as icdlab
-import im.common.data.types as icdtyp
-import im.kibot.data.load.kibot_file_path_generator as ikdlki
+import im.common.data.load.abstract_data_loader as imcdladalo
+import im.common.data.types as imcodatyp
+import im.kibot.data.load.kibot_file_path_generator as imkdlkfpge
 
 _LOG = logging.getLogger(__name__)
 
 
-class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
+class KibotS3DataLoader(imcdladalo.AbstractS3DataLoader):
     def read_data(
         self,
         exchange: str,
         symbol: str,
-        asset_class: icdtyp.AssetClass,
-        frequency: icdtyp.Frequency,
-        contract_type: Optional[icdtyp.ContractType] = None,
+        asset_class: imcodatyp.AssetClass,
+        frequency: imcodatyp.Frequency,
+        contract_type: Optional[imcodatyp.ContractType] = None,
         currency: Optional[str] = None,
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
@@ -49,9 +55,9 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
     def _read_data(
         self,
         symbol: str,
-        asset_class: icdtyp.AssetClass,
-        frequency: icdtyp.Frequency,
-        contract_type: Optional[icdtyp.ContractType] = None,
+        asset_class: imcodatyp.AssetClass,
+        frequency: imcodatyp.Frequency,
+        contract_type: Optional[imcodatyp.ContractType] = None,
         exchange: Optional[str] = None,
         currency: Optional[str] = None,
         unadjusted: Optional[bool] = None,
@@ -60,7 +66,7 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
     ) -> pd.DataFrame:
-        file_path = ikdlki.KibotFilePathGenerator().generate_file_path(
+        file_path = imkdlkfpge.KibotFilePathGenerator().generate_file_path(
             symbol=symbol,
             asset_class=asset_class,
             frequency=frequency,
@@ -68,7 +74,7 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
             exchange=exchange,
             currency=currency,
             unadjusted=unadjusted,
-            ext=icdtyp.Extension.CSV,
+            ext=imcodatyp.Extension.CSV,
         )
         data = self._read_csv(file_path, frequency, start_ts, end_ts, nrows)
         if normalize:
@@ -79,7 +85,7 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
     @hcache.cache()
     def _read_csv(
         file_path: str,
-        frequency: icdtyp.Frequency,
+        frequency: imcodatyp.Frequency,
         nrows: Optional[int] = None,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
@@ -88,8 +94,11 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
         Read data from S3 and cache it.
         """
         s3fs = hs3.get_s3fs("am")
-        data = pdhelp.read_csv(
-            file_path, s3fs=s3fs, header=None, nrows=nrows,
+        data = cpanh.read_csv(
+            file_path,
+            s3fs=s3fs,
+            header=None,
+            nrows=nrows,
         )
         data = KibotS3DataLoader._filter_by_dates(
             data, frequency=frequency, start_ts=start_ts, end_ts=end_ts
@@ -99,7 +108,7 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
     @staticmethod
     def _filter_by_dates(
         data: pd.DataFrame,
-        frequency: icdtyp.Frequency,
+        frequency: imcodatyp.Frequency,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
     ) -> pd.DataFrame:
@@ -157,8 +166,8 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
         else:
             df.columns = df.columns.astype(str)
             _LOG.warning("The dataframe has only one column:\n%s", df)
-        dbg.dassert(df.index.is_monotonic_increasing)
-        dbg.dassert(df.index.is_unique)
+        hdbg.dassert(df.index.is_monotonic_increasing)
+        hdbg.dassert(df.index.is_unique)
         return df
 
     @staticmethod
@@ -180,8 +189,8 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
         df.columns = "datetime open high low close vol".split()
         df.set_index("datetime", drop=True, inplace=True)
         # TODO(gp): Turn date into datetime using EOD timestamp. Check on Kibot.
-        dbg.dassert(df.index.is_monotonic_increasing)
-        dbg.dassert(df.index.is_unique)
+        hdbg.dassert(df.index.is_monotonic_increasing)
+        hdbg.dassert(df.index.is_unique)
         return df
 
     @staticmethod
