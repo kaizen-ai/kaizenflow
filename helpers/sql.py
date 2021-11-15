@@ -24,6 +24,7 @@ _LOG = logging.getLogger(__name__)
 DbConnection = psycop.extensions.connection
 
 
+# TODO(gp): Return only the connection (CmampTask441).
 def get_connection(
     dbname: str,
     host: str,
@@ -44,6 +45,7 @@ def get_connection(
     return connection, cursor
 
 
+# TODO(gp): Return only the connection (CmampTask441).
 def get_connection_from_env_vars() -> Tuple[
     DbConnection, psycop.extensions.cursor
 ]:
