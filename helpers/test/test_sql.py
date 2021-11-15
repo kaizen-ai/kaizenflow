@@ -41,7 +41,7 @@ class Test_sql(huntes.TestCase):
         super().tearDown()
 
     @pytest.mark.slow()
-    def test_checkdb(self) -> None:
+    def test_waitdb(self) -> None:
         """
         Smoke test.
         """
@@ -49,7 +49,7 @@ class Test_sql(huntes.TestCase):
         dbname = "im_postgres_db_local"
         host = "localhost"
         port = 5432
-        hsql.check_db_connection(dbname, port, host)
+        hsql.wait_db_connection(dbname, port, host)
 
     @pytest.mark.slow()
     def test_db_connection_to_tuple(self) -> None:
@@ -61,7 +61,7 @@ class Test_sql(huntes.TestCase):
         port = 5432
         password = "alsdkqoen"
         user = "aljsdalsd"
-        hsql.check_db_connection(dbname, port, host)
+        hsql.wait_db_connection(dbname, port, host)
         self.connection, _ = hsql.get_connection(
             dbname,
             host,
@@ -88,7 +88,7 @@ class Test_sql(huntes.TestCase):
         port = 5432
         password = "alsdkqoen"
         user = "aljsdalsd"
-        hsql.check_db_connection(dbname, port, host)
+        hsql.wait_db_connection(dbname, port, host)
         self.connection, _ = hsql.get_connection(
             dbname,
             host,
