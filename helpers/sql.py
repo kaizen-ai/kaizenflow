@@ -418,11 +418,12 @@ def get_remove_duplicates_query(
     table: str, id_col: str, columns: List[str]
 ) -> str:
     """
+    Get a query to remove duplicates from table, keeping last duplicated row.
 
-    :param table:
-    :param id_col:
-    :param columns:
-    :return:
+    :param table: name of table
+    :param id_col: name of unique id column
+    :param columns: names of columns to compare on
+    :return: query to execute duplicate removal
     """
     # TODO(*): Add a "limit" parameter if possible, to check only in top N rows.
     remove_statement = []
