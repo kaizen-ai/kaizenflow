@@ -38,7 +38,7 @@ def _get_docker_compose_path() -> str:
 # #########################
 
 
-def _get_docker_cmd(cmd: str) -> str:
+def _get_docker_cmd(docker_cmd: str) -> str:
     """
     Construct the `docker-compose' command to run a script inside
     this container Docker component.
@@ -54,16 +54,16 @@ def _get_docker_cmd(cmd: str) -> str:
     :param cmd: command to execute
     :return: `docker-compose' command
     """
-    docker_cmd = ["docker-compose"]
+    cmd = ["docker-compose"]
     # Add `docker-compose` file path.
     docker_compose_file_path = _get_docker_compose_path()
-    docker_cmd.append(f"--file {docker_compose_file_path}")
+    cmd.append(f"--file {docker_compose_file_path}")
     # Add `run`.
     service_name = "app"
-    docker_cmd.append(f"run --rm {service_name}")
-    docker_cmd.append(cmd)
+    cmd.append(f"run --rm {service_name}")
+    cmd.append(docker_cmd)
     # Convert the list to a multiline command.
-    multiline_docker_cmd = hlibtask._to_multi_line_cmd(docker_cmd)
+    multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
     return multiline_docker_cmd
 
 
@@ -85,15 +85,39 @@ def oms_docker_cmd(ctx, cmd):  # type: ignore
 # #########################
 
 
+def _get_docker_up_cmd() -> str:
+    """
+    Construct the command to bring up the `oms` service.
+
+    E.g.,
+    ```
+    docker-compose \
+        --file devops/compose/docker-compose.yml \
+        up \
+        oms_postgres_local
+    ```
+    """
+    cmd = ["docker-compose"]
+    # Add `docker-compose` file path.
+    docker_compose_file_path = _get_docker_compose_path()
+    cmd.append(f"--file {docker_compose_file_path}")
+    # Add `down` command.
+    cmd.append("up")
+    service = "oms_postgres_local"
+    cmd.append(service)
+    cmd = hlibtask._to_multi_line_cmd(cmd)
+    return cmd
+
+
 @task
 def oms_docker_up(ctx):  # type: ignore
     """
-    Start oms container.
+    Start oms container with Postgres inside.
 
     :param ctx: `context` object
     """
     # Get docker down command.
-    docker_clean_up_cmd = _get_im_docker_down(volumes_remove)
+    docker_clean_up_cmd = _get_docker_up_cmd()
     # Execute the command.
     hlibtask._run(ctx, docker_clean_up_cmd, pty=True)
 
@@ -101,9 +125,9 @@ def oms_docker_up(ctx):  # type: ignore
 # #########################
 
 
-def _get_docker_down(volumes_remove: bool) -> str:
+def _get_docker_down_cmd(volumes_remove: bool) -> str:
     """
-    Construct the command to shut down the service.
+    Construct the command to shut down the `oms` service.
 
     E.g.,
     ```
@@ -114,25 +138,25 @@ def _get_docker_down(volumes_remove: bool) -> str:
     ```
 
     :param volumes_remove: whether to remove attached volumes or not
-    :return: `im docker-compose down' command
     """
-    docker_compose_down = ["docker-compose"]
+    cmd = ["docker-compose"]
     # Add `docker-compose` file path.
     docker_compose_file_path = _get_docker_compose_path()
-    docker_compose_down.append(f"--file {docker_compose_file_path}")
+    cmd.append(f"--file {docker_compose_file_path}")
     # Add `down` command.
-    docker_compose_down.append("down")
+    cmd.append("down")
     if volumes_remove:
         # Use the '-v' option to remove attached volumes.
-        docker_compose_down.append("-v")
-    multiline_docker_compose_down = hlibtask._to_multi_line_cmd(docker_compose_down)
-    return multiline_docker_compose_down
+        _LOG.warning("Removing the attached volumes resetting the state of the DB")
+        cmd.append("-v")
+    cmd = hlibtask._to_multi_line_cmd(cmd)
+    return cmd
 
 
 @task
 def oms_docker_down(ctx, volumes_remove=False):  # type: ignore
     """
-    Remove containers and volumes attached to the `im app`.
+    Bring down the `oms` service.
 
     By default volumes are not removed, to also remove volumes do
     `invoke im_docker_down -v`.
@@ -141,6 +165,6 @@ def oms_docker_down(ctx, volumes_remove=False):  # type: ignore
     :param ctx: `context` object
     """
     # Get docker down command.
-    docker_clean_up_cmd = _get_im_docker_down(volumes_remove)
+    cmd = _get_docker_down_cmd(volumes_remove)
     # Execute the command.
-    hlibtask._run(ctx, docker_clean_up_cmd, pty=True)
+    hlibtask._run(ctx, cmd, pty=True)
