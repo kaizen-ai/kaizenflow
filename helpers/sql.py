@@ -23,6 +23,9 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): mypy doesn't like this.
 DbConnection = psycop.extensions.connection
 
+DbConnectionInfo = collections.namedtuple(
+    "DbConnectionInfo", ["dbname", "host", "port", "user", "password"]
+)
 
 def get_connection(
     dbname: str,
@@ -113,11 +116,8 @@ def db_connection_to_tuple(connection: DbConnection) -> NamedTuple:
     :param connection: a database connection
     :return: database connection details
     """
-    Details = collections.namedtuple(
-        "DBConnectionDetails", ["dbname", "host", "port", "user", "password"]
-    )
     info = connection.info
-    det = Details(
+    det = DbConnectionInfo(
         dbname=info.dbname,
         host=info.host,
         port=info.port,
