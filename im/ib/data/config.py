@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import im.ib.data.config as imibdacon
+"""
+
 import os
 
 import helpers.s3 as hs3

@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 """
 Benchmark different approaches to download IB data.
+
+Import as:
+
+import im.ib.data.extract.gateway.download_benchmark as imidegdobe
 """
 
 import argparse
@@ -10,14 +14,14 @@ import ib_insync
 import joblib
 import pandas as pd
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.io_ as hio
-import helpers.parser as hparse
+import helpers.parser as hparser
 import helpers.timer as htimer
-import im.ib.data.extract.gateway.download_data_ib_loop as videgd
-import im.ib.data.extract.gateway.save_historical_data_with_IB_loop as videgs
-import im.ib.data.extract.gateway.unrolling_download_data_ib_loop as videgu0
-import im.ib.data.extract.gateway.utils as videgu
+import im.ib.data.extract.gateway.download_data_ib_loop as imidegddil
+import im.ib.data.extract.gateway.save_historical_data_with_IB_loop as imidegshdwIl
+import im.ib.data.extract.gateway.unrolling_download_data_ib_loop as imideguddil
+import im.ib.data.extract.gateway.utils as imidegaut
 
 _LOG = logging.getLogger(__name__)
 
@@ -37,7 +41,7 @@ def _run_req_wrapper() -> None:
     Run direct IB request.
     """
     args = SETUP.copy()
-    ib = videgu.ib_connect(200, False)
+    ib = imidegaut.ib_connect(200, False)
     contract = ib.qualifyContracts(args.pop("contract"))[0]
     ib.disconnect()
     args.pop("start_ts")
@@ -52,14 +56,14 @@ def _run_req_wrapper() -> None:
         timer = htimer.Timer()
         args.update(dict(duration_str=dur))
         for i in range(times):
-            ib = videgu.ib_connect(201 + i, False)
+            ib = imidegaut.ib_connect(201 + i, False)
             args["ib"] = ib
-            df = videgu.req_historical_data(**args)
+            df = imidegaut.req_historical_data(**args)
             ib.disconnect()
         _LOG.info(
             "Finished. Time: %s seconds. Dataframe: %s",
             timer.get_elapsed(),
-            videgu.get_df_signature(df),
+            imidegaut.get_df_signature(df),
         )
 
 
@@ -89,11 +93,11 @@ def _run_unrolling_download_data_ib_loop() -> None:
             "Starting data extraction. Mode: %s. Threads: %s.", mode, num_threads
         )
         timer = htimer.Timer()
-        df = videgu0.get_historical_data(**args)
+        df = imideguddil.get_historical_data(**args)
         _LOG.info(
             "Finished. Time: %s seconds. Dataframe: %s",
             timer.get_elapsed(),
-            videgu.get_df_signature(df),
+            imidegaut.get_df_signature(df),
         )
         hio.delete_dir(dst_dir)
 
@@ -108,15 +112,15 @@ def _run_save_historical_data_with_IB_loop() -> None:
     _LOG.info("Starting data extraction.")
     args = SETUP.copy()
     args.update(
-        dict(file_name=file_name, ib=videgu.ib_connect(400, is_notebook=False))
+        dict(file_name=file_name, ib=imidegaut.ib_connect(400, is_notebook=False))
     )
     timer = htimer.Timer()
-    df = videgs.save_historical_data_with_IB_loop(**args)
+    df = imidegshdwIl.save_historical_data_with_IB_loop(**args)
     args["ib"].disconnect()
     _LOG.info(
         "Finished. Time: %s seconds. Dataframe: %s",
         timer.get_elapsed(),
-        videgu.get_df_signature(df),
+        imidegaut.get_df_signature(df),
     )
     hio.delete_file(file_name)
 
@@ -160,7 +164,7 @@ def _run_download_data_IB_loop_by_symbol(
     args = SETUP.copy()
     args.update(
         dict(
-            ib=videgu.ib_connect(
+            ib=imidegaut.ib_connect(
                 base_client_id + sum(bytes(symbol, encoding="UTF-8")),
                 is_notebook=False,
             )
@@ -177,11 +181,11 @@ def _run_download_data_IB_loop_by_symbol(
         args.update(dict(duration_str=duration_str))
         _LOG.info("Run for %s duration", duration_str)
         timer = htimer.Timer()
-        df = videgd.get_historical_data_with_IB_loop(**args)
+        df = imidegddil.get_historical_data_with_IB_loop(**args)
         _LOG.info(
             "Finished. Time: %s seconds. Dataframe: %s",
             timer.get_elapsed(),
-            videgu.get_df_signature(df),
+            imidegaut.get_df_signature(df),
         )
     args["ib"].disconnect()
     hio.delete_file(file_name)
@@ -189,7 +193,7 @@ def _run_download_data_IB_loop_by_symbol(
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     _run_unrolling_download_data_ib_loop()
     _run_save_historical_data_with_IB_loop()
     _run_download_data_IB_loop()
@@ -198,7 +202,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
-    hparse.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 

@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import im.ib.metadata.extract.ib_metadata_crawler.pipelines as imimeimcpi
+"""
+
 import csv
 import pathlib
 from typing import Union

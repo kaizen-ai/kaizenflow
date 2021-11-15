@@ -1,14 +1,14 @@
 import pytest
 
-import helpers.unit_test as hut
-import im.common.data.transform.transform as icdttr
-import im.common.data.types as icdtyp
+import helpers.unit_test as hunitest
+import im.common.data.transform.transform as imcdatrtr
+import im.common.data.types as imcodatyp
 import im.common.db.utils as imcodbuti
 import im.common.test.utils as ictuti
-import im.ib.data.load.ib_s3_data_loader as iidlib3
-import im.ib.data.load.ib_sql_data_loader as iidlib
-import im.ib.data.transform.ib_s3_to_sql_transformer as iidtib
-import im.ib.sql_writer as iiibsq
+import im.ib.data.load.ib_s3_data_loader as imidlisdlo
+import im.ib.data.load.ib_sql_data_loader as iidlisdlo
+import im.ib.data.transform.ib_s3_to_sql_transformer as imidtistst
+import im.ib.sql_writer as imibsqwri
 
 
 @pytest.mark.skipif(
@@ -23,16 +23,16 @@ class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
     def setUp(self) -> None:
         super().setUp()
         # Initialize writer class to test.
-        self._writer = iiibsq.IbSqlWriter(
+        self._writer = imibsqwri.IbSqlWriter(
             dbname=self._dbname,
             user=self._user,
             password=self._password,
             host=self._host,
             port=self._port,
         )
-        self._s3_data_loader = iidlib3.IbS3DataLoader()
-        self._s3_to_sql_transformer = iidtib.IbS3ToSqlTransformer()
-        self._sql_data_loader = iidlib.IbSqlDataLoader(
+        self._s3_data_loader = imidlisdlo.IbS3DataLoader()
+        self._s3_to_sql_transformer = imidtistst.IbS3ToSqlTransformer()
+        self._sql_data_loader = iidlisdlo.IbSqlDataLoader(
             dbname=self._dbname,
             user=self._user,
             password=self._password,
@@ -63,9 +63,9 @@ class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
         exchange = "GLOBEX"
         symbol = "ES"
         currency = "USD"
-        asset_class = icdtyp.AssetClass.Futures
-        contract_type = contract_type = icdtyp.ContractType.Continuous
-        frequency = icdtyp.Frequency.Daily
+        asset_class = imcodatyp.AssetClass.Futures
+        contract_type = contract_type = imcodatyp.ContractType.Continuous
+        frequency = imcodatyp.Frequency.Daily
         self._run_and_check_s3_to_sql(
             exchange=exchange,
             symbol=symbol,
@@ -94,9 +94,9 @@ class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
         exchange = "NYMEX"
         symbol = "HG"
         currency = "USD"
-        asset_class = icdtyp.AssetClass.Futures
-        contract_type = contract_type = icdtyp.ContractType.Continuous
-        frequency = icdtyp.Frequency.Daily
+        asset_class = imcodatyp.AssetClass.Futures
+        contract_type = contract_type = imcodatyp.ContractType.Continuous
+        frequency = imcodatyp.Frequency.Daily
         self._run_and_check_s3_to_sql(
             exchange=exchange,
             symbol=symbol,
@@ -125,9 +125,9 @@ class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
         exchange = "GLOBEX"
         symbol = "ES"
         currency = "USD"
-        asset_class = icdtyp.AssetClass.Futures
-        contract_type = contract_type = icdtyp.ContractType.Continuous
-        frequency = icdtyp.Frequency.Minutely
+        asset_class = imcodatyp.AssetClass.Futures
+        contract_type = contract_type = imcodatyp.ContractType.Continuous
+        frequency = imcodatyp.Frequency.Minutely
         self._run_and_check_s3_to_sql(
             exchange=exchange,
             symbol=symbol,
@@ -156,9 +156,9 @@ class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
         exchange = "NYMEX"
         symbol = "HG"
         currency = "USD"
-        asset_class = icdtyp.AssetClass.Futures
-        contract_type = contract_type = icdtyp.ContractType.Continuous
-        frequency = icdtyp.Frequency.Minutely
+        asset_class = imcodatyp.AssetClass.Futures
+        contract_type = contract_type = imcodatyp.ContractType.Continuous
+        frequency = imcodatyp.Frequency.Minutely
         self._run_and_check_s3_to_sql(
             exchange=exchange,
             symbol=symbol,
@@ -172,10 +172,10 @@ class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
         self,
         exchange: str,
         symbol: str,
-        asset_class: icdtyp.AssetClass,
-        contract_type: icdtyp.ContractType,
+        asset_class: imcodatyp.AssetClass,
+        contract_type: imcodatyp.ContractType,
         currency: str,
-        frequency: icdtyp.Frequency,
+        frequency: imcodatyp.Frequency,
     ) -> None:
         """
         Run the whole lifecycle of data starting from reading from S3.
@@ -213,7 +213,7 @@ class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
             currency=currency,
         )
         # Read, transform data from S3 and put to the database.
-        icdttr.convert_s3_to_sql(**params_list)
+        imcdatrtr.convert_s3_to_sql(**params_list)
         # Find what was written.
         df = self._sql_data_loader.read_data(
             exchange=exchange,
@@ -224,6 +224,6 @@ class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
         )
         # Convert dataframe to string.
         # df.drop(columns=["id"], inplace=True)
-        txt = hut.convert_df_to_string(df)
+        txt = hunitest.convert_df_to_string(df)
         # Check the output against the golden.
         self.check_string(txt, fuzzy_match=True)

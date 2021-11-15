@@ -5,23 +5,27 @@ Script to download historical data from CryptoDataDownload.
 
 Use as:
 
-- Download Binance minutely candles:
+- Download Binance minutely bars:
 > download_historical.py \
      --dir_name /app/im/cryptodatadownload/data/binance \
      --exchange_id "binance" \
      --timeframe "minute"
 
-- Download Kucoin minutely candles:
+- Download Kucoin minutely bars:
 > download_historical.py \
      --dir_name /app/im/cryptodatadownload/data/kucoin \
      --exchange_id "kucoin" \
      --timeframe "minute"
 
-- Download Binance hourly candles:
+- Download Binance hourly bars:
 > download_historical.py \
      --dir_name /app/im/cryptodatadownload/data/binance \
      --exchange_id "binance" \
      --timeframe "hourly"
+
+Import as:
+
+import im.cryptodatadownload.download_historical as imcrdohis
 """
 
 import argparse
@@ -35,10 +39,10 @@ import bs4
 import pandas as pd
 import tqdm
 
-import helpers.datetime_ as hdatet
-import helpers.dbg as dbg
+import helpers.datetime_ as hdateti
+import helpers.dbg as hdbg
 import helpers.io_ as hio
-import helpers.parser as hparse
+import helpers.parser as hparser
 
 _LOG = logging.getLogger(__name__)
 
@@ -73,7 +77,7 @@ def _parse() -> argparse.ArgumentParser:
         help="Timeframe of the data to load",
     )
     parser.add_argument("--incremental", action="store_true")
-    parser = hparse.add_verbosity_arg(parser)
+    parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
 
 
@@ -83,7 +87,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     ssl._create_default_https_context = ssl._create_unverified_context
     # Set parser arguments.
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Get HTML contents of webpage as string.
     page_content = _get_download_page(args.exchange_id)
     # Parse download links from the page.
@@ -94,7 +98,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     for link in tqdm.tqdm(download_links, desc="Links loaded:"):
         df = pd.read_csv(link)
         _LOG.debug("Downloaded %s", link)
-        timestamp = hdatet.get_timestamp("ET")
+        timestamp = hdateti.get_timestamp("ET")
         # Select filename from URL.
         orig_filename = link.rsplit("/", 1)[-1]
         # Construct new name with timestamp.

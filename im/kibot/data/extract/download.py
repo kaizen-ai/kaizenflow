@@ -16,6 +16,10 @@ Download data from kibot.com, compress each file, upload it to S3.
 
 # Debug
 > download.py --serial -v DEBUG
+
+Import as:
+
+import im.kibot.data.extract.download as imkdaexdo
 """
 
 import argparse
@@ -34,12 +38,12 @@ import requests.adapters as radapt
 import requests.packages.urllib3.util as rpuuti  # pylint: disable=import-error
 import tqdm
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.io_ as hio
 import helpers.s3 as hs3
-import helpers.system_interaction as hsyste
-import im.kibot.base.command as vkbcom
-import im.kibot.data.config as vkdcon
+import helpers.system_interaction as hsysinte
+import im.kibot.base.command as imkibacom
+import im.kibot.data.config as imkidacon
 
 _LOG = logging.getLogger(__name__)
 
@@ -104,7 +108,7 @@ def _download_page(
     :param requests_session: current requests session to preserve cookies
     :return: contents of the page
     """
-    resolved_url = uparse.urljoin(vkdcon.ENDPOINT, page_url)
+    resolved_url = uparse.urljoin(imkidacon.ENDPOINT, page_url)
     _LOG.info("Requesting page '%s'", resolved_url)
     page_response = requests_session.get(resolved_url)
     _LOG.info("Storing page to '%s'", page_file_path)
@@ -162,7 +166,7 @@ class DatasetListExtractor:
         clean_dataset = re.sub(r"\s+", "_", clean_dataset)
         clean_dataset = re.sub(r"&", "", clean_dataset)
         clean_dataset = clean_dataset.strip("_")
-        # TODO(amr): should we assert the result matches an element in `vkdcon.DATASETS`?
+        # TODO(amr): should we assert the result matches an element in `imkidacon.DATASETS`?
         return clean_dataset
 
 
@@ -183,14 +187,14 @@ class DatasetExtractor:
         """
         self.dataset = dataset
         self.requests_session = requests_session
-        self.aws_dir = os.path.join(vkdcon.S3_PREFIX, dataset)
+        self.aws_dir = os.path.join(imkidacon.S3_PREFIX, dataset)
         _LOG.info("Saving to S3 in '%s'", self.aws_dir)
 
     def delete_dataset_s3_directory(self) -> None:
         assert 0, "Very dangerous: are you sure?"
         _LOG.warning("Deleting s3 file %s", self.aws_dir)
         cmd = "aws s3 rm --recursive %s" % self.aws_dir
-        hsyste.system(cmd)
+        hsysinte.system(cmd)
 
     def download_payload_page(
         self,
@@ -228,12 +232,12 @@ class DatasetExtractor:
         # Copy to S3.
         hs3.dassert_is_s3_path(aws_file)
         cmd = "aws s3 cp %s %s" % (dst_file, aws_file)
-        hsyste.system(cmd)
+        hsysinte.system(cmd)
         #
         if clean_up_artifacts:
             # Delete local file.
             cmd = "rm -f %s" % dst_file
-            hsyste.system(cmd)
+            hsysinte.system(cmd)
         return True
 
     def get_dataset_payloads_to_download(
@@ -260,15 +264,15 @@ class DatasetExtractor:
                 dataset_links_df.dataset == self.dataset
             ].link.values
             if len(links) == 0:
-                dbg.dfatal(
+                hdbg.dfatal(
                     "Can't find a link corresponding to the request dataset"
                 )
             if len(links) != 1:
-                dbg.dfatal(
+                hdbg.dfatal(
                     "Found multiple links corresponding to the requested dataset: %s"
                     % links
                 )
-            dbg.dassert_eq(len(links), 1, "links=%s", links)
+            hdbg.dassert_eq(len(links), 1, "links=%s", links)
             link_to_html_page = links[0]
             _download_page(
                 dataset_html_file, link_to_html_page, self.requests_session
@@ -296,7 +300,7 @@ class DatasetExtractor:
         # Copy to S3.
         hs3.dassert_is_s3_path(dataset_csv_s3_file)
         cmd = "aws s3 cp %s %s" % (dataset_csv_file, dataset_csv_s3_file)
-        hsyste.system(cmd)
+        hsysinte.system(cmd)
 
     @staticmethod
     def _extract_payload_links(src_file: str) -> pd.DataFrame:
@@ -338,10 +342,10 @@ class DatasetExtractor:
         if not download_compressed:
             # Compress.
             cmd = "gzip %s -c >%s" % (local_file, dst_file)
-            hsyste.system(cmd)
+            hsysinte.system(cmd)
             # Delete csv file.
             cmd = "rm -f %s" % local_file
-            hsyste.system(cmd)
+            hsysinte.system(cmd)
 
 
 # #############################################################################
@@ -376,7 +380,7 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
         dataset_csv_file = os.path.join(converted_dir, f"{self.dataset}.csv")
         _LOG.debug("Making request to adjustments API")
         response = self.requests_session.get(
-            vkdcon.API_ENDPOINT,
+            imkidacon.API_ENDPOINT,
             params={"action": "adjustments", "symbolsonly": 1},
         )
         with open(dataset_txt_file, "w+b") as f:
@@ -410,7 +414,7 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
         query_params += uparse.urlencode(
             {"action": "adjustments", "symbol": symbol}
         )
-        api_link = uparse.urljoin(vkdcon.API_ENDPOINT, query_params)
+        api_link = uparse.urljoin(imkidacon.API_ENDPOINT, query_params)
         return api_link  # type: ignore
 
     def _download_file(
@@ -424,7 +428,7 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
 # #############################################################################
 
 
-class DownloadDataCommand(vkbcom.KibotCommand):
+class DownloadDataCommand(imkibacom.KibotCommand):
     def __init__(self) -> None:
         super().__init__(
             docstring=__doc__, supports_tmp_dir=True, requires_auth=True
@@ -442,7 +446,7 @@ class DownloadDataCommand(vkbcom.KibotCommand):
             "--dataset",
             type=str,
             help="Download a specific dataset (or all datasets if omitted)",
-            choices=vkdcon.DATASETS,
+            choices=imkidacon.DATASETS,
             action="append",
             default=None,
         )
@@ -502,7 +506,7 @@ def _run(args) -> int:  # type: ignore
     requests_session.mount(
         "https://", radapt.HTTPAdapter(max_retries=requests_retry)
     )
-    kibot_account = vkdcon.ENDPOINT + "account.aspx"
+    kibot_account = imkidacon.ENDPOINT + "account.aspx"
     login_result = _log_in(
         kibot_account, args.username, str(args.password), requests_session
     )
@@ -530,7 +534,7 @@ def _run(args) -> int:  # type: ignore
     dataset_links_df.to_csv(dataset_links_csv_file)
     _LOG.info("Saved dataset list to download in '%s'", dataset_links_csv_file)
     # Process a dataset.
-    datasets_to_proceed = args.dataset or vkdcon.DATASETS
+    datasets_to_proceed = args.dataset or imkidacon.DATASETS
     for dataset in tqdm.tqdm(datasets_to_proceed, desc="dataset"):
         # Create dataset dir.
         dataset_dir = os.path.join(converted_dir, dataset)
@@ -557,8 +561,8 @@ def _run(args) -> int:  # type: ignore
                     args.start_from,
                     to_download.shape[0],
                 )
-                dbg.dassert_lte(0, args.start_from)
-                dbg.dassert_lt(args.start_from, to_download.shape[0])
+                hdbg.dassert_lte(0, args.start_from)
+                hdbg.dassert_lt(args.start_from, to_download.shape[0])
                 to_download = to_download.iloc[args.start_from :]
             func = lambda row: de.download_payload_page(
                 dataset_dir,

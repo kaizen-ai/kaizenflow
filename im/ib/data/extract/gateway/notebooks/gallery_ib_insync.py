@@ -23,21 +23,21 @@ import ib_insync
 
 print(ib_insync.__all__)
 
-import helpers.dbg as dbg
-import helpers.printing as pri
-import im.ib.data.extract.gateway.utils as ibutils
+import helpers.dbg as hdbg
+import helpers.printing as hprint
+import im.ib.data.extract.gateway.utils as imidegaut
 
 # %% [markdown]
 # # Connect
 
 # %%
-ib = ibutils.ib_connect(client_id=32, is_notebook=True)
+ib = imidegaut.ib_connect(client_id=32, is_notebook=True)
 
 # %% [markdown]
 # # Basic
 
 # %%
-# print(pri.obj_to_str(ib, attr_mode="dir", callable_mode="all"))
+# print(hprint.obj_to_str(ib, attr_mode="dir", callable_mode="all"))
 
 # %%
 ib.positions()
@@ -55,66 +55,66 @@ ib.positions()
 # %%
 # INTC
 contract = ib_insync.Contract(conId=270639)
-eq_contract = ibutils.to_contract_details(ib, contract)
+eq_contract = imidegaut.to_contract_details(ib, contract)
 
 # %%
 contract = ib_insync.Stock("AMD", "SMART", "USD")
-eq_contract = ibutils.to_contract_details(ib, contract)
+eq_contract = imidegaut.to_contract_details(ib, contract)
 
 # %%
 contract = ib_insync.Stock("INTC", "SMART", "USD", primaryExchange="NASDAQ")
-eq_contract = ibutils.to_contract_details(ib, contract)
+eq_contract = imidegaut.to_contract_details(ib, contract)
 
 # %% [markdown]
 # ## Forex
 
 # %%
 contract = ib_insync.Forex("EURUSD")
-forex_contract = ibutils.to_contract_details(ib, contract)
+forex_contract = imidegaut.to_contract_details(ib, contract)
 
 # %%
-print(pri.diff_strings(eq_contract, forex_contract))
+print(hprint.diff_strings(eq_contract, forex_contract))
 
 # %% [markdown]
 # ## CFD (contract for difference)
 
 # %%
 contract = ib_insync.CFD("IBUS30")
-cfd_contract = ibutils.to_contract_details(ib, contract)
+cfd_contract = imidegaut.to_contract_details(ib, contract)
 
 # %%
-print(pri.diff_strings(eq_contract, cfd_contract))
+print(hprint.diff_strings(eq_contract, cfd_contract))
 
 # %% [markdown]
 # ## Futures
 
 # %%
 contract = ib_insync.Future("ES", "202109", "GLOBEX")
-fut_contract = ibutils.to_contract_details(ib, contract)
+fut_contract = imidegaut.to_contract_details(ib, contract)
 
 # %%
-print(pri.diff_strings(eq_contract, fut_contract, "eq", "fut"))
+print(hprint.diff_strings(eq_contract, fut_contract, "eq", "fut"))
 
 # %% [markdown]
 # ## Continuous Futures
 
 # %%
 # contract = ib_insync.ContFuture('ES', '202109', 'GLOBEX')
-# fut_contract = ibutils.to_contract_details(ib, contract)
+# fut_contract = imidegaut.to_contract_details(ib, contract)
 
 # %% [markdown]
 # ## Option
 
 # %%
 contract = ib_insync.Option("SPY", "202107", 240, "C", "SMART")
-opt_contract = ibutils.to_contract_details(ib, contract)
+opt_contract = imidegaut.to_contract_details(ib, contract)
 
 # %% [markdown]
 # ## Bond
 
 # %%
 contract = Bond(secIdType="ISIN", secId="US03076KAA60")
-bond_contract = ibutils.to_contract_details(ib, contract)
+bond_contract = imidegaut.to_contract_details(ib, contract)
 
 # %% [markdown]
 # # Contract details
@@ -141,7 +141,7 @@ asset = ib_insync.Stock("AMD", "SMART", "USD")
 print("asset=", asset)
 cds = ib.reqContractDetails(asset)
 print("num contracts=", len(cds))
-dbg.dassert_eq(len(cds), 1)
+hdbg.dassert_eq(len(cds), 1)
 print(cds[0])
 
 # %%
@@ -160,7 +160,7 @@ ib_insync.util.df(contracts)
 # Look for ES.
 
 asset = ib_insync.Future("ES", includeExpired=True)
-ibutils.get_contract_details(ib, asset)
+imidegaut.get_contract_details(ib, asset)
 
 
 # %%
@@ -175,10 +175,10 @@ ib_insync.util.df(contracts)
 
 # %%
 asset = ib_insync.ContFuture("ES", "Globex", "USD")
-ibutils.get_contract_details(ib, asset)
+imidegaut.get_contract_details(ib, asset)
 
 # %%
-ibutils.get_end_timestamp(ib, contract, "TRADES", useRTH=True)
+imidegaut.get_end_timestamp(ib, contract, "TRADES", useRTH=True)
 
 # %% [markdown]
 # # Option chain
@@ -199,7 +199,7 @@ tickers = ib.reqTickers(spx)
 assert len(tickers) == 1
 ticker = tickers[0]
 
-print(pri.type_obj_to_str(ticker))
+print(hprint.type_obj_to_str(ticker))
 
 # %%
 spx_value = ticker.marketPrice()

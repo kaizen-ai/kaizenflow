@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+"""
+Import as:
+
+import im.ib.connect.devops.sanity_check_ib as imicdschib
+"""
+
 # TODO(*): Move to ib/connect
 """
 Connect to IB TWS to check if it works.
@@ -14,8 +20,8 @@ import time
 
 import ib_insync
 
-import helpers.dbg as dbg
-import helpers.parser as hparse
+import helpers.dbg as hdbg
+import helpers.parser as hparser
 
 _LOG = logging.getLogger(__name__)
 
@@ -37,8 +43,8 @@ def get_es_data(ib: ib_insync.ib.IB) -> None:
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    dbg.shutup_chatty_modules()
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.shutup_chatty_modules()
     # Connecting to IB gateway.
     ib = ib_insync.IB()
     host = os.environ["IB_GW_CONNECTION_HOST"]
@@ -78,7 +84,7 @@ def _parse() -> argparse.ArgumentParser:
         type=int,
         help="Number of attempts to connect to IB",
     )
-    hparse.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 

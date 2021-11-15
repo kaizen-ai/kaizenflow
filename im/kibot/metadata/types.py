@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import im.kibot.metadata.types as imkimetyp
+"""
+
 import dataclasses
 import enum
 

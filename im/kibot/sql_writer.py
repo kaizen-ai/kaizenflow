@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.kibot.kibot_sql_writer_backend as imkkisqwribac
+import im.kibot.sql_writer as imkisqwri
 """
 
 from typing import Optional
@@ -10,7 +10,7 @@ import pandas as pd
 import psycopg2.extras as pextra
 
 import im.common.data.types as imcodatyp
-import im.common.sql_writer as imcosqwrbac
+import im.common.sql_writer as imcosqwri
 
 
 def get_create_table_query() -> str:
@@ -62,7 +62,7 @@ def get_create_table_query() -> str:
     return sql_query
 
 
-class KibotSqlWriter(imcosqwrbac.AbstractSqlWriter):
+class KibotSqlWriter(imcosqwri.AbstractSqlWriter):
     """
     Manager of CRUD operations on a database defined in `im/db`.
     """

@@ -12,7 +12,7 @@ from invoke import task
 
 import helpers.dbg as hdbg
 import helpers.git as hgit
-import helpers.lib_tasks as hlitas
+import helpers.lib_tasks as hlibtask
 
 
 def _get_im_docker_compose_path() -> str:
@@ -59,7 +59,7 @@ def _get_im_docker_cmd(cmd: str) -> str:
     docker_cmd.append(f"run --rm {service_name}")
     docker_cmd.append(cmd)
     # Convert the list to a multiline command.
-    multiline_docker_cmd = hlitas._to_multi_line_cmd(docker_cmd)
+    multiline_docker_cmd = hlibtask._to_multi_line_cmd(docker_cmd)
     return multiline_docker_cmd
 
 
@@ -86,7 +86,7 @@ def _get_im_docker_down(volumes_remove: bool) -> str:
     if volumes_remove:
         # Use the '-v' option to remove attached volumes.
         docker_compose_down.append("-v")
-    multiline_docker_compose_down = hlitas._to_multi_line_cmd(docker_compose_down)
+    multiline_docker_compose_down = hlibtask._to_multi_line_cmd(docker_compose_down)
     return multiline_docker_compose_down
 
 
@@ -102,7 +102,7 @@ def im_docker_cmd(ctx, cmd):  # type: ignore
     # Get docker cmd.
     docker_cmd = _get_im_docker_cmd(cmd)
     # Execute the command.
-    hlitas._run(ctx, docker_cmd, pty=True)
+    hlibtask._run(ctx, docker_cmd, pty=True)
 
 
 @task
@@ -119,4 +119,4 @@ def im_docker_down(ctx, volumes_remove=False):  # type: ignore
     # Get docker down command.
     docker_clean_up_cmd = _get_im_docker_down(volumes_remove)
     # Execute the command.
-    hlitas._run(ctx, docker_clean_up_cmd, pty=True)
+    hlibtask._run(ctx, docker_clean_up_cmd, pty=True)

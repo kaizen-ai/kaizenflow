@@ -1,14 +1,20 @@
 #!/usr/bin/env python
 
+"""
+Import as:
+
+import im.ib.data.extract.gateway.download_ib_data_single_file_with_loop as imidegdidsfwl
+"""
+
 import argparse
 import logging
 
 import pandas as pd
 
-import helpers.dbg as dbg
-import helpers.parser as hparse
-import im.ib.data.extract.gateway.download_data_ib_loop as iidegd
-import im.ib.data.extract.gateway.utils as iidegu
+import helpers.dbg as hdbg
+import helpers.parser as hparser
+import im.ib.data.extract.gateway.download_data_ib_loop as imidegddil
+import im.ib.data.extract.gateway.utils as imidegaut
 
 # from tqdm.notebook import tqdm
 
@@ -17,8 +23,8 @@ _LOG = logging.getLogger(__name__)
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    dbg.shutup_chatty_modules()
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.shutup_chatty_modules()
     #
     if False:
         target = "forex"
@@ -38,7 +44,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     target = args.asset_class
     frequency = args.frequency
     currency = "USD"
-    ib = iidegu.ib_connect(0, is_notebook=False)
+    ib = imidegaut.ib_connect(0, is_notebook=False)
     use_rth = False
     start_ts = None
     end_ts = None
@@ -46,7 +52,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dst_dir = args.dst_dir
     incremental = args.incremental
     client_id_base = 5
-    tasks = iidegu.get_tasks(
+    tasks = imidegaut.get_tasks(
         ib=ib,
         target=target,
         frequency=frequency,
@@ -56,7 +62,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         end_ts=end_ts,
         use_rth=use_rth,
     )
-    file_names = iidegd.download_ib_data(
+    file_names = imidegddil.download_ib_data(
         client_id_base, tasks, incremental, dst_dir, num_threads
     )
     _LOG.info("file_names=%s", file_names)
@@ -95,7 +101,7 @@ def _parse() -> argparse.ArgumentParser:
         help="intraday or day or hour",
     )
     parser.add_argument("--incremental", action="store_true", default=True)
-    hparse.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 

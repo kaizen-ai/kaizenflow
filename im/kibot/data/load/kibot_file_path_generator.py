@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.kibot.data.load.kibot_file_path_generator as kfpgen
+import im.kibot.data.load.kibot_file_path_generator as imkdlkfpge
 """
 
 # TODO(*): -> kibot_file_path_generator.py
@@ -9,42 +9,42 @@ import im.kibot.data.load.kibot_file_path_generator as kfpgen
 import os
 from typing import Optional, cast
 
-import helpers.dbg as dbg
-import im.common.data.load.file_path_generator as icdlfi
-import im.common.data.types as icdtyp
-import im.kibot.data.config as ikdcon
+import helpers.dbg as hdbg
+import im.common.data.load.file_path_generator as imcdlfpage
+import im.common.data.types as imcodatyp
+import im.kibot.data.config as imkidacon
 
 
-class KibotFilePathGenerator(icdlfi.FilePathGenerator):
+class KibotFilePathGenerator(imcdlfpage.FilePathGenerator):
     FREQ_PATH_MAPPING = {
-        icdtyp.Frequency.Daily: "daily",
-        icdtyp.Frequency.Minutely: "1min",
-        icdtyp.Frequency.Tick: "tick",
+        imcodatyp.Frequency.Daily: "daily",
+        imcodatyp.Frequency.Minutely: "1min",
+        imcodatyp.Frequency.Tick: "tick",
     }
 
     CONTRACT_PATH_MAPPING = {
-        icdtyp.ContractType.Continuous: "continuous_",
-        icdtyp.ContractType.Expiry: "",
+        imcodatyp.ContractType.Continuous: "continuous_",
+        imcodatyp.ContractType.Expiry: "",
     }
 
     ASSET_TYPE_PREFIX = {
-        icdtyp.AssetClass.ETFs: "all_etfs_",
-        icdtyp.AssetClass.Stocks: "all_stocks_",
-        icdtyp.AssetClass.Forex: "all_forex_pairs_",
-        icdtyp.AssetClass.Futures: "all_futures",
-        icdtyp.AssetClass.SP500: "sp_500_",
+        imcodatyp.AssetClass.ETFs: "all_etfs_",
+        imcodatyp.AssetClass.Stocks: "all_stocks_",
+        imcodatyp.AssetClass.Forex: "all_forex_pairs_",
+        imcodatyp.AssetClass.Futures: "all_futures",
+        imcodatyp.AssetClass.SP500: "sp_500_",
     }
 
     def generate_file_path(
         self,
         symbol: str,
-        frequency: icdtyp.Frequency,
-        asset_class: icdtyp.AssetClass = icdtyp.AssetClass.Futures,
-        contract_type: Optional[icdtyp.ContractType] = None,
+        frequency: imcodatyp.Frequency,
+        asset_class: imcodatyp.AssetClass = imcodatyp.AssetClass.Futures,
+        contract_type: Optional[imcodatyp.ContractType] = None,
         exchange: Optional[str] = None,
         currency: Optional[str] = None,
         unadjusted: Optional[bool] = None,
-        ext: icdtyp.Extension = icdtyp.Extension.Parquet,
+        ext: imcodatyp.Extension = imcodatyp.Extension.Parquet,
     ) -> str:
         """
         Get the path to a specific Kibot dataset on S3.
@@ -62,15 +62,15 @@ class KibotFilePathGenerator(icdlfi.FilePathGenerator):
         )
         dir_name = f"{asset_class_prefix}{modifier}{freq_path}"
         file_path = os.path.join(dir_name, symbol)
-        if ext == icdtyp.Extension.Parquet:
+        if ext == imcodatyp.Extension.Parquet:
             # Parquet files are located in `pq/` subdirectory.
             file_path = os.path.join("pq", file_path)
             file_path += ".pq"
-        elif ext == icdtyp.Extension.CSV:
+        elif ext == imcodatyp.Extension.CSV:
             file_path += ".csv.gz"
         # TODO(amr): should we allow pointing to a local file here?
         # or rename the method to `generate_s3_path`?
-        file_path = os.path.join(ikdcon.S3_PREFIX, file_path)
+        file_path = os.path.join(imkidacon.S3_PREFIX, file_path)
         return file_path
 
     @staticmethod
@@ -81,7 +81,7 @@ class KibotFilePathGenerator(icdlfi.FilePathGenerator):
         raise NotImplementedError
 
     def _generate_contract_path_modifier(
-        self, contract_type: icdtyp.ContractType
+        self, contract_type: imcodatyp.ContractType
     ) -> str:
         contract_path = self.CONTRACT_PATH_MAPPING[contract_type]
         return f"_{contract_path}contracts_"
@@ -93,9 +93,9 @@ class KibotFilePathGenerator(icdlfi.FilePathGenerator):
 
     def _generate_modifier(
         self,
-        asset_class: icdtyp.AssetClass,
+        asset_class: imcodatyp.AssetClass,
         unadjusted: Optional[bool] = None,
-        contract_type: Optional[icdtyp.ContractType] = None,
+        contract_type: Optional[imcodatyp.ContractType] = None,
     ) -> str:
         """
         Generate a modifier to the file path, based on some asset class
@@ -107,8 +107,8 @@ class KibotFilePathGenerator(icdlfi.FilePathGenerator):
         :return: a path modifier
         """
         modifier = ""
-        if asset_class == icdtyp.AssetClass.Futures:
-            dbg.dassert_is_not(
+        if asset_class == imcodatyp.AssetClass.Futures:
+            hdbg.dassert_is_not(
                 contract_type,
                 None,
                 msg="`contract_type` is a required arg for asset class: 'futures'",
@@ -117,11 +117,11 @@ class KibotFilePathGenerator(icdlfi.FilePathGenerator):
                 contract_type=contract_type
             )
         elif asset_class in [
-            icdtyp.AssetClass.Stocks,
-            icdtyp.AssetClass.ETFs,
-            icdtyp.AssetClass.SP500,
+            imcodatyp.AssetClass.Stocks,
+            imcodatyp.AssetClass.ETFs,
+            imcodatyp.AssetClass.SP500,
         ]:
-            dbg.dassert_is_not(
+            hdbg.dassert_is_not(
                 unadjusted,
                 None,
                 msg="`unadjusted` is a required arg for asset "

@@ -41,7 +41,9 @@ Usage examples:
       --exchange GLOBEX \
       --currency USD
 
+Import as:
 
+import im.ib.data.extract.download_ib_data as imidedibda
 """
 import argparse
 import logging
@@ -49,14 +51,14 @@ from typing import List
 
 import pandas as pd
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.io_ as hio
-import helpers.parser as hparse
-import im.common.data.types as icdtyp
-import im.common.metadata.symbols as icmsym
-import im.ib.data.extract.ib_data_extractor as iideib
-import im.ib.data.load.ib_file_path_generator as fpg
-import im.ib.metadata.ib_symbols as iimibs
+import helpers.parser as hparser
+import im.common.data.types as imcodatyp
+import im.common.metadata.symbols as imcomesym
+import im.ib.data.extract.ib_data_extractor as imideidaex
+import im.ib.data.load.ib_file_path_generator as imidlifpge
+import im.ib.metadata.ib_symbols as imimeibsy
 
 # from tqdm.notebook import tqdm
 
@@ -68,14 +70,14 @@ VALID_ACTIONS = [_DOWNLOAD_ACTION, _PUSH_TO_S3_ACTION]
 DEFAULT_ACTIONS = [_DOWNLOAD_ACTION, _PUSH_TO_S3_ACTION]
 
 
-def _get_symbols_from_args(args: argparse.Namespace) -> List[icmsym.Symbol]:
+def _get_symbols_from_args(args: argparse.Namespace) -> List[imcomesym.Symbol]:
     """
     Get list of symbols to extract.
     """
     # If all args are specified to extract only one symbol, return this symbol.
     if args.symbol and args.exchange and args.asset_class and args.currency:
         return [
-            icmsym.Symbol(
+            imcomesym.Symbol(
                 ticker=args_symbol,
                 exchange=args.exchange,
                 asset_class=args.asset_class,
@@ -86,15 +88,15 @@ def _get_symbols_from_args(args: argparse.Namespace) -> List[icmsym.Symbol]:
         ]
     # Find all matched symbols otherwise.
     # Get file with symbols.
-    latest_symbols_file = fpg.IbFilePathGenerator.get_latest_symbols_file()
+    latest_symbols_file = imidlifpge.IbFilePathGenerator.get_latest_symbols_file()
     # Get all symbols.
-    symbol_universe = iimibs.IbSymbolUniverse(symbols_file=latest_symbols_file)
+    symbol_universe = imimeibsy.IbSymbolUniverse(symbols_file=latest_symbols_file)
     # Keep only matched.
     if args.symbol is None:
         args_symbols = [args.symbol]
     else:
         args_symbols = args.symbol
-    symbols: List[icmsym.Symbol] = []
+    symbols: List[imcomesym.Symbol] = []
     for symbol in args_symbols:
         symbols.extend(
             symbol_universe.get(
@@ -110,15 +112,15 @@ def _get_symbols_from_args(args: argparse.Namespace) -> List[icmsym.Symbol]:
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    dbg.shutup_chatty_modules()
-    actions = hparse.select_actions(
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.shutup_chatty_modules()
+    actions = hparser.select_actions(
         args, valid_actions=VALID_ACTIONS, default_actions=DEFAULT_ACTIONS
     )
     # Get symbols to retrieve.
     symbols = _get_symbols_from_args(args)
     # Extract the data.
-    extractor = iideib.IbDataExtractor()
+    extractor = imideidaex.IbDataExtractor()
     for symbol in symbols:
         part_files_dir = args.dst_dir
         if part_files_dir is None:
@@ -177,13 +179,13 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--asset_class",
-        type=icdtyp.AssetClass,
+        type=imcodatyp.AssetClass,
         help="Asset class (e.g. Futures)",
         required=False,
     )
     parser.add_argument(
         "--contract_type",
-        type=icdtyp.ContractType,
+        type=imcodatyp.ContractType,
         help="Contract type (e.g. Expiry)",
         required=False,
     )
@@ -195,7 +197,7 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--frequency",
-        type=icdtyp.Frequency,
+        type=imcodatyp.Frequency,
         help="Frequency of data (e.g. Minutely)",
         required=True,
     )
@@ -205,10 +207,10 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--dst_dir", type=str, help="Path to extracted files with partial data"
     )
-    hparse.add_action_arg(
+    hparser.add_action_arg(
         parser, valid_actions=VALID_ACTIONS, default_actions=DEFAULT_ACTIONS
     )
-    hparse.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 

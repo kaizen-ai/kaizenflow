@@ -1,14 +1,14 @@
 """
 Import as:
 
-import im.ib.ib_sql_writer_backend as imiibsqwribac
+import im.ib.sql_writer as imibsqwri
 """
 
 import pandas as pd
 import psycopg2.extras as pextra
 
 import im.common.data.types as imcodatyp
-import im.common.sql_writer as imcosqwrbac
+import im.common.sql_writer as imcosqwri
 
 
 def get_create_table_query() -> str:
@@ -65,7 +65,7 @@ def get_create_table_query() -> str:
     return sql_query
 
 
-class IbSqlWriter(imcosqwrbac.AbstractSqlWriter):
+class IbSqlWriter(imcosqwri.AbstractSqlWriter):
     """
     Manager of CRUD operations on a database defined in db.sql.
     """
