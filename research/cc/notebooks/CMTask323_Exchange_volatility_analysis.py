@@ -146,9 +146,9 @@ def perform_adf_test(df_daily):
     coin_list = df_daily.reset_index()["currency_pair"].unique()
     for coin in coin_list:
         result = pd.DataFrame()
-        df = df_daily.loc[[f"{coin}"]]
-        df[df["ema_volatility"].notna()]
-        X = df[df["ema_volatility"].notna()]["ema_volatility"].values
+        df = df_daily.loc[[coin]]
+        df = df[df["ema_volatility"].notna()].copy()
+        X = df["ema_volatility"].values
         test_result = adfuller(X)
         result.loc[f"{coin}", "ADF Statistic"] = test_result[0]
         result.loc[f"{coin}", "p-value"] = test_result[1]
@@ -175,7 +175,7 @@ daily_vix_ema = rccsta.compute_stats_for_universe(config, compute_daily_vix_ema)
 
 # %%
 ema_df_daily = get_df_with_coin_price_volatility(daily_vix_ema, display_plot=True)
-print(ema_df_daily)
+display(ema_df_daily)
 
 # %% [markdown]
 # ## 5 min
@@ -189,7 +189,7 @@ vix_ema_5min = rccsta.compute_stats_for_universe(config, compute_5min_vix_ema)
 
 # %%
 ema_df_5min = get_df_with_coin_price_volatility(vix_ema_5min, display_plot=True)
-print(ema_df_5min)
+display(ema_df_5min)
 
 # %% [markdown]
 # ## Volatility for the whole period (1-day frequency)
@@ -201,14 +201,14 @@ daily_close = rccsta.compute_stats_for_universe(config, compute_daily_close)
 
 # %%
 std_df = get_overall_returns_volatility(daily_close, display_plot=True)
-print(std_df)
+display(std_df)
 
 # %% [markdown]
 # # Test for stationarity of volatility
 
 # %%
 test_results = perform_adf_test(ema_df_daily)
-test_results
+display(test_results)
 
 # %% [markdown]
 # After test results we see that __FIL/USDT__ volatility over 1-day is failed to pass the stationarity test. The graph below confirms the persistence of trend: seems like the coin was too volatile right after the listing and failed to keep the same levels during its trading lifetime.
