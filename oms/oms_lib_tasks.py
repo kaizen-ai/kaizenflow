@@ -51,8 +51,7 @@ def _get_docker_cmd(docker_cmd: str) -> str:
         .../devops/set_schema_im_db.py
     ```
 
-    :param cmd: command to execute
-    :return: `docker-compose' command
+    :param cmd: command to execute inside docker
     """
     cmd = ["docker-compose"]
     # Add `docker-compose` file path.
@@ -72,7 +71,6 @@ def oms_docker_cmd(ctx, cmd):  # type: ignore
     """
     Execute the command `cmd` inside a container attached to the `im app`.
 
-    :param ctx: `context` object
     :param cmd: command to execute
     """
     hdbg.dassert_ne(cmd, "")

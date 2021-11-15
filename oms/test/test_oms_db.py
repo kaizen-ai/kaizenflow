@@ -4,6 +4,7 @@ import os
 import pandas as pd
 import pytest
 
+import helpers.printing as hprint
 import helpers.sql as hsql
 import helpers.system_interaction as hsyint
 import helpers.unit_test as huntes
@@ -11,7 +12,7 @@ import helpers.unit_test as huntes
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): Move this to hsql.py
+# TODO(gp): Generalize and move this to hsql.py or hsql_test.py.
 class _TestOmsDbHelper(huntes.TestCase):
 
     def setUp(self) -> None:
@@ -19,24 +20,28 @@ class _TestOmsDbHelper(huntes.TestCase):
         Initialize the test database inside test container.
         """
         super().setUp()
+        _LOG.info("\n%s", hprint.frame("setUp"))
         # Start the service.
         cmd = []
-        service = "oms_postgres_local"
+        # TODO(gp): This information should be retrieved from oms_lib_tasks.py.
+        #  We can also use the invoke command.
         self.docker_compose_file_path = os.path.abspath(
             "oms/devops/compose/docker-compose.yml"
         )
         cmd.append("sudo docker-compose")
         cmd.append(f"--file {self.docker_compose_file_path}")
+        service = "oms_postgres_local"
         cmd.append(f"up -d {service}")
+        cmd = " ".join(cmd)
         hsyint.system(cmd, suppress_output=False)
         # TODO(gp): Read the info from env.
-        dbname = "im_postgres_db_local"
+        dbname = "oms_postgres_db_local"
         host = "localhost"
         port = 5432
         password = "alsdkqoen"
         user = "aljsdalsd"
         # Wait for the DB to be available.
-        hsql.check_db_connection(dbname, port, host)
+        hsql.wait_db_connection(dbname, port, host)
         # Save connection info.
         self.connection, self.cursor = hsql.get_connection(
             dbname,
@@ -51,6 +56,7 @@ class _TestOmsDbHelper(huntes.TestCase):
         """
         Bring down the test container.
         """
+        _LOG.info("\n%s", hprint.frame("tearDown"))
         cmd = (
             "sudo docker-compose "
             f"--file {self.docker_compose_file_path} down -v"
@@ -59,55 +65,14 @@ class _TestOmsDbHelper(huntes.TestCase):
         super().tearDown()
 
 
+# #################################
+
+
 class TestOmsDb1(_TestOmsDbHelper):
 
-    def test_execute_insert_query1(self) -> None:
+    def test_up1(self) -> None:
         """
-        Verify that dataframe insertion is correct.
+        Verify that the DB is up.
         """
-        expected = self.df_to_insert.to_dict()
-        self.cursor.execute(imccdbuti.get_ccxt_ohlcv_create_table_query())
-        imccdbuti.execute_insert_query(
-            self.connection, self.df_to_insert, "ccxt_ohlcv"
-        )
-        df = hsql.execute_query(self.connection, "SELECT * FROM ccxt_ohlcv")
-        actual = huntes.convert_df_to_json_string(df)
-        self.check_string(actual)
-
-
-class TestUtils1(huntes.TestCase):
-    def test_create_insert_query(self) -> None:
-        """
-        Verify that query is correct.
-        """
-        df_to_insert = pd.DataFrame(
-            columns=[
-                "id",
-                "timestamp",
-                "open",
-                "high",
-                "low",
-                "close",
-                "volume",
-                "currency_pair",
-                "exchange_id",
-            ],
-            data=[
-                [
-                    1,
-                    1631145600000,
-                    30.0,
-                    40.0,
-                    50.0,
-                    60.0,
-                    70.0,
-                    "BTC/USDT",
-                    "binance",
-                ]
-            ]
-        )
-        actual_query = imccdbuti._create_insert_query(
-            df_to_insert,
-            "ccxt_ohlcv"
-        )
-        self.check_string(actual_query)
+        db_list = hsql.get_db_names(self.connection)
+        _LOG.info("db_list=%s", db_list)

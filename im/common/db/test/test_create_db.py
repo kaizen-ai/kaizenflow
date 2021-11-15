@@ -13,7 +13,7 @@ import im.common.db.create_db as imcdbcrdb
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
+# TODO(gp): -> CreateDb
 class TestCreateDB(hunitest.TestCase):
     def setUp(self) -> None:
         """
@@ -55,6 +55,13 @@ class TestCreateDB(hunitest.TestCase):
         self.connection.close()
         hsysinte.system(cmd, suppress_output=False)
         super().tearDown()
+
+    def test_up1(self) -> None:
+        """
+        Verify that the DB is up.
+        """
+        db_list = hsql.get_db_names(self.connection)
+        _LOG.info("db_list=%s", db_list)
 
     @pytest.mark.slow()
     def test_create_all_tables1(self) -> None:

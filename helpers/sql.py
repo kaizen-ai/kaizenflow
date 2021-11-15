@@ -14,22 +14,26 @@ import pandas as pd
 import psycopg2 as psycop
 import psycopg2.sql as psql
 
-
 import helpers.dbg as hdbg
+import helpers.printing as hprint
 import helpers.system_interaction as hsysinte
 import helpers.timer as htimer
 
 _LOG = logging.getLogger(__name__)
 
+# Invariant: keep the arguments in the interface in the same order as: host,
+#  dbname, port, user, password
 
 # TODO(gp): mypy doesn't like this.
 DbConnection = psycop.extensions.connection
 
+# TODO(gp): host, dbname, ...
 DbConnectionInfo = collections.namedtuple(
     "DbConnectionInfo", ["dbname", "host", "port", "user", "password"]
 )
 
 # TODO(gp): Return only the connection (CmampTask441).
+# TODO(gp): Reorg host, dbname, user, port
 def get_connection(
     dbname: str,
     host: str,
@@ -41,8 +45,9 @@ def get_connection(
     """
     Create a connection and cursor for a SQL database.
     """
+    _LOG.debug(hprint.to_str("host dbname port user"))
     connection = psycop.connect(
-        dbname=dbname, host=host, user=user, port=port, password=password
+        host=host, dbname=dbname, port=port, user=user, password=password
     )
     cursor = connection.cursor()
     if autocommit:
@@ -55,16 +60,18 @@ def get_connection_from_env_vars() -> Tuple[
     DbConnection, psycop.extensions.cursor
 ]:
     """
-    Create a SQL connection using environment variables.
+    Create a SQL connection with the information from the environment variables.
     """
-    # Get environment variables
-    db_name = os.environ["POSTGRES_DB"]
+    # Get values from the environment variables.
+    # TODO(gp): -> POSTGRES_DBNAME
     host = os.environ["POSTGRES_HOST"]
-    port = int(os.environ["POSTGRES_PORT"])
+    dbname = os.environ["POSTGRES_DB"]
     user = os.environ["POSTGRES_USER"]
+    port = int(os.environ["POSTGRES_PORT"])
     password = os.environ["POSTGRES_PASSWORD"]
+    # Build the
     connection, cursor = get_connection(
-        dbname=db_name,
+        dbname=dbname,
         host=host,
         port=port,
         user=user,
@@ -87,26 +94,29 @@ def get_connection_from_string(
     return connection, cursor
 
 
+# TODO(gp): Rearrange as host, dbname (instead of db_name), port.
 def wait_db_connection(
     db_name: str, port: int, host: str, timeout_in_secs: int = 10
 ) -> None:
     """
-    Verify that the database is available.
+    Wait until the database is available.
+
+    :param timeout_in_secs: secs before timing out with `RuntimeError`.
     """
     hdbg.dassert_lte(1, timeout_in_secs)
     _LOG.debug("db_name=%s, port=%s, host=%s", db_name, port, host)
-    timer = 0
+    elapsed_secs = 0
     while True:
         _LOG.info("Waiting for PostgreSQL to become available...")
         # Note: credentials passed due to race condition.
         cmd = f"pg_isready -d {db_name} -p {port} -h {host}"
         rc = hsysinte.system(cmd, abort_on_error=False)
         if rc == 0:
-            _LOG.info("PostgreSQL is available")
+            _LOG.info("PostgreSQL is available (after %s seconds)", elapsed_secs)
             break
-        if timer > timeout_in_secs:
-            raise RuntimeError(f"Cannot connect to db db_name: {db_name}")
-        timer += 1
+        if elapsed_secs > timeout_in_secs:
+            raise RuntimeError(f"Cannot connect to db host={host} db_name={db_name} port={port}")
+        elapsed_secs += 1
         time.sleep(1)
 
 
