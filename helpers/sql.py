@@ -16,6 +16,7 @@ import psycopg2 as psycop
 import psycopg2.extras as extras
 import psycopg2.sql as psql
 
+
 import helpers.dbg as hdbg
 import helpers.printing as hprint
 import helpers.timer as htimer
@@ -40,6 +41,9 @@ DbConnectionInfo = collections.namedtuple(
 # TODO(gp): mypy doesn't like this.
 DbConnection = psycop.extensions.connection
 
+DbConnectionInfo = collections.namedtuple(
+    "DbConnectionInfo", ["dbname", "host", "port", "user", "password"]
+)
 
 # TODO(gp): mypy doesn't like this. Understand why and / or inline.
 DbConnection = psycop.extensions.connection
