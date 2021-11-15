@@ -13,7 +13,8 @@ import pandas as pd
 import psycopg2 as psycop
 import psycopg2.sql as psql
 
-import helpers.system_interaction as hsyint
+import helpers.dbg as hdbg
+import helpers.system_interaction as hsysinte
 import helpers.timer as htimer
 
 _LOG = logging.getLogger(__name__)
@@ -79,29 +80,33 @@ def get_connection_from_string(
     return connection, cursor
 
 
-def check_db_connection(
-    db_name: str,
-    port: int,
-    host: str,
+def wait_db_connection(
+    db_name: str, port: int, host: str, timeout_in_secs: int = 10
 ) -> None:
     """
     Verify that the database is available.
     """
+    hdbg.dassert_lte(1, timeout_in_secs)
     _LOG.debug("db_name=%s, port=%s, host=%s", db_name, port, host)
+    timer = 0
     while True:
         _LOG.info("Waiting for PostgreSQL to become available...")
+        # Note: credentials passed due to race condition.
         cmd = f"pg_isready -d {db_name} -p {port} -h {host}"
-        rc = hsyint.system(cmd,abort_on_error=False)
-        time.sleep(1)
+        rc = hsysinte.system(cmd, abort_on_error=False)
         if rc == 0:
             _LOG.info("PostgreSQL is available")
             break
+        if timer > timeout_in_secs:
+            raise RuntimeError(f"Cannot connect to db db_name: {db_name}")
+        timer += 1
+        time.sleep(1)
 
 
 def db_connection_to_str(connection: DbConnection) -> str:
     """
-    Get database connection details using connection. Connection
-    details include:
+    Get database connection details using connection. Connection details
+    include:
 
         - Database name
         - Host
@@ -113,11 +118,13 @@ def db_connection_to_str(connection: DbConnection) -> str:
     :return: database connection details
     """
     info = connection.info
-    txt = (f"dbname={info.dbname}\n"
-           f"host={info.host}\n"
-           f"port={info.port}\n"
-           f"user={info.user}\n"
-           f"password={info.password}")
+    txt = (
+        f"dbname={info.dbname}\n"
+        f"host={info.host}\n"
+        f"port={info.port}\n"
+        f"user={info.user}\n"
+        f"password={info.password}"
+    )
     return txt
 
 

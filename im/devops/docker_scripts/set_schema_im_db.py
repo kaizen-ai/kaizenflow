@@ -41,10 +41,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level)
     # Verify that the database is available.
-    hsql.check_db_connection(
-        os.environ["POSTGRES_DB"],
-        os.environ["POSTGRES_HOST"],
-        os.environ["POSTGRES_PORT"],
+    hsql.wait_db_connection(
+        db_name=os.environ["POSTGRES_DB"],
+        port=int(os.environ["POSTGRES_PORT"]),
+        host=os.environ["POSTGRES_HOST"],
     )
     connection, _ = hsql.get_connection_from_env_vars()
     # Set schema for the database.

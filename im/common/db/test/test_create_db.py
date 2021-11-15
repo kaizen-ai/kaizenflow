@@ -34,7 +34,7 @@ class TestCreateDB(hunitest.TestCase):
         port = 5432
         password = "alsdkqoen"
         user = "aljsdalsd"
-        hsql.check_db_connection(dbname, port, host)
+        hsql.wait_db_connection(dbname, port, host)
         self.connection, _ = hsql.get_connection(
             dbname,
             host,
