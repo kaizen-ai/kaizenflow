@@ -97,14 +97,14 @@ def get_connection_from_string(
 
 
 def check_db_connection(
-    host: str, db_name: str, port: int,
+    host: str, dbname: str, port: int,
 ) -> bool:
     """
     Check whether a connection to a DB exists.
 
     This is not blocking.
     """
-    cmd = f"pg_isready -d {db_name} -p {port} -h {host}"
+    cmd = f"pg_isready -d {dbname} -p {port} -h {host}"
     rc = hsysinte.system(cmd, abort_on_error=False)
     conn_exists = rc == 0
     return conn_exists
@@ -302,6 +302,12 @@ def get_columns(connection: DbConnection, table_name: str) -> list:
 # #############################################################################
 
 
+def disconnect_all_clients(dbname: str):
+    cmd = f"SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '{dbname}';"
+
+
+
+
 def create_database(
     connection: DbConnection,
     dbname: str,
@@ -318,7 +324,7 @@ def create_database(
     with connection.cursor() as cursor:
         if overwrite:
             cursor.execute(
-                psql.SQL("DROP DATABASE IF EXISTS {};").format(
+                psql.SQL("DROP DATABASE IF EXISTS {} WITH (FORCE);").format(
                     psql.Identifier(dbname)
                 )
             )
@@ -338,8 +344,9 @@ def remove_database(connection: DbConnection, dbname: str) -> None:
     :param dbname: database name to drop, e.g. `im_db_local`
     """
     # Drop database.
+    # From https://stackoverflow.com/questions/36502401
     connection.cursor().execute(
-        psql.SQL("DROP DATABASE {};").format(psql.Identifier(dbname))
+        psql.SQL("DROP DATABASE {} WITH (FORCE);").format(psql.Identifier(dbname))
     )
 
 
