@@ -6,7 +6,6 @@ import research.cc.detect_outliers as rccdeout
 
 
 class TestDetectOutliers(hunitest.TestCase):
-
     def test1(self) -> None:
         """
         Test for one 0 in data.
