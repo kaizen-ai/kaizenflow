@@ -12,15 +12,18 @@ _LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
-class Test_sql(huntes.TestCase):
+class TestSql(huntes.TestCase):
     def _create_test_table(self) -> None:
-
+        """
+        Create a test table.
+        """
         query = """CREATE TABLE IF NOT EXISTS test_table(
                     id SERIAL PRIMARY KEY,
                     column_1 NUMERIC,
                     column_2 VARCHAR(255) NOT NULL,
                     )
                     """
+        self.connection.cursor.execute(query)
 
     def setUp(self) -> None:
         """
