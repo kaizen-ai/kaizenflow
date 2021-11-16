@@ -238,9 +238,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 )
                 if connection:
                     # Insert into database.
-                    imccdbuti.execute_insert_query(
+                    hsql.execute_insert_query(
                         connection=connection,
-                        df=pair_data,
+                        obj=pair_data,
                         table_name=args.table_name,
                     )
         time.sleep(60)
