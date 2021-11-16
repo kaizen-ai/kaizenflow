@@ -1665,7 +1665,7 @@ def docker_release_dev_image(  # type: ignore
     if superslow_tests:
         run_superslow_tests(ctx, stage=stage)
     # 3) Run end-to-end test.
-    if run_end_to_end_tests:
+    if end_to_end_tests:
         end_to_end_test_fn = get_default_param("END_TO_END_TEST_FN")
         if not end_to_end_test_fn(ctx, stage=stage):
             _LOG.error("End-to-end test has failed")
