@@ -5,6 +5,7 @@ import helpers.sql as hsql
 """
 
 import collections
+import io
 import logging
 import os
 import time
@@ -13,7 +14,7 @@ from typing import List, NamedTuple, Optional, Tuple, Union
 import pandas as pd
 import psycopg2 as psycop
 import psycopg2.sql as psql
-import psycopg2.extras as extras
+from psycopg2 import extras
 
 import helpers.dbg as hdbg
 import helpers.printing as hprint
@@ -105,7 +106,9 @@ def get_connection_from_string(
 
 
 def check_db_connection(
-    host: str, dbname: str, port: int,
+    host: str,
+    dbname: str,
+    port: int,
 ) -> bool:
     """
     Check whether a connection to a DB exists, in a non-blocking way.
@@ -217,12 +220,6 @@ def get_indexes(connection: DbConnection) -> pd.DataFrame:
     return tmp
 
 
-def disconnect_all_clients(dbname: str):
-    # From https://stackoverflow.com/questions/36502401
-    # Not sure this will work in our case, since it might kill our own connection.
-    cmd = f"SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '{dbname}';"
-
-
 # #############################################################################
 # Database
 # #############################################################################
@@ -309,9 +306,9 @@ def get_table_names(connection: DbConnection) -> List[str]:
 
 # TODO(gp): -> get_tables_size
 def get_table_size(
-        connection: DbConnection,
-        only_public: bool = True,
-        summary: bool = True,
+    connection: DbConnection,
+    only_public: bool = True,
+    summary: bool = True,
 ) -> pd.DataFrame:
     """
     Report the size of each table.
@@ -369,9 +366,9 @@ def head_table(
 
 
 def head_tables(
-        connection: DbConnection,
-        tables: Optional[List[str]] = None,
-        limit: int = 5,
+    connection: DbConnection,
+    tables: Optional[List[str]] = None,
+    limit: int = 5,
 ) -> str:
     txt = []
     if tables is None:
@@ -390,10 +387,10 @@ def get_columns(connection: DbConnection, table_name: str) -> list:
     Get column names for given table.
     """
     query = (
-            """SELECT column_name
+        """SELECT column_name
                 FROM information_schema.columns
                 WHERE TABLE_NAME = '%s' """
-            % table_name
+        % table_name
     )
     cursor = connection.cursor()
     cursor.execute(query)
@@ -403,9 +400,9 @@ def get_columns(connection: DbConnection, table_name: str) -> list:
 
 # TODO(gp): -> find_tables_common_columns
 def find_common_columns(
-        connection: DbConnection,
-        tables: List[str],
-        as_df: bool = False,
+    connection: DbConnection,
+    tables: List[str],
+    as_df: bool = False,
 ) -> Union[None, pd.DataFrame]:
     limit = 5
     df = []
@@ -510,7 +507,7 @@ def copy_rows_with_copy_from(
     :param table_name: name of the table for insertion
     """
     # The target table needs to exist.
-    hdbg.dassert_in(table_name, hsql.get_table_names(connection))
+    hdbg.dassert_in(table_name, get_table_names(connection))
     # Read the data.
     buffer = io.StringIO()
     df.to_csv(buffer, index=False, header=False)
@@ -547,7 +544,7 @@ def execute_insert_query(
     Insert a DB as multiple rows into the database.
 
     :param connection: connection to the DB
-    :param df: data to insert
+    :param obj: data to insert
     :param table_name: name of the table for insertion
     """
     if isinstance(obj, pd.Series):
