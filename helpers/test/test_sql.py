@@ -12,9 +12,8 @@ import helpers.unit_test as huntes
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
+#@pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
 class TestSql(huntes.TestCase):
-
     def setUp(self) -> None:
         """
         Initialize the test container.
@@ -96,6 +95,7 @@ class TestSql(huntes.TestCase):
         )
         hsql.create_database(self.connection, dbname="test_db")
         self.assertIn("test_db", hsql.get_db_names(self.connection))
+
     def _create_test_table(self) -> None:
         """
         Create a test table.
@@ -103,10 +103,19 @@ class TestSql(huntes.TestCase):
         query = """CREATE TABLE IF NOT EXISTS test_table(
                     id SERIAL PRIMARY KEY,
                     column_1 NUMERIC,
-                    column_2 VARCHAR(255) NOT NULL,
+                    column_2 VARCHAR(255)
                     )
                     """
-        self.connection.cursor.execute(query)
+        hsql.wait_db_connection(self.dbname, self.port, self.host)
+        connection, _ = hsql.get_connection(
+            self.dbname,
+            self.host,
+            self.user,
+            self.port,
+            self.password,
+            autocommit=True,
+        )
+        connection.cursor().execute(query)
 
     def _get_test_data(self) -> pd.DataFrame:
         test_data = pd.DataFrame(
@@ -140,3 +149,12 @@ class TestSql(huntes.TestCase):
             ],
         )
         return test_data
+
+    def test_create_insert_query(self) -> None:
+        """
+        Verify that query is correct.
+        """
+        self._create_test_table()
+        test_data = self._get_test_data()
+        actual_query = hsql._create_insert_query(test_data, "test_table")
+        self.check_string(actual_query)
