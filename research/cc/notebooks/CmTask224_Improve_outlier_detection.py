@@ -27,6 +27,7 @@ import logging
 import os
 from typing import Any, Optional
 
+import numpy as np
 import pandas as pd
 
 import core.config.config_ as ccocon
@@ -75,7 +76,7 @@ chunk_40days = data.tail(57600).copy()
 # %%
 def detect_outlier_at_index(
     srs: pd.Series,
-    idx: Any,
+    idx: int,
     n_samples: int,
     z_score_threshold: float,
 ) -> bool:
@@ -90,21 +91,21 @@ def detect_outlier_at_index(
     - compares the z-score to the threshold to declare the current element an outlier 
 
     :param srs: input series
+    :param idx: numerical index of a value to check
     :param n_samples: number of samples in z-score window
     :param z_score_threshold: threshold to mark a value as an outlier based on its z-score in the window
     :return: whether the element at index idx is an outlier
     """
-    # Get numerical order of a given index.
-    idx_order = srs.index.get_loc(idx)
-    # Set z-score window boundaries. 
-    window_first_index = max(0, idx_order - n_samples)
-    window_last_index = max(idx_order, window_first_index + n_samples)
+    # Set z-score window boundaries.
+    window_first_index = max(0, idx - n_samples)
     # Get a series window to compute z-score for.
-    window_srs = srs.iloc[window_first_index : window_last_index].copy()
+    window_srs = srs.iloc[window_first_index : idx + 1]
     # Compute z-score of a value at index.
     z_score = (srs[idx] - window_srs.mean()) / window_srs.std()
     # Return if a value at index is an outlier.
-    is_outlier = abs(z_score) > z_score_threshold
+    # Done via `<=` since a series can contain None values that should be detected
+    # as well but will result to NaN if compared to the threshold directly.
+    is_outlier = not (abs(z_score) <= z_score_threshold)
     return is_outlier
 
 
@@ -112,8 +113,7 @@ def detect_outliers(
     srs: pd.Series,
     n_samples: int,
     z_score_threshold: float,
-    mask: Optional[pd.Series] = None,
-) -> bool:
+) -> np.array:
     """
     Return the mask representing the outliers.
     
@@ -129,86 +129,88 @@ def detect_outliers(
     :param srs: input series
     :param n_samples: number of samples in Z-score window
     :param z_score_threshold: threshold to mark a value as an outlier based on its z-score in the window
-    :param mask: boolean mask storing what values need to be ignored when computing the z-score
     :return: whether the element at index idx is an outlier
     """
     hpandas.dassert_monotonic_index(srs)
-    # Set mask.
-    mask = mask or pd.Series(
-        data=[True] * srs.shape[0], index=srs.index
-    )
+    # Initialize mask for outliers.
+    mask = np.array([False] * srs.shape[0])
+    # Set outlier count.
+    outlier_count = 0
     # Iterate over each element and update the mask for it.
-    for idx in srs.index:
-        valid_srs = srs[mask]
+    for idx in range(1, srs.shape[0]):
+        # Drop already detected outliers.
+        valid_srs = srs[~mask]
+        # Adjust numerical index to the number of dropped outliers.
+        idx_adj = idx - outlier_count
+        # Detect if a value at requested numerical index is an outlier
+        # and reflect it in the mask.
         mask[idx] = detect_outlier_at_index(
-            valid_srs, idx, n_samples, z_score_threshold
+            valid_srs, idx_adj, n_samples, z_score_threshold
         )
+        # Increase the outlier count if an outlier was detected.
+        if mask[idx]:
+            outlier_count = outlier_count + 1
     return mask 
 
 
 # %% [markdown]
 # Below you can see that execution time grows exponentially to the growth of input series chunk.
 #
-# The 20-days chunk is processed 2.3 times slower than the 10-days chunk, the 40-days chunk is processed 2.5 times slower than the 20-days chunk.
-#
 # If we take number of days in chunk as `x` for a rough approximation, rounded execution time in seconds as `y`, and build an equation that corresponds to the test samples then we get the following:<br>
-# `y = (1/60)x^2 + (6/5)x - (2/3)`<br>
+# `y = (11/1500)x^2 + (3/4)x + (4/15)`<br>
 #
-# Then processing full 1619960 length series will take ~16 days to complete. This is hardly what we want.
+# Then processing full 1619960 length series should take ~3-4 hours to complete. This is hardly what we want.
 #
-# If we want to process outliers for the whole series I suggest that we split it on 10-days chunks and process them with 1-day window - this should supposedly take ~25 minutes to complete.
+# If we want to process outliers for the whole series I suggest that we split it on 10-days chunks and process them with 1-day window - this should supposedly take ~16 minutes to complete.
 
 # %%
 # %%time
 outlier_mask_10days = detect_outliers(
-    srs=chunk_10days["close"], n_samples=1440, z_score_threshold=3
+    srs=chunk_10days["close"], n_samples=1440, z_score_threshold=4
 )
 
 # %%
 # %%time
 outlier_mask_20days = detect_outliers(
-    srs=chunk_20days["close"], n_samples=1440, z_score_threshold=3
+    srs=chunk_20days["close"], n_samples=1440, z_score_threshold=4
 )
 
 # %%
 # %%time
 outlier_mask_40days = detect_outliers(
-    srs=chunk_40days["close"], n_samples=1440, z_score_threshold=3
+    srs=chunk_40days["close"], n_samples=1440, z_score_threshold=4
 )
 
 # %% [markdown]
-# Another problem with this approach that its results are not quite consistent.<br>
-# 147 outliers were detected on a 20-days chunk but only 94 at the 40-days chunk and these outliers actually intersect only at 1 value.<br>
-# This means that this algorithm changes it's behavior a lot depending on what observations it starts computations from. Therefore, it's not really stable and we should consider this when thinking about using it.
+# Another problem with this approach is that its results are not robust to the cases when a harsh ascent or decline has happened and the price direction has continued. In this case all the values after this harsh change are considered outliers and dropped.
+#
+# Take a look at 10-days chunk result. It has 76% of its values considered outliers with Z-score threshold equals 4 while 3 is a standard. After 2021-09-07 04:25:00-04:00 the price falls from 3848.65 to 3841.97 and all the following observations that are below 3841.95 are considered outliers as well.<br>
+# Note that in this case these are not outliers and this is exactly the problem - with this approach we have a risk to drop all the observations below a certain point. Since crypto data is very volatile, we can end up with losing a lot of data in this case.
 
 # %%
-print(outlier_mask_10days.sum())
-print(outlier_mask_20days.sum())
-print(outlier_mask_40days.sum())
+outlier_mask_10days.sum() / outlier_mask_10days.shape[0]
 
 # %%
-# 20-days outliers intersect only at 1 value with 40-days outliers.
-len(
-    outlier_mask_40days[outlier_mask_40days > 0].index.intersection( 
-        outlier_mask_20days[outlier_mask_20days > 0].index
-    )
-)
+outlier_mask_10days[:3426]
 
 # %%
-# 10-days outliers intersect just at 23 values with 20-days outliers.
-len(
-    outlier_mask_10days[outlier_mask_10days > 0].index.intersection( 
-        outlier_mask_20days[outlier_mask_20days > 0].index
-    )
-)
+outlier_mask_10days[3426:]
 
 # %%
-# 10-days outliers intersect only at 1 value with 40-days outliers.
-len(
-    outlier_mask_10days[outlier_mask_10days > 0].index.intersection( 
-        outlier_mask_40days[outlier_mask_40days > 0].index
-    )
-)
+set(outlier_mask_10days[3426:])
+
+# %%
+chunk_10days["close"][~outlier_mask_10days].tail()
+
+# %%
+chunk_10days["close"][outlier_mask_10days].head()
+
+# %% [markdown]
+# All the other chunks have a lot of false outliers as well.
+
+# %%
+print(outlier_mask_20days.sum() / outlier_mask_20days.shape[0])
+print(outlier_mask_40days.sum() / outlier_mask_40days.shape[0])
 
 
 # %% [markdown]
