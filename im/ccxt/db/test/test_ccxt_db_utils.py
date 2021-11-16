@@ -142,20 +142,6 @@ class TestUtils(hunitest.TestCase):
         actual = hunitest.convert_df_to_json_string(df)
         self.check_string(actual)
 
-    @pytest.mark.skip("CmapAmp413: 92s, too slow")
-    def test_execute_insert_query1(self) -> None:
-        """
-        Verify that dataframe insertion is correct.
-        """
-        # TODO(gp): Insert less data.
-        self.cursor.execute(imccdbuti.get_ccxt_ohlcv_create_table_query())
-        imccdbuti.execute_insert_query(
-            self.connection, self.df_to_insert, "ccxt_ohlcv"
-        )
-        df = hsql.execute_query(self.connection, "SELECT * FROM ccxt_ohlcv")
-        actual = hunitest.convert_df_to_json_string(df)
-        self.check_string(actual)
-
 
 class TestUtils1(hunitest.TestCase):
     def test_create_insert_query(self) -> None:
