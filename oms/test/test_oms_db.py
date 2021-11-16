@@ -134,13 +134,17 @@ class TestOmsDb1(_TestOmsDbHelper):
         _LOG.info("db_list=%s", db_list)
 
     def test_create_table1(self) -> None:
+        # Clean up the table.
+        table_name = "target_files_processed_candidate_view"
+        hsql.remove_table(self.connection, table_name)
+        #
         db_tables = hsql.get_table_names(self.connection)
         _LOG.info("get_table_names=%s", db_tables)
         self.assertEqual(db_tables, [])
         # Create the table.
         query = oomsdb.get_create_target_files_table_query(incremental=False)
         _LOG.debug("query=%s", query)
-        connection.cursor().execute(query)
+        self.connection.cursor().execute(query)
         #
         db_tables = hsql.get_table_names(self.connection)
         _LOG.info("get_table_names=%s", db_tables)
@@ -161,7 +165,7 @@ class TestOmsDb1(_TestOmsDbHelper):
 
     def test_insert1(self) -> None:
         # Create the table.
-        query = oomsdb.get_create_target_files_table_query()
+        query = oomsdb.get_create_target_files_table_query(incremental=True)
         _LOG.debug("query=%s", query)
         self.connection.cursor().execute(query)
         #

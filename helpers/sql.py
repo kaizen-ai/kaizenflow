@@ -444,6 +444,11 @@ def find_common_columns(
     return obj
 
 
+def remove_table(connection: DbConnection, table_name: str) -> None:
+    query = f"DROP TABLE {table_name}"
+    connection.cursor().execute(query)
+
+
 # #############################################################################
 # Query
 # #############################################################################
