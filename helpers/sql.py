@@ -15,7 +15,7 @@ import pandas as pd
 import psycopg2 as psycop
 import psycopg2.extras as extras
 import psycopg2.sql as psql
-
+from psycopg2 import extras
 
 import helpers.dbg as hdbg
 import helpers.printing as hprint
@@ -38,9 +38,14 @@ DbConnectionInfo = collections.namedtuple(
 )
 
 
-# TODO(gp): mypy doesn't like this.
+# Invariant: keep the arguments in the interface in the same order as: host,
+#  dbname, port, user, password
+
+# TODO(gp): mypy doesn't like this. Understand why and / or inline.
 DbConnection = psycop.extensions.connection
 
+
+# TODO(gp): host, dbname, ...
 DbConnectionInfo = collections.namedtuple(
     "DbConnectionInfo", ["dbname", "host", "port", "user", "password"]
 )
@@ -115,6 +120,7 @@ def get_connection_from_env_vars() -> Tuple[
     dbname = os.environ["POSTGRES_DB"]
     port = int(os.environ["POSTGRES_PORT"])
     user = os.environ["POSTGRES_USER"]
+    port = int(os.environ["POSTGRES_PORT"])
     password = os.environ["POSTGRES_PASSWORD"]
     # Build the
     connection = get_connection(
@@ -284,7 +290,7 @@ def disconnect_all_clients(dbname: str):
 
 def get_db_names(connection: DbConnection) -> List[str]:
     """
-    DbConnection  Return the names of the available DBs.
+    Return the names of the available DBs.
 
     E.g., ['postgres', 'rdsadmin', 'template0', 'template1']
     """
