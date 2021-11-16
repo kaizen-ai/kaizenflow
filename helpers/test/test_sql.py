@@ -209,17 +209,18 @@ class TestSql1(huntes.TestCase):
         self.check_string(actual)
 
     @pytest.mark.slow()
-    def test_remove_database(self) -> None:
+    def test_remove_database1(self) -> None:
         """
         Create database 'test_db_to_remove' and remove it.
         """
+        hsql.wait_db_connection(self.dbname, self.port, self.host)
         self.connection, _ = hsql.get_connection(
             self.dbname,
             self.host,
             self.user,
             self.port,
             self.password,
-            #autocommit=True,
+            autocommit=True,
         )
         hsql.create_database(
             self.connection,
@@ -229,17 +230,19 @@ class TestSql1(huntes.TestCase):
         db_list = hsql.get_db_names(self.connection)
         self.assertNotIn("test_db_to_remove", db_list)
 
+    @pytest.mark.slow()
     def test_remove_database_invalid(self) -> None:
         """
         Test failed assertion for passing db name that does not exist.
         """
+        hsql.wait_db_connection(self.dbname, self.port, self.host)
         self.connection, _ = hsql.get_connection(
             self.dbname,
             self.host,
             self.user,
             self.port,
             self.password,
-            #autocommit=True,
+            autocommit=True,
         )
         with self.assertRaises(perrors.InvalidCatalogName):
             hsql.remove_database(self.connection, "db does not exist")
