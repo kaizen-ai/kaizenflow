@@ -5,6 +5,7 @@ import pandas as pd
 import psycopg2.errors as perrors
 import pytest
 
+import pandas as pd
 import pytest
 
 import helpers.git as hgit
