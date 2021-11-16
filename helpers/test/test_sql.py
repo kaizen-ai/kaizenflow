@@ -13,7 +13,7 @@ _LOG = logging.getLogger(__name__)
 
 
 #@pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
-class TestSql(huntes.TestCase):
+class TestSql1(huntes.TestCase):
     def setUp(self) -> None:
         """
         Initialize the test container.
@@ -158,3 +158,51 @@ class TestSql(huntes.TestCase):
         test_data = self._get_test_data()
         actual_query = hsql._create_insert_query(test_data, "test_table")
         self.check_string(actual_query)
+
+    @pytest.mark.slow()
+    def test_execute_insert_query1(self) -> None:
+        """
+        Verify that dataframe insertion is correct.
+        """
+        self._create_test_table()
+        test_data = self._get_test_data()
+        # Try uploading test data.
+        self.connection, _ = hsql.get_connection(
+            self.dbname,
+            self.host,
+            self.user,
+            self.port,
+            self.password,
+            autocommit=True,
+        )
+        hsql.execute_insert_query(
+            self.connection, test_data, "test_table"
+        )
+        # Load data.
+        df = hsql.execute_query(self.connection, "SELECT * FROM test_table")
+        actual = huntes.convert_df_to_json_string(df)
+        self.check_string(actual)
+
+    @pytest.mark.slow()
+    def test_copy_rows_with_copy_from1(self) -> None:
+        """
+        Verify that dataframe insertion via buffer is correct.
+        """
+        self._create_test_table()
+        test_data = self._get_test_data()
+        # Try uploading test data.
+        self.connection, _ = hsql.get_connection(
+            self.dbname,
+            self.host,
+            self.user,
+            self.port,
+            self.password,
+            autocommit=True,
+        )
+        hsql.copy_rows_with_copy_from(
+            self.connection, test_data, "test_table"
+        )
+        # Load data.
+        df = hsql.execute_query(self.connection, "SELECT * FROM test_table")
+        actual = huntes.convert_df_to_json_string(df)
+        self.check_string(actual)
