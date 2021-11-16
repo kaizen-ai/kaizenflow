@@ -14,6 +14,27 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): Generalize and move this to hsql.py or hsql_test.py.
 class _TestOmsDbHelper(hunitest.TestCase):
+    """
+    This class allows to test code that interacts with DB.
+
+    It creates / destroys a test DB during setup / teardown.
+
+    A user can create a persistent local DB in the Docker container with:
+    ```
+    # Create an OMS DB inside Docker for local stage
+    docker> (cd oms; sudo docker-compose \
+        --file /app/oms/devops/compose/docker-compose.yml up \
+        -d \
+        oms_postgres_local)
+    # or
+    docker> invoke oms_docker_up
+    ```
+    and then the creation / destruction of the DB is skipped making the tests faster
+    and allowing easier debugging.
+    For this to work, tests should not assume that the DB is clean, but create tables
+    from scratch.
+    """
+
     def setUp(self) -> None:
         """
         Initialize the test database inside test container.

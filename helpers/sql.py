@@ -29,16 +29,18 @@ _LOG = logging.getLogger(__name__)
 # Invariant: keep the arguments in the interface in the same order as: host,
 #  dbname, port, user, password
 
-# TODO(gp): mypy doesn't like this.
+# TODO(gp): mypy doesn't like this. Understand why and / or inline.
 DbConnection = psycop.extensions.connection
+
 
 # TODO(gp): host, dbname, ...
 DbConnectionInfo = collections.namedtuple(
     "DbConnectionInfo", ["dbname", "host", "port", "user", "password"]
 )
 
+
 # TODO(gp): Return only the connection (CmampTask441).
-# TODO(gp): Reorg host, dbname, user, port
+# TODO(gp): Reorg params -> host, dbname, user, port
 def get_connection(
     dbname: str,
     host: str,
@@ -92,6 +94,8 @@ def get_connection_from_string(
 ) -> Tuple[DbConnection, psycop.extensions.cursor]:
     """
     Create a connection from a string.
+
+    TODO(gp): E.g., add example
     """
     connection = psycop.connect(conn_as_str)
     cursor = connection.cursor()
@@ -104,9 +108,7 @@ def check_db_connection(
     host: str, dbname: str, port: int,
 ) -> bool:
     """
-    Check whether a connection to a DB exists.
-
-    This is not blocking.
+    Check whether a connection to a DB exists, in a non-blocking way.
     """
     cmd = f"pg_isready -d {dbname} -p {port} -h {host}"
     rc = hsysinte.system(cmd, abort_on_error=False)
@@ -349,9 +351,9 @@ def get_table_size(
 
 
 def head_table(
-        connection: DbConnection,
-        table: str,
-        limit: int = 5,
+    connection: DbConnection,
+    table: str,
+    limit: int = 5,
 ) -> str:
     """
     Report the head of the table as str.
@@ -399,6 +401,7 @@ def get_columns(connection: DbConnection, table_name: str) -> list:
     return columns
 
 
+# TODO(gp): -> find_tables_common_columns
 def find_common_columns(
         connection: DbConnection,
         tables: List[str],
@@ -446,7 +449,7 @@ def find_common_columns(
 # #############################################################################
 
 
-# TODO(gp): Rename it execute_pandas_query
+# TODO(gp): -> execute_query_to_df
 def execute_query(
     connection: DbConnection,
     query: str,
