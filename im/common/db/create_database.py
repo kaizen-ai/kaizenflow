@@ -1,4 +1,12 @@
+#!/usr/bin/env python
 """
+Script to create database using connection.
+
+Use as:
+
+# Create a db named 'test_db' using environment variables:
+> im/common/db/create_database.py --db-name 'test_db'
+
 Import as:
 
 import im.common.db.create_database as imcdbcrda
@@ -24,6 +32,36 @@ def _parse() -> argparse.ArgumentParser:
         help="DB to connect",
     )
     parser.add_argument(
+        "--host",
+        action="store",
+        type=str,
+        help="Postgres host to connect",
+    )
+    parser.add_argument(
+        "--db",
+        action="store",
+        type=str,
+        help="Postgres db to connect",
+    )
+    parser.add_argument(
+        "--port",
+        action="store",
+        type=str,
+        help="Postgres port to connect",
+    )
+    parser.add_argument(
+        "--user",
+        action="store",
+        type=str,
+        help="Postgres user to connect",
+    )
+    parser.add_argument(
+        "--password",
+        action="store",
+        type=str,
+        help="Postgres password to connect",
+    )
+    parser.add_argument(
         "--db-name",
         action="store",
         required=True,
@@ -41,9 +79,21 @@ def _parse() -> argparse.ArgumentParser:
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    if args.db_connection == "from_env":
+    credentials_input = (
+        args.host and args.dbname and args.port and args.user and args.password
+    )
+    if credentials_input:
+        connection, _ = hsql.get_connection(
+            host=args.host,
+            dbname=args.dbname,
+            port=args.port,
+            user=args.user,
+            password=args.password,
+        )
+    elif args.db_connection == "from_env":
         connection, _ = hsql.get_connection_from_env_vars()
-    imcdbcrdb.create_database(
+    # Create db with all tables.
+    imcdbcrdb.create_im_database(
         connection=connection, new_db=args.db_name, overwrite=args.overwrite
     )
 
