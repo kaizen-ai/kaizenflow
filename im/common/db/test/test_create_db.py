@@ -84,27 +84,7 @@ class TestCreateDB(hunitest.TestCase):
         self.assertEqual(actual, expected)
 
     @pytest.mark.slow()
-    def test_remove_database(self) -> None:
-        """
-        Create database 'test_db_to_remove' and remove it.
-        """
-        imcdbcrdb.create_im_database(
-            self.connection,
-            new_db="test_db_to_remove",
-        )
-        imcdbcrdb.remove_database(self.connection, "test_db_to_remove")
-        db_list = hsql.get_db_names(self.connection)
-        self.assertNotIn("test_db_to_remove", db_list)
-
-    @pytest.mark.slow()
     def test_create_im_database(self) -> None:
         imcdbcrdb.create_im_database(connection=self.connection, new_db="test_db")
         db_list = hsql.get_db_names(self.connection)
         self.assertIn("test_db", db_list)
-
-    def test_remove_database_invalid(self) -> None:
-        """
-        Test failed assertion for passing db name that does not exist.
-        """
-        with self.assertRaises(perrors.InvalidCatalogName):
-            imcdbcrdb.remove_database(self.connection, "db does not exist")

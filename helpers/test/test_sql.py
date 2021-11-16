@@ -2,6 +2,7 @@ import logging
 import os
 
 import pandas as pd
+import psycopg2.errors as perrors
 import pytest
 
 import helpers.git as hgit
@@ -12,7 +13,7 @@ import helpers.unit_test as huntes
 _LOG = logging.getLogger(__name__)
 
 
-#@pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
+@pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
 class TestSql1(huntes.TestCase):
     def setUp(self) -> None:
         """
@@ -96,6 +97,98 @@ class TestSql1(huntes.TestCase):
         hsql.create_database(self.connection, dbname="test_db")
         self.assertIn("test_db", hsql.get_db_names(self.connection))
 
+    def test_create_insert_query(self) -> None:
+        """
+        Verify that query is correct.
+        """
+        self._create_test_table()
+        test_data = self._get_test_data()
+        actual_query = hsql._create_insert_query(test_data, "test_table")
+        self.check_string(actual_query)
+
+    @pytest.mark.slow()
+    def test_remove_database1(self) -> None:
+        """
+        Create database 'test_db_to_remove' and remove it.
+        """
+        hsql.wait_db_connection(self.dbname, self.port, self.host)
+        self.connection, _ = hsql.get_connection(
+            self.dbname,
+            self.host,
+            self.user,
+            self.port,
+            self.password,
+            autocommit=True,
+        )
+        hsql.create_database(
+            self.connection,
+            dbname="test_db_to_remove",
+        )
+        hsql.remove_database(self.connection, "test_db_to_remove")
+        db_list = hsql.get_db_names(self.connection)
+        self.assertNotIn("test_db_to_remove", db_list)
+
+    @pytest.mark.slow()
+    def test_remove_database_invalid(self) -> None:
+        """
+        Test failed assertion for passing db name that does not exist.
+        """
+        hsql.wait_db_connection(self.dbname, self.port, self.host)
+        self.connection, _ = hsql.get_connection(
+            self.dbname,
+            self.host,
+            self.user,
+            self.port,
+            self.password,
+            autocommit=True,
+        )
+        with self.assertRaises(perrors.InvalidCatalogName):
+            hsql.remove_database(self.connection, "db does not exist")
+
+    @pytest.mark.slow()
+    def test_execute_insert_query1(self) -> None:
+        """
+        Verify that dataframe insertion is correct.
+        """
+        self._create_test_table()
+        test_data = self._get_test_data()
+        # Try uploading test data.
+        self.connection, _ = hsql.get_connection(
+            self.dbname,
+            self.host,
+            self.user,
+            self.port,
+            self.password,
+            autocommit=True,
+        )
+        hsql.execute_insert_query(self.connection, test_data, "test_table")
+        # Load data.
+        df = hsql.execute_query(self.connection, "SELECT * FROM test_table")
+        actual = huntes.convert_df_to_json_string(df, n_tail=None)
+        self.check_string(actual)
+
+    @pytest.mark.slow()
+    def test_copy_rows_with_copy_from1(self) -> None:
+        """
+        Verify that dataframe insertion via buffer is correct.
+        """
+        self._create_test_table()
+        test_data = self._get_test_data()
+        # Try uploading test data.
+        self.connection, _ = hsql.get_connection(
+            self.dbname,
+            self.host,
+            self.user,
+            self.port,
+            self.password,
+            autocommit=True,
+        )
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "test_table")
+        # Load data.
+        df = hsql.execute_query(self.connection, "SELECT * FROM test_table")
+        actual = huntes.convert_df_to_json_string(df, n_tail=None)
+        self.check_string(actual)
+
     def _create_test_table(self) -> None:
         """
         Create a test table.
@@ -149,60 +242,3 @@ class TestSql1(huntes.TestCase):
             ],
         )
         return test_data
-
-    def test_create_insert_query(self) -> None:
-        """
-        Verify that query is correct.
-        """
-        self._create_test_table()
-        test_data = self._get_test_data()
-        actual_query = hsql._create_insert_query(test_data, "test_table")
-        self.check_string(actual_query)
-
-    @pytest.mark.slow()
-    def test_execute_insert_query1(self) -> None:
-        """
-        Verify that dataframe insertion is correct.
-        """
-        self._create_test_table()
-        test_data = self._get_test_data()
-        # Try uploading test data.
-        self.connection, _ = hsql.get_connection(
-            self.dbname,
-            self.host,
-            self.user,
-            self.port,
-            self.password,
-            autocommit=True,
-        )
-        hsql.execute_insert_query(
-            self.connection, test_data, "test_table"
-        )
-        # Load data.
-        df = hsql.execute_query(self.connection, "SELECT * FROM test_table")
-        actual = huntes.convert_df_to_json_string(df, n_tail=None)
-        self.check_string(actual)
-
-    @pytest.mark.slow()
-    def test_copy_rows_with_copy_from1(self) -> None:
-        """
-        Verify that dataframe insertion via buffer is correct.
-        """
-        self._create_test_table()
-        test_data = self._get_test_data()
-        # Try uploading test data.
-        self.connection, _ = hsql.get_connection(
-            self.dbname,
-            self.host,
-            self.user,
-            self.port,
-            self.password,
-            autocommit=True,
-        )
-        hsql.copy_rows_with_copy_from(
-            self.connection, test_data, "test_table"
-        )
-        # Load data.
-        df = hsql.execute_query(self.connection, "SELECT * FROM test_table")
-        actual = huntes.convert_df_to_json_string(df, n_tail=None)
-        self.check_string(actual)
