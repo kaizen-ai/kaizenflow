@@ -1,29 +1,11 @@
-import os
-from typing import List
-
 import numpy as np
 import pandas as pd
-import pytest
 
-import helpers.s3 as hs3
 import helpers.unit_test as hunitest
 import research.cc.detect_outliers as rccdeout
 
 
 class TestDetectOutliers(hunitest.TestCase):
-    @staticmethod
-    def _helper() -> pd.Series:
-        """
-        Get series for test.
-        """
-        data = np.random.uniform(0, 1, 1000).cumsum()
-        index = pd.date_range(
-            end=pd.Timestamp("2021-11-11"), freq="D", periods=1000
-        ).to_pydatetime().tolist()
-        #
-        np.random.seed(42)
-        srs = pd.Series(data=data, index=index)
-        return srs
 
     def test1(self) -> None:
         """
@@ -73,3 +55,19 @@ class TestDetectOutliers(hunitest.TestCase):
         actual = rccdeout.detect_outliers(test_srs, 100, 3)
         expected = np.array([False] * 200 + [True] * 2 + [False] * 798)
         self.assert_equal(str(actual), str(expected))
+
+    @staticmethod
+    def _helper() -> pd.Series:
+        """
+        Get series for test.
+        """
+        data = np.random.uniform(0, 1, 1000).cumsum()
+        index = (
+            pd.date_range(end=pd.Timestamp("2021-11-11"), freq="D", periods=1000)
+            .to_pydatetime()
+            .tolist()
+        )
+        #
+        np.random.seed(42)
+        srs = pd.Series(data=data, index=index)
+        return srs

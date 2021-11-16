@@ -24,21 +24,13 @@
 
 # %%
 import logging
-import os
-from typing import Any, Optional
 
-import numpy as np
 import pandas as pd
 
-import core.config.config_ as ccocon
 import helpers.dbg as hdbg
 import helpers.env as henv
-import helpers.hpandas as hpandas
-import helpers.printing as hprintin
-import helpers.s3 as hs3
-import im.ccxt.data.load.loader as cdlloa
-import im.data.universe as imdauni
-import research.cc.statistics as rccsta
+import helpers.printing as hprint
+import im.ccxt.data.load.loader as imcdalolo
 import research.cc.detect_outliers as rccdeout
 
 # %%
@@ -48,14 +40,14 @@ _LOG = logging.getLogger(__name__)
 
 _LOG.info("%s", henv.get_system_signature()[0])
 
-hprintin.config_notebook()
+hprint.config_notebook()
 
 # %% [markdown]
 # # Load test data
 
 # %%
 root_dir = "s3://alphamatic-data/data"
-сcxt_loader = cdlloa.CcxtLoader(root_dir=root_dir, aws_profile="am")
+сcxt_loader = imcdalolo.CcxtLoader(root_dir=root_dir, aws_profile="am")
 data = сcxt_loader.read_data_from_filesystem("kucoin", "ETH/USDT", "ohlcv")
 data.head()
 
@@ -104,7 +96,7 @@ outlier_mask_40days = rccdeout.detect_outliers(
 #
 # Take a look at 10-days chunk result. It has 76% of its values considered outliers with Z-score threshold equals 4 while 3 is a standard. After 2021-09-07 04:25:00-04:00 the price falls from 3848.65 to 3841.97 and all the following observations that are below 3841.95 are considered outliers as well.<br>
 #
-# This is expected since we do not implement window data normalization before computing z-scores while the data we have clearly has trends at least and the values on the brick of z-score window can easily drop out from standard z-score threshold. 
+# This is expected since we do not implement window data normalization before computing z-scores while the data we have clearly has trends at least and the values on the brick of z-score window can easily drop out from standard z-score threshold.
 #
 # Since crypto data is very volatile, we can end up with losing a lot of data in this case so we should consider the right values for window sample size and Z-scores.
 
@@ -146,12 +138,12 @@ def remove_outlier_at_index(
 ) -> pd.Series:
     """
     Check if a series value at index is an outlier and remove it if so.
-    
-    Index should be a row of positive integers like 0, 1, 2, etc. 
-    
+
+    Index should be a row of positive integers like 0, 1, 2, etc.
+
     Z-score window indices are adjusting with respect to its size, the size of input
     and index to check.
-    
+
     Z-score window size is an integer number of index steps that will be included
     in Z-score computation and outlier detection.
 
@@ -163,7 +155,7 @@ def remove_outlier_at_index(
     """
     # Get numerical order of a given index.
     index_order = srs.index.get_loc(index_to_check)
-    # Set window indices. 
+    # Set window indices.
     window_first_index = max(0, index_order - z_score_window_size)
     window_last_index = max(index_order, window_first_index + z_score_window_size)
     # Verify that distance between window indices equals Z-score window size
@@ -172,7 +164,7 @@ def remove_outlier_at_index(
     hdbg.dassert_lte(window_first_index, index_order)
     hdbg.dassert_lte(index_order, window_last_index)
     # Get a window to compute Z-score for.
-    window_srs = srs.iloc[window_first_index : window_last_index].copy()
+    window_srs = srs.iloc[window_first_index:window_last_index].copy()
     # Compute Z-score of a value at index.
     z_score = (srs[index_order] - window_srs.mean()) / window_srs.std()
     # Drop the value if its Z-score is None or laying beyond the specified boundaries.
@@ -189,12 +181,12 @@ def remove_rolling_outliers(
 ) -> pd.DataFrame:
     """
     Remove outliers using a rolling window.
-    
+
     Outliers are being removed consequtively after every window check.
-    
+
     Z-score window indices are adjusting with respect to its size, the size of input
     and index to check.
-    
+
     Z-score window size is an integer number of index steps that will be included
     in Z-score computation and outlier detection.
 
@@ -247,18 +239,19 @@ def detect_outliers_new(
     z_score_threshold: float = 3.0,
 ):
     """
-    Detect outliers using overlapping windows and averaged z-scores of each observation.
-    
+    Detect outliers using overlapping windows and averaged z-scores of each
+    observation.
+
     Almost every observation will belong to `n_samples` of windows which means that each one
     is going to have `n_samples` of Z-scores. The mean of these scores will give an averaged
     Z-score which will be a more robust metrics to check if a value is an outlier than
     a rolling Z-score computed just once.
-    
+
     This function
-    - creates list of overlapping z-score windows 
+    - creates list of overlapping z-score windows
     - computes z-score of each element in every window
     - for each observation takes average of all the z-scores from the windows it belongs to
-    - compares averaged z-score to the threshold to declare the current element an outlier 
+    - compares averaged z-score to the threshold to declare the current element an outlier
 
     :param srs: input series
     :param n_samples: number of samples in z-score windows
@@ -267,9 +260,8 @@ def detect_outliers_new(
     """
     # Create a list of overlapping windows.
     windows = [
-        srs.iloc[idx: idx + n_samples] for idx in range(
-            0, srs.shape[0] - n_samples + window_step, window_step
-        )
+        srs.iloc[idx : idx + n_samples]
+        for idx in range(0, srs.shape[0] - n_samples + window_step, window_step)
     ]
     # Compute z-score for each observation in every window.
     z_scores_list = [

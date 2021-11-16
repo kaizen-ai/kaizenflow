@@ -6,21 +6,11 @@ Import as:
 import research.cc.detect_outliers as rccdeout
 """
 import logging
-import os
-from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
 
-import core.config.config_ as ccocon
-import helpers.dbg as hdbg
-import helpers.env as henv
 import helpers.hpandas as hpandas
-import helpers.printing as hprintin
-import helpers.s3 as hs3
-import im.ccxt.data.load.loader as cdlloa
-import im.data.universe as imdauni
-import research.cc.statistics as rccsta
 
 _LOG = logging.getLogger(__name__)
 
@@ -44,13 +34,14 @@ def detect_outlier_at_index(
     :param srs: input series
     :param idx: numerical index of a value to check
     :param n_samples: number of samples in z-score window
-    :param z_score_threshold: threshold to mark a value as an outlier based on its z-score in the window
+    :param z_score_threshold: threshold to mark a value as an outlier based on
+        its z-score in the window
     :return: whether the element at index idx is an outlier
     """
     # Set z-score window boundaries.
     window_first_index = max(0, idx - n_samples)
     # Get a series window to compute z-score for.
-    window_srs = srs.iloc[window_first_index: idx + 1]
+    window_srs = srs.iloc[window_first_index : idx + 1]
     # Compute z-score of a value at index.
     z_score = (srs.iloc[idx] - window_srs.mean()) / window_srs.std()
     # Return if a value at index is an outlier.
@@ -68,7 +59,8 @@ def detect_outliers(
     """
     Return the mask representing the outliers.
 
-    Check if a value at index `idx` in a series is an outlier with respect to the previous `n_samples`.
+    Check if a value at index `idx` in a series is an outlier with respect to
+    the previous `n_samples`.
 
     The passed series is supposed to be ordered by increasing timestamps.
 
@@ -79,7 +71,8 @@ def detect_outliers(
 
     :param srs: input series
     :param n_samples: number of samples in Z-score window
-    :param z_score_threshold: threshold to mark a value as an outlier based on its z-score in the window
+    :param z_score_threshold: threshold to mark a value as an outlier based on
+        its z-score in the window
     :return: whether the element at index idx is an outlier
     """
     hpandas.dassert_monotonic_index(srs)
