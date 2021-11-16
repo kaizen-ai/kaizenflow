@@ -5,6 +5,7 @@ import helpers.sql as hsql
 """
 
 import collections
+import io
 import logging
 import os
 import time
@@ -105,7 +106,9 @@ def get_connection_from_string(
 
 
 def check_db_connection(
-    host: str, dbname: str, port: int,
+    host: str,
+    dbname: str,
+    port: int,
 ) -> bool:
     """
     Check whether a connection to a DB exists, in a non-blocking way.
@@ -390,10 +393,10 @@ def get_columns(connection: DbConnection, table_name: str) -> list:
     Get column names for given table.
     """
     query = (
-            """SELECT column_name
+        """SELECT column_name
                 FROM information_schema.columns
                 WHERE TABLE_NAME = '%s' """
-            % table_name
+        % table_name
     )
     cursor = connection.cursor()
     cursor.execute(query)

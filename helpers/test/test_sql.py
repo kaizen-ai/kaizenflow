@@ -102,4 +102,3 @@ class Test_sql(huntes.TestCase):
             dbname="test_db"
         )
         self.assertIn("test_db", hsql.get_db_names(self.connection))
-
