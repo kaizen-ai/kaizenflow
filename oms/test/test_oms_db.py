@@ -113,13 +113,11 @@ class TestOmsDb1(_TestOmsDbHelper):
         _LOG.info("db_list=%s", db_list)
 
     def test_create_table1(self) -> None:
-        Create table from scratch
-
         db_tables = hsql.get_table_names(self.connection)
         _LOG.info("get_table_names=%s", db_tables)
         self.assertEqual(db_tables, [])
         # Create the table.
-        query = oomsdb.get_create_target_files_table_query()
+        query = oomsdb.get_create_target_files_table_query(incremental=False)
         _LOG.debug("query=%s", query)
         connection.cursor().execute(query)
         #

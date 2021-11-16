@@ -7,8 +7,13 @@ import oms.oms_db as oomsdb
 # Create a DB with this table
 
 
-def get_create_target_files_table_query() -> str:
+def get_create_target_files_table_query(incremental: bool) -> str:
     """
+    Create a table for `target_files`
+
+    :param incremental: if it already exists and `incremental` is:
+        - True: delete and create it from scratch
+        - False: skip creating it
     """
     # targetlistid                                              1
     #   = just an internal ID.
@@ -43,8 +48,12 @@ def get_create_target_files_table_query() -> str:
     # cancel_count                                              0
     # success                                               False
     # reason                              There were a total of..
-    query = """
-    CREATE TABLE IF NOT EXISTS target_files_processed_candidate_view(
+    table_name = "target_files_processed_candidate_view"
+    query = []
+    if incremental:
+        query.append(f"DROP TABLE IF EXISTS {table_name}")
+    query.append(f"""
+    CREATE TABLE IF NOT EXISTS {table_name} (
             targetlistid SERIAL PRIMARY KEY,
             tradedate DATE NOT NULL,
             instanceid INT,
@@ -59,7 +68,8 @@ def get_create_target_files_table_query() -> str:
             success BOOL,
             reason VARCHAR(255)
             )
-            """
+            """)
+    query = "; ".join(query)
     return query
 
 
