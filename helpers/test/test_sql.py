@@ -180,7 +180,7 @@ class TestSql1(huntes.TestCase):
         )
         # Load data.
         df = hsql.execute_query(self.connection, "SELECT * FROM test_table")
-        actual = huntes.convert_df_to_json_string(df)
+        actual = huntes.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
 
     @pytest.mark.slow()
@@ -204,5 +204,5 @@ class TestSql1(huntes.TestCase):
         )
         # Load data.
         df = hsql.execute_query(self.connection, "SELECT * FROM test_table")
-        actual = huntes.convert_df_to_json_string(df)
+        actual = huntes.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
