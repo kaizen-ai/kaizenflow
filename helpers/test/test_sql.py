@@ -3,6 +3,7 @@ import os
 
 import pandas as pd
 import pytest
+import psycopg2.errors as perrors
 
 import helpers.git as hgit
 import helpers.sql as hsql
@@ -206,3 +207,39 @@ class TestSql1(huntes.TestCase):
         df = hsql.execute_query(self.connection, "SELECT * FROM test_table")
         actual = huntes.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
+
+    @pytest.mark.slow()
+    def test_remove_database(self) -> None:
+        """
+        Create database 'test_db_to_remove' and remove it.
+        """
+        self.connection, _ = hsql.get_connection(
+            self.dbname,
+            self.host,
+            self.user,
+            self.port,
+            self.password,
+            #autocommit=True,
+        )
+        hsql.create_database(
+            self.connection,
+            dbname="test_db_to_remove",
+        )
+        hsql.remove_database(self.connection, "test_db_to_remove")
+        db_list = hsql.get_db_names(self.connection)
+        self.assertNotIn("test_db_to_remove", db_list)
+
+    def test_remove_database_invalid(self) -> None:
+        """
+        Test failed assertion for passing db name that does not exist.
+        """
+        self.connection, _ = hsql.get_connection(
+            self.dbname,
+            self.host,
+            self.user,
+            self.port,
+            self.password,
+            #autocommit=True,
+        )
+        with self.assertRaises(perrors.InvalidCatalogName):
+            hsql.remove_database(self.connection, "db does not exist")
