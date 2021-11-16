@@ -1554,10 +1554,10 @@ def docker_release_dev_image(  # type: ignore
     ctx,
     cache=True,
     skip_tests=False,
-    run_fast_tests=True,
-    run_slow_tests=True,
-    run_superslow_tests=False,
-    run_end_to_end_tests=True,
+    fast_tests=True,
+    slow_tests=True,
+    superslow_tests=False,
+    end_to_end_tests=True,
     push_to_repo=True,
     update_poetry=False,
 ):
@@ -1575,10 +1575,10 @@ def docker_release_dev_image(  # type: ignore
 
     :param cache: use the cache
     :param skip_tests: skip all the tests and release the dev image
-    :param run_fast_tests: run fast tests, unless all tests skipped
-    :param run_slow_tests: run slow tests, unless all tests skipped
-    :param run_superslow_tests: run superslow tests, unless all tests skipped
-    :param run_end_to_end_tests: run end-to-end linter tests, unless all tests skipped
+    :param fast_tests: run fast tests, unless all tests skipped
+    :param slow_tests: run slow tests, unless all tests skipped
+    :param superslow_tests: run superslow tests, unless all tests skipped
+    :param end_to_end_tests: run end-to-end linter tests, unless all tests skipped
     :param push_to_repo: push the image to the repo_short_name
     :param update_poetry: update package dependencies using poetry
     """
@@ -1588,19 +1588,19 @@ def docker_release_dev_image(  # type: ignore
     # 2) Run tests for the "local" image.
     if skip_tests:
         _LOG.warning("Skipping all tests and releasing")
-        run_fast_tests = False
-        run_slow_tests = False
-        run_superslow_tests = False
-        run_end_to_end_tests = False
+        fast_tests = False
+        slow_tests = False
+        superslow_tests = False
+        end_to_end_tests = False
     stage = "local"
-    if run_fast_tests:
+    if fast_tests:
         run_fast_tests(ctx, stage=stage)
-    if run_slow_tests:
+    if slow_tests:
         run_slow_tests(ctx, stage=stage)
-    if run_superslow_tests:
+    if superslow_tests:
         run_superslow_tests(ctx, stage=stage)
     # 3) Run end-to-end test.
-    if run_end_to_end_tests:
+    if end_to_end_tests:
         end_to_end_test_fn = get_default_param("END_TO_END_TEST_FN")
         if not end_to_end_test_fn(ctx, stage=stage):
             _LOG.error("End-to-end test has failed")
@@ -1680,9 +1680,9 @@ def docker_release_prod_image(  # type: ignore
     ctx,
     cache=True,
     skip_tests=False,
-    run_fast_tests=True,
-    run_slow_tests=True,
-    run_superslow_tests=False,
+    fast_tests=True,
+    slow_tests=True,
+    superslow_tests=False,
     push_to_repo=True,
 ):
     """
@@ -1700,13 +1700,13 @@ def docker_release_prod_image(  # type: ignore
     # 2) Run tests.
     if skip_tests:
         _LOG.warning("Skipping all tests and releasing")
-        run_fast_tests = run_slow_tests = run_superslow_tests = False
+        fast_tests = slow_tests = superslow_tests = False
     stage = "prod"
-    if run_fast_tests:
+    if fast_tests:
         run_fast_tests(ctx, stage=stage)
-    if run_slow_tests:
+    if slow_tests:
         run_slow_tests(ctx, stage=stage)
-    if run_superslow_tests:
+    if superslow_tests:
         run_superslow_tests(ctx, stage=stage)
     # 3) Push prod image.
     if push_to_repo:
