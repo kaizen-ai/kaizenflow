@@ -129,16 +129,4 @@ class TestUtils(hunitest.TestCase):
         hsysinte.system(cmd, suppress_output=False)
         super().tearDown()
 
-    @pytest.mark.slow()
-    def test_copy_rows_with_copy_from1(self) -> None:
-        """
-        Verify that dataframe insertion via buffer is correct.
-        """
-        self.cursor.execute(imccdbuti.get_ccxt_ohlcv_create_table_query())
-        imccdbuti.copy_rows_with_copy_from(
-            self.connection, self.df_to_insert, "ccxt_ohlcv"
-        )
-        df = hsql.execute_query(self.connection, "SELECT * FROM ccxt_ohlcv")
-        actual = hunitest.convert_df_to_json_string(df)
-        self.check_string(actual)
 

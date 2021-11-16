@@ -64,34 +64,6 @@ def get_currency_pair_create_table_query() -> str:
 # #############################################################################
 
 
-def copy_rows_with_copy_from(
-    connection: hsql.DbConnection, df: pd.DataFrame, table_name: str
-) -> None:
-    """
-    Copy dataframe contents into DB directly from buffer.
-
-    This function works much faster for large dataframes (>10000 rows).
-
-    :param connection: DB connection
-    :param df: data to insert
-    :param table_name: name of the table for insertion
-    """
-    # The target table needs to exist.
-    hdbg.dassert_in(table_name, hsql.get_table_names(connection))
-    # Read the data.
-    buffer = io.StringIO()
-    df.to_csv(buffer, index=False, header=False)
-    buffer.seek(0)
-    # Copy the data to the DB.
-    cur = connection.cursor()
-    cur.copy_from(buffer, table_name, sep=",")
-    # TODO(gp): CmampTask413, is this still needed because the autocommit.
-    connection.commit()
-
-
-# #############################################################################
-
-
 def populate_exchange_currency_tables(conn: hsql.DbConnection) -> None:
     """
     Populate exchange name and currency pair tables with data from CCXT.
