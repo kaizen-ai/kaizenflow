@@ -88,11 +88,11 @@ class CcxtExchange:
         """
         Download minute OHLCV bars.
 
-        :param curr_symbol: A currency pair, e.g. "BTC/USDT"
-        :param start_datetime: Starting point for data.
-        :param end_datetime: End point for data (included).
-        :param step: Number of bars per iteration. Defaults to 500.
-        :param sleep_time: Time in seconds between iterations.
+        :param curr_symbol: a currency pair, e.g. "BTC/USDT"
+        :param start_datetime: starting point for data
+        :param end_datetime: end point for data (included)
+        :param step: number of bars per iteration
+        :param sleep_time: time in seconds between iterations
         :return: OHLCV data from CCXT
         """
         # Verify that the exchange has fetch_ohlcv method.
@@ -139,18 +139,18 @@ class CcxtExchange:
         Wrapper for one minute OHLCV bars.
 
         :param symbol: A currency pair, e.g. "BTC/USDT"
-        :param timeframe: Fetch data for certain timeframe. Defaults to 1 minute.
-        :param since: From when is data fetched in milliseconds.
-        :param step: Number of bars per iteration.
+        :param timeframe: fetch data for certain timeframe
+        :param since: from when is data fetched in milliseconds
+        :param step: number of bars per iteration
 
-        :return: OHLCV data from CCXT in pandas dataframe format.
+        :return: OHLCV data from CCXT
         """
         bars = self._exchange.fetch_ohlcv(
             symbol, timeframe=timeframe, since=since, limit=step
         )
         columns = ["timestamp", "open", "high", "low", "close", "volume"]
         bars = pd.DataFrame(bars, columns=columns)
-        bars['created_at'] = str(hdatetime.get_current_time("naive_UTC"))
+        bars['created_at'] = str(hdatetime.get_current_time("UTC"))
         return bars
 
     def download_order_book(self, curr_pair: str) -> Dict[str, Any]:
