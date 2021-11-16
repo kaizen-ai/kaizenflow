@@ -106,7 +106,7 @@ def create_im_database(
     :param overwrite: overwrite existing database
     """
     _LOG.debug("connection=%s", connection)
-    hsql.create_database(connection, db=new_db, overwrite=overwrite)
+    hsql.create_database(connection, dbname=new_db, overwrite=overwrite)
     conn_details = hsql.db_connection_to_tuple(connection)
     new_connection, _ = hsql.get_connection(
         dbname=new_db,
@@ -117,17 +117,3 @@ def create_im_database(
     )
     create_all_tables(new_connection)
     new_connection.close()
-
-
-# TODO(gp): Move to hsql.py.
-def remove_database(connection: hsql.DbConnection, db_to_drop: str) -> None:
-    """
-    Remove database in current environment.
-
-    :param connection: a database connection
-    :param db_to_drop: database name to drop, e.g. `im_db_local`
-    """
-    # Drop database.
-    connection.cursor().execute(
-        psql.SQL("DROP DATABASE {};").format(psql.Identifier(db_to_drop))
-    )

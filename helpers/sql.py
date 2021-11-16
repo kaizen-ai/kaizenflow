@@ -13,6 +13,7 @@ from typing import List, NamedTuple, Optional, Tuple, Union
 import pandas as pd
 import psycopg2 as psycop
 import psycopg2.sql as psql
+import psycopg2.extras as extras
 
 import helpers.dbg as hdbg
 import helpers.printing as hprint
@@ -95,6 +96,20 @@ def get_connection_from_string(
     return connection, cursor
 
 
+def check_db_connection(
+    host: str, db_name: str, port: int,
+) -> bool:
+    """
+    Check whether a connection to a DB exists.
+
+    This is not blocking.
+    """
+    cmd = f"pg_isready -d {db_name} -p {port} -h {host}"
+    rc = hsysinte.system(cmd, abort_on_error=False)
+    conn_exists = rc == 0
+    return conn_exists
+
+
 # TODO(gp): Rearrange as host, dbname (instead of db_name), port.
 def wait_db_connection(
     db_name: str, port: int, host: str, timeout_in_secs: int = 10
@@ -109,10 +124,8 @@ def wait_db_connection(
     elapsed_secs = 0
     while True:
         _LOG.info("Waiting for PostgreSQL to become available...")
-        # Note: credentials passed due to race condition.
-        cmd = f"pg_isready -d {db_name} -p {port} -h {host}"
-        rc = hsysinte.system(cmd, abort_on_error=False)
-        if rc == 0:
+        conn_exists = check_db_connection(host, db_name, port)
+        if conn_exists:
             _LOG.info("PostgreSQL is available (after %s seconds)", elapsed_secs)
             break
         if elapsed_secs > timeout_in_secs:
@@ -291,30 +304,43 @@ def get_columns(connection: DbConnection, table_name: str) -> list:
 
 def create_database(
     connection: DbConnection,
-    db: str,
+    dbname: str,
     overwrite: Optional[bool] = None,
 ) -> None:
     """
     Create empty database.
 
     :param connection: database connection
-    :param db: database to create
-    :param force: overwrite existing database
+    :param dbname: database to create
+    :param overwrite: overwrite existing database
     """
     _LOG.debug("connection=%s", connection)
     with connection.cursor() as cursor:
         if overwrite:
             cursor.execute(
                 psql.SQL("DROP DATABASE IF EXISTS {};").format(
-                    psql.Identifier(db)
+                    psql.Identifier(dbname)
                 )
             )
         else:
-            if db in get_table_names(connection):
-                raise ValueError(f"Database {db} already exists")
+            if dbname in get_table_names(connection):
+                raise ValueError(f"Database {dbname} already exists")
         cursor.execute(
-            psql.SQL("CREATE DATABASE {};").format(psql.Identifier(db))
+            psql.SQL("CREATE DATABASE {};").format(psql.Identifier(dbname))
         )
+
+
+def remove_database(connection: DbConnection, dbname: str) -> None:
+    """
+    Remove database in current environment.
+
+    :param connection: a database connection
+    :param dbname: database name to drop, e.g. `im_db_local`
+    """
+    # Drop database.
+    connection.cursor().execute(
+        psql.SQL("DROP DATABASE {};").format(psql.Identifier(dbname))
+    )
 
 
 # #############################################################################
@@ -437,3 +463,76 @@ def find_common_columns(
             df, columns=["table1", "table2", "num_comm_cols", "common_cols"]
         )
     return obj
+
+
+# #############################################################################
+
+
+def copy_rows_with_copy_from(
+    connection: DbConnection, df: pd.DataFrame, table_name: str
+) -> None:
+    """
+    Copy dataframe contents into DB directly from buffer.
+
+    This function works much faster for large dataframes (>10000 rows).
+
+    :param connection: DB connection
+    :param df: data to insert
+    :param table_name: name of the table for insertion
+    """
+    # The target table needs to exist.
+    hdbg.dassert_in(table_name, hsql.get_table_names(connection))
+    # Read the data.
+    buffer = io.StringIO()
+    df.to_csv(buffer, index=False, header=False)
+    buffer.seek(0)
+    # Copy the data to the DB.
+    cur = connection.cursor()
+    cur.copy_from(buffer, table_name, sep=",")
+    # TODO(gp): CmampTask413, is this still needed because the autocommit.
+    connection.commit()
+
+
+def _create_insert_query(df: pd.DataFrame, table_name: str) -> str:
+    """
+    Create an INSERT query to insert data into a DB.
+
+    :param df: data to insert into DB
+    :param table_name: name of the table for insertion
+    :return: sql query, e.g.,
+        ```
+        INSERT INTO ccxt_ohlcv(timestamp,open,high,low,close) VALUES %s
+        ```
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    columns = ",".join(list(df.columns))
+    query = f"INSERT INTO {table_name}({columns}) VALUES %s"
+    _LOG.debug("query=%s", query)
+    return query
+
+
+def execute_insert_query(
+    connection: DbConnection, obj: Union[pd.DataFrame, pd.Series], table_name: str
+) -> None:
+    """
+    Insert a DB as multiple rows into the database.
+
+    :param connection: connection to the DB
+    :param df: data to insert
+    :param table_name: name of the table for insertion
+    """
+    if isinstance(obj, pd.Series):
+        df = obj.to_frame().T
+    else:
+        df = obj
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert_in(table_name, get_table_names(connection))
+    _LOG.debug("df=\n%s", hprint.dataframe_to_str(df))
+    # Transform dataframe into list of tuples.
+    values = [tuple(v) for v in df.to_numpy()]
+    # Generate a query for multiple rows.
+    query = _create_insert_query(df, table_name)
+    # Execute query for each provided row.
+    cur = connection.cursor()
+    extras.execute_values(cur, query, values)
+    connection.commit()
