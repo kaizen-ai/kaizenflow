@@ -142,37 +142,3 @@ class TestUtils(hunitest.TestCase):
         actual = hunitest.convert_df_to_json_string(df)
         self.check_string(actual)
 
-
-class TestUtils1(hunitest.TestCase):
-    def test_create_insert_query(self) -> None:
-        """
-        Verify that query is correct.
-        """
-        df_to_insert = pd.DataFrame(
-            columns=[
-                "id",
-                "timestamp",
-                "open",
-                "high",
-                "low",
-                "close",
-                "volume",
-                "currency_pair",
-                "exchange_id",
-            ],
-            data=[
-                [
-                    1,
-                    1631145600000,
-                    30.0,
-                    40.0,
-                    50.0,
-                    60.0,
-                    70.0,
-                    "BTC/USDT",
-                    "binance",
-                ]
-            ],
-        )
-        actual_query = imccdbuti._create_insert_query(df_to_insert, "ccxt_ohlcv")
-        self.check_string(actual_query)
