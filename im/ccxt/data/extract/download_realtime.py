@@ -151,7 +151,6 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--dst_dir",
         action="store",
-        required=True,
         type=str,
         help="Folder to save copies of data to",
     )
@@ -191,7 +190,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Create the directory.
-    hio.create_dir(args.dst_dir, incremental=args.incremental)
+    if args.dst_dir:
+        hio.create_dir(args.dst_dir, incremental=args.incremental)
     # Connect to database.
     if args.db_connection == "from_env":
         connection, _ = hsql.get_connection_from_env_vars()
@@ -205,7 +205,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Build mappings from exchange ids to classes and currencies.
     exchanges = []
     for exchange_id in exchange_ids:
-        from pudb import set_trace; set_trace()
         exchanges.append(
             _instantiate_exchange(exchange_id, universe["CCXT"], args.api_keys)
         )
@@ -221,7 +220,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                     ccxt.NetworkError,
                     ccxt.base.errors.RequestTimeout,
                 ) as e:
-                    # ToDo handle timeouts and network errors differently ?
+                    # TODO(*): handle timeouts and network errors differently ?
                     # Continue the loop if could not connect to exchange.
                     _LOG.warning("Got an error: %s", type(e).__name__, e.args)
                     continue
@@ -234,12 +233,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
                     )
                     time.sleep(60)
                     continue
-                # ToDo make it optional ?
                 # Save to disk.
-                # _save_data_on_disk(
-                #     args.data_type, args.dst_dir, pair_data, exchange, pair
-                # )
-                from pudb import set_trace; set_trace()
+                if args.dst_dir:
+                    _save_data_on_disk(
+                        args.data_type, args.dst_dir, pair_data, exchange, pair
+                    )
                 if connection:
                     # Insert into database.
                     hsql.execute_insert_query(
