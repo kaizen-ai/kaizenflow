@@ -1,6 +1,7 @@
 import logging
 import os
 
+import pandas as pd
 import pytest
 
 import helpers.git as hgit
@@ -13,17 +14,6 @@ _LOG = logging.getLogger(__name__)
 
 @pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
 class TestSql(huntes.TestCase):
-    def _create_test_table(self) -> None:
-        """
-        Create a test table.
-        """
-        query = """CREATE TABLE IF NOT EXISTS test_table(
-                    id SERIAL PRIMARY KEY,
-                    column_1 NUMERIC,
-                    column_2 VARCHAR(255) NOT NULL,
-                    )
-                    """
-        self.connection.cursor.execute(query)
 
     def setUp(self) -> None:
         """
@@ -106,3 +96,47 @@ class TestSql(huntes.TestCase):
         )
         hsql.create_database(self.connection, dbname="test_db")
         self.assertIn("test_db", hsql.get_db_names(self.connection))
+    def _create_test_table(self) -> None:
+        """
+        Create a test table.
+        """
+        query = """CREATE TABLE IF NOT EXISTS test_table(
+                    id SERIAL PRIMARY KEY,
+                    column_1 NUMERIC,
+                    column_2 VARCHAR(255) NOT NULL,
+                    )
+                    """
+        self.connection.cursor.execute(query)
+
+    def _get_test_data(self) -> pd.DataFrame:
+        test_data = pd.DataFrame(
+            columns=["id", "column_1", "column_2"],
+            data=[
+                [
+                    1,
+                    1000,
+                    "test_string_1",
+                ],
+                [
+                    2,
+                    1001,
+                    "test_string_2",
+                ],
+                [
+                    3,
+                    1002,
+                    "test_string_3",
+                ],
+                [
+                    4,
+                    1003,
+                    "test_string_4",
+                ],
+                [
+                    5,
+                    1004,
+                    "test_string_5",
+                ],
+            ],
+        )
+        return test_data
