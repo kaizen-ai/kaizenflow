@@ -12,7 +12,6 @@ from typing import Optional
 import psycopg2 as psycop
 import psycopg2.sql as psql
 
-import helpers.dbg as hdbg
 import helpers.sql as hsql
 import im.ccxt.db.utils as imccdbuti
 import im.ib.sql_writer as imibsqwri
@@ -91,7 +90,7 @@ def create_all_tables(connection: hsql.DbConnection) -> None:
             _LOG.warning("Duplicate table created, skipping.")
 
 
-def create_database(
+def create_im_database(
     connection: hsql.DbConnection,
     new_db: str,
     overwrite: Optional[bool] = None,
@@ -101,13 +100,20 @@ def create_database(
 
     :param connection: a database connection
     :param new_db: name of database to connect to, e.g. `im_db_local`
-    :param force: overwrite existing database
+    :param overwrite: overwrite existing database
     """
     _LOG.debug("connection=%s", connection)
-    # Create database.
     hsql.create_database(connection, db=new_db, overwrite=overwrite)
-    # Create SQL schema.
-    create_all_tables(connection)
+    conn_details = hsql.db_connection_to_tuple(connection)
+    new_connection, _ = hsql.get_connection(
+        dbname=new_db,
+        host=conn_details.host,
+        user=conn_details.user,
+        port=conn_details.port,
+        password=conn_details.password,
+    )
+    create_all_tables(new_connection)
+    new_connection.close()
 
 
 def remove_database(connection: hsql.DbConnection, db_to_drop: str) -> None:

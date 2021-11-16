@@ -15,7 +15,7 @@ _LOG = logging.getLogger(__name__)
 
 @pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
 class TestCreateDB(hunitest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         """
         Initialize the test database inside test container.
         """
@@ -34,7 +34,7 @@ class TestCreateDB(hunitest.TestCase):
         port = 5432
         password = "alsdkqoen"
         user = "aljsdalsd"
-        hsql.check_db_connection(dbname, port, host)
+        hsql.wait_db_connection(dbname, port, host)
         self.connection, _ = hsql.get_connection(
             dbname,
             host,
@@ -44,9 +44,9 @@ class TestCreateDB(hunitest.TestCase):
             autocommit=True,
         )
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         """
-        Kill the test database.
+        Bring down the test container.
         """
         cmd = (
             "sudo docker-compose "
@@ -57,7 +57,7 @@ class TestCreateDB(hunitest.TestCase):
         super().tearDown()
 
     @pytest.mark.slow()
-    def test_create_all_tables1(self):
+    def test_create_all_tables1(self) -> None:
         """
         Verify that all necessary tables are created inside the DB.
         """
@@ -84,11 +84,11 @@ class TestCreateDB(hunitest.TestCase):
         self.assertEqual(actual, expected)
 
     @pytest.mark.slow()
-    def test_remove_database(self):
+    def test_remove_database(self) -> None:
         """
         Create database 'test_db_to_remove' and remove it.
         """
-        imcdbcrdb.create_database(
+        imcdbcrdb.create_im_database(
             self.connection,
             new_db="test_db_to_remove",
         )
@@ -96,7 +96,13 @@ class TestCreateDB(hunitest.TestCase):
         db_list = hsql.get_db_names(self.connection)
         self.assertNotIn("test_db_to_remove", db_list)
 
-    def test_remove_database_invalid(self):
+    @pytest.mark.slow()
+    def test_create_im_database(self) -> None:
+        imcdbcrdb.create_im_database(connection=self.connection, new_db="test_db")
+        db_list = hsql.get_db_names(self.connection)
+        self.assertIn("test_db", db_list)
+
+    def test_remove_database_invalid(self) -> None:
         """
         Test failed assertion for passing db name that does not exist.
         """
