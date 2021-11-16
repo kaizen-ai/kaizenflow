@@ -39,6 +39,7 @@ import helpers.s3 as hs3
 import im.ccxt.data.load.loader as cdlloa
 import im.data.universe as imdauni
 import research.cc.statistics as rccsta
+import research.cc.detect_outliers as rccdeout
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -69,89 +70,8 @@ chunk_20days = data.tail(28800).copy()
 # Exactly 40-days length chunk.
 chunk_40days = data.tail(57600).copy()
 
-
 # %% [markdown]
 # # Mask approach
-
-# %%
-def detect_outlier_at_index(
-    srs: pd.Series,
-    idx: int,
-    n_samples: int,
-    z_score_threshold: float,
-) -> bool:
-    """
-    Check if a value at index `idx` in a series is an outlier.
-    
-    The passed series is supposed to be ordered by increasing timestamps.
-    
-    This function
-    - detects z-score window index boundaries with respeect to index order and number of samples
-    - computes the z-score of the current element with respect to the z-score window values
-    - compares the z-score to the threshold to declare the current element an outlier 
-
-    :param srs: input series
-    :param idx: numerical index of a value to check
-    :param n_samples: number of samples in z-score window
-    :param z_score_threshold: threshold to mark a value as an outlier based on its z-score in the window
-    :return: whether the element at index idx is an outlier
-    """
-    # Set z-score window boundaries.
-    window_first_index = max(0, idx - n_samples)
-    # Get a series window to compute z-score for.
-    window_srs = srs.iloc[window_first_index : idx + 1]
-    # Compute z-score of a value at index.
-    z_score = (srs[idx] - window_srs.mean()) / window_srs.std()
-    # Return if a value at index is an outlier.
-    # Done via `<=` since a series can contain None values that should be detected
-    # as well but will result to NaN if compared to the threshold directly.
-    is_outlier = not (abs(z_score) <= z_score_threshold)
-    return is_outlier
-
-
-def detect_outliers(
-    srs: pd.Series,
-    n_samples: int,
-    z_score_threshold: float,
-) -> np.array:
-    """
-    Return the mask representing the outliers.
-    
-    Check if a value at index `idx` in a series is an outlier with respect to the previous `n_samples`.
-    
-    The passed series is supposed to be ordered by increasing timestamps.
-    
-    This function
-    - masks the values of srs before `idx` using `mask` to remove the previously found outliers
-    - computes the z-score of each element consequtively with respect to the remaining values
-    - compares the z-score to the threshold to declare an element as an outlier 
-
-    :param srs: input series
-    :param n_samples: number of samples in Z-score window
-    :param z_score_threshold: threshold to mark a value as an outlier based on its z-score in the window
-    :return: whether the element at index idx is an outlier
-    """
-    hpandas.dassert_monotonic_index(srs)
-    # Initialize mask for outliers.
-    mask = np.array([False] * srs.shape[0])
-    # Set outlier count.
-    outlier_count = 0
-    # Iterate over each element and update the mask for it.
-    for idx in range(1, srs.shape[0]):
-        # Drop already detected outliers.
-        valid_srs = srs[~mask]
-        # Adjust numerical index to the number of dropped outliers.
-        idx_adj = idx - outlier_count
-        # Detect if a value at requested numerical index is an outlier
-        # and reflect it in the mask.
-        mask[idx] = detect_outlier_at_index(
-            valid_srs, idx_adj, n_samples, z_score_threshold
-        )
-        # Increase the outlier count if an outlier was detected.
-        if mask[idx]:
-            outlier_count = outlier_count + 1
-    return mask 
-
 
 # %% [markdown]
 # Below you can see that execution time grows exponentially to the growth of input series chunk.
@@ -159,25 +79,23 @@ def detect_outliers(
 # If we take number of days in chunk as `x` for a rough approximation, rounded execution time in seconds as `y`, and build an equation that corresponds to the test samples then we get the following:<br>
 # `y = (11/1500)x^2 + (3/4)x + (4/15)`<br>
 #
-# Then processing full 1619960 length series should take ~3-4 hours to complete. This is hardly what we want.
-#
-# If we want to process outliers for the whole series I suggest that we split it on 10-days chunks and process them with 1-day window - this should supposedly take ~16 minutes to complete.
+# Then processing full 1619960 length series should take ~3-4 hours to complete so we should think about the ways to apply this function effectively.
 
 # %%
 # %%time
-outlier_mask_10days = detect_outliers(
+outlier_mask_10days = rccdeout.detect_outliers(
     srs=chunk_10days["close"], n_samples=1440, z_score_threshold=4
 )
 
 # %%
 # %%time
-outlier_mask_20days = detect_outliers(
+outlier_mask_20days = rccdeout.detect_outliers(
     srs=chunk_20days["close"], n_samples=1440, z_score_threshold=4
 )
 
 # %%
 # %%time
-outlier_mask_40days = detect_outliers(
+outlier_mask_40days = rccdeout.detect_outliers(
     srs=chunk_40days["close"], n_samples=1440, z_score_threshold=4
 )
 
@@ -185,7 +103,10 @@ outlier_mask_40days = detect_outliers(
 # Another problem with this approach is that its results are not robust to the cases when a harsh ascent or decline has happened and the price direction has continued. In this case all the values after this harsh change are considered outliers and dropped.
 #
 # Take a look at 10-days chunk result. It has 76% of its values considered outliers with Z-score threshold equals 4 while 3 is a standard. After 2021-09-07 04:25:00-04:00 the price falls from 3848.65 to 3841.97 and all the following observations that are below 3841.95 are considered outliers as well.<br>
-# Note that in this case these are not outliers and this is exactly the problem - with this approach we have a risk to drop all the observations below a certain point. Since crypto data is very volatile, we can end up with losing a lot of data in this case.
+#
+# This is expected since we do not implement window data normalization before computing z-scores while the data we have clearly has trends at least and the values on the brick of z-score window can easily drop out from standard z-score threshold. 
+#
+# Since crypto data is very volatile, we can end up with losing a lot of data in this case so we should consider the right values for window sample size and Z-scores.
 
 # %%
 outlier_mask_10days.sum() / outlier_mask_10days.shape[0]
