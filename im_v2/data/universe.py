@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.data.universe as imdatuniv
+import im_v2.data.universe as imtwodauni
 """
 
 import collections
@@ -28,7 +28,7 @@ def get_trade_universe(
     file_path = os.path.join(hgit.get_amp_abs_path(), "im/data", file_name)
     hdbg.dassert_exists(file_path)
     universe = hio.from_json(file_path)
-    return universe
+    return universe  # type: ignore[no-any-return]
 
 
 # #############################################################################
