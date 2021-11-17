@@ -27,10 +27,10 @@ class TestSqlDataLoader1(hunitest.TestCase):
         self._connection = hsql.get_connection_from_env_vars()
         self._new_db = self._get_test_name().replace("/", "").replace(".", "")
         # Create database for test.
-        imcdbcrdb.create_database(
+        imcdbcrdb.create_im_database(
             connection=self._connection,
             new_db=self._new_db,
-            force=True,
+            overwrite=True,
         )
         # Initialize writer class to test.
         writer = imkisqwri.KibotSqlWriter(
