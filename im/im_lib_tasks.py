@@ -15,7 +15,6 @@ import helpers.dbg as hdbg
 import helpers.git as hgit
 import helpers.lib_tasks as hlibtask
 
-
 _LOG = logging.getLogger(__name__)
 
 # TODO(gp): This should be used also from the unit tests?
