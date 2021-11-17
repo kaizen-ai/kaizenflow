@@ -4,9 +4,14 @@ Import as:
 import oms.oms_db as oomsdb
 """
 
-# Create a DB with this table
+import helpers.printing as hprint
+import helpers.sql as hsql
+import helpers.hasyncio as hhasynci
+import helpers.datetime_ as hdatetim
 
 
+# TODO(gp): Instead of returning the query just perform it. We should return the
+#  query only when we want to freeze the query in a test.
 def get_create_target_files_table_query(incremental: bool) -> str:
     """
     Create a table for `target_files`
@@ -73,12 +78,51 @@ def get_create_target_files_table_query(incremental: bool) -> str:
     return query
 
 
-def wait_for_target_ack(connection, query, sleep_in_secs: float,
-                        timeout_in_secs):
+async def poll(func: Callable, sleep_in_secs: float, timeout_in_secs: float,
+         get_wall_clock_time: hdatetim.GetWallClockTime,
+         ) -> Tuple[int, Any]:
+    """
+    :param func: function returning a tuple (rc, value) where rc == 0 means keep
+        iterating
+    """
+    _LOG.debug(hprint.to_str("func sleep_in_secs timeout_in_secs"))
+    hdbg.dassert_lt(0, sleep_in_secs)
+    hdbg.dassert_lt(0, timeout_in_secs)
+    max_num_iter = math.ceil(timeout_in_secs / sleep_in_secs)
+    hdbg.dassert_lte(1, max_num_iter)
+    num_iter = 1
+    while True:
+        _LOG.debug("Iter %s/%s: wall clock time=%s", num_iter + 1, max_num_iter,
+                   get_wall_clock_time())
+        rc, value = func()
+        _LOG.debug("rc=%s, value=%s", rc, value)
+        if rc != 0:
+            # The function returned.
+            _LOG.debug("poll done: wall clock time=", num_iter + 1, max_num_iter,
+                       get_wall_clock_time())
+            return rc, value
+        #
+        num_iter += 1
+        if num_iter >= max_num_iter:
+            raise RuntimeError("Timeout for " +
+                               hprint.to_str("func sleep_in_secs timeout_in_secs"))
+        await asyncio.sleep(sleep_in_secs)
+
+
+def wait_for_row(connection: hsql.DbConnection, target_value: str) -> Tuple[int, pd.DataFrame]:
+    table_name = "target_files_processed_candidate_view"
+    query = f"SELECT filename FROM {table_name} WHERE filename='{target_value}'"
+    df = hsql.execute_query(connection, query)
+    _LOG.debug("df=\n%s", hprint.dataframe_to_str(df))
+    rc = df > 0
+    return rc, df
+
+
+async def wait_for_target_ack(connection: hsql.DbConnection, target_value: str, **poll_kwargs) -> Tuple[int, pd.DataFrame]:
     """
     
     """
-    query = ""
+    func = lambda: wait_for_row(connection, target_value)
+    rc, df = poll(func, **poll_kwargs)
+    return rc, df
 
-    # Iterate on a query until there is a row coming back.
-    # Otherwise time out.

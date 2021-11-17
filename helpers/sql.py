@@ -388,16 +388,14 @@ def head_tables(
 
 
 # TODO(gp): -> get_table_columns
-def get_columns(connection: DbConnection, table_name: str) -> list:
+def get_columns(connection: DbConnection, table_name: str) -> List[str]:
     """
     Get column names for given table.
     """
-    query = (
-        """SELECT column_name
-                FROM information_schema.columns
-                WHERE TABLE_NAME = '%s' """
-        % table_name
-    )
+    query = f"""
+        SELECT column_name
+            FROM information_schema.columns
+            WHERE TABLE_NAME = '{table_name}'"""
     cursor = connection.cursor()
     cursor.execute(query)
     columns = [x[0] for x in cursor.fetchall()]
@@ -448,7 +446,7 @@ def find_common_columns(
 
 
 def remove_table(connection: DbConnection, table_name: str) -> None:
-    query = f"DROP TABLE {table_name}"
+    query = f"DROP TABLE IF EXISTS {table_name}"
     connection.cursor().execute(query)
 
 

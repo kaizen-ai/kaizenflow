@@ -3,6 +3,8 @@ import os
 
 import pandas as pd
 
+import helpers.hasyncio as hhasynci
+import helpers.datetime_ as hdatetim
 import helpers.printing as hprint
 import helpers.sql as hsql
 import helpers.system_interaction as hsysinte
@@ -101,30 +103,6 @@ class _TestOmsDbHelper(hunitest.TestCase):
 
 
 class TestOmsDb1(_TestOmsDbHelper):
-#class TestOmsDb1(hunitest.TestCase):
-
-    # def _get_connection(self):
-    #     try:
-    #         return self.connection
-    #     except AttributeError:
-    #         dbname = "oms_postgres_db_local"
-    #         host = "localhost"
-    #         port = 5432
-    #         password = "alsdkqoen"
-    #         user = "aljsdalsd"
-    #         # Wait for the DB to be available.
-    #         hsql.wait_db_connection(dbname, port, host)
-    #         # Save connection info.
-    #         self.connection, cursor = hsql.get_connection(
-    #             dbname,
-    #             host,
-    #             user,
-    #             port,
-    #             password,
-    #             autocommit=True,
-    #         )
-    #         return self.connection
-    #
 
     def test_up1(self) -> None:
         """
@@ -168,12 +146,13 @@ class TestOmsDb1(_TestOmsDbHelper):
         query = oomsdb.get_create_target_files_table_query(incremental=True)
         _LOG.debug("query=%s", query)
         self.connection.cursor().execute(query)
-        #
-        row1 = """
+        table_name = "target_files_processed_candidate_view"
+        # Insert a row.
+        row = """
         tradedate|2021-11-12
         targetlistid|1
         instanceid|3504
-        filename|s3://targets/20211112000000/test.csvtest.csv
+        filename|s3://targets/20211112000000/test.csv
         strategyid|SAU1
         timestamp_processed|2021-11-12 19:59:23.710677
         timestamp_db|2021-11-12 19:59:23.716732
@@ -184,47 +163,71 @@ class TestOmsDb1(_TestOmsDbHelper):
         success|False
         reason|"There were a total of 1 malformed requests in the file.
         """
-        srs = self._to_series(row1)
-        table_name = "target_files_processed_candidate_view"
+        srs = self._to_series(row)
         hsql.execute_insert_query(self.connection, srs, table_name)
-        #
+        # Insert another row.
+        row = """
+        tradedate|2021-11-12
+        targetlistid|2
+        instanceid|3504
+        filename|s3://targets/20211112000000/positions.16.2021-11-12_15:44:04-05:00.csv
+        strategyid|SAU1
+        timestamp_processed|2021-11-12 20:45:07.463641
+        timestamp_db|2021-11-12 20:45:07.469807
+        target_count|1
+        changed_count|0
+        unchanged_count|0
+        cancel_count|0
+        success|False
+        reason|"There were a total of 1 malformed requests in the file."
+        """
+        srs = self._to_series(row)
+        hsql.execute_insert_query(self.connection, srs, table_name)
+        # Insert another row.
+        row = """
+        tradedate|2021-11-12
+        targetlistid|5
+        instanceid|3504
+        filename|s3://targets/20211112000000/positions.3.2021-11-12_16:38:22-05:00.csv
+        strategyid|SAU1
+        timestamp_processed|2021-11-12 21:38:39.414138
+        timestamp_db|2021-11-12 21:38:39.419536
+        target_count|1
+        changed_count|1
+        unchanged_count|0
+        cancel_count|0
+        success|True
+        reason|
+        """
+        srs = self._to_series(row)
+        hsql.execute_insert_query(self.connection, srs, table_name)
+        # Check the content of the table.
         query = f"SELECT * FROM {table_name}"
         df = hsql.execute_query(self.connection, query)
         act = hprint.dataframe_to_str(df)
-        exp = ""
-        self.assert_equal(act, exp)
-        #
-        # row2 = """
-        # tradedate,2021-11-12
-        # targetlistid,2
-        # instanceid,3504
-        # filename,s3://targets/20211112000000/positions.16.2021-11-12_15:44:04.554833-05:00.csv
-        # strategyid,SAU1
-        # timestamp_processed,2021-11-12 20:45:07.463641
-        # timestamp_db,2021-11-12 20:45:07.469807
-        # target_count,1
-        # changed_count,0
-        # unchanged_count,0
-        # cancel_count,0
-        # success,False
-        # reason,"There were a total of 1 malformed requests in the file.  First 5 malformed entries were ([Failed to process OrderedDict([('trade_date', '20211112'), ('egid', '15151'), ('target_position', '5'), ('notional_limit', '477.32599999999996'), ('adjprice', '94.52'), ('adjprice_ccy', 'USD'), ('algo', 'VWAP'), ('STARTTIME', '2021-11-12 15:44:04.554833-05:00'), ('ENDTIME', '2021-11-12 15:49:04.554833-05:00'), ('MAXPCTVOL', '3')]) due to 'CURRENT_POSITION'])"
-        # """
-        #
-        # row3 = """
-        # tradedate,2021-11-12
-        # targetlistid,5
-        # instanceid,3504
-        # filename,s3://targets/20211112000000/positions.3.2021-11-12_16:38:22.906790-05:00.csv
-        # strategyid,SAU1
-        # timestamp_processed,2021-11-12 21:38:39.414138
-        # timestamp_db,2021-11-12 21:38:39.419536
-        # target_count,1
-        # changed_count,1
-        # unchanged_count,0
-        # cancel_count,0
-        # success,True
-        # reason,
-        # """
+        exp = r"""   
+           targetlistid   tradedate  instanceid                                                                filename strategyid        timestamp_processed               timestamp_db  target_count  changed_count  unchanged_count  cancel_count  success                                                     reason
+        0             1  2021-11-12        3504                                    s3://targets/20211112000000/test.csv       SAU1 2021-11-12 19:59:23.710677 2021-11-12 19:59:23.716732             1              0                0             0    False   "There were a total of 1 malformed requests in the file.
+        1             2  2021-11-12        3504  s3://targets/20211112000000/positions.16.2021-11-12_15:44:04-05:00.csv       SAU1 2021-11-12 20:45:07.463641 2021-11-12 20:45:07.469807             1              0                0             0    False  "There were a total of 1 malformed requests in the file."
+        2             5  2021-11-12        3504   s3://targets/20211112000000/positions.3.2021-11-12_16:38:22-05:00.csv       SAU1 2021-11-12 21:38:39.414138 2021-11-12 21:38:39.419536             1              1                0             0     True                                                           """
+        self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_wait_for_table1(self):
-        pass
+        # Create two asyncio threads.
+        # One is running wait_for_target_ack.
+        # The other is writing on the DB.
+        with hhasynci.solipsism_context() as event_loop:
+            # Use the wall clock time.
+            get_wall_clock_time = lambda: hdatetim.get_current_time(
+                tz="ET", event_loop=event_loop
+            )
+            # Run.
+            target_value = "hello"
+            poll_kwargs = {
+                "sleep_in_secs": 1.0,
+                "timeout_in_secs": 5.0,
+                "get_wall_clock_time": get_wall_clock_time
+            }
+            coro1 = wait_for_target_ack(self.connection, target_value, poll_kwargs)
+            result = await asyncio.gather(wait_for_target_ack)
+            hhasynci.run(coroutine, event_loop=event_loop)
