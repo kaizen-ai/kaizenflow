@@ -1,5 +1,5 @@
 import helpers.unit_test as hunitest
-import im.data.universe as imdatuniv
+import im_v2.data.universe as imdatuniv
 
 
 class TestFilterVendorUniverseAsTuples(hunitest.TestCase):
