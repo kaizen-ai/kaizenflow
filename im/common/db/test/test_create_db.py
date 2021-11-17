@@ -21,7 +21,7 @@ class TestCreateDB(hunitest.TestCase):
         """
         super().setUp()
         self.docker_compose_file_path = os.path.join(
-            hgit.get_amp_abs_path(), "im/devops/compose/docker-compose.yml"
+            hgit.get_amp_abs_path(), "im_v2/devops/compose/docker-compose.yml"
         )
         cmd = (
             "sudo docker-compose "
