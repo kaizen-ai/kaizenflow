@@ -20,14 +20,18 @@ import os
 
 import pandas as pd
 import seaborn as sns
+#import statsmodels.formula.api.ols as stols
 from statsmodels.tsa.stattools import adfuller
-from statsmodels.formula.api import ols
+#import statsmodels.tsa.stattools.adfuller as stfuller
 
 import core.config.config_ as cconconf
 import core.plotting as cplot
 import helpers.s3 as hs3
-import research.cc.statistics as rccstat
 import im.data.universe as imdatuniv
+import research.cc.statistics as rccstat
+
+from statsmodels.formula.api import ols
+
 
 # %% [markdown]
 # # Config
@@ -64,12 +68,12 @@ print(config)
 # # Functions
 
 # %%
-def compute_volatility_for_each_coin(data, freq, span):
+def compute_volatility_for_each_coin(data: pd.DataFrame, freq: str, span: int):
     """
-    Load and transform each (exchange-coin) dataframe to compute 18-period
-    ema volatility.
+    Load and transform each (exchange-coin) dataframe to compute 18-period ema
+    volatility.
 
-    Parameters: DataFrame, resampling frequency
+    Parameters: initial DataFrame from the universe, resampling frequency
     """
     data["date"] = data.index
     resample_close = data.groupby(
@@ -82,12 +86,12 @@ def compute_volatility_for_each_coin(data, freq, span):
     return vix_df
 
 
-def get_daily_close(data, freq):
+def get_daily_close(data: pd.DataFrame, freq: str):
     """
-    Load and transform each (exchange-coin) dataframe to compute volatility
-    for the whole period.
+    Load and transform each (exchange-coin) dataframe to compute volatility for
+    the whole period.
 
-    Parameters: DataFrame, resampling frequency
+    Parameters: initial DataFrame from the universe, resampling frequency
     """
     data["date"] = data.index
     resample_close = data.groupby(
@@ -97,7 +101,7 @@ def get_daily_close(data, freq):
     return resample_close
 
 
-def get_df_with_coin_price_volatility(data, display_plot):
+def get_df_with_coin_price_volatility(data: pd.DataFrame, display_plot: bool):
     """
     Unify volatility values for each coin and plot the graph.
 
@@ -116,7 +120,7 @@ def get_df_with_coin_price_volatility(data, display_plot):
     return vix_df
 
 
-def get_overall_returns_volatility(data, display_plot):
+def get_overall_returns_volatility(data: pd.DataFrame, display_plot: bool):
     """
     Unify volatility values for each coin for the whole period and plot the
     barplot.
@@ -138,7 +142,7 @@ def get_overall_returns_volatility(data, display_plot):
     return std_df
 
 
-def perform_adf_test(df_daily):
+def perform_adf_test(df_daily: pd.DataFrame):
     """
     Perform ADF test to check the stationarity of volatility values
     Parameters: Daily DataFrame with computed volatility
@@ -160,12 +164,12 @@ def perform_adf_test(df_daily):
     )
     return final_result
 
-def get_df_with_volume_and_volatility(data, freq, span):
+def get_df_with_volume_and_volatility(data: pd.DataFrame, freq: str, span: int):
     """
-    Load and transform each (exchange-coin) dataframe with volumes and close prices (to compute 18-period
-    ema volatility).
-    
-    Parameters: DataFrame, resampling frequency
+    Load and transform each (exchange-coin) dataframe with volumes and close
+    prices (to compute 18-period ema volatility).
+
+    Parameters: initial DataFrame from the universe, resampling frequency
     """
     data["date"] = data.index
     close = data.groupby(
@@ -181,11 +185,12 @@ def get_df_with_volume_and_volatility(data, freq, span):
     vix_volume = close_volume.reset_index()
     return vix_volume
 
-def run_regressions(df, lag_volume):
+def run_regressions(df: pd.DataFrame, lag_volume: bool):
     """
-    Run OLS regression of volatility to volume (with intercept) for daily values.
-    
-    Parameters: DataFrame, bool value for lagging volume variable
+    Run OLS regression of volatility to volume (with intercept) for daily
+    values.
+
+    Parameters: price-volatility DataFrame, bool value for lagging volume variable
     """
     volatility = df.groupby(
             ["currency_pair", pd.Grouper(key="date", freq=frequency)]
@@ -208,12 +213,12 @@ def run_regressions(df, lag_volume):
         map_dict = {coin: model.summary()}
         model_results_dict.update({coin: model.summary()})
     return model_results_dict
-        
-def calculate_corr_and_plot_scatter_plots(df, display_plot):
+
+def calculate_corr_and_plot_scatter_plots(df: pd.DataFrame, display_plot: bool):
     """
     Plot the scatter plots for (volatility-exchange) pairs.
-    
-    Parameters: DataFrame
+
+    Parameters: price-volatility DataFrame, boolean value to plot the graph
     """
     volatility = df.groupby(
             ["currency_pair", pd.Grouper(key="date", freq=frequency)]
@@ -239,6 +244,9 @@ def calculate_corr_and_plot_scatter_plots(df, display_plot):
 # %% [markdown]
 # ## 1 day
 
+# %%
+type(18)
+
 # %% run_control={"marked": false}
 frequency = "1D"
 universe = imdatuniv.get_vendor_universe_as_tuples("v03")
@@ -259,7 +267,7 @@ frequency = "5min"
 compute_5min_vix_ema = lambda data: compute_volatility_for_each_coin(
     data, freq=frequency, span=18
 )
-vix_ema_5min = rccstat.compute_stats_for_universe(config, compute_5min_vix_ema)
+vix_ema_5min = rccstat.compute_stats_for_universe(universe, config, compute_5min_vix_ema)
 
 # %%
 ema_df_5min = get_df_with_coin_price_volatility(vix_ema_5min, display_plot=True)
