@@ -291,8 +291,8 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
         super().__init__()
         self._root_dir = root_dir
         # Set s3fs parameter value if aws profile parameter is specified.
-        if self._aws_profile:
-            self._s3fs = hs3.get_s3fs(self._aws_profile)
+        if aws_profile:
+            self._s3fs = hs3.get_s3fs(aws_profile)
 
     def read_universe_data(
         self,
