@@ -48,8 +48,8 @@ class TestSqlDataLoader1(hunitest.TestCase):
         # Close connection.
         self._loader.conn.close()
         # Remove created database.
-        imcdbcrdb.remove_database(
-            connection=self._connection, db_to_drop=self._new_db
+        hsql.remove_database(
+            connection=self._connection, dbname=self._new_db
         )
         super().tearDown()
 

@@ -38,9 +38,9 @@ class SqlWriterBackendTestCase(hunitest.TestCase):
         # Close connection.
         self._writer.close()
         # Remove created database.
-        imcdbcrdb.remove_database(
+        hsql.remove_database(
             connection=self._connection,
-            db_to_drop=self._new_db,
+            dbname=self._new_db,
         )
         super().tearDown()
 

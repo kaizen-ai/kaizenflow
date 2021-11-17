@@ -80,7 +80,7 @@ def populate_exchange_currency_tables(conn: hsql.DbConnection) -> None:
     df_exchange_names = all_exchange_names.reset_index()
     df_exchange_names.columns = ["exchange_id", "exchange_name"]
     # Insert exchange names dataframe in DB.
-    execute_insert_query(conn, df_exchange_names, "exchange_name")
+    hsql.execute_insert_query(conn, df_exchange_names, "exchange_name")
     # Create an empty list for currency pairs.
     currency_pairs = []
     # Extract all the currency pairs for each exchange and append them to the
@@ -101,4 +101,4 @@ def populate_exchange_currency_tables(conn: hsql.DbConnection) -> None:
     df_currency_pairs = currency_pairs_srs.reset_index()
     df_currency_pairs.columns = ["currency_pair_id", "currency_pair"]
     # Insert currency pairs dataframe in DB.
-    execute_insert_query(conn, df_currency_pairs, "currency_pair")
+    hsql.execute_insert_query(conn, df_currency_pairs, "currency_pair")
