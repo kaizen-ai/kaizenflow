@@ -63,7 +63,7 @@ def compute_stats_for_universe(
 def compute_start_end_stats(
     price_data: pd.DataFrame,
     config: ccocon.Config,
-) -> pd.Series:
+) -> pd.DataFrame:
     """
     Compute start-end stats for exchange-currency data.
 
@@ -86,7 +86,7 @@ def compute_start_end_stats(
 
     :param price_data: crypto price data
     :param config: parameters config
-    :return: start-end stats series
+    :return: start-end stats
     """
     hdbg.dassert_is_subset(
         [
@@ -129,8 +129,8 @@ def compute_start_end_stats(
     )
     res_srs["longest_not_nan_seq_start_date"] = longest_not_nan_seq.index[0]
     res_srs["longest_not_nan_seq_end_date"] = longest_not_nan_seq.index[-1]
-    res_srs = pd.DataFrame(res_srs)
-    res_srs = res_srs.T
+    #TODO(Max): think about what to return: `pd.Series` or `pd.DataFrame`?
+    res_srs = pd.DataFrame(res_srs).T
     return res_srs
 
 
