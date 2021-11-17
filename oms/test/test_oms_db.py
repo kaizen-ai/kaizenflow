@@ -75,7 +75,7 @@ class _TestOmsDbHelper(hunitest.TestCase):
             hsql.wait_db_connection(dbname, port, host)
             self.bring_down_db = True
         # Save connection info.
-        self.connection, self.cursor = hsql.get_connection(
+        self.connection = hsql.get_connection(
             self.dbname,
             host,
             user,
@@ -130,7 +130,7 @@ def _get_row1() -> pd.Series:
     unchanged_count|0
     cancel_count|0
     success|False
-    reason|"There were a total of 1 malformed requests in the file.
+    reason|"There were a total of 1 malformed requests in the file."
     """
     srs = _to_series(row)
     return srs
@@ -334,4 +334,4 @@ class TestOmsDb2(_TestOmsDbHelper):
         # Show the state of the DB.
         query = f"SELECT * FROM {table_name}"
         df = hsql.execute_query(self.connection, query)
-        _LOG.debug("df=\n%s", hprint.dataframe_to_str(df, use_tabulate=True))
+        _LOG.debug("df=\n%s", hprint.dataframe_to_str(df, use_tabulate=False))
