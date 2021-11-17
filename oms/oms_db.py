@@ -4,11 +4,21 @@ Import as:
 import oms.oms_db as oomsdb
 """
 
+import asyncio
+import logging
+import math
+
+import pandas as pd
+
+import helpers.dbg as hdbg
 import helpers.printing as hprint
 import helpers.sql as hsql
 import helpers.hasyncio as hhasynci
 import helpers.datetime_ as hdatetim
 
+from typing import Callable, Tuple, Any
+
+_LOG = logging.getLogger(__name__)
 
 # TODO(gp): Instead of returning the query just perform it. We should return the
 #  query only when we want to freeze the query in a test.
@@ -114,15 +124,15 @@ def wait_for_row(connection: hsql.DbConnection, target_value: str) -> Tuple[int,
     query = f"SELECT filename FROM {table_name} WHERE filename='{target_value}'"
     df = hsql.execute_query(connection, query)
     _LOG.debug("df=\n%s", hprint.dataframe_to_str(df))
-    rc = df > 0
+    rc = df.shape[0] > 0
     return rc, df
 
 
-async def wait_for_target_ack(connection: hsql.DbConnection, target_value: str, **poll_kwargs) -> Tuple[int, pd.DataFrame]:
+async def wait_for_target_ack(connection: hsql.DbConnection, target_value: str, poll_kwargs) -> Tuple[int, pd.DataFrame]:
     """
     
     """
     func = lambda: wait_for_row(connection, target_value)
-    rc, df = poll(func, **poll_kwargs)
+    rc, df = await poll(func, **poll_kwargs)
     return rc, df
 

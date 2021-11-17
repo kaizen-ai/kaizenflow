@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 
@@ -228,6 +229,12 @@ class TestOmsDb1(_TestOmsDbHelper):
                 "timeout_in_secs": 5.0,
                 "get_wall_clock_time": get_wall_clock_time
             }
-            coro1 = wait_for_target_ack(self.connection, target_value, poll_kwargs)
-            result = await asyncio.gather(wait_for_target_ack)
+
+            async def _workload():
+                coro1 = oomsdb.wait_for_target_ack(self.connection, target_value, poll_kwargs)
+                result = await asyncio.gather(coro1)
+                #result = 1
+                #await asyncio.sleep(1)
+                return result
+            coroutine = _workload()
             hhasynci.run(coroutine, event_loop=event_loop)
