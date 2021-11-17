@@ -168,7 +168,7 @@ class TestRunExperimentFail2(hut.TestCase):
 
 # #############################################################################
 
-@pytest.mark.skip(reason="Cmamp #179.")
+
 class TestRunExperimentArchiveOnS3(hut.TestCase):
     """
     Run experiments that succeed and archive the results on S3.
