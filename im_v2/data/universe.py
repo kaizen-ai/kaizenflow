@@ -25,7 +25,7 @@ def get_trade_universe(
     :return: trade universe
     """
     file_name = "".join(["universe_", version, ".json"])
-    file_path = os.path.join(hgit.get_amp_abs_path(), "im/data", file_name)
+    file_path = os.path.join(hgit.get_amp_abs_path(), "im_v2/data", file_name)
     hdbg.dassert_exists(file_path)
     universe = hio.from_json(file_path)
     return universe  # type: ignore[no-any-return]
