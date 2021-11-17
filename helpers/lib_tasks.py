@@ -437,65 +437,186 @@ def git_clean(ctx, dry_run=False):  # type: ignore
     _run(ctx, cmd)
 
 
-def _delete_branches(ctx: Any, tag: str, confirm_delete: bool) -> None:
-    if tag == "local":
-        # Delete local branches that are already merged into master.
-        # > git branch --merged
-        # * AmpTask1251_Update_GH_actions_for_amp_02
-        find_cmd = r"git branch --merged master | grep -v master | grep -v \*"
-        delete_cmd = "git branch -d"
-    elif tag == "remote":
-        # Get the branches to delete.
-        find_cmd = (
-            "git branch -r --merged origin/master"
-            + r" | grep -v master | sed 's/origin\///'"
-        )
-        delete_cmd = "git push origin --delete"
-    else:
-        raise ValueError(f"Invalid tag='{tag}'")
-    # TODO(gp): Use system_to_lines
-    _, txt = hsyint.system_to_string(find_cmd, abort_on_error=False)
-    branches = hsyint.text_to_list(txt)
-    # Print info.
-    _LOG.info(
-        "There are %d %s branches to delete:\n%s",
-        len(branches),
-        tag,
-        "\n".join(branches),
-    )
-    if not branches:
-        # No branch to delete, then we are done.
-        return
-    # Ask whether to continue.
-    if confirm_delete:
-        hsyint.query_yes_no(
-            hdbg.WARNING + f": Delete these {tag} branches?", abort_on_no=True
-        )
-    for branch in branches:
-        cmd_tmp = f"{delete_cmd} {branch}"
-        _run(ctx, cmd_tmp)
+@task
+def git_add_all_untracked(ctx):  # type: ignore
+    """
+    Add all untracked files to git.
+    """
+    _report_task()
+    cmd = "git add $(git ls-files -o --exclude-standard)"
+    _run(ctx, cmd)
 
 
 @task
-def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
+def git_create_patch(  # type: ignore
+    ctx, mode="diff", modified=False, branch=False, last_commit=False, files=""
+):
     """
-    Remove (both local and remote) branches that have been merged into master.
+    Create a patch file for the entire repo_short_name client from the base
+    revision. This script accepts a list of files to package, if specified.
+
+    The parameters `modified`, `branch`, `last_commit` have the same meaning as
+    in `_get_files_to_process()`.
+
+    :param mode: what kind of patch to create
+        - "diff": (default) creates a patch with the diff of the files
+        - "tar": creates a tar ball with all the files
+    """
+    _report_task(hprintin.to_str("mode modified branch last_commit files"))
+    _ = ctx
+    # TODO(gp): Check that the current branch is up to date with master to avoid
+    #  failures when we try to merge the patch.
+    hdbg.dassert_in(mode, ("tar", "diff"))
+    # For now we just create a patch for the current submodule.
+    # TODO(gp): Extend this to handle also nested repos.
+    super_module = False
+    git_client_root = hgit.get_client_root(super_module)
+    hash_ = hgit.get_head_hash(git_client_root, short_hash=True)
+    timestamp = _get_ET_timestamp()
+    #
+    tag = os.path.basename(git_client_root)
+    dst_file = f"patch.{tag}.{hash_}.{timestamp}"
+    if mode == "tar":
+        dst_file += ".tgz"
+    elif mode == "diff":
+        dst_file += ".patch"
+    else:
+        hdbg.dfatal("Invalid code path")
+    _LOG.debug("dst_file=%s", dst_file)
+    # Summary of files.
+    _LOG.info(
+        "Difference between HEAD and master:\n%s",
+        hgit.get_summary_files_in_branch("master", "."),
+    )
+    # Get the files.
+    all_ = False
+    # We allow to specify files as a subset of files modified in the branch or
+    # in the client.
+    mutually_exclusive = False
+    # We don't allow to specify directories.
+    remove_dirs = True
+    files_as_list = _get_files_to_process(
+        modified,
+        branch,
+        last_commit,
+        all_,
+        files,
+        mutually_exclusive,
+        remove_dirs,
+    )
+    _LOG.info("Files to save:\n%s", hprintin.indent("\n".join(files_as_list)))
+    if not files_as_list:
+        _LOG.warning("Nothing to patch: exiting")
+        return
+    files_as_str = " ".join(files_as_list)
+    # Prepare the patch command.
+    cmd = ""
+    if mode == "tar":
+        cmd = f"tar czvf {dst_file} {files_as_str}"
+        cmd_inv = "tar xvzf"
+    elif mode == "diff":
+        if modified:
+            opts = "HEAD"
+        elif branch:
+            opts = "master..."
+        elif last_commit:
+            opts = "HEAD^"
+        else:
+            hdbg.dfatal(
+                "You need to specify one among -modified, --branch, "
+                "--last-commit"
+            )
+        cmd = f"git diff {opts} --binary {files_as_str} >{dst_file}"
+        cmd_inv = "git apply"
+    # Execute patch command.
+    _LOG.info("Creating the patch into %s", dst_file)
+    hdbg.dassert_ne(cmd, "")
+    _LOG.debug("cmd=%s", cmd)
+    rc = hsyint.system(cmd, abort_on_error=False)
+    if not rc:
+        _LOG.warning("Command failed with rc=%d", rc)
+    # Print message to apply the patch.
+    remote_file = os.path.basename(dst_file)
+    abs_path_dst_file = os.path.abspath(dst_file)
+    msg = f"""
+# To apply the patch and execute:
+> git checkout {hash_}
+> {cmd_inv} {abs_path_dst_file}
+
+# To apply the patch to a remote client:
+> export SERVER="server"
+> export CLIENT_PATH="~/src"
+> scp {dst_file} $SERVER:
+> ssh $SERVER 'cd $CLIENT_PATH && {cmd_inv} ~/{remote_file}'"
+    """
+    print(msg)
+
+
+@task
+def git_files(  # type: ignore
+    ctx, modified=False, branch=False, last_commit=False, pbcopy=False
+):
+    """
+    Report which files are changed in the current branch with respect to
+    master.
+
+    The params have the same meaning as in `_get_files_to_process()`.
     """
     _report_task()
-    hdbg.dassert(
-        hgit.get_branch_name(),
-        "master",
-        "You need to be on master to delete dead branches",
+    _ = ctx
+    all_ = False
+    files = ""
+    mutually_exclusive = True
+    # pre-commit doesn't handle directories, but only files.
+    remove_dirs = True
+    files_as_list = _get_files_to_process(
+        modified,
+        branch,
+        last_commit,
+        all_,
+        files,
+        mutually_exclusive,
+        remove_dirs,
     )
-    #
-    cmd = "git fetch --all --prune"
+    print("\n".join(sorted(files_as_list)))
+    if pbcopy:
+        res = " ".join(files_as_list)
+        _to_pbcopy(res, pbcopy)
+
+
+@task
+def git_last_commit_files(ctx, pbcopy=True):  # type: ignore
+    """
+    Print the status of the files in the previous commit.
+
+    :param pbcopy: save the result into the system clipboard (only on macOS)
+    """
+    cmd = 'git log -1 --name-status --pretty=""'
     _run(ctx, cmd)
-    # Delete local and remote branches that are already merged into master.
-    _delete_branches(ctx, "local", confirm_delete)
-    _delete_branches(ctx, "remote", confirm_delete)
-    #
-    cmd = "git fetch --all --prune"
-    _run(ctx, cmd)
+    # Get the list of existing files.
+    files = hgit.get_previous_committed_files(".")
+    txt = "\n".join(files)
+    print(f"\n# The files modified are:\n{txt}")
+    # Save to clipboard.
+    res = " ".join(files)
+    _to_pbcopy(res, pbcopy)
+
+
+# Branches workflows
+
+
+@task
+def git_branch_files(ctx):  # type: ignore
+    """
+    Report which files are added, changed, modified in the current branch with
+    respect to master.
+    """
+    _report_task()
+    _ = ctx
+    print(
+        "Difference between HEAD and master:\n"
+        + hgit.get_summary_files_in_branch("master", ".")
+    )
 
 
 @task
@@ -576,246 +697,67 @@ def git_create_branch(  # type: ignore
     _run(ctx, cmd)
 
 
-@task
-def git_create_patch(  # type: ignore
-    ctx, mode="diff", modified=False, branch=False, last_commit=False, files=""
-):
-    """
-    Create a patch file for the entire repo_short_name client from the base
-    revision. This script accepts a list of files to package, if specified.
 
-    The parameters `modified`, `branch`, `last_commit` have the same meaning as
-    in `_get_files_to_process()`.
 
-    :param mode: what kind of patch to create
-        - "diff": (default) creates a patch with the diff of the files
-        - "tar": creates a tar ball with all the files
-    """
-    _report_task(hprintin.to_str("mode modified branch last_commit files"))
-    _ = ctx
-    # TODO(gp): Check that the current branch is up to date with master to avoid
-    #  failures when we try to merge the patch.
-    hdbg.dassert_in(mode, ("tar", "diff"))
-    # For now we just create a patch for the current submodule.
-    # TODO(gp): Extend this to handle also nested repos.
-    super_module = False
-    git_client_root = hgit.get_client_root(super_module)
-    hash_ = hgit.get_head_hash(git_client_root, short_hash=True)
-    timestamp = _get_ET_timestamp()
-    #
-    tag = os.path.basename(git_client_root)
-    dst_file = f"patch.{tag}.{hash_}.{timestamp}"
-    if mode == "tar":
-        dst_file += ".tgz"
-    elif mode == "diff":
-        dst_file += ".patch"
+def _delete_branches(ctx: Any, tag: str, confirm_delete: bool) -> None:
+    if tag == "local":
+        # Delete local branches that are already merged into master.
+        # > git branch --merged
+        # * AmpTask1251_Update_GH_actions_for_amp_02
+        find_cmd = r"git branch --merged master | grep -v master | grep -v \*"
+        delete_cmd = "git branch -d"
+    elif tag == "remote":
+        # Get the branches to delete.
+        find_cmd = (
+            "git branch -r --merged origin/master"
+            + r" | grep -v master | sed 's/origin\///'"
+        )
+        delete_cmd = "git push origin --delete"
     else:
-        hdbg.dfatal("Invalid code path")
-    _LOG.debug("dst_file=%s", dst_file)
-    # Summary of files.
+        raise ValueError(f"Invalid tag='{tag}'")
+    # TODO(gp): Use system_to_lines
+    _, txt = hsyint.system_to_string(find_cmd, abort_on_error=False)
+    branches = hsyint.text_to_list(txt)
+    # Print info.
     _LOG.info(
-        "Difference between HEAD and master:\n%s",
-        hgit.get_summary_files_in_branch("master", "."),
+        "There are %d %s branches to delete:\n%s",
+        len(branches),
+        tag,
+        "\n".join(branches),
     )
-    # Get the files.
-    all_ = False
-    # We allow to specify files as a subset of files modified in the branch or
-    # in the client.
-    mutually_exclusive = False
-    # We don't allow to specify directories.
-    remove_dirs = True
-    files_as_list = _get_files_to_process(
-        modified,
-        branch,
-        last_commit,
-        all_,
-        files,
-        mutually_exclusive,
-        remove_dirs,
-    )
-    _LOG.info("Files to save:\n%s", hprintin.indent("\n".join(files_as_list)))
-    if not files_as_list:
-        _LOG.warning("Nothing to patch: exiting")
+    if not branches:
+        # No branch to delete, then we are done.
         return
-    files_as_str = " ".join(files_as_list)
-
-    # Prepare the patch command.
-    cmd = ""
-    if mode == "tar":
-        cmd = f"tar czvf {dst_file} {files_as_str}"
-        cmd_inv = "tar xvzf"
-    elif mode == "diff":
-        if modified:
-            opts = "HEAD"
-        elif branch:
-            opts = "master..."
-        elif last_commit:
-            opts = "HEAD^"
-        else:
-            hdbg.dfatal(
-                "You need to specify one among -modified, --branch, "
-                "--last-commit"
-            )
-        cmd = f"git diff {opts} --binary {files_as_str} >{dst_file}"
-        cmd_inv = "git apply"
-    # Execute patch command.
-    _LOG.info("Creating the patch into %s", dst_file)
-    hdbg.dassert_ne(cmd, "")
-    _LOG.debug("cmd=%s", cmd)
-    rc = hsyint.system(cmd, abort_on_error=False)
-    if not rc:
-        _LOG.warning("Command failed with rc=%d", rc)
-    # Print message to apply the patch.
-    remote_file = os.path.basename(dst_file)
-    abs_path_dst_file = os.path.abspath(dst_file)
-    msg = f"""
-# To apply the patch and execute:
-> git checkout {hash_}
-> {cmd_inv} {abs_path_dst_file}
-
-# To apply the patch to a remote client:
-> export SERVER="server"
-> export CLIENT_PATH="~/src"
-> scp {dst_file} $SERVER:
-> ssh $SERVER 'cd $CLIENT_PATH && {cmd_inv} ~/{remote_file}'"
-    """
-    print(msg)
+    # Ask whether to continue.
+    if confirm_delete:
+        hsyint.query_yes_no(
+            hdbg.WARNING + f": Delete these {tag} branches?", abort_on_no=True
+        )
+    for branch in branches:
+        cmd_tmp = f"{delete_cmd} {branch}"
+        _run(ctx, cmd_tmp)
 
 
 @task
-def git_branch_files(ctx):  # type: ignore
+def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
     """
-    Report which files are added, changed, modified in the current branch with
-    respect to master.
+    Remove (both local and remote) branches that have been merged into master.
     """
     _report_task()
-    _ = ctx
-    print(
-        "Difference between HEAD and master:\n"
-        + hgit.get_summary_files_in_branch("master", ".")
+    hdbg.dassert(
+        hgit.get_branch_name(),
+        "master",
+        "You need to be on master to delete dead branches",
     )
-
-
-@task
-def git_files(  # type: ignore
-    ctx, modified=False, branch=False, last_commit=False, pbcopy=False
-):
-    """
-    Report which files are changed in the current branch with respect to
-    master.
-
-    The params have the same meaning as in `_get_files_to_process()`.
-    """
-    _report_task()
-    _ = ctx
-    all_ = False
-    files = ""
-    mutually_exclusive = True
-    # pre-commit doesn't handle directories, but only files.
-    remove_dirs = True
-    files_as_list = _get_files_to_process(
-        modified,
-        branch,
-        last_commit,
-        all_,
-        files,
-        mutually_exclusive,
-        remove_dirs,
-    )
-    print("\n".join(sorted(files_as_list)))
-    if pbcopy:
-        res = " ".join(files_as_list)
-        _to_pbcopy(res, pbcopy)
-
-
-@task
-def git_last_commit_files(ctx, pbcopy=True):  # type: ignore
-    """
-    Print the status of the files in the previous commit.
-
-    :param pbcopy: save the result into the system clipboard (only on macOS)
-    """
-    cmd = 'git log -1 --name-status --pretty=""'
+    #
+    cmd = "git fetch --all --prune"
     _run(ctx, cmd)
-    # Get the list of existing files.
-    files = hgit.get_previous_committed_files(".")
-    txt = "\n".join(files)
-    print(f"\n# The files modified are:\n{txt}")
-    # Save to clipboard.
-    res = " ".join(files)
-    _to_pbcopy(res, pbcopy)
-
-
-# TODO(gp): When running `python_execute` we could launch it inside a
-# container.
-@task
-def check_python_files(  # type: ignore
-    ctx,
-    python_compile=True,
-    python_execute=False,
-    modified=False,
-    branch=False,
-    last_commit=False,
-    all_=False,
-    files="",
-):
-    """
-    Compile and execute Python files checking for errors.
-
-    The params have the same meaning as in `_get_files_to_process()`.
-    """
-    _report_task()
-    _ = ctx
-    # We allow to filter through the user specified `files`.
-    mutually_exclusive = False
-    remove_dirs = True
-    file_list = _get_files_to_process(
-        modified,
-        branch,
-        last_commit,
-        all_,
-        files,
-        mutually_exclusive,
-        remove_dirs,
-    )
-    _LOG.debug("Found %d files:\n%s", len(file_list), "\n".join(file_list))
-    # Filter keeping only Python files.
-    _LOG.debug("Filtering for Python files")
-    exclude_paired_jupytext = True
-    file_list = hio.keep_python_files(file_list, exclude_paired_jupytext)
-    _LOG.debug("file_list=%s", "\n".join(file_list))
-    _LOG.info("Need to process %d files", len(file_list))
-    if not file_list:
-        _LOG.warning("No files were selected")
-    # Scan all the files.
-    failed_filenames = []
-    for file_name in file_list:
-        _LOG.info("Processing '%s'", file_name)
-        if python_compile:
-            import compileall
-
-            success = compileall.compile_file(file_name, force=True, quiet=1)
-            _LOG.debug("file_name='%s' -> python_compile=%s", file_name, success)
-            if not success:
-                msg = "'%s' doesn't compile correctly" % file_name
-                _LOG.error(msg)
-                failed_filenames.append(file_name)
-        # TODO(gp): Add also `python -c "import ..."`, if not equivalent to `compileall`.
-        if python_execute:
-            cmd = f"python {file_name}"
-            rc = hsyint.system(cmd, abort_on_error=False, suppress_output=False)
-            _LOG.debug("file_name='%s' -> python_compile=%s", file_name, rc)
-            if rc != 0:
-                msg = "'%s' doesn't execute correctly" % file_name
-                _LOG.error(msg)
-                failed_filenames.append(file_name)
-    _LOG.info(
-        "failed_filenames=%s\n%s",
-        len(failed_filenames),
-        "\n".join(failed_filenames),
-    )
-    error = len(failed_filenames) > 0
-    return error
+    # Delete local and remote branches that are already merged into master.
+    _delete_branches(ctx, "local", confirm_delete)
+    _delete_branches(ctx, "remote", confirm_delete)
+    #
+    cmd = "git fetch --all --prune"
+    _run(ctx, cmd)
 
 
 @task
@@ -2505,6 +2447,78 @@ def pytest_failed(  # type: ignore
 # #############################################################################
 # Linter.
 # #############################################################################
+
+
+# TODO(gp): When running `python_execute` we could launch it inside a
+# container.
+@task
+def check_python_files(  # type: ignore
+    ctx,
+    python_compile=True,
+    python_execute=False,
+    modified=False,
+    branch=False,
+    last_commit=False,
+    all_=False,
+    files="",
+):
+    """
+    Compile and execute Python files checking for errors.
+
+    The params have the same meaning as in `_get_files_to_process()`.
+    """
+    _report_task()
+    _ = ctx
+    # We allow to filter through the user specified `files`.
+    mutually_exclusive = False
+    remove_dirs = True
+    file_list = _get_files_to_process(
+        modified,
+        branch,
+        last_commit,
+        all_,
+        files,
+        mutually_exclusive,
+        remove_dirs,
+    )
+    _LOG.debug("Found %d files:\n%s", len(file_list), "\n".join(file_list))
+    # Filter keeping only Python files.
+    _LOG.debug("Filtering for Python files")
+    exclude_paired_jupytext = True
+    file_list = hio.keep_python_files(file_list, exclude_paired_jupytext)
+    _LOG.debug("file_list=%s", "\n".join(file_list))
+    _LOG.info("Need to process %d files", len(file_list))
+    if not file_list:
+        _LOG.warning("No files were selected")
+    # Scan all the files.
+    failed_filenames = []
+    for file_name in file_list:
+        _LOG.info("Processing '%s'", file_name)
+        if python_compile:
+            import compileall
+
+            success = compileall.compile_file(file_name, force=True, quiet=1)
+            _LOG.debug("file_name='%s' -> python_compile=%s", file_name, success)
+            if not success:
+                msg = "'%s' doesn't compile correctly" % file_name
+                _LOG.error(msg)
+                failed_filenames.append(file_name)
+        # TODO(gp): Add also `python -c "import ..."`, if not equivalent to `compileall`.
+        if python_execute:
+            cmd = f"python {file_name}"
+            rc = hsyint.system(cmd, abort_on_error=False, suppress_output=False)
+            _LOG.debug("file_name='%s' -> python_compile=%s", file_name, rc)
+            if rc != 0:
+                msg = "'%s' doesn't execute correctly" % file_name
+                _LOG.error(msg)
+                failed_filenames.append(file_name)
+    _LOG.info(
+        "failed_filenames=%s\n%s",
+        len(failed_filenames),
+        "\n".join(failed_filenames),
+    )
+    error = len(failed_filenames) > 0
+    return error
 
 
 def _get_lint_docker_cmd(precommit_opts: str, run_bash: bool, stage: str) -> str:

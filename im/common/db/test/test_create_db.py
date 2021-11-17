@@ -12,7 +12,7 @@ import im.common.db.create_db as imcdbcrdb
 _LOG = logging.getLogger(__name__)
 
 
-class CreateDB(hunitest.TestCase):
+class TestCreateDb1(hunitest.TestCase):
     def setUp(self) -> None:
         """
         Initialize the test database inside test container.
