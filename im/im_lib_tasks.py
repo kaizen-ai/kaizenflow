@@ -6,6 +6,7 @@ Import as:
 import im.im_lib_tasks as imimlitas
 """
 
+import logging
 import os
 
 from invoke import task
@@ -14,6 +15,8 @@ import helpers.dbg as hdbg
 import helpers.git as hgit
 import helpers.lib_tasks as hlibtask
 
+
+_LOG = logging.getLogger(__name__)
 
 # TODO(gp): This should be used also from the unit tests?
 def _get_docker_compose_path() -> str:
