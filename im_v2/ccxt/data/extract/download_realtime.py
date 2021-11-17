@@ -5,14 +5,14 @@ Script to download OHLCV data from CCXT in real-time.
 Use as:
 
 # Download OHLCV data for universe 'v03', saving only on disk:
-> python im/ccxt/data/extract/download_realtime.py \
+> python im_v2/ccxt/data/extract/download_realtime.py \
     --db_connection 'none' \
     --dst_dir 'test_ohlcv_rt' \
     --data_type 'ohlcv' \
     --universe 'v03'
 
 # Download order book data for universe 'v03', saving only on disk:
-> python im/ccxt/data/extract/download_realtime.py \
+> python im_v2/ccxt/data/extract/download_realtime.py \
     --db_connection 'none' \
     --dst_dir 'test_orderbook_rt' \
     --data_type 'orderbook' \
