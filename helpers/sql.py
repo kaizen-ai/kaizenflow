@@ -41,8 +41,8 @@ DbConnectionInfo = collections.namedtuple(
 def get_connection(
     host: str,
     dbname: str,
-    user: str,
     port: int,
+    user: str,
     password: str,
     autocommit: bool = True,
 ) -> DbConnection:
@@ -69,13 +69,13 @@ def get_connection_from_env_vars() -> Tuple[
     # TODO(gp): -> POSTGRES_DBNAME
     host = os.environ["POSTGRES_HOST"]
     dbname = os.environ["POSTGRES_DB"]
-    user = os.environ["POSTGRES_USER"]
     port = int(os.environ["POSTGRES_PORT"])
+    user = os.environ["POSTGRES_USER"]
     password = os.environ["POSTGRES_PASSWORD"]
     # Build the
     connection = get_connection(
-        dbname=dbname,
         host=host,
+        dbname=dbname,
         port=port,
         user=user,
         password=password,
@@ -107,7 +107,7 @@ def check_db_connection(
     """
     Check whether a connection to a DB exists, in a non-blocking way.
     """
-    cmd = f"pg_isready -d {dbname} -p {port} -h {host}"
+    cmd = f"pg_isready -h {host} -d {dbname} -p {port}"
     rc = hsysinte.system(cmd, abort_on_error=False)
     conn_exists = rc == 0
     return conn_exists
@@ -122,7 +122,7 @@ def wait_db_connection(
     :param timeout_in_secs: secs before timing out with `RuntimeError`.
     """
     hdbg.dassert_lte(1, timeout_in_secs)
-    _LOG.debug("dbname=%s, port=%s, host=%s", dbname, port, host)
+    _LOG.debug("host=%s, dbname=%s, port=%s", host, dbname, port)
     elapsed_secs = 0
     while True:
         _LOG.info("Waiting for PostgreSQL to become available...")
@@ -143,8 +143,8 @@ def db_connection_to_tuple(connection: DbConnection) -> NamedTuple:
     Get database connection details using connection. Connection details
     include:
 
-        - Database name
         - Host
+        - Database name
         - Port
         - Username
         - Password
