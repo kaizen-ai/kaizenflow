@@ -7,16 +7,14 @@ import oms.oms_db as oomsdb
 import asyncio
 import logging
 import math
+from typing import Any, Callable, Tuple
 
 import pandas as pd
 
+import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.printing as hprint
 import helpers.sql as hsql
-import helpers.hasyncio as hhasynci
-import helpers.datetime_ as hdatetim
-
-from typing import Callable, Tuple, Any
 
 _LOG = logging.getLogger(__name__)
 
@@ -67,7 +65,8 @@ def get_create_target_files_table_query(incremental: bool) -> str:
     query = []
     if incremental:
         query.append(f"DROP TABLE IF EXISTS {table_name}")
-    query.append(f"""
+    query.append(
+        f"""
     CREATE TABLE IF NOT EXISTS {table_name} (
             targetlistid SERIAL PRIMARY KEY,
             tradedate DATE NOT NULL,
@@ -83,14 +82,18 @@ def get_create_target_files_table_query(incremental: bool) -> str:
             success BOOL,
             reason VARCHAR(255)
             )
-            """)
+            """
+    )
     query = "; ".join(query)
     return query
 
 
-async def poll(func: Callable, sleep_in_secs: float, timeout_in_secs: float,
-         get_wall_clock_time: hdatetim.GetWallClockTime,
-         ) -> Tuple[int, Any]:
+async def poll(
+    func: Callable,
+    sleep_in_secs: float,
+    timeout_in_secs: float,
+    get_wall_clock_time: hdateti.GetWallClockTime,
+) -> Tuple[int, Any]:
     """
     :param func: function returning a tuple (rc, value) where rc == 0 means keep
         iterating
@@ -102,24 +105,36 @@ async def poll(func: Callable, sleep_in_secs: float, timeout_in_secs: float,
     hdbg.dassert_lte(1, max_num_iter)
     num_iter = 1
     while True:
-        _LOG.debug("Iter %s/%s: wall clock time=%s", num_iter + 1, max_num_iter,
-                   get_wall_clock_time())
+        _LOG.debug(
+            "Iter %s/%s: wall clock time=%s",
+            num_iter + 1,
+            max_num_iter,
+            get_wall_clock_time(),
+        )
         rc, value = func()
         _LOG.debug("rc=%s, value=%s", rc, value)
         if rc != 0:
             # The function returned.
-            _LOG.debug("poll done: wall clock time=", num_iter + 1, max_num_iter,
-                       get_wall_clock_time())
+            _LOG.debug(
+                "poll done: wall clock time=",
+                num_iter + 1,
+                max_num_iter,
+                get_wall_clock_time(),
+            )
             return rc, value
         #
         num_iter += 1
         if num_iter >= max_num_iter:
-            raise RuntimeError("Timeout for " +
-                               hprint.to_str("func sleep_in_secs timeout_in_secs"))
+            raise RuntimeError(
+                "Timeout for "
+                + hprint.to_str("func sleep_in_secs timeout_in_secs")
+            )
         await asyncio.sleep(sleep_in_secs)
 
 
-def wait_for_row(connection: hsql.DbConnection, target_value: str) -> Tuple[int, pd.DataFrame]:
+def wait_for_row(
+    connection: hsql.DbConnection, target_value: str
+) -> Tuple[int, pd.DataFrame]:
     table_name = "target_files_processed_candidate_view"
     query = f"SELECT filename FROM {table_name} WHERE filename='{target_value}'"
     df = hsql.execute_query(connection, query)
@@ -128,11 +143,12 @@ def wait_for_row(connection: hsql.DbConnection, target_value: str) -> Tuple[int,
     return rc, df
 
 
-async def wait_for_target_ack(connection: hsql.DbConnection, target_value: str, poll_kwargs) -> Tuple[int, pd.DataFrame]:
+async def wait_for_target_ack(
+    connection: hsql.DbConnection, target_value: str, poll_kwargs
+) -> Tuple[int, pd.DataFrame]:
     """
     
     """
     func = lambda: wait_for_row(connection, target_value)
     rc, df = await poll(func, **poll_kwargs)
     return rc, df
-

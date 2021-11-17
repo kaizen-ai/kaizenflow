@@ -13,8 +13,8 @@ from typing import List, NamedTuple, Optional, Tuple, Union
 
 import pandas as pd
 import psycopg2 as psycop
-import psycopg2.sql as psql
 import psycopg2.extras as extras
+import psycopg2.sql as psql
 
 import helpers.dbg as hdbg
 import helpers.printing as hprint
@@ -312,9 +312,9 @@ def get_table_names(connection: DbConnection) -> List[str]:
 
 # TODO(gp): -> get_tables_size
 def get_table_size(
-        connection: DbConnection,
-        only_public: bool = True,
-        summary: bool = True,
+    connection: DbConnection,
+    only_public: bool = True,
+    summary: bool = True,
 ) -> pd.DataFrame:
     """
     Report the size of each table.
@@ -372,9 +372,9 @@ def head_table(
 
 
 def head_tables(
-        connection: DbConnection,
-        tables: Optional[List[str]] = None,
-        limit: int = 5,
+    connection: DbConnection,
+    tables: Optional[List[str]] = None,
+    limit: int = 5,
 ) -> str:
     txt = []
     if tables is None:
@@ -404,9 +404,9 @@ def get_columns(connection: DbConnection, table_name: str) -> List[str]:
 
 # TODO(gp): -> find_tables_common_columns
 def find_common_columns(
-        connection: DbConnection,
-        tables: List[str],
-        as_df: bool = False,
+    connection: DbConnection,
+    tables: List[str],
+    as_df: bool = False,
 ) -> Union[None, pd.DataFrame]:
     limit = 5
     df = []

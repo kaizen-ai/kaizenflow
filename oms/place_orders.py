@@ -74,9 +74,7 @@ def _compute_target_positions(
     predictions.columns = ["asset_id", "predictions"]
     _LOG.debug("predictions=\n%s", hprint.dataframe_to_str(predictions))
     merged_df = holdings.merge(predictions, on="asset_id", how="outer")
-    _LOG.debug(
-        "after merge: merged_df=\n%s", hprint.dataframe_to_str(merged_df)
-    )
+    _LOG.debug("after merge: merged_df=\n%s", hprint.dataframe_to_str(merged_df))
     # Mark to market.
     merged_df = portfolio.mark_holdings_to_market(current_ts, merged_df)
     _LOG.debug("merged_df=\n%s", hprint.dataframe_to_str(merged_df))

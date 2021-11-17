@@ -265,9 +265,7 @@ def _compute_pnl_level2(
     use_cache = True
     columns = ["price"]
     mi = opnlsimu.MarketInterface(df, use_cache, columns)
-    df_5mins = opnlsimu.compute_pnl_level2(
-        mi, df_5mins, initial_wealth, config
-    )
+    df_5mins = opnlsimu.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
     self_.assert_equal(str(df_5mins_no_cache), str(df_5mins))
     pd.testing.assert_frame_equal(df_5mins_no_cache, df_5mins)
     return df_5mins

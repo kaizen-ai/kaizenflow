@@ -4,8 +4,8 @@ import os
 
 import pandas as pd
 
-import helpers.hasyncio as hhasynci
-import helpers.datetime_ as hdatetim
+import helpers.datetime_ as hdateti
+import helpers.hasyncio as hasynci
 import helpers.printing as hprint
 import helpers.sql as hsql
 import helpers.system_interaction as hsysinte
@@ -104,7 +104,6 @@ class _TestOmsDbHelper(hunitest.TestCase):
 
 
 class TestOmsDb1(_TestOmsDbHelper):
-
     def test_up1(self) -> None:
         """
         Verify that the DB is up.
@@ -128,19 +127,6 @@ class TestOmsDb1(_TestOmsDbHelper):
         db_tables = hsql.get_table_names(self.connection)
         _LOG.info("get_table_names=%s", db_tables)
         self.assertEqual(db_tables, ["target_files_processed_candidate_view"])
-
-    @staticmethod
-    def _to_series(txt) -> pd.Series:
-        _LOG.debug("txt=\n%s", txt)
-        tuples = [tuple(line.split("|")) for line in hprint.dedent(txt).split("\n")]
-        _LOG.debug("tuples=%s", str(tuples))
-        # Remove empty tuples.
-        tuples = [t for t in tuples if t[0] != ""]
-        index, data = zip(*tuples)
-        _LOG.debug("index=%s", index)
-        _LOG.debug("data=%s", data)
-        srs = pd.Series(data, index=index)
-        return srs
 
     def test_insert1(self) -> None:
         # Create the table.
@@ -206,7 +192,7 @@ class TestOmsDb1(_TestOmsDbHelper):
         query = f"SELECT * FROM {table_name}"
         df = hsql.execute_query(self.connection, query)
         act = hprint.dataframe_to_str(df)
-        exp = r"""   
+        exp = r"""
            targetlistid   tradedate  instanceid                                                                filename strategyid        timestamp_processed               timestamp_db  target_count  changed_count  unchanged_count  cancel_count  success                                                     reason
         0             1  2021-11-12        3504                                    s3://targets/20211112000000/test.csv       SAU1 2021-11-12 19:59:23.710677 2021-11-12 19:59:23.716732             1              0                0             0    False   "There were a total of 1 malformed requests in the file.
         1             2  2021-11-12        3504  s3://targets/20211112000000/positions.16.2021-11-12_15:44:04-05:00.csv       SAU1 2021-11-12 20:45:07.463641 2021-11-12 20:45:07.469807             1              0                0             0    False  "There were a total of 1 malformed requests in the file."
@@ -217,9 +203,9 @@ class TestOmsDb1(_TestOmsDbHelper):
         # Create two asyncio threads.
         # One is running wait_for_target_ack.
         # The other is writing on the DB.
-        with hhasynci.solipsism_context() as event_loop:
+        with hasynci.solipsism_context() as event_loop:
             # Use the wall clock time.
-            get_wall_clock_time = lambda: hdatetim.get_current_time(
+            get_wall_clock_time = lambda: hdateti.get_current_time(
                 tz="ET", event_loop=event_loop
             )
             # Run.
@@ -227,14 +213,32 @@ class TestOmsDb1(_TestOmsDbHelper):
             poll_kwargs = {
                 "sleep_in_secs": 1.0,
                 "timeout_in_secs": 5.0,
-                "get_wall_clock_time": get_wall_clock_time
+                "get_wall_clock_time": get_wall_clock_time,
             }
 
             async def _workload():
-                coro1 = oomsdb.wait_for_target_ack(self.connection, target_value, poll_kwargs)
+                coro1 = oomsdb.wait_for_target_ack(
+                    self.connection, target_value, poll_kwargs
+                )
                 result = await asyncio.gather(coro1)
-                #result = 1
-                #await asyncio.sleep(1)
+                # result = 1
+                # await asyncio.sleep(1)
                 return result
+
             coroutine = _workload()
-            hhasynci.run(coroutine, event_loop=event_loop)
+            hasynci.run(coroutine, event_loop=event_loop)
+
+    @staticmethod
+    def _to_series(txt) -> pd.Series:
+        _LOG.debug("txt=\n%s", txt)
+        tuples = [
+            tuple(line.split("|")) for line in hprint.dedent(txt).split("\n")
+        ]
+        _LOG.debug("tuples=%s", str(tuples))
+        # Remove empty tuples.
+        tuples = [t for t in tuples if t[0] != ""]
+        index, data = zip(*tuples)
+        _LOG.debug("index=%s", index)
+        _LOG.debug("data=%s", data)
+        srs = pd.Series(data, index=index)
+        return srs

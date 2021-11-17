@@ -10,7 +10,6 @@ import logging
 from typing import Optional
 
 import psycopg2 as psycop
-import psycopg2.sql as psql
 
 import helpers.sql as hsql
 

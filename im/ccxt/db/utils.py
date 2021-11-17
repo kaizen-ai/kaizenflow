@@ -6,13 +6,10 @@ Import as:
 import im.ccxt.db.utils as imccdbuti
 """
 
-import io
 import logging
 
 import pandas as pd
-import psycopg2.extras as extras
 
-import helpers.dbg as hdbg
 import helpers.sql as hsql
 
 _LOG = logging.getLogger(__name__)

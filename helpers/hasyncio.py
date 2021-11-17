@@ -4,7 +4,7 @@ loops.
 
 Import as:
 
-import helpers.hasyncio as hhasynci
+import helpers.hasyncio as hasynci
 """
 import asyncio
 import contextlib
