@@ -49,7 +49,7 @@ def get_connection(
     port: int,
     password: str,
     autocommit: bool = True,
-) -> Tuple[DbConnection, psycop.extensions.cursor]:
+) -> DbConnection:
     """
     Create a connection and cursor for a SQL database.
     """
@@ -57,10 +57,9 @@ def get_connection(
     connection = psycop.connect(
         host=host, dbname=dbname, port=port, user=user, password=password
     )
-    cursor = connection.cursor()
     if autocommit:
         connection.autocommit = True
-    return connection, cursor
+    return connection
 
 
 # TODO(gp): Return only the connection (CmampTask441).
@@ -79,14 +78,14 @@ def get_connection_from_env_vars() -> Tuple[
     port = int(os.environ["POSTGRES_PORT"])
     password = os.environ["POSTGRES_PASSWORD"]
     # Build the
-    connection, cursor = get_connection(
+    connection = get_connection(
         dbname=dbname,
         host=host,
         port=port,
         user=user,
         password=password,
     )
-    return connection, cursor
+    return connection
 
 
 def get_connection_from_string(
