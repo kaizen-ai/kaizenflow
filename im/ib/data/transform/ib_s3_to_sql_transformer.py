@@ -1,25 +1,29 @@
 """
 Convert IB data on S3 from .csv.gz to SQL.
+
+Import as:
+
+import im.ib.data.transform.ib_s3_to_sql_transformer as imidtistst
 """
 
 import logging
 
 import pandas as pd
 
-import helpers.dbg as dbg
-import im.common.data.transform.s3_to_sql_transformer as icdts3
-import im.common.data.types as icdtyp
+import helpers.dbg as hdbg
+import im.common.data.transform.s3_to_sql_transformer as imcdtststr
+import im.common.data.types as imcodatyp
 
 _LOG = logging.getLogger(__name__)
 
 
-class IbS3ToSqlTransformer(icdts3.AbstractS3ToSqlTransformer):
+class IbS3ToSqlTransformer(imcdtststr.AbstractS3ToSqlTransformer):
     @classmethod
     def transform(
         cls,
         df: pd.DataFrame,
         trade_symbol_id: int,
-        frequency: icdtyp.Frequency,
+        frequency: imcodatyp.Frequency,
     ) -> pd.DataFrame:
         """
         Transform IB data loaded from S3 to load to SQL.
@@ -30,14 +34,14 @@ class IbS3ToSqlTransformer(icdts3.AbstractS3ToSqlTransformer):
         :return: processed dataframe
         """
         # Transform dataframe.
-        if frequency == icdtyp.Frequency.Minutely:
+        if frequency == imcodatyp.Frequency.Minutely:
             df = cls._transform_minutely_df(df, trade_symbol_id)
-        elif frequency == icdtyp.Frequency.Daily:
+        elif frequency == imcodatyp.Frequency.Daily:
             df = cls._transform_daily_df(df, trade_symbol_id)
-        elif frequency == icdtyp.Frequency.Tick:
+        elif frequency == imcodatyp.Frequency.Tick:
             df = cls._transform_tick_df(df, trade_symbol_id)
         else:
-            dbg.dfatal("Unknown frequency '%s'", frequency)
+            hdbg.dfatal("Unknown frequency '%s'", frequency)
         return df
 
     @staticmethod

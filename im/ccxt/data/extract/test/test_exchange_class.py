@@ -4,28 +4,30 @@ from typing import Any, List, Optional
 import pandas as pd
 import pytest
 
-import helpers.unit_test as hut
+import helpers.unit_test as hunitest
+
 # TODO(Dan): return to code after CmTask43 is fixed.
-import im.ccxt.data.extract.exchange_class as imcdaexexccla
+import im.ccxt.data.extract.exchange_class as imcdeexcl
 import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): CmampTask413: Why skip this guy?
 @pytest.mark.skip()
-class Test_CcxtExchange(hut.TestCase):
+class Test_CcxtExchange(hunitest.TestCase):
     def test_initialize_class(self) -> None:
         """
         Smoke test that the class is being initialized correctly.
         """
-        _ = imcdaexexccla.CcxtExchange("binance")
+        _ = imcdeexcl.CcxtExchange("binance")
 
     def test_get_exchange_currencies(self) -> None:
         """
         Test that a non-empty list of exchange currencies is loaded.
         """
         # Extract a list of currencies.
-        exchange_class = imcdaexexccla.CcxtExchange("binance")
+        exchange_class = imcdeexcl.CcxtExchange("binance")
         curr_list = exchange_class.get_exchange_currencies()
         # Verify that the output is a non-empty list with only string values.
         hdbg.dassert_container_type(curr_list, list, str)
@@ -36,7 +38,7 @@ class Test_CcxtExchange(hut.TestCase):
         Test that historical data is being loaded correctly.
         """
         # Initiate class and set date parameters.
-        exchange_class = imcdaexexccla.CcxtExchange("binance")
+        exchange_class = imcdeexcl.CcxtExchange("binance")
         start_date = "2021-09-09T00:00:00Z"
         end_date = "2021-09-10T00:00:00Z"
         # Extract data.
@@ -61,14 +63,21 @@ class Test_CcxtExchange(hut.TestCase):
         self.assertEqual(1631145600000, first_date)
         self.assertEqual(1631235540000, last_date)
         # Check the output values.
-        actual_string = hut.convert_df_to_json_string(actual, n_tail=None)
+        actual_string = hunitest.convert_df_to_json_string(actual, n_tail=None)
         self.check_string(actual_string)
 
     def test_download_order_book(self):
         """
         Verify that order book is downloaded correctly.
         """
-        exchange_class = imcdaexexccla.CcxtExchange("gateio")
+        exchange_class = imcdeexcl.CcxtExchange("gateio")
         order_book = exchange_class.download_order_book("BTC/USDT")
-        order_book_keys = ["symbol", "bids", "asks", "timestamp", "datetime", "nonce"]
+        order_book_keys = [
+            "symbol",
+            "bids",
+            "asks",
+            "timestamp",
+            "datetime",
+            "nonce",
+        ]
         self.assertListEqual(order_book_keys, list(order_book.keys()))

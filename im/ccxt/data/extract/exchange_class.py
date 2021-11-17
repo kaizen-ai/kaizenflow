@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.ccxt.data.extract.exchange_class as imcdaexexccla
+import im.ccxt.data.extract.exchange_class as imcdeexcl
 """
 
 import logging
@@ -14,6 +14,7 @@ import tqdm
 import ccxt
 import helpers.dbg as hdbg
 import helpers.io_ as hio
+import helpers.datetime_ as hdatetime
 
 _LOG = logging.getLogger(__name__)
 
@@ -81,7 +82,7 @@ class CcxtExchange:
         curr_symbol: str,
         start_datetime: Optional[pd.Timestamp] = None,
         end_datetime: Optional[pd.Timestamp] = None,
-        step: Optional[int] = None,
+        step: Optional[int] = 500,
         sleep_time: int = 1,
     ) -> pd.DataFrame:
         """
@@ -98,18 +99,9 @@ class CcxtExchange:
         hdbg.dassert(self._exchange.has["fetchOHLCV"])
         # Verify that the provided currency pair is present in exchange.
         hdbg.dassert_in(curr_symbol, self.currency_pairs)
-        # Make the minimal limit of 500 a default step.
-        step = step or 500
         # Get latest bars if no datetime is provided.
         if end_datetime is None and start_datetime is None:
-            all_bars = self._exchange.fetch_ohlcv(
-                curr_symbol, timeframe="1m", limit=step
-            )
-            all_bars = pd.DataFrame(
-                all_bars,
-                columns=["timestamp", "open", "high", "low", "close", "volume"],
-            )
-            return all_bars
+            return self._fetch_ohlcv(curr_symbol, step=step)
         # Verify that date parameters are of correct format.
         hdbg.dassert_isinstance(
             end_datetime,
@@ -135,41 +127,55 @@ class CcxtExchange:
         for t in tqdm.tqdm(
             range(start_datetime, end_datetime + duration, duration * step)
         ):
-            # Fetch OHLCV bars for 1m since current datetime.
-            bars = self._exchange.fetch_ohlcv(
-                curr_symbol, timeframe="1m", since=t, limit=step
-            )
+            bars = self._fetch_ohlcv(curr_symbol, since=t, step=step)
             all_bars += bars
             time.sleep(sleep_time)
-            all_bars = pd.DataFrame(
-                all_bars,
-                columns=["timestamp", "open", "high", "low", "close", "volume"],
-            )
-            return all_bars
+        # TODO(*): Double check if dataframes are properly concatenated.
+        return pd.concat(all_bars)
+
+    def _fetch_ohlcv(self, symbol: str, timeframe: str = "1m",
+                     since: int = None, step: int = None) -> pd.DataFrame:
+        """
+        Wrapper for one minute OHLCV bars.
+
+        :param symbol: A currency pair, e.g. "BTC/USDT"
+        :param timeframe: fetch data for certain timeframe
+        :param since: from when is data fetched in milliseconds
+        :param step: number of bars per iteration
+
+        :return: OHLCV data from CCXT
+        """
+        bars = self._exchange.fetch_ohlcv(
+            symbol, timeframe=timeframe, since=since, limit=step
+        )
+        columns = ["timestamp", "open", "high", "low", "close", "volume"]
+        bars = pd.DataFrame(bars, columns=columns)
+        bars['created_at'] = str(hdatetime.get_current_time("UTC"))
+        return bars
 
     def download_order_book(self, curr_pair: str) -> Dict[str, Any]:
         """
         Download order book for the currency pair.
 
-        The output is a nested dictionary with order book at the
-        moment of request.
+        The output is a nested dictionary with order book at the moment of
+        request.
         Example of an order book:
-        {'symbol': 'BTC/USDT',
-        'bids': [[62715.84, 0.002],
-         [62714.0, 0.002],
-         [62712.55, 0.0094]],
-         'asks': [[62715.85, 0.002],
-         [62717.25, 0.1674]],
-         'timestamp': 1635248738159,
-         'datetime': '2021-10-26T11:45:38.159Z',
-         'nonce': None}
+        ```
+        {
+            'symbol': 'BTC/USDT',
+            'bids': [[62715.84, 0.002], [62714.0, 0.002], [62712.55, 0.0094]],
+            'asks': [[62715.85, 0.002], [62717.25, 0.1674]],
+            'timestamp': 1635248738159,
+            'datetime': '2021-10-26T11:45:38.159Z',
+            'nonce': None
+        }
+        ```
 
         :param curr_pair: a currency pair, e.g. 'BTC/USDT'
         :return:
         """
-        # Verify that the exchange has fetch_order_book method.
+        # Check that exchange and currency pairs are valid.
         hdbg.dassert(self._exchange.has["fetchOrderBook"])
-        # Verify that the provided currency pair is present in exchange.
         hdbg.dassert_in(curr_pair, self.currency_pairs)
         # Download current order book.
         order_book = self._exchange.fetch_order_book(curr_pair)

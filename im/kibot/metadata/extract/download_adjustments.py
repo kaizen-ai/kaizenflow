@@ -7,6 +7,10 @@ Download all adjustments from kibot.
 
 # Download serially
 > download_adjustments.py -u kibot_username -p kibot_password --serial
+
+Import as:
+
+import im.kibot.metadata.extract.download_adjustments as imkmedoad
 """
 import argparse
 import logging
@@ -19,9 +23,9 @@ import tqdm
 
 import helpers.io_ as hio
 import helpers.s3 as hs3
-import helpers.system_interaction as hsyste
-import im.kibot.base.command as vkbcom
-import im.kibot.metadata.config as vkmcon
+import helpers.system_interaction as hsysinte
+import im.kibot.base.command as imkibacom
+import im.kibot.metadata.config as imkimecon
 
 # #############################################################################
 
@@ -62,7 +66,7 @@ def _get_symbols_list() -> List[str]:
     Get a list of symbols that have adjustments from Kibot.
     """
     response = requests.get(
-        url=vkmcon.API_ENDPOINT,
+        url=imkimecon.API_ENDPOINT,
         params=dict(action="adjustments", symbolsonly="1"),
     )
 
@@ -77,29 +81,29 @@ def _download_adjustments_data_for_symbol(symbol: str, tmp_dir: str) -> None:
     Download adjustments file for a symbol and save to s3.
     """
     response = requests.get(
-        url=vkmcon.API_ENDPOINT,
+        url=imkimecon.API_ENDPOINT,
         params=dict(action="adjustments", symbol=symbol),
     )
 
     file_name = f"{symbol}.txt"
-    file_path = os.path.join(tmp_dir, vkmcon.ADJUSTMENTS_SUB_DIR, file_name)
+    file_path = os.path.join(tmp_dir, imkimecon.ADJUSTMENTS_SUB_DIR, file_name)
     hio.to_file(file_name=file_path, lines=str(response.content, "utf-8"))
 
     # Save to S3.
     aws_path = os.path.join(
-        vkmcon.S3_PREFIX, vkmcon.ADJUSTMENTS_SUB_DIR, file_name
+        imkimecon.S3_PREFIX, imkimecon.ADJUSTMENTS_SUB_DIR, file_name
     )
     hs3.dassert_is_s3_path(aws_path)
 
     # TODO(amr): create hs3.copy() helper.
     cmd = "aws s3 cp %s %s" % (file_path, aws_path)
-    hsyste.system(cmd)
+    hsysinte.system(cmd)
 
 
 # #############################################################################
 
 
-class DownloadAdjustmentsCommand(vkbcom.KibotCommand):
+class DownloadAdjustmentsCommand(imkibacom.KibotCommand):
     def __init__(self) -> None:
         super().__init__(
             docstring=__doc__,

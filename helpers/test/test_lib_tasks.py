@@ -662,7 +662,7 @@ class Test_build_run_command_line1(huntes.TestCase):
             #
             skipped_tests,
         )
-        exp = 'pytest -m "not slow and not superslow"'
+        exp = 'pytest -m "not slow and not superslow" .'
         self.assert_equal(act, exp)
 
     def test_run_fast_tests2(self) -> None:
@@ -691,7 +691,7 @@ class Test_build_run_command_line1(huntes.TestCase):
         )
         exp = (
             r'pytest -m "not slow and not superslow" --cov=. --cov-branch'
-            r" --cov-report term-missing --cov-report html --collect-only"
+            r" --cov-report term-missing --cov-report html --collect-only ."
         )
         self.assert_equal(act, exp)
 
@@ -774,7 +774,7 @@ class Test_build_run_command_line1(huntes.TestCase):
             #
             skipped_tests,
         )
-        exp = 'pytest -m "not slow and not superslow" 2>&1 | tee tmp.pytest.log'
+        exp = 'pytest -m "not slow and not superslow" . 2>&1 | tee tmp.pytest.log'
         self.assert_equal(act, exp)
 
 

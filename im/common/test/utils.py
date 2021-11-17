@@ -1,17 +1,16 @@
 import logging
-import os
 
 import pandas as pd
 
 import helpers.sql as hsql
-import helpers.unit_test as huntes
-import im.common.db.create_db as imcodbcrdb
+import helpers.unit_test as hunitest
+import im.common.db.create_db as imcdbcrdb
 import im.common.sql_writer as imcosqwri
 
 _LOG = logging.getLogger(__name__)
 
 
-class SqlWriterBackendTestCase(huntes.TestCase):
+class SqlWriterBackendTestCase(hunitest.TestCase):
     """
     Helper class to test writing data to IM PostgreSQL DB.
     """
@@ -19,10 +18,10 @@ class SqlWriterBackendTestCase(huntes.TestCase):
     def setUp(self) -> None:
         super().setUp()
         # Get PostgreSQL connection.
-        self._connection = hsql.get_connection_from_env_vars()[0]
+        self._connection = hsql.get_connection_from_env_vars()
         self._new_db = self._get_test_string()
         # Create database for each test.
-        imcodbcrdb.create_database(
+        imcdbcrdb.create_database(
             connection=self._connection,
             new_db=self._new_db,
             force=True,
@@ -38,9 +37,9 @@ class SqlWriterBackendTestCase(huntes.TestCase):
         # Close connection.
         self._writer.close()
         # Remove created database.
-        imcodbcrdb.remove_database(
+        hsql.remove_database(
             connection=self._connection,
-            db_to_drop=self._new_db,
+            dbname=self._new_db,
         )
         super().tearDown()
 
@@ -111,6 +110,6 @@ class SqlWriterBackendTestCase(huntes.TestCase):
             if column_to_remove in columns_to_check:
                 columns_to_check.remove(column_to_remove)
         # Convert dataframe to string.
-        txt = huntes.convert_df_to_string(res[columns_to_check])
+        txt = hunitest.convert_df_to_string(res[columns_to_check])
         # Check the output against the golden.
         self.check_string(txt, fuzzy_match=True)

@@ -18,8 +18,8 @@ import os
 
 import pandas as pd
 
-import core.pandas_helpers as pdhelp
-import helpers.dbg as dbg
+import core.pandas_helpers as cpanh
+import helpers.dbg as hdbg
 import helpers.s3 as hs3
 
 # %%
@@ -32,7 +32,7 @@ import helpers.s3 as hs3
 if False:
     dir_name = ".."
     files = glob.glob(os.path.join(dir_name, "symbols*.csv"))
-    dbg.dassert(len(files), 1)
+    hdbg.dassert(len(files), 1)
     file_name = files[0]
 
 S3_BUCKET = hs3.get_bucket()
@@ -41,7 +41,7 @@ file_name = (
 )
 s3fs = hs3.get_s3fs("am")
 print("file_name=%s" % file_name)
-symbols = pdhelp.read_csv(file_name, s3fs=s3fs, sep="\t")
+symbols = cpanh.read_csv(file_name, s3fs=s3fs, sep="\t")
 
 print(len(symbols))
 
@@ -56,7 +56,7 @@ symbols.groupby("product").count()
 # %%
 if False:
     files = glob.glob(os.path.join(dir_name, "exchanges*.csv"))
-    dbg.dassert(len(files), 1)
+    hdbg.dassert(len(files), 1)
     file_name = files[0]
 file_name = (
     f"s3://{S3_BUCKET}/data/ib/metadata/exchanges-2021-04-01-143112738505.csv"

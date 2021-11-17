@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import im.ib.data.extract.gateway.unrolling_download_data_ib_loop as imideguddil
+"""
+
 import logging
 import os
 from typing import Any, List, Optional, Tuple, Union
@@ -14,12 +20,12 @@ import pandas as pd
 # from tqdm.notebook import tqdm
 from tqdm import tqdm
 
-# import core.explore as cexplo
-import helpers.dbg as dbg
+# import core.explore as coexplor
+import helpers.dbg as hdbg
 import helpers.list as hlist
 import helpers.printing as hprint
-import im.ib.data.extract.gateway.download_data_ib_loop as videgd
-import im.ib.data.extract.gateway.utils as videgu
+import im.ib.data.extract.gateway.download_data_ib_loop as imidegddil
+import im.ib.data.extract.gateway.utils as imidegaut
 
 _LOG = logging.getLogger(__name__)
 
@@ -83,10 +89,10 @@ def _start_end_ts_to_ET(
     """
     Convert to timestamps with timezone, if needed.
     """
-    dbg.dassert_lt(start_ts, end_ts)
+    hdbg.dassert_lt(start_ts, end_ts)
     _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
-    start_ts = videgu.to_ET(start_ts, as_datetime=False)
-    end_ts = videgu.to_ET(end_ts, as_datetime=False)
+    start_ts = imidegaut.to_ET(start_ts, as_datetime=False)
+    end_ts = imidegaut.to_ET(end_ts, as_datetime=False)
     _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
     return start_ts, end_ts
 
@@ -100,12 +106,12 @@ def _ib_date_range_sanity_check(
     dates = hlist.remove_duplicates(dates)
     _LOG.debug("-> dates=%s", dates)
     # Sanity check.
-    dbg.dassert_eq(sorted(dates), dates)
-    dbg.dassert_eq(len(set(dates)), len(dates))
+    hdbg.dassert_eq(sorted(dates), dates)
+    hdbg.dassert_eq(len(set(dates)), len(dates))
     # Using each date as end of intervals [date - days(2), date], we should
     # cover the entire interval [start_ts, end_ts].
-    dbg.dassert_lte(dates[0] - pd.DateOffset(days=2), start_ts)
-    dbg.dassert_lte(end_ts, dates[-1])
+    hdbg.dassert_lte(dates[0] - pd.DateOffset(days=2), start_ts)
+    hdbg.dassert_lte(end_ts, dates[-1])
     return dates
 
 
@@ -124,8 +130,8 @@ def _ib_date_range(
     # Compute a range of dates aligned to 6pm that includes
     # [start_ts_tmp, end_ts_tmp].
     _LOG.debug("start_ts_tmp='%s' end_ts='%s'", start_ts_tmp, end_ts)
-    dbg.dassert_eq(_get_hh_mm_ss(start_ts_tmp), _SIX_PM)
-    dbg.dassert_lt(start_ts_tmp, end_ts)
+    hdbg.dassert_eq(_get_hh_mm_ss(start_ts_tmp), _SIX_PM)
+    hdbg.dassert_lt(start_ts_tmp, end_ts)
     dates = pd.date_range(start=start_ts_tmp, end=end_ts, freq="1D").tolist()
     # If the first date is before start_ts, then we don't need since the interval
     # [date - days(1), date] doesn't overlap with [start_ts, end_ts].
@@ -163,7 +169,7 @@ def get_historical_data_workload(
         use_rth,
     )
     start_ts, end_ts = _start_end_ts_to_ET(start_ts, end_ts)
-    dbg.dassert_lte(3, (end_ts - start_ts).days)
+    hdbg.dassert_lte(3, (end_ts - start_ts).days)
     dates = _ib_date_range(start_ts, end_ts)
     # duration_str = "2 D"
     duration_str = "1 D"
@@ -191,7 +197,7 @@ def get_historical_data_from_tasks(
     Execute the workload serially.
     """
     df = []
-    ib = videgu.ib_connect(client_id, is_notebook=False)
+    ib = imidegaut.ib_connect(client_id, is_notebook=False)
     if use_prograss_bar:
         tasks = tqdm(tasks, desc="Getting historical data from tasks")
     for task in tasks:
@@ -204,7 +210,7 @@ def get_historical_data_from_tasks(
             what_to_show,
             use_rth,
         ) = task
-        df_tmp = videgu.req_historical_data(
+        df_tmp = imidegaut.req_historical_data(
             ib,
             contract,
             end_ts,
@@ -214,7 +220,7 @@ def get_historical_data_from_tasks(
             use_rth,
         )
         hpandas.dassert_monotonic_index(df_tmp)
-        _LOG.debug("%s -> df_tmp=%s", end_ts, videgu.get_df_signature(df_tmp))
+        _LOG.debug("%s -> df_tmp=%s", end_ts, imidegaut.get_df_signature(df_tmp))
         df.append(df_tmp)
     #
     ib.disconnect()
@@ -242,7 +248,7 @@ def _task_to_filename(
     symbol = contract.symbol
     bar_size_setting = bar_size_setting.replace(" ", "_")
     duration_str = duration_str.replace(" ", "_")
-    file_name = f"{symbol}.{videgu.to_timestamp_str(end_ts)}.{duration_str}.{bar_size_setting}.{what_to_show}.{use_rth}.csv"
+    file_name = f"{symbol}.{imidegaut.to_timestamp_str(end_ts)}.{duration_str}.{bar_size_setting}.{what_to_show}.{use_rth}.csv"
     file_name = os.path.join(dst_dir, file_name)
     return file_name
 
@@ -257,8 +263,8 @@ def _execute_ptask(
     use_rth,
     file_name,
 ):
-    ib = videgu.ib_connect(client_id, is_notebook=False)
-    df = videgu.req_historical_data(
+    ib = imidegaut.ib_connect(client_id, is_notebook=False)
+    df = imidegaut.req_historical_data(
         ib,
         contract,
         end_ts,
@@ -269,7 +275,7 @@ def _execute_ptask(
     )
     ib.disconnect()
     hpandas.dassert_monotonic_index(df)
-    _LOG.debug("%s -> df=%s", end_ts, videgu.get_df_signature(df))
+    _LOG.debug("%s -> df=%s", end_ts, imidegaut.get_df_signature(df))
     if not df.empty:
         df.to_csv(file_name)
 
@@ -386,7 +392,7 @@ def get_historical_data_parallel(tasks, num_threads, incremental, dst_dir):
         ) = ptask
         # If job was completed succesfully, read dataframe.
         if os.path.exists(file_name):
-            df_tmp = videgd.load_historical_data(file_name)
+            df_tmp = imidegddil.load_historical_data(file_name)
         df.append(df_tmp)
     #
     df = pd.concat(df)
@@ -442,8 +448,8 @@ def get_historical_data(
         raise ValueError("Invalid mode='%s'" % mode)
     #
     if not df.empty:
-        # import helpers.unit_test as hut
-        # hut.diff_df_monotonic(df)
+        # import helpers.unit_test as hunitest
+        # hunitest.diff_df_monotonic(df)
         hpandas.dassert_monotonic_index(df)
         end_ts3 = end_ts - pd.DateOffset(seconds=1)
         _LOG.debug("start_ts= %s end_ts3=%s", start_ts, end_ts3)

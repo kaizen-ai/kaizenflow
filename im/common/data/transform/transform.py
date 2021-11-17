@@ -1,3 +1,10 @@
+"""
+Import as:
+
+import im.common.data.transform.transform as imcdatrtr
+"""
+
+# TODO(gp): CmampTask413: Move to im/data_conversion and generalize
 r"""
 Base methods to run converters.
 """
@@ -9,12 +16,12 @@ import joblib
 import pandas as pd
 import tqdm
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.printing as hprint
-import im.common.data.load.abstract_data_loader as icdlab
-import im.common.data.transform.s3_to_sql_transformer as icdts3
-import im.common.data.types as icdtyp
-import im.common.sql_writer as icsqlw
+import im.common.data.load.abstract_data_loader as imcdladalo
+import im.common.data.transform.s3_to_sql_transformer as imcdtststr
+import im.common.data.types as imcodatyp
+import im.common.sql_writer as imcosqwri
 
 _LOG = logging.getLogger(__name__)
 
@@ -27,14 +34,14 @@ _JOBLIB_VERBOSITY = 1
 def convert_s3_to_sql(
     symbol: str,
     exchange: str,
-    s3_data_loader: icdlab.AbstractS3DataLoader,
-    sql_writer_backend: icsqlw.AbstractSqlWriter,
-    sql_data_loader: icdlab.AbstractSqlDataLoader,
-    s3_to_sql_transformer: icdts3.AbstractS3ToSqlTransformer,
-    asset_class: icdtyp.AssetClass,
-    frequency: icdtyp.Frequency,
+    s3_data_loader: imcdladalo.AbstractS3DataLoader,
+    sql_writer_backend: imcosqwri.AbstractSqlWriter,
+    sql_data_loader: imcdladalo.AbstractSqlDataLoader,
+    s3_to_sql_transformer: imcdtststr.AbstractS3ToSqlTransformer,
+    asset_class: imcodatyp.AssetClass,
+    frequency: imcodatyp.Frequency,
     exchange_id: int,
-    contract_type: Optional[icdtyp.ContractType] = None,
+    contract_type: Optional[imcodatyp.ContractType] = None,
     currency: Optional[str] = None,
     unadjusted: Optional[bool] = None,
     max_num_rows: Optional[int] = None,
@@ -87,11 +94,11 @@ def convert_s3_to_sql(
         sql_writer_backend.delete_data_by_trade_symbol_id(
             trade_symbol_id, frequency
         )
-    if frequency == icdtyp.Frequency.Minutely:
+    if frequency == imcodatyp.Frequency.Minutely:
         sql_writer_backend.insert_bulk_minute_data(df)
-    elif frequency == icdtyp.Frequency.Daily:
+    elif frequency == imcodatyp.Frequency.Daily:
         sql_writer_backend.insert_bulk_daily_data(df)
-    elif frequency == icdtyp.Frequency.Tick:
+    elif frequency == imcodatyp.Frequency.Tick:
         for _, row in df.iterrows():
             sql_writer_backend.insert_tick_data(
                 trade_symbol_id=row["trade_symbol_id"],
@@ -100,7 +107,7 @@ def convert_s3_to_sql(
                 size_val=row["size"],
             )
     else:
-        dbg.dfatal("Unknown frequency '%s'", frequency)
+        hdbg.dfatal("Unknown frequency '%s'", frequency)
     _LOG.info("Done converting '%s' symbol", symbol)
     # Return info about loaded data.
     loaded_data = sql_data_loader.read_data(

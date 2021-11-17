@@ -339,7 +339,7 @@ class SqlPriceInterface(AbstractPriceInterface):
             - E.g., `WHERE ...=... AND ...=...`
         """
         super().__init__(*args, **kwargs)  # type: ignore[arg-type]
-        self.connection, self.cursor = hsql.get_connection(
+        self.connection = hsql.get_connection(
             dbname=dbname,
             host=host,
             port=port,

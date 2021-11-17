@@ -61,100 +61,40 @@ def get_currency_pair_create_table_query() -> str:
     return query
 
 
-def copy_rows_with_copy_from(
-    connection: hsql.DbConnection, df: pd.DataFrame, table_name: str
-) -> None:
-    """
-    Copy dataframe contents into DB directly from buffer.
-
-    This function works much faster for large dataframes (>10000 rows).
-
-    :param connection: DB connection
-    :param df: data to insert
-    :param table_name: name of the table for insertion
-    """
-    hdbg.dassert_in(
-        table_name, hsql.get_table_names(connection)
-    )
-    buffer = io.StringIO()
-    df.to_csv(buffer, index=False, header=False)
-    buffer.seek(0)
-    cur = connection.cursor()
-    cur.copy_from(buffer, table_name, sep=',')
-    connection.commit()
+# #############################################################################
 
 
 def populate_exchange_currency_tables(conn: hsql.DbConnection) -> None:
     """
-    Populate exchange name and currency pair tables with data.
+    Populate exchange name and currency pair tables with data from CCXT.
 
     :param conn: DB connection
     """
-    # Extract a list of all CCXT exchange names.
+    # Extract the list of all CCXT exchange names.
     all_exchange_names = pd.Series(ccxt.exchanges)
-    # Create a dataframe with exchange names and ids.
+    # Create a dataframe with exchange ids and names.
     df_exchange_names = all_exchange_names.reset_index()
     df_exchange_names.columns = ["exchange_id", "exchange_name"]
     # Insert exchange names dataframe in DB.
-    execute_insert_query(conn, df_exchange_names, "exchange_name")
+    hsql.execute_insert_query(conn, df_exchange_names, "exchange_name")
     # Create an empty list for currency pairs.
     currency_pairs = []
-    # Extract all the currency pairs for each exchange and append them.
-    # to the currency pairs list.
+    # Extract all the currency pairs for each exchange and append them to the
+    # currency pairs list.
     for exchange_name in all_exchange_names:
         # Some few exchanges require credentials for this info so we omit them.
         try:
             exchange_class = getattr(ccxt, exchange_name)()
             exchange_currency_pairs = list(exchange_class.load_markets().keys())
             currency_pairs.extend(exchange_currency_pairs)
-        # Continue cycle if some of the following errors appear since all of
-        # them are related to denied access to the requested data for only 6
-        # exchanges that are far from our scope.
-        except(ccxt.AuthenticationError, ccxt.NetworkError, TypeError) as e:
+        except (ccxt.AuthenticationError, ccxt.NetworkError, TypeError) as e:
+            # Continue since these errors are related to denied access for 6
+            # exchanges that we ignore.
+            _LOG.warning("Skipping exchange_name='%s'", exchange_name)
             continue
     # Create a dataframe with currency pairs and ids.
     currency_pairs_srs = pd.Series(sorted(list(set(currency_pairs))))
     df_currency_pairs = currency_pairs_srs.reset_index()
     df_currency_pairs.columns = ["currency_pair_id", "currency_pair"]
     # Insert currency pairs dataframe in DB.
-    execute_insert_query(conn, df_currency_pairs, "currency_pair")
-
-
-def execute_insert_query(
-    connection: hsql.DbConnection, df: pd.DataFrame, table_name: str
-) -> None:
-    """
-    Insert multiple rows into the database.
-
-    :param connection: connection to the DB
-    :param df: data to insert
-    :param table_name: name of the table for insertion
-    """
-    hdbg.dassert_in(
-        table_name, hsql.get_table_names(connection))
-    # Transform dataframe into list of tuples.
-    values = [tuple(v) for v in df.to_numpy()]
-    # Generate a query for multiple rows.
-    query = _create_insert_query(df, table_name)
-    # Execute query for each provided row.
-    cur = connection.cursor()
-    extras.execute_values(cur, query, values)
-    connection.commit()
-
-
-def _create_insert_query(df: pd.DataFrame, table_name: str) -> str:
-    """
-    Create an INSERT query.
-
-    Example:
-
-    INSERT INTO ccxt_ohlcv(timestamp,open,high,low,close) VALUES %s
-
-    :param df: data to insert into DB
-    :param table_name: name of the table for insertion
-    :return: INSERT command
-    """
-    columns = ",".join(list(df.columns))
-    query = f"INSERT INTO {table_name}({columns}) VALUES %s"
-    _LOG.debug("query=%s", query)
-    return query
+    hsql.execute_insert_query(conn, df_currency_pairs, "currency_pair")

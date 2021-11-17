@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 import im.ib.data.extract.gateway.test.utils as iidegt
-import im.ib.data.extract.gateway.utils as iidegu
+import im.ib.data.extract.gateway.utils as imidegaut
 import im.common.db.utils as imcodbuti
 
 _LOG = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ class Test_utils1(iidegt.IbExtractionTest):
         """
         Test that upper bound is open and lower is close.
         """
-        actual = iidegu.truncate(
+        actual = imidegaut.truncate(
             self._truncate_df,
             pd.Timestamp("2020-01-01 12:00:00"),
             pd.Timestamp("2020-01-03 12:00:00"),
@@ -45,7 +45,7 @@ class Test_utils1(iidegt.IbExtractionTest):
         """
         Test if upper and lower bounds are not equal any indeces.
         """
-        actual = iidegu.truncate(
+        actual = imidegaut.truncate(
             self._truncate_df,
             pd.Timestamp("2020-01-01 12:00:01"),
             pd.Timestamp("2020-01-03 12:00:01"),
@@ -57,7 +57,7 @@ class Test_utils1(iidegt.IbExtractionTest):
         """
         Test if empty dataframe is returned if bounds not intersect indeces.
         """
-        actual = iidegu.truncate(
+        actual = imidegaut.truncate(
             self._truncate_df,
             pd.Timestamp("2021-01-01 12:00:01"),
             pd.Timestamp("2021-01-03 12:00:01"),
@@ -68,7 +68,7 @@ class Test_utils1(iidegt.IbExtractionTest):
         """
         Test if empty dataframe is returned if bounds are too narrow.
         """
-        actual = iidegu.truncate(
+        actual = imidegaut.truncate(
             self._truncate_df,
             pd.Timestamp("2020-01-01 12:00:01"),
             pd.Timestamp("2020-01-01 12:00:02"),
@@ -79,7 +79,7 @@ class Test_utils1(iidegt.IbExtractionTest):
         """
         Test if empty dataframe is returned if main dataframe is empty.
         """
-        actual = iidegu.truncate(
+        actual = imidegaut.truncate(
             pd.DataFrame(),
             pd.Timestamp("2020-01-01 12:00:00"),
             pd.Timestamp("2021-01-01 12:00:00"),
@@ -100,11 +100,11 @@ class Test_get_historical_data(iidegt.IbExtractionTest):
         contract = ib_insync.ContFuture("ES", "GLOBEX", currency="USD")
         what_to_show = "TRADES"
         use_rth = True
-        ts1 = iidegu.get_end_timestamp(self.ib, contract, what_to_show, use_rth)
+        ts1 = imidegaut.get_end_timestamp(self.ib, contract, what_to_show, use_rth)
         _LOG.debug("ts1=%s", ts1)
         #
         use_rth = False
-        ts2 = iidegu.get_end_timestamp(self.ib, contract, what_to_show, use_rth)
+        ts2 = imidegaut.get_end_timestamp(self.ib, contract, what_to_show, use_rth)
         _LOG.debug("ts2=%s", ts2)
 
     def test_req_historical_data1(self) -> None:

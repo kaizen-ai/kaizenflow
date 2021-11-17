@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.ib.metadata.ib_symbols as iimibs
+import im.ib.metadata.ib_symbols as imimeibsy
 """
 
 import functools
@@ -9,17 +9,17 @@ import logging
 import string
 from typing import List, Optional
 
-import core.pandas_helpers as pdhelp
-import helpers.dbg as dbg
+import core.pandas_helpers as cpanh
+import helpers.dbg as hdbg
 import helpers.printing as hprint
 import helpers.s3 as hs3
-import im.common.data.types as icdtyp
-import im.common.metadata.symbols as icmsym
+import im.common.data.types as imcodatyp
+import im.common.metadata.symbols as imcomesym
 
 _LOG = logging.getLogger(__name__)
 
 
-class IbSymbolUniverse(icmsym.SymbolUniverse):
+class IbSymbolUniverse(imcomesym.SymbolUniverse):
     """
     Store symbols available in IB and already downloaded.
     """
@@ -30,20 +30,20 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
         # List of the available symbols.
         self._symbols_list: Optional[List[str]] = None
 
-    def get_all_symbols(self) -> List[icmsym.Symbol]:
+    def get_all_symbols(self) -> List[imcomesym.Symbol]:
         """
         Return the symbol list from the file passed to the constructor.
         """
         if self._symbols_list is None:
             # Load the symbol list.
-            dbg.dassert_is_not(self._symbols_file, None)
+            hdbg.dassert_is_not(self._symbols_file, None)
             _LOG.debug("symbol_file=%s", self._symbols_file)
             self._symbols_list = self._parse_symbols_file(self._symbols_file)
         return self._symbols_list
 
     @staticmethod
     @functools.lru_cache(maxsize=16)
-    def _parse_symbols_file(symbols_file: str) -> List[icmsym.Symbol]:
+    def _parse_symbols_file(symbols_file: str) -> List[imcomesym.Symbol]:
         """
         Read the passed file and return the list of symbols.
         """
@@ -54,7 +54,7 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
             kwargs = {"s3fs": s3fs}
         else:
             kwargs = {}
-        df = pdhelp.read_csv(
+        df = cpanh.read_csv(
             symbols_file,
             sep="\t",
             keep_default_na=False,
@@ -100,7 +100,7 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
         ib_exchange: str,
         ib_asset_class: str,
         ib_currency: str,
-    ) -> Optional[icmsym.Symbol]:
+    ) -> Optional[imcomesym.Symbol]:
         """
         Build a Symbol from one row of the IB symbol file.
         """
@@ -113,9 +113,9 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
         # Extract asset class.
         # TODO(plyq): Not covered: `ETF`, `Forex`, `SP500`, expiring `Futures`.
         ib_to_asset = {
-            "Futures": icdtyp.AssetClass.Futures,
+            "Futures": imcodatyp.AssetClass.Futures,
             "Indices": None,
-            "Stocks": icdtyp.AssetClass.Stocks,
+            "Stocks": imcodatyp.AssetClass.Stocks,
             "Options": None,
             "Warrants": None,
             "Structured Products": None,
@@ -125,8 +125,8 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
         # Extract contract type.
         # TODO(plyq): Support expiring contracts.
         contract_type = (
-            icdtyp.ContractType.Continuous
-            if asset_class == icdtyp.AssetClass.Futures
+            imcodatyp.ContractType.Continuous
+            if asset_class == imcodatyp.AssetClass.Futures
             else None
         )
         # Extract currency.
@@ -138,7 +138,7 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
             "ticker exchange asset_class contract_type currency",
         )
         if ib_ticker and exchange and asset_class and currency:
-            symbol = icmsym.Symbol(
+            symbol = imcomesym.Symbol(
                 ticker=ticker,
                 exchange=exchange,
                 asset_class=asset_class,

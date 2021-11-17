@@ -7,9 +7,9 @@ except ModuleNotFoundError:
 import pandas as pd
 import pytest
 
-import im.common.db.create_db as icdcrsch
+import im.common.db.create_db as imcdbcrdb
 import im.ib.data.extract.gateway.test.utils as iidegt
-import im.ib.data.extract.gateway.unrolling_download_data_ib_loop as iidegu
+import im.ib.data.extract.gateway.unrolling_download_data_ib_loop as imideguddil
 import im.common.db.utils as imcodbuti
 
 _LOG = logging.getLogger(__name__)
@@ -69,7 +69,7 @@ class Test_get_historical_data(iidegt.IbExtractionTest):
             tz="America/New_York"
         )
         end_ts = start_ts + pd.DateOffset(days=3)
-        dates = iidegu._ib_date_range(start_ts, end_ts)
+        dates = imideguddil._ib_date_range(start_ts, end_ts)
         #
         act = "\n".join(map(str, dates))
         exp = """
@@ -85,7 +85,7 @@ class Test_get_historical_data(iidegt.IbExtractionTest):
             tz="America/New_York"
         )
         end_ts = start_ts + pd.DateOffset(days=1)
-        dates = iidegu._ib_date_range(start_ts, end_ts)
+        dates = imideguddil._ib_date_range(start_ts, end_ts)
         #
         act = "\n".join(map(str, dates))
         exp = """
@@ -99,7 +99,7 @@ class Test_get_historical_data(iidegt.IbExtractionTest):
             tz="America/New_York"
         )
         end_ts = start_ts + pd.DateOffset(days=2)
-        dates = iidegu._ib_date_range(start_ts, end_ts)
+        dates = imideguddil._ib_date_range(start_ts, end_ts)
         #
         act = "\n".join(map(str, dates))
         exp = """
@@ -114,6 +114,6 @@ class Test_get_historical_data(iidegt.IbExtractionTest):
             tz="America/New_York"
         )
         end_ts = start_ts + pd.DateOffset(days=3)
-        dates = iidegu._ib_date_range(start_ts, end_ts)
+        dates = imideguddil._ib_date_range(start_ts, end_ts)
         #
         act = "\n".join(map(str, dates))

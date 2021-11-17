@@ -20,7 +20,7 @@ Use as:
 
 Import as:
 
-import im.ccxt.data.extract.download_realtime as imcdaexdowrea
+import im.ccxt.data.extract.download_realtime as imcdedore
 """
 import argparse
 import collections
@@ -32,14 +32,13 @@ from typing import Any, Dict, List, NamedTuple, Optional, Union
 import ccxt
 import pandas as pd
 
-import helpers.datetime_ as hdatetim
+import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.io_ as hio
 import helpers.parser as hparser
 import helpers.sql as hsql
-import im.ccxt.data.extract.exchange_class as imcdaexexccla
-import im.ccxt.db.utils as imccdbuti
-import im.data.universe as imdauni
+import im.ccxt.data.extract.exchange_class as imcdeexcl
+import im.data.universe as imdatuniv
 
 _LOG = logging.getLogger(__name__)
 
@@ -61,7 +60,7 @@ def _instantiate_exchange(
         "ExchangeToCurrency", ["id", "instance", "pairs"]
     )
     exchange_to_currency.id = exchange_id
-    exchange_to_currency.instance = imcdaexexccla.CcxtExchange(
+    exchange_to_currency.instance = imcdeexcl.CcxtExchange(
         exchange_id, api_keys
     )
     exchange_to_currency.pairs = ccxt_universe[exchange_id]
@@ -114,7 +113,7 @@ def _save_data_on_disk(
     :param exchange: exchange instance
     :param pair: currency pair, e.g. 'BTC/USDT'
     """
-    current_datetime = hdatetim.get_current_time("ET")
+    current_datetime = hdateti.get_current_time("ET")
     if data_type == "ohlcv":
         file_name = (
             f"{exchange.id}_{pair.replace('/', '_')}_{current_datetime}.csv.gz"
@@ -125,7 +124,7 @@ def _save_data_on_disk(
         file_name = (
             f"orderbook_{exchange.id}_"
             f"{pair.replace('/', '_')}_"
-            f"{hdatetim.get_timestamp('ET')}.json"
+            f"{hdateti.get_timestamp('ET')}.json"
         )
         full_path = os.path.join(dst_dir, file_name)
         hio.to_json(full_path, pair_data)
@@ -151,7 +150,6 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--dst_dir",
         action="store",
-        required=True,
         type=str,
         help="Folder to save copies of data to",
     )
@@ -172,7 +170,7 @@ def _parse() -> argparse.ArgumentParser:
         "--api_keys",
         action="store",
         type=str,
-        default=imcdaexexccla.API_KEYS_PATH,
+        default=imcdeexcl.API_KEYS_PATH,
         help="Path to JSON file that contains API keys for exchange access",
     )
     parser.add_argument(
@@ -191,16 +189,17 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Create the directory.
-    hio.create_dir(args.dst_dir, incremental=args.incremental)
+    if args.dst_dir:
+        hio.create_dir(args.dst_dir, incremental=args.incremental)
     # Connect to database.
     if args.db_connection == "from_env":
-        connection, _ = hsql.get_connection_from_env_vars()
+        connection = hsql.get_connection_from_env_vars()
     elif args.db_connection == "none":
         connection = None
     else:
         hdbg.dfatal("Unknown db connection: %s" % args.db_connection)
     # Load universe.
-    universe = imdauni.get_trade_universe(args.universe)
+    universe = imdatuniv.get_trade_universe(args.universe)
     exchange_ids = universe["CCXT"].keys()
     # Build mappings from exchange ids to classes and currencies.
     exchanges = []
@@ -220,11 +219,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
                     ccxt.NetworkError,
                     ccxt.base.errors.RequestTimeout,
                 ) as e:
+                    # TODO(*): handle timeouts and network errors differently ?
                     # Continue the loop if could not connect to exchange.
                     _LOG.warning("Got an error: %s", type(e).__name__, e.args)
                     continue
                 except ccxt.base.errors.RateLimitExceeded as e:
-                    # Sleep for extra 60 seconds if exceeded rate limit. 
+                    # Sleep for extra 60 seconds if exceeded rate limit.
                     _LOG.warning(
                         "Got an Exceeded limit error: %s",
                         type(e).__name__,
@@ -233,14 +233,15 @@ def _main(parser: argparse.ArgumentParser) -> None:
                     time.sleep(60)
                     continue
                 # Save to disk.
-                _save_data_on_disk(
-                    args.data_type, args.dst_dir, pair_data, exchange, pair
-                )
+                if args.dst_dir:
+                    _save_data_on_disk(
+                        args.data_type, args.dst_dir, pair_data, exchange, pair
+                    )
                 if connection:
                     # Insert into database.
-                    imccdbuti.execute_insert_query(
+                    hsql.execute_insert_query(
                         connection=connection,
-                        df=pair_data,
+                        obj=pair_data,
                         table_name=args.table_name,
                     )
         time.sleep(60)
