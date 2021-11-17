@@ -6,7 +6,7 @@ import pytest
 import helpers.git as hgit
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
-import im.im_lib_tasks as imimlitas  # pylint: disable=no-name-in-module
+import im_v2.im_lib_tasks as imimlitas  # pylint: disable=no-name-in-module
 
 
 _LOG = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ def _get_docker_compose_file_path() -> str:
     :return: `docker-compose.yml` file path
     """
     amp_path = hgit.get_amp_abs_path()
-    file_path = "im/devops/compose/docker-compose.yml"
+    file_path = "im_v2/devops/compose/docker-compose.yml"
     full_file_path = os.path.join(amp_path, file_path)
     return full_file_path
 

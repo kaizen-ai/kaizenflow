@@ -57,9 +57,10 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     run_superslow_tests,
     traceback,
 )
-from im.im_lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
+from im_v2.im_lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     im_docker_cmd,
     im_docker_down,
+    im_docker_up,
 )
 import repo_config as rconf
 
