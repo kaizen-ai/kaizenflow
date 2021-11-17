@@ -207,11 +207,11 @@ class CcxtLoaderFromDb(AbstractCcxtLoader):
         super().__init__()
         self._connection = connection
 
-    def read_data(
+    def read_universe_data(
         self,
-        table_name,
-        exchange_ids: Optional[Tuple[str]] = None,
-        currency_pairs: Optional[Tuple[str]] = None,
+        universe: Union[str, List[imdatuniv.ExchangeCurrencyTuple]],
+        data_type: str,
+        table_name: str,
         start_date: Optional[pd.Timestamp] = None,
         end_date: Optional[pd.Timestamp] = None,
         **read_sql_kwargs: Dict[str, Any],
@@ -221,9 +221,10 @@ class CcxtLoaderFromDb(AbstractCcxtLoader):
 
         This code path is used for the real-time data.
 
+        :param universe: CCXT universe version or a list of exchange-currency
+            tuples to load data for
+        :param data_type: OHLCV or trade, bid/ask data
         :param table_name: name of the table to load, e.g., "ccxt_ohlcv"
-        :param exchange_ids: exchange ids to load data for
-        :param currency_pairs: currency pairs to load data for
         :param start_date: the earliest date timestamp to load data for,
             considered in UTC if tz is not specified
         :param end_date: the latest date timestamp to load data for,
@@ -235,18 +236,25 @@ class CcxtLoaderFromDb(AbstractCcxtLoader):
         hdbg.dassert_in(table_name, hsql.get_table_names(self._connection))
         # Initialize SQL query.
         sql_query = "SELECT * FROM %s" % table_name
+        # Load all the corresponding exchange-currency tuples if a universe
+        # version is provided.
+        if isinstance(universe, str):
+            universe = imdatuniv.get_vendor_universe_as_tuples(universe, "CCXT")
         # Initialize lists for query condition strings and parameters to insert.
         query_conditions = []
         query_params = []
-        # For every conditional parameter if it is provided, append
-        # a corresponding query string to the query conditions list and
-        # the corresponding parameter to the query parameters list.
-        if exchange_ids:
-            query_conditions.append("exchange_id IN %s")
-            query_params.append(exchange_ids)
-        if currency_pairs:
-            query_conditions.append("currency_pair IN %s")
-            query_params.append(currency_pairs)
+        # For every exchange id append a corresponding query string and query
+        # parameter to the corresponding lists.
+        exchange_ids = [tuple_.exchange_id for tuple_ in universe]
+        query_conditions.append("exchange_id IN %s")
+        query_params.append(exchange_ids)
+        # For every currency pair append a corresponding query string and query
+        # parameter to the corresponding lists.
+        currency_pairs = [tuple_.currency_pair for tuple_ in universe]
+        query_conditions.append("currency_pair IN %s")
+        query_params.append(currency_pairs)
+        # If conditional parameter is provided, append a corresponding
+        # query string and query parameter to the corresponding lists.
         if start_date:
             start_date = hdateti.convert_timestamp_to_unix_epoch(start_date)
             query_conditions.append("timestamp >= %s")
@@ -255,10 +263,9 @@ class CcxtLoaderFromDb(AbstractCcxtLoader):
             end_date = hdateti.convert_timestamp_to_unix_epoch(end_date)
             query_conditions.append("timestamp < %s")
             query_params.append(end_date)
-        if query_conditions:
-            # Append all the provided query conditions to the main SQL query.
-            query_conditions = " AND ".join(query_conditions)
-            sql_query = " WHERE ".join([sql_query, query_conditions])
+        # Append all the provided query conditions to the main SQL query.
+        query_conditions = " AND ".join(query_conditions)
+        sql_query = " WHERE ".join([sql_query, query_conditions])
         # Add a tuple of gathered query parameters to kwargs as `params`.
         read_sql_kwargs["params"] = tuple(query_params)
         # Execute SQL query.
