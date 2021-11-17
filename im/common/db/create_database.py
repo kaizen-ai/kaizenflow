@@ -58,7 +58,8 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     if args.credentials:
-        connection, _ = hsql.get_connection(hio.from_json(args.credentials))
+        print(hio.from_json("asd.json"))
+        connection, _ = hsql.get_connection(**hio.from_json(args.credentials))
     elif args.db_connection == "from_env":
         connection, _ = hsql.get_connection_from_env_vars()
     else:
