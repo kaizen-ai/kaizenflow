@@ -1,20 +1,20 @@
 """
 Import as:
 
-import im.ccxt.data.extract.exchange_class as imcdeexcl
+import im_v2.ccxt.data.extract.exchange_class as imcdeexcl
 """
 
 import logging
 import time
 from typing import Any, Dict, List, Optional, Union
 
+import ccxt
 import pandas as pd
 import tqdm
 
-import ccxt
+import helpers.datetime_ as hdatetime
 import helpers.dbg as hdbg
 import helpers.io_ as hio
-import helpers.datetime_ as hdatetime
 
 _LOG = logging.getLogger(__name__)
 
@@ -133,26 +133,6 @@ class CcxtExchange:
         # TODO(*): Double check if dataframes are properly concatenated.
         return pd.concat(all_bars)
 
-    def _fetch_ohlcv(self, symbol: str, timeframe: str = "1m",
-                     since: int = None, step: int = None) -> pd.DataFrame:
-        """
-        Wrapper for one minute OHLCV bars.
-
-        :param symbol: A currency pair, e.g. "BTC/USDT"
-        :param timeframe: fetch data for certain timeframe
-        :param since: from when is data fetched in milliseconds
-        :param step: number of bars per iteration
-
-        :return: OHLCV data from CCXT
-        """
-        bars = self._exchange.fetch_ohlcv(
-            symbol, timeframe=timeframe, since=since, limit=step
-        )
-        columns = ["timestamp", "open", "high", "low", "close", "volume"]
-        bars = pd.DataFrame(bars, columns=columns)
-        bars['created_at'] = str(hdatetime.get_current_time("UTC"))
-        return bars
-
     def download_order_book(self, curr_pair: str) -> Dict[str, Any]:
         """
         Download order book for the currency pair.
@@ -180,3 +160,28 @@ class CcxtExchange:
         # Download current order book.
         order_book = self._exchange.fetch_order_book(curr_pair)
         return order_book
+
+    def _fetch_ohlcv(
+        self,
+        symbol: str,
+        timeframe: str = "1m",
+        since: int = None,
+        step: int = None,
+    ) -> pd.DataFrame:
+        """
+        Wrapper for one minute OHLCV bars.
+
+        :param symbol: A currency pair, e.g. "BTC/USDT"
+        :param timeframe: fetch data for certain timeframe
+        :param since: from when is data fetched in milliseconds
+        :param step: number of bars per iteration
+
+        :return: OHLCV data from CCXT
+        """
+        bars = self._exchange.fetch_ohlcv(
+            symbol, timeframe=timeframe, since=since, limit=step
+        )
+        columns = ["timestamp", "open", "high", "low", "close", "volume"]
+        bars = pd.DataFrame(bars, columns=columns)
+        bars["created_at"] = str(hdatetime.get_current_time("UTC"))
+        return bars

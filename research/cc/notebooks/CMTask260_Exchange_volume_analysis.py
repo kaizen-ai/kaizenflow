@@ -27,7 +27,7 @@ import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprintin
 import helpers.s3 as hs3
-import im.data.universe as imdauni
+import im_v2.data.universe as imdauni
 import research.cc.statistics as rccsta
 import research.cc.volume as rccvol
 import im.ccxt.data.load.loader as imccdaloloa
