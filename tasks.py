@@ -61,7 +61,7 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     traceback,
 )
 # TODO(gp): We want users to go to the component dir to run to avoid coupling.
-from im.im_lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
+from im_v2.im_lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     im_docker_cmd,
     im_docker_down,
     im_docker_up,
