@@ -58,7 +58,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         connection, _ = hsql.get_connection_from_env_vars()
     else:
         connection, _ = hsql.get_connection_from_string(args.db_connection)
-    imcdbcrdb.remove_database(connection=connection, db_to_drop=args.db_name)
+    hsql.remove_database(connection=connection, db_to_drop=args.db_name)
 
 
 if __name__ == "__main__":
