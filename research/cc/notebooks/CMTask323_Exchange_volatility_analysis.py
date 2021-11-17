@@ -20,18 +20,14 @@ import os
 
 import pandas as pd
 import seaborn as sns
-#import statsmodels.formula.api.ols as stols
+from statsmodels.formula.api import ols
 from statsmodels.tsa.stattools import adfuller
-#import statsmodels.tsa.stattools.adfuller as stfuller
 
 import core.config.config_ as cconconf
 import core.plotting as cplot
 import helpers.s3 as hs3
 import im.data.universe as imdatuniv
 import research.cc.statistics as rccstat
-
-from statsmodels.formula.api import ols
-
 
 # %% [markdown]
 # # Config
