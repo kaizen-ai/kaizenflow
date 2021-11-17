@@ -1,35 +1,37 @@
 """
 Import as:
 
-import oms.order as oord
+import oms.order as omorder
 """
-
+import collections
+import copy
 import logging
-from typing import List
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
+import core.dataflow.price_interface as cdtfprint
 import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): Replace MarketInterface -> PriceInterface
-# TODO(gp): mi -> price_interface
 class Order:
     def __init__(
         self,
         order_id: int,
-        mi: MarketInterface,
+        price_interface: cdtfprint.AbstractPriceInterface,
         creation_ts: pd.Timestamp,
         asset_id: int,
         type_: str,
-        ts_start: pd.Timestamp,
-        ts_end: pd.Timestamp,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
         num_shares: float,
+        *,
+        column_remap: Optional[Dict[str, str]] = None,
     ):
         """
-        Represent an order executed in the interval of time (ts_start, ts_end].
+        Represent an order executed in the interval of time (start_ts, end_ts].
 
         An order is characterized by:
         1) what price the order is executed at
@@ -53,32 +55,57 @@ class Order:
             - `price@twap`: pay the TWAP price in the interval
             - `partial_spread_0.2@twap`: pay the TWAP midpoint weighted by 0.2
         """
-        self._order_id = order_id
-        self._mi = mi
-        self._creation_ts = creation_ts
+        self.order_id = order_id
+        self.price_interface = price_interface
+        self.creation_ts = creation_ts
         hdbg.dassert_lte(0, asset_id)
-        self._asset_id = asset_id
+        self.asset_id = asset_id
         self.type_ = type_
-        hdbg.dassert_lt(ts_start, ts_end)
-        self.ts_start = ts_start
-        self.ts_end = ts_end
+        hdbg.dassert_lt(start_ts, end_ts)
+        self.start_ts = start_ts
+        self.end_ts = end_ts
         hdbg.dassert_ne(num_shares, 0)
         self.num_shares = num_shares
+        #
+        needed_columns = ["bid", "ask", "price", "midpoint"]
+        if column_remap is None:
+            column_remap = {col_name: col_name for col_name in needed_columns}
+        hdbg.dassert_set_eq(column_remap.keys(), needed_columns)
+        self.column_remap: Dict[str, str] = column_remap
 
     def __str__(self) -> str:
-        return (
-            f"Order: type={self.type_} "
-            + f"ts=[{self.ts_start}, {self.ts_end}] "
-            + f"num_shares={self.num_shares}"
-        )
+        txt: List[str] = []
+        txt.append(f"Order:")
+        txt.append(f"order_id={self.order_id}")
+        txt.append(f"creation_ts='{self.creation_ts}'")
+        txt.append(f"asset_id={self.asset_id}")
+        txt.append(f"type='{self.type_}'")
+        txt.append(f"ts=[{self.start_ts}, {self.end_ts}]")
+        txt.append(f"num_shares={self.num_shares}")
+        return " ".join(txt)
+
+    def to_dict(self) -> Dict[str, Any]:
+        dict_: Dict[str, Any] = collections.OrderedDict()
+        dict_["order_id"] = self.order_id
+        dict_["creation_ts"] = self.creation_ts
+        dict_["asset_id"] = self.asset_id
+        dict_["type_"] = self.type_
+        dict_["start_ts"] = self.start_ts
+        dict_["end_ts"] = self.end_ts
+        dict_["num_shares"] = self.num_shares
+        return dict_
 
     @staticmethod
     def get_price(
-        mi: MarketInterface,
+        price_interface: cdtfprint.AbstractPriceInterface,
+        # TODO(gp): Move it after end_ts.
+        asset_id: int,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        ts_col_name: str,
         type_: str,
-        ts_start: pd.Timestamp,
-        ts_end: pd.Timestamp,
         num_shares: float,
+        column_remap: Dict[str, str],
     ) -> float:
         """
         Get the price that a generic order with the given parameters would
@@ -92,23 +119,60 @@ class Order:
         price_type, timing = config
         # Get the price depending on the price_type.
         if price_type in ("price", "midpoint"):
-            column = price_type
-            price = Order._get_price(mi, ts_start, ts_end, column, timing)
+            column = column_remap[price_type]
+            price = Order._get_price_per_share(
+                price_interface,
+                start_ts,
+                end_ts,
+                ts_col_name,
+                asset_id,
+                column,
+                timing,
+            )
         elif price_type == "full_spread":
             # Cross the spread depending on buy / sell.
             if num_shares >= 0:
                 column = "ask"
             else:
                 column = "bid"
-            price = Order._get_price(mi, ts_start, ts_end, column, timing)
+            column = column_remap[column]
+            price = Order._get_price_per_share(
+                price_interface,
+                start_ts,
+                end_ts,
+                ts_col_name,
+                asset_id,
+                column,
+                timing,
+            )
         elif price_type.startswith("partial_spread"):
             # Pay part of the spread depending on the parameter encoded in the
-            # `price_type` (e.g., twap
+            # `price_type` (e.g., twap).
             perc = float(price_type.split("_")[2])
             hdbg.dassert_lte(0, perc)
             hdbg.dassert_lte(perc, 1.0)
-            bid_price = Order._get_price(mi, ts_start, ts_end, "bid", timing)
-            ask_price = Order._get_price(mi, ts_start, ts_end, "ask", timing)
+            # TODO(gp): This should not be hardwired.
+            ts_col_name = "end_datetime"
+            column = column_remap["bid"]
+            bid_price = Order._get_price_per_share(
+                price_interface,
+                start_ts,
+                end_ts,
+                ts_col_name,
+                asset_id,
+                column,
+                timing,
+            )
+            column = column_remap["ask"]
+            ask_price = Order._get_price_per_share(
+                price_interface,
+                start_ts,
+                end_ts,
+                ts_col_name,
+                asset_id,
+                column,
+                timing,
+            )
             if num_shares >= 0:
                 # We need to buy:
                 # - if perc == 1.0 pay ask (i.e., pay full-spread)
@@ -124,10 +188,10 @@ class Order:
         else:
             raise ValueError("Invalid type='%s'", type_)
         _LOG.debug(
-            "type=%s, ts_start=%s, ts_end=%s -> execution_price=%s",
+            "type=%s, start_ts=%s, end_ts=%s -> execution_price=%s",
             type_,
-            ts_start,
-            ts_end,
+            start_ts,
+            end_ts,
             price,
         )
         return price
@@ -136,9 +200,24 @@ class Order:
         """
         Get the price that this order executes at.
         """
-        price = self.get_price(
-            self._mi, self.type_, self.ts_start, self.ts_end, self.num_shares
-        )
+        try:
+            # This order price probably depend on future prices, so we need to allow
+            # future peeking (unfortunately).
+            old_value = self.price_interface.set_allow_future_peeking(True)
+            # TODO(gp): It should not be hardwired.
+            ts_col_name = "end_datetime"
+            price = self.get_price(
+                self.price_interface,
+                self.asset_id,
+                self.start_ts,
+                self.end_ts,
+                ts_col_name,
+                self.type_,
+                self.num_shares,
+                self.column_remap,
+            )
+        finally:
+            self.price_interface.set_allow_future_peeking(old_value)
         return price
 
     def is_mergeable(self, rhs: "Order") -> bool:
@@ -152,8 +231,8 @@ class Order:
         """
         return (
             (self.type_ == rhs.type_)
-            and (self.ts_start == rhs.ts_start)
-            and (self.ts_end == rhs.ts_end)
+            and (self.start_ts == rhs.start_ts)
+            and (self.end_ts == rhs.end_ts)
         )
 
     def merge(self, rhs: "Order") -> "Order":
@@ -164,7 +243,11 @@ class Order:
         hdbg.dassert(self.is_mergeable(rhs))
         num_shares = self.num_shares + rhs.num_shares
         order = Order(
-            self._mi, self.type_, self.ts_start, self.ts_end, num_shares
+            self.price_interface,
+            self.type_,
+            self.start_ts,
+            self.end_ts,
+            num_shares,
         )
         return order
 
@@ -172,23 +255,36 @@ class Order:
         return copy.copy(self)
 
     @staticmethod
-    def _get_price(
-        mi: MarketInterface,
-        ts_start: pd.Timestamp,
-        ts_end: pd.Timestamp,
+    def _get_price_per_share(
+        mi: cdtfprint.AbstractPriceInterface,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        ts_col_name: str,
+        asset_id: int,
         column: str,
         timing: str,
     ) -> float:
         """
         Get the price corresponding to a certain column and timing (e.g.,
         `start`, `end`, `twap`).
+
+        :param ts_col_name: column to use to filter based on start_ts and end_ts
+        :param column: column to use to compute the price
         """
         if timing == "start":
-            price = mi.get_instantaneous_price(ts_start, column)
+            asset_ids = [asset_id]
+            price = mi.get_data_at_timestamp(start_ts, ts_col_name, asset_ids)[
+                column
+            ]
         elif timing == "end":
-            price = mi.get_instantaneous_price(ts_end, column)
+            asset_ids = [asset_id]
+            price = mi.get_data_at_timestamp(end_ts, ts_col_name, asset_ids)[
+                column
+            ]
         elif timing == "twap":
-            price = mi.get_twap_price(ts_start, ts_end, column)
+            price = mi.get_twap_price(
+                start_ts, end_ts, ts_col_name, asset_id, column
+            )
         else:
             raise ValueError("Invalid timing='%s'", timing)
         return price
@@ -201,19 +297,19 @@ def _get_orders_to_execute(orders: List[Order], ts: pd.Timestamp) -> List[Order]
     """
     Return the orders from `orders` that can be executed at timestamp `ts`.
     """
-    orders.sort(key=lambda x: x.ts_start, reverse=False)
-    hdbg.dassert_lte(orders[0].ts_start, ts)
+    orders.sort(key=lambda x: x.start_ts, reverse=False)
+    hdbg.dassert_lte(orders[0].start_ts, ts)
     # TODO(gp): This is inefficient. Use binary search.
     curr_orders = []
     for order in orders:
-        if order.ts_start == ts:
+        if order.start_ts == ts:
             curr_orders.append(order)
     return curr_orders
 
 
 def get_orders_to_execute(ts: pd.Timestamp, orders: List[Order]) -> List[Order]:
     if True:
-        if orders[0].ts_start == ts:
+        if orders[0].start_ts == ts:
             return [orders.pop()]
         # hdbg.dassert_eq(len(orders), 1, "%s", orders_to_string(orders))
         assert 0
