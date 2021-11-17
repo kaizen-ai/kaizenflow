@@ -271,7 +271,7 @@ class CcxtLoaderFromDb(AbstractCcxtLoader):
         # Execute SQL query.
         data = pd.read_sql(sql_query, self._connection, **read_sql_kwargs)
         # Apply transformation to raw data.
-        transformed_data = self.transform(data, "ohlcv")
+        transformed_data = self.transform(data, data_type)
         return transformed_data
 
 
