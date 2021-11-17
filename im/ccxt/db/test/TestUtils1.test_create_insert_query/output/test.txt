@@ -1,1 +1,0 @@
-INSERT INTO ccxt_ohlcv(id,timestamp,open,high,low,close,volume,currency_pair,exchange_id) VALUES %s

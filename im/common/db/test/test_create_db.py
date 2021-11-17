@@ -1,7 +1,6 @@
 import logging
 import os
 
-import psycopg2.errors as perrors
 import pytest
 
 import helpers.git as hgit
@@ -13,8 +12,7 @@ import im.common.db.create_db as imcdbcrdb
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
-class TestCreateDB(hunitest.TestCase):
+class CreateDB(hunitest.TestCase):
     def setUp(self) -> None:
         """
         Initialize the test database inside test container.
@@ -35,7 +33,7 @@ class TestCreateDB(hunitest.TestCase):
         password = "alsdkqoen"
         user = "aljsdalsd"
         hsql.wait_db_connection(dbname, port, host)
-        self.connection, _ = hsql.get_connection(
+        self.connection = hsql.get_connection(
             dbname,
             host,
             user,
@@ -55,6 +53,13 @@ class TestCreateDB(hunitest.TestCase):
         self.connection.close()
         hsysinte.system(cmd, suppress_output=False)
         super().tearDown()
+
+    def test_up1(self) -> None:
+        """
+        Verify that the DB is up.
+        """
+        db_list = hsql.get_db_names(self.connection)
+        _LOG.info("db_list=%s", db_list)
 
     @pytest.mark.slow()
     def test_create_all_tables1(self) -> None:
@@ -84,27 +89,7 @@ class TestCreateDB(hunitest.TestCase):
         self.assertEqual(actual, expected)
 
     @pytest.mark.slow()
-    def test_remove_database(self) -> None:
-        """
-        Create database 'test_db_to_remove' and remove it.
-        """
-        imcdbcrdb.create_im_database(
-            self.connection,
-            new_db="test_db_to_remove",
-        )
-        imcdbcrdb.remove_database(self.connection, "test_db_to_remove")
-        db_list = hsql.get_db_names(self.connection)
-        self.assertNotIn("test_db_to_remove", db_list)
-
-    @pytest.mark.slow()
     def test_create_im_database(self) -> None:
         imcdbcrdb.create_im_database(connection=self.connection, new_db="test_db")
         db_list = hsql.get_db_names(self.connection)
         self.assertIn("test_db", db_list)
-
-    def test_remove_database_invalid(self) -> None:
-        """
-        Test failed assertion for passing db name that does not exist.
-        """
-        with self.assertRaises(perrors.InvalidCatalogName):
-            imcdbcrdb.remove_database(self.connection, "db does not exist")

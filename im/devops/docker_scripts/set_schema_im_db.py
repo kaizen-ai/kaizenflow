@@ -46,7 +46,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         port=int(os.environ["POSTGRES_PORT"]),
         host=os.environ["POSTGRES_HOST"],
     )
-    connection, _ = hsql.get_connection_from_env_vars()
+    connection = hsql.get_connection_from_env_vars()
     # Set schema for the database.
     _LOG.info("Setting schema for DB `%s`...", os.environ["POSTGRES_DB"])
     imcdbcrdb.create_all_tables(connection)

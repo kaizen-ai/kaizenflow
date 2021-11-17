@@ -38,7 +38,6 @@ import helpers.io_ as hio
 import helpers.parser as hparser
 import helpers.sql as hsql
 import im.ccxt.data.extract.exchange_class as imcdeexcl
-import im.ccxt.db.utils as imccdbuti
 import im_v2.data.universe as imdatuniv
 
 _LOG = logging.getLogger(__name__)
@@ -151,7 +150,6 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--dst_dir",
         action="store",
-        required=True,
         type=str,
         help="Folder to save copies of data to",
     )
@@ -191,10 +189,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Create the directory.
-    hio.create_dir(args.dst_dir, incremental=args.incremental)
+    if args.dst_dir:
+        hio.create_dir(args.dst_dir, incremental=args.incremental)
     # Connect to database.
     if args.db_connection == "from_env":
-        connection, _ = hsql.get_connection_from_env_vars()
+        connection = hsql.get_connection_from_env_vars()
     elif args.db_connection == "none":
         connection = None
     else:
@@ -220,6 +219,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                     ccxt.NetworkError,
                     ccxt.base.errors.RequestTimeout,
                 ) as e:
+                    # TODO(*): handle timeouts and network errors differently ?
                     # Continue the loop if could not connect to exchange.
                     _LOG.warning("Got an error: %s", type(e).__name__, e.args)
                     continue
@@ -233,14 +233,15 @@ def _main(parser: argparse.ArgumentParser) -> None:
                     time.sleep(60)
                     continue
                 # Save to disk.
-                _save_data_on_disk(
-                    args.data_type, args.dst_dir, pair_data, exchange, pair
-                )
+                if args.dst_dir:
+                    _save_data_on_disk(
+                        args.data_type, args.dst_dir, pair_data, exchange, pair
+                    )
                 if connection:
                     # Insert into database.
-                    imccdbuti.execute_insert_query(
+                    hsql.execute_insert_query(
                         connection=connection,
-                        df=pair_data,
+                        obj=pair_data,
                         table_name=args.table_name,
                     )
         time.sleep(60)
