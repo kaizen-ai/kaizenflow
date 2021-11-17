@@ -334,4 +334,4 @@ class TestOmsDb2(_TestOmsDbHelper):
         # Show the state of the DB.
         query = f"SELECT * FROM {table_name}"
         df = hsql.execute_query(self.connection, query)
-        _LOG.debug("df=\n%s", hprint.dataframe_to_str(df, use_tabulate=True))
+        _LOG.debug("df=\n%s", hprint.dataframe_to_str(df, use_tabulate=False))
