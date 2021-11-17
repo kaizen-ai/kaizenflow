@@ -72,7 +72,6 @@ def _parse() -> argparse.ArgumentParser:
         # TODO(Danya): replace dst_dir with SQL connection.
         "--dst_dir",
         action="store",
-        required=True,
         type=str,
         help="Folder to download files to",
     )

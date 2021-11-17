@@ -14,6 +14,7 @@ import tqdm
 import ccxt
 import helpers.dbg as hdbg
 import helpers.io_ as hio
+import helpers.datetime_ as hdatetime
 
 _LOG = logging.getLogger(__name__)
 
@@ -98,8 +99,6 @@ class CcxtExchange:
         hdbg.dassert(self._exchange.has["fetchOHLCV"])
         # Verify that the provided currency pair is present in exchange.
         hdbg.dassert_in(curr_symbol, self.currency_pairs)
-        # Make the minimal limit of 500 a default step.
-        step = step or 500
         # Get latest bars if no datetime is provided.
         if end_datetime is None and start_datetime is None:
             all_bars = self._exchange.fetch_ohlcv(
@@ -127,10 +126,7 @@ class CcxtExchange:
         for t in tqdm.tqdm(
             range(start_datetime, end_datetime + duration, duration * step)
         ):
-            # Fetch OHLCV bars for 1m since current datetime.
-            bars = self._exchange.fetch_ohlcv(
-                curr_symbol, timeframe="1m", since=t, limit=step
-            )
+            bars = self._fetch_ohlcv(curr_symbol, since=t, step=step)
             all_bars += bars
             time.sleep(sleep_time)
             all_bars = pd.DataFrame(
