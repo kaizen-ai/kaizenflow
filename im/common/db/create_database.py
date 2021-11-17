@@ -37,7 +37,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         default=None,
         type=str,
-        help="DB to connect",
+        help="Path to json file with details to connect to DB",
     )
     parser.add_argument(
         "--db-name",
