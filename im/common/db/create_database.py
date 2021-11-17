@@ -14,6 +14,7 @@ import im.common.db.create_database as imcdbcrda
 
 import argparse
 
+import helpers.io_ as hio
 import helpers.parser as hparser
 import helpers.sql as hsql
 import im.common.db.create_db as imcdbcrdb
@@ -32,34 +33,11 @@ def _parse() -> argparse.ArgumentParser:
         help="DB to connect",
     )
     parser.add_argument(
-        "--host",
+        "--credentials",
         action="store",
+        default=None,
         type=str,
-        help="Postgres host to connect",
-    )
-    parser.add_argument(
-        "--db",
-        action="store",
-        type=str,
-        help="Postgres db to connect",
-    )
-    parser.add_argument(
-        "--port",
-        action="store",
-        type=str,
-        help="Postgres port to connect",
-    )
-    parser.add_argument(
-        "--user",
-        action="store",
-        type=str,
-        help="Postgres user to connect",
-    )
-    parser.add_argument(
-        "--password",
-        action="store",
-        type=str,
-        help="Postgres password to connect",
+        help="DB to connect",
     )
     parser.add_argument(
         "--db-name",
@@ -79,19 +57,12 @@ def _parse() -> argparse.ArgumentParser:
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    credentials_input = (
-        args.host and args.dbname and args.port and args.user and args.password
-    )
-    if credentials_input:
-        connection, _ = hsql.get_connection(
-            host=args.host,
-            dbname=args.dbname,
-            port=args.port,
-            user=args.user,
-            password=args.password,
-        )
+    if args.credentials:
+        connection, _ = hsql.get_connection(hio.from_json(args.credentials))
     elif args.db_connection == "from_env":
         connection, _ = hsql.get_connection_from_env_vars()
+    else:
+        connection, _ = hsql.get_connection_from_string(args.db_connection)
     # Create db with all tables.
     imcdbcrdb.create_im_database(
         connection=connection, new_db=args.db_name, overwrite=args.overwrite
