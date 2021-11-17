@@ -39,7 +39,7 @@ import helpers.parser as hparser
 import helpers.sql as hsql
 import im.ccxt.data.extract.exchange_class as imcdeexcl
 import im.ccxt.db.utils as imccdbuti
-import im.data.universe as imdatuniv
+import im_v2.data.universe as imdatuniv
 
 _LOG = logging.getLogger(__name__)
 
