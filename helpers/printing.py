@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.printing as hprintin
+import helpers.printing as hprint
 """
 
 # TODO(gp): -> hprint
@@ -537,9 +537,9 @@ def diff_strings(
     #
     cmd = f"sdiff --width={width} {file_name1} {file_name2}"
     # To avoid circular dependencies.
-    import helpers.system_interaction as hsyint
+    import helpers.system_interaction as hsysinte
 
-    _, txt = hsyint.system_to_string(
+    _, txt = hsysinte.system_to_string(
         cmd,
         # We don't care if they are different.
         abort_on_error=False,
@@ -712,7 +712,8 @@ def dataframe_to_str(
     ):
         if use_tabulate:
             import tabulate
-            res = tabulate.tabulate(df, headers='keys', tablefmt='psql')
+
+            res = tabulate.tabulate(df, headers="keys", tablefmt="psql")
         else:
             res = str(df)
     return res
@@ -829,7 +830,7 @@ def config_notebook(sns_set: bool = True) -> None:
     pd.set_option("display.width", 1000)
 
     # Warnings.
-    import helpers.warnings_helpers as hwah
+    import helpers.warnings_helpers as hwarnin
 
     # Force the linter to keep this import.
     _ = hwah
