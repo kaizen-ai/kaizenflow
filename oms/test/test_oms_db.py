@@ -75,7 +75,7 @@ class _TestOmsDbHelper(hunitest.TestCase):
             hsql.wait_db_connection(dbname, port, host)
             self.bring_down_db = True
         # Save connection info.
-        self.connection, self.cursor = hsql.get_connection(
+        self.connection = hsql.get_connection(
             self.dbname,
             host,
             user,
