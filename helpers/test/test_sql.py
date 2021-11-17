@@ -62,7 +62,7 @@ class TestSql1(huntes.TestCase):
         Verify that connection string is correct.
         """
         hsql.wait_db_connection(self.dbname, self.port, self.host)
-        self.connection, _ = hsql.get_connection(
+        self.connection = hsql.get_connection(
             self.dbname,
             self.host,
             self.user,
@@ -86,7 +86,7 @@ class TestSql1(huntes.TestCase):
         Verify that db is creating.
         """
         hsql.wait_db_connection(self.dbname, self.port, self.host)
-        self.connection, _ = hsql.get_connection(
+        self.connection = hsql.get_connection(
             self.dbname,
             self.host,
             self.user,
@@ -112,7 +112,7 @@ class TestSql1(huntes.TestCase):
         Create database 'test_db_to_remove' and remove it.
         """
         hsql.wait_db_connection(self.dbname, self.port, self.host)
-        self.connection, _ = hsql.get_connection(
+        self.connection = hsql.get_connection(
             self.dbname,
             self.host,
             self.user,
@@ -134,7 +134,7 @@ class TestSql1(huntes.TestCase):
         Test failed assertion for passing db name that does not exist.
         """
         hsql.wait_db_connection(self.dbname, self.port, self.host)
-        self.connection, _ = hsql.get_connection(
+        self.connection = hsql.get_connection(
             self.dbname,
             self.host,
             self.user,
@@ -153,7 +153,7 @@ class TestSql1(huntes.TestCase):
         self._create_test_table()
         test_data = self._get_test_data()
         # Try uploading test data.
-        self.connection, _ = hsql.get_connection(
+        self.connection = hsql.get_connection(
             self.dbname,
             self.host,
             self.user,
@@ -175,7 +175,7 @@ class TestSql1(huntes.TestCase):
         self._create_test_table()
         test_data = self._get_test_data()
         # Try uploading test data.
-        self.connection, _ = hsql.get_connection(
+        self.connection = hsql.get_connection(
             self.dbname,
             self.host,
             self.user,
@@ -200,7 +200,7 @@ class TestSql1(huntes.TestCase):
                     )
                     """
         hsql.wait_db_connection(self.dbname, self.port, self.host)
-        connection, _ = hsql.get_connection(
+        connection = hsql.get_connection(
             self.dbname,
             self.host,
             self.user,

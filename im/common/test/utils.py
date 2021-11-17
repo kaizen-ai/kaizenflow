@@ -1,5 +1,4 @@
 import logging
-import os
 
 import pandas as pd
 
@@ -19,7 +18,7 @@ class SqlWriterBackendTestCase(hunitest.TestCase):
     def setUp(self) -> None:
         super().setUp()
         # Get PostgreSQL connection.
-        self._connection = hsql.get_connection_from_env_vars()[0]
+        self._connection = hsql.get_connection_from_env_vars()
         self._new_db = self._get_test_string()
         # Create database for each test.
         imcdbcrdb.create_database(

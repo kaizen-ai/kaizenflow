@@ -107,7 +107,7 @@ def create_im_database(
     _LOG.debug("connection=%s", connection)
     hsql.create_database(connection, dbname=new_db, overwrite=overwrite)
     conn_details = hsql.db_connection_to_tuple(connection)
-    new_connection, _ = hsql.get_connection(
+    new_connection = hsql.get_connection(
         dbname=new_db,
         host=conn_details.host,
         user=conn_details.user,
