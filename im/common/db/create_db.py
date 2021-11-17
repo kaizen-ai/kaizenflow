@@ -114,16 +114,3 @@ def create_im_database(
     )
     create_all_tables(new_connection)
     new_connection.close()
-
-
-def remove_database(connection: hsql.DbConnection, db_to_drop: str) -> None:
-    """
-    Remove database in current environment.
-
-    :param connection: a database connection
-    :param db_to_drop: database name to drop, e.g. `im_db_local`
-    """
-    # Drop database.
-    connection.cursor().execute(
-        psql.SQL("DROP DATABASE {};").format(psql.Identifier(db_to_drop))
-    )
