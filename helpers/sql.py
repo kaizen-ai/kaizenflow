@@ -79,14 +79,14 @@ def get_connection_from_env_vars() -> Tuple[
     port = int(os.environ["POSTGRES_PORT"])
     password = os.environ["POSTGRES_PASSWORD"]
     # Build the
-    connection, cursor = get_connection(
+    connection = get_connection(
         dbname=dbname,
         host=host,
         port=port,
         user=user,
         password=password,
     )
-    return connection, cursor
+    return connection
 
 
 def get_connection_from_string(

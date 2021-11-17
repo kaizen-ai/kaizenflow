@@ -24,7 +24,7 @@ class TestSqlDataLoader1(hunitest.TestCase):
     def setUp(self) -> None:
         super().setUp()
         # Get PostgreSQL connection parameters.
-        self._connection = hsql.get_connection_from_env_vars()[0]
+        self._connection = hsql.get_connection_from_env_vars()
         self._new_db = self._get_test_name().replace("/", "").replace(".", "")
         # Create database for test.
         imcdbcrdb.create_database(

@@ -194,7 +194,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hio.create_dir(args.dst_dir, incremental=args.incremental)
     # Connect to database.
     if args.db_connection == "from_env":
-        connection, _ = hsql.get_connection_from_env_vars()
+        connection = hsql.get_connection_from_env_vars()
     elif args.db_connection == "none":
         connection = None
     else:
