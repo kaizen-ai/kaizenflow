@@ -833,4 +833,4 @@ def config_notebook(sns_set: bool = True) -> None:
     import helpers.warnings_helpers as hwarnin
 
     # Force the linter to keep this import.
-    _ = hwah
+    _ = hwarnin

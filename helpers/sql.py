@@ -515,7 +515,7 @@ def copy_rows_with_copy_from(
     :param table_name: name of the table for insertion
     """
     # The target table needs to exist.
-    hdbg.dassert_in(table_name, hsql.get_table_names(connection))
+    hdbg.dassert_in(table_name, get_table_names(connection))
     # Read the data.
     buffer = io.StringIO()
     df.to_csv(buffer, index=False, header=False)
@@ -552,7 +552,7 @@ def execute_insert_query(
     Insert a DB as multiple rows into the database.
 
     :param connection: connection to the DB
-    :param df: data to insert
+    :param obj: data to insert
     :param table_name: name of the table for insertion
     """
     if isinstance(obj, pd.Series):
