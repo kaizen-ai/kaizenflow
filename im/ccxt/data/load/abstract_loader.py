@@ -43,7 +43,7 @@ class AbstractCcxtLoader(abc.ABC):
         self,
         universe: Union[str, List[imdatuniv.ExchangeCurrencyTuple]],
         data_type: str,
-    ) -> pd.Dataframe:
+    ) -> pd.DataFrame:
         """
         Load CCXT data from a source for a specified universe.
 
