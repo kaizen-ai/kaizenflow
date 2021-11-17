@@ -1,4 +1,9 @@
 # TODO(Dan2): Move everything to im_v2 repo when it is created.
+"""
+Import as:
+
+import im.ccxt.data.load.abstract_loader as icdlablo
+"""
 
 import abc
 import logging
@@ -27,8 +32,7 @@ class AbstractCcxtLoader(abc.ABC):
         resample_to_1_min: bool = True,
     ) -> None:
         """
-        Load CCXT data from different backends, e.g., DB, local or S3
-        filesystem.
+        Load CCXT data from different backends e.g., DB, local or S3 filesystem.
 
         :param remove_dups: whether to remove full duplicates or not
         :param resample_to_1_min: whether to resample to 1 min or not
