@@ -37,7 +37,7 @@ import helpers.dbg as hdbg
 import helpers.io_ as hio
 import helpers.parser as hparser
 import helpers.sql as hsql
-import im.ccxt.data.extract.exchange_class as imcdeexcl
+import im_v2.ccxt.data.extract.exchange_class as imcdeexcl
 import im.data.universe as imdatuniv
 
 _LOG = logging.getLogger(__name__)
