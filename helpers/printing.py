@@ -4,7 +4,7 @@ Import as:
 import helpers.printing as hprintin
 """
 
-# TODO(gp): -> print_helpers
+# TODO(gp): -> hprint
 
 import logging
 import re
@@ -15,8 +15,9 @@ from typing import Any, Dict, Iterable, List, Match, Optional, cast
 import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
+
 # Mute this module unless we want to debug it.
-# _LOG.setLevel(logging.INFO)
+_LOG.setLevel(logging.INFO)
 
 
 # #############################################################################
@@ -694,6 +695,7 @@ def dataframe_to_str(
     max_colwidth: int = 2000,
     max_rows: int = 500,
     display_width: int = 10000,
+    use_tabulate: bool = False,
 ) -> str:
     import pandas as pd
 
@@ -708,7 +710,11 @@ def dataframe_to_str(
         "display.width",
         display_width,
     ):
-        res = str(df)
+        if use_tabulate:
+            import tabulate
+            res = tabulate.tabulate(df, headers='keys', tablefmt='psql')
+        else:
+            res = str(df)
     return res
 
 

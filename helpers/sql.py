@@ -562,7 +562,7 @@ def execute_insert_query(
         df = obj
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_in(table_name, get_table_names(connection))
-    _LOG.debug("df=\n%s", hprint.dataframe_to_str(df))
+    _LOG.debug("df=\n%s", hprint.dataframe_to_str(df, use_tabulate=True))
     # Transform dataframe into list of tuples.
     values = [tuple(v) for v in df.to_numpy()]
     # Generate a query for multiple rows.
