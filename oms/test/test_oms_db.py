@@ -229,80 +229,82 @@ class TestOmsDb1(_TestOmsDbHelper):
 
 class TestOmsDb2(_TestOmsDbHelper):
 
+    def wait_for_table_helper(self, coroutines):
+        with hasynci.solipsism_context() as event_loop:
+            get_wall_clock_time = lambda: hdateti.get_current_time(
+                tz="ET", event_loop=event_loop
+            )
+            async def _workload(*coroutines):
+                result = await asyncio.gather(*coroutines)
+                return result
+
+            # Construct the coroutines here by passing the `get_wall_clock_time`
+            # function.
+            coroutines = [coro(get_wall_clock_time) for coro in coroutines]
+            # Run.
+            coroutine = _workload(*coroutines)
+            res = hasynci.run(coroutine, event_loop=event_loop)
+            return res
+
+    async def _db_poller(self, get_wall_clock_time):
+        target_value = "hello_world.txt"
+        poll_kwargs = {
+            "sleep_in_secs": 1.0,
+            "timeout_in_secs": 5.0,
+            "get_wall_clock_time": get_wall_clock_time,
+        }
+        _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
+        coro = oomsdb.wait_for_target_ack(
+            self.connection, target_value, poll_kwargs
+        )
+        _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
+        result = await asyncio.gather(coro)
+        return result
+
+    async def _db_writer(self, sleep_in_secs, table_name, get_wall_clock_time) -> None:
+        # Sleep.
+        _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
+        _LOG.debug("sleep for %s secs", sleep_in_secs)
+        await asyncio.sleep(sleep_in_secs)
+        # Insert the row.
+        _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
+        _LOG.debug("insert ...")
+        row = _get_row1()
+        hsql.execute_insert_query(self.connection, row, table_name)
+        _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
+        _LOG.debug("insert ... done")
+        # Show the state of the DB.
+        query = f"SELECT * FROM {table_name}"
+        df = hsql.execute_query(self.connection, query)
+        _LOG.debug("df=\n%s", hprint.dataframe_to_str(df, use_tabulate=True))
+
     def test_wait_for_table1(self):
         """
         Show that if the value doesn't show up in the DB there is a timeout.
         """
-        with hasynci.solipsism_context() as event_loop:
-            # Use the wall clock time.
-            get_wall_clock_time = lambda: hdateti.get_current_time(
-                tz="ET", event_loop=event_loop
-            )
-            # Run.
-            target_value = "hello"
-            poll_kwargs = {
-                "sleep_in_secs": 1.0,
-                "timeout_in_secs": 5.0,
-                "get_wall_clock_time": get_wall_clock_time,
-            }
-
-            async def _workload():
-                coro1 = oomsdb.wait_for_target_ack(
-                    self.connection, target_value, poll_kwargs
-                )
-                result = await asyncio.gather(coro1)
-                # result = 1
-                # await asyncio.sleep(1)
-                return result
-
-            coroutine = _workload()
-            with self.assertRaises(TimeoutError):
-                hasynci.run(coroutine, event_loop=event_loop)
+        # Create only one coroutine waiting for a row in the table that never comes,
+        # causing a timeout.
+        coroutines = [self._db_poller]
+        with self.assertRaises(TimeoutError):
+            self.wait_for_table_helper(coroutines)
 
     def test_wait_for_table2(self):
         """
         Show that waiting on a value on the table works.
         """
         table_name = oomsdb.create_target_files_table(self.connection, incremental=True)
-        with hasynci.solipsism_context() as event_loop:
-            # Use the wall clock time.
-            get_wall_clock_time = lambda: hdateti.get_current_time(
-                tz="ET", event_loop=event_loop
-            )
-            # Run.
-            target_value = "hello_world.txt"
-            poll_kwargs = {
-                "sleep_in_secs": 1.0,
-                "timeout_in_secs": 5.0,
-                "get_wall_clock_time": get_wall_clock_time,
-            }
 
-            async def _db_writer() -> None:
-                _LOG.debug("sleep for 2 secs")
-                await asyncio.sleep(2)
-                _LOG.debug("insert ...")
-                row = _get_row1()
-                hsql.execute_insert_query(self.connection, row, table_name)
-                _LOG.debug("insert ... done")
-
-            async def _db_poller() -> None:
-                coro = oomsdb.wait_for_target_ack(
-                    self.connection, target_value, poll_kwargs
-                )
-                result = await coro
-                return result
-
-            async def _workload(*coroutines):
-                result = await asyncio.gather(*coroutines)
-                return result
-
-            coroutine = _workload(_db_writer(), _db_poller())
-            hasynci.run(coroutine, event_loop=event_loop)
-
-        # Create two asyncio threads.
-        # One is running wait_for_target_ack.
-        # The other is writing on the DB.
-
-        # Create two asyncio threads.
-        # One is running wait_for_target_ack.
-        # The other is writing on the DB.
+        coroutines = []
+        # Add a DB poller waiting for a row in the table.
+        coroutines.append(self._db_poller)
+        # Add a DB writer that will write after 2 seconds, making the DB poller
+        # exiting successfully.
+        sleep_in_secs = 2
+        coroutines.append(lambda gwct: self._db_writer(sleep_in_secs, table_name, gwct))
+        # Run.
+        res = self.wait_for_table_helper(coroutines)
+        # Check output.
+        act = str(res)
+        # The output is (DB poller, DB writer).
+        exp = r"""[[(True, 1)], None]"""
+        self.assert_equal(act, exp)

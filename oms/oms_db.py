@@ -122,25 +122,30 @@ async def poll(
             return rc, value
         #
         num_iter += 1
-        if num_iter >= max_num_iter:
-            raise TimeoutError(
-                "Timeout for "
-                + hprint.to_str("func sleep_in_secs timeout_in_secs")
-            )
+        if num_iter > max_num_iter:
+            msg = ("Timeout for " + hprint.to_str("func sleep_in_secs timeout_in_secs"))
+            _LOG.error(msg)
+            raise TimeoutError(msg)
         _LOG.debug("sleep for %s secs", sleep_in_secs)
         await asyncio.sleep(sleep_in_secs)
 
 
 def wait_for_row(
     connection: hsql.DbConnection, target_value: str
-) -> Tuple[int, pd.DataFrame]:
+) -> Tuple[int, int]:
     _LOG.debug(hprint.to_str("connection target_value"))
     table_name = "target_files_processed_candidate_view"
+    # Print the state of the DB.
+    if False:
+        query = f"SELECT * FROM {table_name}"
+        df = hsql.execute_query(connection, query)
+        _LOG.debug("df=\n%s", hprint.dataframe_to_str(df, use_tabulate=True))
+    # Check if the required row is available.
     query = f"SELECT filename FROM {table_name} WHERE filename='{target_value}'"
     df = hsql.execute_query(connection, query)
     _LOG.debug("df=\n%s", hprint.dataframe_to_str(df, use_tabulate=True))
     rc = df.shape[0] > 0
-    return rc, df
+    return rc, df.shape[0]
 
 
 async def wait_for_target_ack(
