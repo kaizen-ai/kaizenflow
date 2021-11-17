@@ -96,8 +96,13 @@ async def poll(
     get_wall_clock_time: hdateti.GetWallClockTime,
 ) -> Tuple[int, Any]:
     """
-    :param func: function returning a tuple (rc, value) where rc == 0 means keep
-        iterating
+    Call `func` every `sleep_in_secs` until success or timeout.
+
+    :param func: function returning a tuple (rc, value) where rc != 0 means success
+    :return:
+        - number of iterations before a successful call to `func`
+        - result from `func`
+    :raises: TimeoutError in case of timeout
     """
     _LOG.debug(hprint.to_str("func sleep_in_secs timeout_in_secs"))
     hdbg.dassert_lt(0, sleep_in_secs)
@@ -119,7 +124,7 @@ async def poll(
                 "poll done: wall clock time=%s",
                 get_wall_clock_time(),
             )
-            return rc, value
+            return num_iter, value
         #
         num_iter += 1
         if num_iter > max_num_iter:
@@ -131,17 +136,21 @@ async def poll(
 
 
 def wait_for_row(
-    connection: hsql.DbConnection, target_value: str
+    connection: hsql.DbConnection, table_name: str, field_name: str, target_value: str, *,
+        show_db_state: bool = False
 ) -> Tuple[int, int]:
+    """
+    Wait for a row to be inserted in the DB with
+
+    """
     _LOG.debug(hprint.to_str("connection target_value"))
-    table_name = "target_files_processed_candidate_view"
     # Print the state of the DB.
-    if False:
+    if show_db_state:
         query = f"SELECT * FROM {table_name}"
         df = hsql.execute_query(connection, query)
         _LOG.debug("df=\n%s", hprint.dataframe_to_str(df, use_tabulate=True))
     # Check if the required row is available.
-    query = f"SELECT filename FROM {table_name} WHERE filename='{target_value}'"
+    query = f"SELECT {field_name} FROM {table_name} WHERE {field_name}='{target_value}'"
     df = hsql.execute_query(connection, query)
     _LOG.debug("df=\n%s", hprint.dataframe_to_str(df, use_tabulate=True))
     rc = df.shape[0] > 0
@@ -154,6 +163,8 @@ async def wait_for_target_ack(
     """
     
     """
-    func = lambda: wait_for_row(connection, target_value)
+    table_name = "target_files_processed_candidate_view"
+    field_name = "filename"
+    func = lambda: wait_for_row(connection, target_value, field_value, target_value)
     rc, df = await poll(func, **poll_kwargs)
     return rc, df

@@ -293,7 +293,6 @@ class TestOmsDb2(_TestOmsDbHelper):
         Show that waiting on a value on the table works.
         """
         table_name = oomsdb.create_target_files_table(self.connection, incremental=True)
-
         coroutines = []
         # Add a DB poller waiting for a row in the table.
         coroutines.append(self._db_poller)
@@ -308,3 +307,19 @@ class TestOmsDb2(_TestOmsDbHelper):
         # The output is (DB poller, DB writer).
         exp = r"""[[(True, 1)], None]"""
         self.assert_equal(act, exp)
+
+    def test_wait_for_table3(self):
+        """
+        The data is written too late triggering a timeout.
+        """
+        table_name = oomsdb.create_target_files_table(self.connection, incremental=True)
+        coroutines = []
+        # Add a DB poller waiting for a row in the table.
+        coroutines.append(self._db_poller)
+        # Add a DB writer that will write after 10 seconds, after the DB poller ends
+        # after 5 secs.
+        sleep_in_secs = 10
+        coroutines.append(lambda gwct: self._db_writer(sleep_in_secs, table_name, gwct))
+        # Run.
+        with self.assertRaises(TimeoutError):
+            self.wait_for_table_helper(coroutines)
