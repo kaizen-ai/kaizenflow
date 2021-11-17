@@ -47,7 +47,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         os.environ["POSTRES_HOST"],
         os.environ["POSTRES_PORT"],
     )
-    connection, _ = hsql.get_connection_from_env_vars()
+    connection = hsql.get_connection_from_env_vars()
     # Set schema for the database.
     _LOG.info("Setting schema for DB `%s`...", os.environ["POSTGRES_DB"])
     imcodbcrdb.create_all_tables(connection)
