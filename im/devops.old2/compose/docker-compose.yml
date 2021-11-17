@@ -1,9 +1,8 @@
-version: '3'
+version: '3.5'
 
 services:
-
   # Docker container running code that talks to the DB.
-  app:
+  im_app:
     # TODO(Grisha): Use image env var.
     # TODO(Grisha): for image name use `get_docker_base_image_name`() from `repo_config.py`.
     image: 665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:dev
@@ -35,3 +34,7 @@ services:
 
 volumes:
   im_postgres_data_local: {}
+
+networks:
+  default:
+    name: im_postgres_network
