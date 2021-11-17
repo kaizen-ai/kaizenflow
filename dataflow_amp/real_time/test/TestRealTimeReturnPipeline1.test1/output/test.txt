@@ -7,7 +7,7 @@ config:
   load_prices:
     source_node_name: RealTimeDataSource
     source_node_kwargs:
-      real_time_price_interface: <core.dataflow.price_interface.ReplayedTimePriceInterface object>
+      price_interface: <core.dataflow.price_interface.ReplayedTimePriceInterface object>
       period: last_5mins
       multiindex_output: False
   filter_weekends:
@@ -57,7 +57,7 @@ info:
        1   timestamp_db    5 non-null      datetime64[ns, pytz.FixedOffset(-300)]
        2   close           5 non-null      float64                               
        3   vol             5 non-null      float64                               
-       4   id              5 non-null      int64                                 
+       4   asset_id        5 non-null      int64                                 
       dtypes: datetime64[ns, pytz.FixedOffset(-300)](2), float64(2), int64(1)
   filter_weekends:
     predict:
@@ -70,7 +70,7 @@ info:
        1   timestamp_db    0 non-null      datetime64[ns, pytz.FixedOffset(-300)]
        2   close           0 non-null      float64                               
        3   vol             0 non-null      float64                               
-       4   id              0 non-null      float64                               
+       4   asset_id        0 non-null      float64                               
       dtypes: datetime64[ns, pytz.FixedOffset(-300)](2), float64(3)
   filter_ath:
     predict:
@@ -83,7 +83,7 @@ info:
        1   timestamp_db    0 non-null      datetime64[ns, pytz.FixedOffset(-300)]
        2   close           0 non-null      float64                               
        3   vol             0 non-null      float64                               
-       4   id              0 non-null      float64                               
+       4   asset_id        0 non-null      float64                               
       dtypes: datetime64[ns, pytz.FixedOffset(-300)](2), float64(3)
   resample_prices_to_1min:
     predict:
@@ -132,7 +132,7 @@ config:
   load_prices:
     source_node_name: RealTimeDataSource
     source_node_kwargs:
-      real_time_price_interface: <core.dataflow.price_interface.ReplayedTimePriceInterface object>
+      price_interface: <core.dataflow.price_interface.ReplayedTimePriceInterface object>
       period: last_5mins
       multiindex_output: False
   filter_weekends:
@@ -182,7 +182,7 @@ info:
        1   timestamp_db    5 non-null      datetime64[ns, pytz.FixedOffset(-300)]
        2   close           5 non-null      float64                               
        3   vol             5 non-null      float64                               
-       4   id              5 non-null      int64                                 
+       4   asset_id        5 non-null      int64                                 
       dtypes: datetime64[ns, pytz.FixedOffset(-300)](2), float64(2), int64(1)
   filter_weekends:
     predict:
@@ -195,7 +195,7 @@ info:
        1   timestamp_db    0 non-null      datetime64[ns, pytz.FixedOffset(-300)]
        2   close           0 non-null      float64                               
        3   vol             0 non-null      float64                               
-       4   id              0 non-null      float64                               
+       4   asset_id        0 non-null      float64                               
       dtypes: datetime64[ns, pytz.FixedOffset(-300)](2), float64(3)
   filter_ath:
     predict:
@@ -208,7 +208,7 @@ info:
        1   timestamp_db    0 non-null      datetime64[ns, pytz.FixedOffset(-300)]
        2   close           0 non-null      float64                               
        3   vol             0 non-null      float64                               
-       4   id              0 non-null      float64                               
+       4   asset_id        0 non-null      float64                               
       dtypes: datetime64[ns, pytz.FixedOffset(-300)](2), float64(3)
   resample_prices_to_1min:
     predict:
@@ -257,7 +257,7 @@ config:
   load_prices:
     source_node_name: RealTimeDataSource
     source_node_kwargs:
-      real_time_price_interface: <core.dataflow.price_interface.ReplayedTimePriceInterface object>
+      price_interface: <core.dataflow.price_interface.ReplayedTimePriceInterface object>
       period: last_5mins
       multiindex_output: False
   filter_weekends:
@@ -307,7 +307,7 @@ info:
        1   timestamp_db    5 non-null      datetime64[ns, pytz.FixedOffset(-300)]
        2   close           5 non-null      float64                               
        3   vol             5 non-null      float64                               
-       4   id              5 non-null      int64                                 
+       4   asset_id        5 non-null      int64                                 
       dtypes: datetime64[ns, pytz.FixedOffset(-300)](2), float64(2), int64(1)
   filter_weekends:
     predict:
@@ -320,7 +320,7 @@ info:
        1   timestamp_db    0 non-null      datetime64[ns, pytz.FixedOffset(-300)]
        2   close           0 non-null      float64                               
        3   vol             0 non-null      float64                               
-       4   id              0 non-null      float64                               
+       4   asset_id        0 non-null      float64                               
       dtypes: datetime64[ns, pytz.FixedOffset(-300)](2), float64(3)
   filter_ath:
     predict:
@@ -333,7 +333,7 @@ info:
        1   timestamp_db    0 non-null      datetime64[ns, pytz.FixedOffset(-300)]
        2   close           0 non-null      float64                               
        3   vol             0 non-null      float64                               
-       4   id              0 non-null      float64                               
+       4   asset_id        0 non-null      float64                               
       dtypes: datetime64[ns, pytz.FixedOffset(-300)](2), float64(3)
   resample_prices_to_1min:
     predict:
