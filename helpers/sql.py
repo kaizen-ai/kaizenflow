@@ -15,7 +15,6 @@ import pandas as pd
 import psycopg2 as psycop
 import psycopg2.extras as extras
 import psycopg2.sql as psql
-from psycopg2 import extras
 
 import helpers.dbg as hdbg
 import helpers.printing as hprint

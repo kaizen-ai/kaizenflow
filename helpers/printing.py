@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.printing as hprintin
+import helpers.printing as hprint
 """
 
 # TODO(gp): -> hprint
@@ -17,7 +17,7 @@ import helpers.dbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 # Mute this module unless we want to debug it.
-# _LOG.setLevel(logging.INFO)
+_LOG.setLevel(logging.INFO)
 
 
 # #############################################################################

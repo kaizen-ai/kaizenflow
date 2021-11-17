@@ -11,7 +11,6 @@ import os
 from typing import List, Optional
 
 import psycopg2 as psycop
-import psycopg2.sql as psql
 
 import helpers.io_ as hio
 import helpers.sql as hsql
