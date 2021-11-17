@@ -7,7 +7,7 @@ import pytest
 import helpers.unit_test as hunitest
 
 # TODO(Dan): return to code after CmTask43 is fixed.
-import im.ccxt.data.extract.exchange_class as imcdeexcl
+import im_v2.ccxt.data.extract.exchange_class as imcdeexcl
 import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
