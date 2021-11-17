@@ -380,7 +380,7 @@ class SqlPriceInterface(AbstractPriceInterface):
             self._columns, self._ids, period, sort_time, limit
         )
         _LOG.info("query=%s", query)
-        df = hsql.execute_query(self.connection, query)
+        df = hsql.execute_query_to_df(self.connection, query)
         if normalize_data:
             df = self.process_data(df)
         return df
@@ -406,7 +406,7 @@ class SqlPriceInterface(AbstractPriceInterface):
         query.append(f"{self._id_col_name} = '{self._valid_id}'")
         query = " ".join(query)
         # _LOG.debug("query=%s", query)
-        df = hsql.execute_query(self.connection, query)
+        df = hsql.execute_query_to_df(self.connection, query)
         # Check that the `start_time` is a single value.
         hdbg.dassert_eq(df.shape, (1, 1))
         start_time = df.iloc[0, 0]
@@ -433,7 +433,7 @@ class SqlPriceInterface(AbstractPriceInterface):
         )
         query = " ".join(query)
         # _LOG.debug("query=%s", query)
-        df = hsql.execute_query(self.connection, query)
+        df = hsql.execute_query_to_df(self.connection, query)
         # Check that the `end_time` is a single value.
         hdbg.dassert_eq(df.shape, (1, 1))
         end_time = df.iloc[0, 0]

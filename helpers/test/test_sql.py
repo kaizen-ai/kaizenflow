@@ -146,7 +146,7 @@ class TestSql1(huntes.TestCase):
             hsql.remove_database(self.connection, "db does not exist")
 
     @pytest.mark.slow()
-    def test_execute_insert_query1(self) -> None:
+    def test_execute_insert_query_to_df1(self) -> None:
         """
         Verify that dataframe insertion is correct.
         """
@@ -154,16 +154,16 @@ class TestSql1(huntes.TestCase):
         test_data = self._get_test_data()
         # Try uploading test data.
         self.connection = hsql.get_connection(
-            self.dbname,
             self.host,
-            self.user,
+            self.dbname,
             self.port,
+            self.user,
             self.password,
             autocommit=True,
         )
         hsql.execute_insert_query(self.connection, test_data, "test_table")
         # Load data.
-        df = hsql.execute_query(self.connection, "SELECT * FROM test_table")
+        df = hsql.execute_query_to_df(self.connection, "SELECT * FROM test_table")
         actual = huntes.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
 
@@ -185,7 +185,7 @@ class TestSql1(huntes.TestCase):
         )
         hsql.copy_rows_with_copy_from(self.connection, test_data, "test_table")
         # Load data.
-        df = hsql.execute_query(self.connection, "SELECT * FROM test_table")
+        df = hsql.execute_query_to_df(self.connection, "SELECT * FROM test_table")
         actual = huntes.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
 
