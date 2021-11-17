@@ -337,7 +337,7 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
         currency_pair: str,
         data_type: str,
         data_snapshot: Optional[str] = None,
-    ) -> pd.Dataframe:
+    ) -> pd.DataFrame:
         """
         Load data from a filesystem and process it for use downstream.
 
