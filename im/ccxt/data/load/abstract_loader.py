@@ -39,9 +39,29 @@ class AbstractCcxtLoader(abc.ABC):
         self._data_types = ["ohlcv"]
 
     @abc.abstractmethod
-    def read_data(self) -> pd.Dataframe:
+    def read_universe_data(
+        self,
+        universe: Union[str, List[imdatuniv.ExchangeCurrencyTuple]],
+        data_type: str,
+    ) -> pd.Dataframe:
         """
-        Load CCXT data from a source.
+        Load CCXT data from a source for a specified universe.
+
+        Output data is indexed by timestamp and contains the columns open,
+        high, low, close, volume, epoch, currency_pair, exchange_id, e.g.,
+        ```
+                                   open        epoch          currency_pair exchange_id
+        2018-08-16 20:00:00-04:00  6316.01 ... 1534464000000  BTC/USDT      binance
+        2018-08-16 20:01:00-04:00  6311.36     1534464060000  BTC/USDT      binance
+        ...
+        2021-09-08 20:00:00-04:00  1.10343     1631145600000  XRP/USDT      kucoin
+        2021-09-08 20:02:00-04:00  1.10292     1631145720000  XRP/USDT      kucoin
+        ```
+
+        :param universe: CCXT universe version or a list of exchange-currency
+            tuples to load data for
+        :param data_type: OHLCV or trade, bid/ask data
+        :return: processed CCXT data
         """
 
     def transform(self, data: pd.DataFrame, data_type: str) -> pd.DataFrame:
@@ -267,6 +287,43 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
         if self._aws_profile:
             self._s3fs = hs3.get_s3fs(self._aws_profile)
 
+    def read_universe_data(
+        self,
+        universe: Union[str, List[imdatuniv.ExchangeCurrencyTuple]],
+        data_type: str,
+        data_snapshot: Optional[str] = None,
+    ) -> pd.DataFrame:
+        """
+        Load data from a filesystem for specified universe.
+
+        :param universe: CCXT universe version or a list of exchange-currency
+            tuples to load data for
+        :param data_type: OHLCV or trade, bid/ask data
+        :param data_snapshot: snapshot of datetime when data was loaded,
+            e.g. "20210924"
+        :return: processed CCXT data
+        """
+        # Load all the corresponding exchange-currency tuples if a universe
+        # version is provided.
+        if isinstance(universe, str):
+            universe = imdatuniv.get_vendor_universe_as_tuples(universe, "CCXT")
+        # Initialize results df.
+        combined_data = pd.DataFrame(dtype="object")
+        # Load data for each exchange-currency tuple and append to results df.
+        for exchange_currency_tuple in universe:
+            data = self.read_data(
+                exchange_currency_tuple.exchange_id,
+                exchange_currency_tuple.currency_pair,
+                data_type,
+                data_snapshot,
+            )
+            combined_data = combined_data.append(data)
+        # Sort results by exchange id and currency pair.
+        combined_data = combined_data.sort_values(
+            by=["exchange_id", "currency_pair"]
+        )
+        return combined_data
+
     def read_data(
         self,
         exchange_id: str,
@@ -275,7 +332,7 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
         data_snapshot: Optional[str] = None,
     ) -> pd.Dataframe:
         """
-        Load data from S3 and process it for use downstream.
+        Load data from a filesystem and process it for use downstream.
 
         :param exchange_id: CCXT exchange id, e.g. "binance"
         :param currency_pair: currency pair, e.g. "BTC/USDT"
@@ -308,59 +365,11 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
             exchange_id,
             currency_pair,
         )
-        data = self._preprocess_fylesystem_data(
+        data = self._preprocess_filesystem_data(
             data, exchange_id, currency_pair
         )
         transformed_data = self.transform(data, data_type)
         return transformed_data
-
-    def read_universe_data_from_filesystem(
-        self,
-        universe: Union[str, List[imdatuniv.ExchangeCurrencyTuple]],
-        data_type: str,
-        data_snapshot: Optional[str] = None,
-    ) -> pd.DataFrame:
-        """
-        Load data from S3 for specified universe.
-
-        Output data is indexed by timestamp and contains the columns open,
-        high, low, close, volume, epoch, currency_pair, exchange_id, e.g.,
-        ```
-                                   open        epoch          currency_pair exchange_id
-        2018-08-16 20:00:00-04:00  6316.01 ... 1534464000000  BTC/USDT      binance
-        2018-08-16 20:01:00-04:00  6311.36     1534464060000  BTC/USDT      binance
-        ...
-        2021-09-08 20:00:00-04:00  1.10343     1631145600000  XRP/USDT      kucoin
-        2021-09-08 20:02:00-04:00  1.10292     1631145720000  XRP/USDT      kucoin
-        ```
-
-        :param universe: CCXT universe version or a list of exchange-currency
-            tuples to load data for
-        :param data_type: OHLCV or trade, bid/ask data
-        :param data_snapshot: snapshot of datetime when data was loaded,
-            e.g. "20210924"
-        :return: processed CCXT data
-        """
-        # Load all the corresponding exchange-currency tuples if a universe
-        # version is provided.
-        if isinstance(universe, str):
-            universe = imdatuniv.get_vendor_universe_as_tuples(universe, "CCXT")
-        # Initialize results df.
-        combined_data = pd.DataFrame(dtype="object")
-        # Load data for each exchange-currency tuple and append to results df.
-        for exchange_currency_tuple in universe:
-            data = self.read_data_from_filesystem(
-                exchange_currency_tuple.exchange_id,
-                exchange_currency_tuple.currency_pair,
-                data_type,
-                data_snapshot,
-            )
-            combined_data = combined_data.append(data)
-        # Sort results by exchange id and currency pair.
-        combined_data = combined_data.sort_values(
-            by=["exchange_id", "currency_pair"]
-        )
-        return combined_data
 
     # TODO(Grisha): factor out common code from `CddLoader._get_file_path` and
     # `CcxtLoader._get_file_path`.
@@ -397,7 +406,7 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
         return file_path
 
     @staticmethod
-    def _preprocess_fylesystem_data(
+    def _preprocess_filesystem_data(
         data: pd.DataFrame,
         exchange_id: str,
         currency_pair: str,
