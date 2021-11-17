@@ -6,6 +6,7 @@ Import as:
 import im.im_lib_tasks as imimlitas
 """
 
+import logging
 import os
 
 from invoke import task
@@ -15,14 +16,19 @@ import helpers.git as hgit
 import helpers.lib_tasks as hlibtask
 
 
-def _get_im_docker_compose_path() -> str:
+_LOG = logging.getLogger(__name__)
+
+# TODO(gp): This should be used also from the unit tests?
+def _get_docker_compose_path() -> str:
     """
-    Return path to the docker-compose file `im/devops/compose/docker-
-    compose.yml`.
+    Return the absolute path to the docker-compose file for this component.
+
+    E.g., `im/devops/compose/docker-compose.yml`.
     """
     # Get `amp` path.
     amp_path = hgit.get_amp_abs_path()
     # Get `docker-compose` file path.
+    # TODO(gp): Factor out this dir.
     docker_compose_dir = "im/devops/compose"
     compose_file_name = "docker-compose.yml"
     docker_compose_path = os.path.join(
@@ -35,59 +41,35 @@ def _get_im_docker_compose_path() -> str:
     return docker_compose_abs_path
 
 
-def _get_im_docker_cmd(cmd: str) -> str:
-    """
-    Construct `im docker-compose' command.
+# #############################################################################
 
-    E.g, to run the `im/devops/set_schema_im_db.py`:
+
+def _get_docker_cmd(docker_cmd: str) -> str:
+    """
+    Construct the `docker-compose' command to run a script inside this
+    container Docker component.
+
+    E.g, to run the `.../devops/set_schema_im_db.py`:
     ```
     docker-compose \
-        --file /app/im/devops/compose/docker-compose.yml \
+        --file devops/compose/docker-compose.yml \
         run --rm app \
-        im/devops/set_schema_im_db.py
+        .../devops/set_schema_im_db.py
     ```
 
-    :param cmd: command to execute
-    :return: `im docker-compose' command
+    :param cmd: command to execute inside docker
     """
-    docker_cmd = ["docker-compose"]
+    cmd = ["docker-compose"]
     # Add `docker-compose` file path.
-    docker_compose_file_path = _get_im_docker_compose_path()
-    docker_cmd.append(f"--file {docker_compose_file_path}")
+    docker_compose_file_path = _get_docker_compose_path()
+    cmd.append(f"--file {docker_compose_file_path}")
     # Add `run`.
     service_name = "app"
-    docker_cmd.append(f"run --rm {service_name}")
-    docker_cmd.append(cmd)
+    cmd.append(f"run --rm {service_name}")
+    cmd.append(docker_cmd)
     # Convert the list to a multiline command.
-    multiline_docker_cmd = hlibtask._to_multi_line_cmd(docker_cmd)
+    multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
     return multiline_docker_cmd
-
-
-def _get_im_docker_down(volumes_remove: bool) -> str:
-    """
-    Construct `im docker-compose down' command.
-
-    E.g.,
-    ```
-    docker-compose \
-        --file /app/im/devops/compose/docker-compose.yml \
-        down -v
-    ```
-
-    :param volumes_remove: whether to remove attached volumes or not
-    :return: `im docker-compose down' command
-    """
-    docker_compose_down = ["docker-compose"]
-    # Add `docker-compose` file path.
-    docker_compose_file_path = _get_im_docker_compose_path()
-    docker_compose_down.append(f"--file {docker_compose_file_path}")
-    # Add `down` command.
-    docker_compose_down.append("down")
-    if volumes_remove:
-        # Use the '-v' option to remove attached volumes.
-        docker_compose_down.append("-v")
-    multiline_docker_compose_down = hlibtask._to_multi_line_cmd(docker_compose_down)
-    return multiline_docker_compose_down
 
 
 @task
@@ -95,20 +77,92 @@ def im_docker_cmd(ctx, cmd):  # type: ignore
     """
     Execute the command `cmd` inside a container attached to the `im app`.
 
-    :param ctx: `context` object
     :param cmd: command to execute
     """
     hdbg.dassert_ne(cmd, "")
     # Get docker cmd.
-    docker_cmd = _get_im_docker_cmd(cmd)
+    docker_cmd = _get_docker_cmd(cmd)
     # Execute the command.
     hlibtask._run(ctx, docker_cmd, pty=True)
+
+
+# #############################################################################
+
+
+def _get_docker_up_cmd() -> str:
+    """
+    Construct the command to bring up the `im` service.
+
+    E.g.,
+    ```
+    docker-compose \
+        --file devops/compose/docker-compose.yml \
+        up \
+        im_postgres_local
+    ```
+    """
+    cmd = ["docker-compose"]
+    # Add `docker-compose` file path.
+    docker_compose_file_path = _get_docker_compose_path()
+    cmd.append(f"--file {docker_compose_file_path}")
+    # Add `down` command.
+    cmd.append("up")
+    service = "im_postgres_local"
+    cmd.append(service)
+    cmd = hlibtask._to_multi_line_cmd(cmd)
+    return cmd
+
+
+@task
+def im_docker_up(ctx):  # type: ignore
+    """
+    Start im container with Postgres inside.
+
+    :param ctx: `context` object
+    """
+    # Get docker down command.
+    docker_clean_up_cmd = _get_docker_up_cmd()
+    # Execute the command.
+    hlibtask._run(ctx, docker_clean_up_cmd, pty=True)
+
+
+# #############################################################################
+
+
+def _get_docker_down_cmd(volumes_remove: bool) -> str:
+    """
+    Construct the command to shut down the `im` service.
+
+    E.g.,
+    ```
+    docker-compose \
+        --file devops/compose/docker-compose.yml \
+        down \
+        -v
+    ```
+
+    :param volumes_remove: whether to remove attached volumes or not
+    """
+    cmd = ["docker-compose"]
+    # Add `docker-compose` file path.
+    docker_compose_file_path = _get_docker_compose_path()
+    cmd.append(f"--file {docker_compose_file_path}")
+    # Add `down` command.
+    cmd.append("down")
+    if volumes_remove:
+        # Use the '-v' option to remove attached volumes.
+        _LOG.warning(
+            "Removing the attached volumes resetting the state of the DB"
+        )
+        cmd.append("-v")
+    cmd = hlibtask._to_multi_line_cmd(cmd)
+    return cmd
 
 
 @task
 def im_docker_down(ctx, volumes_remove=False):  # type: ignore
     """
-    Remove containers and volumes attached to the `im app`.
+    Bring down the `im` service.
 
     By default volumes are not removed, to also remove volumes do
     `invoke im_docker_down -v`.
@@ -117,6 +171,6 @@ def im_docker_down(ctx, volumes_remove=False):  # type: ignore
     :param ctx: `context` object
     """
     # Get docker down command.
-    docker_clean_up_cmd = _get_im_docker_down(volumes_remove)
+    cmd = _get_docker_down_cmd(volumes_remove)
     # Execute the command.
-    hlibtask._run(ctx, docker_clean_up_cmd, pty=True)
+    hlibtask._run(ctx, cmd, pty=True)
