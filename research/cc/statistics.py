@@ -17,7 +17,7 @@ import helpers.dbg as hdbg
 import helpers.hpandas as hhpandas
 import im.ccxt.data.load.loader as imccdaloloa
 import im.cryptodatadownload.data.load.loader as imcrdaloloa
-import im.data.universe as imdauni
+import im_v2.data.universe as imdauni
 
 _LOG = logging.getLogger(__name__)
 
