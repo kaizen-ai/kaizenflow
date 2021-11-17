@@ -3,7 +3,7 @@ Tasks related to `im` project.
 
 Import as:
 
-import im.im_lib_tasks as imimlitas
+import im_v2.im_lib_tasks as imimlitas
 """
 
 import logging
@@ -18,18 +18,19 @@ import helpers.lib_tasks as hlibtask
 
 _LOG = logging.getLogger(__name__)
 
+
 # TODO(gp): This should be used also from the unit tests?
 def _get_docker_compose_path() -> str:
     """
     Return the absolute path to the docker-compose file for this component.
 
-    E.g., `im/devops/compose/docker-compose.yml`.
+    E.g., `im_v2/devops/compose/docker-compose.yml`.
     """
     # Get `amp` path.
     amp_path = hgit.get_amp_abs_path()
     # Get `docker-compose` file path.
     # TODO(gp): Factor out this dir.
-    docker_compose_dir = "im/devops/compose"
+    docker_compose_dir = "im_v2/devops/compose"
     compose_file_name = "docker-compose.yml"
     docker_compose_path = os.path.join(
         amp_path, docker_compose_dir, compose_file_name
@@ -57,7 +58,7 @@ def _get_docker_cmd(docker_cmd: str) -> str:
         .../devops/set_schema_im_db.py
     ```
 
-    :param cmd: command to execute inside docker
+    :param docker_cmd: command to execute inside docker
     """
     cmd = ["docker-compose"]
     # Add `docker-compose` file path.
@@ -107,6 +108,7 @@ def _get_docker_up_cmd() -> str:
     cmd.append(f"--file {docker_compose_file_path}")
     # Add `down` command.
     cmd.append("up")
+    # TODO(Grisha): add `-d` option to run in background.
     service = "im_postgres_local"
     cmd.append(service)
     cmd = hlibtask._to_multi_line_cmd(cmd)
