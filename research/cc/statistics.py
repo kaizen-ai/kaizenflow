@@ -199,7 +199,7 @@ def postprocess_stats_table(
 # TODO(Grisha): use the abstract class in #313.
 def get_loader_for_vendor(
     config: cconconf.Config,
-) -> Union[imccdaloloa.CcxtLoaderFromFile, imcrdaloloa.CddLoader]:
+) -> Union[imcdalolo.CcxtLoaderFromFile, imcdalolo.CddLoader]:
     """
     Get vendor specific loader instance.
 
@@ -208,7 +208,7 @@ def get_loader_for_vendor(
     """
     vendor = config["data"]["vendor"]
     if vendor == "CCXT":
-        loader = imccdaloloa.CcxtLoaderFromFile(
+        loader = imcdalolo.CcxtLoaderFromFile(
             root_dir=config["load"]["data_dir"],
             aws_profile=config["load"]["aws_profile"],
         )
