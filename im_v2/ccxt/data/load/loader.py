@@ -220,7 +220,7 @@ class CcxtLoaderFromDb(AbstractCcxtLoader):
         self,
         universe: Union[str, List[imv2dauni.ExchangeCurrencyTuple]],
         data_type: str,
-        table_name: str,
+        table_name: Optional[str] = None,
         start_date: Optional[pd.Timestamp] = None,
         end_date: Optional[pd.Timestamp] = None,
         **read_sql_kwargs: Dict[str, Any],
@@ -241,6 +241,7 @@ class CcxtLoaderFromDb(AbstractCcxtLoader):
         :param read_sql_kwargs: kwargs for `pd.read_sql()` query
         :return: table from database
         """
+        table_name = table_name or "ccxt_ohlcv"
         # Verify that table with specified name exists.
         hdbg.dassert_in(table_name, hsql.get_table_names(self._connection))
         # Initialize SQL query.
