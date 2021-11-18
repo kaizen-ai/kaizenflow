@@ -20,14 +20,15 @@ import os
 
 import pandas as pd
 import seaborn as sns
-from statsmodels.formula.api import ols
-from statsmodels.tsa.stattools import adfuller
+import statsmodels.tsa.stattools as smtools
+import statsmodels.formula.api as smapi
 
 import core.config.config_ as cconconf
 import core.plotting as cplot
 import helpers.s3 as hs3
-import im.data.universe as imdatuniv
+import im_v2.data.universe as imdatuniv
 import research.cc.statistics as rccstat
+
 
 # %% [markdown]
 # # Config
@@ -72,6 +73,7 @@ def compute_volatility_for_each_coin(data: pd.DataFrame, freq: str, span: int):
     Parameters: initial DataFrame from the universe, resampling frequency
     """
     data["date"] = data.index
+    #TODO(Max): Try out our resampe_df() for resampling.
     resample_close = data.groupby(
         ["currency_pair", "exchange_id", pd.Grouper(key="date", freq=freq)]
     )["close"].last()
@@ -150,7 +152,7 @@ def perform_adf_test(df_daily: pd.DataFrame):
         df = df_daily.loc[[coin]]
         df = df[df["ema_volatility"].notna()].copy()
         X = df["ema_volatility"].values
-        test_result = adfuller(X)
+        test_result = smtools.adfuller(X)
         result.loc[f"{coin}", "ADF Statistic"] = test_result[0]
         result.loc[f"{coin}", "p-value"] = test_result[1]
         final_result.append(result)
@@ -203,9 +205,9 @@ def run_regressions(df: pd.DataFrame, lag_volume: bool):
         new_coin_df = coin_df.copy()
         new_coin_df["lag_volume"] = coin_df["volume"].shift(1)
         if lag_volume:
-            model = ols('ema_volatility ~ lag_volume', new_coin_df).fit()
+            model = smapi.ols('ema_volatility ~ lag_volume', new_coin_df).fit()
         else:
-            model = ols('ema_volatility ~ volume', new_coin_df).fit()
+            model = smapi.ols('ema_volatility ~ volume', new_coin_df).fit()
         map_dict = {coin: model.summary()}
         model_results_dict.update({coin: model.summary()})
     return model_results_dict
@@ -230,6 +232,7 @@ def calculate_corr_and_plot_scatter_plots(df: pd.DataFrame, display_plot: bool):
         coin_list = vix_volume["currency_pair"].unique()
         for coin in coin_list:
             coin_df = vix_volume[vix_volume["currency_pair"] == coin]
+            # TODO(Max): check scatter-plotting functions in core.plotting.py
             sns.lmplot(x='ema_volatility',y='volume',data=coin_df,fit_reg=True, line_kws={'color': 'red'}).fig.suptitle(f"{coin}")
     return corr
 
@@ -292,6 +295,7 @@ display(test_results)
 # After test results we see that __FIL/USDT__ volatility over 1-day is failed to pass the stationarity test. The graph below confirms the persistence of trend: seems like the coin was too volatile right after the listing and failed to keep the same levels during its trading lifetime.
 
 # %%
+# TODO(Max): check scatter-plotting functions in core.plotting.py
 sns.lineplot(
     data=ema_df_daily.loc[["FIL/USDT"]].reset_index(),
     x="date",
