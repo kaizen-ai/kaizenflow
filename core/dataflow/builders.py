@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.dataflow.builders as cdtfbui
+import core.dataflow.builders as cdtfbuil
 """
 import abc
 import datetime
@@ -9,7 +9,7 @@ import logging
 from typing import Any, Dict, List, Optional, cast
 
 import core.config as cconfig
-import core.finance as cfin
+import core.finance as cofinanc
 import helpers.dbg as hdbg
 
 # TODO(gp): Use the standard imports.
@@ -237,7 +237,7 @@ class ArmaReturnsBuilder(DagBuilder):
         nid = self._get_nid(stage)
         node = ColumnTransformer(
             nid,
-            transformer_func=cfin.set_weekends_to_nan,
+            transformer_func=cofinanc.set_weekends_to_nan,
             col_mode="replace_all",
         )
         tail_nid = self._append(dag, tail_nid, node)
@@ -246,7 +246,7 @@ class ArmaReturnsBuilder(DagBuilder):
         nid = self._get_nid(stage)
         node = ColumnTransformer(
             nid,
-            transformer_func=cfin.set_non_ath_to_nan,
+            transformer_func=cofinanc.set_non_ath_to_nan,
             **config[nid].to_dict(),
         )
         tail_nid = self._append(dag, tail_nid, node)
@@ -268,7 +268,7 @@ class ArmaReturnsBuilder(DagBuilder):
         nid = self._get_nid(stage)
         node = ColumnTransformer(
             nid,
-            transformer_func=cfin.compute_ret_0,
+            transformer_func=cofinanc.compute_ret_0,
             col_rename_func=lambda x: x + "_ret_0",
             **config[nid].to_dict(),
         )

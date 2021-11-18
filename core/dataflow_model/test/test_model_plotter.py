@@ -1,9 +1,9 @@
 import logging
 
-import core.dataflow_model.model_plotter as modplot
+import core.dataflow_model.model_plotter as cdtfmomopl
 import core.dataflow_model.test.test_model_evaluator as cdmttme
 import helpers.printing as hprint
-import helpers.unit_test as hut
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -12,7 +12,7 @@ _LOG = logging.getLogger(__name__)
 #  When we add DataFrame output to the ModelPlotter functions so we can check that.
 
 
-class TestModelPlotter1(hut.TestCase):
+class TestModelPlotter1(hunitest.TestCase):
     def test_plot_multiple_tests_adjustment1(self) -> None:
         plotter, _, eval_config = self._get_example_model_plotter()
         #
@@ -128,5 +128,5 @@ class TestModelPlotter1(hut.TestCase):
     def _get_example_model_plotter(self):
         evaluator, eval_config = cdmttme.get_example_model_evaluator()
         # Build the ModelPlotter.
-        plotter = modplot.ModelPlotter(evaluator)
+        plotter = cdtfmomopl.ModelPlotter(evaluator)
         return plotter, evaluator, eval_config

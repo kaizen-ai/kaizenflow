@@ -5,9 +5,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import core.data_adapters as adpt
-import helpers.printing as prnt
-import helpers.unit_test as hut
+import core.data_adapters as cdatadap
+import helpers.printing as hprint
+import helpers.unit_test as hunitest
 
 # TODO(gp): Remove after PTask2335.
 if True:
@@ -50,17 +50,17 @@ class _TestAdapter:
 # TODO(gp): Remove after PTask2335.
 if True:
 
-    class TestCreateIterSingleIndex(hut.TestCase):
+    class TestCreateIterSingleIndex(hunitest.TestCase):
         def test1(self) -> None:
             ta = _TestAdapter()
-            data_iter = adpt.iterate_target_features(
+            data_iter = cdatadap.iterate_target_features(
                 ta._df, ta._x_vars, ta._y_vars, None
             )
             self.check_string(str(list(data_iter)))
 
         def test_shape1(self) -> None:
             ta = _TestAdapter()
-            data_iter = adpt.iterate_target_features(
+            data_iter = cdatadap.iterate_target_features(
                 ta._df, ta._x_vars, ta._y_vars, None
             )
             for data_dict in data_iter:
@@ -77,15 +77,15 @@ if True:
 
         def test_truncate1(self) -> None:
             ta = _TestAdapter()
-            data_iter = adpt.iterate_target_features(
+            data_iter = cdatadap.iterate_target_features(
                 ta._df, ta._x_vars, ta._y_vars, y_truncate=10
             )
             self.check_string(str(list(data_iter)))
 
-    class TestTransformToGluon(hut.TestCase):
+    class TestTransformToGluon(hunitest.TestCase):
         def test_transform(self) -> None:
             ta = _TestAdapter()
-            gluon_ts = adpt.transform_to_gluon(
+            gluon_ts = cdatadap.transform_to_gluon(
                 ta._df, ta._x_vars, ta._y_vars, ta._frequency
             )
             self.check_string(str(list(gluon_ts)))
@@ -93,7 +93,7 @@ if True:
         def test_transform_local_ts(self) -> None:
             ta = _TestAdapter()
             local_ts = pd.concat([ta._df, ta._df + 1], keys=[0, 1])
-            gluon_ts = adpt.transform_to_gluon(
+            gluon_ts = cdatadap.transform_to_gluon(
                 local_ts, ta._x_vars, ta._y_vars, ta._frequency
             )
             self.check_string(str(list(gluon_ts)))
@@ -101,7 +101,7 @@ if True:
         def test_transform_series_target(self) -> None:
             ta = _TestAdapter()
             y_vars = ta._y_vars[-1:]
-            gluon_ts = adpt.transform_to_gluon(
+            gluon_ts = cdatadap.transform_to_gluon(
                 ta._df, ta._x_vars, y_vars, ta._frequency
             )
             self.check_string(str(list(gluon_ts)))
@@ -109,19 +109,19 @@ if True:
         def test_transform_none_x_vars(self) -> None:
             ta = _TestAdapter()
             y_vars = ta._y_vars[-1:]
-            gluon_ts = adpt.transform_to_gluon(
+            gluon_ts = cdatadap.transform_to_gluon(
                 ta._df, None, y_vars, ta._frequency
             )
             self.check_string(str(list(gluon_ts)))
 
-    class TestTransformFromGluon(hut.TestCase):
+    class TestTransformFromGluon(hunitest.TestCase):
         @pytest.mark.skip("Disabled because of PTask2440")
         def test_transform(self) -> None:
             ta = _TestAdapter()
-            gluon_ts = adpt.transform_to_gluon(
+            gluon_ts = cdatadap.transform_to_gluon(
                 ta._df, ta._x_vars, ta._y_vars, ta._frequency
             )
-            df = adpt.transform_from_gluon(
+            df = cdatadap.transform_from_gluon(
                 gluon_ts,
                 ta._x_vars,
                 ta._y_vars,
@@ -132,10 +132,10 @@ if True:
         @pytest.mark.skip("Disabled because of PTask2440")
         def test_transform_none_x_vars(self) -> None:
             ta = _TestAdapter()
-            gluon_ts = adpt.transform_to_gluon(
+            gluon_ts = cdatadap.transform_to_gluon(
                 ta._df, None, ta._y_vars, ta._frequency
             )
-            df = adpt.transform_from_gluon(
+            df = cdatadap.transform_from_gluon(
                 gluon_ts,
                 None,
                 ta._y_vars,
@@ -146,10 +146,10 @@ if True:
         @pytest.mark.skip("Disabled because of PTask2440")
         def test_correctness(self) -> None:
             ta = _TestAdapter()
-            gluon_ts = adpt.transform_to_gluon(
+            gluon_ts = cdatadap.transform_to_gluon(
                 ta._df, ta._x_vars, ta._y_vars, ta._frequency
             )
-            inverted_df = adpt.transform_from_gluon(
+            inverted_df = cdatadap.transform_from_gluon(
                 gluon_ts,
                 ta._x_vars,
                 ta._y_vars,
@@ -162,10 +162,10 @@ if True:
         def test_correctness_local_ts(self) -> None:
             ta = _TestAdapter()
             local_ts = pd.concat([ta._df, ta._df + 1], keys=[0, 1])
-            gluon_ts = adpt.transform_to_gluon(
+            gluon_ts = cdatadap.transform_to_gluon(
                 local_ts, ta._x_vars, ta._y_vars, ta._frequency
             )
-            inverted_df = adpt.transform_from_gluon(
+            inverted_df = cdatadap.transform_from_gluon(
                 gluon_ts,
                 ta._x_vars,
                 ta._y_vars,
@@ -200,21 +200,21 @@ if True:
             test_ts = gluonts.dataset.common.ListDataset(
                 artificial_dataset.test, freq=artificial_dataset.metadata.freq
             )
-            train_df = adpt.transform_from_gluon(
+            train_df = cdatadap.transform_from_gluon(
                 train_ts, None, ["y"], index_name=None
             )
-            test_df = adpt.transform_from_gluon(
+            test_df = cdatadap.transform_from_gluon(
                 test_ts, None, ["y"], index_name=None
             )
             str_res = (
-                f"{prnt.frame('train')}{train_df}\n{prnt.frame('test')}{test_df}"
+                f"{hprint.frame('train')}{train_df}\n{hprint.frame('test')}{test_df}"
             )
             self.check_string(str_res)
 
-    class TestTransformFromGluonForecasts(hut.TestCase):
+    class TestTransformFromGluonForecasts(hunitest.TestCase):
         def test_transform1(self) -> None:
             forecasts = TestTransformFromGluonForecasts._get_mock_forecasts()
-            df = adpt.transform_from_gluon_forecasts(forecasts)
+            df = cdatadap.transform_from_gluon_forecasts(forecasts)
             self.check_string(df.to_string())
 
         @staticmethod
@@ -238,24 +238,24 @@ if True:
             return forecasts
 
 
-class TestTransformToSklean(hut.TestCase):
+class TestTransformToSklean(hunitest.TestCase):
     def test_transform1(self) -> None:
         ta = _TestAdapter()
         df = ta._df.dropna()
-        sklearn_input = adpt.transform_to_sklearn_old(df, ta._x_vars, ta._y_vars)
+        sklearn_input = cdatadap.transform_to_sklearn_old(df, ta._x_vars, ta._y_vars)
         self.check_string("x_vals:\n{}\ny_vals:\n{}".format(*sklearn_input))
 
     def test_transform_none_x_vars1(self) -> None:
         ta = _TestAdapter()
         df = ta._df.dropna()
-        sklearn_input = adpt.transform_to_sklearn_old(df, None, ta._y_vars)
+        sklearn_input = cdatadap.transform_to_sklearn_old(df, None, ta._y_vars)
         self.check_string("x_vals:\n{}\ny_vals:\n{}".format(*sklearn_input))
 
 
-class TestTransformFromSklean(hut.TestCase):
+class TestTransformFromSklean(hunitest.TestCase):
     def test_transform1(self) -> None:
         sklearn_data = TestTransformFromSklean._get_sklearn_data()
-        transformed_df = adpt.transform_from_sklearn(*sklearn_data)
+        transformed_df = cdatadap.transform_from_sklearn(*sklearn_data)
         self.check_string(transformed_df.to_string())
 
     @staticmethod

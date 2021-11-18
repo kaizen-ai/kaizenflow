@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.features as cfea
+import core.features as cofeatur
 """
 
 import collections
@@ -11,8 +11,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
-import core.signal_processing as csipro
-import core.statistics as csta
+import core.signal_processing as csigproc
+import core.statistics as costatis
 import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
@@ -297,7 +297,7 @@ def cross_feature_pair(
     name = "compressed_difference"
     if name in requested_cols:
         # Optimized for variance-1 features.
-        cross = csipro.compress_tails(
+        cross = csigproc.compress_tails(
             (ftr1 - ftr2) / np.sqrt(2), scale=compression_scale
         )
         cross = cross.rename(name)
@@ -329,7 +329,7 @@ def cross_feature_pair(
         if (quotient < 0).any():
             _log_opposite_sign_warning(feature1_col, feature2_col, name)
         cross = np.log(ftr1.abs()) - np.log(ftr2.abs())
-        cross = csipro.compress_tails(cross, scale=compression_scale)
+        cross = csigproc.compress_tails(cross, scale=compression_scale)
         cross = cross.rename(name)
         crosses.append(cross)
     #
@@ -342,7 +342,7 @@ def cross_feature_pair(
     name = "compressed_mean"
     if name in requested_cols:
         # Optimized for variance-1 features.
-        cross = csipro.compress_tails(
+        cross = csigproc.compress_tails(
             (ftr1 + ftr2) / np.sqrt(2), scale=compression_scale
         )
         cross = cross.rename(name)
@@ -356,7 +356,7 @@ def cross_feature_pair(
     name = "compressed_product"
     if name in requested_cols:
         # Optimized for variance-1 features.
-        cross = csipro.compress_tails(ftr1 * ftr2, scale=compression_scale)
+        cross = csigproc.compress_tails(ftr1 * ftr2, scale=compression_scale)
         cross = cross.rename(name)
         crosses.append(cross)
     #
@@ -365,7 +365,7 @@ def cross_feature_pair(
         if (ftr1 < 0).any() or (ftr2 < 0).any():
             _log_negative_value_warning(feature1_col, feature2_col, name)
         product = ftr1 * ftr2
-        signs = csipro.sign_normalize(product)
+        signs = csigproc.sign_normalize(product)
         cross = np.sqrt(product.abs()) * signs
         cross = cross.rename(name)
         crosses.append(cross)
@@ -595,7 +595,7 @@ def compute_effective_rank(
     _, singular_values, _ = np.linalg.svd(df, full_matrices=False)
     # Compute effective rank
     sq_singular_values = pd.Series(np.square(singular_values))
-    rank = csta.compute_cardinality(sq_singular_values, alpha=alpha)
+    rank = costatis.compute_cardinality(sq_singular_values, alpha=alpha)
     return rank
 
 

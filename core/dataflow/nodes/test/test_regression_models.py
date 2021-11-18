@@ -5,16 +5,16 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import core.artificial_signal_generators as casgen
+import core.artificial_signal_generators as carsigen
 import core.config as cconfig
-import core.dataflow.nodes.regression_models as cdnrm
+import core.dataflow.nodes.regression_models as cdtfnoremo
 import helpers.io_ as hio
-import helpers.unit_test as hut
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-class TestLinearRegression(hut.TestCase):
+class TestLinearRegression(hunitest.TestCase):
     @pytest.mark.skip(reason="This test generates the input data")
     def test_generate_input_data(self) -> None:
         """
@@ -30,7 +30,7 @@ class TestLinearRegression(hut.TestCase):
         # Read the data back and make sure it is the same.
         data2 = self._get_frozen_input()
         #
-        hut.compare_df(data, data2)
+        hunitest.compare_df(data, data2)
 
     @pytest.mark.skip(
         reason="This test fails on some computers due to AmpTask1649"
@@ -46,7 +46,7 @@ class TestLinearRegression(hut.TestCase):
         _LOG.debug("Current seed=%s", np.random.get_state()[1][0])
         _LOG.debug("data=\n%s", str(data))
         _LOG.debug("Checking against golden")
-        df_str = hut.convert_df_to_string(data, index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(data, index=True, decimals=3)
         self.check_string(df_str)
 
     def test1(self) -> None:
@@ -64,13 +64,13 @@ class TestLinearRegression(hut.TestCase):
                 "col_mode": "merge_all",
             }
         )
-        node = cdnrm.LinearRegression(
+        node = cdtfnoremo.LinearRegression(
             "linear_regression",
             **config.to_dict(),
         )
         #
         df_out = node.fit(data)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(df_out.round(3), index=True, decimals=3)
         self.check_string(df_str)
 
     def test2(self) -> None:
@@ -89,13 +89,13 @@ class TestLinearRegression(hut.TestCase):
                 "col_mode": "merge_all",
             }
         )
-        node = cdnrm.LinearRegression(
+        node = cdtfnoremo.LinearRegression(
             "linear_regression",
             **config.to_dict(),
         )
         #
         df_out = node.fit(data)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(df_out.round(3), index=True, decimals=3)
         self.check_string(df_str)
 
     def test3(self) -> None:
@@ -116,14 +116,14 @@ class TestLinearRegression(hut.TestCase):
                 "col_mode": "merge_all",
             }
         )
-        node = cdnrm.LinearRegression(
+        node = cdtfnoremo.LinearRegression(
             "linear_regression",
             **config.to_dict(),
         )
         #
         node.fit(data_fit)
         df_out = node.predict(data_predict)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(df_out.round(3), index=True, decimals=3)
         self.check_string(df_str)
 
     def test4(self) -> None:
@@ -145,13 +145,13 @@ class TestLinearRegression(hut.TestCase):
                 "col_mode": "merge_all",
             }
         )
-        node = cdnrm.LinearRegression(
+        node = cdtfnoremo.LinearRegression(
             "linear_regression",
             **config.to_dict(),
         )
         #
         df_out = node.fit(data)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(df_out.round(3), index=True, decimals=3)
         self.check_string(df_str)
 
     def test5(self) -> None:
@@ -175,14 +175,14 @@ class TestLinearRegression(hut.TestCase):
                 "col_mode": "merge_all",
             }
         )
-        node = cdnrm.LinearRegression(
+        node = cdtfnoremo.LinearRegression(
             "linear_regression",
             **config.to_dict(),
         )
         #
         node.fit(data_fit)
         df_out = node.predict(data_predict)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(df_out.round(3), index=True, decimals=3)
         self.check_string(df_str)
 
     def test6(self) -> None:
@@ -201,13 +201,13 @@ class TestLinearRegression(hut.TestCase):
                 "col_mode": "merge_all",
             }
         )
-        node = cdnrm.LinearRegression(
+        node = cdtfnoremo.LinearRegression(
             "linear_regression",
             **config.to_dict(),
         )
         #
         df_out = node.fit(data)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(df_out.round(3), index=True, decimals=3)
         self.check_string(df_str)
 
     def test7(self) -> None:
@@ -228,7 +228,7 @@ class TestLinearRegression(hut.TestCase):
                 "feature_weights": [1, 1, 1, 1],
             }
         )
-        node1 = cdnrm.LinearRegression(
+        node1 = cdtfnoremo.LinearRegression(
             "linear_regression",
             **config1.to_dict(),
         )
@@ -245,7 +245,7 @@ class TestLinearRegression(hut.TestCase):
                 "feature_weights": [1, 1, 1, 1],
             }
         )
-        node2 = cdnrm.LinearRegression(
+        node2 = cdtfnoremo.LinearRegression(
             "linear_regression",
             **config2.to_dict(),
         )
@@ -292,7 +292,7 @@ class TestLinearRegression(hut.TestCase):
                 ],
             )
         )
-        mn_process = casgen.MultivariateNormalProcess(cov=cov)
+        mn_process = carsigen.MultivariateNormalProcess(cov=cov)
         data = mn_process.generate_sample(
             {"start": "2000-01-01", "periods": 10, "freq": "B"}, seed=seed
         )

@@ -1,4 +1,5 @@
-"""Implement a residualizer pipeline that, given data (e.g., returns or features),
+"""
+Implement a residualizer pipeline that, given data (e.g., returns or features),
 computes:
 1) factors
 2) loadings

@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.dataflow.result_bundle as cdtfrb
+import core.dataflow.result_bundle as cdtfrebun
 """
 import abc
 import collections
@@ -13,11 +13,11 @@ from typing import Any, Dict, List, Optional, Set, Tuple, cast
 import pandas as pd
 
 import core.config as cconfig
-import core.dataflow.core as cdtfc
-import helpers.dbg as dbg
-import helpers.git as git
-import helpers.hparquet as hparquet
-import helpers.io_ as io_
+import core.dataflow.core as cdtfcore
+import helpers.dbg as hdbg
+import helpers.git as hgit
+import helpers.hparquet as hparque
+import helpers.io_ as hio
 import helpers.pickle_ as hpickle
 import helpers.timer as htimer
 
@@ -37,8 +37,8 @@ class ResultBundle(abc.ABC):
     def __init__(
         self,
         config: cconfig.Config,
-        result_nid: cdtfc.NodeId,
-        method: cdtfc.Method,
+        result_nid: cdtfcore.NodeId,
+        method: cdtfcore.Method,
         result_df: pd.DataFrame,
         # TODO(gp): -> str
         column_to_tags: Optional[Dict[Any, List[Any]]] = None,
@@ -59,10 +59,10 @@ class ResultBundle(abc.ABC):
         """
         self._config = config
         self._result_nid = result_nid
-        dbg.dassert_isinstance(method, cdtfc.Method)
+        hdbg.dassert_isinstance(method, cdtfcore.Method)
         self._method = method
         if result_df is not None:
-            dbg.dassert_isinstance(result_df, pd.DataFrame)
+            hdbg.dassert_isinstance(result_df, pd.DataFrame)
         self._result_df = result_df
         self._column_to_tags = column_to_tags
         self._info = info
@@ -89,11 +89,11 @@ class ResultBundle(abc.ABC):
         return self._config
 
     @property
-    def result_nid(self) -> cdtfc.NodeId:
+    def result_nid(self) -> cdtfcore.NodeId:
         return self._result_nid
 
     @property
-    def method(self) -> cdtfc.Method:
+    def method(self) -> cdtfcore.Method:
         return self._method
 
     @property
@@ -165,7 +165,7 @@ class ResultBundle(abc.ABC):
         serialized_bundle["payload"] = self._payload
         serialized_bundle["class"] = self.__class__.__name__
         if commit_hash:
-            serialized_bundle["commit_hash"] = git.get_current_commit_hash()
+            serialized_bundle["commit_hash"] = hgit.get_current_commit_hash()
         return serialized_bundle
 
     @classmethod
@@ -226,7 +226,7 @@ class ResultBundle(abc.ABC):
         """
         # TODO(gp): We should pass file_name without an extension, since the
         #  extension(s) depend on the format used.
-        io_.create_enclosing_dir(file_name, incremental=True)
+        hio.create_enclosing_dir(file_name, incremental=True)
         # Convert to a dict.
         obj = copy.copy(self)
         if use_pq:
@@ -234,16 +234,16 @@ class ResultBundle(abc.ABC):
             result_df = obj.result_df
             obj.result_df = None
             # Save the config as pickle.
-            file_name_rb = io_.change_filename_extension(
+            file_name_rb = hio.change_filename_extension(
                 file_name, "pkl", "v2_0.pkl"
             )
             hpickle.to_pickle(obj, file_name_rb, log_level=logging.DEBUG)
             # Save the `result_df` as parquet.
-            file_name_pq = io_.change_filename_extension(
+            file_name_pq = hio.change_filename_extension(
                 file_name, "pkl", "v2_0.pq"
             )
-            hparquet.to_parquet(result_df, file_name_pq, log_level=logging.DEBUG)
-            file_name_metadata_df = io_.change_filename_extension(
+            hparque.to_parquet(result_df, file_name_pq, log_level=logging.DEBUG)
+            file_name_metadata_df = hio.change_filename_extension(
                 file_name, "pkl", "v2_0.metadata_df.pkl"
             )
             metadata_df = {"index.freq": result_df.index.freq}
@@ -254,7 +254,7 @@ class ResultBundle(abc.ABC):
             res = [file_name_rb, file_name_pq, file_name_metadata_df]
         else:
             # Save the entire object as pickle.
-            file_name = io_.change_filename_extension(
+            file_name = hio.change_filename_extension(
                 file_name, "pkl", "v1_0.pkl"
             )
             hpickle.to_pickle(obj, file_name, log_level=logging.DEBUG)
@@ -278,7 +278,7 @@ class ResultBundle(abc.ABC):
         #  extension(s) depend on the format used.
         if use_pq:
             # Load the part of the `ResultBundle` stored as pickle.
-            dbg.dassert(
+            hdbg.dassert(
                 file_name.endswith("v2_0.pkl"),
                 "Invalid file_name='%s'",
                 file_name,
@@ -289,19 +289,19 @@ class ResultBundle(abc.ABC):
                 #  We load 200MB of data and then discard 198MB.
                 if hasattr(obj, "payload"):
                     obj.payload = None
-                dbg.dassert_isinstance(obj, ResultBundle)
+                hdbg.dassert_isinstance(obj, ResultBundle)
             # Load the `result_df` as parquet.
-            file_name_pq = io_.change_filename_extension(file_name, "pkl", "pq")
+            file_name_pq = hio.change_filename_extension(file_name, "pkl", "pq")
             if columns is None:
                 _LOG.warning(
                     "Loading the entire `result_df` without filtering by columns: "
                     "this is slow and requires a lot of memory"
                 )
             with htimer.TimedScope(logging.DEBUG, "Load parquet"):
-                obj.result_df = hparquet.from_parquet(
+                obj.result_df = hparque.from_parquet(
                     file_name_pq, columns=columns, log_level=logging.DEBUG
                 )
-            file_name_metadata_df = io_.change_filename_extension(
+            file_name_metadata_df = hio.change_filename_extension(
                 file_name, "pkl", "metadata_df.pkl"
             )
             metadata_df = hpickle.from_pickle(
@@ -313,22 +313,22 @@ class ResultBundle(abc.ABC):
             obj.result_df.index.freq = metadata_df.pop("index.freq")
             # TODO(gp): See AmpTask1732 about disabling this.
             # obj.result_df = _trim_df_trading_hours(obj.result_df)
-            dbg.dassert(
+            hdbg.dassert(
                 not metadata_df, "metadata_df='%s' is not empty", str(metadata_df)
             )
         else:
             # Load the `ResultBundle` as a single pickle.
-            dbg.dassert(
+            hdbg.dassert(
                 file_name.endswith("v1_0.pkl"),
                 "Invalid file_name='%s'",
                 file_name,
             )
-            dbg.dassert_is(
+            hdbg.dassert_is(
                 columns,
                 None,
                 "`columns` can be specified only with `use_pq=True`",
             )
-            file_name = io_.change_filename_extension(
+            file_name = hio.change_filename_extension(
                 file_name, "pkl", "v1_0.pkl"
             )
             obj = hpickle.from_pickle(file_name, log_level=logging.DEBUG)
@@ -388,7 +388,7 @@ class PredictionResultBundle(ResultBundle):
         :return: `Dict[tag, NamedTuple[target_col_name, prediction_col_name]]`,
             `NamedTuple` field names are "target" and "prediction"
         """
-        dbg.dassert_isinstance(tags, list)
+        hdbg.dassert_isinstance(tags, list)
         target_cols = set(self.target_col_names)
         prediction_cols = set(self.prediction_col_names)
         # TODO(gp): Move this out.
@@ -471,7 +471,7 @@ class PredictionResultBundle(ResultBundle):
         :return: intersection of `selected_cols` and `cols_for_tag`
         """
         selected_cols_for_tag = list(selected_cols.intersection(cols_for_tag))
-        dbg.dassert_eq(
+        hdbg.dassert_eq(
             len(selected_cols_for_tag),
             1,
             "Found `%s`!=`1` %s columns for tag '%s'.",
@@ -495,5 +495,5 @@ def _trim_df_trading_hours(df) -> pd.DataFrame:
     # TODO(gp): We should extend this to handle the overnight return.
     mask = (df_time >= datetime.time(9, 30)) & (df_time <= datetime.time(16, 0))
     _LOG.debug(mask.sum() / len(mask))
-    dbg.dassert_eq(len(df[~mask].dropna()), 0)
+    hdbg.dassert_eq(len(df[~mask].dropna()), 0)
     return df[mask]
