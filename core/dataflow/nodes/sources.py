@@ -378,7 +378,7 @@ class RealTimeDataSource(cdtfnobas.DataSource):
     def __init__(
         self,
         nid: cdtfcor.NodeId,
-        real_time_price_interface: cdtfprint.AbstractPriceInterface,
+        price_interface: cdtfprint.AbstractPriceInterface,
         period: str,
         multiindex_output: bool,
     ) -> None:
@@ -388,10 +388,9 @@ class RealTimeDataSource(cdtfnobas.DataSource):
         :param period: how much history is needed from the real-time node
         """
         super().__init__(nid)
-        hdbg.dassert_isinstance(
-            real_time_price_interface, cdtfprint.AbstractPriceInterface
-        )
-        self._rtpi = real_time_price_interface
+        hdbg.dassert_isinstance(price_interface, cdtfprint.AbstractPriceInterface)
+        # TODO(gp): _rtpi -> _price_interface
+        self._rtpi = price_interface
         self._period = period
         self._multiindex_output = multiindex_output
 
@@ -423,8 +422,9 @@ class RealTimeDataSource(cdtfnobas.DataSource):
             hprintin.dataframe_to_str(self.df.head()),
         )
         dfs = {}
-        for egid, df in self.df.groupby("egid"):
-            dfs[egid] = df
+        # TODO(gp): Pass the column name through the interace.
+        for asset_id, df in self.df.groupby("egid"):
+            dfs[asset_id] = df
         # Reorganize the data into the desired format.
         df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
         df = df.swaplevel(i=0, j=1, axis=1)

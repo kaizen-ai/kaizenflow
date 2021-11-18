@@ -56,7 +56,7 @@ class TestParquet1(huntes.TestCase):
         ```
                      idx instr  val1  val2
         2000-01-01     0     A    99    30
-        2000-01-02     0     A    54    46 
+        2000-01-02     0     A    54    46
         2000-01-03     0     A    85    86
         ```
         """

@@ -247,7 +247,9 @@ class DataFrameModeler:
         )
         return self._run_node(model, method)
 
-    def set_weekends_to_nan(self, method: cdataf.Method = "fit") -> DataFrameModeler:
+    def set_weekends_to_nan(
+        self, method: cdataf.Method = "fit"
+    ) -> DataFrameModeler:
         """
         Replace values over weekends with NaNs.
         """

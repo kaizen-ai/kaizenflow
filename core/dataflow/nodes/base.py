@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import core.dataflow.nodes.base as cdtfnobas
+"""
+
 import abc
 import collections
 import copy
@@ -7,9 +13,9 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
 import pandas as pd
 
-import core.dataflow.core as cdtfc
-import core.dataflow.utils as cdtfu
-import helpers.dbg as dbg
+import core.dataflow.core as cdtfcor
+import core.dataflow.utils as cdtfuti
+import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -19,7 +25,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class FitPredictNode(cdtfc.Node, abc.ABC):
+class FitPredictNode(cdtfcor.Node, abc.ABC):
     """
     Class with abstract sklearn-style `fit()` and `predict()` functions.
 
@@ -38,7 +44,7 @@ class FitPredictNode(cdtfc.Node, abc.ABC):
 
     def __init__(
         self,
-        nid: cdtfc.NodeId,
+        nid: cdtfcor.NodeId,
         inputs: Optional[List[str]] = None,
         outputs: Optional[List[str]] = None,
     ) -> None:
@@ -67,14 +73,14 @@ class FitPredictNode(cdtfc.Node, abc.ABC):
         _ = self, fit_state
 
     def get_info(
-        self, method: cdtfc.Method
+        self, method: cdtfcor.Method
     ) -> Optional[Union[str, collections.OrderedDict]]:
         """
         The returned `info` is not copied and the client should not modify it.
         """
         # TODO(Paul): Add a dassert_getattr function to use here and in core.
-        dbg.dassert_isinstance(method, str)
-        dbg.dassert(getattr(self, method))
+        hdbg.dassert_isinstance(method, str)
+        hdbg.dassert(getattr(self, method))
         if method in self._info.keys():
             return self._info[method]
         # TODO(Paul): Maybe crash if there is no info.
@@ -83,14 +89,14 @@ class FitPredictNode(cdtfc.Node, abc.ABC):
 
     # TODO(gp): values -> info
     def _set_info(
-        self, method: cdtfc.Method, values: collections.OrderedDict
+        self, method: cdtfcor.Method, values: collections.OrderedDict
     ) -> None:
         """
         The passed `info` is copied internally.
         """
-        dbg.dassert_isinstance(method, str)
-        dbg.dassert(getattr(self, method))
-        dbg.dassert_isinstance(values, collections.OrderedDict)
+        hdbg.dassert_isinstance(method, str)
+        hdbg.dassert(getattr(self, method))
+        hdbg.dassert_isinstance(values, collections.OrderedDict)
         # Save the info in the node: we make a copy just to be safe.
         self._info[method] = copy.copy(values)
 
@@ -103,23 +109,23 @@ class DataSource(FitPredictNode, abc.ABC):
 
     Derived classes inject the data as a DataFrame in this class at
     construction time (e.g., from a passed DataFrame, reading from a
-    file) This node implements the interface of `FitPredictNode`
+    file). This node implements the interface of `FitPredictNode`
     allowing to filter data for fitting and predicting based on
     intervals.
     """
 
     def __init__(
-        self, nid: cdtfc.NodeId, outputs: Optional[List[str]] = None
+        self, nid: cdtfcor.NodeId, outputs: Optional[List[str]] = None
     ) -> None:
         if outputs is None:
             outputs = ["df_out"]
         # TODO(gp): This seems a common function. We can factor it out in a
         #  `validate_string_list()`.
         # Do not allow any empty list, repetition, or empty strings.
-        dbg.dassert(outputs)
-        dbg.dassert_no_duplicates(outputs)
+        hdbg.dassert(outputs)
+        hdbg.dassert_no_duplicates(outputs)
         for output in outputs:
-            dbg.dassert_ne(output, "")
+            hdbg.dassert_ne(output, "")
         super().__init__(nid, inputs=[], outputs=outputs)
         # This data is initialized by the derived classes depending on their semantics.
         self.df: Optional[pd.DataFrame] = None
@@ -146,7 +152,7 @@ class DataSource(FitPredictNode, abc.ABC):
         """
         :return: training set as df
         """
-        dbg.dassert_is_not(self.df, None)
+        hdbg.dassert_is_not(self.df, None)
         self.df = cast(pd.DataFrame, self.df)
         #
         if self._fit_intervals is not None:
@@ -159,10 +165,10 @@ class DataSource(FitPredictNode, abc.ABC):
         else:
             fit_df = self.df
         fit_df = fit_df.copy()
-        dbg.dassert(not fit_df.empty, "`fit_df` is empty")
+        hdbg.dassert(not fit_df.empty, "`fit_df` is empty")
         # Update `info`.
         info = collections.OrderedDict()
-        info["fit_df_info"] = cdtfu.get_df_info_as_string(fit_df)
+        info["fit_df_info"] = cdtfuti.get_df_info_as_string(fit_df)
         self._set_info("fit", info)
         return {self.output_names[0]: fit_df}
 
@@ -181,7 +187,7 @@ class DataSource(FitPredictNode, abc.ABC):
         """
         :return: test set as df
         """
-        dbg.dassert_is_not(self.df, None)
+        hdbg.dassert_is_not(self.df, None)
         self.df = cast(pd.DataFrame, self.df)
         #
         if self._predict_intervals is not None:
@@ -193,25 +199,25 @@ class DataSource(FitPredictNode, abc.ABC):
             predict_df = self.df.loc[idx].copy()
         else:
             predict_df = self.df.copy()
-        dbg.dassert(not predict_df.empty)
+        hdbg.dassert(not predict_df.empty)
         # Update `info`.
         info = collections.OrderedDict()
-        info["predict_df_info"] = cdtfu.get_df_info_as_string(predict_df)
+        info["predict_df_info"] = cdtfuti.get_df_info_as_string(predict_df)
         self._set_info("predict", info)
         return {self.output_names[0]: predict_df}
 
     def get_df(self) -> pd.DataFrame:
-        dbg.dassert_is_not(self.df, None, "No DataFrame found!")
+        hdbg.dassert_is_not(self.df, None, "No DataFrame found!")
         return self.df
 
     # TODO(gp): This is a nice function to move to `dataflow/utils.py`.
     @staticmethod
     def _validate_intervals(intervals: List[Tuple[Any, Any]]) -> None:
-        dbg.dassert_isinstance(intervals, list)
+        hdbg.dassert_isinstance(intervals, list)
         for interval in intervals:
-            dbg.dassert_eq(len(interval), 2)
+            hdbg.dassert_eq(len(interval), 2)
             if interval[0] is not None and interval[1] is not None:
-                dbg.dassert_lte(interval[0], interval[1])
+                hdbg.dassert_lte(interval[0], interval[1])
 
 
 class Transformer(FitPredictNode, abc.ABC):
@@ -224,23 +230,23 @@ class Transformer(FitPredictNode, abc.ABC):
 
     # TODO(Paul): Consider giving users the option of renaming the single
     #  input and single output (but verify there is only one of each).
-    def __init__(self, nid: cdtfc.NodeId) -> None:
+    def __init__(self, nid: cdtfcor.NodeId) -> None:
         super().__init__(nid)
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        dbg.dassert_no_duplicates(df_in.columns)
+        hdbg.dassert_no_duplicates(df_in.columns)
         # Transform the input df.
         df_out, info = self._transform(df_in)
-        dbg.dassert_no_duplicates(df_out.columns)
+        hdbg.dassert_no_duplicates(df_out.columns)
         # Update `info`.
         self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        dbg.dassert_no_duplicates(df_in.columns)
+        hdbg.dassert_no_duplicates(df_in.columns)
         # Transform the input df.
         df_out, info = self._transform(df_in)
-        dbg.dassert_no_duplicates(df_out.columns)
+        hdbg.dassert_no_duplicates(df_out.columns)
         # Update `info`.
         self._set_info("predict", info)
         return {"df_out": df_out}
@@ -267,7 +273,7 @@ class YConnector(FitPredictNode):
     # TODO(Paul): Support different input/output names.
     def __init__(
         self,
-        nid: cdtfc.NodeId,
+        nid: cdtfcor.NodeId,
         connector_func: Callable[..., pd.DataFrame],
         connector_kwargs: Optional[Any] = None,
     ) -> None:
@@ -331,12 +337,12 @@ class YConnector(FitPredictNode):
         # TODO(Paul): Add meaningful info.
         df_out = self._connector_func(df_in1, df_in2, **self._connector_kwargs)
         info = collections.OrderedDict()
-        info["df_merged_info"] = cdtfu.get_df_info_as_string(df_out)
+        info["df_merged_info"] = cdtfuti.get_df_info_as_string(df_out)
         return df_out, info
 
     @staticmethod
     def _get_col_names(col_names: Optional[List[str]]) -> List[str]:
-        dbg.dassert_is_not(
+        hdbg.dassert_is_not(
             col_names,
             None,
             "No column names. This may indicate an invocation prior to graph "
@@ -377,13 +383,13 @@ class ColModeMixin:
             - `None` defaults to identity transform
         :return: dataframe with columns selected by `col_mode`
         """
-        dbg.dassert_isinstance(df_in, pd.DataFrame)
-        dbg.dassert_isinstance(df_out, pd.DataFrame)
-        dbg.dassert(cols is None or isinstance(cols, list))
+        hdbg.dassert_isinstance(df_in, pd.DataFrame)
+        hdbg.dassert_isinstance(df_out, pd.DataFrame)
+        hdbg.dassert(cols is None or isinstance(cols, list))
         cols = cols or df_out.columns.tolist()
         #
         col_rename_func = col_rename_func or (lambda x: x)
-        dbg.dassert_isinstance(col_rename_func, collections.Callable)
+        hdbg.dassert_isinstance(col_rename_func, collections.Callable)
         #
         col_mode = col_mode or "merge_all"
         # Rename transformed columns.
@@ -392,7 +398,7 @@ class ColModeMixin:
         # Select columns to return.
         if col_mode == "merge_all":
             shared_columns = df_out.columns.intersection(df_in.columns)
-            dbg.dassert(
+            hdbg.dassert(
                 shared_columns.empty,
                 "Transformed column names `%s` conflict with existing column "
                 "names `%s`.",
@@ -404,7 +410,7 @@ class ColModeMixin:
             )
         elif col_mode == "replace_selected":
             df_in_not_transformed_cols = df_in.columns.drop(cols)
-            dbg.dassert(
+            hdbg.dassert(
                 df_in_not_transformed_cols.intersection(df_out.columns).empty,
                 "Transformed column names `%s` conflict with existing column "
                 "names `%s`.",
@@ -417,8 +423,8 @@ class ColModeMixin:
         elif col_mode == "replace_all":
             pass
         else:
-            dbg.dfatal("Unsupported column mode `%s`", col_mode)
-        dbg.dassert_no_duplicates(df_out.columns.tolist())
+            hdbg.dfatal("Unsupported column mode `%s`", col_mode)
+        hdbg.dassert_no_duplicates(df_out.columns.tolist())
         return df_out
 
 
@@ -458,8 +464,8 @@ class GroupedColDfToDfColProcessor:
     @staticmethod
     def preprocess(
         df: pd.DataFrame,
-        col_groups: List[Tuple[cdtfu.NodeColumn]],
-    ) -> Dict[cdtfu.NodeColumn, pd.DataFrame]:
+        col_groups: List[Tuple[cdtfuti.NodeColumn]],
+    ) -> Dict[cdtfuti.NodeColumn, pd.DataFrame]:
         """
         Provides wrappers for transformations operating on many columns.
 
@@ -475,19 +481,19 @@ class GroupedColDfToDfColProcessor:
         """
         # The list `col_groups` should be nonempty and not contain any
         # duplicates.
-        dbg.dassert_isinstance(col_groups, list)
-        dbg.dassert_lt(
+        hdbg.dassert_isinstance(col_groups, list)
+        hdbg.dassert_lt(
             0, len(col_groups), msg="Tuple `col_group` must be nonempty."
         )
-        dbg.dassert_no_duplicates(col_groups)
+        hdbg.dassert_no_duplicates(col_groups)
         # This is an implementation requirement that we may be able to relax.
-        dbg.dassert_lte(1, len(col_groups))
+        hdbg.dassert_lte(1, len(col_groups))
         #
-        dbg.dassert_isinstance(df, pd.DataFrame)
+        hdbg.dassert_isinstance(df, pd.DataFrame)
         # Sanity check each column group tuple.
         for col_group in col_groups:
-            dbg.dassert_isinstance(col_group, tuple)
-            dbg.dassert_eq(
+            hdbg.dassert_isinstance(col_group, tuple)
+            hdbg.dassert_eq(
                 len(col_group),
                 df.columns.nlevels - 1,
                 f"Dataframe multiindex column depth incompatible with {col_group}",
@@ -495,7 +501,7 @@ class GroupedColDfToDfColProcessor:
         # Determine output dataframe column names.
         out_col_names = [col_group[-1] for col_group in col_groups]
         _LOG.debug("out_col_names=%s", out_col_names)
-        dbg.dassert_no_duplicates(out_col_names)
+        hdbg.dassert_no_duplicates(out_col_names)
         # Sort before accessing leaf columns.
         df_out = df.sort_index(axis=1)
         # Determine keys (i.e., leaf column names).
@@ -504,7 +510,7 @@ class GroupedColDfToDfColProcessor:
         # Ensure all groups have the same keys.
         for col_group in col_groups:
             col_group_keys = df_out[col_group].columns.to_list()
-            dbg.dassert_set_eq(keys, col_group_keys)
+            hdbg.dassert_set_eq(keys, col_group_keys)
         # Swap levels in `df` so that keys are top level.
         df_out = df_out.swaplevel(i=-2, j=-1, axis=1)
         # Sort by keys for faster selection (needed post `swaplevel()`).
@@ -525,14 +531,14 @@ class GroupedColDfToDfColProcessor:
                 local_dfs.append(local_df)
             local_df = pd.concat(local_dfs, axis=1)
             # Ensure that there is no column name ambiguity.
-            dbg.dassert_no_duplicates(local_df.columns.to_list())
+            hdbg.dassert_no_duplicates(local_df.columns.to_list())
             dfs[key] = local_df
         return dfs
 
     @staticmethod
     def postprocess(
-        dfs: Dict[cdtfu.NodeColumn, pd.DataFrame],
-        col_group: Tuple[cdtfu.NodeColumn],
+        dfs: Dict[cdtfuti.NodeColumn, pd.DataFrame],
+        col_group: Tuple[cdtfuti.NodeColumn],
     ) -> pd.DataFrame:
         """
         As in `_postprocess_dataframe_dict()`.
@@ -584,7 +590,7 @@ class CrossSectionalDfToDfColProcessor:
     @staticmethod
     def preprocess(
         df: pd.DataFrame,
-        col_group: Tuple[cdtfu.NodeColumn],
+        col_group: Tuple[cdtfuti.NodeColumn],
     ) -> pd.DataFrame:
         """
         As in `preprocess_multiindex_cols()`.
@@ -594,7 +600,7 @@ class CrossSectionalDfToDfColProcessor:
     @staticmethod
     def postprocess(
         df: pd.DataFrame,
-        col_group: Tuple[cdtfu.NodeColumn],
+        col_group: Tuple[cdtfuti.NodeColumn],
     ) -> pd.DataFrame:
         """
         Create a multi-indexed column dataframe from a single-indexed one.
@@ -610,14 +616,14 @@ class CrossSectionalDfToDfColProcessor:
             ```
         """
         # Perform sanity checks on dataframe.
-        dbg.dassert_isinstance(df, pd.DataFrame)
-        dbg.dassert_no_duplicates(df.columns)
-        dbg.dassert_eq(
+        hdbg.dassert_isinstance(df, pd.DataFrame)
+        hdbg.dassert_no_duplicates(df.columns)
+        hdbg.dassert_eq(
             1,
             df.columns.nlevels,
         )
         #
-        dbg.dassert_isinstance(col_group, tuple)
+        hdbg.dassert_isinstance(col_group, tuple)
         #
         if col_group:
             df = pd.concat([df], axis=1, keys=[col_group])
@@ -663,7 +669,7 @@ class SeriesToDfColProcessor:
     @staticmethod
     def preprocess(
         df: pd.DataFrame,
-        col_group: Tuple[cdtfu.NodeColumn],
+        col_group: Tuple[cdtfuti.NodeColumn],
     ) -> pd.DataFrame:
         """
         As in `preprocess_multiindex_cols()`.
@@ -672,8 +678,8 @@ class SeriesToDfColProcessor:
 
     @staticmethod
     def postprocess(
-        dfs: Dict[cdtfu.NodeColumn, pd.DataFrame],
-        col_group: Tuple[cdtfu.NodeColumn],
+        dfs: Dict[cdtfuti.NodeColumn, pd.DataFrame],
+        col_group: Tuple[cdtfuti.NodeColumn],
     ) -> pd.DataFrame:
         """
         As in `_postprocess_dataframe_dict()`.
@@ -694,7 +700,7 @@ class SeriesToSeriesColProcessor:
     @staticmethod
     def preprocess(
         df: pd.DataFrame,
-        col_group: Tuple[cdtfu.NodeColumn],
+        col_group: Tuple[cdtfuti.NodeColumn],
     ) -> pd.DataFrame:
         """
         As in `preprocess_multiindex_cols()`.
@@ -704,7 +710,7 @@ class SeriesToSeriesColProcessor:
     @staticmethod
     def postprocess(
         srs: List[pd.Series],
-        col_group: Tuple[cdtfu.NodeColumn],
+        col_group: Tuple[cdtfuti.NodeColumn],
     ) -> pd.DataFrame:
         """
         Create a multi-indexed column dataframe from `srs` and `col_group`.
@@ -715,14 +721,14 @@ class SeriesToSeriesColProcessor:
             columns
         """
         # Perform basic type checks.
-        dbg.dassert_isinstance(srs, list)
+        hdbg.dassert_isinstance(srs, list)
         for series in srs:
-            dbg.dassert_isinstance(series, pd.Series)
-        dbg.dassert_isinstance(col_group, tuple)
+            hdbg.dassert_isinstance(series, pd.Series)
+        hdbg.dassert_isinstance(col_group, tuple)
         # Create dataframe from series.
         df = pd.concat(srs, axis=1)
         # Ensure that there are no duplicates.
-        dbg.dassert_no_duplicates(df.columns)
+        hdbg.dassert_no_duplicates(df.columns)
         if col_group:
             df = pd.concat([df], axis=1, keys=[col_group])
         return df
@@ -730,7 +736,7 @@ class SeriesToSeriesColProcessor:
 
 def preprocess_multiindex_cols(
     df: pd.DataFrame,
-    col_group: Tuple[cdtfu.NodeColumn],
+    col_group: Tuple[cdtfuti.NodeColumn],
 ) -> pd.DataFrame:
     """
     Extract a single-level column dataframe from a multi-indexed one.
@@ -753,15 +759,15 @@ def preprocess_multiindex_cols(
         extracted from the `ret_0` group.
     """
     # Perform `col_group` sanity checks.
-    dbg.dassert_isinstance(col_group, tuple)
+    hdbg.dassert_isinstance(col_group, tuple)
     # TODO(Paul): Consider whether we want to allow the "degenerate case".
-    dbg.dassert_lt(0, len(col_group), msg="Tuple `col_group` must be nonempty.")
+    hdbg.dassert_lt(0, len(col_group), msg="Tuple `col_group` must be nonempty.")
     #
-    dbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert_isinstance(df, pd.DataFrame)
     # Do not allow duplicate columns.
-    dbg.dassert_no_duplicates(df.columns)
+    hdbg.dassert_no_duplicates(df.columns)
     # Ensure compatibility between dataframe column levels and col groups.
-    dbg.dassert_eq(
+    hdbg.dassert_eq(
         len(col_group),
         df.columns.nlevels - 1,
         "Dataframe multiindex column depth incompatible with config.",
@@ -773,8 +779,8 @@ def preprocess_multiindex_cols(
 
 
 def _postprocess_dataframe_dict(
-    dfs: Dict[cdtfu.NodeColumn, pd.DataFrame],
-    col_group: Tuple[cdtfu.NodeColumn],
+    dfs: Dict[cdtfuti.NodeColumn, pd.DataFrame],
+    col_group: Tuple[cdtfuti.NodeColumn],
 ) -> pd.DataFrame:
     """
     Create a multi-indexed column dataframe from keys, values, `col_group`.
@@ -787,9 +793,9 @@ def _postprocess_dataframe_dict(
           in `dfs` (which are to be the same).
         - the initial levels are given by `col_group`
     """
-    dbg.dassert_isinstance(dfs, dict)
+    hdbg.dassert_isinstance(dfs, dict)
     # Ensure that the dictionary is not empty.
-    dbg.dassert(dfs)
+    hdbg.dassert(dfs)
     # Obtain a reference index and column set.
     idx = None
     cols = None
@@ -801,19 +807,19 @@ def _postprocess_dataframe_dict(
                 "Using symbol=`%s` for reference index and columns", symbol
             )
             break
-    dbg.dassert(idx is not None)
-    dbg.dassert(cols is not None)
+    hdbg.dassert_is_not(idx, None)
+    hdbg.dassert_is_not(cols, None)
     # Perform sanity checks on dataframe.
     empty_dfs = []
     for symbol, df in dfs.items():
         # Ensure that each values of `dfs` is a nonempty dataframe.
-        dbg.dassert_isinstance(df, pd.DataFrame)
+        hdbg.dassert_isinstance(df, pd.DataFrame)
         if df.empty:
             empty_dfs.append(symbol)
             _LOG.warning("Dataframe empty for symbol=`%s`.", symbol)
         # Ensure that `df` columns do not have duplicates and are single-level.
-        dbg.dassert_no_duplicates(df.columns)
-        dbg.dassert_eq(
+        hdbg.dassert_no_duplicates(df.columns)
+        hdbg.dassert_eq(
             1,
             df.columns.nlevels,
         )
@@ -822,7 +828,7 @@ def _postprocess_dataframe_dict(
         _LOG.warning("Imputing NaNs for symbol=`%s`", symbol)
         dfs[symbol] = pd.DataFrame(index=idx, columns=cols)
     # Ensure that `col_group` is a (possibly empty) tuple.
-    dbg.dassert_isinstance(col_group, tuple)
+    hdbg.dassert_isinstance(col_group, tuple)
     # Insert symbols as a column level.
     df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
     # Swap column levels so that symbols are leaves.
@@ -847,7 +853,7 @@ class DfStacker:
 
     @staticmethod
     def preprocess(
-        dfs: Dict[cdtfu.NodeColumn, pd.DataFrame],
+        dfs: Dict[cdtfuti.NodeColumn, pd.DataFrame],
     ) -> pd.DataFrame:
         """
         Stack dataframes with identical columns into a single dataframe.
@@ -862,9 +868,9 @@ class DfStacker:
 
     @staticmethod
     def postprocess(
-        dfs: Dict[cdtfu.NodeColumn, pd.DataFrame],
+        dfs: Dict[cdtfuti.NodeColumn, pd.DataFrame],
         df: pd.DataFrame,
-    ) -> Dict[cdtfu.NodeColumn, pd.DataFrame]:
+    ) -> Dict[cdtfuti.NodeColumn, pd.DataFrame]:
         """
         Unstack dataframes according to location in `dfs`
 
@@ -881,7 +887,7 @@ class DfStacker:
         for key, value in dfs.items():
             length = value.shape[0]
             out_df = df.iloc[counter : counter + length].copy()
-            dbg.dassert_eq(
+            hdbg.dassert_eq(
                 out_df.shape[0],
                 value.shape[0],
                 msg="Dimension mismatch for key=%s" % key,
@@ -892,18 +898,18 @@ class DfStacker:
         return out_dfs
 
     @staticmethod
-    def _validate_dfs(dfs: Dict[cdtfu.NodeColumn, pd.DataFrame]) -> None:
+    def _validate_dfs(dfs: Dict[cdtfuti.NodeColumn, pd.DataFrame]) -> None:
         """
         Perform sanity checks on `dfs`.
         """
         # Ensure that `dfs` is nonempty.
-        dbg.dassert(dfs)
+        hdbg.dassert(dfs)
         # Ensure that all dataframes in `dfs` share the same index and the same
         # columns.
         key = next(iter(dfs))
         idx = dfs[key].index
         cols = dfs[key].columns.to_list()
         for key, value in dfs.items():
-            dbg.dassert_eq(cols, value.columns.to_list())
+            hdbg.dassert_eq(cols, value.columns.to_list())
             # TODO(Paul): We may want to relax the identical index requirement.
-            dbg.dassert(idx.equals(value.index))
+            hdbg.dassert(idx.equals(value.index))

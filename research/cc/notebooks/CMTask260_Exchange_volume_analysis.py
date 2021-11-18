@@ -27,7 +27,7 @@ import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprintin
 import helpers.s3 as hs3
-import im.data.universe as imdauni
+import im_v2.data.universe as imdauni
 import research.cc.statistics as rccsta
 import research.cc.volume as rccvol
 import im.ccxt.data.load.loader as imccdaloloa
@@ -82,10 +82,14 @@ compute_daily_cumul_volume_ = lambda data: rccvol.get_daily_cumul_volume(
     data, config, is_notional_volume=False
 )
 
-cumul_daily_volume = rccsta.compute_stats_for_universe(config, compute_daily_cumul_volume_)
+cumul_daily_volume = rccsta.compute_stats_for_universe(
+    config, compute_daily_cumul_volume_
+)
 
 # %%
-_LOG.info("The number of (exchanges, currency pairs) =%s", cumul_daily_volume.shape[0])
+_LOG.info(
+    "The number of (exchanges, currency pairs) =%s", cumul_daily_volume.shape[0]
+)
 cumul_daily_volume.head(3)
 
 # %% [markdown]
@@ -150,13 +154,15 @@ def get_initial_df_with_volumes(coins, exchange, is_notional_volume):
     Parameters: list of coins, exchange name
     """
     result = []
-    loader = imccdaloloa.CcxtLoader(root_dir="s3://alphamatic-data/data", aws_profile="am")
+    loader = imccdaloloa.CcxtLoader(
+        root_dir="s3://alphamatic-data/data", aws_profile="am"
+    )
     for coin in coins:
         df = loader.read_data_from_filesystem(
             exchange_id=exchange, currency_pair=coin, data_type="OHLCV"
         )
         if is_notional_volume:
-            df["volume"]=df["volume"]*df["close"]
+            df["volume"] = df["volume"] * df["close"]
         result.append(df["volume"])
     final_result = pd.concat(result, axis=1)
     return final_result
@@ -178,9 +184,9 @@ def plot_ath_volumes_comparison(df_list):
         ath_stat.loc[df.name, f"minute_avg_total_volume_ath_{df.name}"] = (
             df_ath.sum().sum() / df_ath.shape[0]
         )
-        ath_stat.loc[
-            df.name, f"minute_avg_total_volume_not_ath_{df.name}"
-        ] = (df_not_ath.sum().sum() / df_not_ath.shape[0])
+        ath_stat.loc[df.name, f"minute_avg_total_volume_not_ath_{df.name}"] = (
+            df_not_ath.sum().sum() / df_not_ath.shape[0]
+        )
         plot_df.append(ath_stat)
     plot_df = pd.concat(plot_df)
     plot_df.plot.bar(figsize=(15, 7), logy=True)
@@ -197,10 +203,16 @@ gateio_coins = imdauni.get_trade_universe("v01")["CCXT"]["gateio"]
 kucoin_coins = imdauni.get_trade_universe("v01")["CCXT"]["kucoin"]
 
 # load all the dataframes
-binance_1 = get_initial_df_with_volumes(binance_coins, "binance", is_notional_volume=True)
+binance_1 = get_initial_df_with_volumes(
+    binance_coins, "binance", is_notional_volume=True
+)
 ftx_1 = get_initial_df_with_volumes(ftx_coins, "ftx", is_notional_volume=True)
-gateio_1 = get_initial_df_with_volumes(gateio_coins, "gateio", is_notional_volume=True)
-kucoin_1 = get_initial_df_with_volumes(kucoin_coins, "kucoin", is_notional_volume=True)
+gateio_1 = get_initial_df_with_volumes(
+    gateio_coins, "gateio", is_notional_volume=True
+)
+kucoin_1 = get_initial_df_with_volumes(
+    kucoin_coins, "kucoin", is_notional_volume=True
+)
 
 # supportive variables
 exchange_list = [binance_1, ftx_1, gateio_1, kucoin_1]

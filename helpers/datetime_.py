@@ -241,7 +241,6 @@ def get_current_time(
     time through asyncio.
 
     :param tz: how to represent the returned time (e.g., "UTC", "ET", "naive")
-    :param event_loop: use
     """
     if event_loop is not None:
         # We accept only `hasyncio.EventLoop` here. If we are using standard asyncio

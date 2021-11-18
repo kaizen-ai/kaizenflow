@@ -170,7 +170,7 @@ upper_bound = hdatetim.to_datetime("2020-01-01")
 upper_bound_ET = config["data"]["timezone"].localize(upper_bound)
 # Fiter data.
 ccxt_data_filtered = cexp.filter_by_time(
-    df=ccxt_data_reindex, 
+    df=ccxt_data_reindex,
     lower_bound=lower_bound_ET,
     upper_bound=upper_bound_ET,
     inclusive="left",

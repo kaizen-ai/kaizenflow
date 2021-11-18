@@ -425,9 +425,7 @@ class Test_convert_unix_epoch_to_timestamp(huntes.TestCase):
         """
         epoch = 1631145600
         unit = "s"
-        actual = hdatetim.convert_unix_epoch_to_timestamp(
-            epoch=epoch, unit=unit
-        )
+        actual = hdatetim.convert_unix_epoch_to_timestamp(epoch=epoch, unit=unit)
         expected = pd.Timestamp("2021-09-09T00:00:00", tz="UTC")
         self.assert_equal(str(actual), str(expected))
 

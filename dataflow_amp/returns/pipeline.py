@@ -54,7 +54,7 @@ class ReturnsPipeline(dtf.DagBuilder):
                     "price_cols": ["close"],
                     # TODO(*): Rename "volume" to adhere with our naming
                     # conventions.
-                    #"volume_cols": ["volume"],
+                    # "volume_cols": ["volume"],
                     "volume_cols": ["vol"],
                 },
             },
@@ -63,7 +63,7 @@ class ReturnsPipeline(dtf.DagBuilder):
                 "func_kwargs": {
                     "rule": "5T",
                     "price_col": "close",
-                    #"volume_col": "volume",
+                    # "volume_col": "volume",
                     "volume_col": "vol",
                     "add_bar_start_timestamps": True,
                     "add_epoch": True,

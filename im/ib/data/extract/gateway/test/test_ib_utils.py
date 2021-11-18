@@ -100,11 +100,15 @@ class Test_get_historical_data(iidegt.IbExtractionTest):
         contract = ib_insync.ContFuture("ES", "GLOBEX", currency="USD")
         what_to_show = "TRADES"
         use_rth = True
-        ts1 = imidegaut.get_end_timestamp(self.ib, contract, what_to_show, use_rth)
+        ts1 = imidegaut.get_end_timestamp(
+            self.ib, contract, what_to_show, use_rth
+        )
         _LOG.debug("ts1=%s", ts1)
         #
         use_rth = False
-        ts2 = imidegaut.get_end_timestamp(self.ib, contract, what_to_show, use_rth)
+        ts2 = imidegaut.get_end_timestamp(
+            self.ib, contract, what_to_show, use_rth
+        )
         _LOG.debug("ts2=%s", ts2)
 
     def test_req_historical_data1(self) -> None:

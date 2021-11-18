@@ -15,13 +15,13 @@ import helpers.dbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 
-def _ts_to_str(ts: pd.Timestamp) -> str:
+def _timestamp_to_str(timestamp: pd.Timestamp) -> str:
     """
     Print timestamp as string only in terms of time.
 
     This is useful to simplify the debug output for intraday trading.
     """
-    val = "'%s'" % str(ts.time())
+    val = "'%s'" % str(timestamp.time())
     return val
 
 
@@ -50,29 +50,27 @@ def _create_accounting_stats(columns: List[str]) -> Accounting:
 
 
 def _append_accounting_df(
-    df_5mins: pd.DataFrame,
+    df: pd.DataFrame,
     accounting: Accounting,
     prefix: str,
 ) -> pd.DataFrame:
     """
-    Update the df with the intermediate results stored in `accounting`.
+    Update `df` with the intermediate results stored in `accounting`.
     """
     dfs = []
     for key, value in accounting.items():
         _LOG.debug("key=%s", key)
-        # Pad the data to the same length of
+        # Pad the data so that it has the same length as `df`.
         num_vals = len(accounting[key])
-        num_pad = df_5mins.shape[0] - num_vals
+        num_pad = df.shape[0] - num_vals
         hdbg.dassert_lte(0, num_pad)
         buffer = [np.nan] * num_pad
-        # Get the target column.
+        # Get the target column name.
         col_name = _get_col_name(key, prefix)
         # Create the column of the data frame.
-        df = pd.DataFrame(
-            value + buffer, index=df_5mins.index, columns=[col_name]
-        )
-        hdbg.dassert_eq(df.shape[0], df_5mins.shape[0])
-        dfs.append(df)
+        df_out = pd.DataFrame(value + buffer, index=df.index, columns=[col_name])
+        hdbg.dassert_eq(df_out.shape[0], df.shape[0])
+        dfs.append(df_out)
     # Concat all the data together with the input.
-    df_5mins = pd.concat([df_5mins] + dfs, axis=1)
-    return df_5mins
+    df_out = pd.concat([df] + dfs, axis=1)
+    return df_out
