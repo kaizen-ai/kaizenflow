@@ -30,7 +30,7 @@ import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprintin
 import helpers.s3 as hs3
-import im.data.universe as imdauni
+import im_v2.data.universe as imdatuniv
 import research.cc.statistics as rccsta
 
 # %%
@@ -60,7 +60,7 @@ def get_cmtask232_config() -> ccocon.Config:
     config.add_subconfig("data")
     config["data"]["data_type"] = "OHLCV"
     config["data"]["target_frequency"] = "T"
-    config["data"]["universe_version"] = "v0_1"
+    config["data"]["universe_version"] = "v03"
     config["data"]["vendor"] = "CCXT"
     # Column names.
     config.add_subconfig("column_names")
@@ -80,7 +80,7 @@ print(config)
 # ## Per exchange id and currency pair for a specified vendor
 
 # %%
-vendor_universe = imdauni.get_vendor_universe_as_tuples(
+vendor_universe = imdatuniv.get_vendor_universe_as_tuples(
     config["data"]["universe_version"], config["data"]["vendor"]
 )
 vendor_universe
@@ -93,6 +93,19 @@ compute_start_end_stats = lambda data: rccsta.compute_start_end_stats(
 start_end_table = rccsta.compute_stats_for_universe(
     vendor_universe, config, compute_start_end_stats
 )
+
+# %%
+# Post-process results.
+cols_to_sort_by = ["coverage", "longest_not_nan_seq_perc"]
+cols_to_round = [
+    "coverage",
+    "avg_data_points_per_day",
+    "longest_not_nan_seq_perc",
+]
+stats_table = rccsta.postprocess_stats_table(
+    start_end_table, cols_to_sort_by, cols_to_round
+)
+stats_table
 
 # %% [markdown]
 # Looking at the results we can see that all the exchanges except for Bitfinex have significantly big longest not-NaN sequence (>13% at least) in combine with high data coverage (>85%). Bitfinex has a very low data coverage and its longest not-NaN sequence lengths are less than 1 day long and comprise less than 1% of the original data. This means that Bitfinex data spottiness is too scattered and we should exclude it from our analysis until we get clearer data for it.

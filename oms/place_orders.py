@@ -1,224 +1,118 @@
 """
 Import as:
 
-import oms.place_orders as oplord
+import oms.place_orders as oplaorde
 """
 
-# We should use a RT graph executed once step at a time.
-# For now we just play back the entire thing.
+import logging
+from typing import Any, Dict, List
 
-def convert_to_csv():
-    # trade_date -- Must be set to the current live trade date.
-    #
-    # egid -- EGID the target is for.
-    #
-    # target_position -- The new position (in qty shares) you wish to enter. Positive for long, negative for short.
-    #
-    # notional_limit -- Max absolute notional allowed for an order that's sent out to move you to the target position. If the order required to move you to your target position exceeds this amount, then this target will be rejected. Concrete example: target_position=7, current_position=5. Order qty would be 2. Suppose adjprice = 12.5. Then order notional is 12.5 * 2 = $25. If 25 > the notional_limit set here, the target is rejected.
-    #
-    # adjprice -- The latest price your system has seen for this EGID. Used along notional_limit to perform the order notional check.
-    #
-    # adjprice_ccy -- Currency of last seen price. Always set to "USD" for US trading.
-    #
-    # algo -- Name of broker algo that should be used for the order that will move you to the desired target position.
-    # The remaining columns are broker algo specific and will depend on what broker algo(s) you want to use. Examples for VWAP:
-    # STARTTIME -- Start time of VWAP algo order.
-    # ENDTIME -- End time of the VWAP algo order.
-    # MAXPCTVOL -- Max participation rate (in %) of the VWAP algo order.
+import numpy as np
+import pandas as pd
+from tqdm.autonotebook import tqdm
 
-    # trade_date,egid,target_position,notional_limit,adjprice,adjprice_ccy,algo,STARTTIME,ENDTIME,MAXPCTVOL,
-    # 20211027,15151,7,26,12.5,USD,VWAP,10:19:38 EST,14:30:00 EST,3
+import core.dataflow.price_interface as cdtfprint
+import helpers.dbg as hdbg
+import helpers.hpandas as hpandas
+import helpers.htqdm as htqdm
+import helpers.printing as hprint
+import oms.order as omorder
+import oms.portfolio as omportfo
 
+_LOG = logging.getLogger(__name__)
 
-# #############################################################################
+# Optimizer file interface:
+# alpha (predictions)
+# - we have it
 
+# holdings
+# - dollar value per name
+# - cash (-1)
 
-# class Portfolio:
-#
-#     def __init__(self, strategy_id: str, account: str):
-#         self._strategy_id = strategy_id
-#         self._account = account
-#
-#     def get_bod_holdings(self, trade_date: Optional[datetime.date]) -> pd.DataFrame:
-#         """
-#         Return the current holdings.
-#         """
-#         # tradedate       2021-10-28
-#         # egid                 10005
-#         # strategyid            SAU1
-#         # account          SAU1_CAND
-#         # bod_position             0
-#         # bod_price              0.0
-#         # currency               USD
-#         # fx                     1.0
-#         return
-#
-#     def get_current_holdings(self,
-#                              trade_date: Optional[datetime.date]) -> pd.DataFrame:
-#         """
-#         Return the current holdings.
-#         """
-#         # tradedate                           2021-10-28
-#         # egid                                     10005
-#         # strategyid                                SAU1
-#         # account                              SAU1_CAND
-#         # published_dt        2021-10-28 12:01:49.414932
-#         # target_position                           None
-#         # current_position                             0
-#         # open_quantity                                0    ?
-#         # net_cost                                   0.0
-#         # currency                                   USD
-#         # fx                                         1.0
-#         # action                                     BOD    ?
-#         # bod_position                                 0
-#         # bod_price                                  0.0
-#         return
-#
-#     def get_total_wealth(ts, cash, holdings) -> float:
-#         """
-#         Return the value of the current holdings and cash.
-#         """
-#         pass
-#
-#     def place_orders(self, orders):
-#         """
-#         Place orders.
-#         """
-#         # EG version places trades to the S3.
-#         return
-#
-#     def get_pnl(self):
-#         """
-#         Return the timeseries of positions, PnL.
-#         """
-#         # SELECT * FROM eod_pnl_candidate_view
-#         #   WHERE account='SAU1_CAND' AND tradedate=current_date - 1
-#         #   ORDER by egid LIMIT 1;
-#
-#         # strategyid                                  SAU1
-#         # tradedate                             2021-10-28
-#         # account                                SAU1_CAND
-#         # egid                                       10005
-#         # cost_basis                                   0.0  ?
-#         # mark                                  795.946716  ?
-#         # avg_buy_px                                   0.0
-#         # avg_sell_px                                  0.0
-#         # qty_bought                                     0
-#         # qty_sold                                       0
-#         # quantity                                       0
-#         # position_pnl                                 0.0
-#         # trading_pnl                                  0.0
-#         # total_pnl                                    0.0
-#         # local_currency                               USD
-#         # portfolio_currency                           USD
-#         # fx                                           1.0
-#         # to_usd                                       1.0
-#         # timestamp_db          2021-10-28 20:40:05.517649
-#         return
+# risk
+# - query for Barra
+
+# spread
+# - either "our" good_bid - good_ask
+# - David's "spread"
+
+# volume
+# - P1 for market impact
+
+# Constraint
+# do not trade
+
+# config
+# - lambda
+# - various misc
 
 
-class Locates:
-
-    def __init__(self, strategy_id: str, account: str):
-        self._strategy_id = strategy_id
-        self._account = account
-
-    def get_locates(self, trade_date) -> pd.DataFrame:
-        # tradedate
-        # egid
-        # strategyid
-        # account
-        # quantity
-        # rate
-        # timestamp_update
-        # timestamp_db
-        return
-
-
-# def place_orders(df_preds: pd.DataFrame):
-#     """
-#                                      17085 ...
-#                      end_time
-#     2018-07-16 09:10:00-04:00        NaN   NaN
-#     2018-07-16 09:15:00-04:00        NaN   NaN
-#     2018-07-16 09:20:00-04:00        NaN   NaN
-#     2018-07-16 09:25:00-04:00        NaN   NaN
-#     ...                              ...   ...
-#     2018-07-20 16:40:00-04:00        NaN   NaN
-#     2018-07-20 16:45:00-04:00        NaN   NaN
-#     2018-07-20 16:50:00-04:00        NaN   NaN
-#     2018-07-20 16:55:00-04:00        NaN   NaN
-#     2018-07-20 17:00:00-04:00        NaN   NaN
-#
-#
-#     """
-#     _LOG.debug("pred=%s", pred)
-#     dbg.dassert(np.isfinite(pred), "pred=%s", pred)
-#
-#     # Mark the portfolio to market.
-#     _LOG.debug("# Mark portfolio to market")
-#     wealth = get_total_wealth(mi, ts, cash, holdings, price_column)
-#     dbg.dassert(np.isfinite(wealth), "wealth=%s", wealth)
-#
-#     # Get locates.
-#
-#     # Get holdings.
-#
-#     #
-#     orders = []
-#     for egid in egids:
-#         # Compute target position.
-#         price_0 = mi.get_instantaneous_price(ts, price_column)
-#         target_num_shares = wealth_to_allocate / price_0
-#         target_num_shares *= pred[egid]
-#
-#         #
-#         diff = target_num_shares - holdings
-#         # Create order.
-#         order = Order(mi, order_type, ts_start, ts_end, diff)
-#         orders.append(order)
-#
-#     #
-#     place_orders(orders)
-
-
-def _compute_target_positions(current_ts: pd.Timestamp,
-                              predictions: pd.Series,
-                              ) -> pd.DataFrame:
+def _compute_target_positions(
+    current_ts: pd.Timestamp,
+    predictions: pd.Series,
+    portfolio: omportfo.Portfolio,
+) -> pd.DataFrame:
     """
     Compute the target positions using `predictions`.
 
     :return: a dataframe about the holdings with various information, e.g.,
+    ```
+         curr_num_shares  price  predictions  target_wealth  target_num_shares  diff_num_shares
+    101              NaN    0.0          0.1  333333.333333                inf              NaN
+    202              NaN    0.0          0.2  666666.666667                inf              NaN
+    ```
     """
-    # Mark the portfolio to market.
-    _LOG.debug("# Mark portfolio to market")
-    wealth = portfolio.get_total_wealth(current_ts)
-    dbg.dassert(np.isfinite(wealth), "wealth=%s", wealth)
+    _LOG.debug("# Mark portfolio to market at ts=%s", current_ts)
     # Get the current holdings.
-    holdings = portfolio.get_holdings(current_ts, exclude_cash=True)
-    holdings = portfolio.mark_holdings_to_market(current_ts, holdings)
-    # Add the predictions.
-    predictions = pd.DataFrame(predictions, columns=["preds"])
-    holdings = holdings.merge(holdings, predictions, on="asset_id", how="outer")
-    hdbg.dassert_lt(0, holdings["price"])
-    holdings[["preds", "price"]].fillna(0.0, inplace=True)
+    asset_id = None
+    holdings = portfolio.get_holdings(current_ts, asset_id, exclude_cash=True)
+    holdings.set_index("asset_id", drop=True, inplace=True)
+    _LOG.debug("holdings=\n%s", hprint.dataframe_to_str(holdings))
+    # Merge the predictions to the holdings.
+    predictions = pd.DataFrame(predictions)
+    predictions.reset_index(inplace=True)
+    predictions.columns = ["asset_id", "predictions"]
+    _LOG.debug("predictions=\n%s", hprint.dataframe_to_str(predictions))
+    merged_df = holdings.merge(predictions, on="asset_id", how="outer")
+    _LOG.debug("after merge: merged_df=\n%s", hprint.dataframe_to_str(merged_df))
+    # Mark to market.
+    merged_df = portfolio.mark_holdings_to_market(current_ts, merged_df)
+    _LOG.debug("merged_df=\n%s", hprint.dataframe_to_str(merged_df))
+    columns = ["predictions", "price", "curr_num_shares"]
+    hdbg.dassert_is_subset(columns, merged_df.columns)
+    merged_df[columns] = merged_df[columns].fillna(0.0)
     # Compute the target notional positions.
-    scale_factor = preds.abs().sum()
+    # TODO(gp): This is the placeholder for the optimizer. In the next iteration
+    #  we will write files with the inputs, call Docker, and read the output.
+    scale_factor = predictions["predictions"].abs().sum()
+    _LOG.debug("scale_factor=%s", scale_factor)
     hdbg.dassert(np.isfinite(scale_factor), "scale_factor=%s", scale_factor)
     hdbg.dassert_lt(0, scale_factor)
-    holdings["target_wealth"] = wealth * holdings["preds"] / scale_factor
-    holdings["target_num_shares"] = holdings["target_wealth"] / holdings["price"]
+    #
+    wealth = portfolio.get_total_wealth(current_ts)
+    _LOG.debug("wealth=%s", wealth)
+    hdbg.dassert(np.isfinite(wealth), "wealth=%s", wealth)
+    merged_df["target_wealth"] = wealth * merged_df["predictions"] / scale_factor
+    merged_df["target_num_shares"] = (
+        merged_df["target_wealth"] / merged_df["price"]
+    )
     # Compute the target share positions.
     # TODO(gp): Round the number of shares to integers.
-    holdings["diff_num_shares"] = holdings["num_shares"] - holdings["target_num_shares"]
-    return holdings
+    merged_df["diff_num_shares"] = (
+        merged_df["curr_num_shares"] - merged_df["target_num_shares"]
+    )
+    _LOG.debug("merged_df=\n%s", hprint.dataframe_to_str(merged_df))
+    return merged_df
 
 
+# TODO(gp): We should use a RT graph executed once step at a time. For now we just
+#  play back the entire thing.
+# TODO(gp): -> update_holdings
 def place_orders(
-    # TODO(gp): -> dag_df
-    df_5mins: pd.DataFrame,
+    predictions_df: pd.DataFrame,
     execution_mode: str,
     config: Dict[str, Any],
+    # TODO(gp): -> initial_order_id
     order_id: int = 0,
 ) -> pd.DataFrame:
     """
@@ -231,42 +125,51 @@ def place_orders(
     - The columns ending with `+1` represent what happens in the next interval
       of time
 
-    :param predictions: a time-series indexed by the ts with the predictions for each
-        assets
-
+    :param predictions_df: a dataframe indexed by timestamps with one column for the
+        predictions for each asset
     :param execution_mode:
         - `batch`: place the trades for all the predictions (used in historical
            mode)
         - `real_time`: place the trades only for the last prediction as in a
            real-time set-up
     :param config:
+        - `price_interface`: the interface to get price data
         - `pred_column`: the column in the df from the DAG containing the predictions
            for all the assets
         - `mark_column`: the column from the PriceInterface to mark holdings to
           market
-        - `portfolio_interface`: object used to store positions
-        - `locate_interface`: object used to access short locates
+        - `portfolio`: object used to store positions
+        - `locates`: object used to access short locates
     :return: df with information about the placed orders
     """
-    # Check
+    # Check the config.
     price_interface = config["price_interface"]
-    hdbg.dassert_issubclass(price_interface, Portfolio)
-    portfolio = config["portfolio_interface"]
-    hdbg.dassert_issubclass(portfolio, Portfolio)
-    # Unique id of the
+    hdbg.dassert_issubclass(price_interface, cdtfprint.AbstractPriceInterface)
+    portfolio = config["portfolio"]
+    hdbg.dassert_issubclass(portfolio, omportfo.Portfolio)
+    # Check predictions.
+    hdbg.dassert_isinstance(predictions_df, pd.DataFrame)
+    hpandas.dassert_index_is_datetime(predictions_df)
+    hpandas.dassert_strictly_increasing_index(predictions_df)
+    if execution_mode == "real_time":
+        predictions_df = predictions_df.tail(1)
+    _LOG.debug("predictions_df=%s\n%s", str(predictions_df.shape), predictions_df)
+    _LOG.debug("predictions_df.index=%s", str(predictions_df.index))
     # Cache some variables used many times.
-    last_index, _ = preds[-1]
-    #price_mark_column = config["price_mark_column"]
     offset_5min = pd.DateOffset(minutes=5)
     order_type = config["order_type"]
     #
     tqdm_out = htqdm.TqdmToLogger(_LOG, level=logging.INFO)
-    num_rows = len(preds)
-    for ts, pred in tqdm(preds, total=num_rows, file=tqdm_out):
-        # _LOG.debug(hprint.frame("# ts=%s" % _ts_to_str(ts)))
-        _LOG.debug("pred=%s", pred)
-        dbg.dassert(np.isfinite(pred), "pred=%s", pred)
-        if ts == last_index:
+    num_rows = len(predictions_df)
+    iter_ = enumerate(predictions_df.iterrows())
+    for idx, (ts, predictions) in tqdm(iter_, total=num_rows, file=tqdm_out):
+        _LOG.debug("\n%s", hprint.frame("# ts=%s" % ts))
+        _LOG.debug("portfolio=\n%s", portfolio)
+        _LOG.debug("predictions=\n%s", predictions)
+        hdbg.dassert(
+            np.isfinite(predictions).all(), "predictions=%s", predictions
+        )
+        if idx == len(predictions_df) - 1:
             # For the last timestamp we only need to mark to market, but not post
             # any more orders.
             continue
@@ -276,19 +179,27 @@ def place_orders(
         ts_start = ts
         ts_end = ts + offset_5min
         #
-        df = _compute_target_positions(ts)
+        df = _compute_target_positions(ts, predictions, portfolio)
         _LOG.debug("# Place orders")
         # Create order.
-        orders: List[Order] = []
-        for ts_tmp, row in df.iteritems():
-            hdbg.dassert_eq(ts, ts_tmp)
+        orders: List[omorder.Order] = []
+        for _, row in df.iterrows():
+            _LOG.debug("row=\n%s", row)
             asset_id = row["asset_id"]
             diff_num_shares = row["diff_num_shares"]
             if diff_num_shares == 0.0:
                 # No need to place trades.
                 continue
-            order = Order(order_id, mi, ts, asset_id, order_type, ts_start, ts_end,
-                          diff_num_shares)
+            order = omorder.Order(
+                order_id,
+                price_interface,
+                ts,
+                asset_id,
+                order_type,
+                ts_start,
+                ts_end,
+                diff_num_shares,
+            )
             order_id += 1
             _LOG.debug("order=%s", order)
             orders.append(order)
@@ -297,8 +208,8 @@ def place_orders(
         #  so we can evaluate an order starting now and ending in the next time step.
         #  A more accurate simulation requires to attach "callbacks" representing
         #  actions to timestamp.
-        portfolio.place_orders(ts, orders)
-
+        next_ts = predictions_df.index[idx + 1]
+        portfolio.place_orders(ts, next_ts, orders)
     # Update the df with intermediate results.
-    df_5mins[pnl] = df_5mins[wealth].pct_change()
-    return df_5mins
+    # df_5mins[pnl] = df_5mins[wealth].pct_change()
+    # return df_5mins

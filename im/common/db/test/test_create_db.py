@@ -1,7 +1,6 @@
 import logging
 import os
 
-import psycopg2.errors as perrors
 import pytest
 
 import helpers.git as hgit
@@ -13,15 +12,14 @@ import im.common.db.create_db as imcdbcrdb
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
-class TestCreateDB(hunitest.TestCase):
-    def setUp(self):
+class TestCreateDb1(hunitest.TestCase):
+    def setUp(self) -> None:
         """
         Initialize the test database inside test container.
         """
         super().setUp()
         self.docker_compose_file_path = os.path.join(
-            hgit.get_amp_abs_path(), "im/devops/compose/docker-compose.yml"
+            hgit.get_amp_abs_path(), "im_v2/devops/compose/docker-compose.yml"
         )
         cmd = (
             "sudo docker-compose "
@@ -34,8 +32,8 @@ class TestCreateDB(hunitest.TestCase):
         port = 5432
         password = "alsdkqoen"
         user = "aljsdalsd"
-        hsql.check_db_connection(dbname, port, host)
-        self.connection, _ = hsql.get_connection(
+        hsql.wait_db_connection(dbname, port, host)
+        self.connection = hsql.get_connection(
             dbname,
             host,
             user,
@@ -44,9 +42,9 @@ class TestCreateDB(hunitest.TestCase):
             autocommit=True,
         )
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         """
-        Kill the test database.
+        Bring down the test container.
         """
         cmd = (
             "sudo docker-compose "
@@ -56,8 +54,15 @@ class TestCreateDB(hunitest.TestCase):
         hsysinte.system(cmd, suppress_output=False)
         super().tearDown()
 
+    def test_up1(self) -> None:
+        """
+        Verify that the DB is up.
+        """
+        db_list = hsql.get_db_names(self.connection)
+        _LOG.info("db_list=%s", db_list)
+
     @pytest.mark.slow()
-    def test_create_all_tables1(self):
+    def test_create_all_tables1(self) -> None:
         """
         Verify that all necessary tables are created inside the DB.
         """
@@ -84,21 +89,7 @@ class TestCreateDB(hunitest.TestCase):
         self.assertEqual(actual, expected)
 
     @pytest.mark.slow()
-    def test_remove_database(self):
-        """
-        Create database 'test_db_to_remove' and remove it.
-        """
-        imcdbcrdb.create_database(
-            self.connection,
-            new_db="test_db_to_remove",
-        )
-        imcdbcrdb.remove_database(self.connection, "test_db_to_remove")
+    def test_create_im_database(self) -> None:
+        imcdbcrdb.create_im_database(connection=self.connection, new_db="test_db")
         db_list = hsql.get_db_names(self.connection)
-        self.assertNotIn("test_db_to_remove", db_list)
-
-    def test_remove_database_invalid(self):
-        """
-        Test failed assertion for passing db name that does not exist.
-        """
-        with self.assertRaises(perrors.InvalidCatalogName):
-            imcdbcrdb.remove_database(self.connection, "db does not exist")
+        self.assertIn("test_db", db_list)

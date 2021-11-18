@@ -4,12 +4,12 @@ Import as:
 import core.dataflow.price_interface as cdtfprint
 """
 
-
 import abc
 import asyncio
 import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
+import numpy as np
 import pandas as pd
 from IPython.display import display
 
@@ -30,7 +30,6 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-# TODO(gp): -> AbstractPriceInterface
 class AbstractPriceInterface(abc.ABC):
     """
     Implement an interface to a real-time database with 1-minute bar data.
@@ -42,6 +41,7 @@ class AbstractPriceInterface(abc.ABC):
         self,
         id_col_name: str,
         ids: List[Any],
+        # TODO(gp): These are before the remapping.
         start_time_col_name: str,
         end_time_col_name: str,
         columns: Optional[List[str]],
@@ -87,15 +87,19 @@ class AbstractPriceInterface(abc.ABC):
         return self._get_wall_clock_time
 
     # TODO(gp): If the DB supports asyncio this should become async.
+    # TODO(gp): -> get_last_data
     def get_data(
         self,
         period: str,
         *,
         normalize_data: bool = True,
+        # TODO(gp): Not sure limit is really needed. We could move it to the DB
+        #  implementation.
         limit: Optional[int] = None,
     ) -> pd.DataFrame:
         """
-        Get data from the real-time DB.
+        Get data for the real-time execution where we need a certain amount of
+        data since the current timestamp.
 
         Without normalization, the returned df is the raw data from the DB and
         could look like:
@@ -116,11 +120,127 @@ class AbstractPriceInterface(abc.ABC):
         2021-07-20 09:33:00-04:00  7085 2021-07-20 09:32:00  143.535   667639
         ```
         """
-        df = self._get_data(period, normalize_data=normalize_data, limit=limit)
-        if self._column_remap:
-            hhpandas.dassert_valid_remap(df.columns.tolist(), self._column_remap)
-            df.rename(columns=self._column_remap, inplace=True)
+        # Handle `period`.
+        _LOG.debug(hprintin.to_str("period"))
+        current_time = self._get_wall_clock_time()
+        start_ts = _process_period(period, current_time)
+        end_ts = None
+        # By convention to get the last chunk of data we use the start_time column.
+        ts_col_name = self._start_time_col_name
+        asset_ids = self._ids
+        # Get the data.
+        df = self.get_data_for_interval(
+            start_ts,
+            end_ts,
+            ts_col_name,
+            asset_ids,
+            normalize_data=normalize_data,
+            limit=limit,
+        )
+        _LOG.debug("-> df=\n%s", hprintin.dataframe_to_str(df))
         return df
+
+    def get_data_at_timestamp(
+        self,
+        ts: pd.Timestamp,
+        ts_col_name: str,
+        asset_ids: Optional[List[int]],
+        *,
+        normalize_data: bool = True,
+    ) -> pd.DataFrame:
+        """
+        Return price data at a specific timestamp.
+
+        :param ts_col_name: the name of the column (before the remapping) to filter
+            on
+        :param ts: the timestamp to filter on
+        :param asset_ids: list of ids to filter on. `None` for all ids.
+        """
+        start_ts = ts - pd.Timedelta(1, unit="ns")
+        end_ts = ts + pd.Timedelta(1, unit="ns")
+        df = self.get_data_for_interval(
+            start_ts,
+            end_ts,
+            ts_col_name,
+            asset_ids,
+            normalize_data=normalize_data,
+        )
+        _LOG.debug("-> df=\n%s", hprintin.dataframe_to_str(df))
+        return df
+
+    def get_data_for_interval(
+        self,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        ts_col_name: str,
+        asset_ids: Optional[List[int]],
+        *,
+        left_close: bool = True,
+        right_close: bool = False,
+        normalize_data: bool = True,
+        limit: Optional[int] = None,
+    ) -> pd.DataFrame:
+        """
+        Return price data in [start_ts, end_ts).
+
+        :param ts_col_name: the name of the column (before the remapping) to filter
+            on
+        :param asset_ids: list of ids to filter on. `None` for all ids.
+        :param left_close, right_close: represent the type of interval
+            - E.g., [start_ts, end_ts), or (start_ts, end_ts]
+        """
+        if start_ts is not None and end_ts is not None:
+            # TODO(gp): This should be function of right_close and left_close.
+            hdbg.dassert_lt(start_ts, end_ts)
+        df = self._get_data(
+            start_ts,
+            end_ts,
+            ts_col_name,
+            asset_ids,
+            left_close,
+            right_close,
+            normalize_data,
+            limit,
+        )
+        _LOG.debug("-> df=\n%s", hprintin.dataframe_to_str(df))
+        return df
+
+    def get_twap_price(
+        self,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        ts_col_name: str,
+        asset_id: int,
+        column: str,
+    ) -> float:
+        """
+        Compute TWAP of the column `column` in (ts_start, ts_end].
+
+        E.g., TWAP for (9:30, 9:35] means avg(p(9:31), ..., p(9:35)).
+
+        This function should be called `get_twa_price()` or `get_twap()`, but alas
+        TWAP is often used as an adjective for price.
+        """
+        # Get the slice (start_ts, end_ts] of prices.
+        left_close = False
+        right_close = True
+        prices = self.get_data_for_interval(
+            start_ts,
+            end_ts,
+            ts_col_name,
+            [asset_id],
+            left_close=left_close,
+            right_close=right_close,
+            normalize_data=True,
+            limit=None,
+        )
+        hdbg.dassert_in(column, prices.columns)
+        prices = prices[column]
+        # Compute the mean value.
+        _LOG.debug("prices=\n%s", prices)
+        price: float = prices.mean()
+        hdbg.dassert(np.isfinite(price), "price=%s", price)
+        return price
 
     # TODO(gp): -> _normalize_bar_data?
     def process_data(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -175,27 +295,6 @@ class AbstractPriceInterface(abc.ABC):
             ret = ret.tz_convert("America/New_York")
         _LOG.debug("-> ret=%s", ret)
         return ret
-
-    def get_data_at_timestamp(
-        self,
-        ts: pd.Timestamp,
-        asset_ids: Optional[List[int]],
-        *,
-        normalize_data: bool = True,
-    ) -> pd.DataFrame:
-        """
-        Return price data at a specific timestamp.
-
-        :param ids: list of ids to filter on. `None` for all ids.
-        """
-        df = self._get_data_at_timestamp(
-            ts, asset_ids=asset_ids, normalize_data=normalize_data
-        )
-        # TODO(gp): Factor this out.
-        if self._column_remap:
-            hhpandas.dassert_valid_remap(df.columns.tolist(), self._column_remap)
-            df.rename(columns=self._column_remap, inplace=True)
-        return df
 
     @abc.abstractmethod
     def should_be_online(self, current_time: pd.Timestamp) -> bool:
@@ -286,25 +385,30 @@ class AbstractPriceInterface(abc.ABC):
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
         ...
 
-    # TODO(gp): We could make all params mandatory.
     @abc.abstractmethod
     def _get_data(
         self,
-        period: str,
-        normalize_data: bool = True,
-        limit: Optional[int] = None,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        ts_col_name: str,
+        asset_ids: Optional[List[int]],
+        left_close: bool,
+        right_close: bool,
+        normalize_data: bool,
+        limit: Optional[int],
     ) -> pd.DataFrame:
+        """
+        Return data in [start_ts, end_ts) for certain assets.
+
+        This is the only entrypoint to get data from the derived classes.
+        """
         ...
 
-    @abc.abstractmethod
-    def _get_data_at_timestamp(
-        self,
-        ts: pd.Timestamp,
-        asset_ids: Optional[List[int]],
-        *,
-        normalize_data: bool = True,
-    ) -> pd.DataFrame:
-        ...
+    def _remap_columns(self, df: pd.DataFrame) -> pd.DataFrame:
+        if self._column_remap:
+            hhpandas.dassert_valid_remap(df.columns.tolist(), self._column_remap)
+            df.rename(columns=self._column_remap, inplace=True)
+        return df
 
 
 # #############################################################################
@@ -370,14 +474,26 @@ class SqlPriceInterface(AbstractPriceInterface):
 
     def _get_data(
         self,
-        period: str,
-        *,
-        normalize_data: bool = True,
-        limit: Optional[int] = None,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        ts_col_name: str,
+        asset_ids: Optional[List[int]],
+        left_close: bool,
+        right_close: bool,
+        normalize_data: bool,
+        limit: Optional[int],
     ) -> pd.DataFrame:
         sort_time = True
         query = self._get_sql_query(
-            self._columns, self._ids, period, sort_time, limit
+            self._columns,
+            start_ts,
+            end_ts,
+            ts_col_name,
+            asset_ids,
+            left_close,
+            right_close,
+            sort_time,
+            limit,
         )
         _LOG.info("query=%s", query)
         df = hsql.execute_query(self.connection, query)
@@ -444,11 +560,17 @@ class SqlPriceInterface(AbstractPriceInterface):
         hdbg.dassert_eq(end_time, start_time + pd.Timedelta(minutes=1))
         return end_time
 
+    # TODO(gp): Rename ids -> asset_ids.
     def _get_sql_query(
         self,
         columns: Optional[List[str]],
-        ids: List[Any],
-        period: str,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        ts_col_name: str,
+        asset_ids: List[Any],
+        # TODO(gp): Move these close to start_ts.
+        left_close: bool,
+        right_close: bool,
         sort_time: bool,
         limit: Optional[int],
     ) -> str:
@@ -463,7 +585,7 @@ class SqlPriceInterface(AbstractPriceInterface):
 
         :param columns: columns to select from `table_name`
             - `None` means all columns.
-        :param ids: ids to select
+        :param asset_ids: ids to select
         :param period: what period to retrieve
             - E.g., `all`, `last_day`, `last_5mins`, `last_1min`
         :param sort_time: whether to sort by end_time
@@ -481,20 +603,31 @@ class SqlPriceInterface(AbstractPriceInterface):
             # E.g., "WHERE interval=60 AND region='AM'")
             query.append(f"WHERE {self._where_clause}")
         # Handle `ids`.
-        hdbg.dassert_isinstance(ids, list)
-        if len(ids) == 1:
-            ids_as_str = f"{self._id_col_name}={ids[0]}"
+        hdbg.dassert_isinstance(asset_ids, list)
+        if len(asset_ids) == 1:
+            ids_as_str = f"{self._id_col_name}={asset_ids[0]}"
         else:
-            ids_as_str = ",".join(map(str, ids))
+            ids_as_str = ",".join(map(str, asset_ids))
             ids_as_str = f"{self._id_col_name} in ({ids_as_str})"
         query.append("AND " + ids_as_str)
         # Handle `period`.
-        current_time = hdatetim.get_current_time(tz="UTC")
-        last_start_time = _process_period(period, current_time)
-        if last_start_time is not None:
+        if start_ts is not None:
+            if left_close:
+                operator = ">="
+            else:
+                operator = ">"
             query.append(
-                f"AND {self._start_time_col_name} >= "
-                + "'%s'" % _to_sql_datetime_string(last_start_time)
+                f"AND {ts_col_name} {operator} "
+                + "'%s'" % _to_sql_datetime_string(start_ts)
+            )
+        if end_ts is not None:
+            if right_close:
+                operator = "<="
+            else:
+                operator = "<"
+            query.append(
+                f"AND {ts_col_name} {operator} "
+                + "'%s'" % _to_sql_datetime_string(end_ts)
             )
         # Handle `sort_time`.
         if sort_time:
@@ -541,6 +674,7 @@ class ReplayedTimePriceInterface(AbstractPriceInterface):
         self._knowledge_datetime_col_name = knowledge_datetime_col_name
         hdbg.dassert_lte(0, delay_in_secs)
         self._delay_in_secs = delay_in_secs
+        self._allow_future_peeking = False
         #
         hdbg.dassert_is_subset(
             [
@@ -555,6 +689,11 @@ class ReplayedTimePriceInterface(AbstractPriceInterface):
             [self._end_time_col_name, self._id_col_name], inplace=True
         )
 
+    def set_allow_future_peeking(self, val: bool) -> bool:
+        old_value = val
+        self._allow_future_peeking = val
+        return old_value
+
     def should_be_online(self, current_time: pd.Timestamp) -> bool:
         return True
 
@@ -566,12 +705,20 @@ class ReplayedTimePriceInterface(AbstractPriceInterface):
 
     def _get_data(
         self,
-        period: str,
-        *,
-        normalize_data: bool = True,
-        limit: Optional[int] = None,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        ts_col_name: str,
+        asset_ids: Optional[List[int]],
+        left_close: bool,
+        right_close: bool,
+        normalize_data: bool,
+        limit: Optional[int],
     ) -> pd.DataFrame:
-        _LOG.debug(hprintin.to_str("period"))
+        _LOG.debug(
+            hprintin.to_str(
+                "start_ts end_ts ts_col_name asset_ids left_close right_close normalize_data limit"
+            )
+        )
         # Filter the data by the current time.
         current_time = self._get_wall_clock_time()
         _LOG.debug(hprintin.to_str("current_time"))
@@ -580,20 +727,43 @@ class ReplayedTimePriceInterface(AbstractPriceInterface):
             self._knowledge_datetime_col_name,
             current_time,
             delay_in_secs=self._delay_in_secs,
+            allow_future_peeking=self._allow_future_peeking,
         )
         # Handle `columns`.
         if self._columns is not None:
             hdbg.dassert_is_subset(self._columns, df_tmp.columns)
             df_tmp = df_tmp[self._columns]
-        # Handle `period`.
-        current_time = self._get_wall_clock_time()
-        last_start_time = _process_period(period, current_time)
-        if last_start_time is not None:
-            mask = df_tmp[self._start_time_col_name] >= last_start_time
+        # # Handle `period`.
+        # TODO(gp): This is inefficient. Make it faster by binary search.
+        if start_ts is not None:
+            # _LOG.debug("start_ts=%s", start_ts)
+            hdbg.dassert_in(ts_col_name, df_tmp)
+            tss = df_tmp[ts_col_name]
+            # _LOG.debug("tss=\n%s", hprintin.dataframe_to_str(tss))
+            if left_close:
+                mask = tss >= start_ts
+            else:
+                mask = tss > start_ts
+            # _LOG.debug("mask=\n%s", hprintin.dataframe_to_str(mask))
+            df_tmp = df_tmp[mask]
+        if end_ts is not None:
+            # _LOG.debug("end_ts=%s", end_ts)
+            hdbg.dassert_in(ts_col_name, df_tmp)
+            tss = df_tmp[ts_col_name]
+            # _LOG.debug("tss=\n%s", hprintin.dataframe_to_str(tss))
+            if right_close:
+                mask = tss <= end_ts
+            else:
+                mask = tss < end_ts
+            # _LOG.debug("mask=\n%s", hprintin.dataframe_to_str(mask))
             df_tmp = df_tmp[mask]
         # Handle `ids`
-        mask = df_tmp[self._id_col_name].isin(set(self._ids))
-        df_tmp = df_tmp[mask]
+        # _LOG.debug("before df_tmp=\n%s", hprintin.dataframe_to_str(df_tmp))
+        if asset_ids is not None:
+            hdbg.dassert_in(self._id_col_name, df_tmp)
+            mask = df_tmp[self._id_col_name].isin(set(asset_ids))
+            df_tmp = df_tmp[mask]
+        # _LOG.debug("after df_tmp=\n%s", hprintin.dataframe_to_str(df_tmp))
         # Handle `limit`.
         if limit:
             hdbg.dassert_lte(1, limit)
@@ -601,6 +771,7 @@ class ReplayedTimePriceInterface(AbstractPriceInterface):
         # Normalize data.
         if normalize_data:
             df_tmp = self.process_data(df_tmp)
+        _LOG.debug("-> df_tmp=\n%s", hprintin.dataframe_to_str(df_tmp))
         return df_tmp
 
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
@@ -616,27 +787,21 @@ class ReplayedTimePriceInterface(AbstractPriceInterface):
             ret = df.index.max()
         return ret
 
-    def _get_data_at_timestamp(
-        self,
-        ts: pd.Timestamp,
-        asset_ids: Optional[List[int]],
-        *,
-        normalize_data: bool = True,
-    ) -> pd.DataFrame:
-        # TODO(gp): Implement
-        raise NotImplementedError
-
 
 # #############################################################################
 # Utils.
 # #############################################################################
 
 
+# TODO(gp): These should be methods of AbstractPriceInterface.
 def _to_sql_datetime_string(dt: pd.Timestamp) -> str:
     """
-    Convert a UTC timestamp into an SQL string to query the DB.
+    Convert a timestamp into an SQL string to query the DB.
     """
-    hdatetim.dassert_has_UTC_tz(dt)
+    hdatetim.dassert_has_tz(dt)
+    # Convert to UTC, if needed.
+    if dt.tzinfo != hdatetim.get_UTC_tz().zone:
+        dt = dt.tz_convert(hdatetim.get_UTC_tz())
     ret: str = dt.strftime("%Y-%m-%d %H:%M:%S")
     return ret
 
