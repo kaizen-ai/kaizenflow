@@ -134,7 +134,9 @@ datetime,normalized_difference
 
     def test_difference_of_logs(self) -> None:
         df = self._get_df()
-        actual = cofeatur.cross_feature_pair(df, "x3", "x4", ["difference_of_logs"])
+        actual = cofeatur.cross_feature_pair(
+            df, "x3", "x4", ["difference_of_logs"]
+        )
         txt = """
 datetime,difference_of_logs
 2016-01-04 12:00:00,-2.014903

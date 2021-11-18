@@ -70,7 +70,9 @@ class TestLinearRegression(hunitest.TestCase):
         )
         #
         df_out = node.fit(data)["df_out"]
-        df_str = hunitest.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(
+            df_out.round(3), index=True, decimals=3
+        )
         self.check_string(df_str)
 
     def test2(self) -> None:
@@ -95,7 +97,9 @@ class TestLinearRegression(hunitest.TestCase):
         )
         #
         df_out = node.fit(data)["df_out"]
-        df_str = hunitest.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(
+            df_out.round(3), index=True, decimals=3
+        )
         self.check_string(df_str)
 
     def test3(self) -> None:
@@ -123,7 +127,9 @@ class TestLinearRegression(hunitest.TestCase):
         #
         node.fit(data_fit)
         df_out = node.predict(data_predict)["df_out"]
-        df_str = hunitest.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(
+            df_out.round(3), index=True, decimals=3
+        )
         self.check_string(df_str)
 
     def test4(self) -> None:
@@ -151,7 +157,9 @@ class TestLinearRegression(hunitest.TestCase):
         )
         #
         df_out = node.fit(data)["df_out"]
-        df_str = hunitest.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(
+            df_out.round(3), index=True, decimals=3
+        )
         self.check_string(df_str)
 
     def test5(self) -> None:
@@ -182,7 +190,9 @@ class TestLinearRegression(hunitest.TestCase):
         #
         node.fit(data_fit)
         df_out = node.predict(data_predict)["df_out"]
-        df_str = hunitest.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(
+            df_out.round(3), index=True, decimals=3
+        )
         self.check_string(df_str)
 
     def test6(self) -> None:
@@ -207,7 +217,9 @@ class TestLinearRegression(hunitest.TestCase):
         )
         #
         df_out = node.fit(data)["df_out"]
-        df_str = hunitest.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(
+            df_out.round(3), index=True, decimals=3
+        )
         self.check_string(df_str)
 
     def test7(self) -> None:

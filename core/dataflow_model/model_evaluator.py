@@ -865,7 +865,9 @@ class PositionComputer:
         )
         # Multiple by a kernel.
         bump_function = functools.partial(
-            csigproc.c_infinity_bump_function, a=z_mute_point, b=z_saturation_point
+            csigproc.c_infinity_bump_function,
+            a=z_mute_point,
+            b=z_saturation_point,
         )
         scale_factors = 1 - zscored_preds.apply(bump_function)
         adjusted_preds = zscored_preds.multiply(scale_factors)

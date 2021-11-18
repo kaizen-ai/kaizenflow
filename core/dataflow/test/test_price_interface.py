@@ -41,9 +41,7 @@ def generate_synthetic_db_data(
     TODO(gp):
     ```
     """
-    _LOG.debug(
-        hprint.to_str("start_datetime end_datetime columns ids freq seed")
-    )
+    _LOG.debug(hprint.to_str("start_datetime end_datetime columns ids freq seed"))
     hdateti.dassert_tz_compatible(start_datetime, end_datetime)
     hdbg.dassert_lte(start_datetime, end_datetime)
     start_dates = pd.date_range(start_datetime, end_datetime, freq=freq)

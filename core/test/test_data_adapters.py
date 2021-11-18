@@ -206,9 +206,7 @@ if True:
             test_df = cdatadap.transform_from_gluon(
                 test_ts, None, ["y"], index_name=None
             )
-            str_res = (
-                f"{hprint.frame('train')}{train_df}\n{hprint.frame('test')}{test_df}"
-            )
+            str_res = f"{hprint.frame('train')}{train_df}\n{hprint.frame('test')}{test_df}"
             self.check_string(str_res)
 
     class TestTransformFromGluonForecasts(hunitest.TestCase):
@@ -242,7 +240,9 @@ class TestTransformToSklean(hunitest.TestCase):
     def test_transform1(self) -> None:
         ta = _TestAdapter()
         df = ta._df.dropna()
-        sklearn_input = cdatadap.transform_to_sklearn_old(df, ta._x_vars, ta._y_vars)
+        sklearn_input = cdatadap.transform_to_sklearn_old(
+            df, ta._x_vars, ta._y_vars
+        )
         self.check_string("x_vals:\n{}\ny_vals:\n{}".format(*sklearn_input))
 
     def test_transform_none_x_vars1(self) -> None:
