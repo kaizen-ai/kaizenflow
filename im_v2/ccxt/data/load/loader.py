@@ -1,8 +1,7 @@
-# TODO(Dan2): Move everything to im_v2 repo when it is created.
 """
 Import as:
 
-import im.ccxt.data.load.abstract_loader as icdlablo
+import im_v2.ccxt.data.load.loader as im2cdllo
 """
 
 import abc
@@ -199,6 +198,9 @@ class AbstractCcxtLoader(abc.ABC):
         return data
 
 
+# #############################################################################
+
+
 class CcxtLoaderFromDb(AbstractCcxtLoader):
     def __init__(
         self, connection: hsql.DbConnection,
@@ -278,6 +280,8 @@ class CcxtLoaderFromDb(AbstractCcxtLoader):
         transformed_data = self.transform(data, data_type)
         return transformed_data
 
+
+# #############################################################################
 
 class CcxtLoaderFromFile(AbstractCcxtLoader):
     def __init__(
