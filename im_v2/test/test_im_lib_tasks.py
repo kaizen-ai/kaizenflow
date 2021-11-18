@@ -1,28 +1,14 @@
 import logging
-import os
 
 import pytest
 
-import helpers.git as hgit
+import helpers.lib_tasks as hlibtask
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
 import im_v2.im_lib_tasks as imimlitas  # pylint: disable=no-name-in-module
 
 
 _LOG = logging.getLogger(__name__)
-
-
-# TODO(gp): This should come from the im_lib_tasks.py
-def _get_docker_compose_file_path() -> str:
-    """
-    Get file path to `docker-compose.yml` file.
-
-    :return: `docker-compose.yml` file path
-    """
-    amp_path = hgit.get_amp_abs_path()
-    file_path = "im_v2/devops/compose/docker-compose.yml"
-    full_file_path = os.path.join(amp_path, file_path)
-    return full_file_path
 
 
 class TestGetImDockerCmd(hunitest.TestCase):
@@ -32,7 +18,7 @@ class TestGetImDockerCmd(hunitest.TestCase):
         """
         cmd = "bash"
         actual = imimlitas._get_docker_cmd(cmd)
-        docker_compose_path = _get_docker_compose_file_path()
+        docker_compose_path = hlibtask._get_base_docker_compose_path()
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
@@ -47,7 +33,7 @@ class TestGetImDockerCmd(hunitest.TestCase):
         """
         cmd = "im/devops/docker_scripts/set_shema_im_db.py"
         actual = imimlitas._get_docker_cmd(cmd)
-        docker_compose_path = _get_docker_compose_file_path()
+        docker_compose_path = hlibtask._get_base_docker_compose_path()
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
@@ -63,7 +49,7 @@ class TestGetImDockerDown(hunitest.TestCase):
         Check the command line to only remove containers.
         """
         actual = imimlitas._get_docker_down_cmd(volumes_remove=False)
-        docker_compose_path = _get_docker_compose_file_path()
+        docker_compose_path = hlibtask._get_base_docker_compose_path()
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
@@ -76,7 +62,7 @@ class TestGetImDockerDown(hunitest.TestCase):
         Check the command line to remove containers and volumes.
         """
         actual = imimlitas._get_docker_down_cmd(volumes_remove=True)
-        docker_compose_path = _get_docker_compose_file_path()
+        docker_compose_path = hlibtask._get_base_docker_compose_path()
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
