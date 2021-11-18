@@ -16,7 +16,7 @@ import types
 from typing import Any, Callable
 
 import helpers.dbg as hdbg
-import helpers.introspection as hintrosp
+import helpers.introspection as hintros
 import helpers.io_ as hio
 import helpers.timer as htimer
 
@@ -74,7 +74,7 @@ def to_pickle(
         else:
             raise ValueError("Invalid backend='%s'" % backend)
     # Report time and size.
-    file_size = hintrosp.format_size(os.path.getsize(file_name))
+    file_size = hintros.format_size(os.path.getsize(file_name))
     _LOG.log(
         log_level,
         "Saved '%s' (size=%s, time=%.1fs)",
@@ -123,7 +123,7 @@ def from_pickle(
         else:
             raise ValueError("Invalid backend='%s'" % backend)
     # Report time and size.
-    file_size = hintrosp.format_size(os.path.getsize(file_name))
+    file_size = hintros.format_size(os.path.getsize(file_name))
     _LOG.log(
         log_level,
         "Read '%s' (size=%s, time=%.1fs)",

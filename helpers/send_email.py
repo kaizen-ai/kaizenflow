@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.send_email as hseema
+import helpers.send_email as hsenemai
 """
 
 import email.mime.multipart as emmult

@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import core.optimizer_baseline as coptbase
+"""
+
 # Portfolio weighting functions
 
 # Currently these functions use the built-in Pandas rolling var/cov.

@@ -3,7 +3,7 @@ import unittest
 
 import pandas as pd
 
-import core.plotting as plot
+import core.plotting as coplotti
 
 _LOG = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ class Test_select_series_to_remove(unittest.TestCase):
 
         df = pd.DataFrame(data, columns=["A", "B", "C", "D", "E"])
         expected = ["C"]
-        actual = plot.select_series_to_keep(df.corr(), 0.7)
+        actual = coplotti.select_series_to_keep(df.corr(), 0.7)
         self.assertListEqual(actual, expected)
 
     def test_select_series_to_remove2(self) -> None:
@@ -40,7 +40,7 @@ class Test_select_series_to_remove(unittest.TestCase):
 
         df = pd.DataFrame(data, columns=["A", "B", "C", "D", "E"])
         expected = ["B"]
-        actual = plot.select_series_to_keep(df.corr(), 0.5)
+        actual = coplotti.select_series_to_keep(df.corr(), 0.5)
         self.assertListEqual(actual, expected)
 
     def test_select_series_to_remove3(self) -> None:
@@ -57,7 +57,7 @@ class Test_select_series_to_remove(unittest.TestCase):
 
         df = pd.DataFrame(data, columns=["A", "B", "C", "D", "E"])
         expected = ["A"]
-        actual = plot.select_series_to_keep(df.corr(), 0.3)
+        actual = coplotti.select_series_to_keep(df.corr(), 0.3)
         self.assertListEqual(actual, expected)
 
     def test_select_series_to_remove4(self) -> None:
@@ -76,7 +76,7 @@ class Test_select_series_to_remove(unittest.TestCase):
 
         df = pd.DataFrame(data, columns=["A", "B", "C", "D", "E", "F", "G"])
         expected = ["A", "D", "G"]
-        actual = plot.select_series_to_keep(df.corr(), 0.7)
+        actual = coplotti.select_series_to_keep(df.corr(), 0.7)
         self.assertListEqual(actual, expected)
 
     def test_select_series_to_remove5(self) -> None:
@@ -95,5 +95,5 @@ class Test_select_series_to_remove(unittest.TestCase):
 
         df = pd.DataFrame(data, columns=["A", "B", "C", "D", "E", "F", "G"])
         expected = ["F", "G"]
-        actual = plot.select_series_to_keep(df.corr(), 0.3)
+        actual = coplotti.select_series_to_keep(df.corr(), 0.3)
         self.assertListEqual(actual, expected)

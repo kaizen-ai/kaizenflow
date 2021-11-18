@@ -16,6 +16,10 @@ Handle backups / export / import of Google Drive directory.
 # Moving data.
 > infra/gdrive.py --action export --src_dir gp_drive:alphamatic --dst_dir tmp.alphamatic
 > infra/gdrive.py --action import --src_dir tmp.alphamatic --dst_dir alphamatic_drive:alphamatic
+
+Import as:
+
+import dev_scripts.infra.gdrive as dscingdr
 """
 
 #  Configure rclone
@@ -45,11 +49,11 @@ import logging
 import os
 import sys
 
-import helpers.datetime_ as datetime_
-import helpers.dbg as dbg
-import helpers.io_ as io_
-import helpers.parser as prsr
-import helpers.system_interaction as si
+import helpers.datetime_ as hdateti
+import helpers.dbg as hdbg
+import helpers.io_ as hio
+import helpers.parser as hparser
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -57,9 +61,9 @@ _LOG = logging.getLogger(__name__)
 
 
 def _create_dst_dir(dst_dir):
-    dbg.dassert(dst_dir, msg="Need to specify --dst_dir")
+    hdbg.dassert(dst_dir, msg="Need to specify --dst_dir")
     dst_dir = os.path.abspath(dst_dir)
-    io_.create_dir(dst_dir, incremental=True)
+    hio.create_dir(dst_dir, incremental=True)
     return dst_dir
 
 
@@ -67,7 +71,7 @@ def _rclone_ls(remote_src_dir, timestamp, log_dir):
     cmd = ["rclone ls", remote_src_dir]
     cmd = " ".join(cmd)
     output_file = "%s/gdrive.%s.txt" % (log_dir, timestamp)
-    si.system(cmd, output_file=output_file)
+    hsysinte.system(cmd, output_file=output_file)
 
 
 def _rclone_copy_from_gdrive(remote_src_dir, local_dst_dir, log_dir, dry_run):
@@ -78,14 +82,14 @@ def _rclone_copy_from_gdrive(remote_src_dir, local_dst_dir, log_dir, dry_run):
         "--drive-export-formats docx,xlsx,pptx,svg",
         # "--drive-shared-with-me",
     ]
-    verbosity = dbg.get_logger_verbosity()
+    verbosity = hdbg.get_logger_verbosity()
     if verbosity <= logging.DEBUG:
         cmd.append("-vv")
     #
     cmd = " ".join(cmd)
     #
     output_file = log_dir + "/rclone_copy_from_gdrive.txt"
-    si.system(
+    hsysinte.system(
         cmd,
         output_file=output_file,
         tee=True,
@@ -95,7 +99,7 @@ def _rclone_copy_from_gdrive(remote_src_dir, local_dst_dir, log_dir, dry_run):
 
 
 def _rclone_copy_to_gdrive(local_src_dir, remote_dst_dir, log_dir, dry_run):
-    dbg.dassert_exists(local_src_dir)
+    hdbg.dassert_exists(local_src_dir)
     cmd = [
         "rclone copy",
         local_src_dir,
@@ -104,14 +108,14 @@ def _rclone_copy_to_gdrive(local_src_dir, remote_dst_dir, log_dir, dry_run):
         "--drive-allow-import-name-change",
         # "--drive-shared-with-me"
     ]
-    verbosity = dbg.get_logger_verbosity()
+    verbosity = hdbg.get_logger_verbosity()
     if verbosity <= logging.DEBUG:
         cmd.append("-vv")
     #
     cmd = " ".join(cmd)
     #
     output_file = log_dir + "/rclone_copy_to_gdrive.log"
-    si.system(
+    hsysinte.system(
         cmd,
         output_file=output_file,
         tee=True,
@@ -140,32 +144,32 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--dst_dir", action="store", default=None, help="Destination dir"
     )
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
     log_dir = "./tmp.gdrive.log"
     log_dir = os.path.abspath(log_dir)
-    io_.create_dir(log_dir, incremental=not args.incremental)
-    timestamp = datetime_.get_timestamp("naive_ET")
+    hio.create_dir(log_dir, incremental=not args.incremental)
+    timestamp = hdateti.get_timestamp("naive_ET")
     if args.action == "ls":
         cmd = ["rclone ls", args.src_dir]
         cmd = " ".join(cmd)
-        si.system(cmd, suppress_output=False)
+        hsysinte.system(cmd, suppress_output=False)
         sys.exit(0)
     if args.action == "backup":
         # Create temp dir.
         temp_dir = "./tmp.gdrive"
         temp_dir = os.path.abspath(temp_dir)
-        io_.create_dir(temp_dir, incremental=not args.incremental)
+        hio.create_dir(temp_dir, incremental=not args.incremental)
         # Create dst dir.
         dst_dir = _create_dst_dir(args.dst_dir)
         # List files.
-        dbg.dassert(args.src_dir, msg="Need to specify --src__dir")
+        hdbg.dassert(args.src_dir, msg="Need to specify --src__dir")
         _rclone_ls(args.src_dir, timestamp, log_dir)
         # Clone data inside the temp dir.
         _LOG.info("# Downloading data from %s to %s ...", args.src_dir, dst_dir)
@@ -174,10 +178,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
         if not args.skip_tgz:
             _LOG.info("# Archiving ...")
             tar_file = "%s/gdrive.%s.tgz" % (dst_dir, timestamp)
-            dbg.dassert_not_exists(tar_file)
+            hdbg.dassert_not_exists(tar_file)
             output_file = log_dir + "/tar.log"
             cmd = "tar -cf %s -C %s ." % (tar_file, temp_dir)
-            si.system(
+            hsysinte.system(
                 cmd, output_file=output_file, tee=True, dry_run=args.dry_run
             )
             _LOG.info("tar_file is at '%s'", tar_file)
@@ -190,14 +194,14 @@ def _main(parser: argparse.ArgumentParser) -> None:
         else:
             _LOG.info("# Cleaning up ...")
             cmd = "rm -rf %s" % temp_dir
-            si.system(cmd, dry_run=args.dry_run)
+            hsysinte.system(cmd, dry_run=args.dry_run)
         # Delete old ones.
         # find $base -type f -mtime +3 -delete
     if args.action == "export":
         # Create dst dir.
         dst_dir = _create_dst_dir(args.dst_dir)
         # List files.
-        dbg.dassert(args.src_dir, msg="Need to specify --src__dir")
+        hdbg.dassert(args.src_dir, msg="Need to specify --src__dir")
         _rclone_ls(args.src_dir, timestamp, log_dir)
         # Clone data inside the temp dir.
         _LOG.info("# Exporting data from %s to %s ...", args.src_dir, dst_dir)

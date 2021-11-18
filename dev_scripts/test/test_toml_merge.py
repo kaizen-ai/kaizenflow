@@ -4,8 +4,8 @@ from typing import Any, MutableMapping
 
 import toml
 
-import dev_scripts.toml_merge as toml_merge
-import helpers.unit_test as hut
+import dev_scripts.toml_merge as dsctomer
+import helpers.unit_test as hunitest
 
 
 def _to_toml(txt: str) -> MutableMapping[str, Any]:
@@ -16,7 +16,7 @@ def _to_toml(txt: str) -> MutableMapping[str, Any]:
     return toml.load(StringIO(txt))
 
 
-class TestMergeToml(hut.TestCase):
+class TestMergeToml(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test that merging two equal toml files return the same one.
@@ -26,7 +26,7 @@ class TestMergeToml(hut.TestCase):
         pyproj2 = self._get_pyproj1()
         pyprojs = [_to_toml(pyproj1), _to_toml(pyproj2)]
         # Call function to test.
-        act = toml_merge._merge_toml(pyprojs=pyprojs)
+        act = dsctomer._merge_toml(pyprojs=pyprojs)
         # Define expected output.
         exp = pyproj1
         exp = _to_toml(exp)
@@ -60,7 +60,7 @@ class TestMergeToml(hut.TestCase):
         """
         pyprojs = [_to_toml(pyproj1), _to_toml(pyproj2)]
         # Call function to test.
-        act = toml_merge._merge_toml(pyprojs=pyprojs)
+        act = dsctomer._merge_toml(pyprojs=pyprojs)
         # Define expected output.
         exp = """
         [tool.poetry]
@@ -108,7 +108,7 @@ class TestMergeToml(hut.TestCase):
         pyprojs = [_to_toml(pyproj1), _to_toml(pyproj2)]
         # Call function to test.
         with self.assertRaises(ValueError):
-            _ = toml_merge._merge_toml(pyprojs=pyprojs)
+            _ = dsctomer._merge_toml(pyprojs=pyprojs)
 
     @staticmethod
     def _get_pyproj1() -> str:

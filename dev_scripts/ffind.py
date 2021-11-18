@@ -10,6 +10,10 @@
 
 # Look only for files.
 > ffind.py stocktwits --only_files
+
+Import as:
+
+import dev_scripts.ffind as dscrffin
 """
 
 import argparse
@@ -17,8 +21,8 @@ import logging
 import os
 import sys
 
-import helpers.dbg as dbg
-import helpers.parser as prsr
+import helpers.dbg as hdbg
+import helpers.parser as hparser
 
 _log = logging.getLogger(__name__)
 
@@ -38,13 +42,13 @@ def _parse() -> argparse.ArgumentParser:
         help="First param is regex, optional second param is dirname",
     )
     parser.add_argument("--only_files", action="store_true", help="Only files")
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level)
+    hdbg.init_logger(verbosity=args.log_level)
     positional = args.positional
     # Error check.
     if len(positional) < 1:
@@ -58,7 +62,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         dir_name = positional[1]
     else:
         dir_name = "."
-    dbg.dassert_exists(dir_name)
+    hdbg.dassert_exists(dir_name)
     name = "*" + positional[0].rstrip("").lstrip("") + "*"
     #
     cmd = "find %s" % dir_name

@@ -1,14 +1,16 @@
 """
 Entry point for `run_experiment.py`.
 
-import core.dataflow_model.master_experiment as cdmme
+Import as:
+
+import core.dataflow_model.master_experiment as cdtfmomaex
 """
 
 import logging
 
 import core.config as cconfig
 import core.dataflow as cdataf
-import core.dataflow_model.utils as cdtfut
+import core.dataflow_model.utils as cdtfmouti
 
 _LOG = logging.getLogger(__name__)
 
@@ -49,7 +51,7 @@ def run_experiment(config: cconfig.Config) -> None:
     # Save results.
     # TODO(gp): We could return a `ResultBundle` and have
     # `run_experiment_stub.py` save it.
-    cdtfut.save_experiment_result_bundle(config, result_bundle)
+    cdtfmouti.save_experiment_result_bundle(config, result_bundle)
 
 
 def run_rolling_experiment(config: cconfig.Config) -> None:
@@ -66,13 +68,13 @@ def run_rolling_experiment(config: cconfig.Config) -> None:
     for training_datetime_str, fit_rb, pred_rb in dag_runner.fit_predict():
         payload = cconfig.get_config_from_nested_dict({"config": config})
         fit_rb.payload = payload
-        cdtfut.save_experiment_result_bundle(
+        cdtfmouti.save_experiment_result_bundle(
             config,
             fit_rb,
             file_name="fit_result_bundle_" + training_datetime_str + ".pkl",
         )
         pred_rb.payload = payload
-        cdtfut.save_experiment_result_bundle(
+        cdtfmouti.save_experiment_result_bundle(
             config,
             pred_rb,
             file_name="predict_result_bundle_" + training_datetime_str + ".pkl",

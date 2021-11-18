@@ -22,7 +22,7 @@ import io
 import pandas as pd
 
 import core.config as cconfig
-import optimizer.single_period_optimization as opspo
+import optimizer.single_period_optimization as osipeopt
 
 # %%
 idx = ["asset1", "asset2", "asset3", "cash"]
@@ -79,7 +79,7 @@ dict_ = {
 spo_config = cconfig.get_config_from_nested_dict(dict_)
 
 # %%
-opspo.perform_single_period_optimization(spo_config)
+osipeopt.perform_single_period_optimization(spo_config)
 
 # %%
 pd.read_csv(io.StringIO(out_buffer.getvalue()), index_col=0)

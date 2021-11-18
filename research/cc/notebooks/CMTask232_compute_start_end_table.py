@@ -25,13 +25,13 @@
 import logging
 import os
 
-import core.config.config_ as ccocon
+import core.config.config_ as cconconf
 import helpers.dbg as hdbg
 import helpers.env as henv
-import helpers.printing as hprintin
+import helpers.printing as hprint
 import helpers.s3 as hs3
-import im_v2.data.universe as imdatuniv
-import research.cc.statistics as rccsta
+import im_v2.data.universe as imv2dauni
+import research.cc.statistics as rccstat
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -40,18 +40,18 @@ _LOG = logging.getLogger(__name__)
 
 _LOG.info("%s", henv.get_system_signature()[0])
 
-hprintin.config_notebook()
+hprint.config_notebook()
 
 
 # %% [markdown]
 # # Config
 
 # %%
-def get_cmtask232_config() -> ccocon.Config:
+def get_cmtask232_config() -> cconconf.Config:
     """
     Get task232-specific config.
     """
-    config = ccocon.Config()
+    config = cconconf.Config()
     # Load parameters.
     config.add_subconfig("load")
     config["load"]["aws_profile"] = "am"
@@ -80,17 +80,17 @@ print(config)
 # ## Per exchange id and currency pair for a specified vendor
 
 # %%
-vendor_universe = imdatuniv.get_vendor_universe_as_tuples(
+vendor_universe = imv2dauni.get_vendor_universe_as_tuples(
     config["data"]["universe_version"], config["data"]["vendor"]
 )
 vendor_universe
 
 # %%
-compute_start_end_stats = lambda data: rccsta.compute_start_end_stats(
+compute_start_end_stats = lambda data: rccstat.compute_start_end_stats(
     data, config
 )
 
-start_end_table = rccsta.compute_stats_for_universe(
+start_end_table = rccstat.compute_stats_for_universe(
     vendor_universe, config, compute_start_end_stats
 )
 
@@ -102,7 +102,7 @@ cols_to_round = [
     "avg_data_points_per_day",
     "longest_not_nan_seq_perc",
 ]
-stats_table = rccsta.postprocess_stats_table(
+stats_table = rccstat.postprocess_stats_table(
     start_end_table, cols_to_sort_by, cols_to_round
 )
 stats_table
@@ -121,7 +121,7 @@ start_end_table
 # ## Per currency pair
 
 # %%
-currency_start_end_table = rccsta.compute_start_end_table_by_currency(
+currency_start_end_table = rccstat.compute_start_end_table_by_currency(
     start_end_table
 )
 currency_start_end_table

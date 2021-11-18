@@ -8,16 +8,20 @@
 > grsync.py --src_dir $HOME/src/.../... --config amp --action diff
 > grsync.py --src_dir $HOME/src/.../... --config amp --action diff_verb
 > grsync.py --src_dir $HOME/src/.../.../tr --config amp --action diff_verb
+
+Import as:
+
+import dev_scripts.grsync as dscrgrsy
 """
 
 import argparse
 import logging
 import os
 
-import helpers.dbg as dbg
-import helpers.io_ as io_
-import helpers.parser as prsr
-import helpers.system_interaction as si
+import helpers.dbg as hdbg
+import helpers.io_ as hio
+import helpers.parser as hparser
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -70,7 +74,7 @@ def _get_rsync_cmd(
     #   /Users/saggese/src/.../.../tr
     #   gp@104.248.187.204:/home/gp/src/...
     #   --dry-run
-    dbg.dassert_eq(os.path.basename(src_dir), os.path.basename(dst_dir))
+    hdbg.dassert_eq(os.path.basename(src_dir), os.path.basename(dst_dir))
     dst_dir = os.path.dirname(dst_dir)
     dst = "%s@%s:%s" % (remote_user_name, dst_ip, dst_dir)
     if local_to_remote:
@@ -84,7 +88,7 @@ def _process_rsync_file_list(src_file, dst_file):
     # rsync --itemize-changes -n -avzu --exclude ... /Users/saggese/src/.../.../tr
     # rsync --itemize-changes -n -avzu --exclude ... gp@104.248.187.204:/home/gp/src/.../tr
     # Load.
-    txt = io_.from_file(src_file).split("\n")
+    txt = hio.from_file(src_file).split("\n")
     _LOG.debug("Read file '%s'", src_file)
     # Process.
     txt_out = []
@@ -101,7 +105,7 @@ def _process_rsync_file_list(src_file, dst_file):
         # 0                   1     2          3        4
         # drwxr-xr-x          1,312 2019/09/05 17:51:42 ...
         data = line.split()
-        dbg.dassert_lte(4, len(data), "line=%s", str(data))
+        hdbg.dassert_lte(4, len(data), "line=%s", str(data))
         perms, size, date, time = data[:4]
         file_name = data[4:]
         _ = date, time
@@ -112,7 +116,7 @@ def _process_rsync_file_list(src_file, dst_file):
         txt_out.append(" ".join(data))
     # Save.
     txt_out = "\n".join(txt_out)
-    io_.to_file(dst_file, txt_out)
+    hio.to_file(dst_file, txt_out)
     _LOG.debug("Written file '%s'", dst_file)
 
 
@@ -136,7 +140,7 @@ def _get_list_files_cmd(
         "tmp.local_all.txt" if not local_to_remote else "tmp.remote_all.txt"
     )
     cmd += " >%s" % dst_file
-    si.system(cmd)
+    hsysinte.system(cmd)
     #
     if not verbose:
         src_file = dst_file
@@ -174,10 +178,10 @@ def _main():
     parser.add_argument(
         "--config", action="store", required=True, help="IP of remote machine"
     )
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     #
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level)
+    hdbg.init_logger(verbosity=args.log_level)
     #
     src_dir = args.src_dir
     if args.config == "":
@@ -187,19 +191,19 @@ def _main():
         dst_dir = "/home/gp/src"
         if args.src_dir:
             base_dir = ""
-            dbg.dassert_in(base_dir, src_dir)
-            dbg.dassert_in(base_dir, dst_dir)
+            hdbg.dassert_in(base_dir, src_dir)
+            hdbg.dassert_in(base_dir, dst_dir)
             idx = src_dir.index(base_dir) + len(base_dir)
             sub_dir = src_dir[idx:]
             dst_dir += "/" + sub_dir
             dst_dir = os.path.abspath(dst_dir)
     else:
         raise ValueError("Invalid config='%s'" % args.config)
-    dbg.dassert_is_not(dst_dir, None)
+    hdbg.dassert_is_not(dst_dir, None)
     # Check that both dirs exist.
-    dbg.dassert_is_not(args.src_dir, None)
+    hdbg.dassert_is_not(args.src_dir, None)
     src_dir = os.path.abspath(args.src_dir)
-    dbg.dassert_exists(src_dir)
+    hdbg.dassert_exists(src_dir)
     #
     print("src_dir=%s" % args.src_dir)
     print("dst_dir=%s" % dst_dir)
@@ -207,7 +211,7 @@ def _main():
     #
     if not args.no_check:
         cmd = 'ssh %s@%s "ls %s"' % (remote_user_name, remote_ip, dst_dir)
-        rc = si.system(cmd, abort_on_error=False)
+        rc = hsysinte.system(cmd, abort_on_error=False)
         if rc != 0:
             msg = "Can't find remote dir '%s' on '%s@%s'" % (
                 dst_dir,
@@ -232,7 +236,7 @@ def _main():
             execute,
             local_to_remote,
         )
-        si.system(cmd, suppress_output=False)
+        hsysinte.system(cmd, suppress_output=False)
     elif args.action == "rsync_both_ways":
         raise RuntimeError("Not implemented yet")
         force = False
@@ -250,7 +254,7 @@ def _main():
                 execute,
                 local_to_remote,
             )
-            si.system(cmd, suppress_output=False)
+            hsysinte.system(cmd, suppress_output=False)
         #
     elif args.action in ("diff", "diff_verb"):
         files = []
@@ -268,9 +272,9 @@ def _main():
         # Save a script to diff.
         vimdiff_cmd = "vimdiff %s %s" % (files[0], files[1])
         diff_script = "./tmp_diff.sh"
-        io_.to_file(diff_script, vimdiff_cmd)
+        hio.to_file(diff_script, vimdiff_cmd)
         cmd = "chmod +x " + diff_script
-        si.system(cmd)
+        hsysinte.system(cmd)
         msg = (
             "Diff with:",
             "> " + vimdiff_cmd,
@@ -280,7 +284,7 @@ def _main():
         msg = "\n".join(msg)
         _LOG.error(msg)
     else:
-        dbg.dfatal("Invalid action='%s'" % args.action)
+        hdbg.dfatal("Invalid action='%s'" % args.action)
 
 
 if __name__ == "__main__":

@@ -21,13 +21,13 @@ import os
 
 import core.config as cconfig
 import core.dataflow as cdataf
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.env as henv
-import helpers.pickle_ as hpickl
+import helpers.pickle_ as hpickle
 import helpers.printing as hprint
 
 # %%
-dbg.init_logger(verbosity=logging.INFO)
+hdbg.init_logger(verbosity=logging.INFO)
 
 _LOG = logging.getLogger(__name__)
 
@@ -79,6 +79,6 @@ try:
         config["meta", "experiment_result_dir"], "result_bundle.pkl"
     )
     if True:
-        hpickl.to_pickle(result_bundle.to_config().to_dict(), path)
+        hpickle.to_pickle(result_bundle.to_config().to_dict(), path)
 except AssertionError:
     _LOG.warning("Unable to serialize results.")

@@ -2,6 +2,10 @@
 
 """
 # TODO(Sergey): add docs
+
+Import as:
+
+import dev_scripts.old.linter.pre_pr_checklist as dsolpprch
 """
 
 import argparse
@@ -11,9 +15,9 @@ import os
 import sys
 from typing import List
 
-import helpers.dbg as dbg
-import helpers.parser as prsr
-import helpers.system_interaction as si
+import helpers.dbg as hdbg
+import helpers.parser as hparser
+import helpers.system_interaction as hsysinte
 
 _log = logging.getLogger(__name__)
 
@@ -40,7 +44,7 @@ def _parse() -> argparse.ArgumentParser:
         choices=ACTIONS,
         help=f"Pick action to perform. \n\tActions: {ACTIONS}",
     )
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
@@ -53,7 +57,7 @@ def _get_reference_conda_list() -> List[str]:
 
 def _get_local_conda_list() -> List[str]:
     cmd = "conda list | sort"
-    _, data = si.system_to_string(cmd)
+    _, data = hsysinte.system_to_string(cmd)
     return data.split("\n")
 
 
@@ -68,25 +72,25 @@ def _check_packages() -> str:
 
 def _get_modified_files() -> str:
     cmd = 'git status -s | grep " M"'
-    _, output = si.system_to_string(cmd, abort_on_error=False)
+    _, output = hsysinte.system_to_string(cmd, abort_on_error=False)
     return output
 
 
 def _run_linter_check() -> None:
     modified_files = _get_modified_files()
-    dbg.dassert(
+    hdbg.dassert(
         len(modified_files) == 0,
         msg=f"Commit changes or stash them.\n{modified_files}",
     )
     amp_path = os.environ["AMP"]
     cmd = f"{amp_path}/dev_scripts/linter_master_report.py"
-    _, output = si.system_to_string(cmd, abort_on_error=False)
+    _, output = hsysinte.system_to_string(cmd, abort_on_error=False)
     print(output.strip())
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level)
+    hdbg.init_logger(verbosity=args.log_level)
     if args.action == ACTION_RUN_LINTER:
         _run_linter_check()
 

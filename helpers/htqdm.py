@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.htqdm as hhtqdm
+import helpers.htqdm as htqdm
 """
 import io
 import logging

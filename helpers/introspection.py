@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.introspection as hintrosp
+import helpers.introspection as hintros
 """
 
 import collections.abc as cabc

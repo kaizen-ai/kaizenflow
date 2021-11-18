@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.telegram_notify.telegram_notify as htenotenot
+import helpers.telegram_notify.telegram_notify as htnoteno
 """
 
 import json

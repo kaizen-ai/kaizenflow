@@ -2,6 +2,10 @@
 
 """
 Calculate execution time of imports.
+
+Import as:
+
+import dev_scripts.measure_import_times as dsmeimti
 """
 
 import argparse
@@ -11,10 +15,10 @@ from typing import Dict, List, Tuple
 
 from tqdm import tqdm
 
-import helpers.dbg as dbg
-import helpers.io_ as io_
-import helpers.parser as prsr
-import helpers.system_interaction as si
+import helpers.dbg as hdbg
+import helpers.io_ as hio
+import helpers.parser as hparser
+import helpers.system_interaction as hsysinte
 from helpers.timer import Timer
 
 _LOG = logging.getLogger(__name__)
@@ -46,7 +50,7 @@ class ImportTimeChecker:
         :return: list of all found module name
         """
         _LOG.debug("file_name=%s", file_name)
-        text = io_.from_file(file_name)
+        text = hio.from_file(file_name)
         modules = re.findall(self.match_pattern, text)
         _LOG.debug("  -> modules=%s", modules)
         return modules
@@ -62,7 +66,7 @@ class ImportTimeChecker:
         if module not in self.checked_modules:
             # execute python "import module" to measure.
             timer = Timer()
-            si.system(f'python -c "import {module}"')
+            hsysinte.system(f'python -c "import {module}"')
             timer.stop()
             elapsed_time = round(timer.get_elapsed(), 3)
             self.checked_modules[module] = elapsed_time
@@ -73,7 +77,7 @@ class ImportTimeChecker:
         Traverse files and directory and find all modules and measure execution time
         :return: None
         """
-        file_names = io_.find_files(self.dir_name, "*.py")
+        file_names = hio.find_files(self.dir_name, "*.py")
         modules = set()
         for file_name in file_names:
             _LOG.debug("filename: %s", file_name)
@@ -134,13 +138,13 @@ def _parse() -> argparse.ArgumentParser:
         help="search directory (default: current directory)",
         default=".",
     )
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
     checker = ImportTimeChecker(args.directory)
     checker.measure_time_for_all_modules()

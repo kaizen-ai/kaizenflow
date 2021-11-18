@@ -10,6 +10,10 @@ Manage custom git pre-commit hooks.
 
 # Check hook status:
 > install_hooks.py --action status
+
+Import as:
+
+import dev_scripts.git.git_hooks.install_hooks as dsgghinho
 """
 
 import argparse
@@ -17,10 +21,10 @@ import logging
 import os
 import sys
 
-import helpers.dbg as dbg
-import helpers.git as git
-import helpers.parser as prsr
-import helpers.system_interaction as si
+import helpers.dbg as hdbg
+import helpers.git as hgit
+import helpers.parser as hparser
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -41,18 +45,18 @@ def _main() -> None:
         choices=["install", "remove", "status"],
         action="store",
     )
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     #
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level)
+    hdbg.init_logger(verbosity=args.log_level)
     # Get amp dir.
-    amp_dir = git.get_amp_abs_path()
+    amp_dir = hgit.get_amp_abs_path()
     _LOG.info("amp_dir=%s", amp_dir)
-    dbg.dassert_dir_exists(amp_dir)
+    hdbg.dassert_dir_exists(amp_dir)
     # Get the dir with the Git hooks to install.
     src_dir = os.path.join(amp_dir, "dev_scripts/git/git_hooks")
     _LOG.info("src_dir=%s", src_dir)
-    dbg.dassert_dir_exists(src_dir)
+    hdbg.dassert_dir_exists(src_dir)
     # Find the location to install the Git hooks.
     # In a super-module:
     # > git rev-parse --git-path hooks
@@ -61,10 +65,10 @@ def _main() -> None:
     # > git rev-parse --git-path hooks
     # /Users/saggese/src/.../.git/modules/amp/hooks
     cmd = "git rev-parse --git-path hooks"
-    rc, target_dir = si.system_to_one_line(cmd)
+    rc, target_dir = hsysinte.system_to_one_line(cmd)
     _ = rc
     _LOG.info("target_dir=%s", target_dir)
-    dbg.dassert_dir_exists(target_dir)
+    hdbg.dassert_dir_exists(target_dir)
     #
     if args.action == "install":
         _LOG.info("Installing hooks into '%s'", target_dir)
@@ -73,14 +77,14 @@ def _main() -> None:
     elif args.action == "status":
         _LOG.info("Checking status of hooks in the repo '%s'", src_dir)
         cmd = "ls -l %s" % src_dir
-        si.system(cmd, suppress_output=False, log_level=logging.DEBUG)
+        hsysinte.system(cmd, suppress_output=False, log_level=logging.DEBUG)
         #
         _LOG.info("Checking status of hooks in '%s'", target_dir)
         cmd = "ls -l %s" % target_dir
-        si.system(cmd, suppress_output=False, log_level=logging.DEBUG)
+        hsysinte.system(cmd, suppress_output=False, log_level=logging.DEBUG)
         sys.exit(0)
     else:
-        dbg.dfatal("Invalid action='%s'" % args.action)
+        hdbg.dfatal("Invalid action='%s'" % args.action)
     # Scan the hooks.
     for hook in _GIT_PHASE_HOOKS:
         # Target location for the hooks.
@@ -90,27 +94,27 @@ def _main() -> None:
             # The name of the script hook is the same as the hook phase.
             hook_file = os.path.join(src_dir, hook) + ".py"
             hook_file = os.path.abspath(hook_file)
-            dbg.dassert_file_exists(hook_file)
+            hdbg.dassert_file_exists(hook_file)
             _LOG.info("Creating %s -> %s", hook_file, target_file)
             # Create link.
             cmd = "ln -sf %s %s" % (hook_file, target_file)
-            si.system(cmd, log_level=logging.DEBUG)
+            hsysinte.system(cmd, log_level=logging.DEBUG)
             # Make the scripts executable.
             cmd = "chmod +x %s" % hook_file
-            si.system(cmd, log_level=logging.DEBUG)
+            hsysinte.system(cmd, log_level=logging.DEBUG)
             cmd = "chmod +x %s" % target_file
-            si.system(cmd, log_level=logging.DEBUG)
+            hsysinte.system(cmd, log_level=logging.DEBUG)
         elif args.action == "remove":
             _LOG.info("Remove hook '%s'", target_file)
             if os.path.exists(target_file):
                 cmd = "unlink %s" % target_file
-                si.system(cmd, log_level=logging.DEBUG)
+                hsysinte.system(cmd, log_level=logging.DEBUG)
             else:
                 _LOG.warning(
                     "Nothing to do since '%s' doesn't exist", target_file
                 )
         else:
-            dbg.dfatal("Invalid action='%s'" % args.action)
+            hdbg.dfatal("Invalid action='%s'" % args.action)
 
 
 if __name__ == "__main__":

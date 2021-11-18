@@ -2,12 +2,12 @@ import logging
 import os
 
 import core.dataflow as dtf
-import helpers.unit_test as hut
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-class Test_dataflow_core_visualization1(hut.TestCase):
+class Test_dataflow_core_visualization1(hunitest.TestCase):
     def test_draw1(self) -> None:
         """
         Build a DAG and draw it in IPython.

@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+"""
+Import as:
+
+import dev_scripts.old.create_conda.install.check_develop_packages as dsoccicdp
+"""
+
 import os
 import sys
 
@@ -19,10 +25,10 @@ import dev_scripts._bootstrap as boot  # isort:skip
 boot.bootstrap(_AMP_REL_PATH)
 
 # pylint: wrong-import-position
-import helpers.env as env  # isort:skip
+import helpers.env as henv  # isort:skip
 
 if __name__ == "__main__":
-    txt, failed = env.get_system_signature()
+    txt, failed = henv.get_system_signature()
     print(txt)
     if failed:
         raise RuntimeError("Can't import some libraries")

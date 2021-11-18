@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import dev_scripts.git.git_hooks.utils as dsgghout
+"""
+
 # NOTE: This file should depend only on Python standard libraries.
 import compileall
 import inspect

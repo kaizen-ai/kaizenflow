@@ -5,16 +5,16 @@ from typing import Any, List, Tuple, cast
 import pytest
 
 import core.config as cconfig
-import helpers.dbg as dbg
-import helpers.git as git
+import helpers.dbg as hdbg
+import helpers.git as hgit
 import helpers.printing as hprint
-import helpers.system_interaction as si
-import helpers.unit_test as hut
+import helpers.system_interaction as hsysinte
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-class TestRunNotebook1(hut.TestCase):
+class TestRunNotebook1(hunitest.TestCase):
     """
     Run notebooks without failures.
     """
@@ -66,7 +66,7 @@ class TestRunNotebook1(hut.TestCase):
 # #############################################################################
 
 
-class TestRunNotebook2(hut.TestCase):
+class TestRunNotebook2(hunitest.TestCase):
     """
     Run experiments that fail.
     """
@@ -160,16 +160,16 @@ class TestRunNotebook2(hut.TestCase):
 
 
 def _get_files() -> Tuple[str, str]:
-    amp_path = git.get_amp_abs_path()
+    amp_path = hgit.get_amp_abs_path()
     #
     exec_file = os.path.join(amp_path, "dev_scripts/notebooks/run_notebook.py")
-    dbg.dassert_file_exists(exec_file)
+    hdbg.dassert_file_exists(exec_file)
     # This notebook fails/succeeds depending on the return code stored inside
     # each config.
     notebook_file = os.path.join(
         amp_path, "dev_scripts/notebooks/test/simple_notebook.ipynb"
     )
-    dbg.dassert_file_exists(notebook_file)
+    hdbg.dassert_file_exists(notebook_file)
     return exec_file, notebook_file
 
 
@@ -241,16 +241,16 @@ def _compare_dir_signature(self: Any, dir_name: str, expected: str) -> None:
     Compute the signature of dir `dir_name` to the expected value `expected`.
     """
     # Compute and compare the dir signature.
-    actual = hut.get_dir_signature(
+    actual = hunitest.get_dir_signature(
         dir_name, include_file_content=False, num_lines=None
     )
     # Remove references like:
     # $GIT_ROOT/core/dataflow_model/test/TestRunExperiment1.test3/tmp.scratch
     actual = actual.replace(dir_name, "$SCRATCH_SPACE")
-    actual = hut.purify_txt_from_client(actual)
+    actual = hunitest.purify_txt_from_client(actual)
     # Remove lines like:
     # $GIT_ROOT/core/dataflow_model/.../log.20210705_100612.txt
-    actual = hut.filter_text(r"^.*/log\.\S+\.txt$", actual)
+    actual = hunitest.filter_text(r"^.*/log\.\S+\.txt$", actual)
     expected = hprint.dedent(expected)
     self.assert_equal(actual, expected, fuzzy_match=True)
 
@@ -275,7 +275,9 @@ def run_cmd_line(
     _LOG.debug(
         "expected_pass=%s abort_on_error=%s", expected_pass, abort_on_error
     )
-    rc = si.system(cmd, abort_on_error=abort_on_error, suppress_output=False)
+    rc = hsysinte.system(
+        cmd, abort_on_error=abort_on_error, suppress_output=False
+    )
     if expected_pass:
         self.assertEqual(rc, 0)
     else:

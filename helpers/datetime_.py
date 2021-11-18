@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.datetime_ as hdatetim
+import helpers.datetime_ as hdateti
 """
 
 # TODO(gp): -> hdatetime

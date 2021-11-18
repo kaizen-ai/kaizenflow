@@ -3,7 +3,7 @@ When this module is imported certain annoying warnings are disabled.
 
 Import as:
 
-import helpers.warnings_helpers as hwah
+import helpers.warnings_helpers as hwarnin
 """
 
 _WARNING = "\033[33mWARNING\033[0m"

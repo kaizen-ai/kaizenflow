@@ -2,19 +2,19 @@ import logging
 
 import core.config as cconfig
 import core.dataflow as dtf
-import dataflow_amp.features.pipeline as dafp
-import helpers.unit_test as hut
+import dataflow_amp.features.pipeline as dtfamfepip
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-class TestFeaturePipeline(hut.TestCase):
+class TestFeaturePipeline(hunitest.TestCase):
     """
     Test the feature pipeline end-to-end.
     """
 
     def test1(self) -> None:
-        dag_builder = dafp.FeaturePipeline()
+        dag_builder = dtfamfepip.FeaturePipeline()
         #
         config = dag_builder.get_config_template()
         _LOG.debug("config from dag_builder=%s", config)
@@ -58,7 +58,7 @@ class TestFeaturePipeline(hut.TestCase):
         dag_runner = dtf.FitPredictDagRunner(config, dag_builder)
         result_bundle = dag_runner.fit()
         df_out = result_bundle.result_df
-        df_str = hut.convert_df_to_string(
+        df_str = hunitest.convert_df_to_string(
             df_out.round(3).dropna(), index=True, decimals=3
         )
         self.check_string(df_str)

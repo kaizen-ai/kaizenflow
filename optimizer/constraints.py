@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import optimizer.constraints as opconstr
+"""
+
 import logging
 from typing import List
 
@@ -5,7 +11,7 @@ import cvxpy as cvx
 
 import core.config as cconfig
 import helpers.dbg as hdbg
-import optimizer.base as opba
+import optimizer.base as opbase
 
 _LOG = logging.getLogger(__name__)
 
@@ -26,7 +32,7 @@ class ConstraintBuilder:
     """
 
     @staticmethod
-    def build_constraints(config: cconfig.Config) -> List[opba.Expression]:
+    def build_constraints(config: cconfig.Config) -> List[opbase.Expression]:
         constraints = []
         config_dict = config.to_dict()
         for k, v in config_dict.items():
@@ -44,7 +50,7 @@ class ConstraintBuilder:
 # #############################################################################
 
 
-class ConcentrationConstraint(opba.Expression):
+class ConcentrationConstraint(opbase.Expression):
     """
     Restrict max weight in an asset.
     """
@@ -61,14 +67,14 @@ class ConcentrationConstraint(opba.Expression):
         constraint = cls(config["concentration_bound"])
         return constraint
 
-    def get_expr(self, target_weights, target_diffs, total_wealth) -> opba.EXPR:
+    def get_expr(self, target_weights, target_diffs, total_wealth) -> opbase.EXPR:
         _ = target_diffs
         _ = total_wealth
         # TODO: Normalize this?
         return cvx.max(cvx.abs(target_weights[:-1])) <= self._concentration_bound
 
 
-class DollarNeutralityConstraint(opba.Expression):
+class DollarNeutralityConstraint(opbase.Expression):
     """
     Require sum of longs weights equals sum of shorts weights.
     """
@@ -81,13 +87,13 @@ class DollarNeutralityConstraint(opba.Expression):
         constraint = cls()
         return constraint
 
-    def get_expr(self, target_weights, target_diffs, total_wealth) -> opba.EXPR:
+    def get_expr(self, target_weights, target_diffs, total_wealth) -> opbase.EXPR:
         _ = target_diffs
         _ = total_wealth
         return sum(target_weights[:-1]) == 0
 
 
-class LeverageConstraint(opba.Expression):
+class LeverageConstraint(opbase.Expression):
     """
     Restrict money allocated to non-cash assets.
     """
@@ -102,7 +108,7 @@ class LeverageConstraint(opba.Expression):
         constraint = cls(config["leverage_bound"])
         return constraint
 
-    def get_expr(self, target_weights, target_diffs, total_wealth) -> opba.EXPR:
+    def get_expr(self, target_weights, target_diffs, total_wealth) -> opbase.EXPR:
         _ = target_diffs
         _ = total_wealth
         return cvx.norm(target_weights[:-1], 1) <= self._leverage_bound

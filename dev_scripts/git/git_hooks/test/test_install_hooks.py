@@ -2,33 +2,33 @@ import logging
 
 import pytest
 
-import dev_scripts.git.git_hooks.utils as ghutils  # pylint: disable=no-name-in-module
+import dev_scripts.git.git_hooks.utils as dsgghout  # pylint: disable=no-name-in-module
 import helpers.printing as hprint
-import helpers.system_interaction as hsinte
-import helpers.unit_test as hut
+import helpers.system_interaction as hsysinte
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.skipif(
-    hsinte.is_inside_ci(), reason="CI is not set up for committing code in GH"
+    hsysinte.is_inside_ci(), reason="CI is not set up for committing code in GH"
 )
-class Test_git_hooks_utils1(hut.TestCase):
+class Test_git_hooks_utils1(hunitest.TestCase):
     def test_check_master1(self) -> None:
         abort_on_error = False
-        ghutils.check_master(abort_on_error)
+        dsgghout.check_master(abort_on_error)
 
     @pytest.mark.skipif(
-        hsinte.is_inside_docker(),
+        hsysinte.is_inside_docker(),
         reason="There are no Git credentials inside Docker",
     )
     def test_check_author1(self) -> None:
         abort_on_error = False
-        ghutils.check_author(abort_on_error)
+        dsgghout.check_author(abort_on_error)
 
     def test_check_file_size1(self) -> None:
         abort_on_error = False
-        ghutils.check_file_size(abort_on_error)
+        dsgghout.check_file_size(abort_on_error)
 
     def test_caesar1(self) -> None:
         txt = """
@@ -40,8 +40,8 @@ class Test_git_hooks_utils1(hut.TestCase):
         """
         txt = hprint.dedent(txt)
         step = 3
-        transformed_txt = ghutils.caesar(txt, step)
-        txt2 = ghutils.caesar(transformed_txt, -step)
+        transformed_txt = dsgghout.caesar(txt, step)
+        txt2 = dsgghout.caesar(transformed_txt, -step)
         self.assert_equal(txt, txt2)
 
     def test_regex1(self) -> None:
@@ -90,7 +90,7 @@ class Test_git_hooks_utils1(hut.TestCase):
         file_name = "foobar.txt"
         lines = txt.split("\n")
         act = "\n".join(
-            ghutils._check_words_in_text(file_name, lines, decaesarify=False)
+            dsgghout._check_words_in_text(file_name, lines, decaesarify=False)
         )
         # Check.
         exp = r"""
@@ -102,7 +102,7 @@ class Test_git_hooks_utils1(hut.TestCase):
 
     def _helper(self, txt: str, decaesarify: bool, exp: bool) -> None:
         _LOG.debug(hprint.to_str("txt decaesarify exp"))
-        regex = ghutils._get_regex(decaesarify)
+        regex = dsgghout._get_regex(decaesarify)
         m = regex.search(txt)
         _LOG.debug("  -> m=%s", bool(m))
         if m:

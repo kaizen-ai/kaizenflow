@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.dataflow.core as cdtfcor
+import core.dataflow.core as cdtfcore
 """
 import abc
 import itertools
@@ -12,7 +12,7 @@ import networkx as networ
 from tqdm.autonotebook import tqdm
 
 import helpers.dbg as hdbg
-import helpers.printing as hprintin
+import helpers.printing as hprint
 import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
@@ -446,7 +446,7 @@ class DAG:
         """
         _LOG.debug(
             "\n%s",
-            hprintin.frame(
+            hprint.frame(
                 "Node nid=`%s` executing method `%s`..." % (nid, method)
             ),
         )

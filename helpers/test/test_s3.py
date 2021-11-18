@@ -2,19 +2,19 @@ import logging
 import os
 
 import helpers.s3 as hs3
-import helpers.unit_test as huntes
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-class Test_s3_get_credentials1(huntes.TestCase):
+class Test_s3_get_credentials1(hunitest.TestCase):
     def test1(self) -> None:
         aws_profile = "am"
         res = hs3.get_aws_credentials(aws_profile)
         _LOG.debug("res=%s", str(res))
 
 
-class Test_s3_functions1(huntes.TestCase):
+class Test_s3_functions1(hunitest.TestCase):
     def test_extract_bucket_from_path1(self) -> None:
         path = (
             "s3://alphamatic-data/tmp/TestCachingOnS3.test_with_caching1/joblib"
@@ -24,7 +24,7 @@ class Test_s3_functions1(huntes.TestCase):
         self.assert_equal(path, "/tmp/TestCachingOnS3.test_with_caching1/joblib")
 
 
-class Test_s3_1(huntes.TestCase):
+class Test_s3_1(hunitest.TestCase):
     def test_ls1(self) -> None:
         file_path = os.path.join(hs3.get_path(), "README.md")
         _LOG.debug("file_path=%s", file_path)

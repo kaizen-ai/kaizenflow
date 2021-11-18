@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.signal_processing as csipro
+import core.signal_processing as csigproc
 """
 
 import collections

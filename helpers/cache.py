@@ -18,14 +18,14 @@ import joblib
 import joblib.func_inspect as jfunci
 import joblib.memory as jmemor
 
-import helpers.datetime_ as hdatetim
+import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.git as hgit
-import helpers.introspection as hintrosp
+import helpers.introspection as hintros
 import helpers.io_ as hio
-import helpers.printing as hprintin
+import helpers.printing as hprint
 import helpers.s3 as hs3
-import helpers.system_interaction as hsyint
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ def get_global_cache_info(
         _LOG.debug("")
     txt = []
     if add_banner:
-        txt.append(hprintin.frame("get_global_cache_info()", char1="<"))
+        txt.append(hprint.frame("get_global_cache_info()", char1="<"))
     txt.append("is global cache enabled=%s" % is_caching_enabled())
     #
     cache_types = _get_cache_types()
@@ -155,7 +155,7 @@ def _get_global_cache_path(cache_type: str, tag: Optional[str] = None) -> str:
     cache_name = _get_global_cache_name(cache_type, tag)
     # Get the enclosing directory path.
     if cache_type == "mem":
-        if hsyint.get_os_name() == "Darwin":
+        if hsysinte.get_os_name() == "Darwin":
             root_path = "/tmp"
         else:
             root_path = "/mnt/tmpfs"
@@ -178,8 +178,8 @@ def _get_cache_size(path: str, description: str) -> str:
         txt = "'%s' cache: path='%s' doesn't exist yet" % (description, path)
     else:
         if os.path.exists(path):
-            size_in_bytes = hsyint.du(path)
-            size_as_str = hintrosp.format_size(size_in_bytes)
+            size_in_bytes = hsysinte.du(path)
+            size_as_str = hintros.format_size(size_in_bytes)
         else:
             size_as_str = "nan"
         # TODO(gp): Compute number of files.
@@ -441,8 +441,8 @@ class _Cached:
             # Get time.
             elapsed_time = time.perf_counter() - perf_counter_start
             # Get memory.
-            obj_size = hintrosp.get_size_in_bytes(obj)
-            obj_size_as_str = hintrosp.format_size(obj_size)
+            obj_size = hintros.get_size_in_bytes(obj)
+            obj_size_as_str = hintros.format_size(obj_size)
             last_cache = self.get_last_cache_accessed()
             cache_dir = self._get_cache_dir(last_cache, self._tag)
             _LOG.info(
@@ -465,7 +465,7 @@ class _Cached:
             _LOG.debug("")
         txt = []
         if add_banner:
-            txt.append(hprintin.frame("get_global_cache_info()", char1="<"))
+            txt.append(hprint.frame("get_global_cache_info()", char1="<"))
         has_func_cache = self.has_function_cache()
         txt.append("has function-specific cache=%s" % has_func_cache)
         if has_func_cache:
@@ -545,7 +545,7 @@ class _Cached:
         # https://github.com/joblib/joblib/tree/master/joblib/_store_backends.py
         func_path = self._get_function_specific_code_path()
         # Archive old code.
-        new_func_path = func_path + "." + hdatetim.get_timestamp(tz="ET")
+        new_func_path = func_path + "." + hdateti.get_timestamp(tz="ET")
         _LOG.debug("new_func_path='%s'", new_func_path)
         # Get the store backend.
         cache_type = "disk"
@@ -692,10 +692,10 @@ class _Cached:
                 "compress": True,
             }
             if hs3.is_s3_path(self._disk_cache_path):
-                import helpers.joblib_helpers as hjoh
+                import helpers.joblib_helpers as hjoblib
 
                 # Register the S3 backend.
-                hjoh.register_s3fs_store_backend()
+                hjoblib.register_s3fs_store_backend()
                 # Use the default profile, unless it was explicitly passed.
                 if self._aws_profile is None:
                     aws_profile = hs3.get_aws_profile()
