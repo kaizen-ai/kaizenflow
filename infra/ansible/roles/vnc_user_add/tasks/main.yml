@@ -15,7 +15,7 @@
     path: "{{ user_home }}/.vnc/"
     state: directory
 
-- name: "Add permissions to /tmp to user"
+- name: "Add permissions to /tmp to user (prevents error in vncserver)"
   file: 
     path: "/tmp"
     mode: o+rw
