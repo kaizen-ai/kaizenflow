@@ -302,6 +302,7 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
 
+    # TODO(Dan2): CmTask495.
     def read_universe_data(
         self,
         universe: Union[str, List[imdatuniv.ExchangeCurrencyTuple]],
