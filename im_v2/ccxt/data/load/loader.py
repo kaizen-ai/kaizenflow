@@ -1,14 +1,15 @@
 """
 Import as:
 
-import im_v2.ccxt.data.load.loader as imcdalolo
+import im_v2.ccxt.data.load.loader as imvcdlolo
 """
 
 import abc
 import logging
 import os
+from typing import Any, Dict, List, Optional, Union
+
 import pandas as pd
-from typing import Any, Dict, List, Optional, Tuple, Union
 
 import core.pandas_helpers as cpanh
 import helpers.datetime_ as hdateti
@@ -16,7 +17,7 @@ import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.s3 as hs3
 import helpers.sql as hsql
-import im_v2.data.universe as imdatuniv
+import im_v2.data.universe as imv2dauni
 
 _LOG = logging.getLogger(__name__)
 
@@ -31,7 +32,8 @@ class AbstractCcxtLoader(abc.ABC):
         resample_to_1_min: bool = True,
     ) -> None:
         """
-        Load CCXT data from different backends e.g., DB, local or S3 filesystem.
+        Load CCXT data from different backends e.g., DB, local or S3
+        filesystem.
 
         :param remove_dups: whether to remove full duplicates or not
         :param resample_to_1_min: whether to resample to 1 min or not
@@ -44,7 +46,7 @@ class AbstractCcxtLoader(abc.ABC):
     @abc.abstractmethod
     def read_universe_data(
         self,
-        universe: Union[str, List[imdatuniv.ExchangeCurrencyTuple]],
+        universe: Union[str, List[imv2dauni.ExchangeCurrencyTuple]],
         data_type: str,
     ) -> pd.DataFrame:
         """
@@ -203,7 +205,8 @@ class AbstractCcxtLoader(abc.ABC):
 
 class CcxtLoaderFromDb(AbstractCcxtLoader):
     def __init__(
-        self, connection: hsql.DbConnection,
+        self,
+        connection: hsql.DbConnection,
     ) -> None:
         """
         Load CCXT data from DB.
@@ -215,7 +218,7 @@ class CcxtLoaderFromDb(AbstractCcxtLoader):
 
     def read_universe_data(
         self,
-        universe: Union[str, List[imdatuniv.ExchangeCurrencyTuple]],
+        universe: Union[str, List[imv2dauni.ExchangeCurrencyTuple]],
         data_type: str,
         table_name: str,
         start_date: Optional[pd.Timestamp] = None,
@@ -245,7 +248,7 @@ class CcxtLoaderFromDb(AbstractCcxtLoader):
         # Load all the corresponding exchange-currency tuples if a universe
         # version is provided.
         if isinstance(universe, str):
-            universe = imdatuniv.get_vendor_universe_as_tuples(universe, "CCXT")
+            universe = imv2dauni.get_vendor_universe_as_tuples(universe, "CCXT")
         # Initialize lists for query condition strings and parameters to insert.
         query_conditions = []
         query_params = []
@@ -283,6 +286,7 @@ class CcxtLoaderFromDb(AbstractCcxtLoader):
 
 # #############################################################################
 
+
 class CcxtLoaderFromFile(AbstractCcxtLoader):
     def __init__(
         self,
@@ -305,7 +309,7 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
     # TODO(Dan2): CmTask495.
     def read_universe_data(
         self,
-        universe: Union[str, List[imdatuniv.ExchangeCurrencyTuple]],
+        universe: Union[str, List[imv2dauni.ExchangeCurrencyTuple]],
         data_type: str,
         data_snapshot: Optional[str] = None,
     ) -> pd.DataFrame:
@@ -322,7 +326,7 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
         # Load all the corresponding exchange-currency tuples if a universe
         # version is provided.
         if isinstance(universe, str):
-            universe = imdatuniv.get_vendor_universe_as_tuples(universe, "CCXT")
+            universe = imv2dauni.get_vendor_universe_as_tuples(universe, "CCXT")
         # Initialize results df.
         combined_data = pd.DataFrame(dtype="object")
         # Load data for each exchange-currency tuple and append to results df.
@@ -381,9 +385,7 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
             exchange_id,
             currency_pair,
         )
-        data = self._preprocess_filesystem_data(
-            data, exchange_id, currency_pair
-        )
+        data = self._preprocess_filesystem_data(data, exchange_id, currency_pair)
         transformed_data = self.transform(data, data_type)
         return transformed_data
 
