@@ -344,19 +344,21 @@ class IbDataExtractor(imcdedaex.AbstractDataExtractor):
             what_to_show,
             use_rth,
         ) in tasks:
-            saved_intervals = imidegddil.save_historical_data_by_intervals_IB_loop(
-                ib=ib,
-                contract=contract,
-                start_ts=start_ts_task,
-                end_ts=end_ts_task,
-                duration_str=duration_str,
-                bar_size_setting=bar_size_setting,
-                what_to_show=what_to_show,
-                use_rth=use_rth,
-                file_name=file_name,
-                part_files_dir=part_files_dir,
-                incremental=incremental,
-                num_retry=self._MAX_IB_DATA_LOAD_ATTEMPTS,
+            saved_intervals = (
+                imidegddil.save_historical_data_by_intervals_IB_loop(
+                    ib=ib,
+                    contract=contract,
+                    start_ts=start_ts_task,
+                    end_ts=end_ts_task,
+                    duration_str=duration_str,
+                    bar_size_setting=bar_size_setting,
+                    what_to_show=what_to_show,
+                    use_rth=use_rth,
+                    file_name=file_name,
+                    part_files_dir=part_files_dir,
+                    incremental=incremental,
+                    num_retry=self._MAX_IB_DATA_LOAD_ATTEMPTS,
+                )
             )
             # Find intervals with no data.
             for interval in saved_intervals:

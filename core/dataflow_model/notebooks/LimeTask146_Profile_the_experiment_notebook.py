@@ -109,10 +109,10 @@ plotter = cdtfmomoplo.ModelPlotter(evaluator)
 
 # %%
 for i in range(3):
-    egid = result_bundle_dict[i].config["load_prices"]["source_node_kwargs"][
+    asset_id = result_bundle_dict[i].config["load_prices"]["source_node_kwargs"][
         "func_kwargs"
-    ]["egid"]
-    print(egid)
+    ]["asset_id"]
+    print(asset_id)
 
 import datetime
 
@@ -123,9 +123,9 @@ import vendors_lime.taq_bars.utils as vltbut
 
 # %%
 # Load the 1min data.
-egid = 10025
-# egid = 10035
-# egid = 10036
+asset_id = 10025
+# asset_id = 10035
+# asset_id = 10036
 columns = [
     "end_time",
     "close",
@@ -138,7 +138,7 @@ columns = [
 ]
 cache_dir = "/cache/vltbut.get_bar_data.v2_1-all.2009_2019.20210907-07_52_53/cache.get_bar_data.v2_0-all.2009_2019"
 df_1min = vltbut.load_single_instrument_data(
-    egid,
+    asset_id,
     datetime.date(2009, 1, 1),
     datetime.date(2019, 1, 1),
     columns=columns,

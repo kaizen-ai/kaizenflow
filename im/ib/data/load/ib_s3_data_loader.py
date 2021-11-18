@@ -116,7 +116,9 @@ class IbS3DataLoader(imcdladalo.AbstractS3DataLoader):
         aws_profile = "am"
         s3fs = hs3.get_s3fs(aws_profile)
         if hs3.is_s3_path(file_path):
-            hdbg.dassert(s3fs.exists(file_path), "S3 key not found: %s", file_path)
+            hdbg.dassert(
+                s3fs.exists(file_path), "S3 key not found: %s", file_path
+            )
         # Read data.
         # cls.S3_COLUMNS.keys() -> list(cls.S3_COLUMNS.keys())
         # https://github.com/pandas-dev/pandas/issues/36928 fixed in Pandas 1.1.4

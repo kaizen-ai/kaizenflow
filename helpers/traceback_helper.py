@@ -158,7 +158,8 @@ def parse_traceback(
                 _LOG.warning("Can't find file corresponding to '%s'", file_name)
             elif len(file_names) > 1:
                 _LOG.warning(
-                    "Found multiple potential files corresponding to '%s'", file_name
+                    "Found multiple potential files corresponding to '%s'",
+                    file_name,
                 )
             else:
                 file_name = file_names[0]

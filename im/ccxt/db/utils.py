@@ -30,7 +30,8 @@ def get_ccxt_ohlcv_create_table_query() -> str:
             close NUMERIC,
             volume NUMERIC,
             currency_pair VARCHAR(255) NOT NULL,
-            exchange_id VARCHAR(255) NOT NULL
+            exchange_id VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP 
             )
             """
     return query

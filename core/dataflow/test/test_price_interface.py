@@ -41,7 +41,9 @@ def generate_synthetic_db_data(
     TODO(gp):
     ```
     """
-    _LOG.debug(hprintin.to_str("start_datetime end_datetime columns ids freq seed"))
+    _LOG.debug(
+        hprintin.to_str("start_datetime end_datetime columns ids freq seed")
+    )
     hdatetim.dassert_tz_compatible(start_datetime, end_datetime)
     hdbg.dassert_lte(start_datetime, end_datetime)
     start_dates = pd.date_range(start_datetime, end_datetime, freq=freq)
@@ -428,7 +430,11 @@ class TestReplayedTimePriceInterface2(huntes.TestCase):
         asset_ids = None
         normalize_data = True
         func = lambda rtpi: rtpi.get_data_for_interval(
-            start_ts, end_ts, ts_col_name, asset_ids, normalize_data=normalize_data
+            start_ts,
+            end_ts,
+            ts_col_name,
+            asset_ids,
+            normalize_data=normalize_data,
         )
         # pylint: disable=line-too-long
         expected_df_as_str = """
@@ -461,7 +467,11 @@ class TestReplayedTimePriceInterface2(huntes.TestCase):
         asset_ids = None
         normalize_data = True
         func = lambda rtpi: rtpi.get_data_for_interval(
-            start_ts, end_ts, ts_col_name, asset_ids, normalize_data=normalize_data
+            start_ts,
+            end_ts,
+            ts_col_name,
+            asset_ids,
+            normalize_data=normalize_data,
         )
         # pylint: disable=line-too-long
         expected_df_as_str = r"""

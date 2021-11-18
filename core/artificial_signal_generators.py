@@ -254,7 +254,9 @@ class MultivariateNormalProcess:
         index = pd.date_range(**date_range_kwargs)
         nsample = index.size
         rv = sp.stats.multivariate_normal(
-            mean=self.mean, cov=self.cov, allow_singular=self.allow_singular,
+            mean=self.mean,
+            cov=self.cov,
+            allow_singular=self.allow_singular,
         )
         # Setting the seed through scipy interface seems to be jittery (see
         # AmpTask1649).

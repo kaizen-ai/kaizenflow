@@ -250,7 +250,7 @@ class AbstractPriceInterface(abc.ABC):
 
         The input df looks like:
         ```
-              egid           start_time             end_time     close   volume
+          asset_id           start_time             end_time     close   volume
 
         idx  17085  2021-07-26 13:40:00  2021-07-26 13:41:00  149.0250   575024
           0  17085  2021-07-26 13:41:00  2021-07-26 13:42:00  148.8600   400176
@@ -260,7 +260,7 @@ class AbstractPriceInterface(abc.ABC):
 
         The output df looks like:
         ```
-                                    egid                start_time    close   volume
+                                asset_id                start_time    close   volume
         end_time
         2021-07-20 09:31:00-04:00  17085 2021-07-20 09:30:00-04:00  143.990  1524506
         2021-07-20 09:32:00-04:00  17085 2021-07-20 09:31:00-04:00  143.310   586654
@@ -511,7 +511,7 @@ class SqlPriceInterface(AbstractPriceInterface):
         #   ```
         #   SELECT MAX(start_time)
         #     FROM bars_qa
-        #     WHERE interval=60 AND region='AM' AND egid = '17085'
+        #     WHERE interval=60 AND region='AM' AND asset_id = '17085'
         #   ```
         query = []
         query.append(f"SELECT MAX({self._start_time_col_name})")
@@ -535,7 +535,7 @@ class SqlPriceInterface(AbstractPriceInterface):
         #     WHERE interval=60 AND
         #         region='AM' AND
         #         start_time = '2021-10-07 15:50:00' AND
-        #         egid = '17085'
+        #         asset_id = '17085'
         #   ```
         query = []
         query.append(f"SELECT {self._end_time_col_name}")
@@ -910,13 +910,13 @@ def read_data_from_file(
     Same interface as `get_real_time_bar_data()`.
 
     ```
-          start_time          end_time   egid   close    volume         timestamp_db
-    2021-10-05 20:00  2021-10-05 20:01  17085  141.11   5792204  2021-10-05 20:01:03
-    2021-10-05 19:59  2021-10-05 20:00  17085  141.09   1354151  2021-10-05 20:00:05
-    2021-10-05 19:58  2021-10-05 19:59  17085  141.12    620395  2021-10-05 19:59:04
-    2021-10-05 19:57  2021-10-05 19:58  17085  141.2644  341584  2021-10-05 19:58:03
-    2021-10-05 19:56  2021-10-05 19:57  17085  141.185   300822  2021-10-05 19:57:04
-    2021-10-05 19:55  2021-10-05 19:56  17085  141.1551  351527  2021-10-05 19:56:04
+          start_time          end_time asset_id   close    volume         timestamp_db
+    2021-10-05 20:00  2021-10-05 20:01    17085  141.11   5792204  2021-10-05 20:01:03
+    2021-10-05 19:59  2021-10-05 20:00    17085  141.09   1354151  2021-10-05 20:00:05
+    2021-10-05 19:58  2021-10-05 19:59    17085  141.12    620395  2021-10-05 19:59:04
+    2021-10-05 19:57  2021-10-05 19:58    17085  141.2644  341584  2021-10-05 19:58:03
+    2021-10-05 19:56  2021-10-05 19:57    17085  141.185   300822  2021-10-05 19:57:04
+    2021-10-05 19:55  2021-10-05 19:56    17085  141.1551  351527  2021-10-05 19:56:04
     ```
     """
     kwargs_tmp = {
@@ -985,8 +985,9 @@ def describe_rt_df(df: pd.DataFrame, *, include_delay_stats: bool) -> None:
     print(
         "end_time: num_mins=%s [%s, %s]" % (num_mins, min_end_time, max_end_time)
     )
-    # Stats about `egids`.
-    print("egids=%s" % hprintin.format_list(df["egid"].unique()))
+    # Stats about `asset_ids`.
+    # TODO(gp): Pass the name of the column through the interface.
+    print("asset_ids=%s" % hprintin.format_list(df["egid"].unique()))
     # Stats about delay.
     if include_delay_stats:
         df = compute_rt_delay(df)

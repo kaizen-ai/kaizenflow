@@ -13,7 +13,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestModelPlotter1(hut.TestCase):
-
     def test_plot_multiple_tests_adjustment1(self) -> None:
         plotter, _, eval_config = self._get_example_model_plotter()
         #

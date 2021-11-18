@@ -18,10 +18,8 @@ if False:
     DEFAULT_KEYNAME: str = "ec2-key-pair"
     DEFAULT_REGION: str = "us-east-1"
 
-
     @mock_ec2
     class Test_AWSManager(unittest.TestCase):
-
         def test_create_instance(self) -> None:
             # Already one instance in the list.
             instance_count = 1
@@ -37,16 +35,17 @@ if False:
                 name_tag=name_tag,
                 root_device_name="/dev/sda1",
                 root_device_size=100,
-                root_device_type='gp2'
+                root_device_type="gp2",
             )
 
             client = boto3.client("ec2", region_name=DEFAULT_REGION)
-            instances = client.describe_instances()["Reservations"][0]["Instances"]
+            instances = client.describe_instances()["Reservations"][0][
+                "Instances"
+            ]
 
             assert len(instances) == instance_count
             assert instances[0]["ImageId"] == image_id
             assert instances[0]["Tags"][0]["Value"] == name_tag
 
-
-    if __name__ == '__main__':
+    if __name__ == "__main__":
         unittest.main()
