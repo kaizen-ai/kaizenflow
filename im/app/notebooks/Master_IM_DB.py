@@ -34,7 +34,7 @@ hdbg.init_logger(verbosity=logging.INFO)
 _LOG = logging.getLogger(__name__)
 
 # %% run_control={"marked": false}
-# dbname=os.environ["POSTGRES_DB"]
+# dbname=os.environ["POSTGRES_DBNAME"]
 # host=os.environ["POSTGRES_HOST"]
 # port=int(os.environ["POSTGRES_PORT"])
 # user=os.environ["POSTGRES_USER"]

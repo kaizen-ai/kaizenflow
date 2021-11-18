@@ -43,14 +43,14 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Verify that the database is available.
     hsql.wait_db_connection(
         host=os.environ["POSTGRES_HOST"],
-        db_name=os.environ["POSTGRES_DB"],
+        db_name=os.environ["POSTGRES_DBNAME"],
         port=int(os.environ["POSTGRES_PORT"]),
     )
     connection = hsql.get_connection_from_env_vars()
     # Set schema for the database.
-    _LOG.info("Setting schema for DB `%s`...", os.environ["POSTGRES_DB"])
+    _LOG.info("Setting schema for DB `%s`...", os.environ["POSTGRES_DBNAME"])
     imcdbcrdb.create_all_tables(connection)
-    _LOG.info("Database `%s` is ready to use.", os.environ["POSTGRES_DB"])
+    _LOG.info("Database `%s` is ready to use.", os.environ["POSTGRES_DBNAME"])
 
 
 if __name__ == "__main__":

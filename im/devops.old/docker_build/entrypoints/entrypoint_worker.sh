@@ -25,7 +25,7 @@ else
 fi
 
 postgres_ready() {
-  pg_isready -d $POSTGRES_DB -p $POSTGRES_PORT -h $POSTGRES_HOST
+  pg_isready -d $POSTGRES_DBNAME -p $POSTGRES_PORT -h $POSTGRES_HOST
 }
 
 until postgres_ready; do
@@ -44,6 +44,6 @@ echo "PYTHONPATH=$PYTHONPATH"
 
 # Initialize the DB.
 # TODO(gp): Use the same initialization scheme as in EDGAR.
-./im/devops/docker_scripts/init_im_db.py --db $POSTGRES_DB
+./im/devops/docker_scripts/init_im_db.py --db $POSTGRES_DBNAME
 
 eval "$@"

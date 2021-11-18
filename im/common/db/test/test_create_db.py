@@ -54,6 +54,7 @@ class CreateDB(hunitest.TestCase):
         hsysinte.system(cmd, suppress_output=False)
         super().tearDown()
 
+    @pytest.mark.slow()
     def test_up1(self) -> None:
         """
         Verify that the DB is up.

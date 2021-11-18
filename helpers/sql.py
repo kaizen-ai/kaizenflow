@@ -66,9 +66,8 @@ def get_connection_from_env_vars() -> Tuple[
     variables.
     """
     # Get values from the environment variables.
-    # TODO(gp): -> POSTGRES_DBNAME
     host = os.environ["POSTGRES_HOST"]
-    dbname = os.environ["POSTGRES_DB"]
+    dbname = os.environ["POSTGRES_DBNAME"]
     port = int(os.environ["POSTGRES_PORT"])
     user = os.environ["POSTGRES_USER"]
     password = os.environ["POSTGRES_PASSWORD"]
