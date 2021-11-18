@@ -443,142 +443,13 @@ def git_clean(ctx, dry_run=False):  # type: ignore
     _run(ctx, cmd)
 
 
-def _delete_branches(ctx: Any, tag: str, confirm_delete: bool) -> None:
-    if tag == "local":
-        # Delete local branches that are already merged into master.
-        # > git branch --merged
-        # * AmpTask1251_Update_GH_actions_for_amp_02
-        find_cmd = r"git branch --merged master | grep -v master | grep -v \*"
-        delete_cmd = "git branch -d"
-    elif tag == "remote":
-        # Get the branches to delete.
-        find_cmd = (
-            "git branch -r --merged origin/master"
-            + r" | grep -v master | sed 's/origin\///'"
-        )
-        delete_cmd = "git push origin --delete"
-    else:
-        raise ValueError(f"Invalid tag='{tag}'")
-    # TODO(gp): Use system_to_lines
-    _, txt = hsyint.system_to_string(find_cmd, abort_on_error=False)
-    branches = hsyint.text_to_list(txt)
-    # Print info.
-    _LOG.info(
-        "There are %d %s branches to delete:\n%s",
-        len(branches),
-        tag,
-        "\n".join(branches),
-    )
-    if not branches:
-        # No branch to delete, then we are done.
-        return
-    # Ask whether to continue.
-    if confirm_delete:
-        hsyint.query_yes_no(
-            hdbg.WARNING + f": Delete these {tag} branches?", abort_on_no=True
-        )
-    for branch in branches:
-        cmd_tmp = f"{delete_cmd} {branch}"
-        _run(ctx, cmd_tmp)
-
-
 @task
-def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
+def git_add_all_untracked(ctx):  # type: ignore
     """
-    Remove (both local and remote) branches that have been merged into master.
+    Add all untracked files to git.
     """
     _report_task()
-    hdbg.dassert(
-        hgit.get_branch_name(),
-        "master",
-        "You need to be on master to delete dead branches",
-    )
-    #
-    cmd = "git fetch --all --prune"
-    _run(ctx, cmd)
-    # Delete local and remote branches that are already merged into master.
-    _delete_branches(ctx, "local", confirm_delete)
-    _delete_branches(ctx, "remote", confirm_delete)
-    #
-    cmd = "git fetch --all --prune"
-    _run(ctx, cmd)
-
-
-@task
-def git_create_branch(  # type: ignore
-    ctx,
-    branch_name="",
-    issue_id=0,
-    repo_short_name="current",
-    suffix="",
-    only_branch_from_master=True,
-):
-    """
-    Create and push upstream branch `branch_name` or the one corresponding to
-    `issue_id` in repo_short_name `repo_short_name`.
-
-    E.g.,
-    ```
-    > git checkout -b LemTask169_Get_GH_actions
-    > git push --set- upstream origin LemTask169_Get_GH_actions
-    ```
-
-    :param branch_name: name of the branch to create (e.g.,
-        `LemTask169_Get_GH_actions`)
-    :param issue_id: use the canonical name for the branch corresponding to that
-        issue
-    :param repo_short_name: name of the GitHub repo_short_name that the `issue_id` belongs to
-        - "current" (default): the current repo_short_name
-        - short name (e.g., "amp", "lm") of the branch
-    :param suffix: suffix (e.g., "02") to add to the branch name when using issue_id
-    :param only_branch_from_master: only allow to branch from master
-    """
-    _report_task()
-    if issue_id > 0:
-        # User specified an issue id on GitHub.
-        hdbg.dassert_eq(
-            branch_name, "", "You can't specify both --issue and --branch_name"
-        )
-        title, _ = _get_gh_issue_title(issue_id, repo_short_name)
-        branch_name = title
-        _LOG.info(
-            "Issue %d in %s repo_short_name corresponds to '%s'",
-            issue_id,
-            repo_short_name,
-            branch_name,
-        )
-        if suffix != "":
-            # Add the the suffix.
-            _LOG.debug("Adding suffix '%s' to '%s'", suffix, branch_name)
-            if suffix[0] in ("-", "_"):
-                _LOG.warning(
-                    "Suffix '%s' should not start with '%s': removing",
-                    suffix,
-                    suffix[0],
-                )
-                suffix = suffix.rstrip("-_")
-            branch_name += "_" + suffix
-    #
-    _LOG.info("branch_name='%s'", branch_name)
-    hdbg.dassert_ne(branch_name, "")
-    # Make sure we are branching from `master`, unless that's what the user wants.
-    curr_branch = hgit.get_branch_name()
-    if curr_branch != "master":
-        if only_branch_from_master:
-            hdbg.dfatal(
-                "You should branch from master and not from '%s'" % curr_branch
-            )
-    # Fetch master.
-    cmd = "git pull --autostash"
-    _run(ctx, cmd)
-    # git checkout -b LmTask169_Get_GH_actions_working_on_lm
-    cmd = f"git checkout -b {branch_name}"
-    _run(ctx, cmd)
-    # TODO(gp): If the branch already exists, increase the number.
-    #   git checkout -b AmpTask1329_Review_code_in_core_03
-    #   fatal: A branch named 'AmpTask1329_Review_code_in_core_03' already exists.
-    #   saggese@gpmaclocal.local ==> RC: 128 <==
-    cmd = f"git push --set-upstream origin {branch_name}"
+    cmd = "git add $(git ls-files -o --exclude-standard)"
     _run(ctx, cmd)
 
 
@@ -688,20 +559,6 @@ def git_create_patch(  # type: ignore
 
 
 @task
-def git_branch_files(ctx):  # type: ignore
-    """
-    Report which files are added, changed, modified in the current branch with
-    respect to master.
-    """
-    _report_task()
-    _ = ctx
-    print(
-        "Difference between HEAD and master:\n"
-        + hgit.get_summary_files_in_branch("master", ".")
-    )
-
-
-@task
 def git_files(  # type: ignore
     ctx, modified=False, branch=False, last_commit=False, pbcopy=False
 ):
@@ -751,76 +608,160 @@ def git_last_commit_files(ctx, pbcopy=True):  # type: ignore
     _to_pbcopy(res, pbcopy)
 
 
-# TODO(gp): When running `python_execute` we could launch it inside a
-# container.
-@task
-def check_python_files(  # type: ignore
-    ctx,
-    python_compile=True,
-    python_execute=False,
-    modified=False,
-    branch=False,
-    last_commit=False,
-    all_=False,
-    files="",
-):
-    """
-    Compile and execute Python files checking for errors.
+# Branches workflows
 
-    The params have the same meaning as in `_get_files_to_process()`.
+
+@task
+def git_branch_files(ctx):  # type: ignore
+    """
+    Report which files are added, changed, modified in the current branch with
+    respect to master.
     """
     _report_task()
     _ = ctx
-    # We allow to filter through the user specified `files`.
-    mutually_exclusive = False
-    remove_dirs = True
-    file_list = _get_files_to_process(
-        modified,
-        branch,
-        last_commit,
-        all_,
-        files,
-        mutually_exclusive,
-        remove_dirs,
+    print(
+        "Difference between HEAD and master:\n"
+        + hgit.get_summary_files_in_branch("master", ".")
     )
-    _LOG.debug("Found %d files:\n%s", len(file_list), "\n".join(file_list))
-    # Filter keeping only Python files.
-    _LOG.debug("Filtering for Python files")
-    exclude_paired_jupytext = True
-    file_list = hio.keep_python_files(file_list, exclude_paired_jupytext)
-    _LOG.debug("file_list=%s", "\n".join(file_list))
-    _LOG.info("Need to process %d files", len(file_list))
-    if not file_list:
-        _LOG.warning("No files were selected")
-    # Scan all the files.
-    failed_filenames = []
-    for file_name in file_list:
-        _LOG.info("Processing '%s'", file_name)
-        if python_compile:
-            import compileall
 
-            success = compileall.compile_file(file_name, force=True, quiet=1)
-            _LOG.debug("file_name='%s' -> python_compile=%s", file_name, success)
-            if not success:
-                msg = "'%s' doesn't compile correctly" % file_name
-                _LOG.error(msg)
-                failed_filenames.append(file_name)
-        # TODO(gp): Add also `python -c "import ..."`, if not equivalent to `compileall`.
-        if python_execute:
-            cmd = f"python {file_name}"
-            rc = hsyint.system(cmd, abort_on_error=False, suppress_output=False)
-            _LOG.debug("file_name='%s' -> python_compile=%s", file_name, rc)
-            if rc != 0:
-                msg = "'%s' doesn't execute correctly" % file_name
-                _LOG.error(msg)
-                failed_filenames.append(file_name)
+
+@task
+def git_create_branch(  # type: ignore
+    ctx,
+    branch_name="",
+    issue_id=0,
+    repo_short_name="current",
+    suffix="",
+    only_branch_from_master=True,
+):
+    """
+    Create and push upstream branch `branch_name` or the one corresponding to
+    `issue_id` in repo_short_name `repo_short_name`.
+
+    E.g.,
+    ```
+    > git checkout -b LemTask169_Get_GH_actions
+    > git push --set- upstream origin LemTask169_Get_GH_actions
+    ```
+
+    :param branch_name: name of the branch to create (e.g.,
+        `LemTask169_Get_GH_actions`)
+    :param issue_id: use the canonical name for the branch corresponding to that
+        issue
+    :param repo_short_name: name of the GitHub repo_short_name that the `issue_id` belongs to
+        - "current" (default): the current repo_short_name
+        - short name (e.g., "amp", "lm") of the branch
+    :param suffix: suffix (e.g., "02") to add to the branch name when using issue_id
+    :param only_branch_from_master: only allow to branch from master
+    """
+    _report_task()
+    if issue_id > 0:
+        # User specified an issue id on GitHub.
+        hdbg.dassert_eq(
+            branch_name, "", "You can't specify both --issue and --branch_name"
+        )
+        title, _ = _get_gh_issue_title(issue_id, repo_short_name)
+        branch_name = title
+        _LOG.info(
+            "Issue %d in %s repo_short_name corresponds to '%s'",
+            issue_id,
+            repo_short_name,
+            branch_name,
+        )
+        if suffix != "":
+            # Add the the suffix.
+            _LOG.debug("Adding suffix '%s' to '%s'", suffix, branch_name)
+            if suffix[0] in ("-", "_"):
+                _LOG.warning(
+                    "Suffix '%s' should not start with '%s': removing",
+                    suffix,
+                    suffix[0],
+                )
+                suffix = suffix.rstrip("-_")
+            branch_name += "_" + suffix
+    #
+    _LOG.info("branch_name='%s'", branch_name)
+    hdbg.dassert_ne(branch_name, "")
+    # Make sure we are branching from `master`, unless that's what the user wants.
+    curr_branch = hgit.get_branch_name()
+    if curr_branch != "master":
+        if only_branch_from_master:
+            hdbg.dfatal(
+                "You should branch from master and not from '%s'" % curr_branch
+            )
+    # Fetch master.
+    cmd = "git pull --autostash"
+    _run(ctx, cmd)
+    # git checkout -b LmTask169_Get_GH_actions_working_on_lm
+    cmd = f"git checkout -b {branch_name}"
+    _run(ctx, cmd)
+    # TODO(gp): If the branch already exists, increase the number.
+    #   git checkout -b AmpTask1329_Review_code_in_core_03
+    #   fatal: A branch named 'AmpTask1329_Review_code_in_core_03' already exists.
+    #   saggese@gpmaclocal.local ==> RC: 128 <==
+    cmd = f"git push --set-upstream origin {branch_name}"
+    _run(ctx, cmd)
+
+
+def _delete_branches(ctx: Any, tag: str, confirm_delete: bool) -> None:
+    if tag == "local":
+        # Delete local branches that are already merged into master.
+        # > git branch --merged
+        # * AmpTask1251_Update_GH_actions_for_amp_02
+        find_cmd = r"git branch --merged master | grep -v master | grep -v \*"
+        delete_cmd = "git branch -d"
+    elif tag == "remote":
+        # Get the branches to delete.
+        find_cmd = (
+            "git branch -r --merged origin/master"
+            + r" | grep -v master | sed 's/origin\///'"
+        )
+        delete_cmd = "git push origin --delete"
+    else:
+        raise ValueError(f"Invalid tag='{tag}'")
+    # TODO(gp): Use system_to_lines
+    _, txt = hsyint.system_to_string(find_cmd, abort_on_error=False)
+    branches = hsyint.text_to_list(txt)
+    # Print info.
     _LOG.info(
-        "failed_filenames=%s\n%s",
-        len(failed_filenames),
-        "\n".join(failed_filenames),
+        "There are %d %s branches to delete:\n%s",
+        len(branches),
+        tag,
+        "\n".join(branches),
     )
-    error = len(failed_filenames) > 0
-    return error
+    if not branches:
+        # No branch to delete, then we are done.
+        return
+    # Ask whether to continue.
+    if confirm_delete:
+        hsyint.query_yes_no(
+            hdbg.WARNING + f": Delete these {tag} branches?", abort_on_no=True
+        )
+    for branch in branches:
+        cmd_tmp = f"{delete_cmd} {branch}"
+        _run(ctx, cmd_tmp)
+
+
+@task
+def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
+    """
+    Remove (both local and remote) branches that have been merged into master.
+    """
+    _report_task()
+    hdbg.dassert(
+        hgit.get_branch_name(),
+        "master",
+        "You need to be on master to delete dead branches",
+    )
+    #
+    cmd = "git fetch --all --prune"
+    _run(ctx, cmd)
+    # Delete local and remote branches that are already merged into master.
+    _delete_branches(ctx, "local", confirm_delete)
+    _delete_branches(ctx, "remote", confirm_delete)
+    #
+    cmd = "git fetch --all --prune"
+    _run(ctx, cmd)
 
 
 @task
@@ -2630,6 +2571,78 @@ def pytest_failed(  # type: ignore
 # #############################################################################
 # Linter.
 # #############################################################################
+
+
+# TODO(gp): When running `python_execute` we could launch it inside a
+# container.
+@task
+def check_python_files(  # type: ignore
+    ctx,
+    python_compile=True,
+    python_execute=False,
+    modified=False,
+    branch=False,
+    last_commit=False,
+    all_=False,
+    files="",
+):
+    """
+    Compile and execute Python files checking for errors.
+
+    The params have the same meaning as in `_get_files_to_process()`.
+    """
+    _report_task()
+    _ = ctx
+    # We allow to filter through the user specified `files`.
+    mutually_exclusive = False
+    remove_dirs = True
+    file_list = _get_files_to_process(
+        modified,
+        branch,
+        last_commit,
+        all_,
+        files,
+        mutually_exclusive,
+        remove_dirs,
+    )
+    _LOG.debug("Found %d files:\n%s", len(file_list), "\n".join(file_list))
+    # Filter keeping only Python files.
+    _LOG.debug("Filtering for Python files")
+    exclude_paired_jupytext = True
+    file_list = hio.keep_python_files(file_list, exclude_paired_jupytext)
+    _LOG.debug("file_list=%s", "\n".join(file_list))
+    _LOG.info("Need to process %d files", len(file_list))
+    if not file_list:
+        _LOG.warning("No files were selected")
+    # Scan all the files.
+    failed_filenames = []
+    for file_name in file_list:
+        _LOG.info("Processing '%s'", file_name)
+        if python_compile:
+            import compileall
+
+            success = compileall.compile_file(file_name, force=True, quiet=1)
+            _LOG.debug("file_name='%s' -> python_compile=%s", file_name, success)
+            if not success:
+                msg = "'%s' doesn't compile correctly" % file_name
+                _LOG.error(msg)
+                failed_filenames.append(file_name)
+        # TODO(gp): Add also `python -c "import ..."`, if not equivalent to `compileall`.
+        if python_execute:
+            cmd = f"python {file_name}"
+            rc = hsyint.system(cmd, abort_on_error=False, suppress_output=False)
+            _LOG.debug("file_name='%s' -> python_compile=%s", file_name, rc)
+            if rc != 0:
+                msg = "'%s' doesn't execute correctly" % file_name
+                _LOG.error(msg)
+                failed_filenames.append(file_name)
+    _LOG.info(
+        "failed_filenames=%s\n%s",
+        len(failed_filenames),
+        "\n".join(failed_filenames),
+    )
+    error = len(failed_filenames) > 0
+    return error
 
 
 def _get_lint_docker_cmd(precommit_opts: str, run_bash: bool, stage: str) -> str:

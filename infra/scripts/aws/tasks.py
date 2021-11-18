@@ -23,7 +23,10 @@ DEFAULT_REGION: str = "us-east-1"
 
 @task
 def aws_create_key_pair(
-    ctx, key_name=DEFAULT_KEYNAME, region=DEFAULT_REGION, path_to_key="aws_ec2_key.pem"
+    ctx,
+    key_name=DEFAULT_KEYNAME,
+    region=DEFAULT_REGION,
+    path_to_key="aws_ec2_key.pem",
 ):
     """Create a public/private key-pair which can be used to access created AWS EC2 instances
 

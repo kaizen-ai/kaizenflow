@@ -38,7 +38,6 @@ class Test_list_remove_duplicates1(huntes.TestCase):
 
 
 class Test_list_extract1(huntes.TestCase):
-
     def test1(self) -> None:
         start_idx = 0
         end_idx = 1
@@ -93,7 +92,6 @@ class Test_list_extract1(huntes.TestCase):
 
 
 class Test_list_chunk1(huntes.TestCase):
-
     def test1(self) -> None:
         n = 1
         expected_list = ["a b c d e f".split()]

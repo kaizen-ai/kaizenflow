@@ -158,15 +158,18 @@ class TestDfRollingApply(hut.TestCase):
 
 
 class TestReadDataFromS3(hut.TestCase):
-
     def test_read_csv1(self) -> None:
         s3fs = hs3.get_s3fs("am")
-        file_name = os.path.join(hs3.get_path(), "data/kibot/all_stocks_1min/RIMG.csv.gz")
+        file_name = os.path.join(
+            hs3.get_path(), "data/kibot/all_stocks_1min/RIMG.csv.gz"
+        )
         hs3.dassert_s3_exists(file_name, s3fs)
         pde.read_csv(file_name, s3fs=s3fs)
 
     def test_read_parquet1(self) -> None:
         s3fs = hs3.get_s3fs("am")
-        file_name = os.path.join(hs3.get_path(), "data/kibot/pq/sp_500_1min/AAPL.pq")
+        file_name = os.path.join(
+            hs3.get_path(), "data/kibot/pq/sp_500_1min/AAPL.pq"
+        )
         hs3.dassert_s3_exists(file_name, s3fs)
         pde.read_parquet(file_name, s3fs=s3fs)

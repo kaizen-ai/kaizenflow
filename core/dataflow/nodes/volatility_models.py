@@ -513,7 +513,9 @@ class VolatilityModel(
     def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
         cdtfu.validate_df_indices(df_in)
         # Get the columns.
-        self._fit_cols = cdtfu.convert_to_list(self._cols or df_in.columns.tolist())
+        self._fit_cols = cdtfu.convert_to_list(
+            self._cols or df_in.columns.tolist()
+        )
         df = df_in[self._fit_cols]
         dfs, info = self._fit_predict_volatility_model(df, fit=fit)
         df_out = pd.concat(dfs.values(), axis=1)

@@ -74,7 +74,12 @@ class IbFilePathGenerator(imcdlfpage.FilePathGenerator):
         file_name = "%s.%s" % (symbol, extension_part)
         # Construct full path.
         file_path = os.path.join(
-            imibdacon.S3_PREFIX, asset_part, exchange, currency, freq_part, file_name
+            imibdacon.S3_PREFIX,
+            asset_part,
+            exchange,
+            currency,
+            freq_part,
+            file_name,
         )
         return file_path
 

@@ -179,6 +179,7 @@ def compute_pseudoinverse(
     )
     if info is not None:
         info["condition_number"] = np.linalg.cond(df, p_moment)
+    # Reverse `columns` and `index` because this is a pseudoinverse.
     return pd.DataFrame(
         np.linalg.pinv(df, rcond=rcond, hermitian=hermitian), df.columns, df.index
     )

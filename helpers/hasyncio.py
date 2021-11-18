@@ -4,7 +4,7 @@ loops.
 
 Import as:
 
-import helpers.hasyncio as hhasynci
+import helpers.hasyncio as hasynci
 """
 import asyncio
 import contextlib
@@ -19,6 +19,9 @@ import helpers.dbg as hdbg
 # TODO(gp): We could make this a mixin and add this behavior to both asyncio and
 #  async_solipsism event loop.
 # TODO(gp): -> _AsyncSolipsismEventLoop
+# TODO(gp): Consider injecting a `get_wall_clock_time: hdatetim.GetWallClockTime`
+#  in the event loop so we can simplify the interfaces. An event loop always needs
+#  a function to get the wall clock.
 class _EventLoop(async_solipsism.EventLoop):
     """
     An `async_solipsism.EventLoop` returning also the wall-clock time.

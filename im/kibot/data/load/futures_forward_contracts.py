@@ -21,7 +21,9 @@ class FuturesForwardContracts:
     """
 
     def __init__(
-        self, data_loader: imcdladalo.AbstractDataLoader, disable_tqdm: bool = False
+        self,
+        data_loader: imcdladalo.AbstractDataLoader,
+        disable_tqdm: bool = False,
     ) -> None:
         """
         Initialize by injecting a data loader.

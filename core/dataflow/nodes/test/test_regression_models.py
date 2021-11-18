@@ -185,7 +185,6 @@ class TestLinearRegression(hut.TestCase):
         df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
         self.check_string(df_str)
 
-    @pytest.mark.skip(reason="cmamp issue #242")
     def test6(self) -> None:
         """
         Test `fit()` with `p_val_threshold`.
