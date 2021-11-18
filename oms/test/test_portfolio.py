@@ -11,16 +11,17 @@ import pandas as pd
 
 import core.dataflow.price_interface as cdtfprint
 import core.dataflow.test.test_price_interface as dartttdi
-import helpers.printing as hprint
-import helpers.unit_test as hunitest
-import oms.order as omorder
-import oms.portfolio as omportfo
+import helpers.printing as hprintin
+import helpers.unit_test as huntes
+import oms.order as oord
+import oms.portfolio as opor
 
 _LOG = logging.getLogger(__name__)
 
 
 def get_portfolio_example1(
-    price_interface: cdtfprint.AbstractPriceInterface, initial_ts: pd.Timestamp
+    price_interface: cdtfprint.AbstractPriceInterface,
+    initial_timestamp: pd.Timestamp,
 ):
     strategy_id = "st1"
     account = "paper"
@@ -29,7 +30,7 @@ def get_portfolio_example1(
     price_column = "price"
     #
     initial_cash = 1e6
-    portfolio = omportfo.Portfolio(
+    portfolio = opor.Portfolio(
         strategy_id,
         account,
         #
@@ -38,7 +39,7 @@ def get_portfolio_example1(
         price_column,
         #
         initial_cash,
-        initial_ts,
+        initial_timestamp,
     )
     return portfolio
 
@@ -52,7 +53,7 @@ def get_replayed_time_price_interface(event_loop):
     df = dartttdi.generate_synthetic_db_data(
         start_datetime, end_datetime, columns_, asset_ids
     )
-    _LOG.debug("df=%s", hprint.dataframe_to_str(df))
+    _LOG.debug("df=%s", hprintin.dataframe_to_str(df))
     # Build a ReplayedTimePriceInterface.
     initial_replayed_delay = 5
     delay_in_secs = 0
@@ -74,7 +75,7 @@ def get_replayed_time_price_interface(event_loop):
 _5mins = pd.DateOffset(minutes=5)
 
 
-class TestPortfolio1(hunitest.TestCase):
+class TestPortfolio1(huntes.TestCase):
     def test_get_holdings1(self) -> None:
         """
         Check non-cash holdings for a Portfolio with only cash.
@@ -83,22 +84,22 @@ class TestPortfolio1(hunitest.TestCase):
         Empty DataFrame
         Columns: [asset_id, curr_num_shares]
         Index: []"""
-        ts = pd.Timestamp("2000-01-01 09:35:00-05:00")
+        timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
         asset_id = None
         exclude_cash = True
-        self._test(expected, ts, asset_id, exclude_cash=exclude_cash)
+        self._test(expected, timestamp, asset_id, exclude_cash=exclude_cash)
 
     def test_get_holdings2(self) -> None:
         """
-        Check non-cash holdings for a Portfolio with only cash.
+        Check holdings for a Portfolio with only cash.
         """
         expected = r"""
                                    asset_id  curr_num_shares
         2000-01-01 09:35:00-05:00      -1.0        1000000.0"""
-        ts = pd.Timestamp("2000-01-01 09:35:00-05:00")
+        timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
         asset_id = None
         exclude_cash = False
-        self._test(expected, ts, asset_id, exclude_cash=exclude_cash)
+        self._test(expected, timestamp, asset_id, exclude_cash=exclude_cash)
 
     def test_get_holdings3(self) -> None:
         """
@@ -108,10 +109,10 @@ class TestPortfolio1(hunitest.TestCase):
         Empty DataFrame
         Columns: [asset_id, curr_num_shares]
         Index: []"""
-        ts = pd.Timestamp("2000-01-01 09:40:00-05:00")
+        timestamp = pd.Timestamp("2000-01-01 09:40:00-05:00")
         asset_id = None
         exclude_cash = False
-        self._test(expected, ts, asset_id, exclude_cash=exclude_cash)
+        self._test(expected, timestamp, asset_id, exclude_cash=exclude_cash)
 
     def test_place_orders1(self) -> None:
         order_id = 0
@@ -119,32 +120,32 @@ class TestPortfolio1(hunitest.TestCase):
         event_loop = None
         price_interface = get_replayed_time_price_interface(event_loop)
         # Get order.
-        ts = pd.Timestamp("2000-01-01 09:30:00-05:00")
-        creation_ts = ts + _5mins
+        timestamp = pd.Timestamp("2000-01-01 09:30:00-05:00")
+        creation_timestamp = timestamp + _5mins
         asset_id = 101
         type_ = "price@twap"
-        ts_start = ts + _5mins
-        ts_end = ts + 2 * _5mins
+        timestamp_start = timestamp + _5mins
+        timestamp_end = timestamp + 2 * _5mins
         num_shares = 10
-        order = omorder.Order(
+        order = oord.Order(
             order_id,
             price_interface,
-            creation_ts,
+            creation_timestamp,
             asset_id,
             type_,
-            ts_start,
-            ts_end,
+            timestamp_start,
+            timestamp_end,
             num_shares,
         )
         orders = [order]
         # Build a Portfolio.
-        initial_ts = ts
-        portfolio = get_portfolio_example1(price_interface, initial_ts)
+        initial_timestamp = timestamp
+        portfolio = get_portfolio_example1(price_interface, initial_timestamp)
         # Execute.
         try:
             # Since there is no simulated time, we need to enable future peeking.
             old_value = price_interface.set_allow_future_peeking(True)
-            portfolio.place_orders(ts_start, ts_end, orders)
+            portfolio.place_orders(timestamp_start, timestamp_end, orders)
         finally:
             price_interface.set_allow_future_peeking(old_value)
         # Check.
@@ -154,9 +155,9 @@ class TestPortfolio1(hunitest.TestCase):
         2000-01-01 09:40:00-05:00       101             10.0
         2000-01-01 09:30:00-05:00        -1        1000000.0
         # orders=
-                                  order_id               creation_ts asset_id       type_                  start_ts                    end_ts num_shares num_shares_filled holdings+1  execution_price        cash+1
-        2000-01-01 09:35:00-05:00        0 2000-01-01 09:35:00-05:00      101  price@twap 2000-01-01 09:35:00-05:00 2000-01-01 09:40:00-05:00         10                10         10        -0.083847  1.000001e+06
-        2000-01-01 09:30:00-05:00      NaN                       NaT      NaN         NaN                       NaT                       NaT        NaN               NaN        NaN              NaN           NaN"""
+                                  order_id               creation_timestamp asset_id       type_                  start_timestamp                    end_timestamp num_shares num_shares_filled holdings+1  execution_price        cash+1
+        2000-01-01 09:35:00-05:00        0        2000-01-01 09:35:00-05:00      101  price@twap        2000-01-01 09:35:00-05:00        2000-01-01 09:40:00-05:00         10                10         10        -0.083847  1.000001e+06
+        2000-01-01 09:30:00-05:00      NaN                              NaT      NaN         NaN                              NaT                              NaT        NaN               NaN        NaN              NaN           NaN"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def _get_portfolio1(self):
@@ -167,8 +168,8 @@ class TestPortfolio1(hunitest.TestCase):
         event_loop = None
         price_interface = get_replayed_time_price_interface(event_loop)
         # Build a Portfolio.
-        initial_ts = pd.Timestamp("2000-01-01 09:35:00-05:00")
-        portfolio = get_portfolio_example1(price_interface, initial_ts)
+        initial_timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
+        portfolio = get_portfolio_example1(price_interface, initial_timestamp)
         return portfolio
 
     def _test(self, expected: str, *args: Any, **kwargs: Dict[str, Any]) -> None:

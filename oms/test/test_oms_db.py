@@ -7,6 +7,7 @@ import pandas as pd
 import helpers.datetime_ as hdateti
 import helpers.hasyncio as hasynci
 import helpers.printing as hprint
+import helpers.git as hgit
 import helpers.sql as hsql
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
@@ -62,7 +63,8 @@ class _TestOmsDbHelper(hunitest.TestCase):
             cmd = []
             # TODO(gp): This information should be retrieved from oms_lib_tasks.py.
             #  We can also use the invoke command.
-            self.docker_compose_file_path = os.path.abspath(
+            self.docker_compose_file_path = os.path.join(
+                hgit.get_amp_abs_path(),
                 "oms/devops/compose/docker-compose.yml"
             )
             cmd.append("sudo docker-compose")

@@ -1,8 +1,10 @@
 """
 Import as:
 
-import oms.locates as omlocate
+import oms.locates as oloc
 """
+
+import pandas as pd
 
 
 class Locates:
