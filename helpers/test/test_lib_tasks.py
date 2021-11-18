@@ -73,7 +73,7 @@ class _CheckDryRunTestCase(hunitest.TestCase):
         `check_string()` the sequence of commands issued in the context.
         """
         act = "\n".join(map(str, ctx.run.mock_calls))
-        act = hprintin.remove_non_printable_chars(act)
+        act = hprint.remove_non_printable_chars(act)
         self.check_string(act)
 
     def _check_output(self, target: str, check: bool = True) -> None:
@@ -515,12 +515,6 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
     Test `_get_docker_cmd()`.
     """
 
-    def _check(self, act: str, exp: str) -> None:
-        act = huntes.purify_txt_from_client(act)
-        # This is required when different repos run Docker with user vs root / remap.
-        act = huntes.filter_text("--user", act)
-        self.assert_equal(act, exp, fuzzy_match=True)
-
     @pytest.mark.skipif(
         not hgit.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
     )
@@ -748,7 +742,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         scratch_space = self.get_scratch_space(use_absolute_path=False)
         dir_name = os.path.join(scratch_space, "test")
         file_dict = {
-            "test_this.py": hprintin.dedent(
+            "test_this.py": hprint.dedent(
                 """
                     foo
 
@@ -756,7 +750,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
                         bar
                     """
             ),
-            "test_that.py": hprintin.dedent(
+            "test_that.py": hprint.dedent(
                 """
                     foo
                     baz
@@ -874,7 +868,7 @@ class TestLibTasksRunTests1(hunitest.TestCase):
         scratch_space = self.get_scratch_space()
         dir_name = os.path.join(scratch_space, "test")
         file_dict = {
-            "test_this.py": hprintin.dedent(
+            "test_this.py": hprint.dedent(
                 """
                     foo
 
@@ -882,7 +876,7 @@ class TestLibTasksRunTests1(hunitest.TestCase):
                         bar
                     """
             ),
-            "test_that.py": hprintin.dedent(
+            "test_that.py": hprint.dedent(
                 """
                     foo
                     baz
@@ -915,7 +909,7 @@ class TestLibTasksRunTests1(hunitest.TestCase):
         scratch_space = self.get_scratch_space()
         dir_name = os.path.join(scratch_space, "test")
         file_dict = {
-            "test_this.py": hprintin.dedent(
+            "test_this.py": hprint.dedent(
                 """
                     foo
 
@@ -923,7 +917,7 @@ class TestLibTasksRunTests1(hunitest.TestCase):
                         bar
                     """
             ),
-            "test_that.py": hprintin.dedent(
+            "test_that.py": hprint.dedent(
                 """
                     foo
                     baz
@@ -1590,7 +1584,7 @@ class Test_pytest_failed1(hunitest.TestCase):
     # #########################################################################
 
     def _build_pytest_file_helper(self, txt: str) -> str:
-        txt = hprintin.dedent(txt)
+        txt = hprint.dedent(txt)
         file_name = os.path.join(self.get_scratch_space(), "input.txt")
         hio.to_file(file_name, txt)
         return file_name
