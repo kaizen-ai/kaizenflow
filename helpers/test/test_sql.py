@@ -13,6 +13,7 @@ import helpers.unit_test as huntes
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): helpers can't depend from im.
 @pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
 class TestSql1(huntes.TestCase):
     def setUp(self) -> None:
@@ -21,7 +22,7 @@ class TestSql1(huntes.TestCase):
         """
         super().setUp()
         self.docker_compose_file_path = os.path.join(
-            hgit.get_amp_abs_path(), "im/devops/compose/docker-compose.yml"
+            hgit.get_amp_abs_path(), "im_v2/devops/compose/docker-compose.yml"
         )
         cmd = (
             "sudo docker-compose "

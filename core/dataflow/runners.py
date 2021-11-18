@@ -520,8 +520,8 @@ class RealTimeDagRunner(_AbstractDagRunner):
         hdbg.dassert_eq(len(events), len(result_bundles))
         for event, result_bundle in zip(events, result_bundles):
             event_as_str = event.to_str(
-                        include_tenths_of_secs=False,
-                        include_wall_clock_time=False)
+                include_tenths_of_secs=False, include_wall_clock_time=False
+            )
             ret.append(hprintin.frame(event_as_str))
             ret.append("result_bundle=\n%s" % str(result_bundle))
         ret = "\n".join(ret)

@@ -97,10 +97,7 @@ def resample_index(index: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
     :return: resampled `DatetimeIndex`
     """
     hdbg.dassert_isinstance(index, pd.DatetimeIndex)
-    hdbg.dassert(
-        index.is_unique,
-        msg="Index must have only unique values"
-    )
+    hdbg.dassert(index.is_unique, msg="Index must have only unique values")
     min_date = index.min()
     max_date = index.max()
     resampled_index = pd.date_range(
@@ -125,10 +122,7 @@ def resample_index(index: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
             len(resampled_index),
         )
     else:
-        _LOG.info(
-            "Index length=%s has not changed",
-            len(index)
-        )
+        _LOG.info("Index length=%s has not changed", len(index))
     return resampled_index
 
 
@@ -149,7 +143,9 @@ def resample_df(df: pd.DataFrame, frequency: str) -> pd.DataFrame:
 
 
 def drop_duplicates(
-    data: Union[pd.Series, pd.DataFrame], *args: Any, **kwargs: Any,
+    data: Union[pd.Series, pd.DataFrame],
+    *args: Any,
+    **kwargs: Any,
 ) -> Union[pd.Series, pd.DataFrame]:
     """
     Wrapper around `pandas.drop_duplicates()`.

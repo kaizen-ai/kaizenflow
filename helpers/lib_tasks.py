@@ -697,8 +697,6 @@ def git_create_branch(  # type: ignore
     _run(ctx, cmd)
 
 
-
-
 def _delete_branches(ctx: Any, tag: str, confirm_delete: bool) -> None:
     if tag == "local":
         # Delete local branches that are already merged into master.

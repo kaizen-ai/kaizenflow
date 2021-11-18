@@ -422,8 +422,9 @@ class RealTimeDataSource(cdtfnobas.DataSource):
             hprintin.dataframe_to_str(self.df.head()),
         )
         dfs = {}
-        for egid, df in self.df.groupby("egid"):
-            dfs[egid] = df
+        # TODO(gp): Pass the column name through the interace.
+        for asset_id, df in self.df.groupby("egid"):
+            dfs[asset_id] = df
         # Reorganize the data into the desired format.
         df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
         df = df.swaplevel(i=0, j=1, axis=1)

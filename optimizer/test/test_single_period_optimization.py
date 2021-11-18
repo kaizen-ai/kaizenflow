@@ -14,6 +14,7 @@ _WARNING = "\033[33mWARNING\033[0m"
 
 try:
     import cvxpy as cvx
+
     _HAS_CVXPY = True
 except ImportError as e:
     print(_WARNING + ": " + str(e))

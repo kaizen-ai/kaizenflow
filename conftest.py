@@ -77,7 +77,9 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
             hut.set_incremental_tests(True)
         # Set the verbosity level.
         level = logging.INFO
-        if config.getoption("--dbg_verbosity", None) or config.getoption("--dbg", None):
+        if config.getoption("--dbg_verbosity", None) or config.getoption(
+            "--dbg", None
+        ):
             if config.getoption("--dbg_verbosity", None):
                 level = config.getoption("--dbg_verbosity")
             elif config.getoption("--dbg", None):

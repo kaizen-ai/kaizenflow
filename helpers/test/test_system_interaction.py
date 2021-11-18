@@ -141,9 +141,7 @@ class Test_compute_file_signature1(huntes.TestCase):
         """
         Compute the signature of a file using 4 enclosing dirs.
         """
-        file_name = (
-                "/app/amp/core/test/TestApplyAdfTest.test1/output/test.txt"
-        )
+        file_name = "/app/amp/core/test/TestApplyAdfTest.test1/output/test.txt"
         dir_depth = 4
         act = hsyint._compute_file_signature(file_name, dir_depth=dir_depth)
         exp = [

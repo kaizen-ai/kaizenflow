@@ -352,7 +352,9 @@ class GroupedColDfToDfTransformer(cdnb.Transformer):
                 self._permitted_exceptions,
             )
             if df_out is None:
-                _LOG.warning("No output for key=%s, imputing empty dataframe", key)
+                _LOG.warning(
+                    "No output for key=%s, imputing empty dataframe", key
+                )
                 df_out = pd.DataFrame()
             dbg.dassert_isinstance(df_out, pd.DataFrame)
             if key_info is not None:

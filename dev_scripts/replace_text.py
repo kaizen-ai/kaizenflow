@@ -47,7 +47,7 @@ import helpers.parser as hparse
 import helpers.printing as hprint
 import helpers.system_interaction as hsyste
 
-# TODO(gp): 
+# TODO(gp):
 #  - allow to read a cfile with a subset of files / points to replace
 #  - allow to work with no filter
 #  - fix the help
@@ -332,12 +332,12 @@ def _fix_AmpTask1403(args: argparse.Namespace) -> None:
     to_replace = [
         "import core.config as cfg",
         "import core.config as ccfg",
-        #"import core.config as cconfi",
+        # "import core.config as cconfi",
         "import core.config as cconfig",
         "import core.config_builders as ccbuild",
         "import core.config_builders as cfgb",
     ]
-    #to_replace = [(f"^{s}$", "import core.config as cconfig") for s in to_replace]
+    # to_replace = [(f"^{s}$", "import core.config as cconfig") for s in to_replace]
     to_replace = [(f"{s}", "import core.config as cconfig") for s in to_replace]
     _fix_AmpTask1403_helper(args, to_replace)
     #
@@ -345,7 +345,7 @@ def _fix_AmpTask1403(args: argparse.Namespace) -> None:
         # (r"printing\.", "hprint."),
         # ("import helpers.config", "import core.config")
         "ccfg",
-        #"cconfi",
+        # "cconfi",
         "cconfig",
         "cfg",
         "ccbuild",
@@ -360,12 +360,9 @@ def _prerelease_cleanup(args: argparse.Namespace) -> None:
     Implement AmpTask1403.
     """
     # From longest to shortest to avoid nested replacements.
-    to_replace = [
-        ("instrument_master", "im"),
-        ("order_management_system", "oms")
-    ]
+    to_replace = [("instrument_master", "im"), ("order_management_system", "oms")]
     dirs = ["."]
-    #exts = ["py", "ipynb", "md", "txt"]
+    # exts = ["py", "ipynb", "md", "txt"]
     exts = None
     backup = args.backup
     preview = args.preview

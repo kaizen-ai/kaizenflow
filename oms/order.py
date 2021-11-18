@@ -21,17 +21,17 @@ class Order:
         self,
         order_id: int,
         price_interface: cdtfprint.AbstractPriceInterface,
-        creation_ts: pd.Timestamp,
+        creation_timestamp: pd.Timestamp,
         asset_id: int,
         type_: str,
-        start_ts: pd.Timestamp,
-        end_ts: pd.Timestamp,
+        start_timestamp: pd.Timestamp,
+        end_timestamp: pd.Timestamp,
         num_shares: float,
         *,
         column_remap: Optional[Dict[str, str]] = None,
     ):
         """
-        Represent an order executed in the interval of time (start_ts, end_ts].
+        Represent an order executed in (start_timestamp, end_timestamp].
 
         An order is characterized by:
         1) what price the order is executed at
@@ -49,7 +49,7 @@ class Order:
         3) number of shares to buy (if positive) or sell (if negative)
 
         :param order_id: unique ID for cross-referencing
-        :param creation_ts: when the order was placed
+        :param creation_timestamp: when the order was placed
         :param asset_id: ID of the asset
         :param type_: e.g.,
             - `price@twap`: pay the TWAP price in the interval
@@ -57,13 +57,13 @@ class Order:
         """
         self.order_id = order_id
         self.price_interface = price_interface
-        self.creation_ts = creation_ts
+        self.creation_timestamp = creation_timestamp
         hdbg.dassert_lte(0, asset_id)
         self.asset_id = asset_id
         self.type_ = type_
-        hdbg.dassert_lt(start_ts, end_ts)
-        self.start_ts = start_ts
-        self.end_ts = end_ts
+        hdbg.dassert_lt(start_timestamp, end_timestamp)
+        self.start_timestamp = start_timestamp
+        self.end_timestamp = end_timestamp
         hdbg.dassert_ne(num_shares, 0)
         self.num_shares = num_shares
         #
@@ -77,32 +77,32 @@ class Order:
         txt: List[str] = []
         txt.append(f"Order:")
         txt.append(f"order_id={self.order_id}")
-        txt.append(f"creation_ts='{self.creation_ts}'")
+        txt.append(f"creation_timestamp='{self.creation_timestamp}'")
         txt.append(f"asset_id={self.asset_id}")
         txt.append(f"type='{self.type_}'")
-        txt.append(f"ts=[{self.start_ts}, {self.end_ts}]")
+        txt.append(f"timestamp=[{self.start_timestamp}, {self.end_timestamp}]")
         txt.append(f"num_shares={self.num_shares}")
         return " ".join(txt)
 
     def to_dict(self) -> Dict[str, Any]:
         dict_: Dict[str, Any] = collections.OrderedDict()
         dict_["order_id"] = self.order_id
-        dict_["creation_ts"] = self.creation_ts
+        dict_["creation_timestamp"] = self.creation_timestamp
         dict_["asset_id"] = self.asset_id
         dict_["type_"] = self.type_
-        dict_["start_ts"] = self.start_ts
-        dict_["end_ts"] = self.end_ts
+        dict_["start_timestamp"] = self.start_timestamp
+        dict_["end_timestamp"] = self.end_timestamp
         dict_["num_shares"] = self.num_shares
         return dict_
 
     @staticmethod
     def get_price(
         price_interface: cdtfprint.AbstractPriceInterface,
-        # TODO(gp): Move it after end_ts.
+        # TODO(gp): Move it after end_timestamp.
         asset_id: int,
-        start_ts: pd.Timestamp,
-        end_ts: pd.Timestamp,
-        ts_col_name: str,
+        start_timestamp: pd.Timestamp,
+        end_timestamp: pd.Timestamp,
+        timestamp_col_name: str,
         type_: str,
         num_shares: float,
         column_remap: Dict[str, str],
@@ -122,9 +122,9 @@ class Order:
             column = column_remap[price_type]
             price = Order._get_price_per_share(
                 price_interface,
-                start_ts,
-                end_ts,
-                ts_col_name,
+                start_timestamp,
+                end_timestamp,
+                timestamp_col_name,
                 asset_id,
                 column,
                 timing,
@@ -138,9 +138,9 @@ class Order:
             column = column_remap[column]
             price = Order._get_price_per_share(
                 price_interface,
-                start_ts,
-                end_ts,
-                ts_col_name,
+                start_timestamp,
+                end_timestamp,
+                timestamp_col_name,
                 asset_id,
                 column,
                 timing,
@@ -152,13 +152,13 @@ class Order:
             hdbg.dassert_lte(0, perc)
             hdbg.dassert_lte(perc, 1.0)
             # TODO(gp): This should not be hardwired.
-            ts_col_name = "end_datetime"
+            timestamp_col_name = "end_datetime"
             column = column_remap["bid"]
             bid_price = Order._get_price_per_share(
                 price_interface,
-                start_ts,
-                end_ts,
-                ts_col_name,
+                start_timestamp,
+                end_timestamp,
+                timestamp_col_name,
                 asset_id,
                 column,
                 timing,
@@ -166,9 +166,9 @@ class Order:
             column = column_remap["ask"]
             ask_price = Order._get_price_per_share(
                 price_interface,
-                start_ts,
-                end_ts,
-                ts_col_name,
+                start_timestamp,
+                end_timestamp,
+                timestamp_col_name,
                 asset_id,
                 column,
                 timing,
@@ -188,10 +188,10 @@ class Order:
         else:
             raise ValueError("Invalid type='%s'", type_)
         _LOG.debug(
-            "type=%s, start_ts=%s, end_ts=%s -> execution_price=%s",
+            "type=%s, start_timestamp=%s, end_timestamp=%s -> execution_price=%s",
             type_,
-            start_ts,
-            end_ts,
+            start_timestamp,
+            end_timestamp,
             price,
         )
         return price
@@ -205,13 +205,13 @@ class Order:
             # future peeking (unfortunately).
             old_value = self.price_interface.set_allow_future_peeking(True)
             # TODO(gp): It should not be hardwired.
-            ts_col_name = "end_datetime"
+            timestamp_col_name = "end_datetime"
             price = self.get_price(
                 self.price_interface,
                 self.asset_id,
-                self.start_ts,
-                self.end_ts,
-                ts_col_name,
+                self.start_timestamp,
+                self.end_timestamp,
+                timestamp_col_name,
                 self.type_,
                 self.num_shares,
                 self.column_remap,
@@ -231,8 +231,8 @@ class Order:
         """
         return (
             (self.type_ == rhs.type_)
-            and (self.start_ts == rhs.start_ts)
-            and (self.end_ts == rhs.end_ts)
+            and (self.start_timestamp == rhs.start_timestamp)
+            and (self.end_timestamp == rhs.end_timestamp)
         )
 
     def merge(self, rhs: "Order") -> "Order":
@@ -245,8 +245,8 @@ class Order:
         order = Order(
             self.price_interface,
             self.type_,
-            self.start_ts,
-            self.end_ts,
+            self.start_timestamp,
+            self.end_timestamp,
             num_shares,
         )
         return order
@@ -257,9 +257,9 @@ class Order:
     @staticmethod
     def _get_price_per_share(
         mi: cdtfprint.AbstractPriceInterface,
-        start_ts: pd.Timestamp,
-        end_ts: pd.Timestamp,
-        ts_col_name: str,
+        start_timestamp: pd.Timestamp,
+        end_timestamp: pd.Timestamp,
+        timestamp_col_name: str,
         asset_id: int,
         column: str,
         timing: str,
@@ -268,22 +268,26 @@ class Order:
         Get the price corresponding to a certain column and timing (e.g.,
         `start`, `end`, `twap`).
 
-        :param ts_col_name: column to use to filter based on start_ts and end_ts
+        :param timestamp_col_name: column to use to filter based on start_timestamp and end_timestamp
         :param column: column to use to compute the price
         """
         if timing == "start":
             asset_ids = [asset_id]
-            price = mi.get_data_at_timestamp(start_ts, ts_col_name, asset_ids)[
-                column
-            ]
+            price = mi.get_data_at_timestamp(
+                start_timestamp, timestamp_col_name, asset_ids
+            )[column]
         elif timing == "end":
             asset_ids = [asset_id]
-            price = mi.get_data_at_timestamp(end_ts, ts_col_name, asset_ids)[
-                column
-            ]
+            price = mi.get_data_at_timestamp(
+                end_timestamp, timestamp_col_name, asset_ids
+            )[column]
         elif timing == "twap":
             price = mi.get_twap_price(
-                start_ts, end_ts, ts_col_name, asset_id, column
+                start_timestamp,
+                end_timestamp,
+                timestamp_col_name,
+                asset_id,
+                column,
             )
         else:
             raise ValueError("Invalid timing='%s'", timing)
@@ -293,27 +297,31 @@ class Order:
 # #############################################################################
 
 
-def _get_orders_to_execute(orders: List[Order], ts: pd.Timestamp) -> List[Order]:
+def _get_orders_to_execute(
+    orders: List[Order], timestamp: pd.Timestamp
+) -> List[Order]:
     """
-    Return the orders from `orders` that can be executed at timestamp `ts`.
+    Return the orders from `orders` that can be executed at `timestamp`.
     """
-    orders.sort(key=lambda x: x.start_ts, reverse=False)
-    hdbg.dassert_lte(orders[0].start_ts, ts)
+    orders.sort(key=lambda x: x.start_timestamp, reverse=False)
+    hdbg.dassert_lte(orders[0].start_timestamp, timestamp)
     # TODO(gp): This is inefficient. Use binary search.
     curr_orders = []
     for order in orders:
-        if order.start_ts == ts:
+        if order.start_timestamp == timestamp:
             curr_orders.append(order)
     return curr_orders
 
 
-def get_orders_to_execute(ts: pd.Timestamp, orders: List[Order]) -> List[Order]:
+def get_orders_to_execute(
+    timestamp: pd.Timestamp, orders: List[Order]
+) -> List[Order]:
     if True:
-        if orders[0].start_ts == ts:
+        if orders[0].start_timestamp == timestamp:
             return [orders.pop()]
         # hdbg.dassert_eq(len(orders), 1, "%s", orders_to_string(orders))
         assert 0
-    orders_to_execute = get_orders_to_execute(orders, ts)
+    orders_to_execute = get_orders_to_execute(orders, timestamp)
     _LOG.debug("orders_to_execute=%s", orders_to_string(orders_to_execute))
     # Merge the orders.
     merged_orders = []
