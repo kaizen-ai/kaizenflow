@@ -68,6 +68,15 @@ def reset_default_params() -> None:
     set_default_params(params)
 
 
+set_default_params(
+        {
+            "fast_test_timeout_in_sec": 5,
+            "slow_test_timeout_in_sec": 20,
+            "superslow_test_timeout_in_sec": 120,
+            }
+        )
+
+
 # #############################################################################
 # Utils.
 # #############################################################################
@@ -1945,6 +1954,7 @@ def run_blank_tests(ctx, stage=STAGE):  # type: ignore
 
 
 def _build_run_command_line(
+    test_type: str,
     pytest_opts: str,
     pytest_mark: str,
     dir_name: str,
@@ -1953,7 +1963,88 @@ def _build_run_command_line(
     collect_only: bool,
     tee_to_file: bool,
     # Different params than the `run_*_tests()`.
+) -> str:
+    """
+    Build the pytest run command.
+
+    Same params as `run_fast_tests()`.
+    """
+    if test_type != "fast_and_slow_tests":
+        skipped_tests = _select_tests_to_skip(test_type)
+        cmd = _build_run_command_line_for_selected_tests(
+            test_type,
+            skipped_tests,
+            pytest_opts,
+            pytest_mark,
+            dir_name,
+            skip_submodules,
+            coverage,
+            collect_only,
+            tee_to_file,  # Different params than the `run_*_tests()`.
+        )
+    else:
+        # Get command for fast tests.
+        skipped_tests = _select_tests_to_skip("fast_tests")
+        cmd_fast_tests = _build_run_command_line_for_selected_tests(
+            test_type,
+            skipped_tests,
+            pytest_opts,
+            pytest_mark,
+            dir_name,
+            skip_submodules,
+            coverage,
+            collect_only,
+            tee_to_file,  # Different params than the `run_*_tests()`.
+        )
+        # Get command for slow tests.
+        skipped_tests = _select_tests_to_skip("slow_tests")
+        cmd_slow_tests = _build_run_command_line_for_selected_tests(
+            test_type,
+            skipped_tests,
+            pytest_opts,
+            pytest_mark,
+            dir_name,
+            skip_submodules,
+            coverage,
+            collect_only,
+            tee_to_file,  # Different params than the `run_*_tests()`.
+        )
+        # TODO(Julia): Figure out whether we are running through ctx or system
+        #            and go from there.
+        pass
+    #
+    return cmd
+
+
+def _select_tests_to_skip(
+    test_type: str
+) -> str:
+    if test_type == "all_tests":
+        return ""
+    if test_type == "fast_tests":
+        return "not slow and not superslow"
+    if test_type == "slow_tests":
+        return "slow and not superslow"
+    if test_type == "superslow_tests":
+        return "not slow and superslow"
+    if test_type == "fast_and_slow_tests":
+        raise ValueError(
+            f"test_type={test_type} requires running this function for fast and"
+            f"slow tests separately."
+        )
+    raise ValueError(f"Invalid test_type={test_type}")
+
+
+def _build_run_command_line_for_selected_tests(
+    test_type: str,
     skipped_tests: str,
+    pytest_opts: str,
+    pytest_mark: str,  # TODO(GP): This argument is not used.
+    dir_name: str,
+    skip_submodules: bool,
+    coverage: bool,
+    collect_only: bool,
+    tee_to_file: bool,
 ) -> str:
     """
     Build the pytest run command.
@@ -1965,7 +2056,7 @@ def _build_run_command_line(
     pytest_opts_tmp = []
     if pytest_opts != "":
         pytest_opts_tmp.append(pytest_opts)
-    if skipped_tests != "":
+    if skipped_tests:
         pytest_opts_tmp.insert(0, f'-m "{skipped_tests}"')
     dir_name = dir_name or "."
     # file_names = _find_test_files(dir_name)
@@ -1996,7 +2087,7 @@ def _build_run_command_line(
     pytest_opts = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
     cmd = f"pytest {pytest_opts} {dir_name}"
     if tee_to_file:
-        cmd += " 2>&1 | tee tmp.pytest.log"
+        cmd += f" 2>&1 | tee tmp.pytest.{test_type}.log"
     return cmd
 
 
@@ -2041,6 +2132,7 @@ def _run_test_cmd(
 def _run_tests(
     ctx: Any,
     stage: str,
+    test_type: str,
     pytest_opts: str,
     pytest_mark: str,
     dir_name: str,
@@ -2048,11 +2140,11 @@ def _run_tests(
     coverage: bool,
     collect_only: bool,
     tee_to_file: bool,
-    skipped_tests: str,
     start_coverage_script: bool = True,
 ) -> None:
     # Build the command line.
     cmd = _build_run_command_line(
+        test_type,
         pytest_opts,
         pytest_mark,
         dir_name,
@@ -2060,7 +2152,6 @@ def _run_tests(
         coverage,
         collect_only,
         tee_to_file,
-        skipped_tests,
     )
     # Execute the command line.
     _run_test_cmd(ctx, stage, cmd, coverage, collect_only, start_coverage_script)
@@ -2092,10 +2183,10 @@ def run_fast_tests(  # type: ignore
     :param tee_to_file: save output of pytest in `tmp.pytest.log`
     """
     _report_task()
-    skipped_tests = "not slow and not superslow"
     _run_tests(
         ctx,
         stage,
+        "fast_tests",
         pytest_opts,
         pytest_mark,
         dir_name,
@@ -2103,7 +2194,6 @@ def run_fast_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
-        skipped_tests,
     )
 
 
@@ -2125,10 +2215,10 @@ def run_slow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
-    skipped_tests = "slow and not superslow"
     _run_tests(
         ctx,
         stage,
+        "slow_tests",
         pytest_opts,
         pytest_mark,
         dir_name,
@@ -2136,9 +2226,7 @@ def run_slow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
-        skipped_tests,
     )
-
 
 @task
 def run_superslow_tests(  # type: ignore
@@ -2158,10 +2246,10 @@ def run_superslow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
-    skipped_tests = "not slow and superslow"
     _run_tests(
         ctx,
         stage,
+        "superslow_tests",
         pytest_opts,
         pytest_mark,
         dir_name,
@@ -2169,7 +2257,6 @@ def run_superslow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
-        skipped_tests,
     )
 
 
@@ -2191,10 +2278,10 @@ def run_fast_slow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
-    skipped_tests = "not superslow"
     _run_tests(
         ctx,
         stage,
+        "fast_and_slow_tests",
         pytest_opts,
         pytest_mark,
         dir_name,
@@ -2202,7 +2289,6 @@ def run_fast_slow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
-        skipped_tests,
     )
 
 
