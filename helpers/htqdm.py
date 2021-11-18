@@ -16,6 +16,8 @@ class TqdmToLogger(io.StringIO):
 
     Use as:
     ```
+    from tqdm.autonotebook import tqdm
+
     tqdm_out = TqdmToLogger(_LOG, level=logging.INFO)
     for ... tqdm(..., file=tqdm_out):
     ```

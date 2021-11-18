@@ -1,5 +1,7 @@
 # syntax = docker/dockerfile:experimental
 
+#FROM continuumio/miniconda3:4.9.2
+#FROM ubuntu:18.04
 FROM ubuntu:20.04 AS builder
 
 # Name of the virtual environment to create.
@@ -39,13 +41,13 @@ COPY devops/docker_build/install_jupyter_extensions.sh .
 RUN /bin/sh -c "./install_jupyter_extensions.sh"
 
 # - Install Docker-in-docker.
-COPY devops/docker_build/install_dind.sh .
-RUN /bin/bash -c "./install_dind.sh"
+#COPY devops/docker_build/install_dind.sh .
+#RUN /bin/bash -c "./install_dind.sh"
 
 # - Create users and set permissions.
-COPY devops/docker_build/create_users.sh .
-RUN /bin/bash -c "./create_users.sh"
-COPY devops/docker_build/etc_sudoers /etc/sudoers
+#COPY devops/docker_build/create_users.sh .
+#RUN /bin/bash -c "./create_users.sh"
+#COPY devops/docker_build/etc_sudoers /etc/sudoers
 
 # Mount external filesystems.
 #RUN mkdir -p /s3/alphamatic-data
