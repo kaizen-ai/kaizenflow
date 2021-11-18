@@ -167,11 +167,11 @@ def _is_target_row_present(connection: hsql.DbConnection, table_name: str,
     # Print the state of the DB, if needed.
     if show_db_state:
         query = f"SELECT * FROM {table_name}"
-        df = hsql.execute_query(connection, query)
+        df = hsql.execute_query_to_df(connection, query)
         _LOG.debug("df=\n%s", hprint.dataframe_to_str(df, use_tabulate=False))
     # Check if the required row is available.
     query = f"SELECT {field_name} FROM {table_name} WHERE {field_name}='{target_value}'"
-    df = hsql.execute_query(connection, query)
+    df = hsql.execute_query_to_df(connection, query)
     _LOG.debug("df=\n%s", hprint.dataframe_to_str(df, use_tabulate=False))
     success = df.shape[0] > 0
     result = None
