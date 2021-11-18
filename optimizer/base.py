@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import optimizer.base as opbase
+"""
+
 import abc
 
 import cvxpy as cvx

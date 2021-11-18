@@ -7,12 +7,12 @@ import networkx as nx
 
 import core.dataflow as dtf
 import helpers.printing as hprint
-import helpers.unit_test as hut
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-class _Dataflow_helper(hut.TestCase):
+class _Dataflow_helper(hunitest.TestCase):
     @staticmethod
     def _remove_stage_names(node_link_data: Dict[str, Any]) -> Dict[str, str]:
         """

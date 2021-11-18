@@ -2,7 +2,7 @@ import logging
 from typing import List, Tuple
 
 import helpers.dbg as hdbg
-import helpers.unit_test as huntes
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -13,7 +13,7 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): Use a self.assert_equal() instead of a check_string() since this
 #  code needs to be stable.
-class Test_dassert1(huntes.TestCase):
+class Test_dassert1(hunitest.TestCase):
     """
     Test `dassert()`.
     """
@@ -82,7 +82,7 @@ class Test_dassert1(huntes.TestCase):
 # #############################################################################
 
 
-class Test_dassert_eq1(huntes.TestCase):
+class Test_dassert_eq1(hunitest.TestCase):
     def test1(self) -> None:
         hdbg.dassert_eq(1, 1)
 
@@ -112,7 +112,7 @@ class Test_dassert_eq1(huntes.TestCase):
 
 
 # TODO(gp): Break it in piece.
-class Test_dassert_misc1(huntes.TestCase):
+class Test_dassert_misc1(hunitest.TestCase):
 
     # dassert_in
 
@@ -257,7 +257,7 @@ class Test_dassert_misc1(huntes.TestCase):
 # #############################################################################
 
 
-class Test_dassert_lgt1(huntes.TestCase):
+class Test_dassert_lgt1(hunitest.TestCase):
     def test1(self) -> None:
         """
         No assertion raised since `0 <= 0 <= 3`.
@@ -311,7 +311,7 @@ class Test_dassert_lgt1(huntes.TestCase):
 # #############################################################################
 
 
-class Test_dassert_is_proportion1(huntes.TestCase):
+class Test_dassert_is_proportion1(hunitest.TestCase):
     def test1(self) -> None:
         """
         Passing assertion with correct message and format.
@@ -394,7 +394,7 @@ class Test_dassert_is_proportion1(huntes.TestCase):
 # #############################################################################
 
 
-class Test_dassert_container_type1(huntes.TestCase):
+class Test_dassert_container_type1(hunitest.TestCase):
     def test1(self) -> None:
         list_ = "a b c".split()
         hdbg.dassert_container_type(list_, List, str)
@@ -463,7 +463,7 @@ class _Vegetable:
     pass
 
 
-class Test_dassert_issubclass1(huntes.TestCase):
+class Test_dassert_issubclass1(hunitest.TestCase):
     def test_man1(self) -> None:
         """
         An instance of `_Man` descends from `_Animal`.
@@ -517,7 +517,7 @@ class Test_dassert_issubclass1(huntes.TestCase):
 # #############################################################################
 
 
-class Test_dassert_callable1(huntes.TestCase):
+class Test_dassert_callable1(hunitest.TestCase):
     def test1(self) -> None:
         func = lambda x: x
         hdbg.dassert_callable(func)
@@ -537,6 +537,6 @@ class Test_dassert_callable1(huntes.TestCase):
 # #############################################################################
 
 
-class Test_logging1(huntes.TestCase):
+class Test_logging1(hunitest.TestCase):
     def test_logging_levels1(self) -> None:
         hdbg.test_logger()

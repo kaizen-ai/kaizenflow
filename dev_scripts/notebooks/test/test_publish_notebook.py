@@ -1,19 +1,19 @@
 import logging
 import os
 
-import helpers.git as git
-import helpers.system_interaction as hsinte
-import helpers.unit_test as hut
+import helpers.git as hgit
+import helpers.system_interaction as hsysinte
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-class Test_publish_notebook1(hut.TestCase):
+class Test_publish_notebook1(hunitest.TestCase):
     def test_publish_local_notebook1(self) -> None:
         """
         Publish locally a notebook as HTML.
         """
-        amp_dir = git.get_amp_abs_path()
+        amp_dir = hgit.get_amp_abs_path()
         file_name = os.path.join(
             amp_dir, "core/dataflow_model/notebooks/Master_pipeline_runner.ipynb"
         )
@@ -24,7 +24,7 @@ class Test_publish_notebook1(hut.TestCase):
         dst_dir = self.get_scratch_space()
         cmd.append(f"--publish_notebook_dir {dst_dir}")
         cmd = " ".join(cmd)
-        hsinte.system(cmd)
+        hsysinte.system(cmd)
 
 
 # TODO(gp): Test different actions

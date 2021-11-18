@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import core.backtest as cobackte
+"""
+
 import logging
 from typing import List, Optional, Tuple, Union
 
@@ -5,8 +11,8 @@ import numpy as np
 import pandas as pd
 from tqdm.autonotebook import tqdm
 
-import core.data_adapters as adpt
-import helpers.dbg as dbg
+import core.data_adapters as cdatadap
+import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.list as hlist
 
@@ -41,9 +47,9 @@ if True:
         :return: SampleForecast with `samples` predictions np.array of shape
             `(num_samples, prediction_length)`
         """
-        dbg.dassert_isinstance(df, pd.DataFrame)
-        dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
-        dbg.dassert(df.index.freq)
+        hdbg.dassert_isinstance(df, pd.DataFrame)
+        hdbg.dassert_isinstance(df.index, pd.DatetimeIndex)
+        hdbg.dassert(df.index.freq)
         # We implicitly assume here that `x_vars` columns are numerical.
         # TODO(Paul): Add an assertion for this.
         if x_vars is None:
@@ -56,7 +62,7 @@ if True:
             y_truncate = prediction_length
         else:
             y_truncate = None
-        data = adpt.transform_to_gluon(
+        data = cdatadap.transform_to_gluon(
             df,
             x_vars,
             y_vars,
@@ -67,7 +73,7 @@ if True:
         predictions = predictor.predict(data, num_samples=num_samples)
         predictions = hlist.assert_single_element_and_return(list(predictions))
         #
-        dbg.dassert_eq(
+        hdbg.dassert_eq(
             predictions.samples.shape, (num_samples, prediction_length)
         )
         return predictions
@@ -101,16 +107,16 @@ if True:
             `(df.shape[0], prediction_length)`. The columns are
             `<y_var>_hat_<timestep>`, `<y_var>_<timestep>` respectively.
         """
-        dbg.dassert_isinstance(df, pd.DataFrame)
-        dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
-        dbg.dassert(
+        hdbg.dassert_isinstance(df, pd.DataFrame)
+        hdbg.dassert_isinstance(df.index, pd.DatetimeIndex)
+        hdbg.dassert(
             df.index.freq, "The dataframe should have uniform datetime grid"
         )
         hpandas.dassert_strictly_increasing_index(df.index)
         if isinstance(y_vars, str):
             y_vars = [y_vars]
-        dbg.dassert_isinstance(y_vars, list)
-        dbg.dassert_eq(len(y_vars), 1, "Multitarget case is not supported.")
+        hdbg.dassert_isinstance(y_vars, list)
+        hdbg.dassert_eq(len(y_vars), 1, "Multitarget case is not supported.")
         y_cols = [f"{y_vars[0]}_{i+1}" for i in range(prediction_length)]
         yhat_cols = [f"{y_vars[0]}_hat_{i+1}" for i in range(prediction_length)]
         yhat_all = np.full((df.shape[0], prediction_length), np.nan)
@@ -155,7 +161,7 @@ if True:
         # index. It's enough to check only the last index because the grid
         # is uniform.
         pred_idx = df.index
-        dbg.dassert_eq(
+        hdbg.dassert_eq(
             pred_idx[-1],
             y_hat_start_date + pd.Timedelta(trunc_len - 1, df.index.freq.freqstr),
             "Prediction start dates are not aligned with the index",

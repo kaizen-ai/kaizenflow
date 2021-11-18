@@ -25,10 +25,10 @@ import os
 import pandas as pd
 
 import helpers.dbg as hdbg
-import helpers.printing as hprintin
+import helpers.printing as hprint
 
 # %%
-hprintin.config_notebook()
+hprint.config_notebook()
 
 # hdbg.init_logger(verbosity=logging.DEBUG)
 hdbg.init_logger(verbosity=logging.INFO)
@@ -176,13 +176,13 @@ results[0][1]["df_out"]
 import core.dataflow.real_time as cdtfretim
 
 # %%
-import helpers.datetime_ as hdatetim
+import helpers.datetime_ as hdateti
 
-start_datetime = pd.Timestamp("2010-01-04 09:30:00", tz=hdatetim.get_ET_tz())
-end_datetime = pd.Timestamp("2010-01-05 09:30:00", tz=hdatetim.get_ET_tz())
+start_datetime = pd.Timestamp("2010-01-04 09:30:00", tz=hdateti.get_ET_tz())
+end_datetime = pd.Timestamp("2010-01-05 09:30:00", tz=hdateti.get_ET_tz())
 
 # Use a replayed real-time starting at the same time as the data.
-rrt = cdtfretim.ReplayedTime(start_datetime, hdatetim.get_current_time(tz="ET"))
+rrt = cdtfretim.ReplayedTime(start_datetime, hdateti.get_current_time(tz="ET"))
 get_wall_clock_time = rrt.get_wall_clock_time
 
 # %%
@@ -224,7 +224,7 @@ len(result[1])
 # %%
 import pandas as pd
 
-import helpers.unit_test as huntes
+import helpers.unit_test as hunitest
 
 num_cols = 2
 seed = 42
@@ -234,7 +234,7 @@ date_range_kwargs = {
     "freq": "1B",
 }
 # pd.date_range(**date_range_kwargs)
-data = huntes.get_random_df(
+data = hunitest.get_random_df(
     num_cols, seed=seed, date_range_kwargs=date_range_kwargs
 )
 print(data)

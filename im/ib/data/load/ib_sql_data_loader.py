@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.ib.data.load.ib_sql_data_loader as iidlisdlo
+import im.ib.data.load.ib_sql_data_loader as imidlisdlo
 """
 import helpers.dbg as hdbg
 import im.common.data.load.abstract_data_loader as imcdladalo

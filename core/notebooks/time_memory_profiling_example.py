@@ -33,18 +33,18 @@ import time
 import IPython.display as dspl
 import pandas as pd
 
-import helpers.dbg as dbg
-import helpers.env as env
-import helpers.printing as prnt
+import helpers.dbg as hdbg
+import helpers.env as henv
+import helpers.printing as hprint
 
 # %%
-dbg.init_logger(verbosity=logging.INFO)
+hdbg.init_logger(verbosity=logging.INFO)
 
 _LOG = logging.getLogger(__name__)
 
-_LOG.info("%s", env.get_system_signature()[0])
+_LOG.info("%s", henv.get_system_signature()[0])
 
-prnt.config_notebook()
+hprint.config_notebook()
 
 
 # %% [markdown]

@@ -7,15 +7,15 @@ import pytest
 
 import core.config as cconfig
 import core.dataflow as dtf
-import core.dataflow_source_nodes as dsn
-import dataflow_amp.returns.pipeline as retp
-import helpers.printing as prnt
-import helpers.unit_test as hut
+import core.dataflow_source_nodes as cdtfsonod
+import dataflow_amp.returns.pipeline as dtfamrepip
+import helpers.printing as hprint
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-class TestReturnsBuilder(hut.TestCase):
+class TestReturnsBuilder(hunitest.TestCase):
     """
     Test the ReturnsBuilder pipeline.
     """
@@ -53,7 +53,7 @@ class TestReturnsBuilder(hut.TestCase):
     @pytest.mark.slow
     def test_futures1(self) -> None:
         source_node_kwargs = {
-            "func": dsn.load_kibot_data,
+            "func": cdtfsonod.load_kibot_data,
             "func_kwargs": {
                 "frequency": "T",
                 "contract_type": "continuous",
@@ -65,7 +65,7 @@ class TestReturnsBuilder(hut.TestCase):
         self._helper(source_node_kwargs)
 
     def _helper(self, source_node_kwargs: Dict[str, Any]) -> None:
-        dag_builder = retp.ReturnsPipeline()
+        dag_builder = dtfamrepip.ReturnsPipeline()
         config = dag_builder.get_config_template()
         # Inject the node.
         config["load_prices"] = cconfig.get_config_from_nested_dict(
@@ -79,7 +79,7 @@ class TestReturnsBuilder(hut.TestCase):
         result_bundle = dag_runner.fit()
         df_out = result_bundle.result_df
         str_output = (
-            f"{prnt.frame('config')}\n{config}\n"
-            f"{prnt.frame('df_out')}\n{hut.convert_df_to_string(df_out, index=True)}\n"
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('df_out')}\n{hunitest.convert_df_to_string(df_out, index=True)}\n"
         )
         self.check_string(str_output)

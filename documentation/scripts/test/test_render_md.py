@@ -2,15 +2,15 @@ import logging
 import os
 from typing import List
 
-import documentation.scripts.render_md as rmd
-import helpers.io_ as io_
-import helpers.unit_test as ut
+import documentation.scripts.render_md as dscremd
+import helpers.io_ as hio
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class Test_render_md1(ut.TestCase):
+class Test_render_md1(hunitest.TestCase):
     """
     Test _uml_file_names method that returns output pathes.
     """
@@ -23,11 +23,11 @@ class Test_render_md1(ut.TestCase):
         dest_file = "/a/b/c/d/e.md"
         idx = 8
         extension = "png"
-        pathes = rmd._uml_file_names(dest_file, idx, extension)
+        pathes = dscremd._uml_file_names(dest_file, idx, extension)
         self.check_string("\n".join(pathes))
 
 
-class Test_render_md2(ut.TestCase):
+class Test_render_md2(hunitest.TestCase):
     """
     Test _render_command method that construct plantuml command.
     """
@@ -39,7 +39,7 @@ class Test_render_md2(ut.TestCase):
         uml_file = "/a/b/c.puml"
         dest = "/d/e/f"
         extension = "png"
-        cmd = rmd._render_command(uml_file, dest, extension)
+        cmd = dscremd._render_command(uml_file, dest, extension)
         self.check_string(cmd)
 
     def test_render_command2(self) -> None:
@@ -51,12 +51,12 @@ class Test_render_md2(ut.TestCase):
         dest = "/d/e/f"
         extension = "bmp"
         with self.assertRaises(AssertionError) as cm:
-            rmd._render_command(uml_file, dest, extension)
+            dscremd._render_command(uml_file, dest, extension)
         # Check error text.
         self.assertIn("bmp", str(cm.exception))
 
 
-class Test_render_md3(ut.TestCase):
+class Test_render_md3(hunitest.TestCase):
     """
     Test _render_plantuml method that adds strings with links to rendered
     images.
@@ -119,12 +119,12 @@ class Test_render_md3(ut.TestCase):
         # Define input variables
         file_name = "im_architecture.md.test"
         in_file = os.path.join(self.get_input_dir(), file_name)
-        in_txt = io_.from_file(in_file).split("\n")
+        in_txt = hio.from_file(in_file).split("\n")
         out_file = os.path.join(self.get_scratch_space(), file_name)
         extension = "png"
         dry_run = True
         # Call function to test
-        act = rmd._render_plantuml(
+        act = dscremd._render_plantuml(
             in_txt=in_txt, out_file=out_file, extension=extension, dry_run=dry_run
         )
         act = "\n".join(act)
@@ -134,7 +134,7 @@ class Test_render_md3(ut.TestCase):
     def _check_str_after_render(self, in_text: List[str]) -> None:
         out_file = os.path.join(self.get_scratch_space(), "out.md")
         extension = "png"
-        out_text = rmd._render_plantuml(
+        out_text = dscremd._render_plantuml(
             in_text, out_file, extension, dry_run=True
         )
         self.check_string("\n".join(out_text))
