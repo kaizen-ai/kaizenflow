@@ -20,15 +20,14 @@ import os
 
 import pandas as pd
 import seaborn as sns
-import statsmodels.tsa.stattools as smtools
 import statsmodels.formula.api as smapi
+import statsmodels.tsa.stattools as smtools
 
 import core.config.config_ as cconconf
 import core.plotting as cplot
 import helpers.s3 as hs3
-import im_v2.data.universe as imdatuniv
+import im_v2.data.universe as imv2dauni
 import research.cc.statistics as rccstat
-
 
 # %% [markdown]
 # # Config
@@ -248,7 +247,7 @@ type(18)
 
 # %% run_control={"marked": false}
 frequency = "1D"
-universe = imdatuniv.get_vendor_universe_as_tuples("v03")
+universe = imv2dauni.get_vendor_universe_as_tuples("v03")
 compute_daily_vix_ema = lambda data: compute_volatility_for_each_coin(
     data, freq=frequency, span=18
 )
