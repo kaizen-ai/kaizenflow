@@ -1,0 +1,44 @@
+- name: Make sure relevant directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - ./dags
+    - ./logs
+    - ./plugins
+
+- name: Register airflow_uid env var
+  shell: echo -e "AIRFLOW_UID=$(id -u)"
+  register: airflow_uid
+
+- name: Add .env file for airflow
+  lineinfile:
+    line: "airflow_uid.stdout"
+    path: /.env
+    create: yes
+
+- name: Fetch docker-compose file
+  get_url:
+    url: https://airflow.apache.org/docs/apache-airflow/2.2.2/docker-compose.yaml
+    dest: "{{ airflow_folder }}"
+
+- name: Run db migration and create the first user (running only airflow-init service)
+  community.docker.docker_compose:
+    project_src: "{{ airflow_folder }}"
+    state: present
+    services:
+      - airflow-init
+  register: compose_init_output
+
+- debug:
+        var: compose_init_output
+
+- name: Start airflow
+  community.docker.docker_compose:
+    project_src: "{{ airflow_folder }}"
+    state: present
+  register: compose_output
+
+- debug:
+        var: compose_output
+

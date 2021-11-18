@@ -1,0 +1,66 @@
+---
+- name: docker systemd service
+  become: 'yes'
+  template:
+    src: docker_rootful.service.j2
+    dest: /etc/systemd/system/docker.service
+    mode: 0644
+    owner: root
+    group: root
+  tags:
+    - docker
+    - systemd
+
+- name: disable rootful docker daemon
+  become: 'yes'
+  systemd:
+    name: docker
+    state: stopped
+    enabled: 'no'
+  when: not docker_rootful_enabled
+  tags:
+    - docker
+    - systemd
+
+- name: enable rootful docker daemon
+  become: 'yes'
+  systemd:
+    name: docker
+    state: started
+    enabled: 'yes'
+  when: docker_rootful_enabled
+  tags:
+    - docker
+    - systemd
+
+- name: stat /run/user/{{ docker_user_info.uid }}/docker.sock
+  become: 'yes'
+  become_user: "{{ docker_user }}"
+  stat:
+    path: "/run/user/{{ docker_user_info.uid }}/docker.sock"
+  register: docker_rootless_sock
+  tags:
+    - docker
+
+- name: install rootless docker
+  become: 'yes'
+  become_user: "{{ docker_user }}"
+  environment:
+    PATH: "{{ docker_user_info.home }}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    XDG_RUNTIME_DIR: "/run/user/{{ docker_user_info.uid }}"
+  command: dockerd-rootless-setuptool.sh install
+  when: not docker_rootless_sock.stat.exists
+
+- name: enable and start docker (rootful installation)
+  become: 'yes'
+  become_user: "{{ docker_user }}"
+  systemd:
+    name: docker.service
+    enabled: 'yes'
+    state: started
+    scope: user
+    daemon_reload: 'yes'
+  tags:
+    - docker
+    - systemd
+...

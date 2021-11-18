@@ -1,0 +1,80 @@
+---
+# - debug: var=ansible_facts
+- name: Gather distribution info
+  # we need:
+  # - hardware for ansible_mounts
+  # - platform for ansible_architecture (ansible internal)
+  # - virtual for ansible_virtualization_type
+  setup:
+      gather_subset: distribution,hardware,platform,virtual,!all,!min
+  when:
+      - ansible_distribution is not defined
+  tags:
+      - always
+
+- name: Check OS version and family
+  fail:
+      msg: "This role can only be run against Ubuntu 20. {{ ansible_distribution }} {{ ansible_distribution_major_version }} is not supported."
+  when:
+      - ansible_distribution == 'Ubuntu'
+      - ansible_distribution_major_version is version_compare('20', '!=')
+  tags:
+      - always
+
+- name: Check ansible version
+  fail:
+      msg: You must use ansible 2.1 or greater
+  when: not ansible_version.full is version_compare('2.1', '>=')
+  tags:
+      - always
+
+- import_tasks: prelim.yml
+  tags:
+      - prelim_tasks
+
+- include: parse_etc_password.yml
+  when:
+      - ubtu20cis_section5_patch or
+        ubtu20cis_section6_patch
+
+- name: Gather the package facts
+  package_facts:
+      manager: auto
+  tags:
+      - always
+
+- name: Include section 1 patches
+  import_tasks: section_1/main.yml
+  when: ubtu20cis_section1_patch
+  tags:
+      - section1
+
+- name: Include section 2 patches
+  import_tasks: section_2/main.yml
+  when: ubtu20cis_section2_patch
+  tags:
+      - section2
+
+- name: Include section 3 patches
+  import_tasks: section_3/main.yml
+  when: ubtu20cis_section3_patch
+  tags:
+      - section3
+
+- name: Include section 4 patches
+  import_tasks: section_4/main.yml
+  when: ubtu20cis_section4_patch
+  tags:
+      - section4
+
+- name: Include section 5 patches
+  import_tasks: section_5/main.yml
+  when: ubtu20cis_section5_patch
+  tags:
+      - section5
+
+- name: Include section 6 patches
+  import_tasks: section_6/main.yml
+  when: ubtu20cis_section6_patch
+  tags:
+      - section6

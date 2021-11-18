@@ -1,0 +1,47 @@
+---
+- name: add user "{{ docker_user }}"
+  become: 'yes'
+  user:
+    name: "{{ docker_user }}"
+    state: present
+    shell: /bin/bash
+  register: docker_user_info
+  tags:
+    - user
+
+- name: adding user "{{ docker_user }}" to systemd-journal group
+  become: 'yes'
+  user:
+    name: "{{ docker_user }}"
+    groups: systemd-journal
+    append: 'yes'
+  when: ansible_distribution == "Debian"
+  tags:
+    - user
+
+- name: ensure "{{ docker_user }}" is lingering
+  stat:
+    path: "/var/lib/systemd/linger/{{ docker_user }}"
+  register: docker_user_lingering
+  tags:
+    - user
+    - systemd
+
+- name: enable lingering for "{{ docker_user }}"
+  become: 'yes'
+  command: "loginctl enable-linger {{ docker_user }}"
+  when: not docker_user_lingering.stat.exists
+  tags:
+    - user
+    - systemd
+
+- name: create "{{ docker_user }}" ansible tmp dir
+  become: 'yes'
+  become_user: "{{ docker_user }}"
+  file:
+    path: "{{ docker_user_info.home }}/.ansible/tmp"
+    state: directory
+    mode: "0700"
+  tags:
+    - user
+...

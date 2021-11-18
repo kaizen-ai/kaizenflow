@@ -1,0 +1,27 @@
+---
+- name: OSCAP | Hardening SCAN | Install package that provides OSCAP
+  ansible.builtin.package:
+    name: libopenscap8
+    state: present
+
+- name: OSCAP | Hardening SCAN | Create a OSCAP working directory if it does not exist
+  ansible.builtin.file:
+    path: "{{ oscap_working_dir }}"
+    state: directory
+    mode: 0750
+    
+- name: OSCAP | Hardening SCAN | Copy OSCAP SSG file to remote server
+  ansible.builtin.copy:
+    src: "./files/{{ oscap_ssg }}"
+    dest: "{{ oscap_working_dir }}{{ oscap_ssg }}"
+    owner: root
+    group: root        
+    mode: 0640
+
+- name: OSCAP | Hardening SCAN | Run OSCAP scanning
+  ansible.builtin.command:
+    cmd: "/bin/oscap xccdf eval --profile {{ oscap_profile }} --report {{ oscap_working_dir }}{{ oscap_output }} {{ oscap_working_dir}}{{ oscap_ssg }}"
+    creates: "{{ oscap_working_dir }}{{ oscap_output }}"
+  ignore_errors: true
+  changed_when: false
+  failed_when: false  

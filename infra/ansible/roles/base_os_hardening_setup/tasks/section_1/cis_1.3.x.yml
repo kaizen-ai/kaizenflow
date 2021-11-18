@@ -1,0 +1,35 @@
+---
+- name: "AUTOMATED | 1.3.1 | PATCH | Ensure AIDE is installed"
+  apt:
+      name: ['aide', 'aide-common']
+      state: present
+  when:
+      - ubtu20cis_rule_1_3_1
+  tags:
+      - level1-server
+      - level1-workstation
+      - automated
+      - patch
+      - rule_1.3.1
+      - aide
+
+- name: "AUTOMATED | 1.3.2 | PATCH | Ensure filesystem integrity is regularly checked"
+  cron:
+      name: Run AIDE integrity check
+      cron_file: "{{ ubtu20cis_aide_cron['cron_file'] }}"
+      user: "{{ ubtu20cis_aide_cron['cron_user'] }}"
+      minute: "{{ ubtu20cis_aide_cron['aide_minute'] | default('0') }}"
+      hour: "{{ ubtu20cis_aide_cron['aide_hour'] | default('5') }}"
+      day: "{{ ubtu20cis_aide_cron['aide_day'] | default('*') }}"
+      month: "{{ ubtu20cis_aide_cron['aide_month'] | default('*') }}"
+      weekday: "{{ ubtu20cis_aide_cron['aide_weekday'] | default('*') }}"
+      job: "{{ ubtu20cis_aide_cron['aide_job'] }}"
+  when:
+      - ubtu20cis_rule_1_3_2
+  tags:
+      - level1-server
+      - level1-workstation
+      - automated
+      - patch
+      - rule_1.3.2
+      - cron

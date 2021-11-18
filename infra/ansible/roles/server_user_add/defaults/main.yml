@@ -1,0 +1,4 @@
+os_username:
+os_password:
+home_dir: /data/{{ os_username }}
+pub_key_path:

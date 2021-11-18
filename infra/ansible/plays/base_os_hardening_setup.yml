@@ -1,0 +1,8 @@
+- name: Harden OS based on CIS
+  hosts: all
+  become: true
+  gather_facts: true
+  roles:
+    - { role: roles/base_os_hardening_setup }
+    
+#ansible-playbook plays/base_os_hardening_setup.yml --user ubuntu --private-key=/root/.ssh/id_rsa_crypto --inventory 3.122.160.116, --extra-vars "ubtu20cis_root_pw=KEEPASS"

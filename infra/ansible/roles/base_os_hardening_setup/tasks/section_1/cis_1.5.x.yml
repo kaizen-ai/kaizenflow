@@ -1,0 +1,86 @@
+---
+- name: "MANUAL | 1.5.1 | AUDIT | Ensure XD/NX support is enabled"
+  block:
+      - name: "MANUAL | 1.5.1 | AUDIT | Ensure XD/NX support is enabled | Find status of XD/NX"
+        shell: "journalctl | grep 'protection: active'"
+        changed_when: false
+        failed_when: false
+        check_mode: false
+        register: ubtu20cis_1_5_1_xdnx_status
+
+      - name: "MANUAL | 1.5.1 | AUDIT | Ensure XD/NX support is enabled | Alert if XD/NX is not enabled"
+        debug:
+            msg:
+                - "ALERT!!!!You do not have XD/NX (Execute Disable/No Execute) enabled"
+                - "To conform to CIS standards this needs to be enabled"
+        when: "'active'not in ubtu20cis_1_5_1_xdnx_status.stdout"
+  when:
+      - ubtu20cis_rule_1_5_1
+  tags:
+      - level1-server
+      - level1-workstation
+      - manual
+      - audit
+      - rule_1.5.1
+      - xd/nx
+
+- name: "AUTOMATED | 1.5.2 | PATCH | Ensure address space layout randomization (ASLR) is enabled"
+  block:
+      - name: "AUTOMATED | 1.5.2 | PATCH | Ensure address space layout randomization (ASLR) is enabled | Set ASLR settings"
+        lineinfile:
+            path: /etc/sysctl.conf
+            regexp: '^kernel.randomize_va_space'
+            line: 'kernel.randomize_va_space = 2'
+
+      - name: "AUTOMATED | 1.5.2 | PATCH | Ensure address space layout randomization (ASLR) is enabled | Set active kernel parameter"
+        sysctl:
+            name: kernel.randomize_va_space
+            value: '2'
+  when:
+      - ubtu20cis_rule_1_5_2
+  tags:
+      - level1-server
+      - level1-workstation
+      - automated
+      - patch
+      - rule_1.5.2
+      - aslr
+
+- name: "AUTOMATED | 1.5.3 | PATCH | Ensure prelink is not installed"
+  block:
+      - name: "AUTOMATED | 1.5.3 | PATCH | Ensure prelink is not installed | Restore binaries to normal"
+        command: prelink -ua
+        changed_when: false
+        failed_when: false
+
+      - name: "AUTOMATED | 1.5.3 | PATCH | Ensure prelink is not installed| Remove prelink package"
+        apt:
+            name: prelink
+            state: absent
+  when:
+      - ubtu20cis_rule_1_5_3
+  tags:
+      - level1-server
+      - level1-workstation
+      - automated
+      - patch
+      - rule_1.5.3
+      - prelink
+
+- name: "AUTOMATED | 1.5.4 | PATCH | Ensure core dumps are restricted"
+  sysctl:
+      name: fs.suid_dumpable
+      value: '0'
+      state: present
+      reload: yes
+      sysctl_set: yes
+      ignoreerrors: yes
+  when:
+      - ubtu20cis_rule_1_5_4
+  tags:
+      - level1-server
+      - level1-workstation
+      - automated
+      - patch
+      - rule_1.5.4
+      - coredump

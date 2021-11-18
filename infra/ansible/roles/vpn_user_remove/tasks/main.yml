@@ -1,0 +1,32 @@
+---
+- name: Ansible | Include variables containing secrets
+  no_log: true
+  include_vars:
+    file: secrets.yml
+
+- name: OpenVPN | Revoke Client | Revoke access
+  expect:
+    command: "./easyrsa revoke {{ openvpn_client_username }}@{{ openvpn_server_common_name }}"
+    responses:
+      'Enter pass phrase for .*?:$': "{{ easyrsa_ca_password }}"
+    chdir: "{{ easyrsa_dir }}"
+  no_log: false
+
+- name: OpenVPN | Revoke Client | Rebuild CRL
+  expect:
+    command: ./easyrsa gen-crl
+    responses:
+      'Enter pass phrase for .*?:$': "{{ easyrsa_ca_password }}"
+    chdir: "{{ easyrsa_dir }}"
+  no_log: false
+
+- name: OpenVPN | Google Authenticator | Remove MFA user from OS
+  user:
+    name: "{{ openvpn_client_username }}"
+    state: absent
+  notify: Restart openvpn
+
+- name: OpenVPN | Google Authenticator | Remove MFA user seed
+  file:
+    path: "{{ gauth_dir }}/{{ openvpn_client_username }}"
+    state: absent

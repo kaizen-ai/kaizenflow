@@ -1,0 +1,66 @@
+#- name: Update APT
+#  apt:
+#    update_cache: yes
+
+- name: Install packages
+  apt:
+    pkg: 
+      - "{{ vnc_server_package }}" 
+      - ubuntu-mate-desktop
+    state: present
+
+- name: "Ensures path {{ user_home }}/.vnc/ exists"
+  become_user: "{{ vnc_user }}"
+  file: 
+    path: "{{ user_home }}/.vnc/"
+    state: directory
+
+- name: "Add permissions to /tmp to user"
+  file: 
+    path: "/tmp"
+    mode: o+rw
+
+- name: Set VNC password
+  become_user: "{{ vnc_user }}"
+  shell:
+    cmd: set -o pipefail ; printf "{{ vnc_password }}\n{{ vnc_password }}\n" | vncpasswd
+    creates: "{{ user_home }}/.vnc/passwd"
+    executable: /bin/bash
+
+- name: Copy systemd service template
+  template:
+    src: vncserver.service.j2
+    dest: "/etc/systemd/system/{{ vnc_user }}_vncserver@.service"
+    mode: 755 
+
+- name: Copy VNC configuration file
+  become_user: "{{ vnc_user }}"
+  copy:
+    src: xstartup
+    dest: "{{ user_home }}/.vnc/xstartup"
+    mode: a+x
+
+- name: Get UID of user to calculate dektop number to assign
+  shell: id -u "{{ vnc_user }}"
+  register: user_uid
+
+- debug:
+    msg: "User UID is: {{ user_uid.stdout }}"
+
+# Desktop number go from 1,2 etc. UIDs start from 1000
+- set_fact:
+    vnc_desktop_number: "{{ user_uid.stdout | int - 999 }}"
+
+- name: Enable VNC service
+  systemd:
+    name: "{{ vnc_user }}_vncserver@{{ vnc_desktop_number }}"
+    enabled: yes
+    daemon-reload: yes
+
+- name: Start VNC service
+  service:
+    name: "{{ vnc_user }}_vncserver@{{ vnc_desktop_number }}"
+    state: started
+
+- debug:
+    msg: "VNC_desktop_number is: {{ vnc_desktop_number }}"

@@ -1,0 +1,115 @@
+---
+- name: apt update
+  become: 'yes'
+  apt:
+    update_cache: 'yes'
+    cache_valid_time: 1800
+  when: ansible_os_family == "Debian"
+  tags:
+    - apt
+
+- name: install Debian family packages
+  become: 'yes'
+  apt:
+    name: ['acl', 'apt-transport-https', 'ca-certificates', 'curl', 'gnupg',
+           'lsb-release', 'python3-pexpect', 'python3-pip', 'python3-six',
+           'uidmap', 'libpam-systemd', 'dbus-user-session']
+    state: present
+    install_recommends: 'no'
+  when: ansible_os_family == "Debian"
+  tags:
+    - acl
+    - apt
+    - packages
+    - gidmap
+
+- name: install fuse-overlayfs
+  become: 'yes'
+  apt:
+    name: fuse-overlayfs
+    state: present
+    install_recommends: 'no'
+  when: >
+    ansible_distribution == "Debian" and
+    (ansible_kernel is version("4.18",">=") and
+    ansible_kernel is version("5.11","<="))
+  tags:
+    - apt
+    - packages
+
+- name: python3-rpm installation
+  become: 'yes'
+  dnf:
+    name: "python3-rpm"
+    state: present
+  when: ansible_distribution == "RedHat"
+  tags:
+    - dnf
+    - yum
+    - packages
+
+- name: install slirp4netns
+  become: 'yes'
+  package:
+    name: "slirp4netns"
+    state: present
+  tags:
+    - apt
+    - dnf
+    - packages
+
+- name: install python3 docker
+  become: 'yes'
+  pip:
+    name: docker
+    state: present
+  tags:
+    - docker
+    - python
+
+- name: sysctl net.ipv4.ip_forward
+  become: 'yes'
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: "1"
+    sysctl_set: 'yes'
+    state: present
+    reload: 'yes'
+  tags:
+    - sysctl
+
+- name: sysctl kernel.unprivileged_userns_clone
+  become: 'yes'
+  sysctl:
+    name: kernel.unprivileged_userns_clone
+    value: "1"
+    sysctl_set: 'yes'
+    state: present
+    reload: 'yes'
+  when: ansible_distribution == "Debian" and
+        ansible_distribution_version is version('11', '<' )
+  tags:
+    - sysctl
+
+- name: sysctl net.ipv4.ip_unprivileged_port_start=0
+  become: 'yes'
+  sysctl:
+    name: net.ipv4.ip_unprivileged_port_start
+    value: "0"
+    sysctl_set: 'yes'
+    state: present
+    reload: 'yes'
+  when: docker_allow_privileged_ports
+  tags:
+    - sysctl
+
+- name: load the overlay module
+  become: 'yes'
+  modprobe:
+    name: overlay
+    state: present
+    params: 'permit_mounts_in_userns=1'
+  when: ansible_distribution == "Debian"
+  tags:
+    - modprobe
+...

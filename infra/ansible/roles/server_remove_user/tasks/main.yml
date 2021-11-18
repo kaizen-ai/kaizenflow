@@ -1,0 +1,28 @@
+- name: Create user group for the user (each user has their separate isolated group)
+  group:
+    name: "{{ username }}"
+    state: present
+
+- name: Create user account
+  user:
+    group: "{{ username }}"
+    name: "{{ username }}"
+    shell: /bin/bash
+    append: no
+    home: "{{ home_dir }}"
+    password: "{{ password | password_hash('sha512') }}"
+
+- name: Add user's pub key to his authorized_keys
+  ansible.posix.authorized_key:
+    user: "{{ username }}"
+    key: "{{ lookup('file', pub_key_path) }}"
+    state: present
+
+- name: Register AllowUsers line to append new user
+  command: grep "^AllowUsers " /etc/ssh/sshd_config
+  register: old_user_list
+
+- lineinfile:
+     regexp: "^AllowUsers .+"
+     line: "{{ old_user_list.stdout }} {{username}}"
+  when: old_user_list.rc == 0

@@ -1,0 +1,7 @@
+---
+# folder where airflow compose will reside
+airflow_folder: /home/airflow
+
+# Docker Compose from bitnami
+airflow_compose_url: https://raw.githubusercontent.com/bitnami/bitnami-docker-airflow/master/docker-compose.yml
+

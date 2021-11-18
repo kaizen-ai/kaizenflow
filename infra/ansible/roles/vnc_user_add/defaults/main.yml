@@ -1,0 +1,10 @@
+vnc_server_package: tigervnc-standalone-server
+vnc_password:
+vnc_user:
+# user specified in systemd unit file
+vnc_service_user: ubuntu
+user_home: /data/{{ vnc_user }}
+
+# vnc desktop geometry
+vnc_desktop_x: 1280
+vnc_desktop_y: 720

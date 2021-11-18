@@ -1,0 +1,118 @@
+---
+- name: Ansible | Include variables containing secrets
+  no_log: true
+  include_vars:
+    file: secrets.yml
+  
+- name: OpenVPN | Install | Ensure the APT cache is up to date
+  apt:
+    update_cache: yes
+  changed_when: False
+  when: ansible_os_family == "Debian"
+  
+- name: OpenVPN | Install | Install packages
+  package:
+    name: 
+      - openvpn
+      - easy-rsa
+      - libpam-google-authenticator
+      
+- name: OpenVPN | PKI | Make CA folder on VPN host
+  file: 
+    path: "{{ easyrsa_pki_dir }}/"
+    state: directory
+
+- name: OpenVPN | PKI | Set CA password variable
+  set_fact:
+    easyrsa_ca_password: "TEST"
+    
+- name: OpenVPN | PKI | Deploy vars configuration
+  template:
+    src: ./templates/easyrsa3_vars.j2
+    dest: "{{ easyrsa_dir }}/vars"
+    owner: root
+    group: root
+    mode: 0600
+
+- name: OpenVPN | PKI | Intialize PKI
+  shell: echo 'yes' | ./easyrsa init-pki
+  args:
+    chdir: "{{ easyrsa_dir }}"
+    creates: "{{ easyrsa_pki_path_keys }}"    
+
+- name: OpenVPN | PKI | Build CA
+  expect:
+    command: ./easyrsa build-ca --req-cn "ca@{{ openvpn_server_common_name }}"
+    responses:
+      'Enter New CA Key Passphrase: $': "{{ easyrsa_ca_password }}"
+      'Re-Enter New CA Key Passphrase: $': "{{ easyrsa_ca_password }}"
+    chdir: "{{ easyrsa_dir }}"
+    creates: "{{ easyrsa_pki_ca_key }}"    
+
+- name: OpenVPN | PKI | Build CRL
+  expect:
+    command: ./easyrsa gen-crl
+    responses:
+      'Enter pass phrase for .*?:$': "{{ easyrsa_ca_password }}"
+    chdir: "{{ easyrsa_dir }}"
+    creates: "{{ easyrsa_pki_crl }}"    
+ 
+- name: OpenVPN | PKI | Add VPN server certificate
+  expect:
+    command: ./easyrsa build-server-full "server@{{ openvpn_server_common_name }}" nopass --req-cn "server@{{ openvpn_server_common_name }}"
+    responses:
+      'Enter pass phrase for .*?:$' : "{{ easyrsa_ca_password }}"
+    chdir: "{{ easyrsa_dir }}"
+    creates: "{{ easyrsa_pki_server_key }}" 
+
+- name: OpenVPN | Google Authenticator | Create the MFA service group
+  group:
+    name: "{{ gauth_group }}"
+    state: present
+    gid: 987
+    
+- name: OpenVPN | Google Authenticator | Create the MFA service user
+  user:
+    name: "{{ gauth_username }}"
+    comment: Google Authenticator service
+    uid: 987
+    group: "{{ gauth_group }}"
+    
+- name: OpenVPN | Google Authenticator | Create a directory for MFA tokens
+  file:
+    path: "{{ gauth_dir }}"
+    state: directory
+    owner: "{{ gauth_username }}"
+    group: "{{ gauth_group }}"
+    mode: 0700
+
+- name: OpenVPN | Google Authenticator | Create pam module that supports MFA
+  template:
+    src: ./templates/openvpn_pam.j2
+    dest: "{{ gauth_pam_file }}"
+    owner: root
+    group: root
+    mode: 0644
+    
+- name: OpenVPN | sysctl | Enable IPv4 traffic forwarding
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: "1"
+
+- name: OpenVPN | Configuration | Create client configuration directory
+  file:
+    path: "{{ openvpn_path_ccd }}"
+    state: directory
+    mode: 0755
+
+- name: OpenVPN | Configuration | Build ta.key
+  shell: "openvpn --genkey --secret ta-{{ openvpn_server_port }}.key"
+  args:
+    chdir: "{{ openvpn_path }}"
+    creates: "{{ openvpn_ta_key }}"
+  
+- name: OpenVPN | Configuration | Copy OpenVPN server configuration files into place
+  template:
+    src: ./templates/openvpn_server.conf.j2
+    dest: "{{ openvpn_path }}/{{ openvpn_server_proto }}-{{ openvpn_server_port }}.conf"
+  notify: Restart openvpn    

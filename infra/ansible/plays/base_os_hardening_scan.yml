@@ -1,0 +1,8 @@
+- name: SCAN system using OSCAP
+  hosts: all
+  become: true
+  gather_facts: true
+  roles:
+    - { role: roles/base_os_hardening_scan }
+    
+#ansible-playbook plays/base_os_hardening_scan.yml --user ubuntu --private-key=/root/.ssh/id_rsa_crypto --inventory 3.122.160.116, 

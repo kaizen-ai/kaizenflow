@@ -1,0 +1,8 @@
+---
+openvpn_client_username: 
+openvpn_server_common_name: vpn1.eu-north-1
+openvpn_server_proto: udp
+openvpn_server_port: 1194
+
+easyrsa_dir: /usr/share/easy-rsa/
+gauth_dir: /etc/openvpn/google-authenticator

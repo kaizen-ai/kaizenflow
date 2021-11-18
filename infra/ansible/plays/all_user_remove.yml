@@ -1,0 +1,9 @@
+- name: Remove user from VPN and DEV
+  hosts: all
+  become: true
+  gather_facts: true
+  roles:
+    - { role: roles/vpn_user_remove }
+    - { role: roles/dev_user_remove }
+
+#ansible-playbook plays/all_user_remove.yml --user ubuntu --private-key=/root/.ssh/id_rsa_crypto --inventory 13.48.137.208, --extra-vars "openvpn_client_username= " --ask-vault-pass

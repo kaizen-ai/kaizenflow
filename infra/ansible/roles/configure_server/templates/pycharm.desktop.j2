@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=PyCharm {{ pycharm_edition.title() }} Edition {{ pycharm_version.split('-')[-1] }}
+Icon={{ pycharm_location}}/bin/pycharm.png
+Exec="{{pycharm_location }}/bin/pycharm.sh" %f
+Comment=Develop with pleasure!
+Categories=Development;IDE;
+Terminal=false
+StartupWMClass=jetbrains-pycharm-ce

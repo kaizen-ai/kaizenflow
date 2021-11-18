@@ -1,0 +1,614 @@
+---
+# If you would like a report at the end accordin to OpenSCAP as to the report results
+# then you should set ubtu20cis_oscap_scan to true/yes.
+# NOTE: This requires the python_xmltojson package on the control host.
+ubtu20cis_oscap_scan: no
+ubtu20cis_report_dir: /tmp
+
+ubtu20cis_section1_patch: true
+ubtu20cis_section2_patch: true
+ubtu20cis_section3_patch: true
+ubtu20cis_section4_patch: true
+ubtu20cis_section5_patch: true
+ubtu20cis_section6_patch: true
+
+# We've defined complexity-high to mean that we cannot automatically remediate
+# the rule in question.  In the future this might mean that the remediation
+# may fail in some cases.
+ubtu20cis_complexity_high: false
+
+# Show "changed" for complex items not remediated per complexity-high setting
+# to make them stand out.  "changed" items on a second run of the role would
+# indicate items requiring manual review.
+ubtu20cis_audit_complex: true
+
+# We've defined disruption-high to indicate items that are likely to cause
+# disruption in a normal workflow.  These items can be remediated automatically
+# but are disabled by default to avoid disruption.
+# Value of true runs duscruptive tasks, value of false will skip disruptive tasks
+ubtu20cis_disruption_high: true
+
+# Show "changed" for disruptive items not remediated per disruption-high
+# setting to make them stand out.
+ubtu20cis_audit_disruptive: yes
+
+ubtu20cis_skip_for_travis: false
+
+ubtu20cis_workaround_for_disa_benchmark: true
+ubtu20cis_workaround_for_ssg_benchmark: true
+
+# tweak role to run in a chroot, such as in kickstart %post script
+ubtu20cis_system_is_chroot: "{{ ansible_is_chroot | default(False) }}"
+
+# tweak role to run in a non-privileged container
+ubtu20cis_system_is_container: false
+
+# skip events for ec2 instance testing pipeline
+system_is_ec2: true
+
+# Section 1 Fixes
+# Section 1 is Initial setup (FileSystem Configuration, Configure Software Updates, Filesystem Integrity Checking, Secure Boot Settings,
+# Additional Process Hardening, Mandatory Access Control, Command Line Warning Banners, and GNOME Display Manager)
+ubtu20cis_rule_1_1_1_1: true
+ubtu20cis_rule_1_1_1_2: true
+ubtu20cis_rule_1_1_1_3: true
+ubtu20cis_rule_1_1_1_4: true
+ubtu20cis_rule_1_1_1_5: true
+ubtu20cis_rule_1_1_1_6: true
+ubtu20cis_rule_1_1_1_7: true
+ubtu20cis_rule_1_1_2: true
+ubtu20cis_rule_1_1_3: true
+ubtu20cis_rule_1_1_4: true
+ubtu20cis_rule_1_1_5: true
+ubtu20cis_rule_1_1_6: true
+ubtu20cis_rule_1_1_7: true
+ubtu20cis_rule_1_1_8: true
+ubtu20cis_rule_1_1_9: true
+ubtu20cis_rule_1_1_10: true
+ubtu20cis_rule_1_1_11: true
+ubtu20cis_rule_1_1_12: true
+ubtu20cis_rule_1_1_13: true
+ubtu20cis_rule_1_1_14: true
+ubtu20cis_rule_1_1_15: true
+ubtu20cis_rule_1_1_16: true
+ubtu20cis_rule_1_1_17: true
+ubtu20cis_rule_1_1_18: true
+ubtu20cis_rule_1_1_19: true
+ubtu20cis_rule_1_1_20: true
+ubtu20cis_rule_1_1_21: true
+ubtu20cis_rule_1_1_22: true
+ubtu20cis_rule_1_1_23: true
+ubtu20cis_rule_1_1_24: true
+ubtu20cis_rule_1_2_1: true
+ubtu20cis_rule_1_2_2: true
+ubtu20cis_rule_1_3_1: true
+ubtu20cis_rule_1_3_2: true
+ubtu20cis_rule_1_4_1: true
+ubtu20cis_rule_1_4_2: true
+ubtu20cis_rule_1_4_3: true
+ubtu20cis_rule_1_4_4: true
+ubtu20cis_rule_1_5_1: true
+ubtu20cis_rule_1_5_2: true
+ubtu20cis_rule_1_5_3: true
+ubtu20cis_rule_1_5_4: true
+ubtu20cis_rule_1_6_1_1: true
+ubtu20cis_rule_1_6_1_2: true
+ubtu20cis_rule_1_6_1_3: true
+ubtu20cis_rule_1_6_1_4: true
+ubtu20cis_rule_1_7_1: true
+ubtu20cis_rule_1_7_2: true
+ubtu20cis_rule_1_7_3: true
+ubtu20cis_rule_1_7_4: true
+ubtu20cis_rule_1_7_5: true
+ubtu20cis_rule_1_7_6: true
+ubtu20cis_rule_1_8_1: true
+ubtu20cis_rule_1_8_2: true
+ubtu20cis_rule_1_8_3: true
+ubtu20cis_rule_1_8_4: true
+ubtu20cis_rule_1_9: true
+
+# Section 2 Fixes
+# Section 2 is Services (Special Purpose Services, and service clients)
+ubtu20cis_rule_2_1_1_1: true
+ubtu20cis_rule_2_1_1_2: true
+ubtu20cis_rule_2_1_1_3: true
+ubtu20cis_rule_2_1_1_4: true
+ubtu20cis_rule_2_1_2: true
+ubtu20cis_rule_2_1_3: true
+ubtu20cis_rule_2_1_4: true
+ubtu20cis_rule_2_1_5: true
+ubtu20cis_rule_2_1_6: true
+ubtu20cis_rule_2_1_7: true
+ubtu20cis_rule_2_1_8: true
+ubtu20cis_rule_2_1_9: true
+ubtu20cis_rule_2_1_10: true
+ubtu20cis_rule_2_1_11: true
+ubtu20cis_rule_2_1_12: true
+ubtu20cis_rule_2_1_13: true
+ubtu20cis_rule_2_1_14: true
+ubtu20cis_rule_2_1_15: true
+ubtu20cis_rule_2_1_16: true
+ubtu20cis_rule_2_1_17: true
+ubtu20cis_rule_2_2_1: true
+ubtu20cis_rule_2_2_2: true
+ubtu20cis_rule_2_2_3: true
+ubtu20cis_rule_2_2_4: true
+ubtu20cis_rule_2_2_5: true
+ubtu20cis_rule_2_2_6: true
+ubtu20cis_rule_2_3: true
+
+# Section 3 Fixes
+# Section 3 is Network Configuration (Disable Unused Networks, Network Parameters (Host Only), Network Parameters (Host and Router), Uncommon Network Protocols, and Firewall Configuration)
+ubtu20cis_rule_3_1_1: true
+ubtu20cis_rule_3_1_2: true
+ubtu20cis_rule_3_2_1: true
+ubtu20cis_rule_3_2_2: true
+ubtu20cis_rule_3_3_1: true
+ubtu20cis_rule_3_3_2: true
+ubtu20cis_rule_3_3_3: true
+ubtu20cis_rule_3_3_4: true
+ubtu20cis_rule_3_3_5: true
+ubtu20cis_rule_3_3_6: true
+ubtu20cis_rule_3_3_7: true
+ubtu20cis_rule_3_3_8: true
+ubtu20cis_rule_3_3_9: true
+ubtu20cis_rule_3_4_1: true
+ubtu20cis_rule_3_4_2: true
+ubtu20cis_rule_3_4_3: true
+ubtu20cis_rule_3_4_4: true
+ubtu20cis_rule_3_5_1_1: true
+ubtu20cis_rule_3_5_1_2: true
+ubtu20cis_rule_3_5_1_3: true
+ubtu20cis_rule_3_5_1_4: true
+ubtu20cis_rule_3_5_1_5: true
+ubtu20cis_rule_3_5_1_6: true
+ubtu20cis_rule_3_5_1_7: true
+ubtu20cis_rule_3_5_2_1: true
+ubtu20cis_rule_3_5_2_2: true
+ubtu20cis_rule_3_5_2_3: true
+ubtu20cis_rule_3_5_2_4: true
+ubtu20cis_rule_3_5_2_5: true
+ubtu20cis_rule_3_5_2_6: true
+ubtu20cis_rule_3_5_2_7: true
+ubtu20cis_rule_3_5_2_8: true
+ubtu20cis_rule_3_5_2_9: true
+ubtu20cis_rule_3_5_2_10: true
+ubtu20cis_rule_3_5_3_1_1: true
+ubtu20cis_rule_3_5_3_1_2: true
+ubtu20cis_rule_3_5_3_1_3: true
+ubtu20cis_rule_3_5_3_2_1: true
+ubtu20cis_rule_3_5_3_2_2: true
+ubtu20cis_rule_3_5_3_2_3: true
+ubtu20cis_rule_3_5_3_2_4: true
+ubtu20cis_rule_3_5_3_3_1: true
+ubtu20cis_rule_3_5_3_3_2: true
+ubtu20cis_rule_3_5_3_3_3: true
+ubtu20cis_rule_3_5_3_3_4: true
+
+# Section 4 Fixes
+# Section 4 is Logging and Auditing (Configure System Accounting (auditd), Configure Data Retention, and Configure Logging)
+ubtu20cis_rule_4_1_1_1: true
+ubtu20cis_rule_4_1_1_2: true
+ubtu20cis_rule_4_1_1_3: true
+ubtu20cis_rule_4_1_1_4: true
+ubtu20cis_rule_4_1_2_1: true
+ubtu20cis_rule_4_1_2_2: true
+ubtu20cis_rule_4_1_2_3: true
+ubtu20cis_rule_4_1_3: true
+ubtu20cis_rule_4_1_4: true
+ubtu20cis_rule_4_1_5: true
+ubtu20cis_rule_4_1_6: true
+ubtu20cis_rule_4_1_7: true
+ubtu20cis_rule_4_1_8: true
+ubtu20cis_rule_4_1_9: true
+ubtu20cis_rule_4_1_10: true
+ubtu20cis_rule_4_1_11: true
+ubtu20cis_rule_4_1_12: true
+ubtu20cis_rule_4_1_13: true
+ubtu20cis_rule_4_1_14: true
+ubtu20cis_rule_4_1_15: true
+ubtu20cis_rule_4_1_16: true
+ubtu20cis_rule_4_1_17: true
+ubtu20cis_rule_4_2_1_1: true
+ubtu20cis_rule_4_2_1_2: true
+ubtu20cis_rule_4_2_1_3: true
+ubtu20cis_rule_4_2_1_4: true
+ubtu20cis_rule_4_2_1_5: false #Switched to false as there is no remote log server
+ubtu20cis_rule_4_2_1_6: true
+ubtu20cis_rule_4_2_2_1: true
+ubtu20cis_rule_4_2_2_2: true
+ubtu20cis_rule_4_2_2_3: true
+ubtu20cis_rule_4_2_3: true
+ubtu20cis_rule_4_3: true
+ubtu20cis_rule_4_4: true
+
+# Section 5 Fixes
+# Section 5 is Access, Authentication, and Authorization (Configure time-based job schedulers, Configure sudo, Configure SSH Server, Configure PAM
+# and User Accounts and Environment)
+ubtu20cis_rule_5_1_1: true
+ubtu20cis_rule_5_1_2: true
+ubtu20cis_rule_5_1_3: true
+ubtu20cis_rule_5_1_4: true
+ubtu20cis_rule_5_1_5: true
+ubtu20cis_rule_5_1_6: true
+ubtu20cis_rule_5_1_7: true
+ubtu20cis_rule_5_1_8: true
+ubtu20cis_rule_5_1_9: true
+ubtu20cis_rule_5_2_1: true
+ubtu20cis_rule_5_2_2: true
+ubtu20cis_rule_5_2_3: true
+ubtu20cis_rule_5_3_1: true
+ubtu20cis_rule_5_3_2: true
+ubtu20cis_rule_5_3_3: true
+ubtu20cis_rule_5_3_4: true
+ubtu20cis_rule_5_3_5: true
+ubtu20cis_rule_5_3_6: true
+ubtu20cis_rule_5_3_7: true
+ubtu20cis_rule_5_3_8: true
+ubtu20cis_rule_5_3_9: true
+ubtu20cis_rule_5_3_10: true
+ubtu20cis_rule_5_3_11: true
+ubtu20cis_rule_5_3_12: true
+ubtu20cis_rule_5_3_13: true
+ubtu20cis_rule_5_3_14: true
+ubtu20cis_rule_5_3_15: true
+ubtu20cis_rule_5_3_16: true
+ubtu20cis_rule_5_3_17: true
+ubtu20cis_rule_5_3_18: true
+ubtu20cis_rule_5_3_19: true
+ubtu20cis_rule_5_3_20: true
+ubtu20cis_rule_5_3_21: true
+ubtu20cis_rule_5_3_22: true
+ubtu20cis_rule_5_4_1: true
+ubtu20cis_rule_5_4_2: true
+ubtu20cis_rule_5_4_3: true
+ubtu20cis_rule_5_4_4: true
+ubtu20cis_rule_5_5_1_1: true
+ubtu20cis_rule_5_5_1_2: true
+ubtu20cis_rule_5_5_1_3: true
+ubtu20cis_rule_5_5_1_4: true
+ubtu20cis_rule_5_5_1_5: true
+ubtu20cis_rule_5_5_2: true
+ubtu20cis_rule_5_5_3: true
+ubtu20cis_rule_5_5_4: true
+ubtu20cis_rule_5_5_5: true
+ubtu20cis_rule_5_6: true
+ubtu20cis_rule_5_7: true
+
+# Section 6 Fixes
+# Section is Systme Maintenance (System File Permissions and User and Group Settings)
+ubtu20cis_rule_6_1_1: true
+ubtu20cis_rule_6_1_2: true
+ubtu20cis_rule_6_1_3: true
+ubtu20cis_rule_6_1_4: true
+ubtu20cis_rule_6_1_5: true
+ubtu20cis_rule_6_1_6: true
+ubtu20cis_rule_6_1_7: true
+ubtu20cis_rule_6_1_8: true
+ubtu20cis_rule_6_1_9: true
+ubtu20cis_rule_6_1_10: true
+ubtu20cis_rule_6_1_11: true
+ubtu20cis_rule_6_1_12: true
+ubtu20cis_rule_6_1_13: true
+ubtu20cis_rule_6_1_14: true
+ubtu20cis_rule_6_2_1: true
+ubtu20cis_rule_6_2_2: true
+ubtu20cis_rule_6_2_3: true
+ubtu20cis_rule_6_2_4: true
+ubtu20cis_rule_6_2_5: true
+ubtu20cis_rule_6_2_6: true
+ubtu20cis_rule_6_2_7: true
+ubtu20cis_rule_6_2_8: true
+ubtu20cis_rule_6_2_9: true
+ubtu20cis_rule_6_2_10: true
+ubtu20cis_rule_6_2_11: true
+ubtu20cis_rule_6_2_12: true
+ubtu20cis_rule_6_2_13: true
+ubtu20cis_rule_6_2_14: true
+ubtu20cis_rule_6_2_15: true
+ubtu20cis_rule_6_2_16: true
+ubtu20cis_rule_6_2_17: true
+
+# Service configuration variables, set to true to keep service
+ubtu20cis_allow_autofs: false
+ubtu20cis_allow_usb_storage: false
+ubtu20cis_avahi_server: false
+ubtu20cis_cups_server: false
+ubtu20cis_dhcp_server: false
+ubtu20cis_ldap_server: false
+ubtu20cis_nfs_server: false
+ubtu20cis_dns_server: false
+ubtu20cis_vsftpd_server: false
+ubtu20cis_httpd_server: false
+ubtu20cis_dovecot_server: false
+ubtu20cis_smb_server: false
+ubtu20cis_squid_server: false
+ubtu20cis_snmp_server: false
+ubtu20cis_rsync_server: false
+ubtu20cis_nis_server: false
+ubtu20cis_rpc_required: false
+
+# Clients in use variables
+ubtu20cis_nis_required: false
+ubtu20cis_rsh_required: false
+ubtu20cis_talk_required: false
+ubtu20cis_telnet_required: false
+ubtu20cis_ldap_clients_required: false
+ubtu20cis_is_router: false
+
+# IPv4 requirement toggle
+ubtu20cis_ipv4_required: true
+
+# IPv6 requirement toggle
+ubtu20cis_ipv6_required: false
+
+# Other system wide variables
+# ubtu20cis_desktop_required is the toggle for requiring desktop environments. True means you use a desktop and will not disable/remove needed items to run a desktop (not recommented for servers)
+# false means you do not require a desktop
+ubtu20cis_desktop_required: false
+
+# Section 1 Control Variables
+# Control 1.1.2/1.1.3/1.1.4/1.1.5
+# ubtu20cis_tmp_fstab_options are the file system options for the fstabs configuration
+# To conform to CIS cotnrol 1.1.2 could use any settings
+# To conform to CIS control 1.1.3 nodev needs to be present
+# To conform to CIS control 1.1.4 nosuid needs to be present
+# To conform to CIS control 1.1.5 noexec needs to present
+ubtu20cis_tmp_fstab_options: "defaults,rw,nosuid,nodev,noexec,relatime"
+
+# Control 1.1.6/1.1.7/1.1.8/1.1.9
+# ubtu20cis_dev_shm_fstab_options are the fstab file system options for /dev/shm
+# To conform to CIS control 1.1.6 could use any settings
+# To conform to CIS control 1.1.7 nodev needs to be present
+# To conform to CIS control 1.1.8 nosuid needs to be present
+# To conform to CIS control 1.1.9 noexec needs to be present
+ubtu20cis_dev_shm_fstab_options: "defaults,noexec,nodev,nosuid,size=2G"
+
+# Control 1.1.12/1.1.13/1.1.14
+# These are the settings for the /var/tmp mount
+# To conform to CIS control 1.1.12 nodev needs to be present in opts
+# To conform to CIS control 1.1.13 nosuid needs to be present in opts
+# To conform to CIS control 1.1.14 noexec needs to be present in opts
+ubtu20cis_vartmp:
+    source: /tmp
+    fstype: none
+    opts: "defaults,nodev,nosuid,noexec,bind"
+    enabled: false
+
+# Control 1.3.2
+# These are the crontab settings for file system integrity enforcement
+ubtu20cis_aide_cron:
+    cron_user: root
+    cron_file: /etc/crontab
+    aide_job: '/usr/bin/aide.wrapper --config /etc/aide/aide.conf --check'
+    aide_minute: 0
+    aide_hour: 5
+    aide_day: '*'
+    aide_month: '*'
+    aide_weekday: '*'
+
+# Control 1.4.4
+# THIS VARAIBLE SHOULD BE CHANGED AND INCORPORATED INTO VAULT
+# THIS VALUE IS WHAT THE ROOT PW WILL BECOME!!!!!!!!
+# HAVING THAT PW EXPOSED IN RAW TEXT IS NOT SECURE!!!!
+ubtu20cis_root_pw: "2SdrdrvVnFeISmzAYLon"
+
+# Control 1.8.2
+# This will be the motd banner must not contain the below items in order to be compliant with Ubuntu 20 CIS
+# \m, \r, \s, \v or references to the OS platform
+ubtu20cis_warning_banner: |
+        Authorized uses only. All activity may be monitored and reported.
+
+# Section 2 Control Variables
+# Control 2.1.1.1
+# ubtu20cis_time_sync_tool is the tool in which to synchronize time
+# The two options are chrony, ntp, or systemd-timesyncd
+ubtu20cis_time_sync_tool: "ntp"
+
+# Control 2.1.1.2
+# ubtu20cis_ntp_server_list is the list ntp servers
+# ubtu20cis_ntp_fallback_server_list is the list of fallback NTP servers
+ubtu20cis_ntp_server_list: "0.debian.pool.ntp.org 1.debian.pool.ntp.org"
+ubtu20cis_ntp_fallback_server_list: "2.debian.pool.ntp.org 3.debian.pool.ntp.org"
+
+# Control 2.1.1.3/2.1.1.4
+# ubtu20cis_chrony_server_options is the server options for chrony
+ubtu20cis_chrony_server_options: "minpoll 8"
+# ubtu20cis_time_synchronization_servers are the synchronization servers
+ubtu20cis_time_synchronization_servers:
+    - 0.pool.ntp.org
+    - 1.pool.ntp.org
+    - 2.pool.ntp.org
+    - 3.pool.ntp.org
+# ubtu20cis_chrony_user is the user that chrony will use, default is _chrony
+ubtu20cis_chrony_user: "_chrony"
+# ubtu20cis_ntp_server_options is the server options for ntp
+ubtu20cis_ntp_server_options: "iburst"
+
+# Control 2.1.15
+# ubtu20_cis_mail_transfer_agent is the mail transfer agent in use
+# The options are exim4, postfix or other
+# ubtu20_cis_mail_transfer_agent: "other"
+
+# Section 3 Control Variables
+# Control 3.1.2
+# ubtu20cis_install_network_manager determines if this role can install network manager
+ubtu20cis_install_network_manager: true
+
+# ubtu20cis_firewall_package is the toggle for which firewall system is in use
+# The valid options to use are ufw, nftables, or iptables
+# Warning!! nftables is not supported in this role and will only message out if nftables is selected
+# If using nftables please manually adjust firewall settings
+ubtu20cis_firewall_package: "ufw"
+
+# Control 3.5.1.5
+# ubtu20cis_ufw_allow_out_ports are the ports for the firewall to allow
+# if you want to allow out on all ports set variable to "all", example ubtu20cis_ufw_allow_out_ports: "all"
+ubtu20cis_ufw_allow_out_ports: "all"
+
+# Control 3.5.2.4
+# nftables is not supported in this role. Some tasks have the task commented out, this is one of them
+# ubtu20cis_nftables_table_name is the name of the table in nftables you want to create
+# the default nftables table name is inet filter. This variable name will be the one all
+# nftables configs are applied to
+# ubtu20cis_nftables_table_name: "inet filter"
+
+
+# Controls 3.5.3.2.1 through 3.5.3.3.4
+# The iptables module only writes to memory which means a reboot could revert settings
+# The below toggle will install iptables-persistent and save the rules in memory (/etc/iptables/rules.v4 or rules.v6)
+# This makes the CIS role changes permenant
+ubtu20cis_save_iptables_cis_rules: true
+
+# Section 4 Control Variables
+# Control 4.1.1.4
+# ubtu20cis_audit_back_log_limit is the audit_back_log limit and should be set to a sufficient value
+# The example from CIS uses 8192
+ubtu20cis_audit_back_log_limit: 8192
+
+# Control 4.1.2.1
+# ubtu20cis_max_log_file_size is largest the log file will become in MB
+# This shoudl be set based on your sites policy
+ubtu20cis_max_log_file_size: 10
+
+# Control 4.1.2.2
+ubtu20cis_auditd:
+    admin_space_left_action: halt
+    max_log_file_action: keep_logs
+
+# Control 4.2.1.3
+# ubtu20cis_rsyslog_ansible_managed will toggle ansible automated configurations of rsyslog
+# You should set the rsyslog to your side specific needs. This toggle will use the example from
+# page 347 to set rsyslog loggin based on those configuration suggestions. Settings can be seen
+# in control 4.2.1.3
+ubtu20cis_rsyslog_ansible_managed: true
+
+# Control 4.2.1.5
+# ubtu20cis_remote_log_server is the remote logging server
+ubtu20cis_remote_log_server: 192.168.2.100
+
+# Control 4.2.1.6
+ubtu20cis_system_is_log_server: false
+
+# Control 4.3
+# ubtu20cis_logrotate is the log rotate frequencey. Options are daily, weekly, monthly, and yearly
+ubtu20cis_logrotate: "daily"
+
+# Control 4.3
+# ubtu20cis_logrotate_create_settings are the settings for the create parameter in /etc/logrotate.conf
+# The permissions need to be 640 or more restrictive.
+ubtu20cis_logrotate_create_settings: "0640 root utmp"
+
+# Section 5 Control Variables
+# Control 5.2.1
+# ubtu20cis_sudo_package is the name of the sudo package to install
+# The possible values are "sudo" or "sudo-ldap"
+ubtu20cis_sudo_package: "sudo"
+
+# Control 5.2.3
+# ubtu20cis_sudo_logfile is the path and file name of the sudo log file
+ubtu20cis_sudo_logfile: "/var/log/sudo.log"
+
+# ubtu20cis_sshd will contain all sshd variables. The task association and variable descriptions for each section are listed below
+# Control 5.3.4
+# allow_users, allow_groups, deny_users, and deny_groups. These are lists of users and groups to allow or deny ssh access to
+# These are lists that are just space delimited, for example allow_users: "vagrant ubuntu" for the vagrant and ubuntu users
+# Control 5.3.5
+# log_level is the log level variable. This needs to be set to VERBOSE or INFO to conform to CIS standards
+# Control 5.3.7
+# max_auth_tries is the max number of authentication attampts per connection.
+# This value should be 4 or less to conform to CIS standards
+# Control 5.3.13
+# ciphers is a comma seperated list of site approved ciphers
+# ONLY USE STRONG CIPHERS. Weak ciphers are listed below
+# DO NOT USE: 3des-cbc, aes128-cbc, aes192-cbc, and aes256-cbc
+# Control 5.3.14
+# MACs is the comma seperated list of site approved MAC algorithms that SSH can use during communication
+# ONLY USE STRONG ALGORITHMS. Weak algorithms are listed below
+# DO NOT USE: hmac-md5, hmac-md5-96, hmac-ripemd160, hmac-sha1, hmac-sha1-96, umac-64@openssh.com, umac-128@openssh.com, hmac-md5-etm@openssh.com,
+# hmac-md5-96-etm@openssh.com, hmac-ripemd160-etm@openssh.com, hmac-sha1-etm@openssh.com, hmac-sha1-96-etm@openssh.com, umac-64-etm@openssh.com, umac-128-etm@openssh.com
+# Control 5.3.15
+# kex_algorithms is comma seperated list of the algorithms for key exchange methods
+# ONLY USE STRONG ALGORITHMS. Weak algorithms are listed below
+# DO NOT USE: diffie-hellman-group1-sha1, diffie-hellman-group14-sha1, diffie-hellman-group-exchange-sha1
+# Control 5.3.16
+# client_alive_interval is the amount of time idle before ssh session terminated. Set to 300 or less to conform to CIS standards
+# client_alive_count_max will send client alive messages at the configured interval. Set to 3 or less to conform to CIS standards
+# Control 5.3.17
+# login_grace_time is the time allowed for successful authentication to the SSH server. This needs to be set to 60 seconds or less to conform to CIS standards
+# Control 5.3.22
+# max_sessions is the max number of open sessions permitted. Set the value to 4 or less to conform to CIS standards
+ubtu20cis_sshd:
+    log_level: "INFO"
+    max_auth_tries: 4
+    ciphers: "chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr"
+    macs: "hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512,hmac-sha2-256"
+    kex_algorithms: "curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group14-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,ecdh-sha2-nistp521,ecdh-sha2-nistp384,ecdh-sha2-nistp256,diffie-hellman-group-exchange-sha256"
+    client_alive_interval: 300
+    client_alive_count_max: 0
+    login_grace_time: 60
+    max_sessions: 4
+    # WARNING: make sure you understand the precedence when working with these values!!
+    allow_users: "vagrant ubuntu"
+    allow_groups: "vagrant ubuntu"
+    # deny_users:
+    # deny_groups:
+
+# Control 5.4.3
+# ubtu20cis_pamd_pwhistory_remember is number of password chnage cycles a user can re-use a password
+# This needs to be 5 or more to conform to CIS standards
+ubtu20cis_pamd_pwhistory_remember: 5
+
+# ubtu20cis_pass will be password based variables
+# Control 5.5.1.1
+# pass_min_days is the min number of days allowed between changing passwords. Set to 1 or more to conform to CIS standards
+# Control 5.5.1.2
+# max_days forces passwords to expire in configured number of days. Set to 365 or less to conform to CIS standards
+# Control 5.5.1.3
+# warn_age is how many days before pw expiry the user will be warned. Set to 7 or more to conform to CIS standards
+# Control 5.5.1.4
+# inactive the number of days of inactivity before the account will lock. Set to 30 day sor less to conform to CIS standards
+ubtu20cis_pass:
+    max_days: 99999
+    min_days: 1
+    warn_age: 7
+    inactive: 99999
+
+# Control 5.5.5
+# Session timeout setting file (TMOUT setting can be set in multiple files)
+# Timeout value is in seconds. Set value to 900 seconds or less
+ubtu20cis_shell_session_timeout:
+    file: /etc/profile.d/tmout.sh
+    timeout: 900
+
+# Control 5.7
+# ubtu20cis_su_group is the su group to use with pam_wheel
+ubtu20cis_su_group: "wheel"
+
+# Section 6 Control Variables
+# Control 6.1.10
+# ubtu20cis_no_world_write_adjust will toggle the automated fix to remove world-writable perms from all files
+# Setting to true will remove all world-writable permissions, and false will leave as-is
+ubtu20cis_no_world_write_adjust: true
+
+# Control 6.1.11
+# ubtu20cis_un_owned_owner is the owner to set files to that have no owner
+ubtu20cis_unowned_owner: root
+# ubtu20cis_no_owner_adjust will toggle the automated fix to give a user to unowned files/directories
+# true will give the owner from ubtu20cis_un_owned_owner to all unowned files/directories and false will skip
+ubtu20cis_no_owner_adjust: true
+# Control 6.1.12
+# ubtu20cis_ungrouped_group is the group to set files to that have no group
+ubtu20cis_ungrouped_group: root
+# ubtu20cis_no_group_adjust will toggle the automated fix to give a group to ungrouped files/directories
+# true will give the group from ubtu20cis_un_owned_group to all ungrouped files/directories and false will skip
+ubtu20cis_no_group_adjust: true
+
+# Cotnrol 6.1.13
+# ubtu20cis_suid_adjust is the toggle to remove the SUID bit from all files on all mounts
+# Set to true this role will remove that bit, set to false we will just warn about the files
+ubtu20cis_suid_adjust: false
+
+# Control 6.2.5 Allow ansible to adjust world-writable files. False will just display world-writable files, True will remove world-writable
+# ubtu20cis_passwd_label: "{{ (this_item | default(item)).id }}: {{ (this_item | default(item)).dir }}"
+ubtu20cis_passwd_label: "{{ (this_item | default(item)).id }}: {{ (this_item | default(item)).dir }}"

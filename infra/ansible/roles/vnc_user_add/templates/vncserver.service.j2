@@ -1,0 +1,14 @@
+[Unit]
+Description=Systemd VNC server startup script for user {{ vnc_user }}
+After=syslog.target network.target
+
+[Service]
+Type=simple
+User={{ vnc_user }}
+ExecStartPre=/usr/bin/vncserver -kill :%i &> /dev/null
+ExecStart=/usr/bin/vncserver -depth 24 -geometry {{ vnc_desktop_x }}x{{ vnc_desktop_y }} -localhost no -fg :%i
+PIDFile=/home/ubuntu/.vnc/%H:%i.pid
+ExecStop=/usr/bin/vncserver -kill :%i
+
+[Install]
+WantedBy=multi-user.target

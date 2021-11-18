@@ -1,0 +1,19 @@
+#!/bin/sh
+# The docker.service is managed by {{ docker_user }}.
+# Ensure the following environment variables are set when managing
+# the docker service:
+#  XDG_RUNTIME_DIR="/run/user/{{ docker_user_info.uid }}"
+#  PATH="{{ docker_user_info.home }}/bin:{{ ansible_env.PATH }}"
+#  DOCKER_HOST="unix:///run/user/{{ docker_user_info.uid }}/docker.sock"
+#
+# See https://docs.docker.com/engine/security/rootless/ for more information.
+#
+# sudo XDG_RUNTIME_DIR="/run/user/$(id -u {{ docker_user }})" \
+#	DOCKER_HOST="unix:///run/user/{{ docker_user_info.uid }}/docker.sock" \
+#	-i -u {{ docker_user }} systemctl --user (start|stop|restart|status) docker.service
+#
+
+sudo XDG_RUNTIME_DIR="/run/user/$(id -u {{ docker_user }})" \
+  DOCKER_HOST="unix:///run/user/{{ docker_user_info.uid }}/docker.sock" \
+  PATH="{{ docker_user_info.home }}/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+    -i -u {{ docker_user }} docker "$@"

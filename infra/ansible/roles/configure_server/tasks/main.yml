@@ -1,0 +1,51 @@
+- name: Update APT
+  apt:
+    update_cache: yes
+
+- name: Include disks configuration tasks
+  include_tasks: disks_configuration.yaml
+  when: "{{ disk_configuration_enabled | bool }}"
+
+- name: Install docker
+  include_tasks: docker/docker_main.yaml
+
+- name: Install GitHub CLI
+  block:
+    - name: add apt key
+      apt_key:
+        url: https://cli.github.com/packages/githubcli-archive-keyring.gpg
+        state: present
+    - name: add apt repo
+      apt_repository:
+        repo: deb https://cli.github.com/packages stable main
+        state: present
+        update_cache: yes
+    - name: Install gh apt package
+      apt:
+        name: gh
+        state: present
+
+- name: Install PyCharm-Community
+  block:
+  - name: Make sure download directory exists
+    file:
+      path: "{{ pycharm_downloads_path }}"
+      state: directory
+
+  - name: Download tar
+    get_url:
+      url: "{{ pycharm_download_url }}/pycharm-{{ pycharm_edition }}-{{ pycharm_version }}.tar.gz"
+      dest: "{{ pycharm_downloads_path }}/pycharm-{{ pycharm_edition }}-{{ pycharm_version }}.tar.gz"
+
+  - name: Install
+    unarchive:
+      src: "{{ pycharm_downloads_path }}/pycharm-{{ pycharm_edition }}-{{ pycharm_version }}.tar.gz"
+      dest: "{{ pycharm_install_prefix }}"
+      creates: "{{ pycharm_install_prefix }}/pycharm-{{ pycharm_edition }}-{{ pycharm_version }}"
+      copy: false
+
+- name: Install Grafana
+  snap:
+    name: grafana
+    state: present
+  

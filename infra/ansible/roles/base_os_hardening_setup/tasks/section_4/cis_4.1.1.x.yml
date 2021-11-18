@@ -1,0 +1,100 @@
+---
+- name: "AUTOMATED | 4.1.1.1 | PATCH | Ensure auditd is installed"
+  apt:
+      name: ['auditd', 'audispd-plugins']
+      state: present
+  when:
+      - ubtu20cis_rule_4_1_1_1
+  tags:
+      - level2-server
+      - level2-workstation
+      - automated
+      - patch
+      - rule_4.1.1.1
+      - auditd
+
+- name: "AUTOMATED | 4.1.1.2 | PATCH | Ensure auditd service is enabled"
+  service:
+      name: auditd
+      state: started
+      enabled: yes
+  when:
+      - ubtu20cis_rule_4_1_1_2
+  tags:
+      - level2-server
+      - level2-workstation
+      - automated
+      - patch
+      - rule_4.1.1.2
+      - auditd
+
+- name: "AUTOMATED | 4.1.1.3 | PATCH | Ensure auditing for processes that start prior to auditd is enabled"
+  block:
+      - name: "AUTOMATED | 4.1.1.3 | AUDIT | Ensure auditing for processes that start prior to auditd is enabled | Get GRUB_CMDLINE_LINUX"
+        shell: grep "GRUB_CMDLINE_LINUX=" /etc/default/grub | cut -f2 -d'"'
+        changed_when: false
+        failed_when: false
+        check_mode: false
+        register: ubtu20cis_4_1_1_3_cmdline_settings
+
+      - name: "AUTOMATED | 4.1.1.3 | PATCH | Ensure auditing for processes that start prior to auditd is enabled | Add setting if doesn't exist"
+        lineinfile:
+            path: /etc/default/grub
+            regexp: '^GRUB_CMDLINE_LINUX='
+            line: 'GRUB_CMDLINE_LINUX="{{ ubtu20cis_4_1_1_3_cmdline_settings.stdout }} audit=1"'
+        when: "'audit=' not in ubtu20cis_4_1_1_3_cmdline_settings.stdout"
+        notify: grub update
+
+      - name: "AUTOMATED | 4.1.1.3 | PATCH | Ensure auditing for processes that start prior to auditd is enabled | Update setting if exists"
+        replace:
+            dest: /etc/default/grub
+            regexp: 'audit=([0-9]+)'
+            replace: 'audot=1'
+            after: '^GRUB_CMDLINE_LINUX="'
+            before: '"'
+        notify: grub update
+        when: "'audit=' in ubtu20cis_4_1_1_3_cmdline_settings.stdout"
+  when:
+      - ubtu20cis_rule_4_1_1_3
+  tags:
+      - level2-server
+      - level2-workstation
+      - automated
+      - patch
+      - rule_4_1_1_3
+      - auditd
+
+- name: "AUTOMATED | 4.1.1.4 | PATCH | Ensure audit_backlog_limit is sufficient"
+  block:
+      - name: "AUTOMATED | 4.1.1.4 | PATCH | Ensure audit_backlog_limit is sufficient | Get current GRUB_CMDLINE_LINUX"
+        shell: grep "GRUB_CMDLINE_LINUX=" /etc/default/grub | cut -f2 -d'"'
+        changed_when: false
+        failed_when: false
+        check_mode: false
+        register: ubtu20cis_4_1_1_4_cmdline_settings
+
+      - name: "AUTOMATED | 4.1.1.4 | PATCH | Ensure audit_backlog_limit is sufficient | Add setting if doesn't exist"
+        lineinfile:
+            path: /etc/default/grub
+            regexp: '^GRUB_CMDLINE_LINUX='
+            line: 'GRUB_CMDLINE_LINUX="{{ ubtu20cis_4_1_1_4_cmdline_settings.stdout }} audit_backlog_limit={{ ubtu20cis_audit_back_log_limit }}"'
+        notify: grub update
+        when: "'audit_backlog_limit=' not in ubtu20cis_4_1_1_4_cmdline_settings.stdout"
+
+      - name: "AUTOMATED | 4.1.1.4 | PATCH | Ensure audit_backlog_limit is sufficient | Update setting if exists"
+        replace:
+            dest: /etc/default/grub
+            regexp: 'audit_backlog_limit=([0-9]+)'
+            replace: 'audit_backlog_limit={{ ubtu20cis_audit_back_log_limit }}'
+            after: '^GRUB_CMDLINE_LINUX="'
+            before: '"'
+        notify: grub update
+  when:
+      - ubtu20cis_rule_4_1_1_4
+  tags:
+      - level2-server
+      - level2-workstation
+      - automated
+      - patch
+      - rule_4.1.1.4
+      - auditd

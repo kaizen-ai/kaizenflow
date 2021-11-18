@@ -1,0 +1,5 @@
+---
+oscap_working_dir: /tmp/oscap/
+oscap_ssg: ssg-ubuntu2004-ds.xml
+oscap_profile: xccdf_org.ssgproject.content_profile_cis_level2_server
+oscap_output: "report_{{ '%Y_%m_%d_%H_%M_%S' | strftime }}.html"

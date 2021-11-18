@@ -1,0 +1,185 @@
+---
+- name: Ansible | Include variables containing secrets
+  no_log: true
+  include_vars:
+    file: secrets.yml
+    
+- name: OpenVPN | Google Authenticator | Create the MFA user on OS
+  user:
+    name: "{{ openvpn_client_username }}"
+    password: "{{ openvpn_client_password | password_hash('sha512') }}"
+    shell: /sbin/nologin
+  notify: Restart openvpn  
+
+- name: OpenVPN | Google Authenticator | Run google authenticator setup
+  command:
+    cmd: "/usr/bin/google-authenticator -t -d -r3 -R30 -W -l '{{ openvpn_client_username }}@{{ openvpn_server_common_name }}' -f -s {{ gauth_dir }}/{{ openvpn_client_username }}"
+    creates: "{{ gauth_dir }}/{{ openvpn_client_username }}"
+  register: result_totp_seed
+
+- name: OpenVPN | Google Authenticator | Set permissions for newly created MFA seed
+  file:
+    path: "{{ gauth_dir }}/{{ openvpn_client_username }}"
+    owner: "{{ gauth_username }}"
+    group: "{{ gauth_group }}"
+    mode: 0400
+  
+- name: OpenVPN | PKI | Create certificate for client
+  expect:
+    command: './easyrsa build-client-full "{{ openvpn_client_username }}@{{ openvpn_server_common_name }}" --req-cn "{{ openvpn_client_username }}"'
+    responses:
+      'Enter PEM pass phrase:$': "{{ openvpn_client_pem_passphrase }}"
+      'Verifying - Enter PEM pass phrase:$': "{{ openvpn_client_pem_passphrase }}"
+      'Enter pass phrase for .*?:$': "{{ easyrsa_ca_password }}"
+    chdir: "{{ easyrsa_dir }}"
+    creates: "{{ easyrsa_pki_client_key }}"
+  no_log: true
+  
+- name: OpenVPN | Add VPN Client | Make client configuration directory
+  file:
+    path: "{{ openvpn_path_ovpn }}"
+    mode: 0700
+    state: directory  
+
+- name: OpenVPN | Google Authenticator | Write output of MFA seed initialisation to file
+  copy:
+    content: "{{ result_totp_seed.stdout_lines }}"
+    dest: "{{ openvpn_path_ovpn }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}-totp.seed"
+  when: "'exists' not in result_totp_seed.stdout" #Skip when the output of totp initialisation already exists
+  
+- name: OpenVPN | Add VPN Client | Load data - slurp ca cert
+  slurp:
+    src: "{{ easyrsa_pki_ca_cert }}"
+  register: slurped_ca
+
+- name: OpenVPN | Add VPN Client | Load data - slurp client cert
+  slurp:
+    src: "{{ easyrsa_pki_client_cert }}"
+  register: slurped_client_cert
+
+- name: OpenVPN | Add VPN Client | Load data - slurp client key
+  slurp:
+    src: "{{ easyrsa_pki_client_key }}"
+  register: slurped_client_key
+  no_log: true
+
+- name: OpenVPN | Add VPN Client | Load data - slurp server ta key
+  slurp:
+    src: "{{ openvpn_ta_key }}"
+  register: slurped_openvpn_ta_key
+  no_log: true
+    
+- name: OpenVPN | Add VPN Client | Set facts
+  set_fact:
+    easyrsa_pki_ca_cert_content: "{{ slurped_ca.content | b64decode | trim }}"
+    easyrsa_pki_client_cert_content: "{{ slurped_client_cert.content | b64decode | trim }}"
+    easyrsa_pki_client_key_content: "{{ slurped_client_key.content | b64decode | trim }}"
+    openvpn_ta_key_content: "{{ slurped_openvpn_ta_key.content | b64decode | trim }}"
+  no_log: true
+
+- name: OpenVPN | Add VPN Client | Build ccd config
+  template:
+    src: ./templates/client_ccd.j2
+    dest: "{{ openvpn_path_ccd }}/{{ openvpn_client_username }}"
+    mode: 0644
+  when: openvpn_server_client_extra_options | length > 0
+    
+- name: OpenVPN | Add VPN Client | Build client config (.ovpn files; pki embedded)
+  template:
+    src: ./templates/client_pki_embedded.ovpn.j2
+    dest: "{{ openvpn_path_ovpn }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}-pki-embedded.ovpn"
+    mode: 0400
+  no_log: true
+
+- name: OpenVPN | Add VPN Client | Build client config (.ovpn files; pki external files)
+  template:
+    src: ./templates/client_pki_files.ovpn.j2
+    dest: "{{ openvpn_path_ovpn }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}-pki-files.ovpn"
+    mode: 0400
+  no_log: true  
+  
+- name: OpenVPN | Add VPN Client | Build client config (.ovpn files; external pkcs12)
+  template:
+    src: ./templates/client_pki_pkcs12.ovpn.j2
+    dest: "{{ openvpn_path_ovpn }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}-pki-pkcs12.ovpn"
+    mode: 0400
+  no_log: true
+    
+- name: OpenVPN | Add VPN Client | Generate PKCS#12 file
+  openssl_pkcs12:
+    action: export
+    passphrase: "{{ openvpn_client_p12_passphrase }}"
+    privatekey_passphrase: "{{ openvpn_client_pem_passphrase }}"
+    path: "{{ openvpn_path_ovpn }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}.p12"
+    friendly_name: "{{ openvpn_client_username }}"
+    certificate_path: "{{ easyrsa_pki_client_cert }}"
+    privatekey_path: "{{ easyrsa_pki_client_key }}"
+    other_certificates: "{{ easyrsa_pki_ca_cert }}"
+    state: present
+
+# EXPORT common
+- name: OpenVPN | Export VPN Client | Get totp seed file and store it in every bundle
+  fetch:
+    src: "{{ openvpn_path_ovpn }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}-totp.seed"
+    dest: "{{ vpn_client_export_bundle_dir }}/{{ item }}"
+    flat: yes
+  loop:
+    - "{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_embeded/"
+    - "{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_files/"
+    - "{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_p12/"
+
+- name: OpenVPN | Export VPN Client | Add openvpn crypt key to files + PKCS#12 directory
+  fetch:
+    src: "{{ openvpn_ta_key }}"
+    dest: "{{ vpn_client_export_bundle_dir }}/{{ item }}"
+    flat: yes
+  loop:
+    - "{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_files/"
+    - "{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_p12/"
+
+# EXPORT bundled
+- name: OpenVPN | Export VPN Client | Get .ovpn files (*-pki-embedded.ovpn)
+  fetch:
+    src: "{{ openvpn_path_ovpn }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}-pki-embedded.ovpn"
+    dest: "{{ vpn_client_export_bundle_dir }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_embeded/"
+    flat: yes
+
+# EXPORT individual files
+- name: OpenVPN | Export VPN Client | Get .ovpn files (*-pki-files.ovpn)
+  fetch:
+    src: "{{ openvpn_path_ovpn }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}-pki-files.ovpn"
+    dest: "{{ vpn_client_export_bundle_dir }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_files/"
+    flat: yes 
+
+- name: OpenVPN | Export VPN Client | Get client CA cert
+  fetch:
+    src: "{{ easyrsa_pki_ca_cert }}"
+    dest: "{{ vpn_client_export_bundle_dir }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_files/"
+    flat: yes
+    
+- name: OpenVPN | Export VPN Client | Get client certs
+  fetch:
+    src: "{{ easyrsa_pki_client_cert }}"
+    dest: "{{ vpn_client_export_bundle_dir }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_files/"
+    flat: yes
+    
+- name: OpenVPN | Export VPN Client | Get client keys
+  fetch:
+    src: "{{ easyrsa_pki_client_key }}"
+    dest: "{{ vpn_client_export_bundle_dir }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_files/"
+    flat: yes 
+
+# EXPORT P12   
+- name: OpenVPN | Export VPN Client | Get .ovpn files (*-pkcs12.ovpn)
+  fetch:
+    src: "{{ openvpn_path_ovpn }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}-pki-pkcs12.ovpn"
+    dest: "{{ vpn_client_export_bundle_dir }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_p12/"
+    flat: yes
+    
+- name: OpenVPN | Export VPN Client | Get client PKCS#12 files
+  fetch:
+    src: "{{ openvpn_path_ovpn }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}.p12"
+    dest: "{{ vpn_client_export_bundle_dir }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_p12/"
+    flat: yes
+
+   

@@ -1,0 +1,3 @@
+#!/bin/sh
+xrdb $HOME/.Xresources
+exec /usr/bin/mate-session

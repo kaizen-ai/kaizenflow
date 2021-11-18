@@ -1,0 +1,45 @@
+dev tun-{{ openvpn_server_proto }}-{{ openvpn_server_port }}
+server {{ openvpn_server_mask }}
+proto {{ openvpn_server_proto }}
+port {{ openvpn_server_port }}
+
+tls-server
+remote-cert-tls client
+ca "{{ easyrsa_pki_ca_cert }}"
+cert "{{ easyrsa_pki_server_cert }}"
+key "{{ easyrsa_pki_server_key }}"
+crl-verify {{ easyrsa_pki_crl }}
+
+plugin {{ gauth_openvpn_plugin }} openvpn
+username-as-common-name
+client-config-dir {{ openvpn_path_ccd }}
+
+user nobody
+group nogroup
+persist-key
+persist-tun
+topology subnet
+keepalive 10 120
+dh {{ openvpn_dh }}
+ecdh-curve {{ openvpn_ecdh_curve }}
+tls-crypt {{ openvpn_path }}/ta-{{ openvpn_server_port }}.key 0
+cipher {{ openvpn_data_ciphers }}
+#data-ciphers {{ openvpn_data_ciphers }}
+#data-ciphers-fallback {{ openvpn_data_ciphers_fallback }}
+tls-cipher {{ openvpn_tls_cipher }}
+auth {{ openvpn_auth_digest }}
+tls-version-min 1.2
+tun-mtu 1500
+mssfix 1450
+status /var/log/openvpn-{{ openvpn_server_proto }}-{{ openvpn_server_port }}-status.log
+log  /var/log/openvpn-{{ openvpn_server_proto }}-{{ openvpn_server_port }}.log
+verb 3
+mute 10
+
+{% for item in openvpn_server_server_extra_options %}
+{{ item }}
+{% endfor %}
+
+# Fix for the Windows 10 DNS leak described here:
+# https://community.openvpn.net/openvpn/ticket/605
+#push block-outside-dns

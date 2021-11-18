@@ -1,0 +1,82 @@
+---
+- name: install required packages and configure sysctl
+  include: docker_pre.yaml
+
+- name: manage docker user
+  include: docker_manage_user.yaml
+
+- name: remove obselete Docker instruction file
+  file:
+    path: "{{ ansible_env.HOME }}/ROOTLESS_DOCKER.README"
+    state: absent
+
+- name: rootful docker
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ docker_user_info.uid }}"
+    PATH: "{{ docker_user_info.home }}/bin:{{ ansible_env.PATH }}"
+    DOCKER_HOST: "unix:///run/user/{{ docker_user_info.uid }}/docker.sock"
+  block:
+    - name: install rootful docker
+      include: docker_install_rootful.yaml
+
+    - name: configure rootful docker service
+      include: docker_service_rootful.yaml
+  when: docker_rootful and not (ansible_distribution == "Debian" and ansible_distribution_major_version <= '10')
+
+- name: debian information
+  fail:
+    msg: "slirp4netns (>= 0.4.0) is required, currently not available in Debian <= 10"
+  when: docker_rootful and (ansible_distribution == "Debian" and ansible_distribution_major_version <= '10')
+
+- name: install and configure rootless docker
+  include: docker_install_rootless.yaml
+  when: not docker_rootful
+
+- name: user sudo alias
+  vars:
+    sudo_alias: >
+      alias docker='sudo XDG_RUNTIME_DIR="/run/user/{{ docker_user_info.uid }}"
+      DOCKER_HOST="unix:///run/user/{{ docker_user_info.uid }}/docker.sock"
+      {{ docker_user_info.home }}/bin/docker'
+
+  block:
+    - name: stat {{ ansible_env.HOME }}/.bashrc
+      stat:
+        path: "{{ ansible_env.HOME }}/.bashrc"
+      register: user_bashrc
+
+    - name: check if .bash_aliases is used
+      command: grep -q '.bash_aliases' "{{ ansible_env.HOME }}/.bashrc"
+      register: check_aliases
+      changed_when: check_aliases.rc >= 2
+      failed_when: check_aliases.rc >= 2
+      when: user_bashrc.stat.exists
+
+    - name: add rootless docker alias to {{ ansible_env.HOME }}/.bash_aliases
+      lineinfile:
+        path: "{{ ansible_env.HOME }}/.bash_aliases"
+        line: "{{ sudo_alias }}"
+        regexp: '^alias docker='
+        state: present
+        create: 'yes'
+        mode: '0640'
+      when: check_aliases.rc == 0 and user_bashrc.stat.exists and not docker_rootful
+
+    - name: add rootless docker alias to {{ ansible_env.HOME }}/.bashrc
+      lineinfile:
+        path: "{{ ansible_env.HOME }}/.bashrc"
+        line: "{{ sudo_alias }}"
+        regexp: '^alias docker='
+      when: user_bashrc.stat.exists and check_aliases.rc != 0 and not docker_rootful
+  when: docker_add_alias|bool and not docker_rootful
+
+- name: create {{ ansible_env.HOME }}/docker_rootless.sh
+  template:
+    src: docker_rootless.sh.j2
+    dest: "{{ ansible_env.HOME }}/docker_rootless.sh"
+    mode: 0700
+  when: docker_rootful or not docker_add_alias|bool
+
+- name: Include docker compose installation
+  include_tasks: docker_compose_install.yaml
+...

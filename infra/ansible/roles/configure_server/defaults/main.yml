@@ -1,0 +1,36 @@
+---
+# Disk configuration
+fstype: ext4
+ebs_data_device_name: "/dev/nvme1n1"
+root_device_name: "/dev/nvme0n1"
+disk_configuration_enabled: true
+
+# Disk layout
+
+# Docker 
+# https://download.docker.com/linux/static/stable/x86_64/{docker,docker-rootless-extras}-20.10.10.tgz
+docker_add_alias: true
+docker_release: "20.10.10"
+docker_release_shasum: "1719446f99cd56e87d0c67019996af4ea859f11891bfd89de2252d6c916ccaaa"
+docker_release_rootless_shasum: "683448bf77e625d198feaec3b28cec2d07e51f310e1172149bdd0558a97c21cf"
+docker_rootful: true
+docker_rootful_enabled: true
+docker_rootful_opts: "--live-restore --icc=false --default-ulimit nproc=512:1024 --default-ulimit nofile=100:200 -H fd://"
+docker_url: "https://download.docker.com/linux/static/stable/x86_64"
+docker_user: dockeruser
+docker_allow_privileged_ports: false
+
+# Docker Compose
+docker_compose_version: 1.29.2
+docker_compose_download_url: "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-Linux-x86_64"
+
+# PyCharm
+pycharm_version: 2021.2.3
+pycharm_edition: community
+pycharm_install_prefix: /opt
+pycharm_download_url: 'http://download.jetbrains.com/python'
+pycharm_downloads_path: /tmp
+
+# Grafana
+# Initial login (set up by Grafana is admin:admin)
+

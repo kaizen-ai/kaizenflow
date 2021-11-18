@@ -1,0 +1,51 @@
+---
+easyrsa_dir: /usr/share/easy-rsa/
+easyrsa_dn_mode_cn_only: false
+easyrsa_key_country:  "US"
+easyrsa_key_province: "California"
+easyrsa_key_city: "Beverly Hills"
+easyrsa_key_org: "TEST CORPORATION"
+easyrsa_key_ou: "Anvil Department"
+easyrsa_key_email: "user@example.com"
+
+easyrsa_pki_dir: /opt/pki
+easyrsa_pki_ca_key: "{{ easyrsa_pki_dir }}/private/ca.key"
+easyrsa_pki_ca_cert: "{{ easyrsa_pki_dir }}/ca.crt"
+easyrsa_pki_crl: "{{ easyrsa_pki_dir }}/crl.pem"
+easyrsa_pki_path_certs: "{{ easyrsa_pki_dir }}/issued"
+easyrsa_pki_path_keys: "{{ easyrsa_pki_dir }}/private"
+easyrsa_pki_server_cert: "{{ easyrsa_pki_path_certs }}/server@{{ openvpn_server_common_name }}.crt"
+easyrsa_pki_server_key: "{{ easyrsa_pki_path_keys }}/server@{{ openvpn_server_common_name }}.key"
+
+easyrsa_algo: ec
+easyrsa_curve: secp384r1
+easyrsa_key_size: 2048 #Only used when easyrsa_algo: rsa
+easyrsa_digest: sha256
+easyrsa_ca_expiration: 3650
+easyrsa_cert_expiration: 3650
+easyrsa_crl_days: 180
+
+openvpn_dh: none
+openvpn_ecdh_curve: prime256v1
+openvpn_data_ciphers: "AES-128-GCM"
+openvpn_data_ciphers_fallback: "AES-128-GCM"
+openvpn_auth_digest: "SHA256"
+openvpn_tls_cipher: "TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256"
+
+openvpn_server_common_name: vpn1.eu-north-1
+openvpn_path: "/etc/openvpn"
+openvpn_path_ccd: "{{ openvpn_path }}/ccd" 
+openvpn_ta_key: "{{ openvpn_path }}/ta-{{ openvpn_server_port }}.key"
+openvpn_server_proto: udp
+openvpn_server_port: 1194
+openvpn_server_mask: "10.30.254.0 255.255.255.0"
+openvpn_server_server_extra_options: 
+  - 'push "route 172.30.1.0 255.255.255.0"'
+  - 'push "route 172.30.2.0 255.255.255.0"'
+
+gauth_username: gauth
+gauth_group: gauth
+gauth_dir: /etc/openvpn/google-authenticator
+gauth_pam_file: /etc/pam.d/openvpn
+gauth_openvpn_plugin: /usr/lib/x86_64-linux-gnu/openvpn/plugins/openvpn-plugin-auth-pam.so
+gauth_openvpn_pam_module: /usr/lib/x86_64-linux-gnu/security/pam_google_authenticator.so
