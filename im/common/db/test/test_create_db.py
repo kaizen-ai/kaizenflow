@@ -12,14 +12,14 @@ import im.common.db.create_db as imcdbcrdb
 _LOG = logging.getLogger(__name__)
 
 
-class CreateDB(hunitest.TestCase):
+class TestCreateDb1(hunitest.TestCase):
     def setUp(self) -> None:
         """
         Initialize the test database inside test container.
         """
         super().setUp()
         self.docker_compose_file_path = os.path.join(
-            hgit.get_amp_abs_path(), "im/devops/compose/docker-compose.yml"
+            hgit.get_amp_abs_path(), "im_v2/devops/compose/docker-compose.yml"
         )
         cmd = (
             "sudo docker-compose "

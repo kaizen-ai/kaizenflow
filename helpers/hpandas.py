@@ -14,15 +14,25 @@ import helpers.printing as hprint
 _LOG = logging.getLogger(__name__)
 
 
+def _get_index(obj: Union[pd.Index, pd.DataFrame, pd.Series]) -> pd.Index:
+    if isinstance(obj, pd.Index):
+        index = obj
+    else:
+        hdbg.dassert_isinstance(obj, (pd.Series, pd.DataFrame))
+        index = obj.index
+    return index
+
+
 def dassert_index_is_datetime(
-    df: pd.DataFrame, msg: Optional[str] = None, *args: Any
+    obj: Union[pd.Index, pd.DataFrame, pd.Series],
+    msg: Optional[str] = None,
+    *args: Any,
 ) -> None:
     """
     Ensure that the dataframe has an index containing datetimes.
     """
-    # TODO(gp): Add support also for series.
-    hdbg.dassert_isinstance(df, pd.DataFrame, msg, *args)
-    hdbg.dassert_isinstance(df.index, pd.DatetimeIndex, msg, *args)
+    index = _get_index(obj)
+    hdbg.dassert_isinstance(index, pd.DatetimeIndex, msg, *args)
 
 
 def dassert_strictly_increasing_index(
@@ -31,12 +41,9 @@ def dassert_strictly_increasing_index(
     *args: Any,
 ) -> None:
     """
-    Ensure that the dataframe has a strictly increasing index.
+    Ensure that a Pandas object has a strictly increasing index.
     """
-    if isinstance(obj, pd.Index):
-        index = obj
-    else:
-        index = obj.index
+    index = _get_index(obj)
     # TODO(gp): Understand why mypy reports:
     #   error: "dassert" gets multiple values for keyword argument "msg"
     hdbg.dassert(index.is_monotonic_increasing, msg=msg, *args)
@@ -52,12 +59,10 @@ def dassert_monotonic_index(
     *args: Any,
 ) -> None:
     """
-    Ensure that the dataframe has a strictly increasing or decreasing index.
+    Ensure that a Pandas object has a monotonic (i.e., strictly increasing or
+    decreasing index).
     """
-    if isinstance(obj, pd.Index):
-        index = obj
-    else:
-        index = obj.index
+    index = _get_index(obj)
     # TODO(gp): Understand why mypy reports:
     #   error: "dassert" gets multiple values for keyword argument "msg"
     cond = index.is_monotonic_increasing or index.is_monotonic_decreasing

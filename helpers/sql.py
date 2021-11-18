@@ -13,8 +13,8 @@ from typing import List, NamedTuple, Optional, Tuple, Union
 
 import pandas as pd
 import psycopg2 as psycop
+import psycopg2.extras as extras
 import psycopg2.sql as psql
-from psycopg2 import extras
 
 import helpers.dbg as hdbg
 import helpers.printing as hprint
@@ -212,6 +212,12 @@ def get_indexes(connection: DbConnection) -> pd.DataFrame:
     return tmp
 
 
+def disconnect_all_clients(dbname: str):
+    # From https://stackoverflow.com/questions/36502401
+    # Not sure this will work in our case, since it might kill our own connection.
+    cmd = f"SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '{dbname}';"
+
+
 # #############################################################################
 # Database
 # #############################################################################
@@ -372,16 +378,15 @@ def head_tables(
     return txt
 
 
-def get_table_columns(connection: DbConnection, table_name: str) -> list:
+
+def get_table_columns(connection: DbConnection, table_name: str) -> List[str]:
     """
     Get column names for given table.
     """
-    query = (
-        """SELECT column_name
-                FROM information_schema.columns
-                WHERE TABLE_NAME = '%s' """
-        % table_name
-    )
+    query = f"""
+        SELECT column_name
+            FROM information_schema.columns
+            WHERE TABLE_NAME = '{table_name}'"""
     cursor = connection.cursor()
     cursor.execute(query)
     columns = [x[0] for x in cursor.fetchall()]
@@ -428,6 +433,11 @@ def find_tables_common_columns(
             df, columns=["table1", "table2", "num_comm_cols", "common_cols"]
         )
     return obj
+
+
+def remove_table(connection: DbConnection, table_name: str) -> None:
+    query = f"DROP TABLE IF EXISTS {table_name}"
+    connection.cursor().execute(query)
 
 
 # #############################################################################
@@ -541,7 +551,7 @@ def execute_insert_query(
         df = obj
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_in(table_name, get_table_names(connection))
-    _LOG.debug("df=\n%s", hprint.dataframe_to_str(df))
+    _LOG.debug("df=\n%s", hprint.dataframe_to_str(df, use_tabulate=False))
     # Transform dataframe into list of tuples.
     values = [tuple(v) for v in df.to_numpy()]
     # Generate a query for multiple rows.
