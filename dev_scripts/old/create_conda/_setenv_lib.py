@@ -1,4 +1,8 @@
 """
+This library contains functions used by a `setenv_*.py` script in a repo to
+generate a bash script that is executed to configure the development
+environment.
+
 Import as:
 
 import dev_scripts.old.create_conda._setenv_lib as dsoccseli

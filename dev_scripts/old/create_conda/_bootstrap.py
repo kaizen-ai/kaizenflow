@@ -1,4 +1,9 @@
 """
+This module:
+    - is used to modify the running PYTHONPATH in order to find //amp libraries
+    - can only depend on standard python library functions
+    - cannot depend from any of our libraries or library installed by conda
+
 Import as:
 
 import dev_scripts.old.create_conda._bootstrap as dsoccobo

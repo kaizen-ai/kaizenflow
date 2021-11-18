@@ -1,11 +1,5 @@
 #!/usr/bin/env python
 
-"""
-Import as:
-
-import documentation.scripts.generate_latex_sty as dsgelast
-"""
-
 # To fix:
 # \bb
 # \XX
