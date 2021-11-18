@@ -198,7 +198,7 @@ def postprocess_stats_table(
 # TODO(Grisha): move `get_loader_for_vendor` out in #269.
 # TODO(Grisha): use the abstract class in #313.
 def get_loader_for_vendor(
-    config: ccocon.Config,
+    config: cconconf.Config,
 ) -> Union[imccdaloloa.CcxtLoaderFromFile, imcrdaloloa.CddLoader]:
     """
     Get vendor specific loader instance.
