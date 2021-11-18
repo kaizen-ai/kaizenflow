@@ -5,20 +5,20 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import helpers.printing as hprint
-import helpers.unit_test as hunitest
-import oms.pnl_simulator as opnlsimu
+import helpers.printing as hprintin
+import helpers.unit_test as huntes
+import oms.pnl_simulator as cdtfmopnsim
 
 _LOG = logging.getLogger(__name__)
 
 
-class TestPnlSimulatorFunctions1(hunitest.TestCase):
+class TestPnlSimulatorFunctions1(huntes.TestCase):
     def test_get_data1(self) -> None:
         """
         Freeze the output of `_get_data()` as reference for other unit tests.
         """
         df = self._get_data()
-        actual_result = hunitest.convert_df_to_string(df, index=True)
+        actual_result = huntes.convert_df_to_string(df, index=True)
         expected_result = """
                                   price         ask         bid    midpoint
         2021-09-12 09:30:00  100.496714  100.722490  100.381066  100.551778
@@ -42,7 +42,7 @@ class TestPnlSimulatorFunctions1(hunitest.TestCase):
         2021-09-12 09:48:00   97.986332   98.183194   97.507158   97.845176
         2021-09-12 09:49:00   96.574029   97.312495   96.388370   96.850433
         2021-09-12 09:50:00   98.039678   98.211046   96.933343   97.572194"""
-        expected_result = hprint.dedent(expected_result)
+        expected_result = hprintin.dedent(expected_result)
         self.assert_equal(actual_result, expected_result)
 
     def test_get_twap_price1(self) -> None:
@@ -240,7 +240,7 @@ class TestPnlSimulatorFunctions1(hunitest.TestCase):
         """
         num_samples = 21
         seed = 42
-        df = opnlsimu.get_random_market_data(num_samples, seed)
+        df = cdtfmopnsim.get_random_market_data(num_samples, seed)
         df["midpoint"] = (df["ask"] + df["bid"]) / 2
         df = df.round(6)
         return df
@@ -259,21 +259,23 @@ def _compute_pnl_level2(
     # Check that with / without cache we get the same results.
     use_cache = False
     columns = None
-    mi = opnlsimu.MarketInterface(df, use_cache, columns)
-    df_5mins_no_cache = opnlsimu.compute_pnl_level2(
+    mi = cdtfmopnsim.MarketInterface(df, use_cache, columns)
+    df_5mins_no_cache = cdtfmopnsim.compute_pnl_level2(
         mi, df_5mins, initial_wealth, config
     )
     #
     use_cache = True
     columns = ["price"]
-    mi = opnlsimu.MarketInterface(df, use_cache, columns)
-    df_5mins = opnlsimu.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
+    mi = cdtfmopnsim.MarketInterface(df, use_cache, columns)
+    df_5mins = cdtfmopnsim.compute_pnl_level2(
+        mi, df_5mins, initial_wealth, config
+    )
     self_.assert_equal(str(df_5mins_no_cache), str(df_5mins))
     pd.testing.assert_frame_equal(df_5mins_no_cache, df_5mins)
     return df_5mins
 
 
-class TestPnlSimulator1(hunitest.TestCase):
+class TestPnlSimulator1(huntes.TestCase):
     """
     Verify that computing PnL using `compute_pnl_level1()`, `compute_lag_pnl()`
     and `compute_pnl_level2()` yield the same results.
@@ -283,7 +285,7 @@ class TestPnlSimulator1(hunitest.TestCase):
         """
         Compute PnL on an handcrafted example.
         """
-        df, df_5mins = opnlsimu.get_example_market_data1()
+        df, df_5mins = cdtfmopnsim.get_example_market_data1()
         # Execute.
         self._run(df, df_5mins)
 
@@ -293,7 +295,7 @@ class TestPnlSimulator1(hunitest.TestCase):
         """
         num_samples = 5 * 3 + 1
         seed = 42
-        df, df_5mins = opnlsimu.get_example_market_data2(num_samples, seed)
+        df, df_5mins = cdtfmopnsim.get_example_market_data2(num_samples, seed)
         # Execute.
         self._run(df, df_5mins)
 
@@ -303,7 +305,7 @@ class TestPnlSimulator1(hunitest.TestCase):
         """
         num_samples = 5 * 10 + 1
         seed = 43
-        df, df_5mins = opnlsimu.get_example_market_data2(num_samples, seed)
+        df, df_5mins = cdtfmopnsim.get_example_market_data2(num_samples, seed)
         # Execute.
         self._run(df, df_5mins)
 
@@ -313,7 +315,7 @@ class TestPnlSimulator1(hunitest.TestCase):
         """
         num_samples = 5 * 20 + 1
         seed = 44
-        df, df_5mins = opnlsimu.get_example_market_data2(num_samples, seed)
+        df, df_5mins = cdtfmopnsim.get_example_market_data2(num_samples, seed)
         # Execute.
         self._run(df, df_5mins)
 
@@ -326,9 +328,9 @@ class TestPnlSimulator1(hunitest.TestCase):
         - the total return from the different approaches matches
         """
         act = []
-        act.append("df=\n%s" % hunitest.convert_df_to_string(df, index=True))
+        act.append("df=\n%s" % huntes.convert_df_to_string(df, index=True))
         act.append(
-            "df_5mins=\n%s" % hunitest.convert_df_to_string(df_5mins, index=True)
+            "df_5mins=\n%s" % huntes.convert_df_to_string(df_5mins, index=True)
         )
         # Compute pnl using simulation level 1.
         initial_wealth = 1000.0
@@ -336,18 +338,18 @@ class TestPnlSimulator1(hunitest.TestCase):
             final_w,
             tot_ret,
             df_5mins,
-        ) = opnlsimu.compute_pnl_level1(initial_wealth, df, df_5mins)
+        ) = cdtfmopnsim.compute_pnl_level1(initial_wealth, df, df_5mins)
         _ = final_w
         act.append("# tot_ret=%s" % tot_ret)
         act.append(
             "After pnl simulation level 1: df_5mins=\n%s"
-            % hunitest.convert_df_to_string(df_5mins, index=True)
+            % huntes.convert_df_to_string(df_5mins, index=True)
         )
         # Compute pnl using lags.
-        tot_ret_lag, df_5mins = opnlsimu.compute_lag_pnl(df_5mins)
+        tot_ret_lag, df_5mins = cdtfmopnsim.compute_lag_pnl(df_5mins)
         act.append(
             "After pnl lag computation: df_5mins=\n%s"
-            % hunitest.convert_df_to_string(df_5mins, index=True)
+            % huntes.convert_df_to_string(df_5mins, index=True)
         )
         act.append("# tot_ret_lag=%s" % tot_ret_lag)
         # Compute pnl using simulation level 2.
@@ -361,7 +363,7 @@ class TestPnlSimulator1(hunitest.TestCase):
         df_5mins = _compute_pnl_level2(self, df, df_5mins, initial_wealth, config)
         act.append(
             "After pnl simulation level 2: df_5mins=\n%s"
-            % hunitest.convert_df_to_string(df_5mins, index=True)
+            % huntes.convert_df_to_string(df_5mins, index=True)
         )
         #
         act = "\n".join(act)
@@ -383,13 +385,13 @@ class TestPnlSimulator1(hunitest.TestCase):
 # #############################################################################
 
 
-class TestPnlSimulator2(hunitest.TestCase):
+class TestPnlSimulator2(huntes.TestCase):
     def test1(self) -> None:
         """
         Run level2 simulation using future information to invest all the
         working capital.
         """
-        df, df_5mins = opnlsimu.get_example_market_data1()
+        df, df_5mins = cdtfmopnsim.get_example_market_data1()
         initial_wealth = 1000.0
         config = {
             "price_column": "price",
@@ -403,7 +405,7 @@ class TestPnlSimulator2(hunitest.TestCase):
         """
         Same as `test1()` but without future information.
         """
-        df, df_5mins = opnlsimu.get_example_market_data1()
+        df, df_5mins = cdtfmopnsim.get_example_market_data1()
         initial_wealth = 1000.0
         config = {
             "price_column": "price",
@@ -419,7 +421,7 @@ class TestPnlSimulator2(hunitest.TestCase):
         """
         num_samples = 5 * 30 + 1
         seed = 45
-        df, df_5mins = opnlsimu.get_example_market_data2(num_samples, seed)
+        df, df_5mins = cdtfmopnsim.get_example_market_data2(num_samples, seed)
         initial_wealth = 10000.0
         config = {
             "price_column": "price",
@@ -436,7 +438,7 @@ class TestPnlSimulator2(hunitest.TestCase):
         """
         num_samples = 5 * 100000 + 1
         seed = 43
-        df, df_5mins = opnlsimu.get_example_market_data2(num_samples, seed)
+        df, df_5mins = cdtfmopnsim.get_example_market_data2(num_samples, seed)
         #
         initial_wealth = 1e6
         #
@@ -446,7 +448,7 @@ class TestPnlSimulator2(hunitest.TestCase):
             "order_type": "price@end",
             "use_cache": True,
         }
-        df_5mins = opnlsimu.compute_pnl_level2(
+        df_5mins = cdtfmopnsim.compute_pnl_level2(
             df, df_5mins, initial_wealth, config
         )
 
@@ -464,7 +466,7 @@ class TestPnlSimulator2(hunitest.TestCase):
         act = []
         df_5mins = _compute_pnl_level2(self, df, df_5mins, initial_wealth, config)
         act.append(
-            "df_5mins=\n%s" % hunitest.convert_df_to_string(df_5mins, index=True)
+            "df_5mins=\n%s" % huntes.convert_df_to_string(df_5mins, index=True)
         )
         # Check.
         act = "\n".join(act)

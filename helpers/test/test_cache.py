@@ -724,6 +724,7 @@ class TestAmpTask1407(_ResetGlobalCacheHelper):
 
 # #############################################################################
 
+
 @pytest.mark.skip(reason="Cmamp #179.")
 class TestCachingOnS3(_ResetFunctionSpecificCacheHelper):
     def setUp(self) -> None:
