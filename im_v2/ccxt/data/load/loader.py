@@ -254,12 +254,12 @@ class CcxtLoaderFromDb(AbstractCcxtLoader):
         query_params = []
         # For every exchange id append a corresponding query string and query
         # parameter to the corresponding lists.
-        exchange_ids = [tuple_.exchange_id for tuple_ in universe]
+        exchange_ids = tuple([tuple_.exchange_id for tuple_ in universe])
         query_conditions.append("exchange_id IN %s")
         query_params.append(exchange_ids)
         # For every currency pair append a corresponding query string and query
         # parameter to the corresponding lists.
-        currency_pairs = [tuple_.currency_pair for tuple_ in universe]
+        currency_pairs = tuple([tuple_.currency_pair for tuple_ in universe])
         query_conditions.append("currency_pair IN %s")
         query_params.append(currency_pairs)
         # If conditional parameter is provided, append a corresponding
