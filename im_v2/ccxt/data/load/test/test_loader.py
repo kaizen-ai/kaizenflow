@@ -154,7 +154,7 @@ class TestCcxtLoaderFromFileReadUniverseData(hunitest.TestCase):
 
 # TODO(*): Consider to factor out the class calling in a `def _get_loader()`.
 class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
-    @pytest.mark.slow
+    @pytest.mark.slow("12 seconds.")
     def test1(self) -> None:
         """
         Test that files on S3 are being read correctly.
