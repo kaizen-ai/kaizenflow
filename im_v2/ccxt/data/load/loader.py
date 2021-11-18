@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.ccxt.data.load.loader as im2cdllo
+import im_v2.ccxt.data.load.loader as imcdalolo
 """
 
 import abc
@@ -16,7 +16,7 @@ import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.s3 as hs3
 import helpers.sql as hsql
-import im.data.universe as imdatuniv
+import im_v2.data.universe as imdatuniv
 
 _LOG = logging.getLogger(__name__)
 
