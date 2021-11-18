@@ -1,12 +1,7 @@
 """
 Import as:
 
-import bootstrap as boot
-
-This module:
-    - is used to modify the running PYTHONPATH in order to find //amp libraries
-    - can only depend on standard python library functions
-    - cannot depend from any of our libraries or library installed by conda
+import dev_scripts.old.create_conda._bootstrap as dsoccobo
 """
 
 import os
@@ -52,7 +47,7 @@ def bootstrap(rel_path_to_amp_helpers):
     sys.path.insert(0, amp_path)
     # Test the imports.
     try:
-        import helpers.dbg as dbg_test  # isort:skip # noqa: E402,F401
+        import helpers.dbg as hdbg  # isort:skip # noqa: E402,F401
 
         print("* Bootstrap successful *")
     except ImportError as e:

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 """
-
 This script provides interface to interact with AWS EC2 services
 
 Import as:

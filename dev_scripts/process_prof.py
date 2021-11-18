@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+"""
+Import as:
+
+import dev_scripts.process_prof as dscprpro
+"""
+
 # To run:
 #   python -m cProfile -o prof.bin CMD
 #   python -m cProfile -o prof.bin test/run_tests.py -v 10 TestComputeDerivedFeatures2.test3
@@ -22,8 +28,8 @@ import logging
 import os
 import pstats
 
-import helpers.dbg as dbg
-import helpers.system_interaction as si
+import helpers.dbg as hdbg
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -80,7 +86,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             # p.sort_stats('time').print_stats()
             # p.sort_stats('time', 'cum').print_stats('getStats')
             # p.sort_stats('time', 'cum').print_stats('portfolio_stats')
-        dbg.dassert_type_is(funcs, list)
+        hdbg.dassert_type_is(funcs, list)
         if show_callees:
             for func in funcs:
                 p.print_callees(func)
@@ -100,9 +106,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
             args.ext,
             graph_file,
         )
-        si.system(dot_cmd)
+        hsysinte.system(dot_cmd)
         _LOG.info("Output profile graph: %s", graph_file)
-        dbg.dassert(os.path.exists(graph_file), msg="Can't find %s" % graph_file)
+        hdbg.dassert(os.path.exists(graph_file), msg="Can't find %s" % graph_file)
         # > eog output.png
 
 

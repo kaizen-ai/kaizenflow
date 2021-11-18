@@ -9,7 +9,7 @@ import pytest
 
 import helpers.unit_test as hunitest
 import im.common.data.types as imcodatyp
-import im.ib.data.load.ib_s3_data_loader as iidlisdlo
+import im.ib.data.load.ib_s3_data_loader as imidlisdlo
 
 
 class TestS3IbDataLoader1(hunitest.TestCase):
@@ -19,7 +19,7 @@ class TestS3IbDataLoader1(hunitest.TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self._s3_data_loader = iidlisdlo.IbS3DataLoader()
+        self._s3_data_loader = imidlisdlo.IbS3DataLoader()
 
     def test_dtypes1(self) -> None:
         """

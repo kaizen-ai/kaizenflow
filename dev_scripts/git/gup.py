@@ -6,16 +6,20 @@ Update a git client by:
 - stashing
 - rebasing
 - reapplying the stashed changes
+
+Import as:
+
+import dev_scripts.git.gup as dscgigup
 """
 
 import argparse
 import logging
 
-import helpers.dbg as dbg
-import helpers.git as git
-import helpers.parser as prsr
-import helpers.printing as pri
-import helpers.system_interaction as si
+import helpers.dbg as hdbg
+import helpers.git as hgit
+import helpers.parser as hparser
+import helpers.printing as hprint
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -25,17 +29,17 @@ _LOG_LEVEL = "echo"
 
 
 def _system(cmd, *args, **kwargs):
-    si.system(cmd, log_level=_LOG_LEVEL, *args, **kwargs)
+    hsysinte.system(cmd, log_level=_LOG_LEVEL, *args, **kwargs)
 
 
 def _print(msg):
-    msg = pri.color_highlight(msg, "blue")
+    msg = hprint.color_highlight(msg, "blue")
     print("\n" + msg)
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level)
+    hdbg.init_logger(verbosity=args.log_level)
     #
     git_ll = "git log --date=local --oneline --graph --date-order --decorate"
     _print("# Checking what are the differences with master...")
@@ -46,7 +50,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     _system(cmd, suppress_output=False)
     #
     _print("# Saving local changes...")
-    tag, was_stashed = git.git_stash_push("gup", log_level=_LOG_LEVEL)
+    tag, was_stashed = hgit.git_stash_push("gup", log_level=_LOG_LEVEL)
     print("tag='%s'" % tag)
     if not was_stashed:
         # raise RuntimeError(msg)
@@ -58,14 +62,14 @@ def _main(parser: argparse.ArgumentParser) -> None:
     #
     if was_stashed:
         _print("# Restoring local changes...")
-        git.git_stash_apply(mode="pop", log_level=_LOG_LEVEL)
+        hgit.git_stash_apply(mode="pop", log_level=_LOG_LEVEL)
 
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 

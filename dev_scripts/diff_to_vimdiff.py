@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-""" Transform the output of `diff -r --brief dir1 dir2` into a script using
+"""
+ Transform the output of `diff -r --brief dir1 dir2` into a script using
 vimdiff.
 
 # To clean up the crap in the dirs:

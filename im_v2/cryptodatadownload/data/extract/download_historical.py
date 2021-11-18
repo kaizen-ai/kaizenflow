@@ -25,7 +25,7 @@ Use as:
 
 Import as:
 
-import im.cryptodatadownload.download_historical as imcrdohis
+import im_v2.cryptodatadownload.data.extract.download_historical as ivcdedohi
 """
 
 import argparse

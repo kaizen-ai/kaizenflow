@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.ccxt.data.extract.exchange_class as imcdeexcl
+import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 """
 
 import logging
@@ -12,7 +12,7 @@ import ccxt
 import pandas as pd
 import tqdm
 
-import helpers.datetime_ as hdatetime
+import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.io_ as hio
 
@@ -183,5 +183,5 @@ class CcxtExchange:
         )
         columns = ["timestamp", "open", "high", "low", "close", "volume"]
         bars = pd.DataFrame(bars, columns=columns)
-        bars["created_at"] = str(hdatetime.get_current_time("UTC"))
+        bars["created_at"] = str(hdateti.get_current_time("UTC"))
         return bars
