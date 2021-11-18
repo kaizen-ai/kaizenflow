@@ -21,7 +21,7 @@ class TestGetImDockerCmd(hunitest.TestCase):
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
-            run --rm app \
+            run --rm im_app \
             bash
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
@@ -36,7 +36,7 @@ class TestGetImDockerCmd(hunitest.TestCase):
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
-            run --rm app \
+            run --rm im_app \
             im/devops/docker_scripts/set_shema_im_db.py
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
