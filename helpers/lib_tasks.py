@@ -1032,7 +1032,7 @@ def docker_login(ctx):  # type: ignore
     _run(ctx, cmd)
 
 
-def _get_base_docker_compose_path() -> str:
+def get_base_docker_compose_path() -> str:
     """
     Return the base docker compose `devops/compose/docker-compose.yml`.
     """
@@ -1186,11 +1186,11 @@ def _get_docker_cmd(
         if repo_short_name == "amp":
             docker_compose_file_tmp = _get_amp_docker_compose_path()
         else:
-            docker_compose_file_tmp = _get_base_docker_compose_path()
+            docker_compose_file_tmp = get_base_docker_compose_path()
         docker_compose_files.append(docker_compose_file_tmp)
     else:
         # Use one or two docker compose files.
-        docker_compose_files.append(_get_base_docker_compose_path())
+        docker_compose_files.append(get_base_docker_compose_path())
         if repo_short_name == "amp":
             docker_compose_file_tmp = _get_amp_docker_compose_path()
             if docker_compose_file_tmp:
