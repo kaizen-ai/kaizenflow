@@ -1044,6 +1044,8 @@ def _get_base_docker_compose_path() -> str:
     docker_compose_path = "docker-compose.yml"
     docker_compose_path = os.path.join(dir_name, docker_compose_path)
     docker_compose_path = os.path.abspath(docker_compose_path)
+    # Verify that the file exists.
+    hdbg.dassert_file_exists(docker_compose_path)
     return docker_compose_path
 
 
