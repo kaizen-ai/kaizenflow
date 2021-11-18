@@ -1,7 +1,5 @@
 # syntax = docker/dockerfile:experimental
 
-#FROM continuumio/miniconda3:4.9.2
-#FROM ubuntu:18.04
 FROM ubuntu:20.04 AS builder
 
 # Name of the virtual environment to create.

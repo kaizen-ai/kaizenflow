@@ -56,24 +56,14 @@ def compute_stats_for_universe(
         cur_stats_data["vendor"] = config["data"]["vendor"]
         stats_data.append(cur_stats_data)
     # Convert results to a dataframe.
-    stats_table = pd.DataFrame(stats_data)
-    # Post-process results.
-    cols_to_sort_by = ["coverage", "longest_not_nan_seq_perc"]
-    cols_to_round = [
-        "coverage",
-        "avg_data_points_per_day",
-        "longest_not_nan_seq_perc",
-    ]
-    stats_table = postprocess_stats_table(
-        stats_table, cols_to_sort_by, cols_to_round
-    )
+    stats_table = pd.concat(stats_data, ignore_index=True)
     return stats_table
 
 
 def compute_start_end_stats(
     price_data: pd.DataFrame,
     config: ccocon.Config,
-) -> pd.Series:
+) -> pd.DataFrame:
     """
     Compute start-end stats for exchange-currency data.
 
@@ -96,7 +86,7 @@ def compute_start_end_stats(
 
     :param price_data: crypto price data
     :param config: parameters config
-    :return: start-end stats series
+    :return: start-end stats
     """
     hdbg.dassert_is_subset(
         [
@@ -139,6 +129,8 @@ def compute_start_end_stats(
     )
     res_srs["longest_not_nan_seq_start_date"] = longest_not_nan_seq.index[0]
     res_srs["longest_not_nan_seq_end_date"] = longest_not_nan_seq.index[-1]
+    #TODO(Max): think about what to return: `pd.Series` or `pd.DataFrame`?
+    res_srs = pd.DataFrame(res_srs).T
     return res_srs
 
 

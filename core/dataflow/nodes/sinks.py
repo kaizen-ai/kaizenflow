@@ -69,6 +69,70 @@ class WriteDf(cdtfnobas.FitPredictNode):
         return {"df_out": df}
 
 
+class WriteCols(cdtfnobas.FitPredictNode):
+    def __init__(
+        self,
+        nid: cdtfcor.NodeId,
+        dir_name: str,
+        col_mapping: Dict[str, str],
+    ) -> None:
+        super().__init__(nid)
+        hdbg.dassert_isinstance(dir_name, str)
+        self._dir_name = dir_name
+        hdbg.dassert_isinstance(col_mapping, dict)
+        hdbg.dassert_eq(
+            len(col_mapping),
+            len(set(col_mapping.values())),
+            "Target names not unique!",
+        )
+        if col_mapping:
+            hdbg.dassert(dir_name, "Received a `col_mapping` but no `dir_name`.")
+        if dir_name:
+            hdbg.dassert(
+                col_mapping, "Received a `dir_name` but no `col_mapping`."
+            )
+        self._col_mapping = col_mapping
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._write_cols(df_in, fit=True)
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._write_cols(df_in, fit=False)
+
+    def _write_cols(
+        self, df: pd.DataFrame, fit: bool = True
+    ) -> Dict[str, pd.DataFrame]:
+        for key in self._col_mapping.keys():
+            hdbg.dassert_in(key, df.columns)
+        # TODO(Paul): Factor out the shared code.
+        if self._dir_name and self._col_mapping:
+            hdbg.dassert_lt(1, df.index.size)
+            # Create the directory if it does not already exist.
+            hio.create_dir(self._dir_name, incremental=True)
+            # Get the latest `df` index value.
+            if isinstance(df.index, pd.DatetimeIndex):
+                # NOTE: If needed, we can pass in only the last two elements.
+                epochs = cfin.compute_epoch(df)
+                epoch = epochs.iloc[-1].values[0]
+            else:
+                raise NotImplementedError
+            for k, v in self._col_mapping.items():
+                srs = df.iloc[-1][k]
+                hdbg.dassert_isinstance(srs, pd.Series)
+                srs.name = str(epoch) + "_" + v
+                file_name = os.path.join(self._dir_name, srs.name + ".csv")
+                hdbg.dassert_not_exists(file_name)
+                # Write file.
+                srs.to_csv(file_name)
+        # Collect info.
+        info = collections.OrderedDict()
+        info["df_out_info"] = cdtfuti.get_df_info_as_string(df)
+        mode = "fit" if fit else "predict"
+        self._set_info(mode, info)
+        # Pass the dataframe through.
+        return {"df_out": df}
+
+
 def read_dfs(dir_name: str) -> Iterable[Tuple[str, pd.DataFrame]]:
     """
     Yield `(file_name, df)` from `dir_name`.
@@ -177,15 +241,17 @@ class PlaceTrades(cdtfnobas.FitPredictNode):
         return self._place_trades(df_in, fit=False)
 
     def _place_trades(self, df, fit: bool = True) -> Dict[str, pd.DataFrame]:
+        import oms.place_orders as oplord
+
         hdbg.dassert_in(self._pred_column, df.columns)
         # TODO(gp): Make sure it's multi-index.
         hdbg.dassert_lt(1, df.index.size)
         hdbg.dassert_isinstance(df.index, pd.DatetimeIndex)
         # Get the latest `df` index value.
         if self._execution_mode == "batch":
-            place_trades(df, self._execution_mode, self._config)
+            oplord.place_trades(df, self._execution_mode, self._config)
         elif self._execution_mode == "real_time":
-            place_trades(df[-1], self._execution_mode, self._config)
+            oplord.place_trades(df[-1], self._execution_mode, self._config)
         else:
             raise "Invalid execution_mode='%s'" % self._execution_mode
         # Compute stats.

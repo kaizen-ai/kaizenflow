@@ -10,9 +10,11 @@ import logging
 from typing import Optional
 
 import psycopg2 as psycop
-import psycopg2.sql as psql
 
 import helpers.sql as hsql
+
+# TODO(gp): Not sure common should depend on these. Maybe the name of the dir should
+#  be `im_db`.
 import im.ccxt.db.utils as imccdbuti
 import im.ib.sql_writer as imibsqwri
 import im.kibot.sql_writer as imkisqwri
@@ -114,16 +116,3 @@ def create_im_database(
     )
     create_all_tables(new_connection)
     new_connection.close()
-
-
-def remove_database(connection: hsql.DbConnection, db_to_drop: str) -> None:
-    """
-    Remove database in current environment.
-
-    :param connection: a database connection
-    :param db_to_drop: database name to drop, e.g. `im_db_local`
-    """
-    # Drop database.
-    connection.cursor().execute(
-        psql.SQL("DROP DATABASE {};").format(psql.Identifier(db_to_drop))
-    )

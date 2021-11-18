@@ -1,0 +1,51 @@
+[tool.poetry]
+name = "amp"
+version = "0.1.0"
+description = ""
+authors = [""]
+
+[tool.poetry.dependencies]
+async_solipsism = ">= 0.3"
+awscli = "*"
+boto3 = "*"
+bs4 = "*"
+ccxt = "*"
+# This constraint is needed because 3.4.8 seems to fail.
+cryptography = "<= 3.4.7"
+flaky = "*"
+fsspec = "*"
+gluonts = "== 0.6.7"
+#ib_insync = "*"
+invoke = "*"
+jsonpickle = "*"
+jupyter = "*"
+jupyter_contrib_nbextensions = "*"
+jupyter_nbextensions_configurator = "*"
+jupytext = "*"
+lxml = "*"
+matplotlib = "*"
+mxnet = ">= 1.6"
+networkx = "*"
+pandas = "^1.2.0"
+psutil = "*"
+psycopg2-binary = "*"
+pyarrow = "*"
+pygraphviz = "*"
+pytest = "^6.0.0"
+pytest-cov = "*"
+pytest-instafail = "*"
+pytest-xdist = "*"
+python = "^3.9"
+pywavelets = "*"
+requests = "*"
+s3fs = "*"
+seaborn = "*"
+sklearn = "*"
+statsmodels = "*"
+tqdm = "*"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
