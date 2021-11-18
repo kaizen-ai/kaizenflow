@@ -72,6 +72,37 @@ class TestGetImDockerDown(hunitest.TestCase):
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
+class TestGetImDockerUp(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Check the command line to bring up the db.
+        """
+        actual = imimlitas._get_docker_up_cmd(detach=False)
+        docker_compose_path = hlibtask._get_base_docker_compose_path()
+        expected = fr"""
+        docker-compose \
+            --file {docker_compose_path} \
+            up \
+            im_postgres_local
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test2(self) -> None:
+        """
+        Check the command line to bring up the db in the detached mode.
+        """
+        actual = imimlitas._get_docker_up_cmd(detach=True)
+        docker_compose_path = hlibtask._get_base_docker_compose_path()
+        expected = fr"""
+        docker-compose \
+            --file {docker_compose_path} \
+            up \
+            -d \
+            im_postgres_local
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+
 # TODO(Grisha): 'is_inside_docker()' -> 'is_inside_im_container()' in #100.
 @pytest.mark.skipif(hsysinte.is_inside_docker(), reason="amp #1189")
 class TestImDockerCmd(hunitest.TestCase):
