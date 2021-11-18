@@ -10,7 +10,7 @@ more complex pipelines. The output is reported through logging.
 
 Import as:
 
-import core.explore as cexp
+import core.explore as coexplor
 """
 
 import datetime
@@ -38,12 +38,12 @@ import statsmodels
 import statsmodels.api
 import tqdm.autonotebook as tauton
 
-import core.plotting as cplo
-import helpers.datetime_ as hdatetim
+import core.plotting as coplotti
+import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
-import helpers.hpandas as hhpandas
+import helpers.hpandas as hpandas
 import helpers.list as hlist
-import helpers.printing as hprintin
+import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -147,13 +147,13 @@ def drop_axis_with_all_nans(
             # Report results.
             cols_after = df.columns[:]
             removed_cols = set(cols_before).difference(set(cols_after))
-            pct_removed = hprintin.perc(
+            pct_removed = hprint.perc(
                 len(cols_before) - len(cols_after), len(cols_after)
             )
             _LOG.info(
                 "removed cols with all nans: %s %s",
                 pct_removed,
-                hprintin.list_to_str(removed_cols),
+                hprint.list_to_str(removed_cols),
             )
     if drop_rows:
         # Remove rows with all nans, if any.
@@ -170,7 +170,7 @@ def drop_axis_with_all_nans(
                 # TODO(gp): Report as intervals of dates.
                 min_ts = min(removed_rows)
                 max_ts = max(removed_rows)
-            pct_removed = hprintin.perc(
+            pct_removed = hprint.perc(
                 len(rows_before) - len(rows_after), len(rows_after)
             )
             _LOG.info(
@@ -199,7 +199,7 @@ def drop_na(
     df = df.dropna(*args, **kwargs)
     if report_stats:
         num_rows_after = df.shape[0]
-        pct_removed = hprintin.perc(
+        pct_removed = hprint.perc(
             num_rows_before - num_rows_after, num_rows_before
         )
         _LOG.info("removed rows with nans: %s", pct_removed)
@@ -219,7 +219,7 @@ def report_zero_nan_inf_stats(
     _LOG.info("index in [%s, %s]", df.index.min(), df.index.max())
     #
     num_rows = df.shape[0]
-    _LOG.info("num_rows=%s", hprintin.thousand_separator(num_rows))
+    _LOG.info("num_rows=%s", hprint.thousand_separator(num_rows))
     _LOG.info("data=")
     display_df(df, max_lines=5, as_txt=as_txt)
     #
@@ -244,28 +244,28 @@ def report_zero_nan_inf_stats(
     if verbose:
         stats_df["num_zeros"] = num_zeros
     stats_df["zeros [%]"] = (100.0 * num_zeros / num_rows).apply(
-        hprintin.round_digits
+        hprint.round_digits
     )
     #
     num_nans = np.isnan(df).sum(axis=0)
     if verbose:
         stats_df["num_nans"] = num_nans
     stats_df["nans [%]"] = (100.0 * num_nans / num_rows).apply(
-        hprintin.round_digits
+        hprint.round_digits
     )
     #
     num_infs = np.isinf(df).sum(axis=0)
     if verbose:
         stats_df["num_infs"] = num_infs
     stats_df["infs [%]"] = (100.0 * num_infs / num_rows).apply(
-        hprintin.round_digits
+        hprint.round_digits
     )
     #
     num_valid = df.shape[0] - num_zeros - num_nans - num_infs
     if verbose:
         stats_df["num_valid"] = num_valid
     stats_df["valid [%]"] = (100.0 * num_valid / num_rows).apply(
-        hprintin.round_digits
+        hprint.round_digits
     )
     #
     display_df(stats_df, as_txt=as_txt)
@@ -288,7 +288,7 @@ def drop_duplicates(
     num_rows_before = df.shape[0]
     df_no_duplicates = df.drop_duplicates(subset=subset)
     num_rows_after = df_no_duplicates.shape[0]
-    pct_removed = hprintin.perc(num_rows_before - num_rows_after, num_rows_before)
+    pct_removed = hprint.perc(num_rows_before - num_rows_after, num_rows_before)
     _LOG.info("Removed duplicated rows: %s", pct_removed)
     return df_no_duplicates
 
@@ -345,10 +345,10 @@ def remove_columns_with_low_variability(
             log_level,
             "  %s: %s",
             col_name,
-            hprintin.list_to_str(list(map(str, unique_elems))),
+            hprint.list_to_str(list(map(str, unique_elems))),
         )
     _LOG.log(log_level, "# Var cols")
-    _LOG.log(log_level, hprintin.list_to_str(var_cols))
+    _LOG.log(log_level, hprint.list_to_str(var_cols))
     return df[var_cols]
 
 
@@ -363,7 +363,7 @@ def print_column_variability(
 
     This is useful to get a sense of which columns are interesting.
     """
-    print(("# df.columns=%s" % hprintin.list_to_str(df.columns)))
+    print(("# df.columns=%s" % hprint.list_to_str(df.columns)))
     res = []
     for c in tauton.tqdm(df.columns, desc="Computing column variability"):
         vals = _get_unique_elements_in_column(df, c)
@@ -410,7 +410,7 @@ def add_pct(
     """
     Add to df a column "dst_col_name" storing the percentage of values in
     column "col_name" with respect to "total". The rest of the parameters are
-    the same as hprintin.round_digits().
+    the same as hprint.round_digits().
 
     :return: updated df
     """
@@ -419,13 +419,13 @@ def add_pct(
     df.insert(pos_col_name + 1, dst_col_name, (100.0 * df[col_name]) / total)
     # Format.
     df[col_name] = [
-        hprintin.round_digits(
+        hprint.round_digits(
             v, num_digits=None, use_thousands_separator=use_thousands_separator
         )
         for v in df[col_name]
     ]
     df[dst_col_name] = [
-        hprintin.round_digits(
+        hprint.round_digits(
             v, num_digits=num_digits, use_thousands_separator=False
         )
         for v in df[dst_col_name]
@@ -448,7 +448,7 @@ def breakdown_table(
 ) -> pd.DataFrame:
     if isinstance(col_name, list):
         for c in col_name:
-            print(("\n" + hprintin.frame(c).rstrip("\n")))
+            print(("\n" + hprint.frame(c).rstrip("\n")))
             res = breakdown_table(df, c)
             print(res)
         return None
@@ -466,20 +466,20 @@ def breakdown_table(
     res["pct"] = (100.0 * res["count"]) / df.shape[0]
     # Format.
     res["count"] = [
-        hprintin.round_digits(
+        hprint.round_digits(
             v, num_digits=None, use_thousands_separator=use_thousands_separator
         )
         for v in res["count"]
     ]
     res["pct"] = [
-        hprintin.round_digits(
+        hprint.round_digits(
             v, num_digits=num_digits, use_thousands_separator=False
         )
         for v in res["pct"]
     ]
     if verbosity:
         for k, df_tmp in df.groupby(col_name):
-            print((hprintin.frame("%s=%s" % (col_name, k))))
+            print((hprint.frame("%s=%s" % (col_name, k))))
             cols = [col_name, "description"]
             with pd.option_context(
                 "display.max_colwidth", 100000, "display.width", 130
@@ -530,10 +530,10 @@ def remove_columns(
     df: pd.DataFrame, cols: Collection[str], log_level: int = logging.DEBUG
 ) -> pd.DataFrame:
     to_remove = set(cols).intersection(set(df.columns))
-    _LOG.log(log_level, "to_remove=%s", hprintin.list_to_str(to_remove))
+    _LOG.log(log_level, "to_remove=%s", hprint.list_to_str(to_remove))
     df.drop(to_remove, axis=1, inplace=True)
     _LOG.debug("df=\n%s", df.head(3))
-    _LOG.log(log_level, hprintin.list_to_str(df.columns))
+    _LOG.log(log_level, hprint.list_to_str(df.columns))
     return df
 
 
@@ -553,14 +553,14 @@ def filter_with_df(
         else:
             mask &= df[c].isin(vals)
     mask: pd.DataFrame
-    _LOG.log(log_level, "after filter=%s", hprintin.perc(mask.sum(), len(mask)))
+    _LOG.log(log_level, "after filter=%s", hprint.perc(mask.sum(), len(mask)))
     return mask
 
 
 def filter_by_time(
     df: pd.DataFrame,
-    lower_bound: hdatetim.StrictDatetime,
-    upper_bound: hdatetim.StrictDatetime,
+    lower_bound: hdateti.StrictDatetime,
+    upper_bound: hdateti.StrictDatetime,
     inclusive: str,
     ts_col_name: Optional[str],
     log_level: int = logging.DEBUG,
@@ -582,11 +582,11 @@ def filter_by_time(
     :param log_level: the level of logging, e.g. `DEBUG`
     :return: data filtered by time
     """
-    hdatetim.dassert_is_strict_datetime(lower_bound)
-    hdatetim.dassert_is_strict_datetime(upper_bound)
+    hdateti.dassert_is_strict_datetime(lower_bound)
+    hdateti.dassert_is_strict_datetime(upper_bound)
     # Time filtering is not working if timezones are different.
-    hdatetim.dassert_tz_compatible_timestamp_with_df(lower_bound, df, ts_col_name)
-    hdatetim.dassert_tz_compatible_timestamp_with_df(upper_bound, df, ts_col_name)
+    hdateti.dassert_tz_compatible_timestamp_with_df(lower_bound, df, ts_col_name)
+    hdateti.dassert_tz_compatible_timestamp_with_df(upper_bound, df, ts_col_name)
     #
     if ts_col_name is None:
         # Filter data by index.
@@ -604,7 +604,7 @@ def filter_by_time(
         lower_bound,
         upper_bound,
         inclusive,
-        hprintin.perc(mask.sum(), df.shape[0]),
+        hprint.perc(mask.sum(), df.shape[0]),
     )
     return df[mask]
 
@@ -639,12 +639,12 @@ def filter_by_val(
     _LOG.log(
         log_level,
         "Rows kept %s, removed %s rows",
-        hprintin.perc(
+        hprint.perc(
             res.shape[0],
             num_rows,
             use_thousands_separator=use_thousands_separator,
         ),
-        hprintin.perc(
+        hprint.perc(
             num_rows - res.shape[0],
             num_rows,
             use_thousands_separator=use_thousands_separator,
@@ -660,7 +660,7 @@ def filter_by_val(
 
 def _get_num_pcs_to_plot(num_pcs_to_plot: int, max_pcs: int) -> int:
     """
-    Get the number of principal components to cplo.
+    Get the number of principal components to coplotti.
     """
     if num_pcs_to_plot == -1:
         num_pcs_to_plot = max_pcs
@@ -714,7 +714,7 @@ def rolling_corr_over_time(
     :return: corr_df is a multi-index df storing correlation matrices with
         labels
     """
-    hhpandas.dassert_strictly_increasing_index(df)
+    hpandas.dassert_strictly_increasing_index(df)
     df = handle_nans(df, nan_mode)
     corr_df = df.ewm(com=com, min_periods=3 * com).corr()
     return corr_df
@@ -775,7 +775,7 @@ def rolling_pca_over_time(
     # Package results.
     eigval_df = pd.DataFrame(eigval, index=timestamps)
     hdbg.dassert_eq(eigval_df.shape[0], len(timestamps))
-    hhpandas.dassert_strictly_increasing_index(eigval_df)
+    hpandas.dassert_strictly_increasing_index(eigval_df)
     # Normalize by sum.
     # TODO(gp): Move this up.
     eigval_df = eigval_df.multiply(1 / eigval_df.sum(axis=1), axis="index")
@@ -816,7 +816,7 @@ def plot_pca_over_time(
     num_pcs_to_plot = _get_num_pcs_to_plot(num_pcs_to_plot, max_pcs)
     _LOG.info("num_pcs_to_plot=%s", num_pcs_to_plot)
     if num_pcs_to_plot > 0:
-        _, axes = cplo.get_multiple_plots(
+        _, axes = coplotti.get_multiple_plots(
             num_pcs_to_plot,
             num_cols=num_cols,
             y_scale=4,
@@ -999,7 +999,7 @@ def _preprocess_regression(
     if num_rows_after_drop_nan_all != num_rows:
         _LOG.info(
             "Removed %s rows with all nans",
-            hprintin.perc(num_rows - num_rows_after_drop_nan_all, num_rows),
+            hprint.perc(num_rows - num_rows_after_drop_nan_all, num_rows),
         )
     #
     df.dropna(how="any", inplace=True)
@@ -1007,7 +1007,7 @@ def _preprocess_regression(
     if num_rows_after_drop_nan_any != num_rows_after_drop_nan_all:
         _LOG.warning(
             "Removed %s rows with any nans",
-            hprintin.perc(num_rows - num_rows_after_drop_nan_any, num_rows),
+            hprint.perc(num_rows - num_rows_after_drop_nan_any, num_rows),
         )
     # Prepare data.
     if intercept:
@@ -1096,14 +1096,14 @@ def ols_regress(
                 if tsplot:
                     # Plot the data over time.
                     if tsplot_figsize is None:
-                        tsplot_figsize = cplo.FIG_SIZE
+                        tsplot_figsize = coplotti.FIG_SIZE
                     df[[predicted_var, predictor_vars[0]]].plot(
                         figsize=tsplot_figsize
                     )
                 if jointplot_:
                     # Perform scatter plot.
                     if jointplot_height is None:
-                        jointplot_height = cplo.FIG_SIZE[1]
+                        jointplot_height = coplotti.FIG_SIZE[1]
                     jointplot(
                         df,
                         predicted_var,
@@ -1257,7 +1257,7 @@ def robust_regression(
     _LOG.info("Estimated coef for RANSAC=%s", ransac.estimator_.coef_)
     if jointplot_:
         if jointplot_figsize is None:
-            jointplot_figsize = cplo.FIG_SIZE
+            jointplot_figsize = coplotti.FIG_SIZE
         plt.figure(figsize=jointplot_figsize)
         plt.scatter(
             X[inlier_mask],

@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.traceback_helper as htrhel
+import helpers.traceback_helper as htraceb
 """
 
 import logging

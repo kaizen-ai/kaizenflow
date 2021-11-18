@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import core.dataflow.nodes.sklearn_models as cdtfnoskmo
+"""
+
 import collections
 import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
@@ -6,13 +12,13 @@ import numpy as np
 import pandas as pd
 import sklearn as sklear
 
-import core.data_adapters as cdataa
-import core.dataflow.core as cdtfc
-import core.dataflow.nodes.base as cdnb
-import core.dataflow.utils as cdtfu
-import core.signal_processing as csigna
-import core.statistics as cstati
-import helpers.dbg as dbg
+import core.data_adapters as cdatadap
+import core.dataflow.core as cdtfcore
+import core.dataflow.nodes.base as cdtfnobas
+import core.dataflow.utils as cdtfutil
+import core.signal_processing as csigproc
+import core.statistics as costatis
+import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -22,7 +28,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
+class ContinuousSkLearnModel(cdtfnobas.FitPredictNode, cdtfnobas.ColModeMixin):
     """
     Fit and predict an sklearn model.
     """
@@ -31,15 +37,15 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
 
     def __init__(
         self,
-        nid: cdtfc.NodeId,
+        nid: cdtfcore.NodeId,
         model_func: Callable[..., Any],
-        x_vars: cdtfu.NodeColumnList,
-        y_vars: cdtfu.NodeColumnList,
+        x_vars: cdtfutil.NodeColumnList,
+        y_vars: cdtfutil.NodeColumnList,
         steps_ahead: int,
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
-        sample_weight_col: Optional[cdtfu.NodeColumnList] = None,
+        sample_weight_col: Optional[cdtfutil.NodeColumnList] = None,
     ) -> None:
         """
         Specify the data and sklearn modeling parameters.
@@ -73,12 +79,12 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         self._y_vars = y_vars
         self._model = None
         self._steps_ahead = steps_ahead
-        dbg.dassert_lte(
+        hdbg.dassert_lte(
             0, self._steps_ahead, "Non-causal prediction attempted! Aborting..."
         )
         # NOTE: Set to "replace_all" for backward compatibility.
         self._col_mode = col_mode or "replace_all"
-        dbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
+        hdbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
         self._nan_mode = nan_mode or "raise"
         self._sample_weight_col = sample_weight_col
 
@@ -100,11 +106,11 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         self, df_in: pd.DataFrame, fit: True
     ) -> Dict[str, pd.DataFrame]:
         # Materialize names of x and y vars.
-        x_vars = cdtfu.convert_to_list(self._x_vars)
-        y_vars = cdtfu.convert_to_list(self._y_vars)
+        x_vars = cdtfutil.convert_to_list(self._x_vars)
+        y_vars = cdtfutil.convert_to_list(self._y_vars)
         if fit and self._sample_weight_col is not None:
-            sample_weight_col = cdtfu.convert_to_list(self._sample_weight_col)
-            dbg.dassert_eq(len(sample_weight_col), 1)
+            sample_weight_col = cdtfutil.convert_to_list(self._sample_weight_col)
+            hdbg.dassert_eq(len(sample_weight_col), 1)
             x_vars_and_maybe_weight = x_vars + sample_weight_col
         else:
             x_vars_and_maybe_weight = x_vars
@@ -112,12 +118,12 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         # Get x and forward y df.
         if fit:
             # This df has no NaNs.
-            df = cdtfu.get_x_and_forward_y_fit_df(
+            df = cdtfutil.get_x_and_forward_y_fit_df(
                 df_in, x_vars_and_maybe_weight, y_vars, self._steps_ahead
             )
         else:
             # This df has no `x_vars` NaNs.
-            df = cdtfu.get_x_and_forward_y_predict_df(
+            df = cdtfutil.get_x_and_forward_y_predict_df(
                 df_in, x_vars_and_maybe_weight, y_vars, self._steps_ahead
             )
         # Handle presence of NaNs according to `nan_mode`.
@@ -129,32 +135,32 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         ).columns.to_list()
         forward_y_df = df[forward_y_cols]
         # Prepare x_vars in sklearn format.
-        x_vals = cdataa.transform_to_sklearn(df, x_vars)
+        x_vals = cdatadap.transform_to_sklearn(df, x_vars)
         if fit:
             if sample_weight_col:
                 # TODO(Paul): The `flatten()` is necessary here (but we do not
                 # need it for the x or y vars). Consider updating
                 # `transform_to_sklearn()` to handle this internally.
-                sample_weights = cdataa.transform_to_sklearn(
+                sample_weights = cdatadap.transform_to_sklearn(
                     df, sample_weight_col
                 ).flatten()
             else:
                 sample_weights = None
             # Prepare forward y_vars in sklearn format.
-            forward_y_fit = cdataa.transform_to_sklearn(df, forward_y_cols)
+            forward_y_fit = cdatadap.transform_to_sklearn(df, forward_y_cols)
             # Define and fit model.
             self._model = self._model_func(**self._model_kwargs)
             self._model = self._model.fit(
                 x_vals, forward_y_fit, sample_weight=sample_weights
             )
-        dbg.dassert(
+        hdbg.dassert(
             self._model, "Model not found! Check if `fit()` has been run."
         )
         # Generate predictions.
         forward_y_hat = self._model.predict(x_vals)
         # Generate dataframe from sklearn predictions.
         forward_y_hat_vars = [f"{y}_hat" for y in forward_y_cols]
-        forward_y_hat = cdataa.transform_from_sklearn(
+        forward_y_hat = cdatadap.transform_from_sklearn(
             df.index, forward_y_hat_vars, forward_y_hat
         )
         score_idx = forward_y_df.index if fit else forward_y_df.dropna().index
@@ -179,7 +185,7 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
             cols=y_vars,
             col_mode=self._col_mode,
         )
-        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfutil.get_df_info_as_string(df_out)
         mode = "fit" if fit else "predict"
         self._set_info(mode, info)
         return {"df_out": df_out}
@@ -216,19 +222,19 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         return metric(y_true, y_pred.loc[y_true.index])
 
 
-class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
+class MultiindexPooledSkLearnModel(cdtfnobas.FitPredictNode):
     """
     Fit and predict multiple sklearn models.
     """
 
     def __init__(
         self,
-        nid: cdtfc.NodeId,
-        in_col_groups: List[Tuple[cdtfu.NodeColumn]],
-        out_col_group: Tuple[cdtfu.NodeColumn],
+        nid: cdtfcore.NodeId,
+        in_col_groups: List[Tuple[cdtfutil.NodeColumn]],
+        out_col_group: Tuple[cdtfutil.NodeColumn],
         model_func: Callable[..., Any],
-        x_vars: List[cdtfu.NodeColumn],
-        y_vars: List[cdtfu.NodeColumn],
+        x_vars: List[cdtfutil.NodeColumn],
+        y_vars: List[cdtfutil.NodeColumn],
         steps_ahead: int,
         model_kwargs: Optional[Any] = None,
         nan_mode: Optional[str] = None,
@@ -244,7 +250,7 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
             `df_in.columns.nlevels - 2`. It may be an empty tuple.
         """
         super().__init__(nid)
-        dbg.dassert_isinstance(in_col_groups, list)
+        hdbg.dassert_isinstance(in_col_groups, list)
         self._in_col_groups = in_col_groups
         self._out_col_group = out_col_group
         #
@@ -277,8 +283,8 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
     def _fit_predict_helper(
         self, df_in: pd.DataFrame, fit: bool
     ) -> Dict[str, pd.DataFrame]:
-        cdtfu.validate_df_indices(df_in)
-        dfs = cdnb.GroupedColDfToDfColProcessor.preprocess(
+        cdtfutil.validate_df_indices(df_in)
+        dfs = cdtfnobas.GroupedColDfToDfColProcessor.preprocess(
             df_in, self._in_col_groups
         )
         results = {}
@@ -286,10 +292,10 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
         if fit:
             # TODO: compute the shifts first, then stack.
             for key, value in dfs.items():
-                dfs[key] = cdtfu.get_x_and_forward_y_fit_df(
+                dfs[key] = cdtfutil.get_x_and_forward_y_fit_df(
                     value, self._x_vars, self._y_vars, self._steps_ahead
                 )
-            stacked_df = cdnb.DfStacker.preprocess(dfs)
+            stacked_df = cdtfnobas.DfStacker.preprocess(dfs)
             forward_y_fit_cols = stacked_df.drop(
                 columns=self._x_vars
             ).columns.to_list()
@@ -302,7 +308,7 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
                 col_mode="merge_all",
             )
             df_out = sklm.fit(stacked_df)["df_out"].drop(columns=self._x_vars)
-            results = cdnb.DfStacker.postprocess(dfs, df_out)
+            results = cdtfnobas.DfStacker.postprocess(dfs, df_out)
             info = sklm.get_info("fit")
             self._fit_state = sklm.get_fit_state()
         else:
@@ -324,29 +330,29 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
                 info_out = csklm.get_info("predict")
                 results[key] = df_out
                 info[key] = info_out
-        df_out = cdnb.GroupedColDfToDfColProcessor.postprocess(
+        df_out = cdtfnobas.GroupedColDfToDfColProcessor.postprocess(
             results, self._out_col_group
         )
         df_out = df_out.reindex(df_in.index)
-        df_out = cdtfu.merge_dataframes(df_in, df_out)
+        df_out = cdtfutil.merge_dataframes(df_in, df_out)
         method = "fit" if fit else "predict"
         self._set_info(method, info)
         return {"df_out": df_out}
 
 
-class MultiindexSkLearnModel(cdnb.FitPredictNode):
+class MultiindexSkLearnModel(cdtfnobas.FitPredictNode):
     """
     Fit and predict multiple sklearn models.
     """
 
     def __init__(
         self,
-        nid: cdtfc.NodeId,
-        in_col_groups: List[Tuple[cdtfu.NodeColumn]],
-        out_col_group: Tuple[cdtfu.NodeColumn],
+        nid: cdtfcore.NodeId,
+        in_col_groups: List[Tuple[cdtfutil.NodeColumn]],
+        out_col_group: Tuple[cdtfutil.NodeColumn],
         model_func: Callable[..., Any],
-        x_vars: List[cdtfu.NodeColumn],
-        y_vars: List[cdtfu.NodeColumn],
+        x_vars: List[cdtfutil.NodeColumn],
+        y_vars: List[cdtfutil.NodeColumn],
         steps_ahead: int,
         model_kwargs: Optional[Any] = None,
         nan_mode: Optional[str] = None,
@@ -362,7 +368,7 @@ class MultiindexSkLearnModel(cdnb.FitPredictNode):
             `df_in.columns.nlevels - 2`. It may be an empty tuple.
         """
         super().__init__(nid)
-        dbg.dassert_isinstance(in_col_groups, list)
+        hdbg.dassert_isinstance(in_col_groups, list)
         self._in_col_groups = in_col_groups
         self._out_col_group = out_col_group
         #
@@ -393,8 +399,8 @@ class MultiindexSkLearnModel(cdnb.FitPredictNode):
         self._info["fit"] = fit_state["_info['fit']"]
 
     def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
-        cdtfu.validate_df_indices(df_in)
-        dfs = cdnb.GroupedColDfToDfColProcessor.preprocess(
+        cdtfutil.validate_df_indices(df_in)
+        dfs = cdtfnobas.GroupedColDfToDfColProcessor.preprocess(
             df_in, self._in_col_groups
         )
         results = {}
@@ -420,17 +426,17 @@ class MultiindexSkLearnModel(cdnb.FitPredictNode):
                 info_out = csklm.get_info("predict")
             results[key] = df_out
             info[key] = info_out
-        df_out = cdnb.GroupedColDfToDfColProcessor.postprocess(
+        df_out = cdtfnobas.GroupedColDfToDfColProcessor.postprocess(
             results, self._out_col_group
         )
         df_out = df_out.reindex(df_in.index)
-        df_out = cdtfu.merge_dataframes(df_in, df_out)
+        df_out = cdtfutil.merge_dataframes(df_in, df_out)
         method = "fit" if fit else "predict"
         self._set_info(method, info)
         return {"df_out": df_out}
 
 
-class SkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
+class SkLearnModel(cdtfnobas.FitPredictNode, cdtfnobas.ColModeMixin):
     """
     Fit and predict an sklearn model.
 
@@ -439,9 +445,9 @@ class SkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
 
     def __init__(
         self,
-        nid: cdtfc.NodeId,
-        x_vars: cdtfu.NodeColumnList,
-        y_vars: cdtfu.NodeColumnList,
+        nid: cdtfcore.NodeId,
+        x_vars: cdtfutil.NodeColumnList,
+        y_vars: cdtfutil.NodeColumnList,
         model_func: Callable[..., Any],
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
@@ -453,11 +459,11 @@ class SkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         self._y_vars = y_vars
         self._model = None
         self._col_mode = col_mode or "replace_all"
-        dbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
+        hdbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         SkLearnModel._validate_input_df(df_in)
-        dbg.dassert(
+        hdbg.dassert(
             df_in[df_in.isna().any(axis=1)].index.empty,
             "NaNs detected at index `%s`",
             str(df_in[df_in.isna().any(axis=1)].head().index),
@@ -486,7 +492,7 @@ class SkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         df_out = self._apply_col_mode(
             df, y_hat, cols=y_vars, col_mode=self._col_mode
         )
-        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfutil.get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
@@ -495,7 +501,7 @@ class SkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         df = df_in.copy()
         idx = df.index
         x_vars, x_predict, y_vars, y_predict = self._to_sklearn_format(df)
-        dbg.dassert_is_not(
+        hdbg.dassert_is_not(
             self._model, None, "Model not found! Check if `fit` has been run."
         )
         y_hat = self._model.predict(x_predict)
@@ -510,7 +516,7 @@ class SkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         df_out = self._apply_col_mode(
             df, y_hat, cols=y_vars, col_mode=self._col_mode
         )
-        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfutil.get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
 
@@ -527,8 +533,8 @@ class SkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         """
         Assert if df violates constraints, otherwise return `None`.
         """
-        dbg.dassert_isinstance(df, pd.DataFrame)
-        dbg.dassert_no_duplicates(df.columns)
+        hdbg.dassert_isinstance(df, pd.DataFrame)
+        hdbg.dassert_no_duplicates(df.columns)
 
     # TODO(Paul): Add type hints.
     @staticmethod
@@ -540,33 +546,33 @@ class SkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         # info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
         pnl_rets = y.multiply(y_hat.rename(columns=lambda x: x.strip("_hat")))
         info["pnl_rets"] = pnl_rets
-        info["sr"] = cstati.compute_sharpe_ratio(
-            csigna.resample(pnl_rets, rule="1B").sum(), time_scaling=252
+        info["sr"] = costatis.compute_sharpe_ratio(
+            csigproc.resample(pnl_rets, rule="1B").sum(), time_scaling=252
         )
         return info
 
     def _to_sklearn_format(
         self, df: pd.DataFrame
     ) -> Tuple[
-        List[cdtfu.NodeColumn], np.array, List[cdtfu.NodeColumn], np.array
+        List[cdtfutil.NodeColumn], np.array, List[cdtfutil.NodeColumn], np.array
     ]:
-        x_vars = cdtfu.convert_to_list(self._x_vars)
-        y_vars = cdtfu.convert_to_list(self._y_vars)
-        x_vals, y_vals = cdataa.transform_to_sklearn_old(df, x_vars, y_vars)
+        x_vars = cdtfutil.convert_to_list(self._x_vars)
+        y_vars = cdtfutil.convert_to_list(self._y_vars)
+        x_vals, y_vals = cdatadap.transform_to_sklearn_old(df, x_vars, y_vars)
         return x_vars, x_vals, y_vars, y_vals
 
     @staticmethod
     def _from_sklearn_format(
         idx: pd.Index,
-        x_vars: List[cdtfu.NodeColumn],
+        x_vars: List[cdtfutil.NodeColumn],
         x_vals: np.array,
-        y_vars: List[cdtfu.NodeColumn],
+        y_vars: List[cdtfutil.NodeColumn],
         y_vals: np.array,
         y_hat: np.array,
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        x = cdataa.transform_from_sklearn(idx, x_vars, x_vals)
-        y = cdataa.transform_from_sklearn(idx, y_vars, y_vals)
-        y_h = cdataa.transform_from_sklearn(
+        x = cdatadap.transform_from_sklearn(idx, x_vars, x_vals)
+        y = cdatadap.transform_from_sklearn(idx, y_vars, y_vals)
+        y_h = cdatadap.transform_from_sklearn(
             idx, [f"{y}_hat" for y in y_vars], y_hat
         )
         return x, y, y_h

@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.unit_test as huntes
+import helpers.unit_test as hunitest
 """
 
 import inspect
@@ -17,11 +17,11 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 import helpers.dbg as hdbg
 import helpers.git as hgit
-import helpers.introspection as hintrosp
+import helpers.introspection as hintros
 import helpers.io_ as hio
-import helpers.printing as hprintin
+import helpers.printing as hprint
 import helpers.s3 as hs3
-import helpers.system_interaction as hsyint
+import helpers.system_interaction as hsysinte
 import helpers.timer as htimer
 
 # We use strings as type hints (e.g., 'pd.DataFrame') since we are not sure
@@ -30,7 +30,7 @@ import helpers.timer as htimer
 
 # Minimize dependencies from installed packages.
 
-# TODO(gp): Use `hprintin.color_highlight`.
+# TODO(gp): Use `hprint.color_highlight`.
 _WARNING = "\033[33mWARNING\033[0m"
 
 try:
@@ -139,7 +139,7 @@ def pytest_warning(txt: str, prefix: str = "") -> None:
     txt_tmp = ""
     if prefix:
         txt_tmp += prefix
-    txt_tmp += hprintin.color_highlight("WARNING", "yellow") + f": {txt}"
+    txt_tmp += hprint.color_highlight("WARNING", "yellow") + f": {txt}"
     pytest_print(txt_tmp)
 
 
@@ -171,7 +171,7 @@ def convert_df_to_string(
     output = []
     # Add title in the beginning if provided.
     if title is not None:
-        output.append(hprintin.frame(title))
+        output.append(hprint.frame(title))
     # Provide context for full representation of data.
     with pd.option_context(
         "display.max_colwidth",
@@ -222,7 +222,7 @@ def convert_info_to_string(info: Mapping) -> str:
         "display.max_rows",
         None,
     ):
-        output.append(hprintin.frame("info"))
+        output.append(hprint.frame("info"))
         output.append(pprint.pformat(info))
         output_str = "\n".join(output)
     return output_str
@@ -385,7 +385,7 @@ def get_dir_signature(
     # file_names = glob.glob(os.path.join(dir_name, "*"), recursive=True)
     cmd = f'find {dir_name} -name "*"'
     remove_files_non_present = False
-    file_names = hsyint.system_to_files(cmd, dir_name, remove_files_non_present)
+    file_names = hsysinte.system_to_files(cmd, dir_name, remove_files_non_present)
     file_names = sorted(file_names)
     #
     txt: List[str] = []
@@ -396,7 +396,7 @@ def get_dir_signature(
     if include_file_content:
         txt.append("# File signatures")
         # Remove the dirs.
-        file_names = hsyint.remove_dirs(file_names)
+        file_names = hsysinte.remove_dirs(file_names)
         # Scan the files.
         txt.append("len(file_names)=%s" % len(file_names))
         txt.append("file_names=%s" % ", ".join(file_names))
@@ -470,9 +470,9 @@ def purify_from_environment(txt: str) -> str:
     pwd = os.getcwd()
     txt = txt.replace(pwd, "$PWD")
     # Replace the user name with `$USER_NAME`.
-    user_name = hsyint.get_user_name()
+    user_name = hsysinte.get_user_name()
     txt = txt.replace(user_name, "$USER_NAME")
-    _LOG.debug("After %s: txt='\n%s'", hintrosp.get_function_name(), txt)
+    _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt
 
 
@@ -505,7 +505,7 @@ def purify_amp_references(txt: str) -> str:
     txt = re.sub(r"\s+amp\/", " ", txt, flags=re.MULTILINE)
     txt = re.sub(r"\/amp:", ":", txt, flags=re.MULTILINE)
     txt = re.sub(r"^\./", "", txt, flags=re.MULTILINE)
-    _LOG.debug("After %s: txt='\n%s'", hintrosp.get_function_name(), txt)
+    _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt
 
 
@@ -514,7 +514,7 @@ def purify_app_references(txt: str) -> str:
     Remove references to `/app`.
     """
     txt = re.sub("/app/", "", txt, flags=re.MULTILINE)
-    _LOG.debug("After %s: txt='\n%s'", hintrosp.get_function_name(), txt)
+    _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt
 
 
@@ -536,7 +536,7 @@ def purify_from_env_vars(txt: str) -> str:
             val = os.environ[env_var]
             hdbg.dassert_ne(val, "", "Env var '%s' can't be empty", env_var)
             txt = txt.replace(val, "*****")
-    _LOG.debug("After %s: txt='\n%s'", hintrosp.get_function_name(), txt)
+    _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt
 
 
@@ -545,7 +545,7 @@ def purify_object_reference(txt: str) -> str:
     Remove references like `at 0x7f43493442e0`.
     """
     txt = re.sub(r"at 0x\S{12}", "at 0x", txt, flags=re.MULTILINE)
-    _LOG.debug("After %s: txt='\n%s'", hintrosp.get_function_name(), txt)
+    _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt
 
 
@@ -580,15 +580,15 @@ def diff_files(
     :param abort_on_exit: whether to assert or not
     :param dst_dir: dir where to save the comparing script
     """
-    _LOG.debug(hprintin.to_str("tag abort_on_exit dst_dir"))
+    _LOG.debug(hprint.to_str("tag abort_on_exit dst_dir"))
     file_name1 = os.path.relpath(file_name1, os.getcwd())
     file_name2 = os.path.relpath(file_name2, os.getcwd())
     msg = []
     # Add tag.
     if tag is not None:
-        msg.append("\n" + hprintin.frame(tag, "-"))
+        msg.append("\n" + hprint.frame(tag, "-"))
     # Diff to screen.
-    _, res = hsyint.system_to_string(
+    _, res = hsysinte.system_to_string(
         "echo; sdiff --expand-tabs -l -w 150 %s %s" % (file_name1, file_name2),
         abort_on_error=False,
         log_level=logging.DEBUG,
@@ -600,7 +600,7 @@ def diff_files(
     # TODO(gp): Use create_executable_script().
     hio.to_file(diff_script, vimdiff_cmd)
     cmd = "chmod +x " + diff_script
-    hsyint.system(cmd)
+    hsysinte.system(cmd)
     # Report how to diff.
     msg.append("Diff with:")
     msg.append("> " + vimdiff_cmd)
@@ -615,7 +615,7 @@ def diff_files(
         log_msg_as_str = (
             msg_as_str
             + "\n"
-            + hprintin.frame("Traceback", "-")
+            + hprint.frame("Traceback", "-")
             + "\n"
             + "".join(traceback.format_stack())
         )
@@ -638,7 +638,7 @@ def diff_strings(
 
     :param dst_dir: where to save the intermediatary files
     """
-    _LOG.debug(hprintin.to_str("tag abort_on_exit dst_dir"))
+    _LOG.debug(hprint.to_str("tag abort_on_exit dst_dir"))
     # Save the actual and expected strings to files.
     file_name1 = "%s/tmp.string1.txt" % dst_dir
     hio.to_file(file_name1, string1)
@@ -667,7 +667,7 @@ def diff_df_monotonic(
     Check for a dataframe to be monotonic using the vimdiff flow from
     diff_files().
     """
-    _LOG.debug(hprintin.to_str("abort_on_exit dst_dir"))
+    _LOG.debug(hprint.to_str("abort_on_exit dst_dir"))
     if not df.index.is_monotonic_increasing:
         df2 = df.copy()
         df2.sort_index(inplace=True)
@@ -792,7 +792,7 @@ def _fuzzy_clean(txt: str) -> str:
     return txt
 
 
-# TODO(gp): Use the one in hprintin. Is it even needed?
+# TODO(gp): Use the one in hprint. Is it even needed?
 def _to_pretty_string(obj: str) -> str:
     if isinstance(obj, dict):
         ret = pprint.pformat(obj)
@@ -821,7 +821,7 @@ def _assert_equal(
     :param full_test_name: e.g., `TestRunNotebook1.test2`
     """
     _LOG.debug(
-        hprintin.to_str(
+        hprint.to_str(
             "full_test_name test_dir fuzzy_match abort_on_error dst_dir"
         )
     )
@@ -835,7 +835,7 @@ def _assert_equal(
     # Dedent expected, if needed.
     if dedent:
         _LOG.debug("# Dedent expected")
-        expected = hprintin.dedent(expected)
+        expected = hprint.dedent(expected)
         _LOG.debug("exp='\n%s'", expected)
     # Purify actual text, if needed.
     if purify_text:
@@ -857,7 +857,7 @@ def _assert_equal(
     if not is_equal:
         _LOG.error(
             "%s",
-            "\n" + hprintin.frame("Test '%s' failed" % full_test_name, "=", 80),
+            "\n" + hprint.frame("Test '%s' failed" % full_test_name, "=", 80),
         )
         # Print the correct output, like:
         #   exp = r'""""
@@ -866,7 +866,7 @@ def _assert_equal(
         #   2021-02-17 11:00:00-05:00
         #   """
         txt = []
-        txt.append(hprintin.frame(f"EXPECTED VARIABLE: {full_test_name}", "-"))
+        txt.append(hprint.frame(f"EXPECTED VARIABLE: {full_test_name}", "-"))
         # We always return the variable exactly as this should be, even if we could
         # make it look better through indentation in case of fuzzy match.
         if actual_orig.startswith('"'):
@@ -929,7 +929,7 @@ class TestCase(unittest.TestCase):
         """
         # Print banner to signal the start of a new test.
         func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
-        _LOG.debug("\n%s", hprintin.frame(func_name))
+        _LOG.debug("\n%s", hprint.frame(func_name))
         # Set the random seed.
         random_seed = 20000101
         _LOG.debug("Resetting random.seed to %s", random_seed)
@@ -1118,8 +1118,8 @@ class TestCase(unittest.TestCase):
             use_absolute_path,
         )
         # Make the path unique for the current user.
-        user_name = hsyint.get_user_name()
-        server_name = hsyint.get_server_name()
+        user_name = hsysinte.get_user_name()
+        server_name = hsysinte.get_server_name()
         project_dirname = hgit.get_project_dirname()
         dir_name = f"{user_name}.{server_name}.{project_dirname}"
         # Assemble everything in a single path.
@@ -1148,7 +1148,7 @@ class TestCase(unittest.TestCase):
 
         The interface is similar to `check_string()`.
         """
-        _LOG.debug(hprintin.to_str("fuzzy_match abort_on_error dst_dir"))
+        _LOG.debug(hprint.to_str("fuzzy_match abort_on_error dst_dir"))
         hdbg.dassert_in(type(actual), (bytes, str), "actual=%s", str(actual))
         hdbg.dassert_in(
             type(expected), (bytes, str), "expected=%s", str(expected)
@@ -1232,9 +1232,7 @@ class TestCase(unittest.TestCase):
             (which should be used only for unit testing) return the result but do not
             assert
         """
-        _LOG.debug(
-            hprintin.to_str("fuzzy_match purify_text abort_on_error dedent")
-        )
+        _LOG.debug(hprint.to_str("fuzzy_match purify_text abort_on_error dedent"))
         hdbg.dassert_in(type(actual), (bytes, str), "actual='%s'", actual)
         #
         dir_name, file_name = self._get_golden_outcome_file_name(tag)
@@ -1311,7 +1309,7 @@ class TestCase(unittest.TestCase):
                         + f"'{action_on_missing_golden}'"
                     )
         self._test_was_updated = outcome_updated
-        _LOG.debug(hprintin.to_str("outcome_updated file_exists is_equal"))
+        _LOG.debug(hprint.to_str("outcome_updated file_exists is_equal"))
         return outcome_updated, file_exists, is_equal
 
     def check_dataframe(
@@ -1327,14 +1325,14 @@ class TestCase(unittest.TestCase):
         """
         Like `check_string()` but for pandas dataframes, instead of strings.
         """
-        _LOG.debug(hprintin.to_str("err_threshold tag abort_on_error"))
+        _LOG.debug(hprint.to_str("err_threshold tag abort_on_error"))
         hdbg.dassert_isinstance(actual, pd.DataFrame)
         #
         dir_name, file_name = self._get_golden_outcome_file_name(tag)
         _LOG.debug("file_name=%s", file_name)
         outcome_updated = False
         file_exists = os.path.exists(file_name)
-        _LOG.debug(hprintin.to_str("file_exists"))
+        _LOG.debug(hprint.to_str("file_exists"))
         is_equal: Optional[bool] = None
         if self._update_tests:
             _LOG.debug("# Update golden outcomes")
@@ -1343,7 +1341,7 @@ class TestCase(unittest.TestCase):
                 is_equal, _ = self._check_df_compare_outcome(
                     file_name, actual, err_threshold
                 )
-                _LOG.debug(hprintin.to_str("is_equal"))
+                _LOG.debug(hprint.to_str("is_equal"))
                 if not is_equal:
                     outcome_updated = True
             else:
@@ -1403,7 +1401,7 @@ class TestCase(unittest.TestCase):
                         + f"'{action_on_missing_golden}'"
                     )
         self._test_was_updated = outcome_updated
-        _LOG.debug(hprintin.to_str("outcome_updated file_exists is_equal"))
+        _LOG.debug(hprint.to_str("outcome_updated file_exists is_equal"))
         return outcome_updated, file_exists, is_equal
 
     # #########################################################################
@@ -1413,13 +1411,13 @@ class TestCase(unittest.TestCase):
         """
         Add to git repo `file_name`, if needed.
         """
-        _LOG.debug(hprintin.to_str("file_name"))
+        _LOG.debug(hprint.to_str("file_name"))
         if self._git_add:
             # Find the file relative to here.
             mode = "assert_unless_one_result"
             file_names_tmp = hgit.find_docker_file(file_name, mode=mode)
             file_name_tmp = file_names_tmp[0]
-            _LOG.debug(hprintin.to_str("file_name file_name_tmp"))
+            _LOG.debug(hprint.to_str("file_name file_name_tmp"))
             if file_name_tmp.startswith("amp"):
                 # To add a file like
                 # amp/core/test/TestCheckSameConfigs.test_check_same_configs_error/output/test.txt
@@ -1430,7 +1428,7 @@ class TestCase(unittest.TestCase):
                 cmd = "cd amp; git add -u %s" % file_name_in_amp
             else:
                 cmd = "git add -u %s" % file_name_tmp
-            rc = hsyint.system(cmd, abort_on_error=False)
+            rc = hsysinte.system(cmd, abort_on_error=False)
             if rc:
                 pytest_warning(
                     f"Can't git add file\n'{file_name}' -> '{file_name_tmp}'\n"
@@ -1442,7 +1440,7 @@ class TestCase(unittest.TestCase):
     def _check_string_update_outcome(
         self, file_name: str, actual: str, use_gzip: bool
     ) -> None:
-        _LOG.debug(hprintin.to_str("file_name"))
+        _LOG.debug(hprint.to_str("file_name"))
         hio.to_file(file_name, actual, use_gzip=use_gzip)
         # Add to git repo.
         self._git_add_file(file_name)
@@ -1454,7 +1452,7 @@ class TestCase(unittest.TestCase):
         file_name: str,
         actual: "pd.DataFrame",
     ) -> None:
-        _LOG.debug(hprintin.to_str("file_name"))
+        _LOG.debug(hprint.to_str("file_name"))
         hio.create_enclosing_dir(file_name)
         actual.to_csv(file_name)
         pytest_warning(f"Update golden outcome file '{file_name}'", prefix="\n")
@@ -1464,7 +1462,7 @@ class TestCase(unittest.TestCase):
     def _check_df_compare_outcome(
         self, file_name: str, actual: "pd.DataFrame", err_threshold: float
     ) -> Tuple[bool, "pd.DataFrame"]:
-        _LOG.debug(hprintin.to_str("file_name"))
+        _LOG.debug(hprint.to_str("file_name"))
         _LOG.debug("actual_=\n%s", actual)
         hdbg.dassert_lte(0, err_threshold)
         hdbg.dassert_lte(err_threshold, 1.0)

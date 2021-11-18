@@ -22,17 +22,17 @@
 import logging
 
 import core.config as cconfig
-import core.dataflow_model.incremental_single_name_model_evaluator as ime
-import core.dataflow_model.model_evaluator as modeval
-import core.dataflow_model.model_plotter as modplot
-import core.dataflow_model.stats_computer as csc
-import core.plotting as cplot
-import helpers.dbg as dbg
+import core.dataflow_model.incremental_single_name_model_evaluator as cdtfmisnmev
+import core.dataflow_model.model_evaluator as cdtfmomoev
+import core.dataflow_model.model_plotter as cdtfmomopl
+import core.dataflow_model.stats_computer as cdtfmostco
+import core.plotting as coplotti
+import helpers.dbg as hdbg
 import helpers.printing as hprint
 
 # %%
-dbg.init_logger(verbosity=logging.INFO)
-# dbg.init_logger(verbosity=logging.DEBUG)
+hdbg.init_logger(verbosity=logging.INFO)
+# hdbg.init_logger(verbosity=logging.DEBUG)
 
 _LOG = logging.getLogger(__name__)
 
@@ -90,7 +90,7 @@ print(str(eval_config))
 # # Compute stats
 
 # %%
-stats = ime.compute_stats_for_single_name_artifacts(
+stats = cdtfmisnmev.compute_stats_for_single_name_artifacts(
     **eval_config["compute_stats_kwargs"].to_dict()
 )
 
@@ -115,7 +115,7 @@ print("model not selected=%s" % not_selected)
 # # Build portfolio
 
 # %%
-portfolio, daily_dfs = ime.aggregate_single_name_models(
+portfolio, daily_dfs = cdtfmisnmev.aggregate_single_name_models(
     **eval_config["aggregate_single_name_models"].to_dict()
 )
 
@@ -123,7 +123,7 @@ portfolio, daily_dfs = ime.aggregate_single_name_models(
 portfolio.dropna().head()
 
 # %%
-stats_computer = csc.StatsComputer()
+stats_computer = cdtfmostco.StatsComputer()
 
 # %% [markdown]
 # # TODO

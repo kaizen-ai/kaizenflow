@@ -16,7 +16,7 @@ import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.s3 as hs3
 import helpers.sql as hsql
-import im_v2.data.universe as imdatuniv
+import im_v2.data.universe as imv2dauni
 
 _LOG = logging.getLogger(__name__)
 
@@ -126,7 +126,7 @@ class CcxtLoader:
 
     def read_universe_data_from_filesystem(
         self,
-        universe: Union[str, List[imdatuniv.ExchangeCurrencyTuple]],
+        universe: Union[str, List[imv2dauni.ExchangeCurrencyTuple]],
         data_type: str,
         data_snapshot: Optional[str] = None,
     ) -> pd.DataFrame:
@@ -154,7 +154,7 @@ class CcxtLoader:
         # Load all the corresponding exchange-currency tuples if a universe
         # version is provided.
         if isinstance(universe, str):
-            universe = imdatuniv.get_vendor_universe_as_tuples(universe, "CCXT")
+            universe = imv2dauni.get_vendor_universe_as_tuples(universe, "CCXT")
         # Initialize results df.
         combined_data = pd.DataFrame(dtype="object")
         # Load data for each exchange-currency tuple and append to results df.

@@ -4,12 +4,12 @@ from typing import List
 
 import pytest
 
-import helpers.old.conda as hoco
-import helpers.dbg as dbg
-import helpers.git as git
-import helpers.io_ as io_
-import helpers.system_interaction as si
-import helpers.unit_test as ut
+import helpers.old.conda as holdcond
+import helpers.dbg as hdbg
+import helpers.git as hgit
+import helpers.io_ as hio
+import helpers.system_interaction as hsysinte
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -23,52 +23,52 @@ _LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.skip("Deprecated after switch to Docker dev env")
-class Test_set_env_amp(ut.TestCase):
+class Test_set_env_amp(hunitest.TestCase):
     def test_setenv_py1(self) -> None:
         """
         Find _setenv_amp.py executable and run it.
         """
-        executable = git.find_file_in_git_tree(
+        executable = hgit.find_file_in_git_tree(
             "_setenv_amp.py", super_module=False
         )
         executable = os.path.abspath(executable)
         _LOG.debug("executable=%s", executable)
-        dbg.dassert_exists(executable)
-        si.system(executable)
+        hdbg.dassert_exists(executable)
+        hsysinte.system(executable)
 
     # Since there are dependency from the user environment, we freeze a
     # particular run of _setenv_amp.py.
-    @pytest.mark.skipif('si.get_user_name() != "saggese"')
+    @pytest.mark.skipif('hsysinte.get_user_name() != "saggese"')
     def test_setenv_py2(self) -> None:
         """
         Find _setenv_amp.py executable, run it, and freeze the output.
         """
-        executable = git.find_file_in_git_tree(
+        executable = hgit.find_file_in_git_tree(
             "_setenv_amp.py", super_module=False
         )
         executable = os.path.abspath(executable)
         _LOG.debug("executable=%s", executable)
-        dbg.dassert_exists(executable)
+        hdbg.dassert_exists(executable)
         # Run _setup.py and get its output.
-        _, txt = si.system_to_string(executable)
+        _, txt = hsysinte.system_to_string(executable)
         # There is a difference between running the same test from different
         # repos, so we remove this line.
-        txt = ut.filter_text("curr_path=", txt)
-        txt = ut.filter_text("server_name=", txt)
+        txt = hunitest.filter_text("curr_path=", txt)
+        txt = hunitest.filter_text("server_name=", txt)
         self.check_string(txt)
 
     def test_setenv_sh1(self) -> None:
         """
         Execute setenv_amp.sh.
         """
-        executable = git.find_file_in_git_tree(
+        executable = hgit.find_file_in_git_tree(
             "setenv_amp.sh", super_module=False
         )
         executable = os.path.abspath(executable)
         _LOG.debug("executable=%s", executable)
-        dbg.dassert_exists(executable)
+        hdbg.dassert_exists(executable)
         cmd = "source %s amp_develop" % executable
-        si.system(cmd)
+        hsysinte.system(cmd)
 
 
 # #############################################################################
@@ -77,7 +77,7 @@ class Test_set_env_amp(ut.TestCase):
 
 
 @pytest.mark.skip("Deprecated after switch to Docker dev env")
-class Test_install_create_conda_py1(ut.TestCase):
+class Test_install_create_conda_py1(hunitest.TestCase):
     def _run_create_conda(self, cmd_opts: List[str], cleanup: bool) -> None:
         """
         Run a create_conda command using custom options `cmd_opts`.
@@ -85,7 +85,7 @@ class Test_install_create_conda_py1(ut.TestCase):
         :param cleanup: True if we want to cleanup the conda env instead of
             creating it.
         """
-        exec_file = git.find_file_in_git_tree("create_conda.py")
+        exec_file = hgit.find_file_in_git_tree("create_conda.py")
         cmd = []
         cmd.append(exec_file)
         cmd.extend(cmd_opts)
@@ -93,7 +93,7 @@ class Test_install_create_conda_py1(ut.TestCase):
         cmd.append("-v DEBUG")
         # TODO(gp): Find a way to check the output looking at the packages.
         if cleanup:
-            if ut.get_incremental_tests():
+            if hunitest.get_incremental_tests():
                 # No clean up for manual inspection with:
                 _LOG.warning("No clean up as per incremental test mode")
                 return
@@ -102,7 +102,7 @@ class Test_install_create_conda_py1(ut.TestCase):
             cmd.append("--skip_pip_install")
             cmd.append("--skip_test_env")
         cmd_tmp = " ".join(cmd)
-        si.system(cmd_tmp)
+        hsysinte.system(cmd_tmp)
 
     def _helper(self, env_name: str, cmd_opts: List[str]) -> None:
         """
@@ -112,7 +112,7 @@ class Test_install_create_conda_py1(ut.TestCase):
         self._run_create_conda(cmd_opts, cleanup=False)
         #
         cmd = "conda activate %s && conda info --envs" % env_name
-        hoco.conda_system(cmd, suppress_output=False)
+        holdcond.conda_system(cmd, suppress_output=False)
         # Clean up the env.
         self._run_create_conda(cmd_opts, cleanup=True)
 
@@ -146,7 +146,7 @@ dependencies:
     - trading-calendars
     """
         yaml_file = os.path.join(self.get_scratch_space(), "reqs.yaml")
-        io_.to_file(yaml_file, yaml)
+        hio.to_file(yaml_file, yaml)
         #
         cmd_opts = []
         env_name = "test_create_conda_yaml1"
@@ -170,7 +170,7 @@ dependencies:
     #- ta                   # Technical analysis package.
     - trading-calendars """
         yaml_file1 = os.path.join(self.get_scratch_space(), "reqs1.yaml")
-        io_.to_file(yaml_file1, yaml1)
+        hio.to_file(yaml_file1, yaml1)
         #
         yaml2 = """
 channels:
@@ -179,7 +179,7 @@ channels:
 dependencies:
   - numpy"""
         yaml_file2 = os.path.join(self.get_scratch_space(), "reqs2.yaml")
-        io_.to_file(yaml_file2, yaml2)
+        hio.to_file(yaml_file2, yaml2)
         #
         cmd_opts = []
         env_name = "test_create_conda_yaml2"
@@ -197,13 +197,13 @@ dependencies:
 ## pylint: disable=too-many-public-methods
 # @pytest.mark.amp
 # @pytest.mark.skip(reason="Disabled because of AmpTask508")
-# class Test_linter_py1(ut.TestCase):
+# class Test_linter_py1(hunitest.TestCase):
 #    def _write_input_file(self, txt: str, file_name: str) -> Tuple[str, str]:
 #        dir_name = self.get_scratch_space()
-#        dbg.dassert_is_not(file_name, None)
+#        hdbg.dassert_is_not(file_name, None)
 #        file_name = os.path.join(dir_name, file_name)
 #        file_name = os.path.abspath(file_name)
-#        io_.to_file(file_name, txt)
+#        hio.to_file(file_name, txt)
 #        return dir_name, file_name
 #
 #    def _run_linter(
@@ -216,11 +216,11 @@ dependencies:
 #            # We need to ignore the errors reported by the script, since it
 #            # represents how many lints were found.
 #            suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
-#            si.system(
+#            hsysinte.system(
 #                cmd_as_str, abort_on_error=False, suppress_output=suppress_output
 #            )
 #        else:
-#            logger_verbosity = dbg.get_logger_verbosity()
+#            logger_verbosity = hdbg.get_logger_verbosity()
 #            parser = lntr._parse()
 #            args = parser.parse_args(
 #                [
@@ -236,11 +236,11 @@ dependencies:
 #                ]
 #            )
 #            lntr._main(args)
-#            dbg.init_logger(logger_verbosity)
+#            hdbg.init_logger(logger_verbosity)
 #
 #        # Read log.
 #        _LOG.debug("linter_log=%s", linter_log)
-#        txt = io_.from_file(linter_log)
+#        txt = hio.from_file(linter_log)
 #        # Process log.
 #        output = []
 #        output.append("# linter log")
@@ -256,7 +256,7 @@ dependencies:
 #        # Read output.
 #        _LOG.debug("file_name=%s", file_name)
 #        output.append("# linter file")
-#        txt = io_.from_file(file_name)
+#        txt = hio.from_file(file_name)
 #        output.extend(txt.split("\n"))
 #        #
 #        output_as_str = "\n".join(output)
@@ -288,7 +288,7 @@ dependencies:
 #
 #    @pytest.mark.skip(reason="Disable because of PTask3409")
 #    @pytest.mark.skipif(
-#        'si.get_server_name() == "docker-instance"', reason="Issue #1522, #1831"
+#        'hsysinte.get_server_name() == "docker-instance"', reason="Issue #1522, #1831"
 #    )
 #    def test_linter1(self) -> None:
 #        """Run linter.py as executable on some text."""
@@ -302,7 +302,7 @@ dependencies:
 #
 #    @pytest.mark.skip(reason="Disable because of PTask3409")
 #    @pytest.mark.skipif(
-#        'si.get_server_name() == "docker-instance"', reason="Issue #1522, #1831"
+#        'hsysinte.get_server_name() == "docker-instance"', reason="Issue #1522, #1831"
 #    )
 #    def test_linter2(self) -> None:
 #        """Run linter.py as library on some text."""
@@ -333,7 +333,7 @@ dependencies:
 #        output = self._helper(txt, file_name, as_system_call)
 #        # Remove the line:
 #        # '12-16_14:59 ^[[33mWARNING^[[0m: _refresh_toc   :138 : No tags for table'
-#        output = ut.filter_text("No tags for table", output)
+#        output = hunitest.filter_text("No tags for table", output)
 #        # Check.
 #        self.check_string(output)
 #
@@ -610,7 +610,7 @@ dependencies:
 #
 #
 # @pytest.mark.amp
-# class Test_process_jupytext(ut.TestCase):
+# class Test_process_jupytext(hunitest.TestCase):
 #    @pytest.mark.skip(
 #        "Latest version of jupytext fixed this problem (PTask1240)"
 #    )
@@ -618,7 +618,7 @@ dependencies:
 #        file_name = "test_notebook.py"
 #        file_path = os.path.join(self.get_input_dir(), file_name)
 #        cmd = f"process_jupytext.py -f {file_path} --action test 2>&1"
-#        _, txt = si.system_to_string(cmd, abort_on_error=False)
+#        _, txt = hsysinte.system_to_string(cmd, abort_on_error=False)
 #        _LOG.debug("txt=\n%s", txt)
 #        # There is a date in output, so we remove date using split.
 #        # Output example:
@@ -626,11 +626,11 @@ dependencies:
 #        #    There is a mismatch of jupytext version:
 #        #    'jupytext_version: 1.1.2' vs 'jupytext_version: 1.3.2': skipping
 #        txts = txt.split("WARNING")
-#        dbg.dassert_eq(2, len(txts), "txt='%s'", txt)
+#        hdbg.dassert_eq(2, len(txts), "txt='%s'", txt)
 #        txts = txts[1]
 #        #
 #        txts = txts.split("[")
-#        dbg.dassert_eq(2, len(txts), "txt='%s'", txt)
+#        hdbg.dassert_eq(2, len(txts), "txt='%s'", txt)
 #        txt_no_date = txts[1]
 #        self.check_string(txt_no_date)
 #

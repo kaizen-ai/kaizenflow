@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import dev_scripts.to_clean.gen_utils.ORIG as dstcgutOR
+"""
+
 import bisect
 import datetime
 import logging

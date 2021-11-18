@@ -26,10 +26,10 @@ import joblib
 
 import helpers.cache as hcache
 import helpers.dbg as hdbg
-import helpers.printing as hprintin
+import helpers.printing as hprint
 import helpers.s3 as hs3
 
-hprintin.config_notebook()
+hprint.config_notebook()
 
 # hdbg.init_logger(verbosity=logging.DEBUG)
 hdbg.init_logger(verbosity=logging.INFO)

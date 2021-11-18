@@ -4,17 +4,21 @@
 Generate a markdown file with the docstring for any script in the repo.
 
 > generate_script_catalog.py
+
+Import as:
+
+import documentation.scripts.generate_script_catalog as dsgescca
 """
 
 import argparse
 import logging
 import os
 
-import helpers.dbg as dbg
-import helpers.io_ as io_
-import helpers.parser as prsr
-import helpers.printing as prnt
-import helpers.system_interaction as si
+import helpers.dbg as hdbg
+import helpers.io_ as hio
+import helpers.parser as hparser
+import helpers.printing as hprint
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -23,7 +27,7 @@ _LOG = logging.getLogger(__name__)
 
 def _get_docstring(file_name):
     _LOG.debug("file_name=%s", file_name)
-    txt = io_.from_file(file_name).split("\n")
+    txt = hio.from_file(file_name).split("\n")
     docstring = []
     found = False
     for line in txt:
@@ -55,16 +59,16 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         default="documentation/general/script_catalog.md",
     )
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level)
+    hdbg.init_logger(verbosity=args.log_level)
     # Get the files.
     cmd = "find %s -perm +111 -type f" % args.src_dir
-    _, output = si.system_to_string(cmd)
+    _, output = hsysinte.system_to_string(cmd)
     file_names = output.split("\n")
     file_names = sorted(file_names)
     file_names = [
@@ -102,15 +106,16 @@ def _main(parser: argparse.ArgumentParser) -> None:
             md_text.append("```\n%s\n```" % docstring)
     # Save in a file.
     md_text_as_str = "\n".join(md_text)
-    io_.to_file(args.dst_file, md_text_as_str)
+    hio.to_file(args.dst_file, md_text_as_str)
     _LOG.info("File '%s' saved", args.dst_file)
     _LOG.info(
-        "Number of scripts with docstring: %s", prnt.perc(num_docstring, len(res))
+        "Number of scripts with docstring: %s",
+        hprint.perc(num_docstring, len(res)),
     )
     # Format the md.
     _LOG.info("Formatting")
     cmd = "linter.py -f %s" % args.dst_file
-    si.system(cmd)
+    hsysinte.system(cmd)
 
 
 if __name__ == "__main__":

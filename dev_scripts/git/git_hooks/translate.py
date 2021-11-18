@@ -1,11 +1,17 @@
 #!/usr/bin/env python
 
+"""
+Import as:
+
+import dev_scripts.git.git_hooks.translate as dsgghotr
+"""
+
 import argparse
 import logging
 
-import dev_scripts.git.git_hooks.utils as ghutils
-import helpers.dbg as dbg
-import helpers.parser as prsr
+import dev_scripts.git.git_hooks.utils as dsgghout
+import helpers.dbg as hdbg
+import helpers.parser as hparser
 
 _LOG = logging.getLogger(__name__)
 
@@ -18,14 +24,14 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument("--text", action="store", type=str, required=True)
     parser.add_argument("--step", action="store", type=int, required=True)
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    transformed_txt = ghutils.caesar(args.text, args.step)
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    transformed_txt = dsgghout.caesar(args.text, args.step)
     print(transformed_txt)
 
 

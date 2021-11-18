@@ -22,11 +22,11 @@ from typing import (
 import numpy as np
 import pandas as pd
 
-import helpers.datetime_ as hdatetim
+import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
-import helpers.hasyncio as hhasynci
-import helpers.hnumpy as hhnumpy
-import helpers.printing as hprintin
+import helpers.hasyncio as hasynci
+import helpers.hnumpy as hnumpy
+import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -76,7 +76,7 @@ class ReplayedTime:
     def __init__(
         self,
         initial_replayed_dt: pd.Timestamp,
-        get_wall_clock_time: hdatetim.GetWallClockTime,
+        get_wall_clock_time: hdateti.GetWallClockTime,
         *,
         speed_up_factor: float = 1.0,
     ):
@@ -89,7 +89,7 @@ class ReplayedTime:
         :param initial_replayed_dt: the time that we want the current wall clock
             time to correspond to
         :param get_wall_clock_time: return the wall clock time. It is usually
-            a closure of `hdatetim.get_wall_clock_time()`. The returned time needs
+            a closure of `hdateti.get_wall_clock_time()`. The returned time needs
             to have the same timezone as `initial_replayed_dt`
         """
         # This is the original time we want to "rewind" to.
@@ -102,11 +102,9 @@ class ReplayedTime:
         # This is when the experiment starts.
         self._initial_wall_clock_dt = self._get_wall_clock_time()
         _LOG.debug(
-            hprintin.to_str(
-                "self._initial_replayed_dt self._initial_wall_clock_dt"
-            )
+            hprint.to_str("self._initial_replayed_dt self._initial_wall_clock_dt")
         )
-        hdatetim.dassert_tz_compatible(
+        hdateti.dassert_tz_compatible(
             self._initial_replayed_dt, self._initial_wall_clock_dt
         )
         hdbg.dassert_lte(
@@ -136,12 +134,12 @@ def get_replayed_wall_clock_time(
     *,
     event_loop: Optional[asyncio.AbstractEventLoop] = None,
     speed_up_factor: float = 1.0,
-) -> hdatetim.GetWallClockTime:
+) -> hdateti.GetWallClockTime:
     """
     Return a function reporting the wall clock time using a replayed approach
     for real and simulated time.
     """
-    get_wall_clock_time = lambda: hdatetim.get_current_time(
+    get_wall_clock_time = lambda: hdateti.get_current_time(
         tz, event_loop=event_loop
     )
     replayed_time = ReplayedTime(
@@ -165,12 +163,12 @@ def generate_synthetic_data(
     """
     Generate synthetic data used to mimic real-time data.
     """
-    hdatetim.dassert_tz_compatible(start_datetime, end_datetime)
+    hdateti.dassert_tz_compatible(start_datetime, end_datetime)
     hdbg.dassert_lte(start_datetime, end_datetime)
     dates = pd.date_range(start_datetime, end_datetime, freq=freq)
     # TODO(gp): Filter by ATH, if needed.
     # Random walk with increments independent and uniform in [-0.5, 0.5].
-    with hhnumpy.random_seed_context(seed):
+    with hnumpy.random_seed_context(seed):
         data = np.random.rand(len(dates), len(columns)) - 0.5  # type: ignore[var-annotated]
     df = pd.DataFrame(data, columns=columns, index=dates)
     df = df.cumsum()
@@ -201,14 +199,14 @@ def get_data_as_of_datetime(
     takes 4 seconds to respond, all and only data before `2021-07-13 13:00:56` is
     returned.
     """
-    _LOG.debug(hprintin.df_to_short_str("Before get_data_as_of_datetime", df))
+    _LOG.debug(hprint.df_to_short_str("Before get_data_as_of_datetime", df))
     _LOG.debug(
-        hprintin.to_str("knowledge_datetime_col_name datetime_ delay_in_secs")
+        hprint.to_str("knowledge_datetime_col_name datetime_ delay_in_secs")
     )
     hdbg.dassert_lte(0, delay_in_secs)
     datetime_eff = datetime_ - datetime.timedelta(seconds=delay_in_secs)
     # TODO(gp): We could / should use binary search.
-    hdatetim.dassert_tz_compatible_timestamp_with_df(
+    hdateti.dassert_tz_compatible_timestamp_with_df(
         datetime_, df, knowledge_datetime_col_name
     )
     if not allow_future_peeking:
@@ -225,7 +223,7 @@ def get_data_as_of_datetime(
         # execution price of an order that will terminate in the future.
         # raise ValueError("Future peeking")
         pass
-    _LOG.debug(hprintin.df_to_short_str("After get_data_as_of_datetime", df))
+    _LOG.debug(hprint.df_to_short_str("After get_data_as_of_datetime", df))
     return df
 
 
@@ -240,7 +238,7 @@ async def _sleep(sleep_in_secs: float) -> None:
 
 
 def align_on_time_grid(
-    get_wall_clock_time: hdatetim.GetWallClockTime,
+    get_wall_clock_time: hdateti.GetWallClockTime,
     grid_time_in_secs: float,
     *,
     event_loop: Optional[asyncio.AbstractEventLoop],
@@ -263,7 +261,7 @@ def align_on_time_grid(
         _LOG.debug("wait for %s secs", sleep_in_secs)
         if sleep_in_secs > 0:
             coroutine = _sleep(sleep_in_secs)
-            hhasynci.run(coroutine, event_loop=event_loop, close_event_loop=False)
+            hasynci.run(coroutine, event_loop=event_loop, close_event_loop=False)
             _LOG.debug("wall_clock=%s", get_wall_clock_time())
 
     _LOG.debug("Aligning at wall_clock=%s ...", get_wall_clock_time())
@@ -343,7 +341,7 @@ class Events(List[Event]):
 
 
 async def execute_with_real_time_loop(
-    get_wall_clock_time: hdatetim.GetWallClockTime,
+    get_wall_clock_time: hdateti.GetWallClockTime,
     sleep_interval_in_secs: float,
     time_out_in_secs: Optional[int],
     workload: Callable[[pd.Timestamp], Any],
@@ -361,7 +359,7 @@ async def execute_with_real_time_loop(
         - an execution trace representing the events in the real-time loop; and
         - a list of results returned by the workload function
     """
-    _LOG.debug(hprintin.to_str("sleep_interval_in_secs time_out_in_secs"))
+    _LOG.debug(hprint.to_str("sleep_interval_in_secs time_out_in_secs"))
     hdbg.dassert(
         callable(get_wall_clock_time),
         "get_wall_clock_time='%s' is not callable",
@@ -373,17 +371,17 @@ async def execute_with_real_time_loop(
         # TODO(gp): Consider using a real-time check instead of number of iterations.
         num_iterations = int(time_out_in_secs / sleep_interval_in_secs)
         hdbg.dassert_lt(0, num_iterations)
-    _LOG.debug(hprintin.to_str("num_iterations"))
+    _LOG.debug(hprint.to_str("num_iterations"))
     #
     num_it = 1
     while True:
         wall_clock_time = get_wall_clock_time()
         # For the wall clock time, we always use the real one. This is used only for
         # book-keeping.
-        real_wall_clock_time = hdatetim.get_current_time(tz="ET")
+        real_wall_clock_time = hdateti.get_current_time(tz="ET")
         _LOG.debug(
             "\n%s",
-            hprintin.frame(
+            hprint.frame(
                 "Real-time loop: "
                 "num_it=%s / %s: wall_clock_time='%s' real_wall_clock_time='%s'"
                 % (num_it, num_iterations, wall_clock_time, real_wall_clock_time),

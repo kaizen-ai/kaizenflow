@@ -7,7 +7,7 @@ import pytest
 import helpers.unit_test as hunitest
 
 # TODO(Dan): return to code after CmTask43 is fixed.
-import im_v2.ccxt.data.extract.exchange_class as imcdeexcl
+import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
@@ -20,14 +20,14 @@ class Test_CcxtExchange(hunitest.TestCase):
         """
         Smoke test that the class is being initialized correctly.
         """
-        _ = imcdeexcl.CcxtExchange("binance")
+        _ = imvcdeexcl.CcxtExchange("binance")
 
     def test_get_exchange_currencies(self) -> None:
         """
         Test that a non-empty list of exchange currencies is loaded.
         """
         # Extract a list of currencies.
-        exchange_class = imcdeexcl.CcxtExchange("binance")
+        exchange_class = imvcdeexcl.CcxtExchange("binance")
         curr_list = exchange_class.get_exchange_currencies()
         # Verify that the output is a non-empty list with only string values.
         hdbg.dassert_container_type(curr_list, list, str)
@@ -38,7 +38,7 @@ class Test_CcxtExchange(hunitest.TestCase):
         Test that historical data is being loaded correctly.
         """
         # Initiate class and set date parameters.
-        exchange_class = imcdeexcl.CcxtExchange("binance")
+        exchange_class = imvcdeexcl.CcxtExchange("binance")
         start_date = "2021-09-09T00:00:00Z"
         end_date = "2021-09-10T00:00:00Z"
         # Extract data.
@@ -70,7 +70,7 @@ class Test_CcxtExchange(hunitest.TestCase):
         """
         Verify that order book is downloaded correctly.
         """
-        exchange_class = imcdeexcl.CcxtExchange("gateio")
+        exchange_class = imvcdeexcl.CcxtExchange("gateio")
         order_book = exchange_class.download_order_book("BTC/USDT")
         order_book_keys = [
             "symbol",

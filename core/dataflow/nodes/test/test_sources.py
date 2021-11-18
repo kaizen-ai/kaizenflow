@@ -5,7 +5,7 @@ from typing import Any, Optional
 import pandas as pd
 
 import core.dataflow as dtf
-import helpers.unit_test as huntes  # pylint: disable=no-name-in-module
+import helpers.unit_test as hunitest  # pylint: disable=no-name-in-module
 
 _LOG = logging.getLogger(__name__)
 
@@ -13,7 +13,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class TestDiskDataSource(huntes.TestCase):
+class TestDiskDataSource(hunitest.TestCase):
     def test_datetime_index_csv1(self) -> None:
         """
         Test CSV file using timestamps in the index.
@@ -138,7 +138,7 @@ class TestDiskDataSource(huntes.TestCase):
 # #############################################################################
 
 
-class TestArmaGenerator(huntes.TestCase):
+class TestArmaGenerator(hunitest.TestCase):
     def test1(self) -> None:
         node = dtf.ArmaGenerator(  # pylint: disable=no-member
             nid="source",
@@ -152,14 +152,14 @@ class TestArmaGenerator(huntes.TestCase):
             seed=0,
         )
         df = node.fit()["df_out"]
-        act = huntes.convert_df_to_string(df, index=True, decimals=2)
+        act = hunitest.convert_df_to_string(df, index=True, decimals=2)
         self.check_string(act)
 
 
 # #############################################################################
 
 
-class TestMultivariateNormalGenerator(huntes.TestCase):
+class TestMultivariateNormalGenerator(hunitest.TestCase):
     def test1(self) -> None:
         node = dtf.MultivariateNormalGenerator(  # pylint: disable=no-member
             nid="source",
@@ -171,5 +171,5 @@ class TestMultivariateNormalGenerator(huntes.TestCase):
             seed=1,
         )
         df = node.fit()["df_out"]
-        act = huntes.convert_df_to_string(df, index=True, decimals=2)
+        act = hunitest.convert_df_to_string(df, index=True, decimals=2)
         self.check_string(act)

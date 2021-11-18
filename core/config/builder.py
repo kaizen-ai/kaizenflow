@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.config.builder as cfgb
+import core.config.builder as cconbuil
 """
 
 import importlib
@@ -11,9 +11,9 @@ import os
 import re
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, cast
 
-import core.config.config_ as cconfig
-import core.config.utils as cfgut
-import helpers.dbg as dbg
+import core.config.config_ as cconconf
+import core.config.utils as cconutil
+import helpers.dbg as hdbg
 import helpers.pickle_ as hpickle
 
 _LOG = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def get_configs_from_builder(config_builder: str) -> List[cconfig.Config]:
+def get_configs_from_builder(config_builder: str) -> List[cconconf.Config]:
     """
     Execute Python code `config_builder` to build configs.
 
@@ -35,7 +35,7 @@ def get_configs_from_builder(config_builder: str) -> List[cconfig.Config]:
     # config_builder looks like:
     #   "nlp.build_configs.build_PTask1088_configs()"
     m = re.match(r"^(\S+)\.(\S+)\((.*)\)$", config_builder)
-    dbg.dassert(m, "config_builder='%s'", config_builder)
+    hdbg.dassert(m, "config_builder='%s'", config_builder)
     # TODO(gp): Fix this.
     m = cast(re.Match, m)
     import_, function, args = m.groups()
@@ -49,18 +49,18 @@ def get_configs_from_builder(config_builder: str) -> List[cconfig.Config]:
     _ = imp
     python_code = "imp.%s(%s)" % (function, args)
     _LOG.debug("executing '%s'", python_code)
-    configs: List[cconfig.Config] = eval(python_code)
-    dbg.dassert_is_not(configs, None)
+    configs: List[cconconf.Config] = eval(python_code)
+    hdbg.dassert_is_not(configs, None)
     # Cast to the right type.
     # TODO(gp): Is this needed?
-    # configs = cast(List[cconfig.Config], configs)
-    cfgut.validate_configs(configs)
+    # configs = cast(List[cconconf.Config], configs)
+    cconutil.validate_configs(configs)
     return configs
 
 
 def patch_configs(
-    configs: List[cconfig.Config], params: Dict[str, str]
-) -> List[cconfig.Config]:
+    configs: List[cconconf.Config], params: Dict[str, str]
+) -> List[cconconf.Config]:
     """
     Patch the configs with information needed to run.
 
@@ -77,7 +77,7 @@ def patch_configs(
         for key in sorted(params.keys()):
             config[("meta", key)] = params[key]
         # Inject the experiment result dir.
-        dbg.dassert_in("dst_dir", params)
+        hdbg.dassert_in("dst_dir", params)
         dst_dir = params["dst_dir"]
         # Add experiment result dir.
         dst_subdir = f"result_{idx}"
@@ -88,7 +88,7 @@ def patch_configs(
     return configs_out
 
 
-def get_config_from_params(idx: int, params: Dict[str, str]) -> cconfig.Config:
+def get_config_from_params(idx: int, params: Dict[str, str]) -> cconconf.Config:
     """
     Get the `idx`-th config built from the params, which includes
     `config_builder`.
@@ -99,14 +99,14 @@ def get_config_from_params(idx: int, params: Dict[str, str]) -> cconfig.Config:
     # Patch the configs with metadata.
     configs = patch_configs(configs, params)
     # Pick the config.
-    dbg.dassert_lte(0, idx)
-    dbg.dassert_lt(idx, len(configs))
+    hdbg.dassert_lte(0, idx)
+    hdbg.dassert_lt(idx, len(configs))
     config = configs[idx]
     config = config.copy()
     return config
 
 
-def get_config_from_env() -> Optional[cconfig.Config]:
+def get_config_from_env() -> Optional[cconconf.Config]:
     """
     Build a config passed through environment vars, if possible, or return
     `None`.
@@ -118,7 +118,7 @@ def get_config_from_env() -> Optional[cconfig.Config]:
         config = None
         return config
     _LOG.warning("Found config vars in environment")
-    dbg.dassert(
+    hdbg.dassert(
         all(var in os.environ for var in config_vars),
         "Some config vars '%s' were defined, but not all"
         % (", ".join(config_vars)),
@@ -148,9 +148,9 @@ def get_config_from_env() -> Optional[cconfig.Config]:
 
 
 def _generate_template_config(
-    config: cconfig.Config,
+    config: cconconf.Config,
     params_variants: Dict[Tuple[str, ...], Iterable[Any]],
-) -> cconfig.Config:
+) -> cconconf.Config:
     """
     Assign `None` to variable parameters in KOTH config.
 
@@ -169,7 +169,7 @@ def _generate_template_config(
 def generate_default_config_variants(
     template_config_builder: Callable,
     params_variants: Optional[Dict[Tuple[str, ...], Iterable[Any]]] = None,
-) -> List[cconfig.Config]:
+) -> List[cconconf.Config]:
     """
     Build a list of config files for experiments.
 
@@ -193,7 +193,7 @@ def generate_default_config_variants(
     return configs
 
 
-def load_configs(results_dir: str) -> List[cconfig.Config]:
+def load_configs(results_dir: str) -> List[cconconf.Config]:
     """
     Load all result pickles and save in order of corresponding configs.
 
@@ -216,14 +216,14 @@ def load_configs(results_dir: str) -> List[cconfig.Config]:
 
 
 def build_multiple_configs(
-    template_config: cconfig.Config,
+    template_config: cconconf.Config,
     params_variants: Dict[Tuple[str, ...], Iterable[Any]],
-) -> List[cconfig.Config]:
+) -> List[cconconf.Config]:
     """
     Build configs from a template and the Cartesian product of given keys/vals.
 
-    Create multiple `cconfig.Config` objects using the given config template and
-    overwriting `None` or `cconfig.DUMMY` parameter specified through a parameter
+    Create multiple `cconconf.Config` objects using the given config template and
+    overwriting `None` or `cconconf.DUMMY` parameter specified through a parameter
     path and several possible elements:
         param_path: Tuple(str) -> param_values: Iterable[Any]
     A parameter path is represented by a tuple of nested names.
@@ -231,7 +231,7 @@ def build_multiple_configs(
     Note that we create a config for each element of the Cartesian product of
     the values to be assigned.
 
-    :param template_config: cconfig.Config object
+    :param template_config: cconconf.Config object
     :param params_variants: {(param_name_in_the_config_path):
         [param_values]}, e.g. {('read_data', 'symbol'): ['CL', 'QM'],
                                 ('resample', 'rule'): ['5T', '10T']}
@@ -267,11 +267,11 @@ def build_multiple_configs(
             conf_tmp.check_params([param_path[-1]])
             if not (
                 conf_tmp[param_path[-1]] is None
-                or conf_tmp[param_path[-1]] == cconfig.DUMMY
+                or conf_tmp[param_path[-1]] == cconconf.DUMMY
             ):
                 raise ValueError(
                     "Trying to change a parameter that is not `None` or "
-                    "`'cconfig.DUMMY'`. Parameter path is %s" % str(param_path)
+                    "`'cconconf.DUMMY'`. Parameter path is %s" % str(param_path)
                 )
             conf_tmp[param_path[-1]] = param_val
         param_configs.append(config_var)

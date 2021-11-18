@@ -36,15 +36,15 @@ import os
 import pandas as pd
 import pytz
 
-import core.config.config_ as ccocon
-import core.explore as cexp
-import core.plotting as cplo
-import helpers.datetime_ as hdatetim
+import core.config.config_ as cconconf
+import core.explore as coexplor
+import core.plotting as coplotti
+import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.env as henv
-import helpers.printing as hprintin
+import helpers.printing as hprint
 import helpers.s3 as hs3
-import im.ccxt.data.load.loader as imccdaloloa
+import im.ccxt.data.load.loader as imcdalolo
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -53,18 +53,18 @@ _LOG = logging.getLogger(__name__)
 
 _LOG.info("%s", henv.get_system_signature()[0])
 
-hprintin.config_notebook()
+hprint.config_notebook()
 
 
 # %% [markdown]
 # # Config
 
 # %%
-def get_eda_config() -> ccocon.Config:
+def get_eda_config() -> cconconf.Config:
     """
     Get config that controls EDA parameters.
     """
-    config = ccocon.Config()
+    config = cconconf.Config()
     # Load parameters.
     config.add_subconfig("load")
     config["load"]["aws_profile"] = "am"
@@ -73,7 +73,7 @@ def get_eda_config() -> ccocon.Config:
     config.add_subconfig("data")
     config["data"]["close_price_col_name"] = "close"
     config["data"]["frequency"] = "T"
-    # TODO(Grisha): use `hdatetim.get_ET_tz()` once it is fixed.
+    # TODO(Grisha): use `hdateti.get_ET_tz()` once it is fixed.
     config["data"]["timezone"] = pytz.timezone("US/Eastern")
     # Statistics parameters.
     config.add_subconfig("stats")
@@ -93,7 +93,7 @@ print(config)
 
 # %%
 # TODO(Grisha): potentially read data from the db.
-ccxt_loader = imccdaloloa.CcxtLoader(
+ccxt_loader = imcdalolo.CcxtLoader(
     root_dir=config["load"]["data_dir"], aws_profile=config["load"]["aws_profile"]
 )
 ccxt_data = ccxt_loader.read_data_from_filesystem(
@@ -163,13 +163,13 @@ ccxt_data_reindex.head(3)
 
 # %%
 # Get the inputs.
-# TODO(Grisha): pass tz to `hdatetim.to_datetime` once it is fixed.
-lower_bound = hdatetim.to_datetime("2019-01-01")
+# TODO(Grisha): pass tz to `hdateti.to_datetime` once it is fixed.
+lower_bound = hdateti.to_datetime("2019-01-01")
 lower_bound_ET = config["data"]["timezone"].localize(lower_bound)
-upper_bound = hdatetim.to_datetime("2020-01-01")
+upper_bound = hdateti.to_datetime("2020-01-01")
 upper_bound_ET = config["data"]["timezone"].localize(upper_bound)
 # Fiter data.
-ccxt_data_filtered = cexp.filter_by_time(
+ccxt_data_filtered = coexplor.filter_by_time(
     df=ccxt_data_reindex,
     lower_bound=lower_bound_ET,
     upper_bound=upper_bound_ET,
@@ -194,7 +194,7 @@ ccxt_data_filtered[config["data"]["close_price_col_name"]].plot()
 
 # %%
 # TODO(Grisha): fix the function behavior in #204.
-cplo.plot_timeseries_distribution(
+coplotti.plot_timeseries_distribution(
     ccxt_data_filtered[config["data"]["close_price_col_name"]],
     datetime_types=["hour"],
 )
@@ -203,7 +203,7 @@ cplo.plot_timeseries_distribution(
 # ## NaN statistics
 
 # %%
-nan_stats_df = cexp.report_zero_nan_inf_stats(ccxt_data_filtered)
+nan_stats_df = coexplor.report_zero_nan_inf_stats(ccxt_data_filtered)
 nan_stats_df
 
 
@@ -213,7 +213,7 @@ nan_stats_df
 # TODO(Grisha): also count NaNs by exchange, currency, asset class.
 def count_nans_by_period(
     df: pd.DataFrame,
-    config: ccocon.Config,
+    config: cconconf.Config,
     period: str,
     top_n: int = 10,
 ) -> pd.DataFrame:
@@ -251,7 +251,7 @@ nan_counts
 
 # %%
 # TODO(Grisha): add support for other approaches, e.g. IQR-based approach.
-def detect_outliers(df: pd.DataFrame, config: ccocon.Config) -> pd.DataFrame:
+def detect_outliers(df: pd.DataFrame, config: cconconf.Config) -> pd.DataFrame:
     """
     Detect outliers in a rolling fashion using z-score.
 

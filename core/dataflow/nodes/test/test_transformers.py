@@ -5,16 +5,16 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import core.artificial_signal_generators as casgen
+import core.artificial_signal_generators as carsigen
 import core.config as cconfig
 import core.dataflow.nodes.test.helpers as cdnth
-import core.dataflow.nodes.transformers as cdnt
-import helpers.unit_test as hut
+import core.dataflow.nodes.transformers as cdtfnotra
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-class TestGroupedColDfToDfTransformer1(hut.TestCase):
+class TestGroupedColDfToDfTransformer1(hunitest.TestCase):
     def test_column_arithmetic(self) -> None:
         data = self._get_data()
 
@@ -33,7 +33,7 @@ class TestGroupedColDfToDfTransformer1(hut.TestCase):
                 },
             },
         )
-        node = cdnt.GroupedColDfToDfTransformer("adj", **config.to_dict())
+        node = cdtfnotra.GroupedColDfToDfTransformer("adj", **config.to_dict())
         actual = node.fit(data)["df_out"]
         expected_txt = """
 ,div,div,ret,ret,vol,vol
@@ -64,7 +64,7 @@ datetime,MN0,MN1,MN0,MN1
         return df
 
 
-class TestGroupedColDfToDfTransformer2(hut.TestCase):
+class TestGroupedColDfToDfTransformer2(hunitest.TestCase):
     def test_resampling(self) -> None:
         data = self._get_data()
 
@@ -83,7 +83,9 @@ class TestGroupedColDfToDfTransformer2(hut.TestCase):
                 "join_output_with_input": False,
             },
         )
-        node = cdnt.GroupedColDfToDfTransformer("resample", **config.to_dict())
+        node = cdtfnotra.GroupedColDfToDfTransformer(
+            "resample", **config.to_dict()
+        )
         actual = node.fit(data)["df_out"]
         expected_txt = """
 ,ret,ret,vol,vol
@@ -113,7 +115,7 @@ datetime,MN0,MN1,MN0,MN1
         return df
 
 
-class TestGroupedColDfToDfTransformer3(hut.TestCase):
+class TestGroupedColDfToDfTransformer3(hunitest.TestCase):
     def test_multicolumn_processing1(self) -> None:
         data = self._get_data()
         config = cconfig.get_config_from_nested_dict(
@@ -130,7 +132,7 @@ class TestGroupedColDfToDfTransformer3(hut.TestCase):
                 },
             }
         )
-        node = cdnt.GroupedColDfToDfTransformer(
+        node = cdtfnotra.GroupedColDfToDfTransformer(
             "compute_ret_0", **config.to_dict()
         )
         actual = node.fit(data)["df_out"]
@@ -166,7 +168,7 @@ class TestGroupedColDfToDfTransformer3(hut.TestCase):
                 "join_output_with_input": False,
             }
         )
-        node = cdnt.GroupedColDfToDfTransformer(
+        node = cdtfnotra.GroupedColDfToDfTransformer(
             "compute_ret_0", **config.to_dict()
         )
         actual = node.fit(data)["df_out"]
@@ -199,7 +201,7 @@ datetime,MN0,MN1,MN0,MN1
         return df
 
 
-class TestGroupedColDfToDfTransformer4(hut.TestCase):
+class TestGroupedColDfToDfTransformer4(hunitest.TestCase):
     def test_drop_nans(self) -> None:
         data = self._get_data()
 
@@ -216,7 +218,7 @@ class TestGroupedColDfToDfTransformer4(hut.TestCase):
                 "join_output_with_input": False,
             },
         )
-        node = cdnt.GroupedColDfToDfTransformer("diff", **config.to_dict())
+        node = cdtfnotra.GroupedColDfToDfTransformer("diff", **config.to_dict())
         actual = node.fit(data)["df_out"]
         expected_txt = """
 ,close_diff,close_diff,mid_diff,mid_diff
@@ -253,7 +255,7 @@ class TestGroupedColDfToDfTransformer4(hut.TestCase):
                 "join_output_with_input": False,
             },
         )
-        node = cdnt.GroupedColDfToDfTransformer("diff", **config.to_dict())
+        node = cdtfnotra.GroupedColDfToDfTransformer("diff", **config.to_dict())
         actual = node.fit(data)["df_out"]
         expected_txt = """
 ,close_diff,close_diff,mid_diff,mid_diff
@@ -288,7 +290,7 @@ datetime,MN0,MN1,MN0,MN1
         return df
 
 
-class TestSeriesToDfTransformer1(hut.TestCase):
+class TestSeriesToDfTransformer1(hunitest.TestCase):
     def test1(self) -> None:
         def add_lags(srs: pd.Series, num_lags: int) -> pd.DataFrame:
             lags = []
@@ -308,7 +310,7 @@ class TestSeriesToDfTransformer1(hut.TestCase):
                 },
             }
         )
-        node = cdnt.SeriesToDfTransformer("add_lags", **config.to_dict())
+        node = cdtfnotra.SeriesToDfTransformer("add_lags", **config.to_dict())
         actual = node.fit(data)["df_out"]
         expected_txt = """
 ,lag_0,lag_0,lag_1,lag_1,lag_2,lag_2,close,close,volume,volume
@@ -339,7 +341,7 @@ datetime,MN0,MN1,MN0,MN1
         return df
 
 
-class TestSeriesToDfTransformer2(hut.TestCase):
+class TestSeriesToDfTransformer2(hunitest.TestCase):
     def test_drop_nans(self) -> None:
         data = self._get_data()
         config = cconfig.get_config_from_nested_dict(
@@ -354,7 +356,7 @@ class TestSeriesToDfTransformer2(hut.TestCase):
                 "join_output_with_input": False,
             }
         )
-        node = cdnt.SeriesToDfTransformer("add_lags", **config.to_dict())
+        node = cdtfnotra.SeriesToDfTransformer("add_lags", **config.to_dict())
         actual = node.fit(data)["df_out"]
         expected_txt = """
 ,lag_0,lag_0,lag_1,lag_1
@@ -387,7 +389,7 @@ class TestSeriesToDfTransformer2(hut.TestCase):
                 "drop_nans": True,
             }
         )
-        node = cdnt.SeriesToDfTransformer("add_lags", **config.to_dict())
+        node = cdtfnotra.SeriesToDfTransformer("add_lags", **config.to_dict())
         actual = node.fit(data)["df_out"]
         expected_txt = """
 ,lag_0,lag_0,lag_1,lag_1,close,close,mid,mid
@@ -422,7 +424,7 @@ class TestSeriesToDfTransformer2(hut.TestCase):
                 "join_output_with_input": False,
             }
         )
-        node = cdnt.SeriesToDfTransformer("add_lags", **config.to_dict())
+        node = cdtfnotra.SeriesToDfTransformer("add_lags", **config.to_dict())
         actual = node.fit(data)["df_out"]
         expected_txt = """
 ,lag_0,lag_0,lag_1,lag_1
@@ -455,7 +457,7 @@ class TestSeriesToDfTransformer2(hut.TestCase):
                 "join_output_with_input": True,
             }
         )
-        node = cdnt.SeriesToDfTransformer("add_lags", **config.to_dict())
+        node = cdtfnotra.SeriesToDfTransformer("add_lags", **config.to_dict())
         with pytest.raises(AssertionError):
             node.fit(data)["df_out"]
 
@@ -484,7 +486,7 @@ datetime,MN0,MN1,MN0,MN1
         return df
 
 
-class TestSeriesToSeriesTransformer1(hut.TestCase):
+class TestSeriesToSeriesTransformer1(hunitest.TestCase):
     def test1(self) -> None:
         data = self._get_data()
         config = cconfig.get_config_from_nested_dict(
@@ -494,7 +496,9 @@ class TestSeriesToSeriesTransformer1(hut.TestCase):
                 "transformer_func": lambda x: x.pct_change(),
             }
         )
-        node = cdnt.SeriesToSeriesTransformer("compute_ret_0", **config.to_dict())
+        node = cdtfnotra.SeriesToSeriesTransformer(
+            "compute_ret_0", **config.to_dict()
+        )
         actual = node.fit(data)["df_out"]
         expected_txt = """
 ,ret_0,ret_0,close,close,volume,volume
@@ -525,7 +529,7 @@ datetime,MN0,MN1,MN0,MN1
         return df
 
 
-class TestSeriesToSeriesTransformer2(hut.TestCase):
+class TestSeriesToSeriesTransformer2(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test `fit()` call.
@@ -538,9 +542,11 @@ class TestSeriesToSeriesTransformer2(hut.TestCase):
                 "transformer_func": lambda x: x.pct_change(),
             }
         )
-        node = cdnt.SeriesToSeriesTransformer("sklearn", **config.to_dict())
+        node = cdtfnotra.SeriesToSeriesTransformer("sklearn", **config.to_dict())
         df_out = node.fit(data)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(
+            df_out.round(3), index=True, decimals=3
+        )
         self.check_string(df_str)
 
     def test2(self) -> None:
@@ -555,7 +561,7 @@ class TestSeriesToSeriesTransformer2(hut.TestCase):
                 "transformer_func": lambda x: x.pct_change(),
             }
         )
-        node = cdnt.SeriesToSeriesTransformer("sklearn", **config.to_dict())
+        node = cdtfnotra.SeriesToSeriesTransformer("sklearn", **config.to_dict())
         expected, actual = cdnth.get_fit_predict_outputs(data, node)
         self.assert_equal(actual, expected)
 
@@ -563,7 +569,7 @@ class TestSeriesToSeriesTransformer2(hut.TestCase):
         """
         Generate multivariate normal returns.
         """
-        mn_process = casgen.MultivariateNormalProcess()
+        mn_process = carsigen.MultivariateNormalProcess()
         mn_process.set_cov_from_inv_wishart_draw(dim=4, seed=342)
         realization = mn_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=134
@@ -577,7 +583,7 @@ class TestSeriesToSeriesTransformer2(hut.TestCase):
         return data
 
 
-class TestSeriesToSeriesTransformer3(hut.TestCase):
+class TestSeriesToSeriesTransformer3(hunitest.TestCase):
     def test_drop_nans(self) -> None:
         data = self._get_data()
         config = cconfig.get_config_from_nested_dict(
@@ -589,7 +595,7 @@ class TestSeriesToSeriesTransformer3(hut.TestCase):
                 "join_output_with_input": False,
             }
         )
-        node = cdnt.SeriesToSeriesTransformer("diff", **config.to_dict())
+        node = cdtfnotra.SeriesToSeriesTransformer("diff", **config.to_dict())
         actual = node.fit(data)["df_out"]
         expected_txt = """
 ,diff,diff
@@ -619,7 +625,7 @@ class TestSeriesToSeriesTransformer3(hut.TestCase):
                 "drop_nans": True,
             }
         )
-        node = cdnt.SeriesToSeriesTransformer("diff", **config.to_dict())
+        node = cdtfnotra.SeriesToSeriesTransformer("diff", **config.to_dict())
         actual = node.fit(data)["df_out"]
         expected_txt = """
 ,diff,diff,close,close,mid,mid
@@ -651,7 +657,7 @@ class TestSeriesToSeriesTransformer3(hut.TestCase):
                 "join_output_with_input": False,
             }
         )
-        node = cdnt.SeriesToSeriesTransformer("diff", **config.to_dict())
+        node = cdtfnotra.SeriesToSeriesTransformer("diff", **config.to_dict())
         actual = node.fit(data)["df_out"]
         expected_txt = """
 ,diff,diff
@@ -681,7 +687,7 @@ class TestSeriesToSeriesTransformer3(hut.TestCase):
                 "join_output_with_input": True,
             }
         )
-        node = cdnt.SeriesToSeriesTransformer("diff", **config.to_dict())
+        node = cdtfnotra.SeriesToSeriesTransformer("diff", **config.to_dict())
         with pytest.raises(AssertionError):
             node.fit(data)["df_out"]
 
@@ -702,7 +708,7 @@ datetime,MN0,MN1,MN0,MN1
         return df
 
 
-class TestFunctionWrapper(hut.TestCase):
+class TestFunctionWrapper(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test `fit()` call.
@@ -722,7 +728,7 @@ class TestFunctionWrapper(hut.TestCase):
                 },
             }
         )
-        node = cdnt.FunctionWrapper("sklearn", **config.to_dict())
+        node = cdtfnotra.FunctionWrapper("sklearn", **config.to_dict())
         actual = node.fit(data)["df_out"]
         txt = """
 datetime,pv
@@ -748,7 +754,7 @@ datetime,close,volume
         return df
 
 
-class TestTwapVwapComputer(hut.TestCase):
+class TestTwapVwapComputer(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test building 5-min TWAP/VWAP bars from 1-min close/volume bars.
@@ -761,9 +767,11 @@ class TestTwapVwapComputer(hut.TestCase):
                 "volume_col": "volume",
             }
         )
-        node = cdnt.TwapVwapComputer("twapvwap", **config.to_dict())
+        node = cdtfnotra.TwapVwapComputer("twapvwap", **config.to_dict())
         df_out = node.fit(data)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(
+            df_out.round(3), index=True, decimals=3
+        )
         self.check_string(df_str)
 
     def test2(self) -> None:
@@ -778,7 +786,7 @@ class TestTwapVwapComputer(hut.TestCase):
                 "volume_col": "volume",
             }
         )
-        node = cdnt.TwapVwapComputer("twapvwap", **config.to_dict())
+        node = cdtfnotra.TwapVwapComputer("twapvwap", **config.to_dict())
         expected, actual = cdnth.get_fit_predict_outputs(data, node)
         self.assert_equal(actual, expected)
 
@@ -792,7 +800,7 @@ class TestTwapVwapComputer(hut.TestCase):
             "freq": "T",
         }
         ar_params = [0.5]
-        arma_process = casgen.ArmaProcess(ar_params, [])
+        arma_process = carsigen.ArmaProcess(ar_params, [])
         rets = arma_process.generate_sample(
             date_range_kwargs=date_range_kwargs,
             scale=1,
@@ -801,7 +809,7 @@ class TestTwapVwapComputer(hut.TestCase):
         )
         prices = np.exp(0.25 * rets.cumsum())
         prices.name = "close"
-        poisson_process = casgen.PoissonProcess(mu=100)
+        poisson_process = carsigen.PoissonProcess(mu=100)
         volume = poisson_process.generate_sample(
             date_range_kwargs=date_range_kwargs,
             seed=100,
@@ -811,7 +819,7 @@ class TestTwapVwapComputer(hut.TestCase):
         return df
 
 
-class TestMultiindexTwapVwapComputer(hut.TestCase):
+class TestMultiindexTwapVwapComputer(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test building 5-min TWAP/VWAP bars from 1-min close/volume bars.
@@ -825,9 +833,13 @@ class TestMultiindexTwapVwapComputer(hut.TestCase):
                 "out_col_group": (),
             }
         )
-        node = cdnt.MultiindexTwapVwapComputer("twapvwap", **config.to_dict())
+        node = cdtfnotra.MultiindexTwapVwapComputer(
+            "twapvwap", **config.to_dict()
+        )
         df_out = node.fit(data)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(
+            df_out.round(3), index=True, decimals=3
+        )
         self.check_string(df_str)
 
     def test2(self) -> None:
@@ -843,7 +855,9 @@ class TestMultiindexTwapVwapComputer(hut.TestCase):
                 "out_col_group": (),
             }
         )
-        node = cdnt.MultiindexTwapVwapComputer("twapvwap", **config.to_dict())
+        node = cdtfnotra.MultiindexTwapVwapComputer(
+            "twapvwap", **config.to_dict()
+        )
         expected, actual = cdnth.get_fit_predict_outputs(data, node)
         self.assert_equal(actual, expected)
 
@@ -856,14 +870,14 @@ class TestMultiindexTwapVwapComputer(hut.TestCase):
             "end": "2001-01-04 10:00:00",
             "freq": "T",
         }
-        mn_process = casgen.MultivariateNormalProcess()
+        mn_process = carsigen.MultivariateNormalProcess()
         mn_process.set_cov_from_inv_wishart_draw(dim=4, seed=402)
         rets = mn_process.generate_sample(
             date_range_kwargs=date_range_kwargs, seed=343
         )
         rets = rets.rename(columns=lambda x: "MN" + str(x))
         prices = np.exp(0.1 * rets.cumsum())
-        poisson_process = casgen.PoissonProcess(mu=100)
+        poisson_process = carsigen.PoissonProcess(mu=100)
         volume_srs = poisson_process.generate_sample(
             date_range_kwargs=date_range_kwargs,
             seed=100,

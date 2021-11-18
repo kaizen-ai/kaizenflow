@@ -1,11 +1,11 @@
 """
-Import as:
-
-import _setenv_lib as selib
-
 This library contains functions used by a `setenv_*.py` script in a repo to
 generate a bash script that is executed to configure the development
 environment.
+
+Import as:
+
+import dev_scripts.old.create_conda._setenv_lib as dsoccseli
 """
 
 import argparse
@@ -14,10 +14,10 @@ import os
 import sys
 from typing import Any, Dict, List, Tuple
 
-import helpers.dbg as dbg  # isort:skip # noqa: E402
-import helpers.io_ as io_  # isort:skip # noqa: E402
-import helpers.parser as prsr  # isort:skip # noqa: E402
-import helpers.system_interaction as si  # isort:skip # noqa: E402
+import helpers.dbg as hdbg  # isort:skip # noqa: E402
+import helpers.io_ as hio  # isort:skip # noqa: E402
+import helpers.parser as hparser  # isort:skip # noqa: E402
+import helpers.system_interaction as hsysinte  # isort:skip # noqa: E402
 
 
 _LOG = logging.getLogger(__name__)
@@ -119,26 +119,26 @@ def report_info(txt: str) -> Tuple[str, str]:
         - user_name
     """
     _frame("Info", txt)
-    _log_var("cmd_line", dbg.get_command_line(), txt)
+    _log_var("cmd_line", hdbg.get_command_line(), txt)
     exec_name = os.path.abspath(sys.argv[0])
-    dbg.dassert_exists(exec_name)
+    hdbg.dassert_exists(exec_name)
     _log_var("exec_name", exec_name, txt)
     # Full path of this executable which is the same as setenv_*.sh.
     exec_path = os.path.dirname(exec_name)
     _log_var("exec_path", exec_path, txt)
-    dbg.dassert(
+    hdbg.dassert(
         os.path.basename(exec_path), "dev_scripts", "exec_path=%s", exec_path
     )
     # Get the path of the root of the Git client.
     client_root_path = os.path.abspath(os.path.join(exec_path, ".."))
-    dbg.dassert_exists(client_root_path)
+    hdbg.dassert_exists(client_root_path)
     # Current dir.
     curr_path = os.getcwd()
     _log_var("curr_path", curr_path, txt)
     # Get name.
-    user_name = si.get_user_name()
+    user_name = hsysinte.get_user_name()
     _log_var("user_name", user_name, txt)
-    server_name = si.get_server_name()
+    server_name = hsysinte.get_server_name()
     _log_var("server_name", server_name, txt)
     return client_root_path, user_name
 
@@ -180,11 +180,11 @@ def config_python(dirs: List[str], txt: str) -> None:
     txt.append("export PYTHONDONTWRITEBYTECODE=x")
     #
     txt.append("# Append paths to PYTHONPATH.")
-    dbg.dassert_isinstance(dirs, list)
+    hdbg.dassert_isinstance(dirs, list)
     dirs = sorted(dirs)
     dirs = [os.path.abspath(d) for d in dirs]
     for d in dirs:
-        dbg.dassert_exists(d)
+        hdbg.dassert_exists(d)
     python_path = dirs + ["$PYTHONPATH"]
     txt.extend(_export_env_var("PYTHONPATH", python_path))
     txt.append("# Assign MYPYPATH to let mypy find the modules.")
@@ -203,7 +203,7 @@ def config_conda(
     _log_var("conda_sh_path", conda_sh_path, txt)
     # TODO(gp): This makes conda not working for some reason.
     # txt.append("source %s" % conda_sh_path)
-    dbg.dassert_exists(conda_sh_path)
+    hdbg.dassert_exists(conda_sh_path)
     #
     txt.append('echo "CONDA_PATH="$(which conda)')
     txt.append('echo "CONDA_VER="$(conda -V)')
@@ -233,11 +233,11 @@ def config_path(dirs: List[str], txt: str) -> str:
     Prepend to PATH the directories `dirs` rooted in `path`.
     """
     _frame("Config path", txt)
-    dbg.dassert_isinstance(dirs, list)
+    hdbg.dassert_isinstance(dirs, list)
     dirs = sorted(dirs)
     dirs = [os.path.abspath(d) for d in dirs]
     for d in dirs:
-        dbg.dassert_exists(d)
+        hdbg.dassert_exists(d)
     path = dirs + ["$PATH"]
     txt.extend(_export_env_var("PATH", path))
     return txt
@@ -249,14 +249,14 @@ def test_packages(amp_path: str, txt: str) -> None:
         amp_path, "dev_scripts/install/check_develop_packages.py"
     )
     script = os.path.abspath(script)
-    dbg.dassert_exists(script)
+    hdbg.dassert_exists(script)
     _execute(script, txt)
 
 
 def save_script(args: argparse.Namespace, txt: str):
     txt = "\n".join(txt)
     if args.output_file:
-        io_.to_file(args.output_file, txt)
+        hio.to_file(args.output_file, txt)
     else:
         # stdout.
         print(txt)
@@ -275,7 +275,7 @@ def parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "-e", "--conda_env", default=None, help="Select the conda env to use."
     )
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     # To capture some dummy command options (e.g., "bell-style none") passed by
     # source on some systems.
     parser.add_argument("positional", nargs="*", help="...")

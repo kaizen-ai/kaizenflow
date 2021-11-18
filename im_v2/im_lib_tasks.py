@@ -3,7 +3,7 @@ Tasks related to `im` project.
 
 Import as:
 
-import im_v2.im_lib_tasks as imimlitas
+import im_v2.im_lib_tasks as imvimlita
 """
 
 import logging

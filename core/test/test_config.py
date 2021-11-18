@@ -7,8 +7,8 @@ import pytest
 
 import core.config as cconfig
 import helpers.printing as hprint
-import helpers.system_interaction as hsinte
-import helpers.unit_test as hut
+import helpers.system_interaction as hsysinte
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ def _check_roundtrip_transformation(self_: Any, config: cconfig.Config) -> str:
 # #############################################################################
 
 
-class Test_flat_config_set1(hut.TestCase):
+class Test_flat_config_set1(hunitest.TestCase):
     def test_set1(self) -> None:
         """
         Set a key and print a flat config.
@@ -90,7 +90,7 @@ class Test_flat_config_set1(hut.TestCase):
 # #############################################################################
 
 
-class Test_flat_config_get1(hut.TestCase):
+class Test_flat_config_get1(hunitest.TestCase):
     """
     Test `__getitem__()` to `get()`.
     """
@@ -162,7 +162,7 @@ class Test_flat_config_get1(hut.TestCase):
 # #############################################################################
 
 
-class Test_flat_config_in1(hut.TestCase):
+class Test_flat_config_in1(hunitest.TestCase):
     def test_in1(self) -> None:
         """
         Test in operator.
@@ -188,7 +188,7 @@ class Test_flat_config_in1(hut.TestCase):
 # #############################################################################
 
 
-class Test_nested_config_get1(hut.TestCase):
+class Test_nested_config_get1(hunitest.TestCase):
     def test_existing_key1(self) -> None:
         """
         Check that a key exists.
@@ -285,7 +285,7 @@ class Test_nested_config_get1(hut.TestCase):
 # #############################################################################
 
 
-class Test_nested_config_set1(hut.TestCase):
+class Test_nested_config_set1(hunitest.TestCase):
     def test_not_existing_key1(self) -> None:
         """
         Set a key that doesn't exist.
@@ -402,7 +402,7 @@ class Test_nested_config_set1(hut.TestCase):
 # #############################################################################
 
 
-class Test_nested_config_misc1(hut.TestCase):
+class Test_nested_config_misc1(hunitest.TestCase):
     def test_config_print1(self) -> None:
         """
         Test printing a config.
@@ -469,7 +469,7 @@ class Test_nested_config_misc1(hut.TestCase):
 # #############################################################################
 
 
-class Test_nested_config_in1(hut.TestCase):
+class Test_nested_config_in1(hunitest.TestCase):
     def test_in1(self) -> None:
         """
         Test `in` with nested access.
@@ -523,7 +523,7 @@ class Test_nested_config_in1(hut.TestCase):
 # #############################################################################
 
 
-class Test_nested_config_update1(hut.TestCase):
+class Test_nested_config_update1(hunitest.TestCase):
     def test_update1(self) -> None:
         config1 = _get_nested_config3()
         config2 = _get_nested_config4()
@@ -598,7 +598,7 @@ class Test_nested_config_update1(hut.TestCase):
 # #############################################################################
 
 
-class Test_nested_config_flatten1(hut.TestCase):
+class Test_nested_config_flatten1(hunitest.TestCase):
     def test_flatten1(self) -> None:
         config = cconfig.Config()
         #
@@ -648,7 +648,7 @@ class Test_nested_config_flatten1(hut.TestCase):
 # #############################################################################
 
 
-class Test_subtract_config1(hut.TestCase):
+class Test_subtract_config1(hunitest.TestCase):
     def test_test1(self) -> None:
         config1 = cconfig.Config()
         config1[("l0",)] = "1st_floor"
@@ -695,7 +695,7 @@ class Test_subtract_config1(hut.TestCase):
 # #############################################################################
 
 
-class Test_dassert_is_serializable1(hut.TestCase):
+class Test_dassert_is_serializable1(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test a config that can be serialized correctly.
@@ -760,7 +760,7 @@ class Test_dassert_is_serializable1(hut.TestCase):
 # #############################################################################
 
 
-class Test_from_env_var1(hut.TestCase):
+class Test_from_env_var1(hunitest.TestCase):
     def test1(self) -> None:
         eval_config = cconfig.get_config_from_nested_dict(
             {
@@ -784,7 +784,7 @@ class Test_from_env_var1(hut.TestCase):
         )
         cmd = f"{pre_cmd}; python -c '{python_code}'"
         _LOG.debug("cmd=%s", cmd)
-        hsinte.system(cmd, suppress_output=False)
+        hsysinte.system(cmd, suppress_output=False)
 
 
 # #############################################################################

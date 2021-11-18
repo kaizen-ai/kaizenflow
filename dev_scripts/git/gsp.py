@@ -3,16 +3,20 @@
 """
 Stash the changes in a Git client without changing the client, besides a reset
 of the index.
+
+Import as:
+
+import dev_scripts.git.gsp as dscgigsp
 """
 
 import argparse
 import logging
 
-import helpers.dbg as dbg
-import helpers.git as git
-import helpers.parser as prsr
-import helpers.printing as pri
-import helpers.system_interaction as si
+import helpers.dbg as hdbg
+import helpers.git as hgit
+import helpers.parser as hparser
+import helpers.printing as hprint
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -20,20 +24,20 @@ _LOG = logging.getLogger(__name__)
 
 
 def _system(cmd, *args, **kwargs):
-    si.system(cmd, log_level=logging.INFO, *args, **kwargs)
+    hsysinte.system(cmd, log_level=logging.INFO, *args, **kwargs)
 
 
 def _print(msg):
-    msg = pri.color_highlight(msg, "blue")
+    msg = hprint.color_highlight(msg, "blue")
     print("\n" + msg)
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level)
+    hdbg.init_logger(verbosity=args.log_level)
     #
     _print("# Saving local changes...")
-    tag, was_stashed = git.git_stash_push(
+    tag, was_stashed = hgit.git_stash_push(
         "gsp", msg=args.message, log_level=logging.INFO
     )
     print("tag='%s'" % tag)
@@ -42,7 +46,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         pass
     else:
         _print("# Restoring local changes...")
-        git.git_stash_apply(mode="apply", log_level=logging.INFO)
+        hgit.git_stash_apply(mode="apply", log_level=logging.INFO)
     #
     _print("# Stash state ...")
     cmd = r"git stash list"
@@ -56,7 +60,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "-m", default=None, dest="message", help="Add message to commit"
     )
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 

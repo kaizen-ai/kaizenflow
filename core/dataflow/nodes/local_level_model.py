@@ -1,28 +1,34 @@
+"""
+Import as:
+
+import core.dataflow.nodes.local_level_model as cdtfnllemo
+"""
+
 import collections
 import logging
 from typing import Callable, Dict, List, Optional, Union
 
 import pandas as pd
 
-import core.dataflow.core as cdtfc
-import core.dataflow.nodes.base as cdnb
-import core.dataflow.utils as cdtfu
-import core.signal_processing as csigna
-import core.statistics as cstati
-import helpers.dbg as dbg
+import core.dataflow.core as cdtfcore
+import core.dataflow.nodes.base as cdtfnobas
+import core.dataflow.utils as cdtfutil
+import core.signal_processing as csigproc
+import core.statistics as costatis
+import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
 
-class LocalLevelModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
+class LocalLevelModel(cdtfnobas.FitPredictNode, cdtfnobas.ColModeMixin):
     """
     Fit and predict a steady-state local level model.
     """
 
     def __init__(
         self,
-        nid: cdtfc.NodeId,
-        cols: cdtfu.NodeColumnList,
+        nid: cdtfcore.NodeId,
+        cols: cdtfutil.NodeColumnList,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
@@ -44,8 +50,8 @@ class LocalLevelModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
     def _fit_predict_helper(
         self, df_in: pd.DataFrame, fit: bool
     ) -> Dict[str, pd.DataFrame]:
-        cols = cdtfu.convert_to_list(self._cols)
-        dbg.dassert_eq(
+        cols = cdtfutil.convert_to_list(self._cols)
+        hdbg.dassert_eq(
             len(cols), 1, msg="`LocalLevelModel` only supports a single column."
         )
         col = cols[0]
@@ -55,14 +61,14 @@ class LocalLevelModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         idx = df_in.index
         self._handle_nans(idx, srs.index)
         # Calculate local-level model stats.
-        stats = cstati.compute_local_level_model_stats(srs)
+        stats = costatis.compute_local_level_model_stats(srs)
         com = stats["com"]
-        tau = csigna.calculate_tau_from_com(com)
+        tau = csigproc.calculate_tau_from_com(com)
         if fit:
             self._tau = tau
         # Compute EWMA.
         _LOG.debug("Computing ewma with tau=%s", self._tau)
-        ewma = csigna.compute_smooth_moving_average(srs, tau=self._tau)
+        ewma = csigproc.compute_smooth_moving_average(srs, tau=self._tau)
         ewma.name = str(col) + "_ewma"
         ewma = ewma.to_frame()
         ewma = ewma.reindex(idx)

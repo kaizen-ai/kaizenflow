@@ -14,8 +14,8 @@ from typing import Dict, List, Match, Optional, Tuple
 
 import helpers.dbg as hdbg
 import helpers.io_ as hio
-import helpers.printing as hprintin
-import helpers.system_interaction as hsyint
+import helpers.printing as hprint
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -62,7 +62,7 @@ def get_client_root(super_module: bool) -> str:
         # /Users/saggese/src/.../amp
         cmd = "git rev-parse --show-toplevel"
     # TODO(gp): Use system_to_one_line().
-    _, out = hsyint.system_to_string(cmd)
+    _, out = hsysinte.system_to_string(cmd)
     out = out.rstrip("\n")
     hdbg.dassert_eq(len(out.split("\n")), 1, msg="Invalid out='%s'" % out)
     client_root: str = os.path.realpath(out)
@@ -108,7 +108,7 @@ def get_branch_name(dir_name: str = ".") -> str:
     # > git rev-parse --abbrev-ref HEAD
     # master
     cmd = "cd %s && git rev-parse --abbrev-ref HEAD" % dir_name
-    data: Tuple[int, str] = hsyint.system_to_one_line(cmd)
+    data: Tuple[int, str] = hsysinte.system_to_one_line(cmd)
     _, output = data
     return output
 
@@ -134,7 +134,7 @@ def is_inside_submodule(git_dir: str = ".") -> bool:
     # true
     cmd.append("(git rev-parse --is-inside-work-tree | grep -q true)")
     cmd_as_str = " && ".join(cmd)
-    rc = hsyint.system(cmd_as_str, abort_on_error=False)
+    rc = hsysinte.system(cmd_as_str, abort_on_error=False)
     ret: bool = rc == 0
     return ret
 
@@ -193,7 +193,7 @@ def _get_submodule_hash(dir_name: str) -> str:
     """
     hdbg.dassert_exists(dir_name)
     cmd = "git ls-tree master | grep %s" % dir_name
-    data: Tuple[int, str] = hsyint.system_to_one_line(cmd)
+    data: Tuple[int, str] = hsysinte.system_to_one_line(cmd)
     _, output = data
     # 160000 commit 0011776388b4c0582161eb2749b665fc45b87e7e  amp
     _LOG.debug("output=%s", output)
@@ -221,7 +221,7 @@ def get_path_from_supermodule() -> Tuple[str, str]:
     # > cd /Users/saggese/src/.../lm
     # > git rev-parse --show-superproject-working-tree
     # (No result)
-    superproject_path: str = hsyint.system_to_one_line(cmd)[1]
+    superproject_path: str = hsysinte.system_to_one_line(cmd)[1]
     _LOG.debug("superproject_path='%s'", superproject_path)
     #
     cmd = (
@@ -231,7 +231,7 @@ def get_path_from_supermodule() -> Tuple[str, str]:
     )
     # > git config --file /Users/saggese/src/.../.gitmodules --get-regexp path
     # submodule.amp.path amp
-    submodule_path: str = hsyint.system_to_one_line(cmd)[1]
+    submodule_path: str = hsysinte.system_to_one_line(cmd)[1]
     _LOG.debug("submodule_path='%s'", submodule_path)
     return superproject_path, submodule_path
 
@@ -244,9 +244,9 @@ def get_submodule_paths() -> List[str]:
     # > git config --file .gitmodules --get-regexp path
     # submodule.amp.path amp
     cmd = "git config --file .gitmodules --get-regexp path | awk '{ print $2 }'"
-    _, txt = hsyint.system_to_string(cmd)
+    _, txt = hsysinte.system_to_string(cmd)
     _LOG.debug("txt=%s", txt)
-    files: List[str] = hsyint.text_to_list(txt)
+    files: List[str] = hsysinte.text_to_list(txt)
     _LOG.debug("files=%s", files)
     return files
 
@@ -383,7 +383,7 @@ def get_repo_full_name_from_dirname(
     hdbg.dassert_exists(dir_name)
     #
     cmd = "cd %s; (git remote -v | grep origin | grep fetch)" % dir_name
-    _, output = hsyint.system_to_string(cmd)
+    _, output = hsysinte.system_to_string(cmd)
     # > git remote -v
     # origin  git@github.com:alphamatic/amp (fetch)
     # origin  git@github.com:alphamatic/amp (push)
@@ -582,7 +582,7 @@ def find_file_in_git_tree(file_name: str, super_module: bool = True) -> str:
     root_dir = get_client_root(super_module=super_module)
     # TODO(gp): Use -not -path '*/\.git/*'
     cmd = "find %s -name '%s' | grep -v .git" % (root_dir, file_name)
-    _, file_name = hsyint.system_to_one_line(cmd)
+    _, file_name = hsysinte.system_to_one_line(cmd)
     _LOG.debug("file_name=%s", file_name)
     hdbg.dassert_ne(
         file_name, "", "Can't find file '%s' in dir '%s'", file_name, root_dir
@@ -704,7 +704,7 @@ def find_docker_file(
     file_name = os.path.normpath(file_name)
     _LOG.debug("file_name=%s", file_name)
     # Find the file in the dir.
-    file_names = hsyint.find_file_with_dir(
+    file_names = hsysinte.find_file_with_dir(
         file_name,
         root_dir=root_dir,
         dir_depth=dir_depth,
@@ -736,7 +736,7 @@ def get_head_hash(dir_name: str = ".", short_hash: bool = False) -> str:
     hdbg.dassert_exists(dir_name)
     opts = "--short " if short_hash else " "
     cmd = f"cd {dir_name} && git rev-parse {opts}HEAD"
-    data: Tuple[int, str] = hsyint.system_to_one_line(cmd)
+    data: Tuple[int, str] = hsysinte.system_to_one_line(cmd)
     _, output = data
     return output
 
@@ -745,7 +745,7 @@ def get_head_hash(dir_name: str = ".", short_hash: bool = False) -> str:
 def get_current_commit_hash(dir_name: str = ".") -> str:
     hdbg.dassert_exists(dir_name)
     cmd = f"cd {dir_name} && git rev-parse HEAD"
-    data: Tuple[int, str] = hsyint.system_to_one_line(cmd)
+    data: Tuple[int, str] = hsysinte.system_to_one_line(cmd)
     _, sha = data
     # 0011776388b4c0582161eb2749b665fc45b87e7e
     _LOG.debug("sha=%s", sha)
@@ -759,7 +759,7 @@ def get_remote_head_hash(dir_name: str) -> str:
     hdbg.dassert_exists(dir_name)
     sym_name = get_repo_full_name_from_dirname(dir_name, include_host_name=False)
     cmd = f"git ls-remote git@github.com:{sym_name} HEAD 2>/dev/null"
-    data: Tuple[int, str] = hsyint.system_to_one_line(cmd)
+    data: Tuple[int, str] = hsysinte.system_to_one_line(cmd)
     _, output = data
     # > git ls-remote git@github.com:alphamatic/amp HEAD 2>/dev/null
     # 921676624f6a5f3f36ab507baed1b886227ac2e6        HEAD
@@ -799,7 +799,7 @@ def get_modified_files(
     #   dev_scripts/infra/ssh_tunnels.py
     #   helpers/git.py
     cmd = "(git diff --cached --name-only; git ls-files -m) | sort | uniq"
-    files: List[str] = hsyint.system_to_files(
+    files: List[str] = hsysinte.system_to_files(
         cmd, dir_name, remove_files_non_present
     )
     return files
@@ -827,7 +827,7 @@ def get_previous_committed_files(
     cmd.append("$(git log --author $(git config user.name) -%d" % num_commits)
     cmd.append(r"""| \grep "^commit " | perl -pe 's/commit (.*)/$1/')""")
     cmd_as_str = " ".join(cmd)
-    files: List[str] = hsyint.system_to_files(
+    files: List[str] = hsysinte.system_to_files(
         cmd_as_str, dir_name, remove_files_non_present
     )
     return files
@@ -854,7 +854,7 @@ def get_modified_files_in_branch(
     else:
         target = f"{dst_branch}..."
     cmd = f"git diff --name-only {target}"
-    files: List[str] = hsyint.system_to_files(
+    files: List[str] = hsysinte.system_to_files(
         cmd, dir_name, remove_files_non_present
     )
     return files
@@ -884,13 +884,13 @@ def get_summary_files_in_branch(
     res = ""
     for tag, diff_type in file_types:
         cmd = f"git diff --diff-filter={diff_type} --name-only {dst_branch}..."
-        files = hsyint.system_to_files(
+        files = hsysinte.system_to_files(
             cmd, dir_name, remove_files_non_present=False
         )
         _LOG.debug("files=%s", "\n".join(files))
         if files:
             res += f"# {tag}: {len(files)}\n"
-            res += hprintin.indent("\n".join(files)) + "\n"
+            res += hprint.indent("\n".join(files)) + "\n"
     res = res.rstrip("\n")
     return res
 
@@ -909,7 +909,7 @@ def get_git_name() -> str:
     cmd = "git config --get user.name"
     # For some reason data is annotated as Any by mypy, instead of
     # Tuple[int, str] so we need to cast it to the right value.
-    data: Tuple[int, str] = hsyint.system_to_one_line(cmd)
+    data: Tuple[int, str] = hsysinte.system_to_one_line(cmd)
     _, output = data
     return output
 
@@ -934,7 +934,7 @@ def git_log(num_commits: int = 5, my_commits: bool = False) -> str:
         # TODO(gp): We should use `get_git_name()`.
         cmd.append("--author $(git config user.name)")
     cmd = " ".join(cmd)
-    data: Tuple[int, str] = hsyint.system_to_string(cmd)
+    data: Tuple[int, str] = hsysinte.system_to_string(cmd)
     _, txt = data
     return txt
 
@@ -942,11 +942,11 @@ def git_log(num_commits: int = 5, my_commits: bool = False) -> str:
 def git_stash_push(
     prefix: str, msg: Optional[str] = None, log_level: int = logging.DEBUG
 ) -> Tuple[str, bool]:
-    import helpers.datetime_ as hdatetim
+    import helpers.datetime_ as hdateti
 
-    user_name = hsyint.get_user_name()
-    server_name = hsyint.get_server_name()
-    timestamp = hdatetim.get_timestamp("naive_ET")
+    user_name = hsysinte.get_user_name()
+    server_name = hsysinte.get_server_name()
+    timestamp = hdateti.get_timestamp("naive_ET")
     tag = "%s-%s-%s" % (user_name, server_name, timestamp)
     tag = prefix + "." + tag
     _LOG.debug("tag='%s'", tag)
@@ -956,10 +956,10 @@ def git_stash_push(
     if msg:
         push_msg += ": " + msg
     cmd += " -m '%s'" % push_msg
-    hsyint.system(cmd, suppress_output=False, log_level=log_level)
+    hsysinte.system(cmd, suppress_output=False, log_level=log_level)
     # Check if we actually stashed anything.
     cmd = r"git stash list | \grep '%s' | wc -l" % tag
-    _, output = hsyint.system_to_string(cmd)
+    _, output = hsysinte.system_to_string(cmd)
     was_stashed = int(output) > 0
     if not was_stashed:
         msg = "Nothing was stashed"
@@ -971,7 +971,7 @@ def git_stash_push(
 def git_stash_apply(mode: str, log_level: int = logging.DEBUG) -> None:
     _LOG.debug("# Checking stash head ...")
     cmd = "git stash list | head -3"
-    hsyint.system(cmd, suppress_output=False, log_level=log_level)
+    hsysinte.system(cmd, suppress_output=False, log_level=log_level)
     #
     _LOG.debug("# Restoring local changes...")
     if mode == "pop":
@@ -980,7 +980,7 @@ def git_stash_apply(mode: str, log_level: int = logging.DEBUG) -> None:
         cmd = "git stash apply --quiet"
     else:
         raise ValueError("mode='%s'" % mode)
-    hsyint.system(cmd, suppress_output=False, log_level=log_level)
+    hsysinte.system(cmd, suppress_output=False, log_level=log_level)
 
 
 def git_add_update(
@@ -995,7 +995,7 @@ def git_add_update(
     """
     _LOG.debug("# Adding all changed files to staging ...")
     cmd = "git add %s" % (" ".join(file_list) if file_list is not None else "-u")
-    hsyint.system(cmd, suppress_output=False, log_level=log_level)
+    hsysinte.system(cmd, suppress_output=False, log_level=log_level)
 
 
 def fetch_origin_master_if_needed() -> None:
@@ -1005,22 +1005,22 @@ def fetch_origin_master_if_needed() -> None:
     When testing a branch, `master` is not always fetched, but it might
     be needed by tests.
     """
-    if hsyint.is_inside_ci():
+    if hsysinte.is_inside_ci():
         _LOG.warning("Running inside CI so fetching master")
         cmd = "git branch -a"
-        _, txt = hsyint.system_to_string(cmd)
+        _, txt = hsysinte.system_to_string(cmd)
         _LOG.debug("%s=%s", cmd, txt)
         cmd = r'git branch -a | egrep "\s+master\s*$" | wc -l'
         # * (HEAD detached at pull/1337/merge)
         # master
         # remotes/origin/master
         # remotes/pull/1337/merge
-        _, num = hsyint.system_to_one_line(cmd)
+        _, num = hsysinte.system_to_one_line(cmd)
         num = int(num)
         _LOG.debug("num=%s", num)
         if num == 0:
             # See AmpTask1321 and AmpTask1338 for details.
             cmd = "git fetch origin master:refs/remotes/origin/master"
-            hsyint.system(cmd)
+            hsysinte.system(cmd)
             cmd = "git branch --track master origin/master"
-            hsyint.system(cmd)
+            hsysinte.system(cmd)

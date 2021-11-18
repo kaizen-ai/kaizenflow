@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.old.tunnels as holtun
+import helpers.old.tunnels as holdtunn
 """
 
 import logging
@@ -10,8 +10,8 @@ from typing import Any, Dict, List, Tuple, cast
 
 import helpers.dbg as hdbg
 import helpers.old.user_credentials as holuscre
-import helpers.printing as hprintin
-import helpers.system_interaction as hsyint
+import helpers.printing as hprint
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ def get_tunnel_info() -> Tuple[list, str]:
 
 def tunnel_info_to_string(tunnel_info: list) -> str:
     ret = "\n".join(map(str, tunnel_info))
-    ret = hprintin.indent(ret)
+    ret = hprint.indent(ret)
     ret = cast(str, ret)
     return ret
 
@@ -73,10 +73,10 @@ def _get_services_info() -> list:
     # Server ports.
     services = [
         # service name, server public IP, local port, remote port.
-        ("MongoDb", hsyint.get_env_var("OLD_DEV_SERVER"), 27017, 27017),
-        ("Jenkins", hsyint.get_env_var("JENKINS_SERVER"), 8080, 8080),
-        # ("Reviewboard", hsyint.get_env_var("REVIEWBOARD_SERVER"), 8000, 8000),
-        # ("Doc server", hsyint.get_env_var("REVIEWBOARD_SERVER"), 8001, 80),
+        ("MongoDb", hsysinte.get_env_var("OLD_DEV_SERVER"), 27017, 27017),
+        ("Jenkins", hsysinte.get_env_var("JENKINS_SERVER"), 8080, 8080),
+        # ("Reviewboard", hsysinte.get_env_var("REVIEWBOARD_SERVER"), 8000, 8000),
+        # ("Doc server", hsysinte.get_env_var("REVIEWBOARD_SERVER"), 8001, 80),
         # Netdata to Jenkins and Dev server.
         # ("Dev system performance", DEV_SERVER, 19999),
         # ("Jenkins system performance", DEV_SERVER, 19999),
@@ -101,7 +101,7 @@ def _get_tunnel_info() -> Tuple[Any, str]:
 
 def _tunnel_info_to_string(tunnel_info: list) -> str:
     ret = "\n".join(map(str, tunnel_info))
-    ret = hprintin.indent(ret)
+    ret = hprint.indent(ret)
     ret = cast(str, ret)
     return ret
 
@@ -138,7 +138,7 @@ def _get_ssh_tunnel_process(
         return keep
 
     _LOG.debug("local_port=%d -> remote_port=%d", local_port, remote_port)
-    pids, txt = hsyint.get_process_pids(_keep_line)
+    pids, txt = hsysinte.get_process_pids(_keep_line)
     _LOG.debug("pids=%s", pids)
     _LOG.debug("txt=\n%s", txt)
     return pids, txt
@@ -170,7 +170,7 @@ def _create_tunnel(
         remote_port=remote_port,
         server=server_name,
     )
-    hsyint.system(cmd, blocking=False)
+    hsysinte.system(cmd, blocking=False)
     # Check that the tunnel is up and running.
     pids = _get_ssh_tunnel_process(local_port, remote_port, fuzzy_match=True)
     hdbg.dassert_lte(1, len(pids))
@@ -183,7 +183,7 @@ def _kill_ssh_tunnel_process(local_port: int, remote_port: int) -> None:
     get_pids = lambda: _get_ssh_tunnel_process(
         local_port, remote_port, fuzzy_match=True
     )
-    hsyint.kill_process(get_pids)
+    hsysinte.kill_process(get_pids)
 
 
 # #############################################################################
@@ -257,5 +257,5 @@ def kill_all_tunnel_processes() -> None:
         keep = ("ssh -i" in line) and (":localhost:" in line)
         return keep
 
-    get_pids = lambda: hsyint.get_process_pids(_keep_line)
-    hsyint.kill_process(get_pids)
+    get_pids = lambda: hsysinte.get_process_pids(_keep_line)
+    hsysinte.kill_process(get_pids)

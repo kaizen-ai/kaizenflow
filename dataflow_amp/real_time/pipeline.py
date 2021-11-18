@@ -1,7 +1,7 @@
 """
 Import as:
 
-import dataflow_amp.real_time.pipeline as dtfamretipip
+import dataflow_amp.real_time.pipeline as dtfaretipi
 """
 
 import logging

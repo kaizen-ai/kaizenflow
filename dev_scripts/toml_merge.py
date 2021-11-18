@@ -8,6 +8,10 @@ merge multiple poetry files.
     --in_file devops/docker_build/pyproject.toml \
     --in_file amp/devops/docker_build/pyproject.toml \
     --out_file pyproject.toml
+
+Import as:
+
+import dev_scripts.toml_merge as dsctomer
 """
 
 import argparse
@@ -19,9 +23,9 @@ from typing import Any, List, MutableMapping
 
 import toml
 
-import helpers.dbg as dbg
-import helpers.io_ as io_
-import helpers.parser as prsr
+import helpers.dbg as hdbg
+import helpers.io_ as hio
+import helpers.parser as hparser
 import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
@@ -61,7 +65,7 @@ def _merge_toml(pyprojs: List[_DepDict]) -> _DepDict:
     """
     Merge "dependencies", "dev-dependencies" keys in two toml dictionaries.
     """
-    dbg.dassert_lte(1, len(pyprojs))
+    hdbg.dassert_lte(1, len(pyprojs))
     pyproj = copy.deepcopy(pyprojs[0])
     for key in ["dependencies", "dev-dependencies"]:
         pyproj_list = [
@@ -81,13 +85,13 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--out_file", action="store", help="File to write", required=True
     )
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Load all the toml files requested as dictionaries.
     pyprojs: List[_DepDict] = []
     for file_name in args.in_file:
@@ -104,7 +108,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     merged_toml = toml.dumps(merged_pyproj)
     _LOG.debug("merged_toml=%s", merged_toml)
     file_name = os.path.abspath(args.out_file)
-    io_.to_file(file_name, merged_toml)
+    hio.to_file(file_name, merged_toml)
     _LOG.info("Result saved into '%s'", file_name)
 
 

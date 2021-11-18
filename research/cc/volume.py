@@ -3,18 +3,18 @@ Compute crypto-related trading volume statistics.
 
 Import as:
 
-import research.cc.volume as rccvol
+import research.cc.volume as rccvolu
 """
 import pandas as pd
 import seaborn as sns
 
-import core.config.config_ as ccocon
-import core.plotting as cplot
+import core.config.config_ as cconconf
+import core.plotting as coplotti
 
 
 def get_daily_cumul_volume(
     data: pd.DataFrame,
-    config: ccocon.Config,
+    config: cconconf.Config,
     is_notional_volume: bool,
 ) -> pd.DataFrame:
     """
@@ -41,7 +41,7 @@ def get_daily_cumul_volume(
 
 def get_total_exchange_volume(
     data: pd.DataFrame,
-    config: ccocon.Config,
+    config: cconconf.Config,
     avg_daily: bool,
     display_plot: bool = True,
 ) -> pd.Series:
@@ -62,7 +62,7 @@ def get_total_exchange_volume(
         exchange_volume = data.groupby([exchange_id])[volume].sum()
     exchange_volume = exchange_volume.sort_values(ascending=False)
     if display_plot:
-        cplot.plot_barplot(
+        coplotti.plot_barplot(
             exchange_volume,
             title="Total volume per exchange (log-scaled)",
             figsize=[15, 7],
@@ -73,7 +73,7 @@ def get_total_exchange_volume(
 
 def get_total_coin_volume(
     data: pd.DataFrame,
-    config: ccocon.Config,
+    config: cconconf.Config,
     avg_daily: bool,
     display_plot: bool = True,
 ) -> pd.Series:
@@ -94,7 +94,7 @@ def get_total_coin_volume(
         coin_volume = data.groupby([currency_pair])[volume].sum()
     coin_volume = coin_volume.sort_values(ascending=False)
     if display_plot:
-        cplot.plot_barplot(
+        coplotti.plot_barplot(
             coin_volume,
             title="Total volume per coin (log-scaled)",
             figsize=[15, 7],
@@ -105,7 +105,7 @@ def get_total_coin_volume(
 
 def get_rolling_volume_per_exchange(
     data: pd.DataFrame,
-    config: ccocon.Config,
+    config: cconconf.Config,
     window: int,
     display_plot: bool = True,
 ) -> pd.DataFrame:
@@ -144,7 +144,7 @@ def get_rolling_volume_per_exchange(
 
 def get_rolling_volume_per_coin(
     data: pd.DataFrame,
-    config: ccocon.Config,
+    config: cconconf.Config,
     window: int,
     display_plot: bool = True,
 ) -> pd.DataFrame:
@@ -183,7 +183,7 @@ def get_rolling_volume_per_coin(
 
 def compare_weekday_volumes(
     data: pd.DataFrame,
-    config: ccocon.Config,
+    config: cconconf.Config,
     plot_total_volumes: bool = True,
     plot_distr_by_weekdays: bool = True,
 ) -> pd.Series:
@@ -202,7 +202,7 @@ def compare_weekday_volumes(
         data.groupby("weekday")[volume].sum().sort_values(ascending=False)
     )
     if plot_total_volumes:
-        cplot.plot_barplot(
+        coplotti.plot_barplot(
             total_volume_by_weekdays,
             title="Total volume per weekdays",
             figsize=[15, 7],

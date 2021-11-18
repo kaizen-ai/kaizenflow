@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import helpers.unit_test as huntes
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -21,12 +21,12 @@ except ImportError as e:
     _HAS_CVXPY = False
 
 if _HAS_CVXPY:
-    import optimizer.costs as optcos
-    import optimizer.single_period_optimization as optspo
+    import optimizer.costs as opcosts
+    import optimizer.single_period_optimization as osipeopt
 
 
 @pytest.mark.skip(reason="Requires special docker container.")
-class Test_compute_single_period_optimization(huntes.TestCase):
+class Test_compute_single_period_optimization(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test with basic covariance matrix cost.
@@ -52,9 +52,9 @@ cash,0
         #
         covariance = self._get_covariance()
         gamma = 0.001
-        costs = [optcos.CovarianceRiskModel(covariance, gamma)]
+        costs = [opcosts.CovarianceRiskModel(covariance, gamma)]
         #
-        spo = optspo.SinglePeriodOptimizer(costs, [])
+        spo = osipeopt.SinglePeriodOptimizer(costs, [])
         actual = spo.optimize(holdings, predictions)
         #
         txt = """
@@ -92,9 +92,9 @@ cash,0
         #
         covariance = self._get_covariance()
         gamma = 1.0
-        costs = [optcos.CovarianceRiskModel(covariance, gamma)]
+        costs = [opcosts.CovarianceRiskModel(covariance, gamma)]
         #
-        spo = optspo.SinglePeriodOptimizer(costs, [])
+        spo = osipeopt.SinglePeriodOptimizer(costs, [])
         actual = spo.optimize(holdings, predictions)
         #
         txt = """

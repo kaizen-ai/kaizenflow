@@ -24,7 +24,7 @@ import statsmodels.formula.api as smapi
 import statsmodels.tsa.stattools as smtools
 
 import core.config.config_ as cconconf
-import core.plotting as cplot
+import core.plotting as coplotti
 import helpers.s3 as hs3
 import im_v2.data.universe as imv2dauni
 import research.cc.statistics as rccstat
@@ -130,7 +130,7 @@ def get_overall_returns_volatility(data: pd.DataFrame, display_plot: bool):
     rets_df = close_df.groupby(["currency_pair"]).pct_change()
     std_df = rets_df.groupby(["currency_pair"]).std()
     if display_plot:
-        cplot.plot_barplot(
+        coplotti.plot_barplot(
             std_df.sort_values(ascending=False),
             title="Volatility per coin for the whole period (1-day basis, log-scaled)",
             figsize=[15, 7],

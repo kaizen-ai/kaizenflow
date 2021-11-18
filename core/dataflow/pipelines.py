@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.dataflow.pipelines as cdtfpip
+import core.dataflow.pipelines as cdtfpipe
 """
 
 import logging
@@ -10,7 +10,7 @@ import sklearn
 
 import core.config as cconfig
 import core.event_study as cevent
-import core.signal_processing as csipro
+import core.signal_processing as csigproc
 from core.dataflow.builders import DagBuilder
 from core.dataflow.core import DAG
 from core.dataflow.nodes.base import YConnector
@@ -163,7 +163,7 @@ class EventStudyBuilder(DagBuilder):
         stage = "generate_event_signal"
         node = ColumnTransformer(
             self._get_nid(stage),
-            transformer_func=csipro.compute_smooth_moving_average,
+            transformer_func=csigproc.compute_smooth_moving_average,
             **config[self._get_nid(stage)].to_dict(),
             col_mode="replace_all",
         )

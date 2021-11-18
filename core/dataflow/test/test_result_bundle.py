@@ -7,15 +7,15 @@ import pandas as pd
 import core.config as cconfig
 
 # TODO(gp): Use
-# import core.dataflow.result_bundle as cdtfrb
+# import core.dataflow.result_bundle as cdtfrebun
 import core.dataflow as dtf
 import helpers.printing as hprint
-import helpers.unit_test as hut
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-class TestResultBundle(hut.TestCase):
+class TestResultBundle(hunitest.TestCase):
     def test_to_config1(self) -> None:
         """
         Convert a `ResultBundle` to a config.
@@ -61,7 +61,7 @@ class TestResultBundle(hut.TestCase):
         file_name = os.path.join(dir_name, "result_bundle.pkl")
         rb.to_pickle(file_name, use_pq=False)
         # Compute the signature of the dir.
-        actual = hut.get_dir_signature(dir_name, include_file_content=False)
+        actual = hunitest.get_dir_signature(dir_name, include_file_content=False)
         # Check.
         expected = """
         # Dir structure
@@ -122,7 +122,7 @@ class TestResultBundle(hut.TestCase):
 # ##################################################################################
 
 
-class TestPredictionResultBundle(hut.TestCase):
+class TestPredictionResultBundle(hunitest.TestCase):
     def test_to_config1(self) -> None:
         init_config = self._get_init_config()
         prb = dtf.PredictionResultBundle(**init_config.to_dict())

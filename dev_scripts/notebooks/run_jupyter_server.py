@@ -8,14 +8,18 @@ Start a jupyter server.
 
 # This is equivalent to:
 > jupyter notebook '--ip=*' --browser chrome . --port 10001
+
+Import as:
+
+import dev_scripts.notebooks.run_jupyter_server as dsnrjuse
 """
 
 import argparse
 import logging
 
-import helpers.dbg as dbg
-import helpers.parser as prsr
-import helpers.system_interaction as si
+import helpers.dbg as hdbg
+import helpers.parser as hparser
+import helpers.system_interaction as hsysinte
 import helpers.user_credentials as usc
 
 _LOG = logging.getLogger(__name__)
@@ -38,7 +42,7 @@ def _get_port_process(port):
         return keep
 
     keep_line = lambda line: _keep_line(port, line)
-    pids, txt = si.get_process_pids(keep_line)
+    pids, txt = hsysinte.get_process_pids(keep_line)
     _LOG.debug("pids=%s", pids)
     return pids, txt
 
@@ -50,7 +54,7 @@ def _check(port):
 
 def _kill(port):
     get_pids = lambda: _get_port_process(port)
-    si.kill_process(get_pids)
+    hsysinte.kill_process(get_pids)
 
 
 def _start(port, action):
@@ -73,7 +77,7 @@ def _start(port, action):
     print("You can connect to: %s:%s" % (ip_name, port))
     cmd = "jupyter notebook '--ip=*' --browser chrome . --port %s" % port
     if action != "only_print_cmd":
-        si.system(cmd, suppress_output=False, log_level="echo")
+        hsysinte.system(cmd, suppress_output=False, log_level="echo")
     else:
         print(cmd)
 
@@ -103,17 +107,17 @@ def _parse() -> argparse.ArgumentParser:
         default=None,
         help="Override the " "default port to use",
     )
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level)
+    hdbg.init_logger(verbosity=args.log_level)
     # Get the default port.
     credentials = usc.get_credentials()
     jupyter_port = credentials["jupyter_port"]
-    dbg.dassert_is_not(jupyter_port, None)
+    hdbg.dassert_is_not(jupyter_port, None)
     if args.port is not None:
         port = int(args.port)
         _LOG.warning("Overriding port %d with port %d", jupyter_port, port)
@@ -129,7 +133,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     elif action in ("start", "force_start", "only_print_cmd"):
         _start(jupyter_port, action)
     else:
-        dbg.dfatal("Invalid action='%s'" % action)
+        hdbg.dfatal("Invalid action='%s'" % action)
 
 
 if __name__ == "__main__":

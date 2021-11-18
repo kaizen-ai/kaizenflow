@@ -8,12 +8,12 @@ import pytest
 import core.dataflow as dtf
 import core.dataflow.real_time as cdtfretim
 import core.dataflow.result_bundle as cdtfrebun
-import core.dataflow.runners as cdtfrun
+import core.dataflow.runners as cdtfrunn
 import core.dataflow.test.test_builders as cdtfnttd
 import core.dataflow.test.test_real_time as cdtfttrt
-import helpers.datetime_ as hdatetim
-import helpers.hasyncio as hhasynci
-import helpers.unit_test as huntes
+import helpers.datetime_ as hdateti
+import helpers.hasyncio as hasynci
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class TestRollingFitPredictDagRunner1(huntes.TestCase):
+class TestRollingFitPredictDagRunner1(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test the DagRunner using `ArmaReturnsBuilder`
@@ -45,7 +45,7 @@ class TestRollingFitPredictDagRunner1(huntes.TestCase):
 # #############################################################################
 
 
-class TestIncrementalDagRunner1(huntes.TestCase):
+class TestIncrementalDagRunner1(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test the DagRunner using `ArmaReturnsBuilder`.
@@ -81,7 +81,7 @@ class TestIncrementalDagRunner1(huntes.TestCase):
 # #############################################################################
 
 
-class TestRealTimeDagRunner1(huntes.TestCase):
+class TestRealTimeDagRunner1(hunitest.TestCase):
     """
     - Create a naive DAG pipeline with a node generating random data and
       processing the data through a pass-through node
@@ -96,7 +96,7 @@ class TestRealTimeDagRunner1(huntes.TestCase):
         """
         Use simulated replayed time.
         """
-        with hhasynci.solipsism_context() as event_loop:
+        with hasynci.solipsism_context() as event_loop:
             events, result_bundles = self._helper(event_loop)
         self._check(events, result_bundles)
 
@@ -137,7 +137,7 @@ class TestRealTimeDagRunner1(huntes.TestCase):
             "dst_dir": None,
         }
         # Align on a second boundary.
-        get_wall_clock_time = lambda: hdatetim.get_current_time(
+        get_wall_clock_time = lambda: hdateti.get_current_time(
             tz="ET", event_loop=event_loop
         )
         grid_time_in_secs = 1
@@ -145,8 +145,8 @@ class TestRealTimeDagRunner1(huntes.TestCase):
             get_wall_clock_time, grid_time_in_secs, event_loop=event_loop
         )
         # Run.
-        dag_runner = cdtfrun.RealTimeDagRunner(**dag_runner_kwargs)
-        result_bundles = hhasynci.run(dag_runner.predict(), event_loop=event_loop)
+        dag_runner = cdtfrunn.RealTimeDagRunner(**dag_runner_kwargs)
+        result_bundles = hasynci.run(dag_runner.predict(), event_loop=event_loop)
         events = dag_runner.events
         #
         _LOG.debug("events=\n%s", events)
