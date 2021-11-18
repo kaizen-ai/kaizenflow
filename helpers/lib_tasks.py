@@ -1046,8 +1046,7 @@ def _get_amp_docker_compose_path() -> Optional[str]:
     """
     Return the docker compose for `amp` as supermodule or as submodule.
 
-    E.g., 
-    `devops/compose/docker-compose_as_submodule.yml` and
+    E.g., `devops/compose/docker-compose_as_submodule.yml` and
     `devops/compose/docker-compose_as_supermodule.yml`
     """
     path, _ = hgit.get_path_from_supermodule()
@@ -1662,7 +1661,7 @@ def docker_release_dev_image(  # type: ignore
     if superslow_tests:
         run_superslow_tests(ctx, stage=stage)
     # 3) Run end-to-end test.
-    if run_end_to_end_tests:
+    if end_to_end_tests:
         end_to_end_test_fn = get_default_param("END_TO_END_TEST_FN")
         if not end_to_end_test_fn(ctx, stage=stage):
             _LOG.error("End-to-end test has failed")
@@ -2147,7 +2146,7 @@ def _build_run_command_line(
     pytest_opts_tmp = [po for po in pytest_opts_tmp if po != ""]
     # TODO(gp): Use _to_multi_line_cmd()
     pytest_opts = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
-    cmd = f"pytest {pytest_opts}"
+    cmd = f"pytest {pytest_opts} {dir_name}"
     if tee_to_file:
         cmd += " 2>&1 | tee tmp.pytest.log"
     return cmd
@@ -2453,6 +2452,7 @@ def _get_failed_tests_from_clipboard() -> List[str]:
     # pylint: disable=line-too-long
     """
     ```
+
     FAILED core/dataflow/nodes/test/test_sources.py::TestRealTimeDataSource1::test_replayed_real_time1 - TypeError: __init__() got an unexpected keyword argument 'speed_up_factor'
     FAILED helpers/test/test_lib_tasks.py::Test_find_check_string_output1::test1 - TypeError: check_string() takes 2 positional arguments but 3 were given
     FAILED helpers/test/test_lib_tasks.py::Test_find_check_string_output1::test2 - TypeError: check_string() takes 2 positional arguments but 3 were given

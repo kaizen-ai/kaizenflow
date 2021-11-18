@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.ccxt.data.load.loader as imccdaloloa
+import im.ccxt.data.load.loader as imcdalolo
 """
 
 import logging
@@ -10,13 +10,13 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 
-import core.pandas_helpers as cpah
-import helpers.datetime_ as hdatetim
+import core.pandas_helpers as cpanh
+import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
-import helpers.hpandas as hhpandas
+import helpers.hpandas as hpandas
 import helpers.s3 as hs3
 import helpers.sql as hsql
-import im.data.universe as imdauni
+import im_v2.data.universe as imdatuniv
 
 _LOG = logging.getLogger(__name__)
 
@@ -105,11 +105,11 @@ class CcxtLoader:
             query_conditions.append("currency_pair IN %s")
             query_params.append(currency_pairs)
         if start_date:
-            start_date = hdatetim.convert_timestamp_to_unix_epoch(start_date)
+            start_date = hdateti.convert_timestamp_to_unix_epoch(start_date)
             query_conditions.append("timestamp >= %s")
             query_params.append(start_date)
         if end_date:
-            end_date = hdatetim.convert_timestamp_to_unix_epoch(end_date)
+            end_date = hdateti.convert_timestamp_to_unix_epoch(end_date)
             query_conditions.append("timestamp < %s")
             query_params.append(end_date)
         if query_conditions:
@@ -126,7 +126,7 @@ class CcxtLoader:
 
     def read_universe_data_from_filesystem(
         self,
-        universe: Union[str, List[imdauni.ExchangeCurrencyTuple]],
+        universe: Union[str, List[imdatuniv.ExchangeCurrencyTuple]],
         data_type: str,
         data_snapshot: Optional[str] = None,
     ) -> pd.DataFrame:
@@ -154,7 +154,7 @@ class CcxtLoader:
         # Load all the corresponding exchange-currency tuples if a universe
         # version is provided.
         if isinstance(universe, str):
-            universe = imdauni.get_vendor_universe_as_tuples(universe, "CCXT")
+            universe = imdatuniv.get_vendor_universe_as_tuples(universe, "CCXT")
         # Initialize results df.
         combined_data = pd.DataFrame(dtype="object")
         # Load data for each exchange-currency tuple and append to results df.
@@ -208,7 +208,7 @@ class CcxtLoader:
             currency_pair,
             file_path,
         )
-        data = cpah.read_csv(file_path, **read_csv_kwargs)
+        data = cpanh.read_csv(file_path, **read_csv_kwargs)
         # Apply transformation to raw data.
         _LOG.info(
             "Processing CCXT data for exchange id='%s', currencies='%s'...",
@@ -220,7 +220,8 @@ class CcxtLoader:
         )
         return transformed_data
 
-    # TODO(Grisha): factor out common code from `CddLoader._get_file_path` and `CcxtLoader._get_file_path`.
+    # TODO(Grisha): factor out common code from `CddLoader._get_file_path` and
+    # `CcxtLoader._get_file_path`.
     def _get_file_path(
         self,
         data_snapshot: str,
@@ -338,13 +339,13 @@ class CcxtLoader:
         #
         if self._remove_dups:
             # Remove full duplicates.
-            data = hhpandas.drop_duplicates(data, ignore_index=True)
+            data = hpandas.drop_duplicates(data, ignore_index=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
         #
         if self._resample_to_1_min:
             # Resample to 1 minute.
-            data = hhpandas.resample_df(data, "T")
+            data = hpandas.resample_df(data, "T")
         return data
 
     @staticmethod
@@ -360,12 +361,14 @@ class CcxtLoader:
         # Convert to timestamp in UTC tz.
         timestamp_col = pd.to_datetime(epoch_col, unit="ms", utc=True)
         # Convert to ET tz.
-        timestamp_col = timestamp_col.dt.tz_convert(hdatetim.get_ET_tz())
+        timestamp_col = timestamp_col.dt.tz_convert(hdateti.get_ET_tz())
         return timestamp_col
 
     @staticmethod
     def _apply_filesystem_transformation(
-        data: pd.DataFrame, exchange_id: str, currency_pair: str,
+        data: pd.DataFrame,
+        exchange_id: str,
+        currency_pair: str,
     ) -> pd.DataFrame:
         """
         Apply transformations for filesystem data.

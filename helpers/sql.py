@@ -40,10 +40,18 @@ DbConnectionInfo = collections.namedtuple(
 DbConnection = psycop.extensions.connection
 
 
-# TODO(gp): mypy doesn't like this.
+# TODO(gp): mypy doesn't like this. Understand why and / or inline.
 DbConnection = psycop.extensions.connection
 
 
+# TODO(gp): host, dbname, ...
+DbConnectionInfo = collections.namedtuple(
+    "DbConnectionInfo", ["dbname", "host", "port", "user", "password"]
+)
+
+
+# TODO(gp): Return only the connection (CmampTask441).
+# TODO(gp): Reorg params -> host, dbname, user, port
 def get_connection(
     host: str,
     dbname: str,
@@ -89,26 +97,30 @@ def get_connection_from_env_vars() -> Tuple[
     return connection
 
 
+# TODO(gp): Return only the connection (CmampTask441).
 def get_connection_from_env_vars() -> Tuple[
     DbConnection, psycop.extensions.cursor
 ]:
     """
-    Create a SQL connection using environment variables.
+    Create a SQL connection with the information from the environment
+    variables.
     """
-    # Get environment variables
-    db_name = os.environ["POSTGRES_DB"]
+    # Get values from the environment variables.
+    # TODO(gp): -> POSTGRES_DBNAME
     host = os.environ["POSTGRES_HOST"]
-    port = int(os.environ["POSTGRES_PORT"])
+    dbname = os.environ["POSTGRES_DB"]
     user = os.environ["POSTGRES_USER"]
+    port = int(os.environ["POSTGRES_PORT"])
     password = os.environ["POSTGRES_PASSWORD"]
-    connection, cursor = get_connection(
-        dbname=db_name,
+    # Build the
+    connection = get_connection(
+        dbname=dbname,
         host=host,
         port=port,
         user=user,
         password=password,
     )
-    return connection, cursor
+    return connection
 
 
 def get_connection_from_string(
@@ -268,7 +280,7 @@ def disconnect_all_clients(dbname: str):
 
 def get_db_names(connection: DbConnection) -> List[str]:
     """
-    DbConnection  Return the names of the available DBs.
+    Return the names of the available DBs.
 
     E.g., ['postgres', 'rdsadmin', 'template0', 'template1']
     """
