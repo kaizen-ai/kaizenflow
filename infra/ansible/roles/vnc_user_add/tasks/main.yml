@@ -1,6 +1,6 @@
-#- name: Update APT
-#  apt:
-#    update_cache: yes
+- name: Update APT
+  apt:
+    update_cache: yes
 
 - name: Install packages
   apt:
@@ -8,6 +8,17 @@
       - "{{ vnc_server_package }}" 
       - ubuntu-mate-desktop
     state: present
+
+- name: Disable desktop environment animations
+  become_user: "{{ vnc_user }}"
+  block:
+    - name: Enable reduced-resources setting
+      shell: dbus-launch gsettings set org.mate.Marco.general reduced-resources true
+
+    - name: Enable reduced-resources setting
+      shell: dbus-launch gsettings set org.gnome.desktop.interface enable-animations false
+  when: 
+    - disable_window_animations|bool  
 
 - name: "Ensures path {{ user_home }}/.vnc/ exists"
   become_user: "{{ vnc_user }}"
