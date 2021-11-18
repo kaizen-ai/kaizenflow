@@ -340,8 +340,8 @@ class SqlPriceInterface(AbstractPriceInterface):
         """
         super().__init__(*args, **kwargs)  # type: ignore[arg-type]
         self.connection = hsql.get_connection(
-            dbname=dbname,
             host=host,
+            dbname=dbname,
             port=port,
             user=user,
             password=password,

@@ -30,14 +30,14 @@ class CreateDB(hunitest.TestCase):
         host = "localhost"
         dbname = "im_postgres_db_local"
         port = 5432
-        password = "alsdkqoen"
         user = "aljsdalsd"
+        password = "alsdkqoen"
         hsql.wait_db_connection(host, dbname, port)
         self.connection = hsql.get_connection(
-            dbname,
             host,
-            user,
+            dbname,
             port,
+            user,
             password,
             autocommit=True,
         )
