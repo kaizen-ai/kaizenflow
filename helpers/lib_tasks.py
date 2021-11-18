@@ -1308,7 +1308,7 @@ def _get_docker_cmd(
     # able to log in GH touching $HOME/.config/gh.
     if as_user:
         docker_cmd_.append(
-            r"""
+            rf"""
         --user $(id -u):$(id -g)"""
         )
     # - Handle the extra docker options.

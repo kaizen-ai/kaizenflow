@@ -515,6 +515,12 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
     Test `_get_docker_cmd()`.
     """
 
+    def _check(self, act: str, exp: str) -> None:
+        act = huntes.purify_txt_from_client(act)
+        # This is required when different repos run Docker with user vs root / remap.
+        act = huntes.filter_text("--user", act)
+        self.assert_equal(act, exp, fuzzy_match=True)
+
     @pytest.mark.skipif(
         not hgit.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
     )

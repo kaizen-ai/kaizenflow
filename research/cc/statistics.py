@@ -129,7 +129,7 @@ def compute_start_end_stats(
     )
     res_srs["longest_not_nan_seq_start_date"] = longest_not_nan_seq.index[0]
     res_srs["longest_not_nan_seq_end_date"] = longest_not_nan_seq.index[-1]
-    #TODO(Max): think about what to return: `pd.Series` or `pd.DataFrame`?
+    # TODO(Max): think about what to return: `pd.Series` or `pd.DataFrame`?
     res_srs = pd.DataFrame(res_srs).T
     return res_srs
 
