@@ -29,7 +29,7 @@ def workload_function(
     incremental = kwargs.pop("incremental")
     num_attempts = kwargs.pop("num_attempts")
     _ = val1, val2, incremental, num_attempts
-    res: str = hprintin.to_str("val1 val2 incremental num_attempts kwargs")
+    res: str = hprint.to_str("val1 val2 incremental num_attempts kwargs")
     _LOG.debug("res=%s", res)
     sleep = 0.01
     # sleep = 2
@@ -47,7 +47,7 @@ def workload_function(
 
 def get_workload1(
     randomize: bool, *, seed: Optional[int] = None
-) -> hjoh.Workload:
+) -> hjoblib.Workload:
     """
     Return a workload for `workload_function()` with 5 tasks that succeeds.
     """
@@ -56,10 +56,12 @@ def get_workload1(
         # val1, val2
         task = ((i, 2 * i), {f"hello{i}": f"world{2 * i}", "good": "bye"})
         tasks.append(task)
-    workload: hjoh.Workload = (workload_function, "workload_function", tasks)
+    workload: hjoblib.Workload = (workload_function, "workload_function", tasks)
     if randomize:
         # Randomize workload.
-        workload: hjoh.Workload = hjoh.randomize_workload(workload, seed=seed)
+        workload: hjoblib.Workload = hjoblib.randomize_workload(
+            workload, seed=seed
+        )
     return workload
 
 
@@ -79,7 +81,7 @@ class Test_parallel_execute1(hunitest.TestCase):
         num_attempts = 1
         abort_on_error = True
         log_file = os.path.join(self.get_scratch_space(), "log.txt")
-        res = hjoh.parallel_execute(
+        res = hjoblib.parallel_execute(
             workload,
             dry_run,
             num_threads,
@@ -166,13 +168,13 @@ val1=4, val2=8, incremental=True, num_attempts=1, kwargs={'hello4': 'world8', 'g
 # #############################################################################
 
 
-def get_workload2() -> hjoh.Workload:
+def get_workload2() -> hjoblib.Workload:
     """
     Return a workload for `workload_function()` with 1 task that fails.
     """
     task = ((-1, 7), {"hello2": "world2", "good2": "bye2"})
     tasks = [task]
-    workload: hjoh.Workload = (workload_function, "workload_function", tasks)
+    workload: hjoblib.Workload = (workload_function, "workload_function", tasks)
     return workload
 
 
@@ -284,7 +286,9 @@ def get_workload3(
     tasks.append(task)
     if randomize:
         # Randomize workload.
-        workload: hjoh.Workload = hjoh.randomize_workload(workload, seed=seed)
+        workload: hjoblib.Workload = hjoblib.randomize_workload(
+            workload, seed=seed
+        )
     return workload
 
 
@@ -467,7 +471,7 @@ def _outcome_to_string(outcome: List[str]) -> str:
 
 def _helper_success(
     self_: Any,
-    workload: hjoh.Workload,
+    workload: hjoblib.Workload,
     num_threads: Union[str, int],
     abort_on_error: bool,
     expected_return: str,
@@ -481,7 +485,7 @@ def _helper_success(
     num_attempts = 1
     log_file = os.path.join(self_.get_scratch_space(), "log.txt")
     #
-    res = hjoh.parallel_execute(
+    res = hjoblib.parallel_execute(
         workload,
         dry_run,
         num_threads,
@@ -499,7 +503,7 @@ def _helper_success(
 
 def _helper_fail(
     self_: Any,
-    workload: hjoh.Workload,
+    workload: hjoblib.Workload,
     num_threads: Union[str, int],
     abort_on_error: bool,
     expected_assertion: str,
@@ -511,7 +515,7 @@ def _helper_fail(
     log_file = os.path.join(self_.get_scratch_space(), "log.txt")
     #
     with self_.assertRaises(ValueError) as cm:
-        res = hjoh.parallel_execute(
+        res = hjoblib.parallel_execute(
             workload,
             dry_run,
             num_threads,

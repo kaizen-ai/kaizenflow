@@ -2434,7 +2434,7 @@ def get_rolling_splits(
     A typical use case is where the index is a monotonic increasing datetime
     index. For such cases, causality is respected by the splits.
     """
-    hhpandas.dassert_strictly_increasing_index(idx)
+    hpandas.dassert_strictly_increasing_index(idx)
     n_chunks = n_splits + 1
     hdbg.dassert_lte(1, n_splits)
     # Split into equal chunks.
@@ -2453,7 +2453,7 @@ def get_oos_start_split(
     """
     Split index using OOS (out-of-sample) start datetime.
     """
-    hhpandas.dassert_strictly_increasing_index(idx)
+    hpandas.dassert_strictly_increasing_index(idx)
     ins_mask = idx < datetime_
     hdbg.dassert_lte(1, ins_mask.sum())
     oos_mask = ~ins_mask
@@ -2499,7 +2499,7 @@ def truncate_index(idx: pd.Index, min_idx: Any, max_idx: Any) -> pd.Index:
     """
     Return subset of idx with values >= min_idx and < max_idx.
     """
-    hhpandas.dassert_strictly_increasing_index(idx)
+    hpandas.dassert_strictly_increasing_index(idx)
     # TODO(*): PTask667: Consider using bisection to avoid linear scans.
     min_mask = idx >= min_idx
     max_mask = idx < max_idx
@@ -2518,7 +2518,7 @@ def combine_indices(idxs: Iterable[pd.Index]) -> pd.Index:
     TODO(Paul): Consider supporting multiple behaviors with `mode`.
     """
     for idx in idxs:
-        hhpandas.dassert_strictly_increasing_index(idx)
+        hpandas.dassert_strictly_increasing_index(idx)
     # Find the maximum start/end datetime overlap of all source indices.
     max_min = max([idx.min() for idx in idxs])
     _LOG.debug("Latest start datetime of indices=%s", max_min)

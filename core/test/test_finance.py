@@ -820,10 +820,10 @@ datetime,close,vol
         return act
 
 
-class Test_process_bid_ask(huntes.TestCase):
+class Test_process_bid_ask(hunitest.TestCase):
     def test_mid(self) -> None:
         df = self._get_df()
-        actual = cfin.process_bid_ask(
+        actual = cofinanc.process_bid_ask(
             df, "bid", "ask", "bid_volume", "ask_volume", ["mid"]
         )
         txt = """
@@ -838,7 +838,7 @@ datetime,mid
 
     def test_geometric_mid(self) -> None:
         df = self._get_df()
-        actual = cfin.process_bid_ask(
+        actual = cofinanc.process_bid_ask(
             df, "bid", "ask", "bid_volume", "ask_volume", ["geometric_mid"]
         )
         txt = """
@@ -853,7 +853,7 @@ datetime,geometric_mid
 
     def test_quoted_spread(self) -> None:
         df = self._get_df()
-        actual = cfin.process_bid_ask(
+        actual = cofinanc.process_bid_ask(
             df, "bid", "ask", "bid_volume", "ask_volume", ["quoted_spread"]
         )
         txt = """
@@ -868,7 +868,7 @@ datetime,quoted_spread
 
     def test_relative_spread(self) -> None:
         df = self._get_df()
-        actual = cfin.process_bid_ask(
+        actual = cofinanc.process_bid_ask(
             df, "bid", "ask", "bid_volume", "ask_volume", ["relative_spread"]
         )
         txt = """
@@ -883,7 +883,7 @@ datetime,relative_spread
 
     def test_log_relative_spread(self) -> None:
         df = self._get_df()
-        actual = cfin.process_bid_ask(
+        actual = cofinanc.process_bid_ask(
             df, "bid", "ask", "bid_volume", "ask_volume", ["log_relative_spread"]
         )
         txt = """
@@ -898,7 +898,7 @@ datetime,log_relative_spread
 
     def test_weighted_mid(self) -> None:
         df = self._get_df()
-        actual = cfin.process_bid_ask(
+        actual = cofinanc.process_bid_ask(
             df, "bid", "ask", "bid_volume", "ask_volume", ["weighted_mid"]
         )
         txt = """
@@ -913,7 +913,7 @@ datetime,weighted_mid
 
     def test_order_book_imbalance(self) -> None:
         df = self._get_df()
-        actual = cfin.process_bid_ask(
+        actual = cofinanc.process_bid_ask(
             df, "bid", "ask", "bid_volume", "ask_volume", ["order_book_imbalance"]
         )
         txt = """
@@ -928,7 +928,7 @@ datetime,order_book_imbalance
 
     def test_centered_order_book_imbalance(self) -> None:
         df = self._get_df()
-        actual = cfin.process_bid_ask(
+        actual = cofinanc.process_bid_ask(
             df,
             "bid",
             "ask",
@@ -948,7 +948,7 @@ datetime,centered_order_book_imbalance
 
     def test_centered_order_book_imbalance(self) -> None:
         df = self._get_df()
-        actual = cfin.process_bid_ask(
+        actual = cofinanc.process_bid_ask(
             df,
             "bid",
             "ask",
@@ -968,7 +968,7 @@ datetime,centered_order_book_imbalance
 
     def test_bid_value(self) -> None:
         df = self._get_df()
-        actual = cfin.process_bid_ask(
+        actual = cofinanc.process_bid_ask(
             df, "bid", "ask", "bid_volume", "ask_volume", ["bid_value"]
         )
         txt = """
@@ -983,7 +983,7 @@ datetime,bid_value
 
     def test_ask_value(self) -> None:
         df = self._get_df()
-        actual = cfin.process_bid_ask(
+        actual = cofinanc.process_bid_ask(
             df, "bid", "ask", "bid_volume", "ask_volume", ["ask_value"]
         )
         txt = """
@@ -998,7 +998,7 @@ datetime,ask_value
 
     def test_mid_value(self) -> None:
         df = self._get_df()
-        actual = cfin.process_bid_ask(
+        actual = cofinanc.process_bid_ask(
             df, "bid", "ask", "bid_volume", "ask_volume", ["mid_value"]
         )
         txt = """

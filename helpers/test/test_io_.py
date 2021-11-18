@@ -54,6 +54,6 @@ class Test_load_df_from_json(hunitest.TestCase):
                 "col3": ["a", "b", "c", np.nan],
             }
         )
-        actual_result = hprintin.dataframe_to_str(actual_result)
-        expected_result = hprintin.dataframe_to_str(expected_result)
+        actual_result = hprint.dataframe_to_str(actual_result)
+        expected_result = hprint.dataframe_to_str(expected_result)
         self.assertEqual(actual_result, expected_result)

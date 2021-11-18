@@ -559,7 +559,7 @@ class ModelEvaluator:
                 hdbg.dassert_is_not(df, None)
                 _LOG.debug(
                     "result_df.memory_usage=%s",
-                    hintrosp.format_size(
+                    hintros.format_size(
                         df.memory_usage(index=True, deep=True).sum()
                     ),
                 )

@@ -32,7 +32,7 @@ _LOG = logging.getLogger(__name__)
 # package.
 
 
-def get_test_data_builder1() -> Tuple[Callable, hhtypes.Kwargs]:
+def get_test_data_builder1() -> Tuple[Callable, htypes.Kwargs]:
     """
     Return a data builder producing between "2010-01-04 09:30:00" and
     "2010-01-04 09:35:00" (for 5 minutes) every second.
@@ -50,7 +50,7 @@ def get_test_data_builder1() -> Tuple[Callable, hhtypes.Kwargs]:
     return data_builder, data_builder_kwargs
 
 
-def get_test_data_builder2() -> Tuple[Callable, hhtypes.Kwargs]:
+def get_test_data_builder2() -> Tuple[Callable, htypes.Kwargs]:
     """
     Return a data builder producing data between "2010-01-04 09:30:00" and
     "2010-01-04 09:30:05" (for 5 seconds) every second.
@@ -209,11 +209,11 @@ class TestReplayedTime1(hunitest.TestCase):
     def _helper(self, rt: cdtfretim.ReplayedTime, exp: pd.Timestamp) -> None:
         rct = rt.get_wall_clock_time()
         _LOG.info("  -> time=%s", rct)
-        _LOG.debug(hprintin.to_str("rct.date"))
+        _LOG.debug(hprint.to_str("rct.date"))
         self.assert_equal(str(rct.date()), str(exp.date()))
-        _LOG.debug(hprintin.to_str("rct.hour"))
+        _LOG.debug(hprint.to_str("rct.hour"))
         self.assert_equal(str(rct.hour), str(exp.hour))
-        _LOG.debug(hprintin.to_str("rct.minute"))
+        _LOG.debug(hprint.to_str("rct.minute"))
         self.assert_equal(str(rct.minute), str(exp.minute))
 
 

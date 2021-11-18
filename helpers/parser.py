@@ -184,8 +184,8 @@ def actions_to_string(
     ]
     actions_as_str = "\n".join(actions)
     if add_frame:
-        ret = hprintin.frame("# Action selected:") + "\n"
-        ret += hprintin.indent(actions_as_str)
+        ret = hprint.frame("# Action selected:") + "\n"
+        ret += hprint.indent(actions_as_str)
     else:
         ret = actions_as_str
     return ret  # type: ignore
@@ -230,7 +230,7 @@ def select_actions(
 
 def mark_action(action: str, actions: List[str]) -> Tuple[bool, List[str]]:
     to_execute = action in actions
-    _LOG.debug("\n%s", hprintin.frame("action=%s" % action))
+    _LOG.debug("\n%s", hprint.frame("action=%s" % action))
     if to_execute:
         actions = [a for a in actions if a != action]
     else:

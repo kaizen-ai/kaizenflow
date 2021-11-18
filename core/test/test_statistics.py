@@ -1099,7 +1099,7 @@ class Test_compute_bet_stats(hunitest.TestCase):
         self, rets_pos_bet_rets: pd.DataFrame, actual: pd.Series
     ) -> None:
         act = []
-        act.append(hprintin.frame("rets_pos"))
+        act.append(hprint.frame("rets_pos"))
         act.append(
             hunitest.convert_df_to_string(
                 rets_pos_bet_rets, index=True, decimals=3

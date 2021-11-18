@@ -19,7 +19,7 @@ import pandas as pd
 import core.config as cconfig
 import helpers.dbg as hdbg
 import helpers.io_ as hio
-import helpers.printing as hprintin
+import helpers.printing as hprint
 
 jepand.register_handlers()
 
@@ -354,7 +354,7 @@ class Playback:
         """
         Add indented line to the code.
         """
-        self._code.append(hprintin.indent(string, num_tabs * 4))
+        self._code.append(hprint.indent(string, num_tabs * 4))
 
 
 def json_pretty_print(parsed: Any) -> str:

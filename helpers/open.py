@@ -78,7 +78,7 @@ def open_file(file_name: str) -> None:
     # Make sure file exists.
     _LOG.info(
         "\n%s",
-        hprintin.frame(
+        hprint.frame(
             f"Opening {extension} file '{file_name}'", char1="<", char2=">"
         ),
     )

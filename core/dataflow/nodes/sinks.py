@@ -136,7 +136,7 @@ class WriteCols(cdtfnobas.FitPredictNode):
 class WriteCols(cdtfnobas.FitPredictNode):
     def __init__(
         self,
-        nid: cdtfcor.NodeId,
+        nid: cdtfcore.NodeId,
         dir_name: str,
         col_mapping: Dict[str, str],
     ) -> None:
@@ -176,7 +176,7 @@ class WriteCols(cdtfnobas.FitPredictNode):
             # Get the latest `df` index value.
             if isinstance(df.index, pd.DatetimeIndex):
                 # NOTE: If needed, we can pass in only the last two elements.
-                epochs = cfin.compute_epoch(df)
+                epochs = cofinanc.compute_epoch(df)
                 epoch = epochs.iloc[-1].values[0]
             else:
                 raise NotImplementedError
@@ -190,7 +190,7 @@ class WriteCols(cdtfnobas.FitPredictNode):
                 srs.to_csv(file_name)
         # Collect info.
         info = collections.OrderedDict()
-        info["df_out_info"] = cdtfuti.get_df_info_as_string(df)
+        info["df_out_info"] = cdtfutil.get_df_info_as_string(df)
         mode = "fit" if fit else "predict"
         self._set_info(mode, info)
         # Pass the dataframe through.
@@ -272,7 +272,7 @@ def consolidate_dfs(df_iter: Iterable[Tuple[str, pd.DataFrame]]) -> pd.DataFrame
             df_out = df2.combine_first(df1)
         else:
             df_out = df2.combine_first(df_out)
-    hhpandas.dassert_strictly_increasing_index(df_out)
+    hpandas.dassert_strictly_increasing_index(df_out)
     return df_out
 
 

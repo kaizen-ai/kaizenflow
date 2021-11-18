@@ -256,7 +256,9 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
         )
         node.fit(data_fit)["df_out"]
         df_out = node.predict(data_predict)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(
+            df_out.round(3), index=True, decimals=3
+        )
         self.check_string(df_str)
 
     def test8(self) -> None:
@@ -277,14 +279,16 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
                 "nan_mode": "drop",
             }
         )
-        node = cdnsm.ContinuousSkLearnModel(
+        node = cdtfnoskmo.ContinuousSkLearnModel(
             "sklearn",
             model_func=slmode.LinearRegression,
             **config.to_dict(),
         )
         node.fit(data_fit)["df_out"]
         df_out = node.predict(data_predict)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(
+            df_out.round(3), index=True, decimals=3
+        )
         self.check_string(df_str)
 
     def _get_data(self, lag: int) -> pd.DataFrame:
