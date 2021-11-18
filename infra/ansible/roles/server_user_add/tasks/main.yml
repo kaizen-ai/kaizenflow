@@ -6,7 +6,7 @@
 - name: Create user account
   user:
     group: "{{ os_username }}"
-    groups: docker
+    groups: docker # temporary solution
     name: "{{ os_username }}"
     shell: /bin/bash
     append: yes
