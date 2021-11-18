@@ -46,7 +46,7 @@ def compute_stats_for_universe(
     # Iterate over vendor universe tuples.
     for exchange_id, currency_pair in vendor_universe:
         # Read data for current exchange and currency pair.
-        data = loader.read_data_from_filesystem(
+        data = loader.read_data(
             exchange_id,
             currency_pair,
             config["data"]["data_type"],
@@ -199,7 +199,7 @@ def postprocess_stats_table(
 # TODO(Grisha): use the abstract class in #313.
 def get_loader_for_vendor(
     config: ccocon.Config,
-) -> Union[imccdaloloa.CcxtLoader, imcrdaloloa.CddLoader]:
+) -> Union[imccdaloloa.CcxtLoaderFromFile, imcrdaloloa.CddLoader]:
     """
     Get vendor specific loader instance.
 
@@ -208,7 +208,7 @@ def get_loader_for_vendor(
     """
     vendor = config["data"]["vendor"]
     if vendor == "CCXT":
-        loader = imccdaloloa.CcxtLoader(
+        loader = imccdaloloa.CcxtLoaderFromFile(
             root_dir=config["load"]["data_dir"],
             aws_profile=config["load"]["aws_profile"],
         )
@@ -271,7 +271,7 @@ def get_universe_price_data(
         colname = " ".join([exchange_id, currency_pair])
         colnames.append(colname)
         # Read data for current exchange and currency pair.
-        data = loader.read_data_from_filesystem(
+        data = loader.read_data(
             exchange_id,
             currency_pair,
             config["data"]["data_type"],
