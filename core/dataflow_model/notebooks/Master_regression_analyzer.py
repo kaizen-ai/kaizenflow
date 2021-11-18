@@ -90,14 +90,16 @@ q_vals.hist(bins=30)
 #
 
 # %%
-feature_stats = cdmra.compute_moments(fit_coeffs, ["rho", "beta", "beta_z_scored", "turn"])
+feature_stats = cdmra.compute_moments(
+    fit_coeffs, ["rho", "beta", "beta_z_scored", "turn"]
+)
 display(feature_stats)
 
 # %%
 sweep = cstati.apply_smoothing_parameters(
     feature_stats[("rho", "mean")],
     feature_stats[("turn", "mean")],
-    np.arange(0, 3, 0.1)
+    np.arange(0, 3, 0.1),
 )
 
 # %%
@@ -117,6 +119,7 @@ art_iter = cdmu.yield_experiment_artifacts(
     file_name=file_name,
     load_rb_kwargs={"columns": feature_cols + [target_col]},
 )
+
 
 def get_feature_weights(key: int) -> pd.Series:
     ...
@@ -170,18 +173,26 @@ split2 = cdmra.compute_coefficients(
 # %%
 stat = ""
 sns.pairplot(
-    pd.concat([
-        split1[stat].rename("split1"),
-        split2[stat].rename("split2"),
-    ], join="inner", axis=1)
+    pd.concat(
+        [
+            split1[stat].rename("split1"),
+            split2[stat].rename("split2"),
+        ],
+        join="inner",
+        axis=1,
+    )
 )
 
 # %%
 stat = ""
 feature = ""
 sns.pairplot(
-    pd.concat([
-        split1[stat].xs(feature, level=1).rename("split1"),
-        split2[stat].xs(feature, level=1).rename("split2"),
-    ], join="inner", axis=1)
+    pd.concat(
+        [
+            split1[stat].xs(feature, level=1).rename("split1"),
+            split2[stat].xs(feature, level=1).rename("split2"),
+        ],
+        join="inner",
+        axis=1,
+    )
 )

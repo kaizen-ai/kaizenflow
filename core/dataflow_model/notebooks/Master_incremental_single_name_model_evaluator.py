@@ -90,7 +90,9 @@ print(str(eval_config))
 # # Compute stats
 
 # %%
-stats = ime.compute_stats_for_single_name_artifacts(**eval_config["compute_stats_kwargs"].to_dict())
+stats = ime.compute_stats_for_single_name_artifacts(
+    **eval_config["compute_stats_kwargs"].to_dict()
+)
 
 # %%
 # TODO(gp): Move this chunk of code into a function.
@@ -113,7 +115,9 @@ print("model not selected=%s" % not_selected)
 # # Build portfolio
 
 # %%
-portfolio, daily_dfs = ime.aggregate_single_name_models(**eval_config["aggregate_single_name_models"].to_dict())
+portfolio, daily_dfs = ime.aggregate_single_name_models(
+    **eval_config["aggregate_single_name_models"].to_dict()
+)
 
 # %%
 portfolio.dropna().head()

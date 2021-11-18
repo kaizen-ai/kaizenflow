@@ -50,7 +50,9 @@ datetime,T1,T2,T3
             index=covariance.index,
             columns=covariance.columns,
         )
-        actual_precision = outi.compute_tangency_portfolio(mu, precision=precision)
+        actual_precision = outi.compute_tangency_portfolio(
+            mu, precision=precision
+        )
         self.assert_dfs_close(
             actual_precision, actual_covariance, rtol=1e-5, atol=1e-5
         )

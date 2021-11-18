@@ -64,8 +64,7 @@ class _TestOmsDbHelper(hunitest.TestCase):
             # TODO(gp): This information should be retrieved from oms_lib_tasks.py.
             #  We can also use the invoke command.
             self.docker_compose_file_path = os.path.join(
-                hgit.get_amp_abs_path(),
-                "oms/devops/compose/docker-compose.yml"
+                hgit.get_amp_abs_path(), "oms/devops/compose/docker-compose.yml"
             )
             cmd.append("sudo docker-compose")
             cmd.append(f"--file {self.docker_compose_file_path}")
@@ -235,9 +234,7 @@ class TestOmsDb1(_TestOmsDbHelper):
 
 class TestOmsDb2(_TestOmsDbHelper):
     def wait_for_table_helper(self, coroutines):
-        oomsdb.create_target_files_table(
-            self.connection, incremental=False
-        )
+        oomsdb.create_target_files_table(self.connection, incremental=False)
         with hasynci.solipsism_context() as event_loop:
             get_wall_clock_time = lambda: hdateti.get_current_time(
                 tz="ET", event_loop=event_loop
@@ -275,9 +272,7 @@ class TestOmsDb2(_TestOmsDbHelper):
         # Add a DB writer that will write after 2 seconds, making the DB poller
         # exiting successfully.
         sleep_in_secs = 2
-        coroutines.append(
-            lambda gwct: self._db_writer(sleep_in_secs, gwct)
-        )
+        coroutines.append(lambda gwct: self._db_writer(sleep_in_secs, gwct))
         # Run.
         res = self.wait_for_table_helper(coroutines)
         # Check output.
@@ -296,9 +291,7 @@ class TestOmsDb2(_TestOmsDbHelper):
         # Add a DB writer that will write after 10 seconds, after the DB poller ends
         # after 5 secs.
         sleep_in_secs = 10
-        coroutines.append(
-            lambda gwct: self._db_writer(sleep_in_secs, gwct)
-        )
+        coroutines.append(lambda gwct: self._db_writer(sleep_in_secs, gwct))
         # Run.
         with self.assertRaises(TimeoutError):
             self.wait_for_table_helper(coroutines)
@@ -318,9 +311,7 @@ class TestOmsDb2(_TestOmsDbHelper):
         result = await asyncio.gather(coro)
         return result
 
-    async def _db_writer(
-        self, sleep_in_secs, get_wall_clock_time
-    ) -> None:
+    async def _db_writer(self, sleep_in_secs, get_wall_clock_time) -> None:
         table_name = "target_files_processed_candidate_view"
         # Sleep.
         _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())

@@ -64,11 +64,7 @@ features.head()
 # # Cross-sectional feature analysis
 
 # %%
-cplot.plot_heatmap(
-    features.corr(),
-    mode="clustermap",
-    figsize=(20, 20)
-)
+cplot.plot_heatmap(features.corr(), mode="clustermap", figsize=(20, 20))
 
 # %%
 cplot.plot_effective_correlation_rank(features)
@@ -93,9 +89,7 @@ cplot.plot_qq(features[feature])
 
 # %%
 cplot.plot_histograms_and_lagged_scatterplot(
-    features[feature],
-    lag=1,
-    figsize=(20, 20)
+    features[feature], lag=1, figsize=(20, 20)
 )
 
 # %%

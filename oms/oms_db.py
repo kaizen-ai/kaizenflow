@@ -154,9 +154,14 @@ async def poll(
 
 
 # TODO(gp): This can be general enough to go in hsql.
-def _is_target_row_present(connection: hsql.DbConnection, table_name: str,
-                           field_name: str, target_value: str, *,
-                           show_db_state: bool = False) -> PollOutput:
+def _is_target_row_present(
+    connection: hsql.DbConnection,
+    table_name: str,
+    field_name: str,
+    target_value: str,
+    *,
+    show_db_state: bool = False,
+) -> PollOutput:
     """
     Check if a row with field_name == target_value is in the given table of the DB.
 
@@ -189,8 +194,9 @@ async def wait_for_target_ack(
     table_name = "target_files_processed_candidate_view"
     field_name = "filename"
     # Create the polling function.
-    func = lambda: _is_target_row_present(connection, table_name, field_name,
-                                          target_value)
+    func = lambda: _is_target_row_present(
+        connection, table_name, field_name, target_value
+    )
     # Poll.
     rc, result = await poll(func, **poll_kwargs)
     return rc, result

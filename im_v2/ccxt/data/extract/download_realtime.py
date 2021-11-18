@@ -60,9 +60,7 @@ def _instantiate_exchange(
         "ExchangeToCurrency", ["id", "instance", "pairs"]
     )
     exchange_to_currency.id = exchange_id
-    exchange_to_currency.instance = imcdeexcl.CcxtExchange(
-        exchange_id, api_keys
-    )
+    exchange_to_currency.instance = imcdeexcl.CcxtExchange(exchange_id, api_keys)
     exchange_to_currency.pairs = ccxt_universe[exchange_id]
     return exchange_to_currency
 

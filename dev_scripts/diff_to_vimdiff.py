@@ -40,15 +40,15 @@ def _diff(dir1: str, dir2: str) -> str:
     cmd = ""
     remove_cmd = "| grep -v .git | grep -v .idea | grep -v '[/ ]tmp.'"
     cmd += '(cd %s && find %s -name "*" %s | sort >/tmp/dir1) && ' % (
-        #os.path.dirname(dir1),
-        #os.path.basename(dir1),
+        # os.path.dirname(dir1),
+        # os.path.basename(dir1),
         dir1,
         dir2,
         remove_cmd,
     )
     cmd += '(cd %s && find %s -name "*" %s | sort >/tmp/dir2)' % (
-        #os.path.dirname(dir2),
-        #os.path.basename(dir2),
+        # os.path.dirname(dir2),
+        # os.path.basename(dir2),
         dir1,
         dir2,
         remove_cmd,
@@ -63,7 +63,7 @@ def _diff(dir1: str, dir2: str) -> str:
     cmd = f"sdiff {opts} /tmp/dir1 /tmp/dir2"
     print("# Diff file listing with:\n> " + cmd)
     si.system(cmd, abort_on_error=False, suppress_output=False)
-    # 
+    #
     print(prnt.frame("Diff dirs '%s' vs '%s'" % (dir1, dir2)))
     dst_file = "./tmp.diff_file_listings.txt"
     cmd = f"diff --brief -r {dir1} {dir2} {remove_cmd} >{dst_file}"
@@ -92,7 +92,9 @@ def _get_symbolic_filepath(dir1: str, dir2: str, file_name: str) -> str:
 # TODO(gp): We should use the `sdiff` between files, instead of the output of
 # `diff -r --brief` to compare, since the second doesn't work for dirs that are
 # present only on one side.
-def _parse_diff_output(input_file: str, dir1: str, dir2: str, args: argparse.Namespace) -> None:
+def _parse_diff_output(
+    input_file: str, dir1: str, dir2: str, args: argparse.Namespace
+) -> None:
     """
     Process the output of diff and create a script to diff the diffenrent
     files.

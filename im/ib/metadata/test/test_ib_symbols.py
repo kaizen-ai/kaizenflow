@@ -70,11 +70,13 @@ class TestIbSymbolUniverse(hunitest.TestCase):
         """
         Test supported futures symbol converting.
         """
-        converted_symbol = imimeibsy.IbSymbolUniverse._convert_df_to_row_to_symbol(
-            ib_ticker="ZC",
-            ib_exchange="CME part (ECBOT)",
-            ib_asset_class="Futures",
-            ib_currency="USD",
+        converted_symbol = (
+            imimeibsy.IbSymbolUniverse._convert_df_to_row_to_symbol(
+                ib_ticker="ZC",
+                ib_exchange="CME part (ECBOT)",
+                ib_asset_class="Futures",
+                ib_currency="USD",
+            )
         )
         expected_symbol = imcomesym.Symbol(
             ticker="ZC",
@@ -89,11 +91,13 @@ class TestIbSymbolUniverse(hunitest.TestCase):
         """
         Test symbol with unsupported exchange.
         """
-        converted_symbol = imimeibsy.IbSymbolUniverse._convert_df_to_row_to_symbol(
-            ib_ticker="AA",
-            ib_exchange="No brackets exchange",
-            ib_asset_class="Stocks",
-            ib_currency="USD",
+        converted_symbol = (
+            imimeibsy.IbSymbolUniverse._convert_df_to_row_to_symbol(
+                ib_ticker="AA",
+                ib_exchange="No brackets exchange",
+                ib_asset_class="Stocks",
+                ib_currency="USD",
+            )
         )
         self.assertIsNone(converted_symbol)
 
@@ -101,11 +105,13 @@ class TestIbSymbolUniverse(hunitest.TestCase):
         """
         Test symbol with unsupported asset class.
         """
-        converted_symbol = imimeibsy.IbSymbolUniverse._convert_df_to_row_to_symbol(
-            ib_ticker="AA",
-            ib_exchange="New York (NYSE)",
-            ib_asset_class="Warrants",
-            ib_currency="USD",
+        converted_symbol = (
+            imimeibsy.IbSymbolUniverse._convert_df_to_row_to_symbol(
+                ib_ticker="AA",
+                ib_exchange="New York (NYSE)",
+                ib_asset_class="Warrants",
+                ib_currency="USD",
+            )
         )
         self.assertIsNone(converted_symbol)
 
@@ -125,7 +131,9 @@ class TestIbSymbolUniverse(hunitest.TestCase):
         Test uppercase name extraction from no brackets string.
         """
         extracted_exchange = (
-            imimeibsy.IbSymbolUniverse._extract_exchange_code_from_full_name("NAME")
+            imimeibsy.IbSymbolUniverse._extract_exchange_code_from_full_name(
+                "NAME"
+            )
         )
         self.assert_equal(extracted_exchange, "NAME")
 
@@ -145,7 +153,9 @@ class TestIbSymbolUniverse(hunitest.TestCase):
         Test non-uppercase name extraction from no brackets string.
         """
         extracted_exchange = (
-            imimeibsy.IbSymbolUniverse._extract_exchange_code_from_full_name("Name")
+            imimeibsy.IbSymbolUniverse._extract_exchange_code_from_full_name(
+                "Name"
+            )
         )
         self.assertIsNone(extracted_exchange)
 

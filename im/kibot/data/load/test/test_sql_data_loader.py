@@ -48,9 +48,7 @@ class TestSqlDataLoader1(hunitest.TestCase):
         # Close connection.
         self._loader.conn.close()
         # Remove created database.
-        hsql.remove_database(
-            connection=self._connection, dbname=self._new_db
-        )
+        hsql.remove_database(connection=self._connection, dbname=self._new_db)
         super().tearDown()
 
     def test_get_symbol_id1(self) -> None:
