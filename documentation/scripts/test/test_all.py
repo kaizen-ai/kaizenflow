@@ -4,14 +4,14 @@
 #
 # import pytest
 #
-# import documentation.scripts.convert_txt_to_pandoc as dscttp
-# import documentation.scripts.lint_txt as dslt
-# import helpers.dbg as dbg
-# import helpers.git as git
-# import helpers.io_ as io_
-# import helpers.printing as prnt
-# import helpers.system_interaction as si
-# import helpers.unit_test as ut
+# import documentation.scripts.convert_txt_to_pandoc as dscttopa
+# import documentation.scripts.lint_txt as dsclitxt
+# import helpers.dbg as hdbg
+# import helpers.git as hgit
+# import helpers.io_ as hio
+# import helpers.printing as hprint
+# import helpers.system_interaction as hsysinte
+# import helpers.unit_test as hunitest
 #
 # _LOG = logging.getLogger(__name__)
 #
@@ -21,10 +21,10 @@
 #
 #
 ## TODO(gp): Generalize to all users, or at least Jenkins.
-# class Test_pandoc1(ut.TestCase):
+# class Test_pandoc1(hunitest.TestCase):
 #    def _helper(self, in_file: str, action: str) -> str:
-#        exec_path = git.find_file_in_git_tree("pandoc.py")
-#        dbg.dassert_exists(exec_path)
+#        exec_path = hgit.find_file_in_git_tree("pandoc.py")
+#        hdbg.dassert_exists(exec_path)
 #        #
 #        tmp_dir = self.get_scratch_space()
 #        out_file = os.path.join(tmp_dir, "output.pdf")
@@ -37,7 +37,7 @@
 #        cmd.append("--action convert_txt_to_pandoc")
 #        cmd.append("--action run_pandoc")
 #        cmd = " ".join(cmd)
-#        si.system(cmd)
+#        hsysinte.system(cmd)
 #        # Check.
 #        if action == "pdf":
 #            out_file = os.path.join(tmp_dir, "tmp.pandoc.tex")
@@ -45,7 +45,7 @@
 #            out_file = os.path.join(tmp_dir, "tmp.pandoc.html")
 #        else:
 #            raise ValueError("Invalid action='%s'" % action)
-#        act = io_.from_file(out_file)
+#        act = hio.from_file(out_file)
 #        return act
 #
 #    def test1(self) -> None:
@@ -77,11 +77,11 @@
 #        """
 #        Convert to pdf all the notes in docs/notes.
 #        """
-#        git_dir = git.get_client_root(super_module=False)
+#        git_dir = hgit.get_client_root(super_module=False)
 #        dir_name = os.path.join(git_dir, "docs/notes/*.txt")
 #        file_names = glob.glob(dir_name)
 #        for file_name in file_names:
-#            _LOG.debug(prnt.frame("file_name=%s" % file_name))
+#            _LOG.debug(hprint.frame("file_name=%s" % file_name))
 #            self._helper(file_name, "html")
 #
 #
@@ -95,24 +95,24 @@
 #    Execute the end-to-end flow for convert_txt_to_pandoc.py returning
 #    the output as string.
 #    """
-#    exec_path = git.find_file_in_git_tree("convert_txt_to_pandoc.py")
-#    dbg.dassert_exists(exec_path)
+#    exec_path = hgit.find_file_in_git_tree("convert_txt_to_pandoc.py")
+#    hdbg.dassert_exists(exec_path)
 #    #
-#    dbg.dassert_exists(in_file)
+#    hdbg.dassert_exists(in_file)
 #    #
 #    cmd = []
 #    cmd.append(exec_path)
 #    cmd.append("--input %s" % in_file)
 #    cmd.append("--output %s" % out_file)
 #    cmd_as_str = " ".join(cmd)
-#    si.system(cmd_as_str)
+#    hsysinte.system(cmd_as_str)
 #    # Check.
-#    act = io_.from_file(out_file)
+#    act = hio.from_file(out_file)
 #    return act  # type: ignore
 #
 #
 ## TODO(gp): -> Test_convert_txt_to_pandoc*
-# class Test_preprocess1(ut.TestCase):
+# class Test_preprocess1(hunitest.TestCase):
 #    """
 #    Check that the output of convert_txt_to_pandoc.py is the expected one
 #    using:
@@ -136,7 +136,7 @@
 #        self._helper()
 #
 #
-# class Test_preprocess2(ut.TestCase):
+# class Test_preprocess2(hunitest.TestCase):
 #    """
 #    Check that the output of convert_txt_to_pandoc.py is the expected one
 #    calling the library function directly.
@@ -145,7 +145,7 @@
 #    def _helper_process_question(
 #        self, txt_in: str, do_continue_exp: bool, exp: str
 #    ) -> None:
-#        do_continue, act = dscttp._process_question(txt_in)
+#        do_continue, act = dscttopa._process_question(txt_in)
 #        self.assertEqual(do_continue, do_continue_exp)
 #        self.assert_equal(act, exp)
 #
@@ -190,7 +190,7 @@
 #    # #########################################################################
 #
 #    def _helper_transform(self, txt_in: str, exp: str) -> None:
-#        act_as_arr = dscttp._transform(txt_in.split("\n"))
+#        act_as_arr = dscttopa._transform(txt_in.split("\n"))
 #        act = "\n".join(act_as_arr)
 #        self.assert_equal(act, exp)
 #
@@ -242,9 +242,9 @@
 ## #############################################################################
 #
 #
-# class Test_lint_txt1(ut.TestCase):
+# class Test_lint_txt1(hunitest.TestCase):
 #    def _helper_preprocess(self, txt: str, exp: str) -> None:
-#        act = dslt._preprocess(txt)
+#        act = dsclitxt._preprocess(txt)
 #        self.assert_equal(act, exp)
 #
 #    def test_preprocess1(self) -> None:
@@ -339,7 +339,7 @@
 #
 #    def _helper_process(self, txt, exp, file_name) -> None:
 #        file_name = os.path.join(self.get_scratch_space(), file_name)
-#        act = dslt._process(txt, file_name)
+#        act = dsclitxt._process(txt, file_name)
 #        if exp:
 #            self.assert_equal(act, exp)
 #        return act
@@ -430,7 +430,7 @@
 # """
 #        file_name = "test.md"
 #        act = self._helper_process(txt, None, file_name)
-#        act = prnt.remove_empty_lines(act)
+#        act = hprint.remove_empty_lines(act)
 #        self.assert_equal(act, exp)
 #
 #    @staticmethod
@@ -464,7 +464,7 @@
 # * Text template as a format string
 #  - Values to insert are provided as a value or a `tuple`
 # """
-#        act = dslt._prettier(txt)
+#        act = dsclitxt._prettier(txt)
 #        self.assert_equal(act, exp)
 #
 #    def test_process5(self) -> None:

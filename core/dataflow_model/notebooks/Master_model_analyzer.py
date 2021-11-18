@@ -30,10 +30,10 @@
 import logging
 
 import core.config as cconfig
-import core.dataflow_model.model_evaluator as cdtfmomoeva
-import core.dataflow_model.model_plotter as cdtfmomoplo
+import core.dataflow_model.model_evaluator as cdtfmomoev
+import core.dataflow_model.model_plotter as cdtfmomopl
 import helpers.dbg as hdbg
-import helpers.printing as hprintin
+import helpers.printing as hprint
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -43,7 +43,7 @@ _LOG = logging.getLogger(__name__)
 
 # _LOG.info("%s", env.get_system_signature()[0])
 
-hprintin.config_notebook()
+hprint.config_notebook()
 
 # %% [markdown]
 # # Notebook config
@@ -89,10 +89,10 @@ print(str(eval_config))
 
 # %%
 # Build the ModelEvaluator from the eval config.
-evaluator = cdtfmomoeva.ModelEvaluator.from_eval_config(eval_config)
+evaluator = cdtfmomoev.ModelEvaluator.from_eval_config(eval_config)
 
 # Build the ModelPlotter.
-plotter = cdtfmomoplo.ModelPlotter(evaluator)
+plotter = cdtfmomopl.ModelPlotter(evaluator)
 
 # %% [markdown]
 # # Analysis
@@ -120,7 +120,7 @@ col_mask = (
 selected = pnl_stats.loc[:, col_mask].columns.to_list()
 not_selected = pnl_stats.loc[:, ~col_mask].columns.to_list()
 
-print("num model selected=%s" % hprintin.perc(len(selected), pnl_stats.shape[1]))
+print("num model selected=%s" % hprint.perc(len(selected), pnl_stats.shape[1]))
 print("model selected=%s" % selected)
 print("model not selected=%s" % not_selected)
 

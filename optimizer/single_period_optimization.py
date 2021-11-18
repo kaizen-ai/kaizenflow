@@ -1,10 +1,16 @@
+"""
+Import as:
+
+import optimizer.single_period_optimization as osipeopt
+"""
+
 import cvxpy as cvx
 import pandas as pd
 
 import core.config as cconfig
 import helpers.dbg as hdbg
-import optimizer.constraints as opcon
-import optimizer.costs as opcos
+import optimizer.constraints as opconstr
+import optimizer.costs as opcosts
 
 # #############################################################################
 # Single period optimization with costs and constraints
@@ -142,8 +148,10 @@ def perform_single_period_optimization(
     config.check_params(
         ["costs", "constraints", "holdings", "predictions", "result_path"]
     )
-    costs = opcos.CostBuilder.build_costs(config["costs"])
-    constraints = opcon.ConstraintBuilder.build_constraints(config["constraints"])
+    costs = opcosts.CostBuilder.build_costs(config["costs"])
+    constraints = opconstr.ConstraintBuilder.build_constraints(
+        config["constraints"]
+    )
     spo = SinglePeriodOptimizer(costs, constraints)
     holdings = pd.read_csv(config["holdings"], index_col=0).squeeze()
     predictions = pd.read_csv(config["predictions"], index_col=0).squeeze()

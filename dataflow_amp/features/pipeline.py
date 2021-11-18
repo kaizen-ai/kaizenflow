@@ -10,9 +10,9 @@ import logging
 import core.config as cconfig
 import core.dataflow as dtf
 import core.dataflow_source_nodes as cdtfsonod
-import core.features as cfea
-import core.finance as cfin
-import core.signal_processing as csipro
+import core.features as cofeatur
+import core.finance as cofinanc
+import core.signal_processing as csigproc
 
 _LOG = logging.getLogger(__name__)
 
@@ -71,7 +71,7 @@ class FeaturePipeline(dtf.DagBuilder):
         nid = self._get_nid(stage)
         node = dtf.ColumnTransformer(
             nid,
-            transformer_func=cfin.set_weekends_to_nan,
+            transformer_func=cofinanc.set_weekends_to_nan,
             **config[nid].to_dict(),
         )
         tail_nid = self._append(dag, tail_nid, node)
@@ -80,7 +80,7 @@ class FeaturePipeline(dtf.DagBuilder):
         nid = self._get_nid(stage)
         node = dtf.ColumnTransformer(
             nid,
-            transformer_func=cfin.set_non_ath_to_nan,
+            transformer_func=cofinanc.set_non_ath_to_nan,
             **config[nid].to_dict(),
         )
         tail_nid = self._append(dag, tail_nid, node)
@@ -89,7 +89,7 @@ class FeaturePipeline(dtf.DagBuilder):
         nid = self._get_nid(stage)
         node = dtf.FunctionWrapper(
             nid,
-            func=cfea.perform_col_arithmetic,
+            func=cofeatur.perform_col_arithmetic,
             **config[nid].to_dict(),
         )
         tail_nid = self._append(dag, tail_nid, node)
@@ -108,7 +108,7 @@ class FeaturePipeline(dtf.DagBuilder):
         nid = self._get_nid(stage)
         node = dtf.SeriesTransformer(
             nid,
-            transformer_func=csipro.compute_fir_zscore,
+            transformer_func=csigproc.compute_fir_zscore,
             **config[nid].to_dict(),
         )
         tail_nid = self._append(dag, tail_nid, node)
@@ -117,7 +117,7 @@ class FeaturePipeline(dtf.DagBuilder):
         nid = self._get_nid(stage)
         node = dtf.SeriesTransformer(
             nid,
-            transformer_func=csipro.compress_tails,
+            transformer_func=csigproc.compress_tails,
             **config[nid].to_dict(),
         )
         tail_nid = self._append(dag, tail_nid, node)
@@ -126,7 +126,7 @@ class FeaturePipeline(dtf.DagBuilder):
         nid = self._get_nid(stage)
         node = dtf.FunctionWrapper(
             nid,
-            func=cfea.cross_feature_pairs,
+            func=cofeatur.cross_feature_pairs,
             **config[nid].to_dict(),
         )
         tail_nid = self._append(dag, tail_nid, node)

@@ -1,7 +1,7 @@
 """
 Import as:
 
-import oms.oms_utils as oomuti
+import oms.oms_utils as oomsutil
 """
 import collections
 import logging

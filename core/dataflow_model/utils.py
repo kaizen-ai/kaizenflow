@@ -32,12 +32,12 @@ from tqdm.autonotebook import tqdm
 
 import core.config as cconfig
 import core.dataflow as dtf
-import core.signal_processing as csipro
+import core.signal_processing as csigproc
 import helpers.dbg as hdbg
 import helpers.io_ as hio
 import helpers.parser as hparser
 import helpers.pickle_ as hpickle
-import helpers.printing as hprintin
+import helpers.printing as hprint
 import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
@@ -211,7 +211,7 @@ def get_configs_from_command_line(
             "The following configs will not be executed due to passing --dry_run:"
         )
         for i, config in enumerate(configs):
-            print(hprintin.frame("Config %d/%s" % (i + 1, len(configs))))
+            print(hprint.frame("Config %d/%s" % (i + 1, len(configs))))
             print(str(config))
         sys.exit(0)
     return configs
@@ -483,7 +483,7 @@ def _yield_rolling_experiment_out_of_sample_df(
         if dfs:
             df = pd.concat(dfs, axis=0)
             hdbg.dassert_strictly_increasing_index(df)
-            df = csipro.resample(df, rule=dfs[0].index.freq).sum(min_count=1)
+            df = csigproc.resample(df, rule=dfs[0].index.freq).sum(min_count=1)
             yield key, df
 
 

@@ -2,12 +2,12 @@ import logging
 from typing import List, Optional
 
 import helpers.list as hlist
-import helpers.unit_test as huntes
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-class Test_list_find_duplicates1(huntes.TestCase):
+class Test_list_find_duplicates1(hunitest.TestCase):
     def test1(self) -> None:
         list_ = "a b c d".split()
         list_out = hlist.find_duplicates(list_)
@@ -19,7 +19,7 @@ class Test_list_find_duplicates1(huntes.TestCase):
         self.assertEqual(set(list_out), set("a f".split()))
 
 
-class Test_list_remove_duplicates1(huntes.TestCase):
+class Test_list_remove_duplicates1(hunitest.TestCase):
     def test1(self) -> None:
         list_ = "a b c d".split()
         list_out = hlist.remove_duplicates(list_)
@@ -37,7 +37,7 @@ class Test_list_remove_duplicates1(huntes.TestCase):
         self.assertEqual(list_out, "f e d a c b".split())
 
 
-class Test_list_extract1(huntes.TestCase):
+class Test_list_extract1(hunitest.TestCase):
     def test1(self) -> None:
         start_idx = 0
         end_idx = 1
@@ -91,7 +91,7 @@ class Test_list_extract1(huntes.TestCase):
         self.assertEqual(actual_list, expected_list)
 
 
-class Test_list_chunk1(huntes.TestCase):
+class Test_list_chunk1(hunitest.TestCase):
     def test1(self) -> None:
         n = 1
         expected_list = ["a b c d e f".split()]

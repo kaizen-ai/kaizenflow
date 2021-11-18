@@ -12,8 +12,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import helpers.dbg as hdbg
 import helpers.io_ as hio
-import helpers.printing as hprintin
-import helpers.system_interaction as hsyint
+import helpers.printing as hprint
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -132,7 +132,7 @@ def parse_dst_dir_arg(args: argparse.Namespace) -> Tuple[str, bool]:
         if os.path.exists(dst_dir):
             _LOG.warning("Dir '%s' already exists", dst_dir)
             if not args.no_confirm:
-                hsyint.query_yes_no(
+                hsysinte.query_yes_no(
                     "Do you want to delete the dir '%s'" % dst_dir,
                     abort_on_no=True,
                 )
@@ -184,8 +184,8 @@ def actions_to_string(
     ]
     actions_as_str = "\n".join(actions)
     if add_frame:
-        ret = hprintin.frame("# Action selected:") + "\n"
-        ret += hprintin.indent(actions_as_str)
+        ret = hprint.frame("# Action selected:") + "\n"
+        ret += hprint.indent(actions_as_str)
     else:
         ret = actions_as_str
     return ret  # type: ignore
@@ -230,7 +230,7 @@ def select_actions(
 
 def mark_action(action: str, actions: List[str]) -> Tuple[bool, List[str]]:
     to_execute = action in actions
-    _LOG.debug("\n%s", hprintin.frame("action=%s" % action))
+    _LOG.debug("\n%s", hprint.frame("action=%s" % action))
     if to_execute:
         actions = [a for a in actions if a != action]
     else:

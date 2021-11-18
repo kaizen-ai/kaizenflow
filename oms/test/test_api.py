@@ -2,8 +2,8 @@ import logging
 
 import pytest
 
-import helpers.unit_test as hut
-import oms.api as omsapi
+import helpers.unit_test as hunitest
+import oms.api as omapi
 
 _LOG = logging.getLogger(__name__)
 
@@ -11,11 +11,11 @@ _LOG = logging.getLogger(__name__)
 def _get_contract1():
     symbol = "ES"
     sec_type = "FUT"
-    contract = omsapi.Contract(symbol, sec_type)
+    contract = omapi.Contract(symbol, sec_type)
     return contract
 
 
-class Test_Contract1(hut.TestCase):
+class Test_Contract1(hunitest.TestCase):
     def test1(self):
         contract = _get_contract1()
         #
@@ -43,11 +43,11 @@ def _get_order1():
     action = "BUY"
     total_quantity = 100.0
     order_type = "MKT"
-    order = omsapi.Order(order_id, action, total_quantity, order_type)
+    order = omapi.Order(order_id, action, total_quantity, order_type)
     return order
 
 
-class Test_Order1(hut.TestCase):
+class Test_Order1(hunitest.TestCase):
     def test1(self):
         order = _get_order1()
         #
@@ -62,13 +62,13 @@ def _get_order_status1():
     filled = 75.0
     remaining = 25.0
     avg_fill_price = 100.0
-    order_status = omsapi.OrderStatus(
+    order_status = omapi.OrderStatus(
         order_id, status, filled, remaining, avg_fill_price
     )
     return order_status
 
 
-class Test_OrderStatus1(hut.TestCase):
+class Test_OrderStatus1(hunitest.TestCase):
     def test1(self):
         order_status = _get_order_status1()
         #
@@ -77,12 +77,12 @@ class Test_OrderStatus1(hut.TestCase):
         self.assert_equal(act, exp)
 
 
-class Test_Trade1(hut.TestCase):
+class Test_Trade1(hunitest.TestCase):
     def test1(self):
         contract = _get_contract1()
         order = _get_order1()
         order_status = _get_order_status1()
-        trade = omsapi.Trade(contract, order, order_status)
+        trade = omapi.Trade(contract, order, order_status)
         #
         act = str(trade)
         exp = """Trade:
@@ -96,12 +96,12 @@ class Test_Trade1(hut.TestCase):
 def _get_position1():
     contract = _get_contract1()
     position = 1000
-    position = omsapi.Position(contract, position)
+    position = omapi.Position(contract, position)
     return position
 
 
 # TODO(*): Test public functions, not private ones.
-class Test_Position1(hut.TestCase):
+class Test_Position1(hunitest.TestCase):
     def test1(self):
         position = _get_position1()
         #
@@ -151,20 +151,20 @@ class Test_Position1(hut.TestCase):
 
     def _update_position_helper(self, amount1: int, amount2: int):
         contract = _get_contract1()
-        position1 = omsapi.Position(contract, amount1)
-        position2 = omsapi.Position(contract, amount2)
+        position1 = omapi.Position(contract, amount1)
+        position2 = omapi.Position(contract, amount2)
         #
-        position = omsapi.Position.update(position1, position2)
+        position = omapi.Position.update(position1, position2)
         return position
 
 
-class Test_OMS1(hut.TestCase):
+class Test_OMS1(hunitest.TestCase):
     @pytest.mark.skip
     def test1(self):
         contract = _get_contract1()
         order = _get_order1()
         timestamp = None
-        oms = omsapi.OMS()
+        oms = omapi.OMS()
         #
         act = str(oms)
         exp = """OMS:
@@ -193,7 +193,7 @@ class Test_OMS1(hut.TestCase):
         contract = _get_contract1()
         _get_order1()
         timestamp = None
-        oms = omsapi.OMS()
+        oms = omapi.OMS()
         # Place an order.
         oms.place_order(contract, order, timestamp)
         act = str(oms)

@@ -12,8 +12,8 @@ import pprint
 import sys
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, Union
 
-# import helpers.versioning as hversion
-# hversion.check_version()
+# import helpers.versioning as hversio
+# hversio.check_version()
 
 # This module should not depend on anything else than Python standard modules.
 

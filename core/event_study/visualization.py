@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import core.event_study.visualization as cevstvis
+"""
+
 import logging
 from typing import Any, Optional
 
@@ -6,8 +12,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-import core.signal_processing as sigp
-import helpers.dbg as dbg
+import core.signal_processing as csigproc
+import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -41,14 +47,14 @@ def plot_interevent_intervals(
     :param timestamps: datetime pd.Series
     :param time_unit: time units in which to plot the data. A parameter
         for timedelta64[]
-    :param window: as in sigp.process_outliers
-    :param min_periods: as in sigp.process_outliers
-    :param mode: as in sigp.process_outliers
-    :param lower_quantile: as in sigp.process_outliers
-    :param kwargs: passed into sigp.process_outliers
+    :param window: as in csigproc.process_outliers
+    :param min_periods: as in csigproc.process_outliers
+    :param mode: as in csigproc.process_outliers
+    :param lower_quantile: as in csigproc.process_outliers
+    :param kwargs: passed into csigproc.process_outliers
     """
-    dbg.dassert(not timestamps.empty, "The time series is empty")
-    dbg.dassert_in(
+    hdbg.dassert(not timestamps.empty, "The time series is empty")
+    hdbg.dassert_in(
         timestamps.dtype,
         [
             np.dtype("datetime64[ns]"),
@@ -60,7 +66,7 @@ def plot_interevent_intervals(
         "The data should be datetime",
     )
     intervals = timestamps.diff()
-    intervals_without_outliers = sigp.process_outliers(
+    intervals_without_outliers = csigproc.process_outliers(
         intervals.astype(f"timedelta64[{time_unit}]"),
         window,
         mode,

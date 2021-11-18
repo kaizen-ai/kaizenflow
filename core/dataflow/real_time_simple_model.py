@@ -1,8 +1,14 @@
+"""
+Import as:
+
+import core.dataflow.real_time_simple_model as cdtfrtsimo
+"""
+
 import asyncio
 import datetime
 import random
 
-import helpers.introspection as hintro
+import helpers.introspection as hintros
 
 # start_time = time.time()
 
@@ -14,7 +20,7 @@ def print_message(msg):
     # current_time = get_current_time()
     # replayed_time = round(time.time() - start_time, 1)
     replayed_time = round(loop.time() - start_time, 1)
-    func_name = hintro.get_function_name(1)
+    func_name = hintros.get_function_name(1)
     # print(f"{current_time}: {replayed_time}: {func_name}: {msg}")
     print(f"{replayed_time}: {func_name}: {msg}")
 

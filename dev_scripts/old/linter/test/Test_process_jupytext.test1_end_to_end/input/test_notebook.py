@@ -21,15 +21,15 @@
 
 import logging
 
-import helpers.dbg as dbg
-import helpers.env as env
-import helpers.printing as prnt
+import helpers.dbg as hdbg
+import helpers.env as henv
+import helpers.printing as hprint
 
 # %%
-print(env.get_system_signature()[0])
+print(henv.get_system_signature()[0])
 
-prnt.config_notebook()
+hprint.config_notebook()
 
-dbg.init_logger(verbosity=logging.INFO)
+hdbg.init_logger(verbosity=logging.INFO)
 
 _LOG = logging.getLogger(__name__)

@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.dataflow_model.incremental_single_name_model_evaluator as cdtfmoinsinamodeva
+import core.dataflow_model.incremental_single_name_model_evaluator as cdtfmisnmev
 """
 
 from __future__ import annotations
@@ -12,12 +12,12 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import pandas as pd
 
-import core.dataflow_model.stats_computer as cdtfmostcom
+import core.dataflow_model.stats_computer as cdtfmostco
 import core.dataflow_model.utils as cdtfmouti
-import core.finance as cfin
-import core.signal_processing as csipro
-import core.statistics as csta
-import helpers.datetime_ as hdatetim
+import core.finance as cofinanc
+import core.signal_processing as csigproc
+import core.statistics as costatis
+import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
@@ -28,8 +28,8 @@ def compute_stats_for_single_name_artifacts(
     file_name: str,
     prediction_col: str,
     target_col: str,
-    start: Optional[hdatetim.Datetime],
-    end: Optional[hdatetim.Datetime],
+    start: Optional[hdateti.Datetime],
+    end: Optional[hdateti.Datetime],
     selected_idxs: Optional[Iterable[int]] = None,
     aws_profile: Optional[str] = None,
 ) -> pd.DataFrame:
@@ -62,7 +62,7 @@ def compute_stats_for_single_name_artifacts(
         pnl = df_for_key[prediction_col] * df_for_key[target_col]
         df_for_key["pnl"] = pnl
         # Compute (intraday) stats.
-        stats_computer = cdtfmostcom.StatsComputer()
+        stats_computer = cdtfmostco.StatsComputer()
         stats[key] = stats_computer.compute_finance_stats(
             df_for_key,
             returns_col=target_col,
@@ -72,7 +72,7 @@ def compute_stats_for_single_name_artifacts(
     # Generate dataframe from dictionary of stats.
     stats_df = pd.DataFrame(stats)
     # Perform multiple tests adjustment.
-    adj_pvals = csta.multipletests(
+    adj_pvals = costatis.multipletests(
         stats_df.loc["signal_quality"].loc["sr.pval"], nan_mode="drop"
     ).rename("sr.adj_pval")
     # Add multiple test info to stats dataframe.
@@ -92,8 +92,8 @@ def aggregate_single_name_models(
     spread_0_col: str,
     prediction_col: str,
     target_col: str,
-    start: Optional[hdatetim.Datetime],
-    end: Optional[hdatetim.Datetime],
+    start: Optional[hdateti.Datetime],
+    end: Optional[hdateti.Datetime],
     selected_idxs: Optional[Iterable[int]] = None,
     aws_profile: Optional[str] = None,
 ) -> Tuple[pd.DataFrame, Dict[Union[str, int], pd.DataFrame]]:
@@ -145,8 +145,8 @@ def load_result_dfs(
     load_rb_kwargs: Dict[str, Any],
     selected_idxs: Optional[Iterable[int]] = None,
     aws_profile: Optional[str] = None,
-    start: Optional[hdatetim.Datetime] = None,
-    end: Optional[hdatetim.Datetime] = None,
+    start: Optional[hdateti.Datetime] = None,
+    end: Optional[hdateti.Datetime] = None,
 ) -> Dict[int, pd.DataFrame]:
     """
     Loads result dataframes.
@@ -183,8 +183,8 @@ def _process_single_name_result_df(
     spread_0_col: str,
     prediction_col: str,
     target_col: str,
-    start: hdatetim.Datetime,
-    end: hdatetim.Datetime,
+    start: hdateti.Datetime,
+    end: hdateti.Datetime,
 ) -> pd.DataFrame:
     """
     Process a result bundle df corresponding to a single name.
@@ -230,7 +230,7 @@ def _process_single_name_result_df(
         },
         inplace=True,
     )
-    long_and_short_intents = csipro.split_positive_and_negative_parts(
+    long_and_short_intents = csigproc.split_positive_and_negative_parts(
         df["position_intent_1"]
     )
     df["position_intent_1_long"] = long_and_short_intents["positive"]
@@ -239,11 +239,11 @@ def _process_single_name_result_df(
     research_pnl_2 = df["prediction"] * df["target"]
     df["research_pnl_2"] = research_pnl_2
     # Compute PnL in original returns space.
-    pnl_0 = cfin.compute_pnl(
+    pnl_0 = cofinanc.compute_pnl(
         df, position_intent_col="position_intent_1", return_col="ret_0"
     )
     df["pnl_0"] = pnl_0
-    half_spread_cost = cfin.compute_spread_cost(
+    half_spread_cost = cofinanc.compute_spread_cost(
         df,
         target_position_col="position_intent_1",
         spread_col="spread_0",

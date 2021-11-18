@@ -15,7 +15,7 @@ import helpers.dbg as hdbg
 import helpers.git as hgit
 import helpers.io_ as hio
 import helpers.parser as hparser
-import helpers.system_interaction as hsyint
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -80,8 +80,8 @@ def get_credentials() -> Dict[str, Any]:
         notebooks
     """
     #
-    user_name = hsyint.get_user_name()
-    server_name = hsyint.get_server_name()
+    user_name = hsysinte.get_user_name()
+    server_name = hsysinte.get_server_name()
     _LOG.debug("user_name='%s'", user_name)
     _LOG.debug("server_name='%s'", server_name)
     git_repo_name = hgit.get_repo_full_name_from_client(super_module=True)
@@ -196,7 +196,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     if args.user:
-        hsyint.set_user_name(args.user)
+        hsysinte.set_user_name(args.user)
     usc = get_credentials()
     pprint.pprint(usc)
 

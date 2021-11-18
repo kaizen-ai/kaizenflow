@@ -7,15 +7,15 @@ import pytest
 
 import helpers.git as hgit
 import helpers.sql as hsql
-import helpers.system_interaction as hsyint
-import helpers.unit_test as huntes
+import helpers.system_interaction as hsysinte
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): helpers can't depend from im.
 @pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
-class TestSql1(huntes.TestCase):
+class TestSql1(hunitest.TestCase):
     def setUp(self) -> None:
         """
         Initialize the test container.
@@ -29,7 +29,7 @@ class TestSql1(huntes.TestCase):
             f"--file {self.docker_compose_file_path} "
             "up -d im_postgres_local"
         )
-        hsyint.system(cmd, suppress_output=False)
+        hsysinte.system(cmd, suppress_output=False)
         # Set DB credentials.
         self.dbname = "im_postgres_db_local"
         self.host = "localhost"
@@ -45,7 +45,7 @@ class TestSql1(huntes.TestCase):
             "sudo docker-compose "
             f"--file {self.docker_compose_file_path} down -v"
         )
-        hsyint.system(cmd, suppress_output=False)
+        hsysinte.system(cmd, suppress_output=False)
 
         super().tearDown()
 
@@ -165,7 +165,7 @@ class TestSql1(huntes.TestCase):
         hsql.execute_insert_query(self.connection, test_data, "test_table")
         # Load data.
         df = hsql.execute_query(self.connection, "SELECT * FROM test_table")
-        actual = huntes.convert_df_to_json_string(df, n_tail=None)
+        actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
 
     @pytest.mark.slow()
@@ -187,7 +187,7 @@ class TestSql1(huntes.TestCase):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "test_table")
         # Load data.
         df = hsql.execute_query(self.connection, "SELECT * FROM test_table")
-        actual = huntes.convert_df_to_json_string(df, n_tail=None)
+        actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
 
     def _create_test_table(self) -> None:

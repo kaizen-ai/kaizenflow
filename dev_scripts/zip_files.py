@@ -8,6 +8,10 @@ Zip all files in a directory retaining the dir structure.
 ```
 > zip_files.py --src_dir FTX --dst_dir FTX.zipped --delete_dst_dir
 ```
+
+Import as:
+
+import dev_scripts.zip_files as dsczifil
 """
 
 import argparse
@@ -17,11 +21,11 @@ import os
 
 from tqdm.auto import tqdm
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.io_ as hio
-import helpers.parser as prsr
+import helpers.parser as hparser
 import helpers.printing as hprint
-import helpers.system_interaction as hsi
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -52,16 +56,16 @@ def _parse() -> argparse.ArgumentParser:
         "--dry_run",
         action="store_true",
     )
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # `src_dir` should exist.
     src_dir = args.src_dir
-    dbg.dassert_dir_exists(src_dir)
+    hdbg.dassert_dir_exists(src_dir)
     # Get all the files.
     files = glob.glob(f"{src_dir}/**", recursive=True)
     files = sorted(files)
@@ -70,7 +74,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dst_dir = args.dst_dir
     if not args.incremental:
         if args.delete_dst_dir:
-            dbg.dassert_eq(
+            hdbg.dassert_eq(
                 args.incremental,
                 False,
                 msg="You can't use --incremental and --delete_dst_dir together",
@@ -78,7 +82,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             _LOG.warning("Deleting '%s' as per user request", dst_dir)
             hio.create_dir(dst_dir, incremental=False)
         else:
-            dbg.dassert_not_exists(dst_dir)
+            hdbg.dassert_not_exists(dst_dir)
     #
     for file_ in tqdm(files):
         _LOG.debug("Processing '%s'", file_)
@@ -108,7 +112,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         if args.dry_run:
             print(f"Dry-run: file_='{file_}' -> {cmd}")
         else:
-            hsi.system(cmd, suppress_output="ON_DEBUG_LEVEL")
+            hsysinte.system(cmd, suppress_output="ON_DEBUG_LEVEL")
 
 
 if __name__ == "__main__":

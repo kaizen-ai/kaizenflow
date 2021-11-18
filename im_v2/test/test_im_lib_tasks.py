@@ -17,7 +17,7 @@ class TestGetImDockerCmd(hunitest.TestCase):
         """
         cmd = "bash"
         actual = imimlitas._get_docker_cmd(cmd)
-        docker_compose_path = hlibtask._get_base_docker_compose_path()
+        docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
@@ -32,7 +32,7 @@ class TestGetImDockerCmd(hunitest.TestCase):
         """
         cmd = "im/devops/docker_scripts/set_shema_im_db.py"
         actual = imimlitas._get_docker_cmd(cmd)
-        docker_compose_path = hlibtask._get_base_docker_compose_path()
+        docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
@@ -48,7 +48,7 @@ class TestGetImDockerDown(hunitest.TestCase):
         Check the command line to only remove containers.
         """
         actual = imimlitas._get_docker_down_cmd(volumes_remove=False)
-        docker_compose_path = hlibtask._get_base_docker_compose_path()
+        docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
@@ -61,7 +61,7 @@ class TestGetImDockerDown(hunitest.TestCase):
         Check the command line to remove containers and volumes.
         """
         actual = imimlitas._get_docker_down_cmd(volumes_remove=True)
-        docker_compose_path = hlibtask._get_base_docker_compose_path()
+        docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
@@ -77,7 +77,7 @@ class TestGetImDockerUp(hunitest.TestCase):
         Check the command line to bring up the db.
         """
         actual = imimlitas._get_docker_up_cmd(detach=False)
-        docker_compose_path = hlibtask._get_base_docker_compose_path()
+        docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
@@ -91,7 +91,7 @@ class TestGetImDockerUp(hunitest.TestCase):
         Check the command line to bring up the db in the detached mode.
         """
         actual = imimlitas._get_docker_up_cmd(detach=True)
-        docker_compose_path = hlibtask._get_base_docker_compose_path()
+        docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \

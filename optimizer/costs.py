@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import optimizer.costs as opcosts
+"""
+
 import abc
 import logging
 from typing import List
@@ -8,8 +14,8 @@ import pandas as pd
 
 import core.config as cconfig
 import helpers.dbg as hdbg
-import optimizer.base as opba
-import optimizer.utils as optutil
+import optimizer.base as opbase
+import optimizer.utils as oputils
 
 _LOG = logging.getLogger(__name__)
 
@@ -45,13 +51,15 @@ class Cost(abc.ABC):
         """
         return self.__mul__(other)
 
-    def get_expr(self, target_weights, target_diffs, total_wealth) -> opba.EXPR:
+    def get_expr(self, target_weights, target_diffs, total_wealth) -> opbase.EXPR:
         expr = self._estimate(target_weights, target_diffs, total_wealth)
         self.expr = expr.copy()
         return self.gamma * expr
 
     @abc.abstractmethod
-    def _estimate(self, target_weights, target_diffs, total_wealth) -> opba.EXPR:
+    def _estimate(
+        self, target_weights, target_diffs, total_wealth
+    ) -> opbase.EXPR:
         ...
 
 
@@ -112,7 +120,9 @@ class DiagonalRiskModel(Cost):
         cost = cls(risk, config["gamma"])
         return cost
 
-    def _estimate(self, target_weights, target_diffs, total_wealth) -> opba.EXPR:
+    def _estimate(
+        self, target_weights, target_diffs, total_wealth
+    ) -> opbase.EXPR:
         _ = target_diffs
         _ = total_wealth
         expr = cvx.sum_squares(target_weights.T @ self._sigma_sqrt.values)
@@ -125,7 +135,7 @@ class CovarianceRiskModel(Cost):
     """
 
     def __init__(self, risk: pd.DataFrame, gamma: float = 1.0) -> None:
-        hdbg.dassert(optutil.is_symmetric(risk))
+        hdbg.dassert(oputils.is_symmetric(risk))
         self._risk = risk
         super().__init__(gamma)
 
@@ -136,7 +146,9 @@ class CovarianceRiskModel(Cost):
         cost = cls(risk, config["gamma"])
         return cost
 
-    def _estimate(self, target_weights, target_diffs, total_wealth) -> opba.EXPR:
+    def _estimate(
+        self, target_weights, target_diffs, total_wealth
+    ) -> opbase.EXPR:
         _ = target_diffs
         _ = total_wealth
         expr = cvx.quad_form(target_weights, self._risk.values)
@@ -163,7 +175,9 @@ class SpreadCost(Cost):
         cost = cls(spread, config["gamma"])
         return cost
 
-    def _estimate(self, target_weights, target_diffs, total_wealth) -> opba.EXPR:
+    def _estimate(
+        self, target_weights, target_diffs, total_wealth
+    ) -> opbase.EXPR:
         _ = target_weights
         _ = total_wealth
         expr = (self._spread.values / 2) @ cvx.abs(target_diffs).T
@@ -186,7 +200,9 @@ class DollarNeutralityCost(Cost):
         cost = cls(config["gamma"])
         return cost
 
-    def _estimate(self, target_weights, target_diffs, total_wealth) -> opba.EXPR:
+    def _estimate(
+        self, target_weights, target_diffs, total_wealth
+    ) -> opbase.EXPR:
         _ = target_diffs
         _ = total_wealth
         return cvx.abs(sum(target_weights[:-1]))
@@ -203,7 +219,9 @@ class TurnoverCost(Cost):
         cost = cls(config["gamma"])
         return cost
 
-    def _estimate(self, target_weights, target_diffs, total_wealth) -> opba.EXPR:
+    def _estimate(
+        self, target_weights, target_diffs, total_wealth
+    ) -> opbase.EXPR:
         _ = target_weights
         _ = total_wealth
         pos = cvx.norm(cvx.pos(target_diffs[:-1]), 1)

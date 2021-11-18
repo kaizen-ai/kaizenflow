@@ -10,8 +10,8 @@ import shutil
 from typing import List, Optional
 
 import helpers.dbg as hdbg
-import helpers.printing as hprintin
-import helpers.system_interaction as hsyint
+import helpers.printing as hprint
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -25,29 +25,29 @@ def _pytest_show_artifacts(dir_name: str, tag: Optional[str] = None) -> List[str
     file_names: List[str] = []
     # Find pytest artifacts.
     cmd = 'find . -name ".pytest_cache" -type d'
-    _, output_tmp = hsyint.system_to_string(
+    _, output_tmp = hsysinte.system_to_string(
         cd_cmd + cmd, abort_on_error=abort_on_error
     )
     file_names.extend(output_tmp.split())
     #
     cmd = 'find . -name "__pycache__" -type d'
-    _, output_tmp = hsyint.system_to_string(
+    _, output_tmp = hsysinte.system_to_string(
         cd_cmd + cmd, abort_on_error=abort_on_error
     )
     file_names.extend(output_tmp.split())
     # Find .pyc artifacts.
     cmd = 'find . -name "*.pyc" -type f'
-    _, output_tmp = hsyint.system_to_string(
+    _, output_tmp = hsysinte.system_to_string(
         cd_cmd + cmd, abort_on_error=abort_on_error
     )
     file_names.extend(output_tmp.split())
     # Remove empty lines.
-    file_names = hprintin.remove_empty_lines_from_string_list(file_names)
+    file_names = hprint.remove_empty_lines_from_string_list(file_names)
     #
     if tag is not None:
         num_files = len(file_names)
         _LOG.info("%s: %d", tag, num_files)
-        _LOG.debug("\n%s", hprintin.indent("\n".join(file_names)))
+        _LOG.debug("\n%s", hprint.indent("\n".join(file_names)))
     return file_names  # type: ignore
 
 

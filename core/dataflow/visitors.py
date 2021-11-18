@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.dataflow.visitors as cdtfv
+import core.dataflow.visitors as cdtfvisi
 """
 
 import collections
@@ -9,19 +9,19 @@ import copy
 import logging
 from typing import Any, Dict, List
 
-import core.dataflow.core as cdtfc
-import helpers.dbg as dbg
+import core.dataflow.core as cdtfcore
+import helpers.dbg as hdbg
 from core.dataflow.nodes.base import FitPredictNode
 
 _LOG = logging.getLogger(__name__)
 
 # Mapping from node and method to some data.
-# NodeInfo = MutableMapping[cdtfc.NodeId, MutableMapping[cdtfc.Method, Any]]
-# NodeInfo = typing.OrderedDict[cdtfc.NodeId, typing.OrderedDict[cdtfc.Method, Any]]
-NodeInfo = Dict[cdtfc.NodeId, Dict[cdtfc.Method, Any]]
+# NodeInfo = MutableMapping[cdtfcore.NodeId, MutableMapping[cdtfcore.Method, Any]]
+# NodeInfo = typing.OrderedDict[cdtfcore.NodeId, typing.OrderedDict[cdtfcore.Method, Any]]
+NodeInfo = Dict[cdtfcore.NodeId, Dict[cdtfcore.Method, Any]]
 
 
-def extract_info(dag: cdtfc.DAG, methods: List[cdtfc.Method]) -> NodeInfo:
+def extract_info(dag: cdtfcore.DAG, methods: List[cdtfcore.Method]) -> NodeInfo:
     """
     Extract node info from each DAG node.
 
@@ -29,8 +29,8 @@ def extract_info(dag: cdtfc.DAG, methods: List[cdtfc.Method]) -> NodeInfo:
     :param methods: `Node` method infos to extract
     :return: nested `OrderedDict`
     """
-    dbg.dassert_isinstance(dag, cdtfc.DAG)
-    dbg.dassert_isinstance(methods, list)
+    hdbg.dassert_isinstance(dag, cdtfcore.DAG)
+    hdbg.dassert_isinstance(methods, list)
     info = collections.OrderedDict()
     # Scan the nodes.
     for nid in dag.dag.nodes():
@@ -48,43 +48,43 @@ def extract_info(dag: cdtfc.DAG, methods: List[cdtfc.Method]) -> NodeInfo:
 # #############################################################################
 
 
-NodeState = Dict[cdtfc.NodeId, Dict[str, Any]]
+NodeState = Dict[cdtfcore.NodeId, Dict[str, Any]]
 
 
 # TODO(gp): We could save / load state also of DAGs with some stateless Node.
-def get_fit_state(dag: cdtfc.DAG) -> NodeState:
+def get_fit_state(dag: cdtfcore.DAG) -> NodeState:
     """
     Obtain the node state learned during fit from DAG.
 
     :param dag: dataflow DAG consisting of `FitPredictNode`s
     :return: result of node `get_fit_state()` keyed by nid
     """
-    dbg.dassert_isinstance(dag, cdtfc.DAG)
+    hdbg.dassert_isinstance(dag, cdtfcore.DAG)
     fit_state = collections.OrderedDict()
     for nid in dag.dag.nodes():
         node = dag.get_node(nid)
         # Save the info for the fit state.
-        dbg.dassert_isinstance(node, FitPredictNode)
+        hdbg.dassert_isinstance(node, FitPredictNode)
         node_fit_state = node.get_fit_state()
         fit_state[nid] = copy.copy(node_fit_state)
     return fit_state
 
 
-def set_fit_state(dag: cdtfc.DAG, fit_state: NodeState) -> None:
+def set_fit_state(dag: cdtfcore.DAG, fit_state: NodeState) -> None:
     """
     Initialize a DAG with pre-fit node state.
 
     :param dag: dataflow DAG consisting of `FitPredictNode`s
     :param fit_state: result of node `get_fit_state()` keyed by nid
     """
-    dbg.dassert_isinstance(dag, cdtfc.DAG)
-    dbg.dassert_isinstance(fit_state, collections.OrderedDict)
-    dbg.dassert_eq(len(dag.dag.nodes()), len(fit_state.keys()))
+    hdbg.dassert_isinstance(dag, cdtfcore.DAG)
+    hdbg.dassert_isinstance(fit_state, collections.OrderedDict)
+    hdbg.dassert_eq(len(dag.dag.nodes()), len(fit_state.keys()))
     # Scan the nodes.
     for nid in dag.dag.nodes():
         node = dag.get_node(nid)
         # Set the info for the fit state.
-        dbg.dassert_isinstance(node, FitPredictNode)
-        dbg.dassert_in(nid, fit_state.keys())
+        hdbg.dassert_isinstance(node, FitPredictNode)
+        hdbg.dassert_in(nid, fit_state.keys())
         node_fit_state = copy.copy(fit_state[nid])
         node.set_fit_state(node_fit_state)

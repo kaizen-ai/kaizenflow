@@ -1,4 +1,5 @@
-"""Implement a residualizer pipeline that, given data (e.g., returns or features),
+"""
+Implement a residualizer pipeline that, given data (e.g., returns or features),
 computes:
 1) factors
 2) loadings
@@ -10,6 +11,10 @@ Each of the 3 components:
 - supports a functional style, composable with pandas and following some pandas
   conventions
 - can be used in sklearn Pipeline objects
+
+Import as:
+
+import core.residualizer as coresidu
 """
 
 import collections
@@ -20,9 +25,9 @@ import numpy as np
 import pandas as pd
 from scipy.spatial.distance import cosine  # type: ignore
 
-import core.explore as exp
-import core.plotting as plot
-import helpers.dbg as dbg
+import core.explore as coexplor
+import core.plotting as coplotti
+import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
@@ -54,7 +59,7 @@ def linearize_df(df: pd.DataFrame, prefix: str) -> pd.Series:
     df.index = df.index.map(str)
     #
     srs = df.unstack()
-    dbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_isinstance(srs, pd.Series)
     srs.index = srs.index.map("_".join)
     return srs
 
@@ -73,7 +78,7 @@ class FactorComputer:
             df = pd.DataFrame(obj)
         else:
             df = obj
-        dbg.dassert_isinstance(df, pd.DataFrame)
+        hdbg.dassert_isinstance(df, pd.DataFrame)
         return self._execute(obj, *args, **kwargs)
 
     def fit(self) -> None:
@@ -154,8 +159,8 @@ class PcaFactorComputer(FactorComputer):
         """
         Return the names of the i-th eigenvector in the result df.
         """
-        dbg.dassert_lte(0, i)
-        dbg.dassert_lt(i, self.eig_num)
+        hdbg.dassert_lte(0, i)
+        hdbg.dassert_lt(i, self.eig_num)
         return ["eigvec%s_%s" % (i, j) for j in range(self.eig_comp_num)]
 
     # TODO(gp): -> private
@@ -165,10 +170,10 @@ class PcaFactorComputer(FactorComputer):
     ) -> pd.Series:
         res = linearize_df(eigvec_df, "eigvec")
         #
-        dbg.dassert_isinstance(eigval_df, pd.DataFrame)
+        hdbg.dassert_isinstance(eigval_df, pd.DataFrame)
         eigval_df = eigval_df.T.copy()
         eigval_df.index = ["eigval%s" % i for i in range(eigval_df.shape[0])]
-        dbg.dassert_eq(eigval_df.shape[1], 1)
+        hdbg.dassert_eq(eigval_df.shape[1], 1)
         res = res.append(eigval_df.iloc[:, 0])
         return res
 
@@ -186,7 +191,7 @@ class PcaFactorComputer(FactorComputer):
             eigval = eigval[idx]
             eigvec = eigvec[:, idx]
             # Make sure it's sorted in descending order.
-            dbg.dassert_eq_all(eigval, np.sort(eigval)[::-1])
+            hdbg.dassert_eq_all(eigval, np.sort(eigval)[::-1])
         return are_eigval_sorted, eigval, eigvec
 
     # TODO(gp): -> eig_distance
@@ -209,8 +214,8 @@ class PcaFactorComputer(FactorComputer):
         col_map_src = col_map.keys()
         col_map_dst = [x[1] for x in col_map.values()]
         exp_idxs = list(range(n))
-        dbg.dassert_eq_all(sorted(col_map_src), exp_idxs)
-        dbg.dassert_eq_all(sorted(col_map_dst), exp_idxs)
+        hdbg.dassert_eq_all(sorted(col_map_src), exp_idxs)
+        hdbg.dassert_eq_all(sorted(col_map_dst), exp_idxs)
         return True
 
     @staticmethod
@@ -227,8 +232,8 @@ class PcaFactorComputer(FactorComputer):
 
         :return: updated eigvalues and eigenvectors
         """
-        dbg.dassert_isinstance(eigval_df, pd.DataFrame)
-        dbg.dassert_isinstance(eigvec_df, pd.DataFrame)
+        hdbg.dassert_isinstance(eigval_df, pd.DataFrame)
+        hdbg.dassert_isinstance(eigvec_df, pd.DataFrame)
         _LOG.debug("col_map=%s", col_map)
         # Apply the permutation to the eigenvalues / eigenvectors.
         permutation = [col_map[i][1] for i in sorted(col_map.keys())]
@@ -252,7 +257,7 @@ class PcaFactorComputer(FactorComputer):
         Return whether eigvec_df are "stable" in the sense that the change of
         corresponding of each eigenvec is smaller than a certain threshold.
         """
-        dbg.dassert_eq(
+        hdbg.dassert_eq(
             prev_eigvec_df.shape,
             eigvec_df.shape,
             "prev_eigvec_df=\n%s\neigvec_df=\n%s",
@@ -279,7 +284,7 @@ class PcaFactorComputer(FactorComputer):
         _LOG.debug(
             "prev_eigval_df=\n%s\neigval_df=\n%s\n", prev_eigval_df, eigval_df
         )
-        dbg.dassert_eq(prev_eigval_df.shape, eigval_df.shape)
+        hdbg.dassert_eq(prev_eigval_df.shape, eigval_df.shape)
         are_stable = True
         diff = PcaFactorComputer.eigvec_distance(prev_eigval_df, eigval_df)
         _LOG.debug("diff=%s", diff)
@@ -297,7 +302,7 @@ class PcaFactorComputer(FactorComputer):
         # Plot eigenvalues.
         cols = [c for c in res_df.columns if c.startswith("eigval")]
         eigval_df = res_df[cols]
-        dbg.dassert_lte(1, eigval_df.shape[1])
+        hdbg.dassert_lte(1, eigval_df.shape[1])
         eigval_df.plot(title="Eigenvalues over time", ylim=(0, 1))
         # Plot cumulative variance.
         eigval_df.cumsum(axis=1).plot(
@@ -307,14 +312,14 @@ class PcaFactorComputer(FactorComputer):
         # Plot eigenvectors.
         cols = [c for c in res_df.columns if c.startswith("eigvec")]
         eigvec_df = res_df[cols]
-        dbg.dassert_lte(1, eigvec_df.shape[1])
+        hdbg.dassert_lte(1, eigvec_df.shape[1])
         # TODO(gp): Fix this.
         # max_pcs = len([c for c in res_df.columns if c.startswith("eigvec_")])
         max_pcs = 3
         num_pcs_to_plot = self._get_num_pcs_to_plot(num_pcs_to_plot, max_pcs)
         _LOG.info("num_pcs_to_plot=%s", num_pcs_to_plot)
         if num_pcs_to_plot > 0:
-            _, axes = plot.get_multiple_plots(
+            _, axes = coplotti.get_multiple_plots(
                 num_pcs_to_plot,
                 num_cols=num_cols,
                 y_scale=4,
@@ -325,7 +330,7 @@ class PcaFactorComputer(FactorComputer):
                 col_names = [
                     c for c in eigvec_df.columns if c.startswith("eigvec%s" % i)
                 ]
-                dbg.dassert_lte(1, len(col_names))
+                hdbg.dassert_lte(1, len(col_names))
                 eigvec_df[col_names].plot(
                     ax=axes[i], ylim=(-1, 1), title="PC%s" % i
                 )
@@ -333,21 +338,21 @@ class PcaFactorComputer(FactorComputer):
     @staticmethod
     def _get_num_pcs_to_plot(num_pcs_to_plot: int, max_pcs: int) -> int:
         """
-        Get the number of principal components to plot.
+        Get the number of principal components to coplotti.
         """
         if num_pcs_to_plot == -1:
             num_pcs_to_plot = max_pcs
-        dbg.dassert_lte(0, num_pcs_to_plot)
-        dbg.dassert_lte(num_pcs_to_plot, max_pcs)
+        hdbg.dassert_lte(0, num_pcs_to_plot)
+        hdbg.dassert_lte(num_pcs_to_plot, max_pcs)
         return num_pcs_to_plot
 
     def _execute(self, df: pd.DataFrame, ts: int) -> pd.Series:
         _LOG.debug("ts=%s", ts)
         hpandas.dassert_strictly_increasing_index(df)
         # Compute correlation.
-        df = exp.handle_nans(df, self.nan_mode_in_data)
+        df = coexplor.handle_nans(df, self.nan_mode_in_data)
         corr_df = df.corr()
-        corr_df = exp.handle_nans(corr_df, self.nan_mode_in_corr)
+        corr_df = coexplor.handle_nans(corr_df, self.nan_mode_in_corr)
         _LOG.debug("corr_df=%s", corr_df)
         # Use the last datetime as timestamp.
         dt = df.index.max()
@@ -382,7 +387,7 @@ class PcaFactorComputer(FactorComputer):
             self._eig_comp_num = eigvec_df.shape[0]
         # Turn results into a pd.Series.
         res = self.linearize_eigval_eigvec(eigval_df, eigvec_df)
-        dbg.dassert_isinstance(res, pd.Series)
+        hdbg.dassert_isinstance(res, pd.Series)
         return res
 
     @staticmethod
@@ -458,7 +463,7 @@ class PcaFactorComputer(FactorComputer):
                 _LOG.debug("i=%s, j=%s, coeff=%s", i, j, coeff)
                 if coeff:
                     _LOG.debug("i=%s -> j=%s", i, j)
-                    dbg.dassert_not_in(
+                    hdbg.dassert_not_in(
                         i, col_map, msg="i=%s col_map=%s" % (i, col_map)
                     )
                     col_map[i] = (coeff, j)
@@ -499,7 +504,7 @@ class PcaFactorComputer(FactorComputer):
                 num_fails = self.are_eigenvectors_stable(
                     prev_eigvec_df, shuffled_eigvec_df
                 )
-                dbg.dassert_eq(
+                hdbg.dassert_eq(
                     num_fails,
                     0,
                     "prev_eigvec_df=\n%s\n" "shuffled_eigvec_df=\n%s",

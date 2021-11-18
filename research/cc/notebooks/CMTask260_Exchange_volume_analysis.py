@@ -22,17 +22,17 @@ import os
 import pandas as pd
 import seaborn as sns
 
-import core.config.config_ as ccocon
+import core.config.config_ as cconconf
 import helpers.dbg as hdbg
 import helpers.env as henv
-import helpers.printing as hprintin
+import helpers.printing as hprint
 import helpers.s3 as hs3
-import im_v2.data.universe as imdauni
-import research.cc.statistics as rccsta
-import research.cc.volume as rccvol
-import im.ccxt.data.load.loader as imccdaloloa
+import im_v2.data.universe as imv2dauni
+import research.cc.statistics as rccstat
+import research.cc.volume as rccvolu
+import im.ccxt.data.load.loader as imcdalolo
 
-import core.plotting as cplot
+import core.plotting as coplotti
 
 
 # %%
@@ -42,18 +42,18 @@ _LOG = logging.getLogger(__name__)
 
 _LOG.info("%s", henv.get_system_signature()[0])
 
-hprintin.config_notebook()
+hprint.config_notebook()
 
 
 # %% [markdown]
 # # Config
 
 # %%
-def get_cmtask260_config() -> ccocon.Config:
+def get_cmtask260_config() -> cconconf.Config:
     """
     Get task260-specific config.
     """
-    config = ccocon.Config()
+    config = cconconf.Config()
     # Load parameters.
     config.add_subconfig("load")
     config["load"]["aws_profile"] = "am"
@@ -78,11 +78,11 @@ print(config)
 # # Load the data
 
 # %%
-compute_daily_cumul_volume_ = lambda data: rccvol.get_daily_cumul_volume(
+compute_daily_cumul_volume_ = lambda data: rccvolu.get_daily_cumul_volume(
     data, config, is_notional_volume=False
 )
 
-cumul_daily_volume = rccsta.compute_stats_for_universe(
+cumul_daily_volume = rccstat.compute_stats_for_universe(
     config, compute_daily_cumul_volume_
 )
 
@@ -96,7 +96,7 @@ cumul_daily_volume.head(3)
 # # Compute total volume per exchange
 
 # %%
-total_volume_by_exchange = rccvol.get_total_exchange_volume(
+total_volume_by_exchange = rccvolu.get_total_exchange_volume(
     cumul_daily_volume, config, avg_daily=False
 )
 print(total_volume_by_exchange)
@@ -105,7 +105,7 @@ print(total_volume_by_exchange)
 # # Compute total volume per currency
 
 # %%
-total_volume_by_coins = rccvol.get_total_coin_volume(
+total_volume_by_coins = rccvolu.get_total_coin_volume(
     cumul_daily_volume, config, avg_daily=False
 )
 print(total_volume_by_coins)
@@ -117,7 +117,7 @@ print(total_volume_by_coins)
 # ## By exchange
 
 # %%
-rolling_volume_per_exchange = rccvol.get_rolling_volume_per_exchange(
+rolling_volume_per_exchange = rccvolu.get_rolling_volume_per_exchange(
     cumul_daily_volume, config, window=90
 )
 print(rolling_volume_per_exchange)
@@ -126,7 +126,7 @@ print(rolling_volume_per_exchange)
 # ## By coins
 
 # %%
-rolling_volume_per_coin = rccvol.get_rolling_volume_per_coin(
+rolling_volume_per_coin = rccvolu.get_rolling_volume_per_coin(
     cumul_daily_volume, config, window=90
 )
 print(rolling_volume_per_coin)
@@ -135,7 +135,7 @@ print(rolling_volume_per_coin)
 # # Compare weekday volumes
 
 # %%
-total_volume_by_weekdays = rccvol.compare_weekday_volumes(
+total_volume_by_weekdays = rccvolu.compare_weekday_volumes(
     cumul_daily_volume, config
 )
 print(total_volume_by_weekdays)
@@ -154,7 +154,7 @@ def get_initial_df_with_volumes(coins, exchange, is_notional_volume):
     Parameters: list of coins, exchange name
     """
     result = []
-    loader = imccdaloloa.CcxtLoader(
+    loader = imcdalolo.CcxtLoader(
         root_dir="s3://alphamatic-data/data", aws_profile="am"
     )
     for coin in coins:
@@ -197,10 +197,10 @@ def plot_ath_volumes_comparison(df_list):
 
 # %% hidden=true
 # get the list of all coin paires for each exchange
-binance_coins = imdauni.get_trade_universe("v01")["CCXT"]["binance"]
-ftx_coins = imdauni.get_trade_universe("v01")["CCXT"]["ftx"]
-gateio_coins = imdauni.get_trade_universe("v01")["CCXT"]["gateio"]
-kucoin_coins = imdauni.get_trade_universe("v01")["CCXT"]["kucoin"]
+binance_coins = imv2dauni.get_trade_universe("v01")["CCXT"]["binance"]
+ftx_coins = imv2dauni.get_trade_universe("v01")["CCXT"]["ftx"]
+gateio_coins = imv2dauni.get_trade_universe("v01")["CCXT"]["gateio"]
+kucoin_coins = imv2dauni.get_trade_universe("v01")["CCXT"]["kucoin"]
 
 # load all the dataframes
 binance_1 = get_initial_df_with_volumes(

@@ -1,14 +1,14 @@
 """
 Import as:
 
-import helpers.jupyter as hjupyter
+import helpers.jupyter as hjupyte
 """
 
 import os
 
 import helpers.dbg as hdbg
 import helpers.io_ as hio
-import helpers.system_interaction as hsyint
+import helpers.system_interaction as hsysinte
 
 
 def run_notebook(
@@ -53,4 +53,4 @@ def run_notebook(
     cmd.append("--ExecutePreprocessor.timeout=-1")
     # Execute.
     cmd_as_str = " ".join(cmd)
-    hsyint.system(cmd_as_str, abort_on_error=True, suppress_output=False)
+    hsysinte.system(cmd_as_str, abort_on_error=True, suppress_output=False)

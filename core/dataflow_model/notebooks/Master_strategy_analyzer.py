@@ -31,14 +31,14 @@
 import logging
 
 import core.config as cconfig
-import core.dataflow_model.model_evaluator as modeval
-import core.dataflow_model.utils as cdmu
-import helpers.dbg as dbg
+import core.dataflow_model.model_evaluator as cdtfmomoev
+import core.dataflow_model.utils as cdtfmouti
+import helpers.dbg as hdbg
 import helpers.printing as hprint
 
 # %%
-dbg.init_logger(verbosity=logging.INFO)
-# dbg.init_logger(verbosity=logging.DEBUG)
+hdbg.init_logger(verbosity=logging.INFO)
+# hdbg.init_logger(verbosity=logging.DEBUG)
 
 _LOG = logging.getLogger(__name__)
 
@@ -82,7 +82,7 @@ print(str(eval_config))
 
 # %%
 # Build the ModelEvaluator from the eval config.
-evaluator = modeval.StrategyEvaluator.from_eval_config(eval_config)
+evaluator = cdtfmomoev.StrategyEvaluator.from_eval_config(eval_config)
 
 # %%
 # TODO(gp): Finish this.

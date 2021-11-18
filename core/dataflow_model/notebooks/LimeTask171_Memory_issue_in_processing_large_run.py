@@ -29,9 +29,9 @@
 import logging
 
 import core.config as cconfig
-import core.dataflow_model.model_evaluator as cdtfmomoeva
+import core.dataflow_model.model_evaluator as cdtfmomoev
 import helpers.dbg as hdbg
-import helpers.printing as hprintin
+import helpers.printing as hprint
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -41,7 +41,7 @@ _LOG = logging.getLogger(__name__)
 
 # _LOG.info("%s", env.get_system_signature()[0])
 
-hprintin.config_notebook()
+hprint.config_notebook()
 
 # %% [markdown]
 # # Notebook config
@@ -82,7 +82,7 @@ print(str(eval_config))
 
 # %%
 # Build the ModelEvaluator from the eval config.
-evaluator = cdtfmomoeva.StrategyEvaluator.from_eval_config(eval_config)
+evaluator = cdtfmomoev.StrategyEvaluator.from_eval_config(eval_config)
 
 # %%
 if False:

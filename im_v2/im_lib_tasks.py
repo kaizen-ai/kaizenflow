@@ -3,7 +3,7 @@ Tasks related to `im` project.
 
 Import as:
 
-import im_v2.im_lib_tasks as imimlitas
+import im_v2.im_lib_tasks as imvimlita
 """
 
 import logging
@@ -35,7 +35,7 @@ def _get_docker_cmd(docker_cmd: str) -> str:
     """
     cmd = ["docker-compose"]
     # Add `docker-compose` file path.
-    docker_compose_file_path = hlibtask._get_base_docker_compose_path()
+    docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
     # Add `run`.
     service_name = "im_app"
@@ -79,7 +79,7 @@ def _get_docker_up_cmd(detach: bool) -> str:
     """
     cmd = ["docker-compose"]
     # Add `docker-compose` file path.
-    docker_compose_file_path = hlibtask._get_base_docker_compose_path()
+    docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
     # Add `down` command.
     cmd.append("up")
@@ -125,7 +125,7 @@ def _get_docker_down_cmd(volumes_remove: bool) -> str:
     """
     cmd = ["docker-compose"]
     # Add `docker-compose` file path.
-    docker_compose_file_path = hlibtask._get_base_docker_compose_path()
+    docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
     # Add `down` command.
     cmd.append("down")

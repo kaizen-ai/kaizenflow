@@ -11,7 +11,7 @@ Usage:
 
 Import as:
 
-import im.devops.docker_scripts.set_schema_im_db as imddsssimdb
+import im.devops.old2.docker_scripts.set_schema_im_db as imdodsssimd
 """
 import argparse
 import logging

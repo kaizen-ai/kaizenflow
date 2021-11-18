@@ -11,10 +11,10 @@ import pandas as pd
 
 import core.dataflow.price_interface as cdtfprint
 import core.dataflow.test.test_price_interface as dartttdi
-import helpers.printing as hprintin
-import helpers.unit_test as huntes
-import oms.order as oord
-import oms.portfolio as opor
+import helpers.printing as hprint
+import helpers.unit_test as hunitest
+import oms.order as omorder
+import oms.portfolio as omportfo
 
 _LOG = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ def get_portfolio_example1(
     price_column = "price"
     #
     initial_cash = 1e6
-    portfolio = opor.Portfolio(
+    portfolio = omportfo.Portfolio(
         strategy_id,
         account,
         #
@@ -53,7 +53,7 @@ def get_replayed_time_price_interface(event_loop):
     df = dartttdi.generate_synthetic_db_data(
         start_datetime, end_datetime, columns_, asset_ids
     )
-    _LOG.debug("df=%s", hprintin.dataframe_to_str(df))
+    _LOG.debug("df=%s", hprint.dataframe_to_str(df))
     # Build a ReplayedTimePriceInterface.
     initial_replayed_delay = 5
     delay_in_secs = 0
@@ -75,7 +75,7 @@ def get_replayed_time_price_interface(event_loop):
 _5mins = pd.DateOffset(minutes=5)
 
 
-class TestPortfolio1(huntes.TestCase):
+class TestPortfolio1(hunitest.TestCase):
     def test_get_holdings1(self) -> None:
         """
         Check non-cash holdings for a Portfolio with only cash.
@@ -127,7 +127,7 @@ class TestPortfolio1(huntes.TestCase):
         timestamp_start = timestamp + _5mins
         timestamp_end = timestamp + 2 * _5mins
         num_shares = 10
-        order = oord.Order(
+        order = omorder.Order(
             order_id,
             price_interface,
             creation_timestamp,
