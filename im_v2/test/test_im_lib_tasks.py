@@ -5,7 +5,7 @@ import pytest
 import helpers.lib_tasks as hlibtask
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
-import im_v2.im_lib_tasks as imvimlita  # pylint: disable=no-name-in-module
+import im_v2.im_lib_tasks as imimlitas  # pylint: disable=no-name-in-module
 
 _LOG = logging.getLogger(__name__)
 
