@@ -161,7 +161,7 @@ def _system(
     """
     _LOG.debug("##> %s", cmd)
     _LOG.debug(
-        hprintin.to_str(
+        hprint.to_str(
             "abort_on_error suppress_error suppress_output "
             "blocking wrapper output_file num_error_lines tee dry_run log_level"
         )
@@ -176,7 +176,7 @@ def _system(
         # Suppress the output if the verbosity level is higher than DEBUG,
         # otherwise print.
         suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
-    _LOG.debug(hprintin.to_str("suppress_output"))
+    _LOG.debug(hprint.to_str("suppress_output"))
     # Prepare the command line.
     cmd = "(%s)" % cmd
     hdbg.dassert_imply(tee, output_file is not None)
@@ -261,9 +261,9 @@ def _system(
     if abort_on_error and rc != 0:
         msg = (
             "\n"
-            + hprintin.frame("cmd='%s' failed with rc='%s'" % (cmd, rc))
+            + hprint.frame("cmd='%s' failed with rc='%s'" % (cmd, rc))
             + "\nOutput of the failing command is:\n%s\n%s\n%s"
-            % (hprintin.line(">"), output, hprintin.line("<"))
+            % (hprint.line(">"), output, hprint.line("<"))
         )
         _LOG.error("%s", msg)
         # Report the first `num_error_lines` of the output.
@@ -367,7 +367,7 @@ def get_first_line(output: str) -> str:
     This is used when calling system_to_string() and expecting a single
     line output.
     """
-    output = hprintin.remove_empty_lines(output)
+    output = hprint.remove_empty_lines(output)
     output_as_arr: List[str] = output.split("\n")
     hdbg.dassert_eq(len(output_as_arr), 1, "output='%s'", output)
     output = output_as_arr[0]
@@ -833,5 +833,5 @@ def append_timestamp_tag(file_name: str, tag: str) -> str:
         # If the tag is specified prepend a `.` in the filename.
         tag_ += "." + tag
     new_file_name = os.path.join(dir_name, "".join([name, tag_, extension]))
-    _LOG.debug(hprintin.to_str("file_name new_file_name"))
+    _LOG.debug(hprint.to_str("file_name new_file_name"))
     return new_file_name

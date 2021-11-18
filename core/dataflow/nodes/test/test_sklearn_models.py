@@ -249,7 +249,7 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
                 "nan_mode": "drop",
             }
         )
-        node = cdnsm.ContinuousSkLearnModel(
+        node = cdtfnoskmo.ContinuousSkLearnModel(
             "sklearn",
             model_func=slmode.LinearRegression,
             **config.to_dict(),

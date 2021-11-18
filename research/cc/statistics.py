@@ -3,27 +3,27 @@ Compute crypto-related statistics.
 
 Import as:
 
-import research.cc.statistics as rccsta
+import research.cc.statistics as rccstat
 """
 import logging
 from typing import Callable, Union
 
 import pandas as pd
 
-import core.config.config_ as ccocon
-import core.statistics as csta
+import core.config.config_ as cconconf
+import core.statistics as costatis
 import helpers.dbg as hdbg
-import helpers.hpandas as hhpandas
-import im.ccxt.data.load.loader as imccdaloloa
-import im.cryptodatadownload.data.load.loader as imcrdaloloa
-import im_v2.data.universe as imdauni
+import helpers.hpandas as hpandas
+import im.ccxt.data.load.loader as imcdalolo
+import im.cryptodatadownload.data.load.loader as icdalolo
+import im_v2.data.universe as imv2dauni
 
 _LOG = logging.getLogger(__name__)
 
 
 def compute_start_end_table(
     price_data: pd.DataFrame,
-    config: ccocon.Config,
+    config: cconconf.Config,
 ) -> pd.DataFrame:
     """
     Compute start-end table on exchange-currency level.
@@ -54,7 +54,7 @@ def compute_start_end_table(
     )
     #
     hdbg.dassert_isinstance(price_data.index, pd.DatetimeIndex)
-    hhpandas.dassert_monotonic_index(price_data.index)
+    hpandas.dassert_monotonic_index(price_data.index)
     hdbg.dassert_eq(price_data.index.freq, "T")
     # Reset the index to use it for stats computation. The index's new column name
     # will be `index`.
@@ -104,12 +104,12 @@ def get_loader_for_vendor(
     :return: loader instance
     """
     if vendor == "CCXT":
-        loader = imccdaloloa.CcxtLoader(
+        loader = imcdalolo.CcxtLoader(
             root_dir=config["load"]["data_dir"],
             aws_profile=config["load"]["aws_profile"],
         )
     elif vendor == "CDD":
-        loader = imcrdaloloa.CddLoader(
+        loader = icdalolo.CddLoader(
             root_dir=config["load"]["data_dir"],
             aws_profile=config["load"]["aws_profile"],
         )

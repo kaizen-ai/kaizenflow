@@ -23,7 +23,7 @@ import helpers.dbg as hdbg
 import helpers.git as hgit
 import helpers.introspection as hintros
 import helpers.io_ as hio
-import helpers.printing as hprintin
+import helpers.printing as hprint
 import helpers.s3 as hs3
 import helpers.system_interaction as hsysinte
 
@@ -90,7 +90,7 @@ def get_global_cache_info(
         _LOG.debug("")
     txt = []
     if add_banner:
-        txt.append(hprintin.frame("get_global_cache_info()", char1="<"))
+        txt.append(hprint.frame("get_global_cache_info()", char1="<"))
     txt.append("is global cache enabled=%s" % is_caching_enabled())
     #
     cache_types = _get_cache_types()
@@ -467,7 +467,7 @@ class _Cached:
             _LOG.debug("")
         txt = []
         if add_banner:
-            txt.append(hprintin.frame("get_global_cache_info()", char1="<"))
+            txt.append(hprint.frame("get_global_cache_info()", char1="<"))
         has_func_cache = self.has_function_cache()
         txt.append("has function-specific cache=%s" % has_func_cache)
         if has_func_cache:
@@ -694,10 +694,10 @@ class _Cached:
                 "compress": True,
             }
             if hs3.is_s3_path(self._disk_cache_path):
-                import helpers.joblib_helpers as hjoh
+                import helpers.joblib_helpers as hjoblib
 
                 # Register the S3 backend.
-                hjoh.register_s3fs_store_backend()
+                hjoblib.register_s3fs_store_backend()
                 # Use the default profile, unless it was explicitly passed.
                 if self._aws_profile is None:
                     aws_profile = hs3.get_aws_profile()

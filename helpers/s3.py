@@ -501,7 +501,7 @@ def retrieve_archived_data_from_s3(
     # Download the tgz file.
     hio.create_dir(dst_dir, incremental=True)
     dst_file = os.path.join(dst_dir, os.path.basename(s3_file_path))
-    _LOG.debug(hprintin.to_str("s3_file_path dst_dir dst_file"))
+    _LOG.debug(hprint.to_str("s3_file_path dst_dir dst_file"))
     if incremental and os.path.exists(dst_file):
         _LOG.warning("Found '%s': skipping downloading", dst_file)
     else:
@@ -533,7 +533,7 @@ def expand_archived_data(src_tgz_file: str, dst_dir: str) -> str:
     cmd = f"cd {dst_dir} && tar tzf {src_tgz_file} | head -1"
     rc, enclosing_tgz_dir_name = hsysinte.system_to_one_line(cmd)
     _ = rc
-    _LOG.debug(hprintin.to_str("enclosing_tgz_dir_name"))
+    _LOG.debug(hprint.to_str("enclosing_tgz_dir_name"))
     tgz_dst_dir = os.path.join(dst_dir, enclosing_tgz_dir_name)
 
     if os.path.exists(tgz_dst_dir):

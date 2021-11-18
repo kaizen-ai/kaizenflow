@@ -1,7 +1,7 @@
 """
 Import as:
 
-import oms.locates as oloc
+import oms.locates as omlocate
 """
 
 import pandas as pd

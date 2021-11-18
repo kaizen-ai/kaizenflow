@@ -49,18 +49,18 @@ _LOG = logging.getLogger(__name__)
 
 _LOG.info("%s", henv.get_system_signature()[0])
 
-hprintin.config_notebook()
+hprint.config_notebook()
 
 
 # %% [markdown]
 # # Config
 
 # %%
-def get_config() -> ccocon.Config:
+def get_config() -> cconconf.Config:
     """
     Get config that controls parameters.
     """
-    config = ccocon.Config()
+    config = cconconf.Config()
     # Load parameters.
     config.add_subconfig("load")
     config["load"]["aws_profile"] = "am"
@@ -239,13 +239,13 @@ df_returns.head(3)
 
 # %%
 corr_matrix = df_returns.corr()
-_ = cplo.plot_heatmap(corr_matrix)
+_ = coplotti.plot_heatmap(corr_matrix)
 
 # %% [markdown]
 # `cluster_and_select()` distinguishes clusters but some very highly correlated stable coins are clustered together so it seems like that we cannot rely on dendrodram and clustering alone.
 
 # %%
-_ = cplo.cluster_and_select(df_returns, 11)
+_ = coplotti.cluster_and_select(df_returns, 11)
 
 # %% run_control={"marked": false}
 _ = sns.clustermap(corr_matrix, figsize=(20, 20))
@@ -270,7 +270,7 @@ df_returns_1day.head(3)
 
 # %%
 corr_matrix_1day = df_returns_1day.corr()
-_ = cplo.plot_heatmap(corr_matrix_1day)
+_ = coplotti.plot_heatmap(corr_matrix_1day)
 
 # %% [markdown]
 # Resampling to 1 day makes clusters much more visible. <br>
@@ -279,7 +279,7 @@ _ = cplo.plot_heatmap(corr_matrix_1day)
 # Therefore, it seems that for detecting similar currencies we'd better use 1 day frequency.
 
 # %%
-_ = cplo.cluster_and_select(df_returns_1day, 11)
+_ = coplotti.cluster_and_select(df_returns_1day, 11)
 
 # %%
 _ = sns.clustermap(corr_matrix_1day, figsize=(20, 20))

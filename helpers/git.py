@@ -891,7 +891,7 @@ def get_summary_files_in_branch(
         _LOG.debug("files=%s", "\n".join(files))
         if files:
             res += f"# {tag}: {len(files)}\n"
-            res += hprintin.indent("\n".join(files)) + "\n"
+            res += hprint.indent("\n".join(files)) + "\n"
     res = res.rstrip("\n")
     return res
 

@@ -1,7 +1,7 @@
 """
 Import as:
 
-import oms.portfolio as opor
+import oms.portfolio as omportfo
 """
 import collections
 import logging
@@ -12,8 +12,8 @@ import pandas as pd
 
 import core.dataflow.price_interface as cdtfprint
 import helpers.dbg as hdbg
-import helpers.printing as hprintin
-import oms.order as oord
+import helpers.printing as hprint
+import oms.order as omorder
 
 _LOG = logging.getLogger(__name__)
 
@@ -98,8 +98,8 @@ class Portfolio:
 
     def __str__(self) -> str:
         act = []
-        act.append("# holdings=\n%s" % hprintin.dataframe_to_str(self.holdings))
-        act.append("# orders=\n%s" % hprintin.dataframe_to_str(self.orders))
+        act.append("# holdings=\n%s" % hprint.dataframe_to_str(self.holdings))
+        act.append("# orders=\n%s" % hprint.dataframe_to_str(self.orders))
         act = "\n".join(act)
         return act
 
@@ -266,7 +266,7 @@ class Portfolio:
             len(non_cash_asset_ids),
             msg="Some assets have no price.",
         )
-        _LOG.debug("price_df=\n%s", hprintin.dataframe_to_str(price_df))
+        _LOG.debug("price_df=\n%s", hprint.dataframe_to_str(price_df))
         # Extract subset of price information.
         columns = [self._asset_id_column, self._price_column]
         hdbg.dassert_is_subset(columns, price_df.columns)
@@ -663,7 +663,7 @@ class Portfolio:
     @staticmethod
     def _concat(rows: List[Dict[str, Any]], columns: List[str]) -> pd.DataFrame:
         df_tmp = pd.DataFrame(rows)
-        _LOG.debug("df_tmp=\n%s", hprintin.dataframe_to_str(df_tmp))
+        _LOG.debug("df_tmp=\n%s", hprint.dataframe_to_str(df_tmp))
         df_tmp.set_index("timestamp", drop=True, inplace=True)
         df_tmp.index.name = None
         df_tmp.sort_values("asset_id", inplace=True)

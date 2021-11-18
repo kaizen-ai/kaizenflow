@@ -43,7 +43,7 @@ import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.list as hlist
-import helpers.printing as hprintin
+import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -147,13 +147,13 @@ def drop_axis_with_all_nans(
             # Report results.
             cols_after = df.columns[:]
             removed_cols = set(cols_before).difference(set(cols_after))
-            pct_removed = hprintin.perc(
+            pct_removed = hprint.perc(
                 len(cols_before) - len(cols_after), len(cols_after)
             )
             _LOG.info(
                 "removed cols with all nans: %s %s",
                 pct_removed,
-                hprintin.list_to_str(removed_cols),
+                hprint.list_to_str(removed_cols),
             )
     if drop_rows:
         # Remove rows with all nans, if any.
@@ -170,7 +170,7 @@ def drop_axis_with_all_nans(
                 # TODO(gp): Report as intervals of dates.
                 min_ts = min(removed_rows)
                 max_ts = max(removed_rows)
-            pct_removed = hprintin.perc(
+            pct_removed = hprint.perc(
                 len(rows_before) - len(rows_after), len(rows_after)
             )
             _LOG.info(
@@ -199,7 +199,7 @@ def drop_na(
     df = df.dropna(*args, **kwargs)
     if report_stats:
         num_rows_after = df.shape[0]
-        pct_removed = hprintin.perc(
+        pct_removed = hprint.perc(
             num_rows_before - num_rows_after, num_rows_before
         )
         _LOG.info("removed rows with nans: %s", pct_removed)
@@ -219,7 +219,7 @@ def report_zero_nan_inf_stats(
     _LOG.info("index in [%s, %s]", df.index.min(), df.index.max())
     #
     num_rows = df.shape[0]
-    _LOG.info("num_rows=%s", hprintin.thousand_separator(num_rows))
+    _LOG.info("num_rows=%s", hprint.thousand_separator(num_rows))
     _LOG.info("data=")
     display_df(df, max_lines=5, as_txt=as_txt)
     #
@@ -244,28 +244,28 @@ def report_zero_nan_inf_stats(
     if verbose:
         stats_df["num_zeros"] = num_zeros
     stats_df["zeros [%]"] = (100.0 * num_zeros / num_rows).apply(
-        hprintin.round_digits
+        hprint.round_digits
     )
     #
     num_nans = np.isnan(df).sum(axis=0)
     if verbose:
         stats_df["num_nans"] = num_nans
     stats_df["nans [%]"] = (100.0 * num_nans / num_rows).apply(
-        hprintin.round_digits
+        hprint.round_digits
     )
     #
     num_infs = np.isinf(df).sum(axis=0)
     if verbose:
         stats_df["num_infs"] = num_infs
     stats_df["infs [%]"] = (100.0 * num_infs / num_rows).apply(
-        hprintin.round_digits
+        hprint.round_digits
     )
     #
     num_valid = df.shape[0] - num_zeros - num_nans - num_infs
     if verbose:
         stats_df["num_valid"] = num_valid
     stats_df["valid [%]"] = (100.0 * num_valid / num_rows).apply(
-        hprintin.round_digits
+        hprint.round_digits
     )
     #
     display_df(stats_df, as_txt=as_txt)
@@ -288,7 +288,7 @@ def drop_duplicates(
     num_rows_before = df.shape[0]
     df_no_duplicates = df.drop_duplicates(subset=subset)
     num_rows_after = df_no_duplicates.shape[0]
-    pct_removed = hprintin.perc(num_rows_before - num_rows_after, num_rows_before)
+    pct_removed = hprint.perc(num_rows_before - num_rows_after, num_rows_before)
     _LOG.info("Removed duplicated rows: %s", pct_removed)
     return df_no_duplicates
 
@@ -345,10 +345,10 @@ def remove_columns_with_low_variability(
             log_level,
             "  %s: %s",
             col_name,
-            hprintin.list_to_str(list(map(str, unique_elems))),
+            hprint.list_to_str(list(map(str, unique_elems))),
         )
     _LOG.log(log_level, "# Var cols")
-    _LOG.log(log_level, hprintin.list_to_str(var_cols))
+    _LOG.log(log_level, hprint.list_to_str(var_cols))
     return df[var_cols]
 
 
@@ -363,7 +363,7 @@ def print_column_variability(
 
     This is useful to get a sense of which columns are interesting.
     """
-    print(("# df.columns=%s" % hprintin.list_to_str(df.columns)))
+    print(("# df.columns=%s" % hprint.list_to_str(df.columns)))
     res = []
     for c in tauton.tqdm(df.columns, desc="Computing column variability"):
         vals = _get_unique_elements_in_column(df, c)
@@ -410,7 +410,7 @@ def add_pct(
     """
     Add to df a column "dst_col_name" storing the percentage of values in
     column "col_name" with respect to "total". The rest of the parameters are
-    the same as hprintin.round_digits().
+    the same as hprint.round_digits().
 
     :return: updated df
     """
@@ -419,13 +419,13 @@ def add_pct(
     df.insert(pos_col_name + 1, dst_col_name, (100.0 * df[col_name]) / total)
     # Format.
     df[col_name] = [
-        hprintin.round_digits(
+        hprint.round_digits(
             v, num_digits=None, use_thousands_separator=use_thousands_separator
         )
         for v in df[col_name]
     ]
     df[dst_col_name] = [
-        hprintin.round_digits(
+        hprint.round_digits(
             v, num_digits=num_digits, use_thousands_separator=False
         )
         for v in df[dst_col_name]
@@ -448,7 +448,7 @@ def breakdown_table(
 ) -> pd.DataFrame:
     if isinstance(col_name, list):
         for c in col_name:
-            print(("\n" + hprintin.frame(c).rstrip("\n")))
+            print(("\n" + hprint.frame(c).rstrip("\n")))
             res = breakdown_table(df, c)
             print(res)
         return None
@@ -466,20 +466,20 @@ def breakdown_table(
     res["pct"] = (100.0 * res["count"]) / df.shape[0]
     # Format.
     res["count"] = [
-        hprintin.round_digits(
+        hprint.round_digits(
             v, num_digits=None, use_thousands_separator=use_thousands_separator
         )
         for v in res["count"]
     ]
     res["pct"] = [
-        hprintin.round_digits(
+        hprint.round_digits(
             v, num_digits=num_digits, use_thousands_separator=False
         )
         for v in res["pct"]
     ]
     if verbosity:
         for k, df_tmp in df.groupby(col_name):
-            print((hprintin.frame("%s=%s" % (col_name, k))))
+            print((hprint.frame("%s=%s" % (col_name, k))))
             cols = [col_name, "description"]
             with pd.option_context(
                 "display.max_colwidth", 100000, "display.width", 130
@@ -530,10 +530,10 @@ def remove_columns(
     df: pd.DataFrame, cols: Collection[str], log_level: int = logging.DEBUG
 ) -> pd.DataFrame:
     to_remove = set(cols).intersection(set(df.columns))
-    _LOG.log(log_level, "to_remove=%s", hprintin.list_to_str(to_remove))
+    _LOG.log(log_level, "to_remove=%s", hprint.list_to_str(to_remove))
     df.drop(to_remove, axis=1, inplace=True)
     _LOG.debug("df=\n%s", df.head(3))
-    _LOG.log(log_level, hprintin.list_to_str(df.columns))
+    _LOG.log(log_level, hprint.list_to_str(df.columns))
     return df
 
 
@@ -553,7 +553,7 @@ def filter_with_df(
         else:
             mask &= df[c].isin(vals)
     mask: pd.DataFrame
-    _LOG.log(log_level, "after filter=%s", hprintin.perc(mask.sum(), len(mask)))
+    _LOG.log(log_level, "after filter=%s", hprint.perc(mask.sum(), len(mask)))
     return mask
 
 
@@ -639,12 +639,12 @@ def filter_by_val(
     _LOG.log(
         log_level,
         "Rows kept %s, removed %s rows",
-        hprintin.perc(
+        hprint.perc(
             res.shape[0],
             num_rows,
             use_thousands_separator=use_thousands_separator,
         ),
-        hprintin.perc(
+        hprint.perc(
             num_rows - res.shape[0],
             num_rows,
             use_thousands_separator=use_thousands_separator,
@@ -714,7 +714,7 @@ def rolling_corr_over_time(
     :return: corr_df is a multi-index df storing correlation matrices with
         labels
     """
-    hhpandas.dassert_strictly_increasing_index(df)
+    hpandas.dassert_strictly_increasing_index(df)
     df = handle_nans(df, nan_mode)
     corr_df = df.ewm(com=com, min_periods=3 * com).corr()
     return corr_df
@@ -999,7 +999,7 @@ def _preprocess_regression(
     if num_rows_after_drop_nan_all != num_rows:
         _LOG.info(
             "Removed %s rows with all nans",
-            hprintin.perc(num_rows - num_rows_after_drop_nan_all, num_rows),
+            hprint.perc(num_rows - num_rows_after_drop_nan_all, num_rows),
         )
     #
     df.dropna(how="any", inplace=True)
@@ -1007,7 +1007,7 @@ def _preprocess_regression(
     if num_rows_after_drop_nan_any != num_rows_after_drop_nan_all:
         _LOG.warning(
             "Removed %s rows with any nans",
-            hprintin.perc(num_rows - num_rows_after_drop_nan_any, num_rows),
+            hprint.perc(num_rows - num_rows_after_drop_nan_any, num_rows),
         )
     # Prepare data.
     if intercept:

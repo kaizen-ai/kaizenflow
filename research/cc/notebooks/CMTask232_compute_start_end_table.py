@@ -30,7 +30,7 @@ import numpy as np
 import core.config.config_ as ccocon
 import helpers.dbg as hdbg
 import helpers.env as henv
-import helpers.printing as hprintin
+import helpers.printing as hprint
 import helpers.s3 as hs3
 import research.cc.statistics as rccsta
 
@@ -41,18 +41,18 @@ _LOG = logging.getLogger(__name__)
 
 _LOG.info("%s", henv.get_system_signature()[0])
 
-hprintin.config_notebook()
+hprint.config_notebook()
 
 
 # %% [markdown]
 # # Config
 
 # %%
-def get_cmtask232_config() -> ccocon.Config:
+def get_cmtask232_config() -> cconconf.Config:
     """
     Get task232-specific config.
     """
-    config = ccocon.Config()
+    config = cconconf.Config()
     # Load parameters.
     config.add_subconfig("load")
     config["load"]["aws_profile"] = "am"

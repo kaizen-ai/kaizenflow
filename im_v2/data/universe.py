@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.data.universe as imdatuniv
+import im_v2.data.universe as imv2dauni
 """
 
 import os
