@@ -1618,6 +1618,7 @@ def docker_release_dev_image(  # type: ignore
     qa_tests=True,
     push_to_repo=True,
     update_poetry=False,
+    version="",
 ):
     """
     (ONLY CI/CD) Build, test, and release to ECR the latest "dev" image.
@@ -1641,6 +1642,7 @@ def docker_release_dev_image(  # type: ignore
     :param qa_tests: run end-to-end linter tests, unless all tests skipped
     :param push_to_repo: push the image to the repo_short_name
     :param update_poetry: update package dependencies using poetry
+    :param version: version to tag the image and code with
     """
     _report_task()
     # 1) Build "local" image.
@@ -1780,6 +1782,7 @@ def docker_release_prod_image(  # type: ignore
     slow_tests=True,
     superslow_tests=False,
     push_to_repo=True,
+    version="",
 ):
     """
     (ONLY CI/CD) Build, test, and release to ECR the prod image.
@@ -2234,6 +2237,7 @@ def run_fast_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    version="",
 ):
     """
     Run fast tests.
