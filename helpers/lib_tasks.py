@@ -2093,13 +2093,14 @@ def _run_test_cmd(
 ) -> None:
     if collect_only:
         # Clean files.
-        _run(ctx, "rm -rf ./.coverage*")
+        hsyint.system("rm -rf ./.coverage*")
     # Run.
     base_image = ""
     # We need to add some " to pass the string as it is to the container.
     cmd = f"'{cmd}'"
     docker_cmd_ = _get_docker_cmd(stage, base_image, cmd)
-    _docker_cmd(ctx, docker_cmd_)
+    _LOG.debug("cmd=%s", docker_cmd_)
+    hsyint.system(cmd, abort_on_error=False)
     # Print message about coverage.
     if coverage:
         msg = """
