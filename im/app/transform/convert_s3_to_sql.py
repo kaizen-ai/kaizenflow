@@ -220,7 +220,7 @@ def _parse() -> argparse.ArgumentParser:
         "--dbname",
         type=str,
         help="Postgres DB",
-        default=os.environ.get("POSTGRES_DB", None),
+        default=os.environ.get("POSTGRES_DBNAME", None),
     )
     parser.add_argument(
         "--max_num_assets",

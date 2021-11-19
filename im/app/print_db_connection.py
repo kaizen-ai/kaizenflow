@@ -33,7 +33,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     conn = hsql.get_connection(
-        dbname=os.environ["POSTGRES_DB"],
+        dbname=os.environ["POSTGRES_DBNAME"],
         host=os.environ["POSTGRES_HOST"],
         port=int(os.environ["POSTGRES_PORT"]),
         user=os.environ["POSTGRES_USER"],
