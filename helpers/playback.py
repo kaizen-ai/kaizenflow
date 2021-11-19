@@ -3,7 +3,7 @@ Code to automatically generate unit tests for functions.
 
 Import as:
 
-import helpers.playback as hplaybac
+import helpers.playback as hplayba
 """
 
 import inspect
@@ -19,7 +19,7 @@ import pandas as pd
 import core.config as cconfig
 import helpers.dbg as hdbg
 import helpers.io_ as hio
-import helpers.printing as hprintin
+import helpers.printing as hprint
 
 jepand.register_handlers()
 
@@ -220,7 +220,7 @@ class Playback:
         if self.mode == "check_string":
             if isinstance(func_output, (pd.DataFrame, pd.Series, str)):
                 if not isinstance(func_output, str):
-                    self._append("act = huntes.convert_df_to_string(act)", 2)
+                    self._append("act = hunitest.convert_df_to_string(act)", 2)
             if not isinstance(func_output, (str, bytes)):
                 self._append("act = str(act)", 2)
             self._append("# Check output.", 2)
@@ -235,8 +235,8 @@ class Playback:
                 self._append("exp = jsonpickle.decode(exp)", 2)
 
             if isinstance(func_output, (pd.DataFrame, pd.Series)):
-                self._append("act = huntes.convert_df_to_string(act)", 2)
-                self._append("exp = huntes.convert_df_to_string(exp)", 2)
+                self._append("act = hunitest.convert_df_to_string(act)", 2)
+                self._append("exp = hunitest.convert_df_to_string(exp)", 2)
             self._append("# Compare actual and expected output.", 2)
             self._append("self.assertEqual(act, exp)", 2)
         else:
@@ -247,7 +247,7 @@ class Playback:
         Add the code with imports.
         """
         # Add imports.
-        self._append("import helpers.unit_test as huntes")
+        self._append("import helpers.unit_test as hunitest")
         self._append("import jsonpickle")
         self._append("import pandas as pd")
         self._append("import core.config as cconfi")
@@ -285,7 +285,7 @@ class Playback:
         """
         Get a string for the test code with the name of the test class.
 
-        I.e. "class TestMyMethod(huntes.TestCase):".
+        I.e. "class TestMyMethod(hunitest.TestCase):".
         """
         test_name = (
             self._parent_class.__class__.__name__
@@ -293,7 +293,7 @@ class Playback:
             else ""
         )
         test_name += "".join([x.capitalize() for x in self._func_name.split("_")])
-        class_string = f"class Test{test_name}(huntes.TestCase):"
+        class_string = f"class Test{test_name}(hunitest.TestCase):"
         return class_string
 
     def _add_function_call(self) -> None:
@@ -354,7 +354,7 @@ class Playback:
         """
         Add indented line to the code.
         """
-        self._code.append(hprintin.indent(string, num_tabs * 4))
+        self._code.append(hprint.indent(string, num_tabs * 4))
 
 
 def json_pretty_print(parsed: Any) -> str:

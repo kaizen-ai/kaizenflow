@@ -1,10 +1,16 @@
+"""
+Import as:
+
+import core.information_bars.bars as cinbabar
+"""
+
 import logging
 from typing import Generator, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -272,12 +278,12 @@ class _StandardBars:
 
         :param test_batch: The first row of the dataset.
         """
-        dbg.dassert_eq(
+        hdbg.dassert_eq(
             test_batch.shape[1],
             3,
             "Must have only 3 columns in csv: date_time, price, & volume.",
         )
-        dbg.dassert_isinstance(
+        hdbg.dassert_isinstance(
             test_batch.iloc[0, 1], float, "price column in csv not float."
         )
         try:

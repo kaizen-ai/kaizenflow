@@ -3,7 +3,7 @@ Helper functions for processing pandas dataframes.
 
 Import as:
 
-import helpers.dataframe as hdatafra
+import helpers.dataframe as hdatafr
 """
 
 # TODO(gp): Consider merging with `helpers/pandas_helpers.py`.
@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 
 import helpers.dbg as hdbg
-import helpers.printing as hprintin
+import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ def filter_data_by_values(
         hdbg.dassert_isinstance(vals, tuple)
         mask = data[col_name].isin(vals)
         info[f"n_{col_name}"] = mask.sum()
-        info[f"perc_{col_name}"] = hprintin.perc(mask.sum(), data.shape[0])
+        info[f"perc_{col_name}"] = hprint.perc(mask.sum(), data.shape[0])
         masks.append(mask)
     masks = pd.concat(masks, axis=1)
     combined_mask = _combine_masks(masks, mode, info)
@@ -98,7 +98,7 @@ def filter_data_by_comparison(
             )
             mask = getattr(data[col_name], comparison_method)(val)
             info[f"n_{col_name}_{comparison_method}_{val}"] = mask.sum()
-            info[f"perc_{col_name}_{comparison_method}_{val}"] = hprintin.perc(
+            info[f"perc_{col_name}_{comparison_method}_{val}"] = hprint.perc(
                 mask.sum(), data.shape[0]
             )
             masks.append(mask)
@@ -137,7 +137,7 @@ def filter_data_by_method(
         for method, kwargs in method_dict.items():
             mask = operator.attrgetter(method)(data[col_name])(**kwargs)
             info[f"n_{col_name}"] = mask.sum()
-            info[f"perc_{col_name}"] = hprintin.perc(mask.sum(), data.shape[0])
+            info[f"perc_{col_name}"] = hprint.perc(mask.sum(), data.shape[0])
             masks.append(mask)
     masks = pd.concat(masks, axis=1)
     combined_mask = _combine_masks(masks, mode, info)

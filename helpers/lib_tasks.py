@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.lib_tasks as hlitas
+import helpers.lib_tasks as hlibtask
 """
 
 import datetime
@@ -25,13 +25,13 @@ from invoke import task
 # this code needs to run with minimal dependencies and without Docker.
 import helpers.dbg as hdbg
 import helpers.git as hgit
-import helpers.introspection as hintrosp
+import helpers.introspection as hintros
 import helpers.io_ as hio
 import helpers.list as hlist
-import helpers.printing as hprintin
-import helpers.system_interaction as hsyint
+import helpers.printing as hprint
+import helpers.system_interaction as hsysinte
 import helpers.table as htable
-import helpers.versioning as hversion
+import helpers.versioning as hversio
 
 _LOG = logging.getLogger(__name__)
 
@@ -110,11 +110,11 @@ def _report_task(txt: str = "") -> None:
     global _IS_FIRST_CALL
     if _IS_FIRST_CALL:
         _IS_FIRST_CALL = True
-        hversion.check_version()
+        hversio.check_version()
     # Print the name of the function.
-    func_name = hintrosp.get_function_name(count=1)
+    func_name = hintros.get_function_name(count=1)
     msg = "## %s: %s" % (func_name, txt)
-    print(hprintin.color_highlight(msg, color="purple"))
+    print(hprint.color_highlight(msg, color="purple"))
 
 
 # TODO(gp): Move this to helpers.system_interaction and allow to add the switch
@@ -233,7 +233,7 @@ def _get_files_to_process(
     :param mutually_exclusive: ensure that all options are mutually exclusive
     """
     _LOG.debug(
-        hprintin.to_str(
+        hprint.to_str(
             "modified branch last_commit all_ files_from_user "
             "mutually_exclusive remove_dirs"
         )
@@ -278,7 +278,7 @@ def _get_files_to_process(
     _LOG.debug("files_to_process='%s'", str(files_to_process))
     # Remove dirs, if needed.
     if remove_dirs:
-        files_to_process = hsyint.remove_dirs(files_to_process)
+        files_to_process = hsysinte.remove_dirs(files_to_process)
     _LOG.debug("files_to_process='%s'", str(files_to_process))
     # Ensure that there are files to process.
     if not files_to_process:
@@ -332,7 +332,7 @@ def print_tasks(ctx, as_code=False):  # type: ignore
     # def print_setup(ctx):  # type: ignore
     # def git_pull(ctx):  # type: ignore
     # def git_pull_master(ctx):  # type: ignore
-    _, txt = hsyint.system_to_string(cmd)
+    _, txt = hsysinte.system_to_string(cmd)
     for line in txt.split("\n"):
         _LOG.debug("line=%s", line)
         m = re.match(r"^def\s+(\S+)\(", line)
@@ -403,7 +403,7 @@ def git_clean(ctx, dry_run=False):  # type: ignore
 
     Run `git status --ignored` to see what it's skipped.
     """
-    _report_task(hprintin.to_str("dry_run"))
+    _report_task(hprint.to_str("dry_run"))
     # TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
     #  mistake.
     # Clean recursively.
@@ -437,65 +437,186 @@ def git_clean(ctx, dry_run=False):  # type: ignore
     _run(ctx, cmd)
 
 
-def _delete_branches(ctx: Any, tag: str, confirm_delete: bool) -> None:
-    if tag == "local":
-        # Delete local branches that are already merged into master.
-        # > git branch --merged
-        # * AmpTask1251_Update_GH_actions_for_amp_02
-        find_cmd = r"git branch --merged master | grep -v master | grep -v \*"
-        delete_cmd = "git branch -d"
-    elif tag == "remote":
-        # Get the branches to delete.
-        find_cmd = (
-            "git branch -r --merged origin/master"
-            + r" | grep -v master | sed 's/origin\///'"
-        )
-        delete_cmd = "git push origin --delete"
-    else:
-        raise ValueError(f"Invalid tag='{tag}'")
-    # TODO(gp): Use system_to_lines
-    _, txt = hsyint.system_to_string(find_cmd, abort_on_error=False)
-    branches = hsyint.text_to_list(txt)
-    # Print info.
-    _LOG.info(
-        "There are %d %s branches to delete:\n%s",
-        len(branches),
-        tag,
-        "\n".join(branches),
-    )
-    if not branches:
-        # No branch to delete, then we are done.
-        return
-    # Ask whether to continue.
-    if confirm_delete:
-        hsyint.query_yes_no(
-            hdbg.WARNING + f": Delete these {tag} branches?", abort_on_no=True
-        )
-    for branch in branches:
-        cmd_tmp = f"{delete_cmd} {branch}"
-        _run(ctx, cmd_tmp)
+@task
+def git_add_all_untracked(ctx):  # type: ignore
+    """
+    Add all untracked files to git.
+    """
+    _report_task()
+    cmd = "git add $(git ls-files -o --exclude-standard)"
+    _run(ctx, cmd)
 
 
 @task
-def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
+def git_create_patch(  # type: ignore
+    ctx, mode="diff", modified=False, branch=False, last_commit=False, files=""
+):
     """
-    Remove (both local and remote) branches that have been merged into master.
+    Create a patch file for the entire repo_short_name client from the base
+    revision. This script accepts a list of files to package, if specified.
+
+    The parameters `modified`, `branch`, `last_commit` have the same meaning as
+    in `_get_files_to_process()`.
+
+    :param mode: what kind of patch to create
+        - "diff": (default) creates a patch with the diff of the files
+        - "tar": creates a tar ball with all the files
+    """
+    _report_task(hprint.to_str("mode modified branch last_commit files"))
+    _ = ctx
+    # TODO(gp): Check that the current branch is up to date with master to avoid
+    #  failures when we try to merge the patch.
+    hdbg.dassert_in(mode, ("tar", "diff"))
+    # For now we just create a patch for the current submodule.
+    # TODO(gp): Extend this to handle also nested repos.
+    super_module = False
+    git_client_root = hgit.get_client_root(super_module)
+    hash_ = hgit.get_head_hash(git_client_root, short_hash=True)
+    timestamp = _get_ET_timestamp()
+    #
+    tag = os.path.basename(git_client_root)
+    dst_file = f"patch.{tag}.{hash_}.{timestamp}"
+    if mode == "tar":
+        dst_file += ".tgz"
+    elif mode == "diff":
+        dst_file += ".patch"
+    else:
+        hdbg.dfatal("Invalid code path")
+    _LOG.debug("dst_file=%s", dst_file)
+    # Summary of files.
+    _LOG.info(
+        "Difference between HEAD and master:\n%s",
+        hgit.get_summary_files_in_branch("master", "."),
+    )
+    # Get the files.
+    all_ = False
+    # We allow to specify files as a subset of files modified in the branch or
+    # in the client.
+    mutually_exclusive = False
+    # We don't allow to specify directories.
+    remove_dirs = True
+    files_as_list = _get_files_to_process(
+        modified,
+        branch,
+        last_commit,
+        all_,
+        files,
+        mutually_exclusive,
+        remove_dirs,
+    )
+    _LOG.info("Files to save:\n%s", hprint.indent("\n".join(files_as_list)))
+    if not files_as_list:
+        _LOG.warning("Nothing to patch: exiting")
+        return
+    files_as_str = " ".join(files_as_list)
+    # Prepare the patch command.
+    cmd = ""
+    if mode == "tar":
+        cmd = f"tar czvf {dst_file} {files_as_str}"
+        cmd_inv = "tar xvzf"
+    elif mode == "diff":
+        if modified:
+            opts = "HEAD"
+        elif branch:
+            opts = "master..."
+        elif last_commit:
+            opts = "HEAD^"
+        else:
+            hdbg.dfatal(
+                "You need to specify one among -modified, --branch, "
+                "--last-commit"
+            )
+        cmd = f"git diff {opts} --binary {files_as_str} >{dst_file}"
+        cmd_inv = "git apply"
+    # Execute patch command.
+    _LOG.info("Creating the patch into %s", dst_file)
+    hdbg.dassert_ne(cmd, "")
+    _LOG.debug("cmd=%s", cmd)
+    rc = hsysinte.system(cmd, abort_on_error=False)
+    if not rc:
+        _LOG.warning("Command failed with rc=%d", rc)
+    # Print message to apply the patch.
+    remote_file = os.path.basename(dst_file)
+    abs_path_dst_file = os.path.abspath(dst_file)
+    msg = f"""
+# To apply the patch and execute:
+> git checkout {hash_}
+> {cmd_inv} {abs_path_dst_file}
+
+# To apply the patch to a remote client:
+> export SERVER="server"
+> export CLIENT_PATH="~/src"
+> scp {dst_file} $SERVER:
+> ssh $SERVER 'cd $CLIENT_PATH && {cmd_inv} ~/{remote_file}'"
+    """
+    print(msg)
+
+
+@task
+def git_files(  # type: ignore
+    ctx, modified=False, branch=False, last_commit=False, pbcopy=False
+):
+    """
+    Report which files are changed in the current branch with respect to
+    master.
+
+    The params have the same meaning as in `_get_files_to_process()`.
     """
     _report_task()
-    hdbg.dassert(
-        hgit.get_branch_name(),
-        "master",
-        "You need to be on master to delete dead branches",
+    _ = ctx
+    all_ = False
+    files = ""
+    mutually_exclusive = True
+    # pre-commit doesn't handle directories, but only files.
+    remove_dirs = True
+    files_as_list = _get_files_to_process(
+        modified,
+        branch,
+        last_commit,
+        all_,
+        files,
+        mutually_exclusive,
+        remove_dirs,
     )
-    #
-    cmd = "git fetch --all --prune"
+    print("\n".join(sorted(files_as_list)))
+    if pbcopy:
+        res = " ".join(files_as_list)
+        _to_pbcopy(res, pbcopy)
+
+
+@task
+def git_last_commit_files(ctx, pbcopy=True):  # type: ignore
+    """
+    Print the status of the files in the previous commit.
+
+    :param pbcopy: save the result into the system clipboard (only on macOS)
+    """
+    cmd = 'git log -1 --name-status --pretty=""'
     _run(ctx, cmd)
-    # Delete local and remote branches that are already merged into master.
-    _delete_branches(ctx, "local", confirm_delete)
-    _delete_branches(ctx, "remote", confirm_delete)
-    #
-    cmd = "git fetch --all --prune"
-    _run(ctx, cmd)
+    # Get the list of existing files.
+    files = hgit.get_previous_committed_files(".")
+    txt = "\n".join(files)
+    print(f"\n# The files modified are:\n{txt}")
+    # Save to clipboard.
+    res = " ".join(files)
+    _to_pbcopy(res, pbcopy)
+
+
+# Branches workflows
+
+
+@task
+def git_branch_files(ctx):  # type: ignore
+    """
+    Report which files are added, changed, modified in the current branch with
+    respect to master.
+    """
+    _report_task()
+    _ = ctx
+    print(
+        "Difference between HEAD and master:\n"
+        + hgit.get_summary_files_in_branch("master", ".")
+    )
 
 
 @task
@@ -576,246 +697,65 @@ def git_create_branch(  # type: ignore
     _run(ctx, cmd)
 
 
-@task
-def git_create_patch(  # type: ignore
-    ctx, mode="diff", modified=False, branch=False, last_commit=False, files=""
-):
-    """
-    Create a patch file for the entire repo_short_name client from the base
-    revision. This script accepts a list of files to package, if specified.
-
-    The parameters `modified`, `branch`, `last_commit` have the same meaning as
-    in `_get_files_to_process()`.
-
-    :param mode: what kind of patch to create
-        - "diff": (default) creates a patch with the diff of the files
-        - "tar": creates a tar ball with all the files
-    """
-    _report_task(hprintin.to_str("mode modified branch last_commit files"))
-    _ = ctx
-    # TODO(gp): Check that the current branch is up to date with master to avoid
-    #  failures when we try to merge the patch.
-    hdbg.dassert_in(mode, ("tar", "diff"))
-    # For now we just create a patch for the current submodule.
-    # TODO(gp): Extend this to handle also nested repos.
-    super_module = False
-    git_client_root = hgit.get_client_root(super_module)
-    hash_ = hgit.get_head_hash(git_client_root, short_hash=True)
-    timestamp = _get_ET_timestamp()
-    #
-    tag = os.path.basename(git_client_root)
-    dst_file = f"patch.{tag}.{hash_}.{timestamp}"
-    if mode == "tar":
-        dst_file += ".tgz"
-    elif mode == "diff":
-        dst_file += ".patch"
+def _delete_branches(ctx: Any, tag: str, confirm_delete: bool) -> None:
+    if tag == "local":
+        # Delete local branches that are already merged into master.
+        # > git branch --merged
+        # * AmpTask1251_Update_GH_actions_for_amp_02
+        find_cmd = r"git branch --merged master | grep -v master | grep -v \*"
+        delete_cmd = "git branch -d"
+    elif tag == "remote":
+        # Get the branches to delete.
+        find_cmd = (
+            "git branch -r --merged origin/master"
+            + r" | grep -v master | sed 's/origin\///'"
+        )
+        delete_cmd = "git push origin --delete"
     else:
-        hdbg.dfatal("Invalid code path")
-    _LOG.debug("dst_file=%s", dst_file)
-    # Summary of files.
+        raise ValueError(f"Invalid tag='{tag}'")
+    # TODO(gp): Use system_to_lines
+    _, txt = hsysinte.system_to_string(find_cmd, abort_on_error=False)
+    branches = hsysinte.text_to_list(txt)
+    # Print info.
     _LOG.info(
-        "Difference between HEAD and master:\n%s",
-        hgit.get_summary_files_in_branch("master", "."),
+        "There are %d %s branches to delete:\n%s",
+        len(branches),
+        tag,
+        "\n".join(branches),
     )
-    # Get the files.
-    all_ = False
-    # We allow to specify files as a subset of files modified in the branch or
-    # in the client.
-    mutually_exclusive = False
-    # We don't allow to specify directories.
-    remove_dirs = True
-    files_as_list = _get_files_to_process(
-        modified,
-        branch,
-        last_commit,
-        all_,
-        files,
-        mutually_exclusive,
-        remove_dirs,
-    )
-    _LOG.info("Files to save:\n%s", hprintin.indent("\n".join(files_as_list)))
-    if not files_as_list:
-        _LOG.warning("Nothing to patch: exiting")
+    if not branches:
+        # No branch to delete, then we are done.
         return
-    files_as_str = " ".join(files_as_list)
-
-    # Prepare the patch command.
-    cmd = ""
-    if mode == "tar":
-        cmd = f"tar czvf {dst_file} {files_as_str}"
-        cmd_inv = "tar xvzf"
-    elif mode == "diff":
-        if modified:
-            opts = "HEAD"
-        elif branch:
-            opts = "master..."
-        elif last_commit:
-            opts = "HEAD^"
-        else:
-            hdbg.dfatal(
-                "You need to specify one among -modified, --branch, "
-                "--last-commit"
-            )
-        cmd = f"git diff {opts} --binary {files_as_str} >{dst_file}"
-        cmd_inv = "git apply"
-    # Execute patch command.
-    _LOG.info("Creating the patch into %s", dst_file)
-    hdbg.dassert_ne(cmd, "")
-    _LOG.debug("cmd=%s", cmd)
-    rc = hsyint.system(cmd, abort_on_error=False)
-    if not rc:
-        _LOG.warning("Command failed with rc=%d", rc)
-    # Print message to apply the patch.
-    remote_file = os.path.basename(dst_file)
-    abs_path_dst_file = os.path.abspath(dst_file)
-    msg = f"""
-# To apply the patch and execute:
-> git checkout {hash_}
-> {cmd_inv} {abs_path_dst_file}
-
-# To apply the patch to a remote client:
-> export SERVER="server"
-> export CLIENT_PATH="~/src"
-> scp {dst_file} $SERVER:
-> ssh $SERVER 'cd $CLIENT_PATH && {cmd_inv} ~/{remote_file}'"
-    """
-    print(msg)
+    # Ask whether to continue.
+    if confirm_delete:
+        hsysinte.query_yes_no(
+            hdbg.WARNING + f": Delete these {tag} branches?", abort_on_no=True
+        )
+    for branch in branches:
+        cmd_tmp = f"{delete_cmd} {branch}"
+        _run(ctx, cmd_tmp)
 
 
 @task
-def git_branch_files(ctx):  # type: ignore
+def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
     """
-    Report which files are added, changed, modified in the current branch with
-    respect to master.
+    Remove (both local and remote) branches that have been merged into master.
     """
     _report_task()
-    _ = ctx
-    print(
-        "Difference between HEAD and master:\n"
-        + hgit.get_summary_files_in_branch("master", ".")
+    hdbg.dassert(
+        hgit.get_branch_name(),
+        "master",
+        "You need to be on master to delete dead branches",
     )
-
-
-@task
-def git_files(  # type: ignore
-    ctx, modified=False, branch=False, last_commit=False, pbcopy=False
-):
-    """
-    Report which files are changed in the current branch with respect to
-    master.
-
-    The params have the same meaning as in `_get_files_to_process()`.
-    """
-    _report_task()
-    _ = ctx
-    all_ = False
-    files = ""
-    mutually_exclusive = True
-    # pre-commit doesn't handle directories, but only files.
-    remove_dirs = True
-    files_as_list = _get_files_to_process(
-        modified,
-        branch,
-        last_commit,
-        all_,
-        files,
-        mutually_exclusive,
-        remove_dirs,
-    )
-    print("\n".join(sorted(files_as_list)))
-    if pbcopy:
-        res = " ".join(files_as_list)
-        _to_pbcopy(res, pbcopy)
-
-
-@task
-def git_last_commit_files(ctx, pbcopy=True):  # type: ignore
-    """
-    Print the status of the files in the previous commit.
-
-    :param pbcopy: save the result into the system clipboard (only on macOS)
-    """
-    cmd = 'git log -1 --name-status --pretty=""'
+    #
+    cmd = "git fetch --all --prune"
     _run(ctx, cmd)
-    # Get the list of existing files.
-    files = hgit.get_previous_committed_files(".")
-    txt = "\n".join(files)
-    print(f"\n# The files modified are:\n{txt}")
-    # Save to clipboard.
-    res = " ".join(files)
-    _to_pbcopy(res, pbcopy)
-
-
-# TODO(gp): When running `python_execute` we could launch it inside a
-# container.
-@task
-def check_python_files(  # type: ignore
-    ctx,
-    python_compile=True,
-    python_execute=False,
-    modified=False,
-    branch=False,
-    last_commit=False,
-    all_=False,
-    files="",
-):
-    """
-    Compile and execute Python files checking for errors.
-
-    The params have the same meaning as in `_get_files_to_process()`.
-    """
-    _report_task()
-    _ = ctx
-    # We allow to filter through the user specified `files`.
-    mutually_exclusive = False
-    remove_dirs = True
-    file_list = _get_files_to_process(
-        modified,
-        branch,
-        last_commit,
-        all_,
-        files,
-        mutually_exclusive,
-        remove_dirs,
-    )
-    _LOG.debug("Found %d files:\n%s", len(file_list), "\n".join(file_list))
-    # Filter keeping only Python files.
-    _LOG.debug("Filtering for Python files")
-    exclude_paired_jupytext = True
-    file_list = hio.keep_python_files(file_list, exclude_paired_jupytext)
-    _LOG.debug("file_list=%s", "\n".join(file_list))
-    _LOG.info("Need to process %d files", len(file_list))
-    if not file_list:
-        _LOG.warning("No files were selected")
-    # Scan all the files.
-    failed_filenames = []
-    for file_name in file_list:
-        _LOG.info("Processing '%s'", file_name)
-        if python_compile:
-            import compileall
-
-            success = compileall.compile_file(file_name, force=True, quiet=1)
-            _LOG.debug("file_name='%s' -> python_compile=%s", file_name, success)
-            if not success:
-                msg = "'%s' doesn't compile correctly" % file_name
-                _LOG.error(msg)
-                failed_filenames.append(file_name)
-        # TODO(gp): Add also `python -c "import ..."`, if not equivalent to `compileall`.
-        if python_execute:
-            cmd = f"python {file_name}"
-            rc = hsyint.system(cmd, abort_on_error=False, suppress_output=False)
-            _LOG.debug("file_name='%s' -> python_compile=%s", file_name, rc)
-            if rc != 0:
-                msg = "'%s' doesn't execute correctly" % file_name
-                _LOG.error(msg)
-                failed_filenames.append(file_name)
-    _LOG.info(
-        "failed_filenames=%s\n%s",
-        len(failed_filenames),
-        "\n".join(failed_filenames),
-    )
-    error = len(failed_filenames) > 0
-    return error
+    # Delete local and remote branches that are already merged into master.
+    _delete_branches(ctx, "local", confirm_delete)
+    _delete_branches(ctx, "remote", confirm_delete)
+    #
+    cmd = "git fetch --all --prune"
+    _run(ctx, cmd)
 
 
 @task
@@ -831,7 +771,7 @@ def git_rename_branch(ctx, new_branch_name):  # type: ignore
         f"Do you want to rename the current branch '{old_branch_name}' to "
         f"'{new_branch_name}'"
     )
-    hsyint.query_yes_no(msg, abort_on_no=True)
+    hsysinte.query_yes_no(msg, abort_on_no=True)
     # https://stackoverflow.com/questions/6591213/how-do-i-rename-a-local-git-branch
     # To rename a local branch:
     # git branch -m <oldname> <newname>
@@ -898,7 +838,7 @@ def _get_last_container_id() -> str:
     cmd = "docker ps -l | grep -v 'CONTAINER ID'"
     # CONTAINER ID   IMAGE          COMMAND                  CREATED
     # 90897241b31a   eeb33fe1880a   "/bin/sh -c '/bin/ba…"   34 hours ago ...
-    _, txt = hsyint.system_to_one_line(cmd)
+    _, txt = hsysinte.system_to_one_line(cmd)
     # Parse the output: there should be at least one line.
     hdbg.dassert_lte(1, len(txt.split(" ")), "Invalid output='%s'", txt)
     container_id: str = txt.split(" ")[0]
@@ -922,14 +862,14 @@ def docker_stats(  # type: ignore
     :param all: report stats for all the containers
     """
     # pylint: enable=line-too-long
-    _report_task(hprintin.to_str("all"))
+    _report_task(hprint.to_str("all"))
     _ = ctx
     fmt = (
         r"table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
         + r"\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}"
     )
     cmd = f"docker stats --no-stream --format='{fmt}'"
-    _, txt = hsyint.system_to_string(cmd)
+    _, txt = hsysinte.system_to_string(cmd)
     if all:
         output = txt
     else:
@@ -962,7 +902,7 @@ def docker_kill(  # type: ignore
 
     :param all: kill all the containers (be careful!)
     """
-    _report_task(hprintin.to_str("all"))
+    _report_task(hprint.to_str("all"))
     # TODO(gp): Ask if we are sure and add a --just-do-it option.
     # Last container.
     opts = "-l"
@@ -1050,7 +990,7 @@ def _get_aws_cli_version() -> int:
     # aws-cli/1.19.49 Python/3.7.6 Darwin/19.6.0 botocore/1.20.49
     # aws-cli/1.20.1 Python/3.9.5 Darwin/19.6.0 botocore/1.20.106
     cmd = "aws --version"
-    res = hsyint.system_to_one_line(cmd)[1]
+    res = hsysinte.system_to_one_line(cmd)[1]
     # Parse the output.
     m = re.match(r"aws-cli/((\d+)\.\d+\.\d+)\s", res)
     hdbg.dassert(m, "Can't parse '%s'", res)
@@ -1068,7 +1008,7 @@ def docker_login(ctx):  # type: ignore
     Log in the AM Docker repo_short_name on AWS.
     """
     _report_task()
-    if hsyint.is_inside_ci():
+    if hsysinte.is_inside_ci():
         _LOG.warning("Running inside GitHub Action: skipping `docker_login`")
         return
     major_version = _get_aws_cli_version()
@@ -1092,7 +1032,7 @@ def docker_login(ctx):  # type: ignore
     _run(ctx, cmd)
 
 
-def _get_base_docker_compose_path() -> str:
+def get_base_docker_compose_path() -> str:
     """
     Return the base docker compose `devops/compose/docker-compose.yml`.
     """
@@ -1129,7 +1069,7 @@ def _get_amp_docker_compose_path() -> Optional[str]:
 # TODO(gp): Isn't this in helper.git?
 def _get_git_hash() -> str:
     cmd = "git rev-parse HEAD"
-    git_hash: str = hsyint.system_to_one_line(cmd)[1]
+    git_hash: str = hsysinte.system_to_one_line(cmd)[1]
     _LOG.debug("git_hash=%s", git_hash)
     return git_hash
 
@@ -1211,7 +1151,7 @@ def _get_docker_cmd(
     :param extra_env_vars: represent vars to add, e.g., `["PORT=9999", "DRY_RUN=1"]`
     :param print_config: print the docker config for debugging purposes
     """
-    hprintin.log(
+    hprint.log(
         _LOG,
         logging.DEBUG,
         "stage base_image cmd extra_env_vars"
@@ -1246,11 +1186,11 @@ def _get_docker_cmd(
         if repo_short_name == "amp":
             docker_compose_file_tmp = _get_amp_docker_compose_path()
         else:
-            docker_compose_file_tmp = _get_base_docker_compose_path()
+            docker_compose_file_tmp = get_base_docker_compose_path()
         docker_compose_files.append(docker_compose_file_tmp)
     else:
         # Use one or two docker compose files.
-        docker_compose_files.append(_get_base_docker_compose_path())
+        docker_compose_files.append(get_base_docker_compose_path())
         if repo_short_name == "amp":
             docker_compose_file_tmp = _get_amp_docker_compose_path()
             if docker_compose_file_tmp:
@@ -1264,11 +1204,11 @@ def _get_docker_cmd(
     if has_default_param(key):
         docker_compose_files.append(get_default_param(key))
     #
-    _LOG.debug(hprintin.to_str("docker_compose_files"))
+    _LOG.debug(hprint.to_str("docker_compose_files"))
     for docker_compose in docker_compose_files:
         hdbg.dassert_exists(docker_compose)
     file_opts = " ".join([f"--file {dcf}" for dcf in docker_compose_files])
-    _LOG.debug(hprintin.to_str("file_opts"))
+    _LOG.debug(hprint.to_str("file_opts"))
     # TODO(gp): Use something like `.append(rf"{space}{...}")`
     docker_cmd_.append(
         rf"""
@@ -1294,7 +1234,6 @@ def _get_docker_cmd(
     )
     # - Handle the user.
     if True:
-        user_name = hsyint.get_user_name()
         docker_cmd_.append(
             rf"""
         --user $(id -u):$(id -g)"""
@@ -1330,7 +1269,7 @@ def _get_docker_cmd(
         _LOG.debug("docker_config_cmd=\n%s", docker_config_cmd_as_str)
         _LOG.debug(
             "docker_config=\n%s",
-            hsyint.system_to_string(docker_config_cmd_as_str)[1],
+            hsysinte.system_to_string(docker_config_cmd_as_str)[1],
         )
     # Print the config for debugging purpose.
     docker_cmd_ = _to_multi_line_cmd(docker_cmd_)
@@ -1455,7 +1394,7 @@ def _get_build_tag(code_ver: str) -> str:
         AmpTask1280_Use_versioning_to_keep_code_and_container_in_sync-
         500a9e31ee70e51101c1b2eb82945c19992fa86e
 
-    :param code_ver: the value from hversion.get_code_version()
+    :param code_ver: the value from hversio.get_code_version()
     """
     # E.g., 20210723-20_52_00
     timestamp = _get_ET_timestamp()
@@ -1502,7 +1441,7 @@ def docker_build_local_image(  # type: ignore
     #
     opts = "--no-cache" if not cache else ""
     # The container version is the version used from this code.
-    container_version = hversion.get_code_version("./version.txt")
+    container_version = hversio.get_code_version("./version.txt")
     build_tag = _get_build_tag(container_version)
     # TODO(gp): Use _to_multi_line_cmd()
     cmd = rf"""
@@ -1821,10 +1760,10 @@ def _to_pbcopy(txt: str, pbcopy: bool) -> None:
     if not txt:
         print("Nothing to copy")
         return
-    if hsyint.is_running_on_macos():
+    if hsysinte.is_running_on_macos():
         # -n = no new line
         cmd = f"echo -n '{txt}' | pbcopy"
-        hsyint.system(cmd)
+        hsysinte.system(cmd)
         print(f"\n# Copied to system clipboard:\n{txt}")
     else:
         _LOG.warning("pbcopy works only on macOS")
@@ -1936,7 +1875,7 @@ def find_check_string_output(  # type: ignore
     cmd = f"find . -name '{class_name}.{method_name}' -type d"
     # > find . -name "TestResultBundle.test_from_config1" -type d
     # ./core/dataflow/test/TestResultBundle.test_from_config1
-    _, txt = hsyint.system_to_string(cmd, abort_on_error=False)
+    _, txt = hsysinte.system_to_string(cmd, abort_on_error=False)
     file_names = txt.split("\n")
     if not txt:
         hdbg.dfatal(f"Can't find the requested dir with '{cmd}'")
@@ -1946,7 +1885,7 @@ def find_check_string_output(  # type: ignore
     # Find the only file underneath that dir.
     hdbg.dassert_dir_exists(dir_name)
     cmd = f"find {dir_name} -name 'test.txt' -type f"
-    _, file_name = hsyint.system_to_one_line(cmd)
+    _, file_name = hsysinte.system_to_one_line(cmd)
     hdbg.dassert_file_exists(file_name)
     # Read the content of the file.
     _LOG.info("Found file '%s' for %s::%s", file_name, class_name, method_name)
@@ -1956,7 +1895,7 @@ def find_check_string_output(  # type: ignore
         if not fuzzy_match:
             # Align the output at the same level as 'exp = r...'.
             num_spaces = 8
-            txt = hprintin.indent(txt, num_spaces=num_spaces)
+            txt = hprint.indent(txt, num_spaces=num_spaces)
         output = f"""
         act =
         exp = r\"\"\"
@@ -2006,7 +1945,6 @@ def run_blank_tests(ctx, stage=STAGE):  # type: ignore
 def _build_run_command_line(
     pytest_opts: str,
     pytest_mark: str,
-    dir_name: str,
     skip_submodules: bool,
     coverage: bool,
     collect_only: bool,
@@ -2018,15 +1956,18 @@ def _build_run_command_line(
     Build the pytest run command.
 
     Same params as `run_fast_tests()`.
+    The invariant is that we don't want to duplicate pytest options that can be
+    passed by the user through `-p` (unless really necessary).
 
     :param skipped_tests: -m option for pytest
     """
+    pytest_opts = pytest_opts or "."
+    #
     pytest_opts_tmp = []
     if pytest_opts != "":
         pytest_opts_tmp.append(pytest_opts)
     if skipped_tests != "":
         pytest_opts_tmp.insert(0, f'-m "{skipped_tests}"')
-    dir_name = dir_name or "."
     # file_names = _find_test_files(dir_name)
     # _LOG.debug("file_names=%s", file_names)
     # if pytest_mark != "":
@@ -2053,7 +1994,7 @@ def _build_run_command_line(
     pytest_opts_tmp = [po for po in pytest_opts_tmp if po != ""]
     # TODO(gp): Use _to_multi_line_cmd()
     pytest_opts = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
-    cmd = f"pytest {pytest_opts} {dir_name}"
+    cmd = f"pytest {pytest_opts}"
     if tee_to_file:
         cmd += " 2>&1 | tee tmp.pytest.log"
     return cmd
@@ -2088,13 +2029,13 @@ def _run_test_cmd(
   covered
 """
         print(msg)
-        if start_coverage_script and hsyint.is_running_on_macos():
+        if start_coverage_script and hsysinte.is_running_on_macos():
             # Create and run a script to show the coverage in the browser.
             script_txt = """(sleep 2; open http://localhost:33333) &
 (cd ./htmlcov; python -m http.server 33333)"""
             script_name = "./tmp.coverage.sh"
-            hsyint.create_executable_script(script_name, script_txt)
-            hsyint.system(script_name)
+            hsysinte.create_executable_script(script_name, script_txt)
+            hsysinte.system(script_name)
 
 
 def _run_tests(
@@ -2114,7 +2055,6 @@ def _run_tests(
     cmd = _build_run_command_line(
         pytest_opts,
         pytest_mark,
-        dir_name,
         skip_submodules,
         coverage,
         collect_only,
@@ -2379,7 +2319,7 @@ def _get_failed_tests_from_clipboard() -> List[str]:
     ```
     """
     # pylint: enable=line-too-long
-    hsyint.system_to_string("pbpaste")
+    hsysinte.system_to_string("pbpaste")
     # TODO(gp): Finish this.
 
 
@@ -2505,6 +2445,78 @@ def pytest_failed(  # type: ignore
 # #############################################################################
 # Linter.
 # #############################################################################
+
+
+# TODO(gp): When running `python_execute` we could launch it inside a
+# container.
+@task
+def check_python_files(  # type: ignore
+    ctx,
+    python_compile=True,
+    python_execute=False,
+    modified=False,
+    branch=False,
+    last_commit=False,
+    all_=False,
+    files="",
+):
+    """
+    Compile and execute Python files checking for errors.
+
+    The params have the same meaning as in `_get_files_to_process()`.
+    """
+    _report_task()
+    _ = ctx
+    # We allow to filter through the user specified `files`.
+    mutually_exclusive = False
+    remove_dirs = True
+    file_list = _get_files_to_process(
+        modified,
+        branch,
+        last_commit,
+        all_,
+        files,
+        mutually_exclusive,
+        remove_dirs,
+    )
+    _LOG.debug("Found %d files:\n%s", len(file_list), "\n".join(file_list))
+    # Filter keeping only Python files.
+    _LOG.debug("Filtering for Python files")
+    exclude_paired_jupytext = True
+    file_list = hio.keep_python_files(file_list, exclude_paired_jupytext)
+    _LOG.debug("file_list=%s", "\n".join(file_list))
+    _LOG.info("Need to process %d files", len(file_list))
+    if not file_list:
+        _LOG.warning("No files were selected")
+    # Scan all the files.
+    failed_filenames = []
+    for file_name in file_list:
+        _LOG.info("Processing '%s'", file_name)
+        if python_compile:
+            import compileall
+
+            success = compileall.compile_file(file_name, force=True, quiet=1)
+            _LOG.debug("file_name='%s' -> python_compile=%s", file_name, success)
+            if not success:
+                msg = "'%s' doesn't compile correctly" % file_name
+                _LOG.error(msg)
+                failed_filenames.append(file_name)
+        # TODO(gp): Add also `python -c "import ..."`, if not equivalent to `compileall`.
+        if python_execute:
+            cmd = f"python {file_name}"
+            rc = hsysinte.system(cmd, abort_on_error=False, suppress_output=False)
+            _LOG.debug("file_name='%s' -> python_compile=%s", file_name, rc)
+            if rc != 0:
+                msg = "'%s' doesn't execute correctly" % file_name
+                _LOG.error(msg)
+                failed_filenames.append(file_name)
+    _LOG.info(
+        "failed_filenames=%s\n%s",
+        len(failed_filenames),
+        "\n".join(failed_filenames),
+    )
+    error = len(failed_filenames) > 0
+    return error
 
 
 def _get_lint_docker_cmd(precommit_opts: str, run_bash: bool, stage: str) -> str:
@@ -2692,7 +2704,7 @@ def gh_workflow_list(ctx, branch="branch", status="all"):  # type: ignore
     """
     Report the status of the GH workflows in a branch.
     """
-    _report_task(hprintin.to_str("branch status"))
+    _report_task(hprint.to_str("branch status"))
     _ = ctx
     #
     cmd = "export NO_COLOR=1; gh run list"
@@ -2712,8 +2724,8 @@ def gh_workflow_list(ctx, branch="branch", status="all"):  # type: ignore
     else:
         raise ValueError("Invalid mode='%s'" % branch)
     # The output is tab separated. Parse it with csv and then filter.
-    _, txt = hsyint.system_to_string(cmd)
-    _LOG.debug(hprintin.to_str("txt"))
+    _, txt = hsysinte.system_to_string(cmd)
+    _LOG.debug(hprint.to_str("txt"))
     # TODO(gp): This is a workaround for AmpTask1612.
     first_line = txt.split("\n")[0]
     num_cols = len(first_line.split("\t"))
@@ -2734,7 +2746,7 @@ def gh_workflow_list(ctx, branch="branch", status="all"):  # type: ignore
         cols.append("age")
     table = htable.Table.from_text(cols, txt, delimiter="\t")
     # table = [line for line in csv.reader(txt.split("\n"), delimiter="\t")]
-    _LOG.debug(hprintin.to_str("table"))
+    _LOG.debug(hprint.to_str("table"))
     #
     if branch != "all":
         field = "branch"
@@ -2756,7 +2768,7 @@ def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
     """
     Run GH workflows in a branch.
     """
-    _report_task(hprintin.to_str("branch workflows"))
+    _report_task(hprint.to_str("branch workflows"))
     # Get the branch name.
     if branch == "branch":
         branch_name = hgit.get_branch_name()
@@ -2764,13 +2776,13 @@ def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
         branch_name = "master"
     else:
         raise ValueError("Invalid branch='%s'" % branch)
-    _LOG.debug(hprintin.to_str("branch_name"))
+    _LOG.debug(hprint.to_str("branch_name"))
     # Get the workflows.
     if workflows == "all":
         gh_tests = ["fast_tests", "slow_tests"]
     else:
         gh_tests = [workflows]
-    _LOG.debug(hprintin.to_str("workflows"))
+    _LOG.debug(hprint.to_str("workflows"))
     # Run.
     for gh_test in gh_tests:
         gh_test += ".yml"
@@ -2841,7 +2853,7 @@ def _get_gh_issue_title(issue_id: int, repo_short_name: str) -> Tuple[str, str]:
     # {"title":"Update GH actions for amp"}
     hdbg.dassert_lte(1, issue_id)
     cmd = f"gh issue view {issue_id} --repo {repo_full_name_with_host} --json title,url"
-    _, txt = hsyint.system_to_string(cmd)
+    _, txt = hsysinte.system_to_string(cmd)
     _LOG.debug("txt=\n%s", txt)
     # Parse json.
     dict_ = json.loads(txt)
@@ -2873,7 +2885,7 @@ def gh_issue_title(ctx, issue_id, repo_short_name="current", pbcopy=True):  # ty
 
     :param pbcopy: save the result into the system clipboard (only on macOS)
     """
-    _report_task(hprintin.to_str("issue_id repo_short_name"))
+    _report_task(hprint.to_str("issue_id repo_short_name"))
     _ = ctx
     issue_id = int(issue_id)
     hdbg.dassert_lte(1, issue_id)
@@ -2951,7 +2963,7 @@ def gh_create_pr(  # type: ignore
 
 def _save_dir_status(dir_name: str, filename: str) -> None:
     cmd = f'find {dir_name} -name "*" | sort | xargs ls -ld >{filename}'
-    hsyint.system(cmd)
+    hsysinte.system(cmd)
     _LOG.info("Saved dir status in %s", filename)
 
 
@@ -2984,7 +2996,7 @@ def _find_files_for_user(dir_name: str, user: str, is_equal: bool) -> List[str]:
     _LOG.debug("")
     mode = "\\!" if not is_equal else ""
     cmd = f'find {dir_name} -name "*" {mode} -user "{user}"'
-    _, txt = hsyint.system_to_string(cmd)
+    _, txt = hsysinte.system_to_string(cmd)
     files: List[str] = txt.split("\n")
     return files
 
@@ -2996,7 +3008,7 @@ def _find_files_for_group(dir_name: str, group: str, is_equal: bool) -> List[str
     _LOG.debug("")
     mode = "\\!" if not is_equal else ""
     cmd = f'find {dir_name} -name "*" {mode} -group "{group}"'
-    _, txt = hsyint.system_to_string(cmd)
+    _, txt = hsysinte.system_to_string(cmd)
     files: List[str] = txt.split("\n")
     return files
 
@@ -3010,7 +3022,7 @@ def _compute_stats_by_user_and_group(dir_name: str) -> Tuple[Dict, Dict, Dict]:
     _LOG.debug("")
     # Find all files.
     cmd = f'find {dir_name} -name "*"'
-    _, txt = hsyint.system_to_string(cmd)
+    _, txt = hsysinte.system_to_string(cmd)
     files = txt.split("\n")
     # Get the user of each file.
     user_to_files: Dict[str, List[str]] = {}
@@ -3051,7 +3063,7 @@ def _ls_l(files: List[str], size: int = 100) -> str:
         files_tmp = files[pos : pos + size]
         files_tmp = [f"'{f}'" for f in files_tmp]
         cmd = "ls -ld %s" % " ".join(files_tmp)
-        _, txt_tmp = hsyint.system_to_string(cmd)
+        _, txt_tmp = hsysinte.system_to_string(cmd)
         txt.append(txt_tmp)
     return "\n".join(txt)
 
@@ -3066,7 +3078,7 @@ def _exec_cmd_by_chunks(
         files_tmp = files[pos : pos + size]
         files_tmp = [f"'{f}'" for f in files_tmp]
         cmd = "%s %s" % (cmd, " ".join(files_tmp))
-        hsyint.system(cmd, abort_on_error=abort_on_error)
+        hsysinte.system(cmd, abort_on_error=abort_on_error)
 
 
 def _print_problems(dir_name: str = ".") -> None:
@@ -3076,7 +3088,7 @@ def _print_problems(dir_name: str = ".") -> None:
     This function is used for debugging.
     """
     _, _, file_to_user_group = _compute_stats_by_user_and_group(dir_name)
-    user = hsyint.get_user_name()
+    user = hsysinte.get_user_name()
     docker_user = get_default_param("DOCKER_USER")
     # user_group = f"{user}_g"
     # shared_group = get_default_param("SHARED_GROUP")
@@ -3118,13 +3130,13 @@ def _change_file_ownership(file: str, abort_on_error: bool) -> None:
     tmp_file = file + ".OLD"
     #
     cmd = f"mv {file} {tmp_file}"
-    hsyint.system(cmd, abort_on_error=abort_on_error)
+    hsysinte.system(cmd, abort_on_error=abort_on_error)
     #
     cmd = f"cp {tmp_file} {file}"
-    hsyint.system(cmd, abort_on_error=abort_on_error)
+    hsysinte.system(cmd, abort_on_error=abort_on_error)
     #
     cmd = f"rm -rf {tmp_file}"
-    hsyint.system(cmd, abort_on_error=abort_on_error)
+    hsysinte.system(cmd, abort_on_error=abort_on_error)
 
 
 def _fix_invalid_owner(dir_name: str, fix: bool, abort_on_error: bool) -> None:
@@ -3132,19 +3144,19 @@ def _fix_invalid_owner(dir_name: str, fix: bool, abort_on_error: bool) -> None:
     Fix files that are owned by a user that is not the current user or the
     Docker one.
     """
-    _LOG.info("\n%s", hprintin.frame(hintrosp.get_function_name()))
+    _LOG.info("\n%s", hprint.frame(hintros.get_function_name()))
     #
     _LOG.info("Before fix")
     _, _, file_to_user_group = _compute_stats_by_user_and_group(dir_name)
     #
-    user = hsyint.get_user_name()
+    user = hsysinte.get_user_name()
     docker_user = get_default_param("DOCKER_USER")
     for file, (curr_user, _) in tqdm.tqdm(file_to_user_group.items()):
         if curr_user not in (user, docker_user):
             _LOG.info("Fixing file '%s'", file)
             hdbg.dassert_file_exists(file)
             cmd = f"ls -l {file}"
-            hsyint.system(
+            hsysinte.system(
                 cmd, abort_on_error=abort_on_error, suppress_output=False
             )
             if fix:
@@ -3158,12 +3170,12 @@ def _fix_group(dir_name: str, fix: bool, abort_on_error: bool) -> None:
     """
     Ensure that all files are owned by the shared group.
     """
-    _LOG.info("\n%s", hprintin.frame(hintrosp.get_function_name()))
+    _LOG.info("\n%s", hprint.frame(hintros.get_function_name()))
     _LOG.info("Before fix")
     _, _, file_to_user_group = _compute_stats_by_user_and_group(dir_name)
     if fix:
         # Get the user and the group.
-        user = hsyint.get_user_name()
+        user = hsysinte.get_user_name()
         user_group = f"{user}_g"
         shared_group = get_default_param("SHARED_GROUP")
         #
@@ -3178,7 +3190,7 @@ def _fix_group(dir_name: str, fix: bool, abort_on_error: bool) -> None:
             else:
                 # For files not owned by the current user, we need to `sudo`.
                 cmd = f"sudo -u {curr_user} {cmd}"
-            hsyint.system(cmd, abort_on_error=abort_on_error)
+            hsysinte.system(cmd, abort_on_error=abort_on_error)
         _LOG.info("After fix")
         _, _, file_to_user_group = _compute_stats_by_user_and_group(dir_name)
     else:
@@ -3189,9 +3201,9 @@ def _fix_group_permissions(dir_name: str, abort_on_error: bool) -> None:
     """
     Ensure that all files are owned by the shared group.
     """
-    _LOG.info("\n%s", hprintin.frame(hintrosp.get_function_name()))
+    _LOG.info("\n%s", hprint.frame(hintros.get_function_name()))
     _, _, file_to_user_group = _compute_stats_by_user_and_group(dir_name)
-    user = hsyint.get_user_name()
+    user = hsysinte.get_user_name()
     # docker_user = get_default_param("DOCKER_USER")
     for file, (curr_user, curr_group) in tqdm.tqdm(file_to_user_group.items()):
         _ = curr_group
@@ -3204,7 +3216,7 @@ def _fix_group_permissions(dir_name: str, abort_on_error: bool) -> None:
             if curr_user != user:
                 # For files not owned by the current user, we need to `sudo`.
                 cmd = f"sudo -u {curr_user} {cmd}"
-            hsyint.system(cmd, abort_on_error=abort_on_error)
+            hsysinte.system(cmd, abort_on_error=abort_on_error)
         is_dir = os.path.isdir(file)
         if is_dir:
             # From https://www.gnu.org/software/coreutils/manual/html_node/Directory-Setuid-and-Setgid.html
@@ -3216,7 +3228,7 @@ def _fix_group_permissions(dir_name: str, abort_on_error: bool) -> None:
                 if curr_user != user:
                     # For files not owned by the current user, we need to `sudo`.
                     cmd = f"sudo -u {curr_user} {cmd}"
-                hsyint.system(cmd, abort_on_error=abort_on_error)
+                hsysinte.system(cmd, abort_on_error=abort_on_error)
 
 
 @task

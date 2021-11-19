@@ -13,8 +13,8 @@ from typing import List, NamedTuple, Optional, Tuple, Union
 
 import pandas as pd
 import psycopg2 as psycop
+import psycopg2.extras as extras
 import psycopg2.sql as psql
-from psycopg2 import extras
 
 import helpers.dbg as hdbg
 import helpers.printing as hprint
@@ -27,26 +27,24 @@ _LOG = logging.getLogger(__name__)
 # Connection
 # #############################################################################
 
-# Invariant: keep the arguments in the interface in the same order as: host,
-#  dbname, port, user, password
+# Invariant: keep the arguments in the interface in the same order as:
+# host, dbname, port, user, password
 
 # TODO(gp): mypy doesn't like this. Understand why and / or inline.
 DbConnection = psycop.extensions.connection
 
 
-# TODO(gp): host, dbname, ...
 DbConnectionInfo = collections.namedtuple(
-    "DbConnectionInfo", ["dbname", "host", "port", "user", "password"]
+    "DbConnectionInfo", ["host", "dbname", "port", "user", "password"]
 )
 
 
 # TODO(gp): Return only the connection (CmampTask441).
-# TODO(gp): Reorg params -> host, dbname, user, port
 def get_connection(
-    dbname: str,
     host: str,
-    user: str,
+    dbname: str,
     port: int,
+    user: str,
     password: str,
     autocommit: bool = True,
 ) -> DbConnection:
@@ -74,13 +72,13 @@ def get_connection_from_env_vars() -> Tuple[
     # TODO(gp): -> POSTGRES_DBNAME
     host = os.environ["POSTGRES_HOST"]
     dbname = os.environ["POSTGRES_DB"]
-    user = os.environ["POSTGRES_USER"]
     port = int(os.environ["POSTGRES_PORT"])
+    user = os.environ["POSTGRES_USER"]
     password = os.environ["POSTGRES_PASSWORD"]
     # Build the
     connection = get_connection(
-        dbname=dbname,
         host=host,
+        dbname=dbname,
         port=port,
         user=user,
         password=password,
@@ -120,7 +118,10 @@ def check_db_connection(
 
 # TODO(gp): Rearrange as host, dbname (instead of db_name), port.
 def wait_db_connection(
-    db_name: str, port: int, host: str, timeout_in_secs: int = 10
+    host: str, 
+    db_name: str, 
+    port: int,  
+    timeout_in_secs: int = 10,
 ) -> None:
     """
     Wait until the database is available.
@@ -149,8 +150,8 @@ def db_connection_to_tuple(connection: DbConnection) -> NamedTuple:
     Get database connection details using connection. Connection details
     include:
 
-        - Database name
         - Host
+        - Database name
         - Port
         - Username
         - Password
@@ -160,8 +161,8 @@ def db_connection_to_tuple(connection: DbConnection) -> NamedTuple:
     """
     info = connection.info
     det = DbConnectionInfo(
-        dbname=info.dbname,
         host=info.host,
+        dbname=info.dbname,
         port=info.port,
         user=info.user,
         password=info.password,
@@ -217,6 +218,12 @@ def get_indexes(connection: DbConnection) -> pd.DataFrame:
     tmp["columns"] = tmp["Statement"].apply(lambda w: w.split("(")[1][:-1])
 
     return tmp
+
+
+def disconnect_all_clients(dbname: str):
+    # From https://stackoverflow.com/questions/36502401
+    # Not sure this will work in our case, since it might kill our own connection.
+    cmd = f"SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '{dbname}';"
 
 
 # #############################################################################
@@ -356,7 +363,7 @@ def head_table(
     """
     txt = []
     query = "SELECT * FROM %s LIMIT %s " % (table, limit)
-    df = execute_query(connection, query)
+    df = execute_query_to_df(connection, query)
     # pd.options.display.max_columns = 1000
     # pd.options.display.width = 130
     txt.append(str(df))
@@ -381,16 +388,14 @@ def head_tables(
 
 
 # TODO(gp): -> get_table_columns
-def get_columns(connection: DbConnection, table_name: str) -> list:
+def get_columns(connection: DbConnection, table_name: str) -> List[str]:
     """
     Get column names for given table.
     """
-    query = (
-        """SELECT column_name
-                FROM information_schema.columns
-                WHERE TABLE_NAME = '%s' """
-        % table_name
-    )
+    query = f"""
+        SELECT column_name
+            FROM information_schema.columns
+            WHERE TABLE_NAME = '{table_name}'"""
     cursor = connection.cursor()
     cursor.execute(query)
     columns = [x[0] for x in cursor.fetchall()]
@@ -408,13 +413,13 @@ def find_common_columns(
     for i, table in enumerate(tables):
         table = tables[i]
         query = "SELECT * FROM %s LIMIT %s " % (table, limit)
-        df1 = execute_query(connection, query, verbose=False)
+        df1 = execute_query_to_df(connection, query, verbose=False)
         if df1 is None:
             continue
         for j in range(i + 1, len(tables)):
             table = tables[j]
             query = "SELECT * FROM %s LIMIT %s " % (table, limit)
-            df2 = execute_query(connection, query, verbose=False)
+            df2 = execute_query_to_df(connection, query, verbose=False)
             if df2 is None:
                 continue
             common_cols = [c for c in df1 if c in df2]
@@ -440,13 +445,17 @@ def find_common_columns(
     return obj
 
 
+def remove_table(connection: DbConnection, table_name: str) -> None:
+    query = f"DROP TABLE IF EXISTS {table_name}"
+    connection.cursor().execute(query)
+
+
 # #############################################################################
 # Query
 # #############################################################################
 
 
-# TODO(gp): -> execute_query_to_df
-def execute_query(
+def execute_query_to_df(
     connection: DbConnection,
     query: str,
     limit: Optional[int] = None,
@@ -552,7 +561,7 @@ def execute_insert_query(
         df = obj
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_in(table_name, get_table_names(connection))
-    _LOG.debug("df=\n%s", hprint.dataframe_to_str(df))
+    _LOG.debug("df=\n%s", hprint.dataframe_to_str(df, use_tabulate=False))
     # Transform dataframe into list of tuples.
     values = [tuple(v) for v in df.to_numpy()]
     # Generate a query for multiple rows.

@@ -10,9 +10,11 @@ import logging
 from typing import Optional
 
 import psycopg2 as psycop
-import psycopg2.sql as psql
 
 import helpers.sql as hsql
+
+# TODO(gp): Not sure common should depend on these. Maybe the name of the dir should
+#  be `im_db`.
 import im.ccxt.db.utils as imccdbuti
 import im.ib.sql_writer as imibsqwri
 import im.kibot.sql_writer as imkisqwri
@@ -106,10 +108,10 @@ def create_im_database(
     hsql.create_database(connection, dbname=new_db, overwrite=overwrite)
     conn_details = hsql.db_connection_to_tuple(connection)
     new_connection = hsql.get_connection(
-        dbname=new_db,
         host=conn_details.host,
-        user=conn_details.user,
+        dbname=new_db,
         port=conn_details.port,
+        user=conn_details.user,
         password=conn_details.password,
     )
     create_all_tables(new_connection)

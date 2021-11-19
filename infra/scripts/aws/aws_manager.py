@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
 """
-
 This script provides interface to interact with AWS EC2 services
 
+Import as:
+
+import infra.scripts.aws.aws_manager as isawawma
 """
 
 import logging
@@ -137,7 +139,9 @@ class AWS_EC2_Manager:
             _LOG.error("Request failed with error code: %i", resp_code)
             return None
 
-    def attach_volume(self, instance_id: str, volume_id: str, device_name: str) -> None:
+    def attach_volume(
+        self, instance_id: str, volume_id: str, device_name: str
+    ) -> None:
         """Attach specified volume to specified instance at specified mount point
 
         :param instance_id: ID of the ec2 instance to attach the volume to

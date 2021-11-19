@@ -1,10 +1,10 @@
 """
 Import as:
 
-import helpers.printing as hprintin
+import helpers.printing as hprint
 """
 
-# TODO(gp): -> print_helpers
+# TODO(gp): -> hprint
 
 import logging
 import re
@@ -15,8 +15,9 @@ from typing import Any, Dict, Iterable, List, Match, Optional, cast
 import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
+
 # Mute this module unless we want to debug it.
-# _LOG.setLevel(logging.INFO)
+_LOG.setLevel(logging.INFO)
 
 
 # #############################################################################
@@ -536,9 +537,9 @@ def diff_strings(
     #
     cmd = f"sdiff --width={width} {file_name1} {file_name2}"
     # To avoid circular dependencies.
-    import helpers.system_interaction as hsyint
+    import helpers.system_interaction as hsysinte
 
-    _, txt = hsyint.system_to_string(
+    _, txt = hsysinte.system_to_string(
         cmd,
         # We don't care if they are different.
         abort_on_error=False,
@@ -694,6 +695,7 @@ def dataframe_to_str(
     max_colwidth: int = 2000,
     max_rows: int = 500,
     display_width: int = 10000,
+    use_tabulate: bool = False,
 ) -> str:
     import pandas as pd
 
@@ -708,7 +710,12 @@ def dataframe_to_str(
         "display.width",
         display_width,
     ):
-        res = str(df)
+        if use_tabulate:
+            import tabulate
+
+            res = tabulate.tabulate(df, headers="keys", tablefmt="psql")
+        else:
+            res = str(df)
     return res
 
 
@@ -823,7 +830,7 @@ def config_notebook(sns_set: bool = True) -> None:
     pd.set_option("display.width", 1000)
 
     # Warnings.
-    import helpers.warnings_helpers as hwah
+    import helpers.warnings_helpers as hwarnin
 
     # Force the linter to keep this import.
-    _ = hwah
+    _ = hwarnin

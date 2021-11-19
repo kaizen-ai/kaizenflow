@@ -3,17 +3,17 @@ import logging
 import pandas as pd
 
 import core.config as cconfig
-import core.dataflow.runners as cdtfrun
+import core.dataflow.runners as cdtfrunn
 import core.dataflow.test.test_price_interface as dartttdi
 import core.dataflow.test.test_real_time as cdtfttrt
-import dataflow_amp.real_time.pipeline as dtfamretipip
-import helpers.hasyncio as hhasynci
-import helpers.unit_test as huntes
+import dataflow_amp.real_time.pipeline as dtfaretipi
+import helpers.hasyncio as hasynci
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-class TestRealTimeReturnPipeline1(huntes.TestCase):
+class TestRealTimeReturnPipeline1(hunitest.TestCase):
     """
     This test is similar to `TestRealTimeDagRunner1`. It uses:
 
@@ -25,16 +25,17 @@ class TestRealTimeReturnPipeline1(huntes.TestCase):
         """
         Test `RealTimeReturnPipeline` using synthetic data.
         """
-        with hhasynci.solipsism_context() as event_loop:
+        with hasynci.solipsism_context() as event_loop:
             # Create the pipeline.
-            dag_builder = dtfamretipip.RealTimeReturnPipeline()
+            dag_builder = dtfaretipi.RealTimeReturnPipeline()
             config = dag_builder.get_config_template()
             # Inject the real-time node.
             start_datetime = pd.Timestamp("2000-01-01 09:30:00-05:00")
             end_datetime = pd.Timestamp("2000-01-01 10:30:00-05:00")
             columns = ["close", "vol"]
+            asset_ids = [1000]
             df = dartttdi.generate_synthetic_db_data(
-                start_datetime, end_datetime, columns
+                start_datetime, end_datetime, columns, asset_ids
             )
             initial_replayed_delay = 5
             rtpi = dartttdi.get_replayed_time_price_interface_example1(
@@ -46,7 +47,7 @@ class TestRealTimeReturnPipeline1(huntes.TestCase):
             )
             period = "last_5mins"
             source_node_kwargs = {
-                "real_time_price_interface": rtpi,
+                "price_interface": rtpi,
                 "period": period,
                 "multiindex_output": False,
             }
@@ -71,14 +72,13 @@ class TestRealTimeReturnPipeline1(huntes.TestCase):
                 "dst_dir": None,
             }
             # Run.
-            dag_runner = cdtfrun.RealTimeDagRunner(**dag_runner_kwargs)
-            result_bundles = hhasynci.run(
+            dag_runner = cdtfrunn.RealTimeDagRunner(**dag_runner_kwargs)
+            result_bundles = hasynci.run(
                 dag_runner.predict(), event_loop=event_loop
             )
             events = dag_runner.events
             # Check.
             # TODO(gp): Factor this out.
-            # TODO(gp):
             actual = []
             events_as_str = "\n".join(
                 [

@@ -23,15 +23,15 @@ import logging
 import numpy as np
 import pandas as pd
 
-import core.timeseries_study as tss
-import helpers.dbg as dbg
-import helpers.env as env
-import helpers.printing as pri
+import core.timeseries_study as ctimstud
+import helpers.dbg as hdbg
+import helpers.env as henv
+import helpers.printing as hprint
 
 # %%
-print(env.get_system_signature())
-pri.config_notebook()
-dbg.init_logger(verbosity=logging.INFO)
+print(henv.get_system_signature())
+hprint.config_notebook()
+hdbg.init_logger(verbosity=logging.INFO)
 _LOG = logging.getLogger(__name__)
 
 # %% [markdown]
@@ -70,14 +70,14 @@ ts_minutely.plot()
 # ## Daily
 
 # %%
-tsds = tss.TimeSeriesDailyStudy(ts_daily)
+tsds = ctimstud.TimeSeriesDailyStudy(ts_daily)
 tsds.execute()
 
 # %% [markdown]
 # ## Minutely
 
 # %%
-tsms = tss.TimeSeriesMinutelyStudy(ts_minutely)
+tsms = ctimstud.TimeSeriesMinutelyStudy(ts_minutely)
 tsms.execute()
 
 # %%

@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.htqdm as hhtqdm
+import helpers.htqdm as htqdm
 """
 import io
 import logging
@@ -16,6 +16,8 @@ class TqdmToLogger(io.StringIO):
 
     Use as:
     ```
+    from tqdm.autonotebook import tqdm
+
     tqdm_out = TqdmToLogger(_LOG, level=logging.INFO)
     for ... tqdm(..., file=tqdm_out):
     ```

@@ -28,14 +28,14 @@ import os
 
 import seaborn as sns
 
-import core.config.config_ as ccocon
-import core.plotting as cplo
+import core.config.config_ as cconconf
+import core.plotting as coplotti
 import helpers.dbg as hdbg
 import helpers.env as henv
-import helpers.printing as hprintin
+import helpers.printing as hprint
 import helpers.s3 as hs3
-import im_v2.data.universe as imdauni
-import research.cc.statistics as rccsta
+import im_v2.data.universe as imv2dauni
+import research.cc.statistics as rccstat
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -44,18 +44,18 @@ _LOG = logging.getLogger(__name__)
 
 _LOG.info("%s", henv.get_system_signature()[0])
 
-hprintin.config_notebook()
+hprint.config_notebook()
 
 
 # %% [markdown]
 # # Config
 
 # %%
-def get_config() -> ccocon.Config:
+def get_config() -> cconconf.Config:
     """
     Get config that controls parameters.
     """
-    config = ccocon.Config()
+    config = cconconf.Config()
     # Load parameters.
     config.add_subconfig("load")
     config["load"]["aws_profile"] = "am"
@@ -76,13 +76,13 @@ print(config)
 # # Get price data for a given universe
 
 # %%
-vendor_universe = imdauni.get_vendor_universe_as_tuples(
+vendor_universe = imv2dauni.get_vendor_universe_as_tuples(
     config["data"]["universe_version"], config["data"]["vendor"]
 )
 vendor_universe
 
 # %%
-df_price = rccsta.get_universe_price_data(vendor_universe, config)
+df_price = rccstat.get_universe_price_data(vendor_universe, config)
 df_price.head(3)
 
 # %%
@@ -100,13 +100,13 @@ df_returns.head(3)
 
 # %%
 corr_matrix = df_returns.corr()
-_ = cplo.plot_heatmap(corr_matrix)
+_ = coplotti.plot_heatmap(corr_matrix)
 
 # %% [markdown]
 # `cluster_and_select()` distinguishes clusters but some very highly correlated stable coins are clustered together so it seems like that we cannot rely on dendrodram and clustering alone.
 
 # %%
-_ = cplo.cluster_and_select(df_returns, 11)
+_ = coplotti.cluster_and_select(df_returns, 11)
 
 # %% run_control={"marked": false}
 _ = sns.clustermap(corr_matrix, figsize=(20, 20))
@@ -131,7 +131,7 @@ df_returns_1day.head(3)
 
 # %%
 corr_matrix_1day = df_returns_1day.corr()
-_ = cplo.plot_heatmap(corr_matrix_1day)
+_ = coplotti.plot_heatmap(corr_matrix_1day)
 
 # %% [markdown]
 # Resampling to 1 day makes clusters much more visible. <br>
@@ -140,7 +140,7 @@ _ = cplo.plot_heatmap(corr_matrix_1day)
 # Therefore, it seems that for detecting similar currencies we'd better use 1 day frequency.
 
 # %%
-_ = cplo.cluster_and_select(df_returns_1day, 11)
+_ = coplotti.cluster_and_select(df_returns_1day, 11)
 
 # %%
 _ = sns.clustermap(corr_matrix_1day, figsize=(20, 20))

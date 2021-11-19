@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.docker_manager as hdoman
+import helpers.docker_manager as hdocmana
 """
 
 import argparse

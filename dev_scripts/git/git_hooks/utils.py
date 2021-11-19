@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import dev_scripts.git.git_hooks.utils as dsgghout
+"""
+
 # NOTE: This file should depend only on Python standard libraries.
 import compileall
 import inspect
@@ -424,10 +430,7 @@ def _check_python_compile(file_list: List[str]) -> bool:
     # Scan all the files.
     violations = []
     for file_name in file_list:
-        success = compileall.compile_file(
-            file_name,
-            force=True,
-            quiet=0)
+        success = compileall.compile_file(file_name, force=True, quiet=0)
         _LOG.debug("%s -> success=%s", file_name, success)
         if not success:
             _LOG.error("file_name='%s' doesn't compile correctly", file_name)

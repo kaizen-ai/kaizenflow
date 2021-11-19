@@ -3,7 +3,7 @@ Compute crypto-related statistics.
 
 Import as:
 
-import research.cc.statistics as rccsta
+import research.cc.statistics as rccstat
 """
 import logging
 from typing import Callable, List, Optional, Union
@@ -11,20 +11,20 @@ from typing import Callable, List, Optional, Union
 import numpy as np
 import pandas as pd
 
-import core.config.config_ as ccocon
-import core.statistics as csta
+import core.config.config_ as cconconf
+import core.statistics as costatis
 import helpers.dbg as hdbg
-import helpers.hpandas as hhpandas
-import im.ccxt.data.load.loader as imccdaloloa
-import im.cryptodatadownload.data.load.loader as imcrdaloloa
-import im_v2.data.universe as imdauni
+import helpers.hpandas as hpandas
+import im.ccxt.data.load.loader as imcdalolo
+import im.cryptodatadownload.data.load.loader as icdalolo
+import im_v2.data.universe as imv2dauni
 
 _LOG = logging.getLogger(__name__)
 
 
 def compute_stats_for_universe(
-    vendor_universe: List[imdauni.ExchangeCurrencyTuple],
-    config: ccocon.Config,
+    vendor_universe: List[imv2dauni.ExchangeCurrencyTuple],
+    config: cconconf.Config,
     stats_func: Callable,
 ) -> pd.DataFrame:
     """
@@ -46,7 +46,7 @@ def compute_stats_for_universe(
     # Iterate over vendor universe tuples.
     for exchange_id, currency_pair in vendor_universe:
         # Read data for current exchange and currency pair.
-        data = loader.read_data_from_filesystem(
+        data = loader.read_data(
             exchange_id,
             currency_pair,
             config["data"]["data_type"],
@@ -56,24 +56,14 @@ def compute_stats_for_universe(
         cur_stats_data["vendor"] = config["data"]["vendor"]
         stats_data.append(cur_stats_data)
     # Convert results to a dataframe.
-    stats_table = pd.DataFrame(stats_data)
-    # Post-process results.
-    cols_to_sort_by = ["coverage", "longest_not_nan_seq_perc"]
-    cols_to_round = [
-        "coverage",
-        "avg_data_points_per_day",
-        "longest_not_nan_seq_perc",
-    ]
-    stats_table = postprocess_stats_table(
-        stats_table, cols_to_sort_by, cols_to_round
-    )
+    stats_table = pd.concat(stats_data, ignore_index=True)
     return stats_table
 
 
 def compute_start_end_stats(
     price_data: pd.DataFrame,
-    config: ccocon.Config,
-) -> pd.Series:
+    config: cconconf.Config,
+) -> pd.DataFrame:
     """
     Compute start-end stats for exchange-currency data.
 
@@ -96,7 +86,7 @@ def compute_start_end_stats(
 
     :param price_data: crypto price data
     :param config: parameters config
-    :return: start-end stats series
+    :return: start-end stats
     """
     hdbg.dassert_is_subset(
         [
@@ -107,7 +97,7 @@ def compute_start_end_stats(
         price_data.columns,
     )
     hdbg.dassert_isinstance(price_data.index, pd.DatetimeIndex)
-    hhpandas.dassert_monotonic_index(price_data.index)
+    hpandas.dassert_monotonic_index(price_data.index)
     hdbg.dassert_eq(price_data.index.freq, "T")
     # Get series of close price.
     close_price_srs = price_data[config["column_names"]["close_price"]]
@@ -126,7 +116,7 @@ def compute_start_end_stats(
     res_srs["min_timestamp"] = first_idx
     res_srs["max_timestamp"] = last_idx
     res_srs["n_data_points"] = close_price_srs.count()
-    res_srs["coverage"] = 100 * (1 - csta.compute_frac_nan(close_price_srs))
+    res_srs["coverage"] = 100 * (1 - costatis.compute_frac_nan(close_price_srs))
     res_srs["days_available"] = (last_idx - first_idx).days
     res_srs["avg_data_points_per_day"] = (
         res_srs["n_data_points"] / res_srs["days_available"]
@@ -139,6 +129,8 @@ def compute_start_end_stats(
     )
     res_srs["longest_not_nan_seq_start_date"] = longest_not_nan_seq.index[0]
     res_srs["longest_not_nan_seq_end_date"] = longest_not_nan_seq.index[-1]
+    # TODO(Max): think about what to return: `pd.Series` or `pd.DataFrame`?
+    res_srs = pd.DataFrame(res_srs).T
     return res_srs
 
 
@@ -206,8 +198,8 @@ def postprocess_stats_table(
 # TODO(Grisha): move `get_loader_for_vendor` out in #269.
 # TODO(Grisha): use the abstract class in #313.
 def get_loader_for_vendor(
-    config: ccocon.Config,
-) -> Union[imccdaloloa.CcxtLoader, imcrdaloloa.CddLoader]:
+    config: cconconf.Config,
+) -> Union[imcdalolo.CcxtLoaderFromFile, icdalolo.CddLoader]:
     """
     Get vendor specific loader instance.
 
@@ -216,12 +208,12 @@ def get_loader_for_vendor(
     """
     vendor = config["data"]["vendor"]
     if vendor == "CCXT":
-        loader = imccdaloloa.CcxtLoader(
+        loader = imcdalolo.CcxtLoaderFromFile(
             root_dir=config["load"]["data_dir"],
             aws_profile=config["load"]["aws_profile"],
         )
     elif vendor == "CDD":
-        loader = imcrdaloloa.CddLoader(
+        loader = icdalolo.CddLoader(
             root_dir=config["load"]["data_dir"],
             aws_profile=config["load"]["aws_profile"],
         )
@@ -242,7 +234,7 @@ def find_longest_not_nan_sequence(
     :return: longest sequence of not-NaN values
     """
     # Verify that index is monotonically increasing.
-    hhpandas.dassert_strictly_increasing_index(data)
+    hpandas.dassert_strictly_increasing_index(data)
     # Get index frequency.
     freq = pd.infer_freq(data.index)
     # Get indices of only not-NaN values.
@@ -258,8 +250,8 @@ def find_longest_not_nan_sequence(
 
 
 def get_universe_price_data(
-    vendor_universe: List[imdauni.ExchangeCurrencyTuple],
-    config: ccocon.Config,
+    vendor_universe: List[imv2dauni.ExchangeCurrencyTuple],
+    config: cconconf.Config,
 ) -> pd.DataFrame:
     """
     Get combined price data for a given vendor universe.
@@ -279,7 +271,7 @@ def get_universe_price_data(
         colname = " ".join([exchange_id, currency_pair])
         colnames.append(colname)
         # Read data for current exchange and currency pair.
-        data = loader.read_data_from_filesystem(
+        data = loader.read_data(
             exchange_id,
             currency_pair,
             config["data"]["data_type"],

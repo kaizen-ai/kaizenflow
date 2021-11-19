@@ -7,31 +7,32 @@ import pytest
 
 import helpers.git as hgit
 import helpers.sql as hsql
-import helpers.system_interaction as hsyint
-import helpers.unit_test as huntes
+import helpers.system_interaction as hsysinte
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): helpers can't depend from im.
 @pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
-class TestSql1(huntes.TestCase):
+class TestSql1(hunitest.TestCase):
     def setUp(self) -> None:
         """
         Initialize the test container.
         """
         super().setUp()
         self.docker_compose_file_path = os.path.join(
-            hgit.get_amp_abs_path(), "im/devops/compose/docker-compose.yml"
+            hgit.get_amp_abs_path(), "im_v2/devops/compose/docker-compose.yml"
         )
         cmd = (
             "sudo docker-compose "
             f"--file {self.docker_compose_file_path} "
             "up -d im_postgres_local"
         )
-        hsyint.system(cmd, suppress_output=False)
+        hsysinte.system(cmd, suppress_output=False)
         # Set DB credentials.
-        self.dbname = "im_postgres_db_local"
         self.host = "localhost"
+        self.dbname = "im_postgres_db_local"
         self.port = 5432
         self.password = "alsdkqoen"
         self.user = "aljsdalsd"
@@ -44,7 +45,7 @@ class TestSql1(huntes.TestCase):
             "sudo docker-compose "
             f"--file {self.docker_compose_file_path} down -v"
         )
-        hsyint.system(cmd, suppress_output=False)
+        hsysinte.system(cmd, suppress_output=False)
 
         super().tearDown()
 
@@ -54,26 +55,26 @@ class TestSql1(huntes.TestCase):
         Smoke test.
         """
         # TODO(Dan3): change to env
-        hsql.wait_db_connection(self.dbname, self.port, self.host)
+        hsql.wait_db_connection(self.host, self.dbname, self.port)
 
     @pytest.mark.slow()
     def test_db_connection_to_tuple(self) -> None:
         """
         Verify that connection string is correct.
         """
-        hsql.wait_db_connection(self.dbname, self.port, self.host)
+        hsql.wait_db_connection(self.host, self.dbname, self.port)
         self.connection = hsql.get_connection(
-            self.dbname,
             self.host,
-            self.user,
+            self.dbname,
             self.port,
+            self.user,
             self.password,
             autocommit=True,
         )
         actual_details = hsql.db_connection_to_tuple(self.connection)
         expected = {
-            "dbname": self.dbname,
             "host": self.host,
+            "dbname": self.dbname,
             "port": self.port,
             "user": self.user,
             "password": self.password,
@@ -87,10 +88,10 @@ class TestSql1(huntes.TestCase):
         """
         hsql.wait_db_connection(self.dbname, self.port, self.host)
         self.connection = hsql.get_connection(
-            self.dbname,
             self.host,
-            self.user,
+            self.dbname,
             self.port,
+            self.user,
             self.password,
             autocommit=True,
         )
@@ -111,12 +112,12 @@ class TestSql1(huntes.TestCase):
         """
         Create database 'test_db_to_remove' and remove it.
         """
-        hsql.wait_db_connection(self.dbname, self.port, self.host)
+        hsql.wait_db_connection(self.host, self.dbname, self.port)
         self.connection = hsql.get_connection(
-            self.dbname,
             self.host,
-            self.user,
+            self.dbname,
             self.port,
+            self.user,
             self.password,
             autocommit=True,
         )
@@ -135,10 +136,10 @@ class TestSql1(huntes.TestCase):
         """
         hsql.wait_db_connection(self.dbname, self.port, self.host)
         self.connection = hsql.get_connection(
-            self.dbname,
             self.host,
-            self.user,
+            self.dbname,
             self.port,
+            self.user,
             self.password,
             autocommit=True,
         )
@@ -154,17 +155,17 @@ class TestSql1(huntes.TestCase):
         test_data = self._get_test_data()
         # Try uploading test data.
         self.connection = hsql.get_connection(
-            self.dbname,
             self.host,
-            self.user,
+            self.dbname,
             self.port,
+            self.user,
             self.password,
             autocommit=True,
         )
         hsql.execute_insert_query(self.connection, test_data, "test_table")
         # Load data.
-        df = hsql.execute_query(self.connection, "SELECT * FROM test_table")
-        actual = huntes.convert_df_to_json_string(df, n_tail=None)
+        df = hsql.execute_query_to_df(self.connection, "SELECT * FROM test_table")
+        actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
 
     @pytest.mark.slow()
@@ -176,17 +177,17 @@ class TestSql1(huntes.TestCase):
         test_data = self._get_test_data()
         # Try uploading test data.
         self.connection = hsql.get_connection(
-            self.dbname,
             self.host,
-            self.user,
+            self.dbname,
             self.port,
+            self.user,
             self.password,
             autocommit=True,
         )
         hsql.copy_rows_with_copy_from(self.connection, test_data, "test_table")
         # Load data.
-        df = hsql.execute_query(self.connection, "SELECT * FROM test_table")
-        actual = huntes.convert_df_to_json_string(df, n_tail=None)
+        df = hsql.execute_query_to_df(self.connection, "SELECT * FROM test_table")
+        actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
 
     def _create_test_table(self) -> None:
@@ -201,10 +202,10 @@ class TestSql1(huntes.TestCase):
                     """
         hsql.wait_db_connection(self.dbname, self.port, self.host)
         connection = hsql.get_connection(
-            self.dbname,
             self.host,
-            self.user,
+            self.dbname,
             self.port,
+            self.user,
             self.password,
             autocommit=True,
         )

@@ -7,16 +7,20 @@
 
 # Replace and check:
 > scripts/replace_latex.py -a pandoc_before -a replace -a pandoc_after --file notes/IN_PROGRESS/finance.portfolio_theory.txt
+
+Import as:
+
+import documentation.scripts.replace_latex as dscrelat
 """
 
 import argparse
 import logging
 import re
 
-import helpers.dbg as dbg
-import helpers.io_ as io_
-import helpers.parser as prsr
-import helpers.system_interaction as si
+import helpers.dbg as hdbg
+import helpers.io_ as hio
+import helpers.parser as hparser
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -28,8 +32,8 @@ def _standard_cleanup(in_file, aggressive):
     # - Always use "you" instead of "one"
     # - Try to make the wording as terse as possible
     # - Always use $\cdot$
-    dbg.dassert_exists(in_file)
-    txt = io_.from_file(in_file).split("\n")
+    hdbg.dassert_exists(in_file)
+    txt = hio.from_file(in_file).split("\n")
     out = []
     for line in txt:
         for s, d in [
@@ -78,7 +82,7 @@ def _standard_cleanup(in_file, aggressive):
         line = re.sub(r"\s+$", "", line)
         out.append(line)
     out = "\n".join(out)
-    io_.to_file(in_file, out)
+    hio.to_file(in_file, out)
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -94,29 +98,29 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument("--file", action="store", type=str, required=True)
     parser.add_argument("--aggressive", action="store_true")
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
-    dbg.dassert_exists(args.file)
+    hdbg.dassert_exists(args.file)
     actions = args.action
     if not isinstance(actions, list):
         actions = list(actions)
     if "checkout" in actions:
         cmd = "git checkout -- %s" % args.file
-        _ = si.system(cmd)
+        _ = hsysinte.system(cmd)
     if "pandoc_before" in actions:
         cmd = "pandoc.py -a pdf --no_toc --no_open_pdf --input %s" % args.file
-        _ = si.system(cmd)
+        _ = hsysinte.system(cmd)
     if "replace" in actions:
         _standard_cleanup(args.file, args.aggressive)
     if "pandoc_after" in actions:
         cmd = "pandoc.py -a pdf --no_toc --no_open_pdf --input %s" % args.file
-        _ = si.system(cmd)
+        _ = hsysinte.system(cmd)
 
 
 if __name__ == "__main__":

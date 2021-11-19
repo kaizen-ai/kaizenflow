@@ -20,11 +20,11 @@ import uuid
 from typing import Any, List, Optional, cast
 
 import helpers.dbg as hdbg
-import helpers.printing as hprintin
+import helpers.printing as hprint
 
 # TODO(gp): Enable this after the linter has been updated.
 # import helpers.s3 as hs3
-import helpers.system_interaction as hsyint
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ def find_files(directory: str, pattern: str) -> List[str]:
 # TODO(gp): Seems equivalent to `find_files`. Let's keep this.
 def find_regex_files(src_dir: str, regex: str) -> List[str]:
     cmd = 'find %s -name "%s"' % (src_dir, regex)
-    _, output = hsyint.system_to_string(cmd)
+    _, output = hsysinte.system_to_string(cmd)
     # TODO(gp): -> system_to_files
     file_names = [f for f in output.split("\n") if f != ""]
     _LOG.debug("Found %s files in %s", len(file_names), src_dir)
@@ -69,7 +69,7 @@ def find_all_files(dir_name: str) -> List[str]:
     Find all files (not directory) under `dir_name`, skipping `.git`.
     """
     cmd = fr'''cd {dir_name} && find . -type f -name "*" -not -path "*/\.git/*"'''
-    file_names = hsyint.system_to_files(cmd)
+    file_names = hsysinte.system_to_files(cmd)
     file_names = cast(List[str], file_names)
     _LOG.debug("Found %s files", len(file_names))
     return file_names
@@ -148,7 +148,7 @@ def create_soft_link(src: str, dst: str) -> None:
     # Create the link. Note that the link source needs to be an absolute path.
     src = os.path.abspath(src)
     cmd = "ln -s %s %s" % (src, dst)
-    hsyint.system(cmd)
+    hsysinte.system(cmd)
 
 
 def delete_file(file_name: str) -> None:
@@ -194,7 +194,7 @@ def delete_dir(
         return
     if change_perms and os.path.isdir(dir_):
         cmd = "chmod -R +rwx " + dir_
-        hsyint.system(cmd)
+        hsysinte.system(cmd)
     i = 1
     while True:
         try:
@@ -237,7 +237,7 @@ def create_dir(
         asks before deleting
     """
     _LOG.debug(
-        hprintin.to_str("dir_name incremental abort_if_exists ask_to_delete")
+        hprint.to_str("dir_name incremental abort_if_exists ask_to_delete")
     )
     hdbg.dassert_is_not(dir_name, None)
     dir_name = os.path.normpath(dir_name)
@@ -245,7 +245,7 @@ def create_dir(
         _LOG.debug("Can't create dir '%s'", dir_name)
     exists = os.path.exists(dir_name)
     is_dir = os.path.isdir(dir_name)
-    _LOG.debug(hprintin.to_str("dir_name exists is_dir"))
+    _LOG.debug(hprint.to_str("dir_name exists is_dir"))
     if abort_if_exists:
         hdbg.dassert_not_exists(dir_name)
     #                   dir exists / dir does not exist
@@ -261,7 +261,7 @@ def create_dir(
             )
             return
         if ask_to_delete:
-            hsyint.query_yes_no(
+            hsysinte.query_yes_no(
                 "Do you really want to delete dir '%s'?" % dir_name,
                 abort_on_no=True,
             )
@@ -304,12 +304,12 @@ def create_enclosing_dir(file_name: str, incremental: bool = False) -> str:
 
     :param incremental: same meaning as in `create_dir()`
     """
-    _LOG.debug(hprintin.to_str("file_name incremental"))
+    _LOG.debug(hprint.to_str("file_name incremental"))
     _dassert_is_valid_file_name(file_name)
     # hs3.dassert_is_not_s3_path(file_name)
     #
     dir_name = os.path.dirname(file_name)
-    _LOG.debug(hprintin.to_str("dir_name"))
+    _LOG.debug(hprint.to_str("dir_name"))
     if dir_name != "":
         _LOG.debug(
             "Creating dir_name='%s' for file_name='%s'", dir_name, file_name
@@ -342,7 +342,7 @@ def to_file(
     :param mode: file writing mode
     :param force_flush: whether to forcibly clear the file buffer
     """
-    _LOG.debug(hprintin.to_str("file_name use_gzip mode force_flush"))
+    _LOG.debug(hprint.to_str("file_name use_gzip mode force_flush"))
     _dassert_is_valid_file_name(file_name)
     # Choose default writing mode based on compression.
     if mode is None:

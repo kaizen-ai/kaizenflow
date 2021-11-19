@@ -13,6 +13,10 @@ parallel.
 Add a description of what the script does and examples of command lines.
 Check dev_scripts/linter.py to see an example of a script using this
 template.
+
+Import as:
+
+import dev_scripts.parallel_script_skeleton as dspascsk
 """
 
 # TODO(gp): We should test this, although the library is already tested.
@@ -21,14 +25,14 @@ import argparse
 import logging
 import os
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.joblib_helpers as hjoblib
-import helpers.parser as prsr
+import helpers.parser as hparser
 
 # This module contains example workloads.
 import helpers.test.test_joblib_helpers
 
-# import helpers.system_interaction as si
+# import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -56,15 +60,15 @@ def _parse() -> argparse.ArgumentParser:
         default=1,
         type=int,
     )
-    # parser = prsr.add_dst_dir_arg(parser, dst_dir_required=True)
-    parser = prsr.add_parallel_processing_arg(parser)
-    parser = prsr.add_verbosity_arg(parser)
+    # parser = hparser.add_dst_dir_arg(parser, dst_dir_required=True)
+    parser = hparser.add_parallel_processing_arg(parser)
+    parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Prepare the workload.
     randomize = args.randomize
     # randomize = False
@@ -76,9 +80,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     elif args.workload == "failure":
         workload = helpers.test.test_joblib_helpers.get_workload2()
     else:
-        dbg.dfatal("Invalid workload='%s'" % args.workload)
+        hdbg.dfatal("Invalid workload='%s'" % args.workload)
     # Handle the dst dir.
-    # dst_dir, clean_dst_dir = prsr.parse_dst_dir_arg(args)
+    # dst_dir, clean_dst_dir = hparser.parse_dst_dir_arg(args)
     # _ = clean_dst_dir
     # Parse command-line options.
     dry_run = args.dry_run

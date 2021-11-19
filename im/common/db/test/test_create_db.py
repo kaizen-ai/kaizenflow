@@ -12,14 +12,14 @@ import im.common.db.create_db as imcdbcrdb
 _LOG = logging.getLogger(__name__)
 
 
-class CreateDB(hunitest.TestCase):
+class TestCreateDb1(hunitest.TestCase):
     def setUp(self) -> None:
         """
         Initialize the test database inside test container.
         """
         super().setUp()
         self.docker_compose_file_path = os.path.join(
-            hgit.get_amp_abs_path(), "im/devops/compose/docker-compose.yml"
+            hgit.get_amp_abs_path(), "im_v2/devops/compose/docker-compose.yml"
         )
         cmd = (
             "sudo docker-compose "
@@ -27,17 +27,17 @@ class CreateDB(hunitest.TestCase):
             "up -d im_postgres_local"
         )
         hsysinte.system(cmd, suppress_output=False)
-        dbname = "im_postgres_db_local"
         host = "localhost"
+        dbname = "im_postgres_db_local"
         port = 5432
         password = "alsdkqoen"
         user = "aljsdalsd"
-        hsql.wait_db_connection(dbname, port, host)
+        hsql.wait_db_connection(host, dbname, port)
         self.connection = hsql.get_connection(
-            dbname,
             host,
-            user,
+            dbname,
             port,
+            user,
             password,
             autocommit=True,
         )

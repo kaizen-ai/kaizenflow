@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.dataflow.nodes.transformers as cdtfnt
+import core.dataflow.nodes.transformers as cdtfnotra
 """
 import collections
 import inspect
@@ -21,12 +21,12 @@ from typing import (
 import numpy as np
 import pandas as pd
 
-import core.dataflow.core as cdtfc
-import core.dataflow.nodes.base as cdnb
-import core.dataflow.utils as cdtfu
-import core.finance as cfinan
-import core.signal_processing as csigna
-import helpers.dbg as dbg
+import core.dataflow.core as cdtfcore
+import core.dataflow.nodes.base as cdtfnobas
+import core.dataflow.utils as cdtfutil
+import core.finance as cofinanc
+import core.signal_processing as csigproc
+import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -39,14 +39,14 @@ _RESAMPLING_RULE_TYPE = Union[pd.DateOffset, pd.Timedelta, str]
 # #############################################################################
 
 
-class ColumnTransformer(cdnb.Transformer, cdnb.ColModeMixin):
+class ColumnTransformer(cdtfnobas.Transformer, cdtfnobas.ColModeMixin):
     """
     Perform non-index modifying changes of columns.
     """
 
     def __init__(
         self,
-        nid: cdtfc.NodeId,
+        nid: cdtfcore.NodeId,
         transformer_func: Callable[..., pd.DataFrame],
         transformer_kwargs: Optional[Dict[str, Any]] = None,
         # TODO(Paul): May need to assume `List` instead.
@@ -74,7 +74,7 @@ class ColumnTransformer(cdnb.Transformer, cdnb.ColModeMixin):
         """
         super().__init__(nid)
         if cols is not None:
-            dbg.dassert_isinstance(cols, list)
+            hdbg.dassert_isinstance(cols, list)
         self._cols = cols
         self._col_rename_func = col_rename_func
         self._col_mode = col_mode
@@ -89,7 +89,7 @@ class ColumnTransformer(cdnb.Transformer, cdnb.ColModeMixin):
     @property
     def transformed_col_names(self) -> List[str]:
         col_names = self._transformed_col_names
-        dbg.dassert_is_not(
+        hdbg.dassert_is_not(
             col_names,
             None,
             "No transformed column names. This may indicate "
@@ -106,7 +106,7 @@ class ColumnTransformer(cdnb.Transformer, cdnb.ColModeMixin):
         if self._fit_cols is None:
             self._fit_cols = df.columns.tolist() or self._cols
         if self._cols is None:
-            dbg.dassert_set_eq(self._fit_cols, df.columns)
+            hdbg.dassert_set_eq(self._fit_cols, df.columns)
         df = df[self._fit_cols]
         # Handle NaNs.
         idx = df.index
@@ -136,7 +136,7 @@ class ColumnTransformer(cdnb.Transformer, cdnb.ColModeMixin):
         df = df.reindex(index=idx)
         # TODO(Paul): Consider supporting the option of relaxing or foregoing this
         #  check.
-        dbg.dassert(
+        hdbg.dassert(
             df.index.equals(df_in.index),
             "Input/output indices differ but are expected to be the same!",
         )
@@ -149,11 +149,11 @@ class ColumnTransformer(cdnb.Transformer, cdnb.ColModeMixin):
             col_mode=self._col_mode,
         )
         # Update `info`.
-        info["df_transformed_info"] = cdtfu.get_df_info_as_string(df)
+        info["df_transformed_info"] = cdtfutil.get_df_info_as_string(df)
         return df, info
 
 
-class SeriesTransformer(cdnb.Transformer, cdnb.ColModeMixin):
+class SeriesTransformer(cdtfnobas.Transformer, cdtfnobas.ColModeMixin):
     """
     Perform non-index modifying changes of columns.
 
@@ -162,7 +162,7 @@ class SeriesTransformer(cdnb.Transformer, cdnb.ColModeMixin):
 
     def __init__(
         self,
-        nid: cdtfc.NodeId,
+        nid: cdtfcore.NodeId,
         transformer_func: Callable[..., pd.DataFrame],
         transformer_kwargs: Optional[Dict[str, Any]] = None,
         # TODO(Paul): May need to assume `List` instead.
@@ -189,7 +189,7 @@ class SeriesTransformer(cdnb.Transformer, cdnb.ColModeMixin):
         """
         super().__init__(nid)
         if cols is not None:
-            dbg.dassert_isinstance(cols, list)
+            hdbg.dassert_isinstance(cols, list)
         self._cols = cols
         self._col_rename_func = col_rename_func
         self._col_mode = col_mode
@@ -203,7 +203,7 @@ class SeriesTransformer(cdnb.Transformer, cdnb.ColModeMixin):
     @property
     def transformed_col_names(self) -> List[str]:
         col_names = self._transformed_col_names
-        dbg.dassert_is_not(
+        hdbg.dassert_is_not(
             col_names,
             None,
             "No transformed column names. This may indicate "
@@ -220,7 +220,7 @@ class SeriesTransformer(cdnb.Transformer, cdnb.ColModeMixin):
         if self._fit_cols is None:
             self._fit_cols = df.columns.tolist() or self._cols
         if self._cols is None:
-            dbg.dassert_set_eq(self._fit_cols, df.columns)
+            hdbg.dassert_set_eq(self._fit_cols, df.columns)
         df = df[self._fit_cols]
         idx = df.index
         # Initialize container to store info (e.g., auxiliary stats) in the
@@ -236,7 +236,7 @@ class SeriesTransformer(cdnb.Transformer, cdnb.ColModeMixin):
                 self._transformer_func,
                 self._transformer_kwargs,
             )
-            dbg.dassert_isinstance(srs, pd.Series)
+            hdbg.dassert_isinstance(srs, pd.Series)
             srs.name = col
             if col_info is not None:
                 func_info[col] = col_info
@@ -246,7 +246,7 @@ class SeriesTransformer(cdnb.Transformer, cdnb.ColModeMixin):
         df = df.reindex(index=idx)
         # TODO(Paul): Consider supporting the option of relaxing or
         # foregoing this check.
-        dbg.dassert(
+        hdbg.dassert(
             df.index.equals(df_in.index),
             "Input/output indices differ but are expected to be the same!",
         )
@@ -259,7 +259,7 @@ class SeriesTransformer(cdnb.Transformer, cdnb.ColModeMixin):
             col_mode=self._col_mode,
         )
         #
-        info["df_transformed_info"] = cdtfu.get_df_info_as_string(df)
+        info["df_transformed_info"] = cdtfutil.get_df_info_as_string(df)
         return df, info
 
 
@@ -268,19 +268,21 @@ class SeriesTransformer(cdnb.Transformer, cdnb.ColModeMixin):
 # #############################################################################
 
 
-class GroupedColDfToDfTransformer(cdnb.Transformer):
+class GroupedColDfToDfTransformer(cdtfnobas.Transformer):
     """
     Wrap transformers using the `GroupedColDfToDfColProcessor` pattern.
     """
 
     def __init__(
         self,
-        nid: cdtfc.NodeId,
-        in_col_groups: List[Tuple[cdtfu.NodeColumn]],
-        out_col_group: Tuple[cdtfu.NodeColumn],
+        nid: cdtfcore.NodeId,
+        in_col_groups: List[Tuple[cdtfutil.NodeColumn]],
+        out_col_group: Tuple[cdtfutil.NodeColumn],
         transformer_func: Callable[..., Union[pd.Series, pd.DataFrame]],
         transformer_kwargs: Optional[Dict[str, Any]] = None,
-        col_mapping: Optional[Dict[cdtfu.NodeColumn, cdtfu.NodeColumn]] = None,
+        col_mapping: Optional[
+            Dict[cdtfutil.NodeColumn, cdtfutil.NodeColumn]
+        ] = None,
         permitted_exceptions: Tuple[Any] = (),
         *,
         drop_nans: bool = False,
@@ -313,8 +315,8 @@ class GroupedColDfToDfTransformer(cdnb.Transformer):
         """
         super().__init__(nid)
         # TODO(Paul): Add more checks here.
-        dbg.dassert_isinstance(in_col_groups, list)
-        dbg.dassert_isinstance(out_col_group, tuple)
+        hdbg.dassert_isinstance(in_col_groups, list)
+        hdbg.dassert_isinstance(out_col_group, tuple)
         self._in_col_groups = in_col_groups
         self._out_col_group = out_col_group
         self._transformer_func = transformer_func
@@ -333,7 +335,7 @@ class GroupedColDfToDfTransformer(cdnb.Transformer):
         #
         df_in = df.copy()
         #
-        in_dfs = cdnb.GroupedColDfToDfColProcessor.preprocess(
+        in_dfs = cdtfnobas.GroupedColDfToDfColProcessor.preprocess(
             df, self._in_col_groups
         )
         self._leaf_cols = list(in_dfs.keys())
@@ -352,34 +354,36 @@ class GroupedColDfToDfTransformer(cdnb.Transformer):
                 self._permitted_exceptions,
             )
             if df_out is None:
-                _LOG.warning("No output for key=%s, imputing empty dataframe", key)
+                _LOG.warning(
+                    "No output for key=%s, imputing empty dataframe", key
+                )
                 df_out = pd.DataFrame()
-            dbg.dassert_isinstance(df_out, pd.DataFrame)
+            hdbg.dassert_isinstance(df_out, pd.DataFrame)
             if key_info is not None:
                 func_info[key] = key_info
             if self._col_mapping:
                 df_out = df_out.rename(columns=self._col_mapping)
             out_dfs[key] = df_out
         info["func_info"] = func_info
-        df = cdnb.GroupedColDfToDfColProcessor.postprocess(
+        df = cdtfnobas.GroupedColDfToDfColProcessor.postprocess(
             out_dfs, self._out_col_group
         )
         if self._join_output_with_input:
-            df = cdtfu.merge_dataframes(df_in, df)
-        info["df_transformed_info"] = cdtfu.get_df_info_as_string(df)
+            df = cdtfutil.merge_dataframes(df_in, df)
+        info["df_transformed_info"] = cdtfutil.get_df_info_as_string(df)
         return df, info
 
 
-class SeriesToDfTransformer(cdnb.Transformer):
+class SeriesToDfTransformer(cdtfnobas.Transformer):
     """
     Wrap transformers using the `SeriesToDfColProcessor` pattern.
     """
 
     def __init__(
         self,
-        nid: cdtfc.NodeId,
-        in_col_group: Tuple[cdtfu.NodeColumn],
-        out_col_group: Tuple[cdtfu.NodeColumn],
+        nid: cdtfcore.NodeId,
+        in_col_group: Tuple[cdtfutil.NodeColumn],
+        out_col_group: Tuple[cdtfutil.NodeColumn],
         transformer_func: Callable[..., pd.Series],
         transformer_kwargs: Optional[Dict[str, Any]] = None,
         *,
@@ -409,8 +413,8 @@ class SeriesToDfTransformer(cdnb.Transformer):
             resampling.
         """
         super().__init__(nid)
-        dbg.dassert_isinstance(in_col_group, tuple)
-        dbg.dassert_isinstance(out_col_group, tuple)
+        hdbg.dassert_isinstance(in_col_group, tuple)
+        hdbg.dassert_isinstance(out_col_group, tuple)
         self._in_col_group = in_col_group
         self._out_col_group = out_col_group
         self._transformer_func = transformer_func
@@ -426,7 +430,7 @@ class SeriesToDfTransformer(cdnb.Transformer):
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         # Preprocess to extract relevant flat dataframe.
         df_in = df.copy()
-        df = cdnb.SeriesToDfColProcessor.preprocess(df, self._in_col_group)
+        df = cdtfnobas.SeriesToDfColProcessor.preprocess(df, self._in_col_group)
         # Apply `transform()` function column-wise.
         self._leaf_cols = df.columns.tolist()
         # Initialize container to store info (e.g., auxiliary stats) in the
@@ -448,21 +452,23 @@ class SeriesToDfTransformer(cdnb.Transformer):
             if df_out is None:
                 _LOG.warning("No output for key=%s", key)
                 continue
-            dbg.dassert_isinstance(df_out, pd.DataFrame)
+            hdbg.dassert_isinstance(df_out, pd.DataFrame)
             if col_info is not None:
                 func_info[col] = col_info
             dfs[col] = df_out
         info["func_info"] = func_info
         # Combine the series representing leaf col transformations back into a
         # single dataframe.
-        df = cdnb.SeriesToDfColProcessor.postprocess(dfs, self._out_col_group)
+        df = cdtfnobas.SeriesToDfColProcessor.postprocess(
+            dfs, self._out_col_group
+        )
         if self._join_output_with_input:
-            df = cdtfu.merge_dataframes(df_in, df)
-        info["df_transformed_info"] = cdtfu.get_df_info_as_string(df)
+            df = cdtfutil.merge_dataframes(df_in, df)
+        info["df_transformed_info"] = cdtfutil.get_df_info_as_string(df)
         return df, info
 
 
-class SeriesToSeriesTransformer(cdnb.Transformer):
+class SeriesToSeriesTransformer(cdtfnobas.Transformer):
     """
     Wrap transformers using the `SeriesToSeriesColProcessor` pattern.
 
@@ -499,9 +505,9 @@ class SeriesToSeriesTransformer(cdnb.Transformer):
 
     def __init__(
         self,
-        nid: cdtfc.NodeId,
-        in_col_group: Tuple[cdtfu.NodeColumn],
-        out_col_group: Tuple[cdtfu.NodeColumn],
+        nid: cdtfcore.NodeId,
+        in_col_group: Tuple[cdtfutil.NodeColumn],
+        out_col_group: Tuple[cdtfutil.NodeColumn],
         transformer_func: Callable[..., pd.Series],
         transformer_kwargs: Optional[Dict[str, Any]] = None,
         permitted_exceptions: Tuple[Any] = (),
@@ -530,9 +536,9 @@ class SeriesToSeriesTransformer(cdnb.Transformer):
         join_output_with_input: whether to join the output with the input
         """
         super().__init__(nid)
-        dbg.dassert_isinstance(in_col_group, tuple)
-        dbg.dassert_isinstance(out_col_group, tuple)
-        dbg.dassert_eq(
+        hdbg.dassert_isinstance(in_col_group, tuple)
+        hdbg.dassert_isinstance(out_col_group, tuple)
+        hdbg.dassert_eq(
             len(in_col_group),
             len(out_col_group),
             msg="Column hierarchy depth must be preserved.",
@@ -553,7 +559,9 @@ class SeriesToSeriesTransformer(cdnb.Transformer):
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         # Preprocess to extract relevant flat dataframe.
         df_in = df.copy()
-        df = cdnb.SeriesToSeriesColProcessor.preprocess(df, self._in_col_group)
+        df = cdtfnobas.SeriesToSeriesColProcessor.preprocess(
+            df, self._in_col_group
+        )
         # Apply `transform()` function column-wise.
         self._leaf_cols = df.columns.tolist()
         # Initialize container to store info (e.g., auxiliary stats) in the
@@ -576,7 +584,7 @@ class SeriesToSeriesTransformer(cdnb.Transformer):
             if srs is None:
                 _LOG.warning("No output for key=%s, imputing NaNs", col)
                 srs = pd.Series(np.nan, index=df[col].index)
-            dbg.dassert_isinstance(srs, pd.Series)
+            hdbg.dassert_isinstance(srs, pd.Series)
             srs.name = col
             if col_info is not None:
                 func_info[col] = col_info
@@ -584,12 +592,12 @@ class SeriesToSeriesTransformer(cdnb.Transformer):
         info["func_info"] = func_info
         # Combine the series representing leaf col transformations back into a
         # single dataframe.
-        df = cdnb.SeriesToSeriesColProcessor.postprocess(
+        df = cdtfnobas.SeriesToSeriesColProcessor.postprocess(
             srs_list, self._out_col_group
         )
         if self._join_output_with_input:
-            df = cdtfu.merge_dataframes(df_in, df)
-        info["df_transformed_info"] = cdtfu.get_df_info_as_string(df)
+            df = cdtfutil.merge_dataframes(df_in, df)
+        info["df_transformed_info"] = cdtfutil.get_df_info_as_string(df)
         return df, info
 
 
@@ -658,7 +666,7 @@ def _apply_func_to_series(
         drop_nans = True
     else:
         raise ValueError(f"Unrecognized `nan_mode` {nan_mode}")
-    dbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_isinstance(srs, pd.Series)
     result, info = _apply_func_to_data(
         srs, func, func_kwargs, drop_nans, reindex_like_input
     )
@@ -670,15 +678,15 @@ def _apply_func_to_series(
 # #############################################################################
 
 
-class DataframeMethodRunner(cdnb.Transformer):
+class DataframeMethodRunner(cdtfnobas.Transformer):
     def __init__(
         self,
-        nid: cdtfc.NodeId,
-        method: cdtfc.Method,
+        nid: cdtfcore.NodeId,
+        method: cdtfcore.Method,
         method_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         super().__init__(nid)
-        dbg.dassert(method)
+        hdbg.dassert(method)
         # TODO(Paul): Ensure that this is a valid method.
         self._method = method
         self._method_kwargs = method_kwargs or {}
@@ -690,17 +698,17 @@ class DataframeMethodRunner(cdnb.Transformer):
         df = getattr(df, self._method)(**self._method_kwargs)
         # Not all methods return DataFrames. We want to restrict to those that
         # do.
-        dbg.dassert_isinstance(df, pd.DataFrame)
+        hdbg.dassert_isinstance(df, pd.DataFrame)
         #
         info = collections.OrderedDict()
-        info["df_transformed_info"] = cdtfu.get_df_info_as_string(df)
+        info["df_transformed_info"] = cdtfutil.get_df_info_as_string(df)
         return df, info
 
 
-class FunctionWrapper(cdnb.Transformer):
+class FunctionWrapper(cdtfnobas.Transformer):
     def __init__(
         self,
-        nid: cdtfc.NodeId,
+        nid: cdtfcore.NodeId,
         func: Callable,
         func_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
@@ -713,10 +721,10 @@ class FunctionWrapper(cdnb.Transformer):
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
         df_out = self._func(df, **self._func_kwargs)
-        dbg.dassert_isinstance(df_out, pd.DataFrame)
+        hdbg.dassert_isinstance(df_out, pd.DataFrame)
         # Update `info`.
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
-        info["df_transformed_info"] = cdtfu.get_df_info_as_string(df_out)
+        info["df_transformed_info"] = cdtfutil.get_df_info_as_string(df_out)
         return df_out, info
 
 
@@ -726,10 +734,10 @@ class FunctionWrapper(cdnb.Transformer):
 
 
 # TODO(Paul): Deprecate.
-class Resample(cdnb.Transformer):
+class Resample(cdtfnobas.Transformer):
     def __init__(
         self,
-        nid: cdtfc.NodeId,
+        nid: cdtfcore.NodeId,
         rule: Union[pd.DateOffset, pd.Timedelta, str],
         agg_func: str,
         resample_kwargs: Optional[Dict[str, Any]] = None,
@@ -753,20 +761,22 @@ class Resample(cdnb.Transformer):
         self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
-        resampler = csigna.resample(df, rule=self._rule, **self._resample_kwargs)
+        resampler = csigproc.resample(
+            df, rule=self._rule, **self._resample_kwargs
+        )
         func = getattr(resampler, self._agg_func)
         df = func(**self._agg_func_kwargs)
         # Update `info`.
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
-        info["df_transformed_info"] = cdtfu.get_df_info_as_string(df)
+        info["df_transformed_info"] = cdtfutil.get_df_info_as_string(df)
         return df, info
 
 
 # TODO(Paul): Deprecate.
-class TimeBarResampler(cdnb.Transformer):
+class TimeBarResampler(cdtfnobas.Transformer):
     def __init__(
         self,
-        nid: cdtfc.NodeId,
+        nid: cdtfcore.NodeId,
         rule: Union[pd.DateOffset, pd.Timedelta, str],
         return_cols: Optional[list] = None,
         return_agg_func: Optional[str] = None,
@@ -801,7 +811,7 @@ class TimeBarResampler(cdnb.Transformer):
         self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
-        df = cfinan.resample_time_bars(
+        df = cofinanc.resample_time_bars(
             df,
             self._rule,
             return_cols=self._return_cols,
@@ -816,18 +826,18 @@ class TimeBarResampler(cdnb.Transformer):
         )
         #
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
-        info["df_transformed_info"] = cdtfu.get_df_info_as_string(df)
+        info["df_transformed_info"] = cdtfutil.get_df_info_as_string(df)
         return df, info
 
 
 # TODO(Paul): Deprecate.
-class TwapVwapComputer(cdnb.Transformer):
+class TwapVwapComputer(cdtfnobas.Transformer):
     def __init__(
         self,
-        nid: cdtfc.NodeId,
+        nid: cdtfcore.NodeId,
         rule: _RESAMPLING_RULE_TYPE,
-        price_col: cdtfu.NodeColumn,
-        volume_col: cdtfu.NodeColumn,
+        price_col: cdtfutil.NodeColumn,
+        volume_col: cdtfutil.NodeColumn,
         offset: Optional[str] = None,
     ) -> None:
         """
@@ -847,7 +857,7 @@ class TwapVwapComputer(cdnb.Transformer):
         self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
-        df = cfinan.compute_twap_vwap(
+        df = cofinanc.compute_twap_vwap(
             df,
             self._rule,
             price_col=self._price_col,
@@ -856,19 +866,19 @@ class TwapVwapComputer(cdnb.Transformer):
         )
         #
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
-        info["df_transformed_info"] = cdtfu.get_df_info_as_string(df)
+        info["df_transformed_info"] = cdtfutil.get_df_info_as_string(df)
         return df, info
 
 
 # TODO(Paul): Deprecate.
-class MultiindexTwapVwapComputer(cdnb.Transformer):
+class MultiindexTwapVwapComputer(cdtfnobas.Transformer):
     def __init__(
         self,
-        nid: cdtfc.NodeId,
+        nid: cdtfcore.NodeId,
         rule: _RESAMPLING_RULE_TYPE,
-        price_col_group: Tuple[cdtfu.NodeColumn],
-        volume_col_group: Tuple[cdtfu.NodeColumn],
-        out_col_group: Tuple[cdtfu.NodeColumn],
+        price_col_group: Tuple[cdtfutil.NodeColumn],
+        volume_col_group: Tuple[cdtfutil.NodeColumn],
+        out_col_group: Tuple[cdtfutil.NodeColumn],
     ) -> None:
         """
         Calculate TWAP and VWAP prices from price and volume columns.
@@ -887,9 +897,11 @@ class MultiindexTwapVwapComputer(cdnb.Transformer):
     def _transform(
         self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
-        price_df = cdnb.preprocess_multiindex_cols(df, self._price_col_group)
-        volume_df = cdnb.preprocess_multiindex_cols(df, self._volume_col_group)
-        dbg.dassert_eq_all(price_df.columns, volume_df.columns)
+        price_df = cdtfnobas.preprocess_multiindex_cols(df, self._price_col_group)
+        volume_df = cdtfnobas.preprocess_multiindex_cols(
+            df, self._volume_col_group
+        )
+        hdbg.dassert_eq_all(price_df.columns, volume_df.columns)
         dfs = {}
         for col in price_df.columns:
             price_col = price_df[col]
@@ -897,7 +909,7 @@ class MultiindexTwapVwapComputer(cdnb.Transformer):
             volume_col = volume_df[col]
             volume_col.name = self._volume_col_name
             df = pd.concat([price_col, volume_col], axis=1)
-            df = cfinan.compute_twap_vwap(
+            df = cofinanc.compute_twap_vwap(
                 df,
                 self._rule,
                 price_col=self._price_col_name,
@@ -912,7 +924,7 @@ class MultiindexTwapVwapComputer(cdnb.Transformer):
         if self._out_col_group:
             df = pd.concat([df], axis=1, keys=[self._out_col_group])
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
-        info["df_transformed_info"] = cdtfu.get_df_info_as_string(df)
+        info["df_transformed_info"] = cdtfutil.get_df_info_as_string(df)
         return df, info
 
 
@@ -921,13 +933,13 @@ class MultiindexTwapVwapComputer(cdnb.Transformer):
 # #############################################################################
 
 
-class Calculator(cdnb.Transformer):
+class Calculator(cdtfnobas.Transformer):
     def __init__(
         self,
-        nid: cdtfc.NodeId,
-        term1: cdtfu.NodeColumn,
-        term2: cdtfu.NodeColumn,
-        out_col_name: cdtfu.NodeColumn,
+        nid: cdtfcore.NodeId,
+        term1: cdtfutil.NodeColumn,
+        term2: cdtfutil.NodeColumn,
+        out_col_name: cdtfutil.NodeColumn,
         operation: str,
         arithmetic_kwargs: Optional[Dict[str, Any]] = None,
         term1_delay: Optional[int] = 0,
@@ -938,7 +950,7 @@ class Calculator(cdnb.Transformer):
         self._term1 = term1
         self._term2 = term2
         self._out_col_name = out_col_name
-        dbg.dassert_in(
+        hdbg.dassert_in(
             operation,
             ["multiply", "divide", "add", "subtract"],
             "Operation %s not supported.",
@@ -952,9 +964,9 @@ class Calculator(cdnb.Transformer):
     def _transform(
         self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
-        dbg.dassert_in(self._term1, df.columns.to_list())
-        dbg.dassert_in(self._term2, df.columns.to_list())
-        dbg.dassert_not_in(self._out_col_name, df.columns.to_list())
+        hdbg.dassert_in(self._term1, df.columns.to_list())
+        hdbg.dassert_in(self._term2, df.columns.to_list())
+        hdbg.dassert_not_in(self._out_col_name, df.columns.to_list())
         df_out = df.copy()
         terms = df_out[[self._term1, self._term2]]
         if self._nan_mode == "leave_unchanged":
@@ -970,5 +982,5 @@ class Calculator(cdnb.Transformer):
         df_out[self._out_col_name] = result
         # Update `info`.
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
-        info["df_transformed_info"] = cdtfu.get_df_info_as_string(df_out)
+        info["df_transformed_info"] = cdtfutil.get_df_info_as_string(df_out)
         return df_out, info

@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+"""
+Import as:
+
+import dev_scripts.old.linter.process_jupytext as dsolprju
+"""
+
 # pylint: disable=line-too-long
 r"""
 Automate some common workflows with jupytext.
@@ -22,9 +28,9 @@ import logging
 import re
 
 import dev_scripts.linter as lin
-import helpers.dbg as dbg
-import helpers.parser as prsr
-import helpers.system_interaction as si
+import helpers.dbg as hdbg
+import helpers.parser as hparser
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -34,7 +40,7 @@ _EXECUTABLE = "jupytext"
 
 
 def _pair(file_name: str) -> None:
-    dbg.dassert(
+    hdbg.dassert(
         lin.is_ipynb_file(file_name), "'%s' has no .ipynb extension", file_name
     )
     if lin.is_paired_jupytext_file(file_name):
@@ -52,24 +58,24 @@ def _pair(file_name: str) -> None:
     cmd.append("""'{"jupytext":{"formats":"ipynb,py:percent"}}'""")
     cmd.append(file_name)
     cmd = " ".join(cmd)
-    si.system(cmd)
+    hsysinte.system(cmd)
     # Test the ipynb -> py:percent -> ipynb round trip conversion.
     cmd = _EXECUTABLE + " --test --stop --to py:percent %s" % file_name
-    si.system(cmd)
+    hsysinte.system(cmd)
     # Add the .py file.
     cmd = _EXECUTABLE + " --to py:percent %s" % file_name
-    si.system(cmd)
+    hsysinte.system(cmd)
     # Add to git.
     py_file_name = lin.from_ipynb_to_python_file(file_name)
     cmd = "git add %s" % py_file_name
-    si.system(cmd)
+    hsysinte.system(cmd)
 
 
 def _sync(file_name: str) -> None:
     if lin.is_paired_jupytext_file(file_name):
         # cmd = _EXECUTABLE + " --sync --update --to py:percent %s" % file_name
         cmd = _EXECUTABLE + " --sync --to py:percent %s" % file_name
-        si.system(cmd)
+        hsysinte.system(cmd)
     else:
         _LOG.warning("The file '%s' is not paired: run --pair", file_name)
 
@@ -119,7 +125,7 @@ def _test(file_name: str, action: str) -> None:
         raise ValueError("Invalid action='%s'" % action)
     cmd = [_EXECUTABLE, opts, "--stop --to py:percent %s" % file_name]
     cmd = " ".join(cmd)
-    rc, txt = si.system_to_string(cmd, abort_on_error=False)
+    rc, txt = hsysinte.system_to_string(cmd, abort_on_error=False)
     if rc != 0:
         # Here we handle special cases that must be escaped.
         _LOG.debug("rc=%s, txt=\n'%s'", rc, txt)
@@ -151,16 +157,16 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         help="Action to perform",
     )
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level)
+    hdbg.init_logger(verbosity=args.log_level)
     #
     file_name = args.file
-    dbg.dassert_exists(file_name)
+    hdbg.dassert_exists(file_name)
     if args.action == "pair":
         _pair(file_name)
     elif args.action == "sync":

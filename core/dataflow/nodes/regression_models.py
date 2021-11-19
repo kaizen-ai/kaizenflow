@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import core.dataflow.nodes.regression_models as cdtfnoremo
+"""
+
 import collections
 import logging
 from typing import Any, Dict, List, Optional
@@ -5,32 +11,32 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 
-import core.dataflow.core as cdtfc
-import core.dataflow.nodes.base as cdnb
-import core.dataflow.utils as cdtfu
-import core.signal_processing as csigna
-import core.statistics as cstati
-import helpers.dbg as dbg
+import core.dataflow.core as cdtfcore
+import core.dataflow.nodes.base as cdtfnobas
+import core.dataflow.utils as cdtfutil
+import core.signal_processing as csigproc
+import core.statistics as costatis
+import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
 
-class LinearRegression(cdnb.FitPredictNode, cdnb.ColModeMixin):
+class LinearRegression(cdtfnobas.FitPredictNode, cdtfnobas.ColModeMixin):
     """
     Fit and predict a linear regression model.
     """
 
     def __init__(
         self,
-        nid: cdtfc.NodeId,
-        x_vars: cdtfu.NodeColumnList,
-        y_vars: cdtfu.NodeColumnList,
+        nid: cdtfcore.NodeId,
+        x_vars: cdtfutil.NodeColumnList,
+        y_vars: cdtfutil.NodeColumnList,
         steps_ahead: int,
         smoothing: float = 0,
         p_val_threshold: float = 1,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
-        sample_weight_col: Optional[cdtfu.NodeColumnList] = None,
+        sample_weight_col: Optional[cdtfutil.NodeColumnList] = None,
         feature_weights: Optional[List[float]] = None,
     ) -> None:
         super().__init__(nid)
@@ -39,19 +45,19 @@ class LinearRegression(cdnb.FitPredictNode, cdnb.ColModeMixin):
         self._fit_coefficients = None
         self._steps_ahead = steps_ahead
         self._smoothing = smoothing
-        dbg.dassert_lte(0, self._smoothing)
+        hdbg.dassert_lte(0, self._smoothing)
         self._p_val_threshold = p_val_threshold
-        dbg.dassert_lte(0, self._p_val_threshold)
-        dbg.dassert_lte(self._p_val_threshold, 1.0)
-        dbg.dassert_lte(
+        hdbg.dassert_lte(0, self._p_val_threshold)
+        hdbg.dassert_lte(self._p_val_threshold, 1.0)
+        hdbg.dassert_lte(
             0, self._steps_ahead, "Non-causal prediction attempted! Aborting..."
         )
         self._col_mode = col_mode or "replace_all"
-        dbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
+        hdbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
         self._nan_mode = nan_mode or "raise"
         self._sample_weight_col = sample_weight_col
         if feature_weights is not None:
-            dbg.dassert_eq(len(feature_weights), len(x_vars))
+            hdbg.dassert_eq(len(feature_weights), len(x_vars))
             self._feature_weights = pd.Series(
                 data=feature_weights, index=x_vars, name="feature_weights"
             )
@@ -79,8 +85,8 @@ class LinearRegression(cdnb.FitPredictNode, cdnb.ColModeMixin):
         self, df_in: pd.DataFrame, fit: bool = True
     ) -> Dict[str, pd.DataFrame]:
         # Materialize names of x and y vars.
-        x_vars = cdtfu.convert_to_list(self._x_vars)
-        y_vars = cdtfu.convert_to_list(self._y_vars)
+        x_vars = cdtfutil.convert_to_list(self._x_vars)
+        y_vars = cdtfutil.convert_to_list(self._y_vars)
         sample_weight_col = self._sample_weight_col
         # Package the sample weight column together with the x variables iff
         # `fit()` is called and a `sample_weight_col` that is not `None` is
@@ -93,12 +99,12 @@ class LinearRegression(cdnb.FitPredictNode, cdnb.ColModeMixin):
         # Get x and forward y df.
         if fit:
             # NOTE: This df has no NaNs.
-            df = cdtfu.get_x_and_forward_y_fit_df(
+            df = cdtfutil.get_x_and_forward_y_fit_df(
                 df_in, x_vars_and_maybe_weight, y_vars, self._steps_ahead
             )
         else:
             # NOTE: This df has no `x_vars` NaNs.
-            df = cdtfu.get_x_and_forward_y_predict_df(
+            df = cdtfutil.get_x_and_forward_y_predict_df(
                 df_in, x_vars_and_maybe_weight, y_vars, self._steps_ahead
             )
         #
@@ -109,11 +115,11 @@ class LinearRegression(cdnb.FitPredictNode, cdnb.ColModeMixin):
         forward_y_cols = df.drop(
             x_vars_and_maybe_weight, axis=1
         ).columns.to_list()
-        dbg.dassert_eq(1, len(forward_y_cols))
+        hdbg.dassert_eq(1, len(forward_y_cols))
         forward_y_col = forward_y_cols[0]
         # Regress `forward_y_col` on `x_vars` using `sample_weight_col` weights.
         # This performs one 1-variable regression per x variable.
-        coefficients = cstati.compute_regression_coefficients(
+        coefficients = costatis.compute_regression_coefficients(
             df, x_vars, forward_y_col, sample_weight_col
         )
         if fit:
@@ -126,12 +132,12 @@ class LinearRegression(cdnb.FitPredictNode, cdnb.ColModeMixin):
             # Apply smoothing.
             smoothing = 1 / self._fit_coefficients["turn"] ** self._smoothing
             beta_norm = np.linalg.norm(weights)
-            weights = beta_norm * csigna.normalize(weights * smoothing)
+            weights = beta_norm * csigproc.normalize(weights * smoothing)
             #
             self._fit_coefficients["weight"] = weights
-            self._fit_coefficients["norm_weight"] = csigna.normalize(weights)
+            self._fit_coefficients["norm_weight"] = csigproc.normalize(weights)
             #
-            dbg.dassert(
+            hdbg.dassert(
                 self._fit_coefficients is not None,
                 "Model not found! Check if `fit()` has been run.",
             )
@@ -155,7 +161,7 @@ class LinearRegression(cdnb.FitPredictNode, cdnb.ColModeMixin):
         )
         # Compute coefficients of forward y against its prediction.
         # NOTE: This does not use the sample weights.
-        hat_coefficients = cstati.compute_regression_coefficients(
+        hat_coefficients = costatis.compute_regression_coefficients(
             df_out, [forward_y_hat_col], forward_y_col
         )
         info["hat_coefficients"] = hat_coefficients
@@ -167,7 +173,7 @@ class LinearRegression(cdnb.FitPredictNode, cdnb.ColModeMixin):
             cols=y_vars,
             col_mode=self._col_mode,
         )
-        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfutil.get_df_info_as_string(df_out)
         mode = "fit" if fit else "predict"
         self._set_info(mode, info)
         return {"df_out": df_out}

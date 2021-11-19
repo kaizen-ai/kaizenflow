@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.stats_computer as cstats
+import core.dataflow_model.stats_computer as cdtfmostco
 """
 
 import functools
@@ -10,8 +10,8 @@ from typing import Callable, List, Optional
 
 import pandas as pd
 
-import core.finance as cfinan
-import core.statistics as cstati
+import core.finance as cofinanc
+import core.statistics as costatis
 import helpers.timer as htimer
 
 _LOG = logging.getLogger(__name__)
@@ -52,8 +52,8 @@ class StatsComputer:
     def compute_sampling_stats(self, srs: pd.Series) -> pd.Series:
         name = "sampling"
         functions = [
-            cstati.summarize_time_index_info,
-            cstati.compute_special_value_stats,
+            costatis.summarize_time_index_info,
+            costatis.compute_special_value_stats,
         ]
         return self._compute_stat_functions(srs, name, functions)
 
@@ -63,11 +63,11 @@ class StatsComputer:
         #   - var and std assuming zero mean
         functions = [
             functools.partial(
-                cstati.compute_moments,
+                costatis.compute_moments,
                 prefix="scipy.",
             ),
-            functools.partial(cstati.ttest_1samp, prefix="null_mean_zero."),
-            cstati.compute_jensen_ratio,
+            functools.partial(costatis.ttest_1samp, prefix="null_mean_zero."),
+            costatis.compute_jensen_ratio,
             lambda x: x.describe(),
         ]
         return self._compute_stat_functions(srs, name, functions)
@@ -79,8 +79,12 @@ class StatsComputer:
         #   2. In practice, the focus is typically on lower order lags
         lags = 16
         functions = [
-            functools.partial(cstati.apply_adf_test, maxlag=lags, prefix="adf."),
-            functools.partial(cstati.apply_kpss_test, nlags=lags, prefix="kpss."),
+            functools.partial(
+                costatis.apply_adf_test, maxlag=lags, prefix="adf."
+            ),
+            functools.partial(
+                costatis.apply_kpss_test, nlags=lags, prefix="kpss."
+            ),
         ]
         return self._compute_stat_functions(srs, name, functions)
 
@@ -88,20 +92,20 @@ class StatsComputer:
         name = "normality"
         functions = [
             functools.partial(
-                cstati.apply_normality_test, prefix="omnibus_null_normal."
+                costatis.apply_normality_test, prefix="omnibus_null_normal."
             ),
             functools.partial(
-                cstati.compute_centered_gaussian_total_log_likelihood,
+                costatis.compute_centered_gaussian_total_log_likelihood,
                 prefix="centered_gaussian.",
             ),
         ]
-        # TODO(*): cstati.compute_centered_gaussian_log_likelihood
+        # TODO(*): costatis.compute_centered_gaussian_log_likelihood
         return self._compute_stat_functions(srs, name, functions)
 
     @staticmethod
     def compute_autocorrelation_stats(srs: pd.Series) -> pd.Series:
         # name = "autocorrelation"
-        # ljung_box = cstati.apply_ljung_box_test(srs)
+        # ljung_box = costatis.apply_ljung_box_test(srs)
         # TODO(Paul): Only return pvals. Rename according to test and lag.
         #     Change default lags reported.
         raise NotImplementedError
@@ -109,18 +113,18 @@ class StatsComputer:
     def compute_spectral_stats(self, srs: pd.Series) -> pd.Series:
         name = "spectral"
         functions = [
-            cstati.compute_forecastability,
+            costatis.compute_forecastability,
         ]
         return self._compute_stat_functions(srs, name, functions)
 
     def compute_signal_quality_stats(self, srs: pd.Series) -> pd.Series:
         name = "signal_quality"
         functions = [
-            cstati.summarize_sharpe_ratio,
-            functools.partial(cstati.ttest_1samp, prefix="sr."),
+            costatis.summarize_sharpe_ratio,
+            functools.partial(costatis.ttest_1samp, prefix="sr."),
         ]
         result = self._compute_stat_functions(srs, name, functions)
-        kratio = pd.Series(cfinan.compute_kratio(srs), index=["kratio"])
+        kratio = pd.Series(cofinanc.compute_kratio(srs), index=["kratio"])
         kratio.name = name
         return pd.concat([result, kratio])
 
@@ -142,7 +146,7 @@ class StatsComputer:
             positions = df[positions_col]
             #
             name = "finance"
-            functions = [cstati.compute_avg_turnover_and_holding_period]
+            functions = [costatis.compute_avg_turnover_and_holding_period]
             stats = self._compute_stat_functions(positions, name, functions)
             results.append(pd.concat([stats], keys=["finance"]))
         # Compute stats related to PnL.
@@ -153,15 +157,15 @@ class StatsComputer:
             #
             name = "pnl"
             functions = [
-                cstati.compute_annualized_return_and_volatility,
-                cstati.compute_max_drawdown,
-                cstati.calculate_hit_rate,
+                costatis.compute_annualized_return_and_volatility,
+                costatis.compute_max_drawdown,
+                costatis.calculate_hit_rate,
             ]
             stats = self._compute_stat_functions(pnl, name, functions)
             results.append(pd.concat([stats], keys=["finance"]))
             #
             corr = pd.Series(
-                cstati.compute_implied_correlation(pnl),
+                costatis.compute_implied_correlation(pnl),
                 index=["prediction_corr_implied_by_pnl"],
                 name=name,
             )
@@ -179,15 +183,17 @@ class StatsComputer:
             results.append(pd.concat([corr], keys=["correlation"]))
             #
             srs = pd.Series(
-                cstati.compute_implied_sharpe_ratio(predictions, prediction_corr),
+                costatis.compute_implied_sharpe_ratio(
+                    predictions, prediction_corr
+                ),
                 index=["sr_implied_by_prediction_corr"],
                 name=name,
             )
             results.append(pd.concat([srs], keys=["signal_quality"]))
             #
-            j_ratio = cstati.compute_jensen_ratio(returns)["jensen_ratio"]
+            j_ratio = costatis.compute_jensen_ratio(returns)["jensen_ratio"]
             hit_rate = pd.Series(
-                cstati.compute_hit_rate_implied_by_correlation(
+                costatis.compute_hit_rate_implied_by_correlation(
                     prediction_corr, j_ratio
                 ),
                 index=["hit_rate_implied_by_prediction_corr"],
@@ -195,10 +201,12 @@ class StatsComputer:
             )
             results.append(pd.concat([hit_rate], keys=["finance"]))
             #
-            hit_rate = cstati.calculate_hit_rate(returns * predictions)
+            hit_rate = costatis.calculate_hit_rate(returns * predictions)
             hit_rate = hit_rate["hit_rate_point_est_(%)"] / 100
             corr2 = pd.Series(
-                cstati.compute_correlation_implied_by_hit_rate(hit_rate, j_ratio),
+                costatis.compute_correlation_implied_by_hit_rate(
+                    hit_rate, j_ratio
+                ),
                 index=["prediction_corr_implied_by_hit_rate"],
                 name=name,
             )
@@ -208,7 +216,7 @@ class StatsComputer:
             positions = df[positions_col]
             #
             name = "pnl"
-            bets = cstati.compute_bet_stats(positions, returns)
+            bets = costatis.compute_bet_stats(positions, returns)
             bets.name = name
             results.append(pd.concat([bets], keys=["bets"]))
         if returns_col is not None and pnl_col is not None:

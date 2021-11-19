@@ -3,10 +3,10 @@ import logging
 import pandas as pd
 import sklearn.decomposition as sdecom
 
-import core.artificial_signal_generators as casgen
+import core.artificial_signal_generators as carsigen
 import core.config as cconfig
 import core.dataflow.nodes.test.helpers as cdnth
-import helpers.unit_test as hut
+import helpers.unit_test as hunitest
 from core.dataflow.nodes.unsupervised_sklearn_models import (
     MultiindexUnsupervisedSkLearnModel,
     Residualizer,
@@ -16,7 +16,7 @@ from core.dataflow.nodes.unsupervised_sklearn_models import (
 _LOG = logging.getLogger(__name__)
 
 
-class TestUnsupervisedSkLearnModel(hut.TestCase):
+class TestUnsupervisedSkLearnModel(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test `fit()` call.
@@ -34,7 +34,7 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
         node = UnsupervisedSkLearnModel("sklearn", **config.to_dict())
         # Fit model.
         df_out = node.fit(data)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True)
+        df_str = hunitest.convert_df_to_string(df_out.round(3), index=True)
         self.check_string(df_str)
 
     def test2(self) -> None:
@@ -53,7 +53,7 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
         node.fit(data.loc["2000-01-03":"2000-01-31"])
         # Predict.
         df_out = node.predict(data.loc["2000-02-01":"2000-02-25"])["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True)
+        df_str = hunitest.convert_df_to_string(df_out.round(3), index=True)
         self.check_string(df_str)
 
     def test3(self) -> None:
@@ -79,7 +79,7 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
         """
         Generate multivariate normal returns.
         """
-        mn_process = casgen.MultivariateNormalProcess()
+        mn_process = carsigen.MultivariateNormalProcess()
         mn_process.set_cov_from_inv_wishart_draw(dim=4, seed=0)
         realization = mn_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
@@ -87,7 +87,7 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
         return realization
 
 
-class TestMultiindexUnsupervisedSkLearnModel(hut.TestCase):
+class TestMultiindexUnsupervisedSkLearnModel(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test `fit()` call.
@@ -103,7 +103,7 @@ class TestMultiindexUnsupervisedSkLearnModel(hut.TestCase):
         )
         node = MultiindexUnsupervisedSkLearnModel("sklearn", **config.to_dict())
         df_out = node.fit(data)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True)
+        df_str = hunitest.convert_df_to_string(df_out.round(3), index=True)
         self.check_string(df_str)
 
     def test2(self) -> None:
@@ -123,7 +123,7 @@ class TestMultiindexUnsupervisedSkLearnModel(hut.TestCase):
         node.fit(data.loc["2000-01-03":"2000-01-31"])
         # Predict.
         df_out = node.predict(data.loc["2000-02-01":"2000-02-25"])["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True)
+        df_str = hunitest.convert_df_to_string(df_out.round(3), index=True)
         self.check_string(df_str)
 
     def test3(self) -> None:
@@ -150,7 +150,7 @@ class TestMultiindexUnsupervisedSkLearnModel(hut.TestCase):
         """
         Generate multivariate normal returns.
         """
-        mn_process = casgen.MultivariateNormalProcess()
+        mn_process = carsigen.MultivariateNormalProcess()
         mn_process.set_cov_from_inv_wishart_draw(dim=4, seed=0)
         realization = mn_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
@@ -163,7 +163,7 @@ class TestMultiindexUnsupervisedSkLearnModel(hut.TestCase):
         return data
 
 
-class TestResidualizer(hut.TestCase):
+class TestResidualizer(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test `fit()` call.
@@ -182,7 +182,7 @@ class TestResidualizer(hut.TestCase):
         node = Residualizer("sklearn", **config.to_dict())
         #
         df_out = node.fit(data)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True)
+        df_str = hunitest.convert_df_to_string(df_out.round(3), index=True)
         self.check_string(df_str)
 
     def test2(self) -> None:
@@ -204,7 +204,7 @@ class TestResidualizer(hut.TestCase):
         node.fit(data.loc["2000-01-03":"2000-01-31"])
         # Predict.
         df_out = node.predict(data.loc["2000-02-01":"2000-02-25"])["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True)
+        df_str = hunitest.convert_df_to_string(df_out.round(3), index=True)
         self.check_string(df_str)
 
     def test3(self) -> None:
@@ -231,7 +231,7 @@ class TestResidualizer(hut.TestCase):
         """
         Generate multivariate normal returns.
         """
-        mn_process = casgen.MultivariateNormalProcess()
+        mn_process = carsigen.MultivariateNormalProcess()
         mn_process.set_cov_from_inv_wishart_draw(dim=4, seed=0)
         realization = mn_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
