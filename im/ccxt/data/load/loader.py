@@ -144,6 +144,10 @@ class AbstractCcxtLoader(abc.ABC):
         if self._resample_to_1_min:
             # Resample to 1 minute.
             data = hpandas.resample_df(data, "T")
+            # Fill missing exchange id and currency pair values that might
+            # have appeared after resampling.
+            cols_to_fill = ["exchange_id", "currency_pair"]
+            data[cols_to_fill] = data[cols_to_fill].fillna(method="bfill")
         return data
 
     @staticmethod
