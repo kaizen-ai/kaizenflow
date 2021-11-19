@@ -1,6 +1,6 @@
 #!/bin/bash -e
 #
-# Create a standard tmux session for the amp repo.
+# Create a standard tmux session for this repo.
 # 
 # # Create an amp tmux session for $HOME/src/amp1
 # > dev_scripts/tmux_amp.sh amp 1
@@ -15,20 +15,33 @@ set -x
 SERVER_NAME=$(uname -n)
 echo "SERVER_NAME=$SERVER_NAME"
 
-if [[ $SERVER_NAME == "gpmac"* ]]; then
-  HOME_DIR="/Users/$USER"
+# Try macOS setup.
+DIR_NAME="/Users/$USER"
+if [[ -d $DIR_NAME ]]; then
+  echo "Inferred macOS setup"
+  HOME_DIR=$DIR_NAME
 else
-  # AWS.
-  HOME_DIR="/data/$USER"
+  # Try AWS setup.
+  DIR_NAME="/data/$USER"
+  if [[ -d $DIR_NAME ]]; then
+    echo "Inferred AWS setup"
+    HOME_DIR=$DIR_NAME
+  fi;
 fi;
 
+if [[ -z $HOME_DIR ]]; then
+    echo "ERROR: Can't infer where your home dir is located"
+    exit -1
+fi;
+echo "HOME_DIR=$HOME_DIR"
+
 # #############################################################################
-# Compute IDX.
+# Parse command options.
 # #############################################################################
 
 DIR_PREFIX=$1
 if [[ -z $DIR_PREFIX ]]; then
-  echo "ERROR: you need to specify directory prefix, e.g. 'amp' or 'cmamp'"
+  echo "ERROR: You need to specify directory prefix, e.g. 'amp' or 'cmamp'"
 fi;
 
 IDX=$2
@@ -41,18 +54,15 @@ AMP_DIR="${HOME_DIR}/src/${DIR_PREFIX}${IDX}"
 echo "AMP_DIR=$AMP_DIR"
 
 # #############################################################################
-# Prepare the script to run.
+# Open the tmux session.
 # #############################################################################
+
 SETENV="dev_scripts/setenv_amp.sh"
 
 # No `clear` since we want to see issues, if any.
 #CMD="source ${SETENV} && reset && clear"
 CMD="source ${SETENV}"
 TMUX_NAME="${DIR_PREFIX}${IDX}"
-
-# #############################################################################
-# Open the tmux windows.
-# #############################################################################
 
 tmux new-session -d -s $TMUX_NAME -n "---${TMUX_NAME}---"
 
