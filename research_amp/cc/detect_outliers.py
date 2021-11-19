@@ -3,7 +3,7 @@ Code to detect outliers.
 
 Import as:
 
-import research.cc.detect_outliers as rccdeout
+import research_amp.cc.detect_outliers as rccdeout
 """
 import logging
 

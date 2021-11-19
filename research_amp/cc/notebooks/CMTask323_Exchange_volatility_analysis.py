@@ -27,7 +27,7 @@ import core.config.config_ as cconconf
 import core.plotting as coplotti
 import helpers.s3 as hs3
 import im_v2.data.universe as imv2dauni
-import research.cc.statistics as rccstat
+import research_amp.cc.statistics as rccstat
 
 # %% [markdown]
 # # Config

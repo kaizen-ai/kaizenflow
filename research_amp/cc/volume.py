@@ -3,7 +3,7 @@ Compute crypto-related trading volume statistics.
 
 Import as:
 
-import research.cc.volume as rccvolu
+import research_amp.cc.volume as rccvolu
 """
 import pandas as pd
 import seaborn as sns
