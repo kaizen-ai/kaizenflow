@@ -26,12 +26,12 @@ import logging
 
 import helpers.dbg as hdbg
 import helpers.env as henv
-import helpers.printing as hprintin
+import helpers.printing as hprint
 
 # %%
 print(henv.get_system_signature()[0])
 
-hprintin.config_notebook()
+hprint.config_notebook()
 
 # %%
 # hdbg.init_logger(verbosity=logging.DEBUG)

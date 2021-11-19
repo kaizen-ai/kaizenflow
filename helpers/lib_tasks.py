@@ -1032,7 +1032,7 @@ def docker_login(ctx):  # type: ignore
     _run(ctx, cmd)
 
 
-def _get_base_docker_compose_path() -> str:
+def get_base_docker_compose_path() -> str:
     """
     Return the base docker compose `devops/compose/docker-compose.yml`.
     """
@@ -1186,11 +1186,11 @@ def _get_docker_cmd(
         if repo_short_name == "amp":
             docker_compose_file_tmp = _get_amp_docker_compose_path()
         else:
-            docker_compose_file_tmp = _get_base_docker_compose_path()
+            docker_compose_file_tmp = get_base_docker_compose_path()
         docker_compose_files.append(docker_compose_file_tmp)
     else:
         # Use one or two docker compose files.
-        docker_compose_files.append(_get_base_docker_compose_path())
+        docker_compose_files.append(get_base_docker_compose_path())
         if repo_short_name == "amp":
             docker_compose_file_tmp = _get_amp_docker_compose_path()
             if docker_compose_file_tmp:
@@ -1952,7 +1952,6 @@ def _build_run_command_line(
     single_test_type: str,
     pytest_opts: str,
     pytest_mark: str,
-    dir_name: str,
     skip_submodules: bool,
     coverage: bool,
     collect_only: bool,
@@ -1963,15 +1962,21 @@ def _build_run_command_line(
     Build the pytest run command.
 
     Same params as `run_fast_tests()`.
+
+    The invariant is that we don't want to duplicate pytest options that can be
+    passed by the user through `-p` (unless really necessary).
+
+    :param skipped_tests: -m option for pytest
     """
     if single_test_type not in _SINGLE_TEST_TYPES:
         raise ValueError(f"Invalid `single_test_type`={single_test_type}")
+    pytest_opts = pytest_opts or "."
+    #
     pytest_opts_tmp = []
     if pytest_opts:
         pytest_opts_tmp.append(pytest_opts)
     skipped_tests = _select_tests_to_skip(single_test_type)
     pytest_opts_tmp.insert(0, f'-m "{skipped_tests}"')
-    dir_name = dir_name or "."
     # file_names = _find_test_files(dir_name)
     # _LOG.debug("file_names=%s", file_names)
     # if pytest_mark != "":
@@ -2000,7 +2005,7 @@ def _build_run_command_line(
     pytest_opts_tmp = [po for po in pytest_opts_tmp if po != ""]
     # TODO(gp): Use _to_multi_line_cmd()
     pytest_opts = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
-    cmd = f"pytest {pytest_opts} {dir_name}"
+    cmd = f"pytest {pytest_opts}"
     if tee_to_file:
         cmd += f" 2>&1 | tee tmp.pytest.{single_test_type}.log"
     return cmd
@@ -2075,7 +2080,6 @@ def _run_tests(
         test_type,
         pytest_opts,
         pytest_mark,
-        dir_name,
         skip_submodules,
         coverage,
         collect_only,

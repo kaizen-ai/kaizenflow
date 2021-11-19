@@ -5,11 +5,11 @@ import numpy as np
 import pandas as pd
 import sklearn.linear_model as slmode
 
-import core.artificial_signal_generators as casgen
+import core.artificial_signal_generators as carsigen
 import core.config as cconfig
-import core.signal_processing as csproc
+import core.signal_processing as csigproc
 import helpers.printing as hprint
-import helpers.unit_test as hut
+import helpers.unit_test as hunitest
 from core.dataflow.nodes.sarimax_models import (
     ContinuousSarimaxModel,
     MultihorizonReturnsPredictionProcessor,
@@ -24,7 +24,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class TestContinuousSarimaxModel(hut.TestCase):
+class TestContinuousSarimaxModel(hunitest.TestCase):
     """
     Warning: SARIMAX can give slightly different outputs on different machines.
     """
@@ -115,7 +115,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
             f"{hprint.frame('sklearn_config')}\n{sklearn_config}\n"
             f"{hprint.frame('sarimax_config')}\n{sarimax_config}\n"
             f"{hprint.frame('df_out')}\n"
-            f"{hut.convert_df_to_string(df_out, index=True)}"
+            f"{hunitest.convert_df_to_string(df_out, index=True)}"
         )
         self.check_string(act)
 
@@ -160,7 +160,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
             f"{hprint.frame('sklearn_config')}\n{sklearn_config}\n"
             f"{hprint.frame('sarimax_config')}\n{sarimax_config}\n"
             f"{hprint.frame('df_out')}\n"
-            f"{hut.convert_df_to_string(df_out, index=True)}"
+            f"{hunitest.convert_df_to_string(df_out, index=True)}"
         )
         self.check_string(act)
 
@@ -233,7 +233,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         df_out = pd.concat(
             [df_out1, df_out2["ret_0_3_hat"], df_out3["ret_0_3_hat"]], axis=1
         )
-        self.check_string(hut.convert_df_to_string(df_out, index=True))
+        self.check_string(hunitest.convert_df_to_string(df_out, index=True))
 
     def test_predict_no_x1(self) -> None:
         """
@@ -287,9 +287,9 @@ class TestContinuousSarimaxModel(hut.TestCase):
         # TODO(gp): Use the idiom like `_check_results()` instead of all
         #  these unreadable f-strings.
         act = (
-            f"{hut.convert_df_to_string(info['info'], index=True)}\n"
-            f"{hut.convert_df_to_string(info['tests'], index=True)}\n"
-            f"{hut.convert_df_to_string(info['coefs'], index=True)}"
+            f"{hunitest.convert_df_to_string(info['info'], index=True)}\n"
+            f"{hunitest.convert_df_to_string(info['tests'], index=True)}\n"
+            f"{hunitest.convert_df_to_string(info['coefs'], index=True)}"
         )
         self.check_string(act)
 
@@ -315,7 +315,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         freq: str = "M",
         seed: int = 42,
     ) -> pd.DataFrame:
-        arma_process = casgen.ArmaProcess(ar_coeffs, ma_coeffs)
+        arma_process = carsigen.ArmaProcess(ar_coeffs, ma_coeffs)
         date_range_kwargs = {
             "start": "2010-01-01",
             "periods": periods,
@@ -324,7 +324,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         y = arma_process.generate_sample(
             date_range_kwargs=date_range_kwargs, scale=0.1, seed=seed
         ).rename("ret_0")
-        x = csproc.compute_smooth_moving_average(y, 26).rename("x")
+        x = csigproc.compute_smooth_moving_average(y, 26).rename("x")
         return pd.concat([x, y], axis=1)
 
     @staticmethod
@@ -347,7 +347,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         return config
 
 
-class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
+class TestMultihorizonReturnsPredictionProcessor(hunitest.TestCase):
     def test1(self) -> None:
         model_output = self._get_multihorizon_model_output(3)
         config = cconfig.get_config_from_nested_dict(
@@ -365,16 +365,16 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
             "process_results", **config.to_dict()
         )
         cum_y_yhat = mrpp.fit(model_output)["df_out"]
-        # TODO(Julia): Ask about creating a `TestFitPredictNode(hut.TestCase)`
+        # TODO(Julia): Ask about creating a `TestFitPredictNode(hunitest.TestCase)`
         #  class that will take care of this piece.
         # TODO(gp): Use the idiom like `_check_results()` instead of all
         #  these unreadable f-strings.
         act = (
             f"{hprint.frame('config')}\n{config}\n"
             f"{hprint.frame('df_in')}\n"
-            f"{hut.convert_df_to_string(model_output, index=True)}\n"
+            f"{hunitest.convert_df_to_string(model_output, index=True)}\n"
             f"{hprint.frame('df_out')}\n"
-            f"{hut.convert_df_to_string(cum_y_yhat, index=True)}\n"
+            f"{hunitest.convert_df_to_string(cum_y_yhat, index=True)}\n"
         )
         self.check_string(act)
 
@@ -396,7 +396,7 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
         fwd_ret_0 = ret_0.shift(-1).rename("cumret_1_original")
         ret_0_from_result = cum_y_yhat[["cumret_1"]]
         df_out = ret_0_from_result.join(fwd_ret_0, how="outer")
-        act = hut.convert_df_to_string(df_out, index=True)
+        act = hunitest.convert_df_to_string(df_out, index=True)
         self.check_string(act)
 
     def test_invert_zret_3_zscoring1(self) -> None:
@@ -423,12 +423,12 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
         #
         cumret_3_from_result = cum_y_yhat[["cumret_3"]]
         df_out = cumret_3_from_result.join(fwd_cumret_3, how="outer")
-        act = hut.convert_df_to_string(df_out, index=True)
+        act = hunitest.convert_df_to_string(df_out, index=True)
         self.check_string(act)
 
     @staticmethod
     def _get_series(seed: int = 24) -> pd.Series:
-        arma_process = casgen.ArmaProcess([1], [1])
+        arma_process = carsigen.ArmaProcess([1], [1])
         date_range_kwargs = {"start": "2010-01-01", "periods": 50, "freq": "D"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range_kwargs, scale=0.1, seed=seed
@@ -445,7 +445,7 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
         ).rename("ret_0")
         # Get volatility estimate indexed by knowledge time. Volatility delay
         # should be one.
-        fwd_vol = csproc.compute_smooth_moving_average(rets, 16).rename(
+        fwd_vol = csigproc.compute_smooth_moving_average(rets, 16).rename(
             "vol_1_hat"
         )
         rets_zscored = (rets / fwd_vol.shift(1)).to_frame(name="ret_0_zscored")
@@ -455,7 +455,7 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
         # Get mock returns predictions.
         model_output = [rets, fwd_vol, rets_zscored, fwd_rets_zscored]
         for i in range(1, steps_ahead + 1):
-            ret_hat = csproc.compute_smooth_moving_average(
+            ret_hat = csigproc.compute_smooth_moving_average(
                 rets_zscored, tau=i + 1
             ).rename(lambda x: f"{x}_{i}_hat", axis=1)
             model_output.append(ret_hat)

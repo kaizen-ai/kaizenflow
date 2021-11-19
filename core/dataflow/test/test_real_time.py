@@ -11,12 +11,12 @@ import pandas as pd
 import pytest
 
 import core.dataflow.real_time as cdtfretim
-import helpers.datetime_ as hdatetim
-import helpers.hasyncio as hhasynci
-import helpers.htypes as hhtypes
-import helpers.printing as hprintin
+import helpers.datetime_ as hdateti
+import helpers.hasyncio as hasynci
+import helpers.htypes as htypes
+import helpers.printing as hprint
 import helpers.timer as htimer
-import helpers.unit_test as huntes
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ _LOG = logging.getLogger(__name__)
 # package.
 
 
-def get_test_data_builder1() -> Tuple[Callable, hhtypes.Kwargs]:
+def get_test_data_builder1() -> Tuple[Callable, htypes.Kwargs]:
     """
     Return a data builder producing between "2010-01-04 09:30:00" and
     "2010-01-04 09:35:00" (for 5 minutes) every second.
@@ -50,7 +50,7 @@ def get_test_data_builder1() -> Tuple[Callable, hhtypes.Kwargs]:
     return data_builder, data_builder_kwargs
 
 
-def get_test_data_builder2() -> Tuple[Callable, hhtypes.Kwargs]:
+def get_test_data_builder2() -> Tuple[Callable, htypes.Kwargs]:
     """
     Return a data builder producing data between "2010-01-04 09:30:00" and
     "2010-01-04 09:30:05" (for 5 seconds) every second.
@@ -80,7 +80,7 @@ def get_replayed_time(
     """
     start_datetime = pd.Timestamp("2010-01-04 09:30:00")
     # Use a replayed real-time starting at the same time as the data.
-    get_wall_clock_time = lambda: hdatetim.get_current_time(
+    get_wall_clock_time = lambda: hdateti.get_current_time(
         tz="naive_ET", event_loop=event_loop
     )
     rt = cdtfretim.ReplayedTime(start_datetime, get_wall_clock_time)
@@ -92,7 +92,7 @@ def get_replayed_time_execute_rt_loop_kwargs(
     sleep_interval_in_secs: float,
     *,
     event_loop: Optional[asyncio.AbstractEventLoop] = None,
-) -> hhtypes.Kwargs:
+) -> htypes.Kwargs:
     """
     Return kwargs for a call to `execute_rt_loop` using replayed time.
     """
@@ -112,11 +112,11 @@ def get_real_time_execute_rt_loop_kwargs(
     sleep_interval_in_secs: float,
     *,
     event_loop: Optional[asyncio.AbstractEventLoop],
-) -> hhtypes.Kwargs:
+) -> htypes.Kwargs:
     """
     Return kwargs for a call to `execute_rt_loop` using real time.
     """
-    get_wall_clock_time = lambda: hdatetim.get_current_time(
+    get_wall_clock_time = lambda: hdateti.get_current_time(
         tz="naive_ET", event_loop=event_loop
     )
     execute_rt_loop_kwargs = {
@@ -130,7 +130,7 @@ def get_real_time_execute_rt_loop_kwargs(
 # #############################################################################
 
 
-class Test_align_on_time_grid1(huntes.TestCase):
+class Test_align_on_time_grid1(hunitest.TestCase):
     """
     Test `align_on_time_grid` using different time semantics.
     """
@@ -143,13 +143,13 @@ class Test_align_on_time_grid1(huntes.TestCase):
         """
         Run twice aligning on 2 seconds.
         """
-        get_wall_clock_time = lambda: hdatetim.get_current_time(
+        get_wall_clock_time = lambda: hdateti.get_current_time(
             tz="ET", event_loop=event_loop
         )
         for i in range(2):
-            _LOG.debug("\n%s", hprintin.frame("Iteration %s" % i, char1="="))
+            _LOG.debug("\n%s", hprint.frame("Iteration %s" % i, char1="="))
             current_time1 = get_wall_clock_time()
-            _LOG.debug(hprintin.to_str("current_time1"))
+            _LOG.debug(hprint.to_str("current_time1"))
             _ = current_time1
             # Align on an even second.
             grid_time_in_secs = 2
@@ -161,7 +161,7 @@ class Test_align_on_time_grid1(huntes.TestCase):
             )
             # Check.
             current_time2 = get_wall_clock_time()
-            _LOG.debug(hprintin.to_str("current_time2"))
+            _LOG.debug(hprint.to_str("current_time2"))
             self.assertEqual(current_time2.second % 2, 0)
 
     @pytest.mark.slow("It takes around 4 secs")
@@ -187,14 +187,14 @@ class Test_align_on_time_grid1(huntes.TestCase):
         Test in real-time aligning on 2 seconds.
         """
         use_high_resolution = False
-        with hhasynci.solipsism_context() as event_loop:
+        with hasynci.solipsism_context() as event_loop:
             self.helper(event_loop, use_high_resolution)
 
 
 # #############################################################################
 
 
-class TestReplayedTime1(huntes.TestCase):
+class TestReplayedTime1(hunitest.TestCase):
     def test1(self) -> None:
         """
         Rewind time to 9:30am of a day in the past.
@@ -209,18 +209,18 @@ class TestReplayedTime1(huntes.TestCase):
     def _helper(self, rt: cdtfretim.ReplayedTime, exp: pd.Timestamp) -> None:
         rct = rt.get_wall_clock_time()
         _LOG.info("  -> time=%s", rct)
-        _LOG.debug(hprintin.to_str("rct.date"))
+        _LOG.debug(hprint.to_str("rct.date"))
         self.assert_equal(str(rct.date()), str(exp.date()))
-        _LOG.debug(hprintin.to_str("rct.hour"))
+        _LOG.debug(hprint.to_str("rct.hour"))
         self.assert_equal(str(rct.hour), str(exp.hour))
-        _LOG.debug(hprintin.to_str("rct.minute"))
+        _LOG.debug(hprint.to_str("rct.minute"))
         self.assert_equal(str(rct.minute), str(exp.minute))
 
 
 # #############################################################################
 
 
-class Test_execute_with_real_time_loop1(huntes.TestCase):
+class Test_execute_with_real_time_loop1(hunitest.TestCase):
     """
     Run `execute_all_with_real_time_loop` with a workload that naively wait
     some time using different time semantics:
@@ -251,7 +251,7 @@ class Test_execute_with_real_time_loop1(huntes.TestCase):
 
     def helper(
         self,
-        get_wall_clock_time: hdatetim.GetWallClockTime,
+        get_wall_clock_time: hdateti.GetWallClockTime,
         event_loop: Optional[asyncio.AbstractEventLoop],
     ) -> Tuple[str, str]:
         """
@@ -276,7 +276,7 @@ class Test_execute_with_real_time_loop1(huntes.TestCase):
             time_out_in_secs,
             self.workload,
         )
-        events, results = hhasynci.run(coroutine, event_loop=event_loop)
+        events, results = hasynci.run(coroutine, event_loop=event_loop)
         _LOG.debug("events=\n%s", str(events))
         _LOG.debug("results=\n%s", str(results))
         # Assemble output.
@@ -291,7 +291,7 @@ class Test_execute_with_real_time_loop1(huntes.TestCase):
     ) -> Tuple[str, str]:
         tz = "ET"
         initial_replayed_dt = pd.Timestamp(
-            "2010-01-04 09:30:01", tz=hdatetim.get_ET_tz()
+            "2010-01-04 09:30:01", tz=hdateti.get_ET_tz()
         )
         get_wall_clock_time = cdtfretim.get_replayed_wall_clock_time(
             tz, initial_replayed_dt, event_loop=event_loop
@@ -343,7 +343,7 @@ class Test_execute_with_real_time_loop1(huntes.TestCase):
         """
         # Run.
         event_loop = None
-        get_wall_clock_time = lambda: hdatetim.get_current_time(tz="ET")
+        get_wall_clock_time = lambda: hdateti.get_current_time(tz="ET")
         events_as_str, results_as_str = self.helper(
             get_wall_clock_time, event_loop
         )
@@ -360,9 +360,9 @@ class Test_execute_with_real_time_loop1(huntes.TestCase):
         """
         with htimer.TimedScope(logging.DEBUG, "") as ts:
             # Use the solipsistic event loop to simulate the real-time faster.
-            with hhasynci.solipsism_context() as event_loop:
+            with hasynci.solipsism_context() as event_loop:
                 # Use the wall clock time.
-                get_wall_clock_time = lambda: hdatetim.get_current_time(
+                get_wall_clock_time = lambda: hdateti.get_current_time(
                     tz="ET", event_loop=event_loop
                 )
                 events_as_str, results_as_str = self.helper(
@@ -392,7 +392,7 @@ class Test_execute_with_real_time_loop1(huntes.TestCase):
         We simulate real-time passing in the past.
         """
         with htimer.TimedScope(logging.DEBUG, "") as ts:
-            with hhasynci.solipsism_context() as event_loop:
+            with hasynci.solipsism_context() as event_loop:
                 events_as_str, results_as_str = self.replayed_time_helper(
                     event_loop
                 )

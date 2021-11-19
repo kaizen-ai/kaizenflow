@@ -17,6 +17,10 @@ Usage:
     4. Render with preview:
     > render_md.py -i ABC.md -o XYZ.md --all
     > render_md.py -i ABC.md --all
+
+Import as:
+
+import documentation.scripts.render_md as dscremd
 """
 
 import argparse
@@ -25,11 +29,11 @@ import os
 import tempfile
 from typing import List, Tuple
 
-import helpers.dbg as dbg
-import helpers.io_ as io_
-import helpers.parser as prsr
-import helpers.printing as prnt
-import helpers.system_interaction as si
+import helpers.dbg as hdbg
+import helpers.io_ as hio
+import helpers.parser as hparser
+import helpers.printing as hprint
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -45,7 +49,7 @@ def _open_html(md_file: str) -> None:
     """
     Pandoc markdown to html and open it.
     """
-    _LOG.info("\n%s", prnt.frame("Process markdown to html"))
+    _LOG.info("\n%s", hprint.frame("Process markdown to html"))
     # Get pandoc.py command.
     curr_path = os.path.abspath(os.path.dirname(__file__))
     tmp_dir = os.path.split(md_file)[0]
@@ -53,7 +57,7 @@ def _open_html(md_file: str) -> None:
         "%s/pandoc.py -t %s -i %s --skip_action %s --skip_action %s --tmp_dir %s"
         % (curr_path, "html", md_file, "copy_to_gdrive", "cleanup_after", tmp_dir)
     )
-    si.system(cmd)
+    hsysinte.system(cmd)
 
 
 def _uml_file_names(
@@ -92,7 +96,7 @@ def _render_command(uml_file: str, pic_dest: str, extension: str) -> str:
     Create PlantUML rendering command.
     """
     available_extensions = ["svg", "png"]
-    dbg.dassert_in(extension, available_extensions)
+    hdbg.dassert_in(extension, available_extensions)
     cmd = "plantuml -t%s -o %s %s" % (extension, pic_dest, uml_file)
     return cmd
 
@@ -121,20 +125,20 @@ def _render_plantuml_code(
     if not uml_content.endswith("@enduml"):
         uml_content = "%s\n@enduml" % uml_content
     # Create the including directory, if needed.
-    io_.create_enclosing_dir(out_file, incremental=True)
+    hio.create_enclosing_dir(out_file, incremental=True)
     # Get pathes.
     target_dir, rel_path, tmp_file_name = _uml_file_names(
         out_file, idx, extension
     )
     # Save text to temporary file.
     tmp_file = os.path.join(tempfile.gettempdir(), tmp_file_name)
-    io_.to_file(tmp_file, uml_content)
+    hio.to_file(tmp_file, uml_content)
     # Convert the plantUML txt.
     cmd = _render_command(tmp_file, target_dir, extension)
     _LOG.info("Creating uml diagram from %s source.", tmp_file)
     _LOG.info("Saving image to %s.", target_dir)
     _LOG.info("> %s", cmd)
-    si.system(cmd, dry_run=dry_run)
+    hsysinte.system(cmd, dry_run=dry_run)
     return rel_path
 
 
@@ -162,7 +166,7 @@ def _render_plantuml(
         out_txt.append(line)
         if line.strip() == "```plantuml":
             # Found the beginning of a plantuml text.
-            dbg.dassert_eq(state, "searching")
+            hdbg.dassert_eq(state, "searching")
             plantuml_txt = []
             plantuml_idx += 1
             state = "found_plantuml"
@@ -187,29 +191,29 @@ def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    prsr.add_input_output_args(parser)
-    prsr.add_action_arg(parser, _VALID_ACTIONS, _DEFAULT_ACTIONS)
+    hparser.add_input_output_args(parser)
+    hparser.add_action_arg(parser, _VALID_ACTIONS, _DEFAULT_ACTIONS)
     # Debug arguments.
     parser.add_argument(
         "--dry_run",
         action="store_true",
         help="Don't create images with plantuml command",
     )
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Insert your code here.
     # Read file arguments.
-    in_file, out_file = prsr.parse_input_output_args(args, clear_screen=True)
+    in_file, out_file = hparser.parse_input_output_args(args, clear_screen=True)
     # Not support stdin and stdout.
-    dbg.dassert_ne(in_file, "-")
-    dbg.dassert_ne(out_file, "-")
+    hdbg.dassert_ne(in_file, "-")
+    hdbg.dassert_ne(out_file, "-")
     # Read actions argument.
-    actions = prsr.select_actions(args, _VALID_ACTIONS, _DEFAULT_ACTIONS)
+    actions = hparser.select_actions(args, _VALID_ACTIONS, _DEFAULT_ACTIONS)
     # Set rendered image extension.
     extension = "png"
     # Save to temporary file and keep svg extension if only open.
@@ -217,11 +221,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
         out_file = tempfile.mktemp(suffix=".md")
         extension = "svg"
     # Read input file lines.
-    in_lines = io_.from_file(in_file).split("\n")
+    in_lines = hio.from_file(in_file).split("\n")
     # Get updated lines after rendering.
     out_lines = _render_plantuml(in_lines, out_file, extension, args.dry_run)
     # Save the output into a file.
-    io_.to_file(out_file, "\n".join(out_lines))
+    hio.to_file(out_file, "\n".join(out_lines))
     # Open if needed.
     if _ACTION_OPEN in actions:
         _open_html(out_file)

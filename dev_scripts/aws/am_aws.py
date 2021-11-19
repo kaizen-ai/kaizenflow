@@ -1,15 +1,19 @@
 #!/usr/bin/env python
 """
 Start / stop / check AWS instance.
+
+Import as:
+
+import dev_scripts.aws.am_aws as dsawamaw
 """
 
 import argparse
 import logging
 import os
 
-import helpers.dbg as dbg
-import helpers.parser as prsr
-import helpers.system_interaction as si
+import helpers.dbg as hdbg
+import helpers.parser as hparser
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -18,7 +22,7 @@ _LOG = logging.getLogger(__name__)
 
 def _get_instance_ip():
     cmd = "aws/get_inst_ip.sh"
-    _, txt = si.system_to_string(cmd)
+    _, txt = hsysinte.system_to_string(cmd)
     txt = txt.rstrip("\n")
     return txt
 
@@ -30,7 +34,7 @@ def _get_instance_id():
 def _gest_inst_status():
     # Get status.
     cmd = "get_inst_status.sh"
-    _, txt = si.system_to_string(cmd)
+    _, txt = hsysinte.system_to_string(cmd)
     if txt:
         # INSTANCESTATUSES        us-east-1a      i-07f9b5323aa7a2ff2
         # INSTANCESTATE   16      running
@@ -43,7 +47,7 @@ def _gest_inst_status():
             if l.startswith("INSTANCESTATE"):
                 res = l.split()[2]
                 break
-        dbg.dassert_is_not(res, None)
+        hdbg.dassert_is_not(res, None)
     else:
         res = "stopped"
     return res
@@ -52,15 +56,15 @@ def _gest_inst_status():
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     inst_id = _get_instance_id()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     if args.action == "start":
         status = _gest_inst_status()
         _LOG.info("Current instance status: %s", status)
         if status == "stopped":
             cmd = "aws ec2 start-instances --instance-ids %s" % inst_id
-            si.system(cmd)
+            hsysinte.system(cmd)
             cmd = "aws ec2 wait instance-running --instance-ids %s" % inst_id
-            si.system(cmd)
+            hsysinte.system(cmd)
         else:
             _LOG.warning("Nothing to do")
         _LOG.info("status=%s", status)
@@ -71,14 +75,14 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _LOG.info("Current instance status: %s", status)
         if status == "running":
             cmd = "aws ec2 stop-instances --instance-ids %s" % inst_id
-            si.system(cmd)
+            hsysinte.system(cmd)
             cmd = "aws ec2 wait instance-stopped --instance-ids %s" % inst_id
-            si.system(cmd)
+            hsysinte.system(cmd)
         else:
             _LOG.warning("Nothing to do")
         #
         status = _gest_inst_status()
-        dbg.dassert_eq(status, "stopped")
+        hdbg.dassert_eq(status, "stopped")
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -92,7 +96,7 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         help="Select action to execute",
     )
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     #
     _main(parser)
 

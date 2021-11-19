@@ -7,6 +7,10 @@ Generate and print a bash script that is used to configure the environment for
 This script:
 - is used to configure the environment
 - should have no dependency other than basic python library
+
+Import as:
+
+import dev_scripts.old.create_conda._setenv_amp as dsoccseam
 """
 
 import argparse
@@ -35,7 +39,7 @@ import dev_scripts._bootstrap as boot  # isort:skip # noqa: E402
 boot.bootstrap(_AMP_REL_PATH)
 
 # pylint: disable=wrong-import-position
-import helpers.dbg as dbg  # isort:skip # noqa: E402
+import helpers.dbg as hdbg  # isort:skip # noqa: E402
 import helpers.user_credentials as usc  # isort:skip # noqa: E402
 import _setenv_lib as selib  # isort:skip # noqa: E402 # type: ignore
 
@@ -51,7 +55,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # TODO(gp): We might want to force to print also the name of script to
     #  help debugging in_get_logging_format(force_print_format,
     #  force_verbose_format):
-    dbg.init_logger(verbosity=args.log_level)
+    hdbg.init_logger(verbosity=args.log_level)
     txt: List[str] = []
     #
     # - Report system info.
@@ -60,7 +64,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Get the path to amp dir.
     amp_path = client_root_dir
     amp_path = os.path.abspath(amp_path)
-    dbg.dassert_exists(amp_path)
+    hdbg.dassert_exists(amp_path)
     #
     # - Config Git.
     #

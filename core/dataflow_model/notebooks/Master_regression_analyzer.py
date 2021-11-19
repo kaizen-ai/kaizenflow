@@ -26,20 +26,20 @@ import pandas as pd
 import seaborn as sns
 
 import core.config as cconfig
-import core.dataflow_model.incremental_single_name_model_evaluator as ime
-import core.dataflow_model.model_evaluator as modeval
-import core.dataflow_model.model_plotter as modplot
-import core.dataflow_model.regression_analyzer as cdmra
-import core.dataflow_model.stats_computer as csc
-import core.dataflow_model.utils as cdmu
-import core.plotting as cplot
-import core.statistics as cstati
-import helpers.dbg as dbg
+import core.dataflow_model.incremental_single_name_model_evaluator as cdtfmisnmev
+import core.dataflow_model.model_evaluator as cdtfmomoev
+import core.dataflow_model.model_plotter as cdtfmomopl
+import core.dataflow_model.regression_analyzer as cdtfmorean
+import core.dataflow_model.stats_computer as cdtfmostco
+import core.dataflow_model.utils as cdtfmouti
+import core.plotting as coplotti
+import core.statistics as costatis
+import helpers.dbg as hdbg
 import helpers.printing as hprint
 
 # %%
-dbg.init_logger(verbosity=logging.INFO)
-# dbg.init_logger(verbosity=logging.DEBUG)
+hdbg.init_logger(verbosity=logging.INFO)
+# hdbg.init_logger(verbosity=logging.DEBUG)
 
 _LOG = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ hprint.config_notebook()
 src_dir = ""
 file_name = "result_bundle.v2_0.pkl"
 
-fit_iter = cdmu.yield_experiment_artifacts(
+fit_iter = cdtfmouti.yield_experiment_artifacts(
     src_dir=src_dir,
     file_name=file_name,
     load_rb_kwargs={},
@@ -77,10 +77,10 @@ p_vals = fit_coeffs["p_val_2s"]
 p_vals.hist(bins=30)
 
 # %%
-cdmra.compute_moments(fit_coeffs, ["p_val_2s"])
+cdtfmorean.compute_moments(fit_coeffs, ["p_val_2s"])
 
 # %%
-q_vals = cstati.estimate_q_values(p_vals)
+q_vals = costatis.estimate_q_values(p_vals)
 
 # %%
 q_vals.hist(bins=30)
@@ -90,14 +90,16 @@ q_vals.hist(bins=30)
 #
 
 # %%
-feature_stats = cdmra.compute_moments(fit_coeffs, ["rho", "beta", "beta_z_scored", "turn"])
+feature_stats = cdtfmorean.compute_moments(
+    fit_coeffs, ["rho", "beta", "beta_z_scored", "turn"]
+)
 display(feature_stats)
 
 # %%
-sweep = cstati.apply_smoothing_parameters(
+sweep = costatis.apply_smoothing_parameters(
     feature_stats[("rho", "mean")],
     feature_stats[("turn", "mean")],
-    np.arange(0, 3, 0.1)
+    np.arange(0, 3, 0.1),
 )
 
 # %%
@@ -112,11 +114,12 @@ fit_coeffs[stat].xs(feature, level=1).hist(bins=101)
 feature_cols = []
 target_col = ""
 
-art_iter = cdmu.yield_experiment_artifacts(
+art_iter = cdtfmouti.yield_experiment_artifacts(
     src_dir=src_dir,
     file_name=file_name,
     load_rb_kwargs={"columns": feature_cols + [target_col]},
 )
+
 
 def get_feature_weights(key: int) -> pd.Series:
     ...
@@ -130,10 +133,10 @@ portfolio_pnl = pd.Series()
 for key, art in art_iter:
     features = art.result_df[feature_cols]
     prediction = (features * get_feature_weights(key)).sum(min_count=1, axis=1)
-    turns[key] = cstati.compute_avg_turnover_and_holding_period(prediction)
+    turns[key] = costatis.compute_avg_turnover_and_holding_period(prediction)
     pnl = prediction * art.result_df[target_col]
     portfolio_pnl = pnl.add(portfolio_pnl, fill_value=0)
-    sharpes[key] = cstati.compute_annualized_sharpe_ratio(pnl)
+    sharpes[key] = costatis.compute_annualized_sharpe_ratio(pnl)
     daily_pnls[key] = pnl.resample("B").sum(min_count=1)
 
 # %%
@@ -149,7 +152,7 @@ daily_portfolio_pnl.cumsum().plot()
 # # Pair plots
 
 # %%
-split1 = cdmra.compute_coefficients(
+split1 = cdtfmorean.compute_coefficients(
     src_dir=src_dir,
     file_name=file_name,
     feature_cols=feature_cols,
@@ -158,7 +161,7 @@ split1 = cdmra.compute_coefficients(
     end=None,
 )
 
-split2 = cdmra.compute_coefficients(
+split2 = cdtfmorean.compute_coefficients(
     src_dir=src_dir,
     file_name=file_name,
     feature_cols=feature_cols,
@@ -170,18 +173,26 @@ split2 = cdmra.compute_coefficients(
 # %%
 stat = ""
 sns.pairplot(
-    pd.concat([
-        split1[stat].rename("split1"),
-        split2[stat].rename("split2"),
-    ], join="inner", axis=1)
+    pd.concat(
+        [
+            split1[stat].rename("split1"),
+            split2[stat].rename("split2"),
+        ],
+        join="inner",
+        axis=1,
+    )
 )
 
 # %%
 stat = ""
 feature = ""
 sns.pairplot(
-    pd.concat([
-        split1[stat].xs(feature, level=1).rename("split1"),
-        split2[stat].xs(feature, level=1).rename("split2"),
-    ], join="inner", axis=1)
+    pd.concat(
+        [
+            split1[stat].xs(feature, level=1).rename("split1"),
+            split2[stat].xs(feature, level=1).rename("split2"),
+        ],
+        join="inner",
+        axis=1,
+    )
 )

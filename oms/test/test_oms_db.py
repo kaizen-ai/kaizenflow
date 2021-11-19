@@ -7,6 +7,7 @@ import pandas as pd
 import helpers.datetime_ as hdateti
 import helpers.hasyncio as hasynci
 import helpers.printing as hprint
+import helpers.git as hgit
 import helpers.sql as hsql
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
@@ -45,8 +46,8 @@ class _TestOmsDbHelper(hunitest.TestCase):
         _LOG.info("\n%s", hprint.frame("setUp"))
         super().setUp()
         # TODO(gp): Read the info from env.
-        dbname = "oms_postgres_db_local"
         host = "localhost"
+        dbname = "oms_postgres_db_local"
         port = 5432
         password = "alsdkqoen"
         user = "aljsdalsd"
@@ -62,8 +63,8 @@ class _TestOmsDbHelper(hunitest.TestCase):
             cmd = []
             # TODO(gp): This information should be retrieved from oms_lib_tasks.py.
             #  We can also use the invoke command.
-            self.docker_compose_file_path = os.path.abspath(
-                "oms/devops/compose/docker-compose.yml"
+            self.docker_compose_file_path = os.path.join(
+                hgit.get_amp_abs_path(), "oms/devops/compose/docker-compose.yml"
             )
             cmd.append("sudo docker-compose")
             cmd.append(f"--file {self.docker_compose_file_path}")
@@ -72,14 +73,14 @@ class _TestOmsDbHelper(hunitest.TestCase):
             cmd = " ".join(cmd)
             hsysinte.system(cmd, suppress_output=False)
             # Wait for the DB to be available.
-            hsql.wait_db_connection(dbname, port, host)
+            hsql.wait_db_connection(host, dbname, port)
             self.bring_down_db = True
         # Save connection info.
         self.connection = hsql.get_connection(
-            self.dbname,
             host,
-            user,
+            self.dbname,
             port,
+            user,
             password,
             autocommit=True,
         )
@@ -221,7 +222,7 @@ class TestOmsDb1(_TestOmsDbHelper):
         hsql.execute_insert_query(self.connection, row, table_name)
         # Check the content of the table.
         query = f"SELECT * FROM {table_name}"
-        df = hsql.execute_query(self.connection, query)
+        df = hsql.execute_query_to_df(self.connection, query)
         act = hprint.dataframe_to_str(df)
         exp = r"""
            targetlistid   tradedate  instanceid                                                                filename strategyid        timestamp_processed               timestamp_db  target_count  changed_count  unchanged_count  cancel_count  success                                                     reason
@@ -233,9 +234,7 @@ class TestOmsDb1(_TestOmsDbHelper):
 
 class TestOmsDb2(_TestOmsDbHelper):
     def wait_for_table_helper(self, coroutines):
-        oomsdb.create_target_files_table(
-            self.connection, incremental=False
-        )
+        oomsdb.create_target_files_table(self.connection, incremental=False)
         with hasynci.solipsism_context() as event_loop:
             get_wall_clock_time = lambda: hdateti.get_current_time(
                 tz="ET", event_loop=event_loop
@@ -273,9 +272,7 @@ class TestOmsDb2(_TestOmsDbHelper):
         # Add a DB writer that will write after 2 seconds, making the DB poller
         # exiting successfully.
         sleep_in_secs = 2
-        coroutines.append(
-            lambda gwct: self._db_writer(sleep_in_secs, gwct)
-        )
+        coroutines.append(lambda gwct: self._db_writer(sleep_in_secs, gwct))
         # Run.
         res = self.wait_for_table_helper(coroutines)
         # Check output.
@@ -294,9 +291,7 @@ class TestOmsDb2(_TestOmsDbHelper):
         # Add a DB writer that will write after 10 seconds, after the DB poller ends
         # after 5 secs.
         sleep_in_secs = 10
-        coroutines.append(
-            lambda gwct: self._db_writer(sleep_in_secs, gwct)
-        )
+        coroutines.append(lambda gwct: self._db_writer(sleep_in_secs, gwct))
         # Run.
         with self.assertRaises(TimeoutError):
             self.wait_for_table_helper(coroutines)
@@ -316,9 +311,7 @@ class TestOmsDb2(_TestOmsDbHelper):
         result = await asyncio.gather(coro)
         return result
 
-    async def _db_writer(
-        self, sleep_in_secs, get_wall_clock_time
-    ) -> None:
+    async def _db_writer(self, sleep_in_secs, get_wall_clock_time) -> None:
         table_name = "target_files_processed_candidate_view"
         # Sleep.
         _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
@@ -333,5 +326,5 @@ class TestOmsDb2(_TestOmsDbHelper):
         _LOG.debug("insert ... done")
         # Show the state of the DB.
         query = f"SELECT * FROM {table_name}"
-        df = hsql.execute_query(self.connection, query)
+        df = hsql.execute_query_to_df(self.connection, query)
         _LOG.debug("df=\n%s", hprint.dataframe_to_str(df, use_tabulate=False))

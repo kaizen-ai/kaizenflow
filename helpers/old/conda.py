@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.old.conda as holcon
+import helpers.old.conda as holdcond
 """
 
 import json
@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import helpers.dbg as hdbg
 import helpers.old.user_credentials as holuscre
-import helpers.system_interaction as hsyint
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ def conda_system(cmd: str, *args: Any, **kwargs: Any) -> int:
     hdbg.dassert_exists(path)
     hdbg.dassert(os.path.isfile(path), "'%s' is not a file", path)
     cmd = "source %s && %s" % (path, cmd)
-    output: int = hsyint.system(cmd, *args, **kwargs)
+    output: int = hsysinte.system(cmd, *args, **kwargs)
     return output
 
 
@@ -44,7 +44,7 @@ def conda_system_to_string(
     hdbg.dassert_exists(path)
     hdbg.dassert(os.path.isfile(path), "'%s' is not a file", path)
     cmd = "source %s && %s" % (path, cmd)
-    output: Tuple[int, str] = hsyint.system_to_string(cmd, *args, **kwargs)
+    output: Tuple[int, str] = hsysinte.system_to_string(cmd, *args, **kwargs)
     return output
 
 

@@ -11,7 +11,7 @@ Run a single DAG model wrapping
 
 Import as:
 
-import core.dataflow_model.run_experiment_stub as cdtfmoruexpstu
+import core.dataflow_model.run_experiment_stub as cdtfmrexst
 """
 import argparse
 import importlib

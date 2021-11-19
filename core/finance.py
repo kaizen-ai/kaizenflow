@@ -3,7 +3,7 @@ Basic functions processing financial data.
 
 Import as:
 
-import core.finance as cfin
+import core.finance as cofinanc
 """
 
 import datetime
@@ -14,12 +14,12 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 
-import core.signal_processing as csipro
-import helpers.dataframe as hdatafra
+import core.signal_processing as csigproc
+import helpers.dataframe as hdatafr
 import helpers.dbg as hdbg
-import helpers.hpandas as hhpandas
-import helpers.htypes as hhtypes
-import helpers.printing as hprintin
+import helpers.hpandas as hpandas
+import helpers.htypes as htypes
+import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ def remove_dates_with_no_data(
     :return: filtered df
     """
     # This is not strictly necessary.
-    hhpandas.dassert_strictly_increasing_index(df)
+    hpandas.dassert_strictly_increasing_index(df)
     # Store the dates of the days removed because of all NaNs.
     removed_days = []
     # Accumulate the df for all the days that are not discarded.
@@ -52,23 +52,23 @@ def remove_dates_with_no_data(
             df_out.append(df_tmp)
         num_days += 1
     df_out = pd.concat(df_out)
-    hhpandas.dassert_strictly_increasing_index(df_out)
+    hpandas.dassert_strictly_increasing_index(df_out)
     #
     if report_stats:
         # Stats for rows.
         _LOG.info("df.index in [%s, %s]", df.index.min(), df.index.max())
-        removed_perc = hprintin.perc(df.shape[0] - df_out.shape[0], df.shape[0])
+        removed_perc = hprint.perc(df.shape[0] - df_out.shape[0], df.shape[0])
         _LOG.info("Rows removed: %s", removed_perc)
         # Stats for all days.
-        removed_perc = hprintin.perc(len(removed_days), num_days)
+        removed_perc = hprint.perc(len(removed_days), num_days)
         _LOG.info("Number of removed days: %s", removed_perc)
         # Find week days.
         removed_weekdays = [d for d in removed_days if d.weekday() < 5]
-        removed_perc = hprintin.perc(len(removed_weekdays), len(removed_days))
+        removed_perc = hprint.perc(len(removed_weekdays), len(removed_days))
         _LOG.info("Number of removed weekdays: %s", removed_perc)
         _LOG.info("Weekdays removed: %s", ", ".join(map(str, removed_weekdays)))
         # Stats for weekend days.
-        removed_perc = hprintin.perc(
+        removed_perc = hprint.perc(
             len(removed_days) - len(removed_weekdays), len(removed_days)
         )
         _LOG.info("Number of removed weekend days: %s", removed_perc)
@@ -94,7 +94,7 @@ def set_non_ath_to_nan(
       - `time <= end_time`
     """
     hdbg.dassert_isinstance(df.index, pd.DatetimeIndex)
-    hhpandas.dassert_strictly_increasing_index(df)
+    hpandas.dassert_strictly_increasing_index(df)
     if start_time is None:
         start_time = datetime.time(9, 30)
     if end_time is None:
@@ -120,7 +120,7 @@ def remove_times_outside_window(
     """
     # Perform sanity checks.
     hdbg.dassert_isinstance(df.index, pd.DatetimeIndex)
-    hhpandas.dassert_strictly_increasing_index(df)
+    hpandas.dassert_strictly_increasing_index(df)
     hdbg.dassert_isinstance(start_time, datetime.time)
     hdbg.dassert_isinstance(end_time, datetime.time)
     hdbg.dassert_lte(start_time, end_time)
@@ -194,12 +194,12 @@ def compute_vwap(
     volume.loc[nan_idx] = np.nan
     # Weight price according to volume.
     volume_weighted_price = price.multiply(volume)
-    resampled_volume_weighted_price = csipro.resample(
+    resampled_volume_weighted_price = csigproc.resample(
         volume_weighted_price,
         rule=rule,
         offset=offset,
     ).sum(min_count=1)
-    resampled_volume = csipro.resample(volume, rule=rule, offset=offset).sum(
+    resampled_volume = csigproc.resample(volume, rule=rule, offset=offset).sum(
         min_count=1
     )
     # Complete the VWAP calculation.
@@ -215,7 +215,7 @@ def _resample_with_aggregate_function(
     rule: str,
     cols: List[str],
     agg_func: str,
-    agg_func_kwargs: hhtypes.Kwargs,
+    agg_func_kwargs: htypes.Kwargs,
 ) -> pd.DataFrame:
     """
     Resample columns `cols` of `df` using the passed parameters.
@@ -224,7 +224,7 @@ def _resample_with_aggregate_function(
     hdbg.dassert_isinstance(cols, list)
     hdbg.dassert(cols, msg="`cols` must be nonempty.")
     hdbg.dassert_is_subset(cols, df.columns)
-    resampler = csipro.resample(df[cols], rule=rule)
+    resampler = csigproc.resample(df[cols], rule=rule)
     resampled = resampler.agg(agg_func, **agg_func_kwargs)
     return resampled
 
@@ -232,7 +232,7 @@ def _resample_with_aggregate_function(
 def resample_bars(
     df: pd.DataFrame,
     rule: str,
-    resampling_groups: List[Tuple[Dict[str, str], str, hhtypes.Kwargs]],
+    resampling_groups: List[Tuple[Dict[str, str], str, htypes.Kwargs]],
     vwap_groups: List[Tuple[str, str, str]],
 ) -> pd.DataFrame:
     """
@@ -278,13 +278,13 @@ def resample_time_bars(
     *,
     return_cols: Optional[List[str]] = None,
     return_agg_func: Optional[str] = None,
-    return_agg_func_kwargs: Optional[hhtypes.Kwargs] = None,
+    return_agg_func_kwargs: Optional[htypes.Kwargs] = None,
     price_cols: Optional[List[str]] = None,
     price_agg_func: Optional[str] = None,
-    price_agg_func_kwargs: Optional[hhtypes.Kwargs] = None,
+    price_agg_func_kwargs: Optional[htypes.Kwargs] = None,
     volume_cols: Optional[List[str]] = None,
     volume_agg_func: Optional[str] = None,
-    volume_agg_func_kwargs: Optional[hhtypes.Kwargs] = None,
+    volume_agg_func_kwargs: Optional[htypes.Kwargs] = None,
 ) -> pd.DataFrame:
     """
     Convenience resampler for time bars.
@@ -447,12 +447,12 @@ def compute_twap_vwap(
     )
     price = df[price_col]
     # Calculate TWAP, but preserve NaNs for all-NaN bars.
-    twap = csipro.resample(price, rule=rule, offset=offset).mean()
+    twap = csigproc.resample(price, rule=rule, offset=offset).mean()
     twap.name = "twap"
     dfs = [vwap, twap]
     if add_last_price:
         # Calculate last price (regardless of whether we have volume data).
-        last_price = csipro.resample(price, rule=rule, offset=offset).last(
+        last_price = csigproc.resample(price, rule=rule, offset=offset).last(
             min_count=1
         )
         last_price.name = "last"
@@ -460,7 +460,7 @@ def compute_twap_vwap(
     if add_bar_volume:
         volume = df[volume_col]
         # Calculate bar volume (regardless of whether we have price data).
-        bar_volume = csipro.resample(volume, rule=rule, offset=offset).sum(
+        bar_volume = csigproc.resample(volume, rule=rule, offset=offset).sum(
             min_count=1
         )
         bar_volume.name = "volume"
@@ -854,7 +854,7 @@ def compute_inverse_volatility_weights(df: pd.DataFrame) -> pd.Series:
     weights /= weights.sum()
     weights.name = "weights"
     # Replace NaN with zero for weights.
-    weights = hdatafra.apply_nan_mode(weights, mode="fill_with_zero")
+    weights = hdatafr.apply_nan_mode(weights, mode="fill_with_zero")
     return weights
 
 
@@ -892,8 +892,8 @@ def compute_volatility_normalization_factor(
     """
     hdbg.dassert_isinstance(srs, pd.Series)
     # TODO(Paul): Determine how to deal with no `freq`.
-    ppy = hdatafra.infer_sampling_points_per_year(srs)
-    srs = hdatafra.apply_nan_mode(srs, mode="fill_with_zero")
+    ppy = hdatafr.infer_sampling_points_per_year(srs)
+    srs = hdatafr.apply_nan_mode(srs, mode="fill_with_zero")
     scale_factor: float = target_volatility / (np.sqrt(ppy) * srs.std())
     _LOG.debug("scale_factor=%f", scale_factor)
     return scale_factor
@@ -914,7 +914,7 @@ def compute_kratio(log_rets: pd.Series) -> float:
     """
     hdbg.dassert_isinstance(log_rets, pd.Series)
     log_rets = maybe_resample(log_rets)
-    log_rets = hdatafra.apply_nan_mode(log_rets, mode="fill_with_zero")
+    log_rets = hdatafr.apply_nan_mode(log_rets, mode="fill_with_zero")
     cum_rets = log_rets.cumsum()
     # Fit the best line to the daily rets.
     x = range(len(cum_rets))
@@ -924,7 +924,7 @@ def compute_kratio(log_rets: pd.Series) -> float:
     # Compute k-ratio as slope / std err of slope.
     kratio = model.params[1] / model.bse[1]
     # Adjust k-ratio by the number of observations and points per year.
-    ppy = hdatafra.infer_sampling_points_per_year(log_rets)
+    ppy = hdatafr.infer_sampling_points_per_year(log_rets)
     kratio = kratio * np.sqrt(ppy) / len(log_rets)
     kratio = cast(float, kratio)
     return kratio
@@ -944,7 +944,7 @@ def compute_drawdown(pnl: pd.Series) -> pd.Series:
     :return: drawdown time series
     """
     hdbg.dassert_isinstance(pnl, pd.Series)
-    pnl = hdatafra.apply_nan_mode(pnl, mode="fill_with_zero")
+    pnl = hdatafr.apply_nan_mode(pnl, mode="fill_with_zero")
     cum_pnl = pnl.cumsum()
     running_max = np.maximum.accumulate(cum_pnl)  # pylint: disable=no-member
     drawdown = running_max - cum_pnl
@@ -994,17 +994,17 @@ def compute_turnover(
 
     :param pos: sequence of positions
     :param unit: desired output unit (e.g. 'B', 'W', 'M', etc.)
-    :param nan_mode: argument for hdatafra.apply_nan_mode()
+    :param nan_mode: argument for hdatafr.apply_nan_mode()
     :return: turnover
     """
     hdbg.dassert_isinstance(pos, pd.Series)
     nan_mode = nan_mode or "drop"
-    pos = hdatafra.apply_nan_mode(pos, mode=nan_mode)
+    pos = hdatafr.apply_nan_mode(pos, mode=nan_mode)
     numerator = pos.diff().abs()
     denominator = (pos.abs() + pos.shift().abs()) / 2
     if unit:
-        numerator = csipro.resample(numerator, rule=unit).sum()
-        denominator = csipro.resample(denominator, rule=unit).sum()
+        numerator = csigproc.resample(numerator, rule=unit).sum()
+        denominator = csigproc.resample(denominator, rule=unit).sum()
     turnover = numerator / denominator
     # Raise if we upsample.
     if len(turnover) > len(pos):
@@ -1020,16 +1020,16 @@ def compute_average_holding_period(
 
     :param pos: sequence of positions
     :param unit: desired output unit (e.g. 'B', 'W', 'M', etc.)
-    :param nan_mode: argument for hdatafra.apply_nan_mode()
+    :param nan_mode: argument for hdatafr.apply_nan_mode()
     :return: average holding period in specified units
     """
     unit = unit or "B"
     hdbg.dassert_isinstance(pos, pd.Series)
     # TODO(Paul): Determine how to deal with no `freq`.
     hdbg.dassert(pos.index.freq)
-    pos_freq_in_year = hdatafra.infer_sampling_points_per_year(pos)
-    unit_freq_in_year = hdatafra.infer_sampling_points_per_year(
-        csipro.resample(pos, rule=unit).sum()
+    pos_freq_in_year = hdatafr.infer_sampling_points_per_year(pos)
+    unit_freq_in_year = hdatafr.infer_sampling_points_per_year(
+        csigproc.resample(pos, rule=unit).sum()
     )
     hdbg.dassert_lte(
         unit_freq_in_year,
@@ -1037,7 +1037,7 @@ def compute_average_holding_period(
         msg=f"Upsampling pos freq={pd.infer_freq(pos.index)} to unit freq={unit} is not allowed",
     )
     nan_mode = nan_mode or "drop"
-    pos = hdatafra.apply_nan_mode(pos, mode=nan_mode)
+    pos = hdatafr.apply_nan_mode(pos, mode=nan_mode)
     unit_coef = unit_freq_in_year / pos_freq_in_year
     average_holding_period = (
         pos.abs().mean() / pos.diff().abs().mean()
@@ -1055,7 +1055,7 @@ def compute_bet_starts(positions: pd.Series) -> pd.Series:
         the start of each new short bet; NaNs are ignored
     """
     # Drop NaNs before determining bet starts.
-    bet_runs = csipro.sign_normalize(positions).dropna()
+    bet_runs = csigproc.sign_normalize(positions).dropna()
     # Determine start of bets.
     # A new bet starts at position j if and only if
     # - the signed value at `j` is +1 or -1 and
@@ -1094,7 +1094,7 @@ def compute_signed_bet_lengths(
         length corresponds to a long bet or a short bet. Index corresponds to
         end of bet (not causal).
     """
-    bet_runs = csipro.sign_normalize(positions)
+    bet_runs = csigproc.sign_normalize(positions)
     bet_starts = compute_bet_starts(positions)
     bet_ends = compute_bet_ends(positions)
     # Sanity check indices.
@@ -1137,7 +1137,7 @@ def compute_returns_per_bet(
         bet
     """
     hdbg.dassert(positions.index.equals(log_rets.index))
-    hhpandas.dassert_strictly_increasing_index(log_rets)
+    hpandas.dassert_strictly_increasing_index(log_rets)
     bet_ends = compute_bet_ends(positions)
     # Retrieve locations of bet starts and bet ends.
     bet_ends_idx = bet_ends.loc[bet_ends != 0].dropna().index
@@ -1168,8 +1168,8 @@ def compute_annualized_return(srs: pd.Series) -> float:
         log rets if `srs` consists of log rets.
     """
     srs = maybe_resample(srs)
-    srs = hdatafra.apply_nan_mode(srs, mode="fill_with_zero")
-    ppy = hdatafra.infer_sampling_points_per_year(srs)
+    srs = hdatafr.apply_nan_mode(srs, mode="fill_with_zero")
+    ppy = hdatafr.infer_sampling_points_per_year(srs)
     mean_rets = srs.mean()
     annualized_mean_rets = ppy * mean_rets
     annualized_mean_rets = cast(float, annualized_mean_rets)
@@ -1184,8 +1184,8 @@ def compute_annualized_volatility(srs: pd.Series) -> float:
     :return: annualized volatility (stdev)
     """
     srs = maybe_resample(srs)
-    srs = hdatafra.apply_nan_mode(srs, mode="fill_with_zero")
-    ppy = hdatafra.infer_sampling_points_per_year(srs)
+    srs = hdatafr.apply_nan_mode(srs, mode="fill_with_zero")
+    ppy = hdatafr.infer_sampling_points_per_year(srs)
     std = srs.std()
     annualized_volatility = np.sqrt(ppy) * std
     annualized_volatility = cast(float, annualized_volatility)

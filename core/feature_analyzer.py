@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import core.feature_analyzer as cfeaanal
+"""
+
 import collections
 import logging
 from typing import Dict, List, Tuple, Union
@@ -7,8 +13,8 @@ import pandas as pd
 import seaborn as sns
 import statsmodels.api as sm
 
-import helpers.dbg as dbg
-import helpers.printing as pri
+import helpers.dbg as hdbg
+import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -31,8 +37,8 @@ def _analyze_feature(
         nan_mode,
         x_shift,
     )
-    dbg.dassert_isinstance(y_var, str)
-    dbg.dassert_isinstance(x_var, str)
+    hdbg.dassert_isinstance(y_var, str)
+    hdbg.dassert_isinstance(x_var, str)
     #
     res = collections.OrderedDict()
     res["y_var"] = y_var
@@ -60,13 +66,13 @@ def _analyze_feature(
     reg = sm.OLS(df_tmp[y_var], df_tmp[regr_x_vars])
     model = reg.fit()
     if use_intercept:
-        dbg.dassert_eq(len(model.params), 2)
+        hdbg.dassert_eq(len(model.params), 2)
         res["params_const"] = model.params[0]
         res["pvalues_const"] = model.pvalues[0]
         res["params_var"] = model.params[1]
         res["pvalues_var"] = model.pvalues[1]
     else:
-        dbg.dassert_eq(len(model.params), 1)
+        hdbg.dassert_eq(len(model.params), 1)
         res["params_var"] = model.params[0]
         res["pvalues_var"] = model.pvalues[0]
     res["nobs"] = model.nobs
@@ -76,7 +82,7 @@ def _analyze_feature(
     # TODO(gp): Add pnl, correlation, hitrate.
     #
     if report_stats:
-        txt = pri.frame(
+        txt = hprint.frame(
             "y_var=%s, x_var=%s, use_intercept=%s, nan_mode=%s, x_shift=%s"
             % (y_var, x_var, use_intercept, nan_mode, x_shift)
         )
@@ -177,8 +183,8 @@ class Reporter:
 
         :return: float value in [0, 1]
         """
-        dbg.dassert_lte(0, val)
-        dbg.dassert_lte(val, max_val)
+        hdbg.dassert_lte(0, val)
+        hdbg.dassert_lte(val, max_val)
         res = min_col + (val / max_val * (max_col - min_col))
         return int(res)
 
@@ -219,7 +225,7 @@ class Reporter:
 
     @staticmethod
     def _decorate_with_color(txt: str, color_map: Dict[str, str]) -> str:
-        dbg.dassert_in(txt, color_map)
+        hdbg.dassert_in(txt, color_map)
         color = color_map[txt]
         return "background-color: %s" % color
 

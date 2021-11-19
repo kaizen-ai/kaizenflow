@@ -5,19 +5,19 @@ from typing import Any, List
 import pytest
 
 import dev_scripts.test.test_run_notebook as trnot
-import helpers.dbg as dbg
-import helpers.git as git
-import helpers.parser as hparse
+import helpers.dbg as hdbg
+import helpers.git as hgit
+import helpers.parser as hparser
 import helpers.s3 as hs3
-import helpers.system_interaction as hsyste
-import helpers.unit_test as hut
+import helpers.system_interaction as hsysinte
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): We could factor out more common code between here and the corresponding
 #  unit tests in TestRuNotebook*. The difference is only in the command lines.
-class TestRunExperimentSuccess1(hut.TestCase):
+class TestRunExperimentSuccess1(hunitest.TestCase):
     """
     Run experiments that succeed.
 
@@ -71,7 +71,7 @@ class TestRunExperimentSuccess1(hut.TestCase):
 # #############################################################################
 
 
-class TestRunExperimentFail2(hut.TestCase):
+class TestRunExperimentFail2(hunitest.TestCase):
     """
     Run experiments that fail.
     """
@@ -169,7 +169,7 @@ class TestRunExperimentFail2(hut.TestCase):
 # #############################################################################
 
 
-class TestRunExperimentArchiveOnS3(hut.TestCase):
+class TestRunExperimentArchiveOnS3(hunitest.TestCase):
     """
     Run experiments that succeed and archive the results on S3.
     """
@@ -218,7 +218,7 @@ class TestRunExperimentArchiveOnS3(hut.TestCase):
                 self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME
             )
             # Read the metadata back.
-            output_metadata = hparse.read_output_metadata(output_metadata_file)
+            output_metadata = hparser.read_output_metadata(output_metadata_file)
             s3_path = output_metadata["s3_path"]
             _LOG.debug("s3_path=%s", s3_path)
         if check_s3_archive:
@@ -229,7 +229,7 @@ class TestRunExperimentArchiveOnS3(hut.TestCase):
             _LOG.info("Retrieved to %s", tgz_dst_dir)
             # Check the content.
             cmd = f"ls -1 {tgz_dst_dir}"
-            files = hsyste.system_to_files(cmd)
+            files = hsysinte.system_to_files(cmd)
             _LOG.debug("Files are:\n%s", files)
             # TODO(gp): We should check that the output looks like:
             # EXPECTED_OUTCOME = r"""# Dir structure
@@ -255,10 +255,10 @@ def _run_experiment_helper(
     """
     Build, run, and check a `run_experiment` command line.
     """
-    amp_path = git.get_amp_abs_path()
+    amp_path = hgit.get_amp_abs_path()
     # Get the executable.
     exec_file = os.path.join(amp_path, "core/dataflow_model/run_experiment.py")
-    dbg.dassert_file_exists(exec_file)
+    hdbg.dassert_file_exists(exec_file)
     # Build command line.
     dst_dir = self.get_scratch_space()
     cmd = [

@@ -52,8 +52,8 @@ class TestPlaceOrders1(hunitest.TestCase):
             predictions = pd.DataFrame(data, index=index, columns=columns)
             config["price_interface"] = rtpi
             # Build a Portfolio.
-            initial_ts = pd.Timestamp("2000-01-01 09:35:00-05:00")
-            portfolio = ottport.get_portfolio_example1(rtpi, initial_ts)
+            initial_timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
+            portfolio = ottport.get_portfolio_example1(rtpi, initial_timestamp)
             config["portfolio"] = portfolio
             config["order_type"] = "price@twap"
             # Run.

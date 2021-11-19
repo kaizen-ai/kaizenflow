@@ -16,16 +16,20 @@
 # Starting a tunnel is equivalent to:
 > ssh -i {ssh_key_path} -f -nNT -L {local_port}:localhost:{remote_port} {user_name}@{server}
 > ssh -f -nNT -L 10003:localhost:10003 saggese@$DEV_SERVER
+
+Import as:
+
+import dev_scripts.infra.old.ssh_tunnels as dsiosstu
 """
 
 import argparse
 import logging
 
-import helpers.dbg as dbg
-import helpers.git as git
-import helpers.old.tunnels as hotunn
-import helpers.parser as hparse
-import helpers.system_interaction as hsyste
+import helpers.dbg as hdbg
+import helpers.git as hgit
+import helpers.old.tunnels as holdtunn
+import helpers.parser as hparser
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -50,15 +54,15 @@ def _main() -> None:
         help=_help,
     )
     parser.add_argument("--user", type=str, action="store")
-    hparse.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     #
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Check that we are in the repo since to open the tunnel we need some
     # env vars set by setenv.sh. This is also preventing Test_ssh_tunnel to be
     # run by Jenkins.
     # TODO(gp): Improve this.
-    repo_name = git.get_repo_full_name_from_client(super_module=True)
+    repo_name = hgit.get_repo_full_name_from_client(super_module=True)
     exp_repo_name = ".../..."
     if repo_name != exp_repo_name:
         msg = "Need to run from repo '%s' and not from '%s'" % (
@@ -71,20 +75,20 @@ def _main() -> None:
     if args.user:
         user_name = args.user
     else:
-        user_name = hsyste.get_user_name()
+        user_name = hsysinte.get_user_name()
     #
     action = args.positional[0]
     _LOG.debug("action=%s", action)
     if action == "start":
-        hotunn.start_tunnels(user_name)
+        holdtunn.start_tunnels(user_name)
     elif action == "stop":
-        hotunn.stop_tunnels()
+        holdtunn.stop_tunnels()
     elif action == "check":
-        hotunn.check_tunnels()
+        holdtunn.check_tunnels()
     elif action == "kill":
-        hotunn.kill_all_tunnel_processes()
+        holdtunn.kill_all_tunnel_processes()
     else:
-        dbg.dfatal("Invalid action='%s'" % action)
+        hdbg.dfatal("Invalid action='%s'" % action)
 
 
 if __name__ == "__main__":

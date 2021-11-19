@@ -20,7 +20,7 @@ Use as:
 
 Import as:
 
-import im_v2.ccxt.data.extract.download_realtime as imcdedore
+import im_v2.ccxt.data.extract.download_realtime as imvcdedore
 """
 import argparse
 import collections
@@ -37,8 +37,8 @@ import helpers.dbg as hdbg
 import helpers.io_ as hio
 import helpers.parser as hparser
 import helpers.sql as hsql
-import im_v2.ccxt.data.extract.exchange_class as imcdeexcl
-import im_v2.data.universe as imdatuniv
+import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
+import im_v2.data.universe as imv2dauni
 
 _LOG = logging.getLogger(__name__)
 
@@ -60,9 +60,7 @@ def _instantiate_exchange(
         "ExchangeToCurrency", ["id", "instance", "pairs"]
     )
     exchange_to_currency.id = exchange_id
-    exchange_to_currency.instance = imcdeexcl.CcxtExchange(
-        exchange_id, api_keys
-    )
+    exchange_to_currency.instance = imvcdeexcl.CcxtExchange(exchange_id, api_keys)
     exchange_to_currency.pairs = ccxt_universe[exchange_id]
     return exchange_to_currency
 
@@ -170,7 +168,7 @@ def _parse() -> argparse.ArgumentParser:
         "--api_keys",
         action="store",
         type=str,
-        default=imcdeexcl.API_KEYS_PATH,
+        default=imvcdeexcl.API_KEYS_PATH,
         help="Path to JSON file that contains API keys for exchange access",
     )
     parser.add_argument(
@@ -199,7 +197,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     else:
         hdbg.dfatal("Unknown db connection: %s" % args.db_connection)
     # Load universe.
-    universe = imdatuniv.get_trade_universe(args.universe)
+    universe = imv2dauni.get_trade_universe(args.universe)
     exchange_ids = universe["CCXT"].keys()
     # Build mappings from exchange ids to classes and currencies.
     exchanges = []

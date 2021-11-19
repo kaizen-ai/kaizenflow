@@ -14,11 +14,11 @@ import pandas as pd
 from IPython.display import display
 
 import core.dataflow.real_time as cdtfretim
-import core.pandas_helpers as cpah
-import helpers.datetime_ as hdatetim
+import core.pandas_helpers as cpanh
+import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
-import helpers.hpandas as hhpandas
-import helpers.printing as hprintin
+import helpers.hpandas as hpandas
+import helpers.printing as hprint
 import helpers.s3 as hs3
 import helpers.sql as hsql
 
@@ -45,7 +45,7 @@ class AbstractPriceInterface(abc.ABC):
         start_time_col_name: str,
         end_time_col_name: str,
         columns: Optional[List[str]],
-        get_wall_clock_time: hdatetim.GetWallClockTime,
+        get_wall_clock_time: hdateti.GetWallClockTime,
         *,
         sleep_in_secs: float = 1.0,
         time_out_in_secs: int = 60 * 2,
@@ -83,7 +83,7 @@ class AbstractPriceInterface(abc.ABC):
         self._max_iters = max_iters
 
     @property
-    def get_wall_clock_time(self) -> hdatetim.GetWallClockTime:
+    def get_wall_clock_time(self) -> hdateti.GetWallClockTime:
         return self._get_wall_clock_time
 
     # TODO(gp): If the DB supports asyncio this should become async.
@@ -121,7 +121,7 @@ class AbstractPriceInterface(abc.ABC):
         ```
         """
         # Handle `period`.
-        _LOG.debug(hprintin.to_str("period"))
+        _LOG.debug(hprint.to_str("period"))
         current_time = self._get_wall_clock_time()
         start_ts = _process_period(period, current_time)
         end_ts = None
@@ -137,7 +137,7 @@ class AbstractPriceInterface(abc.ABC):
             normalize_data=normalize_data,
             limit=limit,
         )
-        _LOG.debug("-> df=\n%s", hprintin.dataframe_to_str(df))
+        _LOG.debug("-> df=\n%s", hprint.dataframe_to_str(df))
         return df
 
     def get_data_at_timestamp(
@@ -165,7 +165,7 @@ class AbstractPriceInterface(abc.ABC):
             asset_ids,
             normalize_data=normalize_data,
         )
-        _LOG.debug("-> df=\n%s", hprintin.dataframe_to_str(df))
+        _LOG.debug("-> df=\n%s", hprint.dataframe_to_str(df))
         return df
 
     def get_data_for_interval(
@@ -202,7 +202,7 @@ class AbstractPriceInterface(abc.ABC):
             normalize_data,
             limit,
         )
-        _LOG.debug("-> df=\n%s", hprintin.dataframe_to_str(df))
+        _LOG.debug("-> df=\n%s", hprint.dataframe_to_str(df))
         return df
 
     def get_twap_price(
@@ -250,7 +250,7 @@ class AbstractPriceInterface(abc.ABC):
 
         The input df looks like:
         ```
-              egid           start_time             end_time     close   volume
+          asset_id           start_time             end_time     close   volume
 
         idx  17085  2021-07-26 13:40:00  2021-07-26 13:41:00  149.0250   575024
           0  17085  2021-07-26 13:41:00  2021-07-26 13:42:00  148.8600   400176
@@ -260,7 +260,7 @@ class AbstractPriceInterface(abc.ABC):
 
         The output df looks like:
         ```
-                                    egid                start_time    close   volume
+                                asset_id                start_time    close   volume
         end_time
         2021-07-20 09:31:00-04:00  17085 2021-07-20 09:30:00-04:00  143.990  1524506
         2021-07-20 09:32:00-04:00  17085 2021-07-20 09:31:00-04:00  143.310   586654
@@ -276,9 +276,9 @@ class AbstractPriceInterface(abc.ABC):
         # # The data source should not return data after the current time.
         # if not df.empty:
         #     current_time = self._get_current_time()
-        #     _LOG.debug(hprintin.to_str("current_time df.index.max()"))
+        #     _LOG.debug(hprint.to_str("current_time df.index.max()"))
         #     hdbg.dassert_lte(df.index.max(), current_time)
-        # _LOG.debug(hprintin.df_to_short_str("after process_data", df))
+        # _LOG.debug(hprint.df_to_short_str("after process_data", df))
         return df
 
     def get_last_end_time(self) -> Optional[pd.Timestamp]:
@@ -356,7 +356,7 @@ class AbstractPriceInterface(abc.ABC):
             last_db_end_time = self.get_last_end_time()
             _LOG.debug(
                 "\n%s",
-                hprintin.frame(
+                hprint.frame(
                     "Waiting on last bar: "
                     "num_iter=%s/%s: current_time=%s last_db_end_time=%s"
                     % (num_iter, self._max_iters, current_time, last_db_end_time),
@@ -377,7 +377,7 @@ class AbstractPriceInterface(abc.ABC):
             await asyncio.sleep(self._sleep_in_secs)
         _LOG.debug(
             "-> %s",
-            hprintin.to_str("start_sampling_time end_sampling_time num_iter"),
+            hprint.to_str("start_sampling_time end_sampling_time num_iter"),
         )
         return start_sampling_time, end_sampling_time, num_iter
 
@@ -406,7 +406,7 @@ class AbstractPriceInterface(abc.ABC):
 
     def _remap_columns(self, df: pd.DataFrame) -> pd.DataFrame:
         if self._column_remap:
-            hhpandas.dassert_valid_remap(df.columns.tolist(), self._column_remap)
+            hpandas.dassert_valid_remap(df.columns.tolist(), self._column_remap)
             df.rename(columns=self._column_remap, inplace=True)
         return df
 
@@ -443,13 +443,14 @@ class SqlPriceInterface(AbstractPriceInterface):
             - E.g., `WHERE ...=... AND ...=...`
         """
         super().__init__(*args, **kwargs)  # type: ignore[arg-type]
-        self.connection, self.cursor = hsql.get_connection(
-            dbname=dbname,
+        self.connection = hsql.get_connection(
             host=host,
+            dbname=dbname,
             port=port,
             user=user,
             password=password,
         )
+        self.cursor = self.connection.cursor()
         self._table_name = table_name
         self._where_clause = where_clause
         self._valid_id = valid_id
@@ -496,7 +497,7 @@ class SqlPriceInterface(AbstractPriceInterface):
             limit,
         )
         _LOG.info("query=%s", query)
-        df = hsql.execute_query(self.connection, query)
+        df = hsql.execute_query_to_df(self.connection, query)
         if normalize_data:
             df = self.process_data(df)
         return df
@@ -511,7 +512,7 @@ class SqlPriceInterface(AbstractPriceInterface):
         #   ```
         #   SELECT MAX(start_time)
         #     FROM bars_qa
-        #     WHERE interval=60 AND region='AM' AND egid = '17085'
+        #     WHERE interval=60 AND region='AM' AND asset_id = '17085'
         #   ```
         query = []
         query.append(f"SELECT MAX({self._start_time_col_name})")
@@ -522,7 +523,7 @@ class SqlPriceInterface(AbstractPriceInterface):
         query.append(f"{self._id_col_name} = '{self._valid_id}'")
         query = " ".join(query)
         # _LOG.debug("query=%s", query)
-        df = hsql.execute_query(self.connection, query)
+        df = hsql.execute_query_to_df(self.connection, query)
         # Check that the `start_time` is a single value.
         hdbg.dassert_eq(df.shape, (1, 1))
         start_time = df.iloc[0, 0]
@@ -535,7 +536,7 @@ class SqlPriceInterface(AbstractPriceInterface):
         #     WHERE interval=60 AND
         #         region='AM' AND
         #         start_time = '2021-10-07 15:50:00' AND
-        #         egid = '17085'
+        #         asset_id = '17085'
         #   ```
         query = []
         query.append(f"SELECT {self._end_time_col_name}")
@@ -549,7 +550,7 @@ class SqlPriceInterface(AbstractPriceInterface):
         )
         query = " ".join(query)
         # _LOG.debug("query=%s", query)
-        df = hsql.execute_query(self.connection, query)
+        df = hsql.execute_query_to_df(self.connection, query)
         # Check that the `end_time` is a single value.
         hdbg.dassert_eq(df.shape, (1, 1))
         end_time = df.iloc[0, 0]
@@ -715,13 +716,13 @@ class ReplayedTimePriceInterface(AbstractPriceInterface):
         limit: Optional[int],
     ) -> pd.DataFrame:
         _LOG.debug(
-            hprintin.to_str(
+            hprint.to_str(
                 "start_ts end_ts ts_col_name asset_ids left_close right_close normalize_data limit"
             )
         )
         # Filter the data by the current time.
         current_time = self._get_wall_clock_time()
-        _LOG.debug(hprintin.to_str("current_time"))
+        _LOG.debug(hprint.to_str("current_time"))
         df_tmp = cdtfretim.get_data_as_of_datetime(
             self._df,
             self._knowledge_datetime_col_name,
@@ -739,31 +740,31 @@ class ReplayedTimePriceInterface(AbstractPriceInterface):
             # _LOG.debug("start_ts=%s", start_ts)
             hdbg.dassert_in(ts_col_name, df_tmp)
             tss = df_tmp[ts_col_name]
-            # _LOG.debug("tss=\n%s", hprintin.dataframe_to_str(tss))
+            # _LOG.debug("tss=\n%s", hprint.dataframe_to_str(tss))
             if left_close:
                 mask = tss >= start_ts
             else:
                 mask = tss > start_ts
-            # _LOG.debug("mask=\n%s", hprintin.dataframe_to_str(mask))
+            # _LOG.debug("mask=\n%s", hprint.dataframe_to_str(mask))
             df_tmp = df_tmp[mask]
         if end_ts is not None:
             # _LOG.debug("end_ts=%s", end_ts)
             hdbg.dassert_in(ts_col_name, df_tmp)
             tss = df_tmp[ts_col_name]
-            # _LOG.debug("tss=\n%s", hprintin.dataframe_to_str(tss))
+            # _LOG.debug("tss=\n%s", hprint.dataframe_to_str(tss))
             if right_close:
                 mask = tss <= end_ts
             else:
                 mask = tss < end_ts
-            # _LOG.debug("mask=\n%s", hprintin.dataframe_to_str(mask))
+            # _LOG.debug("mask=\n%s", hprint.dataframe_to_str(mask))
             df_tmp = df_tmp[mask]
         # Handle `ids`
-        # _LOG.debug("before df_tmp=\n%s", hprintin.dataframe_to_str(df_tmp))
+        # _LOG.debug("before df_tmp=\n%s", hprint.dataframe_to_str(df_tmp))
         if asset_ids is not None:
             hdbg.dassert_in(self._id_col_name, df_tmp)
             mask = df_tmp[self._id_col_name].isin(set(asset_ids))
             df_tmp = df_tmp[mask]
-        # _LOG.debug("after df_tmp=\n%s", hprintin.dataframe_to_str(df_tmp))
+        # _LOG.debug("after df_tmp=\n%s", hprint.dataframe_to_str(df_tmp))
         # Handle `limit`.
         if limit:
             hdbg.dassert_lte(1, limit)
@@ -771,7 +772,7 @@ class ReplayedTimePriceInterface(AbstractPriceInterface):
         # Normalize data.
         if normalize_data:
             df_tmp = self.process_data(df_tmp)
-        _LOG.debug("-> df_tmp=\n%s", hprintin.dataframe_to_str(df_tmp))
+        _LOG.debug("-> df_tmp=\n%s", hprint.dataframe_to_str(df_tmp))
         return df_tmp
 
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
@@ -780,7 +781,7 @@ class ReplayedTimePriceInterface(AbstractPriceInterface):
         # DB.
         period = "last_week"
         df = self.get_data(period)
-        _LOG.debug(hprintin.df_to_short_str("after get_data", df))
+        _LOG.debug(hprint.df_to_short_str("after get_data", df))
         if df.empty:
             ret = None
         else:
@@ -798,10 +799,10 @@ def _to_sql_datetime_string(dt: pd.Timestamp) -> str:
     """
     Convert a timestamp into an SQL string to query the DB.
     """
-    hdatetim.dassert_has_tz(dt)
+    hdateti.dassert_has_tz(dt)
     # Convert to UTC, if needed.
-    if dt.tzinfo != hdatetim.get_UTC_tz().zone:
-        dt = dt.tz_convert(hdatetim.get_UTC_tz())
+    if dt.tzinfo != hdateti.get_UTC_tz().zone:
+        dt = dt.tz_convert(hdateti.get_UTC_tz())
     ret: str = dt.strftime("%Y-%m-%d %H:%M:%S")
     return ret
 
@@ -836,7 +837,7 @@ def _process_period(
         `last_10mins`)
     :return:
     """
-    _LOG.debug(hprintin.to_str("period current_time"))
+    _LOG.debug(hprint.to_str("period current_time"))
     # Period of time.
     if period == "last_day":
         # Get the data for the last day.
@@ -910,13 +911,13 @@ def read_data_from_file(
     Same interface as `get_real_time_bar_data()`.
 
     ```
-          start_time          end_time   egid   close    volume         timestamp_db
-    2021-10-05 20:00  2021-10-05 20:01  17085  141.11   5792204  2021-10-05 20:01:03
-    2021-10-05 19:59  2021-10-05 20:00  17085  141.09   1354151  2021-10-05 20:00:05
-    2021-10-05 19:58  2021-10-05 19:59  17085  141.12    620395  2021-10-05 19:59:04
-    2021-10-05 19:57  2021-10-05 19:58  17085  141.2644  341584  2021-10-05 19:58:03
-    2021-10-05 19:56  2021-10-05 19:57  17085  141.185   300822  2021-10-05 19:57:04
-    2021-10-05 19:55  2021-10-05 19:56  17085  141.1551  351527  2021-10-05 19:56:04
+          start_time          end_time asset_id   close    volume         timestamp_db
+    2021-10-05 20:00  2021-10-05 20:01    17085  141.11   5792204  2021-10-05 20:01:03
+    2021-10-05 19:59  2021-10-05 20:00    17085  141.09   1354151  2021-10-05 20:00:05
+    2021-10-05 19:58  2021-10-05 19:59    17085  141.12    620395  2021-10-05 19:59:04
+    2021-10-05 19:57  2021-10-05 19:58    17085  141.2644  341584  2021-10-05 19:58:03
+    2021-10-05 19:56  2021-10-05 19:57    17085  141.185   300822  2021-10-05 19:57:04
+    2021-10-05 19:55  2021-10-05 19:56    17085  141.1551  351527  2021-10-05 19:56:04
     ```
     """
     kwargs_tmp = {
@@ -927,7 +928,7 @@ def read_data_from_file(
         s3fs_ = hs3.get_s3fs(aws_profile)
         kwargs_tmp["s3fs"] = s3fs_
     kwargs.update(kwargs_tmp)  # type: ignore[arg-type]
-    df = cpah.read_csv(file_name, **kwargs)
+    df = cpanh.read_csv(file_name, **kwargs)
     return df
 
 
@@ -960,11 +961,10 @@ def describe_rt_delay(df: pd.DataFrame) -> None:
     Compute some statistics for the DB delay.
     """
     delay = df["delay_in_secs"]
-    print("delays=%s" % hprintin.format_list(delay, max_n=5))
+    print("delays=%s" % hprint.format_list(delay, max_n=5))
     if False:
         print(
-            "delays.value_counts=\n%s"
-            % hprintin.indent(str(delay.value_counts()))
+            "delays.value_counts=\n%s" % hprint.indent(str(delay.value_counts()))
         )
     delay.plot.hist()
 
@@ -985,8 +985,9 @@ def describe_rt_df(df: pd.DataFrame, *, include_delay_stats: bool) -> None:
     print(
         "end_time: num_mins=%s [%s, %s]" % (num_mins, min_end_time, max_end_time)
     )
-    # Stats about `egids`.
-    print("egids=%s" % hprintin.format_list(df["egid"].unique()))
+    # Stats about `asset_ids`.
+    # TODO(gp): Pass the name of the column through the interface.
+    print("asset_ids=%s" % hprint.format_list(df["egid"].unique()))
     # Stats about delay.
     if include_delay_stats:
         df = compute_rt_delay(df)

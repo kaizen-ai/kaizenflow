@@ -120,7 +120,7 @@ def _save_data_as_pq(df, dst_dir):
     # Save.
     with htimer.TimedScope(logging.DEBUG, "Save data"):
         table = pa.Table.from_pandas(df)
-        partition_cols = ["egid", "year", "month", "day"]
+        partition_cols = ["asset_id", "year", "month", "day"]
         pq.write_to_dataset(table, dst_dir, partition_cols=partition_cols)
 
 

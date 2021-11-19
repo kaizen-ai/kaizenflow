@@ -5,12 +5,12 @@ import os
 import pandas as pd
 
 import core.dataflow.nodes.sinks as cdtfnosin
-import helpers.unit_test as huntes
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-class TestWriteDf(huntes.TestCase):
+class TestWriteDf(hunitest.TestCase):
     def test_write(self) -> None:
         """
         Round-trip test on df serializing/deserializing.
@@ -60,7 +60,7 @@ datetime,MN0,MN1,MN0,MN1
         return df
 
 
-class TestWriteCols(huntes.TestCase):
+class TestWriteCols(hunitest.TestCase):
     def test_write(self) -> None:
         dir_name = self.get_scratch_space()
         mapping = {"close": "price"}

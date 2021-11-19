@@ -2,25 +2,25 @@ import logging
 
 import pandas as pd
 
-import core.artificial_signal_generators as sig_gen
-import helpers.printing as prnt
-import helpers.unit_test as hut
+import core.artificial_signal_generators as carsigen
+import helpers.printing as hprint
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-class TestArmaProcess(hut.TestCase):
+class TestArmaProcess(hunitest.TestCase):
     def test1(self) -> None:
         ar_params = [0.75, -0.25]
         ma_params = [0.65, 0.35]
-        arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
+        arma_process = carsigen.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"},
             scale=1,
             burnin=10,
         )
         self.check_string(
-            hut.convert_df_to_string(
+            hunitest.convert_df_to_string(
                 realization, title=realization.name, index=True
             )
         )
@@ -28,14 +28,14 @@ class TestArmaProcess(hut.TestCase):
     def test2(self) -> None:
         ar_params = [0.5]
         ma_params = [-0.5]
-        arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
+        arma_process = carsigen.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"},
             scale=1,
             burnin=5,
         )
         self.check_string(
-            hut.convert_df_to_string(
+            hunitest.convert_df_to_string(
                 realization, title=realization.name, index=True
             )
         )
@@ -43,42 +43,44 @@ class TestArmaProcess(hut.TestCase):
     def test3(self) -> None:
         ar_params = []
         ma_params = []
-        arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
+        arma_process = carsigen.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"},
             scale=1,
             burnin=5,
         )
         self.check_string(
-            hut.convert_df_to_string(
+            hunitest.convert_df_to_string(
                 realization, title=realization.name, index=True
             )
         )
 
 
-class TestMultivariateNormalProcess(hut.TestCase):
+class TestMultivariateNormalProcess(hunitest.TestCase):
     def test1(self) -> None:
-        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process = carsigen.MultivariateNormalProcess()
         mn_process.set_cov_from_inv_wishart_draw(dim=4, seed=0)
         realization = mn_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
         )
-        self.check_string(hut.convert_df_to_string(realization, index=True))
+        self.check_string(hunitest.convert_df_to_string(realization, index=True))
 
     def test2(self) -> None:
         mean = pd.Series([1, 2])
         cov = pd.DataFrame([[0.5, 0.2], [0.2, 0.3]])
-        mn_process = sig_gen.MultivariateNormalProcess(mean=mean, cov=cov)
+        mn_process = carsigen.MultivariateNormalProcess(mean=mean, cov=cov)
         realization = mn_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
         )
-        self.check_string(hut.convert_df_to_string(realization, index=True))
+        self.check_string(hunitest.convert_df_to_string(realization, index=True))
 
 
-class Test_generate_arima_signal_and_response(hut.TestCase):
+class Test_generate_arima_signal_and_response(hunitest.TestCase):
     def test1(self) -> None:
-        srs = sig_gen.generate_arima_signal_and_response("2010-01-01", "D", 40, 1)
-        self.check_string(hut.convert_df_to_string(srs, index=True))
+        srs = carsigen.generate_arima_signal_and_response(
+            "2010-01-01", "D", 40, 1
+        )
+        self.check_string(hunitest.convert_df_to_string(srs, index=True))
 
 
 # TODO(gp): Remove after PTask2335
@@ -88,7 +90,7 @@ if True:
 
     import gluonts.dataset.artificial.recipe as gdar  # isort: skip # noqa: F401 # pylint: disable=unused-import
 
-    class TestGenerateRecipeDataset(hut.TestCase):
+    class TestGenerateRecipeDataset(hunitest.TestCase):
         def test1(self) -> None:
             mxnet.random.seed(0, ctx="all")
             recipe = [
@@ -119,12 +121,12 @@ if True:
                 # What GluonTS does is find zeros in shape and replace them
                 # with length.
             ]
-            train_dataset = sig_gen.generate_recipe_dataset(
+            train_dataset = carsigen.generate_recipe_dataset(
                 recipe, "D", pd.Timestamp("2010-01-01"), 100, 10, 1
             )
             train_str = str(list(train_dataset.train))
             test_str = str(list(train_dataset.test))
             self.check_string(
-                f"{prnt.frame('train')}{train_str}\n"
-                f"{prnt.frame('test')}{test_str}"
+                f"{hprint.frame('train')}{train_str}\n"
+                f"{hprint.frame('test')}{test_str}"
             )

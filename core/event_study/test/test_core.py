@@ -5,12 +5,12 @@ import numpy as np
 import pandas as pd
 
 import core.event_study as esf
-import helpers.unit_test as hut
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-class TestBuildLocalTimeseries(hut.TestCase):
+class TestBuildLocalTimeseries(hunitest.TestCase):
     def test_minutely1(self) -> None:
         np.random.seed(42)
         n_periods = 10
@@ -100,7 +100,7 @@ class TestBuildLocalTimeseries(hut.TestCase):
         self.check_string(f"local_ts:\n{local_ts.to_string()}\ninfo:\n{str_info}")
 
 
-class TestUnwrapLocalTimeseries(hut.TestCase):
+class TestUnwrapLocalTimeseries(hunitest.TestCase):
     def test_daily1(self) -> None:
         np.random.seed(42)
         n_periods = 10

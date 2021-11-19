@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.hparquet as hhparque
+import helpers.hparquet as hparque
 """
 
 import logging
@@ -13,7 +13,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 import helpers.dbg as hdbg
-import helpers.introspection as hintrosp
+import helpers.introspection as hintros
 import helpers.io_ as hio
 import helpers.timer as htimer
 
@@ -36,13 +36,13 @@ def to_parquet(
     hio.create_enclosing_dir(file_name, incremental=True)
     _LOG.debug("df.shape=%s", str(df.shape))
     mem = df.memory_usage().sum()
-    _LOG.debug("df.memory_usage=%s", hintrosp.format_size(mem))
+    _LOG.debug("df.memory_usage=%s", hintros.format_size(mem))
     # Save data.
     with htimer.TimedScope(logging.DEBUG, "To parquet '%s'" % file_name) as ts:
         table = pa.Table.from_pandas(df)
         pq.write_table(table, file_name)
     # Report stats.
-    file_size = hintrosp.format_size(os.path.getsize(file_name))
+    file_size = hintros.format_size(os.path.getsize(file_name))
     _LOG.log(
         log_level,
         "Saved '%s' (size=%s, time=%.1fs)",
@@ -78,7 +78,7 @@ def from_parquet(
         table = dataset.read_pandas(columns=columns)
         df = table.to_pandas()
     # Report stats.
-    file_size = hintrosp.format_size(os.path.getsize(file_name))
+    file_size = hintros.format_size(os.path.getsize(file_name))
     _LOG.log(
         log_level,
         "Loaded '%s' (size=%s, time=%.1fs)",
@@ -89,5 +89,5 @@ def from_parquet(
     # Report stats about the df.
     _LOG.debug("df.shape=%s", str(df.shape))
     mem = df.memory_usage().sum()
-    _LOG.debug("df.memory_usage=%s", hintrosp.format_size(mem))
+    _LOG.debug("df.memory_usage=%s", hintros.format_size(mem))
     return df

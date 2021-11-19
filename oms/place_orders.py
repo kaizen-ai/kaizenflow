@@ -48,7 +48,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def _compute_target_positions(
-    current_ts: pd.Timestamp,
+    current_timestamp: pd.Timestamp,
     predictions: pd.Series,
     portfolio: omportfo.Portfolio,
 ) -> pd.DataFrame:
@@ -62,10 +62,12 @@ def _compute_target_positions(
     202              NaN    0.0          0.2  666666.666667                inf              NaN
     ```
     """
-    _LOG.debug("# Mark portfolio to market at ts=%s", current_ts)
+    _LOG.debug("# Mark portfolio to market at timestamp=%s", current_timestamp)
     # Get the current holdings.
     asset_id = None
-    holdings = portfolio.get_holdings(current_ts, asset_id, exclude_cash=True)
+    holdings = portfolio.get_holdings(
+        current_timestamp, asset_id, exclude_cash=True
+    )
     holdings.set_index("asset_id", drop=True, inplace=True)
     _LOG.debug("holdings=\n%s", hprint.dataframe_to_str(holdings))
     # Merge the predictions to the holdings.
@@ -76,7 +78,7 @@ def _compute_target_positions(
     merged_df = holdings.merge(predictions, on="asset_id", how="outer")
     _LOG.debug("after merge: merged_df=\n%s", hprint.dataframe_to_str(merged_df))
     # Mark to market.
-    merged_df = portfolio.mark_holdings_to_market(current_ts, merged_df)
+    merged_df = portfolio.mark_holdings_to_market(current_timestamp, merged_df)
     _LOG.debug("merged_df=\n%s", hprint.dataframe_to_str(merged_df))
     columns = ["predictions", "price", "curr_num_shares"]
     hdbg.dassert_is_subset(columns, merged_df.columns)
@@ -89,7 +91,7 @@ def _compute_target_positions(
     hdbg.dassert(np.isfinite(scale_factor), "scale_factor=%s", scale_factor)
     hdbg.dassert_lt(0, scale_factor)
     #
-    wealth = portfolio.get_total_wealth(current_ts)
+    wealth = portfolio.get_net_wealth(current_timestamp)
     _LOG.debug("wealth=%s", wealth)
     hdbg.dassert(np.isfinite(wealth), "wealth=%s", wealth)
     merged_df["target_wealth"] = wealth * merged_df["predictions"] / scale_factor
@@ -162,8 +164,10 @@ def place_orders(
     tqdm_out = htqdm.TqdmToLogger(_LOG, level=logging.INFO)
     num_rows = len(predictions_df)
     iter_ = enumerate(predictions_df.iterrows())
-    for idx, (ts, predictions) in tqdm(iter_, total=num_rows, file=tqdm_out):
-        _LOG.debug("\n%s", hprint.frame("# ts=%s" % ts))
+    for idx, (timestamp, predictions) in tqdm(
+        iter_, total=num_rows, file=tqdm_out
+    ):
+        _LOG.debug("\n%s", hprint.frame("# timestamp=%s" % timestamp))
         _LOG.debug("portfolio=\n%s", portfolio)
         _LOG.debug("predictions=\n%s", predictions)
         hdbg.dassert(
@@ -176,10 +180,10 @@ def place_orders(
         # Use current price to convert forecasts in position intents.
         _LOG.debug("# Compute trade allocation")
         # Enter position between now and the next 5 mins.
-        ts_start = ts
-        ts_end = ts + offset_5min
+        timestamp_start = timestamp
+        timestamp_end = timestamp + offset_5min
         #
-        df = _compute_target_positions(ts, predictions, portfolio)
+        df = _compute_target_positions(timestamp, predictions, portfolio)
         _LOG.debug("# Place orders")
         # Create order.
         orders: List[omorder.Order] = []
@@ -193,11 +197,11 @@ def place_orders(
             order = omorder.Order(
                 order_id,
                 price_interface,
-                ts,
+                timestamp,
                 asset_id,
                 order_type,
-                ts_start,
-                ts_end,
+                timestamp_start,
+                timestamp_end,
                 diff_num_shares,
             )
             order_id += 1
@@ -208,8 +212,8 @@ def place_orders(
         #  so we can evaluate an order starting now and ending in the next time step.
         #  A more accurate simulation requires to attach "callbacks" representing
         #  actions to timestamp.
-        next_ts = predictions_df.index[idx + 1]
-        portfolio.place_orders(ts, next_ts, orders)
+        next_timestamp = predictions_df.index[idx + 1]
+        portfolio.place_orders(timestamp, next_timestamp, orders)
     # Update the df with intermediate results.
     # df_5mins[pnl] = df_5mins[wealth].pct_change()
     # return df_5mins

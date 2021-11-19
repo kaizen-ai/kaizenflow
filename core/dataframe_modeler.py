@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.dataframe_modeler as cdatam
+import core.dataframe_modeler as cdatmode
 """
 
 from __future__ import annotations
@@ -20,12 +20,12 @@ from tqdm.autonotebook import tqdm
 
 import core.config as cconfig
 import core.dataflow as cdataf
-import core.dataflow_model.stats_computer as cstats
-import core.finance as cfinan
-import core.plotting as cplott
-import core.signal_processing as csigna
-import core.timeseries_study as ctimes
-import helpers.dbg as dbg
+import core.dataflow_model.stats_computer as cdtfmostco
+import core.finance as cofinanc
+import core.plotting as coplotti
+import core.signal_processing as csigproc
+import core.timeseries_study as ctimstud
+import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -49,14 +49,14 @@ class DataFrameModeler:
             For methods supporting "fit"/"predict", "fit" applies to
             in-sample only, and "predict" requires `oos_start`.
         """
-        dbg.dassert_isinstance(df, pd.DataFrame)
-        dbg.dassert(pd.DataFrame)
+        hdbg.dassert_isinstance(df, pd.DataFrame)
+        hdbg.dassert(pd.DataFrame)
         self._df = df
         if oos_start is not None:
             oos_start = pd.Timestamp(oos_start)
         self.oos_start = oos_start or None
         self.info = info or None
-        self.stats_computer = cstats.StatsComputer()
+        self.stats_computer = cdtfmostco.StatsComputer()
 
     @property
     def ins_df(self) -> pd.DataFrame:
@@ -64,7 +64,7 @@ class DataFrameModeler:
 
     @property
     def oos_df(self) -> pd.DataFrame:
-        dbg.dassert(self.oos_start, msg="`oos_start` must be set")
+        hdbg.dassert(self.oos_start, msg="`oos_start` must be set")
         return self._df[self.oos_start :].copy()
 
     @property
@@ -221,7 +221,7 @@ class DataFrameModeler:
         col_mode = col_mode or "replace_all"
         model = cdataf.ColumnTransformer(
             nid="compute_ret_0",
-            transformer_func=cfinan.compute_ret_0,
+            transformer_func=cofinanc.compute_ret_0,
             transformer_kwargs={"mode": rets_mode},
             cols=cols,
             col_rename_func=col_rename_func,
@@ -241,19 +241,21 @@ class DataFrameModeler:
         """
         model = cdataf.ColumnTransformer(
             nid="set_non_ath_to_nan",
-            transformer_func=cfinan.set_non_ath_to_nan,
+            transformer_func=cofinanc.set_non_ath_to_nan,
             col_mode="replace_all",
             transformer_kwargs={"start_time": start_time, "end_time": end_time},
         )
         return self._run_node(model, method)
 
-    def set_weekends_to_nan(self, method: cdataf.Method = "fit") -> DataFrameModeler:
+    def set_weekends_to_nan(
+        self, method: cdataf.Method = "fit"
+    ) -> DataFrameModeler:
         """
         Replace values over weekends with NaNs.
         """
         model = cdataf.ColumnTransformer(
             nid="set_weekends_to_nan",
-            transformer_func=cfinan.set_weekends_to_nan,
+            transformer_func=cofinanc.set_weekends_to_nan,
             col_mode="replace_all",
         )
         return self._run_node(model, method)
@@ -270,7 +272,7 @@ class DataFrameModeler:
         dataframes. If `oos_start` dates are different, set it to the
         first one and raise a warning.
         """
-        dbg.dassert_isinstance(dfm, DataFrameModeler)
+        hdbg.dassert_isinstance(dfm, DataFrameModeler)
         merge_kwargs = merge_kwargs or {}
         df_merged = self._df.merge(
             dfm.df,
@@ -338,7 +340,7 @@ class DataFrameModeler:
             num_cols = 1
         if axes is None:
             # Create figure to accommodate plots.
-            _, axes = cplott.get_multiple_plots(
+            _, axes = coplotti.get_multiple_plots(
                 num_plots=num_plots,
                 num_cols=num_cols,
                 y_scale=y_scale,
@@ -364,7 +366,7 @@ class DataFrameModeler:
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
         plot_projection_kwargs = plot_projection_kwargs or {}
-        cplott.plot_projection(df, ax=ax, **plot_projection_kwargs)
+        coplotti.plot_projection(df, ax=ax, **plot_projection_kwargs)
 
     def plot_cumulative_returns(
         self,
@@ -377,7 +379,7 @@ class DataFrameModeler:
         df = self._get_df(cols=cols, mode=mode)
         plot_cumulative_returns_kwargs = plot_cumulative_returns_kwargs or {}
         cum_rets = df.cumsum()
-        cplott.plot_cumulative_returns(
+        coplotti.plot_cumulative_returns(
             cum_rets,
             mode=mode_rets,
             ax=ax,
@@ -396,8 +398,8 @@ class DataFrameModeler:
         """
         df = self._get_df(cols=cols, mode=mode)
         # Calculate correlation.
-        corr_df = csigna.correlate_with_lag(df, lag=lag)
-        cplott.plot_heatmap(corr_df, ax=ax)
+        corr_df = csigproc.correlate_with_lag(df, lag=lag)
+        coplotti.plot_heatmap(corr_df, ax=ax)
         return corr_df
 
     def plot_correlation_with_lagged_cumsum(
@@ -414,10 +416,10 @@ class DataFrameModeler:
         """
         df = self._get_df(cols=cols, mode=mode)
         # Calculate correlation.
-        corr_df = csigna.correlate_with_lagged_cumsum(
+        corr_df = csigproc.correlate_with_lagged_cumsum(
             df, lag=lag, y_vars=y_vars, nan_mode=nan_mode
         )
-        cplott.plot_heatmap(corr_df, ax=ax)
+        coplotti.plot_heatmap(corr_df, ax=ax)
         return corr_df
 
     def plot_autocorrelation(
@@ -429,7 +431,9 @@ class DataFrameModeler:
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
         plot_auto_correlation_kwargs = plot_auto_correlation_kwargs or {}
-        cplott.plot_autocorrelation(df, axes=axes, **plot_auto_correlation_kwargs)
+        coplotti.plot_autocorrelation(
+            df, axes=axes, **plot_auto_correlation_kwargs
+        )
 
     def plot_sequence_and_density(
         self,
@@ -440,7 +444,7 @@ class DataFrameModeler:
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
         plot_cols_kwargs = plot_cols_kwargs or {}
-        cplott.plot_cols(df, axes=axes, **plot_cols_kwargs)
+        coplotti.plot_cols(df, axes=axes, **plot_cols_kwargs)
 
     def plot_spectrum(
         self,
@@ -451,7 +455,7 @@ class DataFrameModeler:
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
         plot_spectrum_kwargs = plot_spectrum_kwargs or {}
-        cplott.plot_spectrum(df, axes=axes, **plot_spectrum_kwargs)
+        coplotti.plot_spectrum(df, axes=axes, **plot_spectrum_kwargs)
 
     def plot_correlation_matrix(
         self,
@@ -462,7 +466,7 @@ class DataFrameModeler:
     ) -> pd.DataFrame:
         df = self._get_df(cols=cols, mode=mode)
         plot_correlation_matrix_kwargs = plot_correlation_matrix_kwargs or {}
-        return cplott.plot_correlation_matrix(
+        return coplotti.plot_correlation_matrix(
             df, ax=ax, **plot_correlation_matrix_kwargs
         )
 
@@ -477,7 +481,7 @@ class DataFrameModeler:
         plot_dendrogram_kwargs = plot_dendrogram_kwargs or {}
         #
         df = self._get_df(cols=cols, mode=mode)
-        cplott.plot_dendrogram(
+        coplotti.plot_dendrogram(
             df, figsize=figsize, ax=ax, **plot_dendrogram_kwargs
         )
 
@@ -495,7 +499,7 @@ class DataFrameModeler:
             figure equals the default `figsize`
         """
         df = self._get_df(cols=cols, mode=mode)
-        pca = cplott.PCA(mode="standard")
+        pca = coplotti.PCA(mode="standard")
         pca.fit(df.replace([np.inf, -np.inf], np.nan).fillna(0))
         pca.plot_components(
             num_components, num_cols=num_cols, y_scale=y_scale, axes=axes
@@ -509,7 +513,7 @@ class DataFrameModeler:
         mode: str = "ins",
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
-        pca = cplott.PCA(mode="standard", n_components=num_components)
+        pca = coplotti.PCA(mode="standard", n_components=num_components)
         pca.fit(df.replace([np.inf, -np.inf], np.nan).fillna(0))
         pca.plot_explained_variance(ax=ax)
 
@@ -522,7 +526,7 @@ class DataFrameModeler:
         mode: str = "ins",
     ) -> None:
         srs = self._get_df(cols=[col], mode=mode).squeeze()
-        cplott.plot_qq(srs, ax=ax, dist=dist, nan_mode=nan_mode)
+        coplotti.plot_qq(srs, ax=ax, dist=dist, nan_mode=nan_mode)
 
     def plot_rolling_correlation(
         self,
@@ -535,7 +539,7 @@ class DataFrameModeler:
     ) -> None:
         df = self._get_df(cols=[col1, col2], mode=mode)
         plot_rolling_correlation_kwargs = plot_rolling_correlation_kwargs or {}
-        cplott.plot_rolling_correlation(
+        coplotti.plot_rolling_correlation(
             df[col1],
             df[col2],
             tau=tau,
@@ -556,7 +560,7 @@ class DataFrameModeler:
         """
         :param num_plots: number of cols to plot the study for
         :param axes: flat list of `ax`/`axes` parameters for each column for
-            each `ctimes.TimeSeriesDailyStudy`method. If the method is skipped,
+            each `ctimstud.TimeSeriesDailyStudy`method. If the method is skipped,
             should be `None`
         """
         df = self._get_df(cols=cols, mode=mode)
@@ -568,7 +572,7 @@ class DataFrameModeler:
             axes_for_cols = np.array(axes).reshape(num_plots, -1)
         figs = []
         for col_name, axes_for_col in zip(cols_to_draw, axes_for_cols):
-            tsds = ctimes.TimeSeriesDailyStudy(df[col_name])
+            tsds = ctimstud.TimeSeriesDailyStudy(df[col_name])
             figs.append(
                 tsds.execute(last_n_years=last_n_years, axes=axes_for_col)
             )
@@ -597,7 +601,7 @@ class DataFrameModeler:
         else:
             axes_for_cols = np.array(axes).reshape(df.shape[1], -1)
         for i, axes_for_col in zip(df.columns.values, axes_for_cols):
-            cplott.plot_seasonal_decomposition(
+            coplotti.plot_seasonal_decomposition(
                 df[i],
                 nan_mode=nan_mode,
                 axes=axes_for_col,
@@ -627,7 +631,7 @@ class DataFrameModeler:
         else:
             axes_for_cols = np.array(axes).reshape(df.shape[1], -1)
         for col_name, axes_for_col in zip(df.columns, axes_for_cols):
-            cplott.plot_histograms_and_lagged_scatterplot(
+            coplotti.plot_histograms_and_lagged_scatterplot(
                 df[col_name],
                 lag=lag,
                 oos_start=oos_start,
@@ -647,7 +651,7 @@ class DataFrameModeler:
 
     def _get_df(self, cols: Optional[List[Any]], mode: str) -> pd.DataFrame:
         cols = cols or self._df.columns
-        dbg.dassert_is_subset(cols, self._df.columns)
+        hdbg.dassert_is_subset(cols, self._df.columns)
         if mode == "ins":
             return self.ins_df[cols]
         if mode == "oos":
@@ -665,7 +669,7 @@ class DataFrameModeler:
             info["fit"] = model.get_info("fit")
             oos_start = None
         elif method == "predict":
-            dbg.dassert(
+            hdbg.dassert(
                 self.oos_start, msg="Must set `oos_start` to run `predict()`"
             )
             model.fit(self._df[: self.oos_start])

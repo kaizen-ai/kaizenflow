@@ -22,19 +22,19 @@
 import logging
 
 import core.config as cconfig
-import core.dataflow_model.incremental_single_name_model_evaluator as ime
-import core.dataflow_model.model_evaluator as modeval
-import core.dataflow_model.model_plotter as modplot
-import core.dataflow_model.stats_computer as csc
-import core.dataflow_model.utils as cdmu
-import core.plotting as cplot
-import core.statistics as cstati
-import helpers.dbg as dbg
+import core.dataflow_model.incremental_single_name_model_evaluator as cdtfmisnmev
+import core.dataflow_model.model_evaluator as cdtfmomoev
+import core.dataflow_model.model_plotter as cdtfmomopl
+import core.dataflow_model.stats_computer as cdtfmostco
+import core.dataflow_model.utils as cdtfmouti
+import core.plotting as coplotti
+import core.statistics as costatis
+import helpers.dbg as hdbg
 import helpers.printing as hprint
 
 # %%
-dbg.init_logger(verbosity=logging.INFO)
-# dbg.init_logger(verbosity=logging.DEBUG)
+hdbg.init_logger(verbosity=logging.INFO)
+# hdbg.init_logger(verbosity=logging.DEBUG)
 
 _LOG = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ hprint.config_notebook()
 # # Load features
 
 # %%
-feat_iter = cdmu.yield_experiment_artifacts(
+feat_iter = cdtfmouti.yield_experiment_artifacts(
     src_dir="",
     file_name="result_bundle.v2_0.pkl",
     load_rb_kwargs={},
@@ -64,20 +64,16 @@ features.head()
 # # Cross-sectional feature analysis
 
 # %%
-cplot.plot_heatmap(
-    features.corr(),
-    mode="clustermap",
-    figsize=(20, 20)
-)
+coplotti.plot_heatmap(features.corr(), mode="clustermap", figsize=(20, 20))
 
 # %%
-cplot.plot_effective_correlation_rank(features)
+coplotti.plot_effective_correlation_rank(features)
 
 # %%
-cplot.plot_projection(features.resample("B").sum(min_count=1))
+coplotti.plot_projection(features.resample("B").sum(min_count=1))
 
 # %%
-sc = csc.StatsComputer()
+sc = cdtfmostco.StatsComputer()
 
 # %%
 features.apply(sc.compute_summary_stats).round(3)
@@ -89,17 +85,15 @@ features.apply(sc.compute_summary_stats).round(3)
 feature = ""
 
 # %%
-cplot.plot_qq(features[feature])
+coplotti.plot_qq(features[feature])
 
 # %%
-cplot.plot_histograms_and_lagged_scatterplot(
-    features[feature],
-    lag=1,
-    figsize=(20, 20)
+coplotti.plot_histograms_and_lagged_scatterplot(
+    features[feature], lag=1, figsize=(20, 20)
 )
 
 # %%
-cplot.plot_time_series_by_period(
+coplotti.plot_time_series_by_period(
     features[feature],
     "hour",
 )

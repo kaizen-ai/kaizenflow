@@ -57,13 +57,13 @@ class TestPnlSimulatorFunctions1(hunitest.TestCase):
             else:
                 columns = None
             mi = opnlsimu.MarketInterface(df, use_cache, columns=columns)
-            ts_start = pd.Timestamp("2021-09-12 09:30:00")
-            ts_end = pd.Timestamp("2021-09-12 09:35:00")
-            act = mi.get_twap_price(ts_start, ts_end, "price")
+            timestamp_start = pd.Timestamp("2021-09-12 09:30:00")
+            timestamp_end = pd.Timestamp("2021-09-12 09:35:00")
+            act = mi.get_twap_price(timestamp_start, timestamp_end, "price")
             #
-            exp = df.loc[ts_start + pd.Timedelta(minutes=1) : ts_end][
-                "price"
-            ].mean()
+            exp = df.loc[
+                timestamp_start + pd.Timedelta(minutes=1) : timestamp_end
+            ]["price"].mean()
             np.testing.assert_almost_equal(act, exp)
             #
             exp = (
@@ -75,8 +75,8 @@ class TestPnlSimulatorFunctions1(hunitest.TestCase):
         df = self._get_data()
         type_ = "price@start"
         num_shares = 100
-        ts_start = pd.Timestamp("2021-09-12 09:30:00")
-        exp: float = df.loc[ts_start]["price"]
+        timestamp_start = pd.Timestamp("2021-09-12 09:30:00")
+        exp: float = df.loc[timestamp_start]["price"]
         np.testing.assert_almost_equal(exp, 100.496714)
         self._test_order(type_, num_shares, exp)
 
@@ -84,8 +84,8 @@ class TestPnlSimulatorFunctions1(hunitest.TestCase):
         df = self._get_data()
         type_ = "price@end"
         num_shares = 100
-        ts_start = pd.Timestamp("2021-09-12 09:35:00")
-        exp = df.loc[ts_start]["price"]
+        timestamp_start = pd.Timestamp("2021-09-12 09:35:00")
+        exp = df.loc[timestamp_start]["price"]
         np.testing.assert_almost_equal(exp, 102.060878)
         self._test_order(type_, num_shares, exp)
 
@@ -226,9 +226,11 @@ class TestPnlSimulatorFunctions1(hunitest.TestCase):
             else:
                 columns = None
             mi = opnlsimu.MarketInterface(df, use_cache, columns=columns)
-            ts_start = pd.Timestamp("2021-09-12 09:30:00")
-            ts_end = pd.Timestamp("2021-09-12 09:35:00")
-            order = opnlsimu.Order(mi, type_, ts_start, ts_end, num_shares)
+            timestamp_start = pd.Timestamp("2021-09-12 09:30:00")
+            timestamp_end = pd.Timestamp("2021-09-12 09:35:00")
+            order = opnlsimu.Order(
+                mi, type_, timestamp_start, timestamp_end, num_shares
+            )
             act = order.get_execution_price()
             np.testing.assert_almost_equal(act, exp, decimal=5)
 

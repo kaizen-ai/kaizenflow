@@ -5,7 +5,7 @@ from typing import List, Optional
 import pytest
 
 import helpers.git as hgit
-import helpers.unit_test as huntes
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ def _execute_func_call(func_call: str) -> None:
     _LOG.debug("\n-> %s=\n  '%s'", func_call, act)
 
 
-class Test_git_submodule1(huntes.TestCase):
+class Test_git_submodule1(hunitest.TestCase):
     def test_get_client_root1(self) -> None:
         func_call = "hgit.get_client_root(super_module=True)"
         _execute_func_call(func_call)
@@ -55,7 +55,7 @@ class Test_git_submodule1(huntes.TestCase):
         _execute_func_call(func_call)
 
 
-class Test_git_submodule2(huntes.TestCase):
+class Test_git_submodule2(hunitest.TestCase):
 
     # def test_get_submodule_hash1(self) -> None:
     #     dir_name = "amp"
@@ -108,7 +108,7 @@ class Test_git_submodule2(huntes.TestCase):
         self.assert_equal(act, exp, fuzzy_match=True)
 
 
-class Test_git_repo_name1(huntes.TestCase):
+class Test_git_repo_name1(hunitest.TestCase):
     def test_parse_github_repo_name1(self) -> None:
         repo_name = "git@github.com:alphamatic/amp"
         host_name, repo_name = hgit._parse_github_repo_name(repo_name)
@@ -209,7 +209,7 @@ class Test_git_repo_name1(huntes.TestCase):
         self.assert_equal(act, exp)
 
 
-class Test_git_path1(huntes.TestCase):
+class Test_git_path1(hunitest.TestCase):
     @pytest.mark.skipif(
         not hgit.is_in_amp_as_supermodule(),
         reason="Run only in amp as super-module",
@@ -262,7 +262,7 @@ class Test_git_path1(huntes.TestCase):
             )
 
 
-class Test_git_modified_files1(huntes.TestCase):
+class Test_git_modified_files1(hunitest.TestCase):
     def setUp(self) -> None:
         """
         All these tests need a reference to Git master branch.
@@ -294,7 +294,7 @@ class Test_git_modified_files1(huntes.TestCase):
 # #############################################################################
 
 
-class Test_find_docker_file1(huntes.TestCase):
+class Test_find_docker_file1(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test for a file `amp/helpers/test/test_git.py` that is not from Docker

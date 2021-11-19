@@ -3,7 +3,7 @@ import logging
 import pytest
 
 import helpers.open as hopen
-import helpers.unit_test as huntes
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -12,7 +12,7 @@ _LOG = logging.getLogger(__name__)
 #  test other systems.
 
 
-class Test_open_unknown(huntes.TestCase):
+class Test_open_unknown(hunitest.TestCase):
     """
     Test unknown extension and unknown systems.
     """
@@ -37,7 +37,7 @@ class Test_open_unknown(huntes.TestCase):
 
 
 @pytest.mark.skip(reason="See cryptomtc/cmamp#321")
-class Test_open_html(huntes.TestCase):
+class Test_open_html(hunitest.TestCase):
     """
     Test different command correctness for opening html file.
     """
@@ -64,7 +64,7 @@ class Test_open_html(huntes.TestCase):
         self.check_string(str(cmd))
 
 
-class Test_open_pdf(huntes.TestCase):
+class Test_open_pdf(hunitest.TestCase):
     """
     Test different command correctness for opening pdf file.
     """

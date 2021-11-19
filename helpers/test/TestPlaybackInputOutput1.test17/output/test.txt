@@ -1,12 +1,12 @@
 # Test created for helpers.test.test_playback.get_result_cs_none.
 
-import helpers.unit_test as huntes
+import helpers.unit_test as hunitest
 import jsonpickle
 import pandas as pd
 import core.config as cconfi
 
 
-class TestGetResultCsNone(huntes.TestCase):
+class TestGetResultCsNone(hunitest.TestCase):
     def test1(self) -> None:
         # Call function to test.
         act = get_result_cs_none()
