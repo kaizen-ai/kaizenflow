@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.ccxt.data.load.loader as imcdalolo
+import im_v2.ccxt.data.load.loader as imcdalolo
 """
 
 import abc
