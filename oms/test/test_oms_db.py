@@ -46,8 +46,8 @@ class _TestOmsDbHelper(hunitest.TestCase):
         _LOG.info("\n%s", hprint.frame("setUp"))
         super().setUp()
         # TODO(gp): Read the info from env.
-        dbname = "oms_postgres_db_local"
         host = "localhost"
+        dbname = "oms_postgres_db_local"
         port = 5432
         password = "alsdkqoen"
         user = "aljsdalsd"
@@ -73,14 +73,14 @@ class _TestOmsDbHelper(hunitest.TestCase):
             cmd = " ".join(cmd)
             hsysinte.system(cmd, suppress_output=False)
             # Wait for the DB to be available.
-            hsql.wait_db_connection(dbname, port, host)
+            hsql.wait_db_connection(host, dbname, port)
             self.bring_down_db = True
         # Save connection info.
         self.connection = hsql.get_connection(
-            self.dbname,
             host,
-            user,
+            self.dbname,
             port,
+            user,
             password,
             autocommit=True,
         )
@@ -222,7 +222,7 @@ class TestOmsDb1(_TestOmsDbHelper):
         hsql.execute_insert_query(self.connection, row, table_name)
         # Check the content of the table.
         query = f"SELECT * FROM {table_name}"
-        df = hsql.execute_query(self.connection, query)
+        df = hsql.execute_query_to_df(self.connection, query)
         act = hprint.dataframe_to_str(df)
         exp = r"""
            targetlistid   tradedate  instanceid                                                                filename strategyid        timestamp_processed               timestamp_db  target_count  changed_count  unchanged_count  cancel_count  success                                                     reason
@@ -326,5 +326,5 @@ class TestOmsDb2(_TestOmsDbHelper):
         _LOG.debug("insert ... done")
         # Show the state of the DB.
         query = f"SELECT * FROM {table_name}"
-        df = hsql.execute_query(self.connection, query)
+        df = hsql.execute_query_to_df(self.connection, query)
         _LOG.debug("df=\n%s", hprint.dataframe_to_str(df, use_tabulate=False))

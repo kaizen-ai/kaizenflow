@@ -47,8 +47,8 @@ hprint.config_notebook()
 
 # %%
 root_dir = "s3://alphamatic-data/data"
-сcxt_loader = imcdalolo.CcxtLoader(root_dir=root_dir, aws_profile="am")
-data = сcxt_loader.read_data_from_filesystem("kucoin", "ETH/USDT", "ohlcv")
+сcxt_loader = imcdalolo.CcxtLoaderFromFile(root_dir=root_dir, aws_profile="am")
+data = сcxt_loader.read_data("kucoin", "ETH/USDT", "ohlcv")
 data.head()
 
 # %% [markdown]

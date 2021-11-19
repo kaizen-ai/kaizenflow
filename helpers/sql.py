@@ -27,26 +27,24 @@ _LOG = logging.getLogger(__name__)
 # Connection
 # #############################################################################
 
-# Invariant: keep the arguments in the interface in the same order as: host,
-#  dbname, port, user, password
+# Invariant: keep the arguments in the interface in the same order as:
+# host, dbname, port, user, password
 
 # TODO(gp): mypy doesn't like this. Understand why and / or inline.
 DbConnection = psycop.extensions.connection
 
 
-# TODO(gp): host, dbname, ...
 DbConnectionInfo = collections.namedtuple(
-    "DbConnectionInfo", ["dbname", "host", "port", "user", "password"]
+    "DbConnectionInfo", ["host", "dbname", "port", "user", "password"]
 )
 
 
 # TODO(gp): Return only the connection (CmampTask441).
-# TODO(gp): Reorg params -> host, dbname, user, port
 def get_connection(
-    dbname: str,
     host: str,
-    user: str,
+    dbname: str,
     port: int,
+    user: str,
     password: str,
     autocommit: bool = True,
 ) -> DbConnection:
@@ -74,13 +72,13 @@ def get_connection_from_env_vars() -> Tuple[
     # TODO(gp): -> POSTGRES_DBNAME
     host = os.environ["POSTGRES_HOST"]
     dbname = os.environ["POSTGRES_DB"]
-    user = os.environ["POSTGRES_USER"]
     port = int(os.environ["POSTGRES_PORT"])
+    user = os.environ["POSTGRES_USER"]
     password = os.environ["POSTGRES_PASSWORD"]
     # Build the
     connection = get_connection(
-        dbname=dbname,
         host=host,
+        dbname=dbname,
         port=port,
         user=user,
         password=password,
@@ -120,7 +118,10 @@ def check_db_connection(
 
 # TODO(gp): Rearrange as host, dbname (instead of db_name), port.
 def wait_db_connection(
-    db_name: str, port: int, host: str, timeout_in_secs: int = 10
+    host: str, 
+    db_name: str, 
+    port: int,  
+    timeout_in_secs: int = 10,
 ) -> None:
     """
     Wait until the database is available.
@@ -149,8 +150,8 @@ def db_connection_to_tuple(connection: DbConnection) -> NamedTuple:
     Get database connection details using connection. Connection details
     include:
 
-        - Database name
         - Host
+        - Database name
         - Port
         - Username
         - Password
@@ -160,8 +161,8 @@ def db_connection_to_tuple(connection: DbConnection) -> NamedTuple:
     """
     info = connection.info
     det = DbConnectionInfo(
-        dbname=info.dbname,
         host=info.host,
+        dbname=info.dbname,
         port=info.port,
         user=info.user,
         password=info.password,
@@ -362,7 +363,7 @@ def head_table(
     """
     txt = []
     query = "SELECT * FROM %s LIMIT %s " % (table, limit)
-    df = execute_query(connection, query)
+    df = execute_query_to_df(connection, query)
     # pd.options.display.max_columns = 1000
     # pd.options.display.width = 130
     txt.append(str(df))
@@ -412,13 +413,13 @@ def find_common_columns(
     for i, table in enumerate(tables):
         table = tables[i]
         query = "SELECT * FROM %s LIMIT %s " % (table, limit)
-        df1 = execute_query(connection, query, verbose=False)
+        df1 = execute_query_to_df(connection, query, verbose=False)
         if df1 is None:
             continue
         for j in range(i + 1, len(tables)):
             table = tables[j]
             query = "SELECT * FROM %s LIMIT %s " % (table, limit)
-            df2 = execute_query(connection, query, verbose=False)
+            df2 = execute_query_to_df(connection, query, verbose=False)
             if df2 is None:
                 continue
             common_cols = [c for c in df1 if c in df2]
@@ -454,8 +455,7 @@ def remove_table(connection: DbConnection, table_name: str) -> None:
 # #############################################################################
 
 
-# TODO(gp): -> execute_query_to_df
-def execute_query(
+def execute_query_to_df(
     connection: DbConnection,
     query: str,
     limit: Optional[int] = None,
