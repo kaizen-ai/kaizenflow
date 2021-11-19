@@ -363,7 +363,7 @@ def head_table(
     """
     txt = []
     query = "SELECT * FROM %s LIMIT %s " % (table, limit)
-    df = execute_query(connection, query)
+    df = execute_query_to_df(connection, query)
     # pd.options.display.max_columns = 1000
     # pd.options.display.width = 130
     txt.append(str(df))
@@ -413,13 +413,13 @@ def find_common_columns(
     for i, table in enumerate(tables):
         table = tables[i]
         query = "SELECT * FROM %s LIMIT %s " % (table, limit)
-        df1 = execute_query(connection, query, verbose=False)
+        df1 = execute_query_to_df(connection, query, verbose=False)
         if df1 is None:
             continue
         for j in range(i + 1, len(tables)):
             table = tables[j]
             query = "SELECT * FROM %s LIMIT %s " % (table, limit)
-            df2 = execute_query(connection, query, verbose=False)
+            df2 = execute_query_to_df(connection, query, verbose=False)
             if df2 is None:
                 continue
             common_cols = [c for c in df1 if c in df2]
@@ -455,8 +455,7 @@ def remove_table(connection: DbConnection, table_name: str) -> None:
 # #############################################################################
 
 
-# TODO(gp): -> execute_query_to_df
-def execute_query(
+def execute_query_to_df(
     connection: DbConnection,
     query: str,
     limit: Optional[int] = None,
