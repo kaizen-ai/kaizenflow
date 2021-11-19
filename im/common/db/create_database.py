@@ -58,11 +58,11 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     if args.credentials:
-        connection, _ = hsql.get_connection(**hio.from_json(args.credentials))
+        connection = hsql.get_connection(**hio.from_json(args.credentials))
     elif args.db_connection == "from_env":
-        connection, _ = hsql.get_connection_from_env_vars()
+        connection = hsql.get_connection_from_env_vars()
     else:
-        connection, _ = hsql.get_connection_from_string(args.db_connection)
+        connection = hsql.get_connection_from_string(args.db_connection)
     # Create db with all tables.
     imcdbcrdb.create_im_database(
         connection=connection, new_db=args.db_name, overwrite=args.overwrite

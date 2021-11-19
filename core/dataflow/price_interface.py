@@ -443,13 +443,14 @@ class SqlPriceInterface(AbstractPriceInterface):
             - E.g., `WHERE ...=... AND ...=...`
         """
         super().__init__(*args, **kwargs)  # type: ignore[arg-type]
-        self.connection, self.cursor = hsql.get_connection(
+        self.connection = hsql.get_connection(
             dbname=dbname,
             host=host,
             port=port,
             user=user,
             password=password,
         )
+        self.cursor = self.connection.cursor()
         self._table_name = table_name
         self._where_clause = where_clause
         self._valid_id = valid_id
