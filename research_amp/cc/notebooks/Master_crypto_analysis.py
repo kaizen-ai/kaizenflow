@@ -44,7 +44,7 @@ import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprint
 import helpers.s3 as hs3
-import im.ccxt.data.load.loader as imcdalolo
+import im_v2.ccxt.data.load.loader as imcdalolo
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)

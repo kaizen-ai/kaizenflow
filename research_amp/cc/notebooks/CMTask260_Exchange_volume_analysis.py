@@ -30,7 +30,7 @@ import helpers.s3 as hs3
 import im_v2.data.universe as imv2dauni
 import research_amp.cc.statistics as rccstat
 import research_amp.cc.volume as rccvolu
-import im.ccxt.data.load.loader as imcdalolo
+import im_v2.ccxt.data.load.loader as imcdalolo
 
 import core.plotting as coplotti
 
