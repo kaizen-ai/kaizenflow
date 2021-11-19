@@ -140,9 +140,10 @@ class TestDryRunTasks1(hunitest.TestCase):
 
     # TODO(gp): -> TestGitCommands1
 
-    def test_print_setup(self) -> None:
-        target = "print_setup"
-        self._dry_run(target)
+    # TODO(gp): We can't test this since amp and cmamp have now different base image.
+    # def test_print_setup(self) -> None:
+    #     target = "print_setup"
+    #     self._dry_run(target)
 
     def test_git_pull(self) -> None:
         target = "git_pull"
