@@ -44,14 +44,12 @@ DbConnection = psycop.extensions.connection
 DbConnection = psycop.extensions.connection
 
 
-# TODO(gp): host, dbname, ...
 DbConnectionInfo = collections.namedtuple(
-    "DbConnectionInfo", ["dbname", "host", "port", "user", "password"]
+    "DbConnectionInfo", ["host", "dbname", "port", "user", "password"]
 )
 
 
 # TODO(gp): Return only the connection (CmampTask441).
-# TODO(gp): Reorg params -> host, dbname, user, port
 def get_connection(
     host: str,
     dbname: str,
@@ -109,13 +107,13 @@ def get_connection_from_env_vars() -> Tuple[
     # TODO(gp): -> POSTGRES_DBNAME
     host = os.environ["POSTGRES_HOST"]
     dbname = os.environ["POSTGRES_DB"]
-    user = os.environ["POSTGRES_USER"]
     port = int(os.environ["POSTGRES_PORT"])
+    user = os.environ["POSTGRES_USER"]
     password = os.environ["POSTGRES_PASSWORD"]
     # Build the
     connection = get_connection(
-        dbname=dbname,
         host=host,
+        dbname=dbname,
         port=port,
         user=user,
         password=password,
