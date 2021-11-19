@@ -3,7 +3,7 @@ Compute crypto-related statistics.
 
 Import as:
 
-import research.cc.statistics as rccstat
+import research_amp.cc.statistics as rccstat
 """
 import logging
 from typing import Callable, List, Optional, Union

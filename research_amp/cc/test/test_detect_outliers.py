@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 import helpers.unit_test as hunitest
-import research.cc.detect_outliers as rccdeout
+import research_amp.cc.detect_outliers as rccdeout
 
 
 class TestDetectOutliers(hunitest.TestCase):

@@ -48,6 +48,7 @@ class _LibTasksTestCase(hunitest.TestCase):
         hlibtask.reset_default_params()
         super().tearDown()
 
+# #############################################################################
 
 def _build_mock_context_returning_ok() -> invoke.MockContext:
     """
@@ -61,7 +62,7 @@ def _build_mock_context_returning_ok() -> invoke.MockContext:
 
 class _CheckDryRunTestCase(hunitest.TestCase):
     """
-    Test class running a invoke target with/without dry-run and checking that
+    Test class running an invoke target with/without dry-run and checking that
     the issued commands are what is expected.
     """
 
@@ -87,6 +88,9 @@ class _CheckDryRunTestCase(hunitest.TestCase):
             self._check_calls(ctx)
 
 
+# #############################################################################
+
+
 def _gh_login() -> None:
     """
     Log in inside GitHub.
@@ -97,6 +101,17 @@ def _gh_login() -> None:
     if os.environ.get(env_var, None):
         # If the env var exists and it's not None.
         _LOG.warning("Using env var '%s' to log in GitHub", env_var)
+        # For debugging only (see AmpTask1864).
+        if False:
+            def _cmd(cmd):
+                hsysinte.system(cmd, suppress_output=False, log_level="echo",
+                        abort_on_error=False)
+            for cmd in ["ls -l $HOME/.config",
+                "ls -l $HOME/.config/gh",
+                "ls -l $HOME/.config/gh/config.yml",
+                "touch $HOME/.config/gh/config.yml",
+                "ls -l $HOME/.config/gh/config.yml"]:
+                _cmd(cmd)
         cmd = "echo $GH_ACTION_ACCESS_TOKEN | gh auth login --with-token"
         hsysinte.system(cmd)
     # Check that we are logged in.
@@ -104,23 +119,31 @@ def _gh_login() -> None:
     hsysinte.system(cmd)
 
 
+class TestGhLogin1(hunitest.TestCase):
+
+    def test_gh_login(self) -> None:
+        _gh_login()
+
+
 # #############################################################################
 
 
-# TODO(gp): We should introspect `lib_tasks.py` and find all the functions decorated
-#  with `@tasks`, instead of maintaining a (incomplete) list of tasks.
+# TODO(gp): We should group the tests by what is tested and not how it's
+# tested. E.g. TestDryRunTasks1::test_print_setup and
+# TestDryRunTasks2::test_print_setup should go together in a class.
+
 class TestDryRunTasks1(hunitest.TestCase):
     """
     - Run invoke in dry-run mode from command line
     - Compare the output to the golden outcomes
     """
 
-    def test_print_setup(self) -> None:
-        target = "print_setup"
-        opts = "--dry"
-        cmd = f"invoke {opts} {target} | grep -v INFO | grep -v '>>ENV<<:'"
-        rc = hsysinte.system(cmd)
-        self.assertEqual(rc, 0)
+    # TODO(gp): -> TestGitCommands1
+
+    # TODO(gp): We can't test this since amp and cmamp have now different base image.
+    # def test_print_setup(self) -> None:
+    #     target = "print_setup"
+    #     self._dry_run(target)
 
     def test_git_pull(self) -> None:
         target = "git_pull"
@@ -133,6 +156,9 @@ class TestDryRunTasks1(hunitest.TestCase):
     def test_git_clean(self) -> None:
         target = "git_clean"
         self._dry_run(target)
+
+    # ################################################################################
+    # TODO(gp): -> TestDockerCommands1
 
     @pytest.mark.skipif(
         hsysinte.is_inside_ci(), reason="In CI the output is different"
@@ -168,6 +194,8 @@ class TestDryRunTasks1(hunitest.TestCase):
     def test_docker_kill_all(self) -> None:
         target = "docker_kill --all"
         self._dry_run(target)
+
+    # ################################################################################
 
     def _dry_run(self, target: str, dry_run: bool = True) -> None:
         """
@@ -213,6 +241,8 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "git_clean(ctx, dry_run=False)"
         self._check_output(target)
 
+    # ################################################################################
+
     def test_docker_images_ls_repo(self) -> None:
         target = "docker_images_ls_repo(ctx)"
         self._check_output(target, check=False)
@@ -249,6 +279,9 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "docker_stats(ctx)"
         self._check_output(target)
 
+    # ################################################################################
+    # TODO(gp): -> TestGhCommands1
+
     def test_gh_create_pr1(self) -> None:
         _gh_login()
         target = "gh_create_pr(ctx, repo_short_name='amp', title='test')"
@@ -281,6 +314,9 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     # def test_gh_workflow_run(self) -> None:
     #     target = "gh_workflow_run(ctx)"
     #     self._check_output(target)
+
+    # ################################################################################
+    # TODO(gp): -> TestGitCommands1
 
     def test_git_branch_files(self) -> None:
         # This test needs a reference to Git master branch.
@@ -319,6 +355,9 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     def test_git_merge_master(self) -> None:
         target = "git_merge_master(ctx)"
         self._check_output(target)
+
+    # ################################################################################
+    # TODO(gp): -> TestLintCommands1
 
     @pytest.mark.skip(
         reason="AmpTask1347: Add support for mocking `system*()` "

@@ -31,7 +31,7 @@ import helpers.env as henv
 import helpers.printing as hprint
 import helpers.s3 as hs3
 import im_v2.data.universe as imv2dauni
-import research.cc.statistics as rccstat
+import research_amp.cc.statistics as rccstat
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)

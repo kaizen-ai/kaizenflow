@@ -31,7 +31,7 @@ import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprint
 import im.ccxt.data.load.loader as imcdalolo
-import research.cc.detect_outliers as rccdeout
+import research_amp.cc.detect_outliers as rccdeout
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
