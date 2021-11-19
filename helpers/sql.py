@@ -44,9 +44,8 @@ DbConnectionInfo = collections.namedtuple(
 DbConnection = psycop.extensions.connection
 
 
-# TODO(gp): host, dbname, ...
 DbConnectionInfo = collections.namedtuple(
-    "DbConnectionInfo", ["dbname", "host", "port", "user", "password"]
+    "DbConnectionInfo", ["host", "dbname", "port", "user", "password"]
 )
 
 # TODO(gp): mypy doesn't like this. Understand why and / or inline.
@@ -120,6 +119,7 @@ def get_connection_from_env_vars() -> Tuple[
     port = int(os.environ["POSTGRES_PORT"])
     user = os.environ["POSTGRES_USER"]
     port = int(os.environ["POSTGRES_PORT"])
+    user = os.environ["POSTGRES_USER"]
     password = os.environ["POSTGRES_PASSWORD"]
     # Build the
     connection = get_connection(
