@@ -140,7 +140,7 @@ class AbstractCcxtLoader(abc.ABC):
             data = hpandas.drop_duplicates(data, ignore_index=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
-        #
+        # TODO(Dan2): CmTask503.
         if self._resample_to_1_min:
             # Resample to 1 minute.
             data = hpandas.resample_df(data, "T")
@@ -216,6 +216,7 @@ class CcxtLoaderFromDb(AbstractCcxtLoader):
         super().__init__()
         self._connection = connection
 
+    # TODO(Dan2): CmTask502.
     def read_universe_data(
         self,
         universe: Union[str, List[imv2dauni.ExchangeCurrencyTuple]],
