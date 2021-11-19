@@ -983,6 +983,31 @@ def git_stash_apply(mode: str, log_level: int = logging.DEBUG) -> None:
     hsysinte.system(cmd, suppress_output=False, log_level=log_level)
 
 
+def git_tag(tag_name: str, super_module: bool = True, log_level: int = logging.DEBUG) -> None:
+    _LOG.debug("# Tagging current commit ...")
+    client_root = get_client_root(super_module=super_module)
+    cmd = f"git --git-dir='{client_root}/.git' --work-tree='{client_root}' tag -f {tag_name}"
+    _ = hsysinte.system(cmd, suppress_output=False, log_level=log_level)
+
+
+def git_push_tag(tag_name: str, remote: str = "origin", log_level: int = logging.DEBUG) -> None:
+    _LOG.debug("# Pushing current commit ...")
+    client_root = get_client_root(super_module=super_module)
+    cmd = f"git --git-dir='{client_root}/.git' --work-tree='{client_root}' push {remote} {tag_name}"
+    _ = hsysinte.system(cmd, suppress_output=False, log_level=log_level)
+
+
+def git_describe(log_level: int = logging.DEBUG) -> str:
+    """
+    Return the closest tag in the repo, e.g., 1.0.0.
+    If there is no tag, this will return short commit hash.
+    """
+    _LOG.debug("# Looking for version ...")
+    cmd = "git describe --tags --always --abbrev=0"
+    tag, num = hsysinte.system_to_one_line(cmd, log_level=log_level)
+    return tag
+
+
 def git_add_update(
     file_list: Optional[List[str]] = None, log_level: int = logging.DEBUG
 ) -> None:

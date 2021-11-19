@@ -205,7 +205,7 @@ class TestDryRunTasks1(hunitest.TestCase):
         execute.
         """
         opts = "--dry" if dry_run else ""
-        cmd = f"invoke {opts} {target} | grep -v INFO | grep -v '>>ENV<<:'"
+        cmd = f"SKIP_VERSION_CHECK=1 invoke {opts} {target} | grep -v INFO | grep -v '>>ENV<<:'"
         _, act = hsysinte.system_to_string(cmd)
         act = hprint.remove_non_printable_chars(act)
         self.check_string(act)
@@ -437,14 +437,8 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
 
 class TestLibTasks1(hunitest.TestCase):
     """
-    Test some auxiliary functions, e.g., `_get_build_tag`,
-    `_get_gh_issue_title()`.
+    Test some auxiliary functions, e.g., `_get_gh_issue_title()`.
     """
-
-    def test_get_build_tag1(self) -> None:
-        code_ver = "amp-1.0.0"
-        build_tag = hlibtask._get_build_tag(code_ver)
-        _LOG.debug("build_tag=%s", build_tag)
 
     def test_get_gh_issue_title1(self) -> None:
         _gh_login()
