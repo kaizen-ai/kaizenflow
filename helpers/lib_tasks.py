@@ -68,15 +68,6 @@ def reset_default_params() -> None:
     set_default_params(params)
 
 
-set_default_params(
-        {
-            "fast_tests_timeout_in_sec": 5,
-            "slow_tests_timeout_in_sec": 20,
-            "superslow_tests_timeout_in_sec": 120,
-            }
-        )
-
-
 # #############################################################################
 # Utils.
 # #############################################################################
@@ -1939,8 +1930,12 @@ _COV_PYTEST_OPTS = [
     "--cov-report html",
     # "--cov-report annotate",
 ]
-
-_SINGLE_TEST_TYPES = ("fast_test", "slow_tests", "superslow_tests")
+_SINGLE_TEST_TYPES = ("fast_tests", "slow_tests", "superslow_tests")
+_TEST_TIMEOUTS = {
+            "fast_tests_timeout_in_sec": 5,
+            "slow_tests_timeout_in_sec": 20,
+            "superslow_tests_timeout_in_sec": 120,
+            }
 
 
 @task
@@ -1985,30 +1980,35 @@ def _build_run_command_line(
             tee_to_file,  # Different params than the `run_*_tests()`.
         )
         return cmd_for_test_type
-    
     if test_type == "fast_slow_tests":
-        cmd_fast_tests = _build_cmd_for_test_type("fast_tests")
-        cmd_slow_tests = _build_cmd_for_test_type("slow_tests")
+        cmd = [
+            _build_cmd_for_test_type("fast_tests"),
+            _build_cmd_for_test_type("slow_tests"),
+        ]
         pass
-    elif test_type == "all_tests":
-        cmd_fast_tests = _build_cmd_for_test_type("fast_tests")
-        cmd_slow_tests = _build_cmd_for_test_type("slow_tests")
-        cmd_slow_tests = _build_cmd_for_test_type("superslow_tests")
+    elif test_type == "all_marked_tests":
+        # NB: This only runs tests marked with a type.
+        cmd = [
+            _build_cmd_for_test_type("fast_tests"),
+            _build_cmd_for_test_type("slow_tests"),
+            _build_cmd_for_test_type("superslow_tests"),
+        ]
         # TODO(Julia): Figure out whether we are running through ctx or system
         #            and go from there.
         pass
     elif test_type in _SINGLE_TEST_TYPES:
-        cmd = _build_cmd_for_test_type(test_type)
+        cmd = [_build_cmd_for_test_type(test_type)]
     else:
         raise ValueError(f"Invalid test_type={test_type}")
     #
+    # TODO(Julia): Join appropriately.
     return cmd
 
 
 def _select_tests_to_skip(
     test_type: str
 ) -> str:
-    if test_type == "all_tests":
+    if test_type == "all_marked_tests":
         return ""
     if test_type == "fast_tests":
         return "not slow and not superslow"
@@ -2025,7 +2025,7 @@ def _select_tests_to_skip(
 
 
 def _build_run_command_line_for_selected_tests(
-    test_type: str,
+    single_test_type: str,
     skipped_tests: str,
     pytest_opts: str,
     pytest_mark: str,  # TODO(GP): This argument is not used.
@@ -2042,7 +2042,7 @@ def _build_run_command_line_for_selected_tests(
 
     :param skipped_tests: -m option for pytest
     """
-    hdbg.dassert_in(test_type, _SINGLE_TEST_TYPES)
+    hdbg.dassert_in(single_test_type, _SINGLE_TEST_TYPES)
     pytest_opts_tmp = []
     if pytest_opts:
         pytest_opts_tmp.append(pytest_opts)
@@ -2057,7 +2057,7 @@ def _build_run_command_line_for_selected_tests(
     #        "After pytest_mark='%s': file_names=%s", pytest_mark, file_names
     #    )
     #    pytest_opts_tmp.extend(file_names)
-    timeout_in_sec = get_default_param(f"{test_type}_timeout_in_sec")
+    timeout_in_sec = _TEST_TIMEOUTS[f"{single_test_type}_timeout_in_sec"]
     pytest_opts_tmp.append(f"--timeout={timeout_in_sec}")
     if skip_submodules:
         submodule_paths = hgit.get_submodule_paths()
@@ -2079,7 +2079,7 @@ def _build_run_command_line_for_selected_tests(
     pytest_opts = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
     cmd = f"pytest {pytest_opts} {dir_name}"
     if tee_to_file:
-        cmd += f" 2>&1 | tee tmp.pytest.{test_type}.log"
+        cmd += f" 2>&1 | tee tmp.pytest.{single_test_type}.log"
     return cmd
 
 
@@ -2274,6 +2274,38 @@ def run_fast_slow_tests(  # type: ignore
         ctx,
         stage,
         "fast_slow_tests",
+        pytest_opts,
+        pytest_mark,
+        dir_name,
+        skip_submodules,
+        coverage,
+        collect_only,
+        tee_to_file,
+    )
+
+
+@task
+def run_fast_slow_superslow_tests(  # type: ignore
+    ctx,
+    stage=STAGE,
+    pytest_opts="",
+    pytest_mark="",
+    dir_name="",
+    skip_submodules=False,
+    coverage=False,
+    collect_only=False,
+    tee_to_file=False,
+):
+    """
+    Run fast, slow, superslow tests.
+
+    Same params as `invoke run_fast_tests`.
+    """
+    _report_task()
+    _run_tests(
+        ctx,
+        stage,
+        "all_marked_tests",
         pytest_opts,
         pytest_mark,
         dir_name,

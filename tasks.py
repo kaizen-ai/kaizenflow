@@ -54,6 +54,7 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     pytest_failed,
     pytest_failed_freeze_test_list,
     run_blank_tests,
+    run_fast_slow_superslow_tests,
     run_fast_slow_tests,
     run_fast_tests,
     run_slow_tests,
