@@ -46,8 +46,8 @@ class _TestOmsDbHelper(hunitest.TestCase):
         _LOG.info("\n%s", hprint.frame("setUp"))
         super().setUp()
         # TODO(gp): Read the info from env.
-        dbname = "oms_postgres_db_local"
         host = "localhost"
+        dbname = "oms_postgres_db_local"
         port = 5432
         password = "alsdkqoen"
         user = "aljsdalsd"
@@ -73,14 +73,14 @@ class _TestOmsDbHelper(hunitest.TestCase):
             cmd = " ".join(cmd)
             hsysinte.system(cmd, suppress_output=False)
             # Wait for the DB to be available.
-            hsql.wait_db_connection(dbname, port, host)
+            hsql.wait_db_connection(host, dbname, port)
             self.bring_down_db = True
         # Save connection info.
         self.connection = hsql.get_connection(
-            self.dbname,
             host,
-            user,
+            self.dbname,
             port,
+            user,
             password,
             autocommit=True,
         )

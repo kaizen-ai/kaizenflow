@@ -31,8 +31,8 @@ class TestSql1(hunitest.TestCase):
         )
         hsysinte.system(cmd, suppress_output=False)
         # Set DB credentials.
-        self.dbname = "im_postgres_db_local"
         self.host = "localhost"
+        self.dbname = "im_postgres_db_local"
         self.port = 5432
         self.password = "alsdkqoen"
         self.user = "aljsdalsd"
@@ -55,26 +55,26 @@ class TestSql1(hunitest.TestCase):
         Smoke test.
         """
         # TODO(Dan3): change to env
-        hsql.wait_db_connection(self.dbname, self.port, self.host)
+        hsql.wait_db_connection(self.host, self.dbname, self.port)
 
     @pytest.mark.slow()
     def test_db_connection_to_tuple(self) -> None:
         """
         Verify that connection string is correct.
         """
-        hsql.wait_db_connection(self.dbname, self.port, self.host)
+        hsql.wait_db_connection(self.host, self.dbname, self.port)
         self.connection = hsql.get_connection(
-            self.dbname,
             self.host,
-            self.user,
+            self.dbname,
             self.port,
+            self.user,
             self.password,
             autocommit=True,
         )
         actual_details = hsql.db_connection_to_tuple(self.connection)
         expected = {
-            "dbname": self.dbname,
             "host": self.host,
+            "dbname": self.dbname,
             "port": self.port,
             "user": self.user,
             "password": self.password,
@@ -88,10 +88,10 @@ class TestSql1(hunitest.TestCase):
         """
         hsql.wait_db_connection(self.dbname, self.port, self.host)
         self.connection = hsql.get_connection(
-            self.dbname,
             self.host,
-            self.user,
+            self.dbname,
             self.port,
+            self.user,
             self.password,
             autocommit=True,
         )
@@ -112,12 +112,12 @@ class TestSql1(hunitest.TestCase):
         """
         Create database 'test_db_to_remove' and remove it.
         """
-        hsql.wait_db_connection(self.dbname, self.port, self.host)
+        hsql.wait_db_connection(self.host, self.dbname, self.port)
         self.connection = hsql.get_connection(
-            self.dbname,
             self.host,
-            self.user,
+            self.dbname,
             self.port,
+            self.user,
             self.password,
             autocommit=True,
         )
@@ -136,10 +136,10 @@ class TestSql1(hunitest.TestCase):
         """
         hsql.wait_db_connection(self.dbname, self.port, self.host)
         self.connection = hsql.get_connection(
-            self.dbname,
             self.host,
-            self.user,
+            self.dbname,
             self.port,
+            self.user,
             self.password,
             autocommit=True,
         )
@@ -155,10 +155,10 @@ class TestSql1(hunitest.TestCase):
         test_data = self._get_test_data()
         # Try uploading test data.
         self.connection = hsql.get_connection(
-            self.dbname,
             self.host,
-            self.user,
+            self.dbname,
             self.port,
+            self.user,
             self.password,
             autocommit=True,
         )
@@ -177,10 +177,10 @@ class TestSql1(hunitest.TestCase):
         test_data = self._get_test_data()
         # Try uploading test data.
         self.connection = hsql.get_connection(
-            self.dbname,
             self.host,
-            self.user,
+            self.dbname,
             self.port,
+            self.user,
             self.password,
             autocommit=True,
         )
@@ -202,10 +202,10 @@ class TestSql1(hunitest.TestCase):
                     """
         hsql.wait_db_connection(self.dbname, self.port, self.host)
         connection = hsql.get_connection(
-            self.dbname,
             self.host,
-            self.user,
+            self.dbname,
             self.port,
+            self.user,
             self.password,
             autocommit=True,
         )
