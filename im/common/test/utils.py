@@ -21,10 +21,10 @@ class SqlWriterBackendTestCase(hunitest.TestCase):
         self._connection = hsql.get_connection_from_env_vars()
         self._new_db = self._get_test_string()
         # Create database for each test.
-        imcdbcrdb.create_database(
+        imcdbcrdb.create_im_database(
             connection=self._connection,
             new_db=self._new_db,
-            force=True,
+            overwrite=True,
         )
         # Define constant IDs for records across the test.
         self._symbol_id = 10

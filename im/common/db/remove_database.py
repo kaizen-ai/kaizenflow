@@ -58,7 +58,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         connection = hsql.get_connection_from_env_vars()
     else:
         connection = hsql.get_connection_from_string(args.db_connection)
-    hsql.remove_database(connection=connection, db_to_drop=args.db_name)
+    hsql.remove_database(connection=connection, dbname=args.db_name)
 
 
 if __name__ == "__main__":
