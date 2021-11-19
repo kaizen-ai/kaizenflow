@@ -144,21 +144,21 @@ print(total_volume_by_weekdays)
 # %% [markdown]
 # # Compare ATH volumes
 
-# %% [markdown] heading_collapsed=true
+# %% [markdown]
 # ## Functions
 
-# %% hidden=true
+# %%
 def get_initial_df_with_volumes(coins, exchange, is_notional_volume):
     """
     Return DataFrame with the volume of all coins for exchange with initial timestamps
     Parameters: list of coins, exchange name
     """
     result = []
-    loader = imcdalolo.CcxtLoader(
+    loader = imcdalolo.CcxtLoaderFromFile(
         root_dir="s3://alphamatic-data/data", aws_profile="am"
     )
     for coin in coins:
-        df = loader.read_data_from_filesystem(
+        df = loader.read_data(
             exchange_id=exchange, currency_pair=coin, data_type="OHLCV"
         )
         if is_notional_volume:
@@ -192,10 +192,10 @@ def plot_ath_volumes_comparison(df_list):
     plot_df.plot.bar(figsize=(15, 7), logy=True)
 
 
-# %% [markdown] heading_collapsed=true
+# %% [markdown]
 # ## Load the data
 
-# %% hidden=true
+# %%
 # get the list of all coin paires for each exchange
 binance_coins = imv2dauni.get_trade_universe("v01")["CCXT"]["binance"]
 ftx_coins = imv2dauni.get_trade_universe("v01")["CCXT"]["ftx"]
@@ -226,3 +226,5 @@ kucoin_1.name = "kucoin"
 
 # %%
 plot_ath_volumes_comparison(exchange_list)
+
+# %%

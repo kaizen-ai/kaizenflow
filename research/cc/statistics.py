@@ -104,7 +104,7 @@ def get_loader_for_vendor(
     :return: loader instance
     """
     if vendor == "CCXT":
-        loader = imcdalolo.CcxtLoader(
+        loader = imcdalolo.CcxtLoaderFromFile(
             root_dir=config["load"]["data_dir"],
             aws_profile=config["load"]["aws_profile"],
         )

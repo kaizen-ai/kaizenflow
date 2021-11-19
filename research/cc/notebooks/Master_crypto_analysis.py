@@ -93,10 +93,10 @@ print(config)
 
 # %%
 # TODO(Grisha): potentially read data from the db.
-ccxt_loader = imcdalolo.CcxtLoader(
+ccxt_loader = imcdalolo.CcxtLoaderFromFile(
     root_dir=config["load"]["data_dir"], aws_profile=config["load"]["aws_profile"]
 )
-ccxt_data = ccxt_loader.read_data_from_filesystem(
+ccxt_data = ccxt_loader.read_data(
     exchange_id="binance", currency_pair="BTC/USDT", data_type="OHLCV"
 )
 _LOG.info("shape=%s", ccxt_data.shape[0])

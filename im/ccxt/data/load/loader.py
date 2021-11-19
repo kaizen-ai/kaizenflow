@@ -4,6 +4,7 @@ Import as:
 import im.ccxt.data.load.loader as imcdalolo
 """
 
+import abc
 import logging
 import os
 from typing import Optional
@@ -64,7 +65,7 @@ def _get_file_path(
 class CcxtLoader:
     def __init__(self, root_dir: str, aws_profile: Optional[str] = None) -> None:
         """
-        Load CCXT data from different backends, e.g., DB, local or S3
+        Load CCXT data from different backends e.g., DB, local or S3
         filesystem.
 
         :param: root_dir: either a local root path (e.g., "/app/im") or
@@ -90,7 +91,7 @@ class CcxtLoader:
         data_snapshot: Optional[str] = None,
     ) -> pd.DataFrame:
         """
-        Load data from S3 and process it for use downstream.
+        Load data from a filesystem and process it for use downstream.
 
         :param exchange_id: CCXT exchange id, e.g. "binance"
         :param currency_pair: currency pair, e.g. "BTC/USDT"
