@@ -222,7 +222,7 @@ class TestOmsDb1(_TestOmsDbHelper):
         hsql.execute_insert_query(self.connection, row, table_name)
         # Check the content of the table.
         query = f"SELECT * FROM {table_name}"
-        df = hsql.execute_query(self.connection, query)
+        df = hsql.execute_query_to_df(self.connection, query)
         act = hprint.dataframe_to_str(df)
         exp = r"""
            targetlistid   tradedate  instanceid                                                                filename strategyid        timestamp_processed               timestamp_db  target_count  changed_count  unchanged_count  cancel_count  success                                                     reason
@@ -326,5 +326,5 @@ class TestOmsDb2(_TestOmsDbHelper):
         _LOG.debug("insert ... done")
         # Show the state of the DB.
         query = f"SELECT * FROM {table_name}"
-        df = hsql.execute_query(self.connection, query)
+        df = hsql.execute_query_to_df(self.connection, query)
         _LOG.debug("df=\n%s", hprint.dataframe_to_str(df, use_tabulate=False))

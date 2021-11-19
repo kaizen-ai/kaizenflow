@@ -164,7 +164,7 @@ class TestSql1(hunitest.TestCase):
         )
         hsql.execute_insert_query(self.connection, test_data, "test_table")
         # Load data.
-        df = hsql.execute_query(self.connection, "SELECT * FROM test_table")
+        df = hsql.execute_query_to_df(self.connection, "SELECT * FROM test_table")
         actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
 
@@ -186,7 +186,7 @@ class TestSql1(hunitest.TestCase):
         )
         hsql.copy_rows_with_copy_from(self.connection, test_data, "test_table")
         # Load data.
-        df = hsql.execute_query(self.connection, "SELECT * FROM test_table")
+        df = hsql.execute_query_to_df(self.connection, "SELECT * FROM test_table")
         actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
 
