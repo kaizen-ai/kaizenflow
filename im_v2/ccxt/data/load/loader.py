@@ -178,7 +178,7 @@ class AbstractCcxtLoader(abc.ABC):
             # Group data by columns to group by if some of them have multiple
             # unique values and resample data inside each unique group.
             data = data.groupby(cols_to_group_by, group_keys=False).apply(
-                lambda x: hpandas.resample_df(data, "T")
+                lambda x: hpandas.resample_df(x, "T")
             )
         # Fill missing values of columns to group by that might have appeared
         # after resampling.
