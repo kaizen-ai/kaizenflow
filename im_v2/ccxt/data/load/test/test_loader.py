@@ -83,6 +83,7 @@ class TestApplyResamplingTo1Min(hunitest.TestCase):
             "currency_pair": ["BTC/USDT"] * 4 + ["ETH/USDT"] * 4,
             "exchange_id": ["binance"] * 4 + ["kucoin"] * 4,
         }
+        # Input index contains 2 time periods and both have a gap of 2 minutes.
         input_index = [
             pd.Timestamp("2021-01-01T00:00:00-04:00"),
             pd.Timestamp("2021-01-01T00:01:00-04:00"),
@@ -109,6 +110,7 @@ class TestApplyResamplingTo1Min(hunitest.TestCase):
             "currency_pair": ["BTC/USDT"] * 6 + ["ETH/USDT"] * 6,
             "exchange_id": ["binance"] * 6 + ["kucoin"] * 6,
         }
+        # Expected input consists of 2 monotonically increasing time periods.
         exp_index = pd.date_range(
             start=pd.Timestamp("2021-01-01T00:00:00-04:00"),
             periods=6,
