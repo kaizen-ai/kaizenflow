@@ -134,20 +134,14 @@ class AbstractCcxtLoader(abc.ABC):
         data = data.rename({"timestamp": "epoch"}, axis=1)
         # Transform Unix epoch into ET timestamp.
         data["timestamp"] = self._convert_epochs_to_timestamp(data["epoch"])
-        #
+        # Remove full duplicates.
         if self._remove_dups:
-            # Remove full duplicates.
             data = hpandas.drop_duplicates(data, ignore_index=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
-        # TODO(Dan2): CmTask503.
+        # Resample data to 1 minute.
         if self._resample_to_1_min:
-            # Resample to 1 minute.
-            data = hpandas.resample_df(data, "T")
-            # Fill missing exchange id and currency pair values that might
-            # have appeared after resampling.
-            cols_to_fill = ["exchange_id", "currency_pair"]
-            data[cols_to_fill] = data[cols_to_fill].fillna(method="bfill")
+            data = self._apply_resampling_to_1_min(data)
         return data
 
     @staticmethod
@@ -165,6 +159,31 @@ class AbstractCcxtLoader(abc.ABC):
         # Convert to ET tz.
         timestamp_col = timestamp_col.dt.tz_convert(hdateti.get_ET_tz())
         return timestamp_col
+
+    @staticmethod
+    def _apply_resampling_to_1_min(data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Resample data to 1 minute frequency.
+
+        :param data: OHLCV data
+        :return: OHLCV data resampled to 1 minute
+        """
+        # Specify columns to group data by.
+        cols_to_group_by = ["exchange_id", "currency_pair"]
+        if set(data[cols_to_group_by].nunique().values) == {1}:
+            # If all the columns to group by contain only 1 unique value,
+            # resample data directly.
+            data = hpandas.resample_df(data, "T")
+        else:
+            # Group data by columns to group by if some of them have multiple
+            # unique values and resample data inside each unique group.
+            data = data.groupby(cols_to_group_by, group_keys=False).apply(
+                lambda x: hpandas.resample_df(data, "T")
+            )
+        # Fill missing values of columns to group by that might have appeared
+        # after resampling.
+        data[cols_to_group_by] = data[cols_to_group_by].fillna(method="bfill")
+        return data
 
     @staticmethod
     def _apply_ohlcv_transformation(data: pd.DataFrame) -> pd.DataFrame:
