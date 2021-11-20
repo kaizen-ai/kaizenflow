@@ -1,6 +1,7 @@
 import os
 from typing import List
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -92,7 +93,7 @@ class TestApplyResamplingTo1Min(hunitest.TestCase):
             pd.Timestamp("2018-06-01T10:19:00-04:00"),
             pd.Timestamp("2018-06-01T10:20:00-04:00"),
         ]
-        input_df = pd.DataFrame.from_dict(data)
+        input_df = pd.DataFrame.from_dict(input_data)
         input_df.index = input_index
         # Compute actual output.
         actual = abstract_ccxt_loader._apply_resampling_to_1_min(input_df)
@@ -109,10 +110,14 @@ class TestApplyResamplingTo1Min(hunitest.TestCase):
             "exchange_id": ["binance"] * 6 + ["kucoin"] * 6,
         }
         exp_index = pd.date_range(
-            start=pd.Timestamp("2021-01-01T00:00:00-04:00"), periods=6, freq="T"
+            start=pd.Timestamp("2021-01-01T00:00:00-04:00"),
+            periods=6,
+            freq="T",
         ).append(
             pd.date_range(
-                start=pd.Timestamp("2018-06-01T10:15:00-04:00"), periods=6, freq="T"
+                start=pd.Timestamp("2018-06-01T10:15:00-04:00"),
+                periods=6,
+                freq="T",
             )
         )
         expected = pd.DataFrame.from_dict(exp_data)
@@ -120,7 +125,7 @@ class TestApplyResamplingTo1Min(hunitest.TestCase):
         # Check the output values.
         actual_string = hunitest.convert_df_to_json_string(actual)
         expected_string = hunitest.convert_df_to_json_string(expected)
-        self.assert_equal(actual, expected)
+        self.assert_equal(actual_string, expected_string)
 
 
 class TestCcxtLoaderFromFileReadUniverseData(hunitest.TestCase):
