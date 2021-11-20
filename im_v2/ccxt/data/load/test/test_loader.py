@@ -67,19 +67,30 @@ class TestGetFilePath(hunitest.TestCase):
 class TestCcxtLoaderFromFileReadUniverseData(hunitest.TestCase):
     def test1(self) -> None:
         """
-        Test that all files from universe version are being read correctly.
+        Test that all files are being read and filtered correctly.
         """
         # Initialize loader and get actual result.
         ccxt_loader = imcdalolo.CcxtLoaderFromFile(
             root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         actual = ccxt_loader.read_universe_data(
-            universe="small", data_type="OHLCV"
+            universe="small",
+            data_type="OHLCV",
+            start_date=pd.Timestamp("2021-09-01T00:00:00-04:00"),
+            end_date=pd.Timestamp("2021-09-01T00:10:00-04:00"),
         )
-        actual_json = hunitest.convert_df_to_json_string(actual)
-        self.check_string(actual_json)
+        # Check output.
+        expected_length = 20
+        expected_exchange_ids = ["gateio", "kucoin"]
+        expected_currency_pairs = ["SOL/USDT", "XRP/USDT"]
+        self._check_output(
+            actual,
+            expected_length,
+            expected_exchange_ids,
+            expected_currency_pairs,
+        )
 
-    @pytest.mark.slow("18 seconds.")
+    @pytest.mark.slow("20 seconds.")
     def test2(self) -> None:
         """
         Test that data for provided list of tuples is being read correctly.
@@ -96,9 +107,16 @@ class TestCcxtLoaderFromFileReadUniverseData(hunitest.TestCase):
         actual = ccxt_loader.read_universe_data(
             universe=input_universe, data_type="OHLCV"
         )
-        actual_json = hunitest.convert_df_to_json_string(actual)
         # Check output.
-        self.check_string(actual_json)
+        expected_length = 3239746
+        expected_exchange_ids = ["kucoin"]
+        expected_currency_pairs = ["BTC/USDT", "ETH/USDT"]
+        self._check_output(
+            actual,
+            expected_length,
+            expected_exchange_ids,
+            expected_currency_pairs,
+        )
 
     def test3(self) -> None:
         """
