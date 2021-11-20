@@ -48,6 +48,8 @@ class AbstractCcxtLoader(abc.ABC):
         self,
         universe: Union[str, List[imv2dauni.ExchangeCurrencyTuple]],
         data_type: str,
+        start_date: Optional[pd.Timestamp] = None,
+        end_date: Optional[pd.Timestamp] = None,
     ) -> pd.DataFrame:
         """
         Load CCXT data from a source for a specified universe.
@@ -66,6 +68,10 @@ class AbstractCcxtLoader(abc.ABC):
         :param universe: CCXT universe version or a list of exchange-currency
             tuples to load data for
         :param data_type: OHLCV or trade, bid/ask data
+        :param start_date: the earliest date timestamp to load data for,
+            considered in UTC if tz is not specified
+        :param end_date: the latest date timestamp to load data for,
+            considered in UTC if tz is not specified
         :return: processed CCXT data
         """
 
@@ -312,11 +318,12 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
 
-    # TODO(Dan2): CmTask495.
     def read_universe_data(
         self,
         universe: Union[str, List[imv2dauni.ExchangeCurrencyTuple]],
         data_type: str,
+        start_date: Optional[pd.Timestamp] = None,
+        end_date: Optional[pd.Timestamp] = None,
         data_snapshot: Optional[str] = None,
     ) -> pd.DataFrame:
         """
@@ -325,6 +332,10 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
         :param universe: CCXT universe version or a list of exchange-currency
             tuples to load data for
         :param data_type: OHLCV or trade, bid/ask data
+        :param start_date: the earliest date timestamp to load data for,
+            considered in UTC if tz is not specified
+        :param end_date: the latest date timestamp to load data for,
+            considered in UTC if tz is not specified
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
         :return: processed CCXT data
@@ -341,6 +352,8 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
                 exchange_currency_tuple.exchange_id,
                 exchange_currency_tuple.currency_pair,
                 data_type,
+                start_date,
+                end_date,
                 data_snapshot,
             )
             combined_data = combined_data.append(data)
@@ -355,6 +368,8 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
         exchange_id: str,
         currency_pair: str,
         data_type: str,
+        start_date: Optional[pd.Timestamp] = None,
+        end_date: Optional[pd.Timestamp] = None,
         data_snapshot: Optional[str] = None,
     ) -> pd.DataFrame:
         """
@@ -363,6 +378,10 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
         :param exchange_id: CCXT exchange id, e.g. "binance"
         :param currency_pair: currency pair, e.g. "BTC/USDT"
         :param data_type: OHLCV or trade, bid/ask data
+        :param start_date: the earliest date timestamp to load data for,
+            considered in UTC if tz is not specified
+        :param end_date: the latest date timestamp to load data for,
+            considered in UTC if tz is not specified
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
         :return: processed CCXT data
@@ -385,6 +404,13 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
             file_path,
         )
         data = cpanh.read_csv(file_path, **read_csv_kwargs)
+        # Filter by dates if they are provided.
+        if start_date:
+            start_date = hdateti.convert_timestamp_to_unix_epoch(start_date)
+            data = data[data["timestamp"] >= start_date]
+        if end_date:
+            end_date = hdateti.convert_timestamp_to_unix_epoch(end_date)
+            data = data[data["timestamp"] < end_date]
         # Apply transformation to raw data.
         _LOG.info(
             "Processing CCXT data for exchange id='%s', currencies='%s'...",
