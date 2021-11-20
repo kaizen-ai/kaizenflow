@@ -64,6 +64,65 @@ class TestGetFilePath(hunitest.TestCase):
             )
 
 
+class TestApplyResamplingTo1Min(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test that mixed data is resampled correctly.
+        """
+        abstract_ccxt_loader = imcdalolo.AbstractCcxtLoader
+        # Set 2 toy input dataframes with 2 exchange ids and 2 currency pairs.
+        input_dummy_values = [1.0] * 8
+        input_data = {
+            "open": input_dummy_values,
+            "high": input_dummy_values,
+            "low": input_dummy_values,
+            "close": input_dummy_values,
+            "volume": input_dummy_values,
+            "epoch": input_dummy_values,
+            "currency_pair": ["BTC/USDT"] * 4 + ["ETH/USDT"] * 4,
+            "exchange_id": ["binance"] * 4 + ["kucoin"] * 4,
+        }
+        input_index = [
+            pd.Timestamp("2021-01-01T00:00:00-04:00"),
+            pd.Timestamp("2021-01-01T00:01:00-04:00"),
+            pd.Timestamp("2021-01-01T00:04:00-04:00"),
+            pd.Timestamp("2021-01-01T00:05:00-04:00"),
+            pd.Timestamp("2018-06-01T10:15:00-04:00"),
+            pd.Timestamp("2018-06-01T10:16:00-04:00"),
+            pd.Timestamp("2018-06-01T10:19:00-04:00"),
+            pd.Timestamp("2018-06-01T10:20:00-04:00"),
+        ]
+        input_df = pd.DataFrame.from_dict(data)
+        input_df.index = input_index
+        # Compute actual output.
+        actual = abstract_ccxt_loader._apply_resampling_to_1_min(input_df)
+        # Set expected output.
+        exp_dummy_values = [1.0] * 2 + [np.nan] * 2 + [1.0] * 4 + [np.nan] * 2 + [1.0] * 2
+        exp_data = {
+            "open": exp_dummy_values,
+            "high": exp_dummy_values,
+            "low": exp_dummy_values,
+            "close": exp_dummy_values,
+            "volume": exp_dummy_values,
+            "epoch": exp_dummy_values,
+            "currency_pair": ["BTC/USDT"] * 6 + ["ETH/USDT"] * 6,
+            "exchange_id": ["binance"] * 6 + ["kucoin"] * 6,
+        }
+        exp_index = pd.date_range(
+            start=pd.Timestamp("2021-01-01T00:00:00-04:00"), periods=6, freq="T"
+        ).append(
+            pd.date_range(
+                start=pd.Timestamp("2018-06-01T10:15:00-04:00"), periods=6, freq="T"
+            )
+        )
+        expected = pd.DataFrame.from_dict(exp_data)
+        expected.index = exp_index
+        # Check the output values.
+        actual_string = hunitest.convert_df_to_json_string(actual)
+        expected_string = hunitest.convert_df_to_json_string(expected)
+        self.assert_equal(actual, expected)
+
+
 class TestCcxtLoaderFromFileReadUniverseData(hunitest.TestCase):
     def test1(self) -> None:
         """
