@@ -54,7 +54,6 @@ class TestSql1(hunitest.TestCase):
         """
         Smoke test.
         """
-        # TODO(Dan3): change to env
         hsql.wait_db_connection(self.host, self.dbname, self.port)
 
     @pytest.mark.slow()
@@ -86,7 +85,7 @@ class TestSql1(hunitest.TestCase):
         """
         Verify that db is creating.
         """
-        hsql.wait_db_connection(self.dbname, self.port, self.host)
+        hsql.wait_db_connection(self.host, self.dbname, self.port)
         self.connection = hsql.get_connection(
             self.host,
             self.dbname,
@@ -134,7 +133,7 @@ class TestSql1(hunitest.TestCase):
         """
         Test failed assertion for passing db name that does not exist.
         """
-        hsql.wait_db_connection(self.dbname, self.port, self.host)
+        hsql.wait_db_connection(self.host, self.dbname, self.port)
         self.connection = hsql.get_connection(
             self.host,
             self.dbname,
@@ -200,7 +199,7 @@ class TestSql1(hunitest.TestCase):
                     column_2 VARCHAR(255)
                     )
                     """
-        hsql.wait_db_connection(self.dbname, self.port, self.host)
+        hsql.wait_db_connection(self.host, self.dbname, self.port)
         connection = hsql.get_connection(
             self.host,
             self.dbname,

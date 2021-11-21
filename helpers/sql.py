@@ -27,19 +27,17 @@ _LOG = logging.getLogger(__name__)
 # Connection
 # #############################################################################
 
-# Invariant: keep the arguments in the interface in the same order as:
-# host, dbname, port, user, password
-
 # TODO(gp): mypy doesn't like this. Understand why and / or inline.
 DbConnection = psycop.extensions.connection
 
 
+# Invariant: keep the arguments in the interface in the same order as:
+# host, dbname, port, user, password
 DbConnectionInfo = collections.namedtuple(
     "DbConnectionInfo", ["host", "dbname", "port", "user", "password"]
 )
 
 
-# TODO(gp): Return only the connection (CmampTask441).
 def get_connection(
     host: str,
     dbname: str,
@@ -60,7 +58,6 @@ def get_connection(
     return connection
 
 
-# TODO(gp): Return only the connection (CmampTask441).
 def get_connection_from_env_vars() -> Tuple[
     DbConnection, psycop.extensions.cursor
 ]:
@@ -116,10 +113,9 @@ def check_db_connection(
     return conn_exists
 
 
-# TODO(gp): Rearrange as host, dbname (instead of db_name), port.
 def wait_db_connection(
     host: str, 
-    db_name: str, 
+    dbname: str, 
     port: int,  
     timeout_in_secs: int = 10,
 ) -> None:
@@ -129,17 +125,17 @@ def wait_db_connection(
     :param timeout_in_secs: secs before timing out with `RuntimeError`.
     """
     hdbg.dassert_lte(1, timeout_in_secs)
-    _LOG.debug("db_name=%s, port=%s, host=%s", db_name, port, host)
+    _LOG.debug("dbname=%s, port=%s, host=%s", dbname, port, host)
     elapsed_secs = 0
     while True:
         _LOG.info("Waiting for PostgreSQL to become available...")
-        conn_exists = check_db_connection(host, db_name, port)
+        conn_exists = check_db_connection(host, dbname, port)
         if conn_exists:
             _LOG.info("PostgreSQL is available (after %s seconds)", elapsed_secs)
             break
         if elapsed_secs > timeout_in_secs:
             raise RuntimeError(
-                f"Cannot connect to db host={host} db_name={db_name} port={port}"
+                f"Cannot connect to db host={host} dbname={dbname} port={port}"
             )
         elapsed_secs += 1
         time.sleep(1)
@@ -310,8 +306,7 @@ def get_table_names(connection: DbConnection) -> List[str]:
     return tables
 
 
-# TODO(gp): -> get_tables_size
-def get_table_size(
+def get_tables_size(
     connection: DbConnection,
     only_public: bool = True,
     summary: bool = True,
@@ -387,8 +382,7 @@ def head_tables(
     return txt
 
 
-# TODO(gp): -> get_table_columns
-def get_columns(connection: DbConnection, table_name: str) -> List[str]:
+def get_table_columns(connection: DbConnection, table_name: str) -> List[str]:
     """
     Get column names for given table.
     """
@@ -402,8 +396,7 @@ def get_columns(connection: DbConnection, table_name: str) -> List[str]:
     return columns
 
 
-# TODO(gp): -> find_tables_common_columns
-def find_common_columns(
+def find_tables_common_columns(
     connection: DbConnection,
     tables: List[str],
     as_df: bool = False,
