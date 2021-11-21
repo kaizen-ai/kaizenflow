@@ -307,8 +307,7 @@ def get_table_names(connection: DbConnection) -> List[str]:
     return tables
 
 
-# TODO(gp): -> get_tables_size
-def get_table_size(
+def get_tables_size(
     connection: DbConnection,
     only_public: bool = True,
     summary: bool = True,
