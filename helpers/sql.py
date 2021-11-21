@@ -27,13 +27,12 @@ _LOG = logging.getLogger(__name__)
 # Connection
 # #############################################################################
 
-# Invariant: keep the arguments in the interface in the same order as:
-# host, dbname, port, user, password
-
 # TODO(gp): mypy doesn't like this. Understand why and / or inline.
 DbConnection = psycop.extensions.connection
 
 
+# Invariant: keep the arguments in the interface in the same order as:
+# host, dbname, port, user, password
 DbConnectionInfo = collections.namedtuple(
     "DbConnectionInfo", ["host", "dbname", "port", "user", "password"]
 )
