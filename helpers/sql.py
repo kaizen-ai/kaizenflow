@@ -125,17 +125,17 @@ def wait_db_connection(
     :param timeout_in_secs: secs before timing out with `RuntimeError`.
     """
     hdbg.dassert_lte(1, timeout_in_secs)
-    _LOG.debug("db_name=%s, port=%s, host=%s", db_name, port, host)
+    _LOG.debug("dbname=%s, port=%s, host=%s", dbname, port, host)
     elapsed_secs = 0
     while True:
         _LOG.info("Waiting for PostgreSQL to become available...")
-        conn_exists = check_db_connection(host, db_name, port)
+        conn_exists = check_db_connection(host, dbname, port)
         if conn_exists:
             _LOG.info("PostgreSQL is available (after %s seconds)", elapsed_secs)
             break
         if elapsed_secs > timeout_in_secs:
             raise RuntimeError(
-                f"Cannot connect to db host={host} db_name={db_name} port={port}"
+                f"Cannot connect to db host={host} dbname={dbname} port={port}"
             )
         elapsed_secs += 1
         time.sleep(1)
