@@ -383,8 +383,7 @@ def head_tables(
     return txt
 
 
-# TODO(gp): -> get_table_columns
-def get_columns(connection: DbConnection, table_name: str) -> List[str]:
+def get_table_columns(connection: DbConnection, table_name: str) -> List[str]:
     """
     Get column names for given table.
     """
@@ -398,8 +397,7 @@ def get_columns(connection: DbConnection, table_name: str) -> List[str]:
     return columns
 
 
-# TODO(gp): -> find_tables_common_columns
-def find_common_columns(
+def find_tables_common_columns(
     connection: DbConnection,
     tables: List[str],
     as_df: bool = False,
