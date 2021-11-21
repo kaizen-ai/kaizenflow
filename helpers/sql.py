@@ -44,6 +44,8 @@ DbConnectionInfo = collections.namedtuple(
 DbConnection = psycop.extensions.connection
 
 
+# Invariant: keep the arguments in the interface in the same order as:
+# host, dbname, port, user, password
 DbConnectionInfo = collections.namedtuple(
     "DbConnectionInfo", ["host", "dbname", "port", "user", "password"]
 )
