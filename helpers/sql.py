@@ -39,7 +39,6 @@ DbConnectionInfo = collections.namedtuple(
 )
 
 
-# TODO(gp): Return only the connection (CmampTask441).
 def get_connection(
     host: str,
     dbname: str,
@@ -60,7 +59,6 @@ def get_connection(
     return connection
 
 
-# TODO(gp): Return only the connection (CmampTask441).
 def get_connection_from_env_vars() -> Tuple[
     DbConnection, psycop.extensions.cursor
 ]:
@@ -116,10 +114,9 @@ def check_db_connection(
     return conn_exists
 
 
-# TODO(gp): Rearrange as host, dbname (instead of db_name), port.
 def wait_db_connection(
     host: str, 
-    db_name: str, 
+    dbname: str, 
     port: int,  
     timeout_in_secs: int = 10,
 ) -> None:
