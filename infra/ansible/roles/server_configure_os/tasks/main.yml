@@ -4,7 +4,39 @@
 
 - name: Include disks configuration tasks
   include_tasks: disks_configuration.yaml
-  when: "{{ disk_configuration_enabled | bool }}"
+  when: 
+    - disk_configuration_enabled|bool
+
+- name: Disable UFW firewall (rules are covered by AWS security groups)
+  ufw:
+    state: disabled
+
+- name: Comment out AllowUsers/Groups directive from the sshd_config
+  block:
+    - name: Add new user to the sshd list of allowed users
+      lineinfile:
+        regexp: "^AllowUsers .+"
+        path: /etc/ssh/sshd_config
+        state: absent
+
+    - name: Add new user's group to the sshd list of allowed groups
+      lineinfile:
+        regexp: "^AllowGroups .+"
+        path: /etc/ssh/sshd_config
+        state: absent
+
+- name: Modify /etc/bash.bashrc to export TMPDIR var (needed because hardened server has /tmp set to no nosuid, nodev, noexec)
+  blockinfile:
+    path: /etc/bash.bashrc
+    state: present
+    block: |
+      mkdir -p $HOME/tmp
+      export TMPDIR=$HOME/tmp
+
+- name: Add /usr/local/bin to system-wide PATH. (useful for custom installed binaries)
+  copy:
+    dest: /etc/profile.d/custom-path.sh
+    content: 'PATH=$PATH:/usr/local/bin'
 
 - name: Install docker
   include_tasks: docker/docker_main.yaml
@@ -27,22 +59,28 @@
 
 - name: Install PyCharm-Community
   block:
-  - name: Make sure download directory exists
+  - name: Make sure pycharm download directory exists
     file:
       path: "{{ pycharm_downloads_path }}"
       state: directory
 
-  - name: Download tar
+  - name: Download PyCharm tar
     get_url:
       url: "{{ pycharm_download_url }}/pycharm-{{ pycharm_edition }}-{{ pycharm_version }}.tar.gz"
       dest: "{{ pycharm_downloads_path }}/pycharm-{{ pycharm_edition }}-{{ pycharm_version }}.tar.gz"
 
-  - name: Install
+  - name: Install PyCharm from tar
     unarchive:
       src: "{{ pycharm_downloads_path }}/pycharm-{{ pycharm_edition }}-{{ pycharm_version }}.tar.gz"
-      dest: "{{ pycharm_install_prefix }}"
-      creates: "{{ pycharm_install_prefix }}/pycharm-{{ pycharm_edition }}-{{ pycharm_version }}"
+      dest: "{{ pycharm_install_path }}"
+      creates: "{{ pycharm_install_path }}/pycharm-{{ pycharm_edition }}-{{ pycharm_version }}"
       copy: false
+      
+  - name: Create symlink to /usr/local/bin
+    file:
+       src: "{{ pycharm_install_path }}/pycharm-{{ pycharm_edition }}-{{ pycharm_version }}/bin/pycharm.sh"
+       path: /usr/local/bin/pycharm
+       state: link
 
 - name: Install Grafana
   snap:

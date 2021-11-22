@@ -1,4 +1,5 @@
----
+--- 
+
 # Disk configuration
 fstype: ext4
 ebs_data_device_name: "/dev/nvme1n1"
@@ -27,7 +28,7 @@ docker_compose_download_url: "https://github.com/docker/compose/releases/downloa
 # PyCharm
 pycharm_version: 2021.2.3
 pycharm_edition: community
-pycharm_install_prefix: /opt
+pycharm_install_path: /opt
 pycharm_download_url: 'http://download.jetbrains.com/python'
 pycharm_downloads_path: /tmp
 
