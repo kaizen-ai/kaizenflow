@@ -3,6 +3,10 @@
   no_log: true
   include_vars:
     file: secrets.yml
+
+- name: Disable UFW firewall (rules are covered by AWS security groups)
+  ufw:
+    state: disabled
   
 - name: OpenVPN | Install | Ensure the APT cache is up to date
   apt:

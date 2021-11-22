@@ -27,8 +27,13 @@ openvpn_client_p12_passphrase: "{{ openvpn_client_pem_passphrase }}"
 easyrsa_pki_client_cert: "{{ easyrsa_pki_path_certs }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}.crt"
 easyrsa_pki_client_key: "{{ easyrsa_pki_path_keys }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}.key"
 
-vpn_client_export_bundle_dir: /opt/crypto_vpn
+# Password Management
+vpn_client_export_bundle_dir: "/opt/crypto_vpn/{{ openvpn_client_username }}"
+password_directory: "{{ vpn_client_export_bundle_dir }}/user_credentials"
+password_file_path: "{{ password_directory }}/vpn_password.txt"
+pem_passphrase_file_path: "{{ password_directory }}/vpn_pem_passphrase.txt"
 
 gauth_username: gauth
 gauth_group: gauth
 gauth_dir: /etc/openvpn/google-authenticator
+

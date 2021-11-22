@@ -11,3 +11,10 @@ vnc_desktop_y: 720
 
 # mate-desktop config
 disable_window_animations: true
+
+# Password Management
+password_directory: "/opt/crypto_vpn/{{ vnc_user }}/user_credentials"
+password_file_path: "{{ password_directory }}/vnc_password.txt"
+vnc_url_file_path: "{{ password_directory }}/vnc_url.txt"
+# used as a prameter to ansible 'lookup' defines where to store password, password length and which chars are allowed
+password_terms: "{{ password_file_path }} chars=ascii_letters length=8" # vnc allows password of length 6-8

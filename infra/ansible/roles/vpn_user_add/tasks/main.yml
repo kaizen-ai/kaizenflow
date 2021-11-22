@@ -7,7 +7,7 @@
 - name: OpenVPN | Google Authenticator | Create the MFA user on OS
   user:
     name: "{{ openvpn_client_username }}"
-    password: "{{ openvpn_client_password | password_hash('sha512') }}"
+    password: "{{ lookup('password', password_file_path + ' chars=ascii_lowercase,ascii_uppercase,digits') | password_hash('sha512') }}"
     shell: /sbin/nologin
   notify: Restart openvpn  
 
@@ -28,8 +28,8 @@
   expect:
     command: './easyrsa build-client-full "{{ openvpn_client_username }}@{{ openvpn_server_common_name }}" --req-cn "{{ openvpn_client_username }}"'
     responses:
-      'Enter PEM pass phrase:$': "{{ openvpn_client_pem_passphrase }}"
-      'Verifying - Enter PEM pass phrase:$': "{{ openvpn_client_pem_passphrase }}"
+      'Enter PEM pass phrase:$': "{{ lookup('password', pem_passphrase_file_path + ' chars=ascii_lowercase,ascii_uppercase,digits') }}"
+      'Verifying - Enter PEM pass phrase:$': "{{ lookup('password', pem_passphrase_file_path) }}"
       'Enter pass phrase for .*?:$': "{{ easyrsa_ca_password }}"
     chdir: "{{ easyrsa_dir }}"
     creates: "{{ easyrsa_pki_client_key }}"
@@ -109,7 +109,7 @@
   openssl_pkcs12:
     action: export
     passphrase: "{{ openvpn_client_p12_passphrase }}"
-    privatekey_passphrase: "{{ openvpn_client_pem_passphrase }}"
+    privatekey_passphrase: "{{ lookup('password', pem_passphrase_file_path) }}"
     path: "{{ openvpn_path_ovpn }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}.p12"
     friendly_name: "{{ openvpn_client_username }}"
     certificate_path: "{{ easyrsa_pki_client_cert }}"

@@ -15,7 +15,7 @@
     - name: Enable reduced-resources setting
       shell: dbus-launch gsettings set org.mate.Marco.general reduced-resources true
 
-    - name: Enable reduced-resources setting
+    - name: Disable enable-animations setting
       shell: dbus-launch gsettings set org.gnome.desktop.interface enable-animations false
   when: 
     - disable_window_animations|bool  
@@ -26,7 +26,7 @@
     path: "{{ user_home }}/.vnc/"
     state: directory
 
-- name: "Add permissions to /tmp to user (prevents error in vncserver)"
+- name: "Add read/write permissions to /tmp to other (prevents errors in vncserver)"
   file: 
     path: "/tmp"
     mode: o+rw
@@ -34,7 +34,7 @@
 - name: Set VNC password
   become_user: "{{ vnc_user }}"
   shell:
-    cmd: set -o pipefail ; printf "{{ vnc_password }}\n{{ vnc_password }}\n" | vncpasswd
+    cmd: set -o pipefail ; printf "{{ lookup('password', password_terms) }}\n{{ lookup('password', password_terms) }}\n" | vncpasswd
     creates: "{{ user_home }}/.vnc/passwd"
     executable: /bin/bash
 
@@ -75,3 +75,10 @@
 
 - debug:
     msg: "VNC_desktop_number is: {{ vnc_desktop_number }}"
+
+- name: Save VNC URL info 
+  local_action:
+    module: copy
+    dest: "{{ vnc_url_file_path }}"
+    content: "{{ ansible_default_ipv4.address }}:{{ vnc_desktop_number|int + 5900 }}"
+    force: yes
