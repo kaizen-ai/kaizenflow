@@ -7,7 +7,7 @@ import pytest
 import helpers.s3 as hs3
 import helpers.unit_test as hunitest
 import im_v2.ccxt.data.load.loader as imcdalolo
-import im_v2.data.universe as imv2dauni
+import im_v2.common.universe.universe as imvcounun
 
 _AM_S3_ROOT_DIR = os.path.join(hs3.get_path(), "data")
 
@@ -86,8 +86,8 @@ class TestCcxtLoaderFromFileReadUniverseData(hunitest.TestCase):
         """
         # Set input universe.
         input_universe = [
-            imv2dauni.ExchangeCurrencyTuple("kucoin", "BTC/USDT"),
-            imv2dauni.ExchangeCurrencyTuple("kucoin", "ETH/USDT"),
+            imvcounun.ExchangeCurrencyTuple("kucoin", "BTC/USDT"),
+            imvcounun.ExchangeCurrencyTuple("kucoin", "ETH/USDT"),
         ]
         # Initialize loader and get actual result.
         ccxt_loader = imcdalolo.CcxtLoaderFromFile(

@@ -17,13 +17,13 @@ import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
 import im.ccxt.data.load.loader as imcdalolo
 import im_v2.cryptodatadownload.data.load.loader as icdalolo
-import im_v2.data.universe as imv2dauni
+import im_v2.common.universe.universe as imvcounun
 
 _LOG = logging.getLogger(__name__)
 
 
 def compute_stats_for_universe(
-    vendor_universe: List[imv2dauni.ExchangeCurrencyTuple],
+    vendor_universe: List[imvcounun.ExchangeCurrencyTuple],
     config: cconconf.Config,
     stats_func: Callable,
 ) -> pd.DataFrame:
@@ -250,7 +250,7 @@ def find_longest_not_nan_sequence(
 
 
 def get_universe_price_data(
-    vendor_universe: List[imv2dauni.ExchangeCurrencyTuple],
+    vendor_universe: List[imvcounun.ExchangeCurrencyTuple],
     config: cconconf.Config,
 ) -> pd.DataFrame:
     """

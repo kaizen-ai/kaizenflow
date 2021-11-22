@@ -26,7 +26,7 @@ import helpers.dbg as hdbg
 import helpers.io_ as hio
 import helpers.parser as hparser
 import im_v2.ccxt.data.extract.exchange_class as imcdeexcl
-import im_v2.data.universe as imdatuniv
+import im_v2.common.universe.universe as imvcounun
 
 _LOG = logging.getLogger(__name__)
 
@@ -105,9 +105,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
         end_datetime = pd.Timestamp(args.end_datetime)
     # Load trading universe.
     if args.universe == "latest":
-        trade_universe = imdatuniv.get_trade_universe()["CCXT"]
+        trade_universe = imvcounun.get_trade_universe()["CCXT"]
     else:
-        trade_universe = imdatuniv.get_trade_universe(args.universe)["CCXT"]
+        trade_universe = imvcounun.get_trade_universe(args.universe)["CCXT"]
     _LOG.info("Getting data for exchanges %s", ", ".join(trade_universe.keys()))
     for exchange_id in trade_universe:
         # Initialize the exchange class.
