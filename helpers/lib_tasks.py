@@ -1340,9 +1340,9 @@ def docker_cmd(  # type: ignore
 
 
 def _get_docker_jupyter_cmd(
+    base_image: str,
     stage: str,
     version: str,
-    base_image: str,
     port: int,
     self_test: bool,
     print_docker_config: bool = False,
