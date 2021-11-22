@@ -983,12 +983,33 @@ def git_stash_apply(mode: str, log_level: int = logging.DEBUG) -> None:
     hsysinte.system(cmd, suppress_output=False, log_level=log_level)
 
 
+# TODO(gp): Consider using this everywhere. Maybe it can simplify handling issues
+#  stemming from the super-module / sub-module repo.
+def _get_git_cmd(super_module: bool) -> str:
+    """
+    Build the first part of a Git command line.
+    """
+    cmd = []
+    cmd.append("git")
+    client_root = get_client_root(super_module=super_module)
+    # Set the path to the repository (".git" directory), avoiding Git to search for
+    # it (from https://git-scm.com/docs/git)
+    cmd.append(f"--git-dir='{client_root}/.git'")
+    # Set the path to the working tree.
+    cmd.append(f"--work-tree='{client_root}'")
+    cmd = " ".join(cmd)
+    return cmd
+
+
 def git_tag(
     tag_name: str, super_module: bool = True, log_level: int = logging.DEBUG
 ) -> None:
+    """
+    Tag the Git tree with `tag_name` without pushing the tag to the remote.
+    """
     _LOG.debug("# Tagging current commit ...")
-    client_root = get_client_root(super_module=super_module)
-    cmd = f"git --git-dir='{client_root}/.git' --work-tree='{client_root}' tag -f {tag_name}"
+    git_cmd = _get_git_cmd(super_module)
+    cmd = f"{git_cmd} tag -f {tag_name}"
     _ = hsysinte.system(cmd, suppress_output=False, log_level=log_level)
 
 
@@ -998,9 +1019,12 @@ def git_push_tag(
     super_module: bool = True,
     log_level: int = logging.DEBUG,
 ) -> None:
+    """
+    Push the tag `tag_name` to the given remote.
+    """
     _LOG.debug("# Pushing current commit ...")
-    client_root = get_client_root(super_module=super_module)
-    cmd = f"git --git-dir='{client_root}/.git' --work-tree='{client_root}' push {remote} {tag_name}"
+    git_cmd = _get_git_cmd(super_module)
+    cmd = f"{git_cmd} push {remote} {tag_name}"
     _ = hsysinte.system(cmd, suppress_output=False, log_level=log_level)
 
 
