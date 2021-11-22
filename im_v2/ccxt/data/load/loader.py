@@ -25,9 +25,14 @@ _LOG = logging.getLogger(__name__)
 _LATEST_DATA_SNAPSHOT = "20210924"
 
 
+# TODO(Grisha): `AbstractCcxtLoader(abc.ABC)` -> `AbstractCcxtLoader(AbstractImClient)`.
 class AbstractCcxtLoader(abc.ABC):
+    # TODO(Grisha): add methods `read_data` and `_read_data`, see specs.
+    # TODO(Grisha): add method `get_universe` to load `CCXT` universe, it will
+    #   use the function(s) from `universe.py`
     def __init__(
         self,
+        # TODO(Grisha): `remove_dups` -> `drop_duplicates`.
         remove_dups: bool = True,
         resample_to_1_min: bool = True,
     ) -> None:
@@ -44,9 +49,12 @@ class AbstractCcxtLoader(abc.ABC):
         self._data_types = ["ohlcv"]
 
     @abc.abstractmethod
+    # TODO(Grisha): this will become `read_data` in `MultipleSymbolsClient`.
     def read_universe_data(
         self,
+        # TODO(Grisha): `universe` -> `full_symbols`.
         universe: Union[str, List[imvcounun.ExchangeCurrencyTuple]],
+        # TODO(Grisha): TBD: add param `full_symbol_col_name`.
         data_type: str,
     ) -> pd.DataFrame:
         """
@@ -69,6 +77,7 @@ class AbstractCcxtLoader(abc.ABC):
         :return: processed CCXT data
         """
 
+    # TODO(Grisha): `transform` -> `normalize`, same everywhere.
     def transform(self, data: pd.DataFrame, data_type: str) -> pd.DataFrame:
         """
         Transform CCXT data loaded from DB or a filesystem.
@@ -134,13 +143,14 @@ class AbstractCcxtLoader(abc.ABC):
         data = data.rename({"timestamp": "epoch"}, axis=1)
         # Transform Unix epoch into ET timestamp.
         data["timestamp"] = self._convert_epochs_to_timestamp(data["epoch"])
-        #
+        # TODO(Grisha): move `remove_dups` to `read_data`.
         if self._remove_dups:
             # Remove full duplicates.
             data = hpandas.drop_duplicates(data, ignore_index=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
         # TODO(Dan2): CmTask503.
+        # TODO(Grisha): move `resample_to_1_min` to `read_data`.
         if self._resample_to_1_min:
             # Resample to 1 minute.
             data = hpandas.resample_df(data, "T")
@@ -221,11 +231,15 @@ class CcxtLoaderFromDb(AbstractCcxtLoader):
         self._connection = connection
 
     # TODO(Dan2): CmTask502.
+    # TODO(Grisha): replace with `read_data` which does `select * from table where symbol = %s`, i.e.
+    #   read only one `full_symbol` in this class.
     def read_universe_data(
         self,
         universe: Union[str, List[imvcounun.ExchangeCurrencyTuple]],
         data_type: str,
+        # TODO(Grisha): remove `table_name` param.
         table_name: Optional[str] = None,
+        # TODO(Grisha): `start/end_date` -> `start/end_ts`, same everywhere.
         start_date: Optional[pd.Timestamp] = None,
         end_date: Optional[pd.Timestamp] = None,
         **read_sql_kwargs: Dict[str, Any],
@@ -313,6 +327,7 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
             self._s3fs = hs3.get_s3fs(aws_profile)
 
     # TODO(Dan2): CmTask495.
+    # TODO(Grisha): re-use in `MultipleSymbolsClient`, remove from here.
     def read_universe_data(
         self,
         universe: Union[str, List[imvcounun.ExchangeCurrencyTuple]],
@@ -352,6 +367,7 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
 
     def read_data(
         self,
+        # TODO(Grisha): TBD we can merge `exchange_id`, `currency_pair` in `full_symbol` in `AbstractCcxtLoader`.
         exchange_id: str,
         currency_pair: str,
         data_type: str,
