@@ -34,7 +34,7 @@ import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprint
 import helpers.s3 as hs3
-import im_v2.data.universe as imv2dauni
+import im_v2.common.universe.universe as imvcounun
 import research_amp.cc.statistics as rccstat
 
 # %%
@@ -76,7 +76,7 @@ print(config)
 # # Get price data for a given universe
 
 # %%
-vendor_universe = imv2dauni.get_vendor_universe_as_tuples(
+vendor_universe = imvcounun.get_vendor_universe_as_tuples(
     config["data"]["universe_version"], config["data"]["vendor"]
 )
 vendor_universe
