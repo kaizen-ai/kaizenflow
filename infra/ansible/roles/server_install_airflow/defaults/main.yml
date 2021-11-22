@@ -1,7 +1,12 @@
 ---
 # folder where airflow compose will reside
-airflow_folder: /home/airflow
+airflow_project_folder: /home/airflow
 
 # Docker Compose from bitnami
 airflow_compose_url: https://raw.githubusercontent.com/bitnami/bitnami-docker-airflow/master/docker-compose.yml
 
+# Env variables for airflow customization 
+# Exhaustive list at https://github.com/bitnami/bitnami-docker-airflow#environment-variables
+
+AIRFLOW_USERNAME: user # Airflow application username.
+AIRFLOW_PASSWORD: bitnami # Airflow application password. 

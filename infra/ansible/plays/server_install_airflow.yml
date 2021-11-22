@@ -1,4 +1,4 @@
 - hosts: all
   become: yes
   roles:
-    - role: roles/server_install_aiflow
+    - { role: roles/server_install_airflow }
