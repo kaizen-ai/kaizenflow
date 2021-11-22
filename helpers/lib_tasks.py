@@ -1471,21 +1471,22 @@ def _to_abs_path(filename: str) -> str:
     return filename
 
 
-# Use Docker buildkit or not.
-# DOCKER_BUILDKIT = 1
-DOCKER_BUILDKIT = 0
-
-
-# DEV image flow:
-# - A "local" image (which is a release candidate for the DEV image) is built
+# ====================================
+# DEV image flow
+# ====================================
+# - A "local" image (which is a release candidate for the DEV image) is built with:
 #   ```
 #   > docker_build_local_image
 #   ```
-#   This creates the image `dev_tools:local`
-# - A qualification process (e.g., running all tests) is performed on the "local"
-#   image (e.g., through GitHub actions)
-# - If qualification is passed, it becomes `dev`.
+#   This creates the local image `dev_tools:local.saggese-1.0.0`
+# - A qualification process (e.g., running all unit tests and the QA tests) is
+#   performed on the "local" image (e.g., locally or through GitHub actions)
+# - If the qualification process is passed, the image is released as `dev` on ECR
 
+
+# Use Docker buildkit or not.
+# DOCKER_BUILDKIT = 1
+DOCKER_BUILDKIT = 0
 
 # For base_image, we use "" as default instead None since pyinvoke can only infer
 # a single type.
@@ -1557,17 +1558,18 @@ def docker_tag_local_image_as_dev(  # type: ignore
     """
     _report_task()
     _dassert_is_version_valid(version)
-    # Tag local version as versioned dev (e.g., `dev-1.0.0`).
+    # Tag local image as versioned dev image (e.g., `dev-1.0.0`).
+    # TODO(gp, vitalii): Is version missing here?
+    image_versioned_local = get_image(base_image, "local")
     image_versioned_dev = get_image(base_image, "dev", version)
     cmd = f"docker tag {image_versioned_local} {image_versioned_dev}"
     _run(ctx, cmd)
-    # Tag local version as `dev`.
-    # TODO(gp, vitalii): Is version missing here?
-    image_versioned_local = get_image(base_image, "local")
+    # Tag local image as dev image.
     image_dev = get_image(base_image, "dev")
     cmd = f"docker tag {image_versioned_local} {image_dev}"
     _run(ctx, cmd)
-    #
+    # Tag the Git repo with the tag corresponding to the image, e.g., `amp-1.0.0`.
+    # TODO(gp): Should we add also the stage in the same format `amp:dev-1.0.0`?
     tag_name = get_git_tag(version)
     hgit.git_tag(tag_name)
 
@@ -1590,15 +1592,15 @@ def docker_push_dev_image(  # type: ignore
     _dassert_is_version_valid(version)
     #
     docker_login(ctx)
-    #
-    image_dev = get_image(base_image, "dev")
-    cmd = f"docker push {image_dev}"
-    _run(ctx, cmd, pty=True)
-    # Push versioned tag.
+    # Push Docker versioned tag.
     image_versioned_dev = get_image(base_image, "dev", version)
     cmd = f"docker push {image_versioned_dev}"
     _run(ctx, cmd, pty=True)
-    #
+    # Push Docker tag.
+    image_dev = get_image(base_image, "dev")
+    cmd = f"docker push {image_dev}"
+    _run(ctx, cmd, pty=True)
+    # Push Git tag.
     tag_name = get_git_tag(version)
     hgit.git_push_tag(tag_name)
 
@@ -1607,6 +1609,8 @@ def docker_push_dev_image(  # type: ignore
 def docker_release_dev_image(  # type: ignore
     ctx,
     cache=True,
+    # TODO(gp, vitalii): version should always be specified here. Remove default
+    #  and move this param first.
     version="",
     skip_tests=False,
     fast_tests=True,
@@ -1623,10 +1627,11 @@ def docker_release_dev_image(  # type: ignore
     running the tests, but not necessarily pushing.
 
     Phases:
-    - Build local image
-    - Run the tests
-    - Mark local as dev image
-    - Push dev image to the repo
+    1) Build local image
+    2) Run the unit tests (e.g., fast, slow, superslow) on the local image
+    3) Mark local as dev image
+    4) Run the QA tests on the dev image
+    5) Push dev image to the repo
 
     :param cache: use the cache
     :param version: version to tag the image and code with
@@ -1660,15 +1665,19 @@ def docker_release_dev_image(  # type: ignore
         run_slow_tests(ctx, stage=stage)
     if superslow_tests:
         run_superslow_tests(ctx, stage=stage)
-    # 3) Run end-to-end test.
+    # 3) Promote the "local" image to "dev".
+    docker_tag_local_image_as_dev(ctx)
+    # 4) Run QA tests for the (local version) of the dev image.
+    # TODO(vitalii): end_to_end -> qa
     if end_to_end_tests:
         end_to_end_test_fn = get_default_param("END_TO_END_TEST_FN")
+        # TODO(vitalii): stage="dev", we want to run the tests on exactly what we
+        #  are releasing.
         if not end_to_end_test_fn(ctx, stage=stage):
-            _LOG.error("End-to-end test has failed")
-            return
-    # 4) Promote the "local" image to "dev".
-    docker_tag_local_image_as_dev(ctx)
-    # 5) Push the "local" image to ECR.
+            msg = "End-to-end test has failed"
+            _LOG.error(msg)
+            raise RuntimeError(msg)
+    # 5) Push the "dev" image to ECR.
     if push_to_repo:
         docker_push_dev_image(ctx)
     else:
@@ -1678,7 +1687,9 @@ def docker_release_dev_image(  # type: ignore
     _LOG.info("==> SUCCESS <==")
 
 
+# ###################################
 # PROD image flow:
+# ###################################
 # - PROD image has no release candidate
 # - Start from a DEV image already built and qualified
 # - The PROD image is created from the DEV image by copying the code inside the
