@@ -23,6 +23,7 @@ _LOG = logging.getLogger(__name__)
 
 # Latest historical data snapshot.
 _LATEST_DATA_SNAPSHOT = "20210924"
+# TODO(Grisha): specify `FullSymbol = str`.
 
 
 # TODO(Grisha): `AbstractCcxtLoader(abc.ABC)` -> `AbstractCcxtLoader(AbstractImClient)`.
@@ -30,6 +31,7 @@ class AbstractCcxtLoader(abc.ABC):
     # TODO(Grisha): add methods `read_data` and `_read_data`, see specs.
     # TODO(Grisha): add method `get_universe` to load `CCXT` universe, it will
     #   use the function(s) from `universe.py`
+    # TODO(Grisha): add methods `get_start(end)_ts_available`.
     def __init__(
         self,
         # TODO(Grisha): `remove_dups` -> `drop_duplicates`.
@@ -135,6 +137,7 @@ class AbstractCcxtLoader(abc.ABC):
         :param currency_pair: currency pair, e.g. "BTC/USDT"
         :return: transformed CCXT data
         """
+        # TODO(Grisha): here we can `full_symbol` column, i.e. `full_symbol = exchange_id::currency_pair`.
         # Verify that the timestamp data is provided in ms.
         hdbg.dassert_container_type(
             data["timestamp"], container_type=None, elem_type=int
