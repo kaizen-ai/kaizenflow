@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.data.universe as imv2dauni
+import im_v2.common.universe.universe as imvcounun
 """
 
 import collections
