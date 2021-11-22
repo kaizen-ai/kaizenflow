@@ -1516,7 +1516,7 @@ def docker_build_local_image(  # type: ignore
         cmd = "cd devops/docker_build; poetry lock -v"
         _run(ctx, cmd)
     #
-    image_local = get_image(base_image, "local", version)
+    image_local = get_image(base_image, "local")
     #
     _dassert_is_image_name_valid(image_local)
     #
@@ -1611,6 +1611,7 @@ def docker_release_dev_image(  # type: ignore
     ctx,
     version,
     cache=True,
+    version="",
     skip_tests=False,
     fast_tests=True,
     slow_tests=True,
@@ -1618,7 +1619,6 @@ def docker_release_dev_image(  # type: ignore
     qa_tests=True,
     push_to_repo=True,
     update_poetry=False,
-    version="",
 ):
     """
     (ONLY CI/CD) Build, test, and release to ECR the latest "dev" image.
@@ -1635,6 +1635,7 @@ def docker_release_dev_image(  # type: ignore
 
     :param version: version to tag the image and code with
     :param cache: use the cache
+    :param version: version to tag the image and code with
     :param skip_tests: skip all the tests and release the dev image
     :param fast_tests: run fast tests, unless all tests skipped
     :param slow_tests: run slow tests, unless all tests skipped
@@ -1642,7 +1643,6 @@ def docker_release_dev_image(  # type: ignore
     :param qa_tests: run end-to-end linter tests, unless all tests skipped
     :param push_to_repo: push the image to the repo_short_name
     :param update_poetry: update package dependencies using poetry
-    :param version: version to tag the image and code with
     """
     _report_task()
     # 1) Build "local" image.
@@ -1777,12 +1777,12 @@ def docker_release_prod_image(  # type: ignore
     ctx,
     version,
     cache=True,
+    version="",
     skip_tests=False,
     fast_tests=True,
     slow_tests=True,
     superslow_tests=False,
     push_to_repo=True,
-    version="",
 ):
     """
     (ONLY CI/CD) Build, test, and release to ECR the prod image.
@@ -1822,7 +1822,7 @@ def docker_release_prod_image(  # type: ignore
 
 
 @task
-def docker_release_all(ctx, version):  # type: ignore
+def docker_release_all(ctx, version=""):  # type: ignore
     """
     (ONLY CI/CD) Release both dev and prod image to ECR.
 
@@ -2237,7 +2237,6 @@ def run_fast_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
-    version="",
 ):
     """
     Run fast tests.
