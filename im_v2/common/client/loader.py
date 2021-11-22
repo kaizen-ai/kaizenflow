@@ -9,7 +9,6 @@ import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 
-# Exchange::Symbol, e.g. `binance::BTC_USDT`.
 FullSymbol = str
 
 
@@ -27,7 +26,24 @@ class AbstractImClient(abc.ABC):
         end_ts: Optional[pd.Timestamp] = None,
         **kwargs: Any,
     ) -> pd.DataFrame:
-        
+        """
+        Read and process data for a single `FullSymbol` in [start_ts, end_ts),
+        e.g. currency pair from a single exchange.
+
+        Data processing includes:
+            - normalization
+            - dropping duplicates
+            - resampling to 1 minute
+            - validity verification
+
+        :param full_symbol: `exchange::symbol`, e.g. `binance::BTC_USDT`
+        :param normalize: transform data, e.g. rename columns, convert data types
+        :param drop_duplicates: whether to drop full duplicates or not
+        :param resample_to_1_min: whether to resample to 1 min or not
+        :param start_ts: the earliest date timestamp to load data for
+        :param end_ts: the latest date timestamp to load data for
+        :return: data for a single `FullSymbol` in [start_ts, end_ts)
+        """
         data = self._read_data(
             full_symbol, start_ts=start_ts, end_ts=end_ts, **kwargs
         )
@@ -50,18 +66,40 @@ class AbstractImClient(abc.ABC):
         end_ts: Optional[pd.Timestamp] = None,
         **kwargs: Any,
     ) -> pd.DataFrame:
-        print(0)
+        """
+        Read data for a single `FullSymbol` in [start_ts, end_ts), e.g. currency pair from a single exchange.
 
+        :param full_symbol: `exchange::symbol`, e.g. `binance::BTC_USDT`
+        :param start_ts: the earliest date timestamp to load data for
+        :param end_ts: the latest date timestamp to load data for
+        :return: data for a single `FullSymbol` in [start_ts, end_ts)
+        """
+
+    @staticmethod
     @abc.abstractmethod
-    def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        print(0)
+    def _normalize_data(df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Transform data, e.g. rename columns, convert data types.
+
+        :param df: raw data
+        :return: normalized data
+        """
 
     @staticmethod
     def _dassert_is_valid(df: pd.DataFrame) -> None:
+        """
+        Verify that data is valid.
 
+        Sanity checks include:
+            - index is `pd.DatetimeIndex`
+            - index is monotonic increasing/decreasing
+            - index has timezone "US/Eastern"
+            - data has no duplicates
+        """
         hpandas.dassert_index_is_datetime(df)
         hpandas.dassert_monotonic_index(df)
         # Verify that timezone info is correct.
+        # TODO(Grisha): converge on the tz `US/Eastern` vs `UTC`.
         expected_tz = "US/Eastern"
         hdbg.dassert_eq(
             df.index.tzinfo,
