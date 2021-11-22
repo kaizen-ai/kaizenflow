@@ -669,7 +669,6 @@ class Test_build_run_command_line1(hunitest.TestCase):
         Basic run fast tests.
         """
         pytest_opts = ""
-        pytest_mark = ""
         skip_submodules = False
         coverage = False
         collect_only = False
@@ -678,12 +677,10 @@ class Test_build_run_command_line1(hunitest.TestCase):
         skipped_tests = "not slow and not superslow"
         act = hlibtask._build_run_command_line(
             pytest_opts,
-            pytest_mark,
             skip_submodules,
             coverage,
             collect_only,
             tee_to_file,
-            #
             skipped_tests,
         )
         exp = 'pytest -m "not slow and not superslow" .'
@@ -695,7 +692,6 @@ class Test_build_run_command_line1(hunitest.TestCase):
         """
 
         pytest_opts = ""
-        pytest_mark = ""
         skip_submodules = False
         coverage = True
         collect_only = True
@@ -704,12 +700,10 @@ class Test_build_run_command_line1(hunitest.TestCase):
         skipped_tests = "not slow and not superslow"
         act = hlibtask._build_run_command_line(
             pytest_opts,
-            pytest_mark,
             skip_submodules,
             coverage,
             collect_only,
             tee_to_file,
-            #
             skipped_tests,
         )
         exp = (
@@ -760,8 +754,6 @@ class Test_build_run_command_line1(hunitest.TestCase):
         skipped_tests = ""
         act = hlibtask._build_run_command_line(
             pytest_opts,
-            pytest_mark,
-            dir_name,
             skip_submodules,
             coverage,
             collect_only,
@@ -788,12 +780,10 @@ class Test_build_run_command_line1(hunitest.TestCase):
         skipped_tests = "not slow and not superslow"
         act = hlibtask._build_run_command_line(
             pytest_opts,
-            pytest_mark,
             skip_submodules,
             coverage,
             collect_only,
             tee_to_file,
-            #
             skipped_tests,
         )
         exp = 'pytest -m "not slow and not superslow" . 2>&1 | tee tmp.pytest.log'
