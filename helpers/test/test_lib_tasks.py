@@ -48,7 +48,9 @@ class _LibTasksTestCase(hunitest.TestCase):
         hlibtask.reset_default_params()
         super().tearDown()
 
+
 # #############################################################################
+
 
 def _build_mock_context_returning_ok() -> invoke.MockContext:
     """
@@ -103,14 +105,22 @@ def _gh_login() -> None:
         _LOG.warning("Using env var '%s' to log in GitHub", env_var)
         # For debugging only (see AmpTask1864).
         if False:
+
             def _cmd(cmd):
-                hsysinte.system(cmd, suppress_output=False, log_level="echo",
-                        abort_on_error=False)
-            for cmd in ["ls -l $HOME/.config",
+                hsysinte.system(
+                    cmd,
+                    suppress_output=False,
+                    log_level="echo",
+                    abort_on_error=False,
+                )
+
+            for cmd in [
+                "ls -l $HOME/.config",
                 "ls -l $HOME/.config/gh",
                 "ls -l $HOME/.config/gh/config.yml",
                 "touch $HOME/.config/gh/config.yml",
-                "ls -l $HOME/.config/gh/config.yml"]:
+                "ls -l $HOME/.config/gh/config.yml",
+            ]:
                 _cmd(cmd)
         cmd = "echo $GH_ACTION_ACCESS_TOKEN | gh auth login --with-token"
         hsysinte.system(cmd)
@@ -120,7 +130,6 @@ def _gh_login() -> None:
 
 
 class TestGhLogin1(hunitest.TestCase):
-
     def test_gh_login(self) -> None:
         _gh_login()
 
@@ -131,6 +140,7 @@ class TestGhLogin1(hunitest.TestCase):
 # TODO(gp): We should group the tests by what is tested and not how it's
 # tested. E.g. TestDryRunTasks1::test_print_setup and
 # TestDryRunTasks2::test_print_setup should go together in a class.
+
 
 class TestDryRunTasks1(hunitest.TestCase):
     """
@@ -157,7 +167,7 @@ class TestDryRunTasks1(hunitest.TestCase):
         target = "git_clean"
         self._dry_run(target)
 
-    # ################################################################################
+    # #########################################################################
     # TODO(gp): -> TestDockerCommands1
 
     @pytest.mark.skipif(
@@ -195,7 +205,7 @@ class TestDryRunTasks1(hunitest.TestCase):
         target = "docker_kill --all"
         self._dry_run(target)
 
-    # ################################################################################
+    # #########################################################################
 
     def _dry_run(self, target: str, dry_run: bool = True) -> None:
         """
@@ -241,7 +251,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "git_clean(ctx, dry_run=False)"
         self._check_output(target)
 
-    # ################################################################################
+    # #########################################################################
 
     def test_docker_images_ls_repo(self) -> None:
         target = "docker_images_ls_repo(ctx)"
@@ -279,7 +289,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "docker_stats(ctx)"
         self._check_output(target)
 
-    # ################################################################################
+    # #########################################################################
     # TODO(gp): -> TestGhCommands1
 
     def test_gh_create_pr1(self) -> None:
@@ -315,7 +325,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     #     target = "gh_workflow_run(ctx)"
     #     self._check_output(target)
 
-    # ################################################################################
+    # #########################################################################
     # TODO(gp): -> TestGitCommands1
 
     def test_git_branch_files(self) -> None:
@@ -356,7 +366,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "git_merge_master(ctx)"
         self._check_output(target)
 
-    # ################################################################################
+    # #########################################################################
     # TODO(gp): -> TestLintCommands1
 
     @pytest.mark.skip(
@@ -744,7 +754,6 @@ class Test_build_run_command_line1(hunitest.TestCase):
         hunitest.create_test_dir(dir_name, incremental, file_dict)
         #
         pytest_opts = ""
-        pytest_mark = "no_container"
         dir_name = scratch_space
         skip_submodules = True
         coverage = False
@@ -771,7 +780,6 @@ class Test_build_run_command_line1(hunitest.TestCase):
         Basic run fast tests tee-ing to a file.
         """
         pytest_opts = ""
-        pytest_mark = ""
         skip_submodules = False
         coverage = False
         collect_only = False
