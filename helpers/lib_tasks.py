@@ -1063,10 +1063,7 @@ def _get_amp_docker_compose_path() -> Optional[str]:
     return docker_compose_path
 
 
-_INTERNET_ADDRESS_RE = r"([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
-_IMAGE_BASE_NAME_RE = r"[a-z0-9_-]+"
-_IMAGE_STAGE_RE = r"[a-z0-9_-]+"
-_IMAGE_USER_RE = r"[a-z0-9_-]+"
+
 _IMAGE_VERSION_RE = r"\d+\.\d+\.\d+(\.[a-z0-9]+)?"
 
 
@@ -1074,29 +1071,56 @@ def _dassert_is_version_valid(version: str) -> None:
     """
     A valid version looks like: `1.0.0` or `1.0.0.saggese`.
     """
+    hdbg.dassert_isinstance(version, str)
+    hdbg.dassert_ne(version, "")
     regex = rf"^({_IMAGE_VERSION_RE})$"
     _LOG.debug("Testing with regex='%s'", regex)
     m = re.match(regex, version)
     hdbg.dassert(m, "Invalid version: '%s'", version)
 
 
+_INTERNET_ADDRESS_RE = r"([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
+_IMAGE_BASE_NAME_RE = r"[a-z0-9_-]+"
+_IMAGE_STAGE_RE = r"[a-z0-9_-]+"
+_IMAGE_USER_RE = r"[a-z0-9_-]+"
+
 def _dassert_is_image_name_valid(image: str) -> None:
     """
+    Check whether an image name is valid.
+
+    Invariants:
+    - Local images contain a user name and a version
+      - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:local.saggese-1.0.0`
+    - `dev` and `prod` images have an instance with the a version and one without
+      to indicate the latest
+      - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev.1.0.0`
+        and `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev`
+    # TODO(gp, vitalii): let's simplify using dashes to separate all pieces, e.g.,
+    #  local-saggese-1.0.0
+
     An image should look like:
 
-    *****.dkr.ecr.us-east-1.amazonaws.com/amp:local
     *****.dkr.ecr.us-east-1.amazonaws.com/amp:local-1.0.0
+    *****.dkr.ecr.us-east-1.amazonaws.com/amp:local.saggese-1.0.0
+    *****.dkr.ecr.us-east-1.amazonaws.com/amp:dev-1.0.0
     """
     regex = "".join(
         [
+            # E.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
             rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_BASE_NAME_RE}",
+            # :local
             rf":{_IMAGE_STAGE_RE}",
-            rf"(\.{_IMAGE_USER_RE})?(-{_IMAGE_VERSION_RE})?$",
+            # .saggese
+            rf"(\.{_IMAGE_USER_RE})?",
+            # -1.0.0
+            rf"(-{_IMAGE_VERSION_RE})?$",
         ]
     )
     _LOG.debug("Testing with regex='%s'", regex)
     m = re.match(regex, image)
     hdbg.dassert(m, "Invalid image: '%s'", image)
+    # TODO(gp, vitalii): Let's implement the checks from the docstring.
+    #  E.g., `local` needs to have a user name.
 
 
 def _dassert_is_base_image_name_valid(base_image: str) -> None:
@@ -1127,14 +1151,16 @@ def _get_base_image(base_image: str) -> str:
 
 
 def get_git_tag(
-    version: str,
+    version: Optional[str],
 ) -> str:
     """
-    Return the tag to be used in git that consists from image name and version.
+    Return the tag to be used in Git that consists of an image name and version.
 
-    :param version: e.g., `1.0.0`, if not provided -- latest version is assumed
+    :param version: e.g., `1.0.0`. If None, the latest version is used
     :return: e.g., `amp-1.0.0`
     """
+    # TODO(gp, vitalii): If version is None, use the latest version.
+    hdbg.dassert_is_not(version, None)
     _dassert_is_version_valid(version)
     base_image = get_default_param("BASE_IMAGE")
     tag_name = f"{base_image}-{version}"
@@ -1144,17 +1170,19 @@ def get_git_tag(
 def get_image(
     base_image: str,
     stage: str,
+    # TODO(gp, vitalii): Remove the default value.
     version: Optional[str] = None,
 ) -> str:
     """
-    Return the fully qualified image name. For local stage, it also appends
-    user name to the image name.
+    Return the fully qualified image name.
+
+    For local stage, it also appends the user name to the image name.
 
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     :param stage: e.g., `local`, `dev`, `prod`
-    :param version: e.g., `1.0.0`, if not provided -- latest version is assumed
+    :param version: e.g., `1.0.0`, if None empty, the latest version is used
     :return: e.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:local` or
-                    `*****.dkr.ecr.us-east-1.amazonaws.com/amp:local-1.0.0`
+        `*****.dkr.ecr.us-east-1.amazonaws.com/amp:local-1.0.0`
     """
     # Docker refers the default image as "latest", although in our stage
     # nomenclature we call it "dev".
@@ -1162,16 +1190,19 @@ def get_image(
     # Get the base image.
     base_image = _get_base_image(base_image)
     _dassert_is_base_image_name_valid(base_image)
-    # Get the full image.
-    image = [base_image, ":", stage]
+    # Get the full image name.
+    image = [base_image]
+    # Handle the stage.
+    image.append(f":{stage}")
+    # User the user name.
     if stage == "local":
         user = hsysinte.get_user_name()
-        image.append(".")
-        image.append(user)
+        image.append(f".{user}")
+    # Handle the version.
     if version is not None and version != "":
         _dassert_is_version_valid(version)
-        image.append("-")
-        image.append(version)
+        image.append(f"-{version}")
+    #
     image = "".join(image)
     _dassert_is_image_name_valid(image)
     return image
@@ -1191,10 +1222,7 @@ def _get_docker_cmd(
     print_docker_config: bool = False,
 ) -> str:
     """
-    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
-    :param stage: select a specific stage for the Docker image
-    :param version: select a specific version of the image,
-                    if not provided -- latest version is assumed
+    :param base_image, stage, version: like in `get_image()`
     :param cmd: command to run inside Docker container
     :param as_user: pass the user / group id or not
     :param extra_env_vars: represent vars to add, e.g., `["PORT=9999", "DRY_RUN=1"]`
@@ -1466,6 +1494,8 @@ def docker_build_local_image(  # type: ignore
     ctx,
     cache=True,
     base_image="",
+    # TODO(gp, vitalii): version should always be specified here. Remove default
+    #  and move this param first.
     version="",
     update_poetry=False,
 ):
@@ -1515,6 +1545,8 @@ def docker_build_local_image(  # type: ignore
 def docker_tag_local_image_as_dev(  # type: ignore
     ctx,
     base_image="",
+    # TODO(gp, vitalii): version should always be specified here. Remove default
+    #  and move this param first.
     version="",
 ):
     """
@@ -1525,13 +1557,15 @@ def docker_tag_local_image_as_dev(  # type: ignore
     """
     _report_task()
     _dassert_is_version_valid(version)
-    #
+    # Tag local version as versioned dev (e.g., `dev-1.0.0`).
+    image_versioned_dev = get_image(base_image, "dev", version)
+    cmd = f"docker tag {image_versioned_local} {image_versioned_dev}"
+    _run(ctx, cmd)
+    # Tag local version as `dev`.
+    # TODO(gp, vitalii): Is version missing here?
     image_versioned_local = get_image(base_image, "local")
     image_dev = get_image(base_image, "dev")
-    image_versioned_dev = get_image(base_image, "dev", version)
     cmd = f"docker tag {image_versioned_local} {image_dev}"
-    _run(ctx, cmd)
-    cmd = f"docker tag {image_versioned_local} {image_versioned_dev}"
     _run(ctx, cmd)
     #
     tag_name = get_git_tag(version)
@@ -1542,6 +1576,8 @@ def docker_tag_local_image_as_dev(  # type: ignore
 def docker_push_dev_image(  # type: ignore
     ctx,
     base_image="",
+    # TODO(gp, vitalii): version should always be specified here. Remove default
+    #  and move this param first.
     version="",
 ):
     """

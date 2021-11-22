@@ -70,7 +70,7 @@ def set_user_name(user_name: str) -> None:
     """
     To impersonate a user.
 
-    To use only in rare cases.
+    To use only in rare cases for testing or back-door.
     """
     _LOG.warning("Setting user to '%s'", user_name)
     global _USER_NAME
@@ -82,6 +82,7 @@ def get_user_name() -> str:
         res = getpass.getuser()
     else:
         res = _USER_NAME
+    hdbg.dassert_ne(res, "")
     return res
 
 
