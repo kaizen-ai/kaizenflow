@@ -17,7 +17,7 @@ import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.s3 as hs3
 import helpers.sql as hsql
-import im_v2.data.universe as imv2dauni
+import im_v2.common.universe.universe as imvcounun
 
 _LOG = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ class AbstractCcxtLoader(abc.ABC):
     @abc.abstractmethod
     def read_universe_data(
         self,
-        universe: Union[str, List[imv2dauni.ExchangeCurrencyTuple]],
+        universe: Union[str, List[imvcounun.ExchangeCurrencyTuple]],
         data_type: str,
     ) -> pd.DataFrame:
         """
@@ -223,7 +223,7 @@ class CcxtLoaderFromDb(AbstractCcxtLoader):
     # TODO(Dan2): CmTask502.
     def read_universe_data(
         self,
-        universe: Union[str, List[imv2dauni.ExchangeCurrencyTuple]],
+        universe: Union[str, List[imvcounun.ExchangeCurrencyTuple]],
         data_type: str,
         table_name: Optional[str] = None,
         start_date: Optional[pd.Timestamp] = None,
@@ -254,7 +254,7 @@ class CcxtLoaderFromDb(AbstractCcxtLoader):
         # Load all the corresponding exchange-currency tuples if a universe
         # version is provided.
         if isinstance(universe, str):
-            universe = imv2dauni.get_vendor_universe_as_tuples(universe, "CCXT")
+            universe = imvcounun.get_vendor_universe_as_tuples(universe, "CCXT")
         # Initialize lists for query condition strings and parameters to insert.
         query_conditions = []
         query_params = []
@@ -315,7 +315,7 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
     # TODO(Dan2): CmTask495.
     def read_universe_data(
         self,
-        universe: Union[str, List[imv2dauni.ExchangeCurrencyTuple]],
+        universe: Union[str, List[imvcounun.ExchangeCurrencyTuple]],
         data_type: str,
         data_snapshot: Optional[str] = None,
     ) -> pd.DataFrame:
@@ -332,7 +332,7 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
         # Load all the corresponding exchange-currency tuples if a universe
         # version is provided.
         if isinstance(universe, str):
-            universe = imv2dauni.get_vendor_universe_as_tuples(universe, "CCXT")
+            universe = imvcounun.get_vendor_universe_as_tuples(universe, "CCXT")
         # Initialize results df.
         combined_data = pd.DataFrame(dtype="object")
         # Load data for each exchange-currency tuple and append to results df.
