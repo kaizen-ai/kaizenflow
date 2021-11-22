@@ -67,7 +67,8 @@ class AbstractImClient(abc.ABC):
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
-        Read data for a single `FullSymbol` in [start_ts, end_ts), e.g. currency pair from a single exchange.
+        Read data for a single `FullSymbol` in [start_ts, end_ts), e.g.
+        currency pair from a single exchange.
 
         :param full_symbol: `exchange::symbol`, e.g. `binance::BTC_USDT`
         :param start_ts: the earliest date timestamp to load data for
@@ -104,12 +105,12 @@ class AbstractImClient(abc.ABC):
         hdbg.dassert_eq(
             df.index.tzinfo,
             expected_tz,
-            msg=f"`DatetimeIndex` must have timezone={expected_tz} instead of {df.index.tzinfo}"
+            msg=f"`DatetimeIndex` must have timezone={expected_tz} instead of {df.index.tzinfo}",
         )
         # Verify that there are no duplicates in data.
         n_duplicated_rows = df[df.duplicated()].shape[0]
         hdbg.dassert_eq(
             n_duplicated_rows,
             0,
-            msg=f"There are {n_duplicated_rows} duplicated rows in data"
+            msg=f"There are {n_duplicated_rows} duplicated rows in data",
         )
