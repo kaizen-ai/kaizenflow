@@ -3,15 +3,3 @@
     url : "{{ docker_compose_download_url }}"
     dest: /usr/local/bin/docker-compose
     mode: +x # apply executable permissions to the binary
-
-- name: Add /usr/local/bin to system-wide $PATH.
-  copy:
-    dest: /etc/profile.d/custom-path.sh
-    content: 'PATH=$PATH:/usr/local/bin'
-
-- name: Check docker-compose installation
-  shell: docker-compose --version
-  register: compose_version
-
-- debug:
-    msg: "{{ compose_version.stdout_lines }}"
