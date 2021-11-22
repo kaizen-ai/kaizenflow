@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import im_v2.common.data.client.abstract_data_loader as imvcdcadlo
+"""
+
 import abc
 import logging
 from typing import Any, Optional
