@@ -43,7 +43,7 @@ _LOG = logging.getLogger(__name__)
 
 def _get_df(date) -> pd.DataFrame:
     """
-    Create pandas random data, like:
+    Create Pandas random data, like:
 
     ```
                 idx asset  val1  val2
