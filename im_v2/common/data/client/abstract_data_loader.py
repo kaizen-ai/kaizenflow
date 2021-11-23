@@ -175,7 +175,10 @@ class MultipleSymbolsClient(AbstractImClient):
         for full_symbol in sorted(full_symbols):
             # Read data for each given full symbol.
             df = self._class.read_data(
-                full_symbol, start_ts, end_ts, **kwargs
+                full_symbol=full_symbol,
+                start_ts=start_ts,
+                end_ts=end_ts,
+                **kwargs
             )[full_symbol]
             # Insert column with full symbol to the dataframe.
             df.insert(0, full_symbol_col_name, full_symbol)
