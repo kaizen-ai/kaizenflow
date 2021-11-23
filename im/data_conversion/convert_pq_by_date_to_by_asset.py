@@ -115,9 +115,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hdbg.dassert_not_exists(dst_dir)
     hio.create_dir(dst_dir, incremental=False)
     # Convert the files one at the time.
+    all_dfs = []
     for src_pq_file in _source_parquet_df_generator(src_dir):
-        df = hparquet.from_parquet(src_pq_file)
-        _save_pq_by_asset(df, dst_dir)
+        all_dfs.append(hparquet.from_parquet(src_pq_file))
+    _save_pq_by_asset(pd.concat(all_dfs), dst_dir)
 
 
 if __name__ == "__main__":
