@@ -970,7 +970,7 @@ def docker_pull(ctx, stage="dev", images="all"):  # type: ignore
             continue
         if token == "current":
             base_image = ""
-            image = get_image(base_image, stage)
+            image = get_image(base_image, stage, None)
         elif token == "dev_tools":
             image = get_default_param("DEV_TOOLS_IMAGE_PROD")
         else:
@@ -1063,35 +1063,53 @@ def _get_amp_docker_compose_path() -> Optional[str]:
     return docker_compose_path
 
 
-_INTERNET_ADDRESS_RE = r"([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
-_IMAGE_BASE_NAME_RE = r"[a-z0-9_-]+"
-_IMAGE_STAGE_RE = r"[a-z0-9_-]+"
-_IMAGE_USER_RE = r"[a-z0-9_-]+"
-_IMAGE_VERSION_RE = r"\d+\.\d+\.\d+(\.[a-z0-9]+)?"
+_IMAGE_VERSION_RE = r"\d+\.\d+\.\d+"
 
 
 def _dassert_is_version_valid(version: str) -> None:
     """
-    A valid version looks like: `1.0.0` or `1.0.0.saggese`.
+    A valid version looks like: `1.0.0`.
     """
+    hdbg.dassert_isinstance(version, str)
+    hdbg.dassert_ne(version, "")
     regex = rf"^({_IMAGE_VERSION_RE})$"
     _LOG.debug("Testing with regex='%s'", regex)
     m = re.match(regex, version)
     hdbg.dassert(m, "Invalid version: '%s'", version)
 
 
+_INTERNET_ADDRESS_RE = r"([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
+_IMAGE_BASE_NAME_RE = r"[a-z0-9_-]+"
+_IMAGE_USER_RE = r"[a-z0-9_-]+"
+_IMAGE_STAGE_RE = rf"(local(?:-{_IMAGE_USER_RE})?|dev|prod)"
+
+
 def _dassert_is_image_name_valid(image: str) -> None:
     """
+    Check whether an image name is valid.
+
+    Invariants:
+    - Local images contain a user name and a version
+      - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:local-saggese-1.0.0`
+    - `dev` and `prod` images have an instance with the a version and one without
+      to indicate the latest
+      - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev-1.0.0`
+        and `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev`
+
     An image should look like:
 
-    *****.dkr.ecr.us-east-1.amazonaws.com/amp:local
-    *****.dkr.ecr.us-east-1.amazonaws.com/amp:local-1.0.0
+    *****.dkr.ecr.us-east-1.amazonaws.com/amp:dev
+    *****.dkr.ecr.us-east-1.amazonaws.com/amp:local-saggese-1.0.0
+    *****.dkr.ecr.us-east-1.amazonaws.com/amp:dev-1.0.0
     """
     regex = "".join(
         [
+            # E.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
             rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_BASE_NAME_RE}",
+            # :local-saggese
             rf":{_IMAGE_STAGE_RE}",
-            rf"(\.{_IMAGE_USER_RE})?(-{_IMAGE_VERSION_RE})?$",
+            # -1.0.0
+            rf"(-{_IMAGE_VERSION_RE})?$",
         ]
     )
     _LOG.debug("Testing with regex='%s'", regex)
@@ -1130,11 +1148,13 @@ def get_git_tag(
     version: str,
 ) -> str:
     """
-    Return the tag to be used in git that consists from image name and version.
+    Return the tag to be used in Git that consists of an image name and
+    version.
 
-    :param version: e.g., `1.0.0`, if not provided -- latest version is assumed
+    :param version: e.g., `1.0.0`. If None, the latest version is used
     :return: e.g., `amp-1.0.0`
     """
+    hdbg.dassert_is_not(version, None)
     _dassert_is_version_valid(version)
     base_image = get_default_param("BASE_IMAGE")
     tag_name = f"{base_image}-{version}"
@@ -1144,17 +1164,18 @@ def get_git_tag(
 def get_image(
     base_image: str,
     stage: str,
-    version: Optional[str] = None,
+    version: Optional[str],
 ) -> str:
     """
-    Return the fully qualified image name. For local stage, it also appends
-    user name to the image name.
+    Return the fully qualified image name.
+
+    For local stage, it also appends the user name to the image name.
 
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     :param stage: e.g., `local`, `dev`, `prod`
-    :param version: e.g., `1.0.0`, if not provided -- latest version is assumed
+    :param version: e.g., `1.0.0`, if None empty, the latest version is used
     :return: e.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:local` or
-                    `*****.dkr.ecr.us-east-1.amazonaws.com/amp:local-1.0.0`
+        `*****.dkr.ecr.us-east-1.amazonaws.com/amp:local-1.0.0`
     """
     # Docker refers the default image as "latest", although in our stage
     # nomenclature we call it "dev".
@@ -1162,16 +1183,19 @@ def get_image(
     # Get the base image.
     base_image = _get_base_image(base_image)
     _dassert_is_base_image_name_valid(base_image)
-    # Get the full image.
-    image = [base_image, ":", stage]
+    # Get the full image name.
+    image = [base_image]
+    # Handle the stage.
+    image.append(f":{stage}")
+    # User the user name.
     if stage == "local":
         user = hsysinte.get_user_name()
-        image.append(".")
-        image.append(user)
+        image.append(f"-{user}")
+    # Handle the version.
     if version is not None and version != "":
         _dassert_is_version_valid(version)
-        image.append("-")
-        image.append(version)
+        image.append(f"-{version}")
+    #
     image = "".join(image)
     _dassert_is_image_name_valid(image)
     return image
@@ -1191,10 +1215,7 @@ def _get_docker_cmd(
     print_docker_config: bool = False,
 ) -> str:
     """
-    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
-    :param stage: select a specific stage for the Docker image
-    :param version: select a specific version of the image,
-                    if not provided -- latest version is assumed
+    :param base_image, stage, version: like in `get_image()`
     :param cmd: command to run inside Docker container
     :param as_user: pass the user / group id or not
     :param extra_env_vars: represent vars to add, e.g., `["PORT=9999", "DRY_RUN=1"]`
@@ -1443,39 +1464,40 @@ def _to_abs_path(filename: str) -> str:
     return filename
 
 
-# Use Docker buildkit or not.
-# DOCKER_BUILDKIT = 1
-DOCKER_BUILDKIT = 0
-
-
-# DEV image flow:
-# - A "local" image (which is a release candidate for the DEV image) is built
+# =============================================================================
+# DEV image flow
+# =============================================================================
+# - A "local" image (which is a release candidate for the DEV image) is built with:
 #   ```
 #   > docker_build_local_image
 #   ```
-#   This creates the image `dev_tools:local`
-# - A qualification process (e.g., running all tests) is performed on the "local"
-#   image (e.g., through GitHub actions)
-# - If qualification is passed, it becomes `dev`.
+#   This creates the local image `dev_tools:local.saggese-1.0.0`
+# - A qualification process (e.g., running all unit tests and the QA tests) is
+#   performed on the "local" image (e.g., locally or through GitHub actions)
+# - If the qualification process is passed, the image is released as `dev` on ECR
 
+
+# Use Docker buildkit or not.
+# DOCKER_BUILDKIT = 1
+DOCKER_BUILDKIT = 0
 
 # For base_image, we use "" as default instead None since pyinvoke can only infer
 # a single type.
 @task
 def docker_build_local_image(  # type: ignore
     ctx,
+    version,
     cache=True,
     base_image="",
-    version="",
     update_poetry=False,
 ):
     """
     Build a local image (i.e., a release candidate "dev" image).
 
+    :param version: version to tag the image and code with
     :param cache: use the cache
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     :param stage: select a specific stage for the Docker image
-    :param version: version to tag the image and code with
     :param update_poetry: run poetry lock to update the packages
     """
     _report_task()
@@ -1485,7 +1507,7 @@ def docker_build_local_image(  # type: ignore
         cmd = "cd devops/docker_build; poetry lock -v"
         _run(ctx, cmd)
     #
-    image_local = get_image(base_image, "local")
+    image_local = get_image(base_image, "local", version)
     #
     _dassert_is_image_name_valid(image_local)
     dockerfile = "devops/docker_build/dev.Dockerfile"
@@ -1514,26 +1536,28 @@ def docker_build_local_image(  # type: ignore
 @task
 def docker_tag_local_image_as_dev(  # type: ignore
     ctx,
+    version,
     base_image="",
-    version="",
 ):
     """
     (ONLY CI/CD) Mark the "local" image as "dev".
 
-    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     :param version: version to tag the image and code with
+    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     _report_task()
     _dassert_is_version_valid(version)
-    #
-    image_versioned_local = get_image(base_image, "local")
-    image_dev = get_image(base_image, "dev")
+    # Tag local image as versioned dev image (e.g., `dev-1.0.0`).
+    image_versioned_local = get_image(base_image, "local", version)
     image_versioned_dev = get_image(base_image, "dev", version)
-    cmd = f"docker tag {image_versioned_local} {image_dev}"
-    _run(ctx, cmd)
     cmd = f"docker tag {image_versioned_local} {image_versioned_dev}"
     _run(ctx, cmd)
-    #
+    # Tag local image as dev image.
+    image_dev = get_image(base_image, "dev", None)
+    cmd = f"docker tag {image_versioned_local} {image_dev}"
+    _run(ctx, cmd)
+    # Tag the Git repo with the tag corresponding to the image, e.g., `amp-1.0.0`.
+    # TODO(gp): Should we add also the stage in the same format `amp:dev-1.0.0`?
     tag_name = get_git_tag(version)
     hgit.git_tag(tag_name)
 
@@ -1541,28 +1565,28 @@ def docker_tag_local_image_as_dev(  # type: ignore
 @task
 def docker_push_dev_image(  # type: ignore
     ctx,
+    version,
     base_image="",
-    version="",
 ):
     """
     (ONLY CI/CD) Push the "dev" image to ECR.
 
-    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     :param version: version to tag the image and code with
+    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     _report_task()
     _dassert_is_version_valid(version)
     #
     docker_login(ctx)
-    #
-    image_dev = get_image(base_image, "dev")
-    cmd = f"docker push {image_dev}"
-    _run(ctx, cmd, pty=True)
-    # Push versioned tag.
+    # Push Docker versioned tag.
     image_versioned_dev = get_image(base_image, "dev", version)
     cmd = f"docker push {image_versioned_dev}"
     _run(ctx, cmd, pty=True)
-    #
+    # Push Docker tag.
+    image_dev = get_image(base_image, "dev", None)
+    cmd = f"docker push {image_dev}"
+    _run(ctx, cmd, pty=True)
+    # Push Git tag.
     tag_name = get_git_tag(version)
     hgit.git_push_tag(tag_name)
 
@@ -1570,13 +1594,13 @@ def docker_push_dev_image(  # type: ignore
 @task
 def docker_release_dev_image(  # type: ignore
     ctx,
+    version,
     cache=True,
-    version="",
     skip_tests=False,
     fast_tests=True,
     slow_tests=True,
     superslow_tests=False,
-    end_to_end_tests=True,
+    qa_tests=True,
     push_to_repo=True,
     update_poetry=False,
 ):
@@ -1587,18 +1611,19 @@ def docker_release_dev_image(  # type: ignore
     running the tests, but not necessarily pushing.
 
     Phases:
-    - Build local image
-    - Run the tests
-    - Mark local as dev image
-    - Push dev image to the repo
+    1) Build local image
+    2) Run the unit tests (e.g., fast, slow, superslow) on the local image
+    3) Mark local as dev image
+    4) Run the QA tests on the dev image
+    5) Push dev image to the repo
 
-    :param cache: use the cache
     :param version: version to tag the image and code with
+    :param cache: use the cache
     :param skip_tests: skip all the tests and release the dev image
     :param fast_tests: run fast tests, unless all tests skipped
     :param slow_tests: run slow tests, unless all tests skipped
     :param superslow_tests: run superslow tests, unless all tests skipped
-    :param end_to_end_tests: run end-to-end linter tests, unless all tests skipped
+    :param qa_tests: run end-to-end linter tests, unless all tests skipped
     :param push_to_repo: push the image to the repo_short_name
     :param update_poetry: update package dependencies using poetry
     """
@@ -1616,7 +1641,7 @@ def docker_release_dev_image(  # type: ignore
         fast_tests = False
         slow_tests = False
         superslow_tests = False
-        end_to_end_tests = False
+        qa_tests = False
     stage = "local"
     if fast_tests:
         run_fast_tests(ctx, stage=stage)
@@ -1624,15 +1649,16 @@ def docker_release_dev_image(  # type: ignore
         run_slow_tests(ctx, stage=stage)
     if superslow_tests:
         run_superslow_tests(ctx, stage=stage)
-    # 3) Run end-to-end test.
-    if end_to_end_tests:
-        end_to_end_test_fn = get_default_param("END_TO_END_TEST_FN")
-        if not end_to_end_test_fn(ctx, stage=stage):
-            _LOG.error("End-to-end test has failed")
-            return
-    # 4) Promote the "local" image to "dev".
+    # 3) Promote the "local" image to "dev".
     docker_tag_local_image_as_dev(ctx)
-    # 5) Push the "local" image to ECR.
+    # 4) Run QA tests for the (local version) of the dev image.
+    if qa_tests:
+        qa_test_fn = get_default_param("END_TO_END_TEST_FN")
+        if not qa_test_fn(ctx, stage="dev"):
+            msg = "End-to-end test has failed"
+            _LOG.error(msg)
+            raise RuntimeError(msg)
+    # 5) Push the "dev" image to ECR.
     if push_to_repo:
         docker_push_dev_image(ctx)
     else:
@@ -1642,7 +1668,9 @@ def docker_release_dev_image(  # type: ignore
     _LOG.info("==> SUCCESS <==")
 
 
+# #############################################################################
 # PROD image flow:
+# #############################################################################
 # - PROD image has no release candidate
 # - Start from a DEV image already built and qualified
 # - The PROD image is created from the DEV image by copying the code inside the
@@ -1654,9 +1682,9 @@ def docker_release_dev_image(  # type: ignore
 @task
 def docker_build_prod_image(  # type: ignore
     ctx,
+    version,
     cache=True,
     base_image="",
-    version="",
 ):
     """
     (ONLY CI/CD) Build a prod image.
@@ -1664,10 +1692,10 @@ def docker_build_prod_image(  # type: ignore
     Phases:
     - Build the prod image on top of the dev image
 
+    :param version: version to tag the image and code with
     :param cache: note that often the prod image is just a copy of the dev
         image so caching makes no difference
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
-    :param version: version to tag the image and code with
     """
     _report_task()
     _dassert_is_version_valid(version)
@@ -1699,19 +1727,19 @@ def docker_build_prod_image(  # type: ignore
 @task
 def docker_push_prod_image(  # type: ignore
     ctx,
+    version,
     base_image="",
-    version="",
 ):
     """
     (ONLY CI/CD) Push the "prod" image to ECR.
 
-    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     :param version: version to tag the image and code with
+    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     _report_task()
     docker_login(ctx)
     #
-    image_prod = get_image(base_image, "prod")
+    image_prod = get_image(base_image, "prod", None)
     cmd = f"docker push {image_prod}"
     _run(ctx, cmd, pty=True)
     #
@@ -1724,8 +1752,8 @@ def docker_push_prod_image(  # type: ignore
 @task
 def docker_release_prod_image(  # type: ignore
     ctx,
+    version,
     cache=True,
-    version="",
     skip_tests=False,
     fast_tests=True,
     slow_tests=True,
@@ -1739,8 +1767,8 @@ def docker_release_prod_image(  # type: ignore
     - Run the tests
     - Push the prod image repo
 
-    :param cache: use the cache
     :param version: version to tag the image and code with
+    :param cache: use the cache
     :param skip_tests: skip all the tests and release the dev image
     :param fast_tests: run fast tests, unless all tests skipped
     :param slow_tests: run slow tests, unless all tests skipped
@@ -1770,7 +1798,7 @@ def docker_release_prod_image(  # type: ignore
 
 
 @task
-def docker_release_all(ctx, version=""):  # type: ignore
+def docker_release_all(ctx, version):  # type: ignore
     """
     (ONLY CI/CD) Release both dev and prod image to ECR.
 
