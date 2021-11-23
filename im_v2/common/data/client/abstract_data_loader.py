@@ -6,7 +6,7 @@ import im_v2.common.data.client.abstract_data_loader as imvcdcadlo
 
 import abc
 import logging
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 
@@ -25,9 +25,8 @@ FullSymbol = str
 # TODO(Grisha): add methods `get_start(end)_ts_available()`, `get_universe()` #543.
 class AbstractImClient(abc.ABC):
     """
-    Abstract Interface for IM client.
+    Abstract Interface for `IM` client.
     """
-    @abc.abstractmethod
     def read_data(
         self,
         full_symbol: FullSymbol,
@@ -37,8 +36,8 @@ class AbstractImClient(abc.ABC):
         resample_to_1_min: bool = True,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
-        **kwargs: Any,
-    ) -> Dict[str, Any]:
+        **kwargs: Dict[str, Any],
+    ) -> pd.DataFrame:
         """
         Read and process data for a single `FullSymbol` (i.e. currency pair
         from a single exchange) in [start_ts, end_ts).
@@ -79,8 +78,8 @@ class AbstractImClient(abc.ABC):
         *,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
-        **kwargs: Any,
-    ) -> Dict[str, Any]:
+        **kwargs: Dict[str, Any],
+    ) -> pd.DataFrame:
         """
         Read data for a single `FullSymbol` (i.e. currency pair from a single
         exchange) in [start_ts, end_ts).
@@ -135,24 +134,27 @@ class AbstractImClient(abc.ABC):
 
 
 class MultipleSymbolsClient(AbstractImClient):
+    """
+    Object compatible with `AbstractImClient` interface which reads data for multiple full symbols.
+    """
     def __init__(self, class_: AbstractImClient, mode: str) -> None:
         """
-        Implement an object compatible with `AbstractImClient` interface which
-        reads data for multiple full symbols.
-
         :param class_: `AbstractImClient` object
         :param mode: output mode
+            - concat: store data for multiple full symbols in one dataframe
+            - dict: store data in a dict of a type `Dict[full_symbol, data]`
         """
         # Store an object from `AbstractImClient`.
         self._class = class_
         # Specify output mode.
-        dbg.dassert_in(mode, ("concat", "dict"))
+        hdbg.dassert_in(mode, ("concat", "dict"))
         self._mode = mode
 
     @abc.abstractmethod
     def read_data(
         self,
         full_symbols: Union[str, List[str]],
+        *,
         full_symbol_col_name: str = "full_symbol",
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
@@ -172,7 +174,7 @@ class MultipleSymbolsClient(AbstractImClient):
         """
         # TODO(Dan): Implement the case when `full_symbols` is string, e.g."v01".
         # Verify that all the provided full symbols are unique.
-        dbg.dassert_no_duplicates(full_symbols)
+        hdbg.dassert_no_duplicates(full_symbols)
         # Initialize results dict.
         full_symbol_to_df = {}
         for full_symbol in sorted(full_symbols):
