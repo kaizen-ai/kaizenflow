@@ -339,8 +339,8 @@ class AbstractCcxtLoader(abc.ABC):
 class CcxtLoaderFromDb(AbstractCcxtClient):
     def __init__(
         self,
-        connection: hsql.DbConnection,
         data_type: str,
+        connection: hsql.DbConnection,
     ) -> None:
         """
         Load CCXT data from database.
@@ -348,25 +348,19 @@ class CcxtLoaderFromDb(AbstractCcxtClient):
         This code path is used for the real-time data.
 
         :param connection: connection for a SQL database
-        :param data_type: OHLCV or trade, bid/ask data
         """
+        super().__init__(data_type=data_type)
         self._connection = connection
-        date_type_lower = data_type.lower()
-        hdbg.dassert_in(date_type_lower, _DATA_TYPES)
-        self._data_type = date_type_lower
 
     def _read_data(
         self,
         full_symbol: imvcdcli.FullSymbol,
-        table_name: Optional[str] = None,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
-        """
-        :param table_name: name of the table to load, e.g., "ccxt_ohlcv"
-        """
-        table_name = table_name or "ccxt_ohlcv"
+        # Construct name of the DB table with data from data type.
+        table_name =  "ccxt_" + self._data_type
         # Verify that table with specified name exists.
         hdbg.dassert_in(table_name, hsql.get_table_names(self._connection))
         # Initialize SQL query.
