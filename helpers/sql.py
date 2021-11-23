@@ -565,7 +565,7 @@ def execute_insert_query(
     connection.commit()
 
 
-    def get_remove_duplicates_query(
+def get_remove_duplicates_query(
     table: str, id_col: str, columns: List[str]
 ) -> str:
     """

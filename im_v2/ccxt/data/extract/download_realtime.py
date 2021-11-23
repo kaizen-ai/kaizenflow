@@ -192,6 +192,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Connect to database.
     if args.db_connection == "from_env":
         connection = hsql.get_connection_from_env_vars()
+        dup_query = hsql.get_remove_duplicates_query(
+            table=args.table_name,
+            id_col="id",
+            columns=["timestamp", "exchange_id", "currency_pair"],
+        )
     elif args.db_connection == "none":
         connection = None
     else:
@@ -215,20 +220,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 except (
                     ccxt.ExchangeError,
                     ccxt.NetworkError,
-                    ccxt.base.errors.RequestTimeout,
+                    ccxt.base.errors.RateLimitExceeded,
+                    ccxt.base.errors.RateLimitExceeded,
                 ) as e:
-                    # TODO(*): handle timeouts and network errors differently ?
                     # Continue the loop if could not connect to exchange.
                     _LOG.warning("Got an error: %s", type(e).__name__, e.args)
-                    continue
-                except ccxt.base.errors.RateLimitExceeded as e:
-                    # Sleep for extra 60 seconds if exceeded rate limit.
-                    _LOG.warning(
-                        "Got an Exceeded limit error: %s",
-                        type(e).__name__,
-                        e.args,
-                    )
-                    time.sleep(60)
                     continue
                 # Save to disk.
                 if args.dst_dir:
@@ -242,6 +238,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                         obj=pair_data,
                         table_name=args.table_name,
                     )
+                    connection.cursor().execute(dup_query)
         time.sleep(60)
 
 
