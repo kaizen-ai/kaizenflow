@@ -349,3 +349,36 @@ class TestSql1(hunitest.TestCase):
             ],
         )
         return test_data
+
+    def _get_duplicated_data(self) -> pd.DataFrame:
+        test_data = pd.DataFrame(
+            columns=["id", "column_1", "column_2"],
+            data=[
+                [
+                    1,
+                    1000,
+                    "test_string_1",
+                ],
+                [
+                    2,
+                    1001,
+                    "test_string_2",
+                ],
+                [
+                    3,
+                    1002,
+                    "test_string_3",
+                ],
+                [
+                    4,
+                    1002,
+                    "test_string_3",
+                ],
+                [
+                    5,
+                    1001,
+                    "test_string_2",
+                ],
+            ],
+        )
+        return test_data
