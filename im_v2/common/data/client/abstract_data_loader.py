@@ -25,7 +25,7 @@ FullSymbol = str
 # TODO(Grisha): add methods `get_start(end)_ts_available()`, `get_universe()` #543.
 class AbstractImClient(abc.ABC):
     """
-    Read data for a given full symbol.
+    Abstract Interface for IM client.
     """
     @abc.abstractmethod
     def read_data(
@@ -135,11 +135,14 @@ class AbstractImClient(abc.ABC):
 
 
 class MultipleSymbolsClient(AbstractImClient):
-    """
-    Implement an object compatible with `AbstractImClient` interface which
-    reads data for multiple full symbols.
-    """
-    def __init__(self, class_: AbstractImClient, mode: str):
+    def __init__(self, class_: AbstractImClient, mode: str) -> None:
+        """
+        Implement an object compatible with `AbstractImClient` interface which
+        reads data for multiple full symbols.
+
+        :param class_: `AbstractImClient` object
+        :param mode: output mode
+        """
         # Store an object from `AbstractImClient`.
         self._class = class_
         # Specify output mode.
