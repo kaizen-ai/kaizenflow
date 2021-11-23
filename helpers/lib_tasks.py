@@ -1063,7 +1063,6 @@ def _get_amp_docker_compose_path() -> Optional[str]:
     return docker_compose_path
 
 
-
 _IMAGE_VERSION_RE = r"\d+\.\d+\.\d+(\.[a-z0-9]+)?"
 
 
@@ -1083,6 +1082,7 @@ _INTERNET_ADDRESS_RE = r"([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
 _IMAGE_BASE_NAME_RE = r"[a-z0-9_-]+"
 _IMAGE_STAGE_RE = r"[a-z0-9_-]+"
 _IMAGE_USER_RE = r"[a-z0-9_-]+"
+
 
 def _dassert_is_image_name_valid(image: str) -> None:
     """
@@ -1154,7 +1154,8 @@ def get_git_tag(
     version: Optional[str],
 ) -> str:
     """
-    Return the tag to be used in Git that consists of an image name and version.
+    Return the tag to be used in Git that consists of an image name and
+    version.
 
     :param version: e.g., `1.0.0`. If None, the latest version is used
     :return: e.g., `amp-1.0.0`
@@ -1471,9 +1472,9 @@ def _to_abs_path(filename: str) -> str:
     return filename
 
 
-# ====================================
+# =============================================================================
 # DEV image flow
-# ====================================
+# =============================================================================
 # - A "local" image (which is a release candidate for the DEV image) is built with:
 #   ```
 #   > docker_build_local_image
@@ -1687,9 +1688,9 @@ def docker_release_dev_image(  # type: ignore
     _LOG.info("==> SUCCESS <==")
 
 
-# ###################################
+# #############################################################################
 # PROD image flow:
-# ###################################
+# #############################################################################
 # - PROD image has no release candidate
 # - Start from a DEV image already built and qualified
 # - The PROD image is created from the DEV image by copying the code inside the
