@@ -24,12 +24,19 @@ _LOG = logging.getLogger(__name__)
 
 # Latest historical data snapshot.
 _LATEST_DATA_SNAPSHOT = "20210924"
+#
+_DATA_TYPES = ["ohlcv"]
 
 
-class AbstractCcxtClient(imvcdcadlo.AbstractImClient):
+class AbstractCcxtClient(imvcdcadlo.AbstractImClient, abc.ABC):
     def __init__(self, data_type: str):
+        """
+        :param data_type: OHLCV or trade, bid/ask data
+        """
+        hdbg.dassert_in(data_type, _DATA_TYPES)
         self._data_type = data_type
 
+    @abc.abstractmethod
     def _read_data(
         self,
         full_symbol: imvcdcadlo.FullSymbol,
@@ -38,7 +45,17 @@ class AbstractCcxtClient(imvcdcadlo.AbstractImClient):
         end_ts: Optional[pd.Timestamp] = None,
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
-        print(0)
+        """
+        Read data for a single `FullSymbol` (i.e. currency pair from a single
+        exchange) in [start_ts, end_ts).
+
+        None `start_ts` and `end_ts` means the entire period of time available.
+
+        :param full_symbol: `exchange::symbol`, e.g. `binance::BTC_USDT`
+        :param start_ts: the earliest date timestamp to load data for
+        :param end_ts: the latest date timestamp to load data for
+        :return: data for a single `FullSymbol` in [start_ts, end_ts)
+        """
 
     def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -62,19 +79,18 @@ class AbstractCcxtClient(imvcdcadlo.AbstractImClient):
         2021-09-08 20:02:00-04:00  3501.59     1631145720000  ETH/USDT      binance
         ```
 
-        :param data: dataframe with CCXT data from DB or a filesystem
-        :param data_type: OHLCV or trade, bid/ask data
+        :param df: CCXT data from DB or a filesystem
         :return: processed dataframe
         """
         # Apply common transformations.
-        transformed_data = self._apply_common_transformation(data)
+        transformed_data = self._apply_common_transformation(df)
         # Apply transformations for OHLCV data.
         if self._data_type.lower() == "ohlcv":
             transformed_data = self._apply_ohlcv_transformation(transformed_data)
         else:
             hdbg.dfatal(
                 "Incorrect data type: '%s'. Acceptable types: '%s'"
-                % (data_type.lower(), self._data_types)
+                % (self._data_type.lower(), _DATA_TYPES)
             )
         # Sort transformed data by exchange id and currency pair columns.
         transformed_data = transformed_data.sort_values(
@@ -89,8 +105,7 @@ class AbstractCcxtClient(imvcdcadlo.AbstractImClient):
         This includes:
         - Datetime format assertion
         - Converting epoch ms timestamp to pd.Timestamp
-        - Removing full duplicates
-        - Resampling to 1 minute using NaNs
+        - Converting `timestamp` to index
 
         :param data: raw CCXT data
         :return: transformed CCXT data
@@ -103,6 +118,8 @@ class AbstractCcxtClient(imvcdcadlo.AbstractImClient):
         data = data.rename({"timestamp": "epoch"}, axis=1)
         # Transform Unix epoch into ET timestamp.
         data["timestamp"] = self._convert_epochs_to_timestamp(data["epoch"])
+        # Set timestamp as index.
+        data = data.set_index("timestamp")
         return data
 
     @staticmethod
@@ -159,6 +176,7 @@ class AbstractCcxtClient(imvcdcadlo.AbstractImClient):
         return data
 
 
+# TODO(Grisha): replace with `AbstractCcxtClient` #543.
 class AbstractCcxtLoader(abc.ABC):
     def __init__(
         self,
@@ -340,7 +358,7 @@ class AbstractCcxtLoader(abc.ABC):
 
 # #############################################################################
 
-
+# TODO(Grisha): inherit from `AbstractCcxtClient` #543.
 class CcxtLoaderFromDb(AbstractCcxtLoader):
     def __init__(
         self,
@@ -426,7 +444,7 @@ class CcxtLoaderFromDb(AbstractCcxtLoader):
 
 # #############################################################################
 
-
+# TODO(Grisha): inherit from `AbstractCcxtClient` #543.
 class CcxtLoaderFromFile(AbstractCcxtLoader):
     def __init__(
         self,
