@@ -4,15 +4,15 @@ import numpy as np
 import pandas as pd
 import sklearn.linear_model as slmode
 
-import core.artificial_signal_generators as casgen
+import core.artificial_signal_generators as carsigen
 import core.config as cconfig
-import core.dataflow.nodes.sklearn_models as cdnsm
-import helpers.unit_test as hut
+import core.dataflow.nodes.sklearn_models as cdtfnoskmo
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-class TestContinuousSkLearnModel(hut.TestCase):
+class TestContinuousSkLearnModel(hunitest.TestCase):
     def test1(self) -> None:
         # Load test data.
         data = self._get_data(1)
@@ -29,14 +29,16 @@ class TestContinuousSkLearnModel(hut.TestCase):
             }
         )
         # Load sklearn config and create modeling node.
-        node = cdnsm.ContinuousSkLearnModel(
+        node = cdtfnoskmo.ContinuousSkLearnModel(
             "sklearn",
             model_func=slmode.Ridge,
             **config.to_dict(),
         )
         #
         df_out = node.fit(data)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(
+            df_out.round(3), index=True, decimals=3
+        )
         self.check_string(df_str)
 
     def test2(self) -> None:
@@ -52,13 +54,15 @@ class TestContinuousSkLearnModel(hut.TestCase):
                 "col_mode": "merge_all",
             }
         )
-        node = cdnsm.ContinuousSkLearnModel(
+        node = cdtfnoskmo.ContinuousSkLearnModel(
             "sklearn",
             model_func=slmode.Ridge,
             **config.to_dict(),
         )
         df_out = node.fit(data)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(
+            df_out.round(3), index=True, decimals=3
+        )
         self.check_string(df_str)
 
     def test3(self) -> None:
@@ -79,13 +83,15 @@ class TestContinuousSkLearnModel(hut.TestCase):
                 },
             }
         )
-        node = cdnsm.ContinuousSkLearnModel(
+        node = cdtfnoskmo.ContinuousSkLearnModel(
             "sklearn",
             model_func=slmode.Lasso,
             **config.to_dict(),
         )
         df_out = node.fit(data)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(
+            df_out.round(3), index=True, decimals=3
+        )
         self.check_string(df_str)
 
     def test4(self) -> None:
@@ -103,14 +109,16 @@ class TestContinuousSkLearnModel(hut.TestCase):
                 "col_mode": "merge_all",
             }
         )
-        node = cdnsm.ContinuousSkLearnModel(
+        node = cdtfnoskmo.ContinuousSkLearnModel(
             "sklearn",
             model_func=slmode.Ridge,
             **config.to_dict(),
         )
         node.fit(data_fit)
         df_out = node.predict(data_predict)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(
+            df_out.round(3), index=True, decimals=3
+        )
         self.check_string(df_str)
 
     def test5(self) -> None:
@@ -127,14 +135,16 @@ class TestContinuousSkLearnModel(hut.TestCase):
                 },
             }
         )
-        node = cdnsm.ContinuousSkLearnModel(
+        node = cdtfnoskmo.ContinuousSkLearnModel(
             "sklearn",
             model_func=slmode.Ridge,
             **config.to_dict(),
         )
         node.fit(data_fit)
         df_out = node.predict(data_predict)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(
+            df_out.round(3), index=True, decimals=3
+        )
         self.check_string(df_str)
 
     def test6(self) -> None:
@@ -152,13 +162,15 @@ class TestContinuousSkLearnModel(hut.TestCase):
                 "sample_weight_col": ["weights"],
             }
         )
-        node = cdnsm.ContinuousSkLearnModel(
+        node = cdtfnoskmo.ContinuousSkLearnModel(
             "sklearn",
             model_func=slmode.LinearRegression,
             **config.to_dict(),
         )
         df_out = node.fit(data_fit)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(
+            df_out.round(3), index=True, decimals=3
+        )
         self.check_string(df_str)
 
     def test7(self) -> None:
@@ -177,14 +189,16 @@ class TestContinuousSkLearnModel(hut.TestCase):
                 "sample_weight_col": ["weights"],
             }
         )
-        node = cdnsm.ContinuousSkLearnModel(
+        node = cdtfnoskmo.ContinuousSkLearnModel(
             "sklearn",
             model_func=slmode.LinearRegression,
             **config.to_dict(),
         )
         node.fit(data_fit)["df_out"]
         df_out = node.predict(data_predict)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(
+            df_out.round(3), index=True, decimals=3
+        )
         self.check_string(df_str)
 
     def test8(self) -> None:
@@ -205,14 +219,16 @@ class TestContinuousSkLearnModel(hut.TestCase):
                 "nan_mode": "drop",
             }
         )
-        node = cdnsm.ContinuousSkLearnModel(
+        node = cdtfnoskmo.ContinuousSkLearnModel(
             "sklearn",
             model_func=slmode.LinearRegression,
             **config.to_dict(),
         )
         node.fit(data_fit)["df_out"]
         df_out = node.predict(data_predict)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(
+            df_out.round(3), index=True, decimals=3
+        )
         self.check_string(df_str)
 
     def _get_data(self, lag: int) -> pd.DataFrame:
@@ -223,8 +239,8 @@ class TestContinuousSkLearnModel(hut.TestCase):
         """
         num_periods = 50
         total_steps = num_periods + lag + 1
-        rets = casgen.get_gaussian_walk(0, 0.2, total_steps, seed=10).diff()
-        noise = casgen.get_gaussian_walk(0, 0.02, total_steps, seed=1).diff()
+        rets = carsigen.get_gaussian_walk(0, 0.2, total_steps, seed=10).diff()
+        noise = carsigen.get_gaussian_walk(0, 0.02, total_steps, seed=1).diff()
         pred = rets.shift(-lag).loc[1:num_periods] + noise.loc[1:num_periods]
         resp = rets.loc[1:num_periods]
         idx = pd.date_range("2010-01-01", periods=num_periods, freq="T")
@@ -232,7 +248,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
         return df
 
 
-class TestMultiindexSkLearnModel(hut.TestCase):
+class TestMultiindexSkLearnModel(hunitest.TestCase):
     def test1(self) -> None:
         # Load test data.
         data = self._get_data()
@@ -252,14 +268,16 @@ class TestMultiindexSkLearnModel(hut.TestCase):
             }
         )
         # Load sklearn config and create modeling node.
-        node = cdnsm.MultiindexSkLearnModel(
+        node = cdtfnoskmo.MultiindexSkLearnModel(
             "sklearn",
             model_func=slmode.Ridge,
             **config.to_dict(),
         )
         #
         df_out = node.fit(data)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(
+            df_out.round(3), index=True, decimals=3
+        )
         self.check_string(df_str)
 
     def test2(self) -> None:
@@ -280,21 +298,23 @@ class TestMultiindexSkLearnModel(hut.TestCase):
                 },
             }
         )
-        node = cdnsm.MultiindexSkLearnModel(
+        node = cdtfnoskmo.MultiindexSkLearnModel(
             "sklearn",
             model_func=slmode.Ridge,
             **config.to_dict(),
         )
         node.fit(data_fit)
         df_out = node.predict(data_predict)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(
+            df_out.round(3), index=True, decimals=3
+        )
         self.check_string(df_str)
 
     def _get_data(self) -> pd.DataFrame:
         """
         Generate multivariate normal returns.
         """
-        mn_process = casgen.MultivariateNormalProcess()
+        mn_process = carsigen.MultivariateNormalProcess()
         mn_process.set_cov_from_inv_wishart_draw(dim=2, seed=0)
         realization = mn_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
@@ -307,7 +327,7 @@ class TestMultiindexSkLearnModel(hut.TestCase):
         return data
 
 
-class TestMultiindexPooledSkLearnModel(hut.TestCase):
+class TestMultiindexPooledSkLearnModel(hunitest.TestCase):
     def test1(self) -> None:
         # Load test data.
         data = self._get_data()
@@ -327,14 +347,16 @@ class TestMultiindexPooledSkLearnModel(hut.TestCase):
             }
         )
         # Load sklearn config and create modeling node.
-        node = cdnsm.MultiindexPooledSkLearnModel(
+        node = cdtfnoskmo.MultiindexPooledSkLearnModel(
             "sklearn",
             model_func=slmode.Ridge,
             **config.to_dict(),
         )
         #
         df_out = node.fit(data)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(
+            df_out.round(3), index=True, decimals=3
+        )
         self.check_string(df_str)
 
     def test2(self) -> None:
@@ -355,21 +377,23 @@ class TestMultiindexPooledSkLearnModel(hut.TestCase):
                 },
             }
         )
-        node = cdnsm.MultiindexPooledSkLearnModel(
+        node = cdtfnoskmo.MultiindexPooledSkLearnModel(
             "sklearn",
             model_func=slmode.Ridge,
             **config.to_dict(),
         )
         node.fit(data_fit)
         df_out = node.predict(data_predict)["df_out"]
-        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        df_str = hunitest.convert_df_to_string(
+            df_out.round(3), index=True, decimals=3
+        )
         self.check_string(df_str)
 
     def _get_data(self) -> pd.DataFrame:
         """
         Generate multivariate normal returns.
         """
-        mn_process = casgen.MultivariateNormalProcess()
+        mn_process = carsigen.MultivariateNormalProcess()
         mn_process.set_cov_from_inv_wishart_draw(dim=2, seed=0)
         realization = mn_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0

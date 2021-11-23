@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.model_plotter as modplot
+import core.dataflow_model.model_plotter as cdtfmomopl
 """
 
 from __future__ import annotations
@@ -14,11 +14,11 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-import core.dataflow_model.model_evaluator as modeval
-import core.finance as fin
-import core.plotting as plot
-import core.statistics as stats
-import helpers.dbg as dbg
+import core.dataflow_model.model_evaluator as cdtfmomoev
+import core.finance as cofinanc
+import core.plotting as coplotti
+import core.statistics as costatis
+import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -37,14 +37,14 @@ class ModelPlotter:
 
     def __init__(
         self,
-        model_evaluator: modeval.ModelEvaluator,
+        model_evaluator: cdtfmomoev.ModelEvaluator,
     ) -> None:
         """
         Initialize by supplying an initialized `ModelEvaluator`.
 
         :param model_evaluator: initialized `ModelEvaluator`
         """
-        dbg.dassert_isinstance(model_evaluator, modeval.ModelEvaluator)
+        hdbg.dassert_isinstance(model_evaluator, cdtfmomoev.ModelEvaluator)
         self.model_evaluator = model_evaluator
 
     def plot_rets_signal_analysis(
@@ -106,19 +106,19 @@ class ModelPlotter:
                 fig.add_subplot(gs[5, -1]),
             ]
         # qq-plot against normal.
-        plot.plot_qq(rets, ax=axes[0])
-        # Plot line and density plot.
-        plot.plot_cols(rets, axes=axes[1:3])
+        coplotti.plot_qq(rets, ax=axes[0])
+        # Plot line and density coplotti.
+        coplotti.plot_cols(rets, axes=axes[1:3])
         # Plot pnl.
-        plot.plot_pnl({"rets pnl": rets}, ax=axes[3])
+        coplotti.plot_pnl({"rets pnl": rets}, ax=axes[3])
         # Plot ACF and PACF.
-        plot.plot_autocorrelation(
+        coplotti.plot_autocorrelation(
             rets,
             axes=axes[4:6],
             fft=True,
         )
         # Plot power spectral density and spectrogram.
-        plot.plot_spectrum(rets, axes=axes[6:])
+        coplotti.plot_spectrum(rets, axes=axes[6:])
 
     def plot_performance(
         self,
@@ -185,7 +185,7 @@ class ModelPlotter:
                 num_plots = 4
             else:
                 num_plots = 3
-            _, axes = plot.get_multiple_plots(
+            _, axes = coplotti.get_multiple_plots(
                 num_plots, 1, y_scale=5, constrained_layout=True
             )
         cumrets = rets.cumsum()
@@ -193,10 +193,10 @@ class ModelPlotter:
         if cumrets_mode == "log":
             pass
         elif cumrets_mode == "pct":
-            cumrets = fin.convert_log_rets_to_pct_rets(cumrets)
+            cumrets = cofinanc.convert_log_rets_to_pct_rets(cumrets)
         else:
             raise ValueError("Invalid cumulative returns mode `{cumrets_mode}`")
-        plot.plot_cumulative_returns(
+        coplotti.plot_cumulative_returns(
             cumrets,
             benchmark_series=benchmark,
             ax=axes[0],
@@ -204,21 +204,21 @@ class ModelPlotter:
             **plot_cumulative_returns_kwargs,
         )
         if benchmark is not None:
-            plot.plot_rolling_beta(
+            coplotti.plot_rolling_beta(
                 rets,
                 benchmark,
                 ax=axes[1],
                 events=events,
                 **plot_rolling_beta_kwargs,
             )
-        plot.plot_rolling_annualized_sharpe_ratio(
+        coplotti.plot_rolling_annualized_sharpe_ratio(
             rets,
             ax=axes[-2],
             events=events,
             **plot_rolling_annualized_sharpe_ratio_kwargs,
         )
         plot_drawdown_kwargs = plot_drawdown_kwargs or {}
-        plot.plot_drawdown(
+        coplotti.plot_drawdown(
             rets, ax=axes[-1], events=events, **plot_drawdown_kwargs
         )
 
@@ -261,24 +261,26 @@ class ModelPlotter:
             rets = rets.resample(rule=resample_rule).sum(min_count=1)
         num_plots = 3
         if axes is None:
-            _, axes = plot.get_multiple_plots(
+            _, axes = coplotti.get_multiple_plots(
                 num_plots, 1, y_scale=5, constrained_layout=True
             )
         # Plot yearly returns.
-        plot.plot_yearly_barplot(
+        coplotti.plot_yearly_barplot(
             rets,
             ax=axes[0],
             figsize=(20, 5 * num_plots),
             **plot_yearly_barplot_kwargs,
         )
         # Plot monthly returns.
-        plot.plot_monthly_heatmap(rets, ax=axes[1], **plot_monthly_heatmap_kwargs)
+        coplotti.plot_monthly_heatmap(
+            rets, ax=axes[1], **plot_monthly_heatmap_kwargs
+        )
         # Set OOS start if applicable.
         events = None
         if mode == "all_available" and self.model_evaluator.oos_start is not None:
             events = [(self.model_evaluator.oos_start, "OOS start")]
         # Plot volatility.
-        plot.plot_rolling_annualized_volatility(
+        coplotti.plot_rolling_annualized_volatility(
             rets,
             ax=axes[2],
             events=events,
@@ -311,7 +313,7 @@ class ModelPlotter:
         )
         if axes is None:
             num_plots = 2
-            _, axes = plot.get_multiple_plots(
+            _, axes = coplotti.get_multiple_plots(
                 num_plots, 1, y_scale=5, constrained_layout=True
             )
         # Set OOS start if applicable.
@@ -319,9 +321,9 @@ class ModelPlotter:
         if mode == "all_available" and self.model_evaluator.oos_start is not None:
             events = [(self.model_evaluator.oos_start, "OOS start")]
         # Plot holdings.
-        plot.plot_holdings(pos, ax=axes[0], events=events)
+        coplotti.plot_holdings(pos, ax=axes[0], events=events)
         # Plot turnover.
-        plot.plot_turnover(pos, unit="%", ax=axes[1], events=events)
+        coplotti.plot_turnover(pos, unit="%", ax=axes[1], events=events)
 
     def plot_sharpe_ratio_panel(
         self,
@@ -342,7 +344,7 @@ class ModelPlotter:
         rets, _, _ = self.model_evaluator.aggregate_models(
             keys=keys, weights=weights, mode=mode
         )
-        plot.plot_sharpe_ratio_panel(rets, frequencies=frequencies, ax=ax)
+        coplotti.plot_sharpe_ratio_panel(rets, frequencies=frequencies, ax=ax)
 
     def plot_holding_diffs(
         self,
@@ -355,7 +357,9 @@ class ModelPlotter:
         pnl_dict = self.model_evaluator.compute_pnl(keys=keys, mode=mode)
         for k, v in pnl_dict.items():
             # TODO(gp): The linter reports that `label` is not part of the interface.
-            plot.plot_holding_diffs(v["positions"], label=f"Holdings diffs {k}")
+            coplotti.plot_holding_diffs(
+                v["positions"], label=f"Holdings diffs {k}"
+            )
         plt.legend()
 
     def plot_returns_and_predictions(
@@ -375,7 +379,7 @@ class ModelPlotter:
         pnl_dict = self.model_evaluator.compute_pnl(keys=keys, mode=mode)
         keys = self.model_evaluator.get_keys(keys)
         if axes is None:
-            _, axes = plot.get_multiple_plots(
+            _, axes = coplotti.get_multiple_plots(
                 len(keys), 1, y_scale=5, sharex=True, sharey=True
             )
             plt.suptitle("Returns and predictions over time", y=1.01)
@@ -394,7 +398,7 @@ class ModelPlotter:
         multipletests_plot_kwargs: Optional[dict] = None,
     ) -> None:
         """
-        Adjust p-values for selected keys and plot.
+        Adjust p-values for selected keys and coplotti.
 
         :param threshold: Adjust p-value threshold for a "pass"
         :param keys: Use all available if `None`
@@ -403,10 +407,10 @@ class ModelPlotter:
         multipletests_plot_kwargs = multipletests_plot_kwargs or {}
         pnl_dict = self.model_evaluator.compute_pnl(keys=keys, mode=mode)
         pvals = {
-            k: stats.ttest_1samp(v["pnl"]).loc["pval"]
+            k: costatis.ttest_1samp(v["pnl"]).loc["pval"]
             for k, v in pnl_dict.items()
         }
-        plot.multipletests_plot(
+        coplotti.multipletests_plot(
             pd.Series(pvals), threshold, axes=axes, **multipletests_plot_kwargs
         )
 
@@ -432,12 +436,12 @@ class ModelPlotter:
         aggregate_pnl, _, _ = self.model_evaluator.aggregate_models(
             keys=keys, weights=weights, mode=mode
         )
-        dbg.dassert_not_in("aggregated", pnls.keys())
+        hdbg.dassert_not_in("aggregated", pnls.keys())
         pnls["aggregated"] = aggregate_pnl
         if resample_rule is not None:
             for k, v in pnls.items():
                 pnls[k] = v.resample(rule=resample_rule).sum(min_count=1)
-        plot.plot_pnl(pnls, ax=ax)
+        coplotti.plot_pnl(pnls, ax=ax)
 
     def plot_correlation_matrix(
         self,
@@ -461,7 +465,9 @@ class ModelPlotter:
         df = self._get_series_as_df(
             series, keys=keys, mode=mode, resample_rule=resample_rule
         )
-        plot.plot_correlation_matrix(df, ax=ax, **plot_correlation_matrix_kwargs)
+        coplotti.plot_correlation_matrix(
+            df, ax=ax, **plot_correlation_matrix_kwargs
+        )
 
     def plot_effective_correlation_rank(
         self,
@@ -478,7 +484,7 @@ class ModelPlotter:
         df = self._get_series_as_df(
             series, keys=keys, mode=mode, resample_rule=resample_rule
         )
-        plot.plot_effective_correlation_rank(
+        coplotti.plot_effective_correlation_rank(
             df, ax=ax, **plot_effective_correlation_rank_kwargs
         )
 
@@ -525,7 +531,7 @@ class ModelPlotter:
         )
         # TODO(Paul): If we fill `NaN`s, we see clusters by data periods
         #     intersections.
-        plot.plot_dendrogram(df.fillna(0), ax=ax)
+        coplotti.plot_dendrogram(df.fillna(0), ax=ax)
 
     def plot_multiple_time_series(
         self,
@@ -537,7 +543,7 @@ class ModelPlotter:
         plot_time_series_dict_kwargs: Optional[dict] = None,
     ) -> None:
         """
-        Plot one time series per plot.
+        Plot one time series per coplotti.
 
         :param series: "returns", "predictions", "positions", or "pnl"
         :param keys: Use all available if `None`
@@ -546,12 +552,12 @@ class ModelPlotter:
         """
         plot_time_series_dict_kwargs = plot_time_series_dict_kwargs or {}
         pnl_dict = self.model_evaluator.compute_pnl(keys=keys, mode=mode)
-        dbg.dassert_in(series, ["returns", "predictions", "positions", "pnl"])
+        hdbg.dassert_in(series, ["returns", "predictions", "positions", "pnl"])
         series_dict = {k: v[series] for k, v in pnl_dict.items()}
         if resample_rule is not None:
             for k, v in series_dict.items():
                 series_dict[k] = v.resample(rule=resample_rule).sum(min_count=1)
-        plot.plot_time_series_dict(
+        coplotti.plot_time_series_dict(
             series_dict, axes=axes, **plot_time_series_dict_kwargs
         )
 
@@ -567,7 +573,7 @@ class ModelPlotter:
         df = self._get_series_as_df(
             series, keys=keys, mode=mode, resample_rule=resample_rule
         )
-        pca = plot.PCA(mode="standard")
+        pca = coplotti.PCA(mode="standard")
         pca.fit(df.fillna(0))
         pca.plot_components(num_components, axes=axes)
 
@@ -582,7 +588,7 @@ class ModelPlotter:
         df = self._get_series_as_df(
             series, keys=keys, mode=mode, resample_rule=resample_rule
         )
-        pca = plot.PCA(mode="standard")
+        pca = coplotti.PCA(mode="standard")
         pca.fit(df.fillna(0))
         pca.plot_explained_variance(ax=ax)
 
@@ -594,7 +600,7 @@ class ModelPlotter:
         resample_rule: Optional[str] = None,
     ) -> pd.DataFrame:
         pnl_dict = self.model_evaluator.compute_pnl(keys=keys, mode=mode)
-        dbg.dassert_in(series, ["returns", "predictions", "positions", "pnl"])
+        hdbg.dassert_in(series, ["returns", "predictions", "positions", "pnl"])
         series_dict = {k: v[series] for k, v in pnl_dict.items()}
         if resample_rule is not None:
             for k, v in series_dict.items():

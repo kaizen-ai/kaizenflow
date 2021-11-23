@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.datetime_ as hdatetim
+import helpers.datetime_ as hdateti
 """
 
 # TODO(gp): -> hdatetime
@@ -121,7 +121,7 @@ def dassert_has_tz(datetime_: StrictDatetime) -> None:
     )
 
 
-def _dassert_has_specified_tz(
+def dassert_has_specified_tz(
     datetime_: StrictDatetime, tz_zones: Iterable[str]
 ) -> None:
     """
@@ -149,7 +149,7 @@ def dassert_has_UTC_tz(datetime_: StrictDatetime) -> None:
     Assert that the passed timestamp is UTC.
     """
     tz_zones = (pytz.timezone("UTC").zone,)
-    _dassert_has_specified_tz(datetime_, tz_zones)
+    dassert_has_specified_tz(datetime_, tz_zones)
 
 
 def dassert_has_ET_tz(datetime_: StrictDatetime) -> None:
@@ -160,7 +160,7 @@ def dassert_has_ET_tz(datetime_: StrictDatetime) -> None:
         pytz.timezone("US/Eastern").zone,
         pytz.timezone("America/New_York").zone,
     )
-    _dassert_has_specified_tz(datetime_, tz_zones)
+    dassert_has_specified_tz(datetime_, tz_zones)
 
 
 def dassert_tz_compatible(
@@ -241,7 +241,6 @@ def get_current_time(
     time through asyncio.
 
     :param tz: how to represent the returned time (e.g., "UTC", "ET", "naive")
-    :param event_loop: use
     """
     if event_loop is not None:
         # We accept only `hasyncio.EventLoop` here. If we are using standard asyncio

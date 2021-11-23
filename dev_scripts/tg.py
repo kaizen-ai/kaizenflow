@@ -5,21 +5,21 @@ Send a notification through Telegram. See README.md in helpers/telegram_notify.
 
 > cmd_to_check; tg.py -m "error=$?"
 
-> ls; tntnot.py -m "error=$?"
-> ls /I_do_not_exist; tntnot.py -m "error=$?"
+> ls; htnoteno.py -m "error=$?"
+> ls /I_do_not_exist; htnoteno.py -m "error=$?"
 
 Import as:
 
-import dev_scripts.tg as dstg
+import dev_scripts.tg as dscrtg
 """
 
 import argparse
 import logging
 
-import helpers.dbg as dbg
-import helpers.parser as hparse
-import helpers.system_interaction as hsinte
-import helpers.telegram_notify.telegram_notify as tntnot
+import helpers.dbg as hdbg
+import helpers.parser as hparser
+import helpers.system_interaction as hsysinte
+import helpers.telegram_notify.telegram_notify as htnoteno
 
 _LOG = logging.getLogger(__name__)
 
@@ -38,22 +38,22 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="Command to execute",
     )
-    hparse.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
     message = []
-    message.append("user=%s" % hsinte.get_user_name())
-    message.append("server=%s" % hsinte.get_server_name())
+    message.append("user=%s" % hsysinte.get_user_name())
+    message.append("server=%s" % hsysinte.get_server_name())
     #
     if args.cmd is not None:
         cmd = args.cmd
         _LOG.info("Executing: %s", cmd)
-        rc = hsinte.system(cmd, suppress_output=False, abort_on_error=False)
+        rc = hsysinte.system(cmd, suppress_output=False, abort_on_error=False)
         _LOG.info("rc=%s", rc)
         message.append("cmd='%s'" % cmd)
         message.append("rc=%s" % rc)
@@ -62,7 +62,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     message = "\n" + "\n".join(message)
     _LOG.info(message)
     #
-    tgn = tntnot.TelegramNotify()
+    tgn = htnoteno.TelegramNotify()
     tgn.send(message)
 
 

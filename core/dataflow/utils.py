@@ -5,7 +5,7 @@ Note this file should not depend on anything in `core`.
 
 Import as:
 
-import core.dataflow.utils as cdtfu
+import core.dataflow.utils as cdtfutil
 """
 
 import datetime
@@ -15,7 +15,7 @@ from typing import Callable, List, Tuple, Union
 
 import pandas as pd
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -81,21 +81,21 @@ def merge_dataframes(
     :return: merge of `df1` and `df2` on their (identical) index
     """
     # Ensure that indices are equal.
-    dbg.dassert(
+    hdbg.dassert(
         df2.index.equals(df1.index),
         "Dataframe indices differ but are expected to be the same!",
     )
     # Ensure that there are no column duplicates within a dataframe.
-    dbg.dassert_no_duplicates(df1.columns)
-    dbg.dassert_no_duplicates(df2.columns)
+    hdbg.dassert_no_duplicates(df1.columns)
+    hdbg.dassert_no_duplicates(df2.columns)
     # Do not allow column collisions.
-    dbg.dassert_not_in(
+    hdbg.dassert_not_in(
         df1.columns.to_list(),
         df2.columns.to_list(),
         "Column names overlap.",
     )
     # Ensure that column depth is equal.
-    dbg.dassert_eq(
+    hdbg.dassert_eq(
         df1.columns.nlevels,
         df2.columns.nlevels,
         msg="Column hierarchy depth must be equal.",
@@ -113,8 +113,8 @@ def validate_df_indices(df: pd.DataFrame) -> None:
     """
     Assert if `df` fails index sanity checks.
     """
-    dbg.dassert_isinstance(df, pd.DataFrame)
-    dbg.dassert_no_duplicates(df.columns.tolist())
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert_no_duplicates(df.columns.tolist())
     # TODO(*): assert if the datetime index has dups.
 
 
@@ -143,8 +143,8 @@ def convert_to_list(to_list: NodeColumnList) -> List[NodeColumn]:
         to_list = to_list()
     if isinstance(to_list, list):
         # Check that the list is not empty and has no duplicates.
-        dbg.dassert_lte(1, len(to_list))
-        dbg.dassert_no_duplicates(to_list)
+        hdbg.dassert_lte(1, len(to_list))
+        hdbg.dassert_no_duplicates(to_list)
         return to_list
     raise TypeError("Data type=`%s`" % type(to_list))
 
@@ -169,13 +169,13 @@ def get_forward_cols(
     :return: dataframe of `steps_ahead` forward values of `df[col]`
     """
     if df.columns.nlevels == 1:
-        dbg.dassert_isinstance(cols, list)
+        hdbg.dassert_isinstance(cols, list)
     else:
-        dbg.dassert_isinstance(cols, tuple)
+        hdbg.dassert_isinstance(cols, tuple)
     # Append to the column names the number of steps ahead generated.
     mapper = lambda x: str(x) + "_%i" % steps_ahead
     forward_df = df[cols].shift(-steps_ahead).rename(columns=mapper)
-    dbg.dassert_not_intersection(forward_df.columns, df.columns)
+    hdbg.dassert_not_intersection(forward_df.columns, df.columns)
     return forward_df
 
 
@@ -197,7 +197,7 @@ def get_x_and_forward_y_fit_df(
     """
     validate_df_indices(df)
     # Obtain index slice for which forward targets exist.
-    dbg.dassert_lt(steps_ahead, df.index.size)
+    hdbg.dassert_lt(steps_ahead, df.index.size)
     idx = df.index[:-steps_ahead]
     # Determine index where no x_vars are NaN.
     non_nan_idx_x = df.loc[idx][x_cols].dropna().index
@@ -208,7 +208,7 @@ def get_x_and_forward_y_fit_df(
     # Intersect non-NaN indices.
     non_nan_idx = non_nan_idx_x.intersection(non_nan_idx_forward_y)
     # Ensure that the intersection is not empty.
-    dbg.dassert(not non_nan_idx.empty)
+    hdbg.dassert(not non_nan_idx.empty)
     # Define the dataframes of x and forward y values.
     x_df = df.loc[non_nan_idx][x_cols]
     forward_y_df = forward_y_df.loc[non_nan_idx]
@@ -236,7 +236,7 @@ def get_x_and_forward_y_predict_df(
     # Determine index where no x_vars are NaN.
     x_df = df[x_cols].dropna()
     non_nan_idx_x = x_df.index
-    dbg.dassert(not non_nan_idx_x.empty)
+    hdbg.dassert(not non_nan_idx_x.empty)
     # Determine index where target is not NaN.
     forward_y_df = get_forward_cols(df, y_cols, steps_ahead)
     forward_y_df = forward_y_df.loc[non_nan_idx_x]

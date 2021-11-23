@@ -46,7 +46,9 @@ class TickerListsLoader:
     """
     # pylint: enable=line-too-long
 
-    def get(self, ticker_list: str, listed: bool = True) -> List[imkimetyp.Ticker]:
+    def get(
+        self, ticker_list: str, listed: bool = True
+    ) -> List[imkimetyp.Ticker]:
         s3_path = os.path.join(
             imkimecon.S3_PREFIX,
             imkimecon.TICKER_LISTS_SUB_DIR,

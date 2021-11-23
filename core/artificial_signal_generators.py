@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.artificial_signal_generators as sig_gen
+import core.artificial_signal_generators as carsigen
 """
 
 import logging
@@ -14,7 +14,7 @@ import scipy as sp
 # import statsmodels as sm
 import statsmodels.api as sm
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.hnumpy as hnumpy
 
 # TODO(*): statsmodels needs this import to work properly.
@@ -67,8 +67,8 @@ if True:
         test_df = gluonts.dataset.util.to_pandas(test_entry)
         train_length = train_length or train_df.shape[0]
         test_length = test_length or test_df.shape[0]
-        dbg.dassert_lte(train_length, train_df.shape[0])
-        dbg.dassert_lte(test_length, test_df.shape[0])
+        hdbg.dassert_lte(train_length, train_df.shape[0])
+        hdbg.dassert_lte(test_length, test_df.shape[0])
         train_df = pd.DataFrame(train_df.head(train_length), columns=["y"])
         test_df = pd.DataFrame(test_df.head(test_length), columns=["y"])
         return train_df, test_df
@@ -138,7 +138,7 @@ if True:
         :return: GluonTS TrainDatasets (with `train` and `test` attributes).
         """
         names = [name for name, _ in recipe]
-        dbg.dassert_in("target", names)
+        hdbg.dassert_in("target", names)
         metadata = gluonts.dataset.common.MetaData(freq=freq)
         recipe_dataset = gda.RecipeDataset(
             recipe,
@@ -254,7 +254,9 @@ class MultivariateNormalProcess:
         index = pd.date_range(**date_range_kwargs)
         nsample = index.size
         rv = sp.stats.multivariate_normal(
-            mean=self.mean, cov=self.cov, allow_singular=self.allow_singular,
+            mean=self.mean,
+            cov=self.cov,
+            allow_singular=self.allow_singular,
         )
         # Setting the seed through scipy interface seems to be jittery (see
         # AmpTask1649).
@@ -370,8 +372,8 @@ def get_heaviside(a: int, b: int, zero_val: int, tick: int) -> pd.Series:
     """
     Generate Heaviside pd.Series.
     """
-    dbg.dassert_lte(a, zero_val)
-    dbg.dassert_lte(zero_val, b)
+    hdbg.dassert_lte(a, zero_val)
+    hdbg.dassert_lte(zero_val, b)
     array = np.arange(a, b, tick)
     srs = pd.Series(
         data=np.heaviside(array, zero_val), index=array, name="Heaviside"

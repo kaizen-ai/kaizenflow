@@ -4,15 +4,15 @@ from typing import List
 import pytest
 
 import helpers.dbg as hdbg
-import helpers.printing as hprintin
-import helpers.traceback_helper as htrhel
-import helpers.unit_test as huntes
+import helpers.printing as hprint
+import helpers.traceback_helper as htraceb
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.skip(reason="See cryptomtc/cmamp#321")
-class Test_Traceback1(huntes.TestCase):
+class Test_Traceback1(hunitest.TestCase):
     def test_parse1(self) -> None:
         """
         Parse traceback with all files from Docker that actually exist in the
@@ -52,7 +52,7 @@ class Test_Traceback1(huntes.TestCase):
                 'get_task_prefix_from_repo_short_name:if repo_short_name == "amp":',
             ),
         ]
-        exp_cfile = htrhel.cfile_to_str(exp_cfile)
+        exp_cfile = htraceb.cfile_to_str(exp_cfile)
         # pylint: enable=line-too-long
         exp_traceback = """
         Traceback (most recent call last):
@@ -78,8 +78,8 @@ class Test_Traceback1(huntes.TestCase):
             TEST TEST TEST
         """
         purify_from_client = True
-        exp_cfile: List[htrhel.CfileRow] = []
-        exp_cfile = htrhel.cfile_to_str(exp_cfile)
+        exp_cfile: List[htraceb.CfileRow] = []
+        exp_cfile = htraceb.cfile_to_str(exp_cfile)
         exp_traceback = "None"
         self._parse_traceback_helper(
             txt, purify_from_client, exp_cfile, exp_traceback
@@ -264,14 +264,14 @@ class Test_Traceback1(huntes.TestCase):
     #   File "/Users/saggese/src/lem1/amp/helpers/lib_tasks.py", line 23, in <module>
     #     import helpers.git as hgit
     #   File "/Users/saggese/src/lem1/amp/helpers/git.py", line 16, in <module>
-    #     import helpers.system_interaction as hsyint
+    #     import helpers.system_interaction as hsysinte
     #   File "/Users/saggese/src/lem1/amp/helpers/system_interaction.py", line 529
     #     signature2 = _compute_file_signature(file_name, dir_depth)
     #     ^
     # SyntaxError: invalid syntax
     # Traceback (most recent call last):
     #   File "/Users/saggese/src/lem1/amp/dev_scripts/tg.py", line 21, in <module>
-    #     import helpers.system_interaction as hsyint
+    #     import helpers.system_interaction as hsysinte
     #   File "/Users/saggese/src/lem1/amp/helpers/system_interaction.py", line 529
     #     signature2 = _compute_file_signature(file_name, dir_depth)
     #     ^
@@ -288,23 +288,23 @@ class Test_Traceback1(huntes.TestCase):
         hdbg.dassert_isinstance(txt, str)
         hdbg.dassert_isinstance(exp_cfile, str)
         hdbg.dassert_isinstance(exp_traceback, str)
-        txt = hprintin.dedent(txt)
+        txt = hprint.dedent(txt)
         # Run the function under test.
-        act_cfile, act_traceback = htrhel.parse_traceback(
+        act_cfile, act_traceback = htraceb.parse_traceback(
             txt, purify_from_client=purify_from_client
         )
         _LOG.debug("act_cfile=\n%s", act_cfile)
         _LOG.debug("act_traceback=\n%s", act_traceback)
         # Compare cfile.
-        act_cfile = htrhel.cfile_to_str(act_cfile)
-        exp_cfile = hprintin.dedent(exp_cfile)
+        act_cfile = htraceb.cfile_to_str(act_cfile)
+        exp_cfile = hprint.dedent(exp_cfile)
         self.assert_equal(
             act_cfile, exp_cfile, fuzzy_match=True, purify_text=True
         )
         # Compare traceback.
         # Handle `None`.
         act_traceback = str(act_traceback)
-        exp_traceback = hprintin.dedent(exp_traceback)
+        exp_traceback = hprint.dedent(exp_traceback)
         self.assert_equal(
             act_traceback, exp_traceback, fuzzy_match=True, purify_text=True
         )

@@ -7,22 +7,22 @@ import numpy as np
 import pandas as pd
 import scipy
 
-import core.explore as exp
-import core.pandas_helpers as pde
-import core.residualizer as res
+import core.explore as coexplor
+import core.pandas_helpers as cpanh
+import core.residualizer as coresidu
 import helpers.hpandas as hpandas
-import helpers.printing as pri
-import helpers.unit_test as hut
+import helpers.printing as hprint
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-class TestPcaFactorComputer1(hut.TestCase):
+class TestPcaFactorComputer1(hunitest.TestCase):
     @staticmethod
     def get_ex1() -> Tuple[
         pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame
     ]:
-        df_str = pri.dedent(
+        df_str = hprint.dedent(
             """
         ,0,1,2
         0,0.68637724274453,0.34344509725064354,0.6410395820984168
@@ -50,12 +50,12 @@ class TestPcaFactorComputer1(hut.TestCase):
 
     def test_stabilize_eigenvec1(self) -> None:
         data_func = self.get_ex1
-        eval_func = res.PcaFactorComputer._build_stable_eig_map
+        eval_func = coresidu.PcaFactorComputer._build_stable_eig_map
         self._test_stabilize_eigenvec_helper(data_func, eval_func)
 
     def test_stabilize_eigenvec2(self) -> None:
         data_func = self.get_ex1
-        eval_func = res.PcaFactorComputer._build_stable_eig_map2
+        eval_func = coresidu.PcaFactorComputer._build_stable_eig_map2
         self._test_stabilize_eigenvec_helper(data_func, eval_func)
 
     # #########################################################################
@@ -64,7 +64,9 @@ class TestPcaFactorComputer1(hut.TestCase):
         # Get data.
         eigval_df, _, eigvec_df, _ = self.get_ex1()
         # Evaluate.
-        out = res.PcaFactorComputer.linearize_eigval_eigvec(eigval_df, eigvec_df)
+        out = coresidu.PcaFactorComputer.linearize_eigval_eigvec(
+            eigval_df, eigvec_df
+        )
         _LOG.debug("out=\n%s", out)
         # Check.
         txt = (
@@ -104,14 +106,14 @@ class TestPcaFactorComputer1(hut.TestCase):
         # Get data.
         prev_eigval_df, eigval_df, prev_eigvec_df, eigvec_df = data_func()
         # Check if they are stable.
-        num_fails = res.PcaFactorComputer.are_eigenvectors_stable(
+        num_fails = coresidu.PcaFactorComputer.are_eigenvectors_stable(
             prev_eigvec_df, eigvec_df
         )
         self.assertEqual(num_fails, 3)
         # Transform.
         col_map, _ = eval_func(prev_eigvec_df, eigvec_df)
         #
-        obj = res.PcaFactorComputer.shuffle_eigval_eigvec(
+        obj = coresidu.PcaFactorComputer.shuffle_eigval_eigvec(
             eigval_df, eigvec_df, col_map
         )
         shuffled_eigval_df, shuffled_eigvec_df = obj
@@ -126,12 +128,12 @@ class TestPcaFactorComputer1(hut.TestCase):
         )
         self.check_string(txt)
         # Check stability.
-        num_fails = res.PcaFactorComputer.are_eigenvectors_stable(
+        num_fails = coresidu.PcaFactorComputer.are_eigenvectors_stable(
             prev_eigvec_df, shuffled_eigvec_df
         )
         self.assertEqual(num_fails, 0)
         self.assertTrue(
-            res.PcaFactorComputer.are_eigenvalues_stable(
+            coresidu.PcaFactorComputer.are_eigenvalues_stable(
                 prev_eigval_df, shuffled_eigval_df
             )
         )
@@ -142,7 +144,7 @@ class TestPcaFactorComputer1(hut.TestCase):
         self, eigval: np.ndarray, eigvec: np.ndarray, are_eigval_sorted_exp: bool
     ) -> None:
         # pylint: disable=possibly-unused-variable
-        obj = res.PcaFactorComputer.sort_eigval(eigval, eigvec)
+        obj = coresidu.PcaFactorComputer.sort_eigval(eigval, eigvec)
         are_eigval_sorted, eigval_tmp, eigvec_tmp = obj
         self.assertEqual(are_eigval_sorted, are_eigval_sorted_exp)
         self.assertSequenceEqual(
@@ -155,14 +157,14 @@ class TestPcaFactorComputer1(hut.TestCase):
             "eigval_tmp",
             "eigvec_tmp",
         ]
-        txt = pri.vars_to_debug_string(vars_as_str, locals())
+        txt = hprint.vars_to_debug_string(vars_as_str, locals())
         self.check_string(txt)
 
 
 # #############################################################################
 
 
-class TestPcaFactorComputer2(hut.TestCase):
+class TestPcaFactorComputer2(hunitest.TestCase):
     def test1(self) -> None:
         num_samples = 100
         report_stats = False
@@ -194,7 +196,7 @@ class TestPcaFactorComputer2(hut.TestCase):
         cov = np.array([[1.0, 0.5, 0], [0.5, 1, 0], [0, 0, 1]])
         if report_stats:
             _LOG.info("cov=\n%s", cov)
-            exp.plot_heatmap(cov, mode="heatmap", title="cov")
+            coexplor.plot_heatmap(cov, mode="heatmap", title="cov")
             plt.show()
         # Generate samples from three independent normally distributed random
         # variables with mean 0 and std dev 1.
@@ -209,7 +211,7 @@ class TestPcaFactorComputer2(hut.TestCase):
         if report_stats:
             _LOG.info("evals=\n%s", evals)
             _LOG.info("evecs=\n%s", evecs)
-            exp.plot_heatmap(evecs, mode="heatmap", title="evecs")
+            coexplor.plot_heatmap(evecs, mode="heatmap", title="evecs")
             plt.show()
         # Construct c, so c*c^T = r.
         transform = np.dot(evecs, np.diag(np.sqrt(evals)))
@@ -222,7 +224,7 @@ class TestPcaFactorComputer2(hut.TestCase):
         y_cov = np.corrcoef(y)
         if report_stats:
             _LOG.info("cov(y)=\n%s", y_cov)
-            exp.plot_heatmap(y_cov, mode="heatmap", title="y_cov")
+            coexplor.plot_heatmap(y_cov, mode="heatmap", title="y_cov")
             plt.show()
         #
         y = pd.DataFrame(y).T
@@ -242,24 +244,26 @@ class TestPcaFactorComputer2(hut.TestCase):
         report_stats: bool,
         stabilize_eig: bool,
         window: int,
-    ) -> Tuple[res.PcaFactorComputer, pd.DataFrame]:
+    ) -> Tuple[coresidu.PcaFactorComputer, pd.DataFrame]:
         result = self._get_data(num_samples, report_stats)
         _LOG.debug("result=%s", result.keys())
         #
         nan_mode_in_data = "drop"
         nan_mode_in_corr = "fill_with_zero"
         sort_eigvals = True
-        comp = res.PcaFactorComputer(
+        comp = coresidu.PcaFactorComputer(
             nan_mode_in_data, nan_mode_in_corr, sort_eigvals, stabilize_eig
         )
-        df_res = pde.df_rolling_apply(
+        df_res = cpanh.df_rolling_apply(
             result["y"], window, comp, progress_bar=True
         )
         if report_stats:
             comp.plot_over_time(df_res, num_pcs_to_plot=-1)
         return comp, df_res
 
-    def _check(self, comp: res.PcaFactorComputer, df_res: pd.DataFrame) -> None:
+    def _check(
+        self, comp: coresidu.PcaFactorComputer, df_res: pd.DataFrame
+    ) -> None:
         txt = []
         txt.append("comp.get_eigval_names()=\n%s" % comp.get_eigval_names())
         txt.append("df_res.mean()=\n%s" % df_res.mean())

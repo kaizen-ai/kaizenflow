@@ -2,6 +2,10 @@
 
 """
 Process a result directory in place.
+
+Import as:
+
+import core.dataflow.scripts.process_experiment_result as cdtfspexre
 """
 
 import argparse
@@ -10,8 +14,8 @@ import logging
 
 from tqdm.auto import tqdm
 
-import helpers.dbg as dbg
-import helpers.parser as prsr
+import helpers.dbg as hdbg
+import helpers.parser as hparser
 import helpers.pickle_ as hpickle
 
 _LOG = logging.getLogger(__name__)
@@ -24,17 +28,17 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("--dst_dir", action="store", help="Destination dir")
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
     dst_dir = args.dst_dir
     dst_dir = "/cache/experiments/oos_experiment.RH2Eg.v2_0-all.5T.run2.hacked"
-    dbg.dassert_dir_exists(dst_dir)
+    hdbg.dassert_dir_exists(dst_dir)
     # Look for files like `.../result_0/result_bundle.v2_0.pkl`
     glob_exp = dst_dir + "/**/result_bundle.v2_0.pkl"
     _LOG.info("glob_exp=%s", glob_exp)

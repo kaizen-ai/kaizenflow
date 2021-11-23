@@ -32,6 +32,10 @@ E.g.,
 
 # Check all jupytext files.
 > linter.py -d . --action sync_jupytext
+
+Import as:
+
+import dev_scripts.old.linter.linter as dsollili
 """
 
 import argparse
@@ -43,14 +47,14 @@ import re
 import sys
 from typing import Any, List, Tuple, Type
 
-import helpers.dbg as dbg
-import helpers.git as git
-import helpers.io_ as io_
+import helpers.dbg as hdbg
+import helpers.git as hgit
+import helpers.io_ as hio
 import helpers.list as hlist
-import helpers.parser as prsr
-import helpers.printing as prnt
-import helpers.system_interaction as si
-import helpers.unit_test as ut
+import helpers.parser as hparser
+import helpers.printing as hprint
+import helpers.system_interaction as hsysinte
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -74,7 +78,7 @@ def _print(*args: Any, **kwargs: Any) -> None:
 # TODO(gp): This could become the default behavior of system().
 def _system(cmd: str, abort_on_error: bool = True) -> int:
     suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
-    rc = si.system(
+    rc = hsysinte.system(
         cmd,
         abort_on_error=abort_on_error,
         suppress_output=suppress_output,
@@ -85,9 +89,9 @@ def _system(cmd: str, abort_on_error: bool = True) -> int:
 
 # TODO(gp): Move to helpers/printing.py
 def _dassert_list_of_strings(output: List[str], *args: Any) -> None:
-    dbg.dassert_isinstance(output, list, *args)
+    hdbg.dassert_isinstance(output, list, *args)
     for line in output:
-        dbg.dassert_isinstance(line, str, *args)
+        hdbg.dassert_isinstance(line, str, *args)
 
 
 def _annotate_output(output: List, executable: str) -> List:
@@ -112,12 +116,12 @@ def _tee(
     :return: list of strings
     """
     _LOG.debug("cmd=%s executable=%s", cmd, executable)
-    rc, output = si.system_to_string(cmd, abort_on_error=abort_on_error)
-    dbg.dassert_isinstance(output, str)
+    rc, output = hsysinte.system_to_string(cmd, abort_on_error=abort_on_error)
+    hdbg.dassert_isinstance(output, str)
     output1 = output.split("\n")
     _LOG.debug("output1= (%d)\n'%s'", len(output1), "\n".join(output1))
     #
-    output2 = prnt.remove_empty_lines_from_string_list(output1)
+    output2 = hprint.remove_empty_lines_from_string_list(output1)
     _LOG.debug("output2= (%d)\n'%s'", len(output2), "\n".join(output2))
     _dassert_list_of_strings(output2)
     return rc, output2
@@ -177,31 +181,31 @@ def _get_files(args: argparse.Namespace) -> List[str]:
     else:
         if args.current_git_files:
             # Get all the git modified files.
-            file_names = git.get_modified_files()
+            file_names = hgit.get_modified_files()
         elif args.previous_git_committed_files is not None:
             _LOG.debug("Looking for files committed in previous Git commit")
             # Get all the git in user previous commit.
             n_commits = args.previous_git_committed_files
             _LOG.info("Using %s previous commits", n_commits)
-            file_names = git.get_previous_committed_files(n_commits)
+            file_names = hgit.get_previous_committed_files(n_commits)
         elif args.modified_files_in_branch:
             dir_name = "."
             dst_branch = "master"
-            file_names = git.get_modified_files_in_branch(dir_name, dst_branch)
+            file_names = hgit.get_modified_files_in_branch(dir_name, dst_branch)
         elif args.target_branch:
             dir_name = "."
             dst_branch = args.target_branch
-            file_names = git.get_modified_files_in_branch(dir_name, dst_branch)
+            file_names = hgit.get_modified_files_in_branch(dir_name, dst_branch)
         elif args.dir_name:
             if args.dir_name == "$GIT_ROOT":
-                dir_name = git.get_client_root(super_module=True)
+                dir_name = hgit.get_client_root(super_module=True)
             else:
                 dir_name = args.dir_name
             dir_name = os.path.abspath(dir_name)
             _LOG.info("Looking for all files in '%s'", dir_name)
-            dbg.dassert_exists(dir_name)
+            hdbg.dassert_exists(dir_name)
             cmd = "find %s -name '*' -type f" % dir_name
-            _, output = si.system_to_string(cmd)
+            _, output = hsysinte.system_to_string(cmd)
             file_names = output.split("\n")
     # Remove text files used in unit tests.
     file_names = [f for f in file_names if not is_test_input_output_file(f)]
@@ -239,7 +243,7 @@ def _get_files_to_lint(
     if args.skip_ipynb:
         file_names = [f for f in file_names if not is_ipynb_file(f)]
     if args.skip_files:
-        dbg.dassert_isinstance(args.skip_files, list)
+        hdbg.dassert_isinstance(args.skip_files, list)
         # TODO(gp): Factor out this code and reuse it in this function.
         _LOG.warning(
             "Skipping %s files, as per user request",
@@ -281,7 +285,7 @@ def _write_file_back(file_name: str, txt: List[str], txt_new: List[str]) -> None
     txt_new_as_str = "\n".join(txt_new)
     #
     if txt_as_str != txt_new_as_str:
-        io_.to_file(file_name, txt_new_as_str)
+        hio.to_file(file_name, txt_new_as_str)
 
 
 # There are some lints that
@@ -326,8 +330,8 @@ class _Action:
         :param pendantic: True if it needs to be run in angry mode
         :return: list of strings representing the output
         """
-        dbg.dassert(file_name)
-        dbg.dassert_exists(file_name)
+        hdbg.dassert(file_name)
+        hdbg.dassert_exists(file_name)
         output = self._execute(file_name, pedantic)
         _dassert_list_of_strings(output)
         return output
@@ -428,7 +432,7 @@ class _BasicHygiene(_Action):
         _ = pedantic
         output: List[str] = []
         # Read file.
-        txt = io_.from_file(file_name).split("\n")
+        txt = hio.from_file(file_name).split("\n")
         # Process file.
         txt_new: List[str] = []
         for line in txt:
@@ -757,7 +761,7 @@ class _Pydocstyle(_Action):
         cmd_as_str = " ".join(cmd)
         # We don't abort on error on pydocstyle, since it returns error if there
         # is any violation.
-        _, file_lines_as_str = si.system_to_string(
+        _, file_lines_as_str = hsysinte.system_to_string(
             cmd_as_str, abort_on_error=False
         )
         # Process lint_log transforming:
@@ -968,7 +972,7 @@ class _Pylint(_Action):
         output = [l for l in output if ("-" * 20) not in l]
         # Remove:
         #    ************* Module dev_scripts.generate_script_catalog
-        output_as_str = ut.filter_text(
+        output_as_str = hunitest.filter_text(
             re.escape("^************* Module "), "\n".join(output)
         )
         # Remove empty lines.
@@ -1095,13 +1099,13 @@ def is_ipynb_file(file_name: str) -> bool:
 
 
 def from_python_to_ipynb_file(file_name: str) -> str:
-    dbg.dassert(is_py_file(file_name))
+    hdbg.dassert(is_py_file(file_name))
     ret = file_name.replace(".py", ".ipynb")
     return ret
 
 
 def from_ipynb_to_python_file(file_name: str) -> str:
-    dbg.dassert(is_ipynb_file(file_name))
+    hdbg.dassert(is_ipynb_file(file_name))
     ret = file_name.replace(".ipynb", ".py")
     return ret
 
@@ -1184,7 +1188,7 @@ class _CustomPythonChecks(_Action):
             _LOG.debug("Skipping file_name='%s'", file_name)
             return output
         # Read file.
-        txt = io_.from_file(file_name).split("\n")
+        txt = hio.from_file(file_name).split("\n")
         # Only library code should be baptized.
         should_baptize = True
         should_baptize &= not os.path.basename("__init__.py")
@@ -1371,8 +1375,8 @@ class _LintMarkdown(_Action):
             return output
         # Run lint_txt.py.
         executable = "lint_txt.py"
-        exec_path = git.find_file_in_git_tree(executable)
-        dbg.dassert_exists(exec_path)
+        exec_path = hgit.find_file_in_git_tree(executable)
+        hdbg.dassert_exists(exec_path)
         #
         cmd = []
         cmd.append(exec_path)
@@ -1411,7 +1415,7 @@ def _are_git_files_changed() -> bool:
     If any file in the local repo changed, returns False.
     """
     result = True
-    changed_files = git.get_modified_files()
+    changed_files = hgit.get_modified_files()
     if changed_files:
         _LOG.warning("Modified files: %s.", changed_files)
         result = False
@@ -1498,9 +1502,9 @@ def _get_action_class(action: str) -> _Action:
         name, rw, comment, class_ = action_meta
         _ = rw, comment
         if name == action:
-            dbg.dassert_is(res, None)
+            hdbg.dassert_is(res, None)
             res = class_
-    dbg.dassert_is_not(res, None)
+    hdbg.dassert_is_not(res, None)
     # mypy gets confused since we are returning a class.
     obj = res()  # type: ignore
     return obj
@@ -1527,12 +1531,12 @@ def _remove_not_possible_actions(actions: List[str]) -> List[str]:
 def _select_actions(args: argparse.Namespace) -> List[str]:
     valid_actions = _get_valid_actions()
     default_actions = _get_default_actions()
-    actions = prsr.select_actions(args, valid_actions, default_actions)
+    actions = hparser.select_actions(args, valid_actions, default_actions)
     # Find the tools that are available.
     actions = _remove_not_possible_actions(actions)
     #
     add_frame = True
-    actions_as_str = prsr.actions_to_string(
+    actions_as_str = hparser.actions_to_string(
         actions, _get_valid_actions(), add_frame
     )
     _LOG.info("\n%s", actions_as_str)
@@ -1554,7 +1558,7 @@ def _test_actions() -> None:
             num_not_poss += 1
     # Report results.
     add_frame = True
-    actions_as_str = prsr.actions_to_string(
+    actions_as_str = hparser.actions_to_string(
         possible_actions, _get_valid_actions(), add_frame
     )
     _LOG.info("\n%s", actions_as_str)
@@ -1578,9 +1582,9 @@ def _lint(
     the proper order.
     """
     output: List[str] = []
-    _LOG.info("\n%s", prnt.frame(file_name, char1="="))
+    _LOG.info("\n%s", hprint.frame(file_name, char1="="))
     for action in actions:
-        _LOG.debug("\n%s", prnt.frame(action, char1="-"))
+        _LOG.debug("\n%s", hprint.frame(action, char1="-"))
         _print("## %-20s (%s)" % (action, file_name))
         if debug:
             # Make a copy after each action.
@@ -1640,7 +1644,7 @@ def _run_linter(
         )
         output_tmp = list(itertools.chain.from_iterable(output_tmp))
     output.extend(output_tmp)
-    output = prnt.remove_empty_lines_from_string_list(output)
+    output = hprint.remove_empty_lines_from_string_list(output)
     return output  # type: ignore
 
 
@@ -1660,7 +1664,7 @@ def _count_lints(lints: List[str]) -> int:
 
 
 def _main(args: argparse.Namespace) -> int:
-    dbg.init_logger(args.log_level)
+    hdbg.init_logger(args.log_level)
     #
     if args.test_actions:
         _LOG.warning("Testing actions...")
@@ -1677,8 +1681,8 @@ def _main(args: argparse.Namespace) -> int:
     file_names = _get_files_to_lint(args, all_file_names)
     _LOG.info(
         "\n%s\n%s",
-        prnt.frame("# Found %d files to lint:" % len(file_names)),
-        prnt.indent("\n".join(file_names)),
+        hprint.frame("# Found %d files to lint:" % len(file_names)),
+        hprint.indent("\n".join(file_names)),
     )
     if args.collect_only:
         _LOG.warning("Exiting as requested")
@@ -1688,7 +1692,7 @@ def _main(args: argparse.Namespace) -> int:
     all_actions = actions[:]
     _LOG.debug("actions=%s", actions)
     # Create tmp dir.
-    io_.create_dir(_TMP_DIR, incremental=False)
+    hio.create_dir(_TMP_DIR, incremental=False)
     _LOG.info("tmp_dir='%s'", _TMP_DIR)
     # Check the files.
     lints: List[str] = []
@@ -1707,7 +1711,7 @@ def _main(args: argparse.Namespace) -> int:
     num_lints = _count_lints(lints)
     #
     output: List[str] = []
-    output.append("cmd line='%s'" % dbg.get_command_line())
+    output.append("cmd line='%s'" % hdbg.get_command_line())
     # TODO(gp): datetime_.get_timestamp().
     # output.insert(1, "datetime='%s'" % datetime.datetime.now())
     output.append("actions=%d %s" % (len(all_actions), all_actions))
@@ -1716,12 +1720,12 @@ def _main(args: argparse.Namespace) -> int:
     output.append("num_lints=%d" % num_lints)
     # Write the file.
     output_as_str = "\n".join(output)
-    io_.to_file(args.linter_log, output_as_str)
+    hio.to_file(args.linter_log, output_as_str)
     # Print linter output.
-    txt = io_.from_file(args.linter_log)
-    _print(prnt.frame(args.linter_log, char1="/").rstrip("\n"))
+    txt = hio.from_file(args.linter_log)
+    _print(hprint.frame(args.linter_log, char1="/").rstrip("\n"))
     _print(txt + "\n")
-    _print(prnt.line(char="/").rstrip("\n"))
+    _print(hprint.line(char="/").rstrip("\n"))
     #
     if num_lints != 0:
         _LOG.warning(
@@ -1730,7 +1734,7 @@ def _main(args: argparse.Namespace) -> int:
         )
     #
     if not args.no_cleanup:
-        io_.delete_dir(_TMP_DIR)
+        hio.delete_dir(_TMP_DIR)
     else:
         _LOG.warning("Leaving tmp files in '%s'", _TMP_DIR)
     if args.jenkins:
@@ -1833,7 +1837,7 @@ def _parse() -> argparse.ArgumentParser:
         "--test_actions", action="store_true", help="Print the possible actions"
     )
     # Select actions.
-    prsr.add_action_arg(parser, _get_valid_actions(), _get_default_actions())
+    hparser.add_action_arg(parser, _get_valid_actions(), _get_default_actions())
     #
     parser.add_argument(
         "--pedantic",
@@ -1861,7 +1865,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store_true",
         help="Add post check. Return -1 if any file changed by the linter.",
     )
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 

@@ -24,13 +24,13 @@ class TestSqlDataLoader1(hunitest.TestCase):
     def setUp(self) -> None:
         super().setUp()
         # Get PostgreSQL connection parameters.
-        self._connection = hsql.get_connection_from_env_vars()[0]
+        self._connection = hsql.get_connection_from_env_vars()
         self._new_db = self._get_test_name().replace("/", "").replace(".", "")
         # Create database for test.
-        imcdbcrdb.create_database(
+        imcdbcrdb.create_im_database(
             connection=self._connection,
             new_db=self._new_db,
-            force=True,
+            overwrite=True,
         )
         # Initialize writer class to test.
         writer = imkisqwri.KibotSqlWriter(
@@ -48,9 +48,7 @@ class TestSqlDataLoader1(hunitest.TestCase):
         # Close connection.
         self._loader.conn.close()
         # Remove created database.
-        imcdbcrdb.remove_database(
-            connection=self._connection, db_to_drop=self._new_db
-        )
+        hsql.remove_database(connection=self._connection, dbname=self._new_db)
         super().tearDown()
 
     def test_get_symbol_id1(self) -> None:

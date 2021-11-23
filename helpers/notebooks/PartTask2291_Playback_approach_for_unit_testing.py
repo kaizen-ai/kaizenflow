@@ -36,8 +36,8 @@ import pandas as pd
 
 import helpers.dbg as hdbg
 import helpers.env as henv
-import helpers.playback as hplaybac
-import helpers.printing as hprintin
+import helpers.playback as hplayba
+import helpers.printing as hprint
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -46,7 +46,7 @@ _LOG = logging.getLogger(__name__)
 
 _LOG.info("%s", henv.get_system_signature()[0])
 
-hprintin.config_notebook()
+hprint.config_notebook()
 
 # %%
 import pandas as pd
@@ -65,7 +65,7 @@ print(df)
 df.to_dict(orient="series")
 
 # %%
-hplaybac.to_python_code(df)
+hplayba.to_python_code(df)
 
 # %%
 pd.DataFrame.from_dict(
@@ -81,7 +81,7 @@ use_playback = True
 
 def F(a, b):
     if use_playback:
-        playback = hplaybac.Playback("assert_equal", "F", a, b)
+        playback = hplayba.Playback("assert_equal", "F", a, b)
         playback.start()
     c = a + b
     if use_playback:
@@ -97,13 +97,13 @@ b = df
 print(F(a, b))
 
 # %%
-hplaybac.to_python_code(["3", 3])
+hplayba.to_python_code(["3", 3])
 
 # %%
-hplaybac.round_trip_convert(df, logging.INFO)
+hplayba.round_trip_convert(df, logging.INFO)
 
 # %%
-hplaybac.round_trip_convert("hello", logging.INFO)
+hplayba.round_trip_convert("hello", logging.INFO)
 
 
 # %%

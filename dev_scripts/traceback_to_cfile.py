@@ -12,18 +12,22 @@ navigate the stack trace.
 
 # Navigate the stacktrace from the sytem clipboard:
 > pbpaste | traceback_to_cfile.py -i -
+
+Import as:
+
+import dev_scripts.traceback_to_cfile as dstrtocf
 """
 
 import argparse
 import logging
 import sys
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.io_ as hio
-import helpers.parser as prsr
+import helpers.parser as hparser
 import helpers.printing as hprint
-import helpers.system_interaction as hsinte
-import helpers.traceback_helper as htrace
+import helpers.system_interaction as hsysinte
+import helpers.traceback_helper as htraceb
 
 _LOG = logging.getLogger(__name__)
 
@@ -37,24 +41,24 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     in_default = _NEWEST_LOG_FILE
-    parser = prsr.add_input_output_args(
+    parser = hparser.add_input_output_args(
         parser, in_default=in_default, out_default="cfile"
     )
-    parser = prsr.add_bool_arg(
+    parser = hparser.add_bool_arg(
         parser,
         "purify_from_client",
         default=True,
         help_="Make references to files in the current client",
     )
-    parser = prsr.add_verbosity_arg(parser)
+    parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=False)
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=False)
     # Parse files.
-    in_file_name, out_file_name = prsr.parse_input_output_args(
+    in_file_name, out_file_name = hparser.parse_input_output_args(
         args, clear_screen=True
     )
     if in_file_name == _NEWEST_LOG_FILE:
@@ -66,27 +70,27 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # ./experiments/RH1E/result_0/run_notebook.0.log
         dir_name = None
         remove_files_non_present = False
-        files = hsinte.system_to_files(cmd, dir_name, remove_files_non_present)
+        files = hsysinte.system_to_files(cmd, dir_name, remove_files_non_present)
         # Pick the newest file.
         in_file_name = files[0]
     _LOG.info("in_file_name=%s", in_file_name)
     if out_file_name != "-":
         hio.delete_file(out_file_name)
     # Read file.
-    txt = prsr.read_file(in_file_name)
+    txt = hparser.read_file(in_file_name)
     # Transform.
     txt_tmp = "\n".join(txt)
-    cfile, traceback = htrace.parse_traceback(
+    cfile, traceback = htraceb.parse_traceback(
         txt_tmp, purify_from_client=args.purify_from_client
     )
     if traceback is None:
         _LOG.error("Can't find traceback in the file")
         sys.exit(-1)
     print(hprint.frame("traceback", "-") + "\n" + traceback)
-    cfile_as_str = htrace.cfile_to_str(cfile)
+    cfile_as_str = htraceb.cfile_to_str(cfile)
     print(hprint.frame("cfile", "-") + "\n" + cfile_as_str)
     # Write file.
-    prsr.write_file(cfile_as_str.split("\n"), out_file_name)
+    hparser.write_file(cfile_as_str.split("\n"), out_file_name)
 
 
 if __name__ == "__main__":

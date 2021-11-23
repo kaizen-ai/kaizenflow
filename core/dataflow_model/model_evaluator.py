@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.dataflow_model.model_evaluator as cdtfmomoeva
+import core.dataflow_model.model_evaluator as cdtfmomoev
 """
 
 from __future__ import annotations
@@ -16,13 +16,13 @@ from tqdm.auto import tqdm
 
 import core.config as cconfig
 import core.dataflow as cdataf
-import core.dataflow_model.stats_computer as cdtfmostcom
+import core.dataflow_model.stats_computer as cdtfmostco
 import core.dataflow_model.utils as cdtfmouti
-import core.finance as cfin
-import core.signal_processing as csipro
-import core.statistics as csta
+import core.finance as cofinanc
+import core.signal_processing as csigproc
+import core.statistics as costatis
 import helpers.dbg as hdbg
-import helpers.introspection as hintrosp
+import helpers.introspection as hintros
 
 _LOG = logging.getLogger(__name__)
 
@@ -82,7 +82,7 @@ class StrategyEvaluator:
         # self.end = end
         # The valid keys are the keys in the data dict.
         self.valid_keys = list(self._data.keys())
-        self._stats_computer = cdtfmostcom.StatsComputer()
+        self._stats_computer = cdtfmostco.StatsComputer()
 
     # TODO(Paul): This looks like the corresponding method for `ModelEvaluator`
     #  except for the columns needed. Factor out the common part.
@@ -112,7 +112,7 @@ class StrategyEvaluator:
                 hdbg.dassert_is_not(df, None)
                 _LOG.debug(
                     "result_df.memory_usage=%s",
-                    hintrosp.format_size(
+                    hintros.format_size(
                         df.memory_usage(index=True, deep=True).sum()
                     ),
                 )
@@ -214,7 +214,7 @@ class StrategyEvaluator:
             )
             # Compute PnL.
             pnl = (
-                cfin.compute_pnl(
+                cofinanc.compute_pnl(
                     df,
                     position_intent_col="position_intent_1",
                     return_col="ret_0",
@@ -225,7 +225,7 @@ class StrategyEvaluator:
             df["pnl_0"] = pnl
             # Compute spread cost.
             spread_cost = (
-                cfin.compute_spread_cost(
+                cofinanc.compute_spread_cost(
                     df,
                     target_position_col="position_intent_1",
                     spread_col="spread_0",
@@ -300,7 +300,7 @@ class StrategyEvaluator:
         # TODO(gp): Factor out this piece since it's common to `ModelEvaluator`.
         stats_df = pd.concat(stats_dict, axis=1)
         # Calculate BH adjustment of pvals.
-        adj_pvals = csta.multipletests(
+        adj_pvals = costatis.multipletests(
             stats_df.loc["signal_quality"].loc["sr.pval"], nan_mode="drop"
         ).rename("sr.adj_pval")
         adj_pvals = pd.concat(
@@ -372,7 +372,7 @@ class ModelEvaluator:
         self.valid_keys = list(self._data.keys())
         # TODO(gp): This is used only in `calculate_stats`, so it doesn't have to be
         #  part of the state.
-        self._stats_computer = cdtfmostcom.StatsComputer()
+        self._stats_computer = cdtfmostco.StatsComputer()
 
     @classmethod
     def from_result_bundle_dict(
@@ -406,7 +406,7 @@ class ModelEvaluator:
                 hdbg.dassert_is_not(df, None)
                 _LOG.debug(
                     "result_df.memory_usage=%s",
-                    hintrosp.format_size(
+                    hintros.format_size(
                         df.memory_usage(index=True, deep=True).sum()
                     ),
                 )
@@ -533,7 +533,7 @@ class ModelEvaluator:
                 )
             else:
                 ins_pnl_srs = pnl_srs
-            scale_factor = cfin.compute_volatility_normalization_factor(
+            scale_factor = cofinanc.compute_volatility_normalization_factor(
                 srs=ins_pnl_srs, target_volatility=target_volatility
             )
             pnl_srs *= scale_factor
@@ -595,7 +595,7 @@ class ModelEvaluator:
             )
         stats_df = pd.concat(stats_dict, axis=1)
         # Calculate BH adjustment of pvals.
-        adj_pvals = csta.multipletests(
+        adj_pvals = costatis.multipletests(
             stats_df.loc["signal_quality"].loc["sr.pval"], nan_mode="drop"
         ).rename("sr.adj_pval")
         adj_pvals = pd.concat(
@@ -860,12 +860,14 @@ class PositionComputer:
         z_saturation_point: float,
     ) -> pd.Series:
         # z-score.
-        zscored_preds = csipro.compute_rolling_zscore(
+        zscored_preds = csigproc.compute_rolling_zscore(
             predictions, tau=tau, delay=delay
         )
         # Multiple by a kernel.
         bump_function = functools.partial(
-            csipro.c_infinity_bump_function, a=z_mute_point, b=z_saturation_point
+            csigproc.c_infinity_bump_function,
+            a=z_mute_point,
+            b=z_saturation_point,
         )
         scale_factors = 1 - zscored_preds.apply(bump_function)
         adjusted_preds = zscored_preds.multiply(scale_factors)
@@ -878,10 +880,10 @@ class PositionComputer:
         delay: int,
         scale: float,
     ) -> pd.Series:
-        zscored_preds = csipro.compute_rolling_zscore(
+        zscored_preds = csigproc.compute_rolling_zscore(
             predictions, tau=tau, delay=delay
         )
-        return csipro.squash(zscored_preds, scale=scale)
+        return csigproc.squash(zscored_preds, scale=scale)
 
     def _adjust_for_volatility(
         self,
@@ -900,7 +902,7 @@ class PositionComputer:
         # Rescale in-sample.
         ins_pnl = pnl[: self.oos_start]  # type: ignore[misc]
         if volatility_strategy == "rescale":
-            scale_factor = cfin.compute_volatility_normalization_factor(
+            scale_factor = cofinanc.compute_volatility_normalization_factor(
                 srs=ins_pnl, target_volatility=target_volatility
             )
             positions = scale_factor * predictions

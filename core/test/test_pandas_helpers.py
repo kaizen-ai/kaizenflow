@@ -5,10 +5,10 @@ import os
 import numpy as np
 import pandas as pd
 
-import core.pandas_helpers as pde
-import helpers.printing as pri
+import core.pandas_helpers as cpanh
+import helpers.printing as hprint
 import helpers.s3 as hs3
-import helpers.unit_test as hut
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -16,14 +16,14 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class TestResampleIndex1(hut.TestCase):
+class TestResampleIndex1(hunitest.TestCase):
     def test1(self) -> None:
         index = pd.date_range(start="01-04-2018", periods=200, freq="30T")
         df = pd.DataFrame(np.random.rand(len(index), 3), index=index)
         txt = []
         txt.extend(["df.head()=", df.head()])
         txt.extend(["df.tail()=", df.tail()])
-        resampled_index = pde.resample_index(df.index, time=(10, 30), freq="D")
+        resampled_index = cpanh.resample_index(df.index, time=(10, 30), freq="D")
         # Normalize since the format seems to be changing on different machines.
         txt_tmp = str(resampled_index).replace("\n", "").replace(" ", "")
         txt.extend(["resampled_index=", txt_tmp])
@@ -36,12 +36,12 @@ class TestResampleIndex1(hut.TestCase):
 # #############################################################################
 
 
-class TestDfRollingApply(hut.TestCase):
+class TestDfRollingApply(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test with function returning a pd.Series.
         """
-        df_str = pri.dedent(
+        df_str = hprint.dedent(
             """
         ,A,B
         2018-01-01,0.47,0.01
@@ -59,7 +59,7 @@ class TestDfRollingApply(hut.TestCase):
         #
         window = 5
         func = np.mean
-        df_act = pde.df_rolling_apply(df, window, func)
+        df_act = cpanh.df_rolling_apply(df, window, func)
         #
         df_exp = df.rolling(window).apply(func, raw=True)
         # Check.
@@ -82,7 +82,7 @@ class TestDfRollingApply(hut.TestCase):
         #
         window = 5
         func = np.mean
-        df_act = pde.df_rolling_apply(df, window, func)
+        df_act = cpanh.df_rolling_apply(df, window, func)
         #
         df_exp = df.rolling(window).apply(func, raw=True)
         # Check.
@@ -97,7 +97,7 @@ class TestDfRollingApply(hut.TestCase):
         #
         window = 5
         func = lambda x: pd.DataFrame(np.mean(x))
-        df_act = pde.df_rolling_apply(df, window, func)
+        df_act = cpanh.df_rolling_apply(df, window, func)
         #
         func = np.mean
         df_exp = df.rolling(window).apply(func, raw=True)
@@ -115,7 +115,7 @@ class TestDfRollingApply(hut.TestCase):
         #
         window = 5
         func = lambda x: pd.DataFrame([np.mean(x), np.sum(x)])
-        df_act = pde.df_rolling_apply(df, window, func)
+        df_act = cpanh.df_rolling_apply(df, window, func)
         # Check.
         self.check_string(df_act.to_string())
 
@@ -128,12 +128,12 @@ class TestDfRollingApply(hut.TestCase):
             np.random.rand(len(dts), 2).round(2), columns=["A", "B"], index=dts
         )
         #
-        resampled_index = pde.resample_index(df.index, time=(9, 0), freq="1D")
+        resampled_index = cpanh.resample_index(df.index, time=(9, 0), freq="1D")
         self.assertEqual(len(resampled_index), 6)
         #
         window = 5
         func = np.mean
-        df_act = pde.df_rolling_apply(
+        df_act = cpanh.df_rolling_apply(
             df, window, func, timestamps=resampled_index
         )
         # Check.
@@ -157,16 +157,19 @@ class TestDfRollingApply(hut.TestCase):
 # #############################################################################
 
 
-class TestReadDataFromS3(hut.TestCase):
-
+class TestReadDataFromS3(hunitest.TestCase):
     def test_read_csv1(self) -> None:
         s3fs = hs3.get_s3fs("am")
-        file_name = os.path.join(hs3.get_path(), "data/kibot/all_stocks_1min/RIMG.csv.gz")
+        file_name = os.path.join(
+            hs3.get_path(), "data/kibot/all_stocks_1min/RIMG.csv.gz"
+        )
         hs3.dassert_s3_exists(file_name, s3fs)
-        pde.read_csv(file_name, s3fs=s3fs)
+        cpanh.read_csv(file_name, s3fs=s3fs)
 
     def test_read_parquet1(self) -> None:
         s3fs = hs3.get_s3fs("am")
-        file_name = os.path.join(hs3.get_path(), "data/kibot/pq/sp_500_1min/AAPL.pq")
+        file_name = os.path.join(
+            hs3.get_path(), "data/kibot/pq/sp_500_1min/AAPL.pq"
+        )
         hs3.dassert_s3_exists(file_name, s3fs)
-        pde.read_parquet(file_name, s3fs=s3fs)
+        cpanh.read_parquet(file_name, s3fs=s3fs)

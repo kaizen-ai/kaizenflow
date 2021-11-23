@@ -13,6 +13,10 @@ https://github.com/.../.../Task229_Exploratory_analysis_of_ST_data.ipynb
 
 jupyter_url=
 http://localhost:10001/tree/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
+
+Import as:
+
+import dev_scripts.url as dscrurl
 """
 
 import argparse
@@ -20,10 +24,10 @@ import logging
 import os
 import sys
 
-import helpers.dbg as dbg
-import helpers.git as git
+import helpers.dbg as hdbg
+import helpers.git as hgit
 import helpers.network as hnetwor
-import helpers.parser as hparse
+import helpers.parser as hparser
 import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
@@ -45,13 +49,13 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument("positional", nargs="*")
     parser.add_argument("--short", action="store_true", help="Short output form")
-    hparse.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, force_print_format=True)
+    hdbg.init_logger(verbosity=args.log_level, force_print_format=True)
     #
     positional = args.positional
     if len(positional) != 1:
@@ -72,7 +76,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     #
     _print("file_name", rel_file_name, verbosity)
     #
-    abs_file_name = git.get_client_root(super_module=True) + "/" + rel_file_name
+    abs_file_name = hgit.get_client_root(super_module=True) + "/" + rel_file_name
     _print("abs file_name", abs_file_name, verbosity)
     #
     github_url = github_prefix + "/" + rel_file_name

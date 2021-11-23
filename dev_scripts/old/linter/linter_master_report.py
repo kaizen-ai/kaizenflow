@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 """
 Compute the change of lints of a branch with respect to master.
+
+Import as:
+
+import dev_scripts.old.linter.linter_master_report as dsollmare
 """
 
 import argparse
@@ -9,10 +13,10 @@ import os
 import sys
 from typing import List, Optional, Tuple
 
-import helpers.git as git
-import helpers.io_ as io_
-import helpers.parser as prsr
-import helpers.system_interaction as si
+import helpers.git as hgit
+import helpers.io_ as hio
+import helpers.parser as hparser
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -20,7 +24,7 @@ _LOG = logging.getLogger(__name__)
 def _perform_linter_for_test_branch(base_commit_sha: str) -> Tuple[int, int, str]:
     cmd = "git reset --hard"
     # Clean up the client from all linter artifacts.
-    si.system(cmd)
+    hsysinte.system(cmd)
     cmd = f"linter.py -t {base_commit_sha} --post_check"
     # We run the same comment twice since we need to get 2 different information
     # from the linter.
@@ -28,23 +32,23 @@ def _perform_linter_for_test_branch(base_commit_sha: str) -> Tuple[int, int, str
     # linted. Without we receive the number of lints.
     # TODO(Sergey): Pass both values with one execution of the linter and stop
     #  this insanity.
-    branch_dirty = si.system(cmd, abort_on_error=False)
+    branch_dirty = hsysinte.system(cmd, abort_on_error=False)
     _LOG.info("Branch dirty: %s", branch_dirty)
     #
     cmd = "git reset --hard"
     # Clean up the client from all linter artifacts.
-    si.system(cmd)
+    hsysinte.system(cmd)
     #
     cmd = f"linter.py -t {base_commit_sha}"
-    branch_lints = si.system(cmd, abort_on_error=False)
+    branch_lints = hsysinte.system(cmd, abort_on_error=False)
     _LOG.info("Branch lints: %s", branch_lints)
     # Read the lints reported from the linter.
     linter_output_filename = "./linter_warnings.txt"
-    linter_message = io_.from_file(linter_output_filename)
+    linter_message = hio.from_file(linter_output_filename)
     linter_message = "```\n" + linter_message + "\n```\n"
     cmd = "git reset --hard"
     # Clean up the client from all linter artifacts.
-    si.system(cmd)
+    hsysinte.system(cmd)
     return branch_lints, branch_dirty, linter_message
 
 
@@ -53,10 +57,10 @@ def _perform_linter_for_reference_branch(
 ) -> Tuple[int, int]:
     # # Calculate "Before*" stats
     cmd = "git reset --hard"
-    si.system(cmd)
+    hsysinte.system(cmd)
     cmd = f"git checkout {base_commit_sha} --recurse-submodules"
     # Check out master at the requested hash.
-    si.system(cmd)
+    hsysinte.system(cmd)
     mod_files_as_str = " ".join(mod_files)
     cmd = f"linter.py --files {mod_files_as_str} --post_check"
     # We run the same comment twice since we need to get 2 different information
@@ -66,17 +70,17 @@ def _perform_linter_for_reference_branch(
     # TODO(Sergey): Pass both values with one execution of the linter and stop
     #  this insanity.
     # Lint the files that are modified.
-    master_dirty = si.system(cmd, abort_on_error=False)
+    master_dirty = hsysinte.system(cmd, abort_on_error=False)
     _LOG.info("Master dirty: %s", master_dirty)
     # Clean up the client.
     cmd = "git reset --hard"
-    si.system(cmd)
+    hsysinte.system(cmd)
     cmd = f"linter.py --files {mod_files_as_str}"
-    master_lints = si.system(cmd, abort_on_error=False)
+    master_lints = hsysinte.system(cmd, abort_on_error=False)
     _LOG.info("Master lints: %s", master_lints)
     # Clean up the client.
     cmd = "git reset --hard"
-    si.system(cmd)
+    hsysinte.system(cmd)
     return master_lints, master_dirty
 
 
@@ -136,7 +140,7 @@ def _calculate_stats(
     #  branch.
     remove_files_non_present = False
     # Find the files that are modified in the branch.
-    mod_files = git.get_modified_files_in_branch(
+    mod_files = hgit.get_modified_files_in_branch(
         dir_name,
         base_commit_sha,
         remove_files_non_present=remove_files_non_present,
@@ -196,7 +200,7 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument("--head_branch_name", type=str, required=False, help="")
     parser.add_argument("--head_commit_sha", type=str, required=False, help="")
 
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
@@ -212,22 +216,22 @@ def _main(args: argparse.Namespace) -> int:
         # Use passed parameters from command line or infer some defaults from
         # the current git client.
         base_commit_sha = args.base_commit_sha or "master"
-        head_branch_name = args.head_branch_name or git.get_branch_name()
-        head_commit_sha = args.head_commit_sha or git.get_current_commit_hash()
+        head_branch_name = args.head_branch_name or hgit.get_branch_name()
+        head_commit_sha = args.head_commit_sha or hgit.get_current_commit_hash()
     rc, message = _calculate_stats(
         base_commit_sha, head_commit_sha, head_branch_name, build_url
     )
     # Save the result or print it to the screen.
     if args.jenkins:
-        io_.to_file("./tmp_message.txt", message)
-        io_.to_file("./tmp_exit_status.txt", str(rc))
+        hio.to_file("./tmp_message.txt", message)
+        hio.to_file("./tmp_exit_status.txt", str(rc))
     else:
         print(message)
     cmd = "git reset --hard"
-    si.system(cmd)
+    hsysinte.system(cmd)
     cmd = f"git checkout {head_branch_name} --recurse-submodules"
     # Clean up the branch bringing to the original status.
-    si.system(cmd)
+    hsysinte.system(cmd)
     return rc
 
 

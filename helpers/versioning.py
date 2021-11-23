@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.versioning as hversion
+import helpers.versioning as hversio
 """
 
 # This code implements version control for code
@@ -20,6 +20,8 @@ import os
 import re
 from typing import Optional
 
+import helpers.git as hgit
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -28,13 +30,16 @@ _WARNING = "\033[33mWARNING\033[0m"
 _ERROR = "\033[31mERROR\033[0m"
 
 
-def check_version(file_name: Optional[str] = None) -> None:
+def check_version() -> None:
     """
     Check that the code and container code have compatible version, otherwise
     raises `RuntimeError`.
     """
+    if "SKIP_VERSION_CHECK" in os.environ:
+        # Skip the check altogether.
+        return
     # Get code version.
-    code_version = get_code_version(file_name)
+    code_version = get_code_version()
     is_inside_container = _is_inside_container()
     # Get container version.
     # TODO(gp): Use _get_container_version().
@@ -89,39 +94,11 @@ def check_version(file_name: Optional[str] = None) -> None:
 
 # TODO(gp): It's not clear how to generalize this for different containers.
 #  For `amp` makes sense to check at top of the repo.
-def get_code_version(file_name: Optional[str] = None) -> Optional[str]:
+def get_code_version() -> Optional[str]:
     """
     Return the code version stored in `file_name`.
-
-    :param file_name: the path to the `version.txt` file. If None uses the dir
-        one level up with respect to the this file (i.e., `amp` dir)
     """
-    file_name_was_specified = False
-    if not file_name:
-        # Use the version one level up.
-        file_name = os.path.abspath(os.path.join(os.getcwd(), "version.txt"))
-    else:
-        file_name_was_specified = True
-    # Load the version.
-    file_name = os.path.abspath(file_name)
-    version_file_exists = os.path.exists(file_name)
-    version: Optional[str] = None
-    if version_file_exists:
-        with open(file_name) as f:
-            version = f.readline().rstrip()
-        # E.g., `amp-1.0.0`.
-        assert re.match(
-            r"^\S+-\d+\.\d+\.\d+$", version
-        ), "Invalid version '%s' from %s" % (version, file_name)
-    else:
-        if file_name_was_specified:
-            # If the `file_name` was specified, we expect to find the file.
-            assert version_file_exists, "Can't find file '%s'" % file_name
-        else:
-            # If the `file_name` was not specified, then it's ok not to find the
-            # file.
-            print(_WARNING + ": Can't find version.txt, so using version=None")
-            version = None
+    version = hgit.git_describe()
     return version
 
 

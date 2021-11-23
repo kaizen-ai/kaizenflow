@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.config.config_ as ccocon
+import core.config.config_ as cconconf
 """
 
 # This file is called `config_.py` and not `config.py` to avoid circular
@@ -19,8 +19,8 @@ import numpy as np
 
 import helpers.dbg as hdbg
 import helpers.dict as hdict
-import helpers.introspection as hintrosp
-import helpers.printing as hprintin
+import helpers.introspection as hintros
+import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -76,7 +76,7 @@ class Config:
         navigated/created and the leaf value added/updated with `val`.
         """
         _LOG.debug("key=%s, config=%s", key, self)
-        if hintrosp.is_iterable(key):
+        if hintros.is_iterable(key):
             head_key, tail_key = self._parse_compound_key(key)
             if not tail_key:
                 # Tuple of a single element, then set the value.
@@ -113,7 +113,7 @@ class Config:
         """
         _LOG.debug("key=%s, config=%s", key, self)
         # Check if the key is nested.
-        if hintrosp.is_iterable(key):
+        if hintros.is_iterable(key):
             head_key, tail_key = self._parse_compound_key(key)
             if not tail_key:
                 # Tuple of a single element, then return the value.
@@ -168,7 +168,7 @@ class Config:
         for k, v in self._config.items():
             if isinstance(v, Config):
                 txt_tmp = str(v)
-                txt.append("%s:\n%s" % (k, hprintin.indent(txt_tmp)))
+                txt.append("%s:\n%s" % (k, hprint.indent(txt_tmp)))
             else:
                 txt.append("%s: %s" % (k, v))
         ret = "\n".join(txt)
@@ -373,12 +373,12 @@ class Config:
         """
         raise ValueError(
             "Invalid %s='%s' in config=\n%s"
-            % (key, self._config[key], hprintin.indent(str(self)))
+            % (key, self._config[key], hprint.indent(str(self)))
         )
 
     @staticmethod
     def _parse_compound_key(key: Key) -> Tuple[str, Iterable[str]]:
-        hdbg.dassert(hintrosp.is_iterable(key), "Key='%s' is not iterable", key)
+        hdbg.dassert(hintros.is_iterable(key), "Key='%s' is not iterable", key)
         head_key, tail_key = key[0], key[1:]  # type: ignore
         _LOG.debug(
             "key='%s' -> head_key='%s', tail_key='%s'", key, head_key, tail_key

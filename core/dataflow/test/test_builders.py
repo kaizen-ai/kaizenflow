@@ -1,8 +1,8 @@
 import logging
 
 import core.dataflow as dtf
-import helpers.printing as hprintin
-import helpers.unit_test as huntes
+import helpers.printing as hprint
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -11,16 +11,16 @@ import logging
 import pandas as pd
 
 import core.config as cconfig
-import core.dataflow.builders as cdtfbui
-import core.dataflow.core as cdtfcor
+import core.dataflow.builders as cdtfbuil
+import core.dataflow.core as cdtfcore
 import core.dataflow.nodes.transformers as cdtfnotra
 import core.dataflow_source_nodes as cdtfsonod
-import helpers.unit_test as huntes
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-class _NaivePipeline(cdtfbui.DagBuilder):
+class _NaivePipeline(cdtfbuil.DagBuilder):
     """
     Pipeline with:
 
@@ -46,7 +46,7 @@ class _NaivePipeline(cdtfbui.DagBuilder):
                 "end": pd.Timestamp("2010-01-10"),
                 "freq": "1B",
             }
-            data = huntes.get_random_df(
+            data = hunitest.get_random_df(
                 num_cols, seed=seed, date_range_kwargs=date_range_kwargs
             )
             return data
@@ -75,7 +75,7 @@ class _NaivePipeline(cdtfbui.DagBuilder):
 
     def _get_dag(
         self, config: cconfig.Config, mode: str = "strict"
-    ) -> cdtfcor.DAG:
+    ) -> cdtfcore.DAG:
         """
         Generate pipeline DAG.
 
@@ -83,7 +83,7 @@ class _NaivePipeline(cdtfbui.DagBuilder):
         :param mode: same meaning as in `dtf.DAG`
         :return: initialized DAG
         """
-        dag = cdtfcor.DAG(mode=mode)
+        dag = cdtfcore.DAG(mode=mode)
         _LOG.debug("%s", config)
         tail_nid = None
         # Get data.
@@ -107,7 +107,7 @@ class _NaivePipeline(cdtfbui.DagBuilder):
 # #############################################################################
 
 
-class TestArmaReturnsBuilder(huntes.TestCase):
+class TestArmaReturnsBuilder(hunitest.TestCase):
     """
     Test the ArmaReturnsBuilder pipeline.
     """
@@ -119,7 +119,7 @@ class TestArmaReturnsBuilder(huntes.TestCase):
         result_bundle = dag_runner.fit()
         df_out = result_bundle.result_df
         str_output = (
-            f"{hprintin.frame('config')}\n{config}\n"
-            f"{hprintin.frame('df_out')}\n{huntes.convert_df_to_string(df_out, index=True)}\n"
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('df_out')}\n{hunitest.convert_df_to_string(df_out, index=True)}\n"
         )
         self.check_string(str_output)

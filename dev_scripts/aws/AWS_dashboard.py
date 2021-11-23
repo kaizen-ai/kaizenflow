@@ -21,23 +21,23 @@ import logging
 
 import pandas as pd
 
-import helpers.dbg as dbg
-import helpers.printing as print_
-import helpers.system_interaction as si
+import helpers.dbg as hdbg
+import helpers.printing as hprint
+import helpers.system_interaction as hsysinte
 
 # %%
-print_.config_notebook()
+hprint.config_notebook()
 
 # TODO(gp): Changing level during the notebook execution doesn't work. Fix it.
-# dbg.init_logger(verbosity=logging.DEBUG)
-dbg.init_logger(verbosity=logging.INFO)
+# hdbg.init_logger(verbosity=logging.DEBUG)
+hdbg.init_logger(verbosity=logging.INFO)
 
 # %% [markdown]
 # ## Describe-instances
 
 # %%
 cmd = "aws ec2 describe-instances"
-_, txt = si.system_to_string(cmd)
+_, txt = hsysinte.system_to_string(cmd)
 
 # %%
 data = json.loads(txt)

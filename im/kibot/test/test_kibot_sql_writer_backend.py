@@ -34,7 +34,8 @@ class TestSqlWriterBackend1(ictuti.SqlWriterBackendTestCase):
         Test adding a new symbol to symbol table.
         """
         self._writer.ensure_symbol_exists(
-            symbol=self._get_test_string(), asset_class=imcodatyp.AssetClass.Futures
+            symbol=self._get_test_string(),
+            asset_class=imcodatyp.AssetClass.Futures,
         )
         self._check_saved_data(table="Symbol")
 

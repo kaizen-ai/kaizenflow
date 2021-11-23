@@ -4,7 +4,7 @@ import pandas as pd
 
 import core.config as cconfig
 import helpers.printing as hprint
-import helpers.unit_test as hut
+import helpers.unit_test as hunitest
 
 
 def _get_test_config1() -> cconfig.Config:
@@ -45,7 +45,7 @@ def _get_test_config3() -> cconfig.Config:
 # #############################################################################
 
 
-class Test_validate_configs1(hut.TestCase):
+class Test_validate_configs1(hunitest.TestCase):
     def test_check_same_configs_error(self) -> None:
         """
         Verify that an error is raised when duplicated configs are encountered.
@@ -77,7 +77,7 @@ class Test_validate_configs1(hut.TestCase):
 # #############################################################################
 
 
-class Test_get_config_from_flattened_dict1(hut.TestCase):
+class Test_get_config_from_flattened_dict1(hunitest.TestCase):
     def test1(self) -> None:
         flattened = collections.OrderedDict(
             [
@@ -126,7 +126,7 @@ class Test_get_config_from_flattened_dict1(hut.TestCase):
 # #############################################################################
 
 
-class Test_get_config_from_nested_dict1(hut.TestCase):
+class Test_get_config_from_nested_dict1(hunitest.TestCase):
     def test1(self) -> None:
         nested = {
             "read_data": {
@@ -177,7 +177,7 @@ class Test_get_config_from_nested_dict1(hut.TestCase):
 # #############################################################################
 
 
-class Test_intersect_configs1(hut.TestCase):
+class Test_intersect_configs1(hunitest.TestCase):
     def test_same_config(self) -> None:
         """
         Verify that intersection of two same configs equals those configs.
@@ -212,7 +212,7 @@ class Test_intersect_configs1(hut.TestCase):
 # #############################################################################
 
 
-class Test_subtract_configs1(hut.TestCase):
+class Test_subtract_configs1(hunitest.TestCase):
     def test_same_config(self) -> None:
         """
         Verify that the difference of two configs is empty.
@@ -240,7 +240,7 @@ class Test_subtract_configs1(hut.TestCase):
 # #############################################################################
 
 
-class Test_diff_configs1(hut.TestCase):
+class Test_diff_configs1(hunitest.TestCase):
     def test_same_config(self) -> None:
         """
         Verify that the difference of two configs is empty.
@@ -319,7 +319,7 @@ class Test_diff_configs1(hut.TestCase):
 # #############################################################################
 
 
-class Test_convert_to_dataframe1(hut.TestCase):
+class Test_convert_to_dataframe1(hunitest.TestCase):
     def test1(self) -> None:
         """
         Compute and verify dataframe with all config parameters.
@@ -328,7 +328,7 @@ class Test_convert_to_dataframe1(hut.TestCase):
         config2 = _get_test_config2()
         # Convert configs to dataframe.
         act = cconfig.convert_to_dataframe([config1, config2])
-        act = hut.convert_df_to_string(act, index=True)
+        act = hunitest.convert_df_to_string(act, index=True)
         #
         exp = pd.DataFrame(
             {
@@ -341,14 +341,14 @@ class Test_convert_to_dataframe1(hut.TestCase):
                 "meta.experiment_result_dir": ["results.pkl", "results.pkl"],
             }
         )
-        exp = hut.convert_df_to_string(exp, index=True)
+        exp = hunitest.convert_df_to_string(exp, index=True)
         self.assert_equal(str(act), str(exp))
 
 
 # #############################################################################
 
 
-class Test_build_config_diff_dataframe1(hut.TestCase):
+class Test_build_config_diff_dataframe1(hunitest.TestCase):
     def test1(self) -> None:
         """
         Summarize differences between two different configs.
@@ -357,14 +357,14 @@ class Test_build_config_diff_dataframe1(hut.TestCase):
         config2 = _get_test_config2()
         #
         act = cconfig.build_config_diff_dataframe({"1": config1, "2": config2})
-        act = hut.convert_df_to_string(act, index=True)
+        act = hunitest.convert_df_to_string(act, index=True)
         #
         exp = pd.DataFrame(
             {
                 "build_targets.target_asset": ["Crude Oil", "Gold"],
             }
         )
-        exp = hut.convert_df_to_string(exp, index=True)
+        exp = hunitest.convert_df_to_string(exp, index=True)
         self.assert_equal(str(act), str(exp))
 
     def test2(self) -> None:
@@ -374,7 +374,7 @@ class Test_build_config_diff_dataframe1(hut.TestCase):
         config1 = _get_test_config1()
         #
         act = cconfig.build_config_diff_dataframe({"1": config1, "2": config1})
-        act = hut.convert_df_to_string(act, index=True)
+        act = hunitest.convert_df_to_string(act, index=True)
         #
         exp = """
         Empty DataFrame
@@ -392,8 +392,9 @@ class Test_build_config_diff_dataframe1(hut.TestCase):
         config3 = _get_test_config3()
         #
         act = cconfig.build_config_diff_dataframe(
-            {"1": config1, "2": config2, "3": config3})
-        act = hut.convert_df_to_string(act, index=True)
+            {"1": config1, "2": config2, "3": config3}
+        )
+        act = hunitest.convert_df_to_string(act, index=True)
         #
         exp = """
           build_targets.target_asset  hello
