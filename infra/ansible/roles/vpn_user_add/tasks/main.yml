@@ -124,7 +124,7 @@
     dest: "{{ vpn_client_export_bundle_dir }}/{{ item }}"
     flat: yes
   loop:
-    - "{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_embeded/"
+    - "{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_embedded/"
     - "{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_files/"
     - "{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_p12/"
 
@@ -141,7 +141,7 @@
 - name: OpenVPN | Export VPN Client | Get .ovpn files (*-pki-embedded.ovpn)
   fetch:
     src: "{{ openvpn_path_ovpn }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}-pki-embedded.ovpn"
-    dest: "{{ vpn_client_export_bundle_dir }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_embeded/"
+    dest: "{{ vpn_client_export_bundle_dir }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_embedded/"
     flat: yes
 
 # EXPORT individual files
