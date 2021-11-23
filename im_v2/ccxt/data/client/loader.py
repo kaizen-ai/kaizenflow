@@ -336,87 +336,71 @@ class AbstractCcxtLoader(abc.ABC):
 # #############################################################################
 
 # TODO(Grisha): inherit from `AbstractCcxtClient` #543.
-class CcxtLoaderFromDb(AbstractCcxtLoader):
+class CcxtLoaderFromDb(AbstractCcxtClient):
     def __init__(
         self,
         connection: hsql.DbConnection,
-    ) -> None:
-        """
-        Load CCXT data from DB.
-
-        :param connection: connection for a SQL database
-        """
-        super().__init__()
-        self._connection = connection
-
-    # TODO(Dan2): CmTask502.
-    def read_universe_data(
-        self,
-        universe: Union[str, List[imvcounun.ExchangeCurrencyTuple]],
         data_type: str,
-        table_name: Optional[str] = None,
-        start_date: Optional[pd.Timestamp] = None,
-        end_date: Optional[pd.Timestamp] = None,
-        **read_sql_kwargs: Dict[str, Any],
-    ) -> pd.DataFrame:
+    ) -> None:
         """
         Load CCXT data from database.
 
         This code path is used for the real-time data.
 
-        :param universe: CCXT universe version or a list of exchange-currency
-            tuples to load data for
+        :param connection: connection for a SQL database
         :param data_type: OHLCV or trade, bid/ask data
+        """
+        self._connection = connection
+        date_type_lower = data_type.lower()
+        hdbg.dassert_in(date_type_lower, _DATA_TYPES)
+        self._data_type = date_type_lower
+
+    def _read_data(
+        self,
+        full_symbol: imvcdcli.FullSymbol,
+        table_name: Optional[str] = None,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
+        **kwargs: Dict[str, Any],
+    ) -> pd.DataFrame:
+        """
         :param table_name: name of the table to load, e.g., "ccxt_ohlcv"
-        :param start_date: the earliest date timestamp to load data for,
-            considered in UTC if tz is not specified
-        :param end_date: the latest date timestamp to load data for,
-            considered in UTC if tz is not specified
-        :param read_sql_kwargs: kwargs for `pd.read_sql()` query
-        :return: table from database
         """
         table_name = table_name or "ccxt_ohlcv"
         # Verify that table with specified name exists.
         hdbg.dassert_in(table_name, hsql.get_table_names(self._connection))
         # Initialize SQL query.
         sql_query = "SELECT * FROM %s" % table_name
-        # Load all the corresponding exchange-currency tuples if a universe
-        # version is provided.
-        if isinstance(universe, str):
-            universe = imvcounun.get_vendor_universe_as_tuples(universe, "CCXT")
+        # Extract exchange id and currency pair from full symbol.
+        exchange_id = full_symbol.split("::")[0]
+        currency_pair = full_symbol.split("::")[-1]
         # Initialize lists for query condition strings and parameters to insert.
         query_conditions = []
         query_params = []
-        # For every exchange id append a corresponding query string and query
-        # parameter to the corresponding lists.
-        exchange_ids = tuple([tuple_.exchange_id for tuple_ in universe])
-        query_conditions.append("exchange_id IN %s")
-        query_params.append(exchange_ids)
-        # For every currency pair append a corresponding query string and query
-        # parameter to the corresponding lists.
-        currency_pairs = tuple([tuple_.currency_pair for tuple_ in universe])
-        query_conditions.append("currency_pair IN %s")
-        query_params.append(currency_pairs)
-        # If conditional parameter is provided, append a corresponding
+        # For exchange id and currency pair append a corresponding query string
+        # and query parameter to the corresponding lists.
+        query_conditions.append("exchange_id = %s")
+        query_params.append(exchange_id)
+        query_conditions.append("currency_pair = %s")
+        query_params.append(currency_pair)
+        # For every provided conditional parameter, append a corresponding
         # query string and query parameter to the corresponding lists.
-        if start_date:
-            start_date = hdateti.convert_timestamp_to_unix_epoch(start_date)
+        if start_ts:
+            start_date = hdateti.convert_timestamp_to_unix_epoch(start_ts)
             query_conditions.append("timestamp >= %s")
             query_params.append(start_date)
-        if end_date:
-            end_date = hdateti.convert_timestamp_to_unix_epoch(end_date)
+        if end_ts:
+            end_date = hdateti.convert_timestamp_to_unix_epoch(end_ts)
             query_conditions.append("timestamp < %s")
             query_params.append(end_date)
         # Append all the provided query conditions to the main SQL query.
         query_conditions = " AND ".join(query_conditions)
         sql_query = " WHERE ".join([sql_query, query_conditions])
         # Add a tuple of gathered query parameters to kwargs as `params`.
-        read_sql_kwargs["params"] = tuple(query_params)
+        kwargs["params"] = tuple(query_params)
         # Execute SQL query.
-        data = pd.read_sql(sql_query, self._connection, **read_sql_kwargs)
-        # Apply transformation to raw data.
-        transformed_data = self.transform(data, data_type)
-        return transformed_data
+        data = pd.read_sql(sql_query, self._connection, **kwargs)
+        return data
 
 
 # #############################################################################
