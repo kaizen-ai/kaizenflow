@@ -181,8 +181,8 @@ class MultipleSymbolsClient(AbstractImClient):
                 full_symbol=full_symbol,
                 start_ts=start_ts,
                 end_ts=end_ts,
-                **kwargs
-            )[full_symbol]
+                **kwargs,
+            )
             # Insert column with full symbol to the dataframe.
             df.insert(0, full_symbol_col_name, full_symbol)
             # Add full symbol data to the results dict.
