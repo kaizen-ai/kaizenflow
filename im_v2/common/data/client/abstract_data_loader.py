@@ -161,7 +161,7 @@ class MultipleSymbolsClient(AbstractImClient):
         None `start_ts` and `end_ts` means the entire period of time available.
 
         :param full_symbols: universe version or a list of full symbols, e.g.
-            `[binance::BTC_USDT, kucoin::ETH_USDT]`
+            `['binance::BTC_USDT', 'kucoin::ETH_USDT']`
         :param full_symbol_col_name: name of the column with full symbols
         :param start_ts: the earliest date timestamp to load data for
         :param end_ts: the latest date timestamp to load data for
