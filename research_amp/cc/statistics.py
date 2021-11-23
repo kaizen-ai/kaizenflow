@@ -15,7 +15,7 @@ import core.config.config_ as cconconf
 import core.statistics as costatis
 import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
-import im.ccxt.data.load.loader as imcdalolo
+import im_v2.ccxt.data.client.loader as imcdacllo
 import im_v2.cryptodatadownload.data.load.loader as icdalolo
 import im_v2.common.universe.universe as imvcounun
 
@@ -199,7 +199,7 @@ def postprocess_stats_table(
 # TODO(Grisha): use the abstract class in #313.
 def get_loader_for_vendor(
     config: cconconf.Config,
-) -> Union[imcdalolo.CcxtLoaderFromFile, icdalolo.CddLoader]:
+) -> Union[imcdacllo.CcxtLoaderFromFile, icdalolo.CddLoader]:
     """
     Get vendor specific loader instance.
 
@@ -208,7 +208,7 @@ def get_loader_for_vendor(
     """
     vendor = config["data"]["vendor"]
     if vendor == "CCXT":
-        loader = imcdalolo.CcxtLoaderFromFile(
+        loader = imcdacllo.CcxtLoaderFromFile(
             root_dir=config["load"]["data_dir"],
             aws_profile=config["load"]["aws_profile"],
         )
