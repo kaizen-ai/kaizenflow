@@ -1306,7 +1306,7 @@ def _get_docker_cmd(
     if as_user:
         docker_cmd_.append(
             r"""
-            --user $(id -u):$(id -g)"""
+        --user $(id -u):$(id -g)"""
         )
     # - Handle the extra docker options.
     if extra_docker_run_opts:

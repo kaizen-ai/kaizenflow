@@ -4,11 +4,11 @@ if [[ 1 == 1 ]]; then
     exit 0
 fi;
 
-SUBDIR=research_amp
+#SUBDIR=research_amp
 #SUBDIR=im
+SUBDIR=helpers
 #SUBDIR=im_v2
 #SUBDIR=oms/devops
-#SUBDIR=dev_scripts/double_integrate
 #SUBDIR=optimizer
 #SUBDIR=research/cc
 # Diff dir.
