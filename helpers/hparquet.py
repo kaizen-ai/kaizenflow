@@ -31,7 +31,7 @@ def to_parquet(
     """
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_isinstance(file_name, str)
-    hdbg.dassert_file_extension(file_name, "pq")
+    hdbg.dassert_file_extension(file_name, ["pq", "parquet"])
     #
     hio.create_enclosing_dir(file_name, incremental=True)
     _LOG.debug("df.shape=%s", str(df.shape))
@@ -63,7 +63,7 @@ def from_parquet(
     Load a dataframe from a Parquet file.
     """
     hdbg.dassert_isinstance(file_name, str)
-    hdbg.dassert_file_extension(file_name, "pq")
+    hdbg.dassert_file_extension(file_name, ["pq", "parquet"])
     # Load data.
     with htimer.TimedScope(logging.DEBUG, "From parquet '%s'" % file_name) as ts:
         filesystem = None
