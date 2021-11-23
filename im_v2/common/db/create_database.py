@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 """
-Script to remove database using connection.
+Script to create database using connection.
 
 Use as:
 
-# Remove a db named 'test_db' using environment variables:
-> im/common/db/remove_database.py --db-name 'test_db'
+# Create a db named 'test_db' using environment variables:
+> im/common/db/create_database.py --db-name 'test_db'
 
 Import as:
 
-import im.common.db.remove_database as imcdbreda
+import im.common.db.create_database as imcdbcrda
 """
 
 import argparse
@@ -17,7 +17,7 @@ import argparse
 import helpers.io_ as hio
 import helpers.parser as hparser
 import helpers.sql as hsql
-import im.common.db.create_db as imcdbcrdb
+import im_v2.common.db.utils as imcodbuti
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -44,7 +44,12 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="DB to drop",
+        help="DB to create",
+    )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="To overwtite existing db",
     )
     parser = hparser.add_verbosity_arg(parser)
     return parser
@@ -58,7 +63,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
         connection = hsql.get_connection_from_env_vars()
     else:
         connection = hsql.get_connection_from_string(args.db_connection)
-    hsql.remove_database(connection=connection, dbname=args.db_name)
+    # Create db with all tables.
+    imcodbuti.create_im_database(
+        connection=connection, new_db=args.db_name, overwrite=args.overwrite
+    )
 
 
 if __name__ == "__main__":

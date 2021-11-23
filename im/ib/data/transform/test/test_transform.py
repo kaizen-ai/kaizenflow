@@ -3,7 +3,7 @@ import pytest
 import helpers.unit_test as hunitest
 import im.common.data.transform.transform as imcdatrtr
 import im.common.data.types as imcodatyp
-import im.common.db.utils as imcodbuti
+import im_v2.common.db.utils as imcodbuti
 import im.common.test.utils as ictuti
 import im.ib.data.load.ib_s3_data_loader as imidlisdlo
 import im.ib.data.load.ib_sql_data_loader as iidlisdlo

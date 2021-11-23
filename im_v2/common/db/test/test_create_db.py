@@ -7,7 +7,7 @@ import helpers.git as hgit
 import helpers.sql as hsql
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
-import im.common.db.create_db as imcdbcrdb
+import im_v2.common.db.utils as imcodbuti
 
 _LOG = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ class TestCreateDb1(hunitest.TestCase):
         """
         Verify that all necessary tables are created inside the DB.
         """
-        imcdbcrdb.create_all_tables(self.connection)
+        imcodbuti.create_all_tables(self.connection)
         expected = sorted(
             [
                 "ccxt_ohlcv",
@@ -90,6 +90,6 @@ class TestCreateDb1(hunitest.TestCase):
 
     @pytest.mark.slow()
     def test_create_im_database(self) -> None:
-        imcdbcrdb.create_im_database(connection=self.connection, new_db="test_db")
+        imcodbuti.create_im_database(connection=self.connection, new_db="test_db")
         db_list = hsql.get_db_names(self.connection)
         self.assertIn("test_db", db_list)

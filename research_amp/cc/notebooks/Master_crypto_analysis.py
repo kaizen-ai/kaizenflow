@@ -44,7 +44,7 @@ import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprint
 import helpers.s3 as hs3
-import im_v2.ccxt.data.load.loader as imcdalolo
+import im_v2.ccxt.data.client.loader as imcdacllo
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -93,7 +93,7 @@ print(config)
 
 # %%
 # TODO(Grisha): potentially read data from the db.
-ccxt_loader = imcdalolo.CcxtLoaderFromFile(
+ccxt_loader = imcdacllo.CcxtLoaderFromFile(
     root_dir=config["load"]["data_dir"], aws_profile=config["load"]["aws_profile"]
 )
 ccxt_data = ccxt_loader.read_data(
