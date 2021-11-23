@@ -24,7 +24,6 @@ FullSymbol = str
 
 # TODO(Grisha): add methods `get_start(end)_ts_available()`, `get_universe()` #543.
 class AbstractImClient(abc.ABC):
-    @abc.abstractmethod
     def read_data(
         self,
         full_symbol: FullSymbol,
@@ -34,8 +33,8 @@ class AbstractImClient(abc.ABC):
         resample_to_1_min: bool = True,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
-        **kwargs: Any,
-    ) -> Dict[str, Any]:
+        **kwargs: Dict[str, Any],
+    ) -> pd.DataFrame:
         """
         Read and process data for a single `FullSymbol` (i.e. currency pair
         from a single exchange) in [start_ts, end_ts).
@@ -76,8 +75,8 @@ class AbstractImClient(abc.ABC):
         *,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
-        **kwargs: Any,
-    ) -> Dict[str, Any]:
+        **kwargs: Dict[str, Any],
+    ) -> pd.DataFrame:
         """
         Read data for a single `FullSymbol` (i.e. currency pair from a single
         exchange) in [start_ts, end_ts).
