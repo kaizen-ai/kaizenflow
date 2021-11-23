@@ -17,7 +17,7 @@ import argparse
 import helpers.io_ as hio
 import helpers.parser as hparser
 import helpers.sql as hsql
-import im.common.db.create_db as imcdbcrdb
+import im_v2.common.db.utils as imcodbuti
 
 
 def _parse() -> argparse.ArgumentParser:

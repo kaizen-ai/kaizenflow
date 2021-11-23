@@ -17,7 +17,7 @@ import argparse
 import helpers.io_ as hio
 import helpers.parser as hparser
 import helpers.sql as hsql
-import im.common.db.create_db as imcdbcrdb
+import im_v2.common.db.utils as imcodbuti
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -64,7 +64,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     else:
         connection = hsql.get_connection_from_string(args.db_connection)
     # Create db with all tables.
-    imcdbcrdb.create_im_database(
+    imcodbuti.create_im_database(
         connection=connection, new_db=args.db_name, overwrite=args.overwrite
     )
 
