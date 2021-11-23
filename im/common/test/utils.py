@@ -4,7 +4,7 @@ import pandas as pd
 
 import helpers.sql as hsql
 import helpers.unit_test as hunitest
-import im.common.db.create_db as imcdbcrdb
+import im_v2.common.db.utils as imcodbuti
 import im.common.sql_writer as imcosqwri
 
 _LOG = logging.getLogger(__name__)
