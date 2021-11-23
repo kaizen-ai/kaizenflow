@@ -17,7 +17,7 @@ import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.s3 as hs3
 import helpers.sql as hsql
-import im_v2.common.data.client as imvcdcadlo
+import im_v2.common.data.client as imvcdcli
 import im_v2.common.universe.universe as imvcounun
 
 _LOG = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ _LATEST_DATA_SNAPSHOT = "20210924"
 _DATA_TYPES = ["ohlcv"]
 
 
-class AbstractCcxtClient(imvcdcadlo.AbstractImClient, abc.ABC):
+class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
     def __init__(self, data_type: str) -> None:
         """
         :param data_type: OHLCV or trade, bid/ask data
