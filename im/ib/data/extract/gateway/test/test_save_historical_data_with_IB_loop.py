@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 import im.ib.data.extract.gateway.test.utils as iidegt
-import im.common.db.utils as imcodbuti
+import im_v2.common.db.utils as imcodbuti
 
 _LOG = logging.getLogger(__name__)
 

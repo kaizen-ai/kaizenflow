@@ -8,11 +8,10 @@ import pandas as pd
 import pytest
 
 import helpers.dbg as hdbg
-import im.common.db.create_db as imcdbcrdb
 import im.ib.data.extract.gateway.download_data_ib_loop as imidegddil
 import im.ib.data.extract.gateway.test.utils as iidegt
 import im.ib.data.extract.gateway.utils as imidegaut
-import im.common.db.utils as imcodbuti
+import im_v2.common.db.utils as imcodbuti
 
 _LOG = logging.getLogger(__name__)
 
