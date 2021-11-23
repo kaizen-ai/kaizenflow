@@ -17,7 +17,7 @@ import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.s3 as hs3
 import helpers.sql as hsql
-import im_v2.common.data.client.abstract_data_loader as imvcdcadlo
+import im_v2.common.data.client as imvcdcadlo
 import im_v2.common.universe.universe as imvcounun
 
 _LOG = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ class AbstractCcxtClient(imvcdcadlo.AbstractImClient, abc.ABC):
 
     def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Transform CCXT data loaded from DB or a filesystem.
+        See description in the parent class.
 
         Input data is indexed with numbers and contains the columns timestamp
         open, high, low, closed, volume, exchange_id, currency_pair e.g.,
@@ -58,9 +58,6 @@ class AbstractCcxtClient(imvcdcadlo.AbstractImClient, abc.ABC):
         2021-09-08 20:01:00-04:00  3496.36     1631145660000  ETH/USDT      binance
         2021-09-08 20:02:00-04:00  3501.59     1631145720000  ETH/USDT      binance
         ```
-
-        :param df: CCXT data from DB or a filesystem
-        :return: processed dataframe
         """
         # Apply common transformations.
         transformed_data = self._apply_common_transformation(df)
