@@ -48,6 +48,7 @@ class _LibTasksTestCase(hunitest.TestCase):
         hlibtask.reset_default_params()
         super().tearDown()
 
+
 # #############################################################################
 
 # #############################################################################
@@ -144,6 +145,7 @@ class TestGhLogin1(hunitest.TestCase):
 # tested. E.g. TestDryRunTasks1::test_print_setup and
 # TestDryRunTasks2::test_print_setup should go together in a class.
 
+
 class TestDryRunTasks1(hunitest.TestCase):
     """
     - Run invoke in dry-run mode from command line
@@ -169,7 +171,7 @@ class TestDryRunTasks1(hunitest.TestCase):
         target = "git_clean"
         self._dry_run(target)
 
-    # ################################################################################
+    # #########################################################################
     # TODO(gp): -> TestDockerCommands1
 
     @pytest.mark.skipif(
@@ -207,7 +209,7 @@ class TestDryRunTasks1(hunitest.TestCase):
         target = "docker_kill --all"
         self._dry_run(target)
 
-    # ################################################################################
+    # #########################################################################
 
     def _dry_run(self, target: str, dry_run: bool = True) -> None:
         """
@@ -256,7 +258,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "git_clean(ctx, dry_run=False)"
         self._check_output(target)
 
-    # ################################################################################
+    # #########################################################################
 
     def test_docker_images_ls_repo(self) -> None:
         target = "docker_images_ls_repo(ctx)"
@@ -294,7 +296,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "docker_stats(ctx)"
         self._check_output(target)
 
-    # ################################################################################
+    # #########################################################################
     # TODO(gp): -> TestGhCommands1
 
     def test_gh_create_pr1(self) -> None:
@@ -330,7 +332,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     #     target = "gh_workflow_run(ctx)"
     #     self._check_output(target)
 
-    # ################################################################################
+    # #########################################################################
     # TODO(gp): -> TestGitCommands1
 
     def test_git_branch_files(self) -> None:
@@ -371,7 +373,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "git_merge_master(ctx)"
         self._check_output(target)
 
-    # ################################################################################
+    # #########################################################################
     # TODO(gp): -> TestLintCommands1
 
     @pytest.mark.skip(

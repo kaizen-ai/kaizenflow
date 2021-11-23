@@ -1481,6 +1481,9 @@ def _to_abs_path(filename: str) -> str:
 #   performed on the "local" image (e.g., locally or through GitHub actions)
 # - If the qualification process is passed, the image is released as `dev` on ECR
 
+# Use Docker buildkit or not.
+# DOCKER_BUILDKIT = 1
+DOCKER_BUILDKIT = 0
 
 # Use Docker buildkit or not.
 # DOCKER_BUILDKIT = 1
@@ -1516,7 +1519,7 @@ def docker_build_local_image(  # type: ignore
         cmd = "cd devops/docker_build; poetry lock -v"
         _run(ctx, cmd)
     #
-    image_local = get_image(base_image, "local")
+    image_local = get_image(base_image, "local", version)
     #
     _dassert_is_image_name_valid(image_local)
     #
@@ -1611,7 +1614,6 @@ def docker_release_dev_image(  # type: ignore
     ctx,
     version,
     cache=True,
-    version="",
     skip_tests=False,
     fast_tests=True,
     slow_tests=True,
@@ -1636,6 +1638,7 @@ def docker_release_dev_image(  # type: ignore
     :param version: version to tag the image and code with
     :param cache: use the cache
     :param version: version to tag the image and code with
+    :param cache: use the cache
     :param skip_tests: skip all the tests and release the dev image
     :param fast_tests: run fast tests, unless all tests skipped
     :param slow_tests: run slow tests, unless all tests skipped
@@ -1666,13 +1669,7 @@ def docker_release_dev_image(  # type: ignore
         run_slow_tests(ctx, stage=stage)
     if superslow_tests:
         run_superslow_tests(ctx, stage=stage)
-    # 3) Run end-to-end test.
-    if end_to_end_tests:
-        end_to_end_test_fn = get_default_param("END_TO_END_TEST_FN")
-        if not end_to_end_test_fn(ctx, stage=stage):
-            _LOG.error("End-to-end test has failed")
-            return
-    # 4) Promote the "local" image to "dev".
+    # 3) Promote the "local" image to "dev".
     docker_tag_local_image_as_dev(ctx)
     # 4) Run QA tests for the (local version) of the dev image.
     if qa_tests:
@@ -1777,7 +1774,6 @@ def docker_release_prod_image(  # type: ignore
     ctx,
     version,
     cache=True,
-    version="",
     skip_tests=False,
     fast_tests=True,
     slow_tests=True,
@@ -1822,7 +1818,7 @@ def docker_release_prod_image(  # type: ignore
 
 
 @task
-def docker_release_all(ctx, version=""):  # type: ignore
+def docker_release_all(ctx, version):  # type: ignore
     """
     (ONLY CI/CD) Release both dev and prod image to ECR.
 
