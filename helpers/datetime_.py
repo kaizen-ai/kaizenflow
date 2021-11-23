@@ -149,7 +149,7 @@ def dassert_has_UTC_tz(datetime_: StrictDatetime) -> None:
     Assert that the passed timestamp is UTC.
     """
     tz_zones = (pytz.timezone("UTC").zone,)
-    _dassert_has_specified_tz(datetime_, tz_zones)
+    dassert_has_specified_tz(datetime_, tz_zones)
 
 
 def dassert_has_ET_tz(datetime_: StrictDatetime) -> None:
@@ -160,7 +160,7 @@ def dassert_has_ET_tz(datetime_: StrictDatetime) -> None:
         pytz.timezone("US/Eastern").zone,
         pytz.timezone("America/New_York").zone,
     )
-    _dassert_has_specified_tz(datetime_, tz_zones)
+    dassert_has_specified_tz(datetime_, tz_zones)
 
 
 def dassert_tz_compatible(
