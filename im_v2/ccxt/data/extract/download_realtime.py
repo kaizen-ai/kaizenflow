@@ -192,6 +192,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Connect to database.
     if args.db_connection == "from_env":
         connection = hsql.get_connection_from_env_vars()
+        # Generate a query to remove duplicates.
         dup_query = hsql.get_remove_duplicates_query(
             table=args.table_name,
             id_col="id",
@@ -238,6 +239,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                         obj=pair_data,
                         table_name=args.table_name,
                     )
+                    # Drop duplicates inside the table.
                     connection.cursor().execute(dup_query)
         time.sleep(60)
 
