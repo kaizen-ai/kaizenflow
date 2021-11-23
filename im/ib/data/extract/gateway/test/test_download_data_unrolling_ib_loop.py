@@ -10,7 +10,7 @@ import pytest
 import im.common.db.create_db as imcdbcrdb
 import im.ib.data.extract.gateway.test.utils as iidegt
 import im.ib.data.extract.gateway.unrolling_download_data_ib_loop as imideguddil
-import im.common.db.utils as imcodbuti
+import im_v2.common.db.utils as imcodbuti
 
 _LOG = logging.getLogger(__name__)
 

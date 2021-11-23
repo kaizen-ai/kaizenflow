@@ -3,7 +3,7 @@ Tools for handling IM Postgres DB.
 
 Import as:
 
-import im.common.db.utils as imcodbuti
+import im_v2.common.db.utils as imcodbuti
 """
 import logging
 import os
