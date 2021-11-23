@@ -33,8 +33,9 @@ class AbstractCcxtClient(imvcdcadlo.AbstractImClient, abc.ABC):
         """
         :param data_type: OHLCV or trade, bid/ask data
         """
-        hdbg.dassert_in(data_type, _DATA_TYPES)
-        self._data_type = data_type
+        date_type_lower = data_type.lower()
+        hdbg.dassert_in(date_type_lower, _DATA_TYPES)
+        self._data_type = date_type_lower
 
     def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -64,12 +65,12 @@ class AbstractCcxtClient(imvcdcadlo.AbstractImClient, abc.ABC):
         # Apply common transformations.
         transformed_data = self._apply_common_transformation(df)
         # Apply transformations for OHLCV data.
-        if self._data_type.lower() == "ohlcv":
+        if self._data_type == "ohlcv":
             transformed_data = self._apply_ohlcv_transformation(transformed_data)
         else:
             hdbg.dfatal(
                 "Incorrect data type: '%s'. Acceptable types: '%s'"
-                % (self._data_type.lower(), _DATA_TYPES)
+                % (self._data_type, _DATA_TYPES)
             )
         # Sort transformed data by exchange id and currency pair columns.
         transformed_data = transformed_data.sort_values(
