@@ -181,24 +181,27 @@ class AbstractImClient(abc.ABC):
 
 
 class MultipleSymbolsClient(AbstractImClient):
+    """
+    Object compatible with `AbstractImClient` interface which reads data for multiple full symbols.
+    """
     def __init__(self, class_: AbstractImClient, mode: str) -> None:
         """
-        Implement an object compatible with `AbstractImClient` interface which
-        reads data for multiple full symbols.
-
         :param class_: `AbstractImClient` object
         :param mode: output mode
+            - concat: store data for multiple full symbols in one dataframe
+            - dict: store data in a dict of a type `Dict[full_symbol, data]`
         """
         # Store an object from `AbstractImClient`.
         self._class = class_
         # Specify output mode.
-        dbg.dassert_in(mode, ("concat", "dict"))
+        hdbg.dassert_in(mode, ("concat", "dict"))
         self._mode = mode
 
     @abc.abstractmethod
     def read_data(
         self,
         full_symbols: Union[str, List[str]],
+        *,
         full_symbol_col_name: str = "full_symbol",
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
@@ -218,7 +221,7 @@ class MultipleSymbolsClient(AbstractImClient):
         """
         # TODO(Dan): Implement the case when `full_symbols` is string, e.g."v01".
         # Verify that all the provided full symbols are unique.
-        dbg.dassert_no_duplicates(full_symbols)
+        hdbg.dassert_no_duplicates(full_symbols)
         # Initialize results dict.
         full_symbol_to_df = {}
         for full_symbol in sorted(full_symbols):
