@@ -19,7 +19,7 @@ import im.kibot.sql_writer as imkisqwri
 
 _LOG = logging.getLogger(__name__)
 
-
+# TODO(Danya): Remove this function since `dind` is implemented.
 def is_inside_im_container() -> bool:
     """
     Return whether we are running inside IM app.
