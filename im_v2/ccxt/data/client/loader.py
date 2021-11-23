@@ -359,8 +359,9 @@ class CcxtLoaderFromDb(AbstractCcxtClient):
         end_ts: Optional[pd.Timestamp] = None,
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
+        # TODO(Dan): CmTask #502.
         # Construct name of the DB table with data from data type.
-        table_name =  "ccxt_" + self._data_type
+        table_name = "ccxt_" + self._data_type
         # Verify that table with specified name exists.
         hdbg.dassert_in(table_name, hsql.get_table_names(self._connection))
         # Initialize SQL query.
