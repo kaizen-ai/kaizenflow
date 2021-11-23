@@ -199,7 +199,7 @@ def postprocess_stats_table(
 # TODO(Grisha): use the abstract class in #313.
 def get_loader_for_vendor(
     config: cconconf.Config,
-) -> Union[imcdacllo.CcxtLoaderFromFile, icdalolo.CddLoader]:
+) -> Union[imcdacllo.AbstractCcxtLoader, icdalolo.CddLoader]:
     """
     Get vendor specific loader instance.
 
