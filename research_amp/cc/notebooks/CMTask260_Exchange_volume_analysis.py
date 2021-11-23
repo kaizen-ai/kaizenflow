@@ -30,7 +30,7 @@ import helpers.s3 as hs3
 import im_v2.common.universe.universe as imvcounun
 import research_amp.cc.statistics as rccstat
 import research_amp.cc.volume as rccvolu
-import im_v2.ccxt.data.load.loader as imcdalolo
+import im_v2.ccxt.data.client.loader as imcdacllo
 
 import core.plotting as coplotti
 
@@ -154,7 +154,7 @@ def get_initial_df_with_volumes(coins, exchange, is_notional_volume):
     Parameters: list of coins, exchange name
     """
     result = []
-    loader = imcdalolo.CcxtLoaderFromFile(
+    loader = imcdacllo.CcxtLoaderFromFile(
         root_dir="s3://alphamatic-data/data", aws_profile="am"
     )
     for coin in coins:
