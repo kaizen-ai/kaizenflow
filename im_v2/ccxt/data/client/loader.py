@@ -29,7 +29,7 @@ _DATA_TYPES = ["ohlcv"]
 
 
 class AbstractCcxtClient(imvcdcadlo.AbstractImClient, abc.ABC):
-    def __init__(self, data_type: str):
+    def __init__(self, data_type: str) -> None:
         """
         :param data_type: OHLCV or trade, bid/ask data
         """
