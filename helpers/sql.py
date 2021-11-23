@@ -566,22 +566,22 @@ def execute_insert_query(
 
 
 def get_remove_duplicates_query(
-    table: str, id_col: str, columns: List[str]
+    table_name: str, id_col_name: str, column_names: List[str]
 ) -> str:
     """
     Get a query to remove duplicates from table, keeping last duplicated row.
 
-    :param table: name of table
-    :param id_col: name of unique id column
-    :param columns: names of columns to compare on
+    :param table_name: name of table
+    :param id_col_name: name of unique id column
+    :param column_names: names of columns to compare on
     :return: query to execute duplicate removal
     """
     # TODO(*): Add a "limit" parameter if possible, to check only in top N rows.
     remove_statement = []
-    remove_statement.append("DELETE FROM {0} a USING {0} b".format(table))
-    remove_statement.append("WHERE a.{0} < b.{0}".format(id_col))
-    for c in columns:
-        remove_statement.append("AND a.{0} = b.{0}".format(c))
+    remove_statement.append(f"DELETE FROM {table_name} a USING {table_name} b")
+    remove_statement.append(f"WHERE a.{id_col_name} < b.{id_col_name}")
+    for c in column_names:
+        remove_statement.append(f"AND a.{c} = b.{c}")
     remove_statement = " ".join(remove_statement)
     return remove_statement
 

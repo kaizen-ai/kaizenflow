@@ -192,12 +192,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Connect to database.
     if args.db_connection == "from_env":
         connection = hsql.get_connection_from_env_vars()
-        # Generate a query to remove duplicates.
-        dup_query = hsql.get_remove_duplicates_query(
-            table=args.table_name,
-            id_col="id",
-            columns=["timestamp", "exchange_id", "currency_pair"],
-        )
     elif args.db_connection == "none":
         connection = None
     else:
@@ -211,6 +205,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
         exchanges.append(
             _instantiate_exchange(exchange_id, universe["CCXT"], args.api_keys)
         )
+    # Generate a query to remove duplicates.
+    dup_query = hsql.get_remove_duplicates_query(
+        table_name=args.table_name,
+        id_col="id",
+        column_names=["timestamp", "exchange_id", "currency_pair"],
+    )
     # Launch an infinite loop.
     while True:
         for exchange in exchanges:
@@ -221,7 +221,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 except (
                     ccxt.ExchangeError,
                     ccxt.NetworkError,
-                    ccxt.base.errors.RateLimitExceeded,
+                    ccxt.base.errors.RequestTimeout,
                     ccxt.base.errors.RateLimitExceeded,
                 ) as e:
                     # Continue the loop if could not connect to exchange.
