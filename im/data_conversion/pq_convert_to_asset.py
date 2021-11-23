@@ -127,14 +127,15 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    dst_dir = args.dst_dir
-    # TODO(Nikola): Double check abort if exists!
+    #
+    src_dir = args.src_dir
     # We assume that the destination dir doesn't exist so we don't override data.
+    dst_dir = args.dst_dir
     hdbg.dassert_not_exists(dst_dir)
     hio.create_dir(dst_dir, incremental=False)
-    src_dir = args.src_dir
     from pudb import set_trace; set_trace()
-    for source_parquet_df in source_parquet_df_generator(src_dir):
+    # Convert the files one at the time.
+    for src_pq_file in source_parquet_df_generator(src_dir):
         df = from_parquet(src_pq_file)
         parquet_by_asset_save(dst_dir, df)
 

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# TODO: move some code to generate_pq_example_data.py
+
 """
 Run example:
 python im/data_conversion/pq_convert.py \
