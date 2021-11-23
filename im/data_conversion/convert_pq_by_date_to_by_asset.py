@@ -47,8 +47,6 @@ import helpers.hparquet as hparquet
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): Let's split the file generation from reading since this will help
-#  later with parallelizing.
 def _source_parquet_df_generator(src_dir: str) -> pd.DataFrame:
     """
     Generator for all the Parquet files in a given dir.
@@ -57,7 +55,7 @@ def _source_parquet_df_generator(src_dir: str) -> pd.DataFrame:
     src_pq_files = hio.find_files(src_dir, "*.parquet")
     if not src_pq_files:
         src_pq_files = hio.find_files(src_dir, "*.pq")
-    _LOG.debug(f"Found {len(src_pq_files)} pq files in {src_dir}.")
+    _LOG.debug("Found %s pq files in '%s'", len(src_pq_files), src_dir)
     for src_pq_file in src_pq_files:
         yield src_pq_file
 
@@ -69,7 +67,7 @@ def _save_pq_by_asset(parquet_df_by_date: pd.DataFrame, dst_dir: str) -> None:
     year_col_name = "year"
     asset_col_name = "asset"
     with htimer.TimedScope(logging.DEBUG, "Create partition indices"):
-        parquet_df_by_date["year"] = parquet_df_by_date.index.year
+        parquet_df_by_date[year_col_name] = parquet_df_by_date.index.year
     with htimer.TimedScope(logging.DEBUG, "Save data"):
         table = pa.Table.from_pandas(parquet_df_by_date)
         partition_cols = [year_col_name, asset_col_name]
