@@ -36,27 +36,6 @@ class AbstractCcxtClient(imvcdcadlo.AbstractImClient, abc.ABC):
         hdbg.dassert_in(data_type, _DATA_TYPES)
         self._data_type = data_type
 
-    @abc.abstractmethod
-    def _read_data(
-        self,
-        full_symbol: imvcdcadlo.FullSymbol,
-        *,
-        start_ts: Optional[pd.Timestamp] = None,
-        end_ts: Optional[pd.Timestamp] = None,
-        **kwargs: Dict[str, Any],
-    ) -> pd.DataFrame:
-        """
-        Read data for a single `FullSymbol` (i.e. currency pair from a single
-        exchange) in [start_ts, end_ts).
-
-        None `start_ts` and `end_ts` means the entire period of time available.
-
-        :param full_symbol: `exchange::symbol`, e.g. `binance::BTC_USDT`
-        :param start_ts: the earliest date timestamp to load data for
-        :param end_ts: the latest date timestamp to load data for
-        :return: data for a single `FullSymbol` in [start_ts, end_ts)
-        """
-
     def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Transform CCXT data loaded from DB or a filesystem.
@@ -100,11 +79,11 @@ class AbstractCcxtClient(imvcdcadlo.AbstractImClient, abc.ABC):
 
     def _apply_common_transformation(self, data: pd.DataFrame) -> pd.DataFrame:
         """
-        Apply transform common to all CCXT data.
+        Apply transformations common to all CCXT data.
 
         This includes:
         - Datetime format assertion
-        - Converting epoch ms timestamp to pd.Timestamp
+        - Converting epoch ms timestamp to `pd.Timestamp`
         - Converting `timestamp` to index
 
         :param data: raw CCXT data
