@@ -335,7 +335,7 @@ class AbstractCcxtLoader(abc.ABC):
 
 # #############################################################################
 
-# TODO(Grisha): inherit from `AbstractCcxtClient` #543.
+
 class CcxtLoaderFromDb(AbstractCcxtClient):
     def __init__(
         self,
