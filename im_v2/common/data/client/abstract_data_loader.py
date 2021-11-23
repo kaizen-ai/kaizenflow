@@ -129,3 +129,52 @@ class AbstractImClient(abc.ABC):
             0,
             msg=f"There are {n_duplicated_rows} duplicated rows in data",
         )
+
+
+class MultipleSymbolsClient(AbstractImClient):
+    """
+    Implement an object compatible with AbstractImClient interface which reads data for multiple full symbols.
+    """
+
+    def __init__(self, class_: AbstractImClient, mode: str):
+        # Store an object from AbstractImClient.
+        self._class = class_
+        dbg.dassert_in(mode, ("concat", "dict"))
+        self._mode = mode
+
+    @abc.abstractmethod
+    def read_data(
+        self,
+        full_symbols: Union[str, List[str]],
+        full_symbol_col_name: str = "full_symbol",
+        **kwargs,
+    ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+        dbg.dassert_no_duplicates(full_symbols)
+        full_symbol_to_df = {}
+        for full_symbol in sorted(full_symbols):
+            df = self._class.read_data(full_symbol, **kwargs)
+            hdbg.dassert_not_in(full_symbol, full_symbol_to_df.keys())
+            df.insert(0, full_symbol_col_name, full_symbol)
+            full_symbol_to_df[full_symbol] = df
+        if self._mode == "concat":
+            ret = pd.concat(full_symbol_to_df.values())
+            # Sort by increasing index and then full_symbol.
+            ret = ret.sort_index().sort_values(by=full_symbol_col_name)
+        elif self._mode == "dict":
+            ret = full_symbol_to_df
+        else:
+            raise ValueError("Invalid …")
+        return ret
+
+    # TODO(gp): Decide if we want to also implement other methods of the base class
+    @abc.abstractmethod
+    def get_start_ts_available(self):
+        """
+        ???
+        """
+
+    @abc.abstractmethod
+    def get_end_ts_available(self):
+        """
+        ???
+        """
