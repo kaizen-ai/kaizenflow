@@ -37,7 +37,8 @@ class AbstractImClient(abc.ABC):
         **kwargs: Any,
     ) -> Dict[str, Any]:
         """
-        Read and process data for a single `FullSymbol` (i.e. currency pair from a single exchange) in [start_ts, end_ts).
+        Read and process data for a single `FullSymbol` (i.e. currency pair
+        from a single exchange) in [start_ts, end_ts).
 
         None `start_ts` and `end_ts` means the entire period of time available.
 
@@ -78,7 +79,8 @@ class AbstractImClient(abc.ABC):
         **kwargs: Any,
     ) -> Dict[str, Any]:
         """
-        Read data for a single `FullSymbol` (i.e. currency pair from a single exchange) in [start_ts, end_ts).
+        Read data for a single `FullSymbol` (i.e. currency pair from a single
+        exchange) in [start_ts, end_ts).
 
         None `start_ts` and `end_ts` means the entire period of time available.
 
@@ -92,7 +94,8 @@ class AbstractImClient(abc.ABC):
     @abc.abstractmethod
     def _normalize_data(df: pd.DataFrame) -> pd.DataFrame:
         """
-        Apply transformation specific of the vendor, e.g. rename columns, convert data types.
+        Apply transformation specific of the vendor, e.g. rename columns,
+        convert data types.
 
         :param df: raw data
         :return: normalized data
