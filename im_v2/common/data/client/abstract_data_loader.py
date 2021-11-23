@@ -6,15 +6,19 @@ import im_v2.common.data.client.abstract_data_loader as imvcdcadlo
 
 import abc
 import logging
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 import pandas as pd
 
+import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 
+# Store information about an exchange and a symbol (e.g., `binance::BTC_USDT`).
+# Note that information about the vendor is carried in the `ImClient` itself,
+# i.e. using `CcxtImClient` serves data from CCXT.
 FullSymbol = str
 
 
@@ -31,16 +35,17 @@ class AbstractImClient(abc.ABC):
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
         **kwargs: Any,
-    ) -> pd.DataFrame:
+    ) -> Dict[str, Any]:
         """
-        Read and process data for a single `FullSymbol` in [start_ts, end_ts),
-        e.g. currency pair from a single exchange.
+        Read and process data for a single `FullSymbol` (i.e. currency pair from a single exchange) in [start_ts, end_ts).
+
+        None `start_ts` and `end_ts` means the entire period of time available.
 
         Data processing includes:
-            - normalization
+            - normalization specific of the vendor
             - dropping duplicates
             - resampling to 1 minute
-            - validity verification
+            - sanity check of the data
 
         :param full_symbol: `exchange::symbol`, e.g. `binance::BTC_USDT`
         :param normalize: transform data, e.g. rename columns, convert data types
@@ -58,10 +63,10 @@ class AbstractImClient(abc.ABC):
         if drop_duplicates:
             data = hpandas.drop_duplicates(data)
         if resample_to_1_min:
-            # TODO(Grisha): think how to fill missing column values that appear due to resampling.
             data = hpandas.resample_df(data, "T")
         # Verify that data is valid.
         self._dassert_is_valid(data)
+        return data
 
     @abc.abstractmethod
     def _read_data(
@@ -71,10 +76,11 @@ class AbstractImClient(abc.ABC):
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
         **kwargs: Any,
-    ) -> pd.DataFrame:
+    ) -> Dict[str, Any]:
         """
-        Read data for a single `FullSymbol` in [start_ts, end_ts), e.g.
-        currency pair from a single exchange.
+        Read data for a single `FullSymbol` (i.e. currency pair from a single exchange) in [start_ts, end_ts).
+
+        None `start_ts` and `end_ts` means the entire period of time available.
 
         :param full_symbol: `exchange::symbol`, e.g. `binance::BTC_USDT`
         :param start_ts: the earliest date timestamp to load data for
@@ -86,7 +92,7 @@ class AbstractImClient(abc.ABC):
     @abc.abstractmethod
     def _normalize_data(df: pd.DataFrame) -> pd.DataFrame:
         """
-        Transform data, e.g. rename columns, convert data types.
+        Apply transformation specific of the vendor, e.g. rename columns, convert data types.
 
         :param df: raw data
         :return: normalized data
@@ -107,14 +113,14 @@ class AbstractImClient(abc.ABC):
         hpandas.dassert_monotonic_index(df)
         # Verify that timezone info is correct.
         # TODO(Grisha): converge on the tz `US/Eastern` vs `UTC`.
-        expected_tz = "US/Eastern"
-        hdbg.dassert_eq(
-            df.index.tzinfo,
+        expected_tz = ["US/Eastern"]
+        # Is is assumed that the 1st value of an index is representative.
+        hdateti.dassert_has_specified_tz(
+            df.index[0],
             expected_tz,
-            msg=f"`DatetimeIndex` must have timezone={expected_tz} instead of {df.index.tzinfo}",
         )
         # Verify that there are no duplicates in data.
-        n_duplicated_rows = df[df.duplicated()].shape[0]
+        n_duplicated_rows = len(df.duplicated())
         hdbg.dassert_eq(
             n_duplicated_rows,
             0,

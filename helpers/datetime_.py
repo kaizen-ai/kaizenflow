@@ -121,7 +121,7 @@ def dassert_has_tz(datetime_: StrictDatetime) -> None:
     )
 
 
-def _dassert_has_specified_tz(
+def dassert_has_specified_tz(
     datetime_: StrictDatetime, tz_zones: Iterable[str]
 ) -> None:
     """
