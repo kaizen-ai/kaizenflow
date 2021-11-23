@@ -30,7 +30,7 @@ import pandas as pd
 import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprint
-import im_v2.ccxt.data.load.loader as imcdalolo
+import im_v2.ccxt.data.client.loader as imcdacllo
 import research_amp.cc.detect_outliers as rccdeout
 
 # %%
@@ -47,7 +47,7 @@ hprint.config_notebook()
 
 # %%
 root_dir = "s3://alphamatic-data/data"
-сcxt_loader = imcdalolo.CcxtLoaderFromFile(root_dir=root_dir, aws_profile="am")
+сcxt_loader = imcdacllo.CcxtLoaderFromFile(root_dir=root_dir, aws_profile="am")
 data = сcxt_loader.read_data("kucoin", "ETH/USDT", "ohlcv")
 data.head()
 
