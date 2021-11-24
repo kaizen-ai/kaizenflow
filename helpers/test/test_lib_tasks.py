@@ -644,14 +644,16 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         not hgit.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
     )
     def test_docker_jupyter1(self) -> None:
-        stage = "dev"
         base_image = ""
+        stage = "dev"
+        version = "1.0.0"
         port = 9999
         self_test = True
         print_docker_config = False
         act = hlibtask._get_docker_jupyter_cmd(
             stage,
             base_image,
+            version,
             port,
             self_test,
             print_docker_config=print_docker_config,
