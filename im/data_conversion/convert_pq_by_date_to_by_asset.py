@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
-Convert a directory storing Parquet files organized by dates into a Parquet dataset
-organized by assets.
+Convert a directory storing Parquet files organized by dates into a Parquet
+dataset organized by assets.
 
 A parquet file organized by dates looks like:
 
@@ -29,6 +29,10 @@ dst_dir
 > python im/data_conversion/convert_pq_by_date_to_by_asset.py \
     --src_dir im/data_conversion/test_data_by_date \
     --dst_dir im/data_conversion/test_data_by_asset
+
+Import as:
+
+import im.data_conversion.convert_pq_by_date_to_by_asset as imdccpbdtba
 """
 
 import argparse
@@ -39,10 +43,10 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 import helpers.dbg as hdbg
+import helpers.hparquet as hparque
 import helpers.io_ as hio
 import helpers.parser as hparser
 import helpers.timer as htimer
-import helpers.hparquet as hparquet
 
 _LOG = logging.getLogger(__name__)
 
@@ -62,7 +66,8 @@ def _source_parquet_df_generator(src_dir: str) -> pd.DataFrame:
 
 def _save_pq_by_asset(parquet_df_by_date: pd.DataFrame, dst_dir: str) -> None:
     """
-    Save a dataframe in a Parquet format in `dst_dir` partitioned by year and asset.
+    Save a dataframe in a Parquet format in `dst_dir` partitioned by year and
+    asset.
     """
     year_col_name = "year"
     asset_col_name = "asset"
@@ -75,7 +80,7 @@ def _save_pq_by_asset(parquet_df_by_date: pd.DataFrame, dst_dir: str) -> None:
             table,
             dst_dir,
             partition_cols=partition_cols,
-            partition_filename_cb=lambda x: 'data.parquet'
+            partition_filename_cb=lambda x: "data.parquet",
         )
 
 
@@ -88,14 +93,14 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         type=str,
         required=True,
-        help="Source directory where original pq files are stored."
+        help="Source directory where original pq files are stored.",
     )
     parser.add_argument(
         "--dst_dir",
         action="store",
         type=str,
         required=True,
-        help="Destination directory where transformed pq files will be stored."
+        help="Destination directory where transformed pq files will be stored.",
     )
     # TODO(Nikola): Additional args ?
     #
@@ -115,7 +120,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Convert the files one at the time.
     all_dfs = []
     for src_pq_file in _source_parquet_df_generator(src_dir):
-        all_dfs.append(hparquet.from_parquet(src_pq_file))
+        all_dfs.append(hparque.from_parquet(src_pq_file))
     _save_pq_by_asset(pd.concat(all_dfs), dst_dir)
 
 
