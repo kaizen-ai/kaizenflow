@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.ccxt.data.load.loader as imcdalolo
+import im_v2.ccxt.data.client.loader as imcdacllo
 """
 
 import abc
@@ -17,14 +17,143 @@ import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.s3 as hs3
 import helpers.sql as hsql
-import im_v2.data.universe as imv2dauni
+import im_v2.common.data.client as imvcdcli
+import im_v2.common.universe.universe as imvcounun
 
 _LOG = logging.getLogger(__name__)
 
 # Latest historical data snapshot.
 _LATEST_DATA_SNAPSHOT = "20210924"
+#
+_DATA_TYPES = ["ohlcv"]
 
 
+class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
+    def __init__(self, data_type: str) -> None:
+        """
+        :param data_type: OHLCV or trade, bid/ask data
+        """
+        date_type_lower = data_type.lower()
+        hdbg.dassert_in(date_type_lower, _DATA_TYPES)
+        self._data_type = date_type_lower
+
+    def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        See description in the parent class.
+
+        Input data is indexed with numbers and contains the columns timestamp
+        open, high, low, closed, volume, exchange_id, currency_pair e.g.,
+        ```
+             timestamp      open     high     low      close    volume    currency_pair exchange_id
+        0    1631145600000  3499.01  3499.49  3496.17  3496.36  346.4812  ETH/USDT      binance
+        1    1631145660000  3496.36  3501.59  3495.69  3501.59  401.9576  ETH/USDT      binance
+        2    1631145720000  3501.59  3513.10  3499.89  3513.09  579.5656  ETH/USDT      binance
+        ```
+
+        Output data is indexed by timestamp and contains the columns open,
+        high, low, close, volume, epoch, currency_pair, exchange_id, e.g.,
+        ```
+                                   open        epoch          currency_pair exchange_id
+        2021-09-08 20:00:00-04:00  3499.01 ... 1631145600000  ETH/USDT      binance
+        2021-09-08 20:01:00-04:00  3496.36     1631145660000  ETH/USDT      binance
+        2021-09-08 20:02:00-04:00  3501.59     1631145720000  ETH/USDT      binance
+        ```
+        """
+        # Apply common transformations.
+        transformed_data = self._apply_common_transformation(df)
+        # Apply transformations for OHLCV data.
+        if self._data_type == "ohlcv":
+            transformed_data = self._apply_ohlcv_transformation(transformed_data)
+        else:
+            hdbg.dfatal(
+                "Incorrect data type: '%s'. Acceptable types: '%s'"
+                % (self._data_type, _DATA_TYPES)
+            )
+        # Sort transformed data by exchange id and currency pair columns.
+        transformed_data = transformed_data.sort_values(
+            by=["exchange_id", "currency_pair"]
+        )
+        return transformed_data
+
+    def _apply_common_transformation(self, data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Apply transformations common to all CCXT data.
+
+        This includes:
+        - Datetime format assertion
+        - Converting epoch ms timestamp to `pd.Timestamp`
+        - Converting `timestamp` to index
+
+        :param data: raw CCXT data
+        :return: transformed CCXT data
+        """
+        # Verify that the timestamp data is provided in ms.
+        hdbg.dassert_container_type(
+            data["timestamp"], container_type=None, elem_type=int
+        )
+        # Rename col with original Unix ms epoch.
+        data = data.rename({"timestamp": "epoch"}, axis=1)
+        # Transform Unix epoch into ET timestamp.
+        data["timestamp"] = self._convert_epochs_to_timestamp(data["epoch"])
+        # Set timestamp as index.
+        data = data.set_index("timestamp")
+        return data
+
+    @staticmethod
+    def _convert_epochs_to_timestamp(epoch_col: pd.Series) -> pd.Series:
+        """
+        Convert Unix epoch to timestamp in ET.
+
+        All Unix time epochs in CCXT are provided in ms and in UTC tz.
+
+        :param epoch_col: Series with Unix time epochs
+        :return: Series with epochs converted to timestamps in ET
+        """
+        # Convert to timestamp in UTC tz.
+        timestamp_col = pd.to_datetime(epoch_col, unit="ms", utc=True)
+        # Convert to ET tz.
+        timestamp_col = timestamp_col.dt.tz_convert(hdateti.get_ET_tz())
+        return timestamp_col
+
+    @staticmethod
+    def _apply_ohlcv_transformation(data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Apply transformations for OHLCV data.
+
+        This includes:
+        - Assertion of present columns
+        - Assertion of data types
+        - Renaming and rearranging of OHLCV columns, namely:
+            ["open",
+             "high",
+             "low",
+             "close"
+             "volume",
+             "epoch",
+             "currency_pair",
+             "exchange_id"]
+
+        :param data: OHLCV data
+        :return: transformed OHLCV data
+        """
+        ohlcv_columns = [
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "epoch",
+            "currency_pair",
+            "exchange_id",
+        ]
+        # Verify that dataframe contains OHLCV columns.
+        hdbg.dassert_is_subset(ohlcv_columns, data.columns)
+        # Rearrange the columns.
+        data = data[ohlcv_columns].copy()
+        return data
+
+
+# TODO(Grisha): replace with `AbstractCcxtClient` #543.
 class AbstractCcxtLoader(abc.ABC):
     def __init__(
         self,
@@ -46,7 +175,7 @@ class AbstractCcxtLoader(abc.ABC):
     @abc.abstractmethod
     def read_universe_data(
         self,
-        universe: Union[str, List[imv2dauni.ExchangeCurrencyTuple]],
+        universe: Union[str, List[imvcounun.ExchangeCurrencyTuple]],
         data_type: str,
     ) -> pd.DataFrame:
         """
@@ -206,7 +335,7 @@ class AbstractCcxtLoader(abc.ABC):
 
 # #############################################################################
 
-
+# TODO(Grisha): inherit from `AbstractCcxtClient` #543.
 class CcxtLoaderFromDb(AbstractCcxtLoader):
     def __init__(
         self,
@@ -223,7 +352,7 @@ class CcxtLoaderFromDb(AbstractCcxtLoader):
     # TODO(Dan2): CmTask502.
     def read_universe_data(
         self,
-        universe: Union[str, List[imv2dauni.ExchangeCurrencyTuple]],
+        universe: Union[str, List[imvcounun.ExchangeCurrencyTuple]],
         data_type: str,
         table_name: Optional[str] = None,
         start_date: Optional[pd.Timestamp] = None,
@@ -254,7 +383,7 @@ class CcxtLoaderFromDb(AbstractCcxtLoader):
         # Load all the corresponding exchange-currency tuples if a universe
         # version is provided.
         if isinstance(universe, str):
-            universe = imv2dauni.get_vendor_universe_as_tuples(universe, "CCXT")
+            universe = imvcounun.get_vendor_universe_as_tuples(universe, "CCXT")
         # Initialize lists for query condition strings and parameters to insert.
         query_conditions = []
         query_params = []
@@ -292,7 +421,7 @@ class CcxtLoaderFromDb(AbstractCcxtLoader):
 
 # #############################################################################
 
-
+# TODO(Grisha): inherit from `AbstractCcxtClient` #543.
 class CcxtLoaderFromFile(AbstractCcxtLoader):
     def __init__(
         self,
@@ -315,7 +444,7 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
     # TODO(Dan2): CmTask495.
     def read_universe_data(
         self,
-        universe: Union[str, List[imv2dauni.ExchangeCurrencyTuple]],
+        universe: Union[str, List[imvcounun.ExchangeCurrencyTuple]],
         data_type: str,
         data_snapshot: Optional[str] = None,
     ) -> pd.DataFrame:
@@ -332,7 +461,7 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
         # Load all the corresponding exchange-currency tuples if a universe
         # version is provided.
         if isinstance(universe, str):
-            universe = imv2dauni.get_vendor_universe_as_tuples(universe, "CCXT")
+            universe = imvcounun.get_vendor_universe_as_tuples(universe, "CCXT")
         # Initialize results df.
         combined_data = pd.DataFrame(dtype="object")
         # Load data for each exchange-currency tuple and append to results df.

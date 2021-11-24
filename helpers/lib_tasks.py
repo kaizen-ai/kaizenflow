@@ -1308,7 +1308,7 @@ def _get_docker_cmd(
     # able to log in GH touching $HOME/.config/gh.
     if as_user:
         docker_cmd_.append(
-            rf"""
+            r"""
         --user $(id -u):$(id -g)"""
         )
     # - Handle the extra docker options.
@@ -1481,6 +1481,10 @@ def _to_abs_path(filename: str) -> str:
 #   performed on the "local" image (e.g., locally or through GitHub actions)
 # - If the qualification process is passed, the image is released as `dev` on ECR
 
+
+# Use Docker buildkit or not.
+# DOCKER_BUILDKIT = 1
+DOCKER_BUILDKIT = 0
 
 # Use Docker buildkit or not.
 # DOCKER_BUILDKIT = 1
@@ -1660,13 +1664,7 @@ def docker_release_dev_image(  # type: ignore
         run_slow_tests(ctx, stage=stage)
     if superslow_tests:
         run_superslow_tests(ctx, stage=stage)
-    # 3) Run end-to-end test.
-    if end_to_end_tests:
-        end_to_end_test_fn = get_default_param("END_TO_END_TEST_FN")
-        if not end_to_end_test_fn(ctx, stage=stage):
-            _LOG.error("End-to-end test has failed")
-            return
-    # 4) Promote the "local" image to "dev".
+    # 3) Promote the "local" image to "dev".
     docker_tag_local_image_as_dev(ctx)
     # 4) Run QA tests for the (local version) of the dev image.
     if qa_tests:

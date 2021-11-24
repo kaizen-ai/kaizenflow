@@ -1,6 +1,14 @@
 #!/usr/bin/env python
 
+# TODO: move some code to generate_pq_example_data.py
+
 """
+Run example:
+python im/data_conversion/pq_convert.py \
+    --start_date 2021-11-16 \
+    --end_date 2021-11-17 \
+    --dst_dir im/data_conversion/test_data_by_date
+
 Read daily data from S3 in Parquet format and transform it into a different
 Parquet representation.
 
@@ -37,16 +45,16 @@ _LOG = logging.getLogger(__name__)
 
 def _get_df(date) -> pd.DataFrame:
     """
-    Create pandas random data, like:
+    Create Pandas random data, like:
 
     ```
-                idx instr  val1  val2
+                idx asset  val1  val2
     2000-01-01    0     A    99    30
     2000-01-02    0     A    54    46
     2000-01-03    0     A    85    86
     ```
     """
-    instruments = "A B C D E".split()
+    assets = "A B C D E".split()
     date = pd.Timestamp(date, tz="America/New_York")
     start_date = date.replace(hour=9, minute=30)
     end_date = date.replace(hour=16, minute=0)
@@ -56,11 +64,11 @@ def _get_df(date) -> pd.DataFrame:
     random.seed(1000)
     # For each instruments generate random data.
     df = []
-    for idx, inst in enumerate(instruments):
+    for idx, asset in enumerate(assets):
         df_tmp = pd.DataFrame(
             {
                 "idx": idx,
-                "instr": inst,
+                "asset": asset,
                 "val1": [random.randint(0, 100) for k in range(len(df_idx))],
                 "val2": [random.randint(0, 100) for k in range(len(df_idx))],
             },
@@ -68,7 +76,7 @@ def _get_df(date) -> pd.DataFrame:
         )
         _LOG.debug(hprint.df_to_short_str("df_tmp", df_tmp))
         df.append(df_tmp)
-    # Create a single df for all the instruments.
+    # Create a single df for all the assets.
     df = pd.concat(df)
     _LOG.debug(hprint.df_to_short_str("df", df))
     return df
@@ -76,17 +84,17 @@ def _get_df(date) -> pd.DataFrame:
 
 # s3 = s3fs.S3FileSystem(profile="saml-spm-sasm")
 
-# def get_available_dates():
-#    """
-#    Return list of all available dates.
-#    """
-#    #dates = pd.date_range(pd.Timestamp("2000-01-01"), pd.Timestamp("2000-01-15"), freq="1D")
-#    # Essentially equivalent to `> aws s3 ls _PATH`
-#    #dates = hs3.listdir(path, mode="non-recursive", aws_profile="saml-spm-sasm")
-#    files = s3.ls(_PATH)
-#    dates = map(os.path.basename, files)
-#    dates = sorted(dates)
-#    return dates
+def get_available_dates():
+   """
+   Return list of all available dates.
+   """
+   dates = pd.date_range(pd.Timestamp("2021-11-13"), pd.Timestamp("2021-11-17"), freq="1D")
+   # Essentially equivalent to `> aws s3 ls _PATH`
+   #dates = hs3.listdir(path, mode="non-recursive", aws_profile="saml-spm-sasm")
+   # files = s3.ls(_PATH)
+   # dates = map(os.path.basename, files)
+   # dates = sorted(dates)
+   return dates
 
 
 def read_data(date: str):
@@ -113,14 +121,13 @@ def read_data(date: str):
 
 def _save_data_as_pq(df, dst_dir):
     with htimer.TimedScope(logging.DEBUG, "Create partition idxs"):
-        # Append year and month.
-        df["year"] = df.index.year
-        df["month"] = df.index.month
-        df["day"] = df.index.day
+        # df["year"] = df.index.year
+        df["date"] = df.index.strftime("%Y%m%d")
     # Save.
     with htimer.TimedScope(logging.DEBUG, "Save data"):
         table = pa.Table.from_pandas(df)
-        partition_cols = ["asset_id", "year", "month", "day"]
+        # partition_cols = ["year", "asset"]
+        partition_cols = ["date"]
         pq.write_to_dataset(table, dst_dir, partition_cols=partition_cols)
 
 
@@ -190,9 +197,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # - Use hdbg.dassert_*() for assertion.
     # - Use hsysinte.system() and hsysinte.system_to_string() to issue commands.
     dst_dir = args.dst_dir
-    df = read_pq_data(dst_dir)
-    print(df_stats(df))
-    assert 0
+    # df = read_pq_data(dst_dir)
+    # print(df_stats(df))
+    # assert 0
 
     #
     hio.create_dir(dst_dir, incremental=args.incremental)
@@ -202,8 +209,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # _LOG.info("Available dates=%s [%s, %s]", len(dates), min(dates), max(dates))
     # E.g., 20031002
     # Filter dates.
-    def _convert_to_date(date: str) -> str:
-        return pd.Timestamp(date).date().strftime("%Y%m%d")
+
+    def _convert_to_date(date: str) -> datetime.date:
+        return pd.Timestamp(date).date()
 
     start_date, end_date = args.start_date, args.end_date
     if start_date is not None:
@@ -227,8 +235,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
             )
             continue
         # Read data.
-        # df = _get_df(date)
-        df = read_data(date)
+        df = _get_df(date)
+        # df = read_data(date)
         _LOG.debug("date=%s\ndf=\n%s", date, str(df.head(3)))
         _save_data_as_pq(df, dst_dir)
 
