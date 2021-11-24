@@ -25,9 +25,9 @@ class TestGetFilePath(hunitest.TestCase):
         actual = ccxt_loader._get_file_path(
             imcdacllo._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
         )
-        # TODO(gp): CmampTask413: Use get_bucket()
-        expected = (
-            "s3://alphamatic-data/data/ccxt/20210924/binance/ETH_USDT.csv.gz"
+        s3_bucket_path = hs3.get_path()
+        expected = os.path.join(
+            s3_bucket_path, "data/ccxt/20210924/binance/ETH_USDT.csv.gz"
         )
         self.assert_equal(actual, expected)
 
