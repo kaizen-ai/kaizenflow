@@ -378,8 +378,8 @@ class CcxtDbClient(AbstractCcxtClient):
         # Initialize a list for SQL conditions.
         sql_conditions = []
         # Fill SQL conditions list for each provided data parameter.
-        sql_conditions.append(f"exchange_id = {exchange_id}")
-        sql_conditions.append(f"currency_pair = {currency_pair}")
+        sql_conditions.append(f"exchange_id = '{exchange_id}'")
+        sql_conditions.append(f"currency_pair = '{currency_pair}'")
         if start_ts:
             start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
             sql_conditions.append(f"timestamp >= {start_ts}")
