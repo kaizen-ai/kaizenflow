@@ -19,11 +19,11 @@ class TestGetFilePath(hunitest.TestCase):
         """
         exchange_id = "binance"
         currency_pair = "ETH_USDT"
-        ccxt_loader = imcdacllo.CcxtFileSystemClient(
+        ccxt_loader = imcdaclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         actual = ccxt_loader._get_file_path(
-            imcdacllo._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
+            imcdaclcl._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
         )
         s3_bucket_path = hs3.get_path()
         expected = os.path.join(
@@ -37,7 +37,7 @@ class TestGetFilePath(hunitest.TestCase):
         """
         exchange_id = "unsupported exchange"
         currency_pair = "ADA_USDT"
-        ccxt_loader = imcdacllo.CcxtFileSystemClient(
+        ccxt_loader = imcdaclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         # TODO(gp): We should throw a different exception, like
@@ -45,7 +45,7 @@ class TestGetFilePath(hunitest.TestCase):
         # TODO(gp): Same change also for CDD test_loader.py
         with self.assertRaises(AssertionError):
             ccxt_loader._get_file_path(
-                imcdacllo._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
+                imcdaclcl._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
             )
 
     def test3(self) -> None:
@@ -54,13 +54,13 @@ class TestGetFilePath(hunitest.TestCase):
         """
         exchange_id = "binance"
         currency_pair = "unsupported_currency"
-        ccxt_loader = imcdacllo.CcxtFileSystemClient(
+        ccxt_loader = imcdaclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         # TODO(gp): Same change also for CDD test_loader.py
         with self.assertRaises(AssertionError):
             ccxt_loader._get_file_path(
-                imcdacllo._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
+                imcdaclcl._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
             )
 
 
@@ -71,7 +71,7 @@ class TestCcxtLoaderFromFileReadUniverseData(hunitest.TestCase):
         Test that all files from universe version are being read correctly.
         """
         # Initialize loader and get actual result.
-        ccxt_loader = imcdacllo.CcxtLoaderFromFile(
+        ccxt_loader = imcdaclcl.CcxtLoaderFromFile(
             root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         actual = ccxt_loader.read_universe_data(
@@ -91,7 +91,7 @@ class TestCcxtLoaderFromFileReadUniverseData(hunitest.TestCase):
             imvcounun.ExchangeCurrencyTuple("kucoin", "ETH/USDT"),
         ]
         # Initialize loader and get actual result.
-        ccxt_loader = imcdacllo.CcxtLoaderFromFile(
+        ccxt_loader = imcdaclcl.CcxtLoaderFromFile(
             root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         actual = ccxt_loader.read_universe_data(
@@ -106,7 +106,7 @@ class TestCcxtLoaderFromFileReadUniverseData(hunitest.TestCase):
         Test that all files from small test universe are being read correctly.
         """
         # Initialize loader and get actual result.
-        ccxt_loader = imcdacllo.CcxtLoaderFromFile(
+        ccxt_loader = imcdaclcl.CcxtLoaderFromFile(
             root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         actual = ccxt_loader.read_universe_data(
@@ -160,7 +160,7 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
         """
         Test that files on S3 are being read correctly.
         """
-        ccxt_loader = imcdacllo.CcxtFileSystemClient(
+        ccxt_loader = imcdaclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         actual = ccxt_loader.read_data("binance::BTC_USDT")
@@ -172,7 +172,7 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
         """
         Test unsupported full symbol.
         """
-        ccxt_loader = imcdacllo.CcxtFileSystemClient(
+        ccxt_loader = imcdaclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         with self.assertRaises(AssertionError):
@@ -183,6 +183,6 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
         Test unsupported data type.
         """
         with self.assertRaises(AssertionError):
-            imcdacllo.CcxtFileSystemClient(
+            imcdaclcl.CcxtFileSystemClient(
                 data_type="unsupported_data_type", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
             )
