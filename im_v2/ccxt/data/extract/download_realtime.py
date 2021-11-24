@@ -95,18 +95,22 @@ def _download_data(
     return pair_data
 
 
-def _save_data_on_disk(
+def _save_data(
+    fs_dir: str,
+    s3_dir: str,
+    s3fs_,
     data_type: str,
-    dst_dir: str,
     pair_data: Union[pd.DataFrame, Dict[str, Any]],
     exchange: NamedTuple,
     pair: str,
 ) -> None:
     """
-    Save downloaded data to disk.
+    Save downloaded data to disk and S3.
 
     :param data_type: 'ohlcv' or 'orderbook'
-    :param dst_dir: directory to save to
+    :param fs_dir: FS directory to save to
+    :param s3_dir: S3 location to save to
+    :param s3fs_: S3 filesystem object
     :param pair_data: downloaded data
     :param exchange: exchange instance
     :param pair: currency pair, e.g. 'BTC/USDT'
@@ -116,16 +120,24 @@ def _save_data_on_disk(
         file_name = (
             f"{exchange.id}_{pair.replace('/', '_')}_{current_datetime}.csv.gz"
         )
-        full_path = os.path.join(dst_dir, file_name)
-        pair_data.to_csv(full_path, index=False, compression="gzip")
+        # Save to filesystem.
+        fs_path = os.path.join(fs_dir, file_name)
+        pair_data.to_csv(fs_path, index=False, compression="gzip")
+        # Save to S3.
+        s3_path = os.path.join(s3_dir, file_name)
+        s3fs_.put(fs_path, s3_path)
     elif data_type == "orderbook":
         file_name = (
-            f"orderbook_{exchange.id}_"
+            f"{exchange.id}_"
             f"{pair.replace('/', '_')}_"
             f"{hdateti.get_timestamp('ET')}.json"
         )
-        full_path = os.path.join(dst_dir, file_name)
-        hio.to_json(full_path, pair_data)
+        # Save to filesystem.
+        fs_path = os.path.join(fs_dir, file_name)
+        hio.to_json(fs_path, pair_data)
+        # Save to S3.
+        s3_path = os.path.join(s3_dir, file_name)
+        s3fs_.put(fs_path, s3_path)
     else:
         hdbg.dfatal(
             "'%s' data type is not supported. Supported data types: 'ohlcv', 'orderbook'",
@@ -224,9 +236,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Generate a query to remove duplicates.
     dup_query = hsql.get_remove_duplicates_query(
         table_name=args.table_name,
-        id_col="id",
+        id_col_name="id",
         column_names=["timestamp", "exchange_id", "currency_pair"],
     )
+    # Get an S3FS object to save RT data.
+    rt_s3fs = hs3.get_s3fs()
     # Launch an infinite loop.
     while True:
         for exchange in exchanges:
@@ -244,10 +258,15 @@ def _main(parser: argparse.ArgumentParser) -> None:
                     _LOG.warning("Got an error: %s", type(e).__name__, e.args)
                     continue
                 # Save to disk.
-                if args.dst_dir:
-                    _save_data_on_disk(
-                        args.data_type, args.dst_dir, pair_data, exchange, pair
-                    )
+                _save_data(
+                    fs_path,
+                    s3_path,
+                    rt_s3fs,
+                    data_type=args.data_type,
+                    pair_data=pair_data,
+                    exchange=exchange,
+                    pair=pair,
+                )
                 if connection:
                     # Insert into database.
                     hsql.execute_insert_query(
