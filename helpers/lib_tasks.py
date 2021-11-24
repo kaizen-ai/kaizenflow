@@ -1304,7 +1304,9 @@ def _get_docker_cmd(
         --rm"""
     )
     # - Handle the user.
-    if as_user:
+    # Based on AmpTask1864 it seems that we need to use root in the CI to be
+    # able to log in GH touching $HOME/.config/gh.
+    if False:
         docker_cmd_.append(
             r"""
         --user $(id -u):$(id -g)"""
@@ -1450,7 +1452,8 @@ def docker_jupyter(  # type: ignore
     #
     print_docker_config = False
     docker_cmd_ = _get_docker_jupyter_cmd(
-        base_image, stage, version, port, self_test, print_docker_config
+        base_image, stage, version, port, self_test,
+        print_docker_config=print_docker_config
     )
     _docker_cmd(ctx, docker_cmd_)
 
