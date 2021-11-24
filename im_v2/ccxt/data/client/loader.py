@@ -29,6 +29,9 @@ _DATA_TYPES = ["ohlcv"]
 
 
 class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
+    """
+    Abstract Interface for CCXT client.
+    """
     def __init__(self, data_type: str) -> None:
         """
         :param data_type: OHLCV or trade, bid/ask data
@@ -421,10 +424,13 @@ class CcxtLoaderFromDb(AbstractCcxtLoader):
 
 # #############################################################################
 
-# TODO(Grisha): inherit from `AbstractCcxtClient` #543.
-class CcxtLoaderFromFile(AbstractCcxtLoader):
+class CcxtFileSystemClient(AbstractCcxtClient):
+    """
+    CCXT client for data from local or S3 filesystem.
+    """
     def __init__(
         self,
+        data_type: str,
         root_dir: str,
         aws_profile: Optional[str] = None,
     ) -> None:
@@ -435,70 +441,30 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
             an S3 root path ("s3://alphamatic-data/data") to the CCXT data
         :param: aws_profile: AWS profile name (e.g., "am")
         """
-        super().__init__()
+        super().__init__(data_type=data_type)
         self._root_dir = root_dir
         # Set s3fs parameter value if aws profile parameter is specified.
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
 
-    # TODO(Dan2): CmTask495.
-    def read_universe_data(
+    def _read_data(
         self,
-        universe: Union[str, List[imvcounun.ExchangeCurrencyTuple]],
-        data_type: str,
-        data_snapshot: Optional[str] = None,
-    ) -> pd.DataFrame:
-        """
-        Load data from a filesystem for specified universe.
-
-        :param universe: CCXT universe version or a list of exchange-currency
-            tuples to load data for
-        :param data_type: OHLCV or trade, bid/ask data
-        :param data_snapshot: snapshot of datetime when data was loaded,
-            e.g. "20210924"
-        :return: processed CCXT data
-        """
-        # Load all the corresponding exchange-currency tuples if a universe
-        # version is provided.
-        if isinstance(universe, str):
-            universe = imvcounun.get_vendor_universe_as_tuples(universe, "CCXT")
-        # Initialize results df.
-        combined_data = pd.DataFrame(dtype="object")
-        # Load data for each exchange-currency tuple and append to results df.
-        for exchange_currency_tuple in universe:
-            data = self.read_data(
-                exchange_currency_tuple.exchange_id,
-                exchange_currency_tuple.currency_pair,
-                data_type,
-                data_snapshot,
-            )
-            combined_data = combined_data.append(data)
-        # Sort results by exchange id and currency pair.
-        combined_data = combined_data.sort_values(
-            by=["exchange_id", "currency_pair"]
-        )
-        return combined_data
-
-    def read_data(
-        self,
-        exchange_id: str,
-        currency_pair: str,
-        data_type: str,
+        full_symbol: imvcdcli.FullSymbol,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
         data_snapshot: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Load data from a filesystem and process it for use downstream.
 
-        :param exchange_id: CCXT exchange id, e.g. "binance"
-        :param currency_pair: currency pair, e.g. "BTC/USDT"
-        :param data_type: OHLCV or trade, bid/ask data
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
         :return: processed CCXT data
         """
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
-        # Verify that requested data type is valid.
-        hdbg.dassert_in(data_type.lower(), self._data_types)
+        # TODO(Grisha): create a helper to split the `full_symbol` #543.
+        exchange_id = full_symbol.split("::")[0]
+        currency_pair = full_symbol.split("::")[1]
         # Get absolute file path for a CCXT file.
         file_path = self._get_file_path(data_snapshot, exchange_id, currency_pair)
         # Initialize kwargs dict for further CCXT data reading.
@@ -520,9 +486,8 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
             exchange_id,
             currency_pair,
         )
-        data = self._preprocess_filesystem_data(data, exchange_id, currency_pair)
-        transformed_data = self.transform(data, data_type)
-        return transformed_data
+        processed_data = self._preprocess_filesystem_data(data, exchange_id, currency_pair)
+        return processed_data
 
     # TODO(Grisha): factor out common code from `CddLoader._get_file_path` and
     # `CcxtLoader._get_file_path`.
@@ -542,11 +507,11 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
             e.g. "20210924"
         :param exchange_id: CCXT exchange id, e.g. "binance"
         :param currency_pair: currency pair `<currency1>/<currency2>`,
-            e.g. "BTC/USDT"
+            e.g. "BTC_USDT"
         :return: absolute path to a file with CCXT data
         """
         # Get absolute file path.
-        file_name = currency_pair.replace("/", "_") + ".csv.gz"
+        file_name = currency_pair + ".csv.gz"
         file_path = os.path.join(
             self._root_dir, "ccxt", data_snapshot, exchange_id, file_name
         )
@@ -572,7 +537,7 @@ class CcxtLoaderFromFile(AbstractCcxtLoader):
 
         :param data: data from a filesystem
         :param exchange_id: CCXT exchange id, e.g. "binance"
-        :param currency_pair: currency pair, e.g. "BTC/USDT"
+        :param currency_pair: currency pair, e.g. "BTC_USDT"
         :return: preprocessed filesystem data
         """
         # Verify that required columns are not already in the dataframe.
