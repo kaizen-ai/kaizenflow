@@ -65,7 +65,7 @@ class TestGetFilePath(hunitest.TestCase):
             )
 
 
-class TestCcxtDbClientReadData(hunitest.TestCase):
+class TestCcxtDbClient(hunitest.TestCase):
     def setUp(self) -> None:
         """
         Initialize the test container.
