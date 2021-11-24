@@ -4,7 +4,10 @@ from typing import List
 import pandas as pd
 import pytest
 
+import helpers.git as hgit
 import helpers.s3 as hs3
+import helpers.sql as hsql
+import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
 import im.ccxt.db.utils as imccdbuti
 import im_v2.ccxt.data.client.loader as imcdacllo
@@ -144,7 +147,7 @@ class TestCcxtDbClient(hunitest.TestCase):
         )
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Load data with client and check if it is correct.
-        ccxt_db_client = imcdacllo.CcxtDbClient("ohlcv", conn)
+        ccxt_db_client = imcdacllo.CcxtDbClient("ohlcv", self.connection)
         df = ccxt_db_client.read_data("binance::BTC/USDT")
         actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
