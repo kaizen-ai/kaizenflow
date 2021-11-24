@@ -216,7 +216,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
     fs_path, s3_path = _get_rt_paths(args.dst_dir)
     # Create local dir.
     hio.create_dir(fs_path, incremental=args.incremental)
-    # Create an S3 path to dst_dir.
     # Connect to database.
     if args.db_connection == "from_env":
         connection = hsql.get_connection_from_env_vars()
