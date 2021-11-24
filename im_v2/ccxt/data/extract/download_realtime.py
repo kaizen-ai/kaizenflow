@@ -27,7 +27,7 @@ import collections
 import logging
 import os
 import time
-from typing import Any, Dict, List, NamedTuple, Optional, Union
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import ccxt
 import pandas as pd
@@ -41,7 +41,13 @@ import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import im_v2.common.universe.universe as imvcounun
 
 _LOG = logging.getLogger(__name__)
+_WARNING = "\033[33mWARNING\033[0m"
 
+try:
+    import s3fs
+except ModuleNotFoundError:
+    _module = "s3fs"
+    print(_WARNING + f": Can't find {_module}: continuing")
 
 # TODO(Danya): Create a type and move outside.
 def _instantiate_exchange(
@@ -131,6 +137,22 @@ def _save_data_on_disk(
             "'%s' data type is not supported. Supported data types: 'ohlcv', 'orderbook'",
             data_type,
         )
+
+
+def _get_rt_destination_dirs(dst_dir: str) -> Tuple[str, s3fs.core.S3FileSystem]:
+    """
+    Get a shared local dir and s3fs object.
+
+    :param dst_dir:
+    :return:
+    """
+    return rt_local_dir, rt_s3fs
+
+
+def _save_rt_to_s3() -> None:
+    """
+    Save downloaded file to S3.
+    """
 
 
 def _parse() -> argparse.ArgumentParser:
