@@ -220,6 +220,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Create local dir.
     hio.create_dir(fs_path, incremental=args.incremental)
     # Connect to database.
+    # TODO(Danya): Factor out the connection getting.
     if args.db_connection == "from_env":
         connection = hsql.get_connection_from_env_vars()
     elif args.db_connection == "none":
@@ -244,6 +245,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Get an S3FS object to save RT data.
     rt_s3fs = hs3.get_s3fs()
     # Launch an infinite loop.
+    # TODO(Danya): Factor out a portion of the loop.
     while True:
         for exchange in exchanges:
             for pair in exchange.pairs:
