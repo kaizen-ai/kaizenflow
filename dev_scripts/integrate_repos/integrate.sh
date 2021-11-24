@@ -14,7 +14,7 @@ SUBDIR=im_v2
 #SUBDIR=research/cc
 #SUBDIR=research_amp
 # Diff dir.
-if [[ 1 == 1 ]]; then
+if [[ 0 == 1 ]]; then
     dev_scripts/diff_to_vimdiff.py --dir1 $AMP_DIR/$SUBDIR --dir2 $CMAMP_DIR/$SUBDIR
     exit 0
 fi;
