@@ -25,9 +25,10 @@
         path: /etc/ssh/sshd_config
         state: absent
 
-- name: Modify /etc/bash.bashrc to export TMPDIR var (needed because hardened server has /tmp set to no nosuid, nodev, noexec)
+- name: Add entry to /etc/bash.bashrc to export TMPDIR var (needed because hardened server has /tmp set to no nosuid, nodev, noexec)
   blockinfile:
     path: /etc/bash.bashrc
+    create: yes
     state: present
     block: |
       mkdir -p $HOME/tmp
