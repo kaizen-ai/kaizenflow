@@ -336,14 +336,17 @@ class AbstractCcxtLoader(abc.ABC):
 # #############################################################################
 
 
-class CcxtLoaderFromDb(AbstractCcxtClient):
+class CcxtDbClient(AbstractCcxtClient):
+    """
+    CCXT client for data from the database.
+    """
     def __init__(
         self,
         data_type: str,
         connection: hsql.DbConnection,
     ) -> None:
         """
-        Load CCXT data from database.
+        Load CCXT data from the database.
 
         This code path is used for the real-time data.
 
@@ -385,13 +388,13 @@ class CcxtLoaderFromDb(AbstractCcxtClient):
         # For every provided conditional parameter, append a corresponding
         # query string and query parameter to the corresponding lists.
         if start_ts:
-            start_date = hdateti.convert_timestamp_to_unix_epoch(start_ts)
+            start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
             query_conditions.append("timestamp >= %s")
-            query_params.append(start_date)
+            query_params.append(start_ts)
         if end_ts:
-            end_date = hdateti.convert_timestamp_to_unix_epoch(end_ts)
+            end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
             query_conditions.append("timestamp < %s")
-            query_params.append(end_date)
+            query_params.append(end_ts)
         # Append all the provided query conditions to the main SQL query.
         query_conditions = " AND ".join(query_conditions)
         sql_query = " WHERE ".join([sql_query, query_conditions])
