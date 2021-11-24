@@ -6,7 +6,7 @@ import pytest
 
 import helpers.s3 as hs3
 import helpers.unit_test as hunitest
-import im_v2.ccxt.data.client.clients as imcdacllo
+import im_v2.ccxt.data.client.clients as imcdaclcl
 import im_v2.common.universe.universe as imvcounun
 
 _AM_S3_ROOT_DIR = os.path.join(hs3.get_path(), "data")
