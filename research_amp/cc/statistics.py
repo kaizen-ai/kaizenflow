@@ -271,12 +271,12 @@ def get_universe_price_data(
         # Construct a column name from exchange id and currency pair.
         colname = " ".join([exchange_id, currency_pair])
         colnames.append(colname)
+        # TODO(Grisha): use `_` as currencies separator #579.
+        currency_pair = currency_pair.replace("/", "_")
+        # TODO(Grisha): convert universe to `List[FullSymbol]` #587.
+        full_symbol = f"{exchange_id}::{currency_pair}"
         # Read data for current exchange and currency pair.
-        data = loader.read_data(
-            exchange_id,
-            currency_pair,
-            config["data"]["data_type"],
-        )
+        data = loader.read_data(full_symbol)
         # Get series of required prices and append to the list.
         price_srs = data[config["data"]["price_column"]]
         price_srs_list.append(price_srs)
