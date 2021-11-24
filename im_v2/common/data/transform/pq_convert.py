@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-# TODO: move some code to generate_pq_example_data.py
-
 """
 # Example:
 > python im_v2/common/data/transform/pq_convert.py \
@@ -62,7 +60,7 @@ def _get_df(date) -> pd.DataFrame:
     _LOG.debug("df_idx=[%s, %s]", min(df_idx), max(df_idx))
     _LOG.debug("len(df_idx)=%s", len(df_idx))
     random.seed(1000)
-    # For each instruments generate random data.
+    # For each asset generate random data.
     df = []
     for idx, asset in enumerate(assets):
         df_tmp = pd.DataFrame(
