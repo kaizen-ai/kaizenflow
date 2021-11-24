@@ -18,9 +18,9 @@ class TestGetFilePath(hunitest.TestCase):
         Test supported exchange id and currency pair.
         """
         exchange_id = "binance"
-        currency_pair = "ETH/USDT"
-        ccxt_loader = imcdacllo.CcxtLoaderFromFile(
-            root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+        currency_pair = "ETH_USDT"
+        ccxt_loader = imcdacllo.CcxtFileSystemClient(
+            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         actual = ccxt_loader._get_file_path(
             imcdacllo._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
@@ -159,10 +159,10 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
         """
         Test that files on S3 are being read correctly.
         """
-        ccxt_loader = imcdacllo.CcxtLoaderFromFile(
-            root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+        ccxt_loader = imcdacllo.CcxtFileSystemClient(
+            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
-        actual = ccxt_loader.read_data("binance", "BTC/USDT", "OHLCV")
+        actual = ccxt_loader.read_data("binance::BTC_USDT")
         # Check the output values.
         actual_string = hunitest.convert_df_to_json_string(actual)
         self.check_string(actual_string)
