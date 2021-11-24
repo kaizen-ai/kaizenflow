@@ -1206,6 +1206,7 @@ def _get_docker_cmd(
     stage: str,
     version: str,
     cmd: str,
+    *,
     extra_env_vars: Optional[List[str]] = None,
     extra_docker_compose_files: Optional[List[str]] = None,
     extra_docker_run_opts: Optional[List[str]] = None,
@@ -1306,7 +1307,7 @@ def _get_docker_cmd(
     if as_user:
         docker_cmd_.append(
             r"""
-            --user $(id -u):$(id -g)"""
+        --user $(id -u):$(id -g)"""
         )
     # - Handle the extra docker options.
     if extra_docker_run_opts:
@@ -1397,6 +1398,7 @@ def _get_docker_jupyter_cmd(
     version: str,
     port: int,
     self_test: bool,
+    *,
     print_docker_config: bool = False,
 ) -> str:
     cmd = ""
@@ -2184,6 +2186,7 @@ def _run_tests(
     collect_only: bool,
     tee_to_file: bool,
     skipped_tests: str,
+    *,
     start_coverage_script: bool = True,
 ) -> None:
     # Build the command line.

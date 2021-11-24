@@ -116,6 +116,8 @@ def _get_container_version() -> Optional[str]:
 
 
 def _check_version(code_version: str, container_version: str) -> bool:
+    # TODO(vitalii): Enable after CmampTask570 is fixed.
+    return True
     # We are running inside a container.
     # Keep the code and the container in sync by versioning both and requiring
     # to be the same.

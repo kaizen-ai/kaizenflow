@@ -73,12 +73,20 @@ def _compute_target_positions(
     # Merge the predictions to the holdings.
     predictions = pd.DataFrame(predictions)
     predictions.reset_index(inplace=True)
+    predictions.index = [current_timestamp] * predictions.index.size
     predictions.columns = ["asset_id", "predictions"]
     _LOG.debug("predictions=\n%s", hprint.dataframe_to_str(predictions))
     merged_df = holdings.merge(predictions, on="asset_id", how="outer")
+    merged_df["curr_num_shares"].fillna(0.0, inplace=True)
+    merged_df["asset_id"] = merged_df["asset_id"].convert_dtypes(
+        infer_objects=False,
+        convert_string=False,
+        convert_boolean=False,
+        convert_floating=False,
+    )
     _LOG.debug("after merge: merged_df=\n%s", hprint.dataframe_to_str(merged_df))
     # Mark to market.
-    merged_df = portfolio.mark_holdings_to_market(current_timestamp, merged_df)
+    merged_df = portfolio.mark_to_market(current_timestamp, merged_df)
     _LOG.debug("merged_df=\n%s", hprint.dataframe_to_str(merged_df))
     columns = ["predictions", "price", "curr_num_shares"]
     hdbg.dassert_is_subset(columns, merged_df.columns)
@@ -213,7 +221,7 @@ def place_orders(
         #  A more accurate simulation requires to attach "callbacks" representing
         #  actions to timestamp.
         next_timestamp = predictions_df.index[idx + 1]
-        portfolio.place_orders(timestamp, next_timestamp, orders)
+        portfolio.process_filled_orders(timestamp, next_timestamp, orders)
     # Update the df with intermediate results.
     # df_5mins[pnl] = df_5mins[wealth].pct_change()
     # return df_5mins
