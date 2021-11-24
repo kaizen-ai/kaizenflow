@@ -142,21 +142,15 @@ def _save_data_on_disk(
 
 def _get_rt_paths(dst_dir: str) -> Tuple[str, str]:
     """
-    Get paths to local shared and S3 directories.
+    Get paths to FS shared and S3 directories.
 
     E.g, "/data/shared/data/ohlcv_test/", "s3://alphamatic-data/data/ohlcv_test/"
     :param dst_dir: download directory
     :return: local and S3 paths
     """
-    rt_local_path = os.path.join("/data/shared/", dst_dir)
+    rt_fs_path = os.path.join("/data/shared/", dst_dir)
     rt_s3_path = hs3.get_path() + dst_dir
-    return rt_local_path, rt_s3_path
-
-
-def _save_rt_to_s3() -> None:
-    """
-    Save downloaded file to S3.
-    """
+    return rt_fs_path, rt_s3_path
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -212,13 +206,11 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Create the directory.
-    if args.dst_dir:
-        hio.create_dir(args.dst_dir, incremental=args.incremental)
-    # Construct an S3 path.
-
-    # Get s3fs filesystem.
-    rt_s3fs = hs3.get_s3fs()
+    # Construct destination paths.
+    #  Note: data is always saved to S3 and "/data/shared/".
+    fs_path, s3_path = _get_rt_paths(args.dst_dir)
+    # Create local dir.
+    hio.create_dir(fs_path, incremental=args.incremental)
     # Create an S3 path to dst_dir.
     # Connect to database.
     if args.db_connection == "from_env":
