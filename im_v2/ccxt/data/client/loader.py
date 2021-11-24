@@ -357,7 +357,7 @@ class CcxtLoaderFromDb(AbstractCcxtClient):
         full_symbol: imvcdcli.FullSymbol,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
-        **kwargs: Dict[str, Any],
+        **read_sql_kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         # TODO(Dan): CmTask #502.
         # Construct name of the DB table with data from data type.
@@ -366,9 +366,13 @@ class CcxtLoaderFromDb(AbstractCcxtClient):
         hdbg.dassert_in(table_name, hsql.get_table_names(self._connection))
         # Initialize SQL query.
         sql_query = "SELECT * FROM %s" % table_name
+        # TODO(Dan): CmTask #572.
         # Extract exchange id and currency pair from full symbol.
         exchange_id = full_symbol.split("::")[0]
         currency_pair = full_symbol.split("::")[-1]
+        # TODO(Grisha/Dan): Discuss the format of currency pairs data in DB.
+        # Change currency pair in the way it is stored in DB dataframe.
+        currency_pair = currency_pair.replace("_", "/")
         # Initialize lists for query condition strings and parameters to insert.
         query_conditions = []
         query_params = []
@@ -391,10 +395,10 @@ class CcxtLoaderFromDb(AbstractCcxtClient):
         # Append all the provided query conditions to the main SQL query.
         query_conditions = " AND ".join(query_conditions)
         sql_query = " WHERE ".join([sql_query, query_conditions])
-        # Add a tuple of gathered query parameters to kwargs as `params`.
-        kwargs["params"] = tuple(query_params)
+        # Add a tuple of gathered query parameters to sql kwargs as `params`.
+        read_sql_kwargs["params"] = tuple(query_params)
         # Execute SQL query.
-        data = pd.read_sql(sql_query, self._connection, **kwargs)
+        data = pd.read_sql(sql_query, self._connection, **read_sql_kwargs)
         return data
 
 
