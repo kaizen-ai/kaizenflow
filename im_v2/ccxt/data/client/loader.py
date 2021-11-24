@@ -362,7 +362,6 @@ class CcxtDbClient(AbstractCcxtClient):
         end_ts: Optional[pd.Timestamp] = None,
         **read_sql_kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
-        # TODO(Dan): CmTask #502.
         # Construct name of the DB table with data from data type.
         table_name = "ccxt_" + self._data_type
         # Verify that table with specified name exists.
@@ -376,30 +375,20 @@ class CcxtDbClient(AbstractCcxtClient):
         # TODO(Grisha/Dan): Discuss the format of currency pairs data in DB.
         # Change currency pair in the way it is stored in DB dataframe.
         currency_pair = currency_pair.replace("_", "/")
-        # Initialize lists for query condition strings and parameters to insert.
-        query_conditions = []
-        query_params = []
-        # For exchange id and currency pair append a corresponding query string
-        # and query parameter to the corresponding lists.
-        query_conditions.append("exchange_id = %s")
-        query_params.append(exchange_id)
-        query_conditions.append("currency_pair = %s")
-        query_params.append(currency_pair)
-        # For every provided conditional parameter, append a corresponding
-        # query string and query parameter to the corresponding lists.
+        # Initialize a list for SQL conditions.
+        sql_conditions = []
+        # Fill SQL conditions list for each provided data parameter.
+        sql_conditions.append(f"exchange_id = {exchange_id}")
+        sql_conditions.append(f"currency_pair = {currency_pair}")
         if start_ts:
             start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
-            query_conditions.append("timestamp >= %s")
-            query_params.append(start_ts)
+            sql_conditions.append(f"timestamp >= {start_ts}")
         if end_ts:
             end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
-            query_conditions.append("timestamp < %s")
-            query_params.append(end_ts)
-        # Append all the provided query conditions to the main SQL query.
-        query_conditions = " AND ".join(query_conditions)
-        sql_query = " WHERE ".join([sql_query, query_conditions])
-        # Add a tuple of gathered query parameters to sql kwargs as `params`.
-        read_sql_kwargs["params"] = tuple(query_params)
+            sql_conditions.append("timestamp < %s")
+        # Append all the provided SQL conditions to the main SQL query.
+        sql_conditions = " AND ".join(sql_conditions)
+        sql_query = " WHERE ".join([sql_query, sql_conditions])
         # Execute SQL query.
         data = pd.read_sql(sql_query, self._connection, **read_sql_kwargs)
         return data
