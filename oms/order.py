@@ -58,6 +58,7 @@ class Order:
         self.order_id = order_id
         self.price_interface = price_interface
         self.creation_timestamp = creation_timestamp
+        # By convention we use `asset_id = -1` for cash.
         hdbg.dassert_lte(0, asset_id)
         self.asset_id = asset_id
         self.type_ = type_
