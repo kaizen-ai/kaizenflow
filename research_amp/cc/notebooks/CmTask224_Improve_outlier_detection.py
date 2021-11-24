@@ -30,7 +30,7 @@ import pandas as pd
 import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprint
-import im_v2.ccxt.data.client.loader as imcdacllo
+import im_v2.ccxt.data.client.clients as imcdacllo
 import research_amp.cc.detect_outliers as rccdeout
 
 # %%
