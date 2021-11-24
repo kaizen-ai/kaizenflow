@@ -105,7 +105,7 @@ _IS_FIRST_CALL = False
 def _report_task(txt: str = "") -> None:
     # On the first invocation report the version.
     global _IS_FIRST_CALL
-    if _IS_FIRST_CALL:
+    if not _IS_FIRST_CALL:
         _IS_FIRST_CALL = True
         hversio.check_version()
     # Print the name of the function.
@@ -1515,6 +1515,11 @@ def docker_build_local_image(  # type: ignore
     image_local = get_image(base_image, "local", version)
     #
     _dassert_is_image_name_valid(image_local)
+    #
+    git_tag_prefix = get_default_param("BASE_IMAGE")
+    #
+    container_version = get_git_tag(version)
+    #
     dockerfile = "devops/docker_build/dev.Dockerfile"
     dockerfile = _to_abs_path(dockerfile)
     #
@@ -1526,8 +1531,8 @@ def docker_build_local_image(  # type: ignore
     docker build \
         --progress=plain \
         {opts} \
-        --build-arg CONTAINER_VERSION={version} \
-        --build-arg BUILD_TAG={version} \
+        --build-arg CONTAINER_VERSION={container_version} \
+        --build-arg GIT_TAG_PREFIX={git_tag_prefix} \
         --tag {image_local} \
         --file {dockerfile} \
         .

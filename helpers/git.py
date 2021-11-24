@@ -1029,15 +1029,21 @@ def git_push_tag(
     _ = hsysinte.system(cmd, suppress_output=False, log_level=log_level)
 
 
-def git_describe(log_level: int = logging.DEBUG) -> str:
+def git_describe(match: Optional[str] = None, log_level: int = logging.DEBUG) -> str:
     """
     Return the closest tag in the repo, e.g., 1.0.0.
 
     If there is no tag, this will return short commit hash.
+
+    :param match: e.g., `dev_tools-*`, only consider tags matching the given glob pattern
     """
     _LOG.debug("# Looking for version ...")
     cmd = "git describe --tags --always --abbrev=0"
-    tag, num = hsysinte.system_to_one_line(cmd, log_level=log_level)
+    if match is not None:
+        hdbg.dassert_isinstance(match, str)
+        hdbg.dassert_ne(match, "")
+        cmd = f"{cmd} --match '{match}'"
+    num, tag = hsysinte.system_to_one_line(cmd, log_level=log_level)
     return tag
 
 

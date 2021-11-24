@@ -20,6 +20,7 @@ import os
 import re
 from typing import Optional
 
+import helpers.dbg as hdbg
 import helpers.git as hgit
 
 _LOG = logging.getLogger(__name__)
@@ -96,9 +97,18 @@ def check_version() -> None:
 #  For `amp` makes sense to check at top of the repo.
 def get_code_version() -> Optional[str]:
     """
-    Return the code version stored in `file_name`.
+    Return the code version.
+
+    Code version is based on a closest git tag that matches
+    container's git tag prefix.
     """
-    version = hgit.git_describe()
+    version: Optional[str] = None
+    if _is_inside_container():
+        git_tag_prefix = os.environ["GIT_TAG_PREFIX"]
+        hdbg.dassert_isinstance(git_tag_prefix, str)
+        hdbg.dassert_ne(git_tag_prefix, "")
+        git_tag_pattern = f"{git_tag_prefix}-*"
+        version = hgit.git_describe(match=git_tag_pattern)
     return version
 
 
@@ -116,8 +126,6 @@ def _get_container_version() -> Optional[str]:
 
 
 def _check_version(code_version: str, container_version: str) -> bool:
-    # TODO(vitalii): Enable after CmampTask570 is fixed.
-    return True
     # We are running inside a container.
     # Keep the code and the container in sync by versioning both and requiring
     # to be the same.
