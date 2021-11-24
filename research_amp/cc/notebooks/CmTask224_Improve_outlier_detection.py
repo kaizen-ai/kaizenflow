@@ -24,13 +24,15 @@
 
 # %%
 import logging
+import os
 
 import pandas as pd
 
 import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprint
-import im_v2.ccxt.data.client.clients as imcdacllo
+import helpers.s3 as hs3
+import im_v2.ccxt.data.client.clients as imcdaclcl
 import research_amp.cc.detect_outliers as rccdeout
 
 # %%
@@ -46,9 +48,13 @@ hprint.config_notebook()
 # # Load test data
 
 # %%
-root_dir = "s3://alphamatic-data/data"
-сcxt_loader = imcdacllo.CcxtLoaderFromFile(root_dir=root_dir, aws_profile="am")
-data = сcxt_loader.read_data("kucoin", "ETH/USDT", "ohlcv")
+root_dir = os.path.join(hs3.get_path(), "data")
+сcxt_loader = imcdaclcl.CcxtFileSystemClient(
+    data_type="OHLCV",
+    root_dir=root_dir,
+    aws_profile="am"
+)
+data = сcxt_loader.read_data("kucoin::ETH_USDT")
 data.head()
 
 # %% [markdown]
@@ -319,5 +325,3 @@ outlier_mask_new_10days = detect_outliers_new(chunk_10days["close"]).dropna()
 
 # %%
 chunk_10days["close"][outlier_mask_new_10days]
-
-# %%

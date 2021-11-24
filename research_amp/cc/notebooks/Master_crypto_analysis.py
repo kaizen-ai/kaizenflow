@@ -44,7 +44,7 @@ import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprint
 import helpers.s3 as hs3
-import im_v2.ccxt.data.client.clients as imcdacllo
+import im_v2.ccxt.data.client.clients as imcdaclcl
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -72,6 +72,7 @@ def get_eda_config() -> cconconf.Config:
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["close_price_col_name"] = "close"
+    config["data"]["data_type"] = "OHLCV"
     config["data"]["frequency"] = "T"
     # TODO(Grisha): use `hdateti.get_ET_tz()` once it is fixed.
     config["data"]["timezone"] = pytz.timezone("US/Eastern")
@@ -93,12 +94,12 @@ print(config)
 
 # %%
 # TODO(Grisha): potentially read data from the db.
-ccxt_loader = imcdacllo.CcxtLoaderFromFile(
-    root_dir=config["load"]["data_dir"], aws_profile=config["load"]["aws_profile"]
+ccxt_loader = imcdaclcl.CcxtFileSystemClient(
+    data_type=config["data"]["data_type"],
+    root_dir=config["load"]["data_dir"], 
+    aws_profile=config["load"]["aws_profile"],
 )
-ccxt_data = ccxt_loader.read_data(
-    exchange_id="binance", currency_pair="BTC/USDT", data_type="OHLCV"
-)
+ccxt_data = ccxt_loader.read_data("binance::BTC_USDT")
 _LOG.info("shape=%s", ccxt_data.shape[0])
 ccxt_data.head(3)
 

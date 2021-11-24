@@ -32,7 +32,7 @@ def compute_stats_for_universe(
     Compute stats on the vendor universe level.
 
     E.g., to compute start-end table for the universe do:
-    `compute_stats_for_universe(vendor_universe, config, compute_start_end_stats, config)`.
+    `compute_stats_for_universe(vendor_universe, config, compute_start_end_stats)`.
 
     :param vendor_universe: vendor universe as a list of of exchange-currency tuples
     :param config: parameters config
