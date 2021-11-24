@@ -1206,6 +1206,7 @@ def _get_docker_cmd(
     stage: str,
     version: str,
     cmd: str,
+    *,
     extra_env_vars: Optional[List[str]] = None,
     extra_docker_compose_files: Optional[List[str]] = None,
     extra_docker_run_opts: Optional[List[str]] = None,
@@ -1303,10 +1304,12 @@ def _get_docker_cmd(
         --rm"""
     )
     # - Handle the user.
-    if as_user:
+    # Based on AmpTask1864 it seems that we need to use root in the CI to be
+    # able to log in GH touching $HOME/.config/gh.
+    if False:
         docker_cmd_.append(
             r"""
-            --user $(id -u):$(id -g)"""
+        --user $(id -u):$(id -g)"""
         )
     # - Handle the extra docker options.
     if extra_docker_run_opts:
@@ -1397,6 +1400,7 @@ def _get_docker_jupyter_cmd(
     version: str,
     port: int,
     self_test: bool,
+    *,
     print_docker_config: bool = False,
 ) -> str:
     cmd = ""
@@ -1448,7 +1452,8 @@ def docker_jupyter(  # type: ignore
     #
     print_docker_config = False
     docker_cmd_ = _get_docker_jupyter_cmd(
-        base_image, stage, version, port, self_test, print_docker_config
+        base_image, stage, version, port, self_test,
+        print_docker_config=print_docker_config
     )
     _docker_cmd(ctx, docker_cmd_)
 
@@ -2184,6 +2189,7 @@ def _run_tests(
     collect_only: bool,
     tee_to_file: bool,
     skipped_tests: str,
+    *,
     start_coverage_script: bool = True,
 ) -> None:
     # Build the command line.

@@ -1,11 +1,4 @@
-#!/usr/bin/env python"""
-Import as:
-
-import dev_scripts.git.git_hooks.pre-commit as dsgghpr
-"""
-
-3
-
+#!/usr/bin/env python3
 """
 This is a git commit-hook used to check that a commit follows certain
 invariants.
@@ -15,6 +8,10 @@ commit. User can ignore the checks with `git commit --no-verify '...'`.
 
 One can run this hook to preview what `git commit` will do:
 > pre-commit.py
+
+Import as:
+
+import dev_scripts.git.git_hooks.pre-commit as dsgghpr
 """
 
 # NOTE: This file should depend only on Python standard libraries.

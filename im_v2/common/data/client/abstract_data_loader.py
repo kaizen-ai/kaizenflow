@@ -117,15 +117,16 @@ class AbstractImClient(abc.ABC):
         hpandas.dassert_index_is_datetime(df)
         hpandas.dassert_monotonic_index(df)
         # Verify that timezone info is correct.
-        # TODO(Grisha): converge on the tz `US/Eastern` vs `UTC`.
-        expected_tz = ["US/Eastern"]
+        # TODO(Grisha): make everything in `UTC` #580.
+        expected_tz = ["America/New_York", "US/Eastern"]
         # Is is assumed that the 1st value of an index is representative.
         hdateti.dassert_has_specified_tz(
             df.index[0],
             expected_tz,
         )
-        # Verify that there are no duplicates in data.
-        n_duplicated_rows = len(df.duplicated())
+        # Verify that there are no duplicates in data. We do not want to
+        # consider missing rows that appear due to resampling duplicated.
+        n_duplicated_rows = df.dropna().duplicated().sum()
         hdbg.dassert_eq(
             n_duplicated_rows,
             0,

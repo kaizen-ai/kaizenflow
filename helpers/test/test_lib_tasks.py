@@ -141,7 +141,6 @@ class TestGhLogin1(hunitest.TestCase):
 # tested. E.g. TestDryRunTasks1::test_print_setup and
 # TestDryRunTasks2::test_print_setup should go together in a class.
 
-
 class TestDryRunTasks1(hunitest.TestCase):
     """
     - Run invoke in dry-run mode from command line
@@ -167,7 +166,7 @@ class TestDryRunTasks1(hunitest.TestCase):
         target = "git_clean"
         self._dry_run(target)
 
-    # #########################################################################
+    # ################################################################################
     # TODO(gp): -> TestDockerCommands1
 
     @pytest.mark.skipif(
@@ -205,7 +204,7 @@ class TestDryRunTasks1(hunitest.TestCase):
         target = "docker_kill --all"
         self._dry_run(target)
 
-    # #########################################################################
+    # ################################################################################
 
     def _dry_run(self, target: str, dry_run: bool = True) -> None:
         """
@@ -215,7 +214,7 @@ class TestDryRunTasks1(hunitest.TestCase):
         execute.
         """
         opts = "--dry" if dry_run else ""
-        cmd = f"SKIP_VERSION_CHECK=1 invoke {opts} {target} | grep -v INFO | grep -v '>>ENV<<:'"
+        cmd = f"invoke {opts} {target} | grep -v INFO | grep -v '>>ENV<<:'"
         _, act = hsysinte.system_to_string(cmd)
         act = hprint.remove_non_printable_chars(act)
         self.check_string(act)
@@ -251,7 +250,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "git_clean(ctx, dry_run=False)"
         self._check_output(target)
 
-    # #########################################################################
+    # ################################################################################
 
     def test_docker_images_ls_repo(self) -> None:
         target = "docker_images_ls_repo(ctx)"
@@ -289,7 +288,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "docker_stats(ctx)"
         self._check_output(target)
 
-    # #########################################################################
+    # ################################################################################
     # TODO(gp): -> TestGhCommands1
 
     def test_gh_create_pr1(self) -> None:
@@ -325,7 +324,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     #     target = "gh_workflow_run(ctx)"
     #     self._check_output(target)
 
-    # #########################################################################
+    # ################################################################################
     # TODO(gp): -> TestGitCommands1
 
     def test_git_branch_files(self) -> None:
@@ -366,7 +365,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "git_merge_master(ctx)"
         self._check_output(target)
 
-    # #########################################################################
+    # ################################################################################
     # TODO(gp): -> TestLintCommands1
 
     @pytest.mark.skip(
@@ -520,22 +519,24 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         """
         Command for docker_bash target.
         """
-        stage = "dev"
         base_image = ""
+        stage = "dev"
+        version = "1.0.0"
         cmd = "bash"
         service_name = "app"
         entrypoint = False
         print_docker_config = False
         act = hlibtask._get_docker_cmd(
-            stage,
             base_image,
+            stage,
+            version,
             cmd,
             service_name=service_name,
             entrypoint=entrypoint,
             print_docker_config=print_docker_config,
         )
         exp = r"""
-        IMAGE=*****/amp_test:dev \
+        IMAGE=*****/amp_test:dev-1.0.0 \
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
             --env-file devops/env/default.env \
@@ -553,12 +554,13 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         """
         Command for docker_bash with entrypoint.
         """
-        stage = "local"
         base_image = ""
+        stage = "local"
+        version = "1.0.0"
         cmd = "bash"
         print_docker_config = False
         act = hlibtask._get_docker_cmd(
-            stage, base_image, cmd, print_docker_config=print_docker_config
+            base_image, stage, version, cmd, print_docker_config=print_docker_config
         )
         exp = r"""
         IMAGE=*****/amp_test:local \
@@ -579,20 +581,22 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         """
         Command for docker_bash with some env vars.
         """
-        stage = "local"
         base_image = ""
+        stage = "local"
+        version = "1.0.0"
         cmd = "bash"
         extra_env_vars = ["PORT=9999", "SKIP_RUN=1"]
         print_docker_config = False
         act = hlibtask._get_docker_cmd(
-            stage,
             base_image,
+            stage,
+            version,
             cmd,
             extra_env_vars=extra_env_vars,
             print_docker_config=print_docker_config,
         )
         exp = r"""
-        IMAGE=*****/amp_test:local \
+        IMAGE=*****/amp_test:local-1.0.0 \
         PORT=9999 \
         SKIP_RUN=1 \
             docker-compose \
@@ -610,20 +614,22 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         reason="Only run in amp as supermodule",
     )
     def test_docker_bash4(self) -> None:
-        stage = "dev"
         base_image = ""
+        stage = "dev"
+        version = "1.0.0"
         cmd = "bash"
         entrypoint = False
         print_docker_config = False
         act = hlibtask._get_docker_cmd(
-            stage,
             base_image,
+            stage,
+            version,
             cmd,
             entrypoint=entrypoint,
             print_docker_config=print_docker_config,
         )
         exp = r"""
-        IMAGE=*****/amp_test:dev \
+        IMAGE=*****/amp_test:dev-1.0.0 \
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml \
             --env-file devops/env/default.env \
@@ -638,14 +644,16 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         not hgit.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
     )
     def test_docker_jupyter1(self) -> None:
-        stage = "dev"
         base_image = ""
+        stage = "dev"
+        version = "1.0.0"
         port = 9999
         self_test = True
         print_docker_config = False
         act = hlibtask._get_docker_jupyter_cmd(
             stage,
             base_image,
+            version,
             port,
             self_test,
             print_docker_config=print_docker_config,

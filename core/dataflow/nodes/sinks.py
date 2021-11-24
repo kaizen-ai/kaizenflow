@@ -227,7 +227,7 @@ class PlaceTrades(cdtfnobas.FitPredictNode):
         config: Dict[str, Any],
     ) -> None:
         """
-        Parameters have the same meaning as in `place_orders()`.
+        Parameters have the same meaning as in `process_filled_orders()`.
         """
         super().__init__(nid)
         hdbg.dassert_in(execution_mode, ("batch", "real_time"))
