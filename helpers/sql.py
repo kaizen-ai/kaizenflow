@@ -563,3 +563,25 @@ def execute_insert_query(
     cur = connection.cursor()
     extras.execute_values(cur, query, values)
     connection.commit()
+
+
+def get_remove_duplicates_query(
+    table_name: str, id_col_name: str, column_names: List[str]
+) -> str:
+    """
+    Get a query to remove duplicates from table, keeping last duplicated row.
+
+    :param table_name: name of table
+    :param id_col_name: name of unique id column
+    :param column_names: names of columns to compare on
+    :return: query to execute duplicate removal
+    """
+    # TODO(*): Add a "limit" parameter if possible, to check only in top N rows.
+    remove_statement = []
+    remove_statement.append(f"DELETE FROM {table_name} a USING {table_name} b")
+    remove_statement.append(f"WHERE a.{id_col_name} < b.{id_col_name}")
+    for c in column_names:
+        remove_statement.append(f"AND a.{c} = b.{c}")
+    remove_statement = " ".join(remove_statement)
+    return remove_statement
+
