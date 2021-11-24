@@ -36,6 +36,7 @@ import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.io_ as hio
 import helpers.parser as hparser
+import helpers.s3 as hs3
 import helpers.sql as hsql
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import im_v2.common.universe.universe as imvcounun
@@ -139,14 +140,17 @@ def _save_data_on_disk(
         )
 
 
-def _get_rt_destination_dirs(dst_dir: str) -> Tuple[str, s3fs.core.S3FileSystem]:
+def _get_rt_paths(dst_dir: str) -> Tuple[str, str]:
     """
-    Get a shared local dir and s3fs object.
+    Get paths to local shared and S3 directories.
 
-    :param dst_dir:
-    :return:
+    E.g, "/data/shared/data/ohlcv_test/", "s3://alphamatic-data/data/ohlcv_test/"
+    :param dst_dir: download directory
+    :return: local and S3 paths
     """
-    return rt_local_dir, rt_s3fs
+    rt_local_path = os.path.join("/data/shared/", dst_dir)
+    rt_s3_path = hs3.get_path() + dst_dir
+    return rt_local_path, rt_s3_path
 
 
 def _save_rt_to_s3() -> None:
@@ -211,6 +215,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Create the directory.
     if args.dst_dir:
         hio.create_dir(args.dst_dir, incremental=args.incremental)
+    # Construct an S3 path.
+
+    # Get s3fs filesystem.
+    rt_s3fs = hs3.get_s3fs()
+    # Create an S3 path to dst_dir.
     # Connect to database.
     if args.db_connection == "from_env":
         connection = hsql.get_connection_from_env_vars()
