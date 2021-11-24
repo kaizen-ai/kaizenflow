@@ -23,6 +23,14 @@
     src: .env.j2
     dest: "{{ airflow_project_folder }}/.env"
 
+- name: test source profile
+  shell: echo $TMPDIR
+  register: output
+
+- debug:
+    msg: "Output: {{ output.stdout_lines }}"
+
 - name: Start airflow viac docker-compose in detached mode
-  shell: docker-compose -f "{{ airflow_project_folder }}"/docker-compose.yml up -d
+  shell: /bin/bash -ilc "docker-compose -f '{{ airflow_project_folder }}'/docker-compose.yml up -d"
+  # -lc needed to load .bashrc and .profile and execute command set as string parameter
 
