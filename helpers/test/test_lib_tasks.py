@@ -519,22 +519,24 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         """
         Command for docker_bash target.
         """
-        stage = "dev"
         base_image = ""
+        stage = "dev"
+        version = "1.0.0"
         cmd = "bash"
         service_name = "app"
         entrypoint = False
         print_docker_config = False
         act = hlibtask._get_docker_cmd(
-            stage,
             base_image,
+            stage,
+            version,
             cmd,
             service_name=service_name,
             entrypoint=entrypoint,
             print_docker_config=print_docker_config,
         )
         exp = r"""
-        IMAGE=*****/amp_test:dev \
+        IMAGE=*****/amp_test:dev-1.0.0 \
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
             --env-file devops/env/default.env \
@@ -552,12 +554,13 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         """
         Command for docker_bash with entrypoint.
         """
-        stage = "local"
         base_image = ""
+        stage = "local"
+        version = "1.0.0"
         cmd = "bash"
         print_docker_config = False
         act = hlibtask._get_docker_cmd(
-            stage, base_image, cmd, print_docker_config=print_docker_config
+            base_image, stage, version, cmd, print_docker_config=print_docker_config
         )
         exp = r"""
         IMAGE=*****/amp_test:local \
@@ -578,20 +581,22 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         """
         Command for docker_bash with some env vars.
         """
-        stage = "local"
         base_image = ""
+        stage = "local"
+        version = "1.0.0"
         cmd = "bash"
         extra_env_vars = ["PORT=9999", "SKIP_RUN=1"]
         print_docker_config = False
         act = hlibtask._get_docker_cmd(
-            stage,
             base_image,
+            stage,
+            version,
             cmd,
             extra_env_vars=extra_env_vars,
             print_docker_config=print_docker_config,
         )
         exp = r"""
-        IMAGE=*****/amp_test:local \
+        IMAGE=*****/amp_test:local-1.0.0 \
         PORT=9999 \
         SKIP_RUN=1 \
             docker-compose \
@@ -609,20 +614,22 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         reason="Only run in amp as supermodule",
     )
     def test_docker_bash4(self) -> None:
-        stage = "dev"
         base_image = ""
+        stage = "dev"
+        version = "1.0.0"
         cmd = "bash"
         entrypoint = False
         print_docker_config = False
         act = hlibtask._get_docker_cmd(
-            stage,
             base_image,
+            stage,
+            version,
             cmd,
             entrypoint=entrypoint,
             print_docker_config=print_docker_config,
         )
         exp = r"""
-        IMAGE=*****/amp_test:dev \
+        IMAGE=*****/amp_test:dev-1.0.0 \
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml \
             --env-file devops/env/default.env \
