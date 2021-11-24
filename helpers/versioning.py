@@ -103,12 +103,23 @@ def get_code_version() -> Optional[str]:
     container's git tag prefix.
     """
     version: Optional[str] = None
+    env_var = "GIT_TAG_PREFIX"
     if _is_inside_container():
-        git_tag_prefix = os.environ["GIT_TAG_PREFIX"]
-        hdbg.dassert_isinstance(git_tag_prefix, str)
-        hdbg.dassert_ne(git_tag_prefix, "")
-        git_tag_pattern = f"{git_tag_prefix}-*"
-        version = hgit.git_describe(match=git_tag_pattern)
+        if env_var not in os.environ:
+            # This situation happens when GH Actions pull the image using invoke
+            # inside their container (but not inside ours), thus there is no
+            # GIT_TAG_PREFIX.
+            print(
+                _WARNING
+                + f": The env var {env_var} should be defined when running inside a"
+                " container"
+            )
+        else:
+            git_tag_prefix = os.environ[env_var]
+            hdbg.dassert_isinstance(git_tag_prefix, str)
+            hdbg.dassert_ne(git_tag_prefix, "")
+            git_tag_pattern = f"{git_tag_prefix}-*"
+            version = hgit.git_describe(match=git_tag_pattern)
     return version
 
 
