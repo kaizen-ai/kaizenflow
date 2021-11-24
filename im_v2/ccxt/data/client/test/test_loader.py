@@ -102,13 +102,14 @@ class TestCcxtDbClient(hunitest.TestCase):
 
         super().tearDown()
 
-    @pytest.mark.slow()
+    @pytest.mark.slow("8 seconds.")
     def test_waitdb(self) -> None:
         """
         Smoke test.
         """
         hsql.wait_db_connection(self.host, self.dbname, self.port)
 
+    @pytest.mark.slow("9 seconds.")
     def test_data_insertion(self) -> None:
         """
         Verify that testing dataframe insertion is correct.
@@ -130,6 +131,7 @@ class TestCcxtDbClient(hunitest.TestCase):
         actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
 
+    @pytest.mark.slow("9 seconds.")
     def test_read_data1(self) -> None:
         """
         Verify that data from DB is read correctly.
