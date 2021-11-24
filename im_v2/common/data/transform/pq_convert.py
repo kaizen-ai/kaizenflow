@@ -3,18 +3,18 @@
 # TODO: move some code to generate_pq_example_data.py
 
 """
-Run example:
-python im/data_conversion/pq_convert.py \
+# Example:
+> python im_v2/common/data/transform/pq_convert.py \
     --start_date 2021-11-16 \
     --end_date 2021-11-17 \
-    --dst_dir im/data_conversion/test_data_by_date
+    --dst_dir im/transform/test_data_by_date
 
 Read daily data from S3 in Parquet format and transform it into a different
 Parquet representation.
 
 Import as:
 
-import im.data_conversion.pq_convert as imdcopqco
+import im_v2.common.data.transform.pq_convert as imvcdtpqco
 """
 
 import argparse
@@ -84,17 +84,20 @@ def _get_df(date) -> pd.DataFrame:
 
 # s3 = s3fs.S3FileSystem(profile="saml-spm-sasm")
 
+
 def get_available_dates():
-   """
-   Return list of all available dates.
-   """
-   dates = pd.date_range(pd.Timestamp("2021-11-13"), pd.Timestamp("2021-11-17"), freq="1D")
-   # Essentially equivalent to `> aws s3 ls _PATH`
-   #dates = hs3.listdir(path, mode="non-recursive", aws_profile="saml-spm-sasm")
-   # files = s3.ls(_PATH)
-   # dates = map(os.path.basename, files)
-   # dates = sorted(dates)
-   return dates
+    """
+    Return list of all available dates.
+    """
+    dates = pd.date_range(
+        pd.Timestamp("2021-11-13"), pd.Timestamp("2021-11-17"), freq="1D"
+    )
+    # Essentially equivalent to `> aws s3 ls _PATH`
+    # dates = hs3.listdir(path, mode="non-recursive", aws_profile="saml-spm-sasm")
+    # files = s3.ls(_PATH)
+    # dates = map(os.path.basename, files)
+    # dates = sorted(dates)
+    return dates
 
 
 def read_data(date: str):

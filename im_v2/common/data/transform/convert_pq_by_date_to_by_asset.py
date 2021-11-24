@@ -26,13 +26,13 @@ dst_dir
             data.parquet
 
 # Example:
-> python im/data_conversion/convert_pq_by_date_to_by_asset.py \
-    --src_dir im/data_conversion/test_data_by_date \
-    --dst_dir im/data_conversion/test_data_by_asset
+> python im_v2/common/data/transform/convert_pq_by_date_to_by_asset.py \
+    --src_dir im/transform/test_data_by_date \
+    --dst_dir im/transform/test_data_by_asset
 
 Import as:
 
-import im.data_conversion.convert_pq_by_date_to_by_asset as imdccpbdtba
+import im_v2.common.data.transform.convert_pq_by_date_to_by_asset as imvcdtcpbdtba
 """
 
 import argparse
