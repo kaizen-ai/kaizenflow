@@ -385,7 +385,7 @@ class CcxtDbClient(AbstractCcxtClient):
             sql_conditions.append(f"timestamp >= {start_ts}")
         if end_ts:
             end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
-            sql_conditions.append("timestamp < %s")
+            sql_conditions.append(f"timestamp < {end_ts}")
         # Append all the provided SQL conditions to the main SQL query.
         sql_conditions = " AND ".join(sql_conditions)
         sql_query = " WHERE ".join([sql_query, sql_conditions])

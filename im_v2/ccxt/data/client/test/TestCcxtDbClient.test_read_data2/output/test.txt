@@ -1,0 +1,15 @@
+original shape=(1, 8)
+Head:
+{
+    "2021-09-09T00:01:00Z":{
+        "open":31.0,
+        "high":41.0,
+        "low":51.0,
+        "close":61.0,
+        "volume":71.0,
+        "epoch":1631145660000,
+        "currency_pair":"BTC\/USDT",
+        "exchange_id":"binance"
+    }
+}
+Tail:

@@ -154,6 +154,33 @@ class TestCcxtDbClient(hunitest.TestCase):
         actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
 
+    @pytest.mark.slow("9 seconds.")
+    def test_read_data2(self) -> None:
+        """
+        Verify that data from DB is read and filtered correctly.
+        """
+        self._create_test_table()
+        test_data = self._get_test_data()
+        # Try uploading test data.
+        self.connection = hsql.get_connection(
+            self.host,
+            self.dbname,
+            self.port,
+            self.user,
+            self.password,
+            autocommit=True,
+        )
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
+        # Load data with client and check if it is correct.
+        ccxt_db_client = imcdacllo.CcxtDbClient("ohlcv", self.connection)
+        df = ccxt_db_client.read_data(
+            "binance::BTC/USDT",
+            start_ts=pd.Timestamp("2021-09-08T20:01:00-04:00"),
+            end_ts=pd.Timestamp("2021-09-08T20:04:00-04:00"),
+        )
+        actual = hunitest.convert_df_to_json_string(df, n_tail=None)
+        self.check_string(actual)
+
     def _create_test_table(self) -> None:
         """
         Create a test CCXT OHLCV table.
