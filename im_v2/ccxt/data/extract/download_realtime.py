@@ -107,6 +107,9 @@ def _save_data(
     """
     Save downloaded data to disk and S3.
 
+    The file name is constructed from provided params, e.g.
+    'kucoin_BTC_USDT_20210922_140312.csv.gz'
+
     :param data_type: 'ohlcv' or 'orderbook'
     :param fs_dir: FS directory to save to
     :param s3_dir: S3 location to save to
