@@ -42,13 +42,6 @@ import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import im_v2.common.universe.universe as imvcounun
 
 _LOG = logging.getLogger(__name__)
-_WARNING = "\033[33mWARNING\033[0m"
-
-try:
-    import s3fs
-except ModuleNotFoundError:
-    _module = "s3fs"
-    print(_WARNING + f": Can't find {_module}: continuing")
 
 # TODO(Danya): Create a type and move outside.
 def _instantiate_exchange(
