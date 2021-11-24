@@ -2,7 +2,7 @@
   apt:
     update_cache: yes
 
-- name: Install packages
+- name: Install packages (can take a couple of minutes if this the first of the playbook on the server because of the package size)
   apt:
     pkg: 
       - "{{ vnc_server_package }}" 
