@@ -462,7 +462,7 @@ class CcxtFileSystemClient(AbstractCcxtClient):
         :return: processed CCXT data
         """
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
-        # TODO(Grisha): create a helper to split the `full_symbol` #543.
+        # TODO(Grisha): create helper to split the `full_symbol` #572.
         exchange_id = full_symbol.split("::")[0]
         currency_pair = full_symbol.split("::")[1]
         # Get absolute file path for a CCXT file.
@@ -480,6 +480,13 @@ class CcxtFileSystemClient(AbstractCcxtClient):
             file_path,
         )
         data = cpanh.read_csv(file_path, **read_csv_kwargs)
+        #
+        if start_ts:
+            start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
+            data = data[data["timestamp"] >= start_ts]
+        if end_ts:
+            end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
+            data = data[data["timestamp"] < end_ts]
         # Apply transformation to raw data.
         _LOG.info(
             "Processing CCXT data for exchange id='%s', currencies='%s'...",
