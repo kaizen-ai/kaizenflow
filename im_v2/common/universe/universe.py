@@ -3,8 +3,6 @@ Import as:
 
 import im_v2.common.universe.universe as imvcounun
 """
-
-import collections
 import os
 from typing import Dict, List
 
@@ -32,14 +30,6 @@ def get_trade_universe(
     hdbg.dassert_exists(file_path)
     universe = hio.from_json(file_path)
     return universe  # type: ignore[no-any-return]
-
-
-# #############################################################################
-
-
-ExchangeCurrencyTuple = collections.namedtuple(
-    "ExchangeCurrencyTuple", "exchange_id currency_pair"
-)
 
 
 def get_vendor_universe(
