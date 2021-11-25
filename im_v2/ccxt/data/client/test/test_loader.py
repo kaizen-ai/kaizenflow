@@ -160,7 +160,7 @@ class TestCcxtDbClient(hunitest.TestCase):
 
     def _create_test_table(self) -> None:
         """
-        Create a test CCXT OHLCV table.
+        Create a test CCXT OHLCV table in DB.
         """
         query = """
         CREATE TABLE IF NOT EXISTS ccxt_ohlcv(
