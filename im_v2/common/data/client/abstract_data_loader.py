@@ -6,7 +6,8 @@ import im_v2.common.data.client.abstract_data_loader as imvcdcadlo
 
 import abc
 import logging
-from typing import Any, Dict, List, Optional, Union
+import re
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -20,6 +21,21 @@ _LOG = logging.getLogger(__name__)
 # Note that information about the vendor is carried in the `ImClient` itself,
 # i.e. using `CcxtImClient` serves data from CCXT.
 FullSymbol = str
+
+
+def dassert_correct_full_symbol_format(full_symbol: FullSymbol) -> None:
+    letter_underscore_pattern = "[a-zA-Z_]"
+    regex_pattern = fr"{letter_underscore_pattern}*::{letter_underscore_pattern}"
+    full_match = re.fullmatch(regex_pattern, full_symbol)
+    is_correct_pattern = full_match is not None
+    hdbg.dassert(
+        is_correct_pattern,
+        msg=f"Incorrect full_symbol format {full_symbol}, must be `exchange::symbol`"
+    )
+
+
+def parse_full_symbol(full_symbol: FullSymbol) -> Tuple[str, str]:
+    print(0)
 
 
 # TODO(Grisha): add methods `get_start(end)_ts_available()`, `get_universe()` #543.
