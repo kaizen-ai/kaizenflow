@@ -99,14 +99,14 @@ else:
 # to `system_interaction.py`.
 
 
-_IS_FIRST_CALL = False
+_WAS_FIRST_CALL_DONE = False
 
 
 def _report_task(txt: str = "") -> None:
     # On the first invocation report the version.
-    global _IS_FIRST_CALL
-    if not _IS_FIRST_CALL:
-        _IS_FIRST_CALL = True
+    global _WAS_FIRST_CALL_DONE
+    if not _WAS_FIRST_CALL_DONE:
+        _WAS_FIRST_CALL_DONE = True
         hversio.check_version()
     # Print the name of the function.
     func_name = hintros.get_function_name(count=1)
@@ -1517,7 +1517,8 @@ def docker_build_local_image(  # type: ignore
     _dassert_is_image_name_valid(image_local)
     #
     git_tag_prefix = get_default_param("BASE_IMAGE")
-    #
+    # Tag the container with the current version of 
+    # the code to keep them in sync.
     container_version = get_git_tag(version)
     #
     dockerfile = "devops/docker_build/dev.Dockerfile"
@@ -1531,8 +1532,8 @@ def docker_build_local_image(  # type: ignore
     docker build \
         --progress=plain \
         {opts} \
-        --build-arg CONTAINER_VERSION={container_version} \
-        --build-arg GIT_TAG_PREFIX={git_tag_prefix} \
+        --build-arg AM_CONTAINER_VERSION={container_version} \
+        --build-arg AM_IMAGE_NAME={git_tag_prefix} \
         --tag {image_local} \
         --file {dockerfile} \
         .

@@ -44,13 +44,13 @@ def check_version() -> None:
     is_inside_container = _is_inside_container()
     # Get container version.
     # TODO(gp): Use _get_container_version().
-    env_var = "CONTAINER_VERSION"
+    env_var = "AM_CONTAINER_VERSION"
     if env_var not in os.environ:
         container_version = None
         if is_inside_container:
             # This situation happens when GH Actions pull the image using invoke
             # inside their container (but not inside ours), thus there is no
-            # CONTAINER_VERSION.
+            # AM_CONTAINER_VERSION.
             print(
                 _WARNING
                 + f": The env var {env_var} should be defined when running inside a"
@@ -103,12 +103,12 @@ def get_code_version() -> Optional[str]:
     container's git tag prefix.
     """
     version: Optional[str] = None
-    env_var = "GIT_TAG_PREFIX"
+    env_var = "AM_IMAGE_NAME"
     if _is_inside_container():
         if env_var not in os.environ:
             # This situation happens when GH Actions pull the image using invoke
             # inside their container (but not inside ours), thus there is no
-            # GIT_TAG_PREFIX.
+            # AM_IMAGE_NAME.
             print(
                 _WARNING
                 + f": The env var {env_var} should be defined when running inside a"
@@ -132,7 +132,7 @@ def _get_container_version() -> Optional[str]:
         # We are running inside a container.
         # Keep the code and the container in sync by versioning both and requiring
         # to be the same.
-        container_version = os.environ["CONTAINER_VERSION"]
+        container_version = os.environ["AM_CONTAINER_VERSION"]
     return container_version
 
 
