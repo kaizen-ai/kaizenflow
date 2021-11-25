@@ -18,7 +18,6 @@ import helpers.hpandas as hpandas
 import im.cryptodatadownload.data.load.loader as icdalolo
 import im_v2.ccxt.data.client.clients as imcdaclcl
 import im_v2.common.data.client as imcdacli
-import im_v2.common.universe.universe as imvcounun
 
 _LOG = logging.getLogger(__name__)
 
