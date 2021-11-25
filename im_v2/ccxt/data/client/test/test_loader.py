@@ -4,12 +4,13 @@ from typing import List
 import pandas as pd
 import pytest
 
+import helpers.dbg as hdbg
 import helpers.git as hgit
+import helpers.lib_tasks as hlibtask
 import helpers.s3 as hs3
 import helpers.sql as hsql
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
-import im.ccxt.db.utils as imccdbuti
 import im_v2.ccxt.data.client.loader as imcdacllo
 import im_v2.common.universe.universe as imvcounun
 
@@ -74,9 +75,7 @@ class TestCcxtDbClient(hunitest.TestCase):
         Initialize the test container.
         """
         super().setUp()
-        self.docker_compose_file_path = os.path.join(
-            hgit.get_amp_abs_path(), "im_v2/devops/compose/docker-compose.yml"
-        )
+        self.docker_compose_file_path = hlibtask.get_base_docker_compose_path()
         cmd = (
             "sudo docker-compose "
             f"--file {self.docker_compose_file_path} "
@@ -89,6 +88,17 @@ class TestCcxtDbClient(hunitest.TestCase):
         self.port = 5432
         self.password = "alsdkqoen"
         self.user = "aljsdalsd"
+        # Wait for DB connection.
+        hsql.wait_db_connection(self.host, self.dbname, self.port)
+        # Get DB connection.
+        self.connection = hsql.get_connection(
+            self.host,
+            self.dbname,
+            self.port,
+            self.user,
+            self.password,
+            autocommit=True,
+        )
 
     def tearDown(self) -> None:
         """
@@ -99,58 +109,31 @@ class TestCcxtDbClient(hunitest.TestCase):
             f"--file {self.docker_compose_file_path} down -v"
         )
         hsysinte.system(cmd, suppress_output=False)
-
         super().tearDown()
 
     @pytest.mark.slow("8 seconds.")
-    def test_waitdb(self) -> None:
+    def test_db_connection(self) -> None:
         """
-        Smoke test.
+        Smoke test DB connection.
         """
-        hsql.wait_db_connection(self.host, self.dbname, self.port)
-
-    @pytest.mark.slow("30 seconds.")
-    def test_data_insertion(self) -> None:
-        """
-        Verify that testing dataframe insertion is correct.
-        """
-        self._create_test_table()
-        test_data = self._get_test_data()
-        # Try uploading test data.
-        self.connection = hsql.get_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password,
-            autocommit=True,
+        conn_exists = hsql.check_db_connection(
+            self.host, self.dbname, self.port
         )
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
-        # Load data.
-        df = hsql.execute_query_to_df(self.connection, "SELECT * FROM ccxt_ohlcv")
-        actual = hunitest.convert_df_to_json_string(df, n_tail=None)
-        self.check_string(actual)
+        if not conn_exists:
+            hdbg.dfatal("DB is not connected.")
 
     @pytest.mark.slow("8 seconds.")
     def test_read_data1(self) -> None:
         """
         Verify that data from DB is read correctly.
         """
+        # Upload test data.
         self._create_test_table()
         test_data = self._get_test_data()
-        # Try uploading test data.
-        self.connection = hsql.get_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password,
-            autocommit=True,
-        )
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Load data with client and check if it is correct.
         ccxt_db_client = imcdacllo.CcxtDbClient("ohlcv", self.connection)
-        df = ccxt_db_client.read_data("binance::BTC/USDT")
+        df = ccxt_db_client.read_data("binance::BTC_USDT")
         actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
 
@@ -159,22 +142,14 @@ class TestCcxtDbClient(hunitest.TestCase):
         """
         Verify that data from DB is read and filtered correctly.
         """
+        # Upload test data.
         self._create_test_table()
         test_data = self._get_test_data()
-        # Try uploading test data.
-        self.connection = hsql.get_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password,
-            autocommit=True,
-        )
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Load data with client and check if it is correct.
         ccxt_db_client = imcdacllo.CcxtDbClient("ohlcv", self.connection)
         df = ccxt_db_client.read_data(
-            "binance::BTC/USDT",
+            "binance::BTC_USDT",
             start_ts=pd.Timestamp("2021-09-08T20:01:00-04:00"),
             end_ts=pd.Timestamp("2021-09-08T20:04:00-04:00"),
         )
@@ -185,32 +160,39 @@ class TestCcxtDbClient(hunitest.TestCase):
         """
         Create a test CCXT OHLCV table.
         """
-        query = imccdbuti.get_ccxt_ohlcv_create_table_query()
-        hsql.wait_db_connection(self.host, self.dbname, self.port)
-        connection = hsql.get_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password,
-            autocommit=True,
-        )
-        connection.cursor().execute(query)
+        query = """
+        CREATE TABLE IF NOT EXISTS ccxt_ohlcv(
+                id SERIAL PRIMARY KEY,
+                timestamp BIGINT NOT NULL,
+                open NUMERIC,
+                high NUMERIC,
+                low NUMERIC,
+                close NUMERIC,
+                volume NUMERIC,
+                currency_pair VARCHAR(255) NOT NULL,
+                exchange_id VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP 
+                )
+                """
+        self.connection.cursor().execute(query)
 
     @staticmethod
     def _get_test_data() -> pd.DataFrame:
+        """
+        Create a test CCXT OHLCV dataframe.
+        """
         test_data = pd.DataFrame(
             columns=[
                 "id", "timestamp", "open", "high", "low", "close", "volume", "currency_pair", "exchange_id", "created_at"
             ],
             data=[
-                [1, 1631145600000, 30, 40, 50, 60, 70, "BTC/USDT", "binance", pd.Timestamp("2021-09-09")],
-                [2, 1631145660000, 31, 41, 51, 61, 71, "BTC/USDT", "binance", pd.Timestamp("2021-09-09")],
-                [3, 1631145720000, 32, 42, 52, 62, 72, "ETH/USDT", "binance", pd.Timestamp("2021-09-09")],
-                [4, 1631145780000, 33, 43, 53, 63, 73, "BTC/USDT", "kucoin", pd.Timestamp("2021-09-09")],
-                [5, 1631145840000, 34, 44, 54, 64, 74, "BTC/USDT", "binance", pd.Timestamp("2021-09-09")],
-                [6, 1631145900000, 34, 44, 54, 64, 74, "BTC/USDT", "kucoin", pd.Timestamp("2021-09-09")],
-                [7, 1631145960000, 34, 44, 54, 64, 74, "ETH/USDT", "binance", pd.Timestamp("2021-09-09")],
+                [1, 1631145600000, 30, 40, 50, 60, 70, "BTC_USDT", "binance", pd.Timestamp("2021-09-09")],
+                [2, 1631145660000, 31, 41, 51, 61, 71, "BTC_USDT", "binance", pd.Timestamp("2021-09-09")],
+                [3, 1631145720000, 32, 42, 52, 62, 72, "ETH_USDT", "binance", pd.Timestamp("2021-09-09")],
+                [4, 1631145780000, 33, 43, 53, 63, 73, "BTC_USDT", "kucoin", pd.Timestamp("2021-09-09")],
+                [5, 1631145840000, 34, 44, 54, 64, 74, "BTC_USDT", "binance", pd.Timestamp("2021-09-09")],
+                [6, 1631145900000, 34, 44, 54, 64, 74, "BTC_USDT", "kucoin", pd.Timestamp("2021-09-09")],
+                [7, 1631145960000, 34, 44, 54, 64, 74, "ETH_USDT", "binance", pd.Timestamp("2021-09-09")],
             ]
         )
         return test_data
@@ -239,8 +221,8 @@ class TestCcxtLoaderFromFileReadUniverseData(hunitest.TestCase):
         """
         # Set input universe.
         input_universe = [
-            imvcounun.ExchangeCurrencyTuple("kucoin", "BTC/USDT"),
-            imvcounun.ExchangeCurrencyTuple("kucoin", "ETH/USDT"),
+            imvcounun.ExchangeCurrencyTuple("kucoin", "BTC_USDT"),
+            imvcounun.ExchangeCurrencyTuple("kucoin", "ETH_USDT"),
         ]
         # Initialize loader and get actual result.
         ccxt_loader = imcdacllo.CcxtLoaderFromFile(
@@ -267,7 +249,7 @@ class TestCcxtLoaderFromFileReadUniverseData(hunitest.TestCase):
         # Check output.
         expected_length = 190046
         expected_exchange_ids = ["gateio", "kucoin"]
-        expected_currency_pairs = ["SOL/USDT", "XRP/USDT"]
+        expected_currency_pairs = ["SOL_USDT", "XRP_USDT"]
         self._check_output(
             actual,
             expected_length,
