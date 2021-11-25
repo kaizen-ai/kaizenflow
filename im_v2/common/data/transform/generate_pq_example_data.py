@@ -5,7 +5,6 @@ import im_v2.common.data.transform.generate_pq_example_data as imvcdtgped
 """
 
 import logging
-import random
 
 import pandas as pd
 import pyarrow as pa
@@ -25,15 +24,14 @@ def _get_dummy_df(
 
     ```
                 idx asset  val1  val2
-    2000-01-01    0     A    99    30
-    2000-01-02    0     A    54    46
-    2000-01-03    0     A    85    86
+    2000-01-01    0     A    00    00
+    2000-01-02    0     A    01    01
+    2000-01-03    0     A    02    02
     ```
     """
     df_idx = pd.date_range(start_date, end_date, freq=freq)
     _LOG.debug("df_idx=[%s, %s]", min(df_idx), max(df_idx))
     _LOG.debug("len(df_idx)=%s", len(df_idx))
-    random.seed(1000)
     # For each asset generate random data.
     df = []
     for idx, asset in enumerate(assets.split(",")):
@@ -42,8 +40,8 @@ def _get_dummy_df(
                 "idx": idx,
                 "asset": asset,
                 "asset_for_check": asset,
-                "val1": [random.randint(0, 100) for _ in range(len(df_idx))],
-                "val2": [random.randint(0, 100) for _ in range(len(df_idx))],
+                "val1": [i for i in range(len(df_idx))],
+                "val2": [i for i in range(len(df_idx))],
             },
             index=df_idx,
         )
