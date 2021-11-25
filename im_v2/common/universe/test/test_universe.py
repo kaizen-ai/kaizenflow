@@ -36,3 +36,14 @@ class TestGetUniverse(hunitest.TestCase):
         """
         with self.assertRaises(AssertionError):
             _ = imvcounun.get_trade_universe("non-existent")
+
+
+class TestGetVendorUniverse(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test that universe is received correctly.
+        """
+        universe_as_full_symbols = imvcounun.get_vendor_universe(version="small")
+        self.assertEqual(len(universe_as_full_symbols), 2)
+        self.assert_equal(universe_as_full_symbols[0], "gateio::XRP_USDT")
+        self.assert_equal(universe_as_full_symbols[1], "kucoin::SOL_USDT")
