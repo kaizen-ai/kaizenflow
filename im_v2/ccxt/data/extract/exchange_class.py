@@ -183,7 +183,7 @@ class CcxtExchange:
         """
         # TODO(*): Replace `symbol` with a `full_symbol`.
         # Change currency pair to CCXT format.
-        symbol = symbol.replace("/", "_")
+        symbol = symbol.replace("_", "/")
         bars = self._exchange.fetch_ohlcv(
             symbol, timeframe=timeframe, since=since, limit=step
         )
