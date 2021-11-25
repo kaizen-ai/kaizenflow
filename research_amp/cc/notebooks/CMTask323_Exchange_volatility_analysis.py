@@ -247,7 +247,7 @@ type(18)
 
 # %% run_control={"marked": false}
 frequency = "1D"
-universe = imvcounun.get_vendor_universe_as_tuples("v03")
+universe = imvcounun.get_vendor_universe("v03")
 compute_daily_vix_ema = lambda data: compute_volatility_for_each_coin(
     data, freq=frequency, span=18
 )
@@ -277,7 +277,7 @@ display(ema_df_5min)
 # %%
 frequency = "1D"
 compute_daily_close = lambda data: get_daily_close(data, freq=frequency)
-daily_close = rccstat.compute_stats_for_universe(vendor_universe = universe, config, compute_daily_close)
+daily_close = rccstat.compute_stats_for_universe(universe, config, compute_daily_close)
 
 # %%
 std_df = get_overall_returns_volatility(daily_close, display_plot=True)
@@ -296,7 +296,7 @@ display(test_results)
 # %%
 # TODO(Max): check scatter-plotting functions in core.plotting.py
 sns.lineplot(
-    data=ema_df_daily.loc[["FIL/USDT"]].reset_index(),
+    data=ema_df_daily.loc[["FIL_USDT"]].reset_index(),
     x="date",
     y="ema_volatility",
     hue="currency_pair",
