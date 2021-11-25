@@ -375,9 +375,6 @@ class CcxtDbClient(AbstractCcxtClient):
         # Extract exchange id and currency pair from full symbol.
         exchange_id = full_symbol.split("::")[0]
         currency_pair = full_symbol.split("::")[-1]
-        # TODO(Grisha/Dan): Discuss the format of currency pairs data in DB.
-        # Change currency pair in the way it is stored in DB dataframe.
-        currency_pair = currency_pair.replace("_", "/")
         # Initialize a list for SQL conditions.
         sql_conditions = []
         # Fill SQL conditions list for each provided data parameter.

@@ -75,7 +75,9 @@ class TestCcxtDbClient(hunitest.TestCase):
         Initialize the test container.
         """
         super().setUp()
-        self.docker_compose_file_path = hlibtask.get_base_docker_compose_path()
+        self.docker_compose_file_path = os.path.join(
+            hgit.get_amp_abs_path(), "im_v2/devops/compose/docker-compose.yml"
+        )
         cmd = (
             "sudo docker-compose "
             f"--file {self.docker_compose_file_path} "
