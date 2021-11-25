@@ -74,6 +74,7 @@ def get_vendor_universe_as_tuples(
 ) -> List[ExchangeCurrencyTuple]:
     """
     Load vendor universe in a list of named tuples format.
+
     :param version: release version
     :param vendor: vendor to load data for
     :return: vendor universe as a list of tuples
@@ -98,6 +99,7 @@ def filter_vendor_universe_as_tuples(
 ) -> List[ExchangeCurrencyTuple]:
     """
     Filter vendor universe by provided exchange ids and currencies.
+
     :param vendor_universe: vendor universe to filter
     :param exchange_ids: list of exchange ids to filter by
     :param currency_pairs: list of currency pairs to filter by
