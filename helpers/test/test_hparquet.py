@@ -48,6 +48,7 @@ class TestParquet1(hunitest.TestCase):
         self.assert_equal(str(df), str(df2))
         self.assertTrue(df.equals(df2))
 
+    # TODO(Nikola): Move away or replace.
     @staticmethod
     def _get_df(date: datetime.date, seed: int = 42) -> pd.DataFrame:
         """
