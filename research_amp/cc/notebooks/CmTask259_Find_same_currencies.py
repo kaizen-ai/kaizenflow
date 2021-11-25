@@ -62,7 +62,7 @@ def get_config() -> cconconf.Config:
     config["load"]["data_dir"] = os.path.join(hs3.get_path(), "data")
     # Data parameters.
     config.add_subconfig("data")
-    config["data"]["universe_version"] = "v0_3"
+    config["data"]["universe_version"] = "v03"
     config["data"]["data_type"] = "OHLCV"
     config["data"]["vendor"] = "CCXT"
     config["data"]["price_column"] = "close"
@@ -151,5 +151,3 @@ for colname in corr_matrix_1day.columns:
     corr_srs = corr_matrix_1day[colname]
     corr_srs_sorted = corr_srs.sort_values(ascending=False)
     display(corr_srs_sorted.head(10))
-
-# %%

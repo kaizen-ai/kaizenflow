@@ -31,6 +31,7 @@ class CcxtExchange:
         :param: exchange_id: CCXT exchange id
         :param: api_keys_path: path to JSON file with API credentials
         """
+        # TODO(*): Replace `exchange_id` with a `full_symbol` and split in class.
         self.exchange_id = exchange_id
         self.api_keys_path = api_keys_path or API_KEYS_PATH
         self._exchange = self.log_into_exchange()
@@ -88,7 +89,7 @@ class CcxtExchange:
         """
         Download minute OHLCV bars.
 
-        :param curr_symbol: a currency pair, e.g. "BTC/USDT"
+        :param curr_symbol: a currency pair, e.g. "BTC_USDT"
         :param start_datetime: starting point for data
         :param end_datetime: end point for data (included)
         :param step: number of bars per iteration
@@ -151,9 +152,11 @@ class CcxtExchange:
         }
         ```
 
-        :param curr_pair: a currency pair, e.g. 'BTC/USDT'
+        :param curr_pair: a currency pair, e.g. 'BTC_USDT'
         :return:
         """
+        # Change currency pair to CCXT format.
+        curr_pair = curr_pair.replace("_", "/")
         # Check that exchange and currency pairs are valid.
         hdbg.dassert(self._exchange.has["fetchOrderBook"])
         hdbg.dassert_in(curr_pair, self.currency_pairs)
@@ -171,13 +174,16 @@ class CcxtExchange:
         """
         Wrapper for one minute OHLCV bars.
 
-        :param symbol: A currency pair, e.g. "BTC/USDT"
+        :param symbol: A currency pair, e.g. "BTC_USDT"
         :param timeframe: fetch data for certain timeframe
         :param since: from when is data fetched in milliseconds
         :param step: number of bars per iteration
 
         :return: OHLCV data from CCXT
         """
+        # TODO(*): Replace `symbol` with a `full_symbol`.
+        # Change currency pair to CCXT format.
+        symbol = symbol.replace("_", "/")
         bars = self._exchange.fetch_ohlcv(
             symbol, timeframe=timeframe, since=since, limit=step
         )

@@ -30,7 +30,7 @@ import helpers.s3 as hs3
 import im_v2.common.universe.universe as imvcounun
 import research_amp.cc.statistics as rccstat
 import research_amp.cc.volume as rccvolu
-import im_v2.ccxt.data.client.loader as imcdacllo
+import im_v2.ccxt.data.client.clients as imcdaclcl
 
 import core.plotting as coplotti
 
@@ -61,7 +61,8 @@ def get_cmtask260_config() -> cconconf.Config:
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["data_type"] = "OHLCV"
-    config["data"]["universe_version"] = "v0_3"
+    config["data"]["universe_version"] = "v03"
+    config["data"]["vendor"] = "CCXT"
     # Column names.
     config.add_subconfig("column_names")
     config["column_names"]["volume"] = "volume"
@@ -78,12 +79,18 @@ print(config)
 # # Load the data
 
 # %%
+vendor_universe = imvcounun.get_vendor_universe_as_tuples(
+    config["data"]["universe_version"], config["data"]["vendor"]
+)
+vendor_universe
+
+# %%
 compute_daily_cumul_volume_ = lambda data: rccvolu.get_daily_cumul_volume(
     data, config, is_notional_volume=False
 )
 
 cumul_daily_volume = rccstat.compute_stats_for_universe(
-    config, compute_daily_cumul_volume_
+    vendor_universe, config, compute_daily_cumul_volume_
 )
 
 # %%
@@ -154,13 +161,17 @@ def get_initial_df_with_volumes(coins, exchange, is_notional_volume):
     Parameters: list of coins, exchange name
     """
     result = []
-    loader = imcdacllo.CcxtLoaderFromFile(
-        root_dir="s3://alphamatic-data/data", aws_profile="am"
+    loader = imcdaclcl.CcxtFileSystemClient(
+        data_type="OHLCV",
+        root_dir=os.path.join(hs3.get_path(), "data"),
+        aws_profile="am",
     )
     for coin in coins:
-        df = loader.read_data(
-            exchange_id=exchange, currency_pair=coin, data_type="OHLCV"
-        )
+        # TODO(Grisha): use `_` as currencies separator #579.
+        coin = coin.replace("/", "_")
+        # TODO(Grisha): use `FullSymbols` #587.
+        full_symbol = f"{exchange}::{coin}"
+        df = loader.read_data(full_symbol)
         if is_notional_volume:
             df["volume"] = df["volume"] * df["close"]
         result.append(df["volume"])
@@ -197,10 +208,10 @@ def plot_ath_volumes_comparison(df_list):
 
 # %%
 # get the list of all coin paires for each exchange
-binance_coins = imvcounun.get_trade_universe("v01")["CCXT"]["binance"]
-ftx_coins = imvcounun.get_trade_universe("v01")["CCXT"]["ftx"]
-gateio_coins = imvcounun.get_trade_universe("v01")["CCXT"]["gateio"]
-kucoin_coins = imvcounun.get_trade_universe("v01")["CCXT"]["kucoin"]
+binance_coins = imvcounun.get_trade_universe("v03")["CCXT"]["binance"]
+ftx_coins = imvcounun.get_trade_universe("v03")["CCXT"]["ftx"]
+gateio_coins = imvcounun.get_trade_universe("v03")["CCXT"]["gateio"]
+kucoin_coins = imvcounun.get_trade_universe("v03")["CCXT"]["kucoin"]
 
 # load all the dataframes
 binance_1 = get_initial_df_with_volumes(
@@ -226,5 +237,3 @@ kucoin_1.name = "kucoin"
 
 # %%
 plot_ath_volumes_comparison(exchange_list)
-
-# %%

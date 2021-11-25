@@ -16,7 +16,8 @@ import core.statistics as costatis
 import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
 import im.cryptodatadownload.data.load.loader as icdalolo
-import im_v2.ccxt.data.client.loader as imcdacllo
+import im_v2.ccxt.data.client.clients as imcdaclcl
+import im_v2.common.data.client as imcdacli
 import im_v2.common.universe.universe as imvcounun
 
 _LOG = logging.getLogger(__name__)
@@ -31,7 +32,7 @@ def compute_stats_for_universe(
     Compute stats on the vendor universe level.
 
     E.g., to compute start-end table for the universe do:
-    `compute_stats_for_universe(vendor_universe, config, compute_start_end_stats, config)`.
+    `compute_stats_for_universe(vendor_universe, config, compute_start_end_stats)`.
 
     :param vendor_universe: vendor universe as a list of of exchange-currency tuples
     :param config: parameters config
@@ -45,12 +46,12 @@ def compute_stats_for_universe(
     stats_data = []
     # Iterate over vendor universe tuples.
     for exchange_id, currency_pair in vendor_universe:
+        # TODO(Grisha): use `_` as currencies separator #579.
+        currency_pair = currency_pair.replace("/", "_")
+        # TODO(Grisha): convert universe to `List[FullSymbol]` #587.
+        full_symbol = f"{exchange_id}::{currency_pair}"
         # Read data for current exchange and currency pair.
-        data = loader.read_data(
-            exchange_id,
-            currency_pair,
-            config["data"]["data_type"],
-        )
+        data = loader.read_data(full_symbol)
         # Compute stats on the exchange-currency level.
         cur_stats_data = stats_func(data)
         cur_stats_data["vendor"] = config["data"]["vendor"]
@@ -195,11 +196,10 @@ def postprocess_stats_table(
     return stats_table
 
 
-# TODO(Grisha): move `get_loader_for_vendor` out in #269.
-# TODO(Grisha): use the abstract class in #313.
+# TODO(Grisha): move `get_loader_for_vendor` out in and use the abstract class in #313.
 def get_loader_for_vendor(
     config: cconconf.Config,
-) -> Union[imcdacllo.AbstractCcxtLoader, icdalolo.CddLoader]:
+) -> Union[imcdacli.AbstractImClient, icdalolo.CddLoader]:
     """
     Get vendor specific loader instance.
 
@@ -208,7 +208,8 @@ def get_loader_for_vendor(
     """
     vendor = config["data"]["vendor"]
     if vendor == "CCXT":
-        loader = imcdacllo.CcxtLoaderFromFile(
+        loader = imcdaclcl.CcxtFileSystemClient(
+            data_type=config["data"]["data_type"],
             root_dir=config["load"]["data_dir"],
             aws_profile=config["load"]["aws_profile"],
         )
@@ -270,12 +271,12 @@ def get_universe_price_data(
         # Construct a column name from exchange id and currency pair.
         colname = " ".join([exchange_id, currency_pair])
         colnames.append(colname)
+        # TODO(Grisha): use `_` as currencies separator #579.
+        currency_pair = currency_pair.replace("/", "_")
+        # TODO(Grisha): convert universe to `List[FullSymbol]` #587.
+        full_symbol = f"{exchange_id}::{currency_pair}"
         # Read data for current exchange and currency pair.
-        data = loader.read_data(
-            exchange_id,
-            currency_pair,
-            config["data"]["data_type"],
-        )
+        data = loader.read_data(full_symbol)
         # Get series of required prices and append to the list.
         price_srs = data[config["data"]["price_column"]]
         price_srs_list.append(price_srs)
