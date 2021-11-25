@@ -1,0 +1,16 @@
+# Dir structure
+/app/im_v2/common/data/transform/test/TestPQByDateToByAsset.test_convert_pq_by_date_to_by_asset/tmp.scratch/by_asset
+/app/im_v2/common/data/transform/test/TestPQByDateToByAsset.test_convert_pq_by_date_to_by_asset/tmp.scratch/by_asset/year=2021
+/app/im_v2/common/data/transform/test/TestPQByDateToByAsset.test_convert_pq_by_date_to_by_asset/tmp.scratch/by_asset/year=2021/asset=A
+/app/im_v2/common/data/transform/test/TestPQByDateToByAsset.test_convert_pq_by_date_to_by_asset/tmp.scratch/by_asset/year=2021/asset=A/data.parquet
+/app/im_v2/common/data/transform/test/TestPQByDateToByAsset.test_convert_pq_by_date_to_by_asset/tmp.scratch/by_asset/year=2021/asset=B
+/app/im_v2/common/data/transform/test/TestPQByDateToByAsset.test_convert_pq_by_date_to_by_asset/tmp.scratch/by_asset/year=2021/asset=B/data.parquet
+/app/im_v2/common/data/transform/test/TestPQByDateToByAsset.test_convert_pq_by_date_to_by_asset/tmp.scratch/by_asset/year=2021/asset=C
+/app/im_v2/common/data/transform/test/TestPQByDateToByAsset.test_convert_pq_by_date_to_by_asset/tmp.scratch/by_asset/year=2021/asset=C/data.parquet
+/app/im_v2/common/data/transform/test/TestPQByDateToByAsset.test_convert_pq_by_date_to_by_asset/tmp.scratch/by_asset/year=2022
+/app/im_v2/common/data/transform/test/TestPQByDateToByAsset.test_convert_pq_by_date_to_by_asset/tmp.scratch/by_asset/year=2022/asset=A
+/app/im_v2/common/data/transform/test/TestPQByDateToByAsset.test_convert_pq_by_date_to_by_asset/tmp.scratch/by_asset/year=2022/asset=A/data.parquet
+/app/im_v2/common/data/transform/test/TestPQByDateToByAsset.test_convert_pq_by_date_to_by_asset/tmp.scratch/by_asset/year=2022/asset=B
+/app/im_v2/common/data/transform/test/TestPQByDateToByAsset.test_convert_pq_by_date_to_by_asset/tmp.scratch/by_asset/year=2022/asset=B/data.parquet
+/app/im_v2/common/data/transform/test/TestPQByDateToByAsset.test_convert_pq_by_date_to_by_asset/tmp.scratch/by_asset/year=2022/asset=C
+/app/im_v2/common/data/transform/test/TestPQByDateToByAsset.test_convert_pq_by_date_to_by_asset/tmp.scratch/by_asset/year=2022/asset=C/data.parquet
