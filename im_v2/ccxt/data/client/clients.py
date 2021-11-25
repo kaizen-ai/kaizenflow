@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.ccxt.data.client.loader as imcdacllo
+import im_v2.ccxt.data.client.clients as imcdaclcl
 """
 
 import abc
