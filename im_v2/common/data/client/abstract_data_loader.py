@@ -14,6 +14,7 @@ import pandas as pd
 import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
+import im_v2.common.universe.universe as imvcounun
 
 _LOG = logging.getLogger(__name__)
 
@@ -220,7 +221,9 @@ class MultipleSymbolsClient(AbstractImClient):
         :param end_ts: the latest date timestamp to load data for
         :return: combined data for provided symbols or universe version
         """
-        # TODO(Dan): Implement the case when `full_symbols` is string, e.g."v01".
+        if isinstance(full_symbols, str):
+            # Extract list of full symbols from universe version.
+            full_symbols = imvcounun.get_vendor_universe(full_symbols)
         # Verify that all the provided full symbols are unique.
         hdbg.dassert_no_duplicates(full_symbols)
         # Initialize results dict.
