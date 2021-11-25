@@ -13,7 +13,6 @@ import helpers.dbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): CmampTask413: Why skip this guy?
 @pytest.mark.skip()
 class Test_CcxtExchange(hunitest.TestCase):
     def test_initialize_class(self) -> None:
@@ -43,12 +42,12 @@ class Test_CcxtExchange(hunitest.TestCase):
         end_date = "2021-09-10T00:00:00Z"
         # Extract data.
         actual = exchange_class.download_ohlcv_data(
-            curr_symbol="BTC/USDT",
+            curr_symbol="BTC_USDT",
             start_datetime=pd.Timestamp(start_date),
             end_datetime=pd.Timestamp(end_date),
         )
         # Verify that the output is a dataframe and verify its length.
-        dbg.dassert_isinstance(actual, pd.DataFrame)
+        hdbg.dassert_isinstance(actual, pd.DataFrame)
         self.assertEqual(1500, actual.shape[0])
         # Verify column names.
         exp_col_names = ["timestamp", "open", "high", "close", "volume"]
@@ -71,7 +70,7 @@ class Test_CcxtExchange(hunitest.TestCase):
         Verify that order book is downloaded correctly.
         """
         exchange_class = imvcdeexcl.CcxtExchange("gateio")
-        order_book = exchange_class.download_order_book("BTC/USDT")
+        order_book = exchange_class.download_order_book("BTC_USDT")
         order_book_keys = [
             "symbol",
             "bids",

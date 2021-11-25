@@ -4,8 +4,14 @@ from typing import List
 import pandas as pd
 import pytest
 
+import helpers.dbg as hdbg
+import helpers.git as hgit
+import helpers.lib_tasks as hlibtask
 import helpers.s3 as hs3
+import helpers.sql as hsql
+import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
+import im.ccxt.db.utils as imccdbuti
 import im_v2.ccxt.data.client.clients as imcdaclcl
 import im_v2.common.universe.universe as imvcounun
 
@@ -64,6 +70,122 @@ class TestGetFilePath(hunitest.TestCase):
             )
 
 
+class TestCcxtDbClient(hunitest.TestCase):
+    def setUp(self) -> None:
+        """
+        Initialize the test container.
+        """
+        super().setUp()
+        self.docker_compose_file_path = os.path.join(
+            hgit.get_amp_abs_path(), "im_v2/devops/compose/docker-compose.yml"
+        )
+        cmd = (
+            "sudo docker-compose "
+            f"--file {self.docker_compose_file_path} "
+            "up -d im_postgres_local"
+        )
+        hsysinte.system(cmd, suppress_output=False)
+        # Set DB credentials.
+        self.host = "localhost"
+        self.dbname = "im_postgres_db_local"
+        self.port = 5432
+        self.password = "alsdkqoen"
+        self.user = "aljsdalsd"
+        # Wait for DB connection.
+        hsql.wait_db_connection(self.host, self.dbname, self.port)
+        # Get DB connection.
+        self.connection = hsql.get_connection(
+            self.host,
+            self.dbname,
+            self.port,
+            self.user,
+            self.password,
+            autocommit=True,
+        )
+
+    def tearDown(self) -> None:
+        """
+        Bring down the test container.
+        """
+        cmd = (
+            "sudo docker-compose "
+            f"--file {self.docker_compose_file_path} down -v"
+        )
+        hsysinte.system(cmd, suppress_output=False)
+        super().tearDown()
+
+    @pytest.mark.slow("8 seconds.")
+    def test_read_data1(self) -> None:
+        """
+        Verify that data from DB is read correctly.
+        """
+        # Load test data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
+        # Load data with client and check if it is correct.
+        ccxt_db_client = imcdaclcl.CcxtDbClient("ohlcv", self.connection)
+        df = ccxt_db_client.read_data("binance::BTC_USDT")
+        actual = hunitest.convert_df_to_json_string(df, n_tail=None)
+        self.check_string(actual)
+
+    @pytest.mark.slow("8 seconds.")
+    def test_read_data2(self) -> None:
+        """
+        Verify that data from DB is read and filtered correctly.
+        """
+        # Load test data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
+        # Load data with client and check if it is correct.
+        ccxt_db_client = imcdaclcl.CcxtDbClient("ohlcv", self.connection)
+        df = ccxt_db_client.read_data(
+            "binance::BTC_USDT",
+            start_ts=pd.Timestamp("2021-09-08T20:01:00-04:00"),
+            end_ts=pd.Timestamp("2021-09-08T20:04:00-04:00"),
+        )
+        actual = hunitest.convert_df_to_json_string(df, n_tail=None)
+        self.check_string(actual)
+
+    def _create_test_table(self) -> None:
+        """
+        Create a test CCXT OHLCV table in DB.
+        """
+        query = imccdbuti.get_ccxt_ohlcv_create_table_query()
+        self.connection.cursor().execute(query)
+
+    @staticmethod
+    def _get_test_data() -> pd.DataFrame:
+        """
+        Create a test CCXT OHLCV dataframe.
+        """
+        test_data = pd.DataFrame(
+            columns=[
+                "id",
+                "timestamp",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "currency_pair",
+                "exchange_id",
+                "created_at",
+            ],
+            data=[
+                [1, 1631145600000, 30, 40, 50, 60, 70, "BTC_USDT", "binance", pd.Timestamp("2021-09-09")],
+                [2, 1631145660000, 31, 41, 51, 61, 71, "BTC_USDT", "binance", pd.Timestamp("2021-09-09")],
+                [3, 1631145720000, 32, 42, 52, 62, 72, "ETH_USDT", "binance", pd.Timestamp("2021-09-09")],
+                [4, 1631145780000, 33, 43, 53, 63, 73, "BTC_USDT", "kucoin", pd.Timestamp("2021-09-09")],
+                [5, 1631145840000, 34, 44, 54, 64, 74, "BTC_USDT", "binance", pd.Timestamp("2021-09-09")],
+                [6, 1631145900000, 34, 44, 54, 64, 74, "BTC_USDT", "kucoin", pd.Timestamp("2021-09-09")],
+                [7, 1631145960000, 34, 44, 54, 64, 74, "ETH_USDT", "binance", pd.Timestamp("2021-09-09")],
+            ]
+        )
+        return test_data
+
+
 @pytest.mark.skip("Fix in #544.")
 class TestCcxtLoaderFromFileReadUniverseData(hunitest.TestCase):
     def test1(self) -> None:
@@ -87,8 +209,8 @@ class TestCcxtLoaderFromFileReadUniverseData(hunitest.TestCase):
         """
         # Set input universe.
         input_universe = [
-            imvcounun.ExchangeCurrencyTuple("kucoin", "BTC/USDT"),
-            imvcounun.ExchangeCurrencyTuple("kucoin", "ETH/USDT"),
+            imvcounun.ExchangeCurrencyTuple("kucoin", "BTC_USDT"),
+            imvcounun.ExchangeCurrencyTuple("kucoin", "ETH_USDT"),
         ]
         # Initialize loader and get actual result.
         ccxt_loader = imcdaclcl.CcxtLoaderFromFile(
@@ -115,7 +237,7 @@ class TestCcxtLoaderFromFileReadUniverseData(hunitest.TestCase):
         # Check output.
         expected_length = 190046
         expected_exchange_ids = ["gateio", "kucoin"]
-        expected_currency_pairs = ["SOL/USDT", "XRP/USDT"]
+        expected_currency_pairs = ["SOL_USDT", "XRP_USDT"]
         self._check_output(
             actual,
             expected_length,
