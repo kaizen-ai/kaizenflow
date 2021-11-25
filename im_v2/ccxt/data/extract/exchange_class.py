@@ -181,6 +181,7 @@ class CcxtExchange:
 
         :return: OHLCV data from CCXT
         """
+        # TODO(*): Replace `symbol` with a `full_symbol`.
         # Change currency pair to CCXT format.
         symbol = symbol.replace("/", "_")
         bars = self._exchange.fetch_ohlcv(
