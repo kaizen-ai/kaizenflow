@@ -11,6 +11,7 @@ from typing import Dict, List, Optional
 import helpers.dbg as hdbg
 import helpers.git as hgit
 import helpers.io_ as hio
+import im_v2.common.data.client as imvcdcadlo
 
 _LATEST_UNIVERSE_VERSION = "v03"
 
@@ -41,6 +42,32 @@ ExchangeCurrencyTuple = collections.namedtuple(
 )
 
 
+# TODO(Grisha): use it instead of `get_vendor_universe_as_tuples`` in the codebase #587.
+def get_vendor_universe(
+    version: str = _LATEST_UNIVERSE_VERSION,
+    vendor: str = "CCXT",
+) -> List[imvcdcadlo.FullSymbol]:
+    """
+    Load vendor universe as full symbols.
+
+    :param version: release version
+    :param vendor: vendor to load data for
+    :return: vendor universe as full symbols
+    """
+    # Get vendor universe.
+    vendor_universe = get_trade_universe(version)[vendor]
+    # Convert vendor universe dict to a sorted list of full symbols.
+    full_symbols = [
+        # TODO(Grisha): use "_" as currencies separator #579.
+        imvcdcadlo.construct_full_symbol(exchange_id, currency_pair.replace("/", "_"))
+        for exchange_id, currency_pairs in vendor_universe.items()
+        for currency_pair in currency_pairs
+    ]
+    sorted_full_symbols = sorted(full_symbols)
+    return sorted_full_symbols
+
+
+# TODO(Grisha): remove in #587.
 def get_vendor_universe_as_tuples(
     version: str = _LATEST_UNIVERSE_VERSION,
     vendor: str = "CCXT",
@@ -64,6 +91,7 @@ def get_vendor_universe_as_tuples(
     return res_list
 
 
+# TODO(Grisha): remove in #587.
 def filter_vendor_universe_as_tuples(
     vendor_universe: List[ExchangeCurrencyTuple],
     exchange_ids: Optional[List[str]] = None,
