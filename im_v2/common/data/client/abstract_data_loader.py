@@ -24,8 +24,10 @@ FullSymbol = str
 
 
 def dassert_correct_full_symbol_format(full_symbol: FullSymbol) -> None:
+    hdbg.dassert_isinstance(full_symbol, str)
+    hdbg.dassert_ne(full_symbol, "")
     letter_underscore_pattern = "[a-zA-Z_]"
-    regex_pattern = fr"{letter_underscore_pattern}*::{letter_underscore_pattern}"
+    regex_pattern = fr"{letter_underscore_pattern}*::{letter_underscore_pattern}*"
     full_match = re.fullmatch(regex_pattern, full_symbol)
     is_correct_pattern = full_match is not None
     hdbg.dassert(
