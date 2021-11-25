@@ -119,7 +119,7 @@ class TestCcxtDbClient(hunitest.TestCase):
         """
         Verify that data from DB is read correctly.
         """
-        # Upload test data.
+        # Load test data.
         self._create_test_table()
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
@@ -134,7 +134,7 @@ class TestCcxtDbClient(hunitest.TestCase):
         """
         Verify that data from DB is read and filtered correctly.
         """
-        # Upload test data.
+        # Load test data.
         self._create_test_table()
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
