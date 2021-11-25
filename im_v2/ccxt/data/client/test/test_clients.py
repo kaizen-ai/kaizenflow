@@ -11,6 +11,7 @@ import helpers.s3 as hs3
 import helpers.sql as hsql
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
+import im.ccxt.db.utils as imccdbuti
 import im_v2.ccxt.data.client.clients as imcdaclcl
 import im_v2.common.universe.universe as imvcounun
 
@@ -114,17 +115,6 @@ class TestCcxtDbClient(hunitest.TestCase):
         super().tearDown()
 
     @pytest.mark.slow("8 seconds.")
-    def test_db_connection(self) -> None:
-        """
-        Smoke test DB connection.
-        """
-        conn_exists = hsql.check_db_connection(
-            self.host, self.dbname, self.port
-        )
-        if not conn_exists:
-            hdbg.dfatal("DB is not connected.")
-
-    @pytest.mark.slow("8 seconds.")
     def test_read_data1(self) -> None:
         """
         Verify that data from DB is read correctly.
@@ -162,20 +152,7 @@ class TestCcxtDbClient(hunitest.TestCase):
         """
         Create a test CCXT OHLCV table in DB.
         """
-        query = """
-        CREATE TABLE IF NOT EXISTS ccxt_ohlcv(
-                id SERIAL PRIMARY KEY,
-                timestamp BIGINT NOT NULL,
-                open NUMERIC,
-                high NUMERIC,
-                low NUMERIC,
-                close NUMERIC,
-                volume NUMERIC,
-                currency_pair VARCHAR(255) NOT NULL,
-                exchange_id VARCHAR(255) NOT NULL,
-                created_at TIMESTAMP 
-                )
-                """
+        query = imccdbuti.get_ccxt_ohlcv_create_table_query()
         self.connection.cursor().execute(query)
 
     @staticmethod
@@ -185,7 +162,16 @@ class TestCcxtDbClient(hunitest.TestCase):
         """
         test_data = pd.DataFrame(
             columns=[
-                "id", "timestamp", "open", "high", "low", "close", "volume", "currency_pair", "exchange_id", "created_at"
+                "id",
+                "timestamp",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "currency_pair",
+                "exchange_id",
+                "created_at",
             ],
             data=[
                 [1, 1631145600000, 30, 40, 50, 60, 70, "BTC_USDT", "binance", pd.Timestamp("2021-09-09")],
