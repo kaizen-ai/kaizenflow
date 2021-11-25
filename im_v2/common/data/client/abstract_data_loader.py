@@ -23,7 +23,7 @@ _LOG = logging.getLogger(__name__)
 FullSymbol = str
 
 
-def dassert_correct_full_symbol_format(full_symbol: FullSymbol) -> None:
+def dassert_is_full_symbol_valid(full_symbol: FullSymbol) -> None:
     hdbg.dassert_isinstance(full_symbol, str)
     hdbg.dassert_ne(full_symbol, "")
     letter_underscore_pattern = "[a-zA-Z_]"
@@ -37,7 +37,19 @@ def dassert_correct_full_symbol_format(full_symbol: FullSymbol) -> None:
 
 
 def parse_full_symbol(full_symbol: FullSymbol) -> Tuple[str, str]:
-    print(0)
+    dassert_is_full_symbol_valid(full_symbol)
+    exchange, symbol = full_symbol.split("::")
+    return exchange, symbol
+
+
+def construct_full_symbol(exchange: str, symbol: str) -> FullSymbol:
+    hdbg.dassert_isinstance(exchange, str)
+    hdbg.dassert_ne(exchange, "")
+    hdbg.dassert_isinstance(symbol, str)
+    hdbg.dassert_ne(symbol, "")
+    full_symbol = f"{exchange}::{symbol}"
+    dassert_is_full_symbol_valid(full_symbol)
+    return full_symbol
 
 
 # TODO(Grisha): add methods `get_start(end)_ts_available()`, `get_universe()` #543.
