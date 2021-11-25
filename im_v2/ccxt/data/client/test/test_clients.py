@@ -134,7 +134,7 @@ class TestCcxtDbClient(hunitest.TestCase):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Load data with client and check if it is correct.
-        ccxt_db_client = imcdacllo.CcxtDbClient("ohlcv", self.connection)
+        ccxt_db_client = imcdaclcl.CcxtDbClient("ohlcv", self.connection)
         df = ccxt_db_client.read_data("binance::BTC_USDT")
         actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
@@ -149,7 +149,7 @@ class TestCcxtDbClient(hunitest.TestCase):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Load data with client and check if it is correct.
-        ccxt_db_client = imcdacllo.CcxtDbClient("ohlcv", self.connection)
+        ccxt_db_client = imcdaclcl.CcxtDbClient("ohlcv", self.connection)
         df = ccxt_db_client.read_data(
             "binance::BTC_USDT",
             start_ts=pd.Timestamp("2021-09-08T20:01:00-04:00"),
