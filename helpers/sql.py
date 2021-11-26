@@ -18,7 +18,6 @@ import psycopg2.sql as psql
 
 import helpers.dbg as hdbg
 import helpers.printing as hprint
-import helpers.system_interaction as hsysinte
 import helpers.timer as htimer
 
 _LOG = logging.getLogger(__name__)
@@ -103,20 +102,28 @@ def check_db_connection(
     host: str,
     dbname: str,
     port: int,
+    user: str,
+    password: str,
 ) -> bool:
     """
     Check whether a connection to a DB exists, in a non-blocking way.
     """
-    cmd = f"pg_isready -d {dbname} -p {port} -h {host}"
-    rc = hsysinte.system(cmd, abort_on_error=False)
-    conn_exists = rc == 0
-    return conn_exists
+    try:
+        get_connection(
+            host=host, dbname=dbname, port=port, user=user, password=password
+        )
+        conn_ex = (True,)
+    except psycop.OperationalError as e:
+        conn_ex = (False, e)
+    return conn_ex
 
 
 def wait_db_connection(
-    host: str, 
-    dbname: str, 
-    port: int,  
+    host: str,
+    dbname: str,
+    port: int,
+    user: str,
+    password: str,
     timeout_in_secs: int = 10,
 ) -> None:
     """
@@ -129,10 +136,12 @@ def wait_db_connection(
     elapsed_secs = 0
     while True:
         _LOG.info("Waiting for PostgreSQL to become available...")
-        conn_exists = check_db_connection(host, dbname, port)
-        if conn_exists:
+        conn_exists = check_db_connection(host, dbname, port, user, password)
+        if conn_exists[0]:
             _LOG.info("PostgreSQL is available (after %s seconds)", elapsed_secs)
             break
+        else:
+            raise ValueError(conn_exists[1])
         if elapsed_secs > timeout_in_secs:
             raise RuntimeError(
                 f"Cannot connect to db host={host} dbname={dbname} port={port}"
@@ -584,4 +593,3 @@ def get_remove_duplicates_query(
         remove_statement.append(f"AND a.{c} = b.{c}")
     remove_statement = " ".join(remove_statement)
     return remove_statement
-
