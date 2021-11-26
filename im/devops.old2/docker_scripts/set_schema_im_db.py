@@ -45,6 +45,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
         host=os.environ["POSTGRES_HOST"],
         dbname=os.environ["POSTGRES_DB"],
         port=int(os.environ["POSTGRES_PORT"]),
+        user=os.environ["POSTGRES_USER"],
+        password=os.environ["POSTGRES_PASSWORD"]
     )
     connection = hsql.get_connection_from_env_vars()
     # Set schema for the database.

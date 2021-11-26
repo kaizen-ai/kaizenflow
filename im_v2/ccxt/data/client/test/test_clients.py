@@ -85,10 +85,16 @@ class TestCcxtDbClient(hunitest.TestCase):
         self.host = "localhost"
         self.dbname = "im_postgres_db_local"
         self.port = 5432
-        self.password = "alsdkqoen"
         self.user = "aljsdalsd"
+        self.password = "alsdkqoen"
         # Wait for DB connection.
-        hsql.wait_db_connection(self.host, self.dbname, self.port)
+        hsql.wait_db_connection(
+            self.host,
+            self.dbname,
+            self.port,
+            self.user,
+            self.password
+        )
         # Get DB connection.
         self.connection = hsql.get_connection(
             self.host,

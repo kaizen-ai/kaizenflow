@@ -5,9 +5,9 @@ import os
 import pandas as pd
 
 import helpers.datetime_ as hdateti
+import helpers.git as hgit
 import helpers.hasyncio as hasynci
 import helpers.printing as hprint
-import helpers.git as hgit
 import helpers.sql as hsql
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
@@ -49,10 +49,10 @@ class _TestOmsDbHelper(hunitest.TestCase):
         host = "localhost"
         dbname = "oms_postgres_db_local"
         port = 5432
-        password = "alsdkqoen"
         user = "aljsdalsd"
+        password = "alsdkqoen"
         self.dbname = dbname
-        conn_exists = hsql.check_db_connection(host, dbname, port)
+        conn_exists = hsql.check_db_connection(host, dbname, port, user, password)[0]
         if conn_exists:
             _LOG.warning("DB is already up: skipping docker compose")
             # Since we have found the DB already up, we assume that we need to
@@ -73,7 +73,7 @@ class _TestOmsDbHelper(hunitest.TestCase):
             cmd = " ".join(cmd)
             hsysinte.system(cmd, suppress_output=False)
             # Wait for the DB to be available.
-            hsql.wait_db_connection(host, dbname, port)
+            hsql.wait_db_connection(host, dbname, port, user, password)
             self.bring_down_db = True
         # Save connection info.
         self.connection = hsql.get_connection(
