@@ -167,6 +167,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         hsysinte.system(cmd, suppress_output=False)
         super().tearDown()
 
+    @pytest.mark.slow("10 seconds.")
     def test1(self) -> None:
         """
         Test that all files from universe version are being read correctly.
@@ -192,7 +193,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
             expected_currency_pairs,
         )
 
-    @pytest.mark.slow("12 seconds.")
+    @pytest.mark.slow("8 seconds.")
     def test2(self) -> None:
         """
         Test that data for provided list of full symbols is being read correctly.
@@ -220,6 +221,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
             expected_currency_pairs,
         )
 
+    @pytest.mark.slow("10 seconds.")
     def test3(self) -> None:
         """
         Test that all files are being read and filtered correctly.
