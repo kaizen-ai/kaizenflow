@@ -104,15 +104,14 @@ def check_db_connection(
     port: int,
     user: str,
     password: str,
-) -> bool:
+) -> tuple:
     """
     Check whether a connection to a DB exists, in a non-blocking way.
     """
     try:
-        c = get_connection(
+        get_connection(
             host=host, dbname=dbname, port=port, user=user, password=password
         )
-        c.close()
         conn_ex = (True,)
     except psycop.OperationalError as e:
         conn_ex = (False, e)
@@ -141,11 +140,10 @@ def wait_db_connection(
         if conn_exists[0]:
             _LOG.info("PostgreSQL is available (after %s seconds)", elapsed_secs)
             break
-        else:
-            raise ValueError(conn_exists[1])
         if elapsed_secs > timeout_in_secs:
-            raise RuntimeError(
+            raise psycop.OperationalError(
                 f"Cannot connect to db host={host} dbname={dbname} port={port}"
+                f"\n{conn_exists[1]}"
             )
         elapsed_secs += 1
         time.sleep(1)
