@@ -36,7 +36,7 @@ class TestMultipleSymbolsClientReadData(hunitest.TestCase):
             expected_currency_pairs,
         )
 
-    @pytest.mark.slow("26 seconds.")
+    @pytest.mark.slow("12 seconds.")
     def test2(self) -> None:
         """
         Test that data for provided list of full symbols is being read correctly.
