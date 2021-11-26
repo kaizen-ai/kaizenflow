@@ -114,6 +114,10 @@ class AbstractImClient(abc.ABC):
             data = hpandas.drop_duplicates(data)
         if resample_to_1_min:
             data = hpandas.resample_df(data, "T")
+            # Fill missing values exchange ids and currency pairs that appeared
+            # after resampling.
+            data["exchange_id"] = data["exchange_id"].fillna(method="bfill")
+            data["currency_pair"] = data["currency_pair"].fillna(method="bfill")
         # Verify that data is valid.
         self._dassert_is_valid(data)
         return data
