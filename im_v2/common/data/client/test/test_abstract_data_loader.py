@@ -2,8 +2,6 @@ import helpers.unit_test as hunitest
 
 import im_v2.common.data.client.abstract_data_loader as imvcdcadlo
 
-_AM_S3_ROOT_DIR = os.path.join(hs3.get_path(), "data")
-
 
 class TestDassertIsFullSymbolValid(hunitest.TestCase):
     def test1(self) -> None:
