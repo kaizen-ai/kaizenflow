@@ -16,11 +16,6 @@ WORKDIR $INSTALL_DIR
 # to False.
 #ENV CLEAN_UP_INSTALLATION=True
 
-# Pass the build variables to the environment.
-ARG CONTAINER_VERSION
-ENV CONTAINER_VERSION=$CONTAINER_VERSION
-RUN echo "CONTAINER_VERSION=$CONTAINER_VERSION"
-
 # - Install OS packages.
 COPY devops/docker_build/install_os_packages.sh .
 RUN /bin/bash -c "./install_os_packages.sh"
@@ -53,11 +48,17 @@ COPY devops/docker_build/etc_sudoers /etc/sudoers
 
 COPY devops/docker_run/bashrc $HOME/.bashrc
 
-# This is the last step since the build tag contains a timestamp that might
-# trigger a re-build even though nothing has changed.
-ARG BUILD_TAG
-ENV BUILD_TAG=$BUILD_TAG
-RUN echo "BUILD_TAG=$BUILD_TAG"
+# Pass the container version (e.g., `1.0.0`) to the environment.
+ARG AM_CONTAINER_VERSION
+ENV AM_CONTAINER_VERSION=$AM_CONTAINER_VERSION
+RUN echo "AM_CONTAINER_VERSION=$AM_CONTAINER_VERSION"
+
+# Pass the image name (e.g., `dev_tools`, `cmamp`) to the environment. 
+# This value together with the version is used to tag the Git tree of
+# the code in order to keep the code in sync with the container.
+ARG AM_IMAGE_NAME
+ENV AM_IMAGE_NAME=$AM_IMAGE_NAME
+RUN echo "AM_IMAGE_NAME=$AM_IMAGE_NAME"
 
 # TODO(gp): Is this needed?
 WORKDIR $APP_DIR
