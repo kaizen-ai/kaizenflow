@@ -104,7 +104,7 @@ def check_db_connection(
     port: int,
     user: str,
     password: str,
-) -> Tuple[bool, Optional[psycop.OperationalError]:
+) -> Tuple[bool, Optional[psycop.OperationalError]]:
     """
     Check whether a connection to a DB exists, in a non-blocking way.
     """
