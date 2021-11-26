@@ -109,9 +109,10 @@ def check_db_connection(
     Check whether a connection to a DB exists, in a non-blocking way.
     """
     try:
-        get_connection(
+        c = get_connection(
             host=host, dbname=dbname, port=port, user=user, password=password
         )
+        c.close()
         conn_ex = (True,)
     except psycop.OperationalError as e:
         conn_ex = (False, e)
