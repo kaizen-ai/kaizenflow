@@ -158,14 +158,13 @@ class AbstractImClient(abc.ABC):
         Sanity checks include:
             - index is `pd.DatetimeIndex`
             - index is monotonic increasing/decreasing
-            - index has timezone "US/Eastern"
+            - index has timezone "UTC"
             - data has no duplicates
         """
         hpandas.dassert_index_is_datetime(df)
         hpandas.dassert_monotonic_index(df)
         # Verify that timezone info is correct.
-        # TODO(Grisha): make everything in `UTC` #580.
-        expected_tz = ["America/New_York", "US/Eastern"]
+        expected_tz = ["UTC"]
         # Is is assumed that the 1st value of an index is representative.
         hdateti.dassert_has_specified_tz(
             df.index[0],

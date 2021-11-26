@@ -80,7 +80,7 @@ print(config)
 # ## Per exchange id and currency pair for a specified vendor
 
 # %%
-vendor_universe = imvcounun.get_vendor_universe_as_tuples(
+vendor_universe = imvcounun.get_vendor_universe(
     config["data"]["universe_version"], config["data"]["vendor"]
 )
 vendor_universe

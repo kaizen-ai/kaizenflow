@@ -76,13 +76,14 @@ class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
         )
         return transformed_data
 
-    def _apply_common_transformation(self, data: pd.DataFrame) -> pd.DataFrame:
+    @staticmethod
+    def _apply_common_transformation(data: pd.DataFrame) -> pd.DataFrame:
         """
         Apply transformations common to all CCXT data.
 
         This includes:
         - Datetime format assertion
-        - Converting epoch ms timestamp to `pd.Timestamp`
+        - Converting epoch ms timestamp to UTC `pd.Timestamp`
         - Converting `timestamp` to index
 
         :param data: raw CCXT data
@@ -94,27 +95,11 @@ class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
         )
         # Rename col with original Unix ms epoch.
         data = data.rename({"timestamp": "epoch"}, axis=1)
-        # Transform Unix epoch into ET timestamp.
-        data["timestamp"] = self._convert_epochs_to_timestamp(data["epoch"])
+        # Transform Unix epoch into UTC timestamp.
+        data["timestamp"] = pd.to_datetime(data["epoch"], unit="ms", utc=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
         return data
-
-    @staticmethod
-    def _convert_epochs_to_timestamp(epoch_col: pd.Series) -> pd.Series:
-        """
-        Convert Unix epoch to timestamp in ET.
-
-        All Unix time epochs in CCXT are provided in ms and in UTC tz.
-
-        :param epoch_col: Series with Unix time epochs
-        :return: Series with epochs converted to timestamps in ET
-        """
-        # Convert to timestamp in UTC tz.
-        timestamp_col = pd.to_datetime(epoch_col, unit="ms", utc=True)
-        # Convert to ET tz.
-        timestamp_col = timestamp_col.dt.tz_convert(hdateti.get_ET_tz())
-        return timestamp_col
 
     @staticmethod
     def _apply_ohlcv_transformation(data: pd.DataFrame) -> pd.DataFrame:

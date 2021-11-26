@@ -18,13 +18,12 @@ import helpers.hpandas as hpandas
 import im.cryptodatadownload.data.load.loader as icdalolo
 import im_v2.ccxt.data.client.clients as imcdaclcl
 import im_v2.common.data.client as imcdacli
-import im_v2.common.universe.universe as imvcounun
 
 _LOG = logging.getLogger(__name__)
 
 
 def compute_stats_for_universe(
-    vendor_universe: List[imvcounun.ExchangeCurrencyTuple],
+    vendor_universe: List[imcdacli.FullSymbol],
     config: cconconf.Config,
     stats_func: Callable,
 ) -> pd.DataFrame:
@@ -45,11 +44,7 @@ def compute_stats_for_universe(
     # Initialize stats data list.
     stats_data = []
     # Iterate over vendor universe tuples.
-    for exchange_id, currency_pair in vendor_universe:
-        # TODO(Grisha): use `_` as currencies separator #579.
-        currency_pair = currency_pair.replace("/", "_")
-        # TODO(Grisha): convert universe to `List[FullSymbol]` #587.
-        full_symbol = f"{exchange_id}::{currency_pair}"
+    for full_symbol in vendor_universe:
         # Read data for current exchange and currency pair.
         data = loader.read_data(full_symbol)
         # Compute stats on the exchange-currency level.
@@ -251,7 +246,7 @@ def find_longest_not_nan_sequence(
 
 
 def get_universe_price_data(
-    vendor_universe: List[imvcounun.ExchangeCurrencyTuple],
+    vendor_universe: List[imcdacli.FullSymbol],
     config: cconconf.Config,
 ) -> pd.DataFrame:
     """
@@ -267,14 +262,8 @@ def get_universe_price_data(
     colnames = []
     price_srs_list = []
     # Iterate exchange ids and currency pairs.
-    for exchange_id, currency_pair in vendor_universe:
-        # Construct a column name from exchange id and currency pair.
-        colname = " ".join([exchange_id, currency_pair])
-        colnames.append(colname)
-        # TODO(Grisha): use `_` as currencies separator #579.
-        currency_pair = currency_pair.replace("/", "_")
-        # TODO(Grisha): convert universe to `List[FullSymbol]` #587.
-        full_symbol = f"{exchange_id}::{currency_pair}"
+    for full_symbol in vendor_universe:
+        colnames.append(full_symbol)
         # Read data for current exchange and currency pair.
         data = loader.read_data(full_symbol)
         # Get series of required prices and append to the list.
