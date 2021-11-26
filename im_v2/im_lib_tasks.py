@@ -160,16 +160,15 @@ def im_docker_down(ctx, volumes_remove=False):  # type: ignore
 
 
 def _get_create_db_cmd(
-        dbname: str,
-        overwrite: bool,
-        connection: str,
-        json: str,
-    ) -> str:
+    dbname: str,
+    overwrite: bool,
+    connection: str,
+    json: str,
+) -> str:
     """
-    Construct the `docker-compose' command to run a create_db script inside this
-    container Docker component.
+    Construct the `docker-compose' command to run a create_db script inside
+    this container Docker component.
 
-    E.g, to run the `.../devops/set_schema_im_db.py`:
     ```
     docker-compose \
         --file devops/compose/docker-compose.yml \
@@ -178,7 +177,7 @@ def _get_create_db_cmd(
     ```
 
     :param dbname: db to create inside docker
-    :param overwrite: to overwrite existing db 
+    :param overwrite: to overwrite existing db
     :param connection: db to connect
     :param json: path to json file with details to connect to db
     """
@@ -186,7 +185,7 @@ def _get_create_db_cmd(
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
     cmd.append(f"run --rm im_app")
-    cmd.append("python3 im_v2/common/db/create_db.py")
+    cmd.append("im_v2/common/db/create_db.py")
     cmd.append(f"--db-name '{dbname}'")
     if connection:
         cmd.append(f"--db-connection {connection}")
@@ -200,17 +199,23 @@ def _get_create_db_cmd(
 
 @task
 def im_create_db(
-        ctx,
-        dbname,
-        overwrite=False,
-        connection="",
-        json="",
-    ):  # type: ignore
+    ctx,
+    dbname,
+    overwrite=False,
+    connection="",
+    json="",
+):  # type: ignore
     """
     Create database inside a container attached to the `im app`.
+    By default it will connect to postgres db through env vars.
+    
+    Will create test_db database and SQL schema inside it:
+    ```
+    > i im_create_db test_db
+    ```
 
     :param dbname: db to create inside docker
-    :param overwrite: to overwrite existing db 
+    :param overwrite: to overwrite existing db
     :param connection: db to connect
     :param json: path to json file with details to connect to db
     """
@@ -219,20 +224,19 @@ def im_create_db(
     # Execute the command.
     hlibtask._run(ctx, docker_cmd, pty=True)
 
-    
+
 # #############################################################################
 
 
 def _get_remove_db_cmd(
-        dbname: str,
-        connection: str,
-        json: str,
-    ) -> str:
+    dbname: str,
+    connection: str,
+    json: str,
+) -> str:
     """
-    Construct the `docker-compose' command to run a remove_db script inside this
-    container Docker component.
+    Construct the `docker-compose' command to run a remove_db script inside
+    this container Docker component.
 
-    E.g, to run the `.../devops/set_schema_im_db.py`:
     ```
     docker-compose \
         --file devops/compose/docker-compose.yml \
@@ -248,7 +252,7 @@ def _get_remove_db_cmd(
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
     cmd.append(f"run --rm im_app")
-    cmd.append("python3 im_v2/common/db/remove_db.py")
+    cmd.append("im_v2/common/db/remove_db.py")
     cmd.append(f"--db-name '{dbname}'")
     if connection:
         cmd.append(f"--db-connection {connection}")
@@ -260,13 +264,19 @@ def _get_remove_db_cmd(
 
 @task
 def im_remove_db(
-        ctx,
-        dbname,
-        connection="",
-        json="",
-    ):  # type: ignore
+    ctx,
+    dbname,
+    connection="",
+    json="",
+):  # type: ignore
     """
     Remove database inside a container attached to the `im app`.
+    By default it will connect to postgres db through env vars.
+
+    Will remove test_db database:
+    ```
+    > i im_remove_db test_db
+    ```
 
     :param dbname: db to remove inside docker
     :param connection: db to connect

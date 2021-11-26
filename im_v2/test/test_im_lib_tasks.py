@@ -113,7 +113,7 @@ class TestGetCreateDbCmd(hunitest.TestCase):
         docker-compose \
             --file {docker_compose_path} \
             run --rm im_app \
-            python3 im_v2/common/db/create_db.py \
+            im_v2/common/db/create_db.py \
             --db-name 'test_db'
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
@@ -128,7 +128,7 @@ class TestGetCreateDbCmd(hunitest.TestCase):
         docker-compose \
             --file {docker_compose_path} \
             run --rm im_app \
-            python3 im_v2/common/db/create_db.py \
+            im_v2/common/db/create_db.py \
             --db-name 'test_db' \
             --overwrite
         """
@@ -144,7 +144,7 @@ class TestGetCreateDbCmd(hunitest.TestCase):
         docker-compose \
             --file {docker_compose_path} \
             run --rm im_app \
-            python3 im_v2/common/db/create_db.py \
+            im_v2/common/db/create_db.py \
             --db-name 'test_db' \
             --credentials 'test.json'
         """
@@ -161,7 +161,7 @@ class TestGetRemoveDbCmd(hunitest.TestCase):
         docker-compose \
             --file {docker_compose_path} \
             run --rm im_app \
-            python3 im_v2/common/db/remove_db.py \
+            im_v2/common/db/remove_db.py \
             --db-name 'test_db'
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
@@ -179,7 +179,7 @@ class TestGetRemoveDbCmd(hunitest.TestCase):
         docker-compose \
             --file {docker_compose_path} \
             run --rm im_app \
-            python3 im_v2/common/db/remove_db.py \
+            im_v2/common/db/remove_db.py \
             --db-name 'test_db' \
             --db-connection host=localhost dbname=im_postgres_db_local port=54
         """
