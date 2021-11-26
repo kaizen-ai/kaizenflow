@@ -226,20 +226,22 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         """
         Test that all files are being read and filtered correctly.
         """
-        # Initialize CCXT file client and pass it to multiple symbols client.
-        ccxt_file_client = imcdaclcl.CcxtFileSystemClient(
-            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
-        )
+        # Load test data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
+        # Initialize CCXT DB client and pass it to multiple symbols client.
+        ccxt_db_client = imcdaclcl.CcxtDbClient("ohlcv", self.connection)
         multiple_symbols_client = imvcdcmscl.MultipleSymbolsClient(
-            class_=ccxt_file_client, mode="concat"
+            class_=ccxt_db_client, mode="concat"
         )
         # Check output.
         actual = multiple_symbols_client.read_data(
             full_symbols="small",
-            start_ts=pd.Timestamp("2021-09-01T00:01:00-04:00"),
-            end_ts=pd.Timestamp("2021-09-01T00:03:00-04:00"),
+            start_ts=pd.Timestamp("2021-09-09T00:01:00"),
+            end_ts=pd.Timestamp("2021-09-09T00:04:00"),
         )
-        expected_length = 4
+        expected_length = 3
         expected_exchange_ids = ["gateio", "kucoin"]
         expected_currency_pairs = ["SOL_USDT", "XRP_USDT"]
         self._check_output(
