@@ -73,7 +73,7 @@ def _download_data(
 
     :param data_type: 'ohlcv' or 'orderbook'
     :param exchange: exchange instance
-    :param pair: currency pair, e.g. 'BTC/USDT'
+    :param pair: currency pair, e.g. 'BTC_USDT'
     :return: downloaded data
     """
     # Download 5 latest OHLCV candles.
@@ -109,7 +109,7 @@ def _save_data_on_disk(
     :param dst_dir: directory to save to
     :param pair_data: downloaded data
     :param exchange: exchange instance
-    :param pair: currency pair, e.g. 'BTC/USDT'
+    :param pair: currency pair, e.g. 'BTC_USDT'
     """
     current_datetime = hdateti.get_current_time("ET")
     if data_type == "ohlcv":

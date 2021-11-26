@@ -3,14 +3,13 @@ Import as:
 
 import im_v2.common.universe.universe as imvcounun
 """
-
-import collections
 import os
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import helpers.dbg as hdbg
 import helpers.git as hgit
 import helpers.io_ as hio
+import im_v2.common.data.client as imvcdcadlo
 
 _LATEST_UNIVERSE_VERSION = "v03"
 
@@ -33,63 +32,25 @@ def get_trade_universe(
     return universe  # type: ignore[no-any-return]
 
 
-# #############################################################################
-
-
-ExchangeCurrencyTuple = collections.namedtuple(
-    "ExchangeCurrencyTuple", "exchange_id currency_pair"
-)
-
-
-def get_vendor_universe_as_tuples(
+def get_vendor_universe(
     version: str = _LATEST_UNIVERSE_VERSION,
     vendor: str = "CCXT",
-) -> List[ExchangeCurrencyTuple]:
+) -> List[imvcdcadlo.FullSymbol]:
     """
-    Load vendor universe in a list of named tuples format.
+    Load vendor universe as full symbols.
 
     :param version: release version
     :param vendor: vendor to load data for
-    :return: vendor universe as a list of tuples
+    :return: vendor universe as full symbols
     """
     # Get vendor universe.
     vendor_universe = get_trade_universe(version)[vendor]
-    # Convert vendor universe dict to a sorted list of named tuples.
-    res_list = [
-        ExchangeCurrencyTuple(exchange_id, currency_pair)
+    # Convert vendor universe dict to a sorted list of full symbols.
+    full_symbols = [
+        # TODO(Grisha): use "_" as currencies separator #579.
+        imvcdcadlo.construct_full_symbol(exchange_id, currency_pair.replace("/", "_"))
         for exchange_id, currency_pairs in vendor_universe.items()
         for currency_pair in currency_pairs
     ]
-    res_list = sorted(res_list)
-    return res_list
-
-
-def filter_vendor_universe_as_tuples(
-    vendor_universe: List[ExchangeCurrencyTuple],
-    exchange_ids: Optional[List[str]] = None,
-    currency_pairs: Optional[List[str]] = None,
-) -> List[ExchangeCurrencyTuple]:
-    """
-    Filter vendor universe by provided exchange ids and currencies.
-
-    :param vendor_universe: vendor universe to filter
-    :param exchange_ids: list of exchange ids to filter by
-    :param currency_pairs: list of currency pairs to filter by
-    :return: filtered vendor universe
-    """
-    if exchange_ids:
-        hdbg.dassert_isinstance(exchange_ids, List)
-        vendor_universe = [
-            e for e in vendor_universe if e.exchange_id in exchange_ids
-        ]
-    if currency_pairs:
-        hdbg.dassert_isinstance(currency_pairs, List)
-        vendor_universe = [
-            e for e in vendor_universe if e.currency_pair in currency_pairs
-        ]
-    # Verify that output is not empty.
-    hdbg.dassert(
-        vendor_universe,
-        "No specified exchange ids and currency pairs in the provided universe.",
-    )
-    return vendor_universe
+    sorted_full_symbols = sorted(full_symbols)
+    return sorted_full_symbols
