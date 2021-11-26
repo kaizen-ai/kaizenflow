@@ -79,7 +79,7 @@ print(config)
 # # Load the data
 
 # %%
-vendor_universe = imvcounun.get_vendor_universe_as_tuples(
+vendor_universe = imvcounun.get_vendor_universe(
     config["data"]["universe_version"], config["data"]["vendor"]
 )
 vendor_universe

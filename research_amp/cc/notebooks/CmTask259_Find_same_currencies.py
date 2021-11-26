@@ -76,7 +76,7 @@ print(config)
 # # Get price data for a given universe
 
 # %%
-vendor_universe = imvcounun.get_vendor_universe_as_tuples(
+vendor_universe = imvcounun.get_vendor_universe(
     config["data"]["universe_version"], config["data"]["vendor"]
 )
 vendor_universe

@@ -7,18 +7,16 @@ import im_v2.ccxt.data.client.clients as imcdaclcl
 import abc
 import logging
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional
 
 import pandas as pd
 
 import core.pandas_helpers as cpanh
 import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
-import helpers.hpandas as hpandas
 import helpers.s3 as hs3
 import helpers.sql as hsql
 import im_v2.common.data.client as imvcdcli
-import im_v2.common.universe.universe as imvcounun
 
 _LOG = logging.getLogger(__name__)
 
@@ -78,13 +76,14 @@ class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
         )
         return transformed_data
 
-    def _apply_common_transformation(self, data: pd.DataFrame) -> pd.DataFrame:
+    @staticmethod
+    def _apply_common_transformation(data: pd.DataFrame) -> pd.DataFrame:
         """
         Apply transformations common to all CCXT data.
 
         This includes:
         - Datetime format assertion
-        - Converting epoch ms timestamp to `pd.Timestamp`
+        - Converting epoch ms timestamp to UTC `pd.Timestamp`
         - Converting `timestamp` to index
 
         :param data: raw CCXT data
@@ -96,207 +95,11 @@ class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
         )
         # Rename col with original Unix ms epoch.
         data = data.rename({"timestamp": "epoch"}, axis=1)
-        # Transform Unix epoch into ET timestamp.
-        data["timestamp"] = self._convert_epochs_to_timestamp(data["epoch"])
+        # Transform Unix epoch into UTC timestamp.
+        data["timestamp"] = pd.to_datetime(data["epoch"], unit="ms", utc=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
         return data
-
-    @staticmethod
-    def _convert_epochs_to_timestamp(epoch_col: pd.Series) -> pd.Series:
-        """
-        Convert Unix epoch to timestamp in ET.
-
-        All Unix time epochs in CCXT are provided in ms and in UTC tz.
-
-        :param epoch_col: Series with Unix time epochs
-        :return: Series with epochs converted to timestamps in ET
-        """
-        # Convert to timestamp in UTC tz.
-        timestamp_col = pd.to_datetime(epoch_col, unit="ms", utc=True)
-        # Convert to ET tz.
-        timestamp_col = timestamp_col.dt.tz_convert(hdateti.get_ET_tz())
-        return timestamp_col
-
-    @staticmethod
-    def _apply_ohlcv_transformation(data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Apply transformations for OHLCV data.
-
-        This includes:
-        - Assertion of present columns
-        - Assertion of data types
-        - Renaming and rearranging of OHLCV columns, namely:
-            ["open",
-             "high",
-             "low",
-             "close"
-             "volume",
-             "epoch",
-             "currency_pair",
-             "exchange_id"]
-
-        :param data: OHLCV data
-        :return: transformed OHLCV data
-        """
-        ohlcv_columns = [
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            "epoch",
-            "currency_pair",
-            "exchange_id",
-        ]
-        # Verify that dataframe contains OHLCV columns.
-        hdbg.dassert_is_subset(ohlcv_columns, data.columns)
-        # Rearrange the columns.
-        data = data[ohlcv_columns].copy()
-        return data
-
-
-# TODO(Grisha): replace with `AbstractCcxtClient` #543.
-class AbstractCcxtLoader(abc.ABC):
-    def __init__(
-        self,
-        remove_dups: bool = True,
-        resample_to_1_min: bool = True,
-    ) -> None:
-        """
-        Load CCXT data from different backends e.g., DB, local or S3
-        filesystem.
-
-        :param remove_dups: whether to remove full duplicates or not
-        :param resample_to_1_min: whether to resample to 1 min or not
-        """
-        self._remove_dups = remove_dups
-        self._resample_to_1_min = resample_to_1_min
-        # Specify supported data types to load.
-        self._data_types = ["ohlcv"]
-
-    @abc.abstractmethod
-    def read_universe_data(
-        self,
-        universe: Union[str, List[imvcounun.ExchangeCurrencyTuple]],
-        data_type: str,
-    ) -> pd.DataFrame:
-        """
-        Load CCXT data from a source for a specified universe.
-
-        Output data is indexed by timestamp and contains the columns open,
-        high, low, close, volume, epoch, currency_pair, exchange_id, e.g.,
-        ```
-                                   open        epoch          currency_pair exchange_id
-        2018-08-16 20:00:00-04:00  6316.01 ... 1534464000000  BTC/USDT      binance
-        2018-08-16 20:01:00-04:00  6311.36     1534464060000  BTC/USDT      binance
-        ...
-        2021-09-08 20:00:00-04:00  1.10343     1631145600000  XRP/USDT      kucoin
-        2021-09-08 20:02:00-04:00  1.10292     1631145720000  XRP/USDT      kucoin
-        ```
-
-        :param universe: CCXT universe version or a list of exchange-currency
-            tuples to load data for
-        :param data_type: OHLCV or trade, bid/ask data
-        :return: processed CCXT data
-        """
-
-    def transform(self, data: pd.DataFrame, data_type: str) -> pd.DataFrame:
-        """
-        Transform CCXT data loaded from DB or a filesystem.
-
-        Input data is indexed with numbers and contains the columns timestamp
-        open, high, low, closed, volume, exchange_id, currency_pair e.g.,
-        ```
-             timestamp      open     high     low      close    volume    currency_pair exchange_id
-        0    1631145600000  3499.01  3499.49  3496.17  3496.36  346.4812  ETH/USDT      binance
-        1    1631145660000  3496.36  3501.59  3495.69  3501.59  401.9576  ETH/USDT      binance
-        2    1631145720000  3501.59  3513.10  3499.89  3513.09  579.5656  ETH/USDT      binance
-        ```
-
-        Output data is indexed by timestamp and contains the columns open,
-        high, low, close, volume, epoch, currency_pair, exchange_id, e.g.,
-        ```
-                                   open        epoch          currency_pair exchange_id
-        2021-09-08 20:00:00-04:00  3499.01 ... 1631145600000  ETH/USDT      binance
-        2021-09-08 20:01:00-04:00  3496.36     1631145660000  ETH/USDT      binance
-        2021-09-08 20:02:00-04:00  3501.59     1631145720000  ETH/USDT      binance
-        ```
-
-        :param data: dataframe with CCXT data from DB or a filesystem
-        :param data_type: OHLCV or trade, bid/ask data
-        :return: processed dataframe
-        """
-        # Apply common transformations.
-        transformed_data = self._apply_common_transformation(data)
-        # Apply transformations for OHLCV data.
-        if data_type.lower() == "ohlcv":
-            transformed_data = self._apply_ohlcv_transformation(transformed_data)
-        else:
-            hdbg.dfatal(
-                "Incorrect data type: '%s'. Acceptable types: '%s'"
-                % (data_type.lower(), self._data_types)
-            )
-        # Sort transformed data by exchange id and currency pair columns.
-        transformed_data = transformed_data.sort_values(
-            by=["exchange_id", "currency_pair"]
-        )
-        return transformed_data
-
-    def _apply_common_transformation(self, data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Apply transform common to all CCXT data.
-
-        This includes:
-        - Datetime format assertion
-        - Converting epoch ms timestamp to pd.Timestamp
-        - Removing full duplicates
-        - Resampling to 1 minute using NaNs
-
-        :param data: raw CCXT data
-        :param exchange_id: CCXT exchange id, e.g. "binance"
-        :param currency_pair: currency pair, e.g. "BTC/USDT"
-        :return: transformed CCXT data
-        """
-        # Verify that the timestamp data is provided in ms.
-        hdbg.dassert_container_type(
-            data["timestamp"], container_type=None, elem_type=int
-        )
-        # Rename col with original Unix ms epoch.
-        data = data.rename({"timestamp": "epoch"}, axis=1)
-        # Transform Unix epoch into ET timestamp.
-        data["timestamp"] = self._convert_epochs_to_timestamp(data["epoch"])
-        #
-        if self._remove_dups:
-            # Remove full duplicates.
-            data = hpandas.drop_duplicates(data, ignore_index=True)
-        # Set timestamp as index.
-        data = data.set_index("timestamp")
-        # TODO(Dan2): CmTask503.
-        if self._resample_to_1_min:
-            # Resample to 1 minute.
-            data = hpandas.resample_df(data, "T")
-            # Fill missing exchange id and currency pair values that might
-            # have appeared after resampling.
-            cols_to_fill = ["exchange_id", "currency_pair"]
-            data[cols_to_fill] = data[cols_to_fill].fillna(method="bfill")
-        return data
-
-    @staticmethod
-    def _convert_epochs_to_timestamp(epoch_col: pd.Series) -> pd.Series:
-        """
-        Convert Unix epoch to timestamp in ET.
-
-        All Unix time epochs in CCXT are provided in ms and in UTC tz.
-
-        :param epoch_col: Series with Unix time epochs
-        :return: Series with epochs converted to timestamps in ET
-        """
-        # Convert to timestamp in UTC tz.
-        timestamp_col = pd.to_datetime(epoch_col, unit="ms", utc=True)
-        # Convert to ET tz.
-        timestamp_col = timestamp_col.dt.tz_convert(hdateti.get_ET_tz())
-        return timestamp_col
 
     @staticmethod
     def _apply_ohlcv_transformation(data: pd.DataFrame) -> pd.DataFrame:
@@ -371,10 +174,8 @@ class CcxtDbClient(AbstractCcxtClient):
         hdbg.dassert_in(table_name, hsql.get_table_names(self._connection))
         # Initialize SQL query.
         sql_query = "SELECT * FROM %s" % table_name
-        # TODO(Dan): CmTask #572.
-        # Extract exchange id and currency pair from full symbol.
-        exchange_id = full_symbol.split("::")[0]
-        currency_pair = full_symbol.split("::")[-1]
+        # Split full symbol into exchange and currency pair.
+        exchange_id, currency_pair = imvcdcli.parse_full_symbol(full_symbol)
         # Initialize a list for SQL conditions.
         sql_conditions = []
         # Fill SQL conditions list for each provided data parameter.
@@ -434,9 +235,8 @@ class CcxtFileSystemClient(AbstractCcxtClient):
         :return: processed CCXT data
         """
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
-        # TODO(Grisha): create helper to split the `full_symbol` #572.
-        exchange_id = full_symbol.split("::")[0]
-        currency_pair = full_symbol.split("::")[1]
+        # Split full symbol into exchange and currency pair.
+        exchange_id, currency_pair = imvcdcli.parse_full_symbol(full_symbol)
         # Get absolute file path for a CCXT file.
         file_path = self._get_file_path(data_snapshot, exchange_id, currency_pair)
         # Initialize kwargs dict for further CCXT data reading.
