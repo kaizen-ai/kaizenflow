@@ -138,6 +138,7 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
     )
+    # TODO(Danya): Remove argument, always from env.
     parser.add_argument(
         "--db_connection",
         action="store",
@@ -145,6 +146,7 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="Connection to database to upload to",
     )
+    # TODO(Danya): Make required, with `/data/shared/data/` and S3 as base.
     parser.add_argument(
         "--dst_dir",
         action="store",
@@ -158,6 +160,7 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="Type of data to load, 'ohlcv' or 'orderbook'",
     )
+    # TODO(Danya): Infer from data_type, see #502.
     parser.add_argument(
         "--table_name",
         action="store",
@@ -178,6 +181,7 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="Trade universe to download data for",
     )
+    # TODO(Danya): Will be handled by Airflow.
     parser.add_argument("--incremental", action="store_true")
     parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
@@ -208,7 +212,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Generate a query to remove duplicates.
     dup_query = hsql.get_remove_duplicates_query(
         table_name=args.table_name,
-        id_col="id",
+        id_col_name="id",
         column_names=["timestamp", "exchange_id", "currency_pair"],
     )
     # Launch an infinite loop.
