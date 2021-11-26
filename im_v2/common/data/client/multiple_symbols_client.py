@@ -54,7 +54,7 @@ class MultipleSymbolsClient:
         :param full_symbol_col_name: name of the column with full symbols
         :param start_ts: the earliest date timestamp to load data for
         :param end_ts: the latest date timestamp to load data for
-        :return: combined data for provided symbols or universe version
+        :return: combined data for provided symbols
         """
         # Verify that all the provided full symbols are unique.
         hdbg.dassert_no_duplicates(full_symbols)
