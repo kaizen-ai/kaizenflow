@@ -7,7 +7,7 @@ import im_v2.common.data.client.abstract_data_loader as imvcdcadlo
 import abc
 import logging
 import re
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
 
