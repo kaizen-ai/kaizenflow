@@ -24,6 +24,11 @@
         regexp: "^AllowGroups .+"
         path: /etc/ssh/sshd_config
         state: absent
+    
+    - name: Restart sshd to apply changes
+      service:
+        name: sshd
+        state: restarted
 
 - name: Add entry to /etc/bash.bashrc to export TMPDIR var (needed because hardened server has /tmp set to no nosuid, nodev, noexec)
   blockinfile:
@@ -38,6 +43,11 @@
   copy:
     dest: /etc/profile.d/custom-path.sh
     content: 'PATH=$PATH:/usr/local/bin'
+
+- name: Install python-venv package
+  apt:
+    name: python3.8-venv
+    state: present
 
 - name: Install docker
   include_tasks: docker/docker_main.yaml
