@@ -36,13 +36,13 @@ class TestMultipleSymbolsClientReadData(hunitest.TestCase):
             expected_currency_pairs,
         )
 
-    @pytest.mark.slow("18 seconds.")
+    @pytest.mark.slow("26 seconds.")
     def test2(self) -> None:
         """
         Test that data for provided list of full symbols is being read correctly.
         """
         # Set input list of full symbols.
-        full_symbols = ["kucoin::BTC_USDT", "kucoin::ETC_USDT"]
+        full_symbols = ["kucoin::XRP_USDT", "gateio::SOL_USDT"]
         # Initialize CCXT file client and pass it to multiple symbols client.
         ccxt_file_client = imcdaclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
@@ -52,9 +52,9 @@ class TestMultipleSymbolsClientReadData(hunitest.TestCase):
         )
         # Check actual results.
         actual = multiple_symbols_client.read_data(full_symbols=full_symbols)
-        expected_length = 190046
-        expected_exchange_ids = ["kucoin"]
-        expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
+        expected_length = 1593983
+        expected_exchange_ids = ["gateio", "kucoin"]
+        expected_currency_pairs = ["SOL_USDT", "XRP_USDT"]
         self._check_output(
             actual,
             expected_length,
@@ -79,7 +79,7 @@ class TestMultipleSymbolsClientReadData(hunitest.TestCase):
             start_ts=pd.Timestamp("2021-09-01T00:00:00-04:00"),
             end_ts=pd.Timestamp("2021-09-02T00:00:00-04:00"),
         )
-        expected_length = 190046
+        expected_length = 2880
         expected_exchange_ids = ["gateio", "kucoin"]
         expected_currency_pairs = ["SOL_USDT", "XRP_USDT"]
         self._check_output(

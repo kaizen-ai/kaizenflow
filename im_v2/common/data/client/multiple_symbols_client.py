@@ -20,7 +20,7 @@ import im_v2.common.universe.universe as imvcounun
 _LOG = logging.getLogger(__name__)
 
 
-class MultipleSymbolsClient(imvcdcadlo.AbstractImClient):
+class MultipleSymbolsClient:
     """
     Object compatible with `AbstractImClient` interface which reads data for multiple full symbols.
     """
