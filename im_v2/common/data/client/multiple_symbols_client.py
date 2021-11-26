@@ -4,9 +4,7 @@ Import as:
 import im_v2.common.data.client.multiple_symbols_client as imvcdcmscl
 """
 
-import abc
 import logging
-import re
 from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
@@ -34,7 +32,6 @@ class MultipleSymbolsClient:
         hdbg.dassert_in(mode, ("concat", "dict"))
         self._mode = mode
 
-    @abc.abstractmethod
     def read_data(
         self,
         full_symbols: List[imvcdcadlo.FullSymbol],
