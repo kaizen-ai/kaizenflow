@@ -106,6 +106,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
         self.check_string(actual_string)
 
 
+# TODO(Dan): CmTask607.
 class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
     def setUp(self) -> None:
         """
