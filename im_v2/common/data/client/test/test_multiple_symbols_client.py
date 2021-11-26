@@ -17,31 +17,8 @@ _AM_S3_ROOT_DIR = os.path.join(hs3.get_path(), "data")
 
 
 class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
-    def test1(self) -> None:
-        """
-        Test that all files from universe version are being read correctly.
-        """
-        # Initialize CCXT file client and pass it to multiple symbols client.
-        ccxt_file_client = imcdaclcl.CcxtFileSystemClient(
-            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
-        )
-        multiple_symbols_client = imvcdcmscl.MultipleSymbolsClient(
-            class_=ccxt_file_client, mode="concat"
-        )
-        # Check actual results.
-        actual = multiple_symbols_client.read_data(full_symbols="small")
-        expected_length = 190046
-        expected_exchange_ids = ["gateio", "kucoin"]
-        expected_currency_pairs = ["SOL_USDT", "XRP_USDT"]
-        self._check_output(
-            actual,
-            expected_length,
-            expected_exchange_ids,
-            expected_currency_pairs,
-        )
-
     @pytest.mark.slow("12 seconds.")
-    def test2(self) -> None:
+    def test1(self) -> None:
         """
         Test that data for provided list of full symbols is being read correctly.
         """
@@ -66,10 +43,12 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
             expected_currency_pairs,
         )
 
-    def test3(self) -> None:
+    def test2(self) -> None:
         """
         Test that all files are being read and filtered correctly.
         """
+        # Set input list of full symbols.
+        full_symbols = ["kucoin::SOL_USDT", "gateio::XRP_USDT"]
         # Initialize CCXT file client and pass it to multiple symbols client.
         ccxt_file_client = imcdaclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
@@ -79,7 +58,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
         )
         # Check output.
         actual = multiple_symbols_client.read_data(
-            full_symbols="small",
+            full_symbols=full_symbols,
             start_ts=pd.Timestamp("2021-09-01T00:00:00-04:00"),
             end_ts=pd.Timestamp("2021-09-02T00:00:00-04:00"),
         )
@@ -171,34 +150,8 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         hsysinte.system(cmd, suppress_output=False)
         super().tearDown()
 
-    @pytest.mark.slow("10 seconds.")
-    def test1(self) -> None:
-        """
-        Test that all files from universe version are being read correctly.
-        """
-        # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
-        # Initialize CCXT DB client and pass it to multiple symbols client.
-        ccxt_db_client = imcdaclcl.CcxtDbClient("ohlcv", self.connection)
-        multiple_symbols_client = imvcdcmscl.MultipleSymbolsClient(
-            class_=ccxt_db_client, mode="concat"
-        )
-        # Check actual results.
-        actual = multiple_symbols_client.read_data(full_symbols="small")
-        expected_length = 8
-        expected_exchange_ids = ["gateio", "kucoin"]
-        expected_currency_pairs = ["SOL_USDT", "XRP_USDT"]
-        self._check_output(
-            actual,
-            expected_length,
-            expected_exchange_ids,
-            expected_currency_pairs,
-        )
-
     @pytest.mark.slow("8 seconds.")
-    def test2(self) -> None:
+    def test1(self) -> None:
         """
         Test that data for provided list of full symbols is being read correctly.
         """
@@ -226,10 +179,12 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         )
 
     @pytest.mark.slow("10 seconds.")
-    def test3(self) -> None:
+    def test2(self) -> None:
         """
         Test that all files are being read and filtered correctly.
         """
+        # Set input list of full symbols.
+        full_symbols = ["kucoin::SOL_USDT", "gateio::XRP_USDT"]
         # Load test data.
         self._create_test_table()
         test_data = self._get_test_data()
@@ -241,7 +196,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         )
         # Check output.
         actual = multiple_symbols_client.read_data(
-            full_symbols="small",
+            full_symbols=full_symbols,
             start_ts=pd.Timestamp("2021-09-09T00:01:00"),
             end_ts=pd.Timestamp("2021-09-09T00:04:00"),
         )

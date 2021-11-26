@@ -12,9 +12,7 @@ from typing import Any, Dict, List, Optional, Union
 import pandas as pd
 
 import helpers.dbg as hdbg
-import helpers.hpandas as hpandas
 import im_v2.common.data.client.abstract_data_loader as imvcdcadlo
-import im_v2.common.universe.universe as imvcounun
 
 _LOG = logging.getLogger(__name__)
 
@@ -39,7 +37,7 @@ class MultipleSymbolsClient:
     @abc.abstractmethod
     def read_data(
         self,
-        full_symbols: Union[str, List[imvcdcadlo.FullSymbol]],
+        full_symbols: List[imvcdcadlo.FullSymbol],
         *,
         full_symbol_col_name: str = "full_symbol",
         start_ts: Optional[pd.Timestamp] = None,
@@ -51,16 +49,13 @@ class MultipleSymbolsClient:
 
         None `start_ts` and `end_ts` means the entire period of time available.
 
-        :param full_symbols: universe version or a list of full symbols, e.g.
+        :param full_symbols: list of full symbols, e.g.
             `['binance::BTC_USDT', 'kucoin::ETH_USDT']`
         :param full_symbol_col_name: name of the column with full symbols
         :param start_ts: the earliest date timestamp to load data for
         :param end_ts: the latest date timestamp to load data for
         :return: combined data for provided symbols or universe version
         """
-        if isinstance(full_symbols, str):
-            # Extract list of full symbols from universe version.
-            full_symbols = imvcounun.get_vendor_universe(full_symbols)
         # Verify that all the provided full symbols are unique.
         hdbg.dassert_no_duplicates(full_symbols)
         # Initialize results dict.
