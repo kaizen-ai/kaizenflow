@@ -194,6 +194,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if args.dst_dir:
         hio.create_dir(args.dst_dir, incremental=args.incremental)
     # Connect to database.
+    # TODO(Danya): Always pass from env.
     if args.db_connection == "from_env":
         connection = hsql.get_connection_from_env_vars()
     elif args.db_connection == "none":
@@ -204,11 +205,14 @@ def _main(parser: argparse.ArgumentParser) -> None:
     universe = imvcounun.get_trade_universe(args.universe)
     exchange_ids = universe["CCXT"].keys()
     # Build mappings from exchange ids to classes and currencies.
+    # TODO(Danya): Factor out to "_instantiate_exchanges"
+    #  to be run at the beginning of each Airflow cycle.
     exchanges = []
     for exchange_id in exchange_ids:
         exchanges.append(
             _instantiate_exchange(exchange_id, universe["CCXT"], args.api_keys)
         )
+    # TODO(Danya): INitialize at the beginning of each Airflow cycle.
     # Generate a query to remove duplicates.
     dup_query = hsql.get_remove_duplicates_query(
         table_name=args.table_name,
@@ -216,12 +220,15 @@ def _main(parser: argparse.ArgumentParser) -> None:
         column_names=["timestamp", "exchange_id", "currency_pair"],
     )
     # Launch an infinite loop.
+    # TODO(Danya): Replace the loop with a scheduled
+    #  Airflow DAG to be run every minute. Factor out downloading for 1 min.
     while True:
         for exchange in exchanges:
             for pair in exchange.pairs:
                 try:
                     # Download latest data.
                     pair_data = _download_data(args.data_type, exchange, pair)
+                # TODO(Danya): Remove, errors will be handled by Airflow.
                 except (
                     ccxt.ExchangeError,
                     ccxt.NetworkError,
@@ -231,11 +238,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
                     # Continue the loop if could not connect to exchange.
                     _LOG.warning("Got an error: %s", type(e).__name__, e.args)
                     continue
+                # TODO(Danya): Remove nesting, make required.
                 # Save to disk.
                 if args.dst_dir:
                     _save_data_on_disk(
                         args.data_type, args.dst_dir, pair_data, exchange, pair
                     )
+                # TODO(Danya): Remove nesting, always from env.
                 if connection:
                     # Insert into database.
                     hsql.execute_insert_query(
@@ -245,6 +254,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                     )
                     # Drop duplicates inside the table.
                     connection.cursor().execute(dup_query)
+        # TODO(Danya): Replace sleep with Airflow schedule.
         time.sleep(60)
 
 
