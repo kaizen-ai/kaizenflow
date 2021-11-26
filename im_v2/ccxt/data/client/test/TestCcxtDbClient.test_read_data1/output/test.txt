@@ -28,8 +28,8 @@ Head:
         "close":null,
         "volume":null,
         "epoch":null,
-        "currency_pair":"BTC_USDT",
-        "exchange_id":"binance"
+        "currency_pair":null,
+        "exchange_id":null
     },
     "2021-09-09T00:03:00Z":{
         "open":null,
@@ -38,8 +38,8 @@ Head:
         "close":null,
         "volume":null,
         "epoch":null,
-        "currency_pair":"BTC_USDT",
-        "exchange_id":"binance"
+        "currency_pair":null,
+        "exchange_id":null
     },
     "2021-09-09T00:04:00Z":{
         "open":34.0,

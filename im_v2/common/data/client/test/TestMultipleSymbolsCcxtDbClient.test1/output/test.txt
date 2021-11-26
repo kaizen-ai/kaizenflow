@@ -34,8 +34,8 @@ Head:
         "close":null,
         "volume":null,
         "epoch":null,
-        "currency_pair":"XRP_USDT",
-        "exchange_id":"gateio"
+        "currency_pair":null,
+        "exchange_id":null
     },
     "3":{
         "index":"2021-09-09T00:03:00Z",
@@ -46,8 +46,8 @@ Head:
         "close":null,
         "volume":null,
         "epoch":null,
-        "currency_pair":"XRP_USDT",
-        "exchange_id":"gateio"
+        "currency_pair":null,
+        "exchange_id":null
     },
     "4":{
         "index":"2021-09-09T00:04:00Z",
@@ -133,8 +133,8 @@ Tail:
         "close":null,
         "volume":null,
         "epoch":null,
-        "currency_pair":"XRP_USDT",
-        "exchange_id":"gateio"
+        "currency_pair":null,
+        "exchange_id":null
     },
     "3":{
         "index":"2021-09-09T00:03:00Z",
@@ -145,8 +145,8 @@ Tail:
         "close":null,
         "volume":null,
         "epoch":null,
-        "currency_pair":"XRP_USDT",
-        "exchange_id":"gateio"
+        "currency_pair":null,
+        "exchange_id":null
     },
     "4":{
         "index":"2021-09-09T00:04:00Z",

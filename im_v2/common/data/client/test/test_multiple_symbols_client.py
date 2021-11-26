@@ -16,7 +16,7 @@ import im_v2.common.data.client.multiple_symbols_client as imvcdcmscl
 _AM_S3_ROOT_DIR = os.path.join(hs3.get_path(), "data")
 
 
-class TestMultipleSymbolsClientReadData(hunitest.TestCase):
+class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test that all files from universe version are being read correctly.
@@ -111,10 +111,14 @@ class TestMultipleSymbolsClientReadData(hunitest.TestCase):
         # Check output df length.
         self.assert_equal(str(expected_length), str(actual.shape[0]))
         # Check unique exchange ids in the output df.
-        actual_exchange_ids = sorted(list(actual["exchange_id"].unique()))
+        actual_exchange_ids = sorted(
+            list(actual["exchange_id"].dropna().unique())
+        )
         self.assert_equal(str(actual_exchange_ids), str(expected_exchange_ids))
         # Check unique currency pairs in the output df.
-        actual_currency_pairs = sorted(list(actual["currency_pair"].unique()))
+        actual_currency_pairs = sorted(
+            list(actual["currency_pair"].dropna().unique())
+        )
         self.assert_equal(
             str(actual_currency_pairs), str(expected_currency_pairs)
         )
@@ -306,10 +310,14 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         # Check output df length.
         self.assert_equal(str(expected_length), str(actual.shape[0]))
         # Check unique exchange ids in the output df.
-        actual_exchange_ids = sorted(list(actual["exchange_id"].unique()))
+        actual_exchange_ids = sorted(
+            list(actual["exchange_id"].dropna().unique())
+        )
         self.assert_equal(str(actual_exchange_ids), str(expected_exchange_ids))
         # Check unique currency pairs in the output df.
-        actual_currency_pairs = sorted(list(actual["currency_pair"].unique()))
+        actual_currency_pairs = sorted(
+            list(actual["currency_pair"].dropna().unique())
+        )
         self.assert_equal(
             str(actual_currency_pairs), str(expected_currency_pairs)
         )
