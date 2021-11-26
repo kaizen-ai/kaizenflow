@@ -189,7 +189,7 @@ def _get_create_db_cmd(
     cmd.append("python3 im_v2/common/db/create_db.py")
     cmd.append(f"--db-name '{dbname}'")
     if connection:
-        cmd.append(f"--db-conection {connection}")
+        cmd.append(f"--db-connection {connection}")
     if json:
         cmd.append(f"--credentials {json}")
     if overwrite:
@@ -251,7 +251,7 @@ def _get_remove_db_cmd(
     cmd.append("python3 im_v2/common/db/remove_db.py")
     cmd.append(f"--db-name '{dbname}'")
     if connection:
-        cmd.append(f"--db-conection {connection}")
+        cmd.append(f"--db-connection {connection}")
     if json:
         cmd.append(f"--credentials {json}")
     multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
