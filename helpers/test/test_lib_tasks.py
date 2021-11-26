@@ -214,7 +214,10 @@ class TestDryRunTasks1(hunitest.TestCase):
         execute.
         """
         opts = "--dry" if dry_run else ""
-        cmd = f"invoke {opts} {target} | grep -v INFO | grep -v '>>ENV<<:'"
+        # TODO(vitalii): While deploying the container versioning 
+        # we disable the check in the unit tests. Remove `SKIP_VERSION_CHECK=1` 
+        # after CmampTask570 is fixed.
+        cmd = f"SKIP_VERSION_CHECK=1 invoke {opts} {target} | grep -v INFO | grep -v '>>ENV<<:'"
         _, act = hsysinte.system_to_string(cmd)
         act = hprint.remove_non_printable_chars(act)
         self.check_string(act)
