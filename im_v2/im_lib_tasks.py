@@ -154,3 +154,67 @@ def im_docker_down(ctx, volumes_remove=False):  # type: ignore
     cmd = _get_docker_down_cmd(volumes_remove)
     # Execute the command.
     hlibtask._run(ctx, cmd, pty=True)
+
+
+# #############################################################################
+
+
+def _get_create_db_cmd(
+        dbname: str,
+        overwrite: bool,
+        connection: str,
+        json: str,
+    ) -> str:
+    """
+    Construct the `docker-compose' command to run a create_db script inside this
+    container Docker component.
+
+    E.g, to run the `.../devops/set_schema_im_db.py`:
+    ```
+    docker-compose \
+        --file devops/compose/docker-compose.yml \
+        run --rm im_app \
+        .../db/create_db.py
+    ```
+
+    :param dbname: db to create inside docker
+    :param overwrite: to overwrite existing db 
+    :param connection: db to connect
+    :param json: path to json file with details to connect to db
+    """
+    cmd = ["docker-compose"]
+    docker_compose_file_path = hlibtask.get_base_docker_compose_path()
+    cmd.append(f"--file {docker_compose_file_path}")
+    cmd.append(f"run --rm im_app")
+    cmd.append("python3 im_v2/common/db/create_db.py")
+    cmd.append(f"--db-name '{dbname}'")
+    if connection:
+        cmd.append(f"--db-conection {connection}")
+    if json:
+        cmd.append(f"--credentials {json}")
+    if overwrite:
+        cmd.append("--overwrite")
+    multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
+    return multiline_docker_cmd  # type: ignore[no-any-return]
+
+
+@task
+def im_create_db(
+        ctx,
+        dbname,
+        overwrite=False,
+        connection="",
+        json="",
+    ):  # type: ignore
+    """
+    Create database inside a container attached to the `im app`.
+
+    :param dbname: db to create inside docker
+    :param overwrite: to overwrite existing db 
+    :param connection: db to connect
+    :param json: path to json file with details to connect to db
+    """
+    # Get docker cmd.
+    docker_cmd = _get_create_db_cmd(dbname, overwrite, connection, json)
+    # Execute the command.
+    hlibtask._run(ctx, docker_cmd, pty=True)
