@@ -7,7 +7,7 @@ import im_v2.ccxt.data.client.clients as imcdaclcl
 import abc
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
@@ -17,6 +17,7 @@ import helpers.dbg as hdbg
 import helpers.s3 as hs3
 import helpers.sql as hsql
 import im_v2.common.data.client as imvcdcli
+import im_v2.common.universe.universe as unv
 
 _LOG = logging.getLogger(__name__)
 
@@ -37,6 +38,16 @@ class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
         date_type_lower = data_type.lower()
         hdbg.dassert_in(date_type_lower, _DATA_TYPES)
         self._data_type = date_type_lower
+
+    def get_universe(self) -> List[imvcdcli.FullSymbol]:
+        """
+        Return CCXT universe as full symbols.
+        """
+        universe = unv.get_vendor_universe(
+            version=unv._LATEST_UNIVERSE_VERSION,
+            vendor="CCXT",
+        )
+        return universe
 
     def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """

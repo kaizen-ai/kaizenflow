@@ -7,7 +7,7 @@ import im_v2.common.data.client.abstract_data_loader as imvcdcadlo
 import abc
 import logging
 import re
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
@@ -69,7 +69,6 @@ def construct_full_symbol(exchange: str, symbol: str) -> FullSymbol:
     return full_symbol
 
 
-# TODO(Grisha): add methods `get_start(end)_ts_available()`, `get_universe()` #543.
 class AbstractImClient(abc.ABC):
     """
     Abstract Interface for `IM` client.
@@ -117,6 +116,34 @@ class AbstractImClient(abc.ABC):
         # Verify that data is valid.
         self._dassert_is_valid(data)
         return data
+
+    def get_start_ts_available(
+        self, full_symbol: FullSymbol
+    ) -> pd.Timestamp:
+        """
+        Return the earliest timestamp available for a given `FullSymbol`.
+        """
+        data = self.read_data(full_symbol)
+        # It is assumed that timestamp is always stored as index.
+        start_ts = data.index.max()
+        return start_ts
+
+    def get_end_ts_available(
+        self, full_symbol: FullSymbol
+    ) -> pd.Timestamp:
+        """
+        Return the latest timestamp available for a given `FullSymbol`.
+        """
+        data = self.read_data(full_symbol)
+        # It is assumed that timestamp is always stored as index.
+        end_ts = data.index.min()
+        return end_ts
+
+    @abc.abstractmethod
+    def get_universe(self) -> List[FullSymbol]:
+        """
+        Get universe as full symbols.
+        """
 
     @abc.abstractmethod
     def _read_data(
