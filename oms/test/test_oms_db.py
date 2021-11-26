@@ -8,7 +8,6 @@ import helpers.datetime_ as hdateti
 import helpers.git as hgit
 import helpers.hasyncio as hasynci
 import helpers.printing as hprint
-import helpers.git as hgit
 import helpers.sql as hsql
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
