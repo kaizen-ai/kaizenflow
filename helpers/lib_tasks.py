@@ -1306,7 +1306,7 @@ def _get_docker_cmd(
     # - Handle the user.
     # Based on AmpTask1864 it seems that we need to use root in the CI to be
     # able to log in GH touching $HOME/.config/gh.
-    if False:
+    if as_user:
         docker_cmd_.append(
             r"""
         --user $(id -u):$(id -g)"""
