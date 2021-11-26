@@ -45,7 +45,7 @@ class MultipleSymbolsClient:
         **kwargs: Dict[str, Any],
     ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
         """
-        Read data for multiple full symbols or a specified universe version.
+        Read data for multiple full symbols.
 
         None `start_ts` and `end_ts` means the entire period of time available.
 
