@@ -31,7 +31,6 @@ class CcxtExchange:
         :param: exchange_id: CCXT exchange id
         :param: api_keys_path: path to JSON file with API credentials
         """
-        # TODO(*): Replace `exchange_id` with a `full_symbol` and split in class.
         self.exchange_id = exchange_id
         self.api_keys_path = api_keys_path or API_KEYS_PATH
         self._exchange = self.log_into_exchange()
@@ -181,7 +180,6 @@ class CcxtExchange:
 
         :return: OHLCV data from CCXT
         """
-        # TODO(*): Replace `symbol` with a `full_symbol`.
         # Change currency pair to CCXT format.
         symbol = symbol.replace("_", "/")
         bars = self._exchange.fetch_ohlcv(
