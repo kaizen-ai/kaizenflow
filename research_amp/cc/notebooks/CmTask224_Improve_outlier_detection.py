@@ -32,7 +32,7 @@ import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprint
 import helpers.s3 as hs3
-import im_v2.ccxt.data.client.clients as imcdaclcl
+import im_v2.ccxt.data.client.clients as imvcdclcl
 import research_amp.cc.detect_outliers as rccdeout
 
 # %%
@@ -49,7 +49,7 @@ hprint.config_notebook()
 
 # %%
 root_dir = os.path.join(hs3.get_path(), "data")
-сcxt_loader = imcdaclcl.CcxtFileSystemClient(
+сcxt_loader = imvcdclcl.CcxtFileSystemClient(
     data_type="OHLCV",
     root_dir=root_dir,
     aws_profile="am"
