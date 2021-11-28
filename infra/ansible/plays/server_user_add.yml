@@ -2,3 +2,6 @@
   become: yes
   roles:
     - role: roles/server_user_add
+
+# ansible-playbook plays/server_user_add.yml --user ubuntu -i 172.30.2.136, --extra-vars "os_username=saggese pub_key_path=/opt/crypto_vpn/saggese/user_credentials/id_rsa.pub" --ask-become-pass
+# ask-become-pass might be needed to write file into /opt folder
