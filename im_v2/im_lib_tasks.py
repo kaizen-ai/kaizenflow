@@ -162,8 +162,7 @@ def im_docker_down(ctx, volumes_remove=False):  # type: ignore
 def _get_create_db_cmd(
     dbname: str,
     overwrite: bool,
-    connection: str,
-    json: str,
+    credentials: str,
 ) -> str:
     """
     Construct the `docker-compose' command to run a create_db script inside
@@ -178,8 +177,10 @@ def _get_create_db_cmd(
 
     :param dbname: db to create inside docker
     :param overwrite: to overwrite existing db
-    :param connection: db to connect
-    :param json: path to json file with details to connect to db
+    :param credentials: credentials to connect a db, there are 3 options: 
+        - by default they getting from environment variables, 'from_env' passed
+        - as string `dbname =... host = ... port =... user =... password = ...`
+        - from a `JSON` file, pass a path to a `JSON` file
     """
     cmd = ["docker-compose"]
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
@@ -187,40 +188,40 @@ def _get_create_db_cmd(
     cmd.append(f"run --rm im_app")
     cmd.append("im_v2/common/db/create_db.py")
     cmd.append(f"--db-name '{dbname}'")
-    if connection:
-        cmd.append(f"--db-connection {connection}")
-    if json:
-        cmd.append(f"--credentials {json}")
     if overwrite:
         cmd.append("--overwrite")
+    if credentials:
+        cmd.append(f"--credentials \'\"{credentials}\"\'")
     multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
     return multiline_docker_cmd  # type: ignore[no-any-return]
 
 
+# TODO(Dan3): add unit tests for `im_create_db` #547.
 @task
 def im_create_db(
     ctx,
     dbname,
     overwrite=False,
-    connection="",
-    json="",
+    credentials="",
 ):  # type: ignore
     """
     Create database inside a container attached to the `im app`.
     By default it will connect to postgres db through env vars.
     
-    Will create test_db database and SQL schema inside it:
+    Will overwrite test_db database with credentials from json file:
     ```
-    > i im_create_db test_db
+    > i im_create_db test_db --overwrite --credentials file.json
     ```
 
     :param dbname: db to create inside docker
     :param overwrite: to overwrite existing db
-    :param connection: db to connect
-    :param json: path to json file with details to connect to db
+    :param credentials: credentials to connect a db, there are 3 options: 
+        - by default they getting from environment variables, 'from_env' passed 
+        - as string `dbname =... host = ... port =... user =... password = ...`
+        - from a `JSON` file, pass a path to a `JSON` file
     """
     # Get docker cmd.
-    docker_cmd = _get_create_db_cmd(dbname, overwrite, connection, json)
+    docker_cmd = _get_create_db_cmd(dbname, overwrite, credentials)
     # Execute the command.
     hlibtask._run(ctx, docker_cmd, pty=True)
 
@@ -230,8 +231,7 @@ def im_create_db(
 
 def _get_remove_db_cmd(
     dbname: str,
-    connection: str,
-    json: str,
+    credentials: str,
 ) -> str:
     """
     Construct the `docker-compose' command to run a remove_db script inside
@@ -245,8 +245,10 @@ def _get_remove_db_cmd(
     ```
 
     :param dbname: db to remove inside docker
-    :param connection: db to connect
-    :param json: path to json file with details to connect to db
+    :param credentials: credentials to connect a db, there are 3 options: 
+        - by default they getting from environment variables, 'from_env' passed
+        - as string `dbname =... host = ... port =... user =... password = ...`
+        - from a `JSON` file, pass a path to a `JSON` file
     """
     cmd = ["docker-compose"]
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
@@ -254,35 +256,35 @@ def _get_remove_db_cmd(
     cmd.append(f"run --rm im_app")
     cmd.append("im_v2/common/db/remove_db.py")
     cmd.append(f"--db-name '{dbname}'")
-    if connection:
-        cmd.append(f"--db-connection {connection}")
-    if json:
-        cmd.append(f"--credentials {json}")
+    if credentials:
+        # Additionals quotes added, because they dropped in the shell.
+        cmd.append(f"--credentials \'\"{credentials}\"\'")
     multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
     return multiline_docker_cmd  # type: ignore[no-any-return]
 
 
+# TODO(Dan3): add unit tests for `im_remove_db` #547.
 @task
 def im_remove_db(
     ctx,
     dbname,
-    connection="",
-    json="",
+    credentials="",
 ):  # type: ignore
     """
     Remove database inside a container attached to the `im app`.
-    By default it will connect to postgres db through env vars.
 
-    Will remove test_db database:
+    Will remove test_db database with credentials from json file:
     ```
-    > i im_remove_db test_db
+    > i im_remove_db test_db --credentials a.json
     ```
 
     :param dbname: db to remove inside docker
-    :param connection: db to connect
-    :param json: path to json file with details to connect to db
+    :param credentials: credentials to connect a db, there are 3 options: 
+        - by default they getting from environment variables, 'from_env' passed
+        - as string `dbname =... host = ... port =... user =... password = ...`
+        - from a `JSON` file, pass a path to a `JSON` file
     """
     # Get docker cmd.
-    docker_cmd = _get_remove_db_cmd(dbname, connection, json)
+    docker_cmd = _get_remove_db_cmd(dbname, credentials)
     # Execute the command.
     hlibtask._run(ctx, docker_cmd, pty=True)

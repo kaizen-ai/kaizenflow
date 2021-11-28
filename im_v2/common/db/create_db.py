@@ -5,14 +5,15 @@ Script to create database using connection.
 Use as:
 
 # Create a db named 'test_db' using environment variables:
-> im/common/db/create_database.py --db-name 'test_db'
+> im/common/db/create_db.py --db-name 'test_db'
 
 Import as:
 
-import im.common.db.create_database as imcdbcrda
+import im.common.db.create_db as imcdbcrdb
 """
 
 import argparse
+import os.path
 
 import helpers.io_ as hio
 import helpers.parser as hparser
@@ -26,18 +27,11 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--db-connection",
+        "--credentials",
         action="store",
         default="from_env",
         type=str,
-        help="DB to connect",
-    )
-    parser.add_argument(
-        "--credentials",
-        action="store",
-        default=None,
-        type=str,
-        help="Path to json file with details to connect to DB",
+        help="Connection string or path to json file with credentials to DB",
     )
     parser.add_argument(
         "--db-name",
@@ -57,12 +51,13 @@ def _parse() -> argparse.ArgumentParser:
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    if args.credentials:
-        connection = hsql.get_connection(**hio.from_json(args.credentials))
-    elif args.db_connection == "from_env":
+    json_exists = os.path.exists(os.path.abspath(args.credentials))
+    if args.credentials == "from_env":
         connection = hsql.get_connection_from_env_vars()
+    elif json_exists:
+        connection = hsql.get_connection(**hio.from_json(args.credentials))
     else:
-        connection = hsql.get_connection_from_string(args.db_connection)
+        connection = hsql.get_connection_from_string(args.credentials)
     # Create db with all tables.
     imcodbuti.create_im_database(
         connection=connection, new_db=args.db_name, overwrite=args.overwrite

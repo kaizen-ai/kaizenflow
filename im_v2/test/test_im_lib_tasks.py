@@ -107,10 +107,10 @@ class TestGetCreateDbCmd(hunitest.TestCase):
         """
         Test the create_db script.
         """
-        actual = imimlitas._get_create_db_cmd("test_db", False, "", "")
+        actual = imimlitas._get_create_db_cmd("test_db", False, "")
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
-        docker-compose \
+            docker-compose \
             --file {docker_compose_path} \
             run --rm im_app \
             im_v2/common/db/create_db.py \
@@ -122,10 +122,10 @@ class TestGetCreateDbCmd(hunitest.TestCase):
         """
         Test the create_db script with overwrite option passed.
         """
-        actual = imimlitas._get_create_db_cmd("test_db", True, "", "")
+        actual = imimlitas._get_create_db_cmd("test_db", True, "")
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
-        docker-compose \
+            docker-compose \
             --file {docker_compose_path} \
             run --rm im_app \
             im_v2/common/db/create_db.py \
@@ -138,15 +138,49 @@ class TestGetCreateDbCmd(hunitest.TestCase):
         """
         Test the create_db script with credentials via json file.
         """
-        actual = imimlitas._get_create_db_cmd("test_db", False, "", "test.json")
+        actual = imimlitas._get_create_db_cmd("test_db", False, "test.json")
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
-        docker-compose \
+            docker-compose \
             --file {docker_compose_path} \
             run --rm im_app \
             im_v2/common/db/create_db.py \
             --db-name 'test_db' \
             --credentials 'test.json'
+        """
+
+    def test4(self) -> None:
+        """
+        Test the create_db script with credentials from string.
+        """
+        actual = imimlitas._get_create_db_cmd(
+            "test_db", 
+            False, 
+            "host=localhost dbname=im_postgres_db_local port=54",
+        )
+        docker_compose_path = hlibtask.get_base_docker_compose_path()
+        expected = fr"""
+            docker-compose \
+            --file {docker_compose_path} \
+            run --rm im_app \
+            im_v2/common/db/create_db.py \
+            --db-name 'test_db' \
+            --credentials '"host=localhost dbname=im_postgres_db_local port=54"'
+        """
+
+    def test3(self) -> None:
+        """
+        Test the create_db script with credentials from_env.
+        """
+        actual = imimlitas._get_create_db_cmd("test_db", False, "from_env")
+        docker_compose_path = hlibtask.get_base_docker_compose_path()
+        expected = fr"""
+            docker-compose \
+            --file {docker_compose_path} \
+            run --rm im_app \
+            im_v2/common/db/create_db.py \
+            --db-name 'test_db' \
+            --credentials 'from_env'
         """
 
 
@@ -155,10 +189,10 @@ class TestGetRemoveDbCmd(hunitest.TestCase):
         """
         Test the remove_db script.
         """
-        actual = imimlitas._get_remove_db_cmd("test_db", "", "")
+        actual = imimlitas._get_remove_db_cmd("test_db", "")
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
-        docker-compose \
+            docker-compose \
             --file {docker_compose_path} \
             run --rm im_app \
             im_v2/common/db/remove_db.py \
@@ -173,17 +207,54 @@ class TestGetRemoveDbCmd(hunitest.TestCase):
         actual = imimlitas._get_remove_db_cmd(
             "test_db",
             "host=localhost dbname=im_postgres_db_local port=54",
-            "")
+        )
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
-        docker-compose \
+            docker-compose \
             --file {docker_compose_path} \
             run --rm im_app \
             im_v2/common/db/remove_db.py \
             --db-name 'test_db' \
-            --db-connection host=localhost dbname=im_postgres_db_local port=54
+            --credentials '"host=localhost dbname=im_postgres_db_local port=54"'
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Test the remove_db script with path to json file.
+        """
+        actual = imimlitas._get_remove_db_cmd(
+            "test_db",
+            "json.asd",
+        )
+        docker_compose_path = hlibtask.get_base_docker_compose_path()
+        expected = fr"""
+            docker-compose \
+            --file {docker_compose_path} \
+            run --rm im_app \
+            im_v2/common/db/remove_db.py \
+            --db-name 'test_db' \
+            --credentials asd.json
+        """
+
+    def test4(self) -> None:
+        """
+        Test the remove_db script with passing from_env
+        """
+        actual = imimlitas._get_remove_db_cmd(
+            "test_db",
+            "from_env",
+        )
+        docker_compose_path = hlibtask.get_base_docker_compose_path()
+        expected = fr"""
+            docker-compose \
+            --file {docker_compose_path} \
+            run --rm im_app \
+            im_v2/common/db/remove_db.py \
+            --db-name 'test_db' \
+            --credentials from_env
+        """
+
 
 # TODO(Grisha): 'is_inside_docker()' -> 'is_inside_im_container()' in #100.
 @pytest.mark.skipif(hsysinte.is_inside_docker(), reason="amp #1189")
