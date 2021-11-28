@@ -6,3 +6,6 @@ pub_key_path:
 # Password Management
 password_directory: "/opt/crypto_vpn/{{ os_username }}/user_credentials"
 password_file_path: "{{ password_directory }}/os_password.txt"
+
+# Set path to file to containing server ip
+server_ip_file_path: "{{ password_directory }}/server_ip.txt"
