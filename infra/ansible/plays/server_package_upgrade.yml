@@ -5,4 +5,4 @@
   roles:
     - { role: roles/server_package_upgrade }
 
-#ansible-playbook plays/server_system_upgrade.yml --user ubuntu --private-key=/root/.ssh/id_rsa_crypto --inventory 13.48.137.208,
+#ansible-playbook plays/server_package_upgrade.yml --user ubuntu --private-key=/root/.ssh/id_rsa_crypto --inventory 13.48.137.208,
