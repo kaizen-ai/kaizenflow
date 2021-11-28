@@ -23,3 +23,10 @@
     user: "{{ os_username }}"
     key: "{{ lookup('file', pub_key_path) }}"
     state: present
+
+- name: Save server IP to a file
+  local_action:
+    module: lineinfile
+    path: "{{ server_ip_file_path }}"
+    line: "{{ ansible_default_ipv4.address }}"
+    create: yes
