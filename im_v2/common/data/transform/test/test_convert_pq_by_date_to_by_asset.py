@@ -1,6 +1,5 @@
 import logging
 import os
-import pytest
 
 import helpers.hparquet as hparque
 import helpers.system_interaction as hsysinte
@@ -11,7 +10,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestPqByDateToByAsset1(hunitest.TestCase):
-    @pytest.mark.skip(reason="Passing on EC2, failing on job run Run_fast_tests")
     def test_convert_pq_by_date_to_by_asset(self) -> None:
         test_dir = self.get_scratch_space()
         by_date_dir = os.path.join(test_dir, "by_date")
