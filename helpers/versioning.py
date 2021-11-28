@@ -20,6 +20,7 @@ import os
 import re
 from typing import Optional
 
+import helpers.dbg as hdbg
 import helpers.git as hgit
 
 _LOG = logging.getLogger(__name__)
@@ -40,23 +41,8 @@ def check_version() -> None:
         return
     # Get code version.
     code_version = get_code_version()
+    container_version = _get_container_version()
     is_inside_container = _is_inside_container()
-    # Get container version.
-    # TODO(gp): Use _get_container_version().
-    env_var = "CONTAINER_VERSION"
-    if env_var not in os.environ:
-        container_version = None
-        if is_inside_container:
-            # This situation happens when GH Actions pull the image using invoke
-            # inside their container (but not inside ours), thus there is no
-            # CONTAINER_VERSION.
-            print(
-                _WARNING
-                + f": The env var {env_var} should be defined when running inside a"
-                " container"
-            )
-    else:
-        container_version = os.environ[env_var]
     # Print information.
     is_inside_docker = _is_inside_docker()
     is_inside_ci = _is_inside_ci()
@@ -96,9 +82,29 @@ def check_version() -> None:
 #  For `amp` makes sense to check at top of the repo.
 def get_code_version() -> Optional[str]:
     """
-    Return the code version stored in `file_name`.
+    Return the code version.
+
+    Code version is based on a closest git tag that matches
+    container's git tag prefix.
     """
-    version = hgit.git_describe()
+    version: Optional[str] = None
+    env_var = "AM_IMAGE_NAME"
+    if _is_inside_container():
+        if env_var not in os.environ:
+            # This situation happens when GH Actions pull the image using invoke
+            # inside their container (but not inside ours), thus there is no
+            # AM_IMAGE_NAME.
+            print(
+                _WARNING
+                + f": The env var {env_var} should be defined when running inside a"
+                " container"
+            )
+        else:
+            git_tag_prefix = os.environ[env_var]
+            hdbg.dassert_isinstance(git_tag_prefix, str)
+            hdbg.dassert_ne(git_tag_prefix, "")
+            git_tag_pattern = f"{git_tag_prefix}-*"
+            version = hgit.git_describe(match=git_tag_pattern)
     return version
 
 
@@ -108,16 +114,26 @@ def _get_container_version() -> Optional[str]:
     """
     container_version: Optional[str] = None
     if _is_inside_container():
-        # We are running inside a container.
-        # Keep the code and the container in sync by versioning both and requiring
-        # to be the same.
-        container_version = os.environ["CONTAINER_VERSION"]
+        env_var = "AM_CONTAINER_VERSION"
+        if env_var not in os.environ:
+            # This can happen when we still in transition from CONTAINER_VERSION
+            # to AM_CONTAINER_VERSION env var name or when GH Actions pull the image 
+            # using invoke inside their container (but not inside ours), thus there is no
+            # AM_CONTAINER_VERSION.
+            print(
+                _WARNING
+                + f": The env var {env_var} should be defined when running inside a"
+                " container"
+            )
+        else:
+            # We are running inside a container.
+            # Keep the code and the container in sync by versioning both and requiring
+            # to be the same.
+            container_version = os.environ["AM_CONTAINER_VERSION"]
     return container_version
 
 
 def _check_version(code_version: str, container_version: str) -> bool:
-    # TODO(vitalii): Enable after CmampTask570 is fixed.
-    return True
     # We are running inside a container.
     # Keep the code and the container in sync by versioning both and requiring
     # to be the same.
