@@ -107,22 +107,7 @@ class TestGetCreateDbCmd(hunitest.TestCase):
         """
         Test the `create_db` script.
         """
-        actual = imimlitas._get_create_db_cmd("test_db", False, "")
-        docker_compose_path = hlibtask.get_base_docker_compose_path()
-        expected = fr"""
-            docker-compose \
-            --file {docker_compose_path} \
-            run --rm im_app \
-            im_v2/common/db/create_db.py \
-            --db-name 'test_db'
-        """
-        self.assert_equal(actual, expected, fuzzy_match=True)
-
-    def test2(self) -> None:
-        """
-        Test the `create_db` script with overwrite option passed.
-        """
-        actual = imimlitas._get_create_db_cmd("test_db", True, "")
+        actual = imimlitas._get_create_db_cmd("test_db", False, "from_env")
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
             docker-compose \
@@ -130,7 +115,24 @@ class TestGetCreateDbCmd(hunitest.TestCase):
             run --rm im_app \
             im_v2/common/db/create_db.py \
             --db-name 'test_db' \
-            --overwrite
+            --credentials '"from_env"'
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test2(self) -> None:
+        """
+        Test the `create_db` script with overwrite option passed.
+        """
+        actual = imimlitas._get_create_db_cmd("test_db", True, "from_env")
+        docker_compose_path = hlibtask.get_base_docker_compose_path()
+        expected = fr"""
+            docker-compose \
+            --file {docker_compose_path} \
+            run --rm im_app \
+            im_v2/common/db/create_db.py \
+            --db-name 'test_db' \
+            --overwrite \
+            --credentials '"from_env"'
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
@@ -180,7 +182,7 @@ class TestGetCreateDbCmd(hunitest.TestCase):
             run --rm im_app \
             im_v2/common/db/create_db.py \
             --db-name 'test_db' \
-            --credentials 'from_env'
+            --credentials '"from_env"'
         """
 
 
@@ -189,14 +191,15 @@ class TestGetRemoveDbCmd(hunitest.TestCase):
         """
         Test the `remove_db` script.
         """
-        actual = imimlitas._get_remove_db_cmd("test_db", "")
+        actual = imimlitas._get_remove_db_cmd("test_db", "from_env")
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
             docker-compose \
             --file {docker_compose_path} \
             run --rm im_app \
             im_v2/common/db/remove_db.py \
-            --db-name 'test_db'
+            --db-name 'test_db' \
+            --credentials '"from_env"'
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
 

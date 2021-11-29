@@ -33,7 +33,7 @@ def _get_docker_cmd(docker_cmd: str) -> str:
 
     :param docker_cmd: command to execute inside docker
     """
-    cmd = ["sudo docker-compose"]
+    cmd = ["docker-compose"]
     # Add `docker-compose` file path.
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
@@ -77,7 +77,7 @@ def _get_docker_up_cmd(detach: bool) -> str:
 
     :param detach: run containers in the background
     """
-    cmd = ["sudo docker-compose"]
+    cmd = ["docker-compose"]
     # Add `docker-compose` file path.
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
@@ -123,7 +123,7 @@ def _get_docker_down_cmd(volumes_remove: bool) -> str:
 
     :param volumes_remove: whether to remove attached volumes or not
     """
-    cmd = ["sudo docker-compose"]
+    cmd = ["docker-compose"]
     # Add `docker-compose` file path.
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
@@ -182,7 +182,7 @@ def _get_create_db_cmd(
         - as string `dbname =... host = ... port =... user =... password = ...`
         - from a `JSON` file, pass a path to a `JSON` file
     """
-    cmd = ["sudo docker-compose"]
+    cmd = ["docker-compose"]
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
     cmd.append(f"run --rm im_app")
@@ -190,9 +190,8 @@ def _get_create_db_cmd(
     cmd.append(f"--db-name '{dbname}'")
     if overwrite:
         cmd.append("--overwrite")
-    if credentials:
-        # Quotes added because they dropped in the shell, cause params conflict
-        cmd.append(f"--credentials \'\"{credentials}\"\'")
+    # Quotes added because they dropped in the shell, cause params conflict
+    cmd.append(f"--credentials \'\"{credentials}\"\'")
     multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
     return multiline_docker_cmd  # type: ignore[no-any-return]
 
