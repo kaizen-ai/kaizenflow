@@ -12,6 +12,7 @@ import im_v2.common.db.utils as imcodbuti
 _LOG = logging.getLogger(__name__)
 
 
+@pytest.mark.skipif(hgit.is_dev_tools(), reason="Do not run in dev_tools")
 class TestCreateDb1(hunitest.TestCase):
     def setUp(self) -> None:
         """
