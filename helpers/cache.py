@@ -39,8 +39,6 @@ _TRACE_FUNCS = False
 
 _IS_CACHE_ENABLED: bool = True
 
-# Global switch to avoid deleting the cache.
-_IS_CLEAR_CACHE_ENABLED: bool = False
 
 def enable_caching(val: bool) -> None:
     """

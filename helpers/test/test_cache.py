@@ -24,12 +24,6 @@ def _LOG_frame(txt: str) -> None:
     _LOG.debug("\n%s", hprint.frame(txt))
 
 
-
-# TODO(gp): Use this everywhere.
-def _LOG_frame(txt: str) -> None:
-    _LOG.debug("\n%s", hprint.frame(txt))
-
-
 # #############################################################################
 
 
@@ -789,15 +783,6 @@ class TestCacheEnableReadOnly1(_ResetGlobalCacheHelper):
     def test_mem_disk_cache1(self) -> None:
         self._helper(cache_from="mem", use_mem_cache=True, use_disk_cache=True)
 
-    def test_mem_cache1(self) -> None:
-        self._helper(cache_from="mem", use_mem_cache=True, use_disk_cache=False)
-
-    def test_disk_cache1(self) -> None:
-        self._helper(cache_from="disk", use_mem_cache=False, use_disk_cache=True)
-
-    def test_mem_disk_cache1(self) -> None:
-        self._helper(cache_from="mem", use_mem_cache=True, use_disk_cache=True)
-
     def _helper(self, cache_from: str, **kwargs: Any) -> None:
         """
         Test that when enabling read-only mode we get an assertion only if the
@@ -888,15 +873,6 @@ class TestCacheUpdateFunction1(_ResetGlobalCacheHelper):
 
 
 class TestCacheEnableCheckOnlyIfPresent1(_ResetGlobalCacheHelper):
-    def test_mem_cache1(self) -> None:
-        self._helper(cache_from="mem", use_mem_cache=True, use_disk_cache=False)
-
-    def test_disk_cache1(self) -> None:
-        self._helper(cache_from="disk", use_mem_cache=False, use_disk_cache=True)
-
-    def test_mem_disk_cache1(self) -> None:
-        self._helper(cache_from="mem", use_mem_cache=True, use_disk_cache=True)
-
     def test_mem_cache1(self) -> None:
         self._helper(cache_from="mem", use_mem_cache=True, use_disk_cache=False)
 

@@ -22,8 +22,6 @@ def _get_index(obj: Union[pd.Index, pd.DataFrame, pd.Series]) -> pd.Index:
         index = obj.index
     return index
 
-_LOG = logging.getLogger(__name__)
-
 
 def dassert_index_is_datetime(
     obj: Union[pd.Index, pd.DataFrame, pd.Series],

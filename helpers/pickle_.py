@@ -18,8 +18,6 @@ from typing import Any, Callable
 import helpers.dbg as hdbg
 import helpers.introspection as hintros
 import helpers.io_ as hio
-import helpers.introspection as hintro
-import helpers.io_ as hio
 import helpers.timer as htimer
 
 _LOG = logging.getLogger(__name__)
@@ -30,12 +28,6 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-# #############################################################################
-# pickle
-# #############################################################################
-
-
-# TODO(gp): No need for verbose. Just use log_level.
 def to_pickle(
     obj: Any,
     file_name: str,

@@ -2,7 +2,7 @@
 
 set -e
 
-FILE_NAME="devops/docker_run/entrypoint.sh"
+FILE_NAME="devops/docker_build/entrypoint.sh"
 echo "##> $FILE_NAME"
 
 echo "# Activate environment"
@@ -14,24 +14,23 @@ set -o vi
 echo "UID="$(id -u)
 echo "GID="$(id -g)
 
-echo "# Activate environment"
-source /${ENV_NAME}/bin/activate
+# We use ~/.aws and the env vars to pass the AWS credentials.
+# TODO(gp): Remove this script.
+# TODO(gp): -> set_aws_env_vars.sh
+#source devops/docker_build/entrypoint/aws_credentials.sh
 
-source devops/docker_run/setenv.sh
+# TODO(gp): -> set_env_vars.sh
+source devops/docker_build/entrypoint/patch_environment_variables.sh
 
 #mount -a || true
 
 # Allow working with files outside a container.
 #umask 000
 
-# Start Docker Engine.
-sudo /etc/init.d/docker start
-sudo /etc/init.d/docker status
-
-# sudo change perms to /mnt/tmpfs
-
-# Check set-up.
-./devops/docker_run/test_setup.sh
+# TODO(gp): Merge all this in a single script `devops/docker_build/test_setup.sh`.
+./devops/docker_build/test/test_mount_fsx.sh
+./devops/docker_build/test/test_mount_s3.sh
+./devops/docker_build/test/test_volumes.sh
 
 # AWS.
 echo "# Check AWS authentication setup"
@@ -58,10 +57,7 @@ echo "CONTAINER_VERSION='$CONTAINER_VERSION'"
 echo "BUILD_TAG='$BUILD_TAG'"
 
 echo "which python: "$(which python)
-echo "python -V: "$(python -V)
-#echo "check pandas package: "$(python -c "import pandas; print(pandas)")
-echo "docker -v: "$(docker -v)
-echo "docker-compose -v: "$(docker-compose -v)
+echo "check pandas package: "$(python -c "import pandas; print(pandas)")
 
 echo "PATH=$PATH"
 echo "PYTHONPATH=$PYTHONPATH"

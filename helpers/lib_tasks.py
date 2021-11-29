@@ -1481,13 +1481,6 @@ def _to_abs_path(filename: str) -> str:
 #   performed on the "local" image (e.g., locally or through GitHub actions)
 # - If the qualification process is passed, the image is released as `dev` on ECR
 
-# Use Docker buildkit or not.
-# DOCKER_BUILDKIT = 1
-DOCKER_BUILDKIT = 0
-
-# Use Docker buildkit or not.
-# DOCKER_BUILDKIT = 1
-DOCKER_BUILDKIT = 0
 
 # Use Docker buildkit or not.
 # DOCKER_BUILDKIT = 1
@@ -1635,8 +1628,6 @@ def docker_release_dev_image(  # type: ignore
     4) Run the QA tests on the dev image
     5) Push dev image to the repo
 
-    :param version: version to tag the image and code with
-    :param cache: use the cache
     :param version: version to tag the image and code with
     :param cache: use the cache
     :param skip_tests: skip all the tests and release the dev image

@@ -230,27 +230,6 @@ class CddLoader:
         return data
 
     @staticmethod
-    def _convert_epochs_to_timestamp(epoch_col: pd.Series) -> pd.Series:
-        """
-        Convert Unix epoch to timestamp in a specified timezone.
-
-        All Unix time epochs in CDD are provided in ms and in UTC tz.
-
-        :param epoch_col: Series with Unix time epochs
-        :param timezone: "ET" or "UTC"
-        :return: Series with epochs converted to timestamps
-        """
-        # Set tz value and verify that it is valid.
-        tz = tz or "ET"
-        dbg.dassert_in(tz, ["ET", "UTC"])
-        # Convert to timestamp in UTC tz.
-        timestamp_col = pd.to_datetime(epoch_col, unit="ms", utc=True)
-        # Convert to ET tz if specified.
-        if tz == "ET":
-            timestamp_col = timestamp_col.dt.tz_convert(hdatet.get_ET_tz())
-        return timestamp_col
-
-    @staticmethod
     def _apply_ohlcv_transformation(data: pd.DataFrame) -> pd.DataFrame:
         """
         Apply transformations for OHLCV data.

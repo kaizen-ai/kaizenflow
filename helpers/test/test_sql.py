@@ -5,9 +5,6 @@ import pandas as pd
 import psycopg2.errors as perrors
 import pytest
 
-import pandas as pd
-import pytest
-
 import helpers.git as hgit
 import helpers.sql as hsql
 import helpers.system_interaction as hsysinte
@@ -276,17 +273,7 @@ class TestSql1(hunitest.TestCase):
 
     def _create_test_table(self) -> None:
         """
-        Verify that query is correct.
-        """
-        self._create_test_table()
-        test_data = self._get_test_data()
-        actual_query = hsql._create_insert_query(test_data, "test_table")
-        self.check_string(actual_query)
-
-    @pytest.mark.slow()
-    def test_remove_database1(self) -> None:
-        """
-        Create database 'test_db_to_remove' and remove it.
+        Create a test table.
         """
         query = """CREATE TABLE IF NOT EXISTS test_table(
                     id SERIAL PRIMARY KEY,
@@ -309,15 +296,9 @@ class TestSql1(hunitest.TestCase):
             self.password,
             autocommit=True,
         )
-        hsql.create_database(
-            self.connection,
-            dbname="test_db_to_remove",
-        )
-        hsql.remove_database(self.connection, "test_db_to_remove")
-        db_list = hsql.get_db_names(self.connection)
-        self.assertNotIn("test_db_to_remove", db_list)
+        connection.cursor().execute(query)
 
-    def _get_duplicated_data(self) -> pd.DataFrame:
+    def _get_test_data(self) -> pd.DataFrame:
         test_data = pd.DataFrame(
             columns=["id", "column_1", "column_2"],
             data=[
@@ -338,13 +319,13 @@ class TestSql1(hunitest.TestCase):
                 ],
                 [
                     4,
-                    1002,
-                    "test_string_3",
+                    1003,
+                    "test_string_4",
                 ],
                 [
                     5,
-                    1001,
-                    "test_string_2",
+                    1004,
+                    "test_string_5",
                 ],
             ],
         )

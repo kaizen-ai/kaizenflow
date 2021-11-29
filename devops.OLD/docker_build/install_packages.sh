@@ -1,14 +1,12 @@
 #!/usr/bin/env bash
 #
-# Install OS level packages.
+# Install packages.
 #
 
 set -ex
 
-FILE_NAME="devops/docker_build/install_os_packages.sh"
-echo "#############################################################################"
+FILE_NAME="devops/docker_build/install_packages.sh"
 echo "##> $FILE_NAME"
-echo "#############################################################################"
 
 DEBIAN_FRONTEND=noninteractive
 
@@ -67,9 +65,6 @@ apt-get install $APT_GET_OPTS graphviz
 
 # This is needed for Postgres DB.
 apt-get install $APT_GET_OPTS postgresql-client
-
-# Install sudo.
-apt-get install $APT_GET_OPTS sudo
 
 # Clean up.
 if [[ $CLEAN_UP_INSTALLATION ]]; then

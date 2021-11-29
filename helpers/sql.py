@@ -37,30 +37,6 @@ DbConnectionInfo = collections.namedtuple(
 )
 
 
-# Invariant: keep the arguments in the interface in the same order as: host,
-#  dbname, port, user, password
-
-# TODO(gp): mypy doesn't like this. Understand why and / or inline.
-DbConnection = psycop.extensions.connection
-
-
-# Invariant: keep the arguments in the interface in the same order as:
-# host, dbname, port, user, password
-DbConnectionInfo = collections.namedtuple(
-    "DbConnectionInfo", ["host", "dbname", "port", "user", "password"]
-)
-
-# TODO(gp): mypy doesn't like this. Understand why and / or inline.
-DbConnection = psycop.extensions.connection
-
-
-# Invariant: keep the arguments in the interface in the same order as:
-# host, dbname, port, user, password
-DbConnectionInfo = collections.namedtuple(
-    "DbConnectionInfo", ["host", "dbname", "port", "user", "password"]
-)
-
-
 def get_connection(
     host: str,
     dbname: str,
@@ -92,34 +68,6 @@ def get_connection_from_env_vars() -> Tuple[
     # TODO(gp): -> POSTGRES_DBNAME
     host = os.environ["POSTGRES_HOST"]
     dbname = os.environ["POSTGRES_DB"]
-    port = int(os.environ["POSTGRES_PORT"])
-    user = os.environ["POSTGRES_USER"]
-    password = os.environ["POSTGRES_PASSWORD"]
-    # Build the
-    connection = get_connection(
-        host=host,
-        dbname=dbname,
-        port=port,
-        user=user,
-        password=password,
-    )
-    return connection
-
-
-# TODO(gp): Return only the connection (CmampTask441).
-def get_connection_from_env_vars() -> Tuple[
-    DbConnection, psycop.extensions.cursor
-]:
-    """
-    Create a SQL connection with the information from the environment
-    variables.
-    """
-    # Get values from the environment variables.
-    # TODO(gp): -> POSTGRES_DBNAME
-    host = os.environ["POSTGRES_HOST"]
-    dbname = os.environ["POSTGRES_DB"]
-    port = int(os.environ["POSTGRES_PORT"])
-    user = os.environ["POSTGRES_USER"]
     port = int(os.environ["POSTGRES_PORT"])
     user = os.environ["POSTGRES_USER"]
     password = os.environ["POSTGRES_PASSWORD"]

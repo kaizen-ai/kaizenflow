@@ -1,5 +1,6 @@
 import os
 
+import pytest
 
 import helpers.s3 as hs3
 import helpers.unit_test as hunitest

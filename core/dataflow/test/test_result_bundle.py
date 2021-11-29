@@ -119,7 +119,7 @@ class TestResultBundle(hunitest.TestCase):
         return rb
 
 
-# #############################################################################
+# ##################################################################################
 
 
 class TestPredictionResultBundle(hunitest.TestCase):
