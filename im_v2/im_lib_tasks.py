@@ -25,7 +25,7 @@ def _get_docker_cmd(docker_cmd: str) -> str:
 
     E.g, to run the `.../devops/set_schema_im_db.py`:
     ```
-        docker-compose \
+    docker-compose \
         --file devops/compose/docker-compose.yml \
         run --rm im_app \
         .../devops/set_schema_im_db.py
@@ -190,7 +190,7 @@ def _get_create_db_cmd(
     cmd.append(f"--db-name '{dbname}'")
     if overwrite:
         cmd.append("--overwrite")
-    # Quotes added because they dropped in the shell, cause params conflict
+    # Add quotes so that credentials as string are handled properly by invoke.
     cmd.append(f"--credentials \'\"{credentials}\"\'")
     multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
     return multiline_docker_cmd  # type: ignore[no-any-return]
@@ -206,7 +206,6 @@ def im_create_db(
 ):  # type: ignore
     """
     Create database inside a container attached to the `im app`.
-    By default it will connect to postgres db through env vars.
     
     Will overwrite test_db database with credentials from json file:
     ```
@@ -256,7 +255,7 @@ def _get_remove_db_cmd(
     cmd.append(f"run --rm im_app")
     cmd.append("im_v2/common/db/remove_db.py")
     cmd.append(f"--db-name '{dbname}'")
-    # Quotes added because they dropped in the shell, cause params conflict
+    # Add quotes so that credentials as string are handled properly by invoke.
     cmd.append(f"--credentials \'\"{credentials}\"\'")
     multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
     return multiline_docker_cmd  # type: ignore[no-any-return]
@@ -272,7 +271,7 @@ def im_remove_db(
     """
     Remove database inside a container attached to the `im app`.
 
-    Will remove test_db database with credentials from json file:
+    Will remove `test_db` database with credentials from json file:
     ```
     > i im_remove_db test_db --credentials a.json
     ```
