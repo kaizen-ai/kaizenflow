@@ -378,19 +378,12 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
         actual_dict = multiple_symbols_client.read_data(full_symbols=full_symbols)
         actual_dict_keys = sorted(list(actual_dict.keys()))
         actual_df1 = actual_dict[actual_dict_keys[0]]
-        actual_df2 = actual_dict[actual_dict_keys[1]]
         self.assert_equal(str(actual_dict_keys), str(full_symbols))
         self._check_output(
             actual=actual_df1,
             expected_length=129595,
             expected_exchange_ids=["gateio"],
             expected_currency_pairs=["SOL_USDT"],
-        )
-        self._check_output(
-            actual=actual_df2,
-            expected_length=1464388,
-            expected_exchange_ids=["kucoin"],
-            expected_currency_pairs=["XRP_USDT"],
         )
 
     def _check_output(
@@ -584,19 +577,12 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         actual_dict = multiple_symbols_client.read_data(full_symbols=full_symbols)
         actual_dict_keys = sorted(list(actual_dict.keys()))
         actual_df1 = actual_dict[actual_dict_keys[0]]
-        actual_df2 = actual_dict[actual_dict_keys[1]]
         self.assert_equal(str(actual_dict_keys), str(full_symbols))
         self._check_output(
             actual=actual_df1,
             expected_length=6,
             expected_exchange_ids=["gateio"],
             expected_currency_pairs=["XRP_USDT"],
-        )
-        self._check_output(
-            actual=actual_df2,
-            expected_length=2,
-            expected_exchange_ids=["kucoin"],
-            expected_currency_pairs=["SOL_USDT"],
         )
 
     def _create_test_table(self) -> None:
