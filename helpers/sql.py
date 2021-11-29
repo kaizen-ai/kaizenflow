@@ -93,7 +93,6 @@ def get_connection_from_string(
     'host=localhost dbname=im_postgres_db_local port=5432 user= password='
     """
     connection = psycop.connect(conn_as_str)
-    cursor = connection.cursor()
     if autocommit:
         connection.autocommit = True
     return connection

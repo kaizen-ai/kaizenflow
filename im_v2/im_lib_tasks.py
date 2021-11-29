@@ -25,7 +25,7 @@ def _get_docker_cmd(docker_cmd: str) -> str:
 
     E.g, to run the `.../devops/set_schema_im_db.py`:
     ```
-    docker-compose \
+        docker-compose \
         --file devops/compose/docker-compose.yml \
         run --rm im_app \
         .../devops/set_schema_im_db.py
@@ -33,7 +33,7 @@ def _get_docker_cmd(docker_cmd: str) -> str:
 
     :param docker_cmd: command to execute inside docker
     """
-    cmd = ["docker-compose"]
+    cmd = ["sudo docker-compose"]
     # Add `docker-compose` file path.
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
@@ -77,7 +77,7 @@ def _get_docker_up_cmd(detach: bool) -> str:
 
     :param detach: run containers in the background
     """
-    cmd = ["docker-compose"]
+    cmd = ["sudo docker-compose"]
     # Add `docker-compose` file path.
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
@@ -123,7 +123,7 @@ def _get_docker_down_cmd(volumes_remove: bool) -> str:
 
     :param volumes_remove: whether to remove attached volumes or not
     """
-    cmd = ["docker-compose"]
+    cmd = ["sudo docker-compose"]
     # Add `docker-compose` file path.
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
@@ -165,7 +165,7 @@ def _get_create_db_cmd(
     credentials: str,
 ) -> str:
     """
-    Construct the `docker-compose' command to run a create_db script inside
+    Construct the `docker-compose` command to run a `create_db` script inside
     this container Docker component.
 
     ```
@@ -178,11 +178,11 @@ def _get_create_db_cmd(
     :param dbname: db to create inside docker
     :param overwrite: to overwrite existing db
     :param credentials: credentials to connect a db, there are 3 options: 
-        - by default they getting from environment variables, 'from_env' passed
+        - credentials are inferred from environment variables, pass 'from_env'
         - as string `dbname =... host = ... port =... user =... password = ...`
         - from a `JSON` file, pass a path to a `JSON` file
     """
-    cmd = ["docker-compose"]
+    cmd = ["sudo docker-compose"]
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
     cmd.append(f"run --rm im_app")
@@ -191,6 +191,7 @@ def _get_create_db_cmd(
     if overwrite:
         cmd.append("--overwrite")
     if credentials:
+        # Quotes added because they dropped in the shell, cause params conflict
         cmd.append(f"--credentials \'\"{credentials}\"\'")
     multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
     return multiline_docker_cmd  # type: ignore[no-any-return]
@@ -202,7 +203,7 @@ def im_create_db(
     ctx,
     dbname,
     overwrite=False,
-    credentials="",
+    credentials="from_env",
 ):  # type: ignore
     """
     Create database inside a container attached to the `im app`.
@@ -216,7 +217,7 @@ def im_create_db(
     :param dbname: db to create inside docker
     :param overwrite: to overwrite existing db
     :param credentials: credentials to connect a db, there are 3 options: 
-        - by default they getting from environment variables, 'from_env' passed 
+        - credentials are inferred from environment variables, pass 'from_env'
         - as string `dbname =... host = ... port =... user =... password = ...`
         - from a `JSON` file, pass a path to a `JSON` file
     """
@@ -234,7 +235,7 @@ def _get_remove_db_cmd(
     credentials: str,
 ) -> str:
     """
-    Construct the `docker-compose' command to run a remove_db script inside
+    Construct the `docker-compose' command to run a `remove_db` script inside
     this container Docker component.
 
     ```
@@ -246,7 +247,7 @@ def _get_remove_db_cmd(
 
     :param dbname: db to remove inside docker
     :param credentials: credentials to connect a db, there are 3 options: 
-        - by default they getting from environment variables, 'from_env' passed
+        - credentials are inferred from environment variables, pass 'from_env'
         - as string `dbname =... host = ... port =... user =... password = ...`
         - from a `JSON` file, pass a path to a `JSON` file
     """
@@ -256,9 +257,8 @@ def _get_remove_db_cmd(
     cmd.append(f"run --rm im_app")
     cmd.append("im_v2/common/db/remove_db.py")
     cmd.append(f"--db-name '{dbname}'")
-    if credentials:
-        # Additionals quotes added, because they dropped in the shell.
-        cmd.append(f"--credentials \'\"{credentials}\"\'")
+    # Quotes added because they dropped in the shell, cause params conflict
+    cmd.append(f"--credentials \'\"{credentials}\"\'")
     multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
     return multiline_docker_cmd  # type: ignore[no-any-return]
 
@@ -268,7 +268,7 @@ def _get_remove_db_cmd(
 def im_remove_db(
     ctx,
     dbname,
-    credentials="",
+    credentials="from_env",
 ):  # type: ignore
     """
     Remove database inside a container attached to the `im app`.
@@ -280,7 +280,7 @@ def im_remove_db(
 
     :param dbname: db to remove inside docker
     :param credentials: credentials to connect a db, there are 3 options: 
-        - by default they getting from environment variables, 'from_env' passed
+        - credentials are inferred from environment variables, pass 'from_env'
         - as string `dbname =... host = ... port =... user =... password = ...`
         - from a `JSON` file, pass a path to a `JSON` file
     """

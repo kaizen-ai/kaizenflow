@@ -13,7 +13,7 @@ import im.common.db.create_db as imcdbcrdb
 """
 
 import argparse
-import os.path
+import os
 
 import helpers.io_ as hio
 import helpers.parser as hparser
@@ -31,7 +31,11 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         default="from_env",
         type=str,
-        help="Connection string or path to json file with credentials to DB",
+        help=(
+            "Connection string"
+            "or path to json file with credentials to DB"
+            "or parameters from environment with"
+        )
     )
     parser.add_argument(
         "--db-name",
