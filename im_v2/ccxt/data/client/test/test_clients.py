@@ -378,6 +378,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
         actual_dict = multiple_symbols_client.read_data(full_symbols=full_symbols)
         actual_dict_keys = sorted(list(actual_dict.keys()))
         actual_df1 = actual_dict[actual_dict_keys[0]]
+        actual_df2 = actual_dict[actual_dict_keys[1]]
         self.assert_equal(str(actual_dict_keys), str(full_symbols))
         self._check_output(
             actual=actual_df1,
@@ -385,6 +386,26 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
             expected_exchange_ids=["gateio"],
             expected_currency_pairs=["SOL_USDT"],
         )
+        self._check_output(
+            actual=actual_df2,
+            expected_length=1464388,
+            expected_exchange_ids=["kucoin"],
+            expected_currency_pairs=["XRP_USDT"],
+            check_string=False,
+        )
+        # Create combined actual string and check it.
+        actual_string_df1 = hunitest.convert_df_to_json_string(actual_df1)
+        actual_string_df2 = hunitest.convert_df_to_json_string(actual_df2)
+        actual_string = "\n".join(
+            [
+                actual_dict_keys[0],
+                actual_string_df1,
+                "\n",
+                actual_dict_keys[1],
+                actual_string_df2,
+            ]
+        )
+        self.check_string(actual_string)
 
     def _check_output(
         self,
@@ -392,6 +413,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
         expected_length: int,
         expected_exchange_ids: List[str],
         expected_currency_pairs: List[str],
+        check_string: bool = True,
     ) -> None:
         """
         Verify that actual outcome dataframe matches the expected one.
@@ -400,6 +422,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
         :param expected_length: expected outcome dataframe length
         :param expected_exchange_ids: list of expected exchange ids
         :param expected_currency_pairs: list of expected currency pairs
+        :param check_string: whether to check with golden outcome or not
         """
         # Check output df length.
         self.assert_equal(str(expected_length), str(actual.shape[0]))
@@ -415,9 +438,10 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
         self.assert_equal(
             str(actual_currency_pairs), str(expected_currency_pairs)
         )
-        # Check the output values.
-        actual_string = hunitest.convert_df_to_json_string(actual)
-        self.check_string(actual_string)
+        if check_string:
+            # Check the output values.
+            actual_string = hunitest.convert_df_to_json_string(actual)
+            self.check_string(actual_string)
 
 
 class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
@@ -577,13 +601,35 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         actual_dict = multiple_symbols_client.read_data(full_symbols=full_symbols)
         actual_dict_keys = sorted(list(actual_dict.keys()))
         actual_df1 = actual_dict[actual_dict_keys[0]]
+        actual_df2 = actual_dict[actual_dict_keys[1]]
         self.assert_equal(str(actual_dict_keys), str(full_symbols))
         self._check_output(
             actual=actual_df1,
             expected_length=6,
             expected_exchange_ids=["gateio"],
             expected_currency_pairs=["XRP_USDT"],
+            check_string=False,
         )
+        self._check_output(
+            actual=actual_df2,
+            expected_length=2,
+            expected_exchange_ids=["kucoin"],
+            expected_currency_pairs=["SOL_USDT"],
+            check_string=False,
+        )
+        # Create combined actual string and check it.
+        actual_string_df1 = hunitest.convert_df_to_json_string(actual_df1)
+        actual_string_df2 = hunitest.convert_df_to_json_string(actual_df2)
+        actual_string = "\n".join(
+            [
+                actual_dict_keys[0],
+                actual_string_df1,
+                "\n",
+                actual_dict_keys[1],
+                actual_string_df2,
+            ]
+        )
+        self.check_string(actual_string)
 
     def _create_test_table(self) -> None:
         """
@@ -628,6 +674,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         expected_length: int,
         expected_exchange_ids: List[str],
         expected_currency_pairs: List[str],
+        check_string: bool = True,
     ) -> None:
         """
         Verify that actual outcome dataframe matches the expected one.
@@ -636,6 +683,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         :param expected_length: expected outcome dataframe length
         :param expected_exchange_ids: list of expected exchange ids
         :param expected_currency_pairs: list of expected currency pairs
+        :param check_string: whether to check with golden outcome or not
         """
         # Check output df length.
         self.assert_equal(str(expected_length), str(actual.shape[0]))
@@ -651,6 +699,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         self.assert_equal(
             str(actual_currency_pairs), str(expected_currency_pairs)
         )
-        # Check the output values.
-        actual_string = hunitest.convert_df_to_json_string(actual.reset_index())
-        self.check_string(actual_string)
+        if check_string:
+            # Check the output values.
+            actual_string = hunitest.convert_df_to_json_string(actual.reset_index())
+            self.check_string(actual_string)
