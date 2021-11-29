@@ -155,17 +155,17 @@ class TestCcxtDbClient(hunitest.TestCase):
     @pytest.mark.slow("8 seconds.")
     def test_read_data3(self) -> None:
         """
-        Verify that data from DB is read correctly without resampling.
+        Verify that data from DB is read correctly without normalization.
         """
         # Load test data.
         self._create_test_table()
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Load data with client and check if it is correct.
-        ccxt_db_client = imcdaclcl.CcxtDbClient("ohlcv", self.connection)
+        ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
         df = ccxt_db_client.read_data(
             full_symbol="binance::BTC_USDT",
-            resample_to_1_min=False,
+            normalize=False,
         )
         actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
@@ -228,7 +228,7 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
         """
         Test that files on S3 are being filtered correctly.
         """
-        ccxt_loader = imcdaclcl.CcxtFileSystemClient(
+        ccxt_loader = imvcdclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         actual = ccxt_loader.read_data(
@@ -243,14 +243,14 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
     @pytest.mark.slow("8 seconds.")
     def test3(self) -> None:
         """
-        Test that files on S3 are being read correctly without resampling.
+        Test that files on S3 are being read correctly without normalization.
         """
-        ccxt_loader = imcdaclcl.CcxtFileSystemClient(
+        ccxt_loader = imvcdclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         actual = ccxt_loader.read_data(
             full_symbol="binance::BTC_USDT",
-            resample_to_1_min=False,
+            normalize=False,
         )
         # Check the output values.
         actual_string = hunitest.convert_df_to_json_string(actual)
@@ -334,23 +334,23 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
 
     def test3(self) -> None:
         """
-        Test that all files are being read correctly without resampling.
+        Test that all files are being read correctly without normalization.
         """
         # Set input list of full symbols.
-        full_symbols = ["kucoin::SOL_USDT", "gateio::XRP_USDT"]
+        full_symbols = ["kucoin::XRP_USDT", "gateio::SOL_USDT"]
         # Initialize CCXT file client and pass it to multiple symbols client.
-        ccxt_file_client = imcdaclcl.CcxtFileSystemClient(
+        ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
-        multiple_symbols_client = imvcdcmscl.MultipleSymbolsClient(
+        multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
             class_=ccxt_file_client, mode="concat"
         )
         # Check output.
         actual = multiple_symbols_client.read_data(
             full_symbols=full_symbols,
-            resample_to_1_min=False,
+            normalize=False,
         )
-        expected_length = 190046
+        expected_length = 1486976
         expected_exchange_ids = ["gateio", "kucoin"]
         expected_currency_pairs = ["SOL_USDT", "XRP_USDT"]
         self._check_output(
@@ -368,10 +368,10 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
         # Set input list of full symbols.
         full_symbols = ["gateio::SOL_USDT", "kucoin::XRP_USDT"]
         # Initialize CCXT file client and pass it to multiple symbols client.
-        ccxt_file_client = imcdaclcl.CcxtFileSystemClient(
+        ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
-        multiple_symbols_client = imvcdcmscl.MultipleSymbolsClient(
+        multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
             class_=ccxt_file_client, mode="dict"
         )
         # Check actual results.
@@ -529,7 +529,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
     @pytest.mark.slow("10 seconds.")
     def test3(self) -> None:
         """
-        Test that all files are being read correctly without resampling.
+        Test that all files are being read correctly without normalization.
         """
         # Set input list of full symbols.
         full_symbols = ["kucoin::SOL_USDT", "gateio::XRP_USDT"]
@@ -538,14 +538,14 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Initialize CCXT DB client and pass it to multiple symbols client.
-        ccxt_db_client = imcdaclcl.CcxtDbClient("ohlcv", self.connection)
-        multiple_symbols_client = imvcdcmscl.MultipleSymbolsClient(
+        ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
+        multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
             class_=ccxt_db_client, mode="concat"
         )
         # Check output.
         actual = multiple_symbols_client.read_data(
             full_symbols=full_symbols,
-            resample_to_1_min=False,
+            normalize=False,
         )
         expected_length = 6
         expected_exchange_ids = ["gateio", "kucoin"]
@@ -569,8 +569,8 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Initialize CCXT DB client and pass it to multiple symbols client.
-        ccxt_db_client = imcdaclcl.CcxtDbClient("ohlcv", self.connection)
-        multiple_symbols_client = imvcdcmscl.MultipleSymbolsClient(
+        ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
+        multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
             class_=ccxt_db_client, mode="dict"
         )
         # Check output.

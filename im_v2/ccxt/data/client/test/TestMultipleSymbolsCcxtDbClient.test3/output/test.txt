@@ -1,151 +1,175 @@
-original shape=(6, 10)
+original shape=(6, 12)
 Head:
 {
     "0":{
-        "timestamp":"2021-09-09T00:00:00Z",
+        "index":0,
         "full_symbol":"gateio::XRP_USDT",
+        "id":1,
+        "timestamp":1631145600000,
         "open":30.0,
         "high":40.0,
         "low":50.0,
         "close":60.0,
         "volume":70.0,
-        "epoch":1631145600000,
         "currency_pair":"XRP_USDT",
-        "exchange_id":"gateio"
+        "exchange_id":"gateio",
+        "created_at":"2021-09-09T00:00:00Z"
     },
     "1":{
-        "timestamp":"2021-09-09T00:01:00Z",
+        "index":1,
         "full_symbol":"gateio::XRP_USDT",
+        "id":2,
+        "timestamp":1631145660000,
         "open":31.0,
         "high":41.0,
         "low":51.0,
         "close":61.0,
         "volume":71.0,
-        "epoch":1631145660000,
         "currency_pair":"XRP_USDT",
-        "exchange_id":"gateio"
+        "exchange_id":"gateio",
+        "created_at":"2021-09-09T00:00:00Z"
     },
     "2":{
-        "timestamp":"2021-09-09T00:04:00Z",
+        "index":2,
         "full_symbol":"gateio::XRP_USDT",
+        "id":5,
+        "timestamp":1631145840000,
         "open":34.0,
         "high":44.0,
         "low":54.0,
         "close":64.0,
         "volume":74.0,
-        "epoch":1631145840000,
         "currency_pair":"XRP_USDT",
-        "exchange_id":"gateio"
+        "exchange_id":"gateio",
+        "created_at":"2021-09-09T00:00:00Z"
     },
     "3":{
-        "timestamp":"2021-09-09T00:05:00Z",
+        "index":3,
         "full_symbol":"gateio::XRP_USDT",
+        "id":6,
+        "timestamp":1631145900000,
         "open":34.0,
         "high":44.0,
         "low":54.0,
         "close":64.0,
         "volume":74.0,
-        "epoch":1631145900000,
         "currency_pair":"XRP_USDT",
-        "exchange_id":"gateio"
+        "exchange_id":"gateio",
+        "created_at":"2021-09-09T00:00:00Z"
     },
     "4":{
-        "timestamp":"2021-09-09T00:02:00Z",
+        "index":0,
         "full_symbol":"kucoin::SOL_USDT",
+        "id":3,
+        "timestamp":1631145720000,
         "open":32.0,
         "high":42.0,
         "low":52.0,
         "close":62.0,
         "volume":72.0,
-        "epoch":1631145720000,
         "currency_pair":"SOL_USDT",
-        "exchange_id":"kucoin"
+        "exchange_id":"kucoin",
+        "created_at":"2021-09-09T00:00:00Z"
     },
     "5":{
-        "timestamp":"2021-09-09T00:03:00Z",
+        "index":1,
         "full_symbol":"kucoin::SOL_USDT",
+        "id":4,
+        "timestamp":1631145780000,
         "open":33.0,
         "high":43.0,
         "low":53.0,
         "close":63.0,
         "volume":73.0,
-        "epoch":1631145780000,
         "currency_pair":"SOL_USDT",
-        "exchange_id":"kucoin"
+        "exchange_id":"kucoin",
+        "created_at":"2021-09-09T00:00:00Z"
     }
 }
 Tail:
 {
     "0":{
-        "timestamp":"2021-09-09T00:00:00Z",
+        "index":0,
         "full_symbol":"gateio::XRP_USDT",
+        "id":1,
+        "timestamp":1631145600000,
         "open":30.0,
         "high":40.0,
         "low":50.0,
         "close":60.0,
         "volume":70.0,
-        "epoch":1631145600000,
         "currency_pair":"XRP_USDT",
-        "exchange_id":"gateio"
+        "exchange_id":"gateio",
+        "created_at":"2021-09-09T00:00:00Z"
     },
     "1":{
-        "timestamp":"2021-09-09T00:01:00Z",
+        "index":1,
         "full_symbol":"gateio::XRP_USDT",
+        "id":2,
+        "timestamp":1631145660000,
         "open":31.0,
         "high":41.0,
         "low":51.0,
         "close":61.0,
         "volume":71.0,
-        "epoch":1631145660000,
         "currency_pair":"XRP_USDT",
-        "exchange_id":"gateio"
+        "exchange_id":"gateio",
+        "created_at":"2021-09-09T00:00:00Z"
     },
     "2":{
-        "timestamp":"2021-09-09T00:04:00Z",
+        "index":2,
         "full_symbol":"gateio::XRP_USDT",
+        "id":5,
+        "timestamp":1631145840000,
         "open":34.0,
         "high":44.0,
         "low":54.0,
         "close":64.0,
         "volume":74.0,
-        "epoch":1631145840000,
         "currency_pair":"XRP_USDT",
-        "exchange_id":"gateio"
+        "exchange_id":"gateio",
+        "created_at":"2021-09-09T00:00:00Z"
     },
     "3":{
-        "timestamp":"2021-09-09T00:05:00Z",
+        "index":3,
         "full_symbol":"gateio::XRP_USDT",
+        "id":6,
+        "timestamp":1631145900000,
         "open":34.0,
         "high":44.0,
         "low":54.0,
         "close":64.0,
         "volume":74.0,
-        "epoch":1631145900000,
         "currency_pair":"XRP_USDT",
-        "exchange_id":"gateio"
+        "exchange_id":"gateio",
+        "created_at":"2021-09-09T00:00:00Z"
     },
     "4":{
-        "timestamp":"2021-09-09T00:02:00Z",
+        "index":0,
         "full_symbol":"kucoin::SOL_USDT",
+        "id":3,
+        "timestamp":1631145720000,
         "open":32.0,
         "high":42.0,
         "low":52.0,
         "close":62.0,
         "volume":72.0,
-        "epoch":1631145720000,
         "currency_pair":"SOL_USDT",
-        "exchange_id":"kucoin"
+        "exchange_id":"kucoin",
+        "created_at":"2021-09-09T00:00:00Z"
     },
     "5":{
-        "timestamp":"2021-09-09T00:03:00Z",
+        "index":1,
         "full_symbol":"kucoin::SOL_USDT",
+        "id":4,
+        "timestamp":1631145780000,
         "open":33.0,
         "high":43.0,
         "low":53.0,
         "close":63.0,
         "volume":73.0,
-        "epoch":1631145780000,
         "currency_pair":"SOL_USDT",
-        "exchange_id":"kucoin"
+        "exchange_id":"kucoin",
+        "created_at":"2021-09-09T00:00:00Z"
     }
 }
