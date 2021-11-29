@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.ccxt.data.client.clients as imcdaclcl
+import im_v2.ccxt.data.client.clients as imvcdclcl
 """
 
 import abc
@@ -30,6 +30,7 @@ class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
     """
     Abstract Interface for CCXT client.
     """
+
     def __init__(self, data_type: str) -> None:
         """
         :param data_type: OHLCV or trade, bid/ask data
@@ -146,6 +147,7 @@ class CcxtDbClient(AbstractCcxtClient):
     """
     CCXT client for data from the database.
     """
+
     def __init__(
         self,
         data_type: str,
@@ -197,10 +199,12 @@ class CcxtDbClient(AbstractCcxtClient):
 
 # #############################################################################
 
+
 class CcxtFileSystemClient(AbstractCcxtClient):
     """
     CCXT client for data from local or S3 filesystem.
     """
+
     def __init__(
         self,
         data_type: str,
@@ -265,7 +269,9 @@ class CcxtFileSystemClient(AbstractCcxtClient):
             exchange_id,
             currency_pair,
         )
-        processed_data = self._preprocess_filesystem_data(data, exchange_id, currency_pair)
+        processed_data = self._preprocess_filesystem_data(
+            data, exchange_id, currency_pair
+        )
         return processed_data
 
     # TODO(Grisha): factor out common code from `CddLoader._get_file_path` and
