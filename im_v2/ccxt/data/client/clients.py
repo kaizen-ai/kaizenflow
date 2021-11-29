@@ -165,7 +165,7 @@ class CcxtDbClient(AbstractCcxtClient):
 
     def _read_data(
         self,
-        full_symbol: imvcdcli.FullSymbol,
+        full_symbol: imvcdcli.FullSymbol = None,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
         **read_sql_kwargs: Dict[str, Any],
@@ -176,13 +176,14 @@ class CcxtDbClient(AbstractCcxtClient):
         hdbg.dassert_in(table_name, hsql.get_table_names(self._connection))
         # Initialize SQL query.
         sql_query = "SELECT * FROM %s" % table_name
-        # Split full symbol into exchange and currency pair.
-        exchange_id, currency_pair = imvcdcli.parse_full_symbol(full_symbol)
         # Initialize a list for SQL conditions.
         sql_conditions = []
         # Fill SQL conditions list for each provided data parameter.
-        sql_conditions.append(f"exchange_id = '{exchange_id}'")
-        sql_conditions.append(f"currency_pair = '{currency_pair}'")
+        if full_symbol:
+            # Split full symbol into exchange and currency pair.
+            exchange_id, currency_pair = imvcdcli.parse_full_symbol(full_symbol)
+            sql_conditions.append(f"exchange_id = '{exchange_id}'")
+            sql_conditions.append(f"currency_pair = '{currency_pair}'")
         if start_ts:
             start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
             sql_conditions.append(f"timestamp >= {start_ts}")
