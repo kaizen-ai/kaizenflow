@@ -63,6 +63,47 @@ def im_docker_cmd(ctx, cmd):  # type: ignore
 # #############################################################################
 
 
+def _get_docker_bash() -> str:
+    """
+    Construct the `docker-compose' command to run a bash inside this
+    container Docker component.
+
+    ```
+    docker-compose \
+        --file devops/compose/docker-compose.yml \
+        run --rm im_app \
+        bash
+    ```
+    """
+    cmd = ["docker-compose"]
+    # Add `docker-compose` file path.
+    docker_compose_file_path = hlibtask.get_base_docker_compose_path()
+    cmd.append(f"--file {docker_compose_file_path}")
+    # Add `run`.
+    service_name = "im_app"
+    cmd.append(f"run --rm {service_name}")
+    cmd.append("bash")
+    # Convert the list to a multiline command.
+    multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
+    return multiline_docker_cmd  # type: ignore[no-any-return]
+
+
+@task
+def im_docker_bash(ctx):  # type: ignore
+    """
+    Execute the command `cmd` inside a container attached to the `im app`.
+
+    :param cmd: command to execute
+    """
+    # Get docker cmd.
+    docker_bash = _get_docker_bash()
+    # Execute the command.
+    hlibtask._run(ctx, docker_bash, pty=True)
+
+
+# #############################################################################
+
+
 def _get_docker_up_cmd(detach: bool) -> str:
     """
     Construct the command to bring up the `im` service.

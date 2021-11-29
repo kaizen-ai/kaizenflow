@@ -42,6 +42,22 @@ class TestGetImDockerCmd(hunitest.TestCase):
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
+class TestGetImDockerBashCmd(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test the bash.
+        """
+        actual = imimlitas._get_docker_bash()
+        docker_compose_path = hlibtask.get_base_docker_compose_path()
+        expected = fr"""
+        docker-compose \
+            --file {docker_compose_path} \
+            run --rm im_app \
+            bash
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+
 class TestGetImDockerDown(hunitest.TestCase):
     def test1(self) -> None:
         """
