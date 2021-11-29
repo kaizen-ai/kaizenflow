@@ -642,25 +642,22 @@ class Test_build_run_command_line1(hunitest.TestCase):
         collect_only = False
         tee_to_file = False
         #
-        skipped_tests = "not slow and not superslow"
         act = hlibtask._build_run_command_line(
+            "fast_tests",
             pytest_opts,
             pytest_mark,
             skip_submodules,
             coverage,
             collect_only,
             tee_to_file,
-            #
-            skipped_tests,
         )
-        exp = 'pytest -m "not slow and not superslow" .'
+        exp = 'pytest -m "not slow and not superslow" . --timeout 5'
         self.assert_equal(act, exp)
 
     def test_run_fast_tests2(self) -> None:
         """
         Coverage and collect-only.
         """
-
         pytest_opts = ""
         pytest_mark = ""
         skip_submodules = False
@@ -668,19 +665,17 @@ class Test_build_run_command_line1(hunitest.TestCase):
         collect_only = True
         tee_to_file = False
         #
-        skipped_tests = "not slow and not superslow"
         act = hlibtask._build_run_command_line(
+            "fast_tests",
             pytest_opts,
             pytest_mark,
             skip_submodules,
             coverage,
             collect_only,
             tee_to_file,
-            #
-            skipped_tests,
         )
         exp = (
-            r'pytest -m "not slow and not superslow" . --cov=. --cov-branch'
+            r'pytest -m "not slow and not superslow" . --timeout 5 --cov=. --cov-branch'
             r" --cov-report term-missing --cov-report html --collect-only"
         )
         self.assert_equal(act, exp)
@@ -718,22 +713,19 @@ class Test_build_run_command_line1(hunitest.TestCase):
         #
         pytest_opts = ""
         pytest_mark = "no_container"
-        dir_name = scratch_space
         skip_submodules = True
         coverage = False
         collect_only = False
         tee_to_file = False
         #
-        skipped_tests = ""
         act = hlibtask._build_run_command_line(
+            "fast_tests",
             pytest_opts,
             pytest_mark,
-            dir_name,
             skip_submodules,
             coverage,
             collect_only,
             tee_to_file,
-            skipped_tests,
         )
         exp = (
             "pytest Test_build_run_command_line1.test_run_fast_tests4/tmp.scratch/"
@@ -752,18 +744,16 @@ class Test_build_run_command_line1(hunitest.TestCase):
         collect_only = False
         tee_to_file = True
         #
-        skipped_tests = "not slow and not superslow"
         act = hlibtask._build_run_command_line(
+            "fast_tests",
             pytest_opts,
             pytest_mark,
             skip_submodules,
             coverage,
             collect_only,
             tee_to_file,
-            #
-            skipped_tests,
         )
-        exp = 'pytest -m "not slow and not superslow" . 2>&1 | tee tmp.pytest.log'
+        exp = 'pytest -m "not slow and not superslow" . --timeout 5 2>&1 | tee tmp.pytest.fast_tests.log'
         self.assert_equal(act, exp)
 
 

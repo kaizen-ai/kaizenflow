@@ -1928,7 +1928,6 @@ _COV_PYTEST_OPTS = [
     "--cov-report html",
     # "--cov-report annotate",
 ]
-_SINGLE_TEST_TYPES = ("fast_tests", "slow_tests", "superslow_tests")
 _TEST_TIMEOUTS_IN_SECS = {
     "fast_tests": 5,
     "slow_tests": 30,
@@ -1968,8 +1967,12 @@ def _build_run_command_line(
 
     :param skipped_tests: -m option for pytest
     """
-    if single_test_type not in _SINGLE_TEST_TYPES:
-        raise ValueError(f"Invalid `single_test_type`={single_test_type}")
+    hdbg.dassert_in(
+        single_test_type,
+        _TEST_TIMEOUTS_IN_SECS,
+        "Invalid `single_test_type``='%s'",
+        single_test_type,
+    )
     pytest_opts = pytest_opts or "."
     #
     pytest_opts_tmp = []
@@ -1986,7 +1989,7 @@ def _build_run_command_line(
     #    )
     #    pytest_opts_tmp.extend(file_names)
     timeout_in_sec = _TEST_TIMEOUTS_IN_SECS[single_test_type]
-    pytest_opts_tmp.append(f"--timeout={timeout_in_sec}")
+    pytest_opts_tmp.append(f"--timeout {timeout_in_sec}")
     if skip_submodules:
         submodule_paths = hgit.get_submodule_paths()
         _LOG.warning(
@@ -2007,7 +2010,7 @@ def _build_run_command_line(
     pytest_opts = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
     cmd = f"pytest {pytest_opts}"
     if tee_to_file:
-        cmd += f" 2>&1 | tee tmp.pytest.{single_test_type}.log"
+        cmd += f" 2>&1 | tee /app/pytest.logs/tmp.pytest.{single_test_type}.log"
     return cmd
 
 
@@ -2038,9 +2041,14 @@ def _run_test_cmd(
     base_image = ""
     # We need to add some " to pass the string as it is to the container.
     cmd = f"'{cmd}'"
-    docker_cmd_ = _get_docker_cmd(stage, base_image, cmd)
-    _LOG.debug("cmd=%s", docker_cmd_)
-    hsysinte.system(cmd, abort_on_error=False)
+    docker_cmd_ = _get_docker_cmd(
+        stage,
+        base_image,
+        cmd,
+        extra_docker_run_opts=["--volume $PATH/pytest.logs:/app/pytest.logs"],
+    )
+    _LOG.info("cmd=%s", docker_cmd_)
+    hsysinte.system(docker_cmd_, abort_on_error=False, suppress_output=False)
     # Print message about coverage.
     if coverage:
         msg = """
