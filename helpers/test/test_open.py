@@ -42,7 +42,6 @@ class Test_open_html(hunitest.TestCase):
     Test different command correctness for opening html file.
     """
 
-    @pytest.mark.skip("Need updated amp")
     def test_linux1(self) -> None:
         """
         Test Linux.
