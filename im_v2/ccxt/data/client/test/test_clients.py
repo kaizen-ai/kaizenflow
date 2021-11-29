@@ -385,6 +385,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
             expected_length=129595,
             expected_exchange_ids=["gateio"],
             expected_currency_pairs=["SOL_USDT"],
+            check_string=False,
         )
         self._check_output(
             actual=actual_df2,
