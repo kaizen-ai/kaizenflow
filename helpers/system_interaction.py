@@ -4,7 +4,7 @@ system commands, env vars, ...
 
 Import as:
 
-import helpers.system_interaction as hsyint
+import helpers.system_interaction as hsysinte
 """
 
 import getpass
@@ -18,8 +18,8 @@ import time
 from typing import Any, Callable, List, Match, Optional, Tuple, Union, cast
 
 import helpers.dbg as hdbg
-import helpers.introspection as hintrosp
-import helpers.printing as hprintin
+import helpers.introspection as hintros
+import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -70,7 +70,7 @@ def set_user_name(user_name: str) -> None:
     """
     To impersonate a user.
 
-    To use only in rare cases.
+    To use only in rare cases for testing or back-door.
     """
     _LOG.warning("Setting user to '%s'", user_name)
     global _USER_NAME
@@ -82,6 +82,7 @@ def get_user_name() -> str:
         res = getpass.getuser()
     else:
         res = _USER_NAME
+    hdbg.dassert_ne(res, "")
     return res
 
 
@@ -160,7 +161,7 @@ def _system(
     """
     _LOG.debug("##> %s", cmd)
     _LOG.debug(
-        hprintin.to_str(
+        hprint.to_str(
             "abort_on_error suppress_error suppress_output "
             "blocking wrapper output_file num_error_lines tee dry_run log_level"
         )
@@ -175,7 +176,7 @@ def _system(
         # Suppress the output if the verbosity level is higher than DEBUG,
         # otherwise print.
         suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
-    _LOG.debug(hprintin.to_str("suppress_output"))
+    _LOG.debug(hprint.to_str("suppress_output"))
     # Prepare the command line.
     cmd = "(%s)" % cmd
     hdbg.dassert_imply(tee, output_file is not None)
@@ -260,9 +261,9 @@ def _system(
     if abort_on_error and rc != 0:
         msg = (
             "\n"
-            + hprintin.frame("cmd='%s' failed with rc='%s'" % (cmd, rc))
+            + hprint.frame("cmd='%s' failed with rc='%s'" % (cmd, rc))
             + "\nOutput of the failing command is:\n%s\n%s\n%s"
-            % (hprintin.line(">"), output, hprintin.line("<"))
+            % (hprint.line(">"), output, hprint.line("<"))
         )
         _LOG.error("%s", msg)
         # Report the first `num_error_lines` of the output.
@@ -366,7 +367,7 @@ def get_first_line(output: str) -> str:
     This is used when calling system_to_string() and expecting a single
     line output.
     """
-    output = hprintin.remove_empty_lines(output)
+    output = hprint.remove_empty_lines(output)
     output_as_arr: List[str] = output.split("\n")
     hdbg.dassert_eq(len(output_as_arr), 1, "output='%s'", output)
     output = output_as_arr[0]
@@ -676,7 +677,7 @@ def du(path_name: str, human_format: bool = False) -> Union[int, str]:
     size_in_bytes = int(txt) * 1024
     size: Union[int, str]
     if human_format:
-        size = hintrosp.format_size(size_in_bytes)
+        size = hintros.format_size(size_in_bytes)
     else:
         size = size_in_bytes
     return size
@@ -738,7 +739,7 @@ def find_file_with_dir(
         mocking
     :return: list of files found
     """
-    _LOG.debug(hprintin.to_str("file_name root_dir dir_depth mode"))
+    _LOG.debug(hprint.to_str("file_name root_dir dir_depth mode"))
     # Find all the files in the dir with the same basename.
     if candidate_files is None:
         base_name = os.path.basename(file_name)
@@ -824,13 +825,13 @@ def append_timestamp_tag(file_name: str, tag: str) -> str:
     tag_ = ""
     # E.g., 20210723-20_52_00
     if not has_timestamp(file_name):
-        import helpers.datetime_ as hdatetim
+        import helpers.datetime_ as hdateti
 
-        tag_ += "." + hdatetim.get_timestamp(tz="ET")
+        tag_ += "." + hdateti.get_timestamp(tz="ET")
     # Add tag, if specified.
     if tag:
         # If the tag is specified prepend a `.` in the filename.
         tag_ += "." + tag
     new_file_name = os.path.join(dir_name, "".join([name, tag_, extension]))
-    _LOG.debug(hprintin.to_str("file_name new_file_name"))
+    _LOG.debug(hprint.to_str("file_name new_file_name"))
     return new_file_name

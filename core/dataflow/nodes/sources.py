@@ -13,15 +13,15 @@ import numpy as np
 import pandas as pd
 
 import core.artificial_signal_generators as carsigen
-import core.dataflow.core as cdtfcor
+import core.dataflow.core as cdtfcore
 import core.dataflow.nodes.base as cdtfnobas
 import core.dataflow.price_interface as cdtfprint
-import core.finance as cfin
-import core.pandas_helpers as cpah
-import helpers.datetime_ as hdatetim
+import core.finance as cofinanc
+import core.pandas_helpers as cpanh
+import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
-import helpers.hpandas as hhpandas
-import helpers.printing as hprintin
+import helpers.hpandas as hpandas
+import helpers.printing as hprint
 import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ class ReadDataFromDf(cdtfnobas.DataSource):
     data.
     """
 
-    def __init__(self, nid: cdtfcor.NodeId, df: pd.DataFrame) -> None:
+    def __init__(self, nid: cdtfcore.NodeId, df: pd.DataFrame) -> None:
         super().__init__(nid)
         hdbg.dassert_isinstance(df, pd.DataFrame)
         self.df = df
@@ -55,7 +55,7 @@ class DataLoader(cdtfnobas.DataSource):
 
     def __init__(
         self,
-        nid: cdtfcor.NodeId,
+        nid: cdtfcore.NodeId,
         func: Callable,
         func_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
@@ -96,8 +96,8 @@ def load_data_from_disk(
     file_path: str,
     # TODO(gp): -> index_col? (Like pandas naming)
     timestamp_col: Optional[str] = None,
-    start_date: Optional[hdatetim.Datetime] = None,
-    end_date: Optional[hdatetim.Datetime] = None,
+    start_date: Optional[hdateti.Datetime] = None,
+    end_date: Optional[hdateti.Datetime] = None,
     aws_profile: Optional[str] = None,
     reader_kwargs: Optional[Dict[str, Any]] = None,
 ) -> pd.DataFrame:
@@ -125,9 +125,9 @@ def load_data_from_disk(
         # Assume that the first column is the index, unless specified.
         if "index_col" not in reader_kwargs:
             kwargs["index_col"] = 0
-        read_data = cpah.read_csv
+        read_data = cpanh.read_csv
     elif ext == ".pq":
-        read_data = cpah.read_parquet
+        read_data = cpanh.read_parquet
     else:
         raise ValueError("Invalid file extension='%s'" % ext)
     # Read the data.
@@ -139,7 +139,7 @@ def load_data_from_disk(
         df.set_index(timestamp_col, inplace=True)
     # Convert index in timestamps.
     df.index = pd.to_datetime(df.index)
-    hhpandas.dassert_strictly_increasing_index(df)
+    hpandas.dassert_strictly_increasing_index(df)
     # Filter by start / end date.
     # TODO(gp): Not sure that a view is enough to force discarding the unused
     #  rows in the DataFrame. Maybe do a copy, delete the old data, and call the
@@ -159,7 +159,7 @@ class DiskDataSource(cdtfnobas.DataSource):
     """
 
     def __init__(
-        self, nid: cdtfcor.NodeId, **load_data_from_disk_kwargs: Dict[str, Any]
+        self, nid: cdtfcore.NodeId, **load_data_from_disk_kwargs: Dict[str, Any]
     ) -> None:
         """
         Constructor.
@@ -205,10 +205,10 @@ class ArmaGenerator(cdtfnobas.DataSource):
 
     def __init__(
         self,
-        nid: cdtfcor.NodeId,
+        nid: cdtfcore.NodeId,
         frequency: str,
-        start_date: hdatetim.Datetime,
-        end_date: hdatetim.Datetime,
+        start_date: hdateti.Datetime,
+        end_date: hdateti.Datetime,
         ar_coeffs: Optional[List[float]] = None,
         ma_coeffs: Optional[List[float]] = None,
         scale: Optional[float] = None,
@@ -294,10 +294,10 @@ class MultivariateNormalGenerator(cdtfnobas.DataSource):
 
     def __init__(
         self,
-        nid: cdtfcor.NodeId,
+        nid: cdtfcore.NodeId,
         frequency: str,
-        start_date: hdatetim.Datetime,
-        end_date: hdatetim.Datetime,
+        start_date: hdateti.Datetime,
+        end_date: hdateti.Datetime,
         dim: int,
         target_volatility: Optional[float] = None,
         seed: Optional[float] = None,
@@ -337,7 +337,7 @@ class MultivariateNormalGenerator(cdtfnobas.DataSource):
             return rets
         if fit:
             avg_rets = rets.mean(axis=1)
-            vol = cfin.compute_annualized_volatility(avg_rets)
+            vol = cofinanc.compute_annualized_volatility(avg_rets)
             self._volatility_scale_factor = self._target_volatility / vol
         return rets * self._volatility_scale_factor
 
@@ -377,7 +377,7 @@ class RealTimeDataSource(cdtfnobas.DataSource):
 
     def __init__(
         self,
-        nid: cdtfcor.NodeId,
+        nid: cdtfcore.NodeId,
         price_interface: cdtfprint.AbstractPriceInterface,
         period: str,
         multiindex_output: bool,
@@ -419,7 +419,7 @@ class RealTimeDataSource(cdtfnobas.DataSource):
         # From _load_multiple_instrument_data().
         _LOG.debug(
             "Before multiindex conversion\n:%s",
-            hprintin.dataframe_to_str(self.df.head()),
+            hprint.dataframe_to_str(self.df.head()),
         )
         dfs = {}
         # TODO(gp): Pass the column name through the interace.
@@ -432,5 +432,5 @@ class RealTimeDataSource(cdtfnobas.DataSource):
         self.df = df
         _LOG.debug(
             "After multiindex conversion\n:%s",
-            hprintin.dataframe_to_str(self.df.head()),
+            hprint.dataframe_to_str(self.df.head()),
         )

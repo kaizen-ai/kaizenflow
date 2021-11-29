@@ -24,13 +24,16 @@ r"""
         --dirs dev_scripts \
         --exts None
 
-
 # To revert all files but this one:
 > gs -s | \
         grep -v dev_scripts/replace_text.py | \
         grep -v "\?" | \
         awk '{print $2}' | \
         xargs git checkout --
+
+Import as:
+
+import dev_scripts.replace_text as dscretex
 """
 
 import argparse
@@ -41,11 +44,11 @@ import re
 import sys
 from typing import Dict, List, Optional, Tuple
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.io_ as hio
-import helpers.parser as hparse
+import helpers.parser as hparser
 import helpers.printing as hprint
-import helpers.system_interaction as hsyste
+import helpers.system_interaction as hsysinte
 
 # TODO(gp):
 #  - allow to read a cfile with a subset of files / points to replace
@@ -66,10 +69,10 @@ def _get_all_files(dirs: List[str], exts: Optional[List[str]]) -> List[str]:
     """
     if exts is not None:
         # Extensions are specified.
-        dbg.dassert_isinstance(exts, list)
-        dbg.dassert_lte(1, len(exts))
+        hdbg.dassert_isinstance(exts, list)
+        hdbg.dassert_lte(1, len(exts))
         for ext in exts:
-            dbg.dassert(not ext.startswith("."), "Invalid ext='%s'", ext)
+            hdbg.dassert(not ext.startswith("."), "Invalid ext='%s'", ext)
     # Get files.
     _LOG.debug("exts=%s", exts)
     file_names = []
@@ -177,7 +180,7 @@ def _replace_with_perl(
     else:
         perl_opts.append(r"-e '%s unless /^\s*#/'" % regex)
     cmd = "perl %s %s" % (" ".join(perl_opts), file_name)
-    hsyste.system(cmd, suppress_output=False)
+    hsysinte.system(cmd, suppress_output=False)
 
 
 def _replace_with_python(
@@ -185,7 +188,7 @@ def _replace_with_python(
 ) -> None:
     if backup:
         cmd = "cp %s %s.bak" % (file_name, file_name)
-        hsyste.system(cmd)
+        hsysinte.system(cmd)
     #
     lines = hio.from_file(file_name, encoding=_ENCODING).split("\n")
     lines_out = []
@@ -278,7 +281,7 @@ def _custom1(args: argparse.Namespace) -> None:
         file_names_to_process, txt_tmp = _get_files_to_replace(
             file_names, old_regex
         )
-        dbg.dassert_lte(1, len(file_names_to_process))
+        hdbg.dassert_lte(1, len(file_names_to_process))
         # Replace.
         if preview:
             txt += txt_tmp
@@ -308,7 +311,7 @@ def _fix_AmpTask1403_helper(
         file_names_to_process, txt_tmp = _get_files_to_replace(
             file_names, old_regex
         )
-        # dbg.dassert_lte(1, len(file_names_to_process))
+        # hdbg.dassert_lte(1, len(file_names_to_process))
         if len(file_names_to_process) < 1:
             _LOG.warning("Didn't find files to replace")
         # Replace.
@@ -377,7 +380,7 @@ def _prerelease_cleanup(args: argparse.Namespace) -> None:
         file_names_to_process, txt_tmp = _get_files_to_replace(
             file_names, old_regex
         )
-        # dbg.dassert_lte(1, len(file_names_to_process))
+        # hdbg.dassert_lte(1, len(file_names_to_process))
         if len(file_names_to_process) < 1:
             _LOG.warning("Didn't find files to replace")
         # Replace.
@@ -421,7 +424,7 @@ def _rename(file_names_to_process: List[str], file_map: Dict[str, str]) -> None:
     for f in file_names_to_process:
         new_name = file_map[f]
         cmd = "git mv %s %s" % (f, new_name)
-        hsyste.system(cmd)
+        hsysinte.system(cmd)
 
 
 # #############################################################################
@@ -479,13 +482,13 @@ def _parse() -> argparse.ArgumentParser:
         default=None,
         help="Directories to process",
     )
-    hparse.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(args.log_level)
+    hdbg.init_logger(args.log_level)
     if args.revert_all:
         # Revert all the files but this one. Use at your own risk.
         _LOG.warning("Reverting all files but this one")
@@ -498,7 +501,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         ]
         cmd = " | ".join(cmd)
         print(f"> {cmd}")
-        hsyste.system(cmd)
+        hsysinte.system(cmd)
     if args.custom_flow:
         eval("%s(args)" % args.custom_flow)
     else:

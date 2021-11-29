@@ -1,7 +1,7 @@
 """
 Import as:
 
-import oms.place_orders as oplord
+import oms.place_orders as oplaorde
 """
 
 import logging
@@ -13,11 +13,11 @@ from tqdm.autonotebook import tqdm
 
 import core.dataflow.price_interface as cdtfprint
 import helpers.dbg as hdbg
-import helpers.hpandas as hhpandas
-import helpers.htqdm as hhtqdm
-import helpers.printing as hprintin
-import oms.order as oord
-import oms.portfolio as opor
+import helpers.hpandas as hpandas
+import helpers.htqdm as htqdm
+import helpers.printing as hprint
+import oms.order as omorder
+import oms.portfolio as omportfo
 
 _LOG = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ _LOG = logging.getLogger(__name__)
 def _compute_target_positions(
     current_timestamp: pd.Timestamp,
     predictions: pd.Series,
-    portfolio: opor.Portfolio,
+    portfolio: omportfo.Portfolio,
 ) -> pd.DataFrame:
     """
     Compute the target positions using `predictions`.
@@ -69,19 +69,25 @@ def _compute_target_positions(
         current_timestamp, asset_id, exclude_cash=True
     )
     holdings.set_index("asset_id", drop=True, inplace=True)
-    _LOG.debug("holdings=\n%s", hprintin.dataframe_to_str(holdings))
+    _LOG.debug("holdings=\n%s", hprint.dataframe_to_str(holdings))
     # Merge the predictions to the holdings.
     predictions = pd.DataFrame(predictions)
     predictions.reset_index(inplace=True)
+    predictions.index = [current_timestamp] * predictions.index.size
     predictions.columns = ["asset_id", "predictions"]
-    _LOG.debug("predictions=\n%s", hprintin.dataframe_to_str(predictions))
+    _LOG.debug("predictions=\n%s", hprint.dataframe_to_str(predictions))
     merged_df = holdings.merge(predictions, on="asset_id", how="outer")
-    _LOG.debug(
-        "after merge: merged_df=\n%s", hprintin.dataframe_to_str(merged_df)
+    merged_df["curr_num_shares"].fillna(0.0, inplace=True)
+    merged_df["asset_id"] = merged_df["asset_id"].convert_dtypes(
+        infer_objects=False,
+        convert_string=False,
+        convert_boolean=False,
+        convert_floating=False,
     )
+    _LOG.debug("after merge: merged_df=\n%s", hprint.dataframe_to_str(merged_df))
     # Mark to market.
-    merged_df = portfolio.mark_holdings_to_market(current_timestamp, merged_df)
-    _LOG.debug("merged_df=\n%s", hprintin.dataframe_to_str(merged_df))
+    merged_df = portfolio.mark_to_market(current_timestamp, merged_df)
+    _LOG.debug("merged_df=\n%s", hprint.dataframe_to_str(merged_df))
     columns = ["predictions", "price", "curr_num_shares"]
     hdbg.dassert_is_subset(columns, merged_df.columns)
     merged_df[columns] = merged_df[columns].fillna(0.0)
@@ -105,7 +111,7 @@ def _compute_target_positions(
     merged_df["diff_num_shares"] = (
         merged_df["curr_num_shares"] - merged_df["target_num_shares"]
     )
-    _LOG.debug("merged_df=\n%s", hprintin.dataframe_to_str(merged_df))
+    _LOG.debug("merged_df=\n%s", hprint.dataframe_to_str(merged_df))
     return merged_df
 
 
@@ -150,11 +156,11 @@ def place_orders(
     price_interface = config["price_interface"]
     hdbg.dassert_issubclass(price_interface, cdtfprint.AbstractPriceInterface)
     portfolio = config["portfolio"]
-    hdbg.dassert_issubclass(portfolio, opor.Portfolio)
+    hdbg.dassert_issubclass(portfolio, omportfo.Portfolio)
     # Check predictions.
     hdbg.dassert_isinstance(predictions_df, pd.DataFrame)
-    hhpandas.dassert_index_is_datetime(predictions_df)
-    hhpandas.dassert_strictly_increasing_index(predictions_df)
+    hpandas.dassert_index_is_datetime(predictions_df)
+    hpandas.dassert_strictly_increasing_index(predictions_df)
     if execution_mode == "real_time":
         predictions_df = predictions_df.tail(1)
     _LOG.debug("predictions_df=%s\n%s", str(predictions_df.shape), predictions_df)
@@ -163,13 +169,13 @@ def place_orders(
     offset_5min = pd.DateOffset(minutes=5)
     order_type = config["order_type"]
     #
-    tqdm_out = hhtqdm.TqdmToLogger(_LOG, level=logging.INFO)
+    tqdm_out = htqdm.TqdmToLogger(_LOG, level=logging.INFO)
     num_rows = len(predictions_df)
     iter_ = enumerate(predictions_df.iterrows())
     for idx, (timestamp, predictions) in tqdm(
         iter_, total=num_rows, file=tqdm_out
     ):
-        _LOG.debug("\n%s", hprintin.frame("# timestamp=%s" % timestamp))
+        _LOG.debug("\n%s", hprint.frame("# timestamp=%s" % timestamp))
         _LOG.debug("portfolio=\n%s", portfolio)
         _LOG.debug("predictions=\n%s", predictions)
         hdbg.dassert(
@@ -188,7 +194,7 @@ def place_orders(
         df = _compute_target_positions(timestamp, predictions, portfolio)
         _LOG.debug("# Place orders")
         # Create order.
-        orders: List[oord.Order] = []
+        orders: List[omorder.Order] = []
         for _, row in df.iterrows():
             _LOG.debug("row=\n%s", row)
             asset_id = row["asset_id"]
@@ -196,7 +202,7 @@ def place_orders(
             if diff_num_shares == 0.0:
                 # No need to place trades.
                 continue
-            order = oord.Order(
+            order = omorder.Order(
                 order_id,
                 price_interface,
                 timestamp,
@@ -215,7 +221,7 @@ def place_orders(
         #  A more accurate simulation requires to attach "callbacks" representing
         #  actions to timestamp.
         next_timestamp = predictions_df.index[idx + 1]
-        portfolio.place_orders(timestamp, next_timestamp, orders)
+        portfolio.process_filled_orders(timestamp, next_timestamp, orders)
     # Update the df with intermediate results.
     # df_5mins[pnl] = df_5mins[wealth].pct_change()
     # return df_5mins

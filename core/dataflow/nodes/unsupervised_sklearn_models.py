@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import core.dataflow.nodes.unsupervised_sklearn_models as cdtfnuskmo
+"""
+
 import collections
 import datetime
 import logging
@@ -5,10 +11,10 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 
-import core.data_adapters as cdataa
-import core.dataflow.core as cdtfc
-import core.dataflow.utils as cdtfu
-import helpers.dbg as dbg
+import core.data_adapters as cdatadap
+import core.dataflow.core as cdtfcore
+import core.dataflow.utils as cdtfutil
+import helpers.dbg as hdbg
 from core.dataflow.nodes.base import (
     ColModeMixin,
     CrossSectionalDfToDfColProcessor,
@@ -40,11 +46,11 @@ class _UnsupervisedSkLearnModelMixin:
         # Determine index where no x_vars are NaN.
         x_vars = df.columns.tolist()
         non_nan_idx = df.dropna().index
-        dbg.dassert(not non_nan_idx.empty)
+        hdbg.dassert(not non_nan_idx.empty)
         # Handle presence of NaNs according to `nan_mode`.
         _handle_nans(self._nan_mode, df.index, non_nan_idx)
         # Prepare x_vars in sklearn format.
-        x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
+        x_fit = cdatadap.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
         if fit:
             # Define and fit model.
             self._model = self._model_func(**self._model_kwargs)
@@ -53,7 +59,7 @@ class _UnsupervisedSkLearnModelMixin:
         x_transform = self._model.transform(x_fit)
         #
         num_cols = x_transform.shape[1]
-        x_hat = cdataa.transform_from_sklearn(
+        x_hat = cdatadap.transform_from_sklearn(
             non_nan_idx, list(range(num_cols)), x_transform
         )
         info = collections.OrderedDict()
@@ -65,7 +71,7 @@ class _UnsupervisedSkLearnModelMixin:
         info["model_attributes"] = model_attribute_info
         # Return targets and predictions.
         df_out = x_hat.reindex(index=df_in.index)
-        dbg.dassert_no_duplicates(df_out.columns)
+        hdbg.dassert_no_duplicates(df_out.columns)
         return df_out, info
 
 
@@ -78,9 +84,9 @@ class UnsupervisedSkLearnModel(
 
     def __init__(
         self,
-        nid: cdtfc.NodeId,
+        nid: cdtfcore.NodeId,
         model_func: Callable[..., Any],
-        x_vars: Optional[cdtfu.NodeColumnList] = None,
+        x_vars: Optional[cdtfutil.NodeColumnList] = None,
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
@@ -147,9 +153,9 @@ class MultiindexUnsupervisedSkLearnModel(
 
     def __init__(
         self,
-        nid: cdtfc.NodeId,
-        in_col_group: Tuple[cdtfu.NodeColumn],
-        out_col_group: Tuple[cdtfu.NodeColumn],
+        nid: cdtfcore.NodeId,
+        in_col_group: Tuple[cdtfutil.NodeColumn],
+        out_col_group: Tuple[cdtfutil.NodeColumn],
         model_func: Callable[..., Any],
         model_kwargs: Optional[Any] = None,
         nan_mode: Optional[str] = None,
@@ -170,9 +176,9 @@ class MultiindexUnsupervisedSkLearnModel(
             (e.g., regularization constants)
         """
         super().__init__(nid)
-        dbg.dassert_isinstance(in_col_group, tuple)
-        dbg.dassert_isinstance(out_col_group, tuple)
-        dbg.dassert_eq(
+        hdbg.dassert_isinstance(in_col_group, tuple)
+        hdbg.dassert_isinstance(out_col_group, tuple)
+        hdbg.dassert_eq(
             len(in_col_group),
             len(out_col_group),
             msg="Column hierarchy depth must be preserved.",
@@ -233,11 +239,11 @@ class _ResidualizerMixin:
         # Determine index where no x_vars are NaN.
         x_vars = df.columns.to_list()
         non_nan_idx = df[x_vars].dropna().index
-        dbg.dassert(not non_nan_idx.empty)
+        hdbg.dassert(not non_nan_idx.empty)
         # Handle presence of NaNs according to `nan_mode`.
         _handle_nans(self._nan_mode, df.index, non_nan_idx)
         # Prepare x_vars in sklearn format.
-        x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
+        x_fit = cdatadap.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
         if fit:
             # Define and fit model.
             self._model = self._model_func(**self._model_kwargs)
@@ -246,7 +252,7 @@ class _ResidualizerMixin:
         x_transform = self._model.transform(x_fit)
         x_hat = self._model.inverse_transform(x_transform)
         #
-        x_residual = cdataa.transform_from_sklearn(
+        x_residual = cdatadap.transform_from_sklearn(
             non_nan_idx, x_vars, x_fit - x_hat
         )
         info = collections.OrderedDict()
@@ -267,9 +273,9 @@ class Residualizer(FitPredictNode, _ResidualizerMixin):
 
     def __init__(
         self,
-        nid: cdtfc.NodeId,
-        in_col_group: Tuple[cdtfu.NodeColumn],
-        out_col_group: Tuple[cdtfu.NodeColumn],
+        nid: cdtfcore.NodeId,
+        in_col_group: Tuple[cdtfutil.NodeColumn],
+        out_col_group: Tuple[cdtfutil.NodeColumn],
         model_func: Callable[..., Any],
         model_kwargs: Optional[Any] = None,
         nan_mode: Optional[str] = None,
@@ -330,10 +336,10 @@ class SkLearnInverseTransformer(FitPredictNode, ColModeMixin):
 
     def __init__(
         self,
-        nid: cdtfc.NodeId,
+        nid: cdtfcore.NodeId,
         model_func: Callable[..., Any],
-        x_vars: cdtfu.NodeColumnList,
-        trans_x_vars: cdtfu.NodeColumnList,
+        x_vars: cdtfutil.NodeColumnList,
+        trans_x_vars: cdtfutil.NodeColumnList,
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
@@ -355,10 +361,10 @@ class SkLearnInverseTransformer(FitPredictNode, ColModeMixin):
         self._model_kwargs = model_kwargs or {}
         self._x_vars = convert_to_list(x_vars)
         self._trans_x_vars = convert_to_list(trans_x_vars)
-        dbg.dassert_not_intersection(self._x_vars, self._trans_x_vars)
+        hdbg.dassert_not_intersection(self._x_vars, self._trans_x_vars)
         self._model = None
         self._col_mode = col_mode or "replace_all"
-        dbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
+        hdbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
         self._nan_mode = nan_mode or "raise"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -390,11 +396,11 @@ class SkLearnInverseTransformer(FitPredictNode, ColModeMixin):
         # Determine index where no x_vars are NaN.
         x_vars = convert_to_list(self._x_vars)
         non_nan_idx = df[x_vars].dropna().index
-        dbg.dassert(not non_nan_idx.empty)
+        hdbg.dassert(not non_nan_idx.empty)
         # Handle presence of NaNs according to `nan_mode`.
         _handle_nans(self._nan_mode, df.index, non_nan_idx)
         # Prepare x_vars in sklearn format.
-        x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
+        x_fit = cdatadap.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
         if fit:
             # Define and fit model.
             self._model = self._model_func(**self._model_kwargs)
@@ -410,15 +416,15 @@ class SkLearnInverseTransformer(FitPredictNode, ColModeMixin):
         # Determine index where no trans_x_vars are NaN.
         trans_x_vars = convert_to_list(self._trans_x_vars)
         trans_non_nan_idx = df[trans_x_vars].dropna().index
-        dbg.dassert(not trans_non_nan_idx.empty)
+        hdbg.dassert(not trans_non_nan_idx.empty)
         # Handle presence of NaNs according to `nan_mode`.
         _handle_nans(self._nan_mode, df.index, trans_non_nan_idx)
         # Prepare trans_x_vars in sklearn format.
-        trans_x_fit = cdataa.transform_to_sklearn(
+        trans_x_fit = cdatadap.transform_to_sklearn(
             df.loc[non_nan_idx], trans_x_vars
         )
         trans_x_inv_trans = self._model.inverse_transform(trans_x_fit)
-        trans_x_inv_trans = cdataa.transform_from_sklearn(
+        trans_x_inv_trans = cdatadap.transform_from_sklearn(
             trans_non_nan_idx, x_vars, trans_x_inv_trans
         )
         #
@@ -431,7 +437,7 @@ class SkLearnInverseTransformer(FitPredictNode, ColModeMixin):
             self._set_info("fit", info)
         else:
             self._set_info("predict", info)
-        dbg.dassert_no_duplicates(df_out.columns)
+        hdbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
 
 

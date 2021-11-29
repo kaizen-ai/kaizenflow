@@ -25,6 +25,10 @@ linear modeling                             |
 `unwrap_local_timeseries` ------------------
   |
   ...
+
+Import as:
+
+import core.event_study.core as cevstcor
 """
 
 
@@ -34,7 +38,7 @@ from typing import Iterable, Optional, Union
 import numpy as np
 import pandas as pd
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
@@ -113,14 +117,14 @@ def build_local_timeseries(
         -   cols: same as grid_data cols
     """
     # Enforce assumptions on inputs.
-    dbg.dassert_isinstance(events, pd.DataFrame)
-    dbg.dassert_isinstance(grid_data, pd.DataFrame)
+    hdbg.dassert_isinstance(events, pd.DataFrame)
+    hdbg.dassert_isinstance(grid_data, pd.DataFrame)
     hpandas.dassert_strictly_increasing_index(events.index)
     hpandas.dassert_strictly_increasing_index(grid_data.index)
     # Make `relative_grid_indices` a sorted list.
     if not isinstance(relative_grid_indices, list):
         relative_grid_indices = list(relative_grid_indices)
-    dbg.dassert(relative_grid_indices)
+    hdbg.dassert(relative_grid_indices)
     relative_grid_indices.sort()
     # Gather the data and, if requested, info.
     relative_data = {}
@@ -209,13 +213,13 @@ def _shift_and_select(
     shifted_grid_data = grid_data.shift(periods, freq)
     # Select.
     intersection = idx.intersection(shifted_grid_data.index)
-    dbg.dassert(not intersection.empty)
+    hdbg.dassert(not intersection.empty)
     selected = shifted_grid_data.loc[intersection]
     # Maybe add info.
     if info is not None:
-        dbg.dassert_isinstance(info, dict)
+        hdbg.dassert_isinstance(info, dict)
         # Ensure `info` is empty.
-        dbg.dassert(not info)
+        hdbg.dassert(not info)
         info["indices_with_no_data"] = intersection.difference(idx)
         info["pct_found"] = intersection.size / idx.size
         info["periods"] = periods
@@ -252,7 +256,7 @@ def regression(x: pd.DataFrame, y: pd.Series, info: Optional[dict] = None):
     regress = np.linalg.lstsq(x, y, rcond=None)
     beta_hat = regress[0]
     # Ensure full rank.
-    dbg.dassert_eq(regress[2], x.shape[1])
+    hdbg.dassert_eq(regress[2], x.shape[1])
     # Extract residual sum of squares.
     rss = np.asscalar(regress[1])
     # Compute r^2.
@@ -266,8 +270,8 @@ def regression(x: pd.DataFrame, y: pd.Series, info: Optional[dict] = None):
     beta_hat_z_score = beta_hat / np.sqrt(sigma_hat_sq * np.diagonal(xtx_inv))
     # Maybe add info.
     if info is not None:
-        dbg.dassert_isinstance(info, dict)
-        dbg.dassert(not info)
+        hdbg.dassert_isinstance(info, dict)
+        hdbg.dassert(not info)
         info["nobs (resp)=%d"] = nobs
         info["y_mean=%f"] = y_mean
         info["tss=%f"] = tss

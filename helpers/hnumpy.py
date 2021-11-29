@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.hnumpy as hhnumpy
+import helpers.hnumpy as hnumpy
 """
 
 import contextlib

@@ -7,15 +7,15 @@ import pytest
 
 import helpers.git as hgit
 import helpers.sql as hsql
-import helpers.system_interaction as hsyint
-import helpers.unit_test as huntes
+import helpers.system_interaction as hsysinte
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): helpers can't depend from im.
-@pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
-class TestSql1(huntes.TestCase):
+# @pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
+class TestSql1(hunitest.TestCase):
     def setUp(self) -> None:
         """
         Initialize the test container.
@@ -29,10 +29,10 @@ class TestSql1(huntes.TestCase):
             f"--file {self.docker_compose_file_path} "
             "up -d im_postgres_local"
         )
-        hsyint.system(cmd, suppress_output=False)
+        hsysinte.system(cmd, suppress_output=False)
         # Set DB credentials.
-        self.dbname = "im_postgres_db_local"
         self.host = "localhost"
+        self.dbname = "im_postgres_db_local"
         self.port = 5432
         self.password = "alsdkqoen"
         self.user = "aljsdalsd"
@@ -45,7 +45,7 @@ class TestSql1(huntes.TestCase):
             "sudo docker-compose "
             f"--file {self.docker_compose_file_path} down -v"
         )
-        hsyint.system(cmd, suppress_output=False)
+        hsysinte.system(cmd, suppress_output=False)
 
         super().tearDown()
 
@@ -54,27 +54,38 @@ class TestSql1(huntes.TestCase):
         """
         Smoke test.
         """
-        # TODO(Dan3): change to env
-        hsql.wait_db_connection(self.dbname, self.port, self.host)
+        hsql.wait_db_connection(
+            self.host,
+            self.dbname,
+            self.port,
+            self.user,
+            self.password
+        )
 
     @pytest.mark.slow()
     def test_db_connection_to_tuple(self) -> None:
         """
         Verify that connection string is correct.
         """
-        hsql.wait_db_connection(self.dbname, self.port, self.host)
-        self.connection = hsql.get_connection(
-            self.dbname,
+        hsql.wait_db_connection(
             self.host,
-            self.user,
+            self.dbname,
             self.port,
+            self.user,
+            self.password
+        )
+        self.connection = hsql.get_connection(
+            self.host,
+            self.dbname,
+            self.port,
+            self.user,
             self.password,
             autocommit=True,
         )
         actual_details = hsql.db_connection_to_tuple(self.connection)
         expected = {
-            "dbname": self.dbname,
             "host": self.host,
+            "dbname": self.dbname,
             "port": self.port,
             "user": self.user,
             "password": self.password,
@@ -86,12 +97,18 @@ class TestSql1(huntes.TestCase):
         """
         Verify that db is creating.
         """
-        hsql.wait_db_connection(self.dbname, self.port, self.host)
-        self.connection = hsql.get_connection(
-            self.dbname,
+        hsql.wait_db_connection(
             self.host,
-            self.user,
+            self.dbname,
             self.port,
+            self.user,
+            self.password
+        )
+        self.connection = hsql.get_connection(
+            self.host,
+            self.dbname,
+            self.port,
+            self.user,
             self.password,
             autocommit=True,
         )
@@ -112,12 +129,18 @@ class TestSql1(huntes.TestCase):
         """
         Create database 'test_db_to_remove' and remove it.
         """
-        hsql.wait_db_connection(self.dbname, self.port, self.host)
-        self.connection = hsql.get_connection(
-            self.dbname,
+        hsql.wait_db_connection(
             self.host,
-            self.user,
+            self.dbname,
             self.port,
+            self.user,
+            self.password
+        )
+        self.connection = hsql.get_connection(
+            self.host,
+            self.dbname,
+            self.port,
+            self.user,
             self.password,
             autocommit=True,
         )
@@ -134,12 +157,18 @@ class TestSql1(huntes.TestCase):
         """
         Test failed assertion for passing db name that does not exist.
         """
-        hsql.wait_db_connection(self.dbname, self.port, self.host)
-        self.connection = hsql.get_connection(
-            self.dbname,
+        hsql.wait_db_connection(
             self.host,
-            self.user,
+            self.dbname,
             self.port,
+            self.user,
+            self.password
+        )
+        self.connection = hsql.get_connection(
+            self.host,
+            self.dbname,
+            self.port,
+            self.user,
             self.password,
             autocommit=True,
         )
@@ -155,17 +184,17 @@ class TestSql1(huntes.TestCase):
         test_data = self._get_test_data()
         # Try uploading test data.
         self.connection = hsql.get_connection(
-            self.dbname,
             self.host,
-            self.user,
+            self.dbname,
             self.port,
+            self.user,
             self.password,
             autocommit=True,
         )
         hsql.execute_insert_query(self.connection, test_data, "test_table")
         # Load data.
-        df = hsql.execute_query(self.connection, "SELECT * FROM test_table")
-        actual = huntes.convert_df_to_json_string(df, n_tail=None)
+        df = hsql.execute_query_to_df(self.connection, "SELECT * FROM test_table")
+        actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
 
     @pytest.mark.slow()
@@ -177,17 +206,69 @@ class TestSql1(huntes.TestCase):
         test_data = self._get_test_data()
         # Try uploading test data.
         self.connection = hsql.get_connection(
-            self.dbname,
             self.host,
-            self.user,
+            self.dbname,
             self.port,
+            self.user,
             self.password,
             autocommit=True,
         )
         hsql.copy_rows_with_copy_from(self.connection, test_data, "test_table")
         # Load data.
-        df = hsql.execute_query(self.connection, "SELECT * FROM test_table")
-        actual = huntes.convert_df_to_json_string(df, n_tail=None)
+        df = hsql.execute_query_to_df(self.connection, "SELECT * FROM test_table")
+        actual = hunitest.convert_df_to_json_string(df, n_tail=None)
+        self.check_string(actual)
+
+    @pytest.mark.slow()
+    def test_duplicate_removal1(self) -> None:
+        """
+        Verify that duplicate entries are removed correctly.
+        """
+        self._create_test_table()
+        test_data = self._get_duplicated_data()
+        # Try uploading test data.
+        self.connection = hsql.get_connection(
+            self.host,
+            self.dbname,
+            self.port,
+            self.user,
+            self.password,
+            autocommit=True,
+        )
+        hsql.execute_insert_query(self.connection, test_data, "test_table")
+        # Create a query to remove duplicates.
+        dup_query = hsql.get_remove_duplicates_query(
+            "test_table", "id", ["column_1", "column_2"]
+        )
+        self.connection.cursor().execute(dup_query)
+        df = hsql.execute_query_to_df(self.connection, "SELECT * FROM test_table")
+        actual = hunitest.convert_df_to_json_string(df, n_tail=None)
+        self.check_string(actual)
+
+    @pytest.mark.slow()
+    def test_duplicate_removal2(self) -> None:
+        """
+        Verify that no rows are removed as duplicates.
+        """
+        self._create_test_table()
+        test_data = self._get_test_data()
+        # Try uploading test data.
+        self.connection = hsql.get_connection(
+            self.host,
+            self.dbname,
+            self.port,
+            self.user,
+            self.password,
+            autocommit=True,
+        )
+        hsql.execute_insert_query(self.connection, test_data, "test_table")
+        # Create a query to remove duplicates.
+        dup_query = hsql.get_remove_duplicates_query(
+            "test_table", "id", ["column_1", "column_2"]
+        )
+        self.connection.cursor().execute(dup_query)
+        df = hsql.execute_query_to_df(self.connection, "SELECT * FROM test_table")
+        actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
 
     def _create_test_table(self) -> None:
@@ -200,12 +281,18 @@ class TestSql1(huntes.TestCase):
                     column_2 VARCHAR(255)
                     )
                     """
-        hsql.wait_db_connection(self.dbname, self.port, self.host)
-        connection = hsql.get_connection(
-            self.dbname,
+        hsql.wait_db_connection(
             self.host,
-            self.user,
+            self.dbname,
             self.port,
+            self.user,
+            self.password
+        )
+        connection = hsql.get_connection(
+            self.host,
+            self.dbname,
+            self.port,
+            self.user,
             self.password,
             autocommit=True,
         )
@@ -239,6 +326,39 @@ class TestSql1(huntes.TestCase):
                     5,
                     1004,
                     "test_string_5",
+                ],
+            ],
+        )
+        return test_data
+
+    def _get_duplicated_data(self) -> pd.DataFrame:
+        test_data = pd.DataFrame(
+            columns=["id", "column_1", "column_2"],
+            data=[
+                [
+                    1,
+                    1000,
+                    "test_string_1",
+                ],
+                [
+                    2,
+                    1001,
+                    "test_string_2",
+                ],
+                [
+                    3,
+                    1002,
+                    "test_string_3",
+                ],
+                [
+                    4,
+                    1002,
+                    "test_string_3",
+                ],
+                [
+                    5,
+                    1001,
+                    "test_string_2",
                 ],
             ],
         )

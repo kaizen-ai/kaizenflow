@@ -1,7 +1,7 @@
 """
 Import as:
 
-import optimizer.utils as outi
+import optimizer.utils as oputils
 """
 
 import logging

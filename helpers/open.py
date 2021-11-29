@@ -13,8 +13,8 @@ import os
 from typing import Optional
 
 import helpers.dbg as hdbg
-import helpers.printing as hprintin
-import helpers.system_interaction as hsyint
+import helpers.printing as hprint
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ def _cmd_open_html(file_name: str, os_name: str) -> Optional[str]:
     }
     hdbg.dassert_in(os_name, os_cmds)
     exec_name = os_cmds[os_name]
-    if not hsyint.check_exec(exec_name):
+    if not hsysinte.check_exec(exec_name):
         _LOG.warning("Can't execute the command '%s' on this platform", exec_name)
         return None
     # Build the command.
@@ -78,13 +78,13 @@ def open_file(file_name: str) -> None:
     # Make sure file exists.
     _LOG.info(
         "\n%s",
-        hprintin.frame(
+        hprint.frame(
             f"Opening {extension} file '{file_name}'", char1="<", char2=">"
         ),
     )
     hdbg.dassert_exists(file_name)
     # Get opening command.
-    os_name = hsyint.get_os_name()
+    os_name = hsysinte.get_os_name()
     cmd: Optional[str]
     if extension == "pdf":
         cmd = _cmd_open_pdf(file_name, os_name)
@@ -95,4 +95,4 @@ def open_file(file_name: str) -> None:
     # Run command.
     if cmd is not None:
         _LOG.info("%s", cmd)
-        hsyint.system(cmd, suppress_output=False)
+        hsysinte.system(cmd, suppress_output=False)

@@ -3,44 +3,17 @@ Tasks related to `im` project.
 
 Import as:
 
-import im_v2.im_lib_tasks as imimlitas
+import im_v2.im_lib_tasks as imvimlita
 """
 
 import logging
-import os
 
 from invoke import task
 
 import helpers.dbg as hdbg
-import helpers.git as hgit
 import helpers.lib_tasks as hlibtask
 
-
 _LOG = logging.getLogger(__name__)
-
-
-# TODO(gp): This should be used also from the unit tests?
-def _get_docker_compose_path() -> str:
-    """
-    Return the absolute path to the docker-compose file for this component.
-
-    E.g., `im_v2/devops/compose/docker-compose.yml`.
-    """
-    # Get `amp` path.
-    amp_path = hgit.get_amp_abs_path()
-    # Get `docker-compose` file path.
-    # TODO(gp): Factor out this dir.
-    docker_compose_dir = "im_v2/devops/compose"
-    compose_file_name = "docker-compose.yml"
-    docker_compose_path = os.path.join(
-        amp_path, docker_compose_dir, compose_file_name
-    )
-    # Get absolute version of a file path.
-    docker_compose_abs_path = os.path.abspath(docker_compose_path)
-    # Verify that the file exists.
-    hdbg.dassert_file_exists(docker_compose_abs_path)
-    return docker_compose_abs_path
-
 
 # #############################################################################
 
@@ -54,7 +27,7 @@ def _get_docker_cmd(docker_cmd: str) -> str:
     ```
     docker-compose \
         --file devops/compose/docker-compose.yml \
-        run --rm app \
+        run --rm im_app \
         .../devops/set_schema_im_db.py
     ```
 
@@ -62,15 +35,15 @@ def _get_docker_cmd(docker_cmd: str) -> str:
     """
     cmd = ["docker-compose"]
     # Add `docker-compose` file path.
-    docker_compose_file_path = _get_docker_compose_path()
+    docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
     # Add `run`.
-    service_name = "app"
+    service_name = "im_app"
     cmd.append(f"run --rm {service_name}")
     cmd.append(docker_cmd)
     # Convert the list to a multiline command.
     multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
-    return multiline_docker_cmd
+    return multiline_docker_cmd  # type: ignore[no-any-return]
 
 
 @task
@@ -90,7 +63,7 @@ def im_docker_cmd(ctx, cmd):  # type: ignore
 # #############################################################################
 
 
-def _get_docker_up_cmd() -> str:
+def _get_docker_up_cmd(detach: bool) -> str:
     """
     Construct the command to bring up the `im` service.
 
@@ -101,29 +74,34 @@ def _get_docker_up_cmd() -> str:
         up \
         im_postgres_local
     ```
+
+    :param detach: run containers in the background
     """
     cmd = ["docker-compose"]
     # Add `docker-compose` file path.
-    docker_compose_file_path = _get_docker_compose_path()
+    docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
     # Add `down` command.
     cmd.append("up")
-    # TODO(Grisha): add `-d` option to run in background.
+    if detach:
+        # Enable detached mode.
+        cmd.append("-d")
     service = "im_postgres_local"
     cmd.append(service)
     cmd = hlibtask._to_multi_line_cmd(cmd)
-    return cmd
+    return cmd  # type: ignore[no-any-return]
 
 
 @task
-def im_docker_up(ctx):  # type: ignore
+def im_docker_up(ctx, detach=False):  # type: ignore
     """
     Start im container with Postgres inside.
 
     :param ctx: `context` object
+    :param detach: run containers in the background
     """
     # Get docker down command.
-    docker_clean_up_cmd = _get_docker_up_cmd()
+    docker_clean_up_cmd = _get_docker_up_cmd(detach)
     # Execute the command.
     hlibtask._run(ctx, docker_clean_up_cmd, pty=True)
 
@@ -147,7 +125,7 @@ def _get_docker_down_cmd(volumes_remove: bool) -> str:
     """
     cmd = ["docker-compose"]
     # Add `docker-compose` file path.
-    docker_compose_file_path = _get_docker_compose_path()
+    docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
     # Add `down` command.
     cmd.append("down")
@@ -158,7 +136,7 @@ def _get_docker_down_cmd(volumes_remove: bool) -> str:
         )
         cmd.append("-v")
     cmd = hlibtask._to_multi_line_cmd(cmd)
-    return cmd
+    return cmd  # type: ignore[no-any-return]
 
 
 @task

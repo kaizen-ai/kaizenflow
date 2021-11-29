@@ -6,16 +6,16 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import core.features as cfea
-import helpers.unit_test as huntes
+import core.features as cofeatur
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-class Test_cross_feature_pairs(huntes.TestCase):
+class Test_cross_feature_pairs(hunitest.TestCase):
     def test1(self) -> None:
         df = self._get_df()
-        actual = cfea.cross_feature_pairs(
+        actual = cofeatur.cross_feature_pairs(
             df,
             [
                 ("x1", "x2", ["difference"], "x1x2"),
@@ -45,10 +45,10 @@ datetime,x1,x2,x3,x4
         return df
 
 
-class Test_cross_feature_pair(huntes.TestCase):
+class Test_cross_feature_pair(hunitest.TestCase):
     def test_difference1(self) -> None:
         df = self._get_df()
-        actual = cfea.cross_feature_pair(df, "x1", "x2", ["difference"])
+        actual = cofeatur.cross_feature_pair(df, "x1", "x2", ["difference"])
         txt = """
 datetime,difference
 2016-01-04 12:00:00,-1.414214
@@ -61,7 +61,7 @@ datetime,difference
 
     def test_difference2(self) -> None:
         df = self._get_df()
-        actual = cfea.cross_feature_pair(df, "x3", "x4", ["difference"])
+        actual = cofeatur.cross_feature_pair(df, "x3", "x4", ["difference"])
         txt = """
 datetime,difference
 2016-01-04 12:00:00,-0.009192
@@ -74,7 +74,7 @@ datetime,difference
 
     def test_compressed_difference1(self) -> None:
         df = self._get_df()
-        actual = cfea.cross_feature_pair(
+        actual = cofeatur.cross_feature_pair(
             df, "x1", "x2", ["compressed_difference"]
         )
         txt = """
@@ -89,7 +89,7 @@ datetime,compressed_difference
 
     def test_compressed_difference2(self) -> None:
         df = self._get_df()
-        actual = cfea.cross_feature_pair(
+        actual = cofeatur.cross_feature_pair(
             df, "x3", "x4", ["compressed_difference"]
         )
         txt = """
@@ -104,7 +104,7 @@ datetime,compressed_difference
 
     def test_normalized_difference1(self) -> None:
         df = self._get_df()
-        actual = cfea.cross_feature_pair(
+        actual = cofeatur.cross_feature_pair(
             df, "x1", "x2", ["normalized_difference"]
         )
         txt = """
@@ -119,7 +119,7 @@ datetime,normalized_difference
 
     def test_normalized_difference2(self) -> None:
         df = self._get_df()
-        actual = cfea.cross_feature_pair(
+        actual = cofeatur.cross_feature_pair(
             df, "x3", "x4", ["normalized_difference"]
         )
         txt = """
@@ -134,7 +134,9 @@ datetime,normalized_difference
 
     def test_difference_of_logs(self) -> None:
         df = self._get_df()
-        actual = cfea.cross_feature_pair(df, "x3", "x4", ["difference_of_logs"])
+        actual = cofeatur.cross_feature_pair(
+            df, "x3", "x4", ["difference_of_logs"]
+        )
         txt = """
 datetime,difference_of_logs
 2016-01-04 12:00:00,-2.014903
@@ -147,7 +149,7 @@ datetime,difference_of_logs
 
     def test_mean(self) -> None:
         df = self._get_df()
-        actual = cfea.cross_feature_pair(df, "x3", "x4", ["mean"])
+        actual = cofeatur.cross_feature_pair(df, "x3", "x4", ["mean"])
         txt = """
 datetime,mean
 2016-01-04 12:00:00,0.012021
@@ -160,7 +162,7 @@ datetime,mean
 
     def test_compressed_mean(self) -> None:
         df = self._get_df()
-        actual = cfea.cross_feature_pair(df, "x3", "x4", ["compressed_mean"])
+        actual = cofeatur.cross_feature_pair(df, "x3", "x4", ["compressed_mean"])
         txt = """
 datetime,compressed_mean
 2016-01-04 12:00:00,0.012021
@@ -173,7 +175,7 @@ datetime,compressed_mean
 
     def test_mean_of_logs(self) -> None:
         df = self._get_df()
-        actual = cfea.cross_feature_pair(df, "x3", "x4", ["mean_of_logs"])
+        actual = cofeatur.cross_feature_pair(df, "x3", "x4", ["mean_of_logs"])
         txt = """
 datetime,mean_of_logs
 2016-01-04 12:00:00,-5.207157
@@ -197,7 +199,7 @@ datetime,x1,x2,x3,x4
         return df
 
 
-class Test_compute_normalized_statistical_leverage_scores(huntes.TestCase):
+class Test_compute_normalized_statistical_leverage_scores(hunitest.TestCase):
     # TODO(Paul): We may need to rewrite these to be insensitive to signs.
     def test_identity_1(self) -> None:
         mat = np.array(
@@ -207,7 +209,7 @@ class Test_compute_normalized_statistical_leverage_scores(huntes.TestCase):
             ]
         )
         df = pd.DataFrame(mat, columns=["x1", "x2"])
-        actual = cfea.compute_normalized_statistical_leverage_scores(df)
+        actual = cofeatur.compute_normalized_statistical_leverage_scores(df)
         txt = """
 proj_dim,x1,x2
 1,1.0,0.0
@@ -224,7 +226,7 @@ proj_dim,x1,x2
             ]
         )
         df = pd.DataFrame(mat, columns=["x1", "x2"])
-        actual = cfea.compute_normalized_statistical_leverage_scores(
+        actual = cofeatur.compute_normalized_statistical_leverage_scores(
             df,
             demean_cols=True,
         )
@@ -244,7 +246,7 @@ proj_dim,x1,x2
             ]
         )
         df = pd.DataFrame(mat, columns=["x1", "x2"])
-        actual = cfea.compute_normalized_statistical_leverage_scores(df)
+        actual = cofeatur.compute_normalized_statistical_leverage_scores(df)
         txt = """
 proj_dim,x1,x2
 1,0.276393,0.723607
@@ -261,7 +263,7 @@ proj_dim,x1,x2
             ]
         )
         df = pd.DataFrame(mat, columns=["x1", "x2"])
-        actual = cfea.compute_normalized_statistical_leverage_scores(
+        actual = cofeatur.compute_normalized_statistical_leverage_scores(
             df,
             demean_cols=True,
         )
@@ -281,7 +283,7 @@ proj_dim,x1,x2
             ]
         )
         df = pd.DataFrame(mat, columns=["x1", "x2"])
-        actual = cfea.compute_normalized_statistical_leverage_scores(
+        actual = cofeatur.compute_normalized_statistical_leverage_scores(
             df,
             demean_cols=True,
             normalize_cols=True,
@@ -295,7 +297,7 @@ proj_dim,x1,x2
         self.assert_dfs_close(actual, expected, rtol=1e-6, atol=1e-6)
 
 
-class Test_compute_normalized_principal_loadings(huntes.TestCase):
+class Test_compute_normalized_principal_loadings(hunitest.TestCase):
     # TODO(Paul): We may need to rewrite these to be insensitive to signs.
     def test_identity_1(self) -> None:
         mat = np.array(
@@ -305,7 +307,7 @@ class Test_compute_normalized_principal_loadings(huntes.TestCase):
             ]
         )
         df = pd.DataFrame(mat, columns=["x1", "x2"])
-        actual = cfea.compute_normalized_principal_loadings(df)
+        actual = cofeatur.compute_normalized_principal_loadings(df)
         txt = """
 proj_dim,x1,x2
 1,0.707107,0
@@ -322,7 +324,7 @@ proj_dim,x1,x2
             ]
         )
         df = pd.DataFrame(mat, columns=["x1", "x2"])
-        actual = cfea.compute_normalized_principal_loadings(
+        actual = cofeatur.compute_normalized_principal_loadings(
             df,
             demean_cols=True,
         )
@@ -342,7 +344,7 @@ proj_dim,x1,x2
             ]
         )
         df = pd.DataFrame(mat, columns=["x1", "x2"])
-        actual = cfea.compute_normalized_principal_loadings(
+        actual = cofeatur.compute_normalized_principal_loadings(
             df, demean_cols=True, normalize_cols=True
         )
         txt = """
@@ -361,7 +363,7 @@ proj_dim,x1,x2
             ]
         )
         df = pd.DataFrame(mat, columns=["x1", "x2"])
-        actual = cfea.compute_normalized_principal_loadings(df)
+        actual = cofeatur.compute_normalized_principal_loadings(df)
         txt = """
 proj_dim,x1,x2
 1,0.601501,-0.973249
@@ -378,7 +380,7 @@ proj_dim,x1,x2
             ]
         )
         df = pd.DataFrame(mat, columns=["x1", "x2"])
-        actual = cfea.compute_normalized_principal_loadings(
+        actual = cofeatur.compute_normalized_principal_loadings(
             df,
             demean_cols=True,
         )
@@ -398,7 +400,7 @@ proj_dim,x1,x2
             ]
         )
         df = pd.DataFrame(mat, columns=["x1", "x2"])
-        actual = cfea.compute_normalized_principal_loadings(
+        actual = cofeatur.compute_normalized_principal_loadings(
             df,
             demean_cols=True,
             normalize_cols=True,
@@ -412,7 +414,7 @@ proj_dim,x1,x2
         self.assert_dfs_close(actual, expected, rtol=1e-6, atol=1e-6)
 
 
-class Test_compare_subspaces(huntes.TestCase):
+class Test_compare_subspaces(hunitest.TestCase):
     def test1(self) -> None:
         mat1 = np.array(
             [
@@ -430,7 +432,7 @@ class Test_compare_subspaces(huntes.TestCase):
         )
         df1 = pd.DataFrame(mat1)
         df2 = pd.DataFrame(mat2)
-        actual = cfea.compare_subspaces(df1, df2)
+        actual = cofeatur.compare_subspaces(df1, df2)
         txt = """
 singular_value,canonical_corr,principal_angle
 1,1.0,0.0
@@ -440,7 +442,7 @@ singular_value,canonical_corr,principal_angle
         self.assert_dfs_close(actual, expected, rtol=1e-6, atol=1e-6)
 
 
-class Test_compute_effective_rank(huntes.TestCase):
+class Test_compute_effective_rank(hunitest.TestCase):
     def test1(self) -> None:
         mat = np.array(
             [
@@ -452,7 +454,7 @@ class Test_compute_effective_rank(huntes.TestCase):
         )
         df = pd.DataFrame(mat, columns=["x1", "x2", "x3"])
         alphas = [1, 2, np.inf]
-        actual = [cfea.compute_effective_rank(df, x) for x in alphas]
+        actual = [cofeatur.compute_effective_rank(df, x) for x in alphas]
         expected = [
             1.6892598840830737,
             1.503275283591628,
@@ -471,7 +473,7 @@ class Test_compute_effective_rank(huntes.TestCase):
         )
         df = pd.DataFrame(mat, columns=["x1", "x2", "x3"])
         alphas = [1, 2, np.inf]
-        actual = [cfea.compute_effective_rank(df, x) for x in alphas]
+        actual = [cofeatur.compute_effective_rank(df, x) for x in alphas]
         expected = [
             2.99004975854808,
             2.9801980198019793,
@@ -483,7 +485,7 @@ class Test_compute_effective_rank(huntes.TestCase):
 # #############################################################################
 
 
-class _TestHelper(huntes.TestCase):
+class _TestHelper(hunitest.TestCase):
     def _assert_lists_equal(self, actual: List[str], expected: List[str]) -> None:
         self.assert_equal(",".join(actual), ",".join(expected))
 
@@ -499,7 +501,7 @@ class _TestHelper(huntes.TestCase):
 class Test_select_cols_by_greedy_grassmann(_TestHelper):
     def test1(self) -> None:
         df = self._get_df()
-        actual = cfea.select_cols_by_greedy_grassmann(df)
+        actual = cofeatur.select_cols_by_greedy_grassmann(df)
         expected = [["x4", "x1", "x3", "x2"], ["x4", "x1", "x2", "x3"]]
         self._assert_list_in(actual, expected)
 
@@ -508,21 +510,21 @@ class Test_select_cols_by_greedy_grassmann(_TestHelper):
     @pytest.mark.skip(reason="Apparent instability")
     def test2(self) -> None:
         df = self._get_df()
-        actual = cfea.select_cols_by_greedy_grassmann(df, demean_cols=True)
+        actual = cofeatur.select_cols_by_greedy_grassmann(df, demean_cols=True)
         expected = ["x3", "x1", "x4", "x2"]
         self._assert_lists_equal(actual, expected)
 
     @pytest.mark.skip(reason="Apparent instability")
     def test3(self) -> None:
         df = self._get_df()
-        actual = cfea.select_cols_by_greedy_grassmann(df, normalize_cols=True)
+        actual = cofeatur.select_cols_by_greedy_grassmann(df, normalize_cols=True)
         expected = ["x3", "x2", "x4", "x1"]
         self._assert_lists_equal(actual, expected)
 
     @pytest.mark.skip(reason="Apparent instability")
     def test4(self) -> None:
         df = self._get_df()
-        actual = cfea.select_cols_by_greedy_grassmann(
+        actual = cofeatur.select_cols_by_greedy_grassmann(
             df,
             demean_cols=True,
             normalize_cols=True,
@@ -547,26 +549,26 @@ class Test_select_cols_by_greedy_grassmann(_TestHelper):
 class Test_select_cols_by_greedy_volume(_TestHelper):
     def test1(self) -> None:
         df = self._get_df()
-        actual = cfea.select_cols_by_greedy_volume(df)
+        actual = cofeatur.select_cols_by_greedy_volume(df)
         expected = [["x4", "x1", "x3", "x2"], ["x4", "x1", "x2", "x3"]]
         self._assert_list_in(actual, expected)
 
     @pytest.mark.skip(reason="Apparent instability")
     def test2(self) -> None:
         df = self._get_df()
-        actual = cfea.select_cols_by_greedy_volume(df, demean_cols=True)
+        actual = cofeatur.select_cols_by_greedy_volume(df, demean_cols=True)
         expected = ["x3", "x2", "x4", "x1"]
         self._assert_lists_equal(actual, expected)
 
     def test3(self) -> None:
         df = self._get_df()
-        actual = cfea.select_cols_by_greedy_volume(df, normalize_cols=True)
+        actual = cofeatur.select_cols_by_greedy_volume(df, normalize_cols=True)
         expected = ["x4", "x1", "x2", "x3"]
         self._assert_lists_equal(actual, expected)
 
     def test4(self) -> None:
         df = self._get_df()
-        actual = cfea.select_cols_by_greedy_volume(
+        actual = cofeatur.select_cols_by_greedy_volume(
             df,
             demean_cols=True,
             normalize_cols=True,

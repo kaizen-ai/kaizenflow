@@ -7,27 +7,26 @@ import pytest
 import helpers.unit_test as hunitest
 
 # TODO(Dan): return to code after CmTask43 is fixed.
-import im_v2.ccxt.data.extract.exchange_class as imcdeexcl
+import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): CmampTask413: Why skip this guy?
 @pytest.mark.skip()
 class Test_CcxtExchange(hunitest.TestCase):
     def test_initialize_class(self) -> None:
         """
         Smoke test that the class is being initialized correctly.
         """
-        _ = imcdeexcl.CcxtExchange("binance")
+        _ = imvcdeexcl.CcxtExchange("binance")
 
     def test_get_exchange_currencies(self) -> None:
         """
         Test that a non-empty list of exchange currencies is loaded.
         """
         # Extract a list of currencies.
-        exchange_class = imcdeexcl.CcxtExchange("binance")
+        exchange_class = imvcdeexcl.CcxtExchange("binance")
         curr_list = exchange_class.get_exchange_currencies()
         # Verify that the output is a non-empty list with only string values.
         hdbg.dassert_container_type(curr_list, list, str)
@@ -38,17 +37,17 @@ class Test_CcxtExchange(hunitest.TestCase):
         Test that historical data is being loaded correctly.
         """
         # Initiate class and set date parameters.
-        exchange_class = imcdeexcl.CcxtExchange("binance")
+        exchange_class = imvcdeexcl.CcxtExchange("binance")
         start_date = "2021-09-09T00:00:00Z"
         end_date = "2021-09-10T00:00:00Z"
         # Extract data.
         actual = exchange_class.download_ohlcv_data(
-            curr_symbol="BTC/USDT",
+            curr_symbol="BTC_USDT",
             start_datetime=pd.Timestamp(start_date),
             end_datetime=pd.Timestamp(end_date),
         )
         # Verify that the output is a dataframe and verify its length.
-        dbg.dassert_isinstance(actual, pd.DataFrame)
+        hdbg.dassert_isinstance(actual, pd.DataFrame)
         self.assertEqual(1500, actual.shape[0])
         # Verify column names.
         exp_col_names = ["timestamp", "open", "high", "close", "volume"]
@@ -70,8 +69,8 @@ class Test_CcxtExchange(hunitest.TestCase):
         """
         Verify that order book is downloaded correctly.
         """
-        exchange_class = imcdeexcl.CcxtExchange("gateio")
-        order_book = exchange_class.download_order_book("BTC/USDT")
+        exchange_class = imvcdeexcl.CcxtExchange("gateio")
+        order_book = exchange_class.download_order_book("BTC_USDT")
         order_book_keys = [
             "symbol",
             "bids",

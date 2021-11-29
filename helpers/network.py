@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.network as hnetwork
+import helpers.network as hnetwor
 """
 
 import logging
@@ -13,7 +13,7 @@ import requests
 
 import helpers.dbg as hdbg
 import helpers.git as hgit
-import helpers.system_interaction as hsyint
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ def get_prefixes(jupyter_port: Optional[int] = None) -> Tuple[str, str]:
     Return the prefixes that a file should have under a GitHub repo and a
     Jupyter notebook.
     """
-    hsyint.get_user_name()
+    hsysinte.get_user_name()
     if jupyter_port is None:
         jupyter_port = 10001
         _LOG.warning(

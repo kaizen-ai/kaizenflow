@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import core.dataflow.nodes.sarimax_models as cdtfnosamo
+"""
+
 import collections
 import logging
 from typing import Any, Dict, Optional
@@ -8,10 +14,10 @@ import statsmodels.api as sm
 import statsmodels.iolib as siolib
 from tqdm.autonotebook import tqdm
 
-import core.dataflow.core as cdtfc
-import core.dataflow.nodes.base as cdnb
-import core.dataflow.utils as cdtfu
-import helpers.dbg as dbg
+import core.dataflow.core as cdtfcore
+import core.dataflow.nodes.base as cdtfnobas
+import core.dataflow.utils as cdtfutil
+import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -21,7 +27,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class ContinuousSarimaxModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
+class ContinuousSarimaxModel(cdtfnobas.FitPredictNode, cdtfnobas.ColModeMixin):
     """
     A dataflow node for continuous SARIMAX model.
 
@@ -43,12 +49,12 @@ class ContinuousSarimaxModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
 
     def __init__(
         self,
-        nid: cdtfc.NodeId,
-        y_vars: cdtfu.NodeColumnList,
+        nid: cdtfcore.NodeId,
+        y_vars: cdtfutil.NodeColumnList,
         steps_ahead: int,
         init_kwargs: Optional[Dict[str, Any]] = None,
         fit_kwargs: Optional[Dict[str, Any]] = None,
-        x_vars: Optional[cdtfu.NodeColumnList] = None,
+        x_vars: Optional[cdtfutil.NodeColumnList] = None,
         add_constant: bool = False,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
@@ -75,7 +81,7 @@ class ContinuousSarimaxModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         super().__init__(nid)
         self._y_vars = y_vars
         # Zero-step prediction is not supported for autoregressive models.
-        dbg.dassert_lte(
+        hdbg.dassert_lte(
             1, steps_ahead, "Non-causal prediction attempted! Aborting..."
         )
         self._steps_ahead = steps_ahead
@@ -86,16 +92,16 @@ class ContinuousSarimaxModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         self._model = None
         self._model_results = None
         self._col_mode = col_mode or "merge_all"
-        dbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
+        hdbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
         self._nan_mode = nan_mode or "raise"
         self._disable_tqdm = disable_tqdm
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        cdtfu.validate_df_indices(df_in)
+        cdtfutil.validate_df_indices(df_in)
         df = df_in.copy()
         idx = df.index
         # Get intersection of non-NaN `y` and `x`.
-        y_vars = cdtfu.convert_to_list(self._y_vars)
+        y_vars = cdtfutil.convert_to_list(self._y_vars)
         y_fit = df[y_vars]
         if self._nan_mode == "leave_unchanged":
             non_nan_idx = idx
@@ -111,7 +117,7 @@ class ContinuousSarimaxModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         else:
             x_fit = None
         x_fit = self._add_constant_to_x(x_fit)
-        dbg.dassert(not non_nan_idx.empty)
+        hdbg.dassert(not non_nan_idx.empty)
         # Handle presence of NaNs according to `nan_mode`.
         self._handle_nans(idx, non_nan_idx)
         y_fit = y_fit.reindex(non_nan_idx)
@@ -125,15 +131,15 @@ class ContinuousSarimaxModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         # `predict()`.
         fwd_y_hat = self._predict(y_fit, x_fit)
         # Package results.
-        y_vars = cdtfu.convert_to_list(self._y_vars)
-        forward_y_df = cdtfu.get_forward_cols(df, y_vars, self._steps_ahead)
+        y_vars = cdtfutil.convert_to_list(self._y_vars)
+        forward_y_df = cdtfutil.get_forward_cols(df, y_vars, self._steps_ahead)
         df_out = forward_y_df.merge(
             fwd_y_hat, how="outer", left_index=True, right_index=True
         )
         df_out = self._apply_col_mode(
             df,
             df_out,
-            cols=cdtfu.convert_to_list(self._y_vars),
+            cols=cdtfutil.convert_to_list(self._y_vars),
             col_mode=self._col_mode,
         )
         # Add info.
@@ -142,17 +148,17 @@ class ContinuousSarimaxModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         info["model_summary"] = _remove_datetime_info_from_sarimax(
             _convert_sarimax_summary_to_dataframe(self._model_results.summary())
         )
-        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfutil.get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        cdtfu.validate_df_indices(df_in)
+        cdtfutil.validate_df_indices(df_in)
         df = df_in.copy()
         idx = df.index
         # Get intersection of non-NaN `y` and `x`.
-        y_vars = cdtfu.convert_to_list(self._y_vars)
-        dbg.dassert_eq(len(y_vars), 1, "Only univariate `y` is supported")
+        y_vars = cdtfutil.convert_to_list(self._y_vars)
+        hdbg.dassert_eq(len(y_vars), 1, "Only univariate `y` is supported")
         y_predict = df[y_vars]
         if self._x_vars is not None:
             x_predict = self._get_bkwd_x_df(df)
@@ -167,15 +173,15 @@ class ContinuousSarimaxModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         self._handle_nans(idx, y_predict.index)
         fwd_y_hat = self._predict(y_predict, x_predict)
         # Package results.
-        y_vars = cdtfu.convert_to_list(self._y_vars)
-        forward_y_df = cdtfu.get_forward_cols(df, y_vars, self._steps_ahead)
+        y_vars = cdtfutil.convert_to_list(self._y_vars)
+        forward_y_df = cdtfutil.get_forward_cols(df, y_vars, self._steps_ahead)
         df_out = forward_y_df.merge(
             fwd_y_hat, how="outer", left_index=True, right_index=True
         )
         df_out = self._apply_col_mode(
             df,
             df_out,
-            cols=cdtfu.convert_to_list(self._y_vars),
+            cols=cdtfutil.convert_to_list(self._y_vars),
             col_mode=self._col_mode,
         )
         # Add info.
@@ -183,7 +189,7 @@ class ContinuousSarimaxModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         info["model_summary"] = _remove_datetime_info_from_sarimax(
             _convert_sarimax_summary_to_dataframe(self._model_results.summary())
         )
-        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfutil.get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
 
@@ -239,7 +245,7 @@ class ContinuousSarimaxModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         This way we predict `y_t` using `x_{t-n}`, ..., `x_{t-1}`, where `n` is
         `self._steps_ahead`.
         """
-        x_vars = cdtfu.convert_to_list(self._x_vars)
+        x_vars = cdtfutil.convert_to_list(self._x_vars)
         shift = self._steps_ahead
         # Shift index instead of series to extend the index.
         bkwd_x_df = df[x_vars].copy()
@@ -251,8 +257,8 @@ class ContinuousSarimaxModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         if not self._add_constant:
             return x
         if self._x_vars is not None:
-            self._x_vars = cdtfu.convert_to_list(self._x_vars)
-            dbg.dassert_not_in(
+            self._x_vars = cdtfutil.convert_to_list(self._x_vars)
+            hdbg.dassert_not_in(
                 "const",
                 self._x_vars,
                 "A column name 'const' is already present, please rename column.",
@@ -276,7 +282,7 @@ class ContinuousSarimaxModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
 
-class MultihorizonReturnsPredictionProcessor(cdnb.FitPredictNode):
+class MultihorizonReturnsPredictionProcessor(cdtfnobas.FitPredictNode):
     """
     Process multi-horizon returns prediction.
 
@@ -290,9 +296,9 @@ class MultihorizonReturnsPredictionProcessor(cdnb.FitPredictNode):
 
     def __init__(
         self,
-        nid: cdtfc.NodeId,
+        nid: cdtfcore.NodeId,
         target_col: Any,
-        prediction_cols: cdtfu.NodeColumnList,
+        prediction_cols: cdtfutil.NodeColumnList,
         volatility_col: Any,
     ):
         """
@@ -309,21 +315,21 @@ class MultihorizonReturnsPredictionProcessor(cdnb.FitPredictNode):
         """
         super().__init__(nid)
         self._target_col = target_col
-        self._prediction_cols = cdtfu.convert_to_list(prediction_cols)
+        self._prediction_cols = cdtfutil.convert_to_list(prediction_cols)
         self._volatility_col = volatility_col
         self._max_steps_ahead = len(self._prediction_cols)
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         df_out = self._process(df_in)
         info = collections.OrderedDict()
-        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfutil.get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         df_out = self._process(df_in)
         info = collections.OrderedDict()
-        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfutil.get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
 

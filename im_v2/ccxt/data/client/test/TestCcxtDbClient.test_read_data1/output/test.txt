@@ -1,0 +1,55 @@
+original shape=(5, 8)
+Head:
+{
+    "2021-09-09T00:00:00Z":{
+        "open":30.0,
+        "high":40.0,
+        "low":50.0,
+        "close":60.0,
+        "volume":70.0,
+        "epoch":1631145600000.0,
+        "currency_pair":"BTC_USDT",
+        "exchange_id":"binance"
+    },
+    "2021-09-09T00:01:00Z":{
+        "open":31.0,
+        "high":41.0,
+        "low":51.0,
+        "close":61.0,
+        "volume":71.0,
+        "epoch":1631145660000.0,
+        "currency_pair":"BTC_USDT",
+        "exchange_id":"binance"
+    },
+    "2021-09-09T00:02:00Z":{
+        "open":null,
+        "high":null,
+        "low":null,
+        "close":null,
+        "volume":null,
+        "epoch":null,
+        "currency_pair":null,
+        "exchange_id":null
+    },
+    "2021-09-09T00:03:00Z":{
+        "open":null,
+        "high":null,
+        "low":null,
+        "close":null,
+        "volume":null,
+        "epoch":null,
+        "currency_pair":null,
+        "exchange_id":null
+    },
+    "2021-09-09T00:04:00Z":{
+        "open":34.0,
+        "high":44.0,
+        "low":54.0,
+        "close":64.0,
+        "volume":74.0,
+        "epoch":1631145840000.0,
+        "currency_pair":"BTC_USDT",
+        "exchange_id":"binance"
+    }
+}
+Tail:

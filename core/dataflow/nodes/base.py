@@ -13,8 +13,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
 import pandas as pd
 
-import core.dataflow.core as cdtfcor
-import core.dataflow.utils as cdtfuti
+import core.dataflow.core as cdtfcore
+import core.dataflow.utils as cdtfutil
 import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class FitPredictNode(cdtfcor.Node, abc.ABC):
+class FitPredictNode(cdtfcore.Node, abc.ABC):
     """
     Class with abstract sklearn-style `fit()` and `predict()` functions.
 
@@ -44,7 +44,7 @@ class FitPredictNode(cdtfcor.Node, abc.ABC):
 
     def __init__(
         self,
-        nid: cdtfcor.NodeId,
+        nid: cdtfcore.NodeId,
         inputs: Optional[List[str]] = None,
         outputs: Optional[List[str]] = None,
     ) -> None:
@@ -73,7 +73,7 @@ class FitPredictNode(cdtfcor.Node, abc.ABC):
         _ = self, fit_state
 
     def get_info(
-        self, method: cdtfcor.Method
+        self, method: cdtfcore.Method
     ) -> Optional[Union[str, collections.OrderedDict]]:
         """
         The returned `info` is not copied and the client should not modify it.
@@ -89,7 +89,7 @@ class FitPredictNode(cdtfcor.Node, abc.ABC):
 
     # TODO(gp): values -> info
     def _set_info(
-        self, method: cdtfcor.Method, values: collections.OrderedDict
+        self, method: cdtfcore.Method, values: collections.OrderedDict
     ) -> None:
         """
         The passed `info` is copied internally.
@@ -115,7 +115,7 @@ class DataSource(FitPredictNode, abc.ABC):
     """
 
     def __init__(
-        self, nid: cdtfcor.NodeId, outputs: Optional[List[str]] = None
+        self, nid: cdtfcore.NodeId, outputs: Optional[List[str]] = None
     ) -> None:
         if outputs is None:
             outputs = ["df_out"]
@@ -168,7 +168,7 @@ class DataSource(FitPredictNode, abc.ABC):
         hdbg.dassert(not fit_df.empty, "`fit_df` is empty")
         # Update `info`.
         info = collections.OrderedDict()
-        info["fit_df_info"] = cdtfuti.get_df_info_as_string(fit_df)
+        info["fit_df_info"] = cdtfutil.get_df_info_as_string(fit_df)
         self._set_info("fit", info)
         return {self.output_names[0]: fit_df}
 
@@ -202,7 +202,7 @@ class DataSource(FitPredictNode, abc.ABC):
         hdbg.dassert(not predict_df.empty)
         # Update `info`.
         info = collections.OrderedDict()
-        info["predict_df_info"] = cdtfuti.get_df_info_as_string(predict_df)
+        info["predict_df_info"] = cdtfutil.get_df_info_as_string(predict_df)
         self._set_info("predict", info)
         return {self.output_names[0]: predict_df}
 
@@ -230,7 +230,7 @@ class Transformer(FitPredictNode, abc.ABC):
 
     # TODO(Paul): Consider giving users the option of renaming the single
     #  input and single output (but verify there is only one of each).
-    def __init__(self, nid: cdtfcor.NodeId) -> None:
+    def __init__(self, nid: cdtfcore.NodeId) -> None:
         super().__init__(nid)
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -273,7 +273,7 @@ class YConnector(FitPredictNode):
     # TODO(Paul): Support different input/output names.
     def __init__(
         self,
-        nid: cdtfcor.NodeId,
+        nid: cdtfcore.NodeId,
         connector_func: Callable[..., pd.DataFrame],
         connector_kwargs: Optional[Any] = None,
     ) -> None:
@@ -337,7 +337,7 @@ class YConnector(FitPredictNode):
         # TODO(Paul): Add meaningful info.
         df_out = self._connector_func(df_in1, df_in2, **self._connector_kwargs)
         info = collections.OrderedDict()
-        info["df_merged_info"] = cdtfuti.get_df_info_as_string(df_out)
+        info["df_merged_info"] = cdtfutil.get_df_info_as_string(df_out)
         return df_out, info
 
     @staticmethod
@@ -464,8 +464,8 @@ class GroupedColDfToDfColProcessor:
     @staticmethod
     def preprocess(
         df: pd.DataFrame,
-        col_groups: List[Tuple[cdtfuti.NodeColumn]],
-    ) -> Dict[cdtfuti.NodeColumn, pd.DataFrame]:
+        col_groups: List[Tuple[cdtfutil.NodeColumn]],
+    ) -> Dict[cdtfutil.NodeColumn, pd.DataFrame]:
         """
         Provides wrappers for transformations operating on many columns.
 
@@ -537,8 +537,8 @@ class GroupedColDfToDfColProcessor:
 
     @staticmethod
     def postprocess(
-        dfs: Dict[cdtfuti.NodeColumn, pd.DataFrame],
-        col_group: Tuple[cdtfuti.NodeColumn],
+        dfs: Dict[cdtfutil.NodeColumn, pd.DataFrame],
+        col_group: Tuple[cdtfutil.NodeColumn],
     ) -> pd.DataFrame:
         """
         As in `_postprocess_dataframe_dict()`.
@@ -590,7 +590,7 @@ class CrossSectionalDfToDfColProcessor:
     @staticmethod
     def preprocess(
         df: pd.DataFrame,
-        col_group: Tuple[cdtfuti.NodeColumn],
+        col_group: Tuple[cdtfutil.NodeColumn],
     ) -> pd.DataFrame:
         """
         As in `preprocess_multiindex_cols()`.
@@ -600,7 +600,7 @@ class CrossSectionalDfToDfColProcessor:
     @staticmethod
     def postprocess(
         df: pd.DataFrame,
-        col_group: Tuple[cdtfuti.NodeColumn],
+        col_group: Tuple[cdtfutil.NodeColumn],
     ) -> pd.DataFrame:
         """
         Create a multi-indexed column dataframe from a single-indexed one.
@@ -669,7 +669,7 @@ class SeriesToDfColProcessor:
     @staticmethod
     def preprocess(
         df: pd.DataFrame,
-        col_group: Tuple[cdtfuti.NodeColumn],
+        col_group: Tuple[cdtfutil.NodeColumn],
     ) -> pd.DataFrame:
         """
         As in `preprocess_multiindex_cols()`.
@@ -678,8 +678,8 @@ class SeriesToDfColProcessor:
 
     @staticmethod
     def postprocess(
-        dfs: Dict[cdtfuti.NodeColumn, pd.DataFrame],
-        col_group: Tuple[cdtfuti.NodeColumn],
+        dfs: Dict[cdtfutil.NodeColumn, pd.DataFrame],
+        col_group: Tuple[cdtfutil.NodeColumn],
     ) -> pd.DataFrame:
         """
         As in `_postprocess_dataframe_dict()`.
@@ -700,7 +700,7 @@ class SeriesToSeriesColProcessor:
     @staticmethod
     def preprocess(
         df: pd.DataFrame,
-        col_group: Tuple[cdtfuti.NodeColumn],
+        col_group: Tuple[cdtfutil.NodeColumn],
     ) -> pd.DataFrame:
         """
         As in `preprocess_multiindex_cols()`.
@@ -710,7 +710,7 @@ class SeriesToSeriesColProcessor:
     @staticmethod
     def postprocess(
         srs: List[pd.Series],
-        col_group: Tuple[cdtfuti.NodeColumn],
+        col_group: Tuple[cdtfutil.NodeColumn],
     ) -> pd.DataFrame:
         """
         Create a multi-indexed column dataframe from `srs` and `col_group`.
@@ -736,7 +736,7 @@ class SeriesToSeriesColProcessor:
 
 def preprocess_multiindex_cols(
     df: pd.DataFrame,
-    col_group: Tuple[cdtfuti.NodeColumn],
+    col_group: Tuple[cdtfutil.NodeColumn],
 ) -> pd.DataFrame:
     """
     Extract a single-level column dataframe from a multi-indexed one.
@@ -779,8 +779,8 @@ def preprocess_multiindex_cols(
 
 
 def _postprocess_dataframe_dict(
-    dfs: Dict[cdtfuti.NodeColumn, pd.DataFrame],
-    col_group: Tuple[cdtfuti.NodeColumn],
+    dfs: Dict[cdtfutil.NodeColumn, pd.DataFrame],
+    col_group: Tuple[cdtfutil.NodeColumn],
 ) -> pd.DataFrame:
     """
     Create a multi-indexed column dataframe from keys, values, `col_group`.
@@ -853,7 +853,7 @@ class DfStacker:
 
     @staticmethod
     def preprocess(
-        dfs: Dict[cdtfuti.NodeColumn, pd.DataFrame],
+        dfs: Dict[cdtfutil.NodeColumn, pd.DataFrame],
     ) -> pd.DataFrame:
         """
         Stack dataframes with identical columns into a single dataframe.
@@ -868,9 +868,9 @@ class DfStacker:
 
     @staticmethod
     def postprocess(
-        dfs: Dict[cdtfuti.NodeColumn, pd.DataFrame],
+        dfs: Dict[cdtfutil.NodeColumn, pd.DataFrame],
         df: pd.DataFrame,
-    ) -> Dict[cdtfuti.NodeColumn, pd.DataFrame]:
+    ) -> Dict[cdtfutil.NodeColumn, pd.DataFrame]:
         """
         Unstack dataframes according to location in `dfs`
 
@@ -898,7 +898,7 @@ class DfStacker:
         return out_dfs
 
     @staticmethod
-    def _validate_dfs(dfs: Dict[cdtfuti.NodeColumn, pd.DataFrame]) -> None:
+    def _validate_dfs(dfs: Dict[cdtfutil.NodeColumn, pd.DataFrame]) -> None:
         """
         Perform sanity checks on `dfs`.
         """

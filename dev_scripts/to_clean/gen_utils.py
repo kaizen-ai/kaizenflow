@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import dev_scripts.to_clean.gen_utils as dstcgeut
+"""
+
 import bisect
 import datetime
 import logging

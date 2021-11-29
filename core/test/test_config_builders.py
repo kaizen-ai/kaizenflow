@@ -2,7 +2,7 @@ import pprint
 from typing import List, Optional, cast
 
 import core.config as cconfig
-import helpers.unit_test as hut
+import helpers.unit_test as hunitest
 
 
 def _build_test_configs(
@@ -28,7 +28,7 @@ def _build_test_configs(
 # #############################################################################
 
 
-class TestGetConfigsFromBuilder1(hut.TestCase):
+class TestGetConfigsFromBuilder1(hunitest.TestCase):
     def test1(self) -> None:
         """
         Build a config from.
@@ -42,7 +42,7 @@ class TestGetConfigsFromBuilder1(hut.TestCase):
 # #############################################################################
 
 
-class TestGetConfigFromEnv(hut.TestCase):
+class TestGetConfigFromEnv(hunitest.TestCase):
     def test_no_env_variables(self) -> None:
         """
         Verify that if there are no config env variables, no config is created.
@@ -95,7 +95,7 @@ def _get_test_config_2() -> cconfig.Config:
 # #############################################################################
 
 
-class Test_generate_default_config_variants1(hut.TestCase):
+class Test_generate_default_config_variants1(hunitest.TestCase):
     def test_add_var_params(self) -> None:
         """
         Verify that Cartesian product of configs with varying parameters is
@@ -124,7 +124,7 @@ class Test_generate_default_config_variants1(hut.TestCase):
 
 
 # TODO(gp): -> Test_build_multiple_configs1
-class TestBuildMultipleConfigs(hut.TestCase):
+class TestBuildMultipleConfigs(hunitest.TestCase):
     def test_existing_path(self) -> None:
         # Create config template.
         config_template = cconfig.Config()

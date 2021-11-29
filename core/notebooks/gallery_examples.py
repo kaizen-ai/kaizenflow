@@ -19,13 +19,13 @@
 import numpy as np
 import pandas as pd
 
-import core.explore as exp
+import core.explore as coexplor
 
 # %load_ext autoreload
 # %autoreload 2
 
 # %% [markdown]
-# # exp.display_df
+# # coexplor.display_df
 
 # %%
 np.random.seed(100)
@@ -36,10 +36,10 @@ df = pd.DataFrame()
 df["x"] = x
 df["y"] = y
 
-exp.display_df(df)
+coexplor.display_df(df)
 
 # %% [markdown]
-# # exp.ols_regress_series
+# # coexplor.ols_regress_series
 
 # %%
 np.random.seed(100)
@@ -50,7 +50,7 @@ df = pd.DataFrame()
 df["x"] = x
 df["y"] = y
 
-exp.ols_regress_series(df["x"], df["y"], intercept=True)
+coexplor.ols_regress_series(df["x"], df["y"], intercept=True)
 
 # %% [markdown]
 # # Qgrid
@@ -76,7 +76,7 @@ df = pd.DataFrame(
 df
 
 # %%
-qgrid_widget = exp.to_qgrid(df)
+qgrid_widget = coexplor.to_qgrid(df)
 qgrid_widget
 
 # %%

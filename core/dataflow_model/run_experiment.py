@@ -13,7 +13,7 @@ Run an experiment consisting of multiple model runs based on the passed:
 
 Import as:
 
-import core.dataflow_model.run_experiment as cdtfmoruexp
+import core.dataflow_model.run_experiment as cdtfmoruex
 """
 import argparse
 import logging
@@ -22,14 +22,14 @@ from typing import cast
 
 import core.config as cconfig
 import core.dataflow_model.utils as cdtfmouti
-import helpers.datetime_ as hdatetim
+import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.git as hgit
-import helpers.joblib_helpers as hjoh
+import helpers.joblib_helpers as hjoblib
 import helpers.parser as hparser
-import helpers.printing as hprintin
+import helpers.printing as hprint
 import helpers.s3 as hs3
-import helpers.system_interaction as hsyint
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ def _run_experiment(
     # TODO(gp): Rename id -> idx everywhere
     #  jackpy "meta" | grep id | grep config
     idx = config[("meta", "id")]
-    _LOG.info("\n%s", hprintin.frame(f"Executing experiment for config {idx}"))
+    _LOG.info("\n%s", hprint.frame(f"Executing experiment for config {idx}"))
     _LOG.info("config=\n%s", config)
     dst_dir = config[("meta", "dst_dir")]
     # Prepare the log file.
@@ -82,7 +82,7 @@ def _run_experiment(
     cmd = " ".join(cmd)
     # Execute.
     _LOG.info("Executing '%s'", cmd)
-    rc = hsyint.system(
+    rc = hsysinte.system(
         cmd, output_file=log_file, suppress_output=False, abort_on_error=False
     )
     _LOG.info("Executed cmd")
@@ -99,7 +99,7 @@ def _run_experiment(
     return rc
 
 
-def _get_workload(args: argparse.Namespace) -> hjoh.Workload:
+def _get_workload(args: argparse.Namespace) -> hjoblib.Workload:
     """
     Prepare the workload using the parameters from command line.
     """
@@ -108,7 +108,7 @@ def _get_workload(args: argparse.Namespace) -> hjoh.Workload:
     # Prepare the tasks.
     tasks = []
     for config in configs:
-        task: hjoh.Task = (
+        task: hjoblib.Task = (
             # args.
             (config,),
             # kwargs.
@@ -118,7 +118,7 @@ def _get_workload(args: argparse.Namespace) -> hjoh.Workload:
     #
     func_name = "_run_experiment"
     workload = (_run_experiment, func_name, tasks)
-    hjoh.validate_workload(workload)
+    hjoblib.validate_workload(workload)
     return workload
 
 
@@ -165,13 +165,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     abort_on_error = not args.skip_on_error
     num_attempts = args.num_attempts
     # Prepare the log file.
-    timestamp = hdatetim.get_timestamp("naive_ET")
+    timestamp = hdateti.get_timestamp("naive_ET")
     log_file = os.path.join(dst_dir, f"log.{timestamp}.txt")
     _LOG.info("log_file='%s'", log_file)
     # Execute.
     # backend = "loky"
     backend = "asyncio_threading"
-    hjoh.parallel_execute(
+    hjoblib.parallel_execute(
         workload,
         dry_run,
         num_threads,

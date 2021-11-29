@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import core.dataflow.nodes.gluonts_models as cdtfnoglmo
+"""
+
 import collections
 import datetime
 import logging
@@ -7,11 +13,11 @@ import gluonts.model.deepar as gmdeep
 import gluonts.trainer as gtrain
 import pandas as pd
 
-import core.backtest as cbackt
-import core.data_adapters as cdataa
-import core.dataflow.core as cdtfc
-import core.dataflow.utils as cdtfu
-import helpers.dbg as dbg
+import core.backtest as cobackte
+import core.data_adapters as cdatadap
+import core.dataflow.core as cdtfcore
+import core.dataflow.utils as cdtfutil
+import helpers.dbg as hdbg
 from core.dataflow.nodes.base import FitPredictNode
 
 _LOG = logging.getLogger(__name__)
@@ -46,11 +52,11 @@ class ContinuousDeepArModel(FitPredictNode):
 
     def __init__(
         self,
-        nid: cdtfc.NodeId,
-        y_vars: cdtfu.NodeColumnList,
+        nid: cdtfcore.NodeId,
+        y_vars: cdtfutil.NodeColumnList,
         trainer_kwargs: Optional[Any] = None,
         estimator_kwargs: Optional[Any] = None,
-        x_vars: Optional[cdtfu.NodeColumnList] = None,
+        x_vars: Optional[cdtfutil.NodeColumnList] = None,
         num_traces: int = 100,
     ) -> None:
         """
@@ -76,7 +82,7 @@ class ContinuousDeepArModel(FitPredictNode):
         # parameters separately from `estimator_kwargs`.
         self._trainer_kwargs = trainer_kwargs
         self._trainer = gtrain.Trainer(**self._trainer_kwargs)
-        dbg.dassert_not_in("trainer", self._estimator_kwargs)
+        hdbg.dassert_not_in("trainer", self._estimator_kwargs)
         #
         self._estimator_func = gmdeep.DeepAREstimator
         # NOTE: Covariates (x_vars) are not required by DeepAR.
@@ -88,29 +94,29 @@ class ContinuousDeepArModel(FitPredictNode):
         self._estimator = None
         self._predictor = None
         #
-        dbg.dassert_in("prediction_length", self._estimator_kwargs)
+        hdbg.dassert_in("prediction_length", self._estimator_kwargs)
         self._prediction_length = self._estimator_kwargs["prediction_length"]
-        dbg.dassert_lt(0, self._prediction_length)
-        dbg.dassert_not_in(
+        hdbg.dassert_lt(0, self._prediction_length)
+        hdbg.dassert_not_in(
             "freq",
             self._estimator_kwargs,
             "`freq` to be autoinferred from `df_in`; do not specify",
         )
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        cdtfu.validate_df_indices(df_in)
+        cdtfutil.validate_df_indices(df_in)
         df = df_in.copy()
         # Obtain index slice for which forward targets exist.
-        dbg.dassert_lt(self._prediction_length, df.index.size)
+        hdbg.dassert_lt(self._prediction_length, df.index.size)
         df_fit = df.iloc[: -self._prediction_length]
         #
         if self._x_vars is not None:
-            x_vars = cdtfu.convert_to_list(self._x_vars)
+            x_vars = cdtfutil.convert_to_list(self._x_vars)
         else:
             x_vars = None
-        y_vars = cdtfu.convert_to_list(self._y_vars)
+        y_vars = cdtfutil.convert_to_list(self._y_vars)
         # Transform dataflow local timeseries dataframe into gluon-ts format.
-        gluon_train = cdataa.transform_to_gluon(
+        gluon_train = cdatadap.transform_to_gluon(
             df_fit, x_vars, y_vars, df_fit.index.freq.freqstr
         )
         # Instantiate the (DeepAR) estimator and train the model.
@@ -122,7 +128,7 @@ class ContinuousDeepArModel(FitPredictNode):
         self._predictor = self._estimator.train(gluon_train)
         # Predict. Generate predictions over all of `df_in` (not just on the
         #     restricted slice `df_fit`).
-        fwd_y_hat, fwd_y = cbackt.generate_predictions(
+        fwd_y_hat, fwd_y = cobackte.generate_predictions(
             predictor=self._predictor,
             df=df,
             y_vars=y_vars,
@@ -135,20 +141,20 @@ class ContinuousDeepArModel(FitPredictNode):
         info["model_x_vars"] = x_vars
         #
         df_out = fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)
-        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfutil.get_df_info_as_string(df_out)
         self._set_info("fit", info)
-        dbg.dassert_no_duplicates(df_out.columns)
+        hdbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        cdtfu.validate_df_indices(df_in)
+        cdtfutil.validate_df_indices(df_in)
         df = df_in.copy()
         if self._x_vars is not None:
-            x_vars = cdtfu.convert_to_list(self._x_vars)
+            x_vars = cdtfutil.convert_to_list(self._x_vars)
         else:
             x_vars = None
-        y_vars = cdtfu.convert_to_list(self._y_vars)
-        gluon_train = cdataa.transform_to_gluon(
+        y_vars = cdtfutil.convert_to_list(self._y_vars)
+        gluon_train = cdatadap.transform_to_gluon(
             df, x_vars, y_vars, df.index.freq.freqstr
         )
         # Instantiate the (DeepAR) estimator and train the model.
@@ -159,7 +165,7 @@ class ContinuousDeepArModel(FitPredictNode):
         )
         self._predictor = self._estimator.train(gluon_train)
         #
-        fwd_y_hat, fwd_y = cbackt.generate_predictions(
+        fwd_y_hat, fwd_y = cobackte.generate_predictions(
             predictor=self._predictor,
             df=df,
             y_vars=y_vars,
@@ -172,9 +178,9 @@ class ContinuousDeepArModel(FitPredictNode):
         info["model_x_vars"] = x_vars
         #
         df_out = fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)
-        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfutil.get_df_info_as_string(df_out)
         self._set_info("predict", info)
-        dbg.dassert_no_duplicates(df_out.columns)
+        hdbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
 
 
@@ -190,9 +196,9 @@ class DeepARGlobalModel(FitPredictNode):
 
     def __init__(
         self,
-        nid: cdtfc.NodeId,
-        x_vars: cdtfu.NodeColumnList,
-        y_vars: cdtfu.NodeColumnList,
+        nid: cdtfcore.NodeId,
+        x_vars: cdtfutil.NodeColumnList,
+        y_vars: cdtfutil.NodeColumnList,
         trainer_kwargs: Optional[Any] = None,
         estimator_kwargs: Optional[Any] = None,
     ) -> None:
@@ -217,7 +223,7 @@ class DeepARGlobalModel(FitPredictNode):
         # parameters separately from `estimator_kwargs`.
         self._trainer_kwargs = trainer_kwargs
         self._trainer = gtrain.Trainer(**self._trainer_kwargs)
-        dbg.dassert_not_in("trainer", self._estimator_kwargs)
+        hdbg.dassert_not_in("trainer", self._estimator_kwargs)
         #
         self._estimator_func = gmdeep.DeepAREstimator
         # NOTE: Covariates (x_vars) are not required by DeepAR.
@@ -230,9 +236,9 @@ class DeepARGlobalModel(FitPredictNode):
         self._predictor = None
         # We determine `prediction_length` automatically and therefore do not
         # allow it to be set by the user.
-        dbg.dassert_not_in("prediction_length", self._estimator_kwargs)
+        hdbg.dassert_not_in("prediction_length", self._estimator_kwargs)
         #
-        dbg.dassert_in("freq", self._estimator_kwargs)
+        hdbg.dassert_in("freq", self._estimator_kwargs)
         self._freq = self._estimator_kwargs["freq"]
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -248,13 +254,13 @@ class DeepARGlobalModel(FitPredictNode):
 
         then `prediction_length = 2`.
         """
-        dbg.dassert_isinstance(df_in, pd.DataFrame)
-        dbg.dassert_no_duplicates(df_in.columns)
-        x_vars = cdtfu.convert_to_list(self._x_vars)
-        y_vars = cdtfu.convert_to_list(self._y_vars)
+        hdbg.dassert_isinstance(df_in, pd.DataFrame)
+        hdbg.dassert_no_duplicates(df_in.columns)
+        x_vars = cdtfutil.convert_to_list(self._x_vars)
+        y_vars = cdtfutil.convert_to_list(self._y_vars)
         df = df_in.copy()
         # Transform dataflow local timeseries dataframe into gluon-ts format.
-        gluon_train = cdataa.transform_to_gluon(df, x_vars, y_vars, self._freq)
+        gluon_train = cdatadap.transform_to_gluon(df, x_vars, y_vars, self._freq)
         # Set the prediction length to the length of the local timeseries - 1.
         #   - To predict for time t_j at time t_i, t_j > t_i, we need to know
         #     x_vars up to and including time t_j
@@ -271,7 +277,7 @@ class DeepARGlobalModel(FitPredictNode):
         # Apply model predictions to the training set (so that we can evaluate
         # in-sample performance).
         #   - Include all data points up to and including zero (the event time)
-        gluon_test = cdataa.transform_to_gluon(
+        gluon_test = cdatadap.transform_to_gluon(
             df, x_vars, y_vars, self._freq, self._prediction_length
         )
         fit_predictions = list(self._predictor.predict(gluon_test))
@@ -279,7 +285,7 @@ class DeepARGlobalModel(FitPredictNode):
         # dataframe.
         # TODO(Paul): Gluon has built-in functionality to take the mean of
         #     traces, and we might consider using it instead.
-        y_hat_traces = cdataa.transform_from_gluon_forecasts(fit_predictions)
+        y_hat_traces = cdatadap.transform_from_gluon_forecasts(fit_predictions)
         # TODO(Paul): Store the traces / dispersion estimates.
         # Average over all available samples.
         y_hat = y_hat_traces.mean(level=[0, 1])
@@ -304,18 +310,18 @@ class DeepARGlobalModel(FitPredictNode):
         # info["gluon_test"] = list(gluon_test)
         # info["fit_predictions"] = fit_predictions
         df_out = y_hat.to_frame()
-        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfutil.get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        dbg.dassert_isinstance(df_in, pd.DataFrame)
-        dbg.dassert_no_duplicates(df_in.columns)
-        x_vars = cdtfu.convert_to_list(self._x_vars)
-        y_vars = cdtfu.convert_to_list(self._y_vars)
+        hdbg.dassert_isinstance(df_in, pd.DataFrame)
+        hdbg.dassert_no_duplicates(df_in.columns)
+        x_vars = cdtfutil.convert_to_list(self._x_vars)
+        y_vars = cdtfutil.convert_to_list(self._y_vars)
         df = df_in.copy()
         # Transform dataflow local timeseries dataframe into gluon-ts format.
-        gluon_test = cdataa.transform_to_gluon(
+        gluon_test = cdatadap.transform_to_gluon(
             df,
             x_vars,
             y_vars,
@@ -327,7 +333,7 @@ class DeepARGlobalModel(FitPredictNode):
         # dataframe.
         # TODO(Paul): Gluon has built-in functionality to take the mean of
         #     traces, and we might consider using it instead.
-        y_hat_traces = cdataa.transform_from_gluon_forecasts(predictions)
+        y_hat_traces = cdatadap.transform_from_gluon_forecasts(predictions)
         # TODO(Paul): Store the traces / dispersion estimates.
         # Average over all available samples.
         y_hat = y_hat_traces.mean(level=[0, 1])
@@ -352,6 +358,6 @@ class DeepARGlobalModel(FitPredictNode):
         # info["gluon_test"] = list(gluon_test)
         # info["fit_predictions"] = fit_predictions
         df_out = y_hat.to_frame()
-        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfutil.get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}

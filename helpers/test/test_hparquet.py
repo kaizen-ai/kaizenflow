@@ -5,13 +5,13 @@ import random
 
 import pandas as pd
 
-import helpers.hparquet as hhparque
-import helpers.unit_test as huntes
+import helpers.hparquet as hparque
+import helpers.unit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-class TestParquet1(huntes.TestCase):
+class TestParquet1(hunitest.TestCase):
     def test1(self) -> None:
         # Prepare data.
         date = datetime.date(2020, 1, 1)
@@ -20,9 +20,9 @@ class TestParquet1(huntes.TestCase):
         # Save data.
         dir_name = self.get_scratch_space()
         file_name = os.path.join(dir_name, "df.pq")
-        hhparque.to_parquet(df, file_name, log_level=logging.INFO)
+        hparque.to_parquet(df, file_name, log_level=logging.INFO)
         # Read data back.
-        df2 = hhparque.from_parquet(file_name, log_level=logging.INFO)
+        df2 = hparque.from_parquet(file_name, log_level=logging.INFO)
         _LOG.debug("df2=\n%s", df2.head(3))
         # Check.
         self.assert_equal(str(df), str(df2))
@@ -36,10 +36,10 @@ class TestParquet1(huntes.TestCase):
         # Save data.
         dir_name = self.get_scratch_space()
         file_name = os.path.join(dir_name, "df.pq")
-        hhparque.to_parquet(df, file_name, log_level=logging.INFO)
+        hparque.to_parquet(df, file_name, log_level=logging.INFO)
         # Read data back.
         columns = ["val1"]
-        df2 = hhparque.from_parquet(
+        df2 = hparque.from_parquet(
             file_name, columns=columns, log_level=logging.INFO
         )
         _LOG.debug("df2=\n%s", df2.head(3))
@@ -48,6 +48,7 @@ class TestParquet1(huntes.TestCase):
         self.assert_equal(str(df), str(df2))
         self.assertTrue(df.equals(df2))
 
+    # TODO(Nikola): Move away or replace.
     @staticmethod
     def _get_df(date: datetime.date, seed: int = 42) -> pd.DataFrame:
         """

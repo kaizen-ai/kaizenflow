@@ -8,6 +8,10 @@ Run a notebook given a config or a list of configs.
     --config_builder "nlp.build_configs.build_PTask1088_configs()" \
     --dst_dir nlp/test_results \
     --num_threads 2
+
+Import as:
+
+import dev_scripts.notebooks.run_notebook as dsnoruno
 """
 
 import argparse
@@ -16,12 +20,12 @@ import os
 from typing import Optional
 
 import core.config as cconfig
-import core.dataflow_model.utils as cdtfut
-import helpers.datetime_ as hdatetime
-import helpers.dbg as dbg
+import core.dataflow_model.utils as cdtfmouti
+import helpers.datetime_ as hdateti
+import helpers.dbg as hdbg
 import helpers.joblib_helpers as hjoblib
-import helpers.parser as prsr
-import helpers.system_interaction as si
+import helpers.parser as hparser
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -51,7 +55,7 @@ def _run_notebook(
         `None`; otherwise, return `rc`
     """
     _ = incremental
-    cdtfut.setup_experiment_dir(config)
+    cdtfmouti.setup_experiment_dir(config)
     # Prepare the destination file.
     idx = config[("meta", "id")]
     experiment_result_dir = config[("meta", "experiment_result_dir")]
@@ -84,7 +88,7 @@ def _run_notebook(
     # TODO(gp): Repeating a command n-times is an idiom that we could move to
     #  system_interaction.
     # Try running the notebook up to `num_attempts` times.
-    dbg.dassert_lte(1, num_attempts)
+    hdbg.dassert_lte(1, num_attempts)
     rc: Optional[int] = None
     for n in range(1, num_attempts + 1):
         if n > 1:
@@ -94,7 +98,7 @@ def _run_notebook(
                 num_attempts,
             )
         _LOG.info("cmd='%s'", cmd)
-        rc = si.system(cmd, output_file=log_file, abort_on_error=False)
+        rc = hsysinte.system(cmd, output_file=log_file, abort_on_error=False)
         if rc == 0:
             _LOG.info("Running notebook was successful")
             break
@@ -118,9 +122,9 @@ def _run_notebook(
                 + " --action publish"
             )
             log_file = log_file.replace(".log", ".html.log")
-            si.system(cmd, output_file=log_file)
+            hsysinte.system(cmd, output_file=log_file)
         # Mark as success.
-        cdtfut.mark_config_as_success(experiment_result_dir)
+        cdtfmouti.mark_config_as_success(experiment_result_dir)
     return rc
 
 
@@ -129,10 +133,10 @@ def _get_workload(args: argparse.Namespace) -> hjoblib.Workload:
     Prepare the workload using the parameters from command line.
     """
     # Get the configs to run.
-    configs = cdtfut.get_configs_from_command_line(args)
+    configs = cdtfmouti.get_configs_from_command_line(args)
     # Get the notebook file.
     notebook_file = os.path.abspath(args.notebook)
-    dbg.dassert_exists(notebook_file)
+    hdbg.dassert_exists(notebook_file)
     #
     publish = args.publish_notebook
     # Prepare the tasks.
@@ -160,7 +164,7 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     # Add common experiment options.
-    parser = cdtfut.add_experiment_arg(parser, dst_dir_required=True)
+    parser = cdtfmouti.add_experiment_arg(parser, dst_dir_required=True)
     # Add notebook options.
     parser.add_argument(
         "--notebook",
@@ -173,7 +177,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store_true",
         help="Publish each notebook after it executes",
     )
-    parser = prsr.add_verbosity_arg(parser)
+    parser = hparser.add_verbosity_arg(parser)
     # TODO(gp): For some reason, not even this makes mypy happy.
     # cast(argparse.ArgumentParser, parser)
     return parser  # type: ignore
@@ -187,9 +191,9 @@ def _parse() -> argparse.ArgumentParser:
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Create the dst dir.
-    dst_dir, clean_dst_dir = prsr.parse_dst_dir_arg(args)
+    dst_dir, clean_dst_dir = hparser.parse_dst_dir_arg(args)
     _ = clean_dst_dir
     # Prepare the workload.
     workload = _get_workload(args)
@@ -200,7 +204,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     abort_on_error = not args.skip_on_error
     num_attempts = args.num_attempts
     # Prepare the log file.
-    timestamp = hdatetime.get_timestamp("naive_ET")
+    timestamp = hdateti.get_timestamp("naive_ET")
     log_file = os.path.join(dst_dir, f"log.{timestamp}.txt")
     _LOG.info("log_file='%s'", log_file)
     # Execute.
@@ -218,7 +222,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     _LOG.info("log_file='%s'", log_file)
     # TODO(gp): Move this inside the framework.
     # # Report failing experiments.
-    # rc = cdtfut.report_failed_experiments(configs, rcs)
+    # rc = cdtfmouti.report_failed_experiments(configs, rcs)
     # sys.exit(rc)
 
 

@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import core.bayesian as cobayesi
+"""
+
 import logging
 from typing import Any, Union
 

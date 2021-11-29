@@ -5,10 +5,10 @@ import mxnet
 import numpy as np
 import pandas as pd
 
-import core.artificial_signal_generators as casgen
+import core.artificial_signal_generators as carsigen
 import core.config as cconfig
 import helpers.printing as hprint
-import helpers.unit_test as hut
+import helpers.unit_test as hunitest
 from core.dataflow.core import DAG
 from core.dataflow.nodes.gluonts_models import (
     ContinuousDeepArModel,
@@ -26,12 +26,12 @@ _LOG = logging.getLogger(__name__)
 
 if True:
 
-    class TestContinuousDeepArModel(hut.TestCase):
+    class TestContinuousDeepArModel(hunitest.TestCase):
         def test_fit_dag1(self) -> None:
             dag = self._get_dag()
             #
             df_out = dag.run_leq_node("deepar", "fit")["df_out"]
-            df_str = hut.convert_df_to_string(df_out, index=True, decimals=1)
+            df_str = hunitest.convert_df_to_string(df_out, index=True, decimals=1)
             self.check_string(df_str)
 
         def test_predict_dag1(self) -> None:
@@ -39,12 +39,12 @@ if True:
             #
             dag.run_leq_node("deepar", "fit")
             df_out = dag.run_leq_node("deepar", "predict")["df_out"]
-            df_str = hut.convert_df_to_string(df_out, index=True, decimals=1)
+            df_str = hunitest.convert_df_to_string(df_out, index=True, decimals=1)
             self.check_string(df_str)
 
         def _get_dag(self) -> DAG:
             mxnet.random.seed(0)
-            data, _ = casgen.get_gluon_dataset(
+            data, _ = carsigen.get_gluon_dataset(
                 dataset_name="m4_hourly",
                 train_length=100,
                 test_length=1,
@@ -71,7 +71,7 @@ if True:
             dag.connect("data", "deepar")
             return dag
 
-    class TestDeepARGlobalModel(hut.TestCase):
+    class TestDeepARGlobalModel(hunitest.TestCase):
         def test_fit1(self) -> None:
             mxnet.random.seed(0)
             local_ts = self._get_local_ts()
@@ -108,7 +108,7 @@ if True:
             dag.add_node(deepar)
             dag.connect("local_ts", "deepar")
             df_out = dag.run_leq_node("deepar", "fit")["df_out"]
-            df_str = hut.convert_df_to_string(df_out, index=True, decimals=1)
+            df_str = hunitest.convert_df_to_string(df_out, index=True, decimals=1)
             expected_shape = (self._n_periods * (self._grid_len - 1), 1)
             self.assertEqual(df_out.shape, expected_shape)
             self.check_string(df_str)

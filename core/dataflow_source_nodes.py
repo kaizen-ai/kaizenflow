@@ -11,10 +11,10 @@ import pandas as pd
 
 # This file can use `core.dataflow` package since it's an external client.
 import core.dataflow as cdataf
-import core.finance as cfin
-import helpers.datetime_ as hdatetim
+import core.finance as cofinanc
+import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
-import helpers.printing as hprintin
+import helpers.printing as hprint
 import im.kibot as vkibot
 
 _LOG = logging.getLogger(__name__)
@@ -75,7 +75,7 @@ def data_source_node_factory(
 
 
 def _process_timestamp(
-    timestamp: Optional[hdatetim.Datetime],
+    timestamp: Optional[hdateti.Datetime],
 ) -> Optional[pd.Timestamp]:
     if timestamp is pd.NaT:
         timestamp = None
@@ -89,8 +89,8 @@ def load_kibot_data(
     symbol: str,
     frequency: Union[str, vkibot.Frequency],
     contract_type: Union[str, vkibot.ContractType],
-    start_date: Optional[hdatetim.Datetime] = None,
-    end_date: Optional[hdatetim.Datetime] = None,
+    start_date: Optional[hdateti.Datetime] = None,
+    end_date: Optional[hdateti.Datetime] = None,
     nrows: Optional[int] = None,
 ) -> pd.DataFrame:
     frequency = (
@@ -125,8 +125,8 @@ class KibotDataReader(cdataf.DataSource):
         symbol: str,
         frequency: Union[str, vkibot.Frequency],
         contract_type: Union[str, vkibot.ContractType],
-        start_date: Optional[hdatetim.Datetime] = None,
-        end_date: Optional[hdatetim.Datetime] = None,
+        start_date: Optional[hdateti.Datetime] = None,
+        end_date: Optional[hdateti.Datetime] = None,
         nrows: Optional[int] = None,
     ) -> None:
         """
@@ -184,8 +184,8 @@ class KibotColumnReader(cdataf.DataSource):
         frequency: Union[str, vkibot.Frequency],
         contract_type: Union[str, vkibot.ContractType],
         col: str,
-        start_date: Optional[hdatetim.Datetime] = None,
-        end_date: Optional[hdatetim.Datetime] = None,
+        start_date: Optional[hdateti.Datetime] = None,
+        end_date: Optional[hdateti.Datetime] = None,
         nrows: Optional[int] = None,
     ) -> None:
         """
@@ -243,8 +243,8 @@ class KibotEquityReader(cdataf.DataSource):
         nid: cdataf.NodeId,
         symbols: List[str],
         frequency: Union[str, vkibot.Frequency],
-        start_date: Optional[hdatetim.Datetime] = None,
-        end_date: Optional[hdatetim.Datetime] = None,
+        start_date: Optional[hdateti.Datetime] = None,
+        end_date: Optional[hdateti.Datetime] = None,
         nrows: Optional[int] = None,
     ) -> None:
         """
@@ -300,9 +300,9 @@ class KibotEquityReader(cdataf.DataSource):
             # Rename column for volume so that it adheres with our conventions.
             data = data.rename(columns={"vol": "volume"})
             # Print some info about the data.
-            _LOG.debug(hprintin.df_to_short_str("data", data))
+            _LOG.debug(hprint.df_to_short_str("data", data))
             # Ensure data is on a uniform frequency grid.
-            data = cfin.resample_ohlcv_bars(data, rule=self._frequency.value)
+            data = cofinanc.resample_ohlcv_bars(data, rule=self._frequency.value)
             dfs[symbol] = data
         # Create a dataframe with multiindexed columns.
         df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())

@@ -4,7 +4,7 @@ import pandas as pd
 
 import helpers.sql as hsql
 import helpers.unit_test as hunitest
-import im.common.db.create_db as imcdbcrdb
+import im_v2.common.db.utils as imcodbuti
 import im.common.sql_writer as imcosqwri
 
 _LOG = logging.getLogger(__name__)
@@ -21,10 +21,10 @@ class SqlWriterBackendTestCase(hunitest.TestCase):
         self._connection = hsql.get_connection_from_env_vars()
         self._new_db = self._get_test_string()
         # Create database for each test.
-        imcdbcrdb.create_database(
+        imcdbcrdb.create_im_database(
             connection=self._connection,
             new_db=self._new_db,
-            force=True,
+            overwrite=True,
         )
         # Define constant IDs for records across the test.
         self._symbol_id = 10

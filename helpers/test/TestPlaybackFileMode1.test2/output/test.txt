@@ -1,12 +1,12 @@
 # Test created for __main__.plbck_sum.
 
-import helpers.unit_test as huntes
+import helpers.unit_test as hunitest
 import jsonpickle
 import pandas as pd
 import core.config as cconfi
 
 
-class TestPlbckSum(huntes.TestCase):
+class TestPlbckSum(hunitest.TestCase):
     def test1(self) -> None:
         # Define input variables.
         a = 0
@@ -17,7 +17,7 @@ class TestPlbckSum(huntes.TestCase):
         # Check output.
         self.check_string(act)
 
-class TestPlbckSum(huntes.TestCase):
+class TestPlbckSum(hunitest.TestCase):
     def test2(self) -> None:
         # Define input variables.
         a = 1
@@ -28,7 +28,7 @@ class TestPlbckSum(huntes.TestCase):
         # Check output.
         self.check_string(act)
 
-class TestPlbckSum(huntes.TestCase):
+class TestPlbckSum(hunitest.TestCase):
     def test3(self) -> None:
         # Define input variables.
         a = 2
@@ -39,7 +39,7 @@ class TestPlbckSum(huntes.TestCase):
         # Check output.
         self.check_string(act)
 
-class TestPlbckSum(huntes.TestCase):
+class TestPlbckSum(hunitest.TestCase):
     def test4(self) -> None:
         # Define input variables.
         a = 3

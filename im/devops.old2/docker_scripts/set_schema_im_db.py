@@ -11,7 +11,7 @@ Usage:
 
 Import as:
 
-import im.devops.docker_scripts.set_schema_im_db as imddsssimdb
+import im.devops.old2.docker_scripts.set_schema_im_db as imdodsssimd
 """
 import argparse
 import logging
@@ -20,7 +20,7 @@ import os
 import helpers.dbg as hdbg
 import helpers.parser as hparser
 import helpers.sql as hsql
-import im.common.db.create_db as imcdbcrdb
+import im_v2.common.db.utils as imcodbuti
 
 _LOG = logging.getLogger(__name__)
 
@@ -42,14 +42,16 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hdbg.init_logger(verbosity=args.log_level)
     # Verify that the database is available.
     hsql.wait_db_connection(
-        db_name=os.environ["POSTGRES_DB"],
-        port=int(os.environ["POSTGRES_PORT"]),
         host=os.environ["POSTGRES_HOST"],
+        dbname=os.environ["POSTGRES_DB"],
+        port=int(os.environ["POSTGRES_PORT"]),
+        user=os.environ["POSTGRES_USER"],
+        password=os.environ["POSTGRES_PASSWORD"]
     )
     connection = hsql.get_connection_from_env_vars()
     # Set schema for the database.
     _LOG.info("Setting schema for DB `%s`...", os.environ["POSTGRES_DB"])
-    imcdbcrdb.create_all_tables(connection)
+    imcodbuti.create_all_tables(connection)
     _LOG.info("Database `%s` is ready to use.", os.environ["POSTGRES_DB"])
 
 
