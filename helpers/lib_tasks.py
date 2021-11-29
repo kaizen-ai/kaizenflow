@@ -1533,11 +1533,11 @@ def docker_release_dev_image(  # type: ignore
         end_to_end_tests = False
     stage = "local"
     if fast_tests:
-        run_fast_tests(ctx, stage=stage)
+        run_fast_tests(stage=stage)
     if slow_tests:
-        run_slow_tests(ctx, stage=stage)
+        run_slow_tests(stage=stage)
     if superslow_tests:
-        run_superslow_tests(ctx, stage=stage)
+        run_superslow_tests(stage=stage)
     # 3) Run end-to-end test.
     if end_to_end_tests:
         end_to_end_test_fn = get_default_param("END_TO_END_TEST_FN")
@@ -1642,11 +1642,11 @@ def docker_release_prod_image(  # type: ignore
         fast_tests = slow_tests = superslow_tests = False
     stage = "prod"
     if fast_tests:
-        run_fast_tests(ctx, stage=stage)
+        run_fast_tests(stage=stage)
     if slow_tests:
-        run_slow_tests(ctx, stage=stage)
+        run_slow_tests(stage=stage)
     if superslow_tests:
-        run_superslow_tests(ctx, stage=stage)
+        run_superslow_tests(stage=stage)
     # 3) Push prod image.
     if push_to_repo:
         docker_push_prod_image(ctx)
@@ -2027,7 +2027,6 @@ def _select_tests_to_skip(single_test_type: str) -> str:
 
 
 def _run_test_cmd(
-    ctx: Any,
     stage: str,
     cmd: str,
     coverage: bool,
@@ -2071,7 +2070,6 @@ def _run_test_cmd(
 
 
 def _run_tests(
-    ctx: Any,
     stage: str,
     test_type: str,
     pytest_opts: str,
@@ -2094,13 +2092,12 @@ def _run_tests(
         tee_to_file,
     )
     # Execute the command line.
-    _run_test_cmd(ctx, stage, cmd, coverage, collect_only, start_coverage_script)
+    _run_test_cmd(stage, cmd, coverage, collect_only, start_coverage_script)
 
 
 # TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code.
 @task
 def run_fast_tests(  # type: ignore
-    ctx,
     stage=STAGE,
     pytest_opts="",
     pytest_mark="",
@@ -2124,7 +2121,6 @@ def run_fast_tests(  # type: ignore
     """
     _report_task()
     _run_tests(
-        ctx,
         stage,
         "fast_tests",
         pytest_opts,
@@ -2139,7 +2135,6 @@ def run_fast_tests(  # type: ignore
 
 @task
 def run_slow_tests(  # type: ignore
-    ctx,
     stage=STAGE,
     pytest_opts="",
     pytest_mark="",
@@ -2156,7 +2151,6 @@ def run_slow_tests(  # type: ignore
     """
     _report_task()
     _run_tests(
-        ctx,
         stage,
         "slow_tests",
         pytest_opts,
@@ -2171,7 +2165,6 @@ def run_slow_tests(  # type: ignore
 
 @task
 def run_superslow_tests(  # type: ignore
-    ctx,
     stage=STAGE,
     pytest_opts="",
     pytest_mark="",
@@ -2188,7 +2181,6 @@ def run_superslow_tests(  # type: ignore
     """
     _report_task()
     _run_tests(
-        ctx,
         stage,
         "superslow_tests",
         pytest_opts,
@@ -2203,7 +2195,6 @@ def run_superslow_tests(  # type: ignore
 
 @task
 def run_fast_slow_tests(  # type: ignore
-    ctx,
     stage=STAGE,
     pytest_opts="",
     pytest_mark="",
@@ -2220,7 +2211,6 @@ def run_fast_slow_tests(  # type: ignore
     """
     _report_task()
     run_fast_tests(
-        ctx,
         stage,
         pytest_opts,
         pytest_mark,
@@ -2231,7 +2221,6 @@ def run_fast_slow_tests(  # type: ignore
         tee_to_file,
     )
     run_slow_tests(
-        ctx,
         stage,
         pytest_opts,
         pytest_mark,
