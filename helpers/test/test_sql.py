@@ -14,7 +14,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): helpers can't depend from im.
-# @pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
+@pytest.mark.skipif(hgit.is_dev_tools(), reason="Do not run in dev_tools")
 class TestSql1(hunitest.TestCase):
     def setUp(self) -> None:
         """
