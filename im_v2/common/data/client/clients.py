@@ -229,6 +229,9 @@ class MultipleSymbolsClient:
             # Read data for each given full symbol.
             df = self._class.read_data(
                 full_symbol=full_symbol,
+                normalize=True,
+                drop_duplicates=True,
+                resample_to_1_min=True,
                 start_ts=start_ts,
                 end_ts=end_ts,
                 **kwargs,
@@ -246,7 +249,7 @@ class MultipleSymbolsClient:
             # Return results dict if specified.
             ret = full_symbol_to_df
         else:
-            raise ValueError("Invalid mode=%s", self._mode)
+            raise ValueError(f"Invalid mode=`{self._mode}`")
         return ret
 
     # TODO(Grisha/Dan): Decide if we want to also implement other methods of the base class.
