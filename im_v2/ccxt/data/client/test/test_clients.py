@@ -10,8 +10,8 @@ import helpers.sql as hsql
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
 import im.ccxt.db.utils as imccdbuti
-import im_v2.ccxt.data.client.clients as imcdaclcl
-import im_v2.common.data.client.multiple_symbols_client as imvcdcmscl
+import im_v2.ccxt.data.client.clients as imvcdclcl
+import im_v2.common.data.client.clients as ivcdclcl
 
 _AM_S3_ROOT_DIR = os.path.join(hs3.get_path(), "data")
 
@@ -23,11 +23,11 @@ class TestGetFilePath(hunitest.TestCase):
         """
         exchange_id = "binance"
         currency_pair = "ETH_USDT"
-        ccxt_loader = imcdaclcl.CcxtFileSystemClient(
+        ccxt_loader = imvcdclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         actual = ccxt_loader._get_file_path(
-            imcdaclcl._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
+            imvcdclcl._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
         )
         s3_bucket_path = hs3.get_path()
         expected = os.path.join(
@@ -41,7 +41,7 @@ class TestGetFilePath(hunitest.TestCase):
         """
         exchange_id = "unsupported exchange"
         currency_pair = "ADA_USDT"
-        ccxt_loader = imcdaclcl.CcxtFileSystemClient(
+        ccxt_loader = imvcdclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         # TODO(gp): We should throw a different exception, like
@@ -49,7 +49,7 @@ class TestGetFilePath(hunitest.TestCase):
         # TODO(gp): Same change also for CDD test_loader.py
         with self.assertRaises(AssertionError):
             ccxt_loader._get_file_path(
-                imcdaclcl._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
+                imvcdclcl._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
             )
 
     def test3(self) -> None:
@@ -58,13 +58,13 @@ class TestGetFilePath(hunitest.TestCase):
         """
         exchange_id = "binance"
         currency_pair = "unsupported_currency"
-        ccxt_loader = imcdaclcl.CcxtFileSystemClient(
+        ccxt_loader = imvcdclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         # TODO(gp): Same change also for CDD test_loader.py
         with self.assertRaises(AssertionError):
             ccxt_loader._get_file_path(
-                imcdaclcl._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
+                imvcdclcl._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
             )
 
 
@@ -128,7 +128,7 @@ class TestCcxtDbClient(hunitest.TestCase):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Load data with client and check if it is correct.
-        ccxt_db_client = imcdaclcl.CcxtDbClient("ohlcv", self.connection)
+        ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
         df = ccxt_db_client.read_data("binance::BTC_USDT")
         actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
@@ -143,7 +143,7 @@ class TestCcxtDbClient(hunitest.TestCase):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Load data with client and check if it is correct.
-        ccxt_db_client = imcdaclcl.CcxtDbClient("ohlcv", self.connection)
+        ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
         df = ccxt_db_client.read_data(
             "binance::BTC_USDT",
             start_ts=pd.Timestamp("2021-09-08T20:01:00-04:00"),
@@ -215,7 +215,7 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
         """
         Test that files on S3 are being read correctly.
         """
-        ccxt_loader = imcdaclcl.CcxtFileSystemClient(
+        ccxt_loader = imvcdclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         actual = ccxt_loader.read_data("binance::BTC_USDT")
@@ -260,7 +260,7 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
         """
         Test unsupported full symbol.
         """
-        ccxt_loader = imcdaclcl.CcxtFileSystemClient(
+        ccxt_loader = imvcdclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         with self.assertRaises(AssertionError):
@@ -271,7 +271,7 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
         Test unsupported data type.
         """
         with self.assertRaises(AssertionError):
-            imcdaclcl.CcxtFileSystemClient(
+            imvcdclcl.CcxtFileSystemClient(
                 data_type="unsupported_data_type", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
             )
 
@@ -285,10 +285,10 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
         # Set input list of full symbols.
         full_symbols = ["kucoin::XRP_USDT", "gateio::SOL_USDT"]
         # Initialize CCXT file client and pass it to multiple symbols client.
-        ccxt_file_client = imcdaclcl.CcxtFileSystemClient(
+        ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
-        multiple_symbols_client = imvcdcmscl.MultipleSymbolsClient(
+        multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
             class_=ccxt_file_client, mode="concat"
         )
         # Check actual results.
@@ -310,10 +310,10 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
         # Set input list of full symbols.
         full_symbols = ["kucoin::SOL_USDT", "gateio::XRP_USDT"]
         # Initialize CCXT file client and pass it to multiple symbols client.
-        ccxt_file_client = imcdaclcl.CcxtFileSystemClient(
+        ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
-        multiple_symbols_client = imvcdcmscl.MultipleSymbolsClient(
+        multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
             class_=ccxt_file_client, mode="concat"
         )
         # Check output.
@@ -478,8 +478,8 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Initialize CCXT DB client and pass it to multiple symbols client.
-        ccxt_db_client = imcdaclcl.CcxtDbClient("ohlcv", self.connection)
-        multiple_symbols_client = imvcdcmscl.MultipleSymbolsClient(
+        ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
+        multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
             class_=ccxt_db_client, mode="concat"
         )
         # Check actual results.
@@ -506,8 +506,8 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Initialize CCXT DB client and pass it to multiple symbols client.
-        ccxt_db_client = imcdaclcl.CcxtDbClient("ohlcv", self.connection)
-        multiple_symbols_client = imvcdcmscl.MultipleSymbolsClient(
+        ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
+        multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
             class_=ccxt_db_client, mode="concat"
         )
         # Check output.
