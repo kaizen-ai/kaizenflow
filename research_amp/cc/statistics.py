@@ -16,7 +16,7 @@ import core.statistics as costatis
 import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
 import im.cryptodatadownload.data.load.loader as icdalolo
-import im_v2.ccxt.data.client.clients as imcdaclcl
+import im_v2.ccxt.data.client.clients as imvcdclcl
 import im_v2.common.data.client as imcdacli
 
 _LOG = logging.getLogger(__name__)
@@ -203,7 +203,7 @@ def get_loader_for_vendor(
     """
     vendor = config["data"]["vendor"]
     if vendor == "CCXT":
-        loader = imcdaclcl.CcxtFileSystemClient(
+        loader = imvcdclcl.CcxtFileSystemClient(
             data_type=config["data"]["data_type"],
             root_dir=config["load"]["data_dir"],
             aws_profile=config["load"]["aws_profile"],
