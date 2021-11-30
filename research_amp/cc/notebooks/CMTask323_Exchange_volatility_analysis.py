@@ -26,7 +26,7 @@ import statsmodels.tsa.stattools as smtools
 import core.config.config_ as cconconf
 import core.plotting as coplotti
 import helpers.s3 as hs3
-import im_v2.common.universe.universe as imvcounun
+import im_v2.ccxt.universe.universe as imvccunun
 import research_amp.cc.statistics as rccstat
 
 # %% [markdown]
@@ -247,7 +247,7 @@ type(18)
 
 # %% run_control={"marked": false}
 frequency = "1D"
-universe = imvcounun.get_vendor_universe("v03")
+universe = imvccunun.get_vendor_universe("v03")
 compute_daily_vix_ema = lambda data: compute_volatility_for_each_coin(
     data, freq=frequency, span=18
 )

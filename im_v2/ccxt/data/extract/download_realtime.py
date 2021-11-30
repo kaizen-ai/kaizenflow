@@ -39,7 +39,7 @@ import helpers.io_ as hio
 import helpers.parser as hparser
 import helpers.sql as hsql
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
-import im_v2.common.universe.universe as imvcounun
+import im_v2.ccxt.universe.universe as imvccunun
 
 _LOG = logging.getLogger(__name__)
 
@@ -208,7 +208,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Connect to database.
     connection = hsql.get_connection_from_env_vars()
     # Load universe.
-    universe = imvcounun.get_trade_universe(args.universe)
+    universe = imvccunun.get_trade_universe(args.universe)
     exchange_ids = universe["CCXT"].keys()
     # Build mappings from exchange ids to classes and currencies.
     exchanges = []
