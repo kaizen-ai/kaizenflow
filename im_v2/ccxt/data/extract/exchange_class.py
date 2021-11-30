@@ -150,18 +150,16 @@ class CcxtExchange:
         :param curr_pair: a currency pair, e.g. 'BTC/USDT'
         :return: order book status. output is a nested dictionary with order book
         at the moment of request. E.g.,
-        ```
-        {
-            'symbol': 'BTC/USDT',
-            'bids': [[62715.84, 0.002], [62714.0, 0.002], [62712.55, 0.0094]],
-            'asks': [[62715.85, 0.002], [62717.25, 0.1674]],
-            'timestamp': 1635248738159,
-            'datetime': '2021-10-26T11:45:38.159Z',
-            'nonce': None
-        }
-        ```
-
-        :param curr_pair: a currency pair, e.g. 'BTC_USDT'
+            ```
+            {
+                'symbol': 'BTC/USDT',
+                'bids': [[62715.84, 0.002], [62714.0, 0.002], [62712.55, 0.0094]],
+                'asks': [[62715.85, 0.002], [62717.25, 0.1674]],
+                'timestamp': 1635248738159,
+                'datetime': '2021-10-26T11:45:38.159Z',
+                'nonce': None
+            }
+            ```
         """
         # Change currency pair to CCXT format.
         curr_pair = curr_pair.replace("_", "/")
