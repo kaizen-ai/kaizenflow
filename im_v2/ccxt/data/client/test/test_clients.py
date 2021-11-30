@@ -68,6 +68,9 @@ class TestGetFilePath(hunitest.TestCase):
             )
 
 
+# #############################################################################
+
+
 @pytest.mark.skipif(hgit.is_lime(), reason="lime doesn't have dind support")
 class TestCcxtDbClient(hunitest.TestCase):
     def setUp(self) -> None:
@@ -207,6 +210,9 @@ class TestCcxtDbClient(hunitest.TestCase):
         return test_data
 
 
+# #############################################################################
+
+
 # TODO(*): Consider to factor out the class calling in a `def _get_loader()`.
 class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
     @pytest.mark.slow("8 seconds.")
@@ -275,6 +281,9 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
                 root_dir=_AM_S3_ROOT_DIR,
                 aws_profile="am",
             )
+
+
+# #############################################################################
 
 
 # TODO(gp): `dind` should not be needed for that.
@@ -447,6 +456,9 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
             # Check the output values.
             actual_string = hunitest.convert_df_to_json_string(actual)
             self.check_string(actual_string)
+
+
+# #############################################################################
 
 
 @pytest.mark.skipif(hgit.is_lime(), reason="lime doesn't have dind support")
@@ -712,3 +724,35 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
             # Check the output values.
             actual_string = hunitest.convert_df_to_json_string(actual.reset_index())
             self.check_string(actual_string)
+
+
+# #############################################################################
+
+
+class TestGetTimestamp(hunitest.TestCase):
+    @pytest.mark.slow("7 seconds.")
+    def test_get_start_ts(self) -> None:
+        """
+        Test that the earliest timestamp available is computed correctly.
+        """
+        ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
+            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+        )
+        start_ts = ccxt_file_client.get_start_ts_available("binance::DOGE_USDT")
+        expected_start_ts = pd.to_datetime("2019-07-05 12:00:00", utc=True)
+        self.assertEqual(start_ts, expected_start_ts)
+
+    @pytest.mark.slow("7 seconds.")
+    def test_get_end_ts(self) -> None:
+        """
+        Test that the latest timestamp available is computed correctly.
+        """
+        ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
+            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+        )
+        end_ts = ccxt_file_client.get_end_ts_available("binance::DOGE_USDT")
+        expected_end_ts = pd.to_datetime("2021-09-16 09:19:00", utc=True)
+        self.assertEqual(end_ts, expected_end_ts)
+
+
+# #############################################################################

@@ -118,9 +118,9 @@ class AbstractImClient(abc.ABC):
         """
         Return the earliest timestamp available for a given `FullSymbol`.
         """
-        data = self.read_data(full_symbol)
+        data = self.read_data(full_symbol, normalize=True)
         # It is assumed that timestamp is always stored as index.
-        start_ts = data.index.max()
+        start_ts = data.index.min()
         return start_ts
 
     def get_end_ts_available(
@@ -129,9 +129,9 @@ class AbstractImClient(abc.ABC):
         """
         Return the latest timestamp available for a given `FullSymbol`.
         """
-        data = self.read_data(full_symbol)
+        data = self.read_data(full_symbol, normalize=True)
         # It is assumed that timestamp is always stored as index.
-        end_ts = data.index.min()
+        end_ts = data.index.max()
         return end_ts
 
     @abc.abstractmethod
