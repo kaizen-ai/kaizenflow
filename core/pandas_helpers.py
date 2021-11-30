@@ -276,6 +276,7 @@ def _get_local_or_s3_stream(file_name: str, *args: Any, **kwargs: Any):
     return stream, args, kwargs
 
 
+# TODO(gp): -> read_csv_to_df
 def read_csv(file_name: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
     """
     Read a CSV file into a `pd.DataFrame` handling the S3 profile, if needed.
@@ -295,6 +296,7 @@ def read_csv(file_name: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
     return df
 
 
+# TODO(gp): -> read_parquet_to_df
 def read_parquet(file_name: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
     """
     Read a Parquet file into a `pd.DataFrame` handling the S3 profile, if

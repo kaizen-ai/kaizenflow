@@ -4,16 +4,18 @@ Script to download historical data from CCXT.
 
 Use as:
 
-# Download data from 2019-01-01 to now, for latest trade universe:
+# Download data from 2019-01-01 to now, for trading universe `v03`
 > download_historical.py \
      --dst_dir 'test' \
      --universe 'v03' \
-     --start_datetime '2019-01-01' \
+     --start_datetime '2019-01-01'
 
 Import as:
 
-import im_v2.ccxt.data.extract.download_historical as imcdedohi
+import im_v2.ccxt.data.extract.download_historical as imvcdedohi
 """
+
+# TODO(gp): -> download_historical_data.py
 
 import argparse
 import logging
@@ -25,8 +27,8 @@ import pandas as pd
 import helpers.dbg as hdbg
 import helpers.io_ as hio
 import helpers.parser as hparser
-import im_v2.ccxt.data.extract.exchange_class as imcdeexcl
-import im_v2.common.universe.universe as imvcounun
+import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
+import im_v2.ccxt.universe.universe as imvccunun
 
 _LOG = logging.getLogger(__name__)
 
@@ -47,7 +49,7 @@ def _parse() -> argparse.ArgumentParser:
         "--api_keys",
         action="store",
         type=str,
-        default=imcdeexcl.API_KEYS_PATH,
+        default=imvcdeexcl.API_KEYS_PATH,
         help="Path to JSON file that contains API keys for exchange access",
     )
     parser.add_argument(
@@ -96,24 +98,26 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Create the directory.
     hio.create_dir(args.dst_dir, incremental=args.incremental)
-    # Pick start and end datetime.
+    # Handle start and end datetime.
     start_datetime = pd.Timestamp(args.start_datetime)
     if not args.end_datetime:
-        # If end datetime is not provided, get current time.
+        # If end datetime is not provided, use the current time.
         end_datetime = pd.Timestamp.now()
     else:
         end_datetime = pd.Timestamp(args.end_datetime)
     # Load trading universe.
     if args.universe == "latest":
-        trade_universe = imvcounun.get_trade_universe()["CCXT"]
+        trade_universe = imvccunun.get_trade_universe()["CCXT"]
     else:
-        trade_universe = imvcounun.get_trade_universe(args.universe)["CCXT"]
+        # Retrieve data.
+        trade_universe = imvccunun.get_trade_universe(args.universe)["CCXT"]
     _LOG.info("Getting data for exchanges %s", ", ".join(trade_universe.keys()))
     for exchange_id in trade_universe:
         # Initialize the exchange class.
-        exchange = imcdeexcl.CcxtExchange(
+        exchange = imvcdeexcl.CcxtExchange(
             exchange_id, api_keys_path=args.api_keys
         )
+        # TODO(gp): -> currency_pair
         for pair in trade_universe[exchange_id]:
             _LOG.info(pair)
             # Download OHLCV data.

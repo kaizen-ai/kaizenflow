@@ -30,7 +30,7 @@ import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprint
 import helpers.s3 as hs3
-import im_v2.common.universe.universe as imvcounun
+import im_v2.ccxt.universe.universe as imvccunun
 import research_amp.cc.statistics as rccstat
 
 # %%
@@ -80,7 +80,7 @@ print(config)
 # ## Per exchange id and currency pair for a specified vendor
 
 # %%
-vendor_universe = imvcounun.get_vendor_universe(
+vendor_universe = imvccunun.get_vendor_universe(
     config["data"]["universe_version"], config["data"]["vendor"]
 )
 vendor_universe
