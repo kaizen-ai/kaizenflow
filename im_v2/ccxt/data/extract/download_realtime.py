@@ -29,10 +29,8 @@ import argparse
 import collections
 import logging
 import os
-import time
 from typing import Any, Dict, List, NamedTuple, Optional, Union
 
-import ccxt
 import pandas as pd
 
 import helpers.datetime_ as hdateti
@@ -203,23 +201,21 @@ def _main(parser: argparse.ArgumentParser) -> None:
         id_col_name="id",
         column_names=["timestamp", "exchange_id", "currency_pair"],
     )
-    # Launch an infinite loop.
-    while True:
-        for exchange in exchanges:
-            for pair in exchange.pairs:
-                pair_data = _download_data(args.data_type, exchange, pair)
-                # Save to disk.
-                _save_data_on_disk(
-                    args.data_type, args.dst_dir, pair_data, exchange, pair
-                )
-                hsql.execute_insert_query(
-                    connection=connection,
-                    obj=pair_data,
-                    table_name=args.table_name,
-                )
-                # Drop duplicates inside the table.
-                connection.cursor().execute(dup_query)
-        time.sleep(60)
+    # Download data for specified time period.
+    for exchange in exchanges:
+        for pair in exchange.pairs:
+            pair_data = _download_data(args.data_type, exchange, pair)
+            # Save to disk.
+            _save_data_on_disk(
+                args.data_type, args.dst_dir, pair_data, exchange, pair
+            )
+            hsql.execute_insert_query(
+                connection=connection,
+                obj=pair_data,
+                table_name=args.table_name,
+            )
+            # Drop duplicates inside the table.
+            connection.cursor().execute(dup_query)
 
 
 if __name__ == "__main__":
