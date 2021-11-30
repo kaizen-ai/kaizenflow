@@ -27,7 +27,7 @@ import helpers.env as henv
 import helpers.printing as hprint
 import helpers.s3 as hs3
 import im_v2.ccxt.data.client.clients as imvcdclcl
-import im_v2.common.universe.universe as imvcounun
+import im_v2.ccxt.universe.universe as imvccunun
 import research_amp.cc.statistics as ramccsta
 import research_amp.cc.volume as ramccvol
 
@@ -75,7 +75,7 @@ print(config)
 # # Load the data
 
 # %%
-vendor_universe = imvcounun.get_vendor_universe(
+vendor_universe = imvccunun.get_vendor_universe(
     config["data"]["universe_version"], config["data"]["vendor"]
 )
 vendor_universe
@@ -204,10 +204,10 @@ def plot_ath_volumes_comparison(df_list):
 
 # %%
 # get the list of all coin paires for each exchange
-binance_coins = imvcounun.get_trade_universe("v03")["CCXT"]["binance"]
-ftx_coins = imvcounun.get_trade_universe("v03")["CCXT"]["ftx"]
-gateio_coins = imvcounun.get_trade_universe("v03")["CCXT"]["gateio"]
-kucoin_coins = imvcounun.get_trade_universe("v03")["CCXT"]["kucoin"]
+binance_coins = imvccunun.get_trade_universe("v03")["CCXT"]["binance"]
+ftx_coins = imvccunun.get_trade_universe("v03")["CCXT"]["ftx"]
+gateio_coins = imvccunun.get_trade_universe("v03")["CCXT"]["gateio"]
+kucoin_coins = imvccunun.get_trade_universe("v03")["CCXT"]["kucoin"]
 
 # load all the dataframes
 binance_1 = get_initial_df_with_volumes(
