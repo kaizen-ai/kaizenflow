@@ -22,11 +22,19 @@ API_KEYS_PATH = "/data/shared/data/API_keys.json"
 
 
 class CcxtExchange:
+    """
+    A class for accessing CCXT exchange data.
+
+    This class implements an access layer that:
+    - logs into an exchange using the proper credentials
+    - retrieves data in multiple chunks to avoid throttling
+    """
+
     def __init__(
         self, exchange_id: str, api_keys_path: Optional[str] = None
     ) -> None:
         """
-        Create a class for accessing CCXT exchange data.
+        Constructor.
 
         :param: exchange_id: CCXT exchange id
         :param: api_keys_path: path to JSON file with API credentials
@@ -38,7 +46,7 @@ class CcxtExchange:
 
     def load_api_credentials(self) -> Dict[str, Dict[str, Union[str, bool]]]:
         """
-        Load JSON file with available CCXT credentials.
+        Load JSON file with available CCXT credentials for all exchanges.
 
         :return: JSON file with API credentials
         """
@@ -48,7 +56,7 @@ class CcxtExchange:
 
     def log_into_exchange(self) -> ccxt.Exchange:
         """
-        Log into exchange via CCXT, returning the corresponding Exchange
+        Log into an exchange via CCXT, returning the corresponding `ccxt.Exchange`
         object.
         """
         # Load all the exchange credentials.
@@ -71,14 +79,16 @@ class CcxtExchange:
         )
         return exchange
 
+    # TODO(gp): -> get_exchange_currency_pairs
     def get_exchange_currencies(self) -> List[str]:
         """
-        Get all the currency pairs available for exchange.
+        Get all the currency pairs available for the exchange.
         """
         return list(self._exchange.load_markets().keys())
 
     def download_ohlcv_data(
         self,
+        # TODO(gp): -> currency_pair
         curr_symbol: str,
         start_datetime: Optional[pd.Timestamp] = None,
         end_datetime: Optional[pd.Timestamp] = None,
@@ -135,11 +145,11 @@ class CcxtExchange:
 
     def download_order_book(self, curr_pair: str) -> Dict[str, Any]:
         """
-        Download order book for the currency pair.
+        Download order book for a currency pair.
 
-        The output is a nested dictionary with order book at the moment of
-        request.
-        Example of an order book:
+        :param curr_pair: a currency pair, e.g. 'BTC/USDT'
+        :return: order book status. output is a nested dictionary with order book
+        at the moment of request. E.g.,
         ```
         {
             'symbol': 'BTC/USDT',
@@ -152,7 +162,6 @@ class CcxtExchange:
         ```
 
         :param curr_pair: a currency pair, e.g. 'BTC_USDT'
-        :return:
         """
         # Change currency pair to CCXT format.
         curr_pair = curr_pair.replace("_", "/")
@@ -165,13 +174,14 @@ class CcxtExchange:
 
     def _fetch_ohlcv(
         self,
+        # TODO(gp): -> currency_pair
         symbol: str,
         timeframe: str = "1m",
         since: int = None,
         step: int = None,
     ) -> pd.DataFrame:
         """
-        Wrapper for one minute OHLCV bars.
+        Wrapper for fetching one minute OHLCV bars.
 
         :param symbol: A currency pair, e.g. "BTC_USDT"
         :param timeframe: fetch data for certain timeframe

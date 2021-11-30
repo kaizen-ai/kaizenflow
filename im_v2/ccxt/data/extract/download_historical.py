@@ -4,16 +4,18 @@ Script to download historical data from CCXT.
 
 Use as:
 
-# Download data from 2019-01-01 to now, for latest trade universe:
+# Download data from 2019-01-01 to now, for trading universe `v03`
 > download_historical.py \
      --dst_dir 'test' \
      --universe 'v03' \
-     --start_datetime '2019-01-01' \
+     --start_datetime '2019-01-01'
 
 Import as:
 
 import im_v2.ccxt.data.extract.download_historical as imcdedohi
 """
+
+# TODO(gp): -> download_historical_data.py
 
 import argparse
 import logging
@@ -96,10 +98,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Create the directory.
     hio.create_dir(args.dst_dir, incremental=args.incremental)
-    # Pick start and end datetime.
+    # Handle start and end datetime.
     start_datetime = pd.Timestamp(args.start_datetime)
     if not args.end_datetime:
-        # If end datetime is not provided, get current time.
+        # If end datetime is not provided, use the current time.
         end_datetime = pd.Timestamp.now()
     else:
         end_datetime = pd.Timestamp(args.end_datetime)
@@ -107,6 +109,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if args.universe == "latest":
         trade_universe = imvcounun.get_trade_universe()["CCXT"]
     else:
+        # Retrieve data.
         trade_universe = imvcounun.get_trade_universe(args.universe)["CCXT"]
     _LOG.info("Getting data for exchanges %s", ", ".join(trade_universe.keys()))
     for exchange_id in trade_universe:
@@ -114,6 +117,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         exchange = imcdeexcl.CcxtExchange(
             exchange_id, api_keys_path=args.api_keys
         )
+        # TODO(gp): -> currency_pair
         for pair in trade_universe[exchange_id]:
             _LOG.info(pair)
             # Download OHLCV data.

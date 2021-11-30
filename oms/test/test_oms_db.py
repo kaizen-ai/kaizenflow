@@ -178,7 +178,7 @@ def _get_row3() -> pd.Series:
     return srs
 
 
-@pytest.mark.skipif(hgit.is_dev_tools(), reason="Do not run in dev_tools")
+@pytest.mark.skipif(hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support")
 class TestOmsDb1(_TestOmsDbHelper):
     def test_up1(self) -> None:
         """
@@ -234,7 +234,7 @@ class TestOmsDb1(_TestOmsDbHelper):
         self.assert_equal(act, exp, fuzzy_match=True)
 
 
-@pytest.mark.skipif(hgit.is_dev_tools(), reason="Do not run in dev_tools")
+@pytest.mark.skipif(hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support")
 class TestOmsDb2(_TestOmsDbHelper):
     def wait_for_table_helper(self, coroutines):
         oomsdb.create_target_files_table(self.connection, incremental=False)
