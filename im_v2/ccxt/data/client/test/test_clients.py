@@ -722,7 +722,9 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         )
         if check_string:
             # Check the output values.
-            actual_string = hunitest.convert_df_to_json_string(actual.reset_index())
+            actual_string = hunitest.convert_df_to_json_string(
+                actual.reset_index()
+            )
             self.check_string(actual_string)
 
 
@@ -756,6 +758,7 @@ class TestGetTimestamp(hunitest.TestCase):
 
 
 # #############################################################################
+
 
 class TestGetUniverse(hunitest.TestCase):
     def test1(self) -> None:

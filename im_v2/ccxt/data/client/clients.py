@@ -16,8 +16,8 @@ import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.s3 as hs3
 import helpers.sql as hsql
-import im_v2.common.data.client as imvcdcli
 import im_v2.ccxt.universe.universe as imvccunun
+import im_v2.common.data.client as imvcdcli
 
 _LOG = logging.getLogger(__name__)
 

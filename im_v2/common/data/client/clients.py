@@ -112,9 +112,7 @@ class AbstractImClient(abc.ABC):
             self._dassert_is_valid(data)
         return data
 
-    def get_start_ts_available(
-        self, full_symbol: FullSymbol
-    ) -> pd.Timestamp:
+    def get_start_ts_available(self, full_symbol: FullSymbol) -> pd.Timestamp:
         """
         Return the earliest timestamp available for a given `FullSymbol`.
         """
@@ -124,9 +122,7 @@ class AbstractImClient(abc.ABC):
         start_ts = data.index.min()
         return start_ts
 
-    def get_end_ts_available(
-        self, full_symbol: FullSymbol
-    ) -> pd.Timestamp:
+    def get_end_ts_available(self, full_symbol: FullSymbol) -> pd.Timestamp:
         """
         Return the latest timestamp available for a given `FullSymbol`.
         """
