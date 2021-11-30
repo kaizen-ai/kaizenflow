@@ -118,6 +118,7 @@ class AbstractImClient(abc.ABC):
         """
         Return the earliest timestamp available for a given `FullSymbol`.
         """
+        # TODO(Grisha): add caching.
         data = self.read_data(full_symbol, normalize=True)
         # It is assumed that timestamp is always stored as index.
         start_ts = data.index.min()
@@ -129,6 +130,7 @@ class AbstractImClient(abc.ABC):
         """
         Return the latest timestamp available for a given `FullSymbol`.
         """
+        # TODO(Grisha): add caching.
         data = self.read_data(full_symbol, normalize=True)
         # It is assumed that timestamp is always stored as index.
         end_ts = data.index.max()
