@@ -7,11 +7,7 @@ import im_v2.common.data.client.clients as ivcdclcl
 import abc
 import logging
 import re
-<<<<<<< HEAD:im_v2/common/data/client/abstract_data_loader.py
-from typing import Any, Dict, List, Optional, Tuple
-=======
 from typing import Any, Dict, List, Optional, Tuple, Union
->>>>>>> master:im_v2/common/data/client/clients.py
 
 import pandas as pd
 

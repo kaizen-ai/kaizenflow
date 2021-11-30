@@ -17,7 +17,7 @@ import helpers.dbg as hdbg
 import helpers.s3 as hs3
 import helpers.sql as hsql
 import im_v2.common.data.client as imvcdcli
-import im_v2.common.universe.universe as unv
+import im_v2.ccxt.universe.universe as imvccunun
 
 _LOG = logging.getLogger(__name__)
 
@@ -44,10 +44,7 @@ class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
         """
         Return CCXT universe as full symbols.
         """
-        universe = unv.get_vendor_universe(
-            version=unv._LATEST_UNIVERSE_VERSION,
-            vendor="CCXT",
-        )
+        universe = imvccunun.get_vendor_universe(vendor="CCXT")
         return universe
 
     def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
