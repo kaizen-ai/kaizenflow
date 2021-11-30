@@ -1710,7 +1710,8 @@ def docker_build_prod_image(  # type: ignore
     """
     _report_task()
     _dassert_is_version_valid(version)
-    image_prod = get_image(base_image, "prod", version)
+    #
+    image_prod = get_image(base_image, "prod", None)
     #
     _dassert_is_image_name_valid(image_prod)
     dockerfile = "devops/docker_build/prod.Dockerfile"
@@ -1729,6 +1730,10 @@ def docker_build_prod_image(  # type: ignore
         --build-arg VERSION={version} \
         .
     """
+    _run(ctx, cmd)
+    #
+    image_versioned_prod = get_image(base_image, "prod", version)
+    cmd = f"docker tag {image_prod} {image_versioned_prod}"
     _run(ctx, cmd)
     #
     cmd = f"docker image ls {image_prod}"
