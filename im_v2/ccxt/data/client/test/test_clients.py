@@ -68,6 +68,9 @@ class TestGetFilePath(hunitest.TestCase):
             )
 
 
+# #############################################################################
+
+
 @pytest.mark.skipif(
     hgit.is_dev_tools() or hgit.is_lime(),
     reason="lime and dev_tools doesn't have dind support",
@@ -196,6 +199,7 @@ class TestCcxtDbClient(hunitest.TestCase):
                 "created_at",
             ],
             # fmt: off
+            # pylint: disable=line-too-long
             data=[
                 [1, 1631145600000, 30, 40, 50, 60, 70, "BTC_USDT", "binance", pd.Timestamp("2021-09-09")],
                 [2, 1631145660000, 31, 41, 51, 61, 71, "BTC_USDT", "binance", pd.Timestamp("2021-09-09")],
@@ -205,9 +209,13 @@ class TestCcxtDbClient(hunitest.TestCase):
                 [6, 1631145900000, 34, 44, 54, 64, 74, "BTC_USDT", "kucoin", pd.Timestamp("2021-09-09")],
                 [7, 1631145960000, 34, 44, 54, 64, 74, "ETH_USDT", "binance", pd.Timestamp("2021-09-09")],
             ]
+            # pylint: enable=line-too-long
             # fmt: on
         )
         return test_data
+
+
+# #############################################################################
 
 
 # TODO(*): Consider to factor out the class calling in a `def _get_loader()`.
@@ -278,6 +286,9 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
                 root_dir=_AM_S3_ROOT_DIR,
                 aws_profile="am",
             )
+
+
+# #############################################################################
 
 
 # TODO(gp): `dind` should not be needed for that.
@@ -453,6 +464,9 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
             # Check the output values.
             actual_string = hunitest.convert_df_to_json_string(actual)
             self.check_string(actual_string)
+
+
+# #############################################################################
 
 
 @pytest.mark.skipif(
@@ -673,6 +687,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
                 "created_at",
             ],
             # fmt: off
+            # pylint: disable=line-too-long
             data=[
                 [1, 1631145600000, 30, 40, 50, 60, 70, "XRP_USDT", "gateio", pd.Timestamp("2021-09-09")],
                 [2, 1631145660000, 31, 41, 51, 61, 71, "XRP_USDT", "gateio", pd.Timestamp("2021-09-09")],
@@ -682,6 +697,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
                 [6, 1631145900000, 34, 44, 54, 64, 74, "XRP_USDT", "gateio", pd.Timestamp("2021-09-09")],
                 [7, 1631145960000, 34, 44, 54, 64, 74, "ETH_USDT", "binance", pd.Timestamp("2021-09-09")],
             ]
+            # pylint: enable=line-too-long
             # fmt: on
         )
         return test_data
@@ -723,3 +739,65 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
                 actual.reset_index()
             )
             self.check_string(actual_string)
+
+
+# #############################################################################
+
+
+class TestGetTimestamp(hunitest.TestCase):
+    @pytest.mark.slow("7 seconds.")
+    def test_get_start_ts(self) -> None:
+        """
+        Test that the earliest timestamp available is computed correctly.
+        """
+        ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
+            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+        )
+        start_ts = ccxt_file_client.get_start_ts_available("binance::DOGE_USDT")
+        expected_start_ts = pd.to_datetime("2019-07-05 12:00:00", utc=True)
+        self.assertEqual(start_ts, expected_start_ts)
+
+    @pytest.mark.slow("7 seconds.")
+    def test_get_end_ts(self) -> None:
+        """
+        Test that the latest timestamp available is computed correctly.
+        """
+        ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
+            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+        )
+        end_ts = ccxt_file_client.get_end_ts_available("binance::DOGE_USDT")
+        expected_end_ts = pd.to_datetime("2021-09-16 09:19:00", utc=True)
+        # TODO(Grisha): use `assertGreater` when start downloading more data.
+        self.assertEqual(end_ts, expected_end_ts)
+
+
+# #############################################################################
+
+
+class TestGetUniverse(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test that CCXT universe is computed correctly.
+        """
+        ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
+            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+        )
+        universe = ccxt_file_client.get_universe()
+        # Check the length of the universe.
+        self.assertEqual(len(universe), 38)
+        # Check the first elements of the universe.
+        first_elements = universe[:3]
+        first_elements_expected = [
+            "binance::ADA_USDT",
+            "binance::AVAX_USDT",
+            "binance::BNB_USDT",
+        ]
+        self.assertEqual(first_elements, first_elements_expected)
+        # Check the last elements of the universe.
+        last_elements = universe[-3:]
+        last_elements_expected = [
+            "kucoin::LINK_USDT",
+            "kucoin::SOL_USDT",
+            "kucoin::XRP_USDT",
+        ]
+        self.assertEqual(last_elements, last_elements_expected)
