@@ -44,7 +44,7 @@ import im_v2.common.universe.universe as imvcounun
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(Danya): Create a type and move outside.
+# TODO(Danya): Move instantation outside, e.g. into Airflow wrapper.
 def _instantiate_exchange(
     exchange_id: str,
     ccxt_universe: Dict[str, List[str]],
@@ -67,11 +67,17 @@ def _instantiate_exchange(
 
 
 def _download_data(
-    data_type: str, exchange: NamedTuple, pair: str
+    start_datetime: pd.Timestamp,
+    end_datetime: pd.Timestamp,
+    data_type: str,
+    exchange: NamedTuple,
+    pair: str,
 ) -> Union[pd.DataFrame, Dict[str, Any]]:
     """
     Download order book or OHLCV data.
 
+    :param start_datetime: start of time period, e.g. `pd.Timestamp("2021-01-01")`
+    :param start_datetime: end of time period, e.g. `pd.Timestamp("2021-01-01")`
     :param data_type: 'ohlcv' or 'orderbook'
     :param exchange: exchange instance
     :param pair: currency pair, e.g. 'BTC_USDT'
@@ -80,7 +86,9 @@ def _download_data(
     # Download 5 latest OHLCV candles.
     if data_type == "ohlcv":
         pair_data = exchange.instance.download_ohlcv_data(
-            curr_symbol=pair, step=5
+            start_datetime=start_datetime,
+            end_datetime=end_datetime,
+            curr_symbol=pair,
         )
         # Assign pair and exchange columns.
         pair_data["currency_pair"] = pair
@@ -140,6 +148,20 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
+        "--start_datetime",
+        action="store",
+        required=True,
+        type=str,
+        help="Beginning of the downloaded period",
+    )
+    parser.add_argument(
+        "--end_datetime",
+        action="store",
+        required=True,
+        type=str,
+        help="End of the downloaded period",
+    )
+    parser.add_argument(
         "--dst_dir",
         action="store",
         required=True,
@@ -182,8 +204,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Create the directory.
-    if args.dst_dir:
-        hio.create_dir(args.dst_dir, incremental=args.incremental)
+    hio.create_dir(args.dst_dir, incremental=args.incremental)
     # Connect to database.
     connection = hsql.get_connection_from_env_vars()
     # Load universe.
@@ -201,10 +222,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
         id_col_name="id",
         column_names=["timestamp", "exchange_id", "currency_pair"],
     )
+    # Convert timestamps.
+    start = hdateti.to_generalized_datetime(args.start_datetime)
+    end = hdateti.to_generalized_datetime(args.end_datetime)
     # Download data for specified time period.
     for exchange in exchanges:
         for pair in exchange.pairs:
-            pair_data = _download_data(args.data_type, exchange, pair)
+            pair_data = _download_data(start, end, args.data_type, exchange, pair)
             # Save to disk.
             _save_data_on_disk(
                 args.data_type, args.dst_dir, pair_data, exchange, pair
