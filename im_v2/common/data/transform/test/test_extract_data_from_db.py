@@ -12,9 +12,6 @@ import im.ccxt.db.utils as imccdbuti
 
 
 class TestExtractDataFromDb1(hunitest.TestCase):
-    # TODO(Nikola): Init on slow test job run instead in each test ?
-    #   Unify set/tear in one place instead repeating setup with credentials.
-    #   Maybe as alternative approach use SQLite in memory as alternative ?
     def setUp(self) -> None:
         """
         Initialize the test database inside test container.
@@ -34,6 +31,12 @@ class TestExtractDataFromDb1(hunitest.TestCase):
         port = 5432
         user = "aljsdalsd"
         password = "alsdkqoen"
+        # TODO(Nikola): Remove eventually.
+        os.environ["POSTGRES_HOST"] = host
+        os.environ["POSTGRES_DB"] = dbname
+        os.environ["POSTGRES_PORT"] = str(port)
+        os.environ["POSTGRES_USER"] = user
+        os.environ["POSTGRES_PASSWORD"] = password
         hsql.wait_db_connection(host, dbname, port, user, password)
         self.connection = hsql.get_connection(
             host,
@@ -43,6 +46,7 @@ class TestExtractDataFromDb1(hunitest.TestCase):
             password,
             autocommit=True,
         )
+        # TODO(Nikola): linter is complaining about cursor and create database ?
         hsql.create_database(self.connection, "test_db", overwrite=True)
         ccxt_ohlcv_table_query = imccdbuti.get_ccxt_ohlcv_create_table_query()
         ccxt_ohlcv_insert_query = """
@@ -67,10 +71,17 @@ class TestExtractDataFromDb1(hunitest.TestCase):
         )
         self.connection.close()
         hsysinte.system(cmd, suppress_output=False)
+        # TODO(Nikola): Remove eventually.
+        os.environ.pop("POSTGRES_HOST")
+        os.environ.pop("POSTGRES_DB")
+        os.environ.pop("POSTGRES_PORT")
+        os.environ.pop("POSTGRES_USER")
+        os.environ.pop("POSTGRES_PASSWORD")
         super().tearDown()
 
     @pytest.mark.slow
     def test_extract_data_from_db(self) -> None:
+
         test_dir = self.get_scratch_space()
         daily_pq_path = os.path.join(test_dir, "by_date")
         hio.create_dir(daily_pq_path, False)
