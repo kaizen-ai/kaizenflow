@@ -2010,7 +2010,7 @@ def _build_run_command_line(
     pytest_opts = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
     cmd = f"pytest {pytest_opts}"
     if tee_to_file:
-        cmd += f" 2>&1 | tee /app/pytest.logs/tmp.pytest.{single_test_type}.log"
+        cmd += f" 2>&1 | tee tmp.pytest.{single_test_type}.log"
     return cmd
 
 
@@ -2045,7 +2045,6 @@ def _run_test_cmd(
         stage,
         base_image,
         cmd,
-        extra_docker_run_opts=["--volume $PATH/pytest.logs:/app/pytest.logs"],
     )
     _LOG.info("cmd=%s", docker_cmd_)
     hsysinte.system(docker_cmd_, abort_on_error=False, suppress_output=False)
