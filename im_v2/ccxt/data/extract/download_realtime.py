@@ -44,7 +44,7 @@ import im_v2.common.universe.universe as imvcounun
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(Danya): Move instantation outside, e.g. into Airflow wrapper.
+# TODO(Danya): Move instantiation outside, e.g. into Airflow wrapper.
 def _instantiate_exchange(
     exchange_id: str,
     ccxt_universe: Dict[str, List[str]],
