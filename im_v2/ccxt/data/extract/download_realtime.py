@@ -206,16 +206,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
     while True:
         for exchange in exchanges:
             for pair in exchange.pairs:
-                try:
-                    # Download latest data.
-                    pair_data = _download_data(args.data_type, exchange, pair)
+                pair_data = _download_data(args.data_type, exchange, pair)
                 # Save to disk.
                 if args.dst_dir:
                     _save_data_on_disk(
                         args.data_type, args.dst_dir, pair_data, exchange, pair
                     )
-                if connection:
-                    # Insert into database.
                     hsql.execute_insert_query(
                         connection=connection,
                         obj=pair_data,
