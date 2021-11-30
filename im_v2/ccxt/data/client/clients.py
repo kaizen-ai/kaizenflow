@@ -174,6 +174,7 @@ class CcxtDbClient(AbstractCcxtClient):
     def _read_data(
         self,
         full_symbol: imvcdcli.FullSymbol,
+        *,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
         **read_sql_kwargs: Dict[str, Any],
@@ -235,6 +236,7 @@ class CcxtFileSystemClient(AbstractCcxtClient):
     def _read_data(
         self,
         full_symbol: imvcdcli.FullSymbol,
+        *,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
         data_snapshot: Optional[str] = None,
