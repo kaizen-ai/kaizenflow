@@ -45,7 +45,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(Danya): Move instantiation outside, e.g. into Airflow wrapper.
-def _instantiate_exchange(
+def instantiate_exchange(
     exchange_id: str,
     ccxt_universe: Dict[str, List[str]],
     api_keys: Optional[str] = None,
@@ -214,7 +214,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     exchanges = []
     for exchange_id in exchange_ids:
         exchanges.append(
-            _instantiate_exchange(exchange_id, universe["CCXT"], args.api_keys)
+            instantiate_exchange(exchange_id, universe["CCXT"], args.api_keys)
         )
     # Generate a query to remove duplicates.
     dup_query = hsql.get_remove_duplicates_query(
