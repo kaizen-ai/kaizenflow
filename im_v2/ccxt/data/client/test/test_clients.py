@@ -11,7 +11,7 @@ import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
 import im.ccxt.db.utils as imccdbuti
 import im_v2.ccxt.data.client.clients as imvcdclcl
-import im_v2.common.data.client.clients as ivcdclcl
+import im_v2.common.data.client as imvcdcli
 
 _AM_S3_ROOT_DIR = os.path.join(hs3.get_path(), "data")
 
@@ -309,7 +309,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
         ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
-        multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
+        multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
             class_=ccxt_file_client, mode="concat"
         )
         # Check actual results.
@@ -334,7 +334,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
         ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
-        multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
+        multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
             class_=ccxt_file_client, mode="concat"
         )
         # Check output.
@@ -363,7 +363,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
         ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
-        multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
+        multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
             class_=ccxt_file_client, mode="concat"
         )
         # Check output.
@@ -392,7 +392,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
         ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
-        multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
+        multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
             class_=ccxt_file_client, mode="dict"
         )
         # Check actual results.
@@ -533,7 +533,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Initialize CCXT DB client and pass it to multiple symbols client.
         ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
-        multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
+        multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
             class_=ccxt_db_client, mode="concat"
         )
         # Check actual results.
@@ -561,7 +561,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Initialize CCXT DB client and pass it to multiple symbols client.
         ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
-        multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
+        multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
             class_=ccxt_db_client, mode="concat"
         )
         # Check output.
@@ -593,7 +593,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Initialize CCXT DB client and pass it to multiple symbols client.
         ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
-        multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
+        multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
             class_=ccxt_db_client, mode="concat"
         )
         # Check output.
@@ -624,7 +624,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Initialize CCXT DB client and pass it to multiple symbols client.
         ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
-        multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
+        multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
             class_=ccxt_db_client, mode="dict"
         )
         # Check output.
