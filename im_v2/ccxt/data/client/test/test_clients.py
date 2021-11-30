@@ -226,6 +226,7 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
             )
 
 
+# TODO(gp): `dind` should not be needed for that.
 @pytest.mark.skipif(hgit.is_lime(), reason="lime doesn't have dind support")
 class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
     @pytest.mark.slow("12 seconds.")
