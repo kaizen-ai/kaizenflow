@@ -49,28 +49,6 @@ dag = airflow.DAG(
 )
 
 
-def _load_universe(universe: str, api_keys: str):
-    """
-    Load universe and exchanges.
-
-    :param universe: name of universe, e.g. 'v3'
-    :param api_keys: path to API keys JSON
-    :return: instantiated exchanges
-    """
-    # TODO(Danya): This operation should not be conducted every minute,
-    #  but at the launch of the Airflow job.
-    universe = imvcounun.get_trade_universe(universe)
-    exchange_ids = universe["CCXT"].keys()
-    exchanges = []
-    for exchange_id in exchange_ids:
-        exchanges.append(
-            imvcdedore.instantiate_exchange(
-                exchange_id, universe["CCXT"], api_keys
-            )
-        )
-    return exchanges
-
-
 def _extract_data(exchanges, data_type: str) -> List[pd.DataFrame]:
     """
     Download 5-minute data for each exchange/currency.
