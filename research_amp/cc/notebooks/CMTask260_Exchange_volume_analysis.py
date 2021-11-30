@@ -26,7 +26,7 @@ import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprint
 import helpers.s3 as hs3
-import im_v2.ccxt.data.client.clients as imvcdclcl
+import im_v2.ccxt.data.client as imvcdcli
 import im_v2.ccxt.universe.universe as imvccunun
 import research_amp.cc.statistics as ramccsta
 import research_amp.cc.volume as ramccvol
@@ -157,7 +157,7 @@ def get_initial_df_with_volumes(coins, exchange, is_notional_volume):
     Parameters: list of coins, exchange name
     """
     result = []
-    loader = imvcdclcl.CcxtFileSystemClient(
+    loader = imvcdcli.CcxtFileSystemClient(
         data_type="OHLCV",
         root_dir=os.path.join(hs3.get_path(), "data"),
         aws_profile="am",
