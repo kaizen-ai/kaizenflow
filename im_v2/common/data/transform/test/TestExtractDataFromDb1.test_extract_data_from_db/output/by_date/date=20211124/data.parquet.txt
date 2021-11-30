@@ -1,0 +1,13 @@
+df.shape=(1, 10)
+df.head=
+   id      timestamp     open     high      low    close     volume  \
+0  71  1637777340000  221.391  221.493  221.297  221.431  81.317758   
+
+  currency_pair exchange_id                 created_at  
+0      SOL/USDT      kucoin 2021-11-23 18:03:54.676947  
+df.tail=
+   id      timestamp     open     high      low    close     volume  \
+0  71  1637777340000  221.391  221.493  221.297  221.431  81.317758   
+
+  currency_pair exchange_id                 created_at  
+0      SOL/USDT      kucoin 2021-11-23 18:03:54.676947  
