@@ -16,7 +16,7 @@ import core.statistics as costatis
 import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
 import im.cryptodatadownload.data.load.loader as imcdalolo
-import im_v2.ccxt.data.client.clients as imvcdclcl
+import im_v2.ccxt.data.client as imvcdclcl
 import im_v2.common.data.client as imcdacli
 
 _LOG = logging.getLogger(__name__)
