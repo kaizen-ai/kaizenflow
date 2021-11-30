@@ -209,15 +209,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 try:
                     # Download latest data.
                     pair_data = _download_data(args.data_type, exchange, pair)
-                except (
-                    ccxt.ExchangeError,
-                    ccxt.NetworkError,
-                    ccxt.base.errors.RequestTimeout,
-                    ccxt.base.errors.RateLimitExceeded,
-                ) as e:
-                    # Continue the loop if could not connect to exchange.
-                    _LOG.warning("Got an error: %s", type(e).__name__, e.args)
-                    continue
                 # Save to disk.
                 if args.dst_dir:
                     _save_data_on_disk(
