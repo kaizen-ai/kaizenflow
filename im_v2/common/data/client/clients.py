@@ -132,8 +132,9 @@ class AbstractImClient(abc.ABC):
         end_ts = data.index.max()
         return end_ts
 
+    @staticmethod
     @abc.abstractmethod
-    def get_universe(self) -> List[FullSymbol]:
+    def get_universe() -> List[FullSymbol]:
         """
         Get universe as full symbols.
         """

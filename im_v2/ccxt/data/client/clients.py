@@ -40,7 +40,8 @@ class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
         hdbg.dassert_in(date_type_lower, _DATA_TYPES)
         self._data_type = date_type_lower
 
-    def get_universe(self) -> List[imvcdcli.FullSymbol]:
+    @staticmethod
+    def get_universe() -> List[imvcdcli.FullSymbol]:
         """
         Return CCXT universe as full symbols.
         """
