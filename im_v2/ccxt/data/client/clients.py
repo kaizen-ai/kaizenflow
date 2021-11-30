@@ -46,7 +46,7 @@ class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
         Return CCXT universe as full symbols.
         """
         universe = imvccunun.get_vendor_universe(vendor="CCXT")
-        return universe
+        return universe  # type: ignore[no-any-return]
 
     def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
