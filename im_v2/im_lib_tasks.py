@@ -177,7 +177,7 @@ def _get_create_db_cmd(
 
     :param dbname: db to create inside docker
     :param overwrite: to overwrite existing db
-    :param credentials: credentials to connect a db, there are 3 options: 
+    :param credentials: credentials to connect a db, there are 3 options:
         - credentials are inferred from environment variables, pass 'from_env'
         - as string `dbname =... host = ... port =... user =... password = ...`
         - from a `JSON` file, pass a path to a `JSON` file
@@ -191,7 +191,7 @@ def _get_create_db_cmd(
     if overwrite:
         cmd.append("--overwrite")
     # Add quotes so that credentials as string are handled properly by invoke.
-    cmd.append(f"--credentials \'\"{credentials}\"\'")
+    cmd.append(f"--credentials '\"{credentials}\"'")
     multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
     return multiline_docker_cmd  # type: ignore[no-any-return]
 
@@ -206,7 +206,7 @@ def im_create_db(
 ):  # type: ignore
     """
     Create database inside a container attached to the `im app`.
-    
+
     Will overwrite test_db database with credentials from json file:
     ```
     > i im_create_db test_db --overwrite --credentials file.json
@@ -214,7 +214,7 @@ def im_create_db(
 
     :param dbname: db to create inside docker
     :param overwrite: to overwrite existing db
-    :param credentials: credentials to connect a db, there are 3 options: 
+    :param credentials: credentials to connect a db, there are 3 options:
         - credentials are inferred from environment variables, pass 'from_env'
         - as string `dbname =... host = ... port =... user =... password = ...`
         - from a `JSON` file, pass a path to a `JSON` file
@@ -244,7 +244,7 @@ def _get_remove_db_cmd(
     ```
 
     :param dbname: db to remove inside docker
-    :param credentials: credentials to connect a db, there are 3 options: 
+    :param credentials: credentials to connect a db, there are 3 options:
         - credentials are inferred from environment variables, pass 'from_env'
         - as string `dbname =... host = ... port =... user =... password = ...`
         - from a `JSON` file, pass a path to a `JSON` file
@@ -256,7 +256,7 @@ def _get_remove_db_cmd(
     cmd.append("im_v2/common/db/remove_db.py")
     cmd.append(f"--db-name '{dbname}'")
     # Add quotes so that credentials as string are handled properly by invoke.
-    cmd.append(f"--credentials \'\"{credentials}\"\'")
+    cmd.append(f"--credentials '\"{credentials}\"'")
     multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
     return multiline_docker_cmd  # type: ignore[no-any-return]
 
@@ -277,7 +277,7 @@ def im_remove_db(
     ```
 
     :param dbname: db to remove inside docker
-    :param credentials: credentials to connect a db, there are 3 options: 
+    :param credentials: credentials to connect a db, there are 3 options:
         - credentials are inferred from environment variables, pass 'from_env'
         - as string `dbname =... host = ... port =... user =... password = ...`
         - from a `JSON` file, pass a path to a `JSON` file

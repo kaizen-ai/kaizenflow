@@ -160,8 +160,6 @@ def is_amp() -> bool:
 def is_dev_tools() -> bool:
     """
     Return whether we are inside `dev_tools` repo. 
-
-    Either as super module, or a sub module depending on a current working directory.
     """
     return _is_repo("dev_tools")
 
@@ -169,8 +167,6 @@ def is_dev_tools() -> bool:
 def is_cmamp() -> bool:
     """
     Return whether we are inside `cmamp` repo. 
-
-    Either as super module, or a sub module depending on a current working directory.
     """
     return _is_repo("cmamp")
 
@@ -178,10 +174,16 @@ def is_cmamp() -> bool:
 def is_lem() -> bool:
     """
     Return whether we are inside `lem` repo. 
-
-    Either as super module, or a sub module depending on a current working directory.
     """
     return _is_repo("lem")
+
+
+def is_lime() -> bool:
+    """
+    Return whether we are inside `lime` repo. 
+    """
+    return _is_repo("lime")
+
 
 
 # TODO(gp): submodule -> sub_module

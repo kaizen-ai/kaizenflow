@@ -96,7 +96,7 @@ print(config)
 # TODO(Grisha): potentially read data from the db.
 ccxt_loader = imvcdclcl.CcxtFileSystemClient(
     data_type=config["data"]["data_type"],
-    root_dir=config["load"]["data_dir"], 
+    root_dir=config["load"]["data_dir"],
     aws_profile=config["load"]["aws_profile"],
 )
 ccxt_data = ccxt_loader.read_data("binance::BTC_USDT")

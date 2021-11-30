@@ -14,7 +14,9 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): helpers can't depend from im.
-@pytest.mark.skipif(hgit.is_dev_tools(), reason="Do not run in dev_tools")
+@pytest.mark.skipif(
+    hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
+)
 class TestSql1(hunitest.TestCase):
     def setUp(self) -> None:
         """
@@ -55,11 +57,7 @@ class TestSql1(hunitest.TestCase):
         Smoke test.
         """
         hsql.wait_db_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password
+            self.host, self.dbname, self.port, self.user, self.password
         )
 
     @pytest.mark.slow()
@@ -68,11 +66,7 @@ class TestSql1(hunitest.TestCase):
         Verify that connection string is correct.
         """
         hsql.wait_db_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password
+            self.host, self.dbname, self.port, self.user, self.password
         )
         self.connection = hsql.get_connection(
             self.host,
@@ -98,11 +92,7 @@ class TestSql1(hunitest.TestCase):
         Verify that db is creating.
         """
         hsql.wait_db_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password
+            self.host, self.dbname, self.port, self.user, self.password
         )
         self.connection = hsql.get_connection(
             self.host,
@@ -130,11 +120,7 @@ class TestSql1(hunitest.TestCase):
         Create database 'test_db_to_remove' and remove it.
         """
         hsql.wait_db_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password
+            self.host, self.dbname, self.port, self.user, self.password
         )
         self.connection = hsql.get_connection(
             self.host,
@@ -158,11 +144,7 @@ class TestSql1(hunitest.TestCase):
         Test failed assertion for passing db name that does not exist.
         """
         hsql.wait_db_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password
+            self.host, self.dbname, self.port, self.user, self.password
         )
         self.connection = hsql.get_connection(
             self.host,
@@ -282,11 +264,7 @@ class TestSql1(hunitest.TestCase):
                     )
                     """
         hsql.wait_db_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password
+            self.host, self.dbname, self.port, self.user, self.password
         )
         connection = hsql.get_connection(
             self.host,

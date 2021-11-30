@@ -32,9 +32,25 @@ _LOG = logging.getLogger(__name__)
 
 class AbstractPriceInterface(abc.ABC):
     """
-    Implement an interface to a real-time database with 1-minute bar data.
+    Implement an interface to an historical / real-time source of price data.
+
+    Responsibilities:
+    - Delegates to a data backend in Instrument Master (IM) to retrieve
+      historical and real-time data
+    - Implement RT behaviors (e.g, `is_last_bar_available`, wall_clock, ...)
+        - TODO(gp): Maybe move them in IM too?
+    - Stitch together different data representations (e.g., historical / RT)
+      using multiple IM backends
+    - Remap columns to connect data backends to consumers
+    - Implement some market related transformations (e.g., TWAP)
+
+    Non-responsibilities:
+    - In general it doesn't access the data directly but relies on an Instrument
+      Master object to retrieve the data from different backends
 
     All the timestamps in the interface are in ET timezone.
+    - TODO(gp): Maybe UTC with the possibility of a switch to enforce certain
+      tz?
     """
 
     def __init__(
@@ -87,7 +103,7 @@ class AbstractPriceInterface(abc.ABC):
         return self._get_wall_clock_time
 
     # TODO(gp): If the DB supports asyncio this should become async.
-    # TODO(gp): -> get_last_data
+    # TODO(gp): -> get_data_for_last_period
     def get_data(
         self,
         period: str,
@@ -281,6 +297,8 @@ class AbstractPriceInterface(abc.ABC):
         # _LOG.debug(hprint.df_to_short_str("after process_data", df))
         return df
 
+    # Methods for handling real-time behaviors.
+
     def get_last_end_time(self) -> Optional[pd.Timestamp]:
         """
         Return the last `end_time` present in the RT DB.
@@ -400,7 +418,8 @@ class AbstractPriceInterface(abc.ABC):
         """
         Return data in [start_ts, end_ts) for certain assets.
 
-        This is the only entrypoint to get data from the derived classes.
+        This is the only entrypoint to get data from the derived
+        classes.
         """
         ...
 
@@ -416,6 +435,7 @@ class AbstractPriceInterface(abc.ABC):
 # #############################################################################
 
 
+# TODO(gp): This should be pushed to the IM
 class SqlPriceInterface(AbstractPriceInterface):
     """
     Implement an interface to a real-time SQL database with 1-minute bar data.
@@ -648,7 +668,10 @@ class SqlPriceInterface(AbstractPriceInterface):
 # TODO(gp): This should have a delay and / or we should use timestamp_db.
 class ReplayedTimePriceInterface(AbstractPriceInterface):
     """
-    Implement an interface to a replayed time database with 1-minute bar data.
+    Implement an interface to a replayed time historical / RT database.
+
+    Another approach to achieve the same goal is to mock the IM directly
+    instead of this class.
     """
 
     def __init__(

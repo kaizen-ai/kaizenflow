@@ -68,6 +68,7 @@ class TestGetFilePath(hunitest.TestCase):
             )
 
 
+@pytest.mark.skipif(hgit.is_lime(), reason="lime doesn't have dind support")
 class TestCcxtDbClient(hunitest.TestCase):
     def setUp(self) -> None:
         """
@@ -91,11 +92,7 @@ class TestCcxtDbClient(hunitest.TestCase):
         self.password = "alsdkqoen"
         # Wait for DB connection.
         hsql.wait_db_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password
+            self.host, self.dbname, self.port, self.user, self.password
         )
         # Get DB connection.
         self.connection = hsql.get_connection(
@@ -177,6 +174,7 @@ class TestCcxtDbClient(hunitest.TestCase):
                 "exchange_id",
                 "created_at",
             ],
+            # fmt: off
             data=[
                 [1, 1631145600000, 30, 40, 50, 60, 70, "BTC_USDT", "binance", pd.Timestamp("2021-09-09")],
                 [2, 1631145660000, 31, 41, 51, 61, 71, "BTC_USDT", "binance", pd.Timestamp("2021-09-09")],
@@ -186,6 +184,7 @@ class TestCcxtDbClient(hunitest.TestCase):
                 [6, 1631145900000, 34, 44, 54, 64, 74, "BTC_USDT", "kucoin", pd.Timestamp("2021-09-09")],
                 [7, 1631145960000, 34, 44, 54, 64, 74, "ETH_USDT", "binance", pd.Timestamp("2021-09-09")],
             ]
+            # fmt: on
         )
         return test_data
 
@@ -221,15 +220,20 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
         """
         with self.assertRaises(AssertionError):
             imvcdclcl.CcxtFileSystemClient(
-                data_type="unsupported_data_type", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+                data_type="unsupported_data_type",
+                root_dir=_AM_S3_ROOT_DIR,
+                aws_profile="am",
             )
 
 
+# TODO(gp): `dind` should not be needed for that.
+@pytest.mark.skipif(hgit.is_lime(), reason="lime doesn't have dind support")
 class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
     @pytest.mark.slow("12 seconds.")
     def test1(self) -> None:
         """
-        Test that data for provided list of full symbols is being read correctly.
+        Test that data for provided list of full symbols is being read
+        correctly.
         """
         # Set input list of full symbols.
         full_symbols = ["kucoin::XRP_USDT", "gateio::SOL_USDT"]
@@ -316,6 +320,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
 
 
 # TODO(Dan): CmTask607.
+@pytest.mark.skipif(hgit.is_lime(), reason="lime doesn't have dind support")
 class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
     def setUp(self) -> None:
         """
@@ -365,7 +370,8 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
     @pytest.mark.slow("8 seconds.")
     def test1(self) -> None:
         """
-        Test that data for provided list of full symbols is being read correctly.
+        Test that data for provided list of full symbols is being read
+        correctly.
         """
         # Set input list of full symbols.
         full_symbols = ["kucoin::SOL_USDT", "gateio::XRP_USDT"]
@@ -447,6 +453,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
                 "exchange_id",
                 "created_at",
             ],
+            # fmt: off
             data=[
                 [1, 1631145600000, 30, 40, 50, 60, 70, "XRP_USDT", "gateio", pd.Timestamp("2021-09-09")],
                 [2, 1631145660000, 31, 41, 51, 61, 71, "XRP_USDT", "gateio", pd.Timestamp("2021-09-09")],
@@ -456,6 +463,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
                 [6, 1631145900000, 34, 44, 54, 64, 74, "XRP_USDT", "gateio", pd.Timestamp("2021-09-09")],
                 [7, 1631145960000, 34, 44, 54, 64, 74, "ETH_USDT", "binance", pd.Timestamp("2021-09-09")],
             ]
+            # fmt: on
         )
         return test_data
 
