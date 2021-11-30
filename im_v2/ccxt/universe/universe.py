@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.common.universe.universe as imvcounun
+import im_v2.ccxt.universe.universe as imvccunun
 """
 import os
 from typing import Dict, List
@@ -25,7 +25,7 @@ def get_trade_universe(
     """
     file_name = "".join(["universe_", version, ".json"])
     file_path = os.path.join(
-        hgit.get_amp_abs_path(), "im_v2/common/universe", file_name
+        hgit.get_amp_abs_path(), "im_v2/ccxt/universe", file_name
     )
     hdbg.dassert_exists(file_path)
     universe = hio.from_json(file_path)
@@ -48,7 +48,9 @@ def get_vendor_universe(
     # Convert vendor universe dict to a sorted list of full symbols.
     full_symbols = [
         # TODO(Grisha): use "_" as currencies separator #579.
-        imvcdcadlo.construct_full_symbol(exchange_id, currency_pair.replace("/", "_"))
+        imvcdcadlo.construct_full_symbol(
+            exchange_id, currency_pair.replace("/", "_")
+        )
         for exchange_id, currency_pairs in vendor_universe.items()
         for currency_pair in currency_pairs
     ]
