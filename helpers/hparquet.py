@@ -52,6 +52,8 @@ def to_parquet(
     )
 
 
+# TODO(gp): What's the difference with read_pq? Maybe we use pandas there,
+# while here we use PQ directly with Dataset.
 def from_parquet(
     file_name: str,
     columns: Optional[List[str]] = None,

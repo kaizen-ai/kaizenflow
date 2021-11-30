@@ -3,6 +3,7 @@ import logging
 import os
 
 import pandas as pd
+import pytest
 
 import helpers.datetime_ as hdateti
 import helpers.git as hgit
@@ -52,7 +53,9 @@ class _TestOmsDbHelper(hunitest.TestCase):
         user = "aljsdalsd"
         password = "alsdkqoen"
         self.dbname = dbname
-        conn_exists = hsql.check_db_connection(host, dbname, port, user, password)[0]
+        conn_exists = hsql.check_db_connection(
+            host, dbname, port, user, password
+        )[0]
         if conn_exists:
             _LOG.warning("DB is already up: skipping docker compose")
             # Since we have found the DB already up, we assume that we need to
@@ -177,6 +180,9 @@ def _get_row3() -> pd.Series:
     return srs
 
 
+@pytest.mark.skipif(
+    hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
+)
 class TestOmsDb1(_TestOmsDbHelper):
     def test_up1(self) -> None:
         """
@@ -232,6 +238,9 @@ class TestOmsDb1(_TestOmsDbHelper):
         self.assert_equal(act, exp, fuzzy_match=True)
 
 
+@pytest.mark.skipif(
+    hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
+)
 class TestOmsDb2(_TestOmsDbHelper):
     def wait_for_table_helper(self, coroutines):
         oomsdb.create_target_files_table(self.connection, incremental=False)

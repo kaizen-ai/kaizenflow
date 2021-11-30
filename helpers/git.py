@@ -150,18 +150,40 @@ def _is_repo(repo_short_name: str) -> bool:
 
 def is_amp() -> bool:
     """
-    Return whether we are inside `amp` and `amp` is a sub-module.
+    Return whether we are inside `amp` repo. 
+
+    Either as super module, or a sub module depending on a current working directory.
     """
     return _is_repo("amp")
 
 
-# This should not be used. If a test is specific of a repo it should be moved to
-# that repo.
+def is_dev_tools() -> bool:
+    """
+    Return whether we are inside `dev_tools` repo. 
+    """
+    return _is_repo("dev_tools")
+
+
+def is_cmamp() -> bool:
+    """
+    Return whether we are inside `cmamp` repo. 
+    """
+    return _is_repo("cmamp")
+
+
 def is_lem() -> bool:
     """
-    Return whether we are inside `lm` and `lm` is a sub-module.
+    Return whether we are inside `lem` repo. 
     """
     return _is_repo("lem")
+
+
+def is_lime() -> bool:
+    """
+    Return whether we are inside `lime` repo. 
+    """
+    return _is_repo("lime")
+
 
 
 # TODO(gp): submodule -> sub_module

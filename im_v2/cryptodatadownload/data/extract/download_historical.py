@@ -28,6 +28,8 @@ Import as:
 import im_v2.cryptodatadownload.data.extract.download_historical as ivcdedohi
 """
 
+# TODO(gp): -> download_historical_data.py
+
 import argparse
 import logging
 import os
@@ -94,6 +96,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     download_links = _get_download_links(page_content, args.timeframe)
     # Create destination directory.
     hio.create_dir(args.dir_name, incremental=args.incremental)
+    # Load the links.
     _LOG.info("Downloading %s links", len(download_links))
     for link in tqdm.tqdm(download_links, desc="Links loaded:"):
         df = pd.read_csv(link)
