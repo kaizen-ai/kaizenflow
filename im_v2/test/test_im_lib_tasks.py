@@ -5,7 +5,7 @@ import pytest
 import helpers.lib_tasks as hlibtask
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
-import im_v2.im_lib_tasks as imimlitas  # pylint: disable=no-name-in-module
+import im_v2.im_lib_tasks as imvimlita  # pylint: disable=no-name-in-module
 
 _LOG = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ class TestGetImDockerCmd(hunitest.TestCase):
         Test the `bash` command.
         """
         cmd = "bash"
-        actual = imimlitas._get_docker_cmd(cmd)
+        actual = imvimlita._get_docker_cmd(cmd)
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
         docker-compose \
@@ -31,7 +31,7 @@ class TestGetImDockerCmd(hunitest.TestCase):
         Test the Python script.
         """
         cmd = "im/devops/docker_scripts/set_shema_im_db.py"
-        actual = imimlitas._get_docker_cmd(cmd)
+        actual = imvimlita._get_docker_cmd(cmd)
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
         docker-compose \
@@ -47,7 +47,7 @@ class TestGetImDockerDown(hunitest.TestCase):
         """
         Check the command line to only remove containers.
         """
-        actual = imimlitas._get_docker_down_cmd(volumes_remove=False)
+        actual = imvimlita._get_docker_down_cmd(volumes_remove=False)
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
         docker-compose \
@@ -60,7 +60,7 @@ class TestGetImDockerDown(hunitest.TestCase):
         """
         Check the command line to remove containers and volumes.
         """
-        actual = imimlitas._get_docker_down_cmd(volumes_remove=True)
+        actual = imvimlita._get_docker_down_cmd(volumes_remove=True)
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
         docker-compose \
@@ -76,7 +76,7 @@ class TestGetImDockerUp(hunitest.TestCase):
         """
         Check the command line to bring up the db.
         """
-        actual = imimlitas._get_docker_up_cmd(detach=False)
+        actual = imvimlita._get_docker_up_cmd(detach=False)
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
         docker-compose \
@@ -90,7 +90,7 @@ class TestGetImDockerUp(hunitest.TestCase):
         """
         Check the command line to bring up the db in the detached mode.
         """
-        actual = imimlitas._get_docker_up_cmd(detach=True)
+        actual = imvimlita._get_docker_up_cmd(detach=True)
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
         docker-compose \
@@ -107,10 +107,8 @@ class TestGetCreateDbCmd(hunitest.TestCase):
         """
         Test the `create_db` script.
         """
-        actual = imimlitas._get_create_db_cmd(
-            dbname="test_db",
-            overwrite=False,
-            credentials="from_env"
+        actual = imvimlita._get_create_db_cmd(
+            dbname="test_db", overwrite=False, credentials="from_env"
         )
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
@@ -127,10 +125,8 @@ class TestGetCreateDbCmd(hunitest.TestCase):
         """
         Test the `create_db` script with overwrite option passed.
         """
-        actual = imimlitas._get_create_db_cmd(
-            dbname="test_db",
-            overwrite=True,
-            credentials="from_env"
+        actual = imvimlita._get_create_db_cmd(
+            dbname="test_db", overwrite=True, credentials="from_env"
         )
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
@@ -148,10 +144,8 @@ class TestGetCreateDbCmd(hunitest.TestCase):
         """
         Test the `create_db` script with credentials via json file.
         """
-        actual = imimlitas._get_create_db_cmd(
-            dbname="test_db",
-            overwrite=False,
-            credentials="test.json"
+        actual = imvimlita._get_create_db_cmd(
+            dbname="test_db", overwrite=False, credentials="test.json"
         )
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
@@ -167,9 +161,9 @@ class TestGetCreateDbCmd(hunitest.TestCase):
         """
         Test the `create_db` script with credentials from string.
         """
-        actual = imimlitas._get_create_db_cmd(
-            dbname="test_db", 
-            overwrite=False, 
+        actual = imvimlita._get_create_db_cmd(
+            dbname="test_db",
+            overwrite=False,
             credentials="host=localhost dbname=im_postgres_db_local port=54",
         )
         docker_compose_path = hlibtask.get_base_docker_compose_path()
@@ -188,9 +182,8 @@ class TestGetRemoveDbCmd(hunitest.TestCase):
         """
         Test the `remove_db` script.
         """
-        actual = imimlitas._get_remove_db_cmd(
-            dbname="test_db",
-            credentials="from_env"
+        actual = imvimlita._get_remove_db_cmd(
+            dbname="test_db", credentials="from_env"
         )
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
@@ -207,7 +200,7 @@ class TestGetRemoveDbCmd(hunitest.TestCase):
         """
         Test the `remove_db` script with connection from string.
         """
-        actual = imimlitas._get_remove_db_cmd(
+        actual = imvimlita._get_remove_db_cmd(
             dbname="test_db",
             credentials="host=localhost dbname=im_postgres_db_local port=54",
         )
@@ -226,7 +219,7 @@ class TestGetRemoveDbCmd(hunitest.TestCase):
         """
         Test the `remove_db` script with path to json file.
         """
-        actual = imimlitas._get_remove_db_cmd(
+        actual = imvimlita._get_remove_db_cmd(
             dbname="test_db",
             credentials="asd.json",
         )

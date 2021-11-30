@@ -33,7 +33,7 @@ import helpers.env as henv
 import helpers.printing as hprint
 import helpers.s3 as hs3
 import im_v2.ccxt.data.client.clients as imvcdclcl
-import research_amp.cc.detect_outliers as rccdeout
+import research_amp.cc.detect_outliers as raccdeou
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -50,9 +50,7 @@ hprint.config_notebook()
 # %%
 root_dir = os.path.join(hs3.get_path(), "data")
 сcxt_loader = imvcdclcl.CcxtFileSystemClient(
-    data_type="OHLCV",
-    root_dir=root_dir,
-    aws_profile="am"
+    data_type="OHLCV", root_dir=root_dir, aws_profile="am"
 )
 data = сcxt_loader.read_data("kucoin::ETH_USDT")
 data.head()
@@ -81,19 +79,19 @@ chunk_40days = data.tail(57600).copy()
 
 # %%
 # %%time
-outlier_mask_10days = rccdeout.detect_outliers(
+outlier_mask_10days = raccdeou.detect_outliers(
     srs=chunk_10days["close"], n_samples=1440, z_score_threshold=4
 )
 
 # %%
 # %%time
-outlier_mask_20days = rccdeout.detect_outliers(
+outlier_mask_20days = raccdeou.detect_outliers(
     srs=chunk_20days["close"], n_samples=1440, z_score_threshold=4
 )
 
 # %%
 # %%time
-outlier_mask_40days = rccdeout.detect_outliers(
+outlier_mask_40days = raccdeou.detect_outliers(
     srs=chunk_40days["close"], n_samples=1440, z_score_threshold=4
 )
 

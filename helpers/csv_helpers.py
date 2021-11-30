@@ -9,7 +9,7 @@ import helpers.csv_helpers as hcsv
 import ast
 import logging
 import os
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable, Dict, Optional
 
 import pandas as pd
 
@@ -21,9 +21,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def _append_csv(
-    df: pd.DataFrame, path: str,
-        *,
-        index: bool = False, **kwargs: Any
+    df: pd.DataFrame, path: str, *, index: bool = False, **kwargs: Any
 ) -> None:
     """
     Append a df to the CSV file `path` without header.
@@ -149,9 +147,9 @@ def find_first_matching_row(
     return None
 
 
-# ###############################
+# #############################################################################
 # CSV to PQ conversion
-# ###############################
+# #############################################################################
 
 
 def _csv_mapreduce(
@@ -281,7 +279,9 @@ def convert_csv_dir_to_pq_dir(
         if csv_stem is None:
             csv_stem = _maybe_remove_extension(filename, ".csv.gz")
         if csv_stem is None:
-            _LOG.warning("Skipping filename=%s since it has invalid extension", csv_stem)
+            _LOG.warning(
+                "Skipping filename=%s since it has invalid extension", csv_stem
+            )
             continue
         # Convert file to PQ.
         pq_filename = csv_stem + ".pq"
@@ -293,9 +293,9 @@ def convert_csv_dir_to_pq_dir(
         )
 
 
-# ###############################
+# #############################################################################
 # CSV-JSON dict conversion
-# ###############################
+# #############################################################################
 
 
 # TODO(gp): convert_csv_to_json_dict?
@@ -343,17 +343,17 @@ def save_csv_as_json(
     hio.to_json(path_to_json, dict_df)
 
 
-# ###############################
+# #############################################################################
 # CSV files with types
-# ###############################
+# #############################################################################
 
 
 def to_typed_csv(df: pd.DataFrame, file_name: str) -> str:
     """
     Convert df into CSV and creates a file with the dtypes of columns.
 
-    This function creates a file containing the types with the same name and suffix
-    e.g., `foobar.csv.types`.
+    This function creates a file containing the types with the same name
+    and suffix e.g., `foobar.csv.types`.
     """
     # Save the types.
     dtypes_filename = file_name + ".types"
@@ -370,8 +370,8 @@ def from_typed_csv(file_name: str) -> pd.DataFrame:
     """
     Load CSV file as df applying the original types of columns.
 
-    This function uses a file with name `file_name.types` to load information about
-    the column types.
+    This function uses a file with name `file_name.types` to load
+    information about the column types.
     """
     # Load the types.
     dtypes_filename = file_name + ".types"

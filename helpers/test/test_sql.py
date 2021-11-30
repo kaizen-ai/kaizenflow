@@ -55,11 +55,7 @@ class TestSql1(hunitest.TestCase):
         Smoke test.
         """
         hsql.wait_db_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password
+            self.host, self.dbname, self.port, self.user, self.password
         )
 
     @pytest.mark.slow()
@@ -68,11 +64,7 @@ class TestSql1(hunitest.TestCase):
         Verify that connection string is correct.
         """
         hsql.wait_db_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password
+            self.host, self.dbname, self.port, self.user, self.password
         )
         self.connection = hsql.get_connection(
             self.host,
@@ -98,11 +90,7 @@ class TestSql1(hunitest.TestCase):
         Verify that db is creating.
         """
         hsql.wait_db_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password
+            self.host, self.dbname, self.port, self.user, self.password
         )
         self.connection = hsql.get_connection(
             self.host,
@@ -130,11 +118,7 @@ class TestSql1(hunitest.TestCase):
         Create database 'test_db_to_remove' and remove it.
         """
         hsql.wait_db_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password
+            self.host, self.dbname, self.port, self.user, self.password
         )
         self.connection = hsql.get_connection(
             self.host,
@@ -158,11 +142,7 @@ class TestSql1(hunitest.TestCase):
         Test failed assertion for passing db name that does not exist.
         """
         hsql.wait_db_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password
+            self.host, self.dbname, self.port, self.user, self.password
         )
         self.connection = hsql.get_connection(
             self.host,
@@ -282,11 +262,7 @@ class TestSql1(hunitest.TestCase):
                     )
                     """
         hsql.wait_db_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password
+            self.host, self.dbname, self.port, self.user, self.password
         )
         connection = hsql.get_connection(
             self.host,

@@ -7,12 +7,14 @@ import helpers.git as hgit
 import helpers.sql as hsql
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
-import im_v2.common.db.utils as imcodbuti
+import im_v2.common.db.utils as imvcodbut
 
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skipif(hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support")
+@pytest.mark.skipif(
+    hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
+)
 class TestCreateDb1(hunitest.TestCase):
     def setUp(self) -> None:
         """
@@ -67,7 +69,7 @@ class TestCreateDb1(hunitest.TestCase):
         """
         Verify that all necessary tables are created inside the DB.
         """
-        imcodbuti.create_all_tables(self.connection)
+        imvcodbut.create_all_tables(self.connection)
         expected = sorted(
             [
                 "ccxt_ohlcv",
@@ -91,6 +93,6 @@ class TestCreateDb1(hunitest.TestCase):
 
     @pytest.mark.slow()
     def test_create_im_database(self) -> None:
-        imcodbuti.create_im_database(connection=self.connection, new_db="test_db")
+        imvcodbut.create_im_database(connection=self.connection, new_db="test_db")
         db_list = hsql.get_db_names(self.connection)
         self.assertIn("test_db", db_list)

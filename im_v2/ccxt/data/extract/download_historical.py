@@ -12,7 +12,7 @@ Use as:
 
 Import as:
 
-import im_v2.ccxt.data.extract.download_historical as imcdedohi
+import im_v2.ccxt.data.extract.download_historical as imvcdedohi
 """
 
 # TODO(gp): -> download_historical_data.py
@@ -27,7 +27,7 @@ import pandas as pd
 import helpers.dbg as hdbg
 import helpers.io_ as hio
 import helpers.parser as hparser
-import im_v2.ccxt.data.extract.exchange_class as imcdeexcl
+import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import im_v2.common.universe.universe as imvcounun
 
 _LOG = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ def _parse() -> argparse.ArgumentParser:
         "--api_keys",
         action="store",
         type=str,
-        default=imcdeexcl.API_KEYS_PATH,
+        default=imvcdeexcl.API_KEYS_PATH,
         help="Path to JSON file that contains API keys for exchange access",
     )
     parser.add_argument(
@@ -114,7 +114,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     _LOG.info("Getting data for exchanges %s", ", ".join(trade_universe.keys()))
     for exchange_id in trade_universe:
         # Initialize the exchange class.
-        exchange = imcdeexcl.CcxtExchange(
+        exchange = imvcdeexcl.CcxtExchange(
             exchange_id, api_keys_path=args.api_keys
         )
         # TODO(gp): -> currency_pair

@@ -56,8 +56,8 @@ class CcxtExchange:
 
     def log_into_exchange(self) -> ccxt.Exchange:
         """
-        Log into an exchange via CCXT, returning the corresponding `ccxt.Exchange`
-        object.
+        Log into an exchange via CCXT, returning the corresponding
+        `ccxt.Exchange` object.
         """
         # Load all the exchange credentials.
         all_credentials = self.load_api_credentials()

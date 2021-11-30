@@ -52,6 +52,7 @@ class AbstractPriceInterface(abc.ABC):
     - TODO(gp): Maybe UTC with the possibility of a switch to enforce certain
       tz?
     """
+
     def __init__(
         self,
         id_col_name: str,
@@ -417,7 +418,8 @@ class AbstractPriceInterface(abc.ABC):
         """
         Return data in [start_ts, end_ts) for certain assets.
 
-        This is the only entrypoint to get data from the derived classes.
+        This is the only entrypoint to get data from the derived
+        classes.
         """
         ...
 
@@ -668,8 +670,8 @@ class ReplayedTimePriceInterface(AbstractPriceInterface):
     """
     Implement an interface to a replayed time historical / RT database.
 
-    Another approach to achieve the same goal is to mock the IM directly instead
-    of this class.
+    Another approach to achieve the same goal is to mock the IM directly
+    instead of this class.
     """
 
     def __init__(

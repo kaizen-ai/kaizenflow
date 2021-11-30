@@ -20,20 +20,16 @@ import logging
 import os
 
 import pandas as pd
-import seaborn as sns
 
 import core.config.config_ as cconconf
 import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprint
 import helpers.s3 as hs3
-import im_v2.common.universe.universe as imvcounun
-import research_amp.cc.statistics as rccstat
-import research_amp.cc.volume as rccvolu
 import im_v2.ccxt.data.client.clients as imvcdclcl
-
-import core.plotting as coplotti
-
+import im_v2.common.universe.universe as imvcounun
+import research_amp.cc.statistics as ramccsta
+import research_amp.cc.volume as ramccvol
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -85,11 +81,11 @@ vendor_universe = imvcounun.get_vendor_universe(
 vendor_universe
 
 # %%
-compute_daily_cumul_volume_ = lambda data: rccvolu.get_daily_cumul_volume(
+compute_daily_cumul_volume_ = lambda data: ramccvol.get_daily_cumul_volume(
     data, config, is_notional_volume=False
 )
 
-cumul_daily_volume = rccstat.compute_stats_for_universe(
+cumul_daily_volume = ramccsta.compute_stats_for_universe(
     vendor_universe, config, compute_daily_cumul_volume_
 )
 
@@ -103,7 +99,7 @@ cumul_daily_volume.head(3)
 # # Compute total volume per exchange
 
 # %%
-total_volume_by_exchange = rccvolu.get_total_exchange_volume(
+total_volume_by_exchange = ramccvol.get_total_exchange_volume(
     cumul_daily_volume, config, avg_daily=False
 )
 print(total_volume_by_exchange)
@@ -112,7 +108,7 @@ print(total_volume_by_exchange)
 # # Compute total volume per currency
 
 # %%
-total_volume_by_coins = rccvolu.get_total_coin_volume(
+total_volume_by_coins = ramccvol.get_total_coin_volume(
     cumul_daily_volume, config, avg_daily=False
 )
 print(total_volume_by_coins)
@@ -124,7 +120,7 @@ print(total_volume_by_coins)
 # ## By exchange
 
 # %%
-rolling_volume_per_exchange = rccvolu.get_rolling_volume_per_exchange(
+rolling_volume_per_exchange = ramccvol.get_rolling_volume_per_exchange(
     cumul_daily_volume, config, window=90
 )
 print(rolling_volume_per_exchange)
@@ -133,7 +129,7 @@ print(rolling_volume_per_exchange)
 # ## By coins
 
 # %%
-rolling_volume_per_coin = rccvolu.get_rolling_volume_per_coin(
+rolling_volume_per_coin = ramccvol.get_rolling_volume_per_coin(
     cumul_daily_volume, config, window=90
 )
 print(rolling_volume_per_coin)
@@ -142,7 +138,7 @@ print(rolling_volume_per_coin)
 # # Compare weekday volumes
 
 # %%
-total_volume_by_weekdays = rccvolu.compare_weekday_volumes(
+total_volume_by_weekdays = ramccvol.compare_weekday_volumes(
     cumul_daily_volume, config
 )
 print(total_volume_by_weekdays)
