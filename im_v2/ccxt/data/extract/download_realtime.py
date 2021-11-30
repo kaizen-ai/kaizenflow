@@ -144,6 +144,7 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--dst_dir",
         action="store",
+        required=True,
         type=str,
         help="Folder to save copies of data to",
     )
@@ -208,17 +209,16 @@ def _main(parser: argparse.ArgumentParser) -> None:
             for pair in exchange.pairs:
                 pair_data = _download_data(args.data_type, exchange, pair)
                 # Save to disk.
-                if args.dst_dir:
-                    _save_data_on_disk(
-                        args.data_type, args.dst_dir, pair_data, exchange, pair
-                    )
-                    hsql.execute_insert_query(
-                        connection=connection,
-                        obj=pair_data,
-                        table_name=args.table_name,
-                    )
-                    # Drop duplicates inside the table.
-                    connection.cursor().execute(dup_query)
+                _save_data_on_disk(
+                    args.data_type, args.dst_dir, pair_data, exchange, pair
+                )
+                hsql.execute_insert_query(
+                    connection=connection,
+                    obj=pair_data,
+                    table_name=args.table_name,
+                )
+                # Drop duplicates inside the table.
+                connection.cursor().execute(dup_query)
         time.sleep(60)
 
 
