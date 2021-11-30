@@ -5,6 +5,8 @@ import im_v2.ccxt.data.extract.download_realtime as imvcdedore
 import im_v2.common.universe.universe as imvcounun
 import helpers.io_ as hio
 import helpers.datetime_ as hdateti
+import pandas as pd
+from typing import List
 
 # TODO(Danya): A placeholder until the interface is cleared up.
 args = {
@@ -40,16 +42,8 @@ dup_query = hsql.get_remove_duplicates_query(
 start = hdateti.to_generalized_datetime(args["start_datetime"])
 end = hdateti.to_generalized_datetime(args["end_datetime"])
 
-dag = airflow.DAG(
-    dag_id="download_ccxt_ohlcv",
-    # Run each minute.
-    schedule_interval="*/1 * * * *",
-    # Do not backfill.
-    catchup=False,
-)
 
-
-def _extract_data(exchanges, data_type: str) -> List[pd.DataFrame]:
+def _extract_data(exchanges: List[Any], data_type: str) -> List[pd.DataFrame]:
     """
     Download 5-minute data for each exchange/currency.
 
@@ -78,7 +72,7 @@ def _save_to_db(pairs_iteration) -> None:
             connection=connection,
             obj=pair_data,
             # TODO(Danya): Table_name should be provided from outside.
-            table_name=table_name,
+            table_name=args["table_name"],
         )
 
 
@@ -113,6 +107,13 @@ def remove_db_duplicates(connection: hsql.DbConnection):
 
 
 # TODO(Danya): Add operators once interfaces are done with.
+dag = airflow.DAG(
+    dag_id="download_ccxt_ohlcv",
+    # Run each minute.
+    schedule_interval="*/1 * * * *",
+    # Do not backfill.
+    catchup=False,
+)
 
 
 # TODO(Danya): Simplify the chain (see DAGs in Airflow official docs).
