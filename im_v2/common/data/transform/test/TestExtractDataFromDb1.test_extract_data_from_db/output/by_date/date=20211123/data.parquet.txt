@@ -1,13 +1,13 @@
-df.shape=(1, 10)
+df.shape=(1, 11)
 df.head=
-   id      timestamp     open     high      low    close      volume  \
-0  66  1637690340000  1.04549  1.04549  1.04527  1.04527  5898.04278   
+        full_symbol  id      timestamp     open     high      low    close  \
+0  gateio::XRP_USDT  66  1637690340000  1.04549  1.04549  1.04527  1.04527   
 
-  currency_pair exchange_id                 created_at  
-0      XRP/USDT      gateio 2021-11-23 18:03:54.318763  
+       volume currency_pair exchange_id                 created_at  
+0  5898.04278      XRP_USDT      gateio 2021-11-23 18:03:54.318763  
 df.tail=
-   id      timestamp     open     high      low    close      volume  \
-0  66  1637690340000  1.04549  1.04549  1.04527  1.04527  5898.04278   
+        full_symbol  id      timestamp     open     high      low    close  \
+0  gateio::XRP_USDT  66  1637690340000  1.04549  1.04549  1.04527  1.04527   
 
-  currency_pair exchange_id                 created_at  
-0      XRP/USDT      gateio 2021-11-23 18:03:54.318763  
+       volume currency_pair exchange_id                 created_at  
+0  5898.04278      XRP_USDT      gateio 2021-11-23 18:03:54.318763  

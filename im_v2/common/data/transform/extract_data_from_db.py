@@ -23,8 +23,8 @@ import helpers.hparquet as hparque
 import helpers.parser as hparser
 import helpers.sql as hsql
 import im_v2.ccxt.data.client.clients as imvcdclcl
+import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.common.data.client.clients as ivcdclcl
-import im_v2.common.universe.universe as imvcounun
 
 _LOG = logging.getLogger(__name__)
 
@@ -83,7 +83,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     multiple_symbols_ccxt_db_client = ivcdclcl.MultipleSymbolsClient(
         class_=ccxt_db_client, mode="concat"
     )
-    symbols = imvcounun.get_vendor_universe()
+    symbols = imvccunun.get_vendor_universe()
     for date_index in range(len(timespan) - 1):
         _LOG.debug("Checking for RT data on %s.", timespan[date_index])
         # TODO(Nikola): Refactor to use one db call.
@@ -91,6 +91,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             symbols,
             start_ts=timespan[date_index],
             end_ts=timespan[date_index + 1],
+            normalize=False,
         )
         if rt_df.empty:
             _LOG.info("No RT date in db for %s.", timespan[date_index])

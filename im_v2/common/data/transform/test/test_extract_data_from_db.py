@@ -53,9 +53,9 @@ class TestExtractDataFromDb1(hunitest.TestCase):
         INSERT INTO public.ccxt_ohlcv
         VALUES
             (66, 1637690340000, 1.04549, 1.04549, 1.04527, 1.04527,
-            5898.0427797325265, 'XRP/USDT', 'gateio', '2021-11-23 18:03:54.318763'),
+            5898.0427797325265, 'XRP_USDT', 'gateio', '2021-11-23 18:03:54.318763'),
             (71, 1637777340000, 221.391, 221.493, 221.297, 221.431,
-            81.31775837, 'SOL/USDT', 'kucoin', '2021-11-23 18:03:54.676947')
+            81.31775837, 'SOL_USDT', 'kucoin', '2021-11-23 18:03:54.676947')
         """
         with self.connection.cursor() as cursor:
             cursor.execute(ccxt_ohlcv_table_query)
