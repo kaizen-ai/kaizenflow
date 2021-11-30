@@ -767,6 +767,7 @@ class TestGetTimestamp(hunitest.TestCase):
         )
         end_ts = ccxt_file_client.get_end_ts_available("binance::DOGE_USDT")
         expected_end_ts = pd.to_datetime("2021-09-16 09:19:00", utc=True)
+        # TODO(Grisha): use `assertGreater` when start downloading more data.
         self.assertEqual(end_ts, expected_end_ts)
 
 
