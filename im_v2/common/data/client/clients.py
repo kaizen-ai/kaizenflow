@@ -80,8 +80,6 @@ class AbstractImClient(abc.ABC):
         full_symbol: FullSymbol,
         *,
         normalize: bool = True,
-        drop_duplicates: bool = True,
-        resample_to_1_min: bool = True,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
         **kwargs: Dict[str, Any],
@@ -99,9 +97,7 @@ class AbstractImClient(abc.ABC):
             - sanity check of the data
 
         :param full_symbol: `exchange::symbol`, e.g. `binance::BTC_USDT`
-        :param normalize: transform data, e.g. rename columns, convert data types
-        :param drop_duplicates: whether to drop full duplicates or not
-        :param resample_to_1_min: whether to resample to 1 min or not
+        :param normalize: whether to transform data or not
         :param start_ts: the earliest date timestamp to load data for
         :param end_ts: the latest date timestamp to load data for
         :return: data for a single `FullSymbol` in [start_ts, end_ts)
@@ -111,12 +107,10 @@ class AbstractImClient(abc.ABC):
         )
         if normalize:
             data = self._normalize_data(data)
-        if drop_duplicates:
             data = hpandas.drop_duplicates(data)
-        if resample_to_1_min:
             data = hpandas.resample_df(data, "T")
-        # Verify that data is valid.
-        self._dassert_is_valid(data)
+            # Verify that data is valid.
+            self._dassert_is_valid(data)
         return data
 
     @abc.abstractmethod
@@ -205,6 +199,7 @@ class MultipleSymbolsClient:
         full_symbols: List[FullSymbol],
         *,
         full_symbol_col_name: str = "full_symbol",
+        normalize: bool = True,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
         **kwargs: Dict[str, Any],
@@ -217,6 +212,7 @@ class MultipleSymbolsClient:
         :param full_symbols: list of full symbols, e.g.
             `['binance::BTC_USDT', 'kucoin::ETH_USDT']`
         :param full_symbol_col_name: name of the column with full symbols
+        :param normalize: whether to transform data or not
         :param start_ts: the earliest date timestamp to load data for
         :param end_ts: the latest date timestamp to load data for
         :return: combined data for provided symbols
@@ -229,9 +225,7 @@ class MultipleSymbolsClient:
             # Read data for each given full symbol.
             df = self._class.read_data(
                 full_symbol=full_symbol,
-                normalize=True,
-                drop_duplicates=True,
-                resample_to_1_min=True,
+                normalize=normalize,
                 start_ts=start_ts,
                 end_ts=end_ts,
                 **kwargs,
