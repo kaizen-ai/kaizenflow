@@ -68,10 +68,14 @@ class TestGetFilePath(hunitest.TestCase):
             )
 
 
+
 # #############################################################################
 
 
-@pytest.mark.skipif(hgit.is_lime(), reason="lime doesn't have dind support")
+@pytest.mark.skipif(
+    hgit.is_dev_tools() or hgit.is_lime(),
+    reason="lime and dev_tools doesn't have dind support",
+)
 class TestCcxtDbClient(hunitest.TestCase):
     def setUp(self) -> None:
         """
@@ -287,7 +291,10 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
 
 
 # TODO(gp): `dind` should not be needed for that.
-@pytest.mark.skipif(hgit.is_lime(), reason="lime doesn't have dind support")
+@pytest.mark.skipif(
+    hgit.is_dev_tools() or hgit.is_lime(),
+    reason="lime and dev_tools doesn't have dind support",
+)
 class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
     @pytest.mark.slow("12 seconds.")
     def test1(self) -> None:
@@ -458,10 +465,14 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
             self.check_string(actual_string)
 
 
+
 # #############################################################################
 
 
-@pytest.mark.skipif(hgit.is_lime(), reason="lime doesn't have dind support")
+@pytest.mark.skipif(
+    hgit.is_dev_tools() or hgit.is_lime(),
+    reason="lime and dev_tools doesn't have dind support",
+)
 class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
     def setUp(self) -> None:
         """
