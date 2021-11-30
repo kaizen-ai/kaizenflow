@@ -142,13 +142,6 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--db_connection",
-        action="store",
-        default="from_env",
-        type=str,
-        help="Connection to database to upload to",
-    )
-    parser.add_argument(
         "--dst_dir",
         action="store",
         type=str,
@@ -193,12 +186,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if args.dst_dir:
         hio.create_dir(args.dst_dir, incremental=args.incremental)
     # Connect to database.
-    if args.db_connection == "from_env":
-        connection = hsql.get_connection_from_env_vars()
-    elif args.db_connection == "none":
-        connection = None
-    else:
-        hdbg.dfatal("Unknown db connection: %s" % args.db_connection)
+    connection = hsql.get_connection_from_env_vars()
     # Load universe.
     universe = imvcounun.get_trade_universe(args.universe)
     exchange_ids = universe["CCXT"].keys()
@@ -211,7 +199,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Generate a query to remove duplicates.
     dup_query = hsql.get_remove_duplicates_query(
         table_name=args.table_name,
-        id_col="id",
+        id_col_name="id",
         column_names=["timestamp", "exchange_id", "currency_pair"],
     )
     # Launch an infinite loop.
