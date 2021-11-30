@@ -756,3 +756,31 @@ class TestGetTimestamp(hunitest.TestCase):
 
 
 # #############################################################################
+
+class TestGetUniverse(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test that CCXT universe is computed correctly.
+        """
+        ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
+            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+        )
+        universe = ccxt_file_client.get_universe()
+        # Check the length of the universe.
+        self.assertEqual(len(universe), 38)
+        # Check the first elements of the universe.
+        first_elements = universe[:3]
+        first_elements_expected = [
+            "binance::ADA_USDT",
+            "binance::AVAX_USDT",
+            "binance::BNB_USDT",
+        ]
+        self.assertEqual(first_elements, first_elements_expected)
+        # Check the last elements of the universe.
+        last_elements = universe[-3:]
+        last_elements_expected = [
+            "kucoin::LINK_USDT",
+            "kucoin::SOL_USDT",
+            "kucoin::XRP_USDT",
+        ]
+        self.assertEqual(last_elements, last_elements_expected)
