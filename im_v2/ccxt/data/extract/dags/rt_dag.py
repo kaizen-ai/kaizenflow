@@ -6,9 +6,9 @@ import im_v2.common.universe.universe as imvcounun
 import helpers.io_ as hio
 import helpers.datetime_ as hdateti
 import pandas as pd
-from typing import List
+from typing import Any, List
 
-# TODO(Danya): A placeholder until the interface is cleared up.
+# Pass default parameters.
 args = {
     "dst_dir": "test/default_dir",
     "universe": "s3",
@@ -18,11 +18,15 @@ args = {
     "end_datetime": hdateti.get_timestamp("UTC")
 
 }
-
-# TODO(*): Not clear at what point should the connection be generated.
+# #############################################################################
+# Initialization code
+# #############################################################################
+# TODO(*): Time the execution and maybe move to a class.
+# Connect to DB.
 connection = hsql.get_connection_from_env_vars()
+# Create a destination directory.
 hio.create_dir(args["dst_dir"], incremental=True)
-
+# Initialize universe.
 universe = imvcounun.get_trade_universe(args["universe"])
 exchange_ids = universe["CCXT"].keys()
 
@@ -38,7 +42,8 @@ dup_query = hsql.get_remove_duplicates_query(
     id_col_name="id",
     column_names=["timestamp", "exchange_id", "currency_pair"],
 )
-# Convert timestamps.
+
+# Convert timestamp strings.
 start = hdateti.to_generalized_datetime(args["start_datetime"])
 end = hdateti.to_generalized_datetime(args["end_datetime"])
 
