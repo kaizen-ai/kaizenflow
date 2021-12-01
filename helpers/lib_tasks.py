@@ -1671,11 +1671,11 @@ def docker_release_dev_image(  # type: ignore
         qa_tests = False
     stage = "local"
     if fast_tests:
-        run_fast_tests(ctx, stage=stage)
+        run_fast_tests(ctx, stage=stage, version=version)
     if slow_tests:
-        run_slow_tests(ctx, stage=stage)
+        run_slow_tests(ctx, stage=stage, version=version)
     if superslow_tests:
-        run_superslow_tests(ctx, stage=stage)
+        run_superslow_tests(ctx, stage=stage, version=version)
     # 3) Promote the "local" image to "dev".
     docker_tag_local_image_as_dev(ctx)
     # 4) Run QA tests for the (local version) of the dev image.
