@@ -31,8 +31,9 @@ with airflow.DAG(
         "api_keys": "API_keys.json",
         "table_name": "ccxt_ohlcv",
     }
-
+    # Get current datetime as string.
     end_datetime = hdateti.get_timestamp("UTC")
+    # Get start as 5 minutes before start.
     start_datetime = (
         pd.Timestamp(end_datetime) - pd.Timedelta("5 minutes")
     ).strftime("%Y%m%d-%H%M%S")
@@ -48,7 +49,7 @@ with airflow.DAG(
         f"--api_keys {script_args['api_keys']}"
         f"--universe {script_args['universe']}"
     )
-
+    # Run the script.
     downloading_task = BashOperator(
         task_id="run_script", bash_command=bash_command, default_args=default_args
     )
