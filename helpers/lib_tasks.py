@@ -2171,7 +2171,6 @@ def _select_tests_to_skip(single_test_type: str) -> str:
 
 
 def _run_test_cmd(
-    ctx: Any,
     stage: str,
     version: str,
     cmd: str,
@@ -2211,7 +2210,6 @@ def _run_test_cmd(
 
 
 def _run_tests(
-    ctx: Any,
     stage: str,
     test_type: str,
     version: str,
@@ -2234,7 +2232,7 @@ def _run_tests(
     )
     # Execute the command line.
     _run_test_cmd(
-        ctx, stage, version, cmd, coverage, collect_only, start_coverage_script
+        stage, version, cmd, coverage, collect_only, start_coverage_script
     )
 
 
@@ -2262,7 +2260,6 @@ def run_fast_tests(  # type: ignore
     """
     _report_task()
     _run_tests(
-        ctx,
         stage,
         "fast_tests",
         version,
@@ -2292,7 +2289,6 @@ def run_slow_tests(  # type: ignore
     """
     _report_task()
     _run_tests(
-        ctx,
         stage,
         "slow_tests",
         version,
@@ -2322,7 +2318,6 @@ def run_superslow_tests(  # type: ignore
     """
     _report_task()
     _run_tests(
-        ctx,
         stage,
         "superslow_tests",
         version,
