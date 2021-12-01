@@ -6,7 +6,7 @@ authors = [""]
 
 [tool.poetry.dependencies]
 async_solipsism = ">= 0.3"
-awscli = "*"
+awscli = "1.22.17"
 boto3 = "*"
 bs4 = "*"
 ccxt = "*"
