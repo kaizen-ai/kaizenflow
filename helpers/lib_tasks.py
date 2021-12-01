@@ -1727,9 +1727,7 @@ def docker_build_prod_image(  # type: ignore
     """
     _report_task()
     _dassert_is_version_valid(version)
-    #
-    latest_version = None
-    image_prod = get_image(base_image, "prod", latest_version)
+    image_prod = get_image(base_image, "prod", version)
     #
     _dassert_is_image_name_valid(image_prod)
     dockerfile = "devops/docker_build/prod.Dockerfile"
