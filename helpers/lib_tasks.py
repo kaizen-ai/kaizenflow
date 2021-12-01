@@ -206,6 +206,8 @@ def _get_files_to_process(
     modified: bool,
     branch: bool,
     last_commit: bool,
+    # TODO(gp): Pass dir_name, instead of `all_` and remove the calls from the
+    # outer clients.
     all_: bool,
     files_from_user: str,
     mutually_exclusive: bool,
@@ -951,34 +953,41 @@ def docker_kill(  # type: ignore
 # For now we pass the customizable part through the default params.
 
 
-@task
-def docker_pull(ctx, stage="dev", images="all"):  # type: ignore
+def _docker_pull(
+    ctx: Any, base_image: str, stage: str, version: Optional[str]
+) -> None:
     """
     Pull images from the registry.
     """
-    _report_task()
     docker_login(ctx)
-    # Default is all the images.
-    if images == "all":
-        images = "current dev_tools"
-    # Parse the images.
-    image_tokens = [token.rstrip().lstrip() for token in images.split()]
-    _LOG.info("image_tokens=%s", ", ".join(image_tokens))
     #
-    for token in image_tokens:
-        if token == "":
-            continue
-        if token == "current":
-            base_image = ""
-            image = get_image(base_image, stage, None)
-        elif token == "dev_tools":
-            image = get_default_param("DEV_TOOLS_IMAGE_PROD")
-        else:
-            raise ValueError("Can't recognize image token '%s'" % token)
-        _LOG.info("token='%s': image='%s'", token, image)
-        _dassert_is_image_name_valid(image)
-        cmd = f"docker pull {image}"
-        _run(ctx, cmd, pty=True)
+    image = get_image(base_image, stage, version)
+    _LOG.info("image='%s'", image)
+    _dassert_is_image_name_valid(image)
+    cmd = f"docker pull {image}"
+    _run(ctx, cmd, pty=True)
+
+
+@task
+def docker_pull(ctx, stage="dev", version=None):  # type: ignore
+    """
+    Pull latest dev image corresponding to the current repo from the registry.
+    """
+    _report_task()
+    #
+    base_image = ""
+    _docker_pull(ctx, base_image, stage, version)
+
+
+@task
+def docker_pull_dev_tools(ctx, stage="prod", version=None):  # type: ignore
+    """
+    Pull latest prod image of `dev_tools` from the registry.
+    """
+    _report_task()
+    #
+    base_image = get_default_param("ECR_BASE_PATH") + "/dev_tools"
+    _docker_pull(ctx, base_image, stage, version)
 
 
 @functools.lru_cache()
@@ -1161,6 +1170,8 @@ def get_git_tag(
     return tag_name
 
 
+# TODO(gp): Consider using a token "latest" in version, so that it's always a
+# string and we avoid a special behavior encoded in None.
 def get_image(
     base_image: str,
     stage: str,
@@ -1452,8 +1463,12 @@ def docker_jupyter(  # type: ignore
     #
     print_docker_config = False
     docker_cmd_ = _get_docker_jupyter_cmd(
-        base_image, stage, version, port, self_test,
-        print_docker_config=print_docker_config
+        base_image,
+        stage,
+        version,
+        port,
+        self_test,
+        print_docker_config=print_docker_config,
     )
     _docker_cmd(ctx, docker_cmd_)
 
@@ -1502,7 +1517,6 @@ def docker_build_local_image(  # type: ignore
     :param version: version to tag the image and code with
     :param cache: use the cache
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
-    :param stage: select a specific stage for the Docker image
     :param update_poetry: run poetry lock to update the packages
     """
     _report_task()
@@ -1517,8 +1531,8 @@ def docker_build_local_image(  # type: ignore
     _dassert_is_image_name_valid(image_local)
     #
     git_tag_prefix = get_default_param("BASE_IMAGE")
-    # Tag the container with the current version of 
-    # the code to keep them in sync.
+    # Tag the container with the current version of the code to keep them in
+    # sync.
     container_version = get_git_tag(version)
     #
     dockerfile = "devops/docker_build/dev.Dockerfile"
@@ -1564,7 +1578,8 @@ def docker_tag_local_image_as_dev(  # type: ignore
     cmd = f"docker tag {image_versioned_local} {image_versioned_dev}"
     _run(ctx, cmd)
     # Tag local image as dev image.
-    image_dev = get_image(base_image, "dev", None)
+    latest_version = None
+    image_dev = get_image(base_image, "dev", latest_version)
     cmd = f"docker tag {image_versioned_local} {image_dev}"
     _run(ctx, cmd)
     # Tag the Git repo with the tag corresponding to the image, e.g., `amp-1.0.0`.
@@ -1594,7 +1609,8 @@ def docker_push_dev_image(  # type: ignore
     cmd = f"docker push {image_versioned_dev}"
     _run(ctx, cmd, pty=True)
     # Push Docker tag.
-    image_dev = get_image(base_image, "dev", None)
+    latest_version = None
+    image_dev = get_image(base_image, "dev", latest_version)
     cmd = f"docker push {image_dev}"
     _run(ctx, cmd, pty=True)
     # Push Git tag.
@@ -1731,6 +1747,10 @@ def docker_build_prod_image(  # type: ignore
     """
     _run(ctx, cmd)
     #
+    image_versioned_prod = get_image(base_image, "prod", version)
+    cmd = f"docker tag {image_prod} {image_versioned_prod}"
+    _run(ctx, cmd)
+    #
     cmd = f"docker image ls {image_prod}"
     _run(ctx, cmd)
 
@@ -1750,7 +1770,8 @@ def docker_push_prod_image(  # type: ignore
     _report_task()
     docker_login(ctx)
     #
-    image_prod = get_image(base_image, "prod", None)
+    latest_version = None
+    image_prod = get_image(base_image, "prod", latest_version)
     cmd = f"docker push {image_prod}"
     _run(ctx, cmd, pty=True)
     #
@@ -2786,8 +2807,9 @@ def lint(  # type: ignore
     branch=False,
     last_commit=False,
     files="",
+    dir_name="",
     phases="",
-    only_format_steps=False,
+    only_formatting=False,
     # stage="prod",
     run_bash=False,
     run_linter_step=True,
@@ -2802,8 +2824,9 @@ def lint(  # type: ignore
     :param branch: select the files modified in the current branch
     :param last_commit: select the files modified in the previous commit
     :param files: specify a space-separated list of files
+    :param dir_name: process all the files in a dir
     :param phases: specify the lint phases to execute
-    :param only_format_steps: run only the formatting steps
+    :param only_formatting: run only the formatting steps
     :param run_bash: instead of running pre-commit, run bash to debug
     :param run_linter_step: run linter step
     :param parse_linter_output: parse linter output and generate vim cfile
@@ -2817,15 +2840,22 @@ def lint(  # type: ignore
         cmd = f"rm {lint_file_name}"
         _run(ctx, cmd)
     #
-    if only_format_steps:
+    if only_formatting:
         hdbg.dassert_eq(phases, "")
-        phases = "isort black"
+        phases = (
+            "amp_isort amp_class_method_order amp_normalize_import "
+            "amp_format_separating_line amp_black"
+        )
     if run_linter_step:
         # We don't want to run this all the times.
         # docker_pull(ctx, stage=stage, images="dev_tools")
         # Get the files to lint.
         # TODO(gp): For now we don't support linting the entire tree.
         all_ = False
+        if dir_name != "":
+            hdbg.dassert_eq(files, "")
+            files = hio.find_files(dir_name, "*.py")
+            files = " ".join(files)
         # For linting we can use only files modified in the client, in the branch, or
         # specified.
         mutually_exclusive = True

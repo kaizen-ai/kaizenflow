@@ -4,6 +4,9 @@ Import as:
 import im_v2.ccxt.data.client.clients as imvcdclcl
 """
 
+# TODO(gp): -> ccxt_clients.py to try to make the names unique, even if there is
+#  stuttering.
+
 import abc
 import logging
 import os
@@ -34,11 +37,11 @@ class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
 
     def __init__(self, data_type: str) -> None:
         """
-        :param data_type: OHLCV or trade, bid/ask data
+        :param data_type: OHLCV, trade, or bid/ask data
         """
-        date_type_lower = data_type.lower()
-        hdbg.dassert_in(date_type_lower, _DATA_TYPES)
-        self._data_type = date_type_lower
+        date_type = data_type.lower()
+        hdbg.dassert_in(date_type, _DATA_TYPES)
+        self._data_type = date_type
 
     @staticmethod
     def get_universe() -> List[imvcdcli.FullSymbol]:
@@ -47,44 +50,6 @@ class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
         """
         universe = imvccunun.get_vendor_universe(vendor="CCXT")
         return universe  # type: ignore[no-any-return]
-
-    def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        See description in the parent class.
-
-        Input data is indexed with numbers and contains the columns timestamp
-        open, high, low, closed, volume, exchange_id, currency_pair e.g.,
-        ```
-             timestamp      open     high     low      close    volume    currency_pair exchange_id
-        0    1631145600000  3499.01  3499.49  3496.17  3496.36  346.4812  ETH/USDT      binance
-        1    1631145660000  3496.36  3501.59  3495.69  3501.59  401.9576  ETH/USDT      binance
-        2    1631145720000  3501.59  3513.10  3499.89  3513.09  579.5656  ETH/USDT      binance
-        ```
-
-        Output data is indexed by timestamp and contains the columns open,
-        high, low, close, volume, epoch, currency_pair, exchange_id, e.g.,
-        ```
-                                   open        epoch          currency_pair exchange_id
-        2021-09-08 20:00:00-04:00  3499.01 ... 1631145600000  ETH/USDT      binance
-        2021-09-08 20:01:00-04:00  3496.36     1631145660000  ETH/USDT      binance
-        2021-09-08 20:02:00-04:00  3501.59     1631145720000  ETH/USDT      binance
-        ```
-        """
-        # Apply common transformations.
-        transformed_data = self._apply_common_transformation(df)
-        # Apply transformations for OHLCV data.
-        if self._data_type == "ohlcv":
-            transformed_data = self._apply_ohlcv_transformation(transformed_data)
-        else:
-            hdbg.dfatal(
-                "Incorrect data type: '%s'. Acceptable types: '%s'"
-                % (self._data_type, _DATA_TYPES)
-            )
-        # Sort transformed data by exchange id and currency pair columns.
-        transformed_data = transformed_data.sort_values(
-            by=["exchange_id", "currency_pair"]
-        )
-        return transformed_data
 
     @staticmethod
     def _apply_common_transformation(data: pd.DataFrame) -> pd.DataFrame:
@@ -147,6 +112,44 @@ class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
         # Rearrange the columns.
         data = data[ohlcv_columns].copy()
         return data
+
+    def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        See description in the parent class.
+
+        Input data is indexed with numbers and contains the columns timestamp
+        open, high, low, closed, volume, exchange_id, currency_pair e.g.,
+        ```
+             timestamp      open     high     low      close    volume    currency_pair exchange_id
+        0    1631145600000  3499.01  3499.49  3496.17  3496.36  346.4812  ETH/USDT      binance
+        1    1631145660000  3496.36  3501.59  3495.69  3501.59  401.9576  ETH/USDT      binance
+        2    1631145720000  3501.59  3513.10  3499.89  3513.09  579.5656  ETH/USDT      binance
+        ```
+
+        Output data is indexed by timestamp and contains the columns open,
+        high, low, close, volume, epoch, currency_pair, exchange_id, e.g.,
+        ```
+                                   open        epoch          currency_pair exchange_id
+        2021-09-08 20:00:00-04:00  3499.01 ... 1631145600000  ETH/USDT      binance
+        2021-09-08 20:01:00-04:00  3496.36     1631145660000  ETH/USDT      binance
+        2021-09-08 20:02:00-04:00  3501.59     1631145720000  ETH/USDT      binance
+        ```
+        """
+        # Apply common transformations.
+        transformed_data = self._apply_common_transformation(df)
+        # Apply transformations for OHLCV data.
+        if self._data_type == "ohlcv":
+            transformed_data = self._apply_ohlcv_transformation(transformed_data)
+        else:
+            hdbg.dfatal(
+                "Incorrect data type: '%s'. Acceptable types: '%s'"
+                % (self._data_type, _DATA_TYPES)
+            )
+        # Sort transformed data by exchange id and currency pair columns.
+        transformed_data = transformed_data.sort_values(
+            by=["exchange_id", "currency_pair"]
+        )
+        return transformed_data
 
 
 # #############################################################################

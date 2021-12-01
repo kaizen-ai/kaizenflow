@@ -32,6 +32,7 @@ def dassert_is_full_symbol_valid(full_symbol: FullSymbol) -> None:
     hdbg.dassert_isinstance(full_symbol, str)
     hdbg.dassert_ne(full_symbol, "")
     # Only letters and underscores are allowed.
+    # TODO(gp): I think we might need non-leading numbers.
     letter_underscore_pattern = "[a-zA-Z_]"
     # Exchanges and symbols must be separated by `::`.
     regex_pattern = fr"{letter_underscore_pattern}*::{letter_underscore_pattern}*"
@@ -45,7 +46,7 @@ def dassert_is_full_symbol_valid(full_symbol: FullSymbol) -> None:
 
 def parse_full_symbol(full_symbol: FullSymbol) -> Tuple[str, str]:
     """
-    Split a full_symbol into exchange and symbol.
+    Split a full_symbol into a tuple of exchange and symbol.
 
     :return: exchange, symbol
     """
@@ -152,12 +153,8 @@ class AbstractImClient(abc.ABC):
         Read data for a single `FullSymbol` (i.e. currency pair from a single
         exchange) in [start_ts, end_ts).
 
-        None `start_ts` and `end_ts` means the entire period of time available.
-
-        :param full_symbol: `exchange::symbol`, e.g. `binance::BTC_USDT`
-        :param start_ts: the earliest date timestamp to load data for
-        :param end_ts: the latest date timestamp to load data for
-        :return: data for a single `FullSymbol` in [start_ts, end_ts)
+        Parameters have the same meaning as parameters in `read_data()` with the same
+        name.
         """
 
     @staticmethod
@@ -174,7 +171,7 @@ class AbstractImClient(abc.ABC):
     @staticmethod
     def _dassert_is_valid(df: pd.DataFrame) -> None:
         """
-        Verify that data is valid.
+        Verify that normalized data is valid.
 
         Sanity checks include:
             - index is `pd.DatetimeIndex`
@@ -183,16 +180,17 @@ class AbstractImClient(abc.ABC):
             - data has no duplicates
         """
         hpandas.dassert_index_is_datetime(df)
+        # TODO(gp): Let's force it to do increasing.
         hpandas.dassert_monotonic_index(df)
         # Verify that timezone info is correct.
         expected_tz = ["UTC"]
-        # Is is assumed that the 1st value of an index is representative.
+        # It is assumed that the 1st value of an index is representative.
         hdateti.dassert_has_specified_tz(
             df.index[0],
             expected_tz,
         )
-        # Verify that there are no duplicates in data. We do not want to
-        # consider missing rows that appear due to resampling duplicated.
+        # Verify that there are no duplicates in the data.
+        # TODO(gp): Consider a stricter dropna(how="all").
         n_duplicated_rows = df.dropna().duplicated().sum()
         hdbg.dassert_eq(
             n_duplicated_rows,
