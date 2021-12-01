@@ -11,12 +11,9 @@ from typing import Any, List
 # Pass default parameters.
 args = {
     "dst_dir": "test/default_dir",
-    "universe": "s3",
-    "api_keys": "/data/shared/data/API_keys.json",
+    "universe": "v3",
+    "api_keys": "API_keys.json",
     "table_name": "ccxt_ohlcv",
-    "start_datetime": hdateti.get_timestamp("UTC"),
-    "end_datetime": hdateti.get_timestamp("UTC")
-
 }
 # #############################################################################
 # Initialization code
