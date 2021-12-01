@@ -1452,8 +1452,12 @@ def docker_jupyter(  # type: ignore
     #
     print_docker_config = False
     docker_cmd_ = _get_docker_jupyter_cmd(
-        base_image, stage, version, port, self_test,
-        print_docker_config=print_docker_config
+        base_image,
+        stage,
+        version,
+        port,
+        self_test,
+        print_docker_config=print_docker_config,
     )
     _docker_cmd(ctx, docker_cmd_)
 
@@ -1517,7 +1521,7 @@ def docker_build_local_image(  # type: ignore
     _dassert_is_image_name_valid(image_local)
     #
     git_tag_prefix = get_default_param("BASE_IMAGE")
-    # Tag the container with the current version of 
+    # Tag the container with the current version of
     # the code to keep them in sync.
     container_version = get_git_tag(version)
     #
@@ -2104,7 +2108,7 @@ def run_blank_tests(ctx, stage="dev", version=""):  # type: ignore
 
 
 def _build_run_command_line(
-    single_test_type: str,
+    uniform_test_list_name: str,
     pytest_opts: str,
     skip_submodules: bool,
     coverage: bool,
@@ -2115,26 +2119,26 @@ def _build_run_command_line(
     """
     Build the pytest run command.
 
-    :param single_test_type: "fast_tests", "slow_tests" or "superslow_tests"
+    :param uniform_test_list_name: "fast_tests", "slow_tests" or "superslow_tests"
     The rest of params are the same as in `run_fast_tests()`.
 
     The invariant is that we don't want to duplicate pytest options that can be
     passed by the user through `-p` (unless really necessary).
     """
     hdbg.dassert_in(
-        single_test_type,
+        uniform_test_list_name,
         _TEST_TIMEOUTS_IN_SECS,
-        "Invalid `single_test_type``='%s'",
-        single_test_type,
+        "Invalid `uniform_test_list_name``='%s'",
+        uniform_test_list_name,
     )
     pytest_opts = pytest_opts or "."
     #
     pytest_opts_tmp = []
     if pytest_opts:
         pytest_opts_tmp.append(pytest_opts)
-    skipped_tests = _select_tests_to_skip(single_test_type)
+    skipped_tests = _select_tests_to_skip(uniform_test_list_name)
     pytest_opts_tmp.insert(0, f'-m "{skipped_tests}"')
-    timeout_in_sec = _TEST_TIMEOUTS_IN_SECS[single_test_type]
+    timeout_in_sec = _TEST_TIMEOUTS_IN_SECS[uniform_test_list_name]
     pytest_opts_tmp.append(f"--timeout {timeout_in_sec}")
     if skip_submodules:
         submodule_paths = hgit.get_submodule_paths()
@@ -2156,22 +2160,24 @@ def _build_run_command_line(
     pytest_opts = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
     cmd = f"pytest {pytest_opts}"
     if tee_to_file:
-        cmd += f" 2>&1 | tee tmp.pytest.{single_test_type}.log"
+        cmd += f" 2>&1 | tee tmp.pytest.{uniform_test_list_name}.log"
     return cmd
 
 
-def _select_tests_to_skip(single_test_type: str) -> str:
+def _select_tests_to_skip(uniform_test_list_name: str) -> str:
     """
     Generate text for pytest specifying which tests to deselect.
     """
-    if single_test_type == "fast_tests":
+    if uniform_test_list_name == "fast_tests":
         skipped_tests = "not slow and not superslow"
-    elif single_test_type == "slow_tests":
+    elif uniform_test_list_name == "slow_tests":
         skipped_tests = "slow and not superslow"
-    elif single_test_type == "superslow_tests":
+    elif uniform_test_list_name == "superslow_tests":
         skipped_tests = "not slow and superslow"
     else:
-        raise ValueError(f"Invalid `single_test_type`={single_test_type}")
+        raise ValueError(
+            f"Invalid `uniform_test_list_name`={uniform_test_list_name}"
+        )
     return skipped_tests
 
 
@@ -2219,7 +2225,7 @@ def _run_test_cmd(
 
 def _run_tests(
     stage: str,
-    test_type: str,
+    test_list_name: str,
     version: str,
     pytest_opts: str,
     skip_submodules: bool,
@@ -2234,7 +2240,7 @@ def _run_tests(
     """
     # Build the command line.
     cmd = _build_run_command_line(
-        test_type,
+        test_list_name,
         pytest_opts,
         skip_submodules,
         coverage,

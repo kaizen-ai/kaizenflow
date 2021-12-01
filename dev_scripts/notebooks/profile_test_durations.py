@@ -56,7 +56,8 @@ def get_profiling_command(test_list_name: str):
     """
     Get command for profiling selected test type.
 
-    This command will need to be posted to the terminal.
+    Output command needs to be run from the command line outside the notebook
+    and container.
     """
     hdbg.dassert_in(
         test_list_name,
