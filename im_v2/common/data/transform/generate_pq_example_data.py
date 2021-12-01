@@ -8,45 +8,11 @@ import logging
 from typing import List
 
 import pandas as pd
-import pyarrow as pa
-import pyarrow.parquet as pq
 
+import helpers.hparquet as hparque
 import helpers.printing as hprint
-import helpers.timer as htimer
 
 _LOG = logging.getLogger(__name__)
-
-# TODO(gp): If this is testing code it should go in test_convert_pq_by_...
-
-
-# TODO(gp): Why so much redundancy with _save_pq_by_asset?
-def _save_daily_df_as_pq(df: pd.DataFrame, dst_dir: str) -> None:
-    """
-    Create and save a daily parquet structure as below:
-
-    ```
-    dst_dir/
-        by_date/
-            date=20211230/
-                data.parquet
-            date=20211231/
-                data.parquet
-            date=20221231/
-                data.parquet
-    ```
-    """
-    date_column_name = "date"
-    with htimer.TimedScope(logging.DEBUG, "Create partition idxs"):
-        df[date_column_name] = df.index.strftime("%Y%m%d")
-    with htimer.TimedScope(logging.DEBUG, "Save data"):
-        table = pa.Table.from_pandas(df)
-        partition_cols = [date_column_name]
-        pq.write_to_dataset(
-            table,
-            dst_dir,
-            partition_cols=partition_cols,
-            partition_filename_cb=lambda x: "data.parquet",
-        )
 
 
 def _get_daily_df(
@@ -103,4 +69,4 @@ def generate_pq_daily_data(
     dst_dir: str,
 ) -> None:
     dummy_df = _get_daily_df(start_date, end_date, assets, freq)
-    _save_daily_df_as_pq(dummy_df, dst_dir)
+    hparque.save_daily_df_as_pq(dummy_df, dst_dir)

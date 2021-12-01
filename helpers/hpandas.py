@@ -166,3 +166,23 @@ def drop_duplicates(
             hprint.perc(num_rows_before - num_rows_after, num_rows_before),
         )
     return data_no_dups
+
+
+# TODO(Nikola): Add unit test.
+#   Revert to previous behaviour that is overriding original timestamp ?
+def reindex_on_unix_epoch(df: pd.DataFrame, in_col_name: str) -> pd.DataFrame:
+    """
+    Transform the df so that `start_time` is converted into a datetime index.
+
+    `start_time` contains an Unix epoch (e.g., 1638194400) and it's
+    converted into a UTC time.
+    """
+    # Convert.
+    temp_col_name = in_col_name + "_tmp"
+    hdbg.dassert_in(in_col_name, df.columns)
+    hdbg.dassert_not_in(temp_col_name, df.columns)
+    # Save.
+    df[temp_col_name] = pd.to_datetime(df[in_col_name], unit="ms", utc=True)
+    df.set_index(temp_col_name, inplace=True, drop=True)
+    df.index.name = None
+    return df
