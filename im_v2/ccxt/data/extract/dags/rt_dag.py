@@ -23,9 +23,6 @@ with airflow.DAG(
     catchup=False,
     start_date=datetime.datetime.now(),
 ) as dag:
-
-    # #########################################################################
-
     # Pass default parameters for the script.
     script_args = {
         "dst_dir": "test/default_dir",
