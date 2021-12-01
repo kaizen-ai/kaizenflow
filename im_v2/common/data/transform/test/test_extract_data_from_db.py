@@ -11,6 +11,7 @@ import helpers.unit_test as hunitest
 import im.ccxt.db.utils as imccdbuti
 
 
+#@pytest.mark.skip("Disabled because of CmampTask646")
 class TestExtractDataFromDb1(hunitest.TestCase):
     def setUp(self) -> None:
         """
