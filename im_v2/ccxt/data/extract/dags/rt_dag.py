@@ -31,9 +31,9 @@ with airflow.DAG(
         "api_keys": "API_keys.json",
         "table_name": "ccxt_ohlcv",
     }
-    # Get current datetime as string.
+    # Get current datetime as end datetime.
     end_datetime = hdateti.get_timestamp("UTC")
-    # Get start as 5 minutes before start.
+    # Get start datetime as 5 minutes before end.
     start_datetime = (
         pd.Timestamp(end_datetime) - pd.Timedelta("5 minutes")
     ).strftime("%Y%m%d-%H%M%S")
