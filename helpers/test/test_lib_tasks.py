@@ -49,6 +49,9 @@ class _LibTasksTestCase(hunitest.TestCase):
         super().tearDown()
 
 
+# #############################################################################
+
+
 def _build_mock_context_returning_ok() -> invoke.MockContext:
     """
     Build a MockContext catching any command and returning rc=0.
@@ -61,7 +64,7 @@ def _build_mock_context_returning_ok() -> invoke.MockContext:
 
 class _CheckDryRunTestCase(hunitest.TestCase):
     """
-    Test class running a invoke target with/without dry-run and checking that
+    Test class running an invoke target with/without dry-run and checking that
     the issued commands are what is expected.
     """
 
@@ -87,6 +90,9 @@ class _CheckDryRunTestCase(hunitest.TestCase):
             self._check_calls(ctx)
 
 
+# #############################################################################
+
+
 def _gh_login() -> None:
     """
     Log in inside GitHub.
@@ -97,6 +103,25 @@ def _gh_login() -> None:
     if os.environ.get(env_var, None):
         # If the env var exists and it's not None.
         _LOG.warning("Using env var '%s' to log in GitHub", env_var)
+        # For debugging only (see AmpTask1864).
+        if False:
+
+            def _cmd(cmd):
+                hsysinte.system(
+                    cmd,
+                    suppress_output=False,
+                    log_level="echo",
+                    abort_on_error=False,
+                )
+
+            for cmd in [
+                "ls -l $HOME/.config",
+                "ls -l $HOME/.config/gh",
+                "ls -l $HOME/.config/gh/config.yml",
+                "touch $HOME/.config/gh/config.yml",
+                "ls -l $HOME/.config/gh/config.yml",
+            ]:
+                _cmd(cmd)
         cmd = "echo $GH_ACTION_ACCESS_TOKEN | gh auth login --with-token"
         hsysinte.system(cmd)
     # Check that we are logged in.
@@ -104,23 +129,30 @@ def _gh_login() -> None:
     hsysinte.system(cmd)
 
 
+class TestGhLogin1(hunitest.TestCase):
+    def test_gh_login(self) -> None:
+        _gh_login()
+
+
 # #############################################################################
 
 
-# TODO(gp): We should introspect `lib_tasks.py` and find all the functions decorated
-#  with `@tasks`, instead of maintaining a (incomplete) list of tasks.
+# TODO(gp): We should group the tests by what is tested and not how it's
+# tested. E.g. TestDryRunTasks1::test_print_setup and
+# TestDryRunTasks2::test_print_setup should go together in a class.
+
 class TestDryRunTasks1(hunitest.TestCase):
     """
     - Run invoke in dry-run mode from command line
     - Compare the output to the golden outcomes
     """
 
-    def test_print_setup(self) -> None:
-        target = "print_setup"
-        opts = "--dry"
-        cmd = f"invoke {opts} {target} | grep -v INFO | grep -v '>>ENV<<:'"
-        rc = hsysinte.system(cmd)
-        self.assertEqual(rc, 0)
+    # TODO(gp): -> TestGitCommands1
+
+    # TODO(gp): We can't test this since amp and cmamp have now different base image.
+    # def test_print_setup(self) -> None:
+    #     target = "print_setup"
+    #     self._dry_run(target)
 
     def test_git_pull(self) -> None:
         target = "git_pull"
@@ -133,6 +165,9 @@ class TestDryRunTasks1(hunitest.TestCase):
     def test_git_clean(self) -> None:
         target = "git_clean"
         self._dry_run(target)
+
+    # ################################################################################
+    # TODO(gp): -> TestDockerCommands1
 
     @pytest.mark.skipif(
         hsysinte.is_inside_ci(), reason="In CI the output is different"
@@ -169,6 +204,8 @@ class TestDryRunTasks1(hunitest.TestCase):
         target = "docker_kill --all"
         self._dry_run(target)
 
+    # ################################################################################
+
     def _dry_run(self, target: str, dry_run: bool = True) -> None:
         """
         Invoke the given target with dry run.
@@ -177,7 +214,10 @@ class TestDryRunTasks1(hunitest.TestCase):
         execute.
         """
         opts = "--dry" if dry_run else ""
-        cmd = f"invoke {opts} {target} | grep -v INFO | grep -v '>>ENV<<:'"
+        # TODO(vitalii): While deploying the container versioning 
+        # we disable the check in the unit tests. Remove `SKIP_VERSION_CHECK=1` 
+        # after CmampTask570 is fixed.
+        cmd = f"SKIP_VERSION_CHECK=1 invoke {opts} {target} | grep -v INFO | grep -v '>>ENV<<:'"
         _, act = hsysinte.system_to_string(cmd)
         act = hprint.remove_non_printable_chars(act)
         self.check_string(act)
@@ -212,6 +252,8 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     def test_git_clean2(self) -> None:
         target = "git_clean(ctx, dry_run=False)"
         self._check_output(target)
+
+    # ################################################################################
 
     def test_docker_images_ls_repo(self) -> None:
         target = "docker_images_ls_repo(ctx)"
@@ -249,6 +291,9 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "docker_stats(ctx)"
         self._check_output(target)
 
+    # ################################################################################
+    # TODO(gp): -> TestGhCommands1
+
     def test_gh_create_pr1(self) -> None:
         _gh_login()
         target = "gh_create_pr(ctx, repo_short_name='amp', title='test')"
@@ -281,6 +326,9 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     # def test_gh_workflow_run(self) -> None:
     #     target = "gh_workflow_run(ctx)"
     #     self._check_output(target)
+
+    # ################################################################################
+    # TODO(gp): -> TestGitCommands1
 
     def test_git_branch_files(self) -> None:
         # This test needs a reference to Git master branch.
@@ -319,6 +367,9 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     def test_git_merge_master(self) -> None:
         target = "git_merge_master(ctx)"
         self._check_output(target)
+
+    # ################################################################################
+    # TODO(gp): -> TestLintCommands1
 
     @pytest.mark.skip(
         reason="AmpTask1347: Add support for mocking `system*()` "
@@ -398,14 +449,8 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
 
 class TestLibTasks1(hunitest.TestCase):
     """
-    Test some auxiliary functions, e.g., `_get_build_tag`,
-    `_get_gh_issue_title()`.
+    Test some auxiliary functions, e.g., `_get_gh_issue_title()`.
     """
-
-    def test_get_build_tag1(self) -> None:
-        code_ver = "amp-1.0.0"
-        build_tag = hlibtask._get_build_tag(code_ver)
-        _LOG.debug("build_tag=%s", build_tag)
 
     def test_get_gh_issue_title1(self) -> None:
         _gh_login()
@@ -477,22 +522,24 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         """
         Command for docker_bash target.
         """
-        stage = "dev"
         base_image = ""
+        stage = "dev"
+        version = "1.0.0"
         cmd = "bash"
         service_name = "app"
         entrypoint = False
         print_docker_config = False
         act = hlibtask._get_docker_cmd(
-            stage,
             base_image,
+            stage,
+            version,
             cmd,
             service_name=service_name,
             entrypoint=entrypoint,
             print_docker_config=print_docker_config,
         )
         exp = r"""
-        IMAGE=*****/amp_test:dev \
+        IMAGE=*****/amp_test:dev-1.0.0 \
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
             --env-file devops/env/default.env \
@@ -510,12 +557,13 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         """
         Command for docker_bash with entrypoint.
         """
-        stage = "local"
         base_image = ""
+        stage = "local"
+        version = "1.0.0"
         cmd = "bash"
         print_docker_config = False
         act = hlibtask._get_docker_cmd(
-            stage, base_image, cmd, print_docker_config=print_docker_config
+            base_image, stage, version, cmd, print_docker_config=print_docker_config
         )
         exp = r"""
         IMAGE=*****/amp_test:local \
@@ -536,20 +584,22 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         """
         Command for docker_bash with some env vars.
         """
-        stage = "local"
         base_image = ""
+        stage = "local"
+        version = "1.0.0"
         cmd = "bash"
         extra_env_vars = ["PORT=9999", "SKIP_RUN=1"]
         print_docker_config = False
         act = hlibtask._get_docker_cmd(
-            stage,
             base_image,
+            stage,
+            version,
             cmd,
             extra_env_vars=extra_env_vars,
             print_docker_config=print_docker_config,
         )
         exp = r"""
-        IMAGE=*****/amp_test:local \
+        IMAGE=*****/amp_test:local-1.0.0 \
         PORT=9999 \
         SKIP_RUN=1 \
             docker-compose \
@@ -567,20 +617,22 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         reason="Only run in amp as supermodule",
     )
     def test_docker_bash4(self) -> None:
-        stage = "dev"
         base_image = ""
+        stage = "dev"
+        version = "1.0.0"
         cmd = "bash"
         entrypoint = False
         print_docker_config = False
         act = hlibtask._get_docker_cmd(
-            stage,
             base_image,
+            stage,
+            version,
             cmd,
             entrypoint=entrypoint,
             print_docker_config=print_docker_config,
         )
         exp = r"""
-        IMAGE=*****/amp_test:dev \
+        IMAGE=*****/amp_test:dev-1.0.0 \
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml \
             --env-file devops/env/default.env \
@@ -595,14 +647,16 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         not hgit.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
     )
     def test_docker_jupyter1(self) -> None:
-        stage = "dev"
         base_image = ""
+        stage = "dev"
+        version = "1.0.0"
         port = 9999
         self_test = True
         print_docker_config = False
         act = hlibtask._get_docker_jupyter_cmd(
             stage,
             base_image,
+            version,
             port,
             self_test,
             print_docker_config=print_docker_config,
@@ -636,7 +690,6 @@ class Test_build_run_command_line1(hunitest.TestCase):
         Basic run fast tests.
         """
         pytest_opts = ""
-        pytest_mark = ""
         skip_submodules = False
         coverage = False
         collect_only = False
@@ -645,7 +698,6 @@ class Test_build_run_command_line1(hunitest.TestCase):
         act = hlibtask._build_run_command_line(
             "fast_tests",
             pytest_opts,
-            pytest_mark,
             skip_submodules,
             coverage,
             collect_only,
@@ -659,7 +711,6 @@ class Test_build_run_command_line1(hunitest.TestCase):
         Coverage and collect-only.
         """
         pytest_opts = ""
-        pytest_mark = ""
         skip_submodules = False
         coverage = True
         collect_only = True
@@ -668,7 +719,6 @@ class Test_build_run_command_line1(hunitest.TestCase):
         act = hlibtask._build_run_command_line(
             "fast_tests",
             pytest_opts,
-            pytest_mark,
             skip_submodules,
             coverage,
             collect_only,
@@ -712,7 +762,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         hunitest.create_test_dir(dir_name, incremental, file_dict)
         #
         pytest_opts = ""
-        pytest_mark = "no_container"
+        dir_name = scratch_space
         skip_submodules = True
         coverage = False
         collect_only = False
@@ -721,7 +771,6 @@ class Test_build_run_command_line1(hunitest.TestCase):
         act = hlibtask._build_run_command_line(
             "fast_tests",
             pytest_opts,
-            pytest_mark,
             skip_submodules,
             coverage,
             collect_only,
@@ -738,7 +787,6 @@ class Test_build_run_command_line1(hunitest.TestCase):
         Basic run fast tests tee-ing to a file.
         """
         pytest_opts = ""
-        pytest_mark = ""
         skip_submodules = False
         coverage = False
         collect_only = False
@@ -747,7 +795,6 @@ class Test_build_run_command_line1(hunitest.TestCase):
         act = hlibtask._build_run_command_line(
             "fast_tests",
             pytest_opts,
-            pytest_mark,
             skip_submodules,
             coverage,
             collect_only,

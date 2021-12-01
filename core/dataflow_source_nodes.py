@@ -32,34 +32,59 @@ def data_source_node_factory(
     The use case for this function is to create nodes depending on config parameters
     leaving the pipeline DAG unchanged.
 
+    There are several types of nodes:
+    - synthetic data generators, e.g.,
+        - `ArmaGenerator`
+        - `MultivariateNormalGenerator`
+    - real-time data sources e.g.,
+        - `RealTimeDataSource` (which uses a full-fledged `AbstractPriceInterface`)
+    - data generators using data from disk
+        - `DiskDataSource` (which reads CSV and PQ files)
+    - data generators using pluggable functions
+        - `DataLoader` (which uses a passed function to create data)
+
+    - Note that the same goal can be achieved using different nodes in multiple
+      ways, e.g.,
+      - Synthetic data or data from disk can be generated using the specialized
+        node or passing a function to `DataLoader`
+      - One could inject synthetic data in the IM and go through the
+        high-fidelity data pipeline or mock a later interface
+
+    - In general we want to funnel data sources through `RealTimeDataSource`
+      since these nodes have the closest behavior to real-time data sources
+
     :param nid: node identifier
     :param source_node_name: short name for data source node type
     :param source_node_kwargs: kwargs for data source node
     :return: data source node of appropriate type instantiated with kwargs
     """
-    hdbg.dassert(source_node_name)
+    hdbg.dassert_ne(source_node_name, "")
     # TODO(gp): To simplify we can use the name of the class (e.g., "ArmaGenerator"
     #  instead of "arma"), so we don't have to use another level of mnemonics.
     if source_node_name == "arma":
         ret = cdataf.ArmaGenerator(nid, **source_node_kwargs)
-    elif source_node_name == "crypto_data_download":
-        import core_lem.dataflow.nodes.sources as cldns
-
-        ret = cldns.CryptoDataDownload_DataReader(nid, **source_node_kwargs)
-    elif source_node_name == "disk":
-        ret = cdataf.DiskDataSource(nid, **source_node_kwargs)
-    elif source_node_name == "kibot":
-        ret = KibotDataReader(nid, **source_node_kwargs)
-    elif source_node_name == "kibot_equities":
-        ret = KibotEquityReader(nid, **source_node_kwargs)
-    elif source_node_name == "kibot_multi_col":
-        ret = KibotColumnReader(nid, **source_node_kwargs)
-    elif source_node_name == "DataLoader":
-        ret = cdataf.DataLoader(nid, **source_node_kwargs)
     elif source_node_name == "multivariate_normal":
         ret = cdataf.MultivariateNormalGenerator(nid, **source_node_kwargs)
     elif source_node_name == "RealTimeDataSource":
         ret = cdataf.RealTimeDataSource(nid, **source_node_kwargs)
+    elif source_node_name == "disk":
+        ret = cdataf.DiskDataSource(nid, **source_node_kwargs)
+    elif source_node_name == "DataLoader":
+        ret = cdataf.DataLoader(nid, **source_node_kwargs)
+    elif source_node_name == "crypto_data_download":
+        # TODO(gp): This should go through RealTimeDataSource.
+        import core_lem.dataflow.nodes.sources as cldns
+
+        ret = cldns.CryptoDataDownload_DataReader(nid, **source_node_kwargs)
+    elif source_node_name == "kibot":
+        # TODO(gp): This should go through RealTimeDataSource.
+        ret = KibotDataReader(nid, **source_node_kwargs)
+    elif source_node_name == "kibot_equities":
+        # TODO(gp): This should go through RealTimeDataSource.
+        ret = KibotEquityReader(nid, **source_node_kwargs)
+    elif source_node_name == "kibot_multi_col":
+        # TODO(gp): This should go through RealTimeDataSource.
+        ret = KibotColumnReader(nid, **source_node_kwargs)
     else:
         raise ValueError(f"Unsupported data source node {source_node_name}")
     return ret

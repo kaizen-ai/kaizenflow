@@ -42,8 +42,8 @@ set_default_params(default_params)
 def im_tws_start_ib_interface(ctx, stage=STAGE, ib_app=""):
     dbg.dassert_in(ib_app, ("TWS", "GATEWAY"))
     base_image = ""
-    # ****.dkr.ecr.us-east-1.amazonaws.com/im_tws:local
-    image = get_image(stage, base_image)
+    # ****.dkr.ecr.us-east-1.amazonaws.com/im_tws:dev
+    image = get_image(base_image, stage)
     # TODO(gp): Use `curl ifconfig.me` to get host's IP.
     trusted_ips = ""
     vnc_password = "12345"

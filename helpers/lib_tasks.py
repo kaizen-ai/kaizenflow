@@ -39,9 +39,6 @@ _LOG = logging.getLogger(__name__)
 # Default params.
 # #############################################################################
 
-# By default we run against the dev image.
-STAGE = "dev"
-
 # This is used to inject the default params.
 # TODO(gp): Using a singleton here is not elegant but simple.
 _DEFAULT_PARAMS = {}
@@ -102,14 +99,14 @@ else:
 # to `system_interaction.py`.
 
 
-_IS_FIRST_CALL = False
+_WAS_FIRST_CALL_DONE = False
 
 
 def _report_task(txt: str = "") -> None:
     # On the first invocation report the version.
-    global _IS_FIRST_CALL
-    if _IS_FIRST_CALL:
-        _IS_FIRST_CALL = True
+    global _WAS_FIRST_CALL_DONE
+    if not _WAS_FIRST_CALL_DONE:
+        _WAS_FIRST_CALL_DONE = True
         hversio.check_version()
     # Print the name of the function.
     func_name = hintros.get_function_name(count=1)
@@ -321,7 +318,7 @@ def print_tasks(ctx, as_code=False):  # type: ignore
 
     These tasks might be exposed or not by different.
 
-    :param as_python_code: print as python code so that it can be embed in a
+    :param as_code: print as python code so that it can be embed in a
         `from helpers.lib_tasks import ...`
     """
     _report_task()
@@ -955,7 +952,7 @@ def docker_kill(  # type: ignore
 
 
 @task
-def docker_pull(ctx, stage=STAGE, images="all"):  # type: ignore
+def docker_pull(ctx, stage="dev", images="all"):  # type: ignore
     """
     Pull images from the registry.
     """
@@ -973,13 +970,13 @@ def docker_pull(ctx, stage=STAGE, images="all"):  # type: ignore
             continue
         if token == "current":
             base_image = ""
-            image = get_image(stage, base_image)
+            image = get_image(base_image, stage, None)
         elif token == "dev_tools":
             image = get_default_param("DEV_TOOLS_IMAGE_PROD")
         else:
             raise ValueError("Can't recognize image token '%s'" % token)
         _LOG.info("token='%s': image='%s'", token, image)
-        _check_image(image)
+        _dassert_is_image_name_valid(image)
         cmd = f"docker pull {image}"
         _run(ctx, cmd, pty=True)
 
@@ -1066,36 +1063,67 @@ def _get_amp_docker_compose_path() -> Optional[str]:
     return docker_compose_path
 
 
-# TODO(gp): Isn't this in helper.git?
-def _get_git_hash() -> str:
-    cmd = "git rev-parse HEAD"
-    git_hash: str = hsysinte.system_to_one_line(cmd)[1]
-    _LOG.debug("git_hash=%s", git_hash)
-    return git_hash
+_IMAGE_VERSION_RE = r"\d+\.\d+\.\d+"
+
+
+def _dassert_is_version_valid(version: str) -> None:
+    """
+    A valid version looks like: `1.0.0`.
+    """
+    hdbg.dassert_isinstance(version, str)
+    hdbg.dassert_ne(version, "")
+    regex = rf"^({_IMAGE_VERSION_RE})$"
+    _LOG.debug("Testing with regex='%s'", regex)
+    m = re.match(regex, version)
+    hdbg.dassert(m, "Invalid version: '%s'", version)
 
 
 _INTERNET_ADDRESS_RE = r"([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
-_IMAGE_RE = r"[a-z0-9_-]+"
-_TAG_RE = r"[a-z0-9_-]+"
+_IMAGE_BASE_NAME_RE = r"[a-z0-9_-]+"
+_IMAGE_USER_RE = r"[a-z0-9_-]+"
+_IMAGE_STAGE_RE = rf"(local(?:-{_IMAGE_USER_RE})?|dev|prod)"
 
 
-def _check_image(image: str) -> None:
+def _dassert_is_image_name_valid(image: str) -> None:
     """
+    Check whether an image name is valid.
+
+    Invariants:
+    - Local images contain a user name and a version
+      - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:local-saggese-1.0.0`
+    - `dev` and `prod` images have an instance with the a version and one without
+      to indicate the latest
+      - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev-1.0.0`
+        and `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev`
+
     An image should look like:
 
-    *****.dkr.ecr.us-east-1.amazonaws.com/amp:local
+    *****.dkr.ecr.us-east-1.amazonaws.com/amp:dev
+    *****.dkr.ecr.us-east-1.amazonaws.com/amp:local-saggese-1.0.0
+    *****.dkr.ecr.us-east-1.amazonaws.com/amp:dev-1.0.0
     """
-    m = re.match(rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_RE}:{_TAG_RE}$", image)
+    regex = "".join(
+        [
+            # E.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
+            rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_BASE_NAME_RE}",
+            # :local-saggese
+            rf":{_IMAGE_STAGE_RE}",
+            # -1.0.0
+            rf"(-{_IMAGE_VERSION_RE})?$",
+        ]
+    )
+    _LOG.debug("Testing with regex='%s'", regex)
+    m = re.match(regex, image)
     hdbg.dassert(m, "Invalid image: '%s'", image)
 
 
-def _check_base_image(base_image: str) -> None:
+def _dassert_is_base_image_name_valid(base_image: str) -> None:
     """
     A base image should look like.
 
     *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
-    regex = rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_RE}$"
+    regex = rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_BASE_NAME_RE}$"
     _LOG.debug("regex=%s", regex)
     m = re.match(regex, base_image)
     hdbg.dassert(m, "Invalid base_image: '%s'", base_image)
@@ -1112,42 +1140,85 @@ def _get_base_image(base_image: str) -> str:
             + "/"
             + get_default_param("BASE_IMAGE")
         )
-    _check_base_image(base_image)
+    _dassert_is_base_image_name_valid(base_image)
     return base_image
 
 
-def get_image(stage: str, base_image: str) -> str:
+def get_git_tag(
+    version: str,
+) -> str:
     """
+    Return the tag to be used in Git that consists of an image name and
+    version.
+
+    :param version: e.g., `1.0.0`. If None, the latest version is used
+    :return: e.g., `amp-1.0.0`
+    """
+    hdbg.dassert_is_not(version, None)
+    _dassert_is_version_valid(version)
+    base_image = get_default_param("BASE_IMAGE")
+    tag_name = f"{base_image}-{version}"
+    return tag_name
+
+
+def get_image(
+    base_image: str,
+    stage: str,
+    version: Optional[str],
+) -> str:
+    """
+    Return the fully qualified image name.
+
+    For local stage, it also appends the user name to the image name.
+
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
-    :return: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp:local
+    :param stage: e.g., `local`, `dev`, `prod`
+    :param version: e.g., `1.0.0`, if None empty, the latest version is used
+    :return: e.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:local` or
+        `*****.dkr.ecr.us-east-1.amazonaws.com/amp:local-1.0.0`
     """
     # Docker refers the default image as "latest", although in our stage
     # nomenclature we call it "dev".
-    hdbg.dassert_in(stage, "local dev prod hash".split())
-    if stage == "hash":
-        stage = _get_git_hash()
+    hdbg.dassert_in(stage, "local dev prod".split())
     # Get the base image.
     base_image = _get_base_image(base_image)
-    _check_base_image(base_image)
-    # Get the full image.
-    image = base_image + ":" + stage
-    _check_image(image)
+    _dassert_is_base_image_name_valid(base_image)
+    # Get the full image name.
+    image = [base_image]
+    # Handle the stage.
+    image.append(f":{stage}")
+    # User the user name.
+    if stage == "local":
+        user = hsysinte.get_user_name()
+        image.append(f"-{user}")
+    # Handle the version.
+    if version is not None and version != "":
+        _dassert_is_version_valid(version)
+        image.append(f"-{version}")
+    #
+    image = "".join(image)
+    _dassert_is_image_name_valid(image)
     return image
 
 
 def _get_docker_cmd(
-    stage: str,
     base_image: str,
+    stage: str,
+    version: str,
     cmd: str,
+    *,
     extra_env_vars: Optional[List[str]] = None,
     extra_docker_compose_files: Optional[List[str]] = None,
     extra_docker_run_opts: Optional[List[str]] = None,
     service_name: str = "app",
     entrypoint: bool = True,
+    as_user: bool = True,
     print_docker_config: bool = False,
 ) -> str:
     """
-    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
+    :param base_image, stage, version: like in `get_image()`
+    :param cmd: command to run inside Docker container
+    :param as_user: pass the user / group id or not
     :param extra_env_vars: represent vars to add, e.g., `["PORT=9999", "DRY_RUN=1"]`
     :param print_config: print the docker config for debugging purposes
     """
@@ -1160,9 +1231,9 @@ def _get_docker_cmd(
     )
     docker_cmd_: List[str] = []
     # - Handle the image.
-    image = get_image(stage, base_image)
+    image = get_image(base_image, stage, version)
     _LOG.debug("base_image=%s stage=%s -> image=%s", base_image, stage, image)
-    _check_image(image)
+    _dassert_is_image_name_valid(image)
     docker_cmd_.append(f"IMAGE={image}")
     # - Handle extra env vars.
     if extra_env_vars:
@@ -1233,9 +1304,11 @@ def _get_docker_cmd(
         --rm"""
     )
     # - Handle the user.
-    if True:
+    # Based on AmpTask1864 it seems that we need to use root in the CI to be
+    # able to log in GH touching $HOME/.config/gh.
+    if as_user:
         docker_cmd_.append(
-            rf"""
+            r"""
         --user $(id -u):$(id -g)"""
         )
     # - Handle the extra docker options.
@@ -1281,42 +1354,53 @@ def _docker_cmd(
     docker_cmd_: str,
 ) -> None:
     """
-    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
+    Execute a docker command printing the command.
     """
     _LOG.debug("cmd=%s", docker_cmd_)
     _run(ctx, docker_cmd_, pty=True)
 
 
 @task
-def docker_bash(ctx, stage=STAGE, entrypoint=True):  # type: ignore
+def docker_bash(  # type: ignore
+    ctx,
+    base_image="",
+    stage="dev",
+    version="",
+    entrypoint=True,
+    as_user=True,
+):
     """
     Start a bash shell inside the container corresponding to a stage.
     """
     _report_task()
-    base_image = ""
     cmd = "bash"
-    docker_cmd_ = _get_docker_cmd(stage, base_image, cmd, entrypoint=entrypoint)
+    docker_cmd_ = _get_docker_cmd(
+        base_image, stage, version, cmd, entrypoint=entrypoint, as_user=as_user
+    )
     _docker_cmd(ctx, docker_cmd_)
 
 
 @task
-def docker_cmd(ctx, stage=STAGE, cmd=""):  # type: ignore
+def docker_cmd(  # type: ignore
+    ctx, base_image="", stage="dev", version="", cmd=""
+):
     """
     Execute the command `cmd` inside a container corresponding to a stage.
     """
     _report_task()
     hdbg.dassert_ne(cmd, "")
-    base_image = ""
     # TODO(gp): Do we need to overwrite the entrypoint?
-    docker_cmd_ = _get_docker_cmd(stage, base_image, cmd)
+    docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd)
     _docker_cmd(ctx, docker_cmd_)
 
 
 def _get_docker_jupyter_cmd(
-    stage: str,
     base_image: str,
+    stage: str,
+    version: str,
     port: int,
     self_test: bool,
+    *,
     print_docker_config: bool = False,
 ) -> str:
     cmd = ""
@@ -1325,8 +1409,9 @@ def _get_docker_jupyter_cmd(
     service_name = "jupyter_server_test" if self_test else "jupyter_server"
     #
     docker_cmd_ = _get_docker_cmd(
-        stage,
         base_image,
+        stage,
+        version,
         cmd,
         extra_env_vars=extra_env_vars,
         extra_docker_run_opts=extra_docker_run_opts,
@@ -1339,7 +1424,8 @@ def _get_docker_jupyter_cmd(
 @task
 def docker_jupyter(  # type: ignore
     ctx,
-    stage=STAGE,
+    stage="dev",
+    version="",
     base_image="",
     auto_assign_port=True,
     port=9999,
@@ -1364,7 +1450,11 @@ def docker_jupyter(  # type: ignore
         port = (uid * max_idx_per_user) + git_repo_idx
         _LOG.info("Assigned port is %s", port)
     #
-    docker_cmd_ = _get_docker_jupyter_cmd(stage, base_image, port, self_test)
+    print_docker_config = False
+    docker_cmd_ = _get_docker_jupyter_cmd(
+        base_image, stage, version, port, self_test,
+        print_docker_config=print_docker_config
+    )
     _docker_cmd(ctx, docker_cmd_)
 
 
@@ -1379,70 +1469,62 @@ def _to_abs_path(filename: str) -> str:
     return filename
 
 
-# Use Docker buildkit or not.
-# DOCKER_BUILDKIT = 1
-DOCKER_BUILDKIT = 0
-
-
-def _get_build_tag(code_ver: str) -> str:
-    """
-    Return a string to tag the build.
-
-    E.g.,
-    build_tag=
-        amp-1.0.0-20210428-
-        AmpTask1280_Use_versioning_to_keep_code_and_container_in_sync-
-        500a9e31ee70e51101c1b2eb82945c19992fa86e
-
-    :param code_ver: the value from hversio.get_code_version()
-    """
-    # E.g., 20210723-20_52_00
-    timestamp = _get_ET_timestamp()
-    branch_name = hgit.get_branch_name()
-    hash_ = hgit.get_head_hash()
-    build_tag = f"{code_ver}-{timestamp}-{branch_name}-{hash_}"
-    return build_tag
-
-
-# DEV image flow:
-# - A "local" image (which is a release candidate for the DEV image) is built
+# =============================================================================
+# DEV image flow
+# =============================================================================
+# - A "local" image (which is a release candidate for the DEV image) is built with:
 #   ```
 #   > docker_build_local_image
 #   ```
-#   This creates the image `dev_tools:local`
-# - A qualification process (e.g., running all tests) is performed on the "local"
-#   image (e.g., through GitHub actions)
-# - If qualification is passed, it becomes `dev`.
+#   This creates the local image `dev_tools:local.saggese-1.0.0`
+# - A qualification process (e.g., running all unit tests and the QA tests) is
+#   performed on the "local" image (e.g., locally or through GitHub actions)
+# - If the qualification process is passed, the image is released as `dev` on ECR
 
+
+# Use Docker buildkit or not.
+# DOCKER_BUILDKIT = 1
+DOCKER_BUILDKIT = 0
 
 # For base_image, we use "" as default instead None since pyinvoke can only infer
 # a single type.
 @task
 def docker_build_local_image(  # type: ignore
-    ctx, cache=True, base_image="", update_poetry=False
+    ctx,
+    version,
+    cache=True,
+    base_image="",
+    update_poetry=False,
 ):
     """
     Build a local image (i.e., a release candidate "dev" image).
 
+    :param version: version to tag the image and code with
     :param cache: use the cache
+    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
+    :param stage: select a specific stage for the Docker image
     :param update_poetry: run poetry lock to update the packages
     """
     _report_task()
+    _dassert_is_version_valid(version)
     # Update poetry.
     if update_poetry:
         cmd = "cd devops/docker_build; poetry lock -v"
         _run(ctx, cmd)
     #
-    image_local = get_image("local", base_image)
+    image_local = get_image(base_image, "local", version)
     #
-    _check_image(image_local)
+    _dassert_is_image_name_valid(image_local)
+    #
+    git_tag_prefix = get_default_param("BASE_IMAGE")
+    # Tag the container with the current version of 
+    # the code to keep them in sync.
+    container_version = get_git_tag(version)
+    #
     dockerfile = "devops/docker_build/dev.Dockerfile"
     dockerfile = _to_abs_path(dockerfile)
     #
     opts = "--no-cache" if not cache else ""
-    # The container version is the version used from this code.
-    container_version = hversio.get_code_version("./version.txt")
-    build_tag = _get_build_tag(container_version)
     # TODO(gp): Use _to_multi_line_cmd()
     cmd = rf"""
     DOCKER_BUILDKIT={DOCKER_BUILDKIT} \
@@ -1450,8 +1532,8 @@ def docker_build_local_image(  # type: ignore
     docker build \
         --progress=plain \
         {opts} \
-        --build-arg CONTAINER_VERSION={container_version} \
-        --build-arg BUILD_TAG={build_tag} \
+        --build-arg AM_CONTAINER_VERSION={container_version} \
+        --build-arg AM_IMAGE_NAME={git_tag_prefix} \
         --tag {image_local} \
         --file {dockerfile} \
         .
@@ -1463,40 +1545,73 @@ def docker_build_local_image(  # type: ignore
 
 
 @task
-def docker_tag_local_image_as_dev(ctx, base_image=""):  # type: ignore
+def docker_tag_local_image_as_dev(  # type: ignore
+    ctx,
+    version,
+    base_image="",
+):
     """
     (ONLY CI/CD) Mark the "local" image as "dev".
+
+    :param version: version to tag the image and code with
+    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     _report_task()
-    #
-    image_local = get_image("local", base_image)
-    image_dev = get_image("dev", base_image)
-    cmd = f"docker tag {image_local} {image_dev}"
+    _dassert_is_version_valid(version)
+    # Tag local image as versioned dev image (e.g., `dev-1.0.0`).
+    image_versioned_local = get_image(base_image, "local", version)
+    image_versioned_dev = get_image(base_image, "dev", version)
+    cmd = f"docker tag {image_versioned_local} {image_versioned_dev}"
     _run(ctx, cmd)
+    # Tag local image as dev image.
+    image_dev = get_image(base_image, "dev", None)
+    cmd = f"docker tag {image_versioned_local} {image_dev}"
+    _run(ctx, cmd)
+    # Tag the Git repo with the tag corresponding to the image, e.g., `amp-1.0.0`.
+    # TODO(gp): Should we add also the stage in the same format `amp:dev-1.0.0`?
+    tag_name = get_git_tag(version)
+    hgit.git_tag(tag_name)
 
 
 @task
-def docker_push_dev_image(ctx, base_image=""):  # type: ignore
+def docker_push_dev_image(  # type: ignore
+    ctx,
+    version,
+    base_image="",
+):
     """
     (ONLY CI/CD) Push the "dev" image to ECR.
+
+    :param version: version to tag the image and code with
+    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     _report_task()
-    docker_login(ctx)
+    _dassert_is_version_valid(version)
     #
-    image_dev = get_image("dev", base_image)
+    docker_login(ctx)
+    # Push Docker versioned tag.
+    image_versioned_dev = get_image(base_image, "dev", version)
+    cmd = f"docker push {image_versioned_dev}"
+    _run(ctx, cmd, pty=True)
+    # Push Docker tag.
+    image_dev = get_image(base_image, "dev", None)
     cmd = f"docker push {image_dev}"
     _run(ctx, cmd, pty=True)
+    # Push Git tag.
+    tag_name = get_git_tag(version)
+    hgit.git_push_tag(tag_name)
 
 
 @task
 def docker_release_dev_image(  # type: ignore
     ctx,
+    version,
     cache=True,
     skip_tests=False,
     fast_tests=True,
     slow_tests=True,
     superslow_tests=False,
-    end_to_end_tests=True,
+    qa_tests=True,
     push_to_repo=True,
     update_poetry=False,
 ):
@@ -1507,30 +1622,37 @@ def docker_release_dev_image(  # type: ignore
     running the tests, but not necessarily pushing.
 
     Phases:
-    - Build local image
-    - Run the tests
-    - Mark local as dev image
-    - Push dev image to the repo
+    1) Build local image
+    2) Run the unit tests (e.g., fast, slow, superslow) on the local image
+    3) Mark local as dev image
+    4) Run the QA tests on the dev image
+    5) Push dev image to the repo
 
+    :param version: version to tag the image and code with
     :param cache: use the cache
     :param skip_tests: skip all the tests and release the dev image
     :param fast_tests: run fast tests, unless all tests skipped
     :param slow_tests: run slow tests, unless all tests skipped
     :param superslow_tests: run superslow tests, unless all tests skipped
-    :param end_to_end_tests: run end-to-end linter tests, unless all tests skipped
+    :param qa_tests: run end-to-end linter tests, unless all tests skipped
     :param push_to_repo: push the image to the repo_short_name
     :param update_poetry: update package dependencies using poetry
     """
     _report_task()
     # 1) Build "local" image.
-    docker_build_local_image(ctx, cache=cache, update_poetry=update_poetry)
+    docker_build_local_image(
+        ctx,
+        cache=cache,
+        update_poetry=update_poetry,
+        version=version,
+    )
     # 2) Run tests for the "local" image.
     if skip_tests:
         _LOG.warning("Skipping all tests and releasing")
         fast_tests = False
         slow_tests = False
         superslow_tests = False
-        end_to_end_tests = False
+        qa_tests = False
     stage = "local"
     if fast_tests:
         run_fast_tests(ctx, stage=stage)
@@ -1538,15 +1660,16 @@ def docker_release_dev_image(  # type: ignore
         run_slow_tests(ctx, stage=stage)
     if superslow_tests:
         run_superslow_tests(ctx, stage=stage)
-    # 3) Run end-to-end test.
-    if end_to_end_tests:
-        end_to_end_test_fn = get_default_param("END_TO_END_TEST_FN")
-        if not end_to_end_test_fn(ctx, stage=stage):
-            _LOG.error("End-to-end test has failed")
-            return
-    # 4) Promote the "local" image to "dev".
+    # 3) Promote the "local" image to "dev".
     docker_tag_local_image_as_dev(ctx)
-    # 5) Push the "local" image to ECR.
+    # 4) Run QA tests for the (local version) of the dev image.
+    if qa_tests:
+        qa_test_fn = get_default_param("END_TO_END_TEST_FN")
+        if not qa_test_fn(ctx, stage="dev"):
+            msg = "End-to-end test has failed"
+            _LOG.error(msg)
+            raise RuntimeError(msg)
+    # 5) Push the "dev" image to ECR.
     if push_to_repo:
         docker_push_dev_image(ctx)
     else:
@@ -1556,7 +1679,9 @@ def docker_release_dev_image(  # type: ignore
     _LOG.info("==> SUCCESS <==")
 
 
+# #############################################################################
 # PROD image flow:
+# #############################################################################
 # - PROD image has no release candidate
 # - Start from a DEV image already built and qualified
 # - The PROD image is created from the DEV image by copying the code inside the
@@ -1566,20 +1691,28 @@ def docker_release_dev_image(  # type: ignore
 
 # TODO(gp): Remove redundancy with docker_build_local_image(), if possible.
 @task
-def docker_build_prod_image(ctx, cache=True, base_image=""):  # type: ignore
+def docker_build_prod_image(  # type: ignore
+    ctx,
+    version,
+    cache=True,
+    base_image="",
+):
     """
     (ONLY CI/CD) Build a prod image.
 
     Phases:
     - Build the prod image on top of the dev image
 
+    :param version: version to tag the image and code with
     :param cache: note that often the prod image is just a copy of the dev
         image so caching makes no difference
+    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     _report_task()
-    image_prod = get_image("prod", base_image)
+    _dassert_is_version_valid(version)
+    image_prod = get_image(base_image, "prod", version)
     #
-    _check_image(image_prod)
+    _dassert_is_image_name_valid(image_prod)
     dockerfile = "devops/docker_build/prod.Dockerfile"
     dockerfile = _to_abs_path(dockerfile)
     #
@@ -1593,6 +1726,7 @@ def docker_build_prod_image(ctx, cache=True, base_image=""):  # type: ignore
         {opts} \
         --tag {image_prod} \
         --file {dockerfile} \
+        --build-arg VERSION={version} \
         .
     """
     _run(ctx, cmd)
@@ -1602,21 +1736,34 @@ def docker_build_prod_image(ctx, cache=True, base_image=""):  # type: ignore
 
 
 @task
-def docker_push_prod_image(ctx, base_image=""):  # type: ignore
+def docker_push_prod_image(  # type: ignore
+    ctx,
+    version,
+    base_image="",
+):
     """
     (ONLY CI/CD) Push the "prod" image to ECR.
+
+    :param version: version to tag the image and code with
+    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     _report_task()
     docker_login(ctx)
     #
-    image_prod = get_image("prod", base_image)
+    image_prod = get_image(base_image, "prod", None)
     cmd = f"docker push {image_prod}"
+    _run(ctx, cmd, pty=True)
+    #
+    # Push versioned tag.
+    image_versioned_prod = get_image(base_image, "prod", version)
+    cmd = f"docker push {image_versioned_prod}"
     _run(ctx, cmd, pty=True)
 
 
 @task
 def docker_release_prod_image(  # type: ignore
     ctx,
+    version,
     cache=True,
     skip_tests=False,
     fast_tests=True,
@@ -1627,46 +1774,54 @@ def docker_release_prod_image(  # type: ignore
     """
     (ONLY CI/CD) Build, test, and release to ECR the prod image.
 
-    Same options as `docker_release_dev_image`.
-
     - Build prod image
     - Run the tests
     - Push the prod image repo
+
+    :param version: version to tag the image and code with
+    :param cache: use the cache
+    :param skip_tests: skip all the tests and release the dev image
+    :param fast_tests: run fast tests, unless all tests skipped
+    :param slow_tests: run slow tests, unless all tests skipped
+    :param superslow_tests: run superslow tests, unless all tests skipped
+    :param push_to_repo: push the image to the repo_short_name
     """
     _report_task()
     # 1) Build prod image.
-    docker_build_prod_image(ctx, cache=cache)
+    docker_build_prod_image(ctx, cache=cache, version=version)
     # 2) Run tests.
     if skip_tests:
         _LOG.warning("Skipping all tests and releasing")
         fast_tests = slow_tests = superslow_tests = False
     stage = "prod"
     if fast_tests:
-        run_fast_tests(ctx, stage=stage)
+        run_fast_tests(ctx, stage=stage, version=version)
     if slow_tests:
-        run_slow_tests(ctx, stage=stage)
+        run_slow_tests(ctx, stage=stage, version=version)
     if superslow_tests:
-        run_superslow_tests(ctx, stage=stage)
+        run_superslow_tests(ctx, stage=stage, version=version)
     # 3) Push prod image.
     if push_to_repo:
-        docker_push_prod_image(ctx)
+        docker_push_prod_image(ctx, version=version)
     else:
         _LOG.warning("Skipping pushing image to repo_short_name as requested")
     _LOG.info("==> SUCCESS <==")
 
 
 @task
-def docker_release_all(ctx):  # type: ignore
+def docker_release_all(ctx, version):  # type: ignore
     """
     (ONLY CI/CD) Release both dev and prod image to ECR.
 
     This includes:
     - docker_release_dev_image
     - docker_release_prod_image
+
+    :param version: version to tag the image and code with
     """
     _report_task()
-    docker_release_dev_image(ctx)
-    docker_release_prod_image(ctx)
+    docker_release_dev_image(ctx, version)
+    docker_release_prod_image(ctx, version)
     _LOG.info("==> SUCCESS <==")
 
 
@@ -1936,21 +2091,20 @@ _TEST_TIMEOUTS_IN_SECS = {
 
 
 @task
-def run_blank_tests(ctx, stage=STAGE):  # type: ignore
+def run_blank_tests(ctx, stage="dev", version=""):  # type: ignore
     """
     (ONLY CI/CD) Test that pytest in the container works.
     """
     _report_task()
     base_image = ""
     cmd = '"pytest -h >/dev/null"'
-    docker_cmd_ = _get_docker_cmd(stage, base_image, cmd)
+    docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd)
     _docker_cmd(ctx, docker_cmd_)
 
 
 def _build_run_command_line(
     single_test_type: str,
     pytest_opts: str,
-    pytest_mark: str,
     skip_submodules: bool,
     coverage: bool,
     collect_only: bool,
@@ -1980,14 +2134,6 @@ def _build_run_command_line(
         pytest_opts_tmp.append(pytest_opts)
     skipped_tests = _select_tests_to_skip(single_test_type)
     pytest_opts_tmp.insert(0, f'-m "{skipped_tests}"')
-    # file_names = _find_test_files(dir_name)
-    # _LOG.debug("file_names=%s", file_names)
-    # if pytest_mark != "":
-    #    file_names = _find_test_decorator(pytest_mark, file_names)
-    #    _LOG.debug(
-    #        "After pytest_mark='%s': file_names=%s", pytest_mark, file_names
-    #    )
-    #    pytest_opts_tmp.extend(file_names)
     timeout_in_sec = _TEST_TIMEOUTS_IN_SECS[single_test_type]
     pytest_opts_tmp.append(f"--timeout {timeout_in_sec}")
     if skip_submodules:
@@ -2029,6 +2175,7 @@ def _select_tests_to_skip(single_test_type: str) -> str:
 def _run_test_cmd(
     ctx: Any,
     stage: str,
+    version: str,
     cmd: str,
     coverage: bool,
     collect_only: bool,
@@ -2041,11 +2188,7 @@ def _run_test_cmd(
     base_image = ""
     # We need to add some " to pass the string as it is to the container.
     cmd = f"'{cmd}'"
-    docker_cmd_ = _get_docker_cmd(
-        stage,
-        base_image,
-        cmd,
-    )
+    docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd)
     _LOG.info("cmd=%s", docker_cmd_)
     hsysinte.system(docker_cmd_, abort_on_error=False, suppress_output=False)
     # Print message about coverage.
@@ -2073,37 +2216,37 @@ def _run_tests(
     ctx: Any,
     stage: str,
     test_type: str,
+    version: str,
     pytest_opts: str,
-    pytest_mark: str,
-    dir_name: str,
     skip_submodules: bool,
     coverage: bool,
     collect_only: bool,
     tee_to_file: bool,
+    *,
     start_coverage_script: bool = True,
 ) -> None:
     # Build the command line.
     cmd = _build_run_command_line(
         test_type,
         pytest_opts,
-        pytest_mark,
         skip_submodules,
         coverage,
         collect_only,
         tee_to_file,
     )
     # Execute the command line.
-    _run_test_cmd(ctx, stage, cmd, coverage, collect_only, start_coverage_script)
+    _run_test_cmd(
+        ctx, stage, version, cmd, coverage, collect_only, start_coverage_script
+    )
 
 
 # TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code.
 @task
 def run_fast_tests(  # type: ignore
     ctx,
-    stage=STAGE,
+    stage="dev",
+    version="",
     pytest_opts="",
-    pytest_mark="",
-    dir_name="",
     skip_submodules=False,
     coverage=False,
     collect_only=False,
@@ -2114,8 +2257,6 @@ def run_fast_tests(  # type: ignore
 
     :param stage: select a specific stage for the Docker image
     :param pytest_opts: option for pytest
-    :param pytest_mark: test list to select as `@pytest.mark.XYZ`
-    :param dir_name: dir to start searching for tests
     :param skip_submodules: ignore all the dir inside a submodule
     :param coverage: enable coverage computation
     :param collect_only: do not run tests but show what will be executed
@@ -2126,9 +2267,8 @@ def run_fast_tests(  # type: ignore
         ctx,
         stage,
         "fast_tests",
+        version,
         pytest_opts,
-        pytest_mark,
-        dir_name,
         skip_submodules,
         coverage,
         collect_only,
@@ -2139,10 +2279,9 @@ def run_fast_tests(  # type: ignore
 @task
 def run_slow_tests(  # type: ignore
     ctx,
-    stage=STAGE,
+    stage="dev",
+    version="",
     pytest_opts="",
-    pytest_mark="",
-    dir_name="",
     skip_submodules=False,
     coverage=False,
     collect_only=False,
@@ -2158,9 +2297,8 @@ def run_slow_tests(  # type: ignore
         ctx,
         stage,
         "slow_tests",
+        version,
         pytest_opts,
-        pytest_mark,
-        dir_name,
         skip_submodules,
         coverage,
         collect_only,
@@ -2171,10 +2309,9 @@ def run_slow_tests(  # type: ignore
 @task
 def run_superslow_tests(  # type: ignore
     ctx,
-    stage=STAGE,
+    stage="dev",
+    version="",
     pytest_opts="",
-    pytest_mark="",
-    dir_name="",
     skip_submodules=False,
     coverage=False,
     collect_only=False,
@@ -2190,9 +2327,8 @@ def run_superslow_tests(  # type: ignore
         ctx,
         stage,
         "superslow_tests",
+        version,
         pytest_opts,
-        pytest_mark,
-        dir_name,
         skip_submodules,
         coverage,
         collect_only,
@@ -2203,10 +2339,9 @@ def run_superslow_tests(  # type: ignore
 @task
 def run_fast_slow_tests(  # type: ignore
     ctx,
-    stage=STAGE,
+    stage="dev",
+    version="",
     pytest_opts="",
-    pytest_mark="",
-    dir_name="",
     skip_submodules=False,
     coverage=False,
     collect_only=False,
@@ -2218,23 +2353,23 @@ def run_fast_slow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
-    run_fast_tests(
+    _run_tests(
         ctx,
         stage,
+        "fast_tests",
+        version,
         pytest_opts,
-        pytest_mark,
-        dir_name,
         skip_submodules,
         coverage,
         collect_only,
         tee_to_file,
     )
-    run_slow_tests(
+    _run_tests(
         ctx,
         stage,
+        "slow_tests",
+        version,
         pytest_opts,
-        pytest_mark,
-        dir_name,
         skip_submodules,
         coverage,
         collect_only,
@@ -2358,6 +2493,7 @@ def _get_failed_tests_from_clipboard() -> List[str]:
     # pylint: enable=line-too-long
     hsysinte.system_to_string("pbpaste")
     # TODO(gp): Finish this.
+    return []
 
 
 @task
@@ -2367,7 +2503,6 @@ def pytest_failed(  # type: ignore
     target_type="tests",
     file_name="",
     refresh=False,
-    use_clipboard=True,
     pbcopy=True,
 ):
     """
@@ -2393,7 +2528,6 @@ def pytest_failed(  # type: ignore
         - classes: print the name of all classes
     :param file_name: specify the file name containing the pytest file to parse
     :param refresh: force to update the frozen file from the current pytest file
-    :param use_clipboard: use the content of the clipboard
     """
     _report_task()
     _ = ctx
@@ -2556,7 +2690,9 @@ def check_python_files(  # type: ignore
     return error
 
 
-def _get_lint_docker_cmd(precommit_opts: str, run_bash: bool, stage: str) -> str:
+def _get_lint_docker_cmd(
+    precommit_opts: str, run_bash: bool, stage: str, as_user: bool
+) -> str:
     superproject_path, submodule_path = hgit.get_path_from_supermodule()
     if superproject_path:
         # We are running in a Git submodule.
@@ -2579,8 +2715,14 @@ def _get_lint_docker_cmd(precommit_opts: str, run_bash: bool, stage: str) -> str
         docker_cmd_.append("-it")
     else:
         docker_cmd_.append("-t")
+    if as_user:
+        docker_cmd_.append(r"--user $(id -u):$(id -g)")
     docker_cmd_.extend(
-        [f"-v '{repo_root}':/src", f"--workdir={work_dir}", f"{image}"]
+        [
+            f"-v '{repo_root}':/src",
+            f"--workdir={work_dir}",
+            f"{image}",
+        ]
     )
     # Build the command inside Docker.
     cmd = f"'pre-commit {precommit_opts}'"
@@ -2645,6 +2787,7 @@ def lint(  # type: ignore
     run_linter_step=True,
     parse_linter_output=True,
     stage="prod",
+    as_user=True,
 ):
     """
     Lint files.
@@ -2659,6 +2802,7 @@ def lint(  # type: ignore
     :param run_linter_step: run linter step
     :param parse_linter_output: parse linter output and generate vim cfile
     :param stage: the image stage to use
+    :param as_user: pass the user / group id or not
     """
     _report_task()
     lint_file_name = "linter_output.txt"
@@ -2705,7 +2849,7 @@ def lint(  # type: ignore
             ]
             precommit_opts = _to_single_line_cmd(precommit_opts)
             # Execute command line.
-            cmd = _get_lint_docker_cmd(precommit_opts, run_bash, stage)
+            cmd = _get_lint_docker_cmd(precommit_opts, run_bash, stage, as_user)
             cmd = f"({cmd}) 2>&1 | tee -a {lint_file_name}"
             if run_bash:
                 # We don't execute this command since pty=True corrupts the terminal
@@ -3256,9 +3400,11 @@ def _fix_group_permissions(dir_name: str, abort_on_error: bool) -> None:
             hsysinte.system(cmd, abort_on_error=abort_on_error)
         is_dir = os.path.isdir(file)
         if is_dir:
+            # pylint: disable=line-too-long
             # From https://www.gnu.org/software/coreutils/manual/html_node/Directory-Setuid-and-Setgid.html
             # If a directory’s set-group-ID bit is set, newly created subfiles
             # inherit the same group as the directory,
+            # pylint: enable=line-too-long
             has_set_group_id = st_mode & stat.S_ISGID
             if not has_set_group_id:
                 cmd = f"chmod g+s {file}"
@@ -3316,7 +3462,7 @@ def fix_perms(  # type: ignore
 
 # TODO(gp): Add ./dev_scripts/testing/pytest_count_files.sh
 
-
+# pylint: disable=line-too-long
 # From https://stackoverflow.com/questions/34878808/finding-docker-container-processes-from-host-point-of-view
 # Convert Docker container to processes id
 # for i in $(docker container ls --format "{{.ID}}"); do docker inspect -f '{{.State.Pid}} {{.Name}}' $i; done
@@ -3325,3 +3471,4 @@ def fix_perms(  # type: ignore
 # 1767 /compose_app_run_6782c2bd6999
 # 25163 /compose_app_run_ab27e17f2c47
 # 18721 /compose_app_run_de23819a6bc2
+# pylint: enable=line-too-long

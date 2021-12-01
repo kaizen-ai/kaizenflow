@@ -18,7 +18,6 @@ import psycopg2.sql as psql
 
 import helpers.dbg as hdbg
 import helpers.printing as hprint
-import helpers.system_interaction as hsysinte
 import helpers.timer as htimer
 
 _LOG = logging.getLogger(__name__)
@@ -27,19 +26,17 @@ _LOG = logging.getLogger(__name__)
 # Connection
 # #############################################################################
 
-# Invariant: keep the arguments in the interface in the same order as:
-# host, dbname, port, user, password
-
 # TODO(gp): mypy doesn't like this. Understand why and / or inline.
 DbConnection = psycop.extensions.connection
 
 
+# Invariant: keep the arguments in the interface in the same order as:
+# host, dbname, port, user, password
 DbConnectionInfo = collections.namedtuple(
     "DbConnectionInfo", ["host", "dbname", "port", "user", "password"]
 )
 
 
-# TODO(gp): Return only the connection (CmampTask441).
 def get_connection(
     host: str,
     dbname: str,
@@ -60,7 +57,6 @@ def get_connection(
     return connection
 
 
-# TODO(gp): Return only the connection (CmampTask441).
 def get_connection_from_env_vars() -> Tuple[
     DbConnection, psycop.extensions.cursor
 ]:
@@ -93,34 +89,45 @@ def get_connection_from_string(
     """
     Create a connection from a string.
 
-    TODO(gp): E.g., add example
+    Example string:
+    ```
+    host=localhost dbname=im_db_local port=5432 user= password=
+    ```
     """
     connection = psycop.connect(conn_as_str)
-    cursor = connection.cursor()
     if autocommit:
         connection.autocommit = True
-    return connection, cursor
+    return connection
 
 
 def check_db_connection(
     host: str,
     dbname: str,
     port: int,
-) -> bool:
+    user: str,
+    password: str,
+) -> Tuple[bool, Optional[psycop.OperationalError]]:
     """
     Check whether a connection to a DB exists, in a non-blocking way.
     """
-    cmd = f"pg_isready -d {dbname} -p {port} -h {host}"
-    rc = hsysinte.system(cmd, abort_on_error=False)
-    conn_exists = rc == 0
-    return conn_exists
+    try:
+        get_connection(
+            host=host, dbname=dbname, port=port, user=user, password=password
+        )
+        connection_exist = True
+        error = None
+    except psycop.OperationalError as e:
+        connection_exist = False
+        error = e
+    return connection_exist, error
 
 
-# TODO(gp): Rearrange as host, dbname (instead of db_name), port.
 def wait_db_connection(
-    host: str, 
-    db_name: str, 
-    port: int,  
+    host: str,
+    dbname: str,
+    port: int,
+    user: str,
+    password: str,
     timeout_in_secs: int = 10,
 ) -> None:
     """
@@ -129,17 +136,18 @@ def wait_db_connection(
     :param timeout_in_secs: secs before timing out with `RuntimeError`.
     """
     hdbg.dassert_lte(1, timeout_in_secs)
-    _LOG.debug("db_name=%s, port=%s, host=%s", db_name, port, host)
+    _LOG.debug("dbname=%s, port=%s, host=%s", dbname, port, host)
     elapsed_secs = 0
     while True:
         _LOG.info("Waiting for PostgreSQL to become available...")
-        conn_exists = check_db_connection(host, db_name, port)
-        if conn_exists:
+        conn_exists = check_db_connection(host, dbname, port, user, password)
+        if conn_exists[0]:
             _LOG.info("PostgreSQL is available (after %s seconds)", elapsed_secs)
             break
         if elapsed_secs > timeout_in_secs:
-            raise RuntimeError(
-                f"Cannot connect to db host={host} db_name={db_name} port={port}"
+            raise psycop.OperationalError(
+                f"Cannot connect to db host={host} dbname={dbname} port={port}"
+                f"\n{conn_exists[1]}"
             )
         elapsed_secs += 1
         time.sleep(1)
@@ -310,8 +318,7 @@ def get_table_names(connection: DbConnection) -> List[str]:
     return tables
 
 
-# TODO(gp): -> get_tables_size
-def get_table_size(
+def get_tables_size(
     connection: DbConnection,
     only_public: bool = True,
     summary: bool = True,
@@ -387,8 +394,7 @@ def head_tables(
     return txt
 
 
-# TODO(gp): -> get_table_columns
-def get_columns(connection: DbConnection, table_name: str) -> List[str]:
+def get_table_columns(connection: DbConnection, table_name: str) -> List[str]:
     """
     Get column names for given table.
     """
@@ -402,8 +408,7 @@ def get_columns(connection: DbConnection, table_name: str) -> List[str]:
     return columns
 
 
-# TODO(gp): -> find_tables_common_columns
-def find_common_columns(
+def find_tables_common_columns(
     connection: DbConnection,
     tables: List[str],
     as_df: bool = False,
@@ -570,3 +575,24 @@ def execute_insert_query(
     cur = connection.cursor()
     extras.execute_values(cur, query, values)
     connection.commit()
+
+
+def get_remove_duplicates_query(
+    table_name: str, id_col_name: str, column_names: List[str]
+) -> str:
+    """
+    Get a query to remove duplicates from table, keeping last duplicated row.
+
+    :param table_name: name of table
+    :param id_col_name: name of unique id column
+    :param column_names: names of columns to compare on
+    :return: query to execute duplicate removal
+    """
+    # TODO(*): Add a "limit" parameter if possible, to check only in top N rows.
+    remove_statement = []
+    remove_statement.append(f"DELETE FROM {table_name} a USING {table_name} b")
+    remove_statement.append(f"WHERE a.{id_col_name} < b.{id_col_name}")
+    for c in column_names:
+        remove_statement.append(f"AND a.{c} = b.{c}")
+    remove_statement = " ".join(remove_statement)
+    return remove_statement

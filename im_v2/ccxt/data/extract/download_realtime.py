@@ -22,14 +22,15 @@ Import as:
 
 import im_v2.ccxt.data.extract.download_realtime as imvcdedore
 """
+
+# TODO(gp): -> download_realtime_data.py
+
 import argparse
 import collections
 import logging
 import os
-import time
 from typing import Any, Dict, List, NamedTuple, Optional, Union
 
-import ccxt
 import pandas as pd
 
 import helpers.datetime_ as hdateti
@@ -38,12 +39,12 @@ import helpers.io_ as hio
 import helpers.parser as hparser
 import helpers.sql as hsql
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
-import im_v2.data.universe as imv2dauni
+import im_v2.ccxt.universe.universe as imvccunun
 
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(Danya): Create a type and move outside.
+# TODO(Danya): Move instantiation outside, e.g. into Airflow wrapper.
 def _instantiate_exchange(
     exchange_id: str,
     ccxt_universe: Dict[str, List[str]],
@@ -66,20 +67,28 @@ def _instantiate_exchange(
 
 
 def _download_data(
-    data_type: str, exchange: NamedTuple, pair: str
+    start_datetime: pd.Timestamp,
+    end_datetime: pd.Timestamp,
+    data_type: str,
+    exchange: NamedTuple,
+    pair: str,
 ) -> Union[pd.DataFrame, Dict[str, Any]]:
     """
     Download order book or OHLCV data.
 
+    :param start_datetime: start of time period, e.g. `pd.Timestamp("2021-01-01")`
+    :param start_datetime: end of time period, e.g. `pd.Timestamp("2021-01-01")`
     :param data_type: 'ohlcv' or 'orderbook'
     :param exchange: exchange instance
-    :param pair: currency pair, e.g. 'BTC/USDT'
+    :param pair: currency pair, e.g. 'BTC_USDT'
     :return: downloaded data
     """
     # Download 5 latest OHLCV candles.
     if data_type == "ohlcv":
         pair_data = exchange.instance.download_ohlcv_data(
-            curr_symbol=pair, step=5
+            start_datetime=start_datetime,
+            end_datetime=end_datetime,
+            curr_symbol=pair,
         )
         # Assign pair and exchange columns.
         pair_data["currency_pair"] = pair
@@ -109,7 +118,7 @@ def _save_data_on_disk(
     :param dst_dir: directory to save to
     :param pair_data: downloaded data
     :param exchange: exchange instance
-    :param pair: currency pair, e.g. 'BTC/USDT'
+    :param pair: currency pair, e.g. 'BTC_USDT'
     """
     current_datetime = hdateti.get_current_time("ET")
     if data_type == "ohlcv":
@@ -139,15 +148,23 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--db_connection",
+        "--start_datetime",
         action="store",
-        default="from_env",
+        required=True,
         type=str,
-        help="Connection to database to upload to",
+        help="Beginning of the downloaded period",
+    )
+    parser.add_argument(
+        "--end_datetime",
+        action="store",
+        required=True,
+        type=str,
+        help="End of the downloaded period",
     )
     parser.add_argument(
         "--dst_dir",
         action="store",
+        required=True,
         type=str,
         help="Folder to save copies of data to",
     )
@@ -187,17 +204,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Create the directory.
-    if args.dst_dir:
-        hio.create_dir(args.dst_dir, incremental=args.incremental)
+    hio.create_dir(args.dst_dir, incremental=args.incremental)
     # Connect to database.
-    if args.db_connection == "from_env":
-        connection = hsql.get_connection_from_env_vars()
-    elif args.db_connection == "none":
-        connection = None
-    else:
-        hdbg.dfatal("Unknown db connection: %s" % args.db_connection)
+    connection = hsql.get_connection_from_env_vars()
     # Load universe.
-    universe = imv2dauni.get_trade_universe(args.universe)
+    universe = imvccunun.get_trade_universe(args.universe)
     exchange_ids = universe["CCXT"].keys()
     # Build mappings from exchange ids to classes and currencies.
     exchanges = []
@@ -205,44 +216,30 @@ def _main(parser: argparse.ArgumentParser) -> None:
         exchanges.append(
             _instantiate_exchange(exchange_id, universe["CCXT"], args.api_keys)
         )
-    # Launch an infinite loop.
-    while True:
-        for exchange in exchanges:
-            for pair in exchange.pairs:
-                try:
-                    # Download latest data.
-                    pair_data = _download_data(args.data_type, exchange, pair)
-                except (
-                    ccxt.ExchangeError,
-                    ccxt.NetworkError,
-                    ccxt.base.errors.RequestTimeout,
-                ) as e:
-                    # TODO(*): handle timeouts and network errors differently ?
-                    # Continue the loop if could not connect to exchange.
-                    _LOG.warning("Got an error: %s", type(e).__name__, e.args)
-                    continue
-                except ccxt.base.errors.RateLimitExceeded as e:
-                    # Sleep for extra 60 seconds if exceeded rate limit.
-                    _LOG.warning(
-                        "Got an Exceeded limit error: %s",
-                        type(e).__name__,
-                        e.args,
-                    )
-                    time.sleep(60)
-                    continue
-                # Save to disk.
-                if args.dst_dir:
-                    _save_data_on_disk(
-                        args.data_type, args.dst_dir, pair_data, exchange, pair
-                    )
-                if connection:
-                    # Insert into database.
-                    hsql.execute_insert_query(
-                        connection=connection,
-                        obj=pair_data,
-                        table_name=args.table_name,
-                    )
-        time.sleep(60)
+    # Generate a query to remove duplicates.
+    dup_query = hsql.get_remove_duplicates_query(
+        table_name=args.table_name,
+        id_col_name="id",
+        column_names=["timestamp", "exchange_id", "currency_pair"],
+    )
+    # Convert timestamps.
+    start = hdateti.to_generalized_datetime(args.start_datetime)
+    end = hdateti.to_generalized_datetime(args.end_datetime)
+    # Download data for specified time period.
+    for exchange in exchanges:
+        for pair in exchange.pairs:
+            pair_data = _download_data(start, end, args.data_type, exchange, pair)
+            # Save to disk.
+            _save_data_on_disk(
+                args.data_type, args.dst_dir, pair_data, exchange, pair
+            )
+            hsql.execute_insert_query(
+                connection=connection,
+                obj=pair_data,
+                table_name=args.table_name,
+            )
+            # Drop duplicates inside the table.
+            connection.cursor().execute(dup_query)
 
 
 if __name__ == "__main__":

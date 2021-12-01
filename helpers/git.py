@@ -10,6 +10,7 @@ import logging
 import os
 import pprint
 import re
+import sys
 from typing import Dict, List, Match, Optional, Tuple
 
 import helpers.dbg as hdbg
@@ -149,18 +150,40 @@ def _is_repo(repo_short_name: str) -> bool:
 
 def is_amp() -> bool:
     """
-    Return whether we are inside `amp` and `amp` is a sub-module.
+    Return whether we are inside `amp` repo. 
+
+    Either as super module, or a sub module depending on a current working directory.
     """
     return _is_repo("amp")
 
 
-# This should not be used. If a test is specific of a repo it should be moved to
-# that repo.
+def is_dev_tools() -> bool:
+    """
+    Return whether we are inside `dev_tools` repo. 
+    """
+    return _is_repo("dev_tools")
+
+
+def is_cmamp() -> bool:
+    """
+    Return whether we are inside `cmamp` repo. 
+    """
+    return _is_repo("cmamp")
+
+
 def is_lem() -> bool:
     """
-    Return whether we are inside `lm` and `lm` is a sub-module.
+    Return whether we are inside `lem` repo. 
     """
     return _is_repo("lem")
+
+
+def is_lime() -> bool:
+    """
+    Return whether we are inside `lime` repo. 
+    """
+    return _is_repo("lime")
+
 
 
 # TODO(gp): submodule -> sub_module
@@ -983,6 +1006,69 @@ def git_stash_apply(mode: str, log_level: int = logging.DEBUG) -> None:
     hsysinte.system(cmd, suppress_output=False, log_level=log_level)
 
 
+# TODO(gp): Consider using this everywhere. Maybe it can simplify handling issues
+#  stemming from the super-module / sub-module repo.
+def _get_git_cmd(super_module: bool) -> str:
+    """
+    Build the first part of a Git command line.
+    """
+    cmd = []
+    cmd.append("git")
+    client_root = get_client_root(super_module=super_module)
+    # Set the path to the repository (".git" directory), avoiding Git to search for
+    # it (from https://git-scm.com/docs/git)
+    cmd.append(f"--git-dir='{client_root}/.git'")
+    # Set the path to the working tree.
+    cmd.append(f"--work-tree='{client_root}'")
+    cmd = " ".join(cmd)
+    return cmd
+
+
+def git_tag(
+    tag_name: str, super_module: bool = True, log_level: int = logging.DEBUG
+) -> None:
+    """
+    Tag the Git tree with `tag_name` without pushing the tag to the remote.
+    """
+    _LOG.debug("# Tagging current commit ...")
+    git_cmd = _get_git_cmd(super_module)
+    cmd = f"{git_cmd} tag -f {tag_name}"
+    _ = hsysinte.system(cmd, suppress_output=False, log_level=log_level)
+
+
+def git_push_tag(
+    tag_name: str,
+    remote: str = "origin",
+    super_module: bool = True,
+    log_level: int = logging.DEBUG,
+) -> None:
+    """
+    Push the tag `tag_name` to the given remote.
+    """
+    _LOG.debug("# Pushing current commit ...")
+    git_cmd = _get_git_cmd(super_module)
+    cmd = f"{git_cmd} push {remote} {tag_name}"
+    _ = hsysinte.system(cmd, suppress_output=False, log_level=log_level)
+
+
+def git_describe(match: Optional[str] = None, log_level: int = logging.DEBUG) -> str:
+    """
+    Return the closest tag in the repo, e.g., 1.0.0.
+
+    If there is no tag, this will return short commit hash.
+
+    :param match: e.g., `dev_tools-*`, only consider tags matching the given glob pattern
+    """
+    _LOG.debug("# Looking for version ...")
+    cmd = "git describe --tags --always --abbrev=0"
+    if match is not None:
+        hdbg.dassert_isinstance(match, str)
+        hdbg.dassert_ne(match, "")
+        cmd = f"{cmd} --match '{match}'"
+    num, tag = hsysinte.system_to_one_line(cmd, log_level=log_level)
+    return tag
+
+
 def git_add_update(
     file_list: Optional[List[str]] = None, log_level: int = logging.DEBUG
 ) -> None:
@@ -1024,3 +1110,77 @@ def fetch_origin_master_if_needed() -> None:
             hsysinte.system(cmd)
             cmd = "git branch --track master origin/master"
             hsysinte.system(cmd)
+
+
+def is_client_clean(dir_name: str, abort_if_needed: bool = True) -> bool:
+    hdbg.dassert_dir_exists(dir_name)
+    cmd = f"cd {dir_name}; git status --untracked-files=no --porcelain"
+    _, txt = hsysinte.system_to_string(cmd)
+    if abort_if_needed and txt != "":
+        _LOG.error("There are uncommitted changes in tracked files\n:%s", txt)
+        sys.exit(-1)
+    return txt == ""
+
+
+def does_branch_exist(dir_name: str, branch_name: str) -> bool:
+    # From https://stackoverflow.com/questions/35941566
+    cmd = f"cd {dir_name} && git fetch --prune"
+    hsysinte.system(cmd, abort_on_error=False)
+    # From https://stackoverflow.com/questions/5167957
+    # > git rev-parse --verify LimeTask197_Get_familiar_with_CF2
+    # f03bfa0b4577c2524afd6a1f24d06013f8aa9f1a
+    # > git rev-parse --verify I_dont_exist
+    # fatal: Needed a single revision
+    cmd = f"cd {dir_name} && git rev-parse --verify {branch_name}"
+    rc = hsysinte.system(cmd, abort_on_error=False)
+    exists = rc == 0
+    return exists
+
+
+def delete_branches(
+    dir_name: str,
+    mode: str,
+    branches: List[str],
+    confirm_delete: bool,
+    abort_on_error: bool = True,
+) -> None:
+    """
+    Delete local or remote branches.
+
+    :param mode: local or remote
+    :param branches: list of branches to delete
+    :param confirm_delete: ask the user to confirm before deleting, or just do it
+    """
+    hdbg.dassert_isinstance(branches, list)
+    delete_cmd = f"cd {dir_name} && "
+    if mode == "local":
+        delete_cmd += "git branch -d"
+    elif mode == "remote":
+        delete_cmd += "git push origin --delete"
+    else:
+        raise ValueError(f"Invalid mode='{mode}'")
+    # Ask whether to continue.
+    if confirm_delete:
+        branches_as_str = " ".join(branches)
+        msg = (
+            hdbg.WARNING
+            + f": Delete {len(branches)} {mode} branch(es) '{branches_as_str}'?"
+        )
+        hsysinte.query_yes_no(msg, abort_on_no=True)
+    for branch in branches:
+        if mode == "remote":
+            prefix = "origin/"
+            hdbg.dassert(
+                branch.startswith(prefix),
+                "Remote branch '%s' needs to start with '%s'",
+                branch,
+                prefix,
+            )
+            branch = branch[len(prefix) :]
+        cmd = f"{delete_cmd} {branch}"
+        hsysinte.system(
+            cmd,
+            suppress_output=False,
+            log_level="echo",
+            abort_on_error=abort_on_error,
+        )

@@ -190,7 +190,7 @@ class CddLoader:
 
         This includes:
         - Datetime format assertion
-        - Converting string dates to pd.Timestamp
+        - Converting string dates to UTC `pd.Timestamp`
         - Removing full duplicates
         - Resampling to 1 minute using NaNs
         - Name volume and currency pair columns properly
@@ -207,8 +207,8 @@ class CddLoader:
         )
         # Rename col with original Unix ms epoch.
         data = data.rename({"unix": "epoch"}, axis=1)
-        # Transform Unix epoch into ET timestamp.
-        data["timestamp"] = self._convert_epochs_to_timestamp(data["epoch"])
+        # Transform Unix epoch into UTC timestamp.
+        data["timestamp"] = pd.to_datetime(data["epoch"], unit="ms", utc=True)
         #
         if self._remove_dups:
             # Remove full duplicates.
@@ -228,22 +228,6 @@ class CddLoader:
         # Add a col with exchange id.
         data["exchange_id"] = exchange_id
         return data
-
-    @staticmethod
-    def _convert_epochs_to_timestamp(epoch_col: pd.Series) -> pd.Series:
-        """
-        Convert Unix epoch to timestamp in ET.
-
-        All Unix time epochs in CDD are provided in ms and in UTC tz.
-
-        :param epoch_col: Series with Unix time epochs
-        :return: Series with epochs converted to timestamps in ET
-        """
-        # Convert to timestamp in UTC tz.
-        timestamp_col = pd.to_datetime(epoch_col, unit="ms", utc=True)
-        # Convert to ET tz.
-        timestamp_col = timestamp_col.dt.tz_convert(hdateti.get_ET_tz())
-        return timestamp_col
 
     @staticmethod
     def _apply_ohlcv_transformation(data: pd.DataFrame) -> pd.DataFrame:

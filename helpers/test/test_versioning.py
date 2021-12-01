@@ -1,7 +1,7 @@
 import logging
-import os
 
-import helpers.git as hgit
+import pytest
+
 import helpers.unit_test as hunitest
 import helpers.versioning as hversio
 
@@ -9,10 +9,10 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestVersioning1(hunitest.TestCase):
+
+    @pytest.mark.skip(reason="CmampTask570")
     def test_get_code_version1(self) -> None:
-        git_root = hgit.get_client_root(super_module=False)
-        file_name = os.path.join(git_root, "version.txt")
-        code_version = hversio.get_code_version(file_name)
+        code_version = hversio.get_code_version()
         _LOG.debug("code_version=%s", code_version)
 
     def test_get_code_version2(self) -> None:
@@ -24,10 +24,9 @@ class TestVersioning1(hunitest.TestCase):
         _LOG.debug("container_version=%s", container_version)
 
     def test_check_version1(self) -> None:
-        git_root = hgit.get_client_root(super_module=False)
-        file_name = os.path.join(git_root, "version.txt")
-        hversio.check_version(file_name)
+        hversio.check_version()
 
+    @pytest.mark.skip(reason="CmampTask570")
     def test__check_version1(self) -> None:
         code_version = "amp-1.0.0"
         container_version = "amp-1.0.2"
