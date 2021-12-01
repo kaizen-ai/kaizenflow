@@ -2091,11 +2091,12 @@ _TEST_TIMEOUTS_IN_SECS = {
 
 
 @task
-def run_blank_tests(_, stage="dev", version=""):  # type: ignore
+def run_blank_tests(ctx, stage="dev", version=""):  # type: ignore
     """
     (ONLY CI/CD) Test that pytest in the container works.
     """
     _report_task()
+    _ = ctx
     base_image = ""
     cmd = '"pytest -h >/dev/null"'
     docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd)
@@ -2249,7 +2250,7 @@ def _run_tests(
 # TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code.
 @task
 def run_fast_tests(  # type: ignore
-    _,
+    ctx,
     stage="dev",
     version="",
     pytest_opts="",
@@ -2269,6 +2270,7 @@ def run_fast_tests(  # type: ignore
     :param tee_to_file: save output of pytest in `tmp.pytest.log`
     """
     _report_task()
+    _ = ctx
     _run_tests(
         stage,
         "fast_tests",
@@ -2283,7 +2285,7 @@ def run_fast_tests(  # type: ignore
 
 @task
 def run_slow_tests(  # type: ignore
-    _,
+    ctx,
     stage="dev",
     version="",
     pytest_opts="",
@@ -2298,6 +2300,7 @@ def run_slow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
+    _ = ctx
     _run_tests(
         stage,
         "slow_tests",
@@ -2312,7 +2315,7 @@ def run_slow_tests(  # type: ignore
 
 @task
 def run_superslow_tests(  # type: ignore
-    _,
+    ctx,
     stage="dev",
     version="",
     pytest_opts="",
@@ -2327,6 +2330,7 @@ def run_superslow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
+    _ = ctx
     _run_tests(
         stage,
         "superslow_tests",
@@ -2341,7 +2345,7 @@ def run_superslow_tests(  # type: ignore
 
 @task
 def run_fast_slow_tests(  # type: ignore
-    _,
+    ctx,
     stage="dev",
     version="",
     pytest_opts="",
@@ -2356,8 +2360,9 @@ def run_fast_slow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
+    _ = ctx
     run_fast_tests(
-        _,
+        ctx,
         stage,
         "fast_tests",
         version,
@@ -2368,7 +2373,7 @@ def run_fast_slow_tests(  # type: ignore
         tee_to_file,
     )
     run_slow_tests(
-        _,
+        ctx,
         stage,
         "slow_tests",
         version,
