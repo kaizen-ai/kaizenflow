@@ -44,7 +44,7 @@ import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprint
 import helpers.s3 as hs3
-import im_v2.ccxt.data.client.clients as imvcdclcl
+import im_v2.ccxt.data.client as imvcdcli
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -94,7 +94,7 @@ print(config)
 
 # %%
 # TODO(Grisha): potentially read data from the db.
-ccxt_loader = imvcdclcl.CcxtFileSystemClient(
+ccxt_loader = imvcdcli.CcxtFileSystemClient(
     data_type=config["data"]["data_type"],
     root_dir=config["load"]["data_dir"],
     aws_profile=config["load"]["aws_profile"],

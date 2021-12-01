@@ -1,0 +1,6 @@
+# Dir structure
+/app/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date
+/app/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date/date=20211123
+/app/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date/date=20211123/data.parquet
+/app/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date/date=20211124
+/app/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date/date=20211124/data.parquet

@@ -19,13 +19,19 @@ if [[ 0 == 1 ]]; then
     exit 0
 fi;
 
-if [[ 1 == 1 ]]; then
-    # Sync dir cmamp -> amp.
-    rsync --delete -au $CMAMP_DIR/$SUBDIR/ $AMP_DIR/$SUBDIR
-else
-    # Sync dir amp -> cmamp.
-    rsync --delete -au $AMP_DIR/$SUBDIR/ $CMAMP_DIR/$SUBDIR
+#RSYNC_OPTS="--delete -au"
+RSYNC_OPTS="--delete -a"
+
+if [[ 0 == 1 ]]; then
+    if [[ 1 == 1 ]]; then
+        # Sync dir cmamp -> amp.
+        rsync $RSYNC_OPTS $CMAMP_DIR/$SUBDIR/ $AMP_DIR/$SUBDIR
+    else
+        # Sync dir amp -> cmamp.
+        rsync $RSYNC_OPTS $AMP_DIR/$SUBDIR/ $CMAMP_DIR/$SUBDIR
+    fi;
 fi;
+
 
 if [[ 1 == 1 ]]; then
     diff -r --brief $AMP_DIR/$SUBDIR $CMAMP_DIR/$SUBDIR

@@ -1,0 +1,26 @@
+# by_date=
+# Dir structure
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20211230
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20211230/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20211231
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20211231/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20220101
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20220101/data.parquet
+# by_asset=
+# Dir structure
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/asset=A
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/asset=A/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/asset=B
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/asset=B/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/asset=C
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/asset=C/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/asset=A
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/asset=A/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/asset=B
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/asset=B/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/asset=C
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/asset=C/data.parquet
