@@ -1,4 +1,4 @@
-# by_date_signature=
+# by_date=
 # Dir structure
 $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date
 $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20211230
@@ -7,7 +7,7 @@ $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_dat
 $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20211231/data.parquet
 $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20220101
 $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20220101/data.parquet
-# by_asset_signature=
+# by_asset=
 # Dir structure
 $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset
 $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021

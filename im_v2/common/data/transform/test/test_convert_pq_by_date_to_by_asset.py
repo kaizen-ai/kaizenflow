@@ -50,13 +50,13 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         # TODO(Nikola): Let's create a single txt and do a single check_string
         #  on it.
         act = []
-        act.append("# by_date_signature=")
+        act.append("# by_date=")
         act.append(by_date_signature)
         # Remove references to dirs.
         by_asset_signature = hunitest.get_dir_signature(
             by_asset_dir, include_file_content
         )
-        act.append("# by_asset_signature=")
+        act.append("# by_asset=")
         act.append(by_asset_signature)
         # Check parquet files content.
         # TODO(Nikola): Let's generalize get_dir_signature to report a snippet
