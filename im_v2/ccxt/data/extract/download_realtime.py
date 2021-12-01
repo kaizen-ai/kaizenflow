@@ -223,8 +223,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
         column_names=["timestamp", "exchange_id", "currency_pair"],
     )
     # Convert timestamps.
-    start = hdateti.to_generalized_datetime(args.start_datetime)
-    end = hdateti.to_generalized_datetime(args.end_datetime)
+    start = pd.Timestamp(args.start_datetime)
+    end = pd.Timestamp(args.end_datetime)
     # Download data for specified time period.
     for exchange in exchanges:
         for pair in exchange.pairs:
