@@ -150,7 +150,7 @@ def _is_repo(repo_short_name: str) -> bool:
 
 def is_amp() -> bool:
     """
-    Return whether we are inside `amp` repo. 
+    Return whether we are inside `amp` repo.
 
     Either as super module, or a sub module depending on a current working directory.
     """
@@ -159,31 +159,30 @@ def is_amp() -> bool:
 
 def is_dev_tools() -> bool:
     """
-    Return whether we are inside `dev_tools` repo. 
+    Return whether we are inside `dev_tools` repo.
     """
     return _is_repo("dev_tools")
 
 
 def is_cmamp() -> bool:
     """
-    Return whether we are inside `cmamp` repo. 
+    Return whether we are inside `cmamp` repo.
     """
     return _is_repo("cmamp")
 
 
 def is_lem() -> bool:
     """
-    Return whether we are inside `lem` repo. 
+    Return whether we are inside `lem` repo.
     """
     return _is_repo("lem")
 
 
 def is_lime() -> bool:
     """
-    Return whether we are inside `lime` repo. 
+    Return whether we are inside `lime` repo.
     """
     return _is_repo("lime")
-
 
 
 # TODO(gp): submodule -> sub_module
@@ -664,7 +663,7 @@ def get_amp_abs_path() -> str:
     """
     repo_sym_name = get_repo_full_name_from_client(super_module=False)
     _LOG.debug("repo_sym_name=%s", repo_sym_name)
-    if repo_sym_name in ["alphamatic/amp", "cryptokaizen/cmamp"]:
+    if repo_sym_name == "alphamatic/amp":
         # If we are in the amp repo, then the git client root is the amp
         # directory.
         git_root = get_client_root(super_module=False)
@@ -1051,7 +1050,9 @@ def git_push_tag(
     _ = hsysinte.system(cmd, suppress_output=False, log_level=log_level)
 
 
-def git_describe(match: Optional[str] = None, log_level: int = logging.DEBUG) -> str:
+def git_describe(
+    match: Optional[str] = None, log_level: int = logging.DEBUG
+) -> str:
     """
     Return the closest tag in the repo, e.g., 1.0.0.
 
