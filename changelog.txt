@@ -3,8 +3,8 @@ cmamp-1.0.1
  # 1.0.1
  # - 2021-12-01
  # - Add `pytest-timeout` Python package
- # - Freeze the `awscli` version = `1.22.17` #339
- # - Freeze the `jsonschema` version = `3.2.0`
+ # - Freeze the `awscli` version = `1.22.17`, see #339
+ # - Freeze the `jsonschema` version = `3.2.0`, see #650
 
 cmamp-1.0.0
  

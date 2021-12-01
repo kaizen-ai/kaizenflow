@@ -6,6 +6,7 @@ authors = [""]
 
 [tool.poetry.dependencies]
 async_solipsism = ">= 0.3"
+# The version is frozen due to #339.
 awscli = "1.22.17"
 boto3 = "*"
 bs4 = "*"
@@ -18,6 +19,7 @@ gluonts = "== 0.6.7"
 #ib_insync = "*"
 invoke = "*"
 jsonpickle = "*"
+# The version is frozen due to #650.
 jsonschema = "3.2.0"
 jupyter = "*"
 jupyter_contrib_nbextensions = "*"
