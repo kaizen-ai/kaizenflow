@@ -2107,6 +2107,23 @@ def run_blank_tests(ctx, stage="dev", version=""):  # type: ignore
     hsysinte.system(docker_cmd_, abort_on_error=False, suppress_output=False)
 
 
+def _select_tests_to_skip(uniform_test_list_name: str) -> str:
+    """
+    Generate text for pytest specifying which tests to deselect.
+    """
+    if uniform_test_list_name == "fast_tests":
+        skipped_tests = "not slow and not superslow"
+    elif uniform_test_list_name == "slow_tests":
+        skipped_tests = "slow and not superslow"
+    elif uniform_test_list_name == "superslow_tests":
+        skipped_tests = "not slow and superslow"
+    else:
+        raise ValueError(
+            f"Invalid `uniform_test_list_name`={uniform_test_list_name}"
+        )
+    return skipped_tests
+
+
 def _build_run_command_line(
     uniform_test_list_name: str,
     pytest_opts: str,
@@ -2162,23 +2179,6 @@ def _build_run_command_line(
     if tee_to_file:
         cmd += f" 2>&1 | tee tmp.pytest.{uniform_test_list_name}.log"
     return cmd
-
-
-def _select_tests_to_skip(uniform_test_list_name: str) -> str:
-    """
-    Generate text for pytest specifying which tests to deselect.
-    """
-    if uniform_test_list_name == "fast_tests":
-        skipped_tests = "not slow and not superslow"
-    elif uniform_test_list_name == "slow_tests":
-        skipped_tests = "slow and not superslow"
-    elif uniform_test_list_name == "superslow_tests":
-        skipped_tests = "not slow and superslow"
-    else:
-        raise ValueError(
-            f"Invalid `uniform_test_list_name`={uniform_test_list_name}"
-        )
-    return skipped_tests
 
 
 def _run_test_cmd(
