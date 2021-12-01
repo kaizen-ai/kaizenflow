@@ -2364,7 +2364,6 @@ def run_fast_slow_tests(  # type: ignore
     run_fast_tests(
         ctx,
         stage,
-        "fast_tests",
         version,
         pytest_opts,
         skip_submodules,
@@ -2375,7 +2374,6 @@ def run_fast_slow_tests(  # type: ignore
     run_slow_tests(
         ctx,
         stage,
-        "slow_tests",
         version,
         pytest_opts,
         skip_submodules,
