@@ -1517,7 +1517,6 @@ def docker_build_local_image(  # type: ignore
     :param version: version to tag the image and code with
     :param cache: use the cache
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
-    :param stage: select a specific stage for the Docker image
     :param update_poetry: run poetry lock to update the packages
     """
     _report_task()
