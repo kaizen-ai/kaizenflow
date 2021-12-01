@@ -93,3 +93,63 @@ def from_parquet(
     mem = df.memory_usage().sum()
     _LOG.debug("df.memory_usage=%s", hintros.format_size(mem))
     return df
+
+
+# TODO(Nikola): Adapt to different formats, if needed.
+#   Currently only ccxt_ohlcv.
+def save_daily_df_as_pq(df: pd.DataFrame, dst_dir: str) -> None:
+    """
+    Mimics daily parquet structure as seen below.
+
+    ................/by_date
+    ................/by_date/date=20211230
+    ................/by_date/date=20211230/data.parquet
+    ................/by_date/date=20211231
+    ................/by_date/date=20211231/data.parquet
+    ................/by_date/date=20220101
+    ................/by_date/date=20220101/data.parquet
+    """
+    date_column_name = "date"
+    with htimer.TimedScope(logging.DEBUG, "Create partition dates"):
+        df[date_column_name] = pd.to_datetime(
+            df.timestamp, unit="ms", utc=True
+        ).dt.strftime("%Y%m%d")
+    with htimer.TimedScope(logging.DEBUG, "Save data"):
+        table = pa.Table.from_pandas(df)
+        partition_cols = [date_column_name]
+        pq.write_to_dataset(
+            table,
+            dst_dir,
+            partition_cols=partition_cols,
+            partition_filename_cb=lambda x: "data.parquet",
+        )
+
+
+# TODO(Nikola): Adapt to different formats, if needed.
+#   Currently only applicable for dummy test data.
+def save_pq_by_asset(parquet_df_by_date: pd.DataFrame, dst_dir: str) -> None:
+    """
+    Save a dataframe in a Parquet format in `dst_dir` partitioned by year and
+    asset.
+
+    ............/by_asset/year=2022
+    ............/by_asset/year=2022/asset=A
+    ............/by_asset/year=2022/asset=A/data.parquet
+    ............/by_asset/year=2022/asset=B
+    ............/by_asset/year=2022/asset=B/data.parquet
+    ............/by_asset/year=2022/asset=C
+    ............/by_asset/year=2022/asset=C/data.parquet
+    """
+    year_col_name = "year"
+    asset_col_name = "asset"
+    with htimer.TimedScope(logging.DEBUG, "Create partition indices"):
+        parquet_df_by_date[year_col_name] = parquet_df_by_date.index.year
+    with htimer.TimedScope(logging.DEBUG, "Save data"):
+        table = pa.Table.from_pandas(parquet_df_by_date)
+        partition_cols = [year_col_name, asset_col_name]
+        pq.write_to_dataset(
+            table,
+            dst_dir,
+            partition_cols=partition_cols,
+            partition_filename_cb=lambda x: "data.parquet",
+        )
