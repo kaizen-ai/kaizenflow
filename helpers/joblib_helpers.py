@@ -68,11 +68,13 @@ Workload = Tuple[
     Callable,
     # `func_name`: the mnemonic name of the function, which is used for debugging info
     # and for naming the directory storing the cache
-    # - E.g., `vltbut.get_bar_data`
+    # - E.g., `vltbut.get_bar_data_for_date_interval`
     # - Note that the `func_name` can be different than the name of `func`
-    #   - E.g., we can call `vltbut.get_bar_data_for_interval` inside `func`,
-    #     in order to create a cache for `vltbut.get_bar_data`, so the cache name
-    #     should be for `vltbut.get_bar_data`
+    #   - E.g., we can call
+    #     `vltbut.get_bar_data_for_date_interval_for_interval` inside `func`,
+    #     in order to create a cache for
+    #     `vltbut.get_bar_data_for_date_interval`, so the cache name should be
+    #     for `vltbut.get_bar_data_for_date_interval`
     str,
     # `tasks`: a list of (*args, **kwargs) to pass to `func`
     List[Task],

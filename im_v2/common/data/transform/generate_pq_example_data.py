@@ -16,11 +16,45 @@ import helpers.timer as htimer
 
 _LOG = logging.getLogger(__name__)
 
+# TODO(gp): If this is testing code it should go in test_convert_pq_by_...
+
+
+# TODO(gp): Why so much redundancy with _save_pq_by_asset?
+def _save_daily_df_as_pq(df: pd.DataFrame, dst_dir: str) -> None:
+    """
+    Create and save a daily parquet structure as below:
+
+    ```
+    dst_dir/
+        by_date/
+            date=20211230/
+                data.parquet
+            date=20211231/
+                data.parquet
+            date=20221231/
+                data.parquet
+    ```
+    """
+    date_column_name = "date"
+    with htimer.TimedScope(logging.DEBUG, "Create partition idxs"):
+        df[date_column_name] = df.index.strftime("%Y%m%d")
+    with htimer.TimedScope(logging.DEBUG, "Save data"):
+        table = pa.Table.from_pandas(df)
+        partition_cols = [date_column_name]
+        pq.write_to_dataset(
+            table,
+            dst_dir,
+            partition_cols=partition_cols,
+            partition_filename_cb=lambda x: "data.parquet",
+        )
+
 
 def _get_daily_df(
     start_date: str, end_date: str, assets: List[str], freq: str
 ) -> pd.DataFrame:
     """
+    Create data for the interval [start_date, end_date].
+
     :param start_date: start of date range including start_date
     :param end_date: end of date range excluding end_date
     :param assets: list of desired assets
@@ -59,32 +93,7 @@ def _get_daily_df(
     return df
 
 
-def _save_daily_df_as_pq(df: pd.DataFrame, dst_dir: str) -> None:
-    """
-    Mimics daily parquet structure as seen below.
-
-    ................/by_date
-    ................/by_date/date=20211230
-    ................/by_date/date=20211230/data.parquet
-    ................/by_date/date=20211231
-    ................/by_date/date=20211231/data.parquet
-    ................/by_date/date=20220101
-    ................/by_date/date=20220101/data.parquet
-    """
-    date_column_name = "date"
-    with htimer.TimedScope(logging.DEBUG, "Create partition idxs"):
-        df[date_column_name] = df.index.strftime("%Y%m%d")
-    with htimer.TimedScope(logging.DEBUG, "Save data"):
-        table = pa.Table.from_pandas(df)
-        partition_cols = [date_column_name]
-        pq.write_to_dataset(
-            table,
-            dst_dir,
-            partition_cols=partition_cols,
-            partition_filename_cb=lambda x: "data.parquet",
-        )
-
-
+# TODO(gp): Very thin. Is it needed?
 def generate_pq_daily_data(
     start_date: str,
     end_date: str,
