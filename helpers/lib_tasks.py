@@ -2091,7 +2091,7 @@ _TEST_TIMEOUTS_IN_SECS = {
 
 
 @task
-def run_blank_tests(ctx, stage="dev", version=""):  # type: ignore
+def run_blank_tests(_, stage="dev", version=""):  # type: ignore
     """
     (ONLY CI/CD) Test that pytest in the container works.
     """
@@ -2114,7 +2114,8 @@ def _build_run_command_line(
     """
     Build the pytest run command.
 
-    Same params as `run_fast_tests()`.
+    :param single_test_type: "fast_tests", "slow_tests" or "superslow_tests"
+    The rest of params are the same as in `run_fast_tests()`.
 
     The invariant is that we don't want to duplicate pytest options that can be
     passed by the user through `-p` (unless really necessary).
@@ -2159,6 +2160,9 @@ def _build_run_command_line(
 
 
 def _select_tests_to_skip(single_test_type: str) -> str:
+    """
+    Generate text for pytest specifying which tests to deselect.
+    """
     if single_test_type == "fast_tests":
         skipped_tests = "not slow and not superslow"
     elif single_test_type == "slow_tests":
@@ -2178,6 +2182,9 @@ def _run_test_cmd(
     collect_only: bool,
     start_coverage_script: bool,
 ) -> None:
+    """
+    Same params as `run_fast_tests()`.
+    """
     if collect_only:
         # Clean files.
         hsysinte.system("rm -rf ./.coverage*")
@@ -2221,6 +2228,9 @@ def _run_tests(
     *,
     start_coverage_script: bool = True,
 ) -> None:
+    """
+    Same params as `run_fast_tests()`.
+    """
     # Build the command line.
     cmd = _build_run_command_line(
         test_type,
@@ -2239,7 +2249,7 @@ def _run_tests(
 # TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code.
 @task
 def run_fast_tests(  # type: ignore
-    ctx,
+    _,
     stage="dev",
     version="",
     pytest_opts="",
@@ -2273,7 +2283,7 @@ def run_fast_tests(  # type: ignore
 
 @task
 def run_slow_tests(  # type: ignore
-    ctx,
+    _,
     stage="dev",
     version="",
     pytest_opts="",
@@ -2302,7 +2312,7 @@ def run_slow_tests(  # type: ignore
 
 @task
 def run_superslow_tests(  # type: ignore
-    ctx,
+    _,
     stage="dev",
     version="",
     pytest_opts="",
@@ -2331,7 +2341,7 @@ def run_superslow_tests(  # type: ignore
 
 @task
 def run_fast_slow_tests(  # type: ignore
-    ctx,
+    _,
     stage="dev",
     version="",
     pytest_opts="",
@@ -2347,7 +2357,7 @@ def run_fast_slow_tests(  # type: ignore
     """
     _report_task()
     run_fast_tests(
-        ctx,
+        _,
         stage,
         "fast_tests",
         version,
@@ -2358,7 +2368,7 @@ def run_fast_slow_tests(  # type: ignore
         tee_to_file,
     )
     run_slow_tests(
-        ctx,
+        _,
         stage,
         "slow_tests",
         version,
