@@ -1655,11 +1655,11 @@ def docker_release_dev_image(  # type: ignore
         qa_tests = False
     stage = "local"
     if fast_tests:
-        run_fast_tests(stage=stage)
+        run_fast_tests(ctx, stage=stage)
     if slow_tests:
-        run_slow_tests(stage=stage)
+        run_slow_tests(ctx, stage=stage)
     if superslow_tests:
-        run_superslow_tests(stage=stage)
+        run_superslow_tests(ctx, stage=stage)
     # 3) Promote the "local" image to "dev".
     docker_tag_local_image_as_dev(ctx)
     # 4) Run QA tests for the (local version) of the dev image.
@@ -1795,11 +1795,11 @@ def docker_release_prod_image(  # type: ignore
         fast_tests = slow_tests = superslow_tests = False
     stage = "prod"
     if fast_tests:
-        run_fast_tests(stage=stage, version=version)
+        run_fast_tests(ctx, stage=stage, version=version)
     if slow_tests:
-        run_slow_tests(stage=stage, version=version)
+        run_slow_tests(ctx, stage=stage, version=version)
     if superslow_tests:
-        run_superslow_tests(stage=stage, version=version)
+        run_superslow_tests(ctx, stage=stage, version=version)
     # 3) Push prod image.
     if push_to_repo:
         docker_push_prod_image(ctx, version=version)
@@ -2091,7 +2091,7 @@ _TEST_TIMEOUTS_IN_SECS = {
 
 
 @task
-def run_blank_tests(stage="dev", version=""):  # type: ignore
+def run_blank_tests(ctx, stage="dev", version=""):  # type: ignore
     """
     (ONLY CI/CD) Test that pytest in the container works.
     """
@@ -2171,6 +2171,7 @@ def _select_tests_to_skip(single_test_type: str) -> str:
 
 
 def _run_test_cmd(
+    ctx: Any,
     stage: str,
     version: str,
     cmd: str,
@@ -2210,6 +2211,7 @@ def _run_test_cmd(
 
 
 def _run_tests(
+    ctx: Any,
     stage: str,
     test_type: str,
     version: str,
@@ -2232,13 +2234,14 @@ def _run_tests(
     )
     # Execute the command line.
     _run_test_cmd(
-        stage, version, cmd, coverage, collect_only, start_coverage_script
+        ctx, stage, version, cmd, coverage, collect_only, start_coverage_script
     )
 
 
 # TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code.
 @task
 def run_fast_tests(  # type: ignore
+    ctx,
     stage="dev",
     version="",
     pytest_opts="",
@@ -2259,6 +2262,7 @@ def run_fast_tests(  # type: ignore
     """
     _report_task()
     _run_tests(
+        ctx,
         stage,
         "fast_tests",
         version,
@@ -2272,6 +2276,7 @@ def run_fast_tests(  # type: ignore
 
 @task
 def run_slow_tests(  # type: ignore
+    ctx,
     stage="dev",
     version="",
     pytest_opts="",
@@ -2287,6 +2292,7 @@ def run_slow_tests(  # type: ignore
     """
     _report_task()
     _run_tests(
+        ctx,
         stage,
         "slow_tests",
         version,
@@ -2300,6 +2306,7 @@ def run_slow_tests(  # type: ignore
 
 @task
 def run_superslow_tests(  # type: ignore
+    ctx,
     stage="dev",
     version="",
     pytest_opts="",
@@ -2315,6 +2322,7 @@ def run_superslow_tests(  # type: ignore
     """
     _report_task()
     _run_tests(
+        ctx,
         stage,
         "superslow_tests",
         version,
@@ -2328,6 +2336,7 @@ def run_superslow_tests(  # type: ignore
 
 @task
 def run_fast_slow_tests(  # type: ignore
+    ctx,
     stage="dev",
     version="",
     pytest_opts="",
@@ -2343,6 +2352,7 @@ def run_fast_slow_tests(  # type: ignore
     """
     _report_task()
     run_fast_tests(
+        ctx,
         stage,
         "fast_tests",
         version,
@@ -2353,6 +2363,7 @@ def run_fast_slow_tests(  # type: ignore
         tee_to_file,
     )
     run_slow_tests(
+        ctx,
         stage,
         "slow_tests",
         version,
