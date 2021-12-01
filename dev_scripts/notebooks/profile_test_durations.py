@@ -86,6 +86,6 @@ durations
 
 # %% run_control={"marked": true}
 plt.hist(durations)
-_ = plt.title("Durations of tests in seconds")
+_ = plt.title(f"Durations of {config['test_type']} in seconds")
 
 # %%
