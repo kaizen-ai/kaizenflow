@@ -970,7 +970,7 @@ def docker_pull(ctx, stage="dev", images="all"):  # type: ignore
             continue
         if token == "current":
             base_image = ""
-            image = get_image(base_image, stage, None)
+            image = get_image(base_image, stage, version=None)
         elif token == "dev_tools":
             image = get_default_param("DEV_TOOLS_IMAGE_PROD")
         else:
@@ -1564,7 +1564,7 @@ def docker_tag_local_image_as_dev(  # type: ignore
     cmd = f"docker tag {image_versioned_local} {image_versioned_dev}"
     _run(ctx, cmd)
     # Tag local image as dev image.
-    image_dev = get_image(base_image, "dev", None)
+    image_dev = get_image(base_image, "dev", version=None)
     cmd = f"docker tag {image_versioned_local} {image_dev}"
     _run(ctx, cmd)
     # Tag the Git repo with the tag corresponding to the image, e.g., `amp-1.0.0`.
@@ -1594,7 +1594,7 @@ def docker_push_dev_image(  # type: ignore
     cmd = f"docker push {image_versioned_dev}"
     _run(ctx, cmd, pty=True)
     # Push Docker tag.
-    image_dev = get_image(base_image, "dev", None)
+    image_dev = get_image(base_image, "dev", version=None)
     cmd = f"docker push {image_dev}"
     _run(ctx, cmd, pty=True)
     # Push Git tag.
@@ -1710,7 +1710,8 @@ def docker_build_prod_image(  # type: ignore
     """
     _report_task()
     _dassert_is_version_valid(version)
-    image_prod = get_image(base_image, "prod", version)
+    #
+    image_prod = get_image(base_image, "prod", version=None)
     #
     _dassert_is_image_name_valid(image_prod)
     dockerfile = "devops/docker_build/prod.Dockerfile"
@@ -1729,6 +1730,10 @@ def docker_build_prod_image(  # type: ignore
         --build-arg VERSION={version} \
         .
     """
+    _run(ctx, cmd)
+    #
+    image_versioned_prod = get_image(base_image, "prod", version)
+    cmd = f"docker tag {image_prod} {image_versioned_prod}"
     _run(ctx, cmd)
     #
     cmd = f"docker image ls {image_prod}"
@@ -1750,7 +1755,7 @@ def docker_push_prod_image(  # type: ignore
     _report_task()
     docker_login(ctx)
     #
-    image_prod = get_image(base_image, "prod", None)
+    image_prod = get_image(base_image, "prod", version=None)
     cmd = f"docker push {image_prod}"
     _run(ctx, cmd, pty=True)
     #
