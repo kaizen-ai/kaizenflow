@@ -44,7 +44,7 @@ jobs:
       - name: Pull image
         env:
           AM_ECR_BASE_PATH: ${{ secrets.AM_ECR_BASE_PATH }}
-        run: invoke docker_pull --images="dev_tools"
+        run: invoke docker_pull_dev_tools
 
       - name: Switch branch
         run: |

@@ -20,6 +20,7 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     docker_login,
     docker_ps,
     docker_pull,
+    docker_pull_dev_tools,
     docker_push_dev_image,
     docker_push_prod_image,
     docker_release_all,
@@ -91,7 +92,6 @@ default_params = {
     # image, e.g., `XYZ_tmp` to not interfere with the prod system.
     # "BASE_IMAGE": "amp_tmp",
     "BASE_IMAGE": DOCKER_BASE_IMAGE_NAME,
-    "DEV_TOOLS_IMAGE_PROD": f"{ECR_BASE_PATH}/dev_tools:prod",
     "END_TO_END_TEST_FN": docker_release_end_to_end_test,
 }
 
