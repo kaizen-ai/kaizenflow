@@ -16,7 +16,7 @@
 # # Description
 
 # %% [markdown]
-# Profile tests durations for test type.
+# Profile tests durations for test list.
 
 # %% [markdown]
 # # Imports
@@ -29,6 +29,7 @@ import matplotlib.pyplot as plt
 
 import helpers.dbg as hdbg
 import helpers.env as henv
+import helpers.io_ as hio
 import helpers.printing as hprint
 
 # %%
@@ -41,22 +42,27 @@ _LOG.info("%s", henv.get_system_signature()[0])
 hprint.config_notebook()
 
 # %%
-# `test_type` can be "fast_tests", "slow_tests", "superslow_tests",
+# `test_list_name` can be "fast_tests", "slow_tests", "superslow_tests",
 # and "fast_slow_tests".
 
-config = {"test_type": "fast_slow_tests"}
+config = {"test_list_name": "fast_slow_tests"}
 
 
 # %% [markdown]
 # # Functions
 
 # %%
-def get_profiling_command(test_type: str):
+def get_profiling_command(test_list_name: str):
+    """
+    Get command for profiling selected test type.
+
+    This command will need to be posted to the terminal.
+    """
     hdbg.dassert_in(
-        test_type,
+        test_list_name,
         ["fast_tests", "slow_tests", "superslow_tests", "fast_slow_tests"],
     )
-    command = f"invoke run_{test_type} -p 'dev_scripts --durations 0' 2>&1 | tee tmp.{test_type}_profile.txt"
+    command = f"invoke run_{test_list_name} -p 'dev_scripts --durations 0' 2>&1 | tee tmp.{test_list_name}_profile.txt"
     return command
 
 
@@ -64,14 +70,13 @@ def get_profiling_command(test_type: str):
 # # Profile
 
 # %%
-print(get_profiling_command(config["test_type"]))
+print(get_profiling_command(config["test_list_name"]))
 
 # %% [markdown]
 # You need to post this command to the terminal and wait for the tests to pass.
 
 # %%
-with open(f"/app/tmp.{config['test_type']}_profile.txt") as fin:
-    test_output = fin.read()
+test_output = hio.from_file(f"/app/tmp.{config['test_list_name']}_profile.txt")
 
 # %%
 print(test_output)
@@ -86,6 +91,6 @@ durations
 
 # %% run_control={"marked": true}
 plt.hist(durations)
-_ = plt.title(f"Durations of {config['test_type']} in seconds")
+_ = plt.title(f"Durations of {config['test_list_name']} in seconds")
 
 # %%
