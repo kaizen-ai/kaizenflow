@@ -11,7 +11,7 @@ import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
 import im.ccxt.db.utils as imccdbuti
 import im_v2.ccxt.data.client.clients as imvcdclcl
-import im_v2.common.data.client.clients as ivcdclcl
+import im_v2.common.data.client as imvcdcli
 
 _AM_S3_ROOT_DIR = os.path.join(hs3.get_path(), "data")
 
@@ -66,6 +66,9 @@ class TestGetFilePath(hunitest.TestCase):
             ccxt_loader._get_file_path(
                 imvcdclcl._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
             )
+
+
+# #############################################################################
 
 
 @pytest.mark.skipif(
@@ -196,6 +199,7 @@ class TestCcxtDbClient(hunitest.TestCase):
                 "created_at",
             ],
             # fmt: off
+            # pylint: disable=line-too-long
             data=[
                 [1, 1631145600000, 30, 40, 50, 60, 70, "BTC_USDT", "binance", pd.Timestamp("2021-09-09")],
                 [2, 1631145660000, 31, 41, 51, 61, 71, "BTC_USDT", "binance", pd.Timestamp("2021-09-09")],
@@ -205,9 +209,13 @@ class TestCcxtDbClient(hunitest.TestCase):
                 [6, 1631145900000, 34, 44, 54, 64, 74, "BTC_USDT", "kucoin", pd.Timestamp("2021-09-09")],
                 [7, 1631145960000, 34, 44, 54, 64, 74, "ETH_USDT", "binance", pd.Timestamp("2021-09-09")],
             ]
+            # pylint: enable=line-too-long
             # fmt: on
         )
         return test_data
+
+
+# #############################################################################
 
 
 # TODO(*): Consider to factor out the class calling in a `def _get_loader()`.
@@ -280,6 +288,9 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
             )
 
 
+# #############################################################################
+
+
 # TODO(gp): `dind` should not be needed for that.
 @pytest.mark.skipif(
     hgit.is_dev_tools() or hgit.is_lime(),
@@ -298,7 +309,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
         ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
-        multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
+        multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
             class_=ccxt_file_client, mode="concat"
         )
         # Check actual results.
@@ -323,7 +334,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
         ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
-        multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
+        multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
             class_=ccxt_file_client, mode="concat"
         )
         # Check output.
@@ -352,7 +363,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
         ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
-        multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
+        multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
             class_=ccxt_file_client, mode="concat"
         )
         # Check output.
@@ -381,7 +392,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
         ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
-        multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
+        multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
             class_=ccxt_file_client, mode="dict"
         )
         # Check actual results.
@@ -455,6 +466,9 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
             self.check_string(actual_string)
 
 
+# #############################################################################
+
+
 @pytest.mark.skipif(
     hgit.is_dev_tools() or hgit.is_lime(),
     reason="lime and dev_tools doesn't have dind support",
@@ -519,7 +533,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Initialize CCXT DB client and pass it to multiple symbols client.
         ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
-        multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
+        multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
             class_=ccxt_db_client, mode="concat"
         )
         # Check actual results.
@@ -547,7 +561,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Initialize CCXT DB client and pass it to multiple symbols client.
         ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
-        multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
+        multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
             class_=ccxt_db_client, mode="concat"
         )
         # Check output.
@@ -579,7 +593,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Initialize CCXT DB client and pass it to multiple symbols client.
         ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
-        multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
+        multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
             class_=ccxt_db_client, mode="concat"
         )
         # Check output.
@@ -610,7 +624,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Initialize CCXT DB client and pass it to multiple symbols client.
         ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
-        multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
+        multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
             class_=ccxt_db_client, mode="dict"
         )
         # Check output.
@@ -673,6 +687,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
                 "created_at",
             ],
             # fmt: off
+            # pylint: disable=line-too-long
             data=[
                 [1, 1631145600000, 30, 40, 50, 60, 70, "XRP_USDT", "gateio", pd.Timestamp("2021-09-09")],
                 [2, 1631145660000, 31, 41, 51, 61, 71, "XRP_USDT", "gateio", pd.Timestamp("2021-09-09")],
@@ -682,6 +697,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
                 [6, 1631145900000, 34, 44, 54, 64, 74, "XRP_USDT", "gateio", pd.Timestamp("2021-09-09")],
                 [7, 1631145960000, 34, 44, 54, 64, 74, "ETH_USDT", "binance", pd.Timestamp("2021-09-09")],
             ]
+            # pylint: enable=line-too-long
             # fmt: on
         )
         return test_data
@@ -723,3 +739,65 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
                 actual.reset_index()
             )
             self.check_string(actual_string)
+
+
+# #############################################################################
+
+
+class TestGetTimestamp(hunitest.TestCase):
+    @pytest.mark.slow("7 seconds.")
+    def test_get_start_ts(self) -> None:
+        """
+        Test that the earliest timestamp available is computed correctly.
+        """
+        ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
+            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+        )
+        start_ts = ccxt_file_client.get_start_ts_available("binance::DOGE_USDT")
+        expected_start_ts = pd.to_datetime("2019-07-05 12:00:00", utc=True)
+        self.assertEqual(start_ts, expected_start_ts)
+
+    @pytest.mark.slow("7 seconds.")
+    def test_get_end_ts(self) -> None:
+        """
+        Test that the latest timestamp available is computed correctly.
+        """
+        ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
+            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+        )
+        end_ts = ccxt_file_client.get_end_ts_available("binance::DOGE_USDT")
+        expected_end_ts = pd.to_datetime("2021-09-16 09:19:00", utc=True)
+        # TODO(Grisha): use `assertGreater` when start downloading more data.
+        self.assertEqual(end_ts, expected_end_ts)
+
+
+# #############################################################################
+
+
+class TestGetUniverse(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test that CCXT universe is computed correctly.
+        """
+        ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
+            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+        )
+        universe = ccxt_file_client.get_universe()
+        # Check the length of the universe.
+        self.assertEqual(len(universe), 38)
+        # Check the first elements of the universe.
+        first_elements = universe[:3]
+        first_elements_expected = [
+            "binance::ADA_USDT",
+            "binance::AVAX_USDT",
+            "binance::BNB_USDT",
+        ]
+        self.assertEqual(first_elements, first_elements_expected)
+        # Check the last elements of the universe.
+        last_elements = universe[-3:]
+        last_elements_expected = [
+            "kucoin::LINK_USDT",
+            "kucoin::SOL_USDT",
+            "kucoin::XRP_USDT",
+        ]
+        self.assertEqual(last_elements, last_elements_expected)

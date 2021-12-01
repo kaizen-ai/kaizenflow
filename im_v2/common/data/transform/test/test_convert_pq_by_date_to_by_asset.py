@@ -1,4 +1,3 @@
-import logging
 import os
 import pytest
 
@@ -7,11 +6,9 @@ import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
 import im_v2.common.data.transform.generate_pq_example_data as imvcdtgped
 
-_LOG = logging.getLogger(__name__)
-
 
 class TestPqByDateToByAsset1(hunitest.TestCase):
-    @pytest.mark.skip(reason="Passing on EC2, failing on job run Run_fast_tests")
+    @pytest.mark.skip(reason="Passing on EC2, failing on job run Run_fast_tests #595")
     def test_convert_pq_by_date_to_by_asset(self) -> None:
         test_dir = self.get_scratch_space()
         by_date_dir = os.path.join(test_dir, "by_date")

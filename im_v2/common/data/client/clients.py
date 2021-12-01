@@ -69,7 +69,6 @@ def construct_full_symbol(exchange: str, symbol: str) -> FullSymbol:
     return full_symbol
 
 
-# TODO(Grisha): add methods `get_start(end)_ts_available()`, `get_universe()` #543.
 class AbstractImClient(abc.ABC):
     """
     Abstract Interface for `IM` client.
@@ -112,6 +111,33 @@ class AbstractImClient(abc.ABC):
             # Verify that data is valid.
             self._dassert_is_valid(data)
         return data
+
+    def get_start_ts_available(self, full_symbol: FullSymbol) -> pd.Timestamp:
+        """
+        Return the earliest timestamp available for a given `FullSymbol`.
+        """
+        # TODO(Grisha): add caching.
+        data = self.read_data(full_symbol, normalize=True)
+        # It is assumed that timestamp is always stored as index.
+        start_ts = data.index.min()
+        return start_ts
+
+    def get_end_ts_available(self, full_symbol: FullSymbol) -> pd.Timestamp:
+        """
+        Return the latest timestamp available for a given `FullSymbol`.
+        """
+        # TODO(Grisha): add caching.
+        data = self.read_data(full_symbol, normalize=True)
+        # It is assumed that timestamp is always stored as index.
+        end_ts = data.index.max()
+        return end_ts
+
+    @staticmethod
+    @abc.abstractmethod
+    def get_universe() -> List[FullSymbol]:
+        """
+        Get universe as full symbols.
+        """
 
     @abc.abstractmethod
     def _read_data(

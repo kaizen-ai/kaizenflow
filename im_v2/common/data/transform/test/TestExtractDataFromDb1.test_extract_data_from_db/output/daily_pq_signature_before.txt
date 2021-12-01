@@ -1,0 +1,2 @@
+# Dir structure
+/app/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date
