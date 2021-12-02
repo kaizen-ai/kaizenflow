@@ -353,6 +353,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
             expected_currency_pairs,
         )
 
+    @pytest.mark.slow
     def test3(self) -> None:
         """
         Test that all files are being read correctly without normalization.
