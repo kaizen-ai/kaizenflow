@@ -581,6 +581,7 @@ class TestApplyKpssTest(hunitest.TestCase):
 
 
 class TestApplyLjungBoxTest(hunitest.TestCase):
+    @pytest.mark.skip(reason="cmamp #654.")
     def test1(self) -> None:
         series = self._get_series(seed=1)
         actual = costatis.apply_ljung_box_test(series)
@@ -593,6 +594,7 @@ class TestApplyLjungBoxTest(hunitest.TestCase):
         actual_string = hunitest.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
+    @pytest.mark.skip(reason="cmamp #654.")
     def test3(self) -> None:
         series = self._get_series(seed=1)
         actual = costatis.apply_ljung_box_test(series, model_df=3)
@@ -605,12 +607,14 @@ class TestApplyLjungBoxTest(hunitest.TestCase):
         actual_string = hunitest.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
+    @pytest.mark.skip(reason="cmamp #654.")
     def test5(self) -> None:
         series = self._get_series(seed=1)
         actual = costatis.apply_ljung_box_test(series, prefix="lb_")
         actual_string = hunitest.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
+    @pytest.mark.skip(reason="cmamp #654.")
     def test6(self) -> None:
         series = self._get_series(seed=1)
         actual = costatis.apply_ljung_box_test(series, return_df=False)
@@ -622,6 +626,7 @@ class TestApplyLjungBoxTest(hunitest.TestCase):
         series = pd.Series([])
         costatis.apply_ljung_box_test(series)
 
+    @pytest.mark.skip(reason="cmamp #654.")
     def test8(self) -> None:
         series = self._get_series(seed=1)
         series[3:5] = np.nan
