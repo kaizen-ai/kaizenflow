@@ -1677,7 +1677,7 @@ def docker_release_dev_image(  # type: ignore
     if superslow_tests:
         run_superslow_tests(ctx, stage=stage, version=version)
     # 3) Promote the "local" image to "dev".
-    docker_tag_local_image_as_dev(ctx)
+    docker_tag_local_image_as_dev(ctx, version=version)
     # 4) Run QA tests for the (local version) of the dev image.
     if qa_tests:
         qa_test_fn = get_default_param("END_TO_END_TEST_FN")
@@ -1687,7 +1687,7 @@ def docker_release_dev_image(  # type: ignore
             raise RuntimeError(msg)
     # 5) Push the "dev" image to ECR.
     if push_to_repo:
-        docker_push_dev_image(ctx)
+        docker_push_dev_image(ctx, version=version)
     else:
         _LOG.warning(
             "Skipping pushing dev image to repo_short_name, as requested"
