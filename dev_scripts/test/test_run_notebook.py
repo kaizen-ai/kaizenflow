@@ -34,6 +34,7 @@ class TestRunNotebook1(hunitest.TestCase):
         $SCRATCH_SPACE/result_1/simple_notebook.1.ipynb
         $SCRATCH_SPACE/result_1/success.txt"""
 
+    @pytest.mark.slow
     def test_serial1(self) -> None:
         """
         Execute:

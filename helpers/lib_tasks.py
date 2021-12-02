@@ -2104,6 +2104,11 @@ _COV_PYTEST_OPTS = [
     "--cov-report html",
     # "--cov-report annotate",
 ]
+_TEST_TIMEOUTS_IN_SECS = {
+    "fast_tests": 5,
+    "slow_tests": 30,
+    "superslow_tests": 60 * 60,
+}
 
 
 @task
@@ -2112,37 +2117,46 @@ def run_blank_tests(ctx, stage="dev", version=""):  # type: ignore
     (ONLY CI/CD) Test that pytest in the container works.
     """
     _report_task()
+    _ = ctx
     base_image = ""
     cmd = '"pytest -h >/dev/null"'
     docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd)
-    _docker_cmd(ctx, docker_cmd_)
+    hsysinte.system(docker_cmd_, abort_on_error=False, suppress_output=False)
 
 
 def _build_run_command_line(
+    single_test_type: str,
     pytest_opts: str,
     skip_submodules: bool,
     coverage: bool,
     collect_only: bool,
     tee_to_file: bool,
     # Different params than the `run_*_tests()`.
-    skipped_tests: str,
 ) -> str:
     """
     Build the pytest run command.
 
-    Same params as `run_fast_tests()`.
+    :param single_test_type: "fast_tests", "slow_tests" or "superslow_tests"
+    The rest of params are the same as in `run_fast_tests()`.
+
     The invariant is that we don't want to duplicate pytest options that can be
     passed by the user through `-p` (unless really necessary).
-
-    :param skipped_tests: -m option for pytest
     """
+    hdbg.dassert_in(
+        single_test_type,
+        _TEST_TIMEOUTS_IN_SECS,
+        "Invalid `single_test_type``='%s'",
+        single_test_type,
+    )
     pytest_opts = pytest_opts or "."
     #
     pytest_opts_tmp = []
-    if pytest_opts != "":
+    if pytest_opts:
         pytest_opts_tmp.append(pytest_opts)
-    if skipped_tests != "":
-        pytest_opts_tmp.insert(0, f'-m "{skipped_tests}"')
+    skipped_tests = _select_tests_to_skip(single_test_type)
+    pytest_opts_tmp.insert(0, f'-m "{skipped_tests}"')
+    timeout_in_sec = _TEST_TIMEOUTS_IN_SECS[single_test_type]
+    pytest_opts_tmp.append(f"--timeout {timeout_in_sec}")
     if skip_submodules:
         submodule_paths = hgit.get_submodule_paths()
         _LOG.warning(
@@ -2163,12 +2177,26 @@ def _build_run_command_line(
     pytest_opts = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
     cmd = f"pytest {pytest_opts}"
     if tee_to_file:
-        cmd += " 2>&1 | tee tmp.pytest.log"
+        cmd += f" 2>&1 | tee tmp.pytest.{single_test_type}.log"
     return cmd
 
 
+def _select_tests_to_skip(single_test_type: str) -> str:
+    """
+    Generate text for pytest specifying which tests to deselect.
+    """
+    if single_test_type == "fast_tests":
+        skipped_tests = "not slow and not superslow"
+    elif single_test_type == "slow_tests":
+        skipped_tests = "slow and not superslow"
+    elif single_test_type == "superslow_tests":
+        skipped_tests = "not slow and superslow"
+    else:
+        raise ValueError(f"Invalid `single_test_type`={single_test_type}")
+    return skipped_tests
+
+
 def _run_test_cmd(
-    ctx: Any,
     stage: str,
     version: str,
     cmd: str,
@@ -2176,15 +2204,19 @@ def _run_test_cmd(
     collect_only: bool,
     start_coverage_script: bool,
 ) -> None:
+    """
+    Same params as `run_fast_tests()`.
+    """
     if collect_only:
         # Clean files.
-        _run(ctx, "rm -rf ./.coverage*")
+        hsysinte.system("rm -rf ./.coverage*")
     # Run.
     base_image = ""
     # We need to add some " to pass the string as it is to the container.
     cmd = f"'{cmd}'"
     docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd)
-    _docker_cmd(ctx, docker_cmd_)
+    _LOG.info("cmd=%s", docker_cmd_)
+    hsysinte.system(docker_cmd_, abort_on_error=False, suppress_output=False)
     # Print message about coverage.
     if coverage:
         msg = """
@@ -2207,30 +2239,32 @@ def _run_test_cmd(
 
 
 def _run_tests(
-    ctx: Any,
     stage: str,
+    test_type: str,
     version: str,
     pytest_opts: str,
     skip_submodules: bool,
     coverage: bool,
     collect_only: bool,
     tee_to_file: bool,
-    skipped_tests: str,
     *,
     start_coverage_script: bool = True,
 ) -> None:
+    """
+    Same params as `run_fast_tests()`.
+    """
     # Build the command line.
     cmd = _build_run_command_line(
+        test_type,
         pytest_opts,
         skip_submodules,
         coverage,
         collect_only,
         tee_to_file,
-        skipped_tests,
     )
     # Execute the command line.
     _run_test_cmd(
-        ctx, stage, version, cmd, coverage, collect_only, start_coverage_script
+        stage, version, cmd, coverage, collect_only, start_coverage_script
     )
 
 
@@ -2257,17 +2291,16 @@ def run_fast_tests(  # type: ignore
     :param tee_to_file: save output of pytest in `tmp.pytest.log`
     """
     _report_task()
-    skipped_tests = "not slow and not superslow"
+    _ = ctx
     _run_tests(
-        ctx,
         stage,
+        "fast_tests",
         version,
         pytest_opts,
         skip_submodules,
         coverage,
         collect_only,
         tee_to_file,
-        skipped_tests,
     )
 
 
@@ -2288,17 +2321,16 @@ def run_slow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
-    skipped_tests = "slow and not superslow"
+    _ = ctx
     _run_tests(
-        ctx,
         stage,
+        "slow_tests",
         version,
         pytest_opts,
         skip_submodules,
         coverage,
         collect_only,
         tee_to_file,
-        skipped_tests,
     )
 
 
@@ -2319,17 +2351,16 @@ def run_superslow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
-    skipped_tests = "not slow and superslow"
+    _ = ctx
     _run_tests(
-        ctx,
         stage,
+        "superslow_tests",
         version,
         pytest_opts,
         skip_submodules,
         coverage,
         collect_only,
         tee_to_file,
-        skipped_tests,
     )
 
 
@@ -2350,8 +2381,8 @@ def run_fast_slow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
-    skipped_tests = "not superslow"
-    _run_tests(
+    _ = ctx
+    run_fast_tests(
         ctx,
         stage,
         version,
@@ -2360,7 +2391,16 @@ def run_fast_slow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
-        skipped_tests,
+    )
+    run_slow_tests(
+        ctx,
+        stage,
+        version,
+        pytest_opts,
+        skip_submodules,
+        coverage,
+        collect_only,
+        tee_to_file,
     )
 
 
