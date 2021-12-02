@@ -70,3 +70,8 @@ def generate_pq_daily_data(
 ) -> None:
     dummy_df = _get_daily_df(start_date, end_date, assets, freq)
     hparque.save_daily_df_as_pq(dummy_df, dst_dir)
+
+assets = ["A", "B", "C"]
+generate_pq_daily_data(
+    "2021-11-01", "2052-02-01", assets, dst_dir="im_v2/common/data/transform/test_data_by_date"
+)

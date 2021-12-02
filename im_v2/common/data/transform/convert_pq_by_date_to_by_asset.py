@@ -18,15 +18,19 @@ A parquet file organized by assets looks like:
 ```
 dst_dir/
     year1/
-        asset1/
-            data.parquet
-        asset2/
-            data.parquet
-    year/
-        asset1/
-            data.parquet
-        asset2/
-            data.parquet
+        month1/
+            day1/
+                asset1/
+                    data.parquet
+                asset2/
+                    data.parquet
+    year2/
+        month2/
+            day2/
+                asset1/
+                    data.parquet
+                asset2/
+                    data.parquet
 ```
 
 # Example:
@@ -41,9 +45,14 @@ import im_v2.common.data.transform.convert_pq_by_date_to_by_asset as imvcdtcpbdt
 
 import argparse
 import logging
+import os
+from typing import Dict, List
 
+import numpy as np
 import pandas as pd
 
+import helpers.datetime_ as hdateti
+import helpers.joblib_helpers as hjoblib
 import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
@@ -55,7 +64,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(Nikola): Return the list so we can use tqdm as progress bar.
-def _source_parquet_df_generator(src_dir: str) -> str:
+def _source_pq_files(src_dir: str) -> List[str]:
     """
     Generator for all the Parquet files in a given dir.
     """
@@ -66,23 +75,17 @@ def _source_parquet_df_generator(src_dir: str) -> str:
         src_pq_files = hio.find_files(src_dir, "*.pq")
     _LOG.debug("Found %s pq files in '%s'", len(src_pq_files), src_dir)
     hdbg.dassert_lte(1, len(src_pq_files))
-    # Return iterator.
-    for src_pq_file in src_pq_files:
-        yield src_pq_file
+    return src_pq_files
 
 
-# TODO(gp): We might want to use a config to pass a set of params related to each
-#  other (e.g., transform_func, asset_col_name, ...)
-def _run(src_dir: str, transform_func: str, dst_dir: str) -> None:
-    # Convert the files one at the time.
-    all_dfs = []
-    for src_pq_file in _source_parquet_df_generator(src_dir):
-        _LOG.debug("src_pq_file=%s", src_pq_file)
-        # Load data.
-        df = hparque.from_parquet(src_pq_file)
+def _save_chunk(config: Dict[str, str]):
+    # TODO(Nikola): Check config.
+    for daily_pq in config["chunk"]:
+        df = hparque.from_parquet(daily_pq)
         _LOG.debug("before df=\n%s", hprint.dataframe_to_str(df.head(3)))
         # Transform.
         # TODO(gp): Use eval or a more general mechanism.
+        transform_func = config["transform_func"]
         if not transform_func:
             pass
         elif transform_func == "reindex_on_unix_epoch":
@@ -92,12 +95,62 @@ def _run(src_dir: str, transform_func: str, dst_dir: str) -> None:
             _LOG.debug("after df=\n%s", hprint.dataframe_to_str(df.head(3)))
         else:
             hdbg.dfatal(f"Invalid transform_func='{transform_func}'")
-        all_dfs.append(df)
-    # Concat df.
-    df = pd.concat(all_dfs)
-    # Save df after indexing by asset.
-    # TODO(Nikola): We need to implement the approach so that it can be parallelized.
-    hparque.save_pq_by_asset("asset", df, dst_dir)
+        hparque.save_pq_by_asset(config["asset_col_name"], df, config["dst_dir"])
+
+
+# TODO(gp): We might want to use a config to pass a set of params related to each
+#  other (e.g., transform_func, asset_col_name, ...)
+def _run(src_dir: str, transform_func: str, dst_dir: str) -> None:
+    tasks = []
+    # Convert the files one at the time.
+    # TODO(Nikola): Pick chunk by chunk, not all files.
+    source_pq_files = _source_pq_files(src_dir)
+    # TODO(Nikola): Remove, quick testing.
+    chunks = np.array_split(source_pq_files, len(source_pq_files) // 7)
+    for chunk in chunks:
+        # _LOG.debug("src_pq_file=%s", src_pq_file)
+        # Load data.
+        config = {
+            "src_dir": src_dir,
+            "chunk": chunk,
+            "dst_dir": dst_dir,
+            "transform_func": transform_func,
+            "asset_col_name": "asset",
+        }
+        task: hjoblib.Task = (
+            # args.
+            (config,),
+            # kwargs.
+            {},
+        )
+        tasks.append(task)
+
+    func_name = "_save_chunk"
+    workload = (_save_chunk, func_name, tasks)
+    hjoblib.validate_workload(workload)
+
+    # TODO(Nikola): Part of configuration instead one args at the time
+    # Parse command-line options.
+    dry_run = False
+    num_threads = 4
+    incremental = False
+    abort_on_error = True
+    num_attempts = 1
+    # Prepare the log file.
+    timestamp = hdateti.get_timestamp("naive_ET")
+    # TODO(Nikola): Change directory.
+    log_dir = os.getcwd()
+    log_file = os.path.join(log_dir, f"log.{timestamp}.txt")
+    _LOG.info("log_file='%s'", log_file)
+    hjoblib.parallel_execute(
+        workload,
+        dry_run,
+        num_threads,
+        incremental,
+        abort_on_error,
+        num_attempts,
+        log_file,
+    )
 
 
 # TODO(Nikola): Add support for reading (not writing) to S3. Reuse code from pq_convert.py.

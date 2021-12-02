@@ -137,23 +137,28 @@ def save_pq_by_asset(
     ```
     dst_dir/
         year=2021/
-            asset=A/
-                data.parquet
-            asset=B/
-                data.parquet
+            month=11/
+                day=06/
+                    asset=A/
+                        data.parquet
+                    asset=B/
+                        data.parquet
         year=2022/
-            asset=A/
-                data.parquet
-            asset=B/
-                data.parquet
+            month=11/
+                day=07/
+                    asset=A/
+                        data.parquet
+                    asset=B/
+                        data.parquet
     ```
     """
-    year_col_name = "year"
+    date_col_names = ["year", "month", "day"]
     with htimer.TimedScope(logging.DEBUG, "Create partition indices"):
-        parquet_df_by_date[year_col_name] = parquet_df_by_date.index.year
+        for name in date_col_names:
+            parquet_df_by_date[name] = getattr(parquet_df_by_date.index, name)
     with htimer.TimedScope(logging.DEBUG, "Save data"):
         table = pa.Table.from_pandas(parquet_df_by_date)
-        partition_cols = [year_col_name, asset_col_name]
+        partition_cols = [*date_col_names, asset_col_name]
         pq.write_to_dataset(
             table,
             dst_dir,
