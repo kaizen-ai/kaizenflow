@@ -8,7 +8,7 @@ import im.ib.sql_writer as imibsqwri
 
 
 # TODO(*): CmTask666.
-@pytest.mark.skip
+@pytest.mark.skip(reason="CmTask666")
 class TestIbSqlWriterBackend1(ictuti.SqlWriterBackendTestCase):
     """
     Test writing operation to PostgreSQL IM db.
