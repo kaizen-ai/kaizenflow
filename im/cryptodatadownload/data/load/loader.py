@@ -58,7 +58,7 @@ class CddLoader:
         Load data from S3 and process it for use downstream.
 
         :param exchange_id: CDD exchange id, e.g. "binance"
-        :param currency_pair: currency pair, e.g. "BTC/USDT"
+        :param currency_pair: currency pair, e.g. "BTC_USDT"
         :param data_type: OHLCV or trade, bid/ask data
         :param data_snapshot: snapshot of datetime when data was loaded, e.g. "20210924"
         :return: processed CDD data
@@ -116,8 +116,8 @@ class CddLoader:
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
         :param exchange_id: CDD exchange id, e.g. "binance"
-        :param currency_pair: currency pair `<currency1>/<currency2>`,
-            e.g. "BTC/USDT"
+        :param currency_pair: currency pair `<currency1>_<currency2>`,
+            e.g. "BTC_USDT"
         :return: absolute path to a file with CDD data
         """
         # Get absolute file path.
@@ -138,6 +138,7 @@ class CddLoader:
         return file_path
 
     # TODO(*): Consider making `exchange_id` a class member.
+    # TODO(*): Replace currencies separator "/" to "_".
     def _transform(
         self,
         data: pd.DataFrame,
@@ -166,7 +167,7 @@ class CddLoader:
 
         :param data: dataframe with CDD data from S3
         :param exchange_id: CDD exchange id, e.g. "binance"
-        :param currency_pair: currency pair, e.g. "BTC/USDT"
+        :param currency_pair: currency pair, e.g. "BTC_USDT"
         :param data_type: OHLCV or trade, bid/ask data
         :return: processed dataframe
         """
@@ -198,7 +199,7 @@ class CddLoader:
 
         :param data: raw data from S3
         :param exchange_id: CDD exchange id, e.g. "binance"
-        :param currency_pair: currency pair, e.g. "BTC/USDT"
+        :param currency_pair: currency pair, e.g. "BTC_USDT"
         :return: transformed CDD data
         """
         # Verify that the Unix data is provided in ms.
@@ -221,7 +222,7 @@ class CddLoader:
             data = hpandas.resample_df(data, "T")
         # Rename col with traded volume in amount of the 1st currency in pair.
         data = data.rename(
-            {"Volume " + currency_pair.split("/")[0]: "volume"}, axis=1
+            {"Volume " + currency_pair.split("_")[0]: "volume"}, axis=1
         )
         # Rename col with currency pair.
         data = data.rename({"symbol": "currency_pair"}, axis=1)

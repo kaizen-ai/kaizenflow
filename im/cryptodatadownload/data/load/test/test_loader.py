@@ -65,7 +65,7 @@ class TestCddLoader(hunitest.TestCase):
             root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         actual = cdd_loader.read_data_from_filesystem(
-            "binance", "BTC/USDT", "OHLCV"
+            "binance", "BTC_USDT", "OHLCV"
         )
         # Check the output values.
         actual_string = hunitest.convert_df_to_json_string(actual)
@@ -80,7 +80,7 @@ class TestCddLoader(hunitest.TestCase):
         )
         with self.assertRaises(AssertionError):
             cdd_loader.read_data_from_filesystem(
-                "unsupported_exchange_id", "BTC/USDT", "OHLCV"
+                "unsupported_exchange_id", "BTC_USDT", "OHLCV"
             )
 
     def test3(self) -> None:
@@ -104,5 +104,5 @@ class TestCddLoader(hunitest.TestCase):
         )
         with self.assertRaises(AssertionError):
             cdd_loader.read_data_from_filesystem(
-                "binance", "BTC/USDT", "unsupported_data_type"
+                "binance", "BTC_USDT", "unsupported_data_type"
             )
