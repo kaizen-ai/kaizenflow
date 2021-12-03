@@ -123,14 +123,14 @@ def _save_data_on_disk(
     current_datetime = hdateti.get_current_time("ET")
     if data_type == "ohlcv":
         file_name = (
-            f"{exchange.id}_{pair.replace('/', '_')}_{current_datetime}.csv.gz"
+            f"{exchange.id}_{pair}_{current_datetime}.csv.gz"
         )
         full_path = os.path.join(dst_dir, file_name)
         pair_data.to_csv(full_path, index=False, compression="gzip")
     elif data_type == "orderbook":
         file_name = (
             f"orderbook_{exchange.id}_"
-            f"{pair.replace('/', '_')}_"
+            f"{pair}_"
             f"{hdateti.get_timestamp('ET')}.json"
         )
         full_path = os.path.join(dst_dir, file_name)
