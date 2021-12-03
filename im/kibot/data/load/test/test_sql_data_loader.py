@@ -12,7 +12,7 @@ import im.kibot.sql_writer as imkisqwri
 
 
 # TODO(*): CmTask666.
-@pytest.mark.skip
+@pytest.mark.skip(reason="CmTask666")
 class TestSqlDataLoader1(hunitest.TestCase):
     """
     Test writing operation to PostgreSQL Kibot DB.
