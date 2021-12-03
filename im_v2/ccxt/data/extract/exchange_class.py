@@ -167,6 +167,7 @@ class CcxtExchange:
         hdbg.dassert(self._exchange.has["fetchOrderBook"])
         hdbg.dassert_in(curr_pair, self.currency_pairs)
         # Download current order book.
+        # TODO(Grisha): use `_` instead of `/` as currencies separator in `symbol`.
         order_book = self._exchange.fetch_order_book(curr_pair)
         return order_book
 

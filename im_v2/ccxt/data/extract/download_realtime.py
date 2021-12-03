@@ -94,7 +94,6 @@ def _download_data(
         pair_data["currency_pair"] = pair
         pair_data["exchange_id"] = exchange.id
     elif data_type == "orderbook":
-        # TODO(*): Replace "/" with "_" for currency pair symbols.
         # Download current state of the orderbook.
         pair_data = exchange.instance.download_order_book(pair)
     else:
