@@ -210,15 +210,17 @@ def _main(parser: argparse.ArgumentParser) -> None:
         exchanges.append(
             instantiate_exchange(exchange_id, universe["CCXT"], args.api_keys)
         )
+    # Construct table name.
+    table_name = f"ccxt_{args.data_type}"
     # Generate a query to remove duplicates.
     dup_query = hsql.get_remove_duplicates_query(
-        table_name=args.table_name,
+        table_name=table_name,
         id_col_name="id",
         column_names=["timestamp", "exchange_id", "currency_pair"],
     )
     # Convert timestamps.
-    start = pd.Timestamp(args.start_datetime)
     end = pd.Timestamp(args.end_datetime)
+    start = end - pd.Timedelta(args.period_length)
     # Download data for specified time period.
     for exchange in exchanges:
         for pair in exchange.pairs:
@@ -230,7 +232,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             hsql.execute_insert_query(
                 connection=connection,
                 obj=pair_data,
-                table_name=args.table_name,
+                table_name=table_name,
             )
             # Drop duplicates inside the table.
             connection.cursor().execute(dup_query)
