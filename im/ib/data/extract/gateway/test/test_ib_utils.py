@@ -87,7 +87,7 @@ class Test_utils1(iidegt.IbExtractionTest):
 
 
 # TODO(*): CmTask666.
-@pytest.mark.skip
+@pytest.mark.skip(reason="CmTask666")
 class Test_get_historical_data(iidegt.IbExtractionTest):
     def test_get_end_timestamp1(self) -> None:
         """

@@ -13,7 +13,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(*): CmTask666.
-@pytest.mark.skip
+@pytest.mark.skip(reason="CmTask666")
 class Test_get_historical_data(iidegt.IbExtractionTest):
     def test_save_historical_data_with_IB_loop1(self) -> None:
         # 2021-02-17 is a Wednesday and it's full day.
