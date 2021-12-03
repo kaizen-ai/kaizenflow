@@ -6,7 +6,6 @@ Import as:
 import im_v2.common.db.utils as imcodbuti
 """
 import logging
-import os
 from typing import Optional
 
 import psycopg2 as psycop
