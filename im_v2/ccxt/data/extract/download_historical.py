@@ -117,24 +117,23 @@ def _main(parser: argparse.ArgumentParser) -> None:
         exchange = imvcdeexcl.CcxtExchange(
             exchange_id, api_keys_path=args.api_keys
         )
-        # TODO(gp): -> currency_pair
-        for pair in trade_universe[exchange_id]:
-            _LOG.info(pair)
+        for currency_pair in trade_universe[exchange_id]:
+            _LOG.info(currency_pair)
             # Download OHLCV data.
-            pair_data = exchange.download_ohlcv_data(
-                curr_symbol=pair,
+            currency_pair_data = exchange.download_ohlcv_data(
+                curr_symbol=currency_pair,
                 start_datetime=start_datetime,
                 end_datetime=end_datetime,
                 step=args.step,
             )
             # Sleep between iterations.
             time.sleep(args.sleep_time)
-            # Create file name based on exchange and pair.
+            # Create file name based on exchange and currency pair.
             # E.g. 'binance_BTC_USDT.csv.gz'
-            file_name = f"{exchange_id}_{pair.replace('/', '_')}.csv.gz"
+            file_name = f"{exchange_id}_{currency_pair}.csv.gz"
             full_path = os.path.join(args.dst_dir, file_name)
             # Save file.
-            pair_data.to_csv(
+            currency_pair_data.to_csv(
                 full_path,
                 index=False,
                 compression="gzip",

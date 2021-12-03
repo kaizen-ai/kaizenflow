@@ -163,8 +163,6 @@ def get_initial_df_with_volumes(coins, exchange, is_notional_volume):
         aws_profile="am",
     )
     for coin in coins:
-        # TODO(Grisha): use `_` as currencies separator #579.
-        coin = coin.replace("/", "_")
         # TODO(Grisha): use `FullSymbols` #587.
         full_symbol = f"{exchange}::{coin}"
         df = loader.read_data(full_symbol)
