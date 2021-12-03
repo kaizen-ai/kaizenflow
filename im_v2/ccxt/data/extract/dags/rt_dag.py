@@ -1,7 +1,7 @@
 import datetime
 
 import airflow
-from airflow.operators.bash import DockerOperator
+from airflow.providers.docker.operators.docker import DockerOperator
 
 # Pass default parameters for the DAG.
 default_args = {
