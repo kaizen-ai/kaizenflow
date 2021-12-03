@@ -45,6 +45,6 @@ with airflow.DAG(
     downloading_task = DockerOperator(
         task_id="run_script",
         image="665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:dev",
-        bash_command=bash_command,
+        command=bash_command,
         default_args=default_args,
     )
