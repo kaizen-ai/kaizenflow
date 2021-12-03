@@ -3,7 +3,6 @@ import pytest
 import helpers.unit_test as hunitest
 import im.common.data.transform.transform as imcdatrtr
 import im.common.data.types as imcodatyp
-import im_v2.common.db.utils as imcodbuti
 import im.common.test.utils as ictuti
 import im.ib.data.load.ib_s3_data_loader as imidlisdlo
 import im.ib.data.load.ib_sql_data_loader as iidlisdlo
@@ -11,10 +10,8 @@ import im.ib.data.transform.ib_s3_to_sql_transformer as imidtistst
 import im.ib.sql_writer as imibsqwri
 
 
-@pytest.mark.skipif(
-    not imcodbuti.is_inside_im_container(),
-    reason="Testable only inside IM container",
-)
+# TODO(*): CmTask666.
+@pytest.mark.skip
 class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
     """
     Test migrating data from S3 to SQL for IB provider.
