@@ -1,13 +1,14 @@
 import logging
 import os
 
+import pytest
+
 import helpers.git as hgit
-import helpers.hparquet as hparque
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
-import im_v2.common.data.transform.generate_pq_example_data as imvcdtgped
 
 _LOG = logging.getLogger(__name__)
+
 
 # TODO(Nikola): Add a unit test for `imvcdtgped.generate_pq_daily_data` just
 #  generating data and then a check_string to show how the data looks like.
@@ -18,18 +19,28 @@ _LOG = logging.getLogger(__name__)
 
 class TestPqByDateToByAsset1(hunitest.TestCase):
 
+    # TODO(Nikola): Revisit.
+    @pytest.mark.skip
     def test_daily_data1(self) -> None:
         """
-        Generate daily data for 4 days in a by-date format and then convert
+        Generate daily data for 3 days in a by-date format and then convert
         it to by-asset.
         """
         test_dir = self.get_scratch_space()
         by_date_dir = os.path.join(test_dir, "by_date")
         # Generate some data.
-        assets = ["A", "B", "C"]
-        imvcdtgped.generate_pq_daily_data(
-            "2021-12-30", "2022-01-02", assets, dst_dir=by_date_dir
+        cmd = []
+        file_path = os.path.join(
+            hgit.get_amp_abs_path(),
+            "im_v2/common/data/transform/test/generate_pq_example_data.py"
         )
+        cmd.append(file_path)
+        cmd.append("--start_date 2021-12-30")
+        cmd.append("--end_date 2022-01-02")
+        cmd.append("--assets A,B,C")
+        cmd.append(f"--dst_dir {by_date_dir}")
+        cmd = " ".join(cmd)
+        hsysinte.system(cmd)
         # Build command line to convert the data.
         cmd = []
         file_path = os.path.join(
