@@ -42,8 +42,8 @@ COPY devops/docker_build/create_users.sh .
 RUN /bin/bash -c "./create_users.sh"
 COPY devops/docker_build/etc_sudoers /etc/sudoers
 
-RUN /bin/bash -c "./create_users.sh"
 COPY devops/docker_build/install_containers.sh .
+RUN /bin/bash -c "./install_containers.sh"
 
 # Mount external filesystems.
 #RUN mkdir -p /s3/alphamatic-data
