@@ -15,6 +15,7 @@ default_args = {
 with airflow.DAG(
     dag_id="realtime_ccxt",
     description="Realtime download of CCXT OHLCV data",
+    max_active_runs=1,
     default_args=default_args,
     schedule_interval="*/1 * * * *",
     catchup=False,
