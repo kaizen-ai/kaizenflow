@@ -16,7 +16,7 @@ class TestGetFilePath(hunitest.TestCase):
         Test supported exchange id and currency pair.
         """
         exchange_id = "binance"
-        currency_pair = "ETH/USDT"
+        currency_pair = "ETH_USDT"
         cdd_loader = icdalolo.CddLoader(
             root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
@@ -31,7 +31,7 @@ class TestGetFilePath(hunitest.TestCase):
         Test unsupported exchange id.
         """
         exchange_id = "unsupported exchange"
-        currency_pair = "ADA/USDT"
+        currency_pair = "ADA_USDT"
         cdd_loader = icdalolo.CddLoader(
             root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
