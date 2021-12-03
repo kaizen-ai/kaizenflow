@@ -117,7 +117,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
         exchange = imvcdeexcl.CcxtExchange(
             exchange_id, api_keys_path=args.api_keys
         )
-        # TODO(gp): -> currency_pair
         for currency_pair in trade_universe[exchange_id]:
             _LOG.info(currency_pair)
             # Download OHLCV data.
