@@ -15,10 +15,12 @@ import im_v2.common.data.transform.extract_data_from_db as imvcdtedfd
 
 import argparse
 import logging
+import os.path
 
 import pandas as pd
 
 import helpers.dbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.parser as hparser
 import helpers.sql as hsql
@@ -67,14 +69,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # TODO(Nikola): Custom exceptions ?
     if start_date > end_date:
         raise ValueError("Start date can not be greater than end date!")
-
     timespan = pd.date_range(start_date, end_date)
     if len(timespan) < 2:
         raise ValueError("Date range must be at least two days!")
     # Location of daily PQ files.
     daily_pq_path = args.daily_pq_path
     hdbg.dassert_exists(daily_pq_path)
-
     ccxt_db_client = imvcdclcl.CcxtDbClient(
         # TODO(Nikola): Is connection eventually closed ?
         "ohlcv",
@@ -98,9 +98,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
             continue
         try:
             date_directory = f"date={timespan[date_index].strftime('%Y%m%d')}"
-            full_path = f"{daily_pq_path}/{date_directory}"
-            # TODO(Nikola): Use part of _source_parquet_df_generator instead.
+            full_path = os.path.join(daily_pq_path, date_directory)
+            # TODO(Nikola): Incremental as in PQ conversion?
             hdbg.dassert_not_exists(full_path)
+            in_col_name = "timestamp"
+            rt_df = hpandas.reindex_on_unix_epoch(rt_df, in_col_name)
             hparque.save_daily_df_as_pq(rt_df, daily_pq_path)
         except AssertionError as ex:
             _LOG.info("Skipping. PQ file already present: %s.", ex)
