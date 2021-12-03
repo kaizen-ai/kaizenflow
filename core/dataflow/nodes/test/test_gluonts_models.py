@@ -4,6 +4,7 @@ import pprint
 import mxnet
 import numpy as np
 import pandas as pd
+import pytest
 
 import core.artificial_signal_generators as carsigen
 import core.config as cconfig
@@ -27,6 +28,7 @@ _LOG = logging.getLogger(__name__)
 if True:
 
     class TestContinuousDeepArModel(hunitest.TestCase):
+        @pytest.mark.slow
         def test_fit_dag1(self) -> None:
             dag = self._get_dag()
             #

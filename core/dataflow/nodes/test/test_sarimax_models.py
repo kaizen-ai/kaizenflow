@@ -3,6 +3,7 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+import pytest
 import sklearn.linear_model as slmode
 
 import core.artificial_signal_generators as carsigen
@@ -37,6 +38,7 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
         # Check results.
         self._check_results(config, df_out)
 
+    @pytest.mark.skip(reason="cmamp #654.")
     def test_fit_step_one1(self) -> None:
         """
         Fit on `x = y`.

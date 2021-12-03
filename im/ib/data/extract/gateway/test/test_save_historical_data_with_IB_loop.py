@@ -8,15 +8,12 @@ import pandas as pd
 import pytest
 
 import im.ib.data.extract.gateway.test.utils as iidegt
-import im_v2.common.db.utils as imcodbuti
 
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skipif(
-    not imcodbuti.is_inside_im_container(),
-    reason="Testable only inside IB container",
-)
+# TODO(*): CmTask666.
+@pytest.mark.skip
 class Test_get_historical_data(iidegt.IbExtractionTest):
     def test_save_historical_data_with_IB_loop1(self) -> None:
         # 2021-02-17 is a Wednesday and it's full day.
