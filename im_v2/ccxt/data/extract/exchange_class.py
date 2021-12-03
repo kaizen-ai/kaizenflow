@@ -138,7 +138,7 @@ class CcxtExchange:
             range(start_datetime, end_datetime + duration, duration * step)
         ):
             bars = self._fetch_ohlcv(curr_symbol, since=t, step=step)
-            all_bars += bars
+            all_bars.append(bars)
             time.sleep(sleep_time)
         # TODO(*): Double check if dataframes are properly concatenated.
         return pd.concat(all_bars)
