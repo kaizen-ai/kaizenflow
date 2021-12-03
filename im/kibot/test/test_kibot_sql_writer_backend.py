@@ -3,16 +3,13 @@ import pytest
 
 import helpers.unit_test as hunitest
 import im.common.data.types as imcodatyp
-import im_v2.common.db.utils as imcodbuti
 import im.common.test.utils as ictuti
 import im.kibot.sql_writer as imkisqwri
 
 
 # TODO(*): -> TestKibotSqlWriterBackend1
-@pytest.mark.skipif(
-    not imcodbuti.is_inside_im_container(),
-    reason="Testable only inside IM container",
-)
+# TODO(*): CmTask666.
+@pytest.mark.skip
 class TestSqlWriterBackend1(ictuti.SqlWriterBackendTestCase):
     """
     Test writing operation to PostgreSQL DB.
