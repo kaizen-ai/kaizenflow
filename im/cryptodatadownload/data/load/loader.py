@@ -121,7 +121,7 @@ class CddLoader:
         :return: absolute path to a file with CDD data
         """
         # Get absolute file path.
-        file_name = currency_pair.replace("/", "_") + ".csv.gz"
+        file_name = currency_pair + ".csv.gz"
         file_path = os.path.join(
             self._root_dir,
             "cryptodatadownload",
