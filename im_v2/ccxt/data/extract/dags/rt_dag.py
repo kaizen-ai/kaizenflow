@@ -27,7 +27,7 @@ with airflow.DAG(
         "universe": "v3",
         "api_keys": "API_keys.json",
         "table_name": "ccxt_ohlcv",
-        "period_length": "5 minutes"
+        "period_length": "5 minutes",
     }
     # Build a bash command to execute.
     bash_command = (
@@ -46,5 +46,5 @@ with airflow.DAG(
         task_id="run_script",
         image="665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:dev",
         bash_command=bash_command,
-        default_args=default_args
+        default_args=default_args,
     )
