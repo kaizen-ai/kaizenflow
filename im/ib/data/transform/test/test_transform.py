@@ -11,7 +11,7 @@ import im.ib.sql_writer as imibsqwri
 
 
 # TODO(*): CmTask666.
-@pytest.mark.skip
+@pytest.mark.skip(reason="CmTask666")
 class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
     """
     Test migrating data from S3 to SQL for IB provider.

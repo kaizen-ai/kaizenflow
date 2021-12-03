@@ -14,7 +14,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(*): CmTask666.
-@pytest.mark.skip
+@pytest.mark.skip(reason="CmTask666")
 class Test_get_historical_data(iidegt.IbExtractionTest):
     def test_get_historical_data1(self) -> None:
         """
