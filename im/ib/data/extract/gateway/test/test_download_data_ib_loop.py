@@ -11,15 +11,12 @@ import helpers.dbg as hdbg
 import im.ib.data.extract.gateway.download_data_ib_loop as imidegddil
 import im.ib.data.extract.gateway.test.utils as iidegt
 import im.ib.data.extract.gateway.utils as imidegaut
-import im_v2.common.db.utils as imcodbuti
 
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skipif(
-    not imcodbuti.is_inside_im_container(),
-    reason="Testable only inside IB container",
-)
+# TODO(*): CmTask666.
+@pytest.mark.skip
 class Test_get_historical_data(iidegt.IbExtractionTest):
     def test_ib_loop_generator1(self) -> None:
         """
