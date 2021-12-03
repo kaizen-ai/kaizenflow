@@ -147,7 +147,7 @@ class CcxtExchange:
         """
         Download order book for a currency pair.
 
-        :param curr_pair: a currency pair, e.g. 'BTC/USDT'
+        :param curr_pair: a currency pair, e.g. 'BTC_USDT'
         :return: order book status. output is a nested dictionary with order book
         at the moment of request. E.g.,
             ```
@@ -172,8 +172,7 @@ class CcxtExchange:
 
     def _fetch_ohlcv(
         self,
-        # TODO(gp): -> currency_pair
-        symbol: str,
+        currency_pair: str,
         timeframe: str = "1m",
         since: int = None,
         step: int = None,
@@ -181,7 +180,7 @@ class CcxtExchange:
         """
         Wrapper for fetching one minute OHLCV bars.
 
-        :param symbol: A currency pair, e.g. "BTC_USDT"
+        :param currency_pair: currency pair, e.g. "BTC_USDT"
         :param timeframe: fetch data for certain timeframe
         :param since: from when is data fetched in milliseconds
         :param step: number of bars per iteration
@@ -189,9 +188,9 @@ class CcxtExchange:
         :return: OHLCV data from CCXT
         """
         # Change currency pair to CCXT format.
-        symbol = symbol.replace("_", "/")
+        currency_pair = currency_pair.replace("_", "/")
         bars = self._exchange.fetch_ohlcv(
-            symbol, timeframe=timeframe, since=since, limit=step
+            currency_pair, timeframe=timeframe, since=since, limit=step
         )
         columns = ["timestamp", "open", "high", "low", "close", "volume"]
         bars = pd.DataFrame(bars, columns=columns)

@@ -121,18 +121,18 @@ class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
         open, high, low, closed, volume, exchange_id, currency_pair e.g.,
         ```
              timestamp      open     high     low      close    volume    currency_pair exchange_id
-        0    1631145600000  3499.01  3499.49  3496.17  3496.36  346.4812  ETH/USDT      binance
-        1    1631145660000  3496.36  3501.59  3495.69  3501.59  401.9576  ETH/USDT      binance
-        2    1631145720000  3501.59  3513.10  3499.89  3513.09  579.5656  ETH/USDT      binance
+        0    1631145600000  3499.01  3499.49  3496.17  3496.36  346.4812  ETH_USDT      binance
+        1    1631145660000  3496.36  3501.59  3495.69  3501.59  401.9576  ETH_USDT      binance
+        2    1631145720000  3501.59  3513.10  3499.89  3513.09  579.5656  ETH_USDT      binance
         ```
 
         Output data is indexed by timestamp and contains the columns open,
         high, low, close, volume, epoch, currency_pair, exchange_id, e.g.,
         ```
                                    open        epoch          currency_pair exchange_id
-        2021-09-08 20:00:00-04:00  3499.01 ... 1631145600000  ETH/USDT      binance
-        2021-09-08 20:01:00-04:00  3496.36     1631145660000  ETH/USDT      binance
-        2021-09-08 20:02:00-04:00  3501.59     1631145720000  ETH/USDT      binance
+        2021-09-08 20:00:00-04:00  3499.01 ... 1631145600000  ETH_USDT      binance
+        2021-09-08 20:01:00-04:00  3496.36     1631145660000  ETH_USDT      binance
+        2021-09-08 20:02:00-04:00  3501.59     1631145720000  ETH_USDT      binance
         ```
         """
         # Apply common transformations.
@@ -305,7 +305,7 @@ class CcxtFileSystemClient(AbstractCcxtClient):
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
         :param exchange_id: CCXT exchange id, e.g. "binance"
-        :param currency_pair: currency pair `<currency1>/<currency2>`,
+        :param currency_pair: currency pair `<currency1>_<currency2>`,
             e.g. "BTC_USDT"
         :return: absolute path to a file with CCXT data
         """
