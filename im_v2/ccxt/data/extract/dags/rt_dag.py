@@ -1,7 +1,7 @@
 import datetime
 
 import airflow
-from airflow.operators.bash import BashOperator
+from airflow.operators.bash import DockerOperator
 
 # Pass default parameters for the DAG.
 default_args = {
@@ -42,6 +42,9 @@ with airflow.DAG(
         f"--universe {script_args['universe']}"
     )
     # Run the script.
-    downloading_task = BashOperator(
-        task_id="run_script", bash_command=bash_command, default_args=default_args
+    downloading_task = DockerOperator(
+        task_id="run_script",
+        image="665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:dev",
+        bash_command=bash_command,
+        default_args=default_args
     )
