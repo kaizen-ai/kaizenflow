@@ -49,7 +49,6 @@ import os
 from typing import Dict, List
 
 import numpy as np
-import pandas as pd
 
 import helpers.datetime_ as hdateti
 import helpers.joblib_helpers as hjoblib
@@ -63,7 +62,6 @@ import helpers.printing as hprint
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(Nikola): Return the list so we can use tqdm as progress bar.
 def _source_pq_files(src_dir: str) -> List[str]:
     """
     Generator for all the Parquet files in a given dir.
@@ -89,7 +87,6 @@ def _save_chunk(config: Dict[str, str]):
         if not transform_func:
             pass
         elif transform_func == "reindex_on_unix_epoch":
-            # TODO(Nikola): Also pass as args/config ?
             in_col_name = "start_time"
             df = hpandas.reindex_on_unix_epoch(df, in_col_name)
             _LOG.debug("after df=\n%s", hprint.dataframe_to_str(df.head(3)))
@@ -185,6 +182,8 @@ def _parse() -> argparse.ArgumentParser:
         help="Function to be use for transforming the df",
     )
     hparser.add_verbosity_arg(parser)
+    # TODO(Nikola): Use options from
+    #   core/dataflow_model/utils.py:61: parser = hparser.add_parallel_processing_arg(parser)
     return parser
 
 

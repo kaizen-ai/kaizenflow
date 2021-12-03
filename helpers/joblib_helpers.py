@@ -225,7 +225,7 @@ def _parallel_execute_decorator(
     txt.append(task_to_string(task))
     args, kwargs = task
     # TODO(Nikola): Can this be optional ? Supplied in task creation instead ?
-    # kwargs.update({"incremental": incremental, "num_attempts": num_attempts})
+    kwargs.update({"incremental": incremental, "num_attempts": num_attempts})
     with htimer.TimedScope(
         logging.DEBUG, "Execute '%s'" % workload_func.__name__
     ) as ts:

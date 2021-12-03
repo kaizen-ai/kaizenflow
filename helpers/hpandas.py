@@ -168,8 +168,6 @@ def drop_duplicates(
     return data_no_dups
 
 
-# TODO(Nikola): Add unit test.
-#   Revert to previous behaviour that is overriding original timestamp ?
 def reindex_on_unix_epoch(df: pd.DataFrame, in_col_name: str) -> pd.DataFrame:
     """
     Transform the df so that `start_time` is converted into a datetime index.

@@ -99,7 +99,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         try:
             date_directory = f"date={timespan[date_index].strftime('%Y%m%d')}"
             full_path = os.path.join(daily_pq_path, date_directory)
-            # TODO(Nikola): Incremental as in PQ conversion ?
+            # TODO(Nikola): Incremental as in PQ conversion?
             hdbg.dassert_not_exists(full_path)
             in_col_name = "timestamp"
             rt_df = hpandas.reindex_on_unix_epoch(rt_df, in_col_name)
