@@ -148,18 +148,18 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--start_datetime",
-        action="store",
-        required=True,
-        type=str,
-        help="Beginning of the downloaded period",
-    )
-    parser.add_argument(
         "--end_datetime",
         action="store",
         required=True,
         type=str,
         help="End of the downloaded period",
+    )
+    parser.add_argument(
+        "--period_length",
+        action="store",
+        required=True,
+        type=str,
+        help="Length of the downloaded period",
     )
     parser.add_argument(
         "--dst_dir",
@@ -174,12 +174,6 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         type=str,
         help="Type of data to load, 'ohlcv' or 'orderbook'",
-    )
-    parser.add_argument(
-        "--table_name",
-        action="store",
-        type=str,
-        help="Name of the table to upload to",
     )
     parser.add_argument(
         "--api_keys",
