@@ -1,10 +1,7 @@
 import datetime
 
 import airflow
-import pandas as pd
 from airflow.operators.bash import BashOperator
-
-import helpers.datetime_ as hdateti
 
 # Pass default parameters for the DAG.
 default_args = {
@@ -30,19 +27,14 @@ with airflow.DAG(
         "universe": "v3",
         "api_keys": "API_keys.json",
         "table_name": "ccxt_ohlcv",
+        "period_length": "5 minutes"
     }
-    # Get current datetime as end datetime.
-    end_datetime = hdateti.get_timestamp("UTC")
-    # Get start datetime as 5 minutes before end.
-    start_datetime = (
-        pd.Timestamp(end_datetime) - pd.Timedelta("5 minutes")
-    ).strftime("%Y%m%d-%H%M%S")
-
-    # TODO(Danya): Rewrite as a collection of PythonOperators.
+    # Build a bash command to execute.
     bash_command = (
         f"python im_v2/ccxt/data/extract/download_realtime.py"
-        f"--start_datetime {start_datetime}"
-        f"--end_datetime {end_datetime}"
+        # Provide end of the time period as UTC timestamp.
+        f"--end_datetime {datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d-%H%M%S')}"
+        f"--period_length {script_args['period_length']}"
         f"--dst_dir {script_args['dst_dir']}"
         f"--data_type {script_args['data_type']}"
         f"--table_name {script_args['table_name']}"

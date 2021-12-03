@@ -159,7 +159,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="Length of the downloaded period",
+        help="Length of the downloaded period, e.g. '5 minutes'",
     )
     parser.add_argument(
         "--dst_dir",
