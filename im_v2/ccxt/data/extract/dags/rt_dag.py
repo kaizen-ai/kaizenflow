@@ -33,12 +33,12 @@ with airflow.DAG(
     bash_command = (
         f"python im_v2/ccxt/data/extract/download_realtime.py"
         # Provide end of the time period as UTC timestamp.
-        f"--end_datetime {datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d-%H%M%S')}"
-        f"--period_length {script_args['period_length']}"
-        f"--dst_dir {script_args['dst_dir']}"
-        f"--data_type {script_args['data_type']}"
-        f"--table_name {script_args['table_name']}"
-        f"--api_keys {script_args['api_keys']}"
+        f"--end_datetime {datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d-%H%M%S')} "
+        f"--period_length {script_args['period_length']} "
+        f"--dst_dir {script_args['dst_dir']} "
+        f"--data_type {script_args['data_type']} "
+        f"--table_name {script_args['table_name']} "
+        f"--api_keys {script_args['api_keys']} "
         f"--universe {script_args['universe']}"
     )
     # Run the script.
