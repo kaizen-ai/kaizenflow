@@ -32,7 +32,7 @@ with airflow.DAG(
     }
     # Build a bash command to execute.
     bash_command = [
-        f"python im_v2/ccxt/data/extract/download_realtime.py ",
+        "python im_v2/ccxt/data/extract/download_realtime.py ",
         # Provide end of the time period as UTC timestamp.
         f"--end_datetime {datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d-%H%M%S')} ",
         f"--period_length {script_args['period_length']} ",
@@ -44,7 +44,7 @@ with airflow.DAG(
     ]
     # Run the script.
     downloading_task = DockerOperator(
-        task_id="run_script",
+        task_id="run_ccxt_realtime",
         image="665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:dev",
         command=bash_command,
         default_args=default_args,
