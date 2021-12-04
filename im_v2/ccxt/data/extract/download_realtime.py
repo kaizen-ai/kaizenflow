@@ -117,9 +117,7 @@ def _save_data_on_disk(
     """
     current_datetime = hdateti.get_current_time("ET")
     if data_type == "ohlcv":
-        file_name = (
-            f"{exchange.id}_{pair}_{current_datetime}.csv.gz"
-        )
+        file_name = f"{exchange.id}_{pair}_{current_datetime}.csv.gz"
         full_path = os.path.join(dst_dir, file_name)
         pair_data.to_csv(full_path, index=False, compression="gzip")
     elif data_type == "orderbook":
