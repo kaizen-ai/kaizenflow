@@ -24,10 +24,9 @@ with airflow.DAG(
     # Pass default parameters for the script.
     script_args = {
         "dst_dir": "test/default_dir",
-        "data_type": "ccxt_ohlcv",
-        "universe": "v3",
+        "data_type": "ohlcv",
+        "universe": "v03",
         "api_keys": "API_keys.json",
-        "table_name": "ccxt_ohlcv",
         "period_length": "5 minutes",
     }
     # Build a bash command to execute.
@@ -38,7 +37,6 @@ with airflow.DAG(
         f"--period_length {script_args['period_length']} ",
         f"--dst_dir {script_args['dst_dir']} ",
         f"--data_type {script_args['data_type']} ",
-        f"--table_name {script_args['table_name']} ",
         f"--api_keys {script_args['api_keys']} ",
         f"--universe {script_args['universe']}",
     ]
