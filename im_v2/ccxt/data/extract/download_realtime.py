@@ -6,16 +6,11 @@ Use as:
 
 # Download OHLCV data for universe 'v03', saving only on disk:
 > python im_v2/ccxt/data/extract/download_realtime.py \
-    --db_connection 'none' \
-    --dst_dir 'test_ohlcv_rt' \
+    --end_datetime '20211204-194432' \
+    --period_length '5 minutes' \
+    --dst_dir 'test/ccxt_test' \
     --data_type 'ohlcv' \
-    --universe 'v03'
-
-# Download order book data for universe 'v03', saving only on disk:
-> python im_v2/ccxt/data/extract/download_realtime.py \
-    --db_connection 'none' \
-    --dst_dir 'test_orderbook_rt' \
-    --data_type 'orderbook' \
+    --api_keys 'API_keys.json' \
     --universe 'v03'
 
 Import as:
@@ -88,7 +83,7 @@ def _download_data(
         pair_data = exchange.instance.download_ohlcv_data(
             start_datetime=start_datetime,
             end_datetime=end_datetime,
-            curr_symbol=pair,
+            curr_symbol=pair.replace("_", "/"),
         )
         # Assign pair and exchange columns.
         pair_data["currency_pair"] = pair
@@ -122,9 +117,7 @@ def _save_data_on_disk(
     """
     current_datetime = hdateti.get_current_time("ET")
     if data_type == "ohlcv":
-        file_name = (
-            f"{exchange.id}_{pair}_{current_datetime}.csv.gz"
-        )
+        file_name = f"{exchange.id}_{pair}_{current_datetime}.csv.gz"
         full_path = os.path.join(dst_dir, file_name)
         pair_data.to_csv(full_path, index=False, compression="gzip")
     elif data_type == "orderbook":
