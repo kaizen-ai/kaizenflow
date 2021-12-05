@@ -70,8 +70,6 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-hversi.check_version()
-
 # TODO(gp): Move it to lib_tasks.
 ECR_BASE_PATH = os.environ["AM_ECR_BASE_PATH"]
 DOCKER_BASE_IMAGE_NAME = rconf.get_docker_base_image_name()
