@@ -1846,6 +1846,84 @@ def docker_release_all(ctx, version):  # type: ignore
     _LOG.info("==> SUCCESS <==")
 
 
+def _docker_rollback_image(
+    ctx: Any,
+    base_image: str,
+    stage: str,
+    version: str
+):
+    """
+    Rollback the versioned image for a particular stage.
+
+    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
+    :param stage: select a specific stage for the Docker image
+    :param version: version to tag the image and code with
+    """
+    image_versioned_dev = get_image(base_image, stage, version)
+    latest_version = None
+    image_dev = get_image(base_image, stage, latest_version)
+    cmd = f"docker tag {image_versioned_dev} {image_dev}"
+    _run(ctx, cmd)
+
+
+@task
+def docker_rollback_dev_image(  # type: ignore
+    ctx,
+    version,
+    push_to_repo=True,
+):
+    """
+    Rollback the version of the dev image.
+
+    Phases:
+    1) Ensure that version of the image exists locally
+    2) Promote versioned image as dev image
+    3) Push dev image to the repo
+
+    :param version: version to tag the image and code with
+    :param push_to_repo: push the image to the ECR repo
+    """
+    _report_task()
+    # 1) Ensure that version of the image exists locally.
+    _docker_pull(ctx, base_image="", stage="dev", version=version)
+    # 2) Promote requested image as dev image.
+    _docker_rollback_image(ctx, base_image="", stage="dev", version=version)
+    # 3) Push the "dev" image to ECR.
+    if push_to_repo:
+        docker_push_dev_image(ctx, version=version)
+    else:
+        _LOG.warning(
+            "Skipping pushing dev image to ECR, as requested"
+        )
+    _LOG.info("==> SUCCESS <==")
+
+
+@task
+def docker_rollback_prod_image(  # type: ignore
+    ctx,
+    version,
+    push_to_repo=True,
+):
+    """
+    Rollback the version of the prod image.
+
+    Same as parameters and meaning as `docker_rollback_dev_image`.
+    """
+    _report_task()
+    # 1) Ensure that version of the image exists locally.
+    _docker_pull(ctx, base_image="", stage="prod", version=version)
+    # 2) Promote requested image as prod image.
+    _docker_rollback_image(ctx, base_image="", stage="prod", version=version)
+    # 3) Push the "prod" image to ECR.
+    if push_to_repo:
+        docker_push_prod_image(ctx, version=version)
+    else:
+        _LOG.warning(
+            "Skipping pushing prod image to ECR, as requested"
+        )
+    _LOG.info("==> SUCCESS <==")
+
+
 # #############################################################################
 # Find test.
 # #############################################################################
