@@ -1860,7 +1860,8 @@ def _docker_rollback_image(
     :param version: version to tag the image and code with
     """
     image_versioned_dev = get_image(base_image, stage, version)
-    image_dev = get_image(base_image, stage, version=None)
+    latest_version = None
+    image_dev = get_image(base_image, stage, latest_version)
     cmd = f"docker tag {image_versioned_dev} {image_dev}"
     _run(ctx, cmd)
 
@@ -1872,27 +1873,27 @@ def docker_rollback_dev_image(  # type: ignore
     push_to_repo=True,
 ):
     """
-    Rollback the dev version of the image.
+    Rollback the version of the dev image.
 
     Phases:
-    1) Ensures that version of the image exists
-    2) Promote versioned image as dev iamge
+    1) Ensure that version of the image exists locally
+    2) Promote versioned image as dev image
     3) Push dev image to the repo
 
     :param version: version to tag the image and code with
-    :param push_to_repo: push the image to the repo_short_name
+    :param push_to_repo: push the image to the ECR repo
     """
     _report_task()
-    # 1) Ensures that version of the image exists
+    # 1) Ensure that version of the image exists locally.
     _docker_pull(ctx, base_image="", stage="dev", version=version)
-    # 2) Promote versioned image as dev iamge
+    # 2) Promote requested image as dev image.
     _docker_rollback_image(ctx, base_image="", stage="dev", version=version)
     # 3) Push the "dev" image to ECR.
     if push_to_repo:
         docker_push_dev_image(ctx, version=version)
     else:
         _LOG.warning(
-            "Skipping pushing dev image to repo_short_name, as requested"
+            "Skipping pushing dev image to ECR, as requested"
         )
     _LOG.info("==> SUCCESS <==")
 
@@ -1904,27 +1905,21 @@ def docker_rollback_prod_image(  # type: ignore
     push_to_repo=True,
 ):
     """
-    Rollback the prod version of the image.
+    Rollback the version of the prod image.
 
-    Phases:
-    1) Ensures that version of the image exists
-    2) Promote versioned image as prod iamge
-    3) Push dev image to the repo
-
-    :param version: version to tag the image and code with
-    :param push_to_repo: push the image to the repo_short_name
+    Same as parameters and meaning as `docker_rollback_dev_image`.
     """
     _report_task()
-    # 1) Ensures that version of the image exists
+    # 1) Ensure that version of the image exists locally.
     _docker_pull(ctx, base_image="", stage="prod", version=version)
-    # 2) Promote versioned image as dev iamge
+    # 2) Promote requested image as prod image.
     _docker_rollback_image(ctx, base_image="", stage="prod", version=version)
     # 3) Push the "prod" image to ECR.
     if push_to_repo:
         docker_push_prod_image(ctx, version=version)
     else:
         _LOG.warning(
-            "Skipping pushing prod image to repo_short_name, as requested"
+            "Skipping pushing prod image to ECR, as requested"
         )
     _LOG.info("==> SUCCESS <==")
 
