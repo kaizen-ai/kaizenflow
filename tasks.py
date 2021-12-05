@@ -28,6 +28,8 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     docker_release_prod_image,
     docker_stats,
     docker_tag_local_image_as_dev,
+    docker_rollback_dev_image,
+    docker_rollback_prod_image,
     find_check_string_output,
     find_test_class,
     find_test_decorator,

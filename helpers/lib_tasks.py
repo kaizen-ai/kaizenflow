@@ -1846,6 +1846,89 @@ def docker_release_all(ctx, version):  # type: ignore
     _LOG.info("==> SUCCESS <==")
 
 
+def _docker_rollback_image(
+    ctx: Any,
+    base_image: str,
+    stage: str,
+    version: str
+):
+    """
+    Rollback the versioned image for a particular stage.
+
+    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
+    :param stage: select a specific stage for the Docker image
+    :param version: version to tag the image and code with
+    """
+    image_versioned_dev = get_image(base_image, stage, version)
+    image_dev = get_image(base_image, stage, version=None)
+    cmd = f"docker tag {image_versioned_dev} {image_dev}"
+    _run(ctx, cmd)
+
+
+@task
+def docker_rollback_dev_image(  # type: ignore
+    ctx,
+    version,
+    push_to_repo=True,
+):
+    """
+    Rollback the dev version of the image.
+
+    Phases:
+    1) Ensures that version of the image exists
+    2) Promote versioned image as dev iamge
+    3) Push dev image to the repo
+
+    :param version: version to tag the image and code with
+    :param push_to_repo: push the image to the repo_short_name
+    """
+    _report_task()
+    # 1) Ensures that version of the image exists
+    _docker_pull(ctx, base_image="", stage="dev", version=version)
+    # 2) Promote versioned image as dev iamge
+    _docker_rollback_image(ctx, base_image="", stage="dev", version=version)
+    # 3) Push the "dev" image to ECR.
+    if push_to_repo:
+        docker_push_dev_image(ctx, version=version)
+    else:
+        _LOG.warning(
+            "Skipping pushing dev image to repo_short_name, as requested"
+        )
+    _LOG.info("==> SUCCESS <==")
+
+
+@task
+def docker_rollback_prod_image(  # type: ignore
+    ctx,
+    version,
+    push_to_repo=True,
+):
+    """
+    Rollback the prod version of the image.
+
+    Phases:
+    1) Ensures that version of the image exists
+    2) Promote versioned image as prod iamge
+    3) Push dev image to the repo
+
+    :param version: version to tag the image and code with
+    :param push_to_repo: push the image to the repo_short_name
+    """
+    _report_task()
+    # 1) Ensures that version of the image exists
+    _docker_pull(ctx, base_image="", stage="prod", version=version)
+    # 2) Promote versioned image as dev iamge
+    _docker_rollback_image(ctx, base_image="", stage="prod", version=version)
+    # 3) Push the "prod" image to ECR.
+    if push_to_repo:
+        docker_push_prod_image(ctx, version=version)
+    else:
+        _LOG.warning(
+            "Skipping pushing prod image to repo_short_name, as requested"
+        )
+    _LOG.info("==> SUCCESS <==")
+
+
 # #############################################################################
 # Find test.
 # #############################################################################
