@@ -107,8 +107,8 @@ def _run(args: argparse.Namespace) -> None:
     # Convert the files one at the time.
     # TODO(Nikola): Pick chunk by chunk, not all files.
     source_pq_files = _source_pq_files(args.src_dir)
-    # TODO(Nikola): Remove, quick testing.
-    chunks = np.array_split(source_pq_files, len(source_pq_files) // 7)
+    # TODO(Nikola): Remove, quick testing. Currently splitting by week.
+    chunks = np.array_split(source_pq_files, len(source_pq_files) // 7 or 1)
     for chunk in chunks:
         # TODO(Nikola): Make this config as subconfig for script args?
         config = {
@@ -152,11 +152,6 @@ def _run(args: argparse.Namespace) -> None:
         num_attempts,
         log_file,
     )
-
-
-# TODO(Nikola): Add support for reading (not writing) to S3. Reuse code from pq_convert.py.
-#  When you transplant the code from that file, pls delete it from there so we know
-#  it has been updated.
 
 
 def _parse() -> argparse.ArgumentParser:

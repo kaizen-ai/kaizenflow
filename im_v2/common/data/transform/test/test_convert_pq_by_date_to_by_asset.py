@@ -1,8 +1,6 @@
 import logging
 import os
 
-import pytest
-
 import helpers.git as hgit
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
@@ -19,8 +17,6 @@ _LOG = logging.getLogger(__name__)
 
 class TestPqByDateToByAsset1(hunitest.TestCase):
 
-    # TODO(Nikola): Revisit.
-    @pytest.mark.skip
     def test_daily_data1(self) -> None:
         """
         Generate daily data for 3 days in a by-date format and then convert
@@ -51,6 +47,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         cmd.append(f"--src_dir {by_date_dir}")
         by_asset_dir = os.path.join(test_dir, "by_asset")
         cmd.append(f"--dst_dir {by_asset_dir}")
+        cmd.append("--num_threads 2")
         cmd = " ".join(cmd)
         hsysinte.system(cmd)
         # Check directory structure.
@@ -58,8 +55,6 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         by_date_signature = hunitest.get_dir_signature(
             by_date_dir, include_file_content
         )
-        # TODO(Nikola): Let's create a single txt and do a single check_string
-        #  on it.
         act = []
         act.append("# by_date=")
         act.append(by_date_signature)
