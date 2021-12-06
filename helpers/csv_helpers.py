@@ -211,8 +211,11 @@ def convert_csv_to_pq(
     :param header: header specification of CSV
     :param normalizer: function to apply to df before writing to PQ
     """
+    if header:
+        df = pd.read_csv(csv_path, header=header)
+    else:
+        df = pd.read_csv(csv_path)
     # TODO(Paul): Ensure that one of header, normalizer is not None.
-    df = pd.read_csv(csv_path, header=header)
     if normalizer is not None:
         df = normalizer(df)
     df.to_parquet(pq_path, compression=compression)
