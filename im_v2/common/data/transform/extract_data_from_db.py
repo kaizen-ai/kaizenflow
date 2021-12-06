@@ -3,7 +3,7 @@
 Extract RT data from db to daily PQ files.
 
 # Example:
-> python im_v2/common/data/transform/extract_data_from_db.py \
+> im_v2/common/data/transform/extract_data_from_db.py \
     --start_date 2021-11-23 \
     --end_date 2021-11-25 \
     --daily_pq_path im_v2/common/data/transform/test_data_by_date

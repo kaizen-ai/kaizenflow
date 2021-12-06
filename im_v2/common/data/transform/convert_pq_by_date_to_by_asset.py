@@ -177,7 +177,6 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         help="Destination directory where transformed PQ files will be stored",
     )
-    parser.add_argument("--no_incremental", action="store_true", help="")
     parser.add_argument(
         "--transform_func",
         action="store",
@@ -195,6 +194,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # We assume that the destination dir doesn't exist so we don't override data.
     dst_dir = args.dst_dir
+    # TODO(Nikola): Conflict with parallel incremental. Use one for all?
     if not args.no_incremental:
         # In not incremental mode the dir should already be there.
         hdbg.dassert_not_exists(dst_dir)

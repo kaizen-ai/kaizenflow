@@ -3,7 +3,7 @@
 Generate daily PQ files.
 
 # Example:
-> python im_v2/common/data/transform/test/generate_pq_example_data.py \
+> im_v2/common/data/transform/test/generate_pq_example_data.py \
     --start_date 2021-11-23 \
     --end_date 2021-11-25 \
     --assets A,B,C \
