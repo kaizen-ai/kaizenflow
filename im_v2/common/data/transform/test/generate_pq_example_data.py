@@ -120,7 +120,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Generation timespan.
     start_date = args.start_date
     end_date = args.end_date
-    # TODO(Nikola): Custom exceptions ?
+    # TODO(Nikola): Custom exceptions?
     if start_date > end_date:
         raise ValueError("Start date can not be greater than end date!")
     assets = args.assets

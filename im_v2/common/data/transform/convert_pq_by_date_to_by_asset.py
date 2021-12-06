@@ -36,7 +36,8 @@ dst_dir/
 # Example:
 > im_v2/common/data/transform/convert_pq_by_date_to_by_asset.py \
     --src_dir im_v2/common/data/transform/test_data_by_date \
-    --dst_dir im_v2/common/data/transform/test_data_by_asset
+    --dst_dir im_v2/common/data/transform/test_data_by_asset \
+    --num_threads 2
 
 Import as:
 
@@ -77,6 +78,10 @@ def _source_pq_files(src_dir: str) -> List[str]:
 
 
 def _save_chunk(config: Dict[str, str]):
+    """
+    Smaller part of daily data that will be decoupled to asset format
+    for certain period of time. Chunk is executed as small task.
+    """
     # TODO(Nikola): Check config.
     for daily_pq in config["chunk"]:
         df = hparque.from_parquet(daily_pq)
@@ -97,21 +102,20 @@ def _save_chunk(config: Dict[str, str]):
 
 # TODO(gp): We might want to use a config to pass a set of params related to each
 #  other (e.g., transform_func, asset_col_name, ...)
-def _run(src_dir: str, transform_func: str, dst_dir: str) -> None:
+def _run(args: argparse.Namespace) -> None:
     tasks = []
     # Convert the files one at the time.
     # TODO(Nikola): Pick chunk by chunk, not all files.
-    source_pq_files = _source_pq_files(src_dir)
+    source_pq_files = _source_pq_files(args.src_dir)
     # TODO(Nikola): Remove, quick testing.
     chunks = np.array_split(source_pq_files, len(source_pq_files) // 7)
     for chunk in chunks:
-        # _LOG.debug("src_pq_file=%s", src_pq_file)
-        # Load data.
+        # TODO(Nikola): Make this config as subconfig for script args?
         config = {
-            "src_dir": src_dir,
+            "src_dir": args.src_dir,
             "chunk": chunk,
-            "dst_dir": dst_dir,
-            "transform_func": transform_func,
+            "dst_dir": args.dst_dir,
+            "transform_func": args.transform_func,
             "asset_col_name": "asset",
         }
         task: hjoblib.Task = (
@@ -126,13 +130,13 @@ def _run(src_dir: str, transform_func: str, dst_dir: str) -> None:
     workload = (_save_chunk, func_name, tasks)
     hjoblib.validate_workload(workload)
 
-    # TODO(Nikola): Part of configuration instead one args at the time
     # Parse command-line options.
-    dry_run = False
-    num_threads = 4
-    incremental = False
-    abort_on_error = True
-    num_attempts = 1
+    dry_run = args.dry_run
+    num_threads = args.num_threads
+    incremental = not args.no_incremental
+    abort_on_error = not args.skip_on_error
+    num_attempts = args.num_attempts
+
     # Prepare the log file.
     timestamp = hdateti.get_timestamp("naive_ET")
     # TODO(Nikola): Change directory.
@@ -164,14 +168,14 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         type=str,
         required=True,
-        help="Source directory where original PQ files are stored.",
+        help="Source directory where original PQ files are stored",
     )
     parser.add_argument(
         "--dst_dir",
         action="store",
         type=str,
         required=True,
-        help="Destination directory where transformed PQ files will be stored.",
+        help="Destination directory where transformed PQ files will be stored",
     )
     parser.add_argument("--no_incremental", action="store_true", help="")
     parser.add_argument(
@@ -179,19 +183,16 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         type=str,
         default="",
-        help="Function to be use for transforming the df",
+        help="Function that will be used for transforming the df",
     )
+    hparser.add_parallel_processing_arg(parser)
     hparser.add_verbosity_arg(parser)
-    # TODO(Nikola): Use options from
-    #   core/dataflow_model/utils.py:61: parser = hparser.add_parallel_processing_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Source directory that contains original Parquet files.
-    src_dir = args.src_dir
     # We assume that the destination dir doesn't exist so we don't override data.
     dst_dir = args.dst_dir
     if not args.no_incremental:
@@ -199,7 +200,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         hdbg.dassert_not_exists(dst_dir)
     hio.create_dir(dst_dir, incremental=False)
     #
-    _run(src_dir, args.transform_func, dst_dir)
+    _run(args)
 
 
 if __name__ == "__main__":
