@@ -76,7 +76,7 @@ jobs:
 
       # TODO(vr): Bring back in #340.
       # - name: Send Telegram notification for success
-      #   if: ${{ success() && github.head_ref == 'master' }}
+      #   if: ${{ success() && github.ref_name == 'master' }}
       #   uses: appleboy/telegram-action@master
       #   with:
       #     to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
@@ -85,12 +85,12 @@ jobs:
       #       🎉 Slow tests succeded at master
       #       Build failure '${{ github.workflow }}'
       #       Repo: '${{ github.repository }}'
-      #       Branch: '${{ github.head_ref }}'
+      #       Branch: '${{ github.ref_name }}'
       #       Event: '${{ github.event_name }}'
       #       https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
       - name: Send Telegram notification for failure
-        if: ${{ failure() && github.head_ref == 'master' }}
+        if: ${{ failure() && github.ref_name == 'master' }}
         uses: appleboy/telegram-action@master
         with:
           to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
@@ -99,6 +99,6 @@ jobs:
             💣 SLOW TESTS FAILED
             Build failure '${{ github.workflow }}'
             Repo: '${{ github.repository }}'
-            Branch: '${{ github.head_ref }}'
+            Branch: '${{ github.ref_name }}'
             Event: '${{ github.event_name }}'
             https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
