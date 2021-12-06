@@ -89,6 +89,10 @@ jobs:
       #       Event: '${{ github.event_name }}'
       #       https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
+      # Need to use ref_name as it contains the branch that
+      # triggered the workflow run.
+      # Alternative, head_ref is only available when the event 
+      # that triggers a workflow run is either pull_request or pull_request_target.
       - name: Send Telegram notification for failure
         if: ${{ failure() && github.ref_name == 'master' }}
         uses: appleboy/telegram-action@master
