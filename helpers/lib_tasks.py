@@ -2278,6 +2278,7 @@ def _build_run_command_line(
 
 
 def _run_test_cmd(
+    ctx: Any,
     stage: str,
     version: str,
     cmd: str,
@@ -2320,6 +2321,7 @@ def _run_test_cmd(
 
 
 def _run_tests(
+    ctx: Any,
     stage: str,
     test_list_name: str,
     version: str,
@@ -2345,7 +2347,7 @@ def _run_tests(
     )
     # Execute the command line.
     _run_test_cmd(
-        stage, version, cmd, coverage, collect_only, start_coverage_script
+        ctx, stage, version, cmd, coverage, collect_only, start_coverage_script
     )
 
 
@@ -2374,6 +2376,7 @@ def run_fast_tests(  # type: ignore
     _report_task()
     _ = ctx
     _run_tests(
+        ctx,
         stage,
         "fast_tests",
         version,
@@ -2404,6 +2407,7 @@ def run_slow_tests(  # type: ignore
     _report_task()
     _ = ctx
     _run_tests(
+        ctx,
         stage,
         "slow_tests",
         version,
@@ -2434,6 +2438,7 @@ def run_superslow_tests(  # type: ignore
     _report_task()
     _ = ctx
     _run_tests(
+        ctx,
         stage,
         "superslow_tests",
         version,
