@@ -950,7 +950,7 @@ class TestLibTasksRunTests1(hunitest.TestCase):
 
 # #############################################################################
 
-
+@pytest.mark.slow(reason="slow via gh actions #687.")
 class TestLibTasksGitCreatePatch1(hunitest.TestCase):
     """
     Test `git_create_patch()`.
@@ -1018,7 +1018,6 @@ class TestLibTasksGitCreatePatch1(hunitest.TestCase):
         files = __file__
         hlibtask.git_create_patch(ctx, mode, modified, branch, last_commit, files)
 
-    @pytest.mark.slow("8 seconds.")
     def test_diff_files_abort1(self) -> None:
         """
         Exercise the code for:
