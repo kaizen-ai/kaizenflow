@@ -42,6 +42,8 @@ COPY devops/docker_build/create_users.sh .
 RUN /bin/bash -c "./create_users.sh"
 COPY devops/docker_build/etc_sudoers /etc/sudoers
 
+#RUN ulimit -n 65536
+COPY devops/docker_build/etc_init_d_docker .
 COPY devops/docker_build/install_containers.sh .
 RUN /bin/bash -c "./install_containers.sh"
 
