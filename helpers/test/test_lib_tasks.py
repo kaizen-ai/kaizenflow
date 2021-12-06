@@ -329,7 +329,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
 
     # ################################################################################
     # TODO(gp): -> TestGitCommands1
-
+    @pytest.mark.slow("7 seconds.")
     def test_git_branch_files(self) -> None:
         # This test needs a reference to Git master branch.
         hgit.fetch_origin_master_if_needed()
