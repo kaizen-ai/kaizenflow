@@ -1,7 +1,4 @@
 """
-Wrappers around `asyncio` to allow to switch true and simulated real-time
-loops.
-
 Import as:
 
 import helpers.hasyncio as hasynci
@@ -9,11 +6,31 @@ import helpers.hasyncio as hasynci
 import asyncio
 import contextlib
 import datetime
-from typing import Any, Coroutine, Iterator, Optional
+import logging
+import math
+import random
+from typing import (
+    Any,
+    Callable,
+    Coroutine,
+    Iterator,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 import async_solipsism
 
+import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
+import helpers.printing as hprint
+
+_LOG = logging.getLogger(__name__)
+
+# #############################################################################
+# Wrappers around `asyncio` to switch among true and simulated real-time loops.
+# #############################################################################
 
 
 # TODO(gp): We could make this a mixin and add this behavior to both asyncio and
@@ -82,3 +99,102 @@ def run(
         if close_event_loop:
             event_loop.close()
     return ret
+
+
+# #############################################################################
+# Asynchronous polling.
+# #############################################################################
+
+
+# The result of a polling function in terms of a bool indicating success (which
+# when True stops the polling) and a result.
+PollOutput = Tuple[bool, Any]
+# A polling function accepts any inputs and needs to return a `PollOutput`
+# in terms of (success, result). Typically polling functions don't accept any inputs
+# and are built through lambdas and closures.
+PollingFunction = Callable[[Any], PollOutput]
+
+
+async def poll(
+    polling_func: PollingFunction,
+    sleep_in_secs: float,
+    timeout_in_secs: float,
+    get_wall_clock_time: hdateti.GetWallClockTime,
+) -> Tuple[int, Any]:
+    """
+    Call `polling_func` every `sleep_in_secs` until `polling_func` returns
+    success or there is a timeout, if no success is achieved within
+    `timeout_in_secs`.
+
+    :param polling_func: function returning a tuple (success, value)
+    :return:
+        - number of iterations before a successful call to `polling_func`
+        - result from `polling_func`
+    :raises: TimeoutError in case of timeout
+    """
+    _LOG.debug(hprint.to_str("polling_func sleep_in_secs timeout_in_secs"))
+    hdbg.dassert_lt(0, sleep_in_secs)
+    hdbg.dassert_lt(0, timeout_in_secs)
+    max_num_iter = math.ceil(timeout_in_secs / sleep_in_secs)
+    hdbg.dassert_lte(1, max_num_iter)
+    num_iter = 1
+    while True:
+        _LOG.debug(
+            "\n%s",
+            hprint.frame(
+                "# Iter %s/%s: wall clock time=%s"
+                % (num_iter, max_num_iter, get_wall_clock_time()),
+                char1="<",
+            ),
+        )
+        # Poll.
+        success, value = polling_func()
+        _LOG.debug("success=%s, value=%s", success, value)
+        # If success, then exit.
+        if success:
+            # The function returned.
+            _LOG.debug(
+                "poll done: wall clock time=%s",
+                get_wall_clock_time(),
+            )
+            return num_iter, value
+        # Otherwise update state.
+        num_iter += 1
+        if num_iter > max_num_iter:
+            msg = "Timeout for " + hprint.to_str(
+                "polling_func sleep_in_secs timeout_in_secs"
+            )
+            _LOG.error(msg)
+            raise TimeoutError(msg)
+        _LOG.debug("sleep for %s secs", sleep_in_secs)
+        await asyncio.sleep(sleep_in_secs)
+
+
+# #############################################################################
+# Wait.
+# #############################################################################
+
+
+# Represent a deterministic, if float, or random delay in [a, b] if a Tuple.
+# All values are in seconds.
+WaitInSecs = Union[float, Tuple[float, float]]
+
+
+async def wait(
+    delay_in_secs: WaitInSecs,
+) -> None:
+    # Extract or compute the delay.
+    if isinstance(delay_in_secs, float):
+        pass
+    elif isinstance(delay_in_secs, tuple):
+        hdbg.dassert_eq(len(delay_in_secs), 2)
+        min_, max_ = delay_in_secs
+        hdbg.dassert_lte(0, min_)
+        hdbg.dassert_lte(min_, max_)
+        delay_in_secs = random.rand(min_, max_)
+    else:
+        raise ValueError(f"Invalid delay_in_secs='delay_in_secs'")
+    # Wait.
+    hdbg.dassert_lte(0, delay_in_secs)
+    delay_in_secs = cast(float, delay_in_secs)
+    await asyncio.wait(delay_in_secs)

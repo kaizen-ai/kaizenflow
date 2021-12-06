@@ -221,8 +221,8 @@ def get_data_as_of_datetime(
     else:
         # Sometimes we need to allow the future peeking. E.g., to know what's the
         # execution price of an order that will terminate in the future.
-        # raise ValueError("Future peeking")
-        pass
+        raise ValueError("Future peeking")
+        # pass
     _LOG.debug(hprint.df_to_short_str("After get_data_as_of_datetime", df))
     return df
 

@@ -9,7 +9,7 @@ import io
 import logging
 import os
 import time
-from typing import List, NamedTuple, Optional, Tuple, Union
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import pandas as pd
 import psycopg2 as psycop
@@ -17,6 +17,7 @@ import psycopg2.extras as extras
 import psycopg2.sql as psql
 
 import helpers.dbg as hdbg
+import helpers.hasyncio as hasynci
 import helpers.printing as hprint
 import helpers.timer as htimer
 
@@ -89,10 +90,8 @@ def get_connection_from_string(
     """
     Create a connection from a string.
 
-    Example string:
-    ```
-    host=localhost dbname=im_db_local port=5432 user= password=
-    ```
+    E.g., `host=localhost dbname=im_db_local port=5432 user=...
+    password=...`
     """
     connection = psycop.connect(conn_as_str)
     if autocommit:
@@ -228,10 +227,11 @@ def get_indexes(connection: DbConnection) -> pd.DataFrame:
     return tmp
 
 
-def disconnect_all_clients(dbname: str):
+def disconnect_all_clients(connection: DbConnection) -> None:
     # From https://stackoverflow.com/questions/36502401
     # Not sure this will work in our case, since it might kill our own connection.
     cmd = f"SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '{dbname}';"
+    connection.cursor().execute(query)
 
 
 # #############################################################################
@@ -455,6 +455,14 @@ def remove_table(connection: DbConnection, table_name: str) -> None:
     connection.cursor().execute(query)
 
 
+def remove_all_tables(connection: DbConnection) -> None:
+    table_names = get_table_names(connection)
+    _LOG.warning("Deleting all the tables: %s", table_names)
+    for table_name in table_names:
+        _LOG.warning("Deleting %s ...", table_name)
+        remove_table(connection, table_name)
+
+
 # #############################################################################
 # Query
 # #############################################################################
@@ -468,7 +476,7 @@ def execute_query_to_df(
     use_timer: bool = False,
     profile: bool = False,
     verbose: bool = False,
-) -> Union[None, pd.DataFrame]:
+) -> pd.DataFrame:
     """
     Execute a query.
     """
@@ -479,11 +487,10 @@ def execute_query_to_df(
     if profile:
         query = "EXPLAIN ANALYZE " + query
     if verbose:
-        print(("> " + query))
+        _LOG.info("> %s", query)
     # Compute.
     if use_timer:
         idx = htimer.dtimer_start(0, "Sql time")
-    df = None
     cursor = connection.cursor()
     try:
         df = pd.read_sql_query(query, connection)
@@ -493,12 +500,11 @@ def execute_query_to_df(
             cursor.execute(query)
         except psycop.Error as e:
             print(e.pgerror)
-            raise psycop.Error
+            raise e
     if use_timer:
         htimer.dtimer_stop(idx)
     if profile:
-        print(df)
-        return None
+        _LOG.info("df=%s", df)
     return df
 
 
@@ -532,6 +538,7 @@ def copy_rows_with_copy_from(
     connection.commit()
 
 
+# TODO(gp): -> table_name, df
 def _create_insert_query(df: pd.DataFrame, table_name: str) -> str:
     """
     Create an INSERT query to insert data into a DB.
@@ -550,6 +557,7 @@ def _create_insert_query(df: pd.DataFrame, table_name: str) -> str:
     return query
 
 
+# TODO(gp): -> connection, table_name, obj
 def execute_insert_query(
     connection: DbConnection, obj: Union[pd.DataFrame, pd.Series], table_name: str
 ) -> None:
@@ -577,6 +585,27 @@ def execute_insert_query(
     connection.commit()
 
 
+# #############################################################################
+# Build more complex SQL queries.
+# #############################################################################
+
+
+# Invariants for functions with SQL queries
+#
+# - Functions creating tables
+#   - accept a parameter `incremental that has the same behavior as in
+#   `hio.create_dir(..., incremental)`
+#   - It controls the behavior of this function if the target table already exists.
+#     If `incremental` is True, then skip creating it and reuse it as it is; if
+#     False delete it and create it from scratch.
+#
+# - Function creating / execution SQL queries
+#   - We prefer functions that directly perform SQL queries implementing a given
+#     functionality (e.g., `get_num_rows()`)
+#   - Use `get_..._query()` returning the query text only when we want to freeze
+#     the query in a test, e.g., because it is complex
+
+
 def get_remove_duplicates_query(
     table_name: str, id_col_name: str, column_names: List[str]
 ) -> str:
@@ -596,3 +625,76 @@ def get_remove_duplicates_query(
         remove_statement.append(f"AND a.{c} = b.{c}")
     remove_statement = " ".join(remove_statement)
     return remove_statement
+
+
+def get_num_rows(connection: DbConnection, table_name: str) -> int:
+    """
+    Return the number of rows in a DB table.
+    """
+    cursor = connection.cursor()
+    query = f"SELECT COUNT(*) FROM {table_name}"
+    cursor.execute(query)
+    vals = cursor.fetchall()
+    hdbg.dassert_eq(len(vals), 1)
+    return vals[0]
+
+
+# #############################################################################
+# Polling functions
+# #############################################################################
+
+
+def is_row_with_value_present(
+    connection: DbConnection,
+    table_name: str,
+    field_name: str,
+    target_value: str,
+    *,
+    show_db_state: bool = False,
+) -> hasynci.PollOutput:
+    """
+    A polling function that checks if a row with `field_name` == `target_value`
+    is present in the table `table_name` of the DB.
+
+    E.g., this can be used with polling to wait for the target value
+    "hello_world.txt" in the "filename" field of the table "table_name" to appear
+
+    :return:
+        - success if the value is present
+        - result: None
+    """
+    _LOG.debug(hprint.to_str("connection table_name field_name target_value"))
+    # Print the state of the DB, if needed.
+    if show_db_state:
+        query = f"SELECT * FROM {table_name}"
+        df = execute_query_to_df(connection, query)
+        _LOG.debug("df=\n%s", hprint.dataframe_to_str(df, use_tabulate=False))
+    # Check if the required row is available.
+    query = f"SELECT {field_name} FROM {table_name} WHERE {field_name}='{target_value}'"
+    df = execute_query_to_df(connection, query)
+    _LOG.debug("df=\n%s", hprint.dataframe_to_str(df, use_tabulate=False))
+    # Package results.
+    success = df.shape[0] > 0
+    result = None
+    return success, result
+
+
+# TODO(gp): Add unit test.
+async def wait_for_change_in_number_of_rows(
+    connection: DbConnection, table_name: str, poll_kwargs: Dict[str, Any]
+) -> None:
+    """
+    Wait until the number of rows in a table changes.
+
+    :param poll_kwargs: a dictionary with the kwargs for `poll()`.
+    """
+    num_orders = get_num_rows(connection, table_name)
+
+    def _is_number_of_rows_changed() -> hasynci.PollOutput:
+        new_num_orders = get_num_rows(connection, table_name)
+        success = new_num_orders != num_orders
+        result_tmp = None
+        return success, result_tmp
+
+    # Poll.
+    await hasynci.poll(_is_number_of_rows_changed, **poll_kwargs)
