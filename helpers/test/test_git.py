@@ -262,6 +262,7 @@ class Test_git_path1(hunitest.TestCase):
             )
 
 
+@pytest.mark.slow(reason="slow via gh actions #687.")
 class Test_git_modified_files1(hunitest.TestCase):
     def setUp(self) -> None:
         """
