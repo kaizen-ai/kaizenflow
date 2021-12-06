@@ -464,7 +464,7 @@ class TestLibTasks1(hunitest.TestCase):
         self.assert_equal(str(act), str(exp))
 
     @pytest.mark.skipif(
-        hgit.is_cmamp(),
+        not hgit.is_cmamp(),
         reason="CmampTask #683.",
     )
     def test_get_gh_issue_title3(self) -> None:
