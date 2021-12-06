@@ -57,6 +57,7 @@ class TestCreateDb1(hunitest.TestCase):
         hsysinte.system(cmd, suppress_output=False)
         super().tearDown()
 
+    @pytest.mark.slow(reason="speed up in #460.")
     def test_up1(self) -> None:
         """
         Verify that the DB is up.
@@ -64,7 +65,7 @@ class TestCreateDb1(hunitest.TestCase):
         db_list = hsql.get_db_names(self.connection)
         _LOG.info("db_list=%s", db_list)
 
-    @pytest.mark.slow()
+    @pytest.mark.slow(reason="speed up in #460.")
     def test_create_all_tables1(self) -> None:
         """
         Verify that all necessary tables are created inside the DB.
@@ -91,7 +92,7 @@ class TestCreateDb1(hunitest.TestCase):
         actual = sorted(hsql.get_table_names(self.connection))
         self.assertEqual(actual, expected)
 
-    @pytest.mark.slow()
+    @pytest.mark.slow(reason="speed up in #460.")
     def test_create_im_database(self) -> None:
         imvcodbut.create_im_database(connection=self.connection, new_db="test_db")
         db_list = hsql.get_db_names(self.connection)

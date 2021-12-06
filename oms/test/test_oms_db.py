@@ -191,6 +191,7 @@ class TestOmsDb1(_TestOmsDbHelper):
         db_list = hsql.get_db_names(self.connection)
         _LOG.info("db_list=%s", db_list)
 
+    @pytest.mark.slow(reason="speed up in #460.")
     def test_create_table1(self) -> None:
         """
         Test creating the table.
@@ -209,6 +210,7 @@ class TestOmsDb1(_TestOmsDbHelper):
         _LOG.info("get_table_names=%s", db_tables)
         self.assertEqual(db_tables, ["target_files_processed_candidate_view"])
 
+    @pytest.mark.slow(reason="speed up in #460.")
     def test_insert1(self) -> None:
         """
         Test inserting in the table.
@@ -261,6 +263,7 @@ class TestOmsDb2(_TestOmsDbHelper):
             res = hasynci.run(coroutine, event_loop=event_loop)
             return res
 
+    @pytest.mark.slow(reason="speed up in #460.")
     def test_wait_for_table1(self):
         """
         Show that if the value doesn't show up in the DB there is a timeout.
