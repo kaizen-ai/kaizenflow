@@ -13,7 +13,6 @@ import im.ib.data.extract.gateway.unrolling_download_data_ib_loop as imideguddil
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(*): CmTask666.
 @pytest.mark.skip(reason="CmTask666")
 class Test_get_historical_data(iidegt.IbExtractionTest):
     def test_get_historical_data1(self) -> None:

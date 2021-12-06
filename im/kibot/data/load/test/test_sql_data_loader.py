@@ -11,7 +11,6 @@ import im.kibot.data.load.kibot_sql_data_loader as ikdlksdlo
 import im.kibot.sql_writer as imkisqwri
 
 
-# TODO(*): CmTask666.
 @pytest.mark.skip(reason="CmTask666")
 class TestSqlDataLoader1(hunitest.TestCase):
     """
