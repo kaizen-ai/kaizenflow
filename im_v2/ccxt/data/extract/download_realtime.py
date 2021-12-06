@@ -38,6 +38,15 @@ import im_v2.ccxt.universe.universe as imvccunun
 
 _LOG = logging.getLogger(__name__)
 
+# TODO(Danya): Replace with an `env` file (CMTask585).
+_DB_CREDENTIALS = {
+    "host": "im_postgres_local",
+    "dbname": "im_postgres_db_local",
+    "port": 5432,
+    "user": "aljsdalsd",
+    "password": "alsdkqoen",
+}
+
 
 # TODO(Danya): Move instantiation outside, e.g. into Airflow wrapper.
 def instantiate_exchange(
@@ -193,7 +202,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Create the directory.
     hio.create_dir(args.dst_dir, incremental=args.incremental)
     # Connect to database.
-    connection = hsql.get_connection_from_env_vars()
+    connection = hsql.get_connection(**_DB_CREDENTIALS)
     # Load universe.
     universe = imvccunun.get_trade_universe(args.universe)
     exchange_ids = universe["CCXT"].keys()
