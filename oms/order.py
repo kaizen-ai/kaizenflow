@@ -76,7 +76,8 @@ class Order:
 
     def __str__(self) -> str:
         txt: List[str] = []
-        txt.append(f"Order:")
+        txt.append("Order:")
+        # TODO(gp): leverage to_dict().
         txt.append(f"order_id={self.order_id}")
         txt.append(f"creation_timestamp='{self.creation_timestamp}'")
         txt.append(f"asset_id={self.asset_id}")
@@ -187,7 +188,7 @@ class Order:
                 # - if perc == 0.0 pay ask
                 price = (1.0 - perc) * ask_price + perc * bid_price
         else:
-            raise ValueError("Invalid type='%s'", type_)
+            raise ValueError(f"Invalid type='{type_}'")
         _LOG.debug(
             "type=%s, start_timestamp=%s, end_timestamp=%s -> execution_price=%s",
             type_,
@@ -201,24 +202,18 @@ class Order:
         """
         Get the price that this order executes at.
         """
-        try:
-            # This order price probably depend on future prices, so we need to allow
-            # future peeking (unfortunately).
-            old_value = self.price_interface.set_allow_future_peeking(True)
-            # TODO(gp): It should not be hardwired.
-            timestamp_col_name = "end_datetime"
-            price = self.get_price(
-                self.price_interface,
-                self.asset_id,
-                self.start_timestamp,
-                self.end_timestamp,
-                timestamp_col_name,
-                self.type_,
-                self.num_shares,
-                self.column_remap,
-            )
-        finally:
-            self.price_interface.set_allow_future_peeking(old_value)
+        # TODO(gp): It should not be hardwired.
+        timestamp_col_name = "end_datetime"
+        price = self.get_price(
+            self.price_interface,
+            self.asset_id,
+            self.start_timestamp,
+            self.end_timestamp,
+            timestamp_col_name,
+            self.type_,
+            self.num_shares,
+            self.column_remap,
+        )
         return price
 
     def is_mergeable(self, rhs: "Order") -> bool:
@@ -269,7 +264,8 @@ class Order:
         Get the price corresponding to a certain column and timing (e.g.,
         `start`, `end`, `twap`).
 
-        :param timestamp_col_name: column to use to filter based on start_timestamp and end_timestamp
+        :param timestamp_col_name: column to use to filter based on
+            start_timestamp and end_timestamp
         :param column: column to use to compute the price
         """
         if timing == "start":
@@ -291,7 +287,7 @@ class Order:
                 column,
             )
         else:
-            raise ValueError("Invalid timing='%s'", timing)
+            raise ValueError(f"Invalid timing='{timing}'")
         return price
 
 
@@ -299,7 +295,8 @@ class Order:
 
 
 def _get_orders_to_execute(
-    orders: List[Order], timestamp: pd.Timestamp
+    timestamp: pd.Timestamp,
+    orders: List[Order],
 ) -> List[Order]:
     """
     Return the orders from `orders` that can be executed at `timestamp`.
@@ -322,7 +319,7 @@ def get_orders_to_execute(
             return [orders.pop()]
         # hdbg.dassert_eq(len(orders), 1, "%s", orders_to_string(orders))
         assert 0
-    orders_to_execute = get_orders_to_execute(orders, timestamp)
+    orders_to_execute = _get_orders_to_execute(orders, timestamp)
     _LOG.debug("orders_to_execute=%s", orders_to_string(orders_to_execute))
     # Merge the orders.
     merged_orders = []

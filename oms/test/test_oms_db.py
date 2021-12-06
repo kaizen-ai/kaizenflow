@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+from typing import Any, Callable, Coroutine, List
 
 import pandas as pd
 import pytest
@@ -107,7 +108,67 @@ class _TestOmsDbHelper(hunitest.TestCase):
 # #############################################################################
 
 
-def _to_series(txt) -> pd.Series:
+@pytest.mark.skip(reason="Run manually to clean up the DB")
+class TestOmsDbRemoveAllTables1(_TestOmsDbHelper):
+    """
+    This is used to reset the state of the DB.
+    """
+
+    def test1(self) -> None:
+        hsql.remove_all_tables(self.connection)
+
+
+def _test_create_table_helper(
+    self_: Any,
+    connection: hsql.DbConnection,
+    table_name: str,
+    create_table_func: Callable,
+) -> None:
+    # Verify that the DB is up.
+    db_list = hsql.get_db_names(connection)
+    _LOG.info("db_list=%s", db_list)
+    # Clean up the table.
+    hsql.remove_table(connection, table_name)
+    # The DB should not have this table.
+    db_tables = hsql.get_table_names(connection)
+    _LOG.info("get_table_names=%s", db_tables)
+    self_.assertNotIn(table_name, db_tables)
+    # Create the table.
+    _ = create_table_func(connection, incremental=False)
+    # The table should be present.
+    db_tables = hsql.get_table_names(connection)
+    _LOG.info("get_table_names=%s", db_tables)
+    self_.assertIn(table_name, db_tables)
+    # Delete the table.
+    hsql.remove_table(connection, table_name)
+
+
+@pytest.mark.skipif(
+    hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
+)
+class TestOmsDbSubmittedOrdersTable1(_TestOmsDbHelper):
+    """
+    Test operations on the submitted orders table.
+    """
+
+    def test_create_table1(self) -> None:
+        """
+        Test creating the table.
+        """
+        table_name = oomsdb.SUBMITTED_ORDERS_TABLE_NAME
+        create_table_func = oomsdb.create_submitted_orders_table
+        _test_create_table_helper(
+            self, self.connection, table_name, create_table_func
+        )
+
+
+# #############################################################################
+
+
+def _to_series(txt: str) -> pd.Series:
+    """
+    Convert a text with (key, value) separated by `|` into a pd.series.
+    """
     # _LOG.debug("txt=\n%s", txt)
     tuples = [tuple(line.split("|")) for line in hprint.dedent(txt).split("\n")]
     # _LOG.debug("tuples=%s", str(tuples))
@@ -180,10 +241,17 @@ def _get_row3() -> pd.Series:
     return srs
 
 
+# #############################################################################
+
+
 @pytest.mark.skipif(
     hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
 )
-class TestOmsDb1(_TestOmsDbHelper):
+class TestOmsDbAcceptedOrdersTable1(_TestOmsDbHelper):
+    """
+    Test operations on the accepted orders table.
+    """
+
     def test_up1(self) -> None:
         """
         Verify that the DB is up.
@@ -195,26 +263,35 @@ class TestOmsDb1(_TestOmsDbHelper):
         """
         Test creating the table.
         """
-        # Clean up the table.
-        table_name = "target_files_processed_candidate_view"
-        hsql.remove_table(self.connection, table_name)
-        # The DB should have no tables.
-        db_tables = hsql.get_table_names(self.connection)
-        _LOG.info("get_table_names=%s", db_tables)
-        self.assertEqual(db_tables, [])
-        # Create the table.
-        _ = oomsdb.create_target_files_table(self.connection, incremental=False)
-        # The table should be present.
-        db_tables = hsql.get_table_names(self.connection)
-        _LOG.info("get_table_names=%s", db_tables)
-        self.assertEqual(db_tables, ["target_files_processed_candidate_view"])
+        # # Clean up the table.
+        # table_name = oomsdb.ACCEPTED_ORDERS_TABLE_NAME
+        # hsql.remove_table(self.connection, table_name)
+        # # The DB should not have that table.
+        # db_tables = hsql.get_table_names(self.connection)
+        # _LOG.info("get_table_names=%s", db_tables)
+        # self.assertNotIn(oomsdb.ACCEPTED_ORDERS_TABLE_NAME, db_tables)
+        # # Create the table.
+        # _ = oomsdb.create_accepted_orders_table(
+        #     self.connection, incremental=False
+        # )
+        # # The table should be present.
+        # db_tables = hsql.get_table_names(self.connection)
+        # _LOG.info("get_table_names=%s", db_tables)
+        # self.assertIn(oomsdb.ACCEPTED_ORDERS_TABLE_NAME, db_tables)
+        # # Delete the table.
+        # hsql.remove_table(self.connection, oomsdb.ACCEPTED_ORDERS_TABLE_NAME)
+        table_name = oomsdb.ACCEPTED_ORDERS_TABLE_NAME
+        create_table_func = oomsdb.create_accepted_orders_table
+        _test_create_table_helper(
+            self, self.connection, table_name, create_table_func
+        )
 
     def test_insert1(self) -> None:
         """
         Test inserting in the table.
         """
         # Create the table.
-        table_name = oomsdb.create_target_files_table(
+        table_name = oomsdb.create_accepted_orders_table(
             self.connection, incremental=True
         )
         # Insert a row.
@@ -236,42 +313,69 @@ class TestOmsDb1(_TestOmsDbHelper):
         1             2  2021-11-12        3504  s3://targets/20211112000000/positions.16.2021-11-12_15:44:04-05:00.csv       SAU1 2021-11-12 20:45:07.463641 2021-11-12 20:45:07.469807             1              0                0             0    False  "There were a total of 1 malformed requests in the file."
         2             5  2021-11-12        3504   s3://targets/20211112000000/positions.3.2021-11-12_16:38:22-05:00.csv       SAU1 2021-11-12 21:38:39.414138 2021-11-12 21:38:39.419536             1              1                0             0     True                                                           """
         self.assert_equal(act, exp, fuzzy_match=True)
+        # Delete the table.
+        hsql.remove_table(self.connection, oomsdb.ACCEPTED_ORDERS_TABLE_NAME)
+
+
+# TODO(gp): -> gather
+# TODO(gp): Move to hasyncio.py
+async def gather_coroutines(*coroutines: List[Coroutine]) -> List[Any]:
+    result = await asyncio.gather(*coroutines)
+    return result
+
+
+async def gather_coroutines_with_wall_clock(
+    event_loop: asyncio.AbstractEventLoop, *coroutines: List[Coroutine]
+) -> List[Any]:
+    get_wall_clock_time = lambda: hdateti.get_current_time(
+        tz="ET", event_loop=event_loop
+    )
+    # Construct the coroutines here by passing the `get_wall_clock_time()`
+    # function.
+    coroutines = [coro(get_wall_clock_time) for coro in coroutines]
+    #
+    result = await gather_coroutines(*coroutines)
+    return result
 
 
 @pytest.mark.skipif(
     hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
 )
 class TestOmsDb2(_TestOmsDbHelper):
-    def wait_for_table_helper(self, coroutines):
-        oomsdb.create_target_files_table(self.connection, incremental=False)
+    """
+    Test interactions through the DB.
+    """
+
+    def wait_for_table_helper(self, coroutines: List[Any]) -> Any:
+        """
+        Create a clean DB table and run the coroutines.
+        """
+        oomsdb.create_accepted_orders_table(self.connection, incremental=False)
         with hasynci.solipsism_context() as event_loop:
-            get_wall_clock_time = lambda: hdateti.get_current_time(
-                tz="ET", event_loop=event_loop
-            )
-
-            async def _workload(*coroutines):
-                result = await asyncio.gather(*coroutines)
-                return result
-
-            # Construct the coroutines here by passing the `get_wall_clock_time`
-            # function.
-            coroutines = [coro(get_wall_clock_time) for coro in coroutines]
-            # Run.
-            coroutine = _workload(*coroutines)
+            # get_wall_clock_time = lambda: hdateti.get_current_time(
+            #     tz="ET", event_loop=event_loop
+            # )
+            # # Construct the coroutines here by passing the `get_wall_clock_time()`
+            # # function.
+            # coroutines = [coro(get_wall_clock_time) for coro in coroutines]
+            # # Run.
+            coroutine = gather_coroutines_with_wall_clock(event_loop, *coroutines)
             res = hasynci.run(coroutine, event_loop=event_loop)
             return res
+        # Delete the table.
+        hsql.remove_table(self.connection, oomsdb.ACCEPTED_ORDERS_TABLE_NAME)
 
-    def test_wait_for_table1(self):
+    def test_wait_for_table1(self) -> None:
         """
         Show that if the value doesn't show up in the DB there is a timeout.
         """
-        # Create only one coroutine waiting for a row in the table that never comes,
-        # causing a timeout.
+        # Create only one coroutine waiting for a row in the table that is never
+        # written, causing a timeout.
         coroutines = [self._db_poller]
         with self.assertRaises(TimeoutError):
             self.wait_for_table_helper(coroutines)
 
-    def test_wait_for_table2(self):
+    def test_wait_for_table2(self) -> None:
         """
         Show that waiting on a value on the table works.
         """
@@ -290,7 +394,7 @@ class TestOmsDb2(_TestOmsDbHelper):
         exp = r"""[[(3, None)], None]"""
         self.assert_equal(act, exp)
 
-    def test_wait_for_table3(self):
+    def test_wait_for_table3(self) -> None:
         """
         The data is written too late triggering a timeout.
         """
@@ -305,23 +409,34 @@ class TestOmsDb2(_TestOmsDbHelper):
         with self.assertRaises(TimeoutError):
             self.wait_for_table_helper(coroutines)
 
-    async def _db_poller(self, get_wall_clock_time):
+    async def _db_poller(
+        self, get_wall_clock_time: hdateti.GetWallClockTime
+    ) -> Any:
+        """
+        Poll a DB for a certain value.
+        """
+        _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
+        #
         target_value = "hello_world.txt"
         poll_kwargs = {
             "sleep_in_secs": 1.0,
             "timeout_in_secs": 5.0,
             "get_wall_clock_time": get_wall_clock_time,
         }
-        _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
-        coro = oomsdb.wait_for_target_ack(
+        coro = oomsdb.wait_for_order_accepted(
             self.connection, target_value, poll_kwargs
         )
-        _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
         result = await asyncio.gather(coro)
+        _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
         return result
 
-    async def _db_writer(self, sleep_in_secs, get_wall_clock_time) -> None:
-        table_name = "target_files_processed_candidate_view"
+    async def _db_writer(
+        self, sleep_in_secs: float, get_wall_clock_time: hdateti.GetWallClockTime
+    ) -> None:
+        """
+        Wait some time and then write a row in the DB.
+        """
+        table_name = oomsdb.ACCEPTED_ORDERS_TABLE_NAME
         # Sleep.
         _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
         _LOG.debug("sleep for %s secs", sleep_in_secs)

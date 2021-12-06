@@ -2297,7 +2297,7 @@ def _run_test_cmd(
     cmd = f"'{cmd}'"
     docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd)
     _LOG.info("cmd=%s", docker_cmd_)
-    hsysinte.system(docker_cmd_, abort_on_error=False, suppress_output=False)
+    hsysinte.system(docker_cmd_, abort_on_error=True, suppress_output=False)
     # Print message about coverage.
     if coverage:
         msg = """

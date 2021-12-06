@@ -7,7 +7,6 @@ import im.common.test.utils as ictuti
 import im.ib.sql_writer as imibsqwri
 
 
-# TODO(*): CmTask666.
 @pytest.mark.skip(reason="CmTask666")
 class TestIbSqlWriterBackend1(ictuti.SqlWriterBackendTestCase):
     """

@@ -41,6 +41,8 @@ jobs:
           token: ${{ secrets.GH_ACTION_ACCESS_TOKEN }}
 
       - name: Authenticate GH
+        # This is needed for checking out `cmamp` from `dev_tools` since they
+        # are in different accounts.
         if: github.event.pull_request.draft == false
         run: |
           echo "${{ secrets.GH_ACTION_ACCESS_TOKEN }}" | gh auth login --hostname github.com --with-token 

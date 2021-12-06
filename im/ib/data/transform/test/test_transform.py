@@ -10,7 +10,6 @@ import im.ib.data.transform.ib_s3_to_sql_transformer as imidtistst
 import im.ib.sql_writer as imibsqwri
 
 
-# TODO(*): CmTask666.
 @pytest.mark.skip(reason="CmTask666")
 class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
     """

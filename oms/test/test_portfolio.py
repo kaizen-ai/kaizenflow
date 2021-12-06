@@ -15,7 +15,6 @@ import core.dataflow.real_time as cdtfretim
 import core.dataflow.test.test_price_interface as dartttdi
 import helpers.printing as hprint
 import helpers.unit_test as hunitest
-import oms.order as omorder
 import oms.portfolio as omportfo
 
 _LOG = logging.getLogger(__name__)
@@ -124,55 +123,6 @@ class TestPortfolio1(hunitest.TestCase):
             expected, timestamp, asset_id, exclude_cash=exclude_cash
         )
 
-    def test_place_orders1(self) -> None:
-        order_id = 0
-        # Build a ReplayedTimePriceInterface.
-        event_loop = None
-        price_interface = get_replayed_time_price_interface(event_loop)
-        # Get order.
-        timestamp = pd.Timestamp("2000-01-01 09:30:00-05:00")
-        creation_timestamp = timestamp + _5mins
-        asset_id = 101
-        type_ = "price@twap"
-        timestamp_start = timestamp + _5mins
-        timestamp_end = timestamp + 2 * _5mins
-        num_shares = 10
-        order = omorder.Order(
-            order_id,
-            price_interface,
-            creation_timestamp,
-            asset_id,
-            type_,
-            timestamp_start,
-            timestamp_end,
-            num_shares,
-        )
-        orders = [order]
-        # Build a Portfolio.
-        initial_timestamp = timestamp
-        portfolio = get_portfolio_example1(price_interface, initial_timestamp)
-        # Execute.
-        try:
-            # Since there is no simulated time, we need to enable future peeking.
-            old_value = price_interface.set_allow_future_peeking(True)
-            portfolio.process_filled_orders(
-                timestamp_start, timestamp_end, orders
-            )
-        finally:
-            price_interface.set_allow_future_peeking(old_value)
-        # Check.
-        act = str(portfolio)
-        exp = r"""# holdings=
-                                   asset_id  curr_num_shares
-        2000-01-01 09:40:00-05:00        -1     1.000001e+06
-        2000-01-01 09:40:00-05:00       101     1.000000e+01
-        2000-01-01 09:30:00-05:00        -1     1.000000e+06
-        # orders=
-                                  order_id               creation_timestamp asset_id       type_                  start_timestamp                    end_timestamp num_shares num_shares_filled holdings+1  execution_price        cash+1
-        2000-01-01 09:35:00-05:00        0        2000-01-01 09:35:00-05:00      101  price@twap        2000-01-01 09:35:00-05:00        2000-01-01 09:40:00-05:00         10                10         10        -0.083847  1.000001e+06
-        2000-01-01 09:30:00-05:00      NaN                              NaT      NaN         NaN                              NaT                              NaT        NaN               NaN        NaN              NaN           NaN"""
-        self.assert_equal(act, exp, fuzzy_match=True)
-
     def _get_portfolio1(self):
         """
         Return a freshly minted Portfolio with only cash.
@@ -204,7 +154,7 @@ class TestPortfolio2(hunitest.TestCase):
             strategy_id="str1",
             account="paper",
             price_interface=price_interface,
-            asset_id_column="asset_id",
+            asset_id_col="asset_id",
             mark_to_market_col="price",
             timestamp_col="end_datetime",
             initial_cash=1e6,
@@ -229,7 +179,7 @@ class TestPortfolio2(hunitest.TestCase):
             strategy_id="str1",
             account="paper",
             price_interface=price_interface,
-            asset_id_column="asset_id",
+            asset_id_col="asset_id",
             mark_to_market_col="price",
             timestamp_col="end_datetime",
             holdings_dict=dict_,
@@ -255,7 +205,7 @@ class TestPortfolio2(hunitest.TestCase):
             strategy_id="str1",
             account="paper",
             price_interface=price_interface,
-            asset_id_column="asset_id",
+            asset_id_col="asset_id",
             mark_to_market_col="price",
             timestamp_col="end_datetime",
             initial_cash=1e6,
@@ -287,7 +237,7 @@ leverage,0.0
             strategy_id="str1",
             account="paper",
             price_interface=price_interface,
-            asset_id_column="asset_id",
+            asset_id_col="asset_id",
             mark_to_market_col="price",
             timestamp_col="end_datetime",
             holdings_dict=dict_,
@@ -342,7 +292,7 @@ start_datetime,end_datetime,asset_id,price
             strategy_id="str1",
             account="paper",
             price_interface=price_interface,
-            asset_id_column="asset_id",
+            asset_id_col="asset_id",
             mark_to_market_col="price",
             timestamp_col="end_datetime",
             initial_cash=1e6,
