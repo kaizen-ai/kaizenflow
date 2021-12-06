@@ -463,9 +463,8 @@ class TestLibTasks1(hunitest.TestCase):
         )
         self.assert_equal(str(act), str(exp))
 
-    # TODO(gp): This test should be moved to `dev_tools`.
     @pytest.mark.skipif(
-        not hgit.is_amp(),
+        hgit.is_cmamp(),
         reason="CmampTask #683.",
     )
     def test_get_gh_issue_title3(self) -> None:
