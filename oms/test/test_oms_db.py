@@ -146,6 +146,7 @@ def _test_create_table_helper(
 @pytest.mark.skipif(
     hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
 )
+@pytest.mark.slow(reason="speed up in #460.")
 class TestOmsDbSubmittedOrdersTable1(_TestOmsDbHelper):
     """
     Test operations on the submitted orders table.
@@ -247,6 +248,7 @@ def _get_row3() -> pd.Series:
 @pytest.mark.skipif(
     hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
 )
+@pytest.mark.slow(reason="speed up in #460.")
 class TestOmsDbAcceptedOrdersTable1(_TestOmsDbHelper):
     """
     Test operations on the accepted orders table.
@@ -341,6 +343,7 @@ async def gather_coroutines_with_wall_clock(
 @pytest.mark.skipif(
     hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
 )
+@pytest.mark.slow(reason="speed up in #460.")
 class TestOmsDb2(_TestOmsDbHelper):
     """
     Test interactions through the DB.

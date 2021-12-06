@@ -329,7 +329,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
 
     # ################################################################################
     # TODO(gp): -> TestGitCommands1
-
+    @pytest.mark.slow("7 seconds.")
     def test_git_branch_files(self) -> None:
         # This test needs a reference to Git master branch.
         hgit.fetch_origin_master_if_needed()
@@ -464,6 +464,10 @@ class TestLibTasks1(hunitest.TestCase):
         self.assert_equal(str(act), str(exp))
 
     # TODO(gp): This test should be moved to `dev_tools`.
+    @pytest.mark.skipif(
+        not hgit.is_amp(),
+        reason="CmampTask #683.",
+    )
     def test_get_gh_issue_title3(self) -> None:
         _gh_login()
         issue_id = 1
@@ -949,7 +953,7 @@ class TestLibTasksRunTests1(hunitest.TestCase):
 
 # #############################################################################
 
-
+@pytest.mark.slow(reason="slow via gh actions #687.")
 class TestLibTasksGitCreatePatch1(hunitest.TestCase):
     """
     Test `git_create_patch()`.

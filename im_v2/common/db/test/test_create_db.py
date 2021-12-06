@@ -15,6 +15,7 @@ _LOG = logging.getLogger(__name__)
 @pytest.mark.skipif(
     hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
 )
+@pytest.mark.slow(reason="speed up in #460.")
 class TestCreateDb1(hunitest.TestCase):
     def setUp(self) -> None:
         """
@@ -64,7 +65,6 @@ class TestCreateDb1(hunitest.TestCase):
         db_list = hsql.get_db_names(self.connection)
         _LOG.info("db_list=%s", db_list)
 
-    @pytest.mark.slow()
     def test_create_all_tables1(self) -> None:
         """
         Verify that all necessary tables are created inside the DB.
@@ -91,7 +91,6 @@ class TestCreateDb1(hunitest.TestCase):
         actual = sorted(hsql.get_table_names(self.connection))
         self.assertEqual(actual, expected)
 
-    @pytest.mark.slow()
     def test_create_im_database(self) -> None:
         imvcodbut.create_im_database(connection=self.connection, new_db="test_db")
         db_list = hsql.get_db_names(self.connection)
