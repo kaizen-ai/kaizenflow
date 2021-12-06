@@ -15,7 +15,6 @@ import im.ib.data.extract.gateway.utils as imidegaut
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(*): CmTask666.
 @pytest.mark.skip(reason="CmTask666")
 class Test_get_historical_data(iidegt.IbExtractionTest):
     def test_ib_loop_generator1(self) -> None:

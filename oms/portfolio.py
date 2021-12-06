@@ -13,7 +13,6 @@ import pandas as pd
 import core.dataflow.price_interface as cdtfprint
 import helpers.dbg as hdbg
 import helpers.printing as hprint
-import oms.order as omorder
 
 _LOG = logging.getLogger(__name__)
 
@@ -26,8 +25,6 @@ class Portfolio:
     - holdings over time
         - how many shares of each asset are owned at any time
         - cash is treated as any other asset to keep code uniform
-    - orders executed over time
-        - what orders were executed, for how many shares, and at how much
 
     The tables are indexed by knowledge time, i.e., when this information became
     known by this object.
@@ -36,12 +33,31 @@ class Portfolio:
     # ID of asset representing cash.
     CASH_ID: int = -1
 
+    # Columns required in a `holding_df`, which represents the holdings over time:
+    # ```
+    #                            asset_id  curr_num_shares
+    # 2000-01-01 09:35:00-05:00        -1        1000000.0
+    # 2000-01-01 09:35:00-05:00       314        1000000.0
+    # ...
+    # 2000-01-01 09:30:00-05:00       214       -1000000.0
+    # ```
     HOLDINGS_COLS = ["asset_id", "curr_num_shares"]
+
+    # Columns required in a `order_df`, which represents the executed orders
+    # time (e.g., what orders were executed, for how many shares, and at how much).
+    ORDER_COLS = [
+        "asset_id",
+        "start_timestamp",
+        "end_timestamp",
+        "num_shares_filled",
+        "execution_price",
+    ]
+
+    # Columns used in a dataframe resulting from mark to market.
     PRICE_COLS = ["asset_id", "price"]
 
     def __init__(
         self,
-        # TODO(GP): Add docstrings for these.
         strategy_id: str,
         account: str,
         #
@@ -54,9 +70,15 @@ class Portfolio:
         """
         Constructor.
 
+        :param strategy_id, account: back office information about the strategy
+            driving this portfolio
         :param asset_id_col: column name in the output df of `price_interface`
             storing the asset id
-        :param mark_to_market_col: column name used to mark holdings to market
+        :param mark_to_market_col: column name used as price to mark holdings to
+            market
+        :param timestamp_col: column to use when accessing price data
+        :param holding_df: the initial state of the portfolio in terms of (cash
+            and non-cash) holdings
         """
         _LOG.debug(
             hprint.to_str("strategy_id account asset_id_col mark_to_market_col")
@@ -69,37 +91,15 @@ class Portfolio:
         self._asset_id_col = asset_id_col
         self._mark_to_market_col = mark_to_market_col
         self._timestamp_col = timestamp_col
+        #
         self._validate_initial_holdings_df(holdings_df)
         self._holdings = holdings_df
-        # Initialize dataframe with order fills.
-        self._order_columns = [
-            # Order corresponding to the change in position.
-            "order_id",
-            # Info from the order.
-            "creation_timestamp",
-            "asset_id",
-            "type_",
-            "start_timestamp",
-            "end_timestamp",
-            "num_shares",
-            # Info about the order execution.
-            "num_shares_filled",
-            "execution_price",
-            # Holdings after this order was executed.
-            "holdings+1",
-            # Amount of cash after this order was executed.
-            "cash+1",
-        ]
-        initial_timestamp = holdings_df.index[0]
-        # We start with an empty row in `orders` to keep it aligned with `holdings`.
-        self._orders = pd.DataFrame(
-            [], index=[initial_timestamp], columns=self._order_columns
-        )
+        # Dictionary from timestamp to some portfolio statistics.
+        self._characteristics = collections.OrderedDict()
 
     def __str__(self) -> str:
         act = []
         act.append("# holdings=\n%s" % hprint.dataframe_to_str(self.holdings))
-        act.append("# orders=\n%s" % hprint.dataframe_to_str(self.orders))
         act = "\n".join(act)
         return act
 
@@ -109,7 +109,7 @@ class Portfolio:
         strategy_id: str,
         account: str,
         price_interface: cdtfprint.AbstractPriceInterface,
-        asset_id_column: str,
+        asset_id_col: str,
         mark_to_market_col: str,
         timestamp_col: str,
         initial_cash: float,
@@ -119,15 +119,17 @@ class Portfolio:
         Initialize a portfolio with no non-cash assets.
         """
         hdbg.dassert_lt(0, initial_cash)
+        # The holdings_df has a single row about cash.
         row = [Portfolio.CASH_ID, initial_cash]
         holdings_df = pd.DataFrame(
             [row], index=[initial_timestamp], columns=Portfolio.HOLDINGS_COLS
         )
+        # Build the portfolio.
         portfolio = cls(
             strategy_id,
             account,
             price_interface,
-            asset_id_column,
+            asset_id_col,
             mark_to_market_col,
             timestamp_col,
             holdings_df,
@@ -140,7 +142,7 @@ class Portfolio:
         strategy_id: str,
         account: str,
         price_interface: cdtfprint.AbstractPriceInterface,
-        asset_id_column: str,
+        asset_id_col: str,
         mark_to_market_col: str,
         timestamp_col: str,
         holdings_dict: Dict[int, float],
@@ -149,38 +151,34 @@ class Portfolio:
         """
         Initialize from a dict of holdings and initial timestamp.
         """
+        # Convert the dictionary into a df with `asset_id`, `curr_num_shares`.
         hdbg.dassert_isinstance(holdings_dict, dict)
         df = pd.Series(holdings_dict).to_frame().reset_index()
         df.columns = Portfolio.HOLDINGS_COLS
         hdbg.dassert_isinstance(initial_timestamp, pd.Timestamp)
         size = len(holdings_dict)
         df.index = [initial_timestamp] * size
+        # Build the portfolio.
         portfolio = cls(
             strategy_id,
             account,
             price_interface,
-            asset_id_column,
+            asset_id_col,
             mark_to_market_col,
             timestamp_col,
             df,
         )
         return portfolio
 
+    # TODO(gp): Only for debug -> get_holdings_df
     @property
     def holdings(self) -> pd.DataFrame:
         return self._holdings
 
-    @property
-    def orders(self) -> pd.DataFrame:
-        return self._orders
-
     def get_last_timestamp(self) -> pd.Timestamp:
         """
-        Get the last time known to Portfolio (holdings).
+        Get the last time known to Portfolio in terms of holdings.
         """
-        # TODO(gp): This is not true because holdings contain also data for one
-        #  interval ahead.
-        # hdbg.dassert_eq(self._holdings.index.max(), self._orders.index.max())
         return self._holdings.index.max()
 
     def get_holdings(
@@ -193,39 +191,21 @@ class Portfolio:
         """
         Return the holdings in shares at `timestamp` for one or all the assets.
 
+        :param timestamp: as-of timestamp
         :param asset_id: consider only a specific asset. `None` means all holdings.
         :param exclude_cash: exclude cash from the holdings
-        :return: a dataframe with asset id and num_shares
+        :return: a holdings_df, like:
             ```
                                        asset_id  curr_num_shares
             2000-01-01 09:35:00-05:00      -1.0        1000000.0
             ```
-
-        - empty dataframe if there are no holdings for the requested timestamp
-        `timestamp`
+            - An empty dataframe if there are no holdings for the requested
+              `timestamp`
         """
+        # TODO(gp): Inline this.
         return Portfolio._get_holdings(
             self._holdings, timestamp, asset_id, exclude_cash=exclude_cash
         )
-
-    def get_holdings_as_scalar(
-        self,
-        timestamp: pd.Timestamp,
-        asset_id: int,
-    ) -> float:
-        """
-        Return the number of shares held for a given asset.
-
-        For cash, this is the same as the cash value.
-        """
-        holdings = self.get_holdings(timestamp, asset_id=asset_id)
-        _LOG.debug("holdings=\n%s", holdings)
-        if holdings.empty:
-            value = 0
-        else:
-            value = holdings["curr_num_shares"].values[0]
-        _LOG.debug("value=%s for asset_id=%s", value, asset_id)
-        return value
 
     def get_asset_price_at_timestamp(
         self,
@@ -240,9 +220,11 @@ class Portfolio:
 
         :return: df with columns `Portfolio.PRICE_COLS`
         """
+        # Check `asset_ids`.
         hdbg.dassert_isinstance(asset_ids, list)
         asset_ids = sorted(asset_ids)
         hdbg.dassert_no_duplicates(asset_ids)
+        # Get `price_df` for all the non-cash assets from the price interface.
         non_cash_asset_ids = list(
             filter(lambda x: x != Portfolio.CASH_ID, asset_ids)
         )
@@ -262,11 +244,17 @@ class Portfolio:
         columns = [self._asset_id_col, self._mark_to_market_col]
         hdbg.dassert_is_subset(columns, price_df.columns)
         price_df = price_df[columns]
+        # Rename using the canonical names.
         price_df.columns = Portfolio.PRICE_COLS
+        # Add the current timestamp.
         price_df.index = [timestamp] * price_df.index.size
+        # Add cash, if missing.
         if len(non_cash_asset_ids) < len(asset_ids):
             cash_df = pd.DataFrame(
-                {Portfolio.PRICE_COLS[0]: -1, Portfolio.PRICE_COLS[1]: 1},
+                {
+                    Portfolio.PRICE_COLS[0]: Portfolio.CASH_ID,
+                    Portfolio.PRICE_COLS[1]: 1,
+                },
                 index=[timestamp],
             )
             price_df = pd.concat([cash_df, price_df])
@@ -316,29 +304,11 @@ class Portfolio:
         # TODO(gp): We should have no nans in res_df["value"].
         return result_df
 
-    def get_net_wealth(self, timestamp: pd.Timestamp) -> float:
-        """
-        Return the net value of all holdings and cash at time `timestamp`.
-        """
-        _LOG.debug(
-            "\n%s",
-            hprint.frame("get_net_wealth: timestamp=%s" % timestamp, char1="<"),
-        )
-        portfolio_characteristics = self.get_characteristics(timestamp)
-        net_wealth = portfolio_characteristics["net_wealth"]
-        return net_wealth
-
-    # TODO(Paul): Think of a better name.
     def get_characteristics(self, timestamp: pd.Timestamp) -> pd.Series:
         """
-        Return asset/cash values, net wealth, exposure, and leverage.
+        Return asset/cash values, net wealth, exposure, and leverage for the
+        portfolio at a given timestamp.
         """
-        _LOG.debug(
-            "\n%s",
-            hprint.frame(
-                "get_characteristics: timestamp=%s" % timestamp, char1="<"
-            ),
-        )
         hdbg.dassert_in(
             timestamp,
             self._holdings.index,
@@ -350,22 +320,19 @@ class Portfolio:
         holdings = self.mark_to_market(timestamp, holdings)
         # Compute value of holdings.
         holdings_net_value = holdings["value"].sum()
-        _LOG.debug("-> holdings_net_value=%s", holdings_net_value)
         hdbg.dassert(
             np.isfinite(holdings_net_value),
             "holdings_net_value=%s",
             holdings_net_value,
         )
         # Get the cash available.
-        cash = self.get_holdings_as_scalar(timestamp, asset_id=self.CASH_ID)
+        cash = self._get_holdings_as_scalar(timestamp, asset_id=self.CASH_ID)
         hdbg.dassert(np.isfinite(cash), "cash=%s", cash)
         # Cash should always be positive.
-        hdbg.dassert_lte(0.0, cash, "cash=%s", cash)
-        _LOG.debug("-> cash=%s", cash)
+        hdbg.dassert_lte(0.0, cash, "cash should always be positive")
         # Compute the net wealth (AKA "total value" AKA "NAV").
         net_wealth = holdings_net_value + cash
         hdbg.dassert(np.isfinite(net_wealth), "net_value=%s", net_wealth)
-        _LOG.debug("-> net_wealth=%s", net_wealth)
         # Compute the gross exposure.
         gross_exposure = holdings["value"].abs().sum()
         # Compute the portfolio leverage.
@@ -377,150 +344,117 @@ class Portfolio:
             "gross_exposure": gross_exposure,
             "leverage": leverage,
         }
-        return pd.Series(dict_, name=timestamp)
+        characteristics = pd.Series(dict_, name=timestamp)
+        return characteristics
 
-    def process_filled_orders(
+    def advance_portfolio_state(
         self,
-        # What timestamp?
-        # TODO: rename `curr_timestamp`.
         timestamp: pd.Timestamp,
-        # Fill cutoff.
-        next_timestamp: pd.Timestamp,
-        orders: List[omorder.Order],
+        order_df: Optional[pd.DataFrame],
     ) -> None:
         """
-        Change state of the portfolio based on the given orders.
+        Update holdings using `order_df`.
+
+        :param timestamp:
+        :param order_df:
+        :return:
         """
         _LOG.debug(
             "\n%s",
             hprint.frame(
-                "process_filled_orders: timestamp=%s" % timestamp, char1="<"
+                "advance_portfolio_state: timestamp=%s" % timestamp, char1="<"
             ),
         )
-        hdbg.dassert_isinstance(timestamp, pd.Timestamp)
-        hdbg.dassert_isinstance(next_timestamp, pd.Timestamp)
-        # Check that curr_timestamp < next_timestamp.
-        _LOG.debug(
-            "before process_filled_orders: orders=\n%s",
-            hprint.dataframe_to_str(self._orders),
-        )
         # TODO(gp): Check that orders are all for different asset_ids.
-        # TODO: Ensure that we are moving forward in time.
+        # TODO(gp): Ensure that we are moving forward in time.
+        hdbg.dassert_isinstance(timestamp, pd.Timestamp)
+        hdbg.dassert(timestamp.tz is not None)
+        hdbg.dassert_eq(timestamp.tz.zone, self._holdings.index.dtype.tz.zone)
+        # Check that latest holdings are timestamped prior to `timestamp`.
         last_timestamp = self.get_last_timestamp()
         hdbg.dassert_lte(last_timestamp, timestamp)
-        # Get the current available cash.
-        cash = self.get_holdings_as_scalar(last_timestamp, self.CASH_ID)
-        # Process the orders.
-        orders_rows = []
-        holdings_rows = []
-        for order in orders:
-            _LOG.debug("# Processing order=%s", order)
-            orders_row: Dict[str, Any] = collections.OrderedDict()
-            hdbg.dassert_eq(
-                order.end_timestamp,
-                next_timestamp,
-                "The order %s doesn't end at next_timestamp=%s",
-                order,
-                next_timestamp,
+        # Log portfolio characteristics at `last_timestamp` if not done already.
+        # This could happen if there is a bar with no orders (or overnight).
+        if last_timestamp not in self._characteristics:
+            _LOG.debug(
+                "Computing portfolio characteristics for timestamp=`%s`",
+                last_timestamp,
             )
-            orders_row["timestamp"] = timestamp
-            # Copy content of the order.
-            orders_row.update(order.to_dict())
-            # Get the current holding for the asset of the order.
-            holdings = self.get_holdings_as_scalar(last_timestamp, order.asset_id)
-            _LOG.debug("holdings=\n%s", hprint.dataframe_to_str(holdings))
-            # Complete fills.
-            orders_row["num_shares_filled"] = order.num_shares
-            # TODO(gp): Allow partial fills.
-            holdings += order.num_shares
-            orders_row["holdings+1"] = holdings
-            # Account for the executed price of the order.
-            execution_price = order.get_execution_price()
-            orders_row["execution_price"] = execution_price
-            #
-            cash -= execution_price * order.num_shares
-            orders_row["cash+1"] = cash
-            #
-            # _LOG.debug("row=%s", row)
-            orders_rows.append(orders_row)
-            holdings_row = {
-                "timestamp": next_timestamp,
-                "asset_id": order.asset_id,
-                "curr_num_shares": holdings,
-            }
-            holdings_rows.append(holdings_row)
-        # Cash should not be negative after executing all the orders.
-        hdbg.dassert_lte(0.0, cash, "cash=%s", cash)
-        cash_holdings_row = {
-            "timestamp": next_timestamp,
-            "asset_id": Portfolio.CASH_ID,
-            "curr_num_shares": cash,
-        }
-        holdings_rows.append(cash_holdings_row)
-        # Add the information to the orders.
-        orders_tmp = self._concat(orders_rows, self._order_columns)
-        self._orders = pd.concat([orders_tmp, self._orders])
+            val = self.get_characteristics(last_timestamp)
+            self._characteristics[last_timestamp] = val
+        # Get latest holdings
+        last_holdings = self.get_holdings(last_timestamp, asset_id=None)
+        last_holdings.index.name = "last_timestamp"
+        last_holdings.reset_index(inplace=True)
+        last_holdings_srs = last_holdings.set_index("asset_id")["curr_num_shares"]
+        new_holdings_srs = last_holdings_srs.copy()
+        if order_df is not None:
+            Portfolio._validate_order_df(order_df)
+            hdbg.dassert_lte(last_timestamp, order_df["start_timestamp"].min())
+            hdbg.dassert_lte(order_df["end_timestamp"].max(), timestamp)
+            holdings_diff = order_df.set_index("asset_id")["num_shares_filled"]
+            cash_diff = (
+                -1
+                * (
+                    order_df["execution_price"] * order_df["num_shares_filled"]
+                ).sum()
+            )
+            hdbg.dassert(np.isfinite(cash_diff))
+            new_holdings_srs = new_holdings_srs.add(holdings_diff, fill_value=0)
+            new_holdings_srs.loc[Portfolio.CASH_ID] += cash_diff
+        new_holdings_srs.name = "curr_num_shares"
+        new_holdings = new_holdings_srs.to_frame().reset_index()
+        new_holdings.index = [timestamp] * len(new_holdings)
+        new_holdings = new_holdings.convert_dtypes()
+        Portfolio._validate_holdings_df(new_holdings)
         # Add the information to the holdings.
-        holdings_tmp = self._concat(holdings_rows, Portfolio.HOLDINGS_COLS)
-        self._holdings = pd.concat([holdings_tmp, self._holdings])
+        updated_state = pd.concat([new_holdings, self._holdings])
+        updated_state = updated_state.convert_dtypes()
+        self._holdings = updated_state
+        # Log portfolio characteristics at `last_timestamp` if not done already.
         _LOG.debug(
-            "after process_filled_orders: orders=\n%s",
-            hprint.dataframe_to_str(self._orders),
+            "Computing portfolio characteristics for timestamp=`%s`", timestamp
         )
+        val = self.get_characteristics(timestamp)
+        self._characteristics[timestamp] = val
 
-    def get_pnl(self):
+    def _get_holdings_as_scalar(
+        self,
+        timestamp: pd.Timestamp,
+        asset_id: int,
+    ) -> float:
         """
-        Return the time series of positions, PnL.
-        """
-        # strategyid                                  SAU1
-        # tradedate                             2021-10-28
-        # account                                SAU1_CAND
-        # id                                         10005
-        # cost_basis                                   0.0  ?
-        # mark                                  795.946716  ?
-        # avg_buy_px                                   0.0
-        # avg_sell_px                                  0.0
-        # qty_bought                                     0
-        # qty_sold                                       0
-        # quantity                                       0
-        # position_pnl                                 0.0
-        # trading_pnl                                  0.0
-        # total_pnl                                    0.0
-        # local_currency                               USD
-        # portfolio_currency                           USD
-        # fx                                           1.0
-        # to_usd                                       1.0
-        # timestamp_db          2021-10-28 20:40:05.517649
-        return
+        Return the number of shares held for a given asset.
 
-    def get_bod_holdings(
-        self, timestamp: pd.Timestamp, id_: Optional[Any]
-    ) -> pd.DataFrame:
+        For cash, this is the same as the cash value.
         """
-        Return the holdings at the beginning of a day.
-        """
-        # tradedate       2021-10-28
-        # id                   10005
-        # strategyid            SAU1
-        # account          SAU1_CAND
-        # bod_position             0
-        # bod_price              0.0
-        # currency               USD
-        # fx                     1.0
-        # TODO(gp): Just implement from get_current_holdings.
-        return
+        holdings = self.get_holdings(timestamp, asset_id=asset_id)
+        _LOG.debug("holdings=\n%s", holdings)
+        if holdings.empty:
+            value = 0
+        else:
+            value = holdings["curr_num_shares"].values[0]
+        _LOG.debug("value=%s for asset_id=%s", value, asset_id)
+        return value
 
     @staticmethod
     def _get_holdings(
-        holdings_df,
+        holdings_df: pd.DataFrame,
         timestamp: pd.Timestamp,
         asset_id: Optional[Any],
         *,
         exclude_cash: bool = False,
     ) -> pd.DataFrame:
+        """
+        Get holdings at time `timestamp` for the given assets.
+
+        :param asset_id: an asset or `None` for all available assets
+        :return the df looks like
+        """
         Portfolio._validate_holdings_df(holdings_df)
         _LOG.debug(hprint.to_str("timestamp asset_id exclude_cash"))
-        _LOG.debug("holdings=\n%s", hprint.dataframe_to_str(holdings_df))
+        # Extract `holdings` at the requested timestamp.
+        # _LOG.debug("holdings=\n%s", hprint.dataframe_to_str(holdings_df))
         if timestamp not in holdings_df.index:
             _LOG.debug("Timestamp=`%s` not found in holdings index", timestamp)
             empty_holdings = pd.DataFrame(
@@ -530,7 +464,7 @@ class Portfolio:
         holdings = holdings_df.loc[timestamp]
         if isinstance(holdings, pd.Series):
             holdings = holdings.to_frame().T
-        _LOG.debug("holdings=%s\n%s", str(holdings.shape), holdings)
+        # _LOG.debug("holdings=%s\n%s", str(holdings.shape), holdings)
         hdbg.dassert(
             not holdings.empty,
             "Timestamp=`%s` found in index but filtered holdings are empty!",
@@ -541,7 +475,7 @@ class Portfolio:
         if asset_id is not None:
             _LOG.debug("Filtering by asset_id: holdings=\n%s", holdings)
             mask = holdings["asset_id"] == asset_id
-            _LOG.debug("mask=\n%s", mask)
+            # _LOG.debug("mask=\n%s", mask)
             holdings = holdings[mask]
             if holdings.empty:
                 _LOG.debug(
@@ -551,7 +485,7 @@ class Portfolio:
                 )
         # Exclude cash, if needed.
         if exclude_cash:
-            _LOG.debug("exclude_cash: holdings=\n%s", holdings)
+            # _LOG.debug("exclude_cash: holdings=\n%s", holdings)
             hdbg.dassert_ne(
                 asset_id,
                 Portfolio.CASH_ID,
@@ -559,7 +493,7 @@ class Portfolio:
                 asset_id,
             )
             mask = holdings["asset_id"] != Portfolio.CASH_ID
-            _LOG.debug("mask=\n%s", mask)
+            # _LOG.debug("mask=\n%s", mask)
             holdings = holdings[mask]
             if holdings.empty:
                 _LOG.debug(
@@ -610,6 +544,8 @@ class Portfolio:
         """
         # The input should be a nonempty dataframe with a datetime index.
         hdbg.dassert_isinstance(holdings_df, pd.DataFrame)
+        hdbg.dassert_isinstance(holdings_df.index, pd.DatetimeIndex)
+        hdbg.dassert(hasattr(holdings_df.index.dtype, "tz"))
         hdbg.dassert(not holdings_df.empty, "The dataframe must be nonempty.")
         # The dataframe must have the correct columns.
         hdbg.dassert_eq_all(
@@ -671,11 +607,47 @@ class Portfolio:
         hdbg.dassert_lte(0, cash)
 
     @staticmethod
-    def _concat(rows: List[Dict[str, Any]], columns: List[str]) -> pd.DataFrame:
-        df_tmp = pd.DataFrame(rows)
-        _LOG.debug("df_tmp=\n%s", hprint.dataframe_to_str(df_tmp))
-        df_tmp.set_index("timestamp", drop=True, inplace=True)
-        df_tmp.index.name = None
-        df_tmp.sort_values("asset_id", inplace=True)
-        hdbg.dassert_set_eq(df_tmp.columns, columns)
-        return df_tmp
+    def _validate_order_df(
+        order_df: pd.DataFrame,
+    ) -> None:
+        """
+        Ensure that `order_df` passes basic sanity checks.
+        """
+        # The input should be a nonempty dataframe.
+        hdbg.dassert_isinstance(order_df, pd.DataFrame)
+        hdbg.dassert(not order_df.empty, "The dataframe must be nonempty.")
+        # The dataframe must have the correct columns.
+        hdbg.dassert_is_subset(
+            Portfolio.ORDER_COLS,
+            order_df.columns.to_list(),
+            "Columns do not conform to requirements.",
+        )
+        # The columns should be of the correct types.
+        hdbg.dassert_eq(
+            order_df["asset_id"].dtype.type,
+            np.int64,
+            "The column `asset_id` should only contain integer ids.",
+        )
+        hdbg.dassert_eq(
+            order_df["num_shares_filled"].dtype.type,
+            np.float64,
+            "The column `curr_num_shares` should be a float column.",
+        )
+        # TODO(gp): Create a dassert in hpandas.
+        hdbg.dassert_eq(order_df["start_timestamp"].dtype.type, pd.Timestamp)
+        hdbg.dassert(hasattr(order_df["start_timestamp"].dtype, "tz"))
+        hdbg.dassert_eq(order_df["end_timestamp"].dtype.type, pd.Timestamp)
+        hdbg.dassert(hasattr(order_df["end_timestamp"].dtype, "tz"))
+        # The dataframe must not contain a row for cash.
+        hdbg.dassert_not_in(
+            Portfolio.CASH_ID,
+            order_df["asset_id"].to_list(),
+            "Order for cash detected.",
+        )
+        # There should be no more than one row per asset.
+        hdbg.dassert_no_duplicates(order_df["asset_id"].to_list())
+        # All share values should be finite.
+        hdbg.dassert(
+            np.isfinite(order_df["num_shares_filled"]).all(),
+            "All share values must be finite.",
+        )

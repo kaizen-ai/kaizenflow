@@ -8,7 +8,6 @@ import im.kibot.sql_writer as imkisqwri
 
 
 # TODO(*): -> TestKibotSqlWriterBackend1
-# TODO(*): CmTask666.
 @pytest.mark.skip(reason="CmTask666")
 class TestSqlWriterBackend1(ictuti.SqlWriterBackendTestCase):
     """
