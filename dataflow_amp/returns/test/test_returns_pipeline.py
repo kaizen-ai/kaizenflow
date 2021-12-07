@@ -50,7 +50,7 @@ class TestReturnsBuilder(hunitest.TestCase):
         }
         self._helper(config)
 
-    @pytest.mark.slow
+    @pytest.mark.superslow("move to slow tests and enable retry mechanism in #693.")
     def test_futures1(self) -> None:
         source_node_kwargs = {
             "func": cdtfsonod.load_kibot_data,
