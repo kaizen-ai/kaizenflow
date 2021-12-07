@@ -75,6 +75,7 @@ class TestGetFilePath(hunitest.TestCase):
     hgit.is_dev_tools() or hgit.is_lime(),
     reason="lime and dev_tools doesn't have dind support",
 )
+@pytest.mark.superslow(reason="speed up in #460.")
 class TestCcxtDbClient(hunitest.TestCase):
     def setUp(self) -> None:
         """
@@ -121,7 +122,7 @@ class TestCcxtDbClient(hunitest.TestCase):
         hsysinte.system(cmd, suppress_output=False)
         super().tearDown()
 
-    @pytest.mark.slow("8 seconds.")
+    # @pytest.mark.slow("8 seconds.")
     def test_read_data1(self) -> None:
         """
         Verify that data from DB is read correctly.
@@ -136,7 +137,7 @@ class TestCcxtDbClient(hunitest.TestCase):
         actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
 
-    @pytest.mark.slow("8 seconds.")
+    # @pytest.mark.slow("8 seconds.")
     def test_read_data2(self) -> None:
         """
         Verify that data from DB is read and filtered correctly.
@@ -155,7 +156,7 @@ class TestCcxtDbClient(hunitest.TestCase):
         actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
 
-    @pytest.mark.slow("8 seconds.")
+    # @pytest.mark.slow("8 seconds.")
     def test_read_data3(self) -> None:
         """
         Verify that data from DB is read correctly without normalization.
@@ -353,7 +354,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
             expected_currency_pairs,
         )
 
-    @pytest.mark.slow
+    @pytest.mark.slow("9 seconds")
     def test3(self) -> None:
         """
         Test that all files are being read correctly without normalization.
@@ -474,6 +475,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
     hgit.is_dev_tools() or hgit.is_lime(),
     reason="lime and dev_tools doesn't have dind support",
 )
+@pytest.mark.superslow(reason="speed up in #460.")
 class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
     def setUp(self) -> None:
         """
@@ -520,7 +522,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
         hsysinte.system(cmd, suppress_output=False)
         super().tearDown()
 
-    @pytest.mark.slow("8 seconds.")
+    # @pytest.mark.slow("8 seconds.")
     def test1(self) -> None:
         """
         Test that data for provided list of full symbols is being read
@@ -549,7 +551,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
             expected_currency_pairs,
         )
 
-    @pytest.mark.slow("10 seconds.")
+    # @pytest.mark.slow("10 seconds.")
     def test2(self) -> None:
         """
         Test that all files are being read and filtered correctly.
@@ -581,7 +583,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
             expected_currency_pairs,
         )
 
-    @pytest.mark.slow("10 seconds.")
+    # @pytest.mark.slow("10 seconds.")
     def test3(self) -> None:
         """
         Test that all files are being read correctly without normalization.
@@ -612,7 +614,7 @@ class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
             expected_currency_pairs,
         )
 
-    @pytest.mark.slow("10 seconds.")
+    # @pytest.mark.slow("10 seconds.")
     def test4(self) -> None:
         """
         Test that all files are being read correctly in dict output mode.
