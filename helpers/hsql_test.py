@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import helpers.hsql_test as hsqltest
+"""
+
 import logging
 import os
 
@@ -55,7 +61,6 @@ class _TestOmsDbHelper(hunitest.TestCase):
             self.bring_down_db = False
         else:
             # Start the service.
-            cmd = []
             # TODO(gp): This information should be retrieved from oms_lib_tasks.py.
             #  We can also use the invoke command.
             self.docker_compose_file_path = os.path.join(
