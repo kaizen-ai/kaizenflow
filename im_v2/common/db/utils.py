@@ -6,7 +6,6 @@ Import as:
 import im_v2.common.db.utils as imcodbuti
 """
 import logging
-import os
 from typing import Optional
 
 import psycopg2 as psycop
@@ -18,23 +17,6 @@ import im.ib.sql_writer as imibsqwri
 import im.kibot.sql_writer as imkisqwri
 
 _LOG = logging.getLogger(__name__)
-
-# TODO(Danya): Remove this function since `dind` is implemented.
-def is_inside_im_container() -> bool:
-    """
-    Return whether we are running inside IM app.
-
-    :return: True if running inside the IM app, False otherwise
-    """
-    # TODO(*): Why not testing only STAGE?
-    condition = (
-        os.environ.get("STAGE") == "TEST"
-        and os.environ.get("POSTGRES_HOST") == "im_postgres_test"
-    ) or (
-        os.environ.get("STAGE") == "LOCAL"
-        and os.environ.get("POSTGRES_HOST") == "im_postgres_local"
-    )
-    return condition
 
 
 def get_common_create_table_query() -> str:

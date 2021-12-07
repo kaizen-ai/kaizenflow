@@ -329,7 +329,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
 
     # ################################################################################
     # TODO(gp): -> TestGitCommands1
-
+    @pytest.mark.slow("7 seconds.")
     def test_git_branch_files(self) -> None:
         # This test needs a reference to Git master branch.
         hgit.fetch_origin_master_if_needed()
@@ -463,7 +463,10 @@ class TestLibTasks1(hunitest.TestCase):
         )
         self.assert_equal(str(act), str(exp))
 
-    # TODO(gp): This test should be moved to `dev_tools`.
+    @pytest.mark.skipif(
+        not hgit.is_cmamp(),
+        reason="CmampTask #683.",
+    )
     def test_get_gh_issue_title3(self) -> None:
         _gh_login()
         issue_id = 1
@@ -695,40 +698,37 @@ class Test_build_run_command_line1(hunitest.TestCase):
         collect_only = False
         tee_to_file = False
         #
-        skipped_tests = "not slow and not superslow"
         act = hlibtask._build_run_command_line(
+            "fast_tests",
             pytest_opts,
             skip_submodules,
             coverage,
             collect_only,
             tee_to_file,
-            skipped_tests,
         )
-        exp = 'pytest -m "not slow and not superslow" .'
+        exp = 'pytest -m "not slow and not superslow" . --timeout 5'
         self.assert_equal(act, exp)
 
     def test_run_fast_tests2(self) -> None:
         """
         Coverage and collect-only.
         """
-
         pytest_opts = ""
         skip_submodules = False
         coverage = True
         collect_only = True
         tee_to_file = False
         #
-        skipped_tests = "not slow and not superslow"
         act = hlibtask._build_run_command_line(
+            "fast_tests",
             pytest_opts,
             skip_submodules,
             coverage,
             collect_only,
             tee_to_file,
-            skipped_tests,
         )
         exp = (
-            r'pytest -m "not slow and not superslow" . --cov=. --cov-branch'
+            r'pytest -m "not slow and not superslow" . --timeout 5 --cov=. --cov-branch'
             r" --cov-report term-missing --cov-report html --collect-only"
         )
         self.assert_equal(act, exp)
@@ -771,14 +771,13 @@ class Test_build_run_command_line1(hunitest.TestCase):
         collect_only = False
         tee_to_file = False
         #
-        skipped_tests = ""
         act = hlibtask._build_run_command_line(
+            "fast_tests",
             pytest_opts,
             skip_submodules,
             coverage,
             collect_only,
             tee_to_file,
-            skipped_tests,
         )
         exp = (
             "pytest Test_build_run_command_line1.test_run_fast_tests4/tmp.scratch/"
@@ -796,16 +795,15 @@ class Test_build_run_command_line1(hunitest.TestCase):
         collect_only = False
         tee_to_file = True
         #
-        skipped_tests = "not slow and not superslow"
         act = hlibtask._build_run_command_line(
+            "fast_tests",
             pytest_opts,
             skip_submodules,
             coverage,
             collect_only,
             tee_to_file,
-            skipped_tests,
         )
-        exp = 'pytest -m "not slow and not superslow" . 2>&1 | tee tmp.pytest.log'
+        exp = 'pytest -m "not slow and not superslow" . --timeout 5 2>&1 | tee tmp.pytest.fast_tests.log'
         self.assert_equal(act, exp)
 
 
@@ -954,7 +952,7 @@ class TestLibTasksRunTests1(hunitest.TestCase):
 
 # #############################################################################
 
-
+@pytest.mark.slow(reason="slow via gh actions #687.")
 class TestLibTasksGitCreatePatch1(hunitest.TestCase):
     """
     Test `git_create_patch()`.

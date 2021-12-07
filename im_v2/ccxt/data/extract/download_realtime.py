@@ -6,16 +6,11 @@ Use as:
 
 # Download OHLCV data for universe 'v03', saving only on disk:
 > python im_v2/ccxt/data/extract/download_realtime.py \
-    --db_connection 'none' \
-    --dst_dir 'test_ohlcv_rt' \
+    --end_datetime '20211204-194432' \
+    --period_length '5 minutes' \
+    --dst_dir 'test/ccxt_test' \
     --data_type 'ohlcv' \
-    --universe 'v03'
-
-# Download order book data for universe 'v03', saving only on disk:
-> python im_v2/ccxt/data/extract/download_realtime.py \
-    --db_connection 'none' \
-    --dst_dir 'test_orderbook_rt' \
-    --data_type 'orderbook' \
+    --api_keys 'API_keys.json' \
     --universe 'v03'
 
 Import as:
@@ -45,7 +40,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(Danya): Move instantiation outside, e.g. into Airflow wrapper.
-def _instantiate_exchange(
+def instantiate_exchange(
     exchange_id: str,
     ccxt_universe: Dict[str, List[str]],
     api_keys: Optional[str] = None,
@@ -88,7 +83,7 @@ def _download_data(
         pair_data = exchange.instance.download_ohlcv_data(
             start_datetime=start_datetime,
             end_datetime=end_datetime,
-            curr_symbol=pair,
+            curr_symbol=pair.replace("_", "/"),
         )
         # Assign pair and exchange columns.
         pair_data["currency_pair"] = pair
@@ -122,15 +117,13 @@ def _save_data_on_disk(
     """
     current_datetime = hdateti.get_current_time("ET")
     if data_type == "ohlcv":
-        file_name = (
-            f"{exchange.id}_{pair.replace('/', '_')}_{current_datetime}.csv.gz"
-        )
+        file_name = f"{exchange.id}_{pair}_{current_datetime}.csv.gz"
         full_path = os.path.join(dst_dir, file_name)
         pair_data.to_csv(full_path, index=False, compression="gzip")
     elif data_type == "orderbook":
         file_name = (
             f"orderbook_{exchange.id}_"
-            f"{pair.replace('/', '_')}_"
+            f"{pair}_"
             f"{hdateti.get_timestamp('ET')}.json"
         )
         full_path = os.path.join(dst_dir, file_name)
@@ -148,18 +141,18 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--start_datetime",
-        action="store",
-        required=True,
-        type=str,
-        help="Beginning of the downloaded period",
-    )
-    parser.add_argument(
         "--end_datetime",
         action="store",
         required=True,
         type=str,
         help="End of the downloaded period",
+    )
+    parser.add_argument(
+        "--period_length",
+        action="store",
+        required=True,
+        type=str,
+        help="Length of the downloaded period, e.g. '5 minutes'",
     )
     parser.add_argument(
         "--dst_dir",
@@ -174,12 +167,6 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         type=str,
         help="Type of data to load, 'ohlcv' or 'orderbook'",
-    )
-    parser.add_argument(
-        "--table_name",
-        action="store",
-        type=str,
-        help="Name of the table to upload to",
     )
     parser.add_argument(
         "--api_keys",
@@ -214,17 +201,19 @@ def _main(parser: argparse.ArgumentParser) -> None:
     exchanges = []
     for exchange_id in exchange_ids:
         exchanges.append(
-            _instantiate_exchange(exchange_id, universe["CCXT"], args.api_keys)
+            instantiate_exchange(exchange_id, universe["CCXT"], args.api_keys)
         )
+    # Construct table name.
+    table_name = f"ccxt_{args.data_type}"
     # Generate a query to remove duplicates.
     dup_query = hsql.get_remove_duplicates_query(
-        table_name=args.table_name,
+        table_name=table_name,
         id_col_name="id",
         column_names=["timestamp", "exchange_id", "currency_pair"],
     )
     # Convert timestamps.
-    start = hdateti.to_generalized_datetime(args.start_datetime)
-    end = hdateti.to_generalized_datetime(args.end_datetime)
+    end = pd.Timestamp(args.end_datetime)
+    start = end - pd.Timedelta(args.period_length)
     # Download data for specified time period.
     for exchange in exchanges:
         for pair in exchange.pairs:
@@ -236,7 +225,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             hsql.execute_insert_query(
                 connection=connection,
                 obj=pair_data,
-                table_name=args.table_name,
+                table_name=table_name,
             )
             # Drop duplicates inside the table.
             connection.cursor().execute(dup_query)

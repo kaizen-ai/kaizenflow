@@ -1517,7 +1517,6 @@ def docker_build_local_image(  # type: ignore
     :param version: version to tag the image and code with
     :param cache: use the cache
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
-    :param stage: select a specific stage for the Docker image
     :param update_poetry: run poetry lock to update the packages
     """
     _report_task()
@@ -1672,13 +1671,13 @@ def docker_release_dev_image(  # type: ignore
         qa_tests = False
     stage = "local"
     if fast_tests:
-        run_fast_tests(ctx, stage=stage)
+        run_fast_tests(ctx, stage=stage, version=version)
     if slow_tests:
-        run_slow_tests(ctx, stage=stage)
+        run_slow_tests(ctx, stage=stage, version=version)
     if superslow_tests:
-        run_superslow_tests(ctx, stage=stage)
+        run_superslow_tests(ctx, stage=stage, version=version)
     # 3) Promote the "local" image to "dev".
-    docker_tag_local_image_as_dev(ctx)
+    docker_tag_local_image_as_dev(ctx, version=version)
     # 4) Run QA tests for the (local version) of the dev image.
     if qa_tests:
         qa_test_fn = get_default_param("END_TO_END_TEST_FN")
@@ -1688,7 +1687,7 @@ def docker_release_dev_image(  # type: ignore
             raise RuntimeError(msg)
     # 5) Push the "dev" image to ECR.
     if push_to_repo:
-        docker_push_dev_image(ctx)
+        docker_push_dev_image(ctx, version=version)
     else:
         _LOG.warning(
             "Skipping pushing dev image to repo_short_name, as requested"
@@ -1844,6 +1843,84 @@ def docker_release_all(ctx, version):  # type: ignore
     _report_task()
     docker_release_dev_image(ctx, version)
     docker_release_prod_image(ctx, version)
+    _LOG.info("==> SUCCESS <==")
+
+
+def _docker_rollback_image(
+    ctx: Any,
+    base_image: str,
+    stage: str,
+    version: str
+):
+    """
+    Rollback the versioned image for a particular stage.
+
+    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
+    :param stage: select a specific stage for the Docker image
+    :param version: version to tag the image and code with
+    """
+    image_versioned_dev = get_image(base_image, stage, version)
+    latest_version = None
+    image_dev = get_image(base_image, stage, latest_version)
+    cmd = f"docker tag {image_versioned_dev} {image_dev}"
+    _run(ctx, cmd)
+
+
+@task
+def docker_rollback_dev_image(  # type: ignore
+    ctx,
+    version,
+    push_to_repo=True,
+):
+    """
+    Rollback the version of the dev image.
+
+    Phases:
+    1) Ensure that version of the image exists locally
+    2) Promote versioned image as dev image
+    3) Push dev image to the repo
+
+    :param version: version to tag the image and code with
+    :param push_to_repo: push the image to the ECR repo
+    """
+    _report_task()
+    # 1) Ensure that version of the image exists locally.
+    _docker_pull(ctx, base_image="", stage="dev", version=version)
+    # 2) Promote requested image as dev image.
+    _docker_rollback_image(ctx, base_image="", stage="dev", version=version)
+    # 3) Push the "dev" image to ECR.
+    if push_to_repo:
+        docker_push_dev_image(ctx, version=version)
+    else:
+        _LOG.warning(
+            "Skipping pushing dev image to ECR, as requested"
+        )
+    _LOG.info("==> SUCCESS <==")
+
+
+@task
+def docker_rollback_prod_image(  # type: ignore
+    ctx,
+    version,
+    push_to_repo=True,
+):
+    """
+    Rollback the version of the prod image.
+
+    Same as parameters and meaning as `docker_rollback_dev_image`.
+    """
+    _report_task()
+    # 1) Ensure that version of the image exists locally.
+    _docker_pull(ctx, base_image="", stage="prod", version=version)
+    # 2) Promote requested image as prod image.
+    _docker_rollback_image(ctx, base_image="", stage="prod", version=version)
+    # 3) Push the "prod" image to ECR.
+    if push_to_repo:
+        docker_push_prod_image(ctx, version=version)
+    else:
+        _LOG.warning(
+            "Skipping pushing prod image to ECR, as requested"
+        )
     _LOG.info("==> SUCCESS <==")
 
 
@@ -2105,6 +2182,11 @@ _COV_PYTEST_OPTS = [
     "--cov-report html",
     # "--cov-report annotate",
 ]
+_TEST_TIMEOUTS_IN_SECS = {
+    "fast_tests": 5,
+    "slow_tests": 30,
+    "superslow_tests": 60 * 60,
+}
 
 
 @task
@@ -2113,37 +2195,64 @@ def run_blank_tests(ctx, stage="dev", version=""):  # type: ignore
     (ONLY CI/CD) Test that pytest in the container works.
     """
     _report_task()
+    _ = ctx
     base_image = ""
     cmd = '"pytest -h >/dev/null"'
     docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd)
-    _docker_cmd(ctx, docker_cmd_)
+    hsysinte.system(docker_cmd_, abort_on_error=False, suppress_output=False)
+
+
+def _select_tests_to_skip(uniform_test_list_name: str) -> str:
+    """
+    Generate text for pytest specifying which tests to deselect.
+    """
+    if uniform_test_list_name == "fast_tests":
+        skipped_tests = "not slow and not superslow"
+    elif uniform_test_list_name == "slow_tests":
+        skipped_tests = "slow and not superslow"
+    elif uniform_test_list_name == "superslow_tests":
+        skipped_tests = "not slow and superslow"
+    else:
+        raise ValueError(
+            f"Invalid `uniform_test_list_name`={uniform_test_list_name}"
+        )
+    return skipped_tests
 
 
 def _build_run_command_line(
+    uniform_test_list_name: str,
     pytest_opts: str,
     skip_submodules: bool,
     coverage: bool,
     collect_only: bool,
     tee_to_file: bool,
     # Different params than the `run_*_tests()`.
-    skipped_tests: str,
 ) -> str:
     """
     Build the pytest run command.
 
-    Same params as `run_fast_tests()`.
+    :param uniform_test_list_name: "fast_tests", "slow_tests" or
+        "superslow_tests"
+    The rest of params are the same as in `run_fast_tests()`.
+
     The invariant is that we don't want to duplicate pytest options that can be
     passed by the user through `-p` (unless really necessary).
-
-    :param skipped_tests: -m option for pytest
     """
+    hdbg.dassert_in(
+        uniform_test_list_name,
+        _TEST_TIMEOUTS_IN_SECS,
+        "Invalid `uniform_test_list_name``='%s'",
+        uniform_test_list_name,
+    )
     pytest_opts = pytest_opts or "."
     #
     pytest_opts_tmp = []
-    if pytest_opts != "":
+    if pytest_opts:
         pytest_opts_tmp.append(pytest_opts)
-    if skipped_tests != "":
-        pytest_opts_tmp.insert(0, f'-m "{skipped_tests}"')
+    skipped_tests = _select_tests_to_skip(uniform_test_list_name)
+    pytest_opts_tmp.insert(0, f'-m "{skipped_tests}"')
+    timeout_in_sec = _TEST_TIMEOUTS_IN_SECS[uniform_test_list_name]
+    pytest_opts_tmp.append(f"--timeout {timeout_in_sec}")
     if skip_submodules:
         submodule_paths = hgit.get_submodule_paths()
         _LOG.warning(
@@ -2164,12 +2273,11 @@ def _build_run_command_line(
     pytest_opts = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
     cmd = f"pytest {pytest_opts}"
     if tee_to_file:
-        cmd += " 2>&1 | tee tmp.pytest.log"
+        cmd += f" 2>&1 | tee tmp.pytest.{uniform_test_list_name}.log"
     return cmd
 
 
 def _run_test_cmd(
-    ctx: Any,
     stage: str,
     version: str,
     cmd: str,
@@ -2177,15 +2285,19 @@ def _run_test_cmd(
     collect_only: bool,
     start_coverage_script: bool,
 ) -> None:
+    """
+    Same params as `run_fast_tests()`.
+    """
     if collect_only:
         # Clean files.
-        _run(ctx, "rm -rf ./.coverage*")
+        hsysinte.system("rm -rf ./.coverage*")
     # Run.
     base_image = ""
     # We need to add some " to pass the string as it is to the container.
     cmd = f"'{cmd}'"
     docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd)
-    _docker_cmd(ctx, docker_cmd_)
+    _LOG.info("cmd=%s", docker_cmd_)
+    hsysinte.system(docker_cmd_, abort_on_error=True, suppress_output=True)
     # Print message about coverage.
     if coverage:
         msg = """
@@ -2208,30 +2320,32 @@ def _run_test_cmd(
 
 
 def _run_tests(
-    ctx: Any,
     stage: str,
+    test_list_name: str,
     version: str,
     pytest_opts: str,
     skip_submodules: bool,
     coverage: bool,
     collect_only: bool,
     tee_to_file: bool,
-    skipped_tests: str,
     *,
     start_coverage_script: bool = True,
 ) -> None:
+    """
+    Same params as `run_fast_tests()`.
+    """
     # Build the command line.
     cmd = _build_run_command_line(
+        test_list_name,
         pytest_opts,
         skip_submodules,
         coverage,
         collect_only,
         tee_to_file,
-        skipped_tests,
     )
     # Execute the command line.
     _run_test_cmd(
-        ctx, stage, version, cmd, coverage, collect_only, start_coverage_script
+        stage, version, cmd, coverage, collect_only, start_coverage_script
     )
 
 
@@ -2258,17 +2372,16 @@ def run_fast_tests(  # type: ignore
     :param tee_to_file: save output of pytest in `tmp.pytest.log`
     """
     _report_task()
-    skipped_tests = "not slow and not superslow"
+    _ = ctx
     _run_tests(
-        ctx,
         stage,
+        "fast_tests",
         version,
         pytest_opts,
         skip_submodules,
         coverage,
         collect_only,
         tee_to_file,
-        skipped_tests,
     )
 
 
@@ -2289,17 +2402,16 @@ def run_slow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
-    skipped_tests = "slow and not superslow"
+    _ = ctx
     _run_tests(
-        ctx,
         stage,
+        "slow_tests",
         version,
         pytest_opts,
         skip_submodules,
         coverage,
         collect_only,
         tee_to_file,
-        skipped_tests,
     )
 
 
@@ -2320,17 +2432,16 @@ def run_superslow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
-    skipped_tests = "not slow and superslow"
+    _ = ctx
     _run_tests(
-        ctx,
         stage,
+        "superslow_tests",
         version,
         pytest_opts,
         skip_submodules,
         coverage,
         collect_only,
         tee_to_file,
-        skipped_tests,
     )
 
 
@@ -2351,8 +2462,8 @@ def run_fast_slow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
-    skipped_tests = "not superslow"
-    _run_tests(
+    _ = ctx
+    run_fast_tests(
         ctx,
         stage,
         version,
@@ -2361,7 +2472,16 @@ def run_fast_slow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
-        skipped_tests,
+    )
+    run_slow_tests(
+        ctx,
+        stage,
+        version,
+        pytest_opts,
+        skip_submodules,
+        coverage,
+        collect_only,
+        tee_to_file,
     )
 
 

@@ -1126,7 +1126,7 @@ class Test__compute_ipca_step(hunitest.TestCase):
         return txt
 
 
-@pytest.mark.slow
+@pytest.mark.superslow
 class Test_gallery_signal_processing1(hunitest.TestCase):
     def test_notebook1(self) -> None:
         file_name = os.path.join(
