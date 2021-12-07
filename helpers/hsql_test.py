@@ -16,7 +16,7 @@ import helpers.unit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
-class _TestOmsDbHelper(hunitest.TestCase):
+class TestOmsDbHelper(hunitest.TestCase):
     """
     This class allows to test code that interacts with DB.
 
