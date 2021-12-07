@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 """
-Extract RT data from csv to daily PQ files.
+Convert data from csv to daily PQ files.
 
 # Example:
-> python im_v2/common/data/transform/extract_data_from_db.py \
-    --daily_pq_path im_v2/common/data/transform/test_dir
+> python im_v2/common/data/transform/csv_to_pq.py \
+    --csv-dir test/ccxt_test \
+    --pq-dir test_pq
 
 Import as:
 
@@ -14,10 +15,12 @@ import im_v2.common.data.transform.csv_to_pq as imvcdtctpq
 import argparse
 import logging
 import os
+import re
 
 import helpers.csv_helpers as hcsv
 import helpers.dbg as hdbg
 import helpers.git as hgit
+import helpers.io_ as hio
 import helpers.parser as hparser
 
 _LOG = logging.getLogger(__name__)
@@ -39,7 +42,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         type=str,
         required=True,
-        help="Location of dir with PQ files",
+        help="Location of dir to convert to PQ files",
     )
     parser.add_argument(
         "--header",
@@ -51,7 +54,7 @@ def _parse() -> argparse.ArgumentParser:
         "--normalizer",
         action="store",
         type=str,
-        help="function to apply to apply to df before writing ot PQ",
+        help="function to apply to df before writing ot PQ",
     )
     hparser.add_verbosity_arg(parser)
     return parser
@@ -69,20 +72,22 @@ def _main(parser: argparse.ArgumentParser) -> None:
         norm = eval(args.normalizer)
     else:
         norm = args.normalizer
-    filenames = []
-    for fn in os.listdir(csv_dir):
-        if fn.endswith(".csv"):
-            filenames.append((fn[:-4], ".csv"))
-        if fn.endswith(".csv.gz"):
-            filenames.append((fn[:-7], ".csv.gz"))
-    if not filenames:
+    ext = (".csv", ".csv.gz")
+    csv_files = [fn for fn in os.listdir(csv_dir) if fn.endswith(ext)]
+    if csv_files:
+        for f in csv_files:
+            csv_full_path = os.path.join(csv_dir, f)
+            date = re.search(r"\d{4}-\d{2}-\d{2}", f).group(0).replace("-", "")
+            date_dir = f"date={date}"
+            hio.create_dir(os.path.join(pq_dir, date_dir), True)
+            filename = f[:-4] if f.endswith(".csv") else f[:-7]  # for .csv.gz
+            pq_file = f"{filename}.parquet"
+            pq_full_path = os.path.join(pq_dir, date_dir, pq_file)
+            hcsv.convert_csv_to_pq(
+                csv_full_path, pq_full_path, header=args.header, normalizer=norm
+            )
+    else:
         hdbg.dassert("No .csv files inside '%s'", csv_dir)
-    for fil in filenames:
-        csv_full_path = os.path.join(csv_dir, "".join(fil))
-        pq_full_path = os.path.join(pq_dir, "".join((fil[0], ".parquet")))
-        hcsv.convert_csv_to_pq(
-            csv_full_path, pq_full_path, header=args.header, normalizer=norm
-        )
 
 
 if __name__ == "__main__":
