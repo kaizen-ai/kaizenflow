@@ -228,7 +228,7 @@ class CcxtFileSystemClient(AbstractCcxtClient):
         Load CCXT data from local or S3 filesystem.
 
         :param: root_dir: either a local root path (e.g., "/app/im") or
-            an S3 root path ("s3://alphamatic-data/data") to the CCXT data
+            an S3 root path (e.g., "s3://alphamatic-data/data") to CCXT data
         :param: aws_profile: AWS profile name (e.g., "am")
         """
         super().__init__(data_type=data_type)
