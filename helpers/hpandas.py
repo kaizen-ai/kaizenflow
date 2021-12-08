@@ -186,7 +186,7 @@ def reindex_on_unix_epoch(df: pd.DataFrame, in_col_name: str) -> pd.DataFrame:
     return df
 
 
-def get_df_signature(df: "pd.DataFrame", num_rows: int = 3) -> str:
+def get_df_signature(df: pd.DataFrame, num_rows: int = 3) -> str:
     hdbg.dassert_isinstance(df, pd.DataFrame)
     txt: List[str] = []
     txt.append("df.shape=%s" % str(df.shape))

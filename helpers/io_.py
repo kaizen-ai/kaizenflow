@@ -20,8 +20,6 @@ import uuid
 from typing import Any, List, Optional, cast
 
 import helpers.dbg as hdbg
-import helpers.hpandas as hpandas
-import helpers.hparquet as hparque
 import helpers.printing as hprint
 
 # TODO(gp): Enable this after the linter has been updated.
@@ -424,6 +422,9 @@ def from_file(
         # Check if user provided correct file name.
         if not file_name.endswith((".pq", ".parquet")):
             _LOG.warning("The provided file extension is not for a pq file.")
+        # TODO(Nikola): Temporary workaround. Definitely revisit.
+        import helpers.hparquet as hparque
+        import helpers.hpandas as hpandas
         # Open pq file.
         df = hparque.from_parquet(file_name)
         data = hpandas.get_df_signature(df)

@@ -66,9 +66,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Extraction timespan.
     start_date = args.start_date
     end_date = args.end_date
-    # TODO(Nikola): Custom exceptions?
-    if start_date > end_date:
-        raise ValueError("Start date can not be greater than end date!")
+    hdbg.dassert_lt(end_date, start_date)
     timespan = pd.date_range(start_date, end_date)
     if len(timespan) < 2:
         raise ValueError("Date range must be at least two days!")
@@ -76,7 +74,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
     daily_pq_path = args.daily_pq_path
     hdbg.dassert_exists(daily_pq_path)
     ccxt_db_client = imvcdclcl.CcxtDbClient(
-        # TODO(Nikola): Is connection eventually closed?
         "ohlcv",
         hsql.get_connection_from_env_vars(),
     )
