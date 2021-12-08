@@ -195,7 +195,7 @@ def convert_csv_to_pq(
     pq_path: str,
     *,
     normalizer: Optional[Callable] = None,
-    header: Optional[str] = None,
+    header: Optional[str] = 0,
     compression: Optional[str] = "gzip",
 ) -> None:
     """
