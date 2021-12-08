@@ -192,12 +192,13 @@ def _to_multi_line_cmd(docker_cmd_: List[str]) -> str:
 use_one_line_cmd = False
 
 
-def _run(ctx: Any, cmd: str, *args: Any, **kwargs: Any) -> None:
+def _run(ctx: Any, cmd: str, *args: Any, **ctx_run_kwargs: Any) -> int:
     _LOG.debug("cmd=%s", cmd)
     if use_one_line_cmd:
         cmd = _to_single_line_cmd(cmd)
     _LOG.debug("cmd=%s", cmd)
-    ctx.run(cmd, *args, **kwargs)
+    result = ctx.run(cmd, *args, **ctx_run_kwargs)
+    return result.return_code
 
 
 # TODO(gp): We should factor out the meaning of the params in a string and add it
@@ -1363,15 +1364,16 @@ def _get_docker_cmd(
 def _docker_cmd(
     ctx: Any,
     docker_cmd_: str,
-    **kwargs: Any,
-) -> None:
+    **ctx_run_kwargs: Any,
+) -> int:
     """
     Execute a docker command printing the command.
 
     :param kwargs: kwargs for `ctx.run`
     """
     _LOG.debug("cmd=%s", docker_cmd_)
-    _run(ctx, docker_cmd_, pty=True, **kwargs)
+    rc = _run(ctx, docker_cmd_, pty=True, **ctx_run_kwargs)
+    return rc
 
 
 @task
@@ -2279,8 +2281,8 @@ def _run_test_cmd(
     coverage: bool,
     collect_only: bool,
     start_coverage_script: bool,
-    **kwargs: Any,
-) -> None:
+    **ctx_run_kwargs: Any,
+) -> int:
     """
     Same params as `run_fast_tests()`.
     """
@@ -2293,7 +2295,7 @@ def _run_test_cmd(
     cmd = f"'{cmd}'"
     docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd)
     _LOG.info("cmd=%s", docker_cmd_)
-    _docker_cmd(ctx, docker_cmd_, **kwargs)
+    rc = _docker_cmd(ctx, docker_cmd_, **ctx_run_kwargs)
     # Print message about coverage.
     if coverage:
         msg = """
@@ -2313,6 +2315,7 @@ def _run_test_cmd(
             script_name = "./tmp.coverage.sh"
             hsysinte.create_executable_script(script_name, script_txt)
             hsysinte.system(script_name)
+    return rc
 
 
 def _run_tests(
@@ -2327,8 +2330,8 @@ def _run_tests(
     tee_to_file: bool,
     *,
     start_coverage_script: bool = True,
-    **kwargs: Any,
-) -> None:
+    **ctx_run_kwargs: Any,
+) -> int:
     """
     Same params as `run_fast_tests()`.
     """
@@ -2342,7 +2345,7 @@ def _run_tests(
         tee_to_file,
     )
     # Execute the command line.
-    _run_test_cmd(
+    rc = _run_test_cmd(
         ctx,
         stage,
         version,
@@ -2350,13 +2353,14 @@ def _run_tests(
         coverage,
         collect_only,
         start_coverage_script,
-        **kwargs,
+        **ctx_run_kwargs,
     )
+    return rc
 
 
 # TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code.
 @task
-def run_fast_tests(  # type: ignore
+def run_fast_tests(  # type: ignore # due to https://github.com/pyinvoke/invoke/issues/357.
     ctx,
     stage="dev",
     version="",
@@ -2379,7 +2383,7 @@ def run_fast_tests(  # type: ignore
     :param kwargs: kwargs for `ctx.run`
     """
     _report_task()
-    _run_tests(
+    rc = _run_tests(
         ctx,
         stage,
         "fast_tests",
@@ -2391,6 +2395,7 @@ def run_fast_tests(  # type: ignore
         tee_to_file,
         **kwargs,
     )
+    return rc
 
 
 @task
@@ -2410,7 +2415,7 @@ def run_slow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
-    _run_tests(
+    rc = _run_tests(
         ctx,
         stage,
         "slow_tests",
@@ -2421,6 +2426,7 @@ def run_slow_tests(  # type: ignore
         collect_only,
         tee_to_file,
     )
+    return rc
 
 
 @task
@@ -2440,7 +2446,7 @@ def run_superslow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
-    _run_tests(
+    rc = _run_tests(
         ctx,
         stage,
         "superslow_tests",
@@ -2451,6 +2457,7 @@ def run_superslow_tests(  # type: ignore
         collect_only,
         tee_to_file,
     )
+    return rc
 
 
 @task
@@ -2471,7 +2478,7 @@ def run_fast_slow_tests(  # type: ignore
     """
     _report_task()
     # Run fast tests but do not fail on error.
-    run_fast_tests(
+    fast_test_rc = run_fast_tests(
         ctx,
         stage,
         version,
@@ -2482,8 +2489,10 @@ def run_fast_slow_tests(  # type: ignore
         tee_to_file,
         warn=True,
     )
+    if fast_test_rc != 0:
+        _LOG.error("Fast tests failed")
     # Run slow tests.
-    run_slow_tests(
+    slow_test_rc = run_slow_tests(
         ctx,
         stage,
         version,
@@ -2493,6 +2502,12 @@ def run_fast_slow_tests(  # type: ignore
         collect_only,
         tee_to_file,
     )
+    if slow_test_rc != 0:
+        _LOG.error("Slow tests failed")
+    if fast_test_rc != 0 or slow_test_rc != 0:
+        _LOG.error("Fast / slow tests failed")
+        raise RuntimeError("Fast / slow tests failed")
+    return fast_test_rc, slow_test_rc
 
 
 # #############################################################################
