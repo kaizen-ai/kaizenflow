@@ -16,8 +16,8 @@ class Test_s3_get_credentials1(hunitest.TestCase):
 
 class Test_s3_functions1(hunitest.TestCase):
     def test_extract_bucket_from_path1(self) -> None:
-        path = (
-            "s3://alphamatic-data/tmp/TestCachingOnS3.test_with_caching1/joblib"
+        path = os.path.join(
+            hs3.get_path(), "tmp/TestCachingOnS3.test_with_caching1/joblib"
         )
         bucket, path = hs3.split_path(path)
         self.assert_equal(bucket, "alphamatic-data")
