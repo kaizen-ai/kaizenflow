@@ -15,16 +15,10 @@ import im_v2.common.data.transform.csv_to_pq as imvcdtctpq
 import argparse
 import logging
 import os
-import re
-
-import pandas as pd
 
 import helpers.csv_helpers as hcsv
 import helpers.dbg as hdbg
-import helpers.git as hgit
-import helpers.io_ as hio
 import helpers.parser as hparser
-import helpers.hparquet as hparque
 
 _LOG = logging.getLogger(__name__)
 
@@ -59,22 +53,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hdbg.dassert(csv_files != [], "No .csv files inside '%s'", args.src_dir)
     for f in csv_files:
         csv_full_path = os.path.join(args.src_dir, f)
-
-#        df = pd.read_csv(csv_full_path)
-#        hparque.save_daily_df_as_pq(df, args.dst_dir)
-
-#        date = re.search(r"\d{4}-\d{2}-\d{2}", f).group(0).replace("-", "")
-#        date_dir = f"date={date}"
-#        hio.create_dir(os.path.join(args.dst_dir, date_dir), True)
-#        filename = f[:-4] if f.endswith(".csv") else f[:-7]  # for .csv.gz
-#        pq_file = f"{filename}.parquet"
-#        pq_full_path = os.path.join(args.dst_dir,"by_date", date_dir, pq_file)
-#        hcsv.convert_csv_to_pq(csv_full_path, pq_full_path)
-
         filename = f[:-4] if f.endswith(".csv") else f[:-7]  # for .csv.gz
-        pq_file = f"{filename}.parquet"
-        pq_full_path = os.path.join(args.dst_dir, filename)
+        pq_full_path = os.path.join(args.dst_dir, f"{filename}.parquet")
         hcsv.convert_csv_to_pq(csv_full_path, pq_full_path)
+
 
 if __name__ == "__main__":
     _main(_parse())
