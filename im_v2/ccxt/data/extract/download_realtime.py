@@ -24,6 +24,7 @@ import argparse
 import collections
 import logging
 import os
+import time
 from typing import Any, Dict, List, NamedTuple, Optional, Union
 
 import pandas as pd
@@ -40,7 +41,7 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(Danya): Replace with an `env` file (CMTask585).
 _DB_CREDENTIALS = {
-    "host": "im_postgres_local",
+    "host": "172.30.2.212",
     "dbname": "im_postgres_db_local",
     "port": 5432,
     "user": "aljsdalsd",
@@ -238,6 +239,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             )
             # Drop duplicates inside the table.
             connection.cursor().execute(dup_query)
+            time.sleep(2)
 
 
 if __name__ == "__main__":
