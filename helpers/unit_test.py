@@ -388,15 +388,10 @@ def get_dir_signature(
         txt.append("len(file_names)=%s" % len(file_names))
         txt.append("file_names=%s" % ", ".join(file_names))
         for file_name in file_names:
-            types = {}
-            if file_name.endswith((".gz", ".gzip")):
-                types["use_gzip"] = True
-            elif file_name.endswith((".pq", ".parquet")):
-                types["use_pq"] = True
             _LOG.debug("file_name=%s", file_name)
             txt.append("# " + file_name)
             # Read file.
-            txt_tmp = hio.from_file(file_name, **types)
+            txt_tmp = hio.from_file(file_name)
             # This seems unstable on different systems.
             # txt.append("num_chars=%s" % len(txt_tmp))
             txt_tmp = txt_tmp.split("\n")
@@ -1245,7 +1240,7 @@ class TestCase(unittest.TestCase):
             _LOG.debug("# Update golden outcomes")
             # Determine whether outcome needs to be updated.
             if file_exists:
-                expected = hio.from_file(file_name, use_gzip=use_gzip)
+                expected = hio.from_file(file_name)
                 is_equal = expected == actual
                 if not is_equal:
                     outcome_updated = True
@@ -1262,7 +1257,7 @@ class TestCase(unittest.TestCase):
             if file_exists:
                 # Golden outcome is available: check the actual outcome against
                 # the golden outcome.
-                expected = hio.from_file(file_name, use_gzip=use_gzip)
+                expected = hio.from_file(file_name)
                 test_name = self._get_test_name()
                 is_equal = _assert_equal(
                     actual,

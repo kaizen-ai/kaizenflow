@@ -391,37 +391,23 @@ def _raise_file_decode_error(error: Exception, file_name: str) -> None:
 
 def from_file(
     file_name: str,
-    use_gzip: bool = False,
-    use_pq: bool = False,
     encoding: Optional[Any] = None,
 ) -> str:
     """
     Read contents of a file as string.
 
-    Use `use_gzip` or `use_pq` flag to load a compressed file with correct extension.
-
     :param file_name: path to .txt,.gz or .pq file
-    :param use_gzip: whether to decompress the archived file
-    :param use_pq: transform pq to csv
     :param encoding: encoding to use when reading the string
     :return: contents of file as string
     """
-    if use_pq and use_gzip:
-        raise ValueError("Only pq or gzip can be used. Not both!")
     hdbg.dassert_ne(file_name, "")
     _dassert_is_valid_file_name(file_name)
     hdbg.dassert_exists(file_name)
     data: str = ""
-    if use_gzip:
-        # Check if user provided correct file name.
-        if not file_name.endswith((".gz", ".gzip")):
-            _LOG.warning("The provided file extension is not for a gzip file.")
+    if file_name.endswith((".gz", ".gzip")):
         # Open gzipped file.
         f = gzip.open(file_name, "rt", encoding=encoding)
-    elif use_pq:
-        # Check if user provided correct file name.
-        if not file_name.endswith((".pq", ".parquet")):
-            _LOG.warning("The provided file extension is not for a pq file.")
+    elif file_name.endswith((".pq", ".parquet")):
         # TODO(Nikola): Temporary workaround. Definitely revisit.
         import helpers.hparquet as hparque
         import helpers.hpandas as hpandas

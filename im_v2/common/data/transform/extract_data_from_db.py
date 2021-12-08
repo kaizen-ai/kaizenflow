@@ -61,17 +61,19 @@ def _parse() -> argparse.ArgumentParser:
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
+    """
+    Standard main part of the script that is parsing provided arguments.
+    Timespan provided via start and end date, can not start and end on the
+    same day. Start date is included in timespan, while end date is excluded.
+    """
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Extraction timespan.
     start_date = args.start_date
     end_date = args.end_date
-    # hdbg.dassert_lt(end_date, start_date)
-    if start_date > end_date:
-        raise ValueError("Start date can not be greater than end date!")
+    hdbg.dassert_lt(start_date, end_date)
     timespan = pd.date_range(start_date, end_date)
-    if len(timespan) < 2:
-        raise ValueError("Date range must be at least two days!")
+    hdbg.dassert_lt(2, len(timespan))
     # Location of daily PQ files.
     daily_pq_path = args.daily_pq_path
     hdbg.dassert_exists(daily_pq_path)
