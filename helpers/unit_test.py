@@ -308,19 +308,6 @@ def get_random_df(
     return df
 
 
-def get_df_signature(df: "pd.DataFrame", num_rows: int = 3) -> str:
-    hdbg.dassert_isinstance(df, pd.DataFrame)
-    txt: List[str] = []
-    txt.append("df.shape=%s" % str(df.shape))
-    with pd.option_context(
-        "display.max_colwidth", int(1e6), "display.max_columns", None
-    ):
-        txt.append("df.head=\n%s" % df.head(num_rows))
-        txt.append("df.tail=\n%s" % df.tail(num_rows))
-    txt = "\n".join(txt)
-    return txt
-
-
 def compare_df(df1: pd.DataFrame, df2: pd.DataFrame) -> None:
     """
     Compare two dfs including their metadata.
@@ -401,10 +388,15 @@ def get_dir_signature(
         txt.append("len(file_names)=%s" % len(file_names))
         txt.append("file_names=%s" % ", ".join(file_names))
         for file_name in file_names:
+            types = {}
+            if file_name.endswith((".gz", ".gzip")):
+                types["use_gzip"] = True
+            elif file_name.endswith((".pq", ".parquet")):
+                types["use_pq"] = True
             _LOG.debug("file_name=%s", file_name)
             txt.append("# " + file_name)
             # Read file.
-            txt_tmp = hio.from_file(file_name)
+            txt_tmp = hio.from_file(file_name, **types)
             # This seems unstable on different systems.
             # txt.append("num_chars=%s" % len(txt_tmp))
             txt_tmp = txt_tmp.split("\n")

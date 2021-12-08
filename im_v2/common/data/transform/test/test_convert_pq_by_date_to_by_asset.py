@@ -13,7 +13,6 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(Nikola): Add one test for the command line and other tests testing directly _run
 #  to get coverage.
-# TODO(Nikola): We want to share code among the tests, instead of copy-paste.
 
 class TestPqByDateToByAsset1(hunitest.TestCase):
 
@@ -51,7 +50,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         cmd = " ".join(cmd)
         hsysinte.system(cmd)
         # Check directory structure.
-        include_file_content = False
+        include_file_content = True
         by_date_signature = hunitest.get_dir_signature(
             by_date_dir, include_file_content
         )
@@ -64,18 +63,6 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         )
         act.append("# by_asset=")
         act.append(by_asset_signature)
-        # Check parquet files content.
-        # TODO(Nikola): Let's generalize get_dir_signature to report a snippet
-        #  of PQ files.
-        # for signature in signatures:
-        #     if signature.endswith(".parquet") or signature.endswith(".pq"):
-        #         df = hparque.from_parquet(signature)
-        #         num_rows = 12
-        #         df_signature = hunitest.get_df_signature(df, num_rows)
-        #         self.check_string(
-        #             df_signature, tag=signature.split("tmp.scratch/")[-1]
-        #         )
-
         act = "\n".join(act)
         purify_text = True
         self.check_string(act, purify_text=purify_text)

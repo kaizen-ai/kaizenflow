@@ -20,6 +20,8 @@ import uuid
 from typing import Any, List, Optional, cast
 
 import helpers.dbg as hdbg
+import helpers.hpandas as hpandas
+import helpers.hparquet as hparque
 import helpers.printing as hprint
 
 # TODO(gp): Enable this after the linter has been updated.
@@ -390,27 +392,43 @@ def _raise_file_decode_error(error: Exception, file_name: str) -> None:
 
 
 def from_file(
-    file_name: str, use_gzip: bool = False, encoding: Optional[Any] = None
+    file_name: str,
+    use_gzip: bool = False,
+    use_pq: bool = False,
+    encoding: Optional[Any] = None,
 ) -> str:
     """
     Read contents of a file as string.
 
-    Use `use_gzip` flag to load a compressed file with correct extenstion.
+    Use `use_gzip` or `use_pq` flag to load a compressed file with correct extension.
 
-    :param file_name: path to .txt or .gz file
+    :param file_name: path to .txt,.gz or .pq file
     :param use_gzip: whether to decompress the archived file
+    :param use_pq: transform pq to csv
     :param encoding: encoding to use when reading the string
     :return: contents of file as string
     """
+    if use_pq and use_gzip:
+        raise ValueError("Only pq or gzip can be used. Not both!")
     hdbg.dassert_ne(file_name, "")
     _dassert_is_valid_file_name(file_name)
     hdbg.dassert_exists(file_name)
+    data: str = ""
     if use_gzip:
         # Check if user provided correct file name.
-        if not file_name.endswith(("gz", "gzip")):
+        if not file_name.endswith((".gz", ".gzip")):
             _LOG.warning("The provided file extension is not for a gzip file.")
         # Open gzipped file.
         f = gzip.open(file_name, "rt", encoding=encoding)
+    elif use_pq:
+        # Check if user provided correct file name.
+        if not file_name.endswith((".pq", ".parquet")):
+            _LOG.warning("The provided file extension is not for a pq file.")
+        # Open pq file.
+        df = hparque.from_parquet(file_name)
+        data = hpandas.get_df_signature(df)
+        # Already a proper string.
+        return data
     else:
         # Open regular text file.
         f = open(  # pylint: disable=consider-using-with
@@ -418,7 +436,7 @@ def from_file(
         )
     try:
         # Read data.
-        data: str = f.read()
+        data = f.read()
     except UnicodeDecodeError as e:
         # Raise unicode decode error message.
         _raise_file_decode_error(e, file_name)

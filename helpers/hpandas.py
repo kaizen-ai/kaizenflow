@@ -184,3 +184,16 @@ def reindex_on_unix_epoch(df: pd.DataFrame, in_col_name: str) -> pd.DataFrame:
     df.set_index(temp_col_name, inplace=True, drop=True)
     df.index.name = None
     return df
+
+
+def get_df_signature(df: "pd.DataFrame", num_rows: int = 3) -> str:
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    txt: List[str] = []
+    txt.append("df.shape=%s" % str(df.shape))
+    with pd.option_context(
+            "display.max_colwidth", int(1e6), "display.max_columns", None
+    ):
+        txt.append("df.head=\n%s" % df.head(num_rows))
+        txt.append("df.tail=\n%s" % df.tail(num_rows))
+    txt = "\n".join(txt)
+    return txt
