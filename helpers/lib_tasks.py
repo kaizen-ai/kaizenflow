@@ -1363,12 +1363,15 @@ def _get_docker_cmd(
 def _docker_cmd(
     ctx: Any,
     docker_cmd_: str,
+    **kwargs: Any,
 ) -> None:
     """
     Execute a docker command printing the command.
+
+    :param kwargs: kwargs for `ctx.run`
     """
     _LOG.debug("cmd=%s", docker_cmd_)
-    _run(ctx, docker_cmd_, pty=True)
+    _run(ctx, docker_cmd_, pty=True, **kwargs)
 
 
 @task
@@ -1846,12 +1849,7 @@ def docker_release_all(ctx, version):  # type: ignore
     _LOG.info("==> SUCCESS <==")
 
 
-def _docker_rollback_image(
-    ctx: Any,
-    base_image: str,
-    stage: str,
-    version: str
-):
+def _docker_rollback_image(ctx: Any, base_image: str, stage: str, version: str):
     """
     Rollback the versioned image for a particular stage.
 
@@ -1892,9 +1890,7 @@ def docker_rollback_dev_image(  # type: ignore
     if push_to_repo:
         docker_push_dev_image(ctx, version=version)
     else:
-        _LOG.warning(
-            "Skipping pushing dev image to ECR, as requested"
-        )
+        _LOG.warning("Skipping pushing dev image to ECR, as requested")
     _LOG.info("==> SUCCESS <==")
 
 
@@ -1918,9 +1914,7 @@ def docker_rollback_prod_image(  # type: ignore
     if push_to_repo:
         docker_push_prod_image(ctx, version=version)
     else:
-        _LOG.warning(
-            "Skipping pushing prod image to ECR, as requested"
-        )
+        _LOG.warning("Skipping pushing prod image to ECR, as requested")
     _LOG.info("==> SUCCESS <==")
 
 
@@ -2278,26 +2272,28 @@ def _build_run_command_line(
 
 
 def _run_test_cmd(
+    ctx: Any,
     stage: str,
     version: str,
     cmd: str,
     coverage: bool,
     collect_only: bool,
     start_coverage_script: bool,
+    **kwargs: Any,
 ) -> None:
     """
     Same params as `run_fast_tests()`.
     """
     if collect_only:
         # Clean files.
-        hsysinte.system("rm -rf ./.coverage*")
+        _run(ctx, "rm -rf ./.coverage*")
     # Run.
     base_image = ""
     # We need to add some " to pass the string as it is to the container.
     cmd = f"'{cmd}'"
     docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd)
     _LOG.info("cmd=%s", docker_cmd_)
-    hsysinte.system(docker_cmd_, abort_on_error=True, suppress_output=True)
+    _docker_cmd(ctx, docker_cmd_, **kwargs)
     # Print message about coverage.
     if coverage:
         msg = """
@@ -2320,6 +2316,7 @@ def _run_test_cmd(
 
 
 def _run_tests(
+    ctx: Any,
     stage: str,
     test_list_name: str,
     version: str,
@@ -2330,6 +2327,7 @@ def _run_tests(
     tee_to_file: bool,
     *,
     start_coverage_script: bool = True,
+    **kwargs: Any,
 ) -> None:
     """
     Same params as `run_fast_tests()`.
@@ -2345,7 +2343,14 @@ def _run_tests(
     )
     # Execute the command line.
     _run_test_cmd(
-        stage, version, cmd, coverage, collect_only, start_coverage_script
+        ctx,
+        stage,
+        version,
+        cmd,
+        coverage,
+        collect_only,
+        start_coverage_script,
+        **kwargs,
     )
 
 
@@ -2360,6 +2365,7 @@ def run_fast_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    **kwargs,
 ):
     """
     Run fast tests.
@@ -2370,10 +2376,11 @@ def run_fast_tests(  # type: ignore
     :param coverage: enable coverage computation
     :param collect_only: do not run tests but show what will be executed
     :param tee_to_file: save output of pytest in `tmp.pytest.log`
+    :param kwargs: kwargs for `ctx.run`
     """
     _report_task()
-    _ = ctx
     _run_tests(
+        ctx,
         stage,
         "fast_tests",
         version,
@@ -2382,6 +2389,7 @@ def run_fast_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
+        **kwargs,
     )
 
 
@@ -2402,8 +2410,8 @@ def run_slow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
-    _ = ctx
     _run_tests(
+        ctx,
         stage,
         "slow_tests",
         version,
@@ -2432,8 +2440,8 @@ def run_superslow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
-    _ = ctx
     _run_tests(
+        ctx,
         stage,
         "superslow_tests",
         version,
@@ -2457,12 +2465,12 @@ def run_fast_slow_tests(  # type: ignore
     tee_to_file=False,
 ):
     """
-    Run fast and slow tests.
+    Run fast and slow tests independently.
 
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
-    _ = ctx
+    # Run fast tests but do not fail on error.
     run_fast_tests(
         ctx,
         stage,
@@ -2472,7 +2480,9 @@ def run_fast_slow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
+        warn=True,
     )
+    # Run slow tests.
     run_slow_tests(
         ctx,
         stage,

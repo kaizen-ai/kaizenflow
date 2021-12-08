@@ -24,6 +24,7 @@ import argparse
 import collections
 import logging
 import os
+import time
 from typing import Any, Dict, List, NamedTuple, Optional, Union
 
 import pandas as pd
@@ -37,6 +38,15 @@ import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import im_v2.ccxt.universe.universe as imvccunun
 
 _LOG = logging.getLogger(__name__)
+
+# TODO(Danya): Replace with an `env` file (CMTask585).
+_DB_CREDENTIALS = {
+    "host": "172.30.2.212",
+    "dbname": "im_postgres_db_local",
+    "port": 5432,
+    "user": "aljsdalsd",
+    "password": "alsdkqoen",
+}
 
 
 # TODO(Danya): Move instantiation outside, e.g. into Airflow wrapper.
@@ -193,7 +203,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Create the directory.
     hio.create_dir(args.dst_dir, incremental=args.incremental)
     # Connect to database.
-    connection = hsql.get_connection_from_env_vars()
+    connection = hsql.get_connection(**_DB_CREDENTIALS)
     # Load universe.
     universe = imvccunun.get_trade_universe(args.universe)
     exchange_ids = universe["CCXT"].keys()
@@ -229,6 +239,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
             )
             # Drop duplicates inside the table.
             connection.cursor().execute(dup_query)
+            # Sleep to prevent interruption by exchanges' API.
+            time.sleep(2)
 
 
 if __name__ == "__main__":
