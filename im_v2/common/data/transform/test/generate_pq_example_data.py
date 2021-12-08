@@ -181,7 +181,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Generation timespan.
     start_date = args.start_date
     end_date = args.end_date
-    hdbg.dassert_lt(end_date, start_date)
+    # hdbg.dassert_lt(end_date, start_date)
+    if start_date > end_date:
+        raise ValueError("Start date can not be greater than end date!")
     assets = args.assets
     assets = assets.split(",")
     dst_dir = args.dst_dir

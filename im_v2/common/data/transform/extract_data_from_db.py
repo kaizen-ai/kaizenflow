@@ -66,7 +66,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Extraction timespan.
     start_date = args.start_date
     end_date = args.end_date
-    hdbg.dassert_lt(end_date, start_date)
+    # hdbg.dassert_lt(end_date, start_date)
+    if start_date > end_date:
+        raise ValueError("Start date can not be greater than end date!")
     timespan = pd.date_range(start_date, end_date)
     if len(timespan) < 2:
         raise ValueError("Date range must be at least two days!")
