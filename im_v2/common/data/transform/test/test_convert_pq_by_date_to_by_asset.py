@@ -1,15 +1,9 @@
-import logging
 import os
 
 import helpers.git as hgit
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
 
-_LOG = logging.getLogger(__name__)
-
-
-# TODO(Nikola): Add a unit test for `imvcdtgped.generate_pq_daily_data` just
-#  generating data and then a check_string to show how the data looks like.
 
 # TODO(Nikola): Add one test for the command line and other tests testing directly _run
 #  to get coverage.
@@ -49,7 +43,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         cmd.append("--num_threads 2")
         cmd = " ".join(cmd)
         hsysinte.system(cmd)
-        # Check directory structure.
+        # Check directory structure with file contents.
         include_file_content = True
         by_date_signature = hunitest.get_dir_signature(
             by_date_dir, include_file_content
@@ -57,7 +51,6 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         act = []
         act.append("# by_date=")
         act.append(by_date_signature)
-        # Remove references to dirs.
         by_asset_signature = hunitest.get_dir_signature(
             by_asset_dir, include_file_content
         )

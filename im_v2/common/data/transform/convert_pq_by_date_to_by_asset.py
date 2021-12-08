@@ -154,6 +154,8 @@ def _run(args: argparse.Namespace) -> None:
         log_file,
     )
 
+# TODO(Nikola): Add support for reading (not writing) to S3. #697
+
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
