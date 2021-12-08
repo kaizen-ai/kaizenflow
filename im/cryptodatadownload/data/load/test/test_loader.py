@@ -23,7 +23,10 @@ class TestGetFilePath(hunitest.TestCase):
         actual = cdd_loader._get_file_path(
             icdalolo._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
         )
-        expected = "s3://alphamatic-data/data/cryptodatadownload/20210924/binance/ETH_USDT.csv.gz"
+        expected = os.path.join(
+            hs3.get_path(),
+            "data/cryptodatadownload/20210924/binance/ETH_USDT.csv.gz",
+        )
         self.assert_equal(actual, expected)
 
     def test2(self) -> None:
