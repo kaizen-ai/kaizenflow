@@ -16,8 +16,40 @@ import oms.oms_db as oomsdb
 _LOG = logging.getLogger(__name__)
 
 
+class TestOmsDbHelper(hsqltest.TestDbHelper):
+    """
+    This class allows to test code that interacts with OMS DB.
+
+    A user can create a persistent local DB in the Docker container with:
+    ```
+    # Create an OMS DB inside Docker for local stage
+    docker> (cd oms; sudo docker-compose \
+        --file /app/oms/devops/compose/docker-compose.yml up \
+        -d \
+        oms_postgres_local)
+    # or
+    docker> invoke oms_docker_up
+    ```
+    """
+
+    @staticmethod
+    def _get_compose_file() -> str:
+        # TODO(gp): This information should be retrieved from oms_lib_tasks.py.
+        #  We can also use the invoke command.
+        return "oms/devops/compose/docker-compose.yml"
+
+    # TODO(Dan): Deprecate after #585.
+    @staticmethod
+    def _get_db_name() -> str:
+        return "oms_postgres_db_local"
+
+    @staticmethod
+    def _get_service_name() -> str:
+        return "oms_postgres_local"
+
+
 @pytest.mark.skip(reason="Run manually to clean up the DB")
-class TestOmsDbRemoveAllTables1(hsqltest.TestOmsDbHelper):
+class TestOmsDbRemoveAllTables1(TestOmsDbHelper):
     """
     This is used to reset the state of the DB.
     """
@@ -55,7 +87,7 @@ def _test_create_table_helper(
     hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
 )
 @pytest.mark.superslow(reason="speed up in #460.")
-class TestOmsDbSubmittedOrdersTable1(hsqltest.TestOmsDbHelper):
+class TestOmsDbSubmittedOrdersTable1(TestOmsDbHelper):
     """
     Test operations on the submitted orders table.
     """
@@ -157,7 +189,7 @@ def _get_row3() -> pd.Series:
     hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
 )
 @pytest.mark.superslow(reason="speed up in #460.")
-class TestOmsDbAcceptedOrdersTable1(hsqltest.TestOmsDbHelper):
+class TestOmsDbAcceptedOrdersTable1(TestOmsDbHelper):
     """
     Test operations on the accepted orders table.
     """
@@ -252,7 +284,7 @@ async def gather_coroutines_with_wall_clock(
     hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
 )
 @pytest.mark.superslow(reason="speed up in #460.")
-class TestOmsDb2(hsqltest.TestOmsDbHelper):
+class TestOmsDb2(TestOmsDbHelper):
     """
     Test interactions through the DB.
     """

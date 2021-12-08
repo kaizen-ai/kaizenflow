@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 import helpers.git as hgit
+import helpers.hsql_test as hsqltest
 import helpers.s3 as hs3
 import helpers.sql as hsql
 import helpers.system_interaction as hsysinte
@@ -14,6 +15,40 @@ import im_v2.ccxt.data.client.clients as imvcdclcl
 import im_v2.common.data.client as imvcdcli
 
 _AM_S3_ROOT_DIR = os.path.join(hs3.get_path(), "data")
+
+
+class TestImDbHelper(hsqltest.TestDbHelper):
+    # TODO(Dan): Figure out if docstrings for IM are correct.
+    """
+    This class allows to test code that interacts with IM DB.
+
+    A user can create a persistent local DB in the Docker container with:
+    ```
+    # Create an IM DB inside Docker for local stage
+    docker> (cd im_v2; sudo docker-compose \
+        --file /app/im_v2/devops/compose/docker-compose.yml up \
+        -d \
+        im_postgres_local)
+    # or
+    docker> invoke im_docker_up
+    ```
+    """
+
+    @staticmethod
+    def _get_compose_file() -> str:
+        return "im_v2/devops/compose/docker-compose.yml"
+
+    # TODO(Dan): Deprecate after #585.
+    @staticmethod
+    def _get_db_name() -> str:
+        return "im_postgres_db_local"
+
+    @staticmethod
+    def _get_service_name() -> str:
+        return "im_postgres_local"
+
+
+# #############################################################################
 
 
 class TestGetFilePath(hunitest.TestCase):
@@ -76,52 +111,7 @@ class TestGetFilePath(hunitest.TestCase):
     reason="lime and dev_tools doesn't have dind support",
 )
 @pytest.mark.superslow(reason="speed up in #460.")
-class TestCcxtDbClient(hunitest.TestCase):
-    def setUp(self) -> None:
-        """
-        Initialize the test container.
-        """
-        super().setUp()
-        self.docker_compose_file_path = os.path.join(
-            hgit.get_amp_abs_path(), "im_v2/devops/compose/docker-compose.yml"
-        )
-        cmd = (
-            "sudo docker-compose "
-            f"--file {self.docker_compose_file_path} "
-            "up -d im_postgres_local"
-        )
-        hsysinte.system(cmd, suppress_output=False)
-        # Set DB credentials.
-        self.host = "localhost"
-        self.dbname = "im_postgres_db_local"
-        self.port = 5432
-        self.user = "aljsdalsd"
-        self.password = "alsdkqoen"
-        # Wait for DB connection.
-        hsql.wait_db_connection(
-            self.host, self.dbname, self.port, self.user, self.password
-        )
-        # Get DB connection.
-        self.connection = hsql.get_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password,
-            autocommit=True,
-        )
-
-    def tearDown(self) -> None:
-        """
-        Bring down the test container.
-        """
-        cmd = (
-            "sudo docker-compose "
-            f"--file {self.docker_compose_file_path} down -v"
-        )
-        hsysinte.system(cmd, suppress_output=False)
-        super().tearDown()
-
+class TestCcxtDbClient(TestImDbHelper):
     # @pytest.mark.slow("8 seconds.")
     def test_read_data1(self) -> None:
         """
@@ -476,52 +466,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
     reason="lime and dev_tools doesn't have dind support",
 )
 @pytest.mark.superslow(reason="speed up in #460.")
-class TestMultipleSymbolsCcxtDbClient(hunitest.TestCase):
-    def setUp(self) -> None:
-        """
-        Initialize the test container.
-        """
-        super().setUp()
-        self.docker_compose_file_path = os.path.join(
-            hgit.get_amp_abs_path(), "im_v2/devops/compose/docker-compose.yml"
-        )
-        cmd = (
-            "sudo docker-compose "
-            f"--file {self.docker_compose_file_path} "
-            "up -d im_postgres_local"
-        )
-        hsysinte.system(cmd, suppress_output=False)
-        # Set DB credentials.
-        self.host = "localhost"
-        self.dbname = "im_postgres_db_local"
-        self.port = 5432
-        self.password = "alsdkqoen"
-        self.user = "aljsdalsd"
-        # Wait for DB connection.
-        hsql.wait_db_connection(
-            self.host, self.dbname, self.port, self.user, self.password
-        )
-        # Get DB connection.
-        self.connection = hsql.get_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password,
-            autocommit=True,
-        )
-
-    def tearDown(self) -> None:
-        """
-        Bring down the test container.
-        """
-        cmd = (
-            "sudo docker-compose "
-            f"--file {self.docker_compose_file_path} down -v"
-        )
-        hsysinte.system(cmd, suppress_output=False)
-        super().tearDown()
-
+class TestMultipleSymbolsCcxtDbClient(TestImDbHelper):
     # @pytest.mark.slow("8 seconds.")
     def test1(self) -> None:
         """
