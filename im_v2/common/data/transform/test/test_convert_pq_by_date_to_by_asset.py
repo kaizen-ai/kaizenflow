@@ -10,7 +10,8 @@ import helpers.unit_test as hunitest
 
 class TestPqByDateToByAsset1(hunitest.TestCase):
 
-    def test_daily_data1(self) -> None:
+    # TODO(Nikola): Parametrize?
+    def _test_daily_data(self, verbose: bool) -> None:
         """
         Generate daily data for 3 days in a by-date format and then convert
         it to by-asset.
@@ -28,6 +29,8 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         cmd.append("--end_date 2022-01-02")
         cmd.append("--assets A,B,C")
         cmd.append(f"--dst_dir {by_date_dir}")
+        if verbose:
+            cmd.append("--verbose")
         cmd = " ".join(cmd)
         hsysinte.system(cmd)
         # Build command line to convert the data.
@@ -41,6 +44,9 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         by_asset_dir = os.path.join(test_dir, "by_asset")
         cmd.append(f"--dst_dir {by_asset_dir}")
         cmd.append("--num_threads 2")
+        if verbose:
+            cmd.append("--transform_func reindex_on_unix_epoch")
+            cmd.append("--asset_col_name ticker")
         cmd = " ".join(cmd)
         hsysinte.system(cmd)
         # Check directory structure with file contents.
@@ -60,12 +66,10 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         purify_text = True
         self.check_string(act, purify_text=purify_text)
 
+    def test_daily_data1(self):
+        verbose = False
+        self._test_daily_data(verbose)
 
-# TODO(Nikola): Add unit test for --transform reindex_on_unix_epoch
-# The input looks like:
-# ```
-#   vendor_date  interval  start_time    end_time ticker currency  open         id
-# 0  2021-11-24        60  1637762400  1637762460      A      USD   100         1
-# 1  2021-11-24        60  1637762400  1637762460      A      USD   200         1
-# ```
-# We need another function to generate this format.
+    def test_daily_data2(self):
+        verbose = True
+        self._test_daily_data(verbose)

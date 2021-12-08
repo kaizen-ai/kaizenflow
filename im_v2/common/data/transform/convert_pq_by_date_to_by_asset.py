@@ -117,7 +117,7 @@ def _run(args: argparse.Namespace) -> None:
             "chunk": chunk,
             "dst_dir": args.dst_dir,
             "transform_func": args.transform_func,
-            "asset_col_name": "asset",
+            "asset_col_name": args.asset_col_name,
         }
         task: hjoblib.Task = (
             # args.
@@ -181,6 +181,13 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         default="",
         help="Function that will be used for transforming the df",
+    )
+    parser.add_argument(
+        "--asset_col_name",
+        action="store",
+        type=str,
+        default="asset",
+        help="Asset column may not be necessarily called asset",
     )
     hparser.add_parallel_processing_arg(parser)
     hparser.add_verbosity_arg(parser)

@@ -1,0 +1,189 @@
+# by_date=
+# Dir structure
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211230
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211230/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211231
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211231/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20220101
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20220101/data.parquet
+# File signatures
+len(file_names)=3
+file_names=$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211230/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211231/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20220101/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211230/data.parquet
+num_lines=25
+'''
+df.shape=(72, 7)
+df.head=
+                     interval  start_time    end_time ticker currency  open  \
+vendor_date                                                                   
+2021-12-30 00:00:00      3600  1640822400  1640826000      A      USD     0   
+2021-12-30 01:00:00      3600  1640826000  1640829600      A      USD     1   
+2021-12-30 02:00:00      3600  1640829600  1640833200      A      USD     2   
+
+                     id  
+vendor_date              
+2021-12-30 00:00:00   0  
+2021-12-30 01:00:00   0  
+2021-12-30 02:00:00   0  
+df.tail=
+                     interval  start_time    end_time ticker currency  open  \
+vendor_date                                                                   
+2021-12-30 21:00:00      3600  1640898000  1640901600      C      USD    21   
+2021-12-30 22:00:00      3600  1640901600  1640905200      C      USD    22   
+2021-12-30 23:00:00      3600  1640905200  1640908800      C      USD    23   
+
+                     id  
+vendor_date              
+2021-12-30 21:00:00   2  
+2021-12-30 22:00:00   2  
+2021-12-30 23:00:00   2  
+'''
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211231/data.parquet
+num_lines=25
+'''
+df.shape=(72, 7)
+df.head=
+                     interval  start_time    end_time ticker currency  open  \
+vendor_date                                                                   
+2021-12-31 00:00:00      3600  1640908800  1640912400      A      USD    24   
+2021-12-31 01:00:00      3600  1640912400  1640916000      A      USD    25   
+2021-12-31 02:00:00      3600  1640916000  1640919600      A      USD    26   
+
+                     id  
+vendor_date              
+2021-12-31 00:00:00   0  
+2021-12-31 01:00:00   0  
+2021-12-31 02:00:00   0  
+df.tail=
+                     interval  start_time    end_time ticker currency  open  \
+vendor_date                                                                   
+2021-12-31 21:00:00      3600  1640984400  1640988000      C      USD    45   
+2021-12-31 22:00:00      3600  1640988000  1640991600      C      USD    46   
+2021-12-31 23:00:00      3600  1640991600  1640995200      C      USD    47   
+
+                     id  
+vendor_date              
+2021-12-31 21:00:00   2  
+2021-12-31 22:00:00   2  
+2021-12-31 23:00:00   2  
+'''
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20220101/data.parquet
+num_lines=25
+'''
+df.shape=(72, 7)
+df.head=
+                     interval  start_time    end_time ticker currency  open  \
+vendor_date                                                                   
+2022-01-01 00:00:00      3600  1640995200  1640998800      A      USD    48   
+2022-01-01 01:00:00      3600  1640998800  1641002400      A      USD    49   
+2022-01-01 02:00:00      3600  1641002400  1641006000      A      USD    50   
+
+                     id  
+vendor_date              
+2022-01-01 00:00:00   0  
+2022-01-01 01:00:00   0  
+2022-01-01 02:00:00   0  
+df.tail=
+                     interval  start_time    end_time ticker currency  open  \
+vendor_date                                                                   
+2022-01-01 21:00:00      3600  1641070800  1641074400      C      USD    69   
+2022-01-01 22:00:00      3600  1641074400  1641078000      C      USD    70   
+2022-01-01 23:00:00      3600  1641078000  1641081600      C      USD    71   
+
+                     id  
+vendor_date              
+2022-01-01 21:00:00   2  
+2022-01-01 22:00:00   2  
+2022-01-01 23:00:00   2  
+'''
+# by_asset=
+# Dir structure
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=A
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=A/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=B
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=B/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=C
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=C/data.parquet
+# File signatures
+len(file_names)=3
+file_names=$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=A/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=B/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=C/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=A/data.parquet
+num_lines=21
+'''
+df.shape=(24, 6)
+df.head=
+                                  interval  start_time    end_time currency  \
+1970-01-19 23:49:55.200000+00:00      3600  1640995200  1640998800      USD   
+1970-01-19 23:49:58.800000+00:00      3600  1640998800  1641002400      USD   
+1970-01-19 23:50:02.400000+00:00      3600  1641002400  1641006000      USD   
+
+                                  open  id  
+1970-01-19 23:49:55.200000+00:00    48   0  
+1970-01-19 23:49:58.800000+00:00    49   0  
+1970-01-19 23:50:02.400000+00:00    50   0  
+df.tail=
+                                  interval  start_time    end_time currency  \
+1970-01-19 23:51:10.800000+00:00      3600  1641070800  1641074400      USD   
+1970-01-19 23:51:14.400000+00:00      3600  1641074400  1641078000      USD   
+1970-01-19 23:51:18+00:00             3600  1641078000  1641081600      USD   
+
+                                  open  id  
+1970-01-19 23:51:10.800000+00:00    69   0  
+1970-01-19 23:51:14.400000+00:00    70   0  
+1970-01-19 23:51:18+00:00           71   0  
+'''
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=B/data.parquet
+num_lines=21
+'''
+df.shape=(24, 6)
+df.head=
+                                  interval  start_time    end_time currency  \
+1970-01-19 23:49:55.200000+00:00      3600  1640995200  1640998800      USD   
+1970-01-19 23:49:58.800000+00:00      3600  1640998800  1641002400      USD   
+1970-01-19 23:50:02.400000+00:00      3600  1641002400  1641006000      USD   
+
+                                  open  id  
+1970-01-19 23:49:55.200000+00:00    48   1  
+1970-01-19 23:49:58.800000+00:00    49   1  
+1970-01-19 23:50:02.400000+00:00    50   1  
+df.tail=
+                                  interval  start_time    end_time currency  \
+1970-01-19 23:51:10.800000+00:00      3600  1641070800  1641074400      USD   
+1970-01-19 23:51:14.400000+00:00      3600  1641074400  1641078000      USD   
+1970-01-19 23:51:18+00:00             3600  1641078000  1641081600      USD   
+
+                                  open  id  
+1970-01-19 23:51:10.800000+00:00    69   1  
+1970-01-19 23:51:14.400000+00:00    70   1  
+1970-01-19 23:51:18+00:00           71   1  
+'''
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=C/data.parquet
+num_lines=21
+'''
+df.shape=(24, 6)
+df.head=
+                                  interval  start_time    end_time currency  \
+1970-01-19 23:49:55.200000+00:00      3600  1640995200  1640998800      USD   
+1970-01-19 23:49:58.800000+00:00      3600  1640998800  1641002400      USD   
+1970-01-19 23:50:02.400000+00:00      3600  1641002400  1641006000      USD   
+
+                                  open  id  
+1970-01-19 23:49:55.200000+00:00    48   2  
+1970-01-19 23:49:58.800000+00:00    49   2  
+1970-01-19 23:50:02.400000+00:00    50   2  
+df.tail=
+                                  interval  start_time    end_time currency  \
+1970-01-19 23:51:10.800000+00:00      3600  1641070800  1641074400      USD   
+1970-01-19 23:51:14.400000+00:00      3600  1641074400  1641078000      USD   
+1970-01-19 23:51:18+00:00             3600  1641078000  1641081600      USD   
+
+                                  open  id  
+1970-01-19 23:51:10.800000+00:00    69   2  
+1970-01-19 23:51:14.400000+00:00    70   2  
+1970-01-19 23:51:18+00:00           71   2  
+'''
