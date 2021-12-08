@@ -34,8 +34,16 @@ class TestOmsDbHelper(hunitest.TestCase):
     ```
     and then the creation / destruction of the DB is skipped making the tests faster
     and allowing easier debugging.
-    For this to work, tests should not assume that the DB is clean, but create tables
-    from scratch.
+    
+    The invariant is that each test should:
+    - (ideally) find a clean DB to work with
+    - not assume that the DB is clean. If the DB is not clean, tests should clean it
+      or work around it
+      - E.g., if a test needs to write a table and the table is already present and
+        partially filled, as a leftover from a previous test, the new test should delete
+        it and then create it again
+    - clean after themselves, i.e., undo the work that has been done
+      - E.g., if a test creates a table, then it should delete it at the end of the test
     """
 
     def setUp(self) -> None:
