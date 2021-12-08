@@ -117,7 +117,6 @@ def save_daily_df_as_pq(df: pd.DataFrame, dst_dir: str) -> None:
         with htimer.TimedScope(logging.DEBUG, "Create partition indices"):
             #df[date_col_name] = df.index.strftime("%Y%m%d")
             df[date_col_name] = pd.to_datetime(df.timestamp, unit='ms').dt.strftime("%Y%m%d")
-            print(df[date_col_name])
     with htimer.TimedScope(logging.DEBUG, "Save data"):
         table = pa.Table.from_pandas(df)
         partition_cols = [date_col_name]

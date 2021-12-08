@@ -76,7 +76,5 @@ def _main(parser: argparse.ArgumentParser) -> None:
         pq_full_path = os.path.join(args.dst_dir, filename)
         hcsv.convert_csv_to_pq(csv_full_path, pq_full_path)
 
-    df = pd.read_parquet("pqzzz/date=20211204/data.parquet")
-    print(df)
 if __name__ == "__main__":
     _main(_parse())
