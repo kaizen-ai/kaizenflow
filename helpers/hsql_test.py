@@ -151,3 +151,34 @@ class TestOmsDbHelper(TestDbHelper):
     @staticmethod
     def _get_service_name() -> str:
         return "oms_postgres_local"
+
+
+class TestImDbHelper(TestDbHelper):
+    # TODO(Dan): Figure out if docstrings for IM are correct.
+    """
+    This class allows to test code that interacts with IM DB.
+
+    A user can create a persistent local DB in the Docker container with:
+    ```
+    # Create an IM DB inside Docker for local stage
+    docker> (cd im_v2; sudo docker-compose \
+        --file /app/im_v2/devops/compose/docker-compose.yml up \
+        -d \
+        im_postgres_local)
+    # or
+    docker> invoke im_docker_up
+    ```
+    """
+
+    @staticmethod
+    def _get_compose_file() -> str:
+        return "im_v2/devops/compose/docker-compose.yml"
+
+    # TODO(Dan): Deprecate after #585.
+    @staticmethod
+    def _get_db_name() -> str:
+        return "im_postgres_db_local"
+
+    @staticmethod
+    def _get_service_name() -> str:
+        return "im_postgres_local"
