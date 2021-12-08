@@ -239,6 +239,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             )
             # Drop duplicates inside the table.
             connection.cursor().execute(dup_query)
+            # Sleep to prevent interruption by exchanges' API.
             time.sleep(2)
 
 
