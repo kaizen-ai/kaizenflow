@@ -141,6 +141,7 @@ class TestGhLogin1(hunitest.TestCase):
 # tested. E.g. TestDryRunTasks1::test_print_setup and
 # TestDryRunTasks2::test_print_setup should go together in a class.
 
+
 class TestDryRunTasks1(hunitest.TestCase):
     """
     - Run invoke in dry-run mode from command line
@@ -166,7 +167,7 @@ class TestDryRunTasks1(hunitest.TestCase):
         target = "git_clean"
         self._dry_run(target)
 
-    # ################################################################################
+    # #########################################################################
     # TODO(gp): -> TestDockerCommands1
 
     @pytest.mark.skipif(
@@ -204,7 +205,7 @@ class TestDryRunTasks1(hunitest.TestCase):
         target = "docker_kill --all"
         self._dry_run(target)
 
-    # ################################################################################
+    # #########################################################################
 
     def _dry_run(self, target: str, dry_run: bool = True) -> None:
         """
@@ -214,8 +215,8 @@ class TestDryRunTasks1(hunitest.TestCase):
         execute.
         """
         opts = "--dry" if dry_run else ""
-        # TODO(vitalii): While deploying the container versioning 
-        # we disable the check in the unit tests. Remove `SKIP_VERSION_CHECK=1` 
+        # TODO(vitalii): While deploying the container versioning
+        # we disable the check in the unit tests. Remove `SKIP_VERSION_CHECK=1`
         # after CmampTask570 is fixed.
         cmd = f"SKIP_VERSION_CHECK=1 invoke {opts} {target} | grep -v INFO | grep -v '>>ENV<<:'"
         _, act = hsysinte.system_to_string(cmd)
@@ -253,7 +254,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "git_clean(ctx, dry_run=False)"
         self._check_output(target)
 
-    # ################################################################################
+    # #########################################################################
 
     def test_docker_images_ls_repo(self) -> None:
         target = "docker_images_ls_repo(ctx)"
@@ -291,7 +292,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "docker_stats(ctx)"
         self._check_output(target)
 
-    # ################################################################################
+    # #########################################################################
     # TODO(gp): -> TestGhCommands1
 
     def test_gh_create_pr1(self) -> None:
@@ -327,7 +328,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     #     target = "gh_workflow_run(ctx)"
     #     self._check_output(target)
 
-    # ################################################################################
+    # #########################################################################
     # TODO(gp): -> TestGitCommands1
     @pytest.mark.slow("7 seconds.")
     def test_git_branch_files(self) -> None:
@@ -368,7 +369,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "git_merge_master(ctx)"
         self._check_output(target)
 
-    # ################################################################################
+    # #########################################################################
     # TODO(gp): -> TestLintCommands1
 
     @pytest.mark.skip(
@@ -566,7 +567,11 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         cmd = "bash"
         print_docker_config = False
         act = hlibtask._get_docker_cmd(
-            base_image, stage, version, cmd, print_docker_config=print_docker_config
+            base_image,
+            stage,
+            version,
+            cmd,
+            print_docker_config=print_docker_config,
         )
         exp = r"""
         IMAGE=*****/amp_test:local \
@@ -706,7 +711,11 @@ class Test_build_run_command_line1(hunitest.TestCase):
             collect_only,
             tee_to_file,
         )
-        exp = 'pytest -m "not slow and not superslow" . --timeout 5'
+        exp = (
+            'pytest -m "not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 5 --reruns 2 "
+            '--only-rerun "Failed: Timeout"'
+        )
         self.assert_equal(act, exp)
 
     def test_run_fast_tests2(self) -> None:
@@ -728,8 +737,11 @@ class Test_build_run_command_line1(hunitest.TestCase):
             tee_to_file,
         )
         exp = (
-            r'pytest -m "not slow and not superslow" . --timeout 5 --cov=. --cov-branch'
-            r" --cov-report term-missing --cov-report html --collect-only"
+            r'pytest -m "not slow and not superslow" . '
+            r"-o timeout_func_only=true --timeout 5 --reruns 2 "
+            r'--only-rerun "Failed: Timeout" --cov=.'
+            r" --cov-branch --cov-report term-missing --cov-report html "
+            r"--collect-only"
         )
         self.assert_equal(act, exp)
 
@@ -803,7 +815,12 @@ class Test_build_run_command_line1(hunitest.TestCase):
             collect_only,
             tee_to_file,
         )
-        exp = 'pytest -m "not slow and not superslow" . --timeout 5 2>&1 | tee tmp.pytest.fast_tests.log'
+        exp = (
+            'pytest -m "not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 5 --reruns 2 "
+            '--only-rerun "Failed: Timeout" 2>&1'
+            " | tee tmp.pytest.fast_tests.log"
+        )
         self.assert_equal(act, exp)
 
 
@@ -951,6 +968,7 @@ class TestLibTasksRunTests1(hunitest.TestCase):
 
 
 # #############################################################################
+
 
 @pytest.mark.slow(reason="slow via gh actions #687.")
 class TestLibTasksGitCreatePatch1(hunitest.TestCase):
