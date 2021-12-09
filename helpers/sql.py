@@ -451,7 +451,7 @@ def find_tables_common_columns(
 
 
 def remove_table(connection: DbConnection, table_name: str) -> None:
-    query = f"DROP TABLE IF EXISTS {table_name}"
+    query = f"DROP TABLE IF EXISTS {table_name} CASCADE"
     connection.cursor().execute(query)
 
 

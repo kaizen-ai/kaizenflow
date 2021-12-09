@@ -12,26 +12,10 @@ import im_v2.common.db.utils as imvcodbut
 _LOG = logging.getLogger(__name__)
 
 
-class TestImDbHelper(hsqltest.TestDbHelper):
-    @staticmethod
-    def _get_compose_file() -> str:
-        return "im_v2/devops/compose/docker-compose.yml"
-
-    # TODO(Dan): Deprecate after #585.
-    @staticmethod
-    def _get_db_name() -> str:
-        return "im_postgres_db_local"
-
-    @staticmethod
-    def _get_service_name() -> str:
-        return "im_postgres_local"
-
-
 @pytest.mark.skipif(
     hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
 )
-@pytest.mark.superslow(reason="speed up in #460.")
-class TestCreateDb1(TestImDbHelper):
+class TestCreateDb1(imvcodbut.TestImDbHelper):
     def test_up1(self) -> None:
         """
         Verify that the DB is up.
@@ -64,8 +48,12 @@ class TestCreateDb1(TestImDbHelper):
         )
         actual = sorted(hsql.get_table_names(self.connection))
         self.assertEqual(actual, expected)
+        # Delete all the tables.
+        hsql.remove_all_tables(self.connection)
 
     def test_create_im_database(self) -> None:
         imvcodbut.create_im_database(connection=self.connection, new_db="test_db")
         db_list = hsql.get_db_names(self.connection)
         self.assertIn("test_db", db_list)
+        # Delete the database.
+        hsql.remove_database(self.connection, "test_db")

@@ -17,6 +17,14 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestOmsDbHelper(hsqltest.TestDbHelper):
+    @classmethod
+    def setUpClass(cls) -> None:
+        super(TestOmsDbHelper, cls).setUpClass()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        super(TestOmsDbHelper, cls).tearDownClass()
+
     @staticmethod
     def _get_compose_file() -> str:
         # TODO(gp): This information should be retrieved from oms_lib_tasks.py.
