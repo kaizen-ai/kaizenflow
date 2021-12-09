@@ -15,6 +15,7 @@ _LOG = logging.getLogger(__name__)
 @pytest.mark.skipif(
     hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
 )
+@pytest.mark.superslow(reason="speed up in #460.")
 class TestCreateDb1(imvcodbut.TestImDbHelper):
     def test_up1(self) -> None:
         """
