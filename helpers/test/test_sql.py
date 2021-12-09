@@ -87,7 +87,6 @@ class TestSql1(imcodbuti.TestImDbHelper):
         # Delete the table.
         hsql.remove_table(self.connection, "test_table")
 
-    @pytest.mark.slow("7 seconds.")
     def test_copy_rows_with_copy_from1(self) -> None:
         """
         Verify that dataframe insertion via buffer is correct.
