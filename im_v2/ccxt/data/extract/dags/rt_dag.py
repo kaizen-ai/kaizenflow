@@ -31,7 +31,7 @@ with airflow.DAG(
         "--from_datetime {{ data_interval_end - macros.timedelta(5) }} "
         # TODO(Danya): Set a shared directory for the DAG (#675).
         "--dst_dir ccxt/ohlcv/ ",
-        "--data_type ccxt_ohlcv ",
+        "--data_type ohlcv ",
         "--api_keys API_keys.json ",
         "--universe 'v03' ",
         "--v DEBUG",

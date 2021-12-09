@@ -6,8 +6,8 @@ Use as:
 
 # Download OHLCV data for universe 'v03', saving only on disk:
 > python im_v2/ccxt/data/extract/download_realtime.py \
-    --end_datetime '20211204-194432' \
-    --period_length '5 minutes' \
+    --to_datetime '20211204-194432' \
+    --from_datetime '20211204-193932' \
     --dst_dir 'test/ccxt_test' \
     --data_type 'ohlcv' \
     --api_keys 'API_keys.json' \
@@ -151,18 +151,18 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--end_datetime",
+        "--to_datetime",
         action="store",
         required=True,
         type=str,
         help="End of the downloaded period",
     )
     parser.add_argument(
-        "--period_length",
+        "--from_datetime",
         action="store",
         required=True,
         type=str,
-        help="Length of the downloaded period, e.g. '5 minutes'",
+        help="Beginning of the downloaded period",
     )
     parser.add_argument(
         "--dst_dir",
@@ -222,8 +222,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
         column_names=["timestamp", "exchange_id", "currency_pair"],
     )
     # Convert timestamps.
-    end = pd.Timestamp(args.end_datetime)
-    start = end - pd.Timedelta(args.period_length)
+    end = pd.Timestamp(args.to_datetime)
+    start = pd.Timedelta(args.from_datetime)
     # Download data for specified time period.
     for exchange in exchanges:
         for pair in exchange.pairs:
