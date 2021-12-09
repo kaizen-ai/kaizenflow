@@ -17,7 +17,7 @@ with airflow.DAG(
     description="Realtime download of CCXT OHLCV data",
     max_active_runs=1,
     default_args=default_args,
-    schedule_interval="*/1 * * * *",
+    schedule_interval="*/3 * * * *",
     catchup=False,
     start_date=datetime.datetime.now(),
 ) as dag:
@@ -33,7 +33,7 @@ with airflow.DAG(
         "python im_v2/ccxt/data/extract/download_realtime.py ",
         # Get end datetime as
         "--to_datetime {{ data_interval_start }} ",
-        "--from_datetime {{ data_interval_end - macros.timedelta(5) }}"
+        "--from_datetime {{ data_interval_end - macros.timedelta(5) }} "
         # TODO(Danya): Set a shared directory for the DAG (#675).
         "--dst_dir ccxt/ohlcv/ ",
         "--data_type ccxt_ohlcv ",
