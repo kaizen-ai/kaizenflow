@@ -390,27 +390,33 @@ def _raise_file_decode_error(error: Exception, file_name: str) -> None:
 
 
 def from_file(
-    file_name: str, use_gzip: bool = False, encoding: Optional[Any] = None
+    file_name: str,
+    encoding: Optional[Any] = None,
 ) -> str:
     """
     Read contents of a file as string.
 
-    Use `use_gzip` flag to load a compressed file with correct extenstion.
-
-    :param file_name: path to .txt or .gz file
-    :param use_gzip: whether to decompress the archived file
+    :param file_name: path to .txt,.gz or .pq file
     :param encoding: encoding to use when reading the string
     :return: contents of file as string
     """
     hdbg.dassert_ne(file_name, "")
     _dassert_is_valid_file_name(file_name)
     hdbg.dassert_exists(file_name)
-    if use_gzip:
-        # Check if user provided correct file name.
-        if not file_name.endswith(("gz", "gzip")):
-            _LOG.warning("The provided file extension is not for a gzip file.")
+    data: str = ""
+    if file_name.endswith((".gz", ".gzip")):
         # Open gzipped file.
         f = gzip.open(file_name, "rt", encoding=encoding)
+    elif file_name.endswith((".pq", ".parquet")):
+        # TODO(Nikola): Temporary workaround. Definitely revisit.
+        import helpers.hparquet as hparque
+        import helpers.unit_test as hunitest
+
+        # Open pq file.
+        df = hparque.from_parquet(file_name)
+        data = hunitest.convert_df_to_json_string(df, n_head=3, n_tail=3)
+        # Already a proper string.
+        return data
     else:
         # Open regular text file.
         f = open(  # pylint: disable=consider-using-with
@@ -418,7 +424,7 @@ def from_file(
         )
     try:
         # Read data.
-        data: str = f.read()
+        data = f.read()
     except UnicodeDecodeError as e:
         # Raise unicode decode error message.
         _raise_file_decode_error(e, file_name)

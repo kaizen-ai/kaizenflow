@@ -46,7 +46,7 @@ class TestExtractDataFromDb1(hunitest.TestCase):
             password,
             autocommit=True,
         )
-        # TODO(Nikola): linter is complaining about cursor and create database ?
+        # TODO(Nikola): linter is complaining about cursor and create database?
         hsql.create_database(self.connection, "test_db", overwrite=True)
         ccxt_ohlcv_table_query = imccdbuti.get_ccxt_ohlcv_create_table_query()
         ccxt_ohlcv_insert_query = """
