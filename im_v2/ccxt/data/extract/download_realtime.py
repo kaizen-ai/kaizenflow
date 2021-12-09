@@ -5,7 +5,7 @@ Script to download OHLCV data from CCXT in real-time.
 Use as:
 
 # Download OHLCV data for universe 'v03', saving only on disk:
-> python im_v2/ccxt/data/extract/download_realtime.py \
+> im_v2/ccxt/data/extract/download_realtime.py \
     --to_datetime '20211204-194432' \
     --from_datetime '20211204-193932' \
     --dst_dir 'test/ccxt_test' \
