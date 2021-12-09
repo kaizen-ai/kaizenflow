@@ -19,6 +19,20 @@ _LOG = logging.getLogger(__name__)
 )
 @pytest.mark.superslow(reason="speed up in #460.")
 class TestSql1(imcodbuti.TestImDbHelper):
+    def test_db_connection_to_tuple(self) -> None:
+        """
+        Verify that connection string is correct.
+        """
+        actual_details = hsql.db_connection_to_tuple(self.connection)
+        expected = {
+            "host": "localhost",
+            "dbname": "im_postgres_db_local",
+            "port": 5432,
+            "user": "aljsdalsd",
+            "password": "alsdkqoen",
+        }
+        self.assertEqual(actual_details._asdict(), expected)
+
     def test_create_database(self) -> None:
         """
         Verify that db is creating.
