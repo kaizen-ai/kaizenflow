@@ -308,19 +308,6 @@ def get_random_df(
     return df
 
 
-def get_df_signature(df: "pd.DataFrame", num_rows: int = 3) -> str:
-    hdbg.dassert_isinstance(df, pd.DataFrame)
-    txt: List[str] = []
-    txt.append("df.shape=%s" % str(df.shape))
-    with pd.option_context(
-        "display.max_colwidth", int(1e6), "display.max_columns", None
-    ):
-        txt.append("df.head=\n%s" % df.head(num_rows))
-        txt.append("df.tail=\n%s" % df.tail(num_rows))
-    txt = "\n".join(txt)
-    return txt
-
-
 def compare_df(df1: pd.DataFrame, df2: pd.DataFrame) -> None:
     """
     Compare two dfs including their metadata.
@@ -1253,7 +1240,7 @@ class TestCase(unittest.TestCase):
             _LOG.debug("# Update golden outcomes")
             # Determine whether outcome needs to be updated.
             if file_exists:
-                expected = hio.from_file(file_name, use_gzip=use_gzip)
+                expected = hio.from_file(file_name)
                 is_equal = expected == actual
                 if not is_equal:
                     outcome_updated = True
@@ -1270,7 +1257,7 @@ class TestCase(unittest.TestCase):
             if file_exists:
                 # Golden outcome is available: check the actual outcome against
                 # the golden outcome.
-                expected = hio.from_file(file_name, use_gzip=use_gzip)
+                expected = hio.from_file(file_name)
                 test_name = self._get_test_name()
                 is_equal = _assert_equal(
                     actual,
