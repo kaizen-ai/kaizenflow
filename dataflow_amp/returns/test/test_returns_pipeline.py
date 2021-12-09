@@ -20,7 +20,7 @@ class TestReturnsBuilder(hunitest.TestCase):
     Test the ReturnsBuilder pipeline.
     """
 
-    @pytest.mark.slow
+    @pytest.mark.slow("6 seconds.")
     def test_equities1(self) -> None:
         # TODO(gp): This node doesn't work with the rest of the pipeline since
         #  it seems that it is multi-index.
@@ -50,7 +50,7 @@ class TestReturnsBuilder(hunitest.TestCase):
         }
         self._helper(config)
 
-    @pytest.mark.superslow("move to slow tests and enable retry mechanism in #693.")
+    @pytest.mark.slow("20 seconds.")
     def test_futures1(self) -> None:
         source_node_kwargs = {
             "func": cdtfsonod.load_kibot_data,

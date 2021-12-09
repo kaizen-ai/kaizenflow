@@ -1,12 +1,10 @@
 import logging
-import os
 
 import pytest
 
 import helpers.git as hgit
 import helpers.hsql_test as hsqltest
 import helpers.sql as hsql
-import helpers.system_interaction as hsysinte
 import im_v2.common.db.utils as imvcodbut
 
 _LOG = logging.getLogger(__name__)
@@ -30,8 +28,8 @@ class TestImDbHelper(hsqltest.TestDbHelper):
 @pytest.mark.skipif(
     hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
 )
-@pytest.mark.superslow(reason="speed up in #460.")
 class TestCreateDb1(TestImDbHelper):
+    @pytest.mark.slow("11 seconds.")
     def test_up1(self) -> None:
         """
         Verify that the DB is up.
@@ -39,6 +37,7 @@ class TestCreateDb1(TestImDbHelper):
         db_list = hsql.get_db_names(self.connection)
         _LOG.info("db_list=%s", db_list)
 
+    @pytest.mark.slow("9 seconds.")
     def test_create_all_tables1(self) -> None:
         """
         Verify that all necessary tables are created inside the DB.
@@ -65,6 +64,7 @@ class TestCreateDb1(TestImDbHelper):
         actual = sorted(hsql.get_table_names(self.connection))
         self.assertEqual(actual, expected)
 
+    @pytest.mark.slow("18 seconds.")
     def test_create_im_database(self) -> None:
         imvcodbut.create_im_database(connection=self.connection, new_db="test_db")
         db_list = hsql.get_db_names(self.connection)
