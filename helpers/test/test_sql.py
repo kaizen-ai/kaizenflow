@@ -35,39 +35,6 @@ class TestImDbHelper(hsqltest.TestDbHelper):
 )
 @pytest.mark.superslow(reason="speed up in #460.")
 class TestSql1(TestImDbHelper):
-    def setUp(self) -> None:
-        """
-        Initialize the test container.
-        """
-        super().setUp()
-        self.docker_compose_file_path = os.path.join(
-            hgit.get_amp_abs_path(), "im_v2/devops/compose/docker-compose.yml"
-        )
-        cmd = (
-            "sudo docker-compose "
-            f"--file {self.docker_compose_file_path} "
-            "up -d im_postgres_local"
-        )
-        hsysinte.system(cmd, suppress_output=False)
-        # Set DB credentials.
-        self.host = "localhost"
-        self.dbname = "im_postgres_db_local"
-        self.port = 5432
-        self.password = "alsdkqoen"
-        self.user = "aljsdalsd"
-
-    def tearDown(self) -> None:
-        """
-        Bring down the test container.
-        """
-        cmd = (
-            "sudo docker-compose "
-            f"--file {self.docker_compose_file_path} down -v"
-        )
-        hsysinte.system(cmd, suppress_output=False)
-
-        super().tearDown()
-
     def test_waitdb(self) -> None:
         """
         Smoke test.

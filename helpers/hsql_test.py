@@ -54,14 +54,13 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         _LOG.info("\n%s", hprint.frame("setUpMethod"))
         super().setUp()
         # TODO(Dan): Read the info from env in #585.
-        host = "localhost"
-        dbname = self._get_db_name()
-        port = 5432
-        user = "aljsdalsd"
-        password = "alsdkqoen"
-        self.dbname = dbname
+        self.host = "localhost"
+        self.dbname = self._get_db_name()
+        self.port = 5432
+        self.user = "aljsdalsd"
+        self.password = "alsdkqoen"
         conn_exists = hsql.check_db_connection(
-            host, dbname, port, user, password
+            self.host, self.dbname, self.port, self.user, self.password
         )[0]
         if conn_exists:
             _LOG.warning("DB is already up: skipping docker compose")
@@ -80,15 +79,17 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
             )
             hsysinte.system(cmd, suppress_output=False)
             # Wait for the DB to be available.
-            hsql.wait_db_connection(host, dbname, port, user, password)
+            hsql.wait_db_connection(
+                self.host, self.dbname, self.port, self.user, self.password
+            )
             self.bring_down_db = True
         # Save connection info.
         self.connection = hsql.get_connection(
-            host,
+            self.host,
             self.dbname,
-            port,
-            user,
-            password,
+            self.port,
+            self.user,
+            self.password,
             autocommit=True,
         )
 
