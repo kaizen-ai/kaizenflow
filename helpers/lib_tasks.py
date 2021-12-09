@@ -2295,6 +2295,8 @@ def _run_test_cmd(
     cmd = f"'{cmd}'"
     docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd)
     _LOG.info("cmd=%s", docker_cmd_)
+    # We can't use `hsysinte.system()` because of buffering of the output,
+    # losing formatting and so on, so we stick to executing through `ctx`.
     rc = _docker_cmd(ctx, docker_cmd_, **ctx_run_kwargs)
     # Print message about coverage.
     if coverage:
