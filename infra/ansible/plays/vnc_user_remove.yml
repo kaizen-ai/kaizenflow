@@ -1,0 +1,7 @@
+- hosts: all
+  become: yes
+  roles:
+    - role: roles/vnc_user_remove
+
+# ansible-playbook plays/vnc_user_remove.yml --user ubuntu -i 172.30.2.136, --extra-vars "vnc_user=saggese" --ask-become-pass
+# ask-become-pass might be needed to write file into /opt folders
