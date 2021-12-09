@@ -189,6 +189,7 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
         actual_string = hunitest.convert_df_to_json_string(actual)
         self.check_string(actual_string)
 
+    @pytest.mark.slow("7 seconds.")
     def test2(self) -> None:
         """
         Test that files on S3 are being filtered correctly.
@@ -205,6 +206,7 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
         actual_string = hunitest.convert_df_to_json_string(actual)
         self.check_string(actual_string)
 
+    @pytest.mark.slow("8 seconds.")
     def test3(self) -> None:
         """
         Test that files on S3 are being read correctly without normalization.
