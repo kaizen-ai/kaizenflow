@@ -33,8 +33,8 @@ with airflow.DAG(
     bash_command = [
         "python im_v2/ccxt/data/extract/download_realtime.py ",
         # Get end datetime as
-        "--end_datetime {{ ts }} ",
-        f"--period_length {script_args['period_length']} ",
+        "--to_datetime {{ data_interval_start }} ",
+        f"--period_length {script_args['lookback_period']} ",
         f"--dst_dir {script_args['dst_dir']} ",
         f"--data_type {script_args['data_type']} ",
         f"--api_keys {script_args['api_keys']} ",
