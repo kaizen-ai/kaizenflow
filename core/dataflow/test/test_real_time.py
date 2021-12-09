@@ -164,7 +164,6 @@ class Test_align_on_time_grid1(hunitest.TestCase):
             _LOG.debug(hprint.to_str("current_time2"))
             self.assertEqual(current_time2.second % 2, 0)
 
-    @pytest.mark.slow("It takes around 4 secs")
     def test_real_time1(self) -> None:
         """
         Test in real-time aligning on 2 seconds.
@@ -173,7 +172,6 @@ class Test_align_on_time_grid1(hunitest.TestCase):
         use_high_resolution = False
         self.helper(event_loop, use_high_resolution)
 
-    @pytest.mark.slow("It takes around 4 secs")
     def test_real_time2(self) -> None:
         """
         Test in real-time aligning on 2 seconds.
