@@ -10,8 +10,8 @@ from typing import Optional
 
 import psycopg2 as psycop
 
+import helpers.hsql_test as hsqltest
 import helpers.sql as hsql
-
 import im.ccxt.db.utils as imccdbuti
 import im.ib.sql_writer as imibsqwri
 import im.kibot.sql_writer as imkisqwri
@@ -113,3 +113,21 @@ def create_im_database(
     )
     create_all_tables(new_connection)
     new_connection.close()
+
+
+# #############################################################################
+
+
+class TestImDbHelper(hsqltest.TestDbHelper):
+    @staticmethod
+    def _get_compose_file() -> str:
+        return "im_v2/devops/compose/docker-compose.yml"
+
+    # TODO(Dan): Deprecate after #585.
+    @staticmethod
+    def _get_db_name() -> str:
+        return "im_postgres_db_local"
+
+    @staticmethod
+    def _get_service_name() -> str:
+        return "im_postgres_local"
