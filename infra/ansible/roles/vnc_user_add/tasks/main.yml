@@ -31,7 +31,7 @@
     path: "/tmp"
     mode: o+rw
 
-- name: Set VNC password
+- name: Set VNC password (password is mandatory but vncserver might be later started without it)
   become_user: "{{ vnc_user }}"
   shell:
     cmd: set -o pipefail ; printf "{{ lookup('password', password_terms) }}\n{{ lookup('password', password_terms) }}\n" | vncpasswd
@@ -71,7 +71,7 @@
 - name: Start VNC service
   service:
     name: "{{ vnc_user }}_vncserver@{{ vnc_desktop_number }}"
-    state: started
+    state: restarted
 
 - debug:
     msg: "VNC_desktop_number is: {{ vnc_desktop_number }}"
