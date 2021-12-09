@@ -27,19 +27,19 @@ with airflow.DAG(
         "data_type": "ohlcv",
         "universe": "v03",
         "api_keys": "API_keys.json",
-        "lookback_period": "5 minutes",
     }
     # Build a bash command to execute.
     bash_command = [
         "python im_v2/ccxt/data/extract/download_realtime.py ",
         # Get end datetime as
         "--to_datetime {{ data_interval_start }} ",
-        f"--period_length {script_args['lookback_period']} ",
-        f"--dst_dir {script_args['dst_dir']} ",
-        f"--data_type {script_args['data_type']} ",
-        f"--api_keys {script_args['api_keys']} ",
-        f"--universe {script_args['universe']}",
-        f"--v DEBUG"
+        "--from_datetime {{ data_interval_end - macros.timedelta(5) }}"
+        # TODO(Danya): Set a shared directory for the DAG (#675).
+        "--dst_dir ccxt/ohlcv/ ",
+        "--data_type ccxt_ohlcv ",
+        "--api_keys API_keys.json ",
+        "--universe 'v03' ",
+        "--v DEBUG"
     ]
     # Run the script.
     downloading_task = DockerOperator(
