@@ -1,30 +1,28 @@
-import logging
 import os
-
-import pytest
 
 import helpers.git as hgit
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
 
-_LOG = logging.getLogger(__name__)
-
-
-# TODO(Nikola): Add a unit test for `imvcdtgped.generate_pq_daily_data` just
-#  generating data and then a check_string to show how the data looks like.
-
 # TODO(Nikola): Add one test for the command line and other tests testing directly _run
 #  to get coverage.
-# TODO(Nikola): We want to share code among the tests, instead of copy-paste.
+
 
 class TestPqByDateToByAsset1(hunitest.TestCase):
 
-    # TODO(Nikola): Revisit.
-    @pytest.mark.skip
-    def test_daily_data1(self) -> None:
+    def test_daily_data1(self):
+        verbose = False
+        self._test_daily_data(verbose)
+
+    def test_daily_data2(self):
+        verbose = True
+        self._test_daily_data(verbose)
+
+    # TODO(Nikola): Parametrize?
+    def _test_daily_data(self, verbose: bool) -> None:
         """
-        Generate daily data for 3 days in a by-date format and then convert
-        it to by-asset.
+        Generate daily data for 3 days in a by-date format and then convert it
+        to by-asset.
         """
         test_dir = self.get_scratch_space()
         by_date_dir = os.path.join(test_dir, "by_date")
@@ -32,65 +30,45 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         cmd = []
         file_path = os.path.join(
             hgit.get_amp_abs_path(),
-            "im_v2/common/data/transform/test/generate_pq_example_data.py"
+            "im_v2/common/data/transform/test/generate_pq_example_data.py",
         )
         cmd.append(file_path)
         cmd.append("--start_date 2021-12-30")
         cmd.append("--end_date 2022-01-02")
         cmd.append("--assets A,B,C")
         cmd.append(f"--dst_dir {by_date_dir}")
+        if verbose:
+            cmd.append("--verbose")
         cmd = " ".join(cmd)
         hsysinte.system(cmd)
         # Build command line to convert the data.
         cmd = []
         file_path = os.path.join(
             hgit.get_amp_abs_path(),
-            "im_v2/common/data/transform/convert_pq_by_date_to_by_asset.py"
+            "im_v2/common/data/transform/convert_pq_by_date_to_by_asset.py",
         )
         cmd.append(file_path)
         cmd.append(f"--src_dir {by_date_dir}")
         by_asset_dir = os.path.join(test_dir, "by_asset")
         cmd.append(f"--dst_dir {by_asset_dir}")
+        cmd.append("--num_threads 2")
+        if verbose:
+            cmd.append("--transform_func reindex_on_unix_epoch")
+            cmd.append("--asset_col_name ticker")
         cmd = " ".join(cmd)
         hsysinte.system(cmd)
-        # Check directory structure.
-        include_file_content = False
+        # Check directory structure with file contents.
+        include_file_content = True
         by_date_signature = hunitest.get_dir_signature(
             by_date_dir, include_file_content
         )
-        # TODO(Nikola): Let's create a single txt and do a single check_string
-        #  on it.
         act = []
         act.append("# by_date=")
         act.append(by_date_signature)
-        # Remove references to dirs.
         by_asset_signature = hunitest.get_dir_signature(
             by_asset_dir, include_file_content
         )
         act.append("# by_asset=")
         act.append(by_asset_signature)
-        # Check parquet files content.
-        # TODO(Nikola): Let's generalize get_dir_signature to report a snippet
-        #  of PQ files.
-        # for signature in signatures:
-        #     if signature.endswith(".parquet") or signature.endswith(".pq"):
-        #         df = hparque.from_parquet(signature)
-        #         num_rows = 12
-        #         df_signature = hunitest.get_df_signature(df, num_rows)
-        #         self.check_string(
-        #             df_signature, tag=signature.split("tmp.scratch/")[-1]
-        #         )
-
         act = "\n".join(act)
-        purify_text = True
-        self.check_string(act, purify_text=purify_text)
-
-
-# TODO(Nikola): Add unit test for --transform reindex_on_unix_epoch
-# The input looks like:
-# ```
-#   vendor_date  interval  start_time    end_time ticker currency  open         id
-# 0  2021-11-24        60  1637762400  1637762460      A      USD   100         1
-# 1  2021-11-24        60  1637762400  1637762460      A      USD   200         1
-# ```
-# We need another function to generate this format.
+        self.check_string(act)
