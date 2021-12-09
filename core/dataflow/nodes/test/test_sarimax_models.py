@@ -30,7 +30,6 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
     Warning: SARIMAX can give slightly different outputs on different machines.
     """
 
-    @pytest.mark.slow("move to fast tests and enable retry mechanism #693.")
     def test_fit1(self) -> None:
         data = self._get_data([], [])
         config = self._get_config((1, 0, 1), (1, 0, 1, 3))
@@ -64,7 +63,6 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
         # Check results.
         self._check_results(config, df_out)
 
-    @pytest.mark.slow("move to fast tests and enable retry mechanism #693.")
     def test_fit_no_x1(self) -> None:
         """
         Fit without providing an exogenous variable.
@@ -168,7 +166,6 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
         )
         self.check_string(act)
 
-    @pytest.mark.slow("move to fast tests and enable retry mechanism #693.")
     def test_predict1(self) -> None:
         data = self._get_data([], [])
         data_fit = data.iloc[:70]
@@ -240,7 +237,6 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
         )
         self.check_string(hunitest.convert_df_to_string(df_out, index=True))
 
-    @pytest.mark.slow("move to fast tests and enable retry mechanism #693.")
     def test_predict_no_x1(self) -> None:
         """
         Predict without providing an exogenous variable.
@@ -284,7 +280,6 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
             df_out3.loc["2010-04-07":"2010-04-16", "ret_0_3_hat"],  # type: ignore
         )
 
-    @pytest.mark.slow("move to fast tests and enable retry mechanism #693.")
     def test_summary(self) -> None:
         data = self._get_data([], [])
         config = self._get_config((1, 0, 1), (1, 0, 1, 3))

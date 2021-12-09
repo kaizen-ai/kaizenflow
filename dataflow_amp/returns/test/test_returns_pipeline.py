@@ -20,7 +20,6 @@ class TestReturnsBuilder(hunitest.TestCase):
     Test the ReturnsBuilder pipeline.
     """
 
-    @pytest.mark.slow("6 seconds.")
     def test_equities1(self) -> None:
         # TODO(gp): This node doesn't work with the rest of the pipeline since
         #  it seems that it is multi-index.
