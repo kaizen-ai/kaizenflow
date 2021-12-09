@@ -18,6 +18,7 @@ _LOG = logging.getLogger(__name__)
     hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
 )
 class TestSql1(imcodbuti.TestImDbHelper):
+    @pytest.mark.slow("10 seconds.")
     def test_db_connection_to_tuple(self) -> None:
         """
         Verify that connection string is correct.
