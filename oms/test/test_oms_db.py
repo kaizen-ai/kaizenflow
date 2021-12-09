@@ -17,21 +17,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestOmsDbHelper(hsqltest.TestDbHelper):
-    """
-    This class allows to test code that interacts with OMS DB.
-
-    A user can create a persistent local DB in the Docker container with:
-    ```
-    # Create an OMS DB inside Docker for local stage
-    docker> (cd oms; sudo docker-compose \
-        --file /app/oms/devops/compose/docker-compose.yml up \
-        -d \
-        oms_postgres_local)
-    # or
-    docker> invoke oms_docker_up
-    ```
-    """
-
     @staticmethod
     def _get_compose_file() -> str:
         # TODO(gp): This information should be retrieved from oms_lib_tasks.py.

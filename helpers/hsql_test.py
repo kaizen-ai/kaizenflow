@@ -23,9 +23,18 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
 
     It creates / destroys a test DB during setup / teardown.
 
-    A user can create a persistent local DB in the Docker container and then
-    the creation / destruction of the DB is skipped making the tests faster
-    and allowing easier debugging.
+    A user can create a persistent local DB in the Docker container, e.g.
+    ```
+    # Create an OMS DB inside Docker for local stage
+    docker> (cd oms; sudo docker-compose \
+        --file /app/oms/devops/compose/docker-compose.yml up \
+        -d \
+        oms_postgres_local)
+    # or
+    docker> invoke oms_docker_up
+    ```
+    and then the creation / destruction of the DB is skipped making the tests
+    faster and allowing easier debugging.
     
     The invariant is that each test should:
     - (ideally) find a clean DB to work with

@@ -6,6 +6,7 @@ import psycopg2.errors as perrors
 import pytest
 
 import helpers.git as hgit
+import helpers.hsql_test as hsqltest
 import helpers.sql as hsql
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
@@ -13,12 +14,27 @@ import helpers.unit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
+class TestImDbHelper(hsqltest.TestDbHelper):
+    @staticmethod
+    def _get_compose_file() -> str:
+        return "im_v2/devops/compose/docker-compose.yml"
+
+    # TODO(Dan): Deprecate after #585.
+    @staticmethod
+    def _get_db_name() -> str:
+        return "im_postgres_db_local"
+
+    @staticmethod
+    def _get_service_name() -> str:
+        return "im_postgres_local"
+
+
 # TODO(gp): helpers can't depend from im.
 @pytest.mark.skipif(
     hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
 )
 @pytest.mark.superslow(reason="speed up in #460.")
-class TestSql1(hunitest.TestCase):
+class TestSql1(TestImDbHelper):
     def setUp(self) -> None:
         """
         Initialize the test container.
