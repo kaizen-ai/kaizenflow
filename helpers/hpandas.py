@@ -180,7 +180,7 @@ def reindex_on_unix_epoch(df: pd.DataFrame, in_col_name: str) -> pd.DataFrame:
     hdbg.dassert_in(in_col_name, df.columns)
     hdbg.dassert_not_in(temp_col_name, df.columns)
     # Save.
-    df[temp_col_name] = pd.to_datetime(df[in_col_name], unit="ms", utc=True)
+    df[temp_col_name] = pd.to_datetime(df[in_col_name], unit="s", utc=True)
     df.set_index(temp_col_name, inplace=True, drop=True)
     df.index.name = None
     return df

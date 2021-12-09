@@ -208,25 +208,395 @@ Tail:
 # by_asset=
 # Dir structure
 /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=A
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=A/data.parquet
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=B
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=B/data.parquet
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=C
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=C/data.parquet
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=A
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=A/data.parquet
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=B
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=B/data.parquet
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=C
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=C/data.parquet
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=A
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=A/data.parquet
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=B
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=B/data.parquet
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=C
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=C/data.parquet
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=A
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=A/data.parquet
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=B
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=B/data.parquet
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=C
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=C/data.parquet
 # File signatures
-len(file_names)=3
-file_names=/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=A/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=B/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=C/data.parquet
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=A/data.parquet
+len(file_names)=9
+file_names=/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=A/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=B/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=C/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=A/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=B/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=C/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=A/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=B/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=C/data.parquet
+# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=A/data.parquet
 num_lines=55
 '''
 original shape=(24, 6)
 Head:
 {
-    "1970-01-19T23:49:55Z":{
+    "2021-12-30T00:00:00Z":{
+        "interval":3600,
+        "start_time":1640822400,
+        "end_time":1640826000,
+        "currency":"USD",
+        "open":0,
+        "id":0
+    },
+    "2021-12-30T01:00:00Z":{
+        "interval":3600,
+        "start_time":1640826000,
+        "end_time":1640829600,
+        "currency":"USD",
+        "open":1,
+        "id":0
+    },
+    "2021-12-30T02:00:00Z":{
+        "interval":3600,
+        "start_time":1640829600,
+        "end_time":1640833200,
+        "currency":"USD",
+        "open":2,
+        "id":0
+    }
+}
+Tail:
+{
+    "2021-12-30T21:00:00Z":{
+        "interval":3600,
+        "start_time":1640898000,
+        "end_time":1640901600,
+        "currency":"USD",
+        "open":21,
+        "id":0
+    },
+    "2021-12-30T22:00:00Z":{
+        "interval":3600,
+        "start_time":1640901600,
+        "end_time":1640905200,
+        "currency":"USD",
+        "open":22,
+        "id":0
+    },
+    "2021-12-30T23:00:00Z":{
+        "interval":3600,
+        "start_time":1640905200,
+        "end_time":1640908800,
+        "currency":"USD",
+        "open":23,
+        "id":0
+    }
+}
+'''
+# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=B/data.parquet
+num_lines=55
+'''
+original shape=(24, 6)
+Head:
+{
+    "2021-12-30T00:00:00Z":{
+        "interval":3600,
+        "start_time":1640822400,
+        "end_time":1640826000,
+        "currency":"USD",
+        "open":0,
+        "id":1
+    },
+    "2021-12-30T01:00:00Z":{
+        "interval":3600,
+        "start_time":1640826000,
+        "end_time":1640829600,
+        "currency":"USD",
+        "open":1,
+        "id":1
+    },
+    "2021-12-30T02:00:00Z":{
+        "interval":3600,
+        "start_time":1640829600,
+        "end_time":1640833200,
+        "currency":"USD",
+        "open":2,
+        "id":1
+    }
+}
+Tail:
+{
+    "2021-12-30T21:00:00Z":{
+        "interval":3600,
+        "start_time":1640898000,
+        "end_time":1640901600,
+        "currency":"USD",
+        "open":21,
+        "id":1
+    },
+    "2021-12-30T22:00:00Z":{
+        "interval":3600,
+        "start_time":1640901600,
+        "end_time":1640905200,
+        "currency":"USD",
+        "open":22,
+        "id":1
+    },
+    "2021-12-30T23:00:00Z":{
+        "interval":3600,
+        "start_time":1640905200,
+        "end_time":1640908800,
+        "currency":"USD",
+        "open":23,
+        "id":1
+    }
+}
+'''
+# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=C/data.parquet
+num_lines=55
+'''
+original shape=(24, 6)
+Head:
+{
+    "2021-12-30T00:00:00Z":{
+        "interval":3600,
+        "start_time":1640822400,
+        "end_time":1640826000,
+        "currency":"USD",
+        "open":0,
+        "id":2
+    },
+    "2021-12-30T01:00:00Z":{
+        "interval":3600,
+        "start_time":1640826000,
+        "end_time":1640829600,
+        "currency":"USD",
+        "open":1,
+        "id":2
+    },
+    "2021-12-30T02:00:00Z":{
+        "interval":3600,
+        "start_time":1640829600,
+        "end_time":1640833200,
+        "currency":"USD",
+        "open":2,
+        "id":2
+    }
+}
+Tail:
+{
+    "2021-12-30T21:00:00Z":{
+        "interval":3600,
+        "start_time":1640898000,
+        "end_time":1640901600,
+        "currency":"USD",
+        "open":21,
+        "id":2
+    },
+    "2021-12-30T22:00:00Z":{
+        "interval":3600,
+        "start_time":1640901600,
+        "end_time":1640905200,
+        "currency":"USD",
+        "open":22,
+        "id":2
+    },
+    "2021-12-30T23:00:00Z":{
+        "interval":3600,
+        "start_time":1640905200,
+        "end_time":1640908800,
+        "currency":"USD",
+        "open":23,
+        "id":2
+    }
+}
+'''
+# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=A/data.parquet
+num_lines=55
+'''
+original shape=(24, 6)
+Head:
+{
+    "2021-12-31T00:00:00Z":{
+        "interval":3600,
+        "start_time":1640908800,
+        "end_time":1640912400,
+        "currency":"USD",
+        "open":24,
+        "id":0
+    },
+    "2021-12-31T01:00:00Z":{
+        "interval":3600,
+        "start_time":1640912400,
+        "end_time":1640916000,
+        "currency":"USD",
+        "open":25,
+        "id":0
+    },
+    "2021-12-31T02:00:00Z":{
+        "interval":3600,
+        "start_time":1640916000,
+        "end_time":1640919600,
+        "currency":"USD",
+        "open":26,
+        "id":0
+    }
+}
+Tail:
+{
+    "2021-12-31T21:00:00Z":{
+        "interval":3600,
+        "start_time":1640984400,
+        "end_time":1640988000,
+        "currency":"USD",
+        "open":45,
+        "id":0
+    },
+    "2021-12-31T22:00:00Z":{
+        "interval":3600,
+        "start_time":1640988000,
+        "end_time":1640991600,
+        "currency":"USD",
+        "open":46,
+        "id":0
+    },
+    "2021-12-31T23:00:00Z":{
+        "interval":3600,
+        "start_time":1640991600,
+        "end_time":1640995200,
+        "currency":"USD",
+        "open":47,
+        "id":0
+    }
+}
+'''
+# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=B/data.parquet
+num_lines=55
+'''
+original shape=(24, 6)
+Head:
+{
+    "2021-12-31T00:00:00Z":{
+        "interval":3600,
+        "start_time":1640908800,
+        "end_time":1640912400,
+        "currency":"USD",
+        "open":24,
+        "id":1
+    },
+    "2021-12-31T01:00:00Z":{
+        "interval":3600,
+        "start_time":1640912400,
+        "end_time":1640916000,
+        "currency":"USD",
+        "open":25,
+        "id":1
+    },
+    "2021-12-31T02:00:00Z":{
+        "interval":3600,
+        "start_time":1640916000,
+        "end_time":1640919600,
+        "currency":"USD",
+        "open":26,
+        "id":1
+    }
+}
+Tail:
+{
+    "2021-12-31T21:00:00Z":{
+        "interval":3600,
+        "start_time":1640984400,
+        "end_time":1640988000,
+        "currency":"USD",
+        "open":45,
+        "id":1
+    },
+    "2021-12-31T22:00:00Z":{
+        "interval":3600,
+        "start_time":1640988000,
+        "end_time":1640991600,
+        "currency":"USD",
+        "open":46,
+        "id":1
+    },
+    "2021-12-31T23:00:00Z":{
+        "interval":3600,
+        "start_time":1640991600,
+        "end_time":1640995200,
+        "currency":"USD",
+        "open":47,
+        "id":1
+    }
+}
+'''
+# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=C/data.parquet
+num_lines=55
+'''
+original shape=(24, 6)
+Head:
+{
+    "2021-12-31T00:00:00Z":{
+        "interval":3600,
+        "start_time":1640908800,
+        "end_time":1640912400,
+        "currency":"USD",
+        "open":24,
+        "id":2
+    },
+    "2021-12-31T01:00:00Z":{
+        "interval":3600,
+        "start_time":1640912400,
+        "end_time":1640916000,
+        "currency":"USD",
+        "open":25,
+        "id":2
+    },
+    "2021-12-31T02:00:00Z":{
+        "interval":3600,
+        "start_time":1640916000,
+        "end_time":1640919600,
+        "currency":"USD",
+        "open":26,
+        "id":2
+    }
+}
+Tail:
+{
+    "2021-12-31T21:00:00Z":{
+        "interval":3600,
+        "start_time":1640984400,
+        "end_time":1640988000,
+        "currency":"USD",
+        "open":45,
+        "id":2
+    },
+    "2021-12-31T22:00:00Z":{
+        "interval":3600,
+        "start_time":1640988000,
+        "end_time":1640991600,
+        "currency":"USD",
+        "open":46,
+        "id":2
+    },
+    "2021-12-31T23:00:00Z":{
+        "interval":3600,
+        "start_time":1640991600,
+        "end_time":1640995200,
+        "currency":"USD",
+        "open":47,
+        "id":2
+    }
+}
+'''
+# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=A/data.parquet
+num_lines=55
+'''
+original shape=(24, 6)
+Head:
+{
+    "2022-01-01T00:00:00Z":{
         "interval":3600,
         "start_time":1640995200,
         "end_time":1640998800,
@@ -234,7 +604,7 @@ Head:
         "open":48,
         "id":0
     },
-    "1970-01-19T23:49:58Z":{
+    "2022-01-01T01:00:00Z":{
         "interval":3600,
         "start_time":1640998800,
         "end_time":1641002400,
@@ -242,7 +612,7 @@ Head:
         "open":49,
         "id":0
     },
-    "1970-01-19T23:50:02Z":{
+    "2022-01-01T02:00:00Z":{
         "interval":3600,
         "start_time":1641002400,
         "end_time":1641006000,
@@ -253,7 +623,7 @@ Head:
 }
 Tail:
 {
-    "1970-01-19T23:51:10Z":{
+    "2022-01-01T21:00:00Z":{
         "interval":3600,
         "start_time":1641070800,
         "end_time":1641074400,
@@ -261,7 +631,7 @@ Tail:
         "open":69,
         "id":0
     },
-    "1970-01-19T23:51:14Z":{
+    "2022-01-01T22:00:00Z":{
         "interval":3600,
         "start_time":1641074400,
         "end_time":1641078000,
@@ -269,7 +639,7 @@ Tail:
         "open":70,
         "id":0
     },
-    "1970-01-19T23:51:18Z":{
+    "2022-01-01T23:00:00Z":{
         "interval":3600,
         "start_time":1641078000,
         "end_time":1641081600,
@@ -279,13 +649,13 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=B/data.parquet
+# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=B/data.parquet
 num_lines=55
 '''
 original shape=(24, 6)
 Head:
 {
-    "1970-01-19T23:49:55Z":{
+    "2022-01-01T00:00:00Z":{
         "interval":3600,
         "start_time":1640995200,
         "end_time":1640998800,
@@ -293,7 +663,7 @@ Head:
         "open":48,
         "id":1
     },
-    "1970-01-19T23:49:58Z":{
+    "2022-01-01T01:00:00Z":{
         "interval":3600,
         "start_time":1640998800,
         "end_time":1641002400,
@@ -301,7 +671,7 @@ Head:
         "open":49,
         "id":1
     },
-    "1970-01-19T23:50:02Z":{
+    "2022-01-01T02:00:00Z":{
         "interval":3600,
         "start_time":1641002400,
         "end_time":1641006000,
@@ -312,7 +682,7 @@ Head:
 }
 Tail:
 {
-    "1970-01-19T23:51:10Z":{
+    "2022-01-01T21:00:00Z":{
         "interval":3600,
         "start_time":1641070800,
         "end_time":1641074400,
@@ -320,7 +690,7 @@ Tail:
         "open":69,
         "id":1
     },
-    "1970-01-19T23:51:14Z":{
+    "2022-01-01T22:00:00Z":{
         "interval":3600,
         "start_time":1641074400,
         "end_time":1641078000,
@@ -328,7 +698,7 @@ Tail:
         "open":70,
         "id":1
     },
-    "1970-01-19T23:51:18Z":{
+    "2022-01-01T23:00:00Z":{
         "interval":3600,
         "start_time":1641078000,
         "end_time":1641081600,
@@ -338,13 +708,13 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=C/data.parquet
+# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=C/data.parquet
 num_lines=55
 '''
 original shape=(24, 6)
 Head:
 {
-    "1970-01-19T23:49:55Z":{
+    "2022-01-01T00:00:00Z":{
         "interval":3600,
         "start_time":1640995200,
         "end_time":1640998800,
@@ -352,7 +722,7 @@ Head:
         "open":48,
         "id":2
     },
-    "1970-01-19T23:49:58Z":{
+    "2022-01-01T01:00:00Z":{
         "interval":3600,
         "start_time":1640998800,
         "end_time":1641002400,
@@ -360,7 +730,7 @@ Head:
         "open":49,
         "id":2
     },
-    "1970-01-19T23:50:02Z":{
+    "2022-01-01T02:00:00Z":{
         "interval":3600,
         "start_time":1641002400,
         "end_time":1641006000,
@@ -371,7 +741,7 @@ Head:
 }
 Tail:
 {
-    "1970-01-19T23:51:10Z":{
+    "2022-01-01T21:00:00Z":{
         "interval":3600,
         "start_time":1641070800,
         "end_time":1641074400,
@@ -379,7 +749,7 @@ Tail:
         "open":69,
         "id":2
     },
-    "1970-01-19T23:51:14Z":{
+    "2022-01-01T22:00:00Z":{
         "interval":3600,
         "start_time":1641074400,
         "end_time":1641078000,
@@ -387,7 +757,7 @@ Tail:
         "open":70,
         "id":2
     },
-    "1970-01-19T23:51:18Z":{
+    "2022-01-01T23:00:00Z":{
         "interval":3600,
         "start_time":1641078000,
         "end_time":1641081600,
