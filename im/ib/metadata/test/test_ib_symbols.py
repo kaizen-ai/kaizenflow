@@ -171,7 +171,11 @@ class TestIbSymbolUniverse(hunitest.TestCase):
         )
         self.assert_equal(extracted_exchange, "NAMES")
 
-    @pytest.mark.slow("move to fast tests and enable retry mechanism #693.")
+    # The 1st test parses the large file, which is used by the tests
+    # `test_get_2`, `test_get_3`, `test_get_4`. They run < 5 seconds,
+    # but they depend on the `test_get_1`, so they should be in one
+    # test category, i.e. `slow` tests.
+    @pytest.mark.slow("25 seconds.")
     def test_get_1(self) -> None:
         """
         Test that ES symbol is returned by request.
@@ -189,7 +193,7 @@ class TestIbSymbolUniverse(hunitest.TestCase):
         # TODO(gp): Use the actual outcome.
         self.assertEqual(len(matched), 1)
 
-    @pytest.mark.slow("move to fast tests and enable retry mechanism #693.")
+    @pytest.mark.slow("depends on `test_get_1`.")
     def test_get_2(self) -> None:
         """
         Test that NON_EXISTING symbol is returned by request.
@@ -206,7 +210,7 @@ class TestIbSymbolUniverse(hunitest.TestCase):
         )
         self.assertEqual(matched, [])
 
-    @pytest.mark.slow("Around 15 sec.")
+    @pytest.mark.slow("depends on `test_get_1`.")
     def test_get_3(self) -> None:
         """
         Test that NG symbol is in downloaded list.
@@ -227,7 +231,7 @@ class TestIbSymbolUniverse(hunitest.TestCase):
         # TODO(gp): Use the actual outcome.
         self.assertEqual(len(matched), 1)
 
-    @pytest.mark.slow("Around 15 sec.")
+    @pytest.mark.slow("depends on `test_get_1`.")
     def test_get_4(self) -> None:
         """
         Test that NON_EXISTING symbol is not in the downloaded list.
