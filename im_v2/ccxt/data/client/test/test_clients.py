@@ -5,7 +5,6 @@ import pandas as pd
 import pytest
 
 import helpers.git as hgit
-import helpers.hsql_test as hsqltest
 import helpers.s3 as hs3
 import helpers.sql as hsql
 import helpers.system_interaction as hsysinte
@@ -13,26 +12,9 @@ import helpers.unit_test as hunitest
 import im.ccxt.db.utils as imccdbuti
 import im_v2.ccxt.data.client.clients as imvcdclcl
 import im_v2.common.data.client as imvcdcli
+import im_v2.common.db.utils as imcodbuti
 
 _AM_S3_ROOT_DIR = os.path.join(hs3.get_path(), "data")
-
-
-class TestImDbHelper(hsqltest.TestDbHelper):
-    @staticmethod
-    def _get_compose_file() -> str:
-        return "im_v2/devops/compose/docker-compose.yml"
-
-    # TODO(Dan): Deprecate after #585.
-    @staticmethod
-    def _get_db_name() -> str:
-        return "im_postgres_db_local"
-
-    @staticmethod
-    def _get_service_name() -> str:
-        return "im_postgres_local"
-
-
-# #############################################################################
 
 
 class TestGetFilePath(hunitest.TestCase):
@@ -95,7 +77,7 @@ class TestGetFilePath(hunitest.TestCase):
     reason="lime and dev_tools doesn't have dind support",
 )
 @pytest.mark.superslow(reason="speed up in #460.")
-class TestCcxtDbClient(TestImDbHelper):
+class TestCcxtDbClient(imcodbuti.TestImDbHelper):
     # @pytest.mark.slow("8 seconds.")
     def test_read_data1(self) -> None:
         """
@@ -450,7 +432,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
     reason="lime and dev_tools doesn't have dind support",
 )
 @pytest.mark.superslow(reason="speed up in #460.")
-class TestMultipleSymbolsCcxtDbClient(TestImDbHelper):
+class TestMultipleSymbolsCcxtDbClient(imcodbuti.TestImDbHelper):
     # @pytest.mark.slow("8 seconds.")
     def test1(self) -> None:
         """
