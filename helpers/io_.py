@@ -21,6 +21,7 @@ from typing import Any, List, Optional, cast
 
 import helpers.dbg as hdbg
 import helpers.printing as hprint
+import helpers.unit_test as hunitest
 
 # TODO(gp): Enable this after the linter has been updated.
 # import helpers.s3 as hs3
@@ -413,7 +414,7 @@ def from_file(
         import helpers.hpandas as hpandas
         # Open pq file.
         df = hparque.from_parquet(file_name)
-        data = hpandas.get_df_signature(df)
+        data = hunitest.convert_df_to_json_string(df, n_head=3, n_tail=3)
         # Already a proper string.
         return data
     else:

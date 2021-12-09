@@ -68,12 +68,12 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         purify_text = True
         self.check_string(act, purify_text=purify_text)
 
-    @pytest.mark.skip(reason="Golden outcome mismatch.")
+    #@pytest.mark.skip(reason="Golden outcome mismatch.")
     def test_daily_data1(self):
         verbose = False
         self._test_daily_data(verbose)
 
-    @pytest.mark.skip(reason="Golden outcome mismatch.")
+    #@pytest.mark.skip(reason="Golden outcome mismatch.")
     def test_daily_data2(self):
         verbose = True
         self._test_daily_data(verbose)
