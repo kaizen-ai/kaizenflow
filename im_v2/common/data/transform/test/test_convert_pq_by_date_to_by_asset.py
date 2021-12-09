@@ -65,8 +65,8 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         act.append("# by_asset=")
         act.append(by_asset_signature)
         act = "\n".join(act)
-        purify_text = True
-        self.check_string(act, purify_text=purify_text)
+        #purify_text = True
+        self.check_string(act)
 
     #@pytest.mark.skip(reason="Golden outcome mismatch.")
     def test_daily_data1(self):

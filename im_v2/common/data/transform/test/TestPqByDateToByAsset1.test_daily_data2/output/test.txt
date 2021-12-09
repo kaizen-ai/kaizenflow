@@ -1,16 +1,16 @@
 # by_date=
 # Dir structure
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211230
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211230/data.parquet
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211231
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211231/data.parquet
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20220101
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20220101/data.parquet
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211230
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211230/data.parquet
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211231
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211231/data.parquet
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20220101
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20220101/data.parquet
 # File signatures
 len(file_names)=3
-file_names=$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211230/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211231/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20220101/data.parquet
-# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211230/data.parquet
+file_names=/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211230/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211231/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20220101/data.parquet
+# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211230/data.parquet
 num_lines=61
 '''
 original shape=(72, 7)
@@ -75,7 +75,7 @@ Tail:
     }
 }
 '''
-# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211231/data.parquet
+# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211231/data.parquet
 num_lines=61
 '''
 original shape=(72, 7)
@@ -140,7 +140,7 @@ Tail:
     }
 }
 '''
-# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20220101/data.parquet
+# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20220101/data.parquet
 num_lines=61
 '''
 original shape=(72, 7)
@@ -207,20 +207,20 @@ Tail:
 '''
 # by_asset=
 # Dir structure
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=A
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=A/data.parquet
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=B
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=B/data.parquet
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=C
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=C/data.parquet
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=A
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=A/data.parquet
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=B
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=B/data.parquet
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=C
+/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=C/data.parquet
 # File signatures
 len(file_names)=3
-file_names=$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=A/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=B/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=C/data.parquet
-# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=A/data.parquet
+file_names=/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=A/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=B/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=C/data.parquet
+# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=A/data.parquet
 num_lines=55
 '''
 original shape=(24, 6)
@@ -279,7 +279,7 @@ Tail:
     }
 }
 '''
-# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=B/data.parquet
+# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=B/data.parquet
 num_lines=55
 '''
 original shape=(24, 6)
@@ -338,7 +338,7 @@ Tail:
     }
 }
 '''
-# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=C/data.parquet
+# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=1970/month=1/day=19/ticker=C/data.parquet
 num_lines=55
 '''
 original shape=(24, 6)
