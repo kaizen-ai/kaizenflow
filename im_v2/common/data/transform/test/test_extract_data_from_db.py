@@ -11,6 +11,7 @@ import helpers.unit_test as hunitest
 import im.ccxt.db.utils as imccdbuti
 
 
+# TODO(Nikola): Expose `TestImDbHelper` from im_v2/common/db/utils.py instead of `setUp()` and `tearDown()` methods.
 class TestExtractDataFromDb1(hunitest.TestCase):
     def setUp(self) -> None:
         """
