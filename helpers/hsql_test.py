@@ -51,7 +51,7 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         """
         Initialize the test database inside test container.
         """
-        _LOG.info("\n%s", hprint.frame("setUpMethod"))
+        _LOG.info("\n%s", hprint.frame("setUp"))
         super().setUp()
         # TODO(Dan): Read the info from env in #585.
         self.host = "localhost"
