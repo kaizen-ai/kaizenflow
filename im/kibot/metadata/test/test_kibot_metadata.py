@@ -1,7 +1,5 @@
 import unittest.mock as mock
 
-import pytest
-
 import helpers.unit_test as hunitest
 import im.kibot.metadata.load.kibot_metadata as imkmlkime
 import im.kibot.metadata.load.s3_backend as imkmls3ba
@@ -11,7 +9,6 @@ MAX_ROWS = 500
 
 
 class TestKibotMetadata(hunitest.TestCase):
-    @pytest.mark.slow()
     def test_get_metadata_slow1(self) -> None:
         """
         Output contains all expected columns.
@@ -36,7 +33,6 @@ class TestKibotMetadata(hunitest.TestCase):
             for column in df.keys():
                 self.assertIn(column, exp_columns)
 
-    @pytest.mark.slow()
     def test_get_metadata_slow2(self) -> None:
         """
         Output contains an reasonable amount of rows.
@@ -47,7 +43,6 @@ class TestKibotMetadata(hunitest.TestCase):
             act = len(cls.get_metadata().index)
             self.assertLessEqual(exp, act)
 
-    @pytest.mark.slow()
     def test_get_metadata_slow3(self) -> None:
         """
         Output contains an reasonable amount of rows.
@@ -58,7 +53,6 @@ class TestKibotMetadata(hunitest.TestCase):
             act = len(cls.get_metadata("tick-bid-ask").index)
             self.assertLessEqual(exp, act)
 
-    @pytest.mark.slow()
     def test_get_futures_slow1(self) -> None:
         """
         Output contains an reasonable amount of rows.
@@ -69,7 +63,6 @@ class TestKibotMetadata(hunitest.TestCase):
             act = len(cls.get_futures())
             self.assertLessEqual(exp, act)
 
-    @pytest.mark.slow()
     def test_get_futures_slow2(self) -> None:
         """
         Output contains an reasonable amount of rows.
@@ -80,7 +73,6 @@ class TestKibotMetadata(hunitest.TestCase):
             act = len(cls.get_futures("tick-bid-ask"))
             self.assertLess(exp, act)
 
-    @pytest.mark.slow()
     def test_get_expiry_contract_slow1(self) -> None:
         """
         Output contains an reasonable amount of rows.
