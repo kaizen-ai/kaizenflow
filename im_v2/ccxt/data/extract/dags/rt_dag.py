@@ -6,7 +6,7 @@ from airflow.providers.docker.operators.docker import DockerOperator
 # Pass default parameters for the DAG.
 default_args = {
     "retries": 1,
-    "retry_delay": datetime.timedelta(minutes=1),
+    "retry_delay": datetime.timedelta(minutes=5),
     "email": ["d.tikhomirov@crypto-kaizen.com"],
     "email_on_failure": True,
     "owner": "test",
@@ -17,17 +17,12 @@ with airflow.DAG(
     description="Realtime download of CCXT OHLCV data",
     max_active_runs=1,
     default_args=default_args,
+    # TODO(Danya): Improve the runtime of the script to fit into 1 minute.
     schedule_interval="*/3 * * * *",
     catchup=False,
     start_date=datetime.datetime.now(),
 ) as dag:
     # Pass default parameters for the script.
-    script_args = {
-        "dst_dir": "test/default_dir",
-        "data_type": "ohlcv",
-        "universe": "v03",
-        "api_keys": "API_keys.json",
-    }
     # Build a bash command to execute.
     bash_command = [
         "python im_v2/ccxt/data/extract/download_realtime.py ",
@@ -39,7 +34,7 @@ with airflow.DAG(
         "--data_type ccxt_ohlcv ",
         "--api_keys API_keys.json ",
         "--universe 'v03' ",
-        "--v DEBUG"
+        "--v DEBUG",
     ]
     # Run the script.
     downloading_task = DockerOperator(
