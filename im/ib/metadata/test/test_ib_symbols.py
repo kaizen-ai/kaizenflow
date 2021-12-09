@@ -171,7 +171,7 @@ class TestIbSymbolUniverse(hunitest.TestCase):
         )
         self.assert_equal(extracted_exchange, "NAMES")
 
-    @pytest.mark.superslow("move to fast tests and enable retry mechanism #693.")
+    @pytest.mark.slow("move to fast tests and enable retry mechanism #693.")
     def test_get_1(self) -> None:
         """
         Test that ES symbol is returned by request.
@@ -189,7 +189,7 @@ class TestIbSymbolUniverse(hunitest.TestCase):
         # TODO(gp): Use the actual outcome.
         self.assertEqual(len(matched), 1)
 
-    @pytest.mark.superslow("move to fast tests and enable retry mechanism #693.")
+    @pytest.mark.slow("move to fast tests and enable retry mechanism #693.")
     def test_get_2(self) -> None:
         """
         Test that NON_EXISTING symbol is returned by request.
