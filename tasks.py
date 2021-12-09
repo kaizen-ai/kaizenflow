@@ -1,7 +1,7 @@
 import logging
 import os
+from typing import Any
 
-import helpers.versioning as hversi
 import repo_config as rconf
 
 # Expose the pytest targets.
@@ -68,6 +68,7 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     run_blank_tests,
     run_fast_slow_tests,
     run_fast_tests,
+    run_qa_tests,
     run_slow_tests,
     run_superslow_tests,
     traceback,
@@ -86,12 +87,15 @@ ECR_BASE_PATH = os.environ["AM_ECR_BASE_PATH"]
 DOCKER_BASE_IMAGE_NAME = rconf.get_docker_base_image_name()
 
 
-def docker_release_end_to_end_test(*args, **kwargs):
+# pylint: disable=unused-argument
+def docker_release_end_to_end_test(ctx: Any, stage: str, version: str) -> bool:
     """
-    Dummy no-op function that mimics end-to-end test that always passes.
+    Run tests for most invoke tasks.
 
-    Used in docker_release_dev_image.
+    Used in docker_release_dev_image and run_qa_tests task.
     """
+    cmd = f"pytest -m no_container test --image_stage {stage} --image_version {version}"
+    ctx.run(cmd)
     return True
 
 

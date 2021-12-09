@@ -31,6 +31,10 @@ class TestExecuteTasks1(hunitest.TestCase):
     Execute tasks that don't change state of the system (e.g., commit images).
     """
 
+    @pytest.fixture(autouse=True)
+    def inject_config(self, request):
+        self._config = request.config
+
     def test_list(self) -> None:
         cmd = "invoke --list"
         hsysinte.system(cmd)
@@ -63,6 +67,13 @@ class TestExecuteTasks1(hunitest.TestCase):
         cmd = "invoke docker_jupyter --self-test"
         hsysinte.system(cmd)
 
+    def test_docker_bash(self) -> None:
+        image_version = self._config.getoption('--image_version')
+        image_stage = self._config.getoption('--image_stage')
+        exit_command = "<(echo 'exit\n')"
+        cmd = f"invoke docker_bash --version {image_version} --stage {image_stage} < {exit_command}"
+        hsysinte.system(cmd)
+
 
 @pytest.mark.no_container
 @pytest.mark.skipif(hsysinte.is_inside_docker(), reason="AmpTask165")
@@ -85,14 +96,14 @@ class TestExecuteTasks2(hunitest.TestCase):
     def test_docker_build_local_image(self) -> None:
         params = _get_default_params()
         base_image = params["ECR_BASE_PATH"] + "/" + params["BASE_IMAGE"]
-        cmd = f"invoke docker_build_local_image --cache --base-image={base_image}"
+        cmd = f"invoke docker_build_local_image --version 1.0.0 --cache --base-image={base_image}"
         hsysinte.system(cmd)
 
     @pytest.mark.skip("No prod image for amp yet")
     def test_docker_build_prod_image(self) -> None:
         params = _get_default_params()
         base_image = params["ECR_BASE_PATH"] + "/" + params["BASE_IMAGE"]
-        cmd = f"invoke docker_build_prod_image --cache --base-image={base_image}"
+        cmd = f"invoke docker_build_prod_image --version 1.0.0 --cache --base-image={base_image}"
         hsysinte.system(cmd)
 
     # Run tests.
@@ -120,10 +131,6 @@ class TestExecuteTasks2(hunitest.TestCase):
         hsysinte.system(cmd)
 
     # Linter.
-
-    def test_lint_docker_pull1(self) -> None:
-        cmd = "invoke lint_docker_pull"
-        hsysinte.system(cmd)
 
     def test_lint1(self) -> None:
         # Get the pointer to amp.
