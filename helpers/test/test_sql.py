@@ -7,7 +7,6 @@ import pytest
 
 import helpers.git as hgit
 import helpers.sql as hsql
-import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
 import im_v2.common.db.utils as imcodbuti
 
@@ -20,54 +19,10 @@ _LOG = logging.getLogger(__name__)
 )
 @pytest.mark.superslow(reason="speed up in #460.")
 class TestSql1(imcodbuti.TestImDbHelper):
-    def test_waitdb(self) -> None:
-        """
-        Smoke test.
-        """
-        hsql.wait_db_connection(
-            self.host, self.dbname, self.port, self.user, self.password
-        )
-
-    def test_db_connection_to_tuple(self) -> None:
-        """
-        Verify that connection string is correct.
-        """
-        hsql.wait_db_connection(
-            self.host, self.dbname, self.port, self.user, self.password
-        )
-        self.connection = hsql.get_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password,
-            autocommit=True,
-        )
-        actual_details = hsql.db_connection_to_tuple(self.connection)
-        expected = {
-            "host": self.host,
-            "dbname": self.dbname,
-            "port": self.port,
-            "user": self.user,
-            "password": self.password,
-        }
-        self.assertEqual(actual_details._asdict(), expected)
-
     def test_create_database(self) -> None:
         """
         Verify that db is creating.
         """
-        hsql.wait_db_connection(
-            self.host, self.dbname, self.port, self.user, self.password
-        )
-        self.connection = hsql.get_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password,
-            autocommit=True,
-        )
         hsql.create_database(self.connection, dbname="test_db")
         self.assertIn("test_db", hsql.get_db_names(self.connection))
 
@@ -84,17 +39,6 @@ class TestSql1(imcodbuti.TestImDbHelper):
         """
         Create database 'test_db_to_remove' and remove it.
         """
-        hsql.wait_db_connection(
-            self.host, self.dbname, self.port, self.user, self.password
-        )
-        self.connection = hsql.get_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password,
-            autocommit=True,
-        )
         hsql.create_database(
             self.connection,
             dbname="test_db_to_remove",
@@ -107,17 +51,6 @@ class TestSql1(imcodbuti.TestImDbHelper):
         """
         Test failed assertion for passing db name that does not exist.
         """
-        hsql.wait_db_connection(
-            self.host, self.dbname, self.port, self.user, self.password
-        )
-        self.connection = hsql.get_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password,
-            autocommit=True,
-        )
         with self.assertRaises(perrors.InvalidCatalogName):
             hsql.remove_database(self.connection, "db does not exist")
 
@@ -128,14 +61,6 @@ class TestSql1(imcodbuti.TestImDbHelper):
         self._create_test_table()
         test_data = self._get_test_data()
         # Try uploading test data.
-        self.connection = hsql.get_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password,
-            autocommit=True,
-        )
         hsql.execute_insert_query(self.connection, test_data, "test_table")
         # Load data.
         df = hsql.execute_query_to_df(self.connection, "SELECT * FROM test_table")
@@ -149,14 +74,6 @@ class TestSql1(imcodbuti.TestImDbHelper):
         self._create_test_table()
         test_data = self._get_test_data()
         # Try uploading test data.
-        self.connection = hsql.get_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password,
-            autocommit=True,
-        )
         hsql.copy_rows_with_copy_from(self.connection, test_data, "test_table")
         # Load data.
         df = hsql.execute_query_to_df(self.connection, "SELECT * FROM test_table")
@@ -170,14 +87,6 @@ class TestSql1(imcodbuti.TestImDbHelper):
         self._create_test_table()
         test_data = self._get_duplicated_data()
         # Try uploading test data.
-        self.connection = hsql.get_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password,
-            autocommit=True,
-        )
         hsql.execute_insert_query(self.connection, test_data, "test_table")
         # Create a query to remove duplicates.
         dup_query = hsql.get_remove_duplicates_query(
@@ -195,14 +104,6 @@ class TestSql1(imcodbuti.TestImDbHelper):
         self._create_test_table()
         test_data = self._get_test_data()
         # Try uploading test data.
-        self.connection = hsql.get_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password,
-            autocommit=True,
-        )
         hsql.execute_insert_query(self.connection, test_data, "test_table")
         # Create a query to remove duplicates.
         dup_query = hsql.get_remove_duplicates_query(
@@ -223,18 +124,7 @@ class TestSql1(imcodbuti.TestImDbHelper):
                     column_2 VARCHAR(255)
                     )
                     """
-        hsql.wait_db_connection(
-            self.host, self.dbname, self.port, self.user, self.password
-        )
-        connection = hsql.get_connection(
-            self.host,
-            self.dbname,
-            self.port,
-            self.user,
-            self.password,
-            autocommit=True,
-        )
-        connection.cursor().execute(query)
+        self.connection.cursor().execute(query)
 
     def _get_test_data(self) -> pd.DataFrame:
         test_data = pd.DataFrame(
