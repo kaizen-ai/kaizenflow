@@ -8,7 +8,6 @@ import helpers.unit_test as hunitest
 
 
 class TestGeneratePqExampleData1(hunitest.TestCase):
-
     @pytest.mark.skip(reason="Golden outcome mismatch.")
     def test_example_data1(self) -> None:
         """
@@ -19,7 +18,7 @@ class TestGeneratePqExampleData1(hunitest.TestCase):
         cmd = []
         file_path = os.path.join(
             hgit.get_amp_abs_path(),
-            "im_v2/common/data/transform/test/generate_pq_example_data.py"
+            "im_v2/common/data/transform/test/generate_pq_example_data.py",
         )
         cmd.append(file_path)
         cmd.append("--start_date 2021-12-30")

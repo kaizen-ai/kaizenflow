@@ -47,16 +47,16 @@ import im_v2.common.data.transform.convert_pq_by_date_to_by_asset as imvcdtcpbdt
 import argparse
 import logging
 import os
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 import numpy as np
 
 import helpers.datetime_ as hdateti
-import helpers.joblib_helpers as hjoblib
 import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.io_ as hio
+import helpers.joblib_helpers as hjoblib
 import helpers.parser as hparser
 import helpers.printing as hprint
 
@@ -79,8 +79,10 @@ def _source_pq_files(src_dir: str) -> List[str]:
 
 def _save_chunk(config: Dict[str, str], **kwargs: Dict[str, Any]):
     """
-    Smaller part of daily data that will be decoupled to asset format
-    for certain period of time. Chunk is executed as small task.
+    Smaller part of daily data that will be decoupled to asset format for
+    certain period of time.
+
+    Chunk is executed as small task.
     """
     # TODO(Nikola): Use incremental and repeat from kwargs.
     # TODO(Nikola): Check config.
@@ -153,6 +155,7 @@ def _run(args: argparse.Namespace) -> None:
         num_attempts,
         log_file,
     )
+
 
 # TODO(Nikola): Add support for reading (not writing) to S3. #697
 

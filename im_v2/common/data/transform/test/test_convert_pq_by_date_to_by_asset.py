@@ -1,22 +1,28 @@
 import os
 
-import pytest
-
 import helpers.git as hgit
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
 
-
 # TODO(Nikola): Add one test for the command line and other tests testing directly _run
 #  to get coverage.
 
+
 class TestPqByDateToByAsset1(hunitest.TestCase):
+
+    def test_daily_data1(self):
+        verbose = False
+        self._test_daily_data(verbose)
+
+    def test_daily_data2(self):
+        verbose = True
+        self._test_daily_data(verbose)
 
     # TODO(Nikola): Parametrize?
     def _test_daily_data(self, verbose: bool) -> None:
         """
-        Generate daily data for 3 days in a by-date format and then convert
-        it to by-asset.
+        Generate daily data for 3 days in a by-date format and then convert it
+        to by-asset.
         """
         test_dir = self.get_scratch_space()
         by_date_dir = os.path.join(test_dir, "by_date")
@@ -24,7 +30,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         cmd = []
         file_path = os.path.join(
             hgit.get_amp_abs_path(),
-            "im_v2/common/data/transform/test/generate_pq_example_data.py"
+            "im_v2/common/data/transform/test/generate_pq_example_data.py",
         )
         cmd.append(file_path)
         cmd.append("--start_date 2021-12-30")
@@ -39,7 +45,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         cmd = []
         file_path = os.path.join(
             hgit.get_amp_abs_path(),
-            "im_v2/common/data/transform/convert_pq_by_date_to_by_asset.py"
+            "im_v2/common/data/transform/convert_pq_by_date_to_by_asset.py",
         )
         cmd.append(file_path)
         cmd.append(f"--src_dir {by_date_dir}")
@@ -65,15 +71,4 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         act.append("# by_asset=")
         act.append(by_asset_signature)
         act = "\n".join(act)
-        #purify_text = True
         self.check_string(act)
-
-    #@pytest.mark.skip(reason="Golden outcome mismatch.")
-    def test_daily_data1(self):
-        verbose = False
-        self._test_daily_data(verbose)
-
-    #@pytest.mark.skip(reason="Golden outcome mismatch.")
-    def test_daily_data2(self):
-        verbose = True
-        self._test_daily_data(verbose)

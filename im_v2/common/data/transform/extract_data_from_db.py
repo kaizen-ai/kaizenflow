@@ -63,8 +63,10 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     """
     Standard main part of the script that is parsing provided arguments.
-    Timespan provided via start and end date, can not start and end on the
-    same day. Start date is included in timespan, while end date is excluded.
+
+    Timespan provided via start and end date, can not start and end on
+    the same day. Start date is included in timespan, while end date is
+    excluded.
     """
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)

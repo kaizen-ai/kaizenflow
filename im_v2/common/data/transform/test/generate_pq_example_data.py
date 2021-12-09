@@ -117,7 +117,7 @@ def _get_verbose_daily_df(
         df.append(df_tmp)
     # Create a single df for all the assets.
     df = pd.concat(df)
-    start_time = (df.index - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
+    start_time = (df.index - pd.Timestamp("1970-01-01")) // pd.Timedelta("1s")
     end_time = start_time + interval
     # TODO(Nikola): Handle various types of dates?
     # df.index = df.index.date
@@ -178,8 +178,10 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     """
     Standard main part of the script that is parsing provided arguments.
-    Timespan provided via start and end date, can not start and end on the
-    same day. Start date is included in timespan, while end date is excluded.
+
+    Timespan provided via start and end date, can not start and end on
+    the same day. Start date is included in timespan, while end date is
+    excluded.
     """
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
@@ -193,7 +195,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     assets = assets.split(",")
     dst_dir = args.dst_dir
     freq = args.freq if args.freq else "1H"
-    get_daily_df = _get_verbose_daily_df if args.verbose else _get_generic_daily_df
+    get_daily_df = (
+        _get_verbose_daily_df if args.verbose else _get_generic_daily_df
+    )
     dummy_df = get_daily_df(start_date, end_date, assets, freq)
     hparque.save_daily_df_as_pq(dummy_df, dst_dir)
 

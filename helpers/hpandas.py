@@ -188,15 +188,16 @@ def reindex_on_unix_epoch(df: pd.DataFrame, in_col_name: str) -> pd.DataFrame:
 
 def get_df_signature(df: pd.DataFrame, num_rows: int = 3) -> str:
     """
-    Obtain simple snapshot of dataframe in string format. It contains
-    metadata about dataframe size and certain amount of rows from start and
-    end of a dataframe. Mostly used for testing purposes.
+    Obtain simple snapshot of dataframe in string format.
+
+    It contains metadata about dataframe size and certain amount of rows
+    from start and end of a dataframe. Mostly used for testing purposes.
     """
     hdbg.dassert_isinstance(df, pd.DataFrame)
     txt: List[str] = []
     txt.append("df.shape=%s" % str(df.shape))
     with pd.option_context(
-            "display.max_colwidth", int(1e6), "display.max_columns", None
+        "display.max_colwidth", int(1e6), "display.max_columns", None
     ):
         txt.append("df.head=\n%s" % df.head(num_rows))
         txt.append("df.tail=\n%s" % df.tail(num_rows))

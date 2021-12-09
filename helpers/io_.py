@@ -409,8 +409,9 @@ def from_file(
         f = gzip.open(file_name, "rt", encoding=encoding)
     elif file_name.endswith((".pq", ".parquet")):
         # TODO(Nikola): Temporary workaround. Definitely revisit.
-        import helpers.unit_test as hunitest
         import helpers.hparquet as hparque
+        import helpers.unit_test as hunitest
+
         # Open pq file.
         df = hparque.from_parquet(file_name)
         data = hunitest.convert_df_to_json_string(df, n_head=3, n_tail=3)
