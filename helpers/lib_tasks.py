@@ -1506,6 +1506,7 @@ def _to_abs_path(filename: str) -> str:
 # DOCKER_BUILDKIT = 1
 DOCKER_BUILDKIT = 0
 
+
 # For base_image, we use "" as default instead None since pyinvoke can only infer
 # a single type.
 @task
@@ -1682,7 +1683,7 @@ def docker_release_dev_image(  # type: ignore
     if superslow_tests:
         run_superslow_tests(ctx, stage=stage, version=version)
     # 3) Promote the "local" image to "dev".
-    docker_tag_local_image_as_dev(ctx, version=version)
+    docker_tag_local_image_as_dev(ctx, version)
     # 4) Run QA tests for the (local version) of the dev image.
     if qa_tests:
         qa_test_fn = get_default_param("END_TO_END_TEST_FN")
@@ -1692,7 +1693,7 @@ def docker_release_dev_image(  # type: ignore
             raise RuntimeError(msg)
     # 5) Push the "dev" image to ECR.
     if push_to_repo:
-        docker_push_dev_image(ctx, version=version)
+        docker_push_dev_image(ctx, version)
     else:
         _LOG.warning(
             "Skipping pushing dev image to repo_short_name, as requested"
@@ -2773,7 +2774,8 @@ def pytest_failed(  # type: ignore
 
 def _purify_test_output(src_file_name: str, dst_file_name: str) -> None:
     """
-    Clean up the output of `pytest -s --dbg` to make easier to compare two runs.
+    Clean up the output of `pytest -s --dbg` to make easier to compare two
+    runs.
 
     E.g., remove the timestamps, reference to Git repo.
     """
@@ -2782,7 +2784,7 @@ def _purify_test_output(src_file_name: str, dst_file_name: str) -> None:
     out_txt = []
     for line in txt.split("\n"):
         # 10:05:18       portfolio        : _get_holdings       : 431 :
-        m = re.match("^\d\d:\d\d:\d\d\s+(.*:.*)$", line)
+        m = re.match(r"^\d\d:\d\d:\d\d\s+(.*:.*)$", line)
         if m:
             new_line = m.group(1)
         else:
@@ -2796,7 +2798,8 @@ def _purify_test_output(src_file_name: str, dst_file_name: str) -> None:
 @task
 def pytest_compare(ctx, file_name1, file_name2):  # type: ignore
     """
-    Compare the output of two runs of `pytest -s --dbg` removing irrelevant details.
+    Compare the output of two runs of `pytest -s --dbg` removing irrelevant
+    details.
     """
     _report_task()
     _ = ctx
@@ -2979,8 +2982,8 @@ def lint(  # type: ignore
     files="",
     dir_name="",
     phases="",
-    only_formatting=False,
-    only_checks=False,
+    only_format=False,
+    only_check=False,
     # stage="prod",
     run_bash=False,
     run_linter_step=True,
@@ -2997,8 +3000,8 @@ def lint(  # type: ignore
     :param files: specify a space-separated list of files
     :param dir_name: process all the files in a dir
     :param phases: specify the lint phases to execute
-    :param only_formatting: run only the formatting phases (e.g., black)
-    :param only_checks: run only the checking phases (e.g., pylint, mypy) that
+    :param only_format: run only the formatting phases (e.g., black)
+    :param only_check: run only the checking phases (e.g., pylint, mypy) that
         don't change the code
     :param run_bash: instead of running pre-commit, run bash to debug
     :param run_linter_step: run linter step
@@ -3037,7 +3040,7 @@ def lint(  # type: ignore
     # amp_warn_incorrectly_formatted_todo..............(no files to check)Skipped
     # amp_processjupytext..............................(no files to check)Skipped
     # ```
-    if only_formatting:
+    if only_format:
         hdbg.dassert_eq(phases, "")
         phases = " ".join(
             [
@@ -3049,7 +3052,7 @@ def lint(  # type: ignore
                 "amp_processjupytext",
             ]
         )
-    if only_checks:
+    if only_check:
         hdbg.dassert_eq(phases, "")
         phases = " ".join(
             [

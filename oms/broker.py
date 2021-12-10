@@ -13,10 +13,15 @@ import pandas as pd
 
 import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
+import helpers.sql as hsql
 import market_data.market_data_interface as mdmadain
+import oms.oms_db as oomsdb
 import oms.order as omorder
 
 _LOG = logging.getLogger(__name__)
+
+
+# #############################################################################
 
 
 class Fill:
@@ -96,7 +101,7 @@ class AbstractBroker(abc.ABC):
         self._market_data_interface = market_data_interface
         self._get_wall_clock_time = get_wall_clock_time
         # Track the orders for internal accounting.
-        self._orders = []
+        self._orders: List[omorder.Order] = []
         # Last seen timestamp to enforce that time is only moving ahead.
         self._last_timestamp = None
 
@@ -109,6 +114,7 @@ class AbstractBroker(abc.ABC):
         """
         _ = self._update_last_timestamp()
         # Submit the orders.
+        _LOG.debug("Submitting orders=%s", omorder.orders_to_string(orders))
         self._orders.extend(orders)
         self._submit_orders(orders)
 
@@ -125,9 +131,9 @@ class AbstractBroker(abc.ABC):
         # Check future peeking.
         if as_of_timestamp > wall_clock_timestamp:
             raise ValueError(
-                f"You are asking about the future: "
-                "as_of_timestamp={as_of_timestamp} > "
-                "wall_clock_timestamp={wall_clock_timestamp}"
+                "You are asking about the future: " +
+                f"as_of_timestamp={as_of_timestamp} > " +
+                f"wall_clock_timestamp={wall_clock_timestamp}"
             )
         # Get the fills.
         fills = self._get_fills(as_of_timestamp)
@@ -215,7 +221,7 @@ class Broker(AbstractBroker):
             # TODO(gp): Here there should be a programmable logic that decides
             #  how many shares are filled.
             fills.extend(self._fully_fill(as_of_timestamp, order))
-        self._fills.append(fills)
+        self._fills.extend(fills)
         # Remove the orders that have been executed.
         _LOG.debug(
             "Removing orders from queue with deadline=`%s`", as_of_timestamp
@@ -232,3 +238,72 @@ class Broker(AbstractBroker):
         price = order.get_execution_price()
         fill = Fill(order, wall_clock_timestamp, num_shares, price)
         return [fill]
+
+
+# #############################################################################
+
+
+class MockedBroker(AbstractBroker):
+    """
+    Implement an object that mocks a real OMS / broker backed by a DB where
+    updates to the state representing the placed orders are asynchronous.
+
+    The DB contains the following tables:
+    - `processed`
+        - tradedate
+        - strategyid
+        - timestamp_db
+            - when the order list was received from the OMS
+
+    - A more complex implementation can also have:
+        - target_count
+        - changed_count
+        - unchanged_count
+    """
+
+    _submitted_order_id: int = 0
+
+    def __init__(
+        self,
+        *args: Any,
+        db_connection: hsql.DbConnection,
+        submitted_orders_table_name: str,
+        accepted_orders_table_name: str,
+    ):
+        super().__init__(*args)
+        self._db_connection = db_connection
+        self._submitted_orders_table_name = submitted_orders_table_name
+        self._accepted_orders_table_name = accepted_orders_table_name
+
+    def submit_orders(
+        self,
+        orders: List[omorder.Order],
+    ) -> None:
+        # Add an order in the submitted orders table.
+        submitted_order_id = self._get_next_submitted_order_id()
+        #
+        file_name = f"filename_{submitted_order_id}.txt"
+        timestamp_db = self._get_wall_clock_time()
+        orders_as_txt = omorder.orders_to_string(orders)
+        row = [
+            ("filename", file_name),
+            ("timestamp_db", timestamp_db),
+            ("orders_as_txt", orders_as_txt),
+        ]
+        row = pd.Series(row)
+        hsql.execute_insert_query(
+            self._db_connection, row, self._submitted_orders_table_name
+        )
+        # TODO(gp): Wait on `OmsDb.processed_orders`.
+
+    def get_fills(self, curr_timestamp: pd.Timestamp) -> List[Fill]:
+        """
+        The reference system doesn't return fills but directly updates the
+        state of a table representing the current holdings.
+        """
+        raise NotImplementedError
+
+    def _get_next_submitted_order_id(self) -> int:
+        submitted_order_id = self._submitted_order_id
+        self._submitted_order_id += 1
+        return submitted_order_id

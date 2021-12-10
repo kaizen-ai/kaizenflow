@@ -9,6 +9,8 @@ import oms.oms_db as oomsdb
 import logging
 from typing import Any, Dict
 
+import helpers.dbg as hdbg
+import helpers.datetime_ as hdateti
 import helpers.hasyncio as hasynci
 import helpers.sql as hsql
 
@@ -22,7 +24,7 @@ SUBMITTED_ORDERS_TABLE_NAME = "submitted_orders"
 
 
 def create_submitted_orders_table(
-    connection: hsql.DbConnection,
+    db_connection: hsql.DbConnection,
     incremental: bool,
     *,
     table_name: str = SUBMITTED_ORDERS_TABLE_NAME,
@@ -44,13 +46,13 @@ def create_submitted_orders_table(
         CREATE TABLE IF NOT EXISTS {table_name} (
             filename VARCHAR(255) NOT NULL,
             timestamp_db TIMESTAMP NOT NULL,
-            order_as_csv VARCHAR(4096)
+            orders_as_txt VARCHAR(16384)
             )
             """
     )
     query = "; ".join(query)
     _LOG.debug("query=%s", query)
-    connection.cursor().execute(query)
+    db_connection.cursor().execute(query)
     return table_name
 
 
@@ -63,7 +65,7 @@ ACCEPTED_ORDERS_TABLE_NAME = "accepted_orders"
 
 
 def create_accepted_orders_table(
-    connection: hsql.DbConnection,
+    db_connection: hsql.DbConnection,
     incremental: bool,
     *,
     table_name: str = ACCEPTED_ORDERS_TABLE_NAME,
@@ -128,7 +130,7 @@ def create_accepted_orders_table(
     )
     query = "; ".join(query)
     _LOG.debug("query=%s", query)
-    connection.cursor().execute(query)
+    db_connection.cursor().execute(query)
     return table_name
 
 
@@ -141,7 +143,7 @@ CURRENT_POSITIONS_TABLE_NAME = "current_positions"
 
 
 def create_current_positions_table(
-    connection: hsql.DbConnection,
+    db_connection: hsql.DbConnection,
     incremental: bool,
     *,
     table_name: str = CURRENT_POSITIONS_TABLE_NAME,
@@ -168,7 +170,7 @@ def create_current_positions_table(
     )
     query = "; ".join(query)
     _LOG.debug("query=%s", query)
-    connection.cursor().execute(query)
+    db_connection.cursor().execute(query)
     return table_name
 
 
@@ -176,7 +178,7 @@ def create_current_positions_table(
 
 
 async def wait_for_order_accepted(
-    connection: hsql.DbConnection,
+    db_connection: hsql.DbConnection,
     target_value: str,
     poll_kwargs: Dict[str, Any],
     *,
@@ -194,7 +196,7 @@ async def wait_for_order_accepted(
     # Create a polling function that checks whether `target_value` is present
     # in the `field_name` column of the table `table_name`.
     polling_func = lambda: hsql.is_row_with_value_present(
-        connection, table_name, field_name, target_value
+        db_connection, table_name, field_name, target_value
     )
     # Poll.
     rc, result = await hasynci.poll(polling_func, **poll_kwargs)
@@ -202,8 +204,9 @@ async def wait_for_order_accepted(
 
 
 async def order_processor(
-    connection: hsql.DbConnection,
+    db_connection: hsql.DbConnection,
     poll_kwargs: Dict[str, Any],
+    get_wall_clock_time: hdateti.GetWallClockTime,
     delay_to_accept_in_secs: float,
     delay_to_fill_in_secs: float,
     portfolio,
@@ -215,6 +218,7 @@ async def order_processor(
 ) -> None:
     """
     A coroutine that:
+
     - polls for submitted orders
     - updates the accepted orders table
     - updates the current positions table
@@ -224,13 +228,28 @@ async def order_processor(
     """
     # Wait for orders to be written in `submitted_orders_table_name`.
     await hsql.wait_for_change_in_number_of_rows(
-        connection, submitted_orders_table_name, poll_kwargs
+        db_connection, submitted_orders_table_name, poll_kwargs
     )
-    # Wait.
-    hdbg.dassert_lt(0, delay_to_accept_in_ses)
+    # Get the new order.
+    # TODO(gp): Implement.
+    # Delay.
+    hdbg.dassert_lt(0, delay_to_accept_in_secs)
     await hasynci.sleep(delay_to_accept_in_secs)
     # Write in `accepted_orders_table_name` to acknowledge the orders.
-    # TODO(gp): Implement.
+    timestamp_db = get_wall_clock_time()
+    trade_date = timestamp_db.date()
+    txt = f"""
+    strategyid,SAU1
+    account,candidate
+    tradedate,{trade_date}
+    id,1
+    timestamp_db,{timestamp_db}
+    target_position,
+    current_position,
+    open_quantity,
+    """
+    row = hsql.csv_to_series(txt, sep=",")
+    hsql.execute_insert_query(db_connection, row, accepted_orders_table_name)
     # Wait.
     hdbg.dassert_lt(0, delay_to_fill_in_ses)
     await hasynci.sleep(delay_to_fill_in_secs)

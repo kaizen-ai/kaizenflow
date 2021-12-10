@@ -29,9 +29,7 @@ class TestPlaceOrders1(hunitest.TestCase):
         (
             market_data_interface,
             get_wall_clock_time,
-        ) = mdmdinex.get_replayed_time_market_data_interface_example2(
-            event_loop
-        )
+        ) = mdmdinex.get_replayed_time_market_data_interface_example2(event_loop)
         # Build predictions.
         index = [
             pd.Timestamp("2000-01-01 09:35:00-05:00", tz="America/New_York"),

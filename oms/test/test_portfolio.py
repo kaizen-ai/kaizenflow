@@ -1,9 +1,3 @@
-"""
-Import as:
-
-import oms.test.test_portfolio as ottport
-"""
-
 import io
 import logging
 from typing import Any, Dict
@@ -77,9 +71,7 @@ class TestPortfolio1(hunitest.TestCase):
         (
             market_data_interface,
             _,
-        ) = mdmdinex.get_replayed_time_market_data_interface_example2(
-            event_loop
-        )
+        ) = mdmdinex.get_replayed_time_market_data_interface_example2(event_loop)
         # Build a Portfolio.
         initial_timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
         portfolio = oporexam.get_portfolio_example1(
@@ -107,9 +99,7 @@ class TestPortfolio2(hunitest.TestCase):
         (
             market_data_interface,
             get_wall_clock_time,
-        ) = mdmdinex.get_replayed_time_market_data_interface_example2(
-            event_loop
-        )
+        ) = mdmdinex.get_replayed_time_market_data_interface_example2(event_loop)
         # Build Broker.
         broker = ombroker.Broker(market_data_interface, get_wall_clock_time)
         # Build a Portfolio.
@@ -149,9 +139,7 @@ class TestPortfolio2(hunitest.TestCase):
         (
             market_data_interface,
             get_wall_clock_time,
-        ) = mdmdinex.get_replayed_time_market_data_interface_example2(
-            event_loop
-        )
+        ) = mdmdinex.get_replayed_time_market_data_interface_example2(event_loop)
         # Build Broker.
         broker = ombroker.Broker(market_data_interface, get_wall_clock_time)
         # Build a Portfolio.
@@ -194,9 +182,7 @@ class TestPortfolio2(hunitest.TestCase):
         (
             market_data_interface,
             get_wall_clock_time,
-        ) = mdmdinex.get_replayed_time_market_data_interface_example2(
-            event_loop
-        )
+        ) = mdmdinex.get_replayed_time_market_data_interface_example2(event_loop)
         # Build Broker.
         broker = ombroker.Broker(market_data_interface, get_wall_clock_time)
         # Build Portfolio.
@@ -243,9 +229,7 @@ leverage,0.0
         (
             market_data_interface,
             get_wall_clock_time,
-        ) = mdmdinex.get_replayed_time_market_data_interface_example2(
-            event_loop
-        )
+        ) = mdmdinex.get_replayed_time_market_data_interface_example2(event_loop)
         # Build Broker.
         broker = ombroker.Broker(market_data_interface, get_wall_clock_time)
         # Build Portfolio.

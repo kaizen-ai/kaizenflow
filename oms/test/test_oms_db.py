@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import os
-from typing import Any, Callable, Coroutine, List
+from typing import Any, Callable, List
 
 import pandas as pd
 import pytest
@@ -60,7 +60,7 @@ class _TestOmsDbHelper(hunitest.TestCase):
         if conn_exists:
             _LOG.warning("DB is already up: skipping docker compose")
             # Since we have found the DB already up, we assume that we need to
-            # leave it running after the tests
+            # leave it running after the tests.
             self.bring_down_db = False
         else:
             # Start the service.
@@ -125,10 +125,12 @@ def _test_create_table_helper(
     create_table_func: Callable,
 ) -> None:
     """
-    - Test that the DB is up.
+    Basic sanity check for a DB table.
+
+    - Test that the DB is up
     - Remove the table `table_name`
     - Create the table `table_name` using `create_table_func()`
-    - Check the table
+    - Check that the table exists
     - Delete the table
     """
     # Verify that the DB is up.
@@ -148,6 +150,9 @@ def _test_create_table_helper(
     self_.assertIn(table_name, db_tables)
     # Delete the table.
     hsql.remove_table(connection, table_name)
+
+
+# #############################################################################
 
 
 @pytest.mark.skipif(
@@ -172,22 +177,6 @@ class TestOmsDbSubmittedOrdersTable1(_TestOmsDbHelper):
 # #############################################################################
 
 
-def _to_series(txt: str) -> pd.Series:
-    """
-    Convert a text with (key, value) separated by `|` into a pd.series.
-    """
-    # _LOG.debug("txt=\n%s", txt)
-    tuples = [tuple(line.split("|")) for line in hprint.dedent(txt).split("\n")]
-    # _LOG.debug("tuples=%s", str(tuples))
-    # Remove empty tuples.
-    tuples = [t for t in tuples if t[0] != ""]
-    index, data = zip(*tuples)
-    # _LOG.debug("index=%s", index)
-    # _LOG.debug("data=%s", data)
-    srs = pd.Series(data, index=index)
-    return srs
-
-
 def _get_row1() -> pd.Series:
     row = """
     tradedate|2021-11-12
@@ -204,7 +193,7 @@ def _get_row1() -> pd.Series:
     success|False
     reason|"There were a total of 1 malformed requests in the file.
     """
-    srs = _to_series(row)
+    srs = hsql.csv_to_series(row, sep="|")
     return srs
 
 
@@ -224,7 +213,7 @@ def _get_row2() -> pd.Series:
     success|False
     reason|"There were a total of 1 malformed requests in the file."
     """
-    srs = _to_series(row)
+    srs = hsql.csv_to_series(row, sep="|")
     return srs
 
 
@@ -244,7 +233,7 @@ def _get_row3() -> pd.Series:
     success|True
     reason|
     """
-    srs = _to_series(row)
+    srs = hsql.csv_to_series(row, sep="|")
     return srs
 
 
@@ -404,11 +393,11 @@ class TestOmsDbTableInteraction1(_TestOmsDbHelper):
         await asyncio.sleep(sleep_in_secs)
         # Insert the row.
         _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
-        _LOG.debug("insert ...")
+        _LOG.debug("insert row ...")
         row = _get_row1()
         hsql.execute_insert_query(self.connection, row, table_name)
         _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
-        _LOG.debug("insert ... done")
+        _LOG.debug("insert row ... done")
         # Show the state of the DB.
         query = f"SELECT * FROM {table_name}"
         df = hsql.execute_query_to_df(self.connection, query)
