@@ -76,8 +76,8 @@ class TestGetFilePath(hunitest.TestCase):
     hgit.is_dev_tools() or hgit.is_lime(),
     reason="lime and dev_tools doesn't have dind support",
 )
-@pytest.mark.superslow(reason="speed up in #460.")
 class TestCcxtDbClient(imcodbuti.TestImDbHelper):
+    @pytest.mark.slow("6 seconds.")
     def test_read_data1(self) -> None:
         """
         Verify that data from DB is read correctly.
@@ -94,6 +94,7 @@ class TestCcxtDbClient(imcodbuti.TestImDbHelper):
         # Delete the table.
         hsql.remove_table(self.connection, "ccxt_ohlcv")
 
+    @pytest.mark.slow("8 seconds.")
     def test_read_data2(self) -> None:
         """
         Verify that data from DB is read and filtered correctly.
@@ -114,6 +115,7 @@ class TestCcxtDbClient(imcodbuti.TestImDbHelper):
         # Delete the table.
         hsql.remove_table(self.connection, "ccxt_ohlcv")
 
+    @pytest.mark.slow("8 seconds.")
     def test_read_data3(self) -> None:
         """
         Verify that data from DB is read correctly without normalization.
@@ -434,8 +436,8 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
     hgit.is_dev_tools() or hgit.is_lime(),
     reason="lime and dev_tools doesn't have dind support",
 )
-@pytest.mark.superslow(reason="speed up in #460.")
 class TestMultipleSymbolsCcxtDbClient(imcodbuti.TestImDbHelper):
+    @pytest.mark.slow("10 seconds.")
     def test1(self) -> None:
         """
         Test that data for provided list of full symbols is being read
@@ -466,6 +468,7 @@ class TestMultipleSymbolsCcxtDbClient(imcodbuti.TestImDbHelper):
         # Delete the table.
         hsql.remove_table(self.connection, "ccxt_ohlcv")
 
+    @pytest.mark.slow("9 seconds.")
     def test2(self) -> None:
         """
         Test that all files are being read and filtered correctly.
@@ -499,6 +502,7 @@ class TestMultipleSymbolsCcxtDbClient(imcodbuti.TestImDbHelper):
         # Delete the table.
         hsql.remove_table(self.connection, "ccxt_ohlcv")
 
+    @pytest.mark.slow("9 seconds.")
     def test3(self) -> None:
         """
         Test that all files are being read correctly without normalization.
@@ -531,6 +535,7 @@ class TestMultipleSymbolsCcxtDbClient(imcodbuti.TestImDbHelper):
         # Delete the table.
         hsql.remove_table(self.connection, "ccxt_ohlcv")
 
+    @pytest.mark.slow("9 seconds.")
     def test4(self) -> None:
         """
         Test that all files are being read correctly in dict output mode.

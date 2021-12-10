@@ -79,12 +79,12 @@ def _test_create_table_helper(
 @pytest.mark.skipif(
     hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
 )
-@pytest.mark.superslow(reason="speed up in #460.")
 class TestOmsDbSubmittedOrdersTable1(TestOmsDbHelper):
     """
     Test operations on the submitted orders table.
     """
 
+    @pytest.mark.slow("9 seconds.")
     def test_create_table1(self) -> None:
         """
         Test creating the table.
@@ -181,12 +181,12 @@ def _get_row3() -> pd.Series:
 @pytest.mark.skipif(
     hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
 )
-@pytest.mark.superslow(reason="speed up in #460.")
 class TestOmsDbAcceptedOrdersTable1(TestOmsDbHelper):
     """
     Test operations on the accepted orders table.
     """
 
+    @pytest.mark.slow("9 seconds.")
     def test_up1(self) -> None:
         """
         Verify that the DB is up.
@@ -194,6 +194,7 @@ class TestOmsDbAcceptedOrdersTable1(TestOmsDbHelper):
         db_list = hsql.get_db_names(self.connection)
         _LOG.info("db_list=%s", db_list)
 
+    @pytest.mark.slow("8 seconds.")
     def test_create_table1(self) -> None:
         """
         Test creating the table.
@@ -221,6 +222,7 @@ class TestOmsDbAcceptedOrdersTable1(TestOmsDbHelper):
             self, self.connection, table_name, create_table_func
         )
 
+    @pytest.mark.slow("8 seconds.")
     def test_insert1(self) -> None:
         """
         Test inserting in the table.
@@ -276,7 +278,6 @@ async def gather_coroutines_with_wall_clock(
 @pytest.mark.skipif(
     hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
 )
-@pytest.mark.superslow(reason="speed up in #460.")
 class TestOmsDb2(TestOmsDbHelper):
     """
     Test interactions through the DB.
@@ -301,6 +302,7 @@ class TestOmsDb2(TestOmsDbHelper):
         # Delete the table.
         hsql.remove_table(self.connection, oomsdb.ACCEPTED_ORDERS_TABLE_NAME)
 
+    @pytest.mark.slow("9 seconds.")
     def test_wait_for_table1(self) -> None:
         """
         Show that if the value doesn't show up in the DB there is a timeout.
@@ -311,6 +313,7 @@ class TestOmsDb2(TestOmsDbHelper):
         with self.assertRaises(TimeoutError):
             self.wait_for_table_helper(coroutines)
 
+    @pytest.mark.slow("9 seconds.")
     def test_wait_for_table2(self) -> None:
         """
         Show that waiting on a value on the table works.
@@ -330,6 +333,7 @@ class TestOmsDb2(TestOmsDbHelper):
         exp = r"""[[(3, None)], None]"""
         self.assert_equal(act, exp)
 
+    @pytest.mark.slow("9 seconds.")
     def test_wait_for_table3(self) -> None:
         """
         The data is written too late triggering a timeout.
