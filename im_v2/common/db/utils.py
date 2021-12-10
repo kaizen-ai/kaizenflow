@@ -119,14 +119,6 @@ def create_im_database(
 
 
 class TestImDbHelper(hsqltest.TestDbHelper):
-    @classmethod
-    def setUpClass(cls) -> None:
-        super(TestImDbHelper, cls).setUpClass()
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        super(TestImDbHelper, cls).tearDownClass()
-
     @staticmethod
     def _get_compose_file() -> str:
         return "im_v2/devops/compose/docker-compose.yml"

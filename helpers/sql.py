@@ -462,7 +462,7 @@ def remove_table(
     """
     query = f"DROP TABLE IF EXISTS {table_name}"
     if cascade:
-        query = " ".join(query, "CASCADE")
+        query = " ".join([query, "CASCADE"])
     connection.cursor().execute(query)
 
 
