@@ -127,7 +127,7 @@ def wait_db_connection(
     port: int,
     user: str,
     password: str,
-    timeout_in_secs: int = 10,
+    timeout_in_secs: int = 15,
 ) -> None:
     """
     Wait until the database is available.
