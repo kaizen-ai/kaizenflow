@@ -2769,6 +2769,48 @@ def pytest_failed(  # type: ignore
 
 
 # #############################################################################
+
+
+def _purify_test_output(src_file_name: str, dst_file_name: str) -> None:
+    """
+    Clean up the output of `pytest -s --dbg` to make easier to compare two runs.
+
+    E.g., remove the timestamps, reference to Git repo.
+    """
+    _LOG.info("Converted '%s' -> '%s", src_file_name, dst_file_name)
+    txt = hio.from_file(src_file_name)
+    out_txt = []
+    for line in txt.split("\n"):
+        # 10:05:18       portfolio        : _get_holdings       : 431 :
+        m = re.match("^\d\d:\d\d:\d\d\s+(.*:.*)$", line)
+        if m:
+            new_line = m.group(1)
+        else:
+            new_line = line
+        out_txt.append(new_line)
+    #
+    out_txt = "\n".join(out_txt)
+    hio.to_file(dst_file_name, out_txt)
+
+
+@task
+def pytest_compare(ctx, file_name1, file_name2):  # type: ignore
+    """
+    Compare the output of two runs of `pytest -s --dbg` removing irrelevant details.
+    """
+    _report_task()
+    _ = ctx
+    # TODO(gp): Change the name of the file before the extension.
+    dst_file_name1 = file_name1 + ".purified"
+    _purify_test_output(file_name1, dst_file_name1)
+    dst_file_name2 = file_name2 + ".purified"
+    _purify_test_output(file_name2, dst_file_name2)
+    # TODO(gp): Call vimdiff automatically.
+    cmd = "vimdiff %s %s" % (dst_file_name1, dst_file_name2)
+    print(f"> {cmd}")
+
+
+# #############################################################################
 # Linter.
 # #############################################################################
 
@@ -2938,6 +2980,7 @@ def lint(  # type: ignore
     dir_name="",
     phases="",
     only_formatting=False,
+    only_checks=False,
     # stage="prod",
     run_bash=False,
     run_linter_step=True,
@@ -2954,7 +2997,9 @@ def lint(  # type: ignore
     :param files: specify a space-separated list of files
     :param dir_name: process all the files in a dir
     :param phases: specify the lint phases to execute
-    :param only_formatting: run only the formatting steps
+    :param only_formatting: run only the formatting phases (e.g., black)
+    :param only_checks: run only the checking phases (e.g., pylint, mypy) that
+        don't change the code
     :param run_bash: instead of running pre-commit, run bash to debug
     :param run_linter_step: run linter step
     :param parse_linter_output: parse linter output and generate vim cfile
@@ -2967,12 +3012,50 @@ def lint(  # type: ignore
     if os.path.exists(lint_file_name):
         cmd = f"rm {lint_file_name}"
         _run(ctx, cmd)
-    #
+    # The available phases are:
+    # ```
+    # > i lint -f "foobar.py"
+    # Don't commit to branch...............................................Passed
+    # Check for merge conflicts........................(no files to check)Skipped
+    # Trim Trailing Whitespace.........................(no files to check)Skipped
+    # Fix End of Files.................................(no files to check)Skipped
+    # Check for added large files......................(no files to check)Skipped
+    # CRLF end-lines remover...........................(no files to check)Skipped
+    # Tabs remover.....................................(no files to check)Skipped
+    # autoflake........................................(no files to check)Skipped
+    # amp_check_filename...............................(no files to check)Skipped
+    # amp_isort........................................(no files to check)Skipped
+    # amp_black........................................(no files to check)Skipped
+    # amp_flake8.......................................(no files to check)Skipped
+    # amp_doc_formatter................................(no files to check)Skipped
+    # amp_pylint.......................................(no files to check)Skipped
+    # amp_mypy.........................................(no files to check)Skipped
+    # amp_lint_md......................................(no files to check)Skipped
+    # amp_class_method_order...........................(no files to check)Skipped
+    # amp_normalize_import.............................(no files to check)Skipped
+    # amp_format_separating_line.......................(no files to check)Skipped
+    # amp_warn_incorrectly_formatted_todo..............(no files to check)Skipped
+    # amp_processjupytext..............................(no files to check)Skipped
+    # ```
     if only_formatting:
         hdbg.dassert_eq(phases, "")
-        phases = (
-            "amp_isort amp_class_method_order amp_normalize_import "
-            "amp_format_separating_line amp_black"
+        phases = " ".join(
+            [
+                "amp_isort",
+                "amp_class_method_order",
+                "amp_normalize_import",
+                "amp_format_separating_line",
+                "amp_black",
+                "amp_processjupytext",
+            ]
+        )
+    if only_checks:
+        hdbg.dassert_eq(phases, "")
+        phases = " ".join(
+            [
+                "amp_pylint",
+                "amp_mypy",
+            ]
         )
     if run_linter_step:
         # We don't want to run this all the times.
