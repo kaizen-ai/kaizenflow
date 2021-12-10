@@ -195,7 +195,7 @@ def convert_csv_to_pq(
     pq_path: str,
     *,
     normalizer: Optional[Callable] = None,
-    header: Optional[str] = None,
+    header: Optional[str] = 0,
     compression: Optional[str] = "gzip",
 ) -> None:
     """
@@ -211,8 +211,8 @@ def convert_csv_to_pq(
     :param header: header specification of CSV
     :param normalizer: function to apply to df before writing to PQ
     """
-    # TODO(Paul): Ensure that one of header, normalizer is not None.
     df = pd.read_csv(csv_path, header=header)
+    # TODO(Paul): Ensure that one of header, normalizer is not None.
     if normalizer is not None:
         df = normalizer(df)
     df.to_parquet(pq_path, compression=compression)
