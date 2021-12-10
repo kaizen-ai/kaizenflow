@@ -91,6 +91,8 @@ class TestCcxtDbClient(imcodbuti.TestImDbHelper):
         df = ccxt_db_client.read_data("binance::BTC_USDT")
         actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
+        # Delete the table.
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     @pytest.mark.slow("8 seconds.")
     def test_read_data2(self) -> None:
@@ -110,6 +112,8 @@ class TestCcxtDbClient(imcodbuti.TestImDbHelper):
         )
         actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
+        # Delete the table.
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     @pytest.mark.slow("8 seconds.")
     def test_read_data3(self) -> None:
@@ -128,6 +132,8 @@ class TestCcxtDbClient(imcodbuti.TestImDbHelper):
         )
         actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
+        # Delete the table.
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     def _create_test_table(self) -> None:
         """
@@ -459,6 +465,8 @@ class TestMultipleSymbolsCcxtDbClient(imcodbuti.TestImDbHelper):
             expected_exchange_ids,
             expected_currency_pairs,
         )
+        # Delete the table.
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     @pytest.mark.slow("9 seconds.")
     def test2(self) -> None:
@@ -491,6 +499,8 @@ class TestMultipleSymbolsCcxtDbClient(imcodbuti.TestImDbHelper):
             expected_exchange_ids,
             expected_currency_pairs,
         )
+        # Delete the table.
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     @pytest.mark.slow("9 seconds.")
     def test3(self) -> None:
@@ -522,6 +532,8 @@ class TestMultipleSymbolsCcxtDbClient(imcodbuti.TestImDbHelper):
             expected_exchange_ids,
             expected_currency_pairs,
         )
+        # Delete the table.
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     @pytest.mark.slow("9 seconds.")
     def test4(self) -> None:
@@ -572,6 +584,8 @@ class TestMultipleSymbolsCcxtDbClient(imcodbuti.TestImDbHelper):
             ]
         )
         self.check_string(actual_string)
+        # Delete the table.
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     def _create_test_table(self) -> None:
         """
