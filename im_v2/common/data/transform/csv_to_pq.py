@@ -52,11 +52,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hio.create_dir(args.dst_dir, False)
     ext = (".csv", ".csv.gz")
     csv_files = [fn for fn in os.listdir(args.src_dir) if fn.endswith(ext)]
-    hdbg.dassert(csv_files != [], "No .csv files inside '%s'", args.src_dir)
+    hdbg.dassert_ne(len(csv_files), 0,  "No .csv files inside '%s'", args.src_dir)
     for f in csv_files:
         csv_full_path = os.path.join(args.src_dir, f)
         filename = f[:-4] if f.endswith(".csv") else f[:-7]  # for .csv.gz
-        pq_full_path = os.path.join(args.dst_dir, f"{filename}.parquet")
+        pq_full_path = os.path.join(args.dst_dir, f"{filename}.pq")
         hcsv.convert_csv_to_pq(csv_full_path, pq_full_path)
 
 
