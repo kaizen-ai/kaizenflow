@@ -15,6 +15,9 @@ import helpers.sql as hsql
 _LOG = logging.getLogger(__name__)
 
 
+# #############################################################################
+
+
 SUBMITTED_ORDERS_TABLE_NAME = "submitted_orders"
 
 
@@ -68,8 +71,9 @@ def create_accepted_orders_table(
     """
     Create a table for acknowledging that orders have been accepted.
     """
+    # - strategyid (e.g., "strat")
     # - targetlistid (e.g., 1)
-    #    = just an internal ID
+    #     = just an internal ID
     # - tradedate (e.g., 2021-11-12)
     # - instanceid (e.g., 3504)
     #     = refers to a number that determines a unique "run" of the continuous
@@ -80,7 +84,6 @@ def create_accepted_orders_table(
     # - filename (e.g., s3://${bucket}/files/.../cand/targe...)
     #     = the filename we read. In this context, this is the full S3 key that
     #       you uploaded the file to.
-    # - strategyid (e.g., "strat")
     # - timestamp_processed (e..g, 2021-11-12 19:59:23.710677)
     # - timestamp_db (e.g., 2021-11-12 19:59:23.716732)
     # - target_count (e.g., 1)
@@ -132,6 +135,46 @@ def create_accepted_orders_table(
 # #############################################################################
 
 
+# This corresponds to the table "current_positions_candidate_view" of an
+# implemented system.
+CURRENT_POSITIONS_TABLE_NAME = "current_positions"
+
+
+def create_current_positions_table(
+    connection: hsql.DbConnection,
+    incremental: bool,
+    *,
+    table_name: str = CURRENT_POSITIONS_TABLE_NAME,
+) -> str:
+    """
+    Create a table holding the current positions.
+    """
+    query = []
+    if not incremental:
+        query.append(f"DROP TABLE IF EXISTS {table_name}")
+    query.append(
+        f"""
+        CREATE TABLE IF NOT EXISTS {table_name} (
+            strategyid VARCHAR(64),
+            account VARCHAR(64),
+            tradedate DATE NOT NULL,
+            id INT,
+            timestamp_db TIMESTAMP NOT NULL,
+            target_position INT,
+            current_position INT,
+            open_quantity INT,
+            )
+            """
+    )
+    query = "; ".join(query)
+    _LOG.debug("query=%s", query)
+    connection.cursor().execute(query)
+    return table_name
+
+
+# #############################################################################
+
+
 async def wait_for_order_accepted(
     connection: hsql.DbConnection,
     target_value: str,
@@ -158,28 +201,43 @@ async def wait_for_order_accepted(
     return rc, result
 
 
-# #############################################################################
-
-
 async def order_processor(
     connection: hsql.DbConnection,
-    delay_in_secs: float,
     poll_kwargs: Dict[str, Any],
+    delay_to_accept_in_secs: float,
+    delay_to_fill_in_secs: float,
+    portfolio,
+    broker,
     *,
-    src_table_name: str = SUBMITTED_ORDERS_TABLE_NAME,
-    dst_table_name: str = ACCEPTED_ORDERS_TABLE_NAME,
+    submitted_orders_table_name: str = SUBMITTED_ORDERS_TABLE_NAME,
+    accepted_orders_table_name: str = ACCEPTED_ORDERS_TABLE_NAME,
+    current_positions_table_name: str = CURRENT_POSITIONS_TABLE_NAME,
 ) -> None:
     """
-    A coroutine that polls for submitted orders and update the accepted orders
-    table.
+    A coroutine that:
+    - polls for submitted orders
+    - updates the accepted orders table
+    - updates the current positions table
 
-    :param delay_in_secs: how long to wait after the order is submitted to update
-        the accepted orders table
+    :param delay_to_accept_in_secs: how long to wait after the order is submitted
+        to update the accepted orders table
     """
-    # Wait for orders to be written in `src_table_name`.
+    # Wait for orders to be written in `submitted_orders_table_name`.
     await hsql.wait_for_change_in_number_of_rows(
-        connection, src_table_name, poll_kwargs
+        connection, submitted_orders_table_name, poll_kwargs
     )
     # Wait.
-    await hasynci.wait(delay_in_secs)
-    # Write in `dst_table_name` to acknowledge the orders.
+    hdbg.dassert_lt(0, delay_to_accept_in_ses)
+    await hasynci.sleep(delay_to_accept_in_secs)
+    # Write in `accepted_orders_table_name` to acknowledge the orders.
+    # TODO(gp): Implement.
+    # Wait.
+    hdbg.dassert_lt(0, delay_to_fill_in_ses)
+    await hasynci.sleep(delay_to_fill_in_secs)
+    # Get the fills.
+    fills = broker.get_fills()
+    # Get the current holdings from the portfolio.
+    holdings = None
+    # Update the holdings with the fills.
+    new_holdings = None
+    # Write the new positions to `current_positions_table_name`.

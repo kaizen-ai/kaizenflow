@@ -10,17 +10,20 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-import core.dataflow.price_interface as cdtfprint
 import helpers.dbg as hdbg
+import market_data.market_data_interface as mdmadain
 
 _LOG = logging.getLogger(__name__)
 
 
 class Order:
+
+    _order_id = 0
+
     def __init__(
         self,
-        order_id: int,
-        price_interface: cdtfprint.AbstractPriceInterface,
+        # TODO(gp): Remove market_data_interface.
+        market_data_interface: mdmadain.AbstractMarketDataInterface,
         creation_timestamp: pd.Timestamp,
         asset_id: int,
         type_: str,
@@ -31,7 +34,7 @@ class Order:
         column_remap: Optional[Dict[str, str]] = None,
     ):
         """
-        Represent an order executed in (start_timestamp, end_timestamp].
+        Represent an order to be executed in (start_timestamp, end_timestamp].
 
         An order is characterized by:
         1) what price the order is executed at
@@ -48,15 +51,15 @@ class Order:
                - "vwap": using VWAP prices
         3) number of shares to buy (if positive) or sell (if negative)
 
-        :param order_id: unique ID for cross-referencing
         :param creation_timestamp: when the order was placed
         :param asset_id: ID of the asset
         :param type_: e.g.,
             - `price@twap`: pay the TWAP price in the interval
             - `partial_spread_0.2@twap`: pay the TWAP midpoint weighted by 0.2
         """
-        self.order_id = order_id
-        self.price_interface = price_interface
+        self.order_id = self._order_id
+        self._order_id += 1
+        self.market_data_interface = market_data_interface
         self.creation_timestamp = creation_timestamp
         # By convention we use `asset_id = -1` for cash.
         hdbg.dassert_lte(0, asset_id)
@@ -99,7 +102,7 @@ class Order:
 
     @staticmethod
     def get_price(
-        price_interface: cdtfprint.AbstractPriceInterface,
+        market_data_interface: mdmadain.AbstractMarketDataInterface,
         # TODO(gp): Move it after end_timestamp.
         asset_id: int,
         start_timestamp: pd.Timestamp,
@@ -123,7 +126,7 @@ class Order:
         if price_type in ("price", "midpoint"):
             column = column_remap[price_type]
             price = Order._get_price_per_share(
-                price_interface,
+                market_data_interface,
                 start_timestamp,
                 end_timestamp,
                 timestamp_col_name,
@@ -139,7 +142,7 @@ class Order:
                 column = "bid"
             column = column_remap[column]
             price = Order._get_price_per_share(
-                price_interface,
+                market_data_interface,
                 start_timestamp,
                 end_timestamp,
                 timestamp_col_name,
@@ -157,7 +160,7 @@ class Order:
             timestamp_col_name = "end_datetime"
             column = column_remap["bid"]
             bid_price = Order._get_price_per_share(
-                price_interface,
+                market_data_interface,
                 start_timestamp,
                 end_timestamp,
                 timestamp_col_name,
@@ -167,7 +170,7 @@ class Order:
             )
             column = column_remap["ask"]
             ask_price = Order._get_price_per_share(
-                price_interface,
+                market_data_interface,
                 start_timestamp,
                 end_timestamp,
                 timestamp_col_name,
@@ -205,7 +208,7 @@ class Order:
         # TODO(gp): It should not be hardwired.
         timestamp_col_name = "end_datetime"
         price = self.get_price(
-            self.price_interface,
+            self.market_data_interface,
             self.asset_id,
             self.start_timestamp,
             self.end_timestamp,
@@ -239,7 +242,7 @@ class Order:
         hdbg.dassert(self.is_mergeable(rhs))
         num_shares = self.num_shares + rhs.num_shares
         order = Order(
-            self.price_interface,
+            self.market_data_interface,
             self.type_,
             self.start_timestamp,
             self.end_timestamp,
@@ -252,7 +255,7 @@ class Order:
 
     @staticmethod
     def _get_price_per_share(
-        mi: cdtfprint.AbstractPriceInterface,
+        mi: mdmadain.AbstractMarketDataInterface,
         start_timestamp: pd.Timestamp,
         end_timestamp: pd.Timestamp,
         timestamp_col_name: str,
