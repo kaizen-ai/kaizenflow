@@ -2332,6 +2332,9 @@ def _run_test_cmd(
             hsysinte.create_executable_script(script_name, script_txt)
             coverage_rc = hsysinte.system(script_name)
             if coverage_rc == 0:
+                _LOG.warning(
+                    "Setting `rc` to `0` due to coverage script failure."
+                )
                 rc = 0
     return rc
 
