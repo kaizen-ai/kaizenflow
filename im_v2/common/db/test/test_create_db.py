@@ -1,63 +1,35 @@
 import logging
-import os
 
 import pytest
 
 import helpers.git as hgit
+import helpers.hsql_test as hsqltest
 import helpers.sql as hsql
-import helpers.system_interaction as hsysinte
-import helpers.unit_test as hunitest
 import im_v2.common.db.utils as imvcodbut
 
 _LOG = logging.getLogger(__name__)
 
 
+class TestImDbHelper(hsqltest.TestDbHelper):
+    @staticmethod
+    def _get_compose_file() -> str:
+        return "im_v2/devops/compose/docker-compose.yml"
+
+    # TODO(Dan): Deprecate after #585.
+    @staticmethod
+    def _get_db_name() -> str:
+        return "im_postgres_db_local"
+
+    @staticmethod
+    def _get_service_name() -> str:
+        return "im_postgres_local"
+
+
 @pytest.mark.skipif(
     hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
 )
-@pytest.mark.slow(reason="speed up in #460.")
-class TestCreateDb1(hunitest.TestCase):
-    def setUp(self) -> None:
-        """
-        Initialize the test database inside test container.
-        """
-        super().setUp()
-        self.docker_compose_file_path = os.path.join(
-            hgit.get_amp_abs_path(), "im_v2/devops/compose/docker-compose.yml"
-        )
-        cmd = (
-            "sudo docker-compose "
-            f"--file {self.docker_compose_file_path} "
-            "up -d im_postgres_local"
-        )
-        hsysinte.system(cmd, suppress_output=False)
-        host = "localhost"
-        dbname = "im_postgres_db_local"
-        port = 5432
-        user = "aljsdalsd"
-        password = "alsdkqoen"
-        hsql.wait_db_connection(host, dbname, port, user, password)
-        self.connection = hsql.get_connection(
-            host,
-            dbname,
-            port,
-            user,
-            password,
-            autocommit=True,
-        )
-
-    def tearDown(self) -> None:
-        """
-        Bring down the test container.
-        """
-        cmd = (
-            "sudo docker-compose "
-            f"--file {self.docker_compose_file_path} down -v"
-        )
-        self.connection.close()
-        hsysinte.system(cmd, suppress_output=False)
-        super().tearDown()
-
+class TestCreateDb1(TestImDbHelper):
+    @pytest.mark.slow("11 seconds.")
     def test_up1(self) -> None:
         """
         Verify that the DB is up.
@@ -65,6 +37,7 @@ class TestCreateDb1(hunitest.TestCase):
         db_list = hsql.get_db_names(self.connection)
         _LOG.info("db_list=%s", db_list)
 
+    @pytest.mark.slow("9 seconds.")
     def test_create_all_tables1(self) -> None:
         """
         Verify that all necessary tables are created inside the DB.
@@ -91,6 +64,7 @@ class TestCreateDb1(hunitest.TestCase):
         actual = sorted(hsql.get_table_names(self.connection))
         self.assertEqual(actual, expected)
 
+    @pytest.mark.slow("18 seconds.")
     def test_create_im_database(self) -> None:
         imvcodbut.create_im_database(connection=self.connection, new_db="test_db")
         db_list = hsql.get_db_names(self.connection)

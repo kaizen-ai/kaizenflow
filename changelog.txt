@@ -1,3 +1,7 @@
+# cmamp-1.0.2
+- 2021-12-07
+- Add `pytest-rerunfailures` Python package
+
 # cmamp-1.0.1
 - 2021-12-01
 - Add `pytest-timeout` Python package

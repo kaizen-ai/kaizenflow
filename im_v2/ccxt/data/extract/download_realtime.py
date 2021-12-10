@@ -5,9 +5,9 @@ Script to download OHLCV data from CCXT in real-time.
 Use as:
 
 # Download OHLCV data for universe 'v03', saving only on disk:
-> python im_v2/ccxt/data/extract/download_realtime.py \
-    --end_datetime '20211204-194432' \
-    --period_length '5 minutes' \
+> im_v2/ccxt/data/extract/download_realtime.py \
+    --to_datetime '20211204-194432' \
+    --from_datetime '20211204-193932' \
     --dst_dir 'test/ccxt_test' \
     --data_type 'ohlcv' \
     --api_keys 'API_keys.json' \
@@ -24,6 +24,7 @@ import argparse
 import collections
 import logging
 import os
+import time
 from typing import Any, Dict, List, NamedTuple, Optional, Union
 
 import pandas as pd
@@ -37,6 +38,15 @@ import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import im_v2.ccxt.universe.universe as imvccunun
 
 _LOG = logging.getLogger(__name__)
+
+# TODO(Danya): Replace with an `env` file (CMTask585).
+_DB_CREDENTIALS = {
+    "host": "172.30.2.212",
+    "dbname": "im_postgres_db_local",
+    "port": 5432,
+    "user": "aljsdalsd",
+    "password": "alsdkqoen",
+}
 
 
 # TODO(Danya): Move instantiation outside, e.g. into Airflow wrapper.
@@ -141,18 +151,18 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--end_datetime",
+        "--to_datetime",
         action="store",
         required=True,
         type=str,
         help="End of the downloaded period",
     )
     parser.add_argument(
-        "--period_length",
+        "--from_datetime",
         action="store",
         required=True,
         type=str,
-        help="Length of the downloaded period, e.g. '5 minutes'",
+        help="Beginning of the downloaded period",
     )
     parser.add_argument(
         "--dst_dir",
@@ -193,7 +203,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Create the directory.
     hio.create_dir(args.dst_dir, incremental=args.incremental)
     # Connect to database.
-    connection = hsql.get_connection_from_env_vars()
+    connection = hsql.get_connection(**_DB_CREDENTIALS)
     # Load universe.
     universe = imvccunun.get_trade_universe(args.universe)
     exchange_ids = universe["CCXT"].keys()
@@ -212,8 +222,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
         column_names=["timestamp", "exchange_id", "currency_pair"],
     )
     # Convert timestamps.
-    end = pd.Timestamp(args.end_datetime)
-    start = end - pd.Timedelta(args.period_length)
+    end = pd.Timestamp(args.to_datetime)
+    start = pd.Timedelta(args.from_datetime)
     # Download data for specified time period.
     for exchange in exchanges:
         for pair in exchange.pairs:
@@ -229,6 +239,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
             )
             # Drop duplicates inside the table.
             connection.cursor().execute(dup_query)
+            # Sleep to prevent interruption by exchanges' API.
+            time.sleep(2)
 
 
 if __name__ == "__main__":
