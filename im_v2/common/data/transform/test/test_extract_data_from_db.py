@@ -11,6 +11,7 @@ import helpers.unit_test as hunitest
 import im.ccxt.db.utils as imccdbuti
 
 
+# TODO(Nikola): Expose `TestImDbHelper` from im_v2/common/db/utils.py instead of `setUp()` and `tearDown()` methods.
 class TestExtractDataFromDb1(hunitest.TestCase):
     def setUp(self) -> None:
         """
@@ -46,7 +47,7 @@ class TestExtractDataFromDb1(hunitest.TestCase):
             password,
             autocommit=True,
         )
-        # TODO(Nikola): linter is complaining about cursor and create database ?
+        # TODO(Nikola): linter is complaining about cursor and create database?
         hsql.create_database(self.connection, "test_db", overwrite=True)
         ccxt_ohlcv_table_query = imccdbuti.get_ccxt_ohlcv_create_table_query()
         ccxt_ohlcv_insert_query = """

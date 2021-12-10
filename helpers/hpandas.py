@@ -180,7 +180,26 @@ def reindex_on_unix_epoch(df: pd.DataFrame, in_col_name: str) -> pd.DataFrame:
     hdbg.dassert_in(in_col_name, df.columns)
     hdbg.dassert_not_in(temp_col_name, df.columns)
     # Save.
-    df[temp_col_name] = pd.to_datetime(df[in_col_name], unit="ms", utc=True)
+    df[temp_col_name] = pd.to_datetime(df[in_col_name], unit="s", utc=True)
     df.set_index(temp_col_name, inplace=True, drop=True)
     df.index.name = None
     return df
+
+
+def get_df_signature(df: pd.DataFrame, num_rows: int = 3) -> str:
+    """
+    Obtain simple snapshot of dataframe in string format.
+
+    It contains metadata about dataframe size and certain amount of rows
+    from start and end of a dataframe. Mostly used for testing purposes.
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    txt: List[str] = []
+    txt.append("df.shape=%s" % str(df.shape))
+    with pd.option_context(
+        "display.max_colwidth", int(1e6), "display.max_columns", None
+    ):
+        txt.append("df.head=\n%s" % df.head(num_rows))
+        txt.append("df.tail=\n%s" % df.tail(num_rows))
+    txt = "\n".join(txt)
+    return txt

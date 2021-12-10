@@ -2184,6 +2184,12 @@ _TEST_TIMEOUTS_IN_SECS = {
     "superslow_tests": 60 * 60,
 }
 
+_NUM_TIMEOUT_TEST_RERUNS = {
+    "fast_tests": 2,
+    "slow_tests": 1,
+    "superslow_tests": 1,
+}
+
 
 @task
 def run_blank_tests(ctx, stage="dev", version=""):  # type: ignore
@@ -2248,7 +2254,15 @@ def _build_run_command_line(
     skipped_tests = _select_tests_to_skip(uniform_test_list_name)
     pytest_opts_tmp.insert(0, f'-m "{skipped_tests}"')
     timeout_in_sec = _TEST_TIMEOUTS_IN_SECS[uniform_test_list_name]
+    # Adding `timeout_func_only` is a workaround for
+    # https://github.com/pytest-dev/pytest-rerunfailures/issues/99. Because of
+    # it, we limit only run time, without setup and teardown time.
+    pytest_opts_tmp.append("-o timeout_func_only=true")
     pytest_opts_tmp.append(f"--timeout {timeout_in_sec}")
+    num_reruns = _NUM_TIMEOUT_TEST_RERUNS[uniform_test_list_name]
+    pytest_opts_tmp.append(
+        f'--reruns {num_reruns} --only-rerun "Failed: Timeout"'
+    )
     if skip_submodules:
         submodule_paths = hgit.get_submodule_paths()
         _LOG.warning(

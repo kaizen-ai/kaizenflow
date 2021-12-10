@@ -3,7 +3,7 @@
 Extract RT data from db to daily PQ files.
 
 # Example:
-> python im_v2/common/data/transform/extract_data_from_db.py \
+> im_v2/common/data/transform/extract_data_from_db.py \
     --start_date 2021-11-23 \
     --end_date 2021-11-25 \
     --daily_pq_path im_v2/common/data/transform/test_data_by_date
@@ -40,43 +40,46 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         type=str,
         required=True,
-        help="From when is data going to be extracted, including start date.",
+        help="From when is data going to be extracted, including start date",
     )
     parser.add_argument(
         "--end_date",
         action="store",
         type=str,
         required=True,
-        help="Until when is data going to be extracted, excluding end date.",
+        help="Until when is data going to be extracted, excluding end date",
     )
     parser.add_argument(
         "--daily_pq_path",
         action="store",
         type=str,
         required=True,
-        help="Location of daily PQ files.",
+        help="Location of daily PQ files",
     )
     hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
+    """
+    Standard main part of the script that is parsing provided arguments.
+
+    Timespan provided via start and end date, can not start and end on
+    the same day. Start date is included in timespan, while end date is
+    excluded.
+    """
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Extraction timespan.
     start_date = args.start_date
     end_date = args.end_date
-    # TODO(Nikola): Custom exceptions ?
-    if start_date > end_date:
-        raise ValueError("Start date can not be greater than end date!")
+    hdbg.dassert_lt(start_date, end_date)
     timespan = pd.date_range(start_date, end_date)
-    if len(timespan) < 2:
-        raise ValueError("Date range must be at least two days!")
+    hdbg.dassert_lt(2, len(timespan))
     # Location of daily PQ files.
     daily_pq_path = args.daily_pq_path
     hdbg.dassert_exists(daily_pq_path)
     ccxt_db_client = imvcdclcl.CcxtDbClient(
-        # TODO(Nikola): Is connection eventually closed ?
         "ohlcv",
         hsql.get_connection_from_env_vars(),
     )

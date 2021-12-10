@@ -4,6 +4,7 @@ Import as:
 import helpers.hsql_test as hsqltest
 """
 
+import abc
 import logging
 import os
 
@@ -16,13 +17,13 @@ import helpers.unit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
-class TestOmsDbHelper(hunitest.TestCase):
+class TestDbHelper(hunitest.TestCase, abc.ABC):
     """
     This class allows to test code that interacts with DB.
 
     It creates / destroys a test DB during setup / teardown.
 
-    A user can create a persistent local DB in the Docker container with:
+    A user can create a persistent local DB in the Docker container, e.g.
     ```
     # Create an OMS DB inside Docker for local stage
     docker> (cd oms; sudo docker-compose \
@@ -32,8 +33,8 @@ class TestOmsDbHelper(hunitest.TestCase):
     # or
     docker> invoke oms_docker_up
     ```
-    and then the creation / destruction of the DB is skipped making the tests faster
-    and allowing easier debugging.
+    and then the creation / destruction of the DB is skipped making the tests
+    faster and allowing easier debugging.
     
     The invariant is that each test should:
     - (ideally) find a clean DB to work with
@@ -52,13 +53,12 @@ class TestOmsDbHelper(hunitest.TestCase):
         """
         _LOG.info("\n%s", hprint.frame("setUp"))
         super().setUp()
-        # TODO(gp): Read the info from env.
+        # TODO(Dan): Read the info from env in #585.
         host = "localhost"
-        dbname = "oms_postgres_db_local"
+        dbname = self._get_db_name()
         port = 5432
         user = "aljsdalsd"
         password = "alsdkqoen"
-        self.dbname = dbname
         conn_exists = hsql.check_db_connection(
             host, dbname, port, user, password
         )[0]
@@ -69,28 +69,23 @@ class TestOmsDbHelper(hunitest.TestCase):
             self.bring_down_db = False
         else:
             # Start the service.
-            # TODO(gp): This information should be retrieved from oms_lib_tasks.py.
-            #  We can also use the invoke command.
             self.docker_compose_file_path = os.path.join(
-                hgit.get_amp_abs_path(), "oms/devops/compose/docker-compose.yml"
+                hgit.get_amp_abs_path(), self._get_compose_file()
             )
             cmd = (
                 "sudo docker-compose "
                 f"--file {self.docker_compose_file_path} "
-                "up -d oms_postgres_local"
+                f"up -d {self._get_service_name()}"
             )
             hsysinte.system(cmd, suppress_output=False)
             # Wait for the DB to be available.
-            hsql.wait_db_connection(host, dbname, port, user, password)
+            hsql.wait_db_connection(
+                host, dbname, port, user, password
+            )
             self.bring_down_db = True
         # Save connection info.
         self.connection = hsql.get_connection(
-            host,
-            self.dbname,
-            port,
-            user,
-            password,
-            autocommit=True,
+            host, dbname, port, user, password, autocommit=True
         )
 
     def tearDown(self) -> None:
@@ -107,3 +102,25 @@ class TestOmsDbHelper(hunitest.TestCase):
         else:
             _LOG.warning("Leaving DB up")
         super().tearDown()
+
+    @staticmethod
+    @abc.abstractmethod
+    def _get_compose_file() -> str:
+        """
+        Get path to Docker compose file.
+        """
+
+    # TODO(Dan): Deprecate after #585.
+    @staticmethod
+    @abc.abstractmethod
+    def _get_db_name() -> str:
+        """
+        Get DB name.
+        """
+
+    @staticmethod
+    @abc.abstractmethod
+    def _get_service_name() -> str:
+        """
+        Get service name.
+        """
