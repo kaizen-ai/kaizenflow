@@ -49,7 +49,7 @@ class TestCreateDb1(imvcodbut.TestImDbHelper):
         actual = sorted(hsql.get_table_names(self.connection))
         self.assertEqual(actual, expected)
         # Delete all the tables.
-        hsql.remove_all_tables(self.connection)
+        hsql.remove_all_tables(connection=self.connection, cascade=True)
 
     @pytest.mark.slow("18 seconds.")
     def test_create_im_database(self) -> None:
