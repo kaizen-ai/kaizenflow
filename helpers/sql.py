@@ -469,6 +469,12 @@ def remove_table(
 def remove_all_tables(
     connection: DbConnection, cascade: bool = False
 ) -> None:
+    """
+    Remove all the tables from a database.
+
+    :param connection: database connection
+    :param cascade: whether to drop the objects dependent on the tables
+    """
     table_names = get_table_names(connection)
     _LOG.warning("Deleting all the tables: %s", table_names)
     for table_name in table_names:
