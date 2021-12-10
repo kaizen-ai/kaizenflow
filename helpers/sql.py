@@ -450,17 +450,36 @@ def find_tables_common_columns(
     return obj
 
 
-def remove_table(connection: DbConnection, table_name: str) -> None:
+def remove_table(
+    connection: DbConnection, table_name: str, cascade: bool = False
+) -> None:
+    """
+    Remove a table from a database.
+
+    :param connection: database connection
+    :param table_name: table name
+    :param cascade: whether to drop the objects dependent on the table
+    """
     query = f"DROP TABLE IF EXISTS {table_name}"
+    if cascade:
+        query = " ".join([query, "CASCADE"])
     connection.cursor().execute(query)
 
 
-def remove_all_tables(connection: DbConnection) -> None:
+def remove_all_tables(
+    connection: DbConnection, cascade: bool = False
+) -> None:
+    """
+    Remove all the tables from a database.
+
+    :param connection: database connection
+    :param cascade: whether to drop the objects dependent on the tables
+    """
     table_names = get_table_names(connection)
     _LOG.warning("Deleting all the tables: %s", table_names)
     for table_name in table_names:
         _LOG.warning("Deleting %s ...", table_name)
-        remove_table(connection, table_name)
+        remove_table(connection, table_name, cascade)
 
 
 # #############################################################################
