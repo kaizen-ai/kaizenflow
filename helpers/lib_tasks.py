@@ -2316,7 +2316,9 @@ def _run_test_cmd(
 (cd ./htmlcov; python -m http.server 33333)"""
             script_name = "./tmp.coverage.sh"
             hsysinte.create_executable_script(script_name, script_txt)
-            hsysinte.system(script_name)
+            coverage_rc = hsysinte.system(script_name)
+            if coverage_rc == 0:
+                rc = 0
     return rc
 
 
