@@ -11,22 +11,10 @@ from typing import Any, Callable, Dict, Optional, Tuple
 import pandas as pd
 
 import core.data_adapters as cdatadap
-import dataflow.core.core as dtfcorcore
+import dataflow.core.node as dtfcornode
+import dataflow.core.nodes.base as dtfconobas
 import dataflow.core.utils as dtfcorutil
 import helpers.dbg as hdbg
-
-# TODO(Paul): Fix these imports.
-from dataflow.core.nodes.base import (
-    ColModeMixin,
-    CrossSectionalDfToDfColProcessor,
-    FitPredictNode,
-)
-from dataflow.core.utils import (
-    convert_to_list,
-    get_df_info_as_string,
-    merge_dataframes,
-    validate_df_indices,
-)
 
 _LOG = logging.getLogger(__name__)
 
@@ -42,7 +30,7 @@ class _UnsupervisedSkLearnModelMixin:
         :param fit: fits model iff `True`
         :return: transformed df_in
         """
-        validate_df_indices(df_in)
+        dtfcorutil.validate_df_indices(df_in)
         df = df_in.copy()
         # Determine index where no x_vars are NaN.
         x_vars = df.columns.tolist()
@@ -77,7 +65,9 @@ class _UnsupervisedSkLearnModelMixin:
 
 
 class UnsupervisedSkLearnModel(
-    FitPredictNode, ColModeMixin, _UnsupervisedSkLearnModelMixin
+    dtfconobas.FitPredictNode,
+    dtfconobas.ColModeMixin,
+    _UnsupervisedSkLearnModelMixin,
 ):
     """
     Fit and transform an unsupervised sklearn model.
@@ -85,7 +75,7 @@ class UnsupervisedSkLearnModel(
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         model_func: Callable[..., Any],
         x_vars: Optional[dtfcorutil.NodeColumnList] = None,
         model_kwargs: Optional[Any] = None,
@@ -131,7 +121,7 @@ class UnsupervisedSkLearnModel(
         df_out = self._apply_col_mode(
             df_in, df_out, cols=df.columns.to_list(), col_mode=self._col_mode
         )
-        info["df_out_info"] = get_df_info_as_string(df_out)
+        info["df_out_info"] = dtfcorutil.get_df_info_as_string(df_out)
         method = "fit" if fit else "predict"
         self._set_info(method, info)
         return {"df_out": df_out}
@@ -140,12 +130,12 @@ class UnsupervisedSkLearnModel(
         if self._x_vars is None:
             x_vars = df_in.columns.tolist()
         else:
-            x_vars = convert_to_list(self._x_vars)
+            x_vars = dtfcorutil.convert_to_list(self._x_vars)
         return df_in[x_vars].copy()
 
 
 class MultiindexUnsupervisedSkLearnModel(
-    FitPredictNode,
+    dtfconobas.FitPredictNode,
     _UnsupervisedSkLearnModelMixin,
 ):
     """
@@ -154,7 +144,7 @@ class MultiindexUnsupervisedSkLearnModel(
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         in_col_group: Tuple[dtfcorutil.NodeColumn],
         out_col_group: Tuple[dtfcorutil.NodeColumn],
         model_func: Callable[..., Any],
@@ -208,15 +198,15 @@ class MultiindexUnsupervisedSkLearnModel(
     def _fit_predict_helper(
         self, df_in: pd.DataFrame, fit: bool
     ) -> Tuple[Dict[str, pd.DataFrame], collections.OrderedDict]:
-        df = CrossSectionalDfToDfColProcessor.preprocess(
+        df = dtfconobas.CrossSectionalDfToDfColProcessor.preprocess(
             df_in, self._in_col_group
         )
         df_out, info = self._fit_predict_unsupervised_sklearn_model(df, fit=fit)
-        df_out = CrossSectionalDfToDfColProcessor.postprocess(
+        df_out = dtfconobas.CrossSectionalDfToDfColProcessor.postprocess(
             df_out, self._out_col_group
         )
-        df_out = merge_dataframes(df_in, df_out)
-        info["df_out_info"] = get_df_info_as_string(df_out)
+        df_out = dtfcorutil.merge_dataframes(df_in, df_out)
+        info["df_out_info"] = dtfcorutil.get_df_info_as_string(df_out)
         method = "fit" if fit else "predict"
         self._set_info(method, info)
         return {"df_out": df_out}
@@ -235,7 +225,7 @@ class _ResidualizerMixin:
         :param fit: fits model iff `True`
         :return: transformed df_in
         """
-        validate_df_indices(df_in)
+        dtfcorutil.validate_df_indices(df_in)
         df = df_in.copy()
         # Determine index where no x_vars are NaN.
         x_vars = df.columns.to_list()
@@ -267,14 +257,14 @@ class _ResidualizerMixin:
         return df_out, info
 
 
-class Residualizer(FitPredictNode, _ResidualizerMixin):
+class Residualizer(dtfconobas.FitPredictNode, _ResidualizerMixin):
     """
     Residualize using an sklearn model with `inverse_transform()`.
     """
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         in_col_group: Tuple[dtfcorutil.NodeColumn],
         out_col_group: Tuple[dtfcorutil.NodeColumn],
         model_func: Callable[..., Any],
@@ -314,21 +304,23 @@ class Residualizer(FitPredictNode, _ResidualizerMixin):
     def _fit_predict_helper(
         self, df_in: pd.DataFrame, fit: bool = False
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
-        df = CrossSectionalDfToDfColProcessor.preprocess(
+        df = dtfconobas.CrossSectionalDfToDfColProcessor.preprocess(
             df_in, self._in_col_group
         )
         df_out, info = self._fit_predict_residualizer(df, fit=fit)
-        df_out = CrossSectionalDfToDfColProcessor.postprocess(
+        df_out = dtfconobas.CrossSectionalDfToDfColProcessor.postprocess(
             df_out, self._out_col_group
         )
-        df_out = merge_dataframes(df_in, df_out)
-        info["df_out_info"] = get_df_info_as_string(df_out)
+        df_out = dtfcorutil.merge_dataframes(df_in, df_out)
+        info["df_out_info"] = dtfcorutil.get_df_info_as_string(df_out)
         method = "fit" if fit else "predict"
         self._set_info(method, info)
         return {"df_out": df_out}
 
 
-class SkLearnInverseTransformer(FitPredictNode, ColModeMixin):
+class SkLearnInverseTransformer(
+    dtfconobas.FitPredictNode, dtfconobas.ColModeMixin
+):
     """
     Inverse transform cols using an unsupervised sklearn model.
     """
@@ -337,7 +329,7 @@ class SkLearnInverseTransformer(FitPredictNode, ColModeMixin):
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         model_func: Callable[..., Any],
         x_vars: dtfcorutil.NodeColumnList,
         trans_x_vars: dtfcorutil.NodeColumnList,
@@ -360,8 +352,8 @@ class SkLearnInverseTransformer(FitPredictNode, ColModeMixin):
         super().__init__(nid)
         self._model_func = model_func
         self._model_kwargs = model_kwargs or {}
-        self._x_vars = convert_to_list(x_vars)
-        self._trans_x_vars = convert_to_list(trans_x_vars)
+        self._x_vars = dtfcorutil.convert_to_list(x_vars)
+        self._trans_x_vars = dtfcorutil.convert_to_list(trans_x_vars)
         hdbg.dassert_not_intersection(self._x_vars, self._trans_x_vars)
         self._model = None
         self._col_mode = col_mode or "replace_all"
@@ -392,10 +384,10 @@ class SkLearnInverseTransformer(FitPredictNode, ColModeMixin):
         :param fit: fits model iff `True`
         :return: transformed df_in
         """
-        validate_df_indices(df_in)
+        dtfcorutil.validate_df_indices(df_in)
         df = df_in.copy()
         # Determine index where no x_vars are NaN.
-        x_vars = convert_to_list(self._x_vars)
+        x_vars = dtfcorutil.convert_to_list(self._x_vars)
         non_nan_idx = df[x_vars].dropna().index
         hdbg.dassert(not non_nan_idx.empty)
         # Handle presence of NaNs according to `nan_mode`.
@@ -415,7 +407,7 @@ class SkLearnInverseTransformer(FitPredictNode, ColModeMixin):
             model_attribute_info[k] = v
         info["model_attributes"] = model_attribute_info
         # Determine index where no trans_x_vars are NaN.
-        trans_x_vars = convert_to_list(self._trans_x_vars)
+        trans_x_vars = dtfcorutil.convert_to_list(self._trans_x_vars)
         trans_non_nan_idx = df[trans_x_vars].dropna().index
         hdbg.dassert(not trans_non_nan_idx.empty)
         # Handle presence of NaNs according to `nan_mode`.
@@ -433,7 +425,7 @@ class SkLearnInverseTransformer(FitPredictNode, ColModeMixin):
         df_out = self._apply_col_mode(
             df, df_out, cols=trans_x_vars, col_mode=self._col_mode
         )
-        info["df_out_info"] = get_df_info_as_string(df_out)
+        info["df_out_info"] = dtfcorutil.get_df_info_as_string(df_out)
         if fit:
             self._set_info("fit", info)
         else:

@@ -3,7 +3,7 @@ from typing import Tuple
 import pandas as pd
 
 import core.config as cconfig
-import dataflow.core.core as dtfcorcore
+import dataflow.core.node as dtfcornode
 import helpers.unit_test as hunitest
 
 
@@ -11,7 +11,7 @@ def test_get_set_state(
     fit_df: pd.DataFrame,
     predict_df: pd.DataFrame,
     config: cconfig.Config,
-    node: dtfcorcore.Node,
+    node: dtfcornode.Node,
     decimals: float = 3,
 ) -> Tuple[str, str]:
     """
@@ -45,7 +45,7 @@ def test_get_set_state(
 
 def get_fit_predict_outputs(
     data: pd.DataFrame,
-    node: dtfcorcore.Node,
+    node: dtfcornode.Node,
     decimals: float = 3,
 ) -> Tuple[str, str]:
     """

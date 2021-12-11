@@ -15,7 +15,7 @@ import pandas as pd
 import core.artificial_signal_generators as carsigen
 import core.finance as cofinanc
 import core.pandas_helpers as cpanh
-import dataflow.core.core as dtfcorcore
+import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.base as dtfconobas
 import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
@@ -37,7 +37,7 @@ class ReadDataFromDf(dtfconobas.DataSource):
     data.
     """
 
-    def __init__(self, nid: dtfcorcore.NodeId, df: pd.DataFrame) -> None:
+    def __init__(self, nid: dtfcornode.NodeId, df: pd.DataFrame) -> None:
         super().__init__(nid)
         hdbg.dassert_isinstance(df, pd.DataFrame)
         self.df = df
@@ -55,7 +55,7 @@ class DataLoader(dtfconobas.DataSource):
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         func: Callable,
         func_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
@@ -159,7 +159,7 @@ class DiskDataSource(dtfconobas.DataSource):
     """
 
     def __init__(
-        self, nid: dtfcorcore.NodeId, **load_data_from_disk_kwargs: Dict[str, Any]
+        self, nid: dtfcornode.NodeId, **load_data_from_disk_kwargs: Dict[str, Any]
     ) -> None:
         """
         Constructor.
@@ -205,7 +205,7 @@ class ArmaGenerator(dtfconobas.DataSource):
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         frequency: str,
         start_date: hdateti.Datetime,
         end_date: hdateti.Datetime,
@@ -294,7 +294,7 @@ class MultivariateNormalGenerator(dtfconobas.DataSource):
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         frequency: str,
         start_date: hdateti.Datetime,
         end_date: hdateti.Datetime,
@@ -377,7 +377,7 @@ class RealTimeDataSource(dtfconobas.DataSource):
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         market_data_interface: mdmadain.AbstractMarketDataInterface,
         period: str,
         asset_id_col: Union[int, str],

@@ -14,7 +14,7 @@ import statsmodels.api as sm
 import statsmodels.iolib as siolib
 from tqdm.autonotebook import tqdm
 
-import dataflow.core.core as dtfcorcore
+import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.base as dtfconobas
 import dataflow.core.utils as dtfcorutil
 import helpers.dbg as hdbg
@@ -49,7 +49,7 @@ class ContinuousSarimaxModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin)
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         y_vars: dtfcorutil.NodeColumnList,
         steps_ahead: int,
         init_kwargs: Optional[Dict[str, Any]] = None,
@@ -296,7 +296,7 @@ class MultihorizonReturnsPredictionProcessor(dtfconobas.FitPredictNode):
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         target_col: Any,
         prediction_cols: dtfcorutil.NodeColumnList,
         volatility_col: Any,

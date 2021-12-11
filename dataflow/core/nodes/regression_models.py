@@ -13,7 +13,7 @@ import pandas as pd
 
 import core.signal_processing as csigproc
 import core.statistics as costatis
-import dataflow.core.core as dtfcorcore
+import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.base as dtfconobas
 import dataflow.core.utils as dtfcorutil
 import helpers.dbg as hdbg
@@ -28,7 +28,7 @@ class LinearRegression(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         x_vars: dtfcorutil.NodeColumnList,
         y_vars: dtfcorutil.NodeColumnList,
         steps_ahead: int,

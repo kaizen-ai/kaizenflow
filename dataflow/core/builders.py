@@ -8,7 +8,8 @@ import logging
 from typing import Any, Dict, List, Optional, cast
 
 import core.config as cconfig
-import dataflow.core.core as dtfcorcore
+import dataflow.core.dag as dtfcordag
+import dataflow.core.node as dtfcornode
 import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
@@ -68,7 +69,7 @@ class DagBuilder(abc.ABC):
 
     def get_dag(
         self, config: cconfig.Config, mode: str = "strict", validate: bool = True
-    ) -> dtfcorcore.DAG:
+    ) -> dtfcordag.DAG:
         """
         Build DAG given `config`.
 
@@ -85,7 +86,7 @@ class DagBuilder(abc.ABC):
 
     @staticmethod
     def validate_config_and_dag(
-        config: cconfig.Config, dag: dtfcorcore.DAG
+        config: cconfig.Config, dag: dtfcordag.DAG
     ) -> None:
         """
         Wraps `get_dag()` with additional sanity-checks.
@@ -132,7 +133,7 @@ class DagBuilder(abc.ABC):
 
     @staticmethod
     def _append(
-        dag: dtfcorcore.DAG, tail_nid: Optional[str], node: dtfcorcore.Node
+        dag: dtfcordag.DAG, tail_nid: Optional[str], node: dtfcornode.Node
     ) -> str:
         dag.add_node(node)
         if tail_nid is not None:

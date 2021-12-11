@@ -7,11 +7,10 @@ import dataflow.pipelines.price.pipeline as dtfpiprpip
 import datetime
 import logging
 
-import dataflow_source_nodes as cdtfsonod
-
 import core.config as cconfig
 import core.finance as cofinanc
 import dataflow as dtf
+import dataflow.system.dataflow_source_nodes as dtfsdtfsono
 import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
@@ -89,7 +88,7 @@ class PricePipeline(dtf.DagBuilder):
         # Read data.
         stage = "load_prices"
         nid = self._get_nid(stage)
-        node = cdtfsonod.data_source_node_factory(nid, **config[nid].to_dict())
+        node = dtfsdtfsono.data_source_node_factory(nid, **config[nid].to_dict())
         tail_nid = self._append(dag, tail_nid, node)
         # Process bid/ask.
         stage = "process_bid_ask"

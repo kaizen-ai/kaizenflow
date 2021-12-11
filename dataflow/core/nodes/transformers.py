@@ -23,7 +23,7 @@ import pandas as pd
 
 import core.finance as cofinanc
 import core.signal_processing as csigproc
-import dataflow.core.core as dtfcorcore
+import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.base as dtfconobas
 import dataflow.core.utils as dtfcorutil
 import helpers.dbg as hdbg
@@ -46,7 +46,7 @@ class ColumnTransformer(dtfconobas.Transformer, dtfconobas.ColModeMixin):
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         transformer_func: Callable[..., pd.DataFrame],
         transformer_kwargs: Optional[Dict[str, Any]] = None,
         # TODO(Paul): May need to assume `List` instead.
@@ -162,7 +162,7 @@ class SeriesTransformer(dtfconobas.Transformer, dtfconobas.ColModeMixin):
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         transformer_func: Callable[..., pd.DataFrame],
         transformer_kwargs: Optional[Dict[str, Any]] = None,
         # TODO(Paul): May need to assume `List` instead.
@@ -275,7 +275,7 @@ class GroupedColDfToDfTransformer(dtfconobas.Transformer):
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         in_col_groups: List[Tuple[dtfcorutil.NodeColumn]],
         out_col_group: Tuple[dtfcorutil.NodeColumn],
         transformer_func: Callable[..., Union[pd.Series, pd.DataFrame]],
@@ -382,7 +382,7 @@ class SeriesToDfTransformer(dtfconobas.Transformer):
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         in_col_group: Tuple[dtfcorutil.NodeColumn],
         out_col_group: Tuple[dtfcorutil.NodeColumn],
         transformer_func: Callable[..., pd.Series],
@@ -507,7 +507,7 @@ class SeriesToSeriesTransformer(dtfconobas.Transformer):
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         in_col_group: Tuple[dtfcorutil.NodeColumn],
         out_col_group: Tuple[dtfcorutil.NodeColumn],
         transformer_func: Callable[..., pd.Series],
@@ -684,8 +684,8 @@ def _apply_func_to_series(
 class DataframeMethodRunner(dtfconobas.Transformer):
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
-        method: dtfcorcore.Method,
+        nid: dtfcornode.NodeId,
+        method: dtfcornode.Method,
         method_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         super().__init__(nid)
@@ -711,7 +711,7 @@ class DataframeMethodRunner(dtfconobas.Transformer):
 class FunctionWrapper(dtfconobas.Transformer):
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         func: Callable,
         func_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
@@ -740,7 +740,7 @@ class FunctionWrapper(dtfconobas.Transformer):
 class Resample(dtfconobas.Transformer):
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         rule: Union[pd.DateOffset, pd.Timedelta, str],
         agg_func: str,
         resample_kwargs: Optional[Dict[str, Any]] = None,
@@ -779,7 +779,7 @@ class Resample(dtfconobas.Transformer):
 class TwapVwapComputer(dtfconobas.Transformer):
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         rule: _RESAMPLING_RULE_TYPE,
         price_col: dtfcorutil.NodeColumn,
         volume_col: dtfcorutil.NodeColumn,
@@ -819,7 +819,7 @@ class TwapVwapComputer(dtfconobas.Transformer):
 class MultiindexTwapVwapComputer(dtfconobas.Transformer):
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         rule: _RESAMPLING_RULE_TYPE,
         price_col_group: Tuple[dtfcorutil.NodeColumn],
         volume_col_group: Tuple[dtfcorutil.NodeColumn],
@@ -883,7 +883,7 @@ class MultiindexTwapVwapComputer(dtfconobas.Transformer):
 class Calculator(dtfconobas.Transformer):
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         term1: dtfcorutil.NodeColumn,
         term2: dtfcorutil.NodeColumn,
         out_col_name: dtfcorutil.NodeColumn,

@@ -17,12 +17,12 @@ import core.config as cconfig
 import core.data_adapters as cdatadap
 import core.finance as cofinanc
 import core.signal_processing as csigproc
-import dataflow.core.core as dtfcorcore
+import dataflow.core.dag as dtfcordag
+import dataflow.core.node as dtfcornode
 import dataflow.core.utils as dtfcorutil
 import helpers.dbg as hdbg
 
 # TODO(Paul): Fix these imports.
-from dataflow.core.core import DAG, Node
 from dataflow.core.nodes.base import (
     ColModeMixin,
     FitPredictNode,
@@ -42,7 +42,7 @@ class SmaModel(FitPredictNode, ColModeMixin):
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         col: dtfcorutil.NodeColumnList,
         steps_ahead: int,
         tau: Optional[float] = None,
@@ -236,7 +236,7 @@ class SmaModel(FitPredictNode, ColModeMixin):
 class SingleColumnVolatilityModel(FitPredictNode):
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         steps_ahead: int,
         col: dtfcorutil.NodeColumn,
         p_moment: float = 2,
@@ -358,7 +358,9 @@ class SingleColumnVolatilityModel(FitPredictNode):
         )
         return config
 
-    def _get_dag(self, df_in: pd.DataFrame, config: cconfig.Config) -> DAG:
+    def _get_dag(
+        self, df_in: pd.DataFrame, config: cconfig.Config
+    ) -> dtfcordag.DAG:
         """
         Build a DAG from data and config.
 
@@ -366,7 +368,7 @@ class SingleColumnVolatilityModel(FitPredictNode):
         :param config: config for configuring DAG nodes
         :return: ready-to-run DAG
         """
-        dag = DAG(mode="strict")
+        dag = dtfcordag.DAG(mode="strict")
         _LOG.debug("%s", config)
         # Load `df_in`.
         nid = "load_data"
@@ -402,7 +404,9 @@ class SingleColumnVolatilityModel(FitPredictNode):
 
     # TODO(gp): This code has several copies. Move it to the base class.
     @staticmethod
-    def _append(dag: DAG, tail_nid: Optional[str], node: Node) -> str:
+    def _append(
+        dag: dtfcordag.DAG, tail_nid: Optional[str], node: dtfcornode.Node
+    ) -> str:
         dag.add_node(node)
         if tail_nid is not None:
             dag.connect(tail_nid, node.nid)
@@ -454,7 +458,7 @@ class VolatilityModel(
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         steps_ahead: int,
         cols: Optional[dtfcorutil.NodeColumnList] = None,
         p_moment: float = 2,
@@ -549,7 +553,7 @@ class MultiindexVolatilityModel(FitPredictNode, _MultiColVolatilityModelMixin):
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         in_col_group: Tuple[dtfcorutil.NodeColumn],
         steps_ahead: int,
         p_moment: float = 2,
@@ -640,7 +644,7 @@ class VolatilityModulator(FitPredictNode, ColModeMixin):
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         signal_cols: dtfcorutil.NodeColumnList,
         volatility_col: dtfcorutil.NodeColumn,
         signal_steps_ahead: int,
@@ -733,7 +737,7 @@ class VolatilityModulator(FitPredictNode, ColModeMixin):
 class VolatilityNormalizer(FitPredictNode, ColModeMixin):
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         col: str,
         target_volatility: float,
         col_mode: Optional[str] = None,

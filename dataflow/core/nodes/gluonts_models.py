@@ -14,12 +14,10 @@ import pandas as pd
 
 import core.backtest as cobackte
 import core.data_adapters as cdatadap
-import dataflow.core.core as dtfcorcore
+import dataflow.core.node as dtfcornode
+import dataflow.core.nodes.base as dtfconobas
 import dataflow.core.utils as dtfcorutil
 import helpers.dbg as hdbg
-
-# TODO(Paul): Change this.
-from dataflow.core.nodes.base import FitPredictNode
 
 _LOG = logging.getLogger(__name__)
 
@@ -29,7 +27,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class ContinuousDeepArModel(FitPredictNode):
+class ContinuousDeepArModel(dtfconobas.FitPredictNode):
     """
     A dataflow node for a DeepAR model.
 
@@ -53,7 +51,7 @@ class ContinuousDeepArModel(FitPredictNode):
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         y_vars: dtfcorutil.NodeColumnList,
         trainer_kwargs: Optional[Any] = None,
         estimator_kwargs: Optional[Any] = None,
@@ -185,7 +183,7 @@ class ContinuousDeepArModel(FitPredictNode):
         return {"df_out": df_out}
 
 
-class DeepARGlobalModel(FitPredictNode):
+class DeepARGlobalModel(dtfconobas.FitPredictNode):
     """
     A dataflow node for a DeepAR model.
 
@@ -197,7 +195,7 @@ class DeepARGlobalModel(FitPredictNode):
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         x_vars: dtfcorutil.NodeColumnList,
         y_vars: dtfcorutil.NodeColumnList,
         trainer_kwargs: Optional[Any] = None,

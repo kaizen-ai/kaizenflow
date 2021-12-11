@@ -15,7 +15,7 @@ import sklearn as sklear
 import core.data_adapters as cdatadap
 import core.signal_processing as csigproc
 import core.statistics as costatis
-import dataflow.core.core as dtfcorcore
+import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.base as dtfconobas
 import dataflow.core.utils as dtfcorutil
 import helpers.dbg as hdbg
@@ -37,7 +37,7 @@ class ContinuousSkLearnModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin)
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         model_func: Callable[..., Any],
         x_vars: dtfcorutil.NodeColumnList,
         y_vars: dtfcorutil.NodeColumnList,
@@ -231,7 +231,7 @@ class MultiindexPooledSkLearnModel(dtfconobas.FitPredictNode):
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         in_col_groups: List[Tuple[dtfcorutil.NodeColumn]],
         out_col_group: Tuple[dtfcorutil.NodeColumn],
         model_func: Callable[..., Any],
@@ -349,7 +349,7 @@ class MultiindexSkLearnModel(dtfconobas.FitPredictNode):
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         in_col_groups: List[Tuple[dtfcorutil.NodeColumn]],
         out_col_group: Tuple[dtfcorutil.NodeColumn],
         model_func: Callable[..., Any],
@@ -447,7 +447,7 @@ class SkLearnModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         x_vars: dtfcorutil.NodeColumnList,
         y_vars: dtfcorutil.NodeColumnList,
         model_func: Callable[..., Any],

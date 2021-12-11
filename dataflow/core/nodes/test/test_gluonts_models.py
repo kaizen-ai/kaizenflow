@@ -8,11 +8,9 @@ import pytest
 
 import core.artificial_signal_generators as carsigen
 import core.config as cconfig
+import dataflow.core.dag as dtfcordag
 import helpers.printing as hprint
 import helpers.unit_test as hunitest
-
-# TODO(Paul): Fix these imports.
-from dataflow.core.core import DAG
 from dataflow.core.nodes.gluonts_models import (
     ContinuousDeepArModel,
     DeepARGlobalModel,
@@ -46,7 +44,7 @@ if True:
             df_str = hunitest.convert_df_to_string(df_out, index=True, decimals=1)
             self.check_string(df_str)
 
-        def _get_dag(self) -> DAG:
+        def _get_dag(self) -> dtfcordag.DAG:
             mxnet.random.seed(0)
             data, _ = carsigen.get_gluon_dataset(
                 dataset_name="m4_hourly",
@@ -59,7 +57,7 @@ if True:
             data_source_node.set_fit_intervals(fit_intervals)
             data_source_node.set_predict_intervals(predict_intervals)
             # Create DAG and test data node.
-            dag = DAG(mode="strict")
+            dag = dtfcordag.DAG(mode="strict")
             dag.add_node(data_source_node)
             # Load deepar config and create modeling node.
             config = cconfig.Config()
@@ -103,7 +101,7 @@ if True:
 
         def test_fit_dag1(self) -> None:
             mxnet.random.seed(0)
-            dag = DAG(mode="strict")
+            dag = dtfcordag.DAG(mode="strict")
             local_ts = self._get_local_ts()
             data_source_node = ReadDataFromDf("local_ts", local_ts)
             dag.add_node(data_source_node)

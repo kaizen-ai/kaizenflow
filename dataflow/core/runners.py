@@ -13,7 +13,7 @@ import pandas as pd
 import core.config as cconfig
 import core.real_time as creatime
 import dataflow.core.builders as dtfcorbuil
-import dataflow.core.core as dtfcorcore
+import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.sources as dtfconosou
 import dataflow.core.result_bundle as dtfcorebun
 import dataflow.core.utils as dtfcorutil
@@ -71,7 +71,7 @@ class _AbstractDagRunner(abc.ABC):
         _LOG.debug("_result_nid=%s", self._result_nid)
 
     def _set_fit_predict_intervals(
-        self, method: dtfcorcore.Method, intervals: Optional[dtfcorutil.Intervals]
+        self, method: dtfcornode.Method, intervals: Optional[dtfcorutil.Intervals]
     ) -> None:
         """
         Set fit or predict intervals for all the source nodes.
@@ -92,7 +92,7 @@ class _AbstractDagRunner(abc.ABC):
                 raise ValueError("Invalid method='%s'" % method)
 
     def _run_dag_helper(
-        self, method: dtfcorcore.Method
+        self, method: dtfcornode.Method
     ) -> Tuple[pd.DataFrame, dtfcorvisi.NodeInfo]:
         """
         Run the DAG for the given method.
@@ -109,7 +109,7 @@ class _AbstractDagRunner(abc.ABC):
     #  `ResultBundle` and `PredictionResultBundle`.
     def _to_result_bundle(
         self,
-        method: dtfcorcore.Method,
+        method: dtfcornode.Method,
         df_out: pd.DataFrame,
         info: dtfcorvisi.NodeInfo,
     ) -> dtfcorebun.ResultBundle:
@@ -171,7 +171,7 @@ class FitPredictDagRunner(_AbstractDagRunner):
         method = "predict"
         return self._run_dag(method)
 
-    def _run_dag(self, method: dtfcorcore.Method) -> dtfcorebun.ResultBundle:
+    def _run_dag(self, method: dtfcornode.Method) -> dtfcorebun.ResultBundle:
         df_out, info = self._run_dag_helper(method)
         return self._to_result_bundle(method, df_out, info)
 
@@ -188,7 +188,7 @@ class PredictionDagRunner(FitPredictDagRunner):
     """
 
     def _run_dag(
-        self, method: dtfcorcore.Method
+        self, method: dtfcornode.Method
     ) -> dtfcorebun.PredictionResultBundle:
         """
         Same as super class but return a `PredictionResultBundle`.
@@ -361,7 +361,7 @@ class RollingFitPredictDagRunner(_AbstractDagRunner):
         hdbg.dassert(not idx.empty)
         return idx
 
-    def _run_dag(self, method: dtfcorcore.Method) -> dtfcorebun.ResultBundle:
+    def _run_dag(self, method: dtfcornode.Method) -> dtfcorebun.ResultBundle:
         """
         Run DAG and return a ResultBundle.
         """
@@ -447,7 +447,7 @@ class IncrementalDagRunner(_AbstractDagRunner):
         result_bundle = self._run_dag("predict")
         return result_bundle
 
-    def _run_dag(self, method: dtfcorcore.Method) -> dtfcorebun.ResultBundle:
+    def _run_dag(self, method: dtfcornode.Method) -> dtfcorebun.ResultBundle:
         """
         Run DAG and return a ResultBundle.
         """
@@ -539,7 +539,7 @@ class RealTimeDagRunner(_AbstractDagRunner):
         return ret
 
     async def _run_dag(
-        self, method: dtfcorcore.Method
+        self, method: dtfcornode.Method
     ) -> dtfcorebun.ResultBundle:
         # Wait until all the real-time source nodes are ready to compute.
         _LOG.debug("Waiting for real-time nodes to be ready ...")

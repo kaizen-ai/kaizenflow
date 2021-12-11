@@ -10,9 +10,9 @@ from typing import Any, Dict, List, Optional, Union
 import pandas as pd
 
 import core.finance as cofinanc
-
-# This file can use `dataflow` package since it's an external client.
-import dataflow as cdataf
+import dataflow.core.node as dtfcornode
+import dataflow.core.nodes.base as dtfconobas
+import dataflow.core.nodes.sources as dtfconosou
 import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.printing as hprint
@@ -25,8 +25,10 @@ _LOG = logging.getLogger(__name__)
 
 
 def data_source_node_factory(
-    nid: cdataf.NodeId, source_node_name: str, source_node_kwargs: Dict[str, Any]
-) -> cdataf.DataSource:
+    nid: dtfcornode.NodeId,
+    source_node_name: str,
+    source_node_kwargs: Dict[str, Any],
+) -> dtfconobas.DataSource:
     """
     Initialize the appropriate data source node.
 
@@ -63,15 +65,15 @@ def data_source_node_factory(
     # TODO(gp): To simplify we can use the name of the class (e.g., "ArmaGenerator"
     #  instead of "arma"), so we don't have to use another level of mnemonics.
     if source_node_name == "arma":
-        ret = cdataf.ArmaGenerator(nid, **source_node_kwargs)
+        ret = dtfconosou.ArmaGenerator(nid, **source_node_kwargs)
     elif source_node_name == "multivariate_normal":
-        ret = cdataf.MultivariateNormalGenerator(nid, **source_node_kwargs)
+        ret = dtfconosou.MultivariateNormalGenerator(nid, **source_node_kwargs)
     elif source_node_name == "RealTimeDataSource":
-        ret = cdataf.RealTimeDataSource(nid, **source_node_kwargs)
+        ret = dtfconosou.RealTimeDataSource(nid, **source_node_kwargs)
     elif source_node_name == "disk":
-        ret = cdataf.DiskDataSource(nid, **source_node_kwargs)
+        ret = dtfconosou.DiskDataSource(nid, **source_node_kwargs)
     elif source_node_name == "DataLoader":
-        ret = cdataf.DataLoader(nid, **source_node_kwargs)
+        ret = dtfconosou.DataLoader(nid, **source_node_kwargs)
     elif source_node_name == "crypto_data_download":
         # TODO(gp): This should go through RealTimeDataSource.
         import core_lem.dataflow.nodes.sources as cldns
@@ -144,10 +146,10 @@ def load_kibot_data(
 # TODO(gp): Maybe consolidate KibotDataReader and KibotColumnReader.
 
 # TODO(gp): -> KibotFuturesDataReader
-class KibotDataReader(cdataf.DataSource):
+class KibotDataReader(dtfconobas.DataSource):
     def __init__(
         self,
-        nid: cdataf.NodeId,
+        nid: dtfcornode.NodeId,
         symbol: str,
         frequency: Union[str, vkibot.Frequency],
         contract_type: Union[str, vkibot.ContractType],
@@ -202,10 +204,10 @@ class KibotDataReader(cdataf.DataSource):
 #  columns.
 
 
-class KibotColumnReader(cdataf.DataSource):
+class KibotColumnReader(dtfconobas.DataSource):
     def __init__(
         self,
-        nid: cdataf.NodeId,
+        nid: dtfcornode.NodeId,
         symbols: List[str],
         frequency: Union[str, vkibot.Frequency],
         contract_type: Union[str, vkibot.ContractType],
@@ -263,10 +265,10 @@ class KibotColumnReader(cdataf.DataSource):
 # #############################################################################
 
 
-class KibotEquityReader(cdataf.DataSource):
+class KibotEquityReader(dtfconobas.DataSource):
     def __init__(
         self,
-        nid: cdataf.NodeId,
+        nid: dtfcornode.NodeId,
         symbols: List[str],
         frequency: Union[str, vkibot.Frequency],
         start_date: Optional[hdateti.Datetime] = None,

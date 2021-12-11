@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple, cast
 import pandas as pd
 
 import core.config as cconfig
-import dataflow.core.core as dtfcorcore
+import dataflow.core.node as dtfcornode
 import helpers.dbg as hdbg
 import helpers.git as hgit
 import helpers.hparquet as hparque
@@ -37,8 +37,8 @@ class ResultBundle(abc.ABC):
     def __init__(
         self,
         config: cconfig.Config,
-        result_nid: dtfcorcore.NodeId,
-        method: dtfcorcore.Method,
+        result_nid: dtfcornode.NodeId,
+        method: dtfcornode.Method,
         result_df: pd.DataFrame,
         # TODO(gp): -> str
         column_to_tags: Optional[Dict[Any, List[Any]]] = None,
@@ -59,7 +59,7 @@ class ResultBundle(abc.ABC):
         """
         self._config = config
         self._result_nid = result_nid
-        hdbg.dassert_isinstance(method, dtfcorcore.Method)
+        hdbg.dassert_isinstance(method, dtfcornode.Method)
         self._method = method
         if result_df is not None:
             hdbg.dassert_isinstance(result_df, pd.DataFrame)
@@ -89,11 +89,11 @@ class ResultBundle(abc.ABC):
         return self._config
 
     @property
-    def result_nid(self) -> dtfcorcore.NodeId:
+    def result_nid(self) -> dtfcornode.NodeId:
         return self._result_nid
 
     @property
-    def method(self) -> dtfcorcore.Method:
+    def method(self) -> dtfcornode.Method:
         return self._method
 
     @property

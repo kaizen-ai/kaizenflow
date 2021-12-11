@@ -10,21 +10,23 @@ from typing import Any, Dict
 
 import pandas as pd
 
-import dataflow as dtf
+import dataflow.core.node as dtfcornode
+import dataflow.core.nodes.base as dtfconobas
+import dataflow.core.utils as dtfcorutil
 import helpers.dbg as hdbg
 import oms.place_orders as oplaorde
 
 _LOG = logging.getLogger(__name__)
 
 
-class ProcessForecasts(dtf.FitPredictNode):
+class ProcessForecasts(dtfconobas.FitPredictNode):
     """
     Place trades from a model.
     """
 
     def __init__(
         self,
-        nid: dtf.NodeId,
+        nid: dtfcornode.NodeId,
         prediction_col: str,
         execution_mode: bool,
         process_forecasts_config: Dict[str, Any],
@@ -60,7 +62,7 @@ class ProcessForecasts(dtf.FitPredictNode):
         )
         # Compute stats.
         info = collections.OrderedDict()
-        info["df_out_info"] = dtf.get_df_info_as_string(df)
+        info["df_out_info"] = dtfcorutil.get_df_info_as_string(df)
         mode = "fit" if fit else "predict"
         self._set_info(mode, info)
         # Pass the dataframe through.

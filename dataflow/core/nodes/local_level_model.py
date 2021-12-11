@@ -12,7 +12,7 @@ import pandas as pd
 
 import core.signal_processing as csigproc
 import core.statistics as costatis
-import dataflow.core.core as dtfcorcore
+import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.base as dtfconobas
 import dataflow.core.utils as dtfcorutil
 import helpers.dbg as hdbg
@@ -27,7 +27,7 @@ class LocalLevelModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         cols: dtfcorutil.NodeColumnList,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,

@@ -10,7 +10,7 @@ import logging
 import core.config as cconfig
 import core.finance as cofinanc
 import dataflow.core.builders as dtfcorbuil
-import dataflow.core.core as dtfcorcore
+import dataflow.core.dag as dtfcordag
 import dataflow.core.nodes.sources as dtfconosou
 import dataflow.core.nodes.transformers as dtfconotra
 import dataflow.core.nodes.volatility_models as dtfcnovomo
@@ -91,7 +91,7 @@ class ArmaReturnsBuilder(dtfcorbuil.DagBuilder):
 
     def _get_dag(
         self, config: cconfig.Config, mode: str = "strict"
-    ) -> dtfcorcore.DAG:
+    ) -> dtfcordag.DAG:
         """
         Generate pipeline DAG.
 
@@ -100,7 +100,7 @@ class ArmaReturnsBuilder(dtfcorbuil.DagBuilder):
             interactive jupyter notebooks)
         :return: initialized DAG
         """
-        dag = dtfcorcore.DAG(mode=mode)
+        dag = dtfcordag.DAG(mode=mode)
         _LOG.debug("%s", config)
         # Read data.
         stage = "rets/read_data"
@@ -238,11 +238,11 @@ class MvnReturnsBuilder(dtfcorbuil.DagBuilder):
 
     def _get_dag(
         self, config: cconfig.Config, mode: str = "strict"
-    ) -> dtfcorcore.DAG:
+    ) -> dtfcordag.DAG:
         """
         Generate pipeline DAG.
         """
-        dag = dtfcorcore.DAG(mode=mode)
+        dag = dtfcordag.DAG(mode=mode)
         _LOG.debug("%s", config)
         stage = "load_prices"
         nid = self._get_nid(stage)

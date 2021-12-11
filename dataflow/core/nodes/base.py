@@ -13,7 +13,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
 import pandas as pd
 
-import dataflow.core.core as dtfcorcore
+import dataflow.core.node as dtfcornode
 import dataflow.core.utils as dtfcorutil
 import helpers.dbg as hdbg
 
@@ -25,7 +25,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class FitPredictNode(dtfcorcore.Node, abc.ABC):
+class FitPredictNode(dtfcornode.Node, abc.ABC):
     """
     Class with abstract sklearn-style `fit()` and `predict()` functions.
 
@@ -44,7 +44,7 @@ class FitPredictNode(dtfcorcore.Node, abc.ABC):
 
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         inputs: Optional[List[str]] = None,
         outputs: Optional[List[str]] = None,
     ) -> None:
@@ -73,7 +73,7 @@ class FitPredictNode(dtfcorcore.Node, abc.ABC):
         _ = self, fit_state
 
     def get_info(
-        self, method: dtfcorcore.Method
+        self, method: dtfcornode.Method
     ) -> Optional[Union[str, collections.OrderedDict]]:
         """
         The returned `info` is not copied and the client should not modify it.
@@ -89,7 +89,7 @@ class FitPredictNode(dtfcorcore.Node, abc.ABC):
 
     # TODO(gp): values -> info
     def _set_info(
-        self, method: dtfcorcore.Method, values: collections.OrderedDict
+        self, method: dtfcornode.Method, values: collections.OrderedDict
     ) -> None:
         """
         The passed `info` is copied internally.
@@ -115,7 +115,7 @@ class DataSource(FitPredictNode, abc.ABC):
     """
 
     def __init__(
-        self, nid: dtfcorcore.NodeId, outputs: Optional[List[str]] = None
+        self, nid: dtfcornode.NodeId, outputs: Optional[List[str]] = None
     ) -> None:
         if outputs is None:
             outputs = ["df_out"]
@@ -230,7 +230,7 @@ class Transformer(FitPredictNode, abc.ABC):
 
     # TODO(Paul): Consider giving users the option of renaming the single
     #  input and single output (but verify there is only one of each).
-    def __init__(self, nid: dtfcorcore.NodeId) -> None:
+    def __init__(self, nid: dtfcornode.NodeId) -> None:
         super().__init__(nid)
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -273,7 +273,7 @@ class YConnector(FitPredictNode):
     # TODO(Paul): Support different input/output names.
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         connector_func: Callable[..., pd.DataFrame],
         connector_kwargs: Optional[Any] = None,
     ) -> None:

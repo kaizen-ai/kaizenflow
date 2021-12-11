@@ -13,7 +13,7 @@ from typing import Dict, Iterable, Tuple
 import pandas as pd
 
 import core.finance as cofinanc
-import dataflow.core.core as dtfcorcore
+import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.base as dtfconobas
 import dataflow.core.utils as dtfcorutil
 import helpers.dbg as hdbg
@@ -27,7 +27,7 @@ _LOG = logging.getLogger(__name__)
 class WriteDf(dtfconobas.FitPredictNode):
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         dir_name: str,
     ) -> None:
         super().__init__(nid)
@@ -72,7 +72,7 @@ class WriteDf(dtfconobas.FitPredictNode):
 class WriteCols(dtfconobas.FitPredictNode):
     def __init__(
         self,
-        nid: dtfcorcore.NodeId,
+        nid: dtfcornode.NodeId,
         dir_name: str,
         col_mapping: Dict[str, str],
     ) -> None:
