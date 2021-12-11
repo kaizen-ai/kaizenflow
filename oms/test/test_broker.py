@@ -22,7 +22,7 @@ class TestSimulatedBroker1(hunitest.TestCase):
         #
 
 
-class TestMockedBroker1(ottb._TestOmsDbHelper):
+class TestMockedBroker1(ottb.TestOmsDbHelper):
     def test1(self) -> None:
         """
         
