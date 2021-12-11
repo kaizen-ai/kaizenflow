@@ -327,8 +327,12 @@ def print_tasks(ctx, as_code=False):  # type: ignore
     _report_task()
     _ = ctx
     func_names = []
+    lib_tasks_file_name = os.path.join(
+        hgit.get_amp_abs_path(), "helpers/lib_tasks.py"
+    )
+    hdbg.dassert_file_exists(lib_tasks_file_name)
     # TODO(gp): Use __file__ instead of hardwiring the file.
-    cmd = r'\grep "^@task" -A 1 helpers/lib_tasks.py | grep def'
+    cmd = rf'\grep "^@task" -A 1 {lib_tasks_file_name} | grep def'
     # def print_setup(ctx):  # type: ignore
     # def git_pull(ctx):  # type: ignore
     # def git_pull_master(ctx):  # type: ignore
@@ -792,6 +796,44 @@ def git_rename_branch(ctx, new_branch_name):  # type: ignore
 # dev_scripts/git/git_branch.sh
 # dev_scripts/git/git_branch_point.sh
 # dev_scripts/create_class_diagram.sh
+
+# #############################################################################
+# Integrate.
+# #############################################################################
+
+
+@task
+def integrate_save_base_files(ctx, file_name):  # type: ignore
+    """
+    Save the files from `file_name` at the commit before this branch was branched.
+    """
+    # Find the hash before the branch was created
+    # > git merge-base master AmpTask1786_Integrate_20211210
+    # 77383ac21bbd3fa353f9572ac3ae9ad144c44db1
+    #hash_ = "77383ac21bbd3fa353f9572ac3ae9ad144c44db1"
+    hash_ = "fdc94164b053f20d9aa1486f216c9ae9314d3d07"
+    # Get the files to diff.
+    _LOG.info("Reading file names from '%s'", file_name)
+    files = hio.from_file(file_name).split("\n")
+    files = [f for f in files if f != ""]
+    _LOG.info("Found %d files:\n%s", len(files), "\n".join(files))
+    script_txt = []
+    for src_file in files:
+        hdbg.dassert_file_exists(src_file)
+        # TODO(gp): Add function to add a suffix to a name, using
+        # os.path.dirname(), os.path.basename(), os.path.split_extension().
+        dst_file = src_file.replace(".py", ".base.py")
+        # Save the base file.
+        cmd = f"git show {hash_}:{src_file} >{dst_file}"
+        hsysinte.system(cmd)
+        # Update the script to diff.
+        script_txt.append(f"vimdiff {dst_file} {src_file}")
+    # Save the script to compare.
+    script_file_name = "./tmp.vimdiff_with_base.sh"
+    script_txt = "\n".join(script_txt)
+    hsysinte.create_executable_script(script_file_name, script_txt)
+    print(f"# To diff against the base run:\n> {script_file_name}")
+
 
 # #############################################################################
 # Basic Docker commands.
@@ -1506,6 +1548,7 @@ def _to_abs_path(filename: str) -> str:
 # DOCKER_BUILDKIT = 1
 DOCKER_BUILDKIT = 0
 
+
 # For base_image, we use "" as default instead None since pyinvoke can only infer
 # a single type.
 @task
@@ -1682,7 +1725,7 @@ def docker_release_dev_image(  # type: ignore
     if superslow_tests:
         run_superslow_tests(ctx, stage=stage, version=version)
     # 3) Promote the "local" image to "dev".
-    docker_tag_local_image_as_dev(ctx, version=version)
+    docker_tag_local_image_as_dev(ctx, version)
     # 4) Run QA tests for the (local version) of the dev image.
     if qa_tests:
         qa_test_fn = get_default_param("END_TO_END_TEST_FN")
@@ -1692,7 +1735,7 @@ def docker_release_dev_image(  # type: ignore
             raise RuntimeError(msg)
     # 5) Push the "dev" image to ECR.
     if push_to_repo:
-        docker_push_dev_image(ctx, version=version)
+        docker_push_dev_image(ctx, version)
     else:
         _LOG.warning(
             "Skipping pushing dev image to repo_short_name, as requested"
@@ -2769,6 +2812,50 @@ def pytest_failed(  # type: ignore
 
 
 # #############################################################################
+
+
+def _purify_test_output(src_file_name: str, dst_file_name: str) -> None:
+    """
+    Clean up the output of `pytest -s --dbg` to make easier to compare two
+    runs.
+
+    E.g., remove the timestamps, reference to Git repo.
+    """
+    _LOG.info("Converted '%s' -> '%s", src_file_name, dst_file_name)
+    txt = hio.from_file(src_file_name)
+    out_txt = []
+    for line in txt.split("\n"):
+        # 10:05:18       portfolio        : _get_holdings       : 431 :
+        m = re.match(r"^\d\d:\d\d:\d\d\s+(.*:.*)$", line)
+        if m:
+            new_line = m.group(1)
+        else:
+            new_line = line
+        out_txt.append(new_line)
+    #
+    out_txt = "\n".join(out_txt)
+    hio.to_file(dst_file_name, out_txt)
+
+
+@task
+def pytest_compare(ctx, file_name1, file_name2):  # type: ignore
+    """
+    Compare the output of two runs of `pytest -s --dbg` removing irrelevant
+    details.
+    """
+    _report_task()
+    _ = ctx
+    # TODO(gp): Change the name of the file before the extension.
+    dst_file_name1 = file_name1 + ".purified"
+    _purify_test_output(file_name1, dst_file_name1)
+    dst_file_name2 = file_name2 + ".purified"
+    _purify_test_output(file_name2, dst_file_name2)
+    # TODO(gp): Call vimdiff automatically.
+    cmd = "vimdiff %s %s" % (dst_file_name1, dst_file_name2)
+    print(f"> {cmd}")
+
+
+# #############################################################################
 # Linter.
 # #############################################################################
 
@@ -2937,7 +3024,8 @@ def lint(  # type: ignore
     files="",
     dir_name="",
     phases="",
-    only_formatting=False,
+    only_format=False,
+    only_check=False,
     # stage="prod",
     run_bash=False,
     run_linter_step=True,
@@ -2954,7 +3042,9 @@ def lint(  # type: ignore
     :param files: specify a space-separated list of files
     :param dir_name: process all the files in a dir
     :param phases: specify the lint phases to execute
-    :param only_formatting: run only the formatting steps
+    :param only_format: run only the formatting phases (e.g., black)
+    :param only_check: run only the checking phases (e.g., pylint, mypy) that
+        don't change the code
     :param run_bash: instead of running pre-commit, run bash to debug
     :param run_linter_step: run linter step
     :param parse_linter_output: parse linter output and generate vim cfile
@@ -2967,12 +3057,50 @@ def lint(  # type: ignore
     if os.path.exists(lint_file_name):
         cmd = f"rm {lint_file_name}"
         _run(ctx, cmd)
-    #
-    if only_formatting:
+    # The available phases are:
+    # ```
+    # > i lint -f "foobar.py"
+    # Don't commit to branch...............................................Passed
+    # Check for merge conflicts........................(no files to check)Skipped
+    # Trim Trailing Whitespace.........................(no files to check)Skipped
+    # Fix End of Files.................................(no files to check)Skipped
+    # Check for added large files......................(no files to check)Skipped
+    # CRLF end-lines remover...........................(no files to check)Skipped
+    # Tabs remover.....................................(no files to check)Skipped
+    # autoflake........................................(no files to check)Skipped
+    # amp_check_filename...............................(no files to check)Skipped
+    # amp_isort........................................(no files to check)Skipped
+    # amp_black........................................(no files to check)Skipped
+    # amp_flake8.......................................(no files to check)Skipped
+    # amp_doc_formatter................................(no files to check)Skipped
+    # amp_pylint.......................................(no files to check)Skipped
+    # amp_mypy.........................................(no files to check)Skipped
+    # amp_lint_md......................................(no files to check)Skipped
+    # amp_class_method_order...........................(no files to check)Skipped
+    # amp_normalize_import.............................(no files to check)Skipped
+    # amp_format_separating_line.......................(no files to check)Skipped
+    # amp_warn_incorrectly_formatted_todo..............(no files to check)Skipped
+    # amp_processjupytext..............................(no files to check)Skipped
+    # ```
+    if only_format:
         hdbg.dassert_eq(phases, "")
-        phases = (
-            "amp_isort amp_class_method_order amp_normalize_import "
-            "amp_format_separating_line amp_black"
+        phases = " ".join(
+            [
+                "amp_isort",
+                "amp_class_method_order",
+                "amp_normalize_import",
+                "amp_format_separating_line",
+                "amp_black",
+                "amp_processjupytext",
+            ]
+        )
+    if only_check:
+        hdbg.dassert_eq(phases, "")
+        phases = " ".join(
+            [
+                "amp_pylint",
+                "amp_mypy",
+            ]
         )
     if run_linter_step:
         # We don't want to run this all the times.
