@@ -810,7 +810,8 @@ def integrate_save_base_files(ctx, file_name):  # type: ignore
     # Find the hash before the branch was created
     # > git merge-base master AmpTask1786_Integrate_20211210
     # 77383ac21bbd3fa353f9572ac3ae9ad144c44db1
-    hash_ = "77383ac21bbd3fa353f9572ac3ae9ad144c44db1"
+    #hash_ = "77383ac21bbd3fa353f9572ac3ae9ad144c44db1"
+    hash_ = "fdc94164b053f20d9aa1486f216c9ae9314d3d07"
     # Get the files to diff.
     _LOG.info("Reading file names from '%s'", file_name)
     files = hio.from_file(file_name).split("\n")
@@ -1359,7 +1360,7 @@ def _get_docker_cmd(
     # - Handle the user.
     # Based on AmpTask1864 it seems that we need to use root in the CI to be
     # able to log in GH touching $HOME/.config/gh.
-    if False and as_user:
+    if as_user:
         docker_cmd_.append(
             r"""
         --user $(id -u):$(id -g)"""
