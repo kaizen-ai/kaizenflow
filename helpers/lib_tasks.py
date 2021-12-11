@@ -327,8 +327,12 @@ def print_tasks(ctx, as_code=False):  # type: ignore
     _report_task()
     _ = ctx
     func_names = []
+    lib_tasks_file_name = os.path.join(
+        hgit.get_amp_abs_path(), "helpers/lib_tasks.py"
+    )
+    hdbg.dassert_file_exists(lib_tasks_file_name)
     # TODO(gp): Use __file__ instead of hardwiring the file.
-    cmd = r'\grep "^@task" -A 1 helpers/lib_tasks.py | grep def'
+    cmd = rf'\grep "^@task" -A 1 {lib_tasks_file_name} | grep def'
     # def print_setup(ctx):  # type: ignore
     # def git_pull(ctx):  # type: ignore
     # def git_pull_master(ctx):  # type: ignore
@@ -792,6 +796,43 @@ def git_rename_branch(ctx, new_branch_name):  # type: ignore
 # dev_scripts/git/git_branch.sh
 # dev_scripts/git/git_branch_point.sh
 # dev_scripts/create_class_diagram.sh
+
+# #############################################################################
+# Integrate.
+# #############################################################################
+
+
+@task
+def integrate_save_base_files(ctx, file_name):  # type: ignore
+    """
+    Save the files from `file_name` at the commit before this branch was branched.
+    """
+    # Find the hash before the branch was created
+    # > git merge-base master AmpTask1786_Integrate_20211210
+    # 77383ac21bbd3fa353f9572ac3ae9ad144c44db1
+    hash_ = "77383ac21bbd3fa353f9572ac3ae9ad144c44db1"
+    # Get the files to diff.
+    _LOG.info("Reading file names from '%s'", file_name)
+    files = hio.from_file(file_name).split("\n")
+    files = [f for f in files if f != ""]
+    _LOG.info("Found %d files:\n%s", len(files), "\n".join(files))
+    script_txt = []
+    for src_file in files:
+        hdbg.dassert_file_exists(src_file)
+        # TODO(gp): Add function to add a suffix to a name, using
+        # os.path.dirname(), os.path.basename(), os.path.split_extension().
+        dst_file = src_file.replace(".py", ".base.py")
+        # Save the base file.
+        cmd = f"git show {hash_}:{src_file} >{dst_file}"
+        hsysinte.system(cmd)
+        # Update the script to diff.
+        script_txt.append(f"vimdiff {dst_file} {src_file}")
+    # Save the script to compare.
+    script_file_name = "./tmp.vimdiff_with_base.sh"
+    script_txt = "\n".join(script_txt)
+    hsysinte.create_executable_script(script_file_name, script_txt)
+    print(f"# To diff against the base run:\n> {script_file_name}")
+
 
 # #############################################################################
 # Basic Docker commands.
@@ -1318,7 +1359,7 @@ def _get_docker_cmd(
     # - Handle the user.
     # Based on AmpTask1864 it seems that we need to use root in the CI to be
     # able to log in GH touching $HOME/.config/gh.
-    if as_user:
+    if False and as_user:
         docker_cmd_.append(
             r"""
         --user $(id -u):$(id -g)"""
