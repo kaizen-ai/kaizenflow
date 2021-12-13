@@ -15,7 +15,7 @@ import im_v2.common.data.transform.csv_to_pq as imvcdtctpq
 import argparse
 import logging
 import os
-from typing import List
+from typing import List, Tuple
 
 import helpers.csv_helpers as hcsv
 import helpers.dbg as hdbg
@@ -34,7 +34,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         type=str,
         required=True,
-        help="Location of input CSV to convert to .pq format",
+        help="Location of input CSV to convert to PQ format",
     )
     parser.add_argument(
         "--dst_dir",
@@ -52,31 +52,29 @@ def _parse() -> argparse.ArgumentParser:
     return parser
 
 
-def _source_csv_files(src_dir: str, dst_dir: str, incremental: bool) -> List[str]:
-    ext = (".csv", ".csv.gz")
+def _source_files(
+    src_dir: str, dst_dir: str, incremental: bool
+) -> List[Tuple[str, str]]:
+    hdbg.dassert_ne(len(os.listdir(src_dir)), 0, "No files inside '%s'", src_dir)
+    csv_ext, csv_gz_ext = ".csv", ".csv.gz"
     # Find all the CSV files to convert.
-    csv_files = [fn for fn in os.listdir(src_dir) if fn.endswith(ext)]
-    hdbg.dassert_ne(len(csv_files), 0, "No .csv files inside '%s'", src_dir)
-    if incremental:
-        # Find pq files that already converted.
-        pq_filenames = []
-        for f in os.listdir(dst_dir):
-            if f.endswith(".pq"):
-                pq_filenames.append(f[:-3])
-            elif f.endswith(".parquet"):
-                pq_filenames.append(f[:-8])
-            else:
-                raise ValueError("Invalid file '{f}'")
-        # Remove csv files that do not need to be converted.
-        for f in csv_files:
-            filename = f[:-4] if f.endswith(".csv") else f[:-7]
-            if filename in pq_filenames:
-                csv_files.remove(f)
-                _LOG.warning(
-                    "Skipping the conversion of CSV file '%s' since '%s' already exists",
-                    f,
-                    f,
-                )
+    csv_files = []
+    for f in os.listdir(src_dir):
+        if f.endswith(csv_ext):
+            filename = f[: -len(csv_ext)]
+        elif f.endswith(csv_gz_ext):
+            filename = f[: -len(csv_gz_ext)]
+        pq_path = os.path.join(dst_dir, f"{filename}.parquet")
+        # Skip CSV files that do not need to be converted.
+        if incremental and os.path.exists(pq_path):
+            _LOG.warning(
+                "Skipping the conversion of CSV file '%s' since '%s' already exists",
+                filename,
+                filename,
+            )
+        else:
+            csv_path = os.path.join(src_dir, f)
+            csv_files.append((csv_path, pq_path))
     return csv_files
 
 
@@ -84,12 +82,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     hio.create_dir(args.dst_dir, args.incremental)
-    csv_files = _source_csv_files(args.src_dir, args.dst_dir, args.incremental)
-    # Transform csv files.
-    for f in csv_files:
-        filename = f[:-4] if f.endswith(".csv") else f[:-7]  # for .csv.gz
-        csv_full_path = os.path.join(args.src_dir, f)
-        pq_full_path = os.path.join(args.dst_dir, f"{filename}.parquet")
+    files = _source_files(args.src_dir, args.dst_dir, args.incremental)
+    # Transform CSV files.
+    for csv_full_path, pq_full_path in files:
         hcsv.convert_csv_to_pq(csv_full_path, pq_full_path)
 
 

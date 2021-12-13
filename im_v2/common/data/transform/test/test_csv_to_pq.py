@@ -13,7 +13,7 @@ class TestCsvToPq(hunitest.TestCase):
         Test that generated .pq file is correct.
         """
         # Generate the files.
-        self._generate_files1()
+        self._generate_example_csv_file()
         pq_dir_path = os.path.join(self.get_scratch_space(), "pq_dir")
         # Run command.
         cmd = (
@@ -32,8 +32,8 @@ class TestCsvToPq(hunitest.TestCase):
         Test that --incremental option does not change the file.
         """
         # Generate the files.
-        self._generate_files1()
-        self._generate_files2()
+        self._generate_example_csv_file()
+        self._generate_example_pq_file()
         # Read file before running command.
         parquet_file_path = os.path.join(self.pq_dir_path, "test.parquet")
         df = pd.read_parquet(parquet_file_path)
@@ -52,7 +52,7 @@ class TestCsvToPq(hunitest.TestCase):
         # Check that file does not change.
         self.assert_equal(before, after)
 
-    def _generate_files1(self) -> None:
+    def _generate_example_csv_file(self) -> None:
         """
         Create a CSV file in scratch directory.
         """
@@ -76,14 +76,14 @@ class TestCsvToPq(hunitest.TestCase):
         df = pd.DataFrame(data=d)
         df.to_csv(os.path.join(self.csv_dir_path, "test.csv"), index=False)
 
-    def _generate_files2(self) -> None:
+    def _generate_example_pq_file(self) -> None:
         """
         Create a PQ file in scratch directory.
         """
         test_dir = self.get_scratch_space()
         self.pq_dir_path = os.path.join(test_dir, "pq_dir")
         hio.create_dir(self.pq_dir_path, False)
-        # DF is different, because we want to check that it does not change.
+        # Create different PQ file for test2.
         d = {
             "timestamp": [1632646800000, 1638646860000],
             "open": [49666.18, 49666.63],
