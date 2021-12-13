@@ -366,13 +366,13 @@ def log(logger: logging.Logger, verbosity: int, *vals: Any) -> None:
 def type_to_string(type_as_str: str) -> str:
     """
     Return a short string representing the type of an object, e.g.,
-    "core.dataflow.Node" (instead of "class <'core.dataflow.Node'>")
+    "dataflow.Node" (instead of "class <'dataflow.Node'>")
     """
     if isinstance(type_as_str, type):
         type_as_str = str(type_as_str)
     hdbg.dassert_isinstance(type_as_str, str)
     # Remove the extra string from:
-    #   <class 'core.dataflow.Zscore'>
+    #   <class 'dataflow.Zscore'>
     prefix = "<class '"
     hdbg.dassert(type_as_str.startswith(prefix), type_as_str)
     suffix = "'>"

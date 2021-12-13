@@ -324,6 +324,7 @@ val1=4, val2=8, incremental=True, num_attempts=1, kwargs={'hello4': 'world8', 'g
         should_succeed = True
         self._run_test(abort_on_error, num_threads, backend, should_succeed)
 
+    @pytest.mark.slow("~5 seconds.")
     def test_parallel_loky4(self) -> None:
         num_threads = "3"
         abort_on_error = False

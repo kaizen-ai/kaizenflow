@@ -58,9 +58,7 @@ def get_connection(
     return connection
 
 
-def get_connection_from_env_vars() -> Tuple[
-    DbConnection, psycop.extensions.cursor
-]:
+def get_connection_from_env_vars() -> DbConnection:
     """
     Create a SQL connection with the information from the environment
     variables.
@@ -86,7 +84,7 @@ def get_connection_from_env_vars() -> Tuple[
 def get_connection_from_string(
     conn_as_str: str,
     autocommit: bool = True,
-) -> Tuple[DbConnection, psycop.extensions.cursor]:
+) -> DbConnection:
     """
     Create a connection from a string.
 
@@ -127,7 +125,7 @@ def wait_db_connection(
     port: int,
     user: str,
     password: str,
-    timeout_in_secs: int = 10,
+    timeout_in_secs: int = 15,
 ) -> None:
     """
     Wait until the database is available.
@@ -152,7 +150,7 @@ def wait_db_connection(
         time.sleep(1)
 
 
-def db_connection_to_tuple(connection: DbConnection) -> NamedTuple:
+def db_connection_to_tuple(connection: DbConnection) -> DbConnectionInfo:
     """
     Get database connection details using connection. Connection details
     include:
@@ -166,15 +164,15 @@ def db_connection_to_tuple(connection: DbConnection) -> NamedTuple:
     :param connection: a database connection
     :return: database connection details
     """
-    info = connection.info
-    det = DbConnectionInfo(
+    info = connection.info  # type: ignore
+    ret = DbConnectionInfo(
         host=info.host,
         dbname=info.dbname,
         port=info.port,
         user=info.user,
         password=info.password,
     )
-    return det
+    return ret
 
 
 # #############################################################################
@@ -200,7 +198,7 @@ def get_engine_version(connection: DbConnection) -> str:
 def get_indexes(connection: DbConnection) -> pd.DataFrame:
     res = []
     tables = get_table_names(connection)
-    cursor = connection.cursor()
+    cursor = connection.cursor()  # type: ignore
     for table in tables:
         query = (
             """SELECT * FROM pg_indexes WHERE tablename = '{table}' """.format(
@@ -230,7 +228,10 @@ def get_indexes(connection: DbConnection) -> pd.DataFrame:
 def disconnect_all_clients(connection: DbConnection) -> None:
     # From https://stackoverflow.com/questions/36502401
     # Not sure this will work in our case, since it might kill our own connection.
-    cmd = f"SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '{dbname}';"
+    query = f"""
+        SELECT pg_terminate_backend(pid)
+            FROM pg_stat_activity
+            WHERE datname = '{dbname}';"""
     connection.cursor().execute(query)
 
 
@@ -450,17 +451,36 @@ def find_tables_common_columns(
     return obj
 
 
-def remove_table(connection: DbConnection, table_name: str) -> None:
+def remove_table(
+    connection: DbConnection, table_name: str, cascade: bool = False
+) -> None:
+    """
+    Remove a table from a database.
+
+    :param connection: database connection
+    :param table_name: table name
+    :param cascade: whether to drop the objects dependent on the table
+    """
     query = f"DROP TABLE IF EXISTS {table_name}"
+    if cascade:
+        query = " ".join([query, "CASCADE"])
     connection.cursor().execute(query)
 
 
-def remove_all_tables(connection: DbConnection) -> None:
+def remove_all_tables(
+    connection: DbConnection, cascade: bool = False
+) -> None:
+    """
+    Remove all the tables from a database.
+
+    :param connection: database connection
+    :param cascade: whether to drop the objects dependent on the tables
+    """
     table_names = get_table_names(connection)
     _LOG.warning("Deleting all the tables: %s", table_names)
     for table_name in table_names:
         _LOG.warning("Deleting %s ...", table_name)
-        remove_table(connection, table_name)
+        remove_table(connection, table_name, cascade)
 
 
 # #############################################################################
@@ -511,6 +531,30 @@ def execute_query_to_df(
 # #############################################################################
 # Insert
 # #############################################################################
+
+
+def csv_to_series(csv_as_txt: str, sep=",") -> pd.Series:
+    """
+    Convert a text with (key, value) separated by `sep` into a `pd.Series`.
+
+    :param csv_as_txt: a string containing csv data
+        E.g.,
+        ```
+        tradedate,2021-11-12
+        targetlistid,1
+        ```
+    :return: series
+    """
+    lines = hprint.dedent(csv_as_txt).split("\n")
+    tuples = [tuple(line.split(sep)) for line in lines]
+    # Remove empty tuples.
+    tuples = [t for t in tuples if t[0] != ""]
+    # Build series.
+    index, data = zip(*tuples)
+    # _LOG.debug("index=%s", index)
+    # _LOG.debug("data=%s", data)
+    srs = pd.Series(data, index=index)
+    return srs
 
 
 def copy_rows_with_copy_from(
