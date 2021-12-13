@@ -177,6 +177,7 @@ def calculate_correlations_for_currency_pairs(df_ccxt, df_cdd, resampling_freq, 
     :param df_cdd: DataFrame with CDD OHLCV data
     :param resampling_freq: set the desired resampling frequency for calculations
     :param compute_returns: if True - compute returns, if False - compare close prices
+    :return: pd.DataFrame with comparable descriptive statistics
     """
     # CDD part.
     ## Reseting DateTime index, so it can be further used in the grouping process.
@@ -281,6 +282,7 @@ def calculate_statistics_for_stamps_cdd(coin_list):
     Load the OHLCV data for each currency pair in CDD universe and compute the corresponding descriptive statistics.
     
     :param coin_list: list of all currency pairs in CDD universe
+    :return: pd.Dataframe with statistics
     """
     # Load data for each currency pair
     result=[]
