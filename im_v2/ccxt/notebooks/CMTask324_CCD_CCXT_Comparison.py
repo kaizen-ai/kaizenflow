@@ -15,22 +15,20 @@
 # %% [markdown]
 # # Imports
 
-# %%
-import pandas as pd
-
-import im_v2.ccxt.data.client.clients as imvcdclcl
-import im_v2.common.data.client.clients as ivcdclcl
-import im_v2.ccxt.universe.universe as imvccunun
-import im_v2.common.data.client.clients as ivcdclcl
-import im.cryptodatadownload.data.load.loader as icdalolo
-import helpers.s3 as hs3
+import logging
 import os
 
-import logging 
+# %%
+import pandas as pd
 
 import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprint
+import helpers.s3 as hs3
+import im.cryptodatadownload.data.load.loader as imcdalolo
+import im_v2.ccxt.data.client.clients as imvcdclcl
+import im_v2.ccxt.universe.universe as imvccunun
+import im_v2.common.data.client.clients as ivcdclcl
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -52,26 +50,32 @@ hprint.config_notebook()
 
 # %%
 root_dir = os.path.join(hs3.get_path(), "data")
-ccxt_client = imvcdclcl.CcxtFileSystemClient(data_type="ohlcv", root_dir=root_dir, aws_profile="am")
-ccxt_universe = imvccunun.get_vendor_universe(version = "v03")
-ccxt_binance_universe = [element for element in ccxt_universe if element.startswith("binance")]
-#multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(class_ = ccxt_client, mode="concat")
-#ccxt_data = multiple_symbols_client.read_data(ccxt_binance_universe) 
+ccxt_client = imvcdclcl.CcxtFileSystemClient(
+    data_type="ohlcv", root_dir=root_dir, aws_profile="am"
+)
+ccxt_universe = imvccunun.get_vendor_universe(version="v03")
+ccxt_binance_universe = [
+    element for element in ccxt_universe if element.startswith("binance")
+]
+# multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(class_ = ccxt_client, mode="concat")
+# ccxt_data = multiple_symbols_client.read_data(ccxt_binance_universe)
 
 # %%
 # need to sort by stamp
-#ccxt_data = ccxt_data.sort_index()
+# ccxt_data = ccxt_data.sort_index()
 
 # %%
-#display(ccxt_data.head(3))
-#display(ccxt_data.shape)
+# display(ccxt_data.head(3))
+# display(ccxt_data.shape)
 
 # %% [markdown]
 # ## CDD
 
 # %% run_control={"marked": false}
 universe_cdd = imvccunun.get_vendor_universe(version="v01", vendor="CDD")
-cdd_binance_universe_initial = [element for element in universe_cdd if element.startswith("binance")]
+cdd_binance_universe_initial = [
+    element for element in universe_cdd if element.startswith("binance")
+]
 
 # %%
 cdd_binance_universe = cdd_binance_universe_initial.copy()
@@ -81,18 +85,18 @@ cdd_binance_universe = cdd_binance_universe_initial.copy()
 cdd_binance_universe.remove("binance::SCU_USDT")
 
 # %%
-#cdd_data=[]
-#cdd_loader = icdalolo.CddLoader(root_dir="s3://alphamatic-data/data", aws_profile="am")
+# cdd_data=[]
+# cdd_loader = imcdalolo.CddLoader(root_dir="s3://alphamatic-data/data", aws_profile="am")
 
-#for i in list(range(len(cdd_binance_universe))):
-#    cdd_data.append(cdd_loader.read_data_from_filesystem(exchange_id="binance", 
-#                                                            currency_pair=ivcdclcl.parse_full_symbol(cdd_binance_universe[i])[1], 
+# for i in list(range(len(cdd_binance_universe))):
+#    cdd_data.append(cdd_loader.read_data_from_filesystem(exchange_id="binance",
+#                                                            currency_pair=ivcdclcl.parse_full_symbol(cdd_binance_universe[i])[1],
 #                                                            data_type="ohlcv"))
-#cdd_data = pd.concat(cdd_data)
+# cdd_data = pd.concat(cdd_data)
 
 # %%
-#display(cdd_data.head(3))
-#display(cdd_data.shape)
+# display(cdd_data.head(3))
+# display(cdd_data.shape)
 
 # %% [markdown]
 # # Compare universes
@@ -129,17 +133,19 @@ display(cdd_and_not_ccxt)
 # We can compare only the intersection of currency pairs for two vendors. In this case it's specified for Binance exchange only.
 
 # %%
-currency_pair_intersection_binance = set(ccxt_binance_universe).intersection(cdd_binance_universe_initial)
+currency_pair_intersection_binance = set(ccxt_binance_universe).intersection(
+    cdd_binance_universe_initial
+)
 
 # %%
-cdd_data=[]
-cdd_loader = icdalolo.CddLoader(root_dir=root_dir, aws_profile="am")
+cdd_data = []
+cdd_loader = imcdalolo.CddLoader(root_dir=root_dir, aws_profile="am")
 
 for full_symbol in currency_pair_intersection_binance:
     _, currency_pair = ivcdclcl.parse_full_symbol(full_symbol)
-    cur_data = cdd_loader.read_data_from_filesystem(exchange_id="binance", 
-                                                    currency_pair = currency_pair,
-                                                    data_type="ohlcv")
+    cur_data = cdd_loader.read_data_from_filesystem(
+        exchange_id="binance", currency_pair=currency_pair, data_type="ohlcv"
+    )
     cdd_data.append(cur_data)
 cdd_binance_df = pd.concat(cdd_data)
 
@@ -148,9 +154,15 @@ display(cdd_binance_df.head(3))
 display(cdd_binance_df.shape)
 
 # %%
-ccxt_client = imvcdclcl.CcxtFileSystemClient(data_type="ohlcv", root_dir=root_dir, aws_profile="am")
-multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(class_ = ccxt_client, mode="concat")
-ccxt_binance_df = multiple_symbols_client.read_data(currency_pair_intersection_binance) 
+ccxt_client = imvcdclcl.CcxtFileSystemClient(
+    data_type="ohlcv", root_dir=root_dir, aws_profile="am"
+)
+multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
+    class_=ccxt_client, mode="concat"
+)
+ccxt_binance_df = multiple_symbols_client.read_data(
+    currency_pair_intersection_binance
+)
 
 # %%
 ccxt_binance_df = ccxt_binance_df.sort_index()
@@ -164,15 +176,19 @@ display(ccxt_binance_df.shape)
 
 # %%
 # CDD names cleaning.
-cdd_binance_df["currency_pair"] = cdd_binance_df["currency_pair"].str.replace("/", "_")
+cdd_binance_df["currency_pair"] = cdd_binance_df["currency_pair"].str.replace(
+    "/", "_"
+)
 
 
 # %%
-def calculate_correlations_for_currency_pairs(df_ccxt, df_cdd, resampling_freq, compute_returns=False):
+def calculate_correlations_for_currency_pairs(
+    df_ccxt, df_cdd, resampling_freq, compute_returns=False
+):
     """
-    Take two dataframes (i.e. CDD and CCXT data), resample it to the given frequency and calculate
-    the correlations for each specific currency pair.
-    
+    Take two dataframes (i.e. CDD and CCXT data), resample it to the given
+    frequency and calculate the correlations for each specific currency pair.
+
     :param df_ccxt: DataFrame with CCXT OHLCV data
     :param df_cdd: DataFrame with CDD OHLCV data
     :param resampling_freq: set the desired resampling frequency for calculations
@@ -182,9 +198,11 @@ def calculate_correlations_for_currency_pairs(df_ccxt, df_cdd, resampling_freq, 
     # CDD part.
     ## Reseting DateTime index, so it can be further used in the grouping process.
     df_cdd.reset_index(inplace=True)
-    df_cdd = df_cdd.rename(columns={"index":"stamp"})
+    df_cdd = df_cdd.rename(columns={"index": "stamp"})
     ## Group by currency pairs and simultaneously resample to the desired frequency.
-    resampler = df_cdd.groupby(["currency_pair", pd.Grouper(key="stamp",freq=resampling_freq)])
+    resampler = df_cdd.groupby(
+        ["currency_pair", pd.Grouper(key="stamp", freq=resampling_freq)]
+    )
     ## Take the last 'close' price from the resampling frequency range.
     close_cdd = resampler.close.last()
     if compute_returns:
@@ -194,9 +212,11 @@ def calculate_correlations_for_currency_pairs(df_ccxt, df_cdd, resampling_freq, 
     # CCXT part
     ## Reseting DateTime index, so it can be further used in the grouping process.
     df_ccxt.reset_index(inplace=True)
-    df_ccxt = df_ccxt.rename(columns={"index":"stamp"})
+    df_ccxt = df_ccxt.rename(columns={"index": "stamp"})
     ## Group by currency pairs and simultaneously resample to the desired frequency.
-    resampler = df_ccxt.groupby(["currency_pair", pd.Grouper(key="stamp",freq=resampling_freq)])
+    resampler = df_ccxt.groupby(
+        ["currency_pair", pd.Grouper(key="stamp", freq=resampling_freq)]
+    )
     ## Take the last 'close' price from the resampling frequency range.
     close_ccxt = resampler.close.last()
     ## Group by currency pairs in order to calculate the percentage returns.
@@ -204,25 +224,25 @@ def calculate_correlations_for_currency_pairs(df_ccxt, df_cdd, resampling_freq, 
         grouper = close_ccxt.groupby("currency_pair")
         close_ccxt = grouper.pct_change()
     # Combine and calculate correlations.
-    combined = pd.concat([close_cdd,close_ccxt],axis=1)
+    combined = pd.concat([close_cdd, close_ccxt], axis=1)
     # Rename the columns.
     if compute_returns:
-        combined.columns=["ccxt_returns","cdd_returns"]
+        combined.columns = ["ccxt_returns", "cdd_returns"]
     else:
-        combined.columns = ["cdd_close","ccxt_close"]
+        combined.columns = ["cdd_close", "ccxt_close"]
     # Group by again to calculte returns correlation for each currency pair.
     corr_matrix = combined.groupby(level=0).corr()
     display(corr_matrix)
     # DataFrame with description statistics
     ## Stats for CDD data.
     descr_cdd = close_cdd.groupby(level=0).describe()
-    descr_cdd=descr_cdd.add_suffix('_cdd')
+    descr_cdd = descr_cdd.add_suffix("_cdd")
     ## Stats for CCXT data.
     descr_ccxt = close_ccxt.groupby(level=0).describe()
-    descr_ccxt=descr_ccxt.add_suffix('_ccxt')
+    descr_ccxt = descr_ccxt.add_suffix("_ccxt")
     ## Collect the results into one dataframe.
-    descr_df = pd.concat([descr_cdd, descr_ccxt],axis=1)
-    descr_df.sort_index(ascending=False, axis=1,inplace=True)
+    descr_df = pd.concat([descr_cdd, descr_ccxt], axis=1)
+    descr_df.sort_index(ascending=False, axis=1, inplace=True)
     return descr_df
 
 
@@ -230,24 +250,27 @@ def calculate_correlations_for_currency_pairs(df_ccxt, df_cdd, resampling_freq, 
 # ### 5-min periods
 
 # %%
-returns_corr_5min = calculate_correlations_for_currency_pairs(ccxt_binance_df, cdd_binance_df,"5min",compute_returns=True)
+returns_corr_5min = calculate_correlations_for_currency_pairs(
+    ccxt_binance_df, cdd_binance_df, "5min", compute_returns=True
+)
 returns_corr_5min
 
 # %% [markdown]
 # ### 1-day periods
 
 # %%
-returns_corr_1day = calculate_correlations_for_currency_pairs(ccxt_binance_df, 
-                                                              cdd_binance_df,
-                                                              "1D",
-                                                              compute_returns=True)
+returns_corr_1day = calculate_correlations_for_currency_pairs(
+    ccxt_binance_df, cdd_binance_df, "1D", compute_returns=True
+)
 returns_corr_1day
 
 # %% [markdown]
 # ## Compare close prices
 
 # %%
-close_1day = calculate_correlations_for_currency_pairs(ccxt_binance_df, cdd_binance_df,"1D",compute_returns=False)
+close_1day = calculate_correlations_for_currency_pairs(
+    ccxt_binance_df, cdd_binance_df, "1D", compute_returns=False
+)
 close_1day
 
 # %% [markdown]
@@ -260,55 +283,68 @@ close_1day
 universe_cdd.remove("binance::SCU_USDT")
 
 # Bitfinex
-universe_cdd.remove("bitfinex::BTC_GBR") #doesn't exist
-universe_cdd.remove("bitfinex::DASH_BTC") # NaT in stamps
-universe_cdd.remove("bitfinex::DASH_USD") # NaT in stamps
-universe_cdd.remove("bitfinex::EOS_GBR") #doesn't exist
-universe_cdd.remove("bitfinex::ETH_GBR") #doesn't exist
-universe_cdd.remove("bitfinex::NEO_GBR") #doesn't exist
-universe_cdd.remove("bitfinex::QTUM_USD") # NaT in stamps
-universe_cdd.remove("bitfinex::TRX_GBR") #doesn't exist
-universe_cdd.remove("bitfinex::XLM_GBR") #doesn't exist
+universe_cdd.remove("bitfinex::BTC_GBR")  # doesn't exist
+universe_cdd.remove("bitfinex::DASH_BTC")  # NaT in stamps
+universe_cdd.remove("bitfinex::DASH_USD")  # NaT in stamps
+universe_cdd.remove("bitfinex::EOS_GBR")  # doesn't exist
+universe_cdd.remove("bitfinex::ETH_GBR")  # doesn't exist
+universe_cdd.remove("bitfinex::NEO_GBR")  # doesn't exist
+universe_cdd.remove("bitfinex::QTUM_USD")  # NaT in stamps
+universe_cdd.remove("bitfinex::TRX_GBR")  # doesn't exist
+universe_cdd.remove("bitfinex::XLM_GBR")  # doesn't exist
 
 # ftx has some critical mistakes in the downloading process, so cannot continue analysis with them.
-cdd_ftx_universe = [element for element in universe_cdd if element.startswith("ftx")]
+cdd_ftx_universe = [
+    element for element in universe_cdd if element.startswith("ftx")
+]
 for elem in cdd_ftx_universe:
-    universe_cdd.remove(elem) 
+    universe_cdd.remove(elem)
 
 
 # %%
 def calculate_statistics_for_stamps_cdd(coin_list):
     """
-    Load the OHLCV data for each currency pair in CDD universe and compute the corresponding descriptive statistics.
-    
+    Load the OHLCV data for each currency pair in CDD universe and compute the
+    corresponding descriptive statistics.
+
     :param coin_list: list of all currency pairs in CDD universe
     :return: pd.Dataframe with statistics
     """
     # Load data for each currency pair
-    result=[]
-    cdd_loader = icdalolo.CddLoader(root_dir=root_dir, aws_profile="am")
+    result = []
+    cdd_loader = imcdalolo.CddLoader(root_dir=root_dir, aws_profile="am")
     for i in list(range(len(coin_list))):
-        coin=cdd_loader.read_data_from_filesystem(exchange_id=ivcdclcl.parse_full_symbol(list(coin_list)[i])[0], 
-                                                  currency_pair=ivcdclcl.parse_full_symbol(list(coin_list)[i])[1], 
-                                                  data_type="ohlcv") 
+        coin = cdd_loader.read_data_from_filesystem(
+            exchange_id=ivcdclcl.parse_full_symbol(list(coin_list)[i])[0],
+            currency_pair=ivcdclcl.parse_full_symbol(list(coin_list)[i])[1],
+            data_type="ohlcv",
+        )
         # Reseting DateTime index, so it can be further used in the calculations.
         coin.reset_index(inplace=True)
-        coin = coin.rename(columns={"index":"stamp"})
+        coin = coin.rename(columns={"index": "stamp"})
         # The value of the step between two data points
         stamp_steps = pd.Series(coin["stamp"].diff().value_counts().index)
         # Start-end date
-        max_date=pd.Series(coin["stamp"].describe(datetime_is_numeric=True).loc["max"])
-        min_date=pd.Series(coin["stamp"].describe(datetime_is_numeric=True).loc["min"])
+        max_date = pd.Series(
+            coin["stamp"].describe(datetime_is_numeric=True).loc["max"]
+        )
+        min_date = pd.Series(
+            coin["stamp"].describe(datetime_is_numeric=True).loc["min"]
+        )
         # Number of timestamps for each coin
-        data_points = pd.Series(coin["stamp"].describe(datetime_is_numeric=True).loc["count"])
+        data_points = pd.Series(
+            coin["stamp"].describe(datetime_is_numeric=True).loc["count"]
+        )
         # Attach calculations to the DataFrame
-        stamp_stats=pd.DataFrame()
-        stamp_stats["exchange_id"]=[ivcdclcl.parse_full_symbol(list(coin_list)[i])[0]]
-        stamp_stats["data_points_counts"]=data_points
-        stamp_stats["NaNs_in_Close"]=len(coin[coin["close"].isna()])
+        stamp_stats = pd.DataFrame()
+        stamp_stats["exchange_id"] = [
+            ivcdclcl.parse_full_symbol(list(coin_list)[i])[0]
+        ]
+        stamp_stats["data_points_counts"] = data_points
+        stamp_stats["NaNs_in_Close"] = len(coin[coin["close"].isna()])
         stamp_stats["step_in_stamp"] = stamp_steps
-        stamp_stats["start_date"]=min_date
-        stamp_stats["end_date"]=max_date
+        stamp_stats["start_date"] = min_date
+        stamp_stats["end_date"] = max_date
         stamp_stats.index = [ivcdclcl.parse_full_symbol(list(coin_list)[i])[1]]
         result.append(stamp_stats)
     result = pd.concat(result)
@@ -340,7 +376,25 @@ stats_for_stamps
 # One can see that there are problems with __kucoin__ exchange: the timestamps are obviously wrong and with too short time period.
 
 # %%
-typical_start_date = pd.DataFrame(stats_for_stamps[stats_for_stamps["exchange_id"]=="kucoin"]["start_date"].value_counts()).reset_index()["index"].dt.strftime('%d-%m-%Y').unique()
-typical_end_date = pd.DataFrame(stats_for_stamps[stats_for_stamps["exchange_id"]=="kucoin"]["end_date"].value_counts()).reset_index()["index"].dt.strftime('%d-%m-%Y').unique()
+typical_start_date = (
+    pd.DataFrame(
+        stats_for_stamps[stats_for_stamps["exchange_id"] == "kucoin"][
+            "start_date"
+        ].value_counts()
+    )
+    .reset_index()["index"]
+    .dt.strftime("%d-%m-%Y")
+    .unique()
+)
+typical_end_date = (
+    pd.DataFrame(
+        stats_for_stamps[stats_for_stamps["exchange_id"] == "kucoin"][
+            "end_date"
+        ].value_counts()
+    )
+    .reset_index()["index"]
+    .dt.strftime("%d-%m-%Y")
+    .unique()
+)
 print("Typical Start Date for Kucoin:", typical_start_date)
 print("Typical End Date for Kucoin:", typical_end_date)
