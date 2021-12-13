@@ -4,53 +4,19 @@ import pytest
 
 import helpers.git as hgit
 import helpers.io_ as hio
-import helpers.sql as hsql
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
 import im.ccxt.db.utils as imccdbuti
+import im_v2.common.db.utils as imcodbuti
 
 
-# TODO(Nikola): Expose `TestImDbHelper` from im_v2/common/db/utils.py instead of `setUp()` and `tearDown()` methods.
-class TestExtractDataFromDb1(hunitest.TestCase):
+class TestExtractDataFromDb1(imcodbuti.TestImDbHelper):
     def setUp(self) -> None:
-        """
-        Initialize the test database inside test container.
-        """
         super().setUp()
-        self.docker_compose_file_path = os.path.join(
-            hgit.get_amp_abs_path(), "im_v2/devops/compose/docker-compose.yml"
-        )
-        cmd = (
-            "sudo docker-compose "
-            f"--file {self.docker_compose_file_path} "
-            "up -d im_postgres_local"
-        )
-        hsysinte.system(cmd, suppress_output=False)
-        host = "localhost"
-        dbname = "im_postgres_db_local"
-        port = 5432
-        user = "aljsdalsd"
-        password = "alsdkqoen"
-        # TODO(Nikola): Remove eventually.
-        os.environ["POSTGRES_HOST"] = host
-        os.environ["POSTGRES_DB"] = dbname
-        os.environ["POSTGRES_PORT"] = str(port)
-        os.environ["POSTGRES_USER"] = user
-        os.environ["POSTGRES_PASSWORD"] = password
-        hsql.wait_db_connection(host, dbname, port, user, password)
-        self.connection = hsql.get_connection(
-            host,
-            dbname,
-            port,
-            user,
-            password,
-            autocommit=True,
-        )
         # TODO(Nikola): linter is complaining about cursor and create database?
-        hsql.create_database(self.connection, "test_db", overwrite=True)
         ccxt_ohlcv_table_query = imccdbuti.get_ccxt_ohlcv_create_table_query()
         ccxt_ohlcv_insert_query = """
-        INSERT INTO public.ccxt_ohlcv
+        INSERT INTO ccxt_ohlcv
         VALUES
             (66, 1637690340000, 1.04549, 1.04549, 1.04527, 1.04527,
             5898.0427797325265, 'XRP_USDT', 'gateio', '2021-11-23 18:03:54.318763'),
@@ -62,22 +28,12 @@ class TestExtractDataFromDb1(hunitest.TestCase):
             cursor.execute(ccxt_ohlcv_insert_query)
 
     def tearDown(self) -> None:
-        """
-        Bring down the test container.
-        """
-        cmd = (
-            "sudo docker-compose "
-            f"--file {self.docker_compose_file_path} down -v"
-        )
-        self.connection.close()
-        hsysinte.system(cmd, suppress_output=False)
-        # TODO(Nikola): Remove eventually.
-        os.environ.pop("POSTGRES_HOST")
-        os.environ.pop("POSTGRES_DB")
-        os.environ.pop("POSTGRES_PORT")
-        os.environ.pop("POSTGRES_USER")
-        os.environ.pop("POSTGRES_PASSWORD")
         super().tearDown()
+        ccxt_ohlcv_drop_query = """
+        DROP TABLE IF EXISTS ccxt_ohlcv;
+        """
+        with self.connection.cursor() as cursor:
+            cursor.execute(ccxt_ohlcv_drop_query)
 
     @pytest.mark.slow
     def test_extract_data_from_db(self) -> None:
