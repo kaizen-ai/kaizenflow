@@ -168,19 +168,25 @@ def drop_duplicates(
     return data_no_dups
 
 
-def reindex_on_unix_epoch(df: pd.DataFrame, in_col_name: str) -> pd.DataFrame:
+def reindex_on_unix_epoch(
+    df: pd.DataFrame, in_col_name: str, unit: str = "s"
+) -> pd.DataFrame:
     """
     Transform the df so that `start_time` is converted into a datetime index.
+    `start_time` contains an Unix epoch (e.g., 1638194400) and it's converted
+    into a UTC time.
 
-    `start_time` contains an Unix epoch (e.g., 1638194400) and it's
-    converted into a UTC time.
+    :param df: pandas dataframe
+    :param in_col_name: column containing unix epoch
+    :param unit: unit if epoch is not stored in seconds
+    :return:
     """
     # Convert.
     temp_col_name = in_col_name + "_tmp"
     hdbg.dassert_in(in_col_name, df.columns)
     hdbg.dassert_not_in(temp_col_name, df.columns)
     # Save.
-    df[temp_col_name] = pd.to_datetime(df[in_col_name], unit="s", utc=True)
+    df[temp_col_name] = pd.to_datetime(df[in_col_name], unit=unit, utc=True)
     df.set_index(temp_col_name, inplace=True, drop=True)
     df.index.name = None
     return df
@@ -190,9 +196,9 @@ def get_df_signature(df: pd.DataFrame, num_rows: int = 3) -> str:
     """
     Compute a simple signature of a dataframe in string format.
 
-    The signature contains metadata about dataframe size and certain amount of
-    rows from start and end of a dataframe.
-    It is used for testing purposes.
+    The signature contains metadata about dataframe size and certain
+    amount of rows from start and end of a dataframe. It is used for
+    testing purposes.
     """
     hdbg.dassert_isinstance(df, pd.DataFrame)
     txt: List[str] = []

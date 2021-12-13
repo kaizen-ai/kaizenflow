@@ -3,7 +3,6 @@ import os
 import pytest
 
 import helpers.git as hgit
-import helpers.hparquet as hparque
 import helpers.io_ as hio
 import helpers.sql as hsql
 import helpers.system_interaction as hsysinte
@@ -80,43 +79,35 @@ class TestExtractDataFromDb1(hunitest.TestCase):
         os.environ.pop("POSTGRES_PASSWORD")
         super().tearDown()
 
-    # TODO(Nikola): Revisit. It is slow test.
-    @pytest.mark.skip
+    @pytest.mark.slow
     def test_extract_data_from_db(self) -> None:
-
         test_dir = self.get_scratch_space()
-        daily_pq_path = os.path.join(test_dir, "by_date")
-        hio.create_dir(daily_pq_path, False)
+        dst_dir = os.path.join(test_dir, "by_date")
+        hio.create_dir(dst_dir, False)
 
-        file_path = "im_v2/common/data/transform/extract_data_from_db.py"
-        cmd = (
-            f"python {file_path}"
-            f" --start_date 2021-11-23"
-            f" --end_date 2021-11-25"
-            f" --daily_pq_path {daily_pq_path}"
+        file_path = os.path.join(
+            hgit.get_amp_abs_path(),
+            "im_v2/common/data/transform/extract_data_from_db.py",
         )
-        include_file_content = False
-        daily_pq_signature_before = hunitest.get_dir_signature(
-            daily_pq_path, include_file_content
-        )
-        self.check_string(
-            daily_pq_signature_before, tag="daily_pq_signature_before"
+        cmd = []
+        cmd.append(file_path)
+        cmd.append("--start_date 2021-11-23")
+        cmd.append("--end_date 2021-11-25")
+        cmd.append(f"--dst_dir {dst_dir}")
+        cmd = " ".join(cmd)
+        include_file_content = True
+        daily_signature_before = hunitest.get_dir_signature(
+            dst_dir, include_file_content
         )
         hsysinte.system(cmd)
-
-        # Check directory structure.
-        daily_pq_signature_after = hunitest.get_dir_signature(
-            daily_pq_path, include_file_content
+        # Check directory structure with file contents.
+        act = []
+        act.append("# before=")
+        act.append(daily_signature_before)
+        daily_signature_after = hunitest.get_dir_signature(
+            dst_dir, include_file_content
         )
-        self.check_string(
-            daily_pq_signature_after, tag="daily_pq_signature_after"
-        )
-
-        # Check parquet files content.
-        for signature in daily_pq_signature_after.split("\n"):
-            if signature.endswith(".parquet") or signature.endswith(".pq"):
-                df = hparque.from_parquet(signature)
-                df_signature = hunitest.get_df_signature(df, 1)
-                self.check_string(
-                    df_signature, tag=signature.split("tmp.scratch/")[-1]
-                )
+        act.append("# after=")
+        act.append(daily_signature_after)
+        act = "\n".join(act)
+        self.check_string(act)
