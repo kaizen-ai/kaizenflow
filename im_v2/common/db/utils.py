@@ -12,6 +12,7 @@ import psycopg2 as psycop
 
 import helpers.hsql_test as hsqltest
 import helpers.sql as hsql
+import im_v2.im_lib_tasks as imlib
 import im.ccxt.db.utils as imccdbuti
 import im.ib.sql_writer as imibsqwri
 import im.kibot.sql_writer as imkisqwri
@@ -123,11 +124,12 @@ class TestImDbHelper(hsqltest.TestDbHelper):
     def _get_compose_file() -> str:
         return "im_v2/devops/compose/docker-compose.yml"
 
-    # TODO(Dan): Deprecate after #585.
-    @staticmethod
-    def _get_db_name() -> str:
-        return "im_postgres_db_local"
-
     @staticmethod
     def _get_service_name() -> str:
         return "im_postgres_local"
+
+    @staticmethod
+    def _get_db_config_path() -> str:
+        # `Local` stage is used for testing.
+        config_path = imlib.get_db_config_file_path("local")
+        return config_path

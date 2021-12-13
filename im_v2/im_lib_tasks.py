@@ -7,6 +7,7 @@ import im_v2.im_lib_tasks as imvimlita
 """
 
 import logging
+import os
 
 from invoke import task
 
@@ -14,6 +15,24 @@ import helpers.dbg as hdbg
 import helpers.lib_tasks as hlibtask
 
 _LOG = logging.getLogger(__name__)
+
+
+def get_db_config_file_path(stage: str) -> str:
+    """
+    Get path to a db config. Config contains db connection parameters.
+
+    :param stage: development stage, i.e. `local`, `dev` or `prod`
+    """
+    hdbg.dassert_in(stage, "local dev prod".split())
+    # Add `docker-compose` file path.
+    # TODO(Grisha): use `hgit.get_client_root`.
+    env_dir = "/app/im_v2/devops/env"
+    # Get the file name depending on the stage.
+    env_file_name = f"{stage}.im_db_config.env"
+    # Get file path.
+    env_file_path = os.path.join(env_dir, env_file_name)
+    return env_file_path
+
 
 # #############################################################################
 
@@ -63,7 +82,7 @@ def im_docker_cmd(ctx, cmd):  # type: ignore
 # #############################################################################
 
 
-def _get_docker_up_cmd(detach: bool) -> str:
+def _get_docker_up_cmd(stage: str, detach: bool) -> str:
     """
     Construct the command to bring up the `im` service.
 
@@ -77,10 +96,14 @@ def _get_docker_up_cmd(detach: bool) -> str:
 
     :param detach: run containers in the background
     """
-    cmd = ["docker-compose"]
+    # TODO(Grisha): remove `sudo` it was added for testing.
+    cmd = ["sudo docker-compose"]
     # Add `docker-compose` file path.
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
+    # Get path to config file.
+    config_path = get_db_config_file_path(stage)
+    cmd.append(f"--env-file {config_path}")
     # Add `down` command.
     cmd.append("up")
     if detach:
@@ -93,7 +116,7 @@ def _get_docker_up_cmd(detach: bool) -> str:
 
 
 @task
-def im_docker_up(ctx, detach=False):  # type: ignore
+def im_docker_up(ctx, stage, detach=False):  # type: ignore
     """
     Start im container with Postgres inside.
 
@@ -101,7 +124,7 @@ def im_docker_up(ctx, detach=False):  # type: ignore
     :param detach: run containers in the background
     """
     # Get docker down command.
-    docker_clean_up_cmd = _get_docker_up_cmd(detach)
+    docker_clean_up_cmd = _get_docker_up_cmd(stage, detach)
     # Execute the command.
     hlibtask._run(ctx, docker_clean_up_cmd, pty=True)
 
@@ -123,7 +146,8 @@ def _get_docker_down_cmd(volumes_remove: bool) -> str:
 
     :param volumes_remove: whether to remove attached volumes or not
     """
-    cmd = ["docker-compose"]
+    # TODO(Grisha): remove `sudo` it was added for testing.
+    cmd = ["sudo docker-compose"]
     # Add `docker-compose` file path.
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")

@@ -8,6 +8,8 @@ import abc
 import logging
 import os
 
+import dotenv
+
 import helpers.git as hgit
 import helpers.printing as hprint
 import helpers.sql as hsql
@@ -53,12 +55,13 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         Initialize the test database inside test container.
         """
         _LOG.info("\n%s", hprint.frame("setUpClass"))
-        # TODO(Dan): Read the info from env in #585.
+        cls.db_config = cls._get_db_config_path()
+        connection_parameters = dotenv.dotenv_values(cls.db_config)
         host = "localhost"
-        dbname = cls._get_db_name()
-        port = 5432
-        user = "aljsdalsd"
-        password = "alsdkqoen"
+        dbname = connection_parameters["POSTGRES_DB"]
+        port = connection_parameters["POSTGRES_PORT"]
+        user = connection_parameters["POSTGRES_USER"]
+        password = connection_parameters["POSTGRES_PASSWORD"]
         conn_exists = hsql.check_db_connection(
             host, dbname, port, user, password
         )[0]
@@ -75,6 +78,7 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
             cmd = (
                 "sudo docker-compose "
                 f"--file {cls.docker_compose_file_path} "
+                f"--env-file {cls.db_config} "
                 f"up -d {cls._get_service_name()}"
             )
             hsysinte.system(cmd, suppress_output=False)
@@ -110,17 +114,17 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         Get path to Docker compose file.
         """
 
-    # TODO(Dan): Deprecate after #585.
-    @staticmethod
-    @abc.abstractmethod
-    def _get_db_name() -> str:
-        """
-        Get DB name.
-        """
-
     @staticmethod
     @abc.abstractmethod
     def _get_service_name() -> str:
         """
         Get service name.
         """
+
+    @staticmethod
+    @abc.abstractmethod
+    def _get_db_config_path() -> str:
+        """
+        Get DB config path.
+        """
+
