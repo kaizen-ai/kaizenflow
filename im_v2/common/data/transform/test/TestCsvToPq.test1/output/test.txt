@@ -1,8 +1,7 @@
-original shape=(2, 10)
+original shape=(2, 9)
 Head:
 {
     "0":{
-        "Unnamed: 0":0,
         "timestamp":1638646800000,
         "open":49317.68,
         "high":49346.95,
@@ -14,7 +13,6 @@ Head:
         "exchange_id":"binance"
     },
     "1":{
-        "Unnamed: 0":1,
         "timestamp":1638646860000,
         "open":49330.63,
         "high":49400.98,

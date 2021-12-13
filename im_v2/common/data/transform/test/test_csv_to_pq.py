@@ -74,7 +74,7 @@ class TestCsvToPq(hunitest.TestCase):
             'exchange_id':["binance","binance"]
         }
         df = pd.DataFrame(data=d)
-        df.to_csv(os.path.join(csv_dir_path, "test.csv"))
+        df.to_csv(os.path.join(csv_dir_path, "test.csv"), index=False)
         df2 = pd.DataFrame(data=d2)
-        df2.to_parquet(os.path.join(pq_dir_path, "test.pq"))
+        df2.to_parquet(os.path.join(pq_dir_path, "test.pq"), index=False)
         return csv_dir_path, pq_dir_path

@@ -60,8 +60,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hdbg.dassert_ne(len(csv_files), 0,  "No .csv files inside '%s'", args.src_dir)
     pq_filenames = []
     for fn in os.listdir(args.dst_dir):
-        filename = f[:-3] if fn.endswith(".pq")
-        filename = f[:-8] if fn.endswith(".parquet")
+        if fn.endswith(".pq"):
+            filename = fn[:-3]
+        elif fn.endswith(".parquet"):
+            filename = fn[:-8]
         pq_filenames.append(filename)
     for f in csv_files:
         filename = f[:-4] if f.endswith(".csv") else f[:-7]  # for .csv.gz
