@@ -199,6 +199,8 @@ class AbstractImClient(abc.ABC):
         )
 
 
+# TODO(gp): We should derive it from AbstractImClient and add all the methods as
+#  raise NotImplementedError. A better name could be `MultipleSymbolsImClient`.
 class MultipleSymbolsClient:
     """
     Object compatible with `AbstractImClient` interface which reads data for

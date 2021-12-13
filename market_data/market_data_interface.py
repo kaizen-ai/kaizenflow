@@ -424,8 +424,7 @@ class AbstractMarketDataInterface(abc.ABC):
         """
         Return data in [start_ts, end_ts) for certain assets.
 
-        This is the only entrypoint to get data from the derived
-        classes.
+        This is the only entrypoint to get data from the derived classes.
         """
         ...
 
@@ -449,6 +448,7 @@ class SqlMarketDataInterface(AbstractMarketDataInterface):
 
     def __init__(
         self,
+        # TODO(gp): Pass *args first.
         # TODO(gp): Pass a connection directly.
         dbname: str,
         host: str,
@@ -668,6 +668,226 @@ class SqlMarketDataInterface(AbstractMarketDataInterface):
         return query
 
 
+def compute_rt_delay(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Add a "delay" column with the difference between `timestamp_db` and
+    `end_time`.
+    """
+
+    def _to_et(srs: pd.Series) -> pd.Series:
+        srs = srs.dt.tz_localize("UTC").dt.tz_convert("America/New_York")
+        return srs
+
+    timestamp_db = _to_et(df["timestamp_db"])
+    end_time = _to_et(df["end_time"])
+    # Compute delay.
+    delay = (timestamp_db - end_time).dt.total_seconds()
+    delay = round(delay, 2)
+    df["delay_in_secs"] = delay
+    return df
+
+
+def describe_rt_delay(df: pd.DataFrame) -> None:
+    """
+    Compute some statistics for the DB delay.
+    """
+    delay = df["delay_in_secs"]
+    print("delays=%s" % hprint.format_list(delay, max_n=5))
+    if False:
+        print(
+            "delays.value_counts=\n%s" % hprint.indent(str(delay.value_counts()))
+        )
+    delay.plot.hist()
+
+
+def describe_rt_df(df: pd.DataFrame, *, include_delay_stats: bool) -> None:
+    """
+    Print some statistics for a df from the RT DB.
+    """
+    print("shape=%s" % str(df.shape))
+    # Is it sorted?
+    end_times = df["end_time"]
+    is_sorted = all(sorted(end_times, reverse=True) == end_times)
+    print("is_sorted=", is_sorted)
+    # Stats about `end_time`.
+    min_end_time = df["end_time"].min()
+    max_end_time = df["end_time"].max()
+    num_mins = df["end_time"].nunique()
+    print(
+        "end_time: num_mins=%s [%s, %s]" % (num_mins, min_end_time, max_end_time)
+    )
+    # Stats about `asset_ids`.
+    # TODO(gp): Pass the name of the column through the interface.
+    print("asset_ids=%s" % hprint.format_list(df["egid"].unique()))
+    # Stats about delay.
+    if include_delay_stats:
+        df = compute_rt_delay(df)
+        describe_rt_delay(df)
+    #
+    display(df.head(3))
+    display(df.tail(3))
+
+# #############################################################################
+# MarketDataInterface
+# #############################################################################
+
+
+class MarketDataInterface(AbstractMarketDataInterface):
+    """
+    Implement an interface using AbstractImClient.
+    """
+
+    def __init__(
+        self,
+        *args: Any,
+        im_client: AbstractImClient,
+    ):
+        """
+        Constructor.
+        """
+        super().__init__(*args)  # type: ignore[arg-type]
+        self._im_client = im_client
+
+    def should_be_online(self, current_time: pd.Timestamp) -> bool:
+        return True
+
+    def _get_data(
+        self,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        ts_col_name: str,
+        asset_ids: Optional[List[int]],
+        left_close: bool,
+        right_close: bool,
+        normalize_data: bool,
+        limit: Optional[int],
+    ) -> pd.DataFrame:
+        _LOG.debug(
+            hprint.to_str(
+                "start_ts end_ts ts_col_name asset_ids left_close right_close normalize_data limit"
+            )
+        )
+        # Filter the data by the current time.
+        # TODO(gp): current_time -> wall_clock_time everywhere
+        current_time = self._get_wall_clock_time()
+        _LOG.debug(hprint.to_str("current_time"))
+        # Handle `left_close` and `right_close`.
+        # TODO(gp): Rename ts -> start_timestamp
+        # TODO(gp): Handle left_close / right_close by adding a ms based on the
+        #  semantic of `im_client._read_data()` which is [a, b) (to confirm).
+        # TODO(gp): Add unit tests.
+        # start_ts = start_ts
+        # end_ts = end_ts
+        # Handle `ids`
+        full_symbols = asset_ids
+        df_tmp = self._im_client.read_data(full_symbols, start_ts, end_ts)
+        # Handle `columns`.
+        if self._columns is not None:
+            hdbg.dassert_is_subset(self._columns, df_tmp.columns)
+            df_tmp = df_tmp[self._columns]
+        # Handle `limit`.
+        if limit:
+            hdbg.dassert_lte(1, limit)
+            df_tmp = df_tmp.head(limit)
+        # Normalize data.
+        if normalize_data:
+            df_tmp = self.process_data(df_tmp)
+        _LOG.debug("-> df_tmp=\n%s", hprint.dataframe_to_str(df_tmp))
+        return df_tmp
+
+    def _get_last_end_time(self) -> Optional[pd.Timestamp]:
+        # We need to find the last timestamp before the current time. We use
+        # `last_week` but could also use all the data since we don't call the
+        # DB.
+        period = "last_week"
+        df = self.get_data(period)
+        _LOG.debug(hprint.df_to_short_str("after get_data", df))
+        if df.empty:
+            ret = None
+        else:
+            ret = df.index.max()
+        return ret
+
+
+# #############################################################################
+# Utils.
+# #############################################################################
+
+
+# TODO(gp): @Grisha. This should go in SqlMarketDataInterface.
+def _to_sql_datetime_string(dt: pd.Timestamp) -> str:
+    """
+    Convert a timestamp into an SQL string to query the DB.
+    """
+    hdateti.dassert_has_tz(dt)
+    # Convert to UTC, if needed.
+    if dt.tzinfo != hdateti.get_UTC_tz().zone:
+        dt = dt.tz_convert(hdateti.get_UTC_tz())
+    ret: str = dt.strftime("%Y-%m-%d %H:%M:%S")
+    return ret
+
+
+# TODO(gp): @Grisha. This should go in AbstractMarketDataInterface.
+def _process_period(
+    period: str, current_time: pd.Timestamp
+) -> Optional[pd.Timestamp]:
+    """
+    Return the start time corresponding to getting the desired `period` of
+    time.
+
+    E.g., if the df looks like:
+    ```
+       start_datetime           last_price    id
+                 end_datetime
+                          timestamp_db
+    0  09:30     09:31    09:31  -0.125460  1000
+    1  09:31     09:32    09:32   0.325254  1000
+    2  09:32     09:33    09:33   0.557248  1000
+    3  09:33     09:34    09:34   0.655907  1000
+    4  09:34     09:35    09:35   0.311925  1000
+    ```
+    and `current_time=09:34` the last minute should be
+    ```
+       start_datetime           last_price    id
+                 end_datetime
+                          timestamp_db
+    4  09:34     09:35    09:35   0.311925  1000
+    ```
+
+    :param period: what period the df to extract (e.g., `last_1mins`, ...,
+        `last_10mins`)
+    :return:
+    """
+    _LOG.debug(hprint.to_str("period current_time"))
+    # Period of time.
+    if period == "last_day":
+        # Get the data for the last day.
+        last_start_time = current_time.replace(hour=0, minute=0, second=0)
+    elif period == "last_week":
+        # Get the data for the last day.
+        last_start_time = current_time.replace(
+            hour=0, minute=0, second=0
+        ) - pd.Timedelta(days=16)
+    elif period in ("last_10mins", "last_5mins", "last_1min"):
+        # Get the data for the last N minutes.
+        if period == "last_10mins":
+            mins = 10
+        elif period == "last_5mins":
+            mins = 5
+        elif period == "last_1min":
+            mins = 1
+        else:
+            raise ValueError("Invalid period='%s'" % period)
+        # We condition on `start_time` since it's an index.
+        last_start_time = current_time - pd.Timedelta(minutes=mins)
+    elif period == "all":
+        last_start_time = None
+    else:
+        raise ValueError("Invalid period='%s'" % period)
+    _LOG.debug("last_start_time=%s", last_start_time)
+    return last_start_time
+
+
 # #############################################################################
 # ReplayedTimeMarketDataInterface
 # #############################################################################
@@ -683,13 +903,13 @@ class ReplayedTimeMarketDataInterface(AbstractMarketDataInterface):
     """
 
     def __init__(
-        self,
-        df: pd.DataFrame,
-        knowledge_datetime_col_name: str,
-        delay_in_secs: int,
-        # Params from `AbstractMarketDataInterface`.
-        *args: List[Any],
-        **kwargs: Dict[str, Any],
+            self,
+            df: pd.DataFrame,
+            knowledge_datetime_col_name: str,
+            delay_in_secs: int,
+            # Params from `AbstractMarketDataInterface`.
+            *args: List[Any],
+            **kwargs: Dict[str, Any],
     ):
         """
         Constructor.
@@ -730,15 +950,15 @@ class ReplayedTimeMarketDataInterface(AbstractMarketDataInterface):
         return df
 
     def _get_data(
-        self,
-        start_ts: pd.Timestamp,
-        end_ts: pd.Timestamp,
-        ts_col_name: str,
-        asset_ids: Optional[List[int]],
-        left_close: bool,
-        right_close: bool,
-        normalize_data: bool,
-        limit: Optional[int],
+            self,
+            start_ts: pd.Timestamp,
+            end_ts: pd.Timestamp,
+            ts_col_name: str,
+            asset_ids: Optional[List[int]],
+            left_close: bool,
+            right_close: bool,
+            normalize_data: bool,
+            limit: Optional[int],
     ) -> pd.DataFrame:
         _LOG.debug(
             hprint.to_str(
@@ -814,90 +1034,12 @@ class ReplayedTimeMarketDataInterface(AbstractMarketDataInterface):
 
 
 # #############################################################################
-# Utils.
-# #############################################################################
-
-
-# TODO(gp): These should be methods of AbstractMarketDataInterface.
-def _to_sql_datetime_string(dt: pd.Timestamp) -> str:
-    """
-    Convert a timestamp into an SQL string to query the DB.
-    """
-    hdateti.dassert_has_tz(dt)
-    # Convert to UTC, if needed.
-    if dt.tzinfo != hdateti.get_UTC_tz().zone:
-        dt = dt.tz_convert(hdateti.get_UTC_tz())
-    ret: str = dt.strftime("%Y-%m-%d %H:%M:%S")
-    return ret
-
-
-def _process_period(
-    period: str, current_time: pd.Timestamp
-) -> Optional[pd.Timestamp]:
-    """
-    Return the start time corresponding to getting the desired `period` of
-    time.
-
-    E.g., if the df looks like:
-    ```
-       start_datetime           last_price    id
-                 end_datetime
-                          timestamp_db
-    0  09:30     09:31    09:31  -0.125460  1000
-    1  09:31     09:32    09:32   0.325254  1000
-    2  09:32     09:33    09:33   0.557248  1000
-    3  09:33     09:34    09:34   0.655907  1000
-    4  09:34     09:35    09:35   0.311925  1000
-    ```
-    and `current_time=09:34` the last minute should be
-    ```
-       start_datetime           last_price    id
-                 end_datetime
-                          timestamp_db
-    4  09:34     09:35    09:35   0.311925  1000
-    ```
-
-    :param period: what period the df to extract (e.g., `last_1mins`, ...,
-        `last_10mins`)
-    :return:
-    """
-    _LOG.debug(hprint.to_str("period current_time"))
-    # Period of time.
-    if period == "last_day":
-        # Get the data for the last day.
-        last_start_time = current_time.replace(hour=0, minute=0, second=0)
-    elif period == "last_week":
-        # Get the data for the last day.
-        last_start_time = current_time.replace(
-            hour=0, minute=0, second=0
-        ) - pd.Timedelta(days=16)
-    elif period in ("last_10mins", "last_5mins", "last_1min"):
-        # Get the data for the last N minutes.
-        if period == "last_10mins":
-            mins = 10
-        elif period == "last_5mins":
-            mins = 5
-        elif period == "last_1min":
-            mins = 1
-        else:
-            raise ValueError("Invalid period='%s'" % period)
-        # We condition on `start_time` since it's an index.
-        last_start_time = current_time - pd.Timedelta(minutes=mins)
-    elif period == "all":
-        last_start_time = None
-    else:
-        raise ValueError("Invalid period='%s'" % period)
-    _LOG.debug("last_start_time=%s", last_start_time)
-    return last_start_time
-
-
-# #############################################################################
 # Serialize / deserialize example of DB.
 # #############################################################################
 
 
 def save_raw_data(
-    rtdbi: AbstractMarketDataInterface,
+    market_data_interface: AbstractMarketDataInterface,
     file_name: str,
     period: str,
     limit: int,
@@ -908,7 +1050,7 @@ def save_raw_data(
     normalize_data = False
     # Around 3 days.
     _LOG.info("Querying DB ...")
-    rt_df = rtdbi.get_data(period, normalize_data=normalize_data, limit=limit)
+    rt_df = market_data_interface.get_data(period, normalize_data=normalize_data, limit=limit)
     _LOG.info("Querying DB done")
     print("rt_df.shape=%s" % str(rt_df.shape))
     print("# head")
@@ -954,68 +1096,3 @@ def read_data_from_file(
     kwargs.update(kwargs_tmp)  # type: ignore[arg-type]
     df = cpanh.read_csv(file_name, **kwargs)
     return df
-
-
-# #############################################################################
-# Stats about DB delay
-# #############################################################################
-
-
-def compute_rt_delay(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Add a "delay" column with the difference between `timestamp_db` and
-    `end_time`.
-    """
-
-    def _to_et(srs: pd.Series) -> pd.Series:
-        srs = srs.dt.tz_localize("UTC").dt.tz_convert("America/New_York")
-        return srs
-
-    timestamp_db = _to_et(df["timestamp_db"])
-    end_time = _to_et(df["end_time"])
-    # Compute delay.
-    delay = (timestamp_db - end_time).dt.total_seconds()
-    delay = round(delay, 2)
-    df["delay_in_secs"] = delay
-    return df
-
-
-def describe_rt_delay(df: pd.DataFrame) -> None:
-    """
-    Compute some statistics for the DB delay.
-    """
-    delay = df["delay_in_secs"]
-    print("delays=%s" % hprint.format_list(delay, max_n=5))
-    if False:
-        print(
-            "delays.value_counts=\n%s" % hprint.indent(str(delay.value_counts()))
-        )
-    delay.plot.hist()
-
-
-def describe_rt_df(df: pd.DataFrame, *, include_delay_stats: bool) -> None:
-    """
-    Print some statistics for a df from the RT DB.
-    """
-    print("shape=%s" % str(df.shape))
-    # Is it sorted?
-    end_times = df["end_time"]
-    is_sorted = all(sorted(end_times, reverse=True) == end_times)
-    print("is_sorted=", is_sorted)
-    # Stats about `end_time`.
-    min_end_time = df["end_time"].min()
-    max_end_time = df["end_time"].max()
-    num_mins = df["end_time"].nunique()
-    print(
-        "end_time: num_mins=%s [%s, %s]" % (num_mins, min_end_time, max_end_time)
-    )
-    # Stats about `asset_ids`.
-    # TODO(gp): Pass the name of the column through the interface.
-    print("asset_ids=%s" % hprint.format_list(df["egid"].unique()))
-    # Stats about delay.
-    if include_delay_stats:
-        df = compute_rt_delay(df)
-        describe_rt_delay(df)
-    #
-    display(df.head(3))
-    display(df.tail(3))
