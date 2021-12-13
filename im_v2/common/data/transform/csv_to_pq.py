@@ -46,7 +46,7 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--incremental",
         action="store_true",
-        help="Skip files that have already being converted",
+        help="Skip files that have already been converted",
     )
     hparser.add_verbosity_arg(parser)
     return parser
