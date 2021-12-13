@@ -42,6 +42,11 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         help="Destination dir where to save converted PQ files",
     )
+    parser.add_argument(
+        "--incremental",
+        action="store_true",
+        help="Skip files that have already being downloaded",
+    )
     hparser.add_verbosity_arg(parser)
     return parser
 
@@ -49,13 +54,23 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    hio.create_dir(args.dst_dir, False)
+    hio.create_dir(args.dst_dir, args.incremental)
     ext = (".csv", ".csv.gz")
     csv_files = [fn for fn in os.listdir(args.src_dir) if fn.endswith(ext)]
     hdbg.dassert_ne(len(csv_files), 0,  "No .csv files inside '%s'", args.src_dir)
+    pq_filenames = []
+    for fn in os.listdir(args.dst_dir):
+        if fn.endswith(".pq"):
+            filename = fn[:-3]
+        elif fn.endswith(".parquet"):
+            filename = fn[:-8]
+        pq_filenames.append(filename)
     for f in csv_files:
-        csv_full_path = os.path.join(args.src_dir, f)
         filename = f[:-4] if f.endswith(".csv") else f[:-7]  # for .csv.gz
+        if args.incremental:
+            if filename in pq_filenames:
+                continue
+        csv_full_path = os.path.join(args.src_dir, f)
         pq_full_path = os.path.join(args.dst_dir, f"{filename}.pq")
         hcsv.convert_csv_to_pq(csv_full_path, pq_full_path)
 
