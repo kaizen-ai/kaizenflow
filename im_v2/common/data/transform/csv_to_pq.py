@@ -15,6 +15,7 @@ import im_v2.common.data.transform.csv_to_pq as imvcdtctpq
 import argparse
 import logging
 import os
+from typing import List
 
 import helpers.csv_helpers as hcsv
 import helpers.dbg as hdbg
@@ -51,18 +52,15 @@ def _parse() -> argparse.ArgumentParser:
     return parser
 
 
-def _main(parser: argparse.ArgumentParser) -> None:
-    args = parser.parse_args()
-    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    hio.create_dir(args.dst_dir, args.incremental)
+def _source_csv_files(src_dir: str, dst_dir: str, incremental: bool) -> List[str]:
     ext = (".csv", ".csv.gz")
     # Find all the CSV files to convert.
-    csv_files = [fn for fn in os.listdir(args.src_dir) if fn.endswith(ext)]
-    hdbg.dassert_ne(len(csv_files), 0, "No .csv files inside '%s'", args.src_dir)
-    if args.incremental:
+    csv_files = [fn for fn in os.listdir(src_dir) if fn.endswith(ext)]
+    hdbg.dassert_ne(len(csv_files), 0, "No .csv files inside '%s'", src_dir)
+    if incremental:
         # Find pq files that already converted.
         pq_filenames = []
-        for f in os.listdir(args.dst_dir):
+        for f in os.listdir(dst_dir):
             if f.endswith(".pq"):
                 pq_filenames.append(f[:-3])
             elif f.endswith(".parquet"):
@@ -79,6 +77,14 @@ def _main(parser: argparse.ArgumentParser) -> None:
                     f,
                     f,
                 )
+    return csv_files
+
+
+def _main(parser: argparse.ArgumentParser) -> None:
+    args = parser.parse_args()
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hio.create_dir(args.dst_dir, args.incremental)
+    csv_files = _source_csv_files(args.src_dir, args.dst_dir, args.incremental)
     # Transform csv files.
     for f in csv_files:
         filename = f[:-4] if f.endswith(".csv") else f[:-7]  # for .csv.gz
