@@ -180,7 +180,7 @@ def calculate_correlations_for_currency_pairs(df_ccxt, df_cdd, resampling_freq, 
     """
     # CDD part.
     ## Reseting DateTime index, so it can be further used in the grouping process.
-    df_cdd = df_cdd.reset_index()
+    df_cdd.reset_index(inplace=True)
     df_cdd = df_cdd.rename(columns={"index":"stamp"})
     ## Group by currency pairs and simultaneously resample to the desired frequency.
     resampler = df_cdd.groupby(["currency_pair", pd.Grouper(key="stamp",freq=resampling_freq)])
@@ -192,7 +192,7 @@ def calculate_correlations_for_currency_pairs(df_ccxt, df_cdd, resampling_freq, 
         close_cdd = grouper.pct_change()
     # CCXT part
     ## Reseting DateTime index, so it can be further used in the grouping process.
-    df_ccxt = df_ccxt.reset_index()
+    df_ccxt.reset_index(inplace=True)
     df_ccxt = df_ccxt.rename(columns={"index":"stamp"})
     ## Group by currency pairs and simultaneously resample to the desired frequency.
     resampler = df_ccxt.groupby(["currency_pair", pd.Grouper(key="stamp",freq=resampling_freq)])
@@ -236,18 +236,21 @@ returns_corr_5min
 # ### 1-day periods
 
 # %%
-returns_corr_1day = calculate_correlations_for_currency_pairs(ccxt_binance_df, cdd_binance_df,"1D",compute_returns=True)
+returns_corr_1day = calculate_correlations_for_currency_pairs(ccxt_binance_df, 
+                                                              cdd_binance_df,
+                                                              "1D",
+                                                              compute_returns=True)
 returns_corr_1day
 
 # %% [markdown]
 # ## Compare close prices
 
 # %%
-close_1day = calculate_correlations_of_returns(ccxt_binance_df, cdd_binance_df,"1D",compute_returns=False)
+close_1day = calculate_correlations_for_currency_pairs(ccxt_binance_df, cdd_binance_df,"1D",compute_returns=False)
 close_1day
 
 # %% [markdown]
-# # Statistical properties of a unique coin
+# # Statistical properties of a unique coin in CDD
 
 # %%
 # Clearing CDD currency pairs that are incorrect.
@@ -274,19 +277,30 @@ for elem in cdd_ftx_universe:
 
 # %%
 def calculate_statistics_for_stamps_cdd(coin_list):
+    """
+    Load the OHLCV data for each currency pair in CDD universe and compute the corresponding descriptive statistics.
+    
+    :param coin_list: list of all currency pairs in CDD universe
+    """
+    # Load data for each currency pair
     result=[]
     cdd_loader = icdalolo.CddLoader(root_dir=root_dir, aws_profile="am")
     for i in list(range(len(coin_list))):
         coin=cdd_loader.read_data_from_filesystem(exchange_id=ivcdclcl.parse_full_symbol(list(coin_list)[i])[0], 
                                                   currency_pair=ivcdclcl.parse_full_symbol(list(coin_list)[i])[1], 
                                                   data_type="ohlcv") 
+        # Reseting DateTime index, so it can be further used in the calculations.
         coin.reset_index(inplace=True)
         coin = coin.rename(columns={"index":"stamp"})
-        stamp_stats=pd.DataFrame()
+        # The value of the step between two data points
         stamp_steps = pd.Series(coin["stamp"].diff().value_counts().index)
+        # Start-end date
         max_date=pd.Series(coin["stamp"].describe(datetime_is_numeric=True).loc["max"])
         min_date=pd.Series(coin["stamp"].describe(datetime_is_numeric=True).loc["min"])
+        # Number of timestamps for each coin
         data_points = pd.Series(coin["stamp"].describe(datetime_is_numeric=True).loc["count"])
+        # Attach calculations to the DataFrame
+        stamp_stats=pd.DataFrame()
         stamp_stats["exchange_id"]=[ivcdclcl.parse_full_symbol(list(coin_list)[i])[0]]
         stamp_stats["data_points_counts"]=data_points
         stamp_stats["NaNs_in_Close"]=len(coin[coin["close"].isna()])
@@ -303,7 +317,7 @@ def calculate_statistics_for_stamps_cdd(coin_list):
 stats_for_stamps = calculate_statistics_for_stamps_cdd(universe_cdd)
 
 # %% [markdown]
-# Currently there are  descriptive statistics:
+# Currently there are the following descriptive statistics:
 # - __index__ - currency pair
 # - __exchange_id__ - exchange_id
 # - __data_points_counts__ - number of timestamps for each coin
@@ -321,7 +335,7 @@ stats_for_stamps
 # Each coin in CDD has a stamp step of 1 minute.
 
 # %% [markdown]
-# One can see that there are problems with __kucoin__ exchange: the timestamps are obviously wrong and wit too short time period.
+# One can see that there are problems with __kucoin__ exchange: the timestamps are obviously wrong and with too short time period.
 
 # %%
 typical_start_date = pd.DataFrame(stats_for_stamps[stats_for_stamps["exchange_id"]=="kucoin"]["start_date"].value_counts()).reset_index()["index"].dt.strftime('%d-%m-%Y').unique()
