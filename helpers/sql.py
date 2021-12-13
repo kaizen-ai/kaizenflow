@@ -9,8 +9,9 @@ import io
 import logging
 import os
 import time
-from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
+import dotenv
 import pandas as pd
 import psycopg2 as psycop
 import psycopg2.extras as extras
@@ -64,7 +65,6 @@ def get_connection_from_env_vars() -> DbConnection:
     variables.
     """
     # Get values from the environment variables.
-    # TODO(gp): -> POSTGRES_DBNAME
     host = os.environ["POSTGRES_HOST"]
     dbname = os.environ["POSTGRES_DB"]
     port = int(os.environ["POSTGRES_PORT"])
@@ -94,6 +94,23 @@ def get_connection_from_string(
     connection = psycop.connect(conn_as_str)
     if autocommit:
         connection.autocommit = True
+    return connection
+
+
+def get_connection_from_env_file(env_file_path: str) -> DbConnection:
+    """
+    Create a SQL connection from environment file.
+
+    :param env_file_path: path to an environment file that contains db connection parameters
+    """
+    connection_parameters = dotenv.dotenv_values(env_file_path)
+    connection = get_connection(
+        host=connection_parameters["POSTGRES_HOST"],
+        dbname=connection_parameters["POSTGRES_DB"],
+        port=int(connection_parameters["POSTGRES_PORT"]),
+        user=connection_parameters["POSTGRES_USER"],
+        password=connection_parameters["POSTGRES_PASSWORD"],
+    )
     return connection
 
 
