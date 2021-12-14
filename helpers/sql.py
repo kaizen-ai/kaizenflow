@@ -10,7 +10,7 @@ import logging
 import os
 import re
 import time
-from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 import psycopg2 as psycop
@@ -28,12 +28,12 @@ _LOG = logging.getLogger(__name__)
 # Connection
 # #############################################################################
 
-# TODO(gp): mypy doesn't like this. Understand why and / or inline.
+# TODO(gp): mypy doesn't like this. Understand why and / or inline CMTask #756.
 DbConnection = psycop.extensions.connection
 
 
 # Invariant: keep the arguments in the interface in the same order as:
-# host, dbname, port, user, password
+# host, dbname, port, user, password.
 DbConnectionInfo = collections.namedtuple(
     "DbConnectionInfo", ["host", "dbname", "port", "user", "password"]
 )
@@ -56,7 +56,7 @@ def get_connection(
     )
     if autocommit:
         connection.autocommit = True
-    return connection
+    return connection  # type: ignore[no-any-return]
 
 
 def get_connection_from_env_vars() -> DbConnection:
@@ -92,13 +92,13 @@ def get_connection_from_string(
     E.g., `host=localhost dbname=im_db_local port=5432 user=...
     password=...`
     """
-    regex = "host=\w+ dbname=\w+ port=\d+ user=\w+ password=\w+"
+    regex = r"host=\w+ dbname=\w+ port=\d+ user=\w+ password=\w+"
     m = re.match(regex, conn_as_str)
     hdbg.dassert(m, "Invalid connection string: '%s'", conn_as_str)
     connection = psycop.connect(conn_as_str)
     if autocommit:
         connection.autocommit = True
-    return connection
+    return connection  # type: ignore[no-any-return]
 
 
 def check_db_connection(
@@ -232,6 +232,7 @@ def get_indexes(connection: DbConnection) -> pd.DataFrame:
 def disconnect_all_clients(connection: DbConnection) -> None:
     # From https://stackoverflow.com/questions/36502401
     # Not sure this will work in our case, since it might kill our own connection.
+    dbname = connection.info.host
     query = f"""
         SELECT pg_terminate_backend(pid)
             FROM pg_stat_activity
@@ -471,9 +472,7 @@ def remove_table(
     connection.cursor().execute(query)
 
 
-def remove_all_tables(
-    connection: DbConnection, cascade: bool = False
-) -> None:
+def remove_all_tables(connection: DbConnection, cascade: bool = False) -> None:
     """
     Remove all the tables from a database.
 
@@ -537,7 +536,7 @@ def execute_query_to_df(
 # #############################################################################
 
 
-def csv_to_series(csv_as_txt: str, sep=",") -> pd.Series:
+def csv_to_series(csv_as_txt: str, sep: str = ",") -> pd.Series:
     """
     Convert a text with (key, value) separated by `sep` into a `pd.Series`.
 
@@ -547,6 +546,7 @@ def csv_to_series(csv_as_txt: str, sep=",") -> pd.Series:
         tradedate,2021-11-12
         targetlistid,1
         ```
+    :param sep: csv separator, e.g. `,`
     :return: series
     """
     lines = hprint.dedent(csv_as_txt).split("\n")
@@ -684,7 +684,7 @@ def get_num_rows(connection: DbConnection, table_name: str) -> int:
     cursor.execute(query)
     vals = cursor.fetchall()
     hdbg.dassert_eq(len(vals), 1)
-    return vals[0]
+    return vals[0]  # type: ignore[no-any-return]
 
 
 # #############################################################################
