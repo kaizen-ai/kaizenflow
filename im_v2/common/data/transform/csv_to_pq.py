@@ -72,7 +72,7 @@ def _get_csv_to_pq_file_names(
         elif f.endswith(csv_gz_ext):
             filename = f[: -len(csv_gz_ext)]
         else:
-            _LOG.warning("Encountered not CSV file %s", f)
+            _LOG.warning(f"Encountered non CSV file '{f}'")
         pq_path = os.path.join(dst_dir, f"{filename}.parquet")
         # Skip CSV files that do not need to be converted.
         if incremental and os.path.exists(pq_path):
