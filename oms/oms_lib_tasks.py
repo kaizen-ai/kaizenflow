@@ -32,13 +32,12 @@ def get_db_env_path(stage: str) -> str:
     # Get `env` files dir.
     env_dir = "oms/devops/env"
     # Get the file name depending on the stage.
-    env_file_name = f"{stage}.im_db_config.env"
+    env_file_name = f"{stage}.oms_db_config.env"
     # Get file path.
     amp_path = hgit.get_amp_abs_path()
     env_file_path = os.path.join(amp_path, env_dir, env_file_name)
     hdbg.dassert_file_exists(env_file_path)
     return env_file_path
-
 
 
 # TODO(gp): This should be used also from the unit tests?
