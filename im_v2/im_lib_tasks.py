@@ -198,12 +198,12 @@ def _get_create_db_cmd(
 
 # TODO(Dan3): add unit tests for `im_create_db` #547.
 @task
-def im_create_db(
+def im_create_db(  # type: ignore
     ctx,
     dbname,
     overwrite=False,
     credentials="from_env",
-):  # type: ignore
+):
     """
     Create database inside a container attached to the `im app`.
 
@@ -263,11 +263,11 @@ def _get_remove_db_cmd(
 
 # TODO(Dan3): add unit tests for `im_remove_db` #547.
 @task
-def im_remove_db(
+def im_remove_db(  # type: ignore
     ctx,
     dbname,
     credentials="from_env",
-):  # type: ignore
+):
     """
     Remove database inside a container attached to the `im app`.
 

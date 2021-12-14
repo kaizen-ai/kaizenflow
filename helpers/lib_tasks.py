@@ -147,6 +147,7 @@ def _to_single_line_cmd(cmd: Union[str, List[str]]) -> str:
     return cmd
 
 
+# TODO(Grisha): make it public #755.
 def _to_multi_line_cmd(docker_cmd_: List[str]) -> str:
     r"""
     Convert a command encoded as a list of strings into a single command
@@ -192,7 +193,7 @@ def _to_multi_line_cmd(docker_cmd_: List[str]) -> str:
 use_one_line_cmd = False
 
 
-# TODO(Grisha): make it public.
+# TODO(Grisha): make it public #755.
 def _run(ctx: Any, cmd: str, *args: Any, **ctx_run_kwargs: Any) -> int:
     _LOG.debug("cmd=%s", cmd)
     if use_one_line_cmd:
