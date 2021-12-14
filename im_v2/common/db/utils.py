@@ -12,11 +12,12 @@ import psycopg2 as psycop
 
 import helpers.hsql_test as hsqltest
 import helpers.sql as hsql
-import im_v2.im_lib_tasks as imvimlita
+
 # TODO(Grisha): move to `im_v2`.
 import im.ccxt.db.utils as imccdbuti
 import im.ib.sql_writer as imibsqwri
 import im.kibot.sql_writer as imkisqwri
+import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
 
@@ -136,4 +137,4 @@ class TestImDbHelper(hsqltest.TestDbHelper):
         """
         # Use the `local` stage for testing.
         env_file_path = imvimlita.get_db_env_path("local")
-        return env_file_path
+        return env_file_path  # type: ignore[no-any-return]

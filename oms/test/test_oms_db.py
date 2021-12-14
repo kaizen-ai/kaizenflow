@@ -27,7 +27,7 @@ class TestOmsDbHelper(hsqltest.TestDbHelper):
     @staticmethod
     def _get_service_name() -> str:
         return "oms_postgres_local"
-    
+
     @staticmethod
     def _get_db_env_path() -> str:
         """

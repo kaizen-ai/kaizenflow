@@ -54,7 +54,9 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         """
         _LOG.info("\n%s", hprint.frame("setUpClass"))
         # Read the connection parameters from the env file.
-        connection_info = hsql.get_connection_info_from_env_file(cls._get_db_env_path())
+        connection_info = hsql.get_connection_info_from_env_file(
+            cls._get_db_env_path()
+        )
         conn_exists = hsql.check_db_connection(
             host=connection_info.host,
             dbname=connection_info.dbname,
