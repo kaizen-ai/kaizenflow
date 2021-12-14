@@ -15,10 +15,9 @@
 # %% [markdown]
 # # Imports
 
+# %%
 import logging
 import os
-
-# %%
 import pandas as pd
 
 import helpers.dbg as hdbg
@@ -40,87 +39,44 @@ _LOG.info("%s", henv.get_system_signature()[0])
 hprint.config_notebook()
 
 # %% [markdown]
-# # Load the data
-
-# %% [markdown]
-# The code below can be used to load all the existing data from two vendors CDD and CCXT. Current version is specified to Binance only, however, even for one exchange there's too many data to operate, that's why I am skipping this part and allow downloads only for the universes.
+# # Load the data universe
 
 # %% [markdown]
 # ## CCXT
 
 # %%
 root_dir = os.path.join(hs3.get_path(), "data")
-ccxt_client = imvcdclcl.CcxtFileSystemClient(
-    data_type="ohlcv", root_dir=root_dir, aws_profile="am"
-)
 ccxt_universe = imvccunun.get_vendor_universe(version="v03")
-ccxt_binance_universe = [
-    element for element in ccxt_universe if element.startswith("binance")
-]
-# multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(class_ = ccxt_client, mode="concat")
-# ccxt_data = multiple_symbols_client.read_data(ccxt_binance_universe)
-
-# %%
-# need to sort by stamp
-# ccxt_data = ccxt_data.sort_index()
-
-# %%
-# display(ccxt_data.head(3))
-# display(ccxt_data.shape)
 
 # %% [markdown]
 # ## CDD
 
 # %% run_control={"marked": false}
 universe_cdd = imvccunun.get_vendor_universe(version="v01", vendor="CDD")
-cdd_binance_universe_initial = [
-    element for element in universe_cdd if element.startswith("binance")
-]
-
-# %%
-cdd_binance_universe = cdd_binance_universe_initial.copy()
-
-# SCU_USDT has incorrect columns, so can not be downloaded.
-# See CMTask244 - Cannot load CDD - binance - SCU/USDT from s3 for the reference.
-cdd_binance_universe.remove("binance::SCU_USDT")
-
-# %%
-# cdd_data=[]
-# cdd_loader = imcdalolo.CddLoader(root_dir="s3://alphamatic-data/data", aws_profile="am")
-
-# for i in list(range(len(cdd_binance_universe))):
-#    cdd_data.append(cdd_loader.read_data_from_filesystem(exchange_id="binance",
-#                                                            currency_pair=ivcdclcl.parse_full_symbol(cdd_binance_universe[i])[1],
-#                                                            data_type="ohlcv"))
-# cdd_data = pd.concat(cdd_data)
-
-# %%
-# display(cdd_data.head(3))
-# display(cdd_data.shape)
 
 # %% [markdown]
 # # Compare universes
 
 # %%
-_LOG.info("Number of currency pairs in CCXT: %s", len(ccxt_universe))
-_LOG.info("Number of currency pairs in CDD: %s", len(universe_cdd))
+_LOG.info("Number of full symbols in CCXT: %s", len(ccxt_universe))
+_LOG.info("Number of full symbols in CDD: %s", len(universe_cdd))
 
 # %%
-# Intersection of currency pairs between two vendors.
+# Intersection of full symbols between two vendors.
 currency_pair_intersection = set(ccxt_universe).intersection(universe_cdd)
-_LOG.info("Number of similar currency pairs: %s", len(currency_pair_intersection))
+_LOG.info("Number of similar full symbols: %s", len(currency_pair_intersection))
 display(currency_pair_intersection)
 
 # %%
-# Currency pairs that are included in CCXT but not in CDD.
+# Full symbols that are included in CCXT but not in CDD.
 ccxt_and_not_cdd = set(ccxt_universe).difference(universe_cdd)
-_LOG.info("Number of unique CCXT currency pairs: %s", len(ccxt_and_not_cdd))
+_LOG.info("Number of full symbols that are included in CCXT but not in CDD: %s", len(ccxt_and_not_cdd))
 display(ccxt_and_not_cdd)
 
 # %%
-# Currency pairs that are included in CDD but not in CCXT.
+# Full symbols that are included in CDD but not in CCXT.
 cdd_and_not_ccxt = set(universe_cdd).difference(ccxt_universe)
-_LOG.info("Number of unique CDD currency pairs: %s", len(cdd_and_not_ccxt))
+_LOG.info("Number of full symbols that are included in CDD but not in CCXT: %s", len(cdd_and_not_ccxt))
 display(cdd_and_not_ccxt)
 
 # %% [markdown]
@@ -130,9 +86,23 @@ display(cdd_and_not_ccxt)
 # ## Load the data
 
 # %% [markdown]
-# We can compare only the intersection of currency pairs for two vendors. In this case it's specified for Binance exchange only.
+# The code below can be used to load all the existing data from two vendors CDD and CCXT. Current version is specified to Binance only, however, even for one exchange there's too many data to operate, that's why the output is the intersection of currency pairs between to universe, since one can compare only the intersection of currency pairs for two vendors.
 
 # %%
+# Load Binance-specific universe for CCXT
+ccxt_binance_universe = [
+    element for element in ccxt_universe if element.startswith("binance")
+]
+# Load Binnance-specific universe for CDD
+cdd_binance_universe_initial = [
+    element for element in universe_cdd if element.startswith("binance")
+]
+cdd_binance_universe = cdd_binance_universe_initial.copy()
+# SCU_USDT has incorrect columns, so can not be downloaded.
+# See CMTask244 - Cannot load CDD - binance - SCU/USDT from s3 for the reference.
+cdd_binance_universe.remove("binance::SCU_USDT")
+
+# The intersection of Binance currency pairs from two universes
 currency_pair_intersection_binance = set(ccxt_binance_universe).intersection(
     cdd_binance_universe_initial
 )
@@ -182,49 +152,51 @@ cdd_binance_df["currency_pair"] = cdd_binance_df["currency_pair"].str.replace(
 
 
 # %%
-def calculate_correlations_for_currency_pairs(
-    df_ccxt, df_cdd, resampling_freq, compute_returns=False
-):
+def resample_ohlcv_dataframe(
+    df: pd.DataFrame, 
+    resampling_freq: str
+) -> pd.Series:
     """
-    Take two dataframes (i.e. CDD and CCXT data), resample it to the given
-    frequency and calculate the correlations for each specific currency pair.
+    Transform OHLCV data to the grouped series with resampled frequency and last close prices.
+    
+    :param df: OHLCV data
+    :param resampling_freq: frequency from `pd.date_range()` to resample to
+    :return: grouped and resampled close prices
+    """
+    # Reseting DateTime index, since pd.Grouper can't use index values.
+    df=df.reset_index().rename(columns={"index": "stamp"})
+    # Group by currency pairs and simultaneously resample to the desired frequency.
+    resampler = df.groupby(
+        ["currency_pair", pd.Grouper(key="stamp", freq=resampling_freq)]
+    )
+    # Take the last close value from each resampling period.
+    close_series = resampler.close.last()
+    return close_series
 
-    :param df_ccxt: DataFrame with CCXT OHLCV data
-    :param df_cdd: DataFrame with CDD OHLCV data
-    :param resampling_freq: set the desired resampling frequency for calculations
-    :param compute_returns: if True - compute returns, if False - compare close prices
-    :return: pd.DataFrame with comparable descriptive statistics
+
+# %%
+def calculate_correlations(
+    ccxt_series: pd.Series,
+    cdd_series: pd.Series,
+    compute_returns: bool
+) -> pd.DataFrame:
     """
-    # CDD part.
-    ## Reseting DateTime index, so it can be further used in the grouping process.
-    df_cdd.reset_index(inplace=True)
-    df_cdd = df_cdd.rename(columns={"index": "stamp"})
-    ## Group by currency pairs and simultaneously resample to the desired frequency.
-    resampler = df_cdd.groupby(
-        ["currency_pair", pd.Grouper(key="stamp", freq=resampling_freq)]
-    )
-    ## Take the last 'close' price from the resampling frequency range.
-    close_cdd = resampler.close.last()
+    Take two series with close prices(i.e. CDD and CCXT data) and calculate the correlations 
+    for each specific currency pair.
+    
+    :param ccxt_series: grouped and resampled close prices for CCXT
+    :param cdd_series: grouped and resampled close prices for CDD
+    :param compute_returns: if True - compare returns, if False - compare close prices
+    :return: grouped correlation matrix
+    """
     if compute_returns:
-        ## Group by currency pairs in order to calculate the percentage returns.
-        grouper = close_cdd.groupby("currency_pair")
-        close_cdd = grouper.pct_change()
-    # CCXT part
-    ## Reseting DateTime index, so it can be further used in the grouping process.
-    df_ccxt.reset_index(inplace=True)
-    df_ccxt = df_ccxt.rename(columns={"index": "stamp"})
-    ## Group by currency pairs and simultaneously resample to the desired frequency.
-    resampler = df_ccxt.groupby(
-        ["currency_pair", pd.Grouper(key="stamp", freq=resampling_freq)]
-    )
-    ## Take the last 'close' price from the resampling frequency range.
-    close_ccxt = resampler.close.last()
-    ## Group by currency pairs in order to calculate the percentage returns.
-    if compute_returns:
-        grouper = close_ccxt.groupby("currency_pair")
-        close_ccxt = grouper.pct_change()
+        # Group by currency pairs in order to calculate the percentage returns.
+        grouper_cdd = cdd_series.groupby("currency_pair")
+        cdd_series = grouper_cdd.pct_change()
+        grouper_ccxt = ccxt_series.groupby("currency_pair")
+        ccxt_series = grouper_ccxt.pct_change()
     # Combine and calculate correlations.
-    combined = pd.concat([close_cdd, close_ccxt], axis=1)
+    combined = pd.merge(cdd_series, ccxt_series,left_index=True,right_index=True)
     # Rename the columns.
     if compute_returns:
         combined.columns = ["ccxt_returns", "cdd_returns"]
@@ -232,46 +204,37 @@ def calculate_correlations_for_currency_pairs(
         combined.columns = ["cdd_close", "ccxt_close"]
     # Group by again to calculte returns correlation for each currency pair.
     corr_matrix = combined.groupby(level=0).corr()
-    display(corr_matrix)
-    # DataFrame with description statistics
-    ## Stats for CDD data.
-    descr_cdd = close_cdd.groupby(level=0).describe()
-    descr_cdd = descr_cdd.add_suffix("_cdd")
-    ## Stats for CCXT data.
-    descr_ccxt = close_ccxt.groupby(level=0).describe()
-    descr_ccxt = descr_ccxt.add_suffix("_ccxt")
-    ## Collect the results into one dataframe.
-    descr_df = pd.concat([descr_cdd, descr_ccxt], axis=1)
-    descr_df.sort_index(ascending=False, axis=1, inplace=True)
-    return descr_df
+    return corr_matrix
 
-
-# %% [markdown]
-# ### 5-min periods
 
 # %%
-returns_corr_5min = calculate_correlations_for_currency_pairs(
-    ccxt_binance_df, cdd_binance_df, "5min", compute_returns=True
-)
-returns_corr_5min
+# Corresponding resampled Series.
+ccxt_binance_series_1d = resample_ohlcv_dataframe(ccxt_binance_df, "1D")
+cdd_binance_series_1d = resample_ohlcv_dataframe(cdd_binance_df, "1D")
+
+ccxt_binance_series_5min = resample_ohlcv_dataframe(ccxt_binance_df, "5min")
+cdd_binance_series_5min = resample_ohlcv_dataframe(cdd_binance_df, "5min")
 
 # %% [markdown]
-# ### 1-day periods
+# ### 1-day returns
 
 # %%
-returns_corr_1day = calculate_correlations_for_currency_pairs(
-    ccxt_binance_df, cdd_binance_df, "1D", compute_returns=True
-)
-returns_corr_1day
+returns_corr_1day = calculate_correlations(ccxt_binance_series_1d,cdd_binance_series_1d,compute_returns=True)
+display(returns_corr_1day)
+
+# %% [markdown]
+# ### 5-min returns
+
+# %%
+returns_corr_5min = calculate_correlations(ccxt_binance_series_5min,cdd_binance_series_5min,compute_returns=True)
+display(returns_corr_5min)
 
 # %% [markdown]
 # ## Compare close prices
 
 # %%
-close_1day = calculate_correlations_for_currency_pairs(
-    ccxt_binance_df, cdd_binance_df, "1D", compute_returns=False
-)
-close_1day
+close_corr_1day = calculate_correlations(ccxt_binance_series_1d,cdd_binance_series_1d,compute_returns=False)
+display(close_corr_1day)
 
 # %% [markdown]
 # # Statistical properties of a unique coin in CDD
@@ -310,7 +273,7 @@ def calculate_statistics_for_stamps_cdd(coin_list):
     :param coin_list: list of all currency pairs in CDD universe
     :return: pd.Dataframe with statistics
     """
-    # Load data for each currency pair
+    # Load data for each currency pair.
     result = []
     cdd_loader = imcdalolo.CddLoader(root_dir=root_dir, aws_profile="am")
     for i in list(range(len(coin_list))):
@@ -331,11 +294,11 @@ def calculate_statistics_for_stamps_cdd(coin_list):
         min_date = pd.Series(
             coin["stamp"].describe(datetime_is_numeric=True).loc["min"]
         )
-        # Number of timestamps for each coin
+        # Number of timestamps for each coin.
         data_points = pd.Series(
             coin["stamp"].describe(datetime_is_numeric=True).loc["count"]
         )
-        # Attach calculations to the DataFrame
+        # Attach calculations to the DataFrame.
         stamp_stats = pd.DataFrame()
         stamp_stats["exchange_id"] = [
             ivcdclcl.parse_full_symbol(list(coin_list)[i])[0]
