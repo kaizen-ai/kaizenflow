@@ -6,8 +6,8 @@ Import as:
 import oms.oms_lib_tasks as oomlitas
 """
 
-import os
 import logging
+import os
 
 from invoke import task
 
