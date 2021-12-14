@@ -192,6 +192,7 @@ def _to_multi_line_cmd(docker_cmd_: List[str]) -> str:
 use_one_line_cmd = False
 
 
+# TODO(Grisha): make it public.
 def _run(ctx: Any, cmd: str, *args: Any, **ctx_run_kwargs: Any) -> int:
     _LOG.debug("cmd=%s", cmd)
     if use_one_line_cmd:
