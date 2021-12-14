@@ -256,9 +256,7 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         # Split full symbol into exchange and currency pair.
         exchange_id, currency_pair = imvcdcli.parse_full_symbol(full_symbol)
         # Get absolute file path for a CCXT file.
-        file_path = self._get_file_path(
-            data_snapshot, exchange_id, currency_pair
-        )
+        file_path = self._get_file_path(data_snapshot, exchange_id, currency_pair)
         # Initialize kwargs dict for further CCXT data reading.
         read_kwargs = {}
         if hs3.is_s3_path(file_path):
