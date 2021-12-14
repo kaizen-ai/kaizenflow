@@ -97,21 +97,24 @@ def get_connection_from_string(
     return connection
 
 
-def get_connection_from_env_file(env_file_path: str) -> DbConnection:
+# TODO(Grisha): move to helpers.io_?
+def get_connection_info_from_env_file(env_file_path: str) -> DbConnection:
     """
-    Create a SQL connection from environment file.
+    Get connection parameters from environment file.
 
     :param env_file_path: path to an environment file that contains db connection parameters
     """
-    connection_parameters = dotenv.dotenv_values(env_file_path)
-    connection = get_connection(
-        host=connection_parameters["POSTGRES_HOST"],
-        dbname=connection_parameters["POSTGRES_DB"],
-        port=int(connection_parameters["POSTGRES_PORT"]),
-        user=connection_parameters["POSTGRES_USER"],
-        password=connection_parameters["POSTGRES_PASSWORD"],
+    db_config = dotenv.dotenv_values(env_file_path)
+    # The parameters' names are fixed and cannot be changed, see
+    # `https:://hub.docker.com/_/postgres`.
+    connection_parameters = DbConnectionInfo(
+        host=db_config["POSTGRES_HOST"],
+        dbname=db_config["POSTGRES_DB"],
+        port=int(db_config["POSTGRES_PORT"]),
+        user=db_config["POSTGRES_USER"],
+        password=db_config["POSTGRES_PASSWORD"],
     )
-    return connection
+    return connection_parameters
 
 
 def check_db_connection(

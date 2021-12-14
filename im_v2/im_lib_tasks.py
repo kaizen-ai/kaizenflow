@@ -7,13 +7,33 @@ import im_v2.im_lib_tasks as imvimlita
 """
 
 import logging
+import os
 
 from invoke import task
 
 import helpers.dbg as hdbg
+import helpers.git as hgit
 import helpers.lib_tasks as hlibtask
 
 _LOG = logging.getLogger(__name__)
+
+
+def get_db_env_path(stage: str) -> str:
+    """
+    Get path to db env file that contains db connection parameters.
+
+    :param stage: development stage, i.e. `local`, `dev` and `prod`
+    """
+    hdbg.dassert_in(stage, "local dev prod".split())
+    # Get `env` files dir.
+    env_dir = "im_v2/devops/env"
+    # Get the file name depending on the stage.
+    env_file_name = f"{stage}.im_db_config.env"
+    # Get file path.
+    amp_path = hgit.get_amp_abs_path()
+    env_file_path = os.path.join(amp_path, env_dir, env_file_name)
+    hdbg.dassert_file_exists(env_file_path)
+    return env_file_path
 
 # #############################################################################
 
