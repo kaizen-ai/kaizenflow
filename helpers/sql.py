@@ -101,7 +101,6 @@ def get_connection_from_string(
     return connection  # type: ignore[no-any-return]
 
 
-# TODO(Grisha): move to helpers.io_?
 def get_connection_info_from_env_file(env_file_path: str) -> DbConnectionInfo:
     """
     Get connection parameters from environment file.

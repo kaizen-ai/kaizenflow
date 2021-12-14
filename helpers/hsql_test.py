@@ -8,8 +8,6 @@ import abc
 import logging
 import os
 
-import dotenv
-
 import helpers.git as hgit
 import helpers.printing as hprint
 import helpers.sql as hsql
@@ -55,6 +53,7 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         Initialize the test database inside test container.
         """
         _LOG.info("\n%s", hprint.frame("setUpClass"))
+        # Read the connection parameters from the env file.
         connection_info = hsql.get_connection_info_from_env_file(cls._get_db_env_path())
         conn_exists = hsql.check_db_connection(
             host=connection_info.host,
