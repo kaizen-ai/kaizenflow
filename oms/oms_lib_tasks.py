@@ -14,8 +14,26 @@ import helpers.dbg as hdbg
 import helpers.git as hgit
 import helpers.lib_tasks as hlibtask
 
+
 # TODO(gp): This was branched from im/im_lib_tasks.py. We should factor out the
 #  common part.
+def get_db_env_path(stage: str) -> str:
+    """
+    Get path to db env file that contains db connection parameters.
+
+    :param stage: development stage, i.e. `local`, `dev` and `prod`
+    """
+    hdbg.dassert_in(stage, "local dev prod".split())
+    # Get `env` files dir.
+    env_dir = "oms/devops/env"
+    # Get the file name depending on the stage.
+    env_file_name = f"{stage}.im_db_config.env"
+    # Get file path.
+    amp_path = hgit.get_amp_abs_path()
+    env_file_path = os.path.join(amp_path, env_dir, env_file_name)
+    hdbg.dassert_file_exists(env_file_path)
+    return env_file_path
+
 
 # TODO(gp): This should be used also from the unit tests?
 def _get_docker_compose_path() -> str:
