@@ -12,6 +12,8 @@ import psycopg2 as psycop
 
 import helpers.hsql_test as hsqltest
 import helpers.sql as hsql
+import im_v2.im_lib_tasks as imvimlita
+# TODO(Grisha): move to `im_v2`.
 import im.ccxt.db.utils as imccdbuti
 import im.ib.sql_writer as imibsqwri
 import im.kibot.sql_writer as imkisqwri
@@ -123,11 +125,15 @@ class TestImDbHelper(hsqltest.TestDbHelper):
     def _get_compose_file() -> str:
         return "im_v2/devops/compose/docker-compose.yml"
 
-    # TODO(Dan): Deprecate after #585.
-    @staticmethod
-    def _get_db_name() -> str:
-        return "im_postgres_db_local"
-
     @staticmethod
     def _get_service_name() -> str:
         return "im_postgres_local"
+
+    @staticmethod
+    def _get_db_env_path() -> str:
+        """
+        See `_get_db_env_path()` in the parent class.
+        """
+        # Use the `local` stage for testing.
+        env_file_path = imvimlita.get_db_env_path("local")
+        return env_file_path
