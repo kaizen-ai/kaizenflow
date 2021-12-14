@@ -35,7 +35,7 @@ class TestOmsDbHelper(hsqltest.TestDbHelper):
         """
         # Use the `local` stage for testing.
         env_file_path = oomlitas.get_db_env_path("local")
-        return env_file_path
+        return env_file_path  # type: ignore[no-any-return]
 
 
 @pytest.mark.skip(reason="Run manually to clean up the DB")
