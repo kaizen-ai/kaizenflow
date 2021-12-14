@@ -194,13 +194,19 @@ use_one_line_cmd = False
 
 
 # TODO(Grisha): make it public #755.
-def _run(ctx: Any, cmd: str, *args: Any, **ctx_run_kwargs: Any) -> int:
+def _run(ctx: Any, cmd: str, *args, dry_run: bool = False, **ctx_run_kwargs: Any) -> int:
     _LOG.debug("cmd=%s", cmd)
     if use_one_line_cmd:
         cmd = _to_single_line_cmd(cmd)
     _LOG.debug("cmd=%s", cmd)
-    result = ctx.run(cmd, *args, **ctx_run_kwargs)
-    return result.return_code
+    if dry_run:
+        print(f"> {cmd}")
+        _LOG.warning("Skipping execution")
+        res = None
+    else:
+        result = ctx.run(cmd, *args, **ctx_run_kwargs)
+        res = result.return_code
+    return res
 
 
 # TODO(gp): We should factor out the meaning of the params in a string and add it
@@ -813,7 +819,7 @@ def _dassert_current_dir_matches(dir_name: str) -> None:
 
 
 @task
-def integrate_create_branches(ctx, dir_name):  # type: ignore
+def integrate_create_branches(ctx, dir_name, dry_run=False):  # type: ignore
     """
     Create the branch for integration in the current dir.
 
@@ -829,26 +835,35 @@ def integrate_create_branches(ctx, dir_name):  # type: ignore
     #query_yes_no("Are you sure you want to create the brach ")
     _LOG.info("Creating branch '%s'", branch_name)
     cmd = f"invoke git_create_branch -b '{branch_name}'"
-    _run(ctx, cmd)
+    _run(ctx, cmd, dry_run=dry_run)
 
 
 @task
-def integrate_diff_dirs(ctx, subdir_name="", src_dir="amp1", dst_dir="cmamp1", diff_only=False):  # type: ignore
+def integrate_diff_dirs(ctx, subdir_name="", src_dir="amp1", dst_dir="cmamp1", use_linux_diff=False, dry_run=False):  # type: ignore
     """
     Integrate repos from dir `dir1` and `dir2`.
 
-    :param diff_only:
+    > i integrate_diff_dirs --subdir-name . --src-dir amp1 --dst-dir cmamp1
+
+    :param diff_only: use Linux `diff` instead of `diff_to_vimdiff.py`
     """
     _report_task()
     _ = ctx
     _dassert_current_dir_matches(src_dir)
-    src_dir = os.path.join(src_dir, subdir_name)
-    dst_dir = os.path.join(dst_dir, subdir_name)
-    if diff_only:
-        cmd = f"dev_scripts/diff_to_vimdiff.py --dir1 {src_dir} --dir2 {dst_dir}"
-    else:
+    root_dir = os.path.dirname(os.getcwd())
+    #
+    src_dir = os.path.join(root_dir, src_dir, subdir_name)
+    src_dir = os.path.normpath(src_dir)
+    hdbg.dassert_dir_exists(src_dir)
+    #
+    dst_dir = os.path.join(root_dir, dst_dir, subdir_name)
+    dst_dir = os.path.normpath(dst_dir)
+    hdbg.dassert_dir_exists(dst_dir)
+    if use_linux_diff:
         cmd = f"diff -r --brief {src_dir} {dst_dir}"
-    _run(ctx, cmd)
+    else:
+        cmd = f"dev_scripts/diff_to_vimdiff.py --dir1 {src_dir} --dir2 {dst_dir}"
+    _run(ctx, cmd, dry_run=dry_run)
 
 
 @task
