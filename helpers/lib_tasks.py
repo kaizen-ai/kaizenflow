@@ -896,7 +896,8 @@ def _dassert_current_dir_matches(dir_name: str) -> None:
     Ensure that the name of the current dir is the expected one.
     """
     curr_dir_name = os.path.basename(os.getcwd())
-    hdbg.dassert_eq(curr_dir_name, dir_name)
+    hdbg.dassert_eq(curr_dir_name, dir_name, "The current dir '%s' is not the source dir '%s'",
+                    curr_dir_name, dir_name)
 
 
 @task
@@ -907,7 +908,6 @@ def integrate_create_branches(ctx, dir_name, dry_run=False):  # type: ignore
     The dir needs to be specified to ensure the set-up is correct.
     """
     _report_task()
-    #_ = ctx
     #
     _dassert_current_dir_matches(dir_name)
     date = datetime.datetime.now().date()
@@ -919,17 +919,7 @@ def integrate_create_branches(ctx, dir_name, dry_run=False):  # type: ignore
     _run(ctx, cmd, dry_run=dry_run)
 
 
-@task
-def integrate_diff_dirs(ctx, subdir_name="", src_dir="amp1", dst_dir="cmamp1", use_linux_diff=False, dry_run=False):  # type: ignore
-    """
-    Integrate repos from dir `dir1` and `dir2`.
-
-    > i integrate_diff_dirs --subdir-name . --src-dir amp1 --dst-dir cmamp1
-
-    :param diff_only: use Linux `diff` instead of `diff_to_vimdiff.py`
-    """
-    _report_task()
-    _ = ctx
+def _get_src_dst_dirs(src_dir: str, dst_dir: str, subdir_name: str) -> Tuple[str, str]:
     _dassert_current_dir_matches(src_dir)
     root_dir = os.path.dirname(os.getcwd())
     #
@@ -940,6 +930,22 @@ def integrate_diff_dirs(ctx, subdir_name="", src_dir="amp1", dst_dir="cmamp1", u
     dst_dir = os.path.join(root_dir, dst_dir, subdir_name)
     dst_dir = os.path.normpath(dst_dir)
     hdbg.dassert_dir_exists(dst_dir)
+    return src_dir, dst_dir
+
+
+@task
+def integrate_diff_dirs(ctx, src_dir="amp1", dst_dir="cmamp1", subdir_name="", use_linux_diff=False, dry_run=False):  # type: ignore
+    """
+    Integrate repos from dir `dir1` and `dir2`.
+
+    > i integrate_diff_dirs --subdir-name . --src-dir amp1 --dst-dir cmamp1
+
+    :param diff_only: use Linux `diff` instead of `diff_to_vimdiff.py`
+    """
+    _report_task()
+    #
+    src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir_name)
+    #
     if use_linux_diff:
         cmd = f"diff -r --brief {src_dir} {dst_dir}"
     else:
@@ -948,12 +954,22 @@ def integrate_diff_dirs(ctx, subdir_name="", src_dir="amp1", dst_dir="cmamp1", u
 
 
 @task
-def integrate_copy_dirs(ctx, dry_run=True, src_dir="amp1", dst_dir="cmamp1"):  # type: ignore
+def integrate_copy_dirs(ctx, src_dir="amp1", dst_dir="cmamp1", subdir_name="", dry_run=False):  # type: ignore
     """
     Integrate repos in dir `dir1` and `dir2`.
+
+    > i integrate_copy_dirs --subdir-name documentation --src-dir amp1 --dst-dir cmamp1
     """
     _report_task()
-    _ = ctx
+    #
+    src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir_name)
+    #
+    if dry_run:
+        cmd = f"diff -r --brief {src_dir} {dst_dir}"
+    else:
+        rsync_opts = "--delete -a"
+        cmd = f"rsync {rsync_opts} {src_dir}/ {dst_dir}"
+    _run(ctx, cmd)
 
 
 @task
