@@ -28,7 +28,6 @@ _LOG = logging.getLogger(__name__)
 _LATEST_DATA_SNAPSHOT = "20210924"
 #
 _DATA_TYPES = ["ohlcv"]
-_FILE_EXTENSIONS = [".csv.gz", ".pq"]
 
 
 class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
@@ -224,7 +223,6 @@ class CcxtFileSystemClient(AbstractCcxtClient):
         data_type: str,
         root_dir: str,
         aws_profile: Optional[str] = None,
-        ext: Optional[str] = ".csv.gz",
     ) -> None:
         """
         Load CCXT data from local or S3 filesystem.
@@ -232,16 +230,12 @@ class CcxtFileSystemClient(AbstractCcxtClient):
         :param: root_dir: either a local root path (e.g., "/app/im") or
             an S3 root path (e.g., "s3://alphamatic-data/data") to CCXT data
         :param: aws_profile: AWS profile name (e.g., "am")
-        :param: ext: file extension (either ".csv.gz" or ".pq")
         """
         super().__init__(data_type=data_type)
         self._root_dir = root_dir
         # Set s3fs parameter value if aws profile parameter is specified.
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
-        # Verify that provided file extension is valid and set it.
-        hdbg.dassert_in(ext, _FILE_EXTENSIONS)
-        self._ext = ext
 
     def _read_data(
         self,
@@ -264,10 +258,10 @@ class CcxtFileSystemClient(AbstractCcxtClient):
         # Get absolute file path for a CCXT file.
         file_path = self._get_file_path(data_snapshot, exchange_id, currency_pair)
         # Initialize kwargs dict for further CCXT data reading.
-        read_ext_kwargs = {}
+        read_csv_kwargs = {}
         if hs3.is_s3_path(file_path):
             # Add s3fs argument to kwargs.
-            read_ext_kwargs["s3fs"] = self._s3fs
+            read_csv_kwargs["s3fs"] = self._s3fs
         # Read raw CCXT data.
         _LOG.info(
             "Reading CCXT data for exchange id='%s', currencies='%s' from file='%s'...",
@@ -275,16 +269,8 @@ class CcxtFileSystemClient(AbstractCcxtClient):
             currency_pair,
             file_path,
         )
-        if file_path.endswith(".csv.gz"):
-            data = cpanh.read_csv(file_path, **read_ext_kwargs)
-        elif file_path.endswith(".pq"):
-            data = cpanh.read_parquet(file_path, **read_ext_kwargs)
-        else:
-            hdbg.dfatal(
-                "Incorrect file extension: '%s'. Acceptable extensions: '%s'"
-                % (self._ext, _FILE_EXTENSIONS)
-            )
-        # Filter data by dates if specified.
+        data = cpanh.read_csv(file_path, **read_csv_kwargs)
+        #
         if start_ts:
             start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
             data = data[data["timestamp"] >= start_ts]
@@ -314,7 +300,7 @@ class CcxtFileSystemClient(AbstractCcxtClient):
         Get the absolute path to a file with CCXT data.
 
         The file path is constructed in the following way:
-        `<root_dir>/ccxt/<snapshot>/<exchange_id>/<currency_pair><self._ext>`.
+        `<root_dir>/ccxt/<snapshot>/<exchange_id>/<currency_pair>.csv.gz`.
 
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
@@ -324,7 +310,7 @@ class CcxtFileSystemClient(AbstractCcxtClient):
         :return: absolute path to a file with CCXT data
         """
         # Get absolute file path.
-        file_name = currency_pair + self._ext
+        file_name = currency_pair + ".csv.gz"
         file_path = os.path.join(
             self._root_dir, "ccxt", data_snapshot, exchange_id, file_name
         )
