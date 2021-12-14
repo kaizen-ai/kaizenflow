@@ -56,7 +56,7 @@ def get_connection(
     )
     if autocommit:
         connection.autocommit = True
-    return connection
+    return connection  # type: ignore[no-any-return]
 
 
 def get_connection_from_env_vars() -> DbConnection:
