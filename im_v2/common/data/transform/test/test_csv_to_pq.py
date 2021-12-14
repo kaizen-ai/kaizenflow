@@ -83,7 +83,8 @@ class TestCsvToPq(hunitest.TestCase):
         test_dir = self.get_scratch_space()
         self.pq_dir_path = os.path.join(test_dir, "pq_dir")
         hio.create_dir(self.pq_dir_path, False)
-        # Create different PQ file for test2.
+        # Create a PQ file with a different content than `_generate_example_csv_file`
+        # since we use the content to check whether the file was overwritten or not.
         d = {
             "timestamp": [1632646800000, 1638646860000],
             "open": [49666.18, 49666.63],

@@ -52,12 +52,19 @@ def _parse() -> argparse.ArgumentParser:
     return parser
 
 
-def _source_files(
+def _get_csv_to_pq_file_names(
     src_dir: str, dst_dir: str, incremental: bool
 ) -> List[Tuple[str, str]]:
+    """
+    Find all the CSV files in `src_dir` to transform and the corresponding
+    destination PQ files.
+
+    :param incremental: if True, skip CSV files for which the corresponding PQ file already exists
+    :return: list of tuples (csv_file, pq_file)
+    """
     hdbg.dassert_ne(len(os.listdir(src_dir)), 0, "No files inside '%s'", src_dir)
-    csv_ext, csv_gz_ext = ".csv", ".csv.gz"
     # Find all the CSV files to convert.
+    csv_ext, csv_gz_ext = ".csv", ".csv.gz"
     csv_files = []
     for f in os.listdir(src_dir):
         if f.endswith(csv_ext):
@@ -84,7 +91,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     hio.create_dir(args.dst_dir, args.incremental)
-    files = _source_files(args.src_dir, args.dst_dir, args.incremental)
+    files = _get_csv_to_pq_file_names(
+        args.src_dir, args.dst_dir, args.incremental
+    )
     # Transform CSV files.
     for csv_full_path, pq_full_path in files:
         hcsv.convert_csv_to_pq(csv_full_path, pq_full_path)
