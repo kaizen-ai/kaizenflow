@@ -804,11 +804,69 @@ def git_rename_branch(ctx, new_branch_name):  # type: ignore
 # #############################################################################
 
 
+def _dassert_current_dir_matches(dir_name: str) -> None:
+    """
+    Ensure that the name of the current dir is the expected one.
+    """
+    curr_dir_name = os.path.basename(os.getcwd())
+    hdbg.dassert_eq(curr_dir_name, dir_name)
+
+
+@task
+def integrate_create_branches(ctx, dir_name):  # type: ignore
+    """
+    Create the branch for integration in the current dir.
+
+    The dir needs to be specified to ensure the set-up is correct.
+    """
+    _report_task()
+    #_ = ctx
+    #
+    _dassert_current_dir_matches(dir_name)
+    date = datetime.datetime.now().date()
+    date_as_str = date.strftime("%Y%m%d")
+    branch_name = f"AmpTask1786_Integrate_{date_as_str}"
+    #query_yes_no("Are you sure you want to create the brach ")
+    _LOG.info("Creating branch '%s'", branch_name)
+    cmd = f"invoke git_create_branch -b '{branch_name}'"
+    _run(ctx, cmd)
+
+
+@task
+def integrate_diff_dirs(ctx, subdir_name="", src_dir="amp1", dst_dir="cmamp1", diff_only=False):  # type: ignore
+    """
+    Integrate repos from dir `dir1` and `dir2`.
+
+    :param diff_only:
+    """
+    _report_task()
+    _ = ctx
+    _dassert_current_dir_matches(src_dir)
+    src_dir = os.path.join(src_dir, subdir_name)
+    dst_dir = os.path.join(dst_dir, subdir_name)
+    if diff_only:
+        cmd = f"dev_scripts/diff_to_vimdiff.py --dir1 {src_dir} --dir2 {dst_dir}"
+    else:
+        cmd = f"diff -r --brief {src_dir} {dst_dir}"
+    _run(ctx, cmd)
+
+
+@task
+def integrate_copy_dirs(ctx, dry_run=True, src_dir="amp1", dst_dir="cmamp1"):  # type: ignore
+    """
+    Integrate repos in dir `dir1` and `dir2`.
+    """
+    _report_task()
+    _ = ctx
+
+
 @task
 def integrate_save_base_files(ctx, file_name):  # type: ignore
     """
     Save the files from `file_name` at the commit before this branch was branched.
     """
+    _report_task()
+    _ = ctx
     # Find the hash before the branch was created
     # > git merge-base master AmpTask1786_Integrate_20211210
     # 77383ac21bbd3fa353f9572ac3ae9ad144c44db1
@@ -1362,7 +1420,7 @@ def _get_docker_cmd(
     # - Handle the user.
     # Based on AmpTask1864 it seems that we need to use root in the CI to be
     # able to log in GH touching $HOME/.config/gh.
-    if as_user:
+    if False and as_user:
         docker_cmd_.append(
             r"""
         --user $(id -u):$(id -g)"""
