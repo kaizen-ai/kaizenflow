@@ -8,6 +8,7 @@ import collections
 import io
 import logging
 import os
+import re
 import time
 from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
 
@@ -91,6 +92,9 @@ def get_connection_from_string(
     E.g., `host=localhost dbname=im_db_local port=5432 user=...
     password=...`
     """
+    regex = "host=\w+ dbname=\w+ port=\d+ user=\w+ password=\w+"
+    m = re.match(regex, conn_as_str)
+    hdbg.dassert(m, "Invalid connection string: '%s'", conn_as_str)
     connection = psycop.connect(conn_as_str)
     if autocommit:
         connection.autocommit = True
