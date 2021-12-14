@@ -73,8 +73,8 @@ class TestGetFilePath(hunitest.TestCase):
 
 
 @pytest.mark.skipif(
-    hgit.is_dev_tools() or hgit.is_lime(),
-    reason="lime and dev_tools doesn't have dind support",
+    not hgit.execute_repo_config_code("has_dind_support()"),
+    reason="Need dind support"
 )
 class TestCcxtDbClient(imcodbuti.TestImDbHelper):
     @pytest.mark.slow("6 seconds.")
@@ -253,10 +253,9 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
 # #############################################################################
 
 
-# TODO(gp): `dind` should not be needed for that.
 @pytest.mark.skipif(
-    hgit.is_dev_tools() or hgit.is_lime(),
-    reason="lime and dev_tools doesn't have dind support",
+    not hgit.execute_repo_config_code("has_dind_support()"),
+    reason="Need dind support"
 )
 class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
     @pytest.mark.slow("12 seconds.")
@@ -433,8 +432,8 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
 
 
 @pytest.mark.skipif(
-    hgit.is_dev_tools() or hgit.is_lime(),
-    reason="lime and dev_tools doesn't have dind support",
+    not hgit.execute_repo_config_code("has_dind_support()"),
+    reason="Need dind support"
 )
 class TestMultipleSymbolsCcxtDbClient(imcodbuti.TestImDbHelper):
     @pytest.mark.slow("10 seconds.")

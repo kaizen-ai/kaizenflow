@@ -6,17 +6,19 @@ Import as:
 import oms.oms_db as oomsdb
 """
 
+import asyncio
 import logging
 from typing import Any, Dict
 
 import helpers.dbg as hdbg
-import helpers.datetime_ as hdateti
 import helpers.hasyncio as hasynci
 import helpers.sql as hsql
 
 _LOG = logging.getLogger(__name__)
 
 
+# #############################################################################
+# Submitted orders
 # #############################################################################
 
 
@@ -56,6 +58,8 @@ def create_submitted_orders_table(
     return table_name
 
 
+# #############################################################################
+# Accepted orders
 # #############################################################################
 
 
@@ -112,11 +116,11 @@ def create_accepted_orders_table(
     query.append(
         f"""
         CREATE TABLE IF NOT EXISTS {table_name} (
+            strategyid VARCHAR(64),
             targetlistid SERIAL PRIMARY KEY,
             tradedate DATE NOT NULL,
             instanceid INT,
             filename VARCHAR(255) NOT NULL,
-            strategyid VARCHAR(64),
             timestamp_processed TIMESTAMP NOT NULL,
             timestamp_db TIMESTAMP NOT NULL,
             target_count INT,
@@ -134,6 +138,8 @@ def create_accepted_orders_table(
     return table_name
 
 
+# #############################################################################
+# Current positions
 # #############################################################################
 
 
@@ -154,18 +160,51 @@ def create_current_positions_table(
     query = []
     if not incremental:
         query.append(f"DROP TABLE IF EXISTS {table_name}")
+    # The current positions table has the following fields:
+    # - strategyid (e.g., SAU1)
+    # - account (e.g., SAU1_CAND)
+    # - id (e.g., 10005)
+    # - tradedate (e.g., 2021-10-28)
+    # - published_dt (e.g., 2021-10-28 12:01:49.41)
+    # - target_position (e.g., 300)
+    #   = the fully realized portfolio position
+    #   - E.g., the value is 300 if we own 100 AAPL and we want get 200 more so
+    #     we send an order for 200
+    # - current_position (e.g., 100)
+    #   = what we own (e.g., 100 AAPL)
+    # - open_quantity (e.g., 200)
+    #   = how many shares we have orders open in the market. In other words,
+    #     open quantity reflects how much is out getting executed in the market
+    #   - Note that it's not always
+    #     `open_quantity = target_position - current_position`
+    #     since orders might have been cancelled. If `open_quantity = 0` it
+    #     means that there are no order in the market
+    #   - E.g., if we send orders for 200 AAPL, then current_position = 200, but
+    #     if we cancel the orders, current_position = 0, even if target_position
+    #     reports what we were targeting 200 shares
+    # - net_cost (e.g., 0.0)
+    #   = fill-quantity * signed fill_price with respect to the BOD price
+    #   - In practice it is the average price paid
+    # - bod_position (e.g., 0)
+    #   - = number of shares at BOD
+    # - bod_price (e.g., 0.0)
+    #   - = price of a share at BOD
     query.append(
         f"""
         CREATE TABLE IF NOT EXISTS {table_name} (
             strategyid VARCHAR(64),
             account VARCHAR(64),
-            tradedate DATE NOT NULL,
             id INT,
+            tradedate DATE NOT NULL,
             timestamp_db TIMESTAMP NOT NULL,
-            target_position INT,
-            current_position INT,
-            open_quantity INT,
-            )
+            asset_id INT,
+            target_position FLOAT,
+            current_position FLOAT,
+            open_quantity FLOAT,
+            net_cost FLOAT,
+            bod_position FLOAT,
+            bod_price FLOAT
+            );
             """
     )
     query = "; ".join(query)
@@ -175,6 +214,10 @@ def create_current_positions_table(
 
 
 # #############################################################################
+# Order processor
+# #############################################################################
+
+# This mocks the behavior of the actual broker + market.
 
 
 async def wait_for_order_accepted(
@@ -206,10 +249,8 @@ async def wait_for_order_accepted(
 async def order_processor(
     db_connection: hsql.DbConnection,
     poll_kwargs: Dict[str, Any],
-    get_wall_clock_time: hdateti.GetWallClockTime,
     delay_to_accept_in_secs: float,
     delay_to_fill_in_secs: float,
-    portfolio,
     broker,
     *,
     submitted_orders_table_name: str = SUBMITTED_ORDERS_TABLE_NAME,
@@ -234,15 +275,15 @@ async def order_processor(
     # TODO(gp): Implement.
     # Delay.
     hdbg.dassert_lt(0, delay_to_accept_in_secs)
-    await hasynci.sleep(delay_to_accept_in_secs)
+    await asyncio.sleep(delay_to_accept_in_secs)
     # Write in `accepted_orders_table_name` to acknowledge the orders.
     timestamp_db = get_wall_clock_time()
     trade_date = timestamp_db.date()
     txt = f"""
     strategyid,SAU1
     account,candidate
-    tradedate,{trade_date}
     id,1
+    tradedate,{trade_date}
     timestamp_db,{timestamp_db}
     target_position,
     current_position,
@@ -251,12 +292,10 @@ async def order_processor(
     row = hsql.csv_to_series(txt, sep=",")
     hsql.execute_insert_query(db_connection, row, accepted_orders_table_name)
     # Wait.
-    hdbg.dassert_lt(0, delay_to_fill_in_ses)
-    await hasynci.sleep(delay_to_fill_in_secs)
+    hdbg.dassert_lt(0, delay_to_fill_in_secs)
+    await asyncio.sleep(delay_to_fill_in_secs)
     # Get the fills.
-    fills = broker.get_fills()
+    broker.get_fills()
     # Get the current holdings from the portfolio.
-    holdings = None
     # Update the holdings with the fills.
-    new_holdings = None
     # Write the new positions to `current_positions_table_name`.

@@ -35,6 +35,16 @@ import helpers.versioning as hversio
 
 _LOG = logging.getLogger(__name__)
 
+
+# Conventions around `pyinvoke`:
+# - `pyinvoke` uses introspection to infer properties of a task, but doesn't
+#   support many Python3 features (see https://github.com/pyinvoke/invoke/issues/357)
+# - Don't use type hints in `@tasks`
+#   - we use `# ignore: type` to avoid mypy complaints
+# - Minimize the code in `@tasks` calling other functions to use Python3 features
+# - Use `""` as default instead None since `pyinvoke` can only infer a single type
+
+
 # #############################################################################
 # Default params.
 # #############################################################################
@@ -452,7 +462,7 @@ def git_clean(ctx, dry_run=False):  # type: ignore
 @task
 def git_add_all_untracked(ctx):  # type: ignore
     """
-    Add all untracked files to git.
+    Add all untracked files to Git.
     """
     _report_task()
     cmd = "git add $(git ls-files -o --exclude-standard)"
@@ -570,7 +580,7 @@ def git_files(  # type: ignore
 ):
     """
     Report which files are changed in the current branch with respect to
-    master.
+    `master`.
 
     The params have the same meaning as in `_get_files_to_process()`.
     """
@@ -614,14 +624,30 @@ def git_last_commit_files(ctx, pbcopy=True):  # type: ignore
     _to_pbcopy(res, pbcopy)
 
 
+# TODO(gp): Add git_co(ctx)
+# Reuse hgit.git_stash_push() and hgit.stash_apply()
+# git stash save your-file-name
+# git checkout master
+# # do whatever you had to do with master
+# git checkout staging
+# git stash pop
+
+
+# #############################################################################
 # Branches workflows
+# #############################################################################
+
+
+# TODO(gp): Consider renaming the commands as `git_branch_*`
 
 
 @task
 def git_branch_files(ctx):  # type: ignore
     """
-    Report which files are added, changed, modified in the current branch with
-    respect to master.
+    Report which files were added, changed, and modified in the current branch with
+    respect to `master`.
+
+    This is a more detailed version of `i git_files --branch`.
     """
     _report_task()
     _ = ctx
@@ -688,6 +714,17 @@ def git_create_branch(  # type: ignore
     #
     _LOG.info("branch_name='%s'", branch_name)
     hdbg.dassert_ne(branch_name, "")
+    # Check that the branch is not just a number.
+    m = re.match("^\d+$", branch_name)
+    hdbg.dassert(not m, "Branch names with only numbers are invalid")
+    # The valid format of a branch name is `AmpTask1903_Implemented_system_Portfolio`.
+    m = re.match("^\S+Task\d+_\S+$", branch_name)
+    hdbg.dassert(m, "Branch name should be '{Amp,...}TaskXYZ_...'")
+    hdbg.dassert(
+        not hgit.does_branch_exist(branch_name),
+        "The branch '%s' already exists",
+        branch_name,
+    )
     # Make sure we are branching from `master`, unless that's what the user wants.
     curr_branch = hgit.get_branch_name()
     if curr_branch != "master":
@@ -701,10 +738,6 @@ def git_create_branch(  # type: ignore
     # git checkout -b LmTask169_Get_GH_actions_working_on_lm
     cmd = f"git checkout -b {branch_name}"
     _run(ctx, cmd)
-    # TODO(gp): If the branch already exists, increase the number.
-    #   git checkout -b AmpTask1329_Review_code_in_core_03
-    #   fatal: A branch named 'AmpTask1329_Review_code_in_core_03' already exists.
-    #   saggese@gpmaclocal.local ==> RC: 128 <==
     cmd = f"git push --set-upstream origin {branch_name}"
     _run(ctx, cmd)
 
@@ -796,6 +829,54 @@ def git_rename_branch(ctx, new_branch_name):  # type: ignore
     cmd = f"git push origin --delete {old_branch_name}"
     _run(ctx, cmd)
     print("Done")
+
+
+@task
+def git_branch_next_name(ctx):  # type: ignore
+    """
+    Return a name derived from the branch so that the branch doesn't exist.
+
+    E.g., `AmpTask1903_Implemented_system_Portfolio` ->
+        `AmpTask1903_Implemented_system_Portfolio_3`
+    """
+    _report_task()
+    _ = ctx
+    branch_next_name = hgit.get_branch_next_name()
+    print(f"branch_next_name='{branch_next_name}'")
+
+
+@task
+def git_branch_copy(ctx, new_branch_name="", use_patch=False):  # type: ignore
+    """
+    Create a new branch with the same content of the current branch.
+    """
+    hdbg.dassert(not use_patch, "Patch flow not implemented yet")
+    #
+    curr_branch_name = hgit.get_branch_name()
+    hdbg.dassert_ne(curr_branch_name, "master")
+    # Make sure `old_branch_name` doesn't need to have `master` merged.
+    cmd = "invoke git_merge_master --ff-only"
+    _run(ctx, cmd)
+    if use_patch:
+        # TODO(gp): Create a patch or do a `git merge`.
+        pass
+    # If new_branch_name was not specified, find a new branch with the next index.
+    if new_branch_name == "":
+        new_branch_name = hgit.get_branch_next_name()
+    _LOG.info("new_branch_name='%s'", new_branch_name)
+    # Create or go to the new branch.
+    new_branch_exists = hgit.does_branch_exist(new_branch_name)
+    if new_branch_exists:
+        cmd = f"git checkout {new_branch_name}"
+    else:
+        cmd = f"git checkout master && invoke git_create_branch -b '{new_branch_name}'"
+    _run(ctx, cmd)
+    if use_patch:
+        # TODO(gp): Apply the patch.
+        pass
+    #
+    cmd = f"git merge --squash --ff {curr_branch_name} && git reset HEAD"
+    _run(ctx, cmd)
 
 
 # TODO(gp): Add the following scripts:
@@ -2451,8 +2532,7 @@ def _run_test_cmd(
             coverage_rc = hsysinte.system(script_name)
             if coverage_rc != 0:
                 _LOG.warning(
-                    "Setting `rc` to `0` even though the coverage script"
-                    "fails."
+                    "Setting `rc` to `0` even though the coverage script fails."
                 )
                 rc = 0
     return rc

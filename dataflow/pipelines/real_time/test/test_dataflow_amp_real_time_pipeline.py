@@ -10,8 +10,7 @@ import dataflow.pipelines.real_time.pipeline as dtfpretipi
 import helpers.hasyncio as hasynci
 import helpers.unit_test as hunitest
 import market_data.market_data_interface_example as mdmdinex
-import oms.broker as ombroker
-import oms.portfolio as omportfo
+import oms.portfolio_example as oporexam
 
 _LOG = logging.getLogger(__name__)
 
@@ -163,32 +162,16 @@ class TestRealTimePipelineWithOms1(hunitest.TestCase):
                 }
             )
             # Build Portfolio.
-            # TODO(Paul): We want to have builder functions in the same class as
-            #  the objects to build "standard" objects.
-            strategy_id = "str1"
-            account = "paper"
-            asset_id_col = "asset_id"
-            mark_to_market_col = "price"
-            # mark_to_market_col = "close"
-            timestamp_col = "end_datetime"
-            broker = ombroker.Broker(market_data_interface, get_wall_clock_time)
             initial_timestamp = pd.Timestamp(
                 "2000-01-01 09:30:00-05:00", tz="America/New_York"
             )
-            portfolio = omportfo.Portfolio.from_cash(
-                strategy_id,
-                account,
-                market_data_interface,
-                get_wall_clock_time,
-                asset_id_col,
-                mark_to_market_col,
-                timestamp_col,
-                broker=broker,
-                initial_cash=1e6,
-                initial_timestamp=initial_timestamp,
+            portfolio = oporexam.get_simulated_portfolio_example1(
+                event_loop,
+                initial_timestamp,
+                market_data_interface=market_data_interface,
             )
-            order_type = "price@twap"
             # Populate place trades.
+            order_type = "price@twap"
             config["process_forecasts"]["process_forecasts_config"] = {
                 "market_data_interface": market_data_interface,
                 "portfolio": portfolio,

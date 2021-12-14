@@ -14,8 +14,8 @@ from typing import (
     Callable,
     Coroutine,
     Dict,
-    List,
     Iterator,
+    List,
     Optional,
     Tuple,
     Union,
@@ -197,7 +197,9 @@ def get_poll_kwargs(
     sleep_in_secs: float = 1.0,
     timeout_in_secs: float = 10.0,
 ) -> Dict[str, Any]:
-    # TODO(gp): Add checks.
+    hdbg.dassert_lt(0, sleep_in_secs)
+    hdbg.dassert_lt(0, timeout_in_secs)
+    hdbg.dassert_isinstance(get_wall_clock_time, Callable)
     poll_kwargs = {
         "sleep_in_secs": sleep_in_secs,
         "timeout_in_secs": timeout_in_secs,

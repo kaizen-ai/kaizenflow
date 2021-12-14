@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import oms.test.test_oms_db as ottodb
+"""
+
 import asyncio
 import logging
 from typing import Any, Callable, List
@@ -16,11 +22,21 @@ import oms.oms_db as oomsdb
 _LOG = logging.getLogger(__name__)
 
 
+# #############################################################################
+
+
+# TODO(gp): Move this to TestDbHelper although I am not sure it will work.
+@pytest.mark.skipif(
+    not hgit.execute_repo_config_code("has_dind_support()"),
+    reason="Need dind support",
+)
 class TestOmsDbHelper(hsqltest.TestDbHelper):
+    """
+    Configure the helper to build an OMS test DB.
+    """
+
     @staticmethod
     def _get_compose_file() -> str:
-        # TODO(gp): This information should be retrieved from oms_lib_tasks.py.
-        #  We can also use the invoke command.
         return "oms/devops/compose/docker-compose.yml"
 
     # TODO(Dan): Deprecate after #585.
@@ -32,7 +48,40 @@ class TestOmsDbHelper(hsqltest.TestDbHelper):
     def _get_service_name() -> str:
         return "oms_postgres_local"
 
+    def _test_create_table_helper(
+        self: Any,
+        table_name: str,
+        create_table_func: Callable,
+    ) -> None:
+        """
+        Run sanity check for a DB table.
 
+        - Test that the DB is up
+        - Remove the table `table_name`
+        - Create the table `table_name` using `create_table_func()`
+        - Check that the table exists
+        - Delete the table
+        """
+        # Verify that the DB is up.
+        db_list = hsql.get_db_names(self.connection)
+        _LOG.info("db_list=%s", db_list)
+        # Clean up the table.
+        hsql.remove_table(self.connection, table_name)
+        # The DB should not have this table.
+        db_tables = hsql.get_table_names(self.connection)
+        _LOG.info("get_table_names=%s", db_tables)
+        self.assertNotIn(table_name, db_tables)
+        # Create the table.
+        _ = create_table_func(self.connection, incremental=False)
+        # The table should be present.
+        db_tables = hsql.get_table_names(self.connection)
+        _LOG.info("get_table_names=%s", db_tables)
+        self.assertIn(table_name, db_tables)
+        # Delete the table.
+        hsql.remove_table(self.connection, table_name)
+
+
+# TODO(gp): This could become an invoke task.
 @pytest.mark.skip(reason="Run manually to clean up the DB")
 class TestOmsDbRemoveAllTables1(TestOmsDbHelper):
     """
@@ -43,45 +92,12 @@ class TestOmsDbRemoveAllTables1(TestOmsDbHelper):
         hsql.remove_all_tables(self.connection)
 
 
-def _test_create_table_helper(
-    self_: Any,
-    connection: hsql.DbConnection,
-    table_name: str,
-    create_table_func: Callable,
-) -> None:
-    """
-    Basic sanity check for a DB table.
-
-    - Test that the DB is up
-    - Remove the table `table_name`
-    - Create the table `table_name` using `create_table_func()`
-    - Check that the table exists
-    - Delete the table
-    """
-    # Verify that the DB is up.
-    db_list = hsql.get_db_names(connection)
-    _LOG.info("db_list=%s", db_list)
-    # Clean up the table.
-    hsql.remove_table(connection, table_name)
-    # The DB should not have this table.
-    db_tables = hsql.get_table_names(connection)
-    _LOG.info("get_table_names=%s", db_tables)
-    self_.assertNotIn(table_name, db_tables)
-    # Create the table.
-    _ = create_table_func(connection, incremental=False)
-    # The table should be present.
-    db_tables = hsql.get_table_names(connection)
-    _LOG.info("get_table_names=%s", db_tables)
-    self_.assertIn(table_name, db_tables)
-    # Delete the table.
-    hsql.remove_table(connection, table_name)
-
-
 # #############################################################################
 
 
 @pytest.mark.skipif(
-    hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
+    not hgit.execute_repo_config_code("has_dind_support()"),
+    reason="Need dind support",
 )
 class TestOmsDbSubmittedOrdersTable1(TestOmsDbHelper):
     """
@@ -95,9 +111,7 @@ class TestOmsDbSubmittedOrdersTable1(TestOmsDbHelper):
         """
         table_name = oomsdb.SUBMITTED_ORDERS_TABLE_NAME
         create_table_func = oomsdb.create_submitted_orders_table
-        _test_create_table_helper(
-            self, self.connection, table_name, create_table_func
-        )
+        self._test_create_table_helper(table_name, create_table_func)
 
 
 # #############################################################################
@@ -167,7 +181,8 @@ def _get_row3() -> pd.Series:
 
 
 @pytest.mark.skipif(
-    hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
+    not hgit.execute_repo_config_code("has_dind_support()"),
+    reason="Need dind support",
 )
 class TestOmsDbAcceptedOrdersTable1(TestOmsDbHelper):
     """
@@ -181,9 +196,7 @@ class TestOmsDbAcceptedOrdersTable1(TestOmsDbHelper):
         """
         table_name = oomsdb.ACCEPTED_ORDERS_TABLE_NAME
         create_table_func = oomsdb.create_accepted_orders_table
-        _test_create_table_helper(
-            self, self.connection, table_name, create_table_func
-        )
+        self._test_create_table_helper(table_name, create_table_func)
 
     @pytest.mark.slow("8 seconds.")
     def test_insert1(self) -> None:
@@ -206,15 +219,14 @@ class TestOmsDbAcceptedOrdersTable1(TestOmsDbHelper):
         # Check the content of the table.
         query = f"SELECT * FROM {table_name}"
         df = hsql.execute_query_to_df(self.connection, query)
-        act = hprint.dataframe_to_str(df)
-        # pylint: disable=line-too-long
-        exp = r"""
-           targetlistid   tradedate  instanceid                                                                filename strategyid        timestamp_processed               timestamp_db  target_count  changed_count  unchanged_count  cancel_count  success                                                     reason
-        0             1  2021-11-12        3504                                                         hello_world.txt       SAU1 2021-11-12 19:59:23.710677 2021-11-12 19:59:23.716732             1              0                0             0    False   "There were a total of 1 malformed requests in the file.
-        1             2  2021-11-12        3504  s3://targets/20211112000000/positions.16.2021-11-12_15:44:04-05:00.csv       SAU1 2021-11-12 20:45:07.463641 2021-11-12 20:45:07.469807             1              0                0             0    False  "There were a total of 1 malformed requests in the file."
-        2             5  2021-11-12        3504   s3://targets/20211112000000/positions.3.2021-11-12_16:38:22-05:00.csv       SAU1 2021-11-12 21:38:39.414138 2021-11-12 21:38:39.419536             1              1                0             0     True                                                           """
-        # pylint: enable=line-too-long
-        self.assert_equal(act, exp, fuzzy_match=True)
+        actual = hprint.dataframe_to_str(df)
+        expected = r"""
+        strategyid  targetlistid   tradedate  instanceid                                                                filename        timestamp_processed               timestamp_db  target_count  changed_count  unchanged_count  cancel_count  success                                                     reason
+        0       SAU1             1  2021-11-12        3504                                                         hello_world.txt 2021-11-12 19:59:23.710677 2021-11-12 19:59:23.716732       1              0                0             0    False   "There were a total of 1 malformed requests in the file.
+        1       SAU1             2  2021-11-12        3504  s3://targets/20211112000000/positions.16.2021-11-12_15:44:04-05:00.csv 2021-11-12 20:45:07.463641 2021-11-12 20:45:07.469807       1              0                0             0    False  "There were a total of 1 malformed requests in the file."
+        2       SAU1             5  2021-11-12        3504   s3://targets/20211112000000/positions.3.2021-11-12_16:38:22-05:00.csv 2021-11-12 21:38:39.414138 2021-11-12 21:38:39.419536       1              1                0             0     True
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
         # Delete the table.
         hsql.remove_table(self.connection, oomsdb.ACCEPTED_ORDERS_TABLE_NAME)
 
@@ -223,7 +235,8 @@ class TestOmsDbAcceptedOrdersTable1(TestOmsDbHelper):
 
 
 @pytest.mark.skipif(
-    hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
+    not hgit.execute_repo_config_code("has_dind_support()"),
+    reason="Need dind support",
 )
 class TestOmsDbTableInteraction1(TestOmsDbHelper):
     """
@@ -241,9 +254,9 @@ class TestOmsDbTableInteraction1(TestOmsDbHelper):
                 event_loop, *coroutines
             )
             res = hasynci.run(coroutine, event_loop=event_loop)
-            return res
         # Delete the table.
         hsql.remove_table(self.connection, oomsdb.ACCEPTED_ORDERS_TABLE_NAME)
+        return res
 
     @pytest.mark.slow("9 seconds.")
     def test_wait_for_table1(self) -> None:
@@ -335,3 +348,25 @@ class TestOmsDbTableInteraction1(TestOmsDbHelper):
         query = f"SELECT * FROM {table_name}"
         df = hsql.execute_query_to_df(self.connection, query)
         _LOG.debug("df=\n%s", hprint.dataframe_to_str(df, use_tabulate=False))
+
+
+# #############################################################################
+
+
+@pytest.mark.skipif(
+    not hgit.execute_repo_config_code("has_dind_support()"),
+    reason="Need dind support",
+)
+class TestOmsDbCurrentPositionsTable1(TestOmsDbHelper):
+    """
+    Test operations on the submitted orders table.
+    """
+
+    @pytest.mark.slow("9 seconds.")
+    def test_create_table1(self) -> None:
+        """
+        Test creating the table.
+        """
+        table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
+        create_table_func = oomsdb.create_current_positions_table
+        self._test_create_table_helper(table_name, create_table_func)

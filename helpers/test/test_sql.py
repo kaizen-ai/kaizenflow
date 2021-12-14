@@ -15,7 +15,8 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): helpers can't depend from im.
 @pytest.mark.skipif(
-    hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
+    not hgit.execute_repo_config_code("has_dind_support()"),
+    reason="Need dind support"
 )
 class TestSql1(imcodbuti.TestImDbHelper):
     @pytest.mark.slow("10 seconds.")

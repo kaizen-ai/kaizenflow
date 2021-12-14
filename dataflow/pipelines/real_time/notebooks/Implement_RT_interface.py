@@ -184,13 +184,13 @@ end_datetime = pd.Timestamp("2010-01-05 09:30:00", tz=hdateti.get_ET_tz())
 
 # Use a replayed real-time starting at the same time as the data.
 rrt = creatime.ReplayedTime(start_datetime, hdateti.get_current_time(tz="ET"))
-get_wall_clock_time = rrt.get_wall_clock_time
+get_wall_clock_time = rrt._get_wall_clock_time
 
 # %%
 import core.dataflow as cdtf
 
 execute_rt_loop_kwargs = {
-    "get_wall_clock_time": rrt.get_wall_clock_time,
+    "get_wall_clock_time": rrt._get_wall_clock_time,
     "sleep_interval_in_secs": 1.0,
     "num_iterations": 3,
 }

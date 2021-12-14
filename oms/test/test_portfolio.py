@@ -5,19 +5,27 @@ from typing import Any, Dict
 import pandas as pd
 
 import core.real_time as creatime
+import helpers.hasyncio as hasynci
+import helpers.printing as hprint
+import helpers.sql as hsql
 import helpers.unit_test as hunitest
 import market_data.market_data_interface as mdmadain
 import market_data.market_data_interface_example as mdmdinex
-import oms.broker as ombroker
+import oms.broker_example as obroexam
+import oms.oms_db as oomsdb
 import oms.portfolio as omportfo
 import oms.portfolio_example as oporexam
+import oms.test.test_oms_db as ottodb
 
 _LOG = logging.getLogger(__name__)
 
 _5mins = pd.DateOffset(minutes=5)
 
 
-class TestPortfolio1(hunitest.TestCase):
+# #############################################################################
+
+
+class TestSimulatedPortfolio1(hunitest.TestCase):
     def test_get_holdings1(self) -> None:
         """
         Check non-cash holdings for a Portfolio with only cash.
@@ -74,8 +82,10 @@ class TestPortfolio1(hunitest.TestCase):
         ) = mdmdinex.get_replayed_time_market_data_interface_example2(event_loop)
         # Build a Portfolio.
         initial_timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
-        portfolio = oporexam.get_portfolio_example1(
-            market_data_interface, initial_timestamp
+        portfolio = oporexam.get_simulated_portfolio_example1(
+            event_loop,
+            initial_timestamp,
+            market_data_interface=market_data_interface,
         )
         return portfolio
 
@@ -92,35 +102,23 @@ class TestPortfolio1(hunitest.TestCase):
 # #############################################################################
 
 
-class TestPortfolio2(hunitest.TestCase):
-    def test_initialization1(self) -> None:
-        # Build a ReplayedTimePriceInterface.
+class TestSimulatedPortfolio2(hunitest.TestCase):
+    def test_initialization_with_cash1(self) -> None:
+        """
+        Initialize a Portfolio with cash.
+        """
+        # Build ReplayedTimePriceInterface.
         event_loop = None
         (
             market_data_interface,
-            get_wall_clock_time,
+            _,
         ) = mdmdinex.get_replayed_time_market_data_interface_example2(event_loop)
-        # Build Broker.
-        broker = ombroker.Broker(market_data_interface, get_wall_clock_time)
-        # Build a Portfolio.
-        strategy_id = "str1"
-        account = "paper"
-        asset_id_col = "asset_id"
-        mark_to_market_col = "price"
-        timestamp_col = "end_datetime"
-        initial_cash = 1e6
+        # Build Portfolio.
         initial_timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
-        portfolio = omportfo.Portfolio.from_cash(
-            strategy_id,
-            account,
-            market_data_interface,
-            get_wall_clock_time,
-            asset_id_col,
-            mark_to_market_col,
-            timestamp_col,
-            broker=broker,
-            initial_cash=initial_cash,
-            initial_timestamp=initial_timestamp,
+        portfolio = oporexam.get_simulated_portfolio_example1(
+            event_loop,
+            initial_timestamp,
+            market_data_interface=market_data_interface,
         )
         # Check.
         txt = r"""
@@ -133,16 +131,21 @@ class TestPortfolio2(hunitest.TestCase):
         )
         self.assert_dfs_close(portfolio.holdings, expected)
 
-    def test_initialization2(self) -> None:
-        # Build a ReplayedTimePriceInterface.
+    def test_initialization_with_holdings1(self) -> None:
+        """
+        Initialize a Portfolio with holdings.
+        """
+        # Build ReplayedTimePriceInterface.
         event_loop = None
         (
             market_data_interface,
             get_wall_clock_time,
         ) = mdmdinex.get_replayed_time_market_data_interface_example2(event_loop)
         # Build Broker.
-        broker = ombroker.Broker(market_data_interface, get_wall_clock_time)
-        # Build a Portfolio.
+        broker = obroexam.get_simulated_broker_example1(
+            event_loop, market_data_interface=market_data_interface
+        )
+        # Build Portfolio.
         strategy_id = "str1"
         account = "paper"
         market_data_interface = market_data_interface
@@ -151,7 +154,7 @@ class TestPortfolio2(hunitest.TestCase):
         timestamp_col = "end_datetime"
         holdings_dict = {101: 727.5, 202: 1040.3, -1: 10000}
         initial_timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
-        portfolio = omportfo.Portfolio.from_dict(
+        portfolio = omportfo.SimulatedPortfolio.from_dict(
             strategy_id,
             account,
             market_data_interface,
@@ -181,29 +184,14 @@ class TestPortfolio2(hunitest.TestCase):
         event_loop = None
         (
             market_data_interface,
-            get_wall_clock_time,
+            _,
         ) = mdmdinex.get_replayed_time_market_data_interface_example2(event_loop)
-        # Build Broker.
-        broker = ombroker.Broker(market_data_interface, get_wall_clock_time)
-        # Build Portfolio.
-        strategy_id = "str1"
-        account = "paper"
-        asset_id_col = "asset_id"
-        mark_to_market_col = "price"
-        timestamp_col = "end_datetime"
-        initial_cash = 1e6
+        #
         initial_timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
-        portfolio = omportfo.Portfolio.from_cash(
-            strategy_id,
-            account,
-            market_data_interface,
-            get_wall_clock_time,
-            asset_id_col,
-            mark_to_market_col,
-            timestamp_col,
-            broker=broker,
-            initial_cash=initial_cash,
-            initial_timestamp=initial_timestamp,
+        portfolio = oporexam.get_simulated_portfolio_example1(
+            event_loop,
+            initial_timestamp,
+            market_data_interface=market_data_interface,
         )
         # Check.
         txt = r"""
@@ -231,16 +219,18 @@ leverage,0.0
             get_wall_clock_time,
         ) = mdmdinex.get_replayed_time_market_data_interface_example2(event_loop)
         # Build Broker.
-        broker = ombroker.Broker(market_data_interface, get_wall_clock_time)
+        broker = obroexam.get_simulated_broker_example1(
+            event_loop, market_data_interface=market_data_interface
+        )
         # Build Portfolio.
-        initial_timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
-        holdings_dict = {101: 727.5, 202: 1040.3, -1: 10000}
         strategy_id = "str1"
         account = "paper"
         asset_id_col = "asset_id"
         mark_to_market_col = "price"
         timestamp_col = "end_datetime"
-        portfolio = omportfo.Portfolio.from_dict(
+        holdings_dict = {101: 727.5, 202: 1040.3, -1: 10000}
+        initial_timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
+        portfolio = omportfo.SimulatedPortfolio.from_dict(
             strategy_id,
             account,
             market_data_interface,
@@ -298,25 +288,10 @@ start_datetime,end_datetime,asset_id,price
             columns=[],
             get_wall_clock_time=get_wall_clock_time,
         )
-        # Build Broker.
-        broker = ombroker.Broker(market_data_interface, get_wall_clock_time)
-        # Build Portfolio.
-        strategy_id = "str1"
-        account = "paper"
-        asset_id_col = "asset_id"
-        mark_to_market_col = "price"
-        timestamp_col = "end_datetime"
-        portfolio = omportfo.Portfolio.from_cash(
-            strategy_id,
-            account,
-            market_data_interface,
-            get_wall_clock_time,
-            asset_id_col,
-            mark_to_market_col,
-            timestamp_col,
-            broker=broker,
-            initial_cash=1e6,
-            initial_timestamp=initial_timestamp,
+        portfolio = oporexam.get_simulated_portfolio_example1(
+            event_loop,
+            initial_timestamp,
+            market_data_interface=market_data_interface,
         )
         # Check.
         txt = r"""
@@ -335,3 +310,118 @@ leverage,0.0
         expected.columns = [initial_timestamp]
         actual = portfolio.get_characteristics(initial_timestamp)
         self.assert_dfs_close(actual.to_frame(), expected, rtol=1e-2, atol=1e-2)
+
+
+# #############################################################################
+
+
+def _get_row1() -> pd.Series:
+    row = """
+    strategyid,SAU1
+    account,candidate
+    id,0
+    tradedate,2000-01-01
+    timestamp_db,2000-01-01 21:38:39.419536
+    asset_id,101
+    target_position,10
+    current_position,20.0
+    open_quantity,0
+    net_cost,0
+    bod_position,0
+    bod_price,0
+    """
+    srs = hsql.csv_to_series(row, sep=",")
+    return srs
+
+
+def _get_row2() -> pd.Series:
+    row = """
+    strategyid,SAU1
+    account,candidate
+    id,0
+    tradedate,2000-01-01
+    timestamp_db,2000-01-01 21:38:39.419536
+    asset_id,101
+    target_position,10
+    current_position,20.0
+    open_quantity,0
+    net_cost,1903.1217
+    bod_position,0
+    bod_price,0
+    """
+    srs = hsql.csv_to_series(row, sep=",")
+    return srs
+
+
+class TestMockedPortfolio1(ottodb.TestOmsDbHelper):
+    def test1(self) -> None:
+        """
+        Test that the update of Portfolio works.
+        """
+        with hasynci.solipsism_context() as event_loop:
+            # Create current positions in the table.
+            row = _get_row1()
+            table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
+            oomsdb.create_current_positions_table(
+                self.connection, incremental=False, table_name=table_name
+            )
+            hsql.execute_insert_query(self.connection, row, table_name)
+            if False:
+                # Print the DB status.
+                query = """SELECT * FROM current_positions"""
+                df = hsql.execute_query_to_df(self.connection, query)
+                print(hprint.dataframe_to_str(df))
+                assert 0
+            #
+            # Create MockedPortfolio with some initial cash.
+            initial_timestamp = pd.Timestamp(
+                "2000-01-01 09:30:00-05:00", tz="America/New_York"
+            )
+            portfolio = oporexam.get_mocked_portfolio_example1(
+                event_loop, self.connection, table_name, initial_timestamp
+            )
+            portfolio.update_state()
+            # Check.
+            actual = str(portfolio)
+            expected = r"""# holdings=
+                                       asset_id  curr_num_shares
+            2000-01-01 09:35:00-05:00       101               20
+            2000-01-01 09:35:00-05:00        -1          1000000
+            2000-01-01 09:30:00-05:00        -1          1000000"""
+            self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test2(self) -> None:
+        """
+        Test that the update of Portfolio works when accounting for costs.
+        """
+        with hasynci.solipsism_context() as event_loop:
+            # Create current positions in the table.
+            row = _get_row2()
+            table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
+            oomsdb.create_current_positions_table(
+                self.connection, incremental=False, table_name=table_name
+            )
+            hsql.execute_insert_query(self.connection, row, table_name)
+            if False:
+                # Print the DB status.
+                query = """SELECT * FROM current_positions"""
+                df = hsql.execute_query_to_df(self.connection, query)
+                print(hprint.dataframe_to_str(df))
+                assert 0
+            #
+            # Create MockedPortfolio with some initial cash.
+            initial_timestamp = pd.Timestamp(
+                "2000-01-01 09:30:00-05:00", tz="America/New_York"
+            )
+            portfolio = oporexam.get_mocked_portfolio_example1(
+                event_loop, self.connection, table_name, initial_timestamp
+            )
+            portfolio.update_state()
+            # Check.
+            actual = str(portfolio)
+            expected = r"""# holdings=
+                                       asset_id  curr_num_shares
+            2000-01-01 09:35:00-05:00       101          20.0
+            2000-01-01 09:35:00-05:00        -1      998096.8783
+            2000-01-01 09:30:00-05:00        -1     1000000.0"""
+            self.assert_equal(actual, expected, fuzzy_match=True)

@@ -19,32 +19,36 @@ _LOG = logging.getLogger(__name__)
 
 class TestDbHelper(hunitest.TestCase, abc.ABC):
     """
-    This class allows to test code that interacts with DB.
+    This class allows testing code that interacts with a DB.
 
-    It creates / destroys a test DB during setup / teardown.
+    It creates / destroys a test DB during setup / teardown of the class. This means
+    that the same DB is reused for multiple test methods of the same class.
 
-    A user can create a persistent local DB in the Docker container, e.g.
-    ```
-    # Create an OMS DB inside Docker for local stage
-    docker> (cd oms; sudo docker-compose \
-        --file /app/oms/devops/compose/docker-compose.yml up \
-        -d \
-        oms_postgres_local)
-    # or
-    docker> invoke oms_docker_up
-    ```
-    and then the creation / destruction of the DB is skipped making the tests
-    faster and allowing easier debugging.
-
-    The invariant is that each test should:
+    The invariant is that each test method should:
     - (ideally) find a clean DB to work with
     - not assume that the DB is clean. If the DB is not clean, tests should clean it
-      or work around it
-      - E.g., if a test needs to write a table and the table is already present and
-        partially filled, as a leftover from a previous test, the new test should delete
-        it and then create it again
-    - clean after themselves, i.e., undo the work that has been done
-      - E.g., if a test creates a table, then it should delete it at the end of the test
+      before starting, or work around it
+      - E.g., if a test needs to write a table, but the table is already present and
+        partially filled as a leftover from a previous test, the new test should
+        delete the table and create it again
+    - clean the DB after themselves, i.e., undo the work that has been done
+      - E.g., if a test creates a table, then the test should delete the table at
+        the end of the test
+
+    - An existing DB can be reused
+      - A user can create a persistent local DB in the Docker container, e.g. for OMS:
+        ```
+        docker> (cd oms; sudo docker-compose \
+                    --file /app/oms/devops/compose/docker-compose.yml up \
+                    -d \
+                    oms_postgres_local)
+        ```
+        or
+        ```
+        docker> invoke oms_docker_up
+        ```
+      - Then this class skips creating / destructing the DB, making the tests faster
+        and allowing easier debugging.
     """
 
     @classmethod
@@ -82,6 +86,7 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
             hsql.wait_db_connection(host, dbname, port, user, password)
             cls.bring_down_db = True
         # Save connection info.
+        # TODO(gp): -> db_connection
         cls.connection = hsql.get_connection(
             host, dbname, port, user, password, autocommit=True
         )

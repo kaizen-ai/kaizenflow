@@ -491,6 +491,7 @@ def remove_all_tables(connection: DbConnection, cascade: bool = False) -> None:
 # #############################################################################
 
 
+# TODO(gp): -> as_df
 def execute_query_to_df(
     connection: DbConnection,
     query: str,
@@ -714,7 +715,7 @@ def is_row_with_value_present(
     _LOG.debug(hprint.to_str("connection table_name field_name target_value"))
     # Print the state of the DB, if needed.
     if show_db_state:
-        query = f"SELECT * FROM {table_name}"
+        query = f"SELECT * FROM {table_name} ORDER BY filename"
         df = execute_query_to_df(connection, query)
         _LOG.debug("df=\n%s", hprint.dataframe_to_str(df, use_tabulate=False))
     # Check if the required row is available.

@@ -11,7 +11,8 @@ _LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.skipif(
-    hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
+    not hgit.execute_repo_config_code("has_dind_support()"),
+    reason="Need dind support"
 )
 class TestCreateDb1(imvcodbut.TestImDbHelper):
     @pytest.mark.slow("11 seconds.")
