@@ -283,7 +283,6 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         )
         return processed_data
 
-    @property
     @abc.abstractmethod
     def _ext(self) -> str:
         """
