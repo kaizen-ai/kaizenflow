@@ -19,7 +19,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): This was branched from im/im_lib_tasks.py. We should factor out the
-#  common part.
+#  common part CMTask #496.
 
 
 def get_db_env_path(stage: str) -> str:
