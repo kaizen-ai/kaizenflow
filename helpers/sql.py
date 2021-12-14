@@ -28,12 +28,12 @@ _LOG = logging.getLogger(__name__)
 # Connection
 # #############################################################################
 
-# TODO(gp): mypy doesn't like this. Understand why and / or inline.
+# TODO(gp): mypy doesn't like this. Understand why and / or inline CMTask #756.
 DbConnection = psycop.extensions.connection
 
 
 # Invariant: keep the arguments in the interface in the same order as:
-# host, dbname, port, user, password
+# host, dbname, port, user, password.
 DbConnectionInfo = collections.namedtuple(
     "DbConnectionInfo", ["host", "dbname", "port", "user", "password"]
 )
@@ -98,7 +98,7 @@ def get_connection_from_string(
     connection = psycop.connect(conn_as_str)
     if autocommit:
         connection.autocommit = True
-    return connection
+    return connection  # type: ignore[no-any-return]
 
 
 def check_db_connection(
@@ -232,6 +232,7 @@ def get_indexes(connection: DbConnection) -> pd.DataFrame:
 def disconnect_all_clients(connection: DbConnection) -> None:
     # From https://stackoverflow.com/questions/36502401
     # Not sure this will work in our case, since it might kill our own connection.
+    dbname = connection.info.host
     query = f"""
         SELECT pg_terminate_backend(pid)
             FROM pg_stat_activity
@@ -535,7 +536,7 @@ def execute_query_to_df(
 # #############################################################################
 
 
-def csv_to_series(csv_as_txt: str, sep=",") -> pd.Series:
+def csv_to_series(csv_as_txt: str, sep: str = ",") -> pd.Series:
     """
     Convert a text with (key, value) separated by `sep` into a `pd.Series`.
 
@@ -545,6 +546,7 @@ def csv_to_series(csv_as_txt: str, sep=",") -> pd.Series:
         tradedate,2021-11-12
         targetlistid,1
         ```
+    :param sep: csv separator, e.g. `,`
     :return: series
     """
     lines = hprint.dedent(csv_as_txt).split("\n")
@@ -682,7 +684,7 @@ def get_num_rows(connection: DbConnection, table_name: str) -> int:
     cursor.execute(query)
     vals = cursor.fetchall()
     hdbg.dassert_eq(len(vals), 1)
-    return vals[0]
+    return vals[0]  # type: ignore[no-any-return]
 
 
 # #############################################################################
