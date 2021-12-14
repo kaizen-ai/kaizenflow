@@ -900,6 +900,13 @@ def _dassert_current_dir_matches(dir_name: str) -> None:
                     curr_dir_name, dir_name)
 
 
+def _dassert_is_integration_branch() -> None:
+    curr_branch = hgit.get_branch_name()
+    hdbg.dassert_ne(curr_branch, "master")
+    hdbg.dassert_in("Integrate", curr_branch)
+
+
+
 @task
 def integrate_create_branches(ctx, dir_name, dry_run=False):  # type: ignore
     """
@@ -910,6 +917,8 @@ def integrate_create_branches(ctx, dir_name, dry_run=False):  # type: ignore
     _report_task()
     #
     _dassert_current_dir_matches(dir_name)
+    _dassert_is_integration_branch()
+    #
     date = datetime.datetime.now().date()
     date_as_str = date.strftime("%Y%m%d")
     branch_name = f"AmpTask1786_Integrate_{date_as_str}"
@@ -920,7 +929,6 @@ def integrate_create_branches(ctx, dir_name, dry_run=False):  # type: ignore
 
 
 def _get_src_dst_dirs(src_dir: str, dst_dir: str, subdir_name: str) -> Tuple[str, str]:
-    _dassert_current_dir_matches(src_dir)
     root_dir = os.path.dirname(os.getcwd())
     #
     src_dir = os.path.join(root_dir, src_dir, subdir_name)
@@ -944,8 +952,10 @@ def integrate_diff_dirs(ctx, src_dir="amp1", dst_dir="cmamp1", subdir_name="", u
     """
     _report_task()
     #
-    src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir_name)
+    _dassert_current_dir_matches(src_dir)
+    _dassert_is_integration_branch()
     #
+    src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir_name)
     if use_linux_diff:
         cmd = f"diff -r --brief {src_dir} {dst_dir}"
     else:
@@ -962,8 +972,9 @@ def integrate_copy_dirs(ctx, src_dir="amp1", dst_dir="cmamp1", subdir_name="", d
     """
     _report_task()
     #
-    src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir_name)
+    _dassert_is_integration_branch()
     #
+    src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir_name)
     if dry_run:
         cmd = f"diff -r --brief {src_dir} {dst_dir}"
     else:
@@ -979,6 +990,7 @@ def integrate_save_base_files(ctx, file_name):  # type: ignore
     """
     _report_task()
     _ = ctx
+    _dassert_is_integration_branch()
     # Find the hash before the branch was created
     # > git merge-base master AmpTask1786_Integrate_20211210
     # 77383ac21bbd3fa353f9572ac3ae9ad144c44db1
