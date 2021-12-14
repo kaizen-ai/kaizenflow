@@ -205,7 +205,7 @@ def _get_create_db_cmd(
     cmd = ["docker-compose"]
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
-    cmd.append(f"run --rm im_app")
+    cmd.append("run --rm im_app")
     cmd.append("im_v2/common/db/create_db.py")
     cmd.append(f"--db-name '{dbname}'")
     if overwrite:
@@ -218,12 +218,12 @@ def _get_create_db_cmd(
 
 # TODO(Dan3): add unit tests for `im_create_db` #547.
 @task
-def im_create_db(
+def im_create_db(  # type: ignore
     ctx,
     dbname,
     overwrite=False,
     credentials="from_env",
-):  # type: ignore
+):
     """
     Create database inside a container attached to the `im app`.
 
@@ -272,7 +272,7 @@ def _get_remove_db_cmd(
     cmd = ["docker-compose"]
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
-    cmd.append(f"run --rm im_app")
+    cmd.append("run --rm im_app")
     cmd.append("im_v2/common/db/remove_db.py")
     cmd.append(f"--db-name '{dbname}'")
     # Add quotes so that credentials as string are handled properly by invoke.
@@ -283,11 +283,11 @@ def _get_remove_db_cmd(
 
 # TODO(Dan3): add unit tests for `im_remove_db` #547.
 @task
-def im_remove_db(
+def im_remove_db(  # type: ignore
     ctx,
     dbname,
     credentials="from_env",
-):  # type: ignore
+):
     """
     Remove database inside a container attached to the `im app`.
 

@@ -37,7 +37,7 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
     ```
     and then the creation / destruction of the DB is skipped making the tests
     faster and allowing easier debugging.
-    
+
     The invariant is that each test should:
     - (ideally) find a clean DB to work with
     - not assume that the DB is clean. If the DB is not clean, tests should clean it
