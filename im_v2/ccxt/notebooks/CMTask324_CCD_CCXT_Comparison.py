@@ -18,6 +18,7 @@
 # %%
 import logging
 import os
+
 import pandas as pd
 
 import helpers.dbg as hdbg
@@ -70,13 +71,19 @@ display(currency_pair_intersection)
 # %%
 # Full symbols that are included in CCXT but not in CDD.
 ccxt_and_not_cdd = set(ccxt_universe).difference(universe_cdd)
-_LOG.info("Number of full symbols that are included in CCXT but not in CDD: %s", len(ccxt_and_not_cdd))
+_LOG.info(
+    "Number of full symbols that are included in CCXT but not in CDD: %s",
+    len(ccxt_and_not_cdd),
+)
 display(ccxt_and_not_cdd)
 
 # %%
 # Full symbols that are included in CDD but not in CCXT.
 cdd_and_not_ccxt = set(universe_cdd).difference(ccxt_universe)
-_LOG.info("Number of full symbols that are included in CDD but not in CCXT: %s", len(cdd_and_not_ccxt))
+_LOG.info(
+    "Number of full symbols that are included in CDD but not in CCXT: %s",
+    len(cdd_and_not_ccxt),
+)
 display(cdd_and_not_ccxt)
 
 # %% [markdown]
@@ -152,19 +159,17 @@ cdd_binance_df["currency_pair"] = cdd_binance_df["currency_pair"].str.replace(
 
 
 # %%
-def resample_ohlcv_dataframe(
-    df: pd.DataFrame, 
-    resampling_freq: str
-) -> pd.Series:
+def resample_ohlcv_dataframe(df: pd.DataFrame, resampling_freq: str) -> pd.Series:
     """
-    Transform OHLCV data to the grouped series with resampled frequency and last close prices.
-    
+    Transform OHLCV data to the grouped series with resampled frequency and
+    last close prices.
+
     :param df: OHLCV data
     :param resampling_freq: frequency from `pd.date_range()` to resample to
     :return: grouped and resampled close prices
     """
     # Reseting DateTime index, since pd.Grouper can't use index values.
-    df=df.reset_index().rename(columns={"index": "stamp"})
+    df = df.reset_index().rename(columns={"index": "stamp"})
     # Group by currency pairs and simultaneously resample to the desired frequency.
     resampler = df.groupby(
         ["currency_pair", pd.Grouper(key="stamp", freq=resampling_freq)]
@@ -176,14 +181,12 @@ def resample_ohlcv_dataframe(
 
 # %%
 def calculate_correlations(
-    ccxt_series: pd.Series,
-    cdd_series: pd.Series,
-    compute_returns: bool
+    ccxt_series: pd.Series, cdd_series: pd.Series, compute_returns: bool
 ) -> pd.DataFrame:
     """
-    Take two series with close prices(i.e. CDD and CCXT data) and calculate the correlations 
-    for each specific currency pair.
-    
+    Take two series with close prices(i.e. CDD and CCXT data) and calculate the
+    correlations for each specific currency pair.
+
     :param ccxt_series: grouped and resampled close prices for CCXT
     :param cdd_series: grouped and resampled close prices for CDD
     :param compute_returns: if True - compare returns, if False - compare close prices
@@ -196,7 +199,9 @@ def calculate_correlations(
         grouper_ccxt = ccxt_series.groupby("currency_pair")
         ccxt_series = grouper_ccxt.pct_change()
     # Combine and calculate correlations.
-    combined = pd.merge(cdd_series, ccxt_series,left_index=True,right_index=True)
+    combined = pd.merge(
+        cdd_series, ccxt_series, left_index=True, right_index=True
+    )
     # Rename the columns.
     if compute_returns:
         combined.columns = ["ccxt_returns", "cdd_returns"]
@@ -219,19 +224,25 @@ cdd_binance_series_5min = resample_ohlcv_dataframe(cdd_binance_df, "5min")
 # ### 1-day returns
 
 # %%
-returns_corr_1day = calculate_correlations(ccxt_binance_series_1d,cdd_binance_series_1d,compute_returns=True)
+returns_corr_1day = calculate_correlations(
+    ccxt_binance_series_1d, cdd_binance_series_1d, compute_returns=True
+)
 display(returns_corr_1day)
 
 # %% [markdown]
 # ### 5-min returns
 
 # %%
-returns_corr_5min = calculate_correlations(ccxt_binance_series_5min,cdd_binance_series_5min,compute_returns=True)
+returns_corr_5min = calculate_correlations(
+    ccxt_binance_series_5min, cdd_binance_series_5min, compute_returns=True
+)
 display(returns_corr_5min)
 
 # %% [markdown]
 # ## Compare close prices
 
 # %%
-close_corr_1day = calculate_correlations(ccxt_binance_series_1d,cdd_binance_series_1d,compute_returns=False)
+close_corr_1day = calculate_correlations(
+    ccxt_binance_series_1d, cdd_binance_series_1d, compute_returns=False
+)
 display(close_corr_1day)
