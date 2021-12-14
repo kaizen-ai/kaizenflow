@@ -699,7 +699,7 @@ def is_row_with_value_present(
     field_name: str,
     target_value: str,
     *,
-    show_db_state: bool = False,
+    show_db_state: bool = True,
 ) -> hasynci.PollOutput:
     """
     A polling function that checks if a row with `field_name` == `target_value`
