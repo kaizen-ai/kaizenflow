@@ -32,7 +32,7 @@ _DATA_TYPES = ["ohlcv"]
 
 class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
     """
-    Abstract Interface for CCXT client.
+    Abstract interface for CCXT client.
     """
 
     def __init__(self, data_type: str) -> None:
@@ -215,7 +215,7 @@ class CcxtDbClient(AbstractCcxtClient):
 
 class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
     """
-    Abstract Interface for CCXT filesystem client.
+    Abstract interface for CCXT filesystem client.
     """
 
     def __init__(
@@ -272,10 +272,7 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
             file_path,
         )
         data = self._read_data_from_filesystem(
-            file_path=file_path,
-            start_ts=start_ts,
-            end_ts=end_ts,
-            **read_kwargs,
+            file_path, start_ts, end_ts, **read_kwargs,
         )
         # Apply transformation to raw data.
         _LOG.info(
@@ -291,7 +288,7 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
     @abc.abstractmethod
     def _get_file_extension(self) -> str:
         """
-        Set file extension.
+        Return the file extension of files that are expected by this class.
         """
 
     @abc.abstractmethod
@@ -299,8 +296,8 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         self,
         file_path: str,
         *,
-        start_ts: Optional[pd.Timestamp] = None,
-        end_ts: Optional[pd.Timestamp] = None,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
         **read_kwargs: Any,
     ) -> pd.DataFrame:
         """
@@ -393,8 +390,8 @@ class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
     def _read_data_from_filesystem(
         file_path: str,
         *,
-        start_ts: Optional[pd.Timestamp] = None,
-        end_ts: Optional[pd.Timestamp] = None,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
         **read_kwargs: Any,
     ) -> pd.DataFrame:
         """
@@ -425,8 +422,8 @@ class CcxtParquetFileSystemClient(AbstractCcxtFileSystemClient):
     def _read_data_from_filesystem(
         file_path: str,
         *,
-        start_ts: Optional[pd.Timestamp] = None,
-        end_ts: Optional[pd.Timestamp] = None,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
         **read_kwargs: Any,
     ) -> pd.DataFrame:
         """
