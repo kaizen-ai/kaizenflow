@@ -12,7 +12,6 @@ import re
 import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import dotenv
 import pandas as pd
 import psycopg2 as psycop
 import psycopg2.extras as extras
@@ -66,6 +65,7 @@ def get_connection_from_env_vars() -> DbConnection:
     variables.
     """
     # Get values from the environment variables.
+    # TODO(gp): -> POSTGRES_DBNAME
     host = os.environ["POSTGRES_HOST"]
     dbname = os.environ["POSTGRES_DB"]
     port = int(os.environ["POSTGRES_PORT"])
@@ -99,25 +99,6 @@ def get_connection_from_string(
     if autocommit:
         connection.autocommit = True
     return connection  # type: ignore[no-any-return]
-
-
-def get_connection_info_from_env_file(env_file_path: str) -> DbConnectionInfo:
-    """
-    Get connection parameters from environment file.
-
-    :param env_file_path: path to an environment file that contains db connection parameters
-    """
-    db_config = dotenv.dotenv_values(env_file_path)
-    # The parameters' names are fixed and cannot be changed, see
-    # `https:://hub.docker.com/_/postgres`.
-    connection_parameters = DbConnectionInfo(
-        host=db_config["POSTGRES_HOST"],
-        dbname=db_config["POSTGRES_DB"],
-        port=int(db_config["POSTGRES_PORT"]),
-        user=db_config["POSTGRES_USER"],
-        password=db_config["POSTGRES_PASSWORD"],
-    )
-    return connection_parameters
 
 
 def check_db_connection(
@@ -653,19 +634,6 @@ def execute_insert_query(
     connection.commit()
 
 
-def execute_query(connection: DbConnection, query: str) -> None:
-    """
-    Used for generic simple operations.
-
-    :param connection: connection to the DB
-    :param query: generic query that can be: insert, update, delete, etc.
-    """
-    with connection.cursor() as cursor:
-        cursor.execute(query)
-        if not connection.autocommit:
-            connection.commit()
-
-
 # #############################################################################
 # Build more complex SQL queries.
 # #############################################################################
@@ -769,11 +737,11 @@ async def wait_for_change_in_number_of_rows(
 
     :param poll_kwargs: a dictionary with the kwargs for `poll()`.
     """
-    num_orders = get_num_rows(connection, table_name)
+    num_rows = get_num_rows(connection, table_name)
 
     def _is_number_of_rows_changed() -> hasynci.PollOutput:
-        new_num_orders = get_num_rows(connection, table_name)
-        success = new_num_orders != num_orders
+        new_num_rows = get_num_rows(connection, table_name)
+        success = new_num_rows != num_rows
         result_tmp = None
         return success, result_tmp
 

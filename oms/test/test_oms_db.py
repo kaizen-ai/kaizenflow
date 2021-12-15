@@ -17,8 +17,9 @@ import helpers.hasyncio as hasynci
 import helpers.hsql_test as hsqltest
 import helpers.printing as hprint
 import helpers.sql as hsql
+import oms.broker_example as obroexam
 import oms.oms_db as oomsdb
-import oms.oms_lib_tasks as oomlitas
+import oms.order_example as oordexam
 
 _LOG = logging.getLogger(__name__)
 
@@ -27,10 +28,10 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): Move this to TestDbHelper although I am not sure it will work.
-@pytest.mark.skipif(
-    not hgit.execute_repo_config_code("has_dind_support()"),
-    reason="Need dind support",
-)
+# @pytest.mark.skipif(
+#     not hgit.execute_repo_config_code("has_dind_support()"),
+#     reason="Need dind support",
+# )
 class TestOmsDbHelper(hsqltest.TestDbHelper):
     """
     Configure the helper to build an OMS test DB.
@@ -376,3 +377,67 @@ class TestOmsDbCurrentPositionsTable1(TestOmsDbHelper):
         table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
         create_table_func = oomsdb.create_current_positions_table
         self._test_create_table_helper(table_name, create_table_func)
+
+
+# #############################################################################
+
+
+@pytest.mark.skipif(
+    not hgit.execute_repo_config_code("has_dind_support()"),
+    reason="Need dind support",
+)
+class TestOmsDbOrderProcessor1(TestOmsDbHelper):
+    """
+    Test operations on the submitted orders table.
+    """
+
+    def test1(self) -> None:
+        """
+        Test creating the table.
+        """
+        # Create OMS tables.
+        oomsdb.create_oms_tables(self.connection, incremental=False)
+
+        #
+        with hasynci.solipsism_context() as event_loop:
+            # Build MockedBroker.
+            broker = obroexam.get_mocked_broker_example1(
+                event_loop, self.connection
+            )
+            #
+            async_broker = self._broker_thread(event_loop, broker)
+            # Build OrderProcessor.
+            get_wall_clock_time = broker.market_data_interface.get_wall_clock_time
+            poll_kwargs = hasynci.get_poll_kwargs(get_wall_clock_time)
+            delay_to_accept_in_secs = 3
+            delay_to_fill_in_secs = 10
+            order_processor = oomsdb.order_processor(
+                self.connection,
+                poll_kwargs,
+                delay_to_accept_in_secs,
+                delay_to_fill_in_secs,
+                broker,
+            )
+            #
+            coroutines = [order_processor, async_broker]
+            hasynci.run(asyncio.gather(*coroutines), event_loop=event_loop)
+
+    async def _order_processor_thread(
+        self,
+        event_loop: asyncio.AbstractEventLoop,
+        broker,
+    ) -> None:
+        # Kick off the OrderProcessor.
+        # Wait.
+        pass
+
+    async def _broker_thread(
+        self,
+        event_loop: asyncio.AbstractEventLoop,
+        broker,
+    ) -> None:
+        await asyncio.sleep(1)
+        # Create an order.
+        order = oordexam.get_order_example1()
+        # Submit the order to the broker.
+        broker.submit_orders([order])

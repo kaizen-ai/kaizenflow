@@ -182,8 +182,8 @@ class AbstractBroker(abc.ABC):
         return wall_clock_timestamp
 
     def _get_next_submitted_order_id(self) -> int:
-        submitted_order_id = self._submitted_order_id
-        self._submitted_order_id += 1
+        submitted_order_id = AbstractBroker._submitted_order_id
+        AbstractBroker._submitted_order_id += 1
         return submitted_order_id
 
 
@@ -293,6 +293,7 @@ class MockedBroker(AbstractBroker):
         self._db_connection = db_connection
         self._submitted_orders_table_name = submitted_orders_table_name
         self._accepted_orders_table_name = accepted_orders_table_name
+        self._submissions = collections.OrderedDict()
 
     def _submit_orders(
         self,
@@ -312,14 +313,32 @@ class MockedBroker(AbstractBroker):
         index = ["filename", "timestamp_db", "orders_as_txt"]
         data = [file_name, timestamp_db, orders_as_txt]
         row = pd.Series(data, index=index)
+        self._submissions[timestamp_db] = row
         hsql.execute_insert_query(
             self._db_connection, row, self._submitted_orders_table_name
         )
-        # TODO(gp): Wait on `OmsDb.processed_orders`.
+        # Poll accepted orders and wait.
+        # This is the only place where this object is using
+        # `accepted_orders_table`.
+        # coro = oomsdb.wait_for_order_accepted(
+        #    self.connection, target_value, poll_kwargs
+        # )
 
-    def _get_fills(self, curr_timestamp: pd.Timestamp) -> List[Fill]:
+    def _get_fills(self, as_of_timestamp: pd.Timestamp) -> List[Fill]:
         """
         The reference system doesn't return fills but directly updates the
         state of a table representing the current holdings.
         """
-        raise NotImplementedError
+        latest_submission_timestamp = next(reversed(self._submissions))
+        latest_submission = self._submissions[latest_submission_timestamp]
+        orders_as_txt = latest_submission["orders_as_txt"]
+        orders = omorder.orders_from_string(orders_as_txt)
+        wall_clock_timestamp = self.market_data_interface.get_wall_clock_time()
+        fills = []
+        for order in orders:
+            # TODO: get the price from the market data interface.
+            # price = self.market_data_interface.get_data_at_timestamp(
+            # )
+            fill = Fill(order, wall_clock_timestamp, order.num_shares, 100.0)
+            fills.append(fill)
+        return fills
