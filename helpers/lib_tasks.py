@@ -397,15 +397,21 @@ def git_pull_master(ctx):  # type: ignore
 
 
 @task
-def git_merge_master(ctx):  # type: ignore
+def git_merge_master(ctx, ff_only=False, abort_if_not_clean=True):  # type: ignore
     """
-    Merge `origin/master` into this branch.
+    Merge `origin/master` into the current branch.
+
+    :param ff_only: abort if fast-forward is not possible
     """
     _report_task()
-    # TODO(gp): Check that we are in a branch and that the branch is clean.
+    # Check that the Git client is clean.
+    hgit.is_client_clean(dir_name=".", abort_if_not_clean=abort_if_not_clean)
+    # Pull master.
     git_pull_master(ctx)
-    #
+    # Merge master.
     cmd = "git merge master"
+    if ff_only:
+        cmd += " --ff-only"
     _run(ctx, cmd)
 
 

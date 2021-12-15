@@ -32,6 +32,12 @@ services:
       - ~/.config/gh:/home/.config/gh
       # No need to mount file systems.
       #- ../docker_build/fstab:/etc/fstab
+      #deploy:
+      #  resources:
+      #    limits:
+      #      # This should be passed from command line depending on how much
+      #      # memory is available.
+      #      memory: 60G
 
   # Mount `amp` when it is used as supermodule.
   app:
