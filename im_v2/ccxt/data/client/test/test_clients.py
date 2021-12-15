@@ -24,7 +24,7 @@ class TestGetFilePath(hunitest.TestCase):
         """
         exchange_id = "binance"
         currency_pair = "ETH_USDT"
-        ccxt_loader = imvcdclcl.CcxtFileSystemClient(
+        ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         actual = ccxt_loader._get_file_path(
@@ -42,7 +42,7 @@ class TestGetFilePath(hunitest.TestCase):
         """
         exchange_id = "unsupported exchange"
         currency_pair = "ADA_USDT"
-        ccxt_loader = imvcdclcl.CcxtFileSystemClient(
+        ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         # TODO(gp): We should throw a different exception, like
@@ -59,7 +59,7 @@ class TestGetFilePath(hunitest.TestCase):
         """
         exchange_id = "binance"
         currency_pair = "unsupported_currency"
-        ccxt_loader = imvcdclcl.CcxtFileSystemClient(
+        ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         # TODO(gp): Same change also for CDD test_loader.py
@@ -180,6 +180,7 @@ class TestCcxtDbClient(imcodbuti.TestImDbHelper):
 # #############################################################################
 
 
+# TODO(Dan): Rename test class name in #759.
 # TODO(*): Consider to factor out the class calling in a `def _get_loader()`.
 class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
     @pytest.mark.slow("8 seconds.")
@@ -187,7 +188,7 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
         """
         Test that files on S3 are being read correctly.
         """
-        ccxt_loader = imvcdclcl.CcxtFileSystemClient(
+        ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         actual = ccxt_loader.read_data("binance::BTC_USDT")
@@ -200,7 +201,7 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
         """
         Test that files on S3 are being filtered correctly.
         """
-        ccxt_loader = imvcdclcl.CcxtFileSystemClient(
+        ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         actual = ccxt_loader.read_data(
@@ -217,7 +218,7 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
         """
         Test that files on S3 are being read correctly without normalization.
         """
-        ccxt_loader = imvcdclcl.CcxtFileSystemClient(
+        ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         actual = ccxt_loader.read_data(
@@ -232,7 +233,7 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
         """
         Test unsupported full symbol.
         """
-        ccxt_loader = imvcdclcl.CcxtFileSystemClient(
+        ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         with self.assertRaises(AssertionError):
@@ -243,7 +244,7 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
         Test unsupported data type.
         """
         with self.assertRaises(AssertionError):
-            imvcdclcl.CcxtFileSystemClient(
+            imvcdclcl.CcxtCsvFileSystemClient(
                 data_type="unsupported_data_type",
                 root_dir=_AM_S3_ROOT_DIR,
                 aws_profile="am",
@@ -253,6 +254,8 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
 # #############################################################################
 
 
+# TODO(Dan): Rename test class name in #759.
+# TODO(gp): `dind` should not be needed for that.
 @pytest.mark.skipif(
     not hgit.execute_repo_config_code("has_dind_support()"),
     reason="Need dind support"
@@ -267,7 +270,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
         # Set input list of full symbols.
         full_symbols = ["kucoin::XRP_USDT", "gateio::SOL_USDT"]
         # Initialize CCXT file client and pass it to multiple symbols client.
-        ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
+        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
@@ -292,7 +295,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
         # Set input list of full symbols.
         full_symbols = ["kucoin::SOL_USDT", "gateio::XRP_USDT"]
         # Initialize CCXT file client and pass it to multiple symbols client.
-        ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
+        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
@@ -322,7 +325,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
         # Set input list of full symbols.
         full_symbols = ["kucoin::XRP_USDT", "gateio::SOL_USDT"]
         # Initialize CCXT file client and pass it to multiple symbols client.
-        ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
+        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
@@ -351,7 +354,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
         # Set input list of full symbols.
         full_symbols = ["gateio::SOL_USDT", "kucoin::XRP_USDT"]
         # Initialize CCXT file client and pass it to multiple symbols client.
-        ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
+        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
@@ -675,7 +678,7 @@ class TestGetTimestamp(hunitest.TestCase):
         """
         Test that the earliest timestamp available is computed correctly.
         """
-        ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
+        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         start_ts = ccxt_file_client.get_start_ts_available("binance::DOGE_USDT")
@@ -687,7 +690,7 @@ class TestGetTimestamp(hunitest.TestCase):
         """
         Test that the latest timestamp available is computed correctly.
         """
-        ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
+        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         end_ts = ccxt_file_client.get_end_ts_available("binance::DOGE_USDT")
@@ -704,7 +707,7 @@ class TestGetUniverse(hunitest.TestCase):
         """
         Test that CCXT universe is computed correctly.
         """
-        ccxt_file_client = imvcdclcl.CcxtFileSystemClient(
+        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
             data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         universe = ccxt_file_client.get_universe()

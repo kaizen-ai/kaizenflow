@@ -57,15 +57,11 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         Initialize the test database inside test container.
         """
         _LOG.info("\n%s", hprint.frame("setUpClass"))
-        # TODO(Dan): Read the info from env in #585.
-        host = "localhost"
-        dbname = cls._get_db_name()
-        port = 5432
-        user = "aljsdalsd"
-        password = "alsdkqoen"
-        conn_exists = hsql.check_db_connection(
-            host, dbname, port, user, password
-        )[0]
+        # Read the connection parameters from the env file.
+        connection_info = hsql.get_connection_info_from_env_file(
+            cls._get_db_env_path()
+        )
+        conn_exists = hsql.check_db_connection(*connection_info)[0]
         if conn_exists:
             _LOG.warning("DB is already up: skipping docker compose")
             # Since we have found the DB already up, we assume that we need to
@@ -83,13 +79,11 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
             )
             hsysinte.system(cmd, suppress_output=False)
             # Wait for the DB to be available.
-            hsql.wait_db_connection(host, dbname, port, user, password)
+            hsql.wait_db_connection(*connection_info)
             cls.bring_down_db = True
         # Save connection info.
         # TODO(gp): -> db_connection
-        cls.connection = hsql.get_connection(
-            host, dbname, port, user, password, autocommit=True
-        )
+        cls.connection = hsql.get_connection(*connection_info, autocommit=True)
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -113,17 +107,16 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         Get path to Docker compose file.
         """
 
-    # TODO(Dan): Deprecate after #585.
-    @staticmethod
-    @abc.abstractmethod
-    def _get_db_name() -> str:
-        """
-        Get DB name.
-        """
-
     @staticmethod
     @abc.abstractmethod
     def _get_service_name() -> str:
         """
         Get service name.
+        """
+
+    @staticmethod
+    @abc.abstractmethod
+    def _get_db_env_path() -> str:
+        """
+        Get path to db env file that contains db connection parameters.
         """

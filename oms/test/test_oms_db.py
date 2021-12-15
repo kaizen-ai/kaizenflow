@@ -18,6 +18,7 @@ import helpers.hsql_test as hsqltest
 import helpers.printing as hprint
 import helpers.sql as hsql
 import oms.oms_db as oomsdb
+import oms.oms_lib_tasks as oomlitas
 
 _LOG = logging.getLogger(__name__)
 
@@ -39,14 +40,18 @@ class TestOmsDbHelper(hsqltest.TestDbHelper):
     def _get_compose_file() -> str:
         return "oms/devops/compose/docker-compose.yml"
 
-    # TODO(Dan): Deprecate after #585.
-    @staticmethod
-    def _get_db_name() -> str:
-        return "oms_postgres_db_local"
-
     @staticmethod
     def _get_service_name() -> str:
         return "oms_postgres_local"
+
+    @staticmethod
+    def _get_db_env_path() -> str:
+        """
+        See `_get_db_env_path()` in the parent class.
+        """
+        # Use the `local` stage for testing.
+        env_file_path = oomlitas.get_db_env_path("local")
+        return env_file_path  # type: ignore[no-any-return]
 
     def _test_create_table_helper(
         self: Any,
