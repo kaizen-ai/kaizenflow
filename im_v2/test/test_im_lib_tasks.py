@@ -166,7 +166,7 @@ class TestGetCreateDbCmd(hunitest.TestCase):
             run --rm im_app \
             im_v2/common/db/create_db.py \
             --db-name 'test_db' \
-            --credentials 'test.json'
+            --credentials '"test.json"'
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
@@ -244,7 +244,7 @@ class TestGetRemoveDbCmd(hunitest.TestCase):
             run --rm im_app \
             im_v2/common/db/remove_db.py \
             --db-name 'test_db' \
-            --credentials asd.json
+            --credentials '"asd.json"'
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
