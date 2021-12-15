@@ -57,13 +57,7 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         connection_info = hsql.get_connection_info_from_env_file(
             cls._get_db_env_path()
         )
-        conn_exists = hsql.check_db_connection(
-            host=connection_info.host,
-            dbname=connection_info.dbname,
-            port=connection_info.port,
-            user=connection_info.user,
-            password=connection_info.password,
-        )[0]
+        conn_exists = hsql.check_db_connection(*connection_info)[0]
         if conn_exists:
             _LOG.warning("DB is already up: skipping docker compose")
             # Since we have found the DB already up, we assume that we need to
@@ -81,23 +75,10 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
             )
             hsysinte.system(cmd, suppress_output=False)
             # Wait for the DB to be available.
-            hsql.wait_db_connection(
-                host=connection_info.host,
-                dbname=connection_info.dbname,
-                port=connection_info.port,
-                user=connection_info.user,
-                password=connection_info.password,
-            )
+            hsql.wait_db_connection(*connection_info)
             cls.bring_down_db = True
         # Save connection info.
-        cls.connection = hsql.get_connection(
-            host=connection_info.host,
-            dbname=connection_info.dbname,
-            port=connection_info.port,
-            user=connection_info.user,
-            password=connection_info.password,
-            autocommit=True,
-        )
+        cls.connection = hsql.get_connection(*connection_info, autocommit=True)
 
     @classmethod
     def tearDownClass(cls) -> None:
