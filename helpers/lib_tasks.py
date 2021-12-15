@@ -934,7 +934,7 @@ def _get_src_dst_dirs(src_dir: str, dst_dir: str, subdir_name: str) -> Tuple[str
     - `src_dir` is the current dir
     - `dst_dir` is parallel dir to the current one
 
-    :return: full paths of both directiories
+    :return: full paths of both directories
     """
     curr_parent_dir = os.path.dirname(os.getcwd())
     #
@@ -951,11 +951,15 @@ def _get_src_dst_dirs(src_dir: str, dst_dir: str, subdir_name: str) -> Tuple[str
 @task
 def integrate_diff_dirs(ctx, src_dir="amp1", dst_dir="cmamp1", subdir_name="", use_linux_diff=False, dry_run=False):  # type: ignore
     """
-    Integrate repos from dir `dir1` and `dir2`.
+    Integrate repos from dir `src_dir` to `dst_dir`.
 
+    We use default values for src / dst dirs to represent the usual set-up.
+
+    ```
     > i integrate_diff_dirs --subdir-name . --src-dir amp1 --dst-dir cmamp1
+    ```
 
-    :param diff_only: use Linux `diff` instead of `diff_to_vimdiff.py`
+    :param use_linux_diff: use Linux `diff` instead of `diff_to_vimdiff.py`
     """
     _report_task()
     #
@@ -973,11 +977,15 @@ def integrate_diff_dirs(ctx, src_dir="amp1", dst_dir="cmamp1", subdir_name="", u
 
 
 @task
-def integrate_copy_dirs(ctx, src_dir="amp1", dst_dir="cmamp1", subdir_name="", dry_run=False):  # type: ignore
+def integrate_copy_dirs(ctx, src_dir, dst_dir, subdir_name="", dry_run=False):  # type: ignore
     """
-    Integrate repos in dir `dir1` and `dir2`.
+    Copy dir `subdir_name` from dir `src_dir` to `dst_dir`.
 
+    ```
     > i integrate_copy_dirs --subdir-name documentation --src-dir amp1 --dst-dir cmamp1
+    ```
+
+    :param dry_run: diff the dirs as a preview instead of copying
     """
     _report_task()
     #
@@ -993,9 +1001,12 @@ def integrate_copy_dirs(ctx, src_dir="amp1", dst_dir="cmamp1", subdir_name="", d
 
 
 @task
-def integrate_compare_branch_with_base(ctx, src_dir="amp1", dst_dir="cmamp1", subdir_name=""):  # type: ignore
+def integrate_compare_branch_with_base(ctx, src_dir, dst_dir, subdir_name=""):  # type: ignore
     """
-    Save the files from `file_name` at the commit before this branch was branched.
+    Compare the files modified in both the branches in src_dir and dst_dir to master
+    before this current branch was branched.
+
+    This is used to check what changes were made to files modified by both branches.
     """
     _report_task()
     _ = ctx
@@ -1036,7 +1047,7 @@ def integrate_compare_branch_with_base(ctx, src_dir="amp1", dst_dir="cmamp1", su
         # Update the script to diff.
         script_txt.append(f"vimdiff {dst_file} {src_file}")
     # Save the script to compare.
-    script_file_name = "./tmp.vimdiff_with_base.sh"
+    script_file_name = "./tmp.vimdiff_branch_with_base.sh"
     script_txt = "\n".join(script_txt)
     hsysinte.create_executable_script(script_file_name, script_txt)
     print(f"# To diff against the base run:\n> {script_file_name}")
