@@ -47,11 +47,14 @@ class TestGetImDockerDown(hunitest.TestCase):
         """
         Check the command line to only remove containers.
         """
-        actual = imvimlita._get_docker_down_cmd(volumes_remove=False)
+        stage = "local"
+        actual = imvimlita._get_docker_down_cmd(stage, False)
         docker_compose_path = hlibtask.get_base_docker_compose_path()
+        env_file = imvimlita.get_db_env_path(stage)
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
+            --env-file {env_file} \
             down
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
@@ -60,11 +63,14 @@ class TestGetImDockerDown(hunitest.TestCase):
         """
         Check the command line to remove containers and volumes.
         """
-        actual = imvimlita._get_docker_down_cmd(volumes_remove=True)
+        stage = "dev"
+        actual = imvimlita._get_docker_down_cmd(stage, True)
         docker_compose_path = hlibtask.get_base_docker_compose_path()
+        env_file = imvimlita.get_db_env_path(stage)
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
+            --env-file {env_file} \
             down \
             -v
         """
@@ -76,13 +82,16 @@ class TestGetImDockerUp(hunitest.TestCase):
         """
         Check the command line to bring up the db.
         """
-        actual = imvimlita._get_docker_up_cmd(detach=False)
+        stage = "local"
+        actual = imvimlita._get_docker_up_cmd(stage, False)
         docker_compose_path = hlibtask.get_base_docker_compose_path()
+        env_file = imvimlita.get_db_env_path(stage)
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
+            --env-file {env_file} \
             up \
-            im_postgres_local
+            im_postgres
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
@@ -90,11 +99,14 @@ class TestGetImDockerUp(hunitest.TestCase):
         """
         Check the command line to bring up the db in the detached mode.
         """
-        actual = imvimlita._get_docker_up_cmd(detach=True)
+        stage = "local"
+        actual = imvimlita._get_docker_up_cmd(stage, True)
         docker_compose_path = hlibtask.get_base_docker_compose_path()
+        env_file = imvimlita.get_db_env_path(stage)
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
+            --env-file {env_file} \
             up \
             -d \
             im_postgres_local
