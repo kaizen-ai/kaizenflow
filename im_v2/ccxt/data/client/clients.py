@@ -295,7 +295,6 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
     def _read_data_from_filesystem(
         self,
         file_path: str,
-        *,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         **read_kwargs: Any,
@@ -389,7 +388,6 @@ class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
     @staticmethod
     def _read_data_from_filesystem(
         file_path: str,
-        *,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         **read_kwargs: Any,
@@ -421,7 +419,6 @@ class CcxtParquetFileSystemClient(AbstractCcxtFileSystemClient):
     @staticmethod
     def _read_data_from_filesystem(
         file_path: str,
-        *,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         **read_kwargs: Any,
