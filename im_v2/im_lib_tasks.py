@@ -92,14 +92,15 @@ def _get_docker_up_cmd(stage: str, detach: bool) -> str:
     ```
     docker-compose \
         --file devops/compose/docker-compose.yml \
+        --env-file devops/env/local.im_db_config.env \
         up \
-        im_postgres_local
+        im_postgres
     ```
 
     :param stage: development stage, i.e. `local`, `dev` and `prod`
     :param detach: run containers in the background
     """
-    cmd = ["docker-compose"]
+    cmd = ["sudo docker-compose"]
     # Add `docker-compose` file path.
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
@@ -118,15 +119,16 @@ def _get_docker_up_cmd(stage: str, detach: bool) -> str:
 
 
 @task
-def im_docker_up(ctx, detach=False):  # type: ignore
+def im_docker_up(ctx, stage, detach=False):  # type: ignore
     """
     Start im container with Postgres inside.
 
     :param ctx: `context` object
+    :param stage: development stage, i.e. `local`, `dev` and `prod`
     :param detach: run containers in the background
     """
     # Get docker down command.
-    docker_clean_up_cmd = _get_docker_up_cmd(detach)
+    docker_clean_up_cmd = _get_docker_up_cmd(stage, detach)
     # Execute the command.
     hlibtask._run(ctx, docker_clean_up_cmd, pty=True)
 
@@ -134,7 +136,7 @@ def im_docker_up(ctx, detach=False):  # type: ignore
 # #############################################################################
 
 
-def _get_docker_down_cmd(volumes_remove: bool) -> str:
+def _get_docker_down_cmd(stage: str, volumes_remove: bool) -> str:
     """
     Construct the command to shut down the `im` service.
 
@@ -142,18 +144,24 @@ def _get_docker_down_cmd(volumes_remove: bool) -> str:
     ```
     docker-compose \
         --file devops/compose/docker-compose.yml \
+        --env-file devops/env/local.im_db_config.env \
         down \
         -v
     ```
 
     :param volumes_remove: whether to remove attached volumes or not
     """
-    cmd = ["docker-compose"]
+    cmd = ["sudo docker-compose"]
     # Add `docker-compose` file path.
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
+    # Add `env file` path.
+    env_file = get_db_env_path(stage)
+    cmd.append(f"--env-file {env_file}")
     # Add `down` command.
     cmd.append("down")
+    service = "im_postgres"
+    cmd.append(service)
     if volumes_remove:
         # Use the '-v' option to remove attached volumes.
         _LOG.warning(
@@ -165,7 +173,7 @@ def _get_docker_down_cmd(volumes_remove: bool) -> str:
 
 
 @task
-def im_docker_down(ctx, volumes_remove=False):  # type: ignore
+def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
     """
     Bring down the `im` service.
 
@@ -176,7 +184,7 @@ def im_docker_down(ctx, volumes_remove=False):  # type: ignore
     :param ctx: `context` object
     """
     # Get docker down command.
-    cmd = _get_docker_down_cmd(volumes_remove)
+    cmd = _get_docker_down_cmd(stage, volumes_remove)
     # Execute the command.
     hlibtask._run(ctx, cmd, pty=True)
 
