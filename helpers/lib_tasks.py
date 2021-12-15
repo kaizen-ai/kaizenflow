@@ -982,6 +982,13 @@ def _dassert_is_integration_branch(dir_name: str) -> None:
     hdbg.dassert_in("Integrate", curr_branch)
 
 
+def _clean_both_integration_dirs(dir_name1: str, dir_name2: str) -> None:
+    cmd = f"cd {dir_name1} && invoke git_clean"
+    hsysinte.system(cmd)
+    cmd = f"cd {dir_name2} && invoke git_clean"
+    hsysinte.system(cmd)
+
+
 @task
 def integrate_create_branches(ctx, dir_name, dry_run=False):  # type: ignore
     """
@@ -1044,6 +1051,7 @@ def integrate_diff_dirs(ctx, src_dir="amp1", dst_dir="cmamp1", subdir_name="", u
     src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir_name)
     _dassert_is_integration_branch(src_dir)
     _dassert_is_integration_branch(dst_dir)
+    _clean_both_integration_dirs(src_dir, dst_dir)
     #
     if use_linux_diff:
         cmd = f"diff -r --brief {src_dir} {dst_dir}"
@@ -1068,6 +1076,8 @@ def integrate_copy_dirs(ctx, src_dir, dst_dir, subdir_name="", dry_run=False):  
     src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir_name)
     _dassert_is_integration_branch(src_dir)
     _dassert_is_integration_branch(dst_dir)
+    _clean_both_integration_dirs(src_dir, dst_dir)
+    #
     if dry_run:
         cmd = f"diff -r --brief {src_dir} {dst_dir}"
     else:
@@ -1091,6 +1101,7 @@ def integrate_compare_branch_with_base(ctx, src_dir, dst_dir, subdir_name=""):  
     src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir_name)
     _dassert_is_integration_branch(src_dir)
     _dassert_is_integration_branch(dst_dir)
+    _clean_both_integration_dirs(src_dir, dst_dir)
     #
     # Find the files modified by both branches.
     src_hash = hgit.get_branch_hash(src_dir)
