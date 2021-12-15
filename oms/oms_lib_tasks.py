@@ -6,6 +6,7 @@ Import as:
 import oms.oms_lib_tasks as oomlitas
 """
 
+import logging
 import os
 
 from invoke import task
@@ -37,6 +38,7 @@ def get_db_env_path(stage: str) -> str:
     env_file_path = os.path.join(amp_path, env_dir, env_file_name)
     hdbg.dassert_file_exists(env_file_path)
     return env_file_path
+
 
 # TODO(gp): This should be used also from the unit tests?
 def _get_docker_compose_path() -> str:
@@ -89,7 +91,7 @@ def _get_docker_cmd(docker_cmd: str) -> str:
     cmd.append(docker_cmd)
     # Convert the list to a multiline command.
     multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
-    return multiline_docker_cmd
+    return multiline_docker_cmd  # type: ignore[no-any-return]
 
 
 @task
@@ -130,7 +132,7 @@ def _get_docker_up_cmd() -> str:
     service = "oms_postgres_local"
     cmd.append(service)
     cmd = hlibtask._to_multi_line_cmd(cmd)
-    return cmd
+    return cmd  # type: ignore[no-any-return]
 
 
 @task
@@ -176,7 +178,7 @@ def _get_docker_down_cmd(volumes_remove: bool) -> str:
         )
         cmd.append("-v")
     cmd = hlibtask._to_multi_line_cmd(cmd)
-    return cmd
+    return cmd  # type: ignore[no-any-return]
 
 
 @task
