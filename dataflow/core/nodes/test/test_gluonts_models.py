@@ -36,6 +36,7 @@ if True:
             df_str = hunitest.convert_df_to_string(df_out, index=True, decimals=1)
             self.check_string(df_str)
 
+        @pytest.mark.slow("~10 seconds.")
         def test_predict_dag1(self) -> None:
             dag = self._get_dag()
             #
