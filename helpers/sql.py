@@ -12,6 +12,7 @@ import re
 import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import dotenv
 import pandas as pd
 import psycopg2 as psycop
 import psycopg2.extras as extras
@@ -65,7 +66,6 @@ def get_connection_from_env_vars() -> DbConnection:
     variables.
     """
     # Get values from the environment variables.
-    # TODO(gp): -> POSTGRES_DBNAME
     host = os.environ["POSTGRES_HOST"]
     dbname = os.environ["POSTGRES_DB"]
     port = int(os.environ["POSTGRES_PORT"])
@@ -99,6 +99,25 @@ def get_connection_from_string(
     if autocommit:
         connection.autocommit = True
     return connection  # type: ignore[no-any-return]
+
+
+def get_connection_info_from_env_file(env_file_path: str) -> DbConnectionInfo:
+    """
+    Get connection parameters from environment file.
+
+    :param env_file_path: path to an environment file that contains db connection parameters
+    """
+    db_config = dotenv.dotenv_values(env_file_path)
+    # The parameters' names are fixed and cannot be changed, see
+    # `https:://hub.docker.com/_/postgres`.
+    connection_parameters = DbConnectionInfo(
+        host=db_config["POSTGRES_HOST"],
+        dbname=db_config["POSTGRES_DB"],
+        port=int(db_config["POSTGRES_PORT"]),
+        user=db_config["POSTGRES_USER"],
+        password=db_config["POSTGRES_PASSWORD"],
+    )
+    return connection_parameters
 
 
 def check_db_connection(
