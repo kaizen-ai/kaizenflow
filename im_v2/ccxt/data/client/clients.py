@@ -10,7 +10,7 @@ import im_v2.ccxt.data.client.clients as imvcdclcl
 import abc
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import pandas as pd
 
@@ -32,16 +32,16 @@ _DATA_TYPES = ["ohlcv"]
 
 class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
     """
-    Abstract Interface for CCXT client.
+    Abstract interface for CCXT client.
     """
 
     def __init__(self, data_type: str) -> None:
         """
         :param data_type: OHLCV, trade, or bid/ask data
         """
-        date_type = data_type.lower()
-        hdbg.dassert_in(date_type, _DATA_TYPES)
-        self._data_type = date_type
+        data_type = data_type.lower()
+        hdbg.dassert_in(data_type, _DATA_TYPES)
+        self._data_type = data_type
 
     @staticmethod
     def get_universe() -> List[imvcdcli.FullSymbol]:
@@ -181,7 +181,7 @@ class CcxtDbClient(AbstractCcxtClient):
         *,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
-        **read_sql_kwargs: Dict[str, Any],
+        **read_sql_kwargs: Any,
     ) -> pd.DataFrame:
         # Construct name of the DB table with data from data type.
         table_name = "ccxt_" + self._data_type
@@ -213,9 +213,9 @@ class CcxtDbClient(AbstractCcxtClient):
 # #############################################################################
 
 
-class CcxtFileSystemClient(AbstractCcxtClient):
+class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
     """
-    CCXT client for data from local or S3 filesystem.
+    Abstract interface for CCXT filesystem client.
     """
 
     def __init__(
@@ -227,15 +227,17 @@ class CcxtFileSystemClient(AbstractCcxtClient):
         """
         Load CCXT data from local or S3 filesystem.
 
-        :param: root_dir: either a local root path (e.g., "/app/im") or
+        :param root_dir: either a local root path (e.g., "/app/im") or
             an S3 root path (e.g., "s3://alphamatic-data/data") to CCXT data
-        :param: aws_profile: AWS profile name (e.g., "am")
+        :param aws_profile: AWS profile name (e.g., "am")
         """
         super().__init__(data_type=data_type)
         self._root_dir = root_dir
         # Set s3fs parameter value if aws profile parameter is specified.
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
+        # Set file extension.
+        self._ext = self._get_file_extension()
 
     def _read_data(
         self,
@@ -258,10 +260,10 @@ class CcxtFileSystemClient(AbstractCcxtClient):
         # Get absolute file path for a CCXT file.
         file_path = self._get_file_path(data_snapshot, exchange_id, currency_pair)
         # Initialize kwargs dict for further CCXT data reading.
-        read_csv_kwargs = {}
+        read_kwargs = {}
         if hs3.is_s3_path(file_path):
             # Add s3fs argument to kwargs.
-            read_csv_kwargs["s3fs"] = self._s3fs
+            read_kwargs["s3fs"] = self._s3fs
         # Read raw CCXT data.
         _LOG.info(
             "Reading CCXT data for exchange id='%s', currencies='%s' from file='%s'...",
@@ -269,14 +271,9 @@ class CcxtFileSystemClient(AbstractCcxtClient):
             currency_pair,
             file_path,
         )
-        data = cpanh.read_csv(file_path, **read_csv_kwargs)
-        #
-        if start_ts:
-            start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
-            data = data[data["timestamp"] >= start_ts]
-        if end_ts:
-            end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
-            data = data[data["timestamp"] < end_ts]
+        data = self._read_data_from_filesystem(
+            file_path, start_ts, end_ts, **read_kwargs,
+        )
         # Apply transformation to raw data.
         _LOG.info(
             "Processing CCXT data for exchange id='%s', currencies='%s'...",
@@ -287,6 +284,28 @@ class CcxtFileSystemClient(AbstractCcxtClient):
             data, exchange_id, currency_pair
         )
         return processed_data
+
+    @abc.abstractmethod
+    def _get_file_extension(self) -> str:
+        """
+        Return the file extension of files that are expected by this class.
+        """
+
+    @abc.abstractmethod
+    def _read_data_from_filesystem(
+        self,
+        file_path: str,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+        **read_kwargs: Any,
+    ) -> pd.DataFrame:
+        """
+        Load data from the specified file.
+
+        :param file_path: absolute path to a file with CCXT data
+        :param read_kwargs: kwargs for data reading
+        :return: data from the specified path
+        """
 
     # TODO(Grisha): factor out common code from `CddLoader._get_file_path` and
     # `CcxtLoader._get_file_path`.
@@ -300,7 +319,7 @@ class CcxtFileSystemClient(AbstractCcxtClient):
         Get the absolute path to a file with CCXT data.
 
         The file path is constructed in the following way:
-        `<root_dir>/ccxt/<snapshot>/<exchange_id>/<currency_pair>.csv.gz`.
+        `<root_dir>/ccxt/<snapshot>/<exchange_id>/<currency_pair><self._ext>`.
 
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
@@ -310,7 +329,7 @@ class CcxtFileSystemClient(AbstractCcxtClient):
         :return: absolute path to a file with CCXT data
         """
         # Get absolute file path.
-        file_name = currency_pair + ".csv.gz"
+        file_name = currency_pair + self._ext
         file_path = os.path.join(
             self._root_dir, "ccxt", data_snapshot, exchange_id, file_name
         )
@@ -345,4 +364,76 @@ class CcxtFileSystemClient(AbstractCcxtClient):
         # Add required columns.
         data["exchange_id"] = exchange_id
         data["currency_pair"] = currency_pair
+        return data
+
+
+class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
+    """
+    CCXT client for data stored as CSV from local or S3 filesystem.
+    """
+
+    def __init__(self, gzip: bool = True, **kwargs: Any) -> None:
+        """
+        :param gzip: whether the CSV file is compressed or not
+        """
+        self._gzip = gzip
+        super().__init__(**kwargs)
+
+    def _get_file_extension(self) -> str:
+        if self._gzip:
+            return ".csv.gz"
+        else:
+            return ".csv"
+
+    @staticmethod
+    def _read_data_from_filesystem(
+        file_path: str,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+        **read_kwargs: Any,
+    ) -> pd.DataFrame:
+        """
+        See the `_read_data_from_filesystem()` in the parent class.
+        """
+        # Load data.
+        data = cpanh.read_csv(file_path, **read_kwargs)
+        # Filter by dates if specified.
+        if start_ts:
+            start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
+            data = data[data["timestamp"] >= start_ts]
+        if end_ts:
+            end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
+            data = data[data["timestamp"] < end_ts]
+        return data
+
+
+class CcxtParquetFileSystemClient(AbstractCcxtFileSystemClient):
+    """
+    CCXT client for data stored as Parquet from local or S3 filesystem.
+    """
+
+    @staticmethod
+    def _get_file_extension() -> str:
+        return ".pq"
+
+    @staticmethod
+    def _read_data_from_filesystem(
+        file_path: str,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+        **read_kwargs: Any,
+    ) -> pd.DataFrame:
+        """
+        See the `_read_data_from_filesystem()` in the parent class.
+        """
+        # Load data.
+        data = cpanh.read_parquet(file_path, **read_kwargs)
+        # TODO(Dan): Refactor filtering by dates using Parquet functionality.
+        # Filter by dates if specified.
+        if start_ts:
+            start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
+            data = data[data["timestamp"] >= start_ts]
+        if end_ts:
+            end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
+            data = data[data["timestamp"] < end_ts]
         return data
