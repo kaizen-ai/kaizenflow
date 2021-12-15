@@ -31,6 +31,16 @@ import im_v2.common.data.client.clients as ivcdclcl
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(Nikola): Replace with an `env` file (CMTask585).
+_DB_CREDENTIALS = {
+    "host": "im_postgres_local",
+    "dbname": "im_postgres_db_local",
+    "port": 5432,
+    "user": "aljsdalsd",
+    "password": "alsdkqoen",
+}
+
+
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -79,10 +89,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Location of daily PQ files.
     daily_pq_path = args.daily_pq_path
     hdbg.dassert_exists(daily_pq_path)
-    ccxt_db_client = imvcdclcl.CcxtDbClient(
-        "ohlcv",
-        hsql.get_connection_from_env_vars(),
-    )
+    connection = hsql.get_connection(**_DB_CREDENTIALS)
+    ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", connection)
     multiple_symbols_ccxt_db_client = ivcdclcl.MultipleSymbolsClient(
         class_=ccxt_db_client, mode="concat"
     )

@@ -32,12 +32,6 @@ class TestExtractDataFromDb1(hunitest.TestCase):
         port = 5432
         user = "aljsdalsd"
         password = "alsdkqoen"
-        # TODO(Nikola): Remove eventually.
-        os.environ["POSTGRES_HOST"] = host
-        os.environ["POSTGRES_DB"] = dbname
-        os.environ["POSTGRES_PORT"] = str(port)
-        os.environ["POSTGRES_USER"] = user
-        os.environ["POSTGRES_PASSWORD"] = password
         hsql.wait_db_connection(host, dbname, port, user, password)
         self.connection = hsql.get_connection(
             host,
@@ -72,12 +66,6 @@ class TestExtractDataFromDb1(hunitest.TestCase):
         )
         self.connection.close()
         hsysinte.system(cmd, suppress_output=False)
-        # TODO(Nikola): Remove eventually.
-        os.environ.pop("POSTGRES_HOST")
-        os.environ.pop("POSTGRES_DB")
-        os.environ.pop("POSTGRES_PORT")
-        os.environ.pop("POSTGRES_USER")
-        os.environ.pop("POSTGRES_PASSWORD")
         super().tearDown()
 
     # TODO(Nikola): Revisit. It is slow test.
