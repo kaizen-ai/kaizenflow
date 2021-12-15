@@ -48,9 +48,7 @@ class TestGetImDockerDown(hunitest.TestCase):
         Check the command line to only remove containers.
         """
         stage = "local"
-        actual = imvimlita._get_docker_down_cmd(  # pylint: disable=too-many-arguments
-            stage, False
-        )
+        actual = imvimlita._get_docker_down_cmd(stage, False)  # pylint: disable-msg=too-many-arguments
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         env_file = imvimlita.get_db_env_path(stage)
         expected = fr"""
@@ -66,8 +64,10 @@ class TestGetImDockerDown(hunitest.TestCase):
         Check the command line to remove containers and volumes.
         """
         stage = "local"
-        actual = imvimlita._get_docker_down_cmd(  # pylint: disable=too-many-arguments
-            stage, True
+        actual = (
+            imvimlita._get_docker_down_cmd(  # pylint: disable=too-many-arguments
+                stage, True
+            )
         )
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         env_file = imvimlita.get_db_env_path(stage)
@@ -87,8 +87,10 @@ class TestGetImDockerUp(hunitest.TestCase):
         Check the command line to bring up the db.
         """
         stage = "local"
-        actual = imvimlita._get_docker_up_cmd(  # pylint: disable=too-many-arguments
-            stage, False
+        actual = (
+            imvimlita._get_docker_up_cmd(  # pylint: disable=too-many-arguments
+                stage, False
+            )
         )
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         env_file = imvimlita.get_db_env_path(stage)
@@ -106,8 +108,10 @@ class TestGetImDockerUp(hunitest.TestCase):
         Check the command line to bring up the db in the detached mode.
         """
         stage = "local"
-        actual = imvimlita._get_docker_up_cmd(  # pylint: disable=too-many-arguments
-            stage, True
+        actual = (
+            imvimlita._get_docker_up_cmd(  # pylint: disable=too-many-arguments
+                stage, True
+            )
         )
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         env_file = imvimlita.get_db_env_path(stage)
