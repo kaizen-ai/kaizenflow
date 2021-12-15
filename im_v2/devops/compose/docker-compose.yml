@@ -1,7 +1,7 @@
 version: '3.5'
 
 services:
-
+  # TODO(Grisha): drop `im_app` CMTask #630.
   # Docker container running code that talks to the DB.
   im_app:
     # TODO(Grisha): Use image env var.
@@ -23,13 +23,16 @@ services:
     entrypoint: /app/devops/docker_run/entrypoint.sh
 
   # Docker container running Postgres DB.
+  # TODO(Grisha): remove `local` suffix everywhere CMTask #585.
   im_postgres_local:
     image: postgres:13
     restart: "no"
     volumes:
       - im_postgres_data_local:/var/lib/postgresql/data
+    # TODO(Grisha): pass port via env file CMTask #585.
     ports:
       - 5432:5432
+    # TODO(Grisha): pass credentials via `--enf-file` option CMTask #585.
     env_file:
       - ../env/local.im_db_config.env
 
