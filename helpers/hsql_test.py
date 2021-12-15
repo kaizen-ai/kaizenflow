@@ -55,9 +55,7 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         _LOG.info("\n%s", hprint.frame("setUpClass"))
         # Read the connection parameters from the env file.
         cls.db_env_file = cls._get_db_env_path()
-        connection_info = hsql.get_connection_info_from_env_file(
-            cls.db_env_file
-        )
+        connection_info = hsql.get_connection_info_from_env_file(cls.db_env_file)
         conn_exists = hsql.check_db_connection(*connection_info)[0]
         if conn_exists:
             _LOG.warning("DB is already up: skipping docker compose")
