@@ -93,7 +93,7 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
             # TODO(Grisha): use invoke task CMTask #547.
             cmd = (
                 "sudo docker-compose "
-                f"--file {cls.docker_compose_file_path}"
+                f"--file {cls.docker_compose_file_path} "
                 f"--env-file {cls.db_env_file} "
                 "down -v"
             )
