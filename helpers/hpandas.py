@@ -172,13 +172,13 @@ def reindex_on_unix_epoch(
     df: pd.DataFrame, in_col_name: str, unit: str = "s"
 ) -> pd.DataFrame:
     """
-    Transform the df so that `start_time` is converted into a datetime index.
-    `start_time` contains an Unix epoch (e.g., 1638194400) and it's converted
-    into a UTC time.
+    Transform the column `in_col_name` into a datetime index.
+    `in_col_name` contains Unix epoch (e.g., 1638194400) and it is
+    converted into a UTC time.
 
-    :param df: pandas dataframe
+    :param df: dataframe containing various information about asset
     :param in_col_name: column containing unix epoch
-    :param unit: unit if epoch is not stored in seconds
+    :param unit: the unit of unix epoch
     :return:
     """
     # Convert.
