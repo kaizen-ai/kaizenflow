@@ -180,6 +180,7 @@ class TestCcxtDbClient(imcodbuti.TestImDbHelper):
 # #############################################################################
 
 
+# TODO(Dan): Rename test class name in #759.
 # TODO(*): Consider to factor out the class calling in a `def _get_loader()`.
 class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
     @pytest.mark.slow("8 seconds.")
@@ -253,6 +254,7 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
 # #############################################################################
 
 
+# TODO(Dan): Rename test class name in #759.
 # TODO(gp): `dind` should not be needed for that.
 @pytest.mark.skipif(
     hgit.is_dev_tools() or hgit.is_lime(),
