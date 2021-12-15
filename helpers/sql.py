@@ -652,16 +652,17 @@ def execute_insert_query(
     connection.commit()
 
 
-def execute_raw_query(connection: DbConnection, query: str) -> None:
+def execute_query(connection: DbConnection, query: str) -> None:
     """
     Used for generic simple operations.
 
     :param connection: connection to the DB
     :param query: generic query that can be: insert, update, delete, etc.
     """
-    cursor = connection.cursor()
-    cursor.execute(query)
-    cursor.close()
+    with connection.cursor() as cursor:
+        cursor.execute(query)
+        if not connection.autocommit:
+            connection.commit()
 
 
 # #############################################################################
