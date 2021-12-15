@@ -19,6 +19,7 @@ import helpers.printing as hprint
 import helpers.sql as hsql
 import oms.broker_example as obroexam
 import oms.oms_db as oomsdb
+import oms.oms_lib_tasks as oomlitas
 import oms.order_example as oordexam
 
 _LOG = logging.getLogger(__name__)
