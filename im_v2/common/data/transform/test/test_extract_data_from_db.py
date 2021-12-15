@@ -4,16 +4,16 @@ import pytest
 
 import helpers.git as hgit
 import helpers.io_ as hio
+import helpers.sql as hsql
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
 import im.ccxt.db.utils as imccdbuti
-import im_v2.common.db.utils as imcodbuti
+import im_v2.common.db.utils as imvcodbut
 
 
-class TestExtractDataFromDb1(imcodbuti.TestImDbHelper):
+class TestExtractDataFromDb1(imvcodbut.TestImDbHelper):
     def setUp(self) -> None:
         super().setUp()
-        # TODO(Nikola): linter is complaining about cursor and create database?
         ccxt_ohlcv_table_query = imccdbuti.get_ccxt_ohlcv_create_table_query()
         ccxt_ohlcv_insert_query = """
         INSERT INTO ccxt_ohlcv
@@ -23,17 +23,15 @@ class TestExtractDataFromDb1(imcodbuti.TestImDbHelper):
             (71, 1637777340000, 221.391, 221.493, 221.297, 221.431,
             81.31775837, 'SOL_USDT', 'kucoin', '2021-11-23 18:03:54.676947')
         """
-        with self.connection.cursor() as cursor:
-            cursor.execute(ccxt_ohlcv_table_query)
-            cursor.execute(ccxt_ohlcv_insert_query)
+        hsql.execute_query(self.connection, ccxt_ohlcv_table_query)
+        hsql.execute_query(self.connection, ccxt_ohlcv_insert_query)
 
     def tearDown(self) -> None:
         super().tearDown()
         ccxt_ohlcv_drop_query = """
         DROP TABLE IF EXISTS ccxt_ohlcv;
         """
-        with self.connection.cursor() as cursor:
-            cursor.execute(ccxt_ohlcv_drop_query)
+        hsql.execute_query(self.connection, ccxt_ohlcv_drop_query)
 
     @pytest.mark.slow
     def test_extract_data_from_db(self) -> None:
@@ -57,13 +55,13 @@ class TestExtractDataFromDb1(imcodbuti.TestImDbHelper):
         )
         hsysinte.system(cmd)
         # Check directory structure with file contents.
-        act = []
-        act.append("# before=")
-        act.append(daily_signature_before)
+        actual = []
+        actual.append("# before=")
+        actual.append(daily_signature_before)
         daily_signature_after = hunitest.get_dir_signature(
             dst_dir, include_file_content
         )
-        act.append("# after=")
-        act.append(daily_signature_after)
-        act = "\n".join(act)
-        self.check_string(act)
+        actual.append("# after=")
+        actual.append(daily_signature_after)
+        actual = "\n".join(actual)
+        self.check_string(actual)
