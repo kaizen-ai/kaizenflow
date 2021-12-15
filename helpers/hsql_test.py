@@ -54,8 +54,9 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         """
         _LOG.info("\n%s", hprint.frame("setUpClass"))
         # Read the connection parameters from the env file.
+        cls.db_env_file = cls._get_db_env_path()
         connection_info = hsql.get_connection_info_from_env_file(
-            cls._get_db_env_path()
+            cls.db_env_file
         )
         conn_exists = hsql.check_db_connection(*connection_info)[0]
         if conn_exists:
@@ -68,9 +69,11 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
             cls.docker_compose_file_path = os.path.join(
                 hgit.get_amp_abs_path(), cls._get_compose_file()
             )
+            # TODO(Grisha): use invoke task CMTask #547.
             cmd = (
                 "sudo docker-compose "
                 f"--file {cls.docker_compose_file_path} "
+                f"--env-file {cls.db_env_file} "
                 f"up -d {cls._get_service_name()}"
             )
             hsysinte.system(cmd, suppress_output=False)
@@ -87,9 +90,12 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         """
         _LOG.info("\n%s", hprint.frame("tearDown"))
         if cls.bring_down_db:
+            # TODO(Grisha): use invoke task CMTask #547.
             cmd = (
                 "sudo docker-compose "
-                f"--file {cls.docker_compose_file_path} down -v"
+                f"--file {cls.docker_compose_file_path}"
+                f"--env-file {cls.db_env_file} "
+                "down -v"
             )
             hsysinte.system(cmd, suppress_output=False)
         else:
