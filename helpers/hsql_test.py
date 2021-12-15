@@ -35,7 +35,7 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
     ```
     and then the creation / destruction of the DB is skipped making the tests
     faster and allowing easier debugging.
-    
+
     The invariant is that each test should:
     - (ideally) find a clean DB to work with
     - not assume that the DB is clean. If the DB is not clean, tests should clean it
@@ -79,9 +79,7 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
             )
             hsysinte.system(cmd, suppress_output=False)
             # Wait for the DB to be available.
-            hsql.wait_db_connection(
-                host, dbname, port, user, password
-            )
+            hsql.wait_db_connection(host, dbname, port, user, password)
             cls.bring_down_db = True
         # Save connection info.
         cls.connection = hsql.get_connection(
