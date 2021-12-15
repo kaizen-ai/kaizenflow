@@ -880,7 +880,7 @@ def git_branch_copy(ctx, new_branch_name="", use_patch=False):  # type: ignore
 
 
 @task
-def git_branch_diff_with_base(ctx ,diff_type="", dir_name="."):  # type: ignore
+def git_branch_diff_with_base(ctx ,diff_type="", subdir_name=""):  # type: ignore
     """
     Diff files of the current branch with master at the branching point.
     """
@@ -889,6 +889,7 @@ def git_branch_diff_with_base(ctx ,diff_type="", dir_name="."):  # type: ignore
     curr_branch_name = hgit.get_branch_name()
     hdbg.dassert_ne(curr_branch_name, "master")
     # Get the branching point.
+    dir_name = "."
     hash_ = hgit.get_branch_hash(dir_name=dir_name)
     # Get the modified files.
     cmd = []
@@ -905,23 +906,45 @@ def git_branch_diff_with_base(ctx ,diff_type="", dir_name="."):  # type: ignore
     # Retrieve the original file and create the diff command.
     script_txt = []
     for branch_file in files:
+        _LOG.debug("\n%s", hprint.frame(f"branch_file={branch_file}"))
+        # Check if it needs to be compared.
+        if subdir_name != "":
+            if not branch_file.startswith(subdir_name):
+                _LOG.debug("Skipping since '%s' doesn't start with '%s'",
+                           branch_file, subdir_name)
+                continue
+        # Get the file on the right of the vimdiff.
         if os.path.exists(branch_file):
-            master_file = branch_file.replace(".py", ".base.py")
-            # Save the base file.
-            cmd = f"git show {hash_}:{branch_file} >{master_file}"
-            rc = hsysinte.system(cmd, abort_on_error=False)
-            if rc == 0:
-                # For new files we get the error:
-                # fatal: path 'dev_scripts/configure_env.sh' exists on disk, but
-                # not in 'c92cfe4382325678fdfccd0ddcd1927008090602'
-                branch_file = "/dev/null"
+            right_file = branch_file
         else:
-            master_file = "/dev/null"
+            right_file = "/dev/null"
+        #
+        tmp_file = branch_file.replace(".py", ".base.py")
+        # Flatten the file dirs: e.g.,
+        # dataflow/core/nodes/test/test_volatility_models.base.py
+        tmp_file = "tmp." + tmp_file.replace("/", "_")
+        _LOG.debug("branch_file='%s' exists in branch -> master_file='%s'", branch_file, tmp_file)
+        # Save the base file.
+        cmd = f"git show {hash_}:{branch_file} >{tmp_file}"
+        rc = hsysinte.system(cmd, abort_on_error=False)
+        if rc != 0:
+            # For new files we get the error:
+            # fatal: path 'dev_scripts/configure_env.sh' exists on disk, but
+            # not in 'c92cfe4382325678fdfccd0ddcd1927008090602'
+            _LOG.debug("branch_file='%s' doesn't exist in master", branch_file)
+            left_file = "/dev/null"
+        else:
+            left_file = tmp_file
         # Update the script to diff.
-        script_txt.append(f"vimdiff {master_file} {branch_file}")
+        cmd = f"vimdiff {left_file} {right_file}"
+        _LOG.debug("-> %s", cmd)
+        script_txt.append(cmd)
+    script_txt = "\n".join(script_txt)
+    # Files to diff.
+    print(hprint.frame("Diffing script"))
+    print(script_txt)
     # Save the script to compare.
     script_file_name = "./tmp.vimdiff_branch_with_base.sh"
-    script_txt = "\n".join(script_txt)
     hsysinte.create_executable_script(script_file_name, script_txt)
     print(f"# To diff against the base run:\n> {script_file_name}")
 
