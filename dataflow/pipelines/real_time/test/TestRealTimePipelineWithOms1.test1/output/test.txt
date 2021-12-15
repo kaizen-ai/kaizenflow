@@ -16,7 +16,7 @@ config:
   process_forecasts:
     prediction_col: price
     execution_mode: real_time
-    process_forecasts_config: {'market_data_interface': <market_data.market_data_interface.ReplayedTimeMarketDataInterface object>, 'portfolio': <oms.portfolio.SimulatedPortfolio object>, 'order_type': 'price@twap', 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30), 'ath_end_time': datetime.time(16, 40), 'trading_end_time': datetime.time(16, 40)}
+    process_forecasts_config: {'market_data_interface': <market_data.market_data_interface.ReplayedTimeMarketDataInterface object>, 'portfolio': <oms.portfolio.Portfolio object>, 'order_type': 'price@twap', 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30), 'ath_end_time': datetime.time(16, 40), 'trading_end_time': datetime.time(16, 40)}
 result_nid: process_forecasts
 method: predict
 result_df:                           asset_id      price            start_datetime  \
@@ -84,7 +84,7 @@ config:
   process_forecasts:
     prediction_col: price
     execution_mode: real_time
-    process_forecasts_config: {'market_data_interface': <market_data.market_data_interface.ReplayedTimeMarketDataInterface object>, 'portfolio': <oms.portfolio.SimulatedPortfolio object>, 'order_type': 'price@twap', 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30), 'ath_end_time': datetime.time(16, 40), 'trading_end_time': datetime.time(16, 40)}
+    process_forecasts_config: {'market_data_interface': <market_data.market_data_interface.ReplayedTimeMarketDataInterface object>, 'portfolio': <oms.portfolio.Portfolio object>, 'order_type': 'price@twap', 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30), 'ath_end_time': datetime.time(16, 40), 'trading_end_time': datetime.time(16, 40)}
 result_nid: process_forecasts
 method: predict
 result_df:                           asset_id        price            start_datetime  \
@@ -160,7 +160,7 @@ config:
   process_forecasts:
     prediction_col: price
     execution_mode: real_time
-    process_forecasts_config: {'market_data_interface': <market_data.market_data_interface.ReplayedTimeMarketDataInterface object>, 'portfolio': <oms.portfolio.SimulatedPortfolio object>, 'order_type': 'price@twap', 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30), 'ath_end_time': datetime.time(16, 40), 'trading_end_time': datetime.time(16, 40)}
+    process_forecasts_config: {'market_data_interface': <market_data.market_data_interface.ReplayedTimeMarketDataInterface object>, 'portfolio': <oms.portfolio.Portfolio object>, 'order_type': 'price@twap', 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30), 'ath_end_time': datetime.time(16, 40), 'trading_end_time': datetime.time(16, 40)}
 result_nid: process_forecasts
 method: predict
 result_df:                           asset_id        price            start_datetime  \

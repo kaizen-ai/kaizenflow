@@ -950,6 +950,7 @@ def get_modified_files_in_branch(
 
 def get_summary_files_in_branch(
     dst_branch: str,
+    *,
     dir_name: str = ".",
 ) -> str:
     """

@@ -508,7 +508,7 @@ def git_create_patch(  # type: ignore
     # Summary of files.
     _LOG.info(
         "Difference between HEAD and master:\n%s",
-        hgit.get_summary_files_in_branch("master", "."),
+        hgit.get_summary_files_in_branch("master", dir_name="."),
     )
     # Get the files.
     all_ = False
@@ -653,7 +653,7 @@ def git_branch_files(ctx):  # type: ignore
     _ = ctx
     print(
         "Difference between HEAD and master:\n"
-        + hgit.get_summary_files_in_branch("master", ".")
+        + hgit.get_summary_files_in_branch("master", dir_name=".")
     )
 
 
@@ -877,6 +877,53 @@ def git_branch_copy(ctx, new_branch_name="", use_patch=False):  # type: ignore
     #
     cmd = f"git merge --squash --ff {curr_branch_name} && git reset HEAD"
     _run(ctx, cmd)
+
+
+@task
+def git_branch_diff_with_base(ctx ,diff_type="", dir_name="."):  # type: ignore
+    """
+    Diff files of the current branch with master at the branching point.
+    """
+    _ = ctx
+    # This branch is not master.
+    curr_branch_name = hgit.get_branch_name()
+    hdbg.dassert_ne(curr_branch_name, "master")
+    # Get the branching point.
+    hash_ = hgit.get_branch_hash(dir_name=dir_name)
+    # Get the modified files.
+    cmd = []
+    cmd.append("git diff")
+    if diff_type:
+        cmd.append(f"--diff-filter={diff_type}")
+    cmd.append(f"--name-only HEAD {hash_}")
+    cmd = " ".join(cmd)
+    files = hsysinte.system_to_files(
+        cmd, dir_name, remove_files_non_present=False
+    )
+    files = sorted(files)
+    print("files=%s\n%s" % (len(files), "\n".join(files)))
+    # Retrieve the original file and create the diff command.
+    script_txt = []
+    for branch_file in files:
+        if os.path.exists(branch_file):
+            master_file = branch_file.replace(".py", ".base.py")
+            # Save the base file.
+            cmd = f"git show {hash_}:{branch_file} >{master_file}"
+            rc = hsysinte.system(cmd, abort_on_error=False)
+            if rc == 0:
+                # For new files we get the error:
+                # fatal: path 'dev_scripts/configure_env.sh' exists on disk, but
+                # not in 'c92cfe4382325678fdfccd0ddcd1927008090602'
+                branch_file = "/dev/null"
+        else:
+            master_file = "/dev/null"
+        # Update the script to diff.
+        script_txt.append(f"vimdiff {master_file} {branch_file}")
+    # Save the script to compare.
+    script_file_name = "./tmp.vimdiff_branch_with_base.sh"
+    script_txt = "\n".join(script_txt)
+    hsysinte.create_executable_script(script_file_name, script_txt)
+    print(f"# To diff against the base run:\n> {script_file_name}")
 
 
 # TODO(gp): Add the following scripts:
