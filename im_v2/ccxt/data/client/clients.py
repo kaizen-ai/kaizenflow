@@ -10,7 +10,7 @@ import im_v2.ccxt.data.client.clients as imvcdclcl
 import abc
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import pandas as pd
 
@@ -39,9 +39,9 @@ class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
         """
         :param data_type: OHLCV, trade, or bid/ask data
         """
-        date_type = data_type.lower()
-        hdbg.dassert_in(date_type, _DATA_TYPES)
-        self._data_type = date_type
+        data_type = data_type.lower()
+        hdbg.dassert_in(data_type, _DATA_TYPES)
+        self._data_type = data_type
 
     @staticmethod
     def get_universe() -> List[imvcdcli.FullSymbol]:
@@ -181,7 +181,7 @@ class CcxtDbClient(AbstractCcxtClient):
         *,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
-        **read_sql_kwargs: Dict[str, Any],
+        **read_sql_kwargs: Any,
     ) -> pd.DataFrame:
         # Construct name of the DB table with data from data type.
         table_name = "ccxt_" + self._data_type
@@ -223,6 +223,7 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         data_type: str,
         root_dir: str,
         aws_profile: Optional[str] = None,
+        prefer_compressed: Optional[bool] = True,
     ) -> None:
         """
         Load CCXT data from local or S3 filesystem.
@@ -230,12 +231,16 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         :param: root_dir: either a local root path (e.g., "/app/im") or
             an S3 root path (e.g., "s3://alphamatic-data/data") to CCXT data
         :param: aws_profile: AWS profile name (e.g., "am")
+        :param prefer_compressed: whether to prefer to read a compressed file or not
         """
         super().__init__(data_type=data_type)
         self._root_dir = root_dir
         # Set s3fs parameter value if aws profile parameter is specified.
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
+        self._prefer_compressed = prefer_compressed
+        # Set file extension.
+        self._ext = self._get_file_extension()
 
     def _read_data(
         self,
@@ -270,7 +275,10 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
             file_path,
         )
         data = self._read_data_from_filesystem(
-            file_path, start_ts, end_ts, **read_kwargs
+            file_path=file_path,
+            start_ts=start_ts,
+            end_ts=end_ts,
+            **read_kwargs,
         )
         # Apply transformation to raw data.
         _LOG.info(
@@ -284,7 +292,7 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         return processed_data
 
     @abc.abstractmethod
-    def _ext(self) -> str:
+    def _get_file_extension(self) -> str:
         """
         Set file extension.
         """
@@ -293,16 +301,17 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
     def _read_data_from_filesystem(
         self,
         file_path: str,
+        *,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
-        **read_kwargs: Dict[str, Any],
+        **read_kwargs: Any,
     ) -> pd.DataFrame:
         """
-        Load data at the specified file path.
+        Load data from the specified file.
 
         :param file_path: absolute path to a file with CCXT data
         :param read_kwargs: kwargs for data reading
-        :return: dataframe from a specified path
+        :return: data from the specified path
         """
 
     # TODO(Grisha): factor out common code from `CddLoader._get_file_path` and
@@ -317,7 +326,7 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         Get the absolute path to a file with CCXT data.
 
         The file path is constructed in the following way:
-        `<root_dir>/ccxt/<snapshot>/<exchange_id>/<currency_pair><self._ext()>`.
+        `<root_dir>/ccxt/<snapshot>/<exchange_id>/<currency_pair><self._ext>`.
 
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
@@ -327,7 +336,7 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         :return: absolute path to a file with CCXT data
         """
         # Get absolute file path.
-        file_name = currency_pair + self._ext()
+        file_name = currency_pair + self._ext
         file_path = os.path.join(
             self._root_dir, "ccxt", data_snapshot, exchange_id, file_name
         )
@@ -367,20 +376,26 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
 
 class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
     """
-    CCXT client for data stored in CSV from local or S3 filesystem.
+    CCXT client for data stored as CSV from local or S3 filesystem.
     """
 
-    @staticmethod
-    def _ext() -> str:
-        return ".csv.gz"
+    def _get_file_extension(self) -> str:
+        if self._prefer_compressed:
+            return ".csv.gz"
+        else:
+            return ".csv"
 
     @staticmethod
     def _read_data_from_filesystem(
         file_path: str,
+        *,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
-        **read_kwargs: Dict[str, Any],
+        **read_kwargs: Any,
     ) -> pd.DataFrame:
+        """
+        See the `_read_data_from_filesystem()` in the parent class.
+        """
         # Load data.
         data = cpanh.read_csv(file_path, **read_kwargs)
         # Filter by dates if specified.
@@ -395,20 +410,24 @@ class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
 
 class CcxtParquetFileSystemClient(AbstractCcxtFileSystemClient):
     """
-    CCXT client for data stored in Parquet from local or S3 filesystem.
+    CCXT client for data stored as Parquet from local or S3 filesystem.
     """
 
     @staticmethod
-    def _ext() -> str:
+    def _get_file_extension() -> str:
         return ".pq"
 
     @staticmethod
     def _read_data_from_filesystem(
         file_path: str,
+        *,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
-        **read_kwargs: Dict[str, Any],
+        **read_kwargs: Any,
     ) -> pd.DataFrame:
+        """
+        See the `_read_data_from_filesystem()` in the parent class.
+        """
         # Load data.
         data = cpanh.read_parquet(file_path, **read_kwargs)
         # TODO(Dan): Refactor filtering by dates using Parquet functionality.
