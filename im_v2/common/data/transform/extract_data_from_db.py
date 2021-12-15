@@ -27,6 +27,7 @@ import helpers.sql as hsql
 import im_v2.ccxt.data.client.clients as imvcdclcl
 import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.common.data.client.clients as ivcdclcl
+import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
 
@@ -56,6 +57,13 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         help="Location of daily PQ files",
     )
+    parser.add_argument(
+        "--stage",
+        action="store",
+        type=str,
+        default="local",
+        help="Which env is used: local, dev or prod",
+    )
     hparser.add_verbosity_arg(parser)
     return parser
 
@@ -79,10 +87,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Location of daily PQ files.
     dst_dir = args.dst_dir
     hdbg.dassert_exists(dst_dir)
-    ccxt_db_client = imvcdclcl.CcxtDbClient(
-        "ohlcv",
-        hsql.get_connection_from_env_vars(),
-    )
+    stage = args.stage
+    env_file = imvimlita.get_db_env_path(stage)
+    connection_params = hsql.get_connection_info_from_env_file(env_file)
+    connection = hsql.get_connection(*connection_params)
+    ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", connection)
     multiple_symbols_ccxt_db_client = ivcdclcl.MultipleSymbolsClient(
         class_=ccxt_db_client, mode="concat"
     )
