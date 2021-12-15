@@ -168,6 +168,7 @@ class TestGetCreateDbCmd(hunitest.TestCase):
             --db-name 'test_db' \
             --credentials 'test.json'
         """
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test4(self) -> None:
         """
@@ -187,6 +188,7 @@ class TestGetCreateDbCmd(hunitest.TestCase):
             --db-name 'test_db' \
             --credentials '"host=localhost dbname=im_postgres_db_local port=54"'
         """
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
 
 class TestGetRemoveDbCmd(hunitest.TestCase):
@@ -244,9 +246,10 @@ class TestGetRemoveDbCmd(hunitest.TestCase):
             --db-name 'test_db' \
             --credentials asd.json
         """
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
 
-# TODO(Grisha): 'is_inside_docker()' -> 'is_inside_im_container()' in #100.
+# TODO(Grisha): add more tests and enable this one having `dind`.
 @pytest.mark.skipif(hsysinte.is_inside_docker(), reason="amp #1189")
 class TestImDockerCmd(hunitest.TestCase):
     def test1(self) -> None:
