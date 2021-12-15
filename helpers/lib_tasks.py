@@ -900,11 +900,10 @@ def _dassert_current_dir_matches(dir_name: str) -> None:
                     curr_dir_name, dir_name)
 
 
-def _dassert_is_integration_branch() -> None:
-    curr_branch = hgit.get_branch_name()
+def _dassert_is_integration_branch(dir_name: str) -> None:
+    curr_branch = hgit.get_branch_name(dir_name=dir_name)
     hdbg.dassert_ne(curr_branch, "master")
     hdbg.dassert_in("Integrate", curr_branch)
-
 
 
 @task
@@ -917,7 +916,8 @@ def integrate_create_branches(ctx, dir_name, dry_run=False):  # type: ignore
     _report_task()
     #
     _dassert_current_dir_matches(dir_name)
-    _dassert_is_integration_branch()
+    _dassert_is_integration_branch(src_dir)
+    _dassert_is_integration_branch(dst_dir)
     #
     date = datetime.datetime.now().date()
     date_as_str = date.strftime("%Y%m%d")
@@ -929,13 +929,20 @@ def integrate_create_branches(ctx, dir_name, dry_run=False):  # type: ignore
 
 
 def _get_src_dst_dirs(src_dir: str, dst_dir: str, subdir_name: str) -> Tuple[str, str]:
-    root_dir = os.path.dirname(os.getcwd())
+    """
+    Return the full path of `src_dir` and `dst_dir` assuming that
+    - `src_dir` is the current dir
+    - `dst_dir` is parallel dir to the current one
+
+    :return: full paths of both directiories
+    """
+    curr_parent_dir = os.path.dirname(os.getcwd())
     #
-    src_dir = os.path.join(root_dir, src_dir, subdir_name)
+    src_dir = os.path.join(curr_parent_dir, src_dir, subdir_name)
     src_dir = os.path.normpath(src_dir)
     hdbg.dassert_dir_exists(src_dir)
     #
-    dst_dir = os.path.join(root_dir, dst_dir, subdir_name)
+    dst_dir = os.path.join(curr_parent_dir, dst_dir, subdir_name)
     dst_dir = os.path.normpath(dst_dir)
     hdbg.dassert_dir_exists(dst_dir)
     return src_dir, dst_dir
@@ -953,9 +960,11 @@ def integrate_diff_dirs(ctx, src_dir="amp1", dst_dir="cmamp1", subdir_name="", u
     _report_task()
     #
     _dassert_current_dir_matches(src_dir)
-    _dassert_is_integration_branch()
     #
     src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir_name)
+    _dassert_is_integration_branch(src_dir)
+    _dassert_is_integration_branch(dst_dir)
+    #
     if use_linux_diff:
         cmd = f"diff -r --brief {src_dir} {dst_dir}"
     else:
@@ -972,9 +981,9 @@ def integrate_copy_dirs(ctx, src_dir="amp1", dst_dir="cmamp1", subdir_name="", d
     """
     _report_task()
     #
-    _dassert_is_integration_branch()
-    #
     src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir_name)
+    _dassert_is_integration_branch(src_dir)
+    _dassert_is_integration_branch(dst_dir)
     if dry_run:
         cmd = f"diff -r --brief {src_dir} {dst_dir}"
     else:
@@ -984,31 +993,45 @@ def integrate_copy_dirs(ctx, src_dir="amp1", dst_dir="cmamp1", subdir_name="", d
 
 
 @task
-def integrate_save_base_files(ctx, file_name):  # type: ignore
+def integrate_compare_branch_with_base(ctx, src_dir="amp1", dst_dir="cmamp1", subdir_name=""):  # type: ignore
     """
     Save the files from `file_name` at the commit before this branch was branched.
     """
     _report_task()
     _ = ctx
-    _dassert_is_integration_branch()
-    # Find the hash before the branch was created
-    # > git merge-base master AmpTask1786_Integrate_20211210
-    # 77383ac21bbd3fa353f9572ac3ae9ad144c44db1
-    #hash_ = "77383ac21bbd3fa353f9572ac3ae9ad144c44db1"
-    hash_ = "fdc94164b053f20d9aa1486f216c9ae9314d3d07"
-    # Get the files to diff.
-    _LOG.info("Reading file names from '%s'", file_name)
-    files = hio.from_file(file_name).split("\n")
+    #
+    _dassert_current_dir_matches(src_dir)
+    src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir_name)
+    _dassert_is_integration_branch(src_dir)
+    _dassert_is_integration_branch(dst_dir)
+    #
+    # Find the files modified by both branches.
+    src_hash = hgit.get_branch_hash(src_dir)
+    _LOG.info("src_hash=%s", src_hash)
+    dst_hash = hgit.get_branch_hash(dst_dir)
+    _LOG.info("dst_hash=%s", dst_hash)
+    diff_files1 = os.path.abspath("./tmp.files_modified1.txt")
+    diff_files2 = os.path.abspath("./tmp.files_modified2.txt")
+    cmd = f"cd {src_dir} && git diff --name-only {src_hash} HEAD >{diff_files1}"
+    hsysinte.system(cmd)
+    cmd = f"cd {dst_dir} && git diff --name-only {dst_hash} HEAD >{diff_files2}"
+    hsysinte.system(cmd)
+    common_files = "./tmp.common_files.txt"
+    cmd = f"comm -12 {diff_files1} {diff_files2} >{common_files}"
+    hsysinte.system(cmd)
+    # Get the base files to diff.
+    files = hio.from_file(common_files).split("\n")
     files = [f for f in files if f != ""]
-    _LOG.info("Found %d files:\n%s", len(files), "\n".join(files))
+    _LOG.info("Found %d files to diff:\n%s", len(files), "\n".join(files))
+    # Retrieve the original file and create the diff command.
     script_txt = []
     for src_file in files:
         hdbg.dassert_file_exists(src_file)
         # TODO(gp): Add function to add a suffix to a name, using
-        # os.path.dirname(), os.path.basename(), os.path.split_extension().
+        #  os.path.dirname(), os.path.basename(), os.path.split_extension().
         dst_file = src_file.replace(".py", ".base.py")
         # Save the base file.
-        cmd = f"git show {hash_}:{src_file} >{dst_file}"
+        cmd = f"git show {src_hash}:{src_file} >{dst_file}"
         hsysinte.system(cmd)
         # Update the script to diff.
         script_txt.append(f"vimdiff {dst_file} {src_file}")

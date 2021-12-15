@@ -64,7 +64,7 @@ def get_branch_next_name(dir_name: str = ".") -> str:
     E.g., `AmpTask1903_Implemented_system_Portfolio` ->
         `AmpTask1903_Implemented_system_Portfolio_3`
     """
-    curr_branch_name = get_branch_name()
+    curr_branch_name = get_branch_name(dir_name=dir_name)
     hdbg.dassert_ne(curr_branch_name, "master")
     _LOG.debug("curr_branch_name=%s", curr_branch_name)
     #
@@ -76,6 +76,20 @@ def get_branch_next_name(dir_name: str = ".") -> str:
             return new_branch_name
     hdbg.dassert("Can't find the next branch name for '%s'", curr_branch_name)
 
+
+def get_branch_hash(dir_name: str = ".") -> str:
+    """
+    Return the hash of the commit right before the branch in `dir_name` was created.
+    """
+    curr_branch_name = get_branch_name(dir_name=dir_name)
+    hdbg.dassert_ne(curr_branch_name, "master")
+    _LOG.debug("curr_branch_name=%s", curr_branch_name)
+    #
+    cmd = f"cd {dir_name} && git merge-base master {curr_branch_name}"
+    _, hash = hsysinte.system_to_string(cmd)
+    hash_ = hash.rstrip("\n").lstrip("\n")
+    hdbg.dassert_eq(len(hash_.split("\n")), 1)
+    return hash_
 
 # #############################################################################
 # Git submodule functions
