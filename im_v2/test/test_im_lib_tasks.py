@@ -109,7 +109,7 @@ class TestGetImDockerUp(hunitest.TestCase):
             --env-file {env_file} \
             up \
             -d \
-            im_postgres_local
+            im_postgres
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
