@@ -63,7 +63,7 @@ class TestGetImDockerDown(hunitest.TestCase):
         """
         Check the command line to remove containers and volumes.
         """
-        stage = "dev"
+        stage = "local"
         actual = imvimlita._get_docker_down_cmd(stage, True)
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         env_file = imvimlita.get_db_env_path(stage)

@@ -100,7 +100,7 @@ def _get_docker_up_cmd(stage: str, detach: bool) -> str:
     :param stage: development stage, i.e. `local`, `dev` and `prod`
     :param detach: run containers in the background
     """
-    cmd = ["sudo docker-compose"]
+    cmd = ["docker-compose"]
     # Add `docker-compose` file path.
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
@@ -152,7 +152,7 @@ def _get_docker_down_cmd(stage: str, volumes_remove: bool) -> str:
     :param stage: development stage, i.e. `local`, `dev` and `prod`
     :param volumes_remove: whether to remove attached volumes or not
     """
-    cmd = ["sudo docker-compose"]
+    cmd = ["docker-compose"]
     # Add `docker-compose` file path.
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
