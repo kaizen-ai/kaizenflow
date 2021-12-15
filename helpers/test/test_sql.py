@@ -40,6 +40,8 @@ class TestSql1(imcodbuti.TestImDbHelper):
         """
         hsql.create_database(self.connection, dbname="test_db")
         self.assertIn("test_db", hsql.get_db_names(self.connection))
+        # Delete the database.
+        hsql.remove_database(self.connection, "test_db")
 
     @pytest.mark.slow("10 seconds.")
     def test_create_insert_query(self) -> None:
@@ -50,6 +52,8 @@ class TestSql1(imcodbuti.TestImDbHelper):
         test_data = self._get_test_data()
         actual_query = hsql._create_insert_query(test_data, "test_table")
         self.check_string(actual_query)
+        # Delete the table.
+        hsql.remove_table(self.connection, "test_table")
 
     @pytest.mark.slow("11 seconds.")
     def test_remove_database1(self) -> None:
@@ -85,6 +89,8 @@ class TestSql1(imcodbuti.TestImDbHelper):
         df = hsql.execute_query_to_df(self.connection, "SELECT * FROM test_table")
         actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
+        # Delete the table.
+        hsql.remove_table(self.connection, "test_table")
 
     @pytest.mark.slow("16 seconds.")
     def test_copy_rows_with_copy_from1(self) -> None:
@@ -99,6 +105,8 @@ class TestSql1(imcodbuti.TestImDbHelper):
         df = hsql.execute_query_to_df(self.connection, "SELECT * FROM test_table")
         actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
+        # Delete the table.
+        hsql.remove_table(self.connection, "test_table")
 
     @pytest.mark.slow("9 seconds.")
     def test_duplicate_removal1(self) -> None:
@@ -117,6 +125,8 @@ class TestSql1(imcodbuti.TestImDbHelper):
         df = hsql.execute_query_to_df(self.connection, "SELECT * FROM test_table")
         actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
+        # Delete the table.
+        hsql.remove_table(self.connection, "test_table")
 
     @pytest.mark.slow("9 seconds.")
     def test_duplicate_removal2(self) -> None:
@@ -135,6 +145,8 @@ class TestSql1(imcodbuti.TestImDbHelper):
         df = hsql.execute_query_to_df(self.connection, "SELECT * FROM test_table")
         actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
+        # Delete the table.
+        hsql.remove_table(self.connection, "test_table")
 
     def _create_test_table(self) -> None:
         """

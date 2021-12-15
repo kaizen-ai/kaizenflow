@@ -7,13 +7,34 @@ import im_v2.im_lib_tasks as imvimlita
 """
 
 import logging
+import os
 
 from invoke import task
 
 import helpers.dbg as hdbg
+import helpers.git as hgit
 import helpers.lib_tasks as hlibtask
 
 _LOG = logging.getLogger(__name__)
+
+
+def get_db_env_path(stage: str) -> str:
+    """
+    Get path to db env file that contains db connection parameters.
+
+    :param stage: development stage, i.e. `local`, `dev` and `prod`
+    """
+    hdbg.dassert_in(stage, "local dev prod".split())
+    # Get `env` files dir.
+    env_dir = "im_v2/devops/env"
+    # Get the file name depending on the stage.
+    env_file_name = f"{stage}.im_db_config.env"
+    # Get file path.
+    amp_path = hgit.get_amp_abs_path()
+    env_file_path = os.path.join(amp_path, env_dir, env_file_name)
+    hdbg.dassert_file_exists(env_file_path)
+    return env_file_path
+
 
 # #############################################################################
 
@@ -185,7 +206,7 @@ def _get_create_db_cmd(
     cmd = ["docker-compose"]
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
-    cmd.append(f"run --rm im_app")
+    cmd.append("run --rm im_app")
     cmd.append("im_v2/common/db/create_db.py")
     cmd.append(f"--db-name '{dbname}'")
     if overwrite:
@@ -198,12 +219,12 @@ def _get_create_db_cmd(
 
 # TODO(Dan3): add unit tests for `im_create_db` #547.
 @task
-def im_create_db(
+def im_create_db(  # type: ignore
     ctx,
     dbname,
     overwrite=False,
     credentials="from_env",
-):  # type: ignore
+):
     """
     Create database inside a container attached to the `im app`.
 
@@ -252,7 +273,7 @@ def _get_remove_db_cmd(
     cmd = ["docker-compose"]
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
-    cmd.append(f"run --rm im_app")
+    cmd.append("run --rm im_app")
     cmd.append("im_v2/common/db/remove_db.py")
     cmd.append(f"--db-name '{dbname}'")
     # Add quotes so that credentials as string are handled properly by invoke.
@@ -263,11 +284,11 @@ def _get_remove_db_cmd(
 
 # TODO(Dan3): add unit tests for `im_remove_db` #547.
 @task
-def im_remove_db(
+def im_remove_db(  # type: ignore
     ctx,
     dbname,
     credentials="from_env",
-):  # type: ignore
+):
     """
     Remove database inside a container attached to the `im app`.
 

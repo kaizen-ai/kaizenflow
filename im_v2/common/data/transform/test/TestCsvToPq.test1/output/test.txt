@@ -1,0 +1,27 @@
+original shape=(2, 9)
+Head:
+{
+    "0":{
+        "timestamp":1638646800000,
+        "open":49317.68,
+        "high":49346.95,
+        "volume":23.13681,
+        "low":49315.45,
+        "close":49330.63,
+        "currency_pair":"BTC_USDT",
+        "created_at":"2021-12-07 13:01:20.183463+00:00",
+        "exchange_id":"binance"
+    },
+    "1":{
+        "timestamp":1638646860000,
+        "open":49330.63,
+        "high":49400.98,
+        "volume":61.99752,
+        "low":49322.78,
+        "close":49325.23,
+        "currency_pair":"BTC_USDT",
+        "created_at":"2021-12-07 13:01:20.183463+00:00",
+        "exchange_id":"binance"
+    }
+}
+Tail:

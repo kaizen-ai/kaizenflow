@@ -18,18 +18,16 @@
 
 import logging
 
-import numpy as np
 import pandas as pd
 
-import core.config as cconfig
-import core.dataflow.price_interface as cdtfprint
 import helpers.dbg as hdbg
 import helpers.printing as hprint
-import oms.portfolio as omportfo
-import oms.test.test_portfolio as ottport
 
 # %%
 # hdbg.init_logger(verbosity=logging.INFO)
+import market_data.market_data_interface_example as mdmdinex
+import oms.portfolio_example as oporexam
+
 hdbg.init_logger(verbosity=logging.DEBUG)
 
 _LOG = logging.getLogger(__name__)
@@ -43,11 +41,13 @@ hprint.config_notebook()
 
 # %%
 event_loop = None
-price_interface = ottport.get_replayed_time_price_interface(event_loop)
+market_data_interface = mdmdinex.get_replayed_time_market_data_interface_example2(
+    event_loop
+)
 
 # %%
 initial_timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
-portfolio = ottport.get_portfolio_example1(price_interface, initial_timestamp)
+portfolio = oporexam.get_portfolio_example1(market_data_interface, initial_timestamp)
 
 # %%
 str(portfolio)

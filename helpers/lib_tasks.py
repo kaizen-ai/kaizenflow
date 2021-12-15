@@ -147,6 +147,7 @@ def _to_single_line_cmd(cmd: Union[str, List[str]]) -> str:
     return cmd
 
 
+# TODO(Grisha): make it public #755.
 def _to_multi_line_cmd(docker_cmd_: List[str]) -> str:
     r"""
     Convert a command encoded as a list of strings into a single command
@@ -192,12 +193,14 @@ def _to_multi_line_cmd(docker_cmd_: List[str]) -> str:
 use_one_line_cmd = False
 
 
-def _run(ctx: Any, cmd: str, *args: Any, **kwargs: Any) -> None:
+# TODO(Grisha): make it public #755.
+def _run(ctx: Any, cmd: str, *args: Any, **ctx_run_kwargs: Any) -> int:
     _LOG.debug("cmd=%s", cmd)
     if use_one_line_cmd:
         cmd = _to_single_line_cmd(cmd)
     _LOG.debug("cmd=%s", cmd)
-    ctx.run(cmd, *args, **kwargs)
+    result = ctx.run(cmd, *args, **ctx_run_kwargs)
+    return result.return_code
 
 
 # TODO(gp): We should factor out the meaning of the params in a string and add it
@@ -326,8 +329,12 @@ def print_tasks(ctx, as_code=False):  # type: ignore
     _report_task()
     _ = ctx
     func_names = []
+    lib_tasks_file_name = os.path.join(
+        hgit.get_amp_abs_path(), "helpers/lib_tasks.py"
+    )
+    hdbg.dassert_file_exists(lib_tasks_file_name)
     # TODO(gp): Use __file__ instead of hardwiring the file.
-    cmd = r'\grep "^@task" -A 1 helpers/lib_tasks.py | grep def'
+    cmd = rf'\grep "^@task" -A 1 {lib_tasks_file_name} | grep def'
     # def print_setup(ctx):  # type: ignore
     # def git_pull(ctx):  # type: ignore
     # def git_pull_master(ctx):  # type: ignore
@@ -791,6 +798,44 @@ def git_rename_branch(ctx, new_branch_name):  # type: ignore
 # dev_scripts/git/git_branch.sh
 # dev_scripts/git/git_branch_point.sh
 # dev_scripts/create_class_diagram.sh
+
+# #############################################################################
+# Integrate.
+# #############################################################################
+
+
+@task
+def integrate_save_base_files(ctx, file_name):  # type: ignore
+    """
+    Save the files from `file_name` at the commit before this branch was branched.
+    """
+    # Find the hash before the branch was created
+    # > git merge-base master AmpTask1786_Integrate_20211210
+    # 77383ac21bbd3fa353f9572ac3ae9ad144c44db1
+    #hash_ = "77383ac21bbd3fa353f9572ac3ae9ad144c44db1"
+    hash_ = "fdc94164b053f20d9aa1486f216c9ae9314d3d07"
+    # Get the files to diff.
+    _LOG.info("Reading file names from '%s'", file_name)
+    files = hio.from_file(file_name).split("\n")
+    files = [f for f in files if f != ""]
+    _LOG.info("Found %d files:\n%s", len(files), "\n".join(files))
+    script_txt = []
+    for src_file in files:
+        hdbg.dassert_file_exists(src_file)
+        # TODO(gp): Add function to add a suffix to a name, using
+        # os.path.dirname(), os.path.basename(), os.path.split_extension().
+        dst_file = src_file.replace(".py", ".base.py")
+        # Save the base file.
+        cmd = f"git show {hash_}:{src_file} >{dst_file}"
+        hsysinte.system(cmd)
+        # Update the script to diff.
+        script_txt.append(f"vimdiff {dst_file} {src_file}")
+    # Save the script to compare.
+    script_file_name = "./tmp.vimdiff_with_base.sh"
+    script_txt = "\n".join(script_txt)
+    hsysinte.create_executable_script(script_file_name, script_txt)
+    print(f"# To diff against the base run:\n> {script_file_name}")
+
 
 # #############################################################################
 # Basic Docker commands.
@@ -1363,15 +1408,16 @@ def _get_docker_cmd(
 def _docker_cmd(
     ctx: Any,
     docker_cmd_: str,
-    **kwargs: Any,
-) -> None:
+    **ctx_run_kwargs: Any,
+) -> int:
     """
     Execute a docker command printing the command.
 
     :param kwargs: kwargs for `ctx.run`
     """
     _LOG.debug("cmd=%s", docker_cmd_)
-    _run(ctx, docker_cmd_, pty=True, **kwargs)
+    rc = _run(ctx, docker_cmd_, pty=True, **ctx_run_kwargs)
+    return rc
 
 
 @task
@@ -1503,6 +1549,7 @@ def _to_abs_path(filename: str) -> str:
 # Use Docker buildkit or not.
 # DOCKER_BUILDKIT = 1
 DOCKER_BUILDKIT = 0
+
 
 # For base_image, we use "" as default instead None since pyinvoke can only infer
 # a single type.
@@ -1680,7 +1727,7 @@ def docker_release_dev_image(  # type: ignore
     if superslow_tests:
         run_superslow_tests(ctx, stage=stage, version=version)
     # 3) Promote the "local" image to "dev".
-    docker_tag_local_image_as_dev(ctx, version=version)
+    docker_tag_local_image_as_dev(ctx, version)
     # 4) Run QA tests for the (local version) of the dev image.
     if qa_tests:
         qa_test_fn = get_default_param("END_TO_END_TEST_FN")
@@ -1690,7 +1737,7 @@ def docker_release_dev_image(  # type: ignore
             raise RuntimeError(msg)
     # 5) Push the "dev" image to ECR.
     if push_to_repo:
-        docker_push_dev_image(ctx, version=version)
+        docker_push_dev_image(ctx, version)
     else:
         _LOG.warning(
             "Skipping pushing dev image to repo_short_name, as requested"
@@ -2293,8 +2340,8 @@ def _run_test_cmd(
     coverage: bool,
     collect_only: bool,
     start_coverage_script: bool,
-    **kwargs: Any,
-) -> None:
+    **ctx_run_kwargs: Any,
+) -> int:
     """
     Same params as `run_fast_tests()`.
     """
@@ -2307,7 +2354,9 @@ def _run_test_cmd(
     cmd = f"'{cmd}'"
     docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd)
     _LOG.info("cmd=%s", docker_cmd_)
-    _docker_cmd(ctx, docker_cmd_, **kwargs)
+    # We can't use `hsysinte.system()` because of buffering of the output,
+    # losing formatting and so on, so we stick to executing through `ctx`.
+    rc = _docker_cmd(ctx, docker_cmd_, **ctx_run_kwargs)
     # Print message about coverage.
     if coverage:
         msg = """
@@ -2326,7 +2375,14 @@ def _run_test_cmd(
 (cd ./htmlcov; python -m http.server 33333)"""
             script_name = "./tmp.coverage.sh"
             hsysinte.create_executable_script(script_name, script_txt)
-            hsysinte.system(script_name)
+            coverage_rc = hsysinte.system(script_name)
+            if coverage_rc != 0:
+                _LOG.warning(
+                    "Setting `rc` to `0` even though the coverage script"
+                    "fails."
+                )
+                rc = 0
+    return rc
 
 
 def _run_tests(
@@ -2341,8 +2397,8 @@ def _run_tests(
     tee_to_file: bool,
     *,
     start_coverage_script: bool = True,
-    **kwargs: Any,
-) -> None:
+    **ctx_run_kwargs: Any,
+) -> int:
     """
     Same params as `run_fast_tests()`.
     """
@@ -2356,7 +2412,7 @@ def _run_tests(
         tee_to_file,
     )
     # Execute the command line.
-    _run_test_cmd(
+    rc = _run_test_cmd(
         ctx,
         stage,
         version,
@@ -2364,13 +2420,14 @@ def _run_tests(
         coverage,
         collect_only,
         start_coverage_script,
-        **kwargs,
+        **ctx_run_kwargs,
     )
+    return rc
 
 
 # TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code.
 @task
-def run_fast_tests(  # type: ignore
+def run_fast_tests(  # type: ignore # due to https://github.com/pyinvoke/invoke/issues/357.
     ctx,
     stage="dev",
     version="",
@@ -2393,7 +2450,7 @@ def run_fast_tests(  # type: ignore
     :param kwargs: kwargs for `ctx.run`
     """
     _report_task()
-    _run_tests(
+    rc = _run_tests(
         ctx,
         stage,
         "fast_tests",
@@ -2405,6 +2462,7 @@ def run_fast_tests(  # type: ignore
         tee_to_file,
         **kwargs,
     )
+    return rc
 
 
 @task
@@ -2424,7 +2482,7 @@ def run_slow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
-    _run_tests(
+    rc = _run_tests(
         ctx,
         stage,
         "slow_tests",
@@ -2435,6 +2493,7 @@ def run_slow_tests(  # type: ignore
         collect_only,
         tee_to_file,
     )
+    return rc
 
 
 @task
@@ -2454,7 +2513,7 @@ def run_superslow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
-    _run_tests(
+    rc = _run_tests(
         ctx,
         stage,
         "superslow_tests",
@@ -2465,6 +2524,7 @@ def run_superslow_tests(  # type: ignore
         collect_only,
         tee_to_file,
     )
+    return rc
 
 
 @task
@@ -2485,7 +2545,7 @@ def run_fast_slow_tests(  # type: ignore
     """
     _report_task()
     # Run fast tests but do not fail on error.
-    run_fast_tests(
+    fast_test_rc = run_fast_tests(
         ctx,
         stage,
         version,
@@ -2496,8 +2556,10 @@ def run_fast_slow_tests(  # type: ignore
         tee_to_file,
         warn=True,
     )
+    if fast_test_rc != 0:
+        _LOG.error("Fast tests failed")
     # Run slow tests.
-    run_slow_tests(
+    slow_test_rc = run_slow_tests(
         ctx,
         stage,
         version,
@@ -2507,6 +2569,12 @@ def run_fast_slow_tests(  # type: ignore
         collect_only,
         tee_to_file,
     )
+    if slow_test_rc != 0:
+        _LOG.error("Slow tests failed")
+    if fast_test_rc != 0 or slow_test_rc != 0:
+        _LOG.error("Fast / slow tests failed")
+        raise RuntimeError("Fast / slow tests failed")
+    return fast_test_rc, slow_test_rc
 
 
 # #############################################################################
@@ -2746,6 +2814,50 @@ def pytest_failed(  # type: ignore
 
 
 # #############################################################################
+
+
+def _purify_test_output(src_file_name: str, dst_file_name: str) -> None:
+    """
+    Clean up the output of `pytest -s --dbg` to make easier to compare two
+    runs.
+
+    E.g., remove the timestamps, reference to Git repo.
+    """
+    _LOG.info("Converted '%s' -> '%s", src_file_name, dst_file_name)
+    txt = hio.from_file(src_file_name)
+    out_txt = []
+    for line in txt.split("\n"):
+        # 10:05:18       portfolio        : _get_holdings       : 431 :
+        m = re.match(r"^\d\d:\d\d:\d\d\s+(.*:.*)$", line)
+        if m:
+            new_line = m.group(1)
+        else:
+            new_line = line
+        out_txt.append(new_line)
+    #
+    out_txt = "\n".join(out_txt)
+    hio.to_file(dst_file_name, out_txt)
+
+
+@task
+def pytest_compare(ctx, file_name1, file_name2):  # type: ignore
+    """
+    Compare the output of two runs of `pytest -s --dbg` removing irrelevant
+    details.
+    """
+    _report_task()
+    _ = ctx
+    # TODO(gp): Change the name of the file before the extension.
+    dst_file_name1 = file_name1 + ".purified"
+    _purify_test_output(file_name1, dst_file_name1)
+    dst_file_name2 = file_name2 + ".purified"
+    _purify_test_output(file_name2, dst_file_name2)
+    # TODO(gp): Call vimdiff automatically.
+    cmd = "vimdiff %s %s" % (dst_file_name1, dst_file_name2)
+    print(f"> {cmd}")
+
+
+# #############################################################################
 # Linter.
 # #############################################################################
 
@@ -2914,7 +3026,8 @@ def lint(  # type: ignore
     files="",
     dir_name="",
     phases="",
-    only_formatting=False,
+    only_format=False,
+    only_check=False,
     # stage="prod",
     run_bash=False,
     run_linter_step=True,
@@ -2931,7 +3044,9 @@ def lint(  # type: ignore
     :param files: specify a space-separated list of files
     :param dir_name: process all the files in a dir
     :param phases: specify the lint phases to execute
-    :param only_formatting: run only the formatting steps
+    :param only_format: run only the formatting phases (e.g., black)
+    :param only_check: run only the checking phases (e.g., pylint, mypy) that
+        don't change the code
     :param run_bash: instead of running pre-commit, run bash to debug
     :param run_linter_step: run linter step
     :param parse_linter_output: parse linter output and generate vim cfile
@@ -2944,12 +3059,50 @@ def lint(  # type: ignore
     if os.path.exists(lint_file_name):
         cmd = f"rm {lint_file_name}"
         _run(ctx, cmd)
-    #
-    if only_formatting:
+    # The available phases are:
+    # ```
+    # > i lint -f "foobar.py"
+    # Don't commit to branch...............................................Passed
+    # Check for merge conflicts........................(no files to check)Skipped
+    # Trim Trailing Whitespace.........................(no files to check)Skipped
+    # Fix End of Files.................................(no files to check)Skipped
+    # Check for added large files......................(no files to check)Skipped
+    # CRLF end-lines remover...........................(no files to check)Skipped
+    # Tabs remover.....................................(no files to check)Skipped
+    # autoflake........................................(no files to check)Skipped
+    # amp_check_filename...............................(no files to check)Skipped
+    # amp_isort........................................(no files to check)Skipped
+    # amp_black........................................(no files to check)Skipped
+    # amp_flake8.......................................(no files to check)Skipped
+    # amp_doc_formatter................................(no files to check)Skipped
+    # amp_pylint.......................................(no files to check)Skipped
+    # amp_mypy.........................................(no files to check)Skipped
+    # amp_lint_md......................................(no files to check)Skipped
+    # amp_class_method_order...........................(no files to check)Skipped
+    # amp_normalize_import.............................(no files to check)Skipped
+    # amp_format_separating_line.......................(no files to check)Skipped
+    # amp_warn_incorrectly_formatted_todo..............(no files to check)Skipped
+    # amp_processjupytext..............................(no files to check)Skipped
+    # ```
+    if only_format:
         hdbg.dassert_eq(phases, "")
-        phases = (
-            "amp_isort amp_class_method_order amp_normalize_import "
-            "amp_format_separating_line amp_black"
+        phases = " ".join(
+            [
+                "amp_isort",
+                "amp_class_method_order",
+                "amp_normalize_import",
+                "amp_format_separating_line",
+                "amp_black",
+                "amp_processjupytext",
+            ]
+        )
+    if only_check:
+        hdbg.dassert_eq(phases, "")
+        phases = " ".join(
+            [
+                "amp_pylint",
+                "amp_mypy",
+            ]
         )
     if run_linter_step:
         # We don't want to run this all the times.

@@ -35,7 +35,7 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
     ```
     and then the creation / destruction of the DB is skipped making the tests
     faster and allowing easier debugging.
-    
+
     The invariant is that each test should:
     - (ideally) find a clean DB to work with
     - not assume that the DB is clean. If the DB is not clean, tests should clean it
@@ -47,61 +47,53 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
       - E.g., if a test creates a table, then it should delete it at the end of the test
     """
 
-    def setUp(self) -> None:
+    @classmethod
+    def setUpClass(cls) -> None:
         """
         Initialize the test database inside test container.
         """
-        _LOG.info("\n%s", hprint.frame("setUp"))
-        super().setUp()
-        # TODO(Dan): Read the info from env in #585.
-        host = "localhost"
-        dbname = self._get_db_name()
-        port = 5432
-        user = "aljsdalsd"
-        password = "alsdkqoen"
-        conn_exists = hsql.check_db_connection(
-            host, dbname, port, user, password
-        )[0]
+        _LOG.info("\n%s", hprint.frame("setUpClass"))
+        # Read the connection parameters from the env file.
+        connection_info = hsql.get_connection_info_from_env_file(
+            cls._get_db_env_path()
+        )
+        conn_exists = hsql.check_db_connection(*connection_info)[0]
         if conn_exists:
             _LOG.warning("DB is already up: skipping docker compose")
             # Since we have found the DB already up, we assume that we need to
             # leave it running after the tests
-            self.bring_down_db = False
+            cls.bring_down_db = False
         else:
             # Start the service.
-            self.docker_compose_file_path = os.path.join(
-                hgit.get_amp_abs_path(), self._get_compose_file()
+            cls.docker_compose_file_path = os.path.join(
+                hgit.get_amp_abs_path(), cls._get_compose_file()
             )
             cmd = (
                 "sudo docker-compose "
-                f"--file {self.docker_compose_file_path} "
-                f"up -d {self._get_service_name()}"
+                f"--file {cls.docker_compose_file_path} "
+                f"up -d {cls._get_service_name()}"
             )
             hsysinte.system(cmd, suppress_output=False)
             # Wait for the DB to be available.
-            hsql.wait_db_connection(
-                host, dbname, port, user, password
-            )
-            self.bring_down_db = True
+            hsql.wait_db_connection(*connection_info)
+            cls.bring_down_db = True
         # Save connection info.
-        self.connection = hsql.get_connection(
-            host, dbname, port, user, password, autocommit=True
-        )
+        cls.connection = hsql.get_connection(*connection_info, autocommit=True)
 
-    def tearDown(self) -> None:
+    @classmethod
+    def tearDownClass(cls) -> None:
         """
         Bring down the test container.
         """
         _LOG.info("\n%s", hprint.frame("tearDown"))
-        if self.bring_down_db:
+        if cls.bring_down_db:
             cmd = (
                 "sudo docker-compose "
-                f"--file {self.docker_compose_file_path} down -v"
+                f"--file {cls.docker_compose_file_path} down -v"
             )
             hsysinte.system(cmd, suppress_output=False)
         else:
             _LOG.warning("Leaving DB up")
-        super().tearDown()
 
     @staticmethod
     @abc.abstractmethod
@@ -110,17 +102,16 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         Get path to Docker compose file.
         """
 
-    # TODO(Dan): Deprecate after #585.
-    @staticmethod
-    @abc.abstractmethod
-    def _get_db_name() -> str:
-        """
-        Get DB name.
-        """
-
     @staticmethod
     @abc.abstractmethod
     def _get_service_name() -> str:
         """
         Get service name.
+        """
+
+    @staticmethod
+    @abc.abstractmethod
+    def _get_db_env_path() -> str:
+        """
+        Get path to db env file that contains db connection parameters.
         """

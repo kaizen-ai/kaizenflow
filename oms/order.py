@@ -6,21 +6,43 @@ import oms.order as omorder
 import collections
 import copy
 import logging
-from typing import Any, Dict, List, Optional
+import re
+from typing import Any, Dict, List, Match, Optional, cast
 
 import pandas as pd
 
-import core.dataflow.price_interface as cdtfprint
 import helpers.dbg as hdbg
+import market_data.market_data_interface as mdmadain
 
 _LOG = logging.getLogger(__name__)
 
 
 class Order:
+    """
+    Represent an order to be executed in (start_timestamp, end_timestamp].
+
+    An order is characterized by:
+    1) what price the order is executed at
+       - E.g.,
+           - "price": the (historical) realized price
+           - "midpoint": the midpoint
+           - "full_spread": always cross the spread to hit ask or lift bid
+           - "partial_spread": pay a percentage of spread
+    2) when the order is executed
+       - E.g.,
+           - "start": at beginning of interval
+           - "end": at end of interval
+           - "twap": using TWAP prices
+           - "vwap": using VWAP prices
+    3) number of shares to buy (if positive) or sell (if negative)
+    """
+
+    _order_id = 0
+
     def __init__(
         self,
-        order_id: int,
-        price_interface: cdtfprint.AbstractPriceInterface,
+        # TODO(gp): Remove market_data_interface.
+        market_data_interface: mdmadain.AbstractMarketDataInterface,
         creation_timestamp: pd.Timestamp,
         asset_id: int,
         type_: str,
@@ -28,35 +50,22 @@ class Order:
         end_timestamp: pd.Timestamp,
         num_shares: float,
         *,
+        order_id: Optional[int] = None,
         column_remap: Optional[Dict[str, str]] = None,
     ):
         """
-        Represent an order executed in (start_timestamp, end_timestamp].
+        Constructor.
 
-        An order is characterized by:
-        1) what price the order is executed at
-           - E.g.,
-               - "price": the (historical) realized price
-               - "midpoint": the midpoint
-               - "full_spread": always cross the spread to hit ask or lift bid
-               - "partial_spread": pay a percentage of spread
-        2) when the order is executed
-           - E.g.,
-               - "start": at beginning of interval
-               - "end": at end of interval
-               - "twap": using TWAP prices
-               - "vwap": using VWAP prices
-        3) number of shares to buy (if positive) or sell (if negative)
-
-        :param order_id: unique ID for cross-referencing
         :param creation_timestamp: when the order was placed
         :param asset_id: ID of the asset
         :param type_: e.g.,
             - `price@twap`: pay the TWAP price in the interval
             - `partial_spread_0.2@twap`: pay the TWAP midpoint weighted by 0.2
         """
+        if order_id is None:
+            order_id = self._get_next_order_id()
         self.order_id = order_id
-        self.price_interface = price_interface
+        self.market_data_interface = market_data_interface
         self.creation_timestamp = creation_timestamp
         # By convention we use `asset_id = -1` for cash.
         hdbg.dassert_lte(0, asset_id)
@@ -66,7 +75,7 @@ class Order:
         self.start_timestamp = start_timestamp
         self.end_timestamp = end_timestamp
         hdbg.dassert_ne(num_shares, 0)
-        self.num_shares = num_shares
+        self.num_shares = float(num_shares)
         #
         needed_columns = ["bid", "ask", "price", "midpoint"]
         if column_remap is None:
@@ -77,14 +86,43 @@ class Order:
     def __str__(self) -> str:
         txt: List[str] = []
         txt.append("Order:")
-        # TODO(gp): leverage to_dict().
-        txt.append(f"order_id={self.order_id}")
-        txt.append(f"creation_timestamp='{self.creation_timestamp}'")
-        txt.append(f"asset_id={self.asset_id}")
-        txt.append(f"type='{self.type_}'")
-        txt.append(f"timestamp=[{self.start_timestamp}, {self.end_timestamp}]")
-        txt.append(f"num_shares={self.num_shares}")
+        dict_ = self.to_dict()
+        for k, v in dict_.items():
+            txt.append(f"{k}={v}")
         return " ".join(txt)
+
+    @classmethod
+    def from_string(cls, txt: str) -> "Order":
+        """
+        Create an order from a string coming from `__str__()`.
+        """
+        # Parse the string.
+        m = re.match(
+            "^Order: order_id=(.*) creation_timestamp=(.*) asset_id=(.*) "
+            "type_=(.*) start_timestamp=(.*) end_timestamp=(.*) num_shares=(.*)",
+            txt,
+        )
+        hdbg.dassert(m, "Can't match '%s'", txt)
+        m = cast(Match[str], m)
+        # Build the object.
+        market_data_interface = None
+        order_id = int(m.group(1))
+        creation_timestamp = pd.Timestamp(m.group(2))
+        asset_id = int(m.group(3))
+        type_ = m.group(4)
+        start_timestamp = pd.Timestamp(m.group(5))
+        end_timestamp = pd.Timestamp(m.group(6))
+        num_shares = float(m.group(7))
+        return cls(
+            market_data_interface,
+            creation_timestamp,
+            asset_id,
+            type_,
+            start_timestamp,
+            end_timestamp,
+            num_shares,
+            order_id=order_id,
+        )
 
     def to_dict(self) -> Dict[str, Any]:
         dict_: Dict[str, Any] = collections.OrderedDict()
@@ -99,7 +137,7 @@ class Order:
 
     @staticmethod
     def get_price(
-        price_interface: cdtfprint.AbstractPriceInterface,
+        market_data_interface: mdmadain.AbstractMarketDataInterface,
         # TODO(gp): Move it after end_timestamp.
         asset_id: int,
         start_timestamp: pd.Timestamp,
@@ -123,7 +161,7 @@ class Order:
         if price_type in ("price", "midpoint"):
             column = column_remap[price_type]
             price = Order._get_price_per_share(
-                price_interface,
+                market_data_interface,
                 start_timestamp,
                 end_timestamp,
                 timestamp_col_name,
@@ -139,7 +177,7 @@ class Order:
                 column = "bid"
             column = column_remap[column]
             price = Order._get_price_per_share(
-                price_interface,
+                market_data_interface,
                 start_timestamp,
                 end_timestamp,
                 timestamp_col_name,
@@ -157,7 +195,7 @@ class Order:
             timestamp_col_name = "end_datetime"
             column = column_remap["bid"]
             bid_price = Order._get_price_per_share(
-                price_interface,
+                market_data_interface,
                 start_timestamp,
                 end_timestamp,
                 timestamp_col_name,
@@ -167,7 +205,7 @@ class Order:
             )
             column = column_remap["ask"]
             ask_price = Order._get_price_per_share(
-                price_interface,
+                market_data_interface,
                 start_timestamp,
                 end_timestamp,
                 timestamp_col_name,
@@ -205,7 +243,7 @@ class Order:
         # TODO(gp): It should not be hardwired.
         timestamp_col_name = "end_datetime"
         price = self.get_price(
-            self.price_interface,
+            self.market_data_interface,
             self.asset_id,
             self.start_timestamp,
             self.end_timestamp,
@@ -239,7 +277,7 @@ class Order:
         hdbg.dassert(self.is_mergeable(rhs))
         num_shares = self.num_shares + rhs.num_shares
         order = Order(
-            self.price_interface,
+            self.market_data_interface,
             self.type_,
             self.start_timestamp,
             self.end_timestamp,
@@ -248,11 +286,17 @@ class Order:
         return order
 
     def copy(self) -> "Order":
+        # TODO(gp): This is dangerous since we might copy the PriceInterface too.
         return copy.copy(self)
+
+    def _get_next_order_id(self) -> int:
+        order_id = self._order_id
+        self._order_id += 1
+        return order_id
 
     @staticmethod
     def _get_price_per_share(
-        mi: cdtfprint.AbstractPriceInterface,
+        mi: mdmadain.AbstractMarketDataInterface,
         start_timestamp: pd.Timestamp,
         end_timestamp: pd.Timestamp,
         timestamp_col_name: str,
@@ -288,10 +332,37 @@ class Order:
             )
         else:
             raise ValueError(f"Invalid timing='{timing}'")
+        hdbg.dassert_is_not(price, None)
+        price = cast(float, price)
         return price
 
 
 # #############################################################################
+
+
+def orders_to_string(orders: List[Order]) -> str:
+    """
+    Get the string representations of a list of Orders.
+    """
+    return "\n".join(map(str, orders))
+
+
+def orders_from_string(txt: str) -> List[Order]:
+    """
+    Deserialize a list of Orders from a multi-line string.
+
+    E.g.,
+    ```
+    Order: order_id=0 creation_timestamp=2021-01-04 09:29:00-05:00 asset_id=1 ...
+    Order: order_id=1 creation_timestamp=2021-01-04 09:29:00-05:00 asset_id=3 ...
+    ```
+    """
+    orders: List[Order] = []
+    for line in txt.split("\n"):
+        order = Order.from_string(line)
+        _LOG.debug("line='%s'\n-> order=%s", line, order)
+        orders.append(order)
+    return orders
 
 
 def _get_orders_to_execute(
@@ -338,7 +409,3 @@ def get_orders_to_execute(
         orders_to_string(orders_to_execute),
     )
     return merged_orders
-
-
-def orders_to_string(orders: List[Order]) -> str:
-    return str(list(map(str, orders)))

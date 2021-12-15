@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Any, Callable, Coroutine, List
+from typing import Any, Callable, List
 
 import pandas as pd
 import pytest
@@ -12,6 +12,7 @@ import helpers.hsql_test as hsqltest
 import helpers.printing as hprint
 import helpers.sql as hsql
 import oms.oms_db as oomsdb
+import oms.oms_lib_tasks as oomlitas
 
 _LOG = logging.getLogger(__name__)
 
@@ -23,14 +24,18 @@ class TestOmsDbHelper(hsqltest.TestDbHelper):
         #  We can also use the invoke command.
         return "oms/devops/compose/docker-compose.yml"
 
-    # TODO(Dan): Deprecate after #585.
-    @staticmethod
-    def _get_db_name() -> str:
-        return "oms_postgres_db_local"
-
     @staticmethod
     def _get_service_name() -> str:
         return "oms_postgres_local"
+
+    @staticmethod
+    def _get_db_env_path() -> str:
+        """
+        See `_get_db_env_path()` in the parent class.
+        """
+        # Use the `local` stage for testing.
+        env_file_path = oomlitas.get_db_env_path("local")
+        return env_file_path  # type: ignore[no-any-return]
 
 
 @pytest.mark.skip(reason="Run manually to clean up the DB")
@@ -49,6 +54,15 @@ def _test_create_table_helper(
     table_name: str,
     create_table_func: Callable,
 ) -> None:
+    """
+    Basic sanity check for a DB table.
+
+    - Test that the DB is up
+    - Remove the table `table_name`
+    - Create the table `table_name` using `create_table_func()`
+    - Check that the table exists
+    - Delete the table
+    """
     # Verify that the DB is up.
     db_list = hsql.get_db_names(connection)
     _LOG.info("db_list=%s", db_list)
@@ -66,6 +80,9 @@ def _test_create_table_helper(
     self_.assertIn(table_name, db_tables)
     # Delete the table.
     hsql.remove_table(connection, table_name)
+
+
+# #############################################################################
 
 
 @pytest.mark.skipif(
@@ -91,22 +108,6 @@ class TestOmsDbSubmittedOrdersTable1(TestOmsDbHelper):
 # #############################################################################
 
 
-def _to_series(txt: str) -> pd.Series:
-    """
-    Convert a text with (key, value) separated by `|` into a pd.series.
-    """
-    # _LOG.debug("txt=\n%s", txt)
-    tuples = [tuple(line.split("|")) for line in hprint.dedent(txt).split("\n")]
-    # _LOG.debug("tuples=%s", str(tuples))
-    # Remove empty tuples.
-    tuples = [t for t in tuples if t[0] != ""]
-    index, data = zip(*tuples)
-    # _LOG.debug("index=%s", index)
-    # _LOG.debug("data=%s", data)
-    srs = pd.Series(data, index=index)
-    return srs
-
-
 def _get_row1() -> pd.Series:
     row = """
     tradedate|2021-11-12
@@ -123,7 +124,7 @@ def _get_row1() -> pd.Series:
     success|False
     reason|"There were a total of 1 malformed requests in the file.
     """
-    srs = _to_series(row)
+    srs = hsql.csv_to_series(row, sep="|")
     return srs
 
 
@@ -143,7 +144,7 @@ def _get_row2() -> pd.Series:
     success|False
     reason|"There were a total of 1 malformed requests in the file."
     """
-    srs = _to_series(row)
+    srs = hsql.csv_to_series(row, sep="|")
     return srs
 
 
@@ -163,7 +164,7 @@ def _get_row3() -> pd.Series:
     success|True
     reason|
     """
-    srs = _to_series(row)
+    srs = hsql.csv_to_series(row, sep="|")
     return srs
 
 
@@ -178,36 +179,11 @@ class TestOmsDbAcceptedOrdersTable1(TestOmsDbHelper):
     Test operations on the accepted orders table.
     """
 
-    @pytest.mark.slow("9 seconds.")
-    def test_up1(self) -> None:
-        """
-        Verify that the DB is up.
-        """
-        db_list = hsql.get_db_names(self.connection)
-        _LOG.info("db_list=%s", db_list)
-
     @pytest.mark.slow("8 seconds.")
     def test_create_table1(self) -> None:
         """
         Test creating the table.
         """
-        # # Clean up the table.
-        # table_name = oomsdb.ACCEPTED_ORDERS_TABLE_NAME
-        # hsql.remove_table(self.connection, table_name)
-        # # The DB should not have that table.
-        # db_tables = hsql.get_table_names(self.connection)
-        # _LOG.info("get_table_names=%s", db_tables)
-        # self.assertNotIn(oomsdb.ACCEPTED_ORDERS_TABLE_NAME, db_tables)
-        # # Create the table.
-        # _ = oomsdb.create_accepted_orders_table(
-        #     self.connection, incremental=False
-        # )
-        # # The table should be present.
-        # db_tables = hsql.get_table_names(self.connection)
-        # _LOG.info("get_table_names=%s", db_tables)
-        # self.assertIn(oomsdb.ACCEPTED_ORDERS_TABLE_NAME, db_tables)
-        # # Delete the table.
-        # hsql.remove_table(self.connection, oomsdb.ACCEPTED_ORDERS_TABLE_NAME)
         table_name = oomsdb.ACCEPTED_ORDERS_TABLE_NAME
         create_table_func = oomsdb.create_accepted_orders_table
         _test_create_table_helper(
@@ -236,41 +212,25 @@ class TestOmsDbAcceptedOrdersTable1(TestOmsDbHelper):
         query = f"SELECT * FROM {table_name}"
         df = hsql.execute_query_to_df(self.connection, query)
         act = hprint.dataframe_to_str(df)
+        # pylint: disable=line-too-long
         exp = r"""
            targetlistid   tradedate  instanceid                                                                filename strategyid        timestamp_processed               timestamp_db  target_count  changed_count  unchanged_count  cancel_count  success                                                     reason
         0             1  2021-11-12        3504                                                         hello_world.txt       SAU1 2021-11-12 19:59:23.710677 2021-11-12 19:59:23.716732             1              0                0             0    False   "There were a total of 1 malformed requests in the file.
         1             2  2021-11-12        3504  s3://targets/20211112000000/positions.16.2021-11-12_15:44:04-05:00.csv       SAU1 2021-11-12 20:45:07.463641 2021-11-12 20:45:07.469807             1              0                0             0    False  "There were a total of 1 malformed requests in the file."
         2             5  2021-11-12        3504   s3://targets/20211112000000/positions.3.2021-11-12_16:38:22-05:00.csv       SAU1 2021-11-12 21:38:39.414138 2021-11-12 21:38:39.419536             1              1                0             0     True                                                           """
+        # pylint: enable=line-too-long
         self.assert_equal(act, exp, fuzzy_match=True)
         # Delete the table.
         hsql.remove_table(self.connection, oomsdb.ACCEPTED_ORDERS_TABLE_NAME)
 
 
-# TODO(gp): -> gather
-# TODO(gp): Move to hasyncio.py
-async def gather_coroutines(*coroutines: List[Coroutine]) -> List[Any]:
-    result = await asyncio.gather(*coroutines)
-    return result
-
-
-async def gather_coroutines_with_wall_clock(
-    event_loop: asyncio.AbstractEventLoop, *coroutines: List[Coroutine]
-) -> List[Any]:
-    get_wall_clock_time = lambda: hdateti.get_current_time(
-        tz="ET", event_loop=event_loop
-    )
-    # Construct the coroutines here by passing the `get_wall_clock_time()`
-    # function.
-    coroutines = [coro(get_wall_clock_time) for coro in coroutines]
-    #
-    result = await gather_coroutines(*coroutines)
-    return result
+# #############################################################################
 
 
 @pytest.mark.skipif(
     hgit.is_dev_tools() or hgit.is_lime(), reason="Need dind support"
 )
-class TestOmsDb2(TestOmsDbHelper):
+class TestOmsDbTableInteraction1(TestOmsDbHelper):
     """
     Test interactions through the DB.
     """
@@ -281,14 +241,10 @@ class TestOmsDb2(TestOmsDbHelper):
         """
         oomsdb.create_accepted_orders_table(self.connection, incremental=False)
         with hasynci.solipsism_context() as event_loop:
-            # get_wall_clock_time = lambda: hdateti.get_current_time(
-            #     tz="ET", event_loop=event_loop
-            # )
-            # # Construct the coroutines here by passing the `get_wall_clock_time()`
-            # # function.
-            # coroutines = [coro(get_wall_clock_time) for coro in coroutines]
-            # # Run.
-            coroutine = gather_coroutines_with_wall_clock(event_loop, *coroutines)
+            # Run.
+            coroutine = hasynci.gather_coroutines_with_wall_clock(
+                event_loop, *coroutines
+            )
             res = hasynci.run(coroutine, event_loop=event_loop)
             return res
         # Delete the table.
@@ -375,11 +331,11 @@ class TestOmsDb2(TestOmsDbHelper):
         await asyncio.sleep(sleep_in_secs)
         # Insert the row.
         _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
-        _LOG.debug("insert ...")
+        _LOG.debug("insert row ...")
         row = _get_row1()
         hsql.execute_insert_query(self.connection, row, table_name)
         _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
-        _LOG.debug("insert ... done")
+        _LOG.debug("insert row ... done")
         # Show the state of the DB.
         query = f"SELECT * FROM {table_name}"
         df = hsql.execute_query_to_df(self.connection, query)

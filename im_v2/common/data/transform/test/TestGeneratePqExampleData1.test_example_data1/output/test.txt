@@ -1,57 +1,153 @@
 # test_data=
 # Dir structure
-$GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch
-$GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211230
-$GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211230/data.parquet
-$GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211231
-$GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211231/data.parquet
-$GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20220101
-$GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20220101/data.parquet
+/app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch
+/app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211230
+/app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211230/data.parquet
+/app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211231
+/app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211231/data.parquet
+/app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20220101
+/app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20220101/data.parquet
 # File signatures
 len(file_names)=3
-file_names=$GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211230/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211231/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20220101/data.parquet
-# $GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211230/data.parquet
-num_lines=11
+file_names=/app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211230/data.parquet, /app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211231/data.parquet, /app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20220101/data.parquet
+# /app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211230/data.parquet
+num_lines=43
 '''
-df.shape=(72, 4)
-df.head=
-                     idx asset  val1  val2
-2021-12-30 00:00:00    0     A     0     0
-2021-12-30 01:00:00    0     A     1     1
-2021-12-30 02:00:00    0     A     2     2
-df.tail=
-                     idx asset  val1  val2
-2021-12-30 21:00:00    2     C    21    21
-2021-12-30 22:00:00    2     C    22    22
-2021-12-30 23:00:00    2     C    23    23
+original shape=(72, 4)
+Head:
+{
+    "2021-12-30T00:00:00Z":{
+        "idx":0,
+        "asset":"A",
+        "val1":0,
+        "val2":0
+    },
+    "2021-12-30T01:00:00Z":{
+        "idx":0,
+        "asset":"A",
+        "val1":1,
+        "val2":1
+    },
+    "2021-12-30T02:00:00Z":{
+        "idx":0,
+        "asset":"A",
+        "val1":2,
+        "val2":2
+    }
+}
+Tail:
+{
+    "2021-12-30T21:00:00Z":{
+        "idx":2,
+        "asset":"C",
+        "val1":21,
+        "val2":21
+    },
+    "2021-12-30T22:00:00Z":{
+        "idx":2,
+        "asset":"C",
+        "val1":22,
+        "val2":22
+    },
+    "2021-12-30T23:00:00Z":{
+        "idx":2,
+        "asset":"C",
+        "val1":23,
+        "val2":23
+    }
+}
 '''
-# $GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211231/data.parquet
-num_lines=11
+# /app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211231/data.parquet
+num_lines=43
 '''
-df.shape=(72, 4)
-df.head=
-                     idx asset  val1  val2
-2021-12-31 00:00:00    0     A    24    24
-2021-12-31 01:00:00    0     A    25    25
-2021-12-31 02:00:00    0     A    26    26
-df.tail=
-                     idx asset  val1  val2
-2021-12-31 21:00:00    2     C    45    45
-2021-12-31 22:00:00    2     C    46    46
-2021-12-31 23:00:00    2     C    47    47
+original shape=(72, 4)
+Head:
+{
+    "2021-12-31T00:00:00Z":{
+        "idx":0,
+        "asset":"A",
+        "val1":24,
+        "val2":24
+    },
+    "2021-12-31T01:00:00Z":{
+        "idx":0,
+        "asset":"A",
+        "val1":25,
+        "val2":25
+    },
+    "2021-12-31T02:00:00Z":{
+        "idx":0,
+        "asset":"A",
+        "val1":26,
+        "val2":26
+    }
+}
+Tail:
+{
+    "2021-12-31T21:00:00Z":{
+        "idx":2,
+        "asset":"C",
+        "val1":45,
+        "val2":45
+    },
+    "2021-12-31T22:00:00Z":{
+        "idx":2,
+        "asset":"C",
+        "val1":46,
+        "val2":46
+    },
+    "2021-12-31T23:00:00Z":{
+        "idx":2,
+        "asset":"C",
+        "val1":47,
+        "val2":47
+    }
+}
 '''
-# $GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20220101/data.parquet
-num_lines=11
+# /app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20220101/data.parquet
+num_lines=43
 '''
-df.shape=(72, 4)
-df.head=
-                     idx asset  val1  val2
-2022-01-01 00:00:00    0     A    48    48
-2022-01-01 01:00:00    0     A    49    49
-2022-01-01 02:00:00    0     A    50    50
-df.tail=
-                     idx asset  val1  val2
-2022-01-01 21:00:00    2     C    69    69
-2022-01-01 22:00:00    2     C    70    70
-2022-01-01 23:00:00    2     C    71    71
+original shape=(72, 4)
+Head:
+{
+    "2022-01-01T00:00:00Z":{
+        "idx":0,
+        "asset":"A",
+        "val1":48,
+        "val2":48
+    },
+    "2022-01-01T01:00:00Z":{
+        "idx":0,
+        "asset":"A",
+        "val1":49,
+        "val2":49
+    },
+    "2022-01-01T02:00:00Z":{
+        "idx":0,
+        "asset":"A",
+        "val1":50,
+        "val2":50
+    }
+}
+Tail:
+{
+    "2022-01-01T21:00:00Z":{
+        "idx":2,
+        "asset":"C",
+        "val1":69,
+        "val2":69
+    },
+    "2022-01-01T22:00:00Z":{
+        "idx":2,
+        "asset":"C",
+        "val1":70,
+        "val2":70
+    },
+    "2022-01-01T23:00:00Z":{
+        "idx":2,
+        "asset":"C",
+        "val1":71,
+        "val2":71
+    }
+}
 '''

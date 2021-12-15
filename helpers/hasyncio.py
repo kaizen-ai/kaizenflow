@@ -13,6 +13,8 @@ from typing import (
     Any,
     Callable,
     Coroutine,
+    Dict,
+    List,
     Iterator,
     Optional,
     Tuple,
@@ -21,6 +23,7 @@ from typing import (
 )
 
 import async_solipsism
+import pandas as pd
 
 import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
@@ -70,6 +73,24 @@ def solipsism_context() -> Iterator:
         yield event_loop
     finally:
         asyncio.set_event_loop(None)
+
+
+async def gather_coroutines_with_wall_clock(
+    event_loop: asyncio.AbstractEventLoop, *coroutines: List[Coroutine]
+) -> List[Any]:
+    """
+    Inject a wall clock associated to `event_loop` in all the coroutines and then
+    gathers them in a single coroutine.
+    """
+    get_wall_clock_time = lambda: hdateti.get_current_time(
+        tz="ET", event_loop=event_loop
+    )
+    # Construct the coroutines here by passing the `get_wall_clock_time()`
+    # function.
+    coroutines = [coro(get_wall_clock_time) for coro in coroutines]
+    #
+    result = await asyncio.gather(*coroutines)
+    return result
 
 
 # TODO(gp): For some reason `asyncio.run()` doesn't seem to pick up the new event
@@ -170,6 +191,21 @@ async def poll(
         await asyncio.sleep(sleep_in_secs)
 
 
+def get_poll_kwargs(
+    get_wall_clock_time: hdateti.GetWallClockTime,
+    *,
+    sleep_in_secs: float = 1.0,
+    timeout_in_secs: float = 10.0,
+) -> Dict[str, Any]:
+    # TODO(gp): Add checks.
+    poll_kwargs = {
+        "sleep_in_secs": sleep_in_secs,
+        "timeout_in_secs": timeout_in_secs,
+        "get_wall_clock_time": get_wall_clock_time,
+    }
+    return poll_kwargs
+
+
 # #############################################################################
 # Wait.
 # #############################################################################
@@ -182,7 +218,12 @@ WaitInSecs = Union[float, Tuple[float, float]]
 
 async def wait(
     delay_in_secs: WaitInSecs,
+    # TODO(gp): How to handle random seed here?
+    seed: int = 42,
 ) -> None:
+    """
+    Wait a deterministic or a randomized delay.
+    """
     # Extract or compute the delay.
     if isinstance(delay_in_secs, float):
         pass
@@ -197,4 +238,21 @@ async def wait(
     # Wait.
     hdbg.dassert_lte(0, delay_in_secs)
     delay_in_secs = cast(float, delay_in_secs)
+    # TODO(gp): -> use asyncio.sleep()
     await asyncio.wait(delay_in_secs)
+
+
+async def wait_until(
+    timestamp: pd.Timestamp,
+    get_wall_clock_time: hdateti.GetWallClockTime,
+) -> None:
+    """
+    Wait until the wall clock time is `timestamp`.
+    """
+    curr_timestamp = get_wall_clock_time()
+    # We only wait for times in the future.
+    hdbg.dassert_lte(curr_timestamp, timestamp)
+    #
+    time_in_secs = (curr_timestamp - timestamp).seconds
+    hdbg.dassert_lte(0, time_in_secs)
+    asyncio.sleep(time_in_secs)
