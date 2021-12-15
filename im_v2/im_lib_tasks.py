@@ -84,7 +84,7 @@ def im_docker_cmd(ctx, cmd):  # type: ignore
 # #############################################################################
 
 
-def _get_docker_up_cmd(detach: bool) -> str:
+def _get_docker_up_cmd(stage: str, detach: bool) -> str:
     """
     Construct the command to bring up the `im` service.
 
@@ -96,18 +96,22 @@ def _get_docker_up_cmd(detach: bool) -> str:
         im_postgres_local
     ```
 
+    :param stage: development stage, i.e. `local`, `dev` and `prod`
     :param detach: run containers in the background
     """
     cmd = ["docker-compose"]
     # Add `docker-compose` file path.
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
+    # Add `env file` path.
+    env_file = get_db_env_path(stage)
+    cmd.append(f"--env-file {env_file}")
     # Add `down` command.
     cmd.append("up")
     if detach:
         # Enable detached mode.
         cmd.append("-d")
-    service = "im_postgres_local"
+    service = "im_postgres"
     cmd.append(service)
     cmd = hlibtask._to_multi_line_cmd(cmd)
     return cmd  # type: ignore[no-any-return]

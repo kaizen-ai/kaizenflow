@@ -23,21 +23,22 @@ services:
     entrypoint: /app/devops/docker_run/entrypoint.sh
 
   # Docker container running Postgres DB.
-  # TODO(Grisha): remove `local` suffix everywhere CMTask #585.
-  im_postgres_local:
+  im_postgres:
     image: postgres:13
     restart: "no"
+    environment:
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
-      - im_postgres_data_local:/var/lib/postgresql/data
-    # TODO(Grisha): pass port via env file CMTask #585.
+      - im_postgres_data:/var/lib/postgresql/data
     ports:
-      - 5432:5432
-    # TODO(Grisha): pass credentials via `--enf-file` option CMTask #585.
-    env_file:
-      - ../env/local.im_db_config.env
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
 
 volumes:
-  im_postgres_data_local: {}
+  im_postgres_data: {}
 
 networks:
   default:
