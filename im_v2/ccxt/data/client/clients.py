@@ -223,22 +223,19 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         data_type: str,
         root_dir: str,
         aws_profile: Optional[str] = None,
-        prefer_compressed: Optional[bool] = True,
     ) -> None:
         """
         Load CCXT data from local or S3 filesystem.
 
-        :param: root_dir: either a local root path (e.g., "/app/im") or
+        :param root_dir: either a local root path (e.g., "/app/im") or
             an S3 root path (e.g., "s3://alphamatic-data/data") to CCXT data
-        :param: aws_profile: AWS profile name (e.g., "am")
-        :param prefer_compressed: whether to prefer to read a compressed file or not
+        :param aws_profile: AWS profile name (e.g., "am")
         """
         super().__init__(data_type=data_type)
         self._root_dir = root_dir
         # Set s3fs parameter value if aws profile parameter is specified.
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
-        self._prefer_compressed = prefer_compressed
         # Set file extension.
         self._ext = self._get_file_extension()
 
@@ -379,8 +376,15 @@ class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
     CCXT client for data stored as CSV from local or S3 filesystem.
     """
 
+    def __init__(self, gzip: bool = True, **kwargs: Any) -> None:
+        """
+        :param gzip: whether the CSV file is compressed or not
+        """
+        self._gzip = gzip
+        super().__init__(**kwargs)
+
     def _get_file_extension(self) -> str:
-        if self._prefer_compressed:
+        if self._gzip:
             return ".csv.gz"
         else:
             return ".csv"
