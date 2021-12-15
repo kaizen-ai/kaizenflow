@@ -26,7 +26,7 @@ def get_docker_base_image_name() -> str:
     """
     Return a base name for docker image.
     """
-    base_image_name = "amp"
+    base_image_name = "cmamp"
     return base_image_name
 
 
