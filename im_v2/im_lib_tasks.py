@@ -149,6 +149,7 @@ def _get_docker_down_cmd(stage: str, volumes_remove: bool) -> str:
         -v
     ```
 
+    :param stage: development stage, i.e. `local`, `dev` and `prod`
     :param volumes_remove: whether to remove attached volumes or not
     """
     cmd = ["sudo docker-compose"]
@@ -160,8 +161,6 @@ def _get_docker_down_cmd(stage: str, volumes_remove: bool) -> str:
     cmd.append(f"--env-file {env_file}")
     # Add `down` command.
     cmd.append("down")
-    service = "im_postgres"
-    cmd.append(service)
     if volumes_remove:
         # Use the '-v' option to remove attached volumes.
         _LOG.warning(
@@ -180,6 +179,7 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
     By default volumes are not removed, to also remove volumes do
     `invoke im_docker_down -v`.
 
+    :param stage: development stage, i.e. `local`, `dev` and `prod`
     :param volumes_remove: whether to remove attached volumes or not
     :param ctx: `context` object
     """
