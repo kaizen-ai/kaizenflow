@@ -31,7 +31,7 @@ import helpers.env as henv
 import helpers.printing as hprint
 import helpers.s3 as hs3
 import im_v2.ccxt.universe.universe as imvccunun
-import research_amp.cc.statistics as rccstat
+import research_amp.cc.statistics as ramccsta
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -86,11 +86,11 @@ vendor_universe = imvccunun.get_vendor_universe(
 vendor_universe
 
 # %%
-compute_start_end_stats = lambda data: rccstat.compute_start_end_stats(
+compute_start_end_stats = lambda data: ramccsta.compute_start_end_stats(
     data, config
 )
 
-start_end_table = rccstat.compute_stats_for_universe(
+start_end_table = ramccsta.compute_stats_for_universe(
     vendor_universe, config, compute_start_end_stats
 )
 
@@ -102,7 +102,7 @@ cols_to_round = [
     "avg_data_points_per_day",
     "longest_not_nan_seq_perc",
 ]
-stats_table = rccstat.postprocess_stats_table(
+stats_table = ramccsta.postprocess_stats_table(
     start_end_table, cols_to_sort_by, cols_to_round
 )
 stats_table
@@ -121,7 +121,7 @@ start_end_table
 # ## Per currency pair
 
 # %%
-currency_start_end_table = rccstat.compute_start_end_table_by_currency(
+currency_start_end_table = ramccsta.compute_start_end_table_by_currency(
     start_end_table
 )
 currency_start_end_table

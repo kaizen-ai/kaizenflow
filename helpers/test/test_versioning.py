@@ -9,7 +9,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestVersioning1(hunitest.TestCase):
-
     @pytest.mark.skip(reason="CmampTask570")
     def test_get_code_version1(self) -> None:
         code_version = hversio.get_code_version()

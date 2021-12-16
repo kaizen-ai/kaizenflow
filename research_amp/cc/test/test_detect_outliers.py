@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 import helpers.unit_test as hunitest
-import research_amp.cc.detect_outliers as rccdeout
+import research_amp.cc.detect_outliers as raccdeou
 
 
 class TestDetectOutliers(hunitest.TestCase):
@@ -14,7 +14,7 @@ class TestDetectOutliers(hunitest.TestCase):
         test_srs = self._helper()
         test_srs.iloc[200] = 0
         # Compute actual outcome and compare to expected.
-        actual = rccdeout.detect_outliers(test_srs, 100, 3)
+        actual = raccdeou.detect_outliers(test_srs, 100, 3)
         expected = np.array([False] * 200 + [True] + [False] * 799)
         self.assert_equal(str(actual), str(expected))
 
@@ -26,7 +26,7 @@ class TestDetectOutliers(hunitest.TestCase):
         test_srs = self._helper()
         test_srs.iloc[200:202] = 0
         # Compute actual outcome and compare to expected.
-        actual = rccdeout.detect_outliers(test_srs, 100, 3)
+        actual = raccdeou.detect_outliers(test_srs, 100, 3)
         expected = np.array([False] * 200 + [True] * 2 + [False] * 798)
         self.assert_equal(str(actual), str(expected))
 
@@ -38,7 +38,7 @@ class TestDetectOutliers(hunitest.TestCase):
         test_srs = self._helper()
         test_srs.iloc[200:203] = 0
         # Compute actual outcome and compare to expected.
-        actual = rccdeout.detect_outliers(test_srs, 100, 3)
+        actual = raccdeou.detect_outliers(test_srs, 100, 3)
         expected = np.array([False] * 200 + [True] * 3 + [False] * 797)
         self.assert_equal(str(actual), str(expected))
 
@@ -51,7 +51,7 @@ class TestDetectOutliers(hunitest.TestCase):
         test_srs.iloc[200] = 0
         test_srs.iloc[201] = 1000
         # Compute actual outcome and compare to expected.
-        actual = rccdeout.detect_outliers(test_srs, 100, 3)
+        actual = raccdeou.detect_outliers(test_srs, 100, 3)
         expected = np.array([False] * 200 + [True] * 2 + [False] * 798)
         self.assert_equal(str(actual), str(expected))
 

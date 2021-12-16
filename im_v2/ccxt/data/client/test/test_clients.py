@@ -12,7 +12,7 @@ import helpers.unit_test as hunitest
 import im.ccxt.db.utils as imccdbuti
 import im_v2.ccxt.data.client.clients as imvcdclcl
 import im_v2.common.data.client as imvcdcli
-import im_v2.common.db.utils as imcodbuti
+import im_v2.common.db.utils as imvcodbut
 
 _AM_S3_ROOT_DIR = os.path.join(hs3.get_path(), "data")
 
@@ -74,9 +74,9 @@ class TestGetFilePath(hunitest.TestCase):
 
 @pytest.mark.skipif(
     not hgit.execute_repo_config_code("has_dind_support()"),
-    reason="Need dind support"
+    reason="Need dind support",
 )
-class TestCcxtDbClient(imcodbuti.TestImDbHelper):
+class TestCcxtDbClient(imvcodbut.TestImDbHelper):
     @pytest.mark.slow("6 seconds.")
     def test_read_data1(self) -> None:
         """
@@ -258,7 +258,7 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
 # TODO(gp): `dind` should not be needed for that.
 @pytest.mark.skipif(
     not hgit.execute_repo_config_code("has_dind_support()"),
-    reason="Need dind support"
+    reason="Need dind support",
 )
 class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
     @pytest.mark.slow("12 seconds.")
@@ -436,9 +436,9 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
 
 @pytest.mark.skipif(
     not hgit.execute_repo_config_code("has_dind_support()"),
-    reason="Need dind support"
+    reason="Need dind support",
 )
-class TestMultipleSymbolsCcxtDbClient(imcodbuti.TestImDbHelper):
+class TestMultipleSymbolsCcxtDbClient(imvcodbut.TestImDbHelper):
     @pytest.mark.slow("10 seconds.")
     def test1(self) -> None:
         """

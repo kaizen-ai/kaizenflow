@@ -9,7 +9,7 @@ Use as:
 
 Import as:
 
-import im.common.db.remove_db as imcdbredb
+import im_v2.common.db.remove_db as imvcdredb
 """
 
 import argparse
@@ -18,7 +18,7 @@ import os
 import helpers.io_ as hio
 import helpers.parser as hparser
 import helpers.sql as hsql
-import im_v2.common.db.utils as imcodbuti
+import im_v2.common.db.utils as imvcodbut
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -35,7 +35,7 @@ def _parse() -> argparse.ArgumentParser:
             "Connection string"
             "or path to json file with credentials to DB"
             "or parameters from environment with"
-        )
+        ),
     )
     parser.add_argument(
         "--db-name",

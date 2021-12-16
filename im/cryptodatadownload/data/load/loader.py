@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.cryptodatadownload.data.load.loader as icdalolo
+import im.cryptodatadownload.data.load.loader as imcdalolo
 """
 
 import logging

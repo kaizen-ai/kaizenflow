@@ -9,7 +9,6 @@ import helpers.unit_test as hunitest
 
 
 class TestPqByDateToByAsset1(hunitest.TestCase):
-
     def test_daily_data1(self):
         verbose = False
         self._test_daily_data(verbose)

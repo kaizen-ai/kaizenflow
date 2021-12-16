@@ -19,10 +19,10 @@ import logging
 import os
 from typing import Optional
 
-# TODO(*): Remove this dependency!
-import dataflow.model.utils as cdtfmouti
-
 import core.config as cconfig
+
+# TODO(*): Remove this dependency!
+import dataflow.model.utils as dtfmodutil
 import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.joblib_helpers as hjoblib
@@ -57,7 +57,7 @@ def _run_notebook(
         `None`; otherwise, return `rc`
     """
     _ = incremental
-    cdtfmouti.setup_experiment_dir(config)
+    dtfmodutil.setup_experiment_dir(config)
     # Prepare the destination file.
     idx = config[("meta", "id")]
     experiment_result_dir = config[("meta", "experiment_result_dir")]
@@ -126,7 +126,7 @@ def _run_notebook(
             log_file = log_file.replace(".log", ".html.log")
             hsysinte.system(cmd, output_file=log_file)
         # Mark as success.
-        cdtfmouti.mark_config_as_success(experiment_result_dir)
+        dtfmodutil.mark_config_as_success(experiment_result_dir)
     return rc
 
 
@@ -135,7 +135,7 @@ def _get_workload(args: argparse.Namespace) -> hjoblib.Workload:
     Prepare the workload using the parameters from command line.
     """
     # Get the configs to run.
-    configs = cdtfmouti.get_configs_from_command_line(args)
+    configs = dtfmodutil.get_configs_from_command_line(args)
     # Get the notebook file.
     notebook_file = os.path.abspath(args.notebook)
     hdbg.dassert_exists(notebook_file)
@@ -166,7 +166,7 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     # Add common experiment options.
-    parser = cdtfmouti.add_experiment_arg(parser, dst_dir_required=True)
+    parser = dtfmodutil.add_experiment_arg(parser, dst_dir_required=True)
     # Add notebook options.
     parser.add_argument(
         "--notebook",
@@ -224,7 +224,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     _LOG.info("log_file='%s'", log_file)
     # TODO(gp): Move this inside the framework.
     # # Report failing experiments.
-    # rc = cdtfmouti.report_failed_experiments(configs, rcs)
+    # rc = dtfmodutil.report_failed_experiments(configs, rcs)
     # sys.exit(rc)
 
 

@@ -53,7 +53,7 @@ print("asset_id=", len(df_taq_bars["asset_id"].unique()))
 print("currency=", df_taq_bars["currency"].unique())
 
 # %%
-#print("\n".join(map(str, df_taq_bars.iloc[0].values)))
+# print("\n".join(map(str, df_taq_bars.iloc[0].values)))
 
 # %%
 display(df_taq_bars.head(3))
