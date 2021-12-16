@@ -7,7 +7,7 @@ import dataflow.core.nodes.sources as dtfconosou
 """
 import logging
 import os
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -20,9 +20,7 @@ import dataflow.core.nodes.base as dtfconobas
 import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
-import helpers.printing as hprint
 import helpers.s3 as hs3
-import market_data.market_data_interface as mdmadain
 
 _LOG = logging.getLogger(__name__)
 
@@ -356,85 +354,3 @@ class MultivariateNormalGenerator(dtfconobas.DataSource):
         )
         df = pd.concat([prices, volume], axis=1, keys=["close", "volume"])
         self.df = df.loc[self._start_date : self._end_date]
-
-
-# #############################################################################
-# Real-time nodes.
-# #############################################################################
-
-
-class RealTimeDataSource(dtfconobas.DataSource):
-    """
-    A RealTimeDataSource is a node that:
-
-    - has a wall clock (replayed or not, simulated or real)
-    - emits different data based on the value of a clock
-      - This represents the fact the state of a DB is updated over time
-    - has a blocking behavior
-      - E.g., the data might not be available immediately when the data is
-        requested and thus we have to wait
-    """
-
-    def __init__(
-        self,
-        nid: dtfcornode.NodeId,
-        market_data_interface: mdmadain.AbstractMarketDataInterface,
-        period: str,
-        asset_id_col: Union[int, str],
-        multiindex_output: bool,
-    ) -> None:
-        """
-        Constructor.
-
-        :param period: how much history is needed from the real-time node
-        """
-        super().__init__(nid)
-        hdbg.dassert_isinstance(
-            market_data_interface, mdmadain.AbstractMarketDataInterface
-        )
-        self._market_data_interface = market_data_interface
-        self._period = period
-        self._asset_id_col = asset_id_col
-        self._multiindex_output = multiindex_output
-
-    # TODO(gp): Can we use a run and move it inside fit?
-    async def wait_for_latest_data(
-        self,
-    ) -> Tuple[pd.Timestamp, pd.Timestamp, int]:
-        ret = await self._market_data_interface.is_last_bar_available()
-        return ret  # type: ignore[no-any-return]
-
-    def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
-        # TODO(gp): This approach of communicating params through the state
-        #  makes the code difficult to understand.
-        self.df = self._market_data_interface.get_data(self._period)
-        if self._multiindex_output:
-            self._convert_to_multiindex()
-        return super().fit()  # type: ignore[no-any-return]
-
-    def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
-        self.df = self._market_data_interface.get_data(self._period)
-        if self._multiindex_output:
-            self._convert_to_multiindex()
-        return super().predict()  # type: ignore[no-any-return]
-
-    def _convert_to_multiindex(self) -> None:
-        # From _load_multiple_instrument_data().
-        _LOG.debug(
-            "Before multiindex conversion\n:%s",
-            hprint.dataframe_to_str(self.df.head()),
-        )
-        dfs = {}
-        # TODO(Paul): Pass the column name through the constructor, so we can make it
-        # programmable.
-        for asset_id, df in self.df.groupby(self._asset_id_col):
-            dfs[asset_id] = df
-        # Reorganize the data into the desired format.
-        df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
-        df = df.swaplevel(i=0, j=1, axis=1)
-        df.sort_index(axis=1, level=0, inplace=True)
-        self.df = df
-        _LOG.debug(
-            "After multiindex conversion\n:%s",
-            hprint.dataframe_to_str(self.df.head()),
-        )

@@ -1005,7 +1005,7 @@ def _clean_both_integration_dirs(dir_name1: str, dir_name2: str) -> None:
 
 
 @task
-def integrate_create_branches(ctx, dir_name, dry_run=False):  # type: ignore
+def integrate_create_branch(ctx, dir_name, dry_run=False):  # type: ignore
     """
     Create the branch for integration in the current dir.
 
@@ -1047,7 +1047,12 @@ def _get_src_dst_dirs(
 
 
 @task
-def integrate_diff_dirs(ctx, src_dir="amp1", dst_dir="cmamp1", subdir_name="", use_linux_diff=False, dry_run=False):  # type: ignore
+def integrate_diff_dirs(  # type: ignore
+        ctx, src_dir="amp1", dst_dir="cmamp1", subdir_name="", use_linux_diff=False,
+        check_branches=True,
+        clean_branches=True,
+        dry_run=False,
+                        ):
     """
     Integrate repos from dir `src_dir` to `dst_dir`.
 
@@ -1064,9 +1069,15 @@ def integrate_diff_dirs(ctx, src_dir="amp1", dst_dir="cmamp1", subdir_name="", u
     _dassert_current_dir_matches(src_dir)
     #
     src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir_name)
-    _dassert_is_integration_branch(src_dir)
-    _dassert_is_integration_branch(dst_dir)
-    _clean_both_integration_dirs(src_dir, dst_dir)
+    if check_branches:
+        _dassert_is_integration_branch(src_dir)
+        _dassert_is_integration_branch(dst_dir)
+    else:
+        _LOG.warning("Skipping integration branch check")
+    if clean_branches:
+        _clean_both_integration_dirs(src_dir, dst_dir)
+    else:
+        _LOG.warning("Skipping integration branch cleaning")
     #
     if use_linux_diff:
         cmd = f"diff -r --brief {src_dir} {dst_dir}"
@@ -2687,7 +2698,7 @@ def _run_test_cmd(
   covered
 """
         print(msg)
-        if start_coverage_script and hsysinte.is_running_on_macos():
+        if start_coverage_script:
             # Create and run a script to show the coverage in the browser.
             script_txt = """(sleep 2; open http://localhost:33333) &
 (cd ./htmlcov; python -m http.server 33333)"""
