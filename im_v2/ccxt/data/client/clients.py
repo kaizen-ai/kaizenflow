@@ -172,7 +172,7 @@ class CcxtDbClient(AbstractCcxtClient):
 
         :param connection: connection for a SQL database
         """
-        super().__init__(data_type=data_type)
+        super().__init__(data_type)
         self._connection = connection
 
     def _read_data(
@@ -221,8 +221,8 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         self,
         data_type: str,
         root_dir: str,
-        *,
         extension: str,
+        *,
         aws_profile: Optional[str] = None,
     ) -> None:
         """
@@ -233,8 +233,13 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         :param extension: file extension
         :param aws_profile: AWS profile name (e.g., "am")
         """
-        super().__init__(data_type=data_type)
+        super().__init__(data_type)
         self._root_dir = root_dir
+        # Verify that extension does not start with "." and set parameter.
+        hdbg.dassert(
+            not extension.startswith("."),
+            "The extension %s should not start with '.'" % extension,
+        )
         self._extension = extension
         # Set s3fs parameter value if aws profile parameter is specified.
         if aws_profile:
@@ -273,10 +278,7 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
             file_path,
         )
         data = self._read_data_from_filesystem(
-            file_path,
-            start_ts,
-            end_ts,
-            **read_kwargs,
+            file_path, start_ts, end_ts, **read_kwargs
         )
         # Apply transformation to raw data.
         _LOG.info(
@@ -317,7 +319,7 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         Get the absolute path to a file with CCXT data.
 
         The file path is constructed in the following way:
-        `<root_dir>/ccxt/<snapshot>/<exchange_id>/<currency_pair><self._ext>`.
+        `<root_dir>/ccxt/<snapshot>/<exchange_id>/<currency_pair>.<self._extension>`
 
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
@@ -327,7 +329,7 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         :return: absolute path to a file with CCXT data
         """
         # Get absolute file path.
-        file_name = currency_pair + self._extension
+        file_name = ".".join([currency_pair, self._extension])
         file_path = os.path.join(
             self._root_dir, "ccxt", data_snapshot, exchange_id, file_name
         )
@@ -378,14 +380,11 @@ class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
         aws_profile: Optional[str] = None,
         use_gzip: bool = True,
     ) -> None:
-        extension = ".csv"
+        extension = "csv"
         if use_gzip:
             extension = extension + ".gz"
         super().__init__(
-            data_type=data_type,
-            root_dir=root_dir,
-            extension=extension,
-            aws_profile=aws_profile,
+            data_type, root_dir, extension, aws_profile=aws_profile
         )
 
     @staticmethod
@@ -422,11 +421,9 @@ class CcxtParquetFileSystemClient(AbstractCcxtFileSystemClient):
         *,
         aws_profile: Optional[str] = None,
     ) -> None:
+        extension = "pq"
         super().__init__(
-            data_type=data_type,
-            root_dir=root_dir,
-            extension=".pq",
-            aws_profile=aws_profile,
+            data_type, root_dir, extension, aws_profile=aws_profile
         )
 
     @staticmethod
