@@ -9,10 +9,10 @@ from __future__ import annotations
 import logging
 from typing import List, Optional, Union
 
-import dataflow_model.utils as cdtfmouti
 import pandas as pd
 
 import core.statistics as costatis
+import dataflow.model.utils as dtfmodutil
 import helpers.datetime_ as hdateti
 
 _LOG = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ def compute_coefficients(
     end: Optional[hdateti.Datetime],
 ) -> pd.DataFrame:
     coeffs = {}
-    artifact_iter = cdtfmouti.yield_experiment_artifacts(
+    artifact_iter = dtfmodutil.yield_experiment_artifacts(
         src_dir=src_dir,
         file_name=file_name,
         load_rb_kwargs={"columns": feature_cols + [target_col]},

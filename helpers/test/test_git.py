@@ -381,3 +381,28 @@ class Test_find_docker_file1(hunitest.TestCase):
         # Only one file matches `utils.py` using all the 3 dir levels.
         expected = ["core/dataflow/utils.py"]
         self.assertEqual(actual, expected)
+
+
+# #############################################################################
+
+
+class Test_execute_repo_config_code1(hunitest.TestCase):
+    """
+    Make sure we can execute the code from `repo_config.py`.
+    """
+
+    def _exec(self, code_to_execute: str) -> None:
+        val = hgit.execute_repo_config_code(code_to_execute)
+        _LOG.debug("%s=%s", code_to_execute, val)
+
+    def test_get_repo_map1(self) -> None:
+        self._exec("get_repo_map()")
+
+    def test_get_host_name1(self) -> None:
+        self._exec("get_host_name()")
+
+    def test_get_docker_base_image_name1(self) -> None:
+        self._exec("get_docker_base_image_name()")
+
+    def test_has_didn_support1(self) -> None:
+        self._exec("has_dind_support()")

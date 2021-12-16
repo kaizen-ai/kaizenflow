@@ -24,7 +24,7 @@ import core.plotting as coplotti
 import core.signal_processing as csigproc
 import core.timeseries_study as ctimstud
 
-# TODO(Paul): Replace with more precise imports.
+# We treat this as a client of `dataflow.core`.
 import dataflow as cdataf
 import dataflow.model.stats_computer as dtfmostcom
 import helpers.dbg as hdbg

@@ -10,13 +10,13 @@ import collections
 import logging
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
-import dataflow_model.stats_computer as cdtfmostco
-import dataflow_model.utils as cdtfmouti
 import pandas as pd
 
 import core.finance as cofinanc
 import core.signal_processing as csigproc
 import core.statistics as costatis
+import dataflow.model.stats_computer as dtfmostcom
+import dataflow.model.utils as dtfmodutil
 import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 
@@ -44,7 +44,7 @@ def compute_stats_for_single_name_artifacts(
     """
     stats = collections.OrderedDict()
     load_rb_kwargs = {"columns": list([prediction_col, target_col])}
-    iterator = cdtfmouti.yield_experiment_artifacts(
+    iterator = dtfmodutil.yield_experiment_artifacts(
         src_dir,
         file_name,
         load_rb_kwargs=load_rb_kwargs,
@@ -62,7 +62,7 @@ def compute_stats_for_single_name_artifacts(
         pnl = df_for_key[prediction_col] * df_for_key[target_col]
         df_for_key["pnl"] = pnl
         # Compute (intraday) stats.
-        stats_computer = cdtfmostco.StatsComputer()
+        stats_computer = dtfmostcom.StatsComputer()
         stats[key] = stats_computer.compute_finance_stats(
             df_for_key,
             returns_col=target_col,
@@ -105,7 +105,7 @@ def aggregate_single_name_models(
         target_col,
     ]
     load_rb_kwargs = {"columns": expected_columns}
-    iterator = cdtfmouti.yield_experiment_artifacts(
+    iterator = dtfmodutil.yield_experiment_artifacts(
         src_dir,
         file_name,
         load_rb_kwargs=load_rb_kwargs,
@@ -156,7 +156,7 @@ def load_result_dfs(
     This function should be used judiciously on large runs due to the memory
     requirements.
     """
-    iterator = cdtfmouti.yield_experiment_artifacts(
+    iterator = dtfmodutil.yield_experiment_artifacts(
         src_dir,
         file_name,
         load_rb_kwargs=load_rb_kwargs,
@@ -268,7 +268,7 @@ def load_info(
     :return: dict keyed by experiment, with value equal to `info`
         restricted to `info_path`
     """
-    iterator = cdtfmouti.yield_experiment_artifacts(
+    iterator = dtfmodutil.yield_experiment_artifacts(
         src_dir,
         file_name,
         load_rb_kwargs={"columns": []},

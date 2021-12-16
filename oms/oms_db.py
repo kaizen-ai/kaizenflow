@@ -6,17 +6,19 @@ Import as:
 import oms.oms_db as oomsdb
 """
 
+import asyncio
 import logging
 from typing import Any, Dict
 
 import helpers.dbg as hdbg
-import helpers.datetime_ as hdateti
 import helpers.hasyncio as hasynci
 import helpers.sql as hsql
 
 _LOG = logging.getLogger(__name__)
 
 
+# #############################################################################
+# Submitted orders
 # #############################################################################
 
 
@@ -56,6 +58,8 @@ def create_submitted_orders_table(
     return table_name
 
 
+# #############################################################################
+# Accepted orders
 # #############################################################################
 
 
@@ -112,11 +116,11 @@ def create_accepted_orders_table(
     query.append(
         f"""
         CREATE TABLE IF NOT EXISTS {table_name} (
+            strategyid VARCHAR(64),
             targetlistid SERIAL PRIMARY KEY,
             tradedate DATE NOT NULL,
             instanceid INT,
             filename VARCHAR(255) NOT NULL,
-            strategyid VARCHAR(64),
             timestamp_processed TIMESTAMP NOT NULL,
             timestamp_db TIMESTAMP NOT NULL,
             target_count INT,
@@ -134,6 +138,8 @@ def create_accepted_orders_table(
     return table_name
 
 
+# #############################################################################
+# Current positions
 # #############################################################################
 
 
@@ -154,18 +160,51 @@ def create_current_positions_table(
     query = []
     if not incremental:
         query.append(f"DROP TABLE IF EXISTS {table_name}")
+    # The current positions table has the following fields:
+    # - strategyid (e.g., SAU1)
+    # - account (e.g., SAU1_CAND)
+    # - id (e.g., 10005)
+    # - tradedate (e.g., 2021-10-28)
+    # - published_dt (e.g., 2021-10-28 12:01:49.41)
+    # - target_position (e.g., 300)
+    #   = the fully realized portfolio position
+    #   - E.g., the value is 300 if we own 100 AAPL and we want get 200 more so
+    #     we send an order for 200
+    # - current_position (e.g., 100)
+    #   = what we own (e.g., 100 AAPL)
+    # - open_quantity (e.g., 200)
+    #   = how many shares we have orders open in the market. In other words,
+    #     open quantity reflects how much is out getting executed in the market
+    #   - Note that it's not always
+    #     `open_quantity = target_position - current_position`
+    #     since orders might have been cancelled. If `open_quantity = 0` it
+    #     means that there are no order in the market
+    #   - E.g., if we send orders for 200 AAPL, then current_position = 200, but
+    #     if we cancel the orders, current_position = 0, even if target_position
+    #     reports what we were targeting 200 shares
+    # - net_cost (e.g., 0.0)
+    #   = fill-quantity * signed fill_price with respect to the BOD price
+    #   - In practice it is the average price paid
+    # - bod_position (e.g., 0)
+    #   - = number of shares at BOD
+    # - bod_price (e.g., 0.0)
+    #   - = price of a share at BOD
     query.append(
         f"""
         CREATE TABLE IF NOT EXISTS {table_name} (
             strategyid VARCHAR(64),
             account VARCHAR(64),
-            tradedate DATE NOT NULL,
             id INT,
+            tradedate DATE NOT NULL,
             timestamp_db TIMESTAMP NOT NULL,
-            target_position INT,
-            current_position INT,
-            open_quantity INT,
-            )
+            asset_id INT,
+            target_position FLOAT,
+            current_position FLOAT,
+            open_quantity FLOAT,
+            net_cost FLOAT,
+            bod_position FLOAT,
+            bod_price FLOAT
+            );
             """
     )
     query = "; ".join(query)
@@ -175,6 +214,18 @@ def create_current_positions_table(
 
 
 # #############################################################################
+# Order processor
+# #############################################################################
+
+# This mocks the behavior of the actual broker + market.
+
+
+def create_oms_tables(
+    db_connection: hsql.DbConnection, incremental: bool
+) -> None:
+    create_accepted_orders_table(db_connection, incremental)
+    create_submitted_orders_table(db_connection, incremental)
+    create_current_positions_table(db_connection, incremental)
 
 
 async def wait_for_order_accepted(
@@ -206,10 +257,8 @@ async def wait_for_order_accepted(
 async def order_processor(
     db_connection: hsql.DbConnection,
     poll_kwargs: Dict[str, Any],
-    get_wall_clock_time: hdateti.GetWallClockTime,
     delay_to_accept_in_secs: float,
     delay_to_fill_in_secs: float,
-    portfolio,
     broker,
     *,
     submitted_orders_table_name: str = SUBMITTED_ORDERS_TABLE_NAME,
@@ -230,33 +279,75 @@ async def order_processor(
     await hsql.wait_for_change_in_number_of_rows(
         db_connection, submitted_orders_table_name, poll_kwargs
     )
-    # Get the new order.
-    # TODO(gp): Implement.
-    # Delay.
     hdbg.dassert_lt(0, delay_to_accept_in_secs)
-    await hasynci.sleep(delay_to_accept_in_secs)
+    await asyncio.sleep(delay_to_accept_in_secs)
+    # Extract the latest file_name after order submission is complete.
+    _LOG.debug("Executing query for submitted orders filename...")
+    query = (
+        f"SELECT t.filename, t.timestamp_db "
+        f"from {submitted_orders_table_name} t "
+        f"inner join ("
+        f"    select filename, max(timestamp_db) as MaxDate "
+        f"    from {submitted_orders_table_name} "
+        f"    group by filename "
+        f") tm on t.filename = tm.filename and t.timestamp_db = tm.MaxDate"
+    )
+    df = hsql.execute_query_to_df(db_connection, query)
+    _LOG.debug("df=\n%s", df)
+    hdbg.dassert_eq(len(df), 1)
+    file_name = df.squeeze()["filename"]
+    _LOG.debug("file_name=%s", file_name)
     # Write in `accepted_orders_table_name` to acknowledge the orders.
-    timestamp_db = get_wall_clock_time()
+    # NOTE: This is where we use `file_name`.
+    timestamp_db = broker.market_data_interface.get_wall_clock_time()
     trade_date = timestamp_db.date()
+    success = True
     txt = f"""
     strategyid,SAU1
-    account,candidate
+    targetlistid,1
     tradedate,{trade_date}
-    id,1
+    instanceid,1
+    filename,{file_name}
+    timestamp_processed,{timestamp_db}
     timestamp_db,{timestamp_db}
-    target_position,
-    current_position,
-    open_quantity,
+    target_count,1
+    changed_count,0
+    unchanged_count,0
+    cancel_count,0
+    success,{success}
+    reason,Foobar
     """
     row = hsql.csv_to_series(txt, sep=",")
     hsql.execute_insert_query(db_connection, row, accepted_orders_table_name)
     # Wait.
-    hdbg.dassert_lt(0, delay_to_fill_in_ses)
-    await hasynci.sleep(delay_to_fill_in_secs)
+    hdbg.dassert_lt(0, delay_to_fill_in_secs)
+    await asyncio.sleep(delay_to_fill_in_secs)
     # Get the fills.
-    fills = broker.get_fills()
-    # Get the current holdings from the portfolio.
-    holdings = None
-    # Update the holdings with the fills.
-    new_holdings = None
-    # Write the new positions to `current_positions_table_name`.
+    _LOG.debug("Getting philz.")
+    fills = broker.get_fills(timestamp_db)
+    _LOG.debug("Received %i fills", len(fills))
+    # Update current positions based on fills.
+    for fill in fills:
+        id_ = fill.order.order_id
+        trade_date = fill.timestamp.date()
+        timestamp_db = broker.market_data_interface.get_wall_clock_time()
+        asset_id = fill.order.asset_id
+        # TODO: query current positions table, then modify based on fills
+        txt = f"""
+        strategyid,SAU1
+        account,paper
+        id,{id_}
+        tradedate,{trade_date}
+        timestamp_db,{timestamp_db}
+        asset_id,{asset_id}
+        target_position,0
+        current_position,0
+        open_quantity,0
+        net_cost,0
+        bod_position,0
+        bod_price,0
+        """
+        row = hsql.csv_to_series(txt, sep=",")
+        hsql.execute_insert_query(
+            db_connection, row, current_positions_table_name
+        )
