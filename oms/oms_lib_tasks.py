@@ -120,7 +120,7 @@ def _get_docker_up_cmd() -> str:
     docker-compose \
         --file devops/compose/docker-compose.yml \
         up \
-        oms_postgres_local
+        oms_postgres
     ```
     """
     cmd = ["docker-compose"]
@@ -129,7 +129,7 @@ def _get_docker_up_cmd() -> str:
     cmd.append(f"--file {docker_compose_file_path}")
     # Add `down` command.
     cmd.append("up")
-    service = "oms_postgres_local"
+    service = "oms_postgres"
     cmd.append(service)
     cmd = hlibtask._to_multi_line_cmd(cmd)
     return cmd  # type: ignore[no-any-return]
