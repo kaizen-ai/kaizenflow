@@ -247,3 +247,168 @@ close_corr_1day = calculate_correlations(
     ccxt_binance_series_1d, cdd_binance_series_1d, compute_returns=False
 )
 display(close_corr_1day)
+
+# %% [markdown]
+# # Statistical properties of a full symbol in CDD
+
+# %%
+# Clearing CDD currency pairs that are incorrect.
+
+# Binance
+universe_cdd.remove("binance::SCU_USDT")
+
+# Bitfinex
+universe_cdd.remove("bitfinex::BTC_GBR")  # doesn't exist
+universe_cdd.remove("bitfinex::DASH_BTC")  # NaT in stamps
+universe_cdd.remove("bitfinex::DASH_USD")  # NaT in stamps
+universe_cdd.remove("bitfinex::EOS_GBR")  # doesn't exist
+universe_cdd.remove("bitfinex::ETH_GBR")  # doesn't exist
+universe_cdd.remove("bitfinex::NEO_GBR")  # doesn't exist
+universe_cdd.remove("bitfinex::QTUM_USD")  # NaT in stamps
+universe_cdd.remove("bitfinex::TRX_GBR")  # doesn't exist
+universe_cdd.remove("bitfinex::XLM_GBR")  # doesn't exist
+
+# ftx has some critical mistakes in the downloading process, so cannot continue analysis with them.
+cdd_ftx_universe = [
+    element for element in universe_cdd if element.startswith("ftx")
+]
+for elem in cdd_ftx_universe:
+    universe_cdd.remove(elem)
+
+
+# %%
+def calculate_statistics_for_stamps(coin_list,vendor):
+    """
+    Load the OHLCV data for each currency pair in CDD or CCXT universe and compute the
+    corresponding descriptive statistics.
+
+    :param coin_list: list of all currency pairs in CDD or CCXT universe
+    :return: pd.Dataframe with statistics
+    """
+    # Load data for each currency pair.
+    result = []
+    cdd_loader = imcdalolo.CddLoader(root_dir=root_dir, aws_profile="am")
+    for full_symbol in coin_list:
+        if vendor=="cdd":
+            exchange_id, currency_pair = ivcdclcl.parse_full_symbol(full_symbol)
+            coin = cdd_loader.read_data_from_filesystem(
+                exchange_id=exchange_id, currency_pair=currency_pair, data_type="ohlcv"
+            )
+        else:
+            ccxt_client = imvcdclcl.CcxtCsvFileSystemClient(
+            data_type="ohlcv", root_dir=root_dir, aws_profile="am"
+            )
+            multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
+                class_=ccxt_client, mode="concat"
+            )
+            coin = multiple_symbols_client.read_data(
+                [full_symbol]
+            )
+            exchange_id, currency_pair = ivcdclcl.parse_full_symbol(full_symbol)
+            coin = coin.sort_index()
+        # Reseting DateTime index, so it can be further used in the calculations.
+        coin.reset_index(inplace=True)
+        coin = coin.rename(columns={"index": "stamp"})
+        # The value of the step between two data points
+        stamp_steps = pd.Series(coin["stamp"].diff().value_counts().index)
+        # Start-end date
+        max_date = pd.Series(
+            coin["stamp"].describe(datetime_is_numeric=True).loc["max"]
+        )
+        min_date = pd.Series(
+            coin["stamp"].describe(datetime_is_numeric=True).loc["min"]
+        )
+        # Number of timestamps for each coin.
+        data_points = pd.Series(
+            coin["stamp"].describe(datetime_is_numeric=True).loc["count"]
+        )
+        # Attach calculations to the DataFrame.
+        stamp_stats = pd.DataFrame()
+        stamp_stats["exchange_id"] = [exchange_id]
+        stamp_stats["data_points_counts"] = data_points
+        stamp_stats["NaNs_in_Close"] = len(coin[coin["close"].isna()])
+        stamp_stats["step_in_stamp"] = stamp_steps
+        stamp_stats["start_date"] = min_date
+        stamp_stats["end_date"] = max_date
+        stamp_stats.index = [currency_pair]
+        result.append(stamp_stats)
+    result = pd.concat(result)
+    if vendor=="cdd":
+        result = result.add_suffix('_cdd')
+    else:
+        result = result.add_suffix('_ccxt')
+    return result
+
+
+# %% [markdown]
+# ## Comparison of intersection of full symbols between CCXT and CDD
+
+# %%
+# Full symbols that are included in CDD but not in CCXT (cleaned from unavailable full symbols).
+cdd_and_ccxt_cleaned = set(ccxt_universe).intersection(universe_cdd)
+len(cdd_and_ccxt_cleaned)
+
+# %%
+# Load the intersection of full symbols for CDD and CCXT.
+stats_for_stamps_ccxt = calculate_statistics_for_stamps_cdd(cdd_and_ccxt_cleaned,vendor="ccxt")
+stats_for_stamps_cdd_union = calculate_statistics_for_stamps_cdd(cdd_and_ccxt_cleaned,vendor="cdd")
+
+# %%
+union_cdd_ccxt_stats = pd.concat([stats_for_stamps_cdd_union, stats_for_stamps_ccxt],axis=1)
+union_cdd_ccxt_stats.sort_values("exchange_id_cdd")
+
+# %% [markdown]
+# ## Comparison of full symbols that are included in CDD but not available in CCXT
+
+# %%
+# Intersection of full symbols from CDD and CCXT (cleaned from unavailable full symbols).
+cdd_and_not_ccxt_cleaned = set(universe_cdd).difference(ccxt_universe)
+len(cdd_and_not_ccxt_cleaned)
+
+# %%
+stats_for_stamps_cdd = calculate_statistics_for_stamps_cdd(cdd_and_not_ccxt_cleaned,vendor="cdd")
+
+# %% [markdown]
+# Currently there are the following descriptive statistics:
+#
+# - index - currency pair
+# - exchange_id - exchange_id
+# - data_points_counts - number of timestamps for each coin
+# - NaNs_in_Close - number of NaNs in "close"
+# - step_in_stamp - value counts of steps between timestamps
+# - start_date
+# - end_date
+#
+# What else can be added here?
+
+# %%
+stats_for_stamps_cdd.sort_values("exchange_id_cdd")
+
+# %% [markdown]
+# Each coin in CDD has a stamp step of 1 minute.
+#
+# One can see that there are problems with __kucoin__ exchange: the timestamps are obviously wrong and with too short time period.
+
+# %%
+typical_start_date = (
+    pd.DataFrame(
+        stats_for_stamps_cdd[stats_for_stamps_cdd["exchange_id_cdd"] == "kucoin"][
+            "start_date_cdd"
+        ].value_counts()
+    )
+    .reset_index()["index"]
+    .dt.strftime("%d-%m-%Y")
+    .unique()
+)
+typical_end_date = (
+    pd.DataFrame(
+        stats_for_stamps_cdd[stats_for_stamps_cdd["exchange_id_cdd"] == "kucoin"][
+            "end_date_cdd"
+        ].value_counts()
+    )
+    .reset_index()["index"]
+    .dt.strftime("%d-%m-%Y")
+    .unique()
+)
+print("Typical Start Date for Kucoin:", typical_start_date)
+print("Typical End Date for Kucoin:", typical_end_date)
