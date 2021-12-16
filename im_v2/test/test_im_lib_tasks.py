@@ -114,6 +114,7 @@ class TestGetImDockerUp(hunitest.TestCase):
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
+@pytest.mark.skip("CMTask #789.")
 class TestGetCreateDbCmd(hunitest.TestCase):
     def test1(self) -> None:
         """
@@ -191,6 +192,7 @@ class TestGetCreateDbCmd(hunitest.TestCase):
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
+@pytest.mark.skip("CMTask #789.")
 class TestGetRemoveDbCmd(hunitest.TestCase):
     def test1(self) -> None:
         """
