@@ -383,9 +383,7 @@ class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
         extension = "csv"
         if use_gzip:
             extension = extension + ".gz"
-        super().__init__(
-            data_type, root_dir, extension, aws_profile=aws_profile
-        )
+        super().__init__(data_type, root_dir, extension, aws_profile=aws_profile)
 
     @staticmethod
     def _read_data_from_filesystem(
@@ -422,9 +420,7 @@ class CcxtParquetFileSystemClient(AbstractCcxtFileSystemClient):
         aws_profile: Optional[str] = None,
     ) -> None:
         extension = "pq"
-        super().__init__(
-            data_type, root_dir, extension, aws_profile=aws_profile
-        )
+        super().__init__(data_type, root_dir, extension, aws_profile=aws_profile)
 
     @staticmethod
     def _read_data_from_filesystem(
