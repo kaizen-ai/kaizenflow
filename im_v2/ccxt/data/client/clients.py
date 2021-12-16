@@ -397,8 +397,6 @@ class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
         return data
 
 
-class CcxtFileSystemClient(AbstractCcxtClient):
-
 class CcxtParquetFileSystemClient(AbstractCcxtFileSystemClient):
     """
     CCXT client for data stored as Parquet from local or S3 filesystem.
