@@ -128,7 +128,7 @@ class TestImDbHelper(hsqltest.TestDbHelper):
 
     @staticmethod
     def _get_service_name() -> str:
-        return "im_postgres_local"
+        return "im_postgres"
 
     @staticmethod
     def _get_db_env_path() -> str:
