@@ -6,29 +6,25 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import core.artificial_signal_generators as casgen
+import core.artificial_signal_generators as carsigen
 import core.config as cconfig
-import core.finance as fin
-import core.signal_processing as sigp
-import core.signal_processing as csproc
+import core.signal_processing as csigproc
 import dataflow.core.nodes.test.helpers as cdnth
-import helpers.dbg as dbg
-import helpers.printing as prnt
+import helpers.dbg as hdbg
 import helpers.printing as hprint
-import helpers.unit_test as hut
+import helpers.unit_test as hunitest
 from dataflow.core.nodes.volatility_models import (
     MultiindexVolatilityModel,
     SingleColumnVolatilityModel,
     SmaModel,
     VolatilityModel,
     VolatilityModulator,
-    VolatilityNormalizer,
 )
 
 _LOG = logging.getLogger(__name__)
 
 
-class TestSmaModel(hut.TestCase):
+class TestSmaModel(hunitest.TestCase):
     def test1(self) -> None:
         # Load test data.
         data = self._get_data()
@@ -132,7 +128,7 @@ class TestSmaModel(hut.TestCase):
         ```
         """
         # Get ARMA random data with some correlation.
-        arma_process = casgen.ArmaProcess([0.45], [0])
+        arma_process = carsigen.ArmaProcess([0.45], [0])
         date_range_kwargs = {"start": "2000-01-01", "periods": 40, "freq": "B"}
         date_range = pd.date_range(**date_range_kwargs)
         realization = arma_process.generate_sample(
@@ -153,13 +149,13 @@ class TestSmaModel(hut.TestCase):
         Convert inputs to a string and check it against golden reference.
         """
         decimals = 3
-        actual = hut.convert_df_to_string(
+        actual = hunitest.convert_df_to_string(
             df.round(decimals), index=True, decimals=decimals
         )
         self.check_string(actual)
 
 
-class TestSingleColumnVolatilityModel(hut.TestCase):
+class TestSingleColumnVolatilityModel(hunitest.TestCase):
     def test1(self) -> None:
         """
         Perform a typical `fit()` call.
@@ -230,7 +226,7 @@ class TestSingleColumnVolatilityModel(hut.TestCase):
 
         Use lag + noise as predictor.
         """
-        arma_process = casgen.ArmaProcess([0.45], [0])
+        arma_process = carsigen.ArmaProcess([0.45], [0])
         date_range_kwargs = {"start": "2000-01-01", "periods": 40, "freq": "B"}
         date_range = pd.date_range(**date_range_kwargs)
         realization = arma_process.generate_sample(
@@ -253,13 +249,13 @@ class TestSingleColumnVolatilityModel(hut.TestCase):
         act.append(str(cconfig.get_config_from_nested_dict(info)))
         act.append(hprint.frame("df_out"))
         act.append(
-            hut.convert_df_to_string(df_out.round(2), index=True, decimals=2)
+            hunitest.convert_df_to_string(df_out.round(2), index=True, decimals=2)
         )
         act = "\n".join(act)
         return act
 
 
-class TestVolatilityModel(hut.TestCase):
+class TestVolatilityModel(hunitest.TestCase):
     def test01(self) -> None:
         """
         Perform a typical `fit()` call.
@@ -444,7 +440,7 @@ class TestVolatilityModel(hut.TestCase):
         # Check if specified tau is used for all columns via learned taus property.
         node = VolatilityModel("vol_model", **config.to_dict())
         node.fit(data)
-        dbg.dassert_set_eq(node.taus.values(), [10])
+        hdbg.dassert_set_eq(node.taus.values(), [10])
 
     def test09(self) -> None:
         """
@@ -564,7 +560,7 @@ class TestVolatilityModel(hut.TestCase):
         act.append(hprint.frame("info"))
         act.append(str(cconfig.get_config_from_nested_dict(info)))
         act.append(hprint.frame("df_out"))
-        act.append(hut.convert_df_to_string(df_out, index=True))
+        act.append(hunitest.convert_df_to_string(df_out, index=True))
         act = "\n".join(act)
         return act
 
@@ -578,7 +574,7 @@ class TestVolatilityModel(hut.TestCase):
         act.append(hprint.frame("state"))
         act.append(str(state))
         act.append(hprint.frame("df_out"))
-        act.append(hut.convert_df_to_string(df_out, index=True))
+        act.append(hunitest.convert_df_to_string(df_out, index=True))
         act = "\n".join(act)
         return act
 
@@ -589,7 +585,7 @@ class TestVolatilityModel(hut.TestCase):
 
         Use lag + noise as predictor.
         """
-        arma_process = casgen.ArmaProcess([0.45], [0])
+        arma_process = carsigen.ArmaProcess([0.45], [0])
         date_range_kwargs = {"start": "2000-01-01", "periods": 40, "freq": "B"}
         date_range = pd.date_range(**date_range_kwargs)
         realization = arma_process.generate_sample(
@@ -600,7 +596,7 @@ class TestVolatilityModel(hut.TestCase):
         return df
 
 
-class TestMultiindexVolatilityModel(hut.TestCase):
+class TestMultiindexVolatilityModel(hunitest.TestCase):
     def test1(self) -> None:
         """
         Perform a typical `fit()` call.
@@ -674,7 +670,7 @@ class TestMultiindexVolatilityModel(hut.TestCase):
         act.append(str(cconfig.get_config_from_nested_dict(info)))
         act.append(hprint.frame("df_out"))
         act.append(
-            hut.convert_df_to_string(df_out.round(2), index=True, decimals=2)
+            hunitest.convert_df_to_string(df_out.round(2), index=True, decimals=2)
         )
         act = "\n".join(act)
         return act
@@ -683,7 +679,7 @@ class TestMultiindexVolatilityModel(hut.TestCase):
         """
         Generate multivariate normal returns.
         """
-        mn_process = casgen.MultivariateNormalProcess()
+        mn_process = carsigen.MultivariateNormalProcess()
         mn_process.set_cov_from_inv_wishart_draw(dim=2, seed=0)
         realization = mn_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
@@ -696,12 +692,12 @@ class TestMultiindexVolatilityModel(hut.TestCase):
         return data
 
 
-class TestVolatilityModulator(hut.TestCase):
+class TestVolatilityModulator(hunitest.TestCase):
     def test_modulate1(self) -> None:
         steps_ahead = 2
         df_in = self._get_signal_and_fwd_vol(steps_ahead)
         # Get mock returns prediction 1 step ahead indexed by knowledge time.
-        y_hat = csproc.compute_smooth_moving_average(df_in["ret_0"], 4).shift(-1)
+        y_hat = csigproc.compute_smooth_moving_average(df_in["ret_0"], 4).shift(-1)
         df_in["ret_1_hat"] = y_hat
         config = cconfig.get_config_from_nested_dict(
             {
@@ -787,102 +783,13 @@ class TestVolatilityModulator(hut.TestCase):
     def _get_signal_and_fwd_vol(
         steps_ahead: int,
     ) -> pd.DataFrame:
-        arma_process = casgen.ArmaProcess([0.45], [0])
+        arma_process = carsigen.ArmaProcess([0.45], [0])
         date_range_kwargs = {"start": "2010-01-01", "periods": 40, "freq": "B"}
         signal = arma_process.generate_sample(
             date_range_kwargs=date_range_kwargs, scale=0.1, seed=42
         )
-        vol = csproc.compute_smooth_moving_average(signal, 16)
+        vol = csigproc.compute_smooth_moving_average(signal, 16)
         fwd_vol = vol.shift(steps_ahead)
         return pd.concat(
             [signal.rename("ret_0"), fwd_vol.rename("vol_2_hat")], axis=1
         )
-
-
-class TestVolatilityNormalizer(hut.TestCase):
-    def test_fit1(self) -> None:
-        y = TestVolatilityNormalizer._get_series(42).rename("ret_0")
-        y_hat = sigp.compute_smooth_moving_average(y, 28).rename("ret_0_hat")
-        df_in = pd.concat([y, y_hat], axis=1)
-        #
-        vn = VolatilityNormalizer("normalize_volatility", "ret_0_hat", 0.1)
-        df_out = vn.fit(df_in)["df_out"]
-        #
-        volatility = 100 * df_out.apply(fin.compute_annualized_volatility)
-        output_str = (
-            f"{prnt.frame('df_out')}\n"
-            f"{hut.convert_df_to_string(df_out, index=True)}\n"
-            f"{prnt.frame('df_out annualized volatility')}\n"
-            f"{volatility}"
-        )
-        self.check_string(output_str)
-
-    def test_fit2(self) -> None:
-        """
-        Test with `col_mode`="replace_all".
-        """
-        y = TestVolatilityNormalizer._get_series(42).rename("ret_0")
-        y_hat = sigp.compute_smooth_moving_average(y, 28).rename("ret_0_hat")
-        df_in = pd.concat([y, y_hat], axis=1)
-        #
-        vn = VolatilityNormalizer(
-            "normalize_volatility",
-            "ret_0_hat",
-            0.1,
-            col_mode="replace_all",
-        )
-        df_out = vn.fit(df_in)["df_out"]
-        #
-        volatility = 100 * df_out.apply(fin.compute_annualized_volatility)
-        output_str = (
-            f"{prnt.frame('df_in')}\n"
-            f"{hut.convert_df_to_string(df_in, index=True)}\n"
-            f"{prnt.frame('df_out')}\n"
-            f"{hut.convert_df_to_string(df_out, index=True)}\n"
-            f"{prnt.frame('df_out annualized volatility')}\n"
-            f"{volatility}"
-        )
-        self.check_string(output_str)
-
-    def test_predict1(self) -> None:
-        y = TestVolatilityNormalizer._get_series(42).rename("ret_0")
-        y_hat = sigp.compute_smooth_moving_average(y, 28).rename("ret_0_hat")
-        fit_df_in = pd.concat([y, y_hat], axis=1)
-        predict_df_in = (
-            TestVolatilityNormalizer._get_series(0).rename("ret_0_hat").to_frame()
-        )
-        predict_df_in = sigp.compute_smooth_moving_average(predict_df_in, 18)
-        # Fit normalizer.
-        vn = VolatilityNormalizer("normalize_volatility", "ret_0_hat", 0.1)
-        fit_df_out = vn.fit(fit_df_in)["df_out"]
-        # Predict.
-        predict_df_out = vn.predict(predict_df_in)["df_out"]
-        #
-        fit_df_out_volatility = 100 * fit_df_out.apply(
-            fin.compute_annualized_volatility
-        )
-        predict_df_out_volatility = 100 * predict_df_out.apply(
-            fin.compute_annualized_volatility
-        )
-        output_str = (
-            # Fit outputs.
-            f"{prnt.frame('fit_df_out')}\n"
-            f"{hut.convert_df_to_string(fit_df_out, index=True)}\n"
-            f"{prnt.frame('fit_df_out annualized volatility')}\n"
-            f"{fit_df_out_volatility}"
-            # Predict outputs.
-            f"{prnt.frame('predict_df_out')}\n"
-            f"{hut.convert_df_to_string(predict_df_out, index=True)}\n"
-            f"{prnt.frame('predict_df_out annualized volatility')}\n"
-            f"{predict_df_out_volatility}"
-        )
-        self.check_string(output_str)
-
-    @staticmethod
-    def _get_series(seed: int, periods: int = 44) -> pd.Series:
-        arma_process = casgen.ArmaProcess([0], [0])
-        date_range = {"start": "2010-01-01", "periods": periods, "freq": "B"}
-        series = arma_process.generate_sample(
-            date_range_kwargs=date_range, scale=0.1, seed=seed
-        )
-        return series

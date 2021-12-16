@@ -70,6 +70,11 @@ def construct_full_symbol(exchange: str, symbol: str) -> FullSymbol:
     return full_symbol
 
 
+# #############################################################################
+# AbstractImClient
+# #############################################################################
+
+
 class AbstractImClient(abc.ABC):
     """
     Abstract Interface for `IM` client.
@@ -153,8 +158,8 @@ class AbstractImClient(abc.ABC):
         Read data for a single `FullSymbol` (i.e. currency pair from a single
         exchange) in [start_ts, end_ts).
 
-        Parameters have the same meaning as parameters in `read_data()` with the same
-        name.
+        Parameters have the same meaning as parameters in `read_data()`
+        with the same name.
         """
 
     @staticmethod
@@ -197,6 +202,11 @@ class AbstractImClient(abc.ABC):
             0,
             msg=f"There are {n_duplicated_rows} duplicated rows in data",
         )
+
+
+# #############################################################################
+# MultipleSymbolsClient
+# #############################################################################
 
 
 class MultipleSymbolsClient:

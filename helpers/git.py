@@ -10,8 +10,7 @@ import logging
 import os
 import pprint
 import re
-import sys
-from typing import Dict, List, Match, Optional, Tuple
+from typing import Any, Dict, List, Match, Optional, Tuple
 
 import helpers.dbg as hdbg
 import helpers.io_ as hio
@@ -36,6 +35,61 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Spell super_module and sub_module always in the same way in both
 #  comments and code. For simplicity (e.g., instead of `super_module` in code and
 #  `super-module` in comment) we might want to spell `supermodule` everywhere.
+
+# #############################################################################
+# Git branch functions
+# #############################################################################
+
+
+@functools.lru_cache()
+def get_branch_name(dir_name: str = ".") -> str:
+    """
+    Return the name of the Git branch including a certain dir.
+
+    E.g., `master` or `AmpTask672_Add_script_to_check_and_merge_PR`
+    """
+    hdbg.dassert_exists(dir_name)
+    # > git rev-parse --abbrev-ref HEAD
+    # master
+    cmd = "cd %s && git rev-parse --abbrev-ref HEAD" % dir_name
+    data: Tuple[int, str] = hsysinte.system_to_one_line(cmd)
+    _, output = data
+    return output
+
+
+def get_branch_next_name(dir_name: str = ".") -> str:
+    """
+    Return a name derived from the branch so that the branch doesn't exist.
+
+    E.g., `AmpTask1903_Implemented_system_Portfolio` ->
+        `AmpTask1903_Implemented_system_Portfolio_3`
+    """
+    curr_branch_name = get_branch_name(dir_name=dir_name)
+    hdbg.dassert_ne(curr_branch_name, "master")
+    _LOG.debug("curr_branch_name=%s", curr_branch_name)
+    #
+    for i in range(1, 10):
+        new_branch_name = f"{curr_branch_name}_{i}"
+        exists = does_branch_exist(new_branch_name, dir_name=dir_name)
+        _LOG.debug("'%s' -> exists=%s", new_branch_name, exists)
+        if not exists:
+            return new_branch_name
+    hdbg.dassert("Can't find the next branch name for '%s'", curr_branch_name)
+
+
+def get_branch_hash(dir_name: str = ".") -> str:
+    """
+    Return the hash of the commit right before the branch in `dir_name` was created.
+    """
+    curr_branch_name = get_branch_name(dir_name=dir_name)
+    hdbg.dassert_ne(curr_branch_name, "master")
+    _LOG.debug("curr_branch_name=%s", curr_branch_name)
+    #
+    cmd = f"cd {dir_name} && git merge-base master {curr_branch_name}"
+    _, hash = hsysinte.system_to_string(cmd)
+    hash_ = hash.rstrip("\n").lstrip("\n")
+    hdbg.dassert_eq(len(hash_.split("\n")), 1)
+    return hash_
 
 # #############################################################################
 # Git submodule functions
@@ -99,22 +153,6 @@ def get_project_dirname(only_index: bool = False) -> str:
 
 
 @functools.lru_cache()
-def get_branch_name(dir_name: str = ".") -> str:
-    """
-    Return the name of the Git branch including a certain dir.
-
-    E.g., `master` or `AmpTask672_Add_script_to_check_and_merge_PR`
-    """
-    hdbg.dassert_exists(dir_name)
-    # > git rev-parse --abbrev-ref HEAD
-    # master
-    cmd = "cd %s && git rev-parse --abbrev-ref HEAD" % dir_name
-    data: Tuple[int, str] = hsysinte.system_to_one_line(cmd)
-    _, output = data
-    return output
-
-
-@functools.lru_cache()
 def is_inside_submodule(git_dir: str = ".") -> bool:
     """
     Return whether a dir is inside a Git submodule or a Git supermodule.
@@ -157,6 +195,34 @@ def is_amp() -> bool:
     return _is_repo("amp")
 
 
+# TODO(gp): Be consistent with submodule and sub-module in the code. Same for
+# supermodule.
+def is_in_amp_as_submodule() -> bool:
+    """
+    Return whether we are in the `amp` repo and it's a sub-module, e.g., of
+    `lm`.
+    """
+    return is_amp() and is_inside_submodule(".")
+
+
+def is_in_amp_as_supermodule() -> bool:
+    """
+    Return whether we are in the `amp` repo and it's a super-module, i.e.,
+    `amp` by itself.
+    """
+    return is_amp() and not is_inside_submodule(".")
+
+
+# Using these functions is the last resort to skip / change the tests depending
+# on the repo. We should control the tests through what functionalities they have,
+# e.g.,
+# ```
+# hgit.execute_repo_config_code("has_dind_support()"),
+# ```
+# 
+# rather than their name.
+
+
 def is_dev_tools() -> bool:
     """
     Return whether we are inside `dev_tools` repo.
@@ -183,24 +249,6 @@ def is_lime() -> bool:
     Return whether we are inside `lime` repo.
     """
     return _is_repo("lime")
-
-
-# TODO(gp): submodule -> sub_module
-def is_in_amp_as_submodule() -> bool:
-    """
-    Return whether we are in the `amp` repo and it's a sub-module, e.g., of
-    `lm`.
-    """
-    return is_amp() and is_inside_submodule(".")
-
-
-# TODO(gp): supermodule -> super_module
-def is_in_amp_as_supermodule() -> bool:
-    """
-    Return whether we are in the `amp` repo and it's a super-module, i.e.,
-    `amp` by itself.
-    """
-    return is_amp() and not is_inside_submodule(".")
 
 
 # #############################################################################
@@ -440,16 +488,34 @@ def get_repo_full_name_from_client(super_module: bool) -> str:
 
 # /////////////////////////////////////////////////////////////////////////
 
+# Execute code from the `repo_config.py` in the super module.
 
-def _get_repo_config_code() -> str:
+def _get_repo_config_code(super_module: bool = True) -> str:
     """
     Return the text of the code stored in `repo_config.py`.
     """
     # TODO(gp): We should actually ask Git where the super-module is.
-    file_name = "./repo_config.py"
+    client_root = get_client_root(super_module)
+    file_name = os.path.join(client_root, "repo_config.py")
     hdbg.dassert_file_exists(file_name)
     code: str = hio.from_file(file_name)
     return code
+
+
+def execute_repo_config_code(code_to_execute: str) -> Any:
+    """
+    Execute code in `repo_config.py`.
+    """
+    # Read the info from the current repo.
+    code = _get_repo_config_code()
+    # TODO(gp): make the linter happy creating this symbol that comes from the
+    #  `exec()`.
+    exec(code, globals())  # pylint: disable=exec-used
+    ret = eval(code_to_execute)
+    return ret
+
+
+# /////////////////////////////////////////////////////////////////////////
 
 
 def _decorate_with_host_name(
@@ -884,6 +950,7 @@ def get_modified_files_in_branch(
 
 def get_summary_files_in_branch(
     dst_branch: str,
+    *,
     dir_name: str = ".",
 ) -> str:
     """
@@ -1058,7 +1125,8 @@ def git_describe(
 
     If there is no tag, this will return short commit hash.
 
-    :param match: e.g., `dev_tools-*`, only consider tags matching the given glob pattern
+    :param match: e.g., `dev_tools-*`, only consider tags matching the given glob
+        pattern
     """
     _LOG.debug("# Looking for version ...")
     cmd = "git describe --tags --always --abbrev=0"
@@ -1113,17 +1181,26 @@ def fetch_origin_master_if_needed() -> None:
             hsysinte.system(cmd)
 
 
-def is_client_clean(dir_name: str, abort_if_needed: bool = True) -> bool:
-    hdbg.dassert_dir_exists(dir_name)
-    cmd = f"cd {dir_name}; git status --untracked-files=no --porcelain"
-    _, txt = hsysinte.system_to_string(cmd)
-    if abort_if_needed and txt != "":
-        _LOG.error("There are uncommitted changes in tracked files\n:%s", txt)
-        sys.exit(-1)
-    return txt == ""
+def is_client_clean(
+    dir_name: str = ".", abort_if_not_clean: bool = False
+) -> bool:
+    """
+    Return whether there are files modified, added, or removed in `dir_name`.
+
+    :param abort_if_not_clean: if True and the client is not clean, abort reporting
+        the files modified
+    """
+    files = get_modified_files(dir_name)
+    # A Git client is clean iff there are no files in the index.
+    is_clean = len(files) == 0
+    if abort_if_not_clean:
+        hdbg.dassert(
+            is_clean, "The Git client is not clean:\n%s", "\n".join(files)
+        )
+    return is_clean
 
 
-def does_branch_exist(dir_name: str, branch_name: str) -> bool:
+def does_branch_exist(branch_name: str, dir_name: str = ".") -> bool:
     # From https://stackoverflow.com/questions/35941566
     cmd = f"cd {dir_name} && git fetch --prune"
     hsysinte.system(cmd, abort_on_error=False)

@@ -78,14 +78,12 @@ def check_version() -> None:
     _check_version(code_version, container_version)
 
 
-# TODO(gp): It's not clear how to generalize this for different containers.
-#  For `amp` makes sense to check at top of the repo.
 def get_code_version() -> Optional[str]:
     """
     Return the code version.
 
-    Code version is based on a closest git tag that matches
-    container's git tag prefix.
+    Code version is based on a closest Git tag that matches container's Git tag
+    prefix.
     """
     version: Optional[str] = None
     env_var = "AM_IMAGE_NAME"
@@ -101,7 +99,6 @@ def get_code_version() -> Optional[str]:
             )
         else:
             git_tag_prefix = os.environ[env_var]
-            hdbg.dassert_isinstance(git_tag_prefix, str)
             hdbg.dassert_ne(git_tag_prefix, "")
             git_tag_pattern = f"{git_tag_prefix}-*"
             version = hgit.git_describe(match=git_tag_pattern)

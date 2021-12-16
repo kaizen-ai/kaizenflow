@@ -290,8 +290,8 @@ class Order:
         return copy.copy(self)
 
     def _get_next_order_id(self) -> int:
-        order_id = self._order_id
-        self._order_id += 1
+        order_id = Order._order_id
+        Order._order_id += 1
         return order_id
 
     @staticmethod

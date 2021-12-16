@@ -8,8 +8,10 @@ fi;
 
 #SUBDIR=helpers
 #SUBDIR=im
-SUBDIR=im_v2
+#SUBDIR=im_v2
 #SUBDIR=oms
+#SUBDIR=market_data
+SUBDIR=dataflow
 #SUBDIR=optimizer
 #SUBDIR=research/cc
 #SUBDIR=research_amp
@@ -23,7 +25,7 @@ fi;
 RSYNC_OPTS="--delete -a"
 
 if [[ 1 == 1 ]]; then
-    if [[ 1 == 1 ]]; then
+    if [[ 0 == 1 ]]; then
         # Sync dir cmamp -> amp.
         rsync $RSYNC_OPTS $CMAMP_DIR/$SUBDIR/ $AMP_DIR/$SUBDIR
     else

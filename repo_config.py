@@ -2,7 +2,7 @@
 This file contains info specific of this repo.
 """
 
-from typing import Dict
+from typing import Dict, List
 
 
 def get_repo_map() -> Dict[str, str]:
@@ -13,8 +13,13 @@ def get_repo_map() -> Dict[str, str]:
     return repo_map
 
 
+# TODO(gp): -> get_gihub_host_name
 def get_host_name() -> str:
     return "github.com"
+
+
+def get_invalid_words() -> List[str]:
+    return []
 
 
 def get_docker_base_image_name() -> str:
@@ -23,3 +28,10 @@ def get_docker_base_image_name() -> str:
     """
     base_image_name = "cmamp"
     return base_image_name
+
+
+def has_dind_support() -> bool:
+    """
+    Return whether this repo image supports Docker-in-Docker.
+    """
+    return True

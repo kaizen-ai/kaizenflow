@@ -339,7 +339,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
 
     def test_git_create_branch1(self) -> None:
         target = (
-            "git_create_branch(ctx, branch_name='test', "
+            "git_create_branch(ctx, branch_name='AmpTask123_test', "
             "only_branch_from_master=False)"
         )
         self._check_output(target)
@@ -365,7 +365,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     #     self._check_output(target)
 
     def test_git_merge_master(self) -> None:
-        target = "git_merge_master(ctx)"
+        target = "git_merge_master(ctx, abort_if_not_clean=False)"
         self._check_output(target)
 
     # #########################################################################

@@ -63,12 +63,20 @@ def find_regex_files(src_dir: str, regex: str) -> List[str]:
     return file_names
 
 
-# TODO(gp): Redundant with `find_files()`.
-def find_all_files(dir_name: str) -> List[str]:
+# TODO(gp): Redundant with `find_files()`. Remove this.
+def find_all_files(dir_name: str, extension: Optional[str] = None) -> List[str]:
     """
     Find all files (not directory) under `dir_name`, skipping `.git`.
     """
-    cmd = fr'''cd {dir_name} && find . -type f -name "*" -not -path "*/\.git/*"'''
+    file_name = "*"
+    if extension is not None:
+        hdbg.dassert(
+            not extension.startswith("."),
+            "extension='%s' should not start with .",
+            extension,
+        )
+        file_name += f".{extension}"
+    cmd = fr'''cd {dir_name} && find . -type f -name "{file_name}" -not -path "*/\.git/*"'''
     file_names = hsysinte.system_to_files(cmd)
     file_names = cast(List[str], file_names)
     _LOG.debug("Found %s files", len(file_names))
