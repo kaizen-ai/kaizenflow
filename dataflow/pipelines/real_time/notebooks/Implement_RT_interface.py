@@ -21,10 +21,10 @@
 
 import logging
 
-import pandas as pd
-
 # %%
 import amp.dataflow.pipelines.dataflow_example
+import pandas as pd
+
 import helpers.dbg as hdbg
 import helpers.printing as hprint
 

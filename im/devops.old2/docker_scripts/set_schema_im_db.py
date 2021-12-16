@@ -20,7 +20,7 @@ import os
 import helpers.dbg as hdbg
 import helpers.parser as hparser
 import helpers.sql as hsql
-import im_v2.common.db.utils as imcodbuti
+import im_v2.common.db.utils as imvcodbut
 
 _LOG = logging.getLogger(__name__)
 
@@ -46,12 +46,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
         dbname=os.environ["POSTGRES_DB"],
         port=int(os.environ["POSTGRES_PORT"]),
         user=os.environ["POSTGRES_USER"],
-        password=os.environ["POSTGRES_PASSWORD"]
+        password=os.environ["POSTGRES_PASSWORD"],
     )
     connection = hsql.get_connection_from_env_vars()
     # Set schema for the database.
     _LOG.info("Setting schema for DB `%s`...", os.environ["POSTGRES_DB"])
-    imcodbuti.create_all_tables(connection)
+    imvcodbut.create_all_tables(connection)
     _LOG.info("Database `%s` is ready to use.", os.environ["POSTGRES_DB"])
 
 

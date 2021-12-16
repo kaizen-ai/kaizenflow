@@ -697,7 +697,9 @@ class TestVolatilityModulator(hunitest.TestCase):
         steps_ahead = 2
         df_in = self._get_signal_and_fwd_vol(steps_ahead)
         # Get mock returns prediction 1 step ahead indexed by knowledge time.
-        y_hat = csigproc.compute_smooth_moving_average(df_in["ret_0"], 4).shift(-1)
+        y_hat = csigproc.compute_smooth_moving_average(df_in["ret_0"], 4).shift(
+            -1
+        )
         df_in["ret_1_hat"] = y_hat
         config = cconfig.get_config_from_nested_dict(
             {

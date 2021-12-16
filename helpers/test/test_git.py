@@ -391,10 +391,6 @@ class Test_execute_repo_config_code1(hunitest.TestCase):
     Make sure we can execute the code from `repo_config.py`.
     """
 
-    def _exec(self, code_to_execute: str) -> None:
-        val = hgit.execute_repo_config_code(code_to_execute)
-        _LOG.debug("%s=%s", code_to_execute, val)
-
     def test_get_repo_map1(self) -> None:
         self._exec("get_repo_map()")
 
@@ -406,3 +402,7 @@ class Test_execute_repo_config_code1(hunitest.TestCase):
 
     def test_has_didn_support1(self) -> None:
         self._exec("has_dind_support()")
+
+    def _exec(self, code_to_execute: str) -> None:
+        val = hgit.execute_repo_config_code(code_to_execute)
+        _LOG.debug("%s=%s", code_to_execute, val)

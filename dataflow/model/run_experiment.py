@@ -21,7 +21,7 @@ import os
 from typing import cast
 
 import core.config as cconfig
-import dataflow.model.utils as cdtfmouti
+import dataflow.model.utils as dtfmodutil
 import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.git as hgit
@@ -53,7 +53,7 @@ def _run_experiment(
     """
     hdbg.dassert_eq(1, num_attempts, "Multiple attempts not supported yet")
     _ = incremental
-    cdtfmouti.setup_experiment_dir(config)
+    dtfmodutil.setup_experiment_dir(config)
     # Execute experiment.
     # TODO(gp): Rename id -> idx everywhere
     #  jackpy "meta" | grep id | grep config
@@ -94,7 +94,7 @@ def _run_experiment(
         _LOG.error(msg)
         raise RuntimeError(msg)
     # Mark as success.
-    cdtfmouti.mark_config_as_success(experiment_result_dir)
+    dtfmodutil.mark_config_as_success(experiment_result_dir)
     rc = cast(int, rc)
     return rc
 
@@ -104,7 +104,7 @@ def _get_workload(args: argparse.Namespace) -> hjoblib.Workload:
     Prepare the workload using the parameters from command line.
     """
     # Get the configs to run.
-    configs = cdtfmouti.get_configs_from_command_line(args)
+    configs = dtfmodutil.get_configs_from_command_line(args)
     # Prepare the tasks.
     tasks = []
     for config in configs:
@@ -130,7 +130,7 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     # Add common experiment options.
-    parser = cdtfmouti.add_experiment_arg(parser, dst_dir_required=True)
+    parser = dtfmodutil.add_experiment_arg(parser, dst_dir_required=True)
     # Add pipeline options.
     parser.add_argument(
         "--experiment_builder",

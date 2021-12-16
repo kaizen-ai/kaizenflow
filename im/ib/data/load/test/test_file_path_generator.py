@@ -12,7 +12,6 @@ import im.common.data.types as imcodatyp
 import im.ib.data.config as imibdacon
 import im.ib.data.load.ib_file_path_generator as imidlifpge
 
-
 _S3_BUCKET = hs3.get_bucket()
 
 

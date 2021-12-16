@@ -18,18 +18,18 @@
 # %autoreload 2
 # %matplotlib inline
 
-import logging
 import json
+import logging
+import time
+from typing import Any
+
+import ccxt
+import pandas as pd
 
 import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.io_ as hio
 import helpers.printing as hprint
-from typing import Any
-import time
-
-import ccxt
-import pandas as pd
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)

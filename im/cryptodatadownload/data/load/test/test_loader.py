@@ -4,8 +4,7 @@ import pytest
 
 import helpers.s3 as hs3
 import helpers.unit_test as hunitest
-import im.cryptodatadownload.data.load.loader as icdalolo
-
+import im.cryptodatadownload.data.load.loader as imcdalolo
 
 _AM_S3_ROOT_DIR = os.path.join(hs3.get_path(), "data")
 
@@ -17,11 +16,11 @@ class TestGetFilePath(hunitest.TestCase):
         """
         exchange_id = "binance"
         currency_pair = "ETH_USDT"
-        cdd_loader = icdalolo.CddLoader(
+        cdd_loader = imcdalolo.CddLoader(
             root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         actual = cdd_loader._get_file_path(
-            icdalolo._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
+            imcdalolo._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
         )
         expected = os.path.join(
             hs3.get_path(),
@@ -35,12 +34,12 @@ class TestGetFilePath(hunitest.TestCase):
         """
         exchange_id = "unsupported exchange"
         currency_pair = "ADA_USDT"
-        cdd_loader = icdalolo.CddLoader(
+        cdd_loader = imcdalolo.CddLoader(
             root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         with self.assertRaises(AssertionError):
             cdd_loader._get_file_path(
-                icdalolo._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
+                imcdalolo._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
             )
 
     def test3(self) -> None:
@@ -49,12 +48,12 @@ class TestGetFilePath(hunitest.TestCase):
         """
         exchange_id = "binance"
         currency_pair = "unsupported_currency"
-        cdd_loader = icdalolo.CddLoader(
+        cdd_loader = imcdalolo.CddLoader(
             root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         with self.assertRaises(AssertionError):
             cdd_loader._get_file_path(
-                icdalolo._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
+                imcdalolo._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
             )
 
 
@@ -64,7 +63,7 @@ class TestCddLoader(hunitest.TestCase):
         """
         Test files on S3 are being read correctly.
         """
-        cdd_loader = icdalolo.CddLoader(
+        cdd_loader = imcdalolo.CddLoader(
             root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         actual = cdd_loader.read_data_from_filesystem(
@@ -78,7 +77,7 @@ class TestCddLoader(hunitest.TestCase):
         """
         Test unsupported exchange id.
         """
-        cdd_loader = icdalolo.CddLoader(
+        cdd_loader = imcdalolo.CddLoader(
             root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         with self.assertRaises(AssertionError):
@@ -90,7 +89,7 @@ class TestCddLoader(hunitest.TestCase):
         """
         Test unsupported currency pair.
         """
-        cdd_loader = icdalolo.CddLoader(
+        cdd_loader = imcdalolo.CddLoader(
             root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         with self.assertRaises(AssertionError):
@@ -102,7 +101,7 @@ class TestCddLoader(hunitest.TestCase):
         """
         Test unsupported data type.
         """
-        cdd_loader = icdalolo.CddLoader(
+        cdd_loader = imcdalolo.CddLoader(
             root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         with self.assertRaises(AssertionError):
