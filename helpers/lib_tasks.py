@@ -999,8 +999,6 @@ def integrate_create_branches(ctx, dir_name, dry_run=False):  # type: ignore
     _report_task()
     #
     _dassert_current_dir_matches(dir_name)
-    _dassert_is_integration_branch(src_dir)
-    _dassert_is_integration_branch(dst_dir)
     #
     date = datetime.datetime.now().date()
     date_as_str = date.strftime("%Y%m%d")
@@ -3469,6 +3467,26 @@ def lint(  # type: ignore
         print(cfile)
     else:
         _LOG.warning("Skipping lint parsing, as per user request")
+
+
+@task
+def lint_create_branches(ctx, dir_name, dry_run=False):  # type: ignore
+    """
+    Create the branch for integration in the current dir.
+
+    The dir needs to be specified to ensure the set-up is correct.
+    """
+    _report_task()
+    #
+    _dassert_current_dir_matches(dir_name)
+    #
+    date = datetime.datetime.now().date()
+    date_as_str = date.strftime("%Y%m%d")
+    branch_name = f"AmpTask1955_Lint_{date_as_str}"
+    #query_yes_no("Are you sure you want to create the branch '{branch_name}'")
+    _LOG.info("Creating branch '%s'", branch_name)
+    cmd = f"invoke git_create_branch -b '{branch_name}'"
+    _run(ctx, cmd, dry_run=dry_run)
 
 
 # #############################################################################
