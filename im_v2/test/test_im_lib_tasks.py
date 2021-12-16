@@ -47,11 +47,14 @@ class TestGetImDockerDown(hunitest.TestCase):
         """
         Check the command line to only remove containers.
         """
-        actual = imvimlita._get_docker_down_cmd(volumes_remove=False)
+        stage = "local"
+        actual = imvimlita._get_docker_down_cmd(stage, False)
         docker_compose_path = hlibtask.get_base_docker_compose_path()
+        env_file = imvimlita.get_db_env_path(stage)
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
+            --env-file {env_file} \
             down
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
@@ -60,11 +63,14 @@ class TestGetImDockerDown(hunitest.TestCase):
         """
         Check the command line to remove containers and volumes.
         """
-        actual = imvimlita._get_docker_down_cmd(volumes_remove=True)
+        stage = "local"
+        actual = imvimlita._get_docker_down_cmd(stage, True)
         docker_compose_path = hlibtask.get_base_docker_compose_path()
+        env_file = imvimlita.get_db_env_path(stage)
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
+            --env-file {env_file} \
             down \
             -v
         """
@@ -76,13 +82,16 @@ class TestGetImDockerUp(hunitest.TestCase):
         """
         Check the command line to bring up the db.
         """
-        actual = imvimlita._get_docker_up_cmd(detach=False)
+        stage = "local"
+        actual = imvimlita._get_docker_up_cmd(stage, False)
         docker_compose_path = hlibtask.get_base_docker_compose_path()
+        env_file = imvimlita.get_db_env_path(stage)
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
+            --env-file {env_file} \
             up \
-            im_postgres_local
+            im_postgres
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
@@ -90,14 +99,17 @@ class TestGetImDockerUp(hunitest.TestCase):
         """
         Check the command line to bring up the db in the detached mode.
         """
-        actual = imvimlita._get_docker_up_cmd(detach=True)
+        stage = "local"
+        actual = imvimlita._get_docker_up_cmd(stage, True)
         docker_compose_path = hlibtask.get_base_docker_compose_path()
+        env_file = imvimlita.get_db_env_path(stage)
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
+            --env-file {env_file} \
             up \
             -d \
-            im_postgres_local
+            im_postgres
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
@@ -154,8 +166,9 @@ class TestGetCreateDbCmd(hunitest.TestCase):
             run --rm im_app \
             im_v2/common/db/create_db.py \
             --db-name 'test_db' \
-            --credentials 'test.json'
+            --credentials '"test.json"'
         """
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test4(self) -> None:
         """
@@ -175,6 +188,7 @@ class TestGetCreateDbCmd(hunitest.TestCase):
             --db-name 'test_db' \
             --credentials '"host=localhost dbname=im_postgres_db_local port=54"'
         """
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
 
 class TestGetRemoveDbCmd(hunitest.TestCase):
@@ -230,11 +244,12 @@ class TestGetRemoveDbCmd(hunitest.TestCase):
             run --rm im_app \
             im_v2/common/db/remove_db.py \
             --db-name 'test_db' \
-            --credentials asd.json
+            --credentials '"asd.json"'
         """
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
 
-# TODO(Grisha): 'is_inside_docker()' -> 'is_inside_im_container()' in #100.
+# TODO(Grisha): add more tests and enable this one having `dind`.
 @pytest.mark.skipif(hsysinte.is_inside_docker(), reason="amp #1189")
 class TestImDockerCmd(hunitest.TestCase):
     def test1(self) -> None:
