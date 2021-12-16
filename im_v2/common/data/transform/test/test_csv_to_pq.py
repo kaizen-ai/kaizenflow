@@ -1,5 +1,7 @@
 import os
 
+import pytest
+
 import pandas as pd
 
 import helpers.io_ as hio
@@ -8,6 +10,7 @@ import helpers.unit_test as hunitest
 
 
 class TestCsvToPq(hunitest.TestCase):
+    @pytest.mark.skip("Enable when purify_text is set to True CMTask782")
     def test1(self) -> None:
         """
         Test that generated .pq file is correct.
@@ -27,6 +30,7 @@ class TestCsvToPq(hunitest.TestCase):
         actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
 
+    @pytest.mark.skip("Enable when purify_text is set to True CMTask782")
     def test2(self) -> None:
         """
         Test that --incremental option does not change the file.
