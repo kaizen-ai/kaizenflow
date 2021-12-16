@@ -94,7 +94,9 @@ def _run_qa_tests(ctx: Any, stage: str, version: str) -> bool:
 
     This is used when qualifying a docker image before releasing.
     """
-    cmd = f"pytest -m qa test --image_stage {stage} --image_version {version}"
+    cmd = f"pytest -m qa test --image_stage {stage}"
+    if version:
+        cmd = f"{cmd} --image_version {version}"
     ctx.run(cmd)
     return True
 

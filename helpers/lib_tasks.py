@@ -2906,11 +2906,11 @@ def run_fast_slow_tests(  # type: ignore
 @task
 def run_qa_tests(  # type: ignore
     ctx,
-    version,
     stage="dev",
+    version="",
 ):
     """
-    Run qa tests independently.
+    Run QA tests independently.
 
     :param version: version to tag the image and code with
     :param stage: select a specific stage for the Docker image

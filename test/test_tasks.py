@@ -71,7 +71,10 @@ class TestExecuteTasks1(hunitest.TestCase):
         image_version = self._config.getoption('--image_version')
         image_stage = self._config.getoption('--image_stage')
         exit_command = "<(echo 'exit\n')"
-        cmd = f"invoke docker_bash --version {image_version} --stage {image_stage} < {exit_command}"
+        cmd = f"invoke docker_bash"
+        if image_version:
+            cmd = f"{cmd} --version {image_version}"
+        cmd = f"{cmd} --stage {image_stage} < {exit_command}"
         hsysinte.system(cmd)
 
 
@@ -133,12 +136,8 @@ class TestExecuteTasks2(hunitest.TestCase):
     def test_run_fast_tests_failed(self) -> None:
         file_name = "helpers/test/test_lib_tasks.py::TestFailing"
         cmd = f"export AM_FORCE_TEST_FAIL=1; invoke run_fast_tests --pytest-opts='{file_name}'"
-        try:
+        with self.assertRaises(RuntimeError):
             hsysinte.system(cmd)
-        except RuntimeError:
-            pass
-        else:
-            self.fail("this should not happen")
 
     # Linter.
 
