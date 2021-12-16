@@ -183,7 +183,7 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
 # TODO(Dan): Rename test class name in #759.
 # TODO(*): Consider to factor out the class calling in a `def _get_loader()`.
 class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
-    @pytest.mark.slow("8 seconds.")
+    @pytest.mark.slow("15 seconds.")
     def test1(self) -> None:
         """
         Test that files on S3 are being read correctly.
@@ -196,7 +196,7 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
         actual_string = hunitest.convert_df_to_json_string(actual)
         self.check_string(actual_string)
 
-    @pytest.mark.slow("7 seconds.")
+    @pytest.mark.slow("8 seconds.")
     def test2(self) -> None:
         """
         Test that files on S3 are being filtered correctly.
@@ -213,7 +213,7 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
         actual_string = hunitest.convert_df_to_json_string(actual)
         self.check_string(actual_string)
 
-    @pytest.mark.slow("8 seconds.")
+    @pytest.mark.slow("7 seconds.")
     def test3(self) -> None:
         """
         Test that files on S3 are being read correctly without normalization.
@@ -261,7 +261,7 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
     reason="Need dind support",
 )
 class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
-    @pytest.mark.slow("12 seconds.")
+    @pytest.mark.slow("15 seconds.")
     def test1(self) -> None:
         """
         Test that data for provided list of full symbols is being read
@@ -317,7 +317,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
             expected_currency_pairs,
         )
 
-    @pytest.mark.slow("9 seconds")
+    @pytest.mark.slow("8 seconds")
     def test3(self) -> None:
         """
         Test that all files are being read correctly without normalization.
@@ -346,7 +346,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
             expected_currency_pairs,
         )
 
-    @pytest.mark.slow("11 seconds.")
+    @pytest.mark.slow("9 seconds.")
     def test4(self) -> None:
         """
         Test that all files are being read correctly with dict output mode.

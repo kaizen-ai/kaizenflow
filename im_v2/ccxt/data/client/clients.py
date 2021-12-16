@@ -222,7 +222,9 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         self,
         data_type: str,
         root_dir: str,
+        *,
         aws_profile: Optional[str] = None,
+        extension: Optional[str] = None,
     ) -> None:
         """
         Load CCXT data from local or S3 filesystem.
@@ -230,6 +232,7 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         :param root_dir: either a local root path (e.g., "/app/im") or
             an S3 root path (e.g., "s3://alphamatic-data/data") to CCXT data
         :param aws_profile: AWS profile name (e.g., "am")
+        :param extension: file extension
         """
         super().__init__(data_type=data_type)
         self._root_dir = root_dir
@@ -237,7 +240,7 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
         # Set file extension.
-        self._ext = self._get_file_extension()
+        self._extension = extension
 
     def _read_data(
         self,
@@ -289,12 +292,6 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         return processed_data
 
     @abc.abstractmethod
-    def _get_file_extension(self) -> str:
-        """
-        Return the file extension of files that are expected by this class.
-        """
-
-    @abc.abstractmethod
     def _read_data_from_filesystem(
         self,
         file_path: str,
@@ -332,7 +329,7 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         :return: absolute path to a file with CCXT data
         """
         # Get absolute file path.
-        file_name = currency_pair + self._ext
+        file_name = currency_pair + self._extension
         file_path = os.path.join(
             self._root_dir, "ccxt", data_snapshot, exchange_id, file_name
         )
@@ -379,14 +376,11 @@ class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
         """
         :param gzip: whether the CSV file is compressed or not
         """
-        self._gzip = gzip
-        super().__init__(**kwargs)
-
-    def _get_file_extension(self) -> str:
-        if self._gzip:
-            return ".csv.gz"
+        if gzip:
+            extension = ".csv.gz"
         else:
-            return ".csv"
+            extension = ".csv"
+        super().__init__(**kwargs, extension=extension)
 
     @staticmethod
     def _read_data_from_filesystem(
@@ -415,9 +409,8 @@ class CcxtParquetFileSystemClient(AbstractCcxtFileSystemClient):
     CCXT client for data stored as Parquet from local or S3 filesystem.
     """
 
-    @staticmethod
-    def _get_file_extension() -> str:
-        return ".pq"
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs, extension=".pq")
 
     @staticmethod
     def _read_data_from_filesystem(
