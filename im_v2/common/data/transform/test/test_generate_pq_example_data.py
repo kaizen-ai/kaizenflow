@@ -1,11 +1,14 @@
 import os
 
+import pytest
+
 import helpers.git as hgit
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
 
 
 class TestGeneratePqExampleData1(hunitest.TestCase):
+    @pytest.mark.skip("Enable when purify_text is set to True CMTask782")
     def test_example_data1(self) -> None:
         """
         Generate daily data for 3 days in a by-date format.
