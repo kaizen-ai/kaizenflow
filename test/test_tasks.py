@@ -130,6 +130,16 @@ class TestExecuteTasks2(hunitest.TestCase):
         cmd = f"invoke run_fast_tests --pytest-opts='{file_name}'"
         hsysinte.system(cmd)
 
+    def test_run_fast_tests_failed(self) -> None:
+        file_name = "helpers/test/test_lib_tasks.py::TestFailing"
+        cmd = f"export AM_FORCE_TEST_FAIL=1; invoke run_fast_tests --pytest-opts='{file_name}'"
+        try:
+            hsysinte.system(cmd)
+        except RuntimeError:
+            pass
+        else:
+            self.fail("this should not happen")
+
     # Linter.
 
     def test_lint1(self) -> None:

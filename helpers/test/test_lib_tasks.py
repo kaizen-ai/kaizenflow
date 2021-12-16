@@ -1687,3 +1687,16 @@ class Test_pytest_failed1(hunitest.TestCase):
         )
         exp = " ".join(exp)
         self.assert_equal(act, exp)
+
+
+# #############################################################################
+
+
+class TestFailing(hunitest.TestCase):
+    """
+    Run a test that fails based on AM_FORCE_TEST_FAIL environment variable.
+    """
+
+    def test_failing(self) -> None:
+        if os.environ.get("AM_FORCE_TEST_FAIL", "") == "1":
+            self.fail("test failed succesfully")
