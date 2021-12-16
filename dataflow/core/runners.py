@@ -14,10 +14,12 @@ import core.config as cconfig
 import core.real_time as creatime
 import dataflow.core.builders as dtfcorbuil
 import dataflow.core.node as dtfcornode
-import dataflow.core.nodes.sources as dtfconosou
 import dataflow.core.result_bundle as dtfcorebun
 import dataflow.core.utils as dtfcorutil
 import dataflow.core.visitors as dtfcorvisi
+
+# TODO(*): Move the realtime runner out of this file to avoid this dep.
+import dataflow.system.dataflow_source_nodes as dtfsdtfsono
 import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.printing as hprint
@@ -547,7 +549,7 @@ class RealTimeDagRunner(_AbstractDagRunner):
         for nid in sources:
             node = self.dag.get_node(nid)
             _LOG.debug("nid=%s node=%s type=%s", nid, str(node), str(type(node)))
-            if isinstance(node, dtfconosou.RealTimeDataSource):
+            if isinstance(node, dtfsdtfsono.RealTimeDataSource):
                 _LOG.debug("Waiting on node '%s' ...", str(nid))
                 await node.wait_for_latest_data()
                 _LOG.debug("Waiting on node '%s': done", str(nid))

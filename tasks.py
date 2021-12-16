@@ -55,7 +55,7 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     git_rename_branch,
     integrate_compare_branch_with_base,
     integrate_copy_dirs,
-    integrate_create_branches,
+    integrate_create_branch,
     integrate_diff_dirs,
     lint,
     lint_create_branches,

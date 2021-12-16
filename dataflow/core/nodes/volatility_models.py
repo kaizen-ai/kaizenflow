@@ -18,23 +18,17 @@ import core.data_adapters as cdatadap
 import core.signal_processing as csigproc
 import dataflow.core.dag as dtfcordag
 import dataflow.core.node as dtfcornode
+import dataflow.core.nodes.base as dtfconobas
+import dataflow.core.nodes.sources as dtfconosou
+import dataflow.core.nodes.transformers as dtfconotra
 import dataflow.core.utils as dtfcorutil
+import dataflow.core.visitors as dtfcorvisi
 import helpers.dbg as hdbg
-
-# TODO(Paul): Fix these imports.
-from dataflow.core.nodes.base import (
-    ColModeMixin,
-    FitPredictNode,
-    SeriesToDfColProcessor,
-)
-from dataflow.core.nodes.sources import ReadDataFromDf
-from dataflow.core.nodes.transformers import ColumnTransformer
-from dataflow.core.visitors import extract_info
 
 _LOG = logging.getLogger(__name__)
 
 
-class SmaModel(FitPredictNode, ColModeMixin):
+class SmaModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
     """
     Fit and predict a smooth moving average (SMA) model.
     """
@@ -232,7 +226,7 @@ class SmaModel(FitPredictNode, ColModeMixin):
         return x_sma.values
 
 
-class SingleColumnVolatilityModel(FitPredictNode):
+class SingleColumnVolatilityModel(dtfconobas.FitPredictNode):
     def __init__(
         self,
         nid: dtfcornode.NodeId,
@@ -294,7 +288,7 @@ class SingleColumnVolatilityModel(FitPredictNode):
         df_out = dag.run_leq_node(
             "demodulate_using_vol_pred", mode, progress_bar=self._progress_bar
         )["df_out"]
-        info[self._col] = extract_info(dag, [mode])
+        info[self._col] = dtfcorvisi.extract_info(dag, [mode])
         if self._learn_tau_on_fit and fit:
             self._tau = info[self._col]["compute_smooth_moving_average"]["fit"][
                 "tau"
@@ -371,11 +365,11 @@ class SingleColumnVolatilityModel(FitPredictNode):
         _LOG.debug("%s", config)
         # Load `df_in`.
         nid = "load_data"
-        node = ReadDataFromDf(nid, df_in)
+        node = dtfconosou.ReadDataFromDf(nid, df_in)
         tail_nid = self._append(dag, None, node)
         # Raise volatility columns to pth power.
         nid = "calculate_vol_pth_power"
-        node = ColumnTransformer(
+        node = dtfconotra.ColumnTransformer(
             nid,
             transformer_func=lambda x: np.abs(x) ** self._p_moment,
             **config[nid].to_dict(),
@@ -387,7 +381,7 @@ class SingleColumnVolatilityModel(FitPredictNode):
         tail_nid = self._append(dag, tail_nid, node)
         # Calculate the pth root of volatility columns.
         nid = "calculate_vol_pth_root"
-        node = ColumnTransformer(
+        node = dtfconotra.ColumnTransformer(
             nid,
             transformer_func=lambda x: np.abs(x) ** (1.0 / self._p_moment),
             **config[nid].to_dict(),
@@ -444,8 +438,8 @@ class _MultiColVolatilityModelMixin:
 
 
 class VolatilityModel(
-    FitPredictNode,
-    ColModeMixin,
+    dtfconobas.FitPredictNode,
+    dtfconobas.ColModeMixin,
     _MultiColVolatilityModelMixin,
 ):
     """
@@ -542,7 +536,9 @@ class VolatilityModel(
         return {"df_out": df_out}
 
 
-class MultiindexVolatilityModel(FitPredictNode, _MultiColVolatilityModelMixin):
+class MultiindexVolatilityModel(
+    dtfconobas.FitPredictNode, _MultiColVolatilityModelMixin
+):
     """
     Fit and predict a smooth moving average volatility model.
 
@@ -606,18 +602,22 @@ class MultiindexVolatilityModel(FitPredictNode, _MultiColVolatilityModelMixin):
 
     def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
         dtfcorutil.validate_df_indices(df_in)
-        df = SeriesToDfColProcessor.preprocess(df_in, self._in_col_group)
+        df = dtfconobas.SeriesToDfColProcessor.preprocess(
+            df_in, self._in_col_group
+        )
         dfs, info = self._fit_predict_volatility_model(
             df, fit=fit, out_col_prefix=self._out_col_prefix
         )
-        df_out = SeriesToDfColProcessor.postprocess(dfs, self._out_col_group)
+        df_out = dtfconobas.SeriesToDfColProcessor.postprocess(
+            dfs, self._out_col_group
+        )
         df_out = dtfcorutil.merge_dataframes(df_in, df_out)
         method = "fit" if fit else "predict"
         self._set_info(method, info)
         return {"df_out": df_out}
 
 
-class VolatilityModulator(FitPredictNode, ColModeMixin):
+class VolatilityModulator(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
     """
     Modulate or demodulate signal by volatility.
 
