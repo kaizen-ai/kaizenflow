@@ -222,25 +222,24 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         self,
         data_type: str,
         root_dir: str,
+        extension: str,
         *,
         aws_profile: Optional[str] = None,
-        extension: Optional[str] = None,
     ) -> None:
         """
         Load CCXT data from local or S3 filesystem.
 
         :param root_dir: either a local root path (e.g., "/app/im") or
             an S3 root path (e.g., "s3://alphamatic-data/data") to CCXT data
-        :param aws_profile: AWS profile name (e.g., "am")
         :param extension: file extension
+        :param aws_profile: AWS profile name (e.g., "am")
         """
         super().__init__(data_type=data_type)
         self._root_dir = root_dir
+        self._extension = extension
         # Set s3fs parameter value if aws profile parameter is specified.
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
-        # Set file extension.
-        self._extension = extension
 
     def _read_data(
         self,
@@ -372,14 +371,8 @@ class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
     CCXT client for data stored as CSV from local or S3 filesystem.
     """
 
-    def __init__(self, gzip: bool = True, **kwargs: Any) -> None:
-        """
-        :param gzip: whether the CSV file is compressed or not
-        """
-        if gzip:
-            extension = ".csv.gz"
-        else:
-            extension = ".csv"
+    def __init__(self, extension: str = ".csv.gz", **kwargs: Any) -> None:
+        hdbg.dassert_in(extension, [".csv.gz", ".csv"])
         super().__init__(**kwargs, extension=extension)
 
     @staticmethod
@@ -409,8 +402,9 @@ class CcxtParquetFileSystemClient(AbstractCcxtFileSystemClient):
     CCXT client for data stored as Parquet from local or S3 filesystem.
     """
 
-    def __init__(self, **kwargs: Any) -> None:
-        super().__init__(**kwargs, extension=".pq")
+    def __init__(self, extension: str = ".pq", **kwargs: Any) -> None:
+        hdbg.dassert_in(extension, [".pq"])
+        super().__init__(**kwargs, extension=extension)
 
     @staticmethod
     def _read_data_from_filesystem(
