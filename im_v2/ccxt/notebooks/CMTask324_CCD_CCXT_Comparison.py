@@ -46,7 +46,6 @@ hprint.config_notebook()
 # ## CCXT
 
 # %%
-root_dir = os.path.join(hs3.get_path(), "data")
 ccxt_universe = imvccunun.get_vendor_universe(version="v03")
 
 # %% [markdown]
@@ -87,7 +86,7 @@ _LOG.info(
 display(cdd_and_not_ccxt)
 
 # %% [markdown]
-# # Compare close prices from Binance
+# # Compare close prices / returns from Binance
 
 # %% [markdown]
 # ## Load the data
@@ -96,11 +95,11 @@ display(cdd_and_not_ccxt)
 # The code below can be used to load all the existing data from two vendors CDD and CCXT. Current version is specified to Binance only, however, even for one exchange there's too many data to operate, that's why the output is the intersection of currency pairs between to universe, since one can compare only the intersection of currency pairs for two vendors.
 
 # %%
-# Load Binance-specific universe for CCXT
+# Load Binance-specific universe for CCXT.
 ccxt_binance_universe = [
     element for element in ccxt_universe if element.startswith("binance")
 ]
-# Load Binnance-specific universe for CDD
+# Load Binnance-specific universe for CDD.
 cdd_binance_universe_initial = [
     element for element in universe_cdd if element.startswith("binance")
 ]
@@ -108,11 +107,13 @@ cdd_binance_universe = cdd_binance_universe_initial.copy()
 # SCU_USDT has incorrect columns, so can not be downloaded.
 # See CMTask244 - Cannot load CDD - binance - SCU/USDT from s3 for the reference.
 cdd_binance_universe.remove("binance::SCU_USDT")
-
-# The intersection of Binance currency pairs from two universes
+# The intersection of Binance currency pairs from two universes.
 currency_pair_intersection_binance = set(ccxt_binance_universe).intersection(
     cdd_binance_universe_initial
 )
+
+# %%
+root_dir = os.path.join(hs3.get_path(), "data")
 
 # %%
 cdd_data = []
@@ -159,7 +160,7 @@ cdd_binance_df["currency_pair"] = cdd_binance_df["currency_pair"].str.replace(
 
 
 # %%
-def resample_ohlcv_dataframe(df: pd.DataFrame, resampling_freq: str) -> pd.Series:
+def resample_close_price(df: pd.DataFrame, resampling_freq: str) -> pd.Series:
     """
     Transform OHLCV data to the grouped series with resampled frequency and
     last close prices.
@@ -181,7 +182,7 @@ def resample_ohlcv_dataframe(df: pd.DataFrame, resampling_freq: str) -> pd.Serie
 
 # %%
 def calculate_correlations(
-    ccxt_series: pd.Series, cdd_series: pd.Series, compute_returns: bool
+    ccxt_close_price: pd.Series, cdd_close_price: pd.Series, compute_returns: bool
 ) -> pd.DataFrame:
     """
     Take two series with close prices(i.e. CDD and CCXT data) and calculate the
@@ -194,9 +195,9 @@ def calculate_correlations(
     """
     if compute_returns:
         # Group by currency pairs in order to calculate the percentage returns.
-        grouper_cdd = cdd_series.groupby("currency_pair")
+        grouper_cdd = cdd_close_price.groupby("currency_pair")
         cdd_series = grouper_cdd.pct_change()
-        grouper_ccxt = ccxt_series.groupby("currency_pair")
+        grouper_ccxt = ccxt_close_price.groupby("currency_pair")
         ccxt_series = grouper_ccxt.pct_change()
     # Combine and calculate correlations.
     combined = pd.merge(
@@ -214,11 +215,11 @@ def calculate_correlations(
 
 # %%
 # Corresponding resampled Series.
-ccxt_binance_series_1d = resample_ohlcv_dataframe(ccxt_binance_df, "1D")
-cdd_binance_series_1d = resample_ohlcv_dataframe(cdd_binance_df, "1D")
+ccxt_binance_series_1d = resample_close_price(ccxt_binance_df, "1D")
+cdd_binance_series_1d = resample_close_price(cdd_binance_df, "1D")
 
-ccxt_binance_series_5min = resample_ohlcv_dataframe(ccxt_binance_df, "5min")
-cdd_binance_series_5min = resample_ohlcv_dataframe(cdd_binance_df, "5min")
+ccxt_binance_series_5min = resample_close_price(ccxt_binance_df, "5min")
+cdd_binance_series_5min = resample_close_price(cdd_binance_df, "5min")
 
 # %% [markdown]
 # ### 1-day returns
