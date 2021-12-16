@@ -203,7 +203,7 @@ def get_loader_for_vendor(
     """
     vendor = config["data"]["vendor"]
     if vendor == "CCXT":
-        loader = imvcdcli.CcxtFileSystemClient(
+        loader = imvcdcli.CcxtCsvFileSystemClient(
             data_type=config["data"]["data_type"],
             root_dir=config["load"]["data_dir"],
             aws_profile=config["load"]["aws_profile"],
