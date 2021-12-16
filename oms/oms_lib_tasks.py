@@ -111,7 +111,7 @@ def oms_docker_cmd(ctx, cmd):  # type: ignore
 # #############################################################################
 
 
-def _get_docker_up_cmd() -> str:
+def _get_docker_up_cmd(stage: str) -> str:
     """
     Construct the command to bring up the `oms` service.
 
@@ -119,14 +119,20 @@ def _get_docker_up_cmd() -> str:
     ```
     docker-compose \
         --file devops/compose/docker-compose.yml \
+        --env-file devops/env/local.oms_db_config.env \
         up \
         oms_postgres
     ```
+
+    :param stage: development stage, i.e. `local`, `dev` and `prod`
     """
     cmd = ["docker-compose"]
     # Add `docker-compose` file path.
     docker_compose_file_path = _get_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
+    # Add `env file` path.
+    env_file = get_db_env_path(stage)
+    cmd.append(f"--env-file {env_file}")
     # Add `down` command.
     cmd.append("up")
     service = "oms_postgres"
@@ -136,14 +142,15 @@ def _get_docker_up_cmd() -> str:
 
 
 @task
-def oms_docker_up(ctx):  # type: ignore
+def oms_docker_up(ctx, stage):  # type: ignore
     """
     Start oms container with Postgres inside.
 
     :param ctx: `context` object
+    :param stage: development stage, i.e. `local`, `dev` and `prod`
     """
     # Get docker down command.
-    docker_clean_up_cmd = _get_docker_up_cmd()
+    docker_clean_up_cmd = _get_docker_up_cmd(stage)
     # Execute the command.
     hlibtask._run(ctx, docker_clean_up_cmd, pty=True)
 
@@ -151,7 +158,7 @@ def oms_docker_up(ctx):  # type: ignore
 # #############################################################################
 
 
-def _get_docker_down_cmd(volumes_remove: bool) -> str:
+def _get_docker_down_cmd(stage: str, volumes_remove: bool) -> str:
     """
     Construct the command to shut down the `oms` service.
 
@@ -159,16 +166,21 @@ def _get_docker_down_cmd(volumes_remove: bool) -> str:
     ```
     docker-compose \
         --file devops/compose/docker-compose.yml \
+        --env-file devops/env/local.oms_db_config.env \
         down \
         -v
     ```
 
+    :param stage: development stage, i.e. `local`, `dev` and `prod`
     :param volumes_remove: whether to remove attached volumes or not
     """
     cmd = ["docker-compose"]
     # Add `docker-compose` file path.
     docker_compose_file_path = _get_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
+    # Add `env file` path.
+    env_file = get_db_env_path(stage)
+    cmd.append(f"--env-file {env_file}")
     # Add `down` command.
     cmd.append("down")
     if volumes_remove:
@@ -182,17 +194,18 @@ def _get_docker_down_cmd(volumes_remove: bool) -> str:
 
 
 @task
-def oms_docker_down(ctx, volumes_remove=False):  # type: ignore
+def oms_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
     """
     Bring down the `oms` service.
 
     By default volumes are not removed, to also remove volumes do
     `invoke im_docker_down -v`.
 
+    :param stage: development stage, i.e. `local`, `dev` and `prod`
     :param volumes_remove: whether to remove attached volumes or not
     :param ctx: `context` object
     """
     # Get docker down command.
-    cmd = _get_docker_down_cmd(volumes_remove)
+    cmd = _get_docker_down_cmd(stage, volumes_remove)
     # Execute the command.
     hlibtask._run(ctx, cmd, pty=True)
