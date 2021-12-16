@@ -374,8 +374,8 @@ class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
         self,
         data_type: str,
         root_dir: str,
-        aws_profile: Optional[str],
         *,
+        aws_profile: Optional[str] = None,
         use_gzip: bool = True,
     ) -> None:
         extension = ".csv"
@@ -419,7 +419,8 @@ class CcxtParquetFileSystemClient(AbstractCcxtFileSystemClient):
         self,
         data_type: str,
         root_dir: str,
-        aws_profile: Optional[str],
+        *,
+        aws_profile: Optional[str] = None,
     ) -> None:
         super().__init__(
             data_type=data_type,
