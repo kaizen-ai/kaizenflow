@@ -429,14 +429,19 @@ class CcxtParquetFileSystemClient(AbstractCcxtFileSystemClient):
         """
         See the `_read_data_from_filesystem()` in the parent class.
         """
+        # Initialize list of filters.
+        filters = []
+        if start_ts:
+            # Add filtering by start timestamp if specified.
+            start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
+            filters.append(("timestamp", ">=", start_ts))
+        if end_ts:
+            # Add filtering by end timestamp if specified.
+            end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
+            filters.append(("timestamp", "<", end_ts))
+        if filters:
+            # Add filters to kwargs if any were set.
+            read_kwargs["filters"] = filters
         # Load data.
         data = cpanh.read_parquet(file_path, **read_kwargs)
-        # TODO(Dan): Refactor filtering by dates using Parquet functionality.
-        # Filter by dates if specified.
-        if start_ts:
-            start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
-            data = data[data["timestamp"] >= start_ts]
-        if end_ts:
-            end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
-            data = data[data["timestamp"] < end_ts]
         return data
