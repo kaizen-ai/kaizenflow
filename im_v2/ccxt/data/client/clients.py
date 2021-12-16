@@ -179,8 +179,8 @@ class CcxtDbClient(AbstractCcxtClient):
         self,
         full_symbol: imvcdcli.FullSymbol,
         *,
-        start_ts: Optional[pd.Timestamp] = None,
-        end_ts: Optional[pd.Timestamp] = None,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
         **read_sql_kwargs: Any,
     ) -> pd.DataFrame:
         # Construct name of the DB table with data from data type.
@@ -245,8 +245,8 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         self,
         full_symbol: imvcdcli.FullSymbol,
         *,
-        start_ts: Optional[pd.Timestamp] = None,
-        end_ts: Optional[pd.Timestamp] = None,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
         data_snapshot: Optional[str] = None,
     ) -> pd.DataFrame:
         """
