@@ -176,10 +176,9 @@ def reindex_on_unix_epoch(
     `in_col_name` contains Unix epoch (e.g., 1638194400) and it is
     converted into a UTC time.
 
-    :param df: dataframe containing various information about asset
+    :param df: dataframe with a unix epoch
     :param in_col_name: column containing unix epoch
     :param unit: the unit of unix epoch
-    :return:
     """
     # Convert.
     temp_col_name = in_col_name + "_tmp"
