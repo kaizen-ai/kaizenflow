@@ -20,6 +20,7 @@ persist-key
 persist-tun
 topology subnet
 keepalive 10 43200
+inactive 0
 dh {{ openvpn_dh }}
 ecdh-curve {{ openvpn_ecdh_curve }}
 tls-crypt {{ openvpn_path }}/ta-{{ openvpn_server_port }}.key 0
