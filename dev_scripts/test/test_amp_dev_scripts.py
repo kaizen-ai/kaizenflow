@@ -1,10 +1,10 @@
 import logging
 import os
 
-import helpers.network as hnetwor
 import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.git as hgit
+import helpers.network as hnetwor
 import helpers.printing as hprint
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest

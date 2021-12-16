@@ -272,7 +272,10 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
             file_path,
         )
         data = self._read_data_from_filesystem(
-            file_path, start_ts, end_ts, **read_kwargs,
+            file_path,
+            start_ts,
+            end_ts,
+            **read_kwargs,
         )
         # Apply transformation to raw data.
         _LOG.info(

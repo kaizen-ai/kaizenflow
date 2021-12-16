@@ -35,7 +35,7 @@ import helpers.env as henv
 import helpers.printing as hprint
 import helpers.s3 as hs3
 import im_v2.ccxt.universe.universe as imvccunun
-import research_amp.cc.statistics as rccstat
+import research_amp.cc.statistics as ramccsta
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -82,7 +82,7 @@ vendor_universe = imvccunun.get_vendor_universe(
 vendor_universe
 
 # %%
-df_price = rccstat.get_universe_price_data(vendor_universe, config)
+df_price = ramccsta.get_universe_price_data(vendor_universe, config)
 df_price.head(3)
 
 # %%

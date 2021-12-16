@@ -204,7 +204,9 @@ use_one_line_cmd = False
 
 
 # TODO(Grisha): make it public #755.
-def _run(ctx: Any, cmd: str, *args, dry_run: bool = False, **ctx_run_kwargs: Any) -> int:
+def _run(
+    ctx: Any, cmd: str, *args, dry_run: bool = False, **ctx_run_kwargs: Any
+) -> int:
     _LOG.debug("cmd=%s", cmd)
     if use_one_line_cmd:
         cmd = _to_single_line_cmd(cmd)
@@ -886,7 +888,7 @@ def git_branch_copy(ctx, new_branch_name="", use_patch=False):  # type: ignore
 
 
 @task
-def git_branch_diff_with_base(ctx ,diff_type="", subdir_name=""):  # type: ignore
+def git_branch_diff_with_base(ctx, diff_type="", subdir_name=""):  # type: ignore
     """
     Diff files of the current branch with master at the branching point.
     """
@@ -916,8 +918,11 @@ def git_branch_diff_with_base(ctx ,diff_type="", subdir_name=""):  # type: ignor
         # Check if it needs to be compared.
         if subdir_name != "":
             if not branch_file.startswith(subdir_name):
-                _LOG.debug("Skipping since '%s' doesn't start with '%s'",
-                           branch_file, subdir_name)
+                _LOG.debug(
+                    "Skipping since '%s' doesn't start with '%s'",
+                    branch_file,
+                    subdir_name,
+                )
                 continue
         # Get the file on the right of the vimdiff.
         if os.path.exists(branch_file):
@@ -929,7 +934,11 @@ def git_branch_diff_with_base(ctx ,diff_type="", subdir_name=""):  # type: ignor
         # Flatten the file dirs: e.g.,
         # dataflow/core/nodes/test/test_volatility_models.base.py
         tmp_file = "tmp." + tmp_file.replace("/", "_")
-        _LOG.debug("branch_file='%s' exists in branch -> master_file='%s'", branch_file, tmp_file)
+        _LOG.debug(
+            "branch_file='%s' exists in branch -> master_file='%s'",
+            branch_file,
+            tmp_file,
+        )
         # Save the base file.
         cmd = f"git show {hash_}:{branch_file} >{tmp_file}"
         rc = hsysinte.system(cmd, abort_on_error=False)
@@ -972,14 +981,20 @@ def _dassert_current_dir_matches(dir_name: str) -> None:
     Ensure that the name of the current dir is the expected one.
     """
     curr_dir_name = os.path.basename(os.getcwd())
-    hdbg.dassert_eq(curr_dir_name, dir_name, "The current dir '%s' is not the source dir '%s'",
-                    curr_dir_name, dir_name)
+    hdbg.dassert_eq(
+        curr_dir_name,
+        dir_name,
+        "The current dir '%s' is not the source dir '%s'",
+        curr_dir_name,
+        dir_name,
+    )
 
 
 def _dassert_is_integration_branch(dir_name: str) -> None:
     curr_branch = hgit.get_branch_name(dir_name=dir_name)
     hdbg.dassert_ne(curr_branch, "master")
-    hdbg.dassert_in("Integrate", curr_branch)
+    hdbg.dassert(("_Integrate_" in curr_branch) or
+                 ("_Lint_" in curr_branch))
 
 
 def _clean_both_integration_dirs(dir_name1: str, dir_name2: str) -> None:
@@ -999,19 +1014,19 @@ def integrate_create_branches(ctx, dir_name, dry_run=False):  # type: ignore
     _report_task()
     #
     _dassert_current_dir_matches(dir_name)
-    _dassert_is_integration_branch(src_dir)
-    _dassert_is_integration_branch(dst_dir)
     #
     date = datetime.datetime.now().date()
     date_as_str = date.strftime("%Y%m%d")
     branch_name = f"AmpTask1786_Integrate_{date_as_str}"
-    #query_yes_no("Are you sure you want to create the brach ")
+    # query_yes_no("Are you sure you want to create the brach ")
     _LOG.info("Creating branch '%s'", branch_name)
     cmd = f"invoke git_create_branch -b '{branch_name}'"
     _run(ctx, cmd, dry_run=dry_run)
 
 
-def _get_src_dst_dirs(src_dir: str, dst_dir: str, subdir_name: str) -> Tuple[str, str]:
+def _get_src_dst_dirs(
+    src_dir: str, dst_dir: str, subdir_name: str
+) -> Tuple[str, str]:
     """
     Return the full path of `src_dir` and `dst_dir` assuming that
     - `src_dir` is the current dir
@@ -3469,6 +3484,26 @@ def lint(  # type: ignore
         print(cfile)
     else:
         _LOG.warning("Skipping lint parsing, as per user request")
+
+
+@task
+def lint_create_branches(ctx, dir_name, dry_run=False):  # type: ignore
+    """
+    Create the branch for linting in the current dir.
+
+    The dir needs to be specified to ensure the set-up is correct.
+    """
+    _report_task()
+    #
+    _dassert_current_dir_matches(dir_name)
+    #
+    date = datetime.datetime.now().date()
+    date_as_str = date.strftime("%Y%m%d")
+    branch_name = f"AmpTask1955_Lint_{date_as_str}"
+    # query_yes_no("Are you sure you want to create the branch '{branch_name}'")
+    _LOG.info("Creating branch '%s'", branch_name)
+    cmd = f"invoke git_create_branch -b '{branch_name}'"
+    _run(ctx, cmd, dry_run=dry_run)
 
 
 # #############################################################################

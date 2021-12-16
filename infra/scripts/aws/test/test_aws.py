@@ -1,10 +1,11 @@
 if False:
-    import unittest
-    import helpers.dbg as hdbg
-    import boto3
     import logging
+    import unittest
+
+    import boto3
     from moto import mock_ec2
 
+    import helpers.dbg as hdbg
     import infra.scripts.aws.aws_manager as isawawma
 
     """

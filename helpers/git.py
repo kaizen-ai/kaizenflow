@@ -91,6 +91,7 @@ def get_branch_hash(dir_name: str = ".") -> str:
     hdbg.dassert_eq(len(hash_.split("\n")), 1)
     return hash_
 
+
 # #############################################################################
 # Git submodule functions
 # #############################################################################
@@ -219,7 +220,7 @@ def is_in_amp_as_supermodule() -> bool:
 # ```
 # hgit.execute_repo_config_code("has_dind_support()"),
 # ```
-# 
+#
 # rather than their name.
 
 
@@ -489,6 +490,7 @@ def get_repo_full_name_from_client(super_module: bool) -> str:
 # /////////////////////////////////////////////////////////////////////////
 
 # Execute code from the `repo_config.py` in the super module.
+
 
 def _get_repo_config_code(super_module: bool = True) -> str:
     """

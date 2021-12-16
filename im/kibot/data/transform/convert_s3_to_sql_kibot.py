@@ -43,8 +43,8 @@ import im.kibot.data.load as ikdloa
 import im.kibot.data.load.dataset_name_parser as imkdldnapa
 import im.kibot.data.load.kibot_sql_data_loader as ikdlksdlo
 import im.kibot.data.transform.kibot_s3_to_sql_transformer as imkdtkstst
-import im.kibot.sql_writer as imkisqwri
 import im.kibot.metadata.load.s3_backend as imkmls3ba
+import im.kibot.sql_writer as imkisqwri
 
 _LOG = logging.getLogger(__name__)
 

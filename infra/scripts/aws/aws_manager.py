@@ -9,10 +9,11 @@ import infra.scripts.aws.aws_manager as isawawma
 """
 
 import logging
-import boto3
 import os
 import sys
 from typing import Optional
+
+import boto3
 
 _LOG = logging.getLogger(__name__)
 

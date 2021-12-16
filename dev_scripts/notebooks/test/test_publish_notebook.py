@@ -39,7 +39,7 @@ class Test_publish_notebook1(hunitest.TestCase):
 # TODO(gp): Fix this.
 # http://127.0.0.1:5012/notebooks/amp/core/dataflow_model/notebooks/Master_model_analyzer.ipynb
 # is not resolved correctly
-# ################################################################################
+# #############################################################################
 # * Failed assertion *
 # File '/app/amp/amp/core/dataflow_model/notebooks/Master_model_analyzer.ipynb' doesn't exist
-# ################################################################################
+# #############################################################################

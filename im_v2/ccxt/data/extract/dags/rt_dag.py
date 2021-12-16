@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import im_v2.ccxt.data.extract.dags.rt_dag as imvcdedrda
+"""
+
 import datetime
 
 import airflow
@@ -25,17 +31,19 @@ with airflow.DAG(
 ) as dag:
     # Pass default parameters for the script.
     # Build a bash command to execute.
-    bash_command = " ".join([
-        "im_v2/ccxt/data/extract/download_realtime.py",
-        "--to_datetime {{ data_interval_start }}",
-        "--from_datetime {{ data_interval_end - macros.timedelta(5) }}"
-        # TODO(Danya): Set a shared directory for the DAG (#675).
-        "--dst_dir 'ccxt/ohlcv/'",
-        "--data_type 'ohlcv'",
-        "--api_keys 'API_keys.json'",
-        "--universe 'v03'",
-        "--v DEBUG",
-    ])
+    bash_command = " ".join(
+        [
+            "im_v2/ccxt/data/extract/download_realtime.py",
+            "--to_datetime {{ data_interval_start }}",
+            "--from_datetime {{ data_interval_end - macros.timedelta(5) }}"
+            # TODO(Danya): Set a shared directory for the DAG (#675).
+            "--dst_dir 'ccxt/ohlcv/'",
+            "--data_type 'ohlcv'",
+            "--api_keys 'API_keys.json'",
+            "--universe 'v03'",
+            "--v DEBUG",
+        ]
+    )
     # Run the script.
     downloading_task = DockerOperator(
         task_id="run_ccxt_realtime",

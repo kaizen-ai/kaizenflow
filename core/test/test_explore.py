@@ -39,27 +39,6 @@ class Test_explore1(hunitest.TestCase):
 
 
 class TestFilterByTime(hunitest.TestCase):
-    @staticmethod
-    def _get_test_data() -> pd.DataFrame:
-        """
-        Get data for testing.
-
-        :return: data for testing
-        """
-        df = pd.DataFrame(
-            {
-                "col1": [1, 2, 3, 4],
-                "col2": [
-                    hdateti.to_datetime("2018-04-05"),
-                    hdateti.to_datetime("2018-04-06"),
-                    hdateti.to_datetime("2018-04-07"),
-                    hdateti.to_datetime("2018-04-08"),
-                ],
-            }
-        )
-        df.index = pd.date_range("2017-01-01", periods=4)
-        return df
-
     def test_filter_by_index1(self) -> None:
         """
         Verify that `[lower_bound, upper_bound)` works.
@@ -212,3 +191,24 @@ class TestFilterByTime(hunitest.TestCase):
             ts_col_name=None,
         )
         self.assertEqual(actual.shape[0], 0)
+
+    @staticmethod
+    def _get_test_data() -> pd.DataFrame:
+        """
+        Get data for testing.
+
+        :return: data for testing
+        """
+        df = pd.DataFrame(
+            {
+                "col1": [1, 2, 3, 4],
+                "col2": [
+                    hdateti.to_datetime("2018-04-05"),
+                    hdateti.to_datetime("2018-04-06"),
+                    hdateti.to_datetime("2018-04-07"),
+                    hdateti.to_datetime("2018-04-08"),
+                ],
+            }
+        )
+        df.index = pd.date_range("2017-01-01", periods=4)
+        return df

@@ -4,10 +4,10 @@ from typing import List
 
 import pytest
 
-import helpers.old.conda as holdcond
 import helpers.dbg as hdbg
 import helpers.git as hgit
 import helpers.io_ as hio
+import helpers.old.conda as holdcond
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
 
@@ -78,44 +78,6 @@ class Test_set_env_amp(hunitest.TestCase):
 
 @pytest.mark.skip("Deprecated after switch to Docker dev env")
 class Test_install_create_conda_py1(hunitest.TestCase):
-    def _run_create_conda(self, cmd_opts: List[str], cleanup: bool) -> None:
-        """
-        Run a create_conda command using custom options `cmd_opts`.
-
-        :param cleanup: True if we want to cleanup the conda env instead of
-            creating it.
-        """
-        exec_file = hgit.find_file_in_git_tree("create_conda.py")
-        cmd = []
-        cmd.append(exec_file)
-        cmd.extend(cmd_opts)
-        cmd.append("--delete_env_if_exists")
-        cmd.append("-v DEBUG")
-        # TODO(gp): Find a way to check the output looking at the packages.
-        if cleanup:
-            if hunitest.get_incremental_tests():
-                # No clean up for manual inspection with:
-                _LOG.warning("No clean up as per incremental test mode")
-                return
-            # Remove env.
-            cmd.append("--skip_install_env")
-            cmd.append("--skip_pip_install")
-            cmd.append("--skip_test_env")
-        cmd_tmp = " ".join(cmd)
-        hsysinte.system(cmd_tmp)
-
-    def _helper(self, env_name: str, cmd_opts: List[str]) -> None:
-        """
-        Run create_conda with custom options `cmd_opts` and then remove the
-        env.
-        """
-        self._run_create_conda(cmd_opts, cleanup=False)
-        #
-        cmd = "conda activate %s && conda info --envs" % env_name
-        holdcond.conda_system(cmd, suppress_output=False)
-        # Clean up the env.
-        self._run_create_conda(cmd_opts, cleanup=True)
-
     @pytest.mark.slow
     def test_create_conda_test_install1(self) -> None:
         """
@@ -187,6 +149,44 @@ dependencies:
         cmd_opts.append(f"--req_file {yaml_file1}")
         cmd_opts.append(f"--req_file {yaml_file2}")
         self._helper(env_name, cmd_opts)
+
+    def _run_create_conda(self, cmd_opts: List[str], cleanup: bool) -> None:
+        """
+        Run a create_conda command using custom options `cmd_opts`.
+
+        :param cleanup: True if we want to cleanup the conda env instead of
+            creating it.
+        """
+        exec_file = hgit.find_file_in_git_tree("create_conda.py")
+        cmd = []
+        cmd.append(exec_file)
+        cmd.extend(cmd_opts)
+        cmd.append("--delete_env_if_exists")
+        cmd.append("-v DEBUG")
+        # TODO(gp): Find a way to check the output looking at the packages.
+        if cleanup:
+            if hunitest.get_incremental_tests():
+                # No clean up for manual inspection with:
+                _LOG.warning("No clean up as per incremental test mode")
+                return
+            # Remove env.
+            cmd.append("--skip_install_env")
+            cmd.append("--skip_pip_install")
+            cmd.append("--skip_test_env")
+        cmd_tmp = " ".join(cmd)
+        hsysinte.system(cmd_tmp)
+
+    def _helper(self, env_name: str, cmd_opts: List[str]) -> None:
+        """
+        Run create_conda with custom options `cmd_opts` and then remove the
+        env.
+        """
+        self._run_create_conda(cmd_opts, cleanup=False)
+        #
+        cmd = "conda activate %s && conda info --envs" % env_name
+        holdcond.conda_system(cmd, suppress_output=False)
+        # Clean up the env.
+        self._run_create_conda(cmd_opts, cleanup=True)
 
 
 ## #############################################################################
