@@ -13,6 +13,10 @@ def get_repo_map() -> Dict[str, str]:
     return repo_map
 
 
+def get_extra_amp_repo_sym_name() -> str:
+    return "cryptokaizen/cmamp"
+
+
 # TODO(gp): -> get_gihub_host_name
 def get_host_name() -> str:
     return "github.com"
