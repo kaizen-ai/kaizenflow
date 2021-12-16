@@ -49,7 +49,7 @@ hprint.config_notebook()
 
 # %%
 root_dir = os.path.join(hs3.get_path(), "data")
-ccxt_loader = imvcdcli.CcxtFileSystemClient(
+ccxt_loader = imvcdcli.CcxtCsvFileSystemClient(
     data_type="OHLCV", root_dir=root_dir, aws_profile="am"
 )
 data = ccxt_loader.read_data("kucoin::ETH_USDT")

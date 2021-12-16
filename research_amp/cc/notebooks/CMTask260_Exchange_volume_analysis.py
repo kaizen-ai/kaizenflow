@@ -157,7 +157,7 @@ def get_initial_df_with_volumes(coins, exchange, is_notional_volume):
     Parameters: list of coins, exchange name
     """
     result = []
-    loader = imvcdcli.CcxtFileSystemClient(
+    loader = imvcdcli.CcxtCsvFileSystemClient(
         data_type="OHLCV",
         root_dir=os.path.join(hs3.get_path(), "data"),
         aws_profile="am",
