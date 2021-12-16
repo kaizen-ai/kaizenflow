@@ -1,5 +1,7 @@
 import os
 
+import pytest
+
 import helpers.git as hgit
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
@@ -9,10 +11,12 @@ import helpers.unit_test as hunitest
 
 
 class TestPqByDateToByAsset1(hunitest.TestCase):
+    @pytest.mark.skip("Enable when purify_text is set to True CMTask782")
     def test_daily_data1(self):
         verbose = False
         self._test_daily_data(verbose)
 
+    @pytest.mark.skip("Enable when purify_text is set to True CMTask782")
     def test_daily_data2(self):
         verbose = True
         self._test_daily_data(verbose)
