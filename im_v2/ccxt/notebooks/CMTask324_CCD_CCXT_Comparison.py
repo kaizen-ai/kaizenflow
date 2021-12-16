@@ -196,12 +196,12 @@ def calculate_correlations(
     if compute_returns:
         # Group by currency pairs in order to calculate the percentage returns.
         grouper_cdd = cdd_close_price.groupby("currency_pair")
-        cdd_series = grouper_cdd.pct_change()
+        cdd_close_price = grouper_cdd.pct_change()
         grouper_ccxt = ccxt_close_price.groupby("currency_pair")
-        ccxt_series = grouper_ccxt.pct_change()
+        ccxt_close_price = grouper_ccxt.pct_change()
     # Combine and calculate correlations.
     combined = pd.merge(
-        cdd_series, ccxt_series, left_index=True, right_index=True
+        cdd_close_price, ccxt_close_price, left_index=True, right_index=True
     )
     # Rename the columns.
     if compute_returns:
