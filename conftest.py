@@ -65,10 +65,10 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
         parser.addoption(
             "--image_version",
             action="store",
-            help="version of the image to test against",
+            help="Version of the image to test against",
         )
         parser.addoption(
-            "--image_stage", action="store", help="stage of the image to test against"
+            "--image_stage", action="store", help="Stage of the image to test against"
         )
 
     def pytest_collection_modifyitems(config: Any, items: Any) -> None:

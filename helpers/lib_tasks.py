@@ -2427,7 +2427,7 @@ def _find_test_decorator(decorator_name: str, file_names: List[str]) -> List[str
     hdbg.dassert_isinstance(file_names, list)
     # E.g.,
     #   @pytest.mark.slow(...)
-    #   @pytest.mark.no_container
+    #   @pytest.mark.qa
     string = "@pytest.mark.%s" % decorator_name
     regex = r"^\s*%s\s*[\(]?" % re.escape(string)
     _LOG.debug("regex='%s'", regex)
@@ -2917,9 +2917,11 @@ def run_qa_tests(  # type: ignore
     """
     _report_task()
     #
-    qa_test_fn = get_default_param("END_TO_END_TEST_FN")
-    if not qa_test_fn(ctx, stage, version):
-        msg = "End-to-end test has failed"
+    qa_test_fn = get_default_param("QA_TEST_FUNCTION")
+    # Run the call back function.
+    rc = qa_test_fn(ctx, stage, version)
+    if not rc:
+        msg = "QA tests failed"
         _LOG.error(msg)
         raise RuntimeError(msg)
 

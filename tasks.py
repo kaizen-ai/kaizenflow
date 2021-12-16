@@ -88,13 +88,13 @@ DOCKER_BASE_IMAGE_NAME = rconf.get_docker_base_image_name()
 
 
 # pylint: disable=unused-argument
-def docker_release_end_to_end_test(ctx: Any, stage: str, version: str) -> bool:
+def _run_qa_tests(ctx: Any, stage: str, version: str) -> bool:
     """
-    Run tests for most invoke tasks.
+    Run QA tests to verify that the invoke tasks are working properly.
 
-    Used in docker_release_dev_image and run_qa_tests task.
+    This is used when qualifying a docker image before releasing.
     """
-    cmd = f"pytest -m no_container test --image_stage {stage} --image_version {version}"
+    cmd = f"pytest -m qa test --image_stage {stage} --image_version {version}"
     ctx.run(cmd)
     return True
 
@@ -105,7 +105,7 @@ default_params = {
     # image, e.g., `XYZ_tmp` to not interfere with the prod system.
     # "BASE_IMAGE": "amp_tmp",
     "BASE_IMAGE": DOCKER_BASE_IMAGE_NAME,
-    "END_TO_END_TEST_FN": docker_release_end_to_end_test,
+    "QA_TEST_FUNCTION": _run_qa_tests,
 }
 
 
