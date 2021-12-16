@@ -132,7 +132,7 @@ display(cdd_binance_df.head(3))
 display(cdd_binance_df.shape)
 
 # %%
-ccxt_client = imvcdclcl.CcxtFileSystemClient(
+ccxt_client = imvcdclcl.CcxtCsvFileSystemClient(
     data_type="ohlcv", root_dir=root_dir, aws_profile="am"
 )
 multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
