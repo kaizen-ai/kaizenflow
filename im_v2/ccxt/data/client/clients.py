@@ -178,7 +178,6 @@ class CcxtDbClient(AbstractCcxtClient):
     def _read_data(
         self,
         full_symbol: imvcdcli.FullSymbol,
-        *,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         **read_sql_kwargs: Any,
@@ -222,8 +221,8 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         self,
         data_type: str,
         root_dir: str,
-        extension: str,
         *,
+        extension: str,
         aws_profile: Optional[str] = None,
     ) -> None:
         """
@@ -244,9 +243,9 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
     def _read_data(
         self,
         full_symbol: imvcdcli.FullSymbol,
-        *,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        *,
         data_snapshot: Optional[str] = None,
     ) -> pd.DataFrame:
         """
@@ -371,9 +370,23 @@ class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
     CCXT client for data stored as CSV from local or S3 filesystem.
     """
 
-    def __init__(self, extension: str = ".csv.gz", **kwargs: Any) -> None:
-        hdbg.dassert_in(extension, [".csv.gz", ".csv"])
-        super().__init__(**kwargs, extension=extension)
+    def __init__(
+        self,
+        data_type: str,
+        root_dir: str,
+        aws_profile: Optional[str],
+        *,
+        use_gzip: bool = True,
+    ) -> None:
+        extension = ".csv"
+        if use_gzip:
+            extension = extension + ".gz"
+        super().__init__(
+            data_type=data_type,
+            root_dir=root_dir,
+            extension=extension,
+            aws_profile=aws_profile,
+        )
 
     @staticmethod
     def _read_data_from_filesystem(
@@ -402,9 +415,18 @@ class CcxtParquetFileSystemClient(AbstractCcxtFileSystemClient):
     CCXT client for data stored as Parquet from local or S3 filesystem.
     """
 
-    def __init__(self, extension: str = ".pq", **kwargs: Any) -> None:
-        hdbg.dassert_in(extension, [".pq"])
-        super().__init__(**kwargs, extension=extension)
+    def __init__(
+        self,
+        data_type: str,
+        root_dir: str,
+        aws_profile: Optional[str],
+    ) -> None:
+        super().__init__(
+            data_type=data_type,
+            root_dir=root_dir,
+            extension=".pq",
+            aws_profile=aws_profile,
+        )
 
     @staticmethod
     def _read_data_from_filesystem(
