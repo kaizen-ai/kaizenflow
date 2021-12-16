@@ -7,7 +7,6 @@ import pytest
 import helpers.git as hgit
 import helpers.s3 as hs3
 import helpers.sql as hsql
-import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
 import im.ccxt.db.utils as imccdbuti
 import im_v2.ccxt.data.client.clients as imvcdclcl
