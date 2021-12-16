@@ -258,15 +258,15 @@ display(close_corr_1day)
 universe_cdd.remove("binance::SCU_USDT")
 
 # Bitfinex
-universe_cdd.remove("bitfinex::BTC_GBR")  # doesn't exist
-universe_cdd.remove("bitfinex::DASH_BTC")  # NaT in stamps
-universe_cdd.remove("bitfinex::DASH_USD")  # NaT in stamps
-universe_cdd.remove("bitfinex::EOS_GBR")  # doesn't exist
-universe_cdd.remove("bitfinex::ETH_GBR")  # doesn't exist
-universe_cdd.remove("bitfinex::NEO_GBR")  # doesn't exist
-universe_cdd.remove("bitfinex::QTUM_USD")  # NaT in stamps
-universe_cdd.remove("bitfinex::TRX_GBR")  # doesn't exist
-universe_cdd.remove("bitfinex::XLM_GBR")  # doesn't exist
+universe_cdd.remove("bitfinex::BTC_GBR")  # doesn't exist.
+universe_cdd.remove("bitfinex::DASH_BTC")  # NaT in stamps.
+universe_cdd.remove("bitfinex::DASH_USD")  # NaT in stamps.
+universe_cdd.remove("bitfinex::EOS_GBR")  # doesn't exist.
+universe_cdd.remove("bitfinex::ETH_GBR")  # doesn't exist.
+universe_cdd.remove("bitfinex::NEO_GBR")  # doesn't exist.
+universe_cdd.remove("bitfinex::QTUM_USD")  # NaT in stamps.
+universe_cdd.remove("bitfinex::TRX_GBR")  # doesn't exist.
+universe_cdd.remove("bitfinex::XLM_GBR")  # doesn't exist.
 
 # ftx has some critical mistakes in the downloading process, so cannot continue analysis with them.
 cdd_ftx_universe = [
@@ -277,33 +277,34 @@ for elem in cdd_ftx_universe:
 
 
 # %%
-def calculate_statistics_for_stamps(coin_list,vendor):
+def calculate_statistics_for_stamps(coin_list: set, vendor: str) -> pd.DataFrame:
     """
-    Load the OHLCV data for each currency pair in CDD or CCXT universe and compute the
-    corresponding descriptive statistics.
+    Load the OHLCV data for each currency pair in CDD or CCXT universe and
+    compute the corresponding descriptive statistics.
 
-    :param coin_list: list of all currency pairs in CDD or CCXT universe
+    :param coin_list: list of all full symbols in CDD or CCXT universe
+    :param vendor: "ccxt" or "cdd" 
     :return: pd.Dataframe with statistics
     """
-    # Load data for each currency pair.
+    # Load data for each full symbol.
     result = []
     cdd_loader = imcdalolo.CddLoader(root_dir=root_dir, aws_profile="am")
     for full_symbol in coin_list:
-        if vendor=="cdd":
+        if vendor == "cdd":
             exchange_id, currency_pair = ivcdclcl.parse_full_symbol(full_symbol)
             coin = cdd_loader.read_data_from_filesystem(
-                exchange_id=exchange_id, currency_pair=currency_pair, data_type="ohlcv"
+                exchange_id=exchange_id,
+                currency_pair=currency_pair,
+                data_type="ohlcv",
             )
         else:
             ccxt_client = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=root_dir, aws_profile="am"
+                data_type="ohlcv", root_dir=root_dir, aws_profile="am"
             )
             multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
                 class_=ccxt_client, mode="concat"
             )
-            coin = multiple_symbols_client.read_data(
-                [full_symbol]
-            )
+            coin = multiple_symbols_client.read_data([full_symbol])
             exchange_id, currency_pair = ivcdclcl.parse_full_symbol(full_symbol)
             coin = coin.sort_index()
         # Reseting DateTime index, so it can be further used in the calculations.
@@ -333,10 +334,10 @@ def calculate_statistics_for_stamps(coin_list,vendor):
         stamp_stats.index = [currency_pair]
         result.append(stamp_stats)
     result = pd.concat(result)
-    if vendor=="cdd":
-        result = result.add_suffix('_cdd')
+    if vendor == "cdd":
+        result = result.add_suffix("_cdd")
     else:
-        result = result.add_suffix('_ccxt')
+        result = result.add_suffix("_ccxt")
     return result
 
 
@@ -350,11 +351,17 @@ len(cdd_and_ccxt_cleaned)
 
 # %%
 # Load the intersection of full symbols for CDD and CCXT.
-stats_for_stamps_ccxt = calculate_statistics_for_stamps_cdd(cdd_and_ccxt_cleaned,vendor="ccxt")
-stats_for_stamps_cdd_union = calculate_statistics_for_stamps_cdd(cdd_and_ccxt_cleaned,vendor="cdd")
+stats_for_stamps_ccxt = calculate_statistics_for_stamps_cdd(
+    cdd_and_ccxt_cleaned, vendor="ccxt"
+)
+stats_for_stamps_cdd_union = calculate_statistics_for_stamps_cdd(
+    cdd_and_ccxt_cleaned, vendor="cdd"
+)
 
 # %%
-union_cdd_ccxt_stats = pd.concat([stats_for_stamps_cdd_union, stats_for_stamps_ccxt],axis=1)
+union_cdd_ccxt_stats = pd.concat(
+    [stats_for_stamps_cdd_union, stats_for_stamps_ccxt], axis=1
+)
 union_cdd_ccxt_stats.sort_values("exchange_id_cdd")
 
 # %% [markdown]
@@ -366,7 +373,9 @@ cdd_and_not_ccxt_cleaned = set(universe_cdd).difference(ccxt_universe)
 len(cdd_and_not_ccxt_cleaned)
 
 # %%
-stats_for_stamps_cdd = calculate_statistics_for_stamps_cdd(cdd_and_not_ccxt_cleaned,vendor="cdd")
+stats_for_stamps_cdd = calculate_statistics_for_stamps_cdd(
+    cdd_and_not_ccxt_cleaned, vendor="cdd"
+)
 
 # %% [markdown]
 # Currently there are the following descriptive statistics:
