@@ -728,93 +728,10 @@ def describe_rt_df(df: pd.DataFrame, *, include_delay_stats: bool) -> None:
     display(df.tail(3))
 
 # #############################################################################
-# MarketDataInterface
-# #############################################################################
-
-
-class MarketDataInterface(AbstractMarketDataInterface):
-    """
-    Implement an interface using AbstractImClient.
-    """
-
-    def __init__(
-        self,
-        *args: Any,
-        im_client: AbstractImClient,
-    ):
-        """
-        Constructor.
-        """
-        super().__init__(*args)  # type: ignore[arg-type]
-        self._im_client = im_client
-
-    def should_be_online(self, current_time: pd.Timestamp) -> bool:
-        return True
-
-    def _get_data(
-        self,
-        start_ts: pd.Timestamp,
-        end_ts: pd.Timestamp,
-        ts_col_name: str,
-        asset_ids: Optional[List[int]],
-        left_close: bool,
-        right_close: bool,
-        normalize_data: bool,
-        limit: Optional[int],
-    ) -> pd.DataFrame:
-        _LOG.debug(
-            hprint.to_str(
-                "start_ts end_ts ts_col_name asset_ids left_close right_close normalize_data limit"
-            )
-        )
-        # Filter the data by the current time.
-        # TODO(gp): current_time -> wall_clock_time everywhere
-        current_time = self._get_wall_clock_time()
-        _LOG.debug(hprint.to_str("current_time"))
-        # Handle `left_close` and `right_close`.
-        # TODO(gp): Rename ts -> start_timestamp
-        # TODO(gp): Handle left_close / right_close by adding a ms based on the
-        #  semantic of `im_client._read_data()` which is [a, b) (to confirm).
-        # TODO(gp): Add unit tests.
-        # start_ts = start_ts
-        # end_ts = end_ts
-        # Handle `ids`
-        full_symbols = asset_ids
-        df_tmp = self._im_client.read_data(full_symbols, start_ts, end_ts)
-        # Handle `columns`.
-        if self._columns is not None:
-            hdbg.dassert_is_subset(self._columns, df_tmp.columns)
-            df_tmp = df_tmp[self._columns]
-        # Handle `limit`.
-        if limit:
-            hdbg.dassert_lte(1, limit)
-            df_tmp = df_tmp.head(limit)
-        # Normalize data.
-        if normalize_data:
-            df_tmp = self.process_data(df_tmp)
-        _LOG.debug("-> df_tmp=\n%s", hprint.dataframe_to_str(df_tmp))
-        return df_tmp
-
-    def _get_last_end_time(self) -> Optional[pd.Timestamp]:
-        # We need to find the last timestamp before the current time. We use
-        # `last_week` but could also use all the data since we don't call the
-        # DB.
-        period = "last_week"
-        df = self.get_data(period)
-        _LOG.debug(hprint.df_to_short_str("after get_data", df))
-        if df.empty:
-            ret = None
-        else:
-            ret = df.index.max()
-        return ret
-
-
-# #############################################################################
 # Utils.
 # #############################################################################
 
 
-# TODO(gp): @Grisha. This should go in SqlMarketDataInterface.
 def _to_sql_datetime_string(dt: pd.Timestamp) -> str:
     """
     Convert a timestamp into an SQL string to query the DB.
@@ -827,7 +744,6 @@ def _to_sql_datetime_string(dt: pd.Timestamp) -> str:
     return ret
 
 
-# TODO(gp): @Grisha. This should go in AbstractMarketDataInterface.
 def _process_period(
     period: str, current_time: pd.Timestamp
 ) -> Optional[pd.Timestamp]:
@@ -1096,3 +1012,87 @@ def read_data_from_file(
     kwargs.update(kwargs_tmp)  # type: ignore[arg-type]
     df = cpanh.read_csv(file_name, **kwargs)
     return df
+
+
+# #############################################################################
+# MarketDataInterface
+# #############################################################################
+
+
+class MarketDataInterface(AbstractMarketDataInterface):
+    """
+    Implement an interface using AbstractImClient.
+    """
+
+    def __init__(
+            self,
+            *args: Any,
+            im_client: AbstractImClient,
+    ):
+        """
+        Constructor.
+        """
+        super().__init__(*args)  # type: ignore[arg-type]
+        self._im_client = im_client
+
+    def should_be_online(self, current_time: pd.Timestamp) -> bool:
+        return True
+
+    def _get_data(
+            self,
+            start_ts: pd.Timestamp,
+            end_ts: pd.Timestamp,
+            ts_col_name: str,
+            asset_ids: Optional[List[int]],
+            left_close: bool,
+            right_close: bool,
+            normalize_data: bool,
+            limit: Optional[int],
+    ) -> pd.DataFrame:
+        _LOG.debug(
+            hprint.to_str(
+                "start_ts end_ts ts_col_name asset_ids left_close right_close normalize_data limit"
+            )
+        )
+        # Filter the data by the current time.
+        # TODO(gp): current_time -> wall_clock_time everywhere
+        current_time = self._get_wall_clock_time()
+        _LOG.debug(hprint.to_str("current_time"))
+        # Handle `left_close` and `right_close`.
+        # TODO(gp): Rename ts -> start_timestamp
+        # TODO(gp): Handle left_close / right_close by adding a ms based on the
+        #  semantic of `im_client._read_data()` which is [a, b) (to confirm).
+        # TODO(gp): Add unit tests.
+        # start_ts = start_ts
+        # end_ts = end_ts
+        # Handle `ids`
+        full_symbols = asset_ids
+        df_tmp = self._im_client.read_data(full_symbols, start_ts, end_ts)
+        # Handle `columns`.
+        if self._columns is not None:
+            hdbg.dassert_is_subset(self._columns, df_tmp.columns)
+            df_tmp = df_tmp[self._columns]
+        # Handle `limit`.
+        if limit:
+            hdbg.dassert_lte(1, limit)
+            df_tmp = df_tmp.head(limit)
+        # Normalize data.
+        if normalize_data:
+            df_tmp = self.process_data(df_tmp)
+        _LOG.debug("-> df_tmp=\n%s", hprint.dataframe_to_str(df_tmp))
+        return df_tmp
+
+    def _get_last_end_time(self) -> Optional[pd.Timestamp]:
+        # We need to find the last timestamp before the current time. We use
+        # `last_week` but could also use all the data since we don't call the
+        # DB.
+        period = "last_week"
+        df = self.get_data(period)
+        _LOG.debug(hprint.df_to_short_str("after get_data", df))
+        if df.empty:
+            ret = None
+        else:
+            ret = df.index.max()
+        return ret
+
+
