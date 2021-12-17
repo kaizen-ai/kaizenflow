@@ -289,7 +289,7 @@ class MultipleSymbolsImClient(AbstractImClient):
         """
         Get universe as full symbols.
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     def _read_data(
         self,
@@ -306,7 +306,7 @@ class MultipleSymbolsImClient(AbstractImClient):
         Parameters have the same meaning as parameters in `read_data()`
         with the same name.
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     @staticmethod
     def _normalize_data(df: pd.DataFrame) -> pd.DataFrame:
@@ -317,7 +317,7 @@ class MultipleSymbolsImClient(AbstractImClient):
         :param df: raw data
         :return: normalized data
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     # TODO(Grisha/Dan): Decide if we want to also implement other methods of the base class.
     # TODO(Grisha/Dan): Decide if we want to add get_start(end)_ts_available() methods.
