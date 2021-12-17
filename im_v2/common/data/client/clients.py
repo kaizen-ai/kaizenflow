@@ -79,8 +79,9 @@ class AbstractImClient(abc.ABC):
     """
     Abstract Interface for `IM` client.
 
-    Clients derived from `AbstractImClient read data for a single `FullSymbol`, to
-    read data for multiple `FullSymbols` use `MultipleSymbolsImClient`.
+    Clients derived from `AbstractImClient read data for a single
+    `FullSymbol`, to read data for multiple `FullSymbols` use
+    `MultipleSymbolsImClient`.
     """
 
     def read_data(
@@ -93,8 +94,8 @@ class AbstractImClient(abc.ABC):
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
-        Read and process data for `FullSymbols` (i.e. currency pair
-        from a single exchange) in [start_ts, end_ts).
+        Read and process data for `FullSymbols` (i.e. currency pair from a
+        single exchange) in [start_ts, end_ts).
 
         None `start_ts` and `end_ts` means the entire period of time available.
 
