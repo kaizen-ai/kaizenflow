@@ -44,11 +44,6 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         help="Destination dir where to save converted PQ files",
     )
-    parser.add_argument(
-        "--incremental",
-        action="store_true",
-        help="Skip files that have already been converted",
-    )
     hparser.add_verbosity_arg(parser)
     hparser.add_parallel_processing_arg(parser)
     return parser
@@ -92,22 +87,27 @@ def _get_csv_to_pq_file_names(
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
+    incremental = not args.no_incremental
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    hio.create_dir(args.dst_dir, args.incremental)
-    files = _get_csv_to_pq_file_names(
-        args.src_dir, args.dst_dir, args.incremental
-    )
+    hio.create_dir(args.dst_dir, incremental)
+    files = _get_csv_to_pq_file_names(args.src_dir, args.dst_dir, incremental)
+    print(files)
     tasks = []
     for csv_full_path, pq_full_path in files:
         config = {"csv_path": csv_full_path, "pq_path": pq_full_path}
-        task: hjoblib.Task = ((config,), {})
+        task: hjoblib.Task = (
+            # args.
+            tuple(),
+            # kwargs.
+            config,
+        )
         tasks.append(task)
     workload = (hcsv.convert_csv_to_pq, "convert_csv_to_pq", tasks)
     hjoblib.parallel_execute(
         workload,
         args.dry_run,
         args.num_threads,
-        incremental=not args.no_incremental,
+        incremental=incremental,
         abort_on_error=not args.skip_on_error,
         num_attempts=args.num_attempts,
         log_file="csv_to_pq.py.log",

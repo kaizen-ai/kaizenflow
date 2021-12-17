@@ -197,6 +197,8 @@ def convert_csv_to_pq(
     normalizer: Optional[Callable] = None,
     header: Optional[str] = 0,
     compression: Optional[str] = "gzip",
+    # TODO(Danya): Kwargs are passed to allow parallelization. Remove.
+    **kwargs: Dict[str, Any]
 ) -> None:
     """
     Convert CSV file to Parquet file.
