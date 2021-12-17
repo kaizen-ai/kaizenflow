@@ -44,9 +44,18 @@ def _parse() -> argparse.ArgumentParser:
         help="Destination dir where to save converted PQ files",
     )
     parser.add_argument(
+        "--num_threads",
+        action="store",
+        default="serial",
+        help="Number of threads to execute in parallel. -1 is treated as max threads.",
+    )
+    parser.add_argument(
         "--incremental",
         action="store_true",
         help="Skip files that have already been converted",
+    )
+    parser.add_argument(
+        "--dry_run", action="store_true", help="Print workload without executing"
     )
     hparser.add_verbosity_arg(parser)
     return parser
@@ -73,6 +82,7 @@ def _get_csv_to_pq_file_names(
             filename = f[: -len(csv_gz_ext)]
         else:
             _LOG.warning(f"Encountered non CSV file '{f}'")
+            continue
         pq_path = os.path.join(dst_dir, f"{filename}.parquet")
         # Skip CSV files that do not need to be converted.
         if incremental and os.path.exists(pq_path):
