@@ -1019,15 +1019,23 @@ def read_data_from_file(
 # #############################################################################
 
 
+# TODO(Grisha): Add a test_market_data_interface.py, create a MarketDataInterface
+#  with one of the CcxtImClient, add unit test to make sure that the methods work
+#  correctly
+# Look at the unit tests in test_market_data_interface.py
+# Start using coverage
+
+# TODO(Grisha): 1st PR, add one test for get_data_for_interval
+
 class MarketDataInterface(AbstractMarketDataInterface):
     """
-    Implement an interface using AbstractImClient.
+    Implement an interface using `AbstractImClient`.
     """
 
     def __init__(
-            self,
-            *args: Any,
-            im_client: AbstractImClient,
+        self,
+        *args: Any,
+        im_client: AbstractImClient,
     ):
         """
         Constructor.
@@ -1036,18 +1044,21 @@ class MarketDataInterface(AbstractMarketDataInterface):
         self._im_client = im_client
 
     def should_be_online(self, current_time: pd.Timestamp) -> bool:
+        # TODO(gp): In reality we should delegate to AbstractImClient.
+        # Real-time AbstractImClient (e.g., ones that talk to a DB) should return
+        # their availability.
         return True
 
     def _get_data(
-            self,
-            start_ts: pd.Timestamp,
-            end_ts: pd.Timestamp,
-            ts_col_name: str,
-            asset_ids: Optional[List[int]],
-            left_close: bool,
-            right_close: bool,
-            normalize_data: bool,
-            limit: Optional[int],
+        self,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        ts_col_name: str,
+        asset_ids: Optional[List[int]],
+        left_close: bool,
+        right_close: bool,
+        normalize_data: bool,
+        limit: Optional[int],
     ) -> pd.DataFrame:
         _LOG.debug(
             hprint.to_str(
