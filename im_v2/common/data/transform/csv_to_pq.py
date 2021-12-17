@@ -18,6 +18,7 @@ import os
 from typing import List, Tuple
 
 import helpers.csv_helpers as hcsv
+import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.io_ as hio
 import helpers.joblib_helpers as hjoblib
@@ -86,12 +87,14 @@ def _get_csv_to_pq_file_names(
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
+    # Parse arguments.
     args = parser.parse_args()
     incremental = not args.no_incremental
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    # Create directory and read file names to be converted.
     hio.create_dir(args.dst_dir, incremental)
     files = _get_csv_to_pq_file_names(args.src_dir, args.dst_dir, incremental)
-    print(files)
+    # Set up joblib task for each file.
     tasks = []
     for csv_full_path, pq_full_path in files:
         config = {"csv_path": csv_full_path, "pq_path": pq_full_path}
@@ -102,19 +105,23 @@ def _main(parser: argparse.ArgumentParser) -> None:
             config,
         )
         tasks.append(task)
+    # Parse joblib command line options.
     workload = (hcsv.convert_csv_to_pq, "convert_csv_to_pq", tasks)
+    dry_run = args.dry_run
+    num_threads = args.num_threads
+    abort_on_error = not args.skip_on_error
+    num_attempts = args.num_attempts
+    log_file = f"csv_to_pq_{hdateti.get_timestamp('ET')}.py.log"
+    # Convert files in parallel.
     hjoblib.parallel_execute(
         workload,
-        args.dry_run,
-        args.num_threads,
-        incremental=incremental,
-        abort_on_error=not args.skip_on_error,
-        num_attempts=args.num_attempts,
-        log_file="csv_to_pq.py.log",
+        dry_run,
+        num_threads,
+        incremental,
+        abort_on_error,
+        num_attempts,
+        log_file,
     )
-    # Transform CSV files.
-    # for csv_full_path, pq_full_path in files:
-    #    hcsv.convert_csv_to_pq(csv_full_path, pq_full_path)
 
 
 if __name__ == "__main__":
