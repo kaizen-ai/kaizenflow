@@ -20,6 +20,7 @@ from typing import List, Tuple
 import helpers.csv_helpers as hcsv
 import helpers.dbg as hdbg
 import helpers.io_ as hio
+import helpers.joblib_helpers as hjoblib
 import helpers.parser as hparser
 
 _LOG = logging.getLogger(__name__)
@@ -44,20 +45,12 @@ def _parse() -> argparse.ArgumentParser:
         help="Destination dir where to save converted PQ files",
     )
     parser.add_argument(
-        "--num_threads",
-        action="store",
-        default="serial",
-        help="Number of threads to execute in parallel. -1 is treated as max threads.",
-    )
-    parser.add_argument(
         "--incremental",
         action="store_true",
         help="Skip files that have already been converted",
     )
-    parser.add_argument(
-        "--dry_run", action="store_true", help="Print workload without executing"
-    )
     hparser.add_verbosity_arg(parser)
+    hparser.add_parallel_processing_arg(parser)
     return parser
 
 
@@ -104,9 +97,24 @@ def _main(parser: argparse.ArgumentParser) -> None:
     files = _get_csv_to_pq_file_names(
         args.src_dir, args.dst_dir, args.incremental
     )
-    # Transform CSV files.
+    tasks = []
     for csv_full_path, pq_full_path in files:
-        hcsv.convert_csv_to_pq(csv_full_path, pq_full_path)
+        config = {"csv_path": csv_full_path, "pq_path": pq_full_path}
+        task: hjoblib.Task = ((config,), {})
+        tasks.append(task)
+    workload = (hcsv.convert_csv_to_pq, "convert_csv_to_pq", tasks)
+    hjoblib.parallel_execute(
+        workload,
+        args.dry_run,
+        args.num_threads,
+        incremental=not args.no_incremental,
+        abort_on_error=not args.skip_on_error,
+        num_attempts=args.num_attempts,
+        log_file="csv_to_pq.py.log",
+    )
+    # Transform CSV files.
+    # for csv_full_path, pq_full_path in files:
+    #    hcsv.convert_csv_to_pq(csv_full_path, pq_full_path)
 
 
 if __name__ == "__main__":
