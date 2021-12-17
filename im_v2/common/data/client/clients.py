@@ -209,7 +209,7 @@ class AbstractImClient(abc.ABC):
 # #############################################################################
 
 
-class MultipleSymbolsClient:
+class MultipleSymbolsImClient(AbstractImClient):
     """
     Object compatible with `AbstractImClient` interface which reads data for
     multiple full symbols.
@@ -279,6 +279,42 @@ class MultipleSymbolsClient:
         else:
             raise ValueError(f"Invalid mode=`{self._mode}`")
         return ret
+
+    @staticmethod
+    def get_universe() -> List[FullSymbol]:
+        """
+        Get universe as full symbols.
+        """
+        raise NotImplemented
+
+    @abc.abstractmethod
+    def _read_data(
+        self,
+        full_symbol: FullSymbol,
+        *,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
+        **kwargs: Dict[str, Any],
+    ) -> pd.DataFrame:
+        """
+        Read data for a single `FullSymbol` (i.e. currency pair from a single
+        exchange) in [start_ts, end_ts).
+
+        Parameters have the same meaning as parameters in `read_data()`
+        with the same name.
+        """
+        raise NotImplemented
+
+    @staticmethod
+    def _normalize_data(df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Apply transformation specific of the vendor, e.g. rename columns,
+        convert data types.
+
+        :param df: raw data
+        :return: normalized data
+        """
+        raise NotImplemented
 
     # TODO(Grisha/Dan): Decide if we want to also implement other methods of the base class.
     # TODO(Grisha/Dan): Decide if we want to add get_start(end)_ts_available() methods.
