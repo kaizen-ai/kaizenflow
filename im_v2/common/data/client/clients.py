@@ -287,7 +287,6 @@ class MultipleSymbolsImClient(AbstractImClient):
         """
         raise NotImplemented
 
-    @abc.abstractmethod
     def _read_data(
         self,
         full_symbol: FullSymbol,
