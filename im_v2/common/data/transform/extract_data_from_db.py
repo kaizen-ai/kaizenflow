@@ -92,7 +92,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
     ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", connection)
-    multiple_symbols_ccxt_db_client = ivcdclcl.MultipleSymbolsClient(
+    multiple_symbols_ccxt_db_client = ivcdclcl.MultipleSymbolsImClient(
         class_=ccxt_db_client, mode="concat"
     )
     symbols = imvccunun.get_vendor_universe()

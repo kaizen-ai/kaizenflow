@@ -78,11 +78,15 @@ def construct_full_symbol(exchange: str, symbol: str) -> FullSymbol:
 class AbstractImClient(abc.ABC):
     """
     Abstract Interface for `IM` client.
+
+    Clients derived from `AbstractImClient` read data for a single
+    `FullSymbol`, to read data for multiple `FullSymbols` use
+    `MultipleSymbolsImClient`.
     """
 
     def read_data(
         self,
-        full_symbol: FullSymbol,
+        full_symbol: Union[FullSymbol, List[FullSymbol]],
         *,
         normalize: bool = True,
         start_ts: Optional[pd.Timestamp] = None,
@@ -90,8 +94,8 @@ class AbstractImClient(abc.ABC):
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
-        Read and process data for a single `FullSymbol` (i.e. currency pair
-        from a single exchange) in [start_ts, end_ts).
+        Read and process data for `FullSymbols` (i.e. currency pair from a
+        single exchange) in [start_ts, end_ts).
 
         None `start_ts` and `end_ts` means the entire period of time available.
 
@@ -209,7 +213,7 @@ class AbstractImClient(abc.ABC):
 # #############################################################################
 
 
-class MultipleSymbolsClient:
+class MultipleSymbolsImClient(AbstractImClient):
     """
     Object compatible with `AbstractImClient` interface which reads data for
     multiple full symbols.
@@ -279,6 +283,33 @@ class MultipleSymbolsClient:
         else:
             raise ValueError(f"Invalid mode=`{self._mode}`")
         return ret
+
+    @staticmethod
+    def get_universe() -> List[FullSymbol]:
+        """
+        See `AbstractImClient`.
+        """
+        raise NotImplementedError
+
+    def _read_data(
+        self,
+        full_symbol: FullSymbol,
+        *,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
+        **kwargs: Dict[str, Any],
+    ) -> pd.DataFrame:
+        """
+        See `AbstractImClient`.
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def _normalize_data(df: pd.DataFrame) -> pd.DataFrame:
+        """
+        See `AbstractImClient`.
+        """
+        raise NotImplementedError
 
     # TODO(Grisha/Dan): Decide if we want to also implement other methods of the base class.
     # TODO(Grisha/Dan): Decide if we want to add get_start(end)_ts_available() methods.
