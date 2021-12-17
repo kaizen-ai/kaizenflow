@@ -287,7 +287,7 @@ class MultipleSymbolsImClient(AbstractImClient):
     @staticmethod
     def get_universe() -> List[FullSymbol]:
         """
-        Get universe as full symbols.
+        See `AbstractImClient`.
         """
         raise NotImplementedError
 
@@ -300,22 +300,14 @@ class MultipleSymbolsImClient(AbstractImClient):
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
-        Read data for a single `FullSymbol` (i.e. currency pair from a single
-        exchange) in [start_ts, end_ts).
-
-        Parameters have the same meaning as parameters in `read_data()`
-        with the same name.
+        See `AbstractImClient`.
         """
         raise NotImplementedError
 
     @staticmethod
     def _normalize_data(df: pd.DataFrame) -> pd.DataFrame:
         """
-        Apply transformation specific of the vendor, e.g. rename columns,
-        convert data types.
-
-        :param df: raw data
-        :return: normalized data
+        See `AbstractImClient`.
         """
         raise NotImplementedError
 
