@@ -82,7 +82,7 @@ class AbstractImClient(abc.ABC):
 
     def read_data(
         self,
-        full_symbol: FullSymbol,
+        full_symbol: Union[FullSymbol, List[FullSymbol]],
         *,
         normalize: bool = True,
         start_ts: Optional[pd.Timestamp] = None,
