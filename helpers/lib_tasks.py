@@ -2059,11 +2059,7 @@ def docker_release_dev_image(  # type: ignore
     docker_tag_local_image_as_dev(ctx, version)
     # 4) Run QA tests for the (local version) of the dev image.
     if qa_tests:
-        qa_test_fn = get_default_param("END_TO_END_TEST_FN")
-        if not qa_test_fn(ctx, stage="dev"):
-            msg = "End-to-end test has failed"
-            _LOG.error(msg)
-            raise RuntimeError(msg)
+        run_qa_tests(ctx, stage="dev", version=version)
     # 5) Push the "dev" image to ECR.
     if push_to_repo:
         docker_push_dev_image(ctx, version)
@@ -2225,7 +2221,9 @@ def docker_release_all(ctx, version):  # type: ignore
     _LOG.info("==> SUCCESS <==")
 
 
-def _docker_rollback_image(ctx: Any, base_image: str, stage: str, version: str):
+def _docker_rollback_image(
+    ctx: Any, base_image: str, stage: str, version: str
+) -> None:
     """
     Rollback the versioned image for a particular stage.
 
@@ -2429,7 +2427,7 @@ def _find_test_decorator(decorator_name: str, file_names: List[str]) -> List[str
     hdbg.dassert_isinstance(file_names, list)
     # E.g.,
     #   @pytest.mark.slow(...)
-    #   @pytest.mark.no_container
+    #   @pytest.mark.qa
     string = "@pytest.mark.%s" % decorator_name
     regex = r"^\s*%s\s*[\(]?" % re.escape(string)
     _LOG.debug("regex='%s'", regex)
@@ -2903,6 +2901,29 @@ def run_fast_slow_tests(  # type: ignore
         _LOG.error("Fast / slow tests failed")
         raise RuntimeError("Fast / slow tests failed")
     return fast_test_rc, slow_test_rc
+
+
+@task
+def run_qa_tests(  # type: ignore
+    ctx,
+    stage="dev",
+    version="",
+):
+    """
+    Run QA tests independently.
+
+    :param version: version to tag the image and code with
+    :param stage: select a specific stage for the Docker image
+    """
+    _report_task()
+    #
+    qa_test_fn = get_default_param("QA_TEST_FUNCTION")
+    # Run the call back function.
+    rc = qa_test_fn(ctx, stage, version)
+    if not rc:
+        msg = "QA tests failed"
+        _LOG.error(msg)
+        raise RuntimeError(msg)
 
 
 # #############################################################################
