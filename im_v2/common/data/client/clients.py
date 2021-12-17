@@ -79,7 +79,7 @@ class AbstractImClient(abc.ABC):
     """
     Abstract Interface for `IM` client.
 
-    Clients derived from `AbstractImClient read data for a single
+    Clients derived from `AbstractImClient` read data for a single
     `FullSymbol`, to read data for multiple `FullSymbols` use
     `MultipleSymbolsImClient`.
     """
