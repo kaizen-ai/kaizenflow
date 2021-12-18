@@ -427,7 +427,7 @@ def git_merge_master(ctx, ff_only=False, abort_if_not_clean=True):  # type: igno
 
 
 @task
-def git_clean(ctx, dry_run=False):  # type: ignore
+def git_clean(ctx, fix_perms=False, dry_run=False):  # type: ignore
     """
     Clean the repo_short_name and its submodules from artifacts.
 
@@ -436,6 +436,10 @@ def git_clean(ctx, dry_run=False):  # type: ignore
     _report_task(hprint.to_str("dry_run"))
     # TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
     #  mistake.
+    # Fix permissions, if needed.
+    if fix_perms:
+        cmd = "invoke fix_perms"
+        _run(ctx, cmd)
     # Clean recursively.
     git_clean_cmd = "git clean -fd"
     if dry_run:
@@ -1691,7 +1695,10 @@ def _get_docker_cmd(
     # - Handle the user.
     # Based on AmpTask1864 it seems that we need to use root in the CI to be
     # able to log in GH touching $HOME/.config/gh.
-    if False and as_user:
+    as_root = hgit.execute_repo_config_code("run_docker_as_root()")
+    as_user = as_user and not as_root
+    _LOG.debug("as_root=%s as_user=%s", as_root, as_user)
+    if as_user:
         docker_cmd_.append(
             r"""
         --user $(id -u):$(id -g)"""
@@ -2059,7 +2066,11 @@ def docker_release_dev_image(  # type: ignore
     docker_tag_local_image_as_dev(ctx, version)
     # 4) Run QA tests for the (local version) of the dev image.
     if qa_tests:
-        run_qa_tests(ctx, stage="dev", version=version)
+        qa_test_fn = get_default_param("END_TO_END_TEST_FN")
+        if not qa_test_fn(ctx, stage="dev"):
+            msg = "End-to-end test has failed"
+            _LOG.error(msg)
+            raise RuntimeError(msg)
     # 5) Push the "dev" image to ECR.
     if push_to_repo:
         docker_push_dev_image(ctx, version)
@@ -3386,6 +3397,11 @@ def lint(  # type: ignore
 ):
     """
     Lint files.
+
+    # To lint only a repo including `amp` but not `amp` itself:
+    ```
+    > i lint --files="$(find . -name '*.py' -not -path './compute/*' -not -path './amp/*')"
+    ```
 
     :param modified: select the files modified in the client
     :param branch: select the files modified in the current branch

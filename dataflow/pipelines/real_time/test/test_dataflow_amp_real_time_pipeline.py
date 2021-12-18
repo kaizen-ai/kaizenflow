@@ -4,9 +4,9 @@ import pandas as pd
 
 import core.config as cconfig
 import core.real_time_example as cretiexa
-import dataflow.core.runners as dtfcorrunn
 import dataflow.pipelines.dataflow_example as dtfpidtfexa
 import dataflow.pipelines.real_time.pipeline as dtfpretipi
+import dataflow.system.real_time_runner as dtfsretiru
 import helpers.hasyncio as hasynci
 import helpers.unit_test as hunitest
 import market_data.market_data_interface_example as mdmdinex
@@ -78,7 +78,7 @@ class TestRealTimeReturnPipeline1(hunitest.TestCase):
                 "dst_dir": None,
             }
             # Run.
-            dag_runner = dtfcorrunn.RealTimeDagRunner(**dag_runner_kwargs)
+            dag_runner = dtfsretiru.RealTimeDagRunner(**dag_runner_kwargs)
             result_bundles = hasynci.run(
                 dag_runner.predict(), event_loop=event_loop
             )
@@ -205,7 +205,7 @@ class TestRealTimePipelineWithOms1(hunitest.TestCase):
                 "dst_dir": None,
             }
             # Run.
-            dag_runner = dtfcorrunn.RealTimeDagRunner(**dag_runner_kwargs)
+            dag_runner = dtfsretiru.RealTimeDagRunner(**dag_runner_kwargs)
             result_bundles = hasynci.run(
                 dag_runner.predict(), event_loop=event_loop
             )
