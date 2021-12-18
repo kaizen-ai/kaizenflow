@@ -111,7 +111,7 @@ def oms_docker_cmd(ctx, cmd):  # type: ignore
 # #############################################################################
 
 
-def _get_docker_up_cmd(stage: str) -> str:
+def _get_docker_up_cmd(stage: str, detach: bool) -> str:
     """
     Construct the command to bring up the `oms` service.
 
@@ -125,6 +125,7 @@ def _get_docker_up_cmd(stage: str) -> str:
     ```
 
     :param stage: development stage, i.e. `local`, `dev` and `prod`
+    :param detach: run containers in the background
     """
     cmd = ["docker-compose"]
     # Add `docker-compose` file path.
@@ -135,6 +136,9 @@ def _get_docker_up_cmd(stage: str) -> str:
     cmd.append(f"--env-file {env_file}")
     # Add `down` command.
     cmd.append("up")
+    if detach:
+        # Enable detached mode.
+        cmd.append("-d")
     service = "oms_postgres"
     cmd.append(service)
     cmd = hlibtask._to_multi_line_cmd(cmd)
@@ -142,15 +146,16 @@ def _get_docker_up_cmd(stage: str) -> str:
 
 
 @task
-def oms_docker_up(ctx, stage):  # type: ignore
+def oms_docker_up(ctx, stage, detach=False):  # type: ignore
     """
     Start oms container with Postgres inside.
 
     :param ctx: `context` object
     :param stage: development stage, i.e. `local`, `dev` and `prod`
+    :param detach: run containers in the background
     """
     # Get docker down command.
-    docker_clean_up_cmd = _get_docker_up_cmd(stage)
+    docker_clean_up_cmd = _get_docker_up_cmd(stage, detach)
     # Execute the command.
     hlibtask._run(ctx, docker_clean_up_cmd, pty=True)
 
