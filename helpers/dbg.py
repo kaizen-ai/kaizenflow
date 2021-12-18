@@ -623,7 +623,7 @@ def dassert_file_extension(
 # Logger.
 # #############################################################################
 
-# TODO(gp): Separate this to helpers/log.py
+# TODO(gp): Separate this to helpers/hlogging.py
 
 # Copied from helpers/system_interaction.py to avoid circular imports.
 def _is_running_in_ipynb() -> bool:

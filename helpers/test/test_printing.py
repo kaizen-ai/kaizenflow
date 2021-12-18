@@ -260,3 +260,17 @@ class TestHelloWorld(hunitest.TestCase):
 bar
 """
         self.assert_equal(act, exp, fuzzy_match=False)
+
+
+# #############################################################################
+
+
+class Test_logging1(hunitest.TestCase):
+    def test_log_frame1(self) -> None:
+        hprint.log_frame(_LOG, "%s %s", "hello", "world")
+
+    def test_log_frame2(self) -> None:
+        hprint.log_frame(_LOG, "%s", "hello", level=1)
+
+    def test_log_frame3(self) -> None:
+        hprint.log_frame(_LOG, "%s", "hello", level=2, verbosity=logging.INFO)

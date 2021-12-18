@@ -892,7 +892,7 @@ def git_branch_copy(ctx, new_branch_name="", use_patch=False):  # type: ignore
 
 
 @task
-def git_branch_diff_with_base(ctx, diff_type="", subdir_name=""):  # type: ignore
+def git_branch_diff_with_base(ctx, diff_type="", subdir=""):  # type: ignore
     """
     Diff files of the current branch with master at the branching point.
     """
@@ -920,12 +920,12 @@ def git_branch_diff_with_base(ctx, diff_type="", subdir_name=""):  # type: ignor
     for branch_file in files:
         _LOG.debug("\n%s", hprint.frame(f"branch_file={branch_file}"))
         # Check if it needs to be compared.
-        if subdir_name != "":
-            if not branch_file.startswith(subdir_name):
+        if subdir != "":
+            if not branch_file.startswith(subdir):
                 _LOG.debug(
                     "Skipping since '%s' doesn't start with '%s'",
                     branch_file,
-                    subdir_name,
+                    subdir,
                 )
                 continue
         # Get the file on the right of the vimdiff.
@@ -1029,7 +1029,7 @@ def integrate_create_branch(ctx, dir_name, dry_run=False):  # type: ignore
 
 
 def _get_src_dst_dirs(
-    src_dir: str, dst_dir: str, subdir_name: str
+    src_dir: str, dst_dir: str, subdir: str
 ) -> Tuple[str, str]:
     """
     Return the full path of `src_dir` and `dst_dir` assuming that
@@ -1040,11 +1040,11 @@ def _get_src_dst_dirs(
     """
     curr_parent_dir = os.path.dirname(os.getcwd())
     #
-    src_dir = os.path.join(curr_parent_dir, src_dir, subdir_name)
+    src_dir = os.path.join(curr_parent_dir, src_dir, subdir)
     src_dir = os.path.normpath(src_dir)
     hdbg.dassert_dir_exists(src_dir)
     #
-    dst_dir = os.path.join(curr_parent_dir, dst_dir, subdir_name)
+    dst_dir = os.path.join(curr_parent_dir, dst_dir, subdir)
     dst_dir = os.path.normpath(dst_dir)
     hdbg.dassert_dir_exists(dst_dir)
     return src_dir, dst_dir
@@ -1052,7 +1052,7 @@ def _get_src_dst_dirs(
 
 @task
 def integrate_diff_dirs(  # type: ignore
-        ctx, src_dir="amp1", dst_dir="cmamp1", subdir_name="", use_linux_diff=False,
+        ctx, src_dir="amp1", dst_dir="cmamp1", subdir="", use_linux_diff=False,
         check_branches=True,
         clean_branches=True,
         dry_run=False,
@@ -1072,14 +1072,16 @@ def integrate_diff_dirs(  # type: ignore
     #
     _dassert_current_dir_matches(src_dir)
     #
-    src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir_name)
+    src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir)
     if check_branches:
         _dassert_is_integration_branch(src_dir)
         _dassert_is_integration_branch(dst_dir)
     else:
         _LOG.warning("Skipping integration branch check")
     if clean_branches:
-        _clean_both_integration_dirs(src_dir, dst_dir)
+        # We can clean up only the root dir.
+        if subdir == "":
+            _clean_both_integration_dirs(src_dir, dst_dir)
     else:
         _LOG.warning("Skipping integration branch cleaning")
     #
@@ -1091,9 +1093,9 @@ def integrate_diff_dirs(  # type: ignore
 
 
 @task
-def integrate_copy_dirs(ctx, src_dir, dst_dir, subdir_name="", dry_run=False):  # type: ignore
+def integrate_copy_dirs(ctx, src_dir, dst_dir, subdir="", dry_run=False):  # type: ignore
     """
-    Copy dir `subdir_name` from dir `src_dir` to `dst_dir`.
+    Copy dir `subdir` from dir `src_dir` to `dst_dir`.
 
     ```
     > i integrate_copy_dirs --subdir-name documentation --src-dir amp1 --dst-dir cmamp1
@@ -1103,7 +1105,7 @@ def integrate_copy_dirs(ctx, src_dir, dst_dir, subdir_name="", dry_run=False):  
     """
     _report_task()
     #
-    src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir_name)
+    src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir)
     _dassert_is_integration_branch(src_dir)
     _dassert_is_integration_branch(dst_dir)
     _clean_both_integration_dirs(src_dir, dst_dir)
@@ -1117,7 +1119,7 @@ def integrate_copy_dirs(ctx, src_dir, dst_dir, subdir_name="", dry_run=False):  
 
 
 @task
-def integrate_compare_branch_with_base(ctx, src_dir, dst_dir, subdir_name=""):  # type: ignore
+def integrate_compare_branch_with_base(ctx, src_dir, dst_dir, subdir=""):  # type: ignore
     """
     Compare the files modified in both the branches in src_dir and dst_dir to master
     before this current branch was branched.
@@ -1128,7 +1130,7 @@ def integrate_compare_branch_with_base(ctx, src_dir, dst_dir, subdir_name=""):  
     _ = ctx
     #
     _dassert_current_dir_matches(src_dir)
-    src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir_name)
+    src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir)
     _dassert_is_integration_branch(src_dir)
     _dassert_is_integration_branch(dst_dir)
     _clean_both_integration_dirs(src_dir, dst_dir)

@@ -28,11 +28,6 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-# TODO(gp): Move this to TestDbHelper although I am not sure it will work.
-# @pytest.mark.skipif(
-#     not hgit.execute_repo_config_code("has_dind_support()"),
-#     reason="Need dind support",
-# )
 class TestOmsDbHelper(hsqltest.TestDbHelper):
     """
     Configure the helper to build an OMS test DB.
