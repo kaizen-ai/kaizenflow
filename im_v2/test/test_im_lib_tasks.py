@@ -16,11 +16,12 @@ class TestGetImDockerCmd(hunitest.TestCase):
         Test the `bash` command.
         """
         cmd = "bash"
-        actual = imvimlita._get_docker_cmd(cmd)
+        actual = imvimlita._get_docker_cmd("local", cmd)
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
+            --env-file /app/im_v2/devops/env/local.im_db_config.env \
             run --rm im_app \
             bash
         """
@@ -31,11 +32,12 @@ class TestGetImDockerCmd(hunitest.TestCase):
         Test the Python script.
         """
         cmd = "im/devops/docker_scripts/set_shema_im_db.py"
-        actual = imvimlita._get_docker_cmd(cmd)
+        actual = imvimlita._get_docker_cmd("local", cmd)
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
+            --env-file /app/im_v2/devops/env/local.im_db_config.env \
             run --rm im_app \
             im/devops/docker_scripts/set_shema_im_db.py
         """

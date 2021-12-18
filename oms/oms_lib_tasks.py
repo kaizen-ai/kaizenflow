@@ -66,7 +66,7 @@ def _get_docker_compose_path() -> str:
 # #############################################################################
 
 
-def _get_docker_cmd(docker_cmd: str) -> str:
+def _get_docker_cmd(stage: str, docker_cmd: str) -> str:
     """
     Construct the `docker-compose' command to run a script inside this
     container Docker component.
@@ -75,6 +75,7 @@ def _get_docker_cmd(docker_cmd: str) -> str:
     ```
     docker-compose \
         --file devops/compose/docker-compose.yml \
+        --env-file devops/env/local.oms_db_config.env \
         run --rm app \
         .../devops/set_schema_im_db.py
     ```
@@ -85,6 +86,9 @@ def _get_docker_cmd(docker_cmd: str) -> str:
     # Add `docker-compose` file path.
     docker_compose_file_path = _get_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
+    # Add `env file` path.
+    env_file = get_db_env_path(stage)
+    cmd.append(f"--env-file {env_file}")
     # Add `run`.
     service_name = "app"
     cmd.append(f"run --rm {service_name}")
@@ -95,15 +99,16 @@ def _get_docker_cmd(docker_cmd: str) -> str:
 
 
 @task
-def oms_docker_cmd(ctx, cmd):  # type: ignore
+def oms_docker_cmd(ctx, stage, cmd):  # type: ignore
     """
     Execute the command `cmd` inside a container attached to the `im app`.
 
+    :param stage: development stage, i.e. `local`, `dev` and `prod`
     :param cmd: command to execute
     """
     hdbg.dassert_ne(cmd, "")
     # Get docker cmd.
-    docker_cmd = _get_docker_cmd(cmd)
+    docker_cmd = _get_docker_cmd(stage, cmd)
     # Execute the command.
     hlibtask._run(ctx, docker_cmd, pty=True)
 
