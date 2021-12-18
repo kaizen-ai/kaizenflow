@@ -62,6 +62,14 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
             action="store_true",
             help="Set the logging level to DEBUG",
         )
+        parser.addoption(
+            "--image_version",
+            action="store",
+            help="Version of the image to test against",
+        )
+        parser.addoption(
+            "--image_stage", action="store", help="Stage of the image to test against"
+        )
 
     def pytest_collection_modifyitems(config: Any, items: Any) -> None:
         _ = items
