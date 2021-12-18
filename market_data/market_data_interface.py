@@ -516,6 +516,7 @@ class SqlMarketDataInterface(AbstractMarketDataInterface):
         table_name: str,
         where_clause: Optional[str],
         valid_id: Any,
+        # TODO(gp): Move args first.
         # Params from `AbstractMarketDataInterface`.
         *args: List[Any],
         **kwargs: Dict[str, Any],
@@ -744,6 +745,7 @@ class ReplayedTimeMarketDataInterface(AbstractMarketDataInterface):
         df: pd.DataFrame,
         knowledge_datetime_col_name: str,
         delay_in_secs: int,
+        # TODO(gp): Move args first.
         # Params from `AbstractMarketDataInterface`.
         *args: List[Any],
         **kwargs: Dict[str, Any],

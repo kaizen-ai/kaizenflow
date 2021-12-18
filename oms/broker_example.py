@@ -28,7 +28,7 @@ def get_simulated_broker_example1(
         (
             market_data_interface,
             _,
-        ) = mdmdinex.get_replayed_time_market_data_interface_example2(event_loop)
+        ) = mdmdinex.get_replayed_time_market_data_interface_example3(event_loop)
     # Build SimulatedBroker.
     strategy_id = "SAU1"
     account = "candidate"
@@ -56,7 +56,7 @@ def get_mocked_broker_example1(
         (
             market_data_interface,
             _,
-        ) = mdmdinex.get_replayed_time_market_data_interface_example2(event_loop)
+        ) = mdmdinex.get_replayed_time_market_data_interface_example3(event_loop)
     # Build MockedBroker.
     strategy_id = "SAU1"
     account = "candidate"

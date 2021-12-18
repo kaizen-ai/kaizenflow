@@ -27,11 +27,14 @@ def _check_get_data(
         # Build ReplayedTimePriceInterval.
         start_datetime = pd.Timestamp("2000-01-01 09:30:00-05:00")
         end_datetime = pd.Timestamp("2000-01-01 10:29:00-05:00")
+        asset_ids = [1000]
         (
             market_data_interface,
             _,
-        ) = mdmdinex.get_replayed_time_market_data_interface_example1(
-            event_loop, start_datetime, end_datetime, initial_replayed_delay
+        ) = mdmdinex.get_replayed_time_market_data_interface_example2(
+            event_loop, start_datetime, end_datetime, initial_replayed_delay,
+            asset_ids
+            # TODO(gp): initial_replayed_delay -> initial_delay_in_mins (or in secs).
         )
         # Execute function under test.
         actual_df = func(market_data_interface)
@@ -86,7 +89,7 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         df.index in [2000-01-01 09:31:00-05:00, 2000-01-01 09:35:00-05:00]
         df.columns=asset_id,last_price,start_datetime,timestamp_db
         df.shape=(5, 4)
-                                   asset_id  last_price            start_datetime              timestamp_db
+                                   asset_id     last_price             start_datetime              timestamp_db
         end_datetime
         2000-01-01 09:31:00-05:00      1000    999.874540   2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00
         2000-01-01 09:32:00-05:00      1000    1000.325254  2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00
@@ -123,14 +126,14 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         df.index in [0, 4]
         df.columns=asset_id,end_datetime,last_price,start_datetime,timestamp_db
         df.shape=(5, 5)
-           asset_id              end_datetime  last_price            start_datetime              timestamp_db
-        0      1000 2000-01-01 09:31:00-05:00    999.874540  2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00
-        1      1000 2000-01-01 09:32:00-05:00    1000.325254 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00
-        2      1000 2000-01-01 09:33:00-05:00    1000.557248 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00
+           asset_id              end_datetime    last_price            start_datetime              timestamp_db
+        0      1000 2000-01-01 09:31:00-05:00   999.874540  2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00
+        1      1000 2000-01-01 09:32:00-05:00   1000.325254 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00
+        2      1000 2000-01-01 09:33:00-05:00   1000.557248 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00
         ...
-        2      1000 2000-01-01 09:33:00-05:00    1000.557248 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00
-        3      1000 2000-01-01 09:34:00-05:00    1000.655907 2000-01-01 09:33:00-05:00 2000-01-01 09:34:00-05:00
-        4      1000 2000-01-01 09:35:00-05:00    1000.311925 2000-01-01 09:34:00-05:00 2000-01-01 09:35:00-05:00"""
+        2      1000 2000-01-01 09:33:00-05:00   1000.557248 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00
+        3      1000 2000-01-01 09:34:00-05:00   1000.655907 2000-01-01 09:33:00-05:00 2000-01-01 09:34:00-05:00
+        4      1000 2000-01-01 09:35:00-05:00   1000.311925 2000-01-01 09:34:00-05:00 2000-01-01 09:35:00-05:00"""
         # pylint: enable=line-too-long
         market_data_interface = _check_get_data(
             self, initial_replayed_delay, func, expected_df_as_str
@@ -458,17 +461,19 @@ class TestReplayedTimeMarketDataInterface3(hunitest.TestCase):
             # Build object.
             start_datetime = pd.Timestamp("2000-01-01 09:30:00-05:00")
             end_datetime = pd.Timestamp("2000-01-01 10:30:00-05:00")
+            asset_ids = [1000]
             initial_replayed_delay = 5
             delay_in_secs = 0
             (
                 market_data_interface,
                 _,
-            ) = mdmdinex.get_replayed_time_market_data_interface_example1(
+            ) = mdmdinex.get_replayed_time_market_data_interface_example2(
                 event_loop,
                 start_datetime,
                 end_datetime,
                 initial_replayed_delay,
-                delay_in_secs,
+                asset_ids,
+                delay_in_secs=delay_in_secs,
             )
             # Call method.
             last_end_time = market_data_interface.get_last_end_time()
@@ -529,18 +534,20 @@ class TestReplayedTimeMarketDataInterface3(hunitest.TestCase):
             # Build a ReplayedTimeMarketDataInterface.
             start_datetime = pd.Timestamp("2000-01-01 09:30:00-05:00")
             end_datetime = pd.Timestamp("2000-01-01 10:30:00-05:00")
+            asset_ids = [1000]
             delay_in_secs = 0
             sleep_in_secs = 30
             time_out_in_secs = 60 * 5
             (
                 market_data_interface,
                 _,
-            ) = mdmdinex.get_replayed_time_market_data_interface_example1(
+            ) = mdmdinex.get_replayed_time_market_data_interface_example2(
                 event_loop,
                 start_datetime,
                 end_datetime,
                 initial_replayed_delay,
-                delay_in_secs,
+                asset_ids,
+                delay_in_secs=delay_in_secs,
                 sleep_in_secs=sleep_in_secs,
                 time_out_in_secs=time_out_in_secs,
             )

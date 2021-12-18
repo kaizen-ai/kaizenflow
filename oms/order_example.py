@@ -39,7 +39,7 @@ def get_order_example2(event_loop) -> omorder.Order:
     (
         market_data_interface,
         _,
-    ) = mdmdinex.get_replayed_time_market_data_interface_example2(event_loop)
+    ) = mdmdinex.get_replayed_time_market_data_interface_example3(event_loop)
     creation_timestamp = pd.Timestamp(
         "2000-01-01 09:29:00-05:00", tz="America/New_York"
     )

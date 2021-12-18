@@ -79,7 +79,7 @@ class TestSimulatedPortfolio1(hunitest.TestCase):
         (
             market_data_interface,
             _,
-        ) = mdmdinex.get_replayed_time_market_data_interface_example2(event_loop)
+        ) = mdmdinex.get_replayed_time_market_data_interface_example3(event_loop)
         # Build a Portfolio.
         initial_timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
         portfolio = oporexam.get_simulated_portfolio_example1(
@@ -112,7 +112,7 @@ class TestSimulatedPortfolio2(hunitest.TestCase):
         (
             market_data_interface,
             _,
-        ) = mdmdinex.get_replayed_time_market_data_interface_example2(event_loop)
+        ) = mdmdinex.get_replayed_time_market_data_interface_example3(event_loop)
         # Build Portfolio.
         initial_timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
         portfolio = oporexam.get_simulated_portfolio_example1(
@@ -140,7 +140,7 @@ class TestSimulatedPortfolio2(hunitest.TestCase):
         (
             market_data_interface,
             get_wall_clock_time,
-        ) = mdmdinex.get_replayed_time_market_data_interface_example2(event_loop)
+        ) = mdmdinex.get_replayed_time_market_data_interface_example3(event_loop)
         # Build Broker.
         broker = obroexam.get_simulated_broker_example1(
             event_loop, market_data_interface=market_data_interface
@@ -185,7 +185,7 @@ class TestSimulatedPortfolio2(hunitest.TestCase):
         (
             market_data_interface,
             _,
-        ) = mdmdinex.get_replayed_time_market_data_interface_example2(event_loop)
+        ) = mdmdinex.get_replayed_time_market_data_interface_example3(event_loop)
         #
         initial_timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
         portfolio = oporexam.get_simulated_portfolio_example1(
@@ -217,7 +217,7 @@ leverage,0.0
         (
             market_data_interface,
             get_wall_clock_time,
-        ) = mdmdinex.get_replayed_time_market_data_interface_example2(event_loop)
+        ) = mdmdinex.get_replayed_time_market_data_interface_example3(event_loop)
         # Build Broker.
         broker = obroexam.get_simulated_broker_example1(
             event_loop, market_data_interface=market_data_interface

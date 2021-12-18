@@ -29,7 +29,7 @@ start_datetime,end_datetime,timestamp_db,price,asset_id
 2000-01-01 09:30:00-05:00,2000-01-01 09:35:00-05:00,2000-01-01 09:35:00-05:00,107.73,101
 2000-01-01 09:30:00-05:00,2000-01-01 09:35:00-05:00,2000-01-01 09:35:00-05:00,93.25,202
 """
-        db_df = pd.read_csv(
+        df = pd.read_csv(
             io.StringIO(db_txt),
             parse_dates=["start_datetime", "end_datetime", "timestamp_db"],
         )
@@ -46,11 +46,9 @@ start_datetime,end_datetime,timestamp_db,price,asset_id
             get_wall_clock_time,
         ) = mdmdinex.get_replayed_time_market_data_interface_example1(
             event_loop,
-            start_datetime,
-            end_datetime,
             initial_replayed_delay,
-            delay_in_secs,
-            df=db_df,
+            df,
+            delay_in_secs=delay_in_secs,
             sleep_in_secs=sleep_in_secs,
             time_out_in_secs=time_out_in_secs,
         )
@@ -148,11 +146,9 @@ start_datetime,end_datetime,timestamp_db,price,asset_id
             get_wall_clock_time,
         ) = mdmdinex.get_replayed_time_market_data_interface_example1(
             event_loop,
-            start_datetime,
-            end_datetime,
             initial_replayed_delay,
-            delay_in_secs,
             df=db_df,
+            delay_in_secs=delay_in_secs,
             sleep_in_secs=sleep_in_secs,
             time_out_in_secs=time_out_in_secs,
         )
@@ -240,7 +236,7 @@ class TestPlaceOrders1(hunitest.TestCase):
         (
             market_data_interface,
             get_wall_clock_time,
-        ) = mdmdinex.get_replayed_time_market_data_interface_example2(event_loop)
+        ) = mdmdinex.get_replayed_time_market_data_interface_example3(event_loop)
         # Build predictions.
         index = [
             pd.Timestamp("2000-01-01 09:35:00-05:00", tz="America/New_York"),
