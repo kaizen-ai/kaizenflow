@@ -20,8 +20,8 @@ def get_simulated_broker_example1(
     market_data_interface: Optional[mdmadain.AbstractMarketDataInterface] = None,
 ) -> ombroker.SimulatedBroker:
     """
-    Build an example of `SimulatedBroker` using an example
-    `MarketDataInterface`, unless specified.
+    Build an example of `SimulatedBroker` using an example `MarketDataInterface`,
+    unless specified.
     """
     # Build MarketDataInterface.
     if market_data_interface is None:

@@ -6,21 +6,17 @@ import oms.test.test_oms_db as ottodb
 
 import asyncio
 import logging
-from typing import Any, Callable, List
+from typing import Any, List
 
 import pandas as pd
 import pytest
 
 import helpers.datetime_ as hdateti
-import helpers.git as hgit
 import helpers.hasyncio as hasynci
-import helpers.hsql_test as hsqltest
 import helpers.printing as hprint
 import helpers.sql as hsql
-import oms.broker_example as obroexam
 import oms.oms_db as oomsdb
-import oms.oms_lib_tasks as oomlitas
-import oms.order_example as oordexam
+import oms.test.oms_db_helper as omtodh
 
 _LOG = logging.getLogger(__name__)
 
@@ -28,64 +24,9 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class TestOmsDbHelper(hsqltest.TestDbHelper):
-    """
-    Configure the helper to build an OMS test DB.
-    """
-
-    @staticmethod
-    def _get_compose_file() -> str:
-        return "oms/devops/compose/docker-compose.yml"
-
-    @staticmethod
-    def _get_service_name() -> str:
-        return "oms_postgres_local"
-
-    @staticmethod
-    def _get_db_env_path() -> str:
-        """
-        See `_get_db_env_path()` in the parent class.
-        """
-        # Use the `local` stage for testing.
-        env_file_path = oomlitas.get_db_env_path("local")
-        return env_file_path  # type: ignore[no-any-return]
-
-    def _test_create_table_helper(
-        self: Any,
-        table_name: str,
-        create_table_func: Callable,
-    ) -> None:
-        """
-        Run sanity check for a DB table.
-
-        - Test that the DB is up
-        - Remove the table `table_name`
-        - Create the table `table_name` using `create_table_func()`
-        - Check that the table exists
-        - Delete the table
-        """
-        # Verify that the DB is up.
-        db_list = hsql.get_db_names(self.connection)
-        _LOG.info("db_list=%s", db_list)
-        # Clean up the table.
-        hsql.remove_table(self.connection, table_name)
-        # The DB should not have this table.
-        db_tables = hsql.get_table_names(self.connection)
-        _LOG.info("get_table_names=%s", db_tables)
-        self.assertNotIn(table_name, db_tables)
-        # Create the table.
-        _ = create_table_func(self.connection, incremental=False)
-        # The table should be present.
-        db_tables = hsql.get_table_names(self.connection)
-        _LOG.info("get_table_names=%s", db_tables)
-        self.assertIn(table_name, db_tables)
-        # Delete the table.
-        hsql.remove_table(self.connection, table_name)
-
-
 # TODO(gp): This could become an invoke task.
 @pytest.mark.skip(reason="Run manually to clean up the DB")
-class TestOmsDbRemoveAllTables1(TestOmsDbHelper):
+class TestOmsDbRemoveAllTables1(omtodh.TestOmsDbHelper):
     """
     This is used to reset the state of the DB.
     """
@@ -97,11 +38,7 @@ class TestOmsDbRemoveAllTables1(TestOmsDbHelper):
 # #############################################################################
 
 
-@pytest.mark.skipif(
-    not hgit.execute_repo_config_code("has_dind_support()"),
-    reason="Need dind support",
-)
-class TestOmsDbSubmittedOrdersTable1(TestOmsDbHelper):
+class TestOmsDbSubmittedOrdersTable1(omtodh.TestOmsDbHelper):
     """
     Test operations on the submitted orders table.
     """
@@ -182,11 +119,7 @@ def _get_row3() -> pd.Series:
 # #############################################################################
 
 
-@pytest.mark.skipif(
-    not hgit.execute_repo_config_code("has_dind_support()"),
-    reason="Need dind support",
-)
-class TestOmsDbAcceptedOrdersTable1(TestOmsDbHelper):
+class TestOmsDbAcceptedOrdersTable1(omtodh.TestOmsDbHelper):
     """
     Test operations on the accepted orders table.
     """
@@ -236,11 +169,7 @@ class TestOmsDbAcceptedOrdersTable1(TestOmsDbHelper):
 # #############################################################################
 
 
-@pytest.mark.skipif(
-    not hgit.execute_repo_config_code("has_dind_support()"),
-    reason="Need dind support",
-)
-class TestOmsDbTableInteraction1(TestOmsDbHelper):
+class TestOmsDbTableInteraction1(omtodh.TestOmsDbHelper):
     """
     Test interactions through the DB.
     """
@@ -321,7 +250,7 @@ class TestOmsDbTableInteraction1(TestOmsDbHelper):
             "timeout_in_secs": 5.0,
             "get_wall_clock_time": get_wall_clock_time,
         }
-        coro = oomsdb.wait_for_order_accepted(
+        coro = oomsdb.wait_for_order_acceptance(
             self.connection, target_value, poll_kwargs
         )
         result = await asyncio.gather(coro)
@@ -355,11 +284,7 @@ class TestOmsDbTableInteraction1(TestOmsDbHelper):
 # #############################################################################
 
 
-@pytest.mark.skipif(
-    not hgit.execute_repo_config_code("has_dind_support()"),
-    reason="Need dind support",
-)
-class TestOmsDbCurrentPositionsTable1(TestOmsDbHelper):
+class TestOmsDbCurrentPositionsTable1(omtodh.TestOmsDbHelper):
     """
     Test operations on the submitted orders table.
     """
@@ -372,67 +297,3 @@ class TestOmsDbCurrentPositionsTable1(TestOmsDbHelper):
         table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
         create_table_func = oomsdb.create_current_positions_table
         self._test_create_table_helper(table_name, create_table_func)
-
-
-# #############################################################################
-
-
-@pytest.mark.skipif(
-    not hgit.execute_repo_config_code("has_dind_support()"),
-    reason="Need dind support",
-)
-class TestOmsDbOrderProcessor1(TestOmsDbHelper):
-    """
-    Test operations on the submitted orders table.
-    """
-
-    def test1(self) -> None:
-        """
-        Test creating the table.
-        """
-        # Create OMS tables.
-        oomsdb.create_oms_tables(self.connection, incremental=False)
-
-        #
-        with hasynci.solipsism_context() as event_loop:
-            # Build MockedBroker.
-            broker = obroexam.get_mocked_broker_example1(
-                event_loop, self.connection
-            )
-            #
-            async_broker = self._broker_thread(event_loop, broker)
-            # Build OrderProcessor.
-            get_wall_clock_time = broker.market_data_interface.get_wall_clock_time
-            poll_kwargs = hasynci.get_poll_kwargs(get_wall_clock_time)
-            delay_to_accept_in_secs = 3
-            delay_to_fill_in_secs = 10
-            order_processor = oomsdb.order_processor(
-                self.connection,
-                poll_kwargs,
-                delay_to_accept_in_secs,
-                delay_to_fill_in_secs,
-                broker,
-            )
-            #
-            coroutines = [order_processor, async_broker]
-            hasynci.run(asyncio.gather(*coroutines), event_loop=event_loop)
-
-    async def _order_processor_thread(
-        self,
-        event_loop: asyncio.AbstractEventLoop,
-        broker,
-    ) -> None:
-        # Kick off the OrderProcessor.
-        # Wait.
-        pass
-
-    async def _broker_thread(
-        self,
-        event_loop: asyncio.AbstractEventLoop,
-        broker,
-    ) -> None:
-        await asyncio.sleep(1)
-        # Create an order.
-        order = oordexam.get_order_example1()
-        # Submit the order to the broker.
-        broker.submit_orders([order])

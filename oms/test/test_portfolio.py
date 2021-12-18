@@ -15,7 +15,7 @@ import oms.broker_example as obroexam
 import oms.oms_db as oomsdb
 import oms.portfolio as omportfo
 import oms.portfolio_example as oporexam
-import oms.test.test_oms_db as ottodb
+import oms.test.oms_db_helper as omtodh
 
 _LOG = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ class TestSimulatedPortfolio1(hunitest.TestCase):
         """
         Return a freshly minted Portfolio with only cash.
         """
-        # Build a ReplayedTimePriceInterface.
+        # Build a ReplayedTimeMarketDataInterface.
         event_loop = None
         (
             market_data_interface,
@@ -107,7 +107,7 @@ class TestSimulatedPortfolio2(hunitest.TestCase):
         """
         Initialize a Portfolio with cash.
         """
-        # Build ReplayedTimePriceInterface.
+        # Build ReplayedTimeMarketDataInterface.
         event_loop = None
         (
             market_data_interface,
@@ -135,7 +135,7 @@ class TestSimulatedPortfolio2(hunitest.TestCase):
         """
         Initialize a Portfolio with holdings.
         """
-        # Build ReplayedTimePriceInterface.
+        # Build ReplayedTimeMarketDataInterface.
         event_loop = None
         (
             market_data_interface,
@@ -180,7 +180,7 @@ class TestSimulatedPortfolio2(hunitest.TestCase):
         self.assert_dfs_close(portfolio.holdings, expected)
 
     def test_characteristics1(self) -> None:
-        # Build PriceInterface.
+        # Build MarketDataInterface.
         event_loop = None
         (
             market_data_interface,
@@ -212,7 +212,7 @@ leverage,0.0
         self.assert_dfs_close(actual.to_frame(), expected, rtol=1e-2, atol=1e-2)
 
     def test_characteristics2(self) -> None:
-        # Build PriceInterface.
+        # Build MarketDataInterface.
         event_loop = None
         (
             market_data_interface,
@@ -260,7 +260,7 @@ leverage,0.994
         self.assert_dfs_close(actual.to_frame(), expected, rtol=1e-2, atol=1e-2)
 
     def test_characteristics3(self) -> None:
-        # Build PriceInterface.
+        # Build MarketDataInterface.
         tz = "ET"
         initial_timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
         event_loop = None
@@ -277,16 +277,23 @@ start_datetime,end_datetime,asset_id,price
             io.StringIO(price_txt),
             parse_dates=["start_datetime", "end_datetime"],
         )
+        start_time_col_name = "start_datetime"
+        end_time_col_name = "end_datetime"
+        knowledge_datetime_col_name = "end_datetime"
+        delay_in_secs = 0
+        asset_id_col_name = "asset_id"
+        asset_ids = None
+        columns = []
         market_data_interface = mdmadain.ReplayedTimeMarketDataInterface(
             price_df,
-            start_time_col_name="start_datetime",
-            end_time_col_name="end_datetime",
-            knowledge_datetime_col_name="end_datetime",
-            delay_in_secs=0,
-            id_col_name="asset_id",
-            ids=None,
-            columns=[],
-            get_wall_clock_time=get_wall_clock_time,
+            knowledge_datetime_col_name,
+            delay_in_secs,
+            asset_id_col_name,
+            asset_ids,
+            start_time_col_name,
+            end_time_col_name,
+            columns,
+            get_wall_clock_time,
         )
         portfolio = oporexam.get_simulated_portfolio_example1(
             event_loop,
@@ -353,7 +360,7 @@ def _get_row2() -> pd.Series:
     return srs
 
 
-class TestMockedPortfolio1(ottodb.TestOmsDbHelper):
+class TestMockedPortfolio1(omtodh.TestOmsDbHelper):
     def test1(self) -> None:
         """
         Test that the update of Portfolio works.
