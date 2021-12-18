@@ -25,6 +25,9 @@ import helpers.sql as hsql
 _LOG = logging.getLogger(__name__)
 
 
+hprint.install_log_verb_debug(_LOG, verbose=False)
+
+
 # #############################################################################
 # AbstractMarketDataInterface
 # #############################################################################
@@ -55,9 +58,10 @@ class AbstractMarketDataInterface(abc.ABC):
 
     def __init__(
         self,
-        id_col_name: str,
-        ids: List[Any],
+        asset_id_col: str,
+        asset_ids: List[Any],
         # TODO(gp): These are before the remapping.
+        # TODO(gp): -> start_timestamp_col
         start_time_col_name: str,
         end_time_col_name: str,
         columns: Optional[List[str]],
@@ -70,8 +74,9 @@ class AbstractMarketDataInterface(abc.ABC):
         """
         Constructor.
 
-        :param id_col_name: the name of the column used to select the ids
-        :param ids: ids to keep
+        :param asset_id_col: the name of the column used to select the
+            asset ids
+        :param asset_ids: asset_ids to keep
         :param start_time_col_name: the column with the start_time
         :param end_time_col_name: the column with the end_time
         :param columns: columns to return
@@ -81,8 +86,8 @@ class AbstractMarketDataInterface(abc.ABC):
         :param column_remap: dict of columns to remap or `None`
         """
         _LOG.debug("")
-        self._id_col_name = id_col_name
-        self._ids = ids
+        self._asset_id_col = asset_id_col
+        self._asset_ids = asset_ids
         self._start_time_col_name = start_time_col_name
         self._end_time_col_name = end_time_col_name
         self._columns = columns
@@ -94,9 +99,9 @@ class AbstractMarketDataInterface(abc.ABC):
         #
         self._column_remap = column_remap
         # Compute the max number of iterations.
-        max_iters = int(time_out_in_secs / sleep_in_secs)
-        hdbg.dassert_lte(1, max_iters)
-        self._max_iters = max_iters
+        max_iterations = int(time_out_in_secs / sleep_in_secs)
+        hdbg.dassert_lte(1, max_iterations)
+        self._max_iterations = max_iterations
 
     # TODO(gp): If the DB supports asyncio this should become async.
     # TODO(gp): -> get_data_for_last_period
@@ -133,13 +138,13 @@ class AbstractMarketDataInterface(abc.ABC):
         ```
         """
         # Handle `period`.
-        _LOG.debug(hprint.to_str("period"))
-        current_time = self.get_wall_clock_time()
-        start_ts = _process_period(period, current_time)
+        _LOG.verb_debug(hprint.to_str("period"))
+        wall_clock_time = self.get_wall_clock_time()
+        start_ts = self._process_period(period, wall_clock_time)
         end_ts = None
         # By convention to get the last chunk of data we use the start_time column.
         ts_col_name = self._start_time_col_name
-        asset_ids = self._ids
+        asset_ids = self._asset_ids
         # Get the data.
         df = self.get_data_for_interval(
             start_ts,
@@ -149,7 +154,7 @@ class AbstractMarketDataInterface(abc.ABC):
             normalize_data=normalize_data,
             limit=limit,
         )
-        _LOG.debug("-> df=\n%s", hprint.dataframe_to_str(df))
+        _LOG.verb_debug("-> df=\n%s", hprint.dataframe_to_str(df))
         return df
 
     def get_data_at_timestamp(
@@ -166,7 +171,7 @@ class AbstractMarketDataInterface(abc.ABC):
         :param ts_col_name: the name of the column (before the remapping) to filter
             on
         :param ts: the timestamp to filter on
-        :param asset_ids: list of ids to filter on. `None` for all ids.
+        :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
         """
         start_ts = ts - pd.Timedelta(1, unit="s")
         end_ts = ts + pd.Timedelta(1, unit="s")
@@ -177,7 +182,7 @@ class AbstractMarketDataInterface(abc.ABC):
             asset_ids,
             normalize_data=normalize_data,
         )
-        # _LOG.debug("-> df=\n%s", hprint.dataframe_to_str(df))
+        _LOG.verb_debug("-> df=\n%s", hprint.dataframe_to_str(df))
         return df
 
     def get_data_for_interval(
@@ -197,7 +202,7 @@ class AbstractMarketDataInterface(abc.ABC):
 
         :param ts_col_name: the name of the column (before the remapping) to filter
             on
-        :param asset_ids: list of ids to filter on. `None` for all ids.
+        :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
         :param left_close, right_close: represent the type of interval
             - E.g., [start_ts, end_ts), or (start_ts, end_ts]
         """
@@ -214,7 +219,7 @@ class AbstractMarketDataInterface(abc.ABC):
             normalize_data,
             limit,
         )
-        # _LOG.debug("-> df=\n%s", hprint.dataframe_to_str(df))
+        _LOG.verb_debug("-> df=\n%s", hprint.dataframe_to_str(df))
         return df
 
     def get_twap_price(
@@ -249,7 +254,7 @@ class AbstractMarketDataInterface(abc.ABC):
         hdbg.dassert_in(column, prices.columns)
         prices = prices[column]
         # Compute the mean value.
-        # _LOG.debug("prices=\n%s", prices)
+        _LOG.verb_debug("prices=\n%s", prices)
         price: float = prices.mean()
         hdbg.dassert(
             np.isfinite(price),
@@ -286,16 +291,16 @@ class AbstractMarketDataInterface(abc.ABC):
         ```
         """
         # Sort in increasing time order and reindex.
-        df.sort_values([self._end_time_col_name, self._id_col_name], inplace=True)
+        df.sort_values([self._end_time_col_name, self._asset_id_col], inplace=True)
         df.set_index(self._end_time_col_name, drop=True, inplace=True)
         # TODO(gp): Add a check to make sure we are not getting data after the
         #  current time.
-        # _LOG.debug("df.empty=%s, df.shape=%s", df.empty, str(df.shape))
+        _LOG.verb_debug("df.empty=%s, df.shape=%s", df.empty, str(df.shape))
         # # The data source should not return data after the current time.
         # if not df.empty:
-        #     current_time = self._get_current_time()
-        #     _LOG.debug(hprint.to_str("current_time df.index.max()"))
-        #     hdbg.dassert_lte(df.index.max(), current_time)
+        #     wall_clock_time = self.get_wall_clock_time()
+        #     _LOG.debug(hprint.to_str("wall_clock_time df.index.max()"))
+        #     hdbg.dassert_lte(df.index.max(), wall_clock_time)
         # _LOG.debug(hprint.df_to_short_str("after process_data", df))
         return df
 
@@ -313,11 +318,11 @@ class AbstractMarketDataInterface(abc.ABC):
         if ret is not None:
             # Convert to ET.
             ret = ret.tz_convert("America/New_York")
-        _LOG.debug("-> ret=%s", ret)
+        _LOG.verb_debug("-> ret=%s", ret)
         return ret
 
     @abc.abstractmethod
-    def should_be_online(self, current_time: pd.Timestamp) -> bool:
+    def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
         """
         Return whether the interface should be available at the given time.
         """
@@ -331,25 +336,25 @@ class AbstractMarketDataInterface(abc.ABC):
         check this by checking if there was data in the last minute.
         """
         # Check if the data in the last minute is empty.
-        _LOG.debug("")
+        _LOG.verb_debug("")
         # The DB is online if there was data within the last minute.
         last_db_end_time = self.get_last_end_time()
         if last_db_end_time is None:
             ret = False
         else:
-            _LOG.debug(
+            _LOG.verb_debug(
                 "last_db_end_time=%s -> %s",
                 last_db_end_time,
                 last_db_end_time.floor("Min"),
             )
-            current_time = self.get_wall_clock_time()
-            _LOG.debug(
-                "current_time=%s -> %s", current_time, current_time.floor("Min")
+            wall_clock_time = self.get_wall_clock_time()
+            _LOG.verb_debug(
+                "wall_clock_time=%s -> %s", wall_clock_time, wall_clock_time.floor("Min")
             )
             ret = last_db_end_time.floor("Min") >= (
-                current_time.floor("Min") - pd.Timedelta(minutes=1)
+                wall_clock_time.floor("Min") - pd.Timedelta(minutes=1)
             )
-        _LOG.debug("-> ret=%s", ret)
+        _LOG.verb_debug("-> ret=%s", ret)
         return ret
 
     # TODO(gp): -> wait_for_latest_data
@@ -357,45 +362,42 @@ class AbstractMarketDataInterface(abc.ABC):
         self,
     ) -> Tuple[pd.Timestamp, pd.Timestamp, int]:
         """
-        Wait until the bar with `end_time` == `current_time` is present in the
+        Wait until the bar with `end_time` == `wall_clock_time` is present in the
         RT DB.
 
         :return:
             - start_sampling_time: timestamp when the sampling started
             - end_sampling_time: timestamp when the sampling ended, since the bar
               was ready
-            - num_iters: number of iterations
+            - num_iter: number of iterations before the last bar was ready
         """
         start_sampling_time = self.get_wall_clock_time()
-        _LOG.debug("DB on-line: %s", self.is_online())
+        _LOG.verb_debug("DB on-line: %s", self.is_online())
         #
-        _LOG.debug("Waiting on last bar ...")
+        hprint.log_frame(_LOG, "Waiting on last bar ...")
         num_iter = 0
         while True:
-            current_time = self.get_wall_clock_time()
+            wall_clock_time = self.get_wall_clock_time()
             last_db_end_time = self.get_last_end_time()
+            # TODO(gp): We should use the new hasynci.poll().
             _LOG.debug(
-                "\n%s",
-                hprint.frame(
-                    "Waiting on last bar: "
-                    "num_iter=%s/%s: current_time=%s last_db_end_time=%s"
-                    % (num_iter, self._max_iters, current_time, last_db_end_time),
-                    char1="-",
-                ),
+                    "\n### waiting on last bar: "
+                    "num_iter=%s/%s: wall_clock_time=%s last_db_end_time=%s",
+                    num_iter, self._max_iterations, wall_clock_time, last_db_end_time
             )
             if last_db_end_time and (
-                last_db_end_time.floor("Min") >= current_time.floor("Min")
+                last_db_end_time.floor("Min") >= wall_clock_time.floor("Min")
             ):
                 # Get the current timestamp when the call was finally executed.
-                _LOG.debug("Waiting on last bar: done")
-                end_sampling_time = current_time
+                hprint.log_frame(_LOG, "Waiting on last bar: done")
+                end_sampling_time = wall_clock_time
                 break
-            if num_iter >= self._max_iters:
+            if num_iter >= self._max_iterations:
                 raise TimeoutError
             num_iter += 1
-            _LOG.debug("Sleep for %s secs", self._sleep_in_secs)
+            _LOG.verb_debug("Sleep for %s secs", self._sleep_in_secs)
             await asyncio.sleep(self._sleep_in_secs)
-        _LOG.debug(
+        _LOG.verb_debug(
             "-> %s",
             hprint.to_str("start_sampling_time end_sampling_time num_iter"),
         )
@@ -430,6 +432,66 @@ class AbstractMarketDataInterface(abc.ABC):
             hpandas.dassert_valid_remap(df.columns.tolist(), self._column_remap)
             df.rename(columns=self._column_remap, inplace=True)
         return df
+
+    @staticmethod
+    def _process_period(
+        period: str, wall_clock_time: pd.Timestamp
+    ) -> Optional[pd.Timestamp]:
+        """
+        Return the start time corresponding to getting the desired `period` of
+        time.
+
+        E.g., if the df looks like:
+        ```
+           start_datetime           last_price    id
+                     end_datetime
+                              timestamp_db
+        0  09:30     09:31    09:31  -0.125460  1000
+        1  09:31     09:32    09:32   0.325254  1000
+        2  09:32     09:33    09:33   0.557248  1000
+        3  09:33     09:34    09:34   0.655907  1000
+        4  09:34     09:35    09:35   0.311925  1000
+        ```
+        and `wall_clock_time=09:34` the last minute should be
+        ```
+           start_datetime           last_price    id
+                     end_datetime
+                              timestamp_db
+        4  09:34     09:35    09:35   0.311925  1000
+        ```
+
+        :param period: what period the df to extract (e.g., `last_1mins`, ...,
+            `last_10mins`)
+        :return:
+        """
+        _LOG.verb_debug(hprint.to_str("period wall_clock_time"))
+        # Period of time.
+        if period == "last_day":
+            # Get the data for the last day.
+            last_start_time = wall_clock_time.replace(hour=0, minute=0, second=0)
+        elif period == "last_week":
+            # Get the data for the last day.
+            last_start_time = wall_clock_time.replace(
+                hour=0, minute=0, second=0
+            ) - pd.Timedelta(days=16)
+        elif period in ("last_10mins", "last_5mins", "last_1min"):
+            # Get the data for the last N minutes.
+            if period == "last_10mins":
+                mins = 10
+            elif period == "last_5mins":
+                mins = 5
+            elif period == "last_1min":
+                mins = 1
+            else:
+                raise ValueError("Invalid period='%s'" % period)
+            # We condition on `start_time` since it's an index.
+            last_start_time = wall_clock_time - pd.Timedelta(minutes=mins)
+        elif period == "all":
+            last_start_time = None
+        else:
+            raise ValueError("Invalid period='%s'" % period)
+        _LOG.verb_debug("last_start_time=%s", last_start_time)
+        return last_start_time
 
 
 # #############################################################################
@@ -494,7 +556,7 @@ class SqlMarketDataInterface(AbstractMarketDataInterface):
         df = super().process_data(df)
         return df
 
-    def should_be_online(self, current_time: pd.Timestamp) -> bool:
+    def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
         return True
 
     def _get_data(
@@ -544,7 +606,7 @@ class SqlMarketDataInterface(AbstractMarketDataInterface):
         query.append("WHERE")
         if self._where_clause:
             query.append(f"{self._where_clause} AND")
-        query.append(f"{self._id_col_name} = '{self._valid_id}'")
+        query.append(f"{self._asset_id_col} = '{self._valid_id}'")
         query = " ".join(query)
         # _LOG.debug("query=%s", query)
         df = hsql.execute_query_to_df(self.connection, query)
@@ -570,7 +632,7 @@ class SqlMarketDataInterface(AbstractMarketDataInterface):
             query.append(f"{self._where_clause} AND")
         query.append(
             f"{self._start_time_col_name} = '{start_time}' AND "
-            + f"{self._id_col_name} = '{self._valid_id}'"
+            + f"{self._asset_id_col} = '{self._valid_id}'"
         )
         query = " ".join(query)
         # _LOG.debug("query=%s", query)
@@ -585,7 +647,6 @@ class SqlMarketDataInterface(AbstractMarketDataInterface):
         hdbg.dassert_eq(end_time, start_time + pd.Timedelta(minutes=1))
         return end_time
 
-    # TODO(gp): Rename ids -> asset_ids.
     def _get_sql_query(
         self,
         columns: Optional[List[str]],
@@ -610,7 +671,7 @@ class SqlMarketDataInterface(AbstractMarketDataInterface):
 
         :param columns: columns to select from `table_name`
             - `None` means all columns.
-        :param asset_ids: ids to select
+        :param asset_ids: asset ids to select
         :param period: what period to retrieve
             - E.g., `all`, `last_day`, `last_5mins`, `last_1min`
         :param sort_time: whether to sort by end_time
@@ -627,13 +688,13 @@ class SqlMarketDataInterface(AbstractMarketDataInterface):
         if self._where_clause is not None:
             # E.g., "WHERE interval=60 AND region='AM'")
             query.append(f"WHERE {self._where_clause}")
-        # Handle `ids`.
+        # Handle `asset_ids`.
         hdbg.dassert_isinstance(asset_ids, list)
         if len(asset_ids) == 1:
-            ids_as_str = f"{self._id_col_name}={asset_ids[0]}"
+            ids_as_str = f"{self._asset_id_col}={asset_ids[0]}"
         else:
             ids_as_str = ",".join(map(str, asset_ids))
-            ids_as_str = f"{self._id_col_name} in ({ids_as_str})"
+            ids_as_str = f"{self._asset_id_col} in ({ids_as_str})"
         query.append("AND " + ids_as_str)
         # Handle `period`.
         if start_ts is not None:
@@ -643,7 +704,7 @@ class SqlMarketDataInterface(AbstractMarketDataInterface):
                 operator = ">"
             query.append(
                 f"AND {ts_col_name} {operator} "
-                + "'%s'" % _to_sql_datetime_string(start_ts)
+                + "'%s'" % self._to_sql_datetime_string(start_ts)
             )
         if end_ts is not None:
             if right_close:
@@ -652,7 +713,7 @@ class SqlMarketDataInterface(AbstractMarketDataInterface):
                 operator = "<"
             query.append(
                 f"AND {ts_col_name} {operator} "
-                + "'%s'" % _to_sql_datetime_string(end_ts)
+                + "'%s'" % self._to_sql_datetime_string(end_ts)
             )
         # Handle `sort_time`.
         if sort_time:
@@ -705,7 +766,7 @@ class ReplayedTimeMarketDataInterface(AbstractMarketDataInterface):
         #
         hdbg.dassert_is_subset(
             [
-                self._id_col_name,
+                self._asset_id_col,
                 self._start_time_col_name,
                 self._end_time_col_name,
                 self._knowledge_datetime_col_name,
@@ -713,14 +774,14 @@ class ReplayedTimeMarketDataInterface(AbstractMarketDataInterface):
             df.columns,
         )
         self._df.sort_values(
-            [self._end_time_col_name, self._id_col_name], inplace=True
+            [self._end_time_col_name, self._asset_id_col], inplace=True
         )
 
-    def should_be_online(self, current_time: pd.Timestamp) -> bool:
+    def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
         return True
 
     def process_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        _LOG.debug("")
+        _LOG.verb_debug("")
         # Sort in increasing time order and reindex.
         df = super().process_data(df)
         return df
@@ -736,18 +797,24 @@ class ReplayedTimeMarketDataInterface(AbstractMarketDataInterface):
         normalize_data: bool,
         limit: Optional[int],
     ) -> pd.DataFrame:
-        _LOG.debug(
+        _LOG.verb_debug(
             hprint.to_str(
                 "start_ts end_ts ts_col_name asset_ids left_close right_close normalize_data limit"
             )
         )
+        if asset_ids is not None:
+            # Make sure that the requested asset_ids are in the df at some point.
+            # This avoids mistakes when mocking data for certain assets, but request
+            # data for assets that don't exist, which can make us wait for data that
+            # will never come.
+            hdbg.dassert_is_subset(asset_ids, self._df[self._asset_id_col].unique())
         # Filter the data by the current time.
-        current_time = self.get_wall_clock_time()
-        _LOG.debug(hprint.to_str("current_time"))
+        wall_clock_time = self.get_wall_clock_time()
+        _LOG.verb_debug(hprint.to_str("wall_clock_time"))
         df_tmp = creatime.get_data_as_of_datetime(
             self._df,
             self._knowledge_datetime_col_name,
-            current_time,
+            wall_clock_time,
             delay_in_secs=self._delay_in_secs,
         )
         # Handle `columns`.
@@ -757,34 +824,34 @@ class ReplayedTimeMarketDataInterface(AbstractMarketDataInterface):
         # # Handle `period`.
         # TODO(gp): This is inefficient. Make it faster by binary search.
         if start_ts is not None:
-            # _LOG.debug("start_ts=%s", start_ts)
+            _LOG.verb_debug("start_ts=%s", start_ts)
             hdbg.dassert_in(ts_col_name, df_tmp)
             tss = df_tmp[ts_col_name]
-            # _LOG.debug("tss=\n%s", hprint.dataframe_to_str(tss))
+            _LOG.verb_debug("tss=\n%s", hprint.dataframe_to_str(tss))
             if left_close:
                 mask = tss >= start_ts
             else:
                 mask = tss > start_ts
-            # _LOG.debug("mask=\n%s", hprint.dataframe_to_str(mask))
+            _LOG.verb_debug("mask=\n%s", hprint.dataframe_to_str(mask))
             df_tmp = df_tmp[mask]
         if end_ts is not None:
             # _LOG.debug("end_ts=%s", end_ts)
             hdbg.dassert_in(ts_col_name, df_tmp)
             tss = df_tmp[ts_col_name]
-            # _LOG.debug("tss=\n%s", hprint.dataframe_to_str(tss))
+            _LOG.verb_debug("tss=\n%s", hprint.dataframe_to_str(tss))
             if right_close:
                 mask = tss <= end_ts
             else:
                 mask = tss < end_ts
-            # _LOG.debug("mask=\n%s", hprint.dataframe_to_str(mask))
+            _LOG.verb_debug("mask=\n%s", hprint.dataframe_to_str(mask))
             df_tmp = df_tmp[mask]
-        # Handle `ids`
-        # _LOG.debug("before df_tmp=\n%s", hprint.dataframe_to_str(df_tmp))
+        # Handle `asset_ids`
+        _LOG.verb_debug("before df_tmp=\n%s", hprint.dataframe_to_str(df_tmp))
         if asset_ids is not None:
-            hdbg.dassert_in(self._id_col_name, df_tmp)
-            mask = df_tmp[self._id_col_name].isin(set(asset_ids))
+            hdbg.dassert_in(self._asset_id_col, df_tmp)
+            mask = df_tmp[self._asset_id_col].isin(set(asset_ids))
             df_tmp = df_tmp[mask]
-        # _LOG.debug("after df_tmp=\n%s", hprint.dataframe_to_str(df_tmp))
+        _LOG.verb_debug("after df_tmp=\n%s", hprint.dataframe_to_str(df_tmp))
         # Handle `limit`.
         if limit:
             hdbg.dassert_lte(1, limit)
@@ -792,7 +859,7 @@ class ReplayedTimeMarketDataInterface(AbstractMarketDataInterface):
         # Normalize data.
         if normalize_data:
             df_tmp = self.process_data(df_tmp)
-        _LOG.debug("-> df_tmp=\n%s", hprint.dataframe_to_str(df_tmp))
+        _LOG.verb_debug("-> df_tmp=\n%s", hprint.dataframe_to_str(df_tmp))
         return df_tmp
 
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
@@ -806,85 +873,20 @@ class ReplayedTimeMarketDataInterface(AbstractMarketDataInterface):
             ret = None
         else:
             ret = df.index.max()
+        _LOG.debug("-> ret=%s", ret)
         return ret
 
-
-# #############################################################################
-# Utils.
-# #############################################################################
-
-
-# TODO(gp): These should be methods of AbstractMarketDataInterface.
-def _to_sql_datetime_string(dt: pd.Timestamp) -> str:
-    """
-    Convert a timestamp into an SQL string to query the DB.
-    """
-    hdateti.dassert_has_tz(dt)
-    # Convert to UTC, if needed.
-    if dt.tzinfo != hdateti.get_UTC_tz().zone:
-        dt = dt.tz_convert(hdateti.get_UTC_tz())
-    ret: str = dt.strftime("%Y-%m-%d %H:%M:%S")
-    return ret
-
-
-def _process_period(
-    period: str, current_time: pd.Timestamp
-) -> Optional[pd.Timestamp]:
-    """
-    Return the start time corresponding to getting the desired `period` of
-    time.
-
-    E.g., if the df looks like:
-    ```
-       start_datetime           last_price    id
-                 end_datetime
-                          timestamp_db
-    0  09:30     09:31    09:31  -0.125460  1000
-    1  09:31     09:32    09:32   0.325254  1000
-    2  09:32     09:33    09:33   0.557248  1000
-    3  09:33     09:34    09:34   0.655907  1000
-    4  09:34     09:35    09:35   0.311925  1000
-    ```
-    and `current_time=09:34` the last minute should be
-    ```
-       start_datetime           last_price    id
-                 end_datetime
-                          timestamp_db
-    4  09:34     09:35    09:35   0.311925  1000
-    ```
-
-    :param period: what period the df to extract (e.g., `last_1mins`, ...,
-        `last_10mins`)
-    :return:
-    """
-    _LOG.debug(hprint.to_str("period current_time"))
-    # Period of time.
-    if period == "last_day":
-        # Get the data for the last day.
-        last_start_time = current_time.replace(hour=0, minute=0, second=0)
-    elif period == "last_week":
-        # Get the data for the last day.
-        last_start_time = current_time.replace(
-            hour=0, minute=0, second=0
-        ) - pd.Timedelta(days=16)
-    elif period in ("last_10mins", "last_5mins", "last_1min"):
-        # Get the data for the last N minutes.
-        if period == "last_10mins":
-            mins = 10
-        elif period == "last_5mins":
-            mins = 5
-        elif period == "last_1min":
-            mins = 1
-        else:
-            raise ValueError("Invalid period='%s'" % period)
-        # We condition on `start_time` since it's an index.
-        last_start_time = current_time - pd.Timedelta(minutes=mins)
-    elif period == "all":
-        last_start_time = None
-    else:
-        raise ValueError("Invalid period='%s'" % period)
-    _LOG.debug("last_start_time=%s", last_start_time)
-    return last_start_time
+    @staticmethod
+    def _to_sql_datetime_string(dt: pd.Timestamp) -> str:
+        """
+        Convert a timestamp into an SQL string to query the DB.
+        """
+        hdateti.dassert_has_tz(dt)
+        # Convert to UTC, if needed.
+        if dt.tzinfo != hdateti.get_UTC_tz().zone:
+            dt = dt.tz_convert(hdateti.get_UTC_tz())
+        ret: str = dt.strftime("%Y-%m-%d %H:%M:%S")
+        return ret
 
 
 # #############################################################################

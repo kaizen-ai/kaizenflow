@@ -19,8 +19,8 @@ def _check_get_data(
     expected_df_as_str: str,
 ) -> mdmadain.ReplayedTimeMarketDataInterface:
     """
-    - Build ReplayedTimePriceInterval
-    - Execute `get_data*`
+    - Build `ReplayedTimePriceInterval`
+    - Execute the function `get_data*` in `func`
     - Check actual output against expected.
     """
     with hasynci.solipsism_context() as event_loop:

@@ -1093,7 +1093,10 @@ def integrate_diff_dirs(  # type: ignore
 
 
 @task
-def integrate_copy_dirs(ctx, src_dir, dst_dir, subdir="", dry_run=False):  # type: ignore
+def integrate_copy_dirs(ctx, src_dir, dst_dir, subdir="",
+                        check_branches=True,
+                        clean_branches=True,
+                        dry_run=False):  # type: ignore
     """
     Copy dir `subdir` from dir `src_dir` to `dst_dir`.
 
@@ -1106,9 +1109,17 @@ def integrate_copy_dirs(ctx, src_dir, dst_dir, subdir="", dry_run=False):  # typ
     _report_task()
     #
     src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir)
-    _dassert_is_integration_branch(src_dir)
-    _dassert_is_integration_branch(dst_dir)
-    _clean_both_integration_dirs(src_dir, dst_dir)
+    if check_branches:
+        _dassert_is_integration_branch(src_dir)
+        _dassert_is_integration_branch(dst_dir)
+    else:
+        _LOG.warning("Skipping integration branch check")
+    if clean_branches:
+        # We can clean up only the root dir.
+        if subdir == "":
+            _clean_both_integration_dirs(src_dir, dst_dir)
+    else:
+        _LOG.warning("Skipping integration branch cleaning")
     #
     if dry_run:
         cmd = f"diff -r --brief {src_dir} {dst_dir}"
