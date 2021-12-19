@@ -268,23 +268,41 @@ universe_cdd.remove("bitfinex::QTUM_USD")  # NaT in stamps.
 universe_cdd.remove("bitfinex::TRX_GBR")  # doesn't exist.
 universe_cdd.remove("bitfinex::XLM_GBR")  # doesn't exist.
 
-# ftx has some critical mistakes in the downloading process, so cannot continue analysis with them.
+# ftx has some critical mistakes in the downloading process, so can not continue analysis with them.
+# see CMTask801 - Downloading issues of FTX exchange from CDD universe for further reference.
 cdd_ftx_universe = [
     element for element in universe_cdd if element.startswith("ftx")
 ]
 for elem in cdd_ftx_universe:
     universe_cdd.remove(elem)
+    
+# kucoin exchange: the timestamps are obviously wrong and with too short time period.
+# see CMTask253 - Fix timestamp for CDD - kucoin for reference.
+cdd_kucoin_universe = [
+    element for element in universe_cdd if element.startswith("kucoin")
+]
+for elem in cdd_kucoin_universe:
+    universe_cdd.remove(elem)
 
 
 # %%
+# TODO(Max): consider using compute_start_end_table function
 def calculate_statistics_for_stamps(coin_list: set, vendor: str) -> pd.DataFrame:
     """
     Load the OHLCV data for each currency pair in CDD or CCXT universe and
     compute the corresponding descriptive statistics.
-
+    Stats include:
+        - index - currency pair
+        - exchange_id - exchange_id
+        - data_points_counts - number of timestamps for each coin
+        - NaNs_in_Close - number of NaNs in "close"
+        - step_in_stamp - value counts of steps between timestamps
+        - start_date
+        - end_date
+    
     :param coin_list: list of all full symbols in CDD or CCXT universe
-    :param vendor: "ccxt" or "cdd" 
-    :return: pd.Dataframe with statistics
+    :param vendor: CCXT or CDD 
+    :return: descriptive statistics for each full symbol
     """
     # Load data for each full symbol.
     result = []
@@ -310,9 +328,9 @@ def calculate_statistics_for_stamps(coin_list: set, vendor: str) -> pd.DataFrame
         # Reseting DateTime index, so it can be further used in the calculations.
         coin.reset_index(inplace=True)
         coin = coin.rename(columns={"index": "stamp"})
-        # The value of the step between two data points
+        # The value of the step between two data points.
         stamp_steps = pd.Series(coin["stamp"].diff().value_counts().index)
-        # Start-end date
+        # Start-end date.
         max_date = pd.Series(
             coin["stamp"].describe(datetime_is_numeric=True).loc["max"]
         )
@@ -351,10 +369,10 @@ len(cdd_and_ccxt_cleaned)
 
 # %%
 # Load the intersection of full symbols for CDD and CCXT.
-stats_for_stamps_ccxt = calculate_statistics_for_stamps_cdd(
+stats_for_stamps_ccxt = calculate_statistics_for_stamps(
     cdd_and_ccxt_cleaned, vendor="ccxt"
 )
-stats_for_stamps_cdd_union = calculate_statistics_for_stamps_cdd(
+stats_for_stamps_cdd_union = calculate_statistics_for_stamps(
     cdd_and_ccxt_cleaned, vendor="cdd"
 )
 
@@ -373,7 +391,7 @@ cdd_and_not_ccxt_cleaned = set(universe_cdd).difference(ccxt_universe)
 len(cdd_and_not_ccxt_cleaned)
 
 # %%
-stats_for_stamps_cdd = calculate_statistics_for_stamps_cdd(
+stats_for_stamps_cdd = calculate_statistics_for_stamps(
     cdd_and_not_ccxt_cleaned, vendor="cdd"
 )
 
@@ -392,32 +410,3 @@ stats_for_stamps_cdd = calculate_statistics_for_stamps_cdd(
 
 # %%
 stats_for_stamps_cdd.sort_values("exchange_id_cdd")
-
-# %% [markdown]
-# Each coin in CDD has a stamp step of 1 minute.
-#
-# One can see that there are problems with __kucoin__ exchange: the timestamps are obviously wrong and with too short time period.
-
-# %%
-typical_start_date = (
-    pd.DataFrame(
-        stats_for_stamps_cdd[stats_for_stamps_cdd["exchange_id_cdd"] == "kucoin"][
-            "start_date_cdd"
-        ].value_counts()
-    )
-    .reset_index()["index"]
-    .dt.strftime("%d-%m-%Y")
-    .unique()
-)
-typical_end_date = (
-    pd.DataFrame(
-        stats_for_stamps_cdd[stats_for_stamps_cdd["exchange_id_cdd"] == "kucoin"][
-            "end_date_cdd"
-        ].value_counts()
-    )
-    .reset_index()["index"]
-    .dt.strftime("%d-%m-%Y")
-    .unique()
-)
-print("Typical Start Date for Kucoin:", typical_start_date)
-print("Typical End Date for Kucoin:", typical_end_date)
