@@ -25,8 +25,7 @@ def is_iterable(obj: object) -> bool:
 
 def get_function_name(count: int = 0) -> str:
     """
-    Return the name of the function calling this function, i.e., the name of
-    the function calling `get_function_name()`.
+    Return the name of the function calling this function.
     """
     ptr = inspect.currentframe()
     # count=0 corresponds to the calling function, so we need to add an extra

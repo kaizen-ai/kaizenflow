@@ -960,7 +960,7 @@ class TestLibTasksRunTests1(hunitest.TestCase):
         Find test functions in the "no_container" test list.
         """
         file_names = ["test/test_tasks.py"]
-        act = hlibtask._find_test_decorator("no_container", file_names)
+        act = hlibtask._find_test_decorator("qa", file_names)
         act = hunitest.purify_file_names(act)
         exp = ["test/test_tasks.py"]
         self.assert_equal(str(act), str(exp))

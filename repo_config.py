@@ -34,6 +34,13 @@ def get_docker_base_image_name() -> str:
     return base_image_name
 
 
+def run_docker_as_root() -> bool:
+    """
+    Return whether Docker should be run with root user.
+    """
+    return False
+
+
 def has_dind_support() -> bool:
     """
     Return whether this repo image supports Docker-in-Docker.

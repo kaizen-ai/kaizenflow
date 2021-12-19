@@ -20,15 +20,15 @@ def get_simulated_broker_example1(
     market_data_interface: Optional[mdmadain.AbstractMarketDataInterface] = None,
 ) -> ombroker.SimulatedBroker:
     """
-    Build an example of `SimulatedBroker` using an example
-    `MarketDataInterface`, unless specified.
+    Build an example of `SimulatedBroker` using an example `MarketDataInterface`,
+    unless specified.
     """
     # Build MarketDataInterface.
     if market_data_interface is None:
         (
             market_data_interface,
             _,
-        ) = mdmdinex.get_replayed_time_market_data_interface_example2(event_loop)
+        ) = mdmdinex.get_replayed_time_market_data_interface_example3(event_loop)
     # Build SimulatedBroker.
     strategy_id = "SAU1"
     account = "candidate"
@@ -56,7 +56,7 @@ def get_mocked_broker_example1(
         (
             market_data_interface,
             _,
-        ) = mdmdinex.get_replayed_time_market_data_interface_example2(event_loop)
+        ) = mdmdinex.get_replayed_time_market_data_interface_example3(event_loop)
     # Build MockedBroker.
     strategy_id = "SAU1"
     account = "candidate"

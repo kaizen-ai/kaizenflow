@@ -69,8 +69,10 @@ def line(char: Optional[str] = None, num_chars: Optional[int] = None) -> str:
     return char * num_chars
 
 
+# TODO(gp): -> Use *args instead of forcing to build a string to simplify the caller.
 def frame(
     message: str,
+    *,
     char1: Optional[str] = None,
     num_chars: Optional[int] = None,
     char2: Optional[str] = None,
@@ -296,8 +298,11 @@ def round_digits(
 
 
 # #############################################################################
+# Logging helpers
+# #############################################################################
 
-# TODO(gp): Move to hdbg.py close to logging.
+
+# TODO(gp): Move this to hdbg.hlogging, but there are dependencies from this file.
 
 
 def to_str(expression: str, frame_lev: int = 1) -> str:
@@ -333,7 +338,6 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
     return ret
 
 
-# TODO(gp): Move to hdbg.log (or hdbg.logging_helpers)
 def log(logger: logging.Logger, verbosity: int, *vals: Any) -> None:
     """
     log(_LOG, logging.DEBUG, "ticker", "exchange")
@@ -358,6 +362,68 @@ def log(logger: logging.Logger, verbosity: int, *vals: Any) -> None:
             fstring = ", ".join(["%s"] * num_vals)
             vals = list(map(_to_str, vals))  # type: ignore
         logger.log(verbosity, fstring, vals)
+
+
+def log_frame(
+    logger: logging.Logger,
+    fstring: str,
+    *args,
+    level: int = 1,
+    char: str = "#",
+    verbosity: int = logging.DEBUG,
+) -> None:
+    """
+    Log using a frame around the text with different number of leading `#` (or
+    `char`) to organize the log visually.
+
+    The logging output looks like:
+    ```
+    07:44:51       printing            : log_frame                     : 390 :
+    # #########################################################################
+    # hello
+    # #########################################################################
+    ```
+
+    :param txt: text to print in a frame
+    :param level: number of `#` (or `char`) to prepend the logged text
+    :param char: char to prepend the logged text with
+    :param verbosity: logging verbosity
+    """
+    hdbg.dassert_isinstance(logger, logging.Logger)
+    hdbg.dassert_isinstance(fstring, str)
+    msg = fstring % args
+    msg = msg.rstrip().lstrip()
+    msg = frame(msg)
+    # Prepend a `# `, if needed.
+    if level > 0:
+        prefix = level * char + " "
+        msg = prepend(msg, prefix=prefix)
+    # Add an empty space.
+    msg = "\n" + msg
+    logger.log(verbosity, "%s", msg)
+
+
+def install_log_verb_debug(logger: logging.Logger, *, verbose: bool) -> None:
+    """
+    Create in a module a _LOG.debug() that can be disabled in a centralized way.
+
+    This is useful when we want to make a module not too chatty.
+
+    Use example:
+    ```
+    _LOG = logging.getLogger(__name__)
+    hprint.install_log_verb_debug(_LOG, verbose=True)
+
+    _LOG.verb_debug(...)
+    ```
+    """
+    hdbg.dassert_isinstance(logger, logging.Logger)
+
+    def _verb_debug(*args: Any, **kwargs: Any) -> None:
+        if verbose:
+            logger.debug(*args, **kwargs)
+
+    logger.verb_debug = _verb_debug
 
 
 # #############################################################################

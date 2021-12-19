@@ -507,6 +507,11 @@ def _get_repo_config_code(super_module: bool = True) -> str:
 def execute_repo_config_code(code_to_execute: str) -> Any:
     """
     Execute code in `repo_config.py`.
+
+    E.g.,
+    ```
+    hgit.execute_repo_config_code("has_dind_support()")
+    ```
     """
     # Read the info from the current repo.
     code = _get_repo_config_code()
