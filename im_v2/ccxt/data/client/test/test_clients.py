@@ -71,10 +71,6 @@ class TestGetFilePath(hunitest.TestCase):
 # #############################################################################
 
 
-@pytest.mark.skipif(
-    not hgit.execute_repo_config_code("has_dind_support()"),
-    reason="Need dind support",
-)
 class TestCcxtDbClient(imvcodbut.TestImDbHelper):
     @pytest.mark.slow("6 seconds.")
     def test_read_data1(self) -> None:
@@ -255,10 +251,6 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
 
 # TODO(Dan): Rename test class name in #759.
 # TODO(gp): `dind` should not be needed for that.
-@pytest.mark.skipif(
-    not hgit.execute_repo_config_code("has_dind_support()"),
-    reason="Need dind support",
-)
 class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
     @pytest.mark.slow("15 seconds.")
     def test1(self) -> None:
@@ -433,10 +425,6 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
 # #############################################################################
 
 
-@pytest.mark.skipif(
-    not hgit.execute_repo_config_code("has_dind_support()"),
-    reason="Need dind support",
-)
 class TestMultipleSymbolsCcxtDbClient(imvcodbut.TestImDbHelper):
     @pytest.mark.slow("10 seconds.")
     def test1(self) -> None:

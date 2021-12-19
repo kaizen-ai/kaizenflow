@@ -41,7 +41,7 @@ def data_source_node_factory(
         - `ArmaGenerator`
         - `MultivariateNormalGenerator`
     - real-time data sources e.g.,
-        - `RealTimeDataSource` (which uses a full-fledged `AbstractPriceInterface`)
+        - `RealTimeDataSource` (which uses a full-fledged `AbstractMarketDataInterface`)
     - data generators using data from disk
         - `DiskDataSource` (which reads CSV and PQ files)
     - data generators using pluggable functions

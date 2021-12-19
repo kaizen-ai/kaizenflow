@@ -240,6 +240,8 @@ class Test_Traceback1(hunitest.TestCase):
 
     # pylint: disable=line-too-long
     # TODO(gp): Add test and fix for the following traceback:
+
+    # Bug1:
     # Traceback (most recent call last):
     #   File "/Users/saggese/src/venv/amp.client_venv/bin/invoke", line 8, in <module>
     #     sys.exit(program.run())
@@ -276,6 +278,16 @@ class Test_Traceback1(hunitest.TestCase):
     #     signature2 = _compute_file_signature(file_name, dir_depth)
     #     ^
     # SyntaxError: invalid syntax
+
+    # Bug2:
+    # Traceback (most recent call last):
+    #   File "/app/amp/dataflow/pipelines/real_time/test/test_dataflow_amp_real_time_pipeline.py", line 46, in test1
+    #     ) = mdmdinex.get_replayed_time_market_data_interface_example2(
+    # TypeError: get_replayed_time_market_data_interface_example2() got an unexpected keyword argument 'df'
+    #
+    # 13:34:45 INFO  traceback_to_cfile  : _main                         : 76  : in_file_name=log.txt
+    # 13:34:45 INFO  parser              : read_file                     : 304 : Reading from 'log.txt'
+    # 13:34:45 ERROR traceback_to_cfile  : _main                         : 87  : Can't find traceback in the file
     # pylint: enable=line-too-long
 
     def _parse_traceback_helper(

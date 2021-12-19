@@ -6,7 +6,6 @@ import oms.place_orders as oplaorde
 
 # TODO(Paul): -> process_forecasts.py
 
-import asyncio
 import datetime
 import logging
 from typing import Any, Dict, List
@@ -16,6 +15,7 @@ from tqdm.autonotebook import tqdm
 
 import core.config as cconfig
 import helpers.dbg as hdbg
+import helpers.hasyncio as hasynci
 import helpers.hpandas as hpandas
 import helpers.htqdm as htqdm
 import helpers.printing as hprint
@@ -117,9 +117,7 @@ def _generate_orders(
             # No need to place trades.
             continue
         order = omorder.Order(
-            asset_id=asset_id,
-            num_shares=shares_,
-            **order_config.to_dict(),
+            asset_id=asset_id, num_shares=shares_, **order_config.to_dict()
         )
         _LOG.debug("order=%s", order.order_id)
         orders.append(order)
@@ -185,7 +183,7 @@ async def place_orders(
         - `market_data_interface`: the interface to get price data
         - `pred_column`: the column in the df from the DAG containing the predictions
            for all the assets
-        - `mark_column`: the column from the PriceInterface to mark holdings to
+        - `mark_column`: the column from the MarketDataInterface to mark holdings to
           market
         - `portfolio`: object used to store positions
         - `locates`: object used to access short locates
@@ -238,6 +236,7 @@ async def place_orders(
     # Cache a variable used many times.
     offset_5min = pd.DateOffset(minutes=5)
     #
+    get_wall_clock_time = market_data_interface.get_wall_clock_time
     tqdm_out = htqdm.TqdmToLogger(_LOG, level=logging.INFO)
     num_rows = len(prediction_df)
     iter_ = enumerate(prediction_df.iterrows())
@@ -248,11 +247,9 @@ async def place_orders(
             "\n%s",
             hprint.frame("# idx=%s next_timestamp=%s" % (idx, next_timestamp)),
         )
-        # TODO(gp): Synchronize here to avoid clock drift.
         # Wait until get_wall_clock_time() == timestamp.
-        # hasyncio.wait_until(timestamp, get_wall_clock_time)
-        # wall_clock_timestamp = get_wall_clock_time()
-        wall_clock_timestamp = next_timestamp
+        await hasynci.wait_until(next_timestamp, get_wall_clock_time)
+        wall_clock_timestamp = get_wall_clock_time()
         _LOG.debug("wall_clock_timestamp=%s", wall_clock_timestamp)
         #
         time = wall_clock_timestamp.time()
@@ -287,7 +284,6 @@ async def place_orders(
                 char1="#",
             ),
         )
-        # _update_portfolio(wall_clock_timestamp, portfolio, broker)
         portfolio.update_state()
         # Continue if we are outside of our trading window.
         if time < trading_start_time or time > trading_end_time:
@@ -313,7 +309,6 @@ async def place_orders(
         # Create an config for `Order`. This requires timestamps and so is
         # inside the loop.
         order_dict_ = {
-            "market_data_interface": market_data_interface,
             "type_": order_type,
             "creation_timestamp": wall_clock_timestamp,
             "start_timestamp": timestamp_start,
@@ -332,6 +327,4 @@ async def place_orders(
                 char1="#",
             ),
         )
-        broker.submit_orders(orders)
-        # TODO(gp): Remove this once it's synchronized above.
-        await asyncio.sleep(60 * 5)
+        await broker.submit_orders(orders)

@@ -25,6 +25,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(gp): -> AbstractFitPredictNode
 class FitPredictNode(dtfcornode.Node, abc.ABC):
     """
     Class with abstract sklearn-style `fit()` and `predict()` functions.
@@ -107,11 +108,10 @@ class DataSource(FitPredictNode, abc.ABC):
     A source node that generates data for cross-validation from the passed data
     frame.
 
-    Derived classes inject the data as a DataFrame in this class at
-    construction time (e.g., from a passed DataFrame, reading from a
-    file). This node implements the interface of `FitPredictNode`
-    allowing to filter data for fitting and predicting based on
-    intervals.
+    Derived classes inject the data as a DataFrame in this class at construction
+    time (e.g., from a passed DataFrame, reading from a file). This node implements
+    the interface of `FitPredictNode` allowing to filter data for fitting and
+    predicting based on intervals.
     """
 
     def __init__(
@@ -154,7 +154,7 @@ class DataSource(FitPredictNode, abc.ABC):
         """
         hdbg.dassert_is_not(self.df, None)
         self.df = cast(pd.DataFrame, self.df)
-        #
+        # Filter.
         if self._fit_intervals is not None:
             idx_slices = [
                 self.df.loc[interval[0] : interval[1]].index
@@ -164,6 +164,7 @@ class DataSource(FitPredictNode, abc.ABC):
             fit_df = self.df.loc[idx]
         else:
             fit_df = self.df
+        # TODO(gp): Is this copy necessary?
         fit_df = fit_df.copy()
         hdbg.dassert(not fit_df.empty, "`fit_df` is empty")
         # Update `info`.
@@ -189,7 +190,7 @@ class DataSource(FitPredictNode, abc.ABC):
         """
         hdbg.dassert_is_not(self.df, None)
         self.df = cast(pd.DataFrame, self.df)
-        #
+        # TODO(gp): Factor out common code with `fit()`.
         if self._predict_intervals is not None:
             idx_slices = [
                 self.df.loc[interval[0] : interval[1]].index
@@ -215,6 +216,7 @@ class DataSource(FitPredictNode, abc.ABC):
     def _validate_intervals(intervals: List[Tuple[Any, Any]]) -> None:
         hdbg.dassert_isinstance(intervals, list)
         for interval in intervals:
+            # Intervals are [a, b] with a <= b.
             hdbg.dassert_eq(len(interval), 2)
             if interval[0] is not None and interval[1] is not None:
                 hdbg.dassert_lte(interval[0], interval[1])

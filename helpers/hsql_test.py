@@ -8,6 +8,8 @@ import abc
 import logging
 import os
 
+import pytest
+
 import helpers.git as hgit
 import helpers.printing as hprint
 import helpers.sql as hsql
@@ -17,6 +19,10 @@ import helpers.unit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
+@pytest.mark.skipif(
+    not hgit.execute_repo_config_code("has_dind_support()"),
+    reason="Need dind support",
+)
 class TestDbHelper(hunitest.TestCase, abc.ABC):
     """
     This class allows testing code that interacts with a DB.
