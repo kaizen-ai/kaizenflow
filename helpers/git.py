@@ -739,8 +739,7 @@ def get_amp_abs_path() -> str:
     repo_sym_names = ["alphamatic/amp"]
     code = "get_extra_amp_repo_sym_name()"
     try:
-        repo_sym_names.append(
-            execute_repo_config_code(code))
+        repo_sym_names.append(execute_repo_config_code(code))
     except NameError:
         _LOG.debug("Can't execute the code '%s'", code)
     if repo_sym_name in repo_sym_names:

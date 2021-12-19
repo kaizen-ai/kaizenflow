@@ -158,15 +158,17 @@ def get_replayed_time_market_data_interface_example2(
     df = generate_random_price_data(
         start_datetime, end_datetime, columns, asset_ids
     )
-    market_data_interface, get_wall_clock_time = (
-        get_replayed_time_market_data_interface_example1(
-            event_loop,
-            initial_replayed_delay,
-            df,
-            delay_in_secs=delay_in_secs,
-            sleep_in_secs=sleep_in_secs,
-            time_out_in_secs=time_out_in_secs
-    ))
+    (
+        market_data_interface,
+        get_wall_clock_time,
+    ) = get_replayed_time_market_data_interface_example1(
+        event_loop,
+        initial_replayed_delay,
+        df,
+        delay_in_secs=delay_in_secs,
+        sleep_in_secs=sleep_in_secs,
+        time_out_in_secs=time_out_in_secs,
+    )
     return market_data_interface, get_wall_clock_time
 
 

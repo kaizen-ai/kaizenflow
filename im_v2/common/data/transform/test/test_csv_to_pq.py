@@ -1,8 +1,7 @@
 import os
 
-import pytest
-
 import pandas as pd
+import pytest
 
 import helpers.io_ as hio
 import helpers.system_interaction as hsysinte

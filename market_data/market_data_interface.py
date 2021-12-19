@@ -291,7 +291,9 @@ class AbstractMarketDataInterface(abc.ABC):
         ```
         """
         # Sort in increasing time order and reindex.
-        df.sort_values([self._end_time_col_name, self._asset_id_col], inplace=True)
+        df.sort_values(
+            [self._end_time_col_name, self._asset_id_col], inplace=True
+        )
         df.set_index(self._end_time_col_name, drop=True, inplace=True)
         # TODO(gp): Add a check to make sure we are not getting data after the
         #  current time.
@@ -349,7 +351,9 @@ class AbstractMarketDataInterface(abc.ABC):
             )
             wall_clock_time = self.get_wall_clock_time()
             _LOG.verb_debug(
-                "wall_clock_time=%s -> %s", wall_clock_time, wall_clock_time.floor("Min")
+                "wall_clock_time=%s -> %s",
+                wall_clock_time,
+                wall_clock_time.floor("Min"),
             )
             ret = last_db_end_time.floor("Min") >= (
                 wall_clock_time.floor("Min") - pd.Timedelta(minutes=1)
@@ -381,9 +385,12 @@ class AbstractMarketDataInterface(abc.ABC):
             last_db_end_time = self.get_last_end_time()
             # TODO(gp): We should use the new hasynci.poll().
             _LOG.debug(
-                    "\n### waiting on last bar: "
-                    "num_iter=%s/%s: wall_clock_time=%s last_db_end_time=%s",
-                    num_iter, self._max_iterations, wall_clock_time, last_db_end_time
+                "\n### waiting on last bar: "
+                "num_iter=%s/%s: wall_clock_time=%s last_db_end_time=%s",
+                num_iter,
+                self._max_iterations,
+                wall_clock_time,
+                last_db_end_time,
             )
             if last_db_end_time and (
                 last_db_end_time.floor("Min") >= wall_clock_time.floor("Min")
@@ -809,7 +816,9 @@ class ReplayedTimeMarketDataInterface(AbstractMarketDataInterface):
             # This avoids mistakes when mocking data for certain assets, but request
             # data for assets that don't exist, which can make us wait for data that
             # will never come.
-            hdbg.dassert_is_subset(asset_ids, self._df[self._asset_id_col].unique())
+            hdbg.dassert_is_subset(
+                asset_ids, self._df[self._asset_id_col].unique()
+            )
         # Filter the data by the current time.
         wall_clock_time = self.get_wall_clock_time()
         _LOG.verb_debug(hprint.to_str("wall_clock_time"))

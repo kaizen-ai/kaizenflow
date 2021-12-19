@@ -58,7 +58,7 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     integrate_create_branch,
     integrate_diff_dirs,
     lint,
-    lint_create_branches,
+    lint_create_branch,
     print_setup,
     print_tasks,
     pytest_clean,
