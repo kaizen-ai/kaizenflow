@@ -18,6 +18,7 @@
 # %%
 import logging
 import os
+from typing import List
 
 import pandas as pd
 
@@ -275,7 +276,7 @@ cdd_ftx_universe = [
 ]
 for elem in cdd_ftx_universe:
     universe_cdd.remove(elem)
-    
+
 # kucoin exchange: the timestamps are obviously wrong and with too short time period.
 # see CMTask253 - Fix timestamp for CDD - kucoin for reference.
 cdd_kucoin_universe = [
@@ -287,11 +288,13 @@ for elem in cdd_kucoin_universe:
 
 # %%
 # TODO(Max): consider using compute_start_end_table function
-def calculate_statistics_for_stamps(coin_list: set, vendor: str) -> pd.DataFrame:
+def calculate_statistics_for_stamps(
+    coin_list: List[str], vendor: str
+) -> pd.DataFrame:
     """
     Load the OHLCV data for each currency pair in CDD or CCXT universe and
-    compute the corresponding descriptive statistics.
-    Stats include:
+    compute the corresponding descriptive statistics. Stats include:
+
         - index - currency pair
         - exchange_id - exchange_id
         - data_points_counts - number of timestamps for each coin
@@ -299,9 +302,9 @@ def calculate_statistics_for_stamps(coin_list: set, vendor: str) -> pd.DataFrame
         - step_in_stamp - value counts of steps between timestamps
         - start_date
         - end_date
-    
+
     :param coin_list: list of all full symbols in CDD or CCXT universe
-    :param vendor: CCXT or CDD 
+    :param vendor: CCXT or CDD
     :return: descriptive statistics for each full symbol
     """
     # Load data for each full symbol.
@@ -386,13 +389,20 @@ union_cdd_ccxt_stats.sort_values("exchange_id_cdd")
 # ## Comparison of full symbols that are included in CDD but not available in CCXT
 
 # %%
-# Intersection of full symbols from CDD and CCXT (cleaned from unavailable full symbols).
+# Set of full symbols that are included in CDD but not available in CCXT (cleaned from unavailable full symbols).
 cdd_and_not_ccxt_cleaned = set(universe_cdd).difference(ccxt_universe)
 len(cdd_and_not_ccxt_cleaned)
 
 # %%
+# Clean the set from non-USDT pairs.
+cdd_and_not_ccxt_cleaned_usdt = [
+    element for element in cdd_and_not_ccxt_cleaned if element.endswith("USDT")
+]
+len(cdd_and_not_ccxt_cleaned_usdt)
+
+# %% run_control={"marked": false}
 stats_for_stamps_cdd = calculate_statistics_for_stamps(
-    cdd_and_not_ccxt_cleaned, vendor="cdd"
+    cdd_and_not_ccxt_cleaned_usdt, vendor="cdd"
 )
 
 # %% [markdown]
