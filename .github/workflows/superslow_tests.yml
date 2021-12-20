@@ -1,8 +1,9 @@
 name: Superslow tests
+
 on:
   schedule:
-    # Run this once a day even if there are no commit.
-    - cron:  '0 0 */1 * *'
+    # Run this once a week even if there are no commits.
+    - cron:  '0 0 * * 0'
 
 jobs:
 
