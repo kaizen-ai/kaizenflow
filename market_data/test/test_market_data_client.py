@@ -4,6 +4,7 @@ import pandas as pd
 
 import helpers.datetime_ as hdateti
 import helpers.git as hgit
+import helpers.printing as hprint
 import helpers.unit_test as hunitest
 import im_v2.ccxt.data.client.clients as imvcdclcl
 import im_v2.common.data.client as imvcdcli
@@ -49,4 +50,4 @@ class TestGetData(hunitest.TestCase):
             normalize_data=True,
             limit=None,
         )
-        self.check_string(data)
+        print(hprint.df_to_short_str("df", data))
