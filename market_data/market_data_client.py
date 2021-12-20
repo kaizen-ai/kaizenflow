@@ -2,6 +2,7 @@ from typing import Any, List, Optional
 
 import pandas as pd
 
+import helpers.dbg as hdbg
 import im_v2.common.data.client as ivcdclcl
 import market_data.market_data_interface as mdmadain
 
@@ -29,13 +30,20 @@ class MarketDataInterFace(mdmadain.AbstractMarketDataInterface):
         normalize_data: bool,
         limit: Optional[int],
     ) -> pd.DataFrame:
-        wall_clock_time = self.get_wall_clock_time()
         full_symbols = asset_ids
         market_data = self._im_client.read_data(
             full_symbols,
             start_ts=start_ts,
             end_ts=end_ts,
         )
+        if self._columns:
+            hdbg.dassert_is_subset(self._columns, market_data.columns)
+            market_data = market_data[self._columns]
+        if limit:
+            hdbg.dassert_lte(1, limit)
+            market_data = market_data.head(limit)
+        if normalize_data:
+            market_data = self.process_data(market_data)
         return market_data
 
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
