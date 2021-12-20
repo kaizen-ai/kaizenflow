@@ -1,4 +1,5 @@
 import argparse
+import copy
 import os
 from typing import Tuple
 
@@ -11,6 +12,17 @@ import im_v2.common.data.transform.convert_pq_by_date_to_by_asset as imvcdtcpbdt
 
 
 class TestPqByDateToByAsset1(hunitest.TestCase):
+    test_kwargs = {
+        "transform_func": "",
+        "asset_col_name": "asset",
+        # parallelization args
+        "num_threads": "2",
+        "dry_run": True,
+        "no_incremental": True,
+        "skip_on_error": True,
+        "num_attempts": 1,
+    }
+
     def generate_test_data(self, verbose: bool) -> Tuple[str, str]:
         test_dir = self.get_scratch_space()
         by_date_dir = os.path.join(test_dir, "by_date")
@@ -103,18 +115,13 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         """
         test_dir, by_date_dir = self.generate_test_data(verbose)
         by_asset_dir = os.path.join(test_dir, "by_asset")
-        kwargs = {
-            "src_dir": by_date_dir,
-            "dst_dir": by_asset_dir,
-            "transform_func": "",
-            "asset_col_name": "asset",
-            # parallelization args
-            "num_threads": "2",
-            "dry_run": True,
-            "no_incremental": True,
-            "skip_on_error": True,
-            "num_attempts": 1,
-        }
+        kwargs = copy.deepcopy(self.test_kwargs)
+        kwargs.update(
+            {
+                "src_dir": by_date_dir,
+                "dst_dir": by_asset_dir,
+            }
+        )
         if verbose:
             kwargs.update(
                 {
@@ -127,6 +134,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         self.check_directory_structure_with_file_contents(
             by_date_dir, by_asset_dir
         )
+
 
 # TODO(Nikola): Command line tests plus error checks for direct run.
 #   _save_chunk must be tested separately!
