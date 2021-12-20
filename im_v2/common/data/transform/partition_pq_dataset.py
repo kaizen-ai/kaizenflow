@@ -26,8 +26,8 @@ dst_dir/
 
 # Use as:
 
-> im_v2/common/data/transform/partition_pq_dataset.py
-    --src_dir ccxt_realtime_raw_pq_example/ \
+> im_v2/common/data/transform/partition_pq_dataset.py \
+    --src_dir ccxt_raw_pq_example/ \
     --dst_dir ccxt_realtime_partitioned_pq/ \
     --by asset \
     --datetime_col timestamp \
@@ -121,7 +121,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dataset = ds.dataset(args.src_dir, format="parquet", partitioning="hive")
     data = dataset.to_table().to_pandas()
     # Set datetime index.
-    data = data.set_index(convert_timestamp_column(args.datetime_col))
+    datetime_col = data[args.datetime_col]
+    data = data.set_index(convert_timestamp_column(datetime_col))
     if args.by == "date":
         data["date"] = data.index.strftime("%Y%m%d")
         partition_cols = ["date"]
