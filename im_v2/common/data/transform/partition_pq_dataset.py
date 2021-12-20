@@ -33,7 +33,14 @@ def _parse() -> argparse.ArgumentParser:
         help="Source directory with unpartitioned .parquet files",
     )
     parser.add_argument(
-        "--src_dir",
+        "--by",
+        action="store",
+        type=str,
+        required=True,
+        help="Partition dataset by date or by asset",
+    )
+    parser.add_argument(
+        "--col_name",
         action="store",
         type=str,
         required=True,
