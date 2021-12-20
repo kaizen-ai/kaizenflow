@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 """
 # Partition parquet dataset by date or by asset.
 
