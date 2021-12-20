@@ -12,10 +12,10 @@ import market_data.market_data_client as mclient
 
 
 # TODO(Grisha): add more tests.
-class TestGetData(hunitest.TestCase):
+class TestGetDataForInterval(hunitest.TestCase):
     def test1(self) -> None:
         """
-        Test that `MarketDataInterface` returns data correctly.
+        Test that `MarketDataInterface` returns data for interval correctly.
         """
         # Initialize the `IM` client.
         test_dir = os.path.join(
@@ -40,7 +40,7 @@ class TestGetData(hunitest.TestCase):
         # Read data.
         start_ts = pd.Timestamp("2018-08-17T00:01:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00")
-        data = market_data_client._get_data(
+        data = market_data_client.get_data_for_interval(
             start_ts,
             end_ts,
             "end_ts",
