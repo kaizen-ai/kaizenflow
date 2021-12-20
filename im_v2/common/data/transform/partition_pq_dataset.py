@@ -4,7 +4,7 @@
 
 # Parquet dataset partitioned by date:
 ```
-src_dir/
+dst_dir/
     date=20211211/
         data.parquet
     date=20211212/
