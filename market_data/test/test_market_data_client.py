@@ -25,15 +25,18 @@ class TestGetData(hunitest.TestCase):
         market_data_client = mclient.MarketDataInterFace(
             "full_symbol",
             full_symbols,
-            "start_timestamp_col",
-            "end_timestamp_col",
+            "start_ts",
+            "end_ts",
+            [],
             hdateti.GetWallClockTime,
             im_client=multiple_symbols_client,
         )
+        start_ts = pd.Timestamp("2018-08-17T00:01:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00")
         data = market_data_client._get_data(
-            pd.Timestamp("2018-08-17T00:01:00"),
-            pd.Timestamp("2018-08-17T00:05:00"),
-            "end_timestamp_col",
+            start_ts,
+            end_ts,
+            "end_ts",
             full_symbols,
             left_close=True,
             right_close=False,

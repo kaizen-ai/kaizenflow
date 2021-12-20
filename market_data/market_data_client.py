@@ -25,12 +25,14 @@ class MarketDataInterFace(mdmadain.AbstractMarketDataInterface):
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         ts_col_name: str,
+        # TODO(Grisha): handle `asset_ids = None` on the `im` side.
         asset_ids: Optional[List[str]],
         left_close: bool,
         right_close: bool,
         normalize_data: bool,
         limit: Optional[int],
     ) -> pd.DataFrame:
+        # Load the data using `im_client`.
         full_symbols = asset_ids
         market_data = self._im_client.read_data(
             full_symbols,
@@ -38,12 +40,19 @@ class MarketDataInterFace(mdmadain.AbstractMarketDataInterface):
             end_ts=end_ts,
         )
         if self._columns:
+            # Select only specified columns.
             hdbg.dassert_is_subset(self._columns, market_data.columns)
             market_data = market_data[self._columns]
         if limit:
+            # Keep only top N records.
             hdbg.dassert_lte(1, limit)
             market_data = market_data.head(limit)
         if normalize_data:
+            # TODO(Grisha): handle data format properly on the `im` side.
+            # Convert data to the format required by `process_data()`.
+            market_data = market_data.reset_index()
+            market_data = market_data.rename(columns={"index": "end_ts"})
+            market_data["start_ts"] = market_data["end_ts"] - pd.Timedelta(minutes=1)
             market_data = self.process_data(market_data)
         return market_data
 
