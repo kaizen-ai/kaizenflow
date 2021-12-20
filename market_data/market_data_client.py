@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import market_data.market_data_client as mdmadacl
+"""
+
 from typing import Any, List, Optional
 
 import pandas as pd
@@ -82,7 +88,9 @@ class MarketDataInterFace(mdmadain.AbstractMarketDataInterface):
             # Convert data to the format required by `process_data()`.
             market_data = market_data.reset_index()
             market_data = market_data.rename(columns={"index": "end_ts"})
-            market_data["start_ts"] = market_data["end_ts"] - pd.Timedelta(minutes=1)
+            market_data["start_ts"] = market_data["end_ts"] - pd.Timedelta(
+                minutes=1
+            )
             market_data = self.process_data(market_data)
         return market_data
 
