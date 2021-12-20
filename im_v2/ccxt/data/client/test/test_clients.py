@@ -294,7 +294,7 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
             end_ts=pd.Timestamp("2018-08-17T00:05:00"),
         )
         # Reset index to convert output to JSON.
-        actual = actual.reset_index(col_fill="date")
+        actual = actual.reset_index()
         expected_length = 8
         expected_exchange_ids = ["binance", "kucoin"]
         expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
