@@ -122,6 +122,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Set datetime index.
     datetime_col = data[args.datetime_col]
     data = data.set_index(convert_timestamp_column(datetime_col))
+    # TODO(Danya): Employ partition functions from helpers.hparquet.
     if args.by == "date":
         data["date"] = data.index.strftime("%Y%m%d")
         partition_cols = ["date"]
