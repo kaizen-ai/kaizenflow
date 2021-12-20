@@ -14,10 +14,19 @@ class MarketDataInterFace(mdmadain.AbstractMarketDataInterface):
         *args: Any,
         im_client: ivcdclcl.AbstractImClient,
     ) -> None:
-        super().__init__(*args)
+        """
+        Constructor.
+
+        :param args: see `AbstractMarketDataInterface`
+        :param im_client: `IM` client
+        """
+        super().__init__(*args)  # type: ignore[arg-type]
         self._im_client = im_client
 
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
+        """
+        See the parent class.
+        """
         return True
 
     def _get_data(
@@ -32,6 +41,27 @@ class MarketDataInterFace(mdmadain.AbstractMarketDataInterface):
         normalize_data: bool,
         limit: Optional[int],
     ) -> pd.DataFrame:
+        """
+        Read market data using `IM` client.
+
+        :param start_ts: beginning of the time interval to select data for
+        :param end_ts: end of the time interval to select data for
+        :param ts_col_name: the name of the column (before the remapping) to filter
+            on
+        :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
+        :param left_close, right_close: represent the type of interval
+            - E.g., [start_ts, end_ts), or (start_ts, end_ts]
+        :param normalize_data: whether to normalize data or not, see `self.process_data()`
+        :param limit: keep only top N records
+        :return: market data retrieved by `IM` client
+        """
+        # `IM` client uses [start_ts; end_ts).
+        if not left_close:
+            # Add one millisecond not to include the left boundary.
+            start_ts = start_ts + pd.Timedelta(ms=1)
+        if right_close:
+            # Subtract one millisecond to include the right boundary.
+            end_ts = end_ts - pd.Timedelta(ms=1)
         # Load the data using `im_client`.
         full_symbols = asset_ids
         market_data = self._im_client.read_data(
@@ -56,5 +86,6 @@ class MarketDataInterFace(mdmadain.AbstractMarketDataInterface):
             market_data = self.process_data(market_data)
         return market_data
 
+    # TODO(Grisha): implement the method.
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
         return NotImplementedError
