@@ -1,16 +1,16 @@
 # by_date=
 # Dir structure
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20211230
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20211230/data.parquet
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20211231
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20211231/data.parquet
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20220101
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20220101/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20211230
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20211230/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20211231
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20211231/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20220101
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20220101/data.parquet
 # File signatures
 len(file_names)=3
-file_names=/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20211230/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20211231/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20220101/data.parquet
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20211230/data.parquet
+file_names=$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20211230/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20211231/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20220101/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20211230/data.parquet
 num_lines=43
 '''
 original shape=(72, 4)
@@ -57,7 +57,7 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20211231/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20211231/data.parquet
 num_lines=43
 '''
 original shape=(72, 4)
@@ -104,7 +104,7 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20220101/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_date/date=20220101/data.parquet
 num_lines=43
 '''
 original shape=(72, 4)
@@ -153,36 +153,36 @@ Tail:
 '''
 # by_asset=
 # Dir structure
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30/asset=A
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30/asset=A/data.parquet
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30/asset=B
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30/asset=B/data.parquet
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30/asset=C
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30/asset=C/data.parquet
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31/asset=A
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31/asset=A/data.parquet
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31/asset=B
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31/asset=B/data.parquet
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31/asset=C
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31/asset=C/data.parquet
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1/asset=A
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1/asset=A/data.parquet
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1/asset=B
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1/asset=B/data.parquet
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1/asset=C
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1/asset=C/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30/asset=A
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30/asset=A/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30/asset=B
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30/asset=B/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30/asset=C
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30/asset=C/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31/asset=A
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31/asset=A/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31/asset=B
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31/asset=B/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31/asset=C
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31/asset=C/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1/asset=A
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1/asset=A/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1/asset=B
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1/asset=B/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1/asset=C
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1/asset=C/data.parquet
 # File signatures
 len(file_names)=9
-file_names=/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30/asset=A/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30/asset=B/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30/asset=C/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31/asset=A/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31/asset=B/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31/asset=C/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1/asset=A/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1/asset=B/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1/asset=C/data.parquet
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30/asset=A/data.parquet
+file_names=$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30/asset=A/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30/asset=B/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30/asset=C/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31/asset=A/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31/asset=B/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31/asset=C/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1/asset=A/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1/asset=B/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1/asset=C/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30/asset=A/data.parquet
 num_lines=37
 '''
 original shape=(24, 3)
@@ -223,7 +223,7 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30/asset=B/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30/asset=B/data.parquet
 num_lines=37
 '''
 original shape=(24, 3)
@@ -264,7 +264,7 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30/asset=C/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=30/asset=C/data.parquet
 num_lines=37
 '''
 original shape=(24, 3)
@@ -305,7 +305,7 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31/asset=A/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31/asset=A/data.parquet
 num_lines=37
 '''
 original shape=(24, 3)
@@ -346,7 +346,7 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31/asset=B/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31/asset=B/data.parquet
 num_lines=37
 '''
 original shape=(24, 3)
@@ -387,7 +387,7 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31/asset=C/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2021/month=12/day=31/asset=C/data.parquet
 num_lines=37
 '''
 original shape=(24, 3)
@@ -428,7 +428,7 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1/asset=A/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1/asset=A/data.parquet
 num_lines=37
 '''
 original shape=(24, 3)
@@ -469,7 +469,7 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1/asset=B/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1/asset=B/data.parquet
 num_lines=37
 '''
 original shape=(24, 3)
@@ -510,7 +510,7 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1/asset=C/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data1/tmp.scratch/by_asset/year=2022/month=1/day=1/asset=C/data.parquet
 num_lines=37
 '''
 original shape=(24, 3)
