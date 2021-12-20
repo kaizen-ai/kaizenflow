@@ -171,6 +171,11 @@ def _parse() -> argparse.ArgumentParser:
         action="store_true",
         help="More realistic and complete data is generated",
     )
+    parser.add_argument(
+        "--no_partition",
+        action="store_true",
+        help="Whether to partition the resulting parquet"
+    )
     hparser.add_verbosity_arg(parser)
     return parser
 
@@ -199,7 +204,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _get_verbose_daily_df if args.verbose else _get_generic_daily_df
     )
     dummy_df = get_daily_df(start_date, end_date, assets, freq)
-    hparque.save_daily_df_as_pq(dummy_df, dst_dir)
+    if args.no_partition:
+        dummy_df.to_parquet(dst_dir, index=False)
+    else:
+        hparque.save_daily_df_as_pq(dummy_df, dst_dir)
 
 
 if __name__ == "__main__":
