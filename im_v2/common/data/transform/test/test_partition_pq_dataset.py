@@ -1,11 +1,8 @@
 import os
 
-import pytest
-
 import helpers.git as hgit
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
-import im_v2.common.data.transform.partition_pq_dataset as ppqiw
 
 
 class TestPartitionPQDataset(hunitest.TestCase):
@@ -23,9 +20,7 @@ class TestPartitionPQDataset(hunitest.TestCase):
         cmd = " ".join(cmd)
         hsysinte.system(cmd)
         include_file_content = True
-        signature = hunitest.get_dir_signature(
-            dst_dir, include_file_content
-        )
+        signature = hunitest.get_dir_signature(dst_dir, include_file_content)
         self.check_string(signature)
 
     def test_partition_dataset_by_asset(self):
@@ -35,7 +30,8 @@ class TestPartitionPQDataset(hunitest.TestCase):
         cmd = []
         script_path = os.path.join(
             hgit.get_amp_abs_path(),
-            "im_v2/common/data/transform/partition_pq_dataset.py")
+            "im_v2/common/data/transform/partition_pq_dataset.py",
+        )
         cmd.append(script_path)
         cmd.append(f"--src_dir {source_dir}")
         cmd.append(f"--dst_dir {dst_dir}")
@@ -45,9 +41,7 @@ class TestPartitionPQDataset(hunitest.TestCase):
         cmd = " ".join(cmd)
         hsysinte.system(cmd)
         include_file_content = True
-        signature = hunitest.get_dir_signature(
-            dst_dir, include_file_content
-        )
+        signature = hunitest.get_dir_signature(dst_dir, include_file_content)
         self.check_string(signature)
 
     def _generate_daily_data(self) -> None:
