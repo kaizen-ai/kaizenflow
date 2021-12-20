@@ -88,11 +88,17 @@ def _main(parser: argparse.ArgumentParser) -> None:
     data = data.set_index(convert_timestamp_column(args.datetime_col))
     if args.by == "date":
         data["date"] = data.index.strftime("%Y%m%d")
+        partition_cols = ["date"]
     elif args.by == "asset":
+        hdbg.dassert(args.asset_col, msg="Please probide the name of asset column.")
         data["year"] = data.index.year
         data["month"] = data.index.month
+        partition_cols = ["year", "month", args.asset_col]
     else:
         raise ValueError(f"Partition by {args.by} is not supported.")
+    # Save partitioned parquet dataset.
+    table = pa.Table.from_pandas(data)
+    pq.write_to_dataset(table, args.dst_dir, partition_cols=partition_cols)
 
 
 if __name__ == "__main__":
