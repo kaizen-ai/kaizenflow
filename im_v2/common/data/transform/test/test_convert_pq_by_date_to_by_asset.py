@@ -1,7 +1,6 @@
 import argparse
-import copy
 import os
-from typing import Tuple
+from typing import Any, Dict, Tuple
 
 import pytest
 
@@ -12,16 +11,32 @@ import im_v2.common.data.transform.convert_pq_by_date_to_by_asset as imvcdtcpbdt
 
 
 class TestPqByDateToByAsset1(hunitest.TestCase):
-    test_kwargs = {
-        "transform_func": "",
-        "asset_col_name": "asset",
-        # parallelization args
-        "num_threads": "2",
-        "dry_run": True,
-        "no_incremental": True,
-        "skip_on_error": True,
-        "num_attempts": 1,
-    }
+    @staticmethod
+    def get_dummy_script_kwargs() -> Dict[str, Any]:
+        return {
+            "transform_func": "",
+            "asset_col_name": "asset",
+            # parallelization args
+            "num_threads": "2",
+            "dry_run": True,
+            "no_incremental": True,
+            "skip_on_error": True,
+            "num_attempts": 1,
+        }
+
+    @staticmethod
+    def get_dummy_task_config(test_dir: str) -> Dict[str, Any]:
+        return {
+            "src_dir": f"{test_dir}/by_date",
+            "chunk": [
+                f"{test_dir}/by_date/date=20211230/data.parquet",
+                f"{test_dir}/by_date/date=20211231/data.parquet",
+                f"{test_dir}/by_date/date=20220101/data.parquet",
+            ],
+            "dst_dir": f"{test_dir}/by_asset",
+            "transform_func": "",
+            "asset_col_name": "asset",
+        }
 
     def generate_test_data(self, verbose: bool) -> Tuple[str, str]:
         test_dir = self.get_scratch_space()
@@ -81,6 +96,26 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         verbose = True
         self._test_daily_data_direct_run(verbose)
 
+    @pytest.mark.skip("Enable when purify_text issue is resolved CMTask782")
+    def test__save_chunk1(self) -> None:
+        verbose = False
+        self._test_joblib_task(verbose, {})
+
+    @pytest.mark.skip("Enable when purify_text issue is resolved CMTask782")
+    def test__save_chunk2(self) -> None:
+        verbose = True
+        self._test_joblib_task(verbose, {})
+
+    def test__save_chunk3(self) -> None:
+        """
+        Faulty transform_func.
+        """
+        verbose = False
+        faulty_config = {"transform_func": "faulty_func"}
+        with self.assertRaises(AssertionError) as fail:
+            self._test_joblib_task(verbose, faulty_config)
+        self.assertIn("Invalid transform_func='faulty_func'", str(fail.exception))
+
     def _test_daily_data(self, verbose: bool) -> None:
         """
         Generate daily data for 3 days in a by-date format and then convert it
@@ -115,7 +150,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         """
         test_dir, by_date_dir = self.generate_test_data(verbose)
         by_asset_dir = os.path.join(test_dir, "by_asset")
-        kwargs = copy.deepcopy(self.test_kwargs)
+        kwargs = self.get_dummy_script_kwargs()
         kwargs.update(
             {
                 "src_dir": by_date_dir,
@@ -135,6 +170,31 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
             by_date_dir, by_asset_dir
         )
 
+    def _test_joblib_task(
+        self, verbose: bool, config_update: Dict[str, Any]
+    ) -> None:
+        """
+        Tests directly _save_chunk function that is used as joblib task.
 
-# TODO(Nikola): Command line tests plus error checks for direct run.
-#   _save_chunk must be tested separately!
+        Because it is run as a separate process it is not caught by
+        coverage.
+        """
+        test_dir, by_date_dir = self.generate_test_data(verbose)
+        by_asset_dir = os.path.join(test_dir, "by_asset")
+        config = self.get_dummy_task_config(test_dir)
+        if verbose:
+            config.update(
+                {
+                    "transform_func": "reindex_on_unix_epoch",
+                    "asset_col_name": "ticker",
+                }
+            )
+        if config_update:
+            config.update(config_update)
+        imvcdtcpbdtba._save_chunk(config)
+        self.check_directory_structure_with_file_contents(
+            by_date_dir, by_asset_dir
+        )
+
+
+# TODO(Nikola): Command line tests.
