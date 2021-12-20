@@ -573,7 +573,7 @@ def diff_files(
     msg = []
     # Add tag.
     if tag is not None:
-        msg.append("\n" + hprint.frame(tag, "-"))
+        msg.append("\n" + hprint.frame(tag, char1="-"))
     # Diff to screen.
     _, res = hsysinte.system_to_string(
         "echo; sdiff --expand-tabs -l -w 150 %s %s" % (file_name1, file_name2),
@@ -844,7 +844,10 @@ def _assert_equal(
     if not is_equal:
         _LOG.error(
             "%s",
-            "\n" + hprint.frame("Test '%s' failed" % full_test_name, "=", 80),
+            "\n"
+            + hprint.frame(
+                "Test '%s' failed" % full_test_name, char1="=", num_chars=80
+            ),
         )
         # Print the correct output, like:
         #   exp = r'""""
@@ -853,7 +856,9 @@ def _assert_equal(
         #   2021-02-17 11:00:00-05:00
         #   """
         txt = []
-        txt.append(hprint.frame(f"EXPECTED VARIABLE: {full_test_name}", "-"))
+        txt.append(
+            hprint.frame(f"EXPECTED VARIABLE: {full_test_name}", char1="-")
+        )
         # We always return the variable exactly as this should be, even if we could
         # make it look better through indentation in case of fuzzy match.
         if actual_orig.startswith('"'):

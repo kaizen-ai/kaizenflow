@@ -21,14 +21,14 @@ import market_data.market_data_interface as mdmadain
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): -> generate_random_price_data()
-def generate_synthetic_db_data(
+def generate_random_price_data(
     start_datetime: pd.Timestamp,
     end_datetime: pd.Timestamp,
     columns: List[str],
     asset_ids: List[int],
     *,
     freq: str = "1T",
+    initial_price: float = 1000,
     seed: int = 42,
 ) -> pd.DataFrame:
     """
@@ -46,9 +46,10 @@ def generate_synthetic_db_data(
     )
     hdateti.dassert_tz_compatible(start_datetime, end_datetime)
     hdbg.dassert_lte(start_datetime, end_datetime)
+    hdbg.dassert_isinstance(asset_ids, list)
+    #
     start_dates = pd.date_range(start_datetime, end_datetime, freq=freq)
     dfs = []
-    offset = 1000
     for asset_id in asset_ids:
         df = pd.DataFrame()
         df["start_datetime"] = start_dates
@@ -60,52 +61,39 @@ def generate_synthetic_db_data(
         for column in columns:
             with hnumpy.random_seed_context(seed):
                 data = np.random.rand(len(start_dates), 1) - 0.5  # type: ignore[var-annotated]
-            df[column] = offset + data.cumsum()
+            df[column] = initial_price + data.cumsum()
         df["asset_id"] = asset_id
         dfs.append(df)
     df = pd.concat(dfs, axis=0)
     return df
 
 
-# TODO(gp): initial_replayed_delay -> initial_delay_in_mins (or in secs).
 def get_replayed_time_market_data_interface_example1(
     event_loop: asyncio.AbstractEventLoop,
-    start_datetime: pd.Timestamp,
-    end_datetime: pd.Timestamp,
     initial_replayed_delay: int,
-    delay_in_secs: int = 0,
+    df: pd.DataFrame,
     *,
-    asset_ids: Optional[List[int]] = None,
-    columns: Optional[List[str]] = None,
-    df: Optional[pd.DataFrame] = None,
+    delay_in_secs: int = 0,
     sleep_in_secs: float = 1.0,
     time_out_in_secs: int = 60 * 2,
 ) -> Tuple[mdmadain.ReplayedTimeMarketDataInterface, hdateti.GetWallClockTime]:
     """
-    Build a ReplayedTimeMarketDataInterface backed by synthetic data.
+    Build a `ReplayedTimeMarketDataInterface` backed by synthetic data.
 
     :param start_datetime: start time for the generation of the synthetic data
     :param end_datetime: end time for the generation of the synthetic data
     :param initial_replayed_delay: how many minutes after the beginning of the data
         the replayed time starts. This is useful to simulate the beginning / end of
         the trading day
-    :param asset_ids: asset ids to generate data for. `None` defaults to asset_id=1000
+    :param asset_ids: asset ids to generate data for. `None` defaults to all the
+        available asset ids in the data frame
     """
-    # TODO(gp): This could / should be inferred from df.
-    if asset_ids is None:
-        asset_ids = [1000]
-    # TODO(gp): Move it to the client, if possible.
-    # Build the df with the data.
-    if df is None:
-        if columns is None:
-            columns = ["last_price"]
-        df = generate_synthetic_db_data(
-            start_datetime, end_datetime, columns, asset_ids
-        )
     # Build the `ReplayedTimeMarketDataInterface` backed by the df with
     # `initial_replayed_delay` after the first timestamp of the data.
     knowledge_datetime_col_name = "timestamp_db"
     asset_id_col_name = "asset_id"
+    # If the asset ids were not specified, then infer it from the dataframe.
+    asset_ids = df[asset_id_col_name].unique()
     start_time_col_name = "start_datetime"
     end_time_col_name = "end_datetime"
     columns = None
@@ -139,7 +127,50 @@ def get_replayed_time_market_data_interface_example1(
     return market_data_interface, get_wall_clock_time
 
 
+# TODO(gp): initial_replayed_delay -> initial_delay_in_mins (or in secs).
 def get_replayed_time_market_data_interface_example2(
+    event_loop: asyncio.AbstractEventLoop,
+    start_datetime: pd.Timestamp,
+    end_datetime: pd.Timestamp,
+    initial_replayed_delay: int,
+    asset_ids: List[int],
+    *,
+    delay_in_secs: int = 0,
+    columns: Optional[List[str]] = None,
+    sleep_in_secs: float = 1.0,
+    time_out_in_secs: int = 60 * 2,
+) -> Tuple[mdmadain.ReplayedTimeMarketDataInterface, hdateti.GetWallClockTime]:
+    """
+    Build a `ReplayedTimeMarketDataInterface` backed by synthetic data.
+
+    :param start_datetime: start time for the generation of the synthetic data
+    :param end_datetime: end time for the generation of the synthetic data
+    :param initial_replayed_delay: how many minutes after the beginning of the data
+        the replayed time starts. This is useful to simulate the beginning / end of
+        the trading day
+    :param asset_ids: asset ids to generate data for. `None` defaults to all the
+        available asset ids in the data frame
+    """
+    # Build the df with the data.
+    if columns is None:
+        columns = ["last_price"]
+    hdbg.dassert_is_not(asset_ids, None)
+    df = generate_random_price_data(
+        start_datetime, end_datetime, columns, asset_ids
+    )
+    market_data_interface, get_wall_clock_time = (
+        get_replayed_time_market_data_interface_example1(
+            event_loop,
+            initial_replayed_delay,
+            df,
+            delay_in_secs=delay_in_secs,
+            sleep_in_secs=sleep_in_secs,
+            time_out_in_secs=time_out_in_secs
+    ))
+    return market_data_interface, get_wall_clock_time
+
+
+def get_replayed_time_market_data_interface_example3(
     event_loop: asyncio.AbstractEventLoop,
 ) -> Tuple[mdmadain.ReplayedTimeMarketDataInterface, hdateti.GetWallClockTime]:
     """
@@ -157,7 +188,7 @@ def get_replayed_time_market_data_interface_example2(
     )
     columns_ = ["price"]
     asset_ids = [101, 202]
-    df = generate_synthetic_db_data(
+    df = generate_random_price_data(
         start_datetime, end_datetime, columns_, asset_ids
     )
     _LOG.debug("df=%s", hprint.dataframe_to_str(df))
@@ -171,11 +202,9 @@ def get_replayed_time_market_data_interface_example2(
         get_wall_clock_time,
     ) = get_replayed_time_market_data_interface_example1(
         event_loop,
-        start_datetime,
-        end_datetime,
         initial_replayed_delay,
-        delay_in_secs,
         df=df,
+        delay_in_secs=delay_in_secs,
         sleep_in_secs=sleep_in_secs,
         time_out_in_secs=time_out_in_secs,
     )

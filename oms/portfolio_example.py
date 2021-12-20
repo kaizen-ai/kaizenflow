@@ -55,6 +55,8 @@ def get_simulated_portfolio_example1(
 def get_mocked_portfolio_example1(
     event_loop: Optional[asyncio.AbstractEventLoop],
     db_connection: hsql.DbConnection,
+    # TODO(gp): For symmetry with get_mocked_broker_example1 we should have a
+    #  default value.
     table_name: str,
     initial_timestamp: pd.Timestamp,
     *,

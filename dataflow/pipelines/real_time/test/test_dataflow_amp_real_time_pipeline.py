@@ -4,9 +4,9 @@ import pandas as pd
 
 import core.config as cconfig
 import core.real_time_example as cretiexa
-import dataflow.core.runners as dtfcorrunn
 import dataflow.pipelines.dataflow_example as dtfpidtfexa
 import dataflow.pipelines.real_time.pipeline as dtfpretipi
+import dataflow.system.real_time_runner as dtfsretiru
 import helpers.hasyncio as hasynci
 import helpers.unit_test as hunitest
 import market_data.market_data_interface_example as mdmdinex
@@ -36,7 +36,7 @@ class TestRealTimeReturnPipeline1(hunitest.TestCase):
             end_datetime = pd.Timestamp("2000-01-01 10:30:00-05:00")
             columns = ["close", "vol"]
             asset_ids = [1000]
-            df = mdmdinex.generate_synthetic_db_data(
+            df = mdmdinex.generate_random_price_data(
                 start_datetime, end_datetime, columns, asset_ids
             )
             initial_replayed_delay = 5
@@ -45,10 +45,8 @@ class TestRealTimeReturnPipeline1(hunitest.TestCase):
                 _,
             ) = mdmdinex.get_replayed_time_market_data_interface_example1(
                 event_loop,
-                start_datetime,
-                end_datetime,
                 initial_replayed_delay,
-                df=df,
+                df,
             )
             period = "last_5mins"
             source_node_kwargs = {
@@ -78,7 +76,7 @@ class TestRealTimeReturnPipeline1(hunitest.TestCase):
                 "dst_dir": None,
             }
             # Run.
-            dag_runner = dtfcorrunn.RealTimeDagRunner(**dag_runner_kwargs)
+            dag_runner = dtfsretiru.RealTimeDagRunner(**dag_runner_kwargs)
             result_bundles = hasynci.run(
                 dag_runner.predict(), event_loop=event_loop
             )
@@ -131,8 +129,8 @@ class TestRealTimePipelineWithOms1(hunitest.TestCase):
                 "2000-01-01 10:30:00-05:00", tz="America/New_York"
             )
             columns = ["price", "vol"]
-            asset_ids = [1000, 1001]
-            df = mdmdinex.generate_synthetic_db_data(
+            asset_ids = [1000]
+            df = mdmdinex.generate_random_price_data(
                 start_datetime, end_datetime, columns, asset_ids
             )
             initial_replayed_delay = 0
@@ -141,10 +139,8 @@ class TestRealTimePipelineWithOms1(hunitest.TestCase):
                 get_wall_clock_time,
             ) = mdmdinex.get_replayed_time_market_data_interface_example1(
                 event_loop,
-                start_datetime,
-                end_datetime,
                 initial_replayed_delay,
-                df=df,
+                df,
             )
             period = "last_5mins"
             source_node_kwargs = {
@@ -205,7 +201,7 @@ class TestRealTimePipelineWithOms1(hunitest.TestCase):
                 "dst_dir": None,
             }
             # Run.
-            dag_runner = dtfcorrunn.RealTimeDagRunner(**dag_runner_kwargs)
+            dag_runner = dtfsretiru.RealTimeDagRunner(**dag_runner_kwargs)
             result_bundles = hasynci.run(
                 dag_runner.predict(), event_loop=event_loop
             )
