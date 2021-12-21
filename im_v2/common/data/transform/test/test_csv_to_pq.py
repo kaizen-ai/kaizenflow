@@ -21,8 +21,8 @@ class TestCsvToPq(hunitest.TestCase):
             "im_v2/common/data/transform/csv_to_pq.py",
             f"--src_dir {self.csv_dir_path}",
             f"--dst_dir {pq_dir_path}",
-            f"--datetime_col timestamp",
-            f"--asset_col currency_pair",
+            "--datetime_col timestamp",
+            "--asset_col currency_pair",
         ]
         cmd = " ".join(cmd)
         hsysinte.system(cmd)
