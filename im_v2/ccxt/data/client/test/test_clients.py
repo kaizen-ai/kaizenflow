@@ -5,16 +5,17 @@ import pandas as pd
 import pytest
 
 import helpers.git as hgit
-import helpers.s3 as hs3
 import helpers.sql as hsql
-import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
-import im.ccxt.db.utils as imccdbuti
+import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.ccxt.data.client.clients as imvcdclcl
 import im_v2.common.data.client as imvcdcli
 import im_v2.common.db.utils as imvcodbut
 
-_AM_S3_ROOT_DIR = os.path.join(hs3.get_path(), "data")
+_LOCAL_ROOT_DIR = os.path.join(
+    hgit.get_client_root(False),
+    "im_v2/ccxt/data/client/test/test_data",
+)
 
 
 class TestGetFilePath(hunitest.TestCase):
@@ -23,16 +24,15 @@ class TestGetFilePath(hunitest.TestCase):
         Test supported exchange id and currency pair.
         """
         exchange_id = "binance"
-        currency_pair = "ETH_USDT"
+        currency_pair = "BTC_USDT"
         ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
         )
         actual = ccxt_loader._get_file_path(
             imvcdclcl._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
         )
-        s3_bucket_path = hs3.get_path()
         expected = os.path.join(
-            s3_bucket_path, "data/ccxt/20210924/binance/ETH_USDT.csv.gz"
+            _LOCAL_ROOT_DIR, "ccxt/20210924/binance/BTC_USDT.csv.gz"
         )
         self.assert_equal(actual, expected)
 
@@ -41,9 +41,9 @@ class TestGetFilePath(hunitest.TestCase):
         Test unsupported exchange id.
         """
         exchange_id = "unsupported exchange"
-        currency_pair = "ADA_USDT"
+        currency_pair = "BTC_USDT"
         ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
         )
         # TODO(gp): We should throw a different exception, like
         # `UnsupportedExchange`.
@@ -60,7 +60,7 @@ class TestGetFilePath(hunitest.TestCase):
         exchange_id = "binance"
         currency_pair = "unsupported_currency"
         ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
         )
         # TODO(gp): Same change also for CDD test_loader.py
         with self.assertRaises(AssertionError):
@@ -72,10 +72,6 @@ class TestGetFilePath(hunitest.TestCase):
 # #############################################################################
 
 
-@pytest.mark.skipif(
-    not hgit.execute_repo_config_code("has_dind_support()"),
-    reason="Need dind support",
-)
 class TestCcxtDbClient(imvcodbut.TestImDbHelper):
     @pytest.mark.slow("6 seconds.")
     def test_read_data1(self) -> None:
@@ -139,7 +135,7 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
         """
         Create a test CCXT OHLCV table in DB.
         """
-        query = imccdbuti.get_ccxt_ohlcv_create_table_query()
+        query = imvccdbut.get_ccxt_ohlcv_create_table_query()
         self.connection.cursor().execute(query)
 
     @staticmethod
@@ -180,46 +176,42 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
 # #############################################################################
 
 
-# TODO(Dan): Rename test class name in #759.
 # TODO(*): Consider to factor out the class calling in a `def _get_loader()`.
-class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
-    @pytest.mark.slow("8 seconds.")
+class TestCcxtCsvFileSystemClientReadData(hunitest.TestCase):
     def test1(self) -> None:
         """
-        Test that files on S3 are being read correctly.
+        Test that ".csv.gz" files from filesystem are being read correctly.
         """
         ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
         )
         actual = ccxt_loader.read_data("binance::BTC_USDT")
         # Check the output values.
         actual_string = hunitest.convert_df_to_json_string(actual)
         self.check_string(actual_string)
 
-    @pytest.mark.slow("7 seconds.")
     def test2(self) -> None:
         """
-        Test that files on S3 are being filtered correctly.
+        Test that files from filesystem are being filtered correctly.
         """
         ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
         )
         actual = ccxt_loader.read_data(
             full_symbol="binance::BTC_USDT",
-            start_ts=pd.Timestamp("2021-09-09"),
-            end_ts=pd.Timestamp("2021-09-10"),
+            start_ts=pd.Timestamp("2018-08-17T00:01:00"),
+            end_ts=pd.Timestamp("2018-08-17T00:05:00"),
         )
         # Check the output values.
         actual_string = hunitest.convert_df_to_json_string(actual)
         self.check_string(actual_string)
 
-    @pytest.mark.slow("8 seconds.")
     def test3(self) -> None:
         """
-        Test that files on S3 are being read correctly without normalization.
+        Test that files are being read correctly without normalization.
         """
         ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
         )
         actual = ccxt_loader.read_data(
             full_symbol="binance::BTC_USDT",
@@ -231,56 +223,89 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
 
     def test4(self) -> None:
         """
+        Test that ".csv" files from filesystem are being read correctly.
+        """
+        ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
+            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR, use_gzip=False
+        )
+        actual = ccxt_loader.read_data("binance::BTC_USDT")
+        # Check the output values.
+        actual_string = hunitest.convert_df_to_json_string(actual)
+        self.check_string(actual_string)
+
+    def test5(self) -> None:
+        """
         Test unsupported full symbol.
         """
         ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
         )
         with self.assertRaises(AssertionError):
             ccxt_loader.read_data("unsupported_exchange::unsupported_currency")
 
-    def test5(self) -> None:
+    def test6(self) -> None:
         """
         Test unsupported data type.
         """
         with self.assertRaises(AssertionError):
             imvcdclcl.CcxtCsvFileSystemClient(
-                data_type="unsupported_data_type",
-                root_dir=_AM_S3_ROOT_DIR,
-                aws_profile="am",
+                data_type="unsupported_data_type", root_dir=_LOCAL_ROOT_DIR
             )
+
+
+class TestCcxtParquetFileSystemClientReadData(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test that Parquet files from filesystem are being read correctly.
+        """
+        ccxt_loader = imvcdclcl.CcxtParquetFileSystemClient(
+            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
+        )
+        actual = ccxt_loader.read_data("binance::BTC_USDT")
+        # Check the output values.
+        actual_string = hunitest.convert_df_to_json_string(actual)
+        self.check_string(actual_string)
+
+    def test2(self) -> None:
+        """
+        Test that Parquet files from filesystem are being filtered correctly.
+        """
+        ccxt_loader = imvcdclcl.CcxtParquetFileSystemClient(
+            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
+        )
+        actual = ccxt_loader.read_data(
+            full_symbol="binance::BTC_USDT",
+            start_ts=pd.Timestamp("2018-08-17T00:01:00"),
+            end_ts=pd.Timestamp("2018-08-17T00:05:00"),
+        )
+        # Check the output values.
+        actual_string = hunitest.convert_df_to_json_string(actual)
+        self.check_string(actual_string)
 
 
 # #############################################################################
 
 
-# TODO(Dan): Rename test class name in #759.
-# TODO(gp): `dind` should not be needed for that.
-@pytest.mark.skipif(
-    not hgit.execute_repo_config_code("has_dind_support()"),
-    reason="Need dind support",
-)
 class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
-    @pytest.mark.slow("12 seconds.")
     def test1(self) -> None:
         """
         Test that data for provided list of full symbols is being read
         correctly.
         """
         # Set input list of full symbols.
-        full_symbols = ["kucoin::XRP_USDT", "gateio::SOL_USDT"]
+        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         # Initialize CCXT file client and pass it to multiple symbols client.
         ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
         )
-        multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
+        multiple_symbols_client = imvcdcli.MultipleSymbolsImClient(
             class_=ccxt_file_client, mode="concat"
         )
         # Check actual results.
         actual = multiple_symbols_client.read_data(full_symbols=full_symbols)
-        expected_length = 1593983
-        expected_exchange_ids = ["gateio", "kucoin"]
-        expected_currency_pairs = ["SOL_USDT", "XRP_USDT"]
+        expected_length = 199
+        expected_exchange_ids = ["binance", "kucoin"]
+        expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
         self._check_output(
             actual,
             expected_length,
@@ -293,23 +318,25 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
         Test that all files are being read and filtered correctly.
         """
         # Set input list of full symbols.
-        full_symbols = ["kucoin::SOL_USDT", "gateio::XRP_USDT"]
+        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         # Initialize CCXT file client and pass it to multiple symbols client.
         ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
         )
-        multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
+        multiple_symbols_client = imvcdcli.MultipleSymbolsImClient(
             class_=ccxt_file_client, mode="concat"
         )
         # Check output.
         actual = multiple_symbols_client.read_data(
             full_symbols=full_symbols,
-            start_ts=pd.Timestamp("2021-09-01T00:00:00-04:00"),
-            end_ts=pd.Timestamp("2021-09-02T00:00:00-04:00"),
+            start_ts=pd.Timestamp("2018-08-17T00:01:00"),
+            end_ts=pd.Timestamp("2018-08-17T00:05:00"),
         )
-        expected_length = 2880
-        expected_exchange_ids = ["gateio", "kucoin"]
-        expected_currency_pairs = ["SOL_USDT", "XRP_USDT"]
+        # Reset index to convert output to JSON.
+        actual = actual.reset_index()
+        expected_length = 8
+        expected_exchange_ids = ["binance", "kucoin"]
+        expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
         self._check_output(
             actual,
             expected_length,
@@ -317,18 +344,17 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
             expected_currency_pairs,
         )
 
-    @pytest.mark.slow("9 seconds")
     def test3(self) -> None:
         """
         Test that all files are being read correctly without normalization.
         """
         # Set input list of full symbols.
-        full_symbols = ["kucoin::XRP_USDT", "gateio::SOL_USDT"]
+        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         # Initialize CCXT file client and pass it to multiple symbols client.
         ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
         )
-        multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
+        multiple_symbols_client = imvcdcli.MultipleSymbolsImClient(
             class_=ccxt_file_client, mode="concat"
         )
         # Check output.
@@ -336,9 +362,9 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
             full_symbols=full_symbols,
             normalize=False,
         )
-        expected_length = 1486976
-        expected_exchange_ids = ["gateio", "kucoin"]
-        expected_currency_pairs = ["SOL_USDT", "XRP_USDT"]
+        expected_length = 174
+        expected_exchange_ids = ["binance", "kucoin"]
+        expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
         self._check_output(
             actual,
             expected_length,
@@ -346,18 +372,17 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
             expected_currency_pairs,
         )
 
-    @pytest.mark.slow("11 seconds.")
     def test4(self) -> None:
         """
         Test that all files are being read correctly with dict output mode.
         """
         # Set input list of full symbols.
-        full_symbols = ["gateio::SOL_USDT", "kucoin::XRP_USDT"]
+        full_symbols = ["binance::BTC_USDT", "kucoin::ETH_USDT"]
         # Initialize CCXT file client and pass it to multiple symbols client.
         ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
         )
-        multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
+        multiple_symbols_client = imvcdcli.MultipleSymbolsImClient(
             class_=ccxt_file_client, mode="dict"
         )
         # Check actual results.
@@ -368,16 +393,16 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
         self.assert_equal(str(actual_dict_keys), str(full_symbols))
         self._check_output(
             actual=actual_df1,
-            expected_length=129595,
-            expected_exchange_ids=["gateio"],
-            expected_currency_pairs=["SOL_USDT"],
+            expected_length=100,
+            expected_exchange_ids=["binance"],
+            expected_currency_pairs=["BTC_USDT"],
             check_string=False,
         )
         self._check_output(
             actual=actual_df2,
-            expected_length=1464388,
+            expected_length=99,
             expected_exchange_ids=["kucoin"],
-            expected_currency_pairs=["XRP_USDT"],
+            expected_currency_pairs=["ETH_USDT"],
             check_string=False,
         )
         # Create combined actual string and check it.
@@ -434,10 +459,6 @@ class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
 # #############################################################################
 
 
-@pytest.mark.skipif(
-    not hgit.execute_repo_config_code("has_dind_support()"),
-    reason="Need dind support",
-)
 class TestMultipleSymbolsCcxtDbClient(imvcodbut.TestImDbHelper):
     @pytest.mark.slow("10 seconds.")
     def test1(self) -> None:
@@ -453,7 +474,7 @@ class TestMultipleSymbolsCcxtDbClient(imvcodbut.TestImDbHelper):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Initialize CCXT DB client and pass it to multiple symbols client.
         ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
-        multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
+        multiple_symbols_client = imvcdcli.MultipleSymbolsImClient(
             class_=ccxt_db_client, mode="concat"
         )
         # Check actual results.
@@ -483,7 +504,7 @@ class TestMultipleSymbolsCcxtDbClient(imvcodbut.TestImDbHelper):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Initialize CCXT DB client and pass it to multiple symbols client.
         ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
-        multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
+        multiple_symbols_client = imvcdcli.MultipleSymbolsImClient(
             class_=ccxt_db_client, mode="concat"
         )
         # Check output.
@@ -517,7 +538,7 @@ class TestMultipleSymbolsCcxtDbClient(imvcodbut.TestImDbHelper):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Initialize CCXT DB client and pass it to multiple symbols client.
         ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
-        multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
+        multiple_symbols_client = imvcdcli.MultipleSymbolsImClient(
             class_=ccxt_db_client, mode="concat"
         )
         # Check output.
@@ -550,7 +571,7 @@ class TestMultipleSymbolsCcxtDbClient(imvcodbut.TestImDbHelper):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Initialize CCXT DB client and pass it to multiple symbols client.
         ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
-        multiple_symbols_client = imvcdcli.MultipleSymbolsClient(
+        multiple_symbols_client = imvcdcli.MultipleSymbolsImClient(
             class_=ccxt_db_client, mode="dict"
         )
         # Check output.
@@ -593,7 +614,7 @@ class TestMultipleSymbolsCcxtDbClient(imvcodbut.TestImDbHelper):
         """
         Create a test CCXT OHLCV table in DB.
         """
-        query = imccdbuti.get_ccxt_ohlcv_create_table_query()
+        query = imvccdbut.get_ccxt_ohlcv_create_table_query()
         self.connection.cursor().execute(query)
 
     @staticmethod
@@ -673,28 +694,26 @@ class TestMultipleSymbolsCcxtDbClient(imvcodbut.TestImDbHelper):
 
 
 class TestGetTimestamp(hunitest.TestCase):
-    @pytest.mark.slow("7 seconds.")
     def test_get_start_ts(self) -> None:
         """
         Test that the earliest timestamp available is computed correctly.
         """
         ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
         )
-        start_ts = ccxt_file_client.get_start_ts_available("binance::DOGE_USDT")
-        expected_start_ts = pd.to_datetime("2019-07-05 12:00:00", utc=True)
+        start_ts = ccxt_file_client.get_start_ts_available("binance::BTC_USDT")
+        expected_start_ts = pd.to_datetime("2018-08-17 00:00:00", utc=True)
         self.assertEqual(start_ts, expected_start_ts)
 
-    @pytest.mark.slow("7 seconds.")
     def test_get_end_ts(self) -> None:
         """
         Test that the latest timestamp available is computed correctly.
         """
         ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
         )
-        end_ts = ccxt_file_client.get_end_ts_available("binance::DOGE_USDT")
-        expected_end_ts = pd.to_datetime("2021-09-16 09:19:00", utc=True)
+        end_ts = ccxt_file_client.get_end_ts_available("binance::BTC_USDT")
+        expected_end_ts = pd.to_datetime("2018-08-17 01:39:00", utc=True)
         # TODO(Grisha): use `assertGreater` when start downloading more data.
         self.assertEqual(end_ts, expected_end_ts)
 
@@ -708,7 +727,7 @@ class TestGetUniverse(hunitest.TestCase):
         Test that CCXT universe is computed correctly.
         """
         ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
+            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
         )
         universe = ccxt_file_client.get_universe()
         # Check the length of the universe.

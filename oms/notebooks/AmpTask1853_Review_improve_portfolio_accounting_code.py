@@ -41,7 +41,7 @@ hprint.config_notebook()
 
 # %%
 event_loop = None
-market_data_interface = mdmdinex.get_replayed_time_market_data_interface_example2(
+market_data_interface = mdmdinex.get_replayed_time_market_data_interface_example3(
     event_loop
 )
 

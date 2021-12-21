@@ -960,7 +960,7 @@ class TestLibTasksRunTests1(hunitest.TestCase):
         Find test functions in the "no_container" test list.
         """
         file_names = ["test/test_tasks.py"]
-        act = hlibtask._find_test_decorator("no_container", file_names)
+        act = hlibtask._find_test_decorator("qa", file_names)
         act = hunitest.purify_file_names(act)
         exp = ["test/test_tasks.py"]
         self.assert_equal(str(act), str(exp))
@@ -1687,3 +1687,16 @@ class Test_pytest_failed1(hunitest.TestCase):
         )
         exp = " ".join(exp)
         self.assert_equal(act, exp)
+
+
+# #############################################################################
+
+
+class TestFailing(hunitest.TestCase):
+    """
+    Run a test that fails based on AM_FORCE_TEST_FAIL environment variable.
+    """
+
+    def test_failing(self) -> None:
+        if os.environ.get("AM_FORCE_TEST_FAIL", "") == "1":
+            self.fail("test failed succesfully")

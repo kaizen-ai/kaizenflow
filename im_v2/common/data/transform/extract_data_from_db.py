@@ -6,7 +6,7 @@ Extract RT data from db to daily PQ files.
 > im_v2/common/data/transform/extract_data_from_db.py \
     --start_date 2021-11-23 \
     --end_date 2021-11-25 \
-    --daily_pq_path im_v2/common/data/transform/test_data_by_date
+    --dst_dir im_v2/common/data/transform/test_data_by_date
 
 Import as:
 
@@ -27,6 +27,7 @@ import helpers.sql as hsql
 import im_v2.ccxt.data.client.clients as imvcdclcl
 import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.common.data.client.clients as ivcdclcl
+import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
 
@@ -50,11 +51,18 @@ def _parse() -> argparse.ArgumentParser:
         help="Until when is data going to be extracted, excluding end date",
     )
     parser.add_argument(
-        "--daily_pq_path",
+        "--dst_dir",
         action="store",
         type=str,
         required=True,
         help="Location of daily PQ files",
+    )
+    parser.add_argument(
+        "--stage",
+        action="store",
+        type=str,
+        default="local",
+        help="Which env is used: local, dev or prod",
     )
     hparser.add_verbosity_arg(parser)
     return parser
@@ -77,13 +85,14 @@ def _main(parser: argparse.ArgumentParser) -> None:
     timespan = pd.date_range(start_date, end_date)
     hdbg.dassert_lt(2, len(timespan))
     # Location of daily PQ files.
-    daily_pq_path = args.daily_pq_path
-    hdbg.dassert_exists(daily_pq_path)
-    ccxt_db_client = imvcdclcl.CcxtDbClient(
-        "ohlcv",
-        hsql.get_connection_from_env_vars(),
-    )
-    multiple_symbols_ccxt_db_client = ivcdclcl.MultipleSymbolsClient(
+    dst_dir = args.dst_dir
+    hdbg.dassert_exists(dst_dir)
+    stage = args.stage
+    env_file = imvimlita.get_db_env_path(stage)
+    connection_params = hsql.get_connection_info_from_env_file(env_file)
+    connection = hsql.get_connection(*connection_params)
+    ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", connection)
+    multiple_symbols_ccxt_db_client = ivcdclcl.MultipleSymbolsImClient(
         class_=ccxt_db_client, mode="concat"
     )
     symbols = imvccunun.get_vendor_universe()
@@ -101,12 +110,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
             continue
         try:
             date_directory = f"date={timespan[date_index].strftime('%Y%m%d')}"
-            full_path = os.path.join(daily_pq_path, date_directory)
+            full_path = os.path.join(dst_dir, date_directory)
             # TODO(Nikola): Incremental as in PQ conversion?
             hdbg.dassert_not_exists(full_path)
             in_col_name = "timestamp"
-            rt_df = hpandas.reindex_on_unix_epoch(rt_df, in_col_name)
-            hparque.save_daily_df_as_pq(rt_df, daily_pq_path)
+            unit = "ms"
+            rt_df = hpandas.reindex_on_unix_epoch(rt_df, in_col_name, unit=unit)
+            hparque.save_daily_df_as_pq(rt_df, dst_dir)
         except AssertionError as ex:
             _LOG.info("Skipping. PQ file already present: %s.", ex)
             continue

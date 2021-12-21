@@ -136,7 +136,7 @@ display(cdd_binance_df.shape)
 ccxt_client = imvcdclcl.CcxtCsvFileSystemClient(
     data_type="ohlcv", root_dir=root_dir, aws_profile="am"
 )
-multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
+multiple_symbols_client = ivcdclcl.MultipleSymbolsImClient(
     class_=ccxt_client, mode="concat"
 )
 ccxt_binance_df = multiple_symbols_client.read_data(

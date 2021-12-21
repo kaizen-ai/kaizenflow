@@ -427,7 +427,7 @@ def git_merge_master(ctx, ff_only=False, abort_if_not_clean=True):  # type: igno
 
 
 @task
-def git_clean(ctx, dry_run=False):  # type: ignore
+def git_clean(ctx, fix_perms=False, dry_run=False):  # type: ignore
     """
     Clean the repo_short_name and its submodules from artifacts.
 
@@ -436,6 +436,10 @@ def git_clean(ctx, dry_run=False):  # type: ignore
     _report_task(hprint.to_str("dry_run"))
     # TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
     #  mistake.
+    # Fix permissions, if needed.
+    if fix_perms:
+        cmd = "invoke fix_perms"
+        _run(ctx, cmd)
     # Clean recursively.
     git_clean_cmd = "git clean -fd"
     if dry_run:
@@ -888,7 +892,7 @@ def git_branch_copy(ctx, new_branch_name="", use_patch=False):  # type: ignore
 
 
 @task
-def git_branch_diff_with_base(ctx, diff_type="", subdir_name=""):  # type: ignore
+def git_branch_diff_with_base(ctx, diff_type="", subdir=""):  # type: ignore
     """
     Diff files of the current branch with master at the branching point.
     """
@@ -916,12 +920,12 @@ def git_branch_diff_with_base(ctx, diff_type="", subdir_name=""):  # type: ignor
     for branch_file in files:
         _LOG.debug("\n%s", hprint.frame(f"branch_file={branch_file}"))
         # Check if it needs to be compared.
-        if subdir_name != "":
-            if not branch_file.startswith(subdir_name):
+        if subdir != "":
+            if not branch_file.startswith(subdir):
                 _LOG.debug(
                     "Skipping since '%s' doesn't start with '%s'",
                     branch_file,
-                    subdir_name,
+                    subdir,
                 )
                 continue
         # Get the file on the right of the vimdiff.
@@ -1025,7 +1029,7 @@ def integrate_create_branch(ctx, dir_name, dry_run=False):  # type: ignore
 
 
 def _get_src_dst_dirs(
-    src_dir: str, dst_dir: str, subdir_name: str
+    src_dir: str, dst_dir: str, subdir: str
 ) -> Tuple[str, str]:
     """
     Return the full path of `src_dir` and `dst_dir` assuming that
@@ -1036,11 +1040,11 @@ def _get_src_dst_dirs(
     """
     curr_parent_dir = os.path.dirname(os.getcwd())
     #
-    src_dir = os.path.join(curr_parent_dir, src_dir, subdir_name)
+    src_dir = os.path.join(curr_parent_dir, src_dir, subdir)
     src_dir = os.path.normpath(src_dir)
     hdbg.dassert_dir_exists(src_dir)
     #
-    dst_dir = os.path.join(curr_parent_dir, dst_dir, subdir_name)
+    dst_dir = os.path.join(curr_parent_dir, dst_dir, subdir)
     dst_dir = os.path.normpath(dst_dir)
     hdbg.dassert_dir_exists(dst_dir)
     return src_dir, dst_dir
@@ -1048,7 +1052,7 @@ def _get_src_dst_dirs(
 
 @task
 def integrate_diff_dirs(  # type: ignore
-        ctx, src_dir="amp1", dst_dir="cmamp1", subdir_name="", use_linux_diff=False,
+        ctx, src_dir="amp1", dst_dir="cmamp1", subdir="", use_linux_diff=False,
         check_branches=True,
         clean_branches=True,
         dry_run=False,
@@ -1068,14 +1072,16 @@ def integrate_diff_dirs(  # type: ignore
     #
     _dassert_current_dir_matches(src_dir)
     #
-    src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir_name)
+    src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir)
     if check_branches:
         _dassert_is_integration_branch(src_dir)
         _dassert_is_integration_branch(dst_dir)
     else:
         _LOG.warning("Skipping integration branch check")
     if clean_branches:
-        _clean_both_integration_dirs(src_dir, dst_dir)
+        # We can clean up only the root dir.
+        if subdir == "":
+            _clean_both_integration_dirs(src_dir, dst_dir)
     else:
         _LOG.warning("Skipping integration branch cleaning")
     #
@@ -1087,9 +1093,12 @@ def integrate_diff_dirs(  # type: ignore
 
 
 @task
-def integrate_copy_dirs(ctx, src_dir, dst_dir, subdir_name="", dry_run=False):  # type: ignore
+def integrate_copy_dirs(ctx, src_dir, dst_dir, subdir="",
+                        check_branches=True,
+                        clean_branches=True,
+                        dry_run=False):  # type: ignore
     """
-    Copy dir `subdir_name` from dir `src_dir` to `dst_dir`.
+    Copy dir `subdir` from dir `src_dir` to `dst_dir`.
 
     ```
     > i integrate_copy_dirs --subdir-name documentation --src-dir amp1 --dst-dir cmamp1
@@ -1099,10 +1108,18 @@ def integrate_copy_dirs(ctx, src_dir, dst_dir, subdir_name="", dry_run=False):  
     """
     _report_task()
     #
-    src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir_name)
-    _dassert_is_integration_branch(src_dir)
-    _dassert_is_integration_branch(dst_dir)
-    _clean_both_integration_dirs(src_dir, dst_dir)
+    src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir)
+    if check_branches:
+        _dassert_is_integration_branch(src_dir)
+        _dassert_is_integration_branch(dst_dir)
+    else:
+        _LOG.warning("Skipping integration branch check")
+    if clean_branches:
+        # We can clean up only the root dir.
+        if subdir == "":
+            _clean_both_integration_dirs(src_dir, dst_dir)
+    else:
+        _LOG.warning("Skipping integration branch cleaning")
     #
     if dry_run:
         cmd = f"diff -r --brief {src_dir} {dst_dir}"
@@ -1113,7 +1130,7 @@ def integrate_copy_dirs(ctx, src_dir, dst_dir, subdir_name="", dry_run=False):  
 
 
 @task
-def integrate_compare_branch_with_base(ctx, src_dir, dst_dir, subdir_name=""):  # type: ignore
+def integrate_compare_branch_with_base(ctx, src_dir, dst_dir, subdir=""):  # type: ignore
     """
     Compare the files modified in both the branches in src_dir and dst_dir to master
     before this current branch was branched.
@@ -1124,7 +1141,7 @@ def integrate_compare_branch_with_base(ctx, src_dir, dst_dir, subdir_name=""):  
     _ = ctx
     #
     _dassert_current_dir_matches(src_dir)
-    src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir_name)
+    src_dir, dst_dir = _get_src_dst_dirs(src_dir, dst_dir, subdir)
     _dassert_is_integration_branch(src_dir)
     _dassert_is_integration_branch(dst_dir)
     _clean_both_integration_dirs(src_dir, dst_dir)
@@ -1691,7 +1708,10 @@ def _get_docker_cmd(
     # - Handle the user.
     # Based on AmpTask1864 it seems that we need to use root in the CI to be
     # able to log in GH touching $HOME/.config/gh.
-    if False and as_user:
+    as_root = hgit.execute_repo_config_code("run_docker_as_root()")
+    as_user = as_user and not as_root
+    _LOG.debug("as_root=%s as_user=%s", as_root, as_user)
+    if as_user:
         docker_cmd_.append(
             r"""
         --user $(id -u):$(id -g)"""
@@ -2225,7 +2245,9 @@ def docker_release_all(ctx, version):  # type: ignore
     _LOG.info("==> SUCCESS <==")
 
 
-def _docker_rollback_image(ctx: Any, base_image: str, stage: str, version: str):
+def _docker_rollback_image(
+    ctx: Any, base_image: str, stage: str, version: str
+) -> None:
     """
     Rollback the versioned image for a particular stage.
 
@@ -2429,7 +2451,7 @@ def _find_test_decorator(decorator_name: str, file_names: List[str]) -> List[str
     hdbg.dassert_isinstance(file_names, list)
     # E.g.,
     #   @pytest.mark.slow(...)
-    #   @pytest.mark.no_container
+    #   @pytest.mark.qa
     string = "@pytest.mark.%s" % decorator_name
     regex = r"^\s*%s\s*[\(]?" % re.escape(string)
     _LOG.debug("regex='%s'", regex)
@@ -2698,7 +2720,7 @@ def _run_test_cmd(
   covered
 """
         print(msg)
-        if start_coverage_script and hsysinte.is_running_on_macos():
+        if start_coverage_script:
             # Create and run a script to show the coverage in the browser.
             script_txt = """(sleep 2; open http://localhost:33333) &
 (cd ./htmlcov; python -m http.server 33333)"""
@@ -2903,6 +2925,29 @@ def run_fast_slow_tests(  # type: ignore
         _LOG.error("Fast / slow tests failed")
         raise RuntimeError("Fast / slow tests failed")
     return fast_test_rc, slow_test_rc
+
+
+@task
+def run_qa_tests(  # type: ignore
+    ctx,
+    stage="dev",
+    version="",
+):
+    """
+    Run QA tests independently.
+
+    :param version: version to tag the image and code with
+    :param stage: select a specific stage for the Docker image
+    """
+    _report_task()
+    #
+    qa_test_fn = get_default_param("QA_TEST_FUNCTION")
+    # Run the call back function.
+    rc = qa_test_fn(ctx, stage, version)
+    if not rc:
+        msg = "QA tests failed"
+        _LOG.error(msg)
+        raise RuntimeError(msg)
 
 
 # #############################################################################
@@ -3365,6 +3410,11 @@ def lint(  # type: ignore
 ):
     """
     Lint files.
+
+    # To lint only a repo including `amp` but not `amp` itself:
+    ```
+    > i lint --files="$(find . -name '*.py' -not -path './compute/*' -not -path './amp/*')"
+    ```
 
     :param modified: select the files modified in the client
     :param branch: select the files modified in the current branch

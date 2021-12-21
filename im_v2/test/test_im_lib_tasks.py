@@ -16,12 +16,13 @@ class TestGetImDockerCmd(hunitest.TestCase):
         Test the `bash` command.
         """
         cmd = "bash"
-        actual = imvimlita._get_docker_cmd(cmd)
+        actual = imvimlita._get_docker_cmd("local", cmd)
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
-            run --rm im_app \
+            --env-file /app/im_v2/devops/env/local.im_db_config.env \
+            run --rm im_postgres \
             bash
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
@@ -31,12 +32,13 @@ class TestGetImDockerCmd(hunitest.TestCase):
         Test the Python script.
         """
         cmd = "im/devops/docker_scripts/set_shema_im_db.py"
-        actual = imvimlita._get_docker_cmd(cmd)
+        actual = imvimlita._get_docker_cmd("local", cmd)
         docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
-            run --rm im_app \
+            --env-file /app/im_v2/devops/env/local.im_db_config.env \
+            run --rm im_postgres \
             im/devops/docker_scripts/set_shema_im_db.py
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
@@ -114,6 +116,7 @@ class TestGetImDockerUp(hunitest.TestCase):
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
+@pytest.mark.skip("CMTask #789.")
 class TestGetCreateDbCmd(hunitest.TestCase):
     def test1(self) -> None:
         """
@@ -126,7 +129,7 @@ class TestGetCreateDbCmd(hunitest.TestCase):
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
-            run --rm im_app \
+            run --rm im_postgres \
             im_v2/common/db/create_db.py \
             --db-name 'test_db' \
             --credentials '"from_env"'
@@ -144,7 +147,7 @@ class TestGetCreateDbCmd(hunitest.TestCase):
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
-            run --rm im_app \
+            run --rm im_postgres \
             im_v2/common/db/create_db.py \
             --db-name 'test_db' \
             --overwrite \
@@ -163,7 +166,7 @@ class TestGetCreateDbCmd(hunitest.TestCase):
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
-            run --rm im_app \
+            run --rm im_postgres \
             im_v2/common/db/create_db.py \
             --db-name 'test_db' \
             --credentials '"test.json"'
@@ -183,7 +186,7 @@ class TestGetCreateDbCmd(hunitest.TestCase):
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
-            run --rm im_app \
+            run --rm im_postgres \
             im_v2/common/db/create_db.py \
             --db-name 'test_db' \
             --credentials '"host=localhost dbname=im_postgres_db_local port=54"'
@@ -191,6 +194,7 @@ class TestGetCreateDbCmd(hunitest.TestCase):
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
+@pytest.mark.skip("CMTask #789.")
 class TestGetRemoveDbCmd(hunitest.TestCase):
     def test1(self) -> None:
         """
@@ -203,7 +207,7 @@ class TestGetRemoveDbCmd(hunitest.TestCase):
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
-            run --rm im_app \
+            run --rm im_postgres \
             im_v2/common/db/remove_db.py \
             --db-name 'test_db' \
             --credentials '"from_env"'
@@ -222,7 +226,7 @@ class TestGetRemoveDbCmd(hunitest.TestCase):
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
-            run --rm im_app \
+            run --rm im_postgres \
             im_v2/common/db/remove_db.py \
             --db-name 'test_db' \
             --credentials '"host=localhost dbname=im_postgres_db_local port=54"'
@@ -241,7 +245,7 @@ class TestGetRemoveDbCmd(hunitest.TestCase):
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
-            run --rm im_app \
+            run --rm im_postgres \
             im_v2/common/db/remove_db.py \
             --db-name 'test_db' \
             --credentials '"asd.json"'

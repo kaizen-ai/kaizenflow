@@ -15,7 +15,6 @@ _LOG = logging.getLogger(__name__)
 
 
 def get_order_example1() -> omorder.Order:
-    market_data_interface = None
     creation_timestamp = pd.Timestamp("2021-01-04 09:29:00-05:00")
     asset_id = 1
     type_ = "price@twap"
@@ -25,7 +24,6 @@ def get_order_example1() -> omorder.Order:
     order_id = 0
     # Build Order.
     order = omorder.Order(
-        market_data_interface,
         creation_timestamp,
         asset_id,
         type_,
@@ -41,7 +39,7 @@ def get_order_example2(event_loop) -> omorder.Order:
     (
         market_data_interface,
         _,
-    ) = mdmdinex.get_replayed_time_market_data_interface_example2(event_loop)
+    ) = mdmdinex.get_replayed_time_market_data_interface_example3(event_loop)
     creation_timestamp = pd.Timestamp(
         "2000-01-01 09:29:00-05:00", tz="America/New_York"
     )
@@ -57,7 +55,6 @@ def get_order_example2(event_loop) -> omorder.Order:
     order_id = 0
     # Build Order.
     order = omorder.Order(
-        market_data_interface,
         creation_timestamp,
         asset_id,
         type_,

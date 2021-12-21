@@ -9,10 +9,6 @@ import im_v2.common.db.utils as imvcodbut
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skipif(
-    not hgit.execute_repo_config_code("has_dind_support()"),
-    reason="Need dind support",
-)
 class TestCreateDb1(imvcodbut.TestImDbHelper):
     @pytest.mark.slow("11 seconds.")
     def test_up1(self) -> None:
