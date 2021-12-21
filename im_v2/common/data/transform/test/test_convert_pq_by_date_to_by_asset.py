@@ -12,12 +12,15 @@ import im_v2.common.data.transform.convert_pq_by_date_to_by_asset as imvcdtcpbdt
 
 class TestPqByDateToByAsset1(hunitest.TestCase):
     @staticmethod
-    def get_dummy_script_kwargs() -> Dict[str, Any]:
+    def get_dummy_script_arguments() -> Dict[str, Any]:
+        """
+        Arguments used in script run.
+        """
         return {
             "transform_func": "",
             "asset_col_name": "asset",
             # parallelization args
-            "num_threads": "2",
+            "num_threads": "1",
             "dry_run": True,
             "no_incremental": True,
             "skip_on_error": True,
@@ -26,6 +29,13 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
 
     @staticmethod
     def get_dummy_task_config(test_dir: str) -> Dict[str, Any]:
+        """
+        Specific config used for joblib task.
+
+        Along with regular arguments used in script run, there is
+        `chunk` which represents list of daily PQ file paths that will
+        be converted to by asset PQ files.
+        """
         return {
             "src_dir": f"{test_dir}/by_date",
             "chunk": [
@@ -39,6 +49,9 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         }
 
     def generate_test_data(self, verbose: bool) -> Tuple[str, str]:
+        """
+        Generate test data in form of daily PQ files.
+        """
         test_dir = self.get_scratch_space()
         by_date_dir = os.path.join(test_dir, "by_date")
         cmd = []
@@ -60,6 +73,14 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
     def check_directory_structure_with_file_contents(
         self, by_date_dir: str, by_asset_dir: str
     ) -> None:
+        """
+        Generate directory and file structure together with file contents in
+        form of string. String is compared with previously generated .txt file
+        for any differences.
+
+        :param by_date_dir: daily PQ files before conversion
+        :param by_asset_dir: daily PQ files after conversion in by asset format
+        """
         include_file_content = True
         by_date_signature = hunitest.get_dir_signature(
             by_date_dir, include_file_content
@@ -150,7 +171,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         """
         test_dir, by_date_dir = self.generate_test_data(verbose)
         by_asset_dir = os.path.join(test_dir, "by_asset")
-        kwargs = self.get_dummy_script_kwargs()
+        kwargs = self.get_dummy_script_arguments()
         kwargs.update(
             {
                 "src_dir": by_date_dir,
