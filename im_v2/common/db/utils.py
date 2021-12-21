@@ -13,10 +13,9 @@ import psycopg2 as psycop
 import helpers.hsql_test as hsqltest
 import helpers.sql as hsql
 
-# TODO(Grisha): move to `im_v2`.
-import im.ccxt.db.utils as imccdbuti
 import im.ib.sql_writer as imibsqwri
 import im.kibot.sql_writer as imkisqwri
+import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
@@ -78,9 +77,9 @@ def create_all_tables(connection: hsql.DbConnection) -> None:
         get_common_create_table_query(),
         imibsqwri.get_create_table_query(),
         imkisqwri.get_create_table_query(),
-        imccdbuti.get_ccxt_ohlcv_create_table_query(),
-        imccdbuti.get_exchange_name_create_table_query(),
-        imccdbuti.get_currency_pair_create_table_query(),
+        imvccdbut.get_ccxt_ohlcv_create_table_query(),
+        imvccdbut.get_exchange_name_create_table_query(),
+        imvccdbut.get_currency_pair_create_table_query(),
     ]
     # Create tables.
     for query in queries:

@@ -1,0 +1,87 @@
+original shape=(4, 8)
+Head:
+{
+    "2018-08-17T00:01:00Z":{
+        "open":6311.64,
+        "high":6311.77,
+        "low":6302.81,
+        "close":6302.81,
+        "volume":16.781206,
+        "epoch":1534464060000,
+        "currency_pair":"BTC_USDT",
+        "exchange_id":"binance"
+    },
+    "2018-08-17T00:02:00Z":{
+        "open":6302.81,
+        "high":6306.0,
+        "low":6292.79,
+        "close":6297.26,
+        "volume":55.373226,
+        "epoch":1534464120000,
+        "currency_pair":"BTC_USDT",
+        "exchange_id":"binance"
+    },
+    "2018-08-17T00:03:00Z":{
+        "open":6299.97,
+        "high":6299.97,
+        "low":6286.93,
+        "close":6294.52,
+        "volume":34.611797,
+        "epoch":1534464180000,
+        "currency_pair":"BTC_USDT",
+        "exchange_id":"binance"
+    },
+    "2018-08-17T00:04:00Z":{
+        "open":6294.52,
+        "high":6299.98,
+        "low":6290.0,
+        "close":6296.1,
+        "volume":22.088586,
+        "epoch":1534464240000,
+        "currency_pair":"BTC_USDT",
+        "exchange_id":"binance"
+    }
+}
+Tail:
+{
+    "2018-08-17T00:01:00Z":{
+        "open":6311.64,
+        "high":6311.77,
+        "low":6302.81,
+        "close":6302.81,
+        "volume":16.781206,
+        "epoch":1534464060000,
+        "currency_pair":"BTC_USDT",
+        "exchange_id":"binance"
+    },
+    "2018-08-17T00:02:00Z":{
+        "open":6302.81,
+        "high":6306.0,
+        "low":6292.79,
+        "close":6297.26,
+        "volume":55.373226,
+        "epoch":1534464120000,
+        "currency_pair":"BTC_USDT",
+        "exchange_id":"binance"
+    },
+    "2018-08-17T00:03:00Z":{
+        "open":6299.97,
+        "high":6299.97,
+        "low":6286.93,
+        "close":6294.52,
+        "volume":34.611797,
+        "epoch":1534464180000,
+        "currency_pair":"BTC_USDT",
+        "exchange_id":"binance"
+    },
+    "2018-08-17T00:04:00Z":{
+        "open":6294.52,
+        "high":6299.98,
+        "low":6290.0,
+        "close":6296.1,
+        "volume":22.088586,
+        "epoch":1534464240000,
+        "currency_pair":"BTC_USDT",
+        "exchange_id":"binance"
+    }
+}
