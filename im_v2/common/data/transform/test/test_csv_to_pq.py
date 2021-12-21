@@ -6,9 +6,11 @@ import helpers.io_ as hio
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
 import im_v2.common.data.transform.csv_to_pq as imvcdtctpq
+import pytest
 
 
 class TestCsvToPq(hunitest.TestCase):
+    @pytest.mark.skip("Enable when purify_text is set to True CMTask782")
     def test_csv_to_pq_script(self) -> None:
         """
         Test that generated parquet dataset is correct.
@@ -82,23 +84,25 @@ class TestCsvToPq(hunitest.TestCase):
 
 
 class TestConvertTimestampColumn(hunitest.TestCase):
-    def test_convert_integer(self):
+    def test_convert_integer(self) -> None:
         """
-        Assert that integer datetime is converted correctly.
+        Verify that integer datetime is converted correctly.
         """
         test_data = pd.Series([1638756800000, 1639656800000, 1648656800000])
         actual = imvcdtctpq.convert_timestamp_column(test_data)
-        self.check_string(actual.to_string())
+        actual = str(actual)
+        self.check_string(actual)
 
-    def test_convert_string(self):
+    def test_convert_string(self) -> None:
         """
-        Assert that string datetime is converted correctly.
+        Verify that string datetime is converted correctly.
         """
         test_data = pd.Series(["2021-01-12", "2021-02-14", "2010-12-11"])
         actual = imvcdtctpq.convert_timestamp_column(test_data)
-        self.check_string(actual.to_string())
+        actual = str(actual)
+        self.check_string(actual)
 
-    def test_convert_incorrect(self):
+    def test_convert_incorrect(self) -> None:
         """
         Assert that incorrect types are not converted.
         """
