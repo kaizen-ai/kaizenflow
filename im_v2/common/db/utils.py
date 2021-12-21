@@ -13,7 +13,6 @@ import psycopg2 as psycop
 import helpers.hsql_test as hsqltest
 import helpers.sql as hsql
 
-# TODO(Grisha): move to `im_v2`.
 import im.ib.sql_writer as imibsqwri
 import im.kibot.sql_writer as imkisqwri
 import im_v2.ccxt.db.utils as imvccdbut
