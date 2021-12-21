@@ -100,6 +100,7 @@ def _get_verbose_daily_df(
     for idx, asset in enumerate(assets):
         df_tmp = pd.DataFrame(
             {
+                "vendor_date": None,
                 "interval": interval,
                 "start_time": None,
                 "end_time": None,
@@ -119,11 +120,9 @@ def _get_verbose_daily_df(
     df = pd.concat(df)
     start_time = (df.index - pd.Timestamp("1970-01-01")) // pd.Timedelta("1s")
     end_time = start_time + interval
-    # TODO(Nikola): Handle various types of dates?
-    # df.index = df.index.date
+    df["vendor_date"] = df.index.date.astype(str)
     df["start_time"] = start_time
     df["end_time"] = end_time
-    df.index.name = "vendor_date"
     _LOG.debug(hprint.df_to_short_str("df", df))
     return df
 
