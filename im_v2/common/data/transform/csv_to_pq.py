@@ -29,7 +29,7 @@ import argparse
 import logging
 import os
 from typing import List, Tuple
-
+import helpers.system_interaction as hsysinte
 import pandas as pd
 import pyarrow as pa
 import pyarrow.dataset as ds
@@ -129,15 +129,11 @@ def _partition_dataset(
     indexed_data["day"] = indexed_data.index.day
     partition_cols = [asset_col_name, "year", "month", "day"]
     # Save partitioned parquet dataset.
-    table = pa.Table.from_pandas(data)
+    table = pa.Table.from_pandas(indexed_data)
     pq.write_to_dataset(table, dataset_path, partition_cols=partition_cols)
-    if delete_original:
-        # Delete original files.
-        pq_filenames = [
-            f for f in os.listdir(dataset_path) if f.endswith(".parquet")
-        ]
-        for f in pq_filenames:
-            os.remove(f)
+    # if delete_original:
+    # Delete original files.
+    hsysinte.system("rm %s/*.parquet" % dataset_path)
 
 
 # TODO(Danya): Add `by` argument and allow partitioning by date.
