@@ -3,7 +3,7 @@ Utilities for working with CCXT database.
 
 Import as:
 
-import im.ccxt.db.utils as imccdbuti
+import im_v2.ccxt.db.utils as imvccdbut
 """
 
 import logging
@@ -31,7 +31,7 @@ def get_ccxt_ohlcv_create_table_query() -> str:
             volume NUMERIC,
             currency_pair VARCHAR(255) NOT NULL,
             exchange_id VARCHAR(255) NOT NULL,
-            created_at TIMESTAMP 
+            created_at TIMESTAMP
             )
             """
     return query
