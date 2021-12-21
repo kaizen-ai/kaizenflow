@@ -137,6 +137,34 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
             self._test_joblib_task(verbose, faulty_config)
         self.assertIn("Invalid transform_func='faulty_func'", str(fail.exception))
 
+    def test_parser(self) -> None:
+        """
+        Tests arg parser for predefined args in the script.
+        """
+        parser = imvcdtcpbdtba._parse()
+        cmd = []
+        cmd.extend(["--src_dir", "dummy_by_date_dir"])
+        cmd.extend(["--dst_dir", "dummy_by_asset_dir"])
+        cmd.extend(["--num_threads", "1"])
+        cmd.extend(["--transform_func", "reindex_on_unix_epoch"])
+        cmd.extend(["--asset_col_name", "ticker"])
+        args = parser.parse_args(cmd)
+        expected_args = (
+            "Namespace("
+            "asset_col_name='ticker', "
+            "dry_run=False, "
+            "dst_dir='dummy_by_asset_dir', "
+            "log_level='INFO', "
+            "no_incremental=False, "
+            "num_attempts=1, "
+            "num_threads='1', "
+            "skip_on_error=False, "
+            "src_dir='dummy_by_date_dir', "
+            "transform_func='reindex_on_unix_epoch'"
+            ")"
+        )
+        self.assertEqual(str(args), expected_args)
+
     def _test_daily_data(self, verbose: bool) -> None:
         """
         Generate daily data for 3 days in a by-date format and then convert it
@@ -153,7 +181,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         cmd.append(f"--src_dir {by_date_dir}")
         by_asset_dir = os.path.join(test_dir, "by_asset")
         cmd.append(f"--dst_dir {by_asset_dir}")
-        cmd.append("--num_threads 2")
+        cmd.append("--num_threads 1")
         if verbose:
             cmd.append("--transform_func reindex_on_unix_epoch")
             cmd.append("--asset_col_name ticker")
@@ -216,6 +244,3 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         self.check_directory_structure_with_file_contents(
             by_date_dir, by_asset_dir
         )
-
-
-# TODO(Nikola): Command line tests.
