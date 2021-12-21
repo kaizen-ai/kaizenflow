@@ -30,13 +30,13 @@ class TestGetDataForInterval(hunitest.TestCase):
         )
         # Initialize the `MarketDataInterface`.
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        market_data_client = mdmadacl.MarketDataInterFace(
+        market_data_client = mdmadacl.MarketDataInterface(
             "full_symbol",
             full_symbols,
             "start_ts",
             "end_ts",
             [],
-            hdateti.GetWallClockTime,
+            hdateti.get_current_time("UTC"),
             im_client=multiple_symbols_client,
         )
         # Read data.

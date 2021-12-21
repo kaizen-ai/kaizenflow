@@ -13,8 +13,7 @@ import im_v2.common.data.client as ivcdclcl
 import market_data.market_data_interface as mdmadain
 
 
-# TODO(Grisha): move to `market_data_interface.py`.
-class MarketDataInterFace(mdmadain.AbstractMarketDataInterface):
+class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
     def __init__(
         self,
         *args: Any,
@@ -40,7 +39,7 @@ class MarketDataInterFace(mdmadain.AbstractMarketDataInterface):
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         ts_col_name: str,
-        # TODO(Grisha): handle `asset_ids = None` on the `im` side.
+        # TODO(Grisha): handle `asset_ids = None`.
         asset_ids: Optional[List[str]],
         left_close: bool,
         right_close: bool,
