@@ -1,14 +1,11 @@
 import os
 
-import pytest
-
 import pandas as pd
 
 import helpers.io_ as hio
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
 import im_v2.common.data.transform.csv_to_pq as imvcdtctpq
-import os
 
 
 class TestCsvToPq(hunitest.TestCase):
@@ -20,11 +17,13 @@ class TestCsvToPq(hunitest.TestCase):
         self._generate_example_csv_files()
         pq_dir_path = os.path.join(self.get_scratch_space(), "pq_dir")
         # Run command.
-        cmd = ["im_v2/common/data/transform/csv_to_pq.py",
-               f"--src_dir {self.csv_dir_path}",
-               f"--dst_dir {pq_dir_path}",
-               f"--datetime_col timestamp",
-               f"--asset_col currency_pair"]
+        cmd = [
+            "im_v2/common/data/transform/csv_to_pq.py",
+            f"--src_dir {self.csv_dir_path}",
+            f"--dst_dir {pq_dir_path}",
+            f"--datetime_col timestamp",
+            f"--asset_col currency_pair",
+        ]
         cmd = " ".join(cmd)
         hsysinte.system(cmd)
         # Check output directory structure.

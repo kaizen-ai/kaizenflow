@@ -29,7 +29,7 @@ import argparse
 import logging
 import os
 from typing import List, Tuple
-import helpers.system_interaction as hsysinte
+
 import pandas as pd
 import pyarrow as pa
 import pyarrow.dataset as ds
@@ -40,6 +40,7 @@ import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.io_ as hio
 import helpers.parser as hparser
+import helpers.system_interaction as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
