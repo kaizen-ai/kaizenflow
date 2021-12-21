@@ -7,7 +7,7 @@ import pytest
 import helpers.git as hgit
 import helpers.sql as hsql
 import helpers.unit_test as hunitest
-import im.ccxt.db.utils as imccdbuti
+import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.ccxt.data.client.clients as imvcdclcl
 import im_v2.common.data.client as imvcdcli
 import im_v2.common.db.utils as imvcodbut
@@ -135,7 +135,7 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
         """
         Create a test CCXT OHLCV table in DB.
         """
-        query = imccdbuti.get_ccxt_ohlcv_create_table_query()
+        query = imvccdbut.get_ccxt_ohlcv_create_table_query()
         self.connection.cursor().execute(query)
 
     @staticmethod
@@ -176,12 +176,11 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
 # #############################################################################
 
 
-# TODO(Dan): Rename test class name in #759.
 # TODO(*): Consider to factor out the class calling in a `def _get_loader()`.
-class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
+class TestCcxtCsvFileSystemClientReadData(hunitest.TestCase):
     def test1(self) -> None:
         """
-        Test that files from filesystem are being read correctly.
+        Test that ".csv.gz" files from filesystem are being read correctly.
         """
         ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
             data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
@@ -224,6 +223,18 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
 
     def test4(self) -> None:
         """
+        Test that ".csv" files from filesystem are being read correctly.
+        """
+        ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
+            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR, use_gzip=False
+        )
+        actual = ccxt_loader.read_data("binance::BTC_USDT")
+        # Check the output values.
+        actual_string = hunitest.convert_df_to_json_string(actual)
+        self.check_string(actual_string)
+
+    def test5(self) -> None:
+        """
         Test unsupported full symbol.
         """
         ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
@@ -232,7 +243,7 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
         with self.assertRaises(AssertionError):
             ccxt_loader.read_data("unsupported_exchange::unsupported_currency")
 
-    def test5(self) -> None:
+    def test6(self) -> None:
         """
         Test unsupported data type.
         """
@@ -242,11 +253,39 @@ class TestCcxtLoaderFromFileReadData(hunitest.TestCase):
             )
 
 
+class TestCcxtParquetFileSystemClientReadData(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test that Parquet files from filesystem are being read correctly.
+        """
+        ccxt_loader = imvcdclcl.CcxtParquetFileSystemClient(
+            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
+        )
+        actual = ccxt_loader.read_data("binance::BTC_USDT")
+        # Check the output values.
+        actual_string = hunitest.convert_df_to_json_string(actual)
+        self.check_string(actual_string)
+
+    def test2(self) -> None:
+        """
+        Test that Parquet files from filesystem are being filtered correctly.
+        """
+        ccxt_loader = imvcdclcl.CcxtParquetFileSystemClient(
+            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
+        )
+        actual = ccxt_loader.read_data(
+            full_symbol="binance::BTC_USDT",
+            start_ts=pd.Timestamp("2018-08-17T00:01:00"),
+            end_ts=pd.Timestamp("2018-08-17T00:05:00"),
+        )
+        # Check the output values.
+        actual_string = hunitest.convert_df_to_json_string(actual)
+        self.check_string(actual_string)
+
+
 # #############################################################################
 
 
-# TODO(Dan): Rename test class name in #759.
-# TODO(gp): `dind` should not be needed for that.
 class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
     def test1(self) -> None:
         """
@@ -575,7 +614,7 @@ class TestMultipleSymbolsCcxtDbClient(imvcodbut.TestImDbHelper):
         """
         Create a test CCXT OHLCV table in DB.
         """
-        query = imccdbuti.get_ccxt_ohlcv_create_table_query()
+        query = imvccdbut.get_ccxt_ohlcv_create_table_query()
         self.connection.cursor().execute(query)
 
     @staticmethod
