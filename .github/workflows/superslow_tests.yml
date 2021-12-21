@@ -1,0 +1,86 @@
+name: Superslow tests
+
+on:
+  schedule:
+    # Run this once a week even if there are no commits.
+    - cron:  '0 0 * * 0'
+
+jobs:
+
+  Run_superslow_tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Cleanup
+        run: sudo chmod 777 -R .
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+          token: ${{ secrets.GH_ACTION_ACCESS_TOKEN }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r .github/gh_requirements.txt
+
+      - name: Pull image
+        env:
+          AM_ECR_BASE_PATH: ${{ secrets.AM_ECR_BASE_PATH }}
+        run: invoke docker_pull
+
+      - name: Run superslow tests
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+          GH_ACTION_ACCESS_TOKEN: ${{ secrets.GH_ACTION_ACCESS_TOKEN }}
+          AM_ECR_BASE_PATH: ${{ secrets.AM_ECR_BASE_PATH }}
+          AM_S3_BUCKET: ${{ secrets.AM_S3_BUCKET }}
+          AM_TELEGRAM_TOKEN: ${{ secrets.AM_TELEGRAM_TOKEN }}
+        run: invoke run_superslow_tests
+
+      # TODO(vr): Bring back in #340.
+      # - name: Send Telegram notification for success
+      #   if: ${{ success() && github.ref_name == 'master' }}
+      #   uses: appleboy/telegram-action@master
+      #   with:
+      #     to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
+      #     token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
+      #     message: |
+      #       🎉 Superslow tests succeded at master
+      #       Build failure '${{ github.workflow }}'
+      #       Repo: '${{ github.repository }}'
+      #       Branch: '${{ github.ref_name }}'
+      #       Event: '${{ github.event_name }}'
+      #       https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      # We need to use `ref_name` since this contains the branch that triggered
+      # the workflow run.
+      # `head_ref` is only available when the event that triggers a workflow
+      # run is either `pull_request` or `pull_request_target`.
+      - name: Send Telegram notification for failure
+        if: ${{ failure() && github.ref_name == 'master' }}
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
+          token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
+          message: |
+            💣 SUPERSLOW TESTS FAILED
+            Build failure '${{ github.workflow }}'
+            Repo: '${{ github.repository }}'
+            Branch: '${{ github.ref_name }}'
+            Event: '${{ github.event_name }}'
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
