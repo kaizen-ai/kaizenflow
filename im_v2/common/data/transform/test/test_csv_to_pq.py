@@ -1,13 +1,9 @@
-# %%
 import os
 
-# %%
 import pytest
 
-# %%
 import pandas as pd
 
-# %%
 import helpers.io_ as hio
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
@@ -15,12 +11,10 @@ import im_v2.common.data.transform.csv_to_pq as imvcdtctpq
 import os
 
 
-# %%
 class TestCsvToPq(hunitest.TestCase):
-    # @pytest.mark.skip("Enable when purify_text is set to True CMTask782")
     def test_csv_to_pq_script(self) -> None:
         """
-        Test that generated .pq file is correct.
+        Test that generated parquet dataset is correct.
         """
         # Generate the files.
         self._generate_example_csv_files()
@@ -33,10 +27,17 @@ class TestCsvToPq(hunitest.TestCase):
                f"--asset_col currency_pair"]
         cmd = " ".join(cmd)
         hsysinte.system(cmd)
+        # Check output directory structure.
+        directories = []
+        for root, dirs, files in os.walk(pq_dir_path):
+            for subdir in dirs:
+                directories.append(os.path.join(root, subdir))
+        actual_dirs = "\n".join(directories)
         # Check output.
-        actual = pd.read_parquet(pq_dir_path)
-        actual = hunitest.convert_df_to_json_string(actual, n_tail=None)
-        self.check_string(actual, purify_text=True)
+        actual_df = pd.read_parquet(pq_dir_path)
+        actual_df = hunitest.convert_df_to_json_string(actual_df, n_tail=None)
+        actual_result = "\n".join([actual_dirs, actual_df])
+        self.check_string(actual_result, purify_text=True)
 
     def _generate_example_csv_files(self) -> None:
         """
@@ -79,3 +80,29 @@ class TestCsvToPq(hunitest.TestCase):
         df1.to_csv(os.path.join(self.csv_dir_path, "test1.csv"), index=False)
         df2 = pd.DataFrame(data=d2)
         df2.to_csv(os.path.join(self.csv_dir_path, "test2.csv"), index=False)
+
+
+class TestConvertTimestampColumn(hunitest.TestCase):
+    def test_convert_integer(self):
+        """
+        Assert that integer datetime is converted correctly.
+        """
+        test_data = pd.Series([1638756800000, 1639656800000, 1648656800000])
+        actual = imvcdtctpq.convert_timestamp_column(test_data)
+        self.check_string(actual.to_string())
+
+    def test_convert_string(self):
+        """
+        Assert that string datetime is converted correctly.
+        """
+        test_data = pd.Series(["2021-01-12", "2021-02-14", "2010-12-11"])
+        actual = imvcdtctpq.convert_timestamp_column(test_data)
+        self.check_string(actual.to_string())
+
+    def test_convert_incorrect(self):
+        """
+        Assert that incorrect types are not converted.
+        """
+        test_data = pd.Series([37.9, 88.11, 14.0])
+        with self.assertRaises(ValueError):
+            imvcdtctpq.convert_timestamp_column(test_data)

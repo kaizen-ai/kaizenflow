@@ -45,7 +45,6 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(*): Move as a general transform utility function.
-# TODO(*): Add tests.
 def convert_timestamp_column(datetime_col: pd.Series) -> pd.Series:
     """
     Convert datetime as string or int into a timestamp.
