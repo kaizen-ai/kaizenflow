@@ -22,7 +22,7 @@ class TestGetImDockerCmd(hunitest.TestCase):
         docker-compose \
             --file {docker_compose_path} \
             --env-file /app/im_v2/devops/env/local.im_db_config.env \
-            run --rm im_app \
+            run --rm im_postgres \
             bash
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
@@ -38,7 +38,7 @@ class TestGetImDockerCmd(hunitest.TestCase):
         docker-compose \
             --file {docker_compose_path} \
             --env-file /app/im_v2/devops/env/local.im_db_config.env \
-            run --rm im_app \
+            run --rm im_postgres \
             im/devops/docker_scripts/set_shema_im_db.py
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
@@ -129,7 +129,7 @@ class TestGetCreateDbCmd(hunitest.TestCase):
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
-            run --rm im_app \
+            run --rm im_postgres \
             im_v2/common/db/create_db.py \
             --db-name 'test_db' \
             --credentials '"from_env"'
@@ -147,7 +147,7 @@ class TestGetCreateDbCmd(hunitest.TestCase):
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
-            run --rm im_app \
+            run --rm im_postgres \
             im_v2/common/db/create_db.py \
             --db-name 'test_db' \
             --overwrite \
@@ -166,7 +166,7 @@ class TestGetCreateDbCmd(hunitest.TestCase):
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
-            run --rm im_app \
+            run --rm im_postgres \
             im_v2/common/db/create_db.py \
             --db-name 'test_db' \
             --credentials '"test.json"'
@@ -186,7 +186,7 @@ class TestGetCreateDbCmd(hunitest.TestCase):
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
-            run --rm im_app \
+            run --rm im_postgres \
             im_v2/common/db/create_db.py \
             --db-name 'test_db' \
             --credentials '"host=localhost dbname=im_postgres_db_local port=54"'
@@ -207,7 +207,7 @@ class TestGetRemoveDbCmd(hunitest.TestCase):
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
-            run --rm im_app \
+            run --rm im_postgres \
             im_v2/common/db/remove_db.py \
             --db-name 'test_db' \
             --credentials '"from_env"'
@@ -226,7 +226,7 @@ class TestGetRemoveDbCmd(hunitest.TestCase):
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
-            run --rm im_app \
+            run --rm im_postgres \
             im_v2/common/db/remove_db.py \
             --db-name 'test_db' \
             --credentials '"host=localhost dbname=im_postgres_db_local port=54"'
@@ -245,7 +245,7 @@ class TestGetRemoveDbCmd(hunitest.TestCase):
         expected = fr"""
         docker-compose \
             --file {docker_compose_path} \
-            run --rm im_app \
+            run --rm im_postgres \
             im_v2/common/db/remove_db.py \
             --db-name 'test_db' \
             --credentials '"asd.json"'

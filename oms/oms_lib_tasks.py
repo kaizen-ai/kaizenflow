@@ -76,7 +76,7 @@ def _get_docker_cmd(stage: str, docker_cmd: str) -> str:
     docker-compose \
         --file devops/compose/docker-compose.yml \
         --env-file devops/env/local.oms_db_config.env \
-        run --rm app \
+        run --rm oms_postgres \
         .../devops/set_schema_im_db.py
     ```
 
@@ -90,7 +90,7 @@ def _get_docker_cmd(stage: str, docker_cmd: str) -> str:
     env_file = get_db_env_path(stage)
     cmd.append(f"--env-file {env_file}")
     # Add `run`.
-    service_name = "app"
+    service_name = "oms_postgres"
     cmd.append(f"run --rm {service_name}")
     cmd.append(docker_cmd)
     # Convert the list to a multiline command.

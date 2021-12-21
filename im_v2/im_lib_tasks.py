@@ -48,7 +48,7 @@ def _get_docker_cmd(stage: str, docker_cmd: str) -> str:
     docker-compose \
         --file devops/compose/docker-compose.yml \
         --env-file devops/env/local.im_db_config.env \
-        run --rm im_app \
+        run --rm im_postgres \
         .../devops/set_schema_im_db.py
     ```
 
@@ -63,7 +63,7 @@ def _get_docker_cmd(stage: str, docker_cmd: str) -> str:
     env_file = get_db_env_path(stage)
     cmd.append(f"--env-file {env_file}")
     # Add `run`.
-    service_name = "im_app"
+    service_name = "im_postgres"
     cmd.append(f"run --rm {service_name}")
     cmd.append(docker_cmd)
     # Convert the list to a multiline command.
@@ -210,7 +210,7 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
 #     ```
 #     docker-compose \
 #         --file devops/compose/docker-compose.yml \
-#         run --rm im_app \
+#         run --rm im_postgres \
 #         .../db/create_db.py
 #     ```
 #
@@ -224,7 +224,7 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
 #     cmd = ["docker-compose"]
 #     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
 #     cmd.append(f"--file {docker_compose_file_path}")
-#     cmd.append("run --rm im_app")
+#     cmd.append("run --rm im_postgres")
 #     cmd.append("im_v2/common/db/create_db.py")
 #     cmd.append(f"--db-name '{dbname}'")
 #     if overwrite:
@@ -278,7 +278,7 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
 #     ```
 #     docker-compose \
 #         --file devops/compose/docker-compose.yml \
-#         run --rm im_app \
+#         run --rm im_postgres \
 #         .../db/remove_db.py
 #     ```
 #
@@ -291,7 +291,7 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
 #     cmd = ["docker-compose"]
 #     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
 #     cmd.append(f"--file {docker_compose_file_path}")
-#     cmd.append("run --rm im_app")
+#     cmd.append("run --rm im_postgres")
 #     cmd.append("im_v2/common/db/remove_db.py")
 #     cmd.append(f"--db-name '{dbname}'")
 #     # Add quotes so that credentials as string are handled properly by invoke.
