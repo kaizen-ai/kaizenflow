@@ -35,3 +35,4 @@ class TestGeneratePqExampleData1(hunitest.TestCase):
         actual = "\n".join(actual)
         purify_text = True
         self.check_string(actual, purify_text=purify_text)
+        # self.check_string(actual)
