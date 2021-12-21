@@ -36,7 +36,7 @@ class TestGetDataForInterval(hunitest.TestCase):
             "start_ts",
             "end_ts",
             [],
-            hdateti.get_current_time("UTC"),
+            hdateti.get_current_time,
             im_client=multiple_symbols_client,
         )
         # Read data.
