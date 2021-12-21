@@ -7,14 +7,14 @@ import helpers.io_ as hio
 import helpers.sql as hsql
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
-import im.ccxt.db.utils as imccdbuti
+import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.db.utils as imvcodbut
 
 
 class TestExtractDataFromDb1(imvcodbut.TestImDbHelper):
     def setUp(self) -> None:
         super().setUp()
-        ccxt_ohlcv_table_query = imccdbuti.get_ccxt_ohlcv_create_table_query()
+        ccxt_ohlcv_table_query = imvccdbut.get_ccxt_ohlcv_create_table_query()
         ccxt_ohlcv_insert_query = """
         INSERT INTO ccxt_ohlcv
         VALUES
