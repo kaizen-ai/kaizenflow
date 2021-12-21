@@ -7,7 +7,7 @@ import pytest
 import helpers.git as hgit
 import helpers.sql as hsql
 import helpers.unit_test as hunitest
-import im.ccxt.db.utils as imccdbuti
+import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.ccxt.data.client.clients as imvcdclcl
 import im_v2.common.data.client as imvcdcli
 import im_v2.common.db.utils as imvcodbut
@@ -135,7 +135,7 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
         """
         Create a test CCXT OHLCV table in DB.
         """
-        query = imccdbuti.get_ccxt_ohlcv_create_table_query()
+        query = imvccdbut.get_ccxt_ohlcv_create_table_query()
         self.connection.cursor().execute(query)
 
     @staticmethod
@@ -575,7 +575,7 @@ class TestMultipleSymbolsCcxtDbClient(imvcodbut.TestImDbHelper):
         """
         Create a test CCXT OHLCV table in DB.
         """
-        query = imccdbuti.get_ccxt_ohlcv_create_table_query()
+        query = imvccdbut.get_ccxt_ohlcv_create_table_query()
         self.connection.cursor().execute(query)
 
     @staticmethod
