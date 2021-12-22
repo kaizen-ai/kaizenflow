@@ -106,6 +106,14 @@ def _save_chunk(config: Dict[str, str], **kwargs: Dict[str, Any]):
 # TODO(gp): We might want to use a config to pass a set of params related to each
 #  other (e.g., transform_func, asset_col_name, ...)
 def _run(args: argparse.Namespace) -> None:
+    # We assume that the destination dir doesn't exist, so we don't override data.
+    dst_dir = args.dst_dir
+    # TODO(Nikola): Conflict with parallel incremental. Use one for all?
+    if not args.no_incremental:
+        # In not incremental mode the dir should already be there.
+        hdbg.dassert_not_exists(dst_dir)
+    hio.create_dir(dst_dir, incremental=False)
+
     tasks = []
     # Convert the files one at the time.
     # TODO(Nikola): Pick chunk by chunk, not all files.
@@ -200,14 +208,6 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # We assume that the destination dir doesn't exist so we don't override data.
-    dst_dir = args.dst_dir
-    # TODO(Nikola): Conflict with parallel incremental. Use one for all?
-    if not args.no_incremental:
-        # In not incremental mode the dir should already be there.
-        hdbg.dassert_not_exists(dst_dir)
-    hio.create_dir(dst_dir, incremental=False)
-    #
     _run(args)
 
 
