@@ -47,7 +47,7 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         docker> (cd oms; sudo docker-compose \
                     --file /app/oms/devops/compose/docker-compose.yml up \
                     -d \
-                    oms_postgres_local)
+                    oms_postgres)
         ```
         or
         ```
