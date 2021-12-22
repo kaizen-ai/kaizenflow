@@ -83,44 +83,70 @@ class AbstractImClient(abc.ABC):
     `FullSymbol`, to read data for multiple `FullSymbols` use
     `MultipleSymbolsImClient`.
     """
-
     def read_data(
         self,
-        full_symbol: Union[FullSymbol, List[FullSymbol]],
+        full_symbols: Union[FullSymbol, List[FullSymbol]],
         *,
+        mode: str = "concat",
+        full_symbol_col_name: str = "full_symbol",
         normalize: bool = True,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
         **kwargs: Dict[str, Any],
-    ) -> pd.DataFrame:
+    ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
         """
-        Read and process data for `FullSymbols` (i.e. currency pair from a
-        single exchange) in [start_ts, end_ts).
+        Read data for multiple full symbols.
 
         None `start_ts` and `end_ts` means the entire period of time available.
 
-        Data processing includes:
-            - normalization specific of the vendor
-            - dropping duplicates
-            - resampling to 1 minute
-            - sanity check of the data
-
-        :param full_symbol: `exchange::symbol`, e.g. `binance::BTC_USDT`
+        :param full_symbols: list of full symbols, e.g.
+            `['binance::BTC_USDT', 'kucoin::ETH_USDT']`
+        :param mode: output mode
+            - concat: store data for multiple full symbols in one dataframe
+            - dict: store data in a dict of a type `Dict[full_symbol, data]`
+        :param full_symbol_col_name: name of the column with full symbols
         :param normalize: whether to transform data or not
         :param start_ts: the earliest date timestamp to load data for
         :param end_ts: the latest date timestamp to load data for
-        :return: data for a single `FullSymbol` in [start_ts, end_ts)
+        :return: combined data for provided symbols
         """
-        data = self._read_data(
-            full_symbol, start_ts=start_ts, end_ts=end_ts, **kwargs
-        )
-        if normalize:
-            data = self._normalize_data(data)
-            data = hpandas.drop_duplicates(data)
-            data = hpandas.resample_df(data, "T")
-            # Verify that data is valid.
-            self._dassert_is_valid(data)
-        return data
+        hdbg.dassert_isinstance(full_symbols, [str, List])
+        if isinstance(full_symbols, str):
+            # Handle case for a singe `FullSymbol`.
+            full_symbols = [full_symbols]
+        # Verify that all the provided full symbols are unique.
+        hdbg.dassert_no_duplicates(full_symbols)
+        # Initialize results dict.
+        full_symbol_to_df = {}
+        for full_symbol in sorted(full_symbols):
+            # Read data for each given full symbol.
+            df = self._read_data(
+                full_symbol,
+                start_ts=start_ts,
+                end_ts=end_ts,
+                **kwargs,
+            )
+            if normalize:
+                df = self._normalize_data(df)
+                df = hpandas.drop_duplicates(df)
+                df = hpandas.resample_df(df, "T")
+                # Verify that data is valid.
+                self._dassert_is_valid(df)
+            # Insert column with full symbol to the dataframe.
+            df.insert(0, full_symbol_col_name, full_symbol)
+            # Add full symbol data to the results dict.
+            full_symbol_to_df[full_symbol] = df
+        if mode == "concat":
+            # Combine results dict in a dataframe if specified.
+            ret = pd.concat(full_symbol_to_df.values())
+            # Sort results dataframe by increasing index and full symbol.
+            ret = ret.sort_index().sort_values(by=full_symbol_col_name)
+        elif mode == "dict":
+            # Return results dict if specified.
+            ret = full_symbol_to_df
+        else:
+            raise ValueError(f"Invalid mode=`{mode}`")
+        return ret
 
     def get_start_ts_available(self, full_symbol: FullSymbol) -> pd.Timestamp:
         """
@@ -153,9 +179,8 @@ class AbstractImClient(abc.ABC):
     def _read_data(
         self,
         full_symbol: FullSymbol,
-        *,
-        start_ts: Optional[pd.Timestamp] = None,
-        end_ts: Optional[pd.Timestamp] = None,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
