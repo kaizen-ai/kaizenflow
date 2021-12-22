@@ -69,8 +69,7 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
             end_ts = end_ts - pd.Timedelta(ms=1)
         # Load the data using `im_client`.
         if not asset_ids:
-            # TODO(*): Figure out how to pass `vendor` parameter value.
-            asset_ids = imvccunun.get_vendor_universe()
+            asset_ids = self._im_client.get_universe()
         full_symbols = asset_ids
         market_data = self._im_client.read_data(
             full_symbols,
