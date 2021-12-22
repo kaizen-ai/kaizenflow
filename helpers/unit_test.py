@@ -543,7 +543,7 @@ def purify_txt_from_client(txt: str) -> str:
     txt = purify_from_environment(txt)
     txt = purify_app_references(txt)
     txt = purify_amp_references(txt)
-    txt = purify_from_env_vars(txt)
+    # txt = purify_from_env_vars(txt)
     txt = purify_object_reference(txt)
     return txt
 
