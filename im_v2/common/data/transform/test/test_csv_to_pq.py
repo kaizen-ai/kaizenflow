@@ -1,16 +1,16 @@
 import os
 
+import pytest
+
 import pandas as pd
 
 import helpers.io_ as hio
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
 import im_v2.common.data.transform.csv_to_pq as imvcdtctpq
-import pytest
-
 
 class TestCsvToPq(hunitest.TestCase):
-    @pytest.mark.skip("Enable when purify_text is set to True CMTask782")
+    @pytest.mark.skip("Enable when purify_text issue is resolved CMTask782")
     def test_csv_to_pq_script(self) -> None:
         """
         Test that generated parquet dataset is correct.
@@ -40,6 +40,7 @@ class TestCsvToPq(hunitest.TestCase):
         actual_result = "\n".join([actual_dirs, actual_df])
         self.check_string(actual_result, purify_text=True)
 
+    @pytest.mark.skip("Enable when purify_text issue is resolved CMTask782")
     def _generate_example_csv_files(self) -> None:
         """
         Create CSV files in scratch directory.
