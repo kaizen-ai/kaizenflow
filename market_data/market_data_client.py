@@ -9,6 +9,7 @@ from typing import Any, List, Optional
 import pandas as pd
 
 import helpers.dbg as hdbg
+import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.common.data.client as ivcdclcl
 import market_data.market_data_interface as mdmadain
 
@@ -39,7 +40,6 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         ts_col_name: str,
-        # TODO(Grisha): handle `asset_ids = None`.
         asset_ids: Optional[List[str]],
         left_close: bool,
         right_close: bool,
@@ -68,6 +68,9 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
             # Subtract one millisecond to include the right boundary.
             end_ts = end_ts - pd.Timedelta(ms=1)
         # Load the data using `im_client`.
+        if not asset_ids:
+            # TODO(*): Figure out how to pass `vendor` parameter value.
+            asset_ids = imvccunun.get_vendor_universe()
         full_symbols = asset_ids
         market_data = self._im_client.read_data(
             full_symbols,
