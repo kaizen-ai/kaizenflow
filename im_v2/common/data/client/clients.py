@@ -284,12 +284,11 @@ class MultipleSymbolsImClient(AbstractImClient):
             raise ValueError(f"Invalid mode=`{self._mode}`")
         return ret
 
-    @staticmethod
-    def get_universe() -> List[FullSymbol]:
+    def get_universe(self) -> List[FullSymbol]:
         """
         See `AbstractImClient`.
         """
-        raise NotImplementedError
+        return self._class.get_universe()
 
     def _read_data(
         self,
