@@ -149,21 +149,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         cmd.extend(["--transform_func", "reindex_on_unix_epoch"])
         cmd.extend(["--asset_col_name", "ticker"])
         args = parser.parse_args(cmd)
-        expected_args = (
-            "Namespace("
-            "asset_col_name='ticker', "
-            "dry_run=False, "
-            "dst_dir='dummy_by_asset_dir', "
-            "log_level='INFO', "
-            "no_incremental=False, "
-            "num_attempts=1, "
-            "num_threads='1', "
-            "skip_on_error=False, "
-            "src_dir='dummy_by_date_dir', "
-            "transform_func='reindex_on_unix_epoch'"
-            ")"
-        )
-        self.assertEqual(str(args), expected_args)
+        self.check_string(str(args))
 
     def _test_daily_data(self, verbose: bool) -> None:
         """
