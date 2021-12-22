@@ -149,7 +149,11 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         cmd.extend(["--transform_func", "reindex_on_unix_epoch"])
         cmd.extend(["--asset_col_name", "ticker"])
         args = parser.parse_args(cmd)
-        self.check_string(str(args))
+        args = str(args).split("(")[-1]
+        args = args.rstrip(")")
+        args = args.split(", ")
+        args = "\n".join(args)
+        self.check_string(args)
 
     def _test_daily_data(self, verbose: bool) -> None:
         """
