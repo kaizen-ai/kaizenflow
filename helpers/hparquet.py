@@ -95,9 +95,7 @@ def from_parquet(
     return df
 
 
-# TODO(Nikola): Add tests for new functions below.
-#   Adapt to different formats, if needed.
-#   Currently only ccxt_ohlcv.
+# TODO(Danya): Move to `im_v2...transform`, since not general enough. Add tests.
 def save_daily_df_as_pq(df: pd.DataFrame, dst_dir: str) -> None:
     """
     Create and save a daily parquet structure as below:
@@ -126,7 +124,8 @@ def save_daily_df_as_pq(df: pd.DataFrame, dst_dir: str) -> None:
             partition_filename_cb=lambda x: "data.parquet",
         )
 
-
+# TODO(Danya): Move to `im_v2...transform`, since not general enough.
+#  Merge with `by_date` with partition cols added by the user.
 def save_pq_by_asset(
     asset_col_name: str, parquet_df_by_date: pd.DataFrame, dst_dir: str
 ) -> None:

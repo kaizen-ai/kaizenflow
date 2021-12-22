@@ -58,7 +58,7 @@ def _parse() -> argparse.ArgumentParser:
         help="Location of daily PQ files",
     )
     parser.add_argument(
-        "--stage",
+        "--db_stage",
         action="store",
         type=str,
         default="local",
@@ -78,23 +78,26 @@ def _main(parser: argparse.ArgumentParser) -> None:
     """
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Extraction timespan.
+    # Generate timespan.
     start_date = args.start_date
     end_date = args.end_date
     hdbg.dassert_lt(start_date, end_date)
     timespan = pd.date_range(start_date, end_date)
     hdbg.dassert_lt(2, len(timespan))
-    # Location of daily PQ files.
+    # Create location of daily PQ files.
     dst_dir = args.dst_dir
     hdbg.dassert_exists(dst_dir)
-    stage = args.stage
-    env_file = imvimlita.get_db_env_path(stage)
+    # Connect to database.
+    db_stage = args.db_stage
+    env_file = imvimlita.get_db_env_path(db_stage)
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
+    # Initiate DB client.
     ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", connection)
     multiple_symbols_ccxt_db_client = ivcdclcl.MultipleSymbolsImClient(
         class_=ccxt_db_client, mode="concat"
     )
+    # Get universe of symbols
     symbols = imvccunun.get_vendor_universe()
     for date_index in range(len(timespan) - 1):
         _LOG.debug("Checking for RT data on %s.", timespan[date_index])
@@ -111,11 +114,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
         try:
             date_directory = f"date={timespan[date_index].strftime('%Y%m%d')}"
             full_path = os.path.join(dst_dir, date_directory)
-            # TODO(Nikola): Incremental as in PQ conversion?
             hdbg.dassert_not_exists(full_path)
-            in_col_name = "timestamp"
-            unit = "ms"
-            rt_df = hpandas.reindex_on_unix_epoch(rt_df, in_col_name, unit=unit)
+            datetime_col_name = "timestamp"
+            rt_df = hpandas.reindex_on_unix_epoch(rt_df, datetime_col_name, unit="ms")
             hparque.save_daily_df_as_pq(rt_df, dst_dir)
         except AssertionError as ex:
             _LOG.info("Skipping. PQ file already present: %s.", ex)

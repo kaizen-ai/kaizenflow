@@ -91,6 +91,8 @@ def _save_chunk(config: Dict[str, str], **kwargs: Dict[str, Any]):
         _LOG.debug("before df=\n%s", hprint.dataframe_to_str(df.head(3)))
         # Transform.
         # TODO(gp): Use eval or a more general mechanism.
+        # TODO(Danya): Remove the 'transform_func' argument for now.
+        #  The reindexing function is introduced in PR #811, let's make it uniform.
         transform_func = config["transform_func"]
         if not transform_func:
             pass
@@ -100,6 +102,7 @@ def _save_chunk(config: Dict[str, str], **kwargs: Dict[str, Any]):
             _LOG.debug("after df=\n%s", hprint.dataframe_to_str(df.head(3)))
         else:
             hdbg.dfatal(f"Invalid transform_func='{transform_func}'")
+        # TODO (Danya): Utilize a general function.
         hparque.save_pq_by_asset(config["asset_col_name"], df, config["dst_dir"])
 
 
@@ -108,7 +111,6 @@ def _save_chunk(config: Dict[str, str], **kwargs: Dict[str, Any]):
 def _run(args: argparse.Namespace) -> None:
     # We assume that the destination dir doesn't exist, so we don't override data.
     dst_dir = args.dst_dir
-    # TODO(Nikola): Conflict with parallel incremental. Use one for all?
     if not args.no_incremental:
         # In not incremental mode the dir should already be there.
         hdbg.dassert_not_exists(dst_dir)
@@ -131,9 +133,9 @@ def _run(args: argparse.Namespace) -> None:
         }
         task: hjoblib.Task = (
             # args.
-            (config,),
+            tuple(),
             # kwargs.
-            {},
+            config,
         )
         tasks.append(task)
 
@@ -149,7 +151,7 @@ def _run(args: argparse.Namespace) -> None:
     num_attempts = args.num_attempts
 
     # Prepare the log file.
-    timestamp = hdateti.get_timestamp("naive_ET")
+    timestamp = hdateti.get_timestamp("ET")
     # TODO(Nikola): Change directory.
     log_dir = os.getcwd()
     log_file = os.path.join(log_dir, f"log.{timestamp}.txt")
@@ -193,6 +195,7 @@ def _parse() -> argparse.ArgumentParser:
         default="",
         help="Function that will be used for transforming the df",
     )
+    # TODO (Danya): Remove as described above. Reindexing will be default for transform.
     parser.add_argument(
         "--asset_col_name",
         action="store",
