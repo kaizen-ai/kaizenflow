@@ -100,6 +100,7 @@ def _get_verbose_daily_df(
     for idx, asset in enumerate(assets):
         df_tmp = pd.DataFrame(
             {
+                "vendor_date": None,
                 "interval": interval,
                 "start_time": None,
                 "end_time": None,
@@ -119,13 +120,29 @@ def _get_verbose_daily_df(
     df = pd.concat(df)
     start_time = (df.index - pd.Timestamp("1970-01-01")) // pd.Timedelta("1s")
     end_time = start_time + interval
-    # TODO(Nikola): Handle various types of dates?
-    # df.index = df.index.date
+    df["vendor_date"] = df.index.date.astype(str)
     df["start_time"] = start_time
     df["end_time"] = end_time
-    df.index.name = "vendor_date"
     _LOG.debug(hprint.df_to_short_str("df", df))
     return df
+
+
+def _run(args: argparse.Namespace) -> None:
+    # Generation timespan.
+    start_date = args.start_date
+    end_date = args.end_date
+    hdbg.dassert_lt(start_date, end_date)
+    timespan = pd.date_range(start_date, end_date)
+    hdbg.dassert_lt(2, len(timespan))
+    assets = args.assets
+    assets = assets.split(",")
+    dst_dir = args.dst_dir
+    freq = args.freq if args.freq else "1H"
+    get_daily_df = (
+        _get_verbose_daily_df if args.verbose else _get_generic_daily_df
+    )
+    dummy_df = get_daily_df(start_date, end_date, assets, freq)
+    hparque.save_daily_df_as_pq(dummy_df, dst_dir)
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -185,21 +202,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     """
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Generation timespan.
-    start_date = args.start_date
-    end_date = args.end_date
-    hdbg.dassert_lt(start_date, end_date)
-    timespan = pd.date_range(start_date, end_date)
-    hdbg.dassert_lt(2, len(timespan))
-    assets = args.assets
-    assets = assets.split(",")
-    dst_dir = args.dst_dir
-    freq = args.freq if args.freq else "1H"
-    get_daily_df = (
-        _get_verbose_daily_df if args.verbose else _get_generic_daily_df
-    )
-    dummy_df = get_daily_df(start_date, end_date, assets, freq)
-    hparque.save_daily_df_as_pq(dummy_df, dst_dir)
+    _run(args)
 
 
 if __name__ == "__main__":
