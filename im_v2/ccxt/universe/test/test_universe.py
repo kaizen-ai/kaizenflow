@@ -26,3 +26,23 @@ class TestGetVendorUniverse(hunitest.TestCase):
         self.assertEqual(len(universe_as_full_symbols), 2)
         self.assert_equal(universe_as_full_symbols[0], "gateio::XRP_USDT")
         self.assert_equal(universe_as_full_symbols[1], "kucoin::SOL_USDT")
+
+
+class TestGetFullSymbolId(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test that full symbol numeric id is constructed correctly.
+        """
+        numeric_id = imvccunun.get_full_symbol_id("binance::BTC_USDT")
+        self.assertEqual(numeric_id, 104)
+
+
+class TestGetVendorUniverseIds(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test that universe numeric ids are received correctly.
+        """
+        universe_as_numeric_ids = imvccunun.get_vendor_universe_ids("small")
+        self.assertEqual(len(universe_as_numeric_ids), 2)
+        self.assertEqual(universe_as_numeric_ids[0], 3011)
+        self.assertEqual(universe_as_numeric_ids[1], 4010)
