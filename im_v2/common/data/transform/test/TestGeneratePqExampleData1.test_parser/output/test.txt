@@ -1,0 +1,7 @@
+assets='A,B,C'
+dst_dir='dummy_by_date_dir'
+end_date='2022-01-02'
+freq='1H'
+log_level='INFO'
+start_date='2021-12-30'
+verbose=True

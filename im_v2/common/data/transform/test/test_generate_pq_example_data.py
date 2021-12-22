@@ -45,26 +45,6 @@ class TestGeneratePqExampleData1(hunitest.TestCase):
         purify_text = True
         self.check_string(actual, purify_text=purify_text)
 
-    @staticmethod
-    def _prepare_command_args(by_date_dir: str, verbose: bool) -> List[str]:
-        cmd = []
-        cmd.append("--start_date 2021-12-30")
-        cmd.append("--end_date 2022-01-02")
-        cmd.append("--assets A,B,C")
-        cmd.append(f"--dst_dir {by_date_dir}")
-        if verbose:
-            cmd.append("--verbose")
-        return cmd
-
-    def _prepare_scratch_space(self) -> Tuple[str, str]:
-        test_dir = self.get_scratch_space()
-        by_date_dir = os.path.join(test_dir, "by_date")
-        file_path = os.path.join(
-            hgit.get_amp_abs_path(),
-            "im_v2/common/data/transform/test/generate_pq_example_data.py",
-        )
-        return by_date_dir, file_path
-
     @pytest.mark.skip("Enable when purify_text issue is resolved CMTask782")
     def test_generate_example_data1(self) -> None:
         """
@@ -103,9 +83,47 @@ class TestGeneratePqExampleData1(hunitest.TestCase):
         verbose = True
         self._direct_run(verbose)
 
+    def test_parser(self) -> None:
+        """
+        Tests arg parser for predefined args in the script.
+        """
+        parser = generate_pq_example_data._parse()
+        verbose = True
+        by_date_dir = "dummy_by_date_dir"
+        cmd = self._prepare_command_args(by_date_dir, verbose)
+        # Prepare commands for parse_args.
+        cmd = [cmd_part for c in cmd for cmd_part in c.split(" ")]
+        args = parser.parse_args(cmd)
+        args = str(args).split("(")[-1]
+        args = args.rstrip(")")
+        args = args.split(", ")
+        args = "\n".join(args)
+        self.check_string(args)
+
+    @staticmethod
+    def _prepare_command_args(by_date_dir: str, verbose: bool) -> List[str]:
+        cmd = []
+        cmd.append("--start_date 2021-12-30")
+        cmd.append("--end_date 2022-01-02")
+        cmd.append("--assets A,B,C")
+        cmd.append(f"--dst_dir {by_date_dir}")
+        if verbose:
+            cmd.append("--verbose")
+        return cmd
+
+    def _prepare_scratch_space(self) -> Tuple[str, str]:
+        test_dir = self.get_scratch_space()
+        by_date_dir = os.path.join(test_dir, "by_date")
+        file_path = os.path.join(
+            hgit.get_amp_abs_path(),
+            "im_v2/common/data/transform/test/generate_pq_example_data.py",
+        )
+        return by_date_dir, file_path
+
     def _direct_run(self, verbose: bool) -> None:
         by_date_dir, _ = self._prepare_scratch_space()
         cmd = self._prepare_command_args(by_date_dir, verbose)
+        # Prepare args for kwargs conversion.
         cmd = [c.lstrip("--").split(" ") for c in cmd]
         if verbose:
             # Namespace can be initialized with key value pairs only,
