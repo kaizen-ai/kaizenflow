@@ -20,7 +20,6 @@ class ImTransform:
         df: pd.DataFrame,
         partition_col_names: List[str],
         dst_dir: str,
-        date_partition_mode: Optional[str] = None,
     ) -> None:
         """
         Partition given DataFrame indexed on datetime and save as parquet
@@ -29,7 +28,6 @@ class ImTransform:
         :param df: DataFrame with datetime index
         :param partition_col_names: partition columns, e.g. ['asset']
         :param dst_dir: location of partitioned dataset
-        :param date_partition_mode: date unit to partition, e.g. 'year'. None by entire date.
         """
         raise NotImplementedError
 
@@ -67,9 +65,12 @@ class ImTransform:
             )
         return converted_datetime_col
 
-    def _get_date_partition_cols(self, partition_mode: str) -> pd.DataFrame:
+    def get_date_partition_cols(self, partition_mode: str) -> pd.DataFrame:
         """
-        Get partition columns like year, month, day from datetime index.
+        Add partition columns like year, month, day from datetime index.
+
+        :param partition_mode: date unit to partition, e.g. 'year'.
+        :return: DataFrame with date partition cols added.
         """
         # TODO(Danya): possible values are 'year', 'month', 'day' and None.
         #  None means partitioning by entire date, e.g. "20211201".
