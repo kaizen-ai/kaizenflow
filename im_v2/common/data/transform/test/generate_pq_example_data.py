@@ -134,10 +134,11 @@ def _run(args: argparse.Namespace) -> None:
     hdbg.dassert_lt(start_date, end_date)
     timespan = pd.date_range(start_date, end_date)
     hdbg.dassert_lt(2, len(timespan))
+
     assets = args.assets
     assets = assets.split(",")
     dst_dir = args.dst_dir
-    freq = args.freq if args.freq else "1H"
+    freq = args.freq
     get_daily_df = (
         _get_verbose_daily_df if args.verbose else _get_generic_daily_df
     )
@@ -181,7 +182,8 @@ def _parse() -> argparse.ArgumentParser:
         "--freq",
         action="store",
         type=str,
-        help="Frequency of data generation. Defaults to one hour",
+        default="1H",
+        help="Frequency of data generation",
     )
     parser.add_argument(
         "--verbose",
@@ -195,10 +197,6 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     """
     Standard main part of the script that is parsing provided arguments.
-
-    Timespan provided via start and end date, can not start and end on
-    the same day. Start date is included in timespan, while end date is
-    excluded.
     """
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
