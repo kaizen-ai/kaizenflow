@@ -9,7 +9,6 @@ from typing import Any, List, Optional
 import pandas as pd
 
 import helpers.dbg as hdbg
-import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.common.data.client as ivcdclcl
 import market_data.market_data_interface as mdmadain
 
@@ -67,10 +66,11 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
         if right_close:
             # Subtract one millisecond to include the right boundary.
             end_ts = end_ts - pd.Timedelta(ms=1)
-        # Load the data using `im_client`.
         if not asset_ids:
+            # If `asset_ids` is None, get all symbols from the latest universe.
             asset_ids = self._im_client.get_universe()
         full_symbols = asset_ids
+        # Load the data using `im_client`.
         market_data = self._im_client.read_data(
             full_symbols,
             start_ts=start_ts,
