@@ -15,6 +15,7 @@ import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.s3 as hs3
+import im_v2.common.data.client.clients as ivcdclcl
 
 _LOG = logging.getLogger(__name__)
 
@@ -25,6 +26,7 @@ _LATEST_DATA_SNAPSHOT = "20210924"
 class CddLoader:
     def __init__(
         self,
+        data_type: str,
         root_dir: str,
         aws_profile: Optional[str] = None,
         remove_dups: bool = True,
@@ -46,12 +48,19 @@ class CddLoader:
         self._s3fs = hs3.get_s3fs(self._aws_profile)
         # Specify supported data types to load.
         self._data_types = ["ohlcv"]
+                # Verify that requested data type is valid.
+        hdbg.dassert_in(
+            data_type.lower(),
+            self._data_types,
+            msg="Incorrect data type: '%s'. Acceptable types: '%s'"
+            % (data_type.lower(), self._data_types),
+        )
+        self._data_type = data_type
 
-    def read_data_from_filesystem(
+    def read_data(
         self,
-        exchange_id: str,
-        currency_pair: str,
-        data_type: str,
+        full_symbol: str,
+        *,
         data_snapshot: Optional[str] = None,
     ) -> pd.DataFrame:
         """
@@ -64,14 +73,8 @@ class CddLoader:
         :return: processed CDD data
         """
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
-        # Verify that requested data type is valid.
-        hdbg.dassert_in(
-            data_type.lower(),
-            self._data_types,
-            msg="Incorrect data type: '%s'. Acceptable types: '%s'"
-            % (data_type.lower(), self._data_types),
-        )
         # Get absolute file path for a CDD file.
+        exchange_id, currency_pair = ivcdclcl.parse_full_symbol(full_symbol)
         file_path = self._get_file_path(data_snapshot, exchange_id, currency_pair)
         # Initialize kwargs dict for further CDD data reading.
         # Add "skiprows" to kwargs in order to skip a row with the file name.
@@ -95,7 +98,7 @@ class CddLoader:
             currency_pair,
         )
         transformed_data = self._transform(
-            data, exchange_id, currency_pair, data_type
+            data, exchange_id, currency_pair, self._data_type
         )
         return transformed_data
 

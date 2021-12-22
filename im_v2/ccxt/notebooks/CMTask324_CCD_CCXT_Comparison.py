@@ -53,7 +53,80 @@ ccxt_universe = imvccunun.get_vendor_universe(version="v03")
 # ## CDD
 
 # %% run_control={"marked": false}
+# TODO(Max): `universe_cdd` -> `cdd_universe`.
 universe_cdd = imvccunun.get_vendor_universe(version="v01", vendor="CDD")
+# TODO(Max): remove below after comparison.
+universe_cdd.remove("binance::SCU_USDT")
+universe_cdd = [element for element in universe_cdd if not element.startswith("kucoin")]
+universe_cdd = [element for element in universe_cdd if not element.startswith("ftx")]
+# TODO(Max): remove it here.
+universe_cdd = [element for element in universe_cdd if element.endswith("USDT")]
+
+# %%
+import research_amp.cc.statistics as ramccsta
+import core.config.config_ as cconconf
+
+
+# %%
+# TODO(Max): use config everywhere below.
+def get_cmtask435_config() -> cconconf.Config:
+    """
+    Get task232-specific config.
+    """
+    config = cconconf.Config()
+    # Load parameters.
+    config.add_subconfig("load")
+    config["load"]["aws_profile"] = "am"
+    config["load"]["data_dir"] = os.path.join(hs3.get_path(), "data")
+    # Data parameters.
+    config.add_subconfig("data")
+    config["data"]["data_type"] = "OHLCV"
+    config["data"]["target_frequency"] = "T"
+    config["data"]["universe_version"] = "v03"
+    config["data"]["vendor"] = "CCXT"
+    # Column names.
+    config.add_subconfig("column_names")
+    config["column_names"]["close_price"] = "close"
+    config["column_names"]["currency_pair"] = "currency_pair"
+    config["column_names"]["exchange_id"] = "exchange_id"
+    return config
+
+
+config = get_cmtask435_config()
+print(config)
+
+# %%
+test_universe_cdd = universe_cdd[:2]
+test_universe_cdd
+
+# %%
+compute_start_end_stats = lambda data: ramccsta.compute_start_end_stats(
+    data, config
+)
+
+cdd_start_end_table = ramccsta.compute_stats_for_universe(
+    test_universe_cdd, config, compute_start_end_stats
+)
+
+# %%
+cdd_start_end_table
+
+# %%
+test_universe_ccxt = ccxt_universe[:2]
+test_universe_ccxt
+
+compute_start_end_stats = lambda data: ramccsta.compute_start_end_stats(
+    data, config
+)
+
+ccxt_start_end_table = ramccsta.compute_stats_for_universe(
+    test_universe_ccxt, config, compute_start_end_stats
+)
+
+# %%
+ccxt_start_end_table 
+columns = ["exchange_id"] + ... + sorted_columns
+data[columns]
 
 # %% [markdown]
 # # Compare universes
@@ -79,6 +152,7 @@ display(ccxt_and_not_cdd)
 
 # %%
 # Full symbols that are included in CDD but not in CCXT.
+# TODO(Max): remove non-USDT from here also.
 cdd_and_not_ccxt = set(universe_cdd).difference(ccxt_universe)
 _LOG.info(
     "Number of full symbols that are included in CDD but not in CCXT: %s",
@@ -163,12 +237,11 @@ cdd_binance_df["currency_pair"] = cdd_binance_df["currency_pair"].str.replace(
 # %%
 def resample_close_price(df: pd.DataFrame, resampling_freq: str) -> pd.Series:
     """
-    Transform OHLCV data to the grouped series with resampled frequency and
-    last close prices.
+    Resample close price on the currency level to the specified frequency using the last close price.
 
     :param df: OHLCV data
     :param resampling_freq: frequency from `pd.date_range()` to resample to
-    :return: grouped and resampled close prices
+    :return: resampled close price per currency
     """
     # Reseting DateTime index, since pd.Grouper can't use index values.
     df = df.reset_index().rename(columns={"index": "stamp"})
@@ -186,13 +259,12 @@ def calculate_correlations(
     ccxt_close_price: pd.Series, cdd_close_price: pd.Series, compute_returns: bool
 ) -> pd.DataFrame:
     """
-    Take two series with close prices(i.e. CDD and CCXT data) and calculate the
-    correlations for each specific currency pair.
+    Take CCXT and CDD close prices and calculate the correlations for each specific currency pair.
 
-    :param ccxt_series: grouped and resampled close prices for CCXT
-    :param cdd_series: grouped and resampled close prices for CDD
+    :param ccxt_series: resampled close price per currency for CCXT
+    :param cdd_series: resampled close price per currency for CDD
     :param compute_returns: if True - compare returns, if False - compare close prices
-    :return: grouped correlation matrix
+    :return: correlation matrix per currency
     """
     if compute_returns:
         # Group by currency pairs in order to calculate the percentage returns.
@@ -244,6 +316,7 @@ display(returns_corr_5min)
 # ## Compare close prices
 
 # %%
+# TODO(Max): add for 5 min freq also.
 close_corr_1day = calculate_correlations(
     ccxt_binance_series_1d, cdd_binance_series_1d, compute_returns=False
 )
@@ -258,6 +331,7 @@ display(close_corr_1day)
 # Binance
 universe_cdd.remove("binance::SCU_USDT")
 
+# TODO(Max): this should dissappear after we exclude non-USDT.
 # Bitfinex
 universe_cdd.remove("bitfinex::BTC_GBR")  # doesn't exist.
 universe_cdd.remove("bitfinex::DASH_BTC")  # NaT in stamps.
