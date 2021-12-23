@@ -19,7 +19,6 @@
 import logging
 import os
 from typing import List
-fdsdf ="ff"
 
 import pandas as pd
 
@@ -46,6 +45,9 @@ hprint.config_notebook()
 
 # %% [markdown]
 # # Configs
+
+# %%
+# Two configs are necesary in this situation because current downloading functions work only with specific 'vendor' value.
 
 # %%
 def get_cmtask324_config_ccxt() -> cconconf.Config:
@@ -79,7 +81,7 @@ print(config_ccxt)
 # %%
 def get_cmtask324_config_cdd() -> cconconf.Config:
     """
-    Get task232-specific config.
+    Get task324-specific config.
     """
     config = cconconf.Config()
     # Load parameters.
@@ -103,30 +105,6 @@ def get_cmtask324_config_cdd() -> cconconf.Config:
 # %%
 config_cdd = get_cmtask324_config_cdd()
 print(config_cdd)
-
-# %%
-
-# %%
-cdd_universe = imvccunun.get_vendor_universe(version="v01", vendor="CDD")
-# remove non-USDT elements, since we are not interested in them.
-cdd_universe = [element for element in cdd_universe if element.endswith("USDT")]
-
-test_universe_cdd = cdd_universe[:2]
-test_universe_cdd
-
-# %%
-compute_start_end_stats = lambda data: ramccsta.compute_start_end_stats(
-    data, config_cdd
-)
-
-cdd_start_end_table = ramccsta.compute_stats_for_universe(
-    test_universe_cdd, config_cdd, compute_start_end_stats)
-
-# %%
-
-# %%
-
-# %%
 
 # %% [markdown]
 # # Load the data universe
@@ -333,11 +311,23 @@ display(returns_corr_5min)
 # %% [markdown]
 # ## Compare close prices
 
+# %% [markdown]
+# ### 1-day close prices
+
 # %%
 close_corr_1day = calculate_correlations(
     ccxt_binance_series_1d, cdd_binance_series_1d, compute_returns=False
 )
 display(close_corr_1day)
+
+# %% [markdown]
+# ### 5-min close prices
+
+# %%
+close_corr_5min = calculate_correlations(
+    ccxt_binance_series_5min, cdd_binance_series_5min, compute_returns=False
+)
+display(close_corr_5min)
 
 # %% [markdown]
 # # Statistical properties of a full symbol in CDD
@@ -346,18 +336,7 @@ display(close_corr_1day)
 # Clearing CDD currency pairs that are incorrect.
 
 # Binance
-cdd_universe.remove("binance::SCU_USDT")
-
-# Bitfinex
-cdd_universe.remove("bitfinex::BTC_GBR")  # doesn't exist.
-cdd_universe.remove("bitfinex::DASH_BTC")  # NaT in stamps.
-cdd_universe.remove("bitfinex::DASH_USD")  # NaT in stamps.
-cdd_universe.remove("bitfinex::EOS_GBR")  # doesn't exist.
-cdd_universe.remove("bitfinex::ETH_GBR")  # doesn't exist.
-cdd_universe.remove("bitfinex::NEO_GBR")  # doesn't exist.
-cdd_universe.remove("bitfinex::QTUM_USD")  # NaT in stamps.
-cdd_universe.remove("bitfinex::TRX_GBR")  # doesn't exist.
-cdd_universe.remove("bitfinex::XLM_GBR")  # doesn't exist.
+#cdd_universe.remove("binance::SCU_USDT")
 
 # ftx has some critical mistakes in the downloading process, so can not continue analysis with them.
 # see CMTask801 - Downloading issues of FTX exchange from CDD universe for further reference.
@@ -375,83 +354,6 @@ cdd_kucoin_universe = [
 for elem in cdd_kucoin_universe:
     cdd_universe.remove(elem)
 
-
-# %%
-# TODO(Max): consider using compute_start_end_table function
-def calculate_statistics_for_stamps(
-    coin_list: List[str], vendor: str
-) -> pd.DataFrame:
-    """
-    Load the OHLCV data for each currency pair in CDD or CCXT universe and
-    compute the corresponding descriptive statistics. Stats include:
-
-        - index - currency pair
-        - exchange_id - exchange_id
-        - data_points_counts - number of timestamps for each coin
-        - NaNs_in_Close - number of NaNs in "close"
-        - step_in_stamp - value counts of steps between timestamps
-        - start_date
-        - end_date
-
-    :param coin_list: list of all full symbols in CDD or CCXT universe
-    :param vendor: CCXT or CDD
-    :return: descriptive statistics for each full symbol
-    """
-    # Load data for each full symbol.
-    result = []
-    cdd_loader = imcdalolo.CddLoader(root_dir=root_dir, aws_profile="am")
-    for full_symbol in coin_list:
-        if vendor == "cdd":
-            exchange_id, currency_pair = ivcdclcl.parse_full_symbol(full_symbol)
-            coin = cdd_loader.read_data_from_filesystem(
-                exchange_id=exchange_id,
-                currency_pair=currency_pair,
-                data_type="ohlcv",
-            )
-        else:
-            ccxt_client = imvcdclcl.CcxtCsvFileSystemClient(
-                data_type="ohlcv", root_dir=root_dir, aws_profile="am"
-            )
-            multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
-                class_=ccxt_client, mode="concat"
-            )
-            coin = multiple_symbols_client.read_data([full_symbol])
-            exchange_id, currency_pair = ivcdclcl.parse_full_symbol(full_symbol)
-            coin = coin.sort_index()
-        # Reseting DateTime index, so it can be further used in the calculations.
-        coin.reset_index(inplace=True)
-        coin = coin.rename(columns={"index": "stamp"})
-        # The value of the step between two data points.
-        stamp_steps = pd.Series(coin["stamp"].diff().value_counts().index)
-        # Start-end date.
-        max_date = pd.Series(
-            coin["stamp"].describe(datetime_is_numeric=True).loc["max"]
-        )
-        min_date = pd.Series(
-            coin["stamp"].describe(datetime_is_numeric=True).loc["min"]
-        )
-        # Number of timestamps for each coin.
-        data_points = pd.Series(
-            coin["stamp"].describe(datetime_is_numeric=True).loc["count"]
-        )
-        # Attach calculations to the DataFrame.
-        stamp_stats = pd.DataFrame()
-        stamp_stats["exchange_id"] = [exchange_id]
-        stamp_stats["data_points_counts"] = data_points
-        stamp_stats["NaNs_in_Close"] = len(coin[coin["close"].isna()])
-        stamp_stats["step_in_stamp"] = stamp_steps
-        stamp_stats["start_date"] = min_date
-        stamp_stats["end_date"] = max_date
-        stamp_stats.index = [currency_pair]
-        result.append(stamp_stats)
-    result = pd.concat(result)
-    if vendor == "cdd":
-        result = result.add_suffix("_cdd")
-    else:
-        result = result.add_suffix("_ccxt")
-    return result
-
-
 # %% [markdown]
 # ## Comparison of intersection of full symbols between CCXT and CDD
 
@@ -460,20 +362,64 @@ def calculate_statistics_for_stamps(
 cdd_and_ccxt_cleaned = set(ccxt_universe).intersection(cdd_universe)
 len(cdd_and_ccxt_cleaned)
 
+# %% [markdown]
+# ### Load the intersection of full symbols for CDD and CCXT
+
+# %% [markdown]
+# #### CDD
+
 # %%
-# Load the intersection of full symbols for CDD and CCXT.
-stats_for_stamps_ccxt = calculate_statistics_for_stamps(
-    cdd_and_ccxt_cleaned, vendor="ccxt"
+compute_start_end_stats = lambda data: ramccsta.compute_start_end_stats(
+    data, config_cdd
 )
-stats_for_stamps_cdd_union = calculate_statistics_for_stamps(
-    cdd_and_ccxt_cleaned, vendor="cdd"
+
+cdd_start_end_table = ramccsta.compute_stats_for_universe(
+    cdd_and_ccxt_cleaned, config_cdd, compute_start_end_stats
 )
 
 # %%
-union_cdd_ccxt_stats = pd.concat(
-    [stats_for_stamps_cdd_union, stats_for_stamps_ccxt], axis=1
+# CDD names cleaning.
+cdd_start_end_table["currency_pair"] = cdd_start_end_table["currency_pair"].str.replace(
+    "/", "_"
 )
-union_cdd_ccxt_stats.sort_values("exchange_id_cdd")
+
+# %%
+cdd_start_end_table.head(3)
+
+# %% [markdown]
+# #### CCXT
+
+# %%
+compute_start_end_stats = lambda data: ramccsta.compute_start_end_stats(
+    data, config_ccxt
+)
+
+ccxt_start_end_table = ramccsta.compute_stats_for_universe(
+    cdd_and_ccxt_cleaned, config_ccxt, compute_start_end_stats
+)
+
+# %%
+ccxt_start_end_table.head(3)
+
+
+# %% [markdown]
+# ### Display the union results
+
+# %%
+def unify_start_end_tables(cdd_df,ccxt_df):
+    cdd_df = cdd_df.set_index(['exchange_id', 'currency_pair'])
+    ccxt_df = ccxt_df.set_index(['exchange_id', 'currency_pair'])
+    ccxt_df = ccxt_df.add_suffix("_ccxt")
+    cdd_df = cdd_df.add_suffix("_cdd")
+    ccxt_and_cdd = pd.concat([cdd_df,ccxt_df], axis=1)
+    cols_to_sort = ccxt_and_cdd.columns.to_list() 
+    ccxt_and_cdd = ccxt_and_cdd[sorted(cols_to_sort)]
+    return ccxt_and_cdd
+
+
+# %%
+union_cdd_ccxt_stats = unify_start_end_tables(cdd_start_end_table,ccxt_start_end_table)
+display(union_cdd_ccxt_stats)
 
 # %% [markdown]
 # ## Comparison of full symbols that are included in CDD but not available in CCXT
@@ -484,29 +430,17 @@ cdd_and_not_ccxt_cleaned = set(cdd_universe).difference(ccxt_universe)
 len(cdd_and_not_ccxt_cleaned)
 
 # %%
-# Clean the set from non-USDT pairs.
-cdd_and_not_ccxt_cleaned_usdt = [
-    element for element in cdd_and_not_ccxt_cleaned if element.endswith("USDT")
-]
-len(cdd_and_not_ccxt_cleaned_usdt)
-
-# %% run_control={"marked": false}
-stats_for_stamps_cdd = calculate_statistics_for_stamps(
-    cdd_and_not_ccxt_cleaned_usdt, vendor="cdd"
-)
-
-# %% [markdown]
-# Currently there are the following descriptive statistics:
-#
-# - index - currency pair
-# - exchange_id - exchange_id
-# - data_points_counts - number of timestamps for each coin
-# - NaNs_in_Close - number of NaNs in "close"
-# - step_in_stamp - value counts of steps between timestamps
-# - start_date
-# - end_date
-#
-# What else can be added here?
+# for 'avg_data_points_per_day' the amount of "days_available" is equal to 0, so it crashes the calculations.
+cdd_and_not_ccxt_cleaned.remove("binance::DAI_USDT")
 
 # %%
-stats_for_stamps_cdd.sort_values("exchange_id_cdd")
+compute_start_end_stats = lambda data: ramccsta.compute_start_end_stats(
+    data, config_cdd
+)
+
+cdd_unique_start_end_table = ramccsta.compute_stats_for_universe(
+    cdd_and_not_ccxt_cleaned, config_cdd, compute_start_end_stats
+)
+
+# %%
+display(cdd_unique_start_end_table)

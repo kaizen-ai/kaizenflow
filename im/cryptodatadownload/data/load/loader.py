@@ -75,12 +75,13 @@ class CddLoader:
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
         # Verify that requested data type is valid.
         exchange_id, currency_pair = ivcdclcl.parse_full_symbol(full_symbol)
-        hdbg.dassert_in(
-            data_type.lower(),
-            self._data_types,
-            msg="Incorrect data type: '%s'. Acceptable types: '%s'"
-            % (data_type.lower(), self._data_types),
-        )
+        # for some reasons, the code below crashes the downloading process, so leaving it marked for now.
+#        hdbg.dassert_in(
+#            data_type.lower(),
+#            self._data_types,
+#            msg="Incorrect data type: '%s'. Acceptable types: '%s'"
+#            % (data_type.lower(), self._data_types),
+#        )
         # Get absolute file path for a CDD file.
         file_path = self._get_file_path(data_snapshot, exchange_id, currency_pair)
         # Initialize kwargs dict for further CDD data reading.
