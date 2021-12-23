@@ -6,7 +6,7 @@ import market_data.market_data_interface_example as mdmdinex
 
 import asyncio
 import logging
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -76,6 +76,7 @@ def get_replayed_time_market_data_interface_example1(
     delay_in_secs: int = 0,
     sleep_in_secs: float = 1.0,
     time_out_in_secs: int = 60 * 2,
+    column_remap: Optional[Dict[str, str]] = None,
 ) -> Tuple[mdmadain.ReplayedTimeMarketDataInterface, hdateti.GetWallClockTime]:
     """
     Build a `ReplayedTimeMarketDataInterface` backed by synthetic data.
@@ -87,6 +88,7 @@ def get_replayed_time_market_data_interface_example1(
         the trading day
     :param asset_ids: asset ids to generate data for. `None` defaults to all the
         available asset ids in the data frame
+    :param column_remap: dict of columns to remap or `None`
     """
     # Build the `ReplayedTimeMarketDataInterface` backed by the df with
     # `initial_replayed_delay` after the first timestamp of the data.
@@ -123,6 +125,7 @@ def get_replayed_time_market_data_interface_example1(
         get_wall_clock_time,
         sleep_in_secs=sleep_in_secs,
         time_out_in_secs=time_out_in_secs,
+        column_remap=column_remap,
     )
     return market_data_interface, get_wall_clock_time
 
@@ -139,6 +142,7 @@ def get_replayed_time_market_data_interface_example2(
     columns: Optional[List[str]] = None,
     sleep_in_secs: float = 1.0,
     time_out_in_secs: int = 60 * 2,
+    column_remap: Optional[Dict[str, str]] = None,
 ) -> Tuple[mdmadain.ReplayedTimeMarketDataInterface, hdateti.GetWallClockTime]:
     """
     Build a `ReplayedTimeMarketDataInterface` backed by synthetic data.
@@ -150,6 +154,7 @@ def get_replayed_time_market_data_interface_example2(
         the trading day
     :param asset_ids: asset ids to generate data for. `None` defaults to all the
         available asset ids in the data frame
+    :param column_remap: dict of columns to remap or `None`
     """
     # Build the df with the data.
     if columns is None:
@@ -165,8 +170,10 @@ def get_replayed_time_market_data_interface_example2(
             df,
             delay_in_secs=delay_in_secs,
             sleep_in_secs=sleep_in_secs,
-            time_out_in_secs=time_out_in_secs
-    ))
+            time_out_in_secs=time_out_in_secs,
+            column_remap=column_remap,
+        )
+    )
     return market_data_interface, get_wall_clock_time
 
 

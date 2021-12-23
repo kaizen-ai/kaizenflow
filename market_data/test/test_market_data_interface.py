@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Callable, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple
 
 import pandas as pd
 
@@ -17,6 +17,7 @@ def _check_get_data(
     initial_replayed_delay: int,
     func: Callable,
     expected_df_as_str: str,
+    column_remap: Optional[Dict[str, str]] = None,
 ) -> mdmadain.ReplayedTimeMarketDataInterface:
     """
     - Build `ReplayedTimePriceInterval`
@@ -33,7 +34,7 @@ def _check_get_data(
             _,
         ) = mdmdinex.get_replayed_time_market_data_interface_example2(
             event_loop, start_datetime, end_datetime, initial_replayed_delay,
-            asset_ids
+            asset_ids, column_remap=column_remap
             # TODO(gp): initial_replayed_delay -> initial_delay_in_mins (or in secs).
         )
         # Execute function under test.
@@ -345,9 +346,9 @@ class TestReplayedTimeMarketDataInterface2(hunitest.TestCase):
         expected_df_as_str = """
         # df=
         df.index in [2000-01-01 09:31:00-05:00, 2000-01-01 09:35:00-05:00]
-        df.columns=asset_id,last_price,start_datetime,timestamp_db
+        df.columns=asset_id,close_price,start_datetime,timestamp_db
         df.shape=(5, 4)
-                                   asset_id  last_price            start_datetime              timestamp_db
+                                   asset_id  close_price            start_datetime              timestamp_db
         end_datetime
         2000-01-01 09:31:00-05:00      1000    999.874540  2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00
         2000-01-01 09:32:00-05:00      1000    1000.325254 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00
@@ -357,7 +358,10 @@ class TestReplayedTimeMarketDataInterface2(hunitest.TestCase):
         2000-01-01 09:34:00-05:00      1000    1000.655907 2000-01-01 09:33:00-05:00 2000-01-01 09:34:00-05:00
         2000-01-01 09:35:00-05:00      1000    1000.311925 2000-01-01 09:34:00-05:00 2000-01-01 09:35:00-05:00"""
         # pylint: enable=line-too-long
-        _check_get_data(self, initial_replayed_delay, func, expected_df_as_str)
+        _check_get_data(
+            self, initial_replayed_delay, func, expected_df_as_str,
+            column_remap={"last_price": "close_price"}
+        )
 
     def test_get_data_for_interval2(self) -> None:
         """
