@@ -102,9 +102,9 @@ def _save_chunk(config: Dict[str, str], **kwargs: Dict[str, Any]):
             hdbg.dfatal(f"Invalid transform_func='{transform_func}'")
         dst_dir = config["dst_dir"]
         asset_col_name = config["asset_col_name"]
-        partition_col_names = ["year", "month", "day", asset_col_name]
+        partition_cols = ["year", "month", "day", asset_col_name]
         hparque.add_date_partition_cols(df, partition_mode="day")
-        hparque.partition_dataset(df, partition_col_names, dst_dir)
+        hparque.partition_dataset(df, partition_cols, dst_dir)
 
 
 # TODO(gp): We might want to use a config to pass a set of params related to each

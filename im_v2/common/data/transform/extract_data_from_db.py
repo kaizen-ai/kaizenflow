@@ -114,9 +114,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
             hdbg.dassert_not_exists(full_path)
             in_col_name = "timestamp"
             rt_df = hpandas.reindex_on_unix_epoch(rt_df, in_col_name, unit="ms")
-            partition_col_names = ["date"]
+            partition_cols = ["date"]
             hparque.add_date_partition_cols(rt_df)
-            hparque.partition_dataset(rt_df, partition_col_names, dst_dir)
+            hparque.partition_dataset(rt_df, partition_cols, dst_dir)
         except AssertionError as ex:
             _LOG.info("Skipping. PQ file already present: %s.", ex)
             continue
