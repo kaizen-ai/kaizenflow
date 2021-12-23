@@ -94,35 +94,28 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         actual.append("# by_asset=")
         actual.append(by_asset_signature)
         actual = "\n".join(actual)
-        purify_text = True
-        self.check_string(actual, purify_text=purify_text)
+        self.check_string(actual, purify_text=True)
 
-    @pytest.mark.skip("Enable when purify_text issue is resolved CMTask782")
     def test_daily_data1(self) -> None:
         verbose = False
         self._test_daily_data(verbose)
 
-    @pytest.mark.skip("Enable when purify_text issue is resolved CMTask782")
     def test_daily_data2(self) -> None:
         verbose = True
         self._test_daily_data(verbose)
 
-    @pytest.mark.skip("Enable when purify_text issue is resolved CMTask782")
     def test_daily_data_direct_run1(self) -> None:
         verbose = False
         self._test_daily_data_direct_run(verbose)
 
-    @pytest.mark.skip("Enable when purify_text issue is resolved CMTask782")
     def test_daily_data_direct_run2(self) -> None:
         verbose = True
         self._test_daily_data_direct_run(verbose)
 
-    @pytest.mark.skip("Enable when purify_text issue is resolved CMTask782")
     def test__save_chunk1(self) -> None:
         verbose = False
         self._test_joblib_task(verbose, {})
 
-    @pytest.mark.skip("Enable when purify_text issue is resolved CMTask782")
     def test__save_chunk2(self) -> None:
         verbose = True
         self._test_joblib_task(verbose, {})
@@ -143,7 +136,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         args = args.rstrip(")")
         args = args.split(", ")
         args = "\n".join(args)
-        self.check_string(args)
+        self.check_string(args, purify_text=True)
 
     def _test_daily_data(self, verbose: bool) -> None:
         """
