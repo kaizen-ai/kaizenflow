@@ -20,12 +20,25 @@ class TestGetUniverse(hunitest.TestCase):
 class TestGetVendorUniverse(hunitest.TestCase):
     def test1(self) -> None:
         """
-        Test that universe is received correctly.
+        Test that universe full symbols are received correctly.
         """
-        universe_as_full_symbols = imvccunun.get_vendor_universe(version="small")
+        universe_as_full_symbols = imvccunun.get_vendor_universe(
+            version="small"
+        )
         self.assertEqual(len(universe_as_full_symbols), 2)
         self.assert_equal(universe_as_full_symbols[0], "gateio::XRP_USDT")
         self.assert_equal(universe_as_full_symbols[1], "kucoin::SOL_USDT")
+
+    def test2(self) -> None:
+        """
+        Test that universe numeric ids are received correctly.
+        """
+        universe_as_numeric_ids = imvccunun.get_vendor_universe(
+            version="small", as_ids=True
+        )
+        self.assertEqual(len(universe_as_numeric_ids), 2)
+        self.assertEqual(universe_as_numeric_ids[0], 2002879833)
+        self.assertEqual(universe_as_numeric_ids[1], 2568064341)
 
 
 class TestStringToNumId(hunitest.TestCase):
@@ -35,17 +48,6 @@ class TestStringToNumId(hunitest.TestCase):
         """
         num_id = imvccunun.string_to_num_id("binance::BTC_USDT")
         self.assertEqual(num_id, 1467591036)
-
-
-class TestGetVendorUniverseNumIds(hunitest.TestCase):
-    def test1(self) -> None:
-        """
-        Test that universe numeric ids are received correctly.
-        """
-        universe_as_numeric_ids = imvccunun.get_vendor_universe_num_ids("small")
-        self.assertEqual(len(universe_as_numeric_ids), 2)
-        self.assertEqual(universe_as_numeric_ids[0], 2002879833)
-        self.assertEqual(universe_as_numeric_ids[1], 2568064341)
 
 
 class TestBuildNumToStringIdMapping(hunitest.TestCase):
