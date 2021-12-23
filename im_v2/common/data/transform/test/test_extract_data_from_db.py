@@ -33,7 +33,7 @@ class TestExtractDataFromDb1(imvcodbut.TestImDbHelper):
         """
         hsql.execute_query(self.connection, ccxt_ohlcv_drop_query)
 
-    # @pytest.mark.slow
+    @pytest.mark.slow
     def test_extract_data_from_db(self) -> None:
         test_dir = self.get_scratch_space()
         dst_dir = os.path.join(test_dir, "by_date")
