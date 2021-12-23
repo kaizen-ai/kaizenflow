@@ -557,30 +557,3 @@ def convert_timestamp_to_unix_epoch(
     # Convert to epoch.
     epoch = (timestamp - pd.Timestamp("1970-01-01")) // pd.Timedelta("1" + unit)
     return epoch
-
-
-# TODO(Nikola): Transform specific. It will be moved out.
-def convert_timestamp_column(
-    datetime_col: pd.Series, unit: str = "ms"
-) -> pd.Series:
-    """
-    Convert datetime as string or int, into a timestamp.
-
-    :param datetime_col: series containing datetime as str or int
-    :param unit: the unit of unix epoch
-    :return: series containing datetime as `pd.Timestamp`
-    """
-    if pd.api.types.is_integer_dtype(datetime_col):
-        # Convert unix epoch into timestamp.
-        kwargs = {"unit": unit}
-        converted_datetime_col = datetime_col.apply(
-            convert_unix_epoch_to_timestamp, **kwargs
-        )
-    elif pd.api.types.is_string_dtype(datetime_col):
-        # Convert string into timestamp.
-        converted_datetime_col = to_generalized_datetime(datetime_col)
-    else:
-        raise ValueError(
-            "Incorrect data format. Datetime column should be of integer or string dtype."
-        )
-    return converted_datetime_col

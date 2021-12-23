@@ -19,7 +19,6 @@ import os.path
 
 import pandas as pd
 
-import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.hparquet as hparque
 import helpers.parser as hparser
@@ -27,6 +26,7 @@ import helpers.sql as hsql
 import im_v2.ccxt.data.client.clients as imvcdclcl
 import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.common.data.client.clients as ivcdclcl
+import im_v2.common.data.transform.convert_pq_by_date_to_by_asset as imvcdtcpbdtba
 import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
@@ -113,8 +113,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
             full_path = os.path.join(dst_dir, date_directory)
             # TODO(Nikola): Incremental as in PQ conversion?
             hdbg.dassert_not_exists(full_path)
-            datetime_series = hdateti.convert_timestamp_column(df["timestamp"])
             # TODO(Nikola): Move to new Transform class.
+            datetime_series = imvcdtcpbdtba.convert_timestamp_column(
+                df["timestamp"]
+            )
             reindexed_df = df.set_index(datetime_series)
             hparque.save_daily_df_as_pq(reindexed_df, dst_dir)
         except AssertionError as ex:
