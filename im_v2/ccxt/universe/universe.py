@@ -13,12 +13,6 @@ import helpers.io_ as hio
 import im_v2.common.data.client as imvcdcadlo
 
 _LATEST_UNIVERSE_VERSION = "v03"
-_EXCHANGE_IDS_MAPPING_PATH = os.path.join(
-    hgit.get_amp_abs_path(), "im_v2/ccxt/universe/exchange_ids_mapping.json"
-)
-_CURRENCY_PAIR_IDS_MAPPING_PATH = os.path.join(
-    hgit.get_amp_abs_path(), "im_v2/ccxt/universe/currency_pair_ids_mapping.json"
-)
 
 
 def get_trade_universe(
