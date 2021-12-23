@@ -13,13 +13,20 @@ import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skip()
+#@pytest.mark.skip()
 class Test_CcxtExchange(hunitest.TestCase):
     def test_initialize_class(self) -> None:
         """
         Smoke test that the class is being initialized correctly.
         """
         _ = imvcdeexcl.CcxtExchange("binance")
+
+    def test_unsupported_exchange(self) -> None:
+        """
+        Test that initializing the class with unsupported exchange
+        string raises AssertionErrors
+        """
+        raise NotImplementedError
 
     def test_get_exchange_currencies(self) -> None:
         """
@@ -32,9 +39,30 @@ class Test_CcxtExchange(hunitest.TestCase):
         hdbg.dassert_container_type(curr_list, list, str)
         self.assertGreater(len(curr_list), 0)
 
+    def test_fetch_ohlcv(self) -> None:
+        """
+        Test that a single iteration of loading historical data works correctly:
+        - timestamps are not outside the specified interval
+        - returned dataframe has the expected row count (most likely only if start date is far enough
+          in the past)
+        - returned dataframe has the expected column count and column names
+        """
+        raise NotImplementedError
+
+    def test_fetch_ohlcv_invalid_params(self):
+        """
+        Test that a single iteration of loading historical data returns empty result if:
+        - step is <= 0
+        - the provided start date (since) is in the future
+        - timeframe argument has an invalid format
+        - currency pair is invalid
+        """
+        raise NotImplementedError
+
     def test_download_ohlcv_data(self) -> None:
         """
         Test that historical data is being loaded correctly.
+        TODO(Juraj): add test to check all timestamps are within requested interval
         """
         # Initiate class and set date parameters.
         exchange_class = imvcdeexcl.CcxtExchange("binance")
@@ -65,6 +93,17 @@ class Test_CcxtExchange(hunitest.TestCase):
         actual_string = hunitest.convert_df_to_json_string(actual, n_tail=None)
         self.check_string(actual_string)
 
+    def test_download_ohlcv_data_invalid_params(self):
+        """
+        Test that the download_ohlcv_data method returns empty result if:
+        - step is <= 0
+        - the provided start date (since) is in the future
+        - the end date is before the start date
+        - currency pair is in invalid format
+        - timeframe argument has an invalid format
+        """
+        raise NotImplementedError
+
     def test_download_order_book(self):
         """
         Verify that order book is downloaded correctly.
@@ -80,3 +119,4 @@ class Test_CcxtExchange(hunitest.TestCase):
             "nonce",
         ]
         self.assertListEqual(order_book_keys, list(order_book.keys()))
+        # TODO(Juraj): assert that passed currency pair matches the value of symbol key
