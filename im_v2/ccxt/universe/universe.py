@@ -62,7 +62,10 @@ def get_vendor_universe(
     universe = sorted(universe)
     if as_ids:
         # Convert universe symbols to numeric ids if specified.
-        universe = [string_to_num_id(symbol) for symbol in universe]
+        universe_tuple = tuple(universe)
+        universe = sorted(
+            list(build_num_to_string_id_mapping(universe_tuple).keys())
+        )
     return universe
 
 
@@ -92,7 +95,7 @@ def string_to_num_id(string_id: str) -> int:
 
 
 @functools.lru_cache
-def build_num_to_string_id_mapping(universe: Tuple[str]) -> Dict[int, str]:
+def build_num_to_string_id_mapping(universe: Tuple[str, ...]) -> Dict[int, str]:
     """
     Build a mapping from numeric ids to string ones.
 
