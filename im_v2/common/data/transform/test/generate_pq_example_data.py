@@ -185,21 +185,27 @@ def _main(parser: argparse.ArgumentParser) -> None:
     """
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Generation timespan.
+    # Generate timespan.
     start_date = args.start_date
     end_date = args.end_date
     hdbg.dassert_lt(start_date, end_date)
     timespan = pd.date_range(start_date, end_date)
     hdbg.dassert_lt(2, len(timespan))
+    # Obtain remaining args.
     assets = args.assets
     assets = assets.split(",")
     dst_dir = args.dst_dir
     freq = args.freq if args.freq else "1H"
+    # Pick specific function and generate dataframe.
     get_daily_df = (
         _get_verbose_daily_df if args.verbose else _get_generic_daily_df
     )
     dummy_df = get_daily_df(start_date, end_date, assets, freq)
-    hparque.save_daily_df_as_pq(dummy_df, dst_dir)
+    # Add date partition columns to the dataframe.
+    hparque.add_date_partition_cols(dummy_df)
+    # Partition and write dataset.
+    partition_cols = ["date"]
+    hparque.partition_dataset(dummy_df, partition_cols, dst_dir)
 
 
 if __name__ == "__main__":
