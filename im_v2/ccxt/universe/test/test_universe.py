@@ -20,7 +20,7 @@ class TestGetUniverse(hunitest.TestCase):
 class TestGetVendorUniverse(hunitest.TestCase):
     def test1(self) -> None:
         """
-        Test that universe full symbols are received correctly.
+        Test that universe as full symbols is received correctly.
         """
         universe_as_full_symbols = imvccunun.get_vendor_universe(version="small")
         self.assertEqual(len(universe_as_full_symbols), 2)
@@ -29,7 +29,7 @@ class TestGetVendorUniverse(hunitest.TestCase):
 
     def test2(self) -> None:
         """
-        Test that universe numeric ids are received correctly.
+        Test that universe as numeric ids is received correctly.
         """
         universe_as_numeric_ids = imvccunun.get_vendor_universe(
             version="small", as_ids=True

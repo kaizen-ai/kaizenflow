@@ -34,6 +34,8 @@ def get_trade_universe(
     return universe  # type: ignore[no-any-return]
 
 
+# TODO(Dan): Use `version = None` as default value and remove other default
+#  parameters values in #832.
 def get_vendor_universe(
     version: str = _LATEST_UNIVERSE_VERSION,
     vendor: str = "CCXT",
@@ -44,7 +46,8 @@ def get_vendor_universe(
 
     :param version: release version
     :param vendor: vendor to load data for
-    :param as_ids: whether to return universe as numeric ids or not
+    :param as_ids: if True return universe as numeric ids, return as full
+        symbols otherwise
     :return: vendor universe
     """
     # Get vendor universe.
