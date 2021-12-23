@@ -94,6 +94,22 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
         """
         Convert `IM` data to the format required by `AbstractMarketDataInterface`.
 
+        Input data example:
+        ```
+                                  full_symbol     close     volume
+        2021-07-26 13:42:00  binance:BTC_USDT  47063.51  29.403690
+        2021-07-26 13:43:00  binance:BTC_USDT  46946.30  58.246946
+        2021-07-26 13:44:00  binance:BTC_USDT  46895.39  81.264098
+        ```
+
+        Output data example:
+        ```
+                        end_ts       full_symbol     close     volume             start_ts
+        0  2021-07-26 13:42:00  binance:BTC_USDT  47063.51  29.403690  2021-07-26 13:41:00
+        1  2021-07-26 13:43:00  binance:BTC_USDT  46946.30  58.246946  2021-07-26 13:42:00
+        2  2021-07-26 13:44:00  binance:BTC_USDT  46895.39  81.264098  2021-07-26 13:43:00
+        ```
+
         :param data: `IM` data to transform
         :return: transformed data
         """
