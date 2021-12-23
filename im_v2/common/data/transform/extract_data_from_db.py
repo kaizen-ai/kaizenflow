@@ -109,13 +109,17 @@ def _main(parser: argparse.ArgumentParser) -> None:
             _LOG.info("No RT date in db for %s.", timespan[date_index])
             continue
         try:
+            # Check if directory already exists in specified path.
             date_directory = f"date={timespan[date_index].strftime('%Y%m%d')}"
             full_path = os.path.join(dst_dir, date_directory)
             hdbg.dassert_not_exists(full_path)
+            # Set datetime index.
             in_col_name = "timestamp"
             rt_df = hpandas.reindex_on_unix_epoch(rt_df, in_col_name, unit="ms")
-            partition_cols = ["date"]
+            # Add date partition columns to the dataframe.
             hparque.add_date_partition_cols(rt_df)
+            # Partition and write dataset.
+            partition_cols = ["date"]
             hparque.partition_dataset(rt_df, partition_cols, dst_dir)
         except AssertionError as ex:
             _LOG.info("Skipping. PQ file already present: %s.", ex)
