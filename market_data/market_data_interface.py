@@ -221,7 +221,7 @@ class AbstractMarketDataInterface(abc.ABC):
         )
         if self._column_remap:
             # Remap column names if mapping is provided.
-            df = self._remap_columns(df)
+            df = self._column_remap(df)
         _LOG.verb_debug("-> df=\n%s", hprint.dataframe_to_str(df))
         return df
 
