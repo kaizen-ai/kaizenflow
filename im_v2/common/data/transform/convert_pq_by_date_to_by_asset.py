@@ -89,14 +89,19 @@ def _save_chunk(config: Dict[str, str], **kwargs: Dict[str, Any]) -> None:
     for daily_pq in config["chunk"]:
         df = hparque.from_parquet(daily_pq)
         _LOG.debug("before df=\n%s", hprint.dataframe_to_str(df.head(3)))
-        # Transform.
+        # Set datetime index.
         # TODO(Nikola): Move to new Transform class.
         datetime_series = convert_timestamp_column(df["timestamp"], unit="s")
         reindexed_df = df.set_index(datetime_series)
         _LOG.debug("after df=\n%s", hprint.dataframe_to_str(reindexed_df.head(3)))
-        hparque.save_pq_by_asset(
-            config["asset_col_name"], reindexed_df, config["dst_dir"]
-        )
+        # Get partition arguments.
+        dst_dir = config["dst_dir"]
+        asset_col_name = config["asset_col_name"]
+        # Add date partition columns to the dataframe.
+        hparque.add_date_partition_cols(reindexed_df, partition_mode="day")
+        # Partition and write dataset.
+        partition_cols = ["year", "month", "day", asset_col_name]
+        hparque.partition_dataset(reindexed_df, partition_cols, dst_dir)
 
 
 # TODO(gp): We might want to use a config to pass a set of params related to each

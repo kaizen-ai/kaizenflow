@@ -109,16 +109,21 @@ def _main(parser: argparse.ArgumentParser) -> None:
             _LOG.info("No RT date in db for %s.", timespan[date_index])
             continue
         try:
+            # Check if directory already exists in specified path.
             date_directory = f"date={timespan[date_index].strftime('%Y%m%d')}"
             full_path = os.path.join(dst_dir, date_directory)
-            # TODO(Nikola): Incremental as in PQ conversion?
             hdbg.dassert_not_exists(full_path)
+            # Set datetime index.
             # TODO(Nikola): Move to new Transform class.
             datetime_series = imvcdtcpbdtba.convert_timestamp_column(
                 df["timestamp"]
             )
             reindexed_df = df.set_index(datetime_series)
-            hparque.save_daily_df_as_pq(reindexed_df, dst_dir)
+            # Add date partition columns to the dataframe.
+            hparque.add_date_partition_cols(reindexed_df)
+            # Partition and write dataset.
+            partition_cols = ["date"]
+            hparque.partition_dataset(reindexed_df, partition_cols, dst_dir)
         except AssertionError as ex:
             _LOG.info("Skipping. PQ file already present: %s.", ex)
             continue
