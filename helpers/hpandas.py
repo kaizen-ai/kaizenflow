@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 
-import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.printing as hprint
 
@@ -169,27 +168,21 @@ def drop_duplicates(
     return data_no_dups
 
 
-def convert_timestamp_column(
-    datetime_col: pd.Series, unit: str = "ms"
-) -> pd.Series:
+def get_df_signature(df: pd.DataFrame, num_rows: int = 3) -> str:
     """
-    Convert datetime as string or int, into a timestamp.
+    Compute a simple signature of a dataframe in string format.
 
-    :param datetime_col: series containing datetime as str or int
-    :param unit: the unit of unix epoch
-    :return: series containing datetime as `pd.Timestamp`
+    The signature contains metadata about dataframe size and certain
+    amount of rows from start and end of a dataframe. It is used for
+    testing purposes.
     """
-    # Convert unix epoch into timestamp.
-    if pd.api.types.is_integer_dtype(datetime_col):
-        kwargs = {"unit": unit}
-        converted_datetime_col = datetime_col.apply(
-            hdateti.convert_unix_epoch_to_timestamp, **kwargs
-        )
-    # Convert string into timestamp.
-    elif pd.api.types.is_string_dtype(datetime_col):
-        converted_datetime_col = hdateti.to_generalized_datetime(datetime_col)
-    else:
-        raise ValueError(
-            "Incorrect data format. Datetime column should be of integer or string dtype."
-        )
-    return converted_datetime_col
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    txt: List[str] = []
+    txt.append("df.shape=%s" % str(df.shape))
+    with pd.option_context(
+        "display.max_colwidth", int(1e6), "display.max_columns", None
+    ):
+        txt.append("df.head=\n%s" % df.head(num_rows))
+        txt.append("df.tail=\n%s" % df.tail(num_rows))
+    txt = "\n".join(txt)
+    return txt

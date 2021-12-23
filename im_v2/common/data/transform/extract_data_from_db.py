@@ -19,8 +19,8 @@ import os.path
 
 import pandas as pd
 
+import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
-import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.parser as hparser
 import helpers.sql as hsql
@@ -99,13 +99,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     for date_index in range(len(timespan) - 1):
         _LOG.debug("Checking for RT data on %s.", timespan[date_index])
         # TODO(Nikola): Refactor to use one db call.
-        rt_df = multiple_symbols_ccxt_db_client.read_data(
+        df = multiple_symbols_ccxt_db_client.read_data(
             symbols,
             start_ts=timespan[date_index],
             end_ts=timespan[date_index + 1],
             normalize=False,
         )
-        if rt_df.empty:
+        if df.empty:
             _LOG.info("No RT date in db for %s.", timespan[date_index])
             continue
         try:
@@ -113,10 +113,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
             full_path = os.path.join(dst_dir, date_directory)
             # TODO(Nikola): Incremental as in PQ conversion?
             hdbg.dassert_not_exists(full_path)
-            datetime_series = hpandas.convert_timestamp_column(rt_df["timestamp"])
+            datetime_series = hdateti.convert_timestamp_column(df["timestamp"])
             # TODO(Nikola): Move to new Transform class.
-            rt_df = rt_df.set_index(datetime_series)
-            hparque.save_daily_df_as_pq(rt_df, dst_dir)
+            reindexed_df = df.set_index(datetime_series)
+            hparque.save_daily_df_as_pq(reindexed_df, dst_dir)
         except AssertionError as ex:
             _LOG.info("Skipping. PQ file already present: %s.", ex)
             continue

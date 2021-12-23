@@ -53,7 +53,6 @@ import numpy as np
 
 import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
-import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.io_ as hio
 import helpers.joblib_helpers as hjoblib
@@ -90,20 +89,15 @@ def _save_chunk(config: Dict[str, str], **kwargs: Dict[str, Any]):
         df = hparque.from_parquet(daily_pq)
         _LOG.debug("before df=\n%s", hprint.dataframe_to_str(df.head(3)))
         # Transform.
-        # TODO(gp): Use eval or a more general mechanism.
-        transform_func = config["transform_func"]
-        if not transform_func:
-            pass
-        elif transform_func == "reindex_on_unix_epoch":
-            datetime_series = hpandas.convert_timestamp_column(
-                df["timestamp"], unit="s"
-            )
-            # TODO(Nikola): Move to new Transform class.
-            df = df.set_index(datetime_series)
-            _LOG.debug("after df=\n%s", hprint.dataframe_to_str(df.head(3)))
-        else:
-            hdbg.dfatal(f"Invalid transform_func='{transform_func}'")
-        hparque.save_pq_by_asset(config["asset_col_name"], df, config["dst_dir"])
+        datetime_series = hdateti.convert_timestamp_column(
+            df["timestamp"], unit="s"
+        )
+        # TODO(Nikola): Move to new Transform class.
+        reindexed_df = df.set_index(datetime_series)
+        _LOG.debug("after df=\n%s", hprint.dataframe_to_str(reindexed_df.head(3)))
+        hparque.save_pq_by_asset(
+            config["asset_col_name"], reindexed_df, config["dst_dir"]
+        )
 
 
 # TODO(gp): We might want to use a config to pass a set of params related to each
