@@ -3,9 +3,10 @@ Import as:
 
 import im_v2.ccxt.universe.universe as imvccunun
 """
+import functools
 import hashlib
 import os
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import helpers.dbg as hdbg
 import helpers.git as hgit
@@ -66,18 +67,29 @@ def string_to_num_id(string_id: str) -> int:
     """
     Convert string id to a numeric one.
 
+    The approach to conversion is following:
+        - Initialize MD5 algorithm converter
+        - Get hexadecimal id of a string id
+        - Convert hexadecimal id to decimal one
+        - Shorten numeric decimal id to 10 symbols
+
     :param string_id: string id to convert
     :return: numeric id
     """
     # Initialize MD5 algorithm converter and update it with string id.
     converter = hashlib.md5()
     converter.update(string_id.encode("utf-8"))
-    # Convert string id to integer and take first 10 elements for numeric id.
-    num_id = int(str(int(converter.hexdigest(), 16))[:10])
+    # Get hexadecimal numeric id.
+    num_id = converter.hexdigest()
+    # Convert hexadecimal id to decimal one.
+    num_id = int(num_id, 16)
+    # Shorten full numeric id to 10 symbols.
+    num_id = int(str(num_id)[:10])
     return num_id
 
 
-def build_num_to_string_id_mapping(universe: List[str]) -> Dict[int, str]:
+@functools.lru_cache
+def build_num_to_string_id_mapping(universe: Tuple[str]) -> Dict[int, str]:
     """
     Build a mapping from numeric ids to string ones.
 
@@ -88,5 +100,10 @@ def build_num_to_string_id_mapping(universe: List[str]) -> Dict[int, str]:
     # Convert each numeric id to a string one and add the pair to the mapping.
     for string_id in universe:
         num_id = string_to_num_id(string_id)
+        hdbg.dassert_not_in(
+            num_id,
+            mapping,
+            msg="Collision warning, id %s already exists" % num_id,
+        )
         mapping[num_id] = string_id
     return mapping

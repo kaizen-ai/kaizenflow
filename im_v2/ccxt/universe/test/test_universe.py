@@ -56,7 +56,7 @@ class TestBuildNumToStringIdMapping(hunitest.TestCase):
         Test that numeric to string ids mapping is being built correctly.
         """
         mapping = imvccunun.build_num_to_string_id_mapping(
-            ["gateio::XRP_USDT", "kucoin::SOL_USDT"]
+            ("gateio::XRP_USDT", "kucoin::SOL_USDT")
         )
         self.assertEqual(len(mapping), 2)
         self.assert_equal(mapping[2002879833], "gateio::XRP_USDT")
@@ -69,5 +69,5 @@ class TestBuildNumToStringIdMapping(hunitest.TestCase):
         Since the mapping is dict with numeric ids as keys, there are no
         collisions if it is just built.
         """
-        latest_universe = imvccunun.get_vendor_universe()
+        latest_universe = tuple(imvccunun.get_vendor_universe())
         _ = imvccunun.build_num_to_string_id_mapping(latest_universe)
