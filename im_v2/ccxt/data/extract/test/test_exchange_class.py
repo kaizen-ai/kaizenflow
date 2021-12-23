@@ -1,8 +1,6 @@
 import logging
-from typing import Any, List, Optional
 
 import pandas as pd
-import pytest
 
 import helpers.dbg as hdbg
 import helpers.unit_test as hunitest
@@ -13,7 +11,7 @@ import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 _LOG = logging.getLogger(__name__)
 
 
-#@pytest.mark.skip()
+# @pytest.mark.skip()
 class Test_CcxtExchange(hunitest.TestCase):
     def test_initialize_class(self) -> None:
         """
@@ -23,8 +21,8 @@ class Test_CcxtExchange(hunitest.TestCase):
 
     def test_unsupported_exchange(self) -> None:
         """
-        Test that initializing the class with unsupported exchange
-        string raises AssertionErrors
+        Test that initializing the class with unsupported exchange string
+        raises AssertionErrors.
         """
         raise NotImplementedError
 
@@ -41,17 +39,21 @@ class Test_CcxtExchange(hunitest.TestCase):
 
     def test_fetch_ohlcv(self) -> None:
         """
-        Test that a single iteration of loading historical data works correctly:
+        Test that a single iteration of loading historical data works
+        correctly:
+
         - timestamps are not outside the specified interval
-        - returned dataframe has the expected row count (most likely only if start date is far enough
-          in the past)
+        - returned dataframe has the expected row count
+        (most likely only if start date is far enough in the past)
         - returned dataframe has the expected column count and column names
         """
         raise NotImplementedError
 
-    def test_fetch_ohlcv_invalid_params(self):
+    def test_fetch_ohlcv_invalid_params(self) -> None:
         """
-        Test that a single iteration of loading historical data returns empty result if:
+        Test that a single iteration of loading historical data returns empty
+        result if:
+
         - step is <= 0
         - the provided start date (since) is in the future
         - timeframe argument has an invalid format
@@ -62,6 +64,7 @@ class Test_CcxtExchange(hunitest.TestCase):
     def test_download_ohlcv_data(self) -> None:
         """
         Test that historical data is being loaded correctly.
+
         TODO(Juraj): add test to check all timestamps are within requested interval
         """
         # Initiate class and set date parameters.
@@ -93,9 +96,10 @@ class Test_CcxtExchange(hunitest.TestCase):
         actual_string = hunitest.convert_df_to_json_string(actual, n_tail=None)
         self.check_string(actual_string)
 
-    def test_download_ohlcv_data_invalid_params(self):
+    def test_download_ohlcv_data_invalid_params(self) -> None:
         """
         Test that the download_ohlcv_data method returns empty result if:
+
         - step is <= 0
         - the provided start date (since) is in the future
         - the end date is before the start date
@@ -104,7 +108,7 @@ class Test_CcxtExchange(hunitest.TestCase):
         """
         raise NotImplementedError
 
-    def test_download_order_book(self):
+    def test_download_order_book(self) -> None:
         """
         Verify that order book is downloaded correctly.
         """
