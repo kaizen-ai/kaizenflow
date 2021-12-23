@@ -32,7 +32,10 @@ def _check_get_data(
             market_data_interface,
             _,
         ) = mdmdinex.get_replayed_time_market_data_interface_example2(
-            event_loop, start_datetime, end_datetime, initial_replayed_delay,
+            event_loop,
+            start_datetime,
+            end_datetime,
+            initial_replayed_delay,
             asset_ids
             # TODO(gp): initial_replayed_delay -> initial_delay_in_mins (or in secs).
         )

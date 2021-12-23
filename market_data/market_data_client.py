@@ -4,7 +4,7 @@ Import as:
 import market_data.market_data_client as mdmadacl
 """
 
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
@@ -18,6 +18,7 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
         self,
         *args: Any,
         im_client: ivcdclcl.AbstractImClient,
+        column_remap: Optional[Dict[str, str]] = None,
     ) -> None:
         """
         Constructor.
@@ -25,7 +26,7 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
         :param args: see `AbstractMarketDataInterface`
         :param im_client: `IM` client
         """
-        super().__init__(*args)  # type: ignore[arg-type]
+        super().__init__(*args, column_remap=column_remap)  # type: ignore[arg-type]
         self._im_client = im_client
 
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
