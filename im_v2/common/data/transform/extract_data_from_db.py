@@ -32,52 +32,7 @@ import im_v2.im_lib_tasks as imvimlita
 _LOG = logging.getLogger(__name__)
 
 
-def _parse() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.add_argument(
-        "--start_date",
-        action="store",
-        type=str,
-        required=True,
-        help="From when is data going to be extracted, including start date",
-    )
-    parser.add_argument(
-        "--end_date",
-        action="store",
-        type=str,
-        required=True,
-        help="Until when is data going to be extracted, excluding end date",
-    )
-    parser.add_argument(
-        "--dst_dir",
-        action="store",
-        type=str,
-        required=True,
-        help="Location of daily PQ files",
-    )
-    parser.add_argument(
-        "--stage",
-        action="store",
-        type=str,
-        default="local",
-        help="Which env is used: local, dev or prod",
-    )
-    hparser.add_verbosity_arg(parser)
-    return parser
-
-
-def _main(parser: argparse.ArgumentParser) -> None:
-    """
-    Standard main part of the script that is parsing provided arguments.
-
-    Timespan provided via start and end date, can not start and end on
-    the same day. Start date is included in timespan, while end date is
-    excluded.
-    """
-    args = parser.parse_args()
-    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+def _run(args: argparse.Namespace) -> None:
     # Extraction timespan.
     start_date = args.start_date
     end_date = args.end_date
@@ -120,6 +75,51 @@ def _main(parser: argparse.ArgumentParser) -> None:
         except AssertionError as ex:
             _LOG.info("Skipping. PQ file already present: %s.", ex)
             continue
+
+
+def _parse() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "--start_date",
+        action="store",
+        type=str,
+        required=True,
+        help="From when is data going to be extracted, including start date",
+    )
+    parser.add_argument(
+        "--end_date",
+        action="store",
+        type=str,
+        required=True,
+        help="Until when is data going to be extracted, excluding end date",
+    )
+    parser.add_argument(
+        "--dst_dir",
+        action="store",
+        type=str,
+        required=True,
+        help="Location of daily PQ files",
+    )
+    parser.add_argument(
+        "--stage",
+        action="store",
+        type=str,
+        default="local",
+        help="Which env is used: local, dev or prod",
+    )
+    hparser.add_verbosity_arg(parser)
+    return parser
+
+
+def _main(parser: argparse.ArgumentParser) -> None:
+    """
+    Standard main part of the script that is parsing provided arguments.
+    """
+    args = parser.parse_args()
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    _run(args)
 
 
 if __name__ == "__main__":
