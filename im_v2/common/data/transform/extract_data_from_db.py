@@ -113,9 +113,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
             full_path = os.path.join(dst_dir, date_directory)
             # TODO(Nikola): Incremental as in PQ conversion?
             hdbg.dassert_not_exists(full_path)
-            in_col_name = "timestamp"
-            unit = "ms"
-            rt_df = hpandas.reindex_on_unix_epoch(rt_df, in_col_name, unit=unit)
+            datetime_series = hpandas.convert_timestamp_column(rt_df["timestamp"])
+            # TODO(Nikola): Move to new Transform class.
+            rt_df = rt_df.set_index(datetime_series)
             hparque.save_daily_df_as_pq(rt_df, dst_dir)
         except AssertionError as ex:
             _LOG.info("Skipping. PQ file already present: %s.", ex)

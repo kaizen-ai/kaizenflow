@@ -95,8 +95,11 @@ def _save_chunk(config: Dict[str, str], **kwargs: Dict[str, Any]):
         if not transform_func:
             pass
         elif transform_func == "reindex_on_unix_epoch":
-            in_col_name = "start_time"
-            df = hpandas.reindex_on_unix_epoch(df, in_col_name)
+            datetime_series = hpandas.convert_timestamp_column(
+                df["timestamp"], unit="s"
+            )
+            # TODO(Nikola): Move to new Transform class.
+            df = df.set_index(datetime_series)
             _LOG.debug("after df=\n%s", hprint.dataframe_to_str(df.head(3)))
         else:
             hdbg.dfatal(f"Invalid transform_func='{transform_func}'")

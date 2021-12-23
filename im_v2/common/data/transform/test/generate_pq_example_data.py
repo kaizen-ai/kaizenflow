@@ -117,6 +117,7 @@ def _get_verbose_daily_df(
         df.append(df_tmp)
     # Create a single df for all the assets.
     df = pd.concat(df)
+    # TODO(Nikola): There is nice function in datetime helpers.
     start_time = (df.index - pd.Timestamp("1970-01-01")) // pd.Timedelta("1s")
     end_time = start_time + interval
     # TODO(Nikola): Handle various types of dates?
