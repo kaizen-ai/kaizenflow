@@ -63,6 +63,33 @@ import helpers.printing as hprint
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(Nikola): Transform specific. It will be moved out.
+def convert_timestamp_column(
+    datetime_col: pd.Series, unit: str = "ms"
+) -> pd.Series:
+    """
+    Convert datetime as string or int into a timestamp.
+
+    :param datetime_col: series containing datetime as str or int
+    :param unit: the unit of unix epoch
+    :return: series containing datetime as `pd.Timestamp`
+    """
+    if pd.api.types.is_integer_dtype(datetime_col):
+        # Convert unix epoch into timestamp.
+        kwargs = {"unit": unit}
+        converted_datetime_col = datetime_col.apply(
+            hdateti.convert_unix_epoch_to_timestamp, **kwargs
+        )
+    elif pd.api.types.is_string_dtype(datetime_col):
+        # Convert string into timestamp.
+        converted_datetime_col = hdateti.to_generalized_datetime(datetime_col)
+    else:
+        raise ValueError(
+            "Incorrect data format. Datetime column should be of integer or string dtype."
+        )
+    return converted_datetime_col
+
+
 def _source_pq_files(src_dir: str) -> List[str]:
     """
     Generator for all the Parquet files in a given dir.
@@ -91,7 +118,7 @@ def _save_chunk(config: Dict[str, str], **kwargs: Dict[str, Any]) -> None:
         _LOG.debug("before df=\n%s", hprint.dataframe_to_str(df.head(3)))
         # Set datetime index.
         # TODO(Nikola): Move to new Transform class.
-        datetime_series = convert_timestamp_column(df["timestamp"], unit="s")
+        datetime_series = convert_timestamp_column(df["start_time"], unit="s")
         reindexed_df = df.set_index(datetime_series)
         _LOG.debug("after df=\n%s", hprint.dataframe_to_str(reindexed_df.head(3)))
         # Get partition arguments.
@@ -214,30 +241,3 @@ def _main(parser: argparse.ArgumentParser) -> None:
 
 if __name__ == "__main__":
     _main(_parse())
-
-
-# TODO(Nikola): Transform specific. It will be moved out.
-def convert_timestamp_column(
-    datetime_col: pd.Series, unit: str = "ms"
-) -> pd.Series:
-    """
-    Convert datetime as string or int into a timestamp.
-
-    :param datetime_col: series containing datetime as str or int
-    :param unit: the unit of unix epoch
-    :return: series containing datetime as `pd.Timestamp`
-    """
-    if pd.api.types.is_integer_dtype(datetime_col):
-        # Convert unix epoch into timestamp.
-        kwargs = {"unit": unit}
-        converted_datetime_col = datetime_col.apply(
-            hdateti.convert_unix_epoch_to_timestamp, **kwargs
-        )
-    elif pd.api.types.is_string_dtype(datetime_col):
-        # Convert string into timestamp.
-        converted_datetime_col = hdateti.to_generalized_datetime(datetime_col)
-    else:
-        raise ValueError(
-            "Incorrect data format. Datetime column should be of integer or string dtype."
-        )
-    return converted_datetime_col
