@@ -28,21 +28,44 @@ class TestGetVendorUniverse(hunitest.TestCase):
         self.assert_equal(universe_as_full_symbols[1], "kucoin::SOL_USDT")
 
 
-class TestGetFullSymbolId(hunitest.TestCase):
+class TestStringToNumId(hunitest.TestCase):
     def test1(self) -> None:
         """
-        Test that full symbol numeric id is constructed correctly.
+        Test that string id is converted to numeric correctly.
         """
-        numeric_id = imvccunun.get_full_symbol_id("binance::BTC_USDT")
-        self.assertEqual(numeric_id, 104)
+        num_id = imvccunun.string_to_num_id("binance::BTC_USDT")
+        self.assertEqual(num_id, 1467591036)
 
 
-class TestGetVendorUniverseIds(hunitest.TestCase):
+class TestGetVendorUniverseNumIds(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test that universe numeric ids are received correctly.
         """
-        universe_as_numeric_ids = imvccunun.get_vendor_universe_ids("small")
+        universe_as_numeric_ids = imvccunun.get_vendor_universe_num_ids("small")
         self.assertEqual(len(universe_as_numeric_ids), 2)
-        self.assertEqual(universe_as_numeric_ids[0], 3011)
-        self.assertEqual(universe_as_numeric_ids[1], 4010)
+        self.assertEqual(universe_as_numeric_ids[0], 2002879833)
+        self.assertEqual(universe_as_numeric_ids[1], 2568064341)
+
+
+class TestBuildNumToStringIdMapping(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test that numeric to string ids mapping is being built correctly.
+        """
+        mapping = imvccunun.build_num_to_string_id_mapping(
+            ["gateio::XRP_USDT", "kucoin::SOL_USDT"]
+        )
+        self.assertEqual(len(mapping), 2)
+        self.assert_equal(mapping[2002879833], "gateio::XRP_USDT")
+        self.assert_equal(mapping[2568064341], "kucoin::SOL_USDT")
+
+    def test2(self) -> None:
+        """
+        Smoke test that latest CCXT universe has no collisions in numeric ids.
+
+        Since the mapping is dict with numeric ids as keys, there are no
+        collisions if it is just built.
+        """
+        latest_universe = imvccunun.get_vendor_universe()
+        _ = imvccunun.build_num_to_string_id_mapping(latest_universe)
