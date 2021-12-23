@@ -199,7 +199,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _get_verbose_daily_df if args.verbose else _get_generic_daily_df
     )
     dummy_df = get_daily_df(start_date, end_date, assets, freq)
-    hparque.save_daily_df_as_pq(dummy_df, dst_dir)
+    partition_col_names = ["date"]
+    hparque.add_date_partition_cols(dummy_df)
+    hparque.partition_dataset(dummy_df, partition_col_names, dst_dir)
 
 
 if __name__ == "__main__":

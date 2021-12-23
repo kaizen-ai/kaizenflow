@@ -111,12 +111,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
         try:
             date_directory = f"date={timespan[date_index].strftime('%Y%m%d')}"
             full_path = os.path.join(dst_dir, date_directory)
-            # TODO(Nikola): Incremental as in PQ conversion?
             hdbg.dassert_not_exists(full_path)
             in_col_name = "timestamp"
-            unit = "ms"
-            rt_df = hpandas.reindex_on_unix_epoch(rt_df, in_col_name, unit=unit)
-            hparque.save_daily_df_as_pq(rt_df, dst_dir)
+            rt_df = hpandas.reindex_on_unix_epoch(rt_df, in_col_name, unit="ms")
+            partition_col_names = ["date"]
+            hparque.add_date_partition_cols(rt_df)
+            hparque.partition_dataset(rt_df, partition_col_names, dst_dir)
         except AssertionError as ex:
             _LOG.info("Skipping. PQ file already present: %s.", ex)
             continue
