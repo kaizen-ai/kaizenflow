@@ -22,9 +22,7 @@ class TestGetVendorUniverse(hunitest.TestCase):
         """
         Test that universe full symbols are received correctly.
         """
-        universe_as_full_symbols = imvccunun.get_vendor_universe(
-            version="small"
-        )
+        universe_as_full_symbols = imvccunun.get_vendor_universe(version="small")
         self.assertEqual(len(universe_as_full_symbols), 2)
         self.assert_equal(universe_as_full_symbols[0], "gateio::XRP_USDT")
         self.assert_equal(universe_as_full_symbols[1], "kucoin::SOL_USDT")
