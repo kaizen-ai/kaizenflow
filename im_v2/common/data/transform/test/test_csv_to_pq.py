@@ -10,7 +10,6 @@ import helpers.unit_test as hunitest
 
 
 class TestCsvToPq(hunitest.TestCase):
-    @pytest.mark.skip("Enable when purify_text issue is resolved CMTask782")
     def test1(self) -> None:
         """
         Test that generated .pq file is correct.
@@ -28,9 +27,8 @@ class TestCsvToPq(hunitest.TestCase):
         # Check output.
         df = pd.read_parquet(os.path.join(pq_dir_path, "test.parquet"))
         actual = hunitest.convert_df_to_json_string(df, n_tail=None)
-        self.check_string(actual)
+        self.check_string(actual, purify_text=True)
 
-    @pytest.mark.skip("Enable when purify_text issue is resolved CMTask782")
     def test2(self) -> None:
         """
         Test that --incremental option does not change the file.
