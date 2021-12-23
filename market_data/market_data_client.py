@@ -115,6 +115,7 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
         """
         data = data.reset_index()
         data = data.rename(columns={"index": "end_ts"})
+        # `IM` data is assumed to have 1 minute frequency.
         data["start_ts"] = data["end_ts"] - pd.Timedelta(minutes=1)
         return data
 
