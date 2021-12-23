@@ -185,7 +185,7 @@ class AbstractImClient(abc.ABC):
         Sanity checks include:
             - index is `pd.DatetimeIndex`
             - index is monotonic increasing/decreasing
-            - index frequence is "T" (1 minute)
+            - index frequency is "T" (1 minute)
             - index has timezone "UTC"
             - data has no duplicates
         """
