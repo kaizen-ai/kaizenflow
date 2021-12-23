@@ -273,12 +273,11 @@ class AbstractMarketDataInterface(abc.ABC):
 
         The input df looks like:
         ```
-          asset_id           start_time             end_time     close   volume
+                                  asset_id      close   volume
 
-        idx  17085  2021-07-26 13:40:00  2021-07-26 13:41:00  149.0250   575024
-          0  17085  2021-07-26 13:41:00  2021-07-26 13:42:00  148.8600   400176
-          1  17085  2021-07-26 13:30:00  2021-07-26 13:31:00  148.5300  1407725
-          2  17085  2021-07-26 13:31:00  2021-07-26 13:32:00  148.0999   473869
+          2021-07-20 09:31:00-04:00  17085    143.990  1524506
+          2021-07-20 09:32:00-04:00  17085    143.310   586654
+          2021-07-20 09:33:00-04:00  17085    143.535   667639
         ```
 
         The output df looks like:
@@ -290,6 +289,11 @@ class AbstractMarketDataInterface(abc.ABC):
         2021-07-20 09:33:00-04:00  17085 2021-07-20 09:32:00-04:00  143.535   667639
         ```
         """
+        # Convert `IM` data to the format required for further processing.
+        df = df.reset_index()
+        df = df.rename(columns={"index": self._end_time_col_name})
+        # `IM` data is assumed to have 1 minute frequency.
+        df[self._start_time_col_name] = df[self._end_time_col_name] - pd.Timedelta(minutes=1)
         # Sort in increasing time order and reindex.
         df.sort_values([self._end_time_col_name, self._asset_id_col], inplace=True)
         df.set_index(self._end_time_col_name, drop=True, inplace=True)
