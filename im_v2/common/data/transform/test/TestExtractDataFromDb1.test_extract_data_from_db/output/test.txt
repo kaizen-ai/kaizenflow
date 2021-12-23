@@ -1,20 +1,20 @@
 # before=
 # Dir structure
-/app/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date
+$GIT_ROOT/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date
 # File signatures
 len(file_names)=0
 file_names=
 # after=
 # Dir structure
-/app/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date
-/app/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date/date=20211123
-/app/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date/date=20211123/data.parquet
-/app/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date/date=20211124
-/app/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date/date=20211124/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date
+$GIT_ROOT/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date/date=20211123
+$GIT_ROOT/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date/date=20211123/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date/date=20211124
+$GIT_ROOT/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date/date=20211124/data.parquet
 # File signatures
 len(file_names)=2
-file_names=/app/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date/date=20211123/data.parquet, /app/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date/date=20211124/data.parquet
-# /app/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date/date=20211123/data.parquet
+file_names=$GIT_ROOT/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date/date=20211123/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date/date=20211124/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date/date=20211123/data.parquet
 num_lines=33
 '''
 original shape=(1, 11)
@@ -51,7 +51,7 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date/date=20211124/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestExtractDataFromDb1.test_extract_data_from_db/tmp.scratch/by_date/date=20211124/data.parquet
 num_lines=33
 '''
 original shape=(1, 11)

@@ -522,7 +522,7 @@ def purify_from_env_vars(txt: str) -> str:
         if env_var in os.environ:
             val = os.environ[env_var]
             hdbg.dassert_ne(val, "", "Env var '%s' can't be empty", env_var)
-            txt = txt.replace(val, "*****")
+            txt = txt.replace(val, f"${env_var}")
     _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt
 
