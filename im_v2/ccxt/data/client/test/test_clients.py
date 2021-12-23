@@ -104,7 +104,7 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
         df = ccxt_db_client.read_data(
             "binance::BTC_USDT",
             start_ts=pd.Timestamp("2021-09-08T20:01:00-04:00"),
-            end_ts=pd.Timestamp("2021-09-08T20:04:00-04:00"),
+            end_ts=pd.Timestamp("2021-09-08T20:05:00-04:00"),
         )
         actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
@@ -479,7 +479,7 @@ class TestMultipleSymbolsCcxtDbClient(imvcodbut.TestImDbHelper):
         )
         # Check actual results.
         actual = multiple_symbols_client.read_data(full_symbols=full_symbols)
-        expected_length = 8
+        expected_length = 12
         expected_exchange_ids = ["gateio", "kucoin"]
         expected_currency_pairs = ["SOL_USDT", "XRP_USDT"]
         self._check_output(
@@ -511,9 +511,9 @@ class TestMultipleSymbolsCcxtDbClient(imvcodbut.TestImDbHelper):
         actual = multiple_symbols_client.read_data(
             full_symbols=full_symbols,
             start_ts=pd.Timestamp("2021-09-09T00:01:00"),
-            end_ts=pd.Timestamp("2021-09-09T00:04:00"),
+            end_ts=pd.Timestamp("2021-09-09T00:06:00"),
         )
-        expected_length = 3
+        expected_length = 10
         expected_exchange_ids = ["gateio", "kucoin"]
         expected_currency_pairs = ["SOL_USDT", "XRP_USDT"]
         self._check_output(
@@ -546,7 +546,7 @@ class TestMultipleSymbolsCcxtDbClient(imvcodbut.TestImDbHelper):
             full_symbols=full_symbols,
             normalize=False,
         )
-        expected_length = 6
+        expected_length = 8
         expected_exchange_ids = ["gateio", "kucoin"]
         expected_currency_pairs = ["SOL_USDT", "XRP_USDT"]
         self._check_output(
@@ -589,7 +589,7 @@ class TestMultipleSymbolsCcxtDbClient(imvcodbut.TestImDbHelper):
         )
         self._check_output(
             actual=actual_df2,
-            expected_length=2,
+            expected_length=6,
             expected_exchange_ids=["kucoin"],
             expected_currency_pairs=["SOL_USDT"],
             check_string=False,
@@ -640,11 +640,13 @@ class TestMultipleSymbolsCcxtDbClient(imvcodbut.TestImDbHelper):
             data=[
                 [1, 1631145600000, 30, 40, 50, 60, 70, "XRP_USDT", "gateio", pd.Timestamp("2021-09-09")],
                 [2, 1631145660000, 31, 41, 51, 61, 71, "XRP_USDT", "gateio", pd.Timestamp("2021-09-09")],
-                [3, 1631145720000, 32, 42, 52, 62, 72, "SOL_USDT", "kucoin", pd.Timestamp("2021-09-09")],
-                [4, 1631145780000, 33, 43, 53, 63, 73, "SOL_USDT", "kucoin", pd.Timestamp("2021-09-09")],
-                [5, 1631145840000, 34, 44, 54, 64, 74, "XRP_USDT", "gateio", pd.Timestamp("2021-09-09")],
-                [6, 1631145900000, 34, 44, 54, 64, 74, "XRP_USDT", "gateio", pd.Timestamp("2021-09-09")],
-                [7, 1631145960000, 34, 44, 54, 64, 74, "ETH_USDT", "binance", pd.Timestamp("2021-09-09")],
+                [3, 1631145600000, 32, 42, 52, 62, 72, "SOL_USDT", "kucoin", pd.Timestamp("2021-09-09")],
+                [4, 1631145660000, 33, 43, 53, 63, 73, "SOL_USDT", "kucoin", pd.Timestamp("2021-09-09")],
+                [5, 1631145720000, 32, 42, 52, 62, 72, "SOL_USDT", "kucoin", pd.Timestamp("2021-09-09")],
+                [6, 1631145900000, 33, 43, 53, 63, 73, "SOL_USDT", "kucoin", pd.Timestamp("2021-09-09")],
+                [7, 1631145840000, 34, 44, 54, 64, 74, "XRP_USDT", "gateio", pd.Timestamp("2021-09-09")],
+                [8, 1631145900000, 34, 44, 54, 64, 74, "XRP_USDT", "gateio", pd.Timestamp("2021-09-09")],
+                [9, 1631145960000, 34, 44, 54, 64, 74, "ETH_USDT", "binance", pd.Timestamp("2021-09-09")],
             ]
             # pylint: enable=line-too-long
             # fmt: on

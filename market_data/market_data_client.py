@@ -92,9 +92,9 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
     @staticmethod
     def convert_im_data(data: pd.DataFrame) -> pd.DataFrame:
         """
-        Convert data to the format required by `process_data()`.
+        Convert `IM` data to the format required by `AbstractMarketDataInterface`.
 
-        :param data: IM data to transform
+        :param data: `IM` data to transform
         :return: transformed data
         """
         data = data.reset_index()
