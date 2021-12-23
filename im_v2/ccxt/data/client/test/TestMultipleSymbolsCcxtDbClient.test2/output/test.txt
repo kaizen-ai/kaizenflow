@@ -1,4 +1,4 @@
-original shape=(10, 10)
+original shape=(3, 10)
 Head:
 {
     "0":{
@@ -9,71 +9,11 @@ Head:
         "low":51.0,
         "close":61.0,
         "volume":71.0,
-        "epoch":1631145660000.0,
+        "epoch":1631145660000,
         "currency_pair":"XRP_USDT",
         "exchange_id":"gateio"
     },
     "1":{
-        "index":"2021-09-09T00:02:00Z",
-        "full_symbol":"gateio::XRP_USDT",
-        "open":null,
-        "high":null,
-        "low":null,
-        "close":null,
-        "volume":null,
-        "epoch":null,
-        "currency_pair":null,
-        "exchange_id":null
-    },
-    "2":{
-        "index":"2021-09-09T00:03:00Z",
-        "full_symbol":"gateio::XRP_USDT",
-        "open":null,
-        "high":null,
-        "low":null,
-        "close":null,
-        "volume":null,
-        "epoch":null,
-        "currency_pair":null,
-        "exchange_id":null
-    },
-    "3":{
-        "index":"2021-09-09T00:04:00Z",
-        "full_symbol":"gateio::XRP_USDT",
-        "open":34.0,
-        "high":44.0,
-        "low":54.0,
-        "close":64.0,
-        "volume":74.0,
-        "epoch":1631145840000.0,
-        "currency_pair":"XRP_USDT",
-        "exchange_id":"gateio"
-    },
-    "4":{
-        "index":"2021-09-09T00:05:00Z",
-        "full_symbol":"gateio::XRP_USDT",
-        "open":34.0,
-        "high":44.0,
-        "low":54.0,
-        "close":64.0,
-        "volume":74.0,
-        "epoch":1631145900000.0,
-        "currency_pair":"XRP_USDT",
-        "exchange_id":"gateio"
-    },
-    "5":{
-        "index":"2021-09-09T00:01:00Z",
-        "full_symbol":"kucoin::SOL_USDT",
-        "open":33.0,
-        "high":43.0,
-        "low":53.0,
-        "close":63.0,
-        "volume":73.0,
-        "epoch":1631145660000.0,
-        "currency_pair":"SOL_USDT",
-        "exchange_id":"kucoin"
-    },
-    "6":{
         "index":"2021-09-09T00:02:00Z",
         "full_symbol":"kucoin::SOL_USDT",
         "open":32.0,
@@ -81,43 +21,19 @@ Head:
         "low":52.0,
         "close":62.0,
         "volume":72.0,
-        "epoch":1631145720000.0,
+        "epoch":1631145720000,
         "currency_pair":"SOL_USDT",
         "exchange_id":"kucoin"
     },
-    "7":{
+    "2":{
         "index":"2021-09-09T00:03:00Z",
-        "full_symbol":"kucoin::SOL_USDT",
-        "open":null,
-        "high":null,
-        "low":null,
-        "close":null,
-        "volume":null,
-        "epoch":null,
-        "currency_pair":null,
-        "exchange_id":null
-    },
-    "8":{
-        "index":"2021-09-09T00:04:00Z",
-        "full_symbol":"kucoin::SOL_USDT",
-        "open":null,
-        "high":null,
-        "low":null,
-        "close":null,
-        "volume":null,
-        "epoch":null,
-        "currency_pair":null,
-        "exchange_id":null
-    },
-    "9":{
-        "index":"2021-09-09T00:05:00Z",
         "full_symbol":"kucoin::SOL_USDT",
         "open":33.0,
         "high":43.0,
         "low":53.0,
         "close":63.0,
         "volume":73.0,
-        "epoch":1631145900000.0,
+        "epoch":1631145780000,
         "currency_pair":"SOL_USDT",
         "exchange_id":"kucoin"
     }
@@ -132,71 +48,11 @@ Tail:
         "low":51.0,
         "close":61.0,
         "volume":71.0,
-        "epoch":1631145660000.0,
+        "epoch":1631145660000,
         "currency_pair":"XRP_USDT",
         "exchange_id":"gateio"
     },
     "1":{
-        "index":"2021-09-09T00:02:00Z",
-        "full_symbol":"gateio::XRP_USDT",
-        "open":null,
-        "high":null,
-        "low":null,
-        "close":null,
-        "volume":null,
-        "epoch":null,
-        "currency_pair":null,
-        "exchange_id":null
-    },
-    "2":{
-        "index":"2021-09-09T00:03:00Z",
-        "full_symbol":"gateio::XRP_USDT",
-        "open":null,
-        "high":null,
-        "low":null,
-        "close":null,
-        "volume":null,
-        "epoch":null,
-        "currency_pair":null,
-        "exchange_id":null
-    },
-    "3":{
-        "index":"2021-09-09T00:04:00Z",
-        "full_symbol":"gateio::XRP_USDT",
-        "open":34.0,
-        "high":44.0,
-        "low":54.0,
-        "close":64.0,
-        "volume":74.0,
-        "epoch":1631145840000.0,
-        "currency_pair":"XRP_USDT",
-        "exchange_id":"gateio"
-    },
-    "4":{
-        "index":"2021-09-09T00:05:00Z",
-        "full_symbol":"gateio::XRP_USDT",
-        "open":34.0,
-        "high":44.0,
-        "low":54.0,
-        "close":64.0,
-        "volume":74.0,
-        "epoch":1631145900000.0,
-        "currency_pair":"XRP_USDT",
-        "exchange_id":"gateio"
-    },
-    "5":{
-        "index":"2021-09-09T00:01:00Z",
-        "full_symbol":"kucoin::SOL_USDT",
-        "open":33.0,
-        "high":43.0,
-        "low":53.0,
-        "close":63.0,
-        "volume":73.0,
-        "epoch":1631145660000.0,
-        "currency_pair":"SOL_USDT",
-        "exchange_id":"kucoin"
-    },
-    "6":{
         "index":"2021-09-09T00:02:00Z",
         "full_symbol":"kucoin::SOL_USDT",
         "open":32.0,
@@ -204,43 +60,19 @@ Tail:
         "low":52.0,
         "close":62.0,
         "volume":72.0,
-        "epoch":1631145720000.0,
+        "epoch":1631145720000,
         "currency_pair":"SOL_USDT",
         "exchange_id":"kucoin"
     },
-    "7":{
+    "2":{
         "index":"2021-09-09T00:03:00Z",
-        "full_symbol":"kucoin::SOL_USDT",
-        "open":null,
-        "high":null,
-        "low":null,
-        "close":null,
-        "volume":null,
-        "epoch":null,
-        "currency_pair":null,
-        "exchange_id":null
-    },
-    "8":{
-        "index":"2021-09-09T00:04:00Z",
-        "full_symbol":"kucoin::SOL_USDT",
-        "open":null,
-        "high":null,
-        "low":null,
-        "close":null,
-        "volume":null,
-        "epoch":null,
-        "currency_pair":null,
-        "exchange_id":null
-    },
-    "9":{
-        "index":"2021-09-09T00:05:00Z",
         "full_symbol":"kucoin::SOL_USDT",
         "open":33.0,
         "high":43.0,
         "low":53.0,
         "close":63.0,
         "volume":73.0,
-        "epoch":1631145900000.0,
+        "epoch":1631145780000,
         "currency_pair":"SOL_USDT",
         "exchange_id":"kucoin"
     }

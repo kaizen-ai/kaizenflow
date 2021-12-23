@@ -1,4 +1,4 @@
-original shape=(8, 12)
+original shape=(6, 12)
 Head:
 {
     "0":{
@@ -32,7 +32,7 @@ Head:
     "2":{
         "index":2,
         "full_symbol":"gateio::XRP_USDT",
-        "id":7,
+        "id":5,
         "timestamp":1631145840000,
         "open":34.0,
         "high":44.0,
@@ -46,7 +46,7 @@ Head:
     "3":{
         "index":3,
         "full_symbol":"gateio::XRP_USDT",
-        "id":8,
+        "id":6,
         "timestamp":1631145900000,
         "open":34.0,
         "high":44.0,
@@ -61,7 +61,7 @@ Head:
         "index":0,
         "full_symbol":"kucoin::SOL_USDT",
         "id":3,
-        "timestamp":1631145600000,
+        "timestamp":1631145720000,
         "open":32.0,
         "high":42.0,
         "low":52.0,
@@ -75,35 +75,7 @@ Head:
         "index":1,
         "full_symbol":"kucoin::SOL_USDT",
         "id":4,
-        "timestamp":1631145660000,
-        "open":33.0,
-        "high":43.0,
-        "low":53.0,
-        "close":63.0,
-        "volume":73.0,
-        "currency_pair":"SOL_USDT",
-        "exchange_id":"kucoin",
-        "created_at":"2021-09-09T00:00:00Z"
-    },
-    "6":{
-        "index":2,
-        "full_symbol":"kucoin::SOL_USDT",
-        "id":5,
-        "timestamp":1631145720000,
-        "open":32.0,
-        "high":42.0,
-        "low":52.0,
-        "close":62.0,
-        "volume":72.0,
-        "currency_pair":"SOL_USDT",
-        "exchange_id":"kucoin",
-        "created_at":"2021-09-09T00:00:00Z"
-    },
-    "7":{
-        "index":3,
-        "full_symbol":"kucoin::SOL_USDT",
-        "id":6,
-        "timestamp":1631145900000,
+        "timestamp":1631145780000,
         "open":33.0,
         "high":43.0,
         "low":53.0,
@@ -147,7 +119,7 @@ Tail:
     "2":{
         "index":2,
         "full_symbol":"gateio::XRP_USDT",
-        "id":7,
+        "id":5,
         "timestamp":1631145840000,
         "open":34.0,
         "high":44.0,
@@ -161,7 +133,7 @@ Tail:
     "3":{
         "index":3,
         "full_symbol":"gateio::XRP_USDT",
-        "id":8,
+        "id":6,
         "timestamp":1631145900000,
         "open":34.0,
         "high":44.0,
@@ -176,7 +148,7 @@ Tail:
         "index":0,
         "full_symbol":"kucoin::SOL_USDT",
         "id":3,
-        "timestamp":1631145600000,
+        "timestamp":1631145720000,
         "open":32.0,
         "high":42.0,
         "low":52.0,
@@ -190,35 +162,7 @@ Tail:
         "index":1,
         "full_symbol":"kucoin::SOL_USDT",
         "id":4,
-        "timestamp":1631145660000,
-        "open":33.0,
-        "high":43.0,
-        "low":53.0,
-        "close":63.0,
-        "volume":73.0,
-        "currency_pair":"SOL_USDT",
-        "exchange_id":"kucoin",
-        "created_at":"2021-09-09T00:00:00Z"
-    },
-    "6":{
-        "index":2,
-        "full_symbol":"kucoin::SOL_USDT",
-        "id":5,
-        "timestamp":1631145720000,
-        "open":32.0,
-        "high":42.0,
-        "low":52.0,
-        "close":62.0,
-        "volume":72.0,
-        "currency_pair":"SOL_USDT",
-        "exchange_id":"kucoin",
-        "created_at":"2021-09-09T00:00:00Z"
-    },
-    "7":{
-        "index":3,
-        "full_symbol":"kucoin::SOL_USDT",
-        "id":6,
-        "timestamp":1631145900000,
+        "timestamp":1631145780000,
         "open":33.0,
         "high":43.0,
         "low":53.0,
