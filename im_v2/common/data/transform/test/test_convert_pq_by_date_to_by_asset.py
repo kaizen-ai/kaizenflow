@@ -127,16 +127,6 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         verbose = True
         self._test_joblib_task(verbose, {})
 
-    def test__save_chunk3(self) -> None:
-        """
-        Faulty transform_func.
-        """
-        verbose = False
-        faulty_config = {"transform_func": "faulty_func"}
-        with self.assertRaises(AssertionError) as fail:
-            self._test_joblib_task(verbose, faulty_config)
-        self.assertIn("Invalid transform_func='faulty_func'", str(fail.exception))
-
     def test_parser(self) -> None:
         """
         Tests arg parser for predefined args in the script.
