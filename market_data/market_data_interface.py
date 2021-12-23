@@ -219,6 +219,9 @@ class AbstractMarketDataInterface(abc.ABC):
             normalize_data,
             limit,
         )
+        if self._column_remap:
+            # Remap column names if mapping is provided.
+            df = self._column_remap(df)
         _LOG.verb_debug("-> df=\n%s", hprint.dataframe_to_str(df))
         return df
 
@@ -427,7 +430,6 @@ class AbstractMarketDataInterface(abc.ABC):
         """
         ...
 
-    # TODO(Grisha): use this method somewhere, `get_data()`?
     def _remap_columns(self, df: pd.DataFrame) -> pd.DataFrame:
         if self._column_remap:
             hpandas.dassert_valid_remap(df.columns.tolist(), self._column_remap)
