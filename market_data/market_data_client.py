@@ -85,8 +85,22 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
             hdbg.dassert_lte(1, limit)
             market_data = market_data.head(limit)
         if normalize_data:
+            market_data = self.convert_im_data(market_data)
             market_data = self.process_data(market_data)
         return market_data
+
+    @staticmethod
+    def convert_im_data(data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Convert data to the format required by `process_data()`.
+
+        :param data: IM data to transform
+        :return: transformed data
+        """
+        data = data.reset_index()
+        data = data.rename(columns={"index": "end_ts"})
+        data["start_ts"] = data["end_ts"] - pd.Timedelta(minutes=1)
+        return data
 
     # TODO(Grisha): implement the method.
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
