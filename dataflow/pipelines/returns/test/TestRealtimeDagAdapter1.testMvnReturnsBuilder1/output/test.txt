@@ -1,0 +1,92 @@
+dag_adapter=
+  dag_builder=
+    nid_prefix=
+    get_config_template=
+      load_prices:
+        frequency: T
+        start_date: 2010-01-04 09:30:00
+        end_date: 2010-01-14 16:05:00
+        dim: 4
+        target_volatility: 0.25
+        seed: 247
+      filter_ath:
+        col_mode: replace_all
+        transformer_kwargs:
+          start_time: 09:30:00
+          end_time: 16:00:00
+      resample:
+        in_col_groups: [('close',), ('volume',)]
+        out_col_group: ()
+        transformer_kwargs:
+          rule: 5T
+          resampling_groups: [({'close': 'close'}, 'last', {}), ({'close': 'twap'}, 'mean', {}), ({'volume': 'volume'}, 'sum', {'min_count': 1})]
+          vwap_groups: [('close', 'volume', 'vwap')]
+        reindex_like_input: False
+        join_output_with_input: False
+      compute_ret_0:
+        in_col_groups: [('close',), ('vwap',), ('twap',)]
+        out_col_group: ()
+        transformer_kwargs:
+          mode: log_rets
+        col_mapping:
+          close: close.ret_0
+          vwap: vwap.ret_0
+          twap: twap.ret_0
+    dag=
+      name=None
+      mode=strict
+      json=
+        {
+            "directed": true,
+            "graph": {},
+            "links": [
+                {
+                    "df_in": "df_out",
+                    "source": "load_prices",
+                    "target": "filter_weekends"
+                },
+                {
+                    "df_in": "df_out",
+                    "source": "filter_weekends",
+                    "target": "filter_ath"
+                },
+                {
+                    "df_in": "df_out",
+                    "source": "filter_ath",
+                    "target": "resample"
+                },
+                {
+                    "df_in": "df_out",
+                    "source": "resample",
+                    "target": "compute_ret_0"
+                }
+            ],
+            "multigraph": false,
+            "nodes": [
+                {
+                    "id": "load_prices",
+                    "stage": "MultivariateNormalGenerator"
+                },
+                {
+                    "id": "filter_weekends",
+                    "stage": "ColumnTransformer"
+                },
+                {
+                    "id": "filter_ath",
+                    "stage": "ColumnTransformer"
+                },
+                {
+                    "id": "resample",
+                    "stage": "GroupedColDfToDfTransformer"
+                },
+                {
+                    "id": "compute_ret_0",
+                    "stage": "GroupedColDfToDfTransformer"
+                }
+            ]
+        }
+  overriding_config=
+    load_prices: {'source_node_name': 'RealTimeDataSource', 'source_node_kwargs': {'market_data_interface': 'market_data_interface_example', 'period': 'last_5mins', 'asset_id_col': 'asset_id', 'multiindex_output': True}}
+    process_forecasts: {'prediction_col': 'close', 'execution_mode': 'real_time', 'process_forecasts_config': {'market_data_interface': 'market_data_interface_example', 'portfolio': 'portfolio_example', 'order_type': 'price@twap', 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30), 'ath_end_time': datetime.time(16, 40), 'trading_end_time': datetime.time(16, 40)}}
+  nodes_to_append=
+    ('process_forecasts', <class 'dataflow.system.dataflow_sink_nodes.ProcessForecasts'>)

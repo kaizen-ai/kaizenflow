@@ -95,30 +95,30 @@ def from_parquet(
     return df
 
 
-# TODO(Nikola): Add tests for new functions below.
-#   Adapt to different formats, if needed.
-#   Currently only ccxt_ohlcv.
-def save_daily_df_as_pq(df: pd.DataFrame, dst_dir: str) -> None:
+def partition_dataset(
+    df: pd.DataFrame, partition_cols: List[str], dst_dir: str
+) -> None:
     """
-    Create and save a daily parquet structure as below:
+    Partition given dataframe indexed on datetime and save as Parquet dataset.
 
+    In case of date partition, file layout format looks like:
     ```
     dst_dir/
         date=20211230/
             data.parquet
         date=20211231/
             data.parquet
-        date=20221231/
+        date=20220101/
             data.parquet
     ```
+
+    :param df: dataframe with datetime index
+    :param partition_cols: partition columns, e.g. ['asset']
+    :param dst_dir: location of partitioned dataset
     """
-    date_col_name = "date"
-    with htimer.TimedScope(logging.DEBUG, "Create partition dates"):
-        with htimer.TimedScope(logging.DEBUG, "Create partition indices"):
-            df[date_col_name] = df.index.strftime("%Y%m%d")
+    hdbg.dassert_is_subset(partition_cols, df.columns)
     with htimer.TimedScope(logging.DEBUG, "Save data"):
         table = pa.Table.from_pandas(df)
-        partition_cols = [date_col_name]
         pq.write_to_dataset(
             table,
             dst_dir,
@@ -127,41 +127,26 @@ def save_daily_df_as_pq(df: pd.DataFrame, dst_dir: str) -> None:
         )
 
 
-def save_pq_by_asset(
-    asset_col_name: str, parquet_df_by_date: pd.DataFrame, dst_dir: str
-) -> None:
+def add_date_partition_cols(
+    df: pd.DataFrame, partition_mode: str = "no_partition"
+) -> pd.DataFrame:
     """
-    Save a dataframe in a Parquet format in `dst_dir` partitioned by year and
-    asset.
+    Add partition columns like year, month, day from datetime index.
+    "no_partition" means partitioning by entire date, e.g. "20211201".
 
-    ```
-    dst_dir/
-        year=2021/
-            month=11/
-                day=06/
-                    asset=A/
-                        data.parquet
-                    asset=B/
-                        data.parquet
-        year=2022/
-            month=11/
-                day=07/
-                    asset=A/
-                        data.parquet
-                    asset=B/
-                        data.parquet
-    ```
+    :param df: original dataframe
+    :param partition_mode: date unit to partition, e.g. 'year'
+    :return: DataFrame with date partition cols added
     """
     date_col_names = ["year", "month", "day"]
+    msg = f"Invalid partition mode `{partition_mode}`!"
+    hdbg.dassert_in(partition_mode, [*date_col_names, "no_partition"], msg)
     with htimer.TimedScope(logging.DEBUG, "Create partition indices"):
-        for name in date_col_names:
-            parquet_df_by_date[name] = getattr(parquet_df_by_date.index, name)
-    with htimer.TimedScope(logging.DEBUG, "Save data"):
-        table = pa.Table.from_pandas(parquet_df_by_date)
-        partition_cols = [*date_col_names, asset_col_name]
-        pq.write_to_dataset(
-            table,
-            dst_dir,
-            partition_cols=partition_cols,
-            partition_filename_cb=lambda x: "data.parquet",
-        )
+        if partition_mode != "no_partition":
+            for name in date_col_names:
+                df[name] = getattr(df.index, name)
+                if name == partition_mode:
+                    break
+        else:
+            df["date"] = df.index.strftime("%Y%m%d")
+    return df

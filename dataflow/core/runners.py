@@ -4,6 +4,8 @@ Import as:
 import dataflow.core.runners as dtfcorrunn
 """
 
+# TODO(gp): -> dag_runner.py
+
 import abc
 import logging
 from typing import Generator, Optional, Tuple
@@ -22,7 +24,7 @@ import helpers.dbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): Should we call the `start` params -> `start_datetime`
+# TODO(gp): Should we call the `start` params -> `start_timestamp`
 
 # #############################################################################
 

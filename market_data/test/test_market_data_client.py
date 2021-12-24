@@ -38,6 +38,7 @@ class TestGetDataForInterval(hunitest.TestCase):
             [],
             hdateti.get_current_time,
             im_client=multiple_symbols_client,
+            column_remap={"full_symbol": "asset_id"},
         )
         # Read data.
         start_ts = pd.Timestamp("2018-08-17T00:01:00")
@@ -57,9 +58,9 @@ class TestGetDataForInterval(hunitest.TestCase):
         expected_df_as_str = """
         # df=
         df.index in [2018-08-17 00:01:00+00:00, 2018-08-17 00:04:00+00:00]
-        df.columns=full_symbol,open,high,low,close,volume,epoch,currency_pair,exchange_id,start_ts
+        df.columns=asset_id,open,high,low,close,volume,epoch,currency_pair,exchange_id,start_ts
         df.shape=(8, 10)
-                                         full_symbol         open         high          low        close     volume          epoch currency_pair exchange_id                  start_ts
+                                         asset_id         open         high          low        close     volume          epoch currency_pair exchange_id                  start_ts
         end_ts
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206  1534464060000      BTC_USDT     binance 2018-08-17 00:00:00+00:00
         2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500  1534464060000      ETH_USDT      kucoin 2018-08-17 00:00:00+00:00

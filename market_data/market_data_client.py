@@ -18,6 +18,7 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
         self,
         *args: Any,
         im_client: ivcdclcl.AbstractImClient,
+        **kwargs: Any,
     ) -> None:
         """
         Constructor.
@@ -25,7 +26,7 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
         :param args: see `AbstractMarketDataInterface`
         :param im_client: `IM` client
         """
-        super().__init__(*args)  # type: ignore[arg-type]
+        super().__init__(*args, **kwargs)
         self._im_client = im_client
 
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
@@ -39,7 +40,6 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         ts_col_name: str,
-        # TODO(Grisha): handle `asset_ids = None`.
         asset_ids: Optional[List[str]],
         left_close: bool,
         right_close: bool,
@@ -67,8 +67,11 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
         if right_close:
             # Subtract one millisecond to include the right boundary.
             end_ts = end_ts - pd.Timedelta(ms=1)
-        # Load the data using `im_client`.
+        if not asset_ids:
+            # If `asset_ids` is None, get all symbols from the latest universe.
+            asset_ids = self._im_client.get_universe()
         full_symbols = asset_ids
+        # Load the data using `im_client`.
         market_data = self._im_client.read_data(
             full_symbols,
             start_ts=start_ts,

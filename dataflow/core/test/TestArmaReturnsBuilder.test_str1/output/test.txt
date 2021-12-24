@@ -1,0 +1,104 @@
+nid_prefix=
+get_config_template=
+  rets/read_data:
+    frequency: T
+    start_date: 2010-01-04 09:00:00
+    end_date: 2010-01-04 16:30:00
+    ar_coeffs: [0]
+    ma_coeffs: [0]
+    scale: 0.1
+    burnin: 0
+    seed: 0
+  rets/filter_ath:
+    col_mode: replace_all
+    transformer_kwargs:
+      start_time: 09:30:00
+      end_time: 16:00:00
+  rets/resample:
+    func_kwargs:
+      rule: 5T
+      resampling_groups: [({'close': 'twap'}, 'mean', {})]
+      vwap_groups: [('close', 'volume', 'vwap')]
+  rets/compute_ret_0:
+    cols: ['twap', 'vwap']
+    col_mode: merge_all
+    transformer_kwargs:
+      mode: pct_change
+  rets/model_volatility:
+    cols: ['vwap_ret_0']
+    steps_ahead: 2
+    nan_mode: leave_unchanged
+  rets/clip:
+    cols: ['vwap_ret_0_vol_adj']
+    col_mode: replace_selected
+dag=
+  name=None
+  mode=strict
+  json=
+    {
+        "directed": true,
+        "graph": {},
+        "links": [
+            {
+                "df_in": "df_out",
+                "source": "rets/read_data",
+                "target": "rets/filter_weekends"
+            },
+            {
+                "df_in": "df_out",
+                "source": "rets/filter_weekends",
+                "target": "rets/filter_ath"
+            },
+            {
+                "df_in": "df_out",
+                "source": "rets/filter_ath",
+                "target": "rets/resample"
+            },
+            {
+                "df_in": "df_out",
+                "source": "rets/resample",
+                "target": "rets/compute_ret_0"
+            },
+            {
+                "df_in": "df_out",
+                "source": "rets/compute_ret_0",
+                "target": "rets/model_volatility"
+            },
+            {
+                "df_in": "df_out",
+                "source": "rets/model_volatility",
+                "target": "rets/clip"
+            }
+        ],
+        "multigraph": false,
+        "nodes": [
+            {
+                "id": "rets/read_data",
+                "stage": "ArmaGenerator"
+            },
+            {
+                "id": "rets/filter_weekends",
+                "stage": "ColumnTransformer"
+            },
+            {
+                "id": "rets/filter_ath",
+                "stage": "ColumnTransformer"
+            },
+            {
+                "id": "rets/resample",
+                "stage": "FunctionWrapper"
+            },
+            {
+                "id": "rets/compute_ret_0",
+                "stage": "ColumnTransformer"
+            },
+            {
+                "id": "rets/model_volatility",
+                "stage": "VolatilityModel"
+            },
+            {
+                "id": "rets/clip",
+                "stage": "ColumnTransformer"
+            }
+        ]
+    }
