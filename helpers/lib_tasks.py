@@ -1137,15 +1137,16 @@ def integrate_copy_dirs(  # type: ignore
 
 
 @task
-def integrate_files_since_last_integration(  # type: ignore
-        ctx, subdir=""):
+def integrate_files_since_last_integration(ctx, subdir=""):  # type: ignore
     """
     Return the list of files modified since the last integration.
     """
     _report_task()
     _ = ctx
     # Find the hash of all integration commits.
-    cmd = "git log --date=local --oneline --date-order | grep AmpTask1786_Integrate"
+    cmd = (
+        "git log --date=local --oneline --date-order | grep AmpTask1786_Integrate"
+    )
     _, txt = hsysinte.system_to_string(cmd)
     _LOG.debug("integration commits=\n%s", txt)
     txt = txt.split("\n")
@@ -1769,8 +1770,12 @@ def _get_docker_cmd(
     as_user = as_user_from_cmd_line
     if as_root:
         as_user = False
-    _LOG.debug("as_user_from_cmd_line=%s as_root=%s -> as_user=%s",
-            as_user_from_cmd_line, as_root, as_user)
+    _LOG.debug(
+        "as_user_from_cmd_line=%s as_root=%s -> as_user=%s",
+        as_user_from_cmd_line,
+        as_root,
+        as_user,
+    )
     if as_user:
         docker_cmd_.append(
             r"""
@@ -2674,9 +2679,7 @@ def _select_tests_to_skip(test_list_name: str) -> str:
     elif test_list_name == "superslow_tests":
         skipped_tests = "not slow and superslow"
     else:
-        raise ValueError(
-            f"Invalid `test_list_name`={test_list_name}"
-        )
+        raise ValueError(f"Invalid `test_list_name`={test_list_name}")
     return skipped_tests
 
 
@@ -2699,9 +2702,7 @@ def _build_run_command_line(
     passed by the user through `-p` (unless really necessary).
     """
     hdbg.dassert_in(
-        test_list_name,
-        _TEST_TIMEOUTS_IN_SECS,
-        "Invalid test_list_name"
+        test_list_name, _TEST_TIMEOUTS_IN_SECS, "Invalid test_list_name"
     )
     pytest_opts = pytest_opts or "."
     #
@@ -3019,8 +3020,12 @@ def run_coverage_report(ctx):
     cmd = f"invoke run_slow_tests --coverage -p {target_dir}; cp .coverage .coverage_slow_tests"
     _run(ctx, cmd)
     cmd = []
-    cmd.append("coverage combine --keep .coverage_fast_tests .coverage_slow_tests")
-    cmd.append('coverage report --include="${target_dir}/*" --omit="*/test_*.py" --sort=Cover')
+    cmd.append(
+        "coverage combine --keep .coverage_fast_tests .coverage_slow_tests"
+    )
+    cmd.append(
+        'coverage report --include="${target_dir}/*" --omit="*/test_*.py" --sort=Cover'
+    )
     cmd.append('coverage html --include="${target_dir}/*" --omit="*/test_*.py"')
     cmd = " && ".join(cmd)
     cmd = "invoke docker_bash --cmd '%s'" % cmd
@@ -3756,7 +3761,9 @@ def gh_workflow_list(
                 print(f"Workflow '{workflow}' for '{branch_name}' is ok")
                 break
             elif status == "failure":
-                _LOG.error("Workflow '%s' for '%s' is broken", workflow, branch_name)
+                _LOG.error(
+                    "Workflow '%s' for '%s' is broken", workflow, branch_name
+                )
                 # Get the output of the broken run.
                 # > gh run view 1477484584 --log-failed
                 workload_id = table_tmp.get_column("id")[i]

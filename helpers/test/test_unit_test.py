@@ -1013,7 +1013,6 @@ class TestDataframeToJson(hunitest.TestCase):
 
 @pytest.mark.skip(reason="See cryptomtc/cmamp#321")
 class Test_get_dir_signature1(hunitest.TestCase):
-
     def helper(self, include_file_content: bool) -> str:
         in_dir = self.get_input_dir()
         act = hunitest.get_dir_signature(
@@ -1058,7 +1057,6 @@ class Test_get_dir_signature1(hunitest.TestCase):
 
 
 class Test_purify_txt_from_client1(hunitest.TestCase):
-
     def helper(self, txt: str, exp: str) -> None:
         act = hunitest.purify_txt_from_client(txt)
         self.assert_equal(act, exp)
@@ -1083,7 +1081,6 @@ class Test_purify_txt_from_client1(hunitest.TestCase):
 
 
 class Test_purify_object_reference1(hunitest.TestCase):
-
     def helper(self, txt: str, exp: str) -> None:
         txt = hprint.dedent(txt)
         act = hunitest.purify_object_reference(txt)

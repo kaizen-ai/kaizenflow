@@ -136,7 +136,9 @@ class AbstractBroker(abc.ABC):
         self._column_remap = column_remap
         # Track the orders for internal accounting, mapping wall clock when the
         # order was submitted to the submitted orders.
-        self._orders: Dict[pd.Timestamp, List[omorder.Order]] = collections.OrderedDict()
+        self._orders: Dict[
+            pd.Timestamp, List[omorder.Order]
+        ] = collections.OrderedDict()
         # Map a timestamp to the orders with that execution time deadline.
         self._deadline_timestamp_to_orders: Dict[
             pd.Timestamp, List[omorder.Order]
@@ -377,7 +379,9 @@ class MockedBroker(AbstractBroker):
             poll_kwargs = hasynci.get_poll_kwargs(self._get_wall_clock_time)
         self._poll_kwargs = poll_kwargs
         # Store the submitted rows to the DB for internal book keeping.
-        self._submissions: Dict[pd.Timestamp, pd.Series] = collections.OrderedDict()
+        self._submissions: Dict[
+            pd.Timestamp, pd.Series
+        ] = collections.OrderedDict()
 
     def get_fills(self) -> List[Fill]:
         return self._get_fills_helper()

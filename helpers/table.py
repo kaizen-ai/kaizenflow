@@ -63,7 +63,7 @@ class Table:
         rows_as_str = [row.rstrip() for row in rows_as_str]
         # Create string.
         res = "\n".join(rows_as_str)
-        #res += "\nsize=%s" % str(self.size())
+        # res += "\nsize=%s" % str(self.size())
         return res
 
     def __repr__(self) -> str:

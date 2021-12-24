@@ -15,7 +15,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class _TestDataflowHelper(hunitest.TestCase):
-
     def _check(self, dag: dtfcordag.DAG) -> None:
         """
         Compute and freeze with `check_string` the signature of a graph.
