@@ -25,9 +25,6 @@ class TestGetDataForInterval(hunitest.TestCase):
         ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
             data_type="ohlcv", root_dir=test_dir
         )
-        multiple_symbols_client = imvcdcli.MultipleSymbolsImClient(
-            ccxt_file_client, "concat"
-        )
         # Initialize the `MarketDataInterface`.
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         market_data_client = mdmadacl.MarketDataInterface(
@@ -37,7 +34,7 @@ class TestGetDataForInterval(hunitest.TestCase):
             "end_ts",
             [],
             hdateti.get_current_time,
-            im_client=multiple_symbols_client,
+            im_client=ccxt_file_client,
             column_remap={"full_symbol": "asset_id"},
         )
         # Read data.
