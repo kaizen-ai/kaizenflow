@@ -775,15 +775,15 @@ class Test_build_run_command_line1(hunitest.TestCase):
         incremental = True
         hunitest.create_test_dir(dir_name, incremental, file_dict)
         #
+        test_list_name = "fast_tests"
         pytest_opts = ""
-        dir_name = scratch_space
         skip_submodules = True
         coverage = False
         collect_only = False
         tee_to_file = False
         #
         act = hlibtask._build_run_command_line(
-            "fast_tests",
+            test_list_name,
             pytest_opts,
             skip_submodules,
             coverage,
@@ -800,6 +800,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         """
         Basic run fast tests tee-ing to a file.
         """
+        test_list_name = "fast_tests"
         pytest_opts = ""
         skip_submodules = False
         coverage = False
@@ -807,7 +808,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         tee_to_file = True
         #
         act = hlibtask._build_run_command_line(
-            "fast_tests",
+            test_list_name,
             pytest_opts,
             skip_submodules,
             coverage,

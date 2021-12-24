@@ -1013,12 +1013,21 @@ class TestDataframeToJson(hunitest.TestCase):
 
 @pytest.mark.skip(reason="See cryptomtc/cmamp#321")
 class Test_get_dir_signature1(hunitest.TestCase):
+
+    def helper(self, include_file_content: bool) -> str:
+        in_dir = self.get_input_dir()
+        act = hunitest.get_dir_signature(
+            in_dir, include_file_content, num_lines=None
+        )
+        act = hunitest.purify_txt_from_client(act)
+        return act  # type: ignore[no-any-return]
+
     def test1(self) -> None:
         """
         Test dir signature excluding the file content.
         """
         include_file_content = False
-        act = self._helper(include_file_content)
+        act = self.helper(include_file_content)
         # pylint: disable=line-too-long
         exp = r"""
         # Dir structure
@@ -1040,38 +1049,95 @@ class Test_get_dir_signature1(hunitest.TestCase):
         Test dir signature including the file content.
         """
         include_file_content = True
-        act = self._helper(include_file_content)
+        act = self.helper(include_file_content)
         # The golden outcome is long and uninteresting so we use check_string.
         self.check_string(act, fuzzy_match=True)
-
-    def _helper(self, include_file_content: bool) -> str:
-        in_dir = self.get_input_dir()
-        act = hunitest.get_dir_signature(
-            in_dir, include_file_content, num_lines=None
-        )
-        act = hunitest.purify_txt_from_client(act)
-        return act  # type: ignore[no-any-return]
 
 
 # #############################################################################
 
 
 class Test_purify_txt_from_client1(hunitest.TestCase):
+
+    def helper(self, txt: str, exp: str) -> None:
+        act = hunitest.purify_txt_from_client(txt)
+        self.assert_equal(act, exp)
+
     def test1(self) -> None:
         txt = "amp/helpers/test/test_system_interaction.py"
         exp = "helpers/test/test_system_interaction.py"
-        self._helper(txt, exp)
+        self.helper(txt, exp)
 
     def test2(self) -> None:
         txt = "amp/helpers/test/test_system_interaction.py"
         exp = "helpers/test/test_system_interaction.py"
-        self._helper(txt, exp)
+        self.helper(txt, exp)
 
     def test3(self) -> None:
         txt = "['amp/helpers/test/test_system_interaction.py']"
         exp = "['helpers/test/test_system_interaction.py']"
-        self._helper(txt, exp)
+        self.helper(txt, exp)
 
-    def _helper(self, txt: str, exp: str) -> None:
-        act = hunitest.purify_txt_from_client(txt)
-        self.assertEqual(act, exp)
+
+# #############################################################################
+
+
+class Test_purify_object_reference1(hunitest.TestCase):
+
+    def helper(self, txt: str, exp: str) -> None:
+        txt = hprint.dedent(txt)
+        act = hunitest.purify_object_reference(txt)
+        exp = hprint.dedent(exp)
+        self.assert_equal(act, exp)
+
+    def test1(self) -> None:
+        txt = """
+        load_prices: {'source_node_name': 'RealTimeDataSource object
+        at 0x7f571c329b50
+        """
+        exp = r"""
+        load_prices: {'source_node_name': 'RealTimeDataSource object
+        at 0x"""
+        self.helper(txt, exp)
+
+    def test2(self) -> None:
+        txt = """
+        load_prices: {'source_node_name at 0x7f571c329b51':
+        'RealTimeDataSource object at 0x7f571c329b50
+        """
+        exp = r"""
+        load_prices: {'source_node_name at 0x':
+        'RealTimeDataSource object at 0x"""
+        self.helper(txt, exp)
+
+    def test3(self) -> None:
+        txt = """
+        load_prices: {'source_node_name': 'RealTimeDataSource',
+        'source_node_kwargs': {'market_data_interface':
+        <market_data.market_data_interface.ReplayedTimeMarketDataInterface
+        object>, 'period': 'last_5mins', 'asset_id_col': 'asset_id',
+        'multiindex_output': True}} process_forecasts: {'prediction_col': 'close',
+        'execution_mode': 'real_time', 'process_forecasts_config':
+        {'market_data_interface':
+        <market_data.market_data_interface.ReplayedTimeMarketDataInterface
+        object at 0x7faff4c3faf0>,'portfolio  ': <oms.portfolio.SimulatedPortfolio
+        object>, 'order_type': 'price@twap', 'ath_start_time':
+        datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30),
+        'ath_end_time': datetime.time(16, 40), 'trading_end_time':
+        datetime.time(16, 4  0)}}
+        """
+        exp = r"""
+        load_prices: {'source_node_name': 'RealTimeDataSource',
+        'source_node_kwargs': {'market_data_interface':
+        <market_data.market_data_interface.ReplayedTimeMarketDataInterface
+        object>, 'period': 'last_5mins', 'asset_id_col': 'asset_id',
+        'multiindex_output': True}} process_forecasts: {'prediction_col': 'close',
+        'execution_mode': 'real_time', 'process_forecasts_config':
+        {'market_data_interface':
+        <market_data.market_data_interface.ReplayedTimeMarketDataInterface
+        object at 0x>,'portfolio  ': <oms.portfolio.SimulatedPortfolio
+        object>, 'order_type': 'price@twap', 'ath_start_time':
+        datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30),
+        'ath_end_time': datetime.time(16, 40), 'trading_end_time':
+        datetime.time(16, 4  0)}}"""
+        self.helper(txt, exp)
