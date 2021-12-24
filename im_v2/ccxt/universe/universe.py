@@ -6,7 +6,7 @@ import im_v2.ccxt.universe.universe as imvccunun
 import functools
 import hashlib
 import os
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 import helpers.dbg as hdbg
 import helpers.git as hgit
@@ -40,14 +40,13 @@ def get_vendor_universe(
     version: str = _LATEST_UNIVERSE_VERSION,
     vendor: str = "CCXT",
     as_ids: bool = False,
-) -> List[imvcdcadlo.FullSymbol]:
+) -> Union[List[imvcdcadlo.FullSymbol], List[int]]:
     """
     Load vendor universe as full symbols or numeric ids.
 
     :param version: release version
     :param vendor: vendor to load data for
-    :param as_ids: if True return universe as numeric ids, return as full
-        symbols otherwise
+    :param as_ids: if True return universe as numeric ids, otherwise universe as full symbols
     :return: vendor universe
     """
     # Get vendor universe.
@@ -58,26 +57,18 @@ def get_vendor_universe(
         for exchange_id, currency_pairs in vendor_universe.items()
         for currency_pair in currency_pairs
     ]
+    if as_ids:
+        # Convert universe symbols to numeric ids.
+        universe_tuple = tuple(universe)
+        universe = list(build_num_to_string_id_mapping(universe_tuple).keys())
     # Sort list of symbols in the universe.
     universe = sorted(universe)
-    if as_ids:
-        # Convert universe symbols to numeric ids if specified.
-        universe_tuple = tuple(universe)
-        universe = sorted(
-            list(build_num_to_string_id_mapping(universe_tuple).keys())
-        )
     return universe
 
 
 def string_to_num_id(string_id: str) -> int:
     """
-    Convert string id to a numeric one.
-
-    The approach to conversion is following:
-        - Initialize MD5 algorithm converter
-        - Get hexadecimal id of a string id
-        - Convert hexadecimal id to decimal one
-        - Shorten numeric decimal id to 10 symbols
+    Convert string id into a numeric one.
 
     :param string_id: string id to convert
     :return: numeric id
@@ -99,17 +90,17 @@ def build_num_to_string_id_mapping(universe: Tuple[str, ...]) -> Dict[int, str]:
     """
     Build a mapping from numeric ids to string ones.
 
-    :param universe: universe of numeric ids to convert
+    :param universe: universe of string ids to convert
     :return: numeric to string ids mapping
     """
     mapping = {}
-    # Convert each numeric id to a string one and add the pair to the mapping.
     for string_id in universe:
+        # Convert string id to a numeric one.
         num_id = string_to_num_id(string_id)
         hdbg.dassert_not_in(
             num_id,
             mapping,
-            msg="Collision warning, id %s already exists" % num_id,
+            "Collision: id %s for string `%s` already exists",  num_id, string_id
         )
         mapping[num_id] = string_id
     return mapping
