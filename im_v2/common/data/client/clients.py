@@ -77,7 +77,8 @@ def construct_full_symbol(exchange: str, symbol: str) -> FullSymbol:
 
 class AbstractImClient(abc.ABC):
     """
-    Abstract Interface for `IM` client.
+    Abstract Interface for `IM` client. Responsible for retrieving the market data
+    for different vendors from different backends.
     """
 
     def read_data(
@@ -113,13 +114,15 @@ class AbstractImClient(abc.ABC):
         # Initialize results dict.
         full_symbol_to_df = {}
         for full_symbol in sorted(full_symbols):
-            df = self._read_data_for_single_full_symbol(
+            df = self._read_data(
                 full_symbol,
-                normalize,
                 start_ts,
                 end_ts,
                 **kwargs,
             )
+            if normalize:
+                # Normalize data.
+                df = self._normalize_data(df)
             # Insert column with full symbol to the dataframe.
             df.insert(0, full_symbol_col_name, full_symbol)
             # Add full symbol data to the results dict.
@@ -141,12 +144,11 @@ class AbstractImClient(abc.ABC):
         Return the earliest timestamp available for a given `FullSymbol`.
         """
         # TODO(Grisha): add caching.
-        normalize = True
-        data = self._read_data_for_single_full_symbol(
-            full_symbol, normalize, None, None
-        )
+        # Read data for the entire period of time available.
+        data = self._read_data(full_symbol, None, None)
+        normalized_data = self._normalize_data(data)
         # It is assumed that timestamp is always stored as index.
-        start_ts = data.index.min()
+        start_ts = normalized_data.index.min()
         return start_ts
 
     def get_end_ts_available(self, full_symbol: FullSymbol) -> pd.Timestamp:
@@ -154,12 +156,11 @@ class AbstractImClient(abc.ABC):
         Return the latest timestamp available for a given `FullSymbol`.
         """
         # TODO(Grisha): add caching.
-        normalize = True
-        data = self._read_data_for_single_full_symbol(
-            full_symbol, normalize, None, None
-        )
+        # Read data for the entire period of time available.
+        data = self._read_data(full_symbol, None, None)
+        normalized_data = self._normalize_data(data)
         # It is assumed that timestamp is always stored as index.
-        end_ts = data.index.max()
+        end_ts = normalized_data.index.max()
         return end_ts
 
     @staticmethod
@@ -169,27 +170,21 @@ class AbstractImClient(abc.ABC):
         Get universe as full symbols.
         """
 
-    def _read_data_for_single_full_symbol(
-        self,
-        full_symbol: FullSymbol,
-        normalize: bool,
-        start_ts: Optional[pd.Timestamp],
-        end_ts: Optional[pd.Timestamp],
-        **kwargs: Any,
-    ) -> pd.DataFrame:
-        # Read data for each given full symbol.
-        df = self._read_data(
-            full_symbol,
-            start_ts=start_ts,
-            end_ts=end_ts,
-            **kwargs,
-        )
-        if normalize:
-            df = self._normalize_data(df)
-            df = hpandas.drop_duplicates(df)
-            df = hpandas.resample_df(df, "T")
-            # Verify that data is valid.
-            self._dassert_is_valid(df)
+    def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Normalize data.
+
+        Normalization includes:
+            - transformation specific of the vendor
+            - dropping duplicates
+            - resampling to 1 minute
+            - sanity check of the data
+        """
+        df = self._normalize_data(df)
+        df = hpandas.drop_duplicates(df)
+        df = hpandas.resample_df(df, "T")
+        # Verify that data is valid.
+        self._dassert_is_valid(df)
         return df
 
     @abc.abstractmethod
@@ -210,7 +205,7 @@ class AbstractImClient(abc.ABC):
 
     @staticmethod
     @abc.abstractmethod
-    def _normalize_data(df: pd.DataFrame) -> pd.DataFrame:
+    def _transform_data(df: pd.DataFrame) -> pd.DataFrame:
         """
         Apply transformation specific of the vendor, e.g. rename columns,
         convert data types.

@@ -113,7 +113,7 @@ class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
         data = data[ohlcv_columns].copy()
         return data
 
-    def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
+    def _transform_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         See description in the parent class.
 
