@@ -78,18 +78,14 @@ def construct_full_symbol(exchange: str, symbol: str) -> FullSymbol:
 class AbstractImClient(abc.ABC):
     """
     Abstract Interface for `IM` client.
-
-    Clients derived from `AbstractImClient` read data for a single
-    `FullSymbol`, to read data for multiple `FullSymbols` use
-    `MultipleSymbolsImClient`.
     """
     def read_data(
         self,
         full_symbols: List[FullSymbol],
         *,
+        normalize: bool = True,
         mode: str = "concat",
         full_symbol_col_name: str = "full_symbol",
-        normalize: bool = True,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
         **kwargs: Any,
@@ -101,11 +97,11 @@ class AbstractImClient(abc.ABC):
 
         :param full_symbols: list of full symbols, e.g.
             `['binance::BTC_USDT', 'kucoin::ETH_USDT']`
+        :param normalize: whether to transform data or not
         :param mode: output mode
             - concat: store data for multiple full symbols in one dataframe
             - dict: store data in a dict of a type `Dict[full_symbol, data]`
         :param full_symbol_col_name: name of the column with full symbols
-        :param normalize: whether to transform data or not
         :param start_ts: the earliest date timestamp to load data for
         :param end_ts: the latest date timestamp to load data for
         :return: combined data for provided symbols
