@@ -182,7 +182,7 @@ class AbstractImClient(abc.ABC):
             - resampling to 1 minute
             - sanity check of the data
         """
-        df = self._normalize_data(df)
+        df = self._transform_data(df)
         df = hpandas.drop_duplicates(df)
         df = hpandas.resample_df(df, "T")
         # Verify that data is valid.
