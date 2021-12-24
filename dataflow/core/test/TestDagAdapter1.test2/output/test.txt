@@ -1,0 +1,192 @@
+################################################################################
+dag_builder
+################################################################################
+nid_prefix=
+get_config_template=
+  rets/filter_ath:
+    col_mode: replace_all
+    transformer_kwargs:
+      start_time: 09:30:00
+      end_time: 16:00:00
+  rets/resample:
+    func_kwargs:
+      rule: 5T
+      resampling_groups: [({'close': 'twap'}, 'mean', {})]
+      vwap_groups: [('close', 'volume', 'vwap')]
+  rets/compute_ret_0:
+    cols: ['twap', 'vwap']
+    col_mode: merge_all
+    transformer_kwargs:
+      mode: pct_change
+  rets/model_volatility:
+    cols: ['vwap_ret_0']
+    steps_ahead: 2
+    nan_mode: leave_unchanged
+  rets/clip:
+    cols: ['vwap_ret_0_vol_adj']
+    col_mode: replace_selected
+dag=
+  name=None
+  mode=strict
+  json=
+    {
+        "directed": true,
+        "graph": {},
+        "links": [
+            {
+                "df_in": "df_out",
+                "source": "rets/filter_weekends",
+                "target": "rets/filter_ath"
+            },
+            {
+                "df_in": "df_out",
+                "source": "rets/filter_ath",
+                "target": "rets/resample"
+            },
+            {
+                "df_in": "df_out",
+                "source": "rets/resample",
+                "target": "rets/compute_ret_0"
+            },
+            {
+                "df_in": "df_out",
+                "source": "rets/compute_ret_0",
+                "target": "rets/model_volatility"
+            },
+            {
+                "df_in": "df_out",
+                "source": "rets/model_volatility",
+                "target": "rets/clip"
+            }
+        ],
+        "multigraph": false,
+        "nodes": [
+            {
+                "id": "rets/filter_weekends",
+                "stage": "ColumnTransformer"
+            },
+            {
+                "id": "rets/filter_ath",
+                "stage": "ColumnTransformer"
+            },
+            {
+                "id": "rets/resample",
+                "stage": "FunctionWrapper"
+            },
+            {
+                "id": "rets/compute_ret_0",
+                "stage": "ColumnTransformer"
+            },
+            {
+                "id": "rets/model_volatility",
+                "stage": "VolatilityModel"
+            },
+            {
+                "id": "rets/clip",
+                "stage": "ColumnTransformer"
+            }
+        ]
+    }
+################################################################################
+dag_adapter
+################################################################################
+dag_builder=
+  nid_prefix=
+  get_config_template=
+    rets/filter_ath:
+      col_mode: replace_all
+      transformer_kwargs:
+        start_time: 09:30:00
+        end_time: 16:00:00
+    rets/resample:
+      func_kwargs:
+        rule: 5T
+        resampling_groups: [({'close': 'twap'}, 'mean', {})]
+        vwap_groups: [('close', 'volume', 'vwap')]
+    rets/compute_ret_0:
+      cols: ['twap', 'vwap']
+      col_mode: merge_all
+      transformer_kwargs:
+        mode: pct_change
+    rets/model_volatility:
+      cols: ['vwap_ret_0']
+      steps_ahead: 2
+      nan_mode: leave_unchanged
+    rets/clip:
+      cols: ['vwap_ret_0_vol_adj']
+      col_mode: replace_selected
+  dag=
+    name=None
+    mode=strict
+    json=
+      {
+          "directed": true,
+          "graph": {},
+          "links": [
+              {
+                  "df_in": "df_out",
+                  "source": "rets/filter_weekends",
+                  "target": "rets/filter_ath"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "rets/filter_ath",
+                  "target": "rets/resample"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "rets/resample",
+                  "target": "rets/compute_ret_0"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "rets/compute_ret_0",
+                  "target": "rets/model_volatility"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "rets/model_volatility",
+                  "target": "rets/clip"
+              }
+          ],
+          "multigraph": false,
+          "nodes": [
+              {
+                  "id": "rets/filter_weekends",
+                  "stage": "ColumnTransformer"
+              },
+              {
+                  "id": "rets/filter_ath",
+                  "stage": "ColumnTransformer"
+              },
+              {
+                  "id": "rets/resample",
+                  "stage": "FunctionWrapper"
+              },
+              {
+                  "id": "rets/compute_ret_0",
+                  "stage": "ColumnTransformer"
+              },
+              {
+                  "id": "rets/model_volatility",
+                  "stage": "VolatilityModel"
+              },
+              {
+                  "id": "rets/clip",
+                  "stage": "ColumnTransformer"
+              }
+          ]
+      }
+overriding_config=
+  load_prices: {'source_node_name': 'DataLoader', 'source_node_kwargs': {'func': <function _get_data>}}
+nodes_to_insert=
+  ('load_prices', <function data_source_node_factory at 0x>)
+nodes_to_append=
+
+################################################################################
+final dag
+################################################################################
+name=None
+mode=strict
+nodes=[('rets/filter_weekends', {'stage': <dataflow.core.nodes.transformers.ColumnTransformer object at 0x>}), ('rets/filter_ath', {'stage': <dataflow.core.nodes.transformers.ColumnTransformer object at 0x>}), ('rets/resample', {'stage': <dataflow.core.nodes.transformers.FunctionWrapper object at 0x>}), ('rets/compute_ret_0', {'stage': <dataflow.core.nodes.transformers.ColumnTransformer object at 0x>}), ('rets/model_volatility', {'stage': <dataflow.core.nodes.volatility_models.VolatilityModel object at 0x>}), ('rets/clip', {'stage': <dataflow.core.nodes.transformers.ColumnTransformer object at 0x>}), ('load_prices', {'stage': <dataflow.core.nodes.sources.DataLoader object at 0x>})]
+edges=[('rets/filter_weekends', 'rets/filter_ath', {'df_in': 'df_out'}), ('rets/filter_ath', 'rets/resample', {'df_in': 'df_out'}), ('rets/resample', 'rets/compute_ret_0', {'df_in': 'df_out'}), ('rets/compute_ret_0', 'rets/model_volatility', {'df_in': 'df_out'}), ('rets/model_volatility', 'rets/clip', {'df_in': 'df_out'}), ('load_prices', 'rets/filter_weekends', {'df_in': 'df_out'})]

@@ -11,8 +11,12 @@ import core.config as cconfig
 import dataflow.core.dag as dtfcordag
 import dataflow.core.node as dtfcornode
 import helpers.dbg as hdbg
+import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
+
+
+# TODO(gp): -> dag_builders.py or dag_builder.py
 
 
 class DagBuilder(abc.ABC):
@@ -20,18 +24,18 @@ class DagBuilder(abc.ABC):
     Abstract class for creating DAGs.
 
     Concrete classes must specify:
-      1) `get_config_template()`
-        - It returns a `Config` object that represents the parameters used to build
-          the DAG
-        - The config can depend upon variables used in class initialization
-        - A config can be incomplete, e.g., `cconfig.DUMMY` is used for required
-          fields that must be defined before the config can be used to initialize
-          a DAG
-      2) `get_dag()`
-        - It builds a DAG
-        - Defines the DAG nodes and how they are connected to each other. The
-          passed-in config object tells this function how to
-          configure/initialize the various nodes.
+    1) `get_config_template()`
+       - It returns a `Config` object that represents the parameters used to build
+         the DAG
+       - The config can depend upon variables used in class initialization
+       - A config can be incomplete, e.g., `cconfig.DUMMY` is used for required
+         fields that must be defined before the config can be used to initialize
+         a DAG
+    2) `get_dag()`
+       - It builds a DAG
+       - Defines the DAG nodes and how they are connected to each other. The
+         passed-in config object tells this function how to configure / initialize
+         the various nodes.
     """
 
     def __init__(self, nid_prefix: Optional[str] = None) -> None:
@@ -54,6 +58,26 @@ class DagBuilder(abc.ABC):
             )
             self._nid_prefix += "/"
 
+    def __str__(self) -> str:
+        txt = []
+        txt.append(f"nid_prefix={self._nid_prefix}")
+        #
+        txt.append("get_config_template=")
+        config_template = self.get_config_template()
+        config_as_str = str(config_template)
+        txt.append(hprint.indent(config_as_str, 2))
+        #
+        txt.append("dag=")
+        # We can't validate the DAG since we are not filling all the dummies in the
+        # config template.
+        validate = False
+        dag = self.get_dag(config_template, validate=validate)
+        dag_as_str = repr(dag)
+        txt.append(hprint.indent(dag_as_str, 2))
+        #
+        txt = "\n".join(txt)
+        return txt
+
     @property
     def nid_prefix(self) -> str:
         return self._nid_prefix
@@ -61,7 +85,7 @@ class DagBuilder(abc.ABC):
     @abc.abstractmethod
     def get_config_template(self) -> cconfig.Config:
         """
-        Return a config template compatible with `self.get_dag`.
+        Return a config template compatible with `self.get_dag()`.
 
         :return: a valid configuration for `self.get_dag`, possibly with some
             "dummy" required paths.
@@ -74,30 +98,15 @@ class DagBuilder(abc.ABC):
         Build DAG given `config`.
 
         :param config: configures DAG. It is up to the client to guarantee
-            compatibility. The result of `self.get_config_template` should
+            compatibility. The result of `self.get_config_template()` should
             always be compatible following template completion.
         :param mode: as in `DAG` constructor
         :return: `dag` with all builder operations applied
         """
         dag = self._get_dag(config, mode=mode)
         if validate:
-            self.validate_config_and_dag(config, dag)
+            self._validate_config_and_dag(config, dag)
         return dag
-
-    @staticmethod
-    def validate_config_and_dag(
-        config: cconfig.Config, dag: dtfcordag.DAG
-    ) -> None:
-        """
-        Wraps `get_dag()` with additional sanity-checks.
-
-        - Raises if `config` has a DUMMY value
-        - Raises if `config` has an entry for a node that is not in the DAG
-        """
-        hdbg.dassert(cconfig.check_no_dummy_values(config))
-        for key in config.to_dict().keys():
-            # This raises if the node does not exist.
-            dag.get_node(key)
 
     @property
     def methods(self) -> List[str]:
@@ -120,14 +129,30 @@ class DagBuilder(abc.ABC):
         _ = self, config
         return None
 
+    @staticmethod
+    def _validate_config_and_dag(
+        config: cconfig.Config, dag: dtfcordag.DAG
+    ) -> None:
+        """
+        Implement sanity-checks for the provided config and a DAG.
+
+        - Raises if `config` has a DUMMY value
+        - Raises if `config` has an entry for a node that is not in the DAG
+        """
+        hdbg.dassert(cconfig.check_no_dummy_values(config))
+        for key in config.to_dict().keys():
+            # This raises if the node does not exist.
+            dag.get_node(key)
+
     @abc.abstractmethod
     def _get_dag(self, config: cconfig.Config, mode: str = "strict"):
         """
-        Implement the dag.
+        Implement the DAG.
         """
         ...
 
     def _get_nid(self, stage_name: str) -> str:
+        hdbg.dassert_isinstance(stage_name, str)
         nid = self._nid_prefix + stage_name
         return nid
 
@@ -135,9 +160,26 @@ class DagBuilder(abc.ABC):
     def _append(
         dag: dtfcordag.DAG, tail_nid: Optional[str], node: dtfcornode.Node
     ) -> str:
+        """
+        Append `node` to the DAG after the node `tail_nid`.
+
+        A typical use of this function is like:
+        ```
+        tail_nid = None
+        tail_nid = dag.append(tail_nid, node_1)
+        ...
+        tail_nid = dag.append(tail_nid, node_n)
+        _ = tail_nid
+        ```
+
+        :param tail_nid: the nid of the node to append to. If `None` add only
+            without appending. This allows a pattern like:
+        """
+        # _LOG.debug("dag before appending=\n%s", str(dag))
         dag.add_node(node)
         if tail_nid is not None:
             dag.connect(tail_nid, node.nid)
+        # _LOG.debug("dag after appending=\n%s", str(dag))
         nid = node.nid
         nid = cast(str, nid)
         return nid

@@ -4,6 +4,8 @@ Import as:
 import dataflow.system.dataflow_sink_nodes as dtfsdtfsino
 """
 
+# TODO(gp): -> sink_nodes.py
+
 import collections
 import logging
 from typing import Any, Dict
@@ -14,7 +16,8 @@ import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.base as dtfconobas
 import dataflow.core.utils as dtfcorutil
 import helpers.dbg as hdbg
-import oms.place_orders as oplaorde
+import helpers.printing as hprint
+import oms.process_forecasts as oprofore
 
 _LOG = logging.getLogger(__name__)
 
@@ -41,12 +44,20 @@ class ProcessForecasts(dtfconobas.FitPredictNode):
         self._process_forecasts_config = process_forecasts_config
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        return self._place_trades(df_in, fit=True)
+        return self._compute_forecasts(df_in, fit=True)
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        return self._place_trades(df_in, fit=False)
+        return self._compute_forecasts(df_in, fit=False)
 
-    def _place_trades(
+    async def process_forecasts(self) -> None:
+        # Get the latest `df` index value.
+        await oprofore.process_forecasts(
+            self._prediction_df,
+            self._execution_mode,
+            self._process_forecasts_config,
+        )
+
+    def _compute_forecasts(
         self, df: pd.DataFrame, fit: bool = True
     ) -> Dict[str, pd.DataFrame]:
         hdbg.dassert_in(self._prediction_col, df.columns)
@@ -56,10 +67,8 @@ class ProcessForecasts(dtfconobas.FitPredictNode):
         # TODO(gp): Maybe pass the entire multi-index df and the name of
         #  pred_col and vol_col.
         prediction_df = df[self._prediction_col]
-        # Get the latest `df` index value.
-        oplaorde.place_orders(
-            prediction_df, self._execution_mode, self._process_forecasts_config
-        )
+        self._prediction_df = prediction_df
+        _LOG.debug("prediction_df=\n%s", hprint.dataframe_to_str(prediction_df))
         # Compute stats.
         info = collections.OrderedDict()
         info["df_out_info"] = dtfcorutil.get_df_info_as_string(df)

@@ -3,7 +3,7 @@ import logging
 import os
 from typing import Any, Dict
 
-import networkx as nx
+import networkx as networ
 
 import dataflow.core.dag as dtfcordag
 import dataflow.core.node as dtfcornode
@@ -14,48 +14,30 @@ import helpers.unit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
-class _Dataflow_helper(hunitest.TestCase):
-    @staticmethod
-    def _remove_stage_names(node_link_data: Dict[str, Any]) -> Dict[str, str]:
-        """
-        Remove stages names from `node_link_data` dictionary.
-
-        The stage names refer to Node objects, which are not json
-        serializable.
-        """
-        _LOG.debug("nld=\n%s", hprint.to_pretty_str(node_link_data))
-        # `nld` looks like:
-        #   {'directed': True,
-        #    'graph': {},
-        #    'links': [],
-        #    'multigraph': False,
-        #    'nodes': [{'id': 'n1',
-        #               'stage': <dataflow.core.Node object at 0x...>}]}
-        nld = node_link_data.copy()
-        for data in nld["nodes"]:
-            data["stage"] = data["stage"].__class__.__name__
-        return nld
+class _TestDataflowHelper(hunitest.TestCase):
 
     def _check(self, dag: dtfcordag.DAG) -> None:
         """
         Compute and freeze with `check_string` the signature of a graph.
         """
-        graph: nx.classes.digraph.DiGraph = dag.dag
-        nld = nx.readwrite.json_graph.node_link_data(graph)
-        nld = self._remove_stage_names(nld)
-        _LOG.debug("stripped node_link_data=\n%s", hprint.to_pretty_str(nld))
-        json_nld = json.dumps(nld, indent=4, sort_keys=True)
-        _LOG.debug("output=\n%s", json_nld)
-        # Visualize if needed.
+        act = []
+        #
+        act.append(hprint.frame("# str"))
+        act.append(str(dag))
+        #
+        act.append(hprint.frame("# repr"))
+        act.append(repr(dag))
+        #
+        act = "\n".join(act)
+        self.check_string(act, purify_text=True)
+        # Make sure the DAG can be drawn into a file.
         dir_name = self.get_scratch_space()
         file_name = os.path.join(dir_name, "graph.png")
         dtfcorvisu.draw_to_file(dag, file_name)
         _LOG.debug("Saved plot to %s", file_name)
-        # Check output.
-        self.check_string(json_nld)
 
 
-class Test_dataflow_core_DAG1(_Dataflow_helper):
+class Test_dataflow_core_DAG1(_TestDataflowHelper):
     def test_add_nodes1(self) -> None:
         """
         Create a node and add it to a DAG.
@@ -129,7 +111,7 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
         self._check(dag)
 
 
-class Test_dataflow_core_DAG2(_Dataflow_helper):
+class Test_dataflow_core_DAG2(_TestDataflowHelper):
     def test_connect_nodes1(self) -> None:
         """
         Simplest case of connecting two nodes.
@@ -303,7 +285,7 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         return dag
 
 
-class Test_dataflow_core_DAG3(_Dataflow_helper):
+class Test_dataflow_core_DAG3(_TestDataflowHelper):
     def test_sources_sinks1(self) -> None:
         """
         Check sources and sinks of a single node linear DAG.
