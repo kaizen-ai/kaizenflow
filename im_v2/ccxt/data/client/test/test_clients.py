@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import Any, List
 
 import pandas as pd
 import pytest
@@ -16,6 +16,44 @@ _LOCAL_ROOT_DIR = os.path.join(
     hgit.get_client_root(False),
     "im_v2/ccxt/data/client/test/test_data",
 )
+
+
+def _check_output(
+    self_: Any,
+    actual: pd.DataFrame,
+    expected_length: int,
+    expected_exchange_ids: List[str],
+    expected_currency_pairs: List[str],
+    *,
+    check_string: bool = True,
+) -> None:
+    """
+    Verify that actual outcome dataframe matches the expected one.
+
+    :param actual: actual outcome dataframe
+    :param expected_length: expected outcome dataframe length
+    :param expected_exchange_ids: list of expected exchange ids
+    :param expected_currency_pairs: list of expected currency pairs
+    :param check_string: whether to check with golden outcome or not
+    """
+    # Check output df length.
+    self_.assert_equal(str(expected_length), str(actual.shape[0]))
+    # Check unique exchange ids in the output df.
+    actual_exchange_ids = sorted(
+        list(actual["exchange_id"].dropna().unique())
+    )
+    self_.assert_equal(str(actual_exchange_ids), str(expected_exchange_ids))
+    # Check unique currency pairs in the output df.
+    actual_currency_pairs = sorted(
+        list(actual["currency_pair"].dropna().unique())
+    )
+    self_.assert_equal(
+        str(actual_currency_pairs), str(expected_currency_pairs)
+    )
+    if check_string:
+        # Check the output values.
+        actual_string = hunitest.convert_df_to_json_string(actual)
+        self_.check_string(actual_string)
 
 
 class TestGetFilePath(hunitest.TestCase):
@@ -185,10 +223,18 @@ class TestCcxtCsvFileSystemClientReadData(hunitest.TestCase):
         ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
             data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
         )
-        actual = ccxt_loader.read_data("binance::BTC_USDT")
+        actual = ccxt_loader.read_data(["binance::BTC_USDT"])
         # Check the output values.
-        actual_string = hunitest.convert_df_to_json_string(actual)
-        self.check_string(actual_string)
+        expected_length = 100
+        expected_exchange_ids = ["binance"]
+        expected_currency_pairs = ["BTC_USDT"]
+        _check_output(
+            self,
+            actual,
+            expected_length,
+            expected_exchange_ids,
+            expected_currency_pairs,
+        )
 
     def test2(self) -> None:
         """
@@ -198,13 +244,21 @@ class TestCcxtCsvFileSystemClientReadData(hunitest.TestCase):
             data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
         )
         actual = ccxt_loader.read_data(
-            full_symbol="binance::BTC_USDT",
+            ["binance::BTC_USDT"],
             start_ts=pd.Timestamp("2018-08-17T00:01:00"),
             end_ts=pd.Timestamp("2018-08-17T00:05:00"),
         )
         # Check the output values.
-        actual_string = hunitest.convert_df_to_json_string(actual)
-        self.check_string(actual_string)
+        expected_length = 4
+        expected_exchange_ids = ["binance"]
+        expected_currency_pairs = ["BTC_USDT"]
+        _check_output(
+            self,
+            actual,
+            expected_length,
+            expected_exchange_ids,
+            expected_currency_pairs,
+        )
 
     def test3(self) -> None:
         """
@@ -214,12 +268,20 @@ class TestCcxtCsvFileSystemClientReadData(hunitest.TestCase):
             data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
         )
         actual = ccxt_loader.read_data(
-            full_symbol="binance::BTC_USDT",
+            ["binance::BTC_USDT"],
             normalize=False,
         )
         # Check the output values.
-        actual_string = hunitest.convert_df_to_json_string(actual)
-        self.check_string(actual_string)
+        expected_length = 100
+        expected_exchange_ids = ["binance"]
+        expected_currency_pairs = ["BTC_USDT"]
+        _check_output(
+            self,
+            actual,
+            expected_length,
+            expected_exchange_ids,
+            expected_currency_pairs,
+        )
 
     def test4(self) -> None:
         """
@@ -228,10 +290,41 @@ class TestCcxtCsvFileSystemClientReadData(hunitest.TestCase):
         ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
             data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR, use_gzip=False
         )
-        actual = ccxt_loader.read_data("binance::BTC_USDT")
+        actual = ccxt_loader.read_data(["binance::BTC_USDT"])
         # Check the output values.
-        actual_string = hunitest.convert_df_to_json_string(actual)
-        self.check_string(actual_string)
+        expected_length = 100
+        expected_exchange_ids = ["binance"]
+        expected_currency_pairs = ["BTC_USDT"]
+        _check_output(
+            self,
+            actual,
+            expected_length,
+            expected_exchange_ids,
+            expected_currency_pairs,
+        )
+
+    def test5(self) -> None:
+        """
+        Test that data for multiple full symbols is being read correctly.
+        """
+        # Set input list of full symbols.
+        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        # Initialize CCXT file client and pass it to multiple symbols client.
+        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
+            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
+        )
+        # Check actual results.
+        actual = ccxt_file_client.read_data(full_symbols)
+        expected_length = 199
+        expected_exchange_ids = ["binance", "kucoin"]
+        expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
+        _check_output(
+            self,
+            actual,
+            expected_length,
+            expected_exchange_ids,
+            expected_currency_pairs,
+        )
 
     def test5(self) -> None:
         """
@@ -241,7 +334,7 @@ class TestCcxtCsvFileSystemClientReadData(hunitest.TestCase):
             data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
         )
         with self.assertRaises(AssertionError):
-            ccxt_loader.read_data("unsupported_exchange::unsupported_currency")
+            ccxt_loader.read_data(["unsupported_exchange::unsupported_currency"])
 
     def test6(self) -> None:
         """
@@ -261,7 +354,7 @@ class TestCcxtParquetFileSystemClientReadData(hunitest.TestCase):
         ccxt_loader = imvcdclcl.CcxtParquetFileSystemClient(
             data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
         )
-        actual = ccxt_loader.read_data("binance::BTC_USDT")
+        actual = ccxt_loader.read_data(["binance::BTC_USDT"])
         # Check the output values.
         actual_string = hunitest.convert_df_to_json_string(actual)
         self.check_string(actual_string)
@@ -274,7 +367,7 @@ class TestCcxtParquetFileSystemClientReadData(hunitest.TestCase):
             data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
         )
         actual = ccxt_loader.read_data(
-            full_symbol="binance::BTC_USDT",
+            ["binance::BTC_USDT"],
             start_ts=pd.Timestamp("2018-08-17T00:01:00"),
             end_ts=pd.Timestamp("2018-08-17T00:05:00"),
         )
