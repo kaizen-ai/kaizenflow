@@ -186,13 +186,11 @@ root_dir = os.path.join(hs3.get_path(), "data")
 
 # %%
 cdd_data = []
-cdd_loader = imcdalolo.CddLoader(root_dir=root_dir, aws_profile="am")
+cdd_loader = imcdalolo.CddLoader(data_type='ohlcv', root_dir=root_dir, aws_profile="am")
 
 for full_symbol in currency_pair_intersection_binance:
-    _, currency_pair = ivcdclcl.parse_full_symbol(full_symbol)
-    cur_data = cdd_loader.read_data_from_filesystem(
-        exchange_id="binance", currency_pair=currency_pair, data_type="ohlcv"
-    )
+    #_, currency_pair = ivcdclcl.parse_full_symbol(full_symbol)
+    cur_data = cdd_loader.read_data(full_symbol=full_symbol)
     cdd_data.append(cur_data)
 cdd_binance_df = pd.concat(cdd_data)
 
@@ -231,12 +229,11 @@ cdd_binance_df["currency_pair"] = cdd_binance_df["currency_pair"].str.replace(
 # %%
 def resample_close_price(df: pd.DataFrame, resampling_freq: str) -> pd.Series:
     """
-    Transform OHLCV data to the grouped series with resampled frequency and
-    last close prices.
+    Resample close price on the currency level to the specified frequency using the last close price.
 
     :param df: OHLCV data
     :param resampling_freq: frequency from `pd.date_range()` to resample to
-    :return: grouped and resampled close prices
+    :return: resampled close price per currency
     """
     # Reseting DateTime index, since pd.Grouper can't use index values.
     df = df.reset_index().rename(columns={"index": "stamp"})
@@ -254,13 +251,12 @@ def calculate_correlations(
     ccxt_close_price: pd.Series, cdd_close_price: pd.Series, compute_returns: bool
 ) -> pd.DataFrame:
     """
-    Take two series with close prices(i.e. CDD and CCXT data) and calculate the
-    correlations for each specific currency pair.
+    Take CCXT and CDD close prices and calculate the correlations for each specific currency pair.
 
-    :param ccxt_series: grouped and resampled close prices for CCXT
-    :param cdd_series: grouped and resampled close prices for CDD
+    :param ccxt_series: resampled close price per currency for CCXT
+    :param cdd_series: resampled close price per currency for CDD
     :param compute_returns: if True - compare returns, if False - compare close prices
-    :return: grouped correlation matrix
+    :return: correlation matrix per currency
     """
     if compute_returns:
         # Group by currency pairs in order to calculate the percentage returns.
@@ -336,7 +332,7 @@ display(close_corr_5min)
 # Clearing CDD currency pairs that are incorrect.
 
 # Binance
-#cdd_universe.remove("binance::SCU_USDT")
+cdd_universe.remove("binance::SCU_USDT")
 
 # ftx has some critical mistakes in the downloading process, so can not continue analysis with them.
 # see CMTask801 - Downloading issues of FTX exchange from CDD universe for further reference.
@@ -406,12 +402,23 @@ ccxt_start_end_table.head(3)
 # ### Display the union results
 
 # %%
-def unify_start_end_tables(cdd_df,ccxt_df):
+def unify_start_end_tables(cdd_df: pd.DataFrame, ccxt_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Combine CCXT and CDD start-end stats tables into unique table.
+
+    :param cdd_df: start-end table for CCXT
+    :param ccxt_df: start-end table for CDD
+    :return: unified start-end table
+    """
+    # set Multiindex.
     cdd_df = cdd_df.set_index(['exchange_id', 'currency_pair'])
     ccxt_df = ccxt_df.set_index(['exchange_id', 'currency_pair'])
+    # add suffixes.
     ccxt_df = ccxt_df.add_suffix("_ccxt")
     cdd_df = cdd_df.add_suffix("_cdd")
+    # combine two universes.
     ccxt_and_cdd = pd.concat([cdd_df,ccxt_df], axis=1)
+    # sort columns.
     cols_to_sort = ccxt_and_cdd.columns.to_list() 
     ccxt_and_cdd = ccxt_and_cdd[sorted(cols_to_sort)]
     return ccxt_and_cdd
