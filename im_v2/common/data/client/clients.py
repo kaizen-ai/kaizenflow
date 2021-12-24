@@ -92,7 +92,7 @@ class AbstractImClient(abc.ABC):
         normalize: bool = True,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
-        **kwargs: Dict[str, Any],
+        **kwargs: Any,
     ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
         """
         Read data for multiple full symbols.
@@ -110,12 +110,19 @@ class AbstractImClient(abc.ABC):
         :param end_ts: the latest date timestamp to load data for
         :return: combined data for provided symbols
         """
+        hdbg.dassert_isinstance(full_symbols, list)
         # Verify that all the provided full symbols are unique.
         hdbg.dassert_no_duplicates(full_symbols)
         # Initialize results dict.
         full_symbol_to_df = {}
         for full_symbol in sorted(full_symbols):
-            cur_df = self._read_data_for_single_full_symbol(
+            df = self._read_data_for_single_full_symbol(
+                full_symbol,
+                normalize,
+                start_ts,
+                end_ts,
+                **kwargs,
+            )
             # Insert column with full symbol to the dataframe.
             df.insert(0, full_symbol_col_name, full_symbol)
             # Add full symbol data to the results dict.
@@ -138,7 +145,7 @@ class AbstractImClient(abc.ABC):
         """
         # TODO(Grisha): add caching.
         normalize = True
-        data = self._read_data_for_single_full_symbol(full_symbol, normalize)
+        data = self._read_data_for_single_full_symbol(full_symbol, normalize, None, None)
         # It is assumed that timestamp is always stored as index.
         start_ts = data.index.min()
         return start_ts
@@ -149,7 +156,7 @@ class AbstractImClient(abc.ABC):
         """
         # TODO(Grisha): add caching.
         normalize = True
-        data = self._read_data_for_single_full_symbol(full_symbol, normalize)
+        data = self._read_data_for_single_full_symbol(full_symbol, normalize, None, None)
         # It is assumed that timestamp is always stored as index.
         end_ts = data.index.max()
         return end_ts
@@ -165,9 +172,8 @@ class AbstractImClient(abc.ABC):
         self,
         full_symbol: FullSymbol,
         normalize: bool,
-        *,
-        start_ts: Optional[pd.Timestamp] = None,
-        end_ts: Optional[pd.Timestamp] = None,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
         **kwargs: Any,
     ) -> pd.DataFrame:
         # Read data for each given full symbol.
