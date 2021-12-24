@@ -4,6 +4,14 @@ Import as:
 import dataflow as cdataf
 """
 
+# TODO(gp): Consider using hierarchical packages, e.g.,
+#  - This file goes inside dataflow/core/__init__.py and code is exported as
+#    `dataflow.core`
+#  - Then we do the same thing for all the packages under `dataflow`, e.g., `model`,
+#    `pipeline`.
+
+# TODO(gp): Document all the conventions about package building.
+
 from dataflow.core.builders import *  # pylint: disable=unused-import # NOQA
 from dataflow.core.dag import *  # pylint: disable=unused-import # NOQA
 from dataflow.core.node import *  # pylint: disable=unused-import # NOQA

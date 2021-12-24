@@ -283,6 +283,11 @@ async def wait_until(
         # Use the name of the function calling this function.
         tag = hintros.get_function_name(count=1)
     curr_timestamp = get_wall_clock_time()
+    _LOG.debug(
+        "wait until timestamp=%s, curr_timestamp=%s",
+        wait_until_timestamp,
+        curr_timestamp,
+    )
     # We only wait for times in the future.
     hdbg.dassert_lte(curr_timestamp, wait_until_timestamp)
     #
