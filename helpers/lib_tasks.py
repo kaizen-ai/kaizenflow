@@ -656,8 +656,8 @@ def git_last_commit_files(ctx, pbcopy=True):  # type: ignore
 @task
 def git_branch_files(ctx):  # type: ignore
     """
-    Report which files were added, changed, and modified in the current branch with
-    respect to `master`.
+    Report which files were added, changed, and modified in the current branch
+    with respect to `master`.
 
     This is a more detailed version of `i git_files --branch`.
     """
@@ -849,7 +849,7 @@ def git_branch_next_name(ctx):  # type: ignore
     Return a name derived from the branch so that the branch doesn't exist.
 
     E.g., `AmpTask1903_Implemented_system_Portfolio` ->
-        `AmpTask1903_Implemented_system_Portfolio_3`
+    `AmpTask1903_Implemented_system_Portfolio_3`
     """
     _report_task()
     _ = ctx
@@ -997,8 +997,7 @@ def _dassert_current_dir_matches(dir_name: str) -> None:
 def _dassert_is_integration_branch(dir_name: str) -> None:
     curr_branch = hgit.get_branch_name(dir_name=dir_name)
     hdbg.dassert_ne(curr_branch, "master")
-    hdbg.dassert(("_Integrate_" in curr_branch) or
-                 ("_Lint_" in curr_branch))
+    hdbg.dassert(("_Integrate_" in curr_branch) or ("_Lint_" in curr_branch))
 
 
 def _clean_both_integration_dirs(dir_name1: str, dir_name2: str) -> None:
@@ -1028,11 +1027,10 @@ def integrate_create_branch(ctx, dir_name, dry_run=False):  # type: ignore
     _run(ctx, cmd, dry_run=dry_run)
 
 
-def _get_src_dst_dirs(
-    src_dir: str, dst_dir: str, subdir: str
-) -> Tuple[str, str]:
+def _get_src_dst_dirs(src_dir: str, dst_dir: str, subdir: str) -> Tuple[str, str]:
     """
-    Return the full path of `src_dir` and `dst_dir` assuming that
+    Return the full path of `src_dir` and `dst_dir` assuming that:
+
     - `src_dir` is the current dir
     - `dst_dir` is parallel dir to the current one
 
@@ -1052,11 +1050,15 @@ def _get_src_dst_dirs(
 
 @task
 def integrate_diff_dirs(  # type: ignore
-        ctx, src_dir="amp1", dst_dir="cmamp1", subdir="", use_linux_diff=False,
-        check_branches=True,
-        clean_branches=True,
-        dry_run=False,
-                        ):
+    ctx,
+    src_dir="amp1",
+    dst_dir="cmamp1",
+    subdir="",
+    use_linux_diff=False,
+    check_branches=True,
+    clean_branches=True,
+    dry_run=False,
+):
     """
     Integrate repos from dir `src_dir` to `dst_dir`.
 
@@ -1093,10 +1095,15 @@ def integrate_diff_dirs(  # type: ignore
 
 
 @task
-def integrate_copy_dirs(ctx, src_dir, dst_dir, subdir="",
-                        check_branches=True,
-                        clean_branches=True,
-                        dry_run=False):  # type: ignore
+def integrate_copy_dirs(  # type: ignore
+    ctx,
+    src_dir,
+    dst_dir,
+    subdir="",
+    check_branches=True,
+    clean_branches=True,
+    dry_run=False,
+):
     """
     Copy dir `subdir` from dir `src_dir` to `dst_dir`.
 
@@ -1178,13 +1185,13 @@ def integrate_files_since_last_integration(  # type: ignore
 
 
 @task
-def integrate_compare_branch_with_base(  # type: ignore
-        ctx, src_dir, dst_dir, subdir=""):
+def integrate_compare_branch_with_base(ctx, src_dir, dst_dir, subdir=""):  # type: ignore
     """
-    Compare the files modified in both the branches in src_dir and dst_dir to master
-    before this current branch was branched.
+    Compare the files modified in both the branches in src_dir and dst_dir to
+    master before this current branch was branched.
 
-    This is used to check what changes were made to files modified by both branches.
+    This is used to check what changes were made to files modified by
+    both branches.
     """
     _report_task()
     _ = ctx
@@ -1757,9 +1764,13 @@ def _get_docker_cmd(
     # - Handle the user.
     # Based on AmpTask1864 it seems that we need to use root in the CI to be
     # able to log in GH touching $HOME/.config/gh.
+    as_user_from_cmd_line = as_user
     as_root = hgit.execute_repo_config_code("run_docker_as_root()")
-    as_user = as_user and not as_root
-    _LOG.debug("as_root=%s as_user=%s", as_root, as_user)
+    as_user = as_user_from_cmd_line
+    if as_root:
+        as_user = False
+    _LOG.debug("as_user_from_cmd_line=%s as_root=%s -> as_user=%s",
+            as_user_from_cmd_line, as_root, as_user)
     if as_user:
         docker_cmd_.append(
             r"""
@@ -2623,11 +2634,14 @@ _COV_PYTEST_OPTS = [
     "--cov-report html",
     # "--cov-report annotate",
 ]
+
+
 _TEST_TIMEOUTS_IN_SECS = {
     "fast_tests": 5,
     "slow_tests": 30,
     "superslow_tests": 60 * 60,
 }
+
 
 _NUM_TIMEOUT_TEST_RERUNS = {
     "fast_tests": 2,
@@ -2649,36 +2663,35 @@ def run_blank_tests(ctx, stage="dev", version=""):  # type: ignore
     hsysinte.system(docker_cmd_, abort_on_error=False, suppress_output=False)
 
 
-def _select_tests_to_skip(uniform_test_list_name: str) -> str:
+def _select_tests_to_skip(test_list_name: str) -> str:
     """
     Generate text for pytest specifying which tests to deselect.
     """
-    if uniform_test_list_name == "fast_tests":
+    if test_list_name == "fast_tests":
         skipped_tests = "not slow and not superslow"
-    elif uniform_test_list_name == "slow_tests":
+    elif test_list_name == "slow_tests":
         skipped_tests = "slow and not superslow"
-    elif uniform_test_list_name == "superslow_tests":
+    elif test_list_name == "superslow_tests":
         skipped_tests = "not slow and superslow"
     else:
         raise ValueError(
-            f"Invalid `uniform_test_list_name`={uniform_test_list_name}"
+            f"Invalid `test_list_name`={test_list_name}"
         )
     return skipped_tests
 
 
 def _build_run_command_line(
-    uniform_test_list_name: str,
+    test_list_name: str,
     pytest_opts: str,
     skip_submodules: bool,
     coverage: bool,
     collect_only: bool,
     tee_to_file: bool,
-    # Different params than the `run_*_tests()`.
 ) -> str:
     """
     Build the pytest run command.
 
-    :param uniform_test_list_name: "fast_tests", "slow_tests" or
+    :param test_list_name: "fast_tests", "slow_tests" or
         "superslow_tests"
     The rest of params are the same as in `run_fast_tests()`.
 
@@ -2686,25 +2699,24 @@ def _build_run_command_line(
     passed by the user through `-p` (unless really necessary).
     """
     hdbg.dassert_in(
-        uniform_test_list_name,
+        test_list_name,
         _TEST_TIMEOUTS_IN_SECS,
-        "Invalid `uniform_test_list_name``='%s'",
-        uniform_test_list_name,
+        "Invalid test_list_name"
     )
     pytest_opts = pytest_opts or "."
     #
     pytest_opts_tmp = []
     if pytest_opts:
         pytest_opts_tmp.append(pytest_opts)
-    skipped_tests = _select_tests_to_skip(uniform_test_list_name)
+    skipped_tests = _select_tests_to_skip(test_list_name)
     pytest_opts_tmp.insert(0, f'-m "{skipped_tests}"')
-    timeout_in_sec = _TEST_TIMEOUTS_IN_SECS[uniform_test_list_name]
+    timeout_in_sec = _TEST_TIMEOUTS_IN_SECS[test_list_name]
     # Adding `timeout_func_only` is a workaround for
     # https://github.com/pytest-dev/pytest-rerunfailures/issues/99. Because of
     # it, we limit only run time, without setup and teardown time.
     pytest_opts_tmp.append("-o timeout_func_only=true")
     pytest_opts_tmp.append(f"--timeout {timeout_in_sec}")
-    num_reruns = _NUM_TIMEOUT_TEST_RERUNS[uniform_test_list_name]
+    num_reruns = _NUM_TIMEOUT_TEST_RERUNS[test_list_name]
     pytest_opts_tmp.append(
         f'--reruns {num_reruns} --only-rerun "Failed: Timeout"'
     )
@@ -2728,7 +2740,7 @@ def _build_run_command_line(
     pytest_opts = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
     cmd = f"pytest {pytest_opts}"
     if tee_to_file:
-        cmd += f" 2>&1 | tee tmp.pytest.{uniform_test_list_name}.log"
+        cmd += f" 2>&1 | tee tmp.pytest.{test_list_name}.log"
     return cmd
 
 
@@ -2795,7 +2807,7 @@ def _run_tests(
     collect_only: bool,
     tee_to_file: bool,
     *,
-    start_coverage_script: bool = True,
+    start_coverage_script: bool = False,
     **ctx_run_kwargs: Any,
 ) -> int:
     """
@@ -2997,6 +3009,22 @@ def run_qa_tests(  # type: ignore
         msg = "QA tests failed"
         _LOG.error(msg)
         raise RuntimeError(msg)
+
+
+@task
+def run_coverage_report(ctx):
+    target_dir = "oms"
+    cmd = f"invoke run_fast_tests --coverage -p {target_dir}; cp .coverage .coverage_fast_tests"
+    _run(ctx, cmd)
+    cmd = f"invoke run_slow_tests --coverage -p {target_dir}; cp .coverage .coverage_slow_tests"
+    _run(ctx, cmd)
+    cmd = []
+    cmd.append("coverage combine --keep .coverage_fast_tests .coverage_slow_tests")
+    cmd.append('coverage report --include="${target_dir}/*" --omit="*/test_*.py" --sort=Cover')
+    cmd.append('coverage html --include="${target_dir}/*" --omit="*/test_*.py"')
+    cmd = " && ".join(cmd)
+    cmd = "invoke docker_bash --cmd '%s'" % cmd
+    _run(ctx, cmd)
 
 
 # #############################################################################
@@ -3460,8 +3488,11 @@ def lint(  # type: ignore
     """
     Lint files.
 
-    # To lint only a repo including `amp` but not `amp` itself:
     ```
+    # To ling all the files:
+    > i lint --dir-name . --only-format
+
+    # To lint only a repo including `amp` but not `amp` itself:
     > i lint --files="$(find . -name '*.py' -not -path './compute/*' -not -path './amp/*')"
     ```
 
@@ -3597,15 +3628,13 @@ def lint(  # type: ignore
 
 
 @task
-def lint_create_branch(ctx, dir_name, dry_run=False):  # type: ignore
+def lint_create_branch(ctx, dry_run=False):  # type: ignore
     """
     Create the branch for linting in the current dir.
 
     The dir needs to be specified to ensure the set-up is correct.
     """
     _report_task()
-    #
-    _dassert_current_dir_matches(dir_name)
     #
     date = datetime.datetime.now().date()
     date_as_str = date.strftime("%Y%m%d")
@@ -3621,68 +3650,130 @@ def lint_create_branch(ctx, dir_name, dry_run=False):  # type: ignore
 # #############################################################################
 
 
-@task
-def gh_workflow_list(ctx, branch="branch", status="all"):  # type: ignore
-    """
-    Report the status of the GH workflows in a branch.
-    """
-    _report_task(hprint.to_str("branch status"))
-    _ = ctx
-    #
-    cmd = "export NO_COLOR=1; gh run list"
-    # pylint: disable=line-too-long
-    # > gh run list
-    # ✓  Merge branch 'master' into AmpTask1251_ Slow tests  AmpTask1251_Update_GH_actions_for_amp  pull_request       788984377
-    # ✓  Merge branch 'master' into AmpTask1251_ Fast tests  AmpTask1251_Update_GH_actions_for_amp  pull_request       788984376
-    # X  Merge branch 'master' into AmpTask1251_ Run linter  AmpTask1251_Update_GH_actions_for_amp  pull_request       788984375
-    # X  Fix lint issue                          Fast tests  master                                 workflow_dispatch  788949955
-    # pylint: enable=line-too-long
-    if branch == "branch":
+def _get_branch_name(branch_mode: str) -> Optional[str]:
+    if branch_mode == "current_branch":
         branch_name = hgit.get_branch_name()
-    elif branch == "master":
+    elif branch_mode == "master":
         branch_name = "master"
-    elif branch == "all":
+    elif branch_mode == "all":
         branch_name = None
     else:
-        raise ValueError("Invalid mode='%s'" % branch)
-    # The output is tab separated. Parse it with csv and then filter.
+        raise ValueError("Invalid branch='%s'" % branch_mode)
+    return branch_name
+
+
+def _get_workflow_table() -> htable.TableType:
+    """
+    Get a table with the status of the GH workflow for the current repo.
+    """
+    # Get the workflow status from GH.
+    cmd = "export NO_COLOR=1; gh run list"
     _, txt = hsysinte.system_to_string(cmd)
     _LOG.debug(hprint.to_str("txt"))
-    # TODO(gp): This is a workaround for AmpTask1612.
+    # pylint: disable=line-too-long
+    # > gh run list
+    # STATUS  NAME                                                        WORKFLOW    BRANCH                                                EVENT              ID          ELAPSED  AGE
+    # X       Amp task1786 integrate 2021118 (#1857)                    Fast tests  master                                                push               1477484584  5m40s    23m
+    # ✓       Amp task1786 integrate 2021118 (#1857)                    Slow tests  master                                                push               1477484582  6m38s    23m
+    # X       Merge branch 'master' into AmpTask1786_Integrate_2021118  Fast tests  AmpTask1786_Integrate_2021118                         pull_request       1477445218  5m52s    34m
+    # pylint: enable=line-too-long
+    # The output is tab separated, so convert it into CSV.
     first_line = txt.split("\n")[0]
+    _LOG.debug("first_line=%s", first_line.replace("\t", ","))
     num_cols = len(first_line.split("\t"))
-    # STATUS            NAME        WORKFLOW  BRANCH        EVENT  ID   ELAPSED  AGE
-    # Speculative fix   Slow tests  AmpTa...  pull_request  1097983981  1m1s     7m
+    _LOG.debug(hprint.to_str("first_line num_cols"))
     cols = [
+        "completed",
         "status",
-        "outcome",
-        "descr",
+        "name",
         "workflow",
         "branch",
-        "trigger",
-        "time",
-        "workflow_id",
+        "event",
+        "id",
+        "elapsed",
+        "age",
     ]
-    hdbg.dassert_in(num_cols, (8, 9))
-    if num_cols == 9:
-        cols.append("age")
+    hdbg.dassert_eq(num_cols, len(cols))
+    # Build the table.
     table = htable.Table.from_text(cols, txt, delimiter="\t")
-    # table = [line for line in csv.reader(txt.split("\n"), delimiter="\t")]
     _LOG.debug(hprint.to_str("table"))
-    #
-    if branch != "all":
+    return table
+
+
+@task
+def gh_workflow_list(
+    ctx,
+    filter_by_branch="current_branch",
+    filter_by_status="all",
+    report_only_status=True,
+):  # type: ignore
+    """
+    Report the status of the GH workflows.
+
+    :param filter_by_branch: name of the branch to check
+        - `current_branch` for the current Git branch
+        - `master` for master branch
+        - `all` for all branches
+    :param filter_by_status: filter table by the status of the workflow
+        - E.g., "failure", "success"
+    """
+    _report_task(hprint.to_str("filter_by_branch filter_by_status"))
+    _ = ctx
+    # Get the table.
+    table = _get_workflow_table()
+    # Filter table based on the branch.
+    if filter_by_branch != "all":
         field = "branch"
-        value = branch_name
-        _LOG.info("Filtering table by %s=%s", field, value)
+        value = _get_branch_name(filter_by_branch)
+        print(f"Filtering table by {field}={value}")
         table = table.filter_rows(field, value)
-    #
-    if status != "all":
+    # Filter table by the workflow status.
+    if filter_by_status != "all":
         field = "status"
-        value = status
-        _LOG.info("Filtering table by %s=%s", field, value)
+        value = filter_by_status
+        print(f"Filtering table by {field}={value}")
         table = table.filter_rows(field, value)
-    #
-    print(str(table))
+    if (
+        filter_by_branch not in ("current_branch", "master")
+        or not report_only_status
+    ):
+        print(str(table))
+        return
+    # For each workflow find the last success.
+    branch_name = hgit.get_branch_name()
+    workflows = table.unique("workflow")
+    print(f"workflows={workflows}")
+    for workflow in workflows:
+        print(hprint.frame(workflow))
+        table_tmp = table.filter_rows("workflow", workflow)
+        # Report the full status.
+        print(table_tmp)
+        # Find the first success.
+        num_rows = table.size()[0]
+        for i in range(num_rows):
+            status = table_tmp.get_column("status")[i]
+            if status == "success":
+                print(f"Workflow '{workflow}' for '{branch_name}' is ok")
+                break
+            elif status == "failure":
+                _LOG.error("Workflow '%s' for '%s' is broken", workflow, branch_name)
+                # Get the output of the broken run.
+                # > gh run view 1477484584 --log-failed
+                workload_id = table_tmp.get_column("id")[i]
+                log_file_name = f"tmp.failure.{workflow}.{branch_name}.txt"
+                log_file_name = log_file_name.replace(" ", "_").lower()
+                cmd = f"gh run view {workload_id} --log-failed >{log_file_name}"
+                hsysinte.system(cmd)
+                print(f"# Log is in '{log_file_name}'")
+                # Run_fast_tests  Run fast tests  2021-12-19T00:19:38.3394316Z FAILED data
+                cmd = rf"grep 'Z FAILED ' {log_file_name}"
+                hsysinte.system(cmd, suppress_output=False)
+                break
+            elif status == "":
+                # It's in progress.
+                pass
+            else:
+                raise ValueError(f"Invalid status='{status}'")
 
 
 @task
@@ -3712,19 +3803,7 @@ def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
         cmd = f"gh workflow run {gh_test} --ref {branch_name}"
         _run(ctx, cmd)
     #
-    gh_workflow_list(ctx, branch=branch)
-
-
-# TODO(gp): Implement this.
-# pylint: disable=line-too-long
-# @task
-# def gh_workflow_passing(ctx, branch="branch", workflows="all"):  # type: ignore
-# For each workflow check if the last completed is success or failure
-# > gh run list | grep master | grep Fast
-# completed       success Fix broken log statement        Fast tests      master  schedule        2m20s   797849342
-# completed       success Fix broken log statement        Fast tests      master  push    2m7s    797789759
-# completed       success Another speculative fix for break       Fast tests      master  push    1m54s   797556212
-# pylint: enable=line-too-long
+    gh_workflow_list(ctx, filter_by_branch=branch)
 
 
 def _get_repo_full_name_from_cmd(repo_short_name: str) -> Tuple[str, str]:
@@ -3761,12 +3840,15 @@ def _get_repo_full_name_from_cmd(repo_short_name: str) -> Tuple[str, str]:
     return repo_full_name_with_host, ret_repo_short_name
 
 
+# #############################################################################
+
+
 def _get_gh_issue_title(issue_id: int, repo_short_name: str) -> Tuple[str, str]:
     """
     Get the title of a GitHub issue.
 
-    :param repo_short_name: `current` refer to the repo_short_name where we are, otherwise
-        a repo_short_name short name (e.g., "amp")
+    :param repo_short_name: `current` refer to the repo_short_name where we are,
+        otherwise a repo_short_name short name (e.g., "amp")
     """
     repo_full_name_with_host, repo_short_name = _get_repo_full_name_from_cmd(
         repo_short_name
@@ -3817,20 +3899,43 @@ def gh_issue_title(ctx, issue_id, repo_short_name="current", pbcopy=True):  # ty
     _to_pbcopy(msg, pbcopy)
 
 
-# TODO(gp): Add unit test for
-# i gh_create_pr --no-draft --body="Misc changes while adding unit tests"
+def _check_if_pr_exists(title: str) -> bool:
+    """
+    Return whether a PR exists or not.
+    """
+    # > gh pr diff AmpTask1955_Lint_20211219
+    # no pull requests found for branch "AmpTask1955_Lint_20211219"
+    cmd = f"gh pr diff {title}"
+    rc = hsysinte.system(cmd, abort_on_error=False)
+    pr_exists = rc == 0
+    return pr_exists
 
 
 @task
 def gh_create_pr(  # type: ignore
-    ctx, body="", draft=True, repo_short_name="current", title=""
+    ctx,
+    body="",
+    draft=True,
+    auto_merge=False,
+    repo_short_name="current",
+    title="",
 ):
     """
     Create a draft PR for the current branch in the corresponding
     repo_short_name.
 
+    ```
+    # To open a PR in the web browser
+    > gh pr view --web
+
+    # To see the status of the checks
+    > gh pr checks
+    ```
+
     :param body: the body of the PR
     :param draft: draft or ready-to-review PR
+    :param auto_merge: enable auto merging PR
+    :param title: title of the PR or the branch name, if title is empty
     """
     _report_task()
     branch_name = hgit.get_branch_name()
@@ -3846,23 +3951,33 @@ def gh_create_pr(  # type: ignore
         branch_name,
         repo_full_name_with_host,
     )
-    # TODO(gp): Check whether the PR already exists.
-    # TODO(gp): Use _to_single_line_cmd
-    cmd = (
-        "gh pr create"
-        + f" --repo {repo_full_name_with_host}"
-        + (" --draft" if draft else "")
-        + f' --title "{title}"'
-        + f' --body "{body}"'
-    )
-    _run(ctx, cmd)
-    # TODO(gp): Capture the output of the command and save the info in a
-    #  github_current_pr_info:
-    # Warning: 22 uncommitted changes
-    # Creating pull request for AmpTask1329_Review_code_in_core_04 into master in alphamatic/amp
-    # https://github.com/alphamatic/amp/pull/1337
+    if auto_merge:
+        hdbg.dassert(
+            not draft, "The PR can't be a draft in order to auto merge it"
+        )
+    pr_exists = _check_if_pr_exists(title)
+    _LOG.debug(hprint.to_str("pr_exists"))
+    if pr_exists:
+        _LOG.warning("PR '%s' already exists: skipping creation", title)
+    else:
+        cmd = (
+            "gh pr create"
+            + f" --repo {repo_full_name_with_host}"
+            + (" --draft" if draft else "")
+            + f' --title "{title}"'
+            + f' --body "{body}"'
+        )
+        # TODO(gp): Use _to_single_line_cmd
+        _run(ctx, cmd)
+    if auto_merge:
+        cmd = f"gh pr ready {title}"
+        _run(ctx, cmd)
+        cmd = f"gh pr merge {title} --auto --delete-branch --squash"
+        _run(ctx, cmd)
 
 
+# #############################################################################
+# Fix permission
 # #############################################################################
 
 
