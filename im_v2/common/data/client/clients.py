@@ -185,12 +185,14 @@ class AbstractImClient(abc.ABC):
         Sanity checks include:
             - index is `pd.DatetimeIndex`
             - index is monotonic increasing/decreasing
+            - index frequency is "T" (1 minute)
             - index has timezone "UTC"
             - data has no duplicates
         """
         hpandas.dassert_index_is_datetime(df)
-        # TODO(gp): Let's force it to do increasing.
-        hpandas.dassert_monotonic_index(df)
+        hpandas.dassert_strictly_increasing_index(df)
+        # Verify that index frequency is "T" (1 minute).
+        hdbg.dassert_eq(df.index.freq, "T")
         # Verify that timezone info is correct.
         expected_tz = ["UTC"]
         # It is assumed that the 1st value of an index is representative.
@@ -199,8 +201,7 @@ class AbstractImClient(abc.ABC):
             expected_tz,
         )
         # Verify that there are no duplicates in the data.
-        # TODO(gp): Consider a stricter dropna(how="all").
-        n_duplicated_rows = df.dropna().duplicated().sum()
+        n_duplicated_rows = df.dropna(how="all").duplicated().sum()
         hdbg.dassert_eq(
             n_duplicated_rows,
             0,
