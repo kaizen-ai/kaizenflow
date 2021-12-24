@@ -1130,7 +1130,56 @@ def integrate_copy_dirs(ctx, src_dir, dst_dir, subdir="",
 
 
 @task
-def integrate_compare_branch_with_base(ctx, src_dir, dst_dir, subdir=""):  # type: ignore
+def integrate_files_since_last_integration(  # type: ignore
+        ctx, subdir=""):
+    """
+    Return the list of files modified since the last integration.
+    """
+    _report_task()
+    _ = ctx
+    # Find the hash of all integration commits.
+    cmd = "git log --date=local --oneline --date-order | grep AmpTask1786_Integrate"
+    _, txt = hsysinte.system_to_string(cmd)
+    _LOG.debug("integration commits=\n%s", txt)
+    txt = txt.split("\n")
+    # > git log --date=local --oneline --date-order | grep AmpTask1786_Integrate
+    # 72a1a101 AmpTask1786_Integrate_20211218 (#1975)
+    # 2acfd6d7 AmpTask1786_Integrate_20211214 (#1950)
+    # 318ab0ff AmpTask1786_Integrate_20211210 (#1933)
+    hdbg.dassert_lte(1, len(txt))
+    print("# last_integration: '%s'" % txt[0])
+    last_integration_hash = txt[0].split()[0]
+    _LOG.debug(hprint.to_str("last_integration_hash"))
+    # Find the first commit after the commit with the last integration.
+    cmd = f"git log --oneline --reverse --ancestry-path {last_integration_hash}^..master"
+    _, txt = hsysinte.system_to_string(cmd)
+    _LOG.debug("commits after last integration=\n%s", txt)
+    txt = txt.split("\n")
+    # > git log --oneline --reverse --ancestry-path 72a1a101^..master
+    # 72a1a101 AmpTask1786_Integrate_20211218 (#1975)
+    # 90e90353 AmpTask1955_Lint_20211218 (#1976)
+    # 4a2b45c6 AmpTask1858_Implement_buildmeister_workflows_in_invoke (#1860)
+    hdbg.dassert_lte(2, len(txt))
+    first_commit_hash = txt[1].split()[0]
+    print("# first_commit: '%s'" % txt[1])
+    _LOG.debug(hprint.to_str("first_commit_hash"))
+    # Find all the modified files.
+    cmd = f"git diff --name-only {first_commit_hash}..HEAD"
+    _, txt = hsysinte.system_to_string(cmd)
+    _LOG.debug("files modified since the integration=\n%s", txt)
+    files = txt.split("\n")
+    if subdir:
+        filtered_files = []
+        for file in files:
+            if files.startswith(subdir):
+                filtered_files.append(file)
+        files = filtered_files
+    print("\n".join(files))
+
+
+@task
+def integrate_compare_branch_with_base(  # type: ignore
+        ctx, src_dir, dst_dir, subdir=""):
     """
     Compare the files modified in both the branches in src_dir and dst_dir to master
     before this current branch was branched.
@@ -3548,7 +3597,7 @@ def lint(  # type: ignore
 
 
 @task
-def lint_create_branches(ctx, dir_name, dry_run=False):  # type: ignore
+def lint_create_branch(ctx, dir_name, dry_run=False):  # type: ignore
     """
     Create the branch for linting in the current dir.
 
