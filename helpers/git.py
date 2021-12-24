@@ -62,7 +62,7 @@ def get_branch_next_name(dir_name: str = ".") -> str:
     Return a name derived from the branch so that the branch doesn't exist.
 
     E.g., `AmpTask1903_Implemented_system_Portfolio` ->
-        `AmpTask1903_Implemented_system_Portfolio_3`
+    `AmpTask1903_Implemented_system_Portfolio_3`
     """
     curr_branch_name = get_branch_name(dir_name=dir_name)
     hdbg.dassert_ne(curr_branch_name, "master")
@@ -74,20 +74,21 @@ def get_branch_next_name(dir_name: str = ".") -> str:
         _LOG.debug("'%s' -> exists=%s", new_branch_name, exists)
         if not exists:
             return new_branch_name
-    hdbg.dassert("Can't find the next branch name for '%s'", curr_branch_name)
+    raise ValueError(f"Can't find the next branch name for '{curr_branch_name}'")
 
 
 def get_branch_hash(dir_name: str = ".") -> str:
     """
-    Return the hash of the commit right before the branch in `dir_name` was created.
+    Return the hash of the commit right before the branch in `dir_name` was
+    created.
     """
     curr_branch_name = get_branch_name(dir_name=dir_name)
     hdbg.dassert_ne(curr_branch_name, "master")
     _LOG.debug("curr_branch_name=%s", curr_branch_name)
     #
     cmd = f"cd {dir_name} && git merge-base master {curr_branch_name}"
-    _, hash = hsysinte.system_to_string(cmd)
-    hash_ = hash.rstrip("\n").lstrip("\n")
+    _, hash_ = hsysinte.system_to_string(cmd)
+    hash_ = hash_.rstrip("\n").lstrip("\n")
     hdbg.dassert_eq(len(hash_.split("\n")), 1)
     return hash_
 
@@ -191,7 +192,8 @@ def is_amp() -> bool:
     """
     Return whether we are inside `amp` repo.
 
-    Either as super module, or a sub module depending on a current working directory.
+    Either as super module, or a sub module depending on a current
+    working directory.
     """
     return _is_repo("amp")
 
@@ -739,8 +741,7 @@ def get_amp_abs_path() -> str:
     repo_sym_names = ["alphamatic/amp"]
     code = "get_extra_amp_repo_sym_name()"
     try:
-        repo_sym_names.append(
-            execute_repo_config_code(code))
+        repo_sym_names.append(execute_repo_config_code(code))
     except NameError:
         _LOG.debug("Can't execute the code '%s'", code)
     if repo_sym_name in repo_sym_names:
@@ -1149,6 +1150,7 @@ def git_describe(
         hdbg.dassert_ne(match, "")
         cmd = f"{cmd} --match '{match}'"
     num, tag = hsysinte.system_to_one_line(cmd, log_level=log_level)
+    _ = num
     return tag
 
 
@@ -1204,6 +1206,7 @@ def is_client_clean(
     :param abort_if_not_clean: if True and the client is not clean, abort reporting
         the files modified
     """
+    _LOG.debug(hprint.to_str("abort_if_not_clean"))
     files = get_modified_files(dir_name)
     # A Git client is clean iff there are no files in the index.
     is_clean = len(files) == 0

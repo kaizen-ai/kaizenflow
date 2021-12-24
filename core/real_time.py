@@ -373,10 +373,14 @@ async def execute_with_real_time_loop(
         # For the wall clock time, we always use the real one. This is used only for
         # book-keeping.
         real_wall_clock_time = hdateti.get_current_time(tz="ET")
-        hprint.log_frame(_LOG,
-            "Real-time loop: " +
-            "num_it=%s / %s: wall_clock_time='%s' real_wall_clock_time='%s'",
-            num_it, num_iterations, wall_clock_time, real_wall_clock_time,
+        hprint.log_frame(
+            _LOG,
+            "Real-time loop: "
+            + "num_it=%s / %s: wall_clock_time='%s' real_wall_clock_time='%s'",
+            num_it,
+            num_iterations,
+            wall_clock_time,
+            real_wall_clock_time,
             level=1,
         )
         # Update the current events.

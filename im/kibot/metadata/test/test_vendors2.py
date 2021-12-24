@@ -268,4 +268,4 @@
 #        tickers = "SPY IVV".split()
 #        df = ydq.get_multiple_data("Adj Close", tickers)
 #        #
-#        self.check_string(hunitest.get_df_signature(df))
+#        self.check_string(hpandas.get_df_signature(df))

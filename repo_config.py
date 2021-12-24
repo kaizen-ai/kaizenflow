@@ -34,11 +34,33 @@ def get_docker_base_image_name() -> str:
     return base_image_name
 
 
+# Copied from `system_interaction.py` to avoid circular imports.
+def is_inside_ci() -> bool:
+    """
+    Return whether we are running inside the Continuous Integration flow.
+    """
+    if "CI" not in os.environ:
+        ret = False
+    else:
+        ret = os.environ["CI"] != ""
+    return ret
+
+
 def run_docker_as_root() -> bool:
     """
     Return whether Docker should be run with root user.
     """
-    return False
+    # We want to run as user anytime we can.
+    res = False
+    if is_inside_ci():
+        # When running as user in GH action we get an error:
+        # ```
+        # /home/.config/gh/config.yml: permission denied
+        # ```
+        # see https://github.com/alphamatic/amp/issues/1864
+        # So we run as root in GH actions.
+        res = True
+    return res
 
 
 def has_dind_support() -> bool:

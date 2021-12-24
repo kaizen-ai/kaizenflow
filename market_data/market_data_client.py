@@ -18,6 +18,7 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
         self,
         *args: Any,
         im_client: ivcdclcl.AbstractImClient,
+        **kwargs: Any,
     ) -> None:
         """
         Constructor.
@@ -25,7 +26,7 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
         :param args: see `AbstractMarketDataInterface`
         :param im_client: `IM` client
         """
-        super().__init__(*args)  # type: ignore[arg-type]
+        super().__init__(*args, **kwargs)
         self._im_client = im_client
 
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:

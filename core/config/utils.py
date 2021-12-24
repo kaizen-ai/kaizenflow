@@ -136,6 +136,7 @@ def intersect_configs(configs: Iterable[cconconf.Config]) -> cconconf.Config:
     return intersection
 
 
+# TODO(gp): This could be a method of Config.
 def subtract_config(
     minuend: cconconf.Config, subtrahend: cconconf.Config
 ) -> cconconf.Config:

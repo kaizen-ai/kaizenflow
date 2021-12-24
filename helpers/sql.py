@@ -718,6 +718,7 @@ def get_num_rows(connection: DbConnection, table_name: str) -> int:
     query = f"SELECT COUNT(*) FROM {table_name}"
     cursor.execute(query)
     vals = cursor.fetchall()
+    # The return value is like: vals=[(0,)]
     hdbg.dassert_eq(len(vals), 1)
     return vals[0][0]  # type: ignore[no-any-return]
 
