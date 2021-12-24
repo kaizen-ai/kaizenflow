@@ -171,6 +171,11 @@ def _parse() -> argparse.ArgumentParser:
         action="store_true",
         help="More realistic and complete data is generated",
     )
+    parser.add_argument(
+        "--no_partition",
+        action="store_true",
+        help="Whether to partition the resulting parquet",
+    )
     hparser.add_verbosity_arg(parser)
     return parser
 

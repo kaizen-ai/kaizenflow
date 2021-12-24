@@ -72,6 +72,9 @@ class Order:
         hdbg.dassert_ne(num_shares, 0)
         self.num_shares = float(num_shares)
         #
+        hdbg.dassert_eq(creation_timestamp.tz, start_timestamp.tz)
+        hdbg.dassert_eq(creation_timestamp.tz, end_timestamp.tz)
+        self.tz = creation_timestamp.tz
 
     def __str__(self) -> str:
         txt: List[str] = []
@@ -89,18 +92,19 @@ class Order:
         # Parse the string.
         m = re.match(
             "^Order: order_id=(.*) creation_timestamp=(.*) asset_id=(.*) "
-            "type_=(.*) start_timestamp=(.*) end_timestamp=(.*) num_shares=(.*)",
+            "type_=(.*) start_timestamp=(.*) end_timestamp=(.*) num_shares=(.*) tz=(.*)",
             txt,
         )
         hdbg.dassert(m, "Can't match '%s'", txt)
         m = cast(Match[str], m)
         # Build the object.
+        tz = m.group(8)
         order_id = int(m.group(1))
-        creation_timestamp = pd.Timestamp(m.group(2))
+        creation_timestamp = pd.Timestamp(m.group(2), tz=tz)
         asset_id = int(m.group(3))
         type_ = m.group(4)
-        start_timestamp = pd.Timestamp(m.group(5))
-        end_timestamp = pd.Timestamp(m.group(6))
+        start_timestamp = pd.Timestamp(m.group(5), tz=tz)
+        end_timestamp = pd.Timestamp(m.group(6), tz=tz)
         num_shares = float(m.group(7))
         return cls(
             creation_timestamp,
@@ -121,6 +125,7 @@ class Order:
         dict_["start_timestamp"] = self.start_timestamp
         dict_["end_timestamp"] = self.end_timestamp
         dict_["num_shares"] = self.num_shares
+        dict_["tz"] = self.tz
         return dict_
 
     def is_mergeable(self, rhs: "Order") -> bool:

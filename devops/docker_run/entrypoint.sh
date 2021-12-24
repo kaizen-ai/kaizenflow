@@ -14,7 +14,6 @@ source /${ENV_NAME}/bin/activate
 source devops/docker_run/setenv.sh
 
 echo "Testing sudo"
-sudo pwd
 
 #mount -a || true
 
@@ -26,6 +25,7 @@ if [[ ! -d /etc/docker ]]; then
     sudo mkdir /etc/docker
 fi;
 # This is needed to run the database in dind mode (see CmTask309).
+# TODO(gp): For some reason appending to file directly `>>` doesn't work.
 sudo echo '{ "storage-driver": "vfs" }' | sudo tee -a /etc/docker/daemon.json
 
 # Start Docker Engine.
