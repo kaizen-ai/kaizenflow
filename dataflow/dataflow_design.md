@@ -41,7 +41,7 @@
 
 - Template configs:
   - Are incomplete configs, with some "mandatory" parameters unspecified but
-    identified, e.g., with `_DUMMY_`
+    identified, e.g., with `cconfig.DUMMY` value
   - Have reasonable defaults for specified parameters
     - This facilitates config extension (e.g., if we add additional parameters /
       flexibility in the future, then we should not have to regenerate old
@@ -286,3 +286,38 @@
         nodes, or also copy state?
       - The answer may depend upon the use case, e.g., notebooks vs production
     - Extending DAGs node by node is in fact how they are built under the hood
+
+## Reusing parameters across nodes' configs
+
+ - The same parameter might need to be used by different objects / functions
+   and DAG nodes and kept in sync some how
+ - E.g., the `start_datetime` for the reading node and for the `ReplayedTime`
+ - Solution #1:
+   - use a "late binding" approach: in the config there is a `ConfigParam`
+     specifying the path of the corresponding value to use
+ - Solution #2:
+   - use a "meta_parameter" Config key with all the parameters used by multiple
+     nodes
+
+# `DagAdapter`
+
+- `DagAdapter` are `DagBuilder` objects that can be further customized in a
+  programmatic way.
+
+- As we know, we build DAGs using `DagBuilder` function using the following
+  pattern:
+  1) generate a template config from the DAG builder
+  2) fill out the template config to make it into a complete config
+  3) instantiate the DAG from the complete config
+- A `DagBuilder` simply keeps together a template config and a corresponding
+  function building the DAG.
+
+- There are different problems with building DAGs:
+  a) Tweaking DAGs for batch simulation vs mocked real-time vs true real-time
+     - E.g., given a DAG we want to customize a few nodes (typically the source
+       node and the last few ones) without having to copy-paste the DAG
+  b) Compositions of DAGs
+     - We might want to put together different DAGs in a single one
+     - E.g., `RealTimeReturnsPipeline` is `ReturnsPipeline` plus some other
+       components. This is a more general solution than tweaking of DAGs
+- `DagAdapter`allows to solve the problem in a programmatic way.

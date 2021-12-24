@@ -28,6 +28,23 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+class DummyDataSource(dtfconobas.DataSource):
+    """
+    Placeholder node for a DataSource factory.
+    """
+
+    def __init__(
+        self,
+        nid: dtfcornode.NodeId,
+        **func_kwargs: Any,
+    ) -> None:
+        super().__init__(nid)
+        _ = func_kwargs
+
+
+# #############################################################################
+
+
 # TODO(gp): -> DfDataSource
 class ReadDataFromDf(dtfconobas.DataSource):
     """

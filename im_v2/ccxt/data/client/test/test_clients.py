@@ -7,8 +7,8 @@ import pytest
 import helpers.git as hgit
 import helpers.sql as hsql
 import helpers.unit_test as hunitest
-import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.ccxt.data.client.clients as imvcdclcl
+import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.client as imvcdcli
 import im_v2.common.db.utils as imvcodbut
 
