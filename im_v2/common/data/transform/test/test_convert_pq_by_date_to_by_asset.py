@@ -2,8 +2,6 @@ import argparse
 import os
 from typing import Any, Dict, Tuple
 
-import pytest
-
 import helpers.git as hgit
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
@@ -96,10 +94,6 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         actual = "\n".join(actual)
         self.check_string(actual, purify_text=True)
 
-    def test_daily_data1(self) -> None:
-        verbose = False
-        self._test_daily_data(verbose)
-
     def test_daily_data2(self) -> None:
         verbose = True
         self._test_daily_data(verbose)
@@ -112,23 +106,9 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         verbose = True
         self._test_daily_data_direct_run(verbose)
 
-    def test__save_chunk1(self) -> None:
-        verbose = False
-        self._test_joblib_task(verbose, {})
-
-    def test__save_chunk2(self) -> None:
+    def test__save_chunk(self) -> None:
         verbose = True
         self._test_joblib_task(verbose, {})
-
-    def test__save_chunk3(self) -> None:
-        """
-        Faulty transform_func.
-        """
-        verbose = False
-        faulty_config = {"transform_func": "faulty_func"}
-        with self.assertRaises(AssertionError) as fail:
-            self._test_joblib_task(verbose, faulty_config)
-        self.assertIn("Invalid transform_func='faulty_func'", str(fail.exception))
 
     def test_parser(self) -> None:
         """

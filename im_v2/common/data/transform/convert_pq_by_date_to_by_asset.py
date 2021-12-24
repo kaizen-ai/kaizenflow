@@ -50,10 +50,10 @@ import os
 from typing import Any, Dict, List
 
 import numpy as np
+import pandas as pd
 
 import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
-import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.io_ as hio
 import helpers.joblib_helpers as hjoblib
@@ -61,6 +61,33 @@ import helpers.parser as hparser
 import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
+
+
+# TODO(Nikola): Transform specific. It will be moved out.
+def convert_timestamp_column(
+    datetime_col: pd.Series, unit: str = "ms"
+) -> pd.Series:
+    """
+    Convert datetime as string or int into a timestamp.
+
+    :param datetime_col: series containing datetime as str or int
+    :param unit: the unit of unix epoch
+    :return: series containing datetime as `pd.Timestamp`
+    """
+    if pd.api.types.is_integer_dtype(datetime_col):
+        # Convert unix epoch into timestamp.
+        kwargs = {"unit": unit}
+        converted_datetime_col = datetime_col.apply(
+            hdateti.convert_unix_epoch_to_timestamp, **kwargs
+        )
+    elif pd.api.types.is_string_dtype(datetime_col):
+        # Convert string into timestamp.
+        converted_datetime_col = hdateti.to_generalized_datetime(datetime_col)
+    else:
+        raise ValueError(
+            "Incorrect data format. Datetime column should be of integer or string dtype."
+        )
+    return converted_datetime_col
 
 
 def _source_pq_files(src_dir: str) -> List[str]:
@@ -77,7 +104,7 @@ def _source_pq_files(src_dir: str) -> List[str]:
     return src_pq_files
 
 
-def _save_chunk(config: Dict[str, str], **kwargs: Dict[str, Any]):
+def _save_chunk(config: Dict[str, str], **kwargs: Dict[str, Any]) -> None:
     """
     Smaller part of daily data that will be decoupled to asset format for
     certain period of time.
@@ -89,25 +116,19 @@ def _save_chunk(config: Dict[str, str], **kwargs: Dict[str, Any]):
     for daily_pq in config["chunk"]:
         df = hparque.from_parquet(daily_pq)
         _LOG.debug("before df=\n%s", hprint.dataframe_to_str(df.head(3)))
-        # Transform.
-        # TODO(gp): Use eval or a more general mechanism.
-        transform_func = config["transform_func"]
-        if not transform_func:
-            pass
-        elif transform_func == "reindex_on_unix_epoch":
-            in_col_name = "start_time"
-            df = hpandas.reindex_on_unix_epoch(df, in_col_name)
-            _LOG.debug("after df=\n%s", hprint.dataframe_to_str(df.head(3)))
-        else:
-            hdbg.dfatal(f"Invalid transform_func='{transform_func}'")
+        # Set datetime index.
+        # TODO(Nikola): Move to new Transform class.
+        datetime_series = convert_timestamp_column(df["start_time"], unit="s")
+        reindexed_df = df.set_index(datetime_series)
+        _LOG.debug("after df=\n%s", hprint.dataframe_to_str(reindexed_df.head(3)))
         # Get partition arguments.
         dst_dir = config["dst_dir"]
         asset_col_name = config["asset_col_name"]
         # Add date partition columns to the dataframe.
-        hparque.add_date_partition_cols(df, partition_mode="day")
+        hparque.add_date_partition_cols(reindexed_df, partition_mode="day")
         # Partition and write dataset.
         partition_cols = ["year", "month", "day", asset_col_name]
-        hparque.partition_dataset(df, partition_cols, dst_dir)
+        hparque.partition_dataset(reindexed_df, partition_cols, dst_dir)
 
 
 # TODO(gp): We might want to use a config to pass a set of params related to each

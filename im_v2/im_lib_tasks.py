@@ -38,6 +38,7 @@ def get_db_env_path(stage: str) -> str:
 
 # #############################################################################
 
+
 def _get_docker_cmd(stage: str, docker_cmd: str) -> str:
     """
     Construct the `docker-compose' command to run a script inside this
