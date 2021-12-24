@@ -657,6 +657,18 @@ class SqlMarketDataInterface(AbstractMarketDataInterface):
         hdbg.dassert_eq(end_time, start_time + pd.Timedelta(minutes=1))
         return end_time
 
+    @staticmethod
+    def _to_sql_datetime_string(dt: pd.Timestamp) -> str:
+        """
+        Convert a timestamp into an SQL string to query the DB.
+        """
+        hdateti.dassert_has_tz(dt)
+        # Convert to UTC, if needed.
+        if dt.tzinfo != hdateti.get_UTC_tz().zone:
+            dt = dt.tz_convert(hdateti.get_UTC_tz())
+        ret: str = dt.strftime("%Y-%m-%d %H:%M:%S")
+        return ret
+
     def _get_sql_query(
         self,
         columns: Optional[List[str]],
@@ -818,7 +830,9 @@ class ReplayedTimeMarketDataInterface(AbstractMarketDataInterface):
             # This avoids mistakes when mocking data for certain assets, but request
             # data for assets that don't exist, which can make us wait for data that
             # will never come.
-            hdbg.dassert_is_subset(asset_ids, self._df[self._asset_id_col].unique())
+            hdbg.dassert_is_subset(
+                asset_ids, self._df[self._asset_id_col].unique()
+            )
         # Filter the data by the current time.
         wall_clock_time = self.get_wall_clock_time()
         _LOG.verb_debug(hprint.to_str("wall_clock_time"))
@@ -885,18 +899,6 @@ class ReplayedTimeMarketDataInterface(AbstractMarketDataInterface):
         else:
             ret = df.index.max()
         _LOG.debug("-> ret=%s", ret)
-        return ret
-
-    @staticmethod
-    def _to_sql_datetime_string(dt: pd.Timestamp) -> str:
-        """
-        Convert a timestamp into an SQL string to query the DB.
-        """
-        hdateti.dassert_has_tz(dt)
-        # Convert to UTC, if needed.
-        if dt.tzinfo != hdateti.get_UTC_tz().zone:
-            dt = dt.tz_convert(hdateti.get_UTC_tz())
-        ret: str = dt.strftime("%Y-%m-%d %H:%M:%S")
         return ret
 
 
