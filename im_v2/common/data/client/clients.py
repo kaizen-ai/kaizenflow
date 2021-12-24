@@ -77,8 +77,10 @@ def construct_full_symbol(exchange: str, symbol: str) -> FullSymbol:
 
 class AbstractImClient(abc.ABC):
     """
-    Abstract Interface for `IM` client. Responsible for retrieving the market data
-    for different vendors from different backends.
+    Abstract Interface for `IM` client.
+
+    Responsible for retrieving the market data for different vendors
+    from different backends.
     """
 
     def read_data(
