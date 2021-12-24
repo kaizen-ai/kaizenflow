@@ -68,8 +68,8 @@ class TestExecuteTasks1(hunitest.TestCase):
         hsysinte.system(cmd)
 
     def test_docker_bash(self) -> None:
-        image_version = self._config.getoption('--image_version')
-        image_stage = self._config.getoption('--image_stage')
+        image_version = self._config.getoption("--image_version")
+        image_stage = self._config.getoption("--image_stage")
         exit_command = "<(echo 'exit\n')"
         cmd = f"invoke docker_bash"
         if image_version:
