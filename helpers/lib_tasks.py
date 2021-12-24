@@ -3494,7 +3494,7 @@ def lint(  # type: ignore
     Lint files.
 
     ```
-    # To ling all the files:
+    # To lint all the files:
     > i lint --dir-name . --only-format
 
     # To lint only a repo including `amp` but not `amp` itself:
