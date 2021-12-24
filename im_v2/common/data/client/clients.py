@@ -79,6 +79,7 @@ class AbstractImClient(abc.ABC):
     """
     Abstract Interface for `IM` client.
     """
+
     def read_data(
         self,
         full_symbols: List[FullSymbol],
@@ -141,7 +142,9 @@ class AbstractImClient(abc.ABC):
         """
         # TODO(Grisha): add caching.
         normalize = True
-        data = self._read_data_for_single_full_symbol(full_symbol, normalize, None, None)
+        data = self._read_data_for_single_full_symbol(
+            full_symbol, normalize, None, None
+        )
         # It is assumed that timestamp is always stored as index.
         start_ts = data.index.min()
         return start_ts
@@ -152,7 +155,9 @@ class AbstractImClient(abc.ABC):
         """
         # TODO(Grisha): add caching.
         normalize = True
-        data = self._read_data_for_single_full_symbol(full_symbol, normalize, None, None)
+        data = self._read_data_for_single_full_symbol(
+            full_symbol, normalize, None, None
+        )
         # It is assumed that timestamp is always stored as index.
         end_ts = data.index.max()
         return end_ts
@@ -244,4 +249,3 @@ class AbstractImClient(abc.ABC):
             0,
             msg=f"There are {n_duplicated_rows} duplicated rows in data",
         )
-
