@@ -4,9 +4,12 @@ from typing import List, Optional, Tuple
 
 import pytest
 
+import core.config as cconfig
 import core.real_time as creatime
 import core.real_time_example as cretiexa
 import dataflow.core.builders_example as dtfcobuexa
+import dataflow.core.dag_adapter as dtfcodaada
+import dataflow.core.nodes.sources as dtfconosou
 import dataflow.core.result_bundle as dtfcorebun
 import dataflow.system.real_time_runner as dtfsretiru
 import helpers.datetime_ as hdateti
@@ -56,6 +59,25 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
         """
         # Get a naive pipeline as DAG.
         dag_builder = dtfcobuexa.MvnReturnsBuilder()
+        #
+        overriding_config = cconfig.Config()
+        overriding_config["load_prices"] = {
+            "frequency": "T",
+            "start_date": "2010-01-04 09:30:00",
+            "end_date": "2010-01-14 16:05:00",
+            "dim": 4,
+            "target_volatility": 0.25,
+            "seed": 247,
+        }
+        node = dtfconosou.MultivariateNormalGenerator
+        nodes_to_insert = [("load_prices", node)]
+        dag_builder = dtfcodaada.DagAdapter(
+            dag_builder,
+            overriding_config,
+            nodes_to_insert,
+            [],
+        )
+        #
         config = dag_builder.get_config_template()
         # Set up the event loop.
         sleep_interval_in_secs = 1.0

@@ -20,13 +20,13 @@ import os.path
 import pandas as pd
 
 import helpers.dbg as hdbg
-import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.parser as hparser
 import helpers.sql as hsql
 import im_v2.ccxt.data.client.clients as imvcdclcl
 import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.common.data.client.clients as ivcdclcl
+import im_v2.common.data.transform.convert_pq_by_date_to_by_asset as imvcdtcpbdtba
 import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
@@ -99,24 +99,31 @@ def _main(parser: argparse.ArgumentParser) -> None:
     for date_index in range(len(timespan) - 1):
         _LOG.debug("Checking for RT data on %s.", timespan[date_index])
         # TODO(Nikola): Refactor to use one db call.
-        rt_df = multiple_symbols_ccxt_db_client.read_data(
+        df = multiple_symbols_ccxt_db_client.read_data(
             symbols,
             start_ts=timespan[date_index],
             end_ts=timespan[date_index + 1],
             normalize=False,
         )
-        if rt_df.empty:
+        if df.empty:
             _LOG.info("No RT date in db for %s.", timespan[date_index])
             continue
         try:
+            # Check if directory already exists in specified path.
             date_directory = f"date={timespan[date_index].strftime('%Y%m%d')}"
             full_path = os.path.join(dst_dir, date_directory)
-            # TODO(Nikola): Incremental as in PQ conversion?
             hdbg.dassert_not_exists(full_path)
-            in_col_name = "timestamp"
-            unit = "ms"
-            rt_df = hpandas.reindex_on_unix_epoch(rt_df, in_col_name, unit=unit)
-            hparque.save_daily_df_as_pq(rt_df, dst_dir)
+            # Set datetime index.
+            # TODO(Nikola): Move to new Transform class.
+            datetime_series = imvcdtcpbdtba.convert_timestamp_column(
+                df["timestamp"]
+            )
+            reindexed_df = df.set_index(datetime_series)
+            # Add date partition columns to the dataframe.
+            hparque.add_date_partition_cols(reindexed_df)
+            # Partition and write dataset.
+            partition_cols = ["date"]
+            hparque.partition_dataset(reindexed_df, partition_cols, dst_dir)
         except AssertionError as ex:
             _LOG.info("Skipping. PQ file already present: %s.", ex)
             continue

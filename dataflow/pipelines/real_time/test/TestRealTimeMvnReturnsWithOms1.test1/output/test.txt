@@ -1,0 +1,458 @@
+events_as_str=
+num_it=1 current_time='2010-01-04 09:30:00'
+num_it=2 current_time='2010-01-04 09:35:00'
+num_it=3 current_time='2010-01-04 09:40:00'
+result_bundles=
+[config:
+  filter_ath:
+    col_mode: replace_all
+    transformer_kwargs:
+      start_time: 09:30:00
+      end_time: 16:00:00
+  resample:
+    in_col_groups: [('close',), ('volume',)]
+    out_col_group: ()
+    transformer_kwargs:
+      rule: 5T
+      resampling_groups: [({'close': 'close'}, 'last', {}), ({'close': 'twap'}, 'mean', {}), ({'volume': 'volume'}, 'sum', {'min_count': 1})]
+      vwap_groups: [('close', 'volume', 'vwap')]
+    reindex_like_input: False
+    join_output_with_input: False
+  compute_ret_0:
+    in_col_groups: [('close',), ('vwap',), ('twap',)]
+    out_col_group: ()
+    transformer_kwargs:
+      mode: log_rets
+    col_mapping:
+      close: close.ret_0
+      vwap: vwap.ret_0
+      twap: twap.ret_0
+  load_prices:
+    source_node_name: RealTimeDataSource
+    source_node_kwargs:
+      market_data_interface: <market_data.market_data_interface.ReplayedTimeMarketDataInterface object>
+      period: last_5mins
+      asset_id_col: asset_id
+      multiindex_output: True
+  process_forecasts:
+    prediction_col: close
+    execution_mode: real_time
+    process_forecasts_config:
+      market_data_interface: <market_data.market_data_interface.ReplayedTimeMarketDataInterface object>
+      portfolio: # holdings=
+                                 asset_id  curr_num_shares
+      2000-01-03 09:40:01-05:00       101     49973.838392
+      2000-01-03 09:40:01-05:00        -1     950003.83233
+      2000-01-03 09:35:01-05:00        -1        1000000.0
+      2000-01-03 09:30:01-05:00        -1        1000000.0
+      2000-01-03 09:30:00-05:00        -1        1000000.0
+      order_type: price@twap
+      order_duration: 5
+      ath_start_time: 09:30:00
+      trading_start_time: 09:30:00
+      ath_end_time: 16:40:00
+      trading_end_time: 16:40:00
+result_nid: process_forecasts
+method: predict
+result_df:                           close.ret_0 twap.ret_0 vwap.ret_0 close twap volume  \
+                                  101        101        101   101  101    101   
+end_datetime                                                                    
+2000-01-03 09:30:00-05:00         NaN        NaN        NaN   NaN  NaN    NaN   
+
+                          vwap  
+                           101  
+end_datetime                    
+2000-01-03 09:30:00-05:00  NaN  
+column_to_tags: None
+info:
+  filter_weekends:
+    predict:
+      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 1 entries, 2000-01-03 09:30:00-05:00 to 2000-01-03 09:30:00-05:00
+      Data columns (total 5 columns):
+       #   Column                 Non-Null Count  Dtype                           
+      ---  ------                 --------------  -----                           
+       0   (asset_id, 101)        1 non-null      float64                         
+       1   (close, 101)           1 non-null      float64                         
+       2   (start_datetime, 101)  1 non-null      datetime64[ns, America/New_York]
+       3   (timestamp_db, 101)    1 non-null      datetime64[ns, America/New_York]
+       4   (volume, 101)          1 non-null      float64                         
+      dtypes: datetime64[ns, America/New_York](2), float64(3)
+  filter_ath:
+    predict:
+      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 1 entries, 2000-01-03 09:30:00-05:00 to 2000-01-03 09:30:00-05:00
+      Data columns (total 5 columns):
+       #   Column                 Non-Null Count  Dtype                           
+      ---  ------                 --------------  -----                           
+       0   (asset_id, 101)        0 non-null      float64                         
+       1   (close, 101)           0 non-null      float64                         
+       2   (start_datetime, 101)  0 non-null      datetime64[ns, America/New_York]
+       3   (timestamp_db, 101)    0 non-null      datetime64[ns, America/New_York]
+       4   (volume, 101)          0 non-null      float64                         
+      dtypes: datetime64[ns, America/New_York](2), float64(3)
+  resample:
+    predict:
+      func_info: OrderedDict()
+      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 1 entries, 2000-01-03 09:30:00-05:00 to 2000-01-03 09:30:00-05:00
+      Freq: 5T
+      Data columns (total 4 columns):
+       #   Column         Non-Null Count  Dtype  
+      ---  ------         --------------  -----  
+       0   (close, 101)   0 non-null      float64
+       1   (twap, 101)    0 non-null      float64
+       2   (volume, 101)  0 non-null      float64
+       3   (vwap, 101)    0 non-null      float64
+      dtypes: float64(4)
+  compute_ret_0:
+    predict:
+      func_info: OrderedDict()
+      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 1 entries, 2000-01-03 09:30:00-05:00 to 2000-01-03 09:30:00-05:00
+      Freq: 5T
+      Data columns (total 7 columns):
+       #   Column              Non-Null Count  Dtype  
+      ---  ------              --------------  -----  
+       0   (close.ret_0, 101)  0 non-null      float64
+       1   (twap.ret_0, 101)   0 non-null      float64
+       2   (vwap.ret_0, 101)   0 non-null      float64
+       3   (close, 101)        0 non-null      float64
+       4   (twap, 101)         0 non-null      float64
+       5   (volume, 101)       0 non-null      float64
+       6   (vwap, 101)         0 non-null      float64
+      dtypes: float64(7)
+  load_prices:
+    predict:
+      predict_df_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 1 entries, 2000-01-03 09:30:00-05:00 to 2000-01-03 09:30:00-05:00
+      Data columns (total 5 columns):
+       #   Column                 Non-Null Count  Dtype                           
+      ---  ------                 --------------  -----                           
+       0   (asset_id, 101)        1 non-null      int64                           
+       1   (close, 101)           1 non-null      float64                         
+       2   (start_datetime, 101)  1 non-null      datetime64[ns, America/New_York]
+       3   (timestamp_db, 101)    1 non-null      datetime64[ns, America/New_York]
+       4   (volume, 101)          1 non-null      int64                           
+      dtypes: datetime64[ns, America/New_York](2), float64(1), int64(2)
+  process_forecasts:
+    predict:
+      df_out_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 1 entries, 2000-01-03 09:30:00-05:00 to 2000-01-03 09:30:00-05:00
+      Freq: 5T
+      Data columns (total 7 columns):
+       #   Column              Non-Null Count  Dtype  
+      ---  ------              --------------  -----  
+       0   (close.ret_0, 101)  0 non-null      float64
+       1   (twap.ret_0, 101)   0 non-null      float64
+       2   (vwap.ret_0, 101)   0 non-null      float64
+       3   (close, 101)        0 non-null      float64
+       4   (twap, 101)         0 non-null      float64
+       5   (volume, 101)       0 non-null      float64
+       6   (vwap, 101)         0 non-null      float64
+      dtypes: float64(7)
+payload: None
+class: ResultBundle, config:
+  filter_ath:
+    col_mode: replace_all
+    transformer_kwargs:
+      start_time: 09:30:00
+      end_time: 16:00:00
+  resample:
+    in_col_groups: [('close',), ('volume',)]
+    out_col_group: ()
+    transformer_kwargs:
+      rule: 5T
+      resampling_groups: [({'close': 'close'}, 'last', {}), ({'close': 'twap'}, 'mean', {}), ({'volume': 'volume'}, 'sum', {'min_count': 1})]
+      vwap_groups: [('close', 'volume', 'vwap')]
+    reindex_like_input: False
+    join_output_with_input: False
+  compute_ret_0:
+    in_col_groups: [('close',), ('vwap',), ('twap',)]
+    out_col_group: ()
+    transformer_kwargs:
+      mode: log_rets
+    col_mapping:
+      close: close.ret_0
+      vwap: vwap.ret_0
+      twap: twap.ret_0
+  load_prices:
+    source_node_name: RealTimeDataSource
+    source_node_kwargs:
+      market_data_interface: <market_data.market_data_interface.ReplayedTimeMarketDataInterface object>
+      period: last_5mins
+      asset_id_col: asset_id
+      multiindex_output: True
+  process_forecasts:
+    prediction_col: close
+    execution_mode: real_time
+    process_forecasts_config:
+      market_data_interface: <market_data.market_data_interface.ReplayedTimeMarketDataInterface object>
+      portfolio: # holdings=
+                                 asset_id  curr_num_shares
+      2000-01-03 09:40:01-05:00       101     49973.838392
+      2000-01-03 09:40:01-05:00        -1     950003.83233
+      2000-01-03 09:35:01-05:00        -1        1000000.0
+      2000-01-03 09:30:01-05:00        -1        1000000.0
+      2000-01-03 09:30:00-05:00        -1        1000000.0
+      order_type: price@twap
+      order_duration: 5
+      ath_start_time: 09:30:00
+      trading_start_time: 09:30:00
+      ath_end_time: 16:40:00
+      trading_end_time: 16:40:00
+result_nid: process_forecasts
+method: predict
+result_df:                           close.ret_0 twap.ret_0 vwap.ret_0     close  \
+                                  101        101        101       101   
+end_datetime                                                            
+2000-01-03 09:30:00-05:00         NaN        NaN        NaN       NaN   
+2000-01-03 09:35:00-05:00         NaN        NaN        NaN  1.000265   
+
+                               twap volume      vwap  
+                                101    101       101  
+end_datetime                                          
+2000-01-03 09:30:00-05:00       NaN    NaN       NaN  
+2000-01-03 09:35:00-05:00  1.000083  400.0  1.000083  
+column_to_tags: None
+info:
+  filter_weekends:
+    predict:
+      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 5 entries, 2000-01-03 09:30:00-05:00 to 2000-01-03 09:34:00-05:00
+      Data columns (total 5 columns):
+       #   Column                 Non-Null Count  Dtype                           
+      ---  ------                 --------------  -----                           
+       0   (asset_id, 101)        5 non-null      float64                         
+       1   (close, 101)           5 non-null      float64                         
+       2   (start_datetime, 101)  5 non-null      datetime64[ns, America/New_York]
+       3   (timestamp_db, 101)    5 non-null      datetime64[ns, America/New_York]
+       4   (volume, 101)          5 non-null      float64                         
+      dtypes: datetime64[ns, America/New_York](2), float64(3)
+  filter_ath:
+    predict:
+      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 5 entries, 2000-01-03 09:30:00-05:00 to 2000-01-03 09:34:00-05:00
+      Data columns (total 5 columns):
+       #   Column                 Non-Null Count  Dtype                           
+      ---  ------                 --------------  -----                           
+       0   (asset_id, 101)        4 non-null      float64                         
+       1   (close, 101)           4 non-null      float64                         
+       2   (start_datetime, 101)  4 non-null      datetime64[ns, America/New_York]
+       3   (timestamp_db, 101)    4 non-null      datetime64[ns, America/New_York]
+       4   (volume, 101)          4 non-null      float64                         
+      dtypes: datetime64[ns, America/New_York](2), float64(3)
+  resample:
+    predict:
+      func_info: OrderedDict()
+      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 2 entries, 2000-01-03 09:30:00-05:00 to 2000-01-03 09:35:00-05:00
+      Freq: 5T
+      Data columns (total 4 columns):
+       #   Column         Non-Null Count  Dtype  
+      ---  ------         --------------  -----  
+       0   (close, 101)   1 non-null      float64
+       1   (twap, 101)    1 non-null      float64
+       2   (volume, 101)  1 non-null      float64
+       3   (vwap, 101)    1 non-null      float64
+      dtypes: float64(4)
+  compute_ret_0:
+    predict:
+      func_info: OrderedDict()
+      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 2 entries, 2000-01-03 09:30:00-05:00 to 2000-01-03 09:35:00-05:00
+      Freq: 5T
+      Data columns (total 7 columns):
+       #   Column              Non-Null Count  Dtype  
+      ---  ------              --------------  -----  
+       0   (close.ret_0, 101)  0 non-null      float64
+       1   (twap.ret_0, 101)   0 non-null      float64
+       2   (vwap.ret_0, 101)   0 non-null      float64
+       3   (close, 101)        1 non-null      float64
+       4   (twap, 101)         1 non-null      float64
+       5   (volume, 101)       1 non-null      float64
+       6   (vwap, 101)         1 non-null      float64
+      dtypes: float64(7)
+  load_prices:
+    predict:
+      predict_df_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 5 entries, 2000-01-03 09:30:00-05:00 to 2000-01-03 09:34:00-05:00
+      Data columns (total 5 columns):
+       #   Column                 Non-Null Count  Dtype                           
+      ---  ------                 --------------  -----                           
+       0   (asset_id, 101)        5 non-null      int64                           
+       1   (close, 101)           5 non-null      float64                         
+       2   (start_datetime, 101)  5 non-null      datetime64[ns, America/New_York]
+       3   (timestamp_db, 101)    5 non-null      datetime64[ns, America/New_York]
+       4   (volume, 101)          5 non-null      int64                           
+      dtypes: datetime64[ns, America/New_York](2), float64(1), int64(2)
+  process_forecasts:
+    predict:
+      df_out_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 2 entries, 2000-01-03 09:30:00-05:00 to 2000-01-03 09:35:00-05:00
+      Freq: 5T
+      Data columns (total 7 columns):
+       #   Column              Non-Null Count  Dtype  
+      ---  ------              --------------  -----  
+       0   (close.ret_0, 101)  0 non-null      float64
+       1   (twap.ret_0, 101)   0 non-null      float64
+       2   (vwap.ret_0, 101)   0 non-null      float64
+       3   (close, 101)        1 non-null      float64
+       4   (twap, 101)         1 non-null      float64
+       5   (volume, 101)       1 non-null      float64
+       6   (vwap, 101)         1 non-null      float64
+      dtypes: float64(7)
+payload: None
+class: ResultBundle, config:
+  filter_ath:
+    col_mode: replace_all
+    transformer_kwargs:
+      start_time: 09:30:00
+      end_time: 16:00:00
+  resample:
+    in_col_groups: [('close',), ('volume',)]
+    out_col_group: ()
+    transformer_kwargs:
+      rule: 5T
+      resampling_groups: [({'close': 'close'}, 'last', {}), ({'close': 'twap'}, 'mean', {}), ({'volume': 'volume'}, 'sum', {'min_count': 1})]
+      vwap_groups: [('close', 'volume', 'vwap')]
+    reindex_like_input: False
+    join_output_with_input: False
+  compute_ret_0:
+    in_col_groups: [('close',), ('vwap',), ('twap',)]
+    out_col_group: ()
+    transformer_kwargs:
+      mode: log_rets
+    col_mapping:
+      close: close.ret_0
+      vwap: vwap.ret_0
+      twap: twap.ret_0
+  load_prices:
+    source_node_name: RealTimeDataSource
+    source_node_kwargs:
+      market_data_interface: <market_data.market_data_interface.ReplayedTimeMarketDataInterface object>
+      period: last_5mins
+      asset_id_col: asset_id
+      multiindex_output: True
+  process_forecasts:
+    prediction_col: close
+    execution_mode: real_time
+    process_forecasts_config:
+      market_data_interface: <market_data.market_data_interface.ReplayedTimeMarketDataInterface object>
+      portfolio: # holdings=
+                                 asset_id  curr_num_shares
+      2000-01-03 09:40:01-05:00       101     49973.838392
+      2000-01-03 09:40:01-05:00        -1     950003.83233
+      2000-01-03 09:35:01-05:00        -1        1000000.0
+      2000-01-03 09:30:01-05:00        -1        1000000.0
+      2000-01-03 09:30:00-05:00        -1        1000000.0
+      order_type: price@twap
+      order_duration: 5
+      ath_start_time: 09:30:00
+      trading_start_time: 09:30:00
+      ath_end_time: 16:40:00
+      trading_end_time: 16:40:00
+result_nid: process_forecasts
+method: predict
+result_df:                           close.ret_0 twap.ret_0 vwap.ret_0     close  \
+                                  101        101        101       101   
+end_datetime                                                            
+2000-01-03 09:35:00-05:00         NaN        NaN        NaN  1.000656   
+2000-01-03 09:40:00-05:00   -0.000356  -0.000128  -0.000128  1.000300   
+
+                               twap volume      vwap  
+                                101    101       101  
+end_datetime                                          
+2000-01-03 09:35:00-05:00  1.000656  100.0  1.000656  
+2000-01-03 09:40:00-05:00  1.000528  400.0  1.000528  
+column_to_tags: None
+info:
+  filter_weekends:
+    predict:
+      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 5 entries, 2000-01-03 09:35:00-05:00 to 2000-01-03 09:39:00-05:00
+      Data columns (total 5 columns):
+       #   Column                 Non-Null Count  Dtype                           
+      ---  ------                 --------------  -----                           
+       0   (asset_id, 101)        5 non-null      float64                         
+       1   (close, 101)           5 non-null      float64                         
+       2   (start_datetime, 101)  5 non-null      datetime64[ns, America/New_York]
+       3   (timestamp_db, 101)    5 non-null      datetime64[ns, America/New_York]
+       4   (volume, 101)          5 non-null      float64                         
+      dtypes: datetime64[ns, America/New_York](2), float64(3)
+  filter_ath:
+    predict:
+      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 5 entries, 2000-01-03 09:35:00-05:00 to 2000-01-03 09:39:00-05:00
+      Data columns (total 5 columns):
+       #   Column                 Non-Null Count  Dtype                           
+      ---  ------                 --------------  -----                           
+       0   (asset_id, 101)        5 non-null      float64                         
+       1   (close, 101)           5 non-null      float64                         
+       2   (start_datetime, 101)  5 non-null      datetime64[ns, America/New_York]
+       3   (timestamp_db, 101)    5 non-null      datetime64[ns, America/New_York]
+       4   (volume, 101)          5 non-null      float64                         
+      dtypes: datetime64[ns, America/New_York](2), float64(3)
+  resample:
+    predict:
+      func_info: OrderedDict()
+      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 2 entries, 2000-01-03 09:35:00-05:00 to 2000-01-03 09:40:00-05:00
+      Freq: 5T
+      Data columns (total 4 columns):
+       #   Column         Non-Null Count  Dtype  
+      ---  ------         --------------  -----  
+       0   (close, 101)   2 non-null      float64
+       1   (twap, 101)    2 non-null      float64
+       2   (volume, 101)  2 non-null      float64
+       3   (vwap, 101)    2 non-null      float64
+      dtypes: float64(4)
+  compute_ret_0:
+    predict:
+      func_info: OrderedDict()
+      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 2 entries, 2000-01-03 09:35:00-05:00 to 2000-01-03 09:40:00-05:00
+      Freq: 5T
+      Data columns (total 7 columns):
+       #   Column              Non-Null Count  Dtype  
+      ---  ------              --------------  -----  
+       0   (close.ret_0, 101)  1 non-null      float64
+       1   (twap.ret_0, 101)   1 non-null      float64
+       2   (vwap.ret_0, 101)   1 non-null      float64
+       3   (close, 101)        2 non-null      float64
+       4   (twap, 101)         2 non-null      float64
+       5   (volume, 101)       2 non-null      float64
+       6   (vwap, 101)         2 non-null      float64
+      dtypes: float64(7)
+  load_prices:
+    predict:
+      predict_df_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 5 entries, 2000-01-03 09:35:00-05:00 to 2000-01-03 09:39:00-05:00
+      Data columns (total 5 columns):
+       #   Column                 Non-Null Count  Dtype                           
+      ---  ------                 --------------  -----                           
+       0   (asset_id, 101)        5 non-null      int64                           
+       1   (close, 101)           5 non-null      float64                         
+       2   (start_datetime, 101)  5 non-null      datetime64[ns, America/New_York]
+       3   (timestamp_db, 101)    5 non-null      datetime64[ns, America/New_York]
+       4   (volume, 101)          5 non-null      int64                           
+      dtypes: datetime64[ns, America/New_York](2), float64(1), int64(2)
+  process_forecasts:
+    predict:
+      df_out_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 2 entries, 2000-01-03 09:35:00-05:00 to 2000-01-03 09:40:00-05:00
+      Freq: 5T
+      Data columns (total 7 columns):
+       #   Column              Non-Null Count  Dtype  
+      ---  ------              --------------  -----  
+       0   (close.ret_0, 101)  1 non-null      float64
+       1   (twap.ret_0, 101)   1 non-null      float64
+       2   (vwap.ret_0, 101)   1 non-null      float64
+       3   (close, 101)        2 non-null      float64
+       4   (twap, 101)         2 non-null      float64
+       5   (volume, 101)       2 non-null      float64
+       6   (vwap, 101)         2 non-null      float64
+      dtypes: float64(7)
+payload: None
+class: ResultBundle]
+None

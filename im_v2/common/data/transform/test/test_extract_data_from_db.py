@@ -34,7 +34,7 @@ class TestExtractDataFromDb1(imvcodbut.TestImDbHelper):
         hsql.execute_query(self.connection, ccxt_ohlcv_drop_query)
 
     # @pytest.mark.slow
-    @pytest.mark.skip("Enable when purify_text issue is resolved CMTask782")
+    @pytest.mark.skip("Enable when timestamp issue is resolved CMTask849")
     def test_extract_data_from_db(self) -> None:
         test_dir = self.get_scratch_space()
         dst_dir = os.path.join(test_dir, "by_date")
@@ -65,4 +65,4 @@ class TestExtractDataFromDb1(imvcodbut.TestImDbHelper):
         actual.append("# after=")
         actual.append(daily_signature_after)
         actual = "\n".join(actual)
-        self.check_string(actual)
+        self.check_string(actual, purify_text=True)

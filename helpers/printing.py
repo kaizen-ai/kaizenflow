@@ -304,6 +304,9 @@ def round_digits(
 
 # TODO(gp): Move this to hdbg.hlogging, but there are dependencies from this file.
 
+# https://stackoverflow.com/questions/2749796 has some solutions to find the
+# name of variables from the caller.
+
 
 def to_str(expression: str, frame_lev: int = 1) -> str:
     """

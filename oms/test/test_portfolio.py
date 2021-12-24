@@ -1,6 +1,5 @@
 import io
 import logging
-from typing import Any, Dict
 
 import pandas as pd
 
@@ -26,49 +25,19 @@ _5mins = pd.DateOffset(minutes=5)
 
 
 class TestSimulatedPortfolio1(hunitest.TestCase):
-    def test_get_holdings1(self) -> None:
+    # @pytest.mark.skip("This is flaky because of the clock jitter")
+    def test_state(self) -> None:
         """
         Check non-cash holdings for a Portfolio with only cash.
         """
-        expected = r"""
-        Empty DataFrame
-        Columns: [asset_id, curr_num_shares]
-        Index: []"""
-        timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
-        asset_id = None
-        exclude_cash = True
-        self._test_get_holdings(
-            expected, timestamp, asset_id, exclude_cash=exclude_cash
-        )
+        expected = r"""                           asset_id  curr_num_shares  price    value  \
+2000-01-01 09:35:00-05:00        -1          1000000      1  1000000
 
-    def test_get_holdings2(self) -> None:
-        """
-        Check holdings for a Portfolio with only cash.
-        """
-        expected = r"""
-                                   asset_id  curr_num_shares
-        2000-01-01 09:35:00-05:00      -1.0        1000000.0"""
-        timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
-        asset_id = None
-        exclude_cash = False
-        self._test_get_holdings(
-            expected, timestamp, asset_id, exclude_cash=exclude_cash
-        )
-
-    def test_get_holdings3(self) -> None:
-        """
-        Check holdings after the last timestamp, which returns an empty df.
-        """
-        expected = r"""
-        Empty DataFrame
-        Columns: [asset_id, curr_num_shares]
-        Index: []"""
-        timestamp = pd.Timestamp("2000-01-01 09:40:00-05:00")
-        asset_id = None
-        exclude_cash = False
-        self._test_get_holdings(
-            expected, timestamp, asset_id, exclude_cash=exclude_cash
-        )
+                               wall_clock_timestamp
+2000-01-01 09:35:00-05:00 2000-01-01 09:35:00-05:00  """
+        portfolio = self._get_portfolio1()
+        actual = portfolio.get_cached_mark_to_market()
+        self.assert_equal(str(actual), expected, fuzzy_match=True)
 
     def _get_portfolio1(self):
         """
@@ -88,15 +57,6 @@ class TestSimulatedPortfolio1(hunitest.TestCase):
             market_data_interface=market_data_interface,
         )
         return portfolio
-
-    def _test_get_holdings(
-        self, expected: str, *args: Any, **kwargs: Dict[str, Any]
-    ) -> None:
-        portfolio = self._get_portfolio1()
-        # Run.
-        holdings = portfolio.get_holdings(*args, **kwargs)
-        # Check.
-        self.assert_equal(str(holdings), expected, fuzzy_match=True)
 
 
 # #############################################################################
@@ -129,7 +89,7 @@ class TestSimulatedPortfolio2(hunitest.TestCase):
             index_col=0,
             parse_dates=True,
         )
-        self.assert_dfs_close(portfolio.holdings, expected)
+        self.assert_dfs_close(portfolio._holdings_df, expected)
 
     def test_initialization_with_holdings1(self) -> None:
         """
@@ -177,9 +137,9 @@ class TestSimulatedPortfolio2(hunitest.TestCase):
             index_col=0,
             parse_dates=True,
         )
-        self.assert_dfs_close(portfolio.holdings, expected)
+        self.assert_dfs_close(portfolio._holdings_df, expected)
 
-    def test_characteristics1(self) -> None:
+    def test_get_historical_statistics1(self) -> None:
         # Build MarketDataInterface.
         event_loop = None
         (
@@ -187,7 +147,9 @@ class TestSimulatedPortfolio2(hunitest.TestCase):
             _,
         ) = mdmdinex.get_replayed_time_market_data_interface_example3(event_loop)
         #
-        initial_timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
+        initial_timestamp = pd.Timestamp(
+            "2000-01-01 09:35:00-05:00", tz="America/New_York"
+        )
         portfolio = oporexam.get_simulated_portfolio_example1(
             event_loop,
             initial_timestamp,
@@ -208,10 +170,10 @@ leverage,0.0
         )
         # The timestamp doesn't parse correctly from the CSV.
         expected.columns = [initial_timestamp]
-        actual = portfolio.get_characteristics(initial_timestamp)
-        self.assert_dfs_close(actual.to_frame(), expected, rtol=1e-2, atol=1e-2)
+        actual = portfolio.get_historical_statistics().transpose()
+        self.assert_dfs_close(actual, expected, rtol=1e-2, atol=1e-2)
 
-    def test_characteristics2(self) -> None:
+    def test_historical_statistics2(self) -> None:
         # Build MarketDataInterface.
         event_loop = None
         (
@@ -256,10 +218,10 @@ leverage,0.994
         )
         # The timestamp doesn't parse correctly from the CSV.
         expected.columns = [initial_timestamp]
-        actual = portfolio.get_characteristics(initial_timestamp)
-        self.assert_dfs_close(actual.to_frame(), expected, rtol=1e-2, atol=1e-2)
+        actual = portfolio.get_historical_statistics().transpose()
+        self.assert_dfs_close(actual, expected, rtol=1e-2, atol=1e-2)
 
-    def test_characteristics3(self) -> None:
+    def test_get_historical_statistics3(self) -> None:
         # Build MarketDataInterface.
         tz = "ET"
         initial_timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
@@ -315,8 +277,8 @@ leverage,0.0
         )
         # The timestamp doesn't parse correctly from the CSV.
         expected.columns = [initial_timestamp]
-        actual = portfolio.get_characteristics(initial_timestamp)
-        self.assert_dfs_close(actual.to_frame(), expected, rtol=1e-2, atol=1e-2)
+        actual = portfolio.get_historical_statistics().transpose()
+        self.assert_dfs_close(actual, expected, rtol=1e-2, atol=1e-2)
 
 
 # #############################################################################
@@ -387,14 +349,14 @@ class TestMockedPortfolio1(omtodh.TestOmsDbHelper):
             portfolio = oporexam.get_mocked_portfolio_example1(
                 event_loop, self.connection, table_name, initial_timestamp
             )
-            portfolio.update_state()
+            portfolio.mark_to_market()
             # Check.
             actual = str(portfolio)
             expected = r"""# holdings=
                                        asset_id  curr_num_shares
-            2000-01-01 09:35:00-05:00       101               20
-            2000-01-01 09:35:00-05:00        -1          1000000
-            2000-01-01 09:30:00-05:00        -1          1000000"""
+            2000-01-01 09:35:00-05:00       101             20.0
+            2000-01-01 09:35:00-05:00        -1        1000000.0
+            2000-01-01 09:30:00-05:00        -1        1000000.0"""
             self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test2(self) -> None:
@@ -423,7 +385,7 @@ class TestMockedPortfolio1(omtodh.TestOmsDbHelper):
             portfolio = oporexam.get_mocked_portfolio_example1(
                 event_loop, self.connection, table_name, initial_timestamp
             )
-            portfolio.update_state()
+            portfolio.mark_to_market()
             # Check.
             actual = str(portfolio)
             expected = r"""# holdings=

@@ -7,7 +7,7 @@ import oms.broker as ombroker
 import abc
 import collections
 import logging
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import pandas as pd
 
@@ -27,6 +27,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(gp): Consider moving this in fill.py
 class Fill:
     """
     Represent an order fill.
@@ -82,7 +83,8 @@ class Fill:
         dict_["price"] = self.price
         return dict_
 
-    def _get_next_fill_id(self) -> int:
+    @staticmethod
+    def _get_next_fill_id() -> int:
         fill_id = Fill._fill_id
         Fill._fill_id += 1
         return fill_id
@@ -96,6 +98,13 @@ class Fill:
 class AbstractBroker(abc.ABC):
     """
     Represent a broker to which we can place orders and receive fills back.
+
+    The broker
+    - keeps an internal book keeping of orders submitted and deadlines when they
+      are supposed to be executed
+    - passes the orders to the actual Order Management System (OMS) through an
+      interface (e.g., a table of a DB, file system)
+    - waits for an acknowledgement of orders being submitted successfully by the OMS
     """
 
     _submitted_order_id: int = 0
@@ -106,7 +115,14 @@ class AbstractBroker(abc.ABC):
         account: str,
         market_data_interface: mdmadain.AbstractMarketDataInterface,
         get_wall_clock_time: hdateti.GetWallClockTime,
+        column_remap: Optional[Dict[str, str]] = None,
     ) -> None:
+        """
+        Constructor.
+
+        :param column_remap: (optional) remap columns when accessing
+            a `MarketDataInterface` to retrieve execution prices
+        """
         self._strategy_id = strategy_id
         self._account = account
         #
@@ -117,46 +133,62 @@ class AbstractBroker(abc.ABC):
         # TODO(gp): Use market_data_interface.get_wall_clock_time and remove
         #  from the interface.
         self._get_wall_clock_time = get_wall_clock_time
-        # Track the orders for internal accounting.
-        self._orders: List[omorder.Order] = []
-        # Last seen timestamp to enforce that time is only moving ahead.
-        self._last_timestamp = None
+        self._column_remap = column_remap
+        # Track the orders for internal accounting, mapping wall clock when the
+        # order was submitted to the submitted orders.
+        self._orders: Dict[
+            pd.Timestamp, List[omorder.Order]
+        ] = collections.OrderedDict()
+        # Map a timestamp to the orders with that execution time deadline.
+        self._deadline_timestamp_to_orders: Dict[
+            pd.Timestamp, List[omorder.Order]
+        ] = collections.defaultdict(list)
+        # Track the fills for internal accounting.
+        self._fills: List[Fill] = []
 
     async def submit_orders(
         self,
         orders: List[omorder.Order],
         *,
         dry_run: bool = False,
-    ) -> None:
+    ) -> str:
         """
-        Submit a list of orders to the broker at the current wall clock time.
-        """
-        wall_clock_timestamp = self._update_last_timestamp()
-        # Submit the orders.
-        _LOG.debug("Submitting orders=\n%s", omorder.orders_to_string(orders))
-        self._orders.extend(orders)
-        await self._submit_orders(orders, wall_clock_timestamp, dry_run=dry_run)
+        Submit a list of orders to the broker.
 
-    def get_fills(self, as_of_timestamp: pd.Timestamp) -> List[Fill]:
+        :param dry_run: do not submit orders to the OMS, but keep track of them
+            internally
         """
-        Get fills for the orders that should have been executed by
-        `as_of_timestamp`.
-
-        Note that this function can be called only once for a given
-        `as_of_timestamp`. In fact it assumes that the fills are
-        consumed and processed from the caller and fills are deleted.
-        """
-        wall_clock_timestamp = self._update_last_timestamp()
-        # Check future peeking.
-        if as_of_timestamp > wall_clock_timestamp:
-            raise ValueError(
-                "You are asking about the future: "
-                + f"as_of_timestamp={as_of_timestamp} > "
-                + f"wall_clock_timestamp={wall_clock_timestamp}"
+        wall_clock_timestamp = self._get_wall_clock_time()
+        # Log the order for internal book keeping.
+        self._log_order_submissions(orders)
+        # Enqueue the orders based on their completion deadline time.
+        _LOG.debug("Submitting %d orders", len(orders))
+        for order in orders:
+            _LOG.debug("Submitting order %s", order.order_id)
+            hdbg.dassert_lte(
+                order.start_timestamp,
+                wall_clock_timestamp,
+                "The order '%s' can only be executed in the future",
+                order,
             )
-        # Get the fills.
-        fills = self._get_fills(as_of_timestamp)
-        return fills
+            self._deadline_timestamp_to_orders[order.end_timestamp].append(order)
+        # Submit the orders to the actual OMS.
+        _LOG.debug("Submitting orders=\n%s", omorder.orders_to_string(orders))
+        file_name = await self._submit_orders(
+            orders, wall_clock_timestamp, dry_run=dry_run
+        )
+        _LOG.debug("The receipt is '%s'", file_name)
+        #
+        _LOG.debug("Waiting for the accepted orders")
+        await self._wait_for_accepted_orders(file_name)
+        return file_name
+
+    @abc.abstractmethod
+    def get_fills(self) -> List[Fill]:
+        """
+        Get any new fills filled since last execution.
+        """
+        ...
 
     @abc.abstractmethod
     async def _submit_orders(
@@ -165,29 +197,104 @@ class AbstractBroker(abc.ABC):
         wall_clock_timestamp: pd.Timestamp,
         *,
         dry_run: bool,
-    ) -> None:
+    ) -> str:
+        """
+        Submit orders to the actual OMS and wait for the orders to be accepted.
+
+        :return: a string representing the receipt of submission / acceptance
+        """
         ...
 
     @abc.abstractmethod
-    def _get_fills(self, as_of_timestamp: pd.Timestamp) -> List[Fill]:
+    async def _wait_for_accepted_orders(
+        self,
+        file_name: str,
+    ) -> None:
+        """
+        Wait until orders are accepted.
+        """
         ...
 
-    def _update_last_timestamp(self) -> pd.Timestamp:
+    def _get_fills_helper(self) -> List[Fill]:
         """
-        Make sure that the current wall clock time is after the previous
-        interaction.
+        Implement logic simulating orders being filled.
+        """
+        # We should always get the "next" orders, for this reason one should use
+        # a priority queue.
+        wall_clock_timestamp = self._get_wall_clock_time()
+        timestamps = self._deadline_timestamp_to_orders.keys()
+        _LOG.debug("Timestamps of orders in queue: %s", timestamps)
+        if not timestamps:
+            return []
+        # In our current execution model, we should ask about the orders that are
+        # terminating.
+        hdbg.dassert_lte(min(timestamps), wall_clock_timestamp)
+        orders_to_execute_timestamps = []
+        orders_to_execute = []
+        for timestamp in timestamps:
+            if timestamp <= wall_clock_timestamp:
+                orders_to_execute.extend(
+                    self._deadline_timestamp_to_orders[timestamp]
+                )
+                orders_to_execute_timestamps.append(timestamp)
+        _LOG.debug("Executing %d orders", len(orders_to_execute))
+        # Ensure that no orders are included with `end_timestamp` greater
+        # than `wall_clock_timestamp`, e.g., assume that in general
+        # orders take their entire allotted window to fill.
+        for order in orders_to_execute:
+            hdbg.dassert_lte(order.end_timestamp, wall_clock_timestamp)
+        # "Execute" the orders.
+        fills = []
+        for order in orders_to_execute:
+            # TODO(gp): Here there should be a programmable logic that decides
+            #  how many shares are filled.
+            fills.extend(self._fully_fill(order.end_timestamp, order))
+        # NOTE: `self._fills` is not in `init()` in the abstract class.
+        self._fills.extend(fills)
+        # Remove the orders that have been executed.
+        _LOG.debug(
+            "Removing orders from queue with deadline earlier than=`%s`",
+            wall_clock_timestamp,
+        )
+        for timestamp in orders_to_execute_timestamps:
+            del self._deadline_timestamp_to_orders[timestamp]
+        _LOG.debug("-> Returning fills:\n%s", str(fills))
+        return fills
 
-        :return: current wall clock time
+    # TODO(gp): Consider getting the wall clock, instead of passing it.
+    def _fully_fill(
+        self, wall_clock_timestamp: pd.Timestamp, order: omorder.Order
+    ) -> List[Fill]:
         """
+        Completely fill an order.
+
+        :param wall_clock_timestamp: we pass this value instead of getting the
+            since conceptually the timestamp is when the `_submit_orders` was
+            executed.
+        """
+        num_shares = order.num_shares
+        # TODO(Paul): The function `get_execution_price()` should be
+        #  configurable.
+        price = get_execution_price(
+            self.market_data_interface, order, self._column_remap
+        )
+        fill = Fill(order, wall_clock_timestamp, num_shares, price)
+        return [fill]
+
+    def _log_order_submissions(self, orders: List[omorder.Order]) -> None:
+        """
+        Add the orders to the internal book keeping.
+        """
+        hdbg.dassert_container_type(orders, list, omorder.Order)
         wall_clock_timestamp = self._get_wall_clock_time()
         _LOG.debug("wall_clock_timestamp=%s", wall_clock_timestamp)
-        # Update.
-        if self._last_timestamp is not None:
-            hdbg.dassert_lte(self._last_timestamp, wall_clock_timestamp)
-        self._last_timestamp = wall_clock_timestamp
-        return wall_clock_timestamp
+        if self._orders:
+            last_timestamp = next(reversed(self._orders))
+            hdbg.dassert_lt(last_timestamp, wall_clock_timestamp)
+        self._orders[wall_clock_timestamp] = orders
 
-    def _get_next_submitted_order_id(self) -> int:
+    @staticmethod
+    def _get_next_submitted_order_id() -> int:
         submitted_order_id = AbstractBroker._submitted_order_id
         AbstractBroker._submitted_order_id += 1
         return submitted_order_id
@@ -208,12 +315,9 @@ class SimulatedBroker(AbstractBroker):
         *args: Any,
     ) -> None:
         super().__init__(*args)
-        # Map a timestamp to the orders with that execution time deadline.
-        self._deadline_timestamp_to_orders: Dict[
-            pd.Timestamp, List[omorder.Order]
-        ] = collections.defaultdict(list)
-        # Track the fills for internal accounting.
-        self._fills: List[Fill] = []
+
+    def get_fills(self) -> List[Fill]:
+        return self._get_fills_helper()
 
     async def _submit_orders(
         self,
@@ -221,56 +325,27 @@ class SimulatedBroker(AbstractBroker):
         wall_clock_timestamp: pd.Timestamp,
         *,
         dry_run: bool,
-    ) -> None:
-        _ = wall_clock_timestamp
+    ) -> str:
+        """
+        Same as abstract method.
+        """
+        # All the simulated behavior is already in the abstract class so there
+        # is nothing to do here.
+        _ = orders, wall_clock_timestamp
         if dry_run:
-            _LOG.warning("Not submitting orders because of dry_run")
-            return
-        # Enqueue the orders based on their completion deadline time.
-        _LOG.debug("Submitting %d orders", len(orders))
-        for order in orders:
-            _LOG.debug("Submitting order %s", order.order_id)
-            # TODO(gp): curr_timestamp <= order.start_timestamp
-            self._deadline_timestamp_to_orders[order.end_timestamp].append(order)
+            _LOG.warning("Not submitting orders to OMS because of dry_run")
+        return "dummy_order_receipt"
 
-    def _get_fills(self, as_of_timestamp: pd.Timestamp) -> List[Fill]:
-        # We should always get the "next" orders, for this reason one should use
-        # a priority queue.
-        timestamps = self._deadline_timestamp_to_orders.keys()
-        _LOG.debug("Timestamps of orders in queue: %s", timestamps)
-        if not timestamps:
-            return []
-        # In our current execution model, we should ask about the orders that are
-        # terminating.
-        hdbg.dassert_eq(min(timestamps), as_of_timestamp)
-        orders_to_execute = self._deadline_timestamp_to_orders[as_of_timestamp]
-        _LOG.debug("Executing %d orders", len(orders_to_execute))
-        # `as_of_timestamp` should match the end time of the orders.
-        for order in orders_to_execute:
-            hdbg.dassert_eq(as_of_timestamp, order.end_timestamp)
-        # "Execute" the orders.
-        fills = []
-        for order in orders_to_execute:
-            # TODO(gp): Here there should be a programmable logic that decides
-            #  how many shares are filled.
-            fills.extend(self._fully_fill(as_of_timestamp, order))
-        self._fills.extend(fills)
-        # Remove the orders that have been executed.
-        _LOG.debug(
-            "Removing orders from queue with deadline=`%s`", as_of_timestamp
-        )
-        del self._deadline_timestamp_to_orders[as_of_timestamp]
-        _LOG.debug("-> Returning fills:\n%s", str(fills))
-        return fills
-
-    def _fully_fill(
-        self, wall_clock_timestamp: pd.Timestamp, order: omorder.Order
-    ) -> List[Fill]:
-        num_shares = order.num_shares
-        # TODO(Paul): We should move the logic here.
-        price = get_execution_price(self.market_data_interface, order)
-        fill = Fill(order, wall_clock_timestamp, num_shares, price)
-        return [fill]
+    async def _wait_for_accepted_orders(
+        self,
+        file_name: str,
+    ) -> None:
+        """
+        Same as abstract method.
+        """
+        # Orders are always immediately accepted in simulation, so there is
+        # nothing to do here.
+        _ = file_name
 
 
 # #############################################################################
@@ -280,12 +355,12 @@ class SimulatedBroker(AbstractBroker):
 
 class MockedBroker(AbstractBroker):
     """
-    Implement an object that mocks a real broker backed by a DB with
-    asynchronous updates to the state representing the placed orders.
+    An object that mocks a real broker backed by a DB with asynchronous updates
+    to the state representing the placed orders.
 
     The DB contains the following tables:
-    - `submitted_orders`: storing information about orders placed by strategies
-    - `accepted_orders`: storing information about orders accepted by the broker
+    - `submitted_orders`: store information about orders placed by strategies
+    - `accepted_orders`: store information about orders accepted by the OMS
     """
 
     def __init__(
@@ -300,10 +375,16 @@ class MockedBroker(AbstractBroker):
         self._db_connection = db_connection
         self._submitted_orders_table_name = submitted_orders_table_name
         self._accepted_orders_table_name = accepted_orders_table_name
-        self._submissions = collections.OrderedDict()
         if poll_kwargs is None:
             poll_kwargs = hasynci.get_poll_kwargs(self._get_wall_clock_time)
         self._poll_kwargs = poll_kwargs
+        # Store the submitted rows to the DB for internal book keeping.
+        self._submissions: Dict[
+            pd.Timestamp, pd.Series
+        ] = collections.OrderedDict()
+
+    def get_fills(self) -> List[Fill]:
+        return self._get_fills_helper()
 
     async def _submit_orders(
         self,
@@ -311,51 +392,48 @@ class MockedBroker(AbstractBroker):
         wall_clock_timestamp: pd.Timestamp,
         *,
         dry_run: bool = False,
-    ) -> None:
-        if dry_run:
-            _LOG.warning("Not submitting orders because of dry_run")
-            return
+    ) -> str:
+        """
+        Same as abstract method.
+
+        :return: a `file_name` representing the id of the submitted order in the DB
+        """
         # Add an order in the submitted orders table.
         submitted_order_id = self._get_next_submitted_order_id()
+        orderlist: List[Tuple[str, Any]] = []
         file_name = f"filename_{submitted_order_id}.txt"
-        timestamp_db = wall_clock_timestamp
-        orders_as_txt = omorder.orders_to_string(orders)
-        index = ["filename", "timestamp_db", "orders_as_txt"]
-        data = [file_name, timestamp_db, orders_as_txt]
-        row = pd.Series(data, index=index)
+        orderlist.append(("filename", file_name))
+        timestamp_db = self._get_wall_clock_time()
+        orderlist.append(("timestamp_db", timestamp_db))
+        orderlist.append(("orders_as_txt", omorder.orders_to_string(orders)))
+        row = pd.Series(collections.OrderedDict(orderlist))
+        # Store the order internally.
         self._submissions[timestamp_db] = row
-        hsql.execute_insert_query(
-            self._db_connection, row, self._submitted_orders_table_name
-        )
-        # Poll accepted orders and wait.
-        # This is the only place where this object is using
-        # `accepted_orders_table`.
+        # Write the row into the DB.
+        if dry_run:
+            _LOG.warning("Not submitting orders because of dry_run")
+        else:
+            hsql.execute_insert_query(
+                self._db_connection, row, self._submitted_orders_table_name
+            )
+        return file_name
+
+    async def _wait_for_accepted_orders(
+        self,
+        file_name: str,
+    ) -> None:
+        """
+        Same as abstract method.
+        """
         _LOG.debug("Wait for accepted orders ...")
         await oomsdb.wait_for_order_acceptance(
             self._db_connection,
             file_name,
             self._poll_kwargs,
+            table_name=self._accepted_orders_table_name,
+            field_name="filename",
         )
         _LOG.debug("Wait for accepted orders ... done")
-
-    def _get_fills(self, as_of_timestamp: pd.Timestamp) -> List[Fill]:
-        """
-        The reference system doesn't return fills but directly updates the
-        state of a table representing the current holdings.
-        """
-        latest_submission_timestamp = next(reversed(self._submissions))
-        latest_submission = self._submissions[latest_submission_timestamp]
-        orders_as_txt = latest_submission["orders_as_txt"]
-        orders = omorder.orders_from_string(orders_as_txt)
-        wall_clock_timestamp = self.market_data_interface.get_wall_clock_time()
-        fills = []
-        for order in orders:
-            # TODO: get the price from the market data interface.
-            # price = self.market_data_interface.get_data_at_timestamp(
-            # )
-            fill = Fill(order, wall_clock_timestamp, order.num_shares, 100.0)
-            fills.append(fill)
-        return fills
 
 
 # #############################################################################
@@ -411,7 +489,7 @@ def get_execution_price(
         )
     elif price_type.startswith("partial_spread"):
         # Pay part of the spread depending on the parameter encoded in the
-        # `price_type` (e.g., twap).
+        # `price_type` (e.g., TWAP).
         perc = float(price_type.split("_")[2])
         hdbg.dassert_lte(0, perc)
         hdbg.dassert_lte(perc, 1.0)
