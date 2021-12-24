@@ -85,7 +85,7 @@ class AbstractImClient(abc.ABC):
     """
     def read_data(
         self,
-        full_symbols: Union[FullSymbol, List[FullSymbol]],
+        full_symbols: List[FullSymbol],
         *,
         mode: str = "concat",
         full_symbol_col_name: str = "full_symbol",
@@ -110,28 +110,12 @@ class AbstractImClient(abc.ABC):
         :param end_ts: the latest date timestamp to load data for
         :return: combined data for provided symbols
         """
-        hdbg.dassert_isinstance(full_symbols, [str, List])
-        if isinstance(full_symbols, str):
-            # Handle case for a singe `FullSymbol`.
-            full_symbols = [full_symbols]
         # Verify that all the provided full symbols are unique.
         hdbg.dassert_no_duplicates(full_symbols)
         # Initialize results dict.
         full_symbol_to_df = {}
         for full_symbol in sorted(full_symbols):
-            # Read data for each given full symbol.
-            df = self._read_data(
-                full_symbol,
-                start_ts=start_ts,
-                end_ts=end_ts,
-                **kwargs,
-            )
-            if normalize:
-                df = self._normalize_data(df)
-                df = hpandas.drop_duplicates(df)
-                df = hpandas.resample_df(df, "T")
-                # Verify that data is valid.
-                self._dassert_is_valid(df)
+            cur_df = self._read_data_for_single_full_symbol(
             # Insert column with full symbol to the dataframe.
             df.insert(0, full_symbol_col_name, full_symbol)
             # Add full symbol data to the results dict.
@@ -153,7 +137,8 @@ class AbstractImClient(abc.ABC):
         Return the earliest timestamp available for a given `FullSymbol`.
         """
         # TODO(Grisha): add caching.
-        data = self.read_data(full_symbol, normalize=True)
+        normalize = True
+        data = self._read_data_for_single_full_symbol(full_symbol, normalize)
         # It is assumed that timestamp is always stored as index.
         start_ts = data.index.min()
         return start_ts
@@ -163,7 +148,8 @@ class AbstractImClient(abc.ABC):
         Return the latest timestamp available for a given `FullSymbol`.
         """
         # TODO(Grisha): add caching.
-        data = self.read_data(full_symbol, normalize=True)
+        normalize = True
+        data = self._read_data_for_single_full_symbol(full_symbol, normalize)
         # It is assumed that timestamp is always stored as index.
         end_ts = data.index.max()
         return end_ts
@@ -175,13 +161,37 @@ class AbstractImClient(abc.ABC):
         Get universe as full symbols.
         """
 
+    def _read_data_for_single_full_symbol(
+        self,
+        full_symbol: FullSymbol,
+        normalize: bool,
+        *,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
+        **kwargs: Any,
+    ) -> pd.DataFrame:
+        # Read data for each given full symbol.
+        df = self._read_data(
+            full_symbol,
+            start_ts=start_ts,
+            end_ts=end_ts,
+            **kwargs,
+        )
+        if normalize:
+            df = self._normalize_data(df)
+            df = hpandas.drop_duplicates(df)
+            df = hpandas.resample_df(df, "T")
+            # Verify that data is valid.
+            self._dassert_is_valid(df)
+        return df
+
     @abc.abstractmethod
     def _read_data(
         self,
         full_symbol: FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        **kwargs: Dict[str, Any],
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
         Read data for a single `FullSymbol` (i.e. currency pair from a single
