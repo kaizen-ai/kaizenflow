@@ -85,7 +85,7 @@ def string_to_num_id(string_id: str) -> int:
     return num_id
 
 
-@functools.lru_cache
+@functools.lru_cache()
 def build_num_to_string_id_mapping(universe: Tuple[str, ...]) -> Dict[int, str]:
     """
     Build a mapping from numeric ids to string ones.
@@ -93,14 +93,16 @@ def build_num_to_string_id_mapping(universe: Tuple[str, ...]) -> Dict[int, str]:
     :param universe: universe of string ids to convert
     :return: numeric to string ids mapping
     """
-    mapping = {}
+    mapping: Dict[int, str] = {}
     for string_id in universe:
         # Convert string id to a numeric one.
         num_id = string_to_num_id(string_id)
         hdbg.dassert_not_in(
             num_id,
             mapping,
-            "Collision: id %s for string `%s` already exists",  num_id, string_id
+            "Collision: id %s for string `%s` already exists",
+            num_id,
+            string_id,
         )
         mapping[num_id] = string_id
     return mapping
