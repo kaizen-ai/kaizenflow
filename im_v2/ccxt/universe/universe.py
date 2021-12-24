@@ -34,8 +34,7 @@ def get_trade_universe(
     return universe  # type: ignore[no-any-return]
 
 
-# TODO(Dan): Use `version = None` as default value and remove other default
-#  parameters values in #832.
+# TODO(Dan): remove default values for `vendor` and `as_ids` param #832.
 def get_vendor_universe(
     version: str = _LATEST_UNIVERSE_VERSION,
     vendor: str = "CCXT",
