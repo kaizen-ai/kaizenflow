@@ -123,7 +123,6 @@ def _get_verbose_daily_df(
     df["vendor_date"] = df.index.date.astype(str)
     df["start_time"] = start_time
     df["end_time"] = end_time
-    df.index.name = "vendor_date"
     _LOG.debug(hprint.df_to_short_str("df", df))
     return df
 
