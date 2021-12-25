@@ -106,14 +106,13 @@ class ImTransform:
     @staticmethod
     def add_date_partition_cols(
         df: pd.DataFrame, partition_mode: str = "no_partition"
-    ) -> pd.DataFrame:
+    ) -> None:
         """
         Add partition columns like year, month, day from datetime index.
         "no_partition" means partitioning by entire date, e.g. "20211201".
 
         :param df: original dataframe
         :param partition_mode: date unit to partition, e.g. 'year'
-        :return: DataFrame with date partition cols added
         """
         date_col_names = ["year", "month", "day"]
         msg = f"Invalid partition mode `{partition_mode}`!"
@@ -126,4 +125,3 @@ class ImTransform:
                         break
             else:
                 df["date"] = df.index.strftime("%Y%m%d")
-        return df
