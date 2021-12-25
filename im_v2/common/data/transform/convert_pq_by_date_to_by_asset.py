@@ -63,7 +63,7 @@ import helpers.printing as hprint
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(Nikola): Transform specific. It will be moved out.
+# TODO(Nikola): Remove in favor of ImTransform class.
 def convert_timestamp_column(
     datetime_col: pd.Series, unit: str = "ms"
 ) -> pd.Series:
