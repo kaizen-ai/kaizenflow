@@ -15,7 +15,6 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         Arguments used in script run.
         """
         return {
-            "transform_func": "",
             "asset_col_name": "asset",
             # parallelization args
             "num_threads": "1",
@@ -42,7 +41,6 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
                 f"{test_dir}/by_date/date=20220101/data.parquet",
             ],
             "dst_dir": f"{test_dir}/by_asset",
-            "transform_func": "",
             "asset_col_name": "asset",
         }
 
@@ -119,7 +117,6 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         cmd.extend(["--src_dir", "dummy_by_date_dir"])
         cmd.extend(["--dst_dir", "dummy_by_asset_dir"])
         cmd.extend(["--num_threads", "1"])
-        cmd.extend(["--transform_func", "reindex_on_unix_epoch"])
         cmd.extend(["--asset_col_name", "ticker"])
         args = parser.parse_args(cmd)
         args = str(args).split("(")[-1]
@@ -146,7 +143,6 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         cmd.append(f"--dst_dir {by_asset_dir}")
         cmd.append("--num_threads 1")
         if verbose:
-            cmd.append("--transform_func reindex_on_unix_epoch")
             cmd.append("--asset_col_name ticker")
         cmd = " ".join(cmd)
         hsysinte.system(cmd)
@@ -172,7 +168,6 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         if verbose:
             kwargs.update(
                 {
-                    "transform_func": "reindex_on_unix_epoch",
                     "asset_col_name": "ticker",
                 }
             )
@@ -197,13 +192,12 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         if verbose:
             config.update(
                 {
-                    "transform_func": "reindex_on_unix_epoch",
                     "asset_col_name": "ticker",
                 }
             )
         if config_update:
             config.update(config_update)
-        imvcdtcpbdtba._save_chunk(config)
+        imvcdtcpbdtba._save_chunk(**config)
         self.check_directory_structure_with_file_contents(
             by_date_dir, by_asset_dir
         )
