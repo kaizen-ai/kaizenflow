@@ -13,8 +13,7 @@ from airflow.providers.docker.operators.docker import DockerOperator
 default_args = {
     "retries": 1,
     "retry_delay": datetime.timedelta(minutes=10),
-    "email": ["d.tikhomirov@crypto-kaizen.com"],
-    "email_on_failure": True,
+    "email_on_failure": False,
     "owner": "test",
 }
 
@@ -27,7 +26,7 @@ with airflow.DAG(
     schedule_interval="*/3 * * * *",
     catchup=False,
     # TODO(Danya): Change to fixed datetime before running in prod.
-    start_date=datetime.datetime.now(),
+    start_date=datetime.datetime(2021, 12, 27, 16, 45, 0),
 ) as dag:
     # Pass default parameters for the script.
     # Build a bash command to execute.
@@ -50,4 +49,6 @@ with airflow.DAG(
         image="665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:dev",
         command=bash_command,
         default_args=default_args,
+        environment={"DATA_INTERVAL_START": "{{ data_interval_start }}",
+                     "DATA_INTERVAL_END": "{{ data_interval_end - macros.timedelta(5) }}"}
     )

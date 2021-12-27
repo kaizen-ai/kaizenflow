@@ -153,14 +153,12 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--to_datetime",
         action="store",
-        required=True,
         type=str,
         help="End of the downloaded period",
     )
     parser.add_argument(
         "--from_datetime",
         action="store",
-        required=True,
         type=str,
         help="Beginning of the downloaded period",
     )
@@ -222,8 +220,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
         column_names=["timestamp", "exchange_id", "currency_pair"],
     )
     # Convert timestamps.
-    end = pd.Timestamp(args.to_datetime)
-    start = pd.Timedelta(args.from_datetime)
+    end = pd.Timestamp(os.environ["DATA_INTERVAL_START"])
+    start = pd.Timedelta(os.environ["DATA_INTERVAL_END"])
     # Download data for specified time period.
     for exchange in exchanges:
         for pair in exchange.pairs:
