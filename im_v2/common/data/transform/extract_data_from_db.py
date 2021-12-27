@@ -61,7 +61,7 @@ def _parse() -> argparse.ArgumentParser:
         help="Location of daily PQ files",
     )
     parser.add_argument(
-        "--stage",
+        "--db_stage",
         action="store",
         type=str,
         default="local",
@@ -81,23 +81,26 @@ def _main(parser: argparse.ArgumentParser) -> None:
     """
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Extraction timespan.
+    # Generate timespan.
     start_date = args.start_date
     end_date = args.end_date
     hdbg.dassert_lt(start_date, end_date)
     timespan = pd.date_range(start_date, end_date)
     hdbg.dassert_lt(2, len(timespan))
-    # Location of daily PQ files.
+    # Create location of daily PQ files.
     dst_dir = args.dst_dir
     hdbg.dassert_exists(dst_dir)
-    stage = args.stage
-    env_file = imvimlita.get_db_env_path(stage)
+    # Connect to database.
+    db_stage = args.db_stage
+    env_file = imvimlita.get_db_env_path(db_stage)
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
+    # Initiate DB client.
     ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", connection)
     multiple_symbols_ccxt_db_client = ivcdclcl.MultipleSymbolsImClient(
         class_=ccxt_db_client, mode="concat"
     )
+    # Get universe of symbols.
     symbols = imvccunun.get_vendor_universe()
     for date_index in range(len(timespan) - 1):
         _LOG.debug("Checking for RT data on %s.", timespan[date_index])

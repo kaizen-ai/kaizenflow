@@ -7,4 +7,3 @@ num_attempts=1
 num_threads='1'
 skip_on_error=False
 src_dir='dummy_by_date_dir'
-transform_func='reindex_on_unix_epoch'
