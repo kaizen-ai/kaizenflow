@@ -484,7 +484,7 @@ class AbstractMarketDataInterface(abc.ABC):
             # Get the data for the last day.
             last_start_time = wall_clock_time.replace(hour=0, minute=0, second=0)
         elif period == "last_week":
-            # Get the data for the last day.
+            # Get the data for the last week.
             last_start_time = wall_clock_time.replace(
                 hour=0, minute=0, second=0
             ) - pd.Timedelta(days=16)
