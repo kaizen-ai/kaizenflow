@@ -17,8 +17,8 @@ dst_dir/
 
 # Use example:
 > im_v2/common/data/transform/csv_to_pq.py \
-    --src-dir test/ccxt_test \
-    --dst-dir test_pq
+    --src_dir test/ccxt_test \
+    --dst_dir test_pq
 
 Import as:
 
@@ -76,6 +76,27 @@ def _get_csv_to_pq_file_names(
     return csv_files
 
 
+def _run(args: argparse.Namespace) -> None:
+    # List all original CSV files.
+    hio.create_dir(args.dst_dir, args.incremental)
+    files = _get_csv_to_pq_file_names(
+        args.src_dir, args.dst_dir, args.incremental
+    )
+    # Transform CSV files.
+    for csv_full_path, pq_full_path in files:
+        hcsv.convert_csv_to_pq(csv_full_path, pq_full_path)
+    # Read files.
+    dataset = ds.dataset(args.dst_dir, format="parquet", partitioning="hive")
+    df = dataset.to_table().to_pandas()
+    # Set datetime index.
+    reindexed_df = imvcdtrut.reindex_on_datetime(df, args.datetime_col)
+    # Add date partition columns to the dataframe.
+    imvcdtrut.add_date_partition_cols(reindexed_df, "day")
+    # Save partitioned parquet dataset.
+    partition_cols = [args.asset_col, "year", "month", "day"]
+    imvcdtrut.partition_dataset(reindexed_df, partition_cols, args.dst_dir)
+
+
 # TODO(Danya): Add `by` argument and allow partitioning by date.
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -121,24 +142,7 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # List all original CSV files.
-    hio.create_dir(args.dst_dir, args.incremental)
-    files = _get_csv_to_pq_file_names(
-        args.src_dir, args.dst_dir, args.incremental
-    )
-    # Transform CSV files.
-    for csv_full_path, pq_full_path in files:
-        hcsv.convert_csv_to_pq(csv_full_path, pq_full_path)
-    # Read files.
-    dataset = ds.dataset(args.dst_dir, format="parquet", partitioning="hive")
-    df = dataset.to_table().to_pandas()
-    # Set datetime index.
-    reindexed_df = imvcdtrut.reindex_on_datetime(df, args.datetime_col)
-    # Add date partition columns to the dataframe.
-    imvcdtrut.add_date_partition_cols(reindexed_df, "day")
-    # Save partitioned parquet dataset.
-    partition_cols = [args.asset_col, "year", "month", "day"]
-    imvcdtrut.partition_dataset(reindexed_df, partition_cols, args.dst_dir)
+    _run(args)
 
 
 if __name__ == "__main__":

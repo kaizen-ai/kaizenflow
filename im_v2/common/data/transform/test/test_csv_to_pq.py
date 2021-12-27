@@ -33,6 +33,7 @@ class TestCsvToPq(hunitest.TestCase):
                 directories.append(os.path.join(root, subdir))
         actual_dirs = "\n".join(directories)
         # Check output.
+        from pdb import set_trace; set_trace()
         actual_df = pd.read_parquet(pq_dir_path)
         actual_df = hunitest.convert_df_to_json_string(actual_df, n_tail=None)
         actual_result = "\n".join([actual_dirs, actual_df])
