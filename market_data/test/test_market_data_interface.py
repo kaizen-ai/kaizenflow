@@ -259,7 +259,7 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
             market_data_interface, expected_last_end_time, expected_is_online
         )
 
-    def test_get_data5(self) -> None:
+    def test_get_data6(self) -> None:
         """
         - Set the current time to 10:00
         - Get all data for specified period
