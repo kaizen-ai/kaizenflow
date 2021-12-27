@@ -44,9 +44,9 @@ def get_vendor_universe(
     Load vendor universe as full symbols or numeric ids.
 
     :param version: release version
-    :param vendor: vendor to load data for
+    :param vendor: vendor to load data for (e.g., CCXT, CDD)
     :param as_ids: if True return universe as numeric ids, otherwise universe as full symbols
-    :return: vendor universe
+    :return: vendor universe as full symbols (e.g., gateio::XRP_USDT)
     """
     # Get vendor universe.
     vendor_universe = get_trade_universe(version)[vendor]

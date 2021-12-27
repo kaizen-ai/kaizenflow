@@ -36,7 +36,7 @@ class CcxtExchange:
         """
         Constructor.
 
-        :param: exchange_id: CCXT exchange id
+        :param: exchange_id: CCXT exchange id (e.g., `binance`)
         :param: api_keys_path: path to JSON file with API credentials
         """
         self.exchange_id = exchange_id
@@ -143,6 +143,7 @@ class CcxtExchange:
         # TODO(*): Double check if dataframes are properly concatenated.
         return pd.concat(all_bars)
 
+    # TODO(gp): @Danya curr_pair -> currency_pair
     def download_order_book(self, curr_pair: str) -> Dict[str, Any]:
         """
         Download order book for a currency pair.
