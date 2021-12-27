@@ -69,7 +69,8 @@ class TestMarketDataClient(hunitest.TestCase):
 
     def test_get_data_for_interval2(self) -> None:
         """
-        Test that interval boundary switches work and columns are filtered correctly.
+        Test that interval boundary switches work and columns are filtered
+        correctly.
         """
         # Initialize the `MarketDataInterface`.
         multiple_symbols_client = self._helper()

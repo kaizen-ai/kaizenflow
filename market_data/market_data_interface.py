@@ -367,8 +367,8 @@ class AbstractMarketDataInterface(abc.ABC):
         self,
     ) -> Tuple[pd.Timestamp, pd.Timestamp, int]:
         """
-        Wait until the bar with `end_time` == `wall_clock_time` is present in the
-        RT DB.
+        Wait until the bar with `end_time` == `wall_clock_time` is present in
+        the RT DB.
 
         :return:
             - start_sampling_time: timestamp when the sampling started

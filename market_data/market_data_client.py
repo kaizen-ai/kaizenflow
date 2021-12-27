@@ -35,6 +35,37 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
         """
         return True
 
+    @staticmethod
+    def convert_im_data(data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Convert `IM` data to the format required by
+        `AbstractMarketDataInterface`.
+
+        Input data example:
+        ```
+                                  full_symbol     close     volume
+        2021-07-26 13:42:00  binance:BTC_USDT  47063.51  29.403690
+        2021-07-26 13:43:00  binance:BTC_USDT  46946.30  58.246946
+        2021-07-26 13:44:00  binance:BTC_USDT  46895.39  81.264098
+        ```
+
+        Output data example:
+        ```
+                        end_ts       full_symbol     close     volume             start_ts
+        0  2021-07-26 13:42:00  binance:BTC_USDT  47063.51  29.403690  2021-07-26 13:41:00
+        1  2021-07-26 13:43:00  binance:BTC_USDT  46946.30  58.246946  2021-07-26 13:42:00
+        2  2021-07-26 13:44:00  binance:BTC_USDT  46895.39  81.264098  2021-07-26 13:43:00
+        ```
+
+        :param data: `IM` data to transform
+        :return: transformed data
+        """
+        data = data.reset_index()
+        data = data.rename(columns={"index": "end_ts"})
+        # `IM` data is assumed to have 1 minute frequency.
+        data["start_ts"] = data["end_ts"] - pd.Timedelta(minutes=1)
+        return data
+
     def _get_data(
         self,
         start_ts: pd.Timestamp,
@@ -89,36 +120,6 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
             market_data = self.convert_im_data(market_data)
             market_data = self.process_data(market_data)
         return market_data
-
-    @staticmethod
-    def convert_im_data(data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Convert `IM` data to the format required by `AbstractMarketDataInterface`.
-
-        Input data example:
-        ```
-                                  full_symbol     close     volume
-        2021-07-26 13:42:00  binance:BTC_USDT  47063.51  29.403690
-        2021-07-26 13:43:00  binance:BTC_USDT  46946.30  58.246946
-        2021-07-26 13:44:00  binance:BTC_USDT  46895.39  81.264098
-        ```
-
-        Output data example:
-        ```
-                        end_ts       full_symbol     close     volume             start_ts
-        0  2021-07-26 13:42:00  binance:BTC_USDT  47063.51  29.403690  2021-07-26 13:41:00
-        1  2021-07-26 13:43:00  binance:BTC_USDT  46946.30  58.246946  2021-07-26 13:42:00
-        2  2021-07-26 13:44:00  binance:BTC_USDT  46895.39  81.264098  2021-07-26 13:43:00
-        ```
-
-        :param data: `IM` data to transform
-        :return: transformed data
-        """
-        data = data.reset_index()
-        data = data.rename(columns={"index": "end_ts"})
-        # `IM` data is assumed to have 1 minute frequency.
-        data["start_ts"] = data["end_ts"] - pd.Timedelta(minutes=1)
-        return data
 
     # TODO(Grisha): implement the method.
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:

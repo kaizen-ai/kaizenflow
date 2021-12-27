@@ -168,7 +168,7 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         df.columns=asset_id,last_price,start_datetime,timestamp_db
         df.shape=(1, 4)
                                    asset_id   last_price            start_datetime              timestamp_db
-        end_datetime                                                                                        
+        end_datetime
         2000-01-01 09:35:00-05:00      1000  1000.311925 2000-01-01 09:34:00-05:00 2000-01-01 09:35:00-05:00"""
         # pylint: enable=line-too-long
         market_data_interface = _check_get_data(
@@ -201,7 +201,7 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         df.columns=asset_id,last_price,start_datetime,timestamp_db
         df.shape=(10, 4)
                                    asset_id   last_price            start_datetime              timestamp_db
-        end_datetime                                                                                        
+        end_datetime
         2000-01-01 09:41:00-05:00      1000   999.721952 2000-01-01 09:40:00-05:00 2000-01-01 09:41:00-05:00
         2000-01-01 09:42:00-05:00      1000  1000.191862 2000-01-01 09:41:00-05:00 2000-01-01 09:42:00-05:00
         2000-01-01 09:43:00-05:00      1000  1000.524304 2000-01-01 09:42:00-05:00 2000-01-01 09:43:00-05:00
@@ -220,7 +220,7 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
             market_data_interface, expected_last_end_time, expected_is_online
         )
 
-    def test_get_data4(self) -> None:
+    def test_get_data5(self) -> None:
         """
         - Set the current time to 10:00
         - Get data for the last day
@@ -240,7 +240,7 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         df.columns=asset_id,last_price,start_datetime,timestamp_db
         df.shape=(30, 4)
                                    asset_id   last_price            start_datetime              timestamp_db
-        end_datetime                                                                                        
+        end_datetime
         2000-01-01 09:31:00-05:00      1000   999.874540 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00
         2000-01-01 09:32:00-05:00      1000  1000.325254 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00
         2000-01-01 09:33:00-05:00      1000  1000.557248 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00
@@ -279,7 +279,7 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         df.columns=asset_id,last_price,start_datetime,timestamp_db
         df.shape=(30, 4)
                                    asset_id   last_price            start_datetime              timestamp_db
-        end_datetime                                                                                        
+        end_datetime
         2000-01-01 09:31:00-05:00      1000   999.874540 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00
         2000-01-01 09:32:00-05:00      1000  1000.325254 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00
         2000-01-01 09:33:00-05:00      1000  1000.557248 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00
