@@ -326,7 +326,79 @@ class TestCcxtCsvFileSystemClientReadData(hunitest.TestCase):
             expected_currency_pairs,
         )
 
-    def test5(self) -> None:
+    def test6(self) -> None:
+        """
+        Test that all files are being read correctly without normalization.
+        """
+        # Set input list of full symbols.
+        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        # Initialize CCXT file client and pass it to multiple symbols client.
+        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
+            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
+        )
+        # Check output.
+        actual = ccxt_file_client.read_data(
+            full_symbols,
+            normalize=False,
+        )
+        expected_length = 174
+        expected_exchange_ids = ["binance", "kucoin"]
+        expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
+        _check_output(
+            self,
+            actual,
+            expected_length,
+            expected_exchange_ids,
+            expected_currency_pairs,
+        )
+
+    def test7(self) -> None:
+        """
+        Test that all files are being read correctly with dict output mode.
+        """
+        # Set input list of full symbols.
+        full_symbols = ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+        # Initialize CCXT file client and pass it to multiple symbols client.
+        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
+            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
+        )
+        # Check actual results.
+        actual_dict = ccxt_file_client.read_data(full_symbols, mode="dict")
+        actual_dict_keys = sorted(list(actual_dict.keys()))
+        actual_df1 = actual_dict[actual_dict_keys[0]]
+        actual_df2 = actual_dict[actual_dict_keys[1]]
+        self.assert_equal(str(actual_dict_keys), str(full_symbols))
+        _check_output(
+            self,
+            actual=actual_df1,
+            expected_length=100,
+            expected_exchange_ids=["binance"],
+            expected_currency_pairs=["BTC_USDT"],
+            check_string=False,
+        )
+        _check_output(
+            self,
+            actual=actual_df2,
+            expected_length=99,
+            expected_exchange_ids=["kucoin"],
+            expected_currency_pairs=["ETH_USDT"],
+            check_string=False,
+        )
+        # Create combined actual string and check it.
+        actual_string_df1 = hunitest.convert_df_to_json_string(actual_df1)
+        actual_string_df2 = hunitest.convert_df_to_json_string(actual_df2)
+        actual_string = "\n".join(
+            [
+                actual_dict_keys[0],
+                actual_string_df1,
+                "\n",
+                actual_dict_keys[1],
+                actual_string_df2,
+            ]
+        )
+        self.check_string(actual_string)
+
+    def test8(self) -> None:
         """
         Test unsupported full symbol.
         """
@@ -336,7 +408,7 @@ class TestCcxtCsvFileSystemClientReadData(hunitest.TestCase):
         with self.assertRaises(AssertionError):
             ccxt_loader.read_data(["unsupported_exchange::unsupported_currency"])
 
-    def test6(self) -> None:
+    def test9(self) -> None:
         """
         Test unsupported data type.
         """
@@ -374,182 +446,6 @@ class TestCcxtParquetFileSystemClientReadData(hunitest.TestCase):
         # Check the output values.
         actual_string = hunitest.convert_df_to_json_string(actual)
         self.check_string(actual_string)
-
-
-# #############################################################################
-
-
-class TestMultipleSymbolsCcxtFileSystemClient(hunitest.TestCase):
-    def test1(self) -> None:
-        """
-        Test that data for provided list of full symbols is being read
-        correctly.
-        """
-        # Set input list of full symbols.
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        # Initialize CCXT file client and pass it to multiple symbols client.
-        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
-        )
-        multiple_symbols_client = imvcdcli.MultipleSymbolsImClient(
-            class_=ccxt_file_client, mode="concat"
-        )
-        # Check actual results.
-        actual = multiple_symbols_client.read_data(full_symbols=full_symbols)
-        expected_length = 199
-        expected_exchange_ids = ["binance", "kucoin"]
-        expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
-        self._check_output(
-            actual,
-            expected_length,
-            expected_exchange_ids,
-            expected_currency_pairs,
-        )
-
-    def test2(self) -> None:
-        """
-        Test that all files are being read and filtered correctly.
-        """
-        # Set input list of full symbols.
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        # Initialize CCXT file client and pass it to multiple symbols client.
-        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
-        )
-        multiple_symbols_client = imvcdcli.MultipleSymbolsImClient(
-            class_=ccxt_file_client, mode="concat"
-        )
-        # Check output.
-        actual = multiple_symbols_client.read_data(
-            full_symbols=full_symbols,
-            start_ts=pd.Timestamp("2018-08-17T00:01:00"),
-            end_ts=pd.Timestamp("2018-08-17T00:05:00"),
-        )
-        # Reset index to convert output to JSON.
-        actual = actual.reset_index()
-        expected_length = 8
-        expected_exchange_ids = ["binance", "kucoin"]
-        expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
-        self._check_output(
-            actual,
-            expected_length,
-            expected_exchange_ids,
-            expected_currency_pairs,
-        )
-
-    def test3(self) -> None:
-        """
-        Test that all files are being read correctly without normalization.
-        """
-        # Set input list of full symbols.
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        # Initialize CCXT file client and pass it to multiple symbols client.
-        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
-        )
-        multiple_symbols_client = imvcdcli.MultipleSymbolsImClient(
-            class_=ccxt_file_client, mode="concat"
-        )
-        # Check output.
-        actual = multiple_symbols_client.read_data(
-            full_symbols=full_symbols,
-            normalize=False,
-        )
-        expected_length = 174
-        expected_exchange_ids = ["binance", "kucoin"]
-        expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
-        self._check_output(
-            actual,
-            expected_length,
-            expected_exchange_ids,
-            expected_currency_pairs,
-        )
-
-    def test4(self) -> None:
-        """
-        Test that all files are being read correctly with dict output mode.
-        """
-        # Set input list of full symbols.
-        full_symbols = ["binance::BTC_USDT", "kucoin::ETH_USDT"]
-        # Initialize CCXT file client and pass it to multiple symbols client.
-        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
-        )
-        multiple_symbols_client = imvcdcli.MultipleSymbolsImClient(
-            class_=ccxt_file_client, mode="dict"
-        )
-        # Check actual results.
-        actual_dict = multiple_symbols_client.read_data(full_symbols=full_symbols)
-        actual_dict_keys = sorted(list(actual_dict.keys()))
-        actual_df1 = actual_dict[actual_dict_keys[0]]
-        actual_df2 = actual_dict[actual_dict_keys[1]]
-        self.assert_equal(str(actual_dict_keys), str(full_symbols))
-        self._check_output(
-            actual=actual_df1,
-            expected_length=100,
-            expected_exchange_ids=["binance"],
-            expected_currency_pairs=["BTC_USDT"],
-            check_string=False,
-        )
-        self._check_output(
-            actual=actual_df2,
-            expected_length=99,
-            expected_exchange_ids=["kucoin"],
-            expected_currency_pairs=["ETH_USDT"],
-            check_string=False,
-        )
-        # Create combined actual string and check it.
-        actual_string_df1 = hunitest.convert_df_to_json_string(actual_df1)
-        actual_string_df2 = hunitest.convert_df_to_json_string(actual_df2)
-        actual_string = "\n".join(
-            [
-                actual_dict_keys[0],
-                actual_string_df1,
-                "\n",
-                actual_dict_keys[1],
-                actual_string_df2,
-            ]
-        )
-        self.check_string(actual_string)
-
-    def _check_output(
-        self,
-        actual: pd.DataFrame,
-        expected_length: int,
-        expected_exchange_ids: List[str],
-        expected_currency_pairs: List[str],
-        check_string: bool = True,
-    ) -> None:
-        """
-        Verify that actual outcome dataframe matches the expected one.
-
-        :param actual: actual outcome dataframe
-        :param expected_length: expected outcome dataframe length
-        :param expected_exchange_ids: list of expected exchange ids
-        :param expected_currency_pairs: list of expected currency pairs
-        :param check_string: whether to check with golden outcome or not
-        """
-        # Check output df length.
-        self.assert_equal(str(expected_length), str(actual.shape[0]))
-        # Check unique exchange ids in the output df.
-        actual_exchange_ids = sorted(
-            list(actual["exchange_id"].dropna().unique())
-        )
-        self.assert_equal(str(actual_exchange_ids), str(expected_exchange_ids))
-        # Check unique currency pairs in the output df.
-        actual_currency_pairs = sorted(
-            list(actual["currency_pair"].dropna().unique())
-        )
-        self.assert_equal(
-            str(actual_currency_pairs), str(expected_currency_pairs)
-        )
-        if check_string:
-            # Check the output values.
-            actual_string = hunitest.convert_df_to_json_string(actual)
-            self.check_string(actual_string)
-
-
-# #############################################################################
 
 
 class TestMultipleSymbolsCcxtDbClient(imvcodbut.TestImDbHelper):
