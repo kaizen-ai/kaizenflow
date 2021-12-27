@@ -116,7 +116,7 @@ def _save_chunk(**config: Dict[str, Any]) -> None:
         df = hparque.from_parquet(daily_pq)
         _LOG.debug("before df=\n%s", hprint.dataframe_to_str(df.head(3)))
         # Set datetime index.
-        # TODO(Nikola): Use new Transform class.
+        # TODO(Nikola): Use new transform utils module.
         # datetime_col_name = "start_time"
         # reindexed_df = imvcdtrut.reindex_on_datetime(df, datetime_col_name, unit="s")
         datetime_series = convert_timestamp_column(df["start_time"], unit="s")

@@ -203,7 +203,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _get_verbose_daily_df if args.verbose else _get_generic_daily_df
     )
     dummy_df = get_daily_df(start_date, end_date, assets, freq)
-    # TODO(Nikola): Use new Transform class.
+    # TODO(Nikola): Use new transform utils module.
     # Add date partition columns to the dataframe.
     # imvcdtrut.add_date_partition_cols(dummy_df)
     hparque.add_date_partition_cols(dummy_df)
