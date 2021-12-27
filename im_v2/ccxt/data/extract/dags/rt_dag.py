@@ -26,7 +26,7 @@ with airflow.DAG(
     schedule_interval="*/3 * * * *",
     catchup=False,
     # TODO(Danya): Change to fixed datetime before running in prod.
-    start_date=datetime.datetime(2021, 12, 27, 16, 45, 0),
+    start_date=datetime.datetime(2021, 12, 27, 17, 32, 0),
 ) as dag:
     # Pass default parameters for the script.
     # Build a bash command to execute.
