@@ -121,11 +121,17 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Load data with client and check if it is correct.
         ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
-        actual = ccxt_db_client.read_data(["binance::BTC_USDT"])
+        actual = ccxt_db_client.read_data(
+            ["binance::BTC_USDT", "binance::ETH_USDT"],
+            normalize=False,
+        )
+        # Reset duplicated index for not normalized data, `convert_df_to_json_string` requires
+        # unique index.
+        actual = actual.reset_index()
         # Check the output values.
         expected_length = 5
         expected_exchange_ids = ["binance"]
-        expected_currency_pairs = ["BTC_USDT"]
+        expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
         _check_output(
             self,
             actual,
@@ -133,6 +139,7 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
             expected_exchange_ids,
             expected_currency_pairs,
         )
+        # Delete the table.
         hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     @pytest.mark.slow("8 seconds.")
@@ -155,38 +162,6 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
         expected_length = 1
         expected_exchange_ids = ["binance"]
         expected_currency_pairs = ["BTC_USDT"]
-        _check_output(
-            self,
-            actual,
-            expected_length,
-            expected_exchange_ids,
-            expected_currency_pairs,
-        )
-        # Delete the table.
-        hsql.remove_table(self.connection, "ccxt_ohlcv")
-
-    @pytest.mark.slow("8 seconds.")
-    def test_read_data3(self) -> None:
-        """
-        Verify that data from DB is read correctly for multiple full symbols.
-        """
-        # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
-        # Load data with client and check if it is correct.
-        ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
-        actual = ccxt_db_client.read_data(
-            ["binance::BTC_USDT", "binance::ETH_USDT"],
-            normalize=False,
-        )
-        # Reset duplicated index for not normalized data, `convert_df_to_json_string` requires
-        # unique index.
-        actual = actual.reset_index()
-        # Check the output values.
-        expected_length = 5
-        expected_exchange_ids = ["binance"]
-        expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
         _check_output(
             self,
             actual,
