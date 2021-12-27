@@ -248,14 +248,17 @@ class TestCcxtCsvFileSystemClientReadData(hunitest.TestCase):
         """
         Test that ".csv.gz" files from filesystem are being read correctly.
         """
-        ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
+        # Set input list of full symbols.
+        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        # Initialize CCXT file client and pass it to multiple symbols client.
+        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
             data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
         )
-        actual = ccxt_loader.read_data(["binance::BTC_USDT"])
-        # Check the output values.
-        expected_length = 100
-        expected_exchange_ids = ["binance"]
-        expected_currency_pairs = ["BTC_USDT"]
+        # Check actual results.
+        actual = ccxt_file_client.read_data(full_symbols)
+        expected_length = 199
+        expected_exchange_ids = ["binance", "kucoin"]
+        expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
         _check_output(
             self,
             actual,
@@ -292,17 +295,20 @@ class TestCcxtCsvFileSystemClientReadData(hunitest.TestCase):
         """
         Test that files are being read correctly without normalization.
         """
-        ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
+        # Set input list of full symbols.
+        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        # Initialize CCXT file client and pass it to multiple symbols client.
+        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
             data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
         )
-        actual = ccxt_loader.read_data(
-            ["binance::BTC_USDT"],
+        # Check output.
+        actual = ccxt_file_client.read_data(
+            full_symbols,
             normalize=False,
         )
-        # Check the output values.
-        expected_length = 100
-        expected_exchange_ids = ["binance"]
-        expected_currency_pairs = ["BTC_USDT"]
+        expected_length = 174
+        expected_exchange_ids = ["binance", "kucoin"]
+        expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
         _check_output(
             self,
             actual,
@@ -332,55 +338,6 @@ class TestCcxtCsvFileSystemClientReadData(hunitest.TestCase):
         )
 
     def test5(self) -> None:
-        """
-        Test that data for multiple full symbols is being read correctly.
-        """
-        # Set input list of full symbols.
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        # Initialize CCXT file client and pass it to multiple symbols client.
-        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
-        )
-        # Check actual results.
-        actual = ccxt_file_client.read_data(full_symbols)
-        expected_length = 199
-        expected_exchange_ids = ["binance", "kucoin"]
-        expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
-        _check_output(
-            self,
-            actual,
-            expected_length,
-            expected_exchange_ids,
-            expected_currency_pairs,
-        )
-
-    def test6(self) -> None:
-        """
-        Test that all files are being read correctly without normalization.
-        """
-        # Set input list of full symbols.
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        # Initialize CCXT file client and pass it to multiple symbols client.
-        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
-        )
-        # Check output.
-        actual = ccxt_file_client.read_data(
-            full_symbols,
-            normalize=False,
-        )
-        expected_length = 174
-        expected_exchange_ids = ["binance", "kucoin"]
-        expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
-        _check_output(
-            self,
-            actual,
-            expected_length,
-            expected_exchange_ids,
-            expected_currency_pairs,
-        )
-
-    def test7(self) -> None:
         """
         Test that all files are being read correctly with dict output mode.
         """
@@ -426,7 +383,7 @@ class TestCcxtCsvFileSystemClientReadData(hunitest.TestCase):
         )
         self.check_string(actual_string)
 
-    def test8(self) -> None:
+    def test6(self) -> None:
         """
         Test unsupported full symbol.
         """
@@ -436,7 +393,7 @@ class TestCcxtCsvFileSystemClientReadData(hunitest.TestCase):
         with self.assertRaises(AssertionError):
             ccxt_loader.read_data(["unsupported_exchange::unsupported_currency"])
 
-    def test9(self) -> None:
+    def test7(self) -> None:
         """
         Test unsupported data type.
         """
@@ -444,6 +401,9 @@ class TestCcxtCsvFileSystemClientReadData(hunitest.TestCase):
             imvcdclcl.CcxtCsvFileSystemClient(
                 data_type="unsupported_data_type", root_dir=_LOCAL_ROOT_DIR
             )
+
+
+# #############################################################################
 
 
 class TestCcxtParquetFileSystemClientReadData(hunitest.TestCase):
