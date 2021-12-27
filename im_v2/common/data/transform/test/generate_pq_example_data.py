@@ -177,6 +177,11 @@ def _parse() -> argparse.ArgumentParser:
         action="store_true",
         help="Whether to partition the resulting parquet",
     )
+    parser.add_argument(
+        "--reset_index",
+        action="store_true",
+        help="Resets dataframe index to default value",
+    )
     hparser.add_verbosity_arg(parser)
     return parser
 
@@ -203,6 +208,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _get_verbose_daily_df if args.verbose else _get_generic_daily_df
     )
     dummy_df = get_daily_df(start_date, end_date, assets, freq)
+    if args.reset_index:
+        dummy_df.reset_index(drop=True, inplace=True)
     # TODO(Nikola): Use new transform utils module.
     # Add date partition columns to the dataframe.
     # imvcdtrut.add_date_partition_cols(dummy_df)
