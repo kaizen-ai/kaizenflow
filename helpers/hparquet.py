@@ -95,7 +95,7 @@ def from_parquet(
     return df
 
 
-# TODO(Nikola): Remove in favor of ImTransform class.
+# TODO(Nikola): Remove in favor of transform utils module.
 def partition_dataset(
     df: pd.DataFrame, partition_cols: List[str], dst_dir: str
 ) -> None:
@@ -128,7 +128,7 @@ def partition_dataset(
         )
 
 
-# TODO(Nikola): Remove in favor of ImTransform class.
+# TODO(Nikola): Remove in favor of transform utils module.
 def add_date_partition_cols(
     df: pd.DataFrame, partition_mode: str = "no_partition"
 ) -> pd.DataFrame:

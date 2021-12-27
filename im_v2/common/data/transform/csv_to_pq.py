@@ -46,7 +46,7 @@ import helpers.system_interaction as hsysinte
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(Nikola): Remove in favor of ImTransform class.
+# TODO(Nikola): Remove in favor of transform utils module.
 def convert_timestamp_column(datetime_col: pd.Series) -> pd.Series:
     """
     Convert datetime as string or int into a timestamp.
@@ -104,7 +104,7 @@ def _get_csv_to_pq_file_names(
     return csv_files
 
 
-# TODO(Nikola): Remove in favor of ImTransform class.
+# TODO(Nikola): Remove in favor of transform utils module.
 def _partition_dataset(
     dataset_path: str,
     datetime_col_name: str,
@@ -202,7 +202,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # # Save partitioned parquet dataset.
     # partition_cols = [args.asset_col, "year", "month", "day"]
     # imvcdtrut.partition_dataset(reindexed_df, partition_cols, args.dst_dir)
-    # TODO(Nikola): Remove in favor of ImTransform class.
+    # TODO(Nikola): Remove in favor of transform utils module.
     _partition_dataset(
         dataset_path=args.dst_dir,
         datetime_col_name=args.datetime_col,

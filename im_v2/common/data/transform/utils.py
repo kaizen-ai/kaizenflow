@@ -132,6 +132,7 @@ def add_date_partition_cols(
     msg = f"Invalid partition mode `{partition_mode}`!"
     hdbg.dassert_in(partition_mode, [*date_col_names, "no_partition"], msg)
     with htimer.TimedScope(logging.DEBUG, "Create partition indices"):
+        # Check if there is partition mode.
         if partition_mode != "no_partition":
             # Add date columns chosen by partition mode.
             for name in date_col_names:
