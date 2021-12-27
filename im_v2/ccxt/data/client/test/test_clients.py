@@ -122,7 +122,7 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Load data with client and check if it is correct.
         ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
-        df = ccxt_db_client.read_data("binance::BTC_USDT")
+        df = ccxt_db_client.read_data(["binance::BTC_USDT"])
         actual = hunitest.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
         # Delete the table.
@@ -140,7 +140,7 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
         # Load data with client and check if it is correct.
         ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
         df = ccxt_db_client.read_data(
-            "binance::BTC_USDT",
+            ["binance::BTC_USDT"],
             start_ts=pd.Timestamp("2021-09-08T20:01:00-04:00"),
             end_ts=pd.Timestamp("2021-09-08T20:04:00-04:00"),
         )
@@ -161,7 +161,7 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
         # Load data with client and check if it is correct.
         ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
         df = ccxt_db_client.read_data(
-            full_symbol="binance::BTC_USDT",
+            ["binance::BTC_USDT"],
             normalize=False,
         )
         actual = hunitest.convert_df_to_json_string(df, n_tail=None)

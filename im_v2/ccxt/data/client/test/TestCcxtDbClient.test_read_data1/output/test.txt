@@ -1,7 +1,8 @@
-original shape=(5, 8)
+original shape=(5, 9)
 Head:
 {
     "2021-09-09T00:00:00Z":{
+        "full_symbol":"binance::BTC_USDT",
         "open":30.0,
         "high":40.0,
         "low":50.0,
@@ -12,6 +13,7 @@ Head:
         "exchange_id":"binance"
     },
     "2021-09-09T00:01:00Z":{
+        "full_symbol":"binance::BTC_USDT",
         "open":31.0,
         "high":41.0,
         "low":51.0,
@@ -22,6 +24,7 @@ Head:
         "exchange_id":"binance"
     },
     "2021-09-09T00:02:00Z":{
+        "full_symbol":"binance::BTC_USDT",
         "open":null,
         "high":null,
         "low":null,
@@ -32,6 +35,7 @@ Head:
         "exchange_id":null
     },
     "2021-09-09T00:03:00Z":{
+        "full_symbol":"binance::BTC_USDT",
         "open":null,
         "high":null,
         "low":null,
@@ -42,6 +46,7 @@ Head:
         "exchange_id":null
     },
     "2021-09-09T00:04:00Z":{
+        "full_symbol":"binance::BTC_USDT",
         "open":34.0,
         "high":44.0,
         "low":54.0,
