@@ -69,7 +69,7 @@ class TestGetDataForInterval(hunitest.TestCase):
 
     def test2(self) -> None:
         """
-        Test that interval border close switches work correctly.
+        Test that interval boundary switches work and columns are filtered correctly.
         """
         # Initialize the `MarketDataInterface`.
         multiple_symbols_client = self._helper()
@@ -79,7 +79,7 @@ class TestGetDataForInterval(hunitest.TestCase):
             full_symbols,
             "start_ts",
             "end_ts",
-            [],
+            ["full_symbol", "close", "volume", "currency_pair", "exchange_id"],
             hdateti.get_current_time,
             im_client=multiple_symbols_client,
         )
@@ -101,17 +101,70 @@ class TestGetDataForInterval(hunitest.TestCase):
         expected_df_as_str = """
         # df=
         df.index in [2018-08-17 00:02:00+00:00, 2018-08-17 00:05:00+00:00]
-        df.columns=full_symbol,open,high,low,close,volume,epoch,currency_pair,exchange_id,start_ts
-        df.shape=(8, 10)
-                                         full_symbol         open         high          low        close     volume          epoch currency_pair exchange_id                  start_ts
+        df.columns=full_symbol,close,volume,currency_pair,exchange_id,start_ts
+        df.shape=(8, 6)
+                                         full_symbol        close     volume  currency_pair exchange_id                  start_ts
         end_ts
-        2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226  1534464120000      BTC_USDT     binance 2018-08-17 00:01:00+00:00
-        2018-08-17 00:02:00+00:00   kucoin::ETH_USDT   286.405988   286.405988   285.400193   285.400197   0.162255  1534464120000      ETH_USDT      kucoin 2018-08-17 00:01:00+00:00
-        2018-08-17 00:03:00+00:00  binance::BTC_USDT  6299.970000  6299.970000  6286.930000  6294.520000  34.611797  1534464180000      BTC_USDT     binance 2018-08-17 00:02:00+00:00
+        2018-08-17 00:02:00+00:00  binance::BTC_USDT  6297.260000  55.373226       BTC_USDT     binance 2018-08-17 00:01:00+00:00
+        2018-08-17 00:02:00+00:00   kucoin::ETH_USDT   285.400197   0.162255       ETH_USDT      kucoin 2018-08-17 00:01:00+00:00
+        2018-08-17 00:03:00+00:00  binance::BTC_USDT  6294.520000  34.611797       BTC_USDT     binance 2018-08-17 00:02:00+00:00
         ...
-        2018-08-17 00:04:00+00:00   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655  1534464240000      ETH_USDT      kucoin 2018-08-17 00:03:00+00:00
-        2018-08-17 00:05:00+00:00  binance::BTC_USDT  6291.970000  6299.320000  6285.400000  6294.990000  18.986206  1534464300000      BTC_USDT     binance 2018-08-17 00:04:00+00:00
-        2018-08-17 00:05:00+00:00   kucoin::ETH_USDT   285.400196   285.884637   285.400196   285.884637   0.006141  1534464300000      ETH_USDT      kucoin 2018-08-17 00:04:00+00:00
+        2018-08-17 00:04:00+00:00   kucoin::ETH_USDT   285.884638   0.074655       ETH_USDT      kucoin 2018-08-17 00:03:00+00:00
+        2018-08-17 00:05:00+00:00  binance::BTC_USDT  6294.990000  18.986206       BTC_USDT     binance 2018-08-17 00:04:00+00:00
+        2018-08-17 00:05:00+00:00   kucoin::ETH_USDT   285.884637   0.006141       ETH_USDT      kucoin 2018-08-17 00:04:00+00:00
+        """
+        # pylint: enable=line-too-long
+        self.assert_equal(
+            actual_df_as_str,
+            expected_df_as_str,
+            dedent=True,
+            fuzzy_match=True,
+        )
+
+    def test3(self) -> None:
+        """
+        Test that not normalized data is loaded correctly.
+        """
+        # Initialize the `MarketDataInterface`.
+        multiple_symbols_client = self._helper()
+        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        market_data_client = mdmadacl.MarketDataInterface(
+            "full_symbol",
+            full_symbols,
+            "start_ts",
+            "end_ts",
+            [],
+            hdateti.get_current_time,
+            im_client=multiple_symbols_client,
+        )
+        # Read data.
+        start_ts = pd.Timestamp("2018-08-17T00:01:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00")
+        data = market_data_client.get_data_for_interval(
+            start_ts,
+            end_ts,
+            "end_ts",
+            full_symbols,
+            left_close=True,
+            right_close=False,
+            normalize_data=False,
+            limit=None,
+        )
+        actual_df_as_str = hprint.df_to_short_str("df", data)
+        # pylint: disable=line-too-long
+        expected_df_as_str = """
+        # df=
+        df.index in [2018-08-17 00:01:00+00:00, 2018-08-17 00:04:00+00:00]
+        df.columns=full_symbol,open,high,low,close,volume,epoch,currency_pair,exchange_id
+        df.shape=(8, 9)
+                                         full_symbol     open     high      low    close     volume          epoch currency_pair exchange_id
+        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.64  6311.77  6302.81  6302.81  16.781206  1534464060000      BTC_USDT     binance
+        2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.81  6306.00  6292.79  6297.26  55.373226  1534464120000      BTC_USDT     binance
+        2018-08-17 00:03:00+00:00  binance::BTC_USDT  6299.97  6299.97  6286.93  6294.52  34.611797  1534464180000      BTC_USDT     binance
+        ...
+        2018-08-17 00:02:00+00:00  kucoin::ETH_USDT  286.405988  286.405988  285.400193  285.400197  0.162255  1534464120000      ETH_USDT      kucoin
+        2018-08-17 00:03:00+00:00  kucoin::ETH_USDT  285.400193  285.400193  285.400193  285.400193  0.020260  1534464180000      ETH_USDT      kucoin
+        2018-08-17 00:04:00+00:00  kucoin::ETH_USDT  285.400193  285.884638  285.400193  285.884638  0.074655  1534464240000      ETH_USDT      kucoin
         """
         # pylint: enable=line-too-long
         self.assert_equal(
