@@ -1,7 +1,8 @@
-original shape=(3, 11)
+original shape=(5, 12)
 Head:
 {
     "0":{
+        "index":0,
         "full_symbol":"binance::BTC_USDT",
         "id":1,
         "timestamp":1631145600000,
@@ -15,6 +16,7 @@ Head:
         "created_at":"2021-09-09T00:00:00Z"
     },
     "1":{
+        "index":1,
         "full_symbol":"binance::BTC_USDT",
         "id":2,
         "timestamp":1631145660000,
@@ -28,6 +30,7 @@ Head:
         "created_at":"2021-09-09T00:00:00Z"
     },
     "2":{
+        "index":2,
         "full_symbol":"binance::BTC_USDT",
         "id":5,
         "timestamp":1631145840000,
@@ -39,6 +42,106 @@ Head:
         "currency_pair":"BTC_USDT",
         "exchange_id":"binance",
         "created_at":"2021-09-09T00:00:00Z"
+    },
+    "3":{
+        "index":0,
+        "full_symbol":"binance::ETH_USDT",
+        "id":3,
+        "timestamp":1631145720000,
+        "open":32.0,
+        "high":42.0,
+        "low":52.0,
+        "close":62.0,
+        "volume":72.0,
+        "currency_pair":"ETH_USDT",
+        "exchange_id":"binance",
+        "created_at":"2021-09-09T00:00:00Z"
+    },
+    "4":{
+        "index":1,
+        "full_symbol":"binance::ETH_USDT",
+        "id":7,
+        "timestamp":1631145960000,
+        "open":34.0,
+        "high":44.0,
+        "low":54.0,
+        "close":64.0,
+        "volume":74.0,
+        "currency_pair":"ETH_USDT",
+        "exchange_id":"binance",
+        "created_at":"2021-09-09T00:00:00Z"
     }
 }
 Tail:
+{
+    "0":{
+        "index":0,
+        "full_symbol":"binance::BTC_USDT",
+        "id":1,
+        "timestamp":1631145600000,
+        "open":30.0,
+        "high":40.0,
+        "low":50.0,
+        "close":60.0,
+        "volume":70.0,
+        "currency_pair":"BTC_USDT",
+        "exchange_id":"binance",
+        "created_at":"2021-09-09T00:00:00Z"
+    },
+    "1":{
+        "index":1,
+        "full_symbol":"binance::BTC_USDT",
+        "id":2,
+        "timestamp":1631145660000,
+        "open":31.0,
+        "high":41.0,
+        "low":51.0,
+        "close":61.0,
+        "volume":71.0,
+        "currency_pair":"BTC_USDT",
+        "exchange_id":"binance",
+        "created_at":"2021-09-09T00:00:00Z"
+    },
+    "2":{
+        "index":2,
+        "full_symbol":"binance::BTC_USDT",
+        "id":5,
+        "timestamp":1631145840000,
+        "open":34.0,
+        "high":44.0,
+        "low":54.0,
+        "close":64.0,
+        "volume":74.0,
+        "currency_pair":"BTC_USDT",
+        "exchange_id":"binance",
+        "created_at":"2021-09-09T00:00:00Z"
+    },
+    "3":{
+        "index":0,
+        "full_symbol":"binance::ETH_USDT",
+        "id":3,
+        "timestamp":1631145720000,
+        "open":32.0,
+        "high":42.0,
+        "low":52.0,
+        "close":62.0,
+        "volume":72.0,
+        "currency_pair":"ETH_USDT",
+        "exchange_id":"binance",
+        "created_at":"2021-09-09T00:00:00Z"
+    },
+    "4":{
+        "index":1,
+        "full_symbol":"binance::ETH_USDT",
+        "id":7,
+        "timestamp":1631145960000,
+        "open":34.0,
+        "high":44.0,
+        "low":54.0,
+        "close":64.0,
+        "volume":74.0,
+        "currency_pair":"ETH_USDT",
+        "exchange_id":"binance",
+        "created_at":"2021-09-09T00:00:00Z"
+    }
+}

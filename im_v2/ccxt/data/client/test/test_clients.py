@@ -9,7 +9,6 @@ import helpers.sql as hsql
 import helpers.unit_test as hunitest
 import im_v2.ccxt.data.client.clients as imvcdclcl
 import im_v2.ccxt.db.utils as imvccdbut
-import im_v2.common.data.client as imvcdcli
 import im_v2.common.db.utils as imvcodbut
 
 _LOCAL_ROOT_DIR = os.path.join(
@@ -181,10 +180,13 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
             ["binance::BTC_USDT", "binance::ETH_USDT"],
             normalize=False,
         )
+        # Reset duplicated index for not normalized data, `convert_df_to_json_string` requires
+        # unique index.
+        actual = actual.reset_index()
         # Check the output values.
         expected_length = 5
         expected_exchange_ids = ["binance"]
-        expected_currency_pairs = ["BTC_USDT"]
+        expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
         _check_output(
             self,
             actual,
