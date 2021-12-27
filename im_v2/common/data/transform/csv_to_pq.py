@@ -41,11 +41,9 @@ import helpers.dbg as hdbg
 import helpers.io_ as hio
 import helpers.parser as hparser
 import helpers.system_interaction as hsysinte
-# import im_v2.common.data.transform.transform as imvcdtrtr
+# import im_v2.common.data.transform.utils as imvcdtrut
 
 _LOG = logging.getLogger(__name__)
-
-# transform = imvcdtrtr.ImTransform()
 
 
 # TODO(Nikola): Remove in favor of ImTransform class.
@@ -198,12 +196,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # dataset = ds.dataset(args.dst_dir, format="parquet", partitioning="hive")
     # df = dataset.to_table().to_pandas()
     # # Set datetime index.
-    # reindexed_df = transform.reindex_on_datetime(df, args.datetime_col)
+    # reindexed_df = imvcdtrut.reindex_on_datetime(df, args.datetime_col)
     # # Add date partition columns to the dataframe.
-    # transform.add_date_partition_cols(reindexed_df, "day")
+    # imvcdtrut.add_date_partition_cols(reindexed_df, "day")
     # # Save partitioned parquet dataset.
     # partition_cols = [args.asset_col, "year", "month", "day"]
-    # transform.partition_dataset(reindexed_df, partition_cols, args.dst_dir)
+    # imvcdtrut.partition_dataset(reindexed_df, partition_cols, args.dst_dir)
     # TODO(Nikola): Remove in favor of ImTransform class.
     _partition_dataset(
         dataset_path=args.dst_dir,

@@ -28,11 +28,9 @@ import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.common.data.client.clients as ivcdclcl
 import im_v2.common.data.transform.convert_pq_by_date_to_by_asset as imvcdtcpbdtba
 import im_v2.im_lib_tasks as imvimlita
-# import im_v2.common.data.transform.transform as imvcdtrtr
+# import im_v2.common.data.transform.utils as imvcdtrut
 
 _LOG = logging.getLogger(__name__)
-
-# transform = imvcdtrtr.ImTransform()
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -122,17 +120,17 @@ def _main(parser: argparse.ArgumentParser) -> None:
             # Set datetime index.
             # TODO(Nikola): Use new Transform class.
             # datetime_col_name = "start_time"
-            # reindexed_df = transform.reindex_on_datetime(df, datetime_col_name)
+            # reindexed_df = imvcdtrut.reindex_on_datetime(df, datetime_col_name)
             datetime_series = imvcdtcpbdtba.convert_timestamp_column(
                 df["timestamp"]
             )
             reindexed_df = df.set_index(datetime_series)
             # Add date partition columns to the dataframe.
-            # transform.add_date_partition_cols(reindexed_df)
+            # imvcdtrut.add_date_partition_cols(reindexed_df)
             hparque.add_date_partition_cols(reindexed_df)
             # Partition and write dataset.
             partition_cols = ["date"]
-            # transform.partition_dataset(reindexed_df, partition_cols, dst_dir)
+            # imvcdtrut.partition_dataset(reindexed_df, partition_cols, dst_dir)
             hparque.partition_dataset(reindexed_df, partition_cols, dst_dir)
         except AssertionError as ex:
             _LOG.info("Skipping. PQ file already present: %s.", ex)

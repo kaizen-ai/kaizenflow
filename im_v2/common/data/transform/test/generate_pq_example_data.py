@@ -24,11 +24,9 @@ import helpers.dbg as hdbg
 import helpers.hparquet as hparque
 import helpers.parser as hparser
 import helpers.printing as hprint
-# import im_v2.common.data.transform.transform as imvcdtrtr
+# import im_v2.common.data.transform.utils as imvcdtrut
 
 _LOG = logging.getLogger(__name__)
-
-# transform = imvcdtrtr.ImTransform()
 
 
 def _get_generic_daily_df(
@@ -207,11 +205,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dummy_df = get_daily_df(start_date, end_date, assets, freq)
     # TODO(Nikola): Use new Transform class.
     # Add date partition columns to the dataframe.
-    # transform.add_date_partition_cols(dummy_df)
+    # imvcdtrut.add_date_partition_cols(dummy_df)
     hparque.add_date_partition_cols(dummy_df)
     # Partition and write dataset.
     partition_cols = ["date"]
-    # transform.partition_dataset(dummy_df, partition_cols, dst_dir)
+    # imvcdtrut.partition_dataset(dummy_df, partition_cols, dst_dir)
     hparque.partition_dataset(dummy_df, partition_cols, dst_dir)
 
 
