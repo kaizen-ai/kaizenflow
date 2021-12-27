@@ -63,10 +63,10 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
         # `IM` client uses [start_ts; end_ts).
         if not left_close:
             # Add one millisecond not to include the left boundary.
-            start_ts = start_ts + pd.Timedelta(ms=1)
+            start_ts = start_ts + pd.Timedelta(1, "ms")
         if right_close:
-            # Subtract one millisecond to include the right boundary.
-            end_ts = end_ts - pd.Timedelta(ms=1)
+            # Add one millisecond to include the right boundary.
+            end_ts = end_ts + pd.Timedelta(1, "ms")
         if not asset_ids:
             # If `asset_ids` is None, get all symbols from the latest universe.
             asset_ids = self._im_client.get_universe()
