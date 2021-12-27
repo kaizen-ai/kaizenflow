@@ -11,8 +11,8 @@ import im_v2.common.data.client as imvcdcli
 import market_data.market_data_client as mdmadacl
 
 
-class TestGetDataForInterval(hunitest.TestCase):
-    def test1(self) -> None:
+class TestMarketDataClient(hunitest.TestCase):
+    def test_get_data_for_interval1(self) -> None:
         """
         Test that data is loaded and columns are remapped correctly.
         """
@@ -67,7 +67,7 @@ class TestGetDataForInterval(hunitest.TestCase):
             fuzzy_match=True,
         )
 
-    def test2(self) -> None:
+    def test_get_data_for_interval2(self) -> None:
         """
         Test that interval boundary switches work and columns are filtered correctly.
         """
@@ -121,7 +121,7 @@ class TestGetDataForInterval(hunitest.TestCase):
             fuzzy_match=True,
         )
 
-    def test3(self) -> None:
+    def test_get_data_for_interval3(self) -> None:
         """
         Test that not normalized data is loaded correctly.
         """
@@ -173,6 +173,34 @@ class TestGetDataForInterval(hunitest.TestCase):
             dedent=True,
             fuzzy_match=True,
         )
+
+    def test_get_twap_price1(self) -> None:
+        """
+        Test that TWAP is computed correctly.
+        """
+        # Initialize the `MarketDataInterface`.
+        multiple_symbols_client = self._helper()
+        full_symbols = ["binance::BTC_USDT"]
+        market_data_client = mdmadacl.MarketDataInterface(
+            "full_symbol",
+            full_symbols,
+            "start_ts",
+            "end_ts",
+            [],
+            hdateti.get_current_time,
+            im_client=multiple_symbols_client,
+        )
+        # Compute TWAP price.
+        start_ts = pd.Timestamp("2018-08-17T00:01:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00")
+        actual = market_data_client.get_twap_price(
+            start_ts,
+            end_ts,
+            "end_ts",
+            full_symbols[0],
+            "close",
+        ).round(2)
+        self.assertEqual(actual, 6295.72)
 
     @staticmethod
     def _helper() -> imvcdcli.MultipleSymbolsImClient:
