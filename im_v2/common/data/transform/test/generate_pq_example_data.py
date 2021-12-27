@@ -21,10 +21,9 @@ from typing import List
 import pandas as pd
 
 import helpers.dbg as hdbg
-import helpers.hparquet as hparque
 import helpers.parser as hparser
 import helpers.printing as hprint
-# import im_v2.common.data.transform.utils as imvcdtrut
+import im_v2.common.data.transform.utils as imvcdtrut
 
 _LOG = logging.getLogger(__name__)
 
@@ -210,14 +209,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dummy_df = get_daily_df(start_date, end_date, assets, freq)
     if args.reset_index:
         dummy_df = dummy_df.reset_index(drop=True)
-    # TODO(Nikola): Use new transform utils module.
     # Add date partition columns to the dataframe.
-    # imvcdtrut.add_date_partition_cols(dummy_df)
-    hparque.add_date_partition_cols(dummy_df)
+    imvcdtrut.add_date_partition_cols(dummy_df)
     # Partition and write dataset.
     partition_cols = ["date"]
-    # imvcdtrut.partition_dataset(dummy_df, partition_cols, dst_dir)
-    hparque.partition_dataset(dummy_df, partition_cols, dst_dir)
+    imvcdtrut.partition_dataset(dummy_df, partition_cols, dst_dir)
 
 
 if __name__ == "__main__":
