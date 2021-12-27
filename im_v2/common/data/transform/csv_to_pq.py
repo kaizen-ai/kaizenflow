@@ -41,11 +41,12 @@ import helpers.dbg as hdbg
 import helpers.io_ as hio
 import helpers.parser as hparser
 import helpers.system_interaction as hsysinte
+# import im_v2.common.data.transform.utils as imvcdtrut
 
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(*): Move as a general transform utility function.
+# TODO(Nikola): Remove in favor of transform utils module.
 def convert_timestamp_column(datetime_col: pd.Series) -> pd.Series:
     """
     Convert datetime as string or int into a timestamp.
@@ -103,6 +104,7 @@ def _get_csv_to_pq_file_names(
     return csv_files
 
 
+# TODO(Nikola): Remove in favor of transform utils module.
 def _partition_dataset(
     dataset_path: str,
     datetime_col_name: str,
@@ -189,7 +191,18 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Transform CSV files.
     for csv_full_path, pq_full_path in files:
         hcsv.convert_csv_to_pq(csv_full_path, pq_full_path)
-    #
+    # TODO(Nikola): Enable.
+    # # Read files.
+    # dataset = ds.dataset(args.dst_dir, format="parquet", partitioning="hive")
+    # df = dataset.to_table().to_pandas()
+    # # Set datetime index.
+    # reindexed_df = imvcdtrut.reindex_on_datetime(df, args.datetime_col)
+    # # Add date partition columns to the dataframe.
+    # imvcdtrut.add_date_partition_cols(reindexed_df, "day")
+    # # Save partitioned parquet dataset.
+    # partition_cols = [args.asset_col, "year", "month", "day"]
+    # imvcdtrut.partition_dataset(reindexed_df, partition_cols, args.dst_dir)
+    # TODO(Nikola): Remove in favor of transform utils module.
     _partition_dataset(
         dataset_path=args.dst_dir,
         datetime_col_name=args.datetime_col,
