@@ -122,12 +122,8 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
         # Load data with client and check if it is correct.
         ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
         actual = ccxt_db_client.read_data(
-            ["binance::BTC_USDT", "binance::ETH_USDT"],
-            normalize=False,
+            ["binance::BTC_USDT", "binance::ETH_USDT"]
         )
-        # Reset duplicated index for not normalized data, `convert_df_to_json_string` requires
-        # unique index.
-        actual = actual.reset_index()
         # Check the output values.
         expected_length = 5
         expected_exchange_ids = ["binance"]
