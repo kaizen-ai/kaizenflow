@@ -59,11 +59,12 @@ import helpers.io_ as hio
 import helpers.joblib_helpers as hjoblib
 import helpers.parser as hparser
 import helpers.printing as hprint
+# import im_v2.common.data.transform.utils as imvcdtrut
 
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(Nikola): Transform specific. It will be moved out.
+# TODO(Nikola): Remove in favor of transform utils module.
 def convert_timestamp_column(
     datetime_col: pd.Series, unit: str = "ms"
 ) -> pd.Series:
@@ -115,7 +116,9 @@ def _save_chunk(**config: Dict[str, Any]) -> None:
         df = hparque.from_parquet(daily_pq)
         _LOG.debug("before df=\n%s", hprint.dataframe_to_str(df.head(3)))
         # Set datetime index.
-        # TODO(Nikola): Move to new Transform class.
+        # TODO(Nikola): Use new transform utils module.
+        # datetime_col_name = "start_time"
+        # reindexed_df = imvcdtrut.reindex_on_datetime(df, datetime_col_name, unit="s")
         datetime_series = convert_timestamp_column(df["start_time"], unit="s")
         reindexed_df = df.set_index(datetime_series)
         _LOG.debug("after df=\n%s", hprint.dataframe_to_str(reindexed_df.head(3)))
@@ -123,9 +126,11 @@ def _save_chunk(**config: Dict[str, Any]) -> None:
         dst_dir = config["dst_dir"]
         asset_col_name = config["asset_col_name"]
         # Add date partition columns to the dataframe.
+        # imvcdtrut.add_date_partition_cols(reindexed_df, "day")
         hparque.add_date_partition_cols(reindexed_df, partition_mode="day")
         # Partition and write dataset.
         partition_cols = ["year", "month", "day", asset_col_name]
+        # imvcdtrut.partition_dataset(reindexed_df, partition_cols, dst_dir)
         hparque.partition_dataset(reindexed_df, partition_cols, dst_dir)
 
 
