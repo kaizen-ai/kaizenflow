@@ -1,7 +1,8 @@
-original shape=(4, 8)
+original shape=(4, 9)
 Head:
 {
     "2018-08-17T00:01:00Z":{
+        "full_symbol":"binance::BTC_USDT",
         "open":6311.64,
         "high":6311.77,
         "low":6302.81,
@@ -12,6 +13,7 @@ Head:
         "exchange_id":"binance"
     },
     "2018-08-17T00:02:00Z":{
+        "full_symbol":"binance::BTC_USDT",
         "open":6302.81,
         "high":6306.0,
         "low":6292.79,
@@ -22,6 +24,7 @@ Head:
         "exchange_id":"binance"
     },
     "2018-08-17T00:03:00Z":{
+        "full_symbol":"binance::BTC_USDT",
         "open":6299.97,
         "high":6299.97,
         "low":6286.93,
@@ -32,6 +35,7 @@ Head:
         "exchange_id":"binance"
     },
     "2018-08-17T00:04:00Z":{
+        "full_symbol":"binance::BTC_USDT",
         "open":6294.52,
         "high":6299.98,
         "low":6290.0,
@@ -45,6 +49,7 @@ Head:
 Tail:
 {
     "2018-08-17T00:01:00Z":{
+        "full_symbol":"binance::BTC_USDT",
         "open":6311.64,
         "high":6311.77,
         "low":6302.81,
@@ -55,6 +60,7 @@ Tail:
         "exchange_id":"binance"
     },
     "2018-08-17T00:02:00Z":{
+        "full_symbol":"binance::BTC_USDT",
         "open":6302.81,
         "high":6306.0,
         "low":6292.79,
@@ -65,6 +71,7 @@ Tail:
         "exchange_id":"binance"
     },
     "2018-08-17T00:03:00Z":{
+        "full_symbol":"binance::BTC_USDT",
         "open":6299.97,
         "high":6299.97,
         "low":6286.93,
@@ -75,6 +82,7 @@ Tail:
         "exchange_id":"binance"
     },
     "2018-08-17T00:04:00Z":{
+        "full_symbol":"binance::BTC_USDT",
         "open":6294.52,
         "high":6299.98,
         "low":6290.0,
