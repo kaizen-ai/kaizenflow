@@ -51,6 +51,7 @@ def _check_output(
     )
     actual_df = actual_df[sorted(actual_df.columns)]
     actual_df_as_str = hprint.df_to_short_str("df", actual_df)
+    print(actual_df_as_str)
     self_.assert_equal(
         actual_df_as_str,
         expected_df_as_str,
@@ -128,7 +129,6 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
         actual = ccxt_db_client.read_data(
             ["binance::BTC_USDT", "binance::ETH_USDT"]
         )
-        print(hprint.df_to_short_str("df", actual))
         # Check the output values.
         expected_length = 8
         expected_exchange_ids = ["binance"]
@@ -136,28 +136,29 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
         # pylint: disable=line-too-long
         expected_df_as_str = """
         # df= 
-        df.index in [2021-09-09 00:00:00+00:00, 2021-09-09 00:04:00+00:00]
-        df.columns=full_symbol,open,high,low,close,volume,epoch,currency_pair,exchange_id
-        df.shape=(8, 9)
-                                         full_symbol  open  high   low  close  volume         epoch currency_pair exchange_id
-        2021-09-09 00:00:00+00:00  binance::BTC_USDT  30.0  40.0  50.0   60.0    70.0  1.631146e+12      BTC_USDT     binance
-        2021-09-09 00:01:00+00:00  binance::BTC_USDT  31.0  41.0  51.0   61.0    71.0  1.631146e+12      BTC_USDT     binance
-        2021-09-09 00:02:00+00:00  binance::BTC_USDT   NaN   NaN   NaN    NaN     NaN           NaN           NaN         NaN
-        ...
-        2021-09-09 00:02:00+00:00  binance::ETH_USDT  32.0  42.0  52.0   62.0    72.0  1.631146e+12      ETH_USDT     binance
-        2021-09-09 00:03:00+00:00  binance::ETH_USDT   NaN   NaN   NaN    NaN     NaN           NaN           NaN         NaN
-        2021-09-09 00:04:00+00:00  binance::ETH_USDT  34.0  44.0  54.0   64.0    74.0  1.631146e+12      ETH_USDT     binance
+        df.index in [2021-09-09 00:00:00+00:00, 2021-09-09 00:04:00+00:00]                                                                                                                                                                    
+        df.columns=close,currency_pair,epoch,exchange_id,full_symbol,high,low,open,volume                                                                                                                                                     
+        df.shape=(8, 9)                                                                                                                                                                                                                       
+        close currency_pair epoch exchange_id full_symbol high low open volume                                                                                                                                                                
+        2021-09-09 00:00:00+00:00 60.0 BTC_USDT 1.631146e+12 binance binance::BTC_USDT 40.0 50.0 30.0 70.0                                                                                                                                    
+        2021-09-09 00:01:00+00:00 61.0 BTC_USDT 1.631146e+12 binance binance::BTC_USDT 41.0 51.0 31.0 71.0                                                                                                                                    
+        2021-09-09 00:02:00+00:00 NaN NaN NaN NaN binance::BTC_USDT NaN NaN NaN NaN                                                                                                                                                           
+        ...                                                                                                                                                                                                                                   
+        2021-09-09 00:02:00+00:00 62.0 ETH_USDT 1.631146e+12 binance binance::ETH_USDT 42.0 52.0 32.0 72.0                                                                                                                                    
+        2021-09-09 00:03:00+00:00 NaN NaN NaN NaN binance::ETH_USDT NaN NaN NaN NaN                                                                                                                                                           
+        2021-09-09 00:04:00+00:00 64.0 ETH_USDT 1.631146e+12 binance binance::ETH_USDT 44.0 54.0 34.0 74.0
         """
         # pylint: enable=line-too-long
-        # _check_output(
-        #     self,
-        #     actual,
-        #     expected_length,
-        #     expected_exchange_ids,
-        #     expected_currency_pairs,
-        # )
-        # # Delete the table.
-        # hsql.remove_table(self.connection, "ccxt_ohlcv")
+        _check_output(
+            self,
+            actual,
+            expected_length,
+            expected_exchange_ids,
+            expected_currency_pairs,
+            expected_df_as_str,
+        )
+        # Delete the table.
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     @pytest.mark.slow("8 seconds.")
     def test_read_data2(self) -> None:
