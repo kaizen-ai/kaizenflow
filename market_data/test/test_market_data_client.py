@@ -219,10 +219,29 @@ class TestMarketDataClient(hunitest.TestCase):
             hdateti.get_current_time,
             im_client=multiple_symbols_client,
         )
-        # Compute TWAP price.
+        # Conduct the check.
         wall_clock_time = pd.Timestamp("2018-08-17T00:01:00")
         actual = market_data_client.should_be_online(wall_clock_time)
         self.assertEqual(actual, True)
+
+    def test_get_last_end_time1(self) -> None:
+        """
+        Test that a call for the last end time is causing an error for now.
+        """
+        # Initialize the `MarketDataInterface`.
+        multiple_symbols_client = self._helper()
+        full_symbols = ["binance::BTC_USDT"]
+        market_data_client = mdmadacl.MarketDataInterface(
+            "full_symbol",
+            full_symbols,
+            "start_ts",
+            "end_ts",
+            [],
+            hdateti.get_current_time,
+            im_client=multiple_symbols_client,
+        )
+        actual = market_data_client._get_last_end_time()
+        self.assertEqual(actual, NotImplementedError)
 
     @staticmethod
     def _helper() -> imvcdcli.MultipleSymbolsImClient:
