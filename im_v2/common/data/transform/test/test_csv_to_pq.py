@@ -79,31 +79,3 @@ class TestCsvToPq(hunitest.TestCase):
         df1.to_csv(os.path.join(self.csv_dir_path, "test1.csv"), index=False)
         df2 = pd.DataFrame(data=d2)
         df2.to_csv(os.path.join(self.csv_dir_path, "test2.csv"), index=False)
-
-
-class TestConvertTimestampColumn(hunitest.TestCase):
-    def test_convert_integer(self) -> None:
-        """
-        Verify that integer datetime is converted correctly.
-        """
-        test_data = pd.Series([1638756800000, 1639656800000, 1648656800000])
-        actual = imvcdtctpq.convert_timestamp_column(test_data)
-        actual = str(actual)
-        self.check_string(actual)
-
-    def test_convert_string(self) -> None:
-        """
-        Verify that string datetime is converted correctly.
-        """
-        test_data = pd.Series(["2021-01-12", "2021-02-14", "2010-12-11"])
-        actual = imvcdtctpq.convert_timestamp_column(test_data)
-        actual = str(actual)
-        self.check_string(actual)
-
-    def test_convert_incorrect(self) -> None:
-        """
-        Assert that incorrect types are not converted.
-        """
-        test_data = pd.Series([37.9, 88.11, 14.0])
-        with self.assertRaises(ValueError):
-            imvcdtctpq.convert_timestamp_column(test_data)
