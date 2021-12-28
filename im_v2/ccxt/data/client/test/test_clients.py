@@ -136,18 +136,17 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
         # pylint: disable=line-too-long
         expected_df_as_str = """
         # df= 
-        df.index in [2000-01-01 09:31:00-05:00, 2000-01-01 09:35:00-05:00]
-        df.columns=asset_id,last_price,start_datetime,timestamp_db
-        df.shape=(5, 4)
-                                   asset_id     last_price             start_datetime              timestamp_db
-        end_datetime
-        2000-01-01 09:31:00-05:00      1000    999.874540   2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00
-        2000-01-01 09:32:00-05:00      1000    1000.325254  2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00
-        2000-01-01 09:33:00-05:00      1000    1000.557248  2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00
+        df.index in [2021-09-09 00:00:00+00:00, 2021-09-09 00:04:00+00:00]
+        df.columns=full_symbol,open,high,low,close,volume,epoch,currency_pair,exchange_id
+        df.shape=(8, 9)
+                                         full_symbol  open  high   low  close  volume         epoch currency_pair exchange_id
+        2021-09-09 00:00:00+00:00  binance::BTC_USDT  30.0  40.0  50.0   60.0    70.0  1.631146e+12      BTC_USDT     binance
+        2021-09-09 00:01:00+00:00  binance::BTC_USDT  31.0  41.0  51.0   61.0    71.0  1.631146e+12      BTC_USDT     binance
+        2021-09-09 00:02:00+00:00  binance::BTC_USDT   NaN   NaN   NaN    NaN     NaN           NaN           NaN         NaN
         ...
-        2000-01-01 09:33:00-05:00      1000    1000.557248  2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00
-        2000-01-01 09:34:00-05:00      1000    1000.655907  2000-01-01 09:33:00-05:00 2000-01-01 09:34:00-05:00
-        2000-01-01 09:35:00-05:00      1000    1000.311925  2000-01-01 09:34:00-05:00 2000-01-01 09:35:00-05:00
+        2021-09-09 00:02:00+00:00  binance::ETH_USDT  32.0  42.0  52.0   62.0    72.0  1.631146e+12      ETH_USDT     binance
+        2021-09-09 00:03:00+00:00  binance::ETH_USDT   NaN   NaN   NaN    NaN     NaN           NaN           NaN         NaN
+        2021-09-09 00:04:00+00:00  binance::ETH_USDT  34.0  44.0  54.0   64.0    74.0  1.631146e+12      ETH_USDT     binance
         """
         # pylint: enable=line-too-long
         # _check_output(
