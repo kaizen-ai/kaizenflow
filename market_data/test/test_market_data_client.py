@@ -203,6 +203,27 @@ class TestMarketDataClient(hunitest.TestCase):
         ).round(2)
         self.assertEqual(actual, 6295.72)
 
+    def test_should_be_online1(self) -> None:
+        """
+        Test that the interface is available at the given time.
+        """
+        # Initialize the `MarketDataInterface`.
+        multiple_symbols_client = self._helper()
+        full_symbols = ["binance::BTC_USDT"]
+        market_data_client = mdmadacl.MarketDataInterface(
+            "full_symbol",
+            full_symbols,
+            "start_ts",
+            "end_ts",
+            [],
+            hdateti.get_current_time,
+            im_client=multiple_symbols_client,
+        )
+        # Compute TWAP price.
+        wall_clock_time = pd.Timestamp("2018-08-17T00:01:00")
+        actual = market_data_client.should_be_online(wall_clock_time)
+        self.assertEqual(actual, True)
+
     @staticmethod
     def _helper() -> imvcdcli.MultipleSymbolsImClient:
         """
