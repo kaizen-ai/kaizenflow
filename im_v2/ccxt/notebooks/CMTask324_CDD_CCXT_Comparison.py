@@ -18,10 +18,10 @@
 # %%
 import logging
 import os
-from typing import List
 
 import pandas as pd
 
+import core.config.config_ as cconconf
 import helpers.dbg as hdbg
 import helpers.env as henv
 import helpers.printing as hprint
@@ -31,7 +31,6 @@ import im_v2.ccxt.data.client.clients as imvcdclcl
 import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.common.data.client.clients as ivcdclcl
 import research_amp.cc.statistics as ramccsta
-import core.config.config_ as cconconf
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -120,7 +119,7 @@ ccxt_universe = imvccunun.get_vendor_universe(version="v03")
 
 # %% run_control={"marked": false}
 cdd_universe = imvccunun.get_vendor_universe(version="v01", vendor="CDD")
-# remove non-USDT elements, since we are not interested in them.
+# Remove non-USDT elements, since we are not interested in them.
 cdd_universe = [element for element in cdd_universe if element.endswith("USDT")]
 
 # %% [markdown]
@@ -186,10 +185,11 @@ root_dir = os.path.join(hs3.get_path(), "data")
 
 # %%
 cdd_data = []
-cdd_loader = imcdalolo.CddLoader(data_type='ohlcv', root_dir=root_dir, aws_profile="am")
+cdd_loader = imcdalolo.CddLoader(
+    data_type="ohlcv", root_dir=root_dir, aws_profile="am"
+)
 
 for full_symbol in currency_pair_intersection_binance:
-    #_, currency_pair = ivcdclcl.parse_full_symbol(full_symbol)
     cur_data = cdd_loader.read_data(full_symbol=full_symbol)
     cdd_data.append(cur_data)
 cdd_binance_df = pd.concat(cdd_data)
@@ -229,7 +229,8 @@ cdd_binance_df["currency_pair"] = cdd_binance_df["currency_pair"].str.replace(
 # %%
 def resample_close_price(df: pd.DataFrame, resampling_freq: str) -> pd.Series:
     """
-    Resample close price on the currency level to the specified frequency using the last close price.
+    Resample close price on the currency level to the specified frequency using
+    the last close price.
 
     :param df: OHLCV data
     :param resampling_freq: frequency from `pd.date_range()` to resample to
@@ -251,7 +252,8 @@ def calculate_correlations(
     ccxt_close_price: pd.Series, cdd_close_price: pd.Series, compute_returns: bool
 ) -> pd.DataFrame:
     """
-    Take CCXT and CDD close prices and calculate the correlations for each specific currency pair.
+    Take CCXT and CDD close prices and calculate the correlations for each
+    specific currency pair.
 
     :param ccxt_series: resampled close price per currency for CCXT
     :param cdd_series: resampled close price per currency for CDD
@@ -375,9 +377,9 @@ cdd_start_end_table = ramccsta.compute_stats_for_universe(
 
 # %%
 # CDD names cleaning.
-cdd_start_end_table["currency_pair"] = cdd_start_end_table["currency_pair"].str.replace(
-    "/", "_"
-)
+cdd_start_end_table["currency_pair"] = cdd_start_end_table[
+    "currency_pair"
+].str.replace("/", "_")
 
 # %%
 cdd_start_end_table.head(3)
@@ -402,7 +404,9 @@ ccxt_start_end_table.head(3)
 # ### Display the union results
 
 # %%
-def unify_start_end_tables(cdd_df: pd.DataFrame, ccxt_df: pd.DataFrame) -> pd.DataFrame:
+def unify_start_end_tables(
+    cdd_df: pd.DataFrame, ccxt_df: pd.DataFrame
+) -> pd.DataFrame:
     """
     Combine CCXT and CDD start-end stats tables into unique table.
 
@@ -411,21 +415,23 @@ def unify_start_end_tables(cdd_df: pd.DataFrame, ccxt_df: pd.DataFrame) -> pd.Da
     :return: unified start-end table
     """
     # set Multiindex.
-    cdd_df = cdd_df.set_index(['exchange_id', 'currency_pair'])
-    ccxt_df = ccxt_df.set_index(['exchange_id', 'currency_pair'])
+    cdd_df = cdd_df.set_index(["exchange_id", "currency_pair"])
+    ccxt_df = ccxt_df.set_index(["exchange_id", "currency_pair"])
     # add suffixes.
     ccxt_df = ccxt_df.add_suffix("_ccxt")
     cdd_df = cdd_df.add_suffix("_cdd")
     # combine two universes.
-    ccxt_and_cdd = pd.concat([cdd_df,ccxt_df], axis=1)
+    ccxt_and_cdd = pd.concat([cdd_df, ccxt_df], axis=1)
     # sort columns.
-    cols_to_sort = ccxt_and_cdd.columns.to_list() 
+    cols_to_sort = ccxt_and_cdd.columns.to_list()
     ccxt_and_cdd = ccxt_and_cdd[sorted(cols_to_sort)]
     return ccxt_and_cdd
 
 
 # %%
-union_cdd_ccxt_stats = unify_start_end_tables(cdd_start_end_table,ccxt_start_end_table)
+union_cdd_ccxt_stats = unify_start_end_tables(
+    cdd_start_end_table, ccxt_start_end_table
+)
 display(union_cdd_ccxt_stats)
 
 # %% [markdown]

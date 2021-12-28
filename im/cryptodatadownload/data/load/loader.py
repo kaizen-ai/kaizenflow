@@ -28,6 +28,7 @@ class CddLoader:
         self,
         data_type: str,
         root_dir: str,
+        *,
         aws_profile: Optional[str] = None,
         remove_dups: bool = True,
         resample_to_1_min: bool = True,
@@ -66,22 +67,13 @@ class CddLoader:
         """
         Load data from S3 and process it for use downstream.
 
-        :param exchange_id: CDD exchange id, e.g. "binance"
-        :param currency_pair: currency pair, e.g. "BTC_USDT"
-        :param data_type: OHLCV or trade, bid/ask data
+        :param full_symbol: combination of exchange and currency pair
         :param data_snapshot: snapshot of datetime when data was loaded, e.g. "20210924"
         :return: processed CDD data
         """
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
         # Verify that requested data type is valid.
         exchange_id, currency_pair = ivcdclcl.parse_full_symbol(full_symbol)
-        # for some reasons, the code below crashes the downloading process, so leaving it marked for now.
-#        hdbg.dassert_in(
-#            data_type.lower(),
-#            self._data_types,
-#            msg="Incorrect data type: '%s'. Acceptable types: '%s'"
-#            % (data_type.lower(), self._data_types),
-#        )
         # Get absolute file path for a CDD file.
         file_path = self._get_file_path(data_snapshot, exchange_id, currency_pair)
         # Initialize kwargs dict for further CDD data reading.
