@@ -227,9 +227,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
         for pair in exchange.pairs:
             pair_data = _download_data(start, end, args.data_type, exchange, pair)
             # Save to disk.
-            _save_data_on_disk(
-                args.data_type, args.dst_dir, pair_data, exchange, pair
-            )
+            #_save_data_on_disk(
+            #    args.data_type, args.dst_dir, pair_data, exchange, pair
+            #)
             hsql.execute_insert_query(
                 connection=connection,
                 obj=pair_data,
