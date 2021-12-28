@@ -22,25 +22,31 @@ class TestMarketDataClient(hunitest.TestCase):
         """
         # Initialize the `MarketDataInterface`.
         multiple_symbols_client = self._helper()
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        asset_id_col = "full_symbol"
+        asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        start_time_col_name = "start_ts"
+        end_time_col_name = "end_ts"
+        columns = []
+        get_wall_clock_time = hdateti.get_current_time
         market_data_client = mdmadacl.MarketDataInterface(
-            asset_id_col="full_symbol",
-            asset_ids=full_symbols,
-            start_time_col_name="start_ts",
-            end_time_col_name="end_ts",
-            columns=[],
-            get_wall_clock_time=hdateti.get_current_time,
+            asset_id_col,
+            asset_ids,
+            start_time_col_name,
+            end_time_col_name,
+            columns,
+            get_wall_clock_time,
             im_client=multiple_symbols_client,
             column_remap={"full_symbol": "asset_id"},
         )
         # Read data.
         start_ts = pd.Timestamp("2018-08-17T00:01:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00")
+        ts_col_name = "end_ts"
         data = market_data_client.get_data_for_interval(
-            start_ts=start_ts,
-            end_ts=end_ts,
-            ts_col_name="end_ts",
-            asset_ids=full_symbols,
+            start_ts,
+            end_ts,
+            ts_col_name,
+            asset_ids,
             left_close=True,
             right_close=False,
             normalize_data=True,
@@ -81,30 +87,36 @@ class TestMarketDataClient(hunitest.TestCase):
         """
         # Initialize the `MarketDataInterface`.
         multiple_symbols_client = self._helper()
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        asset_id_col = "full_symbol"
+        asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        start_time_col_name = "start_ts"
+        end_time_col_name = "end_ts"
+        columns = [
+            "full_symbol",
+            "close",
+            "volume",
+            "currency_pair",
+            "exchange_id",
+        ]
+        get_wall_clock_time = hdateti.get_current_time
         market_data_client = mdmadacl.MarketDataInterface(
-            asset_id_col="full_symbol",
-            asset_ids=full_symbols,
-            start_time_col_name="start_ts",
-            end_time_col_name="end_ts",
-            columns=[
-                "full_symbol",
-                "close",
-                "volume",
-                "currency_pair",
-                "exchange_id",
-            ],
-            get_wall_clock_time=hdateti.get_current_time,
+            asset_id_col,
+            asset_ids,
+            start_time_col_name,
+            end_time_col_name,
+            columns,
+            get_wall_clock_time,
             im_client=multiple_symbols_client,
         )
         # Read data.
         start_ts = pd.Timestamp("2018-08-17T00:01:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00")
+        ts_col_name = "end_ts"
         data = market_data_client.get_data_for_interval(
-            start_ts=start_ts,
-            end_ts=end_ts,
-            ts_col_name="end_ts",
-            asset_ids=full_symbols,
+            start_ts,
+            end_ts,
+            ts_col_name,
+            asset_ids,
             left_close=False,
             right_close=True,
             normalize_data=True,
@@ -141,24 +153,30 @@ class TestMarketDataClient(hunitest.TestCase):
         """
         # Initialize the `MarketDataInterface`.
         multiple_symbols_client = self._helper()
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        asset_id_col = ("full_symbol",)
+        asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        start_time_col_name = "start_ts"
+        end_time_col_name = "end_ts"
+        columns = []
+        get_wall_clock_time = hdateti.get_current_time
         market_data_client = mdmadacl.MarketDataInterface(
-            asset_id_col="full_symbol",
-            asset_ids=full_symbols,
-            start_time_col_name="start_ts",
-            end_time_col_name="end_ts",
-            columns=[],
-            get_wall_clock_time=hdateti.get_current_time,
+            asset_id_col,
+            asset_ids,
+            start_time_col_name,
+            end_time_col_name,
+            columns,
+            get_wall_clock_time,
             im_client=multiple_symbols_client,
         )
         # Read data.
         start_ts = pd.Timestamp("2018-08-17T00:01:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00")
+        ts_col_name = "end_ts"
         data = market_data_client.get_data_for_interval(
-            start_ts=start_ts,
-            end_ts=end_ts,
-            ts_col_name="end_ts",
-            asset_ids=full_symbols,
+            start_ts,
+            end_ts,
+            ts_col_name,
+            asset_ids,
             left_close=True,
             right_close=False,
             normalize_data=False,
@@ -194,25 +212,28 @@ class TestMarketDataClient(hunitest.TestCase):
         """
         # Initialize the `MarketDataInterface`.
         multiple_symbols_client = self._helper()
-        full_symbols = ["binance::BTC_USDT"]
+        asset_id_col = "full_symbol"
+        asset_ids = ["binance::BTC_USDT"]
+        start_time_col_name = "start_ts"
+        end_time_col_name = "end_ts"
+        columns = []
+        get_wall_clock_time = hdateti.get_current_time
         market_data_client = mdmadacl.MarketDataInterface(
-            asset_id_col="full_symbol",
-            asset_ids=full_symbols,
-            start_time_col_name="start_ts",
-            end_time_col_name="end_ts",
-            columns=[],
-            get_wall_clock_time=hdateti.get_current_time,
+            asset_id_col,
+            asset_ids,
+            start_time_col_name,
+            end_time_col_name,
+            columns,
+            get_wall_clock_time,
             im_client=multiple_symbols_client,
         )
         # Compute TWAP price.
         start_ts = pd.Timestamp("2018-08-17T00:01:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00")
+        ts_col_name = "end_ts"
+        asset_id = asset_ids[0]
         actual = market_data_client.get_twap_price(
-            start_ts=start_ts,
-            end_ts=end_ts,
-            ts_col_name="end_ts",
-            asset_id=full_symbols[0],
-            column="close",
+            start_ts, end_ts, ts_col_name, asset_id, column="close"
         ).round(2)
         self.assertEqual(actual, 6295.72)
 
@@ -222,14 +243,19 @@ class TestMarketDataClient(hunitest.TestCase):
         """
         # Initialize the `MarketDataInterface`.
         multiple_symbols_client = self._helper()
-        full_symbols = ["binance::BTC_USDT"]
+        asset_id_col = "full_symbol"
+        asset_ids = ["binance::BTC_USDT"]
+        start_time_col_name = "start_ts"
+        end_time_col_name = "end_ts"
+        columns = []
+        get_wall_clock_time = hdateti.get_current_time
         market_data_client = mdmadacl.MarketDataInterface(
-            asset_id_col="full_symbol",
-            asset_ids=full_symbols,
-            start_time_col_name="start_ts",
-            end_time_col_name="end_ts",
-            columns=[],
-            get_wall_clock_time=hdateti.get_current_time,
+            asset_id_col,
+            asset_ids,
+            start_time_col_name,
+            end_time_col_name,
+            columns,
+            get_wall_clock_time,
             im_client=multiple_symbols_client,
         )
         # Conduct the check.
@@ -243,14 +269,19 @@ class TestMarketDataClient(hunitest.TestCase):
         """
         # Initialize the `MarketDataInterface`.
         multiple_symbols_client = self._helper()
-        full_symbols = ["binance::BTC_USDT"]
+        asset_id_col = ("full_symbol",)
+        asset_ids = ["binance::BTC_USDT"]
+        start_time_col_name = "start_ts"
+        end_time_col_name = "end_ts"
+        columns = []
+        get_wall_clock_time = hdateti.get_current_time
         market_data_client = mdmadacl.MarketDataInterface(
-            asset_id_col="full_symbol",
-            asset_ids=full_symbols,
-            start_time_col_name="start_ts",
-            end_time_col_name="end_ts",
-            columns=[],
-            get_wall_clock_time=hdateti.get_current_time,
+            asset_id_col,
+            asset_ids,
+            start_time_col_name,
+            end_time_col_name,
+            columns,
+            get_wall_clock_time,
             im_client=multiple_symbols_client,
         )
         actual = market_data_client._get_last_end_time()
