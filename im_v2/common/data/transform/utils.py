@@ -81,8 +81,10 @@ def reindex_on_datetime(
     :param unit: the unit of unix epoch
     :return: dataframe with datetime index
     """
+    msg = f"`{datetime_col_name}` is not valid column name!"
+    hdbg.dassert_in(datetime_col_name, df.columns, msg)
     msg = "Datetime index already exists!"
-    hdbg.dassert_type_is(df.index, pd.core.indexes.datetimes.DatetimeIndex, msg)
+    hdbg.dassert_ne(df.index.inferred_type, "datetime64", msg)
     datetime_col = df[datetime_col_name]
     # Convert original datetime column into Timestamp.
     datetime_idx = convert_timestamp_column(datetime_col, unit=unit)
