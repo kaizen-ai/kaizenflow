@@ -115,7 +115,7 @@ class TestGetFilePath(hunitest.TestCase):
 
 
 class TestCcxtDbClient(imvcodbut.TestImDbHelper):
-    @pytest.mark.slow("6 seconds.")
+    @pytest.mark.slow("needs to pull `postgres` image")
     def test_read_data1(self) -> None:
         """
         Verify that data from DB is read correctly.
@@ -160,7 +160,7 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
         # Delete the table.
         hsql.remove_table(self.connection, "ccxt_ohlcv")
 
-    @pytest.mark.slow("8 seconds.")
+    @pytest.mark.slow("needs to pull `postgres` image")
     def test_read_data2(self) -> None:
         """
         Verify that data from DB is read and filtered correctly.
@@ -173,19 +173,36 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
         ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
         actual = ccxt_db_client.read_data(
             ["binance::BTC_USDT"],
-            start_ts=pd.Timestamp("2021-09-08T20:01:00-04:00"),
-            end_ts=pd.Timestamp("2021-09-08T20:04:00-04:00"),
+            start_ts=pd.Timestamp("2021-09-09T00:00:00-00:00"),
+            end_ts=pd.Timestamp("2021-09-09T00:01:00-00:00"),
         )
         # Check the output values.
         expected_length = 1
         expected_exchange_ids = ["binance"]
         expected_currency_pairs = ["BTC_USDT"]
+        # pylint: disable=line-too-long
+        expected_df_as_str = """
+        # df= 
+        df.index in [2021-09-09 00:00:00+00:00, 2021-09-09 00:04:00+00:00]                                                                                                                                                                    
+        df.columns=close,currency_pair,epoch,exchange_id,full_symbol,high,low,open,volume                                                                                                                                                     
+        df.shape=(8, 9)                                                                                                                                                                                                                       
+        close currency_pair epoch exchange_id full_symbol high low open volume                                                                                                                                                                
+        2021-09-09 00:00:00+00:00 60.0 BTC_USDT 1.631146e+12 binance binance::BTC_USDT 40.0 50.0 30.0 70.0                                                                                                                                    
+        2021-09-09 00:01:00+00:00 61.0 BTC_USDT 1.631146e+12 binance binance::BTC_USDT 41.0 51.0 31.0 71.0                                                                                                                                    
+        2021-09-09 00:02:00+00:00 NaN NaN NaN NaN binance::BTC_USDT NaN NaN NaN NaN                                                                                                                                                           
+        ...                                                                                                                                                                                                                                   
+        2021-09-09 00:02:00+00:00 62.0 ETH_USDT 1.631146e+12 binance binance::ETH_USDT 42.0 52.0 32.0 72.0                                                                                                                                    
+        2021-09-09 00:03:00+00:00 NaN NaN NaN NaN binance::ETH_USDT NaN NaN NaN NaN                                                                                                                                                           
+        2021-09-09 00:04:00+00:00 64.0 ETH_USDT 1.631146e+12 binance binance::ETH_USDT 44.0 54.0 34.0 74.0
+        """
+        # pylint: enable=line-too-long
         _check_output(
             self,
             actual,
             expected_length,
             expected_exchange_ids,
             expected_currency_pairs,
+            expected_df_as_str,
         )
         # Delete the table.
         hsql.remove_table(self.connection, "ccxt_ohlcv")
