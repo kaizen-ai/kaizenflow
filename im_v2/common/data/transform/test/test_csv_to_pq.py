@@ -1,12 +1,11 @@
 import os
 
 import pandas as pd
-import pytest
 
 import helpers.io_ as hio
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
-import im_v2.common.data.transform.csv_to_pq as imvcdtctpq
+
 
 class TestCsvToPq(hunitest.TestCase):
     def test_csv_to_pq_script(self) -> None:
@@ -26,18 +25,11 @@ class TestCsvToPq(hunitest.TestCase):
         ]
         cmd = " ".join(cmd)
         hsysinte.system(cmd)
-        # Check output directory structure.
-        directories = []
-        for root, dirs, files in os.walk(pq_dir_path):
-            for subdir in dirs:
-                directories.append(os.path.join(root, subdir))
-        actual_dirs = "\n".join(directories)
-        # Check output.
-        from pdb import set_trace; set_trace()
-        actual_df = pd.read_parquet(pq_dir_path)
-        actual_df = hunitest.convert_df_to_json_string(actual_df, n_tail=None)
-        actual_result = "\n".join([actual_dirs, actual_df])
-        self.check_string(actual_result, purify_text=True)
+        include_file_content = True
+        dir_signature = hunitest.get_dir_signature(
+            pq_dir_path, include_file_content
+        )
+        self.check_string(dir_signature, purify_text=True)
 
     def _generate_example_csv_files(self) -> None:
         """

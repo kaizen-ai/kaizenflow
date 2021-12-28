@@ -62,6 +62,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         cmd.append(f"--dst_dir {by_date_dir}")
         if verbose:
             cmd.append("--verbose")
+            cmd.append("--reset_index")
         cmd = " ".join(cmd)
         hsysinte.system(cmd)
         return test_dir, by_date_dir

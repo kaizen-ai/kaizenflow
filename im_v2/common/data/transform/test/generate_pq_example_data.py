@@ -207,11 +207,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _get_verbose_daily_df if args.verbose else _get_generic_daily_df
     )
     dummy_df = get_daily_df(start_date, end_date, assets, freq)
-    if args.reset_index:
-        dummy_df = dummy_df.reset_index(drop=True)
     # Add date partition columns to the dataframe.
     imvcdtrut.add_date_partition_cols(dummy_df)
     # Partition and write dataset.
+    if args.reset_index:
+        dummy_df = dummy_df.reset_index(drop=True)
     partition_cols = ["date"]
     imvcdtrut.partition_dataset(dummy_df, partition_cols, dst_dir)
 
