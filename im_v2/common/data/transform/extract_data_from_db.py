@@ -20,15 +20,13 @@ import os.path
 import pandas as pd
 
 import helpers.dbg as hdbg
-import helpers.hparquet as hparque
 import helpers.parser as hparser
 import helpers.sql as hsql
 import im_v2.ccxt.data.client.clients as imvcdclcl
 import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.common.data.client.clients as ivcdclcl
-import im_v2.common.data.transform.convert_pq_by_date_to_by_asset as imvcdtcpbdtba
+import im_v2.common.data.transform.utils as imvcdtrut
 import im_v2.im_lib_tasks as imvimlita
-# import im_v2.common.data.transform.utils as imvcdtrut
 
 _LOG = logging.getLogger(__name__)
 
@@ -118,20 +116,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
             full_path = os.path.join(dst_dir, date_directory)
             hdbg.dassert_not_exists(full_path)
             # Set datetime index.
-            # TODO(Nikola): Use new transform utils module.
-            # datetime_col_name = "start_time"
-            # reindexed_df = imvcdtrut.reindex_on_datetime(df, datetime_col_name)
-            datetime_series = imvcdtcpbdtba.convert_timestamp_column(
-                df["timestamp"]
-            )
-            reindexed_df = df.set_index(datetime_series)
+            datetime_col_name = "start_time"
+            reindexed_df = imvcdtrut.reindex_on_datetime(df, datetime_col_name)
             # Add date partition columns to the dataframe.
-            # imvcdtrut.add_date_partition_cols(reindexed_df)
-            hparque.add_date_partition_cols(reindexed_df)
+            imvcdtrut.add_date_partition_cols(reindexed_df)
             # Partition and write dataset.
             partition_cols = ["date"]
-            # imvcdtrut.partition_dataset(reindexed_df, partition_cols, dst_dir)
-            hparque.partition_dataset(reindexed_df, partition_cols, dst_dir)
+            imvcdtrut.partition_dataset(reindexed_df, partition_cols, dst_dir)
         except AssertionError as ex:
             _LOG.info("Skipping. PQ file already present: %s.", ex)
             continue
