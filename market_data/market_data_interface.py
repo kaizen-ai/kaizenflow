@@ -514,6 +514,7 @@ class AbstractMarketDataInterface(abc.ABC):
 
 
 # TODO(gp): This should be pushed to the IM
+# TODO(gp): -> DbBasedMarketData, DbMarketData?
 class SqlMarketDataInterface(AbstractMarketDataInterface):
     """
     Implement an interface to a real-time SQL database with 1-minute bar data.
@@ -758,6 +759,7 @@ class SqlMarketDataInterface(AbstractMarketDataInterface):
 
 
 # TODO(gp): This should have a delay and / or we should use timestamp_db.
+# TODO(gp): -> ReplayedMarketData
 class ReplayedTimeMarketDataInterface(AbstractMarketDataInterface):
     """
     Implement an interface to a replayed time historical / RT database.
