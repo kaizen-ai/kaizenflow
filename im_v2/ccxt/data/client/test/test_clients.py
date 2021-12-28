@@ -136,17 +136,17 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
         # pylint: disable=line-too-long
         expected_df_as_str = """
         # df= 
-        df.index in [2021-09-09 00:00:00+00:00, 2021-09-09 00:04:00+00:00]                                                                                                                                                                    
-        df.columns=close,currency_pair,epoch,exchange_id,full_symbol,high,low,open,volume                                                                                                                                                     
-        df.shape=(8, 9)                                                                                                                                                                                                                       
-        close currency_pair epoch exchange_id full_symbol high low open volume                                                                                                                                                                
-        2021-09-09 00:00:00+00:00 60.0 BTC_USDT 1.631146e+12 binance binance::BTC_USDT 40.0 50.0 30.0 70.0                                                                                                                                    
-        2021-09-09 00:01:00+00:00 61.0 BTC_USDT 1.631146e+12 binance binance::BTC_USDT 41.0 51.0 31.0 71.0                                                                                                                                    
-        2021-09-09 00:02:00+00:00 NaN NaN NaN NaN binance::BTC_USDT NaN NaN NaN NaN                                                                                                                                                           
-        ...                                                                                                                                                                                                                                   
-        2021-09-09 00:02:00+00:00 62.0 ETH_USDT 1.631146e+12 binance binance::ETH_USDT 42.0 52.0 32.0 72.0                                                                                                                                    
-        2021-09-09 00:03:00+00:00 NaN NaN NaN NaN binance::ETH_USDT NaN NaN NaN NaN                                                                                                                                                           
-        2021-09-09 00:04:00+00:00 64.0 ETH_USDT 1.631146e+12 binance binance::ETH_USDT 44.0 54.0 34.0 74.0
+        df.index in [2021-09-09 00:00:00+00:00, 2021-09-09 00:04:00+00:00]
+        df.columns=close,currency_pair,epoch,exchange_id,full_symbol,high,low,open,volume
+        df.shape=(8, 9)
+                                   close currency_pair         epoch exchange_id        full_symbol  high   low  open  volume
+        2021-09-09 00:00:00+00:00   60.0      BTC_USDT  1.631146e+12     binance  binance::BTC_USDT  40.0  50.0  30.0    70.0
+        2021-09-09 00:01:00+00:00   61.0      BTC_USDT  1.631146e+12     binance  binance::BTC_USDT  41.0  51.0  31.0    71.0
+        2021-09-09 00:02:00+00:00    NaN           NaN           NaN         NaN  binance::BTC_USDT   NaN   NaN   NaN     NaN
+        ...
+        2021-09-09 00:02:00+00:00   62.0      ETH_USDT  1.631146e+12     binance  binance::ETH_USDT  42.0  52.0  32.0    72.0
+        2021-09-09 00:03:00+00:00    NaN           NaN           NaN         NaN  binance::ETH_USDT   NaN   NaN   NaN     NaN
+        2021-09-09 00:04:00+00:00   64.0      ETH_USDT  1.631146e+12     binance  binance::ETH_USDT  44.0  54.0  34.0    74.0
         """
         # pylint: enable=line-too-long
         _check_output(
@@ -183,17 +183,11 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
         # pylint: disable=line-too-long
         expected_df_as_str = """
         # df= 
-        df.index in [2021-09-09 00:00:00+00:00, 2021-09-09 00:04:00+00:00]                                                                                                                                                                    
-        df.columns=close,currency_pair,epoch,exchange_id,full_symbol,high,low,open,volume                                                                                                                                                     
-        df.shape=(8, 9)                                                                                                                                                                                                                       
-        close currency_pair epoch exchange_id full_symbol high low open volume                                                                                                                                                                
-        2021-09-09 00:00:00+00:00 60.0 BTC_USDT 1.631146e+12 binance binance::BTC_USDT 40.0 50.0 30.0 70.0                                                                                                                                    
-        2021-09-09 00:01:00+00:00 61.0 BTC_USDT 1.631146e+12 binance binance::BTC_USDT 41.0 51.0 31.0 71.0                                                                                                                                    
-        2021-09-09 00:02:00+00:00 NaN NaN NaN NaN binance::BTC_USDT NaN NaN NaN NaN                                                                                                                                                           
-        ...                                                                                                                                                                                                                                   
-        2021-09-09 00:02:00+00:00 62.0 ETH_USDT 1.631146e+12 binance binance::ETH_USDT 42.0 52.0 32.0 72.0                                                                                                                                    
-        2021-09-09 00:03:00+00:00 NaN NaN NaN NaN binance::ETH_USDT NaN NaN NaN NaN                                                                                                                                                           
-        2021-09-09 00:04:00+00:00 64.0 ETH_USDT 1.631146e+12 binance binance::ETH_USDT 44.0 54.0 34.0 74.0
+        df.index in [2021-09-09 00:00:00+00:00, 2021-09-09 00:00:00+00:00]                                                                                                                                                                          
+        df.columns=close,currency_pair,epoch,exchange_id,full_symbol,high,low,open,volume                                                                                                                                                           
+        df.shape=(1, 9)                                                                                                                                                                                                                             
+                                   close currency_pair          epoch exchange_id        full_symbol  high   low  open  volume                                                                                                                      
+        2021-09-09 00:00:00+00:00   60.0      BTC_USDT  1631145600000     binance  binance::BTC_USDT  40.0  50.0  30.0    70.0    
         """
         # pylint: enable=line-too-long
         _check_output(
