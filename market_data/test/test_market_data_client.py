@@ -14,9 +14,11 @@ import market_data.market_data_client as mdmadacl
 class TestMarketDataClient(hunitest.TestCase):
     def test_get_data_for_interval1(self) -> None:
         """
-        Test that data is loaded correctly when:
-            - interval type is [a; b)
-            - column names are remapped
+        Test that data is loaded correctly.
+
+        Applied conditions:
+        - interval type is [a; b)
+        - column names are remapped
         """
         # Initialize the `MarketDataInterface`.
         multiple_symbols_client = self._helper()
@@ -71,9 +73,11 @@ class TestMarketDataClient(hunitest.TestCase):
 
     def test_get_data_for_interval2(self) -> None:
         """
-        Test that data is loaded correctly when:
-            - interval type is (a; b]
-            - columns are filtered
+        Test that data is loaded correctly.
+
+        Applied conditions:
+        - interval type is (a; b]
+        - columns are filtered
         """
         # Initialize the `MarketDataInterface`.
         multiple_symbols_client = self._helper()
