@@ -124,8 +124,11 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
         actual = ccxt_db_client.read_data(
             ["binance::BTC_USDT", "binance::ETH_USDT"]
         )
+        # Index is duplicated because the timestamps are the same but for the different
+        # currencies. While `convert_df_to_json_string` requires unique index.
+        actual = actual.reset_index()
         # Check the output values.
-        expected_length = 5
+        expected_length = 10
         expected_exchange_ids = ["binance"]
         expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
         _check_output(
