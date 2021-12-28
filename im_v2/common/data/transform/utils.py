@@ -89,7 +89,6 @@ def reindex_on_datetime(
     # Convert original datetime column into Timestamp.
     datetime_idx = convert_timestamp_column(datetime_col, unit=unit)
     reindexed_df = df.set_index(datetime_idx)
-    reindexed_df.index.name = None
     return reindexed_df
 
 

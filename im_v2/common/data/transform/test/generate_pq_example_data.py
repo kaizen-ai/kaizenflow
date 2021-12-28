@@ -209,7 +209,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     )
     dummy_df = get_daily_df(start_date, end_date, assets, freq)
     if args.reset_index:
-        dummy_df.reset_index(drop=True, inplace=True)
+        dummy_df = dummy_df.reset_index(drop=True)
     # TODO(Nikola): Use new transform utils module.
     # Add date partition columns to the dataframe.
     # imvcdtrut.add_date_partition_cols(dummy_df)

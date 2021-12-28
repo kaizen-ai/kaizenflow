@@ -4,7 +4,7 @@ import helpers.unit_test as hunitest
 import im_v2.common.data.transform.utils as imvcdtrut
 
 
-def get_dummy_df_with_timestamp(
+def _get_dummy_df_with_timestamp(
     unit: str = "ms", datetime_col_name: str = "dummy_timestamp"
 ) -> pd.DataFrame:
     test_data = {
@@ -85,7 +85,7 @@ class TestReindexOnDatetime(hunitest.TestCase):
         """
         Verify datetime index creation when timestamp is in milliseconds.
         """
-        dummy_df = get_dummy_df_with_timestamp()
+        dummy_df = _get_dummy_df_with_timestamp()
         reindexed_dummy_df = imvcdtrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp"
         )
@@ -98,7 +98,7 @@ class TestReindexOnDatetime(hunitest.TestCase):
         """
         Verify datetime index creation when timestamp is in seconds.
         """
-        dummy_df = get_dummy_df_with_timestamp(unit="s")
+        dummy_df = _get_dummy_df_with_timestamp(unit="s")
         reindexed_dummy_df = imvcdtrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp", unit="s"
         )
@@ -111,7 +111,7 @@ class TestReindexOnDatetime(hunitest.TestCase):
         """
         Assert that wrong column is detected before reindexing.
         """
-        dummy_df = get_dummy_df_with_timestamp()
+        dummy_df = _get_dummy_df_with_timestamp()
         with self.assertRaises(AssertionError):
             imvcdtrut.reindex_on_datetime(dummy_df, "void_column")
 
@@ -119,7 +119,7 @@ class TestReindexOnDatetime(hunitest.TestCase):
         """
         Assert that reindexing is not done on already reindexed dataframe.
         """
-        dummy_df = get_dummy_df_with_timestamp()
+        dummy_df = _get_dummy_df_with_timestamp()
         reindexed_dummy_df = imvcdtrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp"
         )
@@ -132,7 +132,7 @@ class TestAddDatePartitionCols(hunitest.TestCase):
         """
         Verify that generic date column is present in dataframe.
         """
-        dummy_df = get_dummy_df_with_timestamp()
+        dummy_df = _get_dummy_df_with_timestamp()
         reindexed_dummy_df = imvcdtrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp"
         )
@@ -146,7 +146,7 @@ class TestAddDatePartitionCols(hunitest.TestCase):
         """
         Verify that year column is present in dataframe.
         """
-        dummy_df = get_dummy_df_with_timestamp()
+        dummy_df = _get_dummy_df_with_timestamp()
         reindexed_dummy_df = imvcdtrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp"
         )
@@ -160,7 +160,7 @@ class TestAddDatePartitionCols(hunitest.TestCase):
         """
         Verify that year and month columns are present in dataframe.
         """
-        dummy_df = get_dummy_df_with_timestamp()
+        dummy_df = _get_dummy_df_with_timestamp()
         reindexed_dummy_df = imvcdtrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp"
         )
@@ -174,7 +174,7 @@ class TestAddDatePartitionCols(hunitest.TestCase):
         """
         Verify that year, month and day columns are present in dataframe.
         """
-        dummy_df = get_dummy_df_with_timestamp()
+        dummy_df = _get_dummy_df_with_timestamp()
         reindexed_dummy_df = imvcdtrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp"
         )
@@ -188,7 +188,7 @@ class TestAddDatePartitionCols(hunitest.TestCase):
         """
         Assert that proper partition mode is used.
         """
-        dummy_df = get_dummy_df_with_timestamp()
+        dummy_df = _get_dummy_df_with_timestamp()
         reindexed_dummy_df = imvcdtrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp"
         )
