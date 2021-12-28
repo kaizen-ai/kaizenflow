@@ -153,12 +153,14 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--to_datetime",
         action="store",
+        required=True,
         type=str,
         help="End of the downloaded period",
     )
     parser.add_argument(
         "--from_datetime",
         action="store",
+        required=True,
         type=str,
         help="Beginning of the downloaded period",
     )
@@ -220,16 +222,16 @@ def _main(parser: argparse.ArgumentParser) -> None:
         column_names=["timestamp", "exchange_id", "currency_pair"],
     )
     # Convert timestamps.
-    end = pd.Timestamp(os.environ["DATA_INTERVAL_START"])
-    start = pd.Timedelta(os.environ["DATA_INTERVAL_END"])
+    end = pd.Timestamp(args.to_datetime)
+    start = pd.Timedelta(args.from_datetime)
     # Download data for specified time period.
     for exchange in exchanges:
         for pair in exchange.pairs:
             pair_data = _download_data(start, end, args.data_type, exchange, pair)
             # Save to disk.
-            #_save_data_on_disk(
-            #    args.data_type, args.dst_dir, pair_data, exchange, pair
-            #)
+            _save_data_on_disk(
+                args.data_type, args.dst_dir, pair_data, exchange, pair
+            )
             hsql.execute_insert_query(
                 connection=connection,
                 obj=pair_data,

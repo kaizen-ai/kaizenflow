@@ -26,13 +26,15 @@ with airflow.DAG(
     schedule_interval="*/3 * * * *",
     catchup=False,
     # TODO(Danya): Change to fixed datetime before running in prod.
-    start_date=datetime.datetime(2021, 12, 28, 13, 25, 0),
+    start_date=datetime.datetime.now(),
 ) as dag:
     # Pass default parameters for the script.
     # Build a bash command to execute.
     bash_command = " ".join(
         [
             "im_v2/ccxt/data/extract/download_realtime.py",
+            "--to_datetime {{ data_interval_start }}",
+            "--from_datetime {{ execution_date - macros.timedelta(5) }}"
             # TODO(Danya): Set a shared directory for the DAG (#675).
             "--dst_dir 'ccxt/ohlcv/'",
             "--data_type 'ohlcv'",
