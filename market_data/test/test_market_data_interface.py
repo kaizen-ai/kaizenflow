@@ -148,6 +148,156 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
             market_data_interface, expected_last_end_time, expected_is_online
         )
 
+    def test_get_data3(self) -> None:
+        """
+        - Set the current time to 9:35
+        - Get the last 1 min of data
+        - The returned data should be at 9:35
+        """
+        initial_replayed_delay = 5
+        #
+        period = "last_1min"
+        normalize_data = True
+        func = lambda market_data_interface: market_data_interface.get_data(
+            period, normalize_data=normalize_data
+        )
+        # pylint: disable=line-too-long
+        expected_df_as_str = """
+        # df=
+        df.index in [2000-01-01 09:35:00-05:00, 2000-01-01 09:35:00-05:00]
+        df.columns=asset_id,last_price,start_datetime,timestamp_db
+        df.shape=(1, 4)
+                                   asset_id   last_price            start_datetime              timestamp_db
+        end_datetime
+        2000-01-01 09:35:00-05:00      1000  1000.311925 2000-01-01 09:34:00-05:00 2000-01-01 09:35:00-05:00"""
+        # pylint: enable=line-too-long
+        market_data_interface = _check_get_data(
+            self, initial_replayed_delay, func, expected_df_as_str
+        )
+        #
+        expected_last_end_time = pd.Timestamp("2000-01-01 09:35:00-05:00")
+        expected_is_online = True
+        self.check_last_end_time(
+            market_data_interface, expected_last_end_time, expected_is_online
+        )
+
+    def test_get_data4(self) -> None:
+        """
+        - Set the current time to 9:50
+        - Get the last 10 mins of data
+        - The returned data should be in [9:40, 9:50]
+        """
+        initial_replayed_delay = 20
+        #
+        period = "last_10mins"
+        normalize_data = True
+        func = lambda market_data_interface: market_data_interface.get_data(
+            period, normalize_data=normalize_data
+        )
+        # pylint: disable=line-too-long
+        expected_df_as_str = """
+        # df=
+        df.index in [2000-01-01 09:41:00-05:00, 2000-01-01 09:50:00-05:00]
+        df.columns=asset_id,last_price,start_datetime,timestamp_db
+        df.shape=(10, 4)
+                                   asset_id   last_price            start_datetime              timestamp_db
+        end_datetime
+        2000-01-01 09:41:00-05:00      1000   999.721952 2000-01-01 09:40:00-05:00 2000-01-01 09:41:00-05:00
+        2000-01-01 09:42:00-05:00      1000  1000.191862 2000-01-01 09:41:00-05:00 2000-01-01 09:42:00-05:00
+        2000-01-01 09:43:00-05:00      1000  1000.524304 2000-01-01 09:42:00-05:00 2000-01-01 09:43:00-05:00
+        ...
+        2000-01-01 09:48:00-05:00      1000  999.430872 2000-01-01 09:47:00-05:00 2000-01-01 09:48:00-05:00
+        2000-01-01 09:49:00-05:00      1000  999.362817 2000-01-01 09:48:00-05:00 2000-01-01 09:49:00-05:00
+        2000-01-01 09:50:00-05:00      1000  999.154046 2000-01-01 09:49:00-05:00 2000-01-01 09:50:00-05:00"""
+        # pylint: enable=line-too-long
+        market_data_interface = _check_get_data(
+            self, initial_replayed_delay, func, expected_df_as_str
+        )
+        #
+        expected_last_end_time = pd.Timestamp("2000-01-01 09:50:00-05:00")
+        expected_is_online = True
+        self.check_last_end_time(
+            market_data_interface, expected_last_end_time, expected_is_online
+        )
+
+    def test_get_data5(self) -> None:
+        """
+        - Set the current time to 10:00
+        - Get data for the last day
+        - The returned data should be in [9:30, 10:00]
+        """
+        initial_replayed_delay = 30
+        #
+        period = "last_day"
+        normalize_data = True
+        func = lambda market_data_interface: market_data_interface.get_data(
+            period, normalize_data=normalize_data
+        )
+        # pylint: disable=line-too-long
+        expected_df_as_str = """
+        # df=
+        df.index in [2000-01-01 09:31:00-05:00, 2000-01-01 10:00:00-05:00]
+        df.columns=asset_id,last_price,start_datetime,timestamp_db
+        df.shape=(30, 4)
+                                   asset_id   last_price            start_datetime              timestamp_db
+        end_datetime
+        2000-01-01 09:31:00-05:00      1000   999.874540 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00
+        2000-01-01 09:32:00-05:00      1000  1000.325254 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00
+        2000-01-01 09:33:00-05:00      1000  1000.557248 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00
+        ...
+        2000-01-01 09:58:00-05:00      1000  998.519053 2000-01-01 09:57:00-05:00 2000-01-01 09:58:00-05:00
+        2000-01-01 09:59:00-05:00      1000  998.611468 2000-01-01 09:58:00-05:00 2000-01-01 09:59:00-05:00
+        2000-01-01 10:00:00-05:00      1000  998.157918 2000-01-01 09:59:00-05:00 2000-01-01 10:00:00-05:00"""
+        # pylint: enable=line-too-long
+        market_data_interface = _check_get_data(
+            self, initial_replayed_delay, func, expected_df_as_str
+        )
+        #
+        expected_last_end_time = pd.Timestamp("2000-01-01 10:00:00-05:00")
+        expected_is_online = True
+        self.check_last_end_time(
+            market_data_interface, expected_last_end_time, expected_is_online
+        )
+
+    def test_get_data6(self) -> None:
+        """
+        - Set the current time to 10:00
+        - Get all data for specified period
+        - The returned data should be in [9:30, 10:00]
+        """
+        initial_replayed_delay = 30
+        #
+        period = "all"
+        normalize_data = True
+        func = lambda market_data_interface: market_data_interface.get_data(
+            period, normalize_data=normalize_data
+        )
+        # pylint: disable=line-too-long
+        expected_df_as_str = """
+        # df=
+        df.index in [2000-01-01 09:31:00-05:00, 2000-01-01 10:00:00-05:00]
+        df.columns=asset_id,last_price,start_datetime,timestamp_db
+        df.shape=(30, 4)
+                                   asset_id   last_price            start_datetime              timestamp_db
+        end_datetime
+        2000-01-01 09:31:00-05:00      1000   999.874540 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00
+        2000-01-01 09:32:00-05:00      1000  1000.325254 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00
+        2000-01-01 09:33:00-05:00      1000  1000.557248 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00
+        ...
+        2000-01-01 09:58:00-05:00      1000  998.519053 2000-01-01 09:57:00-05:00 2000-01-01 09:58:00-05:00
+        2000-01-01 09:59:00-05:00      1000  998.611468 2000-01-01 09:58:00-05:00 2000-01-01 09:59:00-05:00
+        2000-01-01 10:00:00-05:00      1000  998.157918 2000-01-01 09:59:00-05:00 2000-01-01 10:00:00-05:00"""
+        # pylint: enable=line-too-long
+        market_data_interface = _check_get_data(
+            self, initial_replayed_delay, func, expected_df_as_str
+        )
+        #
+        expected_last_end_time = pd.Timestamp("2000-01-01 10:00:00-05:00")
+        expected_is_online = True
+        self.check_last_end_time(
+            market_data_interface, expected_last_end_time, expected_is_online
+        )
+
     def test_get_data_for_minute_0(self) -> None:
         """
         The replayed time starts at the same time of the data to represent the

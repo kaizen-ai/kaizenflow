@@ -367,8 +367,8 @@ class AbstractMarketDataInterface(abc.ABC):
         self,
     ) -> Tuple[pd.Timestamp, pd.Timestamp, int]:
         """
-        Wait until the bar with `end_time` == `wall_clock_time` is present in the
-        RT DB.
+        Wait until the bar with `end_time` == `wall_clock_time` is present in
+        the RT DB.
 
         :return:
             - start_sampling_time: timestamp when the sampling started
@@ -484,7 +484,7 @@ class AbstractMarketDataInterface(abc.ABC):
             # Get the data for the last day.
             last_start_time = wall_clock_time.replace(hour=0, minute=0, second=0)
         elif period == "last_week":
-            # Get the data for the last day.
+            # Get the data for the last week.
             last_start_time = wall_clock_time.replace(
                 hour=0, minute=0, second=0
             ) - pd.Timedelta(days=16)
