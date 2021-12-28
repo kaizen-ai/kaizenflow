@@ -33,7 +33,7 @@ with airflow.DAG(
     bash_command = " ".join(
         [
             "im_v2/ccxt/data/extract/download_realtime.py",
-            "--to_datetime {{ data_interval_start }}",
+            "--to_datetime {{ next_execution_date }}",
             "--from_datetime {{ execution_date - macros.timedelta(5) }}"
             # TODO(Danya): Set a shared directory for the DAG (#675).
             "--dst_dir 'ccxt/ohlcv/'",
