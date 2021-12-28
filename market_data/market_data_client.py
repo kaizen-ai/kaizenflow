@@ -63,10 +63,10 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
         # `IM` client uses [start_ts; end_ts).
         if not left_close:
             # Add one millisecond not to include the left boundary.
-            start_ts = start_ts + pd.Timedelta(ms=1)
+            start_ts = start_ts + pd.Timedelta(1, "ms")
         if right_close:
-            # Subtract one millisecond to include the right boundary.
-            end_ts = end_ts - pd.Timedelta(ms=1)
+            # Add one millisecond to include the right boundary.
+            end_ts = end_ts + pd.Timedelta(1, "ms")
         if not asset_ids:
             # If `asset_ids` is None, get all symbols from the latest universe.
             asset_ids = self._im_client.get_universe()
@@ -86,14 +86,15 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
             hdbg.dassert_lte(1, limit)
             market_data = market_data.head(limit)
         if normalize_data:
-            market_data = self.convert_im_data(market_data)
+            market_data = self._convert_im_data(market_data)
             market_data = self.process_data(market_data)
         return market_data
 
     @staticmethod
-    def convert_im_data(data: pd.DataFrame) -> pd.DataFrame:
+    def _convert_im_data(data: pd.DataFrame) -> pd.DataFrame:
         """
-        Convert `IM` data to the format required by `AbstractMarketDataInterface`.
+        Convert `IM` data to the format required by
+        `AbstractMarketDataInterface`.
 
         Input data example:
         ```
