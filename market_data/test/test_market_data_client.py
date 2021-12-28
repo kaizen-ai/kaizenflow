@@ -269,7 +269,7 @@ class TestMarketDataClient(hunitest.TestCase):
         """
         # Initialize the `MarketDataInterface`.
         multiple_symbols_client = self._helper()
-        asset_id_col = ("full_symbol",)
+        asset_id_col = "full_symbol"
         asset_ids = ["binance::BTC_USDT"]
         start_time_col_name = "start_ts"
         end_time_col_name = "end_ts"
