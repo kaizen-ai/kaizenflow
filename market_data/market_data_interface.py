@@ -59,6 +59,8 @@ class AbstractMarketDataInterface(abc.ABC):
     def __init__(
         self,
         asset_id_col: str,
+        # TODO(gp): asset_ids might not be needed since it's specified by
+        #  ImClient.
         asset_ids: List[Any],
         # TODO(gp): These are before the remapping.
         # TODO(gp): -> start_timestamp_col

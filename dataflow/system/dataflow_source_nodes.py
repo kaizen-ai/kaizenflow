@@ -420,3 +420,75 @@ class RealTimeDataSource(dtfconobas.DataSource):
             "After multiindex conversion\n:%s",
             hprint.dataframe_to_str(self.df.head()),
         )
+
+
+class HistoricalDataSource(dtfconobas.DataSource):
+    """
+
+    TODO(gp): Clarify if the intervals are [a, b] or (a, b] or [a, b)
+    """
+
+    def __init__(
+        self,
+        nid: dtfcornode.NodeId,
+        market_data_interface: mdmadain.AbstractMarketDataInterface,
+        multiindex_output: bool,
+    ) -> None:
+        """
+        Constructor.
+
+        Given a fully initialized MarketDataInterface in terms of asset ids, stream
+        the data to the DAG.
+        """
+        super().__init__(nid)
+        hdbg.dassert_isinstance(
+            market_data_interface, mdmadain.AbstractMarketDataInterface
+        )
+        self._market_data_interface = market_data_interface
+        self._asset_id_col = asset_id_col
+        self._multiindex_output = multiindex_output
+
+    def _get_data(self, start_ts, end_ts):
+        # From ArmaGenerator._lazy_loa
+        # self.df = df.loc[self._start_date : self._end_date]
+        left_close = True
+        right_close = True
+        ts_col_name = self._market_data_interface.ts_col_name
+        asset_ids = self._market_data_interface._asset_ids
+        self.df = self._market_data_interface.get_data_for_interval(start_ts, end_ts,
+                                                                    ts_col_name,
+                                                                    asset_ids,
+                                                                    left_close=left_close,
+                                                                    right_close=right_close,
+                                                                    normalize_data=True)
+        if self._multiindex_output:
+            self._convert_to_multiindex()
+
+    def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
+        self._get_data(self._start_date, self._end_date)
+        return super().fit()  # type: ignore[no-any-return]
+
+    def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
+        self._get_data(self._start_date, self._end_date)
+        return super().predict()  # type: ignore[no-any-return]
+
+    def _convert_to_multiindex(self) -> None:
+        # From _load_multiple_instrument_data().
+        _LOG.debug(
+            "Before multiindex conversion\n:%s",
+            hprint.dataframe_to_str(self.df.head()),
+        )
+        dfs = {}
+        # TODO(Paul): Pass the column name through the constructor, so we can make it
+        # programmable.
+        for asset_id, df in self.df.groupby(self._asset_id_col):
+            dfs[asset_id] = df
+        # Reorganize the data into the desired format.
+        df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
+        df = df.swaplevel(i=0, j=1, axis=1)
+        df.sort_index(axis=1, level=0, inplace=True)
+        self.df = df
+        _LOG.debug(
+            "After multiindex conversion\n:%s",
+            hprint.dataframe_to_str(self.df.head()),
+        )
