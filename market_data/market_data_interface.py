@@ -50,10 +50,6 @@ class AbstractMarketDataInterface(abc.ABC):
     Non-responsibilities:
     - In general don't access data directly but rely on an AbstractImClient object
       to retrieve the data from different backends
-
-    All the timestamps in the interface are in ET timezone.
-    - TODO(gp): Maybe UTC with the possibility of a switch to enforce certain
-       tz?
     """
 
     def __init__(
@@ -70,6 +66,7 @@ class AbstractMarketDataInterface(abc.ABC):
         sleep_in_secs: float = 1.0,
         time_out_in_secs: int = 60 * 2,
         column_remap: Optional[Dict[str, str]] = None,
+        tz: str = "UTC",
     ):
         """
         Constructor.
@@ -84,6 +81,7 @@ class AbstractMarketDataInterface(abc.ABC):
         :param sleep_in_secs, time_out_in_secs: sample every `sleep_in_secs`
             seconds waiting up to `time_out_in_secs` seconds
         :param column_remap: dict of columns to remap or `None`
+        :param tz: timezone to convert normalized output dates to
         """
         _LOG.debug("")
         self._asset_id_col = asset_id_col
@@ -98,6 +96,7 @@ class AbstractMarketDataInterface(abc.ABC):
         self._sleep_in_secs = sleep_in_secs
         #
         self._column_remap = column_remap
+        self._tz = tz
         # Compute the max number of iterations.
         max_iterations = int(time_out_in_secs / sleep_in_secs)
         hdbg.dassert_lte(1, max_iterations)
@@ -219,6 +218,13 @@ class AbstractMarketDataInterface(abc.ABC):
             normalize_data,
             limit,
         )
+        if normalize_data:
+            # Convert dates to the specified timezone if data was normalized.
+            df.index = df.index.tz_convert(self._tz)
+            df[self._start_time_col_name] = df[
+                self._start_time_col_name
+            ].dt.tz_convert(self._tz)
+        # Remap column names.
         df = self._remap_columns(df)
         _LOG.verb_debug("-> df=\n%s", hprint.dataframe_to_str(df))
         return df
