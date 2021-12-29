@@ -36,6 +36,7 @@ class CddLoader:
         """
         Load CDD data.
 
+        :param: data_type: OHLCV or trade, bid/ask data
         :param: root_dir: either a local root path (e.g., "/app/im") or
             an S3 root path (e.g., "s3://alphamatic-data/data) to CDD data
         :param: aws_profile: AWS profile name (e.g., "am")
