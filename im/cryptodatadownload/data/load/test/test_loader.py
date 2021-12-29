@@ -70,9 +70,7 @@ class TestCddLoader(hunitest.TestCase):
         cdd_loader = imcdalolo.CddLoader(
             data_type, root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
-        actual = cdd_loader.read_data(
-            "binance::BTC_USDT"
-        )
+        actual = cdd_loader.read_data("binance::BTC_USDT")
         # Check the output values.
         actual_string = hunitest.convert_df_to_json_string(actual)
         self.check_string(actual_string)
@@ -86,9 +84,7 @@ class TestCddLoader(hunitest.TestCase):
             data_type, root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         with self.assertRaises(AssertionError):
-            cdd_loader.read_data(
-                "unsupported_exchange_id::BTC_USDT"
-            )
+            cdd_loader.read_data("unsupported_exchange_id::BTC_USDT")
 
     def test3(self) -> None:
         """
@@ -99,19 +95,18 @@ class TestCddLoader(hunitest.TestCase):
             data_type, root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
         )
         with self.assertRaises(AssertionError):
-            cdd_loader.read_data(
-                "binance::unsupported_currency_pair"
-            )
+            cdd_loader.read_data("binance::unsupported_currency_pair")
 
     def test4(self) -> None:
         """
         Test unsupported data type.
         """
+        
+        data_type = "unsupported_data_type"
         with self.assertRaises(AssertionError):
-            data_type = "unsupported_data_type"
             cdd_loader = imcdalolo.CddLoader(
                 data_type, root_dir=_AM_S3_ROOT_DIR, aws_profile="am"
             )
         # Marked the code below, not sure if the structure is right (it passes, however).
         #with self.assertRaises(AssertionError):
-        #cdd_loader.read_data("binance::BTC_USDT")
+        #    cdd_loader.read_data("binance::BTC_USDT")

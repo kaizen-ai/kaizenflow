@@ -46,7 +46,8 @@ hprint.config_notebook()
 # # Configs
 
 # %%
-# Two configs are necesary in this situation because current downloading functions work only with specific 'vendor' value.
+# Two configs are necessary in this situation because current downloading functions 
+# work only with specific 'vendor' value.
 
 # %%
 def get_cmtask324_config_ccxt() -> cconconf.Config:
