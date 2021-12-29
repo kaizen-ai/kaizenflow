@@ -210,6 +210,7 @@ def get_loader_for_vendor(
         )
     elif vendor == "CDD":
         loader = imcdalolo.CddLoader(
+            data_type=config["data"]["data_type"],
             root_dir=config["load"]["data_dir"],
             aws_profile=config["load"]["aws_profile"],
         )
