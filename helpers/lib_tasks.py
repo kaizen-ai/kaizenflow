@@ -2190,9 +2190,9 @@ def docker_build_prod_image(  # type: ignore
     """
     _report_task()
     _dassert_is_version_valid(version)
-    image_prod = get_image(base_image, "prod", version)
+    image_versioned_prod = get_image(base_image, "prod", version)
     #
-    _dassert_is_image_name_valid(image_prod)
+    _dassert_is_image_name_valid(image_versioned_prod)
     dockerfile = "devops/docker_build/prod.Dockerfile"
     dockerfile = _to_abs_path(dockerfile)
     #
@@ -2204,15 +2204,20 @@ def docker_build_prod_image(  # type: ignore
     docker build \
         --progress=plain \
         {opts} \
-        --tag {image_prod} \
+        --tag {image_versioned_prod} \
         --file {dockerfile} \
         --build-arg VERSION={version} \
         .
     """
     _run(ctx, cmd)
-    #
-    image_versioned_prod = get_image(base_image, "prod", version)
-    cmd = f"docker tag {image_prod} {image_versioned_prod}"
+    # Tag prod image as versioned prod image (e.g., `prod-1.0.0`).
+    #image_versioned_prod = get_image(base_image, "prod", version)
+    #cmd = f"docker tag {image_prod} {image_versioned_prod}"
+    #_run(ctx, cmd)
+    # Tag versioned image as dev image.
+    latest_version = None
+    image_prod = get_image(base_image, "prod", latest_version)
+    cmd = f"docker tag {image_versioned_prod} {image_prod}"
     _run(ctx, cmd)
     #
     cmd = f"docker image ls {image_prod}"
@@ -2232,16 +2237,17 @@ def docker_push_prod_image(  # type: ignore
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     _report_task()
+    _dassert_is_version_valid(version)
+    #
     docker_login(ctx)
+    # Push versioned tag.
+    image_versioned_prod = get_image(base_image, "prod", version)
+    cmd = f"docker push {image_versioned_prod}"
+    _run(ctx, cmd, pty=True)
     #
     latest_version = None
     image_prod = get_image(base_image, "prod", latest_version)
     cmd = f"docker push {image_prod}"
-    _run(ctx, cmd, pty=True)
-    #
-    # Push versioned tag.
-    image_versioned_prod = get_image(base_image, "prod", version)
-    cmd = f"docker push {image_versioned_prod}"
     _run(ctx, cmd, pty=True)
 
 
