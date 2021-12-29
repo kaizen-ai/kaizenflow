@@ -67,7 +67,7 @@ class CddLoader:
         """
         Load data from S3 and process it for use downstream.
 
-        :param full_symbol: combination of exchange and currency pair
+        :param full_symbol: `exchange::symbol`, e.g. `binance::BTC_USDT`
         :param data_snapshot: snapshot of datetime when data was loaded, e.g. "20210924"
         :return: processed CDD data
         """
@@ -170,7 +170,6 @@ class CddLoader:
         :param data: dataframe with CDD data from S3
         :param exchange_id: CDD exchange id, e.g. "binance"
         :param currency_pair: currency pair, e.g. "BTC_USDT"
-        :param data_type: OHLCV or trade, bid/ask data
         :return: processed dataframe
         """
         transformed_data = self._apply_common_transformation(
@@ -181,7 +180,7 @@ class CddLoader:
         else:
             hdbg.dfatal(
                 "Incorrect data type: '%s'. Acceptable types: '%s'"
-                % (data_type.lower(), self._data_types)
+                % (self._data_type.lower(), self._data_types)
             )
         return transformed_data
 
