@@ -244,7 +244,7 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
 
 
 # TODO(*): Consider to factor out the class calling in a `def _get_loader()`.
-class TestCcxtCsvFileSystemClientReadData(hunitest.TestCase):
+class TestCcxtCsvFileSystemClient(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test that ".csv.gz" files from filesystem are being read correctly.
@@ -502,7 +502,7 @@ class TestCcxtCsvFileSystemClientReadData(hunitest.TestCase):
 # #############################################################################
 
 
-class TestCcxtParquetFileSystemClientReadData(hunitest.TestCase):
+class TestCcxtParquetFileSystemClient(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test that Parquet files from filesystem are being read correctly.
