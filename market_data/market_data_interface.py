@@ -218,12 +218,8 @@ class AbstractMarketDataInterface(abc.ABC):
             normalize_data,
             limit,
         )
-        if normalize_data:
-            # Convert dates to the specified timezone if data was normalized.
-            df.index = df.index.tz_convert(self._tz)
-            df[self._start_time_col_name] = df[
-                self._start_time_col_name
-            ].dt.tz_convert(self._tz)
+        # Convert dates to the specified timezone.
+        df = self._convert_dates_to_tz(df)
         # Remap column names.
         df = self._remap_columns(df)
         _LOG.verb_debug("-> df=\n%s", hprint.dataframe_to_str(df))
@@ -451,6 +447,22 @@ class AbstractMarketDataInterface(abc.ABC):
         if self._column_remap:
             hpandas.dassert_valid_remap(df.columns.tolist(), self._column_remap)
             df = df.rename(columns=self._column_remap)
+        return df
+
+    def _convert_dates_to_tz(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Convert all dates in the dataframe to the specified timezone.
+
+        :param df: input data
+        :return: data with dates in specified timezone
+        """
+        # Detect datetime columns and convert them to `self._tz`.
+        for col in df.columns:
+            if "datetime" in str(df[col].dtype):
+                df[col] = df[col].dt.tz_convert(self._tz)
+        if "datetime" in str(df.index.dtype):
+            # Convert datetime index to `self._tz`.
+            df.index = df.index.tz_convert(self._tz)
         return df
 
     @staticmethod
