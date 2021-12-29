@@ -854,6 +854,7 @@ class ReplayedTimeMarketDataInterface(AbstractMarketDataInterface):
             hdbg.dassert_is_subset(self._columns, df_tmp.columns)
             df_tmp = df_tmp[self._columns]
         # # Handle `period`.
+        # TODO(gp): Use hpandas.trim_df
         # TODO(gp): This is inefficient. Make it faster by binary search.
         if start_ts is not None:
             _LOG.verb_debug("start_ts=%s", start_ts)
