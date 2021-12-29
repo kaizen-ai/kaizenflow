@@ -51,7 +51,6 @@ def _check_output(
     )
     actual_df = actual_df[sorted(actual_df.columns)]
     actual_df_as_str = hprint.df_to_short_str("df", actual_df)
-    print(actual_df_as_str)
     self_.assert_equal(
         actual_df_as_str,
         expected_df_as_str,
