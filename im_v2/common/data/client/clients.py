@@ -122,13 +122,11 @@ class AbstractImClient(abc.ABC):
                 end_ts,
                 **kwargs,
             )
-            print("before norm")
-            print(df.head(3))
+            # Sort data by index for stability.
+            df = df.sort_index()
             if normalize:
                 # Normalize data.
                 df = self._normalize_data(df)
-                print("after norm")
-                print(df.head(3))
             # Insert column with full symbol to the dataframe.
             df.insert(0, full_symbol_col_name, full_symbol)
             # Add full symbol data to the results dict.
@@ -136,13 +134,6 @@ class AbstractImClient(abc.ABC):
         if mode == "concat":
             # Combine results dict in a dataframe if specified.
             ret = pd.concat(full_symbol_to_df.values())
-            # To sort by index and column at the same time, set a name for the index.
-            index_col_name = "end_timestamp"
-            ret = ret.rename_axis(index_col_name)
-            # Sort results dataframe by full symbol and index.
-            ret = ret.sort_values(by=[full_symbol_col_name, index_col_name])
-            print("after sort")
-            print(ret.head(3))
         elif mode == "dict":
             # Return results dict if specified.
             ret = full_symbol_to_df
@@ -156,7 +147,9 @@ class AbstractImClient(abc.ABC):
         """
         # TODO(Grisha): add caching.
         # Read data for the entire period of time available.
-        data = self._read_data(full_symbol, None, None)
+        start_timestamp = None
+        end_timestamp = None
+        data = self._read_data(full_symbol, start_timestamp, end_timestamp)
         normalized_data = self._normalize_data(data)
         # It is assumed that timestamp is always stored as index.
         start_ts = normalized_data.index.min()
@@ -167,8 +160,9 @@ class AbstractImClient(abc.ABC):
         Return the latest timestamp available for a given `FullSymbol`.
         """
         # TODO(Grisha): add caching.
-        # Read data for the entire period of time available.
-        data = self._read_data(full_symbol, None, None)
+        start_timestamp = None
+        end_timestamp = None
+        data = self._read_data(full_symbol, start_timestamp, end_timestamp)
         normalized_data = self._normalize_data(data)
         # It is assumed that timestamp is always stored as index.
         end_ts = normalized_data.index.max()
