@@ -98,7 +98,7 @@ class CddLoader:
             currency_pair,
         )
         transformed_data = self._transform(
-            data, exchange_id, currency_pair, self._data_type
+            data, exchange_id, currency_pair
         )
         return transformed_data
 
@@ -147,7 +147,6 @@ class CddLoader:
         data: pd.DataFrame,
         exchange_id: str,
         currency_pair: str,
-        data_type: str,
     ) -> pd.DataFrame:
         """
         Transform CDD data loaded from S3.
@@ -177,7 +176,7 @@ class CddLoader:
         transformed_data = self._apply_common_transformation(
             data, exchange_id, currency_pair
         )
-        if data_type.lower() == "ohlcv":
+        if self._data_type.lower() == "ohlcv":
             transformed_data = self._apply_ohlcv_transformation(transformed_data)
         else:
             hdbg.dfatal(
