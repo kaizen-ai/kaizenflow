@@ -9,16 +9,14 @@ import json
 import boto3
 from botocore.client import BaseClient
 from botocore.exceptions import ClientError
-
 import helpers.dbg as hdbg
-
 
 def get_secrets_client(region_name: str = "eu-north-1") -> BaseClient:
     """
     Return client to work with AWS Secrets Manager in the specified region.
     """
     hdbg.dassert_isinstance(region_name, str)
-    session = boto3.session.Session()
+    session = boto3.session.Session(profile_name='cm')
     client = session.client(
         service_name="secretsmanager", region_name=region_name
     )
