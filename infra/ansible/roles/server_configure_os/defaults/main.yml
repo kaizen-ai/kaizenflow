@@ -16,7 +16,7 @@ docker_release_shasum: "1719446f99cd56e87d0c67019996af4ea859f11891bfd89de2252d6c
 docker_release_rootless_shasum: "683448bf77e625d198feaec3b28cec2d07e51f310e1172149bdd0558a97c21cf"
 docker_rootful: true
 docker_rootful_enabled: true
-docker_rootful_opts: "--live-restore --icc=false --default-ulimit nproc=512:1024 --default-ulimit nofile=100:200 -H fd://"
+docker_rootful_opts: "--live-restore --icc=false -H fd://"
 docker_url: "https://download.docker.com/linux/static/stable/x86_64"
 docker_user: dockeruser
 docker_allow_privileged_ports: false
