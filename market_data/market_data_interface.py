@@ -219,6 +219,7 @@ class AbstractMarketDataInterface(abc.ABC):
             normalize_data,
             limit,
         )
+        df = self._remap_columns(df)
         _LOG.verb_debug("-> df=\n%s", hprint.dataframe_to_str(df))
         return df
 
@@ -291,7 +292,9 @@ class AbstractMarketDataInterface(abc.ABC):
         ```
         """
         # Sort in increasing time order and reindex.
-        df.sort_values([self._end_time_col_name, self._asset_id_col], inplace=True)
+        df.sort_values(
+            [self._end_time_col_name, self._asset_id_col], inplace=True
+        )
         df.set_index(self._end_time_col_name, drop=True, inplace=True)
         # TODO(gp): Add a check to make sure we are not getting data after the
         #  current time.
@@ -349,7 +352,9 @@ class AbstractMarketDataInterface(abc.ABC):
             )
             wall_clock_time = self.get_wall_clock_time()
             _LOG.verb_debug(
-                "wall_clock_time=%s -> %s", wall_clock_time, wall_clock_time.floor("Min")
+                "wall_clock_time=%s -> %s",
+                wall_clock_time,
+                wall_clock_time.floor("Min"),
             )
             ret = last_db_end_time.floor("Min") >= (
                 wall_clock_time.floor("Min") - pd.Timedelta(minutes=1)
@@ -362,8 +367,8 @@ class AbstractMarketDataInterface(abc.ABC):
         self,
     ) -> Tuple[pd.Timestamp, pd.Timestamp, int]:
         """
-        Wait until the bar with `end_time` == `wall_clock_time` is present in the
-        RT DB.
+        Wait until the bar with `end_time` == `wall_clock_time` is present in
+        the RT DB.
 
         :return:
             - start_sampling_time: timestamp when the sampling started
@@ -381,9 +386,12 @@ class AbstractMarketDataInterface(abc.ABC):
             last_db_end_time = self.get_last_end_time()
             # TODO(gp): We should use the new hasynci.poll().
             _LOG.debug(
-                    "\n### waiting on last bar: "
-                    "num_iter=%s/%s: wall_clock_time=%s last_db_end_time=%s",
-                    num_iter, self._max_iterations, wall_clock_time, last_db_end_time
+                "\n### waiting on last bar: "
+                "num_iter=%s/%s: wall_clock_time=%s last_db_end_time=%s",
+                num_iter,
+                self._max_iterations,
+                wall_clock_time,
+                last_db_end_time,
             )
             if last_db_end_time and (
                 last_db_end_time.floor("Min") >= wall_clock_time.floor("Min")
@@ -427,11 +435,16 @@ class AbstractMarketDataInterface(abc.ABC):
         """
         ...
 
-    # TODO(Grisha): use this method somewhere, `get_data()`?
     def _remap_columns(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Remap column names with provided mapping.
+
+        :param df: input dataframe
+        :return: dataframe with remapped column names
+        """
         if self._column_remap:
             hpandas.dassert_valid_remap(df.columns.tolist(), self._column_remap)
-            df.rename(columns=self._column_remap, inplace=True)
+            df = df.rename(columns=self._column_remap)
         return df
 
     @staticmethod
@@ -471,7 +484,7 @@ class AbstractMarketDataInterface(abc.ABC):
             # Get the data for the last day.
             last_start_time = wall_clock_time.replace(hour=0, minute=0, second=0)
         elif period == "last_week":
-            # Get the data for the last day.
+            # Get the data for the last week.
             last_start_time = wall_clock_time.replace(
                 hour=0, minute=0, second=0
             ) - pd.Timedelta(days=16)
@@ -649,6 +662,18 @@ class SqlMarketDataInterface(AbstractMarketDataInterface):
         hdbg.dassert_eq(end_time, start_time + pd.Timedelta(minutes=1))
         return end_time
 
+    @staticmethod
+    def _to_sql_datetime_string(dt: pd.Timestamp) -> str:
+        """
+        Convert a timestamp into an SQL string to query the DB.
+        """
+        hdateti.dassert_has_tz(dt)
+        # Convert to UTC, if needed.
+        if dt.tzinfo != hdateti.get_UTC_tz().zone:
+            dt = dt.tz_convert(hdateti.get_UTC_tz())
+        ret: str = dt.strftime("%Y-%m-%d %H:%M:%S")
+        return ret
+
     def _get_sql_query(
         self,
         columns: Optional[List[str]],
@@ -810,7 +835,9 @@ class ReplayedTimeMarketDataInterface(AbstractMarketDataInterface):
             # This avoids mistakes when mocking data for certain assets, but request
             # data for assets that don't exist, which can make us wait for data that
             # will never come.
-            hdbg.dassert_is_subset(asset_ids, self._df[self._asset_id_col].unique())
+            hdbg.dassert_is_subset(
+                asset_ids, self._df[self._asset_id_col].unique()
+            )
         # Filter the data by the current time.
         wall_clock_time = self.get_wall_clock_time()
         _LOG.verb_debug(hprint.to_str("wall_clock_time"))
@@ -877,18 +904,6 @@ class ReplayedTimeMarketDataInterface(AbstractMarketDataInterface):
         else:
             ret = df.index.max()
         _LOG.debug("-> ret=%s", ret)
-        return ret
-
-    @staticmethod
-    def _to_sql_datetime_string(dt: pd.Timestamp) -> str:
-        """
-        Convert a timestamp into an SQL string to query the DB.
-        """
-        hdateti.dassert_has_tz(dt)
-        # Convert to UTC, if needed.
-        if dt.tzinfo != hdateti.get_UTC_tz().zone:
-            dt = dt.tz_convert(hdateti.get_UTC_tz())
-        ret: str = dt.strftime("%Y-%m-%d %H:%M:%S")
         return ret
 
 

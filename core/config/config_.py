@@ -86,9 +86,9 @@ class Config:
                 _LOG.debug(
                     "head_key='%s', self._config=%s", head_key, self._config
                 )
-                subconfig = self.get(head_key, None) or self.add_subconfig(
-                    head_key
-                )
+                subconfig = self.get(head_key, None)
+                if subconfig is None:
+                    subconfig = self.add_subconfig(head_key)
                 hdbg.dassert_isinstance(subconfig, Config)
                 subconfig.__setitem__(tail_key, val)
             return
@@ -199,6 +199,10 @@ class Config:
         bool evaluation of a `Config` object for truth value testing.
         """
         return len(self._config)
+
+    # TODO(gp): Add also iteritems()
+    def keys(self) -> List[str]:
+        return self._config.keys()
 
     def add_subconfig(self, key: str) -> "Config":
         hdbg.dassert_not_in(key, self._config.keys(), "Key already present")

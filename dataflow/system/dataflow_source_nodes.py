@@ -4,6 +4,8 @@ Import as:
 import dataflow.system.dataflow_source_nodes as dtfsdtfsono
 """
 
+# TODO(gp): -> source_nodes.py
+
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -89,6 +91,8 @@ def data_source_node_factory(
     elif source_node_name == "kibot_multi_col":
         # TODO(gp): This should go through RealTimeDataSource.
         ret = KibotColumnReader(nid, **source_node_kwargs)
+    elif source_node_name == "DummyDataSource":
+        ret = dtfconosou.DummyDataSource(nid, **source_node_kwargs)
     else:
         raise ValueError(f"Unsupported data source node {source_node_name}")
     return ret

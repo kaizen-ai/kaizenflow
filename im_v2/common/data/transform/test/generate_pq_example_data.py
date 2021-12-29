@@ -21,9 +21,9 @@ from typing import List
 import pandas as pd
 
 import helpers.dbg as hdbg
-import helpers.hparquet as hparque
 import helpers.parser as hparser
 import helpers.printing as hprint
+import im_v2.common.data.transform.utils as imvcdtrut
 
 _LOG = logging.getLogger(__name__)
 
@@ -100,6 +100,7 @@ def _get_verbose_daily_df(
     for idx, asset in enumerate(assets):
         df_tmp = pd.DataFrame(
             {
+                "vendor_date": None,
                 "interval": interval,
                 "start_time": None,
                 "end_time": None,
@@ -119,11 +120,9 @@ def _get_verbose_daily_df(
     df = pd.concat(df)
     start_time = (df.index - pd.Timestamp("1970-01-01")) // pd.Timedelta("1s")
     end_time = start_time + interval
-    # TODO(Nikola): Handle various types of dates?
-    # df.index = df.index.date
+    df["vendor_date"] = df.index.date.astype(str)
     df["start_time"] = start_time
     df["end_time"] = end_time
-    df.index.name = "vendor_date"
     _LOG.debug(hprint.df_to_short_str("df", df))
     return df
 
@@ -164,12 +163,23 @@ def _parse() -> argparse.ArgumentParser:
         "--freq",
         action="store",
         type=str,
-        help="Frequency of data generation. Defaults to one hour",
+        default="1H",
+        help="Frequency of data generation",
     )
     parser.add_argument(
         "--verbose",
         action="store_true",
         help="More realistic and complete data is generated",
+    )
+    parser.add_argument(
+        "--no_partition",
+        action="store_true",
+        help="Whether to partition the resulting parquet",
+    )
+    parser.add_argument(
+        "--reset_index",
+        action="store_true",
+        help="Resets dataframe index to default value",
     )
     hparser.add_verbosity_arg(parser)
     return parser
@@ -178,10 +188,6 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     """
     Standard main part of the script that is parsing provided arguments.
-
-    Timespan provided via start and end date, can not start and end on
-    the same day. Start date is included in timespan, while end date is
-    excluded.
     """
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
@@ -195,17 +201,19 @@ def _main(parser: argparse.ArgumentParser) -> None:
     assets = args.assets
     assets = assets.split(",")
     dst_dir = args.dst_dir
-    freq = args.freq if args.freq else "1H"
+    freq = args.freq
     # Pick specific function and generate dataframe.
     get_daily_df = (
         _get_verbose_daily_df if args.verbose else _get_generic_daily_df
     )
     dummy_df = get_daily_df(start_date, end_date, assets, freq)
     # Add date partition columns to the dataframe.
-    hparque.add_date_partition_cols(dummy_df)
+    imvcdtrut.add_date_partition_cols(dummy_df)
     # Partition and write dataset.
+    if args.reset_index:
+        dummy_df = dummy_df.reset_index(drop=True)
     partition_cols = ["date"]
-    hparque.partition_dataset(dummy_df, partition_cols, dst_dir)
+    imvcdtrut.partition_dataset(dummy_df, partition_cols, dst_dir)
 
 
 if __name__ == "__main__":

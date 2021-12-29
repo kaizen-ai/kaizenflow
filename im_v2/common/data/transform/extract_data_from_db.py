@@ -20,13 +20,12 @@ import os.path
 import pandas as pd
 
 import helpers.dbg as hdbg
-import helpers.hpandas as hpandas
-import helpers.hparquet as hparque
 import helpers.parser as hparser
 import helpers.sql as hsql
 import im_v2.ccxt.data.client.clients as imvcdclcl
 import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.common.data.client.clients as ivcdclcl
+import im_v2.common.data.transform.utils as imvcdtrut
 import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
@@ -58,7 +57,7 @@ def _parse() -> argparse.ArgumentParser:
         help="Location of daily PQ files",
     )
     parser.add_argument(
-        "--stage",
+        "--db_stage",
         action="store",
         type=str,
         default="local",
@@ -78,34 +77,34 @@ def _main(parser: argparse.ArgumentParser) -> None:
     """
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Extraction timespan.
+    # Generate timespan.
     start_date = args.start_date
     end_date = args.end_date
     hdbg.dassert_lt(start_date, end_date)
     timespan = pd.date_range(start_date, end_date)
     hdbg.dassert_lt(2, len(timespan))
-    # Location of daily PQ files.
+    # Create location of daily PQ files.
     dst_dir = args.dst_dir
     hdbg.dassert_exists(dst_dir)
-    stage = args.stage
-    env_file = imvimlita.get_db_env_path(stage)
+    # Connect to database.
+    db_stage = args.db_stage
+    env_file = imvimlita.get_db_env_path(db_stage)
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
+    # Initiate DB client.
     ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", connection)
-    multiple_symbols_ccxt_db_client = ivcdclcl.MultipleSymbolsImClient(
-        class_=ccxt_db_client, mode="concat"
-    )
+    # Get universe of symbols.
     symbols = imvccunun.get_vendor_universe()
     for date_index in range(len(timespan) - 1):
         _LOG.debug("Checking for RT data on %s.", timespan[date_index])
         # TODO(Nikola): Refactor to use one db call.
-        rt_df = multiple_symbols_ccxt_db_client.read_data(
+        df = ccxt_db_client.read_data(
             symbols,
             start_ts=timespan[date_index],
             end_ts=timespan[date_index + 1],
             normalize=False,
         )
-        if rt_df.empty:
+        if df.empty:
             _LOG.info("No RT date in db for %s.", timespan[date_index])
             continue
         try:
@@ -114,13 +113,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
             full_path = os.path.join(dst_dir, date_directory)
             hdbg.dassert_not_exists(full_path)
             # Set datetime index.
-            in_col_name = "timestamp"
-            rt_df = hpandas.reindex_on_unix_epoch(rt_df, in_col_name, unit="ms")
+            datetime_col_name = "start_time"
+            reindexed_df = imvcdtrut.reindex_on_datetime(df, datetime_col_name)
             # Add date partition columns to the dataframe.
-            hparque.add_date_partition_cols(rt_df)
+            imvcdtrut.add_date_partition_cols(reindexed_df)
             # Partition and write dataset.
             partition_cols = ["date"]
-            hparque.partition_dataset(rt_df, partition_cols, dst_dir)
+            imvcdtrut.partition_dataset(reindexed_df, partition_cols, dst_dir)
         except AssertionError as ex:
             _LOG.info("Skipping. PQ file already present: %s.", ex)
             continue

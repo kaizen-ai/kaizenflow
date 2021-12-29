@@ -16,6 +16,7 @@ import helpers.dbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): Clarify what is the difference between pipelines and pipeline_examples?
 class ReturnsPipeline(dtf.DagBuilder):
     """
     Pipeline for computing returns from price data.

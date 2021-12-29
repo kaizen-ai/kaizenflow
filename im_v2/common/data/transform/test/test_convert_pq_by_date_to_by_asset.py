@@ -2,8 +2,6 @@ import argparse
 import os
 from typing import Any, Dict, Tuple
 
-import pytest
-
 import helpers.git as hgit
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
@@ -17,7 +15,6 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         Arguments used in script run.
         """
         return {
-            "transform_func": "",
             "asset_col_name": "asset",
             # parallelization args
             "num_threads": "1",
@@ -44,7 +41,6 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
                 f"{test_dir}/by_date/date=20220101/data.parquet",
             ],
             "dst_dir": f"{test_dir}/by_asset",
-            "transform_func": "",
             "asset_col_name": "asset",
         }
 
@@ -66,6 +62,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         cmd.append(f"--dst_dir {by_date_dir}")
         if verbose:
             cmd.append("--verbose")
+            cmd.append("--reset_index")
         cmd = " ".join(cmd)
         hsysinte.system(cmd)
         return test_dir, by_date_dir
@@ -96,10 +93,6 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         actual = "\n".join(actual)
         self.check_string(actual, purify_text=True)
 
-    def test_daily_data1(self) -> None:
-        verbose = False
-        self._test_daily_data(verbose)
-
     def test_daily_data2(self) -> None:
         verbose = True
         self._test_daily_data(verbose)
@@ -112,23 +105,9 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         verbose = True
         self._test_daily_data_direct_run(verbose)
 
-    def test__save_chunk1(self) -> None:
-        verbose = False
-        self._test_joblib_task(verbose, {})
-
-    def test__save_chunk2(self) -> None:
+    def test__save_chunk(self) -> None:
         verbose = True
         self._test_joblib_task(verbose, {})
-
-    def test__save_chunk3(self) -> None:
-        """
-        Faulty transform_func.
-        """
-        verbose = False
-        faulty_config = {"transform_func": "faulty_func"}
-        with self.assertRaises(AssertionError) as fail:
-            self._test_joblib_task(verbose, faulty_config)
-        self.assertIn("Invalid transform_func='faulty_func'", str(fail.exception))
 
     def test_parser(self) -> None:
         """
@@ -139,7 +118,6 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         cmd.extend(["--src_dir", "dummy_by_date_dir"])
         cmd.extend(["--dst_dir", "dummy_by_asset_dir"])
         cmd.extend(["--num_threads", "1"])
-        cmd.extend(["--transform_func", "reindex_on_unix_epoch"])
         cmd.extend(["--asset_col_name", "ticker"])
         args = parser.parse_args(cmd)
         args = str(args).split("(")[-1]
@@ -166,7 +144,6 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         cmd.append(f"--dst_dir {by_asset_dir}")
         cmd.append("--num_threads 1")
         if verbose:
-            cmd.append("--transform_func reindex_on_unix_epoch")
             cmd.append("--asset_col_name ticker")
         cmd = " ".join(cmd)
         hsysinte.system(cmd)
@@ -192,7 +169,6 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         if verbose:
             kwargs.update(
                 {
-                    "transform_func": "reindex_on_unix_epoch",
                     "asset_col_name": "ticker",
                 }
             )
@@ -217,13 +193,12 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         if verbose:
             config.update(
                 {
-                    "transform_func": "reindex_on_unix_epoch",
                     "asset_col_name": "ticker",
                 }
             )
         if config_update:
             config.update(config_update)
-        imvcdtcpbdtba._save_chunk(config)
+        imvcdtcpbdtba._save_chunk(**config)
         self.check_directory_structure_with_file_contents(
             by_date_dir, by_asset_dir
         )

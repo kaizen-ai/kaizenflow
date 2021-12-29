@@ -50,17 +50,45 @@ import os
 from typing import Any, Dict, List
 
 import numpy as np
+import pandas as pd
 
 import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
-import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.io_ as hio
 import helpers.joblib_helpers as hjoblib
 import helpers.parser as hparser
 import helpers.printing as hprint
+import im_v2.common.data.transform.utils as imvcdtrut
 
 _LOG = logging.getLogger(__name__)
+
+
+# TODO(Nikola): Remove in favor of transform utils module.
+def convert_timestamp_column(
+    datetime_col: pd.Series, unit: str = "ms"
+) -> pd.Series:
+    """
+    Convert datetime as string or int into a timestamp.
+
+    :param datetime_col: series containing datetime as str or int
+    :param unit: the unit of unix epoch
+    :return: series containing datetime as `pd.Timestamp`
+    """
+    if pd.api.types.is_integer_dtype(datetime_col):
+        # Convert unix epoch into timestamp.
+        kwargs = {"unit": unit}
+        converted_datetime_col = datetime_col.apply(
+            hdateti.convert_unix_epoch_to_timestamp, **kwargs
+        )
+    elif pd.api.types.is_string_dtype(datetime_col):
+        # Convert string into timestamp.
+        converted_datetime_col = hdateti.to_generalized_datetime(datetime_col)
+    else:
+        raise ValueError(
+            "Incorrect data format. Datetime column should be of integer or string dtype."
+        )
+    return converted_datetime_col
 
 
 def _source_pq_files(src_dir: str) -> List[str]:
@@ -77,37 +105,30 @@ def _source_pq_files(src_dir: str) -> List[str]:
     return src_pq_files
 
 
-def _save_chunk(config: Dict[str, str], **kwargs: Dict[str, Any]):
+def _save_chunk(**config: Dict[str, Any]) -> None:
     """
     Smaller part of daily data that will be decoupled to asset format for
     certain period of time.
 
     Chunk is executed as small task.
     """
-    # TODO(Nikola): Use incremental and repeat from kwargs.
-    # TODO(Nikola): Check config.
     for daily_pq in config["chunk"]:
         df = hparque.from_parquet(daily_pq)
         _LOG.debug("before df=\n%s", hprint.dataframe_to_str(df.head(3)))
-        # Transform.
-        # TODO(gp): Use eval or a more general mechanism.
-        transform_func = config["transform_func"]
-        if not transform_func:
-            pass
-        elif transform_func == "reindex_on_unix_epoch":
-            in_col_name = "start_time"
-            df = hpandas.reindex_on_unix_epoch(df, in_col_name)
-            _LOG.debug("after df=\n%s", hprint.dataframe_to_str(df.head(3)))
-        else:
-            hdbg.dfatal(f"Invalid transform_func='{transform_func}'")
+        # Set datetime index.
+        datetime_col_name = "start_time"
+        reindexed_df = imvcdtrut.reindex_on_datetime(
+            df, datetime_col_name, unit="s"
+        )
+        _LOG.debug("after df=\n%s", hprint.dataframe_to_str(reindexed_df.head(3)))
         # Get partition arguments.
         dst_dir = config["dst_dir"]
         asset_col_name = config["asset_col_name"]
         # Add date partition columns to the dataframe.
-        hparque.add_date_partition_cols(df, partition_mode="day")
+        imvcdtrut.add_date_partition_cols(reindexed_df, "day")
         # Partition and write dataset.
         partition_cols = ["year", "month", "day", asset_col_name]
-        hparque.partition_dataset(df, partition_cols, dst_dir)
+        imvcdtrut.partition_dataset(reindexed_df, partition_cols, dst_dir)
 
 
 # TODO(gp): We might want to use a config to pass a set of params related to each
@@ -115,7 +136,6 @@ def _save_chunk(config: Dict[str, str], **kwargs: Dict[str, Any]):
 def _run(args: argparse.Namespace) -> None:
     # We assume that the destination dir doesn't exist, so we don't override data.
     dst_dir = args.dst_dir
-    # TODO(Nikola): Conflict with parallel incremental. Use one for all?
     if not args.no_incremental:
         # In not incremental mode the dir should already be there.
         hdbg.dassert_not_exists(dst_dir)
@@ -133,14 +153,13 @@ def _run(args: argparse.Namespace) -> None:
             "src_dir": args.src_dir,
             "chunk": chunk,
             "dst_dir": args.dst_dir,
-            "transform_func": args.transform_func,
             "asset_col_name": args.asset_col_name,
         }
         task: hjoblib.Task = (
             # args.
-            (config,),
+            tuple(),
             # kwargs.
-            {},
+            config,
         )
         tasks.append(task)
 
@@ -156,7 +175,7 @@ def _run(args: argparse.Namespace) -> None:
     num_attempts = args.num_attempts
 
     # Prepare the log file.
-    timestamp = hdateti.get_timestamp("naive_ET")
+    timestamp = hdateti.get_timestamp("ET")
     # TODO(Nikola): Change directory.
     log_dir = os.getcwd()
     log_file = os.path.join(log_dir, f"log.{timestamp}.txt")
@@ -194,13 +213,6 @@ def _parse() -> argparse.ArgumentParser:
         help="Destination directory where transformed PQ files will be stored",
     )
     parser.add_argument(
-        "--transform_func",
-        action="store",
-        type=str,
-        default="",
-        help="Function that will be used for transforming the df",
-    )
-    parser.add_argument(
         "--asset_col_name",
         action="store",
         type=str,
@@ -213,6 +225,9 @@ def _parse() -> argparse.ArgumentParser:
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
+    """
+    Standard main part of the script that is parsing provided arguments.
+    """
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     _run(args)

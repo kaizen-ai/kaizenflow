@@ -11,12 +11,13 @@ $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_dat
 len(file_names)=3
 file_names=$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data_direct_run2/tmp.scratch/by_date/date=20211230/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data_direct_run2/tmp.scratch/by_date/date=20211231/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data_direct_run2/tmp.scratch/by_date/date=20220101/data.parquet
 # $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data_direct_run2/tmp.scratch/by_date/date=20211230/data.parquet
-num_lines=61
+num_lines=67
 '''
-original shape=(72, 7)
+original shape=(72, 8)
 Head:
 {
-    "2021-12-30T00:00:00Z":{
+    "0":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640822400,
         "end_time":1640826000,
@@ -25,7 +26,8 @@ Head:
         "open":0,
         "id":0
     },
-    "2021-12-30T01:00:00Z":{
+    "1":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640826000,
         "end_time":1640829600,
@@ -34,7 +36,8 @@ Head:
         "open":1,
         "id":0
     },
-    "2021-12-30T02:00:00Z":{
+    "2":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640829600,
         "end_time":1640833200,
@@ -46,7 +49,8 @@ Head:
 }
 Tail:
 {
-    "2021-12-30T21:00:00Z":{
+    "69":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640898000,
         "end_time":1640901600,
@@ -55,7 +59,8 @@ Tail:
         "open":21,
         "id":2
     },
-    "2021-12-30T22:00:00Z":{
+    "70":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640901600,
         "end_time":1640905200,
@@ -64,7 +69,8 @@ Tail:
         "open":22,
         "id":2
     },
-    "2021-12-30T23:00:00Z":{
+    "71":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640905200,
         "end_time":1640908800,
@@ -76,12 +82,13 @@ Tail:
 }
 '''
 # $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data_direct_run2/tmp.scratch/by_date/date=20211231/data.parquet
-num_lines=61
+num_lines=67
 '''
-original shape=(72, 7)
+original shape=(72, 8)
 Head:
 {
-    "2021-12-31T00:00:00Z":{
+    "0":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640908800,
         "end_time":1640912400,
@@ -90,7 +97,8 @@ Head:
         "open":24,
         "id":0
     },
-    "2021-12-31T01:00:00Z":{
+    "1":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640912400,
         "end_time":1640916000,
@@ -99,7 +107,8 @@ Head:
         "open":25,
         "id":0
     },
-    "2021-12-31T02:00:00Z":{
+    "2":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640916000,
         "end_time":1640919600,
@@ -111,7 +120,8 @@ Head:
 }
 Tail:
 {
-    "2021-12-31T21:00:00Z":{
+    "69":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640984400,
         "end_time":1640988000,
@@ -120,7 +130,8 @@ Tail:
         "open":45,
         "id":2
     },
-    "2021-12-31T22:00:00Z":{
+    "70":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640988000,
         "end_time":1640991600,
@@ -129,7 +140,8 @@ Tail:
         "open":46,
         "id":2
     },
-    "2021-12-31T23:00:00Z":{
+    "71":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640991600,
         "end_time":1640995200,
@@ -141,12 +153,13 @@ Tail:
 }
 '''
 # $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data_direct_run2/tmp.scratch/by_date/date=20220101/data.parquet
-num_lines=61
+num_lines=67
 '''
-original shape=(72, 7)
+original shape=(72, 8)
 Head:
 {
-    "2022-01-01T00:00:00Z":{
+    "0":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1640995200,
         "end_time":1640998800,
@@ -155,7 +168,8 @@ Head:
         "open":48,
         "id":0
     },
-    "2022-01-01T01:00:00Z":{
+    "1":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1640998800,
         "end_time":1641002400,
@@ -164,7 +178,8 @@ Head:
         "open":49,
         "id":0
     },
-    "2022-01-01T02:00:00Z":{
+    "2":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1641002400,
         "end_time":1641006000,
@@ -176,7 +191,8 @@ Head:
 }
 Tail:
 {
-    "2022-01-01T21:00:00Z":{
+    "69":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1641070800,
         "end_time":1641074400,
@@ -185,7 +201,8 @@ Tail:
         "open":69,
         "id":2
     },
-    "2022-01-01T22:00:00Z":{
+    "70":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1641074400,
         "end_time":1641078000,
@@ -194,7 +211,8 @@ Tail:
         "open":70,
         "id":2
     },
-    "2022-01-01T23:00:00Z":{
+    "71":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1641078000,
         "end_time":1641081600,

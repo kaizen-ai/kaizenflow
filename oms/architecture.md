@@ -1,5 +1,5 @@
 <!--ts-->
-   * [Invariants](#invariants)
+   * [Invariants and conventions](#invariants-and-conventions)
    * [Implementation](#implementation)
       * [process_forecasts()](#process_forecasts)
       * [AbstractPortfolio](#abstractportfolio)
@@ -22,30 +22,37 @@
 
 # Invariants and conventions
 
-- In this doc we use the new names for concepts and use "aka" to refer to the old
-  name, if needed
+- In this doc we use the new names for concepts and use "aka" to refer to the
+  old name, if needed
 
 - We refer to:
-  - the as-of-date for a query as `as_of_timestamp`
-  - the actual time from `get_wall_clock_time()` as `wall_clock_timestamp` 
- 
+  - The as-of-date for a query as `as_of_timestamp`
+  - The actual time from `get_wall_clock_time()` as `wall_clock_timestamp`
+
 - Objects need to use `get_wall_clock_time()` to get the "actual" time
   - We don't want to pass `wall_clock_timestamp` because this is dangerous
-  - It is difficult to enforce no future peeking because one object tells another
-    what time is it, there is no way to double check
-  - It's ok to ask for a view of the world as of `as_of_timestamp`, but then the
-    queried object needs to check that there is no future peeking by using
+    - It is difficult to enforce that there is no future peeking when one object
+      tells another what time it is, since there is no way for the second object
+      to double check that the wall clock time is accurate
+  - We pass `wall_clock_timestamp` only when one "action" happens atomically but
+    it is split in multiple functions that need to all share this information.
+    This approach should be the exception to the rule of calling
     `get_wall_clock_time()`
 
+- It's ok to ask for a view of the world as of `as_of_timestamp`, but then the
+  queried object needs to check that there is no future peeking by using
+  `get_wall_clock_time()`
+
 - Objects might need to get `event_loop`
-  - TODO(gp): Clean it up so that we pass event loop all the times and event loop
-    has a reference to the global `get_wall_clock_time()`
+  - TODO(gp): Clean it up so that we pass event loop all the times and event
+    loop has a reference to the global `get_wall_clock_time()`
 
 - The Optimizer only thinks in terms of dollar
 
 # Implementation
 
 ## process_forecasts()
+
 - Aka `place_trades()`
 - Act on the forecasts by:
   - Get the state of portfolio (by getting fills from previous clock)
@@ -71,17 +78,17 @@
 ## AbstractPortfolio
 
 - `get_holdings()`
-  - abstract because IS, Mocked, Simulated have a different implementations
+  - Abstract because IS, Mocked, Simulated have a different implementations
 - `mark_to_market()`
   - Not abstract
   - -> `get_holdings()`, `PriceInterface`
 - `update_state()`
-  - abstract
+  - Abstract
   - Use abstract but make it NotImplemented (we will get some static checks and
     some other dynamic checks)
     - We are trying not to mix static typing and duck typing
 
-- CASH_ID, `get_characteristics()` goes in `AbstractPortolio`
+- CASH_ID, `_compute_statistics()` goes in `AbstractPortolio`
 
 ## AbstractBroker
 
@@ -113,7 +120,8 @@
 
 - `get_holdings()`
   - Check self-consistency and assumptions
-    - Check that no order is in flight otherwise we should assert or log an error
+    - Check that no order is in flight otherwise we should assert or log an
+      error
   - Query the DB and gets you the answer
 - `update_state()`
   - No-op since the portfolio is updated automatically
