@@ -1947,6 +1947,17 @@ def _to_abs_path(filename: str) -> str:
     return filename
 
 
+def _prepare_docker_ignore(ctx: Any, docker_ignore: str) -> None:
+    """
+    Copy the target docker_ignore in the proper position for `docker build`.
+    """
+    # Currently there is no built-in way to control which .dockerignore to use.
+    # https://stackoverflow.com/questions/40904409
+    hdbg.dassert_exists(docker_ignore)
+    cmd = f"cp -f {docker_ignore} .dockerignore"
+    _run(ctx, cmd)
+
+
 # =============================================================================
 # DEV image flow
 # =============================================================================
@@ -1989,14 +2000,15 @@ def docker_build_local_image(  # type: ignore
     if update_poetry:
         cmd = "cd devops/docker_build; poetry lock -v"
         _run(ctx, cmd)
-    #
+    # Prepare `.dockerignore`.
+    docker_ignore = ".dockerignore.dev"
+    _prepare_docker_ignore(ctx, docker_ignore)
+    # Build the local image.
     image_local = get_image(base_image, "local", version)
-    #
     _dassert_is_image_name_valid(image_local)
-    #
-    git_tag_prefix = get_default_param("BASE_IMAGE")
     # Tag the container with the current version of the code to keep them in
     # sync.
+    git_tag_prefix = get_default_param("BASE_IMAGE")
     container_version = get_git_tag(version)
     #
     dockerfile = "devops/docker_build/dev.Dockerfile"
@@ -2190,9 +2202,15 @@ def docker_build_prod_image(  # type: ignore
     """
     _report_task()
     _dassert_is_version_valid(version)
+    # Prepare `.dockerignore`.
+    docker_ignore = ".dockerignore.prod"
+    _prepare_docker_ignore(ctx, docker_ignore)
+    # TODO(gp): We should do a `i git_clean` to remove artifacts and check that
+    #  the client is clean so that we don't release from a dirty client.
+    # Build prod image.
     image_versioned_prod = get_image(base_image, "prod", version)
-    #
     _dassert_is_image_name_valid(image_versioned_prod)
+    #
     dockerfile = "devops/docker_build/prod.Dockerfile"
     dockerfile = _to_abs_path(dockerfile)
     #
@@ -2210,11 +2228,7 @@ def docker_build_prod_image(  # type: ignore
         .
     """
     _run(ctx, cmd)
-    # Tag prod image as versioned prod image (e.g., `prod-1.0.0`).
-    #image_versioned_prod = get_image(base_image, "prod", version)
-    #cmd = f"docker tag {image_prod} {image_versioned_prod}"
-    #_run(ctx, cmd)
-    # Tag versioned image as dev image.
+    # Tag versioned image as latest prod image.
     latest_version = None
     image_prod = get_image(base_image, "prod", latest_version)
     cmd = f"docker tag {image_versioned_prod} {image_prod}"
