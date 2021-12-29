@@ -79,57 +79,80 @@ class AbstractImClient(abc.ABC):
     """
     Abstract Interface for `IM` client.
 
-    Clients derived from `AbstractImClient` read data for a single
-    `FullSymbol`, to read data for multiple `FullSymbols` use
-    `MultipleSymbolsImClient`.
+    Responsible for retrieving the market data for different vendors
+    from different backends.
     """
 
     def read_data(
         self,
-        full_symbol: Union[FullSymbol, List[FullSymbol]],
+        full_symbols: List[FullSymbol],
         *,
         normalize: bool = True,
+        mode: str = "concat",
+        full_symbol_col_name: str = "full_symbol",
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
-        **kwargs: Dict[str, Any],
-    ) -> pd.DataFrame:
+        **kwargs: Any,
+    ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
         """
-        Read and process data for `FullSymbols` (i.e. currency pair from a
-        single exchange) in [start_ts, end_ts).
+        Read data for multiple full symbols.
 
         None `start_ts` and `end_ts` means the entire period of time available.
 
-        Data processing includes:
-            - normalization specific of the vendor
-            - dropping duplicates
-            - resampling to 1 minute
-            - sanity check of the data
-
-        :param full_symbol: `exchange::symbol`, e.g. `binance::BTC_USDT`
+        :param full_symbols: list of full symbols, e.g.
+            `['binance::BTC_USDT', 'kucoin::ETH_USDT']`
         :param normalize: whether to transform data or not
+        :param mode: output mode
+            - concat: store data for multiple full symbols in one dataframe
+            - dict: store data in a dict of a type `Dict[full_symbol, data]`
+        :param full_symbol_col_name: name of the column with full symbols
         :param start_ts: the earliest date timestamp to load data for
         :param end_ts: the latest date timestamp to load data for
-        :return: data for a single `FullSymbol` in [start_ts, end_ts)
+        :return: combined data for provided symbols
         """
-        data = self._read_data(
-            full_symbol, start_ts=start_ts, end_ts=end_ts, **kwargs
-        )
-        if normalize:
-            data = self._normalize_data(data)
-            data = hpandas.drop_duplicates(data)
-            data = hpandas.resample_df(data, "T")
-            # Verify that data is valid.
-            self._dassert_is_valid(data)
-        return data
+        hdbg.dassert_isinstance(full_symbols, list)
+        # Verify that all the provided full symbols are unique.
+        hdbg.dassert_no_duplicates(full_symbols)
+        # Initialize results dict.
+        full_symbol_to_df = {}
+        for full_symbol in sorted(full_symbols):
+            df = self._read_data(
+                full_symbol,
+                start_ts,
+                end_ts,
+                **kwargs,
+            )
+            # Sort data by index for stability.
+            df = df.sort_index()
+            if normalize:
+                # Normalize data.
+                df = self._normalize_data(df)
+            # Insert column with full symbol to the dataframe.
+            df.insert(0, full_symbol_col_name, full_symbol)
+            # Add full symbol data to the results dict.
+            full_symbol_to_df[full_symbol] = df
+        if mode == "concat":
+            # Combine results dict in a dataframe if specified.
+            ret = pd.concat(full_symbol_to_df.values())
+        elif mode == "dict":
+            # Return results dict if specified.
+            ret = full_symbol_to_df
+        else:
+            raise ValueError(f"Invalid mode=`{mode}`")
+        return ret
 
     def get_start_ts_available(self, full_symbol: FullSymbol) -> pd.Timestamp:
         """
         Return the earliest timestamp available for a given `FullSymbol`.
         """
         # TODO(Grisha): add caching.
-        data = self.read_data(full_symbol, normalize=True)
+        # Read data for the entire period of time available.
+        start_timestamp = None
+        end_timestamp = None
+        data = self._read_data(full_symbol, start_timestamp, end_timestamp)
+        normalized_data = self._normalize_data(data)
         # It is assumed that timestamp is always stored as index.
-        start_ts = data.index.min()
+        start_ts = normalized_data.index.min()
         return start_ts
 
     def get_end_ts_available(self, full_symbol: FullSymbol) -> pd.Timestamp:
@@ -137,9 +160,12 @@ class AbstractImClient(abc.ABC):
         Return the latest timestamp available for a given `FullSymbol`.
         """
         # TODO(Grisha): add caching.
-        data = self.read_data(full_symbol, normalize=True)
+        start_timestamp = None
+        end_timestamp = None
+        data = self._read_data(full_symbol, start_timestamp, end_timestamp)
+        normalized_data = self._normalize_data(data)
         # It is assumed that timestamp is always stored as index.
-        end_ts = data.index.max()
+        end_ts = normalized_data.index.max()
         return end_ts
 
     @staticmethod
@@ -149,14 +175,30 @@ class AbstractImClient(abc.ABC):
         Get universe as full symbols.
         """
 
+    def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Normalize data.
+
+        Normalization includes:
+            - transformation specific of the vendor
+            - dropping duplicates
+            - resampling to 1 minute
+            - sanity check of the data
+        """
+        df = self._transform_data(df)
+        df = hpandas.drop_duplicates(df)
+        df = hpandas.resample_df(df, "T")
+        # Verify that data is valid.
+        self._dassert_is_valid(df)
+        return df
+
     @abc.abstractmethod
     def _read_data(
         self,
         full_symbol: FullSymbol,
-        *,
-        start_ts: Optional[pd.Timestamp] = None,
-        end_ts: Optional[pd.Timestamp] = None,
-        **kwargs: Dict[str, Any],
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
         Read data for a single `FullSymbol` (i.e. currency pair from a single
@@ -168,7 +210,7 @@ class AbstractImClient(abc.ABC):
 
     @staticmethod
     @abc.abstractmethod
-    def _normalize_data(df: pd.DataFrame) -> pd.DataFrame:
+    def _transform_data(df: pd.DataFrame) -> pd.DataFrame:
         """
         Apply transformation specific of the vendor, e.g. rename columns,
         convert data types.
@@ -207,109 +249,3 @@ class AbstractImClient(abc.ABC):
             0,
             msg=f"There are {n_duplicated_rows} duplicated rows in data",
         )
-
-
-# #############################################################################
-# MultipleSymbolsClient
-# #############################################################################
-
-
-class MultipleSymbolsImClient(AbstractImClient):
-    """
-    Object compatible with `AbstractImClient` interface which reads data for
-    multiple full symbols.
-    """
-
-    def __init__(self, class_: AbstractImClient, mode: str) -> None:
-        """
-        :param class_: `AbstractImClient` object
-        :param mode: output mode
-            - concat: store data for multiple full symbols in one dataframe
-            - dict: store data in a dict of a type `Dict[full_symbol, data]`
-        """
-        # Store an object from `AbstractImClient`.
-        self._class = class_
-        # Specify output mode.
-        hdbg.dassert_in(mode, ("concat", "dict"))
-        self._mode = mode
-
-    def read_data(
-        self,
-        full_symbols: List[FullSymbol],
-        *,
-        full_symbol_col_name: str = "full_symbol",
-        normalize: bool = True,
-        start_ts: Optional[pd.Timestamp] = None,
-        end_ts: Optional[pd.Timestamp] = None,
-        **kwargs: Dict[str, Any],
-    ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
-        """
-        Read data for multiple full symbols.
-
-        None `start_ts` and `end_ts` means the entire period of time available.
-
-        :param full_symbols: list of full symbols, e.g.
-            `['binance::BTC_USDT', 'kucoin::ETH_USDT']`
-        :param full_symbol_col_name: name of the column with full symbols
-        :param normalize: whether to transform data or not
-        :param start_ts: the earliest date timestamp to load data for
-        :param end_ts: the latest date timestamp to load data for
-        :return: combined data for provided symbols
-        """
-        # Verify that all the provided full symbols are unique.
-        hdbg.dassert_no_duplicates(full_symbols)
-        # Initialize results dict.
-        full_symbol_to_df = {}
-        for full_symbol in sorted(full_symbols):
-            # Read data for each given full symbol.
-            df = self._class.read_data(
-                full_symbol=full_symbol,
-                normalize=normalize,
-                start_ts=start_ts,
-                end_ts=end_ts,
-                **kwargs,
-            )
-            # Insert column with full symbol to the dataframe.
-            df.insert(0, full_symbol_col_name, full_symbol)
-            # Add full symbol data to the results dict.
-            full_symbol_to_df[full_symbol] = df
-        if self._mode == "concat":
-            # Combine results dict in a dataframe if specified.
-            ret = pd.concat(full_symbol_to_df.values())
-            # Sort results dataframe by increasing index and full symbol.
-            ret = ret.sort_index().sort_values(by=full_symbol_col_name)
-        elif self._mode == "dict":
-            # Return results dict if specified.
-            ret = full_symbol_to_df
-        else:
-            raise ValueError(f"Invalid mode=`{self._mode}`")
-        return ret
-
-    def get_universe(self) -> List[FullSymbol]:
-        """
-        See `AbstractImClient`.
-        """
-        return self._class.get_universe()
-
-    def _read_data(
-        self,
-        full_symbol: FullSymbol,
-        *,
-        start_ts: Optional[pd.Timestamp] = None,
-        end_ts: Optional[pd.Timestamp] = None,
-        **kwargs: Dict[str, Any],
-    ) -> pd.DataFrame:
-        """
-        See `AbstractImClient`.
-        """
-        raise NotImplementedError
-
-    @staticmethod
-    def _normalize_data(df: pd.DataFrame) -> pd.DataFrame:
-        """
-        See `AbstractImClient`.
-        """
-        raise NotImplementedError
-
-    # TODO(Grisha/Dan): Decide if we want to also implement other methods of the base class.
-    # TODO(Grisha/Dan): Decide if we want to add get_start(end)_ts_available() methods.

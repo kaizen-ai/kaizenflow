@@ -136,10 +136,7 @@ display(cdd_binance_df.shape)
 ccxt_client = imvcdclcl.CcxtCsvFileSystemClient(
     data_type="ohlcv", root_dir=root_dir, aws_profile="am"
 )
-multiple_symbols_client = ivcdclcl.MultipleSymbolsImClient(
-    class_=ccxt_client, mode="concat"
-)
-ccxt_binance_df = multiple_symbols_client.read_data(
+ccxt_binance_df = ccxt_client.read_data(
     currency_pair_intersection_binance
 )
 
@@ -322,10 +319,7 @@ def calculate_statistics_for_stamps(
             ccxt_client = imvcdclcl.CcxtCsvFileSystemClient(
                 data_type="ohlcv", root_dir=root_dir, aws_profile="am"
             )
-            multiple_symbols_client = ivcdclcl.MultipleSymbolsClient(
-                class_=ccxt_client, mode="concat"
-            )
-            coin = multiple_symbols_client.read_data([full_symbol])
+            coin = ccxt_client.read_data([full_symbol])
             exchange_id, currency_pair = ivcdclcl.parse_full_symbol(full_symbol)
             coin = coin.sort_index()
         # Reseting DateTime index, so it can be further used in the calculations.
