@@ -13,25 +13,31 @@ source /${ENV_NAME}/bin/activate
 
 source devops/docker_run/setenv.sh
 
-echo "Testing sudo"
-
-#mount -a || true
-
 # Allow working with files outside a container.
 #umask 000
 
-echo "Setting up Docker"
-if [[ ! -d /etc/docker ]]; then
-    sudo mkdir /etc/docker
+# TODO(gp): This should be enabled for `dev` container and disabled for `prod`.
+# Maybe pass an arg to docker command line or an env var through docker compose.
+ENABLE_DIND=1
+echo "ENABLE_DIND=$ENABLE_DIND"
+
+if [[ $ENABLE_DIND == 1 ]]; then
+    echo "Setting up Docker-in-docker"
+    if [[ ! -d /etc/docker ]]; then
+        sudo mkdir /etc/docker
+    fi;
+    # This is needed to run the database in dind mode (see CmTask309).
+    # TODO(gp): For some reason appending to file directly `>>` doesn't work.
+    sudo echo '{ "storage-driver": "vfs" }' | sudo tee -a /etc/docker/daemon.json
+
+    # Start Docker Engine.
+    sudo /etc/init.d/docker start
+    sudo /etc/init.d/docker status
+
 fi;
-# This is needed to run the database in dind mode (see CmTask309).
-# TODO(gp): For some reason appending to file directly `>>` doesn't work.
-sudo echo '{ "storage-driver": "vfs" }' | sudo tee -a /etc/docker/daemon.json
 
-# Start Docker Engine.
-sudo /etc/init.d/docker start
-sudo /etc/init.d/docker status
-
+# Mount other file systems.
+# mount -a || true
 # sudo change perms to /mnt/tmpfs
 
 # Check set-up.
