@@ -64,6 +64,7 @@ class AbstractMarketDataInterface(abc.ABC):
         columns: Optional[List[str]],
         get_wall_clock_time: hdateti.GetWallClockTime,
         *,
+        # TODO(Dan): Converge on timezone `America/New_York` vs `US/Eastern` CMTask #217.
         timezone: str = "America/New_York",
         sleep_in_secs: float = 1.0,
         time_out_in_secs: int = 60 * 2,
