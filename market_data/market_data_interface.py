@@ -46,14 +46,11 @@ class AbstractMarketDataInterface(abc.ABC):
       using multiple IM backends
     - Remap columns to connect data backends to consumers
     - Implement some market related transformations (e.g., TWAP)
+    - Convert data (i.e. `start_timestamp` and `end_timestamp`) into the specified timezone
 
     Non-responsibilities:
     - In general don't access data directly but rely on an AbstractImClient object
       to retrieve the data from different backends
-
-    All the timestamps in the interface are in ET timezone.
-    - TODO(gp): Maybe UTC with the possibility of a switch to enforce certain
-       tz?
     """
 
     def __init__(
@@ -67,6 +64,8 @@ class AbstractMarketDataInterface(abc.ABC):
         columns: Optional[List[str]],
         get_wall_clock_time: hdateti.GetWallClockTime,
         *,
+        # TODO(Dan): Converge on timezone `America/New_York` vs `US/Eastern` CMTask #217.
+        timezone: str = "America/New_York",
         sleep_in_secs: float = 1.0,
         time_out_in_secs: int = 60 * 2,
         column_remap: Optional[Dict[str, str]] = None,
@@ -81,6 +80,7 @@ class AbstractMarketDataInterface(abc.ABC):
         :param end_time_col_name: the column with the end_time
         :param columns: columns to return
         :param get_wall_clock_time, speed_up_factor: like in `ReplayedTime`
+        :param timezone: timezone to convert normalized output dates to
         :param sleep_in_secs, time_out_in_secs: sample every `sleep_in_secs`
             seconds waiting up to `time_out_in_secs` seconds
         :param column_remap: dict of columns to remap or `None`
@@ -98,6 +98,7 @@ class AbstractMarketDataInterface(abc.ABC):
         self._sleep_in_secs = sleep_in_secs
         #
         self._column_remap = column_remap
+        self._timezone = timezone
         # Compute the max number of iterations.
         max_iterations = int(time_out_in_secs / sleep_in_secs)
         hdbg.dassert_lte(1, max_iterations)
@@ -200,6 +201,10 @@ class AbstractMarketDataInterface(abc.ABC):
         """
         Return price data in [start_ts, end_ts).
 
+        All the `get_data_*` functions should go through this function since
+        it is in charge of converting the data to the right timezone and
+        performing the column name remapping.
+
         :param ts_col_name: the name of the column (before the remapping) to filter
             on
         :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
@@ -219,6 +224,11 @@ class AbstractMarketDataInterface(abc.ABC):
             normalize_data,
             limit,
         )
+        if normalize_data:
+            # Convert start and end timestamps to `self._timezone` if data is
+            # normalized.
+            df = self._convert_dates_to_timezone(df)
+        # Remap column names.
         df = self._remap_columns(df)
         _LOG.verb_debug("-> df=\n%s", hprint.dataframe_to_str(df))
         return df
@@ -445,6 +455,23 @@ class AbstractMarketDataInterface(abc.ABC):
         if self._column_remap:
             hpandas.dassert_valid_remap(df.columns.tolist(), self._column_remap)
             df = df.rename(columns=self._column_remap)
+        return df
+
+    def _convert_dates_to_timezone(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Convert start and end timestamps to the specified timezone.
+
+        :param df: normalized data
+        :return: data with start and end dates in specified timezone
+        """
+        # Convert end timestamp values that are used as dataframe index.
+        hpandas.dassert_index_is_datetime(df)
+        df.index = df.index.tz_convert(self._timezone)
+        # Convert start timestamp column values.
+        hdbg.dassert_in(self._start_time_col_name, df.columns)
+        df[self._start_time_col_name] = df[
+            self._start_time_col_name
+        ].dt.tz_convert(self._timezone)
         return df
 
     @staticmethod
