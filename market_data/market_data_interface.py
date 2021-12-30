@@ -64,7 +64,7 @@ class AbstractMarketDataInterface(abc.ABC):
         columns: Optional[List[str]],
         get_wall_clock_time: hdateti.GetWallClockTime,
         *,
-        timezone: str = "US/Eastern",
+        timezone: str = "America/New_York",
         sleep_in_secs: float = 1.0,
         time_out_in_secs: int = 60 * 2,
         column_remap: Optional[Dict[str, str]] = None,
