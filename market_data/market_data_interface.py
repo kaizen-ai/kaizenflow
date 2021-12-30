@@ -223,14 +223,8 @@ class AbstractMarketDataInterface(abc.ABC):
             normalize_data,
             limit,
         )
-        # Convert start and end timestamps to `self._tz` if data is normalized.
-        if normalize_data:
-            # Convert datetime index with end timestamp to `self._tz`.
-            df.index = df.index.tz_convert(self._tz)
-            # Convert start timestamp to `self._tz`.
-            df[self._start_time_col_name] = df[
-                self._start_time_col_name
-            ].dt.tz_convert(self._tz)
+        # Convert start and end timestamps to `self._tz`.
+        df = self._convert_dates_to_tz(df)
         # Remap column names.
         df = self._remap_columns(df)
         _LOG.verb_debug("-> df=\n%s", hprint.dataframe_to_str(df))
@@ -462,18 +456,26 @@ class AbstractMarketDataInterface(abc.ABC):
 
     def _convert_dates_to_tz(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Convert all dates in the dataframe to the specified timezone.
+        Convert start and end timestamps to the specified timezone.
 
         :param df: input data
-        :return: data with dates in specified timezone
+        :return: data with start and end dates in specified timezone
         """
-        # Detect datetime columns and convert them to `self._tz`.
-        for col in df.columns:
-            if "datetime" in str(df[col].dtype):
-                df[col] = df[col].dt.tz_convert(self._tz)
-        if "datetime" in str(df.index.dtype):
-            # Convert datetime index to `self._tz`.
+        if self._end_time_col_name in df.columns:
+            # If end timestamp column name is in output columns,
+            # convert it to `self._tz`.
+            df[self._end_time_col_name] = df[self._end_time_col_name].dt.tz_convert(self._tz)
+        else:
+            # End timestamp is used as index after data normalization, so if
+            # end timestamp column name is not present in output columns,
+            # verify that index is timestamp and convert it to `self._tz`.
+            hdbg.dassert_in("datetime", str(df.index.dtype))
             df.index = df.index.tz_convert(self._tz)
+        #
+        if self._start_time_col_name in df.columns:
+            # If start timestamp column name is in output columns,
+            # convert it to `self._tz`.
+            df[self._start_time_col_name] = df[self._start_time_col_name].dt.tz_convert(self._tz)
         return df
 
     @staticmethod
