@@ -44,8 +44,12 @@ class TestRealTimeReturnPipeline1(hunitest.TestCase):
             dag_builder = dtfpirepip.ReturnsPipeline()
             config = dag_builder.get_config_template()
             # Inject the real-time node.
-            start_datetime = pd.Timestamp("2000-01-01 09:30:00-05:00")
-            end_datetime = pd.Timestamp("2000-01-01 10:30:00-05:00")
+            start_datetime = pd.Timestamp(
+                "2000-01-01 09:30:00-05:00", tz="America/New_York"
+            )
+            end_datetime = pd.Timestamp(
+                "2000-01-01 10:30:00-05:00", tz="America/New_York"
+            )
             columns = ["close", "vol"]
             asset_ids = [101]
             df = mdmdinex.generate_random_price_data(
