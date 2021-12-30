@@ -46,6 +46,7 @@ class AbstractMarketDataInterface(abc.ABC):
       using multiple IM backends
     - Remap columns to connect data backends to consumers
     - Implement some market related transformations (e.g., TWAP)
+    - Convert start and end timestamps in the interface to the specified timezone
 
     Non-responsibilities:
     - In general don't access data directly but rely on an AbstractImClient object
@@ -66,7 +67,7 @@ class AbstractMarketDataInterface(abc.ABC):
         sleep_in_secs: float = 1.0,
         time_out_in_secs: int = 60 * 2,
         column_remap: Optional[Dict[str, str]] = None,
-        tz: str = "UTC",
+        tz: str = "US/Eastern",
     ):
         """
         Constructor.
@@ -199,6 +200,10 @@ class AbstractMarketDataInterface(abc.ABC):
         """
         Return price data in [start_ts, end_ts).
 
+        All the `get_data_*` functions should go through this function since
+        it is in charge of converting the data to the right timezone and
+        performing the column name remapping.
+
         :param ts_col_name: the name of the column (before the remapping) to filter
             on
         :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
@@ -218,8 +223,14 @@ class AbstractMarketDataInterface(abc.ABC):
             normalize_data,
             limit,
         )
-        # Convert dates to the specified timezone.
-        df = self._convert_dates_to_tz(df)
+        # Convert start and end timestamps to `self._tz` if data is normalized.
+        if normalize_data:
+            # Convert datetime index with end timestamp to `self._tz`.
+            df.index = df.index.tz_convert(self._tz)
+            # Convert start timestamp to `self._tz`.
+            df[self._start_time_col_name] = df[
+                self._start_time_col_name
+            ].dt.tz_convert(self._tz)
         # Remap column names.
         df = self._remap_columns(df)
         _LOG.verb_debug("-> df=\n%s", hprint.dataframe_to_str(df))
