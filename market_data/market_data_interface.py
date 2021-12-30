@@ -464,7 +464,9 @@ class AbstractMarketDataInterface(abc.ABC):
         if self._end_time_col_name in df.columns:
             # If end timestamp column name is in output columns,
             # convert it to `self._tz`.
-            df[self._end_time_col_name] = df[self._end_time_col_name].dt.tz_convert(self._tz)
+            df[self._end_time_col_name] = df[
+                self._end_time_col_name
+            ].dt.tz_convert(self._tz)
         else:
             # End timestamp is used as index after data normalization, so if
             # end timestamp column name is not present in output columns,
@@ -475,7 +477,9 @@ class AbstractMarketDataInterface(abc.ABC):
         if self._start_time_col_name in df.columns:
             # If start timestamp column name is in output columns,
             # convert it to `self._tz`.
-            df[self._start_time_col_name] = df[self._start_time_col_name].dt.tz_convert(self._tz)
+            df[self._start_time_col_name] = df[
+                self._start_time_col_name
+            ].dt.tz_convert(self._tz)
         return df
 
     @staticmethod
