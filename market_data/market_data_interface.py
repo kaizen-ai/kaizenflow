@@ -223,8 +223,10 @@ class AbstractMarketDataInterface(abc.ABC):
             normalize_data,
             limit,
         )
-        # Convert start and end timestamps to `self._timezone`.
-        df = self._convert_dates_to_timezone(df)
+        if normalize_data:
+            # Convert start and end timestamps to `self._timezone` if data is
+            # normalized.
+            df = self._convert_dates_to_timezone(df)
         # Remap column names.
         df = self._remap_columns(df)
         _LOG.verb_debug("-> df=\n%s", hprint.dataframe_to_str(df))
@@ -458,28 +460,17 @@ class AbstractMarketDataInterface(abc.ABC):
         """
         Convert start and end timestamps to the specified timezone.
 
-        :param df: input data
+        :param df: normalized data
         :return: data with start and end dates in specified timezone
         """
-        if self._end_time_col_name in df.columns:
-            # If end timestamp column name is in output columns,
-            # convert it to `self._timezone`.
-            df[self._end_time_col_name] = df[
-                self._end_time_col_name
-            ].dt.tz_convert(self._timezone)
-        else:
-            # End timestamp is used as index after data normalization, so if
-            # end timestamp column name is not present in output columns,
-            # verify that index is timestamp and convert it to `self._timezone`.
-            hpandas.dassert_index_is_datetime(df)
-            df.index = df.index.tz_convert(self._timezone)
-        #
-        if self._start_time_col_name in df.columns:
-            # If start timestamp column name is in output columns,
-            # convert it to `self._timezone`.
-            df[self._start_time_col_name] = df[
-                self._start_time_col_name
-            ].dt.tz_convert(self._timezone)
+        # Convert end timestamp values that are used as dataframe index.
+        hpandas.dassert_index_is_datetime(df)
+        df.index = df.index.tz_convert(self._timezone)
+        # Convert start timestamp column values.
+        hdbg.dassert_in(self._start_time_col_name, df.columns)
+        df[self._start_time_col_name] = df[
+            self._start_time_col_name
+        ].dt.tz_convert(self._timezone)
         return df
 
     @staticmethod
