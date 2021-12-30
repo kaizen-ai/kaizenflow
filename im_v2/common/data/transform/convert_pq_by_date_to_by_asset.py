@@ -64,33 +64,6 @@ import im_v2.common.data.transform.utils as imvcdtrut
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(Nikola): Remove in favor of transform utils module.
-def convert_timestamp_column(
-    datetime_col: pd.Series, unit: str = "ms"
-) -> pd.Series:
-    """
-    Convert datetime as string or int into a timestamp.
-
-    :param datetime_col: series containing datetime as str or int
-    :param unit: the unit of unix epoch
-    :return: series containing datetime as `pd.Timestamp`
-    """
-    if pd.api.types.is_integer_dtype(datetime_col):
-        # Convert unix epoch into timestamp.
-        kwargs = {"unit": unit}
-        converted_datetime_col = datetime_col.apply(
-            hdateti.convert_unix_epoch_to_timestamp, **kwargs
-        )
-    elif pd.api.types.is_string_dtype(datetime_col):
-        # Convert string into timestamp.
-        converted_datetime_col = hdateti.to_generalized_datetime(datetime_col)
-    else:
-        raise ValueError(
-            "Incorrect data format. Datetime column should be of integer or string dtype."
-        )
-    return converted_datetime_col
-
-
 def _source_pq_files(src_dir: str) -> List[str]:
     """
     Generator for all the Parquet files in a given dir.
@@ -225,9 +198,6 @@ def _parse() -> argparse.ArgumentParser:
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
-    """
-    Standard main part of the script that is parsing provided arguments.
-    """
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     _run(args)

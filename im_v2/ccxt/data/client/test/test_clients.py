@@ -13,7 +13,7 @@ import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.db.utils as imvcodbut
 
 _LOCAL_ROOT_DIR = os.path.join(
-    hgit.get_client_root(False),
+    hgit.get_amp_abs_path(),
     "im_v2/ccxt/data/client/test/test_data",
 )
 
