@@ -15,7 +15,7 @@ _LOG = logging.getLogger(__name__)
 
 class Test_Create_Client(hunitest.TestCase):
     """
-    Simple smoke test to verify cconnection to AWS
+    Simple smoke test to verify cconnection to AWS.
     """
 
     def test_create_client1(self) -> None:
@@ -26,7 +26,7 @@ class Test_Create_Client(hunitest.TestCase):
 @mock_secretsmanager
 class Test_Get_Secret(hunitest.TestCase):
     """
-    Verify that the secret can be retrieved correctly
+    Verify that the secret can be retrieved correctly.
     """
 
     @mock_secretsmanager
@@ -42,7 +42,7 @@ class Test_Get_Secret(hunitest.TestCase):
 
 class Test_Store_Secret(hunitest.TestCase):
     """
-    Verify that a secret can be stored correctly
+    Verify that a secret can be stored correctly.
     """
 
     @mock_secretsmanager
