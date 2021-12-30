@@ -9,14 +9,17 @@ import json
 import boto3
 from botocore.client import BaseClient
 from botocore.exceptions import ClientError
+from typing import optional
+
 import helpers.dbg as hdbg
+
 
 def get_secrets_client(region_name: str = "eu-north-1") -> BaseClient:
     """
     Return client to work with AWS Secrets Manager in the specified region.
     """
     hdbg.dassert_isinstance(region_name, str)
-    session = boto3.session.Session(profile_name='cm')
+    session = boto3.session.Session(profile_name="cm")
     client = session.client(
         service_name="secretsmanager", region_name=region_name
     )
@@ -24,10 +27,12 @@ def get_secrets_client(region_name: str = "eu-north-1") -> BaseClient:
 
 
 # TODO(Juraj): add support to access secrets stored in different regions, not important rn
-def get_secret(secret_name: str) -> dict:
+def get_secret(secret_name: str) -> Optional[dict]:
     """
     Fetch secret values(s) from AWS secrets manager, returns a dictionary of
-    key-value pairs.
+    key-value pairs. example: get_secret('binance') returns:
+
+    { 'apiKey': '<secret_value>', 'secret': '<secret_value>' }
     """
     hdbg.dassert_isinstance(secret_name, str)
 
@@ -52,7 +57,7 @@ def get_secret(secret_name: str) -> dict:
 # TODO(Juraj): add support to store secrets in different regions, not important rn
 def store_secret(
     secret_name: str, secret_value: dict, description: str = ""
-) -> bool:
+) -> Optional[bool]:
     """
     Store secret values(s) from AWS secrets manager, specify string as a dict
     of key-value pairs.
