@@ -46,7 +46,7 @@ class AbstractMarketDataInterface(abc.ABC):
       using multiple IM backends
     - Remap columns to connect data backends to consumers
     - Implement some market related transformations (e.g., TWAP)
-    - Convert data (i.e. `start timestamp` and `end timestamp` into the specified timezone
+    - Convert data (i.e. `start_timestamp` and `end_timestamp` into the specified timezone
 
     Non-responsibilities:
     - In general don't access data directly but rely on an AbstractImClient object
