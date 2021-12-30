@@ -46,7 +46,7 @@ class AbstractMarketDataInterface(abc.ABC):
       using multiple IM backends
     - Remap columns to connect data backends to consumers
     - Implement some market related transformations (e.g., TWAP)
-    - Convert start and end timestamps in the interface to the specified timezone
+    - Convert data (i.e. `start timestamp` and `end timestamp` into the specified timezone
 
     Non-responsibilities:
     - In general don't access data directly but rely on an AbstractImClient object
@@ -64,10 +64,10 @@ class AbstractMarketDataInterface(abc.ABC):
         columns: Optional[List[str]],
         get_wall_clock_time: hdateti.GetWallClockTime,
         *,
+        timezone: str = "US/Eastern",
         sleep_in_secs: float = 1.0,
         time_out_in_secs: int = 60 * 2,
         column_remap: Optional[Dict[str, str]] = None,
-        tz: str = "US/Eastern",
     ):
         """
         Constructor.
@@ -79,10 +79,10 @@ class AbstractMarketDataInterface(abc.ABC):
         :param end_time_col_name: the column with the end_time
         :param columns: columns to return
         :param get_wall_clock_time, speed_up_factor: like in `ReplayedTime`
+        :param timezone: timezone to convert normalized output dates to
         :param sleep_in_secs, time_out_in_secs: sample every `sleep_in_secs`
             seconds waiting up to `time_out_in_secs` seconds
         :param column_remap: dict of columns to remap or `None`
-        :param tz: timezone to convert normalized output dates to
         """
         _LOG.debug("")
         self._asset_id_col = asset_id_col
@@ -97,7 +97,7 @@ class AbstractMarketDataInterface(abc.ABC):
         self._sleep_in_secs = sleep_in_secs
         #
         self._column_remap = column_remap
-        self._tz = tz
+        self._timezone = timezone
         # Compute the max number of iterations.
         max_iterations = int(time_out_in_secs / sleep_in_secs)
         hdbg.dassert_lte(1, max_iterations)
@@ -223,8 +223,8 @@ class AbstractMarketDataInterface(abc.ABC):
             normalize_data,
             limit,
         )
-        # Convert start and end timestamps to `self._tz`.
-        df = self._convert_dates_to_tz(df)
+        # Convert start and end timestamps to `self._timezone`.
+        df = self._convert_dates_to_timezone(df)
         # Remap column names.
         df = self._remap_columns(df)
         _LOG.verb_debug("-> df=\n%s", hprint.dataframe_to_str(df))
@@ -454,7 +454,7 @@ class AbstractMarketDataInterface(abc.ABC):
             df = df.rename(columns=self._column_remap)
         return df
 
-    def _convert_dates_to_tz(self, df: pd.DataFrame) -> pd.DataFrame:
+    def _convert_dates_to_timezone(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Convert start and end timestamps to the specified timezone.
 
@@ -463,23 +463,23 @@ class AbstractMarketDataInterface(abc.ABC):
         """
         if self._end_time_col_name in df.columns:
             # If end timestamp column name is in output columns,
-            # convert it to `self._tz`.
+            # convert it to `self._timezone`.
             df[self._end_time_col_name] = df[
                 self._end_time_col_name
-            ].dt.tz_convert(self._tz)
+            ].dt.tz_convert(self._timezone)
         else:
             # End timestamp is used as index after data normalization, so if
             # end timestamp column name is not present in output columns,
-            # verify that index is timestamp and convert it to `self._tz`.
-            hdbg.dassert_in("datetime", str(df.index.dtype))
-            df.index = df.index.tz_convert(self._tz)
+            # verify that index is timestamp and convert it to `self._timezone`.
+            hpandas.dassert_index_is_datetime(df)
+            df.index = df.index.tz_convert(self._timezone)
         #
         if self._start_time_col_name in df.columns:
             # If start timestamp column name is in output columns,
-            # convert it to `self._tz`.
+            # convert it to `self._timezone`.
             df[self._start_time_col_name] = df[
                 self._start_time_col_name
-            ].dt.tz_convert(self._tz)
+            ].dt.tz_convert(self._timezone)
         return df
 
     @staticmethod
