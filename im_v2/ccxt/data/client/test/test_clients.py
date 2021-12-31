@@ -159,7 +159,6 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
         # Delete the table.
         hsql.remove_table(self.connection, "ccxt_ohlcv")
 
-    @pytest.mark.slow("needs to pull `postgres` image")
     def test_read_data2(self) -> None:
         """
         Verify that data from DB is read and filtered correctly.
