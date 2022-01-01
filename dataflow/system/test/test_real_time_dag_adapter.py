@@ -46,7 +46,7 @@ class TestRealtimeDagAdapter1(hunitest.TestCase):
         dag = dag_adapter.get_dag(config)
         #
         file_name = os.path.join(self.get_scratch_space(), "dag.png")
-        dtfcorvisu.draw_to_file(dag, file_name)
+        dtfcobuexa.draw_to_file(dag, file_name)
         txt.append(hprint.frame("final dag"))
         txt.append(str(dag))
         # Check.
