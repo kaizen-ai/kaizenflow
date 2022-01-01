@@ -24,7 +24,7 @@ def _check_output(
     expected_length: int,
     expected_exchange_ids: List[str],
     expected_currency_pairs: List[str],
-    expected_df_as_str: str,
+    expected_signature: str,
 ) -> None:
     """
     Verify that actual outcome dataframe matches the expected one.
@@ -33,26 +33,38 @@ def _check_output(
     :param expected_length: expected outcome dataframe length
     :param expected_exchange_ids: list of expected exchange ids
     :param expected_currency_pairs: list of expected currency pairs
-    :param expected_df_as_str: expected outcome as string
+    :param expected_signature: expected outcome as string
     """
-    # Check output df length.
-    self_.assert_equal(str(expected_length), str(actual_df.shape[0]))
-    # Check unique exchange ids in the output df.
+    # Build signature.
+    act = []
+    #
+    actual_df = actual_df[sorted(actual_df.columns)]
+    act.append(hprint.df_to_short_str("df", actual_df))
+    #
     actual_exchange_ids = sorted(list(actual_df["exchange_id"].dropna().unique()))
-    self_.assert_equal(str(actual_exchange_ids), str(expected_exchange_ids))
-    # Check unique currency pairs in the output df.
+    act.append("exchange_ids=%s" % ",".join(actual_exchange_ids))
+    #
     actual_currency_pairs = sorted(
         list(actual_df["currency_pair"].dropna().unique())
     )
-    self_.assert_equal(str(actual_currency_pairs), str(expected_currency_pairs))
-    actual_df = actual_df[sorted(actual_df.columns)]
-    actual_df_as_str = hprint.df_to_short_str("df", actual_df)
+    act.append("currency_pairs=%s" % ",".join(actual_currency_pairs))
+    actual_signature = "\n".join(act)
+    # Check.
     self_.assert_equal(
-        actual_df_as_str,
-        expected_df_as_str,
+        actual_signature,
+        expected_signature,
         dedent=True,
         fuzzy_match=True,
     )
+    # Check output df length.
+    self_.assert_equal(str(expected_length), str(actual_df.shape[0]))
+    # Check unique exchange ids in the output df.
+    self_.assert_equal(str(actual_exchange_ids), str(expected_exchange_ids))
+    # Check unique currency pairs in the output df.
+    self_.assert_equal(str(actual_currency_pairs), str(expected_currency_pairs))
+
+
+# #############################################################################
 
 
 class TestGetFilePath(hunitest.TestCase):
@@ -60,11 +72,12 @@ class TestGetFilePath(hunitest.TestCase):
         """
         Test supported exchange id and currency pair.
         """
+        data_type = "ohlcv"
+        root_dir = _LOCAL_ROOT_DIR
+        ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(data_type, root_dir)
+        # Run.
         exchange_id = "binance"
         currency_pair = "BTC_USDT"
-        ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
-        )
         actual = ccxt_loader._get_file_path(
             imvcdclcl._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
         )
@@ -77,14 +90,15 @@ class TestGetFilePath(hunitest.TestCase):
         """
         Test unsupported exchange id.
         """
+        data_type = "ohlcv"
+        root_dir = _LOCAL_ROOT_DIR
+        # Run.
+        ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(data_type, root_dir)
+        # TODO(gp): We should throw a different exception, like
+        #  `UnsupportedExchange`.
+        # TODO(gp): Same change also for CDD test_loader.py
         exchange_id = "unsupported exchange"
         currency_pair = "BTC_USDT"
-        ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
-        )
-        # TODO(gp): We should throw a different exception, like
-        # `UnsupportedExchange`.
-        # TODO(gp): Same change also for CDD test_loader.py
         with self.assertRaises(AssertionError):
             ccxt_loader._get_file_path(
                 imvcdclcl._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
@@ -94,12 +108,12 @@ class TestGetFilePath(hunitest.TestCase):
         """
         Test unsupported currency pair.
         """
+        data_type = "ohlcv"
+        root_dir = _LOCAL_ROOT_DIR
+        ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(data_type, root_dir)
+        # TODO(gp): Same change also for CDD test_loader.py
         exchange_id = "binance"
         currency_pair = "unsupported_currency"
-        ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
-        )
-        # TODO(gp): Same change also for CDD test_loader.py
         with self.assertRaises(AssertionError):
             ccxt_loader._get_file_path(
                 imvcdclcl._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
@@ -110,7 +124,6 @@ class TestGetFilePath(hunitest.TestCase):
 
 
 class TestCcxtDbClient(imvcodbut.TestImDbHelper):
-    @pytest.mark.slow("needs to pull `postgres` image")
     def test_read_data1(self) -> None:
         """
         Verify that data from DB is read correctly.
@@ -121,28 +134,31 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Load data with client and check if it is correct.
         ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
-        actual = ccxt_db_client.read_data(
-            ["binance::BTC_USDT", "binance::ETH_USDT"]
-        )
+        full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
+        start_ts = None
+        end_ts = None
+        actual = ccxt_db_client.read_data(full_symbols, start_ts, end_ts)
         # Check the output values.
         expected_length = 8
         expected_exchange_ids = ["binance"]
         expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
         # pylint: disable=line-too-long
-        expected_df_as_str = """
-        # df= 
+        expected_signature = r"""
+        # df=
         df.index in [2021-09-09 00:00:00+00:00, 2021-09-09 00:04:00+00:00]
         df.columns=close,currency_pair,epoch,exchange_id,full_symbol,high,low,open,volume
         df.shape=(8, 9)
-                                    close currency_pair         epoch exchange_id        full_symbol  high   low  open  volume                                                                                                                                                                                                                                                                                                               
-        2021-09-09 00:00:00+00:00   60.0      BTC_USDT  1.631146e+12     binance  binance::BTC_USDT  40.0  50.0  30.0    70.0                                                                                                                       
-        2021-09-09 00:01:00+00:00   61.0      BTC_USDT  1.631146e+12     binance  binance::BTC_USDT  41.0  51.0  31.0    71.0                                                                                                                       
-        2021-09-09 00:02:00+00:00    NaN           NaN           NaN         NaN  binance::BTC_USDT   NaN   NaN   NaN     NaN                                                                                                                       
-        ...                                                                                                                                                                                                                                         
-        2021-09-09 00:02:00+00:00   62.0      ETH_USDT  1.631146e+12     binance  binance::ETH_USDT  42.0  52.0  32.0    72.0                                                                                                                       
-        2021-09-09 00:03:00+00:00    NaN           NaN           NaN         NaN  binance::ETH_USDT   NaN   NaN   NaN     NaN                                                                                                                       
-        2021-09-09 00:04:00+00:00   64.0      ETH_USDT  1.631146e+12     binance  binance::ETH_USDT  44.0  54.0  34.0    74.0  
-        """
+        close currency_pair         epoch exchange_id        full_symbol  high   low  open  volume
+        timestamp
+        2021-09-09 00:00:00+00:00   60.0      BTC_USDT  1.631146e+12     binance  binance::BTC_USDT  40.0  50.0  30.0    70.0
+        2021-09-09 00:01:00+00:00   61.0      BTC_USDT  1.631146e+12     binance  binance::BTC_USDT  41.0  51.0  31.0    71.0
+        2021-09-09 00:02:00+00:00   62.0      ETH_USDT  1.631146e+12     binance  binance::ETH_USDT  42.0  52.0  32.0    72.0
+        ...
+        2021-09-09 00:03:00+00:00    NaN           NaN           NaN         NaN                NaN   NaN   NaN   NaN     NaN
+        2021-09-09 00:04:00+00:00   64.0      BTC_USDT  1.631146e+12     binance  binance::BTC_USDT  44.0  54.0  34.0    74.0
+        2021-09-09 00:04:00+00:00   64.0      ETH_USDT  1.631146e+12     binance  binance::ETH_USDT  44.0  54.0  34.0    74.0
+        exchange_ids=binance
+        currency_pairs=BTC_USDT,ETH_USDT"""
         # pylint: enable=line-too-long
         _check_output(
             self,
@@ -150,7 +166,7 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
             expected_length,
             expected_exchange_ids,
             expected_currency_pairs,
-            expected_df_as_str,
+            expected_signature,
         )
         # Delete the table.
         hsql.remove_table(self.connection, "ccxt_ohlcv")
@@ -165,24 +181,25 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Load data with client and check if it is correct.
         ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
-        actual = ccxt_db_client.read_data(
-            ["binance::BTC_USDT"],
-            start_ts=pd.Timestamp("2021-09-09T00:00:00-00:00"),
-            end_ts=pd.Timestamp("2021-09-09T00:01:00-00:00"),
-        )
+        full_symbols = ["binance::BTC_USDT"]
+        start_ts = pd.Timestamp("2021-09-09T00:00:00-00:00")
+        end_ts = pd.Timestamp("2021-09-09T00:01:00-00:00")
+        actual = ccxt_db_client.read_data(full_symbols, start_ts, end_ts)
         # Check the output values.
         expected_length = 1
         expected_exchange_ids = ["binance"]
         expected_currency_pairs = ["BTC_USDT"]
         # pylint: disable=line-too-long
-        expected_df_as_str = """
-        # df= 
+        expected_signature = """
+        # df=
         df.index in [2021-09-09 00:00:00+00:00, 2021-09-09 00:00:00+00:00]
         df.columns=close,currency_pair,epoch,exchange_id,full_symbol,high,low,open,volume
         df.shape=(1, 9)
-                                    close currency_pair          epoch exchange_id        full_symbol  high   low  open  volume                                                                                                                                                                                                                                                                                    
-        2021-09-09 00:00:00+00:00   60.0      BTC_USDT  1631145600000     binance  binance::BTC_USDT  40.0  50.0  30.0    70.0 
-        """
+        close currency_pair          epoch exchange_id        full_symbol  high   low  open  volume
+        timestamp
+        2021-09-09 00:00:00+00:00   60.0      BTC_USDT  1631145600000     binance  binance::BTC_USDT  40.0  50.0  30.0    70.0
+        exchange_ids=binance
+        currency_pairs=BTC_USDT"""
         # pylint: enable=line-too-long
         _check_output(
             self,
@@ -190,7 +207,7 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
             expected_length,
             expected_exchange_ids,
             expected_currency_pairs,
-            expected_df_as_str,
+            expected_signature,
         )
         # Delete the table.
         hsql.remove_table(self.connection, "ccxt_ohlcv")
@@ -242,34 +259,45 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
 class TestCcxtCsvFileSystemClient(hunitest.TestCase):
     def test1(self) -> None:
         """
-        Test that ".csv.gz" files from filesystem are being read correctly.
+        Test correctness of reading:
+        - OHLCV data
+        - for 1 currencies
+        - from a ".csv" file on the local filesystem
         """
-        # Set input list of full symbols.
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        # Initialize CCXT file client and pass it to multiple symbols client.
-        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
+        data_type = "ohlcv"
+        root_dir = _LOCAL_ROOT_DIR
+        use_gzip = False
+        ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
+            data_type,
+            root_dir,
+            use_gzip=use_gzip,
         )
-        # Check actual results.
-        actual = ccxt_file_client.read_data(full_symbols)
-        expected_length = 199
-        expected_exchange_ids = ["binance", "kucoin"]
-        expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
+        #
+        full_symbols = ["binance::BTC_USDT"]
+        start_ts = None
+        end_ts = None
+        actual = ccxt_loader.read_data(full_symbols, start_ts, end_ts)
+        # Check the output values.
+        expected_length = 100
+        expected_exchange_ids = ["binance"]
+        expected_currency_pairs = ["BTC_USDT"]
         # pylint: disable=line-too-long
-        expected_df_as_str = """
-        # df= 
-        df.index in [2018-08-17 00:00:00+00:00, 2018-08-17 01:39:00+00:00]                                                                                                                                                                          
-        df.columns=close,currency_pair,epoch,exchange_id,full_symbol,high,low,open,volume                                                                                                                                                           
-        df.shape=(199, 9)                                                                                                                                                                                                                           
-                                     close currency_pair         epoch exchange_id        full_symbol     high      low     open     volume                                                                                                                                                                                                                                          
-        2018-08-17 00:00:00+00:00  6311.64      BTC_USDT  1.534464e+12     binance  binance::BTC_USDT  6319.04  6310.32  6316.00   9.967395                                                                                                         
-        2018-08-17 00:01:00+00:00  6302.81      BTC_USDT  1.534464e+12     binance  binance::BTC_USDT  6311.77  6302.81  6311.64  16.781206                                                                                                         
-        2018-08-17 00:02:00+00:00  6297.26      BTC_USDT  1.534464e+12     binance  binance::BTC_USDT  6306.00  6292.79  6302.81  55.373226                                                                                                         
-        ...                                                                                                                                                                                                                                         
-        2018-08-17 01:37:00+00:00  292.871941      ETH_USDT  1.534470e+12      kucoin  kucoin::ETH_USDT  292.871941  292.180001  292.180001  0.106841                                                                                               
-        2018-08-17 01:38:00+00:00  293.007409      ETH_USDT  1.534470e+12      kucoin  kucoin::ETH_USDT  293.007409  292.158945  292.158945  0.001164                                                                                               
-        2018-08-17 01:39:00+00:00  292.158946      ETH_USDT  1.534470e+12      kucoin  kucoin::ETH_USDT  292.158946  292.158945  292.158945  0.235161 
-        """
+        expected_signature = r"""
+        # df=
+        df.index in [2018-08-17 00:00:00+00:00, 2018-08-17 01:39:00+00:00]
+        df.columns=close,currency_pair,epoch,exchange_id,full_symbol,high,low,open,volume
+        df.shape=(100, 9)
+        close currency_pair          epoch exchange_id        full_symbol     high      low     open     volume
+        timestamp
+        2018-08-17 00:00:00+00:00  6311.64      BTC_USDT  1534464000000     binance  binance::BTC_USDT  6319.04  6310.32  6316.00   9.967395
+        2018-08-17 00:01:00+00:00  6302.81      BTC_USDT  1534464060000     binance  binance::BTC_USDT  6311.77  6302.81  6311.64  16.781206
+        2018-08-17 00:02:00+00:00  6297.26      BTC_USDT  1534464120000     binance  binance::BTC_USDT  6306.00  6292.79  6302.81  55.373226
+        ...
+        2018-08-17 01:37:00+00:00  6343.14      BTC_USDT  1534469820000     binance  binance::BTC_USDT  6347.00  6343.00  6346.96  10.787817
+        2018-08-17 01:38:00+00:00  6339.25      BTC_USDT  1534469880000     binance  binance::BTC_USDT  6345.98  6335.04  6345.98  38.197244
+        2018-08-17 01:39:00+00:00  6342.95      BTC_USDT  1534469940000     binance  binance::BTC_USDT  6348.91  6339.00  6339.25  16.394692
+        exchange_ids=binance
+        currency_pairs=BTC_USDT"""
         # pylint: enable=line-too-long
         _check_output(
             self,
@@ -277,10 +305,56 @@ class TestCcxtCsvFileSystemClient(hunitest.TestCase):
             expected_length,
             expected_exchange_ids,
             expected_currency_pairs,
-            expected_df_as_str,
+            expected_signature,
         )
 
     def test2(self) -> None:
+        """
+        Test correctness of reading:
+        - OHLCV data
+        - for 2 currencies
+        - from a ".csv.gz" on the local filesystem
+        """
+        data_type = "ohlcv"
+        root_dir = _LOCAL_ROOT_DIR
+        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(data_type, root_dir)
+        # Run.
+        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        start_ts = None
+        end_ts = None
+        actual = ccxt_file_client.read_data(full_symbols, start_ts, end_ts)
+        # Check.
+        expected_length = 199
+        expected_exchange_ids = ["binance", "kucoin"]
+        expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        df.index in [2018-08-17 00:00:00+00:00, 2018-08-17 01:39:00+00:00]
+        df.columns=close,currency_pair,epoch,exchange_id,full_symbol,high,low,open,volume
+        df.shape=(199, 9)
+        close currency_pair         epoch exchange_id        full_symbol         high          low         open     volume
+        timestamp
+        2018-08-17 00:00:00+00:00  6311.640000      BTC_USDT  1.534464e+12     binance  binance::BTC_USDT  6319.040000  6310.320000  6316.000000   9.967395
+        2018-08-17 00:01:00+00:00  6302.810000      BTC_USDT  1.534464e+12     binance  binance::BTC_USDT  6311.770000  6302.810000  6311.640000  16.781206
+        2018-08-17 00:01:00+00:00   286.712987      ETH_USDT  1.534464e+12      kucoin   kucoin::ETH_USDT   286.712987   286.712987   286.712987   0.017500
+        ...
+        2018-08-17 01:38:00+00:00   293.007409      ETH_USDT  1.534470e+12      kucoin   kucoin::ETH_USDT   293.007409   292.158945   292.158945   0.001164
+        2018-08-17 01:39:00+00:00  6342.950000      BTC_USDT  1.534470e+12     binance  binance::BTC_USDT  6348.910000  6339.000000  6339.250000  16.394692
+        2018-08-17 01:39:00+00:00   292.158946      ETH_USDT  1.534470e+12      kucoin   kucoin::ETH_USDT   292.158946   292.158945   292.158945   0.235161
+        exchange_ids=binance,kucoin
+        currency_pairs=BTC_USDT,ETH_USDT"""
+        # pylint: enable=line-too-long
+        _check_output(
+            self,
+            actual,
+            expected_length,
+            expected_exchange_ids,
+            expected_currency_pairs,
+            expected_signature,
+        )
+
+    def test3(self) -> None:
         """
         Test that files from filesystem are being filtered correctly.
         """
@@ -297,20 +371,21 @@ class TestCcxtCsvFileSystemClient(hunitest.TestCase):
         expected_exchange_ids = ["binance"]
         expected_currency_pairs = ["BTC_USDT"]
         # pylint: disable=line-too-long
-        expected_df_as_str = """
-        # df= 
-        df.index in [2018-08-17 00:01:00+00:00, 2018-08-17 00:04:00+00:00]                                                                                                                                                                          
-        df.columns=close,currency_pair,epoch,exchange_id,full_symbol,high,low,open,volume                                                                                                                                                           
-        df.shape=(4, 9)                                                                                                                                                                                                                             
-                                     close currency_pair          epoch exchange_id        full_symbol     high      low     open     volume                                                                                                                                                                                                                                                       
-        2018-08-17 00:01:00+00:00  6302.81      BTC_USDT  1534464060000     binance  binance::BTC_USDT  6311.77  6302.81  6311.64  16.781206                                                                                                        
-        2018-08-17 00:02:00+00:00  6297.26      BTC_USDT  1534464120000     binance  binance::BTC_USDT  6306.00  6292.79  6302.81  55.373226                                                                                                        
-        2018-08-17 00:03:00+00:00  6294.52      BTC_USDT  1534464180000     binance  binance::BTC_USDT  6299.97  6286.93  6299.97  34.611797                                                                                                        
-        ...                                                                                                                                                                                                                                         
-        2018-08-17 00:02:00+00:00  6297.26      BTC_USDT  1534464120000     binance  binance::BTC_USDT  6306.00  6292.79  6302.81  55.373226                                                                                                        
-        2018-08-17 00:03:00+00:00  6294.52      BTC_USDT  1534464180000     binance  binance::BTC_USDT  6299.97  6286.93  6299.97  34.611797                                                                                                        
+        expected_signature = r"""# df=
+        df.index in [2018-08-17 00:01:00+00:00, 2018-08-17 00:04:00+00:00]
+        df.columns=close,currency_pair,epoch,exchange_id,full_symbol,high,low,open,volume
+        df.shape=(4, 9)
+                                     close currency_pair          epoch exchange_id        full_symbol     high      low     open     volume
+        timestamp
+        2018-08-17 00:01:00+00:00  6302.81      BTC_USDT  1534464060000     binance  binance::BTC_USDT  6311.77  6302.81  6311.64  16.781206
+        2018-08-17 00:02:00+00:00  6297.26      BTC_USDT  1534464120000     binance  binance::BTC_USDT  6306.00  6292.79  6302.81  55.373226
+        2018-08-17 00:03:00+00:00  6294.52      BTC_USDT  1534464180000     binance  binance::BTC_USDT  6299.97  6286.93  6299.97  34.611797
+        ...
+        2018-08-17 00:02:00+00:00  6297.26      BTC_USDT  1534464120000     binance  binance::BTC_USDT  6306.00  6292.79  6302.81  55.373226
+        2018-08-17 00:03:00+00:00  6294.52      BTC_USDT  1534464180000     binance  binance::BTC_USDT  6299.97  6286.93  6299.97  34.611797
         2018-08-17 00:04:00+00:00  6296.10      BTC_USDT  1534464240000     binance  binance::BTC_USDT  6299.98  6290.00  6294.52  22.088586
-        """
+        exchange_ids=binance
+        currency_pairs=BTC_USDT"""
         # pylint: enable=line-too-long
         _check_output(
             self,
@@ -318,180 +393,31 @@ class TestCcxtCsvFileSystemClient(hunitest.TestCase):
             expected_length,
             expected_exchange_ids,
             expected_currency_pairs,
-            expected_df_as_str,
+            expected_signature,
         )
 
-    def test3(self) -> None:
-        """
-        Test that files are being read correctly without normalization.
-        """
-        # Set input list of full symbols.
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        # Initialize CCXT file client and pass it to multiple symbols client.
-        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
-        )
-        # Check output.
-        actual = ccxt_file_client.read_data(
-            full_symbols,
-            normalize=False,
-        )
-        expected_length = 174
-        expected_exchange_ids = ["binance", "kucoin"]
-        expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
-        # pylint: disable=line-too-long
-        expected_df_as_str = """
-        # df= 
-        df.index in [0, 99]                                                                                                                                                                                                                         
-        df.columns=close,currency_pair,exchange_id,full_symbol,high,low,open,timestamp,volume                                                                                                                                                       
-        df.shape=(174, 9)                                                                                                                                                                                                                           
-                         close currency_pair exchange_id        full_symbol     high      low     open      timestamp     volume                                                                                                                                                                                                                                                                                                                                  
-        0              6311.64      BTC_USDT     binance  binance::BTC_USDT  6319.04  6310.32  6316.00  1534464000000   9.967395                                                                                                                    
-        1              6302.81      BTC_USDT     binance  binance::BTC_USDT  6311.77  6302.81  6311.64  1534464060000  16.781206                                                                                                                    
-        2              6297.26      BTC_USDT     binance  binance::BTC_USDT  6306.00  6292.79  6302.81  1534464120000  55.373226                                                                                                                    
-        ...                                                                                                                                                                                                                                         
-        71             292.871941      ETH_USDT      kucoin  kucoin::ETH_USDT  292.871941  292.180001  292.180001  1534469820000  0.106841                                                                                                          
-        72             293.007409      ETH_USDT      kucoin  kucoin::ETH_USDT  293.007409  292.158945  292.158945  1534469880000  0.001164                                                                                                          
-        73             292.158946      ETH_USDT      kucoin  kucoin::ETH_USDT  292.158946  292.158945  292.158945  1534469940000  0.235161
-        """
-        # pylint: enable=line-too-long
-        _check_output(
-            self,
-            actual,
-            expected_length,
-            expected_exchange_ids,
-            expected_currency_pairs,
-            expected_df_as_str,
-        )
-
-    def test4(self) -> None:
-        """
-        Test that ".csv" files from filesystem are being read correctly.
-        """
-        ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR, use_gzip=False
-        )
-        actual = ccxt_loader.read_data(["binance::BTC_USDT"])
-        # Check the output values.
-        expected_length = 100
-        expected_exchange_ids = ["binance"]
-        expected_currency_pairs = ["BTC_USDT"]
-        # pylint: disable=line-too-long
-        expected_df_as_str = """
-        # df= 
-        df.index in [2018-08-17 00:00:00+00:00, 2018-08-17 01:39:00+00:00]                                                                                                                                                                          
-        df.columns=close,currency_pair,epoch,exchange_id,full_symbol,high,low,open,volume                                                                                                                                                           
-        df.shape=(100, 9)                                                                                                                                                                                                                           
-                                     close currency_pair          epoch exchange_id        full_symbol     high      low     open     volume                                                                                                                                                                                                                                                                                                                                  
-        2018-08-17 00:00:00+00:00  6311.64      BTC_USDT  1534464000000     binance  binance::BTC_USDT  6319.04  6310.32  6316.00   9.967395                                                                                                        
-        2018-08-17 00:01:00+00:00  6302.81      BTC_USDT  1534464060000     binance  binance::BTC_USDT  6311.77  6302.81  6311.64  16.781206                                                                                                        
-        2018-08-17 00:02:00+00:00  6297.26      BTC_USDT  1534464120000     binance  binance::BTC_USDT  6306.00  6292.79  6302.81  55.373226                                                                                                        
-        ...                                                                                                                                                                                                                                         
-        2018-08-17 01:37:00+00:00  6343.14      BTC_USDT  1534469820000     binance  binance::BTC_USDT  6347.00  6343.00  6346.96  10.787817                                                                                                        
-        2018-08-17 01:38:00+00:00  6339.25      BTC_USDT  1534469880000     binance  binance::BTC_USDT  6345.98  6335.04  6345.98  38.197244                                                                                                        
-        2018-08-17 01:39:00+00:00  6342.95      BTC_USDT  1534469940000     binance  binance::BTC_USDT  6348.91  6339.00  6339.25  16.394692 
-        """
-        # pylint: enable=line-too-long
-        _check_output(
-            self,
-            actual,
-            expected_length,
-            expected_exchange_ids,
-            expected_currency_pairs,
-            expected_df_as_str,
-        )
-
-    def test5(self) -> None:
-        """
-        Test that all files are being read correctly with dict output mode.
-        """
-        # Set input list of full symbols.
-        full_symbols = ["binance::BTC_USDT", "kucoin::ETH_USDT"]
-        # Initialize CCXT file client and pass it to multiple symbols client.
-        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
-        )
-        # Check actual results.
-        actual_dict = ccxt_file_client.read_data(full_symbols, mode="dict")
-        actual_dict_keys = sorted(list(actual_dict.keys()))
-        actual_df1 = actual_dict[actual_dict_keys[0]]
-        actual_df2 = actual_dict[actual_dict_keys[1]]
-        self.assert_equal(str(actual_dict_keys), str(full_symbols))
-        # Check df1.
-        expected_length1 = 100
-        expected_exchange_ids1 = ["binance"]
-        expected_currency_pairs1 = ["BTC_USDT"]
-        # pylint: disable=line-too-long
-        expected_df_as_str1 = """
-        # df= 
-        df.index in [2018-08-17 00:00:00+00:00, 2018-08-17 01:39:00+00:00]                                                                                                                                                                          
-        df.columns=close,currency_pair,epoch,exchange_id,full_symbol,high,low,open,volume                                                                                                                                                           
-        df.shape=(100, 9)                                                                                                                                                                                                                           
-                                     close currency_pair          epoch exchange_id        full_symbol     high      low     open     volume                                                                                                                                                                                                                                                                                                                                   
-        2018-08-17 00:00:00+00:00  6311.64      BTC_USDT  1534464000000     binance  binance::BTC_USDT  6319.04  6310.32  6316.00   9.967395                                                                                                        
-        2018-08-17 00:01:00+00:00  6302.81      BTC_USDT  1534464060000     binance  binance::BTC_USDT  6311.77  6302.81  6311.64  16.781206                                                                                                        
-        2018-08-17 00:02:00+00:00  6297.26      BTC_USDT  1534464120000     binance  binance::BTC_USDT  6306.00  6292.79  6302.81  55.373226                                                                                                        
-        ...                                                                                                                                                                                                                                         
-        2018-08-17 01:37:00+00:00  6343.14      BTC_USDT  1534469820000     binance  binance::BTC_USDT  6347.00  6343.00  6346.96  10.787817                                                                                                        
-        2018-08-17 01:38:00+00:00  6339.25      BTC_USDT  1534469880000     binance  binance::BTC_USDT  6345.98  6335.04  6345.98  38.197244                                                                                                        
-        2018-08-17 01:39:00+00:00  6342.95      BTC_USDT  1534469940000     binance  binance::BTC_USDT  6348.91  6339.00  6339.25  16.394692 
-        """
-        # pylint: enable=line-too-long
-        _check_output(
-            self,
-            actual_df1,
-            expected_length1,
-            expected_exchange_ids1,
-            expected_currency_pairs1,
-            expected_df_as_str1,
-        )
-        # Check df2.
-        expected_length2 = 99
-        expected_exchange_ids2 = ["kucoin"]
-        expected_currency_pairs2 = ["ETH_USDT"]
-        # pylint: disable=line-too-long
-        expected_df_as_str2 = """
-        # df= 
-        df.index in [2018-08-17 00:01:00+00:00, 2018-08-17 01:39:00+00:00]                                                                                                                                                                          
-        df.columns=close,currency_pair,epoch,exchange_id,full_symbol,high,low,open,volume                                                                                                                                                           
-        df.shape=(99, 9)                                                                                                                                                                                                                            
-                                        close currency_pair         epoch exchange_id       full_symbol        high         low        open    volume                                                                                               
-        2018-08-17 00:01:00+00:00  286.712987      ETH_USDT  1.534464e+12      kucoin  kucoin::ETH_USDT  286.712987  286.712987  286.712987  0.017500                                                                                               
-        2018-08-17 00:02:00+00:00  285.400197      ETH_USDT  1.534464e+12      kucoin  kucoin::ETH_USDT  286.405988  285.400193  286.405988  0.162255                                                                                               
-        2018-08-17 00:03:00+00:00  285.400193      ETH_USDT  1.534464e+12      kucoin  kucoin::ETH_USDT  285.400193  285.400193  285.400193  0.020260                                                                                               
-        ...                                                                                                                                                                                                                                         
-        2018-08-17 01:37:00+00:00  292.871941      ETH_USDT  1.534470e+12      kucoin  kucoin::ETH_USDT  292.871941  292.180001  292.180001  0.106841                                                                                               
-        2018-08-17 01:38:00+00:00  293.007409      ETH_USDT  1.534470e+12      kucoin  kucoin::ETH_USDT  293.007409  292.158945  292.158945  0.001164                                                                                               
-        2018-08-17 01:39:00+00:00  292.158946      ETH_USDT  1.534470e+12      kucoin  kucoin::ETH_USDT  292.158946  292.158945  292.158945  0.235161 
-        """
-        # pylint: enable=line-too-long
-        _check_output(
-            self,
-            actual_df2,
-            expected_length2,
-            expected_exchange_ids2,
-            expected_currency_pairs2,
-            expected_df_as_str2,
-        )
-
-    def test6(self) -> None:
+    def test_invalid_full_symbol1(self) -> None:
         """
         Test unsupported full symbol.
         """
-        ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
-        )
+        data_type = "ohlcv"
+        root_dir = _LOCAL_ROOT_DIR
+        ccxt_loader = imvcdclcl.CcxtCsvFileSystemClient(data_type, root_dir)
+        start_ts = None
+        end_ts = None
         with self.assertRaises(AssertionError):
-            ccxt_loader.read_data(["unsupported_exchange::unsupported_currency"])
+            ccxt_loader.read_data(
+                ["unsupported_exchange::unsupported_currency"], start_ts, end_ts
+            )
 
-    def test7(self) -> None:
+    def test_invalid_data_type1(self) -> None:
         """
         Test unsupported data type.
         """
+        data_type = "unsupported_data_type"
+        root_dir = _LOCAL_ROOT_DIR
         with self.assertRaises(AssertionError):
-            imvcdclcl.CcxtCsvFileSystemClient(
-                data_type="unsupported_data_type", root_dir=_LOCAL_ROOT_DIR
-            )
+            imvcdclcl.CcxtCsvFileSystemClient(data_type, root_dir)
 
 
 # #############################################################################
@@ -502,29 +428,34 @@ class TestCcxtParquetFileSystemClient(hunitest.TestCase):
         """
         Test that Parquet files from filesystem are being read correctly.
         """
-        ccxt_loader = imvcdclcl.CcxtParquetFileSystemClient(
-            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
-        )
-        actual = ccxt_loader.read_data(["binance::BTC_USDT"])
+        data_type = "ohlcv"
+        root_dir = _LOCAL_ROOT_DIR
+        ccxt_loader = imvcdclcl.CcxtParquetFileSystemClient(data_type, root_dir)
+        full_symbols = ["binance::BTC_USDT"]
+        start_ts = None
+        end_ts = None
+        actual = ccxt_loader.read_data(full_symbols, start_ts, end_ts)
         # Check the output values.
         expected_length = 100
         expected_exchange_ids = ["binance"]
         expected_currency_pairs = ["BTC_USDT"]
         # pylint: disable=line-too-long
-        expected_df_as_str = """
-        # df= 
-        df.index in [2018-08-17 00:00:00+00:00, 2018-08-17 01:39:00+00:00]                                                                                                                                                                          
-        df.columns=close,currency_pair,epoch,exchange_id,full_symbol,high,low,open,volume                                                                                                                                                           
-        df.shape=(100, 9)                                                                                                                                                                                                                           
-                                     close currency_pair          epoch exchange_id        full_symbol     high      low     open     volume                                                                                                                                                                                                                                                                                                                                  
-        2018-08-17 00:00:00+00:00  6311.64      BTC_USDT  1534464000000     binance  binance::BTC_USDT  6319.04  6310.32  6316.00   9.967395                                                                                                        
-        2018-08-17 00:01:00+00:00  6302.81      BTC_USDT  1534464060000     binance  binance::BTC_USDT  6311.77  6302.81  6311.64  16.781206                                                                                                        
-        2018-08-17 00:02:00+00:00  6297.26      BTC_USDT  1534464120000     binance  binance::BTC_USDT  6306.00  6292.79  6302.81  55.373226                                                                                                        
-        ...                                                                                                                                                                                                                                         
-        2018-08-17 01:37:00+00:00  6343.14      BTC_USDT  1534469820000     binance  binance::BTC_USDT  6347.00  6343.00  6346.96  10.787817                                                                                                        
-        2018-08-17 01:38:00+00:00  6339.25      BTC_USDT  1534469880000     binance  binance::BTC_USDT  6345.98  6335.04  6345.98  38.197244                                                                                                        
-        2018-08-17 01:39:00+00:00  6342.95      BTC_USDT  1534469940000     binance  binance::BTC_USDT  6348.91  6339.00  6339.25  16.394692 
-        """
+        expected_signature = r"""
+        # df=
+        df.index in [2018-08-17 00:00:00+00:00, 2018-08-17 01:39:00+00:00]
+        df.columns=close,currency_pair,epoch,exchange_id,full_symbol,high,low,open,volume
+        df.shape=(100, 9)
+        close currency_pair          epoch exchange_id        full_symbol     high      low     open     volume
+        timestamp
+        2018-08-17 00:00:00+00:00  6311.64      BTC_USDT  1534464000000     binance  binance::BTC_USDT  6319.04  6310.32  6316.00   9.967395
+        2018-08-17 00:01:00+00:00  6302.81      BTC_USDT  1534464060000     binance  binance::BTC_USDT  6311.77  6302.81  6311.64  16.781206
+        2018-08-17 00:02:00+00:00  6297.26      BTC_USDT  1534464120000     binance  binance::BTC_USDT  6306.00  6292.79  6302.81  55.373226
+        ...
+        2018-08-17 01:37:00+00:00  6343.14      BTC_USDT  1534469820000     binance  binance::BTC_USDT  6347.00  6343.00  6346.96  10.787817
+        2018-08-17 01:38:00+00:00  6339.25      BTC_USDT  1534469880000     binance  binance::BTC_USDT  6345.98  6335.04  6345.98  38.197244
+        2018-08-17 01:39:00+00:00  6342.95      BTC_USDT  1534469940000     binance  binance::BTC_USDT  6348.91  6339.00  6339.25  16.394692
+        exchange_ids=binance
+        currency_pairs=BTC_USDT"""
         # pylint: enable=line-too-long
         _check_output(
             self,
@@ -532,40 +463,41 @@ class TestCcxtParquetFileSystemClient(hunitest.TestCase):
             expected_length,
             expected_exchange_ids,
             expected_currency_pairs,
-            expected_df_as_str,
+            expected_signature,
         )
 
     def test2(self) -> None:
         """
         Test that Parquet files from filesystem are being filtered correctly.
         """
-        ccxt_loader = imvcdclcl.CcxtParquetFileSystemClient(
-            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
-        )
-        actual = ccxt_loader.read_data(
-            ["binance::BTC_USDT"],
-            start_ts=pd.Timestamp("2018-08-17T00:01:00-00:00"),
-            end_ts=pd.Timestamp("2018-08-17T00:05:00-00:00"),
-        )
+        data_type = "ohlcv"
+        root_dir = _LOCAL_ROOT_DIR
+        ccxt_loader = imvcdclcl.CcxtParquetFileSystemClient(data_type, root_dir)
+        full_symbols = ["binance::BTC_USDT"]
+        start_ts = pd.Timestamp("2018-08-17T00:01:00-00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00-00:00")
+        actual = ccxt_loader.read_data(full_symbols, start_ts, end_ts)
         # Check the output values.
         expected_length = 4
         expected_exchange_ids = ["binance"]
         expected_currency_pairs = ["BTC_USDT"]
         # pylint: disable=line-too-long
-        expected_df_as_str = """
-        # df= 
-        df.index in [2018-08-17 00:01:00+00:00, 2018-08-17 00:04:00+00:00]                                                                                                                                                                          
-        df.columns=close,currency_pair,epoch,exchange_id,full_symbol,high,low,open,volume                                                                                                                                                           
-        df.shape=(4, 9)                                                                                                                                                                                                                             
-                                     close currency_pair          epoch exchange_id        full_symbol     high      low     open     volume                                                                                                                                                                                                                                                       
-        2018-08-17 00:01:00+00:00  6302.81      BTC_USDT  1534464060000     binance  binance::BTC_USDT  6311.77  6302.81  6311.64  16.781206                                                                                                        
-        2018-08-17 00:02:00+00:00  6297.26      BTC_USDT  1534464120000     binance  binance::BTC_USDT  6306.00  6292.79  6302.81  55.373226                                                                                                        
-        2018-08-17 00:03:00+00:00  6294.52      BTC_USDT  1534464180000     binance  binance::BTC_USDT  6299.97  6286.93  6299.97  34.611797                                                                                                        
-        ...                                                                                                                                                                                                                                         
-        2018-08-17 00:02:00+00:00  6297.26      BTC_USDT  1534464120000     binance  binance::BTC_USDT  6306.00  6292.79  6302.81  55.373226                                                                                                        
-        2018-08-17 00:03:00+00:00  6294.52      BTC_USDT  1534464180000     binance  binance::BTC_USDT  6299.97  6286.93  6299.97  34.611797                                                                                                        
+        expected_signature = """
+        # df=
+        df.index in [2018-08-17 00:01:00+00:00, 2018-08-17 00:04:00+00:00]
+        df.columns=close,currency_pair,epoch,exchange_id,full_symbol,high,low,open,volume
+        df.shape=(4, 9)
+        close currency_pair          epoch exchange_id        full_symbol     high      low     open     volume
+        timestamp
+        2018-08-17 00:01:00+00:00  6302.81      BTC_USDT  1534464060000     binance  binance::BTC_USDT  6311.77  6302.81  6311.64  16.781206
+        2018-08-17 00:02:00+00:00  6297.26      BTC_USDT  1534464120000     binance  binance::BTC_USDT  6306.00  6292.79  6302.81  55.373226
+        2018-08-17 00:03:00+00:00  6294.52      BTC_USDT  1534464180000     binance  binance::BTC_USDT  6299.97  6286.93  6299.97  34.611797
+        ...
+        2018-08-17 00:02:00+00:00  6297.26      BTC_USDT  1534464120000     binance  binance::BTC_USDT  6306.00  6292.79  6302.81  55.373226
+        2018-08-17 00:03:00+00:00  6294.52      BTC_USDT  1534464180000     binance  binance::BTC_USDT  6299.97  6286.93  6299.97  34.611797
         2018-08-17 00:04:00+00:00  6296.10      BTC_USDT  1534464240000     binance  binance::BTC_USDT  6299.98  6290.00  6294.52  22.088586
-        """
+        exchange_ids=binance
+        currency_pairs=BTC_USDT"""
         # pylint: enable=line-too-long
         _check_output(
             self,
@@ -573,7 +505,7 @@ class TestCcxtParquetFileSystemClient(hunitest.TestCase):
             expected_length,
             expected_exchange_ids,
             expected_currency_pairs,
-            expected_df_as_str,
+            expected_signature,
         )
 
 
@@ -585,10 +517,10 @@ class TestGetTimestamp(hunitest.TestCase):
         """
         Test that the earliest timestamp available is computed correctly.
         """
-        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
-        )
-        start_ts = ccxt_file_client.get_start_ts_available("binance::BTC_USDT")
+        data_type = "ohlcv"
+        root_dir = _LOCAL_ROOT_DIR
+        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(data_type, root_dir)
+        start_ts = ccxt_file_client.get_start_ts_for_symbol("binance::BTC_USDT")
         expected_start_ts = pd.to_datetime("2018-08-17 00:00:00", utc=True)
         self.assertEqual(start_ts, expected_start_ts)
 
@@ -596,10 +528,10 @@ class TestGetTimestamp(hunitest.TestCase):
         """
         Test that the latest timestamp available is computed correctly.
         """
-        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
-        )
-        end_ts = ccxt_file_client.get_end_ts_available("binance::BTC_USDT")
+        data_type = "ohlcv"
+        root_dir = _LOCAL_ROOT_DIR
+        ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(data_type, root_dir)
+        end_ts = ccxt_file_client.get_end_ts_for_symbol("binance::BTC_USDT")
         expected_end_ts = pd.to_datetime("2018-08-17 01:39:00", utc=True)
         # TODO(Grisha): use `assertGreater` when start downloading more data.
         self.assertEqual(end_ts, expected_end_ts)
@@ -613,8 +545,11 @@ class TestGetUniverse(hunitest.TestCase):
         """
         Test that CCXT universe is computed correctly.
         """
+        data_type = "ohlcv"
+        root_dir = _LOCAL_ROOT_DIR
         ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
-            data_type="ohlcv", root_dir=_LOCAL_ROOT_DIR
+            data_type,
+            root_dir,
         )
         universe = ccxt_file_client.get_universe()
         # Check the length of the universe.
