@@ -95,8 +95,8 @@ def _get_symbolic_filepath(dir1: str, dir2: str, file_name: str) -> str:
 
 
 # TODO(gp): We should use the `sdiff` between files, instead of the output of
-# `diff -r --brief` to compare, since the second doesn't work for dirs that are
-# present only on one side.
+#  `diff -r --brief` to compare, since the second doesn't work for dirs that are
+#  present only on one side.
 def _parse_diff_output(
     input_file: str, dir1: str, dir2: str, args: argparse.Namespace
 ) -> None:
@@ -249,6 +249,7 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--dir2", action="store", required=True, help="Second dir to compare"
     )
+    parser.add_argument("--subdir", action="store", help="subdir to compare")
     # Name dir.
     parser.add_argument(
         "--dir1_name",
@@ -294,6 +295,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     #
     dir1 = os.path.abspath(args.dir1)
     dir2 = os.path.abspath(args.dir2)
+    if args.subdir:
+        dir1 = os.path.join(dir1, args.subdir)
+        dir2 = os.path.join(dir2, args.subdir)
     #
     diff_file = _diff(dir1, dir2)
     #

@@ -23,6 +23,7 @@ def get_simulated_portfolio_example1(
     initial_timestamp: pd.Timestamp,
     *,
     market_data_interface: Optional[mdmadain.AbstractMarketDataInterface] = None,
+    mark_to_market_col: str = "price",
 ) -> omportfo.SimulatedPortfolio:
     # Build SimulatedBroker.
     broker = obroexam.get_simulated_broker_example1(
@@ -34,7 +35,7 @@ def get_simulated_portfolio_example1(
     account = "paper"
     get_wall_clock_time = market_data_interface.get_wall_clock_time
     asset_id_column = "asset_id"
-    mark_to_market_col = "price"
+    mark_to_market_col = mark_to_market_col
     timestamp_col = "end_datetime"
     initial_cash = 1e6
     portfolio = omportfo.SimulatedPortfolio.from_cash(

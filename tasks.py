@@ -57,7 +57,7 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     integrate_copy_dirs,
     integrate_create_branch,
     integrate_diff_dirs,
-    integrate_files_since_last_integration,
+    integrate_files,
     lint,
     lint_create_branch,
     print_setup,

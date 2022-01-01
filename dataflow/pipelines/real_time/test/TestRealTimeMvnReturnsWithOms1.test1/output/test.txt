@@ -36,16 +36,27 @@ result_bundles=
       multiindex_output: True
   process_forecasts:
     prediction_col: close
+    portfolio: # historical holdings=
+    asset_id                            101           -1  
+    2000-01-03 09:30:00-05:00           NaN  1000000.00000
+    2000-01-03 09:30:01-05:00           NaN  1000000.00000
+    2000-01-03 09:35:01-05:00           NaN  1000000.00000
+    2000-01-03 09:40:01-05:00  49973.838392   950003.83233
+    # historical holdings marked to market=
+                                        101           -1  
+    2000-01-03 09:30:00-05:00           NaN  1000000.00000
+    2000-01-03 09:30:01-05:00           NaN  1000000.00000
+    2000-01-03 09:35:01-05:00           NaN  1000000.00000
+    2000-01-03 09:40:01-05:00  49979.934222   950003.83233
+    # historical statistics=
+                               net_asset_holdings           cash      net_wealth  gross_exposure  leverage
+    2000-01-03 09:30:00-05:00            0.000000  1000000.00000  1000000.000000        0.000000  0.000000
+    2000-01-03 09:30:01-05:00            0.000000  1000000.00000  1000000.000000        0.000000  0.000000
+    2000-01-03 09:35:01-05:00            0.000000  1000000.00000  1000000.000000        0.000000  0.000000
+    2000-01-03 09:40:01-05:00        49979.934222   950003.83233   999983.766551    49979.934222  0.049981
     execution_mode: real_time
     process_forecasts_config:
       market_data_interface: <market_data.market_data_interface.ReplayedTimeMarketDataInterface object>
-      portfolio: # holdings=
-                                 asset_id  curr_num_shares
-      2000-01-03 09:40:01-05:00       101     49973.838392
-      2000-01-03 09:40:01-05:00        -1     950003.83233
-      2000-01-03 09:35:01-05:00        -1        1000000.0
-      2000-01-03 09:30:01-05:00        -1        1000000.0
-      2000-01-03 09:30:00-05:00        -1        1000000.0
       order_type: price@twap
       order_duration: 5
       ath_start_time: 09:30:00
@@ -185,16 +196,27 @@ class: ResultBundle, config:
       multiindex_output: True
   process_forecasts:
     prediction_col: close
+    portfolio: # historical holdings=
+    asset_id                            101           -1  
+    2000-01-03 09:30:00-05:00           NaN  1000000.00000
+    2000-01-03 09:30:01-05:00           NaN  1000000.00000
+    2000-01-03 09:35:01-05:00           NaN  1000000.00000
+    2000-01-03 09:40:01-05:00  49973.838392   950003.83233
+    # historical holdings marked to market=
+                                        101           -1  
+    2000-01-03 09:30:00-05:00           NaN  1000000.00000
+    2000-01-03 09:30:01-05:00           NaN  1000000.00000
+    2000-01-03 09:35:01-05:00           NaN  1000000.00000
+    2000-01-03 09:40:01-05:00  49979.934222   950003.83233
+    # historical statistics=
+                               net_asset_holdings           cash      net_wealth  gross_exposure  leverage
+    2000-01-03 09:30:00-05:00            0.000000  1000000.00000  1000000.000000        0.000000  0.000000
+    2000-01-03 09:30:01-05:00            0.000000  1000000.00000  1000000.000000        0.000000  0.000000
+    2000-01-03 09:35:01-05:00            0.000000  1000000.00000  1000000.000000        0.000000  0.000000
+    2000-01-03 09:40:01-05:00        49979.934222   950003.83233   999983.766551    49979.934222  0.049981
     execution_mode: real_time
     process_forecasts_config:
       market_data_interface: <market_data.market_data_interface.ReplayedTimeMarketDataInterface object>
-      portfolio: # holdings=
-                                 asset_id  curr_num_shares
-      2000-01-03 09:40:01-05:00       101     49973.838392
-      2000-01-03 09:40:01-05:00        -1     950003.83233
-      2000-01-03 09:35:01-05:00        -1        1000000.0
-      2000-01-03 09:30:01-05:00        -1        1000000.0
-      2000-01-03 09:30:00-05:00        -1        1000000.0
       order_type: price@twap
       order_duration: 5
       ath_start_time: 09:30:00
@@ -336,16 +358,27 @@ class: ResultBundle, config:
       multiindex_output: True
   process_forecasts:
     prediction_col: close
+    portfolio: # historical holdings=
+    asset_id                            101           -1  
+    2000-01-03 09:30:00-05:00           NaN  1000000.00000
+    2000-01-03 09:30:01-05:00           NaN  1000000.00000
+    2000-01-03 09:35:01-05:00           NaN  1000000.00000
+    2000-01-03 09:40:01-05:00  49973.838392   950003.83233
+    # historical holdings marked to market=
+                                        101           -1  
+    2000-01-03 09:30:00-05:00           NaN  1000000.00000
+    2000-01-03 09:30:01-05:00           NaN  1000000.00000
+    2000-01-03 09:35:01-05:00           NaN  1000000.00000
+    2000-01-03 09:40:01-05:00  49979.934222   950003.83233
+    # historical statistics=
+                               net_asset_holdings           cash      net_wealth  gross_exposure  leverage
+    2000-01-03 09:30:00-05:00            0.000000  1000000.00000  1000000.000000        0.000000  0.000000
+    2000-01-03 09:30:01-05:00            0.000000  1000000.00000  1000000.000000        0.000000  0.000000
+    2000-01-03 09:35:01-05:00            0.000000  1000000.00000  1000000.000000        0.000000  0.000000
+    2000-01-03 09:40:01-05:00        49979.934222   950003.83233   999983.766551    49979.934222  0.049981
     execution_mode: real_time
     process_forecasts_config:
       market_data_interface: <market_data.market_data_interface.ReplayedTimeMarketDataInterface object>
-      portfolio: # holdings=
-                                 asset_id  curr_num_shares
-      2000-01-03 09:40:01-05:00       101     49973.838392
-      2000-01-03 09:40:01-05:00        -1     950003.83233
-      2000-01-03 09:35:01-05:00        -1        1000000.0
-      2000-01-03 09:30:01-05:00        -1        1000000.0
-      2000-01-03 09:30:00-05:00        -1        1000000.0
       order_type: price@twap
       order_duration: 5
       ath_start_time: 09:30:00
@@ -456,3 +489,22 @@ info:
 payload: None
 class: ResultBundle]
 None
+portfolio=
+# historical holdings=
+asset_id                            101           -1  
+2000-01-03 09:30:00-05:00           NaN  1000000.00000
+2000-01-03 09:30:01-05:00           NaN  1000000.00000
+2000-01-03 09:35:01-05:00           NaN  1000000.00000
+2000-01-03 09:40:01-05:00  49973.838392   950003.83233
+# historical holdings marked to market=
+                                    101           -1  
+2000-01-03 09:30:00-05:00           NaN  1000000.00000
+2000-01-03 09:30:01-05:00           NaN  1000000.00000
+2000-01-03 09:35:01-05:00           NaN  1000000.00000
+2000-01-03 09:40:01-05:00  49979.934222   950003.83233
+# historical statistics=
+                           net_asset_holdings           cash      net_wealth  gross_exposure  leverage
+2000-01-03 09:30:00-05:00            0.000000  1000000.00000  1000000.000000        0.000000  0.000000
+2000-01-03 09:30:01-05:00            0.000000  1000000.00000  1000000.000000        0.000000  0.000000
+2000-01-03 09:35:01-05:00            0.000000  1000000.00000  1000000.000000        0.000000  0.000000
+2000-01-03 09:40:01-05:00        49979.934222   950003.83233   999983.766551    49979.934222  0.049981

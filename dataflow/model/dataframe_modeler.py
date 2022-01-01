@@ -23,9 +23,7 @@ import core.finance as cofinanc
 import core.plotting as coplotti
 import core.signal_processing as csigproc
 import core.timeseries_study as ctimstud
-
-# We treat this as a client of `dataflow.core`.
-import dataflow as cdataf
+import dataflow.core as cdataf
 import dataflow.model.stats_computer as dtfmostcom
 import helpers.dbg as hdbg
 

@@ -32,7 +32,7 @@ from tqdm.autonotebook import tqdm
 
 import core.config as cconfig
 import core.signal_processing as csigproc
-import dataflow as dtf
+import dataflow.core as dtf
 import helpers.dbg as hdbg
 import helpers.io_ as hio
 import helpers.parser as hparser
