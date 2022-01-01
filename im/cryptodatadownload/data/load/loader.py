@@ -98,9 +98,7 @@ class CddLoader:
             exchange_id,
             currency_pair,
         )
-        transformed_data = self._transform(
-            data, exchange_id, currency_pair
-        )
+        transformed_data = self._transform(data, exchange_id, currency_pair)
         return transformed_data
 
     # TODO(Grisha): factor out common code from `CddLoader._get_file_path` and

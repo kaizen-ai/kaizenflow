@@ -38,17 +38,13 @@ def _check_output(
     # Check output df length.
     self_.assert_equal(str(expected_length), str(actual_df.shape[0]))
     # Check unique exchange ids in the output df.
-    actual_exchange_ids = sorted(
-        list(actual_df["exchange_id"].dropna().unique())
-    )
+    actual_exchange_ids = sorted(list(actual_df["exchange_id"].dropna().unique()))
     self_.assert_equal(str(actual_exchange_ids), str(expected_exchange_ids))
     # Check unique currency pairs in the output df.
     actual_currency_pairs = sorted(
         list(actual_df["currency_pair"].dropna().unique())
     )
-    self_.assert_equal(
-        str(actual_currency_pairs), str(expected_currency_pairs)
-    )
+    self_.assert_equal(str(actual_currency_pairs), str(expected_currency_pairs))
     actual_df = actual_df[sorted(actual_df.columns)]
     actual_df_as_str = hprint.df_to_short_str("df", actual_df)
     self_.assert_equal(

@@ -18,9 +18,7 @@ class TestGetFilePath(hunitest.TestCase):
         currency_pair = "ETH_USDT"
         data_type = "OHLCV"
         root_dir = _AM_S3_ROOT_DIR
-        cdd_loader = imcdalolo.CddLoader(
-            data_type, root_dir, aws_profile="am"
-        )
+        cdd_loader = imcdalolo.CddLoader(data_type, root_dir, aws_profile="am")
         actual = cdd_loader._get_file_path(
             imcdalolo._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
         )
@@ -38,9 +36,7 @@ class TestGetFilePath(hunitest.TestCase):
         currency_pair = "ADA_USDT"
         data_type = "OHLCV"
         root_dir = _AM_S3_ROOT_DIR
-        cdd_loader = imcdalolo.CddLoader(
-            data_type, root_dir, aws_profile="am"
-        )
+        cdd_loader = imcdalolo.CddLoader(data_type, root_dir, aws_profile="am")
         with self.assertRaises(AssertionError):
             cdd_loader._get_file_path(
                 imcdalolo._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
@@ -54,9 +50,7 @@ class TestGetFilePath(hunitest.TestCase):
         currency_pair = "unsupported_currency"
         data_type = "OHLCV"
         root_dir = _AM_S3_ROOT_DIR
-        cdd_loader = imcdalolo.CddLoader(
-            data_type, root_dir, aws_profile="am"
-        )
+        cdd_loader = imcdalolo.CddLoader(data_type, root_dir, aws_profile="am")
         with self.assertRaises(AssertionError):
             cdd_loader._get_file_path(
                 imcdalolo._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
@@ -71,9 +65,7 @@ class TestCddLoader(hunitest.TestCase):
         """
         data_type = "OHLCV"
         root_dir = _AM_S3_ROOT_DIR
-        cdd_loader = imcdalolo.CddLoader(
-            data_type, root_dir, aws_profile="am"
-        )
+        cdd_loader = imcdalolo.CddLoader(data_type, root_dir, aws_profile="am")
         actual = cdd_loader.read_data("binance::BTC_USDT")
         # Check the output values.
         actual_string = hunitest.convert_df_to_json_string(actual)
@@ -85,9 +77,7 @@ class TestCddLoader(hunitest.TestCase):
         """
         data_type = "OHLCV"
         root_dir = _AM_S3_ROOT_DIR
-        cdd_loader = imcdalolo.CddLoader(
-            data_type, root_dir, aws_profile="am"
-        )
+        cdd_loader = imcdalolo.CddLoader(data_type, root_dir, aws_profile="am")
         with self.assertRaises(AssertionError):
             cdd_loader.read_data("unsupported_exchange_id::BTC_USDT")
 
@@ -97,9 +87,7 @@ class TestCddLoader(hunitest.TestCase):
         """
         data_type = "OHLCV"
         root_dir = _AM_S3_ROOT_DIR
-        cdd_loader = imcdalolo.CddLoader(
-            data_type, root_dir, aws_profile="am"
-        )
+        cdd_loader = imcdalolo.CddLoader(data_type, root_dir, aws_profile="am")
         with self.assertRaises(AssertionError):
             cdd_loader.read_data("binance::unsupported_currency_pair")
 
