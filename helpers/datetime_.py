@@ -182,6 +182,10 @@ def dassert_tz_compatible(
     )
 
 
+# TODO(gp): Replace this check with compatibility between series vs scalar.
+# def dassert_srs_tz_compatible(
+# def dassert_srs_has_tz
+# def dassert_srs_is_tz_naive
 def dassert_tz_compatible_timestamp_with_df(
     datetime_: StrictDatetime,
     df: pd.DataFrame,
@@ -221,6 +225,9 @@ def get_ET_tz() -> datetime.tzinfo:
     Return the US Eastern Time timezone.
     """
     # TODO(Grisha): -> `US/Eastern`?
+    # It appears that "America/New_York" is to be preferred over "US/Eastern".
+    # https://www.iana.org/time-zones
+    # https://en.wikipedia.org/wiki/Tz_database
     return pytz.timezone("America/New_York")
 
 

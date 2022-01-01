@@ -892,9 +892,15 @@ def git_branch_copy(ctx, new_branch_name="", use_patch=False):  # type: ignore
 
 
 @task
-def git_branch_diff_with_base(ctx, diff_type="", subdir=""):  # type: ignore
+def git_branch_diff_with_base(  # type: ignore
+    ctx, diff_type="", subdir="", dry_run=False
+):
     """
     Diff files of the current branch with master at the branching point.
+
+    :param diff_type: files to diff using git `--diff-filter` options
+    :param subdir: subdir to consider for diffing, instead of `.`
+    :param dry_run: execute diffing script or not
     """
     _ = ctx
     # This branch is not master.
@@ -966,6 +972,8 @@ def git_branch_diff_with_base(ctx, diff_type="", subdir=""):  # type: ignore
     script_file_name = "./tmp.vimdiff_branch_with_base.sh"
     hsysinte.create_executable_script(script_file_name, script_txt)
     print(f"# To diff against the base run:\n> {script_file_name}")
+    if not dry_run:
+        _run(ctx, script_file_name, pty=True)
 
 
 # TODO(gp): Add the following scripts:
@@ -978,6 +986,31 @@ def git_branch_diff_with_base(ctx, diff_type="", subdir=""):  # type: ignore
 # #############################################################################
 # Integrate.
 # #############################################################################
+
+
+# Integration good practices
+# - Pull master
+# - Lint both dirs
+#   ```
+#   > cd amp1
+#   > i lint --dir-name . --only-format
+#   > cd cmamp1
+#   > i lint --dir-name . --only-format
+#   ```
+# - Align `lib_tasks.py`
+#   ```
+#   > vimdiff ~/src/{amp1,cmamp1}/helpers/lib_tasks.py
+#   ```
+# - Create the integration branch
+#   ```
+#   > cd amp1
+#   > i integrate_create_branch amp1
+#   > cd cmamp1
+#   > i integrate_create_branch cmamp1
+#   ```
+# - Check what files were modified since the last integration
+#   ```
+#   > i integrate
 
 
 def _dassert_current_dir_matches(dir_name: str) -> None:
@@ -1202,7 +1235,6 @@ def integrate_compare_branch_with_base(ctx, src_dir, dst_dir, subdir=""):  # typ
     _dassert_is_integration_branch(src_dir)
     _dassert_is_integration_branch(dst_dir)
     _clean_both_integration_dirs(src_dir, dst_dir)
-    #
     # Find the files modified by both branches.
     src_hash = hgit.get_branch_hash(src_dir)
     _LOG.info("src_hash=%s", src_hash)
@@ -1245,19 +1277,27 @@ def integrate_compare_branch_with_base(ctx, src_dir, dst_dir, subdir=""):  # typ
 # #############################################################################
 
 
+def _get_docker_exec(sudo: bool) -> str:
+    docker_exec = "docker"
+    if sudo:
+        docker_exec = "sudo " + docker_exec
+    return docker_exec
+
+
 @task
-def docker_images_ls_repo(ctx):  # type: ignore
+def docker_images_ls_repo(ctx, sudo=False):  # type: ignore
     """
     List images in the logged in repo_short_name.
     """
     _report_task()
     docker_login(ctx)
     ecr_base_path = get_default_param("ECR_BASE_PATH")
-    _run(ctx, f"docker image ls {ecr_base_path}")
+    docker_exec = _get_docker_exec(sudo)
+    _run(ctx, f"{docker_exec} image ls {ecr_base_path}")
 
 
 @task
-def docker_ps(ctx):  # type: ignore
+def docker_ps(ctx, sudo=False):  # type: ignore
     # pylint: disable=line-too-long
     """
     List all the running containers.
@@ -1275,14 +1315,16 @@ def docker_ps(ctx):  # type: ignore
         + r"\t{{.RunningFor}}\t{{.Status}}\t{{.Ports}}"
         + r'\t{{.Label "com.docker.compose.service"}}'
     )
-    cmd = f"docker ps --format='{fmt}'"
+    docker_exec = _get_docker_exec(sudo)
+    cmd = f"{docker_exec} ps --format='{fmt}'"
     cmd = _to_single_line_cmd(cmd)
     _run(ctx, cmd)
 
 
-def _get_last_container_id() -> str:
+def _get_last_container_id(sudo: bool) -> str:
+    docker_exec = _get_docker_exec(sudo)
     # Get the last started container.
-    cmd = "docker ps -l | grep -v 'CONTAINER ID'"
+    cmd = f"{docker_exec} ps -l | grep -v 'CONTAINER ID'"
     # CONTAINER ID   IMAGE          COMMAND                  CREATED
     # 90897241b31a   eeb33fe1880a   "/bin/sh -c '/bin/ba…"   34 hours ago ...
     _, txt = hsysinte.system_to_one_line(cmd)
@@ -1294,7 +1336,9 @@ def _get_last_container_id() -> str:
 
 @task
 def docker_stats(  # type: ignore
-    ctx, all=False  # pylint: disable=redefined-builtin
+    ctx,
+    all=False,  # pylint: disable=redefined-builtin
+    sudo=False,
 ):
     # pylint: disable=line-too-long
     """
@@ -1315,13 +1359,14 @@ def docker_stats(  # type: ignore
         r"table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
         + r"\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}"
     )
-    cmd = f"docker stats --no-stream --format='{fmt}'"
+    docker_exec = _get_docker_exec(sudo)
+    cmd = f"{docker_exec} stats --no-stream --format='{fmt}'"
     _, txt = hsysinte.system_to_string(cmd)
     if all:
         output = txt
     else:
         # Get the id of the last started container.
-        container_id = _get_last_container_id()
+        container_id = _get_last_container_id(sudo)
         print(f"Last container id={container_id}")
         # Parse the output looking for the given container.
         txt = txt.split("\n")
@@ -1342,23 +1387,31 @@ def docker_stats(  # type: ignore
 
 @task
 def docker_kill(  # type: ignore
-    ctx, all=False  # pylint: disable=redefined-builtin
+    ctx,
+    all=False,  # pylint: disable=redefined-builtin
+    sudo=False,
 ):
     """
     Kill the last Docker container started.
 
     :param all: kill all the containers (be careful!)
+    :param sudo: use sudo for the Docker commands
     """
     _report_task(hprint.to_str("all"))
-    # TODO(gp): Ask if we are sure and add a --just-do-it option.
+
+    docker_exec = _get_docker_exec(sudo)
     # Last container.
     opts = "-l"
     if all:
+        _LOG.warning("Killing all the containers")
+        # TODO(gp): Ask if we are sure and add a --just-do-it option.
         opts = "-a"
     # Print the containers that will be terminated.
-    _run(ctx, f"docker ps {opts}")
+    cmd = f"{docker_exec} ps {opts}"
+    _run(ctx, cmd)
     # Kill.
-    _run(ctx, f"docker rm -f $(docker ps {opts} -q)")
+    cmd = f"{docker_exec} rm -f $({docker_exec} ps {opts} -q)"
+    _run(ctx, cmd)
 
 
 # docker system prune
@@ -1660,6 +1713,20 @@ def get_image(
     return image
 
 
+def _run_docker_as_user(as_user_from_cmd_line: bool) -> bool:
+    as_root = hgit.execute_repo_config_code("run_docker_as_root()")
+    as_user = as_user_from_cmd_line
+    if as_root:
+        as_user = False
+    _LOG.debug(
+        "as_user_from_cmd_line=%s as_root=%s -> as_user=%s",
+        as_user_from_cmd_line,
+        as_root,
+        as_user,
+    )
+    return as_user
+
+
 def _get_docker_cmd(
     base_image: str,
     stage: str,
@@ -1763,19 +1830,7 @@ def _get_docker_cmd(
         --rm"""
     )
     # - Handle the user.
-    # Based on AmpTask1864 it seems that we need to use root in the CI to be
-    # able to log in GH touching $HOME/.config/gh.
-    as_user_from_cmd_line = as_user
-    as_root = hgit.execute_repo_config_code("run_docker_as_root()")
-    as_user = as_user_from_cmd_line
-    if as_root:
-        as_user = False
-    _LOG.debug(
-        "as_user_from_cmd_line=%s as_root=%s -> as_user=%s",
-        as_user_from_cmd_line,
-        as_root,
-        as_user,
-    )
+    as_user = _run_docker_as_user(as_user)
     if as_user:
         docker_cmd_.append(
             r"""
@@ -2448,16 +2503,22 @@ def _find_test_files(
     return file_names
 
 
-def _find_test_class(class_name: str, file_names: List[str]) -> List[str]:
+# TODO(gp): -> find_class since it works also for any class.
+def _find_test_class(
+    class_name: str, file_names: List[str], exact_match: bool = False
+) -> List[str]:
     """
     Find test file containing `class_name` and report it in pytest format.
 
     E.g., for "TestLibTasksRunTests1" return
     "test/test_lib_tasks.py::TestLibTasksRunTests1"
+
+    :param exact_match: find an exact match or an approximate where `class_name`
+        is included in the class name
     """
     # > jackpy TestLibTasksRunTests1
     # test/test_lib_tasks.py:60:class TestLibTasksRunTests1(hut.TestCase):
-    regex = r"^\s*class\s+(%s)\(" % re.escape(class_name)
+    regex = r"^\s*class\s+(\S+)\s*\("
     _LOG.debug("regex='%s'", regex)
     res: List[str] = []
     # Scan all the files.
@@ -2472,9 +2533,14 @@ def _find_test_class(class_name: str, file_names: List[str]) -> List[str]:
             if m:
                 found_class_name = m.group(1)
                 _LOG.debug("  %s:%d -> %s", line, i, found_class_name)
-                res_tmp = f"{file_name}::{found_class_name}"
-                _LOG.debug("res_tmp=%s", res_tmp)
-                res.append(res_tmp)
+                if exact_match:
+                    found = found_class_name == class_name
+                else:
+                    found = class_name in found_class_name
+                if found:
+                    res_tmp = f"{file_name}::{found_class_name}"
+                    _LOG.debug("-> res_tmp=%s", res_tmp)
+                    res.append(res_tmp)
     res = sorted(list(set(res)))
     return res
 
@@ -2502,8 +2568,10 @@ def _to_pbcopy(txt: str, pbcopy: bool) -> None:
 
 
 # TODO(gp): Extend this to accept only the test method.
+# TODO(gp): Have a single `find` command with multiple options to search for different
+#  things, e.g., class names, test names, pytest_mark, ...
 @task
-def find_test_class(ctx, class_name, dir_name=".", pbcopy=True):  # type: ignore
+def find_test_class(ctx, class_name, dir_name=".", pbcopy=True, exact_match=False):  # type: ignore
     """
     Report test files containing `class_name` in a format compatible with
     pytest.
@@ -2516,7 +2584,7 @@ def find_test_class(ctx, class_name, dir_name=".", pbcopy=True):  # type: ignore
     hdbg.dassert(class_name != "", "You need to specify a class name")
     _ = ctx
     file_names = _find_test_files(dir_name)
-    res = _find_test_class(class_name, file_names)
+    res = _find_test_class(class_name, file_names, exact_match)
     res = " ".join(res)
     # Print or copy to clipboard.
     _to_pbcopy(res, pbcopy)
@@ -2561,18 +2629,21 @@ def _find_test_decorator(decorator_name: str, file_names: List[str]) -> List[str
 
 
 @task
-def find_test_decorator(ctx, decorator_name="", dir_name="."):  # type: ignore
+def find_test_decorator(
+    ctx, decorator_name="", dir_name=".", exact_match=False
+):  # type: ignore
     """
     Report test files containing `class_name` in pytest format.
 
-    :param class_name: the class to search
+    :param decorator_name: the decorator to search
     :param dir_name: the dir from which to search
+    :param exact_match:
     """
     _report_task()
     _ = ctx
     hdbg.dassert_ne(decorator_name, "", "You need to specify a decorator name")
     file_names = _find_test_files(dir_name)
-    res = _find_test_class(decorator_name, file_names)
+    res = _find_test_decorator(decorator_name, file_names, exact_match)
     res = " ".join(res)
     print(res)
 
@@ -3617,6 +3688,7 @@ def lint(  # type: ignore
             return
         files_as_str = " ".join(files_as_list)
         phases = phases.split(" ")
+        as_user = _run_docker_as_user(as_user)
         for phase in phases:
             # Prepare the command line.
             precommit_opts = [

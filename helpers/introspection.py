@@ -117,3 +117,15 @@ def get_methods(obj: Any, access: str = "all") -> List[str]:
     else:
         raise ValueError("Invalid access='%s'" % access)
     return methods
+
+
+# #############################################################################
+
+
+def print_stacktrace():
+    """
+    Print the stack trace.
+    """
+    import traceback
+
+    traceback.print_stack()

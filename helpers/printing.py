@@ -10,7 +10,7 @@ import logging
 import re
 import sys
 import tempfile
-from typing import Any, Dict, Iterable, List, Match, Optional, cast
+from typing import Any, Callable, Dict, Iterable, List, Match, Optional, cast
 
 import helpers.dbg as hdbg
 
@@ -406,16 +406,25 @@ def log_frame(
     logger.log(verbosity, "%s", msg)
 
 
-def install_log_verb_debug(logger: logging.Logger, *, verbose: bool) -> None:
+# TODO(gp): This can be injected in `hlogger.py` and then controlled through
+#  command line, e.g., `-v VERBOSE`. We should be able to tweak the verbosity
+#  of each module independently.
+def install_log_verb_debug(logger: logging.Logger, *, verbose: bool) -> Callable:
     """
-    Create in a module a _LOG.debug() that can be disabled in a centralized way.
+    Create in a module a _LOG.verb_debug() that can be disabled in a centralized
+    way.
 
-    This is useful when we want to make a module not too chatty.
+    This is useful when we want to have an higher-level of verbose debugging that
+    can be enabled programmatically.
 
     Use example:
     ```
     _LOG = logging.getLogger(__name__)
-    hprint.install_log_verb_debug(_LOG, verbose=True)
+    # Assign this not to confuse the linter about a symbol that doesn't exist
+    # in the code.
+    _LOG.verb_debug = hprint.install_log_verb_debug(_LOG,
+        # Enable the very verbose output.
+        verbose=True)
 
     _LOG.verb_debug(...)
     ```
@@ -426,7 +435,7 @@ def install_log_verb_debug(logger: logging.Logger, *, verbose: bool) -> None:
         if verbose:
             logger.debug(*args, **kwargs)
 
-    logger.verb_debug = _verb_debug
+    return _verb_debug
 
 
 # #############################################################################
@@ -757,15 +766,20 @@ def to_pretty_str(obj: Any) -> str:
 
 
 # TODO(gp): This seems redundant with hut.convert_df_to_string.
+# TODO(gp): -> df_to_str
 # TODO(gp): Move to pandas_helpers.
 def dataframe_to_str(
     df: Any,
+    *,
     max_columns: int = 10000,
     max_colwidth: int = 2000,
     max_rows: int = 500,
     display_width: int = 10000,
     use_tabulate: bool = False,
 ) -> str:
+    """
+    Print a dataframe to string reporting all the columns without trimming.
+    """
     import pandas as pd
 
     with pd.option_context(
@@ -789,19 +803,27 @@ def dataframe_to_str(
 
 
 # TODO(gp): Move to pandas_helpers.
-# TODO(gp): -> df_to_str(df, tag, ...
+# TODO(gp): -> df_and_shape_to_str(df, tag, ...
+# TODO(gp): Merge df_to_str and this adding a parameter `print_shape_info`.
 def df_to_short_str(tag: str, df: "pd.DataFrame", *, n: int = 3) -> str:
+    """
+    Print a dataframe to string reporting the info about the size.
+    """
     out = []
+    # Print the tag.
     tag = tag or "df"
     out.append(f"# {tag}=")
+    # Print information about the shape and index.
     if not df.empty:
         out.append("df.index in [%s, %s]" % (df.index.min(), df.index.max()))
         out.append("df.columns=%s" % ",".join(map(str, df.columns)))
     out.append("df.shape=%s" % str(df.shape))
+    # Print the data frame.
     if df.shape[0] <= n:
         out.append(dataframe_to_str(df))
     else:
         # Print top and bottom of df.
+        # TODO(gp): df.head(n / 2)
         out.append(dataframe_to_str(df.head(n)))
         out.append("...")
         tail_str = dataframe_to_str(df.tail(n))
