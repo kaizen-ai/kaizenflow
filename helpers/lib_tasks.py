@@ -990,7 +990,7 @@ def git_branch_diff_with_base(  # type: ignore
 # Integration good practices
 #
 # Concepts
-# --------
+# -----------------------------------------------------------------------------
 #
 # - We have two dirs storing two forks of the same repo
 # - Files are touched, e.g., added, modified, deleted in each forks
@@ -1003,7 +1003,7 @@ def git_branch_diff_with_base(  # type: ignore
 # - Other times we need to integrate "by file"
 #
 # Preparation
-# -----------
+# -----------------------------------------------------------------------------
 #
 # - Pull master
 #
@@ -1029,7 +1029,7 @@ def git_branch_diff_with_base(  # type: ignore
 #   ```
 #
 # Integration
-# -----------
+# -----------------------------------------------------------------------------
 #
 # - Check what files were modified since the last integration in each fork
 #   ```
@@ -1242,9 +1242,10 @@ def integrate_diff_dirs(  # type: ignore
 #     _run(ctx, cmd)
 
 
-#@task
+# @task
 def _find_files_touched_since_last_integration(
-        dir_name: str, abs_dir_name: str, subdir: str)-> List[str]:
+    dir_name: str, abs_dir_name: str, subdir: str
+) -> List[str]:
     """
     Return the list of files modified since the last integration.
 
@@ -1256,9 +1257,7 @@ def _find_files_touched_since_last_integration(
     try:
         os.chdir(abs_dir_name)
         # Find the hash of all integration commits.
-        cmd = (
-            "git log --date=local --oneline --date-order | grep AmpTask1786_Integrate"
-        )
+        cmd = "git log --date=local --oneline --date-order | grep AmpTask1786_Integrate"
         _, txt = hsysinte.system_to_string(cmd)
         _LOG.debug("integration commits=\n%s", txt)
         txt = txt.split("\n")
@@ -1360,7 +1359,9 @@ def _integrate_files(
     :param only_different_files: include in the script only the ones that are
         different
     """
-    _LOG.debug(hprint.to_str("abs_left_dir abs_right_dir copy tag only_different_files"))
+    _LOG.debug(
+        hprint.to_str("abs_left_dir abs_right_dir copy tag only_different_files")
+    )
     files_to_diff = []
     # Create script to diff.
     script_txt = []
@@ -1449,23 +1450,42 @@ def integrate_files(  # type: ignore
     else:
         _LOG.warning("Skipping integration branch check")
     # Find the files touched in each branch since the last integration.
-    src_files = set(_find_files_touched_since_last_integration(src_dir, abs_src_dir, subdir))
-    dst_files = set(_find_files_touched_since_last_integration(dst_dir, abs_dst_dir, subdir))
+    src_files = set(
+        _find_files_touched_since_last_integration(src_dir, abs_src_dir, subdir)
+    )
+    dst_files = set(
+        _find_files_touched_since_last_integration(dst_dir, abs_dst_dir, subdir)
+    )
     #
     if file_direction == "common_files":
         common_files = src_files.intersection(dst_files)
         _integrate_files(
-            common_files, abs_src_dir, abs_dst_dir, copy, file_direction, only_different_files
+            common_files,
+            abs_src_dir,
+            abs_dst_dir,
+            copy,
+            file_direction,
+            only_different_files,
         )
     elif file_direction == "only_files_in_src":
         only_src_files = src_files - dst_files
         _integrate_files(
-            only_src_files, abs_src_dir, abs_dst_dir, copy, file_direction, only_different_files
+            only_src_files,
+            abs_src_dir,
+            abs_dst_dir,
+            copy,
+            file_direction,
+            only_different_files,
         )
     elif file_direction == "only_files_in_dst":
         only_dst_files = dst_files - src_files
         _integrate_files(
-            only_dst_files, abs_src_dir, abs_dst_dir, copy, file_direction, only_different_files
+            only_dst_files,
+            abs_src_dir,
+            abs_dst_dir,
+            copy,
+            file_direction,
+            only_different_files,
         )
     else:
         raise ValueError("Invalid file_direction='%s'" % file_direction)

@@ -6,7 +6,14 @@ import helpers.s3 as hs3
 import helpers.unit_test as hunitest
 import im.cryptodatadownload.data.load.loader as imcdalolo
 
-_AM_S3_ROOT_DIR = os.path.join(hs3.get_path(), "data")
+
+# TODO(gp): Move to im.cryptodatadownloader.data.load.cdd_
+def _get_ccd_loader_example1():
+    _AM_S3_ROOT_DIR = os.path.join(hs3.get_path(), "data")
+    data_type = "OHLCV"
+    root_dir = _AM_S3_ROOT_DIR
+    cdd_loader = imcdalolo.CddLoader(data_type, root_dir, aws_profile="am")
+    return cdd_loader
 
 
 class TestGetFilePath(hunitest.TestCase):
@@ -14,11 +21,12 @@ class TestGetFilePath(hunitest.TestCase):
         """
         Test supported exchange id and currency pair.
         """
-        exchange_id = "binance"
-        currency_pair = "ETH_USDT"
         data_type = "OHLCV"
         root_dir = _AM_S3_ROOT_DIR
         cdd_loader = imcdalolo.CddLoader(data_type, root_dir, aws_profile="am")
+        #
+        exchange_id = "binance"
+        currency_pair = "ETH_USDT"
         actual = cdd_loader._get_file_path(
             imcdalolo._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
         )
@@ -32,11 +40,12 @@ class TestGetFilePath(hunitest.TestCase):
         """
         Test unsupported exchange id.
         """
-        exchange_id = "unsupported exchange"
-        currency_pair = "ADA_USDT"
         data_type = "OHLCV"
         root_dir = _AM_S3_ROOT_DIR
         cdd_loader = imcdalolo.CddLoader(data_type, root_dir, aws_profile="am")
+        #
+        exchange_id = "unsupported exchange"
+        currency_pair = "ADA_USDT"
         with self.assertRaises(AssertionError):
             cdd_loader._get_file_path(
                 imcdalolo._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
