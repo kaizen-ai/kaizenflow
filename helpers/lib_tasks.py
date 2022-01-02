@@ -388,6 +388,7 @@ def git_pull(ctx):  # type: ignore
     _run(ctx, cmd)
 
 
+# TODO(gp): Maybe inline
 @task
 def git_pull_master(ctx):  # type: ignore
     """
@@ -1005,7 +1006,7 @@ def git_branch_diff_with_base(  # type: ignore
 #
 # - Pull master
 #
-# - Lint both forks
+# - Lint both dirs
 #   ```
 #   > cd amp1
 #   > i lint --dir-name . --only-format
@@ -1015,6 +1016,7 @@ def git_branch_diff_with_base(  # type: ignore
 #
 # - Align `lib_tasks.py`
 #   ```
+#   > vimdiff ~/src/{amp1,cmamp1}/tasks.py
 #   > vimdiff ~/src/{amp1,cmamp1}/helpers/lib_tasks.py
 #   ```
 #
@@ -1058,13 +1060,17 @@ def git_branch_diff_with_base(  # type: ignore
 #   since the last integration and compare them to master
 #   ```
 #   > cd amp1
-#   > i integrate_compare_branch_with_base --src-dir "amp1" --dst-dir "cmamp1"
+#   > i integrate_diff_overlapping_files --src-dir "amp1" --dst-dir "cmamp1"
+#   > cd cmamp1
+#   > i integrate_diff_overlapping_files --src-dir "cmamp1" --dst-dir "amp1"
 #   ```
 #
-# -
+# - Quickly scan all the changes in the branch
 #   ```
+#   > cd amp1
+#   > i git_branch_diff_with_base --src-dir "amp1" --dst-dir "cmamp1"
 #   > cd cmamp1
-#   > i integrate_compare_branch_with_base --src-dir "cmamp1" --dst-dir "amp1"
+#   > i git_branch_diff_with_base --src-dir "cmamp1" --dst-dir "amp1"
 #   ```
 
 
@@ -1433,7 +1439,7 @@ def integrate_files(  # type: ignore
 
 
 @task
-def integrate_compare_branch_with_base(  # type: ignore
+def integrate_diff_overlapping_files(  # type: ignore
         ctx, src_dir, dst_dir, subdir=""):
     """
     Find the files modified in both branches `src_dir_name` and `dst_dir_name`
@@ -1477,7 +1483,10 @@ def integrate_compare_branch_with_base(  # type: ignore
         # Save the base file.
         cmd = f"git show {src_hash}:{src_file} >{dst_file}"
         rc = hsysinte.system(cmd, abort_on_error=False)
-        if rc == 128:
+        if rc == 0:
+            # The file was created: nothing to do.
+            pass
+        elif rc == 128:
             # Note that the file potentially could not exist, i.e., it was added in
             # the branch. In this case Git returns:
             # rc=128 fatal: path 'dataflow/pipelines/real_time/test/test_dataflow_pipelines_real_time_pipeline.py' exists on disk, but not in 'ce54877016204315766e90df7c45192bec1fbf20'
@@ -1487,7 +1496,7 @@ def integrate_compare_branch_with_base(  # type: ignore
         # Update the script to diff.
         script_txt.append(f"vimdiff {dst_file} {src_file}")
     # Save the script to compare.
-    script_file_name = "./tmp.vimdiff_branch_with_base.sh"
+    script_file_name = "./tmp.vimdiff_overlapping_files.sh"
     script_txt = "\n".join(script_txt)
     hsysinte.create_executable_script(script_file_name, script_txt)
     print(f"# To diff against the base run:\n> {script_file_name}")

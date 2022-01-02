@@ -266,7 +266,7 @@ def _parse() -> argparse.ArgumentParser:
         "-o",
         "--output_file",
         action="store",
-        default="tmp.diff_file_differences.sh",
+        default="tmp.diff_to_vimdiff.sh",
         help="Output file. Don't specify anything for stdout",
     )
     parser.add_argument(
