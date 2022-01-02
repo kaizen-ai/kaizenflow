@@ -13,7 +13,12 @@ import im_v2.common.data.client as ivcdclcl
 import market_data.market_data_interface as mdmadain
 
 
+# TODO(gp): -> MarketDataImClient?
 class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
+    """
+    Implement a `MarketDataInterface` that uses a `ImClient` as backend.
+    """
+
     def __init__(
         self,
         *args: Any,
@@ -24,15 +29,17 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
         Constructor.
 
         :param args: see `AbstractMarketDataInterface`
-        :param im_client: `IM` client
+        :param im_client: IM client
         """
         super().__init__(*args, **kwargs)
+        #hdbg.dassert_is_instance(im_client, )
         self._im_client = im_client
 
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
         """
         See the parent class.
         """
+        # TODO(gp): It should delegate to the ImClient.
         return True
 
     def _get_data(
@@ -47,35 +54,24 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
         limit: Optional[int],
     ) -> pd.DataFrame:
         """
-        Read market data using `IM` client.
-
-        :param start_ts: beginning of the time interval to select data for
-        :param end_ts: end of the time interval to select data for
-        :param ts_col_name: the name of the column (before the remapping) to filter
-            on
-        :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
-        :param left_close, right_close: represent the type of interval
-            - E.g., [start_ts, end_ts), or (start_ts, end_ts]
-        :param normalize_data: whether to normalize data or not, see `self.process_data()`
-        :param limit: keep only top N records
-        :return: market data retrieved by `IM` client
+        See the parent class.
         """
-        # `IM` client uses [start_ts; end_ts).
+        # `ImClient` uses the convention [start_ts, end_ts).
         if not left_close:
-            # Add one millisecond not to include the left boundary.
+            # Add one millisecond to not include the left boundary.
             start_ts = start_ts + pd.Timedelta(1, "ms")
         if right_close:
             # Add one millisecond to include the right boundary.
             end_ts = end_ts + pd.Timedelta(1, "ms")
         if not asset_ids:
-            # If `asset_ids` is None, get all symbols from the latest universe.
+            # If `asset_ids` is None, get all symbols from the universe.
             asset_ids = self._im_client.get_universe()
-        full_symbols = asset_ids
         # Load the data using `im_client`.
+        full_symbols = asset_ids
         market_data = self._im_client.read_data(
             full_symbols,
-            start_ts=start_ts,
-            end_ts=end_ts,
+            start_ts,
+            end_ts,
         )
         if self._columns:
             # Select only specified columns.
@@ -93,8 +89,7 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
     @staticmethod
     def _convert_im_data(data: pd.DataFrame) -> pd.DataFrame:
         """
-        Convert `IM` data to the format required by
-        `AbstractMarketDataInterface`.
+        Convert IM data to the format required by `AbstractMarketDataInterface`.
 
         Input data example:
         ```
@@ -112,7 +107,7 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
         2  2021-07-26 13:44:00  binance:BTC_USDT  46895.39  81.264098  2021-07-26 13:43:00
         ```
 
-        :param data: `IM` data to transform
+        :param data: IM data to transform
         :return: transformed data
         """
         data = data.reset_index()

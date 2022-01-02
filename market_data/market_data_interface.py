@@ -478,8 +478,18 @@ class AbstractMarketDataInterface(abc.ABC):
         """
         Return data in [start_ts, end_ts) for certain assets.
 
-        This is the only entrypoint to get data from the derived
+        This should be the only entrypoint to get data from the derived
         classes.
+
+        :param start_ts: beginning of the time interval to select data for
+        :param end_ts: end of the time interval to select data for
+        :param ts_col_name: the name of the column (before the remapping) to filter
+            on
+        :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
+        :param left_close, right_close: represent the type of interval
+            - E.g., [start_ts, end_ts), or (start_ts, end_ts]
+        :param normalize_data: whether to normalize data or not, see `self.process_data()`
+        :param limit: keep only top N records
         """
         ...
 

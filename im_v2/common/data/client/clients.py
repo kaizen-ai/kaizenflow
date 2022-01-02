@@ -78,6 +78,7 @@ def construct_full_symbol(exchange: str, symbol: str) -> FullSymbol:
 # #############################################################################
 
 
+# TODO(gp): -> ImClient
 class AbstractImClient(abc.ABC):
     """
     Retrieve market data for different vendors from different backends.
@@ -98,7 +99,7 @@ class AbstractImClient(abc.ABC):
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
-        Read data in [start_ts, end_ts) for the symbols `FullSymbols`.
+        Read data in `[start_ts, end_ts)` for the symbols `FullSymbols`.
 
         # TODO: Add example of the data
 
