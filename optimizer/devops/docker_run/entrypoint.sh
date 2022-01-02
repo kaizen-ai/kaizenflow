@@ -56,9 +56,6 @@ if [[ 1 == 0 ]]; then
     aws configure --profile am list || true
 fi;
 
-echo "CONTAINER_VERSION='$CONTAINER_VERSION'"
-echo "BUILD_TAG='$BUILD_TAG'"
-
 # TODO(gp): Use this idiom everywhere (see CmampTask387).
 VAL=$(which python)
 echo "which python: $VAL"
