@@ -86,35 +86,37 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
             market_data = self.process_data(market_data)
         return market_data
 
-    @staticmethod
-    def _convert_im_data(data: pd.DataFrame) -> pd.DataFrame:
+    def _convert_im_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Convert IM data to the format required by `AbstractMarketDataInterface`.
 
-        Input data example:
+        :param df: IM data to transform
         ```
                                   full_symbol     close     volume
+                      index
         2021-07-26 13:42:00  binance:BTC_USDT  47063.51  29.403690
         2021-07-26 13:43:00  binance:BTC_USDT  46946.30  58.246946
         2021-07-26 13:44:00  binance:BTC_USDT  46895.39  81.264098
         ```
-
-        Output data example:
+        :return: transformed data
         ```
                         end_ts       full_symbol     close     volume             start_ts
+        idx
         0  2021-07-26 13:42:00  binance:BTC_USDT  47063.51  29.403690  2021-07-26 13:41:00
         1  2021-07-26 13:43:00  binance:BTC_USDT  46946.30  58.246946  2021-07-26 13:42:00
         2  2021-07-26 13:44:00  binance:BTC_USDT  46895.39  81.264098  2021-07-26 13:43:00
         ```
-
-        :param data: IM data to transform
-        :return: transformed data
         """
-        data = data.reset_index()
-        data = data.rename(columns={"index": "end_ts"})
+        # Move the index to the end ts column.
+        df.index.name = "index"
+        df = df.reset_index()
+        hdbg.dassert_not_in(self._end_time_col_name, df.columns)
+        df = df.rename(columns={"index": self._end_time_col_name})
         # `IM` data is assumed to have 1 minute frequency.
-        data["start_ts"] = data["end_ts"] - pd.Timedelta(minutes=1)
-        return data
+        hdbg.dassert_not_in(self._start_time_col_name, df.columns)
+        #hdbg.dassert_eq(df.index.freq, "1T")
+        df[self._start_time_col_name] = df[self._end_time_col_name] - pd.Timedelta(minutes=1)
+        return df
 
     # TODO(Grisha): implement the method.
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:

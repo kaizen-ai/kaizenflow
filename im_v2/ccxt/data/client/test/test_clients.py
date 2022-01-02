@@ -223,15 +223,15 @@ class TestCcxtCsvFileSystemClient(hunitest.TestCase):
         df.index in [2018-08-17 00:00:00+00:00, 2018-08-17 01:39:00+00:00]
         df.columns=close,currency_pair,epoch,exchange_id,full_symbol,high,low,open,volume
         df.shape=(100, 9)
-        close currency_pair          epoch exchange_id        full_symbol     high      low     open     volume
+        close currency_pair          epoch exchange_id    full_symbol     high      low     open     volume
         timestamp
-        2018-08-17 00:00:00+00:00  6311.64      BTC_USDT  1534464000000     binance  binance::BTC_USDT  6319.04  6310.32  6316.00   9.967395
-        2018-08-17 00:01:00+00:00  6302.81      BTC_USDT  1534464060000     binance  binance::BTC_USDT  6311.77  6302.81  6311.64  16.781206
-        2018-08-17 00:02:00+00:00  6297.26      BTC_USDT  1534464120000     binance  binance::BTC_USDT  6306.00  6292.79  6302.81  55.373226
+        2018-08-17 00:00:00+00:00  6311.64    BTC_USDT  1534464000000     binance  binance::BTC_USDT  6319.04  6310.32  6316.00   9.967395
+        2018-08-17 00:01:00+00:00  6302.81    BTC_USDT  1534464060000     binance  binance::BTC_USDT  6311.77  6302.81  6311.64  16.781206
+        2018-08-17 00:02:00+00:00  6297.26    BTC_USDT  1534464120000     binance  binance::BTC_USDT  6306.00  6292.79  6302.81  55.373226
         ...
-        2018-08-17 01:37:00+00:00  6343.14      BTC_USDT  1534469820000     binance  binance::BTC_USDT  6347.00  6343.00  6346.96  10.787817
-        2018-08-17 01:38:00+00:00  6339.25      BTC_USDT  1534469880000     binance  binance::BTC_USDT  6345.98  6335.04  6345.98  38.197244
-        2018-08-17 01:39:00+00:00  6342.95      BTC_USDT  1534469940000     binance  binance::BTC_USDT  6348.91  6339.00  6339.25  16.394692
+        2018-08-17 01:37:00+00:00  6343.14    BTC_USDT  1534469820000     binance  binance::BTC_USDT  6347.00  6343.00  6346.96  10.787817
+        2018-08-17 01:38:00+00:00  6339.25    BTC_USDT  1534469880000     binance  binance::BTC_USDT  6345.98  6335.04  6345.98  38.197244
+        2018-08-17 01:39:00+00:00  6342.95    BTC_USDT  1534469940000     binance  binance::BTC_USDT  6348.91  6339.00  6339.25  16.394692
         exchange_ids=binance
         currency_pairs=BTC_USDT"""
         # pylint: enable=line-too-long

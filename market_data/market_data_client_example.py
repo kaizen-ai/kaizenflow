@@ -1,10 +1,11 @@
 """
 Import as:
 
-import market_data.market_data_client_example as mdmdc
+import market_data.market_data_client_example as mdmdclex
 """
 
 import os
+from typing import Dict, List
 
 import pandas as pd
 
@@ -12,20 +13,20 @@ import helpers.datetime_ as hdateti
 import helpers.git as hgit
 import helpers.printing as hprint
 import helpers.unit_test as hunitest
+import im_v2.ccxt.data.client.ccx_clients_example as imvcdcccex
 import im_v2.ccxt.data.client.clients as imvcdclcl
 import im_v2.common.data.client as imvcdcli
-import im_v2.ccxt.data.client.ccx_clients_example as icdccce
 import market_data.market_data_client as mdmadacl
 
 
-def get_MarketDataInterface_example1() -> mdmadacl.MarketDataInterface:
-    ccxt_client = self.get_CcxtCsvFileSytemClient_example1()
+def get_MarketDataInterface_example1(
+    asset_ids: List[str], columns: List[str], column_remap: Dict[str, str]
+) -> mdmadacl.MarketDataInterface:
+    ccxt_client = imvcdcccex.get_CcxtCsvFileSytemClient_example1()
     #
     asset_id_col = "full_symbol"
-    asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
     start_time_col_name = "start_ts"
     end_time_col_name = "end_ts"
-    columns = []
     get_wall_clock_time = hdateti.get_current_time
     market_data_client = mdmadacl.MarketDataInterface(
         asset_id_col,
@@ -35,6 +36,6 @@ def get_MarketDataInterface_example1() -> mdmadacl.MarketDataInterface:
         columns,
         get_wall_clock_time,
         im_client=ccxt_client,
-        column_remap={"full_symbol": "asset_id"},
+        column_remap=column_remap,
     )
     return market_data_client
