@@ -22,6 +22,7 @@ class TestMarketDataClient(hunitest.TestCase):
         - interval type is [a, b)
         - column names are remapped
         """
+        # Build MarketDataInterface.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         columns = []
         column_remap = {"full_symbol": "asset_id"}
@@ -74,6 +75,7 @@ class TestMarketDataClient(hunitest.TestCase):
         - interval type is (a, b]
         - columns are filtered
         """
+        # Build MarketDataInterface.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         columns = [
             "full_symbol",
@@ -86,22 +88,6 @@ class TestMarketDataClient(hunitest.TestCase):
         market_data_client = mdmdclex.get_MarketDataInterface_example1(
             asset_ids, columns, column_remap
         )
-        # # Initialize the `MarketDataInterface`.
-        # ccxt_client = self.get_im_client()
-        # asset_id_col = "full_symbol"
-        # asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        # start_time_col_name = "start_ts"
-        # end_time_col_name = "end_ts"
-        # get_wall_clock_time = hdateti.get_current_time
-        # market_data_client = mdmadacl.MarketDataInterface(
-        #     asset_id_col,
-        #     asset_ids,
-        #     start_time_col_name,
-        #     end_time_col_name,
-        #     columns,
-        #     get_wall_clock_time,
-        #     im_client=ccxt_client,
-        # )
         # Read data.
         start_ts = pd.Timestamp("2018-08-17T00:01:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00")
@@ -145,24 +131,7 @@ class TestMarketDataClient(hunitest.TestCase):
         """
         Test that not normalized data is loaded correctly.
         """
-        # Initialize the `MarketDataInterface`.
-
-        # ccxt_client = self.get_im_client()
-        # asset_id_col = "full_symbol"
-        # asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        # start_time_col_name = "start_ts"
-        # end_time_col_name = "end_ts"
-        # columns = []
-        # get_wall_clock_time = hdateti.get_current_time
-        # market_data_client = mdmadacl.MarketDataInterface(
-        #     asset_id_col,
-        #     asset_ids,
-        #     start_time_col_name,
-        #     end_time_col_name,
-        #     columns,
-        #     get_wall_clock_time,
-        #     im_client=ccxt_client,
-        # )
+        # Build `MarketDataInterface`.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         columns = []
         column_remap = {"full_symbol": "asset_id"}
@@ -211,23 +180,7 @@ class TestMarketDataClient(hunitest.TestCase):
         """
         Test that TWAP is computed correctly.
         """
-        # Initialize the `MarketDataInterface`.
-        # ccxt_client = self.get_im_client()
-        # asset_id_col = "full_symbol"
-        # asset_ids = ["binance::BTC_USDT"]
-        # start_time_col_name = "start_ts"
-        # end_time_col_name = "end_ts"
-        # columns = []
-        # get_wall_clock_time = hdateti.get_current_time
-        # market_data_client = mdmadacl.MarketDataInterface(
-        #     asset_id_col,
-        #     asset_ids,
-        #     start_time_col_name,
-        #     end_time_col_name,
-        #     columns,
-        #     get_wall_clock_time,
-        #     im_client=ccxt_client,
-        # )
+        # Build MarketDataInterface.
         asset_ids = ["binance::BTC_USDT"]
         columns = []
         column_remap = None
@@ -248,23 +201,7 @@ class TestMarketDataClient(hunitest.TestCase):
         """
         Test that the interface is available at the given time.
         """
-        # Initialize the `MarketDataInterface`.
-        # ccxt_client = self.get_im_client()
-        # asset_id_col = "full_symbol"
-        # asset_ids = ["binance::BTC_USDT"]
-        # start_time_col_name = "start_ts"
-        # end_time_col_name = "end_ts"
-        # columns = []
-        # get_wall_clock_time = hdateti.get_current_time
-        # market_data_client = mdmadacl.MarketDataInterface(
-        #     asset_id_col,
-        #     asset_ids,
-        #     start_time_col_name,
-        #     end_time_col_name,
-        #     columns,
-        #     get_wall_clock_time,
-        #     im_client=ccxt_client,
-        # )
+        # Build MarketDataInterface.
         asset_ids = ["binance::BTC_USDT"]
         columns = []
         column_remap = None
@@ -280,28 +217,13 @@ class TestMarketDataClient(hunitest.TestCase):
         """
         Test that a call for the last end time is causing an error for now.
         """
-        # Initialize the `MarketDataInterface`.
+        # Build MarketDataInterface.
         asset_ids = ["binance::BTC_USDT"]
         columns = []
         column_remap = None
         market_data_client = mdmdclex.get_MarketDataInterface_example1(
             asset_ids, columns, column_remap
         )
-        # ccxt_client = self.get_im_client()
-        # asset_id_col = "full_symbol"
-        # asset_ids = ["binance::BTC_USDT"]
-        # start_time_col_name = "start_ts"
-        # end_time_col_name = "end_ts"
-        # columns = []
-        # get_wall_clock_time = hdateti.get_current_time
-        # market_data_client = mdmadacl.MarketDataInterface(
-        #     asset_id_col,
-        #     asset_ids,
-        #     start_time_col_name,
-        #     end_time_col_name,
-        #     columns,
-        #     get_wall_clock_time,
-        #     im_client=ccxt_client,
-        # )
+        # Check.
         actual = market_data_client._get_last_end_time()
         self.assertEqual(actual, NotImplementedError)

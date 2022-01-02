@@ -990,7 +990,6 @@ def git_branch_diff_with_base(  # type: ignore
 # Integration good practices
 #
 # Concepts
-# -----------------------------------------------------------------------------
 #
 # - We have two dirs storing two forks of the same repo
 # - Files are touched, e.g., added, modified, deleted in each forks
@@ -1003,7 +1002,6 @@ def git_branch_diff_with_base(  # type: ignore
 # - Other times we need to integrate "by file"
 #
 # Preparation
-# -----------------------------------------------------------------------------
 #
 # - Pull master
 #
@@ -1029,7 +1027,6 @@ def git_branch_diff_with_base(  # type: ignore
 #   ```
 #
 # Integration
-# -----------------------------------------------------------------------------
 #
 # - Check what files were modified since the last integration in each fork
 #   ```
@@ -1048,6 +1045,26 @@ def git_branch_diff_with_base(  # type: ignore
 # - Diff dir by dir
 #   ```
 #   > i integrate_diff_dirs --subdir dataflow/system
+#   ```
+#
+# Double check
+#
+# - Check that the regressions are passing on GH
+#   ```
+#   > i gh_create_pr --no-draft
+#   ```
+#
+# - Check the files that were changed in both branches (i.e., the problematic ones)
+#   since the last integration and compare them to master
+#   ```
+#   > cd amp1
+#   > i integrate_compare_branch_with_base --src-dir "amp1" --dst-dir "cmamp1"
+#   ```
+#
+# -
+#   ```
+#   > cd cmamp1
+#   > i integrate_compare_branch_with_base --src-dir "cmamp1" --dst-dir "amp1"
 #   ```
 
 

@@ -231,8 +231,8 @@ def _parse_diff_output(
         cmd = "./%s" % output_file
         print("Run script with:\n> " + cmd)
         #
-        cmd = "kill -kill $(ps -ef | grep %s | awk '{print $2 }')" % output_file
-        print("# To kill the script run:\n> " + cmd)
+        # cmd = "kill -kill $(ps -ef | grep %s | awk '{print $2 }')" % output_file
+        # print("# To kill the script run:\n> " + cmd)
 
 
 # #############################################################################
