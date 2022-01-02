@@ -25,7 +25,7 @@ import helpers.sql as hsql
 _LOG = logging.getLogger(__name__)
 
 
-hprint.install_log_verb_debug(_LOG, verbose=False)
+_LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
 
 
 # #############################################################################
@@ -38,19 +38,22 @@ class AbstractMarketDataInterface(abc.ABC):
     Implement an interface to an historical / real-time source of price data.
 
     Responsibilities:
-    - Delegate to a data backend in AbstractImClient to retrieve historical
+    - Delegate to a data backend in `AbstractImClient` to retrieve historical
       and real-time data
+    - Model data in terms of interval `start_timestamp`, `end_timestamp`
+        - `AbstractImClient` models data in terms of end timestamp of the interval
     - Implement RT behaviors (e.g, `is_last_bar_available`, wall_clock, ...)
-        - TODO(gp): Maybe move them in IM too?
+    - Implement knowledge time and delay
+        - `AbstractImClient` doesn't have this view of the data
     - Stitch together different data representations (e.g., historical / RT)
       using multiple IM backends
     - Remap columns to connect data backends to consumers
-    - Implement some market related transformations (e.g., TWAP)
-    - Convert data (i.e. `start_timestamp` and `end_timestamp`) into the specified timezone
+    - Implement some market related transformations (e.g., `get_twap_price()`,
+      `get_last_price()`)
 
     Non-responsibilities:
-    - In general don't access data directly but rely on an AbstractImClient object
-      to retrieve the data from different backends
+    - In general do not access data directly but rely on `AbstractImClient`
+      objects to retrieve the data from different backends
     """
 
     def __init__(
@@ -286,10 +289,10 @@ class AbstractMarketDataInterface(abc.ABC):
         ```
           asset_id           start_time             end_time     close   volume
 
-        idx  17085  2021-07-26 13:40:00  2021-07-26 13:41:00  149.0250   575024
-          0  17085  2021-07-26 13:41:00  2021-07-26 13:42:00  148.8600   400176
-          1  17085  2021-07-26 13:30:00  2021-07-26 13:31:00  148.5300  1407725
-          2  17085  2021-07-26 13:31:00  2021-07-26 13:32:00  148.0999   473869
+        idx
+          0  17085  2021-07-26 13:40:00  2021-07-26 13:41:00  149.0250   575024
+          1  17085  2021-07-26 13:41:00  2021-07-26 13:42:00  148.8600   400176
+          2  17085  2021-07-26 13:30:00  2021-07-26 13:31:00  148.5300  1407725
         ```
 
         The output df looks like:
@@ -333,6 +336,41 @@ class AbstractMarketDataInterface(abc.ABC):
             ret = ret.tz_convert("America/New_York")
         _LOG.verb_debug("-> ret=%s", ret)
         return ret
+
+    def get_last_price(
+        self,
+        col_name: str,
+        asset_ids: List[int],
+    ) -> pd.Series:
+        """
+        Get last price for `asset_ids` using column `col_name` (e.g., "close")
+        """
+        # TODO(*): Use a to-be-written `get_last_start_time()` instead.
+        last_end_time = self.get_last_end_time()
+        _LOG.info("last_end_time=%s", last_end_time)
+        # TODO(gp): This is not super robust.
+        if False:
+            # For debugging.
+            df = self.get_data(period="last_5mins")
+            _LOG.info("df=\n%s", hprintin.dataframe_to_str(df))
+        # Get the data.
+        # TODO(*): Remove the hard-coded 1-minute.
+        start_time = last_end_time - pd.Timedelta(minutes=1)
+        df = self.get_data_at_timestamp(
+            start_time,
+            self._start_time_col_name,
+            asset_ids,
+        )
+        # Convert the df of data into a series.
+        hdbg.dassert_in(col_name, df.columns)
+        last_price = df[[col_name, self._asset_id_col]]
+        last_price.set_index(self._asset_id_col, inplace=True)
+        last_price_srs = hpandas.to_series(last_price)
+        hdbg.dassert_isinstance(last_price_srs, pd.Series)
+        last_price_srs.index.name = self._asset_id_col
+        last_price_srs.name = col_name
+        # TODO(gp): Print if there are nans.
+        return last_price_srs
 
     @abc.abstractmethod
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
@@ -440,8 +478,18 @@ class AbstractMarketDataInterface(abc.ABC):
         """
         Return data in [start_ts, end_ts) for certain assets.
 
-        This is the only entrypoint to get data from the derived
+        This should be the only entrypoint to get data from the derived
         classes.
+
+        :param start_ts: beginning of the time interval to select data for
+        :param end_ts: end of the time interval to select data for
+        :param ts_col_name: the name of the column (before the remapping) to filter
+            on
+        :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
+        :param left_close, right_close: represent the type of interval
+            - E.g., [start_ts, end_ts), or (start_ts, end_ts]
+        :param normalize_data: whether to normalize data or not, see `self.process_data()`
+        :param limit: keep only top N records
         """
         ...
 
@@ -879,10 +927,10 @@ class ReplayedTimeMarketDataInterface(AbstractMarketDataInterface):
             hdbg.dassert_is_subset(self._columns, df_tmp.columns)
             df_tmp = df_tmp[self._columns]
         # # Handle `period`.
+        hdbg.dassert_in(ts_col_name, df_tmp.columns)
         # TODO(gp): This is inefficient. Make it faster by binary search.
         if start_ts is not None:
             _LOG.verb_debug("start_ts=%s", start_ts)
-            hdbg.dassert_in(ts_col_name, df_tmp)
             tss = df_tmp[ts_col_name]
             _LOG.verb_debug("tss=\n%s", hprint.dataframe_to_str(tss))
             if left_close:
@@ -893,7 +941,6 @@ class ReplayedTimeMarketDataInterface(AbstractMarketDataInterface):
             df_tmp = df_tmp[mask]
         if end_ts is not None:
             # _LOG.debug("end_ts=%s", end_ts)
-            hdbg.dassert_in(ts_col_name, df_tmp)
             tss = df_tmp[ts_col_name]
             _LOG.verb_debug("tss=\n%s", hprint.dataframe_to_str(tss))
             if right_close:
@@ -905,7 +952,7 @@ class ReplayedTimeMarketDataInterface(AbstractMarketDataInterface):
         # Handle `asset_ids`
         _LOG.verb_debug("before df_tmp=\n%s", hprint.dataframe_to_str(df_tmp))
         if asset_ids is not None:
-            hdbg.dassert_in(self._asset_id_col, df_tmp)
+            hdbg.dassert_in(self._asset_id_col, df_tmp.columns)
             mask = df_tmp[self._asset_id_col].isin(set(asset_ids))
             df_tmp = df_tmp[mask]
         _LOG.verb_debug("after df_tmp=\n%s", hprint.dataframe_to_str(df_tmp))
@@ -923,6 +970,8 @@ class ReplayedTimeMarketDataInterface(AbstractMarketDataInterface):
         # We need to find the last timestamp before the current time. We use
         # `last_week` but could also use all the data since we don't call the
         # DB.
+        # TODO(gp): SELECT MAX(start_time) instead of getting all the data
+        #  and then find the max and use `start_time`
         period = "last_week"
         df = self.get_data(period)
         _LOG.debug(hprint.df_to_short_str("after get_data", df))

@@ -29,7 +29,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class _AbstractDagRunner(abc.ABC):
+class AbstractDagRunner(abc.ABC):
     """
     Abstract class with the common code to all `DagRunner`s.
 
@@ -128,7 +128,7 @@ class _AbstractDagRunner(abc.ABC):
 # #############################################################################
 
 
-class FitPredictDagRunner(_AbstractDagRunner):
+class FitPredictDagRunner(AbstractDagRunner):
     """
     Run DAGs that have fit / predict methods.
     """
@@ -206,7 +206,7 @@ class PredictionDagRunner(FitPredictDagRunner):
 # #############################################################################
 
 
-class RollingFitPredictDagRunner(_AbstractDagRunner):
+class RollingFitPredictDagRunner(AbstractDagRunner):
     """
     Run a DAG by periodic fitting on previous history and evaluating on new
     data.
@@ -371,7 +371,7 @@ class RollingFitPredictDagRunner(_AbstractDagRunner):
 # #############################################################################
 
 
-class IncrementalDagRunner(_AbstractDagRunner):
+class IncrementalDagRunner(AbstractDagRunner):
     """
     Run DAGs in incremental fashion, i.e., running one step at a time.
 

@@ -4,8 +4,7 @@ from typing import Any, Optional
 
 import pandas as pd
 
-# TODO(Paul): Import the file actually used.
-import dataflow as dtf
+import dataflow.core.nodes.sources as dtfconosou
 import helpers.unit_test as hunitest  # pylint: disable=no-name-in-module
 
 _LOG = logging.getLogger(__name__)
@@ -123,7 +122,7 @@ class TestDiskDataSource(hunitest.TestCase):
         # Save the data with the proper extension.
         file_path = self._save_df(df, ext)
         # Instantiate node.
-        dds = dtf.DiskDataSource(
+        dds = dtfconosou.DiskDataSource(
             "read_data",
             file_path=file_path,
             timestamp_col=timestamp_col,
@@ -141,7 +140,7 @@ class TestDiskDataSource(hunitest.TestCase):
 
 class TestArmaGenerator(hunitest.TestCase):
     def test1(self) -> None:
-        node = dtf.ArmaGenerator(  # pylint: disable=no-member
+        node = dtfconosou.ArmaGenerator(  # pylint: disable=no-member
             nid="source",
             frequency="30T",
             start_date="2010-01-04 09:00",
@@ -162,14 +161,16 @@ class TestArmaGenerator(hunitest.TestCase):
 
 class TestMultivariateNormalGenerator(hunitest.TestCase):
     def test1(self) -> None:
-        node = dtf.MultivariateNormalGenerator(  # pylint: disable=no-member
-            nid="source",
-            frequency="30T",
-            start_date="2010-01-04 09:00",
-            end_date="2010-01-04 17:00",
-            dim=4,
-            target_volatility=10,
-            seed=1,
+        node = (
+            dtfconosou.MultivariateNormalGenerator(  # pylint: disable=no-member
+                nid="source",
+                frequency="30T",
+                start_date="2010-01-04 09:00",
+                end_date="2010-01-04 17:00",
+                dim=4,
+                target_volatility=10,
+                seed=1,
+            )
         )
         df = node.fit()["df_out"]
         act = hunitest.convert_df_to_string(df, index=True, decimals=2)

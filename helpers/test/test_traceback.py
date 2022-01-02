@@ -288,6 +288,34 @@ class Test_Traceback1(hunitest.TestCase):
     # 13:34:45 INFO  traceback_to_cfile  : _main                         : 76  : in_file_name=log.txt
     # 13:34:45 INFO  parser              : read_file                     : 304 : Reading from 'log.txt'
     # 13:34:45 ERROR traceback_to_cfile  : _main                         : 87  : Can't find traceback in the file
+
+    # Bug3:
+    # =================================== FAILURES ===================================
+    # _________________________ TestGetDataForInterval.test1 _________________________
+    # Traceback (most recent call last):
+    #   File "/venv/lib/python3.8/site-packages/pandas/core/indexes/base.py", line 3361, in get_loc
+    #     return self._engine.get_loc(casted_key)
+    #   File "pandas/_libs/index.pyx", line 76, in pandas._libs.index.IndexEngine.get_loc
+    #   File "pandas/_libs/index.pyx", line 108, in pandas._libs.index.IndexEngine.get_loc
+    #   File "pandas/_libs/hashtable_class_helper.pxi", line 5198, in pandas._libs.hashtable.PyObjectHashTable.get_item
+    #   File "pandas/_libs/hashtable_class_helper.pxi", line 5206, in pandas._libs.hashtable.PyObjectHashTable.get_item
+    # KeyError: 'end_ts'
+    #
+    # The above exception was the direct cause of the following exception:
+    #
+    # Traceback (most recent call last):
+    #   File "/app/amp/market_data/test/test_market_data_client.py", line 46, in test1
+    #     data = market_data_client.get_data_for_interval(
+    #   File "/app/amp/market_data/market_data_interface.py", line 212, in get_data_for_interval
+    #     df = self._get_data(
+    #   File "/app/amp/market_data/market_data_client.py", line 93, in _get_data
+    #     market_data["start_ts"] = market_data["end_ts"] - pd.Timedelta(
+    #   File "/venv/lib/python3.8/site-packages/pandas/core/frame.py", line 3458, in __getitem__
+    #     indexer = self.columns.get_loc(key)
+    #   File "/venv/lib/python3.8/site-packages/pandas/core/indexes/base.py", line 3363, in get_loc
+    #     raise KeyError(key) from err
+    # KeyError: 'end_ts'
+
     # pylint: enable=line-too-long
 
     def _parse_traceback_helper(

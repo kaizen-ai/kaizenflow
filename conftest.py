@@ -104,9 +104,8 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
 
             sys.argv.append("-s")
             sys.argv.append("-o log_cli=true")
-        dbg.init_logger(
-            level, in_pytest=True, log_filename="tmp.pytest_logger.log"
-        )
+        # TODO(gp): redirect also the stderr to file.
+        dbg.init_logger(level, in_pytest=True, log_filename="tmp.pytest.log")
 
     if "PYANNOTATE" in os.environ:
         print("\nWARNING: Collecting information about types through pyannotate")

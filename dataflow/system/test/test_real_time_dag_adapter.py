@@ -3,8 +3,7 @@ import os
 
 import pandas as pd
 
-import dataflow.core.builders_example as dtfcobuexa
-import dataflow.core.visualization as dtfcorvisu
+import dataflow.core as dtfcobuexa
 import dataflow.system.real_time_dag_adapter as dtfsrtdaad
 import helpers.printing as hprint
 import helpers.unit_test as hunitest
@@ -36,7 +35,9 @@ class TestRealtimeDagAdapter1(hunitest.TestCase):
             event_loop, initial_timestamp
         )
         # Build a DagAdapter.
-        dag_adapter = dtfsrtdaad.RealTimeDagAdapter(dag_builder, portfolio)
+        dag_adapter = dtfsrtdaad.RealTimeDagAdapter(
+            dag_builder, portfolio, "close"
+        )
         txt.append(hprint.frame("dag_adapter"))
         txt.append(hprint.indent(str(dag_adapter)))
         # Compute the final DAG.
@@ -45,7 +46,7 @@ class TestRealtimeDagAdapter1(hunitest.TestCase):
         dag = dag_adapter.get_dag(config)
         #
         file_name = os.path.join(self.get_scratch_space(), "dag.png")
-        dtfcorvisu.draw_to_file(dag, file_name)
+        dtfcobuexa.draw_to_file(dag, file_name)
         txt.append(hprint.frame("final dag"))
         txt.append(str(dag))
         # Check.

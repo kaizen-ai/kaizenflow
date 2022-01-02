@@ -57,7 +57,6 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
             initial_timestamp,
             market_data_interface=market_data_interface,
         )
-        config["portfolio"] = portfolio
         config["order_type"] = "price@twap"
         config["order_duration"] = 5
         config["ath_start_time"] = datetime.time(9, 30)
@@ -68,6 +67,7 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
         execution_mode = "batch"
         await oprofore.process_forecasts(
             predictions,
+            portfolio,
             execution_mode,
             config,
         )
@@ -147,7 +147,6 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
             [-0.3, 0.0],
         ]
         predictions = pd.DataFrame(data, index=index, columns=columns)
-        config["portfolio"] = portfolio
         config["order_type"] = "price@twap"
         config["order_duration"] = 5
         config["ath_start_time"] = datetime.time(9, 30)
@@ -158,6 +157,7 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
         execution_mode = "batch"
         await oprofore.process_forecasts(
             predictions,
+            portfolio,
             execution_mode,
             config,
         )

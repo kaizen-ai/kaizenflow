@@ -7,11 +7,8 @@ import pytest
 import core.config as cconfig
 import core.real_time as creatime
 import core.real_time_example as cretiexa
-import dataflow.core.builders_example as dtfcobuexa
-import dataflow.core.dag_adapter as dtfcodaada
-import dataflow.core.nodes.sources as dtfconosou
-import dataflow.core.result_bundle as dtfcorebun
-import dataflow.system.real_time_runner as dtfsretiru
+import dataflow.core as dtfcore
+import dataflow.system.real_time_dag_runner as dtfsrtdaru
 import helpers.datetime_ as hdateti
 import helpers.hasyncio as hasynci
 import helpers.unit_test as hunitest
@@ -53,12 +50,12 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
     @staticmethod
     def _helper(
         event_loop: Optional[asyncio.AbstractEventLoop],
-    ) -> Tuple[creatime.Events, List[dtfcorebun.ResultBundle]]:
+    ) -> Tuple[creatime.Events, List[dtfcore.ResultBundle]]:
         """
         Test `RealTimeDagRunner` using a simple DAG triggering every 2 seconds.
         """
         # Get a naive pipeline as DAG.
-        dag_builder = dtfcobuexa.MvnReturnsBuilder()
+        dag_builder = dtfcore.MvnReturnsBuilder()
         #
         overriding_config = cconfig.Config()
         overriding_config["load_prices"] = {
@@ -69,9 +66,9 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
             "target_volatility": 0.25,
             "seed": 247,
         }
-        node = dtfconosou.MultivariateNormalGenerator
+        node = dtfcore.MultivariateNormalGenerator
         nodes_to_insert = [("load_prices", node)]
-        dag_builder = dtfcodaada.DagAdapter(
+        dag_builder = dtfcore.DagAdapter(
             dag_builder,
             overriding_config,
             nodes_to_insert,
@@ -102,7 +99,7 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
             get_wall_clock_time, grid_time_in_secs, event_loop=event_loop
         )
         # Run.
-        dag_runner = dtfsretiru.RealTimeDagRunner(**dag_runner_kwargs)
+        dag_runner = dtfsrtdaru.RealTimeDagRunner(**dag_runner_kwargs)
         result_bundles = hasynci.run(dag_runner.predict(), event_loop=event_loop)
         events = dag_runner.events
         #
@@ -114,7 +111,7 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
     def _check(
         self,
         events: creatime.Events,
-        result_bundles: List[dtfcorebun.ResultBundle],
+        result_bundles: List[dtfcore.ResultBundle],
     ) -> None:
         # Check the events.
         actual = "\n".join(

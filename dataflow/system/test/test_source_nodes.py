@@ -1,13 +1,13 @@
 import pytest
 
-import dataflow.system.dataflow_source_nodes as dtfsdtfsono
+import dataflow.system.source_nodes as dtfsysonod
 import helpers.unit_test as hunitest
 
 
 class TestKibotEquityReader(hunitest.TestCase):
     @pytest.mark.slow
     def test1(self) -> None:
-        node = dtfsdtfsono.KibotEquityReader(
+        node = dtfsysonod.KibotEquityReader(
             "reader",
             ["AAPL", "GOOG"],
             "T",

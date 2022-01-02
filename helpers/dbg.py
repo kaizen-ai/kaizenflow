@@ -397,7 +397,7 @@ def dassert_no_duplicates(
     if not cond:
         # Count the occurrences of each element of the seq.
         v_to_num = [(v, val1.count(v)) for v in set(val1)]
-        # Build list of elems with duplicates.
+        # Build list of elements with duplicates.
         dups = [v for v, n in v_to_num if n > 1]
         txt = []
         txt.append("val1=\n" + pprint.pformat(val1))
