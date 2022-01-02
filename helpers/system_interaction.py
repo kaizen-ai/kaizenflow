@@ -281,7 +281,7 @@ def _system(
 def system(
     cmd: str,
     abort_on_error: bool = True,
-    suppressed_error: Optional[Any] = None,
+    suppress_error: Optional[Any] = None,
     suppress_output: Union[str, bool] = "ON_DEBUG_LEVEL",
     blocking: bool = True,
     wrapper: Optional[Any] = None,
@@ -299,7 +299,7 @@ def system(
     rc, _ = _system(
         cmd,
         abort_on_error=abort_on_error,
-        suppress_error=suppressed_error,
+        suppress_error=suppress_error,
         suppress_output=suppress_output,
         blocking=blocking,
         wrapper=wrapper,

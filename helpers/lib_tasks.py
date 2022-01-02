@@ -1215,51 +1215,6 @@ def integrate_diff_dirs(  # type: ignore
     _run(ctx, cmd, dry_run=dry_run)
 
 
-# # TODO(gp): Maybe merge it in integrate_diff_dirs adding a `--copy` switch.
-# @task
-# def integrate_copy_dirs(  # type: ignore
-#     ctx,
-#     src_dir,
-#     dst_dir,
-#     subdir="",
-#     check_branches=True,
-#     clean_branches=True,
-#     dry_run=False,
-# ):
-#     """
-#     Copy dir `subdir` from dir `src_dir_name` to `dst_dir_name`.
-#
-#     ```
-#     > i integrate_copy_dirs --subdir-name documentation --src-dir amp1 --dst-dir cmamp1
-#     ```
-#
-#     :param dry_run: diff the dirs as a preview instead of copying
-#     """
-#     _report_task()
-#     # Check that the integration branches are in the expected state.
-#     abs_src_dir, abs_dst_dir = _resolve_src_dst_names(src_dir, dst_dir, subdir)
-#     if check_branches:
-#         _dassert_is_integration_branch(abs_src_dir)
-#         _dassert_is_integration_branch(abs_dst_dir)
-#     else:
-#         _LOG.warning("Skipping integration branch check")
-#     # Clean branches, if needed.
-#     if clean_branches:
-#         # We can clean up only the root dir.
-#         if subdir == "":
-#             _clean_both_integration_dirs(abs_src_dir, abs_dst_dir)
-#     else:
-#         _LOG.warning("Skipping integration branch cleaning")
-#     # Copy the files.
-#     if dry_run:
-#         cmd = f"diff -r --brief {abs_src_dir} {abs_dst_dir}"
-#     else:
-#         rsync_opts = "--delete -a"
-#         cmd = f"rsync {rsync_opts} {abs_src_dir}/ {abs_dst_dir}"
-#     _run(ctx, cmd)
-
-
-# @task
 def _find_files_touched_since_last_integration(
     dir_name: str, abs_dir_name: str, subdir: str
 ) -> List[str]:
@@ -1323,37 +1278,6 @@ def _find_files_touched_since_last_integration(
     hio.to_file(file_name, "\n".join(files))
     _LOG.debug("Saved file to '%s'", file_name)
     return files
-
-
-# def _get_files_touched_since_last_integration(
-#     dir_name: str, abs_dir_name: str, subdir: str
-# ) -> List[str]:
-#     """
-#     Retrieve the list of files touched in `dir_name` with abs path `abs_dir_name`.
-#     """
-#     _LOG.debug(
-#         "Retrieve the files touched in '%s' -> '%s' since each integration",
-#         dir_name,
-#         abs_dir_name,
-#     )
-#     # Run the invoke target to get the touched files.
-#     cmd = []
-#     cmd.append("invoke integrate_find_files_touched_since_last_integration")
-#     cmd.append(f"--dir-name {abs_dir_name}")
-#     if subdir:
-#         cmd.append(f'--subdir "{subdir}"')
-#     file_name = os.path.join(
-#         abs_dir_name, f"tmp.integrate_find_files_touched_since_last_integration.{dir_name}.txt"
-#     )
-#     cmd.append(f"--dst-file {file_name}")
-#     cmd = " ".join(cmd)
-#     hsysinte.system(cmd)
-#     # Read the result back from file.
-#     hdbg.dassert_file_exists(file_name)
-#     files_tmp = hio.from_file(file_name).split("\n")
-#     files_tmp = sorted(files_tmp)
-#     _LOG.debug("files_tmp=%s", ",".join(files_tmp))
-#     return files_tmp
 
 
 def _integrate_files(
@@ -1509,22 +1433,23 @@ def integrate_files(  # type: ignore
 
 
 @task
-def integrate_compare_branch_with_base(ctx, src_dir, dst_dir, subdir=""):  # type: ignore
+def integrate_compare_branch_with_base(  # type: ignore
+        ctx, src_dir, dst_dir, subdir=""):
     """
-    Compare the files modified in both the branches in src_dir_name and dst_dir_name
-    to master before this current branch was branched.
+    Find the files modified in both branches `src_dir_name` and `dst_dir_name`
+    Compare these files from HEAD to master version before the branch point.
 
     This is used to check what changes were made to files modified by both branches.
     """
     _report_task()
     _ = ctx
-    #
+    # Check that the integration branches are in the expected state.
     _dassert_current_dir_matches(src_dir)
     src_dir, dst_dir = _resolve_src_dst_names(src_dir, dst_dir, subdir)
     _dassert_is_integration_branch(src_dir)
     _dassert_is_integration_branch(dst_dir)
     _clean_both_integration_dirs(src_dir, dst_dir)
-    # Find the files modified by both branches.
+    # Find the files modified in both branches.
     src_hash = hgit.get_branch_hash(src_dir)
     _LOG.info("src_hash=%s", src_hash)
     dst_hash = hgit.get_branch_hash(dst_dir)
@@ -1551,7 +1476,14 @@ def integrate_compare_branch_with_base(ctx, src_dir, dst_dir, subdir=""):  # typ
         dst_file = src_file.replace(".py", ".base.py")
         # Save the base file.
         cmd = f"git show {src_hash}:{src_file} >{dst_file}"
-        hsysinte.system(cmd)
+        rc = hsysinte.system(cmd, abort_on_error=False)
+        if rc == 128:
+            # Note that the file potentially could not exist, i.e., it was added in
+            # the branch. In this case Git returns:
+            # rc=128 fatal: path 'dataflow/pipelines/real_time/test/test_dataflow_pipelines_real_time_pipeline.py' exists on disk, but not in 'ce54877016204315766e90df7c45192bec1fbf20'
+            src_file = "/dev/null"
+        else:
+            raise ValueError("cmd='%s' returned %s" % (cmd, rc))
         # Update the script to diff.
         script_txt.append(f"vimdiff {dst_file} {src_file}")
     # Save the script to compare.
