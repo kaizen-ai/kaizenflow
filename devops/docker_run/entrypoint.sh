@@ -64,8 +64,7 @@ else
 fi;
 aws configure --profile am list || true
 
-echo "CONTAINER_VERSION='$CONTAINER_VERSION'"
-echo "BUILD_TAG='$BUILD_TAG'"
+echo "AM_CONTAINER_VERSION='$AM_CONTAINER_VERSION'"
 
 echo "which python: "$(which python)
 echo "python -V: "$(python -V)

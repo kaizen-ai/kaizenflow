@@ -113,9 +113,8 @@ def _get_container_version() -> Optional[str]:
     if _is_inside_container():
         env_var = "AM_CONTAINER_VERSION"
         if env_var not in os.environ:
-            # This can happen when we still in transition from CONTAINER_VERSION
-            # to AM_CONTAINER_VERSION env var name or when GH Actions pull the image
-            # using invoke inside their container (but not inside ours), thus there is no
+            # This can happen when GH Actions pull the image using invoke
+            # inside their container (but not inside ours), thus there is no
             # AM_CONTAINER_VERSION.
             print(
                 _WARNING
