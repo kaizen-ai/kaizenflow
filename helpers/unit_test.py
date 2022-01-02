@@ -4,6 +4,7 @@ Import as:
 import helpers.unit_test as hunitest
 """
 
+import abc
 import inspect
 import logging
 import os
@@ -14,6 +15,8 @@ import sys
 import traceback
 import unittest
 from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
+
+import pytest
 
 import helpers.dbg as hdbg
 import helpers.git as hgit
@@ -1577,3 +1580,13 @@ class TestCase(unittest.TestCase):
     def _to_error(self, msg: str) -> None:
         self._error_msg += msg + "\n"
         _LOG.error(msg)
+
+
+@pytest.mark.qa
+@pytest.mark.skipif(hsysinte.is_inside_docker(), reason="Test needs to be run outside Docker")
+class QaTestCase(TestCase, abc.ABC):
+    """
+    This unit test is used for QA to test functionalities (e.g., invoke tasks)
+    that run the dev / prod container.
+    """
+    pass

@@ -24,9 +24,7 @@ def _get_default_params() -> Dict[str, str]:
     return default_params
 
 
-@pytest.mark.qa
-@pytest.mark.skipif(hsysinte.is_inside_docker(), reason="AmpTask165")
-class TestExecuteTasks1(hunitest.TestCase):
+class TestExecuteTasks1(hunitest.QaTestCase):
     """
     Execute tasks that don't change state of the system (e.g., commit images).
     """
@@ -78,9 +76,7 @@ class TestExecuteTasks1(hunitest.TestCase):
         hsysinte.system(cmd)
 
 
-@pytest.mark.qa
-@pytest.mark.skipif(hsysinte.is_inside_docker(), reason="AmpTask165")
-class TestExecuteTasks2(hunitest.TestCase):
+class TestExecuteTasks2(hunitest.QaTestCase):
     """
     Execute tasks that change the state of the system but use a temporary
     image.
