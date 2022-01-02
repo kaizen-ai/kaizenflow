@@ -2,6 +2,7 @@ import os
 
 import pandas as pd
 
+import helpers.git as hgit
 import helpers.io_ as hio
 import helpers.system_interaction as hsysinte
 import helpers.unit_test as hunitest
@@ -16,8 +17,11 @@ class TestCsvToPq(hunitest.TestCase):
         self._generate_example_csv_files()
         pq_dir_path = os.path.join(self.get_scratch_space(), "pq_dir")
         # Run command.
+        exec_path = os.path.join(
+            hgit.get_amp_abs_path(), "im_v2/common/data/transform/csv_to_pq.py"
+        )
         cmd = [
-            "im_v2/common/data/transform/csv_to_pq.py",
+            exec_path,
             f"--src_dir {self.csv_dir_path}",
             f"--dst_dir {pq_dir_path}",
             "--datetime_col timestamp",

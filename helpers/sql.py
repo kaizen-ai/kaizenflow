@@ -525,6 +525,12 @@ def execute_query_to_df(
     """
     Execute a query.
     """
+    if False:
+        # Ask the user before executing a query.
+        print("query=\n%s", query)
+        import helpers.system_interaction as hsysinte
+
+        hsysinte.query_yes_no("Ok to execute?")
     if limit is not None:
         query += " LIMIT %s" % limit
     if offset is not None:

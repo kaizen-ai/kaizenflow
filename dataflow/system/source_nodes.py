@@ -1,7 +1,7 @@
 """
 Import as:
 
-import dataflow.system.dataflow_source_nodes as dtfsdtfsono
+import dataflow.system.source_nodes as dtfsysonod
 """
 
 # TODO(gp): -> source_nodes.py
@@ -12,9 +12,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import pandas as pd
 
 import core.finance as cofinanc
-import dataflow.core.node as dtfcornode
-import dataflow.core.nodes.base as dtfconobas
-import dataflow.core.nodes.sources as dtfconosou
+import dataflow.core as dtfcore
 import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.printing as hprint
@@ -28,10 +26,10 @@ _LOG = logging.getLogger(__name__)
 
 
 def data_source_node_factory(
-    nid: dtfcornode.NodeId,
+    nid: dtfcore.NodeId,
     source_node_name: str,
     source_node_kwargs: Dict[str, Any],
-) -> dtfconobas.DataSource:
+) -> dtfcore.DataSource:
     """
     Initialize the appropriate data source node.
 
@@ -68,15 +66,15 @@ def data_source_node_factory(
     # TODO(gp): To simplify we can use the name of the class (e.g., "ArmaGenerator"
     #  instead of "arma"), so we don't have to use another level of mnemonics.
     if source_node_name == "arma":
-        ret = dtfconosou.ArmaGenerator(nid, **source_node_kwargs)
+        ret = dtfcore.ArmaGenerator(nid, **source_node_kwargs)
     elif source_node_name == "multivariate_normal":
-        ret = dtfconosou.MultivariateNormalGenerator(nid, **source_node_kwargs)
+        ret = dtfcore.MultivariateNormalGenerator(nid, **source_node_kwargs)
     elif source_node_name == "RealTimeDataSource":
         ret = RealTimeDataSource(nid, **source_node_kwargs)
     elif source_node_name == "disk":
-        ret = dtfconosou.DiskDataSource(nid, **source_node_kwargs)
+        ret = dtfcore.DiskDataSource(nid, **source_node_kwargs)
     elif source_node_name == "DataLoader":
-        ret = dtfconosou.DataLoader(nid, **source_node_kwargs)
+        ret = dtfcore.DataLoader(nid, **source_node_kwargs)
     elif source_node_name == "crypto_data_download":
         # TODO(gp): This should go through RealTimeDataSource.
         import core_lem.dataflow.nodes.sources as cldns
@@ -92,7 +90,7 @@ def data_source_node_factory(
         # TODO(gp): This should go through RealTimeDataSource.
         ret = KibotColumnReader(nid, **source_node_kwargs)
     elif source_node_name == "DummyDataSource":
-        ret = dtfconosou.DummyDataSource(nid, **source_node_kwargs)
+        ret = dtfcore.DummyDataSource(nid, **source_node_kwargs)
     else:
         raise ValueError(f"Unsupported data source node {source_node_name}")
     return ret
@@ -151,10 +149,10 @@ def load_kibot_data(
 # TODO(gp): Maybe consolidate KibotDataReader and KibotColumnReader.
 
 # TODO(gp): -> KibotFuturesDataReader
-class KibotDataReader(dtfconobas.DataSource):
+class KibotDataReader(dtfcore.DataSource):
     def __init__(
         self,
-        nid: dtfcornode.NodeId,
+        nid: dtfcore.NodeId,
         symbol: str,
         frequency: Union[str, vkibot.Frequency],
         contract_type: Union[str, vkibot.ContractType],
@@ -209,10 +207,10 @@ class KibotDataReader(dtfconobas.DataSource):
 #  columns.
 
 
-class KibotColumnReader(dtfconobas.DataSource):
+class KibotColumnReader(dtfcore.DataSource):
     def __init__(
         self,
-        nid: dtfcornode.NodeId,
+        nid: dtfcore.NodeId,
         symbols: List[str],
         frequency: Union[str, vkibot.Frequency],
         contract_type: Union[str, vkibot.ContractType],
@@ -270,10 +268,10 @@ class KibotColumnReader(dtfconobas.DataSource):
 # #############################################################################
 
 
-class KibotEquityReader(dtfconobas.DataSource):
+class KibotEquityReader(dtfcore.DataSource):
     def __init__(
         self,
-        nid: dtfcornode.NodeId,
+        nid: dtfcore.NodeId,
         symbols: List[str],
         frequency: Union[str, vkibot.Frequency],
         start_date: Optional[hdateti.Datetime] = None,
@@ -345,7 +343,7 @@ class KibotEquityReader(dtfconobas.DataSource):
         self.df = df
 
 
-class RealTimeDataSource(dtfconobas.DataSource):
+class RealTimeDataSource(dtfcore.DataSource):
     """
     A RealTimeDataSource is a node that:
 
@@ -359,7 +357,7 @@ class RealTimeDataSource(dtfconobas.DataSource):
 
     def __init__(
         self,
-        nid: dtfcornode.NodeId,
+        nid: dtfcore.NodeId,
         market_data_interface: mdmadain.AbstractMarketDataInterface,
         period: str,
         asset_id_col: Union[int, str],

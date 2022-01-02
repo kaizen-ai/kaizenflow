@@ -46,7 +46,7 @@ hprint.config_notebook()
 # # Configs
 
 # %%
-# Two configs are necessary in this situation because current downloading functions 
+# Two configs are necessary in this situation because current downloading functions
 # work only with specific 'vendor' value.
 
 # %%

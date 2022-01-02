@@ -5,12 +5,14 @@ import market_data.market_data_interface_example as mdmdinex
 """
 
 import asyncio
+import datetime
 import logging
 from typing import List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 
+import core.artificial_signal_generators as carsigen
 import core.real_time as creatime
 import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
@@ -50,10 +52,11 @@ def generate_random_price_data(
     #
     start_dates = pd.date_range(start_datetime, end_datetime, freq=freq)
     dfs = []
+    time_delta = pd.Timedelta(freq)
     for asset_id in asset_ids:
         df = pd.DataFrame()
         df["start_datetime"] = start_dates
-        df["end_datetime"] = start_dates + pd.Timedelta(minutes=1)
+        df["end_datetime"] = start_dates + time_delta
         # TODO(gp): We can add 1 sec here to make it more interesting.
         df["timestamp_db"] = df["end_datetime"]
         # TODO(gp): Filter by ATH, if needed.
@@ -66,6 +69,150 @@ def generate_random_price_data(
         dfs.append(df)
     df = pd.concat(dfs, axis=0)
     return df
+
+
+def generate_random_bars(
+    start_datetime: pd.Timestamp,
+    end_datetime: pd.Timestamp,
+    asset_ids: List[int],
+    *,
+    bar_duration: str = "1T",
+    bar_volatility_in_bps: int = 10,
+    bar_expected_count: int = 1000,
+    last_price: float = 1000,
+    start_time: datetime.time = datetime.time(9, 31),
+    end_time: datetime.time = datetime.time(16, 00),
+    seed: int = 10,
+) -> pd.DataFrame:
+    """
+    Wraps `generate_random_bars_for_asset()` for multiple instruments.
+
+    :return: dataframe as in `generate_random_bars_for_asset()`, concatenated
+        along the index, sorted by timestamp then by asset it
+    """
+    asset_dfs = []
+    for asset_id in asset_ids:
+        df = generate_random_bars_for_asset(
+            start_datetime,
+            end_datetime,
+            asset_id,
+            bar_duration=bar_duration,
+            bar_volatility_in_bps=bar_volatility_in_bps,
+            bar_expected_count=bar_expected_count,
+            last_price=last_price,
+            start_time=start_time,
+            end_time=end_time,
+            seed=seed,
+        )
+        asset_dfs.append(df)
+        seed += 1
+    df = pd.concat(asset_dfs, axis=0).sort_values(["end_datetime", "asset_id"])
+    return df
+
+
+def generate_random_bars_for_asset(
+    start_datetime: pd.Timestamp,
+    end_datetime: pd.Timestamp,
+    asset_id: int,
+    *,
+    bar_duration: str = "1T",
+    bar_volatility_in_bps: int = 10,
+    bar_expected_count: int = 1000,
+    last_price: float = 1000,
+    start_time: datetime.time = datetime.time(9, 31),
+    end_time: datetime.time = datetime.time(16, 00),
+    seed: int = 10,
+) -> pd.DataFrame:
+    """
+    Return a dataframe of random bars for a single instrument.
+
+    :param start_datetime: initial timestamp
+    :param end_datetime: final timestamp
+    :param asset_id: asset id for labeling
+    :param bar_duration: length of bar in time
+    :param bar_volatility_in_bps: expected bar volatility
+    :param bar_expected_count: expected volume per bar
+    :param last_price: "last price" before start of series
+    :param start_time: e.g., start of active trading hours
+    :param end_time: e.g., end of active trading hours
+    :param seed: seed for numpy `Generator`
+    :return: dataframe like
+      - index is an integer index
+      - columns include timestamps, asset id, price, volume, and fake features
+    """
+    price_process = carsigen.PriceProcess(seed)
+    close = price_process.generate_price_series_from_normal_log_returns(
+        start_datetime,
+        end_datetime,
+        asset_id,
+        bar_duration=bar_duration,
+        bar_volatility_in_bps=bar_volatility_in_bps,
+        last_price=last_price,
+        start_time=start_time,
+        end_time=end_time,
+    ).rename("close")
+    volume = price_process.generate_volume_series_from_poisson_process(
+        start_datetime,
+        end_datetime,
+        asset_id,
+        bar_duration=bar_duration,
+        bar_expected_count=bar_expected_count,
+        start_time=start_time,
+        end_time=end_time,
+    ).rename("volume")
+    f1 = price_process.generate_volume_series_from_poisson_process(
+        start_datetime,
+        end_datetime,
+        asset_id,
+        bar_duration=bar_duration,
+        bar_expected_count=2 * bar_expected_count,
+        start_time=start_time,
+        end_time=end_time,
+    ).rename("f1")
+    f2 = price_process.generate_volume_series_from_poisson_process(
+        start_datetime,
+        end_datetime,
+        asset_id,
+        bar_duration=bar_duration,
+        bar_expected_count=2 * bar_expected_count,
+        start_time=start_time,
+        end_time=end_time,
+    ).rename("f2")
+    s1 = 0.01 * price_process.generate_volume_series_from_poisson_process(
+        start_datetime,
+        end_datetime,
+        asset_id,
+        bar_duration=bar_duration,
+        bar_expected_count=2,
+        start_time=start_time,
+        end_time=end_time,
+    )
+    s2 = price_process.generate_volume_series_from_poisson_process(
+        start_datetime,
+        end_datetime,
+        asset_id,
+        bar_duration=bar_duration,
+        bar_expected_count=0.1 * bar_expected_count,
+        start_time=start_time,
+        end_time=end_time,
+    ).rename("s2")
+    s1 = (s1 * s2).groupby(lambda x: x.date).cumsum().rename("s1")
+    #
+    index = close.index
+    bar_time_delta = pd.Timedelta(bar_duration)
+    start_datetime = pd.Series(
+        data=index - bar_time_delta, index=index, name="start_datetime"
+    )
+    end_datetime = pd.Series(data=index, index=index, name="end_datetime")
+    timestamp = pd.Series(
+        data=index + pd.Timedelta("10s"), index=index, name="timestamp_db"
+    )
+    df = pd.concat(
+        [start_datetime, end_datetime, timestamp, close, volume, f1, f2, s1, s2],
+        axis=1,
+    )
+    df["asset_id"] = asset_id
+    return df.reset_index(drop=True)
 
 
 def get_replayed_time_market_data_interface_example1(
@@ -207,6 +354,68 @@ def get_replayed_time_market_data_interface_example3(
         initial_replayed_delay,
         df=df,
         delay_in_secs=delay_in_secs,
+        sleep_in_secs=sleep_in_secs,
+        time_out_in_secs=time_out_in_secs,
+    )
+    return market_data_interface, get_wall_clock_time
+
+
+def get_replayed_time_market_data_interface_example4(
+    event_loop: asyncio.AbstractEventLoop,
+) -> Tuple[mdmadain.ReplayedTimeMarketDataInterface, hdateti.GetWallClockTime]:
+    """
+    Build a ReplayedTimeMarketDataInterface:
+
+    - with synthetic data between `2000-01-01 9:30` and `10:30`
+    - for three assets
+    """
+    # Generate random price data.
+    start_datetime = pd.Timestamp(
+        "2000-01-03 09:31:00-05:00", tz="America/New_York"
+    )
+    end_datetime = pd.Timestamp(
+        "2000-01-10 10:30:00-05:00", tz="America/New_York"
+    )
+    asset_ids = [101, 202, 303]
+    df = generate_random_bars(start_datetime, end_datetime, asset_ids)
+    _LOG.debug("df=%s", hprint.dataframe_to_str(df))
+    # Build a `ReplayedTimeMarketDataInterface`.
+    initial_replayed_delay = 0
+    delay_in_secs = 0
+    sleep_in_secs = 30
+    time_out_in_secs = 60 * 5
+    # Build the `ReplayedTimeMarketDataInterface` backed by the df with
+    # `initial_replayed_delay` after the first timestamp of the data.
+    knowledge_datetime_col_name = "timestamp_db"
+    asset_id_col_name = "asset_id"
+    start_datetime_col_name = "start_datetime"
+    end_datetime_col_name = "end_datetime"
+    columns = df.columns.to_list()
+    # Build the wall clock.
+    tz = "ET"
+    initial_replayed_dt = df[end_datetime_col_name].min() + pd.Timedelta(
+        minutes=initial_replayed_delay
+    )
+    # NOTE: This is unused.
+    speed_up_factor = 1.0
+    get_wall_clock_time = creatime.get_replayed_wall_clock_time(
+        tz,
+        initial_replayed_dt,
+        event_loop=event_loop,
+        speed_up_factor=speed_up_factor,
+    )
+    # Build a `ReplayedTimeMarketDataInterface`.
+    market_data_interface = mdmadain.ReplayedTimeMarketDataInterface(
+        df,
+        knowledge_datetime_col_name,
+        delay_in_secs,
+        #
+        asset_id_col_name,
+        asset_ids,
+        start_datetime_col_name,
+        end_datetime_col_name,
+        columns,
+        get_wall_clock_time,
         sleep_in_secs=sleep_in_secs,
         time_out_in_secs=time_out_in_secs,
     )

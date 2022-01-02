@@ -9,6 +9,7 @@ import repo_config as rconf
 # > i print_tasks --as-code
 from helpers.lib_tasks import set_default_params  # This is not an invoke target.
 from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
+    # TODO(gp): -> lint_check_python_files
     check_python_files,
     docker_bash,
     docker_build_local_image,
@@ -26,9 +27,11 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     docker_release_all,
     docker_release_dev_image,
     docker_release_prod_image,
+    # TODO(gp): -> docker_release_rollback_dev_image
     docker_rollback_dev_image,
     docker_rollback_prod_image,
     docker_stats,
+    # TODO(gp): -> docker_release_...
     docker_tag_local_image_as_dev,
     find_check_string_output,
     find_test_class,
@@ -44,20 +47,26 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     git_branch_files,
     git_branch_next_name,
     git_clean,
+    # TODO(gp): -> git_branch_create
     git_create_branch,
+    # TODO(gp): -> git_patch_create
     git_create_patch,
     git_delete_merged_branches,
+    # TODO(gp): -> git_files_list
     git_files,
+    # TODO(gp): -> git_files_last_commit_
     git_last_commit_files,
+    # TODO(gp): -> git_master_merge
     git_merge_master,
     git_pull,
+    # TODO(gp): -> git_master_pull
     git_pull_master,
+    # TODO(gp): -> git_branch_rename
     git_rename_branch,
-    integrate_compare_branch_with_base,
-    integrate_copy_dirs,
+    integrate_diff_overlapping_files,
     integrate_create_branch,
     integrate_diff_dirs,
-    integrate_files_since_last_integration,
+    integrate_files,
     lint,
     lint_create_branch,
     print_setup,

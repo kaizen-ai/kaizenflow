@@ -49,6 +49,12 @@ class Fill:
         num_shares: float,
         price: float,
     ):
+        """
+        Constructor.
+
+        :param num_shares: it's the number of shares that are filled, with
+            respect to `diff_num_shares` in Order
+        """
         self._fill_id = self._get_next_fill_id()
         # Pointer to the order.
         self.order = order
@@ -272,7 +278,7 @@ class AbstractBroker(abc.ABC):
             since conceptually the timestamp is when the `_submit_orders` was
             executed.
         """
-        num_shares = order.num_shares
+        num_shares = order.diff_num_shares
         # TODO(Paul): The function `get_execution_price()` should be
         #  configurable.
         price = get_execution_price(
@@ -473,7 +479,7 @@ def get_execution_price(
         )
     elif price_type == "full_spread":
         # Cross the spread depending on buy / sell.
-        if order.num_shares >= 0:
+        if order.diff_num_shares >= 0:
             column = "ask"
         else:
             column = "bid"
@@ -515,7 +521,7 @@ def get_execution_price(
             column,
             timing,
         )
-        if order.num_shares >= 0:
+        if order.diff_num_shares >= 0:
             # We need to buy:
             # - if perc == 1.0 pay ask (i.e., pay full-spread)
             # - if perc == 0.5 pay midpoint

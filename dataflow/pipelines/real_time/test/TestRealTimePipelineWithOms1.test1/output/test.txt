@@ -16,7 +16,25 @@ config:
   process_forecasts:
     prediction_col: price
     execution_mode: real_time
-    process_forecasts_config: {'portfolio': <oms.portfolio.SimulatedPortfolio object>, 'order_type': 'price@twap', 'order_duration': 1, 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30), 'ath_end_time': datetime.time(16, 40), 'trading_end_time': datetime.time(16, 40)}
+    process_forecasts_config: {'order_type': 'price@twap', 'order_duration': 1, 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30), 'ath_end_time': datetime.time(16, 40), 'trading_end_time': datetime.time(16, 40)}
+    portfolio: # historical holdings=
+    asset_id                        1000           -1   
+    2000-01-01 09:30:00-05:00        NaN  1000000.000000
+    2000-01-01 09:31:01-05:00        NaN  1000000.000000
+    2000-01-01 09:35:01-05:00  99.912622   900054.880574
+    2000-01-01 09:40:01-05:00  99.868846   900098.655231
+    # historical holdings marked to market=
+                                       1000           -1   
+    2000-01-01 09:30:00-05:00           NaN  1000000.000000
+    2000-01-01 09:31:01-05:00           NaN  1000000.000000
+    2000-01-01 09:35:01-05:00  99943.787697   900054.880574
+    2000-01-01 09:40:01-05:00  99888.956668   900098.655231
+    # historical statistics=
+                               net_asset_holdings            cash      net_wealth  gross_exposure  leverage
+    2000-01-01 09:30:00-05:00            0.000000  1000000.000000  1000000.000000        0.000000  0.000000
+    2000-01-01 09:31:01-05:00            0.000000  1000000.000000  1000000.000000        0.000000  0.000000
+    2000-01-01 09:35:01-05:00        99943.787697   900054.880574   999998.668271    99943.787697  0.099944
+    2000-01-01 09:40:01-05:00        99888.956668   900098.655231   999987.611899    99888.956668  0.099890
 result_nid: process_forecasts
 method: predict
 result_df:                           asset_id      price            start_datetime  \
@@ -84,7 +102,25 @@ config:
   process_forecasts:
     prediction_col: price
     execution_mode: real_time
-    process_forecasts_config: {'portfolio': <oms.portfolio.SimulatedPortfolio object>, 'order_type': 'price@twap', 'order_duration': 1, 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30), 'ath_end_time': datetime.time(16, 40), 'trading_end_time': datetime.time(16, 40)}
+    process_forecasts_config: {'order_type': 'price@twap', 'order_duration': 1, 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30), 'ath_end_time': datetime.time(16, 40), 'trading_end_time': datetime.time(16, 40)}
+    portfolio: # historical holdings=
+    asset_id                        1000           -1   
+    2000-01-01 09:30:00-05:00        NaN  1000000.000000
+    2000-01-01 09:31:01-05:00        NaN  1000000.000000
+    2000-01-01 09:35:01-05:00  99.912622   900054.880574
+    2000-01-01 09:40:01-05:00  99.868846   900098.655231
+    # historical holdings marked to market=
+                                       1000           -1   
+    2000-01-01 09:30:00-05:00           NaN  1000000.000000
+    2000-01-01 09:31:01-05:00           NaN  1000000.000000
+    2000-01-01 09:35:01-05:00  99943.787697   900054.880574
+    2000-01-01 09:40:01-05:00  99888.956668   900098.655231
+    # historical statistics=
+                               net_asset_holdings            cash      net_wealth  gross_exposure  leverage
+    2000-01-01 09:30:00-05:00            0.000000  1000000.000000  1000000.000000        0.000000  0.000000
+    2000-01-01 09:31:01-05:00            0.000000  1000000.000000  1000000.000000        0.000000  0.000000
+    2000-01-01 09:35:01-05:00        99943.787697   900054.880574   999998.668271    99943.787697  0.099944
+    2000-01-01 09:40:01-05:00        99888.956668   900098.655231   999987.611899    99888.956668  0.099890
 result_nid: process_forecasts
 method: predict
 result_df:                           asset_id        price            start_datetime  \
@@ -160,7 +196,25 @@ config:
   process_forecasts:
     prediction_col: price
     execution_mode: real_time
-    process_forecasts_config: {'portfolio': <oms.portfolio.SimulatedPortfolio object>, 'order_type': 'price@twap', 'order_duration': 1, 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30), 'ath_end_time': datetime.time(16, 40), 'trading_end_time': datetime.time(16, 40)}
+    process_forecasts_config: {'order_type': 'price@twap', 'order_duration': 1, 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30), 'ath_end_time': datetime.time(16, 40), 'trading_end_time': datetime.time(16, 40)}
+    portfolio: # historical holdings=
+    asset_id                        1000           -1   
+    2000-01-01 09:30:00-05:00        NaN  1000000.000000
+    2000-01-01 09:31:01-05:00        NaN  1000000.000000
+    2000-01-01 09:35:01-05:00  99.912622   900054.880574
+    2000-01-01 09:40:01-05:00  99.868846   900098.655231
+    # historical holdings marked to market=
+                                       1000           -1   
+    2000-01-01 09:30:00-05:00           NaN  1000000.000000
+    2000-01-01 09:31:01-05:00           NaN  1000000.000000
+    2000-01-01 09:35:01-05:00  99943.787697   900054.880574
+    2000-01-01 09:40:01-05:00  99888.956668   900098.655231
+    # historical statistics=
+                               net_asset_holdings            cash      net_wealth  gross_exposure  leverage
+    2000-01-01 09:30:00-05:00            0.000000  1000000.000000  1000000.000000        0.000000  0.000000
+    2000-01-01 09:31:01-05:00            0.000000  1000000.000000  1000000.000000        0.000000  0.000000
+    2000-01-01 09:35:01-05:00        99943.787697   900054.880574   999998.668271    99943.787697  0.099944
+    2000-01-01 09:40:01-05:00        99888.956668   900098.655231   999987.611899    99888.956668  0.099890
 result_nid: process_forecasts
 method: predict
 result_df:                           asset_id        price            start_datetime  \

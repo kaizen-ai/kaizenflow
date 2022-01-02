@@ -6,7 +6,7 @@ import sklearn.linear_model as slm
 
 import core.artificial_signal_generators as carsigen
 import core.config as cconfig
-import dataflow as dtf
+import dataflow.core as dtf
 import dataflow.model.dataframe_modeler as dtfmodamod
 import helpers.unit_test as hunitest
 

@@ -1,29 +1,24 @@
 """
 Import as:
 
-import dataflow.system.real_time_runner as dtfsretiru
+import dataflow.system.real_time_dag_runner as dtfsrtdaru
 """
-
-# TODO(gp): -> real_time_dag_runner.py
 
 import logging
 from typing import Any, Dict, List, Optional
 
 import core.config as cconfig
 import core.real_time as creatime
-import dataflow.core.builders as dtfcorbuil
-import dataflow.core.node as dtfcornode
-import dataflow.core.result_bundle as dtfcorebun
-import dataflow.core.runners as dtfcorrunn
-import dataflow.system.dataflow_sink_nodes as dtfsdtfsino
-import dataflow.system.dataflow_source_nodes as dtfsdtfsono
+import dataflow.core as dtfcore
+import dataflow.system.sink_nodes as dtfsysinod
+import dataflow.system.source_nodes as dtfsysonod
 import helpers.dbg as hdbg
 import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
 
 
-class RealTimeDagRunner(dtfcorrunn._AbstractDagRunner):
+class RealTimeDagRunner(dtfcore.AbstractDagRunner):
     """
     Run a DAG in true or simulated real-time.
 
@@ -38,7 +33,7 @@ class RealTimeDagRunner(dtfcorrunn._AbstractDagRunner):
     def __init__(
         self,
         config: cconfig.Config,
-        dag_builder: dtfcorbuil.DagBuilder,
+        dag_builder: dtfcore.DagBuilder,
         fit_state: cconfig.Config,
         execute_rt_loop_kwargs: Dict[str, Any],
         dst_dir: str,
@@ -52,7 +47,7 @@ class RealTimeDagRunner(dtfcorrunn._AbstractDagRunner):
         # Store information about the real-time execution.
         self._events: creatime.Events = []
 
-    async def predict(self) -> List[dtfcorebun.ResultBundle]:
+    async def predict(self) -> List[dtfcore.ResultBundle]:
         """
         Execute the DAG for all the events.
 
@@ -64,7 +59,7 @@ class RealTimeDagRunner(dtfcorrunn._AbstractDagRunner):
         ]
         return result_bundles
 
-    async def predict_at_datetime(self) -> dtfcorebun.ResultBundle:
+    async def predict_at_datetime(self) -> dtfcore.ResultBundle:
         """
         Predict every time there is a real-time event.
 
@@ -85,7 +80,7 @@ class RealTimeDagRunner(dtfcorrunn._AbstractDagRunner):
         return self._events
 
     def compute_run_signature(
-        self, result_bundles: List[dtfcorebun.ResultBundle]
+        self, result_bundles: List[dtfcore.ResultBundle]
     ) -> str:
         """
         Compute a signature of an execution in terms of `ResultBundles` and
@@ -103,31 +98,29 @@ class RealTimeDagRunner(dtfcorrunn._AbstractDagRunner):
         ret = "\n".join(ret)
         return ret
 
-    async def _run_dag(
-        self, method: dtfcornode.Method
-    ) -> dtfcorebun.ResultBundle:
+    async def _run_dag(self, method: dtfcore.Method) -> dtfcore.ResultBundle:
         # Wait until all the real-time source nodes are ready to compute.
         _LOG.debug("Waiting for real-time nodes to be ready ...")
         sources = self.dag.get_sources()
         for nid in sources:
             node = self.dag.get_node(nid)
             _LOG.debug("nid=%s node=%s type=%s", nid, str(node), str(type(node)))
-            if isinstance(node, dtfsdtfsono.RealTimeDataSource):
+            if isinstance(node, dtfsysonod.RealTimeDataSource):
                 _LOG.debug("Waiting on node '%s' ...", str(nid))
                 await node.wait_for_latest_data()
                 _LOG.debug("Waiting on node '%s': done", str(nid))
         _LOG.debug("Waiting for real-time nodes to be ready: done")
         # Execute the DAG.
         df_out, info = self._run_dag_helper(method)
-        # Wait for the sinks to have completed.
+        # Wait for the sinks to complete.
         # TODO(gp): Find ProcessForecast. We can also create an abstract class
         #  AwaitableNode with a `wait()` method and then wait on all the
         #  sources and sinks that are awaitable.
         nid = self.dag.get_unique_sink()
         node = self.dag.get_node(nid)
-        _LOG.debug("Waiting on node '%s' ...", str(nid))
-        if isinstance(node, dtfsdtfsino.ProcessForecasts):
+        if isinstance(node, dtfsysinod.ProcessForecasts):
+            _LOG.debug("Waiting on node '%s' ...", str(nid))
             await node.process_forecasts()
-        _LOG.debug("Waiting on node '%s': done", str(nid))
+            _LOG.debug("Waiting on node '%s': done", str(nid))
         #
         return self._to_result_bundle(method, df_out, info)

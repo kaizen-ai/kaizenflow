@@ -710,3 +710,49 @@ class TestReplayedTimeMarketDataInterface3(hunitest.TestCase):
                 event_loop=event_loop,
             )
         return start_time, end_time, num_iter
+
+
+class TestReplayedTimeMarketDataInterface4(hunitest.TestCase):
+    """
+    Test `ReplayedTimeMarketDataInterface.is_last_bar_available()` using
+    simulated time.
+    """
+
+    def test_is_last_bar_available1(self) -> None:
+        """
+        Wait for the market to open.
+        """
+        start_time, end_time, num_iter = self._run()
+        # Check.
+        expected_start_time = pd.Timestamp(
+            "2000-01-03 09:31:00-05:00", tz="America/New_York"
+        )
+        self.assertEqual(start_time, expected_start_time)
+        #
+        expected_end_time = pd.Timestamp(
+            "2000-01-03 09:31:30-05:00", tz="America/New_York"
+        )
+        self.assertEqual(end_time, expected_end_time)
+        #
+        expected_num_iter = 1
+        self.assertEqual(num_iter, expected_num_iter)
+
+    def _run(self) -> Tuple[pd.Timestamp, pd.Timestamp, int]:
+        """
+        - Build a ReplayedTimeMarketDataInterface
+        - Run `is_last_bar_available()`
+        """
+        with hasynci.solipsism_context() as event_loop:
+            # Build a ReplayedTimeMarketDataInterface.
+            (
+                market_data_interface,
+                _,
+            ) = mdmdinex.get_replayed_time_market_data_interface_example4(
+                event_loop,
+            )
+            # Run the method.
+            start_time, end_time, num_iter = hasynci.run(
+                market_data_interface.is_last_bar_available(),
+                event_loop=event_loop,
+            )
+        return start_time, end_time, num_iter

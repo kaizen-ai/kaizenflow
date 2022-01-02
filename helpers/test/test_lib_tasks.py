@@ -320,7 +320,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     @pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
     def test_gh_workflow_list(self) -> None:
         _gh_login()
-        target = "gh_workflow_list(ctx, branch='master')"
+        target = "gh_workflow_list(ctx, filter_by_branch='master')"
         self._check_output(target)
 
     # This is an action with side effects so we can't test it.

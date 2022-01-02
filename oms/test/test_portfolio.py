@@ -352,11 +352,19 @@ class TestMockedPortfolio1(omtodh.TestOmsDbHelper):
             portfolio.mark_to_market()
             # Check.
             actual = str(portfolio)
-            expected = r"""# holdings=
-                                       asset_id  curr_num_shares
-            2000-01-01 09:35:00-05:00       101             20.0
-            2000-01-01 09:35:00-05:00        -1        1000000.0
-            2000-01-01 09:30:00-05:00        -1        1000000.0"""
+            expected = r"""# historical holdings=
+asset_id                    101       -1
+2000-01-01 09:30:00-05:00   NaN  1000000.0
+2000-01-01 09:35:00-05:00  20.0  1000000.0
+# historical holdings marked to market=
+                                   101       -1
+2000-01-01 09:30:00-05:00          NaN  1000000.0
+2000-01-01 09:35:00-05:00  20006.23851  1000000.0
+# historical statistics=
+                           net_asset_holdings       cash    net_wealth  gross_exposure  leverage
+2000-01-01 09:30:00-05:00             0.00000  1000000.0  1.000000e+06         0.00000  0.000000
+2000-01-01 09:35:00-05:00         20006.23851  1000000.0  1.020006e+06     20006.23851  0.019614"""
+
             self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test2(self) -> None:
@@ -388,9 +396,16 @@ class TestMockedPortfolio1(omtodh.TestOmsDbHelper):
             portfolio.mark_to_market()
             # Check.
             actual = str(portfolio)
-            expected = r"""# holdings=
-                                       asset_id  curr_num_shares
-            2000-01-01 09:35:00-05:00       101          20.0
-            2000-01-01 09:35:00-05:00        -1      998096.8783
-            2000-01-01 09:30:00-05:00        -1     1000000.0"""
+            expected = r"""# historical holdings=
+asset_id                    101          -1
+2000-01-01 09:30:00-05:00   NaN  1000000.0000
+2000-01-01 09:35:00-05:00  20.0   998096.8783
+# historical holdings marked to market=
+                                   101          -1
+2000-01-01 09:30:00-05:00          NaN  1000000.0000
+2000-01-01 09:35:00-05:00  20006.23851   998096.8783
+# historical statistics=
+                           net_asset_holdings          cash    net_wealth  gross_exposure  leverage
+2000-01-01 09:30:00-05:00             0.00000  1000000.0000  1.000000e+06         0.00000  0.000000
+2000-01-01 09:35:00-05:00         20006.23851   998096.8783  1.018103e+06     20006.23851  0.019651"""
             self.assert_equal(actual, expected, fuzzy_match=True)

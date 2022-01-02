@@ -1,7 +1,7 @@
 """
 Import as:
 
-import dataflow.system.dataflow_sink_nodes as dtfsdtfsino
+import dataflow.system.sink_nodes as dtfsysinod
 """
 
 # TODO(gp): -> sink_nodes.py
@@ -12,25 +12,25 @@ from typing import Any, Dict
 
 import pandas as pd
 
-import dataflow.core.node as dtfcornode
-import dataflow.core.nodes.base as dtfconobas
-import dataflow.core.utils as dtfcorutil
+import dataflow.core as dtfcore
 import helpers.dbg as hdbg
 import helpers.printing as hprint
+import oms.portfolio as omportfo
 import oms.process_forecasts as oprofore
 
 _LOG = logging.getLogger(__name__)
 
 
-class ProcessForecasts(dtfconobas.FitPredictNode):
+class ProcessForecasts(dtfcore.FitPredictNode):
     """
     Place trades from a model.
     """
 
     def __init__(
         self,
-        nid: dtfcornode.NodeId,
+        nid: dtfcore.NodeId,
         prediction_col: str,
+        portfolio: omportfo.AbstractPortfolio,
         execution_mode: bool,
         process_forecasts_config: Dict[str, Any],
     ) -> None:
@@ -40,6 +40,7 @@ class ProcessForecasts(dtfconobas.FitPredictNode):
         super().__init__(nid)
         hdbg.dassert_in(execution_mode, ("batch", "real_time"))
         self._prediction_col = prediction_col
+        self._portfolio = portfolio
         self._execution_mode = execution_mode
         self._process_forecasts_config = process_forecasts_config
 
@@ -53,6 +54,7 @@ class ProcessForecasts(dtfconobas.FitPredictNode):
         # Get the latest `df` index value.
         await oprofore.process_forecasts(
             self._prediction_df,
+            self._portfolio,
             self._execution_mode,
             self._process_forecasts_config,
         )
@@ -71,7 +73,7 @@ class ProcessForecasts(dtfconobas.FitPredictNode):
         _LOG.debug("prediction_df=\n%s", hprint.dataframe_to_str(prediction_df))
         # Compute stats.
         info = collections.OrderedDict()
-        info["df_out_info"] = dtfcorutil.get_df_info_as_string(df)
+        info["df_out_info"] = dtfcore.get_df_info_as_string(df)
         mode = "fit" if fit else "predict"
         self._set_info(mode, info)
         # Pass the dataframe through.

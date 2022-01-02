@@ -6,14 +6,9 @@ import pandas as pd
 import pytest
 
 import core.config as cconfig
-import dataflow as dtf
-import dataflow.core.builders_example as dtfcobuexa
-import dataflow.core.dag_adapter as dtfcodaada
-import dataflow.core.runners as dtfcorrunn
-import dataflow.core.visualization as dtfcorvisu
+import dataflow.core as dtfcore
 import dataflow.pipelines.returns.pipeline as dtfpirepip
-import dataflow.system.dataflow_sink_nodes as dtfsdtfsino
-import dataflow.system.dataflow_source_nodes as dtfsdtfsono
+import dataflow.system as dtfsys
 import helpers.printing as hprint
 import helpers.unit_test as hunitest
 
@@ -43,7 +38,7 @@ class TestReturnsBuilder(hunitest.TestCase):
         # TODO(gp): We could use directly a DiskDataSource here.
         ticker = "AAPL"
         config = {
-            "func": dtf.load_data_from_disk,
+            "func": dtfcore.load_data_from_disk,
             "func_kwargs": {
                 "file_path": os.path.join(
                     S3_PREFIX, "pq/sp_500_1min", ticker + ".pq"
@@ -58,7 +53,7 @@ class TestReturnsBuilder(hunitest.TestCase):
     @pytest.mark.slow
     def test_futures1(self) -> None:
         source_node_kwargs = {
-            "func": dtfsdtfsono.load_kibot_data,
+            "func": dtfsys.load_kibot_data,
             "func_kwargs": {
                 "frequency": "T",
                 "contract_type": "continuous",
@@ -80,7 +75,7 @@ class TestReturnsBuilder(hunitest.TestCase):
             }
         )
         #
-        dag_runner = dtf.FitPredictDagRunner(config, dag_builder)
+        dag_runner = dtfcore.FitPredictDagRunner(config, dag_builder)
         result_bundle = dag_runner.fit()
         df_out = result_bundle.result_df
         str_output = (
