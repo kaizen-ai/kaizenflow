@@ -2483,11 +2483,7 @@ def docker_release_dev_image(  # type: ignore
     docker_tag_local_image_as_dev(ctx, version)
     # 4) Run QA tests for the (local version) of the dev image.
     if qa_tests:
-        qa_test_fn = get_default_param("END_TO_END_TEST_FN")
-        if not qa_test_fn(ctx, stage="dev"):
-            msg = "End-to-end test has failed"
-            _LOG.error(msg)
-            raise RuntimeError(msg)
+        run_qa_tests(ctx, stage="dev", version=version)
     # 5) Push the "dev" image to ECR.
     if push_to_repo:
         docker_push_dev_image(ctx, version)
