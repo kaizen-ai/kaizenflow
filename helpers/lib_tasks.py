@@ -1803,6 +1803,20 @@ def _get_amp_docker_compose_path() -> Optional[str]:
     return docker_compose_path
 
 
+_IMAGE_VERSION_CHANGELOG_TOKEN = "FROM_CHANGELOG"
+
+
+def _convert_from_token(version: str) -> str:
+    """
+    Check if version is a token `FROM_CHANGELOG` and substitute
+    with latest version from changelog.txt file.
+    """
+    hdbg.dassert_isinstance(version, str)
+    if version == _IMAGE_VERSION_CHANGELOG_TOKEN:
+        version = hversio.get_changelog_version()
+    return version
+
+
 _IMAGE_VERSION_RE = r"\d+\.\d+\.\d+"
 
 
@@ -1816,6 +1830,15 @@ def _dassert_is_version_valid(version: str) -> None:
     _LOG.debug("Testing with regex='%s'", regex)
     m = re.match(regex, version)
     hdbg.dassert(m, "Invalid version: '%s'", version)
+
+
+def _dassert_is_subsequent_version(version: str) -> None:
+    """
+    Subsequent version must be bigger than the current one.
+    """
+    base_image = get_default_param("BASE_IMAGE")
+    current_version = hversio.get_changelog_version(base_image)
+    hdbg.dassert_lt(current_version, version)
 
 
 _INTERNET_ADDRESS_RE = r"([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
@@ -1884,23 +1907,6 @@ def _get_base_image(base_image: str) -> str:
     return base_image
 
 
-def get_git_tag(
-    version: str,
-) -> str:
-    """
-    Return the tag to be used in Git that consists of an image name and
-    version.
-
-    :param version: e.g., `1.0.0`. If None, the latest version is used
-    :return: e.g., `amp-1.0.0`
-    """
-    hdbg.dassert_is_not(version, None)
-    _dassert_is_version_valid(version)
-    base_image = get_default_param("BASE_IMAGE")
-    tag_name = f"{base_image}-{version}"
-    return tag_name
-
-
 # TODO(gp): Consider using a token "latest" in version, so that it's always a
 # string and we avoid a special behavior encoded in None.
 def get_image(
@@ -1935,6 +1941,7 @@ def get_image(
         image.append(f"-{user}")
     # Handle the version.
     if version is not None and version != "":
+        version = _convert_from_token(version)
         _dassert_is_version_valid(version)
         image.append(f"-{version}")
     #
@@ -2280,7 +2287,9 @@ def docker_build_local_image(  # type: ignore
     :param update_poetry: run poetry lock to update the packages
     """
     _report_task()
+    version = _convert_from_token(version)
     _dassert_is_version_valid(version)
+    _dassert_is_subsequent_version(version)
     # Update poetry.
     if update_poetry:
         cmd = "cd devops/docker_build; poetry lock -v"
@@ -2291,10 +2300,6 @@ def docker_build_local_image(  # type: ignore
     # Build the local image.
     image_local = get_image(base_image, "local", version)
     _dassert_is_image_name_valid(image_local)
-    # Tag the container with the current version of the code to keep them in
-    # sync.
-    git_tag_prefix = get_default_param("BASE_IMAGE")
-    container_version = get_git_tag(version)
     #
     dockerfile = "devops/docker_build/dev.Dockerfile"
     dockerfile = _to_abs_path(dockerfile)
@@ -2307,8 +2312,7 @@ def docker_build_local_image(  # type: ignore
     docker build \
         --progress=plain \
         {opts} \
-        --build-arg AM_CONTAINER_VERSION={container_version} \
-        --build-arg AM_IMAGE_NAME={git_tag_prefix} \
+        --build-arg AM_CONTAINER_VERSION={version} \
         --tag {image_local} \
         --file {dockerfile} \
         .
@@ -2332,6 +2336,7 @@ def docker_tag_local_image_as_dev(  # type: ignore
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     _report_task()
+    version = _convert_from_token(version)
     _dassert_is_version_valid(version)
     # Tag local image as versioned dev image (e.g., `dev-1.0.0`).
     image_versioned_local = get_image(base_image, "local", version)
@@ -2343,10 +2348,6 @@ def docker_tag_local_image_as_dev(  # type: ignore
     image_dev = get_image(base_image, "dev", latest_version)
     cmd = f"docker tag {image_versioned_local} {image_dev}"
     _run(ctx, cmd)
-    # Tag the Git repo with the tag corresponding to the image, e.g., `amp-1.0.0`.
-    # TODO(gp): Should we add also the stage in the same format `amp:dev-1.0.0`?
-    tag_name = get_git_tag(version)
-    hgit.git_tag(tag_name)
 
 
 @task
@@ -2362,6 +2363,7 @@ def docker_push_dev_image(  # type: ignore
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     _report_task()
+    version = _convert_from_token(version)
     _dassert_is_version_valid(version)
     #
     docker_login(ctx)
@@ -2374,9 +2376,6 @@ def docker_push_dev_image(  # type: ignore
     image_dev = get_image(base_image, "dev", latest_version)
     cmd = f"docker push {image_dev}"
     _run(ctx, cmd, pty=True)
-    # Push Git tag.
-    tag_name = get_git_tag(version)
-    hgit.git_push_tag(tag_name)
 
 
 @task
@@ -2482,6 +2481,7 @@ def docker_build_prod_image(  # type: ignore
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     _report_task()
+    version = _convert_from_token(version)
     _dassert_is_version_valid(version)
     # Prepare `.dockerignore`.
     docker_ignore = ".dockerignore.prod"
