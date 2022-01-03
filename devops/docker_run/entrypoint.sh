@@ -66,7 +66,6 @@ aws configure --profile am list || true
 
 echo "AM_CONTAINER_VERSION='$AM_CONTAINER_VERSION'"
 
-# TODO(gp): Use this idiom everywhere (see CmampTask387).
 VAL=$(which python)
 echo "which python: $VAL"
 VAL=$(python -V)
