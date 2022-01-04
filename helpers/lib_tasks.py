@@ -2319,7 +2319,7 @@ def docker_build_local_image(  # type: ignore
     # Build the local image.
     image_local = get_image(base_image, "local", version)
     _dassert_is_image_name_valid(image_local)
-
+    # This code path through Git tag was discontinued with CmTask746.
     # git_tag_prefix = get_default_param("BASE_IMAGE")
     # container_version = get_git_tag(version)
     #
