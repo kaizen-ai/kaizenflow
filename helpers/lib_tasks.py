@@ -1840,9 +1840,9 @@ def _dassert_is_subsequent_version(version: str) -> None:
     Check that version is strictly bigger than the current one as specified in
     the changelog.
     """
-    base_image = get_default_param("BASE_IMAGE")
-    current_version = hversio.get_changelog_version(base_image)
-    hdbg.dassert_lt(current_version, version)
+    if version != _IMAGE_VERSION_FROM_CHANGELOG:
+        current_version = hversio.get_changelog_version()
+        hdbg.dassert_lt(current_version, version)
 
 
 _INTERNET_ADDRESS_RE = r"([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
@@ -1962,7 +1962,7 @@ def get_image(
         image.append(f"-{user}")
     # Handle the version.
     if version is not None and version != "":
-        version = _resolve_version_value(version)
+        _dassert_is_version_valid(version)
         image.append(f"-{version}")
     #
     image = "".join(image)
@@ -2307,8 +2307,8 @@ def docker_build_local_image(  # type: ignore
     :param update_poetry: run poetry lock to update the packages
     """
     _report_task()
-    version = _resolve_version_value(version)
     _dassert_is_subsequent_version(version)
+    version = _resolve_version_value(version)
     # Update poetry.
     if update_poetry:
         cmd = "cd devops/docker_build; poetry lock -v"
@@ -2442,6 +2442,10 @@ def docker_release_dev_image(  # type: ignore
         update_poetry=update_poetry,
         version=version,
     )
+    # Run resolve after `docker_build_local_image` so that a proper check
+    # for subsequent version can be made in case `FROM_CHANGELOG` token
+    # is used.
+    version = _resolve_version_value(version)
     # 2) Run tests for the "local" image.
     if skip_tests:
         _LOG.warning("Skipping all tests and releasing")
@@ -2551,7 +2555,7 @@ def docker_push_prod_image(  # type: ignore
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     _report_task()
-    _dassert_is_version_valid(version)
+    version = _resolve_version_value(version)
     #
     docker_login(ctx)
     # Push versioned tag.
@@ -2592,6 +2596,7 @@ def docker_release_prod_image(  # type: ignore
     :param push_to_repo: push the image to the repo_short_name
     """
     _report_task()
+    version = _resolve_version_value(version)
     # 1) Build prod image.
     docker_build_prod_image(ctx, cache=cache, version=version)
     # 2) Run tests.
