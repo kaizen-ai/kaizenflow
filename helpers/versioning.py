@@ -22,6 +22,7 @@ from typing import Optional
 
 import helpers.dbg as hdbg
 import helpers.git as hgit
+import helpers.io_ as hio
 
 _LOG = logging.getLogger(__name__)
 
@@ -29,6 +30,8 @@ _LOG = logging.getLogger(__name__)
 _INFO = "\033[36mINFO\033[0m"
 _WARNING = "\033[33mWARNING\033[0m"
 _ERROR = "\033[31mERROR\033[0m"
+#
+_CHANGELOG_VERSION_RE = r"\d+\.\d+\.\d+"
 
 
 def check_version() -> None:
@@ -40,7 +43,7 @@ def check_version() -> None:
         # Skip the check altogether.
         return
     # Get code version.
-    code_version = get_code_version()
+    code_version = get_changelog_version()
     container_version = _get_container_version()
     is_inside_container = _is_inside_container()
     # Print information.
@@ -78,30 +81,18 @@ def check_version() -> None:
     _check_version(code_version, container_version)
 
 
-def get_code_version() -> Optional[str]:
+def get_changelog_version() -> Optional[str]:
     """
-    Return the code version.
-
-    Code version is based on a closest Git tag that matches container's Git tag
-    prefix.
+    Return latest version from changelog.txt file.
     """
     version: Optional[str] = None
-    env_var = "AM_IMAGE_NAME"
-    if _is_inside_container():
-        if env_var not in os.environ:
-            # This situation happens when GH Actions pull the image using invoke
-            # inside their container (but not inside ours), thus there is no
-            # AM_IMAGE_NAME.
-            print(
-                _WARNING
-                + f": The env var {env_var} should be defined when running inside a"
-                " container"
-            )
-        else:
-            git_tag_prefix = os.environ[env_var]
-            hdbg.dassert_ne(git_tag_prefix, "")
-            git_tag_pattern = f"{git_tag_prefix}-*"
-            version = hgit.git_describe(match=git_tag_pattern)
+    root_dir = hgit.get_client_root(super_module=False)
+    changelog_file = os.path.join(root_dir, "changelog.txt")
+    hdbg.dassert_file_exists(changelog_file)
+    changelog = hio.from_file(changelog_file)
+    match = re.search(_CHANGELOG_VERSION_RE, changelog)
+    if match:
+        version = match.group()
     return version
 
 
