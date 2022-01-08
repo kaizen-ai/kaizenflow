@@ -1,10 +1,8 @@
 """
 Import as:
 
-import helpers.csv_helpers as hcsv
+import helpers.hcsv as hcsv
 """
-
-# TODO(gp): -> hcsv.py
 
 import ast
 import logging

@@ -1776,8 +1776,7 @@ def _get_aws_cli_version() -> int:
     # Parse the output.
     m = re.match(r"aws-cli/((\d+)\.\d+\.\d+)\s", res)
     hdbg.dassert(m, "Can't parse '%s'", res)
-    m: Match[Any
-    ]
+    m: Match[Any]
     version = m.group(1)
     _LOG.debug("version=%s", version)
     major_version = int(m.group(2))
