@@ -15,12 +15,12 @@ from IPython.display import display
 
 import core.pandas_helpers as cpanh
 import core.real_time as creatime
-import helpers.datetime_ as hdateti
-import helpers.dbg as hdbg
+import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import helpers.printing as hprint
-import helpers.s3 as hs3
-import helpers.sql as hsql
+import helpers.hprint as hprint
+import helpers.hs3 as hs3
+import helpers.hsql as hsql
 
 _LOG = logging.getLogger(__name__)
 

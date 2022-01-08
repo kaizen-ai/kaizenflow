@@ -4,10 +4,10 @@ from typing import Any, List
 import pandas as pd
 import pytest
 
-import helpers.git as hgit
-import helpers.printing as hprint
-import helpers.sql as hsql
-import helpers.unit_test as hunitest
+import helpers.hgit as hgit
+import helpers.hprint as hprint
+import helpers.hsql as hsql
+import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.client.ccx_clients_example as imvcdcccex
 import im_v2.ccxt.data.client.clients as imvcdclcl
 import im_v2.ccxt.db.utils as imvccdbut

@@ -4,8 +4,8 @@ from typing import List, Optional
 
 import pytest
 
-import helpers.git as hgit
-import helpers.unit_test as hunitest
+import helpers.hgit as hgit
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

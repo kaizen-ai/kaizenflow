@@ -41,10 +41,10 @@ import bs4
 import pandas as pd
 import tqdm
 
-import helpers.datetime_ as hdateti
-import helpers.dbg as hdbg
-import helpers.io_ as hio
-import helpers.parser as hparser
+import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hparser as hparser
 
 _LOG = logging.getLogger(__name__)
 

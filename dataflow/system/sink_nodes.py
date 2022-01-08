@@ -13,8 +13,8 @@ from typing import Any, Dict
 import pandas as pd
 
 import dataflow.core as dtfcore
-import helpers.dbg as hdbg
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 import oms.portfolio as omportfo
 import oms.process_forecasts as oprofore
 

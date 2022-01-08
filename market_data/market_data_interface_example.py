@@ -14,10 +14,10 @@ import pandas as pd
 
 import core.artificial_signal_generators as carsigen
 import core.real_time as creatime
-import helpers.datetime_ as hdateti
-import helpers.dbg as hdbg
+import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
 import helpers.hnumpy as hnumpy
-import helpers.printing as hprint
+import helpers.hprint as hprint
 import market_data.market_data_interface as mdmadain
 
 _LOG = logging.getLogger(__name__)

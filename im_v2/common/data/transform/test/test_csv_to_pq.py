@@ -2,10 +2,10 @@ import os
 
 import pandas as pd
 
-import helpers.git as hgit
-import helpers.io_ as hio
-import helpers.system_interaction as hsysinte
-import helpers.unit_test as hunitest
+import helpers.hgit as hgit
+import helpers.hio as hio
+import helpers.hsystem as hsysinte
+import helpers.hunit_test as hunitest
 
 
 class TestCsvToPq(hunitest.TestCase):

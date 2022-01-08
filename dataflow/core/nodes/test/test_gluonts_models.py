@@ -9,8 +9,8 @@ import pytest
 import core.artificial_signal_generators as carsigen
 import core.config as cconfig
 import dataflow.core.dag as dtfcordag
-import helpers.printing as hprint
-import helpers.unit_test as hunitest
+import helpers.hprint as hprint
+import helpers.hunit_test as hunitest
 from dataflow.core.nodes.gluonts_models import (
     ContinuousDeepArModel,
     DeepARGlobalModel,

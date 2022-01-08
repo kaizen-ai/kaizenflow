@@ -13,9 +13,9 @@ from typing import Any, Callable, Dict, Optional
 
 import pandas as pd
 
-import helpers.dbg as hdbg
-import helpers.io_ as hio
-import helpers.s3 as hs3
+import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hs3 as hs3
 
 _LOG = logging.getLogger(__name__)
 

@@ -18,8 +18,8 @@
 
 import logging
 
-import helpers.dbg as hdbg
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 
 hprint.config_notebook()
 

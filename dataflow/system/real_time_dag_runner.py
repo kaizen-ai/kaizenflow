@@ -12,8 +12,8 @@ import core.real_time as creatime
 import dataflow.core as dtfcore
 import dataflow.system.sink_nodes as dtfsysinod
 import dataflow.system.source_nodes as dtfsysonod
-import helpers.dbg as hdbg
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 

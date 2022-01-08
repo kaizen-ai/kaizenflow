@@ -21,7 +21,7 @@
 
 # %%
 
-import helpers.s3 as hs3
+import helpers.hs3 as hs3
 
 # %%
 profile = "am"

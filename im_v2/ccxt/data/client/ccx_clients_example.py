@@ -6,8 +6,8 @@ import im_v2.ccxt.data.client.ccx_clients_example as icdccce
 
 import os
 
-import helpers.dbg as hdbg
-import helpers.git as hgit
+import helpers.hdbg as hdbg
+import helpers.hgit as hgit
 import im_v2.ccxt.data.client.clients as imvcdclcl
 
 

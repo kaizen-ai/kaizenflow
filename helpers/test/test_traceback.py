@@ -3,10 +3,10 @@ from typing import List
 
 import pytest
 
-import helpers.dbg as hdbg
-import helpers.printing as hprint
-import helpers.traceback_helper as htraceb
-import helpers.unit_test as hunitest
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
+import helpers.htraceback as htraceb
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -264,16 +264,16 @@ class Test_Traceback1(hunitest.TestCase):
     #   File "/Users/saggese/src/lem1/amp/tasks.py", line 8, in <module>
     #     from helpers.lib_tasks import set_default_params  # This is not an invoke target.
     #   File "/Users/saggese/src/lem1/amp/helpers/lib_tasks.py", line 23, in <module>
-    #     import helpers.git as hgit
+    #     import helpers.hgit as hgit
     #   File "/Users/saggese/src/lem1/amp/helpers/git.py", line 16, in <module>
-    #     import helpers.system_interaction as hsysinte
+    #     import helpers.hsystem as hsysinte
     #   File "/Users/saggese/src/lem1/amp/helpers/system_interaction.py", line 529
     #     signature2 = _compute_file_signature(file_name, dir_depth)
     #     ^
     # SyntaxError: invalid syntax
     # Traceback (most recent call last):
     #   File "/Users/saggese/src/lem1/amp/dev_scripts/tg.py", line 21, in <module>
-    #     import helpers.system_interaction as hsysinte
+    #     import helpers.hsystem as hsysinte
     #   File "/Users/saggese/src/lem1/amp/helpers/system_interaction.py", line 529
     #     signature2 = _compute_file_signature(file_name, dir_depth)
     #     ^

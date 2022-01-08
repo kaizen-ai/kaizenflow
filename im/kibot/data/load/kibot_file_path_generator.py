@@ -9,7 +9,7 @@ import im.kibot.data.load.kibot_file_path_generator as imkdlkfpge
 import os
 from typing import Optional, cast
 
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 import im.common.data.load.file_path_generator as imcdlfpage
 import im.common.data.types as imcodatyp
 import im.kibot.data.config as imkidacon

@@ -13,9 +13,9 @@ import pandas as pd
 
 import core.finance as cofinanc
 import dataflow.core as dtfcore
-import helpers.datetime_ as hdateti
-import helpers.dbg as hdbg
-import helpers.printing as hprint
+import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 import im.kibot as vkibot
 import market_data.market_data_interface as mdmadain
 

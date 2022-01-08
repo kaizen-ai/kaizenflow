@@ -25,11 +25,11 @@ import dev_scripts.infra.old.ssh_tunnels as dsiosstu
 import argparse
 import logging
 
-import helpers.dbg as hdbg
-import helpers.git as hgit
+import helpers.hdbg as hdbg
+import helpers.hgit as hgit
 import helpers.old.tunnels as holdtunn
-import helpers.parser as hparser
-import helpers.system_interaction as hsysinte
+import helpers.hparser as hparser
+import helpers.hsystem as hsysinte
 
 _LOG = logging.getLogger(__name__)
 

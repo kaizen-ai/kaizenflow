@@ -2,9 +2,9 @@ import os
 
 import pytest
 
-import helpers.git as hgit
-import helpers.system_interaction as hsysinte
-import helpers.unit_test as hunitest
+import helpers.hgit as hgit
+import helpers.hsystem as hsysinte
+import helpers.hunit_test as hunitest
 
 
 class TestGeneratePqExampleData1(hunitest.TestCase):

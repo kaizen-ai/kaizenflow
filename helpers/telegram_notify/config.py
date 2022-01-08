@@ -8,7 +8,7 @@ import getpass
 import os
 from typing import Tuple
 
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 
 NOTIFY_JUPYTER_TOKEN = os.environ["AM_TELEGRAM_TOKEN"]
 

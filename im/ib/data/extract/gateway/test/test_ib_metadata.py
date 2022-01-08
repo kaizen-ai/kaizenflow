@@ -9,8 +9,8 @@ try:
 except ModuleNotFoundError:
     print("Can't find ib_insync")
 
-import helpers.dbg as hdbg
-import helpers.unit_test as hunitest
+import helpers.hdbg as hdbg
+import helpers.hunit_test as hunitest
 import im.ib.data.extract.gateway.metadata as imidegame
 import im.ib.data.extract.gateway.utils as imidegaut
 

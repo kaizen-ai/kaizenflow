@@ -6,8 +6,8 @@ import pandas as pd
 import pytest
 
 import core.data_adapters as cdatadap
-import helpers.printing as hprint
-import helpers.unit_test as hunitest
+import helpers.hprint as hprint
+import helpers.hunit_test as hunitest
 
 # TODO(gp): Remove after PTask2335.
 if True:

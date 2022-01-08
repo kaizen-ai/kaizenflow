@@ -10,8 +10,8 @@ import argparse
 import logging
 
 import dev_scripts.git.git_hooks.utils as dsgghout
-import helpers.dbg as hdbg
-import helpers.parser as hparser
+import helpers.hdbg as hdbg
+import helpers.hparser as hparser
 
 _LOG = logging.getLogger(__name__)
 

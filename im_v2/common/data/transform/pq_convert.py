@@ -28,13 +28,13 @@ import pyarrow.dataset as ds
 import pyarrow.parquet as pq
 from tqdm.autonotebook import tqdm
 
-import helpers.dbg as hdbg
-import helpers.io_ as hio
-import helpers.parser as hparser
-import helpers.printing as hprint
-import helpers.timer as htimer
+import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hparser as hparser
+import helpers.hprint as hprint
+import helpers.htimer as htimer
 
-# import helpers.system_interaction as hsysinte
+# import helpers.hsystem as hsysinte
 
 _LOG = logging.getLogger(__name__)
 

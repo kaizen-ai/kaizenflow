@@ -10,7 +10,7 @@ import logging
 from typing import Any, Dict
 
 import helpers.hasyncio as hasynci
-import helpers.sql as hsql
+import helpers.hsql as hsql
 
 _LOG = logging.getLogger(__name__)
 

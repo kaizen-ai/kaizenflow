@@ -2,10 +2,10 @@ import os
 
 import pandas as pd
 
-import helpers.datetime_ as hdateti
-import helpers.git as hgit
-import helpers.printing as hprint
-import helpers.unit_test as hunitest
+import helpers.hdatetime as hdateti
+import helpers.hgit as hgit
+import helpers.hprint as hprint
+import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.client.ccx_clients_example as imvcdcccex
 import im_v2.ccxt.data.client.clients as imvcdclcl
 import im_v2.common.data.client as imvcdcli

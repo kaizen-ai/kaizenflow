@@ -9,12 +9,12 @@ from typing import Dict, List
 import invoke
 import pytest
 
-import helpers.git as hgit
-import helpers.io_ as hio
+import helpers.hgit as hgit
+import helpers.hio as hio
 import helpers.lib_tasks as hlibtask
-import helpers.printing as hprint
-import helpers.system_interaction as hsysinte
-import helpers.unit_test as hunitest
+import helpers.hprint as hprint
+import helpers.hsystem as hsysinte
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

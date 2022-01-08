@@ -33,9 +33,9 @@ from typing import List, Tuple
 import pyarrow.dataset as ds
 
 import helpers.csv_helpers as hcsv
-import helpers.dbg as hdbg
-import helpers.io_ as hio
-import helpers.parser as hparser
+import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hparser as hparser
 import im_v2.common.data.transform.utils as imvcdtrut
 
 _LOG = logging.getLogger(__name__)

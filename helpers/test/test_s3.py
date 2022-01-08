@@ -1,8 +1,8 @@
 import logging
 import os
 
-import helpers.s3 as hs3
-import helpers.unit_test as hunitest
+import helpers.hs3 as hs3
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

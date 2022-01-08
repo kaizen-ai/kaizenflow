@@ -17,10 +17,10 @@ import core.finance as cofinanc
 import core.pandas_helpers as cpanh
 import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.base as dtfconobas
-import helpers.datetime_ as hdateti
-import helpers.dbg as hdbg
+import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import helpers.s3 as hs3
+import helpers.hs3 as hs3
 
 _LOG = logging.getLogger(__name__)
 

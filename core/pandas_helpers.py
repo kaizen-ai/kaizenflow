@@ -17,10 +17,10 @@ import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import helpers.printing as hprint
-import helpers.s3 as hs3
+import helpers.hprint as hprint
+import helpers.hs3 as hs3
 
 _LOG = logging.getLogger(__name__)
 

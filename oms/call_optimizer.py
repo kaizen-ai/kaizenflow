@@ -9,7 +9,7 @@ import logging
 import numpy as np
 import pandas as pd
 
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 

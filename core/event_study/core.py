@@ -38,7 +38,7 @@ from typing import Iterable, Optional, Union
 import numpy as np
 import pandas as pd
 
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)

@@ -2,8 +2,8 @@ import logging
 
 import pytest
 
-import helpers.git as hgit
-import helpers.sql as hsql
+import helpers.hgit as hgit
+import helpers.hsql as hsql
 import im_v2.common.db.utils as imvcodbut
 
 _LOG = logging.getLogger(__name__)

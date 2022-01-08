@@ -14,9 +14,9 @@ import logging
 
 from tqdm.auto import tqdm
 
-import helpers.dbg as hdbg
-import helpers.parser as hparser
-import helpers.pickle_ as hpickle
+import helpers.hdbg as hdbg
+import helpers.hparser as hparser
+import helpers.hpickle as hpickle
 
 _LOG = logging.getLogger(__name__)
 

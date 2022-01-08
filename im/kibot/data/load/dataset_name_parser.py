@@ -6,7 +6,7 @@ import im.kibot.data.load.dataset_name_parser as imkdldnapa
 
 from typing import Dict, Tuple
 
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 import im.common.data.types as imcodatyp
 import im.kibot.data.load.kibot_file_path_generator as imkdlkfpge
 

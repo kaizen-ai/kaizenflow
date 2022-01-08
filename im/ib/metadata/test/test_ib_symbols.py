@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-import helpers.unit_test as hunitest
+import helpers.hunit_test as hunitest
 import im.common.data.types as imcodatyp
 import im.common.metadata.symbols as imcomesym
 import im.ib.data.config as imibdacon
@@ -15,7 +15,7 @@ class TestIbSymbolUniverse(hunitest.TestCase):
     def setUpClass(cls) -> None:
         # Disable the chatty modules when debugging with DEBUG verbosity. We need to
         # disable the modules after they have been imported.
-        # import helpers.dbg as hdbg
+        # import helpers.hdbg as hdbg
         # hdbg.shutup_chatty_modules(verbose=True)
         hunitest.TestCase.setUpClass()
 

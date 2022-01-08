@@ -11,9 +11,9 @@ import os
 import numpy as np
 import pandas as pd
 
-import helpers.dataframe as hdatafr
-import helpers.printing as hprint
-import helpers.unit_test as hunitest
+import helpers.hdataframe as hdatafr
+import helpers.hprint as hprint
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

@@ -12,7 +12,7 @@ from typing import Any, Dict, List
 import dataflow.core.dag as dtfcordag
 import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.base as dtfconobas
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 

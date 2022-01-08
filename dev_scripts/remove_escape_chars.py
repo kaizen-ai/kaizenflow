@@ -9,9 +9,9 @@ import dev_scripts.remove_escape_chars as dsreesch
 import argparse
 import logging
 
-import helpers.dbg as hdbg
-import helpers.parser as hparser
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.hparser as hparser
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 

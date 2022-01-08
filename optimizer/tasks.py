@@ -1,7 +1,7 @@
 import logging
 import os
 
-import helpers.versioning as hversi
+import helpers.hversion as hversi
 
 # Expose the pytest targets.
 # Extract with:

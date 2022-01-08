@@ -5,8 +5,8 @@ import pandas as pd
 
 import dataflow.core as dtfcobuexa
 import dataflow.system.real_time_dag_adapter as dtfsrtdaad
-import helpers.printing as hprint
-import helpers.unit_test as hunitest
+import helpers.hprint as hprint
+import helpers.hunit_test as hunitest
 import oms.portfolio_example as oporexam
 
 _LOG = logging.getLogger(__name__)

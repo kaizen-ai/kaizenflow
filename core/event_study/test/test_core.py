@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 import core.event_study as esf
-import helpers.unit_test as hunitest
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
