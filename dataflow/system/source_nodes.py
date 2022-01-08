@@ -17,7 +17,7 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import im.kibot as vkibot
-import market_data.market_data_interface as mdmadain
+import market_data as mdata
 
 _LOG = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ def data_source_node_factory(
         - `ArmaGenerator`
         - `MultivariateNormalGenerator`
     - real-time data sources e.g.,
-        - `RealTimeDataSource` (which uses a full-fledged `AbstractMarketDataInterface`)
+        - `RealTimeDataSource` (which uses a full-fledged `AbstractMarketData`)
     - data generators using data from disk
         - `DiskDataSource` (which reads CSV and PQ files)
     - data generators using pluggable functions
@@ -343,22 +343,78 @@ class KibotEquityReader(dtfcore.DataSource):
         self.df = df
 
 
+# #############################################################################
+
+
+def _convert_to_multiindex(df: pd.DataFrame, asset_id_col: str) -> pd.DataFrame:
+    """
+    Transform a df like: ```
+
+    :                            id close  volume
+    end_time
+    2022-01-04 09:01:00-05:00  13684    NaN       0
+    2022-01-04 09:01:00-05:00  17085    NaN       0
+    2022-01-04 09:02:00-05:00  13684    NaN       0
+    2022-01-04 09:02:00-05:00  17085    NaN       0
+    2022-01-04 09:03:00-05:00  13684    NaN       0
+    ```
+
+    Return a df like:
+    ```
+                                    close       volume
+                              13684 17085  13684 17085
+    end_time
+    2022-01-04 09:01:00-05:00   NaN   NaN      0     0
+    2022-01-04 09:02:00-05:00   NaN   NaN      0     0
+    2022-01-04 09:03:00-05:00   NaN   NaN      0     0
+    2022-01-04 09:04:00-05:00   NaN   NaN      0     0
+    ```
+
+    Note that the `asset_id` column is removed.
+    """
+
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert_lte(1, df.shape[0])
+    # Copied from `_load_multiple_instrument_data()`.
+    _LOG.debug(
+        "Before multiindex conversion\n:%s",
+        hprint.dataframe_to_str(df.head()),
+    )
+    dfs = {}
+    # TODO(Paul): Pass the column name through the constructor, so we can make it
+    #  programmable.
+    hdbg.dassert_in(asset_id_col, df.columns)
+    for asset_id, df in df.groupby(asset_id_col):
+        dfs[asset_id] = df
+    # Reorganize the data into the desired format.
+    df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
+    df = df.swaplevel(i=0, j=1, axis=1)
+    df.sort_index(axis=1, level=0, inplace=True)
+    # Remove the asset_id column, since it's redundant.
+    del df[asset_id_col]
+    _LOG.debug(
+        "After multiindex conversion\n:%s",
+        hprint.dataframe_to_str(df.head()),
+    )
+    return df
+
+
 class RealTimeDataSource(dtfcore.DataSource):
     """
     A RealTimeDataSource is a node that:
 
-    - has a wall clock (replayed or not, simulated or real)
+    - is backed by a `MarketData` (replayed, simulated, or real-time)
     - emits different data based on the value of a clock
       - This represents the fact the state of a DB is updated over time
     - has a blocking behavior
       - E.g., the data might not be available immediately when the data is
-        requested and thus we have to wait
+        requested and thus the caller has to wait
     """
 
     def __init__(
         self,
         nid: dtfcore.NodeId,
-        market_data_interface: mdmadain.AbstractMarketDataInterface,
+        market_data: mdata.AbstractMarketData,
         period: str,
         asset_id_col: Union[int, str],
         multiindex_output: bool,
@@ -366,13 +422,14 @@ class RealTimeDataSource(dtfcore.DataSource):
         """
         Constructor.
 
-        :param period: how much history is needed from the real-time node
+        :param period: how much history is needed from the real-time node. See
+            `AbstractMarketData.get_data()` for details.
+        :param asset_id_col: the name of the column from `market_data`
+            containing the asset ids
         """
         super().__init__(nid)
-        hdbg.dassert_isinstance(
-            market_data_interface, mdmadain.AbstractMarketDataInterface
-        )
-        self._market_data_interface = market_data_interface
+        hdbg.dassert_isinstance(market_data, mdata.AbstractMarketData)
+        self._market_data = market_data
         self._period = period
         self._asset_id_col = asset_id_col
         self._multiindex_output = multiindex_output
@@ -381,40 +438,128 @@ class RealTimeDataSource(dtfcore.DataSource):
     async def wait_for_latest_data(
         self,
     ) -> Tuple[pd.Timestamp, pd.Timestamp, int]:
-        ret = await self._market_data_interface.is_last_bar_available()
+        ret = await self._market_data.wait_for_latest_data()
         return ret  # type: ignore[no-any-return]
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
-        # TODO(gp): This approach of communicating params through the state
-        #  makes the code difficult to understand.
-        self.df = self._market_data_interface.get_data(self._period)
-        if self._multiindex_output:
-            self._convert_to_multiindex()
+        self._get_data()
         return super().fit()  # type: ignore[no-any-return]
 
     def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
-        self.df = self._market_data_interface.get_data(self._period)
-        if self._multiindex_output:
-            self._convert_to_multiindex()
+        self._get_data()
         return super().predict()  # type: ignore[no-any-return]
 
-    def _convert_to_multiindex(self) -> None:
-        # From _load_multiple_instrument_data().
+    def _get_data(self) -> None:
+        # TODO(gp): This approach of communicating params through the state
+        #  makes the code difficult to understand.
+        self.df = self._market_data.get_data_for_last_period(self._period)
+        if self._multiindex_output:
+            self.df = _convert_to_multiindex(self.df, self._asset_id_col)
+
+
+# #############################################################################
+
+
+class HistoricalDataSource(dtfcore.DataSource):
+    """
+    Stream the data to the DAG from a `MarketData`.
+
+    Note that the `MarketData` decides the universe of asset_ids.
+    """
+
+    def __init__(
+        self,
+        nid: dtfcore.NodeId,
+        market_data: mdata.AbstractMarketData,
+        asset_id_col: Union[int, str],
+        ts_col_name: str,
+        multiindex_output: bool,
+        *,
+        col_names_to_remove: Optional[List[str]] = None,
+    ) -> None:
+        """
+        Constructor.
+
+        :param asset_id_col: the name of the column from `market_data`
+            containing the asset ids
+        :param ts_col_name: the name of the column from `market_data`
+            containing the end time stamp of the interval to filter on
+        :param col_names_to_remove: name of the columns to remove from the df
+        """
+        super().__init__(nid)
+        hdbg.dassert_isinstance(market_data, mdata.AbstractMarketData)
+        self._market_data = market_data
+        self._asset_id_col = asset_id_col
+        self._ts_col_name = ts_col_name
+        self._multiindex_output = multiindex_output
+        self._col_names_to_remove = col_names_to_remove
+
+    def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
         _LOG.debug(
-            "Before multiindex conversion\n:%s",
-            hprint.dataframe_to_str(self.df.head()),
+            "wall_clock_time=%s",
+            self._market_data.get_wall_clock_time(),
         )
-        dfs = {}
-        # TODO(Paul): Pass the column name through the constructor, so we can make it
-        # programmable.
-        for asset_id, df in self.df.groupby(self._asset_id_col):
-            dfs[asset_id] = df
-        # Reorganize the data into the desired format.
-        df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
-        df = df.swaplevel(i=0, j=1, axis=1)
-        df.sort_index(axis=1, level=0, inplace=True)
-        self.df = df
+        intervals = self._fit_intervals
+        self.df = self._get_data(intervals)
+        return super().fit()  # type: ignore[no-any-return]
+
+    def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
         _LOG.debug(
-            "After multiindex conversion\n:%s",
-            hprint.dataframe_to_str(self.df.head()),
+            "wall_clock_time=%s",
+            self._market_data.get_wall_clock_time(),
         )
+        intervals = self._predict_intervals
+        self.df = self._get_data(intervals)
+        return super().predict()  # type: ignore[no-any-return]
+
+    def _get_data(self, intervals: dtfcore.Intervals) -> pd.DataFrame:
+        """
+        Get data for the requested [a, b] interval.
+        """
+        _LOG.debug(hprint.to_str("intervals"))
+        # For simplicity's sake we get a slice of the data that includes all the
+        # requested intervals, relying on parent's `fit()` and `predict()` to
+        # extract the data strictly needed.
+        (
+            min_timestamp,
+            max_timestamp,
+        ) = dtfcore.find_min_max_timestamps_from_intervals(intervals)
+        _LOG.debug(hprint.to_str("min_timestamp max_timestamp"))
+        # From ArmaGenerator._lazy_load():
+        #   ```
+        #   self.df = df.loc[self._start_date : self._end_date]
+        #   ```
+        # the interval needs to be [a, b].
+        left_close = True
+        right_close = True
+        # We assume that the `MarketData` object is in charge of specifying
+        # the universe of assets.
+        asset_ids = None
+        df = self._market_data.get_data_for_interval(
+            min_timestamp,
+            max_timestamp,
+            self._ts_col_name,
+            asset_ids,
+            left_close=left_close,
+            right_close=right_close,
+            normalize_data=True,
+        )
+        # Remove the columns that are not needed.
+        if self._col_names_to_remove is not None:
+            _LOG.debug(
+                "Before column removal\n:%s",
+                hprint.dataframe_to_str(df.head()),
+            )
+            _LOG.debug(
+                "Removing %s from %s", self._col_names_to_remove, df.columns
+            )
+            for col_name in self._col_names_to_remove:
+                hdbg.dassert_in(col_name, df.columns)
+                del df[col_name]
+            _LOG.debug(
+                "After column removal\n:%s",
+                hprint.dataframe_to_str(df.head()),
+            )
+        if self._multiindex_output:
+            df = _convert_to_multiindex(df, self._asset_id_col)
+        return df

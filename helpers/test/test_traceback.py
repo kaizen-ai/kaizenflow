@@ -282,8 +282,8 @@ class Test_Traceback1(hunitest.TestCase):
     # Bug2:
     # Traceback (most recent call last):
     #   File "/app/amp/dataflow/pipelines/real_time/test/test_dataflow_amp_real_time_pipeline.py", line 46, in test1
-    #     ) = mdmdinex.get_replayed_time_market_data_interface_example2(
-    # TypeError: get_replayed_time_market_data_interface_example2() got an unexpected keyword argument 'df'
+    #     ) = mdmdinex.get_ReplayedTimeMarketData_example2(
+    # TypeError: get_ReplayedTimeMarketData_example2() got an unexpected keyword argument 'df'
     #
     # 13:34:45 INFO  traceback_to_cfile  : _main                         : 76  : in_file_name=log.txt
     # 13:34:45 INFO  parser              : read_file                     : 304 : Reading from 'log.txt'
@@ -306,7 +306,7 @@ class Test_Traceback1(hunitest.TestCase):
     # Traceback (most recent call last):
     #   File "/app/amp/market_data/test/test_market_data_client.py", line 46, in test1
     #     data = market_data_client.get_data_for_interval(
-    #   File "/app/amp/market_data/market_data_interface.py", line 212, in get_data_for_interval
+    #   File "/app/amp/market_data/market_data.py", line 212, in get_data_for_interval
     #     df = self._get_data(
     #   File "/app/amp/market_data/market_data_client.py", line 93, in _get_data
     #     market_data["start_ts"] = market_data["end_ts"] - pd.Timedelta(

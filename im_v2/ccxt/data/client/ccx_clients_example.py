@@ -14,7 +14,7 @@ import im_v2.ccxt.data.client.clients as imvcdclcl
 # TODO(gp): @grisha, @dan how was this file generated?
 def get_test_data_dir():
     test_data_dir = os.path.join(
-        hgit.get_client_root(False),
+        hgit.get_amp_abs_path(),
         "im_v2/ccxt/data/client/test/test_data",
     )
     hdbg.dassert_dir_exists(test_data_dir)

@@ -178,8 +178,8 @@ dag_adapter
             ]
         }
   overriding_config=
-    load_prices: {'source_node_name': 'RealTimeDataSource', 'source_node_kwargs': {'market_data_interface': <market_data.market_data_interface.ReplayedTimeMarketDataInterface object>, 'period': 'last_5mins', 'asset_id_col': 'asset_id', 'multiindex_output': True}}
-    process_forecasts: {'prediction_col': 'close', 'portfolio': <oms.portfolio.SimulatedPortfolio object at 0x>, 'execution_mode': 'real_time', 'process_forecasts_config': {'market_data_interface': <market_data.market_data_interface.ReplayedTimeMarketDataInterface object>, 'order_type': 'price@twap', 'order_duration': 5, 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30), 'ath_end_time': datetime.time(16, 40), 'trading_end_time': datetime.time(16, 40)}}
+    load_prices: {'source_node_name': 'RealTimeDataSource', 'source_node_kwargs': {'market_data': <market_data.replayed_market_data.ReplayedMarketData object>, 'period': 'last_5mins', 'asset_id_col': 'asset_id', 'multiindex_output': True}}
+    process_forecasts: {'prediction_col': 'close', 'volatility_col': 'close', 'portfolio': <oms.portfolio.SimulatedPortfolio object at 0x>, 'process_forecasts_config': {'market_data': <market_data.replayed_market_data.ReplayedMarketData object>, 'order_type': 'price@twap', 'order_duration': 5, 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30), 'ath_end_time': datetime.time(16, 40), 'trading_end_time': datetime.time(16, 40), 'execution_mode': 'real_time', 'log_dir': None}}
   nodes_to_insert=
     ('load_prices', <function data_source_node_factory at 0x>)
   nodes_to_append=

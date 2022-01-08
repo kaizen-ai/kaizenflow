@@ -134,7 +134,7 @@ def _save_data_on_disk(
         file_name = (
             f"orderbook_{exchange.id}_"
             f"{pair}_"
-            f"{hdateti.get_timestamp('ET')}.json"
+            f"{hdateti.get_current_timestamp_as_string('ET')}.json"
         )
         full_path = os.path.join(dst_dir, file_name)
         hio.to_json(full_path, pair_data)

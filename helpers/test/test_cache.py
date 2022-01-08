@@ -19,7 +19,7 @@ _LOG = logging.getLogger(__name__)
 # _LOG.debug = _LOG.info
 
 
-# TODO(gp): Use this everywhere.
+# TODO(gp): Use hprint.log_frame
 def _LOG_frame(txt: str) -> None:
     _LOG.debug("\n%s", hprint.frame(txt))
 

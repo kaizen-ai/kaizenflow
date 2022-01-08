@@ -25,7 +25,7 @@ import helpers.hprint as hprint
 
 # %%
 # hdbg.init_logger(verbosity=logging.INFO)
-import market_data.market_data_interface_example as mdmdinex
+import market_data as mdata
 import oms.portfolio_example as oporexam
 
 hdbg.init_logger(verbosity=logging.DEBUG)
@@ -41,14 +41,14 @@ hprint.config_notebook()
 
 # %%
 event_loop = None
-market_data_interface = mdmdinex.get_replayed_time_market_data_interface_example3(
+market_data = mdata.get_ReplayedTimeMarketData_example3(
     event_loop
 )
 
 # %%
 initial_timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
 portfolio = oporexam.get_simulated_portfolio_example1(
-    market_data_interface, initial_timestamp
+    market_data, initial_timestamp
 )
 
 # %%

@@ -47,6 +47,7 @@ parse_jack_cmd_opts() {
               exit 0
               ;;
           v)  verbose=1
+              echo "verbose=$verbose"
               ;;
           r)  regex=$OPTARG
               ;;
@@ -68,7 +69,6 @@ parse_jack_cmd_opts() {
 
   if [[ -z $regex ]]; then
       regex=$1
-      dir='.'
       shift
   fi;
 

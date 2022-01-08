@@ -26,12 +26,15 @@ import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import helpers.hsystem as hsysinte
+import helpers.htimer as htimer
 
 _LOG = logging.getLogger(__name__)
 
 # TODO(gp): Do not commit this.
 # _LOG.debug = _LOG.info
 
+# TODO(gp): Use:
+# _LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
 _TRACE_FUNCS = False
 
 # #############################################################################
@@ -382,6 +385,7 @@ class _Cached:
         # Save interface parameters.
         hdbg.dassert_callable(func)
         self._func = func
+        # TODO(gp): We should use memory cache only inside Jupyter notebooks.
         self._use_mem_cache = use_mem_cache
         self._use_disk_cache = use_disk_cache
         self._is_verbose = verbose
@@ -441,8 +445,10 @@ class _Cached:
             # Get time.
             elapsed_time = time.perf_counter() - perf_counter_start
             # Get memory.
-            obj_size = hintros.get_size_in_bytes(obj)
-            obj_size_as_str = hintros.format_size(obj_size)
+            # TODO(gp): This is very slow.
+            # obj_size = hintros.get_size_in_bytes(obj)
+            # obj_size_as_str = hintros.format_size(obj_size)
+            obj_size_as_str = "nan"
             last_cache = self.get_last_cache_accessed()
             cache_dir = self._get_cache_dir(last_cache, self._tag)
             _LOG.info(
@@ -545,7 +551,9 @@ class _Cached:
         # https://github.com/joblib/joblib/tree/master/joblib/_store_backends.py
         func_path = self._get_function_specific_code_path()
         # Archive old code.
-        new_func_path = func_path + "." + hdateti.get_timestamp(tz="ET")
+        new_func_path = (
+            func_path + "." + hdateti.get_current_timestamp_as_string(tz="ET")
+        )
         _LOG.debug("new_func_path='%s'", new_func_path)
         # Get the store backend.
         cache_type = "disk"
@@ -746,6 +754,7 @@ class _Cached:
             ret = self._disk_cache_path
         else:
             ret = _get_global_cache_path(cache_type, tag=tag)
+        ret = cast(str, ret)
         return ret
 
     def _get_memorized_result(self, cache_type: str) -> joblib.MemorizedResult:
@@ -881,7 +890,10 @@ class _Cached:
         func_id, args_id = self._get_identifiers("disk", *args, **kwargs)
         if self._has_cached_version("disk", func_id, args_id):
             _LOG.debug("There is a disk cached version")
-            obj = self._disk_cached_func(*args, **kwargs)
+            with htimer.TimedScope(
+                logging.INFO, "Loading cached version from disk"
+            ):
+                obj = self._disk_cached_func(*args, **kwargs)
             if self._check_only_if_present:
                 raise CachedValueException(func_info)
         else:
@@ -896,7 +908,10 @@ class _Cached:
             if self._enable_read_only:
                 msg = f"{func_info}: trying to execute"
                 raise NotCachedValueException(msg)
-            obj = self._disk_cached_func(*args, **kwargs)
+            with htimer.TimedScope(
+                logging.INFO, "Updating cached version on disk"
+            ):
+                obj = self._disk_cached_func(*args, **kwargs)
             # obj = self._execute_intrinsic_function(*args, **kwargs)
             # The function was not cached in disk, so now we need to update the
             # memory cache.
@@ -922,7 +937,10 @@ class _Cached:
             if self._check_only_if_present:
                 raise CachedValueException(func_info)
             # The function execution was cached in the mem cache.
-            obj = self._memory_cached_func(*args, **kwargs)
+            with htimer.TimedScope(
+                logging.INFO, "Loading cached version from memory"
+            ):
+                obj = self._memory_cached_func(*args, **kwargs)
         else:
             # INV: we know that we didn't hit the memory cache, but we don't know
             # about the disk cache.
@@ -946,16 +964,17 @@ class _Cached:
     def _execute_intrinsic_function(self, *args: Any, **kwargs: Any) -> Any:
         if _TRACE_FUNCS:
             _LOG.debug("")
-        func_info = "%s(args=%s kwargs=%s)" % (
-            self._func.__name__,
-            str(args),
-            str(kwargs),
-        )
-        _LOG.debug("%s: execute intrinsic function", func_info)
-        if self._enable_read_only:
-            msg = f"{func_info}: trying to execute"
-            raise NotCachedValueException(msg)
-        obj = self._func(*args, **kwargs)
+        with htimer.TimedScope(logging.INFO, "Executing intrinsic function"):
+            func_info = "%s(args=%s kwargs=%s)" % (
+                self._func.__name__,
+                str(args),
+                str(kwargs),
+            )
+            _LOG.debug("%s: execute intrinsic function", func_info)
+            if self._enable_read_only:
+                msg = f"{func_info}: trying to execute"
+                raise NotCachedValueException(msg)
+            obj = self._func(*args, **kwargs)
         return obj
 
     def _execute_func(self, *args: Any, **kwargs: Any) -> Any:

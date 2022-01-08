@@ -159,8 +159,8 @@ class TestDryRunTasks1(hunitest.TestCase):
         target = "git_pull"
         self._dry_run(target)
 
-    def test_git_pull_master(self) -> None:
-        target = "git_pull_master"
+    def test_git_fetch_master(self) -> None:
+        target = "git_fetch_master"
         self._dry_run(target)
 
     def test_git_clean(self) -> None:
@@ -242,8 +242,8 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "git_pull(ctx)"
         self._check_output(target)
 
-    def test_git_pull_master(self) -> None:
-        target = "git_pull_master(ctx)"
+    def test_git_fetch_master(self) -> None:
+        target = "git_fetch_master(ctx)"
         self._check_output(target)
 
     def test_git_clean(self) -> None:
@@ -572,16 +572,14 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             cmd,
             print_docker_config=print_docker_config,
         )
-        exp = r"""
-        IMAGE=$AM_ECR_BASE_PATH/amp_test:local \
-            docker-compose \
-            --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
-            --env-file devops/env/default.env \
-            run \
-            --rm \
-            app \
-            bash
-        """
+        exp = r"""IMAGE=$AM_ECR_BASE_PATH/amp_test:local-$USER_NAME-1.0.0 \
+                docker-compose \
+                --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
+                --env-file devops/env/default.env \
+                run \
+                --rm \
+                app \
+                bash """
         self._check(act, exp)
 
     @pytest.mark.skipif(
@@ -606,7 +604,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             print_docker_config=print_docker_config,
         )
         exp = r"""
-        IMAGE=$AM_ECR_BASE_PATH/amp_test:local-1.0.0 \
+        IMAGE=$AM_ECR_BASE_PATH/amp_test:local-$USER_NAME-1.0.0 \
         PORT=9999 \
         SKIP_RUN=1 \
             docker-compose \
@@ -661,15 +659,15 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         self_test = True
         print_docker_config = False
         act = hlibtask._get_docker_jupyter_cmd(
-            stage,
             base_image,
+            stage,
             version,
             port,
             self_test,
             print_docker_config=print_docker_config,
         )
         exp = r"""
-        IMAGE=$AM_ECR_BASE_PATH/amp_test:dev \
+        IMAGE=$AM_ECR_BASE_PATH/amp_test:dev-1.0.0 \
         PORT=9999 \
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \

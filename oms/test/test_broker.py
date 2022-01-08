@@ -93,7 +93,7 @@ class TestMockedBroker1(omtodh.TestOmsDbHelper):
         self, broker: ombroker.MockedBroker, order
     ) -> List[ombroker.Fill]:
         orders = [order]
-        get_wall_clock_time = broker.market_data_interface.get_wall_clock_time
+        get_wall_clock_time = broker.market_data.get_wall_clock_time
         # await asyncio.sleep(1)
         await hasynci.sleep(1, get_wall_clock_time)
         await broker.submit_orders(orders)

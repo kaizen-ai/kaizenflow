@@ -63,7 +63,7 @@ class OrderProcessor:
         self._current_positions_table_name = current_positions_table_name
         #
         self._get_wall_clock_time = (
-            broker.market_data_interface.get_wall_clock_time
+            broker.market_data.get_wall_clock_time
         )
         #
         self._poll_kwargs = poll_kwargs or hasynci.get_poll_kwargs(
@@ -192,7 +192,7 @@ class OrderProcessor:
         """
         orders = await self._orders.get()
         get_wall_clock_time = (
-            self._broker.market_data_interface.get_wall_clock_time
+            self._broker.market_data.get_wall_clock_time
         )
         fulfillment_deadline = max([order.end_timestamp for order in orders])
         _LOG.debug("Order fulfillment deadline=%s", fulfillment_deadline)

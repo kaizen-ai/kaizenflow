@@ -32,7 +32,7 @@ from typing import List, Tuple
 
 import pyarrow.dataset as ds
 
-import helpers.csv_helpers as hcsv
+import helpers.hcsv as hcsv
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hparser as hparser

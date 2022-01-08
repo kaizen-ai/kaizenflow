@@ -1050,7 +1050,7 @@ def git_stash_push(
 
     user_name = hsysinte.get_user_name()
     server_name = hsysinte.get_server_name()
-    timestamp = hdateti.get_timestamp("naive_ET")
+    timestamp = hdateti.get_current_timestamp_as_string("naive_ET")
     tag = "%s-%s-%s" % (user_name, server_name, timestamp)
     tag = prefix + "." + tag
     _LOG.debug("tag='%s'", tag)
@@ -1208,6 +1208,10 @@ def is_client_clean(
     """
     _LOG.debug(hprint.to_str("abort_if_not_clean"))
     files = get_modified_files(dir_name)
+    # Remove "amp" from files.
+    if "amp" in files:
+        _LOG.warning("Skipping 'amp' in modified files")
+        files = [f for f in files if "amp" != f]
     # A Git client is clean iff there are no files in the index.
     is_clean = len(files) == 0
     if abort_if_not_clean:

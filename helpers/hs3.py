@@ -383,21 +383,21 @@ def get_key_value(
 
 def get_s3fs(*args: Any, **kwargs: Any) -> s3fs.core.S3FileSystem:
     """
-    Return an s3fs object.
+    Return an s3fs object from a given AWS profile.
 
     Same parameters as `get_aws_credentials()`.
     """
     # From https://stackoverflow.com/questions/62562945
     aws_credentials = get_aws_credentials(*args, **kwargs)
     _LOG.debug("%s", pprint.pformat(aws_credentials))
-    s3 = s3fs.core.S3FileSystem(
+    s3fs_ = s3fs.core.S3FileSystem(
         anon=False,
         key=aws_credentials["aws_access_key_id"],
         secret=aws_credentials["aws_secret_access_key"],
         token=aws_credentials["aws_session_token"],
         client_kwargs={"region_name": aws_credentials["aws_region"]},
     )
-    return s3
+    return s3fs_
 
 
 # #############################################################################

@@ -246,8 +246,13 @@ async def wait_for_order_acceptance(
     """
     # Create a polling function that checks whether `target_value` is present
     # in the `field_name` column of the table `table_name`.
+    # TODO(Paul): Expose `show_db_state`.
     polling_func = lambda: hsql.is_row_with_value_present(
-        db_connection, table_name, field_name, target_value
+        db_connection,
+        table_name,
+        field_name,
+        target_value,
+        show_db_state=False,
     )
     tag = "wait_for_order_acceptance"
     # Poll.

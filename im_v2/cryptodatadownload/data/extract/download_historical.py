@@ -101,7 +101,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     for link in tqdm.tqdm(download_links, desc="Links loaded:"):
         df = pd.read_csv(link)
         _LOG.debug("Downloaded %s", link)
-        timestamp = hdateti.get_timestamp("UTC")
+        timestamp = hdateti.get_current_timestamp_as_string("UTC")
         # Select filename from URL.
         orig_filename = link.rsplit("/", 1)[-1]
         # Construct new name with timestamp.

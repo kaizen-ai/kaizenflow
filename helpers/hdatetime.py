@@ -273,8 +273,7 @@ def get_current_time(
     return timestamp
 
 
-# TODO(gp): -> get_current_timestamp_as_string()
-def get_timestamp(tz: str) -> str:
+def get_current_timestamp_as_string(tz: str) -> str:
     """
     Return the current time in the format `YYYYMMDD_HHMMSS` (e.g.,
     20210728_221734).
@@ -314,8 +313,8 @@ def to_generalized_datetime(
     date_example = dates.tolist()[format_example_index]
     format_fix = _handle_incorrect_conversions(date_example)
     if format_fix is not None:
-        format_, date_modifiction_func = format_fix
-        dates = dates.map(date_modifiction_func)
+        format_, date_modification_func = format_fix
+        dates = dates.map(date_modification_func)
         date_example = dates.tolist()[format_example_index]
     else:
         format_ = None

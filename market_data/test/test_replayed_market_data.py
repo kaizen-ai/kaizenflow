@@ -6,8 +6,8 @@ import pandas as pd
 import helpers.hasyncio as hasynci
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
-import market_data.market_data_interface as mdmadain
-import market_data.market_data_interface_example as mdmdinex
+import market_data.market_data_example as mdmadaex
+import market_data.replayed_market_data as mdremada
 
 _LOG = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ def _check_get_data(
     initial_replayed_delay: int,
     func: Callable,
     expected_df_as_str: str,
-) -> mdmadain.ReplayedTimeMarketDataInterface:
+) -> mdremada.ReplayedMarketData:
     """
     - Build `ReplayedTimePriceInterval`
     - Execute the function `get_data*` in `func`
@@ -28,10 +28,7 @@ def _check_get_data(
         start_datetime = pd.Timestamp("2000-01-01 09:30:00-05:00")
         end_datetime = pd.Timestamp("2000-01-01 10:29:00-05:00")
         asset_ids = [1000]
-        (
-            market_data_interface,
-            _,
-        ) = mdmdinex.get_replayed_time_market_data_interface_example2(
+        (market_data, _,) = mdmadaex.get_ReplayedTimeMarketData_example2(
             event_loop,
             start_datetime,
             end_datetime,
@@ -40,7 +37,7 @@ def _check_get_data(
             # TODO(gp): initial_replayed_delay -> initial_delay_in_mins (or in secs).
         )
         # Execute function under test.
-        actual_df = func(market_data_interface)
+        actual_df = func(market_data)
     # Check.
     actual_df = actual_df[sorted(actual_df.columns)]
     actual_df_as_str = hprint.df_to_short_str("df", actual_df)
@@ -51,13 +48,13 @@ def _check_get_data(
         dedent=True,
         fuzzy_match=True,
     )
-    return market_data_interface
+    return market_data
 
 
-class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
+class TestReplayedMarketData1(hunitest.TestCase):
     def check_last_end_time(
         self,
-        market_data_interface: mdmadain.ReplayedTimeMarketDataInterface,
+        market_data: mdremada.ReplayedMarketData,
         expected_last_end_time: pd.Timestamp,
         expected_is_online: bool,
     ) -> None:
@@ -65,11 +62,11 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         Check output of `get_last_end_time()` and `is_online()`.
         """
         #
-        last_end_time = market_data_interface.get_last_end_time()
+        last_end_time = market_data.get_last_end_time()
         _LOG.info("-> last_end_time=%s", last_end_time)
         self.assertEqual(last_end_time, expected_last_end_time)
         #
-        is_online = market_data_interface.is_online()
+        is_online = market_data.is_online()
         _LOG.info("-> is_online=%s", is_online)
         self.assertEqual(is_online, expected_is_online)
 
@@ -83,7 +80,7 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         #
         period = "last_5mins"
         normalize_data = True
-        func = lambda market_data_interface: market_data_interface.get_data(
+        func = lambda market_data: market_data.get_data_for_last_period(
             period, normalize_data=normalize_data
         )
         # pylint: disable=line-too-long
@@ -102,14 +99,14 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         2000-01-01 09:34:00-05:00      1000    1000.655907  2000-01-01 09:33:00-05:00 2000-01-01 09:34:00-05:00
         2000-01-01 09:35:00-05:00      1000    1000.311925  2000-01-01 09:34:00-05:00 2000-01-01 09:35:00-05:00"""
         # pylint: enable=line-too-long
-        market_data_interface = _check_get_data(
+        market_data = _check_get_data(
             self, initial_replayed_delay, func, expected_df_as_str
         )
         #
         expected_last_end_time = pd.Timestamp("2000-01-01 09:35:00-05:00")
         expected_is_online = True
         self.check_last_end_time(
-            market_data_interface, expected_last_end_time, expected_is_online
+            market_data, expected_last_end_time, expected_is_online
         )
 
     def test_get_data2(self) -> None:
@@ -120,7 +117,7 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         #
         period = "last_5mins"
         normalize_data = False
-        func = lambda market_data_interface: market_data_interface.get_data(
+        func = lambda market_data: market_data.get_data_for_last_period(
             period, normalize_data=normalize_data
         )
         # pylint: disable=line-too-long
@@ -138,14 +135,14 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         3      1000 2000-01-01 09:34:00-05:00   1000.655907 2000-01-01 09:33:00-05:00 2000-01-01 09:34:00-05:00
         4      1000 2000-01-01 09:35:00-05:00   1000.311925 2000-01-01 09:34:00-05:00 2000-01-01 09:35:00-05:00"""
         # pylint: enable=line-too-long
-        market_data_interface = _check_get_data(
+        market_data = _check_get_data(
             self, initial_replayed_delay, func, expected_df_as_str
         )
         #
         expected_last_end_time = pd.Timestamp("2000-01-01 09:35:00-05:00")
         expected_is_online = True
         self.check_last_end_time(
-            market_data_interface, expected_last_end_time, expected_is_online
+            market_data, expected_last_end_time, expected_is_online
         )
 
     def test_get_data3(self) -> None:
@@ -158,7 +155,7 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         #
         period = "last_1min"
         normalize_data = True
-        func = lambda market_data_interface: market_data_interface.get_data(
+        func = lambda market_data: market_data.get_data_for_last_period(
             period, normalize_data=normalize_data
         )
         # pylint: disable=line-too-long
@@ -171,14 +168,14 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         end_datetime
         2000-01-01 09:35:00-05:00      1000  1000.311925 2000-01-01 09:34:00-05:00 2000-01-01 09:35:00-05:00"""
         # pylint: enable=line-too-long
-        market_data_interface = _check_get_data(
+        market_data = _check_get_data(
             self, initial_replayed_delay, func, expected_df_as_str
         )
         #
         expected_last_end_time = pd.Timestamp("2000-01-01 09:35:00-05:00")
         expected_is_online = True
         self.check_last_end_time(
-            market_data_interface, expected_last_end_time, expected_is_online
+            market_data, expected_last_end_time, expected_is_online
         )
 
     def test_get_data4(self) -> None:
@@ -191,7 +188,7 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         #
         period = "last_10mins"
         normalize_data = True
-        func = lambda market_data_interface: market_data_interface.get_data(
+        func = lambda market_data: market_data.get_data_for_last_period(
             period, normalize_data=normalize_data
         )
         # pylint: disable=line-too-long
@@ -210,14 +207,14 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         2000-01-01 09:49:00-05:00      1000  999.362817 2000-01-01 09:48:00-05:00 2000-01-01 09:49:00-05:00
         2000-01-01 09:50:00-05:00      1000  999.154046 2000-01-01 09:49:00-05:00 2000-01-01 09:50:00-05:00"""
         # pylint: enable=line-too-long
-        market_data_interface = _check_get_data(
+        market_data = _check_get_data(
             self, initial_replayed_delay, func, expected_df_as_str
         )
         #
         expected_last_end_time = pd.Timestamp("2000-01-01 09:50:00-05:00")
         expected_is_online = True
         self.check_last_end_time(
-            market_data_interface, expected_last_end_time, expected_is_online
+            market_data, expected_last_end_time, expected_is_online
         )
 
     def test_get_data5(self) -> None:
@@ -230,7 +227,7 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         #
         period = "last_day"
         normalize_data = True
-        func = lambda market_data_interface: market_data_interface.get_data(
+        func = lambda market_data: market_data.get_data_for_last_period(
             period, normalize_data=normalize_data
         )
         # pylint: disable=line-too-long
@@ -249,14 +246,14 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         2000-01-01 09:59:00-05:00      1000  998.611468 2000-01-01 09:58:00-05:00 2000-01-01 09:59:00-05:00
         2000-01-01 10:00:00-05:00      1000  998.157918 2000-01-01 09:59:00-05:00 2000-01-01 10:00:00-05:00"""
         # pylint: enable=line-too-long
-        market_data_interface = _check_get_data(
+        market_data = _check_get_data(
             self, initial_replayed_delay, func, expected_df_as_str
         )
         #
         expected_last_end_time = pd.Timestamp("2000-01-01 10:00:00-05:00")
         expected_is_online = True
         self.check_last_end_time(
-            market_data_interface, expected_last_end_time, expected_is_online
+            market_data, expected_last_end_time, expected_is_online
         )
 
     def test_get_data6(self) -> None:
@@ -269,7 +266,7 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         #
         period = "all"
         normalize_data = True
-        func = lambda market_data_interface: market_data_interface.get_data(
+        func = lambda market_data: market_data.get_data_for_last_period(
             period, normalize_data=normalize_data
         )
         # pylint: disable=line-too-long
@@ -288,14 +285,14 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         2000-01-01 09:59:00-05:00      1000  998.611468 2000-01-01 09:58:00-05:00 2000-01-01 09:59:00-05:00
         2000-01-01 10:00:00-05:00      1000  998.157918 2000-01-01 09:59:00-05:00 2000-01-01 10:00:00-05:00"""
         # pylint: enable=line-too-long
-        market_data_interface = _check_get_data(
+        market_data = _check_get_data(
             self, initial_replayed_delay, func, expected_df_as_str
         )
         #
         expected_last_end_time = pd.Timestamp("2000-01-01 10:00:00-05:00")
         expected_is_online = True
         self.check_last_end_time(
-            market_data_interface, expected_last_end_time, expected_is_online
+            market_data, expected_last_end_time, expected_is_online
         )
 
     def test_get_data_for_minute_0(self) -> None:
@@ -307,7 +304,7 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         #
         period = "last_5mins"
         normalize_data = True
-        func = lambda market_data_interface: market_data_interface.get_data(
+        func = lambda market_data: market_data.get_data_for_last_period(
             period, normalize_data=normalize_data
         )
         # Check.
@@ -317,14 +314,14 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         Empty DataFrame
         Columns: [asset_id, last_price, start_datetime, timestamp_db]
         Index: []"""
-        market_data_interface = _check_get_data(
+        market_data = _check_get_data(
             self, initial_replayed_delay, func, expected_df_as_str
         )
         #
         expected_last_end_time = None
         expected_is_online = False
         self.check_last_end_time(
-            market_data_interface, expected_last_end_time, expected_is_online
+            market_data, expected_last_end_time, expected_is_online
         )
 
     def test_get_data_for_minute_1(self) -> None:
@@ -335,7 +332,7 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         initial_replayed_delay = 1
         period = "last_5mins"
         normalize_data = True
-        func = lambda market_data_interface: market_data_interface.get_data(
+        func = lambda market_data: market_data.get_data_for_last_period(
             period, normalize_data=normalize_data
         )
         # pylint: disable=line-too-long
@@ -348,14 +345,14 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         end_datetime
         2000-01-01 09:31:00-05:00      1000   999.87454 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00"""
         # pylint: enable=line-too-long
-        market_data_interface = _check_get_data(
+        market_data = _check_get_data(
             self, initial_replayed_delay, func, expected_df_as_str
         )
         #
         expected_last_end_time = pd.Timestamp("2000-01-01 09:31:00-0500")
         expected_is_online = True
         self.check_last_end_time(
-            market_data_interface, expected_last_end_time, expected_is_online
+            market_data, expected_last_end_time, expected_is_online
         )
 
     def test_get_data_for_minute_3(self) -> None:
@@ -367,7 +364,7 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         #
         period = "last_5mins"
         normalize_data = True
-        func = lambda market_data_interface: market_data_interface.get_data(
+        func = lambda market_data: market_data.get_data_for_last_period(
             period, normalize_data=normalize_data
         )
         # Check.
@@ -383,14 +380,14 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         2000-01-01 09:32:00-05:00      1000    1000.325254 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00
         2000-01-01 09:33:00-05:00      1000    1000.557248 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00"""
         # pylint: enable=line-too-long
-        market_data_interface = _check_get_data(
+        market_data = _check_get_data(
             self, initial_replayed_delay, func, expected_df_as_str
         )
         #
         expected_last_end_time = pd.Timestamp("2000-01-01 09:33:00-05:00")
         expected_is_online = True
         self.check_last_end_time(
-            market_data_interface, expected_last_end_time, expected_is_online
+            market_data, expected_last_end_time, expected_is_online
         )
 
     def test_get_data_for_minute_6(self) -> None:
@@ -402,7 +399,7 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         #
         period = "last_5mins"
         normalize_data = True
-        func = lambda market_data_interface: market_data_interface.get_data(
+        func = lambda market_data: market_data.get_data_for_last_period(
             period, normalize_data=normalize_data
         )
         # Check.
@@ -421,14 +418,14 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         2000-01-01 09:35:00-05:00      1000    1000.311925  2000-01-01 09:34:00-05:00 2000-01-01 09:35:00-05:00
         2000-01-01 09:36:00-05:00      1000    999.967920   2000-01-01 09:35:00-05:00 2000-01-01 09:36:00-05:00"""
         # pylint: enable=line-too-long
-        market_data_interface = _check_get_data(
+        market_data = _check_get_data(
             self, initial_replayed_delay, func, expected_df_as_str
         )
         #
         expected_last_end_time = pd.Timestamp("2000-01-01 09:36:00-05:00")
         expected_is_online = True
         self.check_last_end_time(
-            market_data_interface, expected_last_end_time, expected_is_online
+            market_data, expected_last_end_time, expected_is_online
         )
 
     def test_get_data_for_minute_63(self) -> None:
@@ -440,7 +437,7 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         #
         period = "last_5mins"
         normalize_data = True
-        func = lambda market_data_interface: market_data_interface.get_data(
+        func = lambda market_data: market_data.get_data_for_last_period(
             period, normalize_data=normalize_data
         )
         # Check.
@@ -454,21 +451,21 @@ class TestReplayedTimeMarketDataInterface1(hunitest.TestCase):
         2000-01-01 10:29:00-05:00      1000   998.224716  2000-01-01 10:28:00-05:00 2000-01-01 10:29:00-05:00
         2000-01-01 10:30:00-05:00      1000   998.050046  2000-01-01 10:29:00-05:00 2000-01-01 10:30:00-05:00"""
         # pylint: enable=line-too-long
-        market_data_interface = _check_get_data(
+        market_data = _check_get_data(
             self, initial_replayed_delay, func, expected_df_as_str
         )
         #
         expected_last_end_time = pd.Timestamp("2000-01-01 10:30:00-0500")
         expected_is_online = False
         self.check_last_end_time(
-            market_data_interface, expected_last_end_time, expected_is_online
+            market_data, expected_last_end_time, expected_is_online
         )
 
 
 # #############################################################################
 
 
-class TestReplayedTimeMarketDataInterface2(hunitest.TestCase):
+class TestReplayedMarketData2(hunitest.TestCase):
 
     # TODO(gp): Add same tests for the SQL version.
     def test_get_data_for_interval1(self) -> None:
@@ -487,7 +484,7 @@ class TestReplayedTimeMarketDataInterface2(hunitest.TestCase):
         ts_col_name = "end_datetime"
         asset_ids = None
         normalize_data = True
-        func = lambda market_data_interface: market_data_interface.get_data_for_interval(
+        func = lambda market_data: market_data.get_data_for_interval(
             start_ts,
             end_ts,
             ts_col_name,
@@ -524,7 +521,7 @@ class TestReplayedTimeMarketDataInterface2(hunitest.TestCase):
         ts_col_name = "start_datetime"
         asset_ids = None
         normalize_data = True
-        func = lambda market_data_interface: market_data_interface.get_data_for_interval(
+        func = lambda market_data: market_data.get_data_for_interval(
             start_ts,
             end_ts,
             ts_col_name,
@@ -560,7 +557,7 @@ class TestReplayedTimeMarketDataInterface2(hunitest.TestCase):
         ts_col_name = "start_datetime"
         asset_ids = None
         normalize_data = True
-        func = lambda market_data_interface: market_data_interface.get_data_at_timestamp(
+        func = lambda market_data: market_data.get_data_at_timestamp(
             ts, ts_col_name, asset_ids, normalize_data=normalize_data
         )
         # pylint: disable=line-too-long
@@ -586,7 +583,7 @@ class TestReplayedTimeMarketDataInterface2(hunitest.TestCase):
         ts_col_name = "start_datetime"
         asset_ids = None
         normalize_data = True
-        func = lambda market_data_interface: market_data_interface.get_data_at_timestamp(
+        func = lambda market_data: market_data.get_data_at_timestamp(
             ts, ts_col_name, asset_ids, normalize_data=normalize_data
         )
         # pylint: disable=line-too-long
@@ -603,10 +600,9 @@ class TestReplayedTimeMarketDataInterface2(hunitest.TestCase):
 # #############################################################################
 
 
-class TestReplayedTimeMarketDataInterface3(hunitest.TestCase):
+class TestReplayedMarketData3(hunitest.TestCase):
     """
-    Test `ReplayedTimeMarketDataInterface.is_last_bar_available()` using
-    simulated time.
+    Test `ReplayedMarketData.is_last_bar_available()` using simulated time.
     """
 
     def test_get_last_end_time1(self) -> None:
@@ -617,10 +613,7 @@ class TestReplayedTimeMarketDataInterface3(hunitest.TestCase):
             asset_ids = [1000]
             initial_replayed_delay = 5
             delay_in_secs = 0
-            (
-                market_data_interface,
-                _,
-            ) = mdmdinex.get_replayed_time_market_data_interface_example2(
+            (market_data, _,) = mdmadaex.get_ReplayedTimeMarketData_example2(
                 event_loop,
                 start_datetime,
                 end_datetime,
@@ -629,7 +622,7 @@ class TestReplayedTimeMarketDataInterface3(hunitest.TestCase):
                 delay_in_secs=delay_in_secs,
             )
             # Call method.
-            last_end_time = market_data_interface.get_last_end_time()
+            last_end_time = market_data.get_last_end_time()
         # Check.
         _LOG.info("-> last_end_time=%s", last_end_time)
         self.assertEqual(last_end_time, pd.Timestamp("2000-01-01 09:35:00-05:00"))
@@ -680,21 +673,18 @@ class TestReplayedTimeMarketDataInterface3(hunitest.TestCase):
         self, initial_replayed_delay: int
     ) -> Tuple[pd.Timestamp, pd.Timestamp, int]:
         """
-        - Build a ReplayedTimeMarketDataInterface
+        - Build a ReplayedMarketData
         - Run `is_last_bar_available()`
         """
         with hasynci.solipsism_context() as event_loop:
-            # Build a ReplayedTimeMarketDataInterface.
+            # Build a ReplayedMarketData.
             start_datetime = pd.Timestamp("2000-01-01 09:30:00-05:00")
             end_datetime = pd.Timestamp("2000-01-01 10:30:00-05:00")
             asset_ids = [1000]
             delay_in_secs = 0
             sleep_in_secs = 30
             time_out_in_secs = 60 * 5
-            (
-                market_data_interface,
-                _,
-            ) = mdmdinex.get_replayed_time_market_data_interface_example2(
+            (market_data, _,) = mdmadaex.get_ReplayedTimeMarketData_example2(
                 event_loop,
                 start_datetime,
                 end_datetime,
@@ -706,16 +696,15 @@ class TestReplayedTimeMarketDataInterface3(hunitest.TestCase):
             )
             # Run the method.
             start_time, end_time, num_iter = hasynci.run(
-                market_data_interface.is_last_bar_available(),
+                market_data.wait_for_latest_data(),
                 event_loop=event_loop,
             )
         return start_time, end_time, num_iter
 
 
-class TestReplayedTimeMarketDataInterface4(hunitest.TestCase):
+class TestReplayedMarketData4(hunitest.TestCase):
     """
-    Test `ReplayedTimeMarketDataInterface.is_last_bar_available()` using
-    simulated time.
+    Test `ReplayedMarketData.is_last_bar_available()` using simulated time.
     """
 
     def test_is_last_bar_available1(self) -> None:
@@ -739,20 +728,17 @@ class TestReplayedTimeMarketDataInterface4(hunitest.TestCase):
 
     def _run(self) -> Tuple[pd.Timestamp, pd.Timestamp, int]:
         """
-        - Build a ReplayedTimeMarketDataInterface
+        - Build a ReplayedMarketData
         - Run `is_last_bar_available()`
         """
         with hasynci.solipsism_context() as event_loop:
-            # Build a ReplayedTimeMarketDataInterface.
-            (
-                market_data_interface,
-                _,
-            ) = mdmdinex.get_replayed_time_market_data_interface_example4(
+            # Build a ReplayedMarketData.
+            (market_data, _,) = mdmadaex.get_ReplayedTimeMarketData_example4(
                 event_loop,
             )
             # Run the method.
             start_time, end_time, num_iter = hasynci.run(
-                market_data_interface.is_last_bar_available(),
+                market_data.wait_for_latest_data(),
                 event_loop=event_loop,
             )
         return start_time, end_time, num_iter

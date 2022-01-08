@@ -6,8 +6,6 @@ Import as:
 import helpers.hio as hio
 """
 
-# TODO(gp): -> hio
-
 import datetime
 import fnmatch
 import gzip

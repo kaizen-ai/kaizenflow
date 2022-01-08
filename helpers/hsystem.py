@@ -827,7 +827,7 @@ def append_timestamp_tag(file_name: str, tag: str) -> str:
     if not has_timestamp(file_name):
         import helpers.hdatetime as hdateti
 
-        tag_ += "." + hdateti.get_timestamp(tz="ET")
+        tag_ += "." + hdateti.get_current_timestamp_as_string(tz="ET")
     # Add tag, if specified.
     if tag:
         # If the tag is specified prepend a `.` in the filename.

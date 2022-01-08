@@ -165,7 +165,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     abort_on_error = not args.skip_on_error
     num_attempts = args.num_attempts
     # Prepare the log file.
-    timestamp = hdateti.get_timestamp("naive_ET")
+    timestamp = hdateti.get_current_timestamp_as_string("naive_ET")
     log_file = os.path.join(dst_dir, f"log.{timestamp}.txt")
     _LOG.info("log_file='%s'", log_file)
     # Execute.

@@ -52,8 +52,8 @@ if True:
                 train_length=100,
                 test_length=1,
             )
-            fit_intervals = [("1750-01-01 00:00:00", "1750-01-03 21:00:00")]
-            predict_intervals = [("1750-01-03 21:00:00", None)]
+            fit_intervals = [(pd.Timestamp("1750-01-01 00:00:00"), pd.Timestamp("1750-01-03 21:00:00"))]
+            predict_intervals = [(pd.Timestamp("1750-01-03 21:00:00"), None)]
             data_source_node = ReadDataFromDf("data", data)
             data_source_node.set_fit_intervals(fit_intervals)
             data_source_node.set_predict_intervals(predict_intervals)

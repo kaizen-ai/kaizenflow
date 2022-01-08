@@ -1110,13 +1110,13 @@ class Test_purify_object_reference1(hunitest.TestCase):
     def test3(self) -> None:
         txt = """
         load_prices: {'source_node_name': 'RealTimeDataSource',
-        'source_node_kwargs': {'market_data_interface':
-        <market_data.market_data_interface.ReplayedTimeMarketDataInterface
+        'source_node_kwargs': {'market_data':
+        <market_data.market_data.ReplayedMarketData
         object>, 'period': 'last_5mins', 'asset_id_col': 'asset_id',
         'multiindex_output': True}} process_forecasts: {'prediction_col': 'close',
         'execution_mode': 'real_time', 'process_forecasts_config':
-        {'market_data_interface':
-        <market_data.market_data_interface.ReplayedTimeMarketDataInterface
+        {'market_data':
+        <market_data.market_data.ReplayedMarketData
         object at 0x7faff4c3faf0>,'portfolio  ': <oms.portfolio.SimulatedPortfolio
         object>, 'order_type': 'price@twap', 'ath_start_time':
         datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30),
@@ -1125,13 +1125,13 @@ class Test_purify_object_reference1(hunitest.TestCase):
         """
         exp = r"""
         load_prices: {'source_node_name': 'RealTimeDataSource',
-        'source_node_kwargs': {'market_data_interface':
-        <market_data.market_data_interface.ReplayedTimeMarketDataInterface
+        'source_node_kwargs': {'market_data':
+        <market_data.market_data.ReplayedMarketData
         object>, 'period': 'last_5mins', 'asset_id_col': 'asset_id',
         'multiindex_output': True}} process_forecasts: {'prediction_col': 'close',
         'execution_mode': 'real_time', 'process_forecasts_config':
-        {'market_data_interface':
-        <market_data.market_data_interface.ReplayedTimeMarketDataInterface
+        {'market_data':
+        <market_data.market_data.ReplayedMarketData
         object at 0x>,'portfolio  ': <oms.portfolio.SimulatedPortfolio
         object>, 'order_type': 'price@twap', 'ath_start_time':
         datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30),

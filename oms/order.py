@@ -171,7 +171,7 @@ class Order:
         return order
 
     def copy(self) -> "Order":
-        # TODO(gp): This is dangerous since we might copy the MarketDataInterface too.
+        # TODO(gp): This is dangerous since we might copy the MarketData too.
         return copy.copy(self)
 
     def _get_next_order_id(self) -> int:

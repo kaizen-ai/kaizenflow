@@ -1,7 +1,7 @@
 """
 Import as:
 
-import market_data.market_data_client as mdmadacl
+import market_data.market_data_im_client as mdmdimcl
 """
 
 from typing import Any, List, Optional
@@ -10,13 +10,13 @@ import pandas as pd
 
 import helpers.hdbg as hdbg
 import im_v2.common.data.client as ivcdclcl
-import market_data.market_data_interface as mdmadain
+import market_data.abstract_market_data as mdabmada
 
 
 # TODO(gp): -> MarketDataImClient?
-class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
+class MarketDataInterface(mdabmada.AbstractMarketData):
     """
-    Implement a `MarketDataInterface` that uses a `ImClient` as backend.
+    Implement a `MarketData` that uses a `ImClient` as backend.
     """
 
     def __init__(
@@ -28,11 +28,11 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
         """
         Constructor.
 
-        :param args: see `AbstractMarketDataInterface`
+        :param args: see `AbstractMarketData`
         :param im_client: IM client
         """
         super().__init__(*args, **kwargs)
-        #hdbg.dassert_is_instance(im_client, )
+        # TODO(gp): Add hdbg.dassert_is_instance(im_client, )
         self._im_client = im_client
 
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
@@ -83,12 +83,12 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
             market_data = market_data.head(limit)
         if normalize_data:
             market_data = self._convert_im_data(market_data)
-            market_data = self.process_data(market_data)
+            market_data = self._normalize_data(market_data)
         return market_data
 
     def _convert_im_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Convert IM data to the format required by `AbstractMarketDataInterface`.
+        Convert IM data to the format required by `AbstractMarketData`.
 
         :param df: IM data to transform
         ```
@@ -114,8 +114,10 @@ class MarketDataInterface(mdmadain.AbstractMarketDataInterface):
         df = df.rename(columns={"index": self._end_time_col_name})
         # `IM` data is assumed to have 1 minute frequency.
         hdbg.dassert_not_in(self._start_time_col_name, df.columns)
-        #hdbg.dassert_eq(df.index.freq, "1T")
-        df[self._start_time_col_name] = df[self._end_time_col_name] - pd.Timedelta(minutes=1)
+        # hdbg.dassert_eq(df.index.freq, "1T")
+        df[self._start_time_col_name] = df[
+            self._end_time_col_name
+        ] - pd.Timedelta(minutes=1)
         return df
 
     # TODO(Grisha): implement the method.

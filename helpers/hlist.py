@@ -4,8 +4,6 @@ Import as:
 import helpers.hlist as hlist
 """
 
-# TODO(gp): -> `hlist.py`
-
 from typing import Any, List, Optional, Set
 
 import helpers.hdbg as hdbg

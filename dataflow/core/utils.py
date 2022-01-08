@@ -34,11 +34,60 @@ NodeColumnList = Union[List[NodeColumn], Callable[[], List[NodeColumn]]]
 # #############################################################################
 
 
+# TODO(gp): Always use pd.Timestamp since we care about timezone. This will need
+#  to update lots of unit tests.
 IntervalEndpoint = Union[datetime.datetime, pd.Timestamp, None]
 # Intervals are considered as closed, i.e., [a, b]. An endpoint equal to `None` means
 # unbounded interval on that direction.
 Interval = Tuple[IntervalEndpoint, IntervalEndpoint]
 Intervals = List[Interval]
+
+
+def dassert_valid_interval(interval: Interval) -> None:
+    hdbg.dassert_isinstance(interval, tuple)
+    # Intervals are [a, b] with a <= b.
+    hdbg.dassert_eq(len(interval), 2)
+    for interval_endpoint in interval:
+        if interval_endpoint is not None:
+            hdbg.dassert_isinstance(
+                interval_endpoint, (datetime.datetime, pd.Timestamp)
+            )
+            # TODO(gp): Check that it has a tzinfo.
+    if interval[0] is not None and interval[1] is not None:
+        hdbg.dassert_lte(interval[0], interval[1])
+
+
+def dassert_valid_intervals(intervals: Intervals) -> None:
+    hdbg.dassert_isinstance(intervals, list)
+    hdbg.dassert_lte(1, len(intervals))
+    for interval in intervals:
+        dassert_valid_interval(interval)
+
+
+# TODO(gp): Unit test.
+def find_min_max_timestamps_from_intervals(
+    intervals: Intervals,
+) -> Tuple[pd.Timestamp, pd.Timestamp]:
+    if intervals is not None:
+        dassert_valid_intervals(intervals)
+        interval = intervals[0]
+        min_timestamp, max_timestamp = interval
+        for interval in intervals[1:]:
+            min_timestamp_tmp, max_timestamp_tmp = interval
+            #
+            if min_timestamp is None or min_timestamp_tmp is None:
+                min_timestamp = None
+            else:
+                min_timestamp = min(min_timestamp, min_timestamp_tmp)
+            #
+            if max_timestamp is None or max_timestamp_tmp is None:
+                max_timestamp = None
+            else:
+                max_timestamp = max(max_timestamp, max_timestamp_tmp)
+    else:
+        min_timestamp = None
+        max_timestamp = None
+    return (min_timestamp, max_timestamp)
 
 
 # #############################################################################

@@ -216,7 +216,7 @@ def _parallel_execute_decorator(
     # Save some information about the function execution.
     txt = []
     # `start_ts` needs to be before running the function.
-    start_ts = hdateti.get_timestamp("naive_ET")
+    start_ts = hdateti.get_current_timestamp_as_string("naive_ET")
     tag = "%s/%s (%s)" % (task_idx + 1, task_len, start_ts)
     txt.append("\n" + hprint.frame(tag) + "\n")
     txt.append("tag=%s" % tag)
@@ -241,7 +241,7 @@ def _parallel_execute_decorator(
     txt.append("func_res=\n%s" % hprint.indent(str(res)))
     txt.append("elapsed_time_in_secs=%s" % elapsed_time)
     txt.append("start_ts=%s" % start_ts)
-    end_ts = hdateti.get_timestamp("naive_ET")
+    end_ts = hdateti.get_current_timestamp_as_string("naive_ET")
     txt.append("end_ts=%s" % end_ts)
     txt.append("error=%s" % error)
     # Update log file.

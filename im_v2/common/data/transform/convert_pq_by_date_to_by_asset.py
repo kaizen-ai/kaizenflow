@@ -148,7 +148,7 @@ def _run(args: argparse.Namespace) -> None:
     num_attempts = args.num_attempts
 
     # Prepare the log file.
-    timestamp = hdateti.get_timestamp("ET")
+    timestamp = hdateti.get_current_timestamp_as_string("ET")
     # TODO(Nikola): Change directory.
     log_dir = os.getcwd()
     log_file = os.path.join(log_dir, f"log.{timestamp}.txt")

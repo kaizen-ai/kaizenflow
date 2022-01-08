@@ -35,7 +35,7 @@ class TestOrderProcessor1(omtodh.TestOmsDbHelper):
             broker = obroexam.get_mocked_broker_example1(
                 event_loop, self.connection
             )
-            get_wall_clock_time = broker.market_data_interface.get_wall_clock_time
+            get_wall_clock_time = broker.market_data.get_wall_clock_time
             # Create a coroutine executing the Broker.
             broker_coroutine = self.broker_coroutine(broker, get_wall_clock_time)
             # Build OrderProcessor.
