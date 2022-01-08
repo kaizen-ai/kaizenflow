@@ -958,10 +958,10 @@ class TestLibTasksRunTests1(hunitest.TestCase):
         """
         Find test functions in the "no_container" test list.
         """
-        file_names = ["test/test_tasks.py"]
+        file_names = ["helpers/hunit_test.py"]
         act = hlibtask._find_test_decorator("qa", file_names)
         act = hunitest.purify_file_names(act)
-        exp = ["test/test_tasks.py"]
+        exp = file_names
         self.assert_equal(str(act), str(exp))
 
 
