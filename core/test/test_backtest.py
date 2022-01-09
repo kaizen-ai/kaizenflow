@@ -13,8 +13,8 @@ if True:
     import core.artificial_signal_generators as carsigen
     import core.backtest as cobackte
     import core.data_adapters as cdatadap
-    import helpers.printing as hprint
-    import helpers.unit_test as hunitest
+    import helpers.hprint as hprint
+    import helpers.hunit_test as hunitest
 
     # TODO(*): gluon needs these imports to work properly.
     import gluonts.model.deepar as gmd  # isort: skip # noqa: F401 # pylint: disable=unused-import

@@ -4,8 +4,8 @@ from typing import Any, List, Optional
 import pandas as pd
 import pytest
 
-import helpers.dbg as hdbg
-import helpers.unit_test as hunitest
+import helpers.hdbg as hdbg
+import helpers.hunit_test as hunitest
 
 # TODO(Dan): return to code after CmTask43 is fixed.
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl

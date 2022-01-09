@@ -13,8 +13,8 @@ import pandas as pd
 import seaborn as sns
 import statsmodels.api as sm
 
-import helpers.dbg as hdbg
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 

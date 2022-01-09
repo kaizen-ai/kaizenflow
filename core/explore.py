@@ -39,11 +39,11 @@ import statsmodels.api
 import tqdm.autonotebook as tauton
 
 import core.plotting as coplotti
-import helpers.datetime_ as hdateti
-import helpers.dbg as hdbg
+import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import helpers.list as hlist
-import helpers.printing as hprint
+import helpers.hlist as hlist
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 

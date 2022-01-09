@@ -10,9 +10,9 @@ import string
 from typing import List, Optional
 
 import core.pandas_helpers as cpanh
-import helpers.dbg as hdbg
-import helpers.printing as hprint
-import helpers.s3 as hs3
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
+import helpers.hs3 as hs3
 import im.common.data.types as imcodatyp
 import im.common.metadata.symbols as imcomesym
 

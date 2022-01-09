@@ -17,8 +17,8 @@ import core.signal_processing as csigproc
 import core.statistics as costatis
 import dataflow.model.stats_computer as dtfmostcom
 import dataflow.model.utils as dtfmodutil
-import helpers.datetime_ as hdateti
-import helpers.dbg as hdbg
+import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 

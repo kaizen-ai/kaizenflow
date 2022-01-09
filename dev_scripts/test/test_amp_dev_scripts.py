@@ -1,13 +1,13 @@
 import logging
 import os
 
-import helpers.dbg as hdbg
-import helpers.env as henv
-import helpers.git as hgit
-import helpers.network as hnetwor
-import helpers.printing as hprint
-import helpers.system_interaction as hsysinte
-import helpers.unit_test as hunitest
+import helpers.hdbg as hdbg
+import helpers.henv as henv
+import helpers.hgit as hgit
+import helpers.hnetwork as hnetwor
+import helpers.hprint as hprint
+import helpers.hsystem as hsysinte
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

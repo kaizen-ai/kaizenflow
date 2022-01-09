@@ -2,8 +2,8 @@ import logging
 
 import pytest
 
-import helpers.open as hopen
-import helpers.unit_test as hunitest
+import helpers.hopen as hopen
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

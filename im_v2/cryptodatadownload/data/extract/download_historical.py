@@ -41,10 +41,10 @@ import bs4
 import pandas as pd
 import tqdm
 
-import helpers.datetime_ as hdateti
-import helpers.dbg as hdbg
-import helpers.io_ as hio
-import helpers.parser as hparser
+import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hparser as hparser
 
 _LOG = logging.getLogger(__name__)
 
@@ -101,7 +101,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     for link in tqdm.tqdm(download_links, desc="Links loaded:"):
         df = pd.read_csv(link)
         _LOG.debug("Downloaded %s", link)
-        timestamp = hdateti.get_timestamp("UTC")
+        timestamp = hdateti.get_current_timestamp_as_string("UTC")
         # Select filename from URL.
         orig_filename = link.rsplit("/", 1)[-1]
         # Construct new name with timestamp.

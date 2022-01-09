@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 
 r"""
-- Replace an instance of text in all py, ipynb, and txt files or in filenames.
+- Replace an instance of text in all:
+    - `.py` file contents
+    - `.ipynb` file contents
+    - `.txt` file contents
+    - filenames
 - Git rename the names of files based on certain criteria.
 
 # Replace an import with a new one:
@@ -13,7 +17,7 @@ r"""
 # Custom flow:
 > replace_text.py --custom_flow _custom1
 
-# Custome flow for AmpTask14
+# Custom flow for AmpTask14
 > replace_text.py --custom_flow _custom2 --revert_all
 
 # Replace text in a specific directory:
@@ -44,11 +48,11 @@ import re
 import sys
 from typing import Dict, List, Optional, Tuple
 
-import helpers.dbg as hdbg
-import helpers.io_ as hio
-import helpers.parser as hparser
-import helpers.printing as hprint
-import helpers.system_interaction as hsysinte
+import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hparser as hparser
+import helpers.hprint as hprint
+import helpers.hsystem as hsysinte
 
 # TODO(gp):
 #  - allow to read a cfile with a subset of files / points to replace
@@ -436,19 +440,25 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
+        "--dst_dir",
+        action="store",
+        default=None,
+        help="Change dir before replacing",
+    )
+    parser.add_argument(
         "--revert_all",
         action="store_true",
-        help="Revert all the files before processing",
+        help="Revert all the files (excluding this one) before processing",
     )
     parser.add_argument("--custom_flow", action="store", type=str)
     parser.add_argument(
         "--old",
         action="store",
         type=str,
-        help="regex (in perl format) to replace",
+        help="Regex of text to replace",
     )
     parser.add_argument(
-        "--new", action="store", type=str, help="regex (in perl format) to use"
+        "--new", action="store", type=str, help="New string to replace with"
     )
     parser.add_argument(
         "--preview", action="store_true", help="Preview only the replacement"
@@ -476,7 +486,6 @@ def _parse() -> argparse.ArgumentParser:
         "--backup", action="store_true", help="Keep backups of files"
     )
     parser.add_argument(
-        "-d",
         "--dirs",
         action="append",
         default=None,
@@ -489,6 +498,10 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(args.log_level)
+    if args.dst_dir:
+        print("pwd=", os.getcwd())
+        hdbg.dassert_dir_exists(args.dst_dir)
+        os.chdir(args.dst_dir)
     if args.revert_all:
         # Revert all the files but this one. Use at your own risk.
         _LOG.warning("Reverting all files but this one")

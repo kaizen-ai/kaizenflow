@@ -10,8 +10,8 @@ import dataflow.core.dag_adapter as dtfcodaada
 import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.sinks as dtfconosin
 import dataflow.core.nodes.sources as dtfconosou
-import helpers.printing as hprint
-import helpers.unit_test as hunitest
+import helpers.hprint as hprint
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

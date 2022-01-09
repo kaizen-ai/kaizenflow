@@ -49,11 +49,11 @@ import logging
 import os
 import sys
 
-import helpers.datetime_ as hdateti
-import helpers.dbg as hdbg
-import helpers.io_ as hio
-import helpers.parser as hparser
-import helpers.system_interaction as hsysinte
+import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hparser as hparser
+import helpers.hsystem as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -155,7 +155,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     log_dir = "./tmp.gdrive.log"
     log_dir = os.path.abspath(log_dir)
     hio.create_dir(log_dir, incremental=not args.incremental)
-    timestamp = hdateti.get_timestamp("naive_ET")
+    timestamp = hdateti.get_current_timestamp_as_string("naive_ET")
     if args.action == "ls":
         cmd = ["rclone ls", args.src_dir]
         cmd = " ".join(cmd)

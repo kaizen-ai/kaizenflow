@@ -4,7 +4,7 @@ import sys
 from aws_manager import AWS_EC2_Manager
 from invoke import task
 
-import helpers.dbg as dbg
+import helpers.hdbg as dbg
 
 _LOG = logging.getLogger(__name__)
 

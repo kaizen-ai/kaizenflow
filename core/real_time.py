@@ -13,11 +13,11 @@ from typing import Any, AsyncGenerator, Callable, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
-import helpers.datetime_ as hdateti
-import helpers.dbg as hdbg
+import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
 import helpers.hasyncio as hasynci
 import helpers.hnumpy as hnumpy
-import helpers.printing as hprint
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -190,7 +190,8 @@ def get_data_as_of_datetime(
     takes 4 seconds to respond, all and only data before `2021-07-13 13:00:56` is
     returned.
     """
-    # _LOG.debug(hprint.df_to_short_str("Before get_data_as_of_datetime", df))
+    _LOG.debug("datetime_=%s" % datetime_)
+    _LOG.debug(hprint.df_to_short_str("Before get_data_as_of_datetime", df))
     _LOG.debug(
         hprint.to_str("knowledge_datetime_col_name datetime_ delay_in_secs")
     )

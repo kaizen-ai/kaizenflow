@@ -19,9 +19,9 @@ import os.path
 
 import pandas as pd
 
-import helpers.dbg as hdbg
-import helpers.parser as hparser
-import helpers.sql as hsql
+import helpers.hdbg as hdbg
+import helpers.hparser as hparser
+import helpers.hsql as hsql
 import im_v2.ccxt.data.client.clients as imvcdclcl
 import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.common.data.client.clients as ivcdclcl

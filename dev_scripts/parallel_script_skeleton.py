@@ -25,14 +25,14 @@ import argparse
 import logging
 import os
 
-import helpers.dbg as hdbg
-import helpers.joblib_helpers as hjoblib
-import helpers.parser as hparser
+import helpers.hdbg as hdbg
+import helpers.hjoblib as hjoblib
+import helpers.hparser as hparser
 
 # This module contains example workloads.
 import helpers.test.test_joblib_helpers
 
-# import helpers.system_interaction as hsysinte
+# import helpers.hsystem as hsysinte
 
 _LOG = logging.getLogger(__name__)
 

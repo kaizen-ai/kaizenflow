@@ -5,9 +5,9 @@
 # import pytest
 #
 # import core.finance as cofinanc
-# import helpers.git as hgit
-# import helpers.system_interaction as hsysinte
-# import helpers.unit_test as hunitest
+# import helpers.hgit as hgit
+# import helpers.hsystem as hsysinte
+# import helpers.hunit_test as hunitest
 # import vendors.cme.reader as cmer
 # import vendors.core.base_classes as etl_base
 # import vendors.core.config as etl_cfg

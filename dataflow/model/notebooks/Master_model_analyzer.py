@@ -32,8 +32,8 @@ import logging
 import core.config as cconfig
 import dataflow.model.model_evaluator as dtfmomoeva
 import dataflow.model.model_plotter as dtfmomoplo
-import helpers.dbg as hdbg
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)

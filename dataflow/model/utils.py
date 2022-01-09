@@ -33,12 +33,12 @@ from tqdm.autonotebook import tqdm
 import core.config as cconfig
 import core.signal_processing as csigproc
 import dataflow.core as dtf
-import helpers.dbg as hdbg
-import helpers.io_ as hio
-import helpers.parser as hparser
-import helpers.pickle_ as hpickle
-import helpers.printing as hprint
-import helpers.s3 as hs3
+import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hparser as hparser
+import helpers.hpickle as hpickle
+import helpers.hprint as hprint
+import helpers.hs3 as hs3
 
 _LOG = logging.getLogger(__name__)
 

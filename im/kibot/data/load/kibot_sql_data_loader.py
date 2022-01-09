@@ -4,7 +4,7 @@ Import as:
 import im.kibot.data.load.kibot_sql_data_loader as ikdlksdlo
 """
 
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 import im.common.data.load.abstract_data_loader as imcdladalo
 import im.common.data.types as imcodatyp
 

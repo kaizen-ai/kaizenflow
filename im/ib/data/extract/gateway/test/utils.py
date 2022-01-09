@@ -8,8 +8,8 @@ except ModuleNotFoundError:
     print("Can't find ib_insync")
 import pandas as pd
 
-import helpers.dbg as hdbg
-import helpers.unit_test as hunitest
+import helpers.hdbg as hdbg
+import helpers.hunit_test as hunitest
 import im.ib.data.extract.gateway.download_data_ib_loop as imidegddil
 import im.ib.data.extract.gateway.save_historical_data_with_IB_loop as imidegshdwIl
 import im.ib.data.extract.gateway.unrolling_download_data_ib_loop as imideguddil
