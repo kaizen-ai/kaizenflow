@@ -95,14 +95,16 @@ class TestExecuteTasks2(hunitest.QaTestCase):
     def test_docker_build_local_image(self) -> None:
         params = _get_default_params()
         base_image = params["ECR_BASE_PATH"] + "/" + params["BASE_IMAGE"]
-        cmd = f"invoke docker_build_local_image --version 1.0.0 --cache --base-image={base_image}"
+        # Version must be bigger than any version in `changelog.txt`.
+        cmd = f"invoke docker_build_local_image --version 999.0.0 --cache --base-image={base_image}"
         hsysinte.system(cmd)
 
     @pytest.mark.skip("No prod image for amp yet")
     def test_docker_build_prod_image(self) -> None:
         params = _get_default_params()
         base_image = params["ECR_BASE_PATH"] + "/" + params["BASE_IMAGE"]
-        cmd = f"invoke docker_build_prod_image --version 1.0.0 --cache --base-image={base_image}"
+        # Version must be bigger than any version in `changelog.txt`.
+        cmd = f"invoke docker_build_prod_image --version 999.0.0 --cache --base-image={base_image}"
         hsysinte.system(cmd)
 
     # Run tests.
