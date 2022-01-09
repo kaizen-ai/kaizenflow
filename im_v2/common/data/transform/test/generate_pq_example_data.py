@@ -20,9 +20,9 @@ from typing import List
 
 import pandas as pd
 
-import helpers.dbg as hdbg
-import helpers.parser as hparser
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.hparser as hparser
+import helpers.hprint as hprint
 import im_v2.common.data.transform.utils as imvcdtrut
 
 _LOG = logging.getLogger(__name__)

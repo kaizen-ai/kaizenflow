@@ -13,9 +13,9 @@ import pandas as pd
 from tqdm.auto import tqdm
 
 import core.plotting as coplotti
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import helpers.introspection as hintros
+import helpers.hintrospection as hintros
 
 _LOG = logging.getLogger(__name__)
 

@@ -9,8 +9,8 @@ import dev_scripts.transform_skeleton as dsctrske
 import argparse
 import logging
 
-import helpers.dbg as hdbg
-import helpers.parser as hparser
+import helpers.hdbg as hdbg
+import helpers.hparser as hparser
 
 _LOG = logging.getLogger(__name__)
 

@@ -27,9 +27,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 import core.explore as coexplor
-import helpers.dbg as hdbg
-import helpers.env as henv
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.henv as henv
+import helpers.hprint as hprint
 import im.ib.data.extract.gateway.utils as imidegaut
 import im.kibot as vakibot
 

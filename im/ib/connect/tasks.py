@@ -6,7 +6,7 @@ import os
 from invoke import task
 from lib_tasks import STAGE, get_image, set_default_params
 
-import helpers.dbg as dbg
+import helpers.hdbg as dbg
 
 # We inline the code here since we need to make it visible to `invoke`, although
 # `from ... import *` is bad practice.

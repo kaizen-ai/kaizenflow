@@ -14,8 +14,8 @@ except ModuleNotFoundError:
 
 import pandas as pd
 
-import helpers.dbg as hdbg
-import helpers.io_ as hio
+import helpers.hdbg as hdbg
+import helpers.hio as hio
 import im.ib.data.extract.gateway.download_data_ib_loop as imidegddil
 import im.ib.data.extract.gateway.utils as imidegaut
 

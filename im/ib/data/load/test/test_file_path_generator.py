@@ -6,8 +6,8 @@ import im.ib.data.load.test.test_file_path_generator as tfpgen
 
 import os
 
-import helpers.s3 as hs3
-import helpers.unit_test as hunitest
+import helpers.hs3 as hs3
+import helpers.hunit_test as hunitest
 import im.common.data.types as imcodatyp
 import im.ib.data.config as imibdacon
 import im.ib.data.load.ib_file_path_generator as imidlifpge

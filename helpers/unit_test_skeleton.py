@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.unit_test_skeleton as hunteske
+import helpers.hunit_test_skeleton as hunteske
 """
 
 import logging
@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Tuple
 
 import pytest
 
-import helpers.unit_test as hunitest
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

@@ -13,7 +13,7 @@ import pandas as pd
 
 import core.config.config_ as cconconf
 import core.statistics as costatis
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import im.cryptodatadownload.data.load.loader as imcdalolo
 import im_v2.ccxt.data.client as imvcdcli

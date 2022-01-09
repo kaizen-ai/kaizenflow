@@ -9,9 +9,9 @@ import logging
 import os
 from typing import Any, Dict, List, Optional, Tuple
 
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 import helpers.old.user_credentials as holuscre
-import helpers.system_interaction as hsysinte
+import helpers.hsystem as hsysinte
 
 _LOG = logging.getLogger(__name__)
 

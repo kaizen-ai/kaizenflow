@@ -5,7 +5,7 @@ import numpy as np
 import dataflow.core.builders_example as dtfcobuexa
 import dataflow.core.runners as dtfcorrunn
 import dataflow.core.visitors as dtfcorvisi
-import helpers.unit_test as hunitest
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

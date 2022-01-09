@@ -8,9 +8,9 @@ import hashlib
 import os
 from typing import Dict, List, Tuple, Union
 
-import helpers.dbg as hdbg
-import helpers.git as hgit
-import helpers.io_ as hio
+import helpers.hdbg as hdbg
+import helpers.hgit as hgit
+import helpers.hio as hio
 import im_v2.common.data.client as imvcdcadlo
 
 _LATEST_UNIVERSE_VERSION = "v03"

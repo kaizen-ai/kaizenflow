@@ -15,7 +15,7 @@ import scipy as sp
 # import statsmodels as sm
 import statsmodels.api as sm
 
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 
 # TODO(*): statsmodels needs this import to work properly.
 # import statsmodels.tsa.arima_process as smarima  # isort: skip # noqa: F401 # pylint: disable=unused-import

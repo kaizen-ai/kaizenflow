@@ -24,9 +24,9 @@ import time
 
 import pandas as pd
 
-import helpers.dbg as hdbg
-import helpers.io_ as hio
-import helpers.parser as hparser
+import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hparser as hparser
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import im_v2.ccxt.universe.universe as imvccunun
 

@@ -15,11 +15,11 @@ from typing import Any, List, Optional
 import pandas as pd
 
 import core.pandas_helpers as cpanh
-import helpers.datetime_ as hdateti
-import helpers.dbg as hdbg
-import helpers.printing as hprint
-import helpers.s3 as hs3
-import helpers.sql as hsql
+import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
+import helpers.hs3 as hs3
+import helpers.hsql as hsql
 import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.common.data.client as imvcdcli
 

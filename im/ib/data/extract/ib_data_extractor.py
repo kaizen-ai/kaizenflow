@@ -14,9 +14,9 @@ from typing import List, Optional, Tuple
 import ib_insync
 import pandas as pd
 
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import helpers.s3 as hs3
+import helpers.hs3 as hs3
 import im.common.data.extract.data_extractor as imcdedaex
 import im.common.data.types as imcodatyp
 import im.ib.data.extract.gateway.download_data_ib_loop as imidegddil

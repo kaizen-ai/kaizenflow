@@ -10,11 +10,11 @@ import os
 
 import pytest
 
-import helpers.git as hgit
-import helpers.printing as hprint
-import helpers.sql as hsql
-import helpers.system_interaction as hsysinte
-import helpers.unit_test as hunitest
+import helpers.hgit as hgit
+import helpers.hprint as hprint
+import helpers.hsql as hsql
+import helpers.hsystem as hsysinte
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

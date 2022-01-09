@@ -33,9 +33,9 @@ import core.artificial_signal_generators as carsigen
 import core.plotting as coplotti
 import core.signal_processing as csigproc
 import core.statistics as costatis
-import helpers.dbg as hdbg
-import helpers.env as henv
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.henv as henv
+import helpers.hprint as hprint
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
