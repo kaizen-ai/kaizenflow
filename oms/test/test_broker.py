@@ -3,7 +3,7 @@ import logging
 from typing import List
 
 import helpers.hasyncio as hasynci
-import helpers.unit_test as hunitest
+import helpers.hunit_test as hunitest
 import oms.broker as ombroker
 import oms.broker_example as obroexam
 import oms.oms_db as oomsdb
@@ -93,7 +93,7 @@ class TestMockedBroker1(omtodh.TestOmsDbHelper):
         self, broker: ombroker.MockedBroker, order
     ) -> List[ombroker.Fill]:
         orders = [order]
-        get_wall_clock_time = broker.market_data_interface.get_wall_clock_time
+        get_wall_clock_time = broker.market_data.get_wall_clock_time
         # await asyncio.sleep(1)
         await hasynci.sleep(1, get_wall_clock_time)
         await broker.submit_orders(orders)

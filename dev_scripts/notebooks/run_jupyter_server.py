@@ -17,9 +17,9 @@ import dev_scripts.notebooks.run_jupyter_server as dsnrjuse
 import argparse
 import logging
 
-import helpers.dbg as hdbg
-import helpers.parser as hparser
-import helpers.system_interaction as hsysinte
+import helpers.hdbg as hdbg
+import helpers.hparser as hparser
+import helpers.hsystem as hsysinte
 import helpers.user_credentials as usc
 
 _LOG = logging.getLogger(__name__)

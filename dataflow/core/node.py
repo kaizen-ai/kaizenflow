@@ -7,7 +7,7 @@ import abc
 import logging
 from typing import Any, Dict, List, Optional
 
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 

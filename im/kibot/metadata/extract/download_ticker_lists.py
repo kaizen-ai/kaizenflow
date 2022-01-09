@@ -17,10 +17,10 @@ from typing import List
 import bs4
 import requests
 
-import helpers.dbg as hdbg
-import helpers.io_ as hio
-import helpers.s3 as hs3
-import helpers.system_interaction as hsysinte
+import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hs3 as hs3
+import helpers.hsystem as hsysinte
 import im.kibot.base.command as imkibacom
 import im.kibot.data.extract.download as imkdaexdo
 import im.kibot.metadata.config as imkimecon

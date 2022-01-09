@@ -22,10 +22,10 @@ import os
 import pandas as pd
 
 import core.config.config_ as cconconf
-import helpers.dbg as hdbg
-import helpers.env as henv
-import helpers.printing as hprint
-import helpers.s3 as hs3
+import helpers.hdbg as hdbg
+import helpers.henv as henv
+import helpers.hprint as hprint
+import helpers.hs3 as hs3
 import im_v2.ccxt.data.client as imvcdcli
 import im_v2.ccxt.universe.universe as imvccunun
 import research_amp.cc.statistics as ramccsta

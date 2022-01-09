@@ -9,8 +9,8 @@ from typing import Dict, Optional
 
 import pandas as pd
 
-import helpers.dbg as hdbg
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 

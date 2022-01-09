@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-import helpers.unit_test as hunitest
+import helpers.hunit_test as hunitest
 import research_amp.cc.detect_outliers as raccdeou
 
 

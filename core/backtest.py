@@ -12,9 +12,9 @@ import pandas as pd
 from tqdm.autonotebook import tqdm
 
 import core.data_adapters as cdatadap
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import helpers.list as hlist
+import helpers.hlist as hlist
 
 _LOG = logging.getLogger(__name__)
 

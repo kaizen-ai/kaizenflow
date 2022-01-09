@@ -52,13 +52,13 @@ from typing import Any, Dict, List
 import numpy as np
 import pandas as pd
 
-import helpers.datetime_ as hdateti
-import helpers.dbg as hdbg
+import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
-import helpers.io_ as hio
-import helpers.joblib_helpers as hjoblib
-import helpers.parser as hparser
-import helpers.printing as hprint
+import helpers.hio as hio
+import helpers.hjoblib as hjoblib
+import helpers.hparser as hparser
+import helpers.hprint as hprint
 import im_v2.common.data.transform.utils as imvcdtrut
 
 _LOG = logging.getLogger(__name__)
@@ -148,7 +148,7 @@ def _run(args: argparse.Namespace) -> None:
     num_attempts = args.num_attempts
 
     # Prepare the log file.
-    timestamp = hdateti.get_timestamp("ET")
+    timestamp = hdateti.get_current_timestamp_as_string("ET")
     # TODO(Nikola): Change directory.
     log_dir = os.getcwd()
     log_file = os.path.join(log_dir, f"log.{timestamp}.txt")

@@ -1,9 +1,9 @@
 import logging
 import pprint
 
-import helpers.dbg as hdbg
-import helpers.printing as hprint
-import helpers.unit_test as hunitest
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

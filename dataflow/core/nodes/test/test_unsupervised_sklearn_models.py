@@ -7,7 +7,7 @@ import core.artificial_signal_generators as carsigen
 import core.config as cconfig
 import dataflow.core.nodes.test.helpers as cdnth
 import dataflow.core.nodes.unsupervised_sklearn_models as dtfcnuskmo
-import helpers.unit_test as hunitest
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

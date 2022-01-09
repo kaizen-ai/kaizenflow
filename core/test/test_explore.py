@@ -5,8 +5,8 @@ import pandas as pd
 import pytest
 
 import core.explore as coexplor
-import helpers.datetime_ as hdateti
-import helpers.unit_test as hunitest
+import helpers.hdatetime as hdateti
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

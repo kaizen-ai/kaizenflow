@@ -17,10 +17,10 @@ import argparse
 import logging
 from typing import List
 
-import helpers.dbg as hdbg
-import helpers.git as hgit
-import helpers.parser as hparser
-import helpers.system_interaction as hsysinte
+import helpers.hdbg as hdbg
+import helpers.hgit as hgit
+import helpers.hparser as hparser
+import helpers.hsystem as hsysinte
 
 _LOG = logging.getLogger(__name__)
 

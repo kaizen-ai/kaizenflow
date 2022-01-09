@@ -9,8 +9,8 @@ import pytest
 import core.artificial_signal_generators as carsigen
 import core.config as cconfig
 import dataflow.core.dag as dtfcordag
-import helpers.printing as hprint
-import helpers.unit_test as hunitest
+import helpers.hprint as hprint
+import helpers.hunit_test as hunitest
 from dataflow.core.nodes.gluonts_models import (
     ContinuousDeepArModel,
     DeepARGlobalModel,
@@ -52,8 +52,8 @@ if True:
                 train_length=100,
                 test_length=1,
             )
-            fit_intervals = [("1750-01-01 00:00:00", "1750-01-03 21:00:00")]
-            predict_intervals = [("1750-01-03 21:00:00", None)]
+            fit_intervals = [(pd.Timestamp("1750-01-01 00:00:00"), pd.Timestamp("1750-01-03 21:00:00"))]
+            predict_intervals = [(pd.Timestamp("1750-01-03 21:00:00"), None)]
             data_source_node = ReadDataFromDf("data", data)
             data_source_node.set_fit_intervals(fit_intervals)
             data_source_node.set_predict_intervals(predict_intervals)

@@ -12,9 +12,9 @@ import numpy as np
 import pandas as pd
 from tqdm.autonotebook import tqdm
 
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 import helpers.htqdm as htqdm
-import helpers.printing as hprint
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 

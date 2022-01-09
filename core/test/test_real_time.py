@@ -12,11 +12,11 @@ import pytest
 
 import core.real_time as creatime
 import core.real_time_example as cretiexa
-import helpers.datetime_ as hdateti
+import helpers.hdatetime as hdateti
 import helpers.hasyncio as hasynci
-import helpers.printing as hprint
-import helpers.timer as htimer
-import helpers.unit_test as hunitest
+import helpers.hprint as hprint
+import helpers.htimer as htimer
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

@@ -13,8 +13,8 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, cast
 
 import core.config.config_ as cconconf
 import core.config.utils as cconutil
-import helpers.dbg as hdbg
-import helpers.pickle_ as hpickle
+import helpers.hdbg as hdbg
+import helpers.hpickle as hpickle
 
 _LOG = logging.getLogger(__name__)
 

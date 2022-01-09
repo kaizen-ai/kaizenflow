@@ -15,11 +15,11 @@ import pandas as pd
 import statsmodels.api as sm
 
 import core.signal_processing as csigproc
-import helpers.dataframe as hdatafr
-import helpers.dbg as hdbg
+import helpers.hdataframe as hdatafr
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.htypes as htypes
-import helpers.printing as hprint
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 

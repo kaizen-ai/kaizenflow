@@ -25,7 +25,7 @@ import core.signal_processing as csigproc
 import core.timeseries_study as ctimstud
 import dataflow.core as cdataf
 import dataflow.model.stats_computer as dtfmostcom
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 

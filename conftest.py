@@ -2,14 +2,14 @@ import logging
 import os
 from typing import Any, Generator
 
-import helpers.dbg as dbg
-import helpers.unit_test as hut
+import helpers.hdbg as dbg
+import helpers.hunit_test as hut
 
 # Hack to workaround pytest not happy with multiple redundant conftest.py
 # (bug #34).
 if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
 
-    # import helpers.versioning as hversi
+    # import helpers.hversion as hversi
     # hversi.check_version()
 
     # pylint: disable=protected-access
@@ -75,7 +75,7 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
 
     def pytest_collection_modifyitems(config: Any, items: Any) -> None:
         _ = items
-        import helpers.env as henv
+        import helpers.henv as henv
 
         print(henv.get_system_signature()[0])
         _WARNING = "\033[33mWARNING\033[0m"

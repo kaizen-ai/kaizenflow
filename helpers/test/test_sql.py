@@ -5,9 +5,9 @@ import pandas as pd
 import psycopg2.errors as perrors
 import pytest
 
-import helpers.git as hgit
-import helpers.sql as hsql
-import helpers.unit_test as hunitest
+import helpers.hgit as hgit
+import helpers.hsql as hsql
+import helpers.hunit_test as hunitest
 import im_v2.common.db.utils as imvcodbut
 
 _LOG = logging.getLogger(__name__)

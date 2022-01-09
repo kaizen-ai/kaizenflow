@@ -4,9 +4,9 @@ import re
 import tempfile
 from typing import List
 
-import helpers.dbg as hdbg
-import helpers.system_interaction as hsysinte
-import helpers.unit_test as hunitest
+import helpers.hdbg as hdbg
+import helpers.hsystem as hsysinte
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

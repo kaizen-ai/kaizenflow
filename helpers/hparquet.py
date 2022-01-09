@@ -12,10 +12,10 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-import helpers.dbg as hdbg
-import helpers.introspection as hintros
-import helpers.io_ as hio
-import helpers.timer as htimer
+import helpers.hdbg as hdbg
+import helpers.hintrospection as hintros
+import helpers.hio as hio
+import helpers.htimer as htimer
 
 _LOG = logging.getLogger(__name__)
 

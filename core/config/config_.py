@@ -17,10 +17,10 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 
-import helpers.dbg as hdbg
-import helpers.dict as hdict
-import helpers.introspection as hintros
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.hdict as hdict
+import helpers.hintrospection as hintros
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
