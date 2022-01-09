@@ -66,11 +66,15 @@ aws configure --profile am list || true
 
 echo "AM_CONTAINER_VERSION='$AM_CONTAINER_VERSION'"
 
-echo "which python: "$(which python)
-echo "python -V: "$(python -V)
+VAL=$(which python)
+echo "which python: $VAL"
+VAL=$(python -V)
+echo "python -V: $VAL"
 #echo "check pandas package: "$(python -c "import pandas; print(pandas)")
-echo "docker -v: "$(docker -v)
-echo "docker-compose -v: "$(docker-compose -v)
+#echo "docker -v: "$(docker -v)
+#echo "docker-compose -v: "$(docker-compose -v)
+VAL=$(python -c "import helpers; print(helpers)")
+echo "helpers: $VAL"
 
 echo "PATH=$PATH"
 echo "PYTHONPATH=$PYTHONPATH"
