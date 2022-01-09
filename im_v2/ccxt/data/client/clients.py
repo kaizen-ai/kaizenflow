@@ -15,10 +15,11 @@ from typing import Any, List, Optional
 import pandas as pd
 
 import core.pandas_helpers as cpanh
-import helpers.datetime_ as hdateti
-import helpers.dbg as hdbg
-import helpers.s3 as hs3
-import helpers.sql as hsql
+import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
+import helpers.hs3 as hs3
+import helpers.hsql as hsql
 import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.common.data.client as imvcdcli
 
@@ -26,13 +27,26 @@ _LOG = logging.getLogger(__name__)
 
 # Latest historical data snapshot.
 _LATEST_DATA_SNAPSHOT = "20210924"
-#
+
+
+# TODO(gp): Move inside AbstractCcxtClient.
 _DATA_TYPES = ["ohlcv"]
 
 
-class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
+# #############################################################################
+# AbstractCcxtClient
+# #############################################################################
+
+
+# TODO(gp): -> _CcxtClient
+class AbstractCcxtClient(imvcdcli.ImClientReadingOneSymbol, abc.ABC):
     """
     Abstract interface for CCXT client.
+
+    Contain common code for all the CCXT clients, e.g.,
+    - getting CCXT universe
+    - applying common transformation for all the data from CCXT (see
+      `_apply_common_transformation`)
     """
 
     def __init__(self, data_type: str) -> None:
@@ -52,23 +66,16 @@ class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
         return universe  # type: ignore[no-any-return]
 
     @staticmethod
-    def _apply_common_transformation(data: pd.DataFrame) -> pd.DataFrame:
+    def _apply_ccxt_transformations(data: pd.DataFrame) -> pd.DataFrame:
         """
         Apply transformations common to all CCXT data.
-
-        This includes:
-        - Datetime format assertion
-        - Converting epoch ms timestamp to UTC `pd.Timestamp`
-        - Converting `timestamp` to index
-
-        :param data: raw CCXT data
-        :return: transformed CCXT data
         """
         # Verify that the timestamp data is provided in ms.
         hdbg.dassert_container_type(
             data["timestamp"], container_type=None, elem_type=int
         )
-        # Rename col with original Unix ms epoch.
+        # Rename column with the original Unix ms epoch.
+        # TODO(gp): Remove epoch.
         data = data.rename({"timestamp": "epoch"}, axis=1)
         # Transform Unix epoch into UTC timestamp.
         data["timestamp"] = pd.to_datetime(data["epoch"], unit="ms", utc=True)
@@ -77,25 +84,9 @@ class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
         return data
 
     @staticmethod
-    def _apply_ohlcv_transformation(data: pd.DataFrame) -> pd.DataFrame:
+    def _apply_ohlcv_transformations(data: pd.DataFrame) -> pd.DataFrame:
         """
         Apply transformations for OHLCV data.
-
-        This includes:
-        - Assertion of present columns
-        - Assertion of data types
-        - Renaming and rearranging of OHLCV columns, namely:
-            ["open",
-             "high",
-             "low",
-             "close"
-             "volume",
-             "epoch",
-             "currency_pair",
-             "exchange_id"]
-
-        :param data: OHLCV data
-        :return: transformed OHLCV data
         """
         ohlcv_columns = [
             "open",
@@ -108,17 +99,18 @@ class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
             "exchange_id",
         ]
         # Verify that dataframe contains OHLCV columns.
+        # TODO(gp): dassert_is_seteq?
         hdbg.dassert_is_subset(ohlcv_columns, data.columns)
         # Rearrange the columns.
+        # TODO(gp): Why copying?
         data = data[ohlcv_columns].copy()
         return data
 
-    def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
+    def _apply_vendor_normalization(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         See description in the parent class.
 
-        Input data is indexed with numbers and contains the columns timestamp
-        open, high, low, closed, volume, exchange_id, currency_pair e.g.,
+        Input data is indexed with numbers and looks like:
         ```
              timestamp      open     high     low      close    volume    currency_pair exchange_id
         0    1631145600000  3499.01  3499.49  3496.17  3496.36  346.4812  ETH_USDT      binance
@@ -126,8 +118,7 @@ class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
         2    1631145720000  3501.59  3513.10  3499.89  3513.09  579.5656  ETH_USDT      binance
         ```
 
-        Output data is indexed by timestamp and contains the columns open,
-        high, low, close, volume, epoch, currency_pair, exchange_id, e.g.,
+        Output data is indexed by timestamp and looks like:
         ```
                                    open        epoch          currency_pair exchange_id
         2021-09-08 20:00:00-04:00  3499.01 ... 1631145600000  ETH_USDT      binance
@@ -136,22 +127,22 @@ class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
         ```
         """
         # Apply common transformations.
-        transformed_data = self._apply_common_transformation(df)
-        # Apply transformations for OHLCV data.
+        data = self._apply_ccxt_transformations(df)
+        # Apply transformations specific of the type of data.
         if self._data_type == "ohlcv":
-            transformed_data = self._apply_ohlcv_transformation(transformed_data)
+            data = self._apply_ohlcv_transformations(data)
         else:
-            hdbg.dfatal(
+            raise ValueError(
                 "Incorrect data type: '%s'. Acceptable types: '%s'"
                 % (self._data_type, _DATA_TYPES)
             )
         # Sort transformed data by exchange id and currency pair columns.
-        transformed_data = transformed_data.sort_values(
-            by=["exchange_id", "currency_pair"]
-        )
-        return transformed_data
+        data = data.sort_values(by=["exchange_id", "currency_pair"])
+        return data
 
 
+# #############################################################################
+# CcxtDbClient
 # #############################################################################
 
 
@@ -175,13 +166,16 @@ class CcxtDbClient(AbstractCcxtClient):
         super().__init__(data_type)
         self._connection = connection
 
-    def _read_data(
+    def _read_data_for_one_symbol(
         self,
         full_symbol: imvcdcli.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         **read_sql_kwargs: Any,
     ) -> pd.DataFrame:
+        """
+        Same as parent class.
+        """
         # Construct name of the DB table with data from data type.
         table_name = "ccxt_" + self._data_type
         # Verify that table with specified name exists.
@@ -210,8 +204,11 @@ class CcxtDbClient(AbstractCcxtClient):
 
 
 # #############################################################################
+# AbstractCcxtFileSystemClient
+# #############################################################################
 
 
+# TODO(gp): -> _CcxtFileSystemClient
 class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
     """
     Abstract interface for CCXT filesystem client.
@@ -245,7 +242,7 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
 
-    def _read_data(
+    def _read_data_for_one_symbol(
         self,
         full_symbol: imvcdcli.FullSymbol,
         start_ts: Optional[pd.Timestamp],
@@ -308,7 +305,7 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         """
 
     # TODO(Grisha): factor out common code from `CddLoader._get_file_path` and
-    # `CcxtLoader._get_file_path`.
+    #  `CcxtLoader._get_file_path`.
     def _get_file_path(
         self,
         data_snapshot: str,
@@ -367,6 +364,11 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         return data
 
 
+# #############################################################################
+# CcxtCsvFileSystemClient
+# #############################################################################
+
+
 class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
     """
     CCXT client for data stored as CSV from local or S3 filesystem.
@@ -380,6 +382,7 @@ class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
         aws_profile: Optional[str] = None,
         use_gzip: bool = True,
     ) -> None:
+        _LOG.debug(hprint.to_str("data_type root_dir aws_profile use_gzip"))
         extension = "csv"
         if use_gzip:
             extension = extension + ".gz"
@@ -393,8 +396,9 @@ class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
         **read_kwargs: Any,
     ) -> pd.DataFrame:
         """
-        See the `_read_data_from_filesystem()` in the parent class.
+        Same params as the parent class.
         """
+        _LOG.debug(hprint.to_str("file_path start_ts end_ts"))
         # Load data.
         data = cpanh.read_csv(file_path, **read_kwargs)
         # Filter by dates if specified.
@@ -405,6 +409,11 @@ class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
             end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
             data = data[data["timestamp"] < end_ts]
         return data
+
+
+# #############################################################################
+# CcxtParquetFileSystemClient
+# #############################################################################
 
 
 class CcxtParquetFileSystemClient(AbstractCcxtFileSystemClient):

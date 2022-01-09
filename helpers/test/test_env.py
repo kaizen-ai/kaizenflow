@@ -1,7 +1,7 @@
 import logging
 
-import helpers.env as henv
-import helpers.unit_test as hunitest
+import helpers.henv as henv
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

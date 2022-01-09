@@ -12,11 +12,11 @@ import argparse
 import logging
 
 import dev_scripts.git.git_hooks.utils as dsgghout
-import helpers.dbg as hdbg
-import helpers.git as hgit
-import helpers.parser as hparser
-import helpers.printing as hprint
-import helpers.system_interaction as hsysinte
+import helpers.hdbg as hdbg
+import helpers.hgit as hgit
+import helpers.hparser as hparser
+import helpers.hprint as hprint
+import helpers.hsystem as hsysinte
 
 _LOG = logging.getLogger(__name__)
 

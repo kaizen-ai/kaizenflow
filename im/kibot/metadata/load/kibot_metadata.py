@@ -16,10 +16,10 @@ import pandas.tseries.offsets as ptoffs
 from tqdm.autonotebook import tqdm
 
 import core.pandas_helpers as cpanh
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import helpers.io_ as hio
-import helpers.s3 as hs3
+import helpers.hio as hio
+import helpers.hs3 as hs3
 import im.common.data.types as imcodatyp
 import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
 import im.kibot.metadata.load.expiry_contract_mapper as imkmlecoma

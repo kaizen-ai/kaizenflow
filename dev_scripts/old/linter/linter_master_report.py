@@ -13,10 +13,10 @@ import os
 import sys
 from typing import List, Optional, Tuple
 
-import helpers.git as hgit
-import helpers.io_ as hio
-import helpers.parser as hparser
-import helpers.system_interaction as hsysinte
+import helpers.hgit as hgit
+import helpers.hio as hio
+import helpers.hparser as hparser
+import helpers.hsystem as hsysinte
 
 _LOG = logging.getLogger(__name__)
 

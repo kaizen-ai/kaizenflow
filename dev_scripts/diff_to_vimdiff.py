@@ -22,11 +22,11 @@ import os
 import re
 from typing import Any, Match
 
-import helpers.dbg as hdbg
-import helpers.io_ as hio
-import helpers.parser as hparser
-import helpers.printing as hprint
-import helpers.system_interaction as hsysinte
+import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hparser as hparser
+import helpers.hprint as hprint
+import helpers.hsystem as hsysinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -95,8 +95,8 @@ def _get_symbolic_filepath(dir1: str, dir2: str, file_name: str) -> str:
 
 
 # TODO(gp): We should use the `sdiff` between files, instead of the output of
-# `diff -r --brief` to compare, since the second doesn't work for dirs that are
-# present only on one side.
+#  `diff -r --brief` to compare, since the second doesn't work for dirs that are
+#  present only on one side.
 def _parse_diff_output(
     input_file: str, dir1: str, dir2: str, args: argparse.Namespace
 ) -> None:
@@ -231,8 +231,8 @@ def _parse_diff_output(
         cmd = "./%s" % output_file
         print("Run script with:\n> " + cmd)
         #
-        cmd = "kill -kill $(ps -ef | grep %s | awk '{print $2 }')" % output_file
-        print("# To kill the script run:\n> " + cmd)
+        # cmd = "kill -kill $(ps -ef | grep %s | awk '{print $2 }')" % output_file
+        # print("# To kill the script run:\n> " + cmd)
 
 
 # #############################################################################
@@ -249,6 +249,7 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--dir2", action="store", required=True, help="Second dir to compare"
     )
+    parser.add_argument("--subdir", action="store", help="subdir to compare")
     # Name dir.
     parser.add_argument(
         "--dir1_name",
@@ -265,7 +266,7 @@ def _parse() -> argparse.ArgumentParser:
         "-o",
         "--output_file",
         action="store",
-        default="tmp.diff_file_differences.sh",
+        default="tmp.diff_to_vimdiff.sh",
         help="Output file. Don't specify anything for stdout",
     )
     parser.add_argument(
@@ -294,6 +295,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     #
     dir1 = os.path.abspath(args.dir1)
     dir2 = os.path.abspath(args.dir2)
+    if args.subdir:
+        dir1 = os.path.join(dir1, args.subdir)
+        dir2 = os.path.join(dir2, args.subdir)
     #
     diff_file = _diff(dir1, dir2)
     #

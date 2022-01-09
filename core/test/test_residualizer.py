@@ -11,8 +11,8 @@ import core.explore as coexplor
 import core.pandas_helpers as cpanh
 import core.residualizer as coresidu
 import helpers.hpandas as hpandas
-import helpers.printing as hprint
-import helpers.unit_test as hunitest
+import helpers.hprint as hprint
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

@@ -11,7 +11,7 @@ from typing import Optional
 import psycopg2 as psycop
 
 import helpers.hsql_test as hsqltest
-import helpers.sql as hsql
+import helpers.hsql as hsql
 import im.ib.sql_writer as imibsqwri
 import im.kibot.sql_writer as imkisqwri
 import im_v2.ccxt.db.utils as imvccdbut

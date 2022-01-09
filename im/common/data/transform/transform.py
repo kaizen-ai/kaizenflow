@@ -16,8 +16,8 @@ import joblib
 import pandas as pd
 import tqdm
 
-import helpers.dbg as hdbg
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 import im.common.data.load.abstract_data_loader as imcdladalo
 import im.common.data.transform.s3_to_sql_transformer as imcdtststr
 import im.common.data.types as imcodatyp

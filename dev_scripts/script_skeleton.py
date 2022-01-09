@@ -14,10 +14,10 @@ import dev_scripts.script_skeleton as dscscske
 import argparse
 import logging
 
-import helpers.dbg as hdbg
-import helpers.parser as hparser
+import helpers.hdbg as hdbg
+import helpers.hparser as hparser
 
-# import helpers.system_interaction as hsysinte
+# import helpers.hsystem as hsysinte
 
 _LOG = logging.getLogger(__name__)
 

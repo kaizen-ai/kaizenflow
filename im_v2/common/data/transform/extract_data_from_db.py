@@ -19,9 +19,9 @@ import os.path
 
 import pandas as pd
 
-import helpers.dbg as hdbg
-import helpers.parser as hparser
-import helpers.sql as hsql
+import helpers.hdbg as hdbg
+import helpers.hparser as hparser
+import helpers.hsql as hsql
 import im_v2.ccxt.data.client.clients as imvcdclcl
 import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.common.data.client.clients as ivcdclcl
@@ -93,15 +93,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
     connection = hsql.get_connection(*connection_params)
     # Initiate DB client.
     ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", connection)
-    multiple_symbols_ccxt_db_client = ivcdclcl.MultipleSymbolsImClient(
-        class_=ccxt_db_client, mode="concat"
-    )
     # Get universe of symbols.
     symbols = imvccunun.get_vendor_universe()
     for date_index in range(len(timespan) - 1):
         _LOG.debug("Checking for RT data on %s.", timespan[date_index])
         # TODO(Nikola): Refactor to use one db call.
-        df = multiple_symbols_ccxt_db_client.read_data(
+        df = ccxt_db_client.read_data(
             symbols,
             start_ts=timespan[date_index],
             end_ts=timespan[date_index + 1],

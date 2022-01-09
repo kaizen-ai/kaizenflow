@@ -15,10 +15,10 @@ from typing import Dict, List, Tuple
 
 from tqdm import tqdm
 
-import helpers.dbg as hdbg
-import helpers.io_ as hio
-import helpers.parser as hparser
-import helpers.system_interaction as hsysinte
+import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hparser as hparser
+import helpers.hsystem as hsysinte
 from helpers.timer import Timer
 
 _LOG = logging.getLogger(__name__)

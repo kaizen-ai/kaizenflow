@@ -11,8 +11,8 @@ import networkx as networ
 import pygraphviz
 
 import dataflow.core.dag as dtfcordag
-import helpers.dbg as hdbg
-import helpers.io_ as hio
+import helpers.hdbg as hdbg
+import helpers.hio as hio
 
 
 def draw(dag: dtfcordag.DAG) -> IPython.core.display.Image:

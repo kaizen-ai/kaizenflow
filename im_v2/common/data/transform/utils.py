@@ -16,9 +16,9 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-import helpers.datetime_ as hdateti
-import helpers.dbg as hdbg
-import helpers.timer as htimer
+import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
+import helpers.htimer as htimer
 
 
 def partition_dataset(

@@ -49,6 +49,8 @@ with airflow.DAG(
         image="665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:dev",
         command=bash_command,
         default_args=default_args,
-        environment={"DATA_INTERVAL_START": "{{ execution_date }}",
-                     "DATA_INTERVAL_END": "{{ next_execution_date - macros.timedelta(5) }}"},
+        environment={
+            "DATA_INTERVAL_START": "{{ execution_date }}",
+            "DATA_INTERVAL_END": "{{ next_execution_date - macros.timedelta(5) }}",
+        },
     )

@@ -8,10 +8,10 @@ import logging
 import os
 from typing import Tuple
 
-import helpers.io_ as hio
+import helpers.hio as hio
 import helpers.old.conda as holdcond
-import helpers.printing as hprint
-import helpers.system_interaction as hsysinte
+import helpers.hprint as hprint
+import helpers.hsystem as hsysinte
 
 _LOG = logging.getLogger(__name__)
 

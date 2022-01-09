@@ -9,7 +9,7 @@ import dataflow.model.master_experiment as dtfmomaexp
 import logging
 
 import core.config as cconfig
-import dataflow as cdataf
+import dataflow.core as cdataf
 import dataflow.model.utils as dtfmodutil
 
 _LOG = logging.getLogger(__name__)

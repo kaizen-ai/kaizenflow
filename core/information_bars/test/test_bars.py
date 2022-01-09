@@ -7,7 +7,7 @@ import core.information_bars.test.test_bars as bttbar
 import os
 
 import core.information_bars.bars as cinbabar
-import helpers.unit_test as hunitest
+import helpers.hunit_test as hunitest
 
 
 class TestBars(hunitest.TestCase):

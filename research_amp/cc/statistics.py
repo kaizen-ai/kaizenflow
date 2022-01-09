@@ -13,7 +13,7 @@ import pandas as pd
 
 import core.config.config_ as cconconf
 import core.statistics as costatis
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import im.cryptodatadownload.data.load.loader as imcdalolo
 import im_v2.ccxt.data.client as imvcdcli
@@ -210,6 +210,7 @@ def get_loader_for_vendor(
         )
     elif vendor == "CDD":
         loader = imcdalolo.CddLoader(
+            data_type=config["data"]["data_type"],
             root_dir=config["load"]["data_dir"],
             aws_profile=config["load"]["aws_profile"],
         )

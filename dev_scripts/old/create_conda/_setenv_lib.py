@@ -14,10 +14,10 @@ import os
 import sys
 from typing import Any, Dict, List, Tuple
 
-import helpers.dbg as hdbg  # isort:skip # noqa: E402
-import helpers.io_ as hio  # isort:skip # noqa: E402
-import helpers.parser as hparser  # isort:skip # noqa: E402
-import helpers.system_interaction as hsysinte  # isort:skip # noqa: E402
+import helpers.hdbg as hdbg  # isort:skip # noqa: E402
+import helpers.hio as hio  # isort:skip # noqa: E402
+import helpers.hparser as hparser  # isort:skip # noqa: E402
+import helpers.hsystem as hsysinte  # isort:skip # noqa: E402
 
 
 _LOG = logging.getLogger(__name__)

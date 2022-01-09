@@ -29,11 +29,11 @@ from typing import Any, Dict, List, NamedTuple, Optional, Union
 
 import pandas as pd
 
-import helpers.datetime_ as hdateti
-import helpers.dbg as hdbg
-import helpers.io_ as hio
-import helpers.parser as hparser
-import helpers.sql as hsql
+import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hparser as hparser
+import helpers.hsql as hsql
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import im_v2.ccxt.universe.universe as imvccunun
 
@@ -137,7 +137,7 @@ def _save_data_on_disk(
         file_name = (
             f"orderbook_{exchange.id}_"
             f"{pair}_"
-            f"{hdateti.get_timestamp('ET')}.json"
+            f"{hdateti.get_current_timestamp_as_string('ET')}.json"
         )
         full_path = os.path.join(dst_dir, file_name)
         hio.to_json(full_path, data)

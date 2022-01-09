@@ -6,7 +6,7 @@ Import as:
 import dev_scripts.email_notify as dscemnot
 """
 
-import helpers.send_email as hsenemai
+import helpers.hemail as hsenemai
 
 
 def _main():

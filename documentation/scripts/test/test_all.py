@@ -6,12 +6,12 @@
 #
 # import documentation.scripts.convert_txt_to_pandoc as dscttopa
 # import documentation.scripts.lint_txt as dsclitxt
-# import helpers.dbg as hdbg
-# import helpers.git as hgit
-# import helpers.io_ as hio
-# import helpers.printing as hprint
-# import helpers.system_interaction as hsysinte
-# import helpers.unit_test as hunitest
+# import helpers.hdbg as hdbg
+# import helpers.hgit as hgit
+# import helpers.hio as hio
+# import helpers.hprint as hprint
+# import helpers.hsystem as hsysinte
+# import helpers.hunit_test as hunitest
 #
 # _LOG = logging.getLogger(__name__)
 #

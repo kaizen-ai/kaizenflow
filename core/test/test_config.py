@@ -6,9 +6,9 @@ from typing import Any
 import pytest
 
 import core.config as cconfig
-import helpers.printing as hprint
-import helpers.system_interaction as hsysinte
-import helpers.unit_test as hunitest
+import helpers.hprint as hprint
+import helpers.hsystem as hsysinte
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

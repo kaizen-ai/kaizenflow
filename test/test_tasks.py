@@ -4,8 +4,8 @@ from typing import Dict
 
 import pytest
 
-import helpers.system_interaction as hsysinte
-import helpers.unit_test as hunitest
+import helpers.hsystem as hsysinte
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -24,9 +24,7 @@ def _get_default_params() -> Dict[str, str]:
     return default_params
 
 
-@pytest.mark.qa
-@pytest.mark.skipif(hsysinte.is_inside_docker(), reason="AmpTask165")
-class TestExecuteTasks1(hunitest.TestCase):
+class TestExecuteTasks1(hunitest.QaTestCase):
     """
     Execute tasks that don't change state of the system (e.g., commit images).
     """
@@ -78,9 +76,7 @@ class TestExecuteTasks1(hunitest.TestCase):
         hsysinte.system(cmd)
 
 
-@pytest.mark.qa
-@pytest.mark.skipif(hsysinte.is_inside_docker(), reason="AmpTask165")
-class TestExecuteTasks2(hunitest.TestCase):
+class TestExecuteTasks2(hunitest.QaTestCase):
     """
     Execute tasks that change the state of the system but use a temporary
     image.
@@ -99,14 +95,16 @@ class TestExecuteTasks2(hunitest.TestCase):
     def test_docker_build_local_image(self) -> None:
         params = _get_default_params()
         base_image = params["ECR_BASE_PATH"] + "/" + params["BASE_IMAGE"]
-        cmd = f"invoke docker_build_local_image --version 1.0.0 --cache --base-image={base_image}"
+        # Version must be bigger than any version in `changelog.txt`.
+        cmd = f"invoke docker_build_local_image --version 999.0.0 --cache --base-image={base_image}"
         hsysinte.system(cmd)
 
     @pytest.mark.skip("No prod image for amp yet")
     def test_docker_build_prod_image(self) -> None:
         params = _get_default_params()
         base_image = params["ECR_BASE_PATH"] + "/" + params["BASE_IMAGE"]
-        cmd = f"invoke docker_build_prod_image --version 1.0.0 --cache --base-image={base_image}"
+        # Version must be bigger than any version in `changelog.txt`.
+        cmd = f"invoke docker_build_prod_image --version 999.0.0 --cache --base-image={base_image}"
         hsysinte.system(cmd)
 
     # Run tests.
