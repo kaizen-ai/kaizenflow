@@ -1,8 +1,6 @@
 import logging
 from typing import List
 
-import pytest
-
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.htraceback as htraceb
@@ -11,7 +9,6 @@ import helpers.hunit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skip(reason="See cryptomtc/cmamp#321")
 class Test_Traceback1(hunitest.TestCase):
     def test_parse1(self) -> None:
         """

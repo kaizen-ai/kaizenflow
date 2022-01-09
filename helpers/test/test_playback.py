@@ -4,7 +4,6 @@ import os
 from typing import Any, Optional
 
 import pandas as pd
-import pytest
 
 import core.config as cconfig
 import helpers.hio as hio
@@ -53,7 +52,6 @@ class TestJsonRoundtrip1(hunitest.TestCase):
 # #############################################################################
 
 
-@pytest.mark.skip(reason="See cryptomtc/cmamp#321")
 class TestPlaybackInputOutput1(hunitest.TestCase):
     """
     Freeze the output of Playback.
