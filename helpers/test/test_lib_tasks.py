@@ -295,16 +295,28 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     # #########################################################################
     # TODO(gp): -> TestGhCommands1
 
+    @pytest.mark.skipif(
+        not hgit.is_in_amp_as_supermodule(),
+        reason="Only run in amp as supermodule",
+    )
     def test_gh_create_pr1(self) -> None:
         _gh_login()
         target = "gh_create_pr(ctx, repo_short_name='amp', title='test')"
         self._check_output(target)
 
+    @pytest.mark.skipif(
+        not hgit.is_in_amp_as_supermodule(),
+        reason="Only run in amp as supermodule",
+    )
     def test_gh_create_pr2(self) -> None:
         _gh_login()
         target = "gh_create_pr(ctx, body='hello_world', repo_short_name='amp', title='test')"
         self._check_output(target)
 
+    @pytest.mark.skipif(
+        not hgit.is_in_amp_as_supermodule(),
+        reason="Only run in amp as supermodule",
+    )
     def test_gh_create_pr3(self) -> None:
         _gh_login()
         target = (
