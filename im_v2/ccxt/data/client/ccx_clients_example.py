@@ -11,7 +11,7 @@ import helpers.hgit as hgit
 import im_v2.ccxt.data.client.clients as imvcdclcl
 
 
-# TODO(gp): @grisha, @dan how was this file generated?
+# TODO(gp): @grisha, explain how was this file generated
 def get_test_data_dir():
     test_data_dir = os.path.join(
         hgit.get_amp_abs_path(),

@@ -12,13 +12,9 @@ Use as:
     --data_type 'ohlcv' \
     --api_keys 'API_keys.json' \
     --universe 'v03'
-
-Import as:
-
-import im_v2.ccxt.data.extract.download_realtime as imvcdedore
 """
 
-# TODO(gp): -> download_realtime_data.py
+# TODO(gp): @danya -> download_realtime_data.py
 
 import argparse
 import collections
