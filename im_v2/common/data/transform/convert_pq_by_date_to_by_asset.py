@@ -13,7 +13,7 @@ src_dir/
         data.parquet
 ```
 
-A parquet file organized by assets looks like:
+A Parquet file organized by assets looks like:
 
 ```
 dst_dir/
@@ -24,6 +24,7 @@ dst_dir/
                     data.parquet
                 asset2/
                     data.parquet
+...
     year2/
         month2/
             day2/
@@ -38,10 +39,6 @@ dst_dir/
     --src_dir im_v2/common/data/transform/test_data_by_date \
     --dst_dir im_v2/common/data/transform/test_data_by_asset \
     --num_threads 2
-
-Import as:
-
-import im_v2.common.data.transform.convert_pq_by_date_to_by_asset as imvcdtcpbdtba
 """
 
 import argparse
@@ -64,28 +61,34 @@ import im_v2.common.data.transform.utils as imvcdtrut
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): @danya -> _get_parquet_filenames
 def _source_pq_files(src_dir: str) -> List[str]:
     """
-    Generator for all the Parquet files in a given dir.
+    Generate a list of all the Parquet files in a given dir.
     """
     hdbg.dassert_dir_exists(src_dir)
     # Find all the files with extension `.parquet` or `.pq`.
     src_pq_files = hio.find_files(src_dir, "*.parquet")
     if not src_pq_files:
         src_pq_files = hio.find_files(src_dir, "*.pq")
-    _LOG.debug("Found %s pq files in '%s'", len(src_pq_files), src_dir)
+    _LOG.debug("Found %s Parquet files in '%s'", len(src_pq_files), src_dir)
     hdbg.dassert_lte(1, len(src_pq_files))
     return src_pq_files
 
 
+# TODO(gp): @danya -> _process_chunk.
+# TODO(gp): @danya why not accepting the params directly
+#  _process_chunk(parquet_file_names, asset_col_name, dst_dir)?
 def _save_chunk(**config: Dict[str, Any]) -> None:
     """
-    Smaller part of daily data that will be decoupled to asset format for
-    certain period of time.
+    Process a chunk of work corresponding to multiple Parquet files.
 
-    Chunk is executed as small task.
+    Read the files in "chunk", partition using days and assets and writes into
+    dst_dir.
     """
+    # TODO(gp): @danya daily_pq -> daily_pq_filename
     for daily_pq in config["chunk"]:
+        # Read Parquet df.
         df = hparque.from_parquet(daily_pq)
         _LOG.debug("before df=\n%s", hprint.dataframe_to_str(df.head(3)))
         # Set datetime index.
@@ -94,36 +97,36 @@ def _save_chunk(**config: Dict[str, Any]) -> None:
             df, datetime_col_name, unit="s"
         )
         _LOG.debug("after df=\n%s", hprint.dataframe_to_str(reindexed_df.head(3)))
-        # Get partition arguments.
-        dst_dir = config["dst_dir"]
-        asset_col_name = config["asset_col_name"]
-        # Add date partition columns to the dataframe.
+        # Partition.
         imvcdtrut.add_date_partition_cols(reindexed_df, "day")
-        # Partition and write dataset.
+        asset_col_name = config["asset_col_name"]
         partition_cols = ["year", "month", "day", asset_col_name]
+        # Write.
+        dst_dir = config["dst_dir"]
         imvcdtrut.partition_dataset(reindexed_df, partition_cols, dst_dir)
 
 
 # TODO(gp): We might want to use a config to pass a set of params related to each
 #  other (e.g., transform_func, asset_col_name, ...)
 def _run(args: argparse.Namespace) -> None:
-    # We assume that the destination dir doesn't exist, so we don't override data.
+    # Prepare the destination dir.
+    # TODO(gp): Implement our standard incremental mode. Default to incremental mode
+    #  and skip the chunks already computed. In not incremental mode, delete the
+    #  dir.
     dst_dir = args.dst_dir
     if not args.no_incremental:
         # In not incremental mode the dir should already be there.
         hdbg.dassert_not_exists(dst_dir)
     hio.create_dir(dst_dir, incremental=False)
-
+    # Prepare the tasks.
     tasks = []
-    # Convert the files one at the time.
-    # TODO(Nikola): Pick chunk by chunk, not all files.
     source_pq_files = _source_pq_files(args.src_dir)
     # TODO(Nikola): Remove, quick testing. Currently splitting by week.
     chunks = np.array_split(source_pq_files, len(source_pq_files) // 7 or 1)
     for chunk in chunks:
         # TODO(Nikola): Make this config as subconfig for script args?
         config = {
-            "src_dir": args.src_dir,
+            # TODO(gp): @danya -> parquet_file_names
             "chunk": chunk,
             "dst_dir": args.dst_dir,
             "asset_col_name": args.asset_col_name,
@@ -135,24 +138,23 @@ def _run(args: argparse.Namespace) -> None:
             config,
         )
         tasks.append(task)
-
+    # Prepare the workload.
     func_name = "_save_chunk"
     workload = (_save_chunk, func_name, tasks)
     hjoblib.validate_workload(workload)
-
     # Parse command-line options.
     dry_run = args.dry_run
     num_threads = args.num_threads
     incremental = not args.no_incremental
     abort_on_error = not args.skip_on_error
     num_attempts = args.num_attempts
-
     # Prepare the log file.
     timestamp = hdateti.get_current_timestamp_as_string("ET")
     # TODO(Nikola): Change directory.
     log_dir = os.getcwd()
     log_file = os.path.join(log_dir, f"log.{timestamp}.txt")
     _LOG.info("log_file='%s'", log_file)
+    # Execute the workload.
     hjoblib.parallel_execute(
         workload,
         dry_run,
@@ -190,7 +192,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         type=str,
         default="asset",
-        help="Asset column may not be necessarily called asset",
+        help="Name of the column containing the asset",
     )
     hparser.add_parallel_processing_arg(parser)
     hparser.add_verbosity_arg(parser)

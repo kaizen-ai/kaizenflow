@@ -1,13 +1,15 @@
 """
-A module for handling common transform operations. These include:
+Handle common transform operations, e.g.,
 
 - Reindexing dataframes on datetime
-- Determining the partition of parquet datasets
+- Determining the partition of Parquet datasets
 
 Import as:
 
 import im_v2.common.data.transform.utils as imvcdtrut
 """
+
+# TODO(gp): @danya -> im_v2.common.data.transform.transform_utils
 
 import logging
 from typing import List
@@ -27,7 +29,7 @@ def partition_dataset(
     """
     Partition given dataframe indexed on datetime and save as Parquet dataset.
 
-    In case of date partition, file layout format looks like:
+    In case of date partition, the file layout format looks like:
     ```
     dst_dir/
         date=20211230/
@@ -38,7 +40,7 @@ def partition_dataset(
             data.parquet
     ```
 
-    In case of specific choice, e.g. `month`, file layout format looks like:
+    In case of specific choice, e.g. `month`, the file layout format looks like:
     ```
     dst_dir/
         year=2021/
@@ -70,29 +72,8 @@ def partition_dataset(
         )
 
 
-def reindex_on_datetime(
-    df: pd.DataFrame, datetime_col_name: str, unit: str = "ms"
-) -> pd.DataFrame:
-    """
-    Set datetime index to the dataframe.
-
-    :param df: dataframe without datetime index
-    :param datetime_col_name: name of the column containing time info
-    :param unit: the unit of unix epoch
-    :return: dataframe with datetime index
-    """
-    msg = f"`{datetime_col_name}` is not valid column name!"
-    hdbg.dassert_in(datetime_col_name, df.columns, msg)
-    msg = "Datetime index already exists!"
-    hdbg.dassert_ne(df.index.inferred_type, "datetime64", msg)
-    datetime_col = df[datetime_col_name]
-    # Convert original datetime column into Timestamp.
-    datetime_idx = convert_timestamp_column(datetime_col, unit=unit)
-    reindexed_df = df.set_index(datetime_idx)
-    return reindexed_df
-
-
 def convert_timestamp_column(
+    # TODO(gp): -> datetime_col_name
     datetime_col: pd.Series, unit: str = "ms"
 ) -> pd.Series:
     """
@@ -116,6 +97,28 @@ def convert_timestamp_column(
             "Incorrect data format. Datetime column should be of integer or string dtype."
         )
     return converted_datetime_col
+
+
+def reindex_on_datetime(
+    df: pd.DataFrame, datetime_col_name: str, unit: str = "ms"
+) -> pd.DataFrame:
+    """
+    Set datetime index to the dataframe.
+
+    :param df: dataframe without datetime index
+    :param datetime_col_name: name of the column containing time info
+    :param unit: the unit of unix epoch
+    :return: dataframe with datetime index
+    """
+    hdbg.dassert_in(datetime_col_name, df.columns,
+            "Not valid column name")
+    hdbg.dassert_ne(df.index.inferred_type, "datetime64",
+            "Datetime index already exists")
+    datetime_col = df[datetime_col_name]
+    # Convert original datetime column into `pd.Timestamp`.
+    datetime_idx = convert_timestamp_column(datetime_col, unit=unit)
+    reindexed_df = df.set_index(datetime_idx)
+    return reindexed_df
 
 
 def add_date_partition_cols(

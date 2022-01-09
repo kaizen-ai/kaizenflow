@@ -18,20 +18,29 @@ def _get_dummy_df_with_timestamp(
     return pd.DataFrame(data=test_data)
 
 
+
 class TestPartitionDataset(hunitest.TestCase):
+    @staticmethod
+    def get_test_data1() -> pd.DataFrame:
+        test_data = {
+            "dummy_value_1": [1, 2, 3],
+            "dummy_value_2": ["A", "B", "C"],
+            "dummy_value_3": [0, 0, 0],
+        }
+        df = pd.DataFrame(data=test_data)
+        return df
+
     def test_partition_dataset(self) -> None:
         """
         Verify regular creation of partition datasets with existing columns.
         """
+        # Prepare inputs.
         test_dir = self.get_scratch_space()
-        test_data = {
-            "dummy_value_1": [1, 2, 3],
-            "dummy_value_2": ["A", "B", "C"],
-            "dummy-value_3": [0, 0, 0],
-        }
-        dummy_df = pd.DataFrame(data=test_data)
+        df = self.get_test_data1()
+        # Run.
         partition_cols = ["dummy_value_1", "dummy_value_2"]
-        imvcdtrut.partition_dataset(dummy_df, partition_cols, test_dir)
+        imvcdtrut.partition_dataset(df, partition_cols, test_dir)
+        # Check output.
         include_file_content = True
         dir_signature = hunitest.get_dir_signature(test_dir, include_file_content)
         self.check_string(dir_signature, purify_text=True)
@@ -40,16 +49,23 @@ class TestPartitionDataset(hunitest.TestCase):
         """
         Assert that wrong columns are detected on before partitioning.
         """
+        # Prepare inputs.
         test_dir = self.get_scratch_space()
-        test_data = {
-            "dummy_value_1": [1, 2, 3],
-            "dummy_value_2": ["A", "B", "C"],
-            "dummy-value_3": [0, 0, 0],
-        }
-        dummy_df = pd.DataFrame(data=test_data)
+        df = self.get_test_data1()
+        # Run.
         partition_cols = ["void_column", "dummy_value_2"]
-        with self.assertRaises(AssertionError):
-            imvcdtrut.partition_dataset(dummy_df, partition_cols, test_dir)
+        # Check output.
+        with self.assertRaises(AssertionError) as cm:
+            imvcdtrut.partition_dataset(df, partition_cols, test_dir)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        val1=['dummy_value_2', 'void_column']
+        issubset
+        val2=['dummy_value_1', 'dummy_value_2', 'dummy_value_3']
+        val1 - val2=['void_column']
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
 
 
 class TestConvertTimestampColumn(hunitest.TestCase):
@@ -57,18 +73,26 @@ class TestConvertTimestampColumn(hunitest.TestCase):
         """
         Verify that integer datetime is converted correctly.
         """
+        # Prepare inputs.
         test_data = pd.Series([1638756800000, 1639656800000, 1648656800000])
+        # Run.
         actual = imvcdtrut.convert_timestamp_column(test_data)
+        # Check output.
         actual = str(actual)
+        # TODO(gp): @danya use self.assert_equal
         self.check_string(actual)
 
     def test_string_datetime(self) -> None:
         """
         Verify that string datetime is converted correctly.
         """
+        # Prepare inputs.
         test_data = pd.Series(["2021-01-12", "2021-02-14", "2010-12-11"])
+        # Run.
         actual = imvcdtrut.convert_timestamp_column(test_data)
+        # Check output.
         actual = str(actual)
+        # TODO(gp): @danya use self.assert_equal
         self.check_string(actual)
 
     def test_incorrect_datetime(self) -> None:
@@ -76,8 +100,13 @@ class TestConvertTimestampColumn(hunitest.TestCase):
         Assert that incorrect types are not converted.
         """
         test_data = pd.Series([37.9, 88.11, 14.0])
+        # TODO(gp): @danya check content of the assertion.
         with self.assertRaises(ValueError):
             imvcdtrut.convert_timestamp_column(test_data)
+
+
+# TODO(gp): @danya make changes to align with code above (e.g., add prepare, run,
+#  check comments, use self.assert_equal instead of self.check_string).
 
 
 class TestReindexOnDatetime(hunitest.TestCase):
