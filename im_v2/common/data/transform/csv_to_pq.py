@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 """
-Convert data from csv to PQ files and partition dataset by asset.
+Convert data from CSV to Parquet files and partition dataset by asset.
 
-# A parquet file partitioned by assets:
-
+A parquet file partitioned by assets looks like:
 ```
 dst_dir/
     year=2021/
@@ -16,14 +15,12 @@ dst_dir/
 ```
 
 # Use example:
-> im_v2/common/data/transform/csv_to_pq.py \
+> csv_to_pq.py \
     --src_dir test/ccxt_test \
     --dst_dir test_pq
-
-Import as:
-
-import im_v2.common.data.transform.csv_to_pq as imvcdtctpq
 """
+
+# TODO(gp): @danya -> convert_csv_to_pq.py
 
 import argparse
 import logging
@@ -45,54 +42,62 @@ def _get_csv_to_pq_file_names(
     src_dir: str, dst_dir: str, incremental: bool
 ) -> List[Tuple[str, str]]:
     """
-    Find all the CSV files in `src_dir` to transform and the corresponding
-    destination PQ files.
+    Find all the CSV files in `src_dir` to transform and prepare the corresponding
+    destination Parquet files.
 
-    :param incremental: if True, skip CSV files for which the corresponding PQ file already exists
+    :param incremental: if True, skip CSV files for which the corresponding Parquet
+        file already exists
     :return: list of tuples (csv_file, pq_file)
     """
-    hdbg.dassert_ne(len(os.listdir(src_dir)), 0, "No files inside '%s'", src_dir)
     # Find all the CSV files to convert.
-    csv_ext, csv_gz_ext = ".csv", ".csv.gz"
     csv_files = []
     for f in os.listdir(src_dir):
+        # Find the CSV files.
+        csv_ext = ".csv"
+        csv_gz_ext = ".csv.gz"
         if f.endswith(csv_ext):
-            filename = f[: -len(csv_ext)]
+            csv_filename = f[: -len(csv_ext)]
         elif f.endswith(csv_gz_ext):
-            filename = f[: -len(csv_gz_ext)]
+            csv_filename = f[: -len(csv_gz_ext)]
         else:
-            _LOG.warning(f"Encountered non CSV file '{f}'")
-        pq_path = os.path.join(dst_dir, f"{filename}.parquet")
+            _LOG.warning(f"Found non CSV file '{f}'")
+        # Build corresponding Parquet file.
+        pq_path = os.path.join(dst_dir, f"{csv_filename}.parquet")
+        csv_path = os.path.join(src_dir, f)
         # Skip CSV files that do not need to be converted.
         if incremental and os.path.exists(pq_path):
             _LOG.warning(
-                "Skipping the conversion of CSV file '%s' since '%s' already exists",
-                filename,
-                filename,
+                "Skipping conversion of CSV file '%s' since '%s' already exists",
+                csv_path,
+                pq_path,
             )
         else:
-            csv_path = os.path.join(src_dir, f)
             csv_files.append((csv_path, pq_path))
     return csv_files
 
 
 def _run(args: argparse.Namespace) -> None:
-    # List all original CSV files.
+    # TODO(gp): @danya use our usual incremental idiom.
     hio.create_dir(args.dst_dir, args.incremental)
+    # Find all CSV and Parquet files.
     files = _get_csv_to_pq_file_names(
         args.src_dir, args.dst_dir, args.incremental
     )
-    # Transform CSV files.
+    # Convert CSV files into Parquet files.
     for csv_full_path, pq_full_path in files:
         hcsv.convert_csv_to_pq(csv_full_path, pq_full_path)
-    # Read files.
+    # Convert Parquet files into a different partitioning scheme.
+    # TODO(gp): IMO this is a different / optional step.
     dataset = ds.dataset(args.dst_dir, format="parquet", partitioning="hive")
+    # TODO(gp): Not sure this can be done since all the CSV files might not fit in
+    #  memory.
     df = dataset.to_table().to_pandas()
     # Set datetime index.
     reindexed_df = imvcdtrut.reindex_on_datetime(df, args.datetime_col)
     # Add date partition columns to the dataframe.
     imvcdtrut.add_date_partition_cols(reindexed_df, "day")
-    # Save partitioned parquet dataset.
+    # Save partitioned Parquet dataset.
+    # TODO(gp): Allow to specify different partitions.
     partition_cols = [args.asset_col, "year", "month", "day"]
     imvcdtrut.partition_dataset(reindexed_df, partition_cols, args.dst_dir)
 
@@ -107,14 +112,14 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         type=str,
         required=True,
-        help="Location of input CSV to convert to PQ format",
+        help="Dir with input CSV files to convert to Parquet format",
     )
     parser.add_argument(
         "--dst_dir",
         action="store",
         type=str,
         required=True,
-        help="Destination dir where to save converted PQ files",
+        help="Destination dir where to save converted Parquet files",
     )
     parser.add_argument(
         "--datetime_col",
