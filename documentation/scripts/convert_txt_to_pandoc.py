@@ -20,9 +20,9 @@ import logging
 import re
 from typing import List, Tuple
 
-import helpers.dbg as dbg
-import helpers.io_ as io_
-import helpers.parser as prsr
+import helpers.hdbg as dbg
+import helpers.hio as io_
+import helpers.hparser as prsr
 
 _LOG = logging.getLogger(__name__)
 

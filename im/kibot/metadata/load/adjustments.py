@@ -8,7 +8,7 @@ import os
 from typing import List
 
 import core.pandas_helpers as cpanh
-import helpers.s3 as hs3
+import helpers.hs3 as hs3
 import im.kibot.metadata.config as imkimecon
 import im.kibot.metadata.types as imkimetyp
 

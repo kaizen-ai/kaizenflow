@@ -15,12 +15,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import helpers.dbg as hdbg
-import helpers.git as hgit
-import helpers.io_ as hio
-import helpers.printing as hprint
-import helpers.system_interaction as hsysinte
-import helpers.unit_test as hunitest
+import helpers.hdbg as hdbg
+import helpers.hgit as hgit
+import helpers.hio as hio
+import helpers.hprint as hprint
+import helpers.hsystem as hsysinte
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -1110,13 +1110,13 @@ class Test_purify_object_reference1(hunitest.TestCase):
     def test3(self) -> None:
         txt = """
         load_prices: {'source_node_name': 'RealTimeDataSource',
-        'source_node_kwargs': {'market_data_interface':
-        <market_data.market_data_interface.ReplayedTimeMarketDataInterface
+        'source_node_kwargs': {'market_data':
+        <market_data.market_data.ReplayedMarketData
         object>, 'period': 'last_5mins', 'asset_id_col': 'asset_id',
         'multiindex_output': True}} process_forecasts: {'prediction_col': 'close',
         'execution_mode': 'real_time', 'process_forecasts_config':
-        {'market_data_interface':
-        <market_data.market_data_interface.ReplayedTimeMarketDataInterface
+        {'market_data':
+        <market_data.market_data.ReplayedMarketData
         object at 0x7faff4c3faf0>,'portfolio  ': <oms.portfolio.SimulatedPortfolio
         object>, 'order_type': 'price@twap', 'ath_start_time':
         datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30),
@@ -1125,13 +1125,13 @@ class Test_purify_object_reference1(hunitest.TestCase):
         """
         exp = r"""
         load_prices: {'source_node_name': 'RealTimeDataSource',
-        'source_node_kwargs': {'market_data_interface':
-        <market_data.market_data_interface.ReplayedTimeMarketDataInterface
+        'source_node_kwargs': {'market_data':
+        <market_data.market_data.ReplayedMarketData
         object>, 'period': 'last_5mins', 'asset_id_col': 'asset_id',
         'multiindex_output': True}} process_forecasts: {'prediction_col': 'close',
         'execution_mode': 'real_time', 'process_forecasts_config':
-        {'market_data_interface':
-        <market_data.market_data_interface.ReplayedTimeMarketDataInterface
+        {'market_data':
+        <market_data.market_data.ReplayedMarketData
         object at 0x>,'portfolio  ': <oms.portfolio.SimulatedPortfolio
         object>, 'order_type': 'price@twap', 'ath_start_time':
         datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30),

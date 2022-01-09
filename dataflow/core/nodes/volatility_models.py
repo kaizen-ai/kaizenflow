@@ -23,7 +23,7 @@ import dataflow.core.nodes.sources as dtfconosou
 import dataflow.core.nodes.transformers as dtfconotra
 import dataflow.core.utils as dtfcorutil
 import dataflow.core.visitors as dtfcorvisi
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 

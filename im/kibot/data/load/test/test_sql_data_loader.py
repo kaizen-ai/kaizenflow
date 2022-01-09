@@ -3,8 +3,8 @@ import datetime
 import pandas as pd
 import pytest
 
-import helpers.sql as hsql
-import helpers.unit_test as hunitest
+import helpers.hsql as hsql
+import helpers.hunit_test as hunitest
 import im.common.data.types as imcodatyp
 import im.kibot.data.load.kibot_sql_data_loader as ikdlksdlo
 import im.kibot.sql_writer as imkisqwri

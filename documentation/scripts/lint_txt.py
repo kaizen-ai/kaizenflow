@@ -19,10 +19,10 @@ import sys
 import tempfile
 from typing import List, Optional
 
-import helpers.dbg as dbg
-import helpers.io_ as hio
-import helpers.parser as hparse
-import helpers.system_interaction as hsyste
+import helpers.hdbg as dbg
+import helpers.hio as hio
+import helpers.hparser as hparse
+import helpers.hsystem as hsyste
 
 _LOG = logging.getLogger(__name__)
 
@@ -37,10 +37,10 @@ _LOG = logging.getLogger(__name__)
 def _preprocess(txt: str) -> str:
     _LOG.debug("txt=%s", txt)
     # Remove some artifacts when copying from gdoc.
-    txt = re.sub(r"’", "'", txt)
-    txt = re.sub(r"“", '"', txt)
-    txt = re.sub(r"”", '"', txt)
-    txt = re.sub(r"…", "...", txt)
+    txt = re.sub(r"ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ", "'", txt)
+    txt = re.sub(r"ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ", '"', txt)
+    txt = re.sub(r"ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ", '"', txt)
+    txt = re.sub(r"ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ¦", "...", txt)
     txt_new: List[str] = []
     for line in txt.split("\n"):
         # Skip frames.

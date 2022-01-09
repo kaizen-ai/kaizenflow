@@ -2,8 +2,8 @@ import logging
 
 import pytest
 
-import helpers.unit_test as hunitest
-import helpers.versioning as hversio
+import helpers.hunit_test as hunitest
+import helpers.hversion as hversio
 
 _LOG = logging.getLogger(__name__)
 

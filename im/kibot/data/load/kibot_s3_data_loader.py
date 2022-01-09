@@ -10,9 +10,9 @@ from typing import Optional
 import pandas as pd
 
 import core.pandas_helpers as cpanh
-import helpers.cache as hcache
-import helpers.dbg as hdbg
-import helpers.s3 as hs3
+import helpers.hcache as hcache
+import helpers.hdbg as hdbg
+import helpers.hs3 as hs3
 import im.common.data.load.abstract_data_loader as imcdladalo
 import im.common.data.types as imcodatyp
 import im.kibot.data.load.kibot_file_path_generator as imkdlkfpge

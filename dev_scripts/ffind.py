@@ -21,8 +21,8 @@ import logging
 import os
 import sys
 
-import helpers.dbg as hdbg
-import helpers.parser as hparser
+import helpers.hdbg as hdbg
+import helpers.hparser as hparser
 
 _log = logging.getLogger(__name__)
 

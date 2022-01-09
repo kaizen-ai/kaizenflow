@@ -13,7 +13,7 @@ import pandas as pd
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys
-import helpers.unit_test as hunitest
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ class _NaivePipeline(dtfcore.DagBuilder):
             # Place trades.
             self._get_nid("process_forecasts"): {
                 "prediction_col": "price",
-                "execution_mode": "real_time",
+                "volatility_col": "price",
                 "process_forecasts_config": {},
             },
         }

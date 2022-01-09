@@ -10,7 +10,7 @@ from typing import Union
 import numpy as np
 import pandas as pd
 
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 COL = Union[str, int]

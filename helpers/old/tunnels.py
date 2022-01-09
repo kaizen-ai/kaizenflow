@@ -8,10 +8,10 @@ import logging
 import os
 from typing import Any, Dict, List, Tuple, cast
 
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 import helpers.old.user_credentials as holuscre
-import helpers.printing as hprint
-import helpers.system_interaction as hsysinte
+import helpers.hprint as hprint
+import helpers.hsystem as hsysinte
 
 _LOG = logging.getLogger(__name__)
 

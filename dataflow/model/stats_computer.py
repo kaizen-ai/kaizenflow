@@ -12,7 +12,7 @@ import pandas as pd
 
 import core.finance as cofinanc
 import core.statistics as costatis
-import helpers.timer as htimer
+import helpers.htimer as htimer
 
 _LOG = logging.getLogger(__name__)
 

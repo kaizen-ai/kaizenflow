@@ -28,8 +28,8 @@ import pyarrow as pa
 import pyarrow.dataset as ds
 import pyarrow.parquet as pq
 
-import helpers.dbg as hdbg
-import helpers.io_ as hio
+import helpers.hdbg as hdbg
+import helpers.hio as hio
 
 hdbg.init_logger(verbosity=logging.INFO)
 _LOG = logging.getLogger(__name__)

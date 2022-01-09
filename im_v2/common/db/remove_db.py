@@ -15,9 +15,9 @@ import im_v2.common.db.remove_db as imvcdredb
 import argparse
 import os
 
-import helpers.io_ as hio
-import helpers.parser as hparser
-import helpers.sql as hsql
+import helpers.hio as hio
+import helpers.hparser as hparser
+import helpers.hsql as hsql
 import im_v2.common.db.utils as imvcodbut
 
 

@@ -26,10 +26,10 @@ from typing import Any
 import ccxt
 import pandas as pd
 
-import helpers.dbg as hdbg
-import helpers.env as henv
-import helpers.io_ as hio
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.henv as henv
+import helpers.hio as hio
+import helpers.hprint as hprint
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)

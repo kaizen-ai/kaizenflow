@@ -11,10 +11,10 @@ from typing import Optional
 import pandas as pd
 
 import core.pandas_helpers as cpanh
-import helpers.datetime_ as hdateti
-import helpers.dbg as hdbg
+import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import helpers.s3 as hs3
+import helpers.hs3 as hs3
 import im_v2.common.data.client.clients as ivcdclcl
 
 _LOG = logging.getLogger(__name__)

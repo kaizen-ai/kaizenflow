@@ -11,8 +11,8 @@ import logging
 
 import pandas as pd
 
-import helpers.dbg as hdbg
-import helpers.parser as hparser
+import helpers.hdbg as hdbg
+import helpers.hparser as hparser
 import im.ib.data.extract.gateway.utils as imidegaut
 
 # from tqdm.notebook import tqdm

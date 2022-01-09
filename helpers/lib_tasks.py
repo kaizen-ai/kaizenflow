@@ -23,15 +23,15 @@ from invoke import task
 
 # We want to minimize the dependencies from non-standard Python packages since
 # this code needs to run with minimal dependencies and without Docker.
-import helpers.dbg as hdbg
-import helpers.git as hgit
-import helpers.introspection as hintros
-import helpers.io_ as hio
-import helpers.list as hlist
-import helpers.printing as hprint
-import helpers.system_interaction as hsysinte
-import helpers.table as htable
-import helpers.versioning as hversio
+import helpers.hdbg as hdbg
+import helpers.hgit as hgit
+import helpers.hintrospection as hintros
+import helpers.hio as hio
+import helpers.hlist as hlist
+import helpers.hprint as hprint
+import helpers.hsystem as hsysinte
+import helpers.htable as htable
+import helpers.hversion as hversio
 
 _LOG = logging.getLogger(__name__)
 
@@ -207,7 +207,7 @@ use_one_line_cmd = False
 def _run(
     ctx: Any, cmd: str, *args, dry_run: bool = False, **ctx_run_kwargs: Any
 ) -> int:
-    _LOG.debug("cmd=%s", cmd)
+    _LOG.debug(hprint.to_str("cmd dry_run"))
     if use_one_line_cmd:
         cmd = _to_single_line_cmd(cmd)
     _LOG.debug("cmd=%s", cmd)
@@ -355,7 +355,7 @@ def print_tasks(ctx, as_code=False):  # type: ignore
     cmd = rf'\grep "^@task" -A 1 {lib_tasks_file_name} | grep def'
     # def print_setup(ctx):  # type: ignore
     # def git_pull(ctx):  # type: ignore
-    # def git_pull_master(ctx):  # type: ignore
+    # def git_fetch_master(ctx):  # type: ignore
     _, txt = hsysinte.system_to_string(cmd)
     for line in txt.split("\n"):
         _LOG.debug("line=%s", line)
@@ -382,19 +382,21 @@ def git_pull(ctx):  # type: ignore
     Pull all the repos.
     """
     _report_task()
+    #
     cmd = "git pull --autostash"
     _run(ctx, cmd)
+    #
     cmd = "git submodule foreach 'git pull --autostash'"
     _run(ctx, cmd)
 
 
-# TODO(gp): Maybe inline
 @task
-def git_pull_master(ctx):  # type: ignore
+def git_fetch_master(ctx):  # type: ignore
     """
     Pull master without changing branch.
     """
     _report_task()
+    #
     cmd = "git fetch origin master:master"
     _run(ctx, cmd)
 
@@ -410,7 +412,7 @@ def git_merge_master(ctx, ff_only=False, abort_if_not_clean=True):  # type: igno
     # Check that the Git client is clean.
     hgit.is_client_clean(dir_name=".", abort_if_not_clean=abort_if_not_clean)
     # Pull master.
-    git_pull_master(ctx)
+    git_fetch_master(ctx)
     # Merge master.
     cmd = "git merge master"
     if ff_only:
@@ -892,24 +894,19 @@ def git_branch_copy(ctx, new_branch_name="", use_patch=False):  # type: ignore
     _run(ctx, cmd)
 
 
-@task
-def git_branch_diff_with_base(  # type: ignore
-    ctx, diff_type="", subdir="", dry_run=False
-):
-    """
-    Diff files of the current branch with master at the branching point.
-
-    :param diff_type: files to diff using git `--diff-filter` options
-    :param subdir: subdir to consider for diffing, instead of `.`
-    :param dry_run: execute diffing script or not
-    """
-    _ = ctx
-    # This branch is not master.
+def _git_diff_with_branch(
+    ctx: Any,
+    hash_: str,
+    tag: str,
+    dir_name: str,
+    diff_type: str,
+    subdir: str,
+    dry_run: bool,
+) -> None:
+    _LOG.debug(hprint.to_str("hash_ tag dir_name diff_type subdir dry_run"))
+    # Check that this branch is not master.
     curr_branch_name = hgit.get_branch_name()
     hdbg.dassert_ne(curr_branch_name, "master")
-    # Get the branching point.
-    dir_name = "."
-    hash_ = hgit.get_branch_hash(dir_name=dir_name)
     # Get the modified files.
     cmd = []
     cmd.append("git diff")
@@ -922,6 +919,12 @@ def git_branch_diff_with_base(  # type: ignore
     )
     files = sorted(files)
     print("files=%s\n%s" % (len(files), "\n".join(files)))
+    if len(files) == 0:
+        _LOG.warning("Nothing to diff: exiting")
+        return
+    # Create the dir storing all the files to compare.
+    dst_dir = f"./tmp.{tag}"
+    hio.create_dir(dst_dir, incremental=False)
     # Retrieve the original file and create the diff command.
     script_txt = []
     for branch_file in files:
@@ -940,11 +943,11 @@ def git_branch_diff_with_base(  # type: ignore
             right_file = branch_file
         else:
             right_file = "/dev/null"
-        #
-        tmp_file = branch_file.replace(".py", ".base.py")
         # Flatten the file dirs: e.g.,
         # dataflow/core/nodes/test/test_volatility_models.base.py
-        tmp_file = "tmp." + tmp_file.replace("/", "_")
+        tmp_file = branch_file
+        tmp_file = tmp_file.replace("/", "_")
+        tmp_file = os.path.join(dst_dir, tmp_file)
         _LOG.debug(
             "branch_file='%s' exists in branch -> master_file='%s'",
             branch_file,
@@ -970,11 +973,46 @@ def git_branch_diff_with_base(  # type: ignore
     print(hprint.frame("Diffing script"))
     print(script_txt)
     # Save the script to compare.
-    script_file_name = "./tmp.vimdiff_branch_with_base.sh"
+    script_file_name = f"./tmp.vimdiff_branch_with_{tag}.sh"
     hsysinte.create_executable_script(script_file_name, script_txt)
-    print(f"# To diff against the base run:\n> {script_file_name}")
-    if not dry_run:
-        _run(ctx, script_file_name, pty=True)
+    print(f"# To diff against {tag} run:\n> {script_file_name}")
+    _run(ctx, script_file_name, dry_run=dry_run, pty=True)
+
+
+@task
+def git_branch_diff_with_base(  # type: ignore
+    ctx, diff_type="", subdir="", dry_run=False
+):
+    """
+    Diff files of the current branch with master at the branching point.
+
+    :param diff_type: files to diff using git `--diff-filter` options
+    :param subdir: subdir to consider for diffing, instead of `.`
+    :param dry_run: execute diffing script or not
+    """
+    # Get the branching point.
+    dir_name = "."
+    hash_ = hgit.get_branch_hash(dir_name=dir_name)
+    #
+    tag = "base"
+    _git_diff_with_branch(ctx, hash_, tag, dir_name, diff_type, subdir, dry_run)
+
+
+@task
+def git_branch_diff_with_master(  # type: ignore
+    ctx, diff_type="", subdir="", dry_run=False
+):
+    """
+    Diff files of the current branch with origin/master.
+
+    :param diff_type: files to diff using git `--diff-filter` options
+    :param subdir: subdir to consider for diffing, instead of `.`
+    :param dry_run: execute diffing script or not
+    """
+    dir_name = "."
+    hash_ = "origin/master"
+    tag = "origin_master"
+    _git_diff_with_branch(ctx, hash_, tag, dir_name, diff_type, subdir, dry_run)
 
 
 # TODO(gp): Add the following scripts:
@@ -1023,9 +1061,9 @@ def git_branch_diff_with_base(  # type: ignore
 # - Create the integration branches
 #   ```
 #   > cd amp1
-#   > i integrate_create_branch amp1
+#   > i integrate_create_branch --dir-name amp1
 #   > cd cmamp1
-#   > i integrate_create_branch cmamp1
+#   > i integrate_create_branch --dir-name cmamp1
 #   ```
 #
 # Integration
@@ -1047,6 +1085,11 @@ def git_branch_diff_with_base(  # type: ignore
 # - Diff dir by dir
 #   ```
 #   > i integrate_diff_dirs --subdir dataflow/system
+#   ```
+#
+# - Copy by dir
+#   ```
+#   > i integrate_diff_dirs --subdir market_data -c
 #   ```
 #
 # Double check
@@ -1558,7 +1601,7 @@ def _get_last_container_id(sudo: bool) -> str:
     # Get the last started container.
     cmd = f"{docker_exec} ps -l | grep -v 'CONTAINER ID'"
     # CONTAINER ID   IMAGE          COMMAND                  CREATED
-    # 90897241b31a   eeb33fe1880a   "/bin/sh -c '/bin/ba…"   34 hours ago ...
+    # 90897241b31a   eeb33fe1880a   "/bin/sh -c '/bin/baÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¦"   34 hours ago ...
     _, txt = hsysinte.system_to_one_line(cmd)
     # Parse the output: there should be at least one line.
     hdbg.dassert_lte(1, len(txt.split(" ")), "Invalid output='%s'", txt)
@@ -1929,7 +1972,7 @@ def _get_base_image(base_image: str) -> str:
 
 
 # TODO(gp): Consider using a token "latest" in version, so that it's always a
-# string and we avoid a special behavior encoded in None.
+#  string and we avoid a special behavior encoded in None.
 def get_image(
     base_image: str,
     stage: str,
@@ -3424,7 +3467,7 @@ def pytest_clean(ctx):  # type: ignore
     """
     _report_task()
     _ = ctx
-    import helpers.pytest_ as hpytest
+    import helpers.hpytest as hpytest
 
     hpytest.pytest_clean(".")
 
@@ -4016,7 +4059,7 @@ def _get_workflow_table() -> htable.TableType:
     # > gh run list
     # STATUS  NAME                                                        WORKFLOW    BRANCH                                                EVENT              ID          ELAPSED  AGE
     # X       Amp task1786 integrate 2021118 (#1857)                    Fast tests  master                                                push               1477484584  5m40s    23m
-    # ✓       Amp task1786 integrate 2021118 (#1857)                    Slow tests  master                                                push               1477484582  6m38s    23m
+    # ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ       Amp task1786 integrate 2021118 (#1857)                    Slow tests  master                                                push               1477484582  6m38s    23m
     # X       Merge branch 'master' into AmpTask1786_Integrate_2021118  Fast tests  AmpTask1786_Integrate_2021118                         pull_request       1477445218  5m52s    34m
     # pylint: enable=line-too-long
     # The output is tab separated, so convert it into CSV.
@@ -4097,7 +4140,7 @@ def gh_workflow_list(
             if status == "success":
                 print(f"Workflow '{workflow}' for '{branch_name}' is ok")
                 break
-            elif status == "failure":
+            elif status in ("failure", "startup_failure", "cancelled"):
                 _LOG.error(
                     "Workflow '%s' for '%s' is broken", workflow, branch_name
                 )
@@ -4111,7 +4154,7 @@ def gh_workflow_list(
                 print(f"# Log is in '{log_file_name}'")
                 # Run_fast_tests  Run fast tests  2021-12-19T00:19:38.3394316Z FAILED data
                 cmd = rf"grep 'Z FAILED ' {log_file_name}"
-                hsysinte.system(cmd, suppress_output=False)
+                hsysinte.system(cmd, suppress_output=False, abort_on_error=False)
                 break
             elif status == "":
                 # It's in progress.
@@ -4121,13 +4164,13 @@ def gh_workflow_list(
 
 
 @task
-def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
+def gh_workflow_run(ctx, branch="current_branch", workflows="all"):  # type: ignore
     """
     Run GH workflows in a branch.
     """
     _report_task(hprint.to_str("branch workflows"))
     # Get the branch name.
-    if branch == "branch":
+    if branch == "current_branch":
         branch_name = hgit.get_branch_name()
     elif branch == "master":
         branch_name = "master"
@@ -4146,8 +4189,6 @@ def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
         # gh workflow run fast_tests.yml --ref AmpTask1251_Update_GH_actions_for_amp
         cmd = f"gh workflow run {gh_test} --ref {branch_name}"
         _run(ctx, cmd)
-    #
-    gh_workflow_list(ctx, filter_by_branch=branch)
 
 
 def _get_repo_full_name_from_cmd(repo_short_name: str) -> Tuple[str, str]:
@@ -4602,7 +4643,7 @@ def _fix_group_permissions(dir_name: str, abort_on_error: bool) -> None:
         if is_dir:
             # pylint: disable=line-too-long
             # From https://www.gnu.org/software/coreutils/manual/html_node/Directory-Setuid-and-Setgid.html
-            # If a directory’s set-group-ID bit is set, newly created subfiles
+            # If a directoryÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂs set-group-ID bit is set, newly created subfiles
             # inherit the same group as the directory,
             # pylint: enable=line-too-long
             has_set_group_id = st_mode & stat.S_ISGID

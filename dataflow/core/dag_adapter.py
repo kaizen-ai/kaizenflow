@@ -11,8 +11,8 @@ import core.config as cconfig
 import dataflow.core.builders as dtfcorbuil
 import dataflow.core.dag as dtfcordag
 import dataflow.core.node as dtfcornode
-import helpers.dbg as hdbg
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
