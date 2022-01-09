@@ -107,11 +107,16 @@ class CcxtExchange:
         :param sleep_time: time in seconds between iterations
         :return: OHLCV data from CCXT
         """
-        hdbg.dassert(self._exchange.has["fetchOHLCV"],
-                     "Exchange %s doesn't has fetch_ohlcv method",
-                     self._exchange)
-        hdbg.dassert_in(curr_symbol, self.currency_pairs,
-                    "Currency pair is not present in exchange")
+        hdbg.dassert(
+            self._exchange.has["fetchOHLCV"],
+            "Exchange %s doesn't has fetch_ohlcv method",
+            self._exchange,
+        )
+        hdbg.dassert_in(
+            curr_symbol,
+            self.currency_pairs,
+            "Currency pair is not present in exchange",
+        )
         # Get latest bars if no datetime is provided.
         if end_datetime is None and start_datetime is None:
             return self._fetch_ohlcv(curr_symbol, step=step)
@@ -167,8 +172,11 @@ class CcxtExchange:
         """
         # Change currency pair to CCXT format.
         curr_pair = curr_pair.replace("_", "/")
-        hdbg.dassert(self._exchange.has["fetchOrderBook"],
-                     "Exchange %s doesn't have fetchOrderBook", self._exchange)
+        hdbg.dassert(
+            self._exchange.has["fetchOrderBook"],
+            "Exchange %s doesn't have fetchOrderBook",
+            self._exchange,
+        )
         hdbg.dassert_in(curr_pair, self.currency_pairs)
         # Download current order book.
         # TODO(Grisha): use `_` instead of `/` as currencies separator in `symbol`.

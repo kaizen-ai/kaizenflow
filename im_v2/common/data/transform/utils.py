@@ -74,7 +74,8 @@ def partition_dataset(
 
 def convert_timestamp_column(
     # TODO(gp): -> datetime_col_name
-    datetime_col: pd.Series, unit: str = "ms"
+    datetime_col: pd.Series,
+    unit: str = "ms",
 ) -> pd.Series:
     """
     Convert datetime as string or int into a timestamp.
@@ -110,10 +111,10 @@ def reindex_on_datetime(
     :param unit: the unit of unix epoch
     :return: dataframe with datetime index
     """
-    hdbg.dassert_in(datetime_col_name, df.columns,
-            "Not valid column name")
-    hdbg.dassert_ne(df.index.inferred_type, "datetime64",
-            "Datetime index already exists")
+    hdbg.dassert_in(datetime_col_name, df.columns, "Not valid column name")
+    hdbg.dassert_ne(
+        df.index.inferred_type, "datetime64", "Datetime index already exists"
+    )
     datetime_col = df[datetime_col_name]
     # Convert original datetime column into `pd.Timestamp`.
     datetime_idx = convert_timestamp_column(datetime_col, unit=unit)

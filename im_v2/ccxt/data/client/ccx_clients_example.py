@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.ccxt.data.client.ccx_clients_example as icdccce
+import im_v2.ccxt.data.client.ccx_clients_example as imvcdcccex
 """
 
 import os
@@ -36,16 +36,14 @@ def get_CcxtCsvFileSytemClient_example1() -> imvcdclcl.CcxtCsvFileSystemClient:
     # 1534464240000,285.400193,285.884638,285.400193,285.884638,0.074655
     # ```
     # Initialize client.
-    data_type="ohlcv"
-    root_dir=get_test_data_dir()
-    ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(
-        data_type, root_dir
-    )
+    data_type = "ohlcv"
+    root_dir = get_test_data_dir()
+    ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(data_type, root_dir)
     return ccxt_file_client
 
 
 def get_CcxtParquetFileSytemClient_example1() -> imvcdclcl.CcxtParquetFileSystemClient:
     data_type = "ohlcv"
-    root_dir=get_test_data_dir()
+    root_dir = get_test_data_dir()
     ccxt_client = imvcdclcl.CcxtParquetFileSystemClient(data_type, root_dir)
     return ccxt_client

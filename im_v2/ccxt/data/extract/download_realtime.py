@@ -12,6 +12,10 @@ Use as:
     --data_type 'ohlcv' \
     --api_keys 'API_keys.json' \
     --universe 'v03'
+
+Import as:
+
+import im_v2.ccxt.data.extract.download_realtime as imvcdedore
 """
 
 # TODO(gp): @danya -> download_realtime_data.py
@@ -60,7 +64,8 @@ def instantiate_exchange(
     """
     exchange_to_currency = collections.namedtuple(
         # TODO(gp): @danya pairs -> currency_pairs
-        "ExchangeToCurrency", ["id", "instance", "pairs"]
+        "ExchangeToCurrency",
+        ["id", "instance", "pairs"],
     )
     exchange_to_currency.id = exchange_id
     exchange_to_currency.instance = imvcdeexcl.CcxtExchange(exchange_id, api_keys)

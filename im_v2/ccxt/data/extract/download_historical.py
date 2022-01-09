@@ -62,7 +62,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="Start date of download to parse with pd.Timestamp"
+        help="Start date of download to parse with pd.Timestamp",
     )
     parser.add_argument(
         "--end_datetime",

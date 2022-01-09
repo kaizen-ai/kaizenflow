@@ -11,8 +11,8 @@ from typing import Optional
 
 import psycopg2 as psycop
 
-import helpers.hsql_test as hsqltest
 import helpers.hsql as hsql
+import helpers.hsql_test as hsqltest
 import im.ib.sql_writer as imibsqwri
 import im.kibot.sql_writer as imkisqwri
 import im_v2.ccxt.db.utils as imvccdbut
@@ -21,6 +21,7 @@ import im_v2.im_lib_tasks as imvimlita
 _LOG = logging.getLogger(__name__)
 
 # TODO(gp): -> db_utils.py
+
 
 def get_common_create_table_query() -> str:
     """
@@ -125,6 +126,7 @@ def create_im_database(
 
 
 # TODO(gp): Move to db_test_utils.py
+
 
 class TestImDbHelper(hsqltest.TestDbHelper):
     @staticmethod

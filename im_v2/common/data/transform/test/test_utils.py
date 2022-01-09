@@ -18,7 +18,6 @@ def _get_dummy_df_with_timestamp(
     return pd.DataFrame(data=test_data)
 
 
-
 class TestPartitionDataset(hunitest.TestCase):
     @staticmethod
     def get_test_data1() -> pd.DataFrame:
