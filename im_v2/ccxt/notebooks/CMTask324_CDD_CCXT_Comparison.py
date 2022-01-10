@@ -46,8 +46,7 @@ hprint.config_notebook()
 # # Configs
 
 # %%
-# Two configs are necessary in this situation because current downloading functions
-# work only with specific 'vendor' value.
+# Generate configs for 'CDD' and 'CCXT'.
 
 # %%
 def get_cmtask324_config_ccxt() -> cconconf.Config:
@@ -140,7 +139,7 @@ display(currency_pair_intersection)
 # Full symbols that are included in CCXT but not in CDD.
 ccxt_and_not_cdd = set(ccxt_universe).difference(cdd_universe)
 _LOG.info(
-    "Number of full symbols that are included in CCXT but not in CDD: %s",
+    "Number of full symbols that are included in 'CCXT' but not in 'CDD': %s",
     len(ccxt_and_not_cdd),
 )
 display(ccxt_and_not_cdd)
@@ -149,7 +148,7 @@ display(ccxt_and_not_cdd)
 # Full symbols that are included in CDD but not in CCXT.
 cdd_and_not_ccxt = set(cdd_universe).difference(ccxt_universe)
 _LOG.info(
-    "Number of full symbols that are included in CDD but not in CCXT: %s",
+    "Number of full symbols that are included in 'CDD' but not in 'CCXT': %s",
     len(cdd_and_not_ccxt),
 )
 display(cdd_and_not_ccxt)
@@ -182,16 +181,15 @@ currency_pair_intersection_binance = set(ccxt_binance_universe).intersection(
 )
 
 # %%
-root_dir = os.path.join(hs3.get_path(), "data")
-
-# %%
 cdd_data = []
+data_type_cdd = config_cdd["data"]["data_type"]
+root_dir_cdd = config_cdd["load"]["data_dir"]
 cdd_loader = imcdalolo.CddLoader(
-    data_type="ohlcv", root_dir=root_dir, aws_profile="am"
+    data_type_cdd, root_dir_cdd, aws_profile="am"
 )
 
 for full_symbol in currency_pair_intersection_binance:
-    cur_data = cdd_loader.read_data(full_symbol=full_symbol)
+    cur_data = cdd_loader.read_data(full_symbol)
     cdd_data.append(cur_data)
 cdd_binance_df = pd.concat(cdd_data)
 
@@ -200,28 +198,84 @@ display(cdd_binance_df.head(3))
 display(cdd_binance_df.shape)
 
 # %%
-ccxt_client = imvcdclcl.CcxtCsvFileSystemClient(
-    data_type="ohlcv", root_dir=root_dir, aws_profile="am"
+data_type_ccxt = config_ccxt["data"]["data_type"]
+root_dir_ccxt = config_ccxt["load"]["data_dir"]
+ccxt_csv_client = imvcdclcl.CcxtCsvFileSystemClient(
+    data_type_ccxt, root_dir_ccxt, aws_profile="am"
+)  
+# Removing the part below due to updated loader.
+#multiple_symbols_client = ivcdclcl.MultipleSymbolsImClient(
+#    class_=ccxt_client, mode="concat"
+#)
+ccxt_binance_df = ccxt_csv_client.read_data(
+    list(currency_pair_intersection_binance),
+    # The parameters below were added for consistency with a new loader.
+    start_ts = None, 
+    end_ts = None
 )
-multiple_symbols_client = ivcdclcl.MultipleSymbolsImClient(
-    class_=ccxt_client, mode="concat"
-)
-ccxt_binance_df = multiple_symbols_client.read_data(
-    currency_pair_intersection_binance
-)
-
-# %%
-ccxt_binance_df = ccxt_binance_df.sort_index()
 
 # %%
 display(ccxt_binance_df.head(3))
 display(ccxt_binance_df.shape)
 
 # %% [markdown]
+# # Returns and correlations using Grisha's suggestion
+
+# %% [markdown]
+# The idea is to use the __compute_stats_for_universe__ function to compute the stats in the loop. However, there are several boundaries to do that.
+
+# %%
+# Create the test list.
+test_list = list(currency_pair_intersection_binance)[:2]
+test_list
+
+
+# %%
+# Load 'CDD' data with resampling
+# The function below is designed to resample the data in the loop using compute_stats_for_universe.
+def correlation_func(price_data, config, resampling_freq):
+    price_data = price_data.reset_index()
+    resampler = price_data.groupby(
+        ["currency_pair", pd.Grouper(key="timestamp", freq=resampling_freq)]
+    )
+    close_series = resampler.close.last()
+    close_series = close_series.reset_index()
+    return close_series
+
+
+# %%
+# Applying the function specified above to the loop.
+compute_corr = lambda data: correlation_func(
+    data, config_cdd, "1D"
+)
+
+cdd_resampled_close = ramccsta.compute_stats_for_universe(
+    test_list, config_cdd, compute_corr
+) 
+
+# %%
+# As one can see, the compute_stats_for_universe function is reseting the index in the end, so the output
+# has no Multiindex that was used in the initial approach.
+cdd_resampled_close.head()
+
+# %%
+# Here's the quick look of the next steps.
+# This step can be looped using unique currency_pair.
+cur_df = cdd_resampled_close[cdd_resampled_close["currency_pair"] == "ETH/USDT"]
+# Returns calculation.
+cur_df["rets"] = cur_df["close"].pct_change()
+# Result.
+cur_df[["currency_pair", "timestamp", "rets"]].head()
+
+# %%
+# Then comes the combination of results and the calculation of correlations statistics.
+# It may look a bit messy in comparison to the old appraoch, so I will leave this part for discussions for now.
+
+# %% [markdown]
 # ## Calculate returns and correlation
 
 # %%
-# CDD names cleaning.
+# 'CDD' names cleaning.
 cdd_binance_df["currency_pair"] = cdd_binance_df["currency_pair"].str.replace(
     "/", "_"
 )
@@ -241,7 +295,7 @@ def resample_close_price(df: pd.DataFrame, resampling_freq: str) -> pd.Series:
     df = df.reset_index().rename(columns={"index": "stamp"})
     # Group by currency pairs and simultaneously resample to the desired frequency.
     resampler = df.groupby(
-        ["currency_pair", pd.Grouper(key="stamp", freq=resampling_freq)]
+        ["currency_pair", pd.Grouper(key="timestamp", freq=resampling_freq)]
     )
     # Take the last close value from each resampling period.
     close_series = resampler.close.last()
@@ -332,21 +386,21 @@ display(close_corr_5min)
 # # Statistical properties of a full symbol in CDD
 
 # %%
-# Clearing CDD currency pairs that are incorrect.
+# Clearing 'CDD' currency pairs that are incorrect.
 
 # Binance
 cdd_universe.remove("binance::SCU_USDT")
 
-# ftx has some critical mistakes in the downloading process, so can not continue analysis with them.
-# see CMTask801 - Downloading issues of FTX exchange from CDD universe for further reference.
+# FTX has some critical mistakes in the downloading process, so can not continue analysis with them.
+# see CMTask801 - Downloading issues of FTX exchange from 'CDD' universe for further reference.
 cdd_ftx_universe = [
     element for element in cdd_universe if element.startswith("ftx")
 ]
 for elem in cdd_ftx_universe:
     cdd_universe.remove(elem)
 
-# kucoin exchange: the timestamps are obviously wrong and with too short time period.
-# see CMTask253 - Fix timestamp for CDD - kucoin for reference.
+# Kucoin exchange: the timestamps are obviously wrong and with too short time period.
+# See CMTask253 - Fix timestamp for CDD - kucoin for reference.
 cdd_kucoin_universe = [
     element for element in cdd_universe if element.startswith("kucoin")
 ]
@@ -354,15 +408,15 @@ for elem in cdd_kucoin_universe:
     cdd_universe.remove(elem)
 
 # %% [markdown]
-# ## Comparison of intersection of full symbols between CCXT and CDD
+# ## Comparison of intersection of full symbols between 'CCXT' and 'CDD'
 
 # %%
-# Full symbols that are included in CDD but not in CCXT (cleaned from unavailable full symbols).
+# Full symbols that are included in 'CDD' but not in 'CCXT' (cleaned from unavailable full symbols).
 cdd_and_ccxt_cleaned = set(ccxt_universe).intersection(cdd_universe)
 len(cdd_and_ccxt_cleaned)
 
 # %% [markdown]
-# ### Load the intersection of full symbols for CDD and CCXT
+# ### Load the intersection of full symbols for 'CDD' and 'CCXT'
 
 # %% [markdown]
 # #### CDD
@@ -377,7 +431,7 @@ cdd_start_end_table = ramccsta.compute_stats_for_universe(
 )
 
 # %%
-# CDD names cleaning.
+# 'CDD' names cleaning.
 cdd_start_end_table["currency_pair"] = cdd_start_end_table[
     "currency_pair"
 ].str.replace("/", "_")
@@ -389,12 +443,12 @@ cdd_start_end_table.head(3)
 # #### CCXT
 
 # %%
+# Can not resolve the conflict below (seems like it's an issue with a new loader).
 compute_start_end_stats = lambda data: ramccsta.compute_start_end_stats(
     data, config_ccxt
 )
-
 ccxt_start_end_table = ramccsta.compute_stats_for_universe(
-    cdd_and_ccxt_cleaned, config_ccxt, compute_start_end_stats
+    list(test_list), config_ccxt, compute_start_end_stats,
 )
 
 # %%
@@ -409,21 +463,21 @@ def unify_start_end_tables(
     cdd_df: pd.DataFrame, ccxt_df: pd.DataFrame
 ) -> pd.DataFrame:
     """
-    Combine CCXT and CDD start-end stats tables into unique table.
+    Combine 'CCXT' and 'CDD' start-end stats tables into one table.
 
-    :param cdd_df: start-end table for CCXT
-    :param ccxt_df: start-end table for CDD
+    :param cdd_df: start-end table for 'CCXT'
+    :param ccxt_df: start-end table for 'CDD'
     :return: unified start-end table
     """
-    # set Multiindex.
+    # Set Multiindex.
     cdd_df = cdd_df.set_index(["exchange_id", "currency_pair"])
     ccxt_df = ccxt_df.set_index(["exchange_id", "currency_pair"])
-    # add suffixes.
+    # Add suffixes.
     ccxt_df = ccxt_df.add_suffix("_ccxt")
     cdd_df = cdd_df.add_suffix("_cdd")
-    # combine two universes.
+    # Combine two universes.
     ccxt_and_cdd = pd.concat([cdd_df, ccxt_df], axis=1)
-    # sort columns.
+    # Sort columns.
     cols_to_sort = ccxt_and_cdd.columns.to_list()
     ccxt_and_cdd = ccxt_and_cdd[sorted(cols_to_sort)]
     return ccxt_and_cdd
@@ -436,15 +490,15 @@ union_cdd_ccxt_stats = unify_start_end_tables(
 display(union_cdd_ccxt_stats)
 
 # %% [markdown]
-# ## Comparison of full symbols that are included in CDD but not available in CCXT
+# ## Comparison of full symbols that are included in 'CDD' but not available in 'CCXT'
 
 # %%
-# Set of full symbols that are included in CDD but not available in CCXT (cleaned from unavailable full symbols).
+# Set of full symbols that are included in 'CDD' but not available in 'CCXT' (cleaned from unavailable full symbols).
 cdd_and_not_ccxt_cleaned = set(cdd_universe).difference(ccxt_universe)
 len(cdd_and_not_ccxt_cleaned)
 
 # %%
-# for 'avg_data_points_per_day' the amount of "days_available" is equal to 0, so it crashes the calculations.
+# For 'avg_data_points_per_day' the amount of "days_available" is equal to 0, so it crashes the calculations.
 cdd_and_not_ccxt_cleaned.remove("binance::DAI_USDT")
 
 # %%
