@@ -1,18 +1,14 @@
 #!/usr/bin/env python
 
 """
+Read daily data from S3 in Parquet format and transform it into a different Parquet
+representation.
+
 # Example:
-> python im_v2/common/data/transform/pq_convert.py \
+> pq_convert.py \
     --start_date 2021-11-16 \
     --end_date 2021-11-17 \
     --dst_dir im/transform/test_data_by_date
-
-Read daily data from S3 in Parquet format and transform it into a different
-Parquet representation.
-
-Import as:
-
-import im_v2.common.data.transform.pq_convert as imvcdtpqco
 """
 
 import argparse
@@ -34,8 +30,6 @@ import helpers.hparser as hparser
 import helpers.hprint as hprint
 import helpers.htimer as htimer
 
-# import helpers.hsystem as hsysinte
-
 _LOG = logging.getLogger(__name__)
 
 # #############################################################################
@@ -43,7 +37,7 @@ _LOG = logging.getLogger(__name__)
 
 def _get_df(date) -> pd.DataFrame:
     """
-    Create Pandas random data, like:
+    Create Pandas random data looking like:
 
     ```
                 idx asset  val1  val2
@@ -80,7 +74,7 @@ def _get_df(date) -> pd.DataFrame:
     return df
 
 
-# s3 = s3fs.S3FileSystem(profile="saml-spm-sasm")
+# s3 = s3fs.S3FileSystem(profile="...")
 
 
 def get_available_dates():

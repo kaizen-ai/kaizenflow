@@ -4,18 +4,16 @@ Script to download historical data from CCXT.
 
 Use as:
 
-# Download data from 2019-01-01 to now, for trading universe `v03`
+# Download data for CCXT for trading universe `v03` from 2019-01-01 to now:
 > download_historical.py \
      --dst_dir 'test' \
      --universe 'v03' \
      --start_datetime '2019-01-01'
-
-Import as:
-
-import im_v2.ccxt.data.extract.download_historical as imvcdedohi
 """
 
-# TODO(gp): -> download_historical_data.py
+# TODO(gp): @danya -> download_historical_data.py
+# TODO(gp): @danya Make scripts executable and check that the linter doesn't add
+#  a short import
 
 import argparse
 import logging
@@ -57,21 +55,21 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="Trade universe for which to download data, e.g. 'latest', '01'",
+        help="Trade universe to download data for, e.g. 'latest', '01'",
     )
     parser.add_argument(
         "--start_datetime",
         action="store",
         required=True,
         type=str,
-        help="Start date of download in iso8601 format, e.g. '2021-09-08T00:00:00.000Z'",
+        help="Start date of download to parse with pd.Timestamp",
     )
     parser.add_argument(
         "--end_datetime",
         action="store",
         type=str,
         default=None,
-        help="End date of download in iso8601 format, e.g. '2021-10-08T00:00:00.000Z'."
+        help="End date of download to parse with pd.Timestamp. "
         "None means datetime.now())",
     )
     parser.add_argument(
@@ -109,7 +107,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if args.universe == "latest":
         trade_universe = imvccunun.get_trade_universe()["CCXT"]
     else:
-        # Retrieve data.
         trade_universe = imvccunun.get_trade_universe(args.universe)["CCXT"]
     _LOG.info("Getting data for exchanges %s", ", ".join(trade_universe.keys()))
     for exchange_id in trade_universe:
@@ -118,9 +115,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
             exchange_id, api_keys_path=args.api_keys
         )
         for currency_pair in trade_universe[exchange_id]:
-            _LOG.info(currency_pair)
+            _LOG.info("Downloading currency pair '%s'", currency_pair)
             # Download OHLCV data.
             currency_pair_data = exchange.download_ohlcv_data(
+                # TODO(gp, @danya): use keywords only for params with default
                 curr_symbol=currency_pair,
                 start_datetime=start_datetime,
                 end_datetime=end_datetime,
@@ -130,6 +128,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
             time.sleep(args.sleep_time)
             # Create file name based on exchange and currency pair.
             # E.g. 'binance_BTC_USDT.csv.gz'
+            # TODO(gp): @danya consider using a `.` or `-` to separate the fields
+            #  to easily parse them.
             file_name = f"{exchange_id}_{currency_pair}.csv.gz"
             full_path = os.path.join(args.dst_dir, file_name)
             # Save file.

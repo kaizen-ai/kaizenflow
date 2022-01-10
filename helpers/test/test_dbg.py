@@ -154,6 +154,7 @@ class Test_dassert_misc1(hunitest.TestCase):
     def test_is_instance5(self) -> None:
         with self.assertRaises(AssertionError) as cm:
             hdbg.dassert_isinstance("a", (float, int))
+        # TODO(gp): Replace all check_string with assert_equal
         self.check_string(str(cm.exception))
 
     # dassert_set_eq
@@ -168,7 +169,17 @@ class Test_dassert_misc1(hunitest.TestCase):
             a = [1, 2, 3]
             b = [2, 2, 1]
             hdbg.dassert_set_eq(a, b)
-        self.check_string(str(cm.exception))
+        # Check.
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        val1 - val2=[3]
+        val2 - val1=[]
+        val1=[1, 2, 3]
+        set eq
+        val2=[1, 2]
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
 
     # dassert_is_subset
 
@@ -182,7 +193,16 @@ class Test_dassert_misc1(hunitest.TestCase):
             a = [1, 2, 3]
             b = [4, 2, 1]
             hdbg.dassert_is_subset(a, b)
-        self.check_string(str(cm.exception))
+        # Check.
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        val1=[1, 2, 3]
+        issubset
+        val2=[1, 2, 4]
+        val1 - val2=[3]
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
 
     # dassert_not_intersection
 
@@ -196,7 +216,15 @@ class Test_dassert_misc1(hunitest.TestCase):
             a = [1, 2, 3]
             b = [4, 2, 1]
             hdbg.dassert_not_intersection(a, b)
-        self.check_string(str(cm.exception))
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        val1=[1, 2, 3]
+        has no intersection
+        val2=[1, 2, 4]
+        val1 - val2=[3]
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
 
     # dassert_no_duplicates
 

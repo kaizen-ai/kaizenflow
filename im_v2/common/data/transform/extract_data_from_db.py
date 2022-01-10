@@ -3,14 +3,10 @@
 Extract RT data from db to daily PQ files.
 
 # Example:
-> im_v2/common/data/transform/extract_data_from_db.py \
+> extract_data_from_db.py \
     --start_date 2021-11-23 \
     --end_date 2021-11-25 \
     --dst_dir im_v2/common/data/transform/test_data_by_date
-
-Import as:
-
-import im_v2.common.data.transform.extract_data_from_db as imvcdtedfd
 """
 
 import argparse

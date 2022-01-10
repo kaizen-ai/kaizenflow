@@ -1,6 +1,8 @@
 import helpers.hunit_test as hunitest
 import im_v2.common.data.client.clients as ivcdclcl
 
+# TODO(gp): -> test_full_symbol.py
+
 
 class TestDassertIsFullSymbolValid(hunitest.TestCase):
     def test1(self) -> None:
