@@ -4,6 +4,9 @@ Import as:
 import im_v2.ccxt.data.extract.dags.rt_dag as imvcdedrda
 """
 
+# TODO(gp): @danya -> let's call the dir `airflow` to not confuse it with DataFlow
+#  DAGs.
+
 import datetime
 
 import airflow

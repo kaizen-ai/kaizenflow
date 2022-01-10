@@ -10,7 +10,7 @@ import logging
 import os
 import pprint
 import sys
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Type, Union
 
 # import helpers.hversion as hversio
 # hversio.check_version()
@@ -334,21 +334,47 @@ def dassert_callable(
 # Set related.
 
 
+# TODO(gp): A more general solution is to have a function that traverses an obj
+#  and creates a corresponding obj only with deterministic data structures (e.g.,
+#  converting sets and dicts to sorted lists). Then we can print with `pprint`.
+def _set_to_str(set_: Set[Any]) -> str:
+    """
+    Return a string with the ordered content of a set.
+
+    This is useful when printing assertions that we want to be deterministic (e.g.,
+    if we use it inside unit tests like:
+    ```
+    with self.assertRaises(AssertionError) as cm:
+        ...
+    act = str(cm.exception)
+    exp = r"""
+    """
+    self.assert_equal(act, exp, fuzzy_match=True)
+    ```
+    """
+    list_ = sorted(list(set_))
+    return str(list_)
+
+
 def dassert_set_eq(
     val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
+    """
+    Check that `val1` has the same elements as `val2`, raise otherwise.
+    """
     val1 = set(val1)
     val2 = set(val2)
     # pylint: disable=superfluous-parens
     if not (val1 == val2):
         txt = []
-        txt.append("val1 - val2=" + str(val1.difference(val2)))
-        txt.append("val2 - val1=" + str(val2.difference(val1)))
+        txt.append("val1 - val2=" + _set_to_str(val1.difference(val2)))
+        txt.append("val2 - val1=" + _set_to_str(val2.difference(val1)))
+        # If both sets have less than `thr` elements print them as well.
         thr = 20
         if max(len(val1), len(val2)) < thr:
-            txt.append("val1=" + pprint.pformat(val1))
+            txt.append("val1=" + _set_to_str(val1))
             txt.append("set eq")
-            txt.append("val2=" + pprint.pformat(val2))
+            txt.append("val2=" + _set_to_str(val2))
         _dfatal(txt, msg, *args)
 
 
@@ -357,33 +383,34 @@ def dassert_is_subset(
     val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
     """
-    Check that val1 is a subset of val2, raise otherwise.
+    Check that `val1` is a subset of `val2`, raise otherwise.
     """
     val1 = set(val1)
     val2 = set(val2)
     if not val1.issubset(val2):
         txt = []
-        txt.append("val1=" + pprint.pformat(val1))
+        txt.append("val1=" + _set_to_str(val1))
         txt.append("issubset")
-        txt.append("val2=" + pprint.pformat(val2))
-        txt.append("val1 - val2=" + str(val1.difference(val2)))
+        txt.append("val2=" + _set_to_str(val2))
+        txt.append("val1 - val2=" + _set_to_str(val1.difference(val2)))
         _dfatal(txt, msg, *args)
 
 
+# TODO(gp): -> dassert_no_intersection to match other functions.
 def dassert_not_intersection(
     val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
     """
-    Check that val1 has no intersection val2, raise otherwise.
+    Check that `val1` has no intersection `val2`, raise otherwise.
     """
     val1 = set(val1)
     val2 = set(val2)
     if val1.intersection(val2):
         txt = []
-        txt.append("val1=" + pprint.pformat(val1))
+        txt.append("val1=" + _set_to_str(val1))
         txt.append("has no intersection")
-        txt.append("val2=" + pprint.pformat(val2))
-        txt.append("val1 - val2=" + str(val1.difference(val2)))
+        txt.append("val2=" + _set_to_str(val2))
+        txt.append("val1 - val2=" + _set_to_str(val1.difference(val2)))
         _dfatal(txt, msg, *args)
 
 

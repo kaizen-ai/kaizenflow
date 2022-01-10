@@ -1,23 +1,26 @@
 """
-Tools for handling IM Postgres DB.
+Manage (e.g., create, destroy, query) IM Postgres DB.
 
 Import as:
 
 import im_v2.common.db.utils as imvcodbut
 """
+
 import logging
 from typing import Optional
 
 import psycopg2 as psycop
 
-import helpers.hsql_test as hsqltest
 import helpers.hsql as hsql
+import helpers.hsql_test as hsqltest
 import im.ib.sql_writer as imibsqwri
 import im.kibot.sql_writer as imkisqwri
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
+
+# TODO(gp): -> db_utils.py
 
 
 def get_common_create_table_query() -> str:
@@ -65,9 +68,10 @@ def get_data_types_query() -> str:
     return query
 
 
+# TODO(gp): @danya, @grisha -> db_connection everywhere
 def create_all_tables(connection: hsql.DbConnection) -> None:
     """
-    Create tables inside a database.
+    Create all the tables inside an IM database.
 
     :param connection: a database connection
     """
@@ -103,6 +107,7 @@ def create_im_database(
     :param overwrite: overwrite existing database
     """
     _LOG.debug("connection=%s", connection)
+    # Create a DB.
     hsql.create_database(connection, dbname=new_db, overwrite=overwrite)
     conn_details = hsql.db_connection_to_tuple(connection)
     new_connection = hsql.get_connection(
@@ -112,11 +117,15 @@ def create_im_database(
         user=conn_details.user,
         password=conn_details.password,
     )
+    # Create table..
     create_all_tables(new_connection)
     new_connection.close()
 
 
 # #############################################################################
+
+
+# TODO(gp): Move to db_test_utils.py
 
 
 class TestImDbHelper(hsqltest.TestDbHelper):

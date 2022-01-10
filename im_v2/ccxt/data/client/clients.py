@@ -29,7 +29,8 @@ _LOG = logging.getLogger(__name__)
 _LATEST_DATA_SNAPSHOT = "20210924"
 
 
-# TODO(gp): Move inside AbstractCcxtClient.
+# TODO(gp): @grisha, Move inside AbstractCcxtClient since it's private to
+#  that class.
 _DATA_TYPES = ["ohlcv"]
 
 
@@ -38,15 +39,18 @@ _DATA_TYPES = ["ohlcv"]
 # #############################################################################
 
 
-# TODO(gp): -> _CcxtClient
+# TODO(gp): Consider splitting this file into chunks
+
+# TODO(gp): @grisha Call it CcxtClient to simplify the naming scheme.
+#  The fact that is abstract is in the definition.
 class AbstractCcxtClient(imvcdcli.ImClientReadingOneSymbol, abc.ABC):
     """
     Abstract interface for CCXT client.
 
     Contain common code for all the CCXT clients, e.g.,
     - getting CCXT universe
-    - applying common transformation for all the data from CCXT (see
-      `_apply_common_transformation`)
+    - applying common transformation for all the data from CCXT
+        - E.g., `_apply_olhlcv_transformations()`, `_apply_vendor_normalization()`
     """
 
     def __init__(self, data_type: str) -> None:
@@ -208,10 +212,10 @@ class CcxtDbClient(AbstractCcxtClient):
 # #############################################################################
 
 
-# TODO(gp): -> _CcxtFileSystemClient
+# TODO(gp): @grisha -> CcxtFileSystemClient to simplify the naming scheme.
 class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
     """
-    Abstract interface for CCXT filesystem client.
+    Abstract interface for CCXT client using local or S3 filesystem as backend.
     """
 
     def __init__(
@@ -251,7 +255,7 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
         data_snapshot: Optional[str] = None,
     ) -> pd.DataFrame:
         """
-        Load data from a filesystem and process it for use downstream.
+        Load data for a single symbol from a filesystem and return it as df.
 
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
@@ -338,6 +342,7 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
             hdbg.dassert_file_exists(file_path)
         return file_path
 
+    # TODO(gp): @grisha -> _add_symbol_columns
     @staticmethod
     def _preprocess_filesystem_data(
         data: pd.DataFrame,
@@ -372,6 +377,8 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
 class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
     """
     CCXT client for data stored as CSV from local or S3 filesystem.
+
+    Each CSV file stores data for a single symbol so we use `Ccx
     """
 
     def __init__(
@@ -416,6 +423,8 @@ class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
 # #############################################################################
 
 
+# TODO(gp): @grisha This should descend from `ImClientReadingMultipleSymbols`
+#  since it reads PQ files.
 class CcxtParquetFileSystemClient(AbstractCcxtFileSystemClient):
     """
     CCXT client for data stored as Parquet from local or S3 filesystem.

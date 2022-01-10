@@ -18,7 +18,7 @@ import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): Move to symbol.py or full_symbol.py
+# TODO(gp): @grisha Move to full_symbol.py
 
 # Store information about an exchange and a symbol (e.g., `binance::BTC_USDT`).
 # Note that information about the vendor is carried in the `ImClient` itself,
@@ -77,8 +77,10 @@ def construct_full_symbol(exchange: str, symbol: str) -> FullSymbol:
 # AbstractImClient
 # #############################################################################
 
+# TODO(gp): Consider splitting in one file per class. Not sure about the trade-off
+#  between file proliferation and more organization.
 
-# TODO(gp): -> ImClient
+# TODO(gp): @grisha -> ImClient. This requires changes in all repos.
 class AbstractImClient(abc.ABC):
     """
     Retrieve market data for different vendors from different backends.
@@ -86,7 +88,7 @@ class AbstractImClient(abc.ABC):
     Invariants:
     - data is normalized so that the index is a UTC timestamp
     - data is resampled on a 1min grid
-    - data has no duplicates
+    - data is guaranteed to have no duplicates
     """
 
     def read_data(
@@ -221,6 +223,7 @@ class AbstractImClient(abc.ABC):
         df = hpandas.drop_duplicates(df)
         df = hpandas.resample_df(df, "T")
         # Trim the data with index in [start_ts, end_ts].
+        # TODO(gp): @grisha This should work now. Enable and test it.
         if False:
             # Instance of '2021-09-09T00:02:00.000000000' is '<class 'numpy.datetime64'>' instead of '(<class 'pandas._libs.tslibs.timestamps.Timestamp'>, <class 'datetime.datetime'>)'
             ts_col_name = None

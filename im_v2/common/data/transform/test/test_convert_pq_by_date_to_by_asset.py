@@ -3,7 +3,7 @@ import os
 from typing import Any, Dict, Tuple
 
 import helpers.hgit as hgit
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 import im_v2.common.data.transform.convert_pq_by_date_to_by_asset as imvcdtcpbdtba
 
@@ -64,7 +64,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
             cmd.append("--verbose")
             cmd.append("--reset_index")
         cmd = " ".join(cmd)
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
         return test_dir, by_date_dir
 
     def check_directory_structure_with_file_contents(
@@ -146,7 +146,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         if verbose:
             cmd.append("--asset_col_name ticker")
         cmd = " ".join(cmd)
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
         self.check_directory_structure_with_file_contents(
             by_date_dir, by_asset_dir
         )
