@@ -7,7 +7,6 @@ import im_v2.ccxt.data.extract.dags.rt_dag as imvcdedrda
 import datetime
 
 import airflow
-from airflow.utils.dates import days_ago
 from airflow.contrib.operators.ecs_operator import ECSOperator
 
 # Set ECS configuration.
@@ -50,8 +49,8 @@ dag = airflow.DAG(
     # TODO(Danya): Improve the runtime of the script to fit into 1 minute.
     schedule_interval="*/3 * * * *",
     catchup=False,
-    #start_date=days_ago(1),
-    start_date = datetime.datetime.now() + datetime.timedelta(minutes=3)
+    # start_date=days_ago(1),
+    start_date=datetime.datetime.now() + datetime.timedelta(minutes=3),
 )
 
 
@@ -75,12 +74,14 @@ downloading_task = ECSOperator(
             }
         ]
     },
-    command=bash_command,
-    default_args=default_args,
-    environment={
-        "DATA_INTERVAL_START": "{{ execution_date }}",
-        "DATA_INTERVAL_END": "{{ next_execution_date - macros.timedelta(5) }}",
+    network_configuration={
+        "awsvpcConfiguration": {
+            "securityGroups": ecs_security_group,
+            "subnets": ecs_subnets,
+        },
     },
+    awslogs_group=ecs_awslogs_group,
+    awslogs_stream_prefix=ecs_awslogs_stream_prefix,
 )
 
 downloading_task
