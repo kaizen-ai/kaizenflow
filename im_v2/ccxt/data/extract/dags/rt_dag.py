@@ -11,7 +11,7 @@ from airflow.contrib.operators.ecs_operator import ECSOperator
 
 # Set ECS configuration.
 ecs_cluster = "Crypto1"
-ecs_task_definition = "cmamp1"
+ecs_task_definition = "cmamp"
 ecs_subnets = ["subnet-0d7a4957ff09e7cc5", "subnet-015eee0c93f916f23"]
 ecs_security_group = ["sg-0c605e9a7bb0df2aa"]
 ecs_awslogs_group = "/ecs/airflow-ecs-operator"
@@ -20,7 +20,7 @@ ecs_awslogs_stream_prefix = "ecs"
 
 # Pass default parameters for the DAG.
 default_args = {
-    "retries": 1,
+    "retries": 0,
     "retry_delay": datetime.timedelta(minutes=1),
     "email_on_failure": False,
     "owner": "airflow",
@@ -50,27 +50,30 @@ dag = airflow.DAG(
     schedule_interval="*/3 * * * *",
     catchup=False,
     # start_date=days_ago(1),
-    start_date=datetime.datetime.now() + datetime.timedelta(minutes=3),
+    start_date=datetime.datetime(2022, 1, 11, 18, 40, 0),
 )
 
 
 # Run the script with ECS operator.
 downloading_task = ECSOperator(
-    task_id="run_ccxt_realtime",
+    task_id="realtime_ccxt",
     dag=dag,
     aws_conn_id=None,
     cluster=ecs_cluster,
     task_definition=ecs_task_definition,
     launch_type="FARGATE",
     overrides={
-        "ContainerOverrides": [
+        "containerOverrides": [
             {
-                "name": "run_ccxt_realtime",
+                "name": "cmamp",
                 "command": bash_command,
-                "environment": {
-                    "DATA_INTERVAL_START": "{{ execution_date }}",
-                    "DATA_INTERVAL_END": "{{ next_execution_date - macros.timedelta(5) }}",
-                },
+                "environment": [{
+                    "name": "DATA_INTERVAL_START",
+                    "value": "{{ execution_date }}"},
+                    {
+                    "name": "DATA_INTERVAL_END",
+                    "value": "{{ execution_date - macros.timedelta(5) }}",
+                }],
             }
         ]
     },
