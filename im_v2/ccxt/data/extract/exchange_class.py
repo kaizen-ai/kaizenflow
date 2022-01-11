@@ -138,8 +138,8 @@ class CcxtExchange:
         all_bars = []
         # Iterate over the time period.
         # Note: the iteration goes from start date to end date in milliseconds,
-        # with the step defined by `step` parameter. Because of this, the output
-        # can go slightly over the end date.
+        # with the step defined by `bar_per_iteration` parameter.
+        # Because of this, the output can go slightly over the end date.
         for t in tqdm.tqdm(
             range(
                 start_datetime,
