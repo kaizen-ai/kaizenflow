@@ -7,42 +7,15 @@ import im_v2.ccxt.data.extract.dags.rt_dag as imvcdedrda
 import datetime
 
 import airflow
-import boto3
 
-# Set up boto client.
-ssm = boto3.client("ssm")
 # Set ECS configuration.
 ecs_config = {
-    "cluster": str(
-        ssm.get_parameter(Name="/mwaa/ecs/cluster", WithDecryption=True)[
-            "Parameter"
-        ]["Value"]
-    ),
-    "task_definition": str(
-        ssm.get_parameter(Name="/mwaa/ecs/cluster", WithDecryption=True)[
-            "Parameter"
-        ]["Value"]
-    ),
-    "subnets": str(
-        ssm.get_parameter(Name="/mwaa/vpc/private_subnets", WithDecryption=True)[
-            "Parameter"
-        ]["Value"]
-    ),
-    "security_group": str(
-        ssm.get_parameter(Name="/mwaa/vpc/security_group", WithDecryption=True)[
-            "Parameter"
-        ]["Value"]
-    ),
-    "awslogs_group": str(
-        ssm.get_parameter(Name="/mwaa/cw/log_group", WithDecryption=True)[
-            "Parameter"
-        ]["Value"]
-    ),
-    "awslogs_stream_prefix": str(
-        ssm.get_parameter(Name="/mwaa/cw/log_stream", WithDecryption=True)[
-            "Parameter"
-        ]["Value"]
-    ),
+    "cluster": "Crypto1",
+    "task_definition": "cmamp1",
+    "subnets": ["subnet-0d7a4957ff09e7cc5", "subnet-015eee0c93f916f23"],
+    "security_group": ["sg-0c605e9a7bb0df2aa"],
+    "awslogs_group": "/ecs/airflow-ecs-operator",
+    "awslogs_stream_prefix": "ecs",
 }
 
 
