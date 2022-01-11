@@ -1,11 +1,8 @@
 """
 Import as:
 
-import im_v2.ccxt.data.extract.dags.rt_dag as ivcdedrda
+import im_v2.ccxt.data.extract.airflow.rt_dag as ivcdedrda
 """
-
-# TODO(gp): @danya -> let's call the dir `airflow` to not confuse it with DataFlow
-#  DAGs.
 
 import datetime
 
