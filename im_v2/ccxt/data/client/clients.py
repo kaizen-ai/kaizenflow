@@ -43,7 +43,7 @@ _DATA_TYPES = ["ohlcv"]
 
 # TODO(gp): @grisha Call it CcxtClient to simplify the naming scheme.
 #  The fact that is abstract is in the definition.
-class AbstractCcxtClient(imvcdcli.ImClientReadingOneSymbol, abc.ABC):
+class AbstractCcxtClient(imvcdcli.AbstractImClient, abc.ABC):
     """
     Abstract interface for CCXT client.
 
@@ -149,8 +149,8 @@ class AbstractCcxtClient(imvcdcli.ImClientReadingOneSymbol, abc.ABC):
 # CcxtDbClient
 # #############################################################################
 
-
-class CcxtDbClient(AbstractCcxtClient):
+# TODO(Grisha): it should descend from `ImClientReadingMultipleSymbols`.
+class CcxtDbClient(AbstractCcxtClient, imvcdcli.ImClientReadingOneSymbol):
     """
     CCXT client for data from the database.
     """
@@ -213,7 +213,7 @@ class CcxtDbClient(AbstractCcxtClient):
 
 
 # TODO(gp): @grisha -> CcxtFileSystemClient to simplify the naming scheme.
-class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
+class AbstractCcxtFileSystemClient(abc.ABC):
     """
     Abstract interface for CCXT client using local or S3 filesystem as backend.
     """
@@ -374,7 +374,7 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
 # #############################################################################
 
 
-class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
+class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient, imvcdcli.ImClientReadingOneSymbol):
     """
     CCXT client for data stored as CSV from local or S3 filesystem.
 
@@ -425,7 +425,7 @@ class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
 
 # TODO(gp): @grisha This should descend from `ImClientReadingMultipleSymbols`
 #  since it reads PQ files.
-class CcxtParquetFileSystemClient(AbstractCcxtFileSystemClient):
+class CcxtParquetFileSystemClient(AbstractCcxtFileSystemClient, imvcdcli.ImClientReadingMultipleSymbols):
     """
     CCXT client for data stored as Parquet from local or S3 filesystem.
     """
