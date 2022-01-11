@@ -19,13 +19,13 @@ original shape=(1, 1)
 Head:
 {
     "0":{
-        "dummy-value_3":0
+        "dummy_value_3":0
     }
 }
 Tail:
 {
     "0":{
-        "dummy-value_3":0
+        "dummy_value_3":0
     }
 }
 '''
@@ -36,13 +36,13 @@ original shape=(1, 1)
 Head:
 {
     "0":{
-        "dummy-value_3":0
+        "dummy_value_3":0
     }
 }
 Tail:
 {
     "0":{
-        "dummy-value_3":0
+        "dummy_value_3":0
     }
 }
 '''
@@ -53,13 +53,13 @@ original shape=(1, 1)
 Head:
 {
     "0":{
-        "dummy-value_3":0
+        "dummy_value_3":0
     }
 }
 Tail:
 {
     "0":{
-        "dummy-value_3":0
+        "dummy_value_3":0
     }
 }
 '''

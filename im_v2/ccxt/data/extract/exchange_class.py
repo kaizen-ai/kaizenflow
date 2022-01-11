@@ -36,13 +36,13 @@ class CcxtExchange:
         """
         Constructor.
 
-        :param: exchange_id: CCXT exchange id
+        :param: exchange_id: CCXT exchange id (e.g., `binance`)
         :param: api_keys_path: path to JSON file with API credentials
         """
         self.exchange_id = exchange_id
         self.api_keys_path = api_keys_path or API_KEYS_PATH
         self._exchange = self.log_into_exchange()
-        self.currency_pairs = self.get_exchange_currencies()
+        self.currency_pairs = self.get_exchange_currency_pairs()
 
     def load_api_credentials(self) -> Dict[str, Dict[str, Union[str, bool]]]:
         """
@@ -56,7 +56,7 @@ class CcxtExchange:
 
     def log_into_exchange(self) -> ccxt.Exchange:
         """
-        Log into an exchange via CCXT, returning the corresponding
+        Log into an exchange via CCXT and return the corresponding
         `ccxt.Exchange` object.
         """
         # Load all the exchange credentials.
@@ -79,8 +79,7 @@ class CcxtExchange:
         )
         return exchange
 
-    # TODO(gp): -> get_exchange_currency_pairs
-    def get_exchange_currencies(self) -> List[str]:
+    def get_exchange_currency_pairs(self) -> List[str]:
         """
         Get all the currency pairs available for the exchange.
         """
@@ -88,30 +87,37 @@ class CcxtExchange:
 
     def download_ohlcv_data(
         self,
-        # TODO(gp): -> currency_pair
-        curr_symbol: str,
+        currency_pair: str,
         start_datetime: Optional[pd.Timestamp] = None,
         end_datetime: Optional[pd.Timestamp] = None,
-        step: Optional[int] = 500,
-        sleep_time: int = 1,
+        bar_per_iteration: Optional[int] = 500,
+        sleep_time_in_secs: int = 1,
     ) -> pd.DataFrame:
         """
         Download minute OHLCV bars.
 
-        :param curr_symbol: a currency pair, e.g. "BTC_USDT"
+        :param currency_pair: a currency pair, e.g. "BTC_USDT"
         :param start_datetime: starting point for data
         :param end_datetime: end point for data (included)
-        :param step: number of bars per iteration
-        :param sleep_time: time in seconds between iterations
+        :param bar_per_iteration: number of bars per iteration
+        :param sleep_time_in_secs: time in seconds between iterations
         :return: OHLCV data from CCXT
         """
-        # Verify that the exchange has fetch_ohlcv method.
-        hdbg.dassert(self._exchange.has["fetchOHLCV"])
-        # Verify that the provided currency pair is present in exchange.
-        hdbg.dassert_in(curr_symbol, self.currency_pairs)
+        hdbg.dassert(
+            self._exchange.has["fetchOHLCV"],
+            "Exchange %s doesn't has fetch_ohlcv method",
+            self._exchange,
+        )
+        hdbg.dassert_in(
+            currency_pair,
+            self.currency_pairs,
+            "Currency pair is not present in exchange",
+        )
         # Get latest bars if no datetime is provided.
         if end_datetime is None and start_datetime is None:
-            return self._fetch_ohlcv(curr_symbol, step=step)
+            return self._fetch_ohlcv(
+                currency_pair, bar_per_iteration=bar_per_iteration
+            )
         # Verify that date parameters are of correct format.
         hdbg.dassert_isinstance(
             end_datetime,
@@ -132,22 +138,28 @@ class CcxtExchange:
         all_bars = []
         # Iterate over the time period.
         # Note: the iteration goes from start date to end date in milliseconds,
-        # with the step defined by `step` parameter. Because of this, the output
-        # can go slightly over the end date.
+        # with the step defined by `bar_per_iteration` parameter.
+        # Because of this, the output can go slightly over the end date.
         for t in tqdm.tqdm(
-            range(start_datetime, end_datetime + duration, duration * step)
+            range(
+                start_datetime,
+                end_datetime + duration,
+                duration * bar_per_iteration,
+            )
         ):
-            bars = self._fetch_ohlcv(curr_symbol, since=t, step=step)
+            bars = self._fetch_ohlcv(
+                currency_pair, since=t, bar_per_iteration=bar_per_iteration
+            )
             all_bars.append(bars)
-            time.sleep(sleep_time)
-        # TODO(*): Double check if dataframes are properly concatenated.
+            time.sleep(sleep_time_in_secs)
+        # TODO(gp): Double check if dataframes are properly concatenated.
         return pd.concat(all_bars)
 
-    def download_order_book(self, curr_pair: str) -> Dict[str, Any]:
+    def download_order_book(self, currency_pair: str) -> Dict[str, Any]:
         """
         Download order book for a currency pair.
 
-        :param curr_pair: a currency pair, e.g. 'BTC_USDT'
+        :param currency_pair: a currency pair, e.g. 'BTC_USDT'
         :return: order book status. output is a nested dictionary with order book
         at the moment of request. E.g.,
             ```
@@ -162,13 +174,16 @@ class CcxtExchange:
             ```
         """
         # Change currency pair to CCXT format.
-        curr_pair = curr_pair.replace("_", "/")
-        # Check that exchange and currency pairs are valid.
-        hdbg.dassert(self._exchange.has["fetchOrderBook"])
-        hdbg.dassert_in(curr_pair, self.currency_pairs)
+        currency_pair = currency_pair.replace("_", "/")
+        hdbg.dassert(
+            self._exchange.has["fetchOrderBook"],
+            "Exchange %s doesn't have fetchOrderBook",
+            self._exchange,
+        )
+        hdbg.dassert_in(currency_pair, self.currency_pairs)
         # Download current order book.
         # TODO(Grisha): use `_` instead of `/` as currencies separator in `symbol`.
-        order_book = self._exchange.fetch_order_book(curr_pair)
+        order_book = self._exchange.fetch_order_book(currency_pair)
         return order_book
 
     def _fetch_ohlcv(
@@ -176,7 +191,7 @@ class CcxtExchange:
         currency_pair: str,
         timeframe: str = "1m",
         since: int = None,
-        step: int = None,
+        bar_per_iteration: int = None,
     ) -> pd.DataFrame:
         """
         Wrapper for fetching one minute OHLCV bars.
@@ -184,15 +199,24 @@ class CcxtExchange:
         :param currency_pair: currency pair, e.g. "BTC_USDT"
         :param timeframe: fetch data for certain timeframe
         :param since: from when is data fetched in milliseconds
-        :param step: number of bars per iteration
+        :param bar_per_iteration: number of bars per iteration
 
-        :return: OHLCV data from CCXT
+        :return: OHLCV data from CCXT that looks like:
+            TODO(gp): @danya Add snippet of data
+            ```
+            ...
+            ```
         """
         # Change currency pair to CCXT format.
         currency_pair = currency_pair.replace("_", "/")
+        # Fetch the data through CCX.
         bars = self._exchange.fetch_ohlcv(
-            currency_pair, timeframe=timeframe, since=since, limit=step
+            currency_pair,
+            timeframe=timeframe,
+            since=since,
+            limit=bar_per_iteration,
         )
+        # Package the data.
         columns = ["timestamp", "open", "high", "low", "close", "volume"]
         bars = pd.DataFrame(bars, columns=columns)
         bars["created_at"] = str(hdateti.get_current_time("UTC"))

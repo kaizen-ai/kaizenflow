@@ -1,5 +1,4 @@
 import logging
-from typing import Any, List, Optional
 
 import pandas as pd
 import pytest
@@ -27,7 +26,7 @@ class Test_CcxtExchange(hunitest.TestCase):
         """
         # Extract a list of currencies.
         exchange_class = imvcdeexcl.CcxtExchange("binance")
-        curr_list = exchange_class.get_exchange_currencies()
+        curr_list = exchange_class.get_exchange_currency_pairs()
         # Verify that the output is a non-empty list with only string values.
         hdbg.dassert_container_type(curr_list, list, str)
         self.assertGreater(len(curr_list), 0)
@@ -42,7 +41,7 @@ class Test_CcxtExchange(hunitest.TestCase):
         end_date = "2021-09-10T00:00:00Z"
         # Extract data.
         actual = exchange_class.download_ohlcv_data(
-            curr_symbol="BTC_USDT",
+            currency_pair="BTC_USDT",
             start_datetime=pd.Timestamp(start_date),
             end_datetime=pd.Timestamp(end_date),
         )

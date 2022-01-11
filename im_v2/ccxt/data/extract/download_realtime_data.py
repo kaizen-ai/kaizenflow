@@ -5,7 +5,7 @@ Script to download OHLCV data from CCXT in real-time.
 Use as:
 
 # Download OHLCV data for universe 'v03', saving only on disk:
-> im_v2/ccxt/data/extract/download_realtime.py \
+> download_realtime_data.py \
     --to_datetime '20211204-194432' \
     --from_datetime '20211204-193932' \
     --dst_dir 'test/ccxt_test' \
@@ -15,10 +15,8 @@ Use as:
 
 Import as:
 
-import im_v2.ccxt.data.extract.download_realtime as imvcdedore
+import im_v2.ccxt.data.extract.download_realtime_data as imvcdedrda
 """
-
-# TODO(gp): -> download_realtime_data.py
 
 import argparse
 import collections
@@ -63,81 +61,82 @@ def instantiate_exchange(
     :return: named tuple with exchange id and currencies
     """
     exchange_to_currency = collections.namedtuple(
-        "ExchangeToCurrency", ["id", "instance", "pairs"]
+        "ExchangeToCurrency",
+        ["id", "instance", "currency_pairs"],
     )
     exchange_to_currency.id = exchange_id
     exchange_to_currency.instance = imvcdeexcl.CcxtExchange(exchange_id, api_keys)
-    exchange_to_currency.pairs = ccxt_universe[exchange_id]
+    exchange_to_currency.currency_pairs = ccxt_universe[exchange_id]
     return exchange_to_currency
 
 
 def _download_data(
-    start_datetime: pd.Timestamp,
-    end_datetime: pd.Timestamp,
+    start_timestamp: pd.Timestamp,
+    end_timestamp: pd.Timestamp,
     data_type: str,
     exchange: NamedTuple,
-    pair: str,
+    currency_pair: str,
 ) -> Union[pd.DataFrame, Dict[str, Any]]:
     """
     Download order book or OHLCV data.
 
-    :param start_datetime: start of time period, e.g. `pd.Timestamp("2021-01-01")`
-    :param start_datetime: end of time period, e.g. `pd.Timestamp("2021-01-01")`
+    :param start_timestamp: start of time period, e.g. `pd.Timestamp("2021-01-01")`
+    :param end_timestamp: end of time period, e.g. `pd.Timestamp("2021-01-01")`
     :param data_type: 'ohlcv' or 'orderbook'
     :param exchange: exchange instance
-    :param pair: currency pair, e.g. 'BTC_USDT'
+    :param currency_pair: currency pair, e.g. 'BTC_USDT'
     :return: downloaded data
     """
     # Download 5 latest OHLCV candles.
     if data_type == "ohlcv":
-        pair_data = exchange.instance.download_ohlcv_data(
-            start_datetime=start_datetime,
-            end_datetime=end_datetime,
-            curr_symbol=pair.replace("_", "/"),
+        data = exchange.instance.download_ohlcv_data(
+            currency_pair.replace("_", "/"),
+            start_datetime=start_timestamp,
+            end_datetime=end_timestamp,
         )
         # Assign pair and exchange columns.
-        pair_data["currency_pair"] = pair
-        pair_data["exchange_id"] = exchange.id
+        data["currency_pair"] = currency_pair
+        data["exchange_id"] = exchange.id
     elif data_type == "orderbook":
         # Download current state of the orderbook.
-        pair_data = exchange.instance.download_order_book(pair)
+        data = exchange.instance.download_order_book(currency_pair)
     else:
         hdbg.dfatal(
             "'%s' data type is not supported. Supported data types: 'ohlcv', 'orderbook'",
             data_type,
         )
-    return pair_data
+    return data
 
 
 def _save_data_on_disk(
     data_type: str,
     dst_dir: str,
-    pair_data: Union[pd.DataFrame, Dict[str, Any]],
+    data: Union[pd.DataFrame, Dict[str, Any]],
     exchange: NamedTuple,
-    pair: str,
+    currency_pair: str,
 ) -> None:
     """
     Save downloaded data to disk.
 
     :param data_type: 'ohlcv' or 'orderbook'
     :param dst_dir: directory to save to
-    :param pair_data: downloaded data
+    :param data: downloaded data
     :param exchange: exchange instance
     :param pair: currency pair, e.g. 'BTC_USDT'
     """
     current_datetime = hdateti.get_current_time("ET")
     if data_type == "ohlcv":
-        file_name = f"{exchange.id}_{pair}_{current_datetime}.csv.gz"
+        file_name = f"{exchange.id}_{currency_pair}_{current_datetime}.csv.gz"
         full_path = os.path.join(dst_dir, file_name)
-        pair_data.to_csv(full_path, index=False, compression="gzip")
+        data.to_csv(full_path, index=False, compression="gzip")
     elif data_type == "orderbook":
         file_name = (
             f"orderbook_{exchange.id}_"
-            f"{pair}_"
+            f"{currency_pair}_"
             f"{hdateti.get_current_timestamp_as_string('ET')}.json"
         )
         full_path = os.path.join(dst_dir, file_name)
-        hio.to_json(full_path, pair_data)
+        hio.to_json(full_path, data)
     else:
         hdbg.dfatal(
             "'%s' data type is not supported. Supported data types: 'ohlcv', 'orderbook'",
@@ -226,11 +225,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     start = pd.Timedelta(args.from_datetime)
     # Download data for specified time period.
     for exchange in exchanges:
-        for pair in exchange.pairs:
-            pair_data = _download_data(start, end, args.data_type, exchange, pair)
+        for currency_pair in exchange.currency_pairs:
+            pair_data = _download_data(
+                start, end, args.data_type, exchange, currency_pair
+            )
             # Save to disk.
             _save_data_on_disk(
-                args.data_type, args.dst_dir, pair_data, exchange, pair
+                args.data_type, args.dst_dir, pair_data, exchange, currency_pair
             )
             hsql.execute_insert_query(
                 connection=connection,
