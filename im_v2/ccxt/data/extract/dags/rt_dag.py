@@ -4,13 +4,9 @@ Import as:
 import im_v2.ccxt.data.extract.dags.rt_dag as imvcdedrda
 """
 
-# TODO(gp): @danya -> let's call the dir `airflow` to not confuse it with DataFlow
-#  DAGs.
-
 import datetime
 
 import airflow
-from airflow.providers.docker.operators.docker import DockerOperator
 
 # Pass default parameters for the DAG.
 default_args = {
@@ -28,7 +24,7 @@ with airflow.DAG(
     # TODO(Danya): Improve the runtime of the script to fit into 1 minute.
     schedule_interval="*/3 * * * *",
     catchup=False,
-    # TODO(Danya): Change to fixed datetime before running in prod.
+    # TODO(Danya): Change to airflow.utils.dates method.
     start_date=datetime.datetime.now(),
 ) as dag:
     # Pass default parameters for the script.
