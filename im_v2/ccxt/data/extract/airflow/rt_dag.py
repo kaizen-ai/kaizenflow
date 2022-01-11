@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.ccxt.data.extract.airflow.rt_dag as ivcdedrda
+import im_v2.ccxt.data.extract.airflow.rt_dag as imvcdearda
 """
 
 import datetime

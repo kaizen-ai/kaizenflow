@@ -90,9 +90,9 @@ def _download_data(
     # Download 5 latest OHLCV candles.
     if data_type == "ohlcv":
         data = exchange.instance.download_ohlcv_data(
+            currency_pair.replace("_", "/"),
             start_datetime=start_timestamp,
             end_datetime=end_timestamp,
-            curr_symbol=currency_pair.replace("_", "/"),
         )
         # Assign pair and exchange columns.
         data["currency_pair"] = currency_pair

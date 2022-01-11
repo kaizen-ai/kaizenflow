@@ -121,13 +121,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 currency_pair,
                 start_datetime=start_datetime,
                 end_datetime=end_datetime,
-                step=args.step,
+                bar_per_iteration=args.step,
             )
             # Sleep between iterations.
             time.sleep(args.sleep_time)
             # Create file name based on exchange and currency pair.
             # E.g. 'binance_BTC_USDT.csv.gz'
-            file_name = f"{exchange_id}_{currency_pair}.csv.gz"
+            file_name = f"{exchange_id}-{currency_pair}.csv.gz"
             full_path = os.path.join(args.dst_dir, file_name)
             # Save file.
             currency_pair_data.to_csv(
