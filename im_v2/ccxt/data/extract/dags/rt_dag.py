@@ -7,16 +7,15 @@ import im_v2.ccxt.data.extract.dags.rt_dag as imvcdedrda
 import datetime
 
 import airflow
+from airflow.utils.dates import days_ago
 
 # Set ECS configuration.
-ecs_config = {
-    "cluster": "Crypto1",
-    "task_definition": "cmamp1",
-    "subnets": ["subnet-0d7a4957ff09e7cc5", "subnet-015eee0c93f916f23"],
-    "security_group": ["sg-0c605e9a7bb0df2aa"],
-    "awslogs_group": "/ecs/airflow-ecs-operator",
-    "awslogs_stream_prefix": "ecs",
-}
+ecs_cluster="Crypto1"
+ecs_task_definition="cmamp1"
+ecs_subnets= ["subnet-0d7a4957ff09e7cc5", "subnet-015eee0c93f916f23"]
+ecs_security_group=["sg-0c605e9a7bb0df2aa"]
+ecs_awslogs_group="/ecs/airflow-ecs-operator"
+ecs_awslogs_stream_prefix="ecs"
 
 
 # Pass default parameters for the DAG.
@@ -27,6 +26,7 @@ default_args = {
     "owner": "airflow",
 }
 
+# Create a default
 with airflow.DAG(
     dag_id="realtime_ccxt",
     description="Realtime download of CCXT OHLCV data",
@@ -35,8 +35,7 @@ with airflow.DAG(
     # TODO(Danya): Improve the runtime of the script to fit into 1 minute.
     schedule_interval="*/3 * * * *",
     catchup=False,
-    # TODO(Danya): Change to airflow.utils.dates method.
-    start_date=datetime.datetime.now(),
+    start_date=days_ago(1),
 ) as dag:
     # Pass default parameters for the script.
     # Build a bash command to execute.
@@ -54,7 +53,7 @@ with airflow.DAG(
         ]
     )
     # Run the script.
-    downloading_task = DockerOperator(
+    downloading_task = ECSOperator(
         task_id="run_ccxt_realtime",
         image="665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:dev",
         command=bash_command,
