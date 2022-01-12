@@ -21,7 +21,7 @@ dst_dir/
 
 Import as:
 
-import im_v2.common.data.transform.csv_to_pq as imvcdtctpq
+import im_v2.common.data.transform.convert_csv_to_pq as imvcdtcctp
 """
 
 import argparse
