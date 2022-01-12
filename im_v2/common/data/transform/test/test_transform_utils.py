@@ -78,8 +78,13 @@ class TestConvertTimestampColumn(hunitest.TestCase):
         actual = imvcdttrut.convert_timestamp_column(test_data)
         # Check output.
         actual = str(actual)
-        # TODO(gp): @danya use self.assert_equal
-        self.check_string(actual)
+        expected = "\n".join([
+            "0   2021-12-06 02:13:20+00:00",
+            "1   2021-12-16 12:13:20+00:00",
+            "2   2022-03-30 16:13:20+00:00",
+            "dtype: datetime64[ns, UTC]"
+        ])
+        self.assert_equal(actual, expected)
 
     def test_string_datetime(self) -> None:
         """
@@ -91,21 +96,24 @@ class TestConvertTimestampColumn(hunitest.TestCase):
         actual = imvcdttrut.convert_timestamp_column(test_data)
         # Check output.
         actual = str(actual)
-        # TODO(gp): @danya use self.assert_equal
-        self.check_string(actual)
+        expected = "\n".join([
+            "0   2021-01-12",
+            "1   2021-02-14",
+            "2   2010-12-11",
+            "dtype: datetime64[ns]"
+        ])
+        self.assert_equal(actual, expected)
 
     def test_incorrect_datetime(self) -> None:
         """
         Assert that incorrect types are not converted.
         """
         test_data = pd.Series([37.9, 88.11, 14.0])
-        # TODO(gp): @danya check content of the assertion.
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValueError) as fail:
             imvcdttrut.convert_timestamp_column(test_data)
-
-
-# TODO(gp): @danya make changes to align with code above (e.g., add prepare, run,
-#  check comments, use self.assert_equal instead of self.check_string).
+        actual = str(fail.exception)
+        expected = "Incorrect data format. Datetime column should be of integer or string dtype."
+        self.assert_equal(actual, expected)
 
 
 class TestReindexOnDatetime(hunitest.TestCase):
@@ -113,35 +121,53 @@ class TestReindexOnDatetime(hunitest.TestCase):
         """
         Verify datetime index creation when timestamp is in milliseconds.
         """
+        # Prepare inputs.
         dummy_df = _get_dummy_df_with_timestamp()
+        # Run.
         reindexed_dummy_df = imvcdttrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp"
         )
-        reindexed_txt_df = hunitest.convert_df_to_json_string(
-            reindexed_dummy_df, n_tail=None
-        )
-        self.check_string(reindexed_txt_df)
+        # Check output.
+        actual = str(reindexed_dummy_df)
+        expected = "                           dummy_value  dummy_timestamp\n" \
+                   "dummy_timestamp                                        \n" \
+                   "2021-12-04 19:40:00+00:00            1    1638646800000\n" \
+                   "2021-12-04 19:41:00+00:00            2    1638646860000\n" \
+                   "2021-12-04 19:42:40+00:00            3    1638646960000"
+        self.assert_equal(actual, expected)
 
     def test_reindex_on_datetime_seconds(self) -> None:
         """
         Verify datetime index creation when timestamp is in seconds.
         """
+        # Prepare inputs.
         dummy_df = _get_dummy_df_with_timestamp(unit="s")
+        # Run.
         reindexed_dummy_df = imvcdttrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp", unit="s"
         )
-        reindexed_txt_df = hunitest.convert_df_to_json_string(
-            reindexed_dummy_df, n_tail=None
-        )
-        self.check_string(reindexed_txt_df)
+        actual = str(reindexed_dummy_df)
+        expected = "                           dummy_value  dummy_timestamp\n" \
+                   "dummy_timestamp                                        \n" \
+                   "2021-12-04 19:40:00+00:00            1       1638646800\n" \
+                   "2021-12-04 19:41:00+00:00            2       1638646860\n" \
+                   "2021-12-04 19:42:40+00:00            3       1638646960"
+        self.assert_equal(actual, expected)
 
     def test_reindex_on_datetime_wrong_column(self) -> None:
         """
         Assert that wrong column is detected before reindexing.
         """
         dummy_df = _get_dummy_df_with_timestamp()
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(AssertionError) as fail:
             imvcdttrut.reindex_on_datetime(dummy_df, "void_column")
+        actual = str(fail.exception)
+        expected = """
+        * Failed assertion *
+        'void_column' in 'Index(['dummy_value', 'dummy_timestamp'], dtype='object')'
+        Not valid column name 
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_reindex_on_datetime_index_already_present(self) -> None:
         """
@@ -151,8 +177,15 @@ class TestReindexOnDatetime(hunitest.TestCase):
         reindexed_dummy_df = imvcdttrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp"
         )
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(AssertionError) as fail:
             imvcdttrut.reindex_on_datetime(reindexed_dummy_df, "dummy")
+        actual = str(fail.exception)
+        expected = """
+        * Failed assertion *
+        'dummy' in 'Index(['dummy_value', 'dummy_timestamp'], dtype='object')'
+        Not valid column name
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
 
 class TestAddDatePartitionCols(hunitest.TestCase):
@@ -160,57 +193,81 @@ class TestAddDatePartitionCols(hunitest.TestCase):
         """
         Verify that generic date column is present in dataframe.
         """
+        # Prepare inputs.
         dummy_df = _get_dummy_df_with_timestamp()
         reindexed_dummy_df = imvcdttrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp"
         )
+        # Run.
         imvcdttrut.add_date_partition_cols(reindexed_dummy_df)
-        reindexed_txt_df = hunitest.convert_df_to_json_string(
-            reindexed_dummy_df, n_tail=None
-        )
-        self.check_string(reindexed_txt_df)
+        # Check output.
+        actual = str(reindexed_dummy_df)
+        expected = "                           dummy_value  dummy_timestamp      date\n" \
+                   "dummy_timestamp                                                  \n" \
+                   "2021-12-04 19:40:00+00:00            1    1638646800000  20211204\n" \
+                   "2021-12-04 19:41:00+00:00            2    1638646860000  20211204\n" \
+                   "2021-12-04 19:42:40+00:00            3    1638646960000  20211204"
+        self.assert_equal(actual, expected)
 
     def test_add_date_partition_cols_year(self) -> None:
         """
         Verify that year column is present in dataframe.
         """
+        # Prepare inputs.
         dummy_df = _get_dummy_df_with_timestamp()
         reindexed_dummy_df = imvcdttrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp"
         )
+        # Run.
         imvcdttrut.add_date_partition_cols(reindexed_dummy_df, "year")
-        reindexed_txt_df = hunitest.convert_df_to_json_string(
-            reindexed_dummy_df, n_tail=None
-        )
-        self.check_string(reindexed_txt_df)
+        # Check output.
+        actual = str(reindexed_dummy_df)
+        expected = "                           dummy_value  dummy_timestamp  year\n" \
+                   "dummy_timestamp                                              \n" \
+                   "2021-12-04 19:40:00+00:00            1    1638646800000  2021\n" \
+                   "2021-12-04 19:41:00+00:00            2    1638646860000  2021\n" \
+                   "2021-12-04 19:42:40+00:00            3    1638646960000  2021"
+        self.assert_equal(actual, expected)
 
     def test_add_date_partition_cols_month(self) -> None:
         """
         Verify that year and month columns are present in dataframe.
         """
+        # Prepare inputs.
         dummy_df = _get_dummy_df_with_timestamp()
         reindexed_dummy_df = imvcdttrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp"
         )
+        # Run.
         imvcdttrut.add_date_partition_cols(reindexed_dummy_df, "month")
-        reindexed_txt_df = hunitest.convert_df_to_json_string(
-            reindexed_dummy_df, n_tail=None
-        )
-        self.check_string(reindexed_txt_df)
+        # Check output.
+        actual = str(reindexed_dummy_df)
+        expected = "                           dummy_value  dummy_timestamp  year  month\n" \
+                   "dummy_timestamp                                                     \n" \
+                   "2021-12-04 19:40:00+00:00            1    1638646800000  2021     12\n" \
+                   "2021-12-04 19:41:00+00:00            2    1638646860000  2021     12\n" \
+                   "2021-12-04 19:42:40+00:00            3    1638646960000  2021     12"
+        self.assert_equal(actual, expected)
 
     def test_add_date_partition_cols_day(self) -> None:
         """
         Verify that year, month and day columns are present in dataframe.
         """
+        # Prepare inputs.
         dummy_df = _get_dummy_df_with_timestamp()
         reindexed_dummy_df = imvcdttrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp"
         )
+        # Run.
         imvcdttrut.add_date_partition_cols(reindexed_dummy_df, "day")
-        reindexed_txt_df = hunitest.convert_df_to_json_string(
-            reindexed_dummy_df, n_tail=None
-        )
-        self.check_string(reindexed_txt_df)
+        # Check output.
+        actual = str(reindexed_dummy_df)
+        expected = "                           dummy_value  dummy_timestamp  year  month  day\n" \
+                   "dummy_timestamp                                                          \n" \
+                   "2021-12-04 19:40:00+00:00            1    1638646800000  2021     12    4\n" \
+                   "2021-12-04 19:41:00+00:00            2    1638646860000  2021     12    4\n" \
+                   "2021-12-04 19:42:40+00:00            3    1638646960000  2021     12    4"
+        self.assert_equal(actual, expected)
 
     def test_add_date_partition_cols_wrong_partition_mode(self) -> None:
         """
@@ -220,5 +277,12 @@ class TestAddDatePartitionCols(hunitest.TestCase):
         reindexed_dummy_df = imvcdttrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp"
         )
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(AssertionError) as fail:
             imvcdttrut.add_date_partition_cols(reindexed_dummy_df, "void_mode")
+        actual = str(fail.exception)
+        expected = """
+        * Failed assertion *
+        'void_mode' in '['year', 'month', 'day', 'no_partition']'
+        Invalid partition mode `void_mode`! 
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
