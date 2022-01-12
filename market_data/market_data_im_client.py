@@ -20,10 +20,7 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
     """
 
     def __init__(
-        self,
-        *args: Any,
-        im_client: ivcdclcl.AbstractImClient,
-        **kwargs: Any,
+        self, *args: Any, im_client: ivcdclcl.ImClient, **kwargs: Any
     ) -> None:
         """
         Constructor.

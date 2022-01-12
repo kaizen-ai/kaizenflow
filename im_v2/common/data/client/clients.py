@@ -74,14 +74,14 @@ def construct_full_symbol(exchange: str, symbol: str) -> FullSymbol:
 
 
 # #############################################################################
-# AbstractImClient
+# ImClient
 # #############################################################################
 
 # TODO(gp): Consider splitting in one file per class. Not sure about the trade-off
 #  between file proliferation and more organization.
 
 # TODO(gp): @grisha -> ImClient. This requires changes in all repos.
-class AbstractImClient(abc.ABC):
+class ImClient(abc.ABC):
     """
     Retrieve market data for different vendors from different backends.
 
@@ -276,7 +276,7 @@ class AbstractImClient(abc.ABC):
 # #############################################################################
 
 
-class ImClientReadingOneSymbol(AbstractImClient, abc.ABC):
+class ImClientReadingOneSymbol(ImClient, abc.ABC):
     """
     Abstract IM client for a backend that can read one symbol at a time.
     """
@@ -340,7 +340,7 @@ class ImClientReadingOneSymbol(AbstractImClient, abc.ABC):
 # #############################################################################
 
 
-class ImClientReadingMultipleSymbols(AbstractImClient, abc.ABC):
+class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
     """
     Abstract IM client for backend that can read multiple symbols at the same
     time.

@@ -29,21 +29,18 @@ _LOG = logging.getLogger(__name__)
 _LATEST_DATA_SNAPSHOT = "20210924"
 
 
-# TODO(gp): @grisha, Move inside AbstractCcxtClient since it's private to
-#  that class.
+# TODO(gp): @grisha, Move inside CcxtClient since it's private to that class.
 _DATA_TYPES = ["ohlcv"]
 
 
 # #############################################################################
-# AbstractCcxtClient
+# CcxtClient
 # #############################################################################
 
 
 # TODO(gp): Consider splitting this file into chunks
 
-# TODO(gp): @grisha Call it CcxtClient to simplify the naming scheme.
-#  The fact that is abstract is in the definition.
-class AbstractCcxtClient(imvcdcli.ImClientReadingOneSymbol, abc.ABC):
+class CcxtClient(imvcdcli.ImClientReadingOneSymbol, abc.ABC):
     """
     Abstract interface for CCXT client.
 
@@ -150,7 +147,7 @@ class AbstractCcxtClient(imvcdcli.ImClientReadingOneSymbol, abc.ABC):
 # #############################################################################
 
 
-class CcxtDbClient(AbstractCcxtClient):
+class CcxtDbClient(CcxtClient):
     """
     CCXT client for data from the database.
     """
@@ -213,7 +210,7 @@ class CcxtDbClient(AbstractCcxtClient):
 
 
 # TODO(gp): @grisha -> CcxtFileSystemClient to simplify the naming scheme.
-class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
+class AbstractCcxtFileSystemClient(CcxtClient, abc.ABC):
     """
     Abstract interface for CCXT client using local or S3 filesystem as backend.
     """
