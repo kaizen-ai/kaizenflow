@@ -89,7 +89,9 @@ def convert_timestamp_column(
         )
     elif pd.api.types.is_string_dtype(datetime_col_name):
         # Convert string into timestamp.
-        converted_datetime_col = hdateti.to_generalized_datetime(datetime_col_name)
+        converted_datetime_col = hdateti.to_generalized_datetime(
+            datetime_col_name
+        )
     else:
         raise ValueError(
             "Incorrect data format. Datetime column should be of integer or string dtype."

@@ -18,6 +18,10 @@ dst_dir/
 > csv_to_pq.py \
     --src_dir test/ccxt_test \
     --dst_dir test_pq
+
+Import as:
+
+import im_v2.common.data.transform.csv_to_pq as imvcdtctpq
 """
 
 # TODO(gp): @danya -> convert_csv_to_pq.py
@@ -42,8 +46,8 @@ def _get_csv_to_pq_file_names(
     src_dir: str, dst_dir: str, incremental: bool
 ) -> List[Tuple[str, str]]:
     """
-    Find all the CSV files in `src_dir` to transform and prepare the corresponding
-    destination Parquet files.
+    Find all the CSV files in `src_dir` to transform and prepare the
+    corresponding destination Parquet files.
 
     :param incremental: if True, skip CSV files for which the corresponding Parquet
         file already exists

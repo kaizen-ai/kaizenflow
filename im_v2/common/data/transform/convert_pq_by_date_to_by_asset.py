@@ -39,6 +39,10 @@ dst_dir/
     --src_dir im_v2/common/data/transform/test_data_by_date \
     --dst_dir im_v2/common/data/transform/test_data_by_asset \
     --num_threads 2
+
+Import as:
+
+import im_v2.common.data.transform.convert_pq_by_date_to_by_asset as imvcdtcpbdtba
 """
 
 import argparse
@@ -47,7 +51,6 @@ import os
 from typing import Any, Dict, List
 
 import numpy as np
-import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -83,8 +86,8 @@ def _save_chunk(**config: Dict[str, Any]) -> None:
     """
     Process a chunk of work corresponding to multiple Parquet files.
 
-    Read the files in "chunk", partition using days and assets and writes into
-    dst_dir.
+    Read the files in "chunk", partition using days and assets and
+    writes into dst_dir.
     """
     # TODO(gp): @danya daily_pq -> daily_pq_filename
     for daily_pq in config["chunk"]:
