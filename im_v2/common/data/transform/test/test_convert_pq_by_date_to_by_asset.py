@@ -30,12 +30,12 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         Specific config used for joblib task.
 
         Along with regular arguments used in script run, there is
-        `chunk` which represents list of daily PQ file paths that will
-        be converted to by asset PQ files.
+        `parquet_file_name` which represents list of daily PQ file paths
+        that will be converted to by asset PQ files.
         """
         return {
             "src_dir": f"{test_dir}/by_date",
-            "chunk": [
+            "parquet_file_names": [
                 f"{test_dir}/by_date/date=20211230/data.parquet",
                 f"{test_dir}/by_date/date=20211231/data.parquet",
                 f"{test_dir}/by_date/date=20220101/data.parquet",
@@ -105,7 +105,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         verbose = True
         self._test_daily_data_direct_run(verbose)
 
-    def test__save_chunk(self) -> None:
+    def test__process_chunk(self) -> None:
         verbose = True
         self._test_joblib_task(verbose, {})
 

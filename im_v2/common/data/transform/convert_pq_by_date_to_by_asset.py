@@ -136,7 +136,7 @@ def _run(args: argparse.Namespace) -> None:
         )
         tasks.append(task)
     # Prepare the workload.
-    func_name = "_save_chunk"
+    func_name = "_process_chunk"
     workload = (_process_chunk, func_name, tasks)
     hjoblib.validate_workload(workload)
     # Parse command-line options.
