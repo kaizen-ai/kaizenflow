@@ -23,7 +23,7 @@ import pandas as pd
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hprint as hprint
-import im_v2.common.data.transform.utils as imvcdtrut
+import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 _LOG = logging.getLogger(__name__)
 
@@ -208,12 +208,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
     )
     dummy_df = get_daily_df(start_date, end_date, assets, freq)
     # Add date partition columns to the dataframe.
-    imvcdtrut.add_date_partition_cols(dummy_df)
+    imvcdttrut.add_date_partition_cols(dummy_df)
     # Partition and write dataset.
     if args.reset_index:
         dummy_df = dummy_df.reset_index(drop=True)
     partition_cols = ["date"]
-    imvcdtrut.partition_dataset(dummy_df, partition_cols, dst_dir)
+    imvcdttrut.partition_dataset(dummy_df, partition_cols, dst_dir)
 
 
 if __name__ == "__main__":

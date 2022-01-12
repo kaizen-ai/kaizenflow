@@ -18,7 +18,7 @@ import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.ccxt.universe.universe as imvccunun
-import im_v2.common.data.client as imvcdcli
+import im_v2.common.data.client as icdc
 
 _LOG = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ _DATA_TYPES = ["ohlcv"]
 # TODO(gp): Consider splitting this file into chunks
 
 
-class CcxtClient(imvcdcli.ImClientReadingOneSymbol, abc.ABC):
+class CcxtClient(icdc.ImClientReadingOneSymbol, abc.ABC):
     """
     Abstract interface for CCXT client.
 
@@ -57,7 +57,7 @@ class CcxtClient(imvcdcli.ImClientReadingOneSymbol, abc.ABC):
         self._data_type = data_type
 
     @staticmethod
-    def get_universe() -> List[imvcdcli.FullSymbol]:
+    def get_universe() -> List[icdc.FullSymbol]:
         """
         Return CCXT universe as full symbols.
         """
@@ -167,7 +167,7 @@ class CcxtDbClient(CcxtClient):
 
     def _read_data_for_one_symbol(
         self,
-        full_symbol: imvcdcli.FullSymbol,
+        full_symbol: icdc.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         **read_sql_kwargs: Any,
@@ -182,7 +182,7 @@ class CcxtDbClient(CcxtClient):
         # Initialize SQL query.
         sql_query = "SELECT * FROM %s" % table_name
         # Split full symbol into exchange and currency pair.
-        exchange_id, currency_pair = imvcdcli.parse_full_symbol(full_symbol)
+        exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)
         # Initialize a list for SQL conditions.
         sql_conditions = []
         # Fill SQL conditions list for each provided data parameter.
@@ -242,7 +242,7 @@ class CcxtFileSystemClient(CcxtClient, abc.ABC):
 
     def _read_data_for_one_symbol(
         self,
-        full_symbol: imvcdcli.FullSymbol,
+        full_symbol: icdc.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
@@ -257,7 +257,7 @@ class CcxtFileSystemClient(CcxtClient, abc.ABC):
         """
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
         # Split full symbol into exchange and currency pair.
-        exchange_id, currency_pair = imvcdcli.parse_full_symbol(full_symbol)
+        exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)
         # Get absolute file path for a CCXT file.
         file_path = self._get_file_path(data_snapshot, exchange_id, currency_pair)
         # Initialize kwargs dict for further CCXT data reading.
