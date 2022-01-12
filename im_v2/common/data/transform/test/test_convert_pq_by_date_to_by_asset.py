@@ -198,7 +198,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
             )
         if config_update:
             config.update(config_update)
-        imvcdtcpbdtba._save_chunk(**config)
+        imvcdtcpbdtba._process_chunk(**config)
         self.check_directory_structure_with_file_contents(
             by_date_dir, by_asset_dir
         )
