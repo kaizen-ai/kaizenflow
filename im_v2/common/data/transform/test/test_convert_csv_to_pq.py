@@ -18,7 +18,7 @@ class TestCsvToPq(hunitest.TestCase):
         pq_dir_path = os.path.join(self.get_scratch_space(), "pq_dir")
         # Run command.
         exec_path = os.path.join(
-            hgit.get_amp_abs_path(), "im_v2/common/data/transform/csv_to_pq.py"
+            hgit.get_amp_abs_path(), "im_v2/common/data/transform/convert_csv_to_pq.py"
         )
         cmd = [
             exec_path,
