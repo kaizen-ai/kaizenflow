@@ -29,7 +29,6 @@ import helpers.s3 as hs3
 import im.cryptodatadownload.data.load.loader as imcdalolo
 import im_v2.ccxt.data.client.clients as imvcdclcl
 import im_v2.ccxt.universe.universe as imvccunun
-import im_v2.common.data.client.clients as ivcdclcl
 import research_amp.cc.statistics as ramccsta
 
 # %%
@@ -185,7 +184,7 @@ cdd_data = []
 data_type_cdd = config_cdd["data"]["data_type"]
 root_dir_cdd = config_cdd["load"]["data_dir"]
 cdd_loader = imcdalolo.CddLoader(
-    data_type_cdd, root_dir_cdd, aws_profile="am"
+    data_type_cdd, root_dir_cdd, aws_profile=config_cdd["load"]["aws_profile"]
 )
 
 for full_symbol in currency_pair_intersection_binance:
@@ -201,17 +200,13 @@ display(cdd_binance_df.shape)
 data_type_ccxt = config_ccxt["data"]["data_type"]
 root_dir_ccxt = config_ccxt["load"]["data_dir"]
 ccxt_csv_client = imvcdclcl.CcxtCsvFileSystemClient(
-    data_type_ccxt, root_dir_ccxt, aws_profile="am"
-)  
-# Removing the part below due to updated loader.
-#multiple_symbols_client = ivcdclcl.MultipleSymbolsImClient(
-#    class_=ccxt_client, mode="concat"
-#)
+    data_type_ccxt, root_dir_ccxt, aws_profile=config_ccxt["load"]["aws_profile"]
+)
+
+start_ts = None
+end_ts = None
 ccxt_binance_df = ccxt_csv_client.read_data(
-    list(currency_pair_intersection_binance),
-    # The parameters below were added for consistency with a new loader.
-    start_ts = None, 
-    end_ts = None
+    list(currency_pair_intersection_binance), start_ts, end_ts
 )
 
 # %%
@@ -219,10 +214,10 @@ display(ccxt_binance_df.head(3))
 display(ccxt_binance_df.shape)
 
 # %% [markdown]
-# # Returns and correlations using Grisha's suggestion
+# # Returns and correlations using 'compute_stats_for_universe'
 
 # %% [markdown]
-# The idea is to use the __compute_stats_for_universe__ function to compute the stats in the loop. However, there are several boundaries to do that.
+# The approach below shows the snippet of using the __compute_stats_for_universe__ function to compute the stats in the loop.
 
 # %%
 # Create the test list.
@@ -231,9 +226,9 @@ test_list
 
 
 # %%
-# Load 'CDD' data with resampling
+# Load 'CDD' data with resampling.
 # The function below is designed to resample the data in the loop using compute_stats_for_universe.
-def correlation_func(price_data, config, resampling_freq):
+def resampling_func(price_data, config, resampling_freq):
     price_data = price_data.reset_index()
     resampler = price_data.groupby(
         ["currency_pair", pd.Grouper(key="timestamp", freq=resampling_freq)]
@@ -245,31 +240,26 @@ def correlation_func(price_data, config, resampling_freq):
 
 # %%
 # Applying the function specified above to the loop.
-compute_corr = lambda data: correlation_func(
-    data, config_cdd, "1D"
-)
+resample_data = lambda data: resampling_func(data, config_ccxt, "1D")
 
-cdd_resampled_close = ramccsta.compute_stats_for_universe(
-    test_list, config_cdd, compute_corr
-) 
+ccxt_resampled_close = ramccsta.compute_stats_for_universe(
+    test_list, config_ccxt, resample_data
+)
 
 # %%
 # As one can see, the compute_stats_for_universe function is reseting the index in the end, so the output
 # has no Multiindex that was used in the initial approach.
-cdd_resampled_close.head()
+ccxt_resampled_close.head(3)
 
 # %%
-# Here's the quick look of the next steps.
-# This step can be looped using unique currency_pair.
-cur_df = cdd_resampled_close[cdd_resampled_close["currency_pair"] == "ETH/USDT"]
-# Returns calculation.
-cur_df["rets"] = cur_df["close"].pct_change()
-# Result.
-cur_df[["currency_pair", "timestamp", "rets"]].head()
+# Setting the Multiindex.
+ccxt_resampled_close = ccxt_resampled_close.drop("vendor", axis=1).set_index(
+    ["currency_pair", "timestamp"]
+)
+ccxt_resampled_close.head(3)
 
 # %%
-# Then comes the combination of results and the calculation of correlations statistics.
-# It may look a bit messy in comparison to the old appraoch, so I will leave this part for discussions for now.
+# This input can be inserted into 'calculate_correlations' function defined below.
 
 # %% [markdown]
 # ## Calculate returns and correlation
@@ -422,6 +412,7 @@ len(cdd_and_ccxt_cleaned)
 # #### CDD
 
 # %%
+# After fixing 'CCXT' loader below, the structural mistake appears with 'CDD' loader.
 compute_start_end_stats = lambda data: ramccsta.compute_start_end_stats(
     data, config_cdd
 )
@@ -443,12 +434,13 @@ cdd_start_end_table.head(3)
 # #### CCXT
 
 # %%
-# Can not resolve the conflict below (seems like it's an issue with a new loader).
 compute_start_end_stats = lambda data: ramccsta.compute_start_end_stats(
     data, config_ccxt
 )
 ccxt_start_end_table = ramccsta.compute_stats_for_universe(
-    list(test_list), config_ccxt, compute_start_end_stats,
+    list(cdd_and_ccxt_cleaned),
+    config_ccxt,
+    compute_start_end_stats,
 )
 
 # %%

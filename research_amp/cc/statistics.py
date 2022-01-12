@@ -46,7 +46,9 @@ def compute_stats_for_universe(
     # Iterate over vendor universe tuples.
     for full_symbol in vendor_universe:
         # Read data for current exchange and currency pair.
-        data = loader.read_data(full_symbol)
+        start_ts=None
+        end_ts=None
+        data = loader.read_data([full_symbol],start_ts,end_ts)
         # Compute stats on the exchange-currency level.
         cur_stats_data = stats_func(data)
         cur_stats_data["vendor"] = config["data"]["vendor"]
