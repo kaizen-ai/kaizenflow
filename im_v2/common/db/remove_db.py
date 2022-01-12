@@ -3,7 +3,7 @@
 Script to remove IM database using connection.
 
 # Remove a DB named 'test_db' using environment variables:
-> remove_db.py --db-name 'test_db'
+> remove_db.py --db_name 'test_db'
 """
 
 import argparse
@@ -12,7 +12,7 @@ import os
 import helpers.hio as hio
 import helpers.hparser as hparser
 import helpers.hsql as hsql
-import im_v2.common.db.utils as imvcodbut
+import im_v2.common.db.db_utils as imvcodbut
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -32,7 +32,7 @@ def _parse() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
-        "--db-name",
+        "--db_name",
         action="store",
         required=True,
         type=str,

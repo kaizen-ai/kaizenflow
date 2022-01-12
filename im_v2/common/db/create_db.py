@@ -3,7 +3,7 @@
 Script to create IM (Instrument Master) database using the given connection.
 
 # Create a DB named 'test_db' using environment variables:
-> im/common/db/create_db.py --db-name 'test_db'
+> im/common/db/create_db.py --db_name 'test_db'
 """
 
 import argparse
@@ -12,7 +12,7 @@ import os
 import helpers.hio as hio
 import helpers.hparser as hparser
 import helpers.hsql as hsql
-import im_v2.common.db.utils as imvcodbut
+import im_v2.common.db.db_utils as imvcodbut
 
 # TODO(gp): Consider converting create_db and remove_db into invoke tasks.
 
@@ -35,7 +35,7 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         # TODO(gp): @danya -> db_name (we prefer underscores in options).
-        "--db-name",
+        "--db_name",
         action="store",
         required=True,
         type=str,

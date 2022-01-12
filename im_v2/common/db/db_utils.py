@@ -3,7 +3,7 @@ Manage (e.g., create, destroy, query) IM Postgres DB.
 
 Import as:
 
-import im_v2.common.db.utils as imvcodbut
+import im_v2.common.db.db_utils as imvcodbut
 """
 
 import logging
@@ -19,9 +19,6 @@ import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
-
-# TODO(gp): -> db_utils.py
-
 
 def get_common_create_table_query() -> str:
     """
@@ -57,11 +54,9 @@ def get_data_types_query() -> str:
     Define custom data types inside a database.
     """
     # Define data types.
-    # TODO(Grisha): Futures -> futures.
-    # TODO(Grisha): T -> minute, D -> daily.
     query = """
-    CREATE TYPE AssetClass AS ENUM ('Futures', 'etfs', 'forex', 'stocks', 'sp_500');
-    CREATE TYPE Frequency AS ENUM ('T', 'D', 'tick');
+    CREATE TYPE AssetClass AS ENUM ('futures', 'etfs', 'forex', 'stocks', 'sp_500');
+    CREATE TYPE Frequency AS ENUM ('minute', 'daily', 'tick');
     CREATE TYPE ContractType AS ENUM ('continuous', 'expiry');
     CREATE SEQUENCE serial START 1;
     """
@@ -69,11 +64,11 @@ def get_data_types_query() -> str:
 
 
 # TODO(gp): @danya, @grisha -> db_connection everywhere
-def create_all_tables(connection: hsql.DbConnection) -> None:
+def create_all_tables(db_connection: hsql.DbConnection) -> None:
     """
     Create all the tables inside an IM database.
 
-    :param connection: a database connection
+    :param db_connection: a database connection
     """
     queries = [
         get_data_types_query(),
@@ -88,29 +83,29 @@ def create_all_tables(connection: hsql.DbConnection) -> None:
     for query in queries:
         _LOG.debug("Executing query %s", query)
         try:
-            cursor = connection.cursor()
+            cursor = db_connection.cursor()
             cursor.execute(query)
         except psycop.errors.DuplicateObject:
             _LOG.warning("Duplicate table created, skipping.")
 
 
 def create_im_database(
-    connection: hsql.DbConnection,
+    db_connection: hsql.DbConnection,
     new_db: str,
     overwrite: Optional[bool] = None,
 ) -> None:
     """
     Create database and SQL schema inside it.
 
-    :param connection: a database connection
+    :param db_connection: a database connection
     :param new_db: name of database to connect to, e.g. `im_db_local`
     :param overwrite: overwrite existing database
     """
-    _LOG.debug("connection=%s", connection)
+    _LOG.debug("connection=%s", db_connection)
     # Create a DB.
-    hsql.create_database(connection, dbname=new_db, overwrite=overwrite)
-    conn_details = hsql.db_connection_to_tuple(connection)
-    new_connection = hsql.get_connection(
+    hsql.create_database(db_connection, dbname=new_db, overwrite=overwrite)
+    conn_details = hsql.db_connection_to_tuple(db_connection)
+    new_db_connection = hsql.get_connection(
         host=conn_details.host,
         dbname=new_db,
         port=conn_details.port,
@@ -118,8 +113,8 @@ def create_im_database(
         password=conn_details.password,
     )
     # Create table..
-    create_all_tables(new_connection)
-    new_connection.close()
+    create_all_tables(new_db_connection)
+    new_db_connection.close()
 
 
 # #############################################################################

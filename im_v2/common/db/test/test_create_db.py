@@ -4,7 +4,7 @@ import pytest
 
 import helpers.hgit as hgit
 import helpers.hsql as hsql
-import im_v2.common.db.utils as imvcodbut
+import im_v2.common.db.db_utils as imvcodbut
 
 _LOG = logging.getLogger(__name__)
 
