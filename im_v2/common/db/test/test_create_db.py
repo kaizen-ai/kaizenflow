@@ -4,7 +4,7 @@ import pytest
 
 import helpers.hgit as hgit
 import helpers.hsql as hsql
-import im_v2.common.db.utils as imvcodbut
+import im_v2.common.db.db_utils as imvcodbut
 
 _LOG = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ class TestCreateDb1(imvcodbut.TestImDbHelper):
 
     @pytest.mark.slow("18 seconds.")
     def test_create_im_database(self) -> None:
-        imvcodbut.create_im_database(connection=self.connection, new_db="test_db")
+        imvcodbut.create_im_database(db_connection=self.connection, new_db="test_db")
         db_list = hsql.get_db_names(self.connection)
         self.assertIn("test_db", db_list)
         # Delete the database.
