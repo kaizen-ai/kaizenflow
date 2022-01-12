@@ -3477,44 +3477,6 @@ def pytest_clean(ctx):  # type: ignore
     hpytest.pytest_clean(".")
 
 
-#@task
-#def pytest_failed_freeze_test_list(ctx, confirm=False):  # type: ignore
-#    """
-#    Copy last list of failed tests to not overwrite with successive pytest
-#    runs.
-#    """
-#    _report_task()
-#    dir_name = "."
-#    pytest_failed_tests_file = os.path.join(
-#        dir_name, ".pytest_cache/v/cache/lastfailed"
-#    )
-#    frozen_failed_tests_file = "tmp.pytest_cache.lastfailed"
-#    if os.path.exists(frozen_failed_tests_file) and not confirm:
-#        hdbg.dfatal(
-#            "File {frozen_failed_tests_file} already exists. Re-run with --confirm to overwrite"
-#        )
-#    _LOG.info(
-#        "Copying '%s' to '%s'", pytest_failed_tests_file, frozen_failed_tests_file
-#    )
-#    # Make a copy of the pytest file.
-#    hdbg.dassert_file_exists(pytest_failed_tests_file)
-#    cmd = f"cp {pytest_failed_tests_file} {frozen_failed_tests_file}"
-#    _run(ctx, cmd)
-#
-#
-#def _get_failed_tests_from_file(file_name: str) -> List[str]:
-#    hdbg.dassert_file_exists(file_name)
-#    # {
-#    # "vendors/test/test_vendors.py::Test_gp::test1": true,
-#    # "vendors/test/test_vendors.py::Test_kibot_utils1::...": true,
-#    # }
-#    txt = hio.from_file(file_name)
-#    vals = json.loads(txt)
-#    hdbg.dassert_isinstance(vals, dict)
-#    tests = [k for k, v in vals.items() if v]
-#    return tests
-
-
 @task
 def pytest_parse_output(  # type: ignore
     ctx,
@@ -3596,21 +3558,6 @@ def pytest_parse_output(  # type: ignore
     _report_task()
     _ = ctx
     # Read file.
-    if not file_name:
-        dir_name = "."
-        pytest_failed_tests_file = os.path.join(
-            dir_name, ".pytest_cache/v/cache/lastfailed"
-        )
-        frozen_failed_tests_file = "tmp.pytest_cache.lastfailed"
-        if use_frozen_list:
-            if os.path.exists(pytest_failed_tests_file) and not os.path.exists(
-                frozen_failed_tests_file
-            ):
-                _LOG.warning("Freezing the pytest outcomes")
-                pytest_failed_freeze_test_list(ctx)
-            file_name = frozen_failed_tests_file
-        else:
-            file_name = pytest_failed_tests_file
     _LOG.info("Reading file_name='%s'", file_name)
     hdbg.dassert_file_exists(file_name)
     # E.g., vendors/test/test_vendors.py::Test_gp::test1

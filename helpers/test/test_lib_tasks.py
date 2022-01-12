@@ -1466,6 +1466,7 @@ class Test_get_files_to_process1(hunitest.TestCase):
 # #############################################################################
 
 
+# TODO(gp): @julia Update these tests, if needed.
 class Test_pytest_failed1(hunitest.TestCase):
     def test_tests1(self) -> None:
         file_name = self._build_pytest_file1()
@@ -1698,6 +1699,10 @@ class Test_pytest_failed1(hunitest.TestCase):
         )
         exp = " ".join(exp)
         self.assert_equal(act, exp)
+
+
+# TODO(gp): @julia Add an end-to-end test for "invoke pytest_parse_output"
+#  using a fixed file and checking the output.
 
 
 # #############################################################################
