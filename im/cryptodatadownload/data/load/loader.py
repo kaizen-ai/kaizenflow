@@ -15,7 +15,7 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
-import im_v2.common.data.client.clients as ivcdclcl
+import im_v2.common.data.client as icdc
 
 _LOG = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ class CddLoader:
         """
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
         # Verify that requested data type is valid.
-        exchange_id, currency_pair = ivcdclcl.parse_full_symbol(full_symbol)
+        exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)
         # Get absolute file path for a CDD file.
         file_path = self._get_file_path(data_snapshot, exchange_id, currency_pair)
         # Initialize kwargs dict for further CDD data reading.
