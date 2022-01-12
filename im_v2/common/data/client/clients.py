@@ -6,8 +6,7 @@ import im_v2.common.data.client.clients as ivcdclcl
 
 import abc
 import logging
-import re
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 
