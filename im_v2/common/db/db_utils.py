@@ -20,6 +20,7 @@ import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
 
+
 def get_common_create_table_query() -> str:
     """
     Get SQL query that is used to create tables for common usage.
@@ -63,7 +64,6 @@ def get_data_types_query() -> str:
     return query
 
 
-# TODO(gp): @danya, @grisha -> db_connection everywhere
 def create_all_tables(db_connection: hsql.DbConnection) -> None:
     """
     Create all the tables inside an IM database.
