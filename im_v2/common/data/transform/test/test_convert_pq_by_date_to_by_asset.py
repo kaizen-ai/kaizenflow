@@ -105,7 +105,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         verbose = True
         self._test_daily_data_direct_run(verbose)
 
-    def test__process_chunk(self) -> None:
+    def test_process_chunk(self) -> None:
         verbose = True
         self._test_joblib_task(verbose, {})
 

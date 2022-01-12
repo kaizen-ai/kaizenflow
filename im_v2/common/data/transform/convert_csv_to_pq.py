@@ -104,7 +104,7 @@ def _run(args: argparse.Namespace) -> None:
     imvcdttrut.partition_dataset(reindexed_df, partition_cols, args.dst_dir)
 
 
-# TODO(Nikola): Revisit args. #926
+# TODO(Nikola): CMTask926
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter

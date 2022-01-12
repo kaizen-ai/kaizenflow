@@ -78,6 +78,7 @@ def _get_parquet_filenames(src_dir: str) -> List[str]:
     return src_pq_files
 
 
+# TODO(Nikola): CMTask812
 def _process_chunk(**config: Dict[str, Any]) -> None:
     """
     Process a chunk of work corresponding to multiple Parquet files.
@@ -166,7 +167,7 @@ def _run(args: argparse.Namespace) -> None:
 # TODO(Nikola): Add support for reading (not writing) to S3. #697
 
 
-# TODO(Nikola): Revisit args. #926
+# TODO(Nikola): CMTask926
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
