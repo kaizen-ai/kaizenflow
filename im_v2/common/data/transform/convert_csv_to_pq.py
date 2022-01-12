@@ -24,8 +24,6 @@ Import as:
 import im_v2.common.data.transform.csv_to_pq as imvcdtctpq
 """
 
-# TODO(gp): @danya -> convert_csv_to_pq.py
-
 import argparse
 import logging
 import os
@@ -106,7 +104,7 @@ def _run(args: argparse.Namespace) -> None:
     imvcdttrut.partition_dataset(reindexed_df, partition_cols, args.dst_dir)
 
 
-# TODO(Danya): Add `by` argument and allow partitioning by date.
+# TODO(Nikola): Revisit args. #926
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
