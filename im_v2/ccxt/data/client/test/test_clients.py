@@ -8,7 +8,7 @@ import helpers.hgit as hgit
 import helpers.hprint as hprint
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
-import im_v2.ccxt.data.client.ccx_clients_example as imvcdcccex
+import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
 import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.db.utils as imvcodbut

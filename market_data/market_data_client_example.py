@@ -7,7 +7,7 @@ import market_data.market_data_client_example as mdmdclex
 from typing import Dict, List
 
 import helpers.hdatetime as hdateti
-import im_v2.ccxt.data.client.ccx_clients_example as imvcdcccex
+import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
 import market_data.market_data_im_client as mdmdimcl
 
 
