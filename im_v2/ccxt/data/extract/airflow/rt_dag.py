@@ -1,11 +1,8 @@
 """
 Import as:
 
-import im_v2.ccxt.data.extract.dags.rt_dag as imvcdedrda
+import im_v2.ccxt.data.extract.airflow.rt_dag as imvcdearda
 """
-
-# TODO(gp): @danya -> let's call the dir `airflow` to not confuse it with DataFlow
-#  DAGs.
 
 import datetime
 
@@ -35,7 +32,7 @@ with airflow.DAG(
     # Build a bash command to execute.
     bash_command = " ".join(
         [
-            "im_v2/ccxt/data/extract/download_realtime.py",
+            "im_v2/ccxt/data/extract/download_realtime_data.py",
             "--to_datetime {{ next_execution_date }}",
             "--from_datetime {{ execution_date - macros.timedelta(5) }}"
             # TODO(Danya): Set a shared directory for the DAG (#675).

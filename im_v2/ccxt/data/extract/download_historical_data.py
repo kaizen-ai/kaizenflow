@@ -5,15 +5,15 @@ Script to download historical data from CCXT.
 Use as:
 
 # Download data for CCXT for trading universe `v03` from 2019-01-01 to now:
-> download_historical.py \
+> download_historical_data.py \
      --dst_dir 'test' \
      --universe 'v03' \
      --start_datetime '2019-01-01'
-"""
 
-# TODO(gp): @danya -> download_historical_data.py
-# TODO(gp): @danya Make scripts executable and check that the linter doesn't add
-#  a short import
+Import as:
+
+import im_v2.ccxt.data.extract.download_historical_data as imvcdedhda
+"""
 
 import argparse
 import logging
@@ -118,19 +118,16 @@ def _main(parser: argparse.ArgumentParser) -> None:
             _LOG.info("Downloading currency pair '%s'", currency_pair)
             # Download OHLCV data.
             currency_pair_data = exchange.download_ohlcv_data(
-                # TODO(gp, @danya): use keywords only for params with default
-                curr_symbol=currency_pair,
+                currency_pair,
                 start_datetime=start_datetime,
                 end_datetime=end_datetime,
-                step=args.step,
+                bar_per_iteration=args.step,
             )
             # Sleep between iterations.
             time.sleep(args.sleep_time)
             # Create file name based on exchange and currency pair.
             # E.g. 'binance_BTC_USDT.csv.gz'
-            # TODO(gp): @danya consider using a `.` or `-` to separate the fields
-            #  to easily parse them.
-            file_name = f"{exchange_id}_{currency_pair}.csv.gz"
+            file_name = f"{exchange_id}-{currency_pair}.csv.gz"
             full_path = os.path.join(args.dst_dir, file_name)
             # Save file.
             currency_pair_data.to_csv(
