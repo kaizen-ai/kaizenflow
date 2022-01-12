@@ -33,7 +33,7 @@ import helpers.hcsv as hcsv
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hparser as hparser
-import im_v2.common.data.transform.utils as imvcdtrut
+import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 _LOG = logging.getLogger(__name__)
 
@@ -93,13 +93,13 @@ def _run(args: argparse.Namespace) -> None:
     #  memory.
     df = dataset.to_table().to_pandas()
     # Set datetime index.
-    reindexed_df = imvcdtrut.reindex_on_datetime(df, args.datetime_col)
+    reindexed_df = imvcdttrut.reindex_on_datetime(df, args.datetime_col)
     # Add date partition columns to the dataframe.
-    imvcdtrut.add_date_partition_cols(reindexed_df, "day")
+    imvcdttrut.add_date_partition_cols(reindexed_df, "day")
     # Save partitioned Parquet dataset.
     # TODO(gp): Allow to specify different partitions.
     partition_cols = [args.asset_col, "year", "month", "day"]
-    imvcdtrut.partition_dataset(reindexed_df, partition_cols, args.dst_dir)
+    imvcdttrut.partition_dataset(reindexed_df, partition_cols, args.dst_dir)
 
 
 # TODO(Danya): Add `by` argument and allow partitioning by date.

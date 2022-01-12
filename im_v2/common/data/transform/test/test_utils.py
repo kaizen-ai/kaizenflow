@@ -1,7 +1,7 @@
 import pandas as pd
 
 import helpers.hunit_test as hunitest
-import im_v2.common.data.transform.utils as imvcdtrut
+import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 
 def _get_dummy_df_with_timestamp(
@@ -38,7 +38,7 @@ class TestPartitionDataset(hunitest.TestCase):
         df = self.get_test_data1()
         # Run.
         partition_cols = ["dummy_value_1", "dummy_value_2"]
-        imvcdtrut.partition_dataset(df, partition_cols, test_dir)
+        imvcdttrut.partition_dataset(df, partition_cols, test_dir)
         # Check output.
         include_file_content = True
         dir_signature = hunitest.get_dir_signature(test_dir, include_file_content)
@@ -55,7 +55,7 @@ class TestPartitionDataset(hunitest.TestCase):
         partition_cols = ["void_column", "dummy_value_2"]
         # Check output.
         with self.assertRaises(AssertionError) as cm:
-            imvcdtrut.partition_dataset(df, partition_cols, test_dir)
+            imvcdttrut.partition_dataset(df, partition_cols, test_dir)
         act = str(cm.exception)
         exp = r"""
         * Failed assertion *
@@ -75,7 +75,7 @@ class TestConvertTimestampColumn(hunitest.TestCase):
         # Prepare inputs.
         test_data = pd.Series([1638756800000, 1639656800000, 1648656800000])
         # Run.
-        actual = imvcdtrut.convert_timestamp_column(test_data)
+        actual = imvcdttrut.convert_timestamp_column(test_data)
         # Check output.
         actual = str(actual)
         # TODO(gp): @danya use self.assert_equal
@@ -88,7 +88,7 @@ class TestConvertTimestampColumn(hunitest.TestCase):
         # Prepare inputs.
         test_data = pd.Series(["2021-01-12", "2021-02-14", "2010-12-11"])
         # Run.
-        actual = imvcdtrut.convert_timestamp_column(test_data)
+        actual = imvcdttrut.convert_timestamp_column(test_data)
         # Check output.
         actual = str(actual)
         # TODO(gp): @danya use self.assert_equal
@@ -101,7 +101,7 @@ class TestConvertTimestampColumn(hunitest.TestCase):
         test_data = pd.Series([37.9, 88.11, 14.0])
         # TODO(gp): @danya check content of the assertion.
         with self.assertRaises(ValueError):
-            imvcdtrut.convert_timestamp_column(test_data)
+            imvcdttrut.convert_timestamp_column(test_data)
 
 
 # TODO(gp): @danya make changes to align with code above (e.g., add prepare, run,
@@ -114,7 +114,7 @@ class TestReindexOnDatetime(hunitest.TestCase):
         Verify datetime index creation when timestamp is in milliseconds.
         """
         dummy_df = _get_dummy_df_with_timestamp()
-        reindexed_dummy_df = imvcdtrut.reindex_on_datetime(
+        reindexed_dummy_df = imvcdttrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp"
         )
         reindexed_txt_df = hunitest.convert_df_to_json_string(
@@ -127,7 +127,7 @@ class TestReindexOnDatetime(hunitest.TestCase):
         Verify datetime index creation when timestamp is in seconds.
         """
         dummy_df = _get_dummy_df_with_timestamp(unit="s")
-        reindexed_dummy_df = imvcdtrut.reindex_on_datetime(
+        reindexed_dummy_df = imvcdttrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp", unit="s"
         )
         reindexed_txt_df = hunitest.convert_df_to_json_string(
@@ -141,18 +141,18 @@ class TestReindexOnDatetime(hunitest.TestCase):
         """
         dummy_df = _get_dummy_df_with_timestamp()
         with self.assertRaises(AssertionError):
-            imvcdtrut.reindex_on_datetime(dummy_df, "void_column")
+            imvcdttrut.reindex_on_datetime(dummy_df, "void_column")
 
     def test_reindex_on_datetime_index_already_present(self) -> None:
         """
         Assert that reindexing is not done on already reindexed dataframe.
         """
         dummy_df = _get_dummy_df_with_timestamp()
-        reindexed_dummy_df = imvcdtrut.reindex_on_datetime(
+        reindexed_dummy_df = imvcdttrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp"
         )
         with self.assertRaises(AssertionError):
-            imvcdtrut.reindex_on_datetime(reindexed_dummy_df, "dummy")
+            imvcdttrut.reindex_on_datetime(reindexed_dummy_df, "dummy")
 
 
 class TestAddDatePartitionCols(hunitest.TestCase):
@@ -161,10 +161,10 @@ class TestAddDatePartitionCols(hunitest.TestCase):
         Verify that generic date column is present in dataframe.
         """
         dummy_df = _get_dummy_df_with_timestamp()
-        reindexed_dummy_df = imvcdtrut.reindex_on_datetime(
+        reindexed_dummy_df = imvcdttrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp"
         )
-        imvcdtrut.add_date_partition_cols(reindexed_dummy_df)
+        imvcdttrut.add_date_partition_cols(reindexed_dummy_df)
         reindexed_txt_df = hunitest.convert_df_to_json_string(
             reindexed_dummy_df, n_tail=None
         )
@@ -175,10 +175,10 @@ class TestAddDatePartitionCols(hunitest.TestCase):
         Verify that year column is present in dataframe.
         """
         dummy_df = _get_dummy_df_with_timestamp()
-        reindexed_dummy_df = imvcdtrut.reindex_on_datetime(
+        reindexed_dummy_df = imvcdttrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp"
         )
-        imvcdtrut.add_date_partition_cols(reindexed_dummy_df, "year")
+        imvcdttrut.add_date_partition_cols(reindexed_dummy_df, "year")
         reindexed_txt_df = hunitest.convert_df_to_json_string(
             reindexed_dummy_df, n_tail=None
         )
@@ -189,10 +189,10 @@ class TestAddDatePartitionCols(hunitest.TestCase):
         Verify that year and month columns are present in dataframe.
         """
         dummy_df = _get_dummy_df_with_timestamp()
-        reindexed_dummy_df = imvcdtrut.reindex_on_datetime(
+        reindexed_dummy_df = imvcdttrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp"
         )
-        imvcdtrut.add_date_partition_cols(reindexed_dummy_df, "month")
+        imvcdttrut.add_date_partition_cols(reindexed_dummy_df, "month")
         reindexed_txt_df = hunitest.convert_df_to_json_string(
             reindexed_dummy_df, n_tail=None
         )
@@ -203,10 +203,10 @@ class TestAddDatePartitionCols(hunitest.TestCase):
         Verify that year, month and day columns are present in dataframe.
         """
         dummy_df = _get_dummy_df_with_timestamp()
-        reindexed_dummy_df = imvcdtrut.reindex_on_datetime(
+        reindexed_dummy_df = imvcdttrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp"
         )
-        imvcdtrut.add_date_partition_cols(reindexed_dummy_df, "day")
+        imvcdttrut.add_date_partition_cols(reindexed_dummy_df, "day")
         reindexed_txt_df = hunitest.convert_df_to_json_string(
             reindexed_dummy_df, n_tail=None
         )
@@ -217,8 +217,8 @@ class TestAddDatePartitionCols(hunitest.TestCase):
         Assert that proper partition mode is used.
         """
         dummy_df = _get_dummy_df_with_timestamp()
-        reindexed_dummy_df = imvcdtrut.reindex_on_datetime(
+        reindexed_dummy_df = imvcdttrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp"
         )
         with self.assertRaises(AssertionError):
-            imvcdtrut.add_date_partition_cols(reindexed_dummy_df, "void_mode")
+            imvcdttrut.add_date_partition_cols(reindexed_dummy_df, "void_mode")

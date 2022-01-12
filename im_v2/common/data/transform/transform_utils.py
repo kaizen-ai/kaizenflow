@@ -6,10 +6,8 @@ Handle common transform operations, e.g.,
 
 Import as:
 
-import im_v2.common.data.transform.utils as imvcdtrut
+import im_v2.common.data.transform.transform_utils as imvcdttrut
 """
-
-# TODO(gp): @danya -> im_v2.common.data.transform.transform_utils
 
 import logging
 from typing import List
@@ -73,26 +71,25 @@ def partition_dataset(
 
 
 def convert_timestamp_column(
-    # TODO(gp): -> datetime_col_name
-    datetime_col: pd.Series,
+    datetime_col_name: pd.Series,
     unit: str = "ms",
 ) -> pd.Series:
     """
     Convert datetime as string or int into a timestamp.
 
-    :param datetime_col: series containing datetime as str or int
+    :param datetime_col_name: series containing datetime as str or int
     :param unit: the unit of unix epoch
     :return: series containing datetime as `pd.Timestamp`
     """
-    if pd.api.types.is_integer_dtype(datetime_col):
+    if pd.api.types.is_integer_dtype(datetime_col_name):
         # Convert unix epoch into timestamp.
         kwargs = {"unit": unit}
-        converted_datetime_col = datetime_col.apply(
+        converted_datetime_col = datetime_col_name.apply(
             hdateti.convert_unix_epoch_to_timestamp, **kwargs
         )
-    elif pd.api.types.is_string_dtype(datetime_col):
+    elif pd.api.types.is_string_dtype(datetime_col_name):
         # Convert string into timestamp.
-        converted_datetime_col = hdateti.to_generalized_datetime(datetime_col)
+        converted_datetime_col = hdateti.to_generalized_datetime(datetime_col_name)
     else:
         raise ValueError(
             "Incorrect data format. Datetime column should be of integer or string dtype."
@@ -115,9 +112,9 @@ def reindex_on_datetime(
     hdbg.dassert_ne(
         df.index.inferred_type, "datetime64", "Datetime index already exists"
     )
-    datetime_col = df[datetime_col_name]
+    datetime_col_name = df[datetime_col_name]
     # Convert original datetime column into `pd.Timestamp`.
-    datetime_idx = convert_timestamp_column(datetime_col, unit=unit)
+    datetime_idx = convert_timestamp_column(datetime_col_name, unit=unit)
     reindexed_df = df.set_index(datetime_idx)
     return reindexed_df
 

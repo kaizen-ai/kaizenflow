@@ -21,7 +21,7 @@ import helpers.hsql as hsql
 import im_v2.ccxt.data.client.clients as imvcdclcl
 import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.common.data.client.clients as ivcdclcl
-import im_v2.common.data.transform.utils as imvcdtrut
+import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
@@ -110,12 +110,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
             hdbg.dassert_not_exists(full_path)
             # Set datetime index.
             datetime_col_name = "start_time"
-            reindexed_df = imvcdtrut.reindex_on_datetime(df, datetime_col_name)
+            reindexed_df = imvcdttrut.reindex_on_datetime(df, datetime_col_name)
             # Add date partition columns to the dataframe.
-            imvcdtrut.add_date_partition_cols(reindexed_df)
+            imvcdttrut.add_date_partition_cols(reindexed_df)
             # Partition and write dataset.
             partition_cols = ["date"]
-            imvcdtrut.partition_dataset(reindexed_df, partition_cols, dst_dir)
+            imvcdttrut.partition_dataset(reindexed_df, partition_cols, dst_dir)
         except AssertionError as ex:
             _LOG.info("Skipping. PQ file already present: %s.", ex)
             continue
