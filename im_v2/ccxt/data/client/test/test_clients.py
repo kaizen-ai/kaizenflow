@@ -9,7 +9,7 @@ import helpers.hprint as hprint
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.client.ccx_clients_example as imvcdcccex
-import im_v2.ccxt.data.client.clients as imvcdclcl
+import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.db.utils as imvcodbut
 
@@ -75,7 +75,7 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Load data with client and check if it is correct.
-        ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
+        ccxt_db_client = imvcdccccl.CcxtDbClient("ohlcv", self.connection)
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         start_ts = None
         end_ts = None
@@ -122,7 +122,7 @@ class TestCcxtDbClient(imvcodbut.TestImDbHelper):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Load data with client and check if it is correct.
-        ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", self.connection)
+        ccxt_db_client = imvcdccccl.CcxtDbClient("ohlcv", self.connection)
         full_symbols = ["binance::BTC_USDT"]
         start_ts = pd.Timestamp("2021-09-09T00:00:00-00:00")
         end_ts = pd.Timestamp("2021-09-09T00:01:00-00:00")
@@ -347,7 +347,7 @@ class TestCcxtCsvFileSystemClient(hunitest.TestCase):
         data_type = "unsupported_data_type"
         root_dir = imvcdcccex.get_test_data_dir()
         with self.assertRaises(AssertionError):
-            imvcdclcl.CcxtCsvFileSystemClient(data_type, root_dir)
+            imvcdccccl.CcxtCsvFileSystemClient(data_type, root_dir)
 
 
 # #############################################################################
@@ -420,7 +420,7 @@ class TestGetFilePath(hunitest.TestCase):
         exchange_id = "binance"
         currency_pair = "BTC_USDT"
         actual = ccxt_client._get_file_path(
-            imvcdclcl._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
+            imvcdccccl._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
         )
         root_dir = imvcdcccex.get_test_data_dir()
         expected = os.path.join(
@@ -441,7 +441,7 @@ class TestGetFilePath(hunitest.TestCase):
         currency_pair = "BTC_USDT"
         with self.assertRaises(AssertionError):
             ccxt_client._get_file_path(
-                imvcdclcl._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
+                imvcdccccl._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
             )
 
     def test3(self) -> None:
@@ -454,7 +454,7 @@ class TestGetFilePath(hunitest.TestCase):
         currency_pair = "unsupported_currency"
         with self.assertRaises(AssertionError):
             ccxt_client._get_file_path(
-                imvcdclcl._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
+                imvcdccccl._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
             )
 
 

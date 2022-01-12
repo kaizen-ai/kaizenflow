@@ -8,7 +8,7 @@ import os
 
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
-import im_v2.ccxt.data.client.clients as imvcdclcl
+import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 
 
 # TODO(gp): @grisha, explain how was this file generated
@@ -21,7 +21,7 @@ def get_test_data_dir():
     return test_data_dir
 
 
-def get_CcxtCsvFileSytemClient_example1() -> imvcdclcl.CcxtCsvFileSystemClient:
+def get_CcxtCsvFileSytemClient_example1() -> imvcdccccl.CcxtCsvFileSystemClient:
     """
     Get `CcxtCsvFileSystemClient` object for the tests.
     """
@@ -38,12 +38,12 @@ def get_CcxtCsvFileSytemClient_example1() -> imvcdclcl.CcxtCsvFileSystemClient:
     # Initialize client.
     data_type = "ohlcv"
     root_dir = get_test_data_dir()
-    ccxt_file_client = imvcdclcl.CcxtCsvFileSystemClient(data_type, root_dir)
+    ccxt_file_client = imvcdccccl.CcxtCsvFileSystemClient(data_type, root_dir)
     return ccxt_file_client
 
 
-def get_CcxtParquetFileSytemClient_example1() -> imvcdclcl.CcxtParquetFileSystemClient:
+def get_CcxtParquetFileSytemClient_example1() -> imvcdccccl.CcxtParquetFileSystemClient:
     data_type = "ohlcv"
     root_dir = get_test_data_dir()
-    ccxt_client = imvcdclcl.CcxtParquetFileSystemClient(data_type, root_dir)
+    ccxt_client = imvcdccccl.CcxtParquetFileSystemClient(data_type, root_dir)
     return ccxt_client

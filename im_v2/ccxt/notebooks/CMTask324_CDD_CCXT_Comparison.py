@@ -27,7 +27,7 @@ import helpers.henv as henv
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import im.cryptodatadownload.data.load.loader as imcdalolo
-import im_v2.ccxt.data.client.clients as imvcdclcl
+import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.common.data.client.clients as ivcdclcl
 import research_amp.cc.statistics as ramccsta
@@ -200,7 +200,7 @@ display(cdd_binance_df.head(3))
 display(cdd_binance_df.shape)
 
 # %%
-ccxt_client = imvcdclcl.CcxtCsvFileSystemClient(
+ccxt_client = imvcdccccl.CcxtCsvFileSystemClient(
     data_type="ohlcv", root_dir=root_dir, aws_profile="am"
 )
 multiple_symbols_client = ivcdclcl.MultipleSymbolsImClient(
