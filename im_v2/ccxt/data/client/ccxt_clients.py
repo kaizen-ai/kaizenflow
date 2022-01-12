@@ -4,9 +4,6 @@ Import as:
 import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 """
 
-# TODO(gp): -> ccxt_clients.py to try to make the names unique, even if there is
-#  stuttering.
-
 import abc
 import logging
 import os
@@ -210,7 +207,6 @@ class CcxtDbClient(CcxtClient):
 # #############################################################################
 
 
-# TODO(gp): @grisha -> CcxtFileSystemClient to simplify the naming scheme.
 class CcxtFileSystemClient(CcxtClient, abc.ABC):
     """
     Abstract interface for CCXT client using local or S3 filesystem as backend.

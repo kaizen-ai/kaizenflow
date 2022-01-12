@@ -80,7 +80,6 @@ def construct_full_symbol(exchange: str, symbol: str) -> FullSymbol:
 # TODO(gp): Consider splitting in one file per class. Not sure about the trade-off
 #  between file proliferation and more organization.
 
-# TODO(gp): @grisha -> ImClient. This requires changes in all repos.
 class ImClient(abc.ABC):
     """
     Retrieve market data for different vendors from different backends.
