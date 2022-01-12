@@ -9,7 +9,7 @@ from typing import Any, List, Optional
 import pandas as pd
 
 import helpers.hdbg as hdbg
-import im_v2.common.data.client as ivcdclcl
+import im_v2.common.data.client as icdc
 import market_data.abstract_market_data as mdabmada
 
 
@@ -20,7 +20,7 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
     """
 
     def __init__(
-        self, *args: Any, im_client: ivcdclcl.ImClient, **kwargs: Any
+        self, *args: Any, im_client: icdc.ImClient, **kwargs: Any
     ) -> None:
         """
         Constructor.
