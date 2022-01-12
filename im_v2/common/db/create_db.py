@@ -2,8 +2,8 @@
 """
 Script to create IM (Instrument Master) database using the given connection.
 
-# Create a DB named 'test_db' using environment variables: >
-im/common/db/create_db.py --db_name 'test_db'
+# Create a DB named 'test_db' using environment variables:
+> im/common/db/create_db.py --db_name 'test_db'
 """
 
 import argparse
@@ -22,7 +22,6 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        # TODO(gp): @danya -> db_name (we prefer underscores in options).
         "--db_name",
         action="store",
         required=True,
