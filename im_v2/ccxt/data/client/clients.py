@@ -205,12 +205,12 @@ class CcxtDbClient(CcxtClient):
 
 
 # #############################################################################
-# AbstractCcxtFileSystemClient
+# CcxtFileSystemClient
 # #############################################################################
 
 
 # TODO(gp): @grisha -> CcxtFileSystemClient to simplify the naming scheme.
-class AbstractCcxtFileSystemClient(CcxtClient, abc.ABC):
+class CcxtFileSystemClient(CcxtClient, abc.ABC):
     """
     Abstract interface for CCXT client using local or S3 filesystem as backend.
     """
@@ -371,7 +371,7 @@ class AbstractCcxtFileSystemClient(CcxtClient, abc.ABC):
 # #############################################################################
 
 
-class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
+class CcxtCsvFileSystemClient(CcxtFileSystemClient):
     """
     CCXT client for data stored as CSV from local or S3 filesystem.
 
@@ -422,7 +422,7 @@ class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
 
 # TODO(gp): @grisha This should descend from `ImClientReadingMultipleSymbols`
 #  since it reads PQ files.
-class CcxtParquetFileSystemClient(AbstractCcxtFileSystemClient):
+class CcxtParquetFileSystemClient(CcxtFileSystemClient):
     """
     CCXT client for data stored as Parquet from local or S3 filesystem.
     """
