@@ -11,7 +11,7 @@ from typing import Dict, List, Tuple, Union
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
-import im_v2.common.data.client as imvcdcadlo
+import im_v2.common.data.client as icdc
 
 _LATEST_UNIVERSE_VERSION = "v03"
 
@@ -39,7 +39,7 @@ def get_vendor_universe(
     version: str = _LATEST_UNIVERSE_VERSION,
     vendor: str = "CCXT",
     as_ids: bool = False,
-) -> Union[List[imvcdcadlo.FullSymbol], List[int]]:
+) -> Union[List[icdc.FullSymbol], List[int]]:
     """
     Load vendor universe as full symbols or numeric ids.
 
@@ -52,7 +52,7 @@ def get_vendor_universe(
     vendor_universe = get_trade_universe(version)[vendor]
     # Convert vendor universe dict to a sorted list of full symbols.
     universe = [
-        imvcdcadlo.construct_full_symbol(exchange_id, currency_pair)
+        icdc.construct_full_symbol(exchange_id, currency_pair)
         for exchange_id, currency_pairs in vendor_universe.items()
         for currency_pair in currency_pairs
     ]
