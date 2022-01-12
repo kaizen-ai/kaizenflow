@@ -1,11 +1,8 @@
 """
 Import as:
 
-import im_v2.ccxt.data.client.clients as imvcdclcl
+import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 """
-
-# TODO(gp): -> ccxt_clients.py to try to make the names unique, even if there is
-#  stuttering.
 
 import abc
 import logging
@@ -29,21 +26,19 @@ _LOG = logging.getLogger(__name__)
 _LATEST_DATA_SNAPSHOT = "20210924"
 
 
-# TODO(gp): @grisha, Move inside AbstractCcxtClient since it's private to
-#  that class.
+# TODO(gp): @grisha, Move inside CcxtClient since it's private to that class.
 _DATA_TYPES = ["ohlcv"]
 
 
 # #############################################################################
-# AbstractCcxtClient
+# CcxtClient
 # #############################################################################
 
 
 # TODO(gp): Consider splitting this file into chunks
 
-# TODO(gp): @grisha Call it CcxtClient to simplify the naming scheme.
-#  The fact that is abstract is in the definition.
-class AbstractCcxtClient(icdc.ImClientReadingOneSymbol, abc.ABC):
+
+class CcxtClient(icdc.ImClientReadingOneSymbol, abc.ABC):
     """
     Abstract interface for CCXT client.
 
@@ -150,7 +145,7 @@ class AbstractCcxtClient(icdc.ImClientReadingOneSymbol, abc.ABC):
 # #############################################################################
 
 
-class CcxtDbClient(AbstractCcxtClient):
+class CcxtDbClient(CcxtClient):
     """
     CCXT client for data from the database.
     """
@@ -208,12 +203,11 @@ class CcxtDbClient(AbstractCcxtClient):
 
 
 # #############################################################################
-# AbstractCcxtFileSystemClient
+# CcxtFileSystemClient
 # #############################################################################
 
 
-# TODO(gp): @grisha -> CcxtFileSystemClient to simplify the naming scheme.
-class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
+class CcxtFileSystemClient(CcxtClient, abc.ABC):
     """
     Abstract interface for CCXT client using local or S3 filesystem as backend.
     """
@@ -374,7 +368,7 @@ class AbstractCcxtFileSystemClient(AbstractCcxtClient, abc.ABC):
 # #############################################################################
 
 
-class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
+class CcxtCsvFileSystemClient(CcxtFileSystemClient):
     """
     CCXT client for data stored as CSV from local or S3 filesystem.
 
@@ -425,7 +419,7 @@ class CcxtCsvFileSystemClient(AbstractCcxtFileSystemClient):
 
 # TODO(gp): @grisha This should descend from `ImClientReadingMultipleSymbols`
 #  since it reads PQ files.
-class CcxtParquetFileSystemClient(AbstractCcxtFileSystemClient):
+class CcxtParquetFileSystemClient(CcxtFileSystemClient):
     """
     CCXT client for data stored as Parquet from local or S3 filesystem.
     """
