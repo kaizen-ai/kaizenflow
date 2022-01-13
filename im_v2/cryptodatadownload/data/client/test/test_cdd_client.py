@@ -9,13 +9,6 @@ import im_v2.cryptodatadownload.data.client.cdd_clients_example as imvcrcdcex
 
 _AM_S3_ROOT_DIR = os.path.join(hs3.get_path(), "data")
 
-# TODO(gp): Move to im.cryptodatadownloader.data.load.cdd_clients_example.py
-#def get_CcdClient_example1():
-#    data_type = "OHLCV"
-#    root_dir = _AM_S3_ROOT_DIR
-#    cdd_client = imcdaclcd.CddClient(data_type, root_dir, aws_profile="am")
-#    return cdd_client
-
 
 class TestGetFilePath(hunitest.TestCase):
     def test1(self) -> None:
