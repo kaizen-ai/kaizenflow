@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.ccxt.data.extract.dags.rt_dag as imvcdedrda
+import im_v2.ccxt.data.extract.airflow.rt_dag as imvcdedrda
 """
 
 import datetime
@@ -14,8 +14,8 @@ ecs_cluster = "Crypto1"
 ecs_task_definition = "cmamp"
 ecs_subnets = ["subnet-0d7a4957ff09e7cc5", "subnet-015eee0c93f916f23"]
 ecs_security_group = ["sg-0c605e9a7bb0df2aa"]
-ecs_awslogs_group = "/ecs/airflow-ecs-operator"
-ecs_awslogs_stream_prefix = "ecs"
+ecs_awslogs_group = "/ecs/cmamp"
+ecs_awslogs_stream_prefix = "ecs/cmamp"
 
 
 # Pass default parameters for the DAG.
@@ -28,7 +28,7 @@ default_args = {
 
 # Create a command.
 bash_command = [
-    "im_v2/ccxt/data/extract/download_realtime.py",
+    "python im_v2/ccxt/data/extract/download_realtime_data.py",
     "--to_datetime {{ next_execution_date }}",
     "--from_datetime {{ execution_date - macros.timedelta(5) }}"
     # TODO(Danya): Set a shared directory for the DAG (#675).
