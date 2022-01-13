@@ -1,3 +1,7 @@
+# cmamp-1.0.6
+- 2022-01-13
+- Add more docker users
+
 # cmamp-1.0.5
 - 2022-01-05
 - Add `importlib-resources` Python package
