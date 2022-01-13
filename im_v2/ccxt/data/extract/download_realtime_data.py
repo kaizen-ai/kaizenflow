@@ -39,11 +39,11 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(Danya): Replace with an `env` file (CMTask585).
 _DB_CREDENTIALS = {
-    "host": "172.30.2.212",
-    "dbname": "im_postgres_db_local",
+    "host": "dev-im-db.cpox8ul7pzan.eu-north-1.rds.amazonaws.com",
+    "dbname": "postgres",
     "port": 5432,
-    "user": "aljsdalsd",
-    "password": "alsdkqoen",
+    "user": "postgres",
+    "password": "***REMOVED***"
 }
 
 
