@@ -302,7 +302,7 @@ class CcxtFileSystemClient(CcxtClient, abc.ABC):
         :return: data from the specified path
         """
 
-    # TODO(Grisha): factor out common code from `CddLoader._get_file_path` and
+    # TODO(Grisha): factor out common code from `CddClient._get_file_path` and
     #  `CcxtLoader._get_file_path`.
     def _get_file_path(
         self,
