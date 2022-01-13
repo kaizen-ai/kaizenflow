@@ -78,7 +78,6 @@ def get_mocked_portfolio_example1(
         timestamp_col,
         db_connection=db_connection,
         table_name=table_name,
-        asset_id_col=asset_id_column,
         #
         initial_cash=initial_cash,
         asset_ids=asset_ids,

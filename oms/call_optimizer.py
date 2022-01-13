@@ -8,7 +8,7 @@ import logging
 
 import pandas as pd
 
-import core.config as cconfig
+# import core.config as cconfig
 import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
@@ -56,13 +56,19 @@ def compute_target_positions_in_cash(
     volatility = df["volatility"]
     _LOG.debug("volatility=\n%s", volatility)
     volatility[cash_asset_id] = 1.0
+    # Set a lower bound on the volatility forecast.
     volatility = volatility.clip(lower=1e-5)
     #
     unscaled_target_positions = predictions.divide(volatility)
-    unscaled_target_positions_l1 = unscaled_target_positions.abs().sum()
+    cash = predictions[cash_asset_id]
+    hdbg.dassert_lte(0, cash)
+    unscaled_target_positions_l1 = unscaled_target_positions.abs().sum() - cash
     _LOG.debug("unscaled_target_positions_l1 =%s", unscaled_target_positions_l1)
-    hdbg.dassert_lt(0, unscaled_target_positions_l1)
-    scale_factor = target_gmv / unscaled_target_positions_l1
+    hdbg.dassert_lte(0, unscaled_target_positions_l1)
+    if unscaled_target_positions_l1 == 0:
+        scale_factor = 0
+    else:
+        scale_factor = target_gmv / unscaled_target_positions_l1
     _LOG.debug("scale_factor=%s", scale_factor)
     # These positions are expressed in dollars.
     current_positions = df["value"]

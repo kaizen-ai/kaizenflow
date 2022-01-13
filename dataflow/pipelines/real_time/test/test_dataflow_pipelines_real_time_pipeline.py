@@ -54,7 +54,7 @@ class TestRealTimeReturnPipeline1(hunitest.TestCase):
                 start_datetime, end_datetime, columns, asset_ids
             )
             initial_replayed_delay = 5
-            (market_data, _,) = mdata.get_ReplayedTimeMarketData_example1(
+            (market_data, _,) = mdata.get_ReplayedTimeMarketData_from_df(
                 event_loop,
                 initial_replayed_delay,
                 df,
@@ -154,7 +154,7 @@ class TestRealTimePipelineWithOms1(hunitest.TestCase):
             (
                 market_data,
                 get_wall_clock_time,
-            ) = mdata.get_ReplayedTimeMarketData_example1(
+            ) = mdata.get_ReplayedTimeMarketData_from_df(
                 event_loop,
                 initial_replayed_delay,
                 df,
@@ -318,7 +318,7 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
         (
             market_data,
             get_wall_clock_time,
-        ) = mdata.get_ReplayedTimeMarketData_example1(
+        ) = mdata.get_ReplayedTimeMarketData_from_df(
             event_loop,
             initial_replayed_delay,
             df,
@@ -455,6 +455,13 @@ class TestRealTimeMvnReturnsWithOms2(otodh.TestOmsDbHelper):
         ) = mdata.get_ReplayedTimeMarketData_example4(
             event_loop,
             initial_replayed_delay=1,
+            start_datetime=pd.Timestamp(
+                "2000-01-03 09:31:00-05:00", tz="America/New_York"
+            ),
+            end_datetime=pd.Timestamp(
+                "2000-01-03 09:31:00-05:00", tz="America/New_York"
+            ),
+            asset_ids=[101, 202, 303],
         )
         return market_data
 
