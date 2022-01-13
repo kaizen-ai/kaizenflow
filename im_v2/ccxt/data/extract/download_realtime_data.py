@@ -222,7 +222,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     )
     # Convert timestamps.
     end = pd.Timestamp(args.to_datetime)
-    start = pd.Timedelta(args.from_datetime)
+    start = pd.Timestamp(args.from_datetime)
     # Download data for specified time period.
     for exchange in exchanges:
         for currency_pair in exchange.currency_pairs:
