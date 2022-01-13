@@ -26,7 +26,7 @@ import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
-import im.cryptodatadownload.data.load.loader as imcdalolo
+import im.cryptodatadownload.data.client.cdd_client as imcdaclcd
 import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.common.data.client as icdc
@@ -186,7 +186,7 @@ root_dir = os.path.join(hs3.get_path(), "data")
 
 # %%
 cdd_data = []
-cdd_loader = imcdalolo.CddLoader(
+cdd_loader = imcdaclcd.CddClient(
     data_type="ohlcv", root_dir=root_dir, aws_profile="am"
 )
 
