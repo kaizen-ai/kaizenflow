@@ -48,7 +48,7 @@ import im_v2.common.data.transform.convert_pq_by_date_to_by_asset as imvcdtcpbdt
 import argparse
 import logging
 import os
-from typing import Any, Dict, List
+from typing import List
 
 import numpy as np
 
@@ -78,7 +78,9 @@ def _get_parquet_filenames(src_dir: str) -> List[str]:
     return src_pq_files
 
 
-def _process_chunk(parquet_file_names: List[str], asset_col_name: str, dst_dir: str) -> None:
+def _process_chunk(
+    parquet_file_names: List[str], asset_col_name: str, dst_dir: str
+) -> None:
     """
     Process a chunk of work corresponding to multiple Parquet files.
 
@@ -106,8 +108,13 @@ def _process_chunk(parquet_file_names: List[str], asset_col_name: str, dst_dir: 
         imvcdttrut.partition_dataset(reindexed_df, partition_cols, dst_dir)
 
 
-def _process_chunk_adapter(parquet_file_names: List[str], asset_col_name: str, dst_dir: str,
-                           incremental, num_attempts):
+def _process_chunk_adapter(
+    parquet_file_names: List[str],
+    asset_col_name: str,
+    dst_dir: str,
+    incremental,
+    num_attempts,
+):
     """
     A wrapper around `process_chunk` to allow for joblib arguments.
     """

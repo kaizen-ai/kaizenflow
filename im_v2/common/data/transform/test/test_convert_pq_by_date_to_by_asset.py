@@ -24,26 +24,6 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
             "num_attempts": 1,
         }
 
-    @staticmethod
-    def get_dummy_task_config(test_dir: str) -> Dict[str, Any]:
-        """
-        Specific config used for joblib task.
-
-        Along with regular arguments used in script run, there is
-        `parquet_file_name` which represents list of daily PQ file paths
-        that will be converted to by asset PQ files.
-        """
-        return {
-            "src_dir": f"{test_dir}/by_date",
-            "parquet_file_names": [
-                f"{test_dir}/by_date/date=20211230/data.parquet",
-                f"{test_dir}/by_date/date=20211231/data.parquet",
-                f"{test_dir}/by_date/date=20220101/data.parquet",
-            ],
-            "dst_dir": f"{test_dir}/by_asset",
-            "asset_col_name": "asset",
-        }
-
     def generate_test_data(self, verbose: bool) -> Tuple[str, str]:
         """
         Generate test data in form of daily PQ files.
@@ -190,10 +170,10 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         test_dir, by_date_dir = self.generate_test_data(verbose)
         by_asset_dir = os.path.join(test_dir, "by_asset")
         parquet_file_names = [
-                f"{test_dir}/by_date/date=20211230/data.parquet",
-                f"{test_dir}/by_date/date=20211231/data.parquet",
-                f"{test_dir}/by_date/date=20220101/data.parquet",
-            ]
+            f"{test_dir}/by_date/date=20211230/data.parquet",
+            f"{test_dir}/by_date/date=20211231/data.parquet",
+            f"{test_dir}/by_date/date=20220101/data.parquet",
+        ]
         dst_dir = f"{test_dir}/by_asset"
         if verbose:
             asset_col_name = "ticker"
