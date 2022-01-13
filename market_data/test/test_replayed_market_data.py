@@ -735,6 +735,14 @@ class TestReplayedMarketData4(hunitest.TestCase):
             # Build a ReplayedMarketData.
             (market_data, _,) = mdmadaex.get_ReplayedTimeMarketData_example4(
                 event_loop,
+                initial_replayed_delay=1,
+                start_datetime=pd.Timestamp(
+                    "2000-01-03 09:31:00-05:00", tz="America/New_York"
+                ),
+                end_datetime=pd.Timestamp(
+                    "2000-01-03 09:31:00-05:00", tz="America/New_York"
+                ),
+                asset_ids=[101, 202, 303],
             )
             # Run the method.
             start_time, end_time, num_iter = hasynci.run(
