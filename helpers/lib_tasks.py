@@ -1219,12 +1219,12 @@ def integrate_diff_dirs(  # type: ignore
     dry_run=False,
 ):
     """
-    Integrate repos from dir `src_dir_name` to `dst_dir_name`.
-
-    We use default values for src / dst dirs to represent the usual set-up.
+    Integrate repos from dirs `src_dir_name` to `dst_dir_name` by diffing or copying
+    all the files with differences.
 
     ```
-    > i integrate_diff_dirs --subdir-name . --src-dir amp1 --dst-dir cmamp1
+    # Use the default values for src / dst dirs to represent the usual set-up.
+    > i integrate_diff_dirs --src-dir-name amp1 --dst-dir-name cmamp1 --subdir .
     ```
 
     :param copy: copy the files instead of diffing
@@ -1270,9 +1270,11 @@ def _find_files_touched_since_last_integration(
     """
     Return the list of files modified since the last integration.
 
+    :param dir_name: basename of the current dir
     :param abs_dir_name: directory to cd before executing this script
     :param subdir: consider only the files under `subdir`
     """
+    # TODO(gp): dir_name can be computed from abs_dir_name to simplify the interface.
     # Change the dir to the correct one.
     old_dir = os.getcwd()
     try:
@@ -1289,11 +1291,11 @@ def _find_files_touched_since_last_integration(
         hdbg.dassert_lte(1, len(txt))
         print("# last_integration: '%s'" % txt[0])
         last_integration_hash = txt[0].split()[0]
-        _LOG.debug(hprint.to_str("last_integration_hash"))
+        print("* " + hprint.to_str("last_integration_hash"))
         # Find the first commit after the commit with the last integration.
         cmd = f"git log --oneline --reverse --ancestry-path {last_integration_hash}^..master"
         _, txt = hsysinte.system_to_string(cmd)
-        _LOG.debug("commits after last integration=\n%s", txt)
+        print(f"* commits after last integration=\n{txt}")
         txt = txt.split("\n")
         # > git log --oneline --reverse --ancestry-path 72a1a101^..master
         # 72a1a101 AmpTask1786_Integrate_20211218 (#1975)
@@ -1479,6 +1481,28 @@ def integrate_files(  # type: ignore
         )
     else:
         raise ValueError("Invalid file_direction='%s'" % file_direction)
+
+
+@task
+def integrate_find_files(  # type: ignore
+    ctx,
+    subdir="",
+):
+    """
+    Find the files that are touched in the current branch since last integration.
+    """
+    _report_task()
+    _ = ctx
+    #
+    src_dir = os.path.basename(os.getcwd())
+    abs_src_dir = "."
+    abs_src_dir = os.path.normpath(abs_src_dir)
+    hdbg.dassert_dir_exists(abs_src_dir)
+    # Find the files touched in each branch since the last integration.
+    src_files = sorted(
+        _find_files_touched_since_last_integration(src_dir, abs_src_dir, subdir)
+    )
+    print("* Files touched:\n%s" % "\n".join(src_files))
 
 
 @task
