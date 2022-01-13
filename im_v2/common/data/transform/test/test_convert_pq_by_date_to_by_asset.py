@@ -159,7 +159,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         )
 
     def _test_joblib_task(
-        self, verbose: bool, config_update: Dict[str, Any]
+        self, verbose: bool
     ) -> None:
         """
         Tests directly _save_chunk function that is used as joblib task.

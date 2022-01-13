@@ -114,7 +114,7 @@ def _process_chunk_adapter(
     dst_dir: str,
     incremental,
     num_attempts,
-):
+) -> None:
     """
     A wrapper around `process_chunk` to allow for joblib arguments.
     """
