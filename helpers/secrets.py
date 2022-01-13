@@ -59,7 +59,7 @@ def store_secret(
     secret_name: str, secret_value: dict, description: str = ""
 ) -> Optional[bool]:
     """
-    Store secret values(s) from AWS secrets manager, specify string as a dict
+    Store secret values(s) from AWS secrets manager, specify secret as a dict
     of key-value pairs.
     """
     hdbg.dassert_isinstance(secret_name, str)
