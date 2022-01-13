@@ -11,7 +11,7 @@ import boto3
 from botocore.client import BaseClient
 from botocore.exceptions import ClientError
 
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 
 
 def get_secrets_client(region_name: str = "eu-north-1") -> BaseClient:
