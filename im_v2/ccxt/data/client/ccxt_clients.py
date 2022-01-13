@@ -72,11 +72,8 @@ class CcxtClient(icdc.ImClientReadingOneSymbol, abc.ABC):
         hdbg.dassert_container_type(
             data["timestamp"], container_type=None, elem_type=int
         )
-        # Rename column with the original Unix ms epoch.
-        # TODO(gp): Remove epoch.
-        data = data.rename({"timestamp": "epoch"}, axis=1)
         # Transform Unix epoch into UTC timestamp.
-        data["timestamp"] = pd.to_datetime(data["epoch"], unit="ms", utc=True)
+        data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms", utc=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
         return data
@@ -92,7 +89,6 @@ class CcxtClient(icdc.ImClientReadingOneSymbol, abc.ABC):
             "low",
             "close",
             "volume",
-            "epoch",
             "currency_pair",
             "exchange_id",
         ]
@@ -116,10 +112,10 @@ class CcxtClient(icdc.ImClientReadingOneSymbol, abc.ABC):
 
         Output data is indexed by timestamp and looks like:
         ```
-                                   open        epoch          currency_pair exchange_id
-        2021-09-08 20:00:00-04:00  3499.01 ... 1631145600000  ETH_USDT      binance
-        2021-09-08 20:01:00-04:00  3496.36     1631145660000  ETH_USDT      binance
-        2021-09-08 20:02:00-04:00  3501.59     1631145720000  ETH_USDT      binance
+                                   open        currency_pair exchange_id
+        2021-09-08 20:00:00-04:00  3499.01 ... ETH_USDT      binance
+        2021-09-08 20:01:00-04:00  3496.36     ETH_USDT      binance
+        2021-09-08 20:02:00-04:00  3501.59     ETH_USDT      binance
         ```
         """
         # Apply common transformations.
@@ -299,7 +295,7 @@ class CcxtFileSystemClient(CcxtClient, abc.ABC):
         :return: data from the specified path
         """
 
-    # TODO(Grisha): factor out common code from `CddLoader._get_file_path` and
+    # TODO(Grisha): factor out common code from `CddClient._get_file_path` and
     #  `CcxtLoader._get_file_path`.
     def _get_file_path(
         self,

@@ -42,17 +42,17 @@ class TestMarketDataClient(hunitest.TestCase):
         expected_df_as_str = """
         # df=
         df.index in [2018-08-16 20:01:00-04:00, 2018-08-16 20:04:00-04:00]
-        df.columns=asset_id,open,high,low,close,volume,epoch,currency_pair,exchange_id,start_ts
-        df.shape=(8, 10)
-                                            asset_id         open         high          low        close     volume          epoch currency_pair exchange_id                  start_ts
+        df.columns=asset_id,open,high,low,close,volume,currency_pair,exchange_id,start_ts
+        df.shape=(8, 9)
+                                            asset_id         open         high          low        close     volume currency_pair exchange_id                  start_ts
         end_ts
-        2018-08-16 20:01:00-04:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206  1534464060000      BTC_USDT     binance 2018-08-16 20:00:00-04:00
-        2018-08-16 20:01:00-04:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500  1534464060000      ETH_USDT      kucoin 2018-08-16 20:00:00-04:00
-        2018-08-16 20:02:00-04:00  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226  1534464120000      BTC_USDT     binance 2018-08-16 20:01:00-04:00
+        2018-08-16 20:01:00-04:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206      BTC_USDT     binance 2018-08-16 20:00:00-04:00
+        2018-08-16 20:01:00-04:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500      ETH_USDT      kucoin 2018-08-16 20:00:00-04:00
+        2018-08-16 20:02:00-04:00  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226      BTC_USDT     binance 2018-08-16 20:01:00-04:00
         ...
-        2018-08-16 20:03:00-04:00   kucoin::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260  1534464180000      ETH_USDT      kucoin 2018-08-16 20:02:00-04:00
-        2018-08-16 20:04:00-04:00  binance::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586  1534464240000      BTC_USDT     binance 2018-08-16 20:03:00-04:00
-        2018-08-16 20:04:00-04:00   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655  1534464240000      ETH_USDT      kucoin 2018-08-16 20:03:00-04:00"""
+        2018-08-16 20:03:00-04:00   kucoin::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260      ETH_USDT      kucoin 2018-08-16 20:02:00-04:00
+        2018-08-16 20:04:00-04:00  binance::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586      BTC_USDT     binance 2018-08-16 20:03:00-04:00
+        2018-08-16 20:04:00-04:00   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655      ETH_USDT      kucoin 2018-08-16 20:03:00-04:00"""
         # pylint: enable=line-too-long
         self.assert_equal(
             actual_df_as_str,
@@ -151,17 +151,17 @@ class TestMarketDataClient(hunitest.TestCase):
         expected_df_as_str = """
         # df=
         df.index in [2018-08-17 00:01:00+00:00, 2018-08-17 00:04:00+00:00]
-        df.columns=asset_id,open,high,low,close,volume,epoch,currency_pair,exchange_id
-        df.shape=(8, 9)
-                                            asset_id         open         high          low        close     volume          epoch currency_pair exchange_id
+        df.columns=asset_id,open,high,low,close,volume,currency_pair,exchange_id
+        df.shape=(8, 8)
+                                            asset_id         open         high          low        close     volume  currency_pair exchange_id
         timestamp
-        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206  1534464060000      BTC_USDT     binance
-        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500  1534464060000      ETH_USDT      kucoin
-        2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226  1534464120000      BTC_USDT     binance
+        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206       BTC_USDT     binance
+        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500       ETH_USDT      kucoin
+        2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226       BTC_USDT     binance
         ...
-        2018-08-17 00:03:00+00:00   kucoin::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260  1534464180000      ETH_USDT      kucoin
-        2018-08-17 00:04:00+00:00  binance::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586  1534464240000      BTC_USDT     binance
-        2018-08-17 00:04:00+00:00   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655  1534464240000      ETH_USDT      kucoin"""
+        2018-08-17 00:03:00+00:00   kucoin::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260       ETH_USDT      kucoin
+        2018-08-17 00:04:00+00:00  binance::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586       BTC_USDT     binance
+        2018-08-17 00:04:00+00:00   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655       ETH_USDT      kucoin"""
         # pylint: enable=line-too-long
         self.assert_equal(
             actual_df_as_str,
