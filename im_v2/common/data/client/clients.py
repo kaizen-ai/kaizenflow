@@ -117,7 +117,7 @@ class ImClient(abc.ABC):
         # Assume that the timestamp is always stored as index.
         start_ts = data.index.min()
         hdbg.dassert_isinstance(start_ts, pd.Timestamp)
-        # TODO(gp): Check that is UTC.
+        hdateti.dassert_has_specified_tz(start_ts, ["UTC"])
         return start_ts
 
     def get_end_ts_for_symbol(
@@ -134,7 +134,7 @@ class ImClient(abc.ABC):
         # Assume that the timestamp is always stored as index.
         end_ts = data.index.max()
         hdbg.dassert_isinstance(end_ts, pd.Timestamp)
-        # TODO(gp): Check that is UTC.
+        hdateti.dassert_has_specified_tz(end_ts, ["UTC"])
         return end_ts
 
     @staticmethod
@@ -159,6 +159,9 @@ class ImClient(abc.ABC):
 
     @staticmethod
     def _check_full_symbols(full_symbols: List[imvcdcfusy.FullSymbol]) -> None:
+        """
+        Verify that full symbols are passed in a list that has no duplicates.
+        """
         hdbg.dassert_isinstance(full_symbols, list)
         hdbg.dassert_no_duplicates(full_symbols)
 
@@ -168,6 +171,14 @@ class ImClient(abc.ABC):
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
     ) -> pd.DataFrame:
+        """
+        Apply normalizations to IM data.
+
+        Normalizations include:
+        - drop duplicates
+        - resample data to 1 min frequency
+        - trim the data with index in specified date interval
+        """
         _LOG.debug(hprint.to_str("start_ts end_ts"))
         df = hpandas.drop_duplicates(df)
         df = hpandas.resample_df(df, "T")

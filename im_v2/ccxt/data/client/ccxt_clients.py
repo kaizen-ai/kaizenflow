@@ -26,10 +26,6 @@ _LOG = logging.getLogger(__name__)
 _LATEST_DATA_SNAPSHOT = "20210924"
 
 
-# TODO(gp): @grisha, Move inside CcxtClient since it's private to that class.
-_DATA_TYPES = ["ohlcv"]
-
-
 # #############################################################################
 # CcxtClient
 # #############################################################################
@@ -52,8 +48,11 @@ class CcxtClient(icdc.ImClientReadingOneSymbol, abc.ABC):
         """
         :param data_type: OHLCV, trade, or bid/ask data
         """
+        # Set list of available data types.
+        self._data_types = ["ohlcv"]
+        # Verify that the passed data type is available and set it.
         data_type = data_type.lower()
-        hdbg.dassert_in(data_type, _DATA_TYPES)
+        hdbg.dassert_in(data_type, self._data_types)
         self._data_type = data_type
 
     @staticmethod
@@ -98,11 +97,9 @@ class CcxtClient(icdc.ImClientReadingOneSymbol, abc.ABC):
             "exchange_id",
         ]
         # Verify that dataframe contains OHLCV columns.
-        # TODO(gp): dassert_is_seteq?
         hdbg.dassert_is_subset(ohlcv_columns, data.columns)
         # Rearrange the columns.
-        # TODO(gp): Why copying?
-        data = data[ohlcv_columns].copy()
+        data = data[ohlcv_columns]
         return data
 
     def _apply_vendor_normalization(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -133,7 +130,7 @@ class CcxtClient(icdc.ImClientReadingOneSymbol, abc.ABC):
         else:
             raise ValueError(
                 "Incorrect data type: '%s'. Acceptable types: '%s'"
-                % (self._data_type, _DATA_TYPES)
+                % (self._data_type, self._data_types)
             )
         # Sort transformed data by exchange id and currency pair columns.
         data = data.sort_values(by=["exchange_id", "currency_pair"])
