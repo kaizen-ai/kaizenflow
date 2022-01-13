@@ -13,7 +13,7 @@ import pandas as pd
 import seaborn as sns
 
 import core.signal_processing as csigproc
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 

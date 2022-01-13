@@ -7,9 +7,9 @@ import dev_scripts.manage_cache as dscmacac
 
 import argparse
 
-import helpers.cache as hcache
-import helpers.dbg as hdbg
-import helpers.parser as hparser
+import helpers.hcache as hcache
+import helpers.hdbg as hdbg
+import helpers.hparser as hparser
 
 # Example functions for testing.
 

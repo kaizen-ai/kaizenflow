@@ -52,7 +52,7 @@ def bootstrap(rel_path_to_amp_helpers):
     sys.path.insert(0, amp_path)
     # Test the imports.
     try:
-        import helpers.dbg as hdbg  # isort:skip # noqa: E402,F401
+        import helpers.hdbg as hdbg  # isort:skip # noqa: E402,F401
 
         print("* Bootstrap successful *")
     except ImportError as e:

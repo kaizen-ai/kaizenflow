@@ -21,8 +21,8 @@ import core.statistics as costatis
 import dataflow as cdataf
 import dataflow.model.stats_computer as dtfmostcom
 import dataflow.model.utils as dtfmodutil
-import helpers.dbg as hdbg
-import helpers.introspection as hintros
+import helpers.hdbg as hdbg
+import helpers.hintrospection as hintros
 
 _LOG = logging.getLogger(__name__)
 

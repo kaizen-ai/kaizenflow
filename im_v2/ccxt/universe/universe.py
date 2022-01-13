@@ -8,10 +8,10 @@ import hashlib
 import os
 from typing import Dict, List, Tuple, Union
 
-import helpers.dbg as hdbg
-import helpers.git as hgit
-import helpers.io_ as hio
-import im_v2.common.data.client as imvcdcadlo
+import helpers.hdbg as hdbg
+import helpers.hgit as hgit
+import helpers.hio as hio
+import im_v2.common.data.client as icdc
 
 _LATEST_UNIVERSE_VERSION = "v03"
 
@@ -39,20 +39,20 @@ def get_vendor_universe(
     version: str = _LATEST_UNIVERSE_VERSION,
     vendor: str = "CCXT",
     as_ids: bool = False,
-) -> Union[List[imvcdcadlo.FullSymbol], List[int]]:
+) -> Union[List[icdc.FullSymbol], List[int]]:
     """
     Load vendor universe as full symbols or numeric ids.
 
     :param version: release version
-    :param vendor: vendor to load data for
+    :param vendor: vendor to load data for (e.g., CCXT, CDD)
     :param as_ids: if True return universe as numeric ids, otherwise universe as full symbols
-    :return: vendor universe
+    :return: vendor universe as full symbols (e.g., gateio::XRP_USDT)
     """
     # Get vendor universe.
     vendor_universe = get_trade_universe(version)[vendor]
     # Convert vendor universe dict to a sorted list of full symbols.
     universe = [
-        imvcdcadlo.construct_full_symbol(exchange_id, currency_pair)
+        icdc.construct_full_symbol(exchange_id, currency_pair)
         for exchange_id, currency_pairs in vendor_universe.items()
         for currency_pair in currency_pairs
     ]

@@ -13,17 +13,17 @@ import pandas as pd
 
 import core.config.config_ as cconconf
 import core.statistics as costatis
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import im.cryptodatadownload.data.load.loader as imcdalolo
 import im_v2.ccxt.data.client as imvcdcli
-import im_v2.common.data.client as imcdacli
+import im_v2.common.data.client as icdc
 
 _LOG = logging.getLogger(__name__)
 
 
 def compute_stats_for_universe(
-    vendor_universe: List[imcdacli.FullSymbol],
+    vendor_universe: List[icdc.FullSymbol],
     config: cconconf.Config,
     stats_func: Callable,
 ) -> pd.DataFrame:
@@ -194,7 +194,7 @@ def postprocess_stats_table(
 # TODO(Grisha): move `get_loader_for_vendor` out in and use the abstract class in #313.
 def get_loader_for_vendor(
     config: cconconf.Config,
-) -> Union[imcdacli.AbstractImClient, imcdalolo.CddLoader]:
+) -> Union[icdc.ImClient, imcdaclcd.CddClient]:
     """
     Get vendor specific loader instance.
 
@@ -209,7 +209,8 @@ def get_loader_for_vendor(
             aws_profile=config["load"]["aws_profile"],
         )
     elif vendor == "CDD":
-        loader = imcdalolo.CddLoader(
+        loader = imcdaclcd.CddClient(
+            data_type=config["data"]["data_type"],
             root_dir=config["load"]["data_dir"],
             aws_profile=config["load"]["aws_profile"],
         )
@@ -246,7 +247,7 @@ def find_longest_not_nan_sequence(
 
 
 def get_universe_price_data(
-    vendor_universe: List[imcdacli.FullSymbol],
+    vendor_universe: List[icdc.FullSymbol],
     config: cconconf.Config,
 ) -> pd.DataFrame:
     """

@@ -1,2 +1,0 @@
-## git_pull_master: 
-git fetch origin master:master

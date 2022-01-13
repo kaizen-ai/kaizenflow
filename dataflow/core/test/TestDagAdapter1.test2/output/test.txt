@@ -178,9 +178,9 @@ dag_builder=
           ]
       }
 overriding_config=
-  load_prices: {'source_node_name': 'DataLoader', 'source_node_kwargs': {'func': <function _get_data>}}
+  load_prices: {'func': <function _get_data>}
 nodes_to_insert=
-  ('load_prices', <function data_source_node_factory at 0x>)
+  ('load_prices', <class 'dataflow.core.nodes.sources.DataLoader'>)
 nodes_to_append=
 
 ################################################################################

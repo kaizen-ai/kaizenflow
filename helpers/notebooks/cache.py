@@ -24,10 +24,10 @@ import logging
 
 import joblib
 
-import helpers.cache as hcache
-import helpers.dbg as hdbg
-import helpers.printing as hprint
-import helpers.s3 as hs3
+import helpers.hcache as hcache
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
+import helpers.hs3 as hs3
 
 hprint.config_notebook()
 

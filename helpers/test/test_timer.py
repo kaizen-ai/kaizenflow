@@ -1,8 +1,8 @@
 import logging
 import time
 
-import helpers.timer as htimer
-import helpers.unit_test as hunitest
+import helpers.htimer as htimer
+import helpers.hunit_test as hunitest
 
 
 class TestTimedScope(hunitest.TestCase):

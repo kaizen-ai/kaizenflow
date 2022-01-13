@@ -2,9 +2,9 @@ import argparse
 import os
 from typing import Any, Dict, Tuple
 
-import helpers.git as hgit
-import helpers.system_interaction as hsysinte
-import helpers.unit_test as hunitest
+import helpers.hgit as hgit
+import helpers.hsystem as hsystem
+import helpers.hunit_test as hunitest
 import im_v2.common.data.transform.convert_pq_by_date_to_by_asset as imvcdtcpbdtba
 
 
@@ -30,12 +30,12 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         Specific config used for joblib task.
 
         Along with regular arguments used in script run, there is
-        `chunk` which represents list of daily PQ file paths that will
-        be converted to by asset PQ files.
+        `parquet_file_name` which represents list of daily PQ file paths
+        that will be converted to by asset PQ files.
         """
         return {
             "src_dir": f"{test_dir}/by_date",
-            "chunk": [
+            "parquet_file_names": [
                 f"{test_dir}/by_date/date=20211230/data.parquet",
                 f"{test_dir}/by_date/date=20211231/data.parquet",
                 f"{test_dir}/by_date/date=20220101/data.parquet",
@@ -62,8 +62,9 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         cmd.append(f"--dst_dir {by_date_dir}")
         if verbose:
             cmd.append("--verbose")
+            cmd.append("--reset_index")
         cmd = " ".join(cmd)
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
         return test_dir, by_date_dir
 
     def check_directory_structure_with_file_contents(
@@ -104,7 +105,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         verbose = True
         self._test_daily_data_direct_run(verbose)
 
-    def test__save_chunk(self) -> None:
+    def test_process_chunk(self) -> None:
         verbose = True
         self._test_joblib_task(verbose, {})
 
@@ -145,7 +146,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         if verbose:
             cmd.append("--asset_col_name ticker")
         cmd = " ".join(cmd)
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
         self.check_directory_structure_with_file_contents(
             by_date_dir, by_asset_dir
         )
@@ -197,7 +198,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
             )
         if config_update:
             config.update(config_update)
-        imvcdtcpbdtba._save_chunk(**config)
+        imvcdtcpbdtba._process_chunk(**config)
         self.check_directory_structure_with_file_contents(
             by_date_dir, by_asset_dir
         )

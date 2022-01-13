@@ -3,8 +3,8 @@ import collections
 import pandas as pd
 
 import core.config as cconfig
-import helpers.printing as hprint
-import helpers.unit_test as hunitest
+import helpers.hprint as hprint
+import helpers.hunit_test as hunitest
 
 
 def _get_test_config1() -> cconfig.Config:

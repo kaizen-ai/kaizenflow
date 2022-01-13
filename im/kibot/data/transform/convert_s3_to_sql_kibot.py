@@ -35,8 +35,8 @@ import argparse
 import logging
 import os
 
-import helpers.dbg as hdbg
-import helpers.parser as hparser
+import helpers.hdbg as hdbg
+import helpers.hparser as hparser
 import im.common.data.transform.transform as imcdatrtr
 import im.kibot.data.config as imkidacon
 import im.kibot.data.load as ikdloa

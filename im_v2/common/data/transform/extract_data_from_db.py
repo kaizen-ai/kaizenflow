@@ -3,7 +3,7 @@
 Extract RT data from db to daily PQ files.
 
 # Example:
-> im_v2/common/data/transform/extract_data_from_db.py \
+> extract_data_from_db.py \
     --start_date 2021-11-23 \
     --end_date 2021-11-25 \
     --dst_dir im_v2/common/data/transform/test_data_by_date
@@ -19,14 +19,12 @@ import os.path
 
 import pandas as pd
 
-import helpers.dbg as hdbg
-import helpers.hparquet as hparque
-import helpers.parser as hparser
-import helpers.sql as hsql
-import im_v2.ccxt.data.client.clients as imvcdclcl
+import helpers.hdbg as hdbg
+import helpers.hparser as hparser
+import helpers.hsql as hsql
+import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 import im_v2.ccxt.universe.universe as imvccunun
-import im_v2.common.data.client.clients as ivcdclcl
-import im_v2.common.data.transform.convert_pq_by_date_to_by_asset as imvcdtcpbdtba
+import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
@@ -93,16 +91,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
     # Initiate DB client.
-    ccxt_db_client = imvcdclcl.CcxtDbClient("ohlcv", connection)
-    multiple_symbols_ccxt_db_client = ivcdclcl.MultipleSymbolsImClient(
-        class_=ccxt_db_client, mode="concat"
-    )
+    ccxt_db_client = imvcdccccl.CcxtDbClient("ohlcv", connection)
     # Get universe of symbols.
     symbols = imvccunun.get_vendor_universe()
     for date_index in range(len(timespan) - 1):
         _LOG.debug("Checking for RT data on %s.", timespan[date_index])
         # TODO(Nikola): Refactor to use one db call.
-        df = multiple_symbols_ccxt_db_client.read_data(
+        df = ccxt_db_client.read_data(
             symbols,
             start_ts=timespan[date_index],
             end_ts=timespan[date_index + 1],
@@ -117,16 +112,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
             full_path = os.path.join(dst_dir, date_directory)
             hdbg.dassert_not_exists(full_path)
             # Set datetime index.
-            # TODO(Nikola): Move to new Transform class.
-            datetime_series = imvcdtcpbdtba.convert_timestamp_column(
-                df["timestamp"]
-            )
-            reindexed_df = df.set_index(datetime_series)
+            datetime_col_name = "start_time"
+            reindexed_df = imvcdttrut.reindex_on_datetime(df, datetime_col_name)
             # Add date partition columns to the dataframe.
-            hparque.add_date_partition_cols(reindexed_df)
+            imvcdttrut.add_date_partition_cols(reindexed_df)
             # Partition and write dataset.
             partition_cols = ["date"]
-            hparque.partition_dataset(reindexed_df, partition_cols, dst_dir)
+            imvcdttrut.partition_dataset(reindexed_df, partition_cols, dst_dir)
         except AssertionError as ex:
             _LOG.info("Skipping. PQ file already present: %s.", ex)
             continue

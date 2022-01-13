@@ -38,10 +38,10 @@ import requests.adapters as radapt
 import requests.packages.urllib3.util as rpuuti  # pylint: disable=import-error
 import tqdm
 
-import helpers.dbg as hdbg
-import helpers.io_ as hio
-import helpers.s3 as hs3
-import helpers.system_interaction as hsysinte
+import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hs3 as hs3
+import helpers.hsystem as hsysinte
 import im.kibot.base.command as imkibacom
 import im.kibot.data.config as imkidacon
 

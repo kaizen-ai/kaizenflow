@@ -21,8 +21,8 @@ import statsmodels.api as sm
 
 import core.finance as cofinanc
 import core.signal_processing as csigproc
-import helpers.dataframe as hdatafr
-import helpers.dbg as hdbg
+import helpers.hdataframe as hdatafr
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)

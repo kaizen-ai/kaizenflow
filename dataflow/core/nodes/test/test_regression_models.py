@@ -8,8 +8,8 @@ import pytest
 import core.artificial_signal_generators as carsigen
 import core.config as cconfig
 import dataflow.core.nodes.regression_models as dtfcnoremo
-import helpers.io_ as hio
-import helpers.unit_test as hunitest
+import helpers.hio as hio
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

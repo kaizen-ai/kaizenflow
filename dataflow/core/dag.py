@@ -12,9 +12,9 @@ import networkx as networ
 from tqdm.autonotebook import tqdm
 
 import dataflow.core.node as dtfcornode
-import helpers.dbg as hdbg
-import helpers.list as hlist
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.hlist as hlist
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 

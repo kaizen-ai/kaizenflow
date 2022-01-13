@@ -9,9 +9,9 @@ import dev_scripts.old.create_conda.install.print_conda_packages as dsoccipcp
 import argparse
 import logging
 
-import helpers.dbg as hdbg
-import helpers.env as henv
-import helpers.parser as hparser
+import helpers.hdbg as hdbg
+import helpers.henv as henv
+import helpers.hparser as hparser
 
 _LOG = logging.getLogger(__name__)
 

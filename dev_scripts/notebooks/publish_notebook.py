@@ -35,13 +35,13 @@ from typing import BinaryIO, List, Tuple
 
 import requests
 
-import helpers.dbg as hdbg
-import helpers.io_ as hio
-import helpers.open as hopen
-import helpers.parser as hparser
-import helpers.printing as hprint
-import helpers.s3 as hs3
-import helpers.system_interaction as hsysinte
+import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hopen as hopen
+import helpers.hparser as hparser
+import helpers.hprint as hprint
+import helpers.hs3 as hs3
+import helpers.hsystem as hsysinte
 
 _LOG = logging.getLogger(__name__)
 

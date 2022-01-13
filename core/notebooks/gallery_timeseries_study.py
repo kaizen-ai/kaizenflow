@@ -24,9 +24,9 @@ import numpy as np
 import pandas as pd
 
 import core.timeseries_study as ctimstud
-import helpers.dbg as hdbg
-import helpers.env as henv
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.henv as henv
+import helpers.hprint as hprint
 
 # %%
 print(henv.get_system_signature())

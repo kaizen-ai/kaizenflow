@@ -2,7 +2,7 @@ import logging
 from typing import Any, Callable
 
 import helpers.hsql_test as hsqltest
-import helpers.sql as hsql
+import helpers.hsql as hsql
 import oms.oms_lib_tasks as oomlitas
 
 _LOG = logging.getLogger(__name__)

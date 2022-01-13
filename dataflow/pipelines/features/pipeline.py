@@ -11,13 +11,13 @@ import core.config as cconfig
 import core.features as cofeatur
 import core.finance as cofinanc
 import core.signal_processing as csigproc
-import dataflow as dtf
-import dataflow.system.dataflow_source_nodes as dtfsdtfsono
+import dataflow.core as dtfcore
+import dataflow.system as dtfsys
 
 _LOG = logging.getLogger(__name__)
 
 
-class FeaturePipeline(dtf.DagBuilder):
+class FeaturePipeline(dtfcore.DagBuilder):
     def get_config_template(self) -> cconfig.Config:
         dict_ = {
             self._get_nid("load_data"): {
@@ -57,19 +57,21 @@ class FeaturePipeline(dtf.DagBuilder):
         config = cconfig.get_config_from_nested_dict(dict_)
         return config
 
-    def _get_dag(self, config: cconfig.Config, mode: str = "strict") -> dtf.DAG:
-        dag = dtf.DAG(mode=mode)
+    def _get_dag(
+        self, config: cconfig.Config, mode: str = "strict"
+    ) -> dtfcore.DAG:
+        dag = dtfcore.DAG(mode=mode)
         _LOG.debug("%s", config)
         tail_nid = None
         #
         stage = "load_data"
         nid = self._get_nid(stage)
-        node = dtfsdtfsono.data_source_node_factory(nid, **config[nid].to_dict())
+        node = dtfsys.data_source_node_factory(nid, **config[nid].to_dict())
         tail_nid = self._append(dag, tail_nid, node)
         #
         stage = "filter_weekends"
         nid = self._get_nid(stage)
-        node = dtf.ColumnTransformer(
+        node = dtfcore.ColumnTransformer(
             nid,
             transformer_func=cofinanc.set_weekends_to_nan,
             **config[nid].to_dict(),
@@ -78,7 +80,7 @@ class FeaturePipeline(dtf.DagBuilder):
         #
         stage = "filter_ath"
         nid = self._get_nid(stage)
-        node = dtf.ColumnTransformer(
+        node = dtfcore.ColumnTransformer(
             nid,
             transformer_func=cofinanc.set_non_ath_to_nan,
             **config[nid].to_dict(),
@@ -87,7 +89,7 @@ class FeaturePipeline(dtf.DagBuilder):
         #
         stage = "perform_col_arithmetic"
         nid = self._get_nid(stage)
-        node = dtf.FunctionWrapper(
+        node = dtfcore.FunctionWrapper(
             nid,
             func=cofeatur.perform_col_arithmetic,
             **config[nid].to_dict(),
@@ -96,7 +98,7 @@ class FeaturePipeline(dtf.DagBuilder):
         #
         stage = "add_diffs"
         nid = self._get_nid(stage)
-        node = dtf.ColumnTransformer(
+        node = dtfcore.ColumnTransformer(
             nid,
             transformer_func=lambda x: x.diff(),
             col_rename_func=lambda x: x + ".diff",
@@ -106,7 +108,7 @@ class FeaturePipeline(dtf.DagBuilder):
         #
         stage = "zscore"
         nid = self._get_nid(stage)
-        node = dtf.SeriesTransformer(
+        node = dtfcore.SeriesTransformer(
             nid,
             transformer_func=csigproc.compute_fir_zscore,
             **config[nid].to_dict(),
@@ -115,7 +117,7 @@ class FeaturePipeline(dtf.DagBuilder):
         #
         stage = "compress_tails"
         nid = self._get_nid(stage)
-        node = dtf.SeriesTransformer(
+        node = dtfcore.SeriesTransformer(
             nid,
             transformer_func=csigproc.compress_tails,
             **config[nid].to_dict(),
@@ -124,7 +126,7 @@ class FeaturePipeline(dtf.DagBuilder):
         #
         stage = "cross_feature_pairs"
         nid = self._get_nid(stage)
-        node = dtf.FunctionWrapper(
+        node = dtfcore.FunctionWrapper(
             nid,
             func=cofeatur.cross_feature_pairs,
             **config[nid].to_dict(),

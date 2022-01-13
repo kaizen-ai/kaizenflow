@@ -11,15 +11,14 @@ import logging
 import pandas as pd
 
 import core.config as cconfig
-import dataflow as dtf
-import dataflow.system.dataflow_sink_nodes as dtfsdtfsino
-import dataflow.system.dataflow_source_nodes as dtfsdtfsono
-import helpers.unit_test as hunitest
+import dataflow.core as dtfcore
+import dataflow.system as dtfsys
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-class _NaivePipeline(dtf.DagBuilder):
+class _NaivePipeline(dtfcore.DagBuilder):
     """
     Pipeline with:
 
@@ -75,33 +74,35 @@ class _NaivePipeline(dtf.DagBuilder):
             # Place trades.
             self._get_nid("process_forecasts"): {
                 "prediction_col": "price",
-                "execution_mode": "real_time",
+                "volatility_col": "price",
                 "process_forecasts_config": {},
             },
         }
         config = cconfig.get_config_from_nested_dict(dict_)
         return config
 
-    def _get_dag(self, config: cconfig.Config, mode: str = "strict") -> dtf.DAG:
+    def _get_dag(
+        self, config: cconfig.Config, mode: str = "strict"
+    ) -> dtfcore.DAG:
         """
         Generate pipeline DAG.
 
         :param config: config object used to configure DAG
-        :param mode: same meaning as in `dtf.DAG`
+        :param mode: same meaning as in `dtfcore.DAG`
         :return: initialized DAG
         """
-        dag = dtf.DAG(mode=mode)
+        dag = dtfcore.DAG(mode=mode)
         _LOG.debug("%s", config)
         tail_nid = None
         # Get data.
         stage = "get_data"
         nid = self._get_nid(stage)
-        node = dtfsdtfsono.data_source_node_factory(nid, **config[nid].to_dict())
+        node = dtfsys.data_source_node_factory(nid, **config[nid].to_dict())
         tail_nid = self._append(dag, tail_nid, node)
         # Process data.
         stage = "process_data"
         nid = self._get_nid(stage)
-        node = dtf.FunctionWrapper(
+        node = dtfcore.FunctionWrapper(
             nid,
             **config[nid].to_dict(),
         )
@@ -109,7 +110,7 @@ class _NaivePipeline(dtf.DagBuilder):
         # Process forecasts.
         stage = "process_forecasts"
         nid = self._get_nid(stage)
-        node = dtfsdtfsino.ProcessForecasts(
+        node = dtfsys.ProcessForecasts(
             nid,
             **config[nid].to_dict(),
         )

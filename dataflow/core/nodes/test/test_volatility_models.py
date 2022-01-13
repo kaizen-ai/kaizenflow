@@ -10,9 +10,9 @@ import core.artificial_signal_generators as carsigen
 import core.config as cconfig
 import core.signal_processing as csigproc
 import dataflow.core.nodes.test.helpers as cdnth
-import helpers.dbg as hdbg
-import helpers.printing as hprint
-import helpers.unit_test as hunitest
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
+import helpers.hunit_test as hunitest
 from dataflow.core.nodes.volatility_models import (
     MultiindexVolatilityModel,
     SingleColumnVolatilityModel,

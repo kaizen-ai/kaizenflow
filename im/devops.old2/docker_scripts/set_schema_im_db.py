@@ -17,10 +17,10 @@ import argparse
 import logging
 import os
 
-import helpers.dbg as hdbg
-import helpers.parser as hparser
-import helpers.sql as hsql
-import im_v2.common.db.utils as imvcodbut
+import helpers.hdbg as hdbg
+import helpers.hparser as hparser
+import helpers.hsql as hsql
+import im_v2.common.db.db_utils as imvcodbut
 
 _LOG = logging.getLogger(__name__)
 

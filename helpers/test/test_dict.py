@@ -1,8 +1,8 @@
 import logging
 
 import core.config as cconfig
-import helpers.dict as hdict
-import helpers.unit_test as hunitest
+import helpers.hdict as hdict
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

@@ -57,11 +57,11 @@ boot.bootstrap(_AMP_REL_PATH)
 
 # pylint: disable=wrong-import-position
 import helpers.conda as hco  # isort:skip # noqa: E402
-import helpers.dbg as hdbg  # isort:skip # noqa: E402
-import helpers.env as henv  # isort:skip # noqa: E402
-import helpers.io_ as hio  # isort:skip # noqa: E402
-import helpers.parser as hparser  # isort:skip # noqa: E402
-import helpers.printing as hprint  # isort:skip # noqa: E402
+import helpers.hdbg as hdbg  # isort:skip # noqa: E402
+import helpers.henv as henv  # isort:skip # noqa: E402
+import helpers.hio as hio  # isort:skip # noqa: E402
+import helpers.hparser as hparser  # isort:skip # noqa: E402
+import helpers.hprint as hprint  # isort:skip # noqa: E402
 import helpers.user_credentials as usc  # isort:skip # noqa: E402
 
 _LOG = logging.getLogger(__name__)

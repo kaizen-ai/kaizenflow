@@ -2,7 +2,7 @@ import logging
 
 import pytest
 
-import helpers.unit_test as hunitest
+import helpers.hunit_test as hunitest
 import oms.api as omapi
 
 _LOG = logging.getLogger(__name__)

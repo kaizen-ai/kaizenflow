@@ -10,7 +10,7 @@ from typing import List
 import cvxpy as cvx
 
 import core.config as cconfig
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 import optimizer.base as opbase
 
 _LOG = logging.getLogger(__name__)

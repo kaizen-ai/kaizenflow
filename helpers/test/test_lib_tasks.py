@@ -9,12 +9,12 @@ from typing import Dict, List
 import invoke
 import pytest
 
-import helpers.git as hgit
-import helpers.io_ as hio
+import helpers.hgit as hgit
+import helpers.hio as hio
 import helpers.lib_tasks as hlibtask
-import helpers.printing as hprint
-import helpers.system_interaction as hsysinte
-import helpers.unit_test as hunitest
+import helpers.hprint as hprint
+import helpers.hsystem as hsysinte
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -159,8 +159,8 @@ class TestDryRunTasks1(hunitest.TestCase):
         target = "git_pull"
         self._dry_run(target)
 
-    def test_git_pull_master(self) -> None:
-        target = "git_pull_master"
+    def test_git_fetch_master(self) -> None:
+        target = "git_fetch_master"
         self._dry_run(target)
 
     def test_git_clean(self) -> None:
@@ -242,8 +242,8 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "git_pull(ctx)"
         self._check_output(target)
 
-    def test_git_pull_master(self) -> None:
-        target = "git_pull_master(ctx)"
+    def test_git_fetch_master(self) -> None:
+        target = "git_fetch_master(ctx)"
         self._check_output(target)
 
     def test_git_clean(self) -> None:
@@ -295,16 +295,28 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     # #########################################################################
     # TODO(gp): -> TestGhCommands1
 
+    @pytest.mark.skipif(
+        not hgit.is_in_amp_as_supermodule(),
+        reason="Only run in amp as supermodule",
+    )
     def test_gh_create_pr1(self) -> None:
         _gh_login()
         target = "gh_create_pr(ctx, repo_short_name='amp', title='test')"
         self._check_output(target)
 
+    @pytest.mark.skipif(
+        not hgit.is_in_amp_as_supermodule(),
+        reason="Only run in amp as supermodule",
+    )
     def test_gh_create_pr2(self) -> None:
         _gh_login()
         target = "gh_create_pr(ctx, body='hello_world', repo_short_name='amp', title='test')"
         self._check_output(target)
 
+    @pytest.mark.skipif(
+        not hgit.is_in_amp_as_supermodule(),
+        reason="Only run in amp as supermodule",
+    )
     def test_gh_create_pr3(self) -> None:
         _gh_login()
         target = (
@@ -320,7 +332,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     @pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
     def test_gh_workflow_list(self) -> None:
         _gh_login()
-        target = "gh_workflow_list(ctx, branch='master')"
+        target = "gh_workflow_list(ctx, filter_by_branch='master')"
         self._check_output(target)
 
     # This is an action with side effects so we can't test it.
@@ -572,16 +584,14 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             cmd,
             print_docker_config=print_docker_config,
         )
-        exp = r"""
-        IMAGE=$AM_ECR_BASE_PATH/amp_test:local \
-            docker-compose \
-            --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
-            --env-file devops/env/default.env \
-            run \
-            --rm \
-            app \
-            bash
-        """
+        exp = r"""IMAGE=$AM_ECR_BASE_PATH/amp_test:local-$USER_NAME-1.0.0 \
+                docker-compose \
+                --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
+                --env-file devops/env/default.env \
+                run \
+                --rm \
+                app \
+                bash """
         self._check(act, exp)
 
     @pytest.mark.skipif(
@@ -606,7 +616,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             print_docker_config=print_docker_config,
         )
         exp = r"""
-        IMAGE=$AM_ECR_BASE_PATH/amp_test:local-1.0.0 \
+        IMAGE=$AM_ECR_BASE_PATH/amp_test:local-$USER_NAME-1.0.0 \
         PORT=9999 \
         SKIP_RUN=1 \
             docker-compose \
@@ -661,15 +671,15 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         self_test = True
         print_docker_config = False
         act = hlibtask._get_docker_jupyter_cmd(
-            stage,
             base_image,
+            stage,
             version,
             port,
             self_test,
             print_docker_config=print_docker_config,
         )
         exp = r"""
-        IMAGE=$AM_ECR_BASE_PATH/amp_test:dev \
+        IMAGE=$AM_ECR_BASE_PATH/amp_test:dev-1.0.0 \
         PORT=9999 \
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
@@ -960,10 +970,10 @@ class TestLibTasksRunTests1(hunitest.TestCase):
         """
         Find test functions in the "no_container" test list.
         """
-        file_names = ["test/test_tasks.py"]
+        file_names = ["helpers/hunit_test.py"]
         act = hlibtask._find_test_decorator("qa", file_names)
         act = hunitest.purify_file_names(act)
-        exp = ["test/test_tasks.py"]
+        exp = file_names
         self.assert_equal(str(act), str(exp))
 
 

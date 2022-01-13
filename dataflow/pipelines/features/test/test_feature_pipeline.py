@@ -1,9 +1,9 @@
 import logging
 
 import core.config as cconfig
-import dataflow as dtf
+import dataflow.core as dtfcore
 import dataflow.pipelines.features.pipeline as dtfpifepip
-import helpers.unit_test as hunitest
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ class TestFeaturePipeline(hunitest.TestCase):
         #
         _LOG.debug("config after patching=%s", config)
         # Initialize DAG runner.
-        dag_runner = dtf.FitPredictDagRunner(config, dag_builder)
+        dag_runner = dtfcore.FitPredictDagRunner(config, dag_builder)
         result_bundle = dag_runner.fit()
         df_out = result_bundle.result_df
         df_str = hunitest.convert_df_to_string(

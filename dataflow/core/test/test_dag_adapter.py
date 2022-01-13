@@ -9,9 +9,9 @@ import dataflow.core.builders_example as dtfcobuexa
 import dataflow.core.dag_adapter as dtfcodaada
 import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.sinks as dtfconosin
-import dataflow.system.dataflow_source_nodes as dtfsdtfsono
-import helpers.printing as hprint
-import helpers.unit_test as hunitest
+import dataflow.core.nodes.sources as dtfconosou
+import helpers.hprint as hprint
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -71,8 +71,7 @@ class TestDagAdapter1(hunitest.TestCase):
         overriding_config = cconfig.Config()
         # Configure a `DataSourceNode`.
         overriding_config["load_prices"] = {
-            "source_node_name": "DataLoader",
-            "source_node_kwargs": {"func": lambda x: x},
+            "func": lambda x: x,
         }
         overriding_config["write_df"] = {
             "dir_name": "here",
@@ -98,15 +97,12 @@ class TestDagAdapter1(hunitest.TestCase):
         overriding_config = cconfig.Config()
         # Configure a `DataSourceNode`.
         overriding_config["load_prices"] = {
-            "source_node_name": "DataLoader",
-            "source_node_kwargs": {
-                "func": _get_data,
-            },
+            "func": _get_data,
         }
         # Insert one node.
         nodes_to_insert = []
         stage = "load_prices"
-        node_ctor = dtfsdtfsono.data_source_node_factory
+        node_ctor = dtfconosou.DataLoader
         nodes_to_insert.append((stage, node_ctor))
         # Do not append any node.
         nodes_to_append = []
