@@ -5,11 +5,11 @@ import helpers.secrets as hsecret
 """
 
 import json
+from typing import Optional
 
 import boto3
 from botocore.client import BaseClient
 from botocore.exceptions import ClientError
-from typing import optional
 
 import helpers.dbg as hdbg
 
