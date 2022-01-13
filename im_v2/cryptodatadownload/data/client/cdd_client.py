@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.cryptodatadownload.data.client.cdd_client as imcdaclcd
+import im_v2.cryptodatadownload.data.client.cdd_client as imcdaclcd
 """
 
 import logging

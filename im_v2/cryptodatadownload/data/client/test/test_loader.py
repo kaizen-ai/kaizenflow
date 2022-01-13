@@ -4,7 +4,7 @@ import pytest
 
 import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
-import im.cryptodatadownload.data.client.cdd_client as imcdaclcd
+import im_v2.cryptodatadownload.data.client.cdd_client as imcdaclcd
 
 _AM_S3_ROOT_DIR = os.path.join(hs3.get_path(), "data")
 
