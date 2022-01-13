@@ -21,7 +21,7 @@ def get_test_data_dir():
     return test_data_dir
 
 
-def get_CcxtCsvFileSytemClient_example1() -> imvcdccccl.CcxtCsvFileSystemClient:
+def get_CcxtCsvFileSytemClient_example1() -> imvcdccccl.CcxtCsvParquetByAssetClient:
     """
     Get `CcxtCsvFileSystemClient` object for the tests.
     """
@@ -38,12 +38,12 @@ def get_CcxtCsvFileSytemClient_example1() -> imvcdccccl.CcxtCsvFileSystemClient:
     # Initialize client.
     data_type = "ohlcv"
     root_dir = get_test_data_dir()
-    ccxt_file_client = imvcdccccl.CcxtCsvFileSystemClient(data_type, root_dir)
+    ccxt_file_client = imvcdccccl.CcxtCsvParquetByAssetClient(data_type, root_dir, "csv.gz")
     return ccxt_file_client
 
 
-def get_CcxtParquetFileSytemClient_example1() -> imvcdccccl.CcxtParquetFileSystemClient:
+def get_CcxtParquetFileSytemClient_example1() -> imvcdccccl.CcxtCsvParquetByAssetClient:
     data_type = "ohlcv"
     root_dir = get_test_data_dir()
-    ccxt_client = imvcdccccl.CcxtParquetFileSystemClient(data_type, root_dir)
+    ccxt_client = imvcdccccl.CcxtCsvParquetByAssetClient(data_type, root_dir, "pq")
     return ccxt_client

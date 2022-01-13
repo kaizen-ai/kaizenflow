@@ -347,7 +347,7 @@ class TestCcxtCsvFileSystemClient(hunitest.TestCase):
         data_type = "unsupported_data_type"
         root_dir = imvcdcccex.get_test_data_dir()
         with self.assertRaises(AssertionError):
-            imvcdccccl.CcxtCsvFileSystemClient(data_type, root_dir)
+            imvcdccccl.CcxtCsvParquetByAssetClient(data_type, root_dir, "csv")
 
 
 # #############################################################################
