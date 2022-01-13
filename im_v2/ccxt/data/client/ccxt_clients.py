@@ -26,10 +26,6 @@ _LOG = logging.getLogger(__name__)
 _LATEST_DATA_SNAPSHOT = "20210924"
 
 
-# TODO(gp): @grisha, Move inside CcxtClient since it's private to that class.
-_DATA_TYPES = ["ohlcv"]
-
-
 # #############################################################################
 # CcxtClient
 # #############################################################################
@@ -52,8 +48,11 @@ class CcxtClient(icdc.ImClientReadingOneSymbol, abc.ABC):
         """
         :param data_type: OHLCV, trade, or bid/ask data
         """
+        # Set list of available data types.
+        self._data_types = ["ohlcv"]
+        # Verify that the passed data type is available and set it.
         data_type = data_type.lower()
-        hdbg.dassert_in(data_type, _DATA_TYPES)
+        hdbg.dassert_in(data_type, self._data_types)
         self._data_type = data_type
 
     @staticmethod
@@ -73,11 +72,8 @@ class CcxtClient(icdc.ImClientReadingOneSymbol, abc.ABC):
         hdbg.dassert_container_type(
             data["timestamp"], container_type=None, elem_type=int
         )
-        # Rename column with the original Unix ms epoch.
-        # TODO(gp): Remove epoch.
-        data = data.rename({"timestamp": "epoch"}, axis=1)
         # Transform Unix epoch into UTC timestamp.
-        data["timestamp"] = pd.to_datetime(data["epoch"], unit="ms", utc=True)
+        data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms", utc=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
         return data
@@ -93,16 +89,13 @@ class CcxtClient(icdc.ImClientReadingOneSymbol, abc.ABC):
             "low",
             "close",
             "volume",
-            "epoch",
             "currency_pair",
             "exchange_id",
         ]
         # Verify that dataframe contains OHLCV columns.
-        # TODO(gp): dassert_is_seteq?
         hdbg.dassert_is_subset(ohlcv_columns, data.columns)
         # Rearrange the columns.
-        # TODO(gp): Why copying?
-        data = data[ohlcv_columns].copy()
+        data = data[ohlcv_columns]
         return data
 
     def _apply_vendor_normalization(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -119,10 +112,10 @@ class CcxtClient(icdc.ImClientReadingOneSymbol, abc.ABC):
 
         Output data is indexed by timestamp and looks like:
         ```
-                                   open        epoch          currency_pair exchange_id
-        2021-09-08 20:00:00-04:00  3499.01 ... 1631145600000  ETH_USDT      binance
-        2021-09-08 20:01:00-04:00  3496.36     1631145660000  ETH_USDT      binance
-        2021-09-08 20:02:00-04:00  3501.59     1631145720000  ETH_USDT      binance
+                                   open        currency_pair exchange_id
+        2021-09-08 20:00:00-04:00  3499.01 ... ETH_USDT      binance
+        2021-09-08 20:01:00-04:00  3496.36     ETH_USDT      binance
+        2021-09-08 20:02:00-04:00  3501.59     ETH_USDT      binance
         ```
         """
         # Apply common transformations.
@@ -133,7 +126,7 @@ class CcxtClient(icdc.ImClientReadingOneSymbol, abc.ABC):
         else:
             raise ValueError(
                 "Incorrect data type: '%s'. Acceptable types: '%s'"
-                % (self._data_type, _DATA_TYPES)
+                % (self._data_type, self._data_types)
             )
         # Sort transformed data by exchange id and currency pair columns.
         data = data.sort_values(by=["exchange_id", "currency_pair"])
