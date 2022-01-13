@@ -184,10 +184,9 @@ class ImClient(abc.ABC):
 
         Data trimming is done because:
         - some data sources can be only queried at day resolution so we get
-            the date range and then we trim
+          the date range and then we trim
         - we want to guarantee that nobody returns data outside the requested
-            interval. We could have added a dassert or a at least a warning but
-            we want to "bend and not break here" because of the previous point
+          interval
         """
         _LOG.debug(hprint.to_str("start_ts end_ts"))
         # Drop duplicates.
