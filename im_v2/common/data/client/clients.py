@@ -1,12 +1,12 @@
 """
 Import as:
 
-import im_v2.common.data.client.clients as ivcdclcl
+import im_v2.common.data.client.clients as imvcdclcl
 """
 
 import abc
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
@@ -25,6 +25,7 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): Consider splitting in one file per class. Not sure about the trade-off
 #  between file proliferation and more organization.
+
 
 class ImClient(abc.ABC):
     """
@@ -103,11 +104,12 @@ class ImClient(abc.ABC):
         self, full_symbol: imvcdcfusy.FullSymbol
     ) -> pd.Timestamp:
         """
-        Return the earliest timestamp available for a given `imvcdcfusy.FullSymbol`.
+        Return the earliest timestamp available for a given
+        `imvcdcfusy.FullSymbol`.
 
-        This implementation relies on reading all the data and then finding the min.
-        Derived classes can override this method if there is a more efficient
-        way to get this information.
+        This implementation relies on reading all the data and then
+        finding the min. Derived classes can override this method if
+        there is a more efficient way to get this information.
         """
         _LOG.debug(hprint.to_str("full_symbol"))
         # Read data for the entire period of time available.
@@ -124,7 +126,8 @@ class ImClient(abc.ABC):
         self, full_symbol: imvcdcfusy.FullSymbol
     ) -> pd.Timestamp:
         """
-        Return the latest timestamp available for a given `imvcdcfusy.FullSymbol`.
+        Return the latest timestamp available for a given
+        `imvcdcfusy.FullSymbol`.
         """
         _LOG.debug(hprint.to_str("full_symbol"))
         # Read data for the entire period of time available.
@@ -289,8 +292,8 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
         """
         Read data for a single `imvcdcfusy.FullSymbol` in [start_ts, end_ts).
 
-        Parameters have the same meaning as parameters in `read_data()` with
-        the same name.
+        Parameters have the same meaning as parameters in `read_data()`
+        with the same name.
         """
         ...
 
@@ -305,8 +308,9 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
     Abstract IM client for backend that can read multiple symbols at the same
     time.
 
-    This is used for reading data from Parquet by-date files, where multiple
-    assets are stored in the same file and can be accessed together.
+    This is used for reading data from Parquet by-date files, where
+    multiple assets are stored in the same file and can be accessed
+    together.
     """
 
     def _read_data(
