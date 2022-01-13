@@ -112,6 +112,7 @@ def _process_chunk_adapter(parquet_file_names: List[str], asset_col_name: str, d
     A wrapper around `process_chunk` to allow for joblib arguments.
     """
     _ = incremental, num_attempts
+    hdbg.dassert(incremental)
     _process_chunk(parquet_file_names, asset_col_name, dst_dir)
 
 

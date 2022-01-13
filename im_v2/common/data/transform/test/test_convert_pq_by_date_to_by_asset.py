@@ -189,16 +189,17 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         """
         test_dir, by_date_dir = self.generate_test_data(verbose)
         by_asset_dir = os.path.join(test_dir, "by_asset")
-        config = self.get_dummy_task_config(test_dir)
+        parquet_file_names = [
+                f"{test_dir}/by_date/date=20211230/data.parquet",
+                f"{test_dir}/by_date/date=20211231/data.parquet",
+                f"{test_dir}/by_date/date=20220101/data.parquet",
+            ]
+        dst_dir = f"{test_dir}/by_asset"
         if verbose:
-            config.update(
-                {
-                    "asset_col_name": "ticker",
-                }
-            )
-        if config_update:
-            config.update(config_update)
-        imvcdtcpbdtba._process_chunk(**config)
+            asset_col_name = "ticker"
+        else:
+            asset_col_name = "asset"
+        imvcdtcpbdtba._process_chunk(parquet_file_names, asset_col_name, dst_dir)
         self.check_directory_structure_with_file_contents(
             by_date_dir, by_asset_dir
         )
