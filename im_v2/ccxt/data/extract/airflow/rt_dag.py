@@ -28,7 +28,7 @@ default_args = {
 
 # Create a command.
 bash_command = [
-    "python im_v2/ccxt/data/extract/download_realtime_data.py",
+    "im_v2/ccxt/data/extract/download_realtime_data.py",
     #"--to_datetime {{ next_execution_date }}",
     #"--from_datetime {{ execution_date - macros.timedelta(5) }}"
     # TODO(Danya): Set a shared directory for the DAG (#675).
