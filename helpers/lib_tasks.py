@@ -1028,7 +1028,7 @@ def git_branch_diff_with_master(  # type: ignore
 
 # Integration good practices
 #
-# Concepts
+# ## Concepts
 #
 # - We have two dirs storing two forks of the same repo
 # - Files are touched, e.g., added, modified, deleted in each forks
@@ -1039,8 +1039,8 @@ def git_branch_diff_with_master(  # type: ignore
 #   we were touched in one branch but not the other
 #   - In this case we can simply copy the entire dir from one dir to the other
 # - Other times we need to integrate "by file"
-#
-# Preparation
+
+# ## Preparation
 #
 # - Pull master
 #
@@ -1054,8 +1054,7 @@ def git_branch_diff_with_master(  # type: ignore
 #
 # - Align `lib_tasks.py`
 #   ```
-#   > vimdiff ~/src/{amp1,cmamp1}/tasks.py
-#   > vimdiff ~/src/{amp1,cmamp1}/helpers/lib_tasks.py
+#   > vimdiff ~/src/{amp1,cmamp1}/tasks.py; vimdiff ~/src/{amp1,cmamp1}/helpers/lib_tasks.py
 #   ```
 #
 # - Create the integration branches
@@ -1065,8 +1064,8 @@ def git_branch_diff_with_master(  # type: ignore
 #   > cd cmamp1
 #   > i integrate_create_branch --dir-name cmamp1
 #   ```
-#
-# Integration
+
+# ## Integration
 #
 # - Check what files were modified since the last integration in each fork
 #   ```
@@ -1091,16 +1090,16 @@ def git_branch_diff_with_master(  # type: ignore
 #   ```
 #   > i integrate_diff_dirs --subdir market_data -c
 #   ```
-#
-# Double check
+
+# ## Double check the integration
 #
 # - Check that the regressions are passing on GH
 #   ```
 #   > i gh_create_pr --no-draft
 #   ```
 #
-# - Check the files that were changed in both branches (i.e., the problematic ones)
-#   since the last integration and compare them to master
+# - Check the files that were changed in both branches (i.e., the "problematic ones")
+#   since the last integration and compare them to the base in each branch
 #   ```
 #   > cd amp1
 #   > i integrate_diff_overlapping_files --src-dir "amp1" --dst-dir "cmamp1"
@@ -1108,12 +1107,12 @@ def git_branch_diff_with_master(  # type: ignore
 #   > i integrate_diff_overlapping_files --src-dir "cmamp1" --dst-dir "amp1"
 #   ```
 #
-# - Quickly scan all the changes in the branch
+# - Quickly scan all the changes in the branch compared to the base
 #   ```
 #   > cd amp1
-#   > i git_branch_diff_with_base --src-dir "amp1" --dst-dir "cmamp1"
+#   > i git_branch_diff_with_base
 #   > cd cmamp1
-#   > i git_branch_diff_with_base --src-dir "cmamp1" --dst-dir "amp1"
+#   > i git_branch_diff_with_base
 #   ```
 
 
@@ -1281,6 +1280,8 @@ def _find_files_touched_since_last_integration(
         os.chdir(abs_dir_name)
         # Find the hash of all integration commits.
         cmd = "git log --date=local --oneline --date-order | grep AmpTask1786_Integrate"
+        # Remove integrations like "'... Merge branch 'master' into AmpTask1786_Integrate_20220113'"
+        cmd += " | grep -v \"Merge branch 'master' into \""
         _, txt = hsysinte.system_to_string(cmd)
         _LOG.debug("integration commits=\n%s", txt)
         txt = txt.split("\n")
@@ -1288,7 +1289,7 @@ def _find_files_touched_since_last_integration(
         # 72a1a101 AmpTask1786_Integrate_20211218 (#1975)
         # 2acfd6d7 AmpTask1786_Integrate_20211214 (#1950)
         # 318ab0ff AmpTask1786_Integrate_20211210 (#1933)
-        hdbg.dassert_lte(1, len(txt))
+        hdbg.dassert_lte(2, len(txt))
         print("# last_integration: '%s'" % txt[0])
         last_integration_hash = txt[0].split()[0]
         print("* " + hprint.to_str("last_integration_hash"))
