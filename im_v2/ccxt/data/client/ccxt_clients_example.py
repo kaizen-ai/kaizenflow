@@ -36,14 +36,12 @@ def get_CcxtCsvFileSytemClient_example1() -> imvcdccccl.CcxtCsvFileSystemClient:
     # 1534464240000,285.400193,285.884638,285.400193,285.884638,0.074655
     # ```
     # Initialize client.
-    data_type = "ohlcv"
     root_dir = get_test_data_dir()
-    ccxt_file_client = imvcdccccl.CcxtCsvFileSystemClient(data_type, root_dir)
+    ccxt_file_client = imvcdccccl.CcxtCsvFileSystemClient(root_dir)
     return ccxt_file_client
 
 
 def get_CcxtParquetFileSytemClient_example1() -> imvcdccccl.CcxtParquetFileSystemClient:
-    data_type = "ohlcv"
     root_dir = get_test_data_dir()
-    ccxt_client = imvcdccccl.CcxtParquetFileSystemClient(data_type, root_dir)
+    ccxt_client = imvcdccccl.CcxtParquetFileSystemClient(root_dir)
     return ccxt_client

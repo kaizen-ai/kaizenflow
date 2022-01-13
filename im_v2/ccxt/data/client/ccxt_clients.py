@@ -44,17 +44,6 @@ class CcxtClient(icdc.ImClientReadingOneSymbol, abc.ABC):
         - E.g., `_apply_olhlcv_transformations()`, `_apply_vendor_normalization()`
     """
 
-    def __init__(self, data_type: str) -> None:
-        """
-        :param data_type: OHLCV, trade, or bid/ask data
-        """
-        # Set list of available data types.
-        self._data_types = ["ohlcv"]
-        # Verify that the passed data type is available and set it.
-        data_type = data_type.lower()
-        hdbg.dassert_in(data_type, self._data_types)
-        self._data_type = data_type
-
     @staticmethod
     def get_universe() -> List[icdc.FullSymbol]:
         """
@@ -121,13 +110,7 @@ class CcxtClient(icdc.ImClientReadingOneSymbol, abc.ABC):
         # Apply common transformations.
         data = self._apply_ccxt_transformations(df)
         # Apply transformations specific of the type of data.
-        if self._data_type == "ohlcv":
-            data = self._apply_ohlcv_transformations(data)
-        else:
-            raise ValueError(
-                "Incorrect data type: '%s'. Acceptable types: '%s'"
-                % (self._data_type, self._data_types)
-            )
+        data = self._apply_ohlcv_transformations(data)
         # Sort transformed data by exchange id and currency pair columns.
         data = data.sort_values(by=["exchange_id", "currency_pair"])
         return data
@@ -145,7 +128,6 @@ class CcxtDbClient(CcxtClient):
 
     def __init__(
         self,
-        data_type: str,
         connection: hsql.DbConnection,
     ) -> None:
         """
@@ -155,7 +137,6 @@ class CcxtDbClient(CcxtClient):
 
         :param connection: connection for a SQL database
         """
-        super().__init__(data_type)
         self._connection = connection
 
     def _read_data_for_one_symbol(
@@ -168,8 +149,7 @@ class CcxtDbClient(CcxtClient):
         """
         Same as parent class.
         """
-        # Construct name of the DB table with data from data type.
-        table_name = "ccxt_" + self._data_type
+        table_name = "ccxt_ohlcv"
         # Verify that table with specified name exists.
         hdbg.dassert_in(table_name, hsql.get_table_names(self._connection))
         # Initialize SQL query.
@@ -207,7 +187,6 @@ class CcxtFileSystemClient(CcxtClient, abc.ABC):
 
     def __init__(
         self,
-        data_type: str,
         root_dir: str,
         extension: str,
         *,
@@ -221,7 +200,6 @@ class CcxtFileSystemClient(CcxtClient, abc.ABC):
         :param extension: file extension
         :param aws_profile: AWS profile name (e.g., "am")
         """
-        super().__init__(data_type)
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
@@ -370,17 +348,16 @@ class CcxtCsvFileSystemClient(CcxtFileSystemClient):
 
     def __init__(
         self,
-        data_type: str,
         root_dir: str,
         *,
         aws_profile: Optional[str] = None,
         use_gzip: bool = True,
     ) -> None:
-        _LOG.debug(hprint.to_str("data_type root_dir aws_profile use_gzip"))
+        _LOG.debug(hprint.to_str("root_dir aws_profile use_gzip"))
         extension = "csv"
         if use_gzip:
             extension = extension + ".gz"
-        super().__init__(data_type, root_dir, extension, aws_profile=aws_profile)
+        super().__init__(root_dir, extension, aws_profile=aws_profile)
 
     @staticmethod
     def _read_data_from_filesystem(
@@ -419,13 +396,12 @@ class CcxtParquetFileSystemClient(CcxtFileSystemClient):
 
     def __init__(
         self,
-        data_type: str,
         root_dir: str,
         *,
         aws_profile: Optional[str] = None,
     ) -> None:
         extension = "pq"
-        super().__init__(data_type, root_dir, extension, aws_profile=aws_profile)
+        super().__init__(root_dir, extension, aws_profile=aws_profile)
 
     @staticmethod
     def _read_data_from_filesystem(
