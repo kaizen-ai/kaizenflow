@@ -16,9 +16,9 @@ import dev_scripts.tg as dscrtg
 import argparse
 import logging
 
-import helpers.dbg as hdbg
-import helpers.parser as hparser
-import helpers.system_interaction as hsysinte
+import helpers.hdbg as hdbg
+import helpers.hparser as hparser
+import helpers.hsystem as hsysinte
 import helpers.telegram_notify.telegram_notify as htnoteno
 
 _LOG = logging.getLogger(__name__)

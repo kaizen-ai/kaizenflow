@@ -3,8 +3,8 @@ import logging
 import pytest
 
 import helpers.lib_tasks as hlibtask
-import helpers.system_interaction as hsysinte
-import helpers.unit_test as hunitest
+import helpers.hsystem as hsysinte
+import helpers.hunit_test as hunitest
 import im_v2.im_lib_tasks as imvimlita  # pylint: disable=no-name-in-module
 
 _LOG = logging.getLogger(__name__)
@@ -16,30 +16,29 @@ class TestGetImDockerCmd(hunitest.TestCase):
         Test the `bash` command.
         """
         cmd = "bash"
-        actual = imvimlita._get_docker_cmd(cmd)
-        docker_compose_path = hlibtask.get_base_docker_compose_path()
-        expected = fr"""
+        actual = imvimlita._get_docker_cmd("local", cmd)
+        expected = r"""
         docker-compose \
-            --file {docker_compose_path} \
-            run --rm im_app \
-            bash
-        """
-        self.assert_equal(actual, expected, fuzzy_match=True)
+            --file $GIT_ROOT/devops/compose/docker-compose.yml \
+            --env-file $GIT_ROOT/im_v2/devops/env/local.im_db_config.env \
+            run --rm im_postgres \
+            bash """
+        self.assert_equal(actual, expected, fuzzy_match=True, purify_text=True)
 
     def test2(self) -> None:
         """
         Test the Python script.
         """
         cmd = "im/devops/docker_scripts/set_shema_im_db.py"
-        actual = imvimlita._get_docker_cmd(cmd)
-        docker_compose_path = hlibtask.get_base_docker_compose_path()
-        expected = fr"""
+        actual = imvimlita._get_docker_cmd("local", cmd)
+        expected = r"""
         docker-compose \
-            --file {docker_compose_path} \
-            run --rm im_app \
+            --file $GIT_ROOT/devops/compose/docker-compose.yml \
+            --env-file $GIT_ROOT/im_v2/devops/env/local.im_db_config.env \
+            run --rm im_postgres \
             im/devops/docker_scripts/set_shema_im_db.py
         """
-        self.assert_equal(actual, expected, fuzzy_match=True)
+        self.assert_equal(actual, expected, fuzzy_match=True, purify_text=True)
 
 
 class TestGetImDockerDown(hunitest.TestCase):
@@ -47,28 +46,30 @@ class TestGetImDockerDown(hunitest.TestCase):
         """
         Check the command line to only remove containers.
         """
-        actual = imvimlita._get_docker_down_cmd(volumes_remove=False)
-        docker_compose_path = hlibtask.get_base_docker_compose_path()
-        expected = fr"""
+        stage = "local"
+        actual = imvimlita._get_docker_down_cmd(stage, False)
+        expected = r"""
         docker-compose \
-            --file {docker_compose_path} \
+            --file $GIT_ROOT/devops/compose/docker-compose.yml \
+            --env-file $GIT_ROOT/im_v2/devops/env/local.im_db_config.env \
             down
         """
-        self.assert_equal(actual, expected, fuzzy_match=True)
+        self.assert_equal(actual, expected, fuzzy_match=True, purify_text=True)
 
     def test2(self) -> None:
         """
         Check the command line to remove containers and volumes.
         """
-        actual = imvimlita._get_docker_down_cmd(volumes_remove=True)
-        docker_compose_path = hlibtask.get_base_docker_compose_path()
-        expected = fr"""
+        stage = "local"
+        actual = imvimlita._get_docker_down_cmd(stage, True)
+        expected = r"""
         docker-compose \
-            --file {docker_compose_path} \
+            --file $GIT_ROOT/devops/compose/docker-compose.yml \
+            --env-file $GIT_ROOT/im_v2/devops/env/local.im_db_config.env \
             down \
             -v
         """
-        self.assert_equal(actual, expected, fuzzy_match=True)
+        self.assert_equal(actual, expected, fuzzy_match=True, purify_text=True)
 
 
 class TestGetImDockerUp(hunitest.TestCase):
@@ -76,32 +77,35 @@ class TestGetImDockerUp(hunitest.TestCase):
         """
         Check the command line to bring up the db.
         """
-        actual = imvimlita._get_docker_up_cmd(detach=False)
-        docker_compose_path = hlibtask.get_base_docker_compose_path()
-        expected = fr"""
+        stage = "local"
+        actual = imvimlita._get_docker_up_cmd(stage, False)
+        expected = r"""
         docker-compose \
-            --file {docker_compose_path} \
+            --file $GIT_ROOT/devops/compose/docker-compose.yml \
+            --env-file $GIT_ROOT/im_v2/devops/env/local.im_db_config.env \
             up \
-            im_postgres_local
+            im_postgres
         """
-        self.assert_equal(actual, expected, fuzzy_match=True)
+        self.assert_equal(actual, expected, fuzzy_match=True, purify_text=True)
 
     def test2(self) -> None:
         """
         Check the command line to bring up the db in the detached mode.
         """
-        actual = imvimlita._get_docker_up_cmd(detach=True)
-        docker_compose_path = hlibtask.get_base_docker_compose_path()
-        expected = fr"""
+        stage = "local"
+        actual = imvimlita._get_docker_up_cmd(stage, True)
+        expected = r"""
         docker-compose \
-            --file {docker_compose_path} \
+            --file $GIT_ROOT/devops/compose/docker-compose.yml \
+            --env-file $GIT_ROOT/im_v2/devops/env/local.im_db_config.env \
             up \
             -d \
-            im_postgres_local
+            im_postgres
         """
-        self.assert_equal(actual, expected, fuzzy_match=True)
+        self.assert_equal(actual, expected, fuzzy_match=True, purify_text=True)
 
 
+@pytest.mark.skip("CMTask #789.")
 class TestGetCreateDbCmd(hunitest.TestCase):
     def test1(self) -> None:
         """
@@ -110,16 +114,15 @@ class TestGetCreateDbCmd(hunitest.TestCase):
         actual = imvimlita._get_create_db_cmd(
             dbname="test_db", overwrite=False, credentials="from_env"
         )
-        docker_compose_path = hlibtask.get_base_docker_compose_path()
-        expected = fr"""
+        expected = r"""
         docker-compose \
-            --file {docker_compose_path} \
-            run --rm im_app \
+            --file $GIT_ROOT/devops/compose/docker-compose.yml \
+            run --rm im_postgres \
             im_v2/common/db/create_db.py \
             --db-name 'test_db' \
             --credentials '"from_env"'
         """
-        self.assert_equal(actual, expected, fuzzy_match=True)
+        self.assert_equal(actual, expected, fuzzy_match=True, purify_text=True)
 
     def test2(self) -> None:
         """
@@ -128,17 +131,16 @@ class TestGetCreateDbCmd(hunitest.TestCase):
         actual = imvimlita._get_create_db_cmd(
             dbname="test_db", overwrite=True, credentials="from_env"
         )
-        docker_compose_path = hlibtask.get_base_docker_compose_path()
-        expected = fr"""
+        expected = r"""
         docker-compose \
-            --file {docker_compose_path} \
-            run --rm im_app \
+            --file $GIT_ROOT/devops/compose/docker-compose.yml \
+            run --rm im_postgres \
             im_v2/common/db/create_db.py \
             --db-name 'test_db' \
             --overwrite \
             --credentials '"from_env"'
         """
-        self.assert_equal(actual, expected, fuzzy_match=True)
+        self.assert_equal(actual, expected, fuzzy_match=True, purify_text=True)
 
     def test3(self) -> None:
         """
@@ -147,15 +149,15 @@ class TestGetCreateDbCmd(hunitest.TestCase):
         actual = imvimlita._get_create_db_cmd(
             dbname="test_db", overwrite=False, credentials="test.json"
         )
-        docker_compose_path = hlibtask.get_base_docker_compose_path()
-        expected = fr"""
+        expected = r"""
         docker-compose \
-            --file {docker_compose_path} \
-            run --rm im_app \
+            --file $GIT_ROOT/devops/compose/docker-compose.yml \
+            run --rm im_postgres \
             im_v2/common/db/create_db.py \
             --db-name 'test_db' \
-            --credentials 'test.json'
+            --credentials '"test.json"'
         """
+        self.assert_equal(actual, expected, fuzzy_match=True, purify_text=True)
 
     def test4(self) -> None:
         """
@@ -166,17 +168,18 @@ class TestGetCreateDbCmd(hunitest.TestCase):
             overwrite=False,
             credentials="host=localhost dbname=im_postgres_db_local port=54",
         )
-        docker_compose_path = hlibtask.get_base_docker_compose_path()
-        expected = fr"""
+        expected = r"""
         docker-compose \
-            --file {docker_compose_path} \
-            run --rm im_app \
+            --file $GIT_ROOT/devops/compose/docker-compose.yml \
+            run --rm im_postgres \
             im_v2/common/db/create_db.py \
             --db-name 'test_db' \
             --credentials '"host=localhost dbname=im_postgres_db_local port=54"'
         """
+        self.assert_equal(actual, expected, fuzzy_match=True, purify_text=True)
 
 
+@pytest.mark.skip("CMTask #789.")
 class TestGetRemoveDbCmd(hunitest.TestCase):
     def test1(self) -> None:
         """
@@ -185,16 +188,15 @@ class TestGetRemoveDbCmd(hunitest.TestCase):
         actual = imvimlita._get_remove_db_cmd(
             dbname="test_db", credentials="from_env"
         )
-        docker_compose_path = hlibtask.get_base_docker_compose_path()
-        expected = fr"""
+        expected = r"""
         docker-compose \
-            --file {docker_compose_path} \
-            run --rm im_app \
+            --file $GIT_ROOT/devops/compose/docker-compose.yml \
+            run --rm im_postgres \
             im_v2/common/db/remove_db.py \
             --db-name 'test_db' \
             --credentials '"from_env"'
         """
-        self.assert_equal(actual, expected, fuzzy_match=True)
+        self.assert_equal(actual, expected, fuzzy_match=True, purify_text=True)
 
     def test2(self) -> None:
         """
@@ -204,16 +206,15 @@ class TestGetRemoveDbCmd(hunitest.TestCase):
             dbname="test_db",
             credentials="host=localhost dbname=im_postgres_db_local port=54",
         )
-        docker_compose_path = hlibtask.get_base_docker_compose_path()
         expected = fr"""
         docker-compose \
-            --file {docker_compose_path} \
-            run --rm im_app \
+            --file $GIT_ROOT/devops/compose/docker-compose.yml \
+            run --rm im_postgres \
             im_v2/common/db/remove_db.py \
             --db-name 'test_db' \
             --credentials '"host=localhost dbname=im_postgres_db_local port=54"'
         """
-        self.assert_equal(actual, expected, fuzzy_match=True)
+        self.assert_equal(actual, expected, fuzzy_match=True, purify_text=True)
 
     def test3(self) -> None:
         """
@@ -223,18 +224,18 @@ class TestGetRemoveDbCmd(hunitest.TestCase):
             dbname="test_db",
             credentials="asd.json",
         )
-        docker_compose_path = hlibtask.get_base_docker_compose_path()
-        expected = fr"""
+        expected = r"""
         docker-compose \
-            --file {docker_compose_path} \
-            run --rm im_app \
+            --file $GIT_ROOT/devops/compose/docker-compose.yml \
+            run --rm im_postgres \
             im_v2/common/db/remove_db.py \
             --db-name 'test_db' \
-            --credentials asd.json
+            --credentials '"asd.json"'
         """
+        self.assert_equal(actual, expected, fuzzy_match=True, purify_text=True)
 
 
-# TODO(Grisha): 'is_inside_docker()' -> 'is_inside_im_container()' in #100.
+# TODO(Grisha): add more tests and enable this one having `dind`.
 @pytest.mark.skipif(hsysinte.is_inside_docker(), reason="amp #1189")
 class TestImDockerCmd(hunitest.TestCase):
     def test1(self) -> None:

@@ -31,10 +31,10 @@ import core.explore as coexplor
 import core.finance as cofinanc
 import core.signal_processing as csigproc
 import core.statistics as costatis
-import helpers.dataframe as hdatafr
-import helpers.dbg as hdbg
+import helpers.hdataframe as hdatafr
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import helpers.list as hlist
+import helpers.hlist as hlist
 
 _LOG = logging.getLogger(__name__)
 

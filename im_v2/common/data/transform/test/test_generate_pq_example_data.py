@@ -1,8 +1,10 @@
 import os
 
-import helpers.git as hgit
-import helpers.system_interaction as hsysinte
-import helpers.unit_test as hunitest
+import pytest
+
+import helpers.hgit as hgit
+import helpers.hsystem as hsysinte
+import helpers.hunit_test as hunitest
 
 
 class TestGeneratePqExampleData1(hunitest.TestCase):
@@ -33,4 +35,4 @@ class TestGeneratePqExampleData1(hunitest.TestCase):
         actual.append("# test_data=")
         actual.append(by_date_signature)
         actual = "\n".join(actual)
-        self.check_string(actual)
+        self.check_string(actual, purify_text=True)

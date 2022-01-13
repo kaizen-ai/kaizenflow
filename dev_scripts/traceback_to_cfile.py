@@ -22,12 +22,12 @@ import argparse
 import logging
 import sys
 
-import helpers.dbg as hdbg
-import helpers.io_ as hio
-import helpers.parser as hparser
-import helpers.printing as hprint
-import helpers.system_interaction as hsysinte
-import helpers.traceback_helper as htraceb
+import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hparser as hparser
+import helpers.hprint as hprint
+import helpers.hsystem as hsysinte
+import helpers.htraceback as htraceb
 
 _LOG = logging.getLogger(__name__)
 
@@ -86,9 +86,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if traceback is None:
         _LOG.error("Can't find traceback in the file")
         sys.exit(-1)
-    print(hprint.frame("traceback", "-") + "\n" + traceback)
+    print(hprint.frame("traceback", char1="-") + "\n" + traceback)
     cfile_as_str = htraceb.cfile_to_str(cfile)
-    print(hprint.frame("cfile", "-") + "\n" + cfile_as_str)
+    print(hprint.frame("cfile", char1="-") + "\n" + cfile_as_str)
     # Write file.
     hparser.write_file(cfile_as_str.split("\n"), out_file_name)
 

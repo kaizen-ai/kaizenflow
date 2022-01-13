@@ -27,7 +27,7 @@ from typing import Dict
 
 import pandas as pd
 
-import helpers.s3 as hs3
+import helpers.hs3 as hs3
 import im.common.data.types as imcodatyp
 import im.kibot.data.load as vkdloa
 import im.kibot.data.load.kibot_file_path_generator as imkdlkfpge

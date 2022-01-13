@@ -1,7 +1,7 @@
 import logging
 import os
+from typing import Any
 
-import helpers.versioning as hversi
 import repo_config as rconf
 
 # Expose the pytest targets.
@@ -9,6 +9,7 @@ import repo_config as rconf
 # > i print_tasks --as-code
 from helpers.lib_tasks import set_default_params  # This is not an invoke target.
 from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
+    # TODO(gp): -> lint_check_python_files
     check_python_files,
     docker_bash,
     docker_build_local_image,
@@ -26,9 +27,11 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     docker_release_all,
     docker_release_dev_image,
     docker_release_prod_image,
+    # TODO(gp): -> docker_release_rollback_dev_image
     docker_rollback_dev_image,
     docker_rollback_prod_image,
     docker_stats,
+    # TODO(gp): -> docker_release_...
     docker_tag_local_image_as_dev,
     find_check_string_output,
     find_test_class,
@@ -41,24 +44,32 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     git_add_all_untracked,
     git_branch_copy,
     git_branch_diff_with_base,
+    git_branch_diff_with_master,
     git_branch_files,
     git_branch_next_name,
     git_clean,
+    # TODO(gp): -> git_branch_create
     git_create_branch,
+    # TODO(gp): -> git_patch_create
     git_create_patch,
     git_delete_merged_branches,
+    # TODO(gp): -> git_files_list
     git_files,
+    # TODO(gp): -> git_files_last_commit_
     git_last_commit_files,
+    # TODO(gp): -> git_master_merge
     git_merge_master,
     git_pull,
-    git_pull_master,
+    # TODO(gp): -> git_master_fetch
+    git_fetch_master,
+    # TODO(gp): -> git_branch_rename
     git_rename_branch,
-    integrate_compare_branch_with_base,
-    integrate_copy_dirs,
-    integrate_create_branches,
+    integrate_create_branch,
     integrate_diff_dirs,
+    integrate_diff_overlapping_files,
+    integrate_files,
     lint,
-    lint_create_branches,
+    lint_create_branch,
     print_setup,
     print_tasks,
     pytest_clean,
@@ -66,8 +77,10 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     pytest_failed,
     pytest_failed_freeze_test_list,
     run_blank_tests,
+    run_coverage_report,
     run_fast_slow_tests,
     run_fast_tests,
+    run_qa_tests,
     run_slow_tests,
     run_superslow_tests,
     traceback,
@@ -86,12 +99,17 @@ ECR_BASE_PATH = os.environ["AM_ECR_BASE_PATH"]
 DOCKER_BASE_IMAGE_NAME = rconf.get_docker_base_image_name()
 
 
-def docker_release_end_to_end_test(*args, **kwargs):
+# pylint: disable=unused-argument
+def _run_qa_tests(ctx: Any, stage: str, version: str) -> bool:
     """
-    Dummy no-op function that mimics end-to-end test that always passes.
+    Run QA tests to verify that the invoke tasks are working properly.
 
-    Used in docker_release_dev_image.
+    This is used when qualifying a docker image before releasing.
     """
+    cmd = f"pytest -m qa test --image_stage {stage}"
+    if version:
+        cmd = f"{cmd} --image_version {version}"
+    ctx.run(cmd)
     return True
 
 
@@ -101,7 +119,7 @@ default_params = {
     # image, e.g., `XYZ_tmp` to not interfere with the prod system.
     # "BASE_IMAGE": "amp_tmp",
     "BASE_IMAGE": DOCKER_BASE_IMAGE_NAME,
-    "END_TO_END_TEST_FN": docker_release_end_to_end_test,
+    "QA_TEST_FUNCTION": _run_qa_tests,
 }
 
 

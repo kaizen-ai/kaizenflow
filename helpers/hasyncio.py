@@ -25,9 +25,10 @@ from typing import (
 import async_solipsism
 import pandas as pd
 
-import helpers.datetime_ as hdateti
-import helpers.dbg as hdbg
-import helpers.printing as hprint
+import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
+import helpers.hintrospection as hintros
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -79,8 +80,8 @@ async def gather_coroutines_with_wall_clock(
     event_loop: asyncio.AbstractEventLoop, *coroutines: List[Coroutine]
 ) -> List[Any]:
     """
-    Inject a wall clock associated to `event_loop` in all the coroutines and then
-    gathers them in a single coroutine.
+    Inject a wall clock associated to `event_loop` in all the coroutines and
+    then gathers them in a single coroutine.
     """
     get_wall_clock_time = lambda: hdateti.get_current_time(
         tz="ET", event_loop=event_loop
@@ -114,6 +115,7 @@ def run(
         # Use a normal `asyncio` EventLoop.
         event_loop = asyncio.new_event_loop()
     hdbg.dassert_issubclass(event_loop, asyncio.AbstractEventLoop)
+    hprint.log_frame(_LOG, "asyncio.run")
     try:
         ret = event_loop.run_until_complete(coroutine)
     finally:
@@ -141,6 +143,7 @@ async def poll(
     sleep_in_secs: float,
     timeout_in_secs: float,
     get_wall_clock_time: hdateti.GetWallClockTime,
+    tag: Optional[str] = None,
 ) -> Tuple[int, Any]:
     """
     Call `polling_func` every `sleep_in_secs` until `polling_func` returns
@@ -159,14 +162,16 @@ async def poll(
     max_num_iter = math.ceil(timeout_in_secs / sleep_in_secs)
     hdbg.dassert_lte(1, max_num_iter)
     num_iter = 1
+    if tag is None:
+        # Use the function calling this function.
+        tag = hintros.get_function_name(count=0)
     while True:
         _LOG.debug(
-            "\n%s",
-            hprint.frame(
-                "# Iter %s/%s: wall clock time=%s"
-                % (num_iter, max_num_iter, get_wall_clock_time()),
-                char1="<",
-            ),
+            "\n## %s: wall clock time=%s: iter=%s/%s",
+            tag,
+            get_wall_clock_time(),
+            num_iter,
+            max_num_iter,
         )
         # Poll.
         success, value = polling_func()
@@ -174,8 +179,10 @@ async def poll(
         # If success, then exit.
         if success:
             # The function returned.
-            _LOG.debug(
-                "poll done: wall clock time=%s",
+            hprint.log_frame(
+                _LOG,
+                "%s: wall clock time=%s: poll done",
+                tag,
                 get_wall_clock_time(),
             )
             return num_iter, value
@@ -183,7 +190,7 @@ async def poll(
         num_iter += 1
         if num_iter > max_num_iter:
             msg = "Timeout for " + hprint.to_str(
-                "polling_func sleep_in_secs timeout_in_secs"
+                "polling_func sleep_in_secs timeout_in_secs tag"
             )
             _LOG.error(msg)
             raise TimeoutError(msg)
@@ -218,16 +225,22 @@ def get_poll_kwargs(
 WaitInSecs = Union[float, Tuple[float, float]]
 
 
-async def wait(
+async def sleep(
     delay_in_secs: WaitInSecs,
+    get_wall_clock_time: hdateti.GetWallClockTime,
+    *,
+    tag: Optional[str] = None,
     # TODO(gp): How to handle random seed here?
     seed: int = 42,
 ) -> None:
     """
     Wait a deterministic or a randomized delay.
     """
+    if tag is None:
+        # Use the name of the function calling this function.
+        tag = hintros.get_function_name(count=0)
     # Extract or compute the delay.
-    if isinstance(delay_in_secs, float):
+    if isinstance(delay_in_secs, (int, float)):
         pass
     elif isinstance(delay_in_secs, tuple):
         hdbg.dassert_eq(len(delay_in_secs), 2)
@@ -238,23 +251,55 @@ async def wait(
     else:
         raise ValueError(f"Invalid delay_in_secs='delay_in_secs'")
     # Wait.
+    hprint.log_frame(
+        _LOG,
+        "%s: wall_clock_time=%s: started waiting for %s secs",
+        tag,
+        get_wall_clock_time(),
+        delay_in_secs,
+    )
     hdbg.dassert_lte(0, delay_in_secs)
     delay_in_secs = cast(float, delay_in_secs)
-    # TODO(gp): -> use asyncio.sleep()
-    await asyncio.wait(delay_in_secs)
+    await asyncio.sleep(delay_in_secs)
+    hprint.log_frame(
+        _LOG,
+        "%s: wall_clock_time=%s: done waiting for %s secs",
+        tag,
+        get_wall_clock_time(),
+        delay_in_secs,
+    )
 
 
 async def wait_until(
-    timestamp: pd.Timestamp,
+    wait_until_timestamp: pd.Timestamp,
     get_wall_clock_time: hdateti.GetWallClockTime,
+    *,
+    tag: Optional[str] = None,
 ) -> None:
     """
     Wait until the wall clock time is `timestamp`.
     """
+    if tag is None:
+        # Use the name of the function calling this function.
+        tag = hintros.get_function_name(count=1)
     curr_timestamp = get_wall_clock_time()
+    _LOG.debug(
+        "wait until timestamp=%s, curr_timestamp=%s",
+        wait_until_timestamp,
+        curr_timestamp,
+    )
     # We only wait for times in the future.
-    hdbg.dassert_lte(curr_timestamp, timestamp)
+    hdbg.dassert_lte(curr_timestamp, wait_until_timestamp)
     #
-    time_in_secs = (curr_timestamp - timestamp).seconds
+    time_in_secs = (wait_until_timestamp - curr_timestamp).seconds
+    _LOG.debug(
+        "%s: wall_clock_time=%s: sleep for %s secs",
+        tag,
+        get_wall_clock_time(),
+        time_in_secs,
+    )
     hdbg.dassert_lte(0, time_in_secs)
-    asyncio.sleep(time_in_secs)
+    await asyncio.sleep(time_in_secs)
+    hprint.log_frame(
+        _LOG, "%s: wall_clock_time=%s: done waiting", tag, get_wall_clock_time()
+    )

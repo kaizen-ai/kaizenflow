@@ -4,12 +4,12 @@ from typing import List
 
 import pytest
 
-import helpers.dbg as hdbg
-import helpers.git as hgit
-import helpers.io_ as hio
+import helpers.hdbg as hdbg
+import helpers.hgit as hgit
+import helpers.hio as hio
 import helpers.old.conda as holdcond
-import helpers.system_interaction as hsysinte
-import helpers.unit_test as hunitest
+import helpers.hsystem as hsysinte
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

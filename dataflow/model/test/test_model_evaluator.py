@@ -7,7 +7,7 @@ import core.artificial_signal_generators as carsigen
 import core.config as cconfig
 import core.statistics as costatis
 import dataflow.model.model_evaluator as dtfmomoeva
-import helpers.unit_test as hunitest
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

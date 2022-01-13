@@ -7,7 +7,7 @@ import abc
 import logging
 from typing import Any, Dict, List, Optional
 
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -28,12 +28,12 @@ Method = str
 NodeOutput = Dict[str, Any]
 
 
-# TODO(gp): This seems private -> _NodeInterface or _AbstractNode.
+# TODO(gp): This seems private -> _AbstractNode.
 class NodeInterface(abc.ABC):
     """
     Abstract node class for creating DAGs of functions.
 
-    Common use case: `Node`s wrap functions with a common method (e.g., `fit`).
+    Common use case: `Node`s wrap functions with a common method, e.g., `fit()`.
 
     This class provides some convenient introspection (input/output names)
     accessors and, importantly, a unique identifier (`nid`) for building
@@ -93,6 +93,9 @@ class NodeInterface(abc.ABC):
         return items
 
 
+# TODO(gp): Should we merge this with _AbstractNode? There is lots of class
+#  hierarchy (NodeInterface -> Node -> FitPredictNode) that doesn't seem really
+#  used / useful any more.
 class Node(NodeInterface):
     """
     A node class that stores and retrieves its output values on a "per-method"

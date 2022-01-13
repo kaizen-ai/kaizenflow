@@ -23,9 +23,9 @@ import pandas as pd
 # from tqdm.notebook import tqdm
 from tqdm import tqdm
 
-import helpers.dbg as hdbg
-import helpers.io_ as hio
-import helpers.s3 as hs3
+import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hs3 as hs3
 import im.ib.data.extract.gateway.utils as imidegaut
 
 _LOG = logging.getLogger(__name__)

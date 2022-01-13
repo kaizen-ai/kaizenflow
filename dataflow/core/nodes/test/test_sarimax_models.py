@@ -11,8 +11,8 @@ import core.config as cconfig
 import core.signal_processing as csigproc
 import dataflow.core.nodes.sarimax_models as dtfcnosamo
 import dataflow.core.nodes.sklearn_models as dtfcnoskmo
-import helpers.printing as hprint
-import helpers.unit_test as hunitest
+import helpers.hprint as hprint
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

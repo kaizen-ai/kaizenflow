@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 
 import core.pandas_helpers as cpanh
-import helpers.printing as hprint
-import helpers.s3 as hs3
-import helpers.unit_test as hunitest
+import helpers.hprint as hprint
+import helpers.hs3 as hs3
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

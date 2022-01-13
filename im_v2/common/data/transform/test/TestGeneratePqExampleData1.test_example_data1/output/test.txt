@@ -1,16 +1,16 @@
 # test_data=
 # Dir structure
-/app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch
-/app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211230
-/app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211230/data.parquet
-/app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211231
-/app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211231/data.parquet
-/app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20220101
-/app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20220101/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch
+$GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211230
+$GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211230/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211231
+$GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211231/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20220101
+$GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20220101/data.parquet
 # File signatures
 len(file_names)=3
-file_names=/app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211230/data.parquet, /app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211231/data.parquet, /app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20220101/data.parquet
-# /app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211230/data.parquet
+file_names=$GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211230/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211231/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20220101/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211230/data.parquet
 num_lines=43
 '''
 original shape=(72, 4)
@@ -57,7 +57,7 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211231/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20211231/data.parquet
 num_lines=43
 '''
 original shape=(72, 4)
@@ -104,7 +104,7 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20220101/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestGeneratePqExampleData1.test_example_data1/tmp.scratch/date=20220101/data.parquet
 num_lines=43
 '''
 original shape=(72, 4)

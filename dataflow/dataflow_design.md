@@ -41,7 +41,7 @@
 
 - Template configs:
   - Are incomplete configs, with some "mandatory" parameters unspecified but
-    identified, e.g., with `_DUMMY_`
+    identified, e.g., with `cconfig.DUMMY` value
   - Have reasonable defaults for specified parameters
     - This facilitates config extension (e.g., if we add additional parameters /
       flexibility in the future, then we should not have to regenerate old
@@ -286,3 +286,108 @@
         nodes, or also copy state?
       - The answer may depend upon the use case, e.g., notebooks vs production
     - Extending DAGs node by node is in fact how they are built under the hood
+
+## Reusing parameters across nodes' configs
+
+ - The same parameter might need to be used by different objects / functions
+   and DAG nodes and kept in sync somehow
+ - E.g., the `start_datetime` for the reading node and for the `ReplayedTime`
+ - Solution #1:
+   - use a "late binding" approach: in the config there is a `ConfigParam`
+     specifying the path of the corresponding value to use
+ - Solution #2:
+   - use a "meta_parameter" Config key with all the parameters used by multiple
+     nodes
+
+# `DagAdapter`
+
+- `DagAdapter` are `DagBuilder` objects that can be further customized in a
+  programmatic way.
+
+- As we know, we build DAGs using `DagBuilder` function using the following
+  pattern:
+  1) generate a template config from the DAG builder
+  2) fill out the template config to make it into a complete config
+  3) instantiate the DAG from the complete config
+- A `DagBuilder` simply keeps together a template config and a corresponding
+  function building the DAG.
+
+- There are different problems with building DAGs:
+  a) Tweaking DAGs for batch simulation vs mocked real-time vs true real-time
+     - E.g., given a DAG we want to customize a few nodes (typically the source
+       node and the last few ones) without having to copy-paste the DAG
+  b) Compositions of DAGs
+     - We might want to put together different DAGs in a single one
+     - E.g., `RealTimeReturnsPipeline` is `ReturnsPipeline` plus some other
+       components. This is a more general solution than tweaking of DAGs
+- `DagAdapter`allows to solve the problem in a programmatic way.
+
+- TODO(gp): If we allow to pass a fully built DAG instead of a DagBuilder we can
+  simplify the DagAdapter by transforming it into a builder
+  ```
+  def get_RealTimeDag(dag, source_node, sink_nodes) -> DAG:
+    ...
+  ```
+
+# Composing vs deriving objects
+
+- We have a lot of composition of objects to create specialized versions of objects
+- E.g., there is an `HistoricalDataSource` node that allows to connect an
+  `AbstractMarketDataInterface` to a graph
+
+1) we could create a class for each specialization of `DataSource` object
+
+  ```
+  class EgHistoricalDataSource(HistoricalDataSource):
+    """
+    A `HistoricalDataSource` with a `EgReplayedTimeMarketDataInterface` inside.
+    """
+
+    def __init__(
+       self,
+       nid: dtfcore.NodeId,
+       market_data_interface: vltabaretimbar.EgReplayedTimeMarketDataInterface,
+       ):
+  ```
+
+- In this case we use inheritance
+
+- Pros:
+  - this specialized an `HistoricalDataSource` fixing some parameters that need
+    to be fixed
+  Cons:
+  - it does the cross-product of objects
+  - it introduces a new name that we need to keep track of
+
+- We can have further builder methods like `get_..._example1()` to create specific
+  objects for testing purposes
+
+2) we could create a builder method, like `get_EgHistoricalDataSource(params)`, 
+   instead of a class
+ 
+   - In this case we use composition
+ 
+   - This is in practice the same approach as 1), even from the way it is called
+     ```
+     # This is an instance of class `EgHistoricalDataSource`.
+     obj = EgHistoricalDataSource(nid, ...)
+     
+     # This is an instance of class `HistoricalDataSource`.
+     obj = get_EgHistoricalDataSource(nid, ...)
+    ```
+- We can use both approaches 1) and 2) in the `DagBuilder` approach
+
+- Personally I prefer approach 2) since it avoids to create more classes
+  - An OOP adage says "prefer composition over inheritance when possible"
+
+# `DagBuilder`s vs building a DAG directly
+
+- Currently, when we build DAGs we use `DagBuilder` that call a constructor
+  from `get_dag()` with params from the `get_config()`
+  ```
+  dag_builder = DagBuilder()
+  template_config = dag_builder.get_template_config()
+  # Complete the config.
+  config = template_config[...]
+  dag = dag_builder.get_dag(config)
+  ```

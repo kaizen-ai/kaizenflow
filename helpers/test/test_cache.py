@@ -7,11 +7,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import helpers.cache as hcache
-import helpers.dbg as hdbg
-import helpers.io_ as hio
-import helpers.printing as hprint
-import helpers.unit_test as hunitest
+import helpers.hcache as hcache
+import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hprint as hprint
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ _LOG = logging.getLogger(__name__)
 # _LOG.debug = _LOG.info
 
 
-# TODO(gp): Use this everywhere.
+# TODO(gp): Use hprint.log_frame
 def _LOG_frame(txt: str) -> None:
     _LOG.debug("\n%s", hprint.frame(txt))
 
@@ -719,7 +719,6 @@ class TestAmpTask1407(_ResetGlobalCacheHelper):
 # #############################################################################
 
 
-@pytest.mark.skip(reason="Cmamp #179.")
 class TestCachingOnS3(_ResetFunctionSpecificCacheHelper):
     def setUp(self) -> None:
         super().setUp()

@@ -6,7 +6,7 @@ import im.kibot.metadata.config as imkimecon
 
 import os
 
-import helpers.s3 as hs3
+import helpers.hs3 as hs3
 
 # TODO(\*): Merge / reconcile S3_PREFIX in with im.kibot/data/config.py.
 S3_BUCKET = hs3.get_bucket()

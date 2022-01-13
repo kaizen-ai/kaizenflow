@@ -24,8 +24,8 @@ import logging
 import core.config as cconfig
 import dataflow.model.incremental_single_name_model_evaluator as dtfmisnmoev
 import dataflow.model.stats_computer as dtfmostcom
-import helpers.dbg as hdbg
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)

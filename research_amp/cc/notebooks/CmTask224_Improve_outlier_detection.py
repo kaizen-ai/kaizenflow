@@ -28,10 +28,10 @@ import os
 
 import pandas as pd
 
-import helpers.dbg as hdbg
-import helpers.env as henv
-import helpers.printing as hprint
-import helpers.s3 as hs3
+import helpers.hdbg as hdbg
+import helpers.henv as henv
+import helpers.hprint as hprint
+import helpers.hs3 as hs3
 import im_v2.ccxt.data.client as imvcdcli
 import research_amp.cc.detect_outliers as raccdeou
 
@@ -49,7 +49,7 @@ hprint.config_notebook()
 
 # %%
 root_dir = os.path.join(hs3.get_path(), "data")
-ccxt_loader = imvcdcli.CcxtFileSystemClient(
+ccxt_loader = imvcdcli.CcxtCsvFileSystemClient(
     data_type="OHLCV", root_dir=root_dir, aws_profile="am"
 )
 data = ccxt_loader.read_data("kucoin::ETH_USDT")

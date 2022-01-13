@@ -11,9 +11,9 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 import pandas as pd
 
 import core.config.config_ as cconconf
-import helpers.dbg as hdbg
-import helpers.dict as hdict
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.hdict as hdict
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -136,6 +136,7 @@ def intersect_configs(configs: Iterable[cconconf.Config]) -> cconconf.Config:
     return intersection
 
 
+# TODO(gp): This could be a method of Config.
 def subtract_config(
     minuend: cconconf.Config, subtrahend: cconconf.Config
 ) -> cconconf.Config:

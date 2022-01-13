@@ -1,9 +1,9 @@
 import logging
 import pprint
 
-import helpers.dbg as hdbg
-import helpers.printing as hprint
-import helpers.unit_test as hunitest
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -260,3 +260,17 @@ class TestHelloWorld(hunitest.TestCase):
 bar
 """
         self.assert_equal(act, exp, fuzzy_match=False)
+
+
+# #############################################################################
+
+
+class Test_logging1(hunitest.TestCase):
+    def test_log_frame1(self) -> None:
+        hprint.log_frame(_LOG, "%s %s", "hello", "world")
+
+    def test_log_frame2(self) -> None:
+        hprint.log_frame(_LOG, "%s", "hello", level=1)
+
+    def test_log_frame3(self) -> None:
+        hprint.log_frame(_LOG, "%s", "hello", level=2, verbosity=logging.INFO)

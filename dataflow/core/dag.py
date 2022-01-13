@@ -4,16 +4,17 @@ Import as:
 import dataflow.core.dag as dtfcordag
 """
 import itertools
+import json
 import logging
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import networkx as networ
 from tqdm.autonotebook import tqdm
 
 import dataflow.core.node as dtfcornode
-import helpers.dbg as hdbg
-import helpers.list as hlist
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.hlist as hlist
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -59,6 +60,53 @@ class DAG:
             mode, ["strict", "loose"], "Unsupported mode %s requested!", mode
         )
         self._mode = mode
+
+    def __str__(self) -> str:
+        """
+        Return a short representation for user.
+
+        E.g.,
+        ```
+        name=None
+        mode=strict
+        nodes=[('n1', {'stage': <dataflow.core.node.Node object at 0x>})]
+        edges=[]
+        ```
+        """
+        txt = []
+        txt.append(f"name={self._name}")
+        txt.append(f"mode={self._mode}")
+        txt.append("nodes=" + str(self.dag.nodes(data=True)))
+        txt.append("edges=" + str(self.dag.edges(data=True)))
+        return "\n".join(txt)
+
+    def __repr__(self) -> str:
+        """
+        Return a detailed representation for debugging.
+
+        E.g.,
+        ```
+        name=None
+        mode=strict
+        json=
+          {
+              "directed": true,
+              ...
+              "nodes": [
+                  {
+                      "id": "n1",
+                      "stage": "Node"
+                  }
+              ]
+          }
+        ```
+        """
+        txt = []
+        txt.append(f"name={self._name}")
+        txt.append(f"mode={self._mode}")
+        txt.append("json=")
+        txt.append(hprint.indent(self._to_json(), 2))
+        return "\n".join(txt)
 
     # TODO(gp): A bit confusing since other classes have `dag / get_dag` method that
     #  returns a DAG. Also the code does `dag.dag`. Maybe -> `nx_dag()` to say that
@@ -218,6 +266,19 @@ class DAG:
                 sources.append(nid)
         return sources
 
+    def get_unique_source(self) -> dtfcornode.NodeId:
+        """
+        Return the only source node, asserting if there is more than one.
+        """
+        sources = self.get_sources()
+        hdbg.dassert_eq(
+            len(sources),
+            1,
+            "There is more than one sink node %s in DAG",
+            str(sources),
+        )
+        return sources[0]
+
     def get_sinks(self) -> List[dtfcornode.NodeId]:
         """
         :return: list of nid's of sink nodes
@@ -287,6 +348,26 @@ class DAG:
             self._run_node(n, method)
         node = self.get_node(nid)
         return node.get_outputs(method)
+
+    def _to_json(self) -> str:
+        # Get internal networkx representation of the DAG.
+        graph: networ.classes.digraph.DiGraph = self.dag
+        nld = networ.readwrite.json_graph.node_link_data(graph)
+        # Remove stages names from `node_link_data` dictionary since they refer to
+        # `Node` objects, which are not JSON serializable.
+        # E.g., `nld` looks like:
+        #   {'directed': True,
+        #    'graph': {},
+        #    'links': [],
+        #    'multigraph': False,
+        #    'nodes': [{'id': 'n1',
+        #               'stage': <dataflow.core.Node object at 0x...>}]}
+        nld = nld.copy()
+        for data in nld["nodes"]:
+            data["stage"] = data["stage"].__class__.__name__
+        # Print as JSON.
+        json_nld = json.dumps(nld, indent=4, sort_keys=True)
+        return json_nld
 
     def _run_node(
         self, nid: dtfcornode.NodeId, method: dtfcornode.Method

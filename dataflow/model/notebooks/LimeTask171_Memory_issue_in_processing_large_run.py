@@ -31,8 +31,8 @@ import logging
 import dataflow_model.model_evaluator as cdtfmomoev
 
 import core.config as cconfig
-import helpers.dbg as hdbg
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -87,7 +87,7 @@ evaluator = cdtfmomoev.StrategyEvaluator.from_eval_config(eval_config)
 
 # %%
 if False:
-    import helpers.pickle_ as hpickle
+    import helpers.hpickle as hpickle
 
     hpickle.to_pickle(evaluator, "evaluator.pkl")
 

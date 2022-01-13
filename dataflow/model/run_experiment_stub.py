@@ -20,8 +20,8 @@ import re
 from typing import cast
 
 import core.config as cconfig
-import helpers.dbg as hdbg
-import helpers.parser as hparser
+import helpers.hdbg as hdbg
+import helpers.hparser as hparser
 
 _LOG = logging.getLogger(__name__)
 

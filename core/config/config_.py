@@ -17,10 +17,10 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 
-import helpers.dbg as hdbg
-import helpers.dict as hdict
-import helpers.introspection as hintros
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.hdict as hdict
+import helpers.hintrospection as hintros
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -86,9 +86,9 @@ class Config:
                 _LOG.debug(
                     "head_key='%s', self._config=%s", head_key, self._config
                 )
-                subconfig = self.get(head_key, None) or self.add_subconfig(
-                    head_key
-                )
+                subconfig = self.get(head_key, None)
+                if subconfig is None:
+                    subconfig = self.add_subconfig(head_key)
                 hdbg.dassert_isinstance(subconfig, Config)
                 subconfig.__setitem__(tail_key, val)
             return
@@ -199,6 +199,10 @@ class Config:
         bool evaluation of a `Config` object for truth value testing.
         """
         return len(self._config)
+
+    # TODO(gp): Add also iteritems()
+    def keys(self) -> List[str]:
+        return self._config.keys()
 
     def add_subconfig(self, key: str) -> "Config":
         hdbg.dassert_not_in(key, self._config.keys(), "Key already present")

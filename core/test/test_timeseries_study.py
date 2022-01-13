@@ -6,7 +6,7 @@ import pandas as pd
 import core.artificial_signal_generators as carsigen
 import core.statistics as costatis
 import core.timeseries_study as ctimstud
-import helpers.unit_test as hunitest
+import helpers.hunit_test as hunitest
 
 
 class TestTimeSeriesDailyStudy(hunitest.TestCase):

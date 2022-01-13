@@ -1,22 +1,23 @@
 # by_date=
 # Dir structure
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211230
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211230/data.parquet
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211231
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211231/data.parquet
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20220101
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20220101/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211230
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211230/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211231
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211231/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20220101
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20220101/data.parquet
 # File signatures
 len(file_names)=3
-file_names=/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211230/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211231/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20220101/data.parquet
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211230/data.parquet
-num_lines=61
+file_names=$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211230/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211231/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20220101/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211230/data.parquet
+num_lines=67
 '''
-original shape=(72, 7)
+original shape=(72, 8)
 Head:
 {
-    "2021-12-30T00:00:00Z":{
+    "0":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640822400,
         "end_time":1640826000,
@@ -25,7 +26,8 @@ Head:
         "open":0,
         "id":0
     },
-    "2021-12-30T01:00:00Z":{
+    "1":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640826000,
         "end_time":1640829600,
@@ -34,7 +36,8 @@ Head:
         "open":1,
         "id":0
     },
-    "2021-12-30T02:00:00Z":{
+    "2":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640829600,
         "end_time":1640833200,
@@ -46,7 +49,8 @@ Head:
 }
 Tail:
 {
-    "2021-12-30T21:00:00Z":{
+    "69":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640898000,
         "end_time":1640901600,
@@ -55,7 +59,8 @@ Tail:
         "open":21,
         "id":2
     },
-    "2021-12-30T22:00:00Z":{
+    "70":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640901600,
         "end_time":1640905200,
@@ -64,7 +69,8 @@ Tail:
         "open":22,
         "id":2
     },
-    "2021-12-30T23:00:00Z":{
+    "71":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640905200,
         "end_time":1640908800,
@@ -75,13 +81,14 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211231/data.parquet
-num_lines=61
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211231/data.parquet
+num_lines=67
 '''
-original shape=(72, 7)
+original shape=(72, 8)
 Head:
 {
-    "2021-12-31T00:00:00Z":{
+    "0":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640908800,
         "end_time":1640912400,
@@ -90,7 +97,8 @@ Head:
         "open":24,
         "id":0
     },
-    "2021-12-31T01:00:00Z":{
+    "1":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640912400,
         "end_time":1640916000,
@@ -99,7 +107,8 @@ Head:
         "open":25,
         "id":0
     },
-    "2021-12-31T02:00:00Z":{
+    "2":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640916000,
         "end_time":1640919600,
@@ -111,7 +120,8 @@ Head:
 }
 Tail:
 {
-    "2021-12-31T21:00:00Z":{
+    "69":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640984400,
         "end_time":1640988000,
@@ -120,7 +130,8 @@ Tail:
         "open":45,
         "id":2
     },
-    "2021-12-31T22:00:00Z":{
+    "70":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640988000,
         "end_time":1640991600,
@@ -129,7 +140,8 @@ Tail:
         "open":46,
         "id":2
     },
-    "2021-12-31T23:00:00Z":{
+    "71":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640991600,
         "end_time":1640995200,
@@ -140,13 +152,14 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20220101/data.parquet
-num_lines=61
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20220101/data.parquet
+num_lines=67
 '''
-original shape=(72, 7)
+original shape=(72, 8)
 Head:
 {
-    "2022-01-01T00:00:00Z":{
+    "0":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1640995200,
         "end_time":1640998800,
@@ -155,7 +168,8 @@ Head:
         "open":48,
         "id":0
     },
-    "2022-01-01T01:00:00Z":{
+    "1":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1640998800,
         "end_time":1641002400,
@@ -164,7 +178,8 @@ Head:
         "open":49,
         "id":0
     },
-    "2022-01-01T02:00:00Z":{
+    "2":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1641002400,
         "end_time":1641006000,
@@ -176,7 +191,8 @@ Head:
 }
 Tail:
 {
-    "2022-01-01T21:00:00Z":{
+    "69":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1641070800,
         "end_time":1641074400,
@@ -185,7 +201,8 @@ Tail:
         "open":69,
         "id":2
     },
-    "2022-01-01T22:00:00Z":{
+    "70":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1641074400,
         "end_time":1641078000,
@@ -194,7 +211,8 @@ Tail:
         "open":70,
         "id":2
     },
-    "2022-01-01T23:00:00Z":{
+    "71":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1641078000,
         "end_time":1641081600,
@@ -207,42 +225,43 @@ Tail:
 '''
 # by_asset=
 # Dir structure
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=A
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=A/data.parquet
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=B
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=B/data.parquet
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=C
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=C/data.parquet
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=A
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=A/data.parquet
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=B
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=B/data.parquet
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=C
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=C/data.parquet
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=A
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=A/data.parquet
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=B
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=B/data.parquet
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=C
-/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=C/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=A
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=A/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=B
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=B/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=C
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=C/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=A
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=A/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=B
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=B/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=C
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=C/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=A
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=A/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=B
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=B/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=C
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=C/data.parquet
 # File signatures
 len(file_names)=9
-file_names=/app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=A/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=B/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=C/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=A/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=B/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=C/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=A/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=B/data.parquet, /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=C/data.parquet
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=A/data.parquet
-num_lines=55
+file_names=$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=A/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=B/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=C/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=A/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=B/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=C/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=A/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=B/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=C/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=A/data.parquet
+num_lines=61
 '''
-original shape=(24, 6)
+original shape=(24, 7)
 Head:
 {
     "2021-12-30T00:00:00Z":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640822400,
         "end_time":1640826000,
@@ -251,6 +270,7 @@ Head:
         "id":0
     },
     "2021-12-30T01:00:00Z":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640826000,
         "end_time":1640829600,
@@ -259,6 +279,7 @@ Head:
         "id":0
     },
     "2021-12-30T02:00:00Z":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640829600,
         "end_time":1640833200,
@@ -270,6 +291,7 @@ Head:
 Tail:
 {
     "2021-12-30T21:00:00Z":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640898000,
         "end_time":1640901600,
@@ -278,6 +300,7 @@ Tail:
         "id":0
     },
     "2021-12-30T22:00:00Z":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640901600,
         "end_time":1640905200,
@@ -286,6 +309,7 @@ Tail:
         "id":0
     },
     "2021-12-30T23:00:00Z":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640905200,
         "end_time":1640908800,
@@ -295,13 +319,14 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=B/data.parquet
-num_lines=55
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=B/data.parquet
+num_lines=61
 '''
-original shape=(24, 6)
+original shape=(24, 7)
 Head:
 {
     "2021-12-30T00:00:00Z":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640822400,
         "end_time":1640826000,
@@ -310,6 +335,7 @@ Head:
         "id":1
     },
     "2021-12-30T01:00:00Z":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640826000,
         "end_time":1640829600,
@@ -318,6 +344,7 @@ Head:
         "id":1
     },
     "2021-12-30T02:00:00Z":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640829600,
         "end_time":1640833200,
@@ -329,6 +356,7 @@ Head:
 Tail:
 {
     "2021-12-30T21:00:00Z":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640898000,
         "end_time":1640901600,
@@ -337,6 +365,7 @@ Tail:
         "id":1
     },
     "2021-12-30T22:00:00Z":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640901600,
         "end_time":1640905200,
@@ -345,6 +374,7 @@ Tail:
         "id":1
     },
     "2021-12-30T23:00:00Z":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640905200,
         "end_time":1640908800,
@@ -354,13 +384,14 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=C/data.parquet
-num_lines=55
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=C/data.parquet
+num_lines=61
 '''
-original shape=(24, 6)
+original shape=(24, 7)
 Head:
 {
     "2021-12-30T00:00:00Z":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640822400,
         "end_time":1640826000,
@@ -369,6 +400,7 @@ Head:
         "id":2
     },
     "2021-12-30T01:00:00Z":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640826000,
         "end_time":1640829600,
@@ -377,6 +409,7 @@ Head:
         "id":2
     },
     "2021-12-30T02:00:00Z":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640829600,
         "end_time":1640833200,
@@ -388,6 +421,7 @@ Head:
 Tail:
 {
     "2021-12-30T21:00:00Z":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640898000,
         "end_time":1640901600,
@@ -396,6 +430,7 @@ Tail:
         "id":2
     },
     "2021-12-30T22:00:00Z":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640901600,
         "end_time":1640905200,
@@ -404,6 +439,7 @@ Tail:
         "id":2
     },
     "2021-12-30T23:00:00Z":{
+        "vendor_date":"2021-12-30",
         "interval":3600,
         "start_time":1640905200,
         "end_time":1640908800,
@@ -413,13 +449,14 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=A/data.parquet
-num_lines=55
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=A/data.parquet
+num_lines=61
 '''
-original shape=(24, 6)
+original shape=(24, 7)
 Head:
 {
     "2021-12-31T00:00:00Z":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640908800,
         "end_time":1640912400,
@@ -428,6 +465,7 @@ Head:
         "id":0
     },
     "2021-12-31T01:00:00Z":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640912400,
         "end_time":1640916000,
@@ -436,6 +474,7 @@ Head:
         "id":0
     },
     "2021-12-31T02:00:00Z":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640916000,
         "end_time":1640919600,
@@ -447,6 +486,7 @@ Head:
 Tail:
 {
     "2021-12-31T21:00:00Z":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640984400,
         "end_time":1640988000,
@@ -455,6 +495,7 @@ Tail:
         "id":0
     },
     "2021-12-31T22:00:00Z":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640988000,
         "end_time":1640991600,
@@ -463,6 +504,7 @@ Tail:
         "id":0
     },
     "2021-12-31T23:00:00Z":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640991600,
         "end_time":1640995200,
@@ -472,13 +514,14 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=B/data.parquet
-num_lines=55
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=B/data.parquet
+num_lines=61
 '''
-original shape=(24, 6)
+original shape=(24, 7)
 Head:
 {
     "2021-12-31T00:00:00Z":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640908800,
         "end_time":1640912400,
@@ -487,6 +530,7 @@ Head:
         "id":1
     },
     "2021-12-31T01:00:00Z":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640912400,
         "end_time":1640916000,
@@ -495,6 +539,7 @@ Head:
         "id":1
     },
     "2021-12-31T02:00:00Z":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640916000,
         "end_time":1640919600,
@@ -506,6 +551,7 @@ Head:
 Tail:
 {
     "2021-12-31T21:00:00Z":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640984400,
         "end_time":1640988000,
@@ -514,6 +560,7 @@ Tail:
         "id":1
     },
     "2021-12-31T22:00:00Z":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640988000,
         "end_time":1640991600,
@@ -522,6 +569,7 @@ Tail:
         "id":1
     },
     "2021-12-31T23:00:00Z":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640991600,
         "end_time":1640995200,
@@ -531,13 +579,14 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=C/data.parquet
-num_lines=55
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=C/data.parquet
+num_lines=61
 '''
-original shape=(24, 6)
+original shape=(24, 7)
 Head:
 {
     "2021-12-31T00:00:00Z":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640908800,
         "end_time":1640912400,
@@ -546,6 +595,7 @@ Head:
         "id":2
     },
     "2021-12-31T01:00:00Z":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640912400,
         "end_time":1640916000,
@@ -554,6 +604,7 @@ Head:
         "id":2
     },
     "2021-12-31T02:00:00Z":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640916000,
         "end_time":1640919600,
@@ -565,6 +616,7 @@ Head:
 Tail:
 {
     "2021-12-31T21:00:00Z":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640984400,
         "end_time":1640988000,
@@ -573,6 +625,7 @@ Tail:
         "id":2
     },
     "2021-12-31T22:00:00Z":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640988000,
         "end_time":1640991600,
@@ -581,6 +634,7 @@ Tail:
         "id":2
     },
     "2021-12-31T23:00:00Z":{
+        "vendor_date":"2021-12-31",
         "interval":3600,
         "start_time":1640991600,
         "end_time":1640995200,
@@ -590,13 +644,14 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=A/data.parquet
-num_lines=55
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=A/data.parquet
+num_lines=61
 '''
-original shape=(24, 6)
+original shape=(24, 7)
 Head:
 {
     "2022-01-01T00:00:00Z":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1640995200,
         "end_time":1640998800,
@@ -605,6 +660,7 @@ Head:
         "id":0
     },
     "2022-01-01T01:00:00Z":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1640998800,
         "end_time":1641002400,
@@ -613,6 +669,7 @@ Head:
         "id":0
     },
     "2022-01-01T02:00:00Z":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1641002400,
         "end_time":1641006000,
@@ -624,6 +681,7 @@ Head:
 Tail:
 {
     "2022-01-01T21:00:00Z":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1641070800,
         "end_time":1641074400,
@@ -632,6 +690,7 @@ Tail:
         "id":0
     },
     "2022-01-01T22:00:00Z":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1641074400,
         "end_time":1641078000,
@@ -640,6 +699,7 @@ Tail:
         "id":0
     },
     "2022-01-01T23:00:00Z":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1641078000,
         "end_time":1641081600,
@@ -649,13 +709,14 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=B/data.parquet
-num_lines=55
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=B/data.parquet
+num_lines=61
 '''
-original shape=(24, 6)
+original shape=(24, 7)
 Head:
 {
     "2022-01-01T00:00:00Z":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1640995200,
         "end_time":1640998800,
@@ -664,6 +725,7 @@ Head:
         "id":1
     },
     "2022-01-01T01:00:00Z":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1640998800,
         "end_time":1641002400,
@@ -672,6 +734,7 @@ Head:
         "id":1
     },
     "2022-01-01T02:00:00Z":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1641002400,
         "end_time":1641006000,
@@ -683,6 +746,7 @@ Head:
 Tail:
 {
     "2022-01-01T21:00:00Z":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1641070800,
         "end_time":1641074400,
@@ -691,6 +755,7 @@ Tail:
         "id":1
     },
     "2022-01-01T22:00:00Z":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1641074400,
         "end_time":1641078000,
@@ -699,6 +764,7 @@ Tail:
         "id":1
     },
     "2022-01-01T23:00:00Z":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1641078000,
         "end_time":1641081600,
@@ -708,13 +774,14 @@ Tail:
     }
 }
 '''
-# /app/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=C/data.parquet
-num_lines=55
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=C/data.parquet
+num_lines=61
 '''
-original shape=(24, 6)
+original shape=(24, 7)
 Head:
 {
     "2022-01-01T00:00:00Z":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1640995200,
         "end_time":1640998800,
@@ -723,6 +790,7 @@ Head:
         "id":2
     },
     "2022-01-01T01:00:00Z":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1640998800,
         "end_time":1641002400,
@@ -731,6 +799,7 @@ Head:
         "id":2
     },
     "2022-01-01T02:00:00Z":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1641002400,
         "end_time":1641006000,
@@ -742,6 +811,7 @@ Head:
 Tail:
 {
     "2022-01-01T21:00:00Z":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1641070800,
         "end_time":1641074400,
@@ -750,6 +820,7 @@ Tail:
         "id":2
     },
     "2022-01-01T22:00:00Z":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1641074400,
         "end_time":1641078000,
@@ -758,6 +829,7 @@ Tail:
         "id":2
     },
     "2022-01-01T23:00:00Z":{
+        "vendor_date":"2022-01-01",
         "interval":3600,
         "start_time":1641078000,
         "end_time":1641081600,

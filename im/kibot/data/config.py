@@ -6,7 +6,7 @@ import im.kibot.data.config as imkidacon
 
 import os
 
-import helpers.s3 as hs3
+import helpers.hs3 as hs3
 
 ENDPOINT = "http://www.kibot.com/"
 

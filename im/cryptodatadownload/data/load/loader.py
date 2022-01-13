@@ -11,10 +11,11 @@ from typing import Optional
 import pandas as pd
 
 import core.pandas_helpers as cpanh
-import helpers.datetime_ as hdateti
-import helpers.dbg as hdbg
+import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import helpers.s3 as hs3
+import helpers.hs3 as hs3
+import im_v2.common.data.client as icdc
 
 _LOG = logging.getLogger(__name__)
 
@@ -25,7 +26,9 @@ _LATEST_DATA_SNAPSHOT = "20210924"
 class CddLoader:
     def __init__(
         self,
+        data_type: str,
         root_dir: str,
+        *,
         aws_profile: Optional[str] = None,
         remove_dups: bool = True,
         resample_to_1_min: bool = True,
@@ -33,6 +36,7 @@ class CddLoader:
         """
         Load CDD data.
 
+        :param: data_type: OHLCV or trade, bid/ask data
         :param: root_dir: either a local root path (e.g., "/app/im") or
             an S3 root path (e.g., "s3://alphamatic-data/data) to CDD data
         :param: aws_profile: AWS profile name (e.g., "am")
@@ -46,24 +50,6 @@ class CddLoader:
         self._s3fs = hs3.get_s3fs(self._aws_profile)
         # Specify supported data types to load.
         self._data_types = ["ohlcv"]
-
-    def read_data_from_filesystem(
-        self,
-        exchange_id: str,
-        currency_pair: str,
-        data_type: str,
-        data_snapshot: Optional[str] = None,
-    ) -> pd.DataFrame:
-        """
-        Load data from S3 and process it for use downstream.
-
-        :param exchange_id: CDD exchange id, e.g. "binance"
-        :param currency_pair: currency pair, e.g. "BTC_USDT"
-        :param data_type: OHLCV or trade, bid/ask data
-        :param data_snapshot: snapshot of datetime when data was loaded, e.g. "20210924"
-        :return: processed CDD data
-        """
-        data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
         # Verify that requested data type is valid.
         hdbg.dassert_in(
             data_type.lower(),
@@ -71,6 +57,24 @@ class CddLoader:
             msg="Incorrect data type: '%s'. Acceptable types: '%s'"
             % (data_type.lower(), self._data_types),
         )
+        self._data_type = data_type
+
+    def read_data(
+        self,
+        full_symbol: str,
+        *,
+        data_snapshot: Optional[str] = None,
+    ) -> pd.DataFrame:
+        """
+        Load data from S3 and process it for use downstream.
+
+        :param full_symbol: `exchange::symbol`, e.g. `binance::BTC_USDT`
+        :param data_snapshot: snapshot of datetime when data was loaded, e.g. "20210924"
+        :return: processed CDD data
+        """
+        data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
+        # Verify that requested data type is valid.
+        exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)
         # Get absolute file path for a CDD file.
         file_path = self._get_file_path(data_snapshot, exchange_id, currency_pair)
         # Initialize kwargs dict for further CDD data reading.
@@ -94,9 +98,7 @@ class CddLoader:
             exchange_id,
             currency_pair,
         )
-        transformed_data = self._transform(
-            data, exchange_id, currency_pair, data_type
-        )
+        transformed_data = self._transform(data, exchange_id, currency_pair)
         return transformed_data
 
     # TODO(Grisha): factor out common code from `CddLoader._get_file_path` and
@@ -144,7 +146,6 @@ class CddLoader:
         data: pd.DataFrame,
         exchange_id: str,
         currency_pair: str,
-        data_type: str,
     ) -> pd.DataFrame:
         """
         Transform CDD data loaded from S3.
@@ -168,18 +169,17 @@ class CddLoader:
         :param data: dataframe with CDD data from S3
         :param exchange_id: CDD exchange id, e.g. "binance"
         :param currency_pair: currency pair, e.g. "BTC_USDT"
-        :param data_type: OHLCV or trade, bid/ask data
         :return: processed dataframe
         """
         transformed_data = self._apply_common_transformation(
             data, exchange_id, currency_pair
         )
-        if data_type.lower() == "ohlcv":
+        if self._data_type.lower() == "ohlcv":
             transformed_data = self._apply_ohlcv_transformation(transformed_data)
         else:
             hdbg.dfatal(
                 "Incorrect data type: '%s'. Acceptable types: '%s'"
-                % (data_type.lower(), self._data_types)
+                % (self._data_type.lower(), self._data_types)
             )
         return transformed_data
 

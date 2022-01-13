@@ -15,11 +15,11 @@ import pandas as pd
 import statsmodels.api as sm
 
 import core.signal_processing as csigproc
-import helpers.dataframe as hdatafr
-import helpers.dbg as hdbg
+import helpers.hdataframe as hdatafr
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.htypes as htypes
-import helpers.printing as hprint
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -1225,7 +1225,7 @@ def stack_prediction_df(
               are knowable at the timestamp, modulo the computation time
               required for the prediction)
         - Two column levels
-            - innermost level consists of the names/ids
+            - innermost level consists of the names/asset ids
             - outermost level has features/market data
     :param id_col: name to use for identifier col in output
     :param close_price_col: col name for bar close price
@@ -1237,8 +1237,8 @@ def stack_prediction_df(
     :param remove_weekends: remove any weekend data iff `True`
     :return: dataframe of the following form:
         - RangeIndex
-        - Single column level, with columns for timestamps, ids, market data,
-          predictions, etc.
+        - Single column level, with columns for timestamps, asset ids, market
+          data, predictions, etc.
         - Predictions are moved from the end-of-bar semantic to
           beginning-of-bar semantic
         - Epoch and timestamps are for beginning-of-bar rather than end

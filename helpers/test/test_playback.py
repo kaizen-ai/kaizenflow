@@ -4,13 +4,12 @@ import os
 from typing import Any, Optional
 
 import pandas as pd
-import pytest
 
 import core.config as cconfig
-import helpers.io_ as hio
-import helpers.playback as hplayba
-import helpers.system_interaction as hsysinte
-import helpers.unit_test as hunitest
+import helpers.hio as hio
+import helpers.hplayback as hplayba
+import helpers.hsystem as hsysinte
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -53,7 +52,6 @@ class TestJsonRoundtrip1(hunitest.TestCase):
 # #############################################################################
 
 
-@pytest.mark.skip(reason="See cryptomtc/cmamp#321")
 class TestPlaybackInputOutput1(hunitest.TestCase):
     """
     Freeze the output of Playback.
@@ -472,7 +470,7 @@ class TestPlaybackFileMode1(hunitest.TestCase):
         code = (
             "\n".join(
                 [
-                    "import helpers.playback as hplayba",
+                    "import helpers.hplayback as hplayba",
                     "def plbck_sum(a: int, b: int) -> int:",
                     '    hplayba.Playback("check_string", to_file=True%s).run(None)',
                     "    return a + b",

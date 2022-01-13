@@ -5,19 +5,15 @@ import pandas as pd
 import psycopg2.errors as perrors
 import pytest
 
-import helpers.git as hgit
-import helpers.sql as hsql
-import helpers.unit_test as hunitest
-import im_v2.common.db.utils as imvcodbut
+import helpers.hgit as hgit
+import helpers.hsql as hsql
+import helpers.hunit_test as hunitest
+import im_v2.common.db.db_utils as imvcodbut
 
 _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): helpers can't depend from im.
-@pytest.mark.skipif(
-    not hgit.execute_repo_config_code("has_dind_support()"),
-    reason="Need dind support",
-)
 class TestSql1(imvcodbut.TestImDbHelper):
     @pytest.mark.slow("10 seconds.")
     def test_db_connection_to_tuple(self) -> None:

@@ -1,6 +1,6 @@
 import logging
 
-import helpers.unit_test as hunitest
+import helpers.hunit_test as hunitest
 import oms.order as omorder
 import oms.order_example as oordexam
 
@@ -16,12 +16,14 @@ class TestOrder1(hunitest.TestCase):
         # Check.
         act = str(order)
         exp = r"""Order: order_id=0
-        creation_timestamp=2021-01-04 09:29:00-05:00
-        asset_id=1
+        creation_timestamp=2000-01-01 09:30:00-05:00
+        asset_id=101
         type_=price@twap
-        start_timestamp=2021-01-04 09:30:00-05:00
-        end_timestamp=2021-01-04 09:35:00-05:00
-        num_shares=100.0"""
+        start_timestamp=2000-01-01 09:35:00-05:00
+        end_timestamp=2000-01-01 09:40:00-05:00
+        curr_num_shares=0.0
+        diff_num_shares=100.0
+        tz=America/New_York"""
         exp = exp.replace("\n", " ")
         self.assert_equal(act, exp, fuzzy_match=True)
         # Deserialize from string.
@@ -39,8 +41,8 @@ class TestOrders1(hunitest.TestCase):
         orders = [oordexam.get_order_example1(), oordexam.get_order_example1()]
         act = omorder.orders_to_string(orders)
         exp = r"""
-Order: order_id=0 creation_timestamp=2021-01-04 09:29:00-05:00 asset_id=1 type_=price@twap start_timestamp=2021-01-04 09:30:00-05:00 end_timestamp=2021-01-04 09:35:00-05:00 num_shares=100.0
-Order: order_id=0 creation_timestamp=2021-01-04 09:29:00-05:00 asset_id=1 type_=price@twap start_timestamp=2021-01-04 09:30:00-05:00 end_timestamp=2021-01-04 09:35:00-05:00 num_shares=100.0
+Order: order_id=0 creation_timestamp=2000-01-01 09:30:00-05:00 asset_id=101 type_=price@twap start_timestamp=2000-01-01 09:35:00-05:00 end_timestamp=2000-01-01 09:40:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York
+Order: order_id=0 creation_timestamp=2000-01-01 09:30:00-05:00 asset_id=101 type_=price@twap start_timestamp=2000-01-01 09:35:00-05:00 end_timestamp=2000-01-01 09:40:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York
 """
         # exp = exp.replace("\n", " ")
         self.assert_equal(act, exp, fuzzy_match=True)
