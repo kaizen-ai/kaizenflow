@@ -11,7 +11,8 @@ Use as:
     --dst_dir 'test/ccxt_test' \
     --data_type 'ohlcv' \
     --api_keys 'API_keys.json' \
-    --universe 'v03'
+    --universe 'v03' \
+    --db_stage 'dev'
 
 Import as:
 
@@ -34,20 +35,12 @@ import helpers.hparser as hparser
 import helpers.hsql as hsql
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import im_v2.ccxt.universe.universe as imvccunun
+import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(Danya): Replace with an `env` file (CMTask585).
-_DB_CREDENTIALS = {
-    "host": "172.30.2.212",
-    "dbname": "im_postgres_db_local",
-    "port": 5432,
-    "user": "aljsdalsd",
-    "password": "alsdkqoen",
-}
 
-
-# TODO(Danya): Move instantiation outside, e.g. into Airflow wrapper.
+# TODO(Danya): Move instantiation outside.
 def instantiate_exchange(
     exchange_id: str,
     ccxt_universe: Dict[str, List[str]],
@@ -191,6 +184,13 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="Trade universe to download data for",
     )
+    parser.add_argument(
+        "--db_stage",
+        action="store",
+        required=True,
+        type=str,
+        help="DB stage to use",
+    )
     parser.add_argument("--incremental", action="store_true")
     parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
@@ -202,7 +202,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Create the directory.
     hio.create_dir(args.dst_dir, incremental=args.incremental)
     # Connect to database.
-    connection = hsql.get_connection(**_DB_CREDENTIALS)
+    db_stage = args.db_stage
+    env_file = imvimlita.get_db_env_path(db_stage)
+    connection_params = hsql.get_connection_info_from_env_file(env_file)
+    connection = hsql.get_connection(*connection_params)
     # Load universe.
     universe = imvccunun.get_trade_universe(args.universe)
     exchange_ids = universe["CCXT"].keys()
