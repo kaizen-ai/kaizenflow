@@ -31,7 +31,7 @@ class Test_Get_Secret(hunitest.TestCase):
 
     @mock_secretsmanager
     def test_get_secret(self) -> None:
-        # make sure the region name matches the one used in hsecret
+        # make sure the region name matches the one used in hsecret profile
         client = boto3.client("secretsmanager", region_name="eu-north-1")
         secret = {"testkey": "testvalue"}
         secret_name = "Testsecret"

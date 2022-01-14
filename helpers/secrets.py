@@ -14,19 +14,19 @@ from botocore.exceptions import ClientError
 import helpers.hdbg as hdbg
 
 
-def get_secrets_client(region_name: str = "eu-north-1") -> BaseClient:
+def get_secrets_client(aws_profile: str = 'ck') -> BaseClient:
     """
     Return client to work with AWS Secrets Manager in the specified region.
     """
-    hdbg.dassert_isinstance(region_name, str)
-    session = boto3.session.Session(profile_name="cm")
+    hdbg.dassert_isinstance(aws_profile, str)
+    session = boto3.session.Session(profile_name=aws_profile)
     client = session.client(
-        service_name="secretsmanager", region_name=region_name
+        service_name="secretsmanager"
     )
     return client
 
 
-# TODO(Juraj): add support to access secrets stored in different regions, not important rn
+# TODO(Juraj): add support to access secrets for different profiles, not important rn
 def get_secret(secret_name: str) -> Optional[dict]:
     """
     Fetch secret values(s) from AWS secrets manager, returns a dictionary of
