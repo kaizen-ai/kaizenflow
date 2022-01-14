@@ -48,11 +48,22 @@ hprint.config_notebook()
 # # Load test data
 
 # %%
-root_dir = os.path.join(hs3.get_path(), "data")
-ccxt_loader = imvcdcli.CcxtCsvFileSystemClient(
-    data_type="OHLCV", root_dir=root_dir, aws_profile="am"
+data_type = "ohlcv",
+root_dir = os.path.join(hs3.get_path(), "data"),
+extension = "csv.gz"
+ccxt_csv_client = imvcdcli.CcxtCsvParquetByAssetClient(
+    data_type,
+    root_dir,
+    extension,
+    aws_profile="am",
 )
-data = ccxt_loader.read_data("kucoin::ETH_USDT")
+start_ts = None
+end_ts = None
+data = ccxt_csv_client.read_data(
+    ["kucoin::ETH_USDT"],
+    start_ts,
+    end_ts,
+)
 data.head()
 
 # %% [markdown]

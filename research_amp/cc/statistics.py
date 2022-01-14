@@ -15,9 +15,9 @@ import core.config.config_ as cconconf
 import core.statistics as costatis
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import im.cryptodatadownload.data.load.loader as imcdalolo
 import im_v2.ccxt.data.client as imvcdcli
 import im_v2.common.data.client as icdc
+import im_v2.cryptodatadownload.data.client.cdd_client as imcdaclcd
 
 _LOG = logging.getLogger(__name__)
 
@@ -202,16 +202,20 @@ def get_loader_for_vendor(
     :return: loader instance
     """
     vendor = config["data"]["vendor"]
+    data_type = config["data"]["data_type"],
+    root_dir = config["load"]["data_dir"],
+    extension = "csv.gz",
     if vendor == "CCXT":
-        loader = imvcdcli.CcxtCsvFileSystemClient(
-            data_type=config["data"]["data_type"],
-            root_dir=config["load"]["data_dir"],
+        loader = imvcdcli.CcxtCsvParquetByAssetClient(
+            data_type,
+            root_dir,
+            extension,
             aws_profile=config["load"]["aws_profile"],
         )
     elif vendor == "CDD":
         loader = imcdaclcd.CddClient(
-            data_type=config["data"]["data_type"],
-            root_dir=config["load"]["data_dir"],
+            data_type,
+            root_dir,
             aws_profile=config["load"]["aws_profile"],
         )
     else:

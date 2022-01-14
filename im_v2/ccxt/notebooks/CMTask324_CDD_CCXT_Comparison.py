@@ -200,14 +200,16 @@ display(cdd_binance_df.head(3))
 display(cdd_binance_df.shape)
 
 # %%
-ccxt_client = imvcdccccl.CcxtCsvFileSystemClient(
-    data_type="ohlcv", root_dir=root_dir, aws_profile="am"
+extension = "csv.gz"
+ccxt_csv_client = imvcdccccl.CcxtCsvParquetByAssetClient(
+    "ohlcv", root_dir, extension, aws_profile="am"
 )
-multiple_symbols_client = icdc.MultipleSymbolsImClient(
-    class_=ccxt_client, mode="concat"
-)
-ccxt_binance_df = multiple_symbols_client.read_data(
-    currency_pair_intersection_binance
+start_ts = None
+end_ts = None
+ccxt_binance_df = ccxt_csv_client.read_data(
+    currency_pair_intersection_binance,
+    start_ts,
+    end_ts,
 )
 
 # %%

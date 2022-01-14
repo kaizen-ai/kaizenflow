@@ -90,16 +90,24 @@ print(config)
 # # Load data
 
 # %%
-# TODO(Grisha): allow loading multiple assets/exchanges/currencies #219.
 
 # %%
-# TODO(Grisha): potentially read data from the db.
-ccxt_loader = imvcdcli.CcxtCsvFileSystemClient(
-    data_type=config["data"]["data_type"],
-    root_dir=config["load"]["data_dir"],
+data_type = config["data"]["data_type"],
+root_dir = config["load"]["data_dir"],
+extension = "csv.gz"
+ccxt_csv_client = imvcdcli.CcxtCsvParquetByAssetClient(
+    data_type,
+    root_dir,
+    extension,
     aws_profile=config["load"]["aws_profile"],
 )
-ccxt_data = ccxt_loader.read_data("binance::BTC_USDT")
+start_ts = None
+end_ts = None
+ccxt_data = ccxt_csv_client.read_data(
+    ["binance::BTC_USDT"],
+    start_ts,
+    end_ts,
+)
 _LOG.info("shape=%s", ccxt_data.shape[0])
 ccxt_data.head(3)
 
