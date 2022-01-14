@@ -7,7 +7,7 @@ import helpers.hprint as hprint
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
-import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
+import im_v2.ccxt.data.client.ccxt_clients_example as ivcdcccex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.db.db_utils as imvcddbut
 
@@ -206,7 +206,7 @@ class TestCcxtCsvClient(hunitest.TestCase):
         - for 1 currencies
         - from a ".csv" file on the local filesystem
         """
-        ccxt_client = imvcdcccex.get_CcxtCsvClient_example2()
+        ccxt_client = ivcdcccex.get_CcxtCsvClient_example2()
         # Run.
         full_symbols = ["binance::BTC_USDT"]
         start_ts = None
@@ -251,7 +251,7 @@ class TestCcxtCsvClient(hunitest.TestCase):
         - for 2 currencies
         - from a ".csv.gz" on the local filesystem
         """
-        ccxt_client = imvcdcccex.get_CcxtCsvClient_example1()
+        ccxt_client = ivcdcccex.get_CcxtCsvClient_example1()
         # Run.
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         start_ts = None
@@ -292,7 +292,7 @@ class TestCcxtCsvClient(hunitest.TestCase):
         """
         Test that files from filesystem are being filtered correctly.
         """
-        ccxt_client = imvcdcccex.get_CcxtCsvClient_example1()
+        ccxt_client = ivcdcccex.get_CcxtCsvClient_example1()
         # Run.
         full_symbols = ["binance::BTC_USDT"]
         start_ts = pd.Timestamp("2018-08-17T00:01:00-00:00")
@@ -332,7 +332,7 @@ class TestCcxtCsvClient(hunitest.TestCase):
         """
         Test unsupported full symbol.
         """
-        ccxt_client = imvcdcccex.get_CcxtCsvClient_example1()
+        ccxt_client = ivcdcccex.get_CcxtCsvClient_example1()
         #
         full_symbols = ["unsupported_exchange::unsupported_currency"]
         start_ts = None
@@ -345,7 +345,7 @@ class TestCcxtCsvClient(hunitest.TestCase):
         Test unsupported data type.
         """
         data_type = "unsupported_data_type"
-        root_dir = imvcdcccex.get_test_data_dir()
+        root_dir = ivcdcccex.get_test_data_dir()
         with self.assertRaises(AssertionError):
             imvcdccccl.CcxtCsvParquetByAssetClient(data_type, root_dir, "csv")
 
@@ -358,7 +358,7 @@ class TestGetTimestamp(hunitest.TestCase):
         """
         Test that the earliest timestamp available is computed correctly.
         """
-        ccxt_client = imvcdcccex.get_CcxtCsvClient_example1()
+        ccxt_client = ivcdcccex.get_CcxtCsvClient_example1()
         #
         start_ts = ccxt_client.get_start_ts_for_symbol("binance::BTC_USDT")
         expected_start_ts = pd.to_datetime("2018-08-17 00:00:00", utc=True)
@@ -368,7 +368,7 @@ class TestGetTimestamp(hunitest.TestCase):
         """
         Test that the latest timestamp available is computed correctly.
         """
-        ccxt_client = imvcdcccex.get_CcxtCsvClient_example1()
+        ccxt_client = ivcdcccex.get_CcxtCsvClient_example1()
         #
         end_ts = ccxt_client.get_end_ts_for_symbol("binance::BTC_USDT")
         expected_end_ts = pd.to_datetime("2018-08-17 01:39:00", utc=True)
@@ -384,7 +384,7 @@ class TestGetUniverse(hunitest.TestCase):
         """
         Test that CCXT universe is computed correctly.
         """
-        ccxt_client = imvcdcccex.get_CcxtCsvClient_example1()
+        ccxt_client = ivcdcccex.get_CcxtCsvClient_example1()
         #
         universe = ccxt_client.get_universe()
         # Check the length of the universe.
@@ -415,14 +415,14 @@ class TestGetFilePath(hunitest.TestCase):
         """
         Test supported exchange id and currency pair.
         """
-        ccxt_client = imvcdcccex.get_CcxtCsvClient_example1()
+        ccxt_client = ivcdcccex.get_CcxtCsvClient_example1()
         # Run.
         exchange_id = "binance"
         currency_pair = "BTC_USDT"
         actual = ccxt_client._get_file_path(
             imvcdccccl._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
         )
-        root_dir = imvcdcccex.get_test_data_dir()
+        root_dir = ivcdcccex.get_test_data_dir()
         expected = os.path.join(root_dir, "ccxt/20210924/binance/BTC_USDT.csv.gz")
         self.assert_equal(actual, expected)
 
@@ -430,7 +430,7 @@ class TestGetFilePath(hunitest.TestCase):
         """
         Test unsupported exchange id.
         """
-        ccxt_client = imvcdcccex.get_CcxtCsvClient_example1()
+        ccxt_client = ivcdcccex.get_CcxtCsvClient_example1()
         # Run.
         # TODO(gp): We should throw a different exception, like
         #  `UnsupportedExchange`.
@@ -446,7 +446,7 @@ class TestGetFilePath(hunitest.TestCase):
         """
         Test unsupported currency pair.
         """
-        ccxt_client = imvcdcccex.get_CcxtCsvClient_example1()
+        ccxt_client = ivcdcccex.get_CcxtCsvClient_example1()
         # TODO(gp): Same change also for CDD test_loader.py
         exchange_id = "binance"
         currency_pair = "unsupported_currency"
@@ -466,7 +466,7 @@ class TestCcxtParquetByAssetClient(hunitest.TestCase):
         """
         Test that Parquet files from filesystem are being read correctly.
         """
-        ccxt_client = imvcdcccex.get_CcxtParquetByAssetClient_example1()
+        ccxt_client = ivcdcccex.get_CcxtParquetByAssetClient_example1()
         #
         full_symbols = ["binance::BTC_USDT"]
         start_ts = None
@@ -507,7 +507,7 @@ class TestCcxtParquetByAssetClient(hunitest.TestCase):
         """
         Test that Parquet files from filesystem are being filtered correctly.
         """
-        ccxt_client = imvcdcccex.get_CcxtParquetByAssetClient_example1()
+        ccxt_client = ivcdcccex.get_CcxtParquetByAssetClient_example1()
         #
         full_symbols = ["binance::BTC_USDT"]
         start_ts = pd.Timestamp("2018-08-17T00:01:00-00:00")

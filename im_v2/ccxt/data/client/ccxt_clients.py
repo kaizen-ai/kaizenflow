@@ -14,7 +14,6 @@ import pandas as pd
 import core.pandas_helpers as cpanh
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.ccxt.universe.universe as imvccunun
@@ -257,7 +256,9 @@ class CcxtCsvParquetByAssetClient(CcxtClient, icdc.ImClientReadingOneSymbol):
         # Split full symbol into exchange and currency pair.
         exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)
         # Get absolute file path for a CCXT file.
-        file_path = self._get_file_path(self._data_snapshot, exchange_id, currency_pair)
+        file_path = self._get_file_path(
+            self._data_snapshot, exchange_id, currency_pair
+        )
         # Read raw CCXT data.
         _LOG.info(
             "Reading CCXT data for exchange id='%s', currencies='%s' from file='%s'...",
@@ -297,7 +298,9 @@ class CcxtCsvParquetByAssetClient(CcxtClient, icdc.ImClientReadingOneSymbol):
                 data = data[data["timestamp"] < end_ts]
         else:
             # TODO(Grisha): raise `UnsupportedExtension`.
-            raise ValueError(f"Unsupported extension {self._extension}. Supported extensions are: `pq`, `csv`, `csv.gz`")
+            raise ValueError(
+                f"Unsupported extension {self._extension}. Supported extensions are: `pq`, `csv`, `csv.gz`"
+            )
         # Verify that required columns are not already in the dataframe.
         for col in ["exchange_id", "currency_pair"]:
             hdbg.dassert_not_in(col, data.columns)

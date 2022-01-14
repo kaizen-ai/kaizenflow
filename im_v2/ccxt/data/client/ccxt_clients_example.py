@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
+import im_v2.ccxt.data.client.ccxt_clients_example as ivcdcccex
 """
 
 import os
@@ -40,8 +40,11 @@ def get_CcxtCsvClient_example1() -> imvcdccccl.CcxtCsvParquetByAssetClient:
     # Initialize client.
     data_type = "ohlcv"
     root_dir = get_test_data_dir()
-    ccxt_file_client = imvcdccccl.CcxtCsvParquetByAssetClient(data_type, root_dir, "csv.gz")
+    ccxt_file_client = imvcdccccl.CcxtCsvParquetByAssetClient(
+        data_type, root_dir, "csv.gz"
+    )
     return ccxt_file_client
+
 
 def get_CcxtCsvClient_example2() -> imvcdccccl.CcxtCsvParquetByAssetClient:
     """
@@ -62,8 +65,11 @@ def get_CcxtCsvClient_example2() -> imvcdccccl.CcxtCsvParquetByAssetClient:
     # Initialize client.
     data_type = "ohlcv"
     root_dir = get_test_data_dir()
-    ccxt_file_client = imvcdccccl.CcxtCsvParquetByAssetClient(data_type, root_dir, "csv")
+    ccxt_file_client = imvcdccccl.CcxtCsvParquetByAssetClient(
+        data_type, root_dir, "csv"
+    )
     return ccxt_file_client
+
 
 def get_CcxtParquetByAssetClient_example1() -> imvcdccccl.CcxtCsvParquetByAssetClient:
     """
@@ -84,5 +90,7 @@ def get_CcxtParquetByAssetClient_example1() -> imvcdccccl.CcxtCsvParquetByAssetC
     # Initialize client.
     data_type = "ohlcv"
     root_dir = get_test_data_dir()
-    ccxt_client = imvcdccccl.CcxtCsvParquetByAssetClient(data_type, root_dir, "pq")
+    ccxt_client = imvcdccccl.CcxtCsvParquetByAssetClient(
+        data_type, root_dir, "pq"
+    )
     return ccxt_client
