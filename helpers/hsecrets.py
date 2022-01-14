@@ -14,7 +14,7 @@ from botocore.exceptions import ClientError
 import helpers.hdbg as hdbg
 
 
-def get_secrets_client(aws_profile: str = 'ck') -> BaseClient:
+def get_secrets_client(*, aws_profile: str = 'ck') -> BaseClient:
     """
     Return client to work with AWS Secrets Manager in the specified region.
     """
@@ -57,7 +57,7 @@ def get_secret(secret_name: str) -> Optional[Dict[str, Any]]:
 
 # TODO(Juraj): add support to store secrets in different regions, not important rn.
 def store_secret(
-    secret_name: str, secret_value: Dict[str, str], description: str = ""
+    secret_name: str, secret_value: Dict[str, str], *, description: str = ""
 ) -> Optional[bool]:
     """
     Store secret values(s) into AWS secrets manager, specify secret as a dict
