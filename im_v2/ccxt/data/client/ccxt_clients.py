@@ -263,7 +263,6 @@ class CcxtCsvParquetByAssetClient(CcxtClient, icdc.ImClientReadingOneSymbol):
         if hs3.is_s3_path(file_path):
             # Add s3fs argument to kwargs.
             read_kwargs["s3fs"] = self._s3fs
-        data = pd.DataFrame()
         if self._extension == "pq":
             # Initialize list of filters.
             filters = []
