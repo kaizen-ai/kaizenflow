@@ -43,7 +43,6 @@ _LOG = logging.getLogger(__name__)
 def instantiate_exchange(
     exchange_id: str,
     ccxt_universe: Dict[str, List[str]],
-    api_keys: Optional[str] = None,
 ) -> NamedTuple:
     """
     Create a tuple with exchange id, its class instance and currency pairs.
@@ -57,7 +56,7 @@ def instantiate_exchange(
         ["id", "instance", "currency_pairs"],
     )
     exchange_to_currency.id = exchange_id
-    exchange_to_currency.instance = imvcdeexcl.CcxtExchange(exchange_id, api_keys)
+    exchange_to_currency.instance = imvcdeexcl.CcxtExchange(exchange_id)
     exchange_to_currency.currency_pairs = ccxt_universe[exchange_id]
     return exchange_to_currency
 
@@ -114,7 +113,7 @@ def _save_data_on_disk(
     :param dst_dir: directory to save to
     :param data: downloaded data
     :param exchange: exchange instance
-    :param pair: currency pair, e.g. 'BTC_USDT'
+    :param currency_pair: currency pair, e.g. 'BTC_USDT'
     """
     current_datetime = hdateti.get_current_time("ET")
     if data_type == "ohlcv":
@@ -170,13 +169,6 @@ def _parse() -> argparse.ArgumentParser:
         help="Type of data to load, 'ohlcv' or 'orderbook'",
     )
     parser.add_argument(
-        "--api_keys",
-        action="store",
-        type=str,
-        default=imvcdeexcl.API_KEYS_PATH,
-        help="Path to JSON file that contains API keys for exchange access",
-    )
-    parser.add_argument(
         "--universe",
         action="store",
         required=True,
@@ -212,7 +204,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     exchanges = []
     for exchange_id in exchange_ids:
         exchanges.append(
-            instantiate_exchange(exchange_id, universe["CCXT"], args.api_keys)
+            instantiate_exchange(exchange_id, universe["CCXT"])
         )
     # Construct table name.
     table_name = f"ccxt_{args.data_type}"
