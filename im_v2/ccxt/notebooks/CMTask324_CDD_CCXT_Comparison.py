@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.3
+#       jupytext_version: 1.13.5
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -26,10 +26,10 @@ import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
-import im.cryptodatadownload.data.client.cdd_client as imcdaclcd
 import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.common.data.client as icdc
+import im_v2.cryptodatadownload.data.client.cdd_client as imcdaclcd
 import research_amp.cc.statistics as ramccsta
 
 # %%
@@ -207,7 +207,7 @@ ccxt_csv_client = imvcdccccl.CcxtCsvParquetByAssetClient(
 start_ts = None
 end_ts = None
 ccxt_binance_df = ccxt_csv_client.read_data(
-    currency_pair_intersection_binance,
+    list(currency_pair_intersection_binance),
     start_ts,
     end_ts,
 )
