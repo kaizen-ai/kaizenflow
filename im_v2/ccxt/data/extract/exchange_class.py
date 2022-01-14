@@ -6,15 +6,15 @@ import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 
 import logging
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
-import ccxt
 import pandas as pd
 import tqdm
 
+import ccxt
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import helpers.hio as hio
+import helpers.hsecrets as hsecret
 
 _LOG = logging.getLogger(__name__)
 
@@ -31,43 +31,24 @@ class CcxtExchange:
     """
 
     def __init__(
-        self, exchange_id: str, api_keys_path: Optional[str] = None
+        self, exchange_id: str
     ) -> None:
         """
         Constructor.
 
         :param: exchange_id: CCXT exchange id (e.g., `binance`)
-        :param: api_keys_path: path to JSON file with API credentials
         """
         self.exchange_id = exchange_id
-        self.api_keys_path = api_keys_path or API_KEYS_PATH
         self._exchange = self.log_into_exchange()
         self.currency_pairs = self.get_exchange_currency_pairs()
-
-    def load_api_credentials(self) -> Dict[str, Dict[str, Union[str, bool]]]:
-        """
-        Load JSON file with available CCXT credentials for all exchanges.
-
-        :return: JSON file with API credentials
-        """
-        hdbg.dassert_file_extension(self.api_keys_path, "json")
-        all_credentials = hio.from_json(self.api_keys_path)
-        return all_credentials
 
     def log_into_exchange(self) -> ccxt.Exchange:
         """
         Log into an exchange via CCXT and return the corresponding
         `ccxt.Exchange` object.
         """
-        # Load all the exchange credentials.
-        all_credentials = self.load_api_credentials()
-        hdbg.dassert_in(
-            self.exchange_id,
-            all_credentials,
-            msg="Exchange ID `%s` is incorrect." % self.exchange_id,
-        )
         # Select credentials for provided exchange.
-        credentials = all_credentials[self.exchange_id]
+        credentials = hsecret.get_secret(self.exchange_id)
         # Enable rate limit.
         credentials["rateLimit"] = True
         exchange_class = getattr(ccxt, self.exchange_id)
@@ -88,6 +69,7 @@ class CcxtExchange:
     def download_ohlcv_data(
         self,
         currency_pair: str,
+        *,
         start_datetime: Optional[pd.Timestamp] = None,
         end_datetime: Optional[pd.Timestamp] = None,
         bar_per_iteration: Optional[int] = 500,
@@ -189,9 +171,10 @@ class CcxtExchange:
     def _fetch_ohlcv(
         self,
         currency_pair: str,
+        *,
         timeframe: str = "1m",
-        since: int = None,
-        bar_per_iteration: int = None,
+        since: Optional[int] = None,
+        bar_per_iteration: Optional[int] = None,
     ) -> pd.DataFrame:
         """
         Wrapper for fetching one minute OHLCV bars.
