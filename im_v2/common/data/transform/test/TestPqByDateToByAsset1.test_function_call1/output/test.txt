@@ -1,16 +1,16 @@
 # by_date=
 # Dir structure
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data_direct_run1/tmp.scratch/by_date
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data_direct_run1/tmp.scratch/by_date/date=20211230
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data_direct_run1/tmp.scratch/by_date/date=20211230/data.parquet
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data_direct_run1/tmp.scratch/by_date/date=20211231
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data_direct_run1/tmp.scratch/by_date/date=20211231/data.parquet
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data_direct_run1/tmp.scratch/by_date/date=20220101
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data_direct_run1/tmp.scratch/by_date/date=20220101/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_function_call1/tmp.scratch/by_date
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_function_call1/tmp.scratch/by_date/date=20211230
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_function_call1/tmp.scratch/by_date/date=20211230/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_function_call1/tmp.scratch/by_date/date=20211231
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_function_call1/tmp.scratch/by_date/date=20211231/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_function_call1/tmp.scratch/by_date/date=20220101
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_function_call1/tmp.scratch/by_date/date=20220101/data.parquet
 # File signatures
 len(file_names)=3
-file_names=$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data_direct_run1/tmp.scratch/by_date/date=20211230/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data_direct_run1/tmp.scratch/by_date/date=20211231/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data_direct_run1/tmp.scratch/by_date/date=20220101/data.parquet
-# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data_direct_run1/tmp.scratch/by_date/date=20211230/data.parquet
+file_names=$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_function_call1/tmp.scratch/by_date/date=20211230/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_function_call1/tmp.scratch/by_date/date=20211231/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_function_call1/tmp.scratch/by_date/date=20220101/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_function_call1/tmp.scratch/by_date/date=20211230/data.parquet
 num_lines=43
 '''
 original shape=(72, 4)
@@ -57,7 +57,7 @@ Tail:
     }
 }
 '''
-# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data_direct_run1/tmp.scratch/by_date/date=20211231/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_function_call1/tmp.scratch/by_date/date=20211231/data.parquet
 num_lines=43
 '''
 original shape=(72, 4)
@@ -104,7 +104,7 @@ Tail:
     }
 }
 '''
-# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data_direct_run1/tmp.scratch/by_date/date=20220101/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_function_call1/tmp.scratch/by_date/date=20220101/data.parquet
 num_lines=43
 '''
 original shape=(72, 4)
@@ -153,7 +153,7 @@ Tail:
 '''
 # by_asset=
 # Dir structure
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data_direct_run1/tmp.scratch/by_asset
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_function_call1/tmp.scratch/by_asset
 # File signatures
 len(file_names)=0
 file_names=

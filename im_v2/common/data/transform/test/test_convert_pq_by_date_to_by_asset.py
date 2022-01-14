@@ -9,41 +9,6 @@ import im_v2.common.data.transform.convert_pq_by_date_to_by_asset as imvcdtcpbdt
 
 
 class TestPqByDateToByAsset1(hunitest.TestCase):
-    @staticmethod
-    def get_dummy_script_arguments() -> Dict[str, Any]:
-        """
-        Arguments used in script run.
-        """
-        return {
-            "asset_col_name": "asset",
-            # parallelization args
-            "num_threads": "1",
-            "dry_run": True,
-            "no_incremental": True,
-            "skip_on_error": True,
-            "num_attempts": 1,
-        }
-
-    @staticmethod
-    def get_dummy_task_config(test_dir: str) -> Dict[str, Any]:
-        """
-        Specific config used for joblib task.
-
-        Along with regular arguments used in script run, there is
-        `parquet_file_name` which represents list of daily PQ file paths
-        that will be converted to by asset PQ files.
-        """
-        return {
-            "src_dir": f"{test_dir}/by_date",
-            "parquet_file_names": [
-                f"{test_dir}/by_date/date=20211230/data.parquet",
-                f"{test_dir}/by_date/date=20211231/data.parquet",
-                f"{test_dir}/by_date/date=20220101/data.parquet",
-            ],
-            "dst_dir": f"{test_dir}/by_asset",
-            "asset_col_name": "asset",
-        }
-
     def generate_test_data(self, verbose: bool) -> Tuple[str, str]:
         """
         Generate test data in form of daily PQ files.
@@ -93,19 +58,49 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         actual = "\n".join(actual)
         self.check_string(actual, purify_text=True)
 
-    def test_daily_data2(self) -> None:
-        verbose = True
-        self._test_daily_data(verbose)
+    def test_command_line(self) -> None:
+        """
+        Test command line with specific arguments and comparing its output with
+        predefined directory structure and file contents.
 
-    def test_daily_data_direct_run1(self) -> None:
+        Command is run against test data that was generated in verbose
+        mode meaning it is more realistic than generic data that is
+        generated in non-verbose mode.
+        """
+        verbose = True
+        self._test_command_line(verbose)
+
+    def test_function_call1(self) -> None:
+        """
+        Test function call with specific arguments that are mimicking command
+        line arguments and comparing function output with predefined directory
+        structure and file contents.
+
+        Function is run against simple test data in non-verbose mode.
+        """
         verbose = False
-        self._test_daily_data_direct_run(verbose)
+        self._test_function_call(verbose)
 
-    def test_daily_data_direct_run2(self) -> None:
+    def test_function_call2(self) -> None:
+        """
+        Test function call with specific arguments that are mimicking command
+        line arguments and comparing function output with predefined directory
+        structure and file contents.
+
+        Function is run against test data that was generated in verbose
+        mode meaning it is more realistic than generic data that is
+        generated in non-verbose mode.
+        """
         verbose = True
-        self._test_daily_data_direct_run(verbose)
+        self._test_function_call(verbose)
 
     def test_process_chunk(self) -> None:
+        """
+        Test function that is used for parallel execution which is generating
+        outputs depending on how many files/data is provided with.
+
+        Test data for the function is generated in verbose mode.
+        """
         verbose = True
         self._test_joblib_task(verbose, {})
 
@@ -120,13 +115,21 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         cmd.extend(["--num_threads", "1"])
         cmd.extend(["--asset_col_name", "ticker"])
         args = parser.parse_args(cmd)
-        args = str(args).split("(")[-1]
-        args = args.rstrip(")")
-        args = args.split(", ")
-        args = "\n".join(args)
-        self.check_string(args, purify_text=True)
+        actual = vars(args)
+        expected = {
+            "src_dir": "dummy_by_date_dir",
+            "dst_dir": "dummy_by_asset_dir",
+            "asset_col_name": "ticker",
+            "num_threads": "1",
+            "dry_run": False,
+            "no_incremental": False,
+            "skip_on_error": False,
+            "num_attempts": 1,
+            "log_level": "INFO",
+        }
+        self.assertDictEqual(actual, expected)
 
-    def _test_daily_data(self, verbose: bool) -> None:
+    def _test_command_line(self, verbose: bool) -> None:
         """
         Generate daily data for 3 days in a by-date format and then convert it
         to by-asset.
@@ -151,29 +154,32 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
             by_date_dir, by_asset_dir
         )
 
-    def _test_daily_data_direct_run(self, verbose: bool) -> None:
+    def _test_function_call(self, verbose: bool) -> None:
         """
         Tests directly _run function for coverage increase.
 
         Flow is same as in _test_daily_data.
         """
+        # Prepare inputs.
         test_dir, by_date_dir = self.generate_test_data(verbose)
         by_asset_dir = os.path.join(test_dir, "by_asset")
-        kwargs = self.get_dummy_script_arguments()
-        kwargs.update(
-            {
-                "src_dir": by_date_dir,
-                "dst_dir": by_asset_dir,
-            }
-        )
+        kwargs = {
+            "src_dir": by_date_dir,
+            "dst_dir": by_asset_dir,
+            "asset_col_name": "asset",
+            # parallelization args
+            "num_threads": "1",
+            "dry_run": True,
+            "no_incremental": True,
+            "skip_on_error": True,
+            "num_attempts": 1,
+        }
         if verbose:
-            kwargs.update(
-                {
-                    "asset_col_name": "ticker",
-                }
-            )
+            kwargs.update({"asset_col_name": "ticker"})
+        # Run.
         args = argparse.Namespace(**kwargs)
         imvcdtcpbdtba._run(args)
+        # Check output.
         self.check_directory_structure_with_file_contents(
             by_date_dir, by_asset_dir
         )
@@ -187,18 +193,25 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         Because it is run as a separate process it is not caught by
         coverage.
         """
+        # Prepare inputs.
         test_dir, by_date_dir = self.generate_test_data(verbose)
         by_asset_dir = os.path.join(test_dir, "by_asset")
-        config = self.get_dummy_task_config(test_dir)
+        config = {
+            "dst_dir": by_asset_dir,
+            "parquet_file_names": [
+                f"{test_dir}/by_date/date=20211230/data.parquet",
+                f"{test_dir}/by_date/date=20211231/data.parquet",
+                f"{test_dir}/by_date/date=20220101/data.parquet",
+            ],
+            "asset_col_name": "asset",
+        }
         if verbose:
-            config.update(
-                {
-                    "asset_col_name": "ticker",
-                }
-            )
+            config.update({"asset_col_name": "ticker"})
         if config_update:
             config.update(config_update)
+        # Run.
         imvcdtcpbdtba._process_chunk(**config)
+        # Check output.
         self.check_directory_structure_with_file_contents(
             by_date_dir, by_asset_dir
         )
