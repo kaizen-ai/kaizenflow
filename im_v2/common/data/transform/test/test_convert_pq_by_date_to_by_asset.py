@@ -87,7 +87,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
 
     def test_process_chunk(self) -> None:
         verbose = True
-        self._test_joblib_task(verbose, {})
+        self._test_joblib_task(verbose)
 
     def test_parser(self) -> None:
         """
