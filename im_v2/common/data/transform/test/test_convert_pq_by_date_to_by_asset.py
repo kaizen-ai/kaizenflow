@@ -62,16 +62,20 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         """
         Test command line with specific arguments and comparing its output with
         predefined directory structure and file contents.
-        Command is run against test data that was generated in verbose mode
-        meaning it is more realistic than generic data that is generated in non-verbose mode.
+
+        Command is run against test data that was generated in verbose
+        mode meaning it is more realistic than generic data that is
+        generated in non-verbose mode.
         """
         verbose = True
         self._test_command_line(verbose)
 
     def test_function_call1(self) -> None:
         """
-        Test function call with specific arguments that are mimicking command line arguments
-        and comparing function output with predefined directory structure and file contents.
+        Test function call with specific arguments that are mimicking command
+        line arguments and comparing function output with predefined directory
+        structure and file contents.
+
         Function is run against simple test data in non-verbose mode.
         """
         verbose = False
@@ -79,19 +83,23 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
 
     def test_function_call2(self) -> None:
         """
-        Test function call with specific arguments that are mimicking command line arguments
-        and comparing function output with predefined directory structure and file contents.
-        Function is run against test data that was generated in verbose mode
-        meaning it is more realistic than generic data that is generated in non-verbose mode.
+        Test function call with specific arguments that are mimicking command
+        line arguments and comparing function output with predefined directory
+        structure and file contents.
+
+        Function is run against test data that was generated in verbose
+        mode meaning it is more realistic than generic data that is
+        generated in non-verbose mode.
         """
         verbose = True
         self._test_function_call(verbose)
 
     def test_process_chunk(self) -> None:
         """
-        Test function that is used for parallel execution which is generating outputs
-        depending on how many files/data is provided with. Test data for the function is
-        generated in verbose mode.
+        Test function that is used for parallel execution which is generating
+        outputs depending on how many files/data is provided with.
+
+        Test data for the function is generated in verbose mode.
         """
         verbose = True
         self._test_joblib_task(verbose, {})
