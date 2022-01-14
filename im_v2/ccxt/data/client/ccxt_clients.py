@@ -48,6 +48,7 @@ class CcxtClient(icdc.ImClient, abc.ABC):
         - E.g., `_apply_olhlcv_transformations()`, `_apply_vendor_normalization()`
     """
 
+    # TODO(Grisha): remove `data_type` since `OHLCV` is the only supported option CmampTask #949.
     def __init__(self, data_type: str) -> None:
         """
         :param data_type: OHLCV, trade, or bid/ask data
@@ -220,8 +221,6 @@ class CcxtCsvParquetByAssetClient(CcxtClient, icdc.ImClientReadingOneSymbol):
 
     def __init__(
         self,
-        # TODO(gp): It might be premature to try to handle OHLCV, order book data
-        #  and so on. Consider focusing only on OHLCV.
         data_type: str,
         root_dir: str,
         extension: str,
@@ -297,6 +296,9 @@ class CcxtCsvParquetByAssetClient(CcxtClient, icdc.ImClientReadingOneSymbol):
             if end_ts:
                 end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
                 data = data[data["timestamp"] < end_ts]
+        else:
+            # TODO(Grisha): raise `UnsupportedExtension`.
+            raise ValueError(f"Unsupported extension {self._extension}. Supported extensions are: `pq`, `csv`, `csv.gz`")
         # Verify that required columns are not already in the dataframe.
         for col in ["exchange_id", "currency_pair"]:
             hdbg.dassert_not_in(col, data.columns)
@@ -338,128 +340,3 @@ class CcxtCsvParquetByAssetClient(CcxtClient, icdc.ImClientReadingOneSymbol):
         else:
             hdbg.dassert_file_exists(file_path)
         return file_path
-
-#     # TODO(gp): @grisha -> _add_symbol_columns
-#     @staticmethod
-#     def _preprocess_filesystem_data(
-#         data: pd.DataFrame,
-#         exchange_id: str,
-#         currency_pair: str,
-#     ) -> pd.DataFrame:
-#         """
-#         Preprocess filesystem data before transformation stage.
-#
-#         This includes:
-#         - Adding exchange_id and currency_pair columns
-#
-#         :param data: data from a filesystem
-#         :param exchange_id: CCXT exchange id, e.g. "binance"
-#         :param currency_pair: currency pair, e.g. "BTC_USDT"
-#         :return: preprocessed filesystem data
-#         """
-#         # Verify that required columns are not already in the dataframe.
-#         for col in ["exchange_id", "currency_pair"]:
-#             hdbg.dassert_not_in(col, data.columns)
-#         # Add required columns.
-#         data["exchange_id"] = exchange_id
-#         data["currency_pair"] = currency_pair
-#         return data
-#
-#
-# # #############################################################################
-# # CcxtCsvFileSystemClient
-# # #############################################################################
-#
-#
-# class CcxtCsvFileSystemClient(CcxtFileSystemClient):
-#     """
-#     CCXT client for data stored as CSV from local or S3 filesystem.
-#
-#     Each CSV file stores data for a single symbol so we use `Ccx
-#     """
-#
-#     def __init__(
-#         self,
-#         data_type: str,
-#         root_dir: str,
-#         *,
-#         aws_profile: Optional[str] = None,
-#         use_gzip: bool = True,
-#     ) -> None:
-#         _LOG.debug(hprint.to_str("data_type root_dir aws_profile use_gzip"))
-#         extension = "csv"
-#         if use_gzip:
-#             extension = extension + ".gz"
-#         super().__init__(data_type, root_dir, extension, aws_profile=aws_profile)
-#
-#     @staticmethod
-#     def _read_data_from_filesystem(
-#         file_path: str,
-#         start_ts: Optional[pd.Timestamp],
-#         end_ts: Optional[pd.Timestamp],
-#         **read_kwargs: Any,
-#     ) -> pd.DataFrame:
-#         """
-#         Same params as the parent class.
-#         """
-#         _LOG.debug(hprint.to_str("file_path start_ts end_ts"))
-#         # Load data.
-#         data = cpanh.read_csv(file_path, **read_kwargs)
-#         # Filter by dates if specified.
-#         if start_ts:
-#             start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
-#             data = data[data["timestamp"] >= start_ts]
-#         if end_ts:
-#             end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
-#             data = data[data["timestamp"] < end_ts]
-#         return data
-#
-#
-# # #############################################################################
-# # CcxtParquetFileSystemClient
-# # #############################################################################
-#
-#
-# # TODO(gp): @grisha This should descend from `ImClientReadingMultipleSymbols`
-# #  since it reads PQ files.
-# class CcxtParquetFileSystemClient(CcxtFileSystemClient):
-#     """
-#     CCXT client for data stored as Parquet from local or S3 filesystem.
-#     """
-#
-#     def __init__(
-#         self,
-#         data_type: str,
-#         root_dir: str,
-#         *,
-#         aws_profile: Optional[str] = None,
-#     ) -> None:
-#         extension = "pq"
-#         super().__init__(data_type, root_dir, extension, aws_profile=aws_profile)
-#
-#     @staticmethod
-#     def _read_data_from_filesystem(
-#         file_path: str,
-#         start_ts: Optional[pd.Timestamp],
-#         end_ts: Optional[pd.Timestamp],
-#         **read_kwargs: Any,
-#     ) -> pd.DataFrame:
-#         """
-#         See the `_read_data_from_filesystem()` in the parent class.
-#         """
-#         # Initialize list of filters.
-#         filters = []
-#         if start_ts:
-#             # Add filtering by start timestamp if specified.
-#             start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
-#             filters.append(("timestamp", ">=", start_ts))
-#         if end_ts:
-#             # Add filtering by end timestamp if specified.
-#             end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
-#             filters.append(("timestamp", "<", end_ts))
-#         if filters:
-#             # Add filters to kwargs if any were set.
-#             read_kwargs["filters"] = filters
-#         # Load data.
-#         data = cpanh.read_parquet(file_path, **read_kwargs)
-#         return data
