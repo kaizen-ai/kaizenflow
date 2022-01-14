@@ -16,7 +16,7 @@ import market_data.market_data_im_client as mdmdimcl
 def get_MarketDataInterface_example1(
     asset_ids: List[str], columns: List[str], column_remap: Dict[str, str]
 ) -> mdmdimcl.MarketDataInterface:
-    ccxt_client = imvcdcccex.get_CcxtCsvFileSytemClient_example1()
+    ccxt_client = imvcdcccex.get_CcxtCsvClient_example1()
     #
     asset_id_col = "full_symbol"
     start_time_col_name = "start_ts"
