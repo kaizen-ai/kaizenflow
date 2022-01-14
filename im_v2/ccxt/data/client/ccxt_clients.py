@@ -14,7 +14,6 @@ import pandas as pd
 import core.pandas_helpers as cpanh
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.ccxt.universe.universe as imvccunun
@@ -34,7 +33,7 @@ _LATEST_DATA_SNAPSHOT = "20210924"
 # TODO(gp): Consider splitting this file into chunks
 
 
-class CcxtClient(icdc.ImClientReadingOneSymbol, abc.ABC):
+class CcxtClient(icdc.ImClient, abc.ABC):
     """
     Abstract interface for CCXT client.
 
@@ -43,7 +42,6 @@ class CcxtClient(icdc.ImClientReadingOneSymbol, abc.ABC):
     - applying common transformation for all the data from CCXT
         - E.g., `_apply_olhlcv_transformations()`, `_apply_vendor_normalization()`
     """
-
     @staticmethod
     def get_universe() -> List[icdc.FullSymbol]:
         """
@@ -120,8 +118,8 @@ class CcxtClient(icdc.ImClientReadingOneSymbol, abc.ABC):
 # CcxtDbClient
 # #############################################################################
 
-
-class CcxtDbClient(CcxtClient):
+# TODO(Grisha): it should descend from `ImClientReadingMultipleSymbols`.
+class CcxtDbClient(CcxtClient, icdc.ImClientReadingOneSymbol):
     """
     CCXT client for data from the database.
     """
@@ -180,9 +178,15 @@ class CcxtDbClient(CcxtClient):
 # #############################################################################
 
 
-class CcxtFileSystemClient(CcxtClient, abc.ABC):
+class CcxtCsvParquetByAssetClient(CcxtClient, icdc.ImClientReadingOneSymbol):
     """
-    Abstract interface for CCXT client using local or S3 filesystem as backend.
+    CCXT client that reads CSV or Parquet file storing data for a single asset.
+
+    It can read data from local or S3 filesystem as backend.
+
+    Using our naming convention this class implements the two classes:
+    - CcxtCsvClient
+    - CcxtPqByAssetClient
     """
 
     def __init__(
@@ -191,14 +195,17 @@ class CcxtFileSystemClient(CcxtClient, abc.ABC):
         extension: str,
         *,
         aws_profile: Optional[str] = None,
+        data_snapshot: Optional[str] = None,
     ) -> None:
         """
         Load CCXT data from local or S3 filesystem.
 
         :param root_dir: either a local root path (e.g., "/app/im") or
             an S3 root path (e.g., "s3://alphamatic-data/data") to CCXT data
-        :param extension: file extension
+        :param extension: file extension, e.g., `.csv`, `.csv.gz` or `.parquet`
         :param aws_profile: AWS profile name (e.g., "am")
+        :param data_snapshot: snapshot of datetime when data was loaded,
+            e.g. "20210924"
         """
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
@@ -207,6 +214,7 @@ class CcxtFileSystemClient(CcxtClient, abc.ABC):
             "The extension %s should not start with '.'" % extension,
         )
         self._extension = extension
+        self._data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
         # Set s3fs parameter value if aws profile parameter is specified.
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
@@ -216,26 +224,17 @@ class CcxtFileSystemClient(CcxtClient, abc.ABC):
         full_symbol: icdc.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        *,
-        data_snapshot: Optional[str] = None,
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
-        Load data for a single symbol from a filesystem and return it as df.
-
-        :param data_snapshot: snapshot of datetime when data was loaded,
-            e.g. "20210924"
-        :return: processed CCXT data
+        See the `_read_data_for_one_symbol()` in the parent class.
         """
-        data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
         # Split full symbol into exchange and currency pair.
         exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)
         # Get absolute file path for a CCXT file.
-        file_path = self._get_file_path(data_snapshot, exchange_id, currency_pair)
-        # Initialize kwargs dict for further CCXT data reading.
-        read_kwargs = {}
-        if hs3.is_s3_path(file_path):
-            # Add s3fs argument to kwargs.
-            read_kwargs["s3fs"] = self._s3fs
+        file_path = self._get_file_path(
+            self._data_snapshot, exchange_id, currency_pair
+        )
         # Read raw CCXT data.
         _LOG.info(
             "Reading CCXT data for exchange id='%s', currencies='%s' from file='%s'...",
@@ -243,35 +242,47 @@ class CcxtFileSystemClient(CcxtClient, abc.ABC):
             currency_pair,
             file_path,
         )
-        data = self._read_data_from_filesystem(
-            file_path, start_ts, end_ts, **read_kwargs
-        )
-        # Apply transformation to raw data.
-        _LOG.info(
-            "Processing CCXT data for exchange id='%s', currencies='%s'...",
-            exchange_id,
-            currency_pair,
-        )
-        processed_data = self._preprocess_filesystem_data(
-            data, exchange_id, currency_pair
-        )
-        return processed_data
-
-    @abc.abstractmethod
-    def _read_data_from_filesystem(
-        self,
-        file_path: str,
-        start_ts: Optional[pd.Timestamp],
-        end_ts: Optional[pd.Timestamp],
-        **read_kwargs: Any,
-    ) -> pd.DataFrame:
-        """
-        Load data from the specified file.
-
-        :param file_path: absolute path to a file with CCXT data
-        :param read_kwargs: kwargs for data reading
-        :return: data from the specified path
-        """
+        if hs3.is_s3_path(file_path):
+            # Add s3fs argument to kwargs.
+            kwargs["s3fs"] = self._s3fs
+        if self._extension == "pq":
+            # Initialize list of filters.
+            filters = []
+            if start_ts:
+                # Add filtering by start timestamp if specified.
+                start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
+                filters.append(("timestamp", ">=", start_ts))
+            if end_ts:
+                # Add filtering by end timestamp if specified.
+                end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
+                filters.append(("timestamp", "<", end_ts))
+            if filters:
+                # Add filters to kwargs if any were set.
+                kwargs["filters"] = filters
+            # Load data.
+            data = cpanh.read_parquet(file_path, **kwargs)
+        elif self._extension in ["csv", "csv.gz"]:
+            data = cpanh.read_csv(file_path, **kwargs)
+            # Filter by dates if specified.
+            if start_ts:
+                start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
+                data = data[data["timestamp"] >= start_ts]
+            if end_ts:
+                end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
+                data = data[data["timestamp"] < end_ts]
+        else:
+            # TODO(Grisha): raise `UnsupportedExtension`.
+            raise ValueError(
+                f"Unsupported extension {self._extension}. "
+                f"Supported extensions are: `pq`, `csv`, `csv.gz`"
+            )
+        # Verify that required columns are not already in the dataframe.
+        for col in ["exchange_id", "currency_pair"]:
+            hdbg.dassert_not_in(col, data.columns)
+        # Add required columns.
+        data["exchange_id"] = exchange_id
+        data["currency_pair"] = currency_pair
+        return data
 
     # TODO(Grisha): factor out common code from `CddClient._get_file_path` and
     #  `CcxtLoader._get_file_path`.
@@ -306,126 +317,3 @@ class CcxtFileSystemClient(CcxtClient, abc.ABC):
         else:
             hdbg.dassert_file_exists(file_path)
         return file_path
-
-    # TODO(gp): @grisha -> _add_symbol_columns
-    @staticmethod
-    def _preprocess_filesystem_data(
-        data: pd.DataFrame,
-        exchange_id: str,
-        currency_pair: str,
-    ) -> pd.DataFrame:
-        """
-        Preprocess filesystem data before transformation stage.
-
-        This includes:
-        - Adding exchange_id and currency_pair columns
-
-        :param data: data from a filesystem
-        :param exchange_id: CCXT exchange id, e.g. "binance"
-        :param currency_pair: currency pair, e.g. "BTC_USDT"
-        :return: preprocessed filesystem data
-        """
-        # Verify that required columns are not already in the dataframe.
-        for col in ["exchange_id", "currency_pair"]:
-            hdbg.dassert_not_in(col, data.columns)
-        # Add required columns.
-        data["exchange_id"] = exchange_id
-        data["currency_pair"] = currency_pair
-        return data
-
-
-# #############################################################################
-# CcxtCsvFileSystemClient
-# #############################################################################
-
-
-class CcxtCsvFileSystemClient(CcxtFileSystemClient):
-    """
-    CCXT client for data stored as CSV from local or S3 filesystem.
-
-    Each CSV file stores data for a single symbol so we use `Ccx
-    """
-
-    def __init__(
-        self,
-        root_dir: str,
-        *,
-        aws_profile: Optional[str] = None,
-        use_gzip: bool = True,
-    ) -> None:
-        _LOG.debug(hprint.to_str("root_dir aws_profile use_gzip"))
-        extension = "csv"
-        if use_gzip:
-            extension = extension + ".gz"
-        super().__init__(root_dir, extension, aws_profile=aws_profile)
-
-    @staticmethod
-    def _read_data_from_filesystem(
-        file_path: str,
-        start_ts: Optional[pd.Timestamp],
-        end_ts: Optional[pd.Timestamp],
-        **read_kwargs: Any,
-    ) -> pd.DataFrame:
-        """
-        Same params as the parent class.
-        """
-        _LOG.debug(hprint.to_str("file_path start_ts end_ts"))
-        # Load data.
-        data = cpanh.read_csv(file_path, **read_kwargs)
-        # Filter by dates if specified.
-        if start_ts:
-            start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
-            data = data[data["timestamp"] >= start_ts]
-        if end_ts:
-            end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
-            data = data[data["timestamp"] < end_ts]
-        return data
-
-
-# #############################################################################
-# CcxtParquetFileSystemClient
-# #############################################################################
-
-
-# TODO(gp): @grisha This should descend from `ImClientReadingMultipleSymbols`
-#  since it reads PQ files.
-class CcxtParquetFileSystemClient(CcxtFileSystemClient):
-    """
-    CCXT client for data stored as Parquet from local or S3 filesystem.
-    """
-
-    def __init__(
-        self,
-        root_dir: str,
-        *,
-        aws_profile: Optional[str] = None,
-    ) -> None:
-        extension = "pq"
-        super().__init__(root_dir, extension, aws_profile=aws_profile)
-
-    @staticmethod
-    def _read_data_from_filesystem(
-        file_path: str,
-        start_ts: Optional[pd.Timestamp],
-        end_ts: Optional[pd.Timestamp],
-        **read_kwargs: Any,
-    ) -> pd.DataFrame:
-        """
-        See the `_read_data_from_filesystem()` in the parent class.
-        """
-        # Initialize list of filters.
-        filters = []
-        if start_ts:
-            # Add filtering by start timestamp if specified.
-            start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
-            filters.append(("timestamp", ">=", start_ts))
-        if end_ts:
-            # Add filtering by end timestamp if specified.
-            end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
-            filters.append(("timestamp", "<", end_ts))
-        if filters:
-            # Add filters to kwargs if any were set.
-            read_kwargs["filters"] = filters
-        # Load data.
-        data = cpanh.read_parquet(file_path, **read_kwargs)
-        return data
