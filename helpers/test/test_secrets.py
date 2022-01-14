@@ -18,7 +18,7 @@ class Test_Create_Client1(hunitest.TestCase):
     Simple smoke test to verify connection to AWS.
     """
 
-    @pytest.mark.skip(reason='Need to unblock issues, test has passed on dev stage')
+    @pytest.mark.skip(reason='Need to add ck profile to gh actions CmTask961, test has passed on dev stage')
     def test_create_client1(self) -> None:
         client = hsecret.get_secrets_client()
         self.assertIsInstance(client, BaseClient)
@@ -28,7 +28,7 @@ class Test_Get_Secret1(hunitest.TestCase):
     Verify that the secret can be retrieved correctly.
     """
 
-    @pytest.mark.skip(reason='Need to unblock issues, test has passed on dev stage')
+    @pytest.mark.skip(reason='Need to add ck profile to gh actions CmTask961, test has passed on dev stage')
     @mock_secretsmanager
     def test_get_secret(self) -> None:
         # make sure the region name matches the one used in hsecret profile
@@ -45,7 +45,7 @@ class Test_Store_Secret1(hunitest.TestCase):
     Verify that a secret can be stored correctly.
     """
 
-    @pytest.mark.skip(reason='Need to unblock issues, test has passed on dev stage')
+    @pytest.mark.skip(reason='Need to add ck profile to gh actions CmTask961, test has passed on dev stage')
     @mock_secretsmanager
     def test_store_secret(self) -> None:
         secret = {"testkey": "testvalue"}
