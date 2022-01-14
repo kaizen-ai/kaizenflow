@@ -258,6 +258,13 @@ class CcxtCsvParquetByAssetClient(CcxtClient, icdc.ImClientReadingOneSymbol):
         exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)
         # Get absolute file path for a CCXT file.
         file_path = self._get_file_path(self._data_snapshot, exchange_id, currency_pair)
+        # Read raw CCXT data.
+        _LOG.info(
+            "Reading CCXT data for exchange id='%s', currencies='%s' from file='%s'...",
+            exchange_id,
+            currency_pair,
+            file_path,
+        )
         # Initialize kwargs dict for further CCXT data reading.
         read_kwargs = {}
         if hs3.is_s3_path(file_path):
