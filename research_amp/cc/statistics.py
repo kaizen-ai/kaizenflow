@@ -208,9 +208,9 @@ def get_loader_for_vendor(
     :return: loader instance
     """
     vendor = config["data"]["vendor"]
-    data_type = config["data"]["data_type"],
-    root_dir = config["load"]["data_dir"],
-    extension = "csv.gz",
+    data_type = config["data"]["data_type"]
+    root_dir = config["load"]["data_dir"]
+    extension = "csv.gz"
     if vendor == "CCXT":
         loader = imvcdcli.CcxtCsvParquetByAssetClient(
             data_type,

@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.0
+#       jupytext_version: 1.13.5
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -90,10 +90,8 @@ print(config)
 # # Load data
 
 # %%
-
-# %%
-data_type = config["data"]["data_type"],
-root_dir = config["load"]["data_dir"],
+data_type = config["data"]["data_type"]
+root_dir = config["load"]["data_dir"]
 extension = "csv.gz"
 ccxt_csv_client = imvcdcli.CcxtCsvParquetByAssetClient(
     data_type,

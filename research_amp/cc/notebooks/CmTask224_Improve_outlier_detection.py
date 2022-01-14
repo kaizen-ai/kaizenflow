@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.0
+#       jupytext_version: 1.13.5
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -48,8 +48,8 @@ hprint.config_notebook()
 # # Load test data
 
 # %%
-data_type = "ohlcv",
-root_dir = os.path.join(hs3.get_path(), "data"),
+data_type = "ohlcv"
+root_dir = os.path.join(hs3.get_path(), "data")
 extension = "csv.gz"
 ccxt_csv_client = imvcdcli.CcxtCsvParquetByAssetClient(
     data_type,
