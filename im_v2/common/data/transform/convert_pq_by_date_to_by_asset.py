@@ -39,6 +39,10 @@ dst_dir/
     --src_dir im_v2/common/data/transform/test_data_by_date \
     --dst_dir im_v2/common/data/transform/test_data_by_asset \
     --num_threads 2
+
+Import as:
+
+import im_v2.common.data.transform.convert_pq_by_date_to_by_asset as imvcdtcpbdtba
 """
 
 import argparse
@@ -47,7 +51,6 @@ import os
 from typing import Any, Dict, List
 
 import numpy as np
-import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -56,13 +59,12 @@ import helpers.hjoblib as hjoblib
 import helpers.hparquet as hparque
 import helpers.hparser as hparser
 import helpers.hprint as hprint
-import im_v2.common.data.transform.utils as imvcdtrut
+import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): @danya -> _get_parquet_filenames
-def _source_pq_files(src_dir: str) -> List[str]:
+def _get_parquet_filenames(src_dir: str) -> List[str]:
     """
     Generate a list of all the Parquet files in a given dir.
     """
@@ -76,34 +78,31 @@ def _source_pq_files(src_dir: str) -> List[str]:
     return src_pq_files
 
 
-# TODO(gp): @danya -> _process_chunk.
-# TODO(gp): @danya why not accepting the params directly
-#  _process_chunk(parquet_file_names, asset_col_name, dst_dir)?
-def _save_chunk(**config: Dict[str, Any]) -> None:
+# TODO(Nikola): CMTask812
+def _process_chunk(**config: Dict[str, Any]) -> None:
     """
     Process a chunk of work corresponding to multiple Parquet files.
 
-    Read the files in "chunk", partition using days and assets and writes into
-    dst_dir.
+    Read the files in "chunk", partition using days and assets and
+    writes into dst_dir.
     """
-    # TODO(gp): @danya daily_pq -> daily_pq_filename
-    for daily_pq in config["chunk"]:
+    for daily_pq_filename in config["parquet_file_names"]:
         # Read Parquet df.
-        df = hparque.from_parquet(daily_pq)
+        df = hparque.from_parquet(daily_pq_filename)
         _LOG.debug("before df=\n%s", hprint.dataframe_to_str(df.head(3)))
         # Set datetime index.
         datetime_col_name = "start_time"
-        reindexed_df = imvcdtrut.reindex_on_datetime(
+        reindexed_df = imvcdttrut.reindex_on_datetime(
             df, datetime_col_name, unit="s"
         )
         _LOG.debug("after df=\n%s", hprint.dataframe_to_str(reindexed_df.head(3)))
         # Partition.
-        imvcdtrut.add_date_partition_cols(reindexed_df, "day")
+        imvcdttrut.add_date_partition_cols(reindexed_df, "day")
         asset_col_name = config["asset_col_name"]
         partition_cols = ["year", "month", "day", asset_col_name]
         # Write.
         dst_dir = config["dst_dir"]
-        imvcdtrut.partition_dataset(reindexed_df, partition_cols, dst_dir)
+        imvcdttrut.partition_dataset(reindexed_df, partition_cols, dst_dir)
 
 
 # TODO(gp): We might want to use a config to pass a set of params related to each
@@ -120,14 +119,13 @@ def _run(args: argparse.Namespace) -> None:
     hio.create_dir(dst_dir, incremental=False)
     # Prepare the tasks.
     tasks = []
-    source_pq_files = _source_pq_files(args.src_dir)
+    source_pq_files = _get_parquet_filenames(args.src_dir)
     # TODO(Nikola): Remove, quick testing. Currently splitting by week.
     chunks = np.array_split(source_pq_files, len(source_pq_files) // 7 or 1)
-    for chunk in chunks:
+    for parquet_file_names in chunks:
         # TODO(Nikola): Make this config as subconfig for script args?
         config = {
-            # TODO(gp): @danya -> parquet_file_names
-            "chunk": chunk,
+            "parquet_file_names": parquet_file_names,
             "dst_dir": args.dst_dir,
             "asset_col_name": args.asset_col_name,
         }
@@ -139,8 +137,8 @@ def _run(args: argparse.Namespace) -> None:
         )
         tasks.append(task)
     # Prepare the workload.
-    func_name = "_save_chunk"
-    workload = (_save_chunk, func_name, tasks)
+    func_name = "_process_chunk"
+    workload = (_process_chunk, func_name, tasks)
     hjoblib.validate_workload(workload)
     # Parse command-line options.
     dry_run = args.dry_run
@@ -169,6 +167,7 @@ def _run(args: argparse.Namespace) -> None:
 # TODO(Nikola): Add support for reading (not writing) to S3. #697
 
 
+# TODO(Nikola): CMTask926
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter

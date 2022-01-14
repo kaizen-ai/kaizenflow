@@ -46,6 +46,18 @@ usermod -aG docker user_1010
 useradd -u 1011 $OPTS user_1011
 usermod -aG docker user_1011
 
+useradd -u 1012 $OPTS user_1012
+usermod -aG docker user_1012
+
+useradd -u 1013 $OPTS user_1013
+usermod -aG docker user_1013
+
+useradd -u 1014 $OPTS user_1014
+usermod -aG docker user_1014
+
+useradd -u 1015 $OPTS user_1015
+usermod -aG docker user_1015
+
 sudo chmod -R 777 /home
 
 # Allow users to access /mnt/tmpfs.

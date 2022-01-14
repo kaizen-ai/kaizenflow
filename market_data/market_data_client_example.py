@@ -7,7 +7,7 @@ import market_data.market_data_client_example as mdmdclex
 from typing import Dict, List
 
 import helpers.hdatetime as hdateti
-import im_v2.ccxt.data.client.ccx_clients_example as imvcdcccex
+import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
 import market_data.market_data_im_client as mdmdimcl
 
 
@@ -16,7 +16,7 @@ import market_data.market_data_im_client as mdmdimcl
 def get_MarketDataInterface_example1(
     asset_ids: List[str], columns: List[str], column_remap: Dict[str, str]
 ) -> mdmdimcl.MarketDataInterface:
-    ccxt_client = imvcdcccex.get_CcxtCsvFileSytemClient_example1()
+    ccxt_client = imvcdcccex.get_CcxtCsvClient_example1()
     #
     asset_id_col = "full_symbol"
     start_time_col_name = "start_ts"
