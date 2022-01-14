@@ -179,22 +179,27 @@ class ImClient(abc.ABC):
 
         Normalizations include:
         - drop duplicates
-        - resample data to 1 min frequency
         - trim the data with index in specified date interval
+        - resample data to 1 min frequency
+
+        Data trimming is done because:
+        - some data sources can be only queried at day resolution so we get
+          the date range and then we trim
+        - we want to guarantee that nobody returns data outside the requested
+          interval
         """
         _LOG.debug(hprint.to_str("start_ts end_ts"))
+        # Drop duplicates.
         df = hpandas.drop_duplicates(df)
-        df = hpandas.resample_df(df, "T")
         # Trim the data with index in [start_ts, end_ts].
-        # TODO(gp): @grisha This should work now. Enable and test it.
-        if False:
-            # Instance of '2021-09-09T00:02:00.000000000' is '<class 'numpy.datetime64'>' instead of '(<class 'pandas._libs.tslibs.timestamps.Timestamp'>, <class 'datetime.datetime'>)'
-            ts_col_name = None
-            left_close = True
-            right_close = True
-            df = hpandas.trim_df(
-                df, ts_col_name, start_ts, end_ts, left_close, right_close
-            )
+        ts_col_name = None
+        left_close = True
+        right_close = True
+        df = hpandas.trim_df(
+            df, ts_col_name, start_ts, end_ts, left_close, right_close
+        )
+        # Resample index.
+        df = hpandas.resample_df(df, "T")
         return df
 
     @staticmethod
