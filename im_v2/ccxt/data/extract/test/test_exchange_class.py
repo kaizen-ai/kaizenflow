@@ -12,6 +12,7 @@ import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 _LOG = logging.getLogger(__name__)
 
 
+@pytest.mark.skip(reason="CMTask961")
 class Test_CcxtExchange(hunitest.TestCase):
     def test_initialize_class(self) -> None:
         """
