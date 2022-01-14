@@ -44,13 +44,6 @@ def _parse() -> argparse.ArgumentParser:
         help="Folder to download files to",
     )
     parser.add_argument(
-        "--api_keys",
-        action="store",
-        type=str,
-        default=imvcdeexcl.API_KEYS_PATH,
-        help="Path to JSON file that contains API keys for exchange access",
-    )
-    parser.add_argument(
         "--universe",
         action="store",
         required=True,
@@ -111,9 +104,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     _LOG.info("Getting data for exchanges %s", ", ".join(trade_universe.keys()))
     for exchange_id in trade_universe:
         # Initialize the exchange class.
-        exchange = imvcdeexcl.CcxtExchange(
-            exchange_id, api_keys_path=args.api_keys
-        )
+        exchange = imvcdeexcl.CcxtExchange(exchange_id)
         for currency_pair in trade_universe[exchange_id]:
             _LOG.info("Downloading currency pair '%s'", currency_pair)
             # Download OHLCV data.
