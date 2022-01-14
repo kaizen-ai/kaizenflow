@@ -56,7 +56,6 @@ def get_cmtask260_config() -> cconconf.Config:
     config["load"]["data_dir"] = os.path.join(hs3.get_path(), "data")
     # Data parameters.
     config.add_subconfig("data")
-    config["data"]["data_type"] = "OHLCV"
     config["data"]["universe_version"] = "v03"
     config["data"]["vendor"] = "CCXT"
     # Column names.

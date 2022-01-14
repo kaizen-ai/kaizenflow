@@ -72,7 +72,6 @@ def get_eda_config() -> cconconf.Config:
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["close_price_col_name"] = "close"
-    config["data"]["data_type"] = "OHLCV"
     config["data"]["frequency"] = "T"
     # TODO(Grisha): use `hdateti.get_ET_tz()` once it is fixed.
     config["data"]["timezone"] = pytz.timezone("US/Eastern")
