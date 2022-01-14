@@ -266,11 +266,9 @@ class CcxtCsvParquetByAssetClient(CcxtClient, icdc.ImClientReadingOneSymbol):
             currency_pair,
             file_path,
         )
-        # Initialize kwargs dict for further CCXT data reading.
-        read_kwargs = {}
         if hs3.is_s3_path(file_path):
             # Add s3fs argument to kwargs.
-            read_kwargs["s3fs"] = self._s3fs
+            kwargs["s3fs"] = self._s3fs
         if self._extension == "pq":
             # Initialize list of filters.
             filters = []
@@ -284,11 +282,11 @@ class CcxtCsvParquetByAssetClient(CcxtClient, icdc.ImClientReadingOneSymbol):
                 filters.append(("timestamp", "<", end_ts))
             if filters:
                 # Add filters to kwargs if any were set.
-                read_kwargs["filters"] = filters
+                kwargs["filters"] = filters
             # Load data.
-            data = cpanh.read_parquet(file_path, **read_kwargs)
+            data = cpanh.read_parquet(file_path, **kwargs)
         elif self._extension in ["csv", "csv.gz"]:
-            data = cpanh.read_csv(file_path, **read_kwargs)
+            data = cpanh.read_csv(file_path, **kwargs)
             # Filter by dates if specified.
             if start_ts:
                 start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
@@ -299,7 +297,8 @@ class CcxtCsvParquetByAssetClient(CcxtClient, icdc.ImClientReadingOneSymbol):
         else:
             # TODO(Grisha): raise `UnsupportedExtension`.
             raise ValueError(
-                f"Unsupported extension {self._extension}. Supported extensions are: `pq`, `csv`, `csv.gz`"
+                f"Unsupported extension {self._extension}. "
+                f"Supported extensions are: `pq`, `csv`, `csv.gz`"
             )
         # Verify that required columns are not already in the dataframe.
         for col in ["exchange_id", "currency_pair"]:

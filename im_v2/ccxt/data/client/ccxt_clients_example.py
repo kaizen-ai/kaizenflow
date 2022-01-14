@@ -12,7 +12,7 @@ import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 
 
 # TODO(gp): @grisha, explain how was this file generated
-def get_test_data_dir():
+def get_test_data_dir() -> str:
     test_data_dir = os.path.join(
         hgit.get_amp_abs_path(),
         "im_v2/ccxt/data/client/test/test_data",
