@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.secrets as hsecret
+import helpers.hsecrets as hsecret
 """
 
 import json
