@@ -200,28 +200,47 @@ def generate_random_bars_for_asset(
         end_time=end_time,
     ).rename("s2")
     s1 = (s1 * s2).groupby(lambda x: x.date).cumsum().rename("s1")
-    #
-    index = close.index
-    bar_time_delta = pd.Timedelta(bar_duration)
-    start_datetime = pd.Series(
-        data=index - bar_time_delta, index=index, name="start_datetime"
-    )
-    end_datetime = pd.Series(data=index, index=index, name="end_datetime")
-    timestamp = pd.Series(
-        data=index + pd.Timedelta("10s"), index=index, name="timestamp_db"
+    # TODO(Paul): Expose the bar delay.
+    bar_delay = "10s"
+    df = build_timestamp_df(
+        close.index,
+        bar_duration,
+        bar_delay,
     )
     df = pd.concat(
-        [start_datetime, end_datetime, timestamp, close, volume, f1, f2, s1, s2],
+        [df, close, volume, f1, f2, s1, s2],
         axis=1,
     )
     df["asset_id"] = asset_id
     return df.reset_index(drop=True)
 
 
+def build_timestamp_df(
+    index: pd.DatetimeIndex,
+    bar_duration: str,
+    bar_delay: str,
+) -> pd.DataFrame:
+    hdbg.dassert_isinstance(index, pd.DatetimeIndex)
+    bar_time_delta = pd.Timedelta(bar_duration)
+    start_datetime = pd.Series(
+        data=index - bar_time_delta, index=index, name="start_datetime"
+    )
+    end_datetime = pd.Series(data=index, index=index, name="end_datetime")
+    bar_time_delay = pd.Timedelta(bar_delay)
+    timestamp = pd.Series(
+        data=index + bar_time_delay, index=index, name="timestamp_db"
+    )
+    df = pd.concat(
+        [start_datetime, end_datetime, timestamp],
+        axis=1,
+    )
+    return df
+
+
 # #############################################################################
 
 
-def get_ReplayedTimeMarketData_example1(
+def get_ReplayedTimeMarketData_from_df(
     event_loop: asyncio.AbstractEventLoop,
     initial_replayed_delay: int,
     df: pd.DataFrame,
@@ -233,22 +252,24 @@ def get_ReplayedTimeMarketData_example1(
     """
     Build a `ReplayedMarketData` backed by synthetic data.
 
-    :param start_datetime: start time for the generation of the synthetic data
-    :param end_datetime: end time for the generation of the synthetic data
+    :param df: dataframe including the columns
+        ["timestamp_db", "asset_id", "start_datetime", "end_datetime"]
     :param initial_replayed_delay: how many minutes after the beginning of the data
         the replayed time starts. This is useful to simulate the beginning / end of
         the trading day
-    :param asset_ids: asset ids to generate data for. `None` defaults to all the
-        available asset ids in the data frame
     """
     # Build the `ReplayedMarketData` backed by the df with
     # `initial_replayed_delay` after the first timestamp of the data.
     knowledge_datetime_col_name = "timestamp_db"
+    hdbg.dassert_in(knowledge_datetime_col_name, df.columns)
     asset_id_col_name = "asset_id"
+    hdbg.dassert_in(asset_id_col_name, df.columns)
     # If the asset ids were not specified, then infer it from the dataframe.
     asset_ids = df[asset_id_col_name].unique()
     start_time_col_name = "start_datetime"
+    hdbg.dassert_in(start_time_col_name, df.columns)
     end_time_col_name = "end_datetime"
+    hdbg.dassert_in(end_time_col_name, df.columns)
     columns = None
     # Build the wall clock.
     tz = "ET"
@@ -311,7 +332,7 @@ def get_ReplayedTimeMarketData_example2(
     df = generate_random_price_data(
         start_datetime, end_datetime, columns, asset_ids
     )
-    (market_data, get_wall_clock_time,) = get_ReplayedTimeMarketData_example1(
+    (market_data, get_wall_clock_time,) = get_ReplayedTimeMarketData_from_df(
         event_loop,
         initial_replayed_delay,
         df,
@@ -349,7 +370,7 @@ def get_ReplayedTimeMarketData_example3(
     delay_in_secs = 0
     sleep_in_secs = 30
     time_out_in_secs = 60 * 5
-    (market_data, get_wall_clock_time,) = get_ReplayedTimeMarketData_example1(
+    (market_data, get_wall_clock_time,) = get_ReplayedTimeMarketData_from_df(
         event_loop,
         initial_replayed_delay,
         df=df,
@@ -363,59 +384,26 @@ def get_ReplayedTimeMarketData_example3(
 def get_ReplayedTimeMarketData_example4(
     event_loop: asyncio.AbstractEventLoop,
     initial_replayed_delay: int = 0,
+    *,
+    start_datetime: pd.Timestamp,
+    end_datetime: pd.Timestamp,
+    asset_ids: List[int],
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
     """
-    Build a ReplayedMarketData:
-
-    - with synthetic data between `2000-01-01 9:30` and `10:30`
-    - for three assets
+    Build a ReplayedMarketData.
     """
     # Generate random price data.
-    start_datetime = pd.Timestamp(
-        "2000-01-03 09:31:00-05:00", tz="America/New_York"
-    )
-    end_datetime = pd.Timestamp(
-        "2000-01-10 10:30:00-05:00", tz="America/New_York"
-    )
-    asset_ids = [101, 202, 303]
     df = generate_random_bars(start_datetime, end_datetime, asset_ids)
     _LOG.debug("df=%s", hprint.dataframe_to_str(df))
     # Build a `ReplayedMarketData`.
     delay_in_secs = 0
     sleep_in_secs = 30
     time_out_in_secs = 60 * 5
-    # Build the `ReplayedMarketData` backed by the df with
-    # `initial_replayed_delay` after the first timestamp of the data.
-    knowledge_datetime_col_name = "timestamp_db"
-    asset_id_col_name = "asset_id"
-    start_datetime_col_name = "start_datetime"
-    end_datetime_col_name = "end_datetime"
-    columns = df.columns.to_list()
-    # Build the wall clock.
-    tz = "ET"
-    initial_replayed_dt = df[end_datetime_col_name].min() + pd.Timedelta(
-        minutes=initial_replayed_delay
-    )
-    # NOTE: This is unused.
-    speed_up_factor = 1.0
-    get_wall_clock_time = creatime.get_replayed_wall_clock_time(
-        tz,
-        initial_replayed_dt,
-        event_loop=event_loop,
-        speed_up_factor=speed_up_factor,
-    )
-    # Build a `ReplayedMarketData`.
-    market_data = mdremada.ReplayedMarketData(
+    market_data, get_wall_clock_time = get_ReplayedTimeMarketData_from_df(
+        event_loop,
+        initial_replayed_delay,
         df,
-        knowledge_datetime_col_name,
-        delay_in_secs,
-        #
-        asset_id_col_name,
-        asset_ids,
-        start_datetime_col_name,
-        end_datetime_col_name,
-        columns,
-        get_wall_clock_time,
+        delay_in_secs=delay_in_secs,
         sleep_in_secs=sleep_in_secs,
         time_out_in_secs=time_out_in_secs,
     )

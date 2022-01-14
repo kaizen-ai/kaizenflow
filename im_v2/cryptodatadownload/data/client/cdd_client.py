@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.cryptodatadownload.data.load.loader as imcdalolo
+import im_v2.cryptodatadownload.data.client.cdd_client as imcdaclcd
 """
 
 import logging
@@ -11,7 +11,6 @@ from typing import Optional
 import pandas as pd
 
 import core.pandas_helpers as cpanh
-import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
@@ -23,7 +22,7 @@ _LOG = logging.getLogger(__name__)
 _LATEST_DATA_SNAPSHOT = "20210924"
 
 
-class CddLoader:
+class CddClient:
     def __init__(
         self,
         data_type: str,
@@ -101,7 +100,7 @@ class CddLoader:
         transformed_data = self._transform(data, exchange_id, currency_pair)
         return transformed_data
 
-    # TODO(Grisha): factor out common code from `CddLoader._get_file_path` and
+    # TODO(Grisha): factor out common code from `CddClient._get_file_path` and
     # `CcxtLoader._get_file_path`.
     def _get_file_path(
         self,
