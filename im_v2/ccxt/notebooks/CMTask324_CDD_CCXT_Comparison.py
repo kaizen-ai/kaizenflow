@@ -203,7 +203,7 @@ display(cdd_binance_df.shape)
 # TODO(Grisha): @max make sure that the notebook runs end-to-end #905.
 extension = "csv.gz"
 ccxt_csv_client = imvcdccccl.CcxtCsvParquetByAssetClient(
-    "ohlcv", root_dir, extension, aws_profile="am"
+    root_dir, extension, aws_profile="am"
 )
 start_ts = None
 end_ts = None

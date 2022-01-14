@@ -73,7 +73,7 @@ class TestCcxtDbClient(imvcddbut.TestImDbHelper):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Load data with client and check if it is correct.
-        ccxt_db_client = imvcdccccl.CcxtDbClient("ohlcv", self.connection)
+        ccxt_db_client = imvcdccccl.CcxtDbClient(self.connection)
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         start_ts = None
         end_ts = None
@@ -120,7 +120,7 @@ class TestCcxtDbClient(imvcddbut.TestImDbHelper):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         # Load data with client and check if it is correct.
-        ccxt_db_client = imvcdccccl.CcxtDbClient("ohlcv", self.connection)
+        ccxt_db_client = imvcdccccl.CcxtDbClient(self.connection)
         full_symbols = ["binance::BTC_USDT"]
         start_ts = pd.Timestamp("2021-09-09T00:00:00-00:00")
         end_ts = pd.Timestamp("2021-09-09T00:01:00-00:00")
@@ -202,7 +202,6 @@ class TestCcxtCsvClient(hunitest.TestCase):
         """
         Test correctness of reading:
 
-        - OHLCV data
         - for 1 currencies
         - from a ".csv" file on the local filesystem
         """
@@ -247,7 +246,6 @@ class TestCcxtCsvClient(hunitest.TestCase):
         """
         Test correctness of reading:
 
-        - OHLCV data
         - for 2 currencies
         - from a ".csv.gz" on the local filesystem
         """
@@ -339,16 +337,7 @@ class TestCcxtCsvClient(hunitest.TestCase):
         end_ts = None
         with self.assertRaises(AssertionError):
             ccxt_client.read_data(full_symbols, start_ts, end_ts)
-
-    def test_invalid_data_type1(self) -> None:
-        """
-        Test unsupported data type.
-        """
-        data_type = "unsupported_data_type"
-        root_dir = ivcdcccex.get_test_data_dir()
-        with self.assertRaises(AssertionError):
-            imvcdccccl.CcxtCsvParquetByAssetClient(data_type, root_dir, "csv")
-
+            
 
 # #############################################################################
 

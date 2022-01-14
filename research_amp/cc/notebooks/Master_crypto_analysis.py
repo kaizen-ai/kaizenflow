@@ -90,14 +90,13 @@ print(config)
 # # Load data
 
 # %%
-data_type = config["data"]["data_type"]
 root_dir = config["load"]["data_dir"]
 extension = "csv.gz"
+aws_profile = config["load"]["aws_profile"]
 ccxt_csv_client = imvcdcli.CcxtCsvParquetByAssetClient(
-    data_type,
     root_dir,
     extension,
-    aws_profile=config["load"]["aws_profile"],
+    aws_profile=aws_profile,
 )
 start_ts = None
 end_ts = None

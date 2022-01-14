@@ -91,7 +91,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
     # Initiate DB client.
-    ccxt_db_client = imvcdccccl.CcxtDbClient("ohlcv", connection)
+    ccxt_db_client = imvcdccccl.CcxtDbClient(connection)
     # Get universe of symbols.
     symbols = imvccunun.get_vendor_universe()
     for date_index in range(len(timespan) - 1):
