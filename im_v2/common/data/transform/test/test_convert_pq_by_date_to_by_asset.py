@@ -59,18 +59,40 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         self.check_string(actual, purify_text=True)
 
     def test_command_line(self) -> None:
+        """
+        Test command line with specific arguments and comparing its output with
+        predefined directory structure and file contents.
+        Command is run against test data that was generated in verbose mode
+        meaning it is more realistic than generic data that is generated in non-verbose mode.
+        """
         verbose = True
         self._test_command_line(verbose)
 
     def test_function_call1(self) -> None:
+        """
+        Test function call with specific arguments that are mimicking command line arguments
+        and comparing function output with predefined directory structure and file contents.
+        Function is run against simple test data in non-verbose mode.
+        """
         verbose = False
         self._test_function_call(verbose)
 
     def test_function_call2(self) -> None:
+        """
+        Test function call with specific arguments that are mimicking command line arguments
+        and comparing function output with predefined directory structure and file contents.
+        Function is run against test data that was generated in verbose mode
+        meaning it is more realistic than generic data that is generated in non-verbose mode.
+        """
         verbose = True
         self._test_function_call(verbose)
 
     def test_process_chunk(self) -> None:
+        """
+        Test function that is used for parallel execution which is generating outputs
+        depending on how many files/data is provided with. Test data for the function is
+        generated in verbose mode.
+        """
         verbose = True
         self._test_joblib_task(verbose, {})
 
@@ -85,23 +107,19 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         cmd.extend(["--num_threads", "1"])
         cmd.extend(["--asset_col_name", "ticker"])
         args = parser.parse_args(cmd)
-        args = str(args).lstrip("Namespace").lstrip("(").rstrip(")")
-        args = args.split(", ")
-        actual = "\n".join(args)
-        expected = "\n".join(
-            [
-                "asset_col_name='ticker'",
-                "dry_run=False",
-                "dst_dir='dummy_by_asset_dir'",
-                "log_level='INFO'",
-                "no_incremental=False",
-                "num_attempts=1",
-                "num_threads='1'",
-                "skip_on_error=False",
-                "src_dir='dummy_by_date_dir'",
-            ]
-        )
-        self.assert_equal(actual, expected)
+        actual = vars(args)
+        expected = {
+            "src_dir": "dummy_by_date_dir",
+            "dst_dir": "dummy_by_asset_dir",
+            "asset_col_name": "ticker",
+            "num_threads": "1",
+            "dry_run": False,
+            "no_incremental": False,
+            "skip_on_error": False,
+            "num_attempts": 1,
+            "log_level": "INFO",
+        }
+        self.assertDictEqual(actual, expected)
 
     def _test_command_line(self, verbose: bool) -> None:
         """
