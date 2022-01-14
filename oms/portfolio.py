@@ -12,8 +12,8 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 
-import helpers.hdbg as hdbg
 import helpers.hasyncio as hasynci
+import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hsql as hsql
@@ -89,9 +89,7 @@ class AbstractPortfolio(abc.ABC):
         # Extract `market_data` from `broker`.
         self.market_data = broker.market_data
         # Extract `get_wall_clock_time` from `market_data`.
-        self._get_wall_clock_time = (
-            broker.market_data.get_wall_clock_time
-        )
+        self._get_wall_clock_time = broker.market_data.get_wall_clock_time
         self._asset_id_col = asset_id_col
         self._mark_to_market_col = mark_to_market_col
         self._timestamp_col = timestamp_col
@@ -304,6 +302,8 @@ class AbstractPortfolio(abc.ABC):
         df = pd.DataFrame(self._statistics).transpose()
         # Add `pnl` by diffing the snapshots of `net_wealth`.
         df["pnl"] = df["net_wealth"].diff()
+        df["realized_pnl"] = df["cash"].diff()
+        df["unrealized_pnl"] = df["net_asset_holdings"].diff()
         return df
 
     def get_historical_holdings(self) -> pd.DataFrame:
@@ -724,7 +724,6 @@ class MockedPortfolio(AbstractPortfolio):
         db_connection: hsql.DbConnection,
         # TODO(gp): -> position_table_name
         table_name: str,
-        asset_id_col: str,
         poll_kwargs: Optional[Dict[str, Any]] = None,
         **kwargs: Any,
     ):
@@ -735,9 +734,6 @@ class MockedPortfolio(AbstractPortfolio):
         #
         self._db_connection = db_connection
         self._table_name = table_name
-        #
-        hdbg.dassert_isinstance(asset_id_col, str)
-        self._asset_id_col = asset_id_col
         #
         if poll_kwargs is None:
             poll_kwargs = hasynci.get_poll_kwargs(self._get_wall_clock_time)

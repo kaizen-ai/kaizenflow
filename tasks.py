@@ -68,6 +68,7 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     integrate_diff_dirs,
     integrate_diff_overlapping_files,
     integrate_files,
+    integrate_find_files,
     lint,
     lint_create_branch,
     print_setup,
