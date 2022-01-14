@@ -5,7 +5,7 @@ import boto3
 from botocore.client import BaseClient
 from moto import mock_secretsmanager
 
-import helpers.secrets as hsecret
+import helpers.hsecrets as hsecret
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
