@@ -24,8 +24,8 @@ class TestMarketDataClient(hunitest.TestCase):
             asset_ids, columns, column_remap
         )
         # Read data.
-        start_ts = pd.Timestamp("2018-08-17T00:01:00")
-        end_ts = pd.Timestamp("2018-08-17T00:05:00")
+        start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         ts_col_name = "end_ts"
         data = market_data_client.get_data_for_interval(
             start_ts,
@@ -83,8 +83,8 @@ class TestMarketDataClient(hunitest.TestCase):
             asset_ids, columns, column_remap
         )
         # Read data.
-        start_ts = pd.Timestamp("2018-08-17T00:01:00")
-        end_ts = pd.Timestamp("2018-08-17T00:05:00")
+        start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         ts_col_name = "end_ts"
         data = market_data_client.get_data_for_interval(
             start_ts,
@@ -133,8 +133,8 @@ class TestMarketDataClient(hunitest.TestCase):
             asset_ids, columns, column_remap
         )
         # Read data.
-        start_ts = pd.Timestamp("2018-08-17T00:01:00")
-        end_ts = pd.Timestamp("2018-08-17T00:05:00")
+        start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         ts_col_name = "end_ts"
         data = market_data_client.get_data_for_interval(
             start_ts,
@@ -182,8 +182,8 @@ class TestMarketDataClient(hunitest.TestCase):
             asset_ids, columns, column_remap
         )
         # Compute TWAP price.
-        start_ts = pd.Timestamp("2018-08-17T00:01:00")
-        end_ts = pd.Timestamp("2018-08-17T00:05:00")
+        start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         ts_col_name = "end_ts"
         asset_id = asset_ids[0]
         actual = market_data_client.get_twap_price(
