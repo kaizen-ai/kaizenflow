@@ -2,8 +2,9 @@ import json
 import logging
 
 import boto3
-from botocore.client import BaseClient
-from moto import mock_secretsmanager
+import botocore.client
+from botocore.client import botocore.clientBaseClient
+import moto.mock_secretsmanager
 import pytest
 import helpers.hsecrets as hsecret
 import helpers.hunit_test as hunitest
@@ -29,7 +30,7 @@ class Test_Get_Secret(hunitest.TestCase):
     """
 
     @pytest.mark.skip(reason='Need to unblock issues, test has passed on dev stage')
-    @mock_secretsmanager
+    @moto.mock_secretsmanager
     def test_get_secret(self) -> None:
         # make sure the region name matches the one used in hsecret profile
         client = boto3.client("secretsmanager", region_name="eu-north-1")
@@ -46,7 +47,7 @@ class Test_Store_Secret(hunitest.TestCase):
     """
 
     @pytest.mark.skip(reason='Need to unblock issues, test has passed on dev stage')
-    @mock_secretsmanager
+    @moto.mock_secretsmanager
     def test_store_secret(self) -> None:
         secret = {"testkey": "testvalue"}
         secret_name = "Testsecret"

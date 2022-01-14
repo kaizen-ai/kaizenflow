@@ -5,7 +5,7 @@ import helpers.secrets as hsecret
 """
 
 import json
-from typing import Optional
+from typing import Optional, Any, Dict
 
 import boto3
 from botocore.client import BaseClient
@@ -27,7 +27,7 @@ def get_secrets_client(aws_profile: str = 'ck') -> BaseClient:
 
 
 # TODO(Juraj): add support to access secrets for different profiles, not important rn
-def get_secret(secret_name: str) -> Optional[dict]:
+def get_secret(secret_name: str) -> Optional[Dict[str, Any]]:
     """
     Fetch secret values(s) from AWS secrets manager, returns a dictionary of
     key-value pairs. example: get_secret('binance') returns:
@@ -35,36 +35,39 @@ def get_secret(secret_name: str) -> Optional[dict]:
     { 'apiKey': '<secret_value>', 'secret': '<secret_value>' }
     """
     hdbg.dassert_isinstance(secret_name, str)
-
-    # Create a AWS Secrets Manager client
+    # Create a AWS Secrets Manager client.
     client = get_secrets_client()
-
+    # Stores value of retrieved secret.
+    secret_val = {}
     # See https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
-    # for the full list of exceptions
+    # for the full list of exceptions.
     try:
         get_secret_value_response = client.get_secret_value(SecretId=secret_name)
         secret_string = get_secret_value_response["SecretString"]
         hdbg.dassert_isinstance(secret_string, str)
-        return json.loads(secret_string)
+        secret_val = json.loads(secret_string)
     except ClientError as e:
         if e.response["Error"]["Code"] == "ResourceNotFoundException":
-            # Let user know the secret does not exist
+            # Let user know the secret does not exist.
             raise ValueError("No such secret:", secret_name) from e
+        # If not yet implemented handler then just re-raise.
+        raise e
+    return secret_val
 
-    return {}
 
-
-# TODO(Juraj): add support to store secrets in different regions, not important rn
+# TODO(Juraj): add support to store secrets in different regions, not important rn.
 def store_secret(
-    secret_name: str, secret_value: dict, description: str = ""
+    secret_name: str, secret_value: Dict[str, str], description: str = ""
 ) -> Optional[bool]:
     """
-    Store secret values(s) from AWS secrets manager, specify secret as a dict
+    Store secret values(s) into AWS secrets manager, specify secret as a dict
     of key-value pairs.
+    
+    :return: bool representing whether writing was successful or not
     """
     hdbg.dassert_isinstance(secret_name, str)
 
-    # Create a AWS Secrets Manager client
+    # Create a AWS Secrets Manager client.
     client = get_secrets_client()
 
     # See https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_CreateSecret.html
@@ -87,6 +90,8 @@ def store_secret(
             raise ValueError(
                 "Secret with this name already exists:", secret_name
             ) from e
+        # If not yet implemented handler then just re-raise.
+        raise e
 
     # If we did not return inside try block then something went wrong
     return False
