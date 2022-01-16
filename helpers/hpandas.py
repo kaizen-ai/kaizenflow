@@ -126,6 +126,102 @@ def dassert_valid_remap(to_remap: List[str], remap_dict: Dict[str, str]) -> None
 # #############################################################################
 
 
+# TODO(gp): Replace hut.convert_df_to_string with this.
+def df_to_str(
+    df: pd.DataFrame,
+    *,
+    num_rows: int = 6,
+    print_dtypes: bool = False,
+    print_shape_info: bool = False,
+    tag: Optional[str] = None,
+    max_columns: int = 10000,
+    max_colwidth: int = 2000,
+    max_rows: int = 500,
+    display_width: int = 10000,
+    use_tabulate: bool = False,
+) -> str:
+    """
+    Print a dataframe to string reporting all the columns without trimming.
+
+    :param: num_rows: max number of rows to print (half from the top and half from
+        the bottom of the dataframe)
+    :param print_dtypes: report df.types and information about the type of each
+        column by looking at the first value
+    :param print_shape_info: report df.types and information about the type of each
+        column by looking at the first value
+    """
+    out = []
+    # Print the tag.
+    if tag is not None:
+        out.append(f"# {tag}=")
+    # Print information about the shape and index.
+    if print_shape_info:
+        out.append("df.shape=%s" % str(df.shape))
+        if not df.empty:
+            out.append("df.index in [%s, %s]" % (df.index.min(), df.index.max()))
+            out.append("df.columns=%s" % ",".join(map(str, df.columns)))
+    # Print information about the types.
+    if print_dtypes:
+        if not df.empty:
+            out.append("df.type=")
+
+            def _report_type_of_first_element(srs: "pd.Series") -> str:
+                """
+                For a series, report its dtype, the first element and its type.
+                """
+                elem = srs.values[0]
+                val = "%10s %25s %s" % (srs.dtype, type(elem), elem)
+                return val
+
+            col_name = "index"
+            fmt = "  %20s: %s"
+            out.append(fmt % (col_name, _report_type_of_first_element(df.index)))
+            for col_name in df.columns:
+                out.append(
+                    fmt % (col_name, _report_type_of_first_element(df[col_name]))
+                )
+    # Print the data frame.
+    if df.shape[0] <= n:
+        out.append(dataframe_to_str(df))
+    else:
+        # Print top and bottom of df.
+        # TODO(gp): @Nikola use df.head(n / 2). We don't want repetition between
+        #  top and bottom
+        out.append(dataframe_to_str(df.head(n)))
+        out.append("...")
+        tail_str = dataframe_to_str(df.tail(n))
+        # Remove index and columns.
+        skipped_rows = 1
+        if df.index.name:
+            skipped_rows += 1
+        tail_str = "\n".join(tail_str.split("\n")[skipped_rows:])
+        out.append(tail_str)
+    # txt += "\n# dtypes=\n%s" % str(df.dtypes)
+    # Print the dataframe.
+    with pd.option_context(
+            "display.max_colwidth",
+            max_colwidth,
+            #'display.height', 1000,
+            "display.max_rows",
+            max_rows,
+            "display.max_columns",
+            max_columns,
+            "display.width",
+            display_width,
+    ):
+        if use_tabulate:
+            # This is experimental.
+            import tabulate
+                out.append(tabulate.tabulate(df, headers="keys", tablefmt="psql"))
+        else:
+            out.append(str(df))
+    out = "\n".join(out)
+    return out
+
+
+# #############################################################################
+
+
 def resample_index(index: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
     """
     Resample `DatetimeIndex`.
