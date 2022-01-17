@@ -1,12 +1,10 @@
 import logging
 import os
 
-import pandas as pd
-
 import dataflow.core as dtfcobuexa
 import dataflow.system.real_time_dag_adapter as dtfsrtdaad
-import helpers.printing as hprint
-import helpers.unit_test as hunitest
+import helpers.hprint as hprint
+import helpers.hunit_test as hunitest
 import oms.portfolio_example as oporexam
 
 _LOG = logging.getLogger(__name__)
@@ -30,13 +28,15 @@ class TestRealtimeDagAdapter1(hunitest.TestCase):
         # Build a Portfolio.
         # TODO(Paul): Use a nontrivial event loop.
         event_loop = None
-        initial_timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
-        portfolio = oporexam.get_simulated_portfolio_example1(
-            event_loop, initial_timestamp
-        )
+        portfolio = oporexam.get_simulated_portfolio_example1(event_loop)
         # Build a DagAdapter.
         dag_adapter = dtfsrtdaad.RealTimeDagAdapter(
-            dag_builder, portfolio, "close"
+            dag_builder,
+            portfolio,
+            "close",
+            "close",
+            "last_5mins",
+            "asset_id",
         )
         txt.append(hprint.frame("dag_adapter"))
         txt.append(hprint.indent(str(dag_adapter)))

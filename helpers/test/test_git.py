@@ -4,8 +4,8 @@ from typing import List, Optional
 
 import pytest
 
-import helpers.git as hgit
-import helpers.unit_test as hunitest
+import helpers.hgit as hgit
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -171,19 +171,19 @@ class Test_git_repo_name1(hunitest.TestCase):
         exp = "dev_tools"
         self.assert_equal(act, exp)
 
-    @pytest.mark.skipif(
-        not hgit.is_in_amp_as_submodule(), reason="Run only in amp as sub-module"
-    )
     def test_get_all_repo_names1(self) -> None:
+        if not hgit.is_in_amp_as_supermodule():
+            _LOG.warning("Skipping this test, since it can run only in amp as super-module")
+            return
         mode = "short_name"
         act = hgit.get_all_repo_names(mode)
         exp = ["amp", "dev_tools"]
         self.assert_equal(str(act), str(exp))
 
-    @pytest.mark.skipif(
-        not hgit.is_in_amp_as_submodule(), reason="Run only in amp as sub-module"
-    )
     def test_get_all_repo_names2(self) -> None:
+        if not hgit.is_in_amp_as_supermodule():
+            _LOG.warning("Skipping this test, since it can run only in amp as super-module")
+            return
         mode = "full_name"
         act = hgit.get_all_repo_names(mode)
         exp = ["alphamatic/amp", "alphamatic/dev_tools"]

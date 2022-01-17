@@ -18,7 +18,7 @@ import core.statistics as costatis
 import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.base as dtfconobas
 import dataflow.core.utils as dtfcorutil
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 

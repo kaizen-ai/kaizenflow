@@ -5,7 +5,7 @@ if False:
     import boto3
     from moto import mock_ec2
 
-    import helpers.dbg as hdbg
+    import helpers.hdbg as hdbg
     import infra.scripts.aws.aws_manager as isawawma
 
     """

@@ -26,9 +26,9 @@ import sklearn as sklear
 
 import core.dataframe_modeler as cdatmode
 import core.signal_processing as csigproc
-import helpers.dbg as hdbg
-import helpers.env as henv
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.henv as henv
+import helpers.hprint as hprint
 import im.kibot.data.load.futures_forward_contracts as imkdlffoco
 import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
 import im.kibot.metadata.load.kibot_metadata as imkmlkime

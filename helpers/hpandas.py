@@ -8,9 +8,9 @@ from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 
-import helpers.datetime_ as hdateti
-import helpers.dbg as hdbg
-import helpers.printing as hprint
+import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -25,8 +25,8 @@ def to_series(df: pd.DataFrame) -> pd.Series:
     """
     Convert a pd.DataFrame with a single column into a pd.Series.
 
-    The problem is that empty df or df with a single row are not converted
-    correctly to a pd.Series.
+    The problem is that empty df or df with a single row are not
+    converted correctly to a pd.Series.
     """
     # See https://stackoverflow.com/questions/33246771
     hdbg.dassert_isinstance(df, pd.DataFrame)
@@ -111,7 +111,11 @@ def dassert_valid_remap(to_remap: List[str], remap_dict: Dict[str, str]) -> None
     hdbg.dassert_isinstance(to_remap, list)
     hdbg.dassert_isinstance(remap_dict, dict)
     # All the rows / columns to remap, should exist.
-    hdbg.dassert_is_subset(remap_dict.keys(), to_remap)
+    hdbg.dassert_is_subset(
+        remap_dict.keys(),
+        to_remap,
+        "Keys to remap should be a subset of existing columns",
+    )
     # The mapping is invertible.
     hdbg.dassert_no_duplicates(remap_dict.keys())
     hdbg.dassert_no_duplicates(remap_dict.values())
@@ -251,7 +255,6 @@ def get_df_signature(df: pd.DataFrame, num_rows: int = 3) -> str:
 # #############################################################################
 
 
-# TODO(gp): Add unit tests.
 def trim_df(
     df: pd.DataFrame,
     ts_col_name: Optional[str],
@@ -259,39 +262,51 @@ def trim_df(
     end_ts: Optional[pd.Timestamp],
     left_close: bool,
     right_close: bool,
-):
+) -> pd.DataFrame:
     """
-    Trim df using an interval with boundaries `start_ts` and `end_ts`.
+    Trim df using values in `ts_col_name` in interval bounded by `start_ts` and
+    `end_ts`.
 
     :param ts_col_name: the name of the column. `None` means index
+    :param start_ts, end_ts: boundaries of the desired interval
     :param left_close, right_close: encode what to do with the boundaries of the
         interval
         - E.g., [start_ts, end_ts), or (start_ts, end_ts]
     """
-    _LOG.debug("df=\n%s", hprint.dataframe_to_str(df))
+    _LOG.debug(hprint.df_to_short_str("df", df, print_dtypes=True))
     _LOG.debug(
         hprint.to_str("ts_col_name start_ts end_ts left_close right_close")
     )
+    if df.empty:
+        # If the df is empty there is nothing to trim.
+        return df
     if start_ts is not None and end_ts is not None:
         hdateti.dassert_tz_compatible(start_ts, end_ts)
+        hdbg.dassert_lte(start_ts, end_ts)
+    # Handle the index.
     use_index = False
     if ts_col_name is None:
-        # hdateti.dassert_tz_compatible(df.index.values[0], start_ts)
+        # Convert the index into a regular column.
         # TODO(gp): Use binary search if there is an index.
-        # hdbg.dassert_is_not(df.index.name, None, "The index needs to have a name")
         if df.index.name is None:
-            _LOG.debug("The df has no index\n%s", hprint.dataframe_to_str(df))
+            _LOG.debug(
+                "The df has no index\n%s", hprint.dataframe_to_str(df.head())
+            )
             df.index.name = "index"
         ts_col_name = df.index.name
         df = df.reset_index()
         use_index = True
     # TODO(gp): This is inefficient. Make it faster by binary search, if ordered.
     hdbg.dassert_in(ts_col_name, df.columns)
-    # hdateti.dassert_tz_compatible(df[ts_col_name].values[0], start_ts)
     # Filter based on start_ts.
+    _LOG.debug("Filtering by start_ts=%s", start_ts)
     if start_ts is not None:
         _LOG.verb_debug("start_ts=%s", start_ts)
-        tss = df[ts_col_name]
+        # Convert the column into `pd.Timestamp` to compare it to `start_ts`.
+        # This is needed to sidestep the comparison hell involving `numpy.datetime64`
+        # vs Pandas objects.
+        tss = pd.to_datetime(df[ts_col_name])
+        hdateti.dassert_tz_compatible(tss.iloc[0], start_ts)
         _LOG.verb_debug("tss=\n%s", hprint.dataframe_to_str(tss))
         if left_close:
             mask = tss >= start_ts
@@ -300,16 +315,23 @@ def trim_df(
         _LOG.verb_debug("mask=\n%s", hprint.dataframe_to_str(mask))
         df = df[mask]
     # Filter based on end_ts.
-    if end_ts is not None:
-        _LOG.verb_debug("end_ts=%s", end_ts)
-        tss = df[ts_col_name]
-        _LOG.verb_debug("tss=\n%s", hprint.dataframe_to_str(tss))
-        if right_close:
-            mask = tss <= end_ts
-        else:
-            mask = tss < end_ts
-        _LOG.verb_debug("mask=\n%s", hprint.dataframe_to_str(mask))
-        df = df[mask]
+    _LOG.debug("Filtering by end_ts=%s", end_ts)
+    if not df.empty:
+        if end_ts is not None:
+            _LOG.debug("Filtering by start_ts=%s", start_ts)
+            _LOG.verb_debug("end_ts=%s", end_ts)
+            tss = pd.to_datetime(df[ts_col_name])
+            hdateti.dassert_tz_compatible(tss.iloc[0], end_ts)
+            _LOG.verb_debug("tss=\n%s", hprint.dataframe_to_str(tss))
+            if right_close:
+                mask = tss <= end_ts
+            else:
+                mask = tss < end_ts
+            _LOG.verb_debug("mask=\n%s", hprint.dataframe_to_str(mask))
+            df = df[mask]
+    else:
+        # If the df is empty there is nothing to trim.
+        pass
     if use_index:
         df = df.set_index(ts_col_name, drop=True)
     return df

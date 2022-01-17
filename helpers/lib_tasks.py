@@ -23,15 +23,15 @@ from invoke import task
 
 # We want to minimize the dependencies from non-standard Python packages since
 # this code needs to run with minimal dependencies and without Docker.
-import helpers.dbg as hdbg
-import helpers.git as hgit
-import helpers.introspection as hintros
-import helpers.io_ as hio
-import helpers.list as hlist
-import helpers.printing as hprint
-import helpers.system_interaction as hsysinte
-import helpers.table as htable
-import helpers.versioning as hversio
+import helpers.hdbg as hdbg
+import helpers.hgit as hgit
+import helpers.hintrospection as hintros
+import helpers.hio as hio
+import helpers.hlist as hlist
+import helpers.hprint as hprint
+import helpers.hsystem as hsysinte
+import helpers.htable as htable
+import helpers.hversion as hversio
 
 _LOG = logging.getLogger(__name__)
 
@@ -207,7 +207,7 @@ use_one_line_cmd = False
 def _run(
     ctx: Any, cmd: str, *args, dry_run: bool = False, **ctx_run_kwargs: Any
 ) -> int:
-    _LOG.debug("cmd=%s", cmd)
+    _LOG.debug(hprint.to_str("cmd dry_run"))
     if use_one_line_cmd:
         cmd = _to_single_line_cmd(cmd)
     _LOG.debug("cmd=%s", cmd)
@@ -355,7 +355,7 @@ def print_tasks(ctx, as_code=False):  # type: ignore
     cmd = rf'\grep "^@task" -A 1 {lib_tasks_file_name} | grep def'
     # def print_setup(ctx):  # type: ignore
     # def git_pull(ctx):  # type: ignore
-    # def git_pull_master(ctx):  # type: ignore
+    # def git_fetch_master(ctx):  # type: ignore
     _, txt = hsysinte.system_to_string(cmd)
     for line in txt.split("\n"):
         _LOG.debug("line=%s", line)
@@ -382,19 +382,21 @@ def git_pull(ctx):  # type: ignore
     Pull all the repos.
     """
     _report_task()
+    #
     cmd = "git pull --autostash"
     _run(ctx, cmd)
+    #
     cmd = "git submodule foreach 'git pull --autostash'"
     _run(ctx, cmd)
 
 
-# TODO(gp): Maybe inline
 @task
-def git_pull_master(ctx):  # type: ignore
+def git_fetch_master(ctx):  # type: ignore
     """
     Pull master without changing branch.
     """
     _report_task()
+    #
     cmd = "git fetch origin master:master"
     _run(ctx, cmd)
 
@@ -410,7 +412,7 @@ def git_merge_master(ctx, ff_only=False, abort_if_not_clean=True):  # type: igno
     # Check that the Git client is clean.
     hgit.is_client_clean(dir_name=".", abort_if_not_clean=abort_if_not_clean)
     # Pull master.
-    git_pull_master(ctx)
+    git_fetch_master(ctx)
     # Merge master.
     cmd = "git merge master"
     if ff_only:
@@ -892,24 +894,19 @@ def git_branch_copy(ctx, new_branch_name="", use_patch=False):  # type: ignore
     _run(ctx, cmd)
 
 
-@task
-def git_branch_diff_with_base(  # type: ignore
-    ctx, diff_type="", subdir="", dry_run=False
-):
-    """
-    Diff files of the current branch with master at the branching point.
-
-    :param diff_type: files to diff using git `--diff-filter` options
-    :param subdir: subdir to consider for diffing, instead of `.`
-    :param dry_run: execute diffing script or not
-    """
-    _ = ctx
-    # This branch is not master.
+def _git_diff_with_branch(
+    ctx: Any,
+    hash_: str,
+    tag: str,
+    dir_name: str,
+    diff_type: str,
+    subdir: str,
+    dry_run: bool,
+) -> None:
+    _LOG.debug(hprint.to_str("hash_ tag dir_name diff_type subdir dry_run"))
+    # Check that this branch is not master.
     curr_branch_name = hgit.get_branch_name()
     hdbg.dassert_ne(curr_branch_name, "master")
-    # Get the branching point.
-    dir_name = "."
-    hash_ = hgit.get_branch_hash(dir_name=dir_name)
     # Get the modified files.
     cmd = []
     cmd.append("git diff")
@@ -922,6 +919,12 @@ def git_branch_diff_with_base(  # type: ignore
     )
     files = sorted(files)
     print("files=%s\n%s" % (len(files), "\n".join(files)))
+    if len(files) == 0:
+        _LOG.warning("Nothing to diff: exiting")
+        return
+    # Create the dir storing all the files to compare.
+    dst_dir = f"./tmp.{tag}"
+    hio.create_dir(dst_dir, incremental=False)
     # Retrieve the original file and create the diff command.
     script_txt = []
     for branch_file in files:
@@ -940,11 +943,11 @@ def git_branch_diff_with_base(  # type: ignore
             right_file = branch_file
         else:
             right_file = "/dev/null"
-        #
-        tmp_file = branch_file.replace(".py", ".base.py")
         # Flatten the file dirs: e.g.,
         # dataflow/core/nodes/test/test_volatility_models.base.py
-        tmp_file = "tmp." + tmp_file.replace("/", "_")
+        tmp_file = branch_file
+        tmp_file = tmp_file.replace("/", "_")
+        tmp_file = os.path.join(dst_dir, tmp_file)
         _LOG.debug(
             "branch_file='%s' exists in branch -> master_file='%s'",
             branch_file,
@@ -970,11 +973,46 @@ def git_branch_diff_with_base(  # type: ignore
     print(hprint.frame("Diffing script"))
     print(script_txt)
     # Save the script to compare.
-    script_file_name = "./tmp.vimdiff_branch_with_base.sh"
+    script_file_name = f"./tmp.vimdiff_branch_with_{tag}.sh"
     hsysinte.create_executable_script(script_file_name, script_txt)
-    print(f"# To diff against the base run:\n> {script_file_name}")
-    if not dry_run:
-        _run(ctx, script_file_name, pty=True)
+    print(f"# To diff against {tag} run:\n> {script_file_name}")
+    _run(ctx, script_file_name, dry_run=dry_run, pty=True)
+
+
+@task
+def git_branch_diff_with_base(  # type: ignore
+    ctx, diff_type="", subdir="", dry_run=False
+):
+    """
+    Diff files of the current branch with master at the branching point.
+
+    :param diff_type: files to diff using git `--diff-filter` options
+    :param subdir: subdir to consider for diffing, instead of `.`
+    :param dry_run: execute diffing script or not
+    """
+    # Get the branching point.
+    dir_name = "."
+    hash_ = hgit.get_branch_hash(dir_name=dir_name)
+    #
+    tag = "base"
+    _git_diff_with_branch(ctx, hash_, tag, dir_name, diff_type, subdir, dry_run)
+
+
+@task
+def git_branch_diff_with_master(  # type: ignore
+    ctx, diff_type="", subdir="", dry_run=False
+):
+    """
+    Diff files of the current branch with origin/master.
+
+    :param diff_type: files to diff using git `--diff-filter` options
+    :param subdir: subdir to consider for diffing, instead of `.`
+    :param dry_run: execute diffing script or not
+    """
+    dir_name = "."
+    hash_ = "origin/master"
+    tag = "origin_master"
+    _git_diff_with_branch(ctx, hash_, tag, dir_name, diff_type, subdir, dry_run)
 
 
 # TODO(gp): Add the following scripts:
@@ -990,7 +1028,7 @@ def git_branch_diff_with_base(  # type: ignore
 
 # Integration good practices
 #
-# Concepts
+# ## Concepts
 #
 # - We have two dirs storing two forks of the same repo
 # - Files are touched, e.g., added, modified, deleted in each forks
@@ -1001,8 +1039,8 @@ def git_branch_diff_with_base(  # type: ignore
 #   we were touched in one branch but not the other
 #   - In this case we can simply copy the entire dir from one dir to the other
 # - Other times we need to integrate "by file"
-#
-# Preparation
+
+# ## Preparation
 #
 # - Pull master
 #
@@ -1016,19 +1054,18 @@ def git_branch_diff_with_base(  # type: ignore
 #
 # - Align `lib_tasks.py`
 #   ```
-#   > vimdiff ~/src/{amp1,cmamp1}/tasks.py
-#   > vimdiff ~/src/{amp1,cmamp1}/helpers/lib_tasks.py
+#   > vimdiff ~/src/{amp1,cmamp1}/tasks.py; vimdiff ~/src/{amp1,cmamp1}/helpers/lib_tasks.py
 #   ```
 #
 # - Create the integration branches
 #   ```
 #   > cd amp1
-#   > i integrate_create_branch amp1
+#   > i integrate_create_branch --dir-name amp1
 #   > cd cmamp1
-#   > i integrate_create_branch cmamp1
+#   > i integrate_create_branch --dir-name cmamp1
 #   ```
-#
-# Integration
+
+# ## Integration
 #
 # - Check what files were modified since the last integration in each fork
 #   ```
@@ -1049,15 +1086,20 @@ def git_branch_diff_with_base(  # type: ignore
 #   > i integrate_diff_dirs --subdir dataflow/system
 #   ```
 #
-# Double check
+# - Copy by dir
+#   ```
+#   > i integrate_diff_dirs --subdir market_data -c
+#   ```
+
+# ## Double check the integration
 #
 # - Check that the regressions are passing on GH
 #   ```
 #   > i gh_create_pr --no-draft
 #   ```
 #
-# - Check the files that were changed in both branches (i.e., the problematic ones)
-#   since the last integration and compare them to master
+# - Check the files that were changed in both branches (i.e., the "problematic ones")
+#   since the last integration and compare them to the base in each branch
 #   ```
 #   > cd amp1
 #   > i integrate_diff_overlapping_files --src-dir "amp1" --dst-dir "cmamp1"
@@ -1065,12 +1107,12 @@ def git_branch_diff_with_base(  # type: ignore
 #   > i integrate_diff_overlapping_files --src-dir "cmamp1" --dst-dir "amp1"
 #   ```
 #
-# - Quickly scan all the changes in the branch
+# - Quickly scan all the changes in the branch compared to the base
 #   ```
 #   > cd amp1
-#   > i git_branch_diff_with_base --src-dir "amp1" --dst-dir "cmamp1"
+#   > i git_branch_diff_with_base
 #   > cd cmamp1
-#   > i git_branch_diff_with_base --src-dir "cmamp1" --dst-dir "amp1"
+#   > i git_branch_diff_with_base
 #   ```
 
 
@@ -1176,12 +1218,12 @@ def integrate_diff_dirs(  # type: ignore
     dry_run=False,
 ):
     """
-    Integrate repos from dir `src_dir_name` to `dst_dir_name`.
-
-    We use default values for src / dst dirs to represent the usual set-up.
+    Integrate repos from dirs `src_dir_name` to `dst_dir_name` by diffing or copying
+    all the files with differences.
 
     ```
-    > i integrate_diff_dirs --subdir-name . --src-dir amp1 --dst-dir cmamp1
+    # Use the default values for src / dst dirs to represent the usual set-up.
+    > i integrate_diff_dirs --src-dir-name amp1 --dst-dir-name cmamp1 --subdir .
     ```
 
     :param copy: copy the files instead of diffing
@@ -1227,15 +1269,19 @@ def _find_files_touched_since_last_integration(
     """
     Return the list of files modified since the last integration.
 
+    :param dir_name: basename of the current dir
     :param abs_dir_name: directory to cd before executing this script
     :param subdir: consider only the files under `subdir`
     """
+    # TODO(gp): dir_name can be computed from abs_dir_name to simplify the interface.
     # Change the dir to the correct one.
     old_dir = os.getcwd()
     try:
         os.chdir(abs_dir_name)
         # Find the hash of all integration commits.
         cmd = "git log --date=local --oneline --date-order | grep AmpTask1786_Integrate"
+        # Remove integrations like "'... Merge branch 'master' into AmpTask1786_Integrate_20220113'"
+        cmd += " | grep -v \"Merge branch 'master' into \""
         _, txt = hsysinte.system_to_string(cmd)
         _LOG.debug("integration commits=\n%s", txt)
         txt = txt.split("\n")
@@ -1243,14 +1289,14 @@ def _find_files_touched_since_last_integration(
         # 72a1a101 AmpTask1786_Integrate_20211218 (#1975)
         # 2acfd6d7 AmpTask1786_Integrate_20211214 (#1950)
         # 318ab0ff AmpTask1786_Integrate_20211210 (#1933)
-        hdbg.dassert_lte(1, len(txt))
+        hdbg.dassert_lte(2, len(txt))
         print("# last_integration: '%s'" % txt[0])
         last_integration_hash = txt[0].split()[0]
-        _LOG.debug(hprint.to_str("last_integration_hash"))
+        print("* " + hprint.to_str("last_integration_hash"))
         # Find the first commit after the commit with the last integration.
         cmd = f"git log --oneline --reverse --ancestry-path {last_integration_hash}^..master"
         _, txt = hsysinte.system_to_string(cmd)
-        _LOG.debug("commits after last integration=\n%s", txt)
+        print(f"* commits after last integration=\n{txt}")
         txt = txt.split("\n")
         # > git log --oneline --reverse --ancestry-path 72a1a101^..master
         # 72a1a101 AmpTask1786_Integrate_20211218 (#1975)
@@ -1439,13 +1485,37 @@ def integrate_files(  # type: ignore
 
 
 @task
+def integrate_find_files(  # type: ignore
+    ctx,
+    subdir="",
+):
+    """
+    Find the files that are touched in the current branch since last integration.
+    """
+    _report_task()
+    _ = ctx
+    #
+    src_dir = os.path.basename(os.getcwd())
+    abs_src_dir = "."
+    abs_src_dir = os.path.normpath(abs_src_dir)
+    hdbg.dassert_dir_exists(abs_src_dir)
+    # Find the files touched in each branch since the last integration.
+    src_files = sorted(
+        _find_files_touched_since_last_integration(src_dir, abs_src_dir, subdir)
+    )
+    print("* Files touched:\n%s" % "\n".join(src_files))
+
+
+@task
 def integrate_diff_overlapping_files(  # type: ignore
-        ctx, src_dir, dst_dir, subdir=""):
+    ctx, src_dir, dst_dir, subdir=""
+):
     """
     Find the files modified in both branches `src_dir_name` and `dst_dir_name`
     Compare these files from HEAD to master version before the branch point.
 
-    This is used to check what changes were made to files modified by both branches.
+    This is used to check what changes were made to files modified by
+    both branches.
     """
     _report_task()
     _ = ctx
@@ -1556,7 +1626,7 @@ def _get_last_container_id(sudo: bool) -> str:
     # Get the last started container.
     cmd = f"{docker_exec} ps -l | grep -v 'CONTAINER ID'"
     # CONTAINER ID   IMAGE          COMMAND                  CREATED
-    # 90897241b31a   eeb33fe1880a   "/bin/sh -c '/bin/ba…"   34 hours ago ...
+    # 90897241b31a   eeb33fe1880a   "/bin/sh -c '/bin/baÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¦"   34 hours ago ...
     _, txt = hsysinte.system_to_one_line(cmd)
     # Parse the output: there should be at least one line.
     hdbg.dassert_lte(1, len(txt.split(" ")), "Invalid output='%s'", txt)
@@ -1818,6 +1888,31 @@ def _dassert_is_version_valid(version: str) -> None:
     hdbg.dassert(m, "Invalid version: '%s'", version)
 
 
+_IMAGE_VERSION_FROM_CHANGELOG = "FROM_CHANGELOG"
+
+
+def _resolve_version_value(version: str) -> str:
+    """
+    Pass a version (e.g., 1.0.0) or a symbolic value (e.g., FROM_CHANGELOG) and
+    return the resolved value of the version.
+    """
+    hdbg.dassert_isinstance(version, str)
+    if version == _IMAGE_VERSION_FROM_CHANGELOG:
+        version = hversio.get_changelog_version()
+    _dassert_is_version_valid(version)
+    return version
+
+
+def _dassert_is_subsequent_version(version: str) -> None:
+    """
+    Check that version is strictly bigger than the current one as specified in
+    the changelog.
+    """
+    if version != _IMAGE_VERSION_FROM_CHANGELOG:
+        current_version = hversio.get_changelog_version()
+        hdbg.dassert_lt(current_version, version)
+
+
 _INTERNET_ADDRESS_RE = r"([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
 _IMAGE_BASE_NAME_RE = r"[a-z0-9_-]+"
 _IMAGE_USER_RE = r"[a-z0-9_-]+"
@@ -1884,25 +1979,25 @@ def _get_base_image(base_image: str) -> str:
     return base_image
 
 
-def get_git_tag(
-    version: str,
-) -> str:
-    """
-    Return the tag to be used in Git that consists of an image name and
-    version.
-
-    :param version: e.g., `1.0.0`. If None, the latest version is used
-    :return: e.g., `amp-1.0.0`
-    """
-    hdbg.dassert_is_not(version, None)
-    _dassert_is_version_valid(version)
-    base_image = get_default_param("BASE_IMAGE")
-    tag_name = f"{base_image}-{version}"
-    return tag_name
+# This code path through Git tag was discontinued with CmTask746.
+# def get_git_tag(
+#      version: str,
+#  ) -> str:
+#      """
+#      Return the tag to be used in Git that consists of an image name and
+#      version.
+#      :param version: e.g., `1.0.0`. If None, the latest version is used
+#      :return: e.g., `amp-1.0.0`
+#      """
+#      hdbg.dassert_is_not(version, None)
+#      _dassert_is_version_valid(version)
+#      base_image = get_default_param("BASE_IMAGE")
+#      tag_name = f"{base_image}-{version}"
+#      return tag_name
 
 
 # TODO(gp): Consider using a token "latest" in version, so that it's always a
-# string and we avoid a special behavior encoded in None.
+#  string and we avoid a special behavior encoded in None.
 def get_image(
     base_image: str,
     stage: str,
@@ -2280,7 +2375,8 @@ def docker_build_local_image(  # type: ignore
     :param update_poetry: run poetry lock to update the packages
     """
     _report_task()
-    _dassert_is_version_valid(version)
+    _dassert_is_subsequent_version(version)
+    version = _resolve_version_value(version)
     # Update poetry.
     if update_poetry:
         cmd = "cd devops/docker_build; poetry lock -v"
@@ -2291,10 +2387,9 @@ def docker_build_local_image(  # type: ignore
     # Build the local image.
     image_local = get_image(base_image, "local", version)
     _dassert_is_image_name_valid(image_local)
-    # Tag the container with the current version of the code to keep them in
-    # sync.
-    git_tag_prefix = get_default_param("BASE_IMAGE")
-    container_version = get_git_tag(version)
+    # This code path through Git tag was discontinued with CmTask746.
+    # git_tag_prefix = get_default_param("BASE_IMAGE")
+    # container_version = get_git_tag(version)
     #
     dockerfile = "devops/docker_build/dev.Dockerfile"
     dockerfile = _to_abs_path(dockerfile)
@@ -2307,8 +2402,7 @@ def docker_build_local_image(  # type: ignore
     docker build \
         --progress=plain \
         {opts} \
-        --build-arg AM_CONTAINER_VERSION={container_version} \
-        --build-arg AM_IMAGE_NAME={git_tag_prefix} \
+        --build-arg AM_CONTAINER_VERSION={version} \
         --tag {image_local} \
         --file {dockerfile} \
         .
@@ -2332,7 +2426,7 @@ def docker_tag_local_image_as_dev(  # type: ignore
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     _report_task()
-    _dassert_is_version_valid(version)
+    version = _resolve_version_value(version)
     # Tag local image as versioned dev image (e.g., `dev-1.0.0`).
     image_versioned_local = get_image(base_image, "local", version)
     image_versioned_dev = get_image(base_image, "dev", version)
@@ -2343,10 +2437,6 @@ def docker_tag_local_image_as_dev(  # type: ignore
     image_dev = get_image(base_image, "dev", latest_version)
     cmd = f"docker tag {image_versioned_local} {image_dev}"
     _run(ctx, cmd)
-    # Tag the Git repo with the tag corresponding to the image, e.g., `amp-1.0.0`.
-    # TODO(gp): Should we add also the stage in the same format `amp:dev-1.0.0`?
-    tag_name = get_git_tag(version)
-    hgit.git_tag(tag_name)
 
 
 @task
@@ -2362,7 +2452,7 @@ def docker_push_dev_image(  # type: ignore
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     _report_task()
-    _dassert_is_version_valid(version)
+    version = _resolve_version_value(version)
     #
     docker_login(ctx)
     # Push Docker versioned tag.
@@ -2374,9 +2464,6 @@ def docker_push_dev_image(  # type: ignore
     image_dev = get_image(base_image, "dev", latest_version)
     cmd = f"docker push {image_dev}"
     _run(ctx, cmd, pty=True)
-    # Push Git tag.
-    tag_name = get_git_tag(version)
-    hgit.git_push_tag(tag_name)
 
 
 @task
@@ -2423,6 +2510,10 @@ def docker_release_dev_image(  # type: ignore
         update_poetry=update_poetry,
         version=version,
     )
+    # Run resolve after `docker_build_local_image` so that a proper check
+    # for subsequent version can be made in case `FROM_CHANGELOG` token
+    # is used.
+    version = _resolve_version_value(version)
     # 2) Run tests for the "local" image.
     if skip_tests:
         _LOG.warning("Skipping all tests and releasing")
@@ -2482,7 +2573,7 @@ def docker_build_prod_image(  # type: ignore
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     _report_task()
-    _dassert_is_version_valid(version)
+    version = _resolve_version_value(version)
     # Prepare `.dockerignore`.
     docker_ignore = ".dockerignore.prod"
     _prepare_docker_ignore(ctx, docker_ignore)
@@ -2532,7 +2623,7 @@ def docker_push_prod_image(  # type: ignore
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     _report_task()
-    _dassert_is_version_valid(version)
+    version = _resolve_version_value(version)
     #
     docker_login(ctx)
     # Push versioned tag.
@@ -2573,6 +2664,7 @@ def docker_release_prod_image(  # type: ignore
     :param push_to_repo: push the image to the repo_short_name
     """
     _report_task()
+    version = _resolve_version_value(version)
     # 1) Build prod image.
     docker_build_prod_image(ctx, cache=cache, version=version)
     # 2) Run tests.
@@ -3405,7 +3497,7 @@ def pytest_clean(ctx):  # type: ignore
     """
     _report_task()
     _ = ctx
-    import helpers.pytest_ as hpytest
+    import helpers.hpytest as hpytest
 
     hpytest.pytest_clean(".")
 
@@ -3997,7 +4089,7 @@ def _get_workflow_table() -> htable.TableType:
     # > gh run list
     # STATUS  NAME                                                        WORKFLOW    BRANCH                                                EVENT              ID          ELAPSED  AGE
     # X       Amp task1786 integrate 2021118 (#1857)                    Fast tests  master                                                push               1477484584  5m40s    23m
-    # ✓       Amp task1786 integrate 2021118 (#1857)                    Slow tests  master                                                push               1477484582  6m38s    23m
+    # ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ       Amp task1786 integrate 2021118 (#1857)                    Slow tests  master                                                push               1477484582  6m38s    23m
     # X       Merge branch 'master' into AmpTask1786_Integrate_2021118  Fast tests  AmpTask1786_Integrate_2021118                         pull_request       1477445218  5m52s    34m
     # pylint: enable=line-too-long
     # The output is tab separated, so convert it into CSV.
@@ -4078,7 +4170,7 @@ def gh_workflow_list(
             if status == "success":
                 print(f"Workflow '{workflow}' for '{branch_name}' is ok")
                 break
-            elif status == "failure":
+            elif status in ("failure", "startup_failure", "cancelled"):
                 _LOG.error(
                     "Workflow '%s' for '%s' is broken", workflow, branch_name
                 )
@@ -4092,7 +4184,7 @@ def gh_workflow_list(
                 print(f"# Log is in '{log_file_name}'")
                 # Run_fast_tests  Run fast tests  2021-12-19T00:19:38.3394316Z FAILED data
                 cmd = rf"grep 'Z FAILED ' {log_file_name}"
-                hsysinte.system(cmd, suppress_output=False)
+                hsysinte.system(cmd, suppress_output=False, abort_on_error=False)
                 break
             elif status == "":
                 # It's in progress.
@@ -4102,13 +4194,13 @@ def gh_workflow_list(
 
 
 @task
-def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
+def gh_workflow_run(ctx, branch="current_branch", workflows="all"):  # type: ignore
     """
     Run GH workflows in a branch.
     """
     _report_task(hprint.to_str("branch workflows"))
     # Get the branch name.
-    if branch == "branch":
+    if branch == "current_branch":
         branch_name = hgit.get_branch_name()
     elif branch == "master":
         branch_name = "master"
@@ -4127,8 +4219,6 @@ def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
         # gh workflow run fast_tests.yml --ref AmpTask1251_Update_GH_actions_for_amp
         cmd = f"gh workflow run {gh_test} --ref {branch_name}"
         _run(ctx, cmd)
-    #
-    gh_workflow_list(ctx, filter_by_branch=branch)
 
 
 def _get_repo_full_name_from_cmd(repo_short_name: str) -> Tuple[str, str]:
@@ -4583,7 +4673,7 @@ def _fix_group_permissions(dir_name: str, abort_on_error: bool) -> None:
         if is_dir:
             # pylint: disable=line-too-long
             # From https://www.gnu.org/software/coreutils/manual/html_node/Directory-Setuid-and-Setgid.html
-            # If a directory’s set-group-ID bit is set, newly created subfiles
+            # If a directoryÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂs set-group-ID bit is set, newly created subfiles
             # inherit the same group as the directory,
             # pylint: enable=line-too-long
             has_set_group_id = st_mode & stat.S_ISGID

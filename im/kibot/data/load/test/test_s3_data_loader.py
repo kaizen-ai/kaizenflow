@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-import helpers.unit_test as hunitest
+import helpers.hunit_test as hunitest
 import im.common.data.types as imcodatyp
 import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
 

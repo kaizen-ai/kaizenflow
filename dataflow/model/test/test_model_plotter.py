@@ -2,8 +2,8 @@ import logging
 
 import dataflow.model.model_plotter as dtfmomoplo
 import dataflow.model.test.test_model_evaluator as cdmttme
-import helpers.printing as hprint
-import helpers.unit_test as hunitest
+import helpers.hprint as hprint
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

@@ -5,10 +5,14 @@ import pandas as pd
 import psycopg2.errors as perrors
 import pytest
 
-import helpers.git as hgit
-import helpers.sql as hsql
-import helpers.unit_test as hunitest
-import im_v2.common.db.utils as imvcodbut
+import helpers.hgit as hgit
+import helpers.hsql as hsql
+import helpers.hunit_test as hunitest
+# TODO(gp): This is a problematic dependency, since helpers should not depende
+#  from im_v2. For tests we could be more forgiving, but it would be better to
+#  avoid. We should have and use a `TestDbHelper` that doesn't depend on IM
+#  in helpers.
+import im_v2.common.db.db_utils as imvcodbut
 
 _LOG = logging.getLogger(__name__)
 

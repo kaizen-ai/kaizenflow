@@ -27,7 +27,7 @@ from scipy.spatial.distance import cosine  # type: ignore
 
 import core.explore as coexplor
 import core.plotting as coplotti
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)

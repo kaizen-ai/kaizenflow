@@ -61,8 +61,8 @@ from typing import List
 
 import pandas as pd
 
-import helpers.dbg as hdbg
-import helpers.parser as hparser
+import helpers.hdbg as hdbg
+import helpers.hparser as hparser
 import im.app.services.file_path_generator_factory as imasfpgefa
 import im.app.services.loader_factory as imaselofa
 import im.app.services.sql_writer_factory as imasswrfa

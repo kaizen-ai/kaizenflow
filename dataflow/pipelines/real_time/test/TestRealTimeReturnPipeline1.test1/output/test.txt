@@ -7,7 +7,7 @@ config:
   load_prices:
     source_node_name: RealTimeDataSource
     source_node_kwargs:
-      market_data_interface: <market_data.market_data_interface.ReplayedTimeMarketDataInterface object>
+      market_data: <market_data.replayed_market_data.ReplayedMarketData object>
       period: last_5mins
       asset_id_col: asset_id
       multiindex_output: False
@@ -133,7 +133,7 @@ config:
   load_prices:
     source_node_name: RealTimeDataSource
     source_node_kwargs:
-      market_data_interface: <market_data.market_data_interface.ReplayedTimeMarketDataInterface object>
+      market_data: <market_data.replayed_market_data.ReplayedMarketData object>
       period: last_5mins
       asset_id_col: asset_id
       multiindex_output: False
@@ -259,7 +259,7 @@ config:
   load_prices:
     source_node_name: RealTimeDataSource
     source_node_kwargs:
-      market_data_interface: <market_data.market_data_interface.ReplayedTimeMarketDataInterface object>
+      market_data: <market_data.replayed_market_data.ReplayedMarketData object>
       period: last_5mins
       asset_id_col: asset_id
       multiindex_output: False

@@ -53,13 +53,6 @@ ARG AM_CONTAINER_VERSION
 ENV AM_CONTAINER_VERSION=$AM_CONTAINER_VERSION
 RUN echo "AM_CONTAINER_VERSION=$AM_CONTAINER_VERSION"
 
-# Pass the image name (e.g., `dev_tools`, `cmamp`) to the environment. 
-# This value together with the version is used to tag the Git tree of
-# the code in order to keep the code in sync with the container.
-ARG AM_IMAGE_NAME
-ENV AM_IMAGE_NAME=$AM_IMAGE_NAME
-RUN echo "AM_IMAGE_NAME=$AM_IMAGE_NAME"
-
 # TODO(gp): Is this needed?
 WORKDIR $APP_DIR
 

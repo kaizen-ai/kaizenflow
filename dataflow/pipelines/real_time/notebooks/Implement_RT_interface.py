@@ -25,8 +25,8 @@ import logging
 import amp.dataflow.pipelines.dataflow_example
 import pandas as pd
 
-import helpers.dbg as hdbg
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 
 hprint.config_notebook()
 
@@ -177,7 +177,7 @@ results[0][1]["df_out"]
 import core.dataflow.real_time as creatime
 
 # %%
-import helpers.datetime_ as hdateti
+import helpers.hdatetime as hdateti
 
 start_datetime = pd.Timestamp("2010-01-04 09:30:00", tz=hdateti.get_ET_tz())
 end_datetime = pd.Timestamp("2010-01-05 09:30:00", tz=hdateti.get_ET_tz())
@@ -225,7 +225,7 @@ len(result[1])
 # %%
 import pandas as pd
 
-import helpers.unit_test as hunitest
+import helpers.hunit_test as hunitest
 
 num_cols = 2
 seed = 42

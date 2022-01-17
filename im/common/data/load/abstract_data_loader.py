@@ -12,7 +12,7 @@ import pandas as pd
 import psycopg2
 import psycopg2.extensions as pexten
 
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 import im.common.data.types as imcodatyp
 
 

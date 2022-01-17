@@ -4,6 +4,7 @@ Import as:
 import dataflow.system.real_time_dag_adapter as dtfsrtdaad
 """
 
+from typing import Optional
 
 import pandas as pd
 
@@ -25,16 +26,19 @@ class RealTimeDagAdapter(dtfcore.DagAdapter):
         dag_builder: dtfcore.DagBuilder,
         portfolio: omportfo.AbstractPortfolio,
         prediction_col: str,
+        volatility_col: str,
+        period: str,
+        asset_id_col: str,
+        log_dir: Optional[str] = None,
     ):
-        market_data_interface = portfolio.market_data_interface
+        market_data = portfolio.market_data
         #
         overriding_config = cconfig.Config()
         # Configure a DataSourceNode.
-        period = "last_5mins"
         source_node_kwargs = {
-            "market_data_interface": market_data_interface,
+            "market_data": market_data,
             "period": period,
-            "asset_id_col": "asset_id",
+            "asset_id_col": asset_id_col,
             "multiindex_output": True,
         }
         overriding_config["load_prices"] = {
@@ -45,14 +49,14 @@ class RealTimeDagAdapter(dtfcore.DagAdapter):
         order_type = "price@twap"
         overriding_config["process_forecasts"] = {
             "prediction_col": prediction_col,
+            "volatility_col": volatility_col,
             "portfolio": portfolio,
-            "execution_mode": "real_time",
             "process_forecasts_config": {},
         }
         # We could also write the `process_forecasts_config` key directly but we
         # want to show a `Config` created with multiple pieces.
         overriding_config["process_forecasts"]["process_forecasts_config"] = {
-            "market_data_interface": market_data_interface,
+            "market_data": market_data,
             "order_type": order_type,
             "order_duration": 5,
             "ath_start_time": pd.Timestamp(
@@ -67,6 +71,8 @@ class RealTimeDagAdapter(dtfcore.DagAdapter):
             "trading_end_time": pd.Timestamp(
                 "2000-01-01 16:40:00-05:00", tz="America/New_York"
             ).time(),
+            "execution_mode": "real_time",
+            "log_dir": log_dir,
         }
         # Insert a node.
         nodes_to_insert = []

@@ -1,11 +1,10 @@
 import logging
-from typing import Any, List, Optional
 
 import pandas as pd
 import pytest
 
-import helpers.dbg as hdbg
-import helpers.unit_test as hunitest
+import helpers.hdbg as hdbg
+import helpers.hunit_test as hunitest
 
 # TODO(Dan): return to code after CmTask43 is fixed.
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
@@ -13,7 +12,7 @@ import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skip()
+@pytest.mark.skip(reason="CMTask961")
 class Test_CcxtExchange(hunitest.TestCase):
     def test_initialize_class(self) -> None:
         """
@@ -27,11 +26,12 @@ class Test_CcxtExchange(hunitest.TestCase):
         """
         # Extract a list of currencies.
         exchange_class = imvcdeexcl.CcxtExchange("binance")
-        curr_list = exchange_class.get_exchange_currencies()
+        curr_list = exchange_class.get_exchange_currency_pairs()
         # Verify that the output is a non-empty list with only string values.
         hdbg.dassert_container_type(curr_list, list, str)
         self.assertGreater(len(curr_list), 0)
 
+    @pytest.mark.slow()
     def test_download_ohlcv_data(self) -> None:
         """
         Test that historical data is being loaded correctly.
@@ -42,7 +42,7 @@ class Test_CcxtExchange(hunitest.TestCase):
         end_date = "2021-09-10T00:00:00Z"
         # Extract data.
         actual = exchange_class.download_ohlcv_data(
-            curr_symbol="BTC_USDT",
+            currency_pair="BTC/USDT",
             start_datetime=pd.Timestamp(start_date),
             end_datetime=pd.Timestamp(end_date),
         )
@@ -50,11 +50,11 @@ class Test_CcxtExchange(hunitest.TestCase):
         hdbg.dassert_isinstance(actual, pd.DataFrame)
         self.assertEqual(1500, actual.shape[0])
         # Verify column names.
-        exp_col_names = ["timestamp", "open", "high", "close", "volume"]
+        exp_col_names = ["timestamp", "open", "high", "low", "close", "volume", "created_at"]
         self.assertEqual(exp_col_names, actual.columns.to_list())
         # Verify types inside each column.
         col_types = [col_type.name for col_type in actual.dtypes]
-        exp_col_types = ["int64"] + ["float64"] * 5
+        exp_col_types = ['int64', 'float64', 'float64', 'float64', 'float64', 'float64', 'object']
         self.assertEqual(exp_col_types, col_types)
         # Verify corner datetimes if output is not empty.
         first_date = int(actual["timestamp"].iloc[0])

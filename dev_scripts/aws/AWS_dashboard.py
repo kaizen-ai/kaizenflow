@@ -21,9 +21,9 @@ import logging
 
 import pandas as pd
 
-import helpers.dbg as hdbg
-import helpers.printing as hprint
-import helpers.system_interaction as hsysinte
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
+import helpers.hsystem as hsysinte
 
 # %%
 hprint.config_notebook()

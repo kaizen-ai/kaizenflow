@@ -1,97 +1,45 @@
 """
 Import as:
 
-import im_v2.common.data.client.clients as ivcdclcl
+import im_v2.common.data.client.clients as imvcdclcl
 """
 
 import abc
 import logging
-import re
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-import helpers.datetime_ as hdateti
-import helpers.dbg as hdbg
+import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import helpers.printing as hprint
+import helpers.hprint as hprint
+import im_v2.common.data.client.full_symbol as imvcdcfusy
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): Move to symbol.py or full_symbol.py
-
-# Store information about an exchange and a symbol (e.g., `binance::BTC_USDT`).
-# Note that information about the vendor is carried in the `ImClient` itself,
-# i.e. using `CcxtImClient` serves data from CCXT.
-FullSymbol = str
-
-
-def dassert_is_full_symbol_valid(full_symbol: FullSymbol) -> None:
-    """
-    Check that full symbol has valid format, i.e. `exchange::symbol`.
-
-    Note: digits and special symbols (except underscore) are not allowed.
-    """
-    hdbg.dassert_isinstance(full_symbol, str)
-    hdbg.dassert_ne(full_symbol, "")
-    # Only letters and underscores are allowed.
-    # TODO(gp): I think we might need non-leading numbers.
-    letter_underscore_pattern = "[a-zA-Z_]"
-    # Exchanges and symbols must be separated by `::`.
-    regex_pattern = fr"{letter_underscore_pattern}*::{letter_underscore_pattern}*"
-    # Input full symbol must exactly match the pattern.
-    full_match = re.fullmatch(regex_pattern, full_symbol, re.IGNORECASE)
-    hdbg.dassert(
-        full_match,
-        msg=f"Incorrect full_symbol format {full_symbol}, must be `exchange::symbol`",
-    )
-
-
-def parse_full_symbol(full_symbol: FullSymbol) -> Tuple[str, str]:
-    """
-    Split a full_symbol into a tuple of exchange and symbol.
-
-    :return: exchange, symbol
-    """
-    dassert_is_full_symbol_valid(full_symbol)
-    exchange, symbol = full_symbol.split("::")
-    return exchange, symbol
-
-
-def construct_full_symbol(exchange: str, symbol: str) -> FullSymbol:
-    """
-    Combine exchange and symbol in `FullSymbol`.
-    """
-    hdbg.dassert_isinstance(exchange, str)
-    hdbg.dassert_ne(exchange, "")
-    #
-    hdbg.dassert_isinstance(symbol, str)
-    hdbg.dassert_ne(symbol, "")
-    #
-    full_symbol = f"{exchange}::{symbol}"
-    dassert_is_full_symbol_valid(full_symbol)
-    return full_symbol
-
 
 # #############################################################################
-# AbstractImClient
+# ImClient
 # #############################################################################
 
+# TODO(gp): Consider splitting in one file per class. Not sure about the trade-off
+#  between file proliferation and more organization.
 
-# TODO(gp): -> ImClient
-class AbstractImClient(abc.ABC):
+
+class ImClient(abc.ABC):
     """
     Retrieve market data for different vendors from different backends.
 
     Invariants:
     - data is normalized so that the index is a UTC timestamp
     - data is resampled on a 1min grid
-    - data has no duplicates
+    - data is guaranteed to have no duplicates
     """
 
     def read_data(
         self,
-        full_symbols: List[FullSymbol],
+        full_symbols: List[imvcdcfusy.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
@@ -99,7 +47,7 @@ class AbstractImClient(abc.ABC):
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
-        Read data in `[start_ts, end_ts)` for the symbols `FullSymbols`.
+        Read data in `[start_ts, end_ts)` for `imvcdcfusy.FullSymbol` symbols.
 
         ```
                                   full_symbol     close     volume
@@ -152,13 +100,16 @@ class AbstractImClient(abc.ABC):
         _LOG.debug("After sorting: df=\n%s", hprint.dataframe_to_str(df))
         return df
 
-    def get_start_ts_for_symbol(self, full_symbol: FullSymbol) -> pd.Timestamp:
+    def get_start_ts_for_symbol(
+        self, full_symbol: imvcdcfusy.FullSymbol
+    ) -> pd.Timestamp:
         """
-        Return the earliest timestamp available for a given `FullSymbol`.
+        Return the earliest timestamp available for a given
+        `imvcdcfusy.FullSymbol`.
 
-        This implementation relies on reading all the data and then finding the min.
-        Derived classes can override this method if there is a more efficient
-        way to get this information.
+        This implementation relies on reading all the data and then
+        finding the min. Derived classes can override this method if
+        there is a more efficient way to get this information.
         """
         _LOG.debug(hprint.to_str("full_symbol"))
         # Read data for the entire period of time available.
@@ -168,12 +119,15 @@ class AbstractImClient(abc.ABC):
         # Assume that the timestamp is always stored as index.
         start_ts = data.index.min()
         hdbg.dassert_isinstance(start_ts, pd.Timestamp)
-        # TODO(gp): Check that is UTC.
+        hdateti.dassert_has_specified_tz(start_ts, ["UTC"])
         return start_ts
 
-    def get_end_ts_for_symbol(self, full_symbol: FullSymbol) -> pd.Timestamp:
+    def get_end_ts_for_symbol(
+        self, full_symbol: imvcdcfusy.FullSymbol
+    ) -> pd.Timestamp:
         """
-        Return the latest timestamp available for a given `FullSymbol`.
+        Return the latest timestamp available for a given
+        `imvcdcfusy.FullSymbol`.
         """
         _LOG.debug(hprint.to_str("full_symbol"))
         # Read data for the entire period of time available.
@@ -183,12 +137,12 @@ class AbstractImClient(abc.ABC):
         # Assume that the timestamp is always stored as index.
         end_ts = data.index.max()
         hdbg.dassert_isinstance(end_ts, pd.Timestamp)
-        # TODO(gp): Check that is UTC.
+        hdateti.dassert_has_specified_tz(end_ts, ["UTC"])
         return end_ts
 
     @staticmethod
     @abc.abstractmethod
-    def get_universe() -> List[FullSymbol]:
+    def get_universe() -> List[imvcdcfusy.FullSymbol]:
         """
         Get universe as full symbols.
         """
@@ -197,7 +151,7 @@ class AbstractImClient(abc.ABC):
     @abc.abstractmethod
     def _read_data(
         self,
-        full_symbols: List[FullSymbol],
+        full_symbols: List[imvcdcfusy.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
@@ -207,7 +161,10 @@ class AbstractImClient(abc.ABC):
         ...
 
     @staticmethod
-    def _check_full_symbols(full_symbols: List[FullSymbol]) -> None:
+    def _check_full_symbols(full_symbols: List[imvcdcfusy.FullSymbol]) -> None:
+        """
+        Verify that full symbols are passed in a list that has no duplicates.
+        """
         hdbg.dassert_isinstance(full_symbols, list)
         hdbg.dassert_no_duplicates(full_symbols)
 
@@ -217,18 +174,32 @@ class AbstractImClient(abc.ABC):
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
     ) -> pd.DataFrame:
+        """
+        Apply normalizations to IM data.
+
+        Normalizations include:
+        - drop duplicates
+        - trim the data with index in specified date interval
+        - resample data to 1 min frequency
+
+        Data trimming is done because:
+        - some data sources can be only queried at day resolution so we get
+          the date range and then we trim
+        - we want to guarantee that nobody returns data outside the requested
+          interval
+        """
         _LOG.debug(hprint.to_str("start_ts end_ts"))
+        # Drop duplicates.
         df = hpandas.drop_duplicates(df)
-        df = hpandas.resample_df(df, "T")
         # Trim the data with index in [start_ts, end_ts].
-        if False:
-            # Instance of '2021-09-09T00:02:00.000000000' is '<class 'numpy.datetime64'>' instead of '(<class 'pandas._libs.tslibs.timestamps.Timestamp'>, <class 'datetime.datetime'>)'
-            ts_col_name = None
-            left_close = True
-            right_close = True
-            df = hpandas.trim_df(
-                df, ts_col_name, start_ts, end_ts, left_close, right_close
-            )
+        ts_col_name = None
+        left_close = True
+        right_close = True
+        df = hpandas.trim_df(
+            df, ts_col_name, start_ts, end_ts, left_close, right_close
+        )
+        # Resample index.
+        df = hpandas.resample_df(df, "T")
         return df
 
     @staticmethod
@@ -273,14 +244,14 @@ class AbstractImClient(abc.ABC):
 # #############################################################################
 
 
-class ImClientReadingOneSymbol(AbstractImClient, abc.ABC):
+class ImClientReadingOneSymbol(ImClient, abc.ABC):
     """
     Abstract IM client for a backend that can read one symbol at a time.
     """
 
     def _read_data(
         self,
-        full_symbols: List[FullSymbol],
+        full_symbols: List[imvcdcfusy.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
@@ -318,16 +289,16 @@ class ImClientReadingOneSymbol(AbstractImClient, abc.ABC):
     @abc.abstractmethod
     def _read_data_for_one_symbol(
         self,
-        full_symbol: FullSymbol,
+        full_symbol: imvcdcfusy.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
-        Read data for a single `FullSymbol` in [start_ts, end_ts).
+        Read data for a single `imvcdcfusy.FullSymbol` in [start_ts, end_ts).
 
-        Parameters have the same meaning as parameters in `read_data()` with
-        the same name.
+        Parameters have the same meaning as parameters in `read_data()`
+        with the same name.
         """
         ...
 
@@ -337,18 +308,19 @@ class ImClientReadingOneSymbol(AbstractImClient, abc.ABC):
 # #############################################################################
 
 
-class ImClientReadingMultipleSymbols(AbstractImClient, abc.ABC):
+class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
     """
     Abstract IM client for backend that can read multiple symbols at the same
     time.
 
-    This is used for reading data from Parquet by-date files, where multiple
-    assets are stored in the same file and can be accessed together.
+    This is used for reading data from Parquet by-date files, where
+    multiple assets are stored in the same file and can be accessed
+    together.
     """
 
     def _read_data(
         self,
-        full_symbols: List[FullSymbol],
+        full_symbols: List[imvcdcfusy.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
@@ -372,7 +344,7 @@ class ImClientReadingMultipleSymbols(AbstractImClient, abc.ABC):
     @abc.abstractmethod
     def _read_data_for_multiple_symbols(
         self,
-        full_symbols: List[FullSymbol],
+        full_symbols: List[imvcdcfusy.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         full_symbol_col_name: str,

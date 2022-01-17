@@ -3,7 +3,7 @@ import logging
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.pipelines.features.pipeline as dtfpifepip
-import helpers.unit_test as hunitest
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
