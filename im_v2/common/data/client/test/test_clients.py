@@ -6,7 +6,7 @@ import pandas as pd
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.client.ccxt_clients_example as ivcdcccex
-import im_v2.common.data.client.clients as imvcdclcl
+import im_v2.common.data.client as icdc
 
 
 def _check_output(
@@ -64,8 +64,8 @@ class ImClientTestCase(abc.ABC):
     @abc.abstractmethod
     def test_read_data1(
         self,
-        im_client: imvcdclcl.ImClient,
-        full_symbol: str,
+        im_client: icdc.ImClient,
+        full_symbol: icdc.FullSymbol,
         expected_length: int,
         expected_exchange_ids: List[str],
         expected_currency_pairs: List[str],
@@ -92,8 +92,8 @@ class ImClientTestCase(abc.ABC):
     @abc.abstractmethod
     def test_read_data2(
         self,
-        im_client: imvcdclcl.ImClient,
-        full_symbols: List[str],
+        im_client: icdc.ImClient,
+        full_symbols: List[icdc.FullSymbol],
         expected_length: int,
         expected_exchange_ids: List[str],
         expected_currency_pairs: List[str],
@@ -119,8 +119,8 @@ class ImClientTestCase(abc.ABC):
     @abc.abstractmethod
     def test_read_data3(
         self,
-        im_client: imvcdclcl.ImClient,
-        full_symbols: List[str],
+        im_client: icdc.ImClient,
+        full_symbols: List[icdc.FullSymbol],
         start_ts: pd.Timestamp,
         expected_length: int,
         expected_exchange_ids: List[str],
@@ -147,8 +147,8 @@ class ImClientTestCase(abc.ABC):
     @abc.abstractmethod
     def test_read_data4(
         self,
-        im_client: imvcdclcl.ImClient,
-        full_symbols: List[str],
+        im_client: icdc.ImClient,
+        full_symbols: List[icdc.FullSymbol],
         end_ts: pd.Timestamp,
         expected_length: int,
         expected_exchange_ids: List[str],
@@ -175,8 +175,8 @@ class ImClientTestCase(abc.ABC):
     @abc.abstractmethod
     def test_read_data5(
         self,
-        im_client: imvcdclcl.ImClient,
-        full_symbols: List[str],
+        im_client: icdc.ImClient,
+        full_symbols: List[icdc.FullSymbol],
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         expected_length: int,
@@ -202,8 +202,8 @@ class ImClientTestCase(abc.ABC):
     @abc.abstractmethod
     def test_get_start_ts_for_symbol1(
         self,
-        im_client: imvcdclcl.ImClient,
-        full_symbol: str,
+        im_client: icdc.ImClient,
+        full_symbol: icdc.FullSymbol,
         expected_start_ts: pd.Timestamp,
     ) -> None:
         """
@@ -215,8 +215,8 @@ class ImClientTestCase(abc.ABC):
     @abc.abstractmethod
     def test_get_end_ts_for_symbol1(
         self,
-        im_client: imvcdclcl.ImClient,
-        full_symbol: str,
+        im_client: icdc.ImClient,
+        full_symbol: icdc.FullSymbol,
         expected_end_ts: pd.Timestamp,
     ) -> None:
         """
