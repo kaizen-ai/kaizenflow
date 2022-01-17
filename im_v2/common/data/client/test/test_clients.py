@@ -238,6 +238,7 @@ class ImClientTestCase(abc.ABC):
         Test that the latest timestamp available is computed correctly.
         """
         actual_end_ts = im_client.get_end_ts_for_symbol(full_symbol)
+        # TODO(Grisha): use `assertGreater` when start downloading more data.
         self.assertEqual(actual_end_ts, expected_end_ts)
 
     @abc.abstractmethod
