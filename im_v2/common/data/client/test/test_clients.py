@@ -1,4 +1,3 @@
-import abc
 from typing import Any, List
 
 import pandas as pd
@@ -60,9 +59,8 @@ def _check_output(
 # #############################################################################
 
 
-class ImClientTestCase(abc.ABC):
-    @abc.abstractmethod
-    def test_read_data1(
+class ImClientTestCase(hunitest.TestCase):
+    def _test_read_data1(
         self,
         im_client: icdc.ImClient,
         full_symbol: icdc.FullSymbol,
@@ -89,8 +87,7 @@ class ImClientTestCase(abc.ABC):
             expected_signature,
         )
 
-    @abc.abstractmethod
-    def test_read_data2(
+    def _test_read_data2(
         self,
         im_client: icdc.ImClient,
         full_symbols: List[icdc.FullSymbol],
@@ -116,8 +113,7 @@ class ImClientTestCase(abc.ABC):
             expected_signature,
         )
 
-    @abc.abstractmethod
-    def test_read_data3(
+    def _test_read_data3(
         self,
         im_client: icdc.ImClient,
         full_symbols: List[icdc.FullSymbol],
@@ -144,8 +140,7 @@ class ImClientTestCase(abc.ABC):
             expected_signature,
         )
 
-    @abc.abstractmethod
-    def test_read_data4(
+    def _test_read_data4(
         self,
         im_client: icdc.ImClient,
         full_symbols: List[icdc.FullSymbol],
@@ -172,8 +167,7 @@ class ImClientTestCase(abc.ABC):
             expected_signature,
         )
 
-    @abc.abstractmethod
-    def test_read_data5(
+    def _test_read_data5(
         self,
         im_client: icdc.ImClient,
         full_symbols: List[icdc.FullSymbol],
@@ -199,8 +193,7 @@ class ImClientTestCase(abc.ABC):
             expected_signature,
         )
 
-    @abc.abstractmethod
-    def test_read_data6(
+    def _test_read_data6(
         self, im_client: icdc.ImClient, full_symbol: icdc.FullSymbol
     ) -> None:
         """
@@ -214,8 +207,7 @@ class ImClientTestCase(abc.ABC):
         with self.assertRaises(AssertionError):
             im_client.read_data(full_symbols, start_ts, end_ts)
 
-    @abc.abstractmethod
-    def test_get_start_ts_for_symbol1(
+    def _test_get_start_ts_for_symbol1(
         self,
         im_client: icdc.ImClient,
         full_symbol: icdc.FullSymbol,
@@ -227,8 +219,7 @@ class ImClientTestCase(abc.ABC):
         actual_start_ts = im_client.get_start_ts_for_symbol(full_symbol)
         self.assertEqual(actual_start_ts, expected_start_ts)
 
-    @abc.abstractmethod
-    def test_get_end_ts_for_symbol1(
+    def _test_get_end_ts_for_symbol1(
         self,
         im_client: icdc.ImClient,
         full_symbol: icdc.FullSymbol,
@@ -241,8 +232,7 @@ class ImClientTestCase(abc.ABC):
         # TODO(Grisha): use `assertGreater` when start downloading more data.
         self.assertEqual(actual_end_ts, expected_end_ts)
 
-    @abc.abstractmethod
-    def test_get_universe1(
+    def _test_get_universe1(
         self,
         im_client: icdc.ImClient,
         expected_length: int,
@@ -261,7 +251,7 @@ class ImClientTestCase(abc.ABC):
         self.assertEqual(actual_last_elements, expected_last_elements)
 
 
-class TestCcxtCsvClient1(ImClientTestCase, hunitest.TestCase):
+class TestCcxtCsvClient1(ImClientTestCase):
     def test_read_data1(self) -> None:
         """
         Test on a ".csv" file on the local filesystem.
@@ -290,7 +280,7 @@ class TestCcxtCsvClient1(ImClientTestCase, hunitest.TestCase):
         exchange_ids=binance
         currency_pairs=BTC_USDT"""
         # pylint: enable=line-too-long
-        super().test_read_data1(
+        self._test_read_data1(
             im_client,
             full_symbol,
             expected_length,
@@ -327,7 +317,7 @@ class TestCcxtCsvClient1(ImClientTestCase, hunitest.TestCase):
         exchange_ids=binance,kucoin
         currency_pairs=BTC_USDT,ETH_USDT"""
         # pylint: enable=line-too-long
-        super().test_read_data2(
+        self._test_read_data2(
             im_client,
             full_symbols,
             expected_length,
@@ -364,7 +354,7 @@ class TestCcxtCsvClient1(ImClientTestCase, hunitest.TestCase):
         exchange_ids=binance,kucoin
         currency_pairs=BTC_USDT,ETH_USDT"""
         # pylint: enable=line-too-long
-        super().test_read_data3(
+        self._test_read_data3(
             im_client,
             full_symbols,
             start_ts,
@@ -402,7 +392,7 @@ class TestCcxtCsvClient1(ImClientTestCase, hunitest.TestCase):
         exchange_ids=binance,kucoin
         currency_pairs=BTC_USDT,ETH_USDT"""
         # pylint: enable=line-too-long
-        super().test_read_data4(
+        self._test_read_data4(
             im_client,
             full_symbols,
             end_ts,
@@ -441,7 +431,7 @@ class TestCcxtCsvClient1(ImClientTestCase, hunitest.TestCase):
         exchange_ids=binance,kucoin
         currency_pairs=BTC_USDT,ETH_USDT"""
         # pylint: enable=line-too-long
-        super().test_read_data5(
+        self._test_read_data5(
             im_client,
             full_symbols,
             start_ts,
@@ -458,7 +448,7 @@ class TestCcxtCsvClient1(ImClientTestCase, hunitest.TestCase):
         """
         im_client = ivcdcccex.get_CcxtCsvClient_example1()
         full_symbol = "unsupported_exchange::unsupported_currency"
-        super().test_read_data6(im_client, full_symbol)
+        self._test_read_data6(im_client, full_symbol)
 
     def test_get_start_ts_for_symbol1(self) -> None:
         """
@@ -467,7 +457,7 @@ class TestCcxtCsvClient1(ImClientTestCase, hunitest.TestCase):
         im_client = ivcdcccex.get_CcxtCsvClient_example2()
         full_symbol = "binance::BTC_USDT"
         expected_start_ts = pd.to_datetime("2018-08-17 00:00:00", utc=True)
-        super().test_get_start_ts_for_symbol1(
+        self._test_get_start_ts_for_symbol1(
             im_client, full_symbol, expected_start_ts
         )
 
@@ -478,9 +468,7 @@ class TestCcxtCsvClient1(ImClientTestCase, hunitest.TestCase):
         im_client = ivcdcccex.get_CcxtCsvClient_example2()
         full_symbol = "binance::BTC_USDT"
         expected_end_ts = pd.to_datetime("2018-08-17 01:39:00", utc=True)
-        super().test_get_end_ts_for_symbol1(
-            im_client, full_symbol, expected_end_ts
-        )
+        self._test_get_end_ts_for_symbol1(im_client, full_symbol, expected_end_ts)
 
     def test_get_universe1(self) -> None:
         """
@@ -498,7 +486,7 @@ class TestCcxtCsvClient1(ImClientTestCase, hunitest.TestCase):
             "kucoin::SOL_USDT",
             "kucoin::XRP_USDT",
         ]
-        super().test_get_universe1(
+        self._test_get_universe1(
             im_client,
             expected_length,
             expected_first_elements,
