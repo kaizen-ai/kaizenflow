@@ -11,7 +11,8 @@ Use as:
     --dst_dir 'test/ccxt_test' \
     --data_type 'ohlcv' \
     --api_keys 'API_keys.json' \
-    --universe 'v03'
+    --universe 'v03' \
+    --db_stage 'dev'
 
 Import as:
 
@@ -34,24 +35,15 @@ import helpers.hparser as hparser
 import helpers.hsql as hsql
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import im_v2.ccxt.universe.universe as imvccunun
+import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(Danya): Replace with an `env` file (CMTask585).
-_DB_CREDENTIALS = {
-    "host": "172.30.2.212",
-    "dbname": "im_postgres_db_local",
-    "port": 5432,
-    "user": "aljsdalsd",
-    "password": "alsdkqoen",
-}
 
-
-# TODO(Danya): Move instantiation outside, e.g. into Airflow wrapper.
+# TODO(Danya): Move instantiation outside.
 def instantiate_exchange(
     exchange_id: str,
     ccxt_universe: Dict[str, List[str]],
-    api_keys: Optional[str] = None,
 ) -> NamedTuple:
     """
     Create a tuple with exchange id, its class instance and currency pairs.
@@ -65,7 +57,7 @@ def instantiate_exchange(
         ["id", "instance", "currency_pairs"],
     )
     exchange_to_currency.id = exchange_id
-    exchange_to_currency.instance = imvcdeexcl.CcxtExchange(exchange_id, api_keys)
+    exchange_to_currency.instance = imvcdeexcl.CcxtExchange(exchange_id)
     exchange_to_currency.currency_pairs = ccxt_universe[exchange_id]
     return exchange_to_currency
 
@@ -122,7 +114,7 @@ def _save_data_on_disk(
     :param dst_dir: directory to save to
     :param data: downloaded data
     :param exchange: exchange instance
-    :param pair: currency pair, e.g. 'BTC_USDT'
+    :param currency_pair: currency pair, e.g. 'BTC_USDT'
     """
     current_datetime = hdateti.get_current_time("ET")
     if data_type == "ohlcv":
@@ -178,18 +170,18 @@ def _parse() -> argparse.ArgumentParser:
         help="Type of data to load, 'ohlcv' or 'orderbook'",
     )
     parser.add_argument(
-        "--api_keys",
-        action="store",
-        type=str,
-        default=imvcdeexcl.API_KEYS_PATH,
-        help="Path to JSON file that contains API keys for exchange access",
-    )
-    parser.add_argument(
         "--universe",
         action="store",
         required=True,
         type=str,
         help="Trade universe to download data for",
+    )
+    parser.add_argument(
+        "--db_stage",
+        action="store",
+        required=True,
+        type=str,
+        help="DB stage to use",
     )
     parser.add_argument("--incremental", action="store_true")
     parser = hparser.add_verbosity_arg(parser)
@@ -202,7 +194,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Create the directory.
     hio.create_dir(args.dst_dir, incremental=args.incremental)
     # Connect to database.
-    connection = hsql.get_connection(**_DB_CREDENTIALS)
+    db_stage = args.db_stage
+    env_file = imvimlita.get_db_env_path(db_stage)
+    connection_params = hsql.get_connection_info_from_env_file(env_file)
+    connection = hsql.get_connection(*connection_params)
     # Load universe.
     universe = imvccunun.get_trade_universe(args.universe)
     exchange_ids = universe["CCXT"].keys()
@@ -210,7 +205,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     exchanges = []
     for exchange_id in exchange_ids:
         exchanges.append(
-            instantiate_exchange(exchange_id, universe["CCXT"], args.api_keys)
+            instantiate_exchange(exchange_id, universe["CCXT"])
         )
     # Construct table name.
     table_name = f"ccxt_{args.data_type}"

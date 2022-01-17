@@ -1,16 +1,16 @@
 # by_date=
 # Dir structure
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211230
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211230/data.parquet
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211231
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211231/data.parquet
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20220101
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20220101/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_date
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_date/date=20211230
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_date/date=20211230/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_date/date=20211231
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_date/date=20211231/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_date/date=20220101
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_date/date=20220101/data.parquet
 # File signatures
 len(file_names)=3
-file_names=$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211230/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211231/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20220101/data.parquet
-# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211230/data.parquet
+file_names=$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_date/date=20211230/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_date/date=20211231/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_date/date=20220101/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_date/date=20211230/data.parquet
 num_lines=67
 '''
 original shape=(72, 8)
@@ -81,7 +81,7 @@ Tail:
     }
 }
 '''
-# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20211231/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_date/date=20211231/data.parquet
 num_lines=67
 '''
 original shape=(72, 8)
@@ -152,7 +152,7 @@ Tail:
     }
 }
 '''
-# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_date/date=20220101/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_date/date=20220101/data.parquet
 num_lines=67
 '''
 original shape=(72, 8)
@@ -225,36 +225,36 @@ Tail:
 '''
 # by_asset=
 # Dir structure
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=A
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=A/data.parquet
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=B
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=B/data.parquet
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=C
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=C/data.parquet
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=A
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=A/data.parquet
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=B
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=B/data.parquet
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=C
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=C/data.parquet
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=A
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=A/data.parquet
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=B
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=B/data.parquet
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=C
-$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=C/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=30
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=A
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=A/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=B
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=B/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=C
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=C/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=31
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=A
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=A/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=B
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=B/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=C
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=C/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2022
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2022/month=1
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2022/month=1/day=1
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=A
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=A/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=B
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=B/data.parquet
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=C
+$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=C/data.parquet
 # File signatures
 len(file_names)=9
-file_names=$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=A/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=B/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=C/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=A/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=B/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=C/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=A/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=B/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=C/data.parquet
-# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=A/data.parquet
+file_names=$GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=A/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=B/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=C/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=A/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=B/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=C/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=A/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=B/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=C/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=A/data.parquet
 num_lines=61
 '''
 original shape=(24, 7)
@@ -319,7 +319,7 @@ Tail:
     }
 }
 '''
-# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=B/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=B/data.parquet
 num_lines=61
 '''
 original shape=(24, 7)
@@ -384,7 +384,7 @@ Tail:
     }
 }
 '''
-# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=C/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=30/ticker=C/data.parquet
 num_lines=61
 '''
 original shape=(24, 7)
@@ -449,7 +449,7 @@ Tail:
     }
 }
 '''
-# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=A/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=A/data.parquet
 num_lines=61
 '''
 original shape=(24, 7)
@@ -514,7 +514,7 @@ Tail:
     }
 }
 '''
-# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=B/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=B/data.parquet
 num_lines=61
 '''
 original shape=(24, 7)
@@ -579,7 +579,7 @@ Tail:
     }
 }
 '''
-# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=C/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2021/month=12/day=31/ticker=C/data.parquet
 num_lines=61
 '''
 original shape=(24, 7)
@@ -644,7 +644,7 @@ Tail:
     }
 }
 '''
-# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=A/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=A/data.parquet
 num_lines=61
 '''
 original shape=(24, 7)
@@ -709,7 +709,7 @@ Tail:
     }
 }
 '''
-# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=B/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=B/data.parquet
 num_lines=61
 '''
 original shape=(24, 7)
@@ -774,7 +774,7 @@ Tail:
     }
 }
 '''
-# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_daily_data2/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=C/data.parquet
+# $GIT_ROOT/im_v2/common/data/transform/test/TestPqByDateToByAsset1.test_command_line/tmp.scratch/by_asset/year=2022/month=1/day=1/ticker=C/data.parquet
 num_lines=61
 '''
 original shape=(24, 7)

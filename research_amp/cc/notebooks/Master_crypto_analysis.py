@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.0
+#       jupytext_version: 1.13.5
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -72,7 +72,6 @@ def get_eda_config() -> cconconf.Config:
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["close_price_col_name"] = "close"
-    config["data"]["data_type"] = "OHLCV"
     config["data"]["frequency"] = "T"
     # TODO(Grisha): use `hdateti.get_ET_tz()` once it is fixed.
     config["data"]["timezone"] = pytz.timezone("US/Eastern")
@@ -90,16 +89,21 @@ print(config)
 # # Load data
 
 # %%
-# TODO(Grisha): allow loading multiple assets/exchanges/currencies #219.
-
-# %%
-# TODO(Grisha): potentially read data from the db.
-ccxt_loader = imvcdcli.CcxtCsvFileSystemClient(
-    data_type=config["data"]["data_type"],
-    root_dir=config["load"]["data_dir"],
-    aws_profile=config["load"]["aws_profile"],
+root_dir = config["load"]["data_dir"]
+extension = "csv.gz"
+aws_profile = config["load"]["aws_profile"]
+ccxt_csv_client = imvcdcli.CcxtCsvParquetByAssetClient(
+    root_dir,
+    extension,
+    aws_profile=aws_profile,
 )
-ccxt_data = ccxt_loader.read_data("binance::BTC_USDT")
+start_ts = None
+end_ts = None
+ccxt_data = ccxt_csv_client.read_data(
+    ["binance::BTC_USDT"],
+    start_ts,
+    end_ts,
+)
 _LOG.info("shape=%s", ccxt_data.shape[0])
 ccxt_data.head(3)
 
