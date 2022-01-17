@@ -200,6 +200,21 @@ class ImClientTestCase(abc.ABC):
         )
 
     @abc.abstractmethod
+    def test_read_data6(
+        self, im_client: icdc.ImClient, full_symbol: icdc.FullSymbol
+    ) -> None:
+        """
+        Test:
+        - error is raised when an unsupported full symbol is provided
+        - start_ts = end_ts = None
+        """
+        full_symbols = [full_symbol]
+        start_ts = None
+        end_ts = None
+        with self.assertRaises(AssertionError):
+            im_client.read_data(full_symbols, start_ts, end_ts)
+
+    @abc.abstractmethod
     def test_get_start_ts_for_symbol1(
         self,
         im_client: icdc.ImClient,
@@ -435,6 +450,14 @@ class TestCcxtCsvPqByAssetClient1(ImClientTestCase, hunitest.TestCase):
             expected_currency_pairs,
             expected_signature,
         )
+
+    def test_read_data6(self) -> None:
+        """
+        Test on a ".csv.gz" file on the local filesystem.
+        """
+        im_client = ivcdcccex.get_CcxtCsvClient_example1()
+        full_symbol = "unsupported_exchange::unsupported_currency"
+        super().test_read_data6(im_client, full_symbol)
 
     def test_get_start_ts_for_symbol1(self) -> None:
         """
