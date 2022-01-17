@@ -112,14 +112,13 @@ def _process_chunk_adapter(
     parquet_file_names: List[str],
     asset_col_name: str,
     dst_dir: str,
-    incremental,
-    num_attempts,
+    incremental: bool,
+    num_attempts: int,
 ) -> None:
     """
     A wrapper around `process_chunk` to allow for joblib arguments.
     """
     _ = incremental, num_attempts
-    hdbg.dassert(incremental)
     _process_chunk(parquet_file_names, asset_col_name, dst_dir)
 
 
@@ -155,7 +154,7 @@ def _run(args: argparse.Namespace) -> None:
         )
         tasks.append(task)
     # Prepare the workload.
-    func_name = "_process_chunk_adapter"
+    func_name = "_process_chunk"
     workload = (_process_chunk_adapter, func_name, tasks)
     hjoblib.validate_workload(workload)
     # Parse command-line options.
