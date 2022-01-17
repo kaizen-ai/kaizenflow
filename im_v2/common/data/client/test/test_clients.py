@@ -260,12 +260,12 @@ class ImClientTestCase(abc.ABC):
         self.assertEqual(actual_last_elements, expected_last_elements)
 
 
-class TestCcxtCsvPqByAssetClient1(ImClientTestCase, hunitest.TestCase):
+class TestCcxtCsvClient1(ImClientTestCase, hunitest.TestCase):
     def test_read_data1(self) -> None:
         """
-        Test on a ".pq" file on the local filesystem.
+        Test on a ".csv" file on the local filesystem.
         """
-        im_client = ivcdcccex.get_CcxtParquetByAssetClient_example1()
+        im_client = ivcdcccex.get_CcxtCsvClient_example2()
         full_symbol = "binance::BTC_USDT"
         #
         expected_length = 100
