@@ -3,9 +3,13 @@ from typing import Any, List
 import pandas as pd
 
 import helpers.hprint as hprint
+import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.client.ccxt_clients_example as ivcdcccex
 import im_v2.common.data.client as icdc
+import im_v2.ccxt.db.utils as imvccdbut
+import im_v2.common.db.db_utils as imvcddbut
+import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 
 
 def _check_output(
@@ -745,3 +749,86 @@ class TestCcxtPqByAssetClient1(ImClientTestCase):
             expected_first_elements,
             expected_last_elements,
         )
+
+
+class TestCcxtDbClient1(ImClientTestCase, imvcddbut.TestImDbHelper):
+    def test_read_data2(self) -> None:
+        """
+        .
+        """
+        # Load test data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
+        #
+        im_client = imvcdccccl.CcxtDbClient(self.connection)
+        full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
+        #
+        expected_length = 8
+        expected_exchange_ids = ["binance"]
+        expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        df.index in [2021-09-09 00:00:00+00:00, 2021-09-09 00:04:00+00:00]
+        df.columns=close,currency_pair,exchange_id,full_symbol,high,low,open,volume
+        df.shape=(8, 8)
+                                   close currency_pair  exchange_id    full_symbol  high   low  open  volume
+        timestamp
+        2021-09-09 00:00:00+00:00   60.0      BTC_USDT  binance  binance::BTC_USDT  40.0  50.0  30.0    70.0
+        2021-09-09 00:01:00+00:00   61.0      BTC_USDT  binance  binance::BTC_USDT  41.0  51.0  31.0    71.0
+        2021-09-09 00:02:00+00:00   62.0      ETH_USDT  binance  binance::ETH_USDT  42.0  52.0  32.0    72.0
+        ...
+        2021-09-09 00:03:00+00:00    NaN           NaN      NaN                NaN   NaN   NaN   NaN     NaN
+        2021-09-09 00:04:00+00:00   64.0      BTC_USDT  binance  binance::BTC_USDT  44.0  54.0  34.0    74.0
+        2021-09-09 00:04:00+00:00   64.0      ETH_USDT  binance  binance::ETH_USDT  44.0  54.0  34.0    74.0
+        exchange_ids=binance
+        currency_pairs=BTC_USDT,ETH_USDT"""
+        # pylint: enable=line-too-long
+        self._test_read_data2(
+            im_client,
+            full_symbols,
+            expected_length,
+            expected_exchange_ids,
+            expected_currency_pairs,
+            expected_signature,
+        )
+
+    def _create_test_table(self) -> None:
+        """
+        Create a test CCXT OHLCV table in DB.
+        """
+        query = imvccdbut.get_ccxt_ohlcv_create_table_query()
+        self.connection.cursor().execute(query)
+
+    @staticmethod
+    def _get_test_data() -> pd.DataFrame:
+        """
+        Create a test CCXT OHLCV dataframe.
+        """
+        test_data = pd.DataFrame(
+            columns=[
+                "id",
+                "timestamp",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "currency_pair",
+                "exchange_id",
+                "created_at",
+            ],
+            # fmt: off
+            # pylint: disable=line-too-long
+            data=[
+                [1, 1631145600000, 30, 40, 50, 60, 70, "BTC_USDT", "binance", pd.Timestamp("2021-09-09")],
+                [2, 1631145660000, 31, 41, 51, 61, 71, "BTC_USDT", "binance", pd.Timestamp("2021-09-09")],
+                [3, 1631145720000, 32, 42, 52, 62, 72, "ETH_USDT", "binance", pd.Timestamp("2021-09-09")],
+                [4, 1631145840000, 34, 44, 54, 64, 74, "BTC_USDT", "binance", pd.Timestamp("2021-09-09")],
+                [5, 1631145840000, 34, 44, 54, 64, 74, "ETH_USDT", "binance", pd.Timestamp("2021-09-09")],
+            ]
+            # pylint: enable=line-too-long
+            # fmt: on
+        )
+        return test_data
