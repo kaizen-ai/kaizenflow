@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import helpers.printing as hprint
-import helpers.unit_test as hunitest
+import helpers.hprint as hprint
+import helpers.hunit_test as hunitest
 import oms.pnl_simulator as opnlsimu
 
 _LOG = logging.getLogger(__name__)

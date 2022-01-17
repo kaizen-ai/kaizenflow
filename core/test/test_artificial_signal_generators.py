@@ -3,8 +3,8 @@ import logging
 import pandas as pd
 
 import core.artificial_signal_generators as carsigen
-import helpers.printing as hprint
-import helpers.unit_test as hunitest
+import helpers.hprint as hprint
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

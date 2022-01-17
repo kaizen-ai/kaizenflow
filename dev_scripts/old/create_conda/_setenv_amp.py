@@ -39,7 +39,7 @@ import dev_scripts._bootstrap as boot  # isort:skip # noqa: E402
 boot.bootstrap(_AMP_REL_PATH)
 
 # pylint: disable=wrong-import-position
-import helpers.dbg as hdbg  # isort:skip # noqa: E402
+import helpers.hdbg as hdbg  # isort:skip # noqa: E402
 import helpers.user_credentials as usc  # isort:skip # noqa: E402
 import _setenv_lib as selib  # isort:skip # noqa: E402 # type: ignore
 

@@ -10,7 +10,7 @@ import logging
 
 import pandas as pd
 
-import helpers.sql as hsql
+import helpers.hsql as hsql
 
 _LOG = logging.getLogger(__name__)
 

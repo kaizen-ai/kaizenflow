@@ -6,7 +6,7 @@ import pandas as pd
 
 import core.artificial_signal_generators as carsigen
 import core.covariance_shrinkage as ccovshri
-import helpers.unit_test as hunitest
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

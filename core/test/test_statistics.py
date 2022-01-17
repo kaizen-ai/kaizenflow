@@ -17,9 +17,9 @@ import core.artificial_signal_generators as carsigen
 import core.finance as cofinanc
 import core.signal_processing as csigproc
 import core.statistics as costatis
-import helpers.io_ as hio
-import helpers.printing as hprint
-import helpers.unit_test as hunitest
+import helpers.hio as hio
+import helpers.hprint as hprint
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

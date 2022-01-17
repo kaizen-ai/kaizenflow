@@ -3,8 +3,8 @@ import os
 
 import pandas as pd
 
-import helpers.csv_helpers as hcsv
-import helpers.unit_test as hunitest
+import helpers.hcsv as hcsv
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

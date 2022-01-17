@@ -5,9 +5,9 @@ from typing import Any, List, Optional, Union
 
 import pytest
 
-import helpers.joblib_helpers as hjoblib
-import helpers.printing as hprint
-import helpers.unit_test as hunitest
+import helpers.hjoblib as hjoblib
+import helpers.hprint as hprint
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 

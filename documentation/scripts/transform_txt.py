@@ -33,8 +33,8 @@ import argparse
 import logging
 import re
 
-import helpers.dbg as dbg
-import helpers.parser as prsr
+import helpers.hdbg as dbg
+import helpers.hparser as prsr
 
 _LOG = logging.getLogger(__name__)
 

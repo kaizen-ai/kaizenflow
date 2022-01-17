@@ -33,10 +33,10 @@ import os
 
 import core.config as cconfig
 import dataflow as cdataf
-import helpers.dbg as hdbg
-import helpers.env as henv
-import helpers.pickle_ as hpickle
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.henv as henv
+import helpers.hpickle as hpickle
+import helpers.hprint as hprint
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)

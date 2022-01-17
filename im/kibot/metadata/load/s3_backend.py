@@ -11,8 +11,8 @@ from typing import List, Optional
 import pandas as pd
 
 import core.pandas_helpers as cpanh
-import helpers.dbg as hdbg
-import helpers.s3 as hs3
+import helpers.hdbg as hdbg
+import helpers.hs3 as hs3
 import im.kibot.data.config as imkidacon
 import im.kibot.metadata.config as imkimecon
 

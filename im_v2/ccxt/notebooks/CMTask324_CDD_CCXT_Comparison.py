@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.3
+#       jupytext_version: 1.13.5
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -22,13 +22,14 @@ import os
 import pandas as pd
 
 import core.config.config_ as cconconf
-import helpers.dbg as hdbg
-import helpers.env as henv
-import helpers.printing as hprint
-import helpers.s3 as hs3
-import im.cryptodatadownload.data.load.loader as imcdalolo
-import im_v2.ccxt.data.client.clients as imvcdclcl
+import helpers.hdbg as hdbg
+import helpers.henv as henv
+import helpers.hprint as hprint
+import helpers.hs3 as hs3
+import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 import im_v2.ccxt.universe.universe as imvccunun
+import im_v2.common.data.client as icdc
+import im_v2.cryptodatadownload.data.client.cdd_client as imcdaclcd
 import research_amp.cc.statistics as ramccsta
 
 # %%
@@ -181,10 +182,8 @@ currency_pair_intersection_binance = set(ccxt_binance_universe).intersection(
 
 # %%
 cdd_data = []
-data_type_cdd = config_cdd["data"]["data_type"]
-root_dir_cdd = config_cdd["load"]["data_dir"]
-cdd_loader = imcdalolo.CddLoader(
-    data_type_cdd, root_dir_cdd, aws_profile=config_cdd["load"]["aws_profile"]
+cdd_loader = imcdaclcd.CddClient(
+    data_type="ohlcv", root_dir=root_dir, aws_profile="am"
 )
 
 for full_symbol in currency_pair_intersection_binance:
@@ -197,53 +196,17 @@ display(cdd_binance_df.head(3))
 display(cdd_binance_df.shape)
 
 # %%
-data_type_ccxt = config_ccxt["data"]["data_type"]
-root_dir_ccxt = config_ccxt["load"]["data_dir"]
-ccxt_csv_client = imvcdclcl.CcxtCsvFileSystemClient(
-    data_type_ccxt, root_dir_ccxt, aws_profile=config_ccxt["load"]["aws_profile"]
+# TODO(Grisha): @max make sure that the notebook runs end-to-end #905.
+extension = "csv.gz"
+ccxt_csv_client = imvcdccccl.CcxtCsvParquetByAssetClient(
+    root_dir, extension, aws_profile="am"
 )
-
 start_ts = None
 end_ts = None
 ccxt_binance_df = ccxt_csv_client.read_data(
-    list(currency_pair_intersection_binance), start_ts, end_ts
-)
-
-# %%
-display(ccxt_binance_df.head(3))
-display(ccxt_binance_df.shape)
-
-# %% [markdown]
-# # Returns and correlations using 'compute_stats_for_universe'
-
-# %% [markdown]
-# The approach below shows the snippet of using the __compute_stats_for_universe__ function to compute the stats in the loop.
-
-# %%
-# Create the test list.
-test_list = list(currency_pair_intersection_binance)[:2]
-test_list
-
-
-# %%
-# Load 'CDD' data with resampling.
-# The function below is designed to resample the data in the loop using compute_stats_for_universe.
-def resampling_func(price_data, config, resampling_freq):
-    price_data = price_data.reset_index()
-    resampler = price_data.groupby(
-        ["currency_pair", pd.Grouper(key="timestamp", freq=resampling_freq)]
-    )
-    close_series = resampler.close.last()
-    close_series = close_series.reset_index()
-    return close_series
-
-
-# %%
-# Applying the function specified above to the loop.
-resample_data = lambda data: resampling_func(data, config_ccxt, "1D")
-
-ccxt_resampled_close = ramccsta.compute_stats_for_universe(
-    test_list, config_ccxt, resample_data
+    list(currency_pair_intersection_binance),
+    start_ts,
+    end_ts,
 )
 
 # %%

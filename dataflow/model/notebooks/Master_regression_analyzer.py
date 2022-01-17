@@ -28,8 +28,8 @@ import seaborn as sns
 import core.statistics as costatis
 import dataflow.model.regression_analyzer as dtfmoreana
 import dataflow.model.utils as dtfmodutil
-import helpers.dbg as hdbg
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)

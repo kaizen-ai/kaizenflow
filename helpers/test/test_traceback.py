@@ -1,17 +1,14 @@
 import logging
 from typing import List
 
-import pytest
-
-import helpers.dbg as hdbg
-import helpers.printing as hprint
-import helpers.traceback_helper as htraceb
-import helpers.unit_test as hunitest
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
+import helpers.htraceback as htraceb
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skip(reason="See cryptomtc/cmamp#321")
 class Test_Traceback1(hunitest.TestCase):
     def test_parse1(self) -> None:
         """
@@ -264,16 +261,16 @@ class Test_Traceback1(hunitest.TestCase):
     #   File "/Users/saggese/src/lem1/amp/tasks.py", line 8, in <module>
     #     from helpers.lib_tasks import set_default_params  # This is not an invoke target.
     #   File "/Users/saggese/src/lem1/amp/helpers/lib_tasks.py", line 23, in <module>
-    #     import helpers.git as hgit
+    #     import helpers.hgit as hgit
     #   File "/Users/saggese/src/lem1/amp/helpers/git.py", line 16, in <module>
-    #     import helpers.system_interaction as hsysinte
+    #     import helpers.hsystem as hsysinte
     #   File "/Users/saggese/src/lem1/amp/helpers/system_interaction.py", line 529
     #     signature2 = _compute_file_signature(file_name, dir_depth)
     #     ^
     # SyntaxError: invalid syntax
     # Traceback (most recent call last):
     #   File "/Users/saggese/src/lem1/amp/dev_scripts/tg.py", line 21, in <module>
-    #     import helpers.system_interaction as hsysinte
+    #     import helpers.hsystem as hsysinte
     #   File "/Users/saggese/src/lem1/amp/helpers/system_interaction.py", line 529
     #     signature2 = _compute_file_signature(file_name, dir_depth)
     #     ^
@@ -282,8 +279,8 @@ class Test_Traceback1(hunitest.TestCase):
     # Bug2:
     # Traceback (most recent call last):
     #   File "/app/amp/dataflow/pipelines/real_time/test/test_dataflow_amp_real_time_pipeline.py", line 46, in test1
-    #     ) = mdmdinex.get_replayed_time_market_data_interface_example2(
-    # TypeError: get_replayed_time_market_data_interface_example2() got an unexpected keyword argument 'df'
+    #     ) = mdmdinex.get_ReplayedTimeMarketData_example2(
+    # TypeError: get_ReplayedTimeMarketData_example2() got an unexpected keyword argument 'df'
     #
     # 13:34:45 INFO  traceback_to_cfile  : _main                         : 76  : in_file_name=log.txt
     # 13:34:45 INFO  parser              : read_file                     : 304 : Reading from 'log.txt'
@@ -306,7 +303,7 @@ class Test_Traceback1(hunitest.TestCase):
     # Traceback (most recent call last):
     #   File "/app/amp/market_data/test/test_market_data_client.py", line 46, in test1
     #     data = market_data_client.get_data_for_interval(
-    #   File "/app/amp/market_data/market_data_interface.py", line 212, in get_data_for_interval
+    #   File "/app/amp/market_data/market_data.py", line 212, in get_data_for_interval
     #     df = self._get_data(
     #   File "/app/amp/market_data/market_data_client.py", line 93, in _get_data
     #     market_data["start_ts"] = market_data["end_ts"] - pd.Timedelta(

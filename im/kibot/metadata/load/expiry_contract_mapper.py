@@ -8,7 +8,7 @@ import functools
 import re
 from typing import Iterable, Tuple
 
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 
 
 class ExpiryContractMapper:

@@ -25,7 +25,7 @@ import statsmodels.tsa.stattools as smtools
 
 import core.config.config_ as cconconf
 import core.plotting as coplotti
-import helpers.s3 as hs3
+import helpers.hs3 as hs3
 import im_v2.ccxt.universe.universe as imvccunun
 import research_amp.cc.statistics as ramccsta
 
