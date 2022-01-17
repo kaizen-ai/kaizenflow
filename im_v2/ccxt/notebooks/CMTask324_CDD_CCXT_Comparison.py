@@ -28,11 +28,8 @@ import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 import im_v2.ccxt.universe.universe as imvccunun
-<<<<<<< HEAD
-=======
 import im_v2.common.data.client as icdc
 import im_v2.cryptodatadownload.data.client.cdd_client as imcdaclcd
->>>>>>> master
 import research_amp.cc.statistics as ramccsta
 
 # %%
