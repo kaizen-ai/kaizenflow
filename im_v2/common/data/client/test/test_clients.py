@@ -225,6 +225,25 @@ class ImClientTestCase(abc.ABC):
         actual_end_ts = im_client.get_end_ts_for_symbol(full_symbol)
         self.assertEqual(actual_end_ts, expected_end_ts)
 
+    @abc.abstractmethod
+    def test_get_universe1(
+        self,
+        im_client: icdc.ImClient,
+        expected_length: int,
+        expected_first_elements: List[icdc.FullSymbol],
+        expected_last_elements: List[icdc.FullSymbol],
+    ) -> None:
+        """
+        Test that universe is computed correctly.
+        """
+        universe = im_client.get_universe()
+        actual_length = len(universe)
+        actual_first_elements = universe[:3]
+        actual_last_elements = universe[-3:]
+        self.assertEqual(actual_length, expected_length)
+        self.assertEqual(actual_first_elements, expected_first_elements)
+        self.assertEqual(actual_last_elements, expected_last_elements)
+
 
 class TestCcxtCsvPqByAssetClient1(ImClientTestCase, hunitest.TestCase):
     def test_read_data1(self) -> None:
@@ -437,4 +456,27 @@ class TestCcxtCsvPqByAssetClient1(ImClientTestCase, hunitest.TestCase):
         expected_end_ts = pd.to_datetime("2018-08-17 01:39:00", utc=True)
         super().test_get_end_ts_for_symbol1(
             im_client, full_symbol, expected_end_ts
+        )
+
+    def test_get_universe1(self) -> None:
+        """
+        Test on a ".csv" file on the local filesystem.
+        """
+        im_client = ivcdcccex.get_CcxtCsvClient_example2()
+        expected_length = 38
+        expected_first_elements = [
+            "binance::ADA_USDT",
+            "binance::AVAX_USDT",
+            "binance::BNB_USDT",
+        ]
+        expected_last_elements = [
+            "kucoin::LINK_USDT",
+            "kucoin::SOL_USDT",
+            "kucoin::XRP_USDT",
+        ]
+        super().test_get_universe1(
+            im_client,
+            expected_length,
+            expected_first_elements,
+            expected_last_elements,
         )
