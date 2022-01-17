@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.0
+#       jupytext_version: 1.13.5
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -56,7 +56,6 @@ def get_cmtask260_config() -> cconconf.Config:
     config["load"]["data_dir"] = os.path.join(hs3.get_path(), "data")
     # Data parameters.
     config.add_subconfig("data")
-    config["data"]["data_type"] = "OHLCV"
     config["data"]["universe_version"] = "v03"
     config["data"]["vendor"] = "CCXT"
     # Column names.
@@ -157,15 +156,23 @@ def get_initial_df_with_volumes(coins, exchange, is_notional_volume):
     Parameters: list of coins, exchange name
     """
     result = []
-    loader = imvcdcli.CcxtCsvFileSystemClient(
-        data_type="OHLCV",
-        root_dir=os.path.join(hs3.get_path(), "data"),
-        aws_profile="am",
+    root_dir = os.path.join(hs3.get_path(), "data")
+    extension = "csv.gz"
+    ccxt_csv_client = imvcdcli.CcxtCsvParquetByAssetClient(
+        root_dir,
+        extension,
+        aws_profile=config["load"]["aws_profile"],
     )
     for coin in coins:
         # TODO(Grisha): use `FullSymbols` #587.
         full_symbol = f"{exchange}::{coin}"
-        df = loader.read_data(full_symbol)
+        start_ts = None
+        end_ts = None
+        df = ccxt_csv_client.read_data(
+            [full_symbol],
+            start_ts,
+            end_ts,
+        )
         if is_notional_volume:
             df["volume"] = df["volume"] * df["close"]
         result.append(df["volume"])
