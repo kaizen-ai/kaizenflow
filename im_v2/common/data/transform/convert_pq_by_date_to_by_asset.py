@@ -48,7 +48,7 @@ import im_v2.common.data.transform.convert_pq_by_date_to_by_asset as imvcdtcpbdt
 import argparse
 import logging
 import os
-from typing import Any, Dict, List
+from typing import List
 
 import numpy as np
 
@@ -78,15 +78,20 @@ def _get_parquet_filenames(src_dir: str) -> List[str]:
     return src_pq_files
 
 
-# TODO(Nikola): CMTask812
-def _process_chunk(**config: Dict[str, Any]) -> None:
+def _process_chunk(
+    parquet_file_names: List[str], asset_col_name: str, dst_dir: str
+) -> None:
     """
     Process a chunk of work corresponding to multiple Parquet files.
 
-    Read the files in "chunk", partition using days and assets and
-    writes into dst_dir.
+    Read the files in chunks, partition using days/assets and
+    write into dst_dir.
+
+    :param parquet_file_names: names of .parquet files
+    :param asset_col_name: name of the column with asset data
+    :param dst_dir:
     """
-    for daily_pq_filename in config["parquet_file_names"]:
+    for daily_pq_filename in parquet_file_names:
         # Read Parquet df.
         df = hparque.from_parquet(daily_pq_filename)
         _LOG.debug("before df=\n%s", hprint.dataframe_to_str(df.head(3)))
@@ -98,11 +103,23 @@ def _process_chunk(**config: Dict[str, Any]) -> None:
         _LOG.debug("after df=\n%s", hprint.dataframe_to_str(reindexed_df.head(3)))
         # Partition.
         imvcdttrut.add_date_partition_cols(reindexed_df, "day")
-        asset_col_name = config["asset_col_name"]
         partition_cols = ["year", "month", "day", asset_col_name]
         # Write.
-        dst_dir = config["dst_dir"]
         imvcdttrut.partition_dataset(reindexed_df, partition_cols, dst_dir)
+
+
+def _process_chunk_adapter(
+    parquet_file_names: List[str],
+    asset_col_name: str,
+    dst_dir: str,
+    incremental: bool,
+    num_attempts: int,
+) -> None:
+    """
+    A wrapper around `process_chunk` to allow for joblib arguments.
+    """
+    _ = incremental, num_attempts
+    _process_chunk(parquet_file_names, asset_col_name, dst_dir)
 
 
 # TODO(gp): We might want to use a config to pass a set of params related to each
@@ -138,7 +155,7 @@ def _run(args: argparse.Namespace) -> None:
         tasks.append(task)
     # Prepare the workload.
     func_name = "_process_chunk"
-    workload = (_process_chunk, func_name, tasks)
+    workload = (_process_chunk_adapter, func_name, tasks)
     hjoblib.validate_workload(workload)
     # Parse command-line options.
     dry_run = args.dry_run
