@@ -752,9 +752,52 @@ class TestCcxtPqByAssetClient1(ImClientTestCase):
 
 
 class TestCcxtDbClient1(ImClientTestCase, imvcddbut.TestImDbHelper):
+    def test_read_data1(self) -> None:
+        """
+        Verify that data from DB is read correctly.
+        """
+        # Load test data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
+        #
+        im_client = imvcdccccl.CcxtDbClient(self.connection)
+        full_symbol = "binance::BTC_USDT"
+        #
+        expected_length = 5
+        expected_exchange_ids = ["binance"]
+        expected_currency_pairs = ["BTC_USDT"]
+        # pylint: disable=line-too-long
+        expected_signature = r"""# df=
+        df.index in [2021-09-09 00:00:00+00:00, 2021-09-09 00:04:00+00:00]
+        df.columns=close,currency_pair,exchange_id,full_symbol,high,low,open,volume
+        df.shape=(5, 8)
+                                   close currency_pair exchange_id        full_symbol  high   low  open  volume
+        timestamp                                                                                              
+        2021-09-09 00:00:00+00:00   60.0      BTC_USDT     binance  binance::BTC_USDT  40.0  50.0  30.0    70.0
+        2021-09-09 00:01:00+00:00   61.0      BTC_USDT     binance  binance::BTC_USDT  41.0  51.0  31.0    71.0
+        2021-09-09 00:02:00+00:00    NaN           NaN         NaN                NaN   NaN   NaN   NaN     NaN
+        ...
+        2021-09-09 00:02:00+00:00    NaN           NaN         NaN                NaN   NaN   NaN   NaN     NaN
+        2021-09-09 00:03:00+00:00    NaN           NaN         NaN                NaN   NaN   NaN   NaN     NaN
+        2021-09-09 00:04:00+00:00   64.0      BTC_USDT     binance  binance::BTC_USDT  44.0  54.0  34.0    74.0
+        exchange_ids=binance
+        currency_pairs=BTC_USDT"""
+        # pylint: enable=line-too-long
+        self._test_read_data1(
+            im_client,
+            full_symbol,
+            expected_length,
+            expected_exchange_ids,
+            expected_currency_pairs,
+            expected_signature,
+        )
+        # Delete the table.
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
+
     def test_read_data2(self) -> None:
         """
-        .
+        Verify that data from DB is read correctly.
         """
         # Load test data.
         self._create_test_table()
@@ -792,6 +835,201 @@ class TestCcxtDbClient1(ImClientTestCase, imvcddbut.TestImDbHelper):
             expected_exchange_ids,
             expected_currency_pairs,
             expected_signature,
+        )
+        # Delete the table.
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
+
+    def test_read_data3(self) -> None:
+        """
+        Verify that data from DB is read correctly.
+        """
+        # Load test data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
+        #
+        im_client = imvcdccccl.CcxtDbClient(self.connection)
+        full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
+        start_ts = pd.Timestamp("2021-09-09T00:02:00-00:00")
+        #
+        expected_length = 4
+        expected_exchange_ids = ["binance"]
+        expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
+        # pylint: disable=line-too-long
+        expected_signature = r"""# df=
+        df.index in [2021-09-09 00:02:00+00:00, 2021-09-09 00:04:00+00:00]
+        df.columns=close,currency_pair,exchange_id,full_symbol,high,low,open,volume
+        df.shape=(4, 8)
+                                   close currency_pair exchange_id        full_symbol  high   low  open  volume
+        timestamp                                                                                              
+        2021-09-09 00:02:00+00:00   62.0      ETH_USDT     binance  binance::ETH_USDT  42.0  52.0  32.0    72.0
+        2021-09-09 00:03:00+00:00    NaN           NaN         NaN                NaN   NaN   NaN   NaN     NaN
+        2021-09-09 00:04:00+00:00   64.0      BTC_USDT     binance  binance::BTC_USDT  44.0  54.0  34.0    74.0
+        ...
+        2021-09-09 00:03:00+00:00    NaN           NaN         NaN                NaN   NaN   NaN   NaN     NaN
+        2021-09-09 00:04:00+00:00   64.0      BTC_USDT     binance  binance::BTC_USDT  44.0  54.0  34.0    74.0
+        2021-09-09 00:04:00+00:00   64.0      ETH_USDT     binance  binance::ETH_USDT  44.0  54.0  34.0    74.0
+        exchange_ids=binance
+        currency_pairs=BTC_USDT,ETH_USDT"""
+        # pylint: enable=line-too-long
+        self._test_read_data3(
+            im_client,
+            full_symbols,
+            start_ts,
+            expected_length,
+            expected_exchange_ids,
+            expected_currency_pairs,
+            expected_signature,
+        )
+        # Delete the table.
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
+
+    def test_read_data4(self) -> None:
+        """
+        Verify that data from DB is read correctly.
+        """
+        # Load test data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
+        #
+        im_client = imvcdccccl.CcxtDbClient(self.connection)
+        full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
+        end_ts = pd.Timestamp("2021-09-09T00:04:00-00:00")
+        #
+        expected_length = 3
+        expected_exchange_ids = ["binance"]
+        expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
+        # pylint: disable=line-too-long
+        expected_signature = r"""# df=
+        df.index in [2021-09-09 00:00:00+00:00, 2021-09-09 00:02:00+00:00]
+        df.columns=close,currency_pair,exchange_id,full_symbol,high,low,open,volume
+        df.shape=(3, 8)
+                                   close currency_pair exchange_id        full_symbol  high   low  open  volume
+        timestamp                                                                                              
+        2021-09-09 00:00:00+00:00   60.0      BTC_USDT     binance  binance::BTC_USDT  40.0  50.0  30.0    70.0
+        2021-09-09 00:01:00+00:00   61.0      BTC_USDT     binance  binance::BTC_USDT  41.0  51.0  31.0    71.0
+        2021-09-09 00:02:00+00:00   62.0      ETH_USDT     binance  binance::ETH_USDT  42.0  52.0  32.0    72.0
+        exchange_ids=binance
+        currency_pairs=BTC_USDT,ETH_USDT"""
+        # pylint: enable=line-too-long
+        self._test_read_data4(
+            im_client,
+            full_symbols,
+            end_ts,
+            expected_length,
+            expected_exchange_ids,
+            expected_currency_pairs,
+            expected_signature,
+        )
+        # Delete the table.
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
+
+    def test_read_data5(self) -> None:
+        """
+        Verify that data from DB is read correctly.
+        """
+        # Load test data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
+        #
+        im_client = imvcdccccl.CcxtDbClient(self.connection)
+        full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
+        start_ts = pd.Timestamp("2021-09-09T00:01:00-00:00")
+        end_ts = pd.Timestamp("2021-09-09T00:04:00-00:00")
+        #
+        expected_length = 2
+        expected_exchange_ids = ["binance"]
+        expected_currency_pairs = ["BTC_USDT", "ETH_USDT"]
+        # pylint: disable=line-too-long
+        expected_signature = r"""# df=
+        df.index in [2021-09-09 00:01:00+00:00, 2021-09-09 00:02:00+00:00]
+        df.columns=close,currency_pair,exchange_id,full_symbol,high,low,open,volume
+        df.shape=(2, 8)
+                                   close currency_pair exchange_id        full_symbol  high   low  open  volume
+        timestamp                                                                                              
+        2021-09-09 00:01:00+00:00   61.0      BTC_USDT     binance  binance::BTC_USDT  41.0  51.0  31.0    71.0
+        2021-09-09 00:02:00+00:00   62.0      ETH_USDT     binance  binance::ETH_USDT  42.0  52.0  32.0    72.0
+        exchange_ids=binance
+        currency_pairs=BTC_USDT,ETH_USDT"""
+        # pylint: enable=line-too-long
+        self._test_read_data5(
+            im_client,
+            full_symbols,
+            start_ts,
+            end_ts,
+            expected_length,
+            expected_exchange_ids,
+            expected_currency_pairs,
+            expected_signature,
+        )
+        # Delete the table.
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
+
+    def test_read_data6(self) -> None:
+        """
+        Test on a DB.
+        """
+        im_client = imvcdccccl.CcxtDbClient(self.connection)
+        full_symbol = "unsupported_exchange::unsupported_currency"
+        self._test_read_data6(im_client, full_symbol)
+
+    def test_get_start_ts_for_symbol1(self) -> None:
+        """
+        Verify that data from DB is read correctly.
+        """
+        # Load test data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
+        #
+        im_client = imvcdccccl.CcxtDbClient(self.connection)
+        full_symbol = "binance::BTC_USDT"
+        expected_start_ts = pd.to_datetime("2021-09-09 00:00:00", utc=True)
+        self._test_get_start_ts_for_symbol1(
+            im_client, full_symbol, expected_start_ts
+        )
+        # Delete the table.
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
+
+    def test_get_end_ts_for_symbol1(self) -> None:
+        """
+        Verify that data from DB is read correctly.
+        """
+        # Load test data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
+        #
+        im_client = imvcdccccl.CcxtDbClient(self.connection)
+        full_symbol = "binance::BTC_USDT"
+        expected_end_ts = pd.to_datetime("2021-09-09 00:04:00", utc=True)
+        self._test_get_end_ts_for_symbol1(im_client, full_symbol, expected_end_ts)
+        # Delete the table.
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
+
+    def test_get_universe1(self) -> None:
+        """
+        Test on a ".pq" file on the local filesystem.
+        """
+        im_client = imvcdccccl.CcxtDbClient(self.connection)
+        expected_length = 38
+        expected_first_elements = [
+            "binance::ADA_USDT",
+            "binance::AVAX_USDT",
+            "binance::BNB_USDT",
+        ]
+        expected_last_elements = [
+            "kucoin::LINK_USDT",
+            "kucoin::SOL_USDT",
+            "kucoin::XRP_USDT",
+        ]
+        self._test_get_universe1(
+            im_client,
+            expected_length,
+            expected_first_elements,
+            expected_last_elements,
         )
 
     def _create_test_table(self) -> None:
