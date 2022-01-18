@@ -276,7 +276,7 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
                 **kwargs,
             )
             # Normalize data.
-            df = self._apply_vendor_normalization(df)
+            df = self._apply_crypto_normalization(df)
             # Insert column with full symbol to the dataframe.
             hdbg.dassert_is_not(full_symbol_col_name, df.columns)
             df.insert(0, full_symbol_col_name, full_symbol)
@@ -338,7 +338,7 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         df = self._read_data_for_multiple_symbols(
             full_symbols, start_ts, end_ts, full_symbol_col_name, **kwargs
         )
-        df = self._apply_vendor_normalization(df)
+        df = self._apply_crypto_normalization(df)
         return df
 
     @abc.abstractmethod

@@ -26,6 +26,9 @@ _LATEST_DATA_SNAPSHOT = "20210924"
 
 
 class CryptoClient(icdc.ImClient, abc.ABC):
+    def __init__(self, vendor):
+        self._vendor = vendor
+
     def _apply_crypto_normalization(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         See description in the parent class.
@@ -47,19 +50,75 @@ class CryptoClient(icdc.ImClient, abc.ABC):
         ```
         """
         # Apply common transformations.
-        data = self._apply_vendor_transformations(df)
+        if self._vendor == "CCXT":
+            data = self._apply_ccxt_transformations(df)
+        elif self._vendor == "CDD":
+            data = self._apply_cdd_transformations(df)
+        else:
+            raise ValueError(f"Unsopported vendor {self._vendor}")
         # Apply transformations specific of the type of data.
         data = self._apply_ohlcv_transformations(data)
         # Sort transformed data by exchange id and currency pair columns.
         data = data.sort_values(by=["exchange_id", "currency_pair"])
         return data
 
+    def get_universe(self) -> List[icdc.FullSymbol]:
+        """
+        Return CCXT universe as full symbols.
+        """
+        universe = imvccunun.get_vendor_universe(vendor=self._vendor)
+        return universe  # type: ignore[no-any-return]
+
     @staticmethod
-    @abc.abstractmethod
-    def _apply_vendor_transformations(data: pd.DataFrame) -> pd.DataFrame:
+    def _apply_ccxt_transformations(data: pd.DataFrame) -> pd.DataFrame:
         """
-        ...
+        Apply transformations common to all CCXT data.
         """
+        # Verify that the timestamp data is provided in ms.
+        hdbg.dassert_container_type(
+            data["timestamp"], container_type=None, elem_type=int
+        )
+        # Transform Unix epoch into UTC timestamp.
+        data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms", utc=True)
+        # Set timestamp as index.
+        data = data.set_index("timestamp")
+        return data
+
+    @staticmethod
+    def _apply_cdd_transformations(
+        data: pd.DataFrame,
+    ) -> pd.DataFrame:
+        """
+        Apply transform common to all CDD data.
+
+        This includes:
+        - Datetime format assertion
+        - Converting string dates to UTC `pd.Timestamp`
+        - Removing full duplicates
+        - Resampling to 1 minute using NaNs
+        - Name volume and currency pair columns properly
+        - Adding exchange_id and currency_pair columns
+
+        :param data: raw data from S3
+        :return: transformed CDD data
+        """
+        # Verify that the Unix data is provided in ms.
+        hdbg.dassert_container_type(
+            data["unix"], container_type=None, elem_type=int
+        )
+        # Rename col with original Unix ms epoch.
+        data = data.rename({"unix": "epoch"}, axis=1)
+        # Transform Unix epoch into UTC timestamp.
+        data["timestamp"] = pd.to_datetime(data["epoch"], unit="ms", utc=True)
+        # Rename col with traded volume in amount of the 1st currency in pair.
+        # data = data.rename(
+        #     {"Volume " + currency_pair.split("_")[0]: "volume"}, axis=1
+        # )
+        # Rename col with currency pair.
+        data = data.rename({"symbol": "currency_pair"}, axis=1)
+        # Add a col with exchange id.
+        # data["exchange_id"] = exchange_id
+        return data
 
     @staticmethod
     def _apply_ohlcv_transformations(data: pd.DataFrame) -> pd.DataFrame:
@@ -82,92 +141,12 @@ class CryptoClient(icdc.ImClient, abc.ABC):
         return data
 
 
-class CddClient(CryptoClient, abc.ABC):
-    @staticmethod
-    def _apply_vendor_transformations(
-        data: pd.DataFrame,
-    ) -> pd.DataFrame:
-        """
-        Apply transform common to all CDD data.
-
-        This includes:
-        - Datetime format assertion
-        - Converting string dates to UTC `pd.Timestamp`
-        - Removing full duplicates
-        - Resampling to 1 minute using NaNs
-        - Name volume and currency pair columns properly
-        - Adding exchange_id and currency_pair columns
-
-        :param data: raw data from S3
-        :param exchange_id: CDD exchange id, e.g. "binance"
-        :param currency_pair: currency pair, e.g. "BTC_USDT"
-        :return: transformed CDD data
-        """
-        # Verify that the Unix data is provided in ms.
-        hdbg.dassert_container_type(
-            data["unix"], container_type=None, elem_type=int
-        )
-        # Rename col with original Unix ms epoch.
-        data = data.rename({"unix": "epoch"}, axis=1)
-        # Transform Unix epoch into UTC timestamp.
-        data["timestamp"] = pd.to_datetime(data["epoch"], unit="ms", utc=True)
-        # Rename col with traded volume in amount of the 1st currency in pair.
-        data = data.rename(
-            {"Volume " + currency_pair.split("_")[0]: "volume"}, axis=1
-        )
-        # Rename col with currency pair.
-        data = data.rename({"symbol": "currency_pair"}, axis=1)
-        # Add a col with exchange id.
-        data["exchange_id"] = exchange_id
-        return data
-
-# #############################################################################
-# CcxtClient
-# #############################################################################
-
-
-# TODO(gp): Consider splitting this file into chunks
-
-
-class CcxtClient(CryptoClient, abc.ABC):
-    """
-    Abstract interface for CCXT client.
-
-    Contain common code for all the CCXT clients, e.g.,
-    - getting CCXT universe
-    - applying common transformation for all the data from CCXT
-        - E.g., `_apply_olhlcv_transformations()`, `_apply_vendor_normalization()`
-    """
-    @staticmethod
-    def get_universe() -> List[icdc.FullSymbol]:
-        """
-        Return CCXT universe as full symbols.
-        """
-        universe = imvccunun.get_vendor_universe(vendor="CCXT")
-        return universe  # type: ignore[no-any-return]
-
-    @staticmethod
-    def _apply_vendor_transformations(data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Apply transformations common to all CCXT data.
-        """
-        # Verify that the timestamp data is provided in ms.
-        hdbg.dassert_container_type(
-            data["timestamp"], container_type=None, elem_type=int
-        )
-        # Transform Unix epoch into UTC timestamp.
-        data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms", utc=True)
-        # Set timestamp as index.
-        data = data.set_index("timestamp")
-        return data
-
-
 # #############################################################################
 # CcxtDbClient
 # #############################################################################
 
 # TODO(Grisha): it should descend from `ImClientReadingMultipleSymbols`.
-class CcxtDbClient(CcxtClient, icdc.ImClientReadingOneSymbol):
+class CcxtDbClient(CryptoClient, icdc.ImClientReadingOneSymbol):
     """
     CCXT client for data from the database.
     """
@@ -183,6 +162,7 @@ class CcxtDbClient(CcxtClient, icdc.ImClientReadingOneSymbol):
 
         :param connection: connection for a SQL database
         """
+        super().__init__(self._vendor)
         self._connection = connection
 
     def _read_data_for_one_symbol(
@@ -195,7 +175,7 @@ class CcxtDbClient(CcxtClient, icdc.ImClientReadingOneSymbol):
         """
         Same as parent class.
         """
-        table_name = "ccxt_ohlcv"
+        table_name = self._vendor + "_ohlcv"
         # Verify that table with specified name exists.
         hdbg.dassert_in(table_name, hsql.get_table_names(self._connection))
         # Initialize SQL query.
@@ -225,74 +205,8 @@ class CcxtDbClient(CcxtClient, icdc.ImClientReadingOneSymbol):
 # CcxtFileSystemClient
 # #############################################################################
 
-class CddCsvParquetByAssetClient(CddClient, icdc.ImClientReadingOneSymbol):
-    def __init__(
-        self,
-        root_dir: str,
-        extension: str,
-        *,
-        aws_profile: Optional[str] = None,
-        data_snapshot: Optional[str] = None,
-    ) -> None:
-        """
-        Load CCXT data from local or S3 filesystem.
 
-        :param root_dir: either a local root path (e.g., "/app/im") or
-            an S3 root path (e.g., "s3://alphamatic-data/data") to CCXT data
-        :param extension: file extension, e.g., `.csv`, `.csv.gz` or `.parquet`
-        :param aws_profile: AWS profile name (e.g., "am")
-        :param data_snapshot: snapshot of datetime when data was loaded,
-            e.g. "20210924"
-        """
-        self._root_dir = root_dir
-        # Verify that extension does not start with "." and set parameter.
-        hdbg.dassert(
-            not extension.startswith("."),
-            "The extension %s should not start with '.'" % extension,
-        )
-        self._extension = extension
-        self._data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
-        # Set s3fs parameter value if aws profile parameter is specified.
-        if aws_profile:
-            self._s3fs = hs3.get_s3fs(aws_profile)
-
-    def _get_file_path(
-        self,
-        data_snapshot: str,
-        exchange_id: str,
-        currency_pair: str,
-    ) -> str:
-        """
-        Get the absolute path to a file with CDD data.
-
-        The file path is constructed in the following way:
-        `<root_dir>/cryptodatadownload/<snapshot>/<exchange_id>/<currency_pair>.csv.gz`.
-
-        :param data_snapshot: snapshot of datetime when data was loaded,
-            e.g. "20210924"
-        :param exchange_id: CDD exchange id, e.g. "binance"
-        :param currency_pair: currency pair `<currency1>_<currency2>`,
-            e.g. "BTC_USDT"
-        :return: absolute path to a file with CDD data
-        """
-        # Get absolute file path.
-        file_name = currency_pair + self._extension
-        file_path = os.path.join(
-            self._root_dir,
-            "cryptodatadownload",
-            data_snapshot,
-            exchange_id,
-            file_name,
-        )
-        # TODO(Dan): Remove asserts below after CMTask108 is resolved.
-        # Verify that the file exists.
-        if hs3.is_s3_path(file_path):
-            hs3.dassert_s3_exists(file_path, self._s3fs)
-        else:
-            hdbg.dassert_file_exists(file_path)
-        return file_path
-
-class CcxtCsvParquetByAssetClient(CcxtClient, icdc.ImClientReadingOneSymbol):
+class CryptoCsvParquetByAssetClient(CryptoClient, icdc.ImClientReadingOneSymbol):
     """
     CCXT client that reads CSV or Parquet file storing data for a single asset.
 
@@ -305,7 +219,6 @@ class CcxtCsvParquetByAssetClient(CcxtClient, icdc.ImClientReadingOneSymbol):
 
     def __init__(
         self,
-        vendor: str,
         root_dir: str,
         extension: str,
         *,
@@ -322,7 +235,7 @@ class CcxtCsvParquetByAssetClient(CcxtClient, icdc.ImClientReadingOneSymbol):
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
         """
-        self._vendor = vendor
+        super().__init__(self._vendor)
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
