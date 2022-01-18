@@ -204,7 +204,7 @@ class ImClient(abc.ABC):
 
     @staticmethod
     @abc.abstractmethod
-    def _apply_vendor_normalization(df: pd.DataFrame) -> pd.DataFrame:
+    def _apply_crypto_normalization(df: pd.DataFrame) -> pd.DataFrame:
         """
         Apply transformation specific of the vendor, e.g. rename columns,
         convert data types.

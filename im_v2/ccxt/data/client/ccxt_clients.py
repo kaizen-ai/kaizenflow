@@ -25,45 +25,41 @@ _LOG = logging.getLogger(__name__)
 _LATEST_DATA_SNAPSHOT = "20210924"
 
 
-# #############################################################################
-# CcxtClient
-# #############################################################################
-
-
-# TODO(gp): Consider splitting this file into chunks
-
-
-class CcxtClient(icdc.ImClient, abc.ABC):
-    """
-    Abstract interface for CCXT client.
-
-    Contain common code for all the CCXT clients, e.g.,
-    - getting CCXT universe
-    - applying common transformation for all the data from CCXT
-        - E.g., `_apply_olhlcv_transformations()`, `_apply_vendor_normalization()`
-    """
-    @staticmethod
-    def get_universe() -> List[icdc.FullSymbol]:
+class CryptoClient(icdc.ImClient, abc.ABC):
+    def _apply_crypto_normalization(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Return CCXT universe as full symbols.
-        """
-        universe = imvccunun.get_vendor_universe(vendor="CCXT")
-        return universe  # type: ignore[no-any-return]
+        See description in the parent class.
 
-    @staticmethod
-    def _apply_ccxt_transformations(data: pd.DataFrame) -> pd.DataFrame:
+        Input data is indexed with numbers and looks like:
+        ```
+             timestamp      open     high     low      close    volume    currency_pair exchange_id
+        0    1631145600000  3499.01  3499.49  3496.17  3496.36  346.4812  ETH_USDT      binance
+        1    1631145660000  3496.36  3501.59  3495.69  3501.59  401.9576  ETH_USDT      binance
+        2    1631145720000  3501.59  3513.10  3499.89  3513.09  579.5656  ETH_USDT      binance
+        ```
+
+        Output data is indexed by timestamp and looks like:
+        ```
+                                   open        currency_pair exchange_id
+        2021-09-08 20:00:00-04:00  3499.01 ... ETH_USDT      binance
+        2021-09-08 20:01:00-04:00  3496.36     ETH_USDT      binance
+        2021-09-08 20:02:00-04:00  3501.59     ETH_USDT      binance
+        ```
         """
-        Apply transformations common to all CCXT data.
-        """
-        # Verify that the timestamp data is provided in ms.
-        hdbg.dassert_container_type(
-            data["timestamp"], container_type=None, elem_type=int
-        )
-        # Transform Unix epoch into UTC timestamp.
-        data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms", utc=True)
-        # Set timestamp as index.
-        data = data.set_index("timestamp")
+        # Apply common transformations.
+        data = self._apply_vendor_transformations(df)
+        # Apply transformations specific of the type of data.
+        data = self._apply_ohlcv_transformations(data)
+        # Sort transformed data by exchange id and currency pair columns.
+        data = data.sort_values(by=["exchange_id", "currency_pair"])
         return data
+
+    @staticmethod
+    @abc.abstractmethod
+    def _apply_vendor_transformations(data: pd.DataFrame) -> pd.DataFrame:
+        """
+        ...
+        """
 
     @staticmethod
     def _apply_ohlcv_transformations(data: pd.DataFrame) -> pd.DataFrame:
@@ -85,33 +81,86 @@ class CcxtClient(icdc.ImClient, abc.ABC):
         data = data[ohlcv_columns]
         return data
 
-    def _apply_vendor_normalization(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        See description in the parent class.
 
-        Input data is indexed with numbers and looks like:
-        ```
-             timestamp      open     high     low      close    volume    currency_pair exchange_id
-        0    1631145600000  3499.01  3499.49  3496.17  3496.36  346.4812  ETH_USDT      binance
-        1    1631145660000  3496.36  3501.59  3495.69  3501.59  401.9576  ETH_USDT      binance
-        2    1631145720000  3501.59  3513.10  3499.89  3513.09  579.5656  ETH_USDT      binance
-        ```
-
-        Output data is indexed by timestamp and looks like:
-        ```
-                                   open        currency_pair exchange_id
-        2021-09-08 20:00:00-04:00  3499.01 ... ETH_USDT      binance
-        2021-09-08 20:01:00-04:00  3496.36     ETH_USDT      binance
-        2021-09-08 20:02:00-04:00  3501.59     ETH_USDT      binance
-        ```
+class CddClient(CryptoClient, abc.ABC):
+    def _apply_common_transformation(
+        self, data: pd.DataFrame, exchange_id: str, currency_pair: str
+    ) -> pd.DataFrame:
         """
-        # Apply common transformations.
-        data = self._apply_ccxt_transformations(df)
-        # Apply transformations specific of the type of data.
-        data = self._apply_ohlcv_transformations(data)
-        # Sort transformed data by exchange id and currency pair columns.
-        data = data.sort_values(by=["exchange_id", "currency_pair"])
+        Apply transform common to all CDD data.
+
+        This includes:
+        - Datetime format assertion
+        - Converting string dates to UTC `pd.Timestamp`
+        - Removing full duplicates
+        - Resampling to 1 minute using NaNs
+        - Name volume and currency pair columns properly
+        - Adding exchange_id and currency_pair columns
+
+        :param data: raw data from S3
+        :param exchange_id: CDD exchange id, e.g. "binance"
+        :param currency_pair: currency pair, e.g. "BTC_USDT"
+        :return: transformed CDD data
+        """
+        # Verify that the Unix data is provided in ms.
+        hdbg.dassert_container_type(
+            data["unix"], container_type=None, elem_type=int
+        )
+        # Rename col with original Unix ms epoch.
+        data = data.rename({"unix": "epoch"}, axis=1)
+        # Transform Unix epoch into UTC timestamp.
+        data["timestamp"] = pd.to_datetime(data["epoch"], unit="ms", utc=True)
+        # Rename col with traded volume in amount of the 1st currency in pair.
+        data = data.rename(
+            {"Volume " + currency_pair.split("_")[0]: "volume"}, axis=1
+        )
+        # Rename col with currency pair.
+        data = data.rename({"symbol": "currency_pair"}, axis=1)
+        # Add a col with exchange id.
+        data["exchange_id"] = exchange_id
         return data
+
+# #############################################################################
+# CcxtClient
+# #############################################################################
+
+
+# TODO(gp): Consider splitting this file into chunks
+
+
+class CcxtClient(CryptoClient, abc.ABC):
+    """
+    Abstract interface for CCXT client.
+
+    Contain common code for all the CCXT clients, e.g.,
+    - getting CCXT universe
+    - applying common transformation for all the data from CCXT
+        - E.g., `_apply_olhlcv_transformations()`, `_apply_vendor_normalization()`
+    """
+    @staticmethod
+    def get_universe() -> List[icdc.FullSymbol]:
+        """
+        Return CCXT universe as full symbols.
+        """
+        universe = imvccunun.get_vendor_universe(vendor="CCXT")
+        return universe  # type: ignore[no-any-return]
+
+    @staticmethod
+    def _apply_vendor_transformations(data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Apply transformations common to all CCXT data.
+        """
+        # Verify that the timestamp data is provided in ms.
+        hdbg.dassert_container_type(
+            data["timestamp"], container_type=None, elem_type=int
+        )
+        # Transform Unix epoch into UTC timestamp.
+        data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms", utc=True)
+        # Set timestamp as index.
+        data = data.set_index("timestamp")
+        return data
+
+
 
 
 # #############################################################################
