@@ -138,131 +138,131 @@ class CddClient:
             hdbg.dassert_file_exists(file_path)
         return file_path
 
-    # TODO(*): Consider making `exchange_id` a class member.
-    # TODO(*): Replace currencies separator "/" to "_".
-    def _transform(
-        self,
-        data: pd.DataFrame,
-        exchange_id: str,
-        currency_pair: str,
-    ) -> pd.DataFrame:
-        """
-        Transform CDD data loaded from S3.
+    # # TODO(*): Consider making `exchange_id` a class member.
+    # # TODO(*): Replace currencies separator "/" to "_".
+    # def _transform(
+    #     self,
+    #     data: pd.DataFrame,
+    #     exchange_id: str,
+    #     currency_pair: str,
+    # ) -> pd.DataFrame:
+    #     """
+    #     Transform CDD data loaded from S3.
+    #
+    #     Input data example:
+    #     ```
+    #     unix           date                 symbol    open     high     low      close    Volume ETH  Volume USDT  tradecount
+    #     1631145600000  2021-09-09 00:00:00  ETH/USDT  3499.01  3499.49  3496.17  3496.36  346.4812    1212024      719
+    #     1631145660000  2021-09-09 00:01:00  ETH/USDT  3496.36  3501.59  3495.69  3501.59  401.9576    1406241      702
+    #     1631145720000  2021-09-09 00:02:00  ETH/USDT  3501.59  3513.10  3499.89  3513.09  579.5656    2032108      1118
+    #     ```
+    #
+    #     Output data example:
+    #     ```
+    #     timestamp                  open     high     low      close    volume    epoch          currency_pair exchange_id
+    #     2021-09-08 20:00:00-04:00  3499.01  3499.49  3496.17  3496.36  346.4812  1631145600000  ETH/USDT      binance
+    #     2021-09-08 20:01:00-04:00  3496.36  3501.59  3495.69  3501.59  401.9576  1631145660000  ETH/USDT      binance
+    #     2021-09-08 20:02:00-04:00  3501.59  3513.10  3499.89  3513.09  579.5656  1631145720000  ETH/USDT      binance
+    #     ```
+    #
+    #     :param data: dataframe with CDD data from S3
+    #     :param exchange_id: CDD exchange id, e.g. "binance"
+    #     :param currency_pair: currency pair, e.g. "BTC_USDT"
+    #     :return: processed dataframe
+    #     """
+    #     transformed_data = self._apply_common_transformation(
+    #         data, exchange_id, currency_pair
+    #     )
+    #     if self._data_type.lower() == "ohlcv":
+    #         transformed_data = self._apply_ohlcv_transformation(transformed_data)
+    #     else:
+    #         hdbg.dfatal(
+    #             "Incorrect data type: '%s'. Acceptable types: '%s'"
+    #             % (self._data_type.lower(), self._data_types)
+    #         )
+    #     return transformed_data
 
-        Input data example:
-        ```
-        unix           date                 symbol    open     high     low      close    Volume ETH  Volume USDT  tradecount
-        1631145600000  2021-09-09 00:00:00  ETH/USDT  3499.01  3499.49  3496.17  3496.36  346.4812    1212024      719
-        1631145660000  2021-09-09 00:01:00  ETH/USDT  3496.36  3501.59  3495.69  3501.59  401.9576    1406241      702
-        1631145720000  2021-09-09 00:02:00  ETH/USDT  3501.59  3513.10  3499.89  3513.09  579.5656    2032108      1118
-        ```
+    # def _apply_common_transformation(
+    #     self, data: pd.DataFrame, exchange_id: str, currency_pair: str
+    # ) -> pd.DataFrame:
+    #     """
+    #     Apply transform common to all CDD data.
+    #
+    #     This includes:
+    #     - Datetime format assertion
+    #     - Converting string dates to UTC `pd.Timestamp`
+    #     - Removing full duplicates
+    #     - Resampling to 1 minute using NaNs
+    #     - Name volume and currency pair columns properly
+    #     - Adding exchange_id and currency_pair columns
+    #
+    #     :param data: raw data from S3
+    #     :param exchange_id: CDD exchange id, e.g. "binance"
+    #     :param currency_pair: currency pair, e.g. "BTC_USDT"
+    #     :return: transformed CDD data
+    #     """
+    #     # Verify that the Unix data is provided in ms.
+    #     hdbg.dassert_container_type(
+    #         data["unix"], container_type=None, elem_type=int
+    #     )
+    #     # Rename col with original Unix ms epoch.
+    #     data = data.rename({"unix": "epoch"}, axis=1)
+    #     # Transform Unix epoch into UTC timestamp.
+    #     data["timestamp"] = pd.to_datetime(data["epoch"], unit="ms", utc=True)
+    #     #
+    #     if self._remove_dups:
+    #         # Remove full duplicates.
+    #         data = hpandas.drop_duplicates(data, ignore_index=True)
+    #     # Set timestamp as index.
+    #     data = data.set_index("timestamp")
+    #     #
+    #     if self._resample_to_1_min:
+    #         # Resample to 1 minute.
+    #         data = hpandas.resample_df(data, "T")
+    #     # Rename col with traded volume in amount of the 1st currency in pair.
+    #     data = data.rename(
+    #         {"Volume " + currency_pair.split("_")[0]: "volume"}, axis=1
+    #     )
+    #     # Rename col with currency pair.
+    #     data = data.rename({"symbol": "currency_pair"}, axis=1)
+    #     # Add a col with exchange id.
+    #     data["exchange_id"] = exchange_id
+    #     return data
 
-        Output data example:
-        ```
-        timestamp                  open     high     low      close    volume    epoch          currency_pair exchange_id
-        2021-09-08 20:00:00-04:00  3499.01  3499.49  3496.17  3496.36  346.4812  1631145600000  ETH/USDT      binance
-        2021-09-08 20:01:00-04:00  3496.36  3501.59  3495.69  3501.59  401.9576  1631145660000  ETH/USDT      binance
-        2021-09-08 20:02:00-04:00  3501.59  3513.10  3499.89  3513.09  579.5656  1631145720000  ETH/USDT      binance
-        ```
-
-        :param data: dataframe with CDD data from S3
-        :param exchange_id: CDD exchange id, e.g. "binance"
-        :param currency_pair: currency pair, e.g. "BTC_USDT"
-        :return: processed dataframe
-        """
-        transformed_data = self._apply_common_transformation(
-            data, exchange_id, currency_pair
-        )
-        if self._data_type.lower() == "ohlcv":
-            transformed_data = self._apply_ohlcv_transformation(transformed_data)
-        else:
-            hdbg.dfatal(
-                "Incorrect data type: '%s'. Acceptable types: '%s'"
-                % (self._data_type.lower(), self._data_types)
-            )
-        return transformed_data
-
-    def _apply_common_transformation(
-        self, data: pd.DataFrame, exchange_id: str, currency_pair: str
-    ) -> pd.DataFrame:
-        """
-        Apply transform common to all CDD data.
-
-        This includes:
-        - Datetime format assertion
-        - Converting string dates to UTC `pd.Timestamp`
-        - Removing full duplicates
-        - Resampling to 1 minute using NaNs
-        - Name volume and currency pair columns properly
-        - Adding exchange_id and currency_pair columns
-
-        :param data: raw data from S3
-        :param exchange_id: CDD exchange id, e.g. "binance"
-        :param currency_pair: currency pair, e.g. "BTC_USDT"
-        :return: transformed CDD data
-        """
-        # Verify that the Unix data is provided in ms.
-        hdbg.dassert_container_type(
-            data["unix"], container_type=None, elem_type=int
-        )
-        # Rename col with original Unix ms epoch.
-        data = data.rename({"unix": "epoch"}, axis=1)
-        # Transform Unix epoch into UTC timestamp.
-        data["timestamp"] = pd.to_datetime(data["epoch"], unit="ms", utc=True)
-        #
-        if self._remove_dups:
-            # Remove full duplicates.
-            data = hpandas.drop_duplicates(data, ignore_index=True)
-        # Set timestamp as index.
-        data = data.set_index("timestamp")
-        #
-        if self._resample_to_1_min:
-            # Resample to 1 minute.
-            data = hpandas.resample_df(data, "T")
-        # Rename col with traded volume in amount of the 1st currency in pair.
-        data = data.rename(
-            {"Volume " + currency_pair.split("_")[0]: "volume"}, axis=1
-        )
-        # Rename col with currency pair.
-        data = data.rename({"symbol": "currency_pair"}, axis=1)
-        # Add a col with exchange id.
-        data["exchange_id"] = exchange_id
-        return data
-
-    @staticmethod
-    def _apply_ohlcv_transformation(data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Apply transformations for OHLCV data.
-
-        This includes:
-        - Assertion of present columns
-        - Assertion of data types
-        - Renaming and rearranging of OHLCV columns, namely:
-            ["timestamp",
-             "open",
-             "high",
-             "low",
-             "close"
-             "volume",
-             "epoch",
-             "currency_pair",
-             "exchange_id"]
-
-        :param data: data after general CDD transforms
-        :return: transformed OHLCV dataframe
-        """
-        ohlcv_columns = [
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            "epoch",
-            "currency_pair",
-            "exchange_id",
-        ]
-        # Verify that dataframe contains OHLCV columns.
-        hdbg.dassert_is_subset(ohlcv_columns, data.columns)
-        # Rearrange the columns.
-        data = data[ohlcv_columns].copy()
-        return data
+    # @staticmethod
+    # def _apply_ohlcv_transformation(data: pd.DataFrame) -> pd.DataFrame:
+    #     """
+    #     Apply transformations for OHLCV data.
+    #
+    #     This includes:
+    #     - Assertion of present columns
+    #     - Assertion of data types
+    #     - Renaming and rearranging of OHLCV columns, namely:
+    #         ["timestamp",
+    #          "open",
+    #          "high",
+    #          "low",
+    #          "close"
+    #          "volume",
+    #          "epoch",
+    #          "currency_pair",
+    #          "exchange_id"]
+    #
+    #     :param data: data after general CDD transforms
+    #     :return: transformed OHLCV dataframe
+    #     """
+    #     ohlcv_columns = [
+    #         "open",
+    #         "high",
+    #         "low",
+    #         "close",
+    #         "volume",
+    #         "epoch",
+    #         "currency_pair",
+    #         "exchange_id",
+    #     ]
+    #     # Verify that dataframe contains OHLCV columns.
+    #     hdbg.dassert_is_subset(ohlcv_columns, data.columns)
+    #     # Rearrange the columns.
+    #     data = data[ohlcv_columns].copy()
+    #     return data

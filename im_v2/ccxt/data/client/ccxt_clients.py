@@ -83,8 +83,9 @@ class CryptoClient(icdc.ImClient, abc.ABC):
 
 
 class CddClient(CryptoClient, abc.ABC):
-    def _apply_common_transformation(
-        self, data: pd.DataFrame, exchange_id: str, currency_pair: str
+    @staticmethod
+    def _apply_vendor_transformations(
+        data: pd.DataFrame,
     ) -> pd.DataFrame:
         """
         Apply transform common to all CDD data.
@@ -161,8 +162,6 @@ class CcxtClient(CryptoClient, abc.ABC):
         return data
 
 
-
-
 # #############################################################################
 # CcxtDbClient
 # #############################################################################
@@ -226,18 +225,7 @@ class CcxtDbClient(CcxtClient, icdc.ImClientReadingOneSymbol):
 # CcxtFileSystemClient
 # #############################################################################
 
-
-class CcxtCsvParquetByAssetClient(CcxtClient, icdc.ImClientReadingOneSymbol):
-    """
-    CCXT client that reads CSV or Parquet file storing data for a single asset.
-
-    It can read data from local or S3 filesystem as backend.
-
-    Using our naming convention this class implements the two classes:
-    - CcxtCsvClient
-    - CcxtPqByAssetClient
-    """
-
+class CddCsvParquetByAssetClient(CddClient, icdc.ImClientReadingOneSymbol):
     def __init__(
         self,
         root_dir: str,
@@ -256,6 +244,85 @@ class CcxtCsvParquetByAssetClient(CcxtClient, icdc.ImClientReadingOneSymbol):
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
         """
+        self._root_dir = root_dir
+        # Verify that extension does not start with "." and set parameter.
+        hdbg.dassert(
+            not extension.startswith("."),
+            "The extension %s should not start with '.'" % extension,
+        )
+        self._extension = extension
+        self._data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
+        # Set s3fs parameter value if aws profile parameter is specified.
+        if aws_profile:
+            self._s3fs = hs3.get_s3fs(aws_profile)
+
+    def _get_file_path(
+        self,
+        data_snapshot: str,
+        exchange_id: str,
+        currency_pair: str,
+    ) -> str:
+        """
+        Get the absolute path to a file with CDD data.
+
+        The file path is constructed in the following way:
+        `<root_dir>/cryptodatadownload/<snapshot>/<exchange_id>/<currency_pair>.csv.gz`.
+
+        :param data_snapshot: snapshot of datetime when data was loaded,
+            e.g. "20210924"
+        :param exchange_id: CDD exchange id, e.g. "binance"
+        :param currency_pair: currency pair `<currency1>_<currency2>`,
+            e.g. "BTC_USDT"
+        :return: absolute path to a file with CDD data
+        """
+        # Get absolute file path.
+        file_name = currency_pair + self._extension
+        file_path = os.path.join(
+            self._root_dir,
+            "cryptodatadownload",
+            data_snapshot,
+            exchange_id,
+            file_name,
+        )
+        # TODO(Dan): Remove asserts below after CMTask108 is resolved.
+        # Verify that the file exists.
+        if hs3.is_s3_path(file_path):
+            hs3.dassert_s3_exists(file_path, self._s3fs)
+        else:
+            hdbg.dassert_file_exists(file_path)
+        return file_path
+
+class CcxtCsvParquetByAssetClient(CcxtClient, icdc.ImClientReadingOneSymbol):
+    """
+    CCXT client that reads CSV or Parquet file storing data for a single asset.
+
+    It can read data from local or S3 filesystem as backend.
+
+    Using our naming convention this class implements the two classes:
+    - CcxtCsvClient
+    - CcxtPqByAssetClient
+    """
+
+    def __init__(
+        self,
+        vendor: str,
+        root_dir: str,
+        extension: str,
+        *,
+        aws_profile: Optional[str] = None,
+        data_snapshot: Optional[str] = None,
+    ) -> None:
+        """
+        Load CCXT data from local or S3 filesystem.
+
+        :param root_dir: either a local root path (e.g., "/app/im") or
+            an S3 root path (e.g., "s3://alphamatic-data/data") to CCXT data
+        :param extension: file extension, e.g., `.csv`, `.csv.gz` or `.parquet`
+        :param aws_profile: AWS profile name (e.g., "am")
+        :param data_snapshot: snapshot of datetime when data was loaded,
+            e.g. "20210924"
+        """
+        self._vendor = vendor
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
@@ -357,7 +424,7 @@ class CcxtCsvParquetByAssetClient(CcxtClient, icdc.ImClientReadingOneSymbol):
         # Get absolute file path.
         file_name = ".".join([currency_pair, self._extension])
         file_path = os.path.join(
-            self._root_dir, "ccxt", data_snapshot, exchange_id, file_name
+            self._root_dir, self._vendor, data_snapshot, exchange_id, file_name
         )
         # TODO(Dan): Remove asserts below after CMTask108 is resolved.
         # Verify that the file exists.
