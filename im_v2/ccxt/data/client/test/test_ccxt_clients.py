@@ -15,7 +15,7 @@ import im_v2.common.db.db_utils as imvcddbut
 class TestCcxtCsvClient1(icdc.ImClientTestCase):
     def test_read_data1(self) -> None:
         """
-        Test on a ".csv" file on the local filesystem.
+        See description of corresponding private method in parent class.
         """
         im_client = ivcdcccex.get_CcxtCsvClient_example2()
         full_symbol = "binance::BTC_USDT"
@@ -52,7 +52,7 @@ class TestCcxtCsvClient1(icdc.ImClientTestCase):
 
     def test_read_data2(self) -> None:
         """
-        Test on a ".csv.gz" file on the local filesystem.
+        See description of corresponding private method in parent class.
         """
         im_client = ivcdcccex.get_CcxtCsvClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
@@ -89,7 +89,7 @@ class TestCcxtCsvClient1(icdc.ImClientTestCase):
 
     def test_read_data3(self) -> None:
         """
-        Test on a ".csv.gz" file on the local filesystem.
+        See description of corresponding private method in parent class.
         """
         im_client = ivcdcccex.get_CcxtCsvClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
@@ -127,7 +127,7 @@ class TestCcxtCsvClient1(icdc.ImClientTestCase):
 
     def test_read_data4(self) -> None:
         """
-        Test on a ".csv.gz" file on the local filesystem.
+        See description of corresponding private method in parent class.
         """
         im_client = ivcdcccex.get_CcxtCsvClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
@@ -165,7 +165,7 @@ class TestCcxtCsvClient1(icdc.ImClientTestCase):
 
     def test_read_data5(self) -> None:
         """
-        Test on a ".csv.gz" file on the local filesystem.
+        See description of corresponding private method in parent class.
         """
         im_client = ivcdcccex.get_CcxtCsvClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
@@ -205,7 +205,7 @@ class TestCcxtCsvClient1(icdc.ImClientTestCase):
 
     def test_read_data6(self) -> None:
         """
-        Test on a ".csv.gz" file on the local filesystem.
+        See description of corresponding private method in parent class.
         """
         im_client = ivcdcccex.get_CcxtCsvClient_example1()
         full_symbol = "unsupported_exchange::unsupported_currency"
@@ -213,7 +213,7 @@ class TestCcxtCsvClient1(icdc.ImClientTestCase):
 
     def test_get_start_ts_for_symbol1(self) -> None:
         """
-        Test on a ".csv" file on the local filesystem.
+        See description of corresponding private method in parent class.
         """
         im_client = ivcdcccex.get_CcxtCsvClient_example2()
         full_symbol = "binance::BTC_USDT"
@@ -224,7 +224,7 @@ class TestCcxtCsvClient1(icdc.ImClientTestCase):
 
     def test_get_end_ts_for_symbol1(self) -> None:
         """
-        Test on a ".csv" file on the local filesystem.
+        See description of corresponding private method in parent class.
         """
         im_client = ivcdcccex.get_CcxtCsvClient_example2()
         full_symbol = "binance::BTC_USDT"
@@ -233,7 +233,7 @@ class TestCcxtCsvClient1(icdc.ImClientTestCase):
 
     def test_get_universe1(self) -> None:
         """
-        Test on a ".csv" file on the local filesystem.
+        See description of corresponding private method in parent class.
         """
         im_client = ivcdcccex.get_CcxtCsvClient_example2()
         expected_length = 38
@@ -263,7 +263,7 @@ class TestCcxtCsvClient1(icdc.ImClientTestCase):
 class TestCcxtPqByAssetClient1(icdc.ImClientTestCase):
     def test_read_data1(self) -> None:
         """
-        Test on a ".pq" file on the local filesystem.
+        See description of corresponding private method in parent class.
         """
         im_client = ivcdcccex.get_CcxtParquetByAssetClient_example1()
         full_symbol = "binance::BTC_USDT"
@@ -300,7 +300,7 @@ class TestCcxtPqByAssetClient1(icdc.ImClientTestCase):
 
     def test_read_data2(self) -> None:
         """
-        Test on a ".pq" file on the local filesystem.
+        See description of corresponding private method in parent class.
         """
         im_client = ivcdcccex.get_CcxtParquetByAssetClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
@@ -337,7 +337,7 @@ class TestCcxtPqByAssetClient1(icdc.ImClientTestCase):
 
     def test_read_data3(self) -> None:
         """
-        Test on a ".pq" file on the local filesystem.
+        See description of corresponding private method in parent class.
         """
         im_client = ivcdcccex.get_CcxtParquetByAssetClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
@@ -375,7 +375,7 @@ class TestCcxtPqByAssetClient1(icdc.ImClientTestCase):
 
     def test_read_data4(self) -> None:
         """
-        Test on a ".pq" file on the local filesystem.
+        See description of corresponding private method in parent class.
         """
         im_client = ivcdcccex.get_CcxtParquetByAssetClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
@@ -413,7 +413,7 @@ class TestCcxtPqByAssetClient1(icdc.ImClientTestCase):
 
     def test_read_data5(self) -> None:
         """
-        Test on a ".pq" file on the local filesystem.
+        See description of corresponding private method in parent class.
         """
         im_client = ivcdcccex.get_CcxtParquetByAssetClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
@@ -453,7 +453,7 @@ class TestCcxtPqByAssetClient1(icdc.ImClientTestCase):
 
     def test_read_data6(self) -> None:
         """
-        Test on a ".pq" file on the local filesystem.
+        See description of corresponding private method in parent class.
         """
         im_client = ivcdcccex.get_CcxtParquetByAssetClient_example1()
         full_symbol = "unsupported_exchange::unsupported_currency"
@@ -461,7 +461,7 @@ class TestCcxtPqByAssetClient1(icdc.ImClientTestCase):
 
     def test_get_start_ts_for_symbol1(self) -> None:
         """
-        Test on a ".pq" file on the local filesystem.
+        See description of corresponding private method in parent class.
         """
         im_client = ivcdcccex.get_CcxtParquetByAssetClient_example1()
         full_symbol = "binance::BTC_USDT"
@@ -472,7 +472,7 @@ class TestCcxtPqByAssetClient1(icdc.ImClientTestCase):
 
     def test_get_end_ts_for_symbol1(self) -> None:
         """
-        Test on a ".pq" file on the local filesystem.
+        See description of corresponding private method in parent class.
         """
         im_client = ivcdcccex.get_CcxtParquetByAssetClient_example1()
         full_symbol = "binance::BTC_USDT"
@@ -481,7 +481,7 @@ class TestCcxtPqByAssetClient1(icdc.ImClientTestCase):
 
     def test_get_universe1(self) -> None:
         """
-        Test on a ".pq" file on the local filesystem.
+        See description of corresponding private method in parent class.
         """
         im_client = ivcdcccex.get_CcxtParquetByAssetClient_example1()
         expected_length = 38
@@ -506,7 +506,7 @@ class TestCcxtPqByAssetClient1(icdc.ImClientTestCase):
 class TestCcxtDbClient1(icdc.ImClientTestCase, imvcddbut.TestImDbHelper):
     def test_read_data1(self) -> None:
         """
-        Verify that data from DB is read correctly.
+        See description of corresponding private method in parent class.
         """
         # Load test data.
         self._create_test_table()
@@ -549,7 +549,7 @@ class TestCcxtDbClient1(icdc.ImClientTestCase, imvcddbut.TestImDbHelper):
 
     def test_read_data2(self) -> None:
         """
-        Verify that data from DB is read correctly.
+        See description of corresponding private method in parent class.
         """
         # Load test data.
         self._create_test_table()
@@ -593,7 +593,7 @@ class TestCcxtDbClient1(icdc.ImClientTestCase, imvcddbut.TestImDbHelper):
 
     def test_read_data3(self) -> None:
         """
-        Verify that data from DB is read correctly.
+        See description of corresponding private method in parent class.
         """
         # Load test data.
         self._create_test_table()
@@ -638,7 +638,7 @@ class TestCcxtDbClient1(icdc.ImClientTestCase, imvcddbut.TestImDbHelper):
 
     def test_read_data4(self) -> None:
         """
-        Verify that data from DB is read correctly.
+        See description of corresponding private method in parent class.
         """
         # Load test data.
         self._create_test_table()
@@ -679,7 +679,7 @@ class TestCcxtDbClient1(icdc.ImClientTestCase, imvcddbut.TestImDbHelper):
 
     def test_read_data5(self) -> None:
         """
-        Verify that data from DB is read correctly.
+        See description of corresponding private method in parent class.
         """
         # Load test data.
         self._create_test_table()
@@ -721,7 +721,7 @@ class TestCcxtDbClient1(icdc.ImClientTestCase, imvcddbut.TestImDbHelper):
 
     def test_read_data6(self) -> None:
         """
-        Test on a DB.
+        See description of corresponding private method in parent class.
         """
         im_client = imvcdccccl.CcxtDbClient(self.connection)
         full_symbol = "unsupported_exchange::unsupported_currency"
@@ -729,7 +729,7 @@ class TestCcxtDbClient1(icdc.ImClientTestCase, imvcddbut.TestImDbHelper):
 
     def test_get_start_ts_for_symbol1(self) -> None:
         """
-        Verify that data from DB is read correctly.
+        See description of corresponding private method in parent class.
         """
         # Load test data.
         self._create_test_table()
@@ -747,7 +747,7 @@ class TestCcxtDbClient1(icdc.ImClientTestCase, imvcddbut.TestImDbHelper):
 
     def test_get_end_ts_for_symbol1(self) -> None:
         """
-        Verify that data from DB is read correctly.
+        See description of corresponding private method in parent class.
         """
         # Load test data.
         self._create_test_table()
@@ -763,7 +763,7 @@ class TestCcxtDbClient1(icdc.ImClientTestCase, imvcddbut.TestImDbHelper):
 
     def test_get_universe1(self) -> None:
         """
-        Test on a ".pq" file on the local filesystem.
+        See description of corresponding private method in parent class.
         """
         im_client = imvcdccccl.CcxtDbClient(self.connection)
         expected_length = 38
