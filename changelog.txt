@@ -1,3 +1,7 @@
+# cmamp-1.0.7
+- 2022-01-18
+- Allow ENABLE_DIND env var specification
+
 # cmamp-1.0.6
 - 2022-01-13
 - Add more docker users

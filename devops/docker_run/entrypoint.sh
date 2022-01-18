@@ -16,10 +16,10 @@ source devops/docker_run/setenv.sh
 # Allow working with files outside a container.
 #umask 000
 
-# TODO(gp): This should be enabled for `dev` container and disabled for `prod`.
-# Maybe pass an arg to docker command line or an env var through docker compose.
-ENABLE_DIND=1
-echo "ENABLE_DIND=$ENABLE_DIND"
+if [ -z "$ENABLE_DIND" ]; then
+    ENABLE_DIND=1
+    echo "ENABLE_DIND=$ENABLE_DIND"
+fi;
 
 if [[ $ENABLE_DIND == 1 ]]; then
     echo "Setting up Docker-in-docker"
