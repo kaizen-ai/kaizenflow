@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.ccxt.data.extract.airflow.rt_dag as imvcdedrda
+import im_v2.ccxt.data.extract.airflow.rt_dag as imvcdearda
 """
 
 import datetime
@@ -31,10 +31,9 @@ bash_command = [
     "im_v2/ccxt/data/extract/download_realtime_data.py",
     "--to_datetime {{ next_execution_date }}",
     "--from_datetime {{ execution_date - macros.timedelta(5) }}"
-    # TODO(Danya): Set a shared directory for the DAG (#675).
+    # TODO(Danya): Set a shared directory for the DAG (CMTask675).
     "--dst_dir 'ccxt/ohlcv/'",
     "--data_type 'ohlcv'",
-    "--api_keys 'API_keys.json'",
     "--universe 'v03'",
     "--v DEBUG",
 ]
@@ -46,11 +45,9 @@ dag = airflow.DAG(
     description="Realtime download of CCXT OHLCV data",
     max_active_runs=1,
     default_args=default_args,
-    # TODO(Danya): Improve the runtime of the script to fit into 1 minute.
-    schedule_interval="*/3 * * * *",
+    schedule_interval="*/1 * * * *",
     catchup=False,
-    # start_date=days_ago(1),
-    start_date=datetime.datetime(2022, 1, 11, 18, 40, 0),
+    start_date=airflow.utils.date.days_ago(0),
 )
 
 
@@ -67,13 +64,16 @@ downloading_task = ECSOperator(
             {
                 "name": "cmamp",
                 "command": bash_command,
-                "environment": [{
-                    "name": "DATA_INTERVAL_START",
-                    "value": "{{ execution_date }}"},
+                "environment": [
                     {
-                    "name": "DATA_INTERVAL_END",
-                    "value": "{{ execution_date - macros.timedelta(5) }}",
-                }],
+                        "name": "DATA_INTERVAL_START",
+                        "value": "{{ execution_date }}",
+                    },
+                    {
+                        "name": "DATA_INTERVAL_END",
+                        "value": "{{ execution_date - macros.timedelta(5) }}",
+                    },
+                ],
             }
         ]
     },
@@ -86,5 +86,5 @@ downloading_task = ECSOperator(
     awslogs_group=ecs_awslogs_group,
     awslogs_stream_prefix=ecs_awslogs_stream_prefix,
 )
-
-downloading_task
+# Execute the DAG.
+downloading_task  # pylint: disable=pointless-statement
