@@ -1,3 +1,17 @@
+# ---
+# jupyter:
+#   jupytext:
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#       jupytext_version: 1.13.3
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
+
 # %% [markdown]
 # # Imports
 
@@ -32,7 +46,7 @@ hprint.config_notebook()
 # # Configs
 
 # %%
-# Generate configs for 'CDD' and 'CCXT'.
+# Generate configs for `CDD` and `CCXT`.
 
 # %%
 def get_cmtask324_config_ccxt() -> cconconf.Config:
@@ -112,8 +126,8 @@ cdd_universe = [element for element in cdd_universe if element.endswith("USDT")]
 # # Compare universes
 
 # %%
-_LOG.info("Number of full symbols in CCXT: %s", len(ccxt_universe))
-_LOG.info("Number of full symbols in CDD: %s", len(cdd_universe))
+_LOG.info("Number of full symbols in 'CCXT': %s", len(ccxt_universe))
+_LOG.info("Number of full symbols in 'CDD': %s", len(cdd_universe))
 
 # %%
 # Intersection of full symbols between two vendors.
@@ -122,7 +136,7 @@ _LOG.info("Number of similar full symbols: %s", len(currency_pair_intersection))
 display(currency_pair_intersection)
 
 # %%
-# Full symbols that are included in CCXT but not in CDD.
+# Full symbols that are included in `CCXT` but not in `CDD`.
 ccxt_and_not_cdd = set(ccxt_universe).difference(cdd_universe)
 _LOG.info(
     "Number of full symbols that are included in 'CCXT' but not in 'CDD': %s",
@@ -131,7 +145,7 @@ _LOG.info(
 display(ccxt_and_not_cdd)
 
 # %%
-# Full symbols that are included in CDD but not in CCXT.
+# Full symbols that are included in `CDD` but not in `CCXT`.
 cdd_and_not_ccxt = set(cdd_universe).difference(ccxt_universe)
 _LOG.info(
     "Number of full symbols that are included in 'CDD' but not in 'CCXT': %s",
@@ -146,14 +160,14 @@ display(cdd_and_not_ccxt)
 # ## Load the data
 
 # %% [markdown]
-# The code below can be used to load all the existing data from two vendors CDD and CCXT. Current version is specified to Binance only, however, even for one exchange there's too many data to operate, that's why the output is the intersection of currency pairs between to universe, since one can compare only the intersection of currency pairs for two vendors.
+# The code below can be used to load all the existing data from two vendors 'CDD' and 'CCXT'. Current version is specified to Binance only, however, even for one exchange there's too many data to operate, that's why the output is the intersection of currency pairs between to universe, since one can compare only the intersection of currency pairs for two vendors.
 
 # %%
-# Load Binance-specific universe for CCXT.
+# Load Binance-specific universe for `CCXT`.
 ccxt_binance_universe = [
     element for element in ccxt_universe if element.startswith("binance")
 ]
-# Load Binnance-specific universe for CDD.
+# Load Binnance-specific universe for `CDD`.
 cdd_binance_universe_initial = [
     element for element in cdd_universe if element.startswith("binance")
 ]
@@ -168,8 +182,11 @@ currency_pair_intersection_binance = set(ccxt_binance_universe).intersection(
 
 # %%
 cdd_data = []
+data_type_cdd = config_cdd["data"]["data_type"]
+root_dir_cdd = config_cdd["load"]["data_dir"]
+aws_profile_cdd = config_cdd["load"]["aws_profile"]
 cdd_loader = imcdaclcd.CddClient(
-    data_type="ohlcv", root_dir=root_dir, aws_profile="am"
+    data_type_cdd, root_dir_cdd, aws_profile=aws_profile_cdd
 )
 
 for full_symbol in currency_pair_intersection_binance:
@@ -182,10 +199,11 @@ display(cdd_binance_df.head(3))
 display(cdd_binance_df.shape)
 
 # %%
-# TODO(Grisha): @max make sure that the notebook runs end-to-end #905.
 extension = "csv.gz"
+root_dir_ccxt=config_ccxt["load"]["data_dir"]
+aws_profile_ccxt = config_ccxt["load"]["aws_profile"]
 ccxt_csv_client = imvcdccccl.CcxtCsvParquetByAssetClient(
-    root_dir, extension, aws_profile="am"
+    root_dir_ccxt, extension, aws_profile=aws_profile_ccxt
 )
 start_ts = None
 end_ts = None
@@ -196,25 +214,14 @@ ccxt_binance_df = ccxt_csv_client.read_data(
 )
 
 # %%
-# As one can see, the compute_stats_for_universe function is reseting the index in the end, so the output
-# has no Multiindex that was used in the initial approach.
-ccxt_resampled_close.head(3)
-
-# %%
-# Setting the Multiindex.
-ccxt_resampled_close = ccxt_resampled_close.drop("vendor", axis=1).set_index(
-    ["currency_pair", "timestamp"]
-)
-ccxt_resampled_close.head(3)
-
-# %%
-# This input can be inserted into 'calculate_correlations' function defined below.
+display(ccxt_binance_df.head(3))
+display(ccxt_binance_df.shape)
 
 # %% [markdown]
 # ## Calculate returns and correlation
 
 # %%
-# 'CDD' names cleaning.
+# `CDD` names cleaning.
 cdd_binance_df["currency_pair"] = cdd_binance_df["currency_pair"].str.replace(
     "/", "_"
 )
@@ -325,9 +332,9 @@ display(close_corr_5min)
 # # Statistical properties of a full symbol in CDD
 
 # %%
-# Clearing 'CDD' currency pairs that are incorrect.
+# Clearing `CDD` currency pairs that are incorrect.
 
-# Binance
+# Binance.
 cdd_universe.remove("binance::SCU_USDT")
 
 # FTX has some critical mistakes in the downloading process, so can not continue analysis with them.
@@ -350,7 +357,7 @@ for elem in cdd_kucoin_universe:
 # ## Comparison of intersection of full symbols between 'CCXT' and 'CDD'
 
 # %%
-# Full symbols that are included in 'CDD' but not in 'CCXT' (cleaned from unavailable full symbols).
+# Full symbols that are included in `CDD` but not in `CCXT` (cleaned from unavailable full symbols).
 cdd_and_ccxt_cleaned = set(ccxt_universe).intersection(cdd_universe)
 len(cdd_and_ccxt_cleaned)
 
@@ -361,7 +368,9 @@ len(cdd_and_ccxt_cleaned)
 # #### CDD
 
 # %%
-# After fixing 'CCXT' loader below, the structural mistake appears with 'CDD' loader.
+# After fixing `CCXT` loader below, the structural mistake appears with `CDD` loader.
+# TODO(Max): Fix the code, once the vendor universe will be unified.
+# see CMTask985 - Fix compute_start_end_stats in CCXT-CDD comparison notebook.
 compute_start_end_stats = lambda data: ramccsta.compute_start_end_stats(
     data, config_cdd
 )
@@ -371,7 +380,7 @@ cdd_start_end_table = ramccsta.compute_stats_for_universe(
 )
 
 # %%
-# 'CDD' names cleaning.
+# `CDD` names cleaning.
 cdd_start_end_table["currency_pair"] = cdd_start_end_table[
     "currency_pair"
 ].str.replace("/", "_")
@@ -383,6 +392,8 @@ cdd_start_end_table.head(3)
 # #### CCXT
 
 # %%
+# TODO(Max): Fix the code, once the vendor universe will be unified.
+# see CMTask985 - Fix compute_start_end_stats in CCXT-CDD comparison notebook.
 compute_start_end_stats = lambda data: ramccsta.compute_start_end_stats(
     data, config_ccxt
 )
@@ -434,7 +445,7 @@ display(union_cdd_ccxt_stats)
 # ## Comparison of full symbols that are included in 'CDD' but not available in 'CCXT'
 
 # %%
-# Set of full symbols that are included in 'CDD' but not available in 'CCXT' (cleaned from unavailable full symbols).
+# Set of full symbols that are included in `CDD` but not available in `CCXT` (cleaned from unavailable full symbols).
 cdd_and_not_ccxt_cleaned = set(cdd_universe).difference(ccxt_universe)
 len(cdd_and_not_ccxt_cleaned)
 
