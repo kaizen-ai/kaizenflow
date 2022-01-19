@@ -19,6 +19,7 @@ import dataflow.model.stats_computer as dtfmostcom
 import dataflow.model.utils as dtfmodutil
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import helpers.hlogging as hloggin
 
 _LOG = logging.getLogger(__name__)
 
@@ -54,7 +55,7 @@ def compute_stats_for_single_name_artifacts(
     for key, artifact in iterator:
         _LOG.debug(
             "load_experiment_artifacts: memory_usage=%s",
-            hdbg.get_memory_usage_as_str(None),
+            hloggin.get_memory_usage_as_str(None),
         )
         # Extract df and restrict to [start, end].
         df_for_key = artifact.result_df.loc[start:end].copy()
@@ -80,7 +81,7 @@ def compute_stats_for_single_name_artifacts(
         [adj_pvals.to_frame().transpose()], keys=["signal_quality"]
     )
     stats_df = pd.concat([stats_df, adj_pvals], axis=0)
-    _LOG.info("memory_usage=%s", hdbg.get_memory_usage_as_str(None))
+    _LOG.info("memory_usage=%s", hloggin.get_memory_usage_as_str(None))
     return stats_df
 
 
@@ -117,7 +118,7 @@ def aggregate_single_name_models(
     for key, artifact in iterator:
         _LOG.info(
             "load_experiment_artifacts: memory_usage=%s",
-            hdbg.get_memory_usage_as_str(None),
+            hloggin.get_memory_usage_as_str(None),
         )
         # Extract df and restrict to [start, end].
         df_for_key = artifact.result_df.loc[start:end].copy()
@@ -135,7 +136,7 @@ def aggregate_single_name_models(
         portfolio = df_for_key.add(portfolio, fill_value=0)
         # Resample.
         dfs[key] = df_for_key.resample("B").sum(min_count=1)
-    _LOG.info("memory_usage=%s", hdbg.get_memory_usage_as_str(None))
+    _LOG.info("memory_usage=%s", hloggin.get_memory_usage_as_str(None))
     return portfolio, dfs
 
 
@@ -167,12 +168,12 @@ def load_result_dfs(
     for key, artifact in iterator:
         _LOG.info(
             "load_experiment_artifacts: memory_usage=%s",
-            hdbg.get_memory_usage_as_str(None),
+            hloggin.get_memory_usage_as_str(None),
         )
         # Extract df and restrict to [start, end].
         df = artifact.result_df.loc[start:end].copy()
         dfs[key] = df
-    _LOG.info("memory_usage=%s", hdbg.get_memory_usage_as_str(None))
+    _LOG.info("memory_usage=%s", hloggin.get_memory_usage_as_str(None))
     return dfs
 
 
@@ -281,5 +282,5 @@ def load_info(
         for k in info_path:
             info = info[k]
         info_dict[key] = info
-    _LOG.info("memory_usage=%s", hdbg.get_memory_usage_as_str(None))
+    _LOG.info("memory_usage=%s", hloggin.get_memory_usage_as_str(None))
     return info_dict

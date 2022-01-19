@@ -11,8 +11,8 @@ from typing import Any, Dict, Optional, Union
 
 import pandas as pd
 
-import helpers.hdbg as hdbg
 import helpers.hasyncio as hasynci
+import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hsql as hsql
 import oms.broker as ombroker
@@ -62,9 +62,7 @@ class OrderProcessor:
         self._accepted_orders_table_name = accepted_orders_table_name
         self._current_positions_table_name = current_positions_table_name
         #
-        self._get_wall_clock_time = (
-            broker.market_data.get_wall_clock_time
-        )
+        self._get_wall_clock_time = broker.market_data.get_wall_clock_time
         #
         self._poll_kwargs = poll_kwargs or hasynci.get_poll_kwargs(
             self._get_wall_clock_time
@@ -191,9 +189,7 @@ class OrderProcessor:
         Dequeue orders and fill.
         """
         orders = await self._orders.get()
-        get_wall_clock_time = (
-            self._broker.market_data.get_wall_clock_time
-        )
+        get_wall_clock_time = self._broker.market_data.get_wall_clock_time
         fulfillment_deadline = max([order.end_timestamp for order in orders])
         _LOG.debug("Order fulfillment deadline=%s", fulfillment_deadline)
         # Wait until the order fulfillment deadline to return fill.
@@ -204,12 +200,14 @@ class OrderProcessor:
         _LOG.debug("Received %i fills", len(fills))
         # Update current positions based on fills.
         for fill in fills:
+            _LOG.debug("fill=\n%s" % str(fill))
             id_ = fill.order.order_id
             trade_date = fill.timestamp.date()
             wall_clock_time = get_wall_clock_time()
             asset_id = fill.order.asset_id
             num_shares = fill.num_shares
             cost = fill.price * fill.num_shares
+            _LOG.debug("cost=%f" % cost)
             # #################################################################
             # Get the current positions for `asset_id`.
             query = []

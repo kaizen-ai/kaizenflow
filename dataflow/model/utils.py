@@ -520,7 +520,7 @@ def load_experiment_artifacts(
     """
     _LOG.info(
         "Before load_experiment_artifacts: memory_usage=%s",
-        hdbg.get_memory_usage_as_str(None),
+        hloggin.get_memory_usage_as_str(None),
     )
     if experiment_type == "ins_oos":
         iterator = yield_experiment_artifacts
@@ -540,12 +540,12 @@ def load_experiment_artifacts(
     for key, artifact in iter:
         _LOG.info(
             "load_experiment_artifacts: memory_usage=%s",
-            hdbg.get_memory_usage_as_str(None),
+            hloggin.get_memory_usage_as_str(None),
         )
         artifacts[key] = artifact
     hdbg.dassert(artifacts, "No data read from '%s'", src_dir)
     _LOG.info(
         "After load_experiment_artifacts: memory_usage=%s",
-        hdbg.get_memory_usage_as_str(None),
+        hloggin.get_memory_usage_as_str(None),
     )
     return artifacts
