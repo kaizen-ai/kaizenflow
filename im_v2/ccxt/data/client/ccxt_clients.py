@@ -50,9 +50,9 @@ class CryptoClient(icdc.ImClient, abc.ABC):
         ```
         """
         # Apply common transformations.
-        if self._vendor == "CCXT":
+        if self._vendor == "ccxt":
             data = self._apply_ccxt_transformations(df)
-        elif self._vendor == "CDD":
+        elif self._vendor == "cryptodatadownload":
             data = self._apply_cdd_transformations(df)
         else:
             raise ValueError(f"Unsopported vendor {self._vendor}")
@@ -219,6 +219,7 @@ class CryptoCsvParquetByAssetClient(CryptoClient, icdc.ImClientReadingOneSymbol)
 
     def __init__(
         self,
+        vendor: str,
         root_dir: str,
         extension: str,
         *,
@@ -235,7 +236,7 @@ class CryptoCsvParquetByAssetClient(CryptoClient, icdc.ImClientReadingOneSymbol)
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
         """
-        super().__init__(self._vendor)
+        super().__init__(vendor)
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
@@ -274,6 +275,8 @@ class CryptoCsvParquetByAssetClient(CryptoClient, icdc.ImClientReadingOneSymbol)
         if hs3.is_s3_path(file_path):
             # Add s3fs argument to kwargs.
             kwargs["s3fs"] = self._s3fs
+        if self._vendor == "cryptodatadownload":
+            kwargs["skiprows"] = 1
         if self._extension == "pq":
             # Initialize list of filters.
             filters = []
