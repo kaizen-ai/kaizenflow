@@ -13,7 +13,7 @@ import pytest
 import helpers.hgit as hgit
 import helpers.hprint as hprint
 import helpers.hsql as hsql
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -84,7 +84,7 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
                 f"--env-file {cls.db_env_file} "
                 f"up -d {cls._get_service_name()}"
             )
-            hsysinte.system(cmd, suppress_output=False)
+            hsystem.system(cmd, suppress_output=False)
             # Wait for the DB to be available.
             hsql.wait_db_connection(*connection_info)
             cls.bring_down_db = True
@@ -106,7 +106,7 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
                 f"--env-file {cls.db_env_file} "
                 "down -v"
             )
-            hsysinte.system(cmd, suppress_output=False)
+            hsystem.system(cmd, suppress_output=False)
         else:
             _LOG.warning("Leaving DB up")
 

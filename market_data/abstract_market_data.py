@@ -28,74 +28,77 @@ _LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
 # #############################################################################
 
 
+# TODO(gp): -> MarketData?
 class AbstractMarketData(abc.ABC):
     """
     Implement an interface to an historical / real-time source of price data.
 
     # Responsibilities:
-    - Delegate to a data backend in `AbstractImClient` to retrieve historical
-      and real-time data
-    - Model data in terms of interval `start_timestamp`, `end_timestamp`
-        - `AbstractImClient` models data in terms of end timestamp of the interval
-    - Implement RT behaviors (e.g, `is_last_bar_available`, wall_clock, ...)
-    - Implement knowledge time and delay
-        - `AbstractImClient` doesn't have this view of the data
-    - Stitch together different data representations (e.g., historical / RT)
-      using multiple IM backends
-    - Remap columns to connect data backends to consumers
-    - Implement some market related transformations (e.g., `get_twap_price()`,
-      `get_last_price()`)
-
-    # Non-responsibilities:
-    - In general do not access data directly but rely on `AbstractImClient`
-      objects to retrieve the data from different backends
+    1) Delegate to a data backend in `AbstractImClient` to retrieve historical
+       and real-time data
+        - In general do not access data directly but rely on `AbstractImClient`
+          objects to retrieve the data from different backends
+    2) Model data in terms of interval `start_timestamp`, `end_timestamp`
+        - `ImClient` models data in terms of end timestamp of the interval
+    3) Implement RT behaviors
+        - `ImClient` doesn't have this view of the data
+        - E.g, `is_last_bar_available()`, wall_clock, ...
+        - E.g., knowledge time and delay
+    4) Implement market related transformations common to all data price sources
+        - E.g., `get_twap_price()`, `get_last_price()`
+    5) Stitch together different data sources (e.g., historical / RT) using
+       multiple IM backends
+    6) Remap columns to connect data backends to consumers
 
     # Handling of `asset_ids`
-    - Different implementation backing an `MarketData` are possible, e.g.,
+    - Different implementations backing an `MarketData` are possible, e.g.,
       - stateless, i.e., the caller needs to specify the requested `asset_ids`
         - In this case the universe is provided by `MarketData`
-      - stateful, i.e., the back end is initialized with the desired universe of
+      - stateful, i.e., the backend is initialized with the desired universe of
         assets and then `MarketData` just propagates or subsets the universe
 
-    - For these reasons, assets are selected at 3 different points:
-    1) `AbstractMarketData` allows to specify or subset the assets through
-        `asset_ids` through the constructor
-    1) Derived classes / backends specify the assets returned
-       - E.g., a concrete implementation backed by a DB can stream the data for
-         its entire available universe
-    3) Certain class methods allow to query data for a specific asset or subset of
-       assets
-    - For each stage, a value of `None` means no filtering
+    - To accommodate these use cases, assets are selected at 3 different points:
+        1) `AbstractMarketData` allows to specify or subset the assets through
+            `asset_ids` specified in the constructor
+        1) Derived classes / backends specify the assets returned
+           - E.g., a concrete implementation backed by a DB can stream the data for
+             its entire available universe
+        3) Certain class methods allow to query data for a specific asset or subset
+           of assets
+        - For each stage, a value of `None` means no filtering
 
     # Handling of filtering by time
-    - Clients might want to query data using different interval types (namely [a, b),
-      [a, b], (a, b], (a, b)) and by filtering on either the `start_ts` or `end_ts`
+    - Clients might want to query data:
+        - using different interval types, namely [a, b), [a, b], (a, b], (a, b)
+        - by filtering on either the start or the end of the interval
     - For this reason, this class supports all these different ways of providing data
 
     # Data format
-    The data from this class is available in two formats:
+    - The data from this class is available in two formats:
 
-    1) Native data (as delivered by the derived class):
+    1) Native data, as delivered by all the derived classes:
         - indexed with a progressive index
         - with asset, start_time, end_time, knowledge_time
-    ```
-      asset_id           start_time             end_time     close   volume
-    idx
-      0  17085  2021-07-26 13:41:00  2021-07-26 13:42:00  148.8600   400176
-      1  17085  2021-07-26 13:30:00  2021-07-26 13:31:00  148.5300  1407725
-      2  17085  2021-07-26 13:31:00  2021-07-26 13:32:00  148.0999   473869
-    ```
+        - E.g.,
+        ```
+          asset_id           start_time             end_time     close   volume
+        idx
+          0  17085  2021-07-26 13:41:00  2021-07-26 13:42:00  148.8600   400176
+          1  17085  2021-07-26 13:30:00  2021-07-26 13:31:00  148.5300  1407725
+          2  17085  2021-07-26 13:31:00  2021-07-26 13:32:00  148.0999   473869
+        ```
 
     2) Normalized data:
         - indexed by the column that corresponds to `end_time`
         - suitable to DataFlow computation
-    ```
-                            asset_id                start_time    close   volume
-    end_time
-    2021-07-20 09:31:00-04:00  17085 2021-07-20 09:30:00-04:00  143.990  1524506
-    2021-07-20 09:32:00-04:00  17085 2021-07-20 09:31:00-04:00  143.310   586654
-    2021-07-20 09:33:00-04:00  17085 2021-07-20 09:32:00-04:00  143.535   667639
-    ```
+        - E.g.,
+        ```
+                                asset_id                start_time    close   volume
+        end_time
+        2021-07-20 09:31:00-04:00  17085 2021-07-20 09:30:00-04:00  143.990  1524506
+        2021-07-20 09:32:00-04:00  17085 2021-07-20 09:31:00-04:00  143.310   586654
+        2021-07-20 09:33:00-04:00  17085 2021-07-20 09:32:00-04:00  143.535   667639
+        ```
     """
 
     def __init__(
@@ -285,17 +288,17 @@ class AbstractMarketData(abc.ABC):
         # Remap column names.
         df = self._remap_columns(df)
         _LOG.verb_debug("-> df=\n%s", hprint.dataframe_to_str(df))
+        hdbg.dassert_isinstance(df, pd.DataFrame)
         return df
 
-    # TODO(gp): To make the interface symmetric this method should accept `asset_ids`.
     def get_twap_price(
         self,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         ts_col_name: str,
-        asset_id: int,
+        asset_ids: List[int],
         column: str,
-    ) -> float:
+    ) -> pd.Series:
         """
         Compute TWAP of the column `column` in (ts_start, ts_end].
 
@@ -311,7 +314,7 @@ class AbstractMarketData(abc.ABC):
             start_ts,
             end_ts,
             ts_col_name,
-            [asset_id],
+            asset_ids,
             left_close=left_close,
             right_close=right_close,
             normalize_data=True,
@@ -320,18 +323,39 @@ class AbstractMarketData(abc.ABC):
         # We don't need to remap columns since `get_data_for_interval()` has already
         # done it.
         hdbg.dassert_in(column, prices.columns)
-        prices = prices[column]
         # Compute the mean value.
         _LOG.verb_debug("prices=\n%s", prices)
-        price: float = prices.mean()
-        hdbg.dassert(
-            np.isfinite(price),
-            "price=%s in interval `start_ts=%s`, `end_ts=%s`",
-            price,
-            start_ts,
-            end_ts,
+        twap = prices.groupby(self._asset_id_col)[column].mean()
+        hpandas.dassert_series_type_in(twap, [np.float64, np.int64])
+        return twap
+
+    def get_last_twap_price(
+        self,
+        bar_duration: str,
+        ts_col_name: str,
+        asset_ids: List[int],
+        column: str,
+    ) -> pd.Series:
+        """
+        Compute TWAP of the column `column` over last `bar_duration`.
+
+        E.g., if the last end time is 9:35 and `bar_duration=5T`, then
+        we compute TWAP for (9:30, 9:35].
+        """
+        last_end_time = self.get_last_end_time()
+        _LOG.info("last_end_time=%s", last_end_time)
+        offset = pd.Timedelta(bar_duration)
+        first_end_time = last_end_time - offset
+        # We rely on the assumption that we are reading 1-minute bars.
+        start_time = first_end_time - pd.Timedelta(minutes=1)
+        twap = self.get_twap_price(
+            start_time,
+            last_end_time,
+            ts_col_name,
+            asset_ids,
+            column,
         )
-        return price
+        return twap
 
     # Methods for handling real-time behaviors.
 
@@ -382,6 +406,7 @@ class AbstractMarketData(abc.ABC):
         hdbg.dassert_isinstance(last_price_srs, pd.Series)
         last_price_srs.index.name = self._asset_id_col
         last_price_srs.name = col_name
+        hpandas.dassert_series_type_in(last_price_srs, [np.float64, np.int64])
         # TODO(gp): Print if there are nans.
         return last_price_srs
 

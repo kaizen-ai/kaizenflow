@@ -7,6 +7,10 @@ import market_data.market_data_client_example as mdmdclex
 # TODO(gp): -> test_market_data_im_client.py
 
 # TODO(gp): -> TestMarketDataImClient
+
+# TODO(gp): This test should be factored out in a TestCase and then we can use
+#  the class to test a MarketDataImClient.
+# TODO(gp): There is a lot of common code among the test methods, let's factor it out.
 class TestMarketDataClient(hunitest.TestCase):
     def test_get_data_for_interval1(self) -> None:
         """
@@ -170,26 +174,58 @@ class TestMarketDataClient(hunitest.TestCase):
             fuzzy_match=True,
         )
 
+    # //////////////////////////////////////////////////////////////////////////////
+
     def test_get_twap_price1(self) -> None:
         """
         Test that TWAP is computed correctly.
         """
         # Build MarketDataInterface.
-        asset_ids = ["binance::BTC_USDT"]
+        asset_id = "binance::BTC_USDT"
+        asset_ids = [asset_id]
         columns = []
         column_remap = None
         market_data_client = mdmdclex.get_MarketDataInterface_example1(
             asset_ids, columns, column_remap
         )
         # Compute TWAP price.
-        start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
-        end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
+        start_ts = pd.Timestamp("2018-08-17T00:01:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00")
         ts_col_name = "end_ts"
-        asset_id = asset_ids[0]
         actual = market_data_client.get_twap_price(
-            start_ts, end_ts, ts_col_name, asset_id, column="close"
-        ).round(2)
+            start_ts, end_ts, ts_col_name, asset_ids, column="close"
+        ).round(2)[asset_id]
         self.assertEqual(actual, 6295.72)
+
+    def test_get_twap_price2(self) -> None:
+        """
+        Test that TWAP is computed correctly.
+        """
+        # Build MarketDataInterface.
+        asset_ids = ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+        columns = []
+        column_remap = None
+        market_data_client = mdmdclex.get_MarketDataInterface_example1(
+            asset_ids, columns, column_remap
+        )
+        # Compute TWAP price.
+        start_ts = pd.Timestamp("2018-08-17T00:01:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00")
+        ts_col_name = "end_ts"
+        actual = market_data_client.get_twap_price(
+            start_ts, end_ts, ts_col_name, asset_ids, column="close"
+        ).round(2)
+        expected = r"""                     close
+full_symbol
+binance::BTC_USDT  6295.72
+kucoin::ETH_USDT    285.64"""
+        self.assert_equal(
+            hunitest.convert_df_to_string(actual, index=True, decimals=2),
+            expected,
+            fuzzy_match=True,
+        )
+
+    # //////////////////////////////////////////////////////////////////////////////
 
     def test_should_be_online1(self) -> None:
         """
@@ -206,6 +242,8 @@ class TestMarketDataClient(hunitest.TestCase):
         wall_clock_time = pd.Timestamp("2018-08-17T00:01:00")
         actual = market_data_client.should_be_online(wall_clock_time)
         self.assertEqual(actual, True)
+
+    # //////////////////////////////////////////////////////////////////////////////
 
     def test_get_last_end_time1(self) -> None:
         """
