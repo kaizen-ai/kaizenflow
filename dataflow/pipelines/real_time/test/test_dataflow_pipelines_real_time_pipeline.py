@@ -1,3 +1,6 @@
+"""
+Test pipelines using MarketData.
+"""
 import asyncio
 import logging
 
@@ -22,9 +25,12 @@ import oms.test.oms_db_helper as otodh
 
 _LOG = logging.getLogger(__name__)
 
+# TODO(gp): -> dataflow/system/test_real_time_pipeline.py
+
+# TODO(gp): Split the class in methods like TestReplayedRH8EdWithMockedOms1
 
 # TODO(gp): use dag_builder = dtfsrtdaad.RealTimeDagAdapter(base_dag_builder,
-# portfolio)
+#  portfolio)
 class TestRealTimeReturnPipeline1(hunitest.TestCase):
     """
     This test is similar to `TestRealTimeDagRunner1`. It uses:
@@ -272,6 +278,7 @@ class TestRealTimePipelineWithOms1(hunitest.TestCase):
 # #############################################################################
 
 
+# TODO(gp): Use SystemRunner.
 class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
     """
     Run `MvnReturns` pipeline in real-time with mocked OMS objects.

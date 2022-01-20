@@ -614,9 +614,9 @@ def diff_strings(
     #
     cmd = f"sdiff --width={width} {file_name1} {file_name2}"
     # To avoid circular dependencies.
-    import helpers.hsystem as hsysinte
+    import helpers.hsystem as hsystem
 
-    _, txt = hsysinte.system_to_string(
+    _, txt = hsystem.system_to_string(
         cmd,
         # We don't care if they are different.
         abort_on_error=False,
@@ -773,6 +773,7 @@ def dataframe_to_str(
     max_columns: int = 10000,
     max_colwidth: int = 2000,
     max_rows: int = 500,
+    precision: int = 6,
     display_width: int = 10000,
     use_tabulate: bool = False,
 ) -> str:
@@ -787,6 +788,8 @@ def dataframe_to_str(
         #'display.height', 1000,
         "display.max_rows",
         max_rows,
+        "display.precision",
+        precision,
         "display.max_columns",
         max_columns,
         "display.width",
@@ -844,8 +847,8 @@ def df_to_short_str(
             out.append(fmt % (col_name, _report_type_of_first_element(df.index)))
             for col_name in df.columns:
                 out.append(
-                fmt % (col_name, _report_type_of_first_element(df[col_name]))
-            )
+                    fmt % (col_name, _report_type_of_first_element(df[col_name]))
+                )
     # Print the data frame.
     if df.shape[0] <= n:
         out.append(dataframe_to_str(df))

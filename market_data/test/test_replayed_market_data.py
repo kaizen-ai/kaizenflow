@@ -12,6 +12,7 @@ import market_data.replayed_market_data as mdremada
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): Factor out this test in a ReplayedMarketData_TestCase
 def _check_get_data(
     self_: Any,
     initial_replayed_delay: int,
@@ -69,6 +70,8 @@ class TestReplayedMarketData1(hunitest.TestCase):
         is_online = market_data.is_online()
         _LOG.info("-> is_online=%s", is_online)
         self.assertEqual(is_online, expected_is_online)
+
+    # //////////////////////////////////////////////////////////////////////////////
 
     def test_get_data1(self) -> None:
         """
@@ -294,6 +297,8 @@ class TestReplayedMarketData1(hunitest.TestCase):
         self.check_last_end_time(
             market_data, expected_last_end_time, expected_is_online
         )
+
+    # //////////////////////////////////////////////////////////////////////////////
 
     def test_get_data_for_minute_0(self) -> None:
         """
