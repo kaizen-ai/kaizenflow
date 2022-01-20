@@ -44,7 +44,7 @@ import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
-import im_v2.ccxt.data.client as imvcdcli
+import im_v2.ccxt.data.client as icdcl
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -92,7 +92,7 @@ print(config)
 root_dir = config["load"]["data_dir"]
 extension = "csv.gz"
 aws_profile = config["load"]["aws_profile"]
-ccxt_csv_client = imvcdcli.CcxtCsvParquetByAssetClient(
+ccxt_csv_client = icdcl.CcxtCsvParquetByAssetClient(
     root_dir,
     extension,
     aws_profile=aws_profile,
