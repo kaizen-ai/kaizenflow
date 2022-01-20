@@ -189,8 +189,8 @@ class TestMarketDataClient(hunitest.TestCase):
             asset_ids, columns, column_remap
         )
         # Compute TWAP price.
-        start_ts = pd.Timestamp("2018-08-17T00:01:00")
-        end_ts = pd.Timestamp("2018-08-17T00:05:00")
+        start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         ts_col_name = "end_ts"
         actual = market_data_client.get_twap_price(
             start_ts, end_ts, ts_col_name, asset_ids, column="close"
@@ -209,16 +209,17 @@ class TestMarketDataClient(hunitest.TestCase):
             asset_ids, columns, column_remap
         )
         # Compute TWAP price.
-        start_ts = pd.Timestamp("2018-08-17T00:01:00")
-        end_ts = pd.Timestamp("2018-08-17T00:05:00")
+        start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         ts_col_name = "end_ts"
         actual = market_data_client.get_twap_price(
             start_ts, end_ts, ts_col_name, asset_ids, column="close"
         ).round(2)
-        expected = r"""                     close
-full_symbol
-binance::BTC_USDT  6295.72
-kucoin::ETH_USDT    285.64"""
+        expected = r"""
+                            close
+        full_symbol
+        binance::BTC_USDT  6295.72
+        kucoin::ETH_USDT    285.64"""
         self.assert_equal(
             hunitest.convert_df_to_string(actual, index=True, decimals=2),
             expected,
