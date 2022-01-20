@@ -6,10 +6,11 @@ TARGET_REPO=/Users/saggese/src/cmamp2
 cd $TARGET_REPO
 
 # Clean up.
-git reset --hard
+git pull
+git reset --hard HEAD
 
 # Apply changes.
-git merge CmTask972_Merge_dataframe_to_str_and_df_to_short_str_into_hpandas
+git merge origin/CmTask972_Merge_dataframe_to_str_and_df_to_short_str_into_hpandas
 
 # Move dataframe_to_str from hprint to hpandas.
 ./dev_scripts/replace_text.py \
