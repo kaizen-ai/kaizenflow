@@ -10,6 +10,7 @@ import pandas as pd
 
 import helpers.hdbg as hdbg
 import im_v2.common.data.client as icdc
+import im_v2.common.universe.universe_utils as icuuut
 import market_data.abstract_market_data as mdabmada
 
 
@@ -70,6 +71,7 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
             start_ts,
             end_ts,
         )
+        market_data["asset_id"] = market_data["full_symbol"].apply(icuuut.string_to_num_id)
         if self._columns:
             # Select only specified columns.
             hdbg.dassert_is_subset(self._columns, market_data.columns)
