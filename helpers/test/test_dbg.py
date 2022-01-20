@@ -560,11 +560,3 @@ class Test_dassert_callable1(hunitest.TestCase):
         Obj '4' of type '<class 'int'>' is not callable
         """
         self.assert_equal(act, exp, fuzzy_match=True)
-
-
-# #############################################################################
-
-
-class Test_logging1(hunitest.TestCase):
-    def test_logging_levels1(self) -> None:
-        hdbg.test_logger()
