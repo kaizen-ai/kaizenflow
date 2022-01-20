@@ -45,7 +45,7 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         ts_col_name: str,
-        asset_ids: Optional[List[str]],
+        asset_ids: Optional[List[int]],
         left_close: bool,
         right_close: bool,
         normalize_data: bool,
@@ -63,15 +63,16 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
             end_ts = end_ts + pd.Timedelta(1, "ms")
         if not asset_ids:
             # If `asset_ids` is None, get all symbols from the universe.
-            asset_ids = self._im_client.get_universe()
+            asset_ids = self._im_client.get_universe(as_ids=True)
         # Load the data using `im_client`.
-        full_symbols = asset_ids
+        full_symbols = self._convert_universe(asset_ids)
         market_data = self._im_client.read_data(
             full_symbols,
             start_ts,
             end_ts,
         )
-        market_data["asset_id"] = market_data["full_symbol"].apply(icuuut.string_to_num_id)
+        # TODO(Grisha): pass `full_symbol_column_name` as parameter.
+        market_data[self._asset_id_col] = market_data["full_symbol"].apply(icuuut.string_to_num_id)
         if self._columns:
             # Select only specified columns.
             hdbg.dassert_is_subset(self._columns, market_data.columns)
@@ -84,6 +85,23 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
             market_data = self._convert_im_data(market_data)
             market_data = self._normalize_data(market_data)
         return market_data
+
+    def _convert_universe(self, universe_as_ids: List[int]) -> List[icdc.FullSymbol]:
+        """
+        Convert universe as numeric ids to universe as full symbols.
+
+        :param universe_as_ids: universe as numeric ids
+        :return: universe as full symbols
+        """
+        # Get universe as full symbols to construct ids to full symbols mapping.
+        full_symbol_universe = self._im_client.get_universe(as_ids=False)
+        ids_to_symbol_mapping = icuuut.build_num_to_string_id_mapping(tuple(full_symbol_universe))
+        # Check that provided ids are part of universe.
+        hdbg.dassert_in(universe_as_ids, ids_to_symbol_mapping)
+        # Convert ids to full symbols.
+        universe_as_symbols = [ids_to_symbol_mapping[asset_id] for asset_id in universe_as_ids]
+        return universe_as_symbols
+
 
     def _convert_im_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """

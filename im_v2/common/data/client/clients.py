@@ -142,9 +142,11 @@ class ImClient(abc.ABC):
 
     @staticmethod
     @abc.abstractmethod
-    def get_universe() -> List[imvcdcfusy.FullSymbol]:
+    def get_universe(as_ids: bool) -> List[imvcdcfusy.FullSymbol]:
         """
         Get universe as full symbols.
+
+        :param as_ids: if True return universe as numeric ids, otherwise universe as full symbols
         """
         ...
 
