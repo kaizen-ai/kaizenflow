@@ -4,8 +4,6 @@ Import as:
 import helpers.hdatetime as hdateti
 """
 
-# TODO(gp): -> hdatetime
-
 import asyncio
 import calendar
 import datetime
@@ -13,6 +11,7 @@ import logging
 import re
 from typing import Callable, Iterable, Optional, Tuple, Union, cast
 
+# TODO(gp): Use hdbg.WARNING
 _WARNING = "\033[33mWARNING\033[0m"
 
 

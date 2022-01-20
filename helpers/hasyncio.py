@@ -57,7 +57,24 @@ class _EventLoop(async_solipsism.EventLoop):
     def get_current_time(self) -> datetime.datetime:
         # `loop.time()` returns the number of seconds as `float` from when the event
         # loop was created.
-        num_secs = super().time()
+        try:
+            num_secs = super().time()
+        except AttributeError:
+            # Sometimes we call the logger before `async_solipsism` is fully initialized.
+            #   File "/app/amp/helpers/hdatetime.py", line 255, in get_current_time
+            #     timestamp = event_loop.get_current_time()
+            #   File "/app/amp/helpers/hasyncio.py", line 60, in get_current_time
+            #     num_secs = super().time()
+            #   File "/venv/lib/python3.8/site-packages/async_solipsism/loop.py", line 39, in time
+            #     return self._selector.clock.time()
+            # AttributeError: 'NoneType' object has no attribute 'clock'
+            # Call stack:
+            #   File "/app/amp/helpers/hcache.py", line 311, in clear_global_cache
+            #     _LOG.info("After clear_global_cache: %s", info_after)
+            # Message: 'After clear_global_cache: %s'
+            # Arguments: ("'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem', size=nan",)
+            # To avoid the error above we just set the `num_secs` to 0.
+            num_secs = 0
         return self._initial_dt + datetime.timedelta(seconds=num_secs)
 
 
