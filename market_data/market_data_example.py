@@ -240,6 +240,7 @@ def build_timestamp_df(
 # #############################################################################
 
 
+# TODO(gp): Return only MarketData since the wall clock is inside it.
 def get_ReplayedTimeMarketData_from_df(
     event_loop: asyncio.AbstractEventLoop,
     initial_replayed_delay: int,
@@ -250,7 +251,7 @@ def get_ReplayedTimeMarketData_from_df(
     time_out_in_secs: int = 60 * 2,
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
     """
-    Build a `ReplayedMarketData` backed by synthetic data.
+    Build a `ReplayedMarketData` backed by synthetic data stored in a dataframe.
 
     :param df: dataframe including the columns
         ["timestamp_db", "asset_id", "start_datetime", "end_datetime"]
@@ -349,8 +350,9 @@ def get_ReplayedTimeMarketData_example3(
     """
     Build a ReplayedMarketData:
 
-    - with synthetic data between `2000-01-01 9:30` and `10:30`
-    - for two assets
+    - with synthetic price data between `2000-01-01 9:30` and `10:30`
+    - for two assets 101 and 202
+    - starting 5 minutes after the data
     """
     # Generate random price data.
     start_datetime = pd.Timestamp(
@@ -383,14 +385,15 @@ def get_ReplayedTimeMarketData_example3(
 
 def get_ReplayedTimeMarketData_example4(
     event_loop: asyncio.AbstractEventLoop,
-    initial_replayed_delay: int = 0,
-    *,
     start_datetime: pd.Timestamp,
     end_datetime: pd.Timestamp,
     asset_ids: List[int],
+    *,
+    initial_replayed_delay: int = 0,
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
     """
-    Build a ReplayedMarketData.
+    Build a ReplayedMarketData with synthetic bar data for the given interval of
+    time and assets.
     """
     # Generate random price data.
     df = generate_random_bars(start_datetime, end_datetime, asset_ids)

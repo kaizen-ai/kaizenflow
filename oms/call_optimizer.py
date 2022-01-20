@@ -6,9 +6,9 @@ import oms.call_optimizer as ocalopti
 
 import logging
 
+import numpy as np
 import pandas as pd
 
-# import core.config as cconfig
 import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
@@ -17,7 +17,10 @@ _LOG = logging.getLogger(__name__)
 def compute_target_positions_in_cash(
     df: pd.DataFrame,
     cash_asset_id: int,
-    # config: cconfig.Config,
+    *,
+    target_gmv: float = 100000,
+    dollar_neutral: bool = False,
+    volatility_lower_bound: float = 1e-5,
 ) -> pd.DataFrame:
     """
     Compute target trades from holdings (dollar-valued) and predictions.
@@ -31,6 +34,7 @@ def compute_target_positions_in_cash(
     :return: a dataframe with target positions and trades
         (denominated in dollars)
     """
+    # Sanity-check the dataframe.
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_is_subset(
         ["asset_id", "prediction", "volatility", "value"], df.columns
@@ -44,9 +48,6 @@ def compute_target_positions_in_cash(
     #
     df = df.set_index("asset_id")
     hdbg.dassert(not df.index.has_duplicates)
-    # TODO(Paul): Pass this through a config.
-    # target_gmv = config["target_gmv"]
-    target_gmv = 100000
     # In this placeholder, we maintain two invariants (approximately):
     #   1. Net wealth is conserved from one step to the next.
     #   2. GMV is conserved from one step to the next.
@@ -57,15 +58,25 @@ def compute_target_positions_in_cash(
     _LOG.debug("volatility=\n%s", volatility)
     volatility[cash_asset_id] = 1.0
     # Set a lower bound on the volatility forecast.
-    volatility = volatility.clip(lower=1e-5)
-    #
+    volatility = volatility.clip(lower=volatility_lower_bound)
+    # Calculate volatility-weighted target positions. This is not yet scaled
+    #  to target GMV.
     unscaled_target_positions = predictions.divide(volatility)
-    cash = predictions[cash_asset_id]
-    hdbg.dassert_lte(0, cash)
-    unscaled_target_positions_l1 = unscaled_target_positions.abs().sum() - cash
+    # We do not want the cash balance to be used in target GMV or dollar
+    #  neutrality calculations; set it to NaN in intermediate calculations.
+    unscaled_target_positions[cash_asset_id] = np.nan
+    if dollar_neutral:
+        net_target_position = unscaled_target_positions.mean()
+        _LOG.debug(
+            "Target net asset value prior to dollar neutrality constaint=%f"
+            % net_target_position
+        )
+        unscaled_target_positions -= net_target_position
+    unscaled_target_positions_l1 = unscaled_target_positions.abs().sum()
     _LOG.debug("unscaled_target_positions_l1 =%s", unscaled_target_positions_l1)
     hdbg.dassert_lte(0, unscaled_target_positions_l1)
     if unscaled_target_positions_l1 == 0:
+        _LOG.debug("All target positions are zero.")
         scale_factor = 0
     else:
         scale_factor = target_gmv / unscaled_target_positions_l1

@@ -22,7 +22,7 @@ import helpers.hprint as hprint
 
 # TODO(gp): Enable this after the linter has been updated.
 # import helpers.hs3 as hs3
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -35,6 +35,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(gp): Redundant with `find_regex_files()`. Remove this.
 def find_files(directory: str, pattern: str) -> List[str]:
     """
     Find all files under `directory` that match a certain `pattern`.
@@ -50,10 +51,30 @@ def find_files(directory: str, pattern: str) -> List[str]:
     return file_names
 
 
-# TODO(gp): Seems equivalent to `find_files`. Let's keep this.
-def find_regex_files(src_dir: str, regex: str) -> List[str]:
-    cmd = 'find %s -name "%s"' % (src_dir, regex)
-    _, output = hsysinte.system_to_string(cmd)
+def find_regex_files(
+    src_dir: str,
+    regex: str,
+    *,
+    only_files: bool = False,
+    exclude_git_dirs: bool = True,
+) -> List[str]:
+    """
+    Find all files under `src_dir`
+
+    :param regex: find regex to search for (e.g., `*.py`)
+    :param only_files: look for only files instead of both files and dirs
+    :param exclude_git_dirs: skip `.git` dirs
+    """
+    hdbg.dassert_dir_exists(src_dir)
+    cmd = []
+    cmd.append(f"find {src_dir}")
+    cmd.append(f'-name "{regex}"')
+    if only_files:
+        cmd.append("-type f")
+    if exclude_git_dirs:
+        cmd.append(r'-not -path "*/\.git/*"')
+    cmd = " ".join(cmd)
+    _, output = hsystem.system_to_string(cmd)
     # TODO(gp): -> system_to_files
     file_names = [f for f in output.split("\n") if f != ""]
     _LOG.debug("Found %s files in %s", len(file_names), src_dir)
@@ -61,7 +82,7 @@ def find_regex_files(src_dir: str, regex: str) -> List[str]:
     return file_names
 
 
-# TODO(gp): Redundant with `find_files()`. Remove this.
+# TODO(gp): Redundant with `find_regex_files()`. Remove this.
 def find_all_files(dir_name: str, extension: Optional[str] = None) -> List[str]:
     """
     Find all files (not directory) under `dir_name`, skipping `.git`.
@@ -75,7 +96,7 @@ def find_all_files(dir_name: str, extension: Optional[str] = None) -> List[str]:
         )
         file_name += f".{extension}"
     cmd = fr'''cd {dir_name} && find . -type f -name "{file_name}" -not -path "*/\.git/*"'''
-    file_names = hsysinte.system_to_files(cmd)
+    file_names = hsystem.system_to_files(cmd)
     file_names = cast(List[str], file_names)
     _LOG.debug("Found %s files", len(file_names))
     return file_names
@@ -154,7 +175,7 @@ def create_soft_link(src: str, dst: str) -> None:
     # Create the link. Note that the link source needs to be an absolute path.
     src = os.path.abspath(src)
     cmd = "ln -s %s %s" % (src, dst)
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
 
 
 def delete_file(file_name: str) -> None:
@@ -200,7 +221,7 @@ def delete_dir(
         return
     if change_perms and os.path.isdir(dir_):
         cmd = "chmod -R +rwx " + dir_
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
     i = 1
     while True:
         try:
@@ -267,7 +288,7 @@ def create_dir(
             )
             return
         if ask_to_delete:
-            hsysinte.query_yes_no(
+            hsystem.query_yes_no(
                 "Do you really want to delete dir '%s'?" % dir_name,
                 abort_on_no=True,
             )
