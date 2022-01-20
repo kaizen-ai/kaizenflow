@@ -306,7 +306,7 @@ def trim_df(
         interval
         - E.g., [start_ts, end_ts), or (start_ts, end_ts]
     """
-    _LOG.verb_debug(hprint.df_to_short_str("df", df, print_dtypes=True))
+    _LOG.verb_debug(df_to_short_str("df", df, print_dtypes=True))
     _LOG.debug(
         hprint.to_str("ts_col_name start_ts end_ts left_close right_close")
     )
@@ -323,7 +323,7 @@ def trim_df(
         # TODO(gp): Use binary search if there is an index.
         if df.index.name is None:
             _LOG.debug(
-                "The df has no index\n%s", hprint.dataframe_to_str(df.head())
+                "The df has no index\n%s", dataframe_to_str(df.head())
             )
             df.index.name = "index"
         ts_col_name = df.index.name
@@ -340,12 +340,12 @@ def trim_df(
         # vs Pandas objects.
         tss = pd.to_datetime(df[ts_col_name])
         hdateti.dassert_tz_compatible(tss.iloc[0], start_ts)
-        _LOG.verb_debug("tss=\n%s", hprint.dataframe_to_str(tss))
+        _LOG.verb_debug("tss=\n%s", dataframe_to_str(tss))
         if left_close:
             mask = tss >= start_ts
         else:
             mask = tss > start_ts
-        _LOG.verb_debug("mask=\n%s", hprint.dataframe_to_str(mask))
+        _LOG.verb_debug("mask=\n%s", dataframe_to_str(mask))
         df = df[mask]
     # Filter based on end_ts.
     _LOG.debug("Filtering by end_ts=%s", end_ts)
@@ -355,12 +355,12 @@ def trim_df(
             _LOG.verb_debug("end_ts=%s", end_ts)
             tss = pd.to_datetime(df[ts_col_name])
             hdateti.dassert_tz_compatible(tss.iloc[0], end_ts)
-            _LOG.verb_debug("tss=\n%s", hprint.dataframe_to_str(tss))
+            _LOG.verb_debug("tss=\n%s", dataframe_to_str(tss))
             if right_close:
                 mask = tss <= end_ts
             else:
                 mask = tss < end_ts
-            _LOG.verb_debug("mask=\n%s", hprint.dataframe_to_str(mask))
+            _LOG.verb_debug("mask=\n%s", dataframe_to_str(mask))
             df = df[mask]
     else:
         # If the df is empty there is nothing to trim.
@@ -368,3 +368,105 @@ def trim_df(
     if use_index:
         df = df.set_index(ts_col_name, drop=True)
     return df
+
+
+# TODO(gp): This seems redundant with hut.convert_df_to_string.
+def dataframe_to_str(
+    df: Any,
+    *,
+    max_columns: int = 10000,
+    max_colwidth: int = 2000,
+    max_rows: int = 500,
+    precision: int = 6,
+    display_width: int = 10000,
+    use_tabulate: bool = False,
+) -> str:
+    """
+    Print a dataframe to string reporting all the columns without trimming.
+    """
+    import pandas as pd
+
+    with pd.option_context(
+        "display.max_colwidth",
+        max_colwidth,
+        #'display.height', 1000,
+        "display.max_rows",
+        max_rows,
+        "display.precision",
+        precision,
+        "display.max_columns",
+        max_columns,
+        "display.width",
+        display_width,
+    ):
+        if use_tabulate:
+            import tabulate
+
+            res = tabulate.tabulate(df, headers="keys", tablefmt="psql")
+        else:
+            res = str(df)
+    return res
+
+
+# TODO(gp): Merge df_to_str and this adding a parameter `print_shape_info`.
+def df_to_short_str(
+        tag: str,
+        df: "pd.DataFrame",
+        *,
+        n: int = 3,
+        print_dtypes: bool = False,
+) -> str:
+    """
+    Print a dataframe to string reporting the info about the size.
+
+    :param n: number of rows to print
+    :param print_dtypes: report df.types and information about the type of each column by looking
+        at the first value
+    """
+    out = []
+    # Print the tag.
+    tag = tag or "df"
+    out.append(f"# {tag}=")
+    # Print information about the shape and index.
+    if not df.empty:
+        out.append("df.index in [%s, %s]" % (df.index.min(), df.index.max()))
+        out.append("df.columns=%s" % ",".join(map(str, df.columns)))
+    out.append("df.shape=%s" % str(df.shape))
+    # Print information about the types.
+    if not df.empty:
+        if print_dtypes:
+            out.append("df.type=")
+
+            def _report_type_of_first_element(srs: "pd.Series") -> str:
+                """
+                Report dtype, the first element, and its type of a series.
+                """
+                elem = srs.values[0]
+                val = "%10s %25s %s" % (srs.dtype, type(elem), elem)
+                return val
+
+            col_name = "index"
+            fmt = "  %20s: %s"
+            out.append(fmt % (col_name, _report_type_of_first_element(df.index)))
+            for col_name in df.columns:
+                out.append(
+                    fmt % (col_name, _report_type_of_first_element(df[col_name]))
+                )
+    # Print the data frame.
+    if df.shape[0] <= n:
+        out.append(dataframe_to_str(df))
+    else:
+        # Print top and bottom of df.
+        # TODO(gp): df.head(n / 2)
+        out.append(dataframe_to_str(df.head(n)))
+        out.append("...")
+        tail_str = dataframe_to_str(df.tail(n))
+        # Remove index and columns.
+        skipped_rows = 1
+        if df.index.name:
+            skipped_rows += 1
+        tail_str = "\n".join(tail_str.split("\n")[skipped_rows:])
+        out.append(tail_str)
+    # txt += "\n# dtypes=\n%s" % str(df.dtypes)
+    txt = "\n".join(out)
+    return txt
