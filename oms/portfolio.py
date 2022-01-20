@@ -15,6 +15,7 @@ import pandas as pd
 import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
 import helpers.hio as hio
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hsql as hsql
 import oms.broker as ombroker
@@ -62,6 +63,7 @@ class AbstractPortfolio(abc.ABC):
         broker: ombroker.AbstractBroker,
         asset_id_col: str,
         mark_to_market_col: str,
+        pricing_method: str,
         timestamp_col: str,
         initial_holdings: pd.Series,
     ):
@@ -74,6 +76,9 @@ class AbstractPortfolio(abc.ABC):
             storing the asset id
         :param mark_to_market_col: column name used as price to mark holdings to
             market
+        :param pricing_method: pricing methodology to use for valuing assets.
+            If e.g. "twap", then we also include the bar duration as a
+            pandas-style suffix: "twap.5T"
         :param timestamp_col: column to use when accessing price data
         """
         _LOG.debug(
@@ -92,6 +97,23 @@ class AbstractPortfolio(abc.ABC):
         self._get_wall_clock_time = broker.market_data.get_wall_clock_time
         self._asset_id_col = asset_id_col
         self._mark_to_market_col = mark_to_market_col
+        # Parse `pricing_method`.
+        hdbg.dassert_isinstance(pricing_method, str)
+        if pricing_method == "last":
+            self._pricing_type = "last"
+        else:
+            split_str = pricing_method.split(".")
+            hdbg.dassert_eq(len(split_str), 2)
+            pricing_type = split_str[0]
+            hdbg.dassert_in(pricing_type, ["twap", "vwap"])
+            self._pricing_type = pricing_type
+            bar_duration = split_str[1]
+            hdbg.dassert(
+                pd.Timedelta(bar_duration),
+                "Cannot convert %s to `pd.Timedelta`" % bar_duration,
+            )
+            self._bar_duration = bar_duration
+        # Timestamp column.
         self._timestamp_col = timestamp_col
         # Initialize universe and holdings.
         self._validate_initial_holdings(initial_holdings)
@@ -142,19 +164,25 @@ class AbstractPortfolio(abc.ABC):
         Return the state of the Portfolio in terms of the holdings as a string.
         """
         act = []
+        precision = 2
         act.append(
             "# historical holdings=\n%s"
-            % hprint.dataframe_to_str(self.get_historical_holdings())
+            % hprint.dataframe_to_str(
+                self.get_historical_holdings(), precision=precision
+            )
         )
         act.append(
             "# historical holdings marked to market=\n%s"
             % hprint.dataframe_to_str(
-                self.get_historical_holdings_marked_to_market()
+                self.get_historical_holdings_marked_to_market(),
+                precision=precision,
             )
         )
         act.append(
             "# historical statistics=\n%s"
-            % hprint.dataframe_to_str(self.get_historical_statistics())
+            % hprint.dataframe_to_str(
+                self.get_historical_statistics(), precision=precision
+            )
         )
         act = "\n".join(act)
         return act
@@ -313,6 +341,8 @@ class AbstractPortfolio(abc.ABC):
         asset_holdings = pd.DataFrame(self._asset_holdings).transpose()
         cash = pd.Series(self._cash)
         asset_holdings[AbstractPortfolio.CASH_ID] = cash
+        asset_holdings.columns.name = self._asset_id_col
+        asset_holdings = asset_holdings.astype("float")
         return asset_holdings
 
     def get_historical_holdings_marked_to_market(self) -> pd.DataFrame:
@@ -325,6 +355,8 @@ class AbstractPortfolio(abc.ABC):
         asset_values = pd.DataFrame(asset_values).transpose()
         cash = pd.Series(self._cash)
         asset_values[AbstractPortfolio.CASH_ID] = cash
+        asset_values.columns.name = self._asset_id_col
+        asset_values = asset_values.astype("float")
         return asset_values
 
     def log_state(self, log_dir: str) -> None:
@@ -361,9 +393,19 @@ class AbstractPortfolio(abc.ABC):
         :param asset_ids: as in `market_data.get_data_at_timestamp()`
         :return: series of prices at `as_of_timestamp` indexed by asset_id
         """
-        prices = self.market_data.get_last_price(
-            self._mark_to_market_col, asset_ids
-        )
+        if self._pricing_type == "last":
+            prices = self.market_data.get_last_price(
+                self._mark_to_market_col, asset_ids
+            )
+        elif self._pricing_type == "twap":
+            prices = self.market_data.get_last_twap_price(
+                self._bar_duration,
+                self._timestamp_col,
+                asset_ids,
+                self._mark_to_market_col,
+            )
+        else:
+            raise NotImplementedError
         hdbg.dassert_eq(self._mark_to_market_col, prices.name)
         prices.index.name = "asset_id"
         prices.name = "price"
@@ -487,13 +529,13 @@ class AbstractPortfolio(abc.ABC):
         # The columns should be of the correct types. Skip if the dataframe is
         # empty (since the correct types are not inferred in that case).
         if not df.empty:
-            hdbg.dassert_eq(
-                df["asset_id"].dtype.type,
+            hpandas.dassert_series_type_is(
+                df["asset_id"],
                 np.int64,
                 "The column `asset_id` should only contain integer ids.",
             )
-            hdbg.dassert_in(
-                df["curr_num_shares"].dtype.type,
+            hpandas.dassert_series_type_in(
+                df["curr_num_shares"],
                 [np.float64, np.int64],
                 "The column `curr_num_shares` should be a float column.",
             )
@@ -643,7 +685,9 @@ class SimulatedPortfolio(AbstractPortfolio):
             fills_df = fills_df.convert_dtypes()
         else:
             fills_df = None
-        _LOG.debug("fills_df=\n%s", hprint.dataframe_to_str(fills_df))
+        _LOG.debug(
+            "fills_df=\n%s", hprint.dataframe_to_str(fills_df, precision=2)
+        )
         return fills_df
 
     @staticmethod
@@ -813,7 +857,9 @@ class MockedPortfolio(AbstractPortfolio):
         # 2021-12-09    10006 2021-12-09 11:54:28  0.0              0
         # 2021-12-09    10009 1970-01-01 00:00:00  0.0              0
         # ```
-        _LOG.debug("snapshot_df=\n%s", hprint.dataframe_to_str(snapshot_df))
+        _LOG.debug(
+            "snapshot_df=\n%s", hprint.dataframe_to_str(snapshot_df, precision=2)
+        )
         if not snapshot_df.empty:
             hdbg.dassert_no_duplicates(
                 snapshot_df["asset_id"],
@@ -831,7 +877,18 @@ class MockedPortfolio(AbstractPortfolio):
             "asset_id"
         )["current_position"]
         hdbg.dassert_isinstance(asset_holdings, pd.Series)
+        _LOG.debug("asset_holdings=%s" % asset_holdings)
+        asset_holdings = asset_holdings.reindex(
+            index=self._initial_universe, copy=False
+        )
         asset_holdings.name = wall_clock_timestamp
+        # If the database does not have an entry for an asset (e.g., as in
+        # a mock database without universe initialization), then a NaN is
+        # returned.
+        _LOG.debug(
+            "Number of NaN asset_holdings=%d" % asset_holdings.isna().sum()
+        )
+        asset_holdings.fillna(0, inplace=True)
         self._sequential_insert(
             wall_clock_timestamp, asset_holdings, self._asset_holdings
         )
@@ -863,7 +920,7 @@ class MockedPortfolio(AbstractPortfolio):
             return 0.0
         hdbg.dassert_in("net_cost", snapshot_df.columns)
         net_cost = snapshot_df["net_cost"].sum()
-        _LOG.debug("net_cost=%f", net_cost)
+        _LOG.debug("net_cost (cumulative)=%f", net_cost)
         return net_cost
 
     def _update_cash(
@@ -892,11 +949,14 @@ class MockedPortfolio(AbstractPortfolio):
         # Get the current net cost.
         current_net_cost = self._get_net_cost(snapshot_df)
         hdbg.dassert(
-            np.isfinite(current_net_cost), "current_net_cost=%s", current_net_cost
+            np.isfinite(current_net_cost),
+            "current_net_cost (cumulative)=%f",
+            current_net_cost,
         )
         # The cost of the previous transactions is the difference of net cost.
         cost = current_net_cost - prev_net_cost
-        hdbg.dassert(np.isfinite(cost), "cost=%s", cost)
+        _LOG.debug("cost (net_cost diff)=%f" % cost)
+        hdbg.dassert(np.isfinite(cost))
         # The current cash is given by the previous cash and the cash spent in the
         # previous transactions.
         updated_cash = prev_cash - cost

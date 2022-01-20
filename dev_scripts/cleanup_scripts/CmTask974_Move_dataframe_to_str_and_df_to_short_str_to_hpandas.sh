@@ -30,5 +30,6 @@ git merge origin/CmTask972_Merge_dataframe_to_str_and_df_to_short_str_into_hpand
   --new "import helpers.hpandas as hpandas; import helpers.hprint as hprint" \
   --ext "py"
 
-# Remove unused imports.
-invoke lint --files "$(find . -name '*.py')" --phases="amp_isort autoflake"
+# Remove unused imports from the changed files.
+#invoke lint --files "$(find . -name '*.py')" --phases="amp_isort autoflake"
+invoke lint -m --phases="amp_isort autoflake"
