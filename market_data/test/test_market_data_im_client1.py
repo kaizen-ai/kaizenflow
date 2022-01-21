@@ -1,9 +1,9 @@
-from typing import List
+from typing import Dict, List, Optional
 
 import pandas as pd
 import pytest
 
-import market_data.market_data_client_example as mdmdclex
+import market_data as mdata
 import market_data.test.market_data_test_case as mdtmdtca
 
 
@@ -17,23 +17,89 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Build MarketDataInterface.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        columns: List = []
-        column_remap = None
-        market_data = mdmdclex.get_MarketDataInterface_example1(
-            asset_ids, columns, column_remap
-        )
+        market_data = self._build_client(asset_ids)
         # Run test.
-        periods = (
-            "last_day",
-            "last_2days",
-            "last_week",
-            "last_10mins",
-            "last_5mins",
-            "last_1mins",
-            "all",
-        )
+        period = "last_day"
         normalize_data = True
-        self._test_get_data_for_last_period1(market_data, periods, normalize_data)
+        self._test_get_data_for_last_period(market_data, period, normalize_data)
+
+    @pytest.mark.skip(reason="Skip until TODO above is resolved")
+    def test_get_data_for_last_period2(self) -> None:
+        """
+        See description of corresponding private method in parent class.
+        """
+        # Build MarketDataInterface.
+        asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        market_data = self._build_client(asset_ids)
+        # Run test.
+        period = "last_2days"
+        normalize_data = True
+        self._test_get_data_for_last_period(market_data, period, normalize_data)
+
+    @pytest.mark.skip(reason="Skip until TODO above is resolved")
+    def test_get_data_for_last_period3(self) -> None:
+        """
+        See description of corresponding private method in parent class.
+        """
+        # Build MarketDataInterface.
+        asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        market_data = self._build_client(asset_ids)
+        # Run test.
+        period = "last_week"
+        normalize_data = True
+        self._test_get_data_for_last_period(market_data, period, normalize_data)
+
+    @pytest.mark.skip(reason="Skip until TODO above is resolved")
+    def test_get_data_for_last_period4(self) -> None:
+        """
+        See description of corresponding private method in parent class.
+        """
+        # Build MarketDataInterface.
+        asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        market_data = self._build_client(asset_ids)
+        # Run test.
+        period = "last_10mins"
+        normalize_data = True
+        self._test_get_data_for_last_period(market_data, period, normalize_data)
+
+    @pytest.mark.skip(reason="Skip until TODO above is resolved")
+    def test_get_data_for_last_period5(self) -> None:
+        """
+        See description of corresponding private method in parent class.
+        """
+        # Build MarketDataInterface.
+        asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        market_data = self._build_client(asset_ids)
+        # Run test.
+        period = "last_5mins"
+        normalize_data = True
+        self._test_get_data_for_last_period(market_data, period, normalize_data)
+
+    @pytest.mark.skip(reason="Skip until TODO above is resolved")
+    def test_get_data_for_last_period6(self) -> None:
+        """
+        See description of corresponding private method in parent class.
+        """
+        # Build MarketDataInterface.
+        asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        market_data = self._build_client(asset_ids)
+        # Run test.
+        period = "last_1mins"
+        normalize_data = True
+        self._test_get_data_for_last_period(market_data, period, normalize_data)
+
+    @pytest.mark.skip(reason="Skip until TODO above is resolved")
+    def test_get_data_for_last_period7(self) -> None:
+        """
+        See description of corresponding private method in parent class.
+        """
+        # Build MarketDataInterface.
+        asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        market_data = self._build_client(asset_ids)
+        # Run test.
+        period = "all"
+        normalize_data = True
+        self._test_get_data_for_last_period(market_data, period, normalize_data)
 
     def test_get_data_at_timestamp1(self) -> None:
         """
@@ -41,11 +107,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Build MarketDataInterface.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        columns: List = []
-        column_remap = None
-        market_data = mdmdclex.get_MarketDataInterface_example1(
-            asset_ids, columns, column_remap
-        )
+        market_data = self._build_client(asset_ids)
         # Run test.
         ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         normalize_data = True
@@ -72,11 +134,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Build MarketDataInterface.
         asset_ids = None
-        columns: List = []
-        column_remap = None
-        market_data = mdmdclex.get_MarketDataInterface_example1(
-            asset_ids, columns, column_remap
-        )
+        market_data = self._build_client(asset_ids)
         # Run test.
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
@@ -106,11 +164,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Build MarketDataInterface.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        columns: List = []
-        column_remap = None
-        market_data = mdmdclex.get_MarketDataInterface_example1(
-            asset_ids, columns, column_remap
-        )
+        market_data = self._build_client(asset_ids)
         # Run test.
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
@@ -139,11 +193,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Build MarketDataInterface.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        columns: List = []
-        column_remap = None
-        market_data = mdmdclex.get_MarketDataInterface_example1(
-            asset_ids, columns, column_remap
-        )
+        market_data = self._build_client(asset_ids)
         # Run test.
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
@@ -172,11 +222,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Build MarketDataInterface.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        columns: List = []
-        column_remap = None
-        market_data = mdmdclex.get_MarketDataInterface_example1(
-            asset_ids, columns, column_remap
-        )
+        market_data = self._build_client(asset_ids)
         # Run test.
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
@@ -205,11 +251,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Build MarketDataInterface.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        columns: List = []
-        column_remap = None
-        market_data = mdmdclex.get_MarketDataInterface_example1(
-            asset_ids, columns, column_remap
-        )
+        market_data = self._build_client(asset_ids)
         # Run test.
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
@@ -238,11 +280,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Build MarketDataInterface.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        columns: List = []
-        column_remap = None
-        market_data = mdmdclex.get_MarketDataInterface_example1(
-            asset_ids, columns, column_remap
-        )
+        market_data = self._build_client(asset_ids)
         # Run test.
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
@@ -273,11 +311,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Build MarketDataInterface.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        columns: List = []
-        column_remap = None
-        market_data = mdmdclex.get_MarketDataInterface_example1(
-            asset_ids, columns, column_remap
-        )
+        market_data = self._build_client(asset_ids)
         # Run test.
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
@@ -298,11 +332,23 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Build MarketDataInterface.
         asset_ids = ["binance::BTC_USDT"]
-        columns: List = []
-        column_remap = None
-        market_data = mdmdclex.get_MarketDataInterface_example1(
-            asset_ids, columns, column_remap
-        )
+        market_data = self._build_client(asset_ids)
         # Run test.
         wall_clock_time = pd.Timestamp("2018-08-17T00:01:00")
         self._test_should_be_online1(market_data, wall_clock_time)
+
+    # //////////////////////////////////////////////////////////////////////////////
+    
+    @staticmethod
+    def _build_client(
+        asset_ids: Optional[List[int]],
+        columns: List[Optional[str]] = [],
+        column_remap: Optional[Dict[str, str]] = None,
+    ) -> mdata.AbstractMarketData:
+        """
+        Build MarketDataInterface client.
+        """
+        market_data = mdata.get_MarketDataInterface_example1(
+            asset_ids, columns, column_remap
+        )
+        return market_data

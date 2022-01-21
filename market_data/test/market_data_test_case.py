@@ -25,9 +25,9 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
     """
 
     @staticmethod
-    def _test_get_data_for_last_period1(
+    def _test_get_data_for_last_period(
         market_data: mdata.AbstractMarketData,
-        periods: Tuple[str],
+        period: str,
         normalize_data: bool,
     ) -> None:
         """
@@ -39,22 +39,18 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         """
         # if mdata.skip_test_since_not_online(market_data):
         #     pytest.skip("Market not on-line")
-        for period in periods:
-            hprint.log_frame(
-                _LOG,
-                "get_data_for_last_period:"
-                + hprint.to_str("period normalize_data"),
-            )
-            # Smoke test the method
-            _ = market_data.get_data_for_last_period(
-                period, normalize_data=normalize_data
-            )
+        hprint.log_frame(
+            _LOG,
+            "get_data_for_last_period:"
+            + hprint.to_str("period normalize_data"),
+        )
+        # Smoke test the method
+        _ = market_data.get_data_for_last_period(
+            period, normalize_data=normalize_data
+        )
 
     # //////////////////////////////////////////////////////////////////////////////
 
-    # TODO(gp): Add types.
-    # TODO(gp): ts -> timestamp
-    # TODO(gp): Pass the expected results like we do in other places of the code.
     def _test_get_data_at_timestamp1(
         self,
         market_data: mdata.AbstractMarketData,
@@ -65,8 +61,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
     ) -> None:
         """
         Call `get_data_at_timestamp()` for specified parameters.
-
-        This method is used by other test methods that vary parameters.
         """
         # if mdata.skip_test_since_not_online(market_data):
         #    pytest.skip("Market not on-line")
@@ -100,9 +94,9 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
     ) -> None:
         """
         Call `get_data_for_interval()` for specified parameters.
-
-        This method is used by other test methods that vary parameters.
         """
+        # if mdata.skip_test_since_not_online(market_data):
+        #     pytest.skip("Market not on-line")
         ts_col_name = "end_ts"
         hprint.log_frame(
             _LOG,
@@ -141,8 +135,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         - interval type is default [a, b)
         - data is normalized
         """
-        # if mdata.skip_test_since_not_online(market_data):
-        #     pytest.skip("Market not on-line")
         asset_ids = None
         left_close = True
         right_close = False
@@ -174,8 +166,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         - interval type is default [a, b)
         - data is normalized
         """
-        # if mdata.skip_test_since_not_online(market_data):
-        #     pytest.skip("Market not on-line")
         left_close = True
         right_close = False
         normalize_data = True
@@ -206,8 +196,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         - interval type is default [a, b)
         - data is not normalized
         """
-        # if mdata.skip_test_since_not_online(market_data):
-        #     pytest.skip("Market not on-line")
         left_close = True
         right_close = False
         normalize_data = False
@@ -238,8 +226,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         - interval type is [a, b]
         - data is normalized
         """
-        # if mdata.skip_test_since_not_online(market_data):
-        #     pytest.skip("Market not on-line")
         left_close = True
         right_close = True
         normalize_data = True
@@ -270,8 +256,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         - interval type is (a, b]
         - data is normalized
         """
-        # if mdata.skip_test_since_not_online(market_data):
-        #     pytest.skip("Market not on-line")
         left_close = False
         right_close = True
         normalize_data = True
@@ -302,8 +286,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         - interval type is (a, b)
         - data is normalized
         """
-        # if mdata.skip_test_since_not_online(market_data):
-        #     pytest.skip("Market not on-line")
         left_close = False
         right_close = False
         normalize_data = True
@@ -330,8 +312,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
     ) -> None:
         """
         Call `get_twap_price()` for specified parameters.
-
-        This method is used by other test methods that vary parameters.
         """
         # if mdata.skip_test_since_not_online(market_data):
         #     pytest.skip("Market not on-line")
@@ -352,11 +332,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         self.assert_equal(
             act_srs_as_str, exp_srs_as_str, dedent=True, fuzzy_match=True
         )
-        # self.assert_equal(
-        #     hunitest.convert_df_to_string(srs, index=True, decimals=2),
-        #     exp_srs_as_str,
-        #     fuzzy_match=True,
-        # )
 
     # TODO(Dan, Grisha): Implement test method for get_last_twap_price() after
     #  AbstractMarketData._get_last_end_time() is implemented.
