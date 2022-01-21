@@ -541,8 +541,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
         file_names = _get_all_files(dirs, exts)
         if args.only_files:
             # Use only specific files.
-            only_files_list = args.only_files.split(",")
-            file_names = [name for name in file_names if name in only_files_list]
+            only_files_list = args.only_files.split(" ")
+            file_names = [
+                file_name
+                for file_name in file_names
+                # Remove current directory to match only_files format.
+                if file_name.lstrip("./") in only_files_list
+            ]
         if args.action == "replace":
             # Replace.
             file_names_to_process, txt = _get_files_to_replace(
