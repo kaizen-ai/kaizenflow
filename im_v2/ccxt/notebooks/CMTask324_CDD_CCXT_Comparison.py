@@ -26,7 +26,7 @@ import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
-import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
+import im_v2.ccxt.data.client as icdcl
 import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.common.data.client as icdc
 import im_v2.cryptodatadownload.data.client.cdd_client as imcdaclcd
@@ -202,7 +202,7 @@ display(cdd_binance_df.shape)
 extension = "csv.gz"
 root_dir_ccxt=config_ccxt["load"]["data_dir"]
 aws_profile_ccxt = config_ccxt["load"]["aws_profile"]
-ccxt_csv_client = imvcdccccl.CcxtCsvParquetByAssetClient(
+ccxt_csv_client = icdcl.CcxtCsvParquetByAssetClient(
     root_dir_ccxt, extension, aws_profile=aws_profile_ccxt
 )
 start_ts = None
