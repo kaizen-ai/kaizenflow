@@ -43,11 +43,11 @@ class CcxtClient(icdc.ImClient, abc.ABC):
         - E.g., `_apply_olhlcv_transformations()`, `_apply_vendor_normalization()`
     """
     @staticmethod
-    def get_universe(as_ids: bool) -> List[icdc.FullSymbol]:
+    def get_universe(as_asset_ids: bool) -> List[icdc.FullSymbol]:
         """
         Return CCXT universe as full symbols.
         """
-        universe = imvccunun.get_vendor_universe(vendor="CCXT", as_ids=as_ids)
+        universe = imvccunun.get_vendor_universe(vendor="CCXT", as_asset_ids=as_asset_ids)
         return universe  # type: ignore[no-any-return]
 
     @staticmethod

@@ -151,7 +151,7 @@ class ImClient(abc.ABC):
         """
         ...
 
-    def convert_universe(self, asset_ids: List[int]) -> List[imvcdcfusy.FullSymbol]:
+    def convert_asset_ids_to_symbols(self, asset_ids: List[int]) -> List[imvcdcfusy.FullSymbol]:
         """
         Convert assets as numeric ids to universe as full symbols.
 

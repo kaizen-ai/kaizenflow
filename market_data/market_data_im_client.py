@@ -65,11 +65,14 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
             as_asset_ids = True
             asset_ids = self._im_client.get_universe(as_asset_ids)
         # Load the data using `im_client`.
+        full_symbols = self._im_client.convert_asset_ids_to_symbols(asset_ids)
+        # TODO(Grisha): we should pass `full_symbol_column_name` here.
         market_data = self._im_client.read_data(
             full_symbols,
             start_ts,
             end_ts,
         )
+        market_data[self._asset_id_col] = market_data["full_symbol"]
         if self._columns:
             # Select only specified columns.
             hdbg.dassert_is_subset(self._columns, market_data.columns)
