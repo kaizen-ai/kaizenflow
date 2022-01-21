@@ -25,9 +25,9 @@ _LOG = logging.getLogger(__name__)
 _LATEST_DATA_SNAPSHOT = "20210924"
 
 
-class CryptoClient(icdc.ImClient, abc.ABC):
+class CcxtCddClient(icdc.ImClient, abc.ABC):
     """
-    Crypto client that is responsible for vendor-specific normalization.
+    Client for CCXT and CDD that is responsible for vendor-specific normalization.
     """
 
     def __init__(self, vendor: str) -> None:
@@ -40,7 +40,7 @@ class CryptoClient(icdc.ImClient, abc.ABC):
         hdbg.dassert_in(vendor, _vendors)
         self._vendor = vendor
 
-    def _apply_crypto_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
+    def _apply_CcxtCdd_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
         """
         See description in the parent class.
 
@@ -121,7 +121,7 @@ class CryptoClient(icdc.ImClient, abc.ABC):
 # #############################################################################
 
 # TODO(Grisha): it should descend from `ImClientReadingMultipleSymbols`.
-class CryptoDbClient(CryptoClient, icdc.ImClientReadingOneSymbol):
+class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
     """
     CCXT client for data from the database.
     """
@@ -183,15 +183,15 @@ class CryptoDbClient(CryptoClient, icdc.ImClientReadingOneSymbol):
 # #############################################################################
 
 
-class CryptoCsvParquetByAssetClient(CryptoClient, icdc.ImClientReadingOneSymbol):
+class CcxtCddCsvParquetByAssetClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
     """
-    Crypto client that reads CSV or Parquet file storing data for a single asset.
+    Client for CCXT and CDD that reads CSV or Parquet file storing data for a single asset.
 
     It can read data from local or S3 filesystem as backend.
 
     Using our naming convention this class implements the two classes:
-    - CryptoCsvClient
-    - CryptoPqByAssetClient
+    - CcxtCddCsvClient
+    - CcxtCddPqByAssetClient
     """
 
     def __init__(
@@ -303,7 +303,7 @@ class CryptoCsvParquetByAssetClient(CryptoClient, icdc.ImClientReadingOneSymbol)
         currency_pair: str,
     ) -> str:
         """
-        Get the absolute path to a file with crypto price data.
+        Get the absolute path to a file with CCXT or CDD price data.
 
         The file path is constructed in the following way:
         `<root_dir>/<vendor>/<snapshot>/<exchange_id>/<currency_pair>.<self._extension>`
