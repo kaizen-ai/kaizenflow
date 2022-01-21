@@ -15,6 +15,7 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import im_v2.common.data.client.full_symbol as imvcdcfusy
+import im_v2.common.universe.universe_utils as icuuut
 
 _LOG = logging.getLogger(__name__)
 
@@ -142,13 +143,29 @@ class ImClient(abc.ABC):
 
     @staticmethod
     @abc.abstractmethod
-    def get_universe(as_ids: bool) -> List[imvcdcfusy.FullSymbol]:
+    def get_universe(as_asset_ids: bool) -> List[imvcdcfusy.FullSymbol]:
         """
         Get universe as full symbols.
 
-        :param as_ids: if True return universe as numeric ids, otherwise universe as full symbols
+        :param as_asset_ids: if True return universe as numeric ids, otherwise universe as full symbols
         """
         ...
+
+    def convert_universe(self, asset_ids: List[int]) -> List[imvcdcfusy.FullSymbol]:
+        """
+        Convert assets as numeric ids to universe as full symbols.
+
+        :param asset_ids: assets as numeric ids
+        :return: assets as full symbols
+        """
+        # Get universe as full symbols to construct ids to full symbols mapping.
+        full_symbol_universe = self.get_universe(as_asset_ids=False)
+        ids_to_symbol_mapping = icuuut.build_num_to_string_id_mapping(tuple(full_symbol_universe))
+        # Check that provided ids are part of universe.
+        hdbg.dassert_in(asset_ids, ids_to_symbol_mapping)
+        # Convert ids to full symbols.
+        universe_as_symbols = [ids_to_symbol_mapping[asset_id] for asset_id in asset_ids]
+        return universe_as_symbols
 
     @abc.abstractmethod
     def _read_data(

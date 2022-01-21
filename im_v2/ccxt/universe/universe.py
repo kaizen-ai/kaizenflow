@@ -37,14 +37,14 @@ def get_trade_universe(
 def get_vendor_universe(
     version: str = _LATEST_UNIVERSE_VERSION,
     vendor: str = "CCXT",
-    as_ids: bool = False,
+    as_asset_ids: bool = False,
 ) -> Union[List[icdc.FullSymbol], List[int]]:
     """
     Load vendor universe as full symbols or numeric ids.
 
     :param version: release version
     :param vendor: vendor to load data for (e.g., CCXT, CDD)
-    :param as_ids: if True return universe as numeric ids, otherwise universe as full symbols
+    :param as_asset_ids: if True return universe as numeric ids, otherwise universe as full symbols
     :return: vendor universe as full symbols (e.g., gateio::XRP_USDT)
     """
     # Get vendor universe.
@@ -55,7 +55,7 @@ def get_vendor_universe(
         for exchange_id, currency_pairs in vendor_universe.items()
         for currency_pair in currency_pairs
     ]
-    if as_ids:
+    if as_asset_ids:
         # Convert universe symbols to numeric ids.
         universe_tuple = tuple(universe)
         universe = list(icuuut.build_num_to_string_id_mapping(universe_tuple).keys())

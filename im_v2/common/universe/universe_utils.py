@@ -4,7 +4,7 @@ from typing import Dict, Tuple
 
 import helpers.hdbg as hdbg
 
-def string_to_num_id(string_id: str) -> int:
+def string_to_numeric_id(string_id: str) -> int:
     """
     Convert string id into a numeric one.
 
@@ -34,13 +34,13 @@ def build_num_to_string_id_mapping(universe: Tuple[str, ...]) -> Dict[int, str]:
     mapping: Dict[int, str] = {}
     for string_id in universe:
         # Convert string id to a numeric one.
-        num_id = string_to_num_id(string_id)
+        numeric_id = string_to_numeric_id(string_id)
         hdbg.dassert_not_in(
-            num_id,
+            numeric_id,
             mapping,
             "Collision: id %s for string `%s` already exists",
-            num_id,
+            numeric_id,
             string_id,
         )
-        mapping[num_id] = string_id
+        mapping[numeric_id] = string_id
     return mapping
