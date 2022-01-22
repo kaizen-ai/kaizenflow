@@ -664,18 +664,3 @@ class AbstractMarketData(abc.ABC):
             raise ValueError("Invalid period='%s'" % period)
         _LOG.verb_debug("last_start_time=%s", last_start_time)
         return last_start_time
-
-
-# TODO(gp): This could go in a market_data_utils.py
-def skip_test_since_not_online(market_data: AbstractMarketData) -> bool:
-    """
-    Return true if a test should be skipped since `market_data` is not on-line.
-    """
-    ret = False
-    if not market_data.is_online():
-        current_time = hdateti.get_current_time(tz="ET")
-        _LOG.warning(
-            "Skipping this test since DB is not on-line at %s", current_time
-        )
-        ret = True
-    return ret

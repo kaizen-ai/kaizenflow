@@ -9,6 +9,7 @@ from typing import List, Optional, Tuple
 
 import pandas as pd
 
+import helpers.hdatetime as hdateti
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 import market_data as mdata
@@ -38,7 +39,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         output.
         """
         # TODO(Dan): Uncomment in CmTask999.
-        # if mdata.skip_test_since_not_online(market_data):
+        # if skip_test_since_not_online(market_data):
         #     pytest.skip("Market not on-line")
         hprint.log_frame(
             _LOG,
@@ -64,7 +65,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         Call `get_data_at_timestamp()` for specified parameters.
         """
         # TODO(Dan): Uncomment in CmTask999.
-        # if mdata.skip_test_since_not_online(market_data):
+        # if skip_test_since_not_online(market_data):
         #    pytest.skip("Market not on-line")
         # Prepare inputs.
         ts_col_name = "end_ts"
@@ -101,7 +102,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         Call `get_data_for_interval()` for specified parameters.
         """
         # TODO(Dan): Uncomment in CmTask999.
-        # if mdata.skip_test_since_not_online(market_data):
+        # if skip_test_since_not_online(market_data):
         #     pytest.skip("Market not on-line")
         # Prepare inputs.
         ts_col_name = "end_ts"
@@ -329,7 +330,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         Call `get_twap_price()` for specified parameters.
         """
         # TODO(Dan): Uncomment in CmTask999.
-        # if mdata.skip_test_since_not_online(market_data):
+        # if skip_test_since_not_online(market_data):
         #     pytest.skip("Market not on-line")
         # Prepare inputs.
         ts_col_name = "end_ts"
@@ -363,8 +364,23 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         # Check output.
         self.assertTrue(actual)
 
+
 # TODO(Dan): Implement test methods for remaining methods of
 #  `AbstractMarketData` in CmTask999.
+
+
+def skip_test_since_not_online(market_data: mdata.AbstractMarketData) -> bool:
+    """
+    Return true if a test should be skipped since `market_data` is not on-line.
+    """
+    ret = False
+    if not market_data.is_online():
+        current_time = hdateti.get_current_time(tz="ET")
+        _LOG.warning(
+            "Skipping this test since DB is not on-line at %s", current_time
+        )
+        ret = True
+    return ret
 
 # #############################################################################
 #
@@ -427,7 +443,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
 #        hprint.log_frame(_LOG, "ReplayedMarketData")
 #        market_data = mdlime.get_ReplayedMarketData_example1(event_loop)
 #        #
-#        if mdata.skip_test_since_not_online(market_data):
+#        if skip_test_since_not_online(market_data):
 #            return
 #        get_wall_clock_time = market_data.get_wall_clock_time
 #        # We are at the beginning of the data.
