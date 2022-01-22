@@ -1,117 +1,391 @@
-#import asyncio
-#import logging
-#import os
+"""
+Import as:
+
+import market_data.test.market_data_test_case as mdtmdtca
+"""
+
+import logging
+from typing import List, Optional
+
+import pandas as pd
+
+import helpers.hdatetime as hdateti
+import helpers.hprint as hprint
+import helpers.hunit_test as hunitest
+import market_data as mdata
+
+_LOG = logging.getLogger(__name__)
+
+
+# #############################################################################
+
+
+class MarketData_get_data_TestCase(hunitest.TestCase):
+    """
+    Test `get_data*()` methods for a class derived from `AbstractMarketData`.
+    """
+
+    @staticmethod
+    def _test_get_data_for_last_period(
+        market_data: mdata.AbstractMarketData,
+        period: str,
+        normalize_data: bool,
+    ) -> None:
+        """
+        Call `get_data_for_last_period()` all conditional periods.
+
+        This method is typically tested as smoke test, since it is a
+        real-time method and we can't easily check the content of its
+        output.
+        """
+        # TODO(Dan): Uncomment in CmTask999.
+        # if skip_test_since_not_online(market_data):
+        #     pytest.skip("Market not on-line")
+        hprint.log_frame(
+            _LOG,
+            "get_data_for_last_period:" + hprint.to_str("period normalize_data"),
+        )
+        # Run.
+        _ = market_data.get_data_for_last_period(
+            period, normalize_data=normalize_data
+        )
+
+    # //////////////////////////////////////////////////////////////////////////////
+
+    def _test_get_data_at_timestamp1(
+        self,
+        market_data: mdata.AbstractMarketData,
+        ts: pd.Timestamp,
+        asset_ids: Optional[List[int]],
+        normalize_data: bool,
+        exp_df_as_str: str,
+    ) -> None:
+        """
+        Call `get_data_at_timestamp()` for specified parameters.
+        """
+        # TODO(Dan): Uncomment in CmTask999.
+        # if skip_test_since_not_online(market_data):
+        #    pytest.skip("Market not on-line")
+        # Prepare inputs.
+        ts_col_name = "end_ts"
+        hprint.log_frame(
+            _LOG,
+            "get_data_at_timestamp:"
+            + hprint.to_str("ts ts_col_name asset_ids normalize_data"),
+        )
+        # Run.
+        df = market_data.get_data_at_timestamp(
+            ts, ts_col_name, asset_ids, normalize_data=normalize_data
+        )
+        act_df_as_str = hprint.df_to_short_str("df", df)
+        _LOG.debug("\n%s", hprint.dataframe_to_str(df))
+        # Check output.
+        self.assert_equal(
+            act_df_as_str, exp_df_as_str, dedent=True, fuzzy_match=True
+        )
+
+    # //////////////////////////////////////////////////////////////////////////////
+
+    def _get_data_for_interval_helper(
+        self,
+        market_data: mdata.AbstractMarketData,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        asset_ids: Optional[List[int]],
+        left_close: bool,
+        right_close: bool,
+        normalize_data: bool,
+        exp_df_as_str: str,
+    ) -> None:
+        """
+        Call `get_data_for_interval()` for specified parameters.
+        """
+        # TODO(Dan): Uncomment in CmTask999.
+        # if skip_test_since_not_online(market_data):
+        #     pytest.skip("Market not on-line")
+        # Prepare inputs.
+        ts_col_name = "end_ts"
+        hprint.log_frame(
+            _LOG,
+            "get_data_for_interval:"
+            + hprint.to_str(
+                "start_ts end_ts ts_col_name asset_ids left_close right_close normalize_data"
+            ),
+        )
+        # Run.
+        df = market_data.get_data_for_interval(
+            start_ts,
+            end_ts,
+            ts_col_name,
+            asset_ids,
+            left_close=left_close,
+            right_close=right_close,
+            normalize_data=normalize_data,
+        )
+        act_df_as_str = hprint.df_to_short_str("df", df)
+        _LOG.debug("\n%s", hprint.dataframe_to_str(df))
+        # Check output.
+        self.assert_equal(
+            act_df_as_str, exp_df_as_str, dedent=True, fuzzy_match=True
+        )
+
+    def _test_get_data_for_interval1(
+        self,
+        market_data: mdata.AbstractMarketData,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        exp_df_as_str: str,
+    ) -> None:
+        """
+        Call `get_data_for_interval()` with:
+
+        - asset_ids = None
+        - interval type is default [a, b)
+        - data is normalized
+        """
+        # Prepare inputs.
+        asset_ids = None
+        left_close = True
+        right_close = False
+        normalize_data = True
+        # Run.
+        self._get_data_for_interval_helper(
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            left_close,
+            right_close,
+            normalize_data,
+            exp_df_as_str,
+        )
+
+    def _test_get_data_for_interval2(
+        self,
+        market_data: mdata.AbstractMarketData,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        asset_ids: List[int],
+        exp_df_as_str: str,
+    ) -> None:
+        """
+        Call `get_data_for_interval()` with:
+
+        - `asset_ids` is a list
+        - interval type is default [a, b)
+        - data is normalized
+        """
+        # Prepare inputs.
+        left_close = True
+        right_close = False
+        normalize_data = True
+        # Run.
+        self._get_data_for_interval_helper(
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            left_close,
+            right_close,
+            normalize_data,
+            exp_df_as_str,
+        )
+
+    def _test_get_data_for_interval3(
+        self,
+        market_data: mdata.AbstractMarketData,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        asset_ids: List[int],
+        exp_df_as_str: str,
+    ) -> None:
+        """
+        Call `get_data_for_interval()` with:
+
+        - `asset_ids` is a list
+        - interval type is default [a, b)
+        - data is not normalized
+        """
+        # Prepare inputs.
+        left_close = True
+        right_close = False
+        normalize_data = False
+        # Run.
+        self._get_data_for_interval_helper(
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            left_close,
+            right_close,
+            normalize_data,
+            exp_df_as_str,
+        )
+
+    def _test_get_data_for_interval4(
+        self,
+        market_data: mdata.AbstractMarketData,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        asset_ids: List[int],
+        exp_df_as_str: str,
+    ) -> None:
+        """
+        Call `get_data_for_interval()` with:
+
+        - `asset_ids` is a list
+        - interval type is [a, b]
+        - data is normalized
+        """
+        # Prepare inputs.
+        left_close = True
+        right_close = True
+        normalize_data = True
+        # Run.
+        self._get_data_for_interval_helper(
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            left_close,
+            right_close,
+            normalize_data,
+            exp_df_as_str,
+        )
+
+    def _test_get_data_for_interval5(
+        self,
+        market_data: mdata.AbstractMarketData,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        asset_ids: List[int],
+        exp_df_as_str: str,
+    ) -> None:
+        """
+        Call `get_data_for_interval()` with:
+
+        - `asset_ids` is a list
+        - interval type is (a, b]
+        - data is normalized
+        """
+        # Prepare inputs.
+        left_close = False
+        right_close = True
+        normalize_data = True
+        # Run.
+        self._get_data_for_interval_helper(
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            left_close,
+            right_close,
+            normalize_data,
+            exp_df_as_str,
+        )
+
+    def _test_get_data_for_interval6(
+        self,
+        market_data: mdata.AbstractMarketData,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        asset_ids: List[int],
+        exp_df_as_str: str,
+    ) -> None:
+        """
+        Call `get_data_for_interval()` with:
+
+        - `asset_ids` is a list
+        - interval type is (a, b)
+        - data is normalized
+        """
+        # Prepare inputs.
+        left_close = False
+        right_close = False
+        normalize_data = True
+        # Run.
+        self._get_data_for_interval_helper(
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            left_close,
+            right_close,
+            normalize_data,
+            exp_df_as_str,
+        )
+
+    # //////////////////////////////////////////////////////////////////////////////
+
+    def _test_get_twap_price1(
+        self,
+        market_data: mdata.AbstractMarketData,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        asset_ids: Optional[List[int]],
+        exp_srs_as_str: int,
+    ) -> None:
+        """
+        Call `get_twap_price()` for specified parameters.
+        """
+        # TODO(Dan): Uncomment in CmTask999.
+        # if skip_test_since_not_online(market_data):
+        #     pytest.skip("Market not on-line")
+        # Prepare inputs.
+        ts_col_name = "end_ts"
+        column = "close"
+        hprint.log_frame(
+            _LOG,
+            "get_twap_price:"
+            + hprint.to_str("start_ts end_ts ts_col_name asset_ids column"),
+        )
+        # Run.
+        srs = market_data.get_twap_price(
+            start_ts, end_ts, ts_col_name, asset_ids, column
+        ).round(2)
+        act_srs_as_str = hunitest.convert_df_to_string(
+            srs, index=True, decimals=2
+        )
+        _LOG.debug("\n%s", hprint.dataframe_to_str(srs))
+        # Check output.
+        self.assert_equal(
+            act_srs_as_str, exp_srs_as_str, dedent=True, fuzzy_match=True
+        )
+
+    def _test_should_be_online1(
+        self, market_data: mdata.AbstractMarketData, wall_clock_time: pd.Timestamp
+    ) -> None:
+        """
+        Test that the interface is available at the given time.
+        """
+        # Run.
+        actual = market_data.should_be_online(wall_clock_time)
+        # Check output.
+        self.assertTrue(actual)
+
+
+# TODO(Dan): Implement test methods for remaining methods of
+#  `AbstractMarketData` in CmTask999.
+
+
+def skip_test_since_not_online(market_data: mdata.AbstractMarketData) -> bool:
+    """
+    Return true if a test should be skipped since `market_data` is not on-line.
+    """
+    ret = False
+    if not market_data.is_online():
+        current_time = hdateti.get_current_time(tz="ET")
+        _LOG.warning(
+            "Skipping this test since DB is not on-line at %s", current_time
+        )
+        ret = True
+    return ret
+
+
+# #############################################################################
 #
-#import helpers.hasyncio as hasynci
-#import helpers.hdatetime as hdatetim
-#import helpers.hdbg as hdbg
-#import helpers.hprint as hprintin
-#import helpers.hunit_test as huntes
-#import market_data as mdata
-#import pandas as pd
-#import pytest
 #
-#_LOG = logging.getLogger(__name__)
-#
-#
-## #############################################################################
-#
-#
-#class MarketData_get_data_TestCase(huntes.TestCase):
-#    """
-#    Test `get_data*()` methods for a class derived from `AbstractMarketData`.
-#    """
-#
-#    def _test_get_data_for_last_period1(
-#            self,
-#            market_data: mdata.AbstractMarketData,
-#            ) -> None:
-#        """
-#        Call `get_data_for_last_period()` for both values of `normalize_data`.
-#
-#        This method is typically tested as smoke test, since it is a real-time
-#        method and we can't easily check the content of its output.
-#        """
-#        if mdata.skip_test_since_not_online(market_data):
-#            pytest.skip("Market not on-line")
-#        #
-#        period = "last_10mins"
-#        for normalize_data in (False, True):
-#            hprintin.log_frame(
-#                _LOG, "get_data_for_last_period:" + hprintin.to_str("period normalize_data")
-#            )
-#            df = market_data.get_data_for_last_period(
-#                period, normalize_data=normalize_data
-#            )
-#            _LOG.debug("\n%s", hprintin.dataframe_to_str(df))
-#
-#    # //////////////////////////////////////////////////////////////////////////////
-#
-#    # TODO(gp): Add types.
-#    # TODO(gp): ts -> timestamp
-#    # TODO(gp): Pass the expected results like we do in other places of the code.
-#    @staticmethod
-#    def _get_data_at_timestamp_helper(market_data, ts):
-#        ts_col_name = "end_time"
-#        asset_ids = None
-#        for normalize_data in (False, True):
-#            hprintin.log_frame(
-#                _LOG,
-#                "get_data_at_timestamp:"
-#                + hprintin.to_str("ts ts_col_name asset_ids normalize_data"),
-#                )
-#            df = market_data.get_data_at_timestamp(
-#                ts, ts_col_name, asset_ids, normalize_data=normalize_data
-#            )
-#            _LOG.debug("\n%s", hprintin.dataframe_to_str(df))
-#
-#    # TODO(gp): Pass market_data to all the methods.
-#    def _test_get_data_at_timestamp1(self):
-#        if mdata.skip_test_since_not_online(market_data):
-#            pytest.skip("Market not on-line")
-#        ts = market_data._df["end_time"].min()
-#        self.get_data_at_timestamp_helper(market_data, ts)
-#
-#    def _test_get_data_at_timestamp2(self):
-#        market_data = self.get_RealTimeMarketData()
-#        if mdata.skip_test_since_not_online(market_data):
-#            pytest.skip("Market not on-line")
-#        market_data = self.get_ReplayedMarketData(market_data)
-#        ts = market_data._df["end_time"].max()
-#        self.get_data_at_timestamp_helper(market_data, ts)
-#
-#    # //////////////////////////////////////////////////////////////////////////////
-#
-#    def _test_get_data_for_interval1(self) -> None:
-#        if mdata.skip_test_since_not_online(market_data):
-#            pytest.skip("Market not on-line")
-#        end_ts = market_data._df["end_time"].max()
-#        start_ts = end_ts - pd.DateOffset(minutes=5)
-#        # start_ts = data["end_time"].min()
-#        ts_col_name = "start_time"
-#        asset_ids = None
-#        for normalize_data in (False, True):
-#            hprintin.log_frame(
-#                _LOG,
-#                "get_data_for_interval:"
-#                + hprintin.to_str(
-#                    "start_ts end_ts ts_col_name asset_ids normalize_data"
-#                ),
-#                )
-#            df = market_data.get_data_for_interval(
-#                start_ts,
-#                end_ts,
-#                ts_col_name,
-#                asset_ids,
-#                normalize_data=normalize_data,
-#            )
-#            _LOG.debug("\n%s", hprintin.dataframe_to_str(df))
-#
-#
-## #############################################################################
-#
-#
-#class MarketData_get_data_for_last_period_asyncio_TestCase1(huntes.TestCase):
+# class MarketData_get_data_for_last_period_asyncio_TestCase1(hunitest.TestCase):
 #    """
 #    Test `AbstractMarketData.get_data_for_last_period()` methods in an asyncio
 #    set-up where time is moving forward.
@@ -138,27 +412,27 @@
 #        # Check `get_data(normalize=False)`.
 #        period = "last_10mins"
 #        normalize_data = False
-#        tag = "get_data: " + hprintin.to_str(
+#        tag = "get_data: " + hprint.to_str(
 #            "wall_clock_time period normalize_data"
 #        )
-#        hprintin.log_frame(_LOG, tag)
+#        hprint.log_frame(_LOG, tag)
 #        df = market_data.get_data_for_last_period(
 #            period, normalize_data=normalize_data
 #        )
-#        act = hprintin.df_to_short_str(tag, df)
+#        act = hprint.df_to_short_str(tag, df)
 #        self.assert_equal(
 #            act, exp_get_data_normalize_false, dedent=True, fuzzy_match=True
 #        )
 #        # Check `get_data(normalize=True)`.
 #        normalize_data = True
-#        tag = "get_data: " + hprintin.to_str(
+#        tag = "get_data: " + hprint.to_str(
 #            "wall_clock_time period normalize_data"
 #        )
-#        hprintin.log_frame(_LOG, tag)
+#        hprint.log_frame(_LOG, tag)
 #        df = market_data.get_data_for_last_period(
 #            period, normalize_data=normalize_data
 #        )
-#        act = hprintin.df_to_short_str(tag, df)
+#        act = hprint.df_to_short_str(tag, df)
 #        self.assert_equal(
 #            act, exp_get_data_normalize_true, dedent=True, fuzzy_match=True
 #        )
@@ -166,10 +440,10 @@
 #    async def get_data_coroutine(self, event_loop) -> None:
 #        # TODO(gp): Move this out.
 #        # Build a `ReplayedMarketData`.
-#        hprintin.log_frame(_LOG, "ReplayedMarketData")
+#        hprint.log_frame(_LOG, "ReplayedMarketData")
 #        market_data = mdlime.get_ReplayedMarketData_example1(event_loop)
 #        #
-#        if mdata.skip_test_since_not_online(market_data):
+#        if skip_test_since_not_online(market_data):
 #            return
 #        get_wall_clock_time = market_data.get_wall_clock_time
 #        # We are at the beginning of the data.
@@ -235,48 +509,48 @@
 #        # TODO(gp): Add tests also for this.
 #        # # - get_data()
 #        # normalize_data = True
-#        # tag = "get_data:" + hprintin.to_str("period normalize_data")
-#        # hprintin.log_frame(_LOG, tag)
+#        # tag = "get_data:" + hprint.to_str("period normalize_data")
+#        # hprint.log_frame(_LOG, tag)
 #        # df = market_data.get_data(period, normalize_data=normalize_data)
-#        # act = hprintin.df_to_short_str(tag, df)
+#        # act = hprint.df_to_short_str(tag, df)
 #        # exp = ""
 #        # self.assert_equal(act, exp)
 #        # #
 #        # ts = data["end_time"].max()
 #        # normalize_data = False
-#        # hprintin.log_frame(_LOG, "get_data_at_timestamp:" + hprintin.to_str("ts normalize_data"))
+#        # hprint.log_frame(_LOG, "get_data_at_timestamp:" + hprint.to_str("ts normalize_data"))
 #        # df = market_data.get_data_at_timestamp(ts, normalize_data=normalize_data)
-#        # _LOG.debug("\n%s", hprintin.dataframe_to_str(df))
+#        # _LOG.debug("\n%s", hprint.dataframe_to_str(df))
 #        # #
 #        # normalize_data = True
-#        # hprintin.log_frame(_LOG, "get_data_at_timestamp:" + hprintin.to_str("ts normalize_data"))
+#        # hprint.log_frame(_LOG, "get_data_at_timestamp:" + hprint.to_str("ts normalize_data"))
 #        # df = market_data.get_data_at_timestamp(ts, normalize_data=normalize_data)
-#        # _LOG.debug("\n%s", hprintin.dataframe_to_str(df))
+#        # _LOG.debug("\n%s", hprint.dataframe_to_str(df))
 #        # #
 #        # ts = data["end_time"].min()
 #        # normalize_data = False
-#        # hprintin.log_frame(_LOG, "get_data_at_timestamp:" + hprintin.to_str("ts normalize_data"))
+#        # hprint.log_frame(_LOG, "get_data_at_timestamp:" + hprint.to_str("ts normalize_data"))
 #        # df = market_data.get_data_at_timestamp(ts, normalize_data=normalize_data)
-#        # _LOG.debug("\n%s", hprintin.dataframe_to_str(df))
+#        # _LOG.debug("\n%s", hprint.dataframe_to_str(df))
 #        # #
 #        # normalize_data = True
-#        # hprintin.log_frame(_LOG, "get_data_at_timestamp:" + hprintin.to_str("ts normalize_data"))
+#        # hprint.log_frame(_LOG, "get_data_at_timestamp:" + hprint.to_str("ts normalize_data"))
 #        # df = market_data.get_data_at_timestamp(ts, normalize_data=normalize_data)
-#        # _LOG.debug("\n%s", hprintin.dataframe_to_str(df))
+#        # _LOG.debug("\n%s", hprint.dataframe_to_str(df))
 #        # #
 #        # end_ts = data["end_time"].min()
 #        # start_ts = end_ts - pd.DateOffset(minutes=5)
 #        # ts_col_name = "start_time"
 #        # normalize_data = False
-#        # hprintin.log_frame(_LOG, "get_data_for_timestamp:" + hprintin.to_str("start_ts end_ts normalize_data"))
+#        # hprint.log_frame(_LOG, "get_data_for_timestamp:" + hprint.to_str("start_ts end_ts normalize_data"))
 #        # df = market_data.get_data_at_timestamp(ts, start_ts, end_ts, ts_col_name, normalize_data=normalize_data)
-#        # _LOG.debug("\n%s", hprintin.dataframe_to_str(df))
+#        # _LOG.debug("\n%s", hprint.dataframe_to_str(df))
 #        # #
 #        # normalize_data = True
-#        # hprintin.log_frame(_LOG, "get_data_for_timestamp:" + hprintin.to_str("start_ts end_ts normalize_data"))
+#        # hprint.log_frame(_LOG, "get_data_for_timestamp:" + hprint.to_str("start_ts end_ts normalize_data"))
 #        # df = market_data.get_data_at_timestamp(ts, start_ts, end_ts, ts_col_name,
 #        #                                                  normalize_data=normalize_data)
-#        # _LOG.debug("\n%s", hprintin.dataframe_to_str(df))
+#        # _LOG.debug("\n%s", hprint.dataframe_to_str(df))
 #
 #    def test_get_data1(self) -> None:
 #        with hasynci.solipsism_context() as event_loop:
