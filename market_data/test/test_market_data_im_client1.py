@@ -15,12 +15,12 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         See description of corresponding private method in parent class.
         """
-        # Build MarketDataInterface.
+        # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         market_data = self._build_client(asset_ids)
-        # Run test.
         period = "last_day"
         normalize_data = True
+        # Run.
         self._test_get_data_for_last_period(market_data, period, normalize_data)
 
     @pytest.mark.skip(reason="Skip until TODO above is resolved")
@@ -28,12 +28,12 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         See description of corresponding private method in parent class.
         """
-        # Build MarketDataInterface.
+        # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         market_data = self._build_client(asset_ids)
-        # Run test.
         period = "last_2days"
         normalize_data = True
+        # Run.
         self._test_get_data_for_last_period(market_data, period, normalize_data)
 
     @pytest.mark.skip(reason="Skip until TODO above is resolved")
@@ -41,12 +41,12 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         See description of corresponding private method in parent class.
         """
-        # Build MarketDataInterface.
+        # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         market_data = self._build_client(asset_ids)
-        # Run test.
         period = "last_week"
         normalize_data = True
+        # Run.
         self._test_get_data_for_last_period(market_data, period, normalize_data)
 
     @pytest.mark.skip(reason="Skip until TODO above is resolved")
@@ -54,12 +54,12 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         See description of corresponding private method in parent class.
         """
-        # Build MarketDataInterface.
+        # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         market_data = self._build_client(asset_ids)
-        # Run test.
         period = "last_10mins"
         normalize_data = True
+        # Run.
         self._test_get_data_for_last_period(market_data, period, normalize_data)
 
     @pytest.mark.skip(reason="Skip until TODO above is resolved")
@@ -67,12 +67,12 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         See description of corresponding private method in parent class.
         """
-        # Build MarketDataInterface.
+        # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         market_data = self._build_client(asset_ids)
-        # Run test.
         period = "last_5mins"
         normalize_data = True
+        # Run.
         self._test_get_data_for_last_period(market_data, period, normalize_data)
 
     @pytest.mark.skip(reason="Skip until TODO above is resolved")
@@ -80,12 +80,12 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         See description of corresponding private method in parent class.
         """
-        # Build MarketDataInterface.
+        # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         market_data = self._build_client(asset_ids)
-        # Run test.
         period = "last_1mins"
         normalize_data = True
+        # Run.
         self._test_get_data_for_last_period(market_data, period, normalize_data)
 
     @pytest.mark.skip(reason="Skip until TODO above is resolved")
@@ -93,22 +93,21 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         See description of corresponding private method in parent class.
         """
-        # Build MarketDataInterface.
+        # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         market_data = self._build_client(asset_ids)
-        # Run test.
         period = "all"
         normalize_data = True
+        # Run.
         self._test_get_data_for_last_period(market_data, period, normalize_data)
 
     def test_get_data_at_timestamp1(self) -> None:
         """
         See description of corresponding private method in parent class.
         """
-        # Build MarketDataInterface.
+        # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         market_data = self._build_client(asset_ids)
-        # Run test.
         ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         normalize_data = True
         # pylint: disable=line-too-long
@@ -121,6 +120,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         2018-08-16 20:05:00-04:00  binance::BTC_USDT  6291.970000  6299.320000  6285.400000  6294.990000  18.986206      BTC_USDT     binance 2018-08-16 20:04:00-04:00
         2018-08-16 20:05:00-04:00   kucoin::ETH_USDT   285.400196   285.884637   285.400196   285.884637   0.006141      ETH_USDT      kucoin 2018-08-16 20:04:00-04:00"""
         # pylint: enable=line-too-long
+        # Run.
         self._test_get_data_at_timestamp1(
             market_data, ts, asset_ids, normalize_data, exp_df_as_str
         )
@@ -132,10 +132,9 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         See description of corresponding private method in parent class.
         """
-        # Build MarketDataInterface.
+        # Prepare inputs.
         asset_ids = None
         market_data = self._build_client(asset_ids)
-        # Run test.
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         # pylint: disable=line-too-long
@@ -154,6 +153,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         2018-08-16 20:04:00-04:00  binance::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586      BTC_USDT     binance 2018-08-16 20:03:00-04:00
         2018-08-16 20:04:00-04:00   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655      ETH_USDT      kucoin 2018-08-16 20:03:00-04:00"""
         # pylint: enable=line-too-long
+        # Run.
         self._test_get_data_for_interval1(
             market_data, start_ts, end_ts, exp_df_as_str
         )
@@ -162,10 +162,9 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         See description of corresponding private method in parent class.
         """
-        # Build MarketDataInterface.
+        # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         market_data = self._build_client(asset_ids)
-        # Run test.
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         # pylint: disable=line-too-long
@@ -183,6 +182,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         2018-08-16 20:04:00-04:00  binance::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586      BTC_USDT     binance 2018-08-16 20:03:00-04:00
         2018-08-16 20:04:00-04:00   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655      ETH_USDT      kucoin 2018-08-16 20:03:00-04:00"""
         # pylint: enable=line-too-long
+        # Run.
         self._test_get_data_for_interval2(
             market_data, start_ts, end_ts, asset_ids, exp_df_as_str
         )
@@ -191,10 +191,9 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         See description of corresponding private method in parent class.
         """
-        # Build MarketDataInterface.
+        # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         market_data = self._build_client(asset_ids)
-        # Run test.
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         # pylint: disable=line-too-long
@@ -212,6 +211,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         2018-08-17 00:04:00+00:00  binance::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586      BTC_USDT     binance
         2018-08-17 00:04:00+00:00   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655      ETH_USDT      kucoin"""
         # pylint: enable=line-too-long
+        # Run.
         self._test_get_data_for_interval3(
             market_data, start_ts, end_ts, asset_ids, exp_df_as_str
         )
@@ -220,10 +220,9 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         See description of corresponding private method in parent class.
         """
-        # Build MarketDataInterface.
+        # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         market_data = self._build_client(asset_ids)
-        # Run test.
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         # pylint: disable=line-too-long
@@ -241,6 +240,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         2018-08-16 20:05:00-04:00  binance::BTC_USDT  6291.970000  6299.320000  6285.400000  6294.990000  18.986206      BTC_USDT     binance 2018-08-16 20:04:00-04:00
         2018-08-16 20:05:00-04:00   kucoin::ETH_USDT   285.400196   285.884637   285.400196   285.884637   0.006141      ETH_USDT      kucoin 2018-08-16 20:04:00-04:00"""
         # pylint: enable=line-too-long
+        # Run.
         self._test_get_data_for_interval4(
             market_data, start_ts, end_ts, asset_ids, exp_df_as_str
         )
@@ -249,10 +249,9 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         See description of corresponding private method in parent class.
         """
-        # Build MarketDataInterface.
+        # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         market_data = self._build_client(asset_ids)
-        # Run test.
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         # pylint: disable=line-too-long
@@ -270,6 +269,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         2018-08-16 20:05:00-04:00  binance::BTC_USDT  6291.970000  6299.320000  6285.400000  6294.990000  18.986206      BTC_USDT     binance 2018-08-16 20:04:00-04:00
         2018-08-16 20:05:00-04:00   kucoin::ETH_USDT   285.400196   285.884637   285.400196   285.884637   0.006141      ETH_USDT      kucoin 2018-08-16 20:04:00-04:00"""
         # pylint: enable=line-too-long
+        # Run.
         self._test_get_data_for_interval5(
             market_data, start_ts, end_ts, asset_ids, exp_df_as_str
         )
@@ -278,10 +278,9 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         See description of corresponding private method in parent class.
         """
-        # Build MarketDataInterface.
+        # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         market_data = self._build_client(asset_ids)
-        # Run test.
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         # pylint: disable=line-too-long
@@ -299,6 +298,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         2018-08-16 20:04:00-04:00  binance::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586      BTC_USDT     binance 2018-08-16 20:03:00-04:00
         2018-08-16 20:04:00-04:00   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655      ETH_USDT      kucoin 2018-08-16 20:03:00-04:00"""
         # pylint: enable=line-too-long
+        # Run.
         self._test_get_data_for_interval6(
             market_data, start_ts, end_ts, asset_ids, exp_df_as_str
         )
@@ -309,10 +309,9 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         See description of corresponding private method in parent class.
         """
-        # Build MarketDataInterface.
+        # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         market_data = self._build_client(asset_ids)
-        # Run test.
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         exp_srs_as_str = r"""
@@ -320,6 +319,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         full_symbol
         binance::BTC_USDT  6295.72
         kucoin::ETH_USDT    285.64"""
+        # Run.
         self._test_get_twap_price1(
             market_data, start_ts, end_ts, asset_ids, exp_srs_as_str
         )
@@ -330,11 +330,11 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         See description of corresponding private method in parent class.
         """
-        # Build MarketDataInterface.
+        # Prepare inputs.
         asset_ids = ["binance::BTC_USDT"]
         market_data = self._build_client(asset_ids)
-        # Run test.
         wall_clock_time = pd.Timestamp("2018-08-17T00:01:00")
+        # Run.
         self._test_should_be_online1(market_data, wall_clock_time)
 
     # //////////////////////////////////////////////////////////////////////////////
