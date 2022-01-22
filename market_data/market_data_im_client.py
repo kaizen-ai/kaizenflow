@@ -117,6 +117,6 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
         ] - pd.Timedelta(minutes=1)
         return df
 
-    # TODO(Grisha): implement the method.
+    # TODO(Dan): Implement in CmTask999.
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
         return NotImplementedError
