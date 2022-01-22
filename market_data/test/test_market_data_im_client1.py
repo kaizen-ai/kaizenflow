@@ -16,7 +16,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        market_data = self._build_client(asset_ids)
+        market_data = self._build_client(asset_ids, [], None)
         period = "last_day"
         normalize_data = True
         # Run.
@@ -29,7 +29,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        market_data = self._build_client(asset_ids)
+        market_data = self._build_client(asset_ids, [], None)
         period = "last_2days"
         normalize_data = True
         # Run.
@@ -42,7 +42,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        market_data = self._build_client(asset_ids)
+        market_data = self._build_client(asset_ids, [], None)
         period = "last_week"
         normalize_data = True
         # Run.
@@ -55,7 +55,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        market_data = self._build_client(asset_ids)
+        market_data = self._build_client(asset_ids, [], None)
         period = "last_10mins"
         normalize_data = True
         # Run.
@@ -68,7 +68,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        market_data = self._build_client(asset_ids)
+        market_data = self._build_client(asset_ids, [], None)
         period = "last_5mins"
         normalize_data = True
         # Run.
@@ -81,7 +81,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        market_data = self._build_client(asset_ids)
+        market_data = self._build_client(asset_ids, [], None)
         period = "last_1mins"
         normalize_data = True
         # Run.
@@ -94,7 +94,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        market_data = self._build_client(asset_ids)
+        market_data = self._build_client(asset_ids, [], None)
         period = "all"
         normalize_data = True
         # Run.
@@ -106,7 +106,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        market_data = self._build_client(asset_ids)
+        market_data = self._build_client(asset_ids, [], None)
         ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         normalize_data = True
         # pylint: disable=line-too-long
@@ -131,7 +131,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = None
-        market_data = self._build_client(asset_ids)
+        market_data = self._build_client(asset_ids, [], None)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         # pylint: disable=line-too-long
@@ -161,7 +161,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        market_data = self._build_client(asset_ids)
+        market_data = self._build_client(asset_ids, [], None)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         # pylint: disable=line-too-long
@@ -190,7 +190,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        market_data = self._build_client(asset_ids)
+        market_data = self._build_client(asset_ids, [], None)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         # pylint: disable=line-too-long
@@ -219,7 +219,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        market_data = self._build_client(asset_ids)
+        market_data = self._build_client(asset_ids, [], None)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         # pylint: disable=line-too-long
@@ -248,7 +248,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        market_data = self._build_client(asset_ids)
+        market_data = self._build_client(asset_ids, [], None)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         # pylint: disable=line-too-long
@@ -277,7 +277,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        market_data = self._build_client(asset_ids)
+        market_data = self._build_client(asset_ids, [], None)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         # pylint: disable=line-too-long
@@ -308,7 +308,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        market_data = self._build_client(asset_ids)
+        market_data = self._build_client(asset_ids, [], None)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         exp_srs_as_str = r"""
@@ -329,7 +329,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = ["binance::BTC_USDT"]
-        market_data = self._build_client(asset_ids)
+        market_data = self._build_client(asset_ids, [], None)
         wall_clock_time = pd.Timestamp("2018-08-17T00:01:00")
         # Run.
         self._test_should_be_online1(market_data, wall_clock_time)
@@ -339,13 +339,13 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
     @staticmethod
     def _build_client(
         asset_ids: Optional[List[int]],
-        columns: List[Optional[str]] = [],
-        column_remap: Optional[Dict[str, str]] = None,
+        columns: List[Optional[str]],
+        column_remap: Optional[Dict[str, str]],
     ) -> mdata.AbstractMarketData:
         """
         Build MarketDataInterface client.
         """
         market_data = mdata.get_MarketDataInterface_example1(
-            asset_ids, columns, column_remap
+            asset_ids, columns=columns, column_remap=column_remap
         )
         return market_data
