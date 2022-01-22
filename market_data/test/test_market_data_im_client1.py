@@ -7,7 +7,6 @@ import market_data as mdata
 import market_data.test.market_data_test_case as mdtmdtca
 
 
-# TODO(gp): There is a lot of common code among the test methods, let's factor it out.
 class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
     # TODO(Dan): Resolve problem with get_wall_clock_time() in `AbstractMarketData`.
     @pytest.mark.skip(reason="Skip until TODO above is resolved")
@@ -125,9 +124,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
             market_data, ts, asset_ids, normalize_data, exp_df_as_str
         )
 
-    @pytest.mark.skip(
-        reason="There are no files for the whole universe stored locally"
-    )
+    @pytest.mark.skip(reason="CmTask882.")
     def test_get_data_for_interval1(self) -> None:
         """
         See description of corresponding private method in parent class.

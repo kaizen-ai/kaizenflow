@@ -37,6 +37,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         real-time method and we can't easily check the content of its
         output.
         """
+        # TODO(Dan): Uncomment in CmTask999.
         # if mdata.skip_test_since_not_online(market_data):
         #     pytest.skip("Market not on-line")
         hprint.log_frame(
@@ -62,6 +63,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         """
         Call `get_data_at_timestamp()` for specified parameters.
         """
+        # TODO(Dan): Uncomment in CmTask999.
         # if mdata.skip_test_since_not_online(market_data):
         #    pytest.skip("Market not on-line")
         # Prepare inputs.
@@ -98,6 +100,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         """
         Call `get_data_for_interval()` for specified parameters.
         """
+        # TODO(Dan): Uncomment in CmTask999.
         # if mdata.skip_test_since_not_online(market_data):
         #     pytest.skip("Market not on-line")
         # Prepare inputs.
@@ -325,6 +328,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         """
         Call `get_twap_price()` for specified parameters.
         """
+        # TODO(Dan): Uncomment in CmTask999.
         # if mdata.skip_test_since_not_online(market_data):
         #     pytest.skip("Market not on-line")
         # Prepare inputs.
@@ -348,9 +352,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
             act_srs_as_str, exp_srs_as_str, dedent=True, fuzzy_match=True
         )
 
-    # TODO(Dan, Grisha): Implement test method for get_last_twap_price() after
-    #  AbstractMarketData._get_last_end_time() is implemented.
-
     def _test_should_be_online1(
         self, market_data: mdata.AbstractMarketData, wall_clock_time: pd.Timestamp
     ) -> None:
@@ -362,6 +363,8 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         # Check output.
         self.assertTrue(actual)
 
+# TODO(Dan): Implement test methods for remaining methods of
+#  `AbstractMarketData` in CmTask999.
 
 # #############################################################################
 #
