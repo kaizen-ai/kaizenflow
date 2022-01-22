@@ -728,6 +728,7 @@ class TestCachingOnS3(_ResetFunctionSpecificCacheHelper):
         # Clear global cache.
         hcache.clear_global_cache("all", tag=self.cache_tag)
 
+    @pytest.mark.skip(reason="See CMTask #952.")
     def test_with_caching1(self) -> None:
         """
         - Test using the function-specific cache

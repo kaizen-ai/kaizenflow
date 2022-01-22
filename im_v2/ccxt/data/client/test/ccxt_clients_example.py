@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.ccxt.data.client.ccxt_clients_example as ivcdcccex
+import im_v2.ccxt.data.client.test.ccxt_clients_example as ivcdctcce
 """
 
 import os

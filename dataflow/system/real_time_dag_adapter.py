@@ -29,6 +29,7 @@ class RealTimeDagAdapter(dtfcore.DagAdapter):
         volatility_col: str,
         period: str,
         asset_id_col: str,
+        *,
         log_dir: Optional[str] = None,
     ):
         market_data = portfolio.market_data

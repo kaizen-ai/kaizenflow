@@ -123,6 +123,39 @@ def dassert_valid_remap(to_remap: List[str], remap_dict: Dict[str, str]) -> None
     hdbg.dassert_not_intersection(remap_dict.values(), to_remap)
 
 
+def dassert_series_type_is(
+    srs: pd.Series,
+    type_: type,
+    msg: Optional[str] = None,
+    *args: Any,
+) -> None:
+    """
+    Ensure that the data type of `srs` is `type_`.
+
+    Examples of valid series types are
+      - np.float64
+      - np.int64
+      - pd.Timestamp
+    """
+    hdbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_isinstance(type_, type)
+    hdbg.dassert_eq(srs.dtype.type, type_, msg, *args)
+
+
+def dassert_series_type_in(
+    srs: pd.Series,
+    types: List[type],
+    msg: Optional[str] = None,
+    *args: Any,
+) -> None:
+    """
+    Ensure that the data type of `srs` is one of the types in `types`.
+    """
+    hdbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_container_type(types, list, type)
+    hdbg.dassert_in(srs.dtype.type, types, msg, *args)
+
+
 # #############################################################################
 
 
@@ -273,7 +306,7 @@ def trim_df(
         interval
         - E.g., [start_ts, end_ts), or (start_ts, end_ts]
     """
-    _LOG.debug(hprint.df_to_short_str("df", df, print_dtypes=True))
+    _LOG.verb_debug(hprint.df_to_short_str("df", df, print_dtypes=True))
     _LOG.debug(
         hprint.to_str("ts_col_name start_ts end_ts left_close right_close")
     )
