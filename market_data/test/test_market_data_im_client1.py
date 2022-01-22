@@ -8,8 +8,7 @@ import market_data.test.market_data_test_case as mdtmdtca
 
 
 class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
-    # TODO(Dan): Resolve problem with get_wall_clock_time() in `AbstractMarketData`.
-    @pytest.mark.skip(reason="Skip until TODO above is resolved")
+    @pytest.mark.skip(reason="CmTask1001.")
     def test_get_data_for_last_period1(self) -> None:
         """
         See description of corresponding private method in parent class.
@@ -22,7 +21,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         # Run.
         self._test_get_data_for_last_period(market_data, period, normalize_data)
 
-    @pytest.mark.skip(reason="Skip until TODO above is resolved")
+    @pytest.mark.skip(reason="CmTask1001.")
     def test_get_data_for_last_period2(self) -> None:
         """
         See description of corresponding private method in parent class.
@@ -35,7 +34,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         # Run.
         self._test_get_data_for_last_period(market_data, period, normalize_data)
 
-    @pytest.mark.skip(reason="Skip until TODO above is resolved")
+    @pytest.mark.skip(reason="CmTask1001.")
     def test_get_data_for_last_period3(self) -> None:
         """
         See description of corresponding private method in parent class.
@@ -48,7 +47,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         # Run.
         self._test_get_data_for_last_period(market_data, period, normalize_data)
 
-    @pytest.mark.skip(reason="Skip until TODO above is resolved")
+    @pytest.mark.skip(reason="CmTask1001.")
     def test_get_data_for_last_period4(self) -> None:
         """
         See description of corresponding private method in parent class.
@@ -61,7 +60,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         # Run.
         self._test_get_data_for_last_period(market_data, period, normalize_data)
 
-    @pytest.mark.skip(reason="Skip until TODO above is resolved")
+    @pytest.mark.skip(reason="CmTask1001.")
     def test_get_data_for_last_period5(self) -> None:
         """
         See description of corresponding private method in parent class.
@@ -74,7 +73,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         # Run.
         self._test_get_data_for_last_period(market_data, period, normalize_data)
 
-    @pytest.mark.skip(reason="Skip until TODO above is resolved")
+    @pytest.mark.skip(reason="CmTask1001.")
     def test_get_data_for_last_period6(self) -> None:
         """
         See description of corresponding private method in parent class.
@@ -87,7 +86,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         # Run.
         self._test_get_data_for_last_period(market_data, period, normalize_data)
 
-    @pytest.mark.skip(reason="Skip until TODO above is resolved")
+    @pytest.mark.skip(reason="CmTask1001.")
     def test_get_data_for_last_period7(self) -> None:
         """
         See description of corresponding private method in parent class.
@@ -335,7 +334,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         self._test_should_be_online1(market_data, wall_clock_time)
 
     # //////////////////////////////////////////////////////////////////////////////
-    
+
     @staticmethod
     def _build_client(
         asset_ids: Optional[List[int]],

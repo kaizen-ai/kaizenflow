@@ -5,7 +5,7 @@ import market_data.test.market_data_test_case as mdtmdtca
 """
 
 import logging
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 import pandas as pd
 
@@ -43,8 +43,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         #     pytest.skip("Market not on-line")
         hprint.log_frame(
             _LOG,
-            "get_data_for_last_period:"
-            + hprint.to_str("period normalize_data"),
+            "get_data_for_last_period:" + hprint.to_str("period normalize_data"),
         )
         # Run.
         _ = market_data.get_data_for_last_period(
@@ -381,6 +380,7 @@ def skip_test_since_not_online(market_data: mdata.AbstractMarketData) -> bool:
         )
         ret = True
     return ret
+
 
 # #############################################################################
 #
