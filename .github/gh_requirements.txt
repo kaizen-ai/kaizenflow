@@ -12,6 +12,8 @@ pytest-xdist
 python-dateutil
 s3fs  # For tools like `publish_notebook.py`.
 tqdm
+# TODO(gp): It would be better to avoid depending on these packages.
+#  See if we can remove this dependency.
 numpy
 pandas
 matplotlib
