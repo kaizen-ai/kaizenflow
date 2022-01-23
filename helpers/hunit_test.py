@@ -194,7 +194,9 @@ def convert_df_to_string(
     return output_str
 
 
-def subset_df(df: pd.DataFrame, nrows: int, seed: int = 42) -> pd.DataFrame:
+# TODO(gp): Move this to helpers/hpandas.py since unit_test.py should not
+# depend on pandas.
+def subset_df(df: "pd.DataFrame", nrows: int, seed: int = 42) -> "pd.DataFrame":
     hdbg.dassert_lte(1, nrows)
     hdbg.dassert_lte(nrows, df.shape[0])
     idx = list(range(df.shape[0]))

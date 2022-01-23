@@ -82,9 +82,6 @@ class Test_to_str1(hunitest.TestCase):
 
 
 class Test_log(hunitest.TestCase):
-    def test1(self) -> None:
-        hdbg.test_logger()
-
     def test2(self) -> None:
         x = 1
         # To disable linter complaints.
