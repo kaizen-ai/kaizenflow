@@ -76,7 +76,6 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
             start_ts,
             end_ts,
         )
-        market_data[self._asset_id_col] = market_data["full_symbol"].apply(icuuut.string_to_numeric_id)
         if self._columns:
             # Select only specified columns.
             hdbg.dassert_is_subset(self._columns, market_data.columns)

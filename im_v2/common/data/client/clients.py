@@ -150,16 +150,15 @@ class ImClient(abc.ABC):
         :param as_asset_ids: if True return universe as numeric ids, otherwise universe as full symbols
         """
 
-    def get_numerical_ids_from_full_symbols(self, full_symbols: [imvcdcfusy.FullSymbol]) -> List[int]:
+    @staticmethod
+    def get_numerical_ids_from_full_symbols(full_symbols: [imvcdcfusy.FullSymbol]) -> List[int]:
         """
         Convert assets as full symbols to assets as numeric ids.
 
         :param full_symbols: assets as full symbols
         :return: assets as numeric ids
         """
-        self._check_full_symbols(full_symbols)
         numeric_asset_ids = [icuuut.string_to_numeric_id(full_symbol) for full_symbol in full_symbols]
-        hdbg.dassert_no_duplicates(numeric_asset_ids)
         return numeric_asset_ids
 
     def get_full_symbols_from_numerical_ids(self, asset_ids: List[int]) -> List[imvcdcfusy.FullSymbol]:
@@ -173,11 +172,10 @@ class ImClient(abc.ABC):
         full_symbol_universe = self.get_universe(as_asset_ids=False)
         ids_to_symbol_mapping = icuuut.build_num_to_string_id_mapping(tuple(full_symbol_universe))
         # Check that provided ids are part of universe.
-        hdbg.dassert_in(asset_ids, ids_to_symbol_mapping)
+        hdbg.dassert_is_subset(asset_ids, ids_to_symbol_mapping.keys())
         # Convert ids to full symbols.
         universe_as_symbols = [ids_to_symbol_mapping[asset_id] for asset_id in asset_ids]
         universe_as_symbols = sorted(universe_as_symbols)
-        self._check_full_symbols(universe_as_symbols)
         return universe_as_symbols
 
     @abc.abstractmethod
