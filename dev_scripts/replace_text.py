@@ -546,7 +546,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 file_name
                 for file_name in file_names
                 # Remove current directory to match only_files format.
-                if file_name.lstrip("./") in only_files_list
+                if os.path.normpath(file_name) in only_files_list
             ]
         if args.action == "replace":
             # Replace.
