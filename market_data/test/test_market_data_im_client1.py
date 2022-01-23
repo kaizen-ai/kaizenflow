@@ -15,7 +15,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns = []
+        columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         period = "last_day"
@@ -30,7 +30,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns = []
+        columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         period = "last_2days"
@@ -45,7 +45,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns = []
+        columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         period = "last_week"
@@ -60,7 +60,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns = []
+        columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         period = "last_10mins"
@@ -75,7 +75,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns = []
+        columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         period = "last_5mins"
@@ -90,7 +90,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns = []
+        columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         period = "last_1mins"
@@ -105,7 +105,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns = []
+        columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         period = "all"
@@ -119,7 +119,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns = []
+        columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
@@ -130,7 +130,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         df.columns=asset_id,full_symbol,open,high,low,close,volume,currency_pair,exchange_id,start_ts
         df.shape=(2, 10)
                                      asset_id        full_symbol         open         high          low        close     volume currency_pair exchange_id                  start_ts
-        end_ts                                                                                                                                                                     
+        end_ts
         2018-08-16 20:05:00-04:00  1467591036  binance::BTC_USDT  6291.970000  6299.320000  6285.400000  6294.990000  18.986206      BTC_USDT     binance 2018-08-16 20:04:00-04:00
         2018-08-16 20:05:00-04:00  3187272957   kucoin::ETH_USDT   285.400196   285.884637   285.400196   285.884637   0.006141      ETH_USDT      kucoin 2018-08-16 20:04:00-04:00
         """
@@ -147,7 +147,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = None
-        columns = []
+        columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
@@ -179,7 +179,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns = []
+        columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
@@ -190,7 +190,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         df.columns=asset_id,full_symbol,open,high,low,close,volume,currency_pair,exchange_id,start_ts
         df.shape=(8, 10)
                                      asset_id        full_symbol         open         high          low        close     volume currency_pair exchange_id                  start_ts
-        end_ts                                                                                                                                                                     
+        end_ts
         2018-08-16 20:01:00-04:00  1467591036  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206      BTC_USDT     binance 2018-08-16 20:00:00-04:00
         2018-08-16 20:01:00-04:00  3187272957   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500      ETH_USDT      kucoin 2018-08-16 20:00:00-04:00
         2018-08-16 20:02:00-04:00  1467591036  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226      BTC_USDT     binance 2018-08-16 20:01:00-04:00
@@ -211,7 +211,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns = []
+        columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
@@ -222,7 +222,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         df.columns=asset_id,full_symbol,open,high,low,close,volume,currency_pair,exchange_id
         df.shape=(8, 9)
                                      asset_id        full_symbol         open         high          low        close     volume currency_pair exchange_id
-        timestamp                                                                                                                                        
+        timestamp
         2018-08-17 00:01:00+00:00  1467591036  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206      BTC_USDT     binance
         2018-08-17 00:01:00+00:00  3187272957   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500      ETH_USDT      kucoin
         2018-08-17 00:02:00+00:00  1467591036  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226      BTC_USDT     binance
@@ -243,7 +243,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns = []
+        columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
@@ -254,7 +254,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         df.columns=asset_id,full_symbol,open,high,low,close,volume,currency_pair,exchange_id,start_ts
         df.shape=(10, 10)
                                      asset_id        full_symbol         open         high          low        close     volume currency_pair exchange_id                  start_ts
-        end_ts                                                                                                                                                                     
+        end_ts
         2018-08-16 20:01:00-04:00  1467591036  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206      BTC_USDT     binance 2018-08-16 20:00:00-04:00
         2018-08-16 20:01:00-04:00  3187272957   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500      ETH_USDT      kucoin 2018-08-16 20:00:00-04:00
         2018-08-16 20:02:00-04:00  1467591036  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226      BTC_USDT     binance 2018-08-16 20:01:00-04:00
@@ -275,7 +275,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns = []
+        columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
@@ -286,7 +286,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         df.columns=asset_id,full_symbol,open,high,low,close,volume,currency_pair,exchange_id,start_ts
         df.shape=(8, 10)
                                      asset_id        full_symbol         open         high          low        close     volume currency_pair exchange_id                  start_ts
-        end_ts                                                                                                                                                                     
+        end_ts
         2018-08-16 20:02:00-04:00  1467591036  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226      BTC_USDT     binance 2018-08-16 20:01:00-04:00
         2018-08-16 20:02:00-04:00  3187272957   kucoin::ETH_USDT   286.405988   286.405988   285.400193   285.400197   0.162255      ETH_USDT      kucoin 2018-08-16 20:01:00-04:00
         2018-08-16 20:03:00-04:00  1467591036  binance::BTC_USDT  6299.970000  6299.970000  6286.930000  6294.520000  34.611797      BTC_USDT     binance 2018-08-16 20:02:00-04:00
@@ -307,7 +307,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns = []
+        columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
@@ -318,7 +318,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         df.columns=asset_id,full_symbol,open,high,low,close,volume,currency_pair,exchange_id,start_ts
         df.shape=(6, 10)
                                      asset_id        full_symbol         open         high          low        close     volume currency_pair exchange_id                  start_ts
-        end_ts                                                                                                                                                                     
+        end_ts
         2018-08-16 20:02:00-04:00  1467591036  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226      BTC_USDT     binance 2018-08-16 20:01:00-04:00
         2018-08-16 20:02:00-04:00  3187272957   kucoin::ETH_USDT   286.405988   286.405988   285.400193   285.400197   0.162255      ETH_USDT      kucoin 2018-08-16 20:01:00-04:00
         2018-08-16 20:03:00-04:00  1467591036  binance::BTC_USDT  6299.970000  6299.970000  6286.930000  6294.520000  34.611797      BTC_USDT     binance 2018-08-16 20:02:00-04:00
@@ -341,14 +341,14 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns = []
+        columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         exp_srs_as_str = r"""
                       close
-        asset_id           
+        asset_id
         1467591036  6295.72
         3187272957   285.64
         """
@@ -365,7 +365,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = [1467591036]
-        columns = []
+        columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         wall_clock_time = pd.Timestamp("2018-08-17T00:01:00")
