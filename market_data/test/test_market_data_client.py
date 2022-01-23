@@ -153,7 +153,6 @@ class TestMarketDataClient(hunitest.TestCase):
             limit=None,
         )
         actual_df_as_str = hprint.df_to_short_str("df", data)
-        print(actual_df_as_str)
         # pylint: disable=line-too-long
         expected_df_as_str = """
         # df=
