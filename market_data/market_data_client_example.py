@@ -18,7 +18,7 @@ def get_MarketDataInterface_example1(
 ) -> mdmdimcl.MarketDataInterface:
     ccxt_client = imvcdcccex.get_CcxtCsvClient_example1()
     #
-    asset_id_col = "full_symbol"
+    asset_id_col = "asset_id"
     start_time_col_name = "start_ts"
     end_time_col_name = "end_ts"
     get_wall_clock_time = hdateti.get_current_time

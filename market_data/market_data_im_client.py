@@ -75,7 +75,7 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
             end_ts,
         )
         # TODO(Grisha): we should pass `full_symbol_column_name` here CMTask #822.
-        market_data[self._asset_id_col] = self._im_client.get_numerical_ids_from_full_symbols(market_data["full_symbol"])
+        market_data.insert(0, self._asset_id_col, self._im_client.get_numerical_ids_from_full_symbols(market_data["full_symbol"]))
         if self._columns:
             # Select only specified columns.
             hdbg.dassert_is_subset(self._columns, market_data.columns)

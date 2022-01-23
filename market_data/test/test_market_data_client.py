@@ -4,6 +4,8 @@ import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 import market_data.market_data_client_example as mdmdclex
 
+import im_v2.common.universe.universe_utils as icuuut
+
 # TODO(gp): -> test_market_data_im_client.py
 
 # TODO(gp): -> TestMarketDataImClient
@@ -17,9 +19,11 @@ class TestMarketDataClient(hunitest.TestCase):
         - column names are remapped
         """
         # Build MarketDataInterface.
-        asset_ids = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        asset_ids = [3187272957, 1467591036]
+        print(icuuut.string_to_numeric_id("kucoin::ETH_USDT"), "KUCOIN_ETH_USDT")
+        print(icuuut.string_to_numeric_id("binance::BTC_USDT"), "binance::BTC_USDT")
         columns = []
-        column_remap = {"full_symbol": "asset_id"}
+        column_remap = None #{"full_symbol": "asset_id"}
         market_data_client = mdmdclex.get_MarketDataInterface_example1(
             asset_ids, columns, column_remap
         )
