@@ -195,20 +195,21 @@ class TestMarketDataClient(hunitest.TestCase):
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         ts_col_name = "end_ts"
-        actual = market_data_client.get_twap_price(
-            start_ts, end_ts, ts_col_name, asset_id, column="close"
+        twap_prices = market_data_client.get_twap_price(
+            start_ts, end_ts, ts_col_name, asset_ids, column="close"
         )
-        self.assertEqual(round(actual, 2), 6295.72)
+        actual = twap_prices.round(2).loc[asset_id]
+        self.assertEqual(actual, 6295.72)
 
     def test_get_twap_price2(self) -> None:
         """
         Test that TWAP is computed correctly.
         """
         # Build MarketDataInterface.
-        asset_ids = ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+        asset_ids = [3187272957, 1467591036]
         columns = []
         column_remap = None
-        market_data_client = mdmdclex.get_MarketDataInterface_example1(
+        market_data_client = mdmdclex.get_MarketDataImClient_example1(
             asset_ids, columns, column_remap
         )
         # Compute TWAP price.
@@ -219,10 +220,11 @@ class TestMarketDataClient(hunitest.TestCase):
             start_ts, end_ts, ts_col_name, asset_ids, column="close"
         ).round(2)
         expected = r"""
-                            close
-        full_symbol
-        binance::BTC_USDT  6295.72
-        kucoin::ETH_USDT    285.64"""
+                      close
+        asset_id
+        1467591036  6295.72
+        3187272957   285.64
+        """
         self.assert_equal(
             hunitest.convert_df_to_string(actual, index=True, decimals=2),
             expected,
