@@ -10,7 +10,7 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
 import im_v2.common.data.client as icdc
-import im_v2.common.universe.universe_utils as icuuut
+import im_v2.common.universe.universe_utils as imvcuunut
 
 _LATEST_UNIVERSE_VERSION = "v03"
 
@@ -58,7 +58,9 @@ def get_vendor_universe(
     if as_asset_ids:
         # Convert universe symbols to numeric ids.
         universe_tuple = tuple(universe)
-        universe = list(icuuut.build_num_to_string_id_mapping(universe_tuple).keys())
+        universe = list(
+            imvcuunut.build_num_to_string_id_mapping(universe_tuple).keys()
+        )
     # Sort list of symbols in the universe.
     universe = sorted(universe)
     return universe

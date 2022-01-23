@@ -45,7 +45,7 @@ class TestMarketDataClient(hunitest.TestCase):
         df.columns=id,full_symbol,open,high,low,close,volume,currency_pair,exchange_id,start_ts
         df.shape=(8, 10)
                                            id        full_symbol         open         high          low        close     volume currency_pair exchange_id                  start_ts
-        end_ts                                                                                                                                                                     
+        end_ts
         2018-08-16 20:01:00-04:00  1467591036  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206      BTC_USDT     binance 2018-08-16 20:00:00-04:00
         2018-08-16 20:01:00-04:00  3187272957   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500      ETH_USDT      kucoin 2018-08-16 20:00:00-04:00
         2018-08-16 20:02:00-04:00  1467591036  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226      BTC_USDT     binance 2018-08-16 20:01:00-04:00
@@ -106,7 +106,7 @@ class TestMarketDataClient(hunitest.TestCase):
         df.columns=asset_id,full_symbol,close,volume,currency_pair,exchange_id,start_ts
         df.shape=(8, 7)
                                      asset_id        full_symbol        close     volume currency_pair exchange_id                  start_ts
-        end_ts                                                                                                                              
+        end_ts
         2018-08-16 20:02:00-04:00  1467591036  binance::BTC_USDT  6297.260000  55.373226      BTC_USDT     binance 2018-08-16 20:01:00-04:00
         2018-08-16 20:02:00-04:00  3187272957   kucoin::ETH_USDT   285.400197   0.162255      ETH_USDT      kucoin 2018-08-16 20:01:00-04:00
         2018-08-16 20:03:00-04:00  1467591036  binance::BTC_USDT  6294.520000  34.611797      BTC_USDT     binance 2018-08-16 20:02:00-04:00
@@ -157,7 +157,7 @@ class TestMarketDataClient(hunitest.TestCase):
         df.columns=asset_id,full_symbol,open,high,low,close,volume,currency_pair,exchange_id
         df.shape=(8, 9)
                                      asset_id        full_symbol         open         high          low        close     volume currency_pair exchange_id
-        timestamp                                                                                                                                        
+        timestamp
         2018-08-17 00:01:00+00:00  1467591036  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206      BTC_USDT     binance
         2018-08-17 00:01:00+00:00  3187272957   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500      ETH_USDT      kucoin
         2018-08-17 00:02:00+00:00  1467591036  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226      BTC_USDT     binance

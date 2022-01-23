@@ -20,10 +20,7 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
     """
 
     def __init__(
-        self,
-        *args: Any,
-        im_client: icdc.ImClient,
-        **kwargs: Any
+        self, *args: Any, im_client: icdc.ImClient, **kwargs: Any
     ) -> None:
         """
         Constructor.
@@ -68,7 +65,9 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
             as_asset_ids = True
             asset_ids = self._im_client.get_universe(as_asset_ids)
         # Convert numeric ids to full symbols to read `im` data.
-        full_symbols = self._im_client.get_full_symbols_from_numerical_ids(asset_ids)
+        full_symbols = self._im_client.get_full_symbols_from_numerical_ids(
+            asset_ids
+        )
         # Load the data using `im_client`.
         market_data = self._im_client.read_data(
             full_symbols,
@@ -77,7 +76,13 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
         )
         # TODO(Grisha): we should pass `full_symbol_column_name` here CMTask #822.
         # Add `asset_id` column.
-        market_data.insert(0, self._asset_id_col, self._im_client.get_numerical_ids_from_full_symbols(market_data["full_symbol"]))
+        market_data.insert(
+            0,
+            self._asset_id_col,
+            self._im_client.get_numerical_ids_from_full_symbols(
+                market_data["full_symbol"]
+            ),
+        )
         if self._columns:
             # Select only specified columns.
             hdbg.dassert_is_subset(self._columns, market_data.columns)
