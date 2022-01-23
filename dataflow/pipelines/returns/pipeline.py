@@ -17,6 +17,8 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): Clarify what is the difference between pipelines and pipeline_examples?
+# TODO(gp): Make it compatible with DagAdapter instead of having the `load_prices`
+#  node.
 class ReturnsPipeline(dtfcore.DagBuilder):
     """
     Pipeline for computing returns from price data.
