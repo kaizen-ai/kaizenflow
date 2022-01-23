@@ -11,7 +11,6 @@ import pandas as pd
 import helpers.hdbg as hdbg
 import im_v2.common.data.client as icdc
 import market_data.abstract_market_data as mdabmada
-import im_v2.common.universe.universe_utils as icuuut
 
 
 # TODO(gp): -> MarketDataImClient?
@@ -70,12 +69,13 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
             asset_ids = self._im_client.get_universe(as_asset_ids)
         # Load the data using `im_client`.
         full_symbols = self._im_client.get_full_symbols_from_numerical_ids(asset_ids)
-        # TODO(Grisha): we should pass `full_symbol_column_name` here CMTask #822.
         market_data = self._im_client.read_data(
             full_symbols,
             start_ts,
             end_ts,
         )
+        # TODO(Grisha): we should pass `full_symbol_column_name` here CMTask #822.
+        market_data[self._asset_id_col] = self._im_client.get_numerical_ids_from_full_symbols(market_data["full_symbol"])
         if self._columns:
             # Select only specified columns.
             hdbg.dassert_is_subset(self._columns, market_data.columns)
