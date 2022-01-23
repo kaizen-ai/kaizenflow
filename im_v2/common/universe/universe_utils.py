@@ -31,6 +31,7 @@ def build_num_to_string_id_mapping(universe: Tuple[str, ...]) -> Dict[int, str]:
     :param universe: universe of string ids to convert
     :return: numeric to string ids mapping
     """
+    hdbg.dassert_no_duplicates(universe)
     mapping: Dict[int, str] = {}
     for string_id in universe:
         # Convert string id to a numeric one.

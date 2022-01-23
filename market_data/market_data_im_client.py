@@ -11,6 +11,7 @@ import pandas as pd
 import helpers.hdbg as hdbg
 import im_v2.common.data.client as icdc
 import market_data.abstract_market_data as mdabmada
+import im_v2.common.universe.universe_utils as icuuut
 
 
 # TODO(gp): -> MarketDataImClient?
@@ -20,7 +21,10 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
     """
 
     def __init__(
-        self, *args: Any, im_client: icdc.ImClient, **kwargs: Any
+        self,
+        *args: Any,
+        im_client: icdc.ImClient,
+        **kwargs: Any
     ) -> None:
         """
         Constructor.
@@ -29,7 +33,7 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
         :param im_client: IM client
         """
         super().__init__(*args, **kwargs)
-        # TODO(gp): Add hdbg.dassert_is_instance(im_client, )
+        hdbg.dassert_isinstance(im_client, icdc.ImClient)
         self._im_client = im_client
 
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
@@ -61,18 +65,18 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
             # Add one millisecond to include the right boundary.
             end_ts = end_ts + pd.Timedelta(1, "ms")
         if not asset_ids:
-            # If `asset_ids` is None, get all symbols from the universe.
+            # If `asset_ids` is None, get all assets from the universe.
             as_asset_ids = True
             asset_ids = self._im_client.get_universe(as_asset_ids)
         # Load the data using `im_client`.
-        full_symbols = self._im_client.convert_asset_ids_to_symbols(asset_ids)
-        # TODO(Grisha): we should pass `full_symbol_column_name` here.
+        full_symbols = self._im_client.get_full_symbols_from_numerical_ids(asset_ids)
+        # TODO(Grisha): we should pass `full_symbol_column_name` here CMTask #822.
         market_data = self._im_client.read_data(
             full_symbols,
             start_ts,
             end_ts,
         )
-        market_data[self._asset_id_col] = market_data["full_symbol"]
+        market_data[self._asset_id_col] = market_data["full_symbol"].apply(icuuut.string_to_numeric_id)
         if self._columns:
             # Select only specified columns.
             hdbg.dassert_is_subset(self._columns, market_data.columns)
