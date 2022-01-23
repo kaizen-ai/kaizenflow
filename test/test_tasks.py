@@ -50,7 +50,7 @@ class TestExecuteTasks1(hunitest.QaTestCase):
         hsysinte.system(cmd)
 
     def test_docker_stats(self) -> None:
-        cmd = "invoke docker_stats"
+        cmd = "invoke docker_stats --all"
         hsysinte.system(cmd)
 
     def test_docker_login1(self) -> None:
@@ -62,7 +62,7 @@ class TestExecuteTasks1(hunitest.QaTestCase):
         hsysinte.system(cmd)
 
     def test_docker_jupyter1(self) -> None:
-        cmd = "invoke docker_jupyter --self-test"
+        cmd = "invoke docker_jupyter --self-test --no-auto-assign-port"
         hsysinte.system(cmd)
 
     def test_docker_bash(self) -> None:
@@ -83,7 +83,7 @@ class TestExecuteTasks2(hunitest.QaTestCase):
     """
 
     def test_docker_jupyter1(self) -> None:
-        cmd = "invoke docker_jupyter --self-test"
+        cmd = "invoke docker_jupyter --self-test --no-auto-assign-port"
         hsysinte.system(cmd)
 
     def test_docker_pull1(self) -> None:
