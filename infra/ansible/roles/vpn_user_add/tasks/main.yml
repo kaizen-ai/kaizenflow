@@ -9,7 +9,7 @@
     name: "{{ openvpn_client_username }}"
     password: "{{ lookup('password', password_file_path + ' chars=ascii_lowercase,ascii_uppercase,digits') | password_hash('sha512') }}"
     shell: /sbin/nologin
-  notify: Restart openvpn  
+  #notify: Restart openvpn  
 
 - name: OpenVPN | Google Authenticator | Run google authenticator setup
   command:
