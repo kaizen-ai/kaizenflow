@@ -17,9 +17,10 @@ import psycopg2 as psycop
 import psycopg2.extras as extras
 import psycopg2.sql as psql
 
-import helpers.hdbg as hdbg
 import helpers.hasyncio as hasynci
+import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.htimer as htimer
 
@@ -528,9 +529,9 @@ def execute_query_to_df(
     if False:
         # Ask the user before executing a query.
         print("query=\n%s", query)
-        import helpers.hsystem as hsysinte
+        import helpers.hsystem as hsystem
 
-        hsysinte.query_yes_no("Ok to execute?")
+        hsystem.query_yes_no("Ok to execute?")
     if limit is not None:
         query += " LIMIT %s" % limit
     if offset is not None:
@@ -650,7 +651,7 @@ def execute_insert_query(
         df = obj
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_in(table_name, get_table_names(connection))
-    _LOG.debug("df=\n%s", hprint.dataframe_to_str(df, use_tabulate=False))
+    _LOG.debug("df=\n%s", hpandas.dataframe_to_str(df, use_tabulate=False))
     # Transform dataframe into list of tuples.
     values = [tuple(v) for v in df.to_numpy()]
     # Generate a query for multiple rows.
@@ -758,11 +759,11 @@ def is_row_with_value_present(
     if show_db_state:
         query = f"SELECT * FROM {table_name} ORDER BY filename"
         df = execute_query_to_df(connection, query)
-        _LOG.debug("df=\n%s", hprint.dataframe_to_str(df, use_tabulate=False))
+        _LOG.debug("df=\n%s", hpandas.dataframe_to_str(df, use_tabulate=False))
     # Check if the required row is available.
     query = f"SELECT {field_name} FROM {table_name} WHERE {field_name}='{target_value}'"
     df = execute_query_to_df(connection, query)
-    _LOG.debug("df=\n%s", hprint.dataframe_to_str(df, use_tabulate=False))
+    _LOG.debug("df=\n%s", hpandas.dataframe_to_str(df, use_tabulate=False))
     # Package results.
     success = df.shape[0] > 0
     result = None
