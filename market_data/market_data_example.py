@@ -17,6 +17,7 @@ import core.real_time as creatime
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hnumpy as hnumpy
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import market_data.replayed_market_data as mdremada
 
@@ -366,7 +367,7 @@ def get_ReplayedTimeMarketData_example3(
     df = generate_random_price_data(
         start_datetime, end_datetime, columns_, asset_ids
     )
-    _LOG.debug("df=%s", hprint.dataframe_to_str(df))
+    _LOG.debug("df=%s", hpandas.dataframe_to_str(df))
     # Build a `ReplayedMarketData`.
     initial_replayed_delay = 5
     delay_in_secs = 0
@@ -397,7 +398,7 @@ def get_ReplayedTimeMarketData_example4(
     """
     # Generate random price data.
     df = generate_random_bars(start_datetime, end_datetime, asset_ids)
-    _LOG.debug("df=%s", hprint.dataframe_to_str(df))
+    _LOG.debug("df=%s", hpandas.dataframe_to_str(df))
     # Build a `ReplayedMarketData`.
     delay_in_secs = 0
     sleep_in_secs = 30

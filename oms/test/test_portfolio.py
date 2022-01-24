@@ -6,6 +6,7 @@ import pandas as pd
 
 import core.real_time as creatime
 import helpers.hasyncio as hasynci
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
@@ -334,7 +335,7 @@ class TestMockedPortfolio1(omtodh.TestOmsDbHelper):
                 # Print the DB status.
                 query = """SELECT * FROM current_positions"""
                 df = hsql.execute_query_to_df(self.connection, query)
-                print(hprint.dataframe_to_str(df))
+                print(hpandas.dataframe_to_str(df))
                 assert 0
             #
             # Create MockedPortfolio with some initial cash.
@@ -363,7 +364,7 @@ class TestMockedPortfolio1(omtodh.TestOmsDbHelper):
                 # Print the DB status.
                 query = """SELECT * FROM current_positions"""
                 df = hsql.execute_query_to_df(self.connection, query)
-                print(hprint.dataframe_to_str(df))
+                print(hpandas.dataframe_to_str(df))
                 assert 0
             #
             # Create MockedPortfolio with some initial cash.

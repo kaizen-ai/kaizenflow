@@ -14,6 +14,7 @@ import dataflow.pipelines.dataflow_example as dtfpidtfexa
 import dataflow.pipelines.returns.pipeline as dtfpirepip
 import dataflow.system as dtfsys
 import helpers.hasyncio as hasynci
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 import market_data as mdata
@@ -308,13 +309,13 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
         df = node.fit()["df_out"]
         df = df.swaplevel(i=0, j=1, axis=1)
         df = df["MN0"]
-        _LOG.debug("df=%s", hprint.dataframe_to_str(df))
+        _LOG.debug("df=%s", hpandas.dataframe_to_str(df))
         # Transform a DataFlow df into a MarketData df.
         df["end_datetime"] = df.index
         df["start_datetime"] = df.index - pd.DateOffset(minutes=1)
         df["timestamp_db"] = df["end_datetime"]
         df["asset_id"] = 101
-        _LOG.debug("df=%s", hprint.dataframe_to_str(df))
+        _LOG.debug("df=%s", hpandas.dataframe_to_str(df))
         return df
 
     def get_market_data(

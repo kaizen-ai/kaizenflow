@@ -2,6 +2,7 @@ from typing import Any, List
 
 import pandas as pd
 
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 import im_v2.common.data.client as icdc
@@ -28,7 +29,7 @@ def _check_output(
     act = []
     #
     actual_df = actual_df[sorted(actual_df.columns)]
-    act.append(hprint.df_to_short_str("df", actual_df))
+    act.append(hpandas.df_to_short_str("df", actual_df))
     #
     actual_exchange_ids = sorted(list(actual_df["exchange_id"].dropna().unique()))
     act.append("exchange_ids=%s" % ",".join(actual_exchange_ids))
