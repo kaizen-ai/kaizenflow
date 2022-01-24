@@ -29,7 +29,7 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
         :param im_client: IM client
         """
         super().__init__(*args, **kwargs)
-        # TODO(gp): Add hdbg.dassert_is_instance(im_client, )
+        hdbg.dassert_isinstance(im_client, icdc.ImClient)
         self._im_client = im_client
 
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
@@ -44,7 +44,7 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         ts_col_name: str,
-        asset_ids: Optional[List[str]],
+        asset_ids: Optional[List[int]],
         left_close: bool,
         right_close: bool,
         normalize_data: bool,
@@ -61,14 +61,27 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
             # Add one millisecond to include the right boundary.
             end_ts = end_ts + pd.Timedelta(1, "ms")
         if not asset_ids:
-            # If `asset_ids` is None, get all symbols from the universe.
-            asset_ids = self._im_client.get_universe()
+            # If `asset_ids` is None, get all assets from the universe.
+            as_asset_ids = True
+            asset_ids = self._im_client.get_universe(as_asset_ids)
+        # Convert numeric ids to full symbols to read `im` data.
+        full_symbols = self._im_client.get_full_symbols_from_numerical_ids(
+            asset_ids
+        )
         # Load the data using `im_client`.
-        full_symbols = asset_ids
         market_data = self._im_client.read_data(
             full_symbols,
             start_ts,
             end_ts,
+        )
+        # TODO(Grisha): we should pass `full_symbol_column_name` here CMTask #822.
+        # Add `asset_id` column.
+        market_data.insert(
+            0,
+            self._asset_id_col,
+            self._im_client.get_numerical_ids_from_full_symbols(
+                market_data["full_symbol"]
+            ),
         )
         if self._columns:
             # Select only specified columns.
