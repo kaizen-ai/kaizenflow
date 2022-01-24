@@ -2,8 +2,9 @@
 
 # This script should be invoked on a different repo so that we don't annihilate
 # this file.
-#TARGET_REPO=/Users/saggese/src/cmamp2
-#cd $TARGET_REPO
+SOURCE_REPO=CMTask974_run_script
+TARGET_REPO=/Users/saggese/src/cmamp2
+cd $TARGET_REPO
 
 # Make sure that the branch is at master.
 #if [[ 0 == 1 ]]; then
@@ -11,18 +12,18 @@
 #fi
 
 # Create the branch with the changes.
-# i git_create_branch -b $TARGET_BRANCH
-#TARGET_BRANCH=CmTask972_Merge_dataframe_to_str_and_df_to_short_str_into_hpandas_2
-#git checkout -B $TARGET_BRANCH
+TARGET_BRANCH=CmTask972_Merge_dataframe_to_str_and_df_to_short_str_into_hpandas_2
+#i git_create_branch -b $TARGET_BRANCH
+git checkout -B $TARGET_BRANCH
 
 # Clean up.
-#git reset --hard origin/$TARGET_BRANCH
+git reset --hard origin/$TARGET_BRANCH
 
 # Apply manual changes.
-#git merge --no-commit origin/CmTask972_Merge_dataframe_to_str_and_df_to_short_str_into_hpandas
+git merge --no-commit origin/$SOURCE_REPO
 
 # Move dataframe_to_str from hprint to hpandas.
-./dev_scripts/replace_text.py \
+SOURCE_REPO=CMTask974_run_script./dev_scripts/replace_text.py \
   --old "hprint.dataframe_to_str" \
   --new "hpandas.dataframe_to_str" \
   --ext "py"
