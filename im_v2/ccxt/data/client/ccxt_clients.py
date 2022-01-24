@@ -27,20 +27,20 @@ _LATEST_DATA_SNAPSHOT = "20210924"
 
 class CcxtCddClient(icdc.ImClient, abc.ABC):
     """
-    Client for CCXT and CDD that is responsible for vendor-specific normalization.
+    Client for `CCXT` and `CDD` that is responsible for vendor-specific normalization.
     """
 
     def __init__(self, vendor: str) -> None:
         """
         Constructor.
 
-        :param vendor: crypto price data provider, e.g. "CCXT"
+        :param vendor: price data provider, i.e. "CCXT" or "cryptodatadownload"
         """
         _vendors = ["ccxt", "cryptodatadownload"]
         hdbg.dassert_in(vendor, _vendors)
         self._vendor = vendor
 
-    def _apply_CcxtCdd_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
+    def _apply_vendor_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
         """
         See description in the parent class.
 
@@ -61,7 +61,7 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         ```
         """
         # Apply vendor-specific transformations.
-        data = self._apply_vendor_transformations(data)
+        data = self._apply_ccxt_cdd_normalization(data)
         # Apply transformations specific of the type of data.
         data = self._apply_ohlcv_transformations(data)
         # Sort transformed data by exchange id and currency pair columns.
@@ -75,9 +75,9 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         universe = imvccunun.get_vendor_universe(vendor=self._vendor)
         return universe  # type: ignore[no-any-return]
 
-    def _apply_vendor_transformations(self, data: pd.DataFrame) -> pd.DataFrame:
+    def _apply_ccxt_cdd_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
         """
-        Apply transformations common to all crypto data.
+        Apply transformations common for `CCXT` and `CDD` data.
         """
         if self._vendor == "cryptodatadownload":
             # Rename columns for consistency with other crypto vendors.
@@ -123,7 +123,7 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
 # TODO(Grisha): it should descend from `ImClientReadingMultipleSymbols`.
 class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
     """
-    CCXT client for data from the database.
+    `CCXT` client for data from the database.
     """
 
     def __init__(
@@ -132,11 +132,11 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
         connection: hsql.DbConnection,
     ) -> None:
         """
-        Load crypto price data from the database.
+        Load `CCXT` and `CDD` price data from the database.
 
         This code path is used for the real-time data.
 
-        :param vendor: crypto price data provider, e.g. "CCXT"
+        :param vendor: price data provider, i.e. "CCXT" or "cryptodatadownload"
         :param connection: connection for a SQL database
         """
         super().__init__(vendor)
@@ -185,7 +185,7 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
 
 class CcxtCddCsvParquetByAssetClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
     """
-    Client for CCXT and CDD that reads CSV or Parquet file storing data for a single asset.
+    Client for `CCXT` and `CDD` that reads CSV or Parquet file storing data for a single asset.
 
     It can read data from local or S3 filesystem as backend.
 
@@ -204,11 +204,11 @@ class CcxtCddCsvParquetByAssetClient(CcxtCddClient, icdc.ImClientReadingOneSymbo
         data_snapshot: Optional[str] = None,
     ) -> None:
         """
-        Load CCXT data from local or S3 filesystem.
+        Load `CCXT` data from local or S3 filesystem.
 
-        :param vendor: crypto price data provider, e.g. "CCXT"
+        :param vendor: price data provider, i.e. "CCXT" or "cryptodatadownload"
         :param root_dir: either a local root path (e.g., "/app/im") or
-            an S3 root path (e.g., "s3://alphamatic-data/data") to CCXT data
+            an S3 root path (e.g., "s3://alphamatic-data/data") to `CCXT` data
         :param extension: file extension, e.g., `.csv`, `.csv.gz` or `.parquet`
         :param aws_profile: AWS profile name (e.g., "am")
         :param data_snapshot: snapshot of datetime when data was loaded,
@@ -303,7 +303,7 @@ class CcxtCddCsvParquetByAssetClient(CcxtCddClient, icdc.ImClientReadingOneSymbo
         currency_pair: str,
     ) -> str:
         """
-        Get the absolute path to a file with CCXT or CDD price data.
+        Get the absolute path to a file with `CCXT` or `CDD` price data.
 
         The file path is constructed in the following way:
         `<root_dir>/<vendor>/<snapshot>/<exchange_id>/<currency_pair>.<self._extension>`
@@ -313,7 +313,7 @@ class CcxtCddCsvParquetByAssetClient(CcxtCddClient, icdc.ImClientReadingOneSymbo
         :param exchange_id: exchange id, e.g. "binance"
         :param currency_pair: currency pair `<currency1>_<currency2>`,
             e.g. "BTC_USDT"
-        :return: absolute path to a file with crypto price data
+        :return: absolute path to a file with `CCXT` or `CDD` price data
         """
         # Get absolute file path.
         file_name = ".".join([currency_pair, self._extension])

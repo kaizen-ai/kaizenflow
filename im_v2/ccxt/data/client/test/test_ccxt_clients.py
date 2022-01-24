@@ -783,7 +783,7 @@ class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         im_client = (
-            imvcdccccl.CcxtDbClient(  # pylint: disable=no-value-for-parameter
+            imvcdccccl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
                 self.connection
             )
         )
