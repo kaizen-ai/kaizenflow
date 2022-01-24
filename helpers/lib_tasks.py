@@ -1624,7 +1624,7 @@ def _get_last_container_id(sudo: bool) -> str:
     # Get the last started container.
     cmd = f"{docker_exec} ps -l | grep -v 'CONTAINER ID'"
     # CONTAINER ID   IMAGE          COMMAND                  CREATED
-    # 90897241b31a   eeb33fe1880a   "/bin/sh -c '/bin/bash'" 34 hours ago ...
+    # 90897241b31a   eeb33fe1880a   "/bin/sh -c '/bin/baÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¦"   34 hours ago ...
     _, txt = hsystem.system_to_one_line(cmd)
     # Parse the output: there should be at least one line.
     hdbg.dassert_lte(1, len(txt.split(" ")), "Invalid output='%s'", txt)
@@ -3967,6 +3967,7 @@ def check_python_files(  # type: ignore
     return error
 
 
+# TODO(gp): Pass the cmd
 def _get_lint_docker_cmd(
     precommit_opts: str, run_bash: bool, stage: str, as_user: bool
 ) -> str:
@@ -3985,7 +3986,7 @@ def _get_lint_docker_cmd(
     ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
     image = f"{ecr_base_path}/dev_tools:{stage}"
     docker_cmd_ = ["docker run", "--rm"]
-    if stage == "local":
+    if stage in ("local", "dev"):
         # For local stage also map repository root to /app.
         docker_cmd_.append(f"-v '{repo_root}':/app")
     if run_bash:
@@ -3996,13 +3997,16 @@ def _get_lint_docker_cmd(
         docker_cmd_.append(r"--user $(id -u):$(id -g)")
     docker_cmd_.extend(
         [
+            # Pass MYPYPATH for `mypy` to find the packages from PYTHONPATH.
+            "-e MYPYPATH",
             f"-v '{repo_root}':/src",
             f"--workdir={work_dir}",
             f"{image}",
         ]
     )
     # Build the command inside Docker.
-    cmd = f"'pre-commit {precommit_opts}'"
+    #cmd = f"'pre-commit {precommit_opts}'"
+    cmd = f"import_check/detect_import_cycles.py '{precommit_opts}'"
     if run_bash:
         _LOG.warning("Run bash instead of:\n  > %s", cmd)
         cmd = "bash"
@@ -4048,6 +4052,40 @@ def _parse_linter_output(txt: str) -> str:
     output = sorted(output)
     output_as_str = "\n".join(output)
     return output_as_str
+
+
+@task
+def lint_detect_cycles(  # type: ignore
+        ctx,
+        dir_name="",
+        run_bash=False,
+        # TODO(gp): This is the backdoor.
+        stage="prod",
+        as_user=True,
+):
+    """
+    """
+    _report_task()
+    lint_file_name = "lint_detect_cycles.output.txt"
+    # Remove the file.
+    if os.path.exists(lint_file_name):
+        cmd = f"rm {lint_file_name}"
+        _run(ctx, cmd)
+    as_user = _run_docker_as_user(as_user)
+    # Prepare the command line.
+    precommit_opts = [dir_name]
+    precommit_opts = _to_single_line_cmd(precommit_opts)
+    # Execute command line.
+    cmd = _get_lint_docker_cmd(precommit_opts, run_bash, stage, as_user)
+    cmd = f"({cmd}) 2>&1 | tee -a {lint_file_name}"
+    if run_bash:
+        # We don't execute this command since pty=True corrupts the terminal
+        # session.
+        print("# To get a bash session inside Docker run:")
+        print(cmd)
+        return
+    # Run.
+    _run(ctx, cmd)
 
 
 @task
