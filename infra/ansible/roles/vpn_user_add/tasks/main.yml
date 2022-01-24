@@ -117,7 +117,7 @@
     other_certificates: "{{ easyrsa_pki_ca_cert }}"
     state: present
 
-# EXPORT common
+# EXPORT common - p12 and files are not in use -therefore they are commented out
 - name: OpenVPN | Export VPN Client | Get totp seed file and store it in every bundle
   fetch:
     src: "{{ openvpn_path_ovpn }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}-totp.seed"
@@ -125,17 +125,17 @@
     flat: yes
   loop:
     - "{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_embedded/"
-    - "{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_files/"
-    - "{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_p12/"
+#    - "{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_files/"
+#    - "{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_p12/"
 
-- name: OpenVPN | Export VPN Client | Add openvpn crypt key to files + PKCS#12 directory
-  fetch:
-    src: "{{ openvpn_ta_key }}"
-    dest: "{{ vpn_client_export_bundle_dir }}/{{ item }}"
-    flat: yes
-  loop:
-    - "{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_files/"
-    - "{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_p12/"
+# - name: OpenVPN | Export VPN Client | Add openvpn crypt key to files + PKCS#12 directory
+  # fetch:
+    # src: "{{ openvpn_ta_key }}"
+    # dest: "{{ vpn_client_export_bundle_dir }}/{{ item }}"
+    # flat: yes
+  # loop:
+    # - "{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_files/"
+    # - "{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_p12/"
 
 # EXPORT bundled
 - name: OpenVPN | Export VPN Client | Get .ovpn files (*-pki-embedded.ovpn)
@@ -144,42 +144,42 @@
     dest: "{{ vpn_client_export_bundle_dir }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_embedded/"
     flat: yes
 
-# EXPORT individual files
-- name: OpenVPN | Export VPN Client | Get .ovpn files (*-pki-files.ovpn)
-  fetch:
-    src: "{{ openvpn_path_ovpn }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}-pki-files.ovpn"
-    dest: "{{ vpn_client_export_bundle_dir }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_files/"
-    flat: yes 
+# # EXPORT individual files
+# - name: OpenVPN | Export VPN Client | Get .ovpn files (*-pki-files.ovpn)
+  # fetch:
+    # src: "{{ openvpn_path_ovpn }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}-pki-files.ovpn"
+    # dest: "{{ vpn_client_export_bundle_dir }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_files/"
+    # flat: yes 
 
-- name: OpenVPN | Export VPN Client | Get client CA cert
-  fetch:
-    src: "{{ easyrsa_pki_ca_cert }}"
-    dest: "{{ vpn_client_export_bundle_dir }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_files/"
-    flat: yes
+# - name: OpenVPN | Export VPN Client | Get client CA cert
+  # fetch:
+    # src: "{{ easyrsa_pki_ca_cert }}"
+    # dest: "{{ vpn_client_export_bundle_dir }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_files/"
+    # flat: yes
     
-- name: OpenVPN | Export VPN Client | Get client certs
-  fetch:
-    src: "{{ easyrsa_pki_client_cert }}"
-    dest: "{{ vpn_client_export_bundle_dir }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_files/"
-    flat: yes
+# - name: OpenVPN | Export VPN Client | Get client certs
+  # fetch:
+    # src: "{{ easyrsa_pki_client_cert }}"
+    # dest: "{{ vpn_client_export_bundle_dir }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_files/"
+    # flat: yes
     
-- name: OpenVPN | Export VPN Client | Get client keys
-  fetch:
-    src: "{{ easyrsa_pki_client_key }}"
-    dest: "{{ vpn_client_export_bundle_dir }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_files/"
-    flat: yes 
+# - name: OpenVPN | Export VPN Client | Get client keys
+  # fetch:
+    # src: "{{ easyrsa_pki_client_key }}"
+    # dest: "{{ vpn_client_export_bundle_dir }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_files/"
+    # flat: yes 
 
-# EXPORT P12   
-- name: OpenVPN | Export VPN Client | Get .ovpn files (*-pkcs12.ovpn)
-  fetch:
-    src: "{{ openvpn_path_ovpn }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}-pki-pkcs12.ovpn"
-    dest: "{{ vpn_client_export_bundle_dir }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_p12/"
-    flat: yes
+# # EXPORT P12   
+# - name: OpenVPN | Export VPN Client | Get .ovpn files (*-pkcs12.ovpn)
+  # fetch:
+    # src: "{{ openvpn_path_ovpn }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}-pki-pkcs12.ovpn"
+    # dest: "{{ vpn_client_export_bundle_dir }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_p12/"
+    # flat: yes
     
-- name: OpenVPN | Export VPN Client | Get client PKCS#12 files
-  fetch:
-    src: "{{ openvpn_path_ovpn }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}.p12"
-    dest: "{{ vpn_client_export_bundle_dir }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_p12/"
-    flat: yes
+# - name: OpenVPN | Export VPN Client | Get client PKCS#12 files
+  # fetch:
+    # src: "{{ openvpn_path_ovpn }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}.p12"
+    # dest: "{{ vpn_client_export_bundle_dir }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}_p12/"
+    # flat: yes
 
    
