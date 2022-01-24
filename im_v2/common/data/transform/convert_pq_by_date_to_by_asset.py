@@ -56,6 +56,7 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hjoblib as hjoblib
+import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hparser as hparser
 import helpers.hprint as hprint
@@ -94,13 +95,15 @@ def _process_chunk(
     for daily_pq_filename in parquet_file_names:
         # Read Parquet df.
         df = hparque.from_parquet(daily_pq_filename)
-        _LOG.debug("before df=\n%s", hprint.dataframe_to_str(df.head(3)))
+        _LOG.debug("before df=\n%s", hpandas.dataframe_to_str(df.head(3)))
         # Set datetime index.
         datetime_col_name = "start_time"
         reindexed_df = imvcdttrut.reindex_on_datetime(
             df, datetime_col_name, unit="s"
         )
-        _LOG.debug("after df=\n%s", hprint.dataframe_to_str(reindexed_df.head(3)))
+        _LOG.debug(
+            "after df=\n%s", hpandas.dataframe_to_str(reindexed_df.head(3))
+        )
         # Partition.
         imvcdttrut.add_date_partition_cols(reindexed_df, "day")
         partition_cols = ["year", "month", "day", asset_col_name]

@@ -84,7 +84,7 @@ class Test_trim_df1(hunitest.TestCase):
         """
         df = self.get_df()
         #
-        act = hprint.df_to_short_str("df", df, print_dtypes=True)
+        act = hpandas.df_to_short_str("df", df, print_dtypes=True)
         exp = r"""# df=
         df.index in [4, 44]
         df.columns=start_time,egid,close
@@ -121,7 +121,7 @@ class Test_trim_df1(hunitest.TestCase):
         """
         df = self.get_df_with_parse_dates()
         # Check.
-        act = hprint.df_to_short_str("df", df, print_dtypes=True)
+        act = hpandas.df_to_short_str("df", df, print_dtypes=True)
         exp = r"""# df=
         df.index in [4, 44]
         df.columns=start_time,egid,close
@@ -163,7 +163,7 @@ class Test_trim_df1(hunitest.TestCase):
         """
         df = self.get_df_with_tz_timestamp()
         # Check.
-        act = hprint.df_to_short_str("df", df, print_dtypes=True)
+        act = hpandas.df_to_short_str("df", df, print_dtypes=True)
         exp = r"""# df=
         df.index in [4, 44]
         df.columns=start_time,egid,close
@@ -203,7 +203,7 @@ class Test_trim_df1(hunitest.TestCase):
             df, ts_col_name, start_ts, end_ts, left_close, right_close
         )
         # Check.
-        act = hprint.df_to_short_str("df_trim", df_trim, print_dtypes=True)
+        act = hpandas.df_to_short_str("df_trim", df_trim, print_dtypes=True)
         exp = r"""# df_trim=
         df.index in [4, 38]
         df.columns=start_time,egid,close
@@ -241,7 +241,7 @@ class Test_trim_df1(hunitest.TestCase):
             df, ts_col_name, start_ts, end_ts, left_close, right_close
         )
         # Check.
-        act = hprint.df_to_short_str("df_trim", df_trim, print_dtypes=True)
+        act = hpandas.df_to_short_str("df_trim", df_trim, print_dtypes=True)
         exp = r"""# df_trim=
         df.index in [4, 38]
         df.columns=start_time,egid,close
@@ -279,7 +279,7 @@ class Test_trim_df1(hunitest.TestCase):
             df, ts_col_name, start_ts, end_ts, left_close, right_close
         )
         # Check.
-        act = hprint.df_to_short_str("df_trim", df_trim, print_dtypes=True)
+        act = hpandas.df_to_short_str("df_trim", df_trim, print_dtypes=True)
         exp = r"""# df_trim=
         df.index in [4, 38]
         df.columns=start_time,egid,close

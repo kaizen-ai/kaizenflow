@@ -1,5 +1,6 @@
 import pandas as pd
 
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 import market_data.market_data_client_example as mdmdclex
@@ -41,7 +42,7 @@ class TestMarketDataClient(hunitest.TestCase):
             normalize_data=True,
             limit=None,
         )
-        actual_df_as_str = hprint.df_to_short_str("df", data)
+        actual_df_as_str = hpandas.df_to_short_str("df", data)
         # pylint: disable=line-too-long
         expected_df_as_str = """
         # df=
@@ -102,7 +103,7 @@ class TestMarketDataClient(hunitest.TestCase):
             normalize_data=True,
             limit=None,
         )
-        actual_df_as_str = hprint.df_to_short_str("df", data)
+        actual_df_as_str = hpandas.df_to_short_str("df", data)
         # pylint: disable=line-too-long
         expected_df_as_str = """
         # df=
@@ -152,7 +153,7 @@ class TestMarketDataClient(hunitest.TestCase):
             normalize_data=False,
             limit=None,
         )
-        actual_df_as_str = hprint.df_to_short_str("df", data)
+        actual_df_as_str = hpandas.df_to_short_str("df", data)
         # pylint: disable=line-too-long
         expected_df_as_str = """
         # df=
