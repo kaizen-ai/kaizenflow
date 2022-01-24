@@ -323,7 +323,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         asset_ids: Optional[List[int]],
-        exp_srs_as_str: int,
+        exp_srs_as_str: str,
     ) -> None:
         """
         Call `get_twap_price()` for specified parameters.

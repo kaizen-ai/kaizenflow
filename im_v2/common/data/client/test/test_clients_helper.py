@@ -241,7 +241,8 @@ class ImClientTestCase(hunitest.TestCase):
         """
         Test that universe is computed correctly.
         """
-        universe = im_client.get_universe()
+        # TODO(Grisha): add unit tests for `as_asset_ids=True` CMTask #822.
+        universe = im_client.get_universe(as_asset_ids=False)
         actual_length = len(universe)
         actual_first_elements = universe[:3]
         actual_last_elements = universe[-3:]

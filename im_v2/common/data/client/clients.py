@@ -15,6 +15,7 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import im_v2.common.data.client.full_symbol as imvcdcfusy
+import im_v2.common.universe.universe_utils as imvcuunut
 
 _LOG = logging.getLogger(__name__)
 
@@ -142,11 +143,50 @@ class ImClient(abc.ABC):
 
     @staticmethod
     @abc.abstractmethod
-    def get_universe() -> List[imvcdcfusy.FullSymbol]:
+    def get_universe(as_asset_ids: bool) -> List[imvcdcfusy.FullSymbol]:
         """
         Get universe as full symbols.
+
+        :param as_asset_ids: if True return universe as numeric ids, otherwise universe as full symbols
         """
-        ...
+
+    @staticmethod
+    def get_numerical_ids_from_full_symbols(
+        full_symbols: List[imvcdcfusy.FullSymbol],
+    ) -> List[int]:
+        """
+        Convert assets as full symbols to assets as numeric ids.
+
+        :param full_symbols: assets as full symbols
+        :return: assets as numeric ids
+        """
+        numeric_asset_id = [
+            imvcuunut.string_to_numeric_id(full_symbol)
+            for full_symbol in full_symbols
+        ]
+        return numeric_asset_id
+
+    def get_full_symbols_from_numerical_ids(
+        self, asset_ids: List[int]
+    ) -> List[imvcdcfusy.FullSymbol]:
+        """
+        Convert assets as numeric ids to assets as full symbols.
+
+        :param asset_ids: assets as numeric ids
+        :return: assets as full symbols
+        """
+        # Get universe as full symbols to construct numeric ids to full symbols mapping.
+        full_symbol_universe = self.get_universe(as_asset_ids=False)
+        ids_to_symbols_mapping = imvcuunut.build_num_to_string_id_mapping(
+            tuple(full_symbol_universe)
+        )
+        # Check that provided ids are part of universe.
+        hdbg.dassert_is_subset(asset_ids, ids_to_symbols_mapping)
+        # Convert ids to full symbols.
+        full_symbols = [
+            ids_to_symbols_mapping[asset_id] for asset_id in asset_ids
+        ]
+        return full_symbols
 
     @abc.abstractmethod
     def _read_data(
