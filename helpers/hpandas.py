@@ -326,7 +326,7 @@ def trim_df(
         if df.index.name is None:
             _LOG.debug(
                 "The df has no index\n%s",
-                df_to_str(df.head(), tag="df"),
+                df_to_str(df.head()),
             )
             df.index.name = "index"
         ts_col_name = df.index.name
@@ -343,12 +343,12 @@ def trim_df(
         # vs Pandas objects.
         tss = pd.to_datetime(df[ts_col_name])
         hdateti.dassert_tz_compatible(tss.iloc[0], start_ts)
-        _LOG.verb_debug("tss=\n%s", df_to_str(tss, tag="df"))
+        _LOG.verb_debug("tss=\n%s", df_to_str(tss))
         if left_close:
             mask = tss >= start_ts
         else:
             mask = tss > start_ts
-        _LOG.verb_debug("mask=\n%s", df_to_str(mask, tag="df"))
+        _LOG.verb_debug("mask=\n%s", df_to_str(mask))
         df = df[mask]
     # Filter based on end_ts.
     _LOG.debug("Filtering by end_ts=%s", end_ts)
@@ -358,12 +358,12 @@ def trim_df(
             _LOG.verb_debug("end_ts=%s", end_ts)
             tss = pd.to_datetime(df[ts_col_name])
             hdateti.dassert_tz_compatible(tss.iloc[0], end_ts)
-            _LOG.verb_debug("tss=\n%s", df_to_str(tss, tag="df"))
+            _LOG.verb_debug("tss=\n%s", df_to_str(tss))
             if right_close:
                 mask = tss <= end_ts
             else:
                 mask = tss < end_ts
-            _LOG.verb_debug("mask=\n%s", df_to_str(mask, tag="df"))
+            _LOG.verb_debug("mask=\n%s", df_to_str(mask))
             df = df[mask]
     else:
         # If the df is empty there is nothing to trim.

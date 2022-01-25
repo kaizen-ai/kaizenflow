@@ -11,7 +11,6 @@ import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -68,7 +67,7 @@ class ForecastEvaluator:
         act.append(
             "# holdings marked to market=\n%s"
             % hpandas.df_to_str(
-                target_positions.shift(1), precision=precision, tag="df"
+                target_positions.shift(1), precision=precision
             )
         )
         act.append(
@@ -76,7 +75,6 @@ class ForecastEvaluator:
             % hpandas.df_to_str(
                 pnl,
                 precision=precision,
-                tag="df"
             )
         )
         act.append(
