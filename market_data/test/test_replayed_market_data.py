@@ -4,6 +4,7 @@ from typing import Any, Callable, Tuple
 import pandas as pd
 
 import helpers.hasyncio as hasynci
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 import market_data.market_data_example as mdmadaex
@@ -12,6 +13,7 @@ import market_data.replayed_market_data as mdremada
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): Factor out this test in a ReplayedMarketData_TestCase
 def _check_get_data(
     self_: Any,
     initial_replayed_delay: int,
@@ -40,7 +42,7 @@ def _check_get_data(
         actual_df = func(market_data)
     # Check.
     actual_df = actual_df[sorted(actual_df.columns)]
-    actual_df_as_str = hprint.df_to_short_str("df", actual_df)
+    actual_df_as_str = hpandas.df_to_short_str("df", actual_df)
     _LOG.info("-> %s", actual_df_as_str)
     self_.assert_equal(
         actual_df_as_str,
@@ -69,6 +71,8 @@ class TestReplayedMarketData1(hunitest.TestCase):
         is_online = market_data.is_online()
         _LOG.info("-> is_online=%s", is_online)
         self.assertEqual(is_online, expected_is_online)
+
+    # //////////////////////////////////////////////////////////////////////////////
 
     def test_get_data1(self) -> None:
         """
@@ -294,6 +298,8 @@ class TestReplayedMarketData1(hunitest.TestCase):
         self.check_last_end_time(
             market_data, expected_last_end_time, expected_is_online
         )
+
+    # //////////////////////////////////////////////////////////////////////////////
 
     def test_get_data_for_minute_0(self) -> None:
         """

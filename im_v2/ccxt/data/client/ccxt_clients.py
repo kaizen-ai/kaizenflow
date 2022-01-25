@@ -27,7 +27,10 @@ _LATEST_DATA_SNAPSHOT = "20210924"
 
 class CcxtCddClient(icdc.ImClient, abc.ABC):
     """
-    Client for `CCXT` and `CDD` that is responsible for vendor-specific normalization.
+    Contain common code for all the `CCXT` and `CDD` clients, e.g.,
+        - getting `CCXT` and `CDD` universe
+        - applying common transformation for all the data from `CCXT` and `CDD`
+            - E.g., `_apply_olhlcv_transformations()`, `_apply_vendor_normalization()`
     """
 
     def __init__(self, vendor: str) -> None:
@@ -68,11 +71,11 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         data = data.sort_values(by=["exchange_id", "currency_pair"])
         return data
 
-    def get_universe(self) -> List[icdc.FullSymbol]:
+    def get_universe(self, as_asset_ids: bool) -> List[icdc.FullSymbol]:
         """
         Return vendor universe as full symbols.
         """
-        universe = imvccunun.get_vendor_universe(vendor=self._vendor)
+        universe = imvccunun.get_vendor_universe(vendor=self._vendor, as_asset_ids=as_asset_ids)
         return universe  # type: ignore[no-any-return]
 
     def _apply_ccxt_cdd_normalization(self, data: pd.DataFrame) -> pd.DataFrame:

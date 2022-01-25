@@ -193,7 +193,7 @@ class AbstractMarketData(abc.ABC):
         )
         # We don't need to remap columns since `get_data_for_interval()` has already
         # done it.
-        _LOG.verb_debug("-> df=\n%s", hprint.dataframe_to_str(df))
+        _LOG.verb_debug("-> df=\n%s", hpandas.dataframe_to_str(df))
         return df
 
     def get_data_at_timestamp(
@@ -224,7 +224,7 @@ class AbstractMarketData(abc.ABC):
         )
         # We don't need to remap columns since `get_data_for_interval()` has already
         # done it.
-        _LOG.verb_debug("-> df=\n%s", hprint.dataframe_to_str(df))
+        _LOG.verb_debug("-> df=\n%s", hpandas.dataframe_to_str(df))
         return df
 
     def get_data_for_interval(
@@ -284,18 +284,18 @@ class AbstractMarketData(abc.ABC):
             df = self._convert_timestamps_to_timezone(df)
         # Remap column names.
         df = self._remap_columns(df)
-        _LOG.verb_debug("-> df=\n%s", hprint.dataframe_to_str(df))
+        _LOG.verb_debug("-> df=\n%s", hpandas.dataframe_to_str(df))
+        hdbg.dassert_isinstance(df, pd.DataFrame)
         return df
 
-    # TODO(gp): To make the interface symmetric this method should accept `asset_ids`.
     def get_twap_price(
         self,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         ts_col_name: str,
-        asset_id: int,
+        asset_ids: List[int],
         column: str,
-    ) -> float:
+    ) -> pd.Series:
         """
         Compute TWAP of the column `column` in (ts_start, ts_end].
 
@@ -311,7 +311,7 @@ class AbstractMarketData(abc.ABC):
             start_ts,
             end_ts,
             ts_col_name,
-            [asset_id],
+            asset_ids,
             left_close=left_close,
             right_close=right_close,
             normalize_data=True,
@@ -320,18 +320,39 @@ class AbstractMarketData(abc.ABC):
         # We don't need to remap columns since `get_data_for_interval()` has already
         # done it.
         hdbg.dassert_in(column, prices.columns)
-        prices = prices[column]
         # Compute the mean value.
         _LOG.verb_debug("prices=\n%s", prices)
-        price: float = prices.mean()
-        hdbg.dassert(
-            np.isfinite(price),
-            "price=%s in interval `start_ts=%s`, `end_ts=%s`",
-            price,
-            start_ts,
-            end_ts,
+        twap = prices.groupby(self._asset_id_col)[column].mean()
+        hpandas.dassert_series_type_in(twap, [np.float64, np.int64])
+        return twap
+
+    def get_last_twap_price(
+        self,
+        bar_duration: str,
+        ts_col_name: str,
+        asset_ids: List[int],
+        column: str,
+    ) -> pd.Series:
+        """
+        Compute TWAP of the column `column` over last `bar_duration`.
+
+        E.g., if the last end time is 9:35 and `bar_duration=5T`, then
+        we compute TWAP for (9:30, 9:35].
+        """
+        last_end_time = self.get_last_end_time()
+        _LOG.info("last_end_time=%s", last_end_time)
+        offset = pd.Timedelta(bar_duration)
+        first_end_time = last_end_time - offset
+        # We rely on the assumption that we are reading 1-minute bars.
+        start_time = first_end_time - pd.Timedelta(minutes=1)
+        twap = self.get_twap_price(
+            start_time,
+            last_end_time,
+            ts_col_name,
+            asset_ids,
+            column,
         )
-        return price
+        return twap
 
     # Methods for handling real-time behaviors.
 
@@ -382,6 +403,7 @@ class AbstractMarketData(abc.ABC):
         hdbg.dassert_isinstance(last_price_srs, pd.Series)
         last_price_srs.index.name = self._asset_id_col
         last_price_srs.name = col_name
+        hpandas.dassert_series_type_in(last_price_srs, [np.float64, np.int64])
         # TODO(gp): Print if there are nans.
         return last_price_srs
 
@@ -508,7 +530,7 @@ class AbstractMarketData(abc.ABC):
         #     wall_clock_time = self.get_wall_clock_time()
         #     _LOG.debug(hprint.to_str("wall_clock_time df.index.max()"))
         #     hdbg.dassert_lte(df.index.max(), wall_clock_time)
-        # _LOG.debug(hprint.df_to_short_str("after process_data", df))
+        # _LOG.debug(hpandas.df_to_short_str("after process_data", df))
         return df
 
     # /////////////////////////////////////////////////////////////////////////////
@@ -642,18 +664,3 @@ class AbstractMarketData(abc.ABC):
             raise ValueError("Invalid period='%s'" % period)
         _LOG.verb_debug("last_start_time=%s", last_start_time)
         return last_start_time
-
-
-# TODO(gp): This could go in a market_data_utils.py
-def skip_test_since_not_online(market_data: AbstractMarketData) -> bool:
-    """
-    Return true if a test should be skipped since `market_data` is not on-line.
-    """
-    ret = False
-    if not market_data.is_online():
-        current_time = hdateti.get_current_time(tz="ET")
-        _LOG.warning(
-            "Skipping this test since DB is not on-line at %s", current_time
-        )
-        ret = True
-    return ret

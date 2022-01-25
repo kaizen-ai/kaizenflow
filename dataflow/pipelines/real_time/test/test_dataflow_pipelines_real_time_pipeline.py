@@ -1,3 +1,6 @@
+"""
+Test pipelines using MarketData.
+"""
 import asyncio
 import logging
 
@@ -11,6 +14,7 @@ import dataflow.pipelines.dataflow_example as dtfpidtfexa
 import dataflow.pipelines.returns.pipeline as dtfpirepip
 import dataflow.system as dtfsys
 import helpers.hasyncio as hasynci
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 import market_data as mdata
@@ -22,9 +26,12 @@ import oms.test.oms_db_helper as otodh
 
 _LOG = logging.getLogger(__name__)
 
+# TODO(gp): -> dataflow/system/test_real_time_pipeline.py
+
+# TODO(gp): Split the class in methods like TestReplayedRH8EdWithMockedOms1
 
 # TODO(gp): use dag_builder = dtfsrtdaad.RealTimeDagAdapter(base_dag_builder,
-# portfolio)
+#  portfolio)
 class TestRealTimeReturnPipeline1(hunitest.TestCase):
     """
     This test is similar to `TestRealTimeDagRunner1`. It uses:
@@ -272,6 +279,7 @@ class TestRealTimePipelineWithOms1(hunitest.TestCase):
 # #############################################################################
 
 
+# TODO(gp): Use SystemRunner.
 class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
     """
     Run `MvnReturns` pipeline in real-time with mocked OMS objects.
@@ -301,13 +309,13 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
         df = node.fit()["df_out"]
         df = df.swaplevel(i=0, j=1, axis=1)
         df = df["MN0"]
-        _LOG.debug("df=%s", hprint.dataframe_to_str(df))
+        _LOG.debug("df=%s", hpandas.dataframe_to_str(df))
         # Transform a DataFlow df into a MarketData df.
         df["end_datetime"] = df.index
         df["start_datetime"] = df.index - pd.DateOffset(minutes=1)
         df["timestamp_db"] = df["end_datetime"]
         df["asset_id"] = 101
-        _LOG.debug("df=%s", hprint.dataframe_to_str(df))
+        _LOG.debug("df=%s", hpandas.dataframe_to_str(df))
         return df
 
     def get_market_data(
