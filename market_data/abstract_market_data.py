@@ -367,6 +367,7 @@ class AbstractMarketData(abc.ABC):
         ret = self._get_last_end_time()
         if ret is not None:
             # Convert to ET.
+            # TODO(Dan): Pass timezone from ctor in CmTask1000.
             ret = ret.tz_convert("America/New_York")
         _LOG.verb_debug("-> ret=%s", ret)
         return ret

@@ -251,7 +251,8 @@ def get_ReplayedTimeMarketData_from_df(
     time_out_in_secs: int = 60 * 2,
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
     """
-    Build a `ReplayedMarketData` backed by synthetic data stored in a dataframe.
+    Build a `ReplayedMarketData` backed by synthetic data stored in a
+    dataframe.
 
     :param df: dataframe including the columns
         ["timestamp_db", "asset_id", "start_datetime", "end_datetime"]
@@ -348,7 +349,7 @@ def get_ReplayedTimeMarketData_example3(
     event_loop: asyncio.AbstractEventLoop,
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
     """
-    Build a ReplayedMarketData:
+    Build a `ReplayedMarketData`:
 
     - with synthetic price data between `2000-01-01 9:30` and `10:30`
     - for two assets 101 and 202
@@ -392,8 +393,8 @@ def get_ReplayedTimeMarketData_example4(
     initial_replayed_delay: int = 0,
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
     """
-    Build a ReplayedMarketData with synthetic bar data for the given interval of
-    time and assets.
+    Build a `ReplayedMarketData` with synthetic bar data for the given interval
+    of time and assets.
     """
     # Generate random price data.
     df = generate_random_bars(start_datetime, end_datetime, asset_ids)
@@ -415,17 +416,21 @@ def get_ReplayedTimeMarketData_example4(
 
 # #############################################################################
 
+
 def get_MarketDataImClient_example1(
     asset_ids: List[int],
     columns: List[str],
     column_remap: Optional[Dict[str, str]],
 ) -> mdmdimcl.MarketDataImClient:
+    """
+    Build a `MarketDataImClient` backed with loaded test data.
+    """
     ccxt_client = ivcdctcce.get_CcxtCsvClient_example1()
     #
     asset_id_col = "asset_id"
     start_time_col_name = "start_ts"
     end_time_col_name = "end_ts"
-    get_wall_clock_time = hdateti.get_current_time
+    get_wall_clock_time = get_MarketDataImClient_wall_clock_time
     market_data_client = mdmdimcl.MarketDataImClient(
         asset_id_col,
         asset_ids,
@@ -437,3 +442,10 @@ def get_MarketDataImClient_example1(
         column_remap=column_remap,
     )
     return market_data_client
+
+
+def get_MarketDataImClient_wall_clock_time() -> pd.Timestamp:
+    """
+    Get a wall clock time to build `MarketDataImClient` for tests.
+    """
+    return pd.Timestamp("2018-08-17T01:30:00+00:00")
