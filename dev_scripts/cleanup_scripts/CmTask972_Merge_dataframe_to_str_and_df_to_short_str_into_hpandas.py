@@ -61,7 +61,9 @@ def _run() -> None:
                     new_args = ""
                     if function_ == dataframe_to_str:
                         # Append generic tag name.
-                        new_args = f'{args}, tag="df"'
+                        # new_args = f'{args}, tag="df"'
+                        # TODO(Nikola): Enable tag after merge
+                        new_args = {args}
                     elif function_ == df_to_short_str:
                         # Convert tag positional to keyword argument.
                         new_args_list = args.split(", ")

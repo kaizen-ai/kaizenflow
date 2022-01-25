@@ -402,10 +402,11 @@ def df_to_str(
         out.append(f"# {tag}=")
     # Print information about the shape and index.
     if print_shape_info:
-        out.append("df.shape=%s" % str(df.shape))
         if not df.empty:
             out.append("df.index in [%s, %s]" % (df.index.min(), df.index.max()))
             out.append("df.columns=%s" % ",".join(map(str, df.columns)))
+            # TODO(Nikola): Revisit and rename print_shape_info
+            out.append("df.shape=%s" % str(df.shape))
     # Print information about the types.
     if not df.empty:
         if print_dtypes:
@@ -459,4 +460,6 @@ def df_to_str(
             tail_str = "\n".join(tail_str.split("\n")[skipped_rows:])
             out.append(tail_str)
     txt = "\n".join(out)
+    # TODO(Nikola): Temporary strip
+    txt.rstrip("\n")
     return txt
