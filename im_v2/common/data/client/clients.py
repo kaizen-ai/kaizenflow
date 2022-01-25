@@ -151,7 +151,8 @@ class ImClient(abc.ABC):
         """
         Get universe as full symbols.
 
-        :param as_asset_ids: if True return universe as numeric ids, otherwise universe as full symbols
+        :param as_asset_ids: if True return universe as numeric ids,
+            otherwise universe as full symbols
         """
 
     @staticmethod
@@ -284,8 +285,7 @@ class ImClient(abc.ABC):
         # Check that there are no duplicates in data by index and full symbol.
         n_duplicated_rows = (
             df.reset_index()
-            .dropna(subset=["timestamp", full_symbol_col_name])
-            .duplicated()
+            .duplicated(subset=["timestamp", full_symbol_col_name])
             .sum()
         )
         hdbg.dassert_eq(
