@@ -503,7 +503,7 @@ class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
         )
 
 # TODO(Max): below `CcxtCddClient` -> `CcxtCddDbClient`.
-class TestCcxtCddClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
+class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
     def test_read_data1(self) -> None:
         """
         See description of corresponding private method in parent class.
@@ -562,9 +562,10 @@ class TestCcxtCddClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
+        vendor = "ccxt"
         im_client = (
-            icdcl.CcxtCddClient(  # pylint: disable=no-value-for-parameter
-                self.connection
+            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
+                vendor, self.connection
             )
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
@@ -610,9 +611,10 @@ class TestCcxtCddClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
+        vendor = "ccxt"
         im_client = (
-            icdcl.CcxtCddClient(  # pylint: disable=no-value-for-parameter
-                self.connection
+            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
+                vendor, self.connection
             )
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
@@ -659,9 +661,10 @@ class TestCcxtCddClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
+        vendor = "ccxt"
         im_client = (
-            icdcl.CcxtCddClient(  # pylint: disable=no-value-for-parameter
-                self.connection
+            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
+                vendor, self.connection
             )
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
@@ -704,9 +707,10 @@ class TestCcxtCddClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
+        vendor = "ccxt"
         im_client = (
-            icdcl.CcxtCddClient(  # pylint: disable=no-value-for-parameter
-                self.connection
+            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
+                vendor, self.connection
             )
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
@@ -745,9 +749,10 @@ class TestCcxtCddClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         """
         See description of corresponding private method in parent class.
         """
+        vendor = "ccxt"
         im_client = (
-            icdcl.CcxtCddClient(  # pylint: disable=no-value-for-parameter
-                self.connection
+            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
+                vendor, self.connection
             )
         )
         full_symbol = "unsupported_exchange::unsupported_currency"
@@ -762,9 +767,10 @@ class TestCcxtCddClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
+        vendor = "ccxt"
         im_client = (
-            icdcl.CcxtCddClient(  # pylint: disable=no-value-for-parameter
-                self.connection
+            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
+                vendor, self.connection
             )
         )
         full_symbol = "binance::BTC_USDT"
@@ -800,9 +806,10 @@ class TestCcxtCddClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         """
         See description of corresponding private method in parent class.
         """
+        vendor = "ccxt"
         im_client = (
-            icdcl.CcxtCddClient(  # pylint: disable=no-value-for-parameter
-                self.connection
+            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
+                vendor, self.connection
             )
         )
         expected_length = 38
