@@ -502,7 +502,7 @@ class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
             expected_last_elements,
         )
 
-
+# TODO(Max): below `CcxtCddClient` -> `CcxtCddDbClient`.
 class TestCcxtCddClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
     def test_read_data1(self) -> None:
         """
@@ -513,9 +513,11 @@ class TestCcxtCddClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
+        # TODO(Max): pass vendor in this way.
+        vendor = "ccxt"
         im_client = (
-            imvcdccccl.CcxtCddClient(  # pylint: disable=no-value-for-parameter
-                self.connection
+            imvcdccccl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
+                vendor, self.connection
             )
         )
         full_symbol = "binance::BTC_USDT"
@@ -782,9 +784,10 @@ class TestCcxtCddClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
+        vendor = "ccxt"
         im_client = (
             imvcdccccl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                self.connection
+                vendor, self.connection
             )
         )
         full_symbol = "binance::BTC_USDT"
