@@ -167,21 +167,22 @@ class AbstractPortfolio(abc.ABC):
         precision = 2
         act.append(
             "# historical holdings=\n%s"
-            % hpandas.dataframe_to_str(
-                self.get_historical_holdings(), precision=precision
+            % hpandas.df_to_str(
+                self.get_historical_holdings(), precision=precision, tag="df"
             )
         )
         act.append(
             "# historical holdings marked to market=\n%s"
-            % hpandas.dataframe_to_str(
+            % hpandas.df_to_str(
                 self.get_historical_holdings_marked_to_market(),
                 precision=precision,
+                tag="df"
             )
         )
         act.append(
             "# historical statistics=\n%s"
-            % hpandas.dataframe_to_str(
-                self.get_historical_statistics(), precision=precision
+            % hpandas.df_to_str(
+                self.get_historical_statistics(), precision=precision, tag="df"
             )
         )
         act = "\n".join(act)

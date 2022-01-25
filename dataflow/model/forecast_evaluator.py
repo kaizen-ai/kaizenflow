@@ -67,15 +67,16 @@ class ForecastEvaluator:
         precision = 2
         act.append(
             "# holdings marked to market=\n%s"
-            % hpandas.dataframe_to_str(
-                target_positions.shift(1), precision=precision
+            % hpandas.df_to_str(
+                target_positions.shift(1), precision=precision, tag="df"
             )
         )
         act.append(
             "# pnl=\n%s"
-            % hpandas.dataframe_to_str(
+            % hpandas.df_to_str(
                 pnl,
                 precision=precision,
+                tag="df"
             )
         )
         act.append(

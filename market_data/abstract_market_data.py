@@ -387,7 +387,7 @@ class AbstractMarketData(abc.ABC):
         if False:
             # For debugging.
             df = self.get_data_for_last_period(period="last_5mins")
-            _LOG.info("df=\n%s", hprintin.dataframe_to_str(df))
+            _LOG.info("df=\n%s", hpandas.df_to_str(df, tag="df"))
         # Get the data.
         # TODO(*): Remove the hard-coded 1-minute.
         start_time = last_end_time - pd.Timedelta(minutes=1)
