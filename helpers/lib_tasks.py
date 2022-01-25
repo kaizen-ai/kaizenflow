@@ -28,7 +28,6 @@ import helpers.hgit as hgit
 import helpers.hintrospection as hintros
 import helpers.hio as hio
 import helpers.hlist as hlist
-import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.htable as htable
