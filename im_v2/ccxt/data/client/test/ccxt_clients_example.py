@@ -15,7 +15,7 @@ def get_test_data_dir() -> str:
     """
     Get dir with data files for the tests.
 
-    The files in the dir are copies of some CCXT data files from S3 that
+    The files in the dir are copies of some `CCXT` data files from S3 that
     were loaded for our research purposes. These copies are checked out
     locally in order to test functions without dependencies on S3.
     """
@@ -29,7 +29,7 @@ def get_test_data_dir() -> str:
 
 def get_CcxtCsvClient_example1() -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
     """
-    Get `CcxtCsvParquetByAssetClient` object for the tests.
+    Get `CcxtCddCsvParquetByAssetClient` object for the tests.
 
     Extension is `csv.gz`.
     """
@@ -55,7 +55,7 @@ def get_CcxtCsvClient_example1() -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
 
 def get_CcxtCsvClient_example2() -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
     """
-    Get `CcxtCsvParquetByAssetClient` object for the tests.
+    Get `CcxtCddCsvParquetByAssetClient` object for the tests.
 
     Extension is `csv`.
     """
@@ -81,7 +81,7 @@ def get_CcxtCsvClient_example2() -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
 
 def get_CcxtParquetByAssetClient_example1() -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
     """
-    Get `CcxtCsvParquetByAssetClient` object for the tests.
+    Get `CcxtCddCsvParquetByAssetClient` object for the tests.
 
     Extension is `pq`.
     """

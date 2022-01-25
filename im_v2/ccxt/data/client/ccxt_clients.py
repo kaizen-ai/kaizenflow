@@ -120,7 +120,7 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
 
 
 # #############################################################################
-# CcxtDbClient
+# CcxtCddDbClient
 # #############################################################################
 
 # TODO(Grisha): it should descend from `ImClientReadingMultipleSymbols`.

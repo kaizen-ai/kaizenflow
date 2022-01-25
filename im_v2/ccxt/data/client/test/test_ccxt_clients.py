@@ -502,7 +502,6 @@ class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
             expected_last_elements,
         )
 
-# TODO(Max): below `CcxtCddClient` -> `CcxtCddDbClient`.
 class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
     def test_read_data1(self) -> None:
         """
@@ -513,7 +512,6 @@ class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper)
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
-        # TODO(Max): pass vendor in this way.
         vendor = "ccxt"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
