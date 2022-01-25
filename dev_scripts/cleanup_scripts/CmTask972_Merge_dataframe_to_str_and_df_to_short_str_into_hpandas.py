@@ -34,13 +34,25 @@ def _run() -> None:
             function_args = re.findall(f"{function_}\\((.*?)\\)", file_string)
             if function_args:
                 for args in function_args:
-                    # Skip multiline function call.
-                    if "(" in args:
-                        _LOG.info(
-                            f"Replace occurrences of `{args}` in `{file_name}` "
-                            f"manually or by custom pattern!"
-                        )
-                        continue
+                    # Apply custom patterns.
+                    patterns = [
+                        (
+                            f"{dataframe_to_str}(df.head())",
+                            f'{df_to_str}(df.head(), tag="df")',
+                        ),
+                        (
+                            f"{dataframe_to_str}(reindexed_df.head(3))",
+                            f'{df_to_str}(reindexed_df.head(3), tag="df")',
+                        ),
+                    ]
+                    for old_pattern, new_pattern in patterns:
+                        if old_pattern in file_string:
+                            file_string = file_string.replace(
+                                old_pattern, new_pattern
+                            )
+                            _LOG.info(
+                                f"Replace occurrences of `{old_pattern}` in `{file_name}`!"
+                            )
                     # Create desired function call.
                     new_args = ""
                     if function_ == dataframe_to_str:
