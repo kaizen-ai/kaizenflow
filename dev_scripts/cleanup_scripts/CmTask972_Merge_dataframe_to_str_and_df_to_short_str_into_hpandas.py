@@ -41,6 +41,10 @@ def _run() -> None:
                             f'{df_to_str}(df.head(), tag="df")',
                         ),
                         (
+                            f"{dataframe_to_str}(df.head(3))",
+                            f'{df_to_str}(df.head(3), tag="df")',
+                        ),
+                        (
                             f"{dataframe_to_str}(reindexed_df.head(3))",
                             f'{df_to_str}(reindexed_df.head(3), tag="df")',
                         ),
