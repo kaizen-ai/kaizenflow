@@ -503,7 +503,7 @@ class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
         )
 
 
-class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
+class TestCcxtCddClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
     def test_read_data1(self) -> None:
         """
         See description of corresponding private method in parent class.
@@ -514,7 +514,7 @@ class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         im_client = (
-            imvcdccccl.CcxtDbClient(  # pylint: disable=no-value-for-parameter
+            imvcdccccl.CcxtCddClient(  # pylint: disable=no-value-for-parameter
                 self.connection
             )
         )
@@ -561,7 +561,7 @@ class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         im_client = (
-            imvcdccccl.CcxtDbClient(  # pylint: disable=no-value-for-parameter
+            imvcdccccl.CcxtCddClient(  # pylint: disable=no-value-for-parameter
                 self.connection
             )
         )
@@ -609,7 +609,7 @@ class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         im_client = (
-            imvcdccccl.CcxtDbClient(  # pylint: disable=no-value-for-parameter
+            imvcdccccl.CcxtCddClient(  # pylint: disable=no-value-for-parameter
                 self.connection
             )
         )
@@ -658,7 +658,7 @@ class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         im_client = (
-            imvcdccccl.CcxtDbClient(  # pylint: disable=no-value-for-parameter
+            imvcdccccl.CcxtCddClient(  # pylint: disable=no-value-for-parameter
                 self.connection
             )
         )
@@ -703,7 +703,7 @@ class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         im_client = (
-            imvcdccccl.CcxtDbClient(  # pylint: disable=no-value-for-parameter
+            imvcdccccl.CcxtCddClient(  # pylint: disable=no-value-for-parameter
                 self.connection
             )
         )
@@ -744,7 +744,7 @@ class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         See description of corresponding private method in parent class.
         """
         im_client = (
-            imvcdccccl.CcxtDbClient(  # pylint: disable=no-value-for-parameter
+            imvcdccccl.CcxtCddClient(  # pylint: disable=no-value-for-parameter
                 self.connection
             )
         )
@@ -761,7 +761,7 @@ class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         im_client = (
-            imvcdccccl.CcxtDbClient(  # pylint: disable=no-value-for-parameter
+            imvcdccccl.CcxtCddClient(  # pylint: disable=no-value-for-parameter
                 self.connection
             )
         )
@@ -798,7 +798,7 @@ class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         See description of corresponding private method in parent class.
         """
         im_client = (
-            imvcdccccl.CcxtDbClient(  # pylint: disable=no-value-for-parameter
+            imvcdccccl.CcxtCddClient(  # pylint: disable=no-value-for-parameter
                 self.connection
             )
         )
