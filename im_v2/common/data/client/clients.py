@@ -87,8 +87,10 @@ class ImClient(abc.ABC):
         # Normalize data for each symbol.
         dfs = []
         for _, df_tmp in df.groupby(full_symbol_col_name):
-            df_tmp = self._apply_im_normalizations(df_tmp, start_ts, end_ts)
-            self._dassert_is_valid(df_tmp)
+            df_tmp = self._apply_im_normalizations(
+                df_tmp, full_symbol_col_name, start_ts, end_ts
+            )
+            self._dassert_is_valid(df_tmp, full_symbol_col_name)
             dfs.append(df_tmp)
         df = pd.concat(dfs, axis=0)
         _LOG.debug(
@@ -213,6 +215,7 @@ class ImClient(abc.ABC):
     @staticmethod
     def _apply_im_normalizations(
         df: pd.DataFrame,
+        full_symbol_col_name: str,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
     ) -> pd.DataFrame:
@@ -242,6 +245,8 @@ class ImClient(abc.ABC):
         )
         # Resample index.
         df = hpandas.resample_df(df, "T")
+        # Fill NaN values appeared after resampling in full symbol column.
+        df[full_symbol_col_name] = df[full_symbol_col_name].fillna(method="bfill")
         return df
 
     @staticmethod
@@ -257,7 +262,7 @@ class ImClient(abc.ABC):
         ...
 
     @staticmethod
-    def _dassert_is_valid(df: pd.DataFrame) -> None:
+    def _dassert_is_valid(df: pd.DataFrame, full_symbol_col_name: str) -> None:
         """
         Verify that the normalized data is valid.
         """
@@ -275,7 +280,8 @@ class ImClient(abc.ABC):
             expected_tz,
         )
         # Check that there are no duplicates in the data.
-        n_duplicated_rows = df.dropna(how="all").duplicated().sum()
+        nan_columns = [col for col in df.columns if col != full_symbol_col_name]
+        n_duplicated_rows = df.dropna(subset=nan_columns).duplicated().sum()
         hdbg.dassert_eq(
             n_duplicated_rows, 0, msg="There are duplicated rows in the data"
         )
