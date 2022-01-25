@@ -4,6 +4,7 @@ from typing import Any, Callable, Tuple
 import pandas as pd
 
 import helpers.hasyncio as hasynci
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 import market_data.market_data_example as mdmadaex
@@ -41,7 +42,7 @@ def _check_get_data(
         actual_df = func(market_data)
     # Check.
     actual_df = actual_df[sorted(actual_df.columns)]
-    actual_df_as_str = hprint.df_to_short_str("df", actual_df)
+    actual_df_as_str = hpandas.df_to_short_str("df", actual_df)
     _LOG.info("-> %s", actual_df_as_str)
     self_.assert_equal(
         actual_df_as_str,

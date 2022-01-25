@@ -15,6 +15,7 @@ import core.finance as cofinanc
 import dataflow.core as dtfcore
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import im.kibot as vkibot
 import market_data as mdata
@@ -331,7 +332,7 @@ class KibotEquityReader(dtfcore.DataSource):
             # Rename column for volume so that it adheres with our conventions.
             data = data.rename(columns={"vol": "volume"})
             # Print some info about the data.
-            _LOG.debug(hprint.df_to_short_str("data", data))
+            _LOG.debug(hpandas.df_to_short_str("data", data))
             # Ensure data is on a uniform frequency grid.
             data = cofinanc.resample_ohlcv_bars(data, rule=self._frequency.value)
             dfs[symbol] = data
@@ -378,7 +379,7 @@ def _convert_to_multiindex(df: pd.DataFrame, asset_id_col: str) -> pd.DataFrame:
     # Copied from `_load_multiple_instrument_data()`.
     _LOG.debug(
         "Before multiindex conversion\n:%s",
-        hprint.dataframe_to_str(df.head()),
+        hpandas.dataframe_to_str(df.head()),
     )
     dfs = {}
     # TODO(Paul): Pass the column name through the constructor, so we can make it
@@ -394,7 +395,7 @@ def _convert_to_multiindex(df: pd.DataFrame, asset_id_col: str) -> pd.DataFrame:
     del df[asset_id_col]
     _LOG.debug(
         "After multiindex conversion\n:%s",
-        hprint.dataframe_to_str(df.head()),
+        hpandas.dataframe_to_str(df.head()),
     )
     return df
 
@@ -548,7 +549,7 @@ class HistoricalDataSource(dtfcore.DataSource):
         if self._col_names_to_remove is not None:
             _LOG.debug(
                 "Before column removal\n:%s",
-                hprint.dataframe_to_str(df.head()),
+                hpandas.dataframe_to_str(df.head()),
             )
             _LOG.debug(
                 "Removing %s from %s", self._col_names_to_remove, df.columns
@@ -558,7 +559,7 @@ class HistoricalDataSource(dtfcore.DataSource):
                 del df[col_name]
             _LOG.debug(
                 "After column removal\n:%s",
-                hprint.dataframe_to_str(df.head()),
+                hpandas.dataframe_to_str(df.head()),
             )
         if self._multiindex_output:
             df = _convert_to_multiindex(df, self._asset_id_col)

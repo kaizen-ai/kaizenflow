@@ -7,7 +7,7 @@ import market_data.market_data_example as mdmadaex
 import asyncio
 import datetime
 import logging
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -17,13 +17,13 @@ import core.real_time as creatime
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hnumpy as hnumpy
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import im_v2.ccxt.data.client.test.ccxt_clients_example as ivcdctcce
+import market_data.market_data_im_client as mdmdimcl
 import market_data.replayed_market_data as mdremada
 
 _LOG = logging.getLogger(__name__)
-
-
-# TODO(gp): -> market_data_example.py
 
 
 def generate_random_price_data(
@@ -366,7 +366,7 @@ def get_ReplayedTimeMarketData_example3(
     df = generate_random_price_data(
         start_datetime, end_datetime, columns_, asset_ids
     )
-    _LOG.debug("df=%s", hprint.dataframe_to_str(df))
+    _LOG.debug("df=%s", hpandas.dataframe_to_str(df))
     # Build a `ReplayedMarketData`.
     initial_replayed_delay = 5
     delay_in_secs = 0
@@ -397,7 +397,7 @@ def get_ReplayedTimeMarketData_example4(
     """
     # Generate random price data.
     df = generate_random_bars(start_datetime, end_datetime, asset_ids)
-    _LOG.debug("df=%s", hprint.dataframe_to_str(df))
+    _LOG.debug("df=%s", hpandas.dataframe_to_str(df))
     # Build a `ReplayedMarketData`.
     delay_in_secs = 0
     sleep_in_secs = 30
@@ -411,3 +411,29 @@ def get_ReplayedTimeMarketData_example4(
         time_out_in_secs=time_out_in_secs,
     )
     return market_data, get_wall_clock_time
+
+
+# #############################################################################
+
+def get_MarketDataImClient_example1(
+    asset_ids: List[int],
+    columns: List[str],
+    column_remap: Optional[Dict[str, str]],
+) -> mdmdimcl.MarketDataImClient:
+    ccxt_client = ivcdctcce.get_CcxtCsvClient_example1()
+    #
+    asset_id_col = "asset_id"
+    start_time_col_name = "start_ts"
+    end_time_col_name = "end_ts"
+    get_wall_clock_time = hdateti.get_current_time
+    market_data_client = mdmdimcl.MarketDataImClient(
+        asset_id_col,
+        asset_ids,
+        start_time_col_name,
+        end_time_col_name,
+        columns,
+        get_wall_clock_time,
+        im_client=ccxt_client,
+        column_remap=column_remap,
+    )
+    return market_data_client

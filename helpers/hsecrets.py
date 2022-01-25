@@ -5,7 +5,7 @@ import helpers.hsecrets as hsecret
 """
 
 import json
-from typing import Optional, Any, Dict
+from typing import Any, Dict, Optional
 
 import boto3
 from botocore.client import BaseClient
@@ -14,15 +14,13 @@ from botocore.exceptions import ClientError
 import helpers.hdbg as hdbg
 
 
-def get_secrets_client(*, aws_profile: str = 'ck') -> BaseClient:
+def get_secrets_client(*, aws_profile: str = "ck") -> BaseClient:
     """
     Return client to work with AWS Secrets Manager in the specified region.
     """
     hdbg.dassert_isinstance(aws_profile, str)
     session = boto3.session.Session(profile_name=aws_profile)
-    client = session.client(
-        service_name="secretsmanager"
-    )
+    client = session.client(service_name="secretsmanager")
     return client
 
 
@@ -62,7 +60,7 @@ def store_secret(
     """
     Store secret values(s) into AWS secrets manager, specify secret as a dict
     of key-value pairs.
-    
+
     :return: bool representing whether writing was successful or not
     """
     hdbg.dassert_isinstance(secret_name, str)

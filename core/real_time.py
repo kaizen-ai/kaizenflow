@@ -13,10 +13,11 @@ from typing import Any, AsyncGenerator, Callable, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
+import helpers.hasyncio as hasynci
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import helpers.hasyncio as hasynci
 import helpers.hnumpy as hnumpy
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
@@ -194,7 +195,7 @@ def get_data_as_of_datetime(
     _LOG.debug(
         hprint.to_str("knowledge_datetime_col_name datetime_ delay_in_secs")
     )
-    #_LOG.verb_debug(hprint.df_to_short_str("Before get_data_as_of_datetime", df))
+    # _LOG.verb_debug(hpandas.df_to_short_str("Before get_data_as_of_datetime", df))
     hdbg.dassert_lte(0, delay_in_secs)
     datetime_eff = datetime_ - datetime.timedelta(seconds=delay_in_secs)
     # TODO(gp): We could / should use binary search.
@@ -215,7 +216,7 @@ def get_data_as_of_datetime(
         # execution price of an order that will terminate in the future.
         raise ValueError("Future peeking")
         # pass
-    #_LOG.verb_debug(hprint.df_to_short_str("After get_data_as_of_datetime", df))
+    # _LOG.verb_debug(hpandas.df_to_short_str("After get_data_as_of_datetime", df))
     return df
 
 

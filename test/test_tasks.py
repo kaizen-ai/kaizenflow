@@ -4,7 +4,7 @@ from typing import Dict
 
 import pytest
 
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -35,35 +35,35 @@ class TestExecuteTasks1(hunitest.QaTestCase):
 
     def test_list(self) -> None:
         cmd = "invoke --list"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
 
     def test_print_setup1(self) -> None:
         cmd = "invoke print_setup"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
 
     def test_docker_images_ls_repo1(self) -> None:
         cmd = "invoke docker_images_ls_repo"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
 
     def test_docker_ps(self) -> None:
         cmd = "invoke docker_ps"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
 
     def test_docker_stats(self) -> None:
         cmd = "invoke docker_stats --all"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
 
     def test_docker_login1(self) -> None:
         cmd = "invoke docker_login"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
 
     def test_docker_cmd1(self) -> None:
         cmd = 'invoke docker_cmd --cmd="ls"'
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
 
     def test_docker_jupyter1(self) -> None:
         cmd = "invoke docker_jupyter --self-test --no-auto-assign-port"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
 
     def test_docker_bash(self) -> None:
         image_version = self._config.getoption("--image_version")
@@ -73,7 +73,7 @@ class TestExecuteTasks1(hunitest.QaTestCase):
         if image_version:
             cmd = f"{cmd} --version {image_version}"
         cmd = f"{cmd} --stage {image_stage} < {exit_command}"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
 
 
 class TestExecuteTasks2(hunitest.QaTestCase):
@@ -84,11 +84,11 @@ class TestExecuteTasks2(hunitest.QaTestCase):
 
     def test_docker_jupyter1(self) -> None:
         cmd = "invoke docker_jupyter --self-test --no-auto-assign-port"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
 
     def test_docker_pull1(self) -> None:
         cmd = "invoke docker_pull"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
 
     # Images workflows.
 
@@ -97,7 +97,7 @@ class TestExecuteTasks2(hunitest.QaTestCase):
         base_image = params["ECR_BASE_PATH"] + "/" + params["BASE_IMAGE"]
         # Version must be bigger than any version in `changelog.txt`.
         cmd = f"invoke docker_build_local_image --version 999.0.0 --cache --base-image={base_image}"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
 
     @pytest.mark.skip("No prod image for amp yet")
     def test_docker_build_prod_image(self) -> None:
@@ -105,37 +105,37 @@ class TestExecuteTasks2(hunitest.QaTestCase):
         base_image = params["ECR_BASE_PATH"] + "/" + params["BASE_IMAGE"]
         # Version must be bigger than any version in `changelog.txt`.
         cmd = f"invoke docker_build_prod_image --version 999.0.0 --cache --base-image={base_image}"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
 
     # Run tests.
 
     def test_run_blank_tests1(self) -> None:
         cmd = "invoke run_blank_tests"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
 
     @pytest.mark.skip
     @pytest.mark.slow("Around 30 secs")
     def test_collect_only1(self) -> None:
         cmd = "invoke docker_cmd --cmd='pytest --collect-only'"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
 
     def test_collect_only2(self) -> None:
         # We need to specify the dir independently of the git root since this will
         # run inside a container.
         dir_name = '$(dirname $(find . -name "test_dbg.py" -type f))'
         cmd = f"invoke docker_cmd --cmd='pytest {dir_name} --collect-only'"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
 
     def test_run_fast_tests(self) -> None:
         file_name = '$(find . -name "test_dbg.py" -type f)'
         cmd = f"invoke run_fast_tests --pytest-opts='{file_name}'"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
 
     def test_run_fast_tests_failed(self) -> None:
         file_name = "helpers/test/test_lib_tasks.py::TestFailing"
         cmd = f"export AM_FORCE_TEST_FAIL=1; invoke run_fast_tests --pytest-opts='{file_name}'"
         with self.assertRaises(RuntimeError):
-            hsysinte.system(cmd)
+            hsystem.system(cmd)
 
     # Linter.
 
@@ -143,4 +143,4 @@ class TestExecuteTasks2(hunitest.QaTestCase):
         # Get the pointer to amp.
         file_name = '$(find . -name "dbg.py" -type f)'
         cmd = f"invoke lint --files='{file_name}' --phases='black'"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)

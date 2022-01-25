@@ -193,7 +193,7 @@ class AbstractMarketData(abc.ABC):
         )
         # We don't need to remap columns since `get_data_for_interval()` has already
         # done it.
-        _LOG.verb_debug("-> df=\n%s", hprint.dataframe_to_str(df))
+        _LOG.verb_debug("-> df=\n%s", hpandas.dataframe_to_str(df))
         return df
 
     def get_data_at_timestamp(
@@ -224,7 +224,7 @@ class AbstractMarketData(abc.ABC):
         )
         # We don't need to remap columns since `get_data_for_interval()` has already
         # done it.
-        _LOG.verb_debug("-> df=\n%s", hprint.dataframe_to_str(df))
+        _LOG.verb_debug("-> df=\n%s", hpandas.dataframe_to_str(df))
         return df
 
     def get_data_for_interval(
@@ -284,7 +284,7 @@ class AbstractMarketData(abc.ABC):
             df = self._convert_timestamps_to_timezone(df)
         # Remap column names.
         df = self._remap_columns(df)
-        _LOG.verb_debug("-> df=\n%s", hprint.dataframe_to_str(df))
+        _LOG.verb_debug("-> df=\n%s", hpandas.dataframe_to_str(df))
         hdbg.dassert_isinstance(df, pd.DataFrame)
         return df
 
@@ -530,7 +530,7 @@ class AbstractMarketData(abc.ABC):
         #     wall_clock_time = self.get_wall_clock_time()
         #     _LOG.debug(hprint.to_str("wall_clock_time df.index.max()"))
         #     hdbg.dassert_lte(df.index.max(), wall_clock_time)
-        # _LOG.debug(hprint.df_to_short_str("after process_data", df))
+        # _LOG.debug(hpandas.df_to_short_str("after process_data", df))
         return df
 
     # /////////////////////////////////////////////////////////////////////////////
