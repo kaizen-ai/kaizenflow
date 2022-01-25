@@ -15,7 +15,7 @@ openvpn_ta_key: "{{ openvpn_path }}/ta-{{ openvpn_server_port }}.key"
 openvpn_server_proto: udp
 openvpn_server_port: 1194
 openvpn_server_client_extra_options: []
-openvpn_server_remote_host: "{{ inventory_hostname }}"   
+openvpn_server_remote_host: 13.51.59.43
 openvpn_data_ciphers: "AES-128-GCM"
 openvpn_data_ciphers_fallback: "AES-128-GCM"
 openvpn_auth_digest: "SHA256"
