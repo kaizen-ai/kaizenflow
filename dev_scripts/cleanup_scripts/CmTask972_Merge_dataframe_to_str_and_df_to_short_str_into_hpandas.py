@@ -63,7 +63,7 @@ def _run() -> None:
                         # Append generic tag name.
                         # new_args = f'{args}, tag="df"'
                         # TODO(Nikola): Enable tag after merge
-                        new_args = {args}
+                        new_args = args
                     elif function_ == df_to_short_str:
                         # Convert tag positional to keyword argument.
                         new_args_list = args.split(", ")
