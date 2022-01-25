@@ -1,5 +1,16 @@
-# TODO(gp): Disabled because of "DevTools376: Break 2022-02-22".
-if False:
+_HAS_MOTO = True
+try:
+    from moto import mock_secretsmanager
+
+except ImportError:
+    # `moto` is not installed in dev_tools, so we skip it (see "DevTools376:
+    # Break 2022-02-22")
+    import helpers.hgit as hgit
+    assert hgit.is_dev_tools(), "Only dev_tools can skip this test"
+    _HAS_MOTO = False
+
+
+if _HAS_MOTO:
     import json
     import logging
 
