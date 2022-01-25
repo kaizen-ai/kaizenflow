@@ -530,10 +530,10 @@ class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         timestamp
         2021-09-09 00:00:00+00:00   60.0      BTC_USDT     binance  binance::BTC_USDT  40.0  50.0  30.0    70.0
         2021-09-09 00:01:00+00:00   61.0      BTC_USDT     binance  binance::BTC_USDT  41.0  51.0  31.0    71.0
-        2021-09-09 00:02:00+00:00    NaN           NaN         NaN                NaN   NaN   NaN   NaN     NaN
+        2021-09-09 00:02:00+00:00    NaN           NaN         NaN  binance::BTC_USDT   NaN   NaN   NaN     NaN
         ...
-        2021-09-09 00:02:00+00:00    NaN           NaN         NaN                NaN   NaN   NaN   NaN     NaN
-        2021-09-09 00:03:00+00:00    NaN           NaN         NaN                NaN   NaN   NaN   NaN     NaN
+        2021-09-09 00:02:00+00:00    NaN           NaN         NaN  binance::BTC_USDT   NaN   NaN   NaN     NaN
+        2021-09-09 00:03:00+00:00    NaN           NaN         NaN  binance::BTC_USDT   NaN   NaN   NaN     NaN
         2021-09-09 00:04:00+00:00   64.0      BTC_USDT     binance  binance::BTC_USDT  44.0  54.0  34.0    74.0
         exchange_ids=binance
         currency_pairs=BTC_USDT"""
@@ -574,13 +574,13 @@ class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         df.shape=(8, 8)
                                    close currency_pair  exchange_id    full_symbol  high   low  open  volume
         timestamp
-        2021-09-09 00:00:00+00:00   60.0      BTC_USDT  binance  binance::BTC_USDT  40.0  50.0  30.0    70.0
-        2021-09-09 00:01:00+00:00   61.0      BTC_USDT  binance  binance::BTC_USDT  41.0  51.0  31.0    71.0
-        2021-09-09 00:02:00+00:00   62.0      ETH_USDT  binance  binance::ETH_USDT  42.0  52.0  32.0    72.0
+        2021-09-09 00:00:00+00:00   60.0      BTC_USDT     binance  binance::BTC_USDT  40.0  50.0  30.0    70.0
+        2021-09-09 00:01:00+00:00   61.0      BTC_USDT     binance  binance::BTC_USDT  41.0  51.0  31.0    71.0
+        2021-09-09 00:02:00+00:00    NaN           NaN         NaN  binance::BTC_USDT   NaN   NaN   NaN     NaN
         ...
-        2021-09-09 00:03:00+00:00    NaN           NaN      NaN                NaN   NaN   NaN   NaN     NaN
-        2021-09-09 00:04:00+00:00   64.0      BTC_USDT  binance  binance::BTC_USDT  44.0  54.0  34.0    74.0
-        2021-09-09 00:04:00+00:00   64.0      ETH_USDT  binance  binance::ETH_USDT  44.0  54.0  34.0    74.0
+        2021-09-09 00:03:00+00:00    NaN           NaN         NaN  binance::ETH_USDT   NaN   NaN   NaN     NaN
+        2021-09-09 00:04:00+00:00   64.0      BTC_USDT     binance  binance::BTC_USDT  44.0  54.0  34.0    74.0
+        2021-09-09 00:04:00+00:00   64.0      ETH_USDT     binance  binance::ETH_USDT  44.0  54.0  34.0    74.0
         exchange_ids=binance
         currency_pairs=BTC_USDT,ETH_USDT"""
         # pylint: enable=line-too-long
@@ -621,10 +621,10 @@ class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
                                    close currency_pair exchange_id        full_symbol  high   low  open  volume
         timestamp
         2021-09-09 00:02:00+00:00   62.0      ETH_USDT     binance  binance::ETH_USDT  42.0  52.0  32.0    72.0
-        2021-09-09 00:03:00+00:00    NaN           NaN         NaN                NaN   NaN   NaN   NaN     NaN
+        2021-09-09 00:03:00+00:00    NaN           NaN         NaN  binance::ETH_USDT   NaN   NaN   NaN     NaN
         2021-09-09 00:04:00+00:00   64.0      BTC_USDT     binance  binance::BTC_USDT  44.0  54.0  34.0    74.0
         ...
-        2021-09-09 00:03:00+00:00    NaN           NaN         NaN                NaN   NaN   NaN   NaN     NaN
+        2021-09-09 00:03:00+00:00    NaN           NaN         NaN  binance::ETH_USDT   NaN   NaN   NaN     NaN
         2021-09-09 00:04:00+00:00   64.0      BTC_USDT     binance  binance::BTC_USDT  44.0  54.0  34.0    74.0
         2021-09-09 00:04:00+00:00   64.0      ETH_USDT     binance  binance::ETH_USDT  44.0  54.0  34.0    74.0
         exchange_ids=binance
