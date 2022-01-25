@@ -381,7 +381,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         column_remap: Optional[Dict[str, str]],
     ) -> mdata.AbstractMarketData:
         """
-        Build MarketDataInterface client.
+        Build `MarketDataImClient` client.
         """
         market_data = mdata.get_MarketDataImClient_example1(
             asset_ids, columns=columns, column_remap=column_remap
