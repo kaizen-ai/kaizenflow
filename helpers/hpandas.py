@@ -306,7 +306,9 @@ def trim_df(
         interval
         - E.g., [start_ts, end_ts), or (start_ts, end_ts]
     """
-    _LOG.verb_debug(df_to_str(df, print_dtypes=True, tag="df"))
+    _LOG.verb_debug(
+        df_to_str(df, print_dtypes=True, print_shape_info=True, tag="df")
+    )
     _LOG.debug(
         hprint.to_str("ts_col_name start_ts end_ts left_close right_close")
     )
@@ -322,7 +324,10 @@ def trim_df(
         # Convert the index into a regular column.
         # TODO(gp): Use binary search if there is an index.
         if df.index.name is None:
-            _LOG.debug("The df has no index\n%s", df_to_str(df.head(), tag="df"))
+            _LOG.debug(
+                "The df has no index\n%s",
+                df_to_str(df.head(), print_shape_info=True, tag="df"),
+            )
             df.index.name = "index"
         ts_col_name = df.index.name
         df = df.reset_index()
@@ -338,12 +343,16 @@ def trim_df(
         # vs Pandas objects.
         tss = pd.to_datetime(df[ts_col_name])
         hdateti.dassert_tz_compatible(tss.iloc[0], start_ts)
-        _LOG.verb_debug("tss=\n%s", df_to_str(tss, tag="df"))
+        _LOG.verb_debug(
+            "tss=\n%s", df_to_str(tss, print_shape_info=True, tag="df")
+        )
         if left_close:
             mask = tss >= start_ts
         else:
             mask = tss > start_ts
-        _LOG.verb_debug("mask=\n%s", df_to_str(mask, tag="df"))
+        _LOG.verb_debug(
+            "mask=\n%s", df_to_str(mask, print_shape_info=True, tag="df")
+        )
         df = df[mask]
     # Filter based on end_ts.
     _LOG.debug("Filtering by end_ts=%s", end_ts)
@@ -353,12 +362,16 @@ def trim_df(
             _LOG.verb_debug("end_ts=%s", end_ts)
             tss = pd.to_datetime(df[ts_col_name])
             hdateti.dassert_tz_compatible(tss.iloc[0], end_ts)
-            _LOG.verb_debug("tss=\n%s", df_to_str(tss, tag="df"))
+            _LOG.verb_debug(
+                "tss=\n%s", df_to_str(tss, print_shape_info=True, tag="df")
+            )
             if right_close:
                 mask = tss <= end_ts
             else:
                 mask = tss < end_ts
-            _LOG.verb_debug("mask=\n%s", df_to_str(mask, tag="df"))
+            _LOG.verb_debug(
+                "mask=\n%s", df_to_str(mask, print_shape_info=True, tag="df")
+            )
             df = df[mask]
     else:
         # If the df is empty there is nothing to trim.
