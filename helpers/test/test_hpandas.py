@@ -378,9 +378,9 @@ class TestDfToStr(hunitest.TestCase):
         df = self.get_test_data()
         actual = hpandas.df_to_str(df, print_shape_info=True)
         expected = (
-            "df.shape=(3, 3)\n"
             "df.index in [0, 2]\n"
             "df.columns=dummy_value_1,dummy_value_2,dummy_value_3\n"
+            "df.shape=(3, 3)\n"
             "   dummy_value_1 dummy_value_2  dummy_value_3\n"
             "0              1             A              0\n"
             "1              2             B              0\n"
@@ -417,9 +417,9 @@ class TestDfToStr(hunitest.TestCase):
         )
         expected = (
             "# df=\n"
-            "df.shape=(3, 3)\n"
             "df.index in [0, 2]\n"
             "df.columns=dummy_value_1,dummy_value_2,dummy_value_3\n"
+            "df.shape=(3, 3)\n"
             "df.type=\n"
             "                 index:      int64     <class 'numpy.int64'> 0\n"
             "         dummy_value_1:      int64     <class 'numpy.int64'> 1\n"
