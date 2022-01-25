@@ -326,3 +326,108 @@ class Test_trim_df1(hunitest.TestCase):
         'False'
         datetime1='2022-01-04 16:38:00-05:00' and datetime2='2022-01-04 21:35:00' are not compatible"""
         self.assert_equal(act, exp, fuzzy_match=True)
+
+
+# #############################################################################
+
+
+class TestDfToStr(hunitest.TestCase):
+    @staticmethod
+    def get_test_data() -> pd.DataFrame:
+        test_data = {
+            "dummy_value_1": [1, 2, 3],
+            "dummy_value_2": ["A", "B", "C"],
+            "dummy_value_3": [0, 0, 0],
+        }
+        df = pd.DataFrame(data=test_data)
+        return df
+
+    def test_df_to_str1(self) -> None:
+        """
+        Test common call to `df_to_str` with basic df.
+        """
+        df = self.get_test_data()
+        actual = hpandas.df_to_str(df)
+        expected = (
+            "   dummy_value_1 dummy_value_2  dummy_value_3\n"
+            "0              1             A              0\n"
+            "1              2             B              0\n"
+            "2              3             C              0"
+        )
+        self.assert_equal(actual, expected)
+
+    def test_df_to_str2(self) -> None:
+        """
+        Test common call to `df_to_str` with tag.
+        """
+        df = self.get_test_data()
+        actual = hpandas.df_to_str(df, tag="df")
+        expected = (
+            "# df=\n"
+            "   dummy_value_1 dummy_value_2  dummy_value_3\n"
+            "0              1             A              0\n"
+            "1              2             B              0\n"
+            "2              3             C              0"
+        )
+        self.assert_equal(actual, expected)
+
+    def test_df_to_str3(self) -> None:
+        """
+        Test common call to `df_to_str` with print_shape_info.
+        """
+        df = self.get_test_data()
+        actual = hpandas.df_to_str(df, print_shape_info=True)
+        expected = (
+            "df.shape=(3, 3)\n"
+            "df.index in [0, 2]\n"
+            "df.columns=dummy_value_1,dummy_value_2,dummy_value_3\n"
+            "   dummy_value_1 dummy_value_2  dummy_value_3\n"
+            "0              1             A              0\n"
+            "1              2             B              0\n"
+            "2              3             C              0"
+        )
+        self.assert_equal(actual, expected)
+
+    def test_df_to_str4(self) -> None:
+        """
+        Test common call to `df_to_str` with print_dtypes.
+        """
+        df = self.get_test_data()
+        actual = hpandas.df_to_str(df, print_dtypes=True)
+        expected = (
+            "df.type=\n"
+            "                 index:      int64     <class 'numpy.int64'> 0\n"
+            "         dummy_value_1:      int64     <class 'numpy.int64'> 1\n"
+            "         dummy_value_2:     object             <class 'str'> A\n"
+            "         dummy_value_3:      int64     <class 'numpy.int64'> 0\n"
+            "   dummy_value_1 dummy_value_2  dummy_value_3\n"
+            "0              1             A              0\n"
+            "1              2             B              0\n"
+            "2              3             C              0"
+        )
+        self.assert_equal(actual, expected)
+
+    def test_df_to_str5(self) -> None:
+        """
+        Test common call to `df_to_str` with multiple args.
+        """
+        df = self.get_test_data()
+        actual = hpandas.df_to_str(
+            df, print_shape_info=True, print_dtypes=True, tag="df"
+        )
+        expected = (
+            "# df=\n"
+            "df.shape=(3, 3)\n"
+            "df.index in [0, 2]\n"
+            "df.columns=dummy_value_1,dummy_value_2,dummy_value_3\n"
+            "df.type=\n"
+            "                 index:      int64     <class 'numpy.int64'> 0\n"
+            "         dummy_value_1:      int64     <class 'numpy.int64'> 1\n"
+            "         dummy_value_2:     object             <class 'str'> A\n"
+            "         dummy_value_3:      int64     <class 'numpy.int64'> 0\n"
+            "   dummy_value_1 dummy_value_2  dummy_value_3\n"
+            "0              1             A              0\n"
+            "1              2             B              0\n"
+            "2              3             C              0"
+        )
+        self.assert_equal(actual, expected)
