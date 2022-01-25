@@ -246,6 +246,8 @@ class ImClient(abc.ABC):
         # Resample index.
         df = hpandas.resample_df(df, "T")
         # Fill NaN values appeared after resampling in full symbol column.
+        # Combination of full symbol and timestamp is a unique identifier,
+        # so full symbol cannot be NaN.
         df[full_symbol_col_name] = df[full_symbol_col_name].fillna(method="bfill")
         return df
 
@@ -279,9 +281,13 @@ class ImClient(abc.ABC):
             df.index[0],
             expected_tz,
         )
-        # Check that there are no duplicates in the data.
-        nan_columns = [col for col in df.columns if col != full_symbol_col_name]
-        n_duplicated_rows = df.dropna(subset=nan_columns).duplicated().sum()
+        # Check that there are no duplicates in data by index and full symbol.
+        n_duplicated_rows = (
+            df.reset_index()
+            .dropna(subset=["timestamp", full_symbol_col_name])
+            .duplicated()
+            .sum()
+        )
         hdbg.dassert_eq(
             n_duplicated_rows, 0, msg="There are duplicated rows in the data"
         )
