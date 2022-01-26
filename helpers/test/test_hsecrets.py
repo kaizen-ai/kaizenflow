@@ -1,14 +1,12 @@
 _HAS_MOTO = True
 try:
-    from moto import mock_secretsmanager
-
+    import moto
 except ImportError:
-    # `moto` is not installed in dev_tools, so we skip it (see "DevTools376:
+    # `moto` is not installed in `dev_tools`, so we skip it (see "DevTools376:
     # Break 2022-02-22")
     import helpers.hgit as hgit
-    assert hgit.is_dev_tools(), "Only dev_tools can skip this test"
+    assert hgit.is_dev_tools(), "Only `dev_tools` can skip these tests."
     _HAS_MOTO = False
-
 
 if _HAS_MOTO:
     import json
@@ -16,8 +14,7 @@ if _HAS_MOTO:
 
     import boto3
     import pytest
-    from botocore.client import BaseClient
-    from moto import mock_secretsmanager
+    import botocore
 
     import helpers.hsecrets as hsecret
     import helpers.hunit_test as hunitest
@@ -27,53 +24,50 @@ if _HAS_MOTO:
     # The `mock_secretsmanager` decorator ensures the calls to the AWS API are
     # mocked.
 
-    class Test_Create_Client1(hunitest.TestCase):
-        """
-        Simple smoke test to verify connection to AWS.
-        """
+    _REASON_TO_SKIP = "Need to add `ck` profile to GH actions CmTask961, test has passed on dev stage."
 
+    class TestCreateClient(hunitest.TestCase):
         @pytest.mark.skip(
-            reason="Need to add ck profile to gh actions CmTask961, test has passed on dev stage"
+            reason=_REASON_TO_SKIP
         )
         def test_create_client1(self) -> None:
+            """
+            Simple smoke test to verify connection to AWS.
+            """
             client = hsecret.get_secrets_client()
-            self.assertIsInstance(client, BaseClient)
+            self.assertIsInstance(client, botocore.client.BaseClient)
 
-    class Test_Get_Secret1(hunitest.TestCase):
-        """
-        Verify that the secret can be retrieved correctly.
-        """
-
+    class TestGetSecret(hunitest.TestCase):
         @pytest.mark.skip(
-            reason="Need to add ck profile to gh actions CmTask961, test has passed on dev stage"
+            reason=_REASON_TO_SKIP
         )
-        @mock_secretsmanager
+        @moto.mock_secretsmanager
         def test_get_secret(self) -> None:
-            # make sure the region name matches the one used in hsecret profile
+            """
+            Verify that the secret can be retrieved correctly.
+            """
+            # Make sure the region name matches the one used in `hsecret` profile.
             client = boto3.client("secretsmanager", region_name="eu-north-1")
             secret = {"testkey": "testvalue"}
             secret_name = "Testsecret"
-
             client.create_secret(
                 Name=secret_name, SecretString=json.dumps(secret)
             )
             self.assertDictEqual(hsecret.get_secret(secret_name), secret)
 
-    class Test_Store_Secret1(hunitest.TestCase):
-        """
-        Verify that a secret can be stored correctly.
-        """
-
+    class TestStoreSecret(hunitest.TestCase):
         @pytest.mark.skip(
-            reason="Need to add ck profile to gh actions CmTask961, test has passed on dev stage"
+            reason=_REASON_TO_SKIP
         )
-        @mock_secretsmanager
-        def test_store_secret(self) -> None:
+        @moto.mock_secretsmanager
+        def test_store_secret1(self) -> None:
+            """
+            Verify that a secret can be stored correctly.
+            """
             secret = {"testkey": "testvalue"}
             secret_name = "Testsecret"
             hsecret.store_secret(secret_name, secret)
-
-            # make sure the region name matches the one used in hsecret
+            # Make sure the region name matches the one used in `hsecret`.
             client = boto3.client("secretsmanager", region_name="eu-north-1")
             test_secret_value = json.loads(
                 client.get_secret_value(SecretId=secret_name)["SecretString"]
