@@ -112,7 +112,7 @@ class CddClient:
         Get the absolute path to a file with CDD data.
 
         The file path is constructed in the following way:
-        `<root_dir>/cryptodatadownload/<snapshot>/<exchange_id>/<currency_pair>.csv.gz`.
+        `<root_dir>/cdd/<snapshot>/<exchange_id>/<currency_pair>.csv.gz`.
 
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
@@ -125,7 +125,7 @@ class CddClient:
         file_name = currency_pair + ".csv.gz"
         file_path = os.path.join(
             self._root_dir,
-            "cryptodatadownload",
+            "cdd",
             data_snapshot,
             exchange_id,
             file_name,
