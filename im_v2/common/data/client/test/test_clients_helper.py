@@ -234,6 +234,7 @@ class ImClientTestCase(hunitest.TestCase):
 
     def _test_get_universe1(
         self,
+        # TODO(Grisha): pass vendor when we start testing `CDD`.
         im_client: icdc.ImClient,
         expected_length: int,
         expected_first_elements: List[icdc.FullSymbol],

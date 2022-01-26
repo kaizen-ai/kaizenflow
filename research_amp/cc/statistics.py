@@ -211,7 +211,8 @@ def get_loader_for_vendor(
     root_dir = config["load"]["data_dir"]
     extension = "csv.gz"
     if vendor == "CCXT":
-        loader = icdcl.CcxtCsvParquetByAssetClient(
+        loader = icdcl.CcxtCddCsvParquetByAssetClient(
+            vendor,
             root_dir,
             extension,
             aws_profile=config["load"]["aws_profile"],
