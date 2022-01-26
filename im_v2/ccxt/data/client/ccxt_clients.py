@@ -37,7 +37,7 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         """
         Constructor.
 
-        :param vendor: price data provider, i.e. "CCXT" or "CDD"
+        :param vendor: price data provider, i.e. `CCXT` or `CDD`
         """
         _vendors = ["CCXT", "CDD"]
         hdbg.dassert_in(vendor, _vendors)
@@ -73,7 +73,7 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
 
     def get_universe(self, as_asset_ids: bool) -> List[icdc.FullSymbol]:
         """
-        Return vendor universe as full symbols.
+        See description in the parent class.
         """
         universe = imvccunun.get_vendor_universe(vendor=self._vendor, as_asset_ids=as_asset_ids)
         return universe  # type: ignore[no-any-return]
@@ -84,8 +84,10 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         """
         if self._vendor == "CDD":
             # Rename columns for consistency with other crypto vendors.
-            # Column name for `volume` depends on the `currency_pair`, e.g., `Volume BTC`.
-            # To get rid of this dependency the column's index is used.
+            # Column name for `volume` depends on the `currency_pair`, e.g., there are 2 columns
+            # `Volume BTC` and `Volume USDT` for `currency pair `BTC_USDT. And there is no easy
+            # way to select the right `Volume` column without passing `currency_pair` that will
+            # complicate the interface. To get rid of this dependency the column's index is used.
             data.columns.values[7] = "volume"
             data = data.rename({"unix": "timestamp"}, axis=1)
         # Verify that the timestamp data is provided in ms.
@@ -139,7 +141,7 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
 
         This code path is used for the real-time data.
 
-        :param vendor: price data provider, i.e. "CCXT" or "cryptodatadownload"
+        :param vendor: price data provider, i.e. `CCXT` or `CDD`
         :param connection: connection for a SQL database
         """
         super().__init__(vendor)
@@ -209,7 +211,7 @@ class CcxtCddCsvParquetByAssetClient(CcxtCddClient, icdc.ImClientReadingOneSymbo
         """
         Load `CCXT` data from local or S3 filesystem.
 
-        :param vendor: price data provider, i.e. "CCXT" or "cryptodatadownload"
+        :param vendor: price data provider, i.e. `CCXT` or `CDD`
         :param root_dir: either a local root path (e.g., "/app/im") or
             an S3 root path (e.g., "s3://alphamatic-data/data") to `CCXT` data
         :param extension: file extension, e.g., `.csv`, `.csv.gz` or `.parquet`
@@ -286,7 +288,6 @@ class CcxtCddCsvParquetByAssetClient(CcxtCddClient, icdc.ImClientReadingOneSymbo
                 end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
                 data = data[data["timestamp"] < end_ts]
         else:
-            # TODO(Grisha): raise `UnsupportedExtension`.
             raise ValueError(
                 f"Unsupported extension {self._extension}. "
                 f"Supported extensions are: `pq`, `csv`, `csv.gz`"
