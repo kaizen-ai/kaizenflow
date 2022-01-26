@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.hdocker_manager as hdocmana
+import helpers.hdocker as hdocker
 """
 
 import argparse

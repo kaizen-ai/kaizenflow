@@ -29,7 +29,7 @@ import helpers.hjoblib as hjoblib
 import helpers.hparser as hparser
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -82,7 +82,7 @@ def _run_experiment(
     cmd = " ".join(cmd)
     # Execute.
     _LOG.info("Executing '%s'", cmd)
-    rc = hsysinte.system(
+    rc = hsystem.system(
         cmd, output_file=log_file, suppress_output=False, abort_on_error=False
     )
     _LOG.info("Executed cmd")

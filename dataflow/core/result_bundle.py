@@ -16,8 +16,8 @@ import core.config as cconfig
 import dataflow.core.node as dtfcornode
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
-import helpers.hparquet as hparque
 import helpers.hio as hio
+import helpers.hparquet as hparque
 import helpers.hpickle as hpickle
 import helpers.htimer as htimer
 

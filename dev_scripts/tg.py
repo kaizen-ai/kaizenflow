@@ -18,7 +18,7 @@ import logging
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.telegram_notify.telegram_notify as htnoteno
 
 _LOG = logging.getLogger(__name__)
@@ -47,13 +47,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
     message = []
-    message.append("user=%s" % hsysinte.get_user_name())
-    message.append("server=%s" % hsysinte.get_server_name())
+    message.append("user=%s" % hsystem.get_user_name())
+    message.append("server=%s" % hsystem.get_server_name())
     #
     if args.cmd is not None:
         cmd = args.cmd
         _LOG.info("Executing: %s", cmd)
-        rc = hsysinte.system(cmd, suppress_output=False, abort_on_error=False)
+        rc = hsystem.system(cmd, suppress_output=False, abort_on_error=False)
         _LOG.info("rc=%s", rc)
         message.append("cmd='%s'" % cmd)
         message.append("rc=%s" % rc)

@@ -502,6 +502,7 @@ class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
             expected_last_elements,
         )
 
+
 class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
     def test_read_data1(self) -> None:
         """

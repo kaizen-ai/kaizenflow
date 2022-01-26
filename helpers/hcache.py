@@ -25,7 +25,7 @@ import helpers.hintrospection as hintros
 import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.htimer as htimer
 
 _LOG = logging.getLogger(__name__)
@@ -158,7 +158,7 @@ def _get_global_cache_path(cache_type: str, tag: Optional[str] = None) -> str:
     cache_name = _get_global_cache_name(cache_type, tag)
     # Get the enclosing directory path.
     if cache_type == "mem":
-        if hsysinte.get_os_name() == "Darwin":
+        if hsystem.get_os_name() == "Darwin":
             root_path = "/tmp"
         else:
             root_path = "/mnt/tmpfs"
@@ -181,7 +181,7 @@ def _get_cache_size(path: str, description: str) -> str:
         txt = "'%s' cache: path='%s' doesn't exist yet" % (description, path)
     else:
         if os.path.exists(path):
-            size_in_bytes = hsysinte.du(path)
+            size_in_bytes = hsystem.du(path)
             size_as_str = hintros.format_size(size_in_bytes)
         else:
             size_as_str = "nan"

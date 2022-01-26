@@ -28,9 +28,10 @@ _LATEST_DATA_SNAPSHOT = "20210924"
 class CcxtCddClient(icdc.ImClient, abc.ABC):
     """
     Contain common code for all the `CCXT` and `CDD` clients, e.g.,
-        - getting `CCXT` and `CDD` universe
-        - applying common transformation for all the data from `CCXT` and `CDD`
-            - E.g., `_apply_olhlcv_transformations()`, `_apply_vendor_normalization()`
+
+    - getting `CCXT` and `CDD` universe
+    - applying common transformation for all the data from `CCXT` and `CDD`
+        - E.g., `_apply_olhlcv_transformations()`, `_apply_vendor_normalization()`
     """
 
     def __init__(self, vendor: str) -> None:
@@ -42,6 +43,15 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         _vendors = ["CCXT", "CDD"]
         hdbg.dassert_in(vendor, _vendors)
         self._vendor = vendor
+
+    def get_universe(self, as_asset_ids: bool) -> List[icdc.FullSymbol]:
+        """
+        See description in the parent class.
+        """
+        universe = imvccunun.get_vendor_universe(
+            vendor=self._vendor, as_asset_ids=as_asset_ids
+        )
+        return universe  # type: ignore[no-any-return]
 
     def _apply_vendor_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
         """
@@ -70,13 +80,6 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         # Sort transformed data by exchange id and currency pair columns.
         data = data.sort_values(by=["exchange_id", "currency_pair"])
         return data
-
-    def get_universe(self, as_asset_ids: bool) -> List[icdc.FullSymbol]:
-        """
-        See description in the parent class.
-        """
-        universe = imvccunun.get_vendor_universe(vendor=self._vendor, as_asset_ids=as_asset_ids)
-        return universe  # type: ignore[no-any-return]
 
     def _apply_ccxt_cdd_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
         """
@@ -188,9 +191,12 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
 # #############################################################################
 
 
-class CcxtCddCsvParquetByAssetClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
+class CcxtCddCsvParquetByAssetClient(
+    CcxtCddClient, icdc.ImClientReadingOneSymbol
+):
     """
-    Client for `CCXT` and `CDD` that reads CSV or Parquet file storing data for a single asset.
+    Client for `CCXT` and `CDD` that reads CSV or Parquet file storing data for
+    a single asset.
 
     It can read data from local or S3 filesystem as backend.
 
@@ -322,7 +328,11 @@ class CcxtCddCsvParquetByAssetClient(CcxtCddClient, icdc.ImClientReadingOneSymbo
         # Get absolute file path.
         file_name = ".".join([currency_pair, self._extension])
         file_path = os.path.join(
-            self._root_dir, self._vendor.lower(), data_snapshot, exchange_id, file_name
+            self._root_dir,
+            self._vendor.lower(),
+            data_snapshot,
+            exchange_id,
+            file_name,
         )
         # TODO(Dan): Remove asserts below after CMTask108 is resolved.
         # Verify that the file exists.

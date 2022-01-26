@@ -53,7 +53,7 @@ import helpers.hio as hio
 import helpers.hlist as hlist
 import helpers.hparser as hparser
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -78,7 +78,7 @@ def _print(*args: Any, **kwargs: Any) -> None:
 # TODO(gp): This could become the default behavior of system().
 def _system(cmd: str, abort_on_error: bool = True) -> int:
     suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
-    rc = hsysinte.system(
+    rc = hsystem.system(
         cmd,
         abort_on_error=abort_on_error,
         suppress_output=suppress_output,
@@ -116,7 +116,7 @@ def _tee(
     :return: list of strings
     """
     _LOG.debug("cmd=%s executable=%s", cmd, executable)
-    rc, output = hsysinte.system_to_string(cmd, abort_on_error=abort_on_error)
+    rc, output = hsystem.system_to_string(cmd, abort_on_error=abort_on_error)
     hdbg.dassert_isinstance(output, str)
     output1 = output.split("\n")
     _LOG.debug("output1= (%d)\n'%s'", len(output1), "\n".join(output1))
@@ -205,7 +205,7 @@ def _get_files(args: argparse.Namespace) -> List[str]:
             _LOG.info("Looking for all files in '%s'", dir_name)
             hdbg.dassert_exists(dir_name)
             cmd = "find %s -name '*' -type f" % dir_name
-            _, output = hsysinte.system_to_string(cmd)
+            _, output = hsystem.system_to_string(cmd)
             file_names = output.split("\n")
     # Remove text files used in unit tests.
     file_names = [f for f in file_names if not is_test_input_output_file(f)]
@@ -761,7 +761,7 @@ class _Pydocstyle(_Action):
         cmd_as_str = " ".join(cmd)
         # We don't abort on error on pydocstyle, since it returns error if there
         # is any violation.
-        _, file_lines_as_str = hsysinte.system_to_string(
+        _, file_lines_as_str = hsystem.system_to_string(
             cmd_as_str, abort_on_error=False
         )
         # Process lint_log transforming:

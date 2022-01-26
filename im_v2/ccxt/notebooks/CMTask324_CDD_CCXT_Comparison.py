@@ -28,8 +28,7 @@ import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import im_v2.ccxt.data.client as icdcl
 import im_v2.ccxt.universe.universe as imvccunun
-import im_v2.common.data.client as icdc
-import im_v2.cryptodatadownload.data.client.cdd_client as imcdaclcd
+import im_v2.cryptodatadownload.data.client.cdd_client as imvcdccdcl
 import research_amp.cc.statistics as ramccsta
 
 # %%
@@ -185,7 +184,7 @@ cdd_data = []
 data_type_cdd = config_cdd["data"]["data_type"]
 root_dir_cdd = config_cdd["load"]["data_dir"]
 aws_profile_cdd = config_cdd["load"]["aws_profile"]
-cdd_loader = imcdaclcd.CddClient(
+cdd_loader = imvcdccdcl.CddClient(
     data_type_cdd, root_dir_cdd, aws_profile=aws_profile_cdd
 )
 
@@ -200,7 +199,7 @@ display(cdd_binance_df.shape)
 
 # %%
 extension = "csv.gz"
-root_dir_ccxt=config_ccxt["load"]["data_dir"]
+root_dir_ccxt = config_ccxt["load"]["data_dir"]
 aws_profile_ccxt = config_ccxt["load"]["aws_profile"]
 ccxt_csv_client = icdcl.CcxtCsvParquetByAssetClient(
     root_dir_ccxt, extension, aws_profile=aws_profile_ccxt

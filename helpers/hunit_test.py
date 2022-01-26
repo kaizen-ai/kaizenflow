@@ -24,7 +24,7 @@ import helpers.hintrospection as hintros
 import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.htimer as htimer
 
 # We use strings as type hints (e.g., 'pd.DataFrame') since we are not sure
@@ -377,7 +377,7 @@ def get_dir_signature(
     # file_names = glob.glob(os.path.join(dir_name, "*"), recursive=True)
     cmd = f'find {dir_name} -name "*"'
     remove_files_non_present = False
-    file_names = hsysinte.system_to_files(cmd, dir_name, remove_files_non_present)
+    file_names = hsystem.system_to_files(cmd, dir_name, remove_files_non_present)
     file_names = sorted(file_names)
     #
     txt: List[str] = []
@@ -388,7 +388,7 @@ def get_dir_signature(
     if include_file_content:
         txt.append("# File signatures")
         # Remove the dirs.
-        file_names = hsysinte.remove_dirs(file_names)
+        file_names = hsystem.remove_dirs(file_names)
         # Scan the files.
         txt.append("len(file_names)=%s" % len(file_names))
         txt.append("file_names=%s" % ", ".join(file_names))
@@ -462,7 +462,7 @@ def purify_from_environment(txt: str) -> str:
     pwd = os.getcwd()
     txt = txt.replace(pwd, "$PWD")
     # Replace the user name with `$USER_NAME`.
-    user_name = hsysinte.get_user_name()
+    user_name = hsystem.get_user_name()
     txt = txt.replace(user_name, "$USER_NAME")
     _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt
@@ -580,7 +580,7 @@ def diff_files(
     if tag is not None:
         msg.append("\n" + hprint.frame(tag, char1="-"))
     # Diff to screen.
-    _, res = hsysinte.system_to_string(
+    _, res = hsystem.system_to_string(
         "echo; sdiff --expand-tabs -l -w 150 %s %s" % (file_name1, file_name2),
         abort_on_error=False,
         log_level=logging.DEBUG,
@@ -592,7 +592,7 @@ def diff_files(
     # TODO(gp): Use create_executable_script().
     hio.to_file(diff_script, vimdiff_cmd)
     cmd = "chmod +x " + diff_script
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
     # Report how to diff.
     msg.append("Diff with:")
     msg.append("> " + vimdiff_cmd)
@@ -1115,8 +1115,8 @@ class TestCase(unittest.TestCase):
             use_absolute_path,
         )
         # Make the path unique for the current user.
-        user_name = hsysinte.get_user_name()
-        server_name = hsysinte.get_server_name()
+        user_name = hsystem.get_user_name()
+        server_name = hsystem.get_server_name()
         project_dirname = hgit.get_project_dirname()
         dir_name = f"{user_name}.{server_name}.{project_dirname}"
         # Assemble everything in a single path.
@@ -1425,7 +1425,7 @@ class TestCase(unittest.TestCase):
                 cmd = "cd amp; git add -u %s" % file_name_in_amp
             else:
                 cmd = "git add -u %s" % file_name_tmp
-            rc = hsysinte.system(cmd, abort_on_error=False)
+            rc = hsystem.system(cmd, abort_on_error=False)
             if rc:
                 pytest_warning(
                     f"Can't git add file\n'{file_name}' -> '{file_name_tmp}'\n"
@@ -1585,10 +1585,13 @@ class TestCase(unittest.TestCase):
 
 
 @pytest.mark.qa
-@pytest.mark.skipif(hsysinte.is_inside_docker(), reason="Test needs to be run outside Docker")
+@pytest.mark.skipif(
+    hsystem.is_inside_docker(), reason="Test needs to be run outside Docker"
+)
 class QaTestCase(TestCase, abc.ABC):
     """
     This unit test is used for QA to test functionalities (e.g., invoke tasks)
     that run the dev / prod container.
     """
+
     pass

@@ -17,9 +17,9 @@ import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.base as dtfconobas
 import dataflow.core.utils as dtfcorutil
 import helpers.hdbg as hdbg
+import helpers.hio as hio
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
-import helpers.hio as hio
 
 _LOG = logging.getLogger(__name__)
 

@@ -9,7 +9,7 @@ from typing import List, Tuple
 
 import helpers.hgit as hgit
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.hversion as hversio
 
 _LOG = logging.getLogger(__name__)
@@ -56,11 +56,11 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     txt_tmp: List[str] = []
     try:
         cmd = "git branch --show-current"
-        _, branch_name = hsysinte.system_to_one_line(cmd)
+        _, branch_name = hsystem.system_to_one_line(cmd)
         txt_tmp.append("branch_name='%s'" % branch_name)
         #
         cmd = "git rev-parse --short HEAD"
-        _, hash_ = hsysinte.system_to_one_line(cmd)
+        _, hash_ = hsystem.system_to_one_line(cmd)
         txt_tmp.append("hash='%s'" % hash_)
         #
         num_commits = 3

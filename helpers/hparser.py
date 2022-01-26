@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -132,7 +132,7 @@ def parse_dst_dir_arg(args: argparse.Namespace) -> Tuple[str, bool]:
         if os.path.exists(dst_dir):
             _LOG.warning("Dir '%s' already exists", dst_dir)
             if not args.no_confirm:
-                hsysinte.query_yes_no(
+                hsystem.query_yes_no(
                     "Do you want to delete the dir '%s'" % dst_dir,
                     abort_on_no=True,
                 )
