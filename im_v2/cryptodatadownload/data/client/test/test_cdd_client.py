@@ -24,7 +24,7 @@ class TestGetFilePath(hunitest.TestCase):
         )
         expected = os.path.join(
             hs3.get_path(),
-            "data/cryptodatadownload/20210924/binance/ETH_USDT.csv.gz",
+            "data/cdd/20210924/binance/ETH_USDT.csv.gz",
         )
         self.assert_equal(actual, expected)
 
