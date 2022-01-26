@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.3
+#       jupytext_version: 1.13.5
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -29,7 +29,7 @@ import helpers.hs3 as hs3
 import im_v2.ccxt.data.client as icdcl
 import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.common.data.client as icdc
-import im_v2.cryptodatadownload.data.client.cdd_client as imcdaclcd
+#import im_v2.cryptodatadownload.data.client.cdd_client as imcdaclcd
 import research_amp.cc.statistics as ramccsta
 
 # %%
@@ -122,20 +122,20 @@ cdd_universe = imvccunun.get_vendor_universe(version="v01", vendor="CDD")
 # Remove non-USDT elements, since we are not interested in them.
 cdd_universe = [element for element in cdd_universe if element.endswith("USDT")]
 
-# %% [markdown]
+# %% [markdown] heading_collapsed=true
 # # Compare universes
 
-# %%
+# %% hidden=true
 _LOG.info("Number of full symbols in 'CCXT': %s", len(ccxt_universe))
 _LOG.info("Number of full symbols in 'CDD': %s", len(cdd_universe))
 
-# %%
+# %% hidden=true
 # Intersection of full symbols between two vendors.
 currency_pair_intersection = set(ccxt_universe).intersection(cdd_universe)
 _LOG.info("Number of similar full symbols: %s", len(currency_pair_intersection))
 display(currency_pair_intersection)
 
-# %%
+# %% hidden=true
 # Full symbols that are included in `CCXT` but not in `CDD`.
 ccxt_and_not_cdd = set(ccxt_universe).difference(cdd_universe)
 _LOG.info(
@@ -144,7 +144,7 @@ _LOG.info(
 )
 display(ccxt_and_not_cdd)
 
-# %%
+# %% hidden=true
 # Full symbols that are included in `CDD` but not in `CCXT`.
 cdd_and_not_ccxt = set(cdd_universe).difference(ccxt_universe)
 _LOG.info(
@@ -180,31 +180,42 @@ currency_pair_intersection_binance = set(ccxt_binance_universe).intersection(
     cdd_binance_universe_initial
 )
 
+# %% [markdown]
+# ### "CDD"
+
 # %%
-cdd_data = []
-data_type_cdd = config_cdd["data"]["data_type"]
-root_dir_cdd = config_cdd["load"]["data_dir"]
+vendor_cdd = config_cdd["data"]["vendor"]
+root_dir_cdd=config_cdd["load"]["data_dir"]
+extension = "csv.gz"
 aws_profile_cdd = config_cdd["load"]["aws_profile"]
-cdd_loader = imcdaclcd.CddClient(
-    data_type_cdd, root_dir_cdd, aws_profile=aws_profile_cdd
+cdd_csv_client = icdcl.CcxtCddCsvParquetByAssetClient(
+    vendor_cdd, root_dir_cdd, extension, aws_profile=aws_profile_cdd
 )
 
-for full_symbol in currency_pair_intersection_binance:
-    cur_data = cdd_loader.read_data(full_symbol)
-    cdd_data.append(cur_data)
-cdd_binance_df = pd.concat(cdd_data)
+start_ts = None
+end_ts = None
+cdd_binance_df = cdd_csv_client.read_data(
+    list(currency_pair_intersection_binance),
+    start_ts,
+    end_ts,
+)
 
 # %%
 display(cdd_binance_df.head(3))
 display(cdd_binance_df.shape)
 
+# %% [markdown]
+# ### "CCXT"
+
 # %%
-extension = "csv.gz"
+vendor_ccxt = config_ccxt["data"]["vendor"]
 root_dir_ccxt=config_ccxt["load"]["data_dir"]
+extension = "csv.gz"
 aws_profile_ccxt = config_ccxt["load"]["aws_profile"]
-ccxt_csv_client = icdcl.CcxtCsvParquetByAssetClient(
-    root_dir_ccxt, extension, aws_profile=aws_profile_ccxt
+ccxt_csv_client = icdcl.CcxtCddCsvParquetByAssetClient(
+    vendor_ccxt, root_dir_ccxt, extension, aws_profile=aws_profile_ccxt
 )
+
 start_ts = None
 end_ts = None
 ccxt_binance_df = ccxt_csv_client.read_data(
@@ -217,15 +228,9 @@ ccxt_binance_df = ccxt_csv_client.read_data(
 display(ccxt_binance_df.head(3))
 display(ccxt_binance_df.shape)
 
+
 # %% [markdown]
 # ## Calculate returns and correlation
-
-# %%
-# `CDD` names cleaning.
-cdd_binance_df["currency_pair"] = cdd_binance_df["currency_pair"].str.replace(
-    "/", "_"
-)
-
 
 # %%
 def resample_close_price(df: pd.DataFrame, resampling_freq: str) -> pd.Series:
@@ -380,27 +385,18 @@ cdd_start_end_table = ramccsta.compute_stats_for_universe(
 )
 
 # %%
-# `CDD` names cleaning.
-cdd_start_end_table["currency_pair"] = cdd_start_end_table[
-    "currency_pair"
-].str.replace("/", "_")
-
-# %%
 cdd_start_end_table.head(3)
 
 # %% [markdown]
 # #### CCXT
 
 # %%
-# TODO(Max): Fix the code, once the vendor universe will be unified.
-# see CMTask985 - Fix compute_start_end_stats in CCXT-CDD comparison notebook.
 compute_start_end_stats = lambda data: ramccsta.compute_start_end_stats(
     data, config_ccxt
 )
+
 ccxt_start_end_table = ramccsta.compute_stats_for_universe(
-    list(cdd_and_ccxt_cleaned),
-    config_ccxt,
-    compute_start_end_stats,
+    cdd_and_ccxt_cleaned, config_ccxt, compute_start_end_stats
 )
 
 # %%
