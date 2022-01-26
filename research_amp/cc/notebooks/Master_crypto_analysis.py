@@ -89,10 +89,12 @@ print(config)
 # # Load data
 
 # %%
+vendor = "CCXT"
 root_dir = config["load"]["data_dir"]
 extension = "csv.gz"
 aws_profile = config["load"]["aws_profile"]
-ccxt_csv_client = icdcl.CcxtCsvParquetByAssetClient(
+ccxt_csv_client = icdcl.CcxtCddCsvParquetByAssetClient(
+    vendor,
     root_dir,
     extension,
     aws_profile=aws_profile,
