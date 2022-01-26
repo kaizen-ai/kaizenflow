@@ -35,8 +35,7 @@ bash_command = [
     "--dst_dir 'ccxt/ohlcv/'",
     "--data_type 'ohlcv'",
     "--universe 'v03'",
-    "--db_stage 'dev'"
-    "--v DEBUG",
+    "--db_stage 'dev'" "--v DEBUG",
 ]
 
 

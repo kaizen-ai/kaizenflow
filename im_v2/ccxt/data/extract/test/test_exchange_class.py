@@ -50,11 +50,27 @@ class Test_CcxtExchange(hunitest.TestCase):
         hdbg.dassert_isinstance(actual, pd.DataFrame)
         self.assertEqual(1500, actual.shape[0])
         # Verify column names.
-        exp_col_names = ["timestamp", "open", "high", "low", "close", "volume", "created_at"]
+        exp_col_names = [
+            "timestamp",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "created_at",
+        ]
         self.assertEqual(exp_col_names, actual.columns.to_list())
         # Verify types inside each column.
         col_types = [col_type.name for col_type in actual.dtypes]
-        exp_col_types = ['int64', 'float64', 'float64', 'float64', 'float64', 'float64', 'object']
+        exp_col_types = [
+            "int64",
+            "float64",
+            "float64",
+            "float64",
+            "float64",
+            "float64",
+            "object",
+        ]
         self.assertEqual(exp_col_types, col_types)
         # Verify corner datetimes if output is not empty.
         first_date = int(actual["timestamp"].iloc[0])

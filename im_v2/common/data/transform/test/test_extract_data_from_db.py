@@ -5,13 +5,13 @@ import pytest
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hsql as hsql
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.db.utils as imvccdbut
-import im_v2.common.db.db_utils as imvcodbut
+import im_v2.common.db.db_utils as imvcddbut
 
 
-class TestExtractDataFromDb1(imvcodbut.TestImDbHelper):
+class TestExtractDataFromDb1(imvcddbut.TestImDbHelper):
     def setUp(self) -> None:
         super().setUp()
         ccxt_ohlcv_table_query = imvccdbut.get_ccxt_ohlcv_create_table_query()
@@ -54,7 +54,7 @@ class TestExtractDataFromDb1(imvcodbut.TestImDbHelper):
         daily_signature_before = hunitest.get_dir_signature(
             dst_dir, include_file_content
         )
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
         # Check directory structure with file contents.
         actual = []
         actual.append("# before=")

@@ -13,7 +13,7 @@ import os
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ _LOG = logging.getLogger(__name__)
 
 def _get_instance_ip():
     cmd = "aws/get_inst_ip.sh"
-    _, txt = hsysinte.system_to_string(cmd)
+    _, txt = hsystem.system_to_string(cmd)
     txt = txt.rstrip("\n")
     return txt
 
@@ -34,7 +34,7 @@ def _get_instance_id():
 def _gest_inst_status():
     # Get status.
     cmd = "get_inst_status.sh"
-    _, txt = hsysinte.system_to_string(cmd)
+    _, txt = hsystem.system_to_string(cmd)
     if txt:
         # INSTANCESTATUSES        us-east-1a      i-07f9b5323aa7a2ff2
         # INSTANCESTATE   16      running
@@ -62,9 +62,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _LOG.info("Current instance status: %s", status)
         if status == "stopped":
             cmd = "aws ec2 start-instances --instance-ids %s" % inst_id
-            hsysinte.system(cmd)
+            hsystem.system(cmd)
             cmd = "aws ec2 wait instance-running --instance-ids %s" % inst_id
-            hsysinte.system(cmd)
+            hsystem.system(cmd)
         else:
             _LOG.warning("Nothing to do")
         _LOG.info("status=%s", status)
@@ -75,9 +75,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _LOG.info("Current instance status: %s", status)
         if status == "running":
             cmd = "aws ec2 stop-instances --instance-ids %s" % inst_id
-            hsysinte.system(cmd)
+            hsystem.system(cmd)
             cmd = "aws ec2 wait instance-stopped --instance-ids %s" % inst_id
-            hsysinte.system(cmd)
+            hsystem.system(cmd)
         else:
             _LOG.warning("Nothing to do")
         #

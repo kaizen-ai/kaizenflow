@@ -26,7 +26,7 @@ import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hparser as hparser
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ def _diff(dir1: str, dir2: str) -> str:
         remove_cmd,
     )
     print(cmd)
-    hsysinte.system(cmd, abort_on_error=True)
+    hsystem.system(cmd, abort_on_error=True)
     # Compare the file listings.
     opts = []
     opts.append("--suppress-common-lines")
@@ -67,16 +67,16 @@ def _diff(dir1: str, dir2: str) -> str:
     opts = " ".join(opts)
     cmd = f"sdiff {opts} /tmp/dir1 /tmp/dir2"
     print("# Diff file listing with:\n> " + cmd)
-    hsysinte.system(cmd, abort_on_error=False, suppress_output=False)
+    hsystem.system(cmd, abort_on_error=False, suppress_output=False)
     #
     print(hprint.frame("Diff dirs '%s' vs '%s'" % (dir1, dir2)))
     dst_file = "./tmp.diff_file_listings.txt"
     cmd = f"diff --brief -r {dir1} {dir2} {remove_cmd} >{dst_file}"
     # We don't abort since rc != 0 in case of differences, which is a valid outcome.
-    hsysinte.system(cmd, abort_on_error=False)
+    hsystem.system(cmd, abort_on_error=False)
     cmd = f"cat {dst_file}"
     print(f"# To see diff of the dirs:\n> {cmd}")
-    hsysinte.system(cmd, abort_on_error=False, suppress_output=False)
+    hsystem.system(cmd, abort_on_error=False, suppress_output=False)
 
     input_file = dst_file
     return input_file
@@ -226,7 +226,7 @@ def _parse_diff_output(
         _LOG.info("Writing '%s'", output_file)
         hio.to_file(output_file, out)
         cmd = "chmod +x %s" % output_file
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
         #
         cmd = "./%s" % output_file
         print("Run script with:\n> " + cmd)

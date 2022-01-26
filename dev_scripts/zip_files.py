@@ -25,7 +25,7 @@ import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hparser as hparser
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -112,7 +112,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         if args.dry_run:
             print(f"Dry-run: file_='{file_}' -> {cmd}")
         else:
-            hsysinte.system(cmd, suppress_output="ON_DEBUG_LEVEL")
+            hsystem.system(cmd, suppress_output="ON_DEBUG_LEVEL")
 
 
 if __name__ == "__main__":

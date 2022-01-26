@@ -53,7 +53,7 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hparser as hparser
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -71,7 +71,7 @@ def _rclone_ls(remote_src_dir, timestamp, log_dir):
     cmd = ["rclone ls", remote_src_dir]
     cmd = " ".join(cmd)
     output_file = "%s/gdrive.%s.txt" % (log_dir, timestamp)
-    hsysinte.system(cmd, output_file=output_file)
+    hsystem.system(cmd, output_file=output_file)
 
 
 def _rclone_copy_from_gdrive(remote_src_dir, local_dst_dir, log_dir, dry_run):
@@ -89,7 +89,7 @@ def _rclone_copy_from_gdrive(remote_src_dir, local_dst_dir, log_dir, dry_run):
     cmd = " ".join(cmd)
     #
     output_file = log_dir + "/rclone_copy_from_gdrive.txt"
-    hsysinte.system(
+    hsystem.system(
         cmd,
         output_file=output_file,
         tee=True,
@@ -115,7 +115,7 @@ def _rclone_copy_to_gdrive(local_src_dir, remote_dst_dir, log_dir, dry_run):
     cmd = " ".join(cmd)
     #
     output_file = log_dir + "/rclone_copy_to_gdrive.log"
-    hsysinte.system(
+    hsystem.system(
         cmd,
         output_file=output_file,
         tee=True,
@@ -159,7 +159,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if args.action == "ls":
         cmd = ["rclone ls", args.src_dir]
         cmd = " ".join(cmd)
-        hsysinte.system(cmd, suppress_output=False)
+        hsystem.system(cmd, suppress_output=False)
         sys.exit(0)
     if args.action == "backup":
         # Create temp dir.
@@ -181,7 +181,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             hdbg.dassert_not_exists(tar_file)
             output_file = log_dir + "/tar.log"
             cmd = "tar -cf %s -C %s ." % (tar_file, temp_dir)
-            hsysinte.system(
+            hsystem.system(
                 cmd, output_file=output_file, tee=True, dry_run=args.dry_run
             )
             _LOG.info("tar_file is at '%s'", tar_file)
@@ -194,7 +194,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         else:
             _LOG.info("# Cleaning up ...")
             cmd = "rm -rf %s" % temp_dir
-            hsysinte.system(cmd, dry_run=args.dry_run)
+            hsystem.system(cmd, dry_run=args.dry_run)
         # Delete old ones.
         # find $base -type f -mtime +3 -delete
     if args.action == "export":

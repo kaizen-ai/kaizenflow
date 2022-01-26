@@ -203,9 +203,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Build mappings from exchange ids to classes and currencies.
     exchanges = []
     for exchange_id in exchange_ids:
-        exchanges.append(
-            instantiate_exchange(exchange_id, universe["CCXT"])
-        )
+        exchanges.append(instantiate_exchange(exchange_id, universe["CCXT"]))
     # Construct table name.
     table_name = f"ccxt_{args.data_type}"
     # Generate a query to remove duplicates.

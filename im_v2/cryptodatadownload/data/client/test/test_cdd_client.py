@@ -4,8 +4,8 @@ import pytest
 
 import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
-import im_v2.cryptodatadownload.data.client.cdd_client as imcdaclcd
-import im_v2.cryptodatadownload.data.client.cdd_clients_example as imvcrcdcex
+import im_v2.cryptodatadownload.data.client.cdd_client as imvcdccdcl
+import im_v2.cryptodatadownload.data.client.cdd_clients_example as imvcdcccex
 
 _AM_S3_ROOT_DIR = os.path.join(hs3.get_path(), "data")
 
@@ -15,12 +15,12 @@ class TestGetFilePath(hunitest.TestCase):
         """
         Test supported exchange id and currency pair.
         """
-        cdd_client = imvcrcdcex.get_CcdClient_example1()
+        cdd_client = imvcdcccex.get_CcdClient_example1()
         #
         exchange_id = "binance"
         currency_pair = "ETH_USDT"
         actual = cdd_client._get_file_path(
-            imcdaclcd._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
+            imvcdccdcl._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
         )
         expected = os.path.join(
             hs3.get_path(),
@@ -32,26 +32,26 @@ class TestGetFilePath(hunitest.TestCase):
         """
         Test unsupported exchange id.
         """
-        cdd_client = imvcrcdcex.get_CcdClient_example1()
+        cdd_client = imvcdcccex.get_CcdClient_example1()
         #
         exchange_id = "unsupported exchange"
         currency_pair = "ADA_USDT"
         with self.assertRaises(AssertionError):
             cdd_client._get_file_path(
-                imcdaclcd._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
+                imvcdccdcl._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
             )
 
     def test3(self) -> None:
         """
         Test unsupported currency pair.
         """
-        cdd_client = imvcrcdcex.get_CcdClient_example1()
+        cdd_client = imvcdcccex.get_CcdClient_example1()
         #
         exchange_id = "binance"
         currency_pair = "unsupported_currency"
         with self.assertRaises(AssertionError):
             cdd_client._get_file_path(
-                imcdaclcd._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
+                imvcdccdcl._LATEST_DATA_SNAPSHOT, exchange_id, currency_pair
             )
 
 
@@ -61,7 +61,7 @@ class TestCddClient(hunitest.TestCase):
         """
         Test files on S3 are being read correctly.
         """
-        cdd_client = imvcrcdcex.get_CcdClient_example1()
+        cdd_client = imvcdcccex.get_CcdClient_example1()
         #
         actual = cdd_client.read_data("binance::BTC_USDT")
         # Check the output values.
@@ -72,7 +72,7 @@ class TestCddClient(hunitest.TestCase):
         """
         Test unsupported exchange id.
         """
-        cdd_client = imvcrcdcex.get_CcdClient_example1()
+        cdd_client = imvcdcccex.get_CcdClient_example1()
         #
         with self.assertRaises(AssertionError):
             cdd_client.read_data("unsupported_exchange_id::BTC_USDT")
@@ -81,7 +81,7 @@ class TestCddClient(hunitest.TestCase):
         """
         Test unsupported currency pair.
         """
-        cdd_client = imvcrcdcex.get_CcdClient_example1()
+        cdd_client = imvcdcccex.get_CcdClient_example1()
         #
         with self.assertRaises(AssertionError):
             cdd_client.read_data("binance::unsupported_currency_pair")
@@ -93,6 +93,6 @@ class TestCddClient(hunitest.TestCase):
         root_dir = _AM_S3_ROOT_DIR
         data_type = "unsupported_data_type"
         with self.assertRaises(AssertionError):
-            cdd_client = imcdaclcd.CddClient(
+            cdd_client = imvcdccdcl.CddClient(
                 data_type, root_dir, aws_profile="am"
             )

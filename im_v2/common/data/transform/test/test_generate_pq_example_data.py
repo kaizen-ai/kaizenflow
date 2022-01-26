@@ -3,7 +3,7 @@ import os
 import pytest
 
 import helpers.hgit as hgit
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
 
@@ -25,7 +25,7 @@ class TestGeneratePqExampleData1(hunitest.TestCase):
         cmd.append("--assets A,B,C")
         cmd.append(f"--dst_dir {test_dir}")
         cmd = " ".join(cmd)
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
         # Check directory structure with file contents.
         include_file_content = True
         by_date_signature = hunitest.get_dir_signature(

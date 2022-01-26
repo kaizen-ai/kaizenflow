@@ -25,7 +25,7 @@ Use as:
 
 Import as:
 
-import im_v2.cryptodatadownload.data.extract.download_historical as ivcdedohi
+import im_v2.cryptodatadownload.data.extract.download_historical as imvcdedohi
 """
 
 # TODO(gp): -> download_historical_data.py

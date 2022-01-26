@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.hunit_test_skeleton as hunteske
+import helpers.unit_test_skeleton as hunteske
 """
 
 import logging

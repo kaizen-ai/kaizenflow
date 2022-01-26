@@ -17,7 +17,7 @@ from typing import List
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _log = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ def _get_reference_conda_list() -> List[str]:
 
 def _get_local_conda_list() -> List[str]:
     cmd = "conda list | sort"
-    _, data = hsysinte.system_to_string(cmd)
+    _, data = hsystem.system_to_string(cmd)
     return data.split("\n")
 
 
@@ -72,7 +72,7 @@ def _check_packages() -> str:
 
 def _get_modified_files() -> str:
     cmd = 'git status -s | grep " M"'
-    _, output = hsysinte.system_to_string(cmd, abort_on_error=False)
+    _, output = hsystem.system_to_string(cmd, abort_on_error=False)
     return output
 
 
@@ -84,7 +84,7 @@ def _run_linter_check() -> None:
     )
     amp_path = os.environ["AMP"]
     cmd = f"{amp_path}/dev_scripts/linter_master_report.py"
-    _, output = hsysinte.system_to_string(cmd, abort_on_error=False)
+    _, output = hsystem.system_to_string(cmd, abort_on_error=False)
     print(output.strip())
 
 

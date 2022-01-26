@@ -3,7 +3,7 @@ import logging
 import pytest
 
 import helpers.hgit as hgit
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -14,7 +14,7 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): Only Jenkins can run this to avoid to kill the tunnel. Enable this
 # test somehow.
-# @pytest.mark.skipif('hsysinte.get_user_name() != "jenkins"')
+# @pytest.mark.skipif('hsystem.get_user_name() != "jenkins"')
 @pytest.mark.skip
 class Test_ssh_tunnel(hunitest.TestCase):
     def test1(self) -> None:
@@ -36,4 +36,4 @@ class Test_ssh_tunnel(hunitest.TestCase):
         for action in actions:
             _LOG.debug("action=%s", action)
             cmd = "%s %s -v INFO" % (exec_name, action)
-            hsysinte.system(cmd, suppress_output="ON_DEBUG_LEVEL")
+            hsystem.system(cmd, suppress_output="ON_DEBUG_LEVEL")

@@ -19,7 +19,7 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ def _git_add(file_name: str) -> None:
     # pylint: disable=unreachable
     cmd = "git add -u %s" % file_name
     _LOG.debug("> %s", cmd)
-    rc = hsysinte.system(cmd, abort_on_error=False)
+    rc = hsystem.system(cmd, abort_on_error=False)
     if rc:
         _LOG.warning(
             "Can't run '%s': you need to add the file manually",
