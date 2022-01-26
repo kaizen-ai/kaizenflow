@@ -24,11 +24,11 @@ if _HAS_MOTO:
     # The `mock_secretsmanager` decorator ensures the calls to the AWS API are
     # mocked.
 
-    _REASON_TO_SKIP = "Need to add `ck` profile to GH actions CmTask961, test has passed on dev stage."
+    _REASON_TO_SKIP_TEST = "Need to add `ck` profile to GH actions CmTask961, test has passed on dev stage."
 
     class TestCreateClient(hunitest.TestCase):
         @pytest.mark.skip(
-            reason=_REASON_TO_SKIP
+            reason=_REASON_TO_SKIP_TEST
         )
         def test_create_client1(self) -> None:
             """
@@ -39,7 +39,7 @@ if _HAS_MOTO:
 
     class TestGetSecret(hunitest.TestCase):
         @pytest.mark.skip(
-            reason=_REASON_TO_SKIP
+            reason=_REASON_TO_SKIP_TEST
         )
         @moto.mock_secretsmanager
         def test_get_secret(self) -> None:
@@ -57,7 +57,7 @@ if _HAS_MOTO:
 
     class TestStoreSecret(hunitest.TestCase):
         @pytest.mark.skip(
-            reason=_REASON_TO_SKIP
+            reason=_REASON_TO_SKIP_TEST
         )
         @moto.mock_secretsmanager
         def test_store_secret1(self) -> None:
