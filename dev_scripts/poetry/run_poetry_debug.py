@@ -1,3 +1,5 @@
+# TODO(Grisha): @Nikola it should become executable script.
+
 import os
 from typing import List
 
@@ -6,9 +8,11 @@ import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hsystem as hsystem
 
+
 def get_add_package_poetry_cmd(package: str) -> str:
     cmd = f"poetry add {package}"
     return cmd
+
 
 def get_run_poetry_cmd() -> str:
     # TODO(Grisha): @Nikola make sure you are in `dev_scripts/poetry` dir.
@@ -46,10 +50,31 @@ def get_python_packages(include_optional_packages: bool) -> List[str]:
     return packages
 
 
-def run_poetry_debug(include_optional_packages: bool) -> str:
+def poetry_add_python_packages(python_packages: List[str]) -> None:
+    for python_package in python_packages:
+        poetry_add_package_cmd = get_add_package_poetry_cmd(python_package)
+        # Add every package in a provided list.
+        hsystem.system(poetry_add_package_cmd)
+
+
+def run_poetry_debug(include_optional_packages: bool) -> None:
+    # Get Python packages to debug.
     python_packages = get_python_packages(include_optional_packages)
     poetry_run_cmd = get_run_poetry_cmd()
-    for package in python_packages:
-        poetry_add_package_cmd = get_add_package_poetry_cmd(package)
+    for idx, _ in enumerate(python_packages):
+        # We want to incrementally add one package and see if it works.
+        current_packages = python_packages[:idx]
+        poetry_add_python_packages(current_packages)
+        # TODO(Grisha): @Nikola we should also measure how much time it takes.
+        # TODO(Grisha): @Nikola let's abort the script if running time > 30 minutes (should be a parameter).
+        # TODO(Grisha): @Nikola capture output and compute length.
+        hsystem.system(poetry_run_cmd)
+        # TODO(Grisha): @Nikola write stats in a file:
+        #   - what are the packages
+        #   - did it converge? (run successfully)
+        #   - how much time did it take?
+        #   - how large is the output? i.e. length of string.
+
+
 
 
