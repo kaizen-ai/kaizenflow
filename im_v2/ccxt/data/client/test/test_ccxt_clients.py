@@ -512,7 +512,7 @@ class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper)
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
-        vendor = "ccxt"
+        vendor = "CCXT"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
                 vendor, self.connection
@@ -560,7 +560,7 @@ class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper)
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
-        vendor = "ccxt"
+        vendor = "CCXT"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
                 vendor, self.connection
@@ -609,7 +609,7 @@ class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper)
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
-        vendor = "ccxt"
+        vendor = "CCXT"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
                 vendor, self.connection
@@ -659,7 +659,7 @@ class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper)
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
-        vendor = "ccxt"
+        vendor = "CCXT"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
                 vendor, self.connection
@@ -705,7 +705,7 @@ class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper)
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
-        vendor = "ccxt"
+        vendor = "CCXT"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
                 vendor, self.connection
@@ -747,7 +747,7 @@ class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper)
         """
         See description of corresponding private method in parent class.
         """
-        vendor = "ccxt"
+        vendor = "CCXT"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
                 vendor, self.connection
@@ -765,7 +765,7 @@ class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper)
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
-        vendor = "ccxt"
+        vendor = "CCXT"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
                 vendor, self.connection
@@ -788,7 +788,7 @@ class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper)
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
-        vendor = "ccxt"
+        vendor = "CCXT"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
                 vendor, self.connection
@@ -804,7 +804,7 @@ class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper)
         """
         See description of corresponding private method in parent class.
         """
-        vendor = "ccxt"
+        vendor = "CCXT"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
                 vendor, self.connection

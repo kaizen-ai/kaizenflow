@@ -44,7 +44,7 @@ def get_CcxtCsvClient_example1() -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
     # 1534464240000,285.400193,285.884638,285.400193,285.884638,0.074655
     # ```
     # Initialize client.
-    vendor = "ccxt"
+    vendor = "CCXT"
     root_dir = get_test_data_dir()
     extension = "csv.gz"
     ccxt_file_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
@@ -70,7 +70,7 @@ def get_CcxtCsvClient_example2() -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
     # 1534464240000,285.400193,285.884638,285.400193,285.884638,0.074655
     # ```
     # Initialize client.
-    vendor = "ccxt"
+    vendor = "CCXT"
     root_dir = get_test_data_dir()
     extension = "csv"
     ccxt_file_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
@@ -96,7 +96,7 @@ def get_CcxtParquetByAssetClient_example1() -> imvcdccccl.CcxtCddCsvParquetByAss
     # 1534464240000,285.400193,285.884638,285.400193,285.884638,0.074655
     # ```
     # Initialize client.
-    vendor = "ccxt"
+    vendor = "CCXT"
     root_dir = get_test_data_dir()
     extension = "pq"
     ccxt_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(

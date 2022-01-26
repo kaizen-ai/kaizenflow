@@ -37,9 +37,9 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         """
         Constructor.
 
-        :param vendor: price data provider, i.e. "CCXT" or "cryptodatadownload"
+        :param vendor: price data provider, i.e. "CCXT" or "CDD"
         """
-        _vendors = ["ccxt", "cryptodatadownload"]
+        _vendors = ["CCXT", "CDD"]
         hdbg.dassert_in(vendor, _vendors)
         self._vendor = vendor
 
@@ -82,7 +82,7 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         """
         Apply transformations common for `CCXT` and `CDD` data.
         """
-        if self._vendor == "cryptodatadownload":
+        if self._vendor == "CDD":
             # Rename columns for consistency with other crypto vendors.
             # Column name for `volume` depends on the `currency_pair`, e.g., `Volume BTC`.
             # To get rid of this dependency the column's index is used.
@@ -155,7 +155,7 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
         """
         Same as parent class.
         """
-        table_name = self._vendor + "_ohlcv"
+        table_name = self._vendor.lower() + "_ohlcv"
         # Verify that table with specified name exists.
         hdbg.dassert_in(table_name, hsql.get_table_names(self._connection))
         # Initialize SQL query.
@@ -257,7 +257,7 @@ class CcxtCddCsvParquetByAssetClient(CcxtCddClient, icdc.ImClientReadingOneSymbo
         if hs3.is_s3_path(file_path):
             # Add s3fs argument to kwargs.
             kwargs["s3fs"] = self._s3fs
-        if self._vendor == "cryptodatadownload":
+        if self._vendor == "CDD":
             # For `CDD` column names are in the 1st row.
             kwargs["skiprows"] = 1
         if self._extension == "pq":
@@ -321,7 +321,7 @@ class CcxtCddCsvParquetByAssetClient(CcxtCddClient, icdc.ImClientReadingOneSymbo
         # Get absolute file path.
         file_name = ".".join([currency_pair, self._extension])
         file_path = os.path.join(
-            self._root_dir, self._vendor, data_snapshot, exchange_id, file_name
+            self._root_dir, self._vendor.lower(), data_snapshot, exchange_id, file_name
         )
         # TODO(Dan): Remove asserts below after CMTask108 is resolved.
         # Verify that the file exists.
