@@ -33,7 +33,7 @@ import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hparser as hparser
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ def _open_html(md_file: str) -> None:
         "%s/pandoc.py -t %s -i %s --skip_action %s --skip_action %s --tmp_dir %s"
         % (curr_path, "html", md_file, "copy_to_gdrive", "cleanup_after", tmp_dir)
     )
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
 
 
 def _uml_file_names(
@@ -138,7 +138,7 @@ def _render_plantuml_code(
     _LOG.info("Creating uml diagram from %s source.", tmp_file)
     _LOG.info("Saving image to %s.", target_dir)
     _LOG.info("> %s", cmd)
-    hsysinte.system(cmd, dry_run=dry_run)
+    hsystem.system(cmd, dry_run=dry_run)
     return rel_path
 
 

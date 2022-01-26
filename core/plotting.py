@@ -33,8 +33,8 @@ import core.signal_processing as csigproc
 import core.statistics as costatis
 import helpers.hdataframe as hdatafr
 import helpers.hdbg as hdbg
-import helpers.hpandas as hpandas
 import helpers.hlist as hlist
+import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 

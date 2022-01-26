@@ -35,7 +35,7 @@ import zeep
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hparser as hparser
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import im.eoddata.metadata.types as imeometyp
 
 _LOG = logging.getLogger(__name__)
@@ -52,8 +52,8 @@ def _get_token() -> str:
     """
     Login to EODData API using credentials in env vars and get a token.
     """
-    username = hsysinte.get_env_var("EODDATA_USERNAME")
-    password = hsysinte.get_env_var("EODDATA_PASSWORD")
+    username = hsystem.get_env_var("EODDATA_USERNAME")
+    password = hsystem.get_env_var("EODDATA_PASSWORD")
 
     _LOG.info("Logging into EODData API ...")
 

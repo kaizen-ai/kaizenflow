@@ -17,10 +17,10 @@ from tqdm.autonotebook import tqdm
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import helpers.htqdm as htqdm
 import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.htimer as htimer
+import helpers.htqdm as htqdm
 
 _LOG = logging.getLogger(__name__)
 

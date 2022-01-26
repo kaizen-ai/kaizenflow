@@ -10,7 +10,7 @@
 # import helpers.hgit as hgit
 # import helpers.hio as hio
 # import helpers.hprint as hprint
-# import helpers.hsystem as hsysinte
+# import helpers.hsystem as hsystem
 # import helpers.hunit_test as hunitest
 #
 # _LOG = logging.getLogger(__name__)
@@ -37,7 +37,7 @@
 #        cmd.append("--action convert_txt_to_pandoc")
 #        cmd.append("--action run_pandoc")
 #        cmd = " ".join(cmd)
-#        hsysinte.system(cmd)
+#        hsystem.system(cmd)
 #        # Check.
 #        if action == "pdf":
 #            out_file = os.path.join(tmp_dir, "tmp.pandoc.tex")
@@ -105,7 +105,7 @@
 #    cmd.append("--input %s" % in_file)
 #    cmd.append("--output %s" % out_file)
 #    cmd_as_str = " ".join(cmd)
-#    hsysinte.system(cmd_as_str)
+#    hsystem.system(cmd_as_str)
 #    # Check.
 #    act = hio.from_file(out_file)
 #    return act  # type: ignore

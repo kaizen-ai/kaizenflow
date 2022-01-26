@@ -3,7 +3,7 @@ Manage (e.g., create, destroy, query) IM Postgres DB.
 
 Import as:
 
-import im_v2.common.db.db_utils as imvcodbut
+import im_v2.common.db.db_utils as imvcddbut
 """
 
 import logging

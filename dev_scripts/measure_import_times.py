@@ -18,7 +18,7 @@ from tqdm import tqdm
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hparser as hparser
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 from helpers.timer import Timer
 
 _LOG = logging.getLogger(__name__)
@@ -66,7 +66,7 @@ class ImportTimeChecker:
         if module not in self.checked_modules:
             # execute python "import module" to measure.
             timer = Timer()
-            hsysinte.system(f'python -c "import {module}"')
+            hsystem.system(f'python -c "import {module}"')
             timer.stop()
             elapsed_time = round(timer.get_elapsed(), 3)
             self.checked_modules[module] = elapsed_time

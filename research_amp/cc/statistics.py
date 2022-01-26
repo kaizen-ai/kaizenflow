@@ -17,7 +17,7 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
-import im_v2.cryptodatadownload.data.client.cdd_client as imcdaclcd
+import im_v2.cryptodatadownload.data.client.cdd_client as imvcdccdcl
 
 _LOG = logging.getLogger(__name__)
 
@@ -200,7 +200,7 @@ def postprocess_stats_table(
 # TODO(Grisha): move `get_loader_for_vendor` out in and use the abstract class in #313.
 def get_loader_for_vendor(
     config: cconconf.Config,
-) -> Union[icdc.ImClient, imcdaclcd.CddClient]:
+) -> Union[icdc.ImClient, imvcdccdcl.CddClient]:
     """
     Get vendor specific loader instance.
 
@@ -218,7 +218,7 @@ def get_loader_for_vendor(
             aws_profile=config["load"]["aws_profile"],
         )
     elif vendor == "CDD":
-        loader = imcdaclcd.CddClient(
+        loader = imvcdccdcl.CddClient(
             data_type,
             root_dir,
             aws_profile=config["load"]["aws_profile"],

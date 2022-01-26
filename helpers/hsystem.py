@@ -4,7 +4,7 @@ system commands, env vars, ...
 
 Import as:
 
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 """
 
 import getpass

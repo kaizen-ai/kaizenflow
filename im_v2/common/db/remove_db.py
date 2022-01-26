@@ -4,6 +4,10 @@ Script to remove IM database using connection.
 
 # Remove a DB named 'test_db' using environment variables: >
 remove_db.py --db_name 'test_db'
+
+Import as:
+
+import im_v2.common.db.remove_db as imvcdredb
 """
 
 import argparse

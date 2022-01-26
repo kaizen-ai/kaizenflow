@@ -17,7 +17,7 @@ import logging
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 
-# import helpers.hsystem as hsysinte
+# import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Insert your code here.
     # - Use _LOG.info(), _LOG.debug() instead of printing.
     # - Use hdbg.dassert_*() for assertion.
-    # - Use hsysinte.system() and hsysinte.system_to_string() to issue commands.
+    # - Use hsystem.system() and hsystem.system_to_string() to issue commands.
 
 
 if __name__ == "__main__":
