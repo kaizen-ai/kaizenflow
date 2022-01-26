@@ -396,6 +396,11 @@ def df_to_str(
         column by looking at the first value
     :param print_shape_info: reports dataframe shape, index and columns
     """
+    # TODO(Nikola): Couple of test are failing with
+    #  AttributeError: 'NoneType' object has no attribute 'empty'
+    #  or with totally misleading messages in form of duplicate keys in db, etc.
+    if df is None:
+        return ""
     out = []
     # Print the tag.
     if tag is not None:
@@ -405,7 +410,7 @@ def df_to_str(
         if not df.empty:
             out.append("df.index in [%s, %s]" % (df.index.min(), df.index.max()))
             out.append("df.columns=%s" % ",".join(map(str, df.columns)))
-            # TODO(Nikola): Revisit and rename print_shape_info
+            # TODO(Nikola): Revisit and rename print_shape_info to print_axes_info
             out.append("df.shape=%s" % str(df.shape))
     # Print information about the types.
     if not df.empty:

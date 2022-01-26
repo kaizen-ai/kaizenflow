@@ -13,9 +13,29 @@ _LOG = logging.getLogger(__name__)
 
 
 def _run() -> None:
+    # Functions to replace.
     dataframe_to_str = "hpandas.dataframe_to_str"
     df_to_short_str = "hpandas.df_to_short_str"
     df_to_str = "hpandas.df_to_str"
+    # Custom patterns.
+    # TODO(Nikola): Enable tag after merge
+    patterns = [
+        (
+            f"{dataframe_to_str}(df.head())",
+            # f'{df_to_str}(df.head(), tag="df")',
+            f"{df_to_str}(df.head())",
+        ),
+        (
+            f"{dataframe_to_str}(df.head(3))",
+            # f'{df_to_str}(df.head(3), tag="df")',
+            f"{df_to_str}(df.head(3))",
+        ),
+        (
+            f"{dataframe_to_str}(reindexed_df.head(3))",
+            # f'{df_to_str}(reindexed_df.head(3), tag="df")',
+            f"{df_to_str}(reindexed_df.head(3))",
+        ),
+    ]
     all_files = dscretex._get_all_files(["."], ["py"])
     # Remove current script from the result.
     all_files.remove(__file__)
@@ -29,34 +49,36 @@ def _run() -> None:
             ]
         ):
             continue
+        # Log properly formatted multiline calls.
+        if any(
+            [
+                f"{dataframe_to_str}(\n" in file_string,
+                f"{df_to_short_str}(\n" in file_string,
+            ]
+        ):
+            _LOG.info(f"Multiline call found in `{file_name}`!")
         for function_ in [dataframe_to_str, df_to_short_str]:
             # Find all possible patterns for function call.
             function_args = re.findall(f"{function_}\\((.*?)\\)", file_string)
             if function_args:
                 for args in function_args:
-                    # Apply custom patterns.
-                    patterns = [
-                        (
-                            f"{dataframe_to_str}(df.head())",
-                            f'{df_to_str}(df.head(), tag="df")',
-                        ),
-                        (
-                            f"{dataframe_to_str}(df.head(3))",
-                            f'{df_to_str}(df.head(3), tag="df")',
-                        ),
-                        (
-                            f"{dataframe_to_str}(reindexed_df.head(3))",
-                            f'{df_to_str}(reindexed_df.head(3), tag="df")',
-                        ),
-                    ]
-                    for old_pattern, new_pattern in patterns:
-                        if old_pattern in file_string:
-                            file_string = file_string.replace(
-                                old_pattern, new_pattern
-                            )
-                            _LOG.info(
-                                f"Replace occurrences of `{old_pattern}` in `{file_name}`!"
-                            )
+                    if any(
+                        [
+                            "(" in args,
+                            ")" in args,
+                        ]
+                    ):
+                        # Apply custom patterns.
+                        for old_pattern, new_pattern in patterns:
+                            if old_pattern in file_string:
+                                file_string = file_string.replace(
+                                    old_pattern, new_pattern
+                                )
+                                _LOG.info(
+                                    "Replace occurrences of `%s` in `%s`!"
+                                    % (old_pattern, file_name)
+                                )
+                        continue
                     # Create desired function call.
                     new_args = ""
                     if function_ == dataframe_to_str:
