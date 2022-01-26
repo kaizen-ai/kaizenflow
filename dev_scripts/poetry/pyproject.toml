@@ -5,7 +5,29 @@ description = ""
 authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
+awscli = "1.22.17"
+jupyter = "*"
+jupyter_contrib_nbextensions = "*"
+jupyter_nbextensions_configurator = "*"
+matplotlib = "*"
+networkx = "*"
+pandas = "^1.2.0"
+psycopg2-binary = "*"
+pyarrow = "*"
+pytest = "^6.0.0"
+pytest-cov = "*"
+pytest-instafail = "*"
+pytest-rerunfailures = "*"
+pytest-timeout = "*"
+pytest-xdist = "*"
 python = "^3.8"
+python-dotenv = "*"
+pywavelets = "*"
+s3fs = "*"
+seaborn = "*"
+sklearn = "*"
+statsmodels = "*"
+tqdm = "*"
 
 [tool.poetry.dev-dependencies]
 
