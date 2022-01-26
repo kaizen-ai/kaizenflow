@@ -5,6 +5,7 @@ except ImportError:
     # `moto` is not installed in `dev_tools`, so we skip it (see "DevTools376:
     # Break 2022-02-22")
     import helpers.hgit as hgit
+
     assert hgit.is_dev_tools(), "Only `dev_tools` can skip these tests."
     _HAS_MOTO = False
 
@@ -13,8 +14,8 @@ if _HAS_MOTO:
     import logging
 
     import boto3
-    import pytest
     import botocore
+    import pytest
 
     import helpers.hsecrets as hsecret
     import helpers.hunit_test as hunitest
@@ -27,9 +28,7 @@ if _HAS_MOTO:
     _REASON_TO_SKIP_TEST = "Need to add `ck` profile to GH actions CmTask961, test has passed on dev stage."
 
     class TestCreateClient(hunitest.TestCase):
-        @pytest.mark.skip(
-            reason=_REASON_TO_SKIP_TEST
-        )
+        @pytest.mark.skip(reason=_REASON_TO_SKIP_TEST)
         def test_create_client1(self) -> None:
             """
             Simple smoke test to verify connection to AWS.
@@ -38,9 +37,7 @@ if _HAS_MOTO:
             self.assertIsInstance(client, botocore.client.BaseClient)
 
     class TestGetSecret(hunitest.TestCase):
-        @pytest.mark.skip(
-            reason=_REASON_TO_SKIP_TEST
-        )
+        @pytest.mark.skip(reason=_REASON_TO_SKIP_TEST)
         @moto.mock_secretsmanager
         def test_get_secret(self) -> None:
             """
@@ -56,9 +53,7 @@ if _HAS_MOTO:
             self.assertDictEqual(hsecret.get_secret(secret_name), secret)
 
     class TestStoreSecret(hunitest.TestCase):
-        @pytest.mark.skip(
-            reason=_REASON_TO_SKIP_TEST
-        )
+        @pytest.mark.skip(reason=_REASON_TO_SKIP_TEST)
         @moto.mock_secretsmanager
         def test_store_secret1(self) -> None:
             """
