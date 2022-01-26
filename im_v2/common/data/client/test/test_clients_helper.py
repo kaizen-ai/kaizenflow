@@ -29,7 +29,7 @@ def _check_output(
     act = []
     #
     actual_df = actual_df[sorted(actual_df.columns)]
-    act.append(hpandas.df_to_short_str("df", actual_df))
+    act.append(hpandas.df_to_str(actual_df, print_shape_info=True, tag="df"))
     #
     actual_exchange_ids = sorted(list(actual_df["exchange_id"].dropna().unique()))
     act.append("exchange_ids=%s" % ",".join(actual_exchange_ids))

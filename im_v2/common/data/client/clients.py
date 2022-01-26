@@ -83,7 +83,7 @@ class ImClient(abc.ABC):
         )
         hdbg.dassert_in(full_symbol_col_name, df.columns)
         df.index.name = "timestamp"
-        _LOG.debug("After _read_data: df=\n%s", hpandas.dataframe_to_str(df))
+        _LOG.debug("After _read_data: df=\n%s", hpandas.df_to_str(df))
         # Normalize data for each symbol.
         dfs = []
         for _, df_tmp in df.groupby(full_symbol_col_name):
@@ -94,7 +94,7 @@ class ImClient(abc.ABC):
             dfs.append(df_tmp)
         df = pd.concat(dfs, axis=0)
         _LOG.debug(
-            "After im_normalization: df=\n%s", hpandas.dataframe_to_str(df)
+            "After im_normalization: df=\n%s", hpandas.df_to_str(df)
         )
         # Sort by index and `full_symbol_col_name`.
         # There is not a simple way to sort by index and columns in Pandas,
@@ -102,7 +102,7 @@ class ImClient(abc.ABC):
         df = df.reset_index()
         df = df.sort_values(by=["timestamp", full_symbol_col_name])
         df = df.set_index("timestamp", drop=True)
-        _LOG.debug("After sorting: df=\n%s", hpandas.dataframe_to_str(df))
+        _LOG.debug("After sorting: df=\n%s", hpandas.df_to_str(df))
         return df
 
     def get_start_ts_for_symbol(

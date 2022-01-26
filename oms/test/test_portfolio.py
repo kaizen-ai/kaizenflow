@@ -335,7 +335,7 @@ class TestMockedPortfolio1(omtodh.TestOmsDbHelper):
                 # Print the DB status.
                 query = """SELECT * FROM current_positions"""
                 df = hsql.execute_query_to_df(self.connection, query)
-                print(hpandas.dataframe_to_str(df))
+                print(hpandas.df_to_str(df))
                 assert 0
             #
             # Create MockedPortfolio with some initial cash.
@@ -364,7 +364,7 @@ class TestMockedPortfolio1(omtodh.TestOmsDbHelper):
                 # Print the DB status.
                 query = """SELECT * FROM current_positions"""
                 df = hsql.execute_query_to_df(self.connection, query)
-                print(hpandas.dataframe_to_str(df))
+                print(hpandas.df_to_str(df))
                 assert 0
             #
             # Create MockedPortfolio with some initial cash.

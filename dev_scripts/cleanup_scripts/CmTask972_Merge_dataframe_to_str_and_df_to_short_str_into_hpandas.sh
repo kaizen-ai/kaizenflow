@@ -3,9 +3,11 @@
 # We want to apply changes to the code base 99% automatically
 # 1) Prepare one PR with
 #    a) the code that needs to be changed manually
-#       - E.g., in this case move the code from hprint to hpandas
+#       - E.g., in this case merge `dataframe_to_str` and `df_to_short_str`
+#         from `hpandas` into `df_to_str`
 #    b) more contextual changes (e.g., adding unit tests)
-#    c) the script for the replacement of the caller `replace_text.py`
+#    c) the script for the replacement of the caller
+#       `CmTask972_Merge_dataframe_to_str_and_df_to_short_str_into_hpandas.py`
 #       - Conceptually the script
 #         - prepares the target Git client
 #         - merge this branch with the manual changes
@@ -44,25 +46,8 @@ git reset --hard origin/$TARGET_BRANCH
 # Apply manual changes.
 git merge --no-commit origin/$SOURCE_REPO
 
-# Move dataframe_to_str from hprint to hpandas.
-./dev_scripts/replace_text.py \
-  --old "hprint.dataframe_to_str" \
-  --new "hpandas.dataframe_to_str" \
-  --ext "py"
+# Replace function calls.
+./dev_scripts/cleanup_scripts/CmTask972_Merge_dataframe_to_str_and_df_to_short_str_into_hpandas.py
 
-# Move df_to_short_str from hprint to hpandas.
-./dev_scripts/replace_text.py \
-  --old "hprint.df_to_short_str" \
-  --new "hpandas.df_to_short_str" \
-  --ext "py"
-
-# Add imports to affected files.
-FILES=$(git diff --name-only HEAD)
-./dev_scripts/replace_text.py \
-  --old "import helpers.hprint as hprint" \
-  --new "import helpers.hpandas as hpandas; import helpers.hprint as hprint" \
-  --ext "py" \
-  --only_files "${FILES//$'\n'/ }" # Replace new lines with space.
-
-# Remove unused imports from affected files.
+# Apply lint to affected files.
 invoke lint -m --only-format
