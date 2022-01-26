@@ -335,7 +335,7 @@ def _get_logging_format(
     :param force_verbose_format: force to use the verbose format
     """
     if _is_running_in_ipynb() and not force_no_warning:
-        print(WARNING + ": Running in Jupyter")
+        print("WARNING: Running in Jupyter")
     verbose_format = not _is_running_in_ipynb()
     #
     assert not (force_verbose_format and force_print_format), (
@@ -641,7 +641,7 @@ def set_v2_formatter(
     if _is_running_in_ipynb():
         verbose_format = False
         if not force_no_warning:
-            print(WARNING + ": Running in Jupyter")
+            print("WARNING: Running in Jupyter")
     #
     if force_verbose_format:
         verbose_format = True
