@@ -8,7 +8,6 @@ import market_data.test.market_data_test_case as mdtmdtca
 
 
 class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
-    @pytest.mark.skip(reason="CmTask1001.")
     def test_get_data_for_last_period1(self) -> None:
         """
         See description of corresponding private method in parent class.
@@ -23,7 +22,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         # Run.
         self._test_get_data_for_last_period(market_data, period, normalize_data)
 
-    @pytest.mark.skip(reason="CmTask1001.")
     def test_get_data_for_last_period2(self) -> None:
         """
         See description of corresponding private method in parent class.
@@ -38,7 +36,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         # Run.
         self._test_get_data_for_last_period(market_data, period, normalize_data)
 
-    @pytest.mark.skip(reason="CmTask1001.")
     def test_get_data_for_last_period3(self) -> None:
         """
         See description of corresponding private method in parent class.
@@ -53,7 +50,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         # Run.
         self._test_get_data_for_last_period(market_data, period, normalize_data)
 
-    @pytest.mark.skip(reason="CmTask1001.")
     def test_get_data_for_last_period4(self) -> None:
         """
         See description of corresponding private method in parent class.
@@ -68,7 +64,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         # Run.
         self._test_get_data_for_last_period(market_data, period, normalize_data)
 
-    @pytest.mark.skip(reason="CmTask1001.")
     def test_get_data_for_last_period5(self) -> None:
         """
         See description of corresponding private method in parent class.
@@ -83,7 +78,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         # Run.
         self._test_get_data_for_last_period(market_data, period, normalize_data)
 
-    @pytest.mark.skip(reason="CmTask1001.")
     def test_get_data_for_last_period6(self) -> None:
         """
         See description of corresponding private method in parent class.
@@ -93,12 +87,11 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
-        period = "last_1mins"
+        period = "last_1min"
         normalize_data = True
         # Run.
         self._test_get_data_for_last_period(market_data, period, normalize_data)
 
-    @pytest.mark.skip(reason="CmTask1001.")
     def test_get_data_for_last_period7(self) -> None:
         """
         See description of corresponding private method in parent class.
