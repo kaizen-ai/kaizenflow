@@ -2,7 +2,6 @@ import logging
 
 import pytest
 
-import helpers.hgit as hgit
 import helpers.hsql as hsql
 import im_v2.common.db.db_utils as imvcddbut
 

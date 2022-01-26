@@ -4,7 +4,6 @@ import pytest
 
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
-import helpers.lib_tasks as hlibtask
 import im_v2.im_lib_tasks as imvimlita  # pylint: disable=no-name-in-module
 
 _LOG = logging.getLogger(__name__)

@@ -24,7 +24,7 @@ import collections
 import logging
 import os
 import time
-from typing import Any, Dict, List, NamedTuple, Optional, Union
+from typing import Any, Dict, List, NamedTuple, Union
 
 import pandas as pd
 

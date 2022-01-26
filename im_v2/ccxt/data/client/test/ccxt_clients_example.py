@@ -15,9 +15,9 @@ def get_test_data_dir() -> str:
     """
     Get dir with data files for the tests.
 
-    The files in the dir are copies of some `CCXT` data files from S3 that
-    were loaded for our research purposes. These copies are checked out
-    locally in order to test functions without dependencies on S3.
+    The files in the dir are copies of some `CCXT` data files from S3
+    that were loaded for our research purposes. These copies are checked
+    out locally in order to test functions without dependencies on S3.
     """
     test_data_dir = os.path.join(
         hgit.get_amp_abs_path(),

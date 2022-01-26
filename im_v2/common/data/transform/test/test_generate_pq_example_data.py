@@ -1,7 +1,5 @@
 import os
 
-import pytest
-
 import helpers.hgit as hgit
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
