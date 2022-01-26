@@ -3,7 +3,7 @@ try:
     import moto
 except ImportError:
     # `moto` is not installed in `dev_tools`, so we skip it (see "DevTools376:
-    # Break 2022-02-22")
+    # Break 2022-02-22").
     import helpers.hgit as hgit
 
     assert hgit.is_dev_tools(), "Only `dev_tools` can skip these tests."
