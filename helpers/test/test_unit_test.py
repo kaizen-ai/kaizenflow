@@ -1135,3 +1135,30 @@ class Test_purify_object_reference1(hunitest.TestCase):
         'ath_end_time': datetime.time(16, 40), 'trading_end_time':
         datetime.time(16, 4  0)}}"""
         self.helper(txt, exp)
+
+
+# #############################################################################
+
+
+class Test_purify_amp_reference1(hunitest.TestCase):
+    def helper(self, txt: str, exp: str) -> None:
+        txt = hprint.dedent(txt)
+        act = hunitest.purify_amp_references(txt)
+        exp = hprint.dedent(exp)
+        self.assert_equal(act, exp)
+
+    def test1(self) -> None:
+        """
+        Remove the reference to `amp.`.
+        """
+        txt = """
+        * Failed assertion *
+        Instance '<amp.helpers.test.test_dbg._Man object at 0x123456>'
+            of class '_Man' is not a subclass of '<class 'int'>'
+        """
+        exp = r"""
+        * Failed assertion *
+        Instance '<helpers.test.test_dbg._Man object at 0x123456>'
+            of class '_Man' is not a subclass of '<class 'int'>'
+        """
+        self.helper(txt, exp)

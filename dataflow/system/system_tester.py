@@ -53,7 +53,7 @@ class SystemTester:
         volatility_col: str,
         prediction_col: str,
         target_gmv: float = 100000,
-        dollar_neutral: bool = False,
+        dollar_neutrality: str = "no_constraint",
     ) -> Tuple[str, pd.Series]:
         actual = ["\n# forecast_evaluator signature=\n"]
         forecast_evaluator = dtfmod.ForecastEvaluator(
@@ -65,13 +65,14 @@ class SystemTester:
         signature = forecast_evaluator.to_str(
             result_df,
             target_gmv=target_gmv,
-            dollar_neutral=dollar_neutral,
+            dollar_neutrality=dollar_neutrality,
         )
         actual.append(signature)
         _, _, stats = forecast_evaluator.compute_portfolio(
             result_df,
             target_gmv=target_gmv,
-            dollar_neutral=dollar_neutral,
+            dollar_neutrality=dollar_neutrality,
+            reindex_like_input=True,
         )
         research_pnl = stats["pnl"]
         actual = "\n".join(map(str, actual))

@@ -28,7 +28,9 @@ def get_simulated_portfolio_example1(
 ) -> omportfo.SimulatedPortfolio:
     # Build SimulatedBroker.
     broker = obroexam.get_simulated_broker_example1(
-        event_loop, market_data=market_data
+        event_loop,
+        market_data=market_data,
+        timestamp_col=timestamp_col,
     )
     # Build SimulatedPortfolio.
     strategy_id = "st1"

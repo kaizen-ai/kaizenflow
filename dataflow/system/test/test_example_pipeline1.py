@@ -57,7 +57,7 @@ class TestExamplePipeline1(otodh.TestOmsDbHelper):
         }
         return portfolio
 
-    def get_simulated_portfolio(
+    def get_dataframe_portfolio(
         self,
         event_loop: asyncio.AbstractEventLoop,
         market_data: mdata.AbstractMarketData,
@@ -104,19 +104,25 @@ class TestExamplePipeline1(otodh.TestOmsDbHelper):
     @pytest.mark.slow
     def test_market_data1_database_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = self._get_market_data_df1()
-        actual = self._run_coroutines(data, real_time_loop_time_out_in_secs)
+        actual = self._run_coroutines(
+            data, real_time_loop_time_out_in_secs, is_database_portfolio=False
+        )
         self.check_string(actual)
 
     @pytest.mark.slow
     def test_market_data2_database_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = self._get_market_data_df2()
-        actual = self._run_coroutines(data, real_time_loop_time_out_in_secs)
+        actual = self._run_coroutines(
+            data, real_time_loop_time_out_in_secs, is_database_portfolio=False
+        )
         self.check_string(actual)
 
     @pytest.mark.slow
     def test_market_data3_database_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = self._get_market_data_df3()
-        actual = self._run_coroutines(data, real_time_loop_time_out_in_secs)
+        actual = self._run_coroutines(
+            data, real_time_loop_time_out_in_secs, is_database_portfolio=False
+        )
         self.check_string(actual)
 
     @pytest.mark.slow
@@ -137,7 +143,7 @@ class TestExamplePipeline1(otodh.TestOmsDbHelper):
         )
         self.assert_equal(actual, expected)
 
-    @pytest.mark.slow
+    @pytest.mark.superslow("Times out in GH Actions.")
     def test_market_data3_database_vs_dataframe_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = self._get_market_data_df3()
         expected = self._run_coroutines(data, real_time_loop_time_out_in_secs)
@@ -159,23 +165,27 @@ class TestExamplePipeline1(otodh.TestOmsDbHelper):
                 initial_replayed_delay,
                 data,
             )
-            # Clean the DB tables.
-            oomsdb.create_oms_tables(self.connection, incremental=False)
             if is_database_portfolio:
+                # Clean the DB tables.
+                oomsdb.create_oms_tables(self.connection, incremental=False)
                 portfolio = self.get_database_portfolio(event_loop, market_data)
             else:
-                portfolio = self.get_simulated_portfolio(event_loop, market_data)
+                portfolio = self.get_dataframe_portfolio(event_loop, market_data)
             # Create the real-time DAG.
             base_dag_builder = dtfpiexpip.ExamplePipeline1_ModelBuilder()
             prediction_col = "feature1"
             volatility_col = "vwap.ret_0.vol"
+            returns_col = "vwap.ret_0"
+            timedelta = pd.Timedelta("7D")
+            asset_id_col = "asset_id"
             dag_builder = dtfsrtdaad.RealTimeDagAdapter(
                 base_dag_builder,
                 portfolio,
                 prediction_col,
                 volatility_col,
-                "last_week",
-                "asset_id",
+                returns_col,
+                timedelta,
+                asset_id_col,
                 # log_dir="tmp_log_dir",
             )
             _LOG.debug("dag_builder=\n%s", dag_builder)

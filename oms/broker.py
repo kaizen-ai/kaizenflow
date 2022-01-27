@@ -319,8 +319,9 @@ class SimulatedBroker(AbstractBroker):
     def __init__(
         self,
         *args: Any,
+        **kwargs: Any,
     ) -> None:
-        super().__init__(*args)
+        super().__init__(*args, **kwargs)
 
     def get_fills(self) -> List[Fill]:
         return self._get_fills_helper()

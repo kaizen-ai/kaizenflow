@@ -58,6 +58,8 @@ def _get_index(obj: Union[pd.Index, pd.DataFrame, pd.Series]) -> pd.Index:
     return index
 
 
+# TODO(gp): Maybe for symmetry with the other functions, rename to
+#  dassert_datetime_index
 def dassert_index_is_datetime(
     obj: Union[pd.Index, pd.DataFrame, pd.Series],
     msg: Optional[str] = None,
@@ -70,6 +72,27 @@ def dassert_index_is_datetime(
     hdbg.dassert_isinstance(index, pd.DatetimeIndex, msg, *args)
 
 
+def dassert_unique_index(
+    obj: Union[pd.Index, pd.DataFrame, pd.Series],
+    msg: Optional[str] = None,
+    *args: Any,
+) -> None:
+    """
+    Ensure that a Pandas object has a unique index.
+    """
+    index = _get_index(obj)
+    if not index.is_unique:
+        dup_indices = index.duplicated(keep=False)
+        df_dup = obj[dup_indices]
+        dup_msg = "Duplicated rows are:\n%s\n" % hpandas.dataframe_to_str(df_dup)
+        if msg is None:
+            msg = dup_msg
+        else:
+            msg = dup_msg + msg
+        hdbg.dassert(index.is_unique, msg=msg, *args)
+
+
+# TODO(gp): Add more info in case of failures and unit tests.
 def dassert_strictly_increasing_index(
     obj: Union[pd.Index, pd.DataFrame, pd.Series],
     msg: Optional[str] = None,
@@ -78,11 +101,11 @@ def dassert_strictly_increasing_index(
     """
     Ensure that a Pandas object has a strictly increasing index.
     """
-    index = _get_index(obj)
+    dassert_unique_index(obj, msg=msg, *args)
     # TODO(gp): Understand why mypy reports:
     #   error: "dassert" gets multiple values for keyword argument "msg"
+    index = _get_index(obj)
     hdbg.dassert(index.is_monotonic_increasing, msg=msg, *args)
-    hdbg.dassert(index.is_unique, msg=msg, *args)
 
 
 # TODO(gp): Factor out common code related to extracting the index from several
@@ -97,12 +120,12 @@ def dassert_monotonic_index(
     Ensure that a Pandas object has a monotonic (i.e., strictly increasing or
     decreasing index).
     """
-    index = _get_index(obj)
+    dassert_unique_index(obj, msg=msg, *args)
     # TODO(gp): Understand why mypy reports:
     #   error: "dassert" gets multiple values for keyword argument "msg"
+    index = _get_index(obj)
     cond = index.is_monotonic_increasing or index.is_monotonic_decreasing
     hdbg.dassert(cond, msg=msg, *args)
-    hdbg.dassert(index.is_unique, msg=msg, *args)
 
 
 def dassert_valid_remap(to_remap: List[str], remap_dict: Dict[str, str]) -> None:
@@ -169,7 +192,7 @@ def resample_index(index: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
     :return: resampled `DatetimeIndex`
     """
     hdbg.dassert_isinstance(index, pd.DatetimeIndex)
-    hdbg.dassert(index.is_unique, msg="Index must have only unique values")
+    dassert_unique_index(index, msg="Index must have only unique values")
     min_date = index.min()
     max_date = index.max()
     # TODO(gp): Preserve the index name.

@@ -29,7 +29,7 @@ class TestModelPlotter1(hunitest.TestCase):
         )
         # TODO(gp): Move this chunk of code in a function and call that.
         col_mask = (
-            pnl_stats.loc["signal_quality"].loc["sr.adj_pval"]
+            pnl_stats.loc["ratios"].loc["sr.adj_pval"]
             < eval_config["bh_adj_threshold"]
         )
         selected = pnl_stats.loc[:, col_mask].columns.to_list()
