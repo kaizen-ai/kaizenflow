@@ -416,14 +416,14 @@ class RealTimeDataSource(dtfcore.DataSource):
         self,
         nid: dtfcore.NodeId,
         market_data: mdata.AbstractMarketData,
-        period: str,
+        timedelta: pd.Timedelta,
         asset_id_col: Union[int, str],
         multiindex_output: bool,
     ) -> None:
         """
         Constructor.
 
-        :param period: how much history is needed from the real-time node. See
+        :param timedelta: how much history is needed from the real-time node. See
             `AbstractMarketData.get_data()` for details.
         :param asset_id_col: the name of the column from `market_data`
             containing the asset ids
@@ -431,7 +431,8 @@ class RealTimeDataSource(dtfcore.DataSource):
         super().__init__(nid)
         hdbg.dassert_isinstance(market_data, mdata.AbstractMarketData)
         self._market_data = market_data
-        self._period = period
+        hdbg.dassert_isinstance(timedelta, pd.Timedelta)
+        self._timedelta = timedelta
         self._asset_id_col = asset_id_col
         self._multiindex_output = multiindex_output
 
@@ -453,7 +454,7 @@ class RealTimeDataSource(dtfcore.DataSource):
     def _get_data(self) -> None:
         # TODO(gp): This approach of communicating params through the state
         #  makes the code difficult to understand.
-        self.df = self._market_data.get_data_for_last_period(self._period)
+        self.df = self._market_data.get_data_for_last_period(self._timedelta)
         if self._multiindex_output:
             self.df = _convert_to_multiindex(self.df, self._asset_id_col)
 
