@@ -6,7 +6,7 @@
 #
 # import core.finance as cofinanc
 # import helpers.hgit as hgit
-# import helpers.hsystem as hsysinte
+# import helpers.hsystem as hsystem
 # import helpers.hunit_test as hunitest
 # import vendors.cme.reader as cmer
 # import vendors.core.base_classes as etl_base

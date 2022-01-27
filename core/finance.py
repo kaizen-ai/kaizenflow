@@ -18,8 +18,8 @@ import core.signal_processing as csigproc
 import helpers.hdataframe as hdatafr
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import helpers.htypes as htypes
 import helpers.hprint as hprint
+import helpers.htypes as htypes
 
 _LOG = logging.getLogger(__name__)
 

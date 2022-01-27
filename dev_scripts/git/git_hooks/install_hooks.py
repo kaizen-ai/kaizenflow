@@ -24,7 +24,7 @@ import sys
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hparser as hparser
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ def _main() -> None:
     # > git rev-parse --git-path hooks
     # /Users/saggese/src/.../.git/modules/amp/hooks
     cmd = "git rev-parse --git-path hooks"
-    rc, target_dir = hsysinte.system_to_one_line(cmd)
+    rc, target_dir = hsystem.system_to_one_line(cmd)
     _ = rc
     _LOG.info("target_dir=%s", target_dir)
     hdbg.dassert_dir_exists(target_dir)
@@ -77,11 +77,11 @@ def _main() -> None:
     elif args.action == "status":
         _LOG.info("Checking status of hooks in the repo '%s'", src_dir)
         cmd = "ls -l %s" % src_dir
-        hsysinte.system(cmd, suppress_output=False, log_level=logging.DEBUG)
+        hsystem.system(cmd, suppress_output=False, log_level=logging.DEBUG)
         #
         _LOG.info("Checking status of hooks in '%s'", target_dir)
         cmd = "ls -l %s" % target_dir
-        hsysinte.system(cmd, suppress_output=False, log_level=logging.DEBUG)
+        hsystem.system(cmd, suppress_output=False, log_level=logging.DEBUG)
         sys.exit(0)
     else:
         hdbg.dfatal("Invalid action='%s'" % args.action)
@@ -98,17 +98,17 @@ def _main() -> None:
             _LOG.info("Creating %s -> %s", hook_file, target_file)
             # Create link.
             cmd = "ln -sf %s %s" % (hook_file, target_file)
-            hsysinte.system(cmd, log_level=logging.DEBUG)
+            hsystem.system(cmd, log_level=logging.DEBUG)
             # Make the scripts executable.
             cmd = "chmod +x %s" % hook_file
-            hsysinte.system(cmd, log_level=logging.DEBUG)
+            hsystem.system(cmd, log_level=logging.DEBUG)
             cmd = "chmod +x %s" % target_file
-            hsysinte.system(cmd, log_level=logging.DEBUG)
+            hsystem.system(cmd, log_level=logging.DEBUG)
         elif args.action == "remove":
             _LOG.info("Remove hook '%s'", target_file)
             if os.path.exists(target_file):
                 cmd = "unlink %s" % target_file
-                hsysinte.system(cmd, log_level=logging.DEBUG)
+                hsystem.system(cmd, log_level=logging.DEBUG)
             else:
                 _LOG.warning(
                     "Nothing to do since '%s' doesn't exist", target_file

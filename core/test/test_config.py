@@ -7,7 +7,7 @@ import pytest
 
 import core.config as cconfig
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -784,7 +784,7 @@ class Test_from_env_var1(hunitest.TestCase):
         )
         cmd = f"{pre_cmd}; python -c '{python_code}'"
         _LOG.debug("cmd=%s", cmd)
-        hsysinte.system(cmd, suppress_output=False)
+        hsystem.system(cmd, suppress_output=False)
 
 
 # #############################################################################

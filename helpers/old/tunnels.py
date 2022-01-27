@@ -9,9 +9,9 @@ import os
 from typing import Any, Dict, List, Tuple, cast
 
 import helpers.hdbg as hdbg
-import helpers.old.user_credentials as holuscre
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
+import helpers.old.user_credentials as holuscre
 
 _LOG = logging.getLogger(__name__)
 
@@ -73,10 +73,10 @@ def _get_services_info() -> list:
     # Server ports.
     services = [
         # service name, server public IP, local port, remote port.
-        ("MongoDb", hsysinte.get_env_var("OLD_DEV_SERVER"), 27017, 27017),
-        ("Jenkins", hsysinte.get_env_var("JENKINS_SERVER"), 8080, 8080),
-        # ("Reviewboard", hsysinte.get_env_var("REVIEWBOARD_SERVER"), 8000, 8000),
-        # ("Doc server", hsysinte.get_env_var("REVIEWBOARD_SERVER"), 8001, 80),
+        ("MongoDb", hsystem.get_env_var("OLD_DEV_SERVER"), 27017, 27017),
+        ("Jenkins", hsystem.get_env_var("JENKINS_SERVER"), 8080, 8080),
+        # ("Reviewboard", hsystem.get_env_var("REVIEWBOARD_SERVER"), 8000, 8000),
+        # ("Doc server", hsystem.get_env_var("REVIEWBOARD_SERVER"), 8001, 80),
         # Netdata to Jenkins and Dev server.
         # ("Dev system performance", DEV_SERVER, 19999),
         # ("Jenkins system performance", DEV_SERVER, 19999),
@@ -138,7 +138,7 @@ def _get_ssh_tunnel_process(
         return keep
 
     _LOG.debug("local_port=%d -> remote_port=%d", local_port, remote_port)
-    pids, txt = hsysinte.get_process_pids(_keep_line)
+    pids, txt = hsystem.get_process_pids(_keep_line)
     _LOG.debug("pids=%s", pids)
     _LOG.debug("txt=\n%s", txt)
     return pids, txt
@@ -170,7 +170,7 @@ def _create_tunnel(
         remote_port=remote_port,
         server=server_name,
     )
-    hsysinte.system(cmd, blocking=False)
+    hsystem.system(cmd, blocking=False)
     # Check that the tunnel is up and running.
     pids = _get_ssh_tunnel_process(local_port, remote_port, fuzzy_match=True)
     hdbg.dassert_lte(1, len(pids))
@@ -183,7 +183,7 @@ def _kill_ssh_tunnel_process(local_port: int, remote_port: int) -> None:
     get_pids = lambda: _get_ssh_tunnel_process(
         local_port, remote_port, fuzzy_match=True
     )
-    hsysinte.kill_process(get_pids)
+    hsystem.kill_process(get_pids)
 
 
 # #############################################################################
@@ -257,5 +257,5 @@ def kill_all_tunnel_processes() -> None:
         keep = ("ssh -i" in line) and (":localhost:" in line)
         return keep
 
-    get_pids = lambda: hsysinte.get_process_pids(_keep_line)
-    hsysinte.kill_process(get_pids)
+    get_pids = lambda: hsystem.get_process_pids(_keep_line)
+    hsystem.kill_process(get_pids)

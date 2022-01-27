@@ -29,7 +29,7 @@ import os
 import pstats
 
 import helpers.hdbg as hdbg
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -106,7 +106,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             args.ext,
             graph_file,
         )
-        hsysinte.system(dot_cmd)
+        hsystem.system(dot_cmd)
         _LOG.info("Output profile graph: %s", graph_file)
         hdbg.dassert(os.path.exists(graph_file), msg="Can't find %s" % graph_file)
         # > eog output.png
