@@ -99,7 +99,7 @@ def compute_start_end_stats(
     )
     hdbg.dassert_isinstance(price_data.index, pd.DatetimeIndex)
     hpandas.dassert_monotonic_index(price_data.index)
-    hdbg.dassert_eq(pd.infer_freq(price_data.index), "T»)
+    hdbg.dassert_eq(pd.infer_freq(price_data.index), "T")
     # Get series of close price.
     close_price_srs = price_data[config["column_names"]["close_price"]]
     # Remove leading and trailing NaNs.
