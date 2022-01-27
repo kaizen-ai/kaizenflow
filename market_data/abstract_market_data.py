@@ -383,11 +383,6 @@ class AbstractMarketData(abc.ABC):
         # TODO(*): Use a to-be-written `get_last_start_time()` instead.
         last_end_time = self.get_last_end_time()
         _LOG.info("last_end_time=%s", last_end_time)
-        # TODO(gp): This is not super robust.
-        if False:
-            # For debugging.
-            df = self.get_data_for_last_period(timedelta="5T")
-            _LOG.info("df=\n%s", hprint.dataframe_to_str(df))
         # Get the data.
         # TODO(*): Remove the hard-coded 1-minute.
         start_time = last_end_time - pd.Timedelta("1M")
