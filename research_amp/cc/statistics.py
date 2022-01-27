@@ -99,10 +99,7 @@ def compute_start_end_stats(
     )
     hdbg.dassert_isinstance(price_data.index, pd.DatetimeIndex)
     hpandas.dassert_monotonic_index(price_data.index)
-    # Message for reviewer: The line below causes critical mistakes,
-    # so I commented it and everything works fine.
-    # What shall we do with it?
-    #hdbg.dassert_eq(price_data.index.freq, "T")
+    hdbg.dassert_eq(pd.infer_freq(price_data.index), "T»)
     # Get series of close price.
     close_price_srs = price_data[config["column_names"]["close_price"]]
     # Remove leading and trailing NaNs.
@@ -203,7 +200,6 @@ def postprocess_stats_table(
 def get_loader_for_vendor(
     config: cconconf.Config,
 ) -> icdc.ImClient:
-#) -> Union[icdc.ImClient, imcdaclcd.CddClient]:
     """
     Get vendor specific loader instance.
 
@@ -219,21 +215,6 @@ def get_loader_for_vendor(
             extension,
             aws_profile=config["load"]["aws_profile"],
         )
-    #if vendor == "CCXT":
-    #    loader = icdcl.CcxtCddCsvParquetByAssetClient(
-    #        vendor,
-    #        root_dir,
-    #        extension,
-    #        aws_profile=config["load"]["aws_profile"],
-    #    )
-    #elif vendor == "CDD":
-    #    loader = imcdaclcd.CddClient(
-    #        data_type,
-    #        root_dir,
-    #        aws_profile=config["load"]["aws_profile"],
-    #    )
-    #else:
-    #    raise ValueError(f"Unsupported vendor={vendor}")
     return loader
 
 
