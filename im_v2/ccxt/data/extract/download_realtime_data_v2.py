@@ -84,12 +84,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Connect to database.
     env_file = imvimlita.get_db_env_path(args.db_stage)
     connection_params = hsql.get_connection_info_from_env_file(env_file)
-    hsql.get_connection(*connection_params)
+    connection = hsql.get_connection(*connection_params)
     # Initialize exchange class.
-    imvcdeexcl.CcxtExchange(args.exchange_id)
+    exchange = imvcdeexcl.CcxtExchange(args.exchange_id)
     # Load currency pairs.
     universe = imvccunun.get_trade_universe(args.universe)
-    universe[args.exchange_id]
+    currency_pairs = universe[args.exchange_id]
+    # Generate a query to remove duplicates.
     dup_query = hsql.get_remove_duplicates_query(
         table_name="ccxt_ohlcv",
         id_col_name="id",
@@ -98,6 +99,18 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Convert timestamps.
     end = pd.Timestamp(args.to_datetime)
     start = pd.Timestamp(args.from_datetime)
+    # Download data for specified time period.
+    for currency_pair in currency_pairs:
+        data = exchange.download_ohlcv_data(
+            currency_pair.replace("_", "/"),
+            start_datetime=start,
+            end_datetime=end,
+        )
+        # Assign pair and exchange columns.
+        data["currency_pair"] = currency_pair
+        data["exchange_id"] = args.exchange_id
+        # Remove duplicated entries.
+        connection.cursor().execute(dup_query)
 
 
 if __name__ == "__main__":
