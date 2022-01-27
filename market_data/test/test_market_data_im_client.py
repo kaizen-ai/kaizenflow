@@ -350,6 +350,62 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
             market_data, start_ts, end_ts, asset_ids, exp_srs_as_str
         )
 
+    def test_get_last_twap_price1(self) -> None:
+        """
+        See description of corresponding private method in parent class.
+        """
+        # Prepare inputs.
+        asset_ids = [3187272957, 1467591036]
+        columns: List[str] = []
+        columns_remap = None
+        market_data = self._build_client(asset_ids, columns, columns_remap)
+        bar_duration = "5T"
+        exp_srs_as_str = r"""
+                      close
+        asset_id
+        1467591036  6344.93
+        3187272957   292.93
+        """
+        # Run.
+        self._test_get_last_twap_price1(
+            market_data, bar_duration, asset_ids, exp_srs_as_str
+        )
+
+    # //////////////////////////////////////////////////////////////////////////////
+
+    def test_get_last_end_time1(self) -> None:
+        """
+        See description of corresponding private method in parent class.
+        """
+        # Prepare inputs.
+        asset_ids = [1467591036]
+        columns: List[str] = []
+        columns_remap = None
+        market_data = self._build_client(asset_ids, columns, columns_remap)
+        exp_last_end_time = pd.Timestamp("2018-08-17T01:39:00+00:00")
+        # Run.
+        self._test_get_last_end_time1(market_data, exp_last_end_time)
+
+    def test_get_last_price1(self) -> None:
+        """
+        See description of corresponding private method in parent class.
+        """
+        # Prepare inputs.
+        asset_ids = [3187272957, 1467591036]
+        columns: List[str] = []
+        columns_remap = None
+        market_data = self._build_client(asset_ids, columns, columns_remap)
+        exp_srs_as_str = r"""
+                      close
+        asset_id
+        1467591036  6339.25
+        3187272957   293.01
+        """
+        # Run.
+        self._test_get_last_price1(
+            market_data, asset_ids, exp_srs_as_str
+        )
+
     # //////////////////////////////////////////////////////////////////////////////
 
     def test_should_be_online1(self) -> None:
@@ -364,6 +420,18 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         wall_clock_time = pd.Timestamp("2018-08-17T00:01:00")
         # Run.
         self._test_should_be_online1(market_data, wall_clock_time)
+
+    def test_is_online1(self) -> None:
+        """
+        See description of corresponding private method in parent class.
+        """
+        # Prepare inputs.
+        asset_ids = [1467591036]
+        columns: List[str] = []
+        columns_remap = None
+        market_data = self._build_client(asset_ids, columns, columns_remap)
+        # Run.
+        self._test_is_online1(market_data)
 
     # //////////////////////////////////////////////////////////////////////////////
 

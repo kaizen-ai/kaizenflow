@@ -4,13 +4,17 @@ Import as:
 import market_data.market_data_im_client as mdmdimcl
 """
 
+import logging
 from typing import Any, List, Optional
 
 import pandas as pd
 
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import im_v2.common.data.client as icdc
 import market_data.abstract_market_data as mdabmada
+
+_LOG = logging.getLogger(__name__)
 
 
 class MarketDataImClient(mdabmada.AbstractMarketData):
@@ -129,6 +133,17 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
         ] - pd.Timedelta(minutes=1)
         return df
 
-    # TODO(Dan): Implement in CmTask999.
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
-        return NotImplementedError
+        # We need to find the last timestamp before the current time.
+        # We use all the data since we don't call the DB.
+        # TODO(gp): SELECT MAX(start_time) instead of getting all the data
+        #  and then find the max and use `start_time`
+        period = "all"
+        df = self.get_data_for_last_period(period)
+        _LOG.debug(hpandas.df_to_short_str("after get_data", df))
+        if df.empty:
+            ret = None
+        else:
+            ret = df.index.max()
+        _LOG.debug("-> ret=%s", ret)
+        return ret

@@ -39,9 +39,8 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         real-time method and we can't easily check the content of its
         output.
         """
-        # TODO(Dan): Uncomment in CmTask999.
-        # if skip_test_since_not_online(market_data):
-        #     pytest.skip("Market not on-line")
+        if skip_test_since_not_online(market_data):
+            pytest.skip("Market not on-line")
         hprint.log_frame(
             _LOG,
             "get_data_for_last_period:" + hprint.to_str("period normalize_data"),
@@ -64,9 +63,8 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         """
         Call `get_data_at_timestamp()` for specified parameters.
         """
-        # TODO(Dan): Uncomment in CmTask999.
-        # if skip_test_since_not_online(market_data):
-        #    pytest.skip("Market not on-line")
+        if skip_test_since_not_online(market_data):
+            pytest.skip("Market not on-line")
         # Prepare inputs.
         ts_col_name = "end_ts"
         hprint.log_frame(
@@ -101,9 +99,8 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         """
         Call `get_data_for_interval()` for specified parameters.
         """
-        # TODO(Dan): Uncomment in CmTask999.
-        # if skip_test_since_not_online(market_data):
-        #     pytest.skip("Market not on-line")
+        if skip_test_since_not_online(market_data):
+            pytest.skip("Market not on-line")
         # Prepare inputs.
         ts_col_name = "end_ts"
         hprint.log_frame(
@@ -329,9 +326,8 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         """
         Call `get_twap_price()` for specified parameters.
         """
-        # TODO(Dan): Uncomment in CmTask999.
-        # if skip_test_since_not_online(market_data):
-        #     pytest.skip("Market not on-line")
+        if skip_test_since_not_online(market_data):
+            pytest.skip("Market not on-line")
         # Prepare inputs.
         ts_col_name = "end_ts"
         column = "close"
@@ -353,6 +349,85 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
             act_srs_as_str, exp_srs_as_str, dedent=True, fuzzy_match=True
         )
 
+    def _test_get_last_twap_price1(
+        self,
+        market_data: mdata.AbstractMarketData,
+        bar_duration: str,
+        asset_ids: Optional[List[int]],
+        exp_srs_as_str: str,
+    ) -> None:
+        """
+        Call `get_last_twap_price()` for specified parameters.
+        """
+        if skip_test_since_not_online(market_data):
+            pytest.skip("Market not on-line")
+        # Prepare inputs.
+        ts_col_name = "end_ts"
+        column = "close"
+        hprint.log_frame(
+            _LOG,
+            "get_last_twap_price:"
+            + hprint.to_str("bar_duration ts_col_name asset_ids column"),
+        )
+        # Run.
+        srs = market_data.get_last_twap_price(
+            bar_duration, ts_col_name, asset_ids, column
+        ).round(2)
+        act_srs_as_str = hunitest.convert_df_to_string(
+            srs, index=True, decimals=2
+        )
+        _LOG.debug("\n%s", hpandas.dataframe_to_str(srs))
+        # Check output.
+        self.assert_equal(
+            act_srs_as_str, exp_srs_as_str, dedent=True, fuzzy_match=True
+        )
+
+    # //////////////////////////////////////////////////////////////////////////////
+
+    def _test_get_last_end_time1(
+        self, market_data: mdata.AbstractMarketData, exp_last_end_time: pd.Timestamp
+    ) -> None:
+        """
+        Test that last end time is computed correctly.
+        """
+        if skip_test_since_not_online(market_data):
+            pytest.skip("Market not on-line")
+        # Run.
+        act_last_end_time = market_data.get_last_end_time()
+        # Check output.
+        self.assertEqual(act_last_end_time, exp_last_end_time)
+
+    def _test_get_last_price1(
+        self,
+        market_data: mdata.AbstractMarketData,
+        asset_ids: Optional[List[int]],
+        exp_srs_as_str: str,
+    ) -> None:
+        """
+        Call `get_last_price()` for specified parameters.
+        """
+        if skip_test_since_not_online(market_data):
+            pytest.skip("Market not on-line")
+        # Prepare inputs.
+        col_name = "close"
+        hprint.log_frame(
+            _LOG,
+            "get_last_price:"
+            + hprint.to_str("col_name asset_ids"),
+        )
+        # Run.
+        srs = market_data.get_last_price(col_name, asset_ids).round(2)
+        act_srs_as_str = hunitest.convert_df_to_string(
+            srs, index=True, decimals=2
+        )
+        _LOG.debug("\n%s", hpandas.dataframe_to_str(srs))
+        # Check output.
+        self.assert_equal(
+            act_srs_as_str, exp_srs_as_str, dedent=True, fuzzy_match=True
+        )
+
+    # //////////////////////////////////////////////////////////////////////////////
+
     def _test_should_be_online1(
         self, market_data: mdata.AbstractMarketData, wall_clock_time: pd.Timestamp
     ) -> None:
@@ -364,9 +439,17 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         # Check output.
         self.assertTrue(actual)
 
+    def _test_is_online1(self, market_data: mdata.AbstractMarketData) -> None:
+        """
+        Test whether the DB is on-line at the current time.
+        """
+        # Run.
+        actual = market_data.is_online()
+        # Check output.
+        self.assertTrue(actual)
 
-# TODO(Dan): Implement test methods for remaining methods of
-#  `AbstractMarketData` in CmTask999.
+
+# TODO(Dan): Implement test for `wait_for_latest_data()`.
 
 
 def skip_test_since_not_online(market_data: mdata.AbstractMarketData) -> bool:

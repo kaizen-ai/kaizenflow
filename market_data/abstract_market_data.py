@@ -293,7 +293,7 @@ class AbstractMarketData(abc.ABC):
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         ts_col_name: str,
-        asset_ids: List[int],
+        asset_ids: Optional[List[int]],
         column: str,
     ) -> pd.Series:
         """
@@ -330,7 +330,7 @@ class AbstractMarketData(abc.ABC):
         self,
         bar_duration: str,
         ts_col_name: str,
-        asset_ids: List[int],
+        asset_ids: Optional[List[int]],
         column: str,
     ) -> pd.Series:
         """
@@ -375,7 +375,7 @@ class AbstractMarketData(abc.ABC):
     def get_last_price(
         self,
         col_name: str,
-        asset_ids: List[int],
+        asset_ids: Optional[List[int]],
     ) -> pd.Series:
         """
         Get last price for `asset_ids` using column `col_name` (e.g., "close")
