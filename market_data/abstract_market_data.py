@@ -213,8 +213,8 @@ class AbstractMarketData(abc.ABC):
         :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
         :param normalize_data: normalize the data
         """
-        start_ts = ts - pd.Timedelta(1, unit="s")
-        end_ts = ts + pd.Timedelta(1, unit="s")
+        start_ts = ts - pd.Timedelta("1S")
+        end_ts = ts + pd.Timedelta("1S")
         df = self.get_data_for_interval(
             start_ts,
             end_ts,
@@ -293,7 +293,7 @@ class AbstractMarketData(abc.ABC):
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         ts_col_name: str,
-        asset_ids: List[int],
+        asset_ids: Optional[List[int]],
         column: str,
     ) -> pd.Series:
         """
@@ -330,7 +330,7 @@ class AbstractMarketData(abc.ABC):
         self,
         bar_duration: str,
         ts_col_name: str,
-        asset_ids: List[int],
+        asset_ids: Optional[List[int]],
         column: str,
     ) -> pd.Series:
         """
@@ -375,7 +375,7 @@ class AbstractMarketData(abc.ABC):
     def get_last_price(
         self,
         col_name: str,
-        asset_ids: List[int],
+        asset_ids: Optional[List[int]],
     ) -> pd.Series:
         """
         Get last price for `asset_ids` using column `col_name` (e.g., "close")
@@ -386,11 +386,11 @@ class AbstractMarketData(abc.ABC):
         # TODO(gp): This is not super robust.
         if False:
             # For debugging.
-            df = self.get_data_for_last_period(timedelta="last_5mins")
-            _LOG.info("df=\n%s", hprintin.dataframe_to_str(df))
+            df = self.get_data_for_last_period(timedelta="5T")
+            _LOG.info("df=\n%s", hprint.dataframe_to_str(df))
         # Get the data.
         # TODO(*): Remove the hard-coded 1-minute.
-        start_time = last_end_time - pd.Timedelta(minutes=1)
+        start_time = last_end_time - pd.Timedelta("1M")
         df = self.get_data_at_timestamp(
             start_time,
             self._start_time_col_name,
@@ -441,7 +441,7 @@ class AbstractMarketData(abc.ABC):
                 wall_clock_time.floor("Min"),
             )
             ret = last_db_end_time.floor("Min") >= (
-                wall_clock_time.floor("Min") - pd.Timedelta(minutes=1)
+                wall_clock_time.floor("Min") - pd.Timedelta("1M")
             )
         _LOG.verb_debug("-> ret=%s", ret)
         return ret
@@ -632,7 +632,7 @@ class AbstractMarketData(abc.ABC):
         """
         _LOG.verb_debug(hprint.to_str("timedelta wall_clock_time"))
         hdbg.dassert_isinstance(timedelta, pd.Timedelta)
-        hdbg.dassert_lt(pd.Timedelta(seconds=0), timedelta)
+        hdbg.dassert_lt(pd.Timedelta("0S"), timedelta)
         last_start_time = wall_clock_time - timedelta
         _LOG.verb_debug("last_start_time=%s", last_start_time)
         return last_start_time
