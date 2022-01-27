@@ -1,32 +1,40 @@
-if False:
+if True:
     import logging
     import unittest
 
     import boto3
     from moto import mock_ec2
 
-    import helpers.hdbg as hdbg
-    import infra.scripts.aws.aws_manager as isawawma
-
+    import helpers as hdbg
+    import sys
+    sys.path.append('..')
+    import aws_manager as isawawma
     """
-    Unit tests for the aws_manager class
-    Double check to not make real calls by exporting fake credentials as env variables
-        
+    For import aws_manager is required import library sys and change path of importing,
+    othwerwise it will not work.
+    Importing like this (import infra.scripts.aws.aws_manager as isawawma)  not working
     """
     _LOG = logging.getLogger(__name__)
 
     # Constants used for throughout tests.
     DEFAULT_KEYNAME: str = "ec2-key-pair"
     DEFAULT_REGION: str = "us-east-1"
-
     @mock_ec2
     class Test_AWSManager(unittest.TestCase):
+        
         def test_create_instance(self) -> None:
             # Already one instance in the list.
+            client = boto3.client('ec2', DEFAULT_REGION)
+            image_response = client.describe_images()
+            image_id = image_response['Images'][0]['ImageId']
+            # Choose image automaticly by region 
             instance_count = 1
-            image_id = "ami-083654bd07b5da81d"
+            """
+            Number of instances 
+            Currect maximmum is 1
+            """
             name_tag = "test"
-
+ 
             aws_manager = isawawma.AWS_EC2_Manager(DEFAULT_REGION)
 
             aws_manager.create_instance(
@@ -47,6 +55,5 @@ if False:
             assert len(instances) == instance_count
             assert instances[0]["ImageId"] == image_id
             assert instances[0]["Tags"][0]["Value"] == name_tag
-
     if __name__ == "__main__":
         unittest.main()
