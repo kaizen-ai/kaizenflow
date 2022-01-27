@@ -641,7 +641,7 @@ class AbstractMarketData(abc.ABC):
             # Get the data for the last week.
             last_start_time = wall_clock_time.replace(
                 hour=0, minute=0, second=0
-            ) - pd.Timedelta(days=16)
+            ) - pd.Timedelta(days=6)
         elif period in ("last_10mins", "last_5mins", "last_1min"):
             # Get the data for the last N minutes.
             if period == "last_10mins":
