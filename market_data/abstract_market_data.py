@@ -380,17 +380,14 @@ class AbstractMarketData(abc.ABC):
         """
         Get last price for `asset_ids` using column `col_name` (e.g., "close")
         """
-        # TODO(*): Use a to-be-written `get_last_start_time()` instead.
-        last_end_time = self.get_last_end_time()
-        _LOG.info("last_end_time=%s", last_end_time)
+        start_time = self.get_last_end_time()
+        _LOG.info("start_time=%s", start_time)
         # TODO(gp): This is not super robust.
         if False:
             # For debugging.
             df = self.get_data_for_last_period(period="last_5mins")
             _LOG.info("df=\n%s", hprint.dataframe_to_str(df))
         # Get the data.
-        # TODO(*): Remove the hard-coded 1-minute.
-        start_time = last_end_time - pd.Timedelta(minutes=1)
         df = self.get_data_at_timestamp(
             start_time,
             self._start_time_col_name,

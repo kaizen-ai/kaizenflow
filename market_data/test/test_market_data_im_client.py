@@ -398,8 +398,8 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         exp_srs_as_str = r"""
                       close
         asset_id
-        1467591036  6339.25
-        3187272957   293.01
+        1467591036  6342.95
+        3187272957   292.16
         """
         # Run.
         self._test_get_last_price1(market_data, asset_ids, exp_srs_as_str)
