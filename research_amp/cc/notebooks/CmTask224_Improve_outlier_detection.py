@@ -48,12 +48,15 @@ hprint.config_notebook()
 # # Load test data
 
 # %%
+vendor="CCXT"
 root_dir = os.path.join(hs3.get_path(), "data")
 extension = "csv.gz"
-ccxt_csv_client = icdcl.CcxtCsvParquetByAssetClient(
+aws_profile = "am"
+ccxt_csv_client = icdcl.CcxtCddCsvParquetByAssetClient(
+    vendor,
     root_dir,
     extension,
-    aws_profile="am",
+    aws_profile=aws_profile
 )
 start_ts = None
 end_ts = None

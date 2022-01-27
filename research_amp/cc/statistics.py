@@ -17,7 +17,6 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
-import im_v2.cryptodatadownload.data.client.cdd_client as imvcdccdcl
 
 _LOG = logging.getLogger(__name__)
 
@@ -100,7 +99,7 @@ def compute_start_end_stats(
     )
     hdbg.dassert_isinstance(price_data.index, pd.DatetimeIndex)
     hpandas.dassert_monotonic_index(price_data.index)
-    hdbg.dassert_eq(price_data.index.freq, "T")
+    hdbg.dassert_eq(pd.infer_freq(price_data.index), "T")
     # Get series of close price.
     close_price_srs = price_data[config["column_names"]["close_price"]]
     # Remove leading and trailing NaNs.
@@ -200,7 +199,7 @@ def postprocess_stats_table(
 # TODO(Grisha): move `get_loader_for_vendor` out in and use the abstract class in #313.
 def get_loader_for_vendor(
     config: cconconf.Config,
-) -> Union[icdc.ImClient, imvcdccdcl.CddClient]:
+) -> icdc.ImClient:
     """
     Get vendor specific loader instance.
 
@@ -210,21 +209,12 @@ def get_loader_for_vendor(
     vendor = config["data"]["vendor"]
     root_dir = config["load"]["data_dir"]
     extension = "csv.gz"
-    if vendor == "CCXT":
-        loader = icdcl.CcxtCddCsvParquetByAssetClient(
+    loader = icdcl.CcxtCddCsvParquetByAssetClient(
             vendor,
             root_dir,
             extension,
             aws_profile=config["load"]["aws_profile"],
         )
-    elif vendor == "CDD":
-        loader = imvcdccdcl.CddClient(
-            data_type,
-            root_dir,
-            aws_profile=config["load"]["aws_profile"],
-        )
-    else:
-        raise ValueError(f"Unsupported vendor={vendor}")
     return loader
 
 
