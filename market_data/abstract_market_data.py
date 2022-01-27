@@ -213,8 +213,8 @@ class AbstractMarketData(abc.ABC):
         :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
         :param normalize_data: normalize the data
         """
-        start_ts = ts - pd.Timedelta(1, unit="s")
-        end_ts = ts + pd.Timedelta(1, unit="s")
+        start_ts = ts - pd.Timedelta("1S")
+        end_ts = ts + pd.Timedelta("1S")
         df = self.get_data_for_interval(
             start_ts,
             end_ts,
@@ -383,7 +383,7 @@ class AbstractMarketData(abc.ABC):
         # TODO(gp): This is not super robust.
         if False:
             # For debugging.
-            df = self.get_data_for_last_period(timedelta="last_5mins")
+            df = self.get_data_for_last_period(timedelta="5T")
             _LOG.info("df=\n%s", hprintin.dataframe_to_str(df))
         # Get the data.
         df = self.get_data_at_timestamp(
@@ -436,7 +436,7 @@ class AbstractMarketData(abc.ABC):
                 wall_clock_time.floor("Min"),
             )
             ret = last_db_end_time.floor("Min") >= (
-                wall_clock_time.floor("Min") - pd.Timedelta(minutes=1)
+                wall_clock_time.floor("Min") - pd.Timedelta("1T")
             )
         _LOG.verb_debug("-> ret=%s", ret)
         return ret
@@ -627,7 +627,7 @@ class AbstractMarketData(abc.ABC):
         """
         _LOG.verb_debug(hprint.to_str("timedelta wall_clock_time"))
         hdbg.dassert_isinstance(timedelta, pd.Timedelta)
-        hdbg.dassert_lt(pd.Timedelta(seconds=0), timedelta)
+        hdbg.dassert_lt(pd.Timedelta("0S"), timedelta)
         last_start_time = wall_clock_time - timedelta
         _LOG.verb_debug("last_start_time=%s", last_start_time)
         return last_start_time

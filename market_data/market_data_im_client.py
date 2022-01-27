@@ -134,12 +134,12 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
         return df
 
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
-        # We need to find the last timestamp before the current time.
-        # We use all the data since we don't call the DB.
+        # We need to find the last timestamp before the current time. We use
+        # `7W` but could also use all the data since we don't call the DB.
         # TODO(gp): SELECT MAX(start_time) instead of getting all the data
         #  and then find the max and use `start_time`
-        period = "all"
-        df = self.get_data_for_last_period(period)
+        timedelta = pd.Timedelta("7D")
+        df = self.get_data_for_last_period(timedelta)
         _LOG.debug(hpandas.df_to_short_str("after get_data", df))
         if df.empty:
             ret = None

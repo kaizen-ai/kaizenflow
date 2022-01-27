@@ -30,7 +30,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
     @staticmethod
     def _test_get_data_for_last_period(
         market_data: mdata.AbstractMarketData,
-        period: str,
+        timedelta: pd.Timedelta,
         normalize_data: bool,
     ) -> None:
         """
@@ -44,11 +44,11 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
             pytest.skip("Market not on-line")
         hprint.log_frame(
             _LOG,
-            "get_data_for_last_period:" + hprint.to_str("period normalize_data"),
+            "get_data_for_last_period:" + hprint.to_str("timedelta normalize_data"),
         )
         # Run.
         _ = market_data.get_data_for_last_period(
-            period, normalize_data=normalize_data
+            timedelta, normalize_data=normalize_data
         )
 
     # //////////////////////////////////////////////////////////////////////////////
