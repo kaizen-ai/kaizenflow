@@ -147,7 +147,7 @@ class ReplayedMarketData(mdabmada.AbstractMarketData):
 
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
         # We need to find the last timestamp before the current time. We use
-        # `7W` but could also use all the data since we don't call the DB.
+        # `7D` but could also use all the data since we don't call the DB.
         # TODO(gp): SELECT MAX(start_time) instead of getting all the data
         #  and then find the max and use `start_time`
         timedelta = pd.Timedelta("7D")

@@ -366,6 +366,21 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
 
     # //////////////////////////////////////////////////////////////////////////////
 
+    def test_get_last_end_time1(self) -> None:
+        """
+        See description of corresponding private method in parent class.
+        """
+        # Prepare inputs.
+        asset_ids = [1467591036]
+        columns: List[str] = []
+        columns_remap = None
+        market_data = self._build_client(asset_ids, columns, columns_remap)
+        exp_last_end_time = pd.Timestamp("2018-08-17T01:39:00+00:00")
+        # Run.
+        self._test_get_last_end_time1(market_data, exp_last_end_time)
+
+    # //////////////////////////////////////////////////////////////////////////////
+
     def test_should_be_online1(self) -> None:
         """
         See description of corresponding private method in parent class.
