@@ -121,20 +121,20 @@ cdd_universe = imvccunun.get_vendor_universe(version="v01", vendor="CDD")
 # Remove non-USDT elements, since we are not interested in them.
 cdd_universe = [element for element in cdd_universe if element.endswith("USDT")]
 
-# %% [markdown] heading_collapsed=true
+# %% [markdown]
 # # Compare universes
 
-# %% hidden=true
+# %%
 _LOG.info("Number of full symbols in 'CCXT': %s", len(ccxt_universe))
 _LOG.info("Number of full symbols in 'CDD': %s", len(cdd_universe))
 
-# %% hidden=true
+# %%
 # Intersection of full symbols between two vendors.
 currency_pair_intersection = set(ccxt_universe).intersection(cdd_universe)
 _LOG.info("Number of similar full symbols: %s", len(currency_pair_intersection))
 display(currency_pair_intersection)
 
-# %% hidden=true
+# %%
 # Full symbols that are included in `CCXT` but not in `CDD`.
 ccxt_and_not_cdd = set(ccxt_universe).difference(cdd_universe)
 _LOG.info(
@@ -143,7 +143,7 @@ _LOG.info(
 )
 display(ccxt_and_not_cdd)
 
-# %% hidden=true
+# %%
 # Full symbols that are included in `CDD` but not in `CCXT`.
 cdd_and_not_ccxt = set(cdd_universe).difference(ccxt_universe)
 _LOG.info(
