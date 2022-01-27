@@ -22,7 +22,7 @@ default_args = {
 
 # Create a command.
 bash_command = [
-    "im_v2/ccxt/data/extract/download_realtime_data_v2.py",
+    "/app/im_v2/ccxt/data/extract/download_realtime_data_v2.py",
     "--to_datetime {{ next_execution_date }}",
     "--from_datetime {{ execution_date - macros.timedelta(5) }}",
     "--exchange_id 'binance'",
