@@ -40,7 +40,7 @@ dag = airflow.DAG(
     default_args=default_args,
     schedule_interval="*/1 * * * *",
     catchup=False,
-    start_date=airflow.utils.date.days_ago(0),
+    start_date=datetime.datetime(2022, 1, 14, 14, 30, 0),
 )
 
 
