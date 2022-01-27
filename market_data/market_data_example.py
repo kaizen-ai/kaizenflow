@@ -444,8 +444,10 @@ def get_MarketDataImClient_example1(
     return market_data_client
 
 
-def get_MarketDataImClient_wall_clock_time() -> pd.Timestamp:
+def get_MarketDataImClient_wall_clock_time(timezone: str) -> pd.Timestamp:
     """
     Get a wall clock time to build `MarketDataImClient` for tests.
+
+    :param timezone: timezone for wall clock time
     """
-    return pd.Timestamp("2018-08-17T01:30:00+00:00")
+    return pd.Timestamp("2018-08-16T21:30:00", tz=timezone)

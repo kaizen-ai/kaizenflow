@@ -176,7 +176,7 @@ class AbstractMarketData(abc.ABC):
         # TODO(gp): If the DB supports asyncio this should become async.
         # Handle `timedelta`.
         _LOG.verb_debug(hprint.to_str("timedelta"))
-        wall_clock_time = self.get_wall_clock_time()
+        wall_clock_time = self.get_wall_clock_time(self._timezone)
         start_ts = self._process_period(timedelta, wall_clock_time)
         end_ts = None
         # By convention to get the last chunk of data we use the start_time column.
@@ -434,7 +434,7 @@ class AbstractMarketData(abc.ABC):
                 last_db_end_time,
                 last_db_end_time.floor("Min"),
             )
-            wall_clock_time = self.get_wall_clock_time()
+            wall_clock_time = self.get_wall_clock_time(self._timezone)
             _LOG.verb_debug(
                 "wall_clock_time=%s -> %s",
                 wall_clock_time,
@@ -459,13 +459,13 @@ class AbstractMarketData(abc.ABC):
               was ready
             - num_iter: number of iterations before the last bar was ready
         """
-        start_sampling_time = self.get_wall_clock_time()
+        start_sampling_time = self.get_wall_clock_time(self._timezone)
         _LOG.verb_debug("DB on-line: %s", self.is_online())
         #
         hprint.log_frame(_LOG, "Waiting on last bar ...")
         num_iter = 0
         while True:
-            wall_clock_time = self.get_wall_clock_time()
+            wall_clock_time = self.get_wall_clock_time(self._timezone)
             last_db_end_time = self.get_last_end_time()
             # TODO(gp): We should use the new hasynci.poll().
             _LOG.debug(

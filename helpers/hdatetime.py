@@ -232,7 +232,7 @@ def get_ET_tz() -> datetime.tzinfo:
 
 # Function returning the current (true, replayed, simulated) wall-clock time as a
 # timestamp.
-GetWallClockTime = Callable[[], pd.Timestamp]
+GetWallClockTime = Callable[[str], pd.Timestamp]
 
 
 # TODO(gp): -> get_wall_clock_time
