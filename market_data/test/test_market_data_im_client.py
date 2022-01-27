@@ -20,7 +20,9 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         timedelta = pd.Timedelta("1D")
         normalize_data = True
         # Run.
-        self._test_get_data_for_last_period(market_data, timedelta, normalize_data)
+        self._test_get_data_for_last_period(
+            market_data, timedelta, normalize_data
+        )
 
     def test_get_data_for_last_period2(self) -> None:
         """
@@ -34,7 +36,9 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         timedelta = pd.Timedelta("2D")
         normalize_data = True
         # Run.
-        self._test_get_data_for_last_period(market_data, timedelta, normalize_data)
+        self._test_get_data_for_last_period(
+            market_data, timedelta, normalize_data
+        )
 
     def test_get_data_for_last_period3(self) -> None:
         """
@@ -48,7 +52,9 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         timedelta = pd.Timedelta("1W")
         normalize_data = True
         # Run.
-        self._test_get_data_for_last_period(market_data, timedelta, normalize_data)
+        self._test_get_data_for_last_period(
+            market_data, timedelta, normalize_data
+        )
 
     def test_get_data_for_last_period4(self) -> None:
         """
@@ -62,7 +68,9 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         timedelta = pd.Timedelta("10T")
         normalize_data = True
         # Run.
-        self._test_get_data_for_last_period(market_data, timedelta, normalize_data)
+        self._test_get_data_for_last_period(
+            market_data, timedelta, normalize_data
+        )
 
     def test_get_data_for_last_period5(self) -> None:
         """
@@ -76,7 +84,9 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         timedelta = pd.Timedelta("5T")
         normalize_data = True
         # Run.
-        self._test_get_data_for_last_period(market_data, timedelta, normalize_data)
+        self._test_get_data_for_last_period(
+            market_data, timedelta, normalize_data
+        )
 
     def test_get_data_for_last_period6(self) -> None:
         """
@@ -90,7 +100,9 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         timedelta = pd.Timedelta("1T")
         normalize_data = True
         # Run.
-        self._test_get_data_for_last_period(market_data, timedelta, normalize_data)
+        self._test_get_data_for_last_period(
+            market_data, timedelta, normalize_data
+        )
 
     def test_get_data_for_last_period7(self) -> None:
         """
@@ -104,7 +116,9 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         timedelta = pd.Timedelta("365D")
         normalize_data = True
         # Run.
-        self._test_get_data_for_last_period(market_data, timedelta, normalize_data)
+        self._test_get_data_for_last_period(
+            market_data, timedelta, normalize_data
+        )
 
     def test_get_data_at_timestamp1(self) -> None:
         """
