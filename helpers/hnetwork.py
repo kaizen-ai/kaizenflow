@@ -13,7 +13,7 @@ import requests
 
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ def get_prefixes(jupyter_port: Optional[int] = None) -> Tuple[str, str]:
     Return the prefixes that a file should have under a GitHub repo and a
     Jupyter notebook.
     """
-    hsysinte.get_user_name()
+    hsystem.get_user_name()
     if jupyter_port is None:
         jupyter_port = 10001
         _LOG.warning(

@@ -11,8 +11,8 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 
 import pandas as pd
 
-import helpers.hdbg as hdbg
 import helpers.hasyncio as hasynci
+import helpers.hdbg as hdbg
 import helpers.hsql as hsql
 import market_data as mdata
 import oms.oms_db as oomsdb
@@ -119,6 +119,8 @@ class AbstractBroker(abc.ABC):
         strategy_id: str,
         account: str,
         market_data: mdata.AbstractMarketData,
+        *,
+        timestamp_col: str = "end_datetime",
         column_remap: Optional[Dict[str, str]] = None,
     ) -> None:
         """
@@ -133,6 +135,7 @@ class AbstractBroker(abc.ABC):
         hdbg.dassert_issubclass(market_data, mdata.AbstractMarketData)
         self.market_data = market_data
         self._get_wall_clock_time = market_data.get_wall_clock_time
+        self._timestamp_col = timestamp_col
         self._column_remap = column_remap
         # Track the orders for internal accounting, mapping wall clock when the
         # order was submitted to the submitted orders.
@@ -275,7 +278,12 @@ class AbstractBroker(abc.ABC):
         num_shares = order.diff_num_shares
         # TODO(Paul): The function `get_execution_price()` should be
         #  configurable.
-        price = get_execution_price(self.market_data, order, self._column_remap)
+        price = get_execution_price(
+            self.market_data,
+            order,
+            timestamp_col=self._timestamp_col,
+            column_remap=self._column_remap,
+        )
         fill = Fill(order, wall_clock_timestamp, num_shares, price)
         return [fill]
 
@@ -311,8 +319,9 @@ class SimulatedBroker(AbstractBroker):
     def __init__(
         self,
         *args: Any,
+        **kwargs: Any,
     ) -> None:
-        super().__init__(*args)
+        super().__init__(*args, **kwargs)
 
     def get_fills(self) -> List[Fill]:
         return self._get_fills_helper()
@@ -368,8 +377,9 @@ class MockedBroker(AbstractBroker):
         submitted_orders_table_name: str,
         accepted_orders_table_name: str,
         poll_kwargs: Optional[Dict[str, Any]] = None,
+        **kwargs: Any,
     ):
-        super().__init__(*args)
+        super().__init__(*args, **kwargs)
         self._db_connection = db_connection
         self._submitted_orders_table_name = submitted_orders_table_name
         self._accepted_orders_table_name = accepted_orders_table_name
@@ -442,13 +452,13 @@ class MockedBroker(AbstractBroker):
 def get_execution_price(
     market_data: mdata.AbstractMarketData,
     order: omorder.Order,
+    *,
+    timestamp_col: str = "end_datetime",
     column_remap: Optional[Dict[str, str]] = None,
 ) -> float:
     """
     Get the simulated execution price of an order.
     """
-    # TODO(gp): It should not be hardwired.
-    timestamp_col_name = "end_datetime"
     needed_columns = ["bid", "ask", "price", "midpoint"]
     if column_remap is None:
         column_remap = {col_name: col_name for col_name in needed_columns}
@@ -464,7 +474,7 @@ def get_execution_price(
             market_data,
             order.start_timestamp,
             order.end_timestamp,
-            timestamp_col_name,
+            timestamp_col,
             order.asset_id,
             column,
             timing,
@@ -480,7 +490,7 @@ def get_execution_price(
             market_data,
             order.start_timestamp,
             order.end_timestamp,
-            timestamp_col_name,
+            timestamp_col,
             order.asset_id,
             column,
             timing,
@@ -491,14 +501,12 @@ def get_execution_price(
         perc = float(price_type.split("_")[2])
         hdbg.dassert_lte(0, perc)
         hdbg.dassert_lte(perc, 1.0)
-        # TODO(gp): This should not be hardwired.
-        timestamp_col_name = "end_datetime"
         column = column_remap["bid"]
         bid_price = _get_price_per_share(
             market_data,
             order.start_timestamp,
             order.end_timestamp,
-            timestamp_col_name,
+            timestamp_col,
             order.asset_id,
             column,
             timing,
@@ -508,7 +516,7 @@ def get_execution_price(
             market_data,
             order.start_timestamp,
             order.end_timestamp,
-            timestamp_col_name,
+            timestamp_col,
             order.asset_id,
             column,
             timing,
@@ -554,13 +562,12 @@ def _get_price_per_share(
         start_timestamp and end_timestamp
     :param column: column to use to compute the price
     """
+    asset_ids = [asset_id]
     if timing == "start":
-        asset_ids = [asset_id]
         price = mi.get_data_at_timestamp(
             start_timestamp, timestamp_col_name, asset_ids
         )[column]
     elif timing == "end":
-        asset_ids = [asset_id]
         price = mi.get_data_at_timestamp(
             end_timestamp, timestamp_col_name, asset_ids
         )[column]
@@ -569,9 +576,9 @@ def _get_price_per_share(
             start_timestamp,
             end_timestamp,
             timestamp_col_name,
-            asset_id,
+            asset_ids,
             column,
-        )
+        )[asset_id]
     else:
         raise ValueError(f"Invalid timing='{timing}'")
     hdbg.dassert_is_not(price, None)

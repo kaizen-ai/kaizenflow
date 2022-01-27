@@ -6,7 +6,7 @@ import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hnetwork as hnetwor
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ class Test_url_py1(hunitest.TestCase):
             "Task51_experiment_with_sklearn_pipeline/"
             "Task51_experiment_with_sklearn_pipeline.ipynb"
         )
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
 
 
 # #############################################################################

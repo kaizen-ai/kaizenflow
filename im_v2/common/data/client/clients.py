@@ -15,6 +15,7 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import im_v2.common.data.client.full_symbol as imvcdcfusy
+import im_v2.common.universe.universe_utils as imvcuunut
 
 _LOG = logging.getLogger(__name__)
 
@@ -82,22 +83,26 @@ class ImClient(abc.ABC):
         )
         hdbg.dassert_in(full_symbol_col_name, df.columns)
         df.index.name = "timestamp"
-        _LOG.debug("After _read_data: df=\n%s", hprint.dataframe_to_str(df))
+        _LOG.debug("After _read_data: df=\n%s", hpandas.dataframe_to_str(df))
         # Normalize data for each symbol.
         dfs = []
         for _, df_tmp in df.groupby(full_symbol_col_name):
-            df_tmp = self._apply_im_normalizations(df_tmp, start_ts, end_ts)
-            self._dassert_is_valid(df_tmp)
+            df_tmp = self._apply_im_normalizations(
+                df_tmp, full_symbol_col_name, start_ts, end_ts
+            )
+            self._dassert_is_valid(df_tmp, full_symbol_col_name)
             dfs.append(df_tmp)
         df = pd.concat(dfs, axis=0)
-        _LOG.debug("After im_normalization: df=\n%s", hprint.dataframe_to_str(df))
+        _LOG.debug(
+            "After im_normalization: df=\n%s", hpandas.dataframe_to_str(df)
+        )
         # Sort by index and `full_symbol_col_name`.
         # There is not a simple way to sort by index and columns in Pandas,
         # so we convert the index into a column, sort.
         df = df.reset_index()
         df = df.sort_values(by=["timestamp", full_symbol_col_name])
         df = df.set_index("timestamp", drop=True)
-        _LOG.debug("After sorting: df=\n%s", hprint.dataframe_to_str(df))
+        _LOG.debug("After sorting: df=\n%s", hpandas.dataframe_to_str(df))
         return df
 
     def get_start_ts_for_symbol(
@@ -142,11 +147,51 @@ class ImClient(abc.ABC):
 
     @staticmethod
     @abc.abstractmethod
-    def get_universe() -> List[imvcdcfusy.FullSymbol]:
+    def get_universe(as_asset_ids: bool) -> List[imvcdcfusy.FullSymbol]:
         """
         Get universe as full symbols.
+
+        :param as_asset_ids: if True return universe as numeric ids,
+            otherwise universe as full symbols
         """
-        ...
+
+    @staticmethod
+    def get_numerical_ids_from_full_symbols(
+        full_symbols: List[imvcdcfusy.FullSymbol],
+    ) -> List[int]:
+        """
+        Convert assets as full symbols to assets as numeric ids.
+
+        :param full_symbols: assets as full symbols
+        :return: assets as numeric ids
+        """
+        numeric_asset_id = [
+            imvcuunut.string_to_numeric_id(full_symbol)
+            for full_symbol in full_symbols
+        ]
+        return numeric_asset_id
+
+    def get_full_symbols_from_numerical_ids(
+        self, asset_ids: List[int]
+    ) -> List[imvcdcfusy.FullSymbol]:
+        """
+        Convert assets as numeric ids to assets as full symbols.
+
+        :param asset_ids: assets as numeric ids
+        :return: assets as full symbols
+        """
+        # Get universe as full symbols to construct numeric ids to full symbols mapping.
+        full_symbol_universe = self.get_universe(as_asset_ids=False)
+        ids_to_symbols_mapping = imvcuunut.build_num_to_string_id_mapping(
+            tuple(full_symbol_universe)
+        )
+        # Check that provided ids are part of universe.
+        hdbg.dassert_is_subset(asset_ids, ids_to_symbols_mapping)
+        # Convert ids to full symbols.
+        full_symbols = [
+            ids_to_symbols_mapping[asset_id] for asset_id in asset_ids
+        ]
+        return full_symbols
 
     @abc.abstractmethod
     def _read_data(
@@ -171,6 +216,7 @@ class ImClient(abc.ABC):
     @staticmethod
     def _apply_im_normalizations(
         df: pd.DataFrame,
+        full_symbol_col_name: str,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
     ) -> pd.DataFrame:
@@ -200,6 +246,10 @@ class ImClient(abc.ABC):
         )
         # Resample index.
         df = hpandas.resample_df(df, "T")
+        # Fill NaN values appeared after resampling in full symbol column.
+        # Combination of full symbol and timestamp is a unique identifier,
+        # so full symbol cannot be NaN.
+        df[full_symbol_col_name] = df[full_symbol_col_name].fillna(method="bfill")
         return df
 
     @staticmethod
@@ -215,7 +265,7 @@ class ImClient(abc.ABC):
         ...
 
     @staticmethod
-    def _dassert_is_valid(df: pd.DataFrame) -> None:
+    def _dassert_is_valid(df: pd.DataFrame, full_symbol_col_name: str) -> None:
         """
         Verify that the normalized data is valid.
         """
@@ -232,8 +282,14 @@ class ImClient(abc.ABC):
             df.index[0],
             expected_tz,
         )
-        # Check that there are no duplicates in the data.
-        n_duplicated_rows = df.dropna(how="all").duplicated().sum()
+        # Check that full symbol column has no NaNs.
+        hdbg.dassert(df[full_symbol_col_name].notna().all())
+        # Check that there are no duplicates in data by index and full symbol.
+        n_duplicated_rows = (
+            df.reset_index()
+            .duplicated(subset=["timestamp", full_symbol_col_name])
+            .sum()
+        )
         hdbg.dassert_eq(
             n_duplicated_rows, 0, msg="There are duplicated rows in the data"
         )

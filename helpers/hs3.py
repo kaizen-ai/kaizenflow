@@ -24,7 +24,7 @@ except ModuleNotFoundError:
 import helpers.hdbg as hdbg  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.hio as hio  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.hprint as hprint  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
-import helpers.hsystem as hsysinte  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
+import helpers.hsystem as hsystem  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.htimer as htimer  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 
 _LOG = logging.getLogger(__name__)
@@ -429,10 +429,10 @@ def archive_data_on_s3(
     hdbg.dassert_dir_exists(src_dir)
     dassert_is_s3_path(s3_path)
     _LOG.info(
-        "The size of '%s' is %s", src_dir, hsysinte.du(src_dir, human_format=True)
+        "The size of '%s' is %s", src_dir, hsystem.du(src_dir, human_format=True)
     )
     # Add a timestamp if needed.
-    dst_path = hsysinte.append_timestamp_tag(src_dir, tag) + ".tgz"
+    dst_path = hsystem.append_timestamp_tag(src_dir, tag) + ".tgz"
     # Compress the dir.
     # > (cd .../TestRunExperimentArchiveOnS3.test_serial1; \
     #    tar cvzf /app/.../TestRunExperimentArchiveOnS3.test_serial1.tgz experiment.RH1E)
@@ -449,11 +449,11 @@ def archive_data_on_s3(
         if dir_name != "":
             cmd += f"cd {dir_name} && "
         cmd += f"tar czf {dst_path} {base_name}"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
     _LOG.info(
         "The size of '%s' is %s",
         dst_path,
-        hsysinte.du(dst_path, human_format=True),
+        hsystem.du(dst_path, human_format=True),
     )
     # Test expanding the tgz. The package should expand to the original dir.
     # > tar tf /app/.../TestRunExperimentArchiveOnS3.test_serial1.tgz
@@ -462,7 +462,7 @@ def archive_data_on_s3(
     # experiment.RH1E/output_metadata.json
     _LOG.info("Testing archive")
     cmd = f"tar tvf {dst_path}"
-    hsysinte.system(cmd, log_level=logging.INFO, suppress_output=False)
+    hsystem.system(cmd, log_level=logging.INFO, suppress_output=False)
     # Copy to S3.
     s3_file_path = os.path.join(s3_path, os.path.basename(dst_path))
     _LOG.info("Copying '%s' to '%s'", dst_path, s3_file_path)
@@ -531,7 +531,7 @@ def expand_archived_data(src_tgz_file: str, dst_dir: str) -> str:
     _LOG.debug("Expanding '%s'", src_tgz_file)
     # Get the name of the including dir, e.g., `experiment.RH1E`.
     cmd = f"cd {dst_dir} && tar tzf {src_tgz_file} | head -1"
-    rc, enclosing_tgz_dir_name = hsysinte.system_to_one_line(cmd)
+    rc, enclosing_tgz_dir_name = hsystem.system_to_one_line(cmd)
     _ = rc
     _LOG.debug(hprint.to_str("enclosing_tgz_dir_name"))
     tgz_dst_dir = os.path.join(dst_dir, enclosing_tgz_dir_name)
@@ -554,7 +554,7 @@ def expand_archived_data(src_tgz_file: str, dst_dir: str) -> str:
         with htimer.TimedScope(logging.INFO, "Decompressing"):
             hdbg.dassert_file_exists(src_tgz_file)
             cmd = f"cd {dst_dir} && tar xzf {src_tgz_file}"
-            hsysinte.system(cmd)
+            hsystem.system(cmd)
     hdbg.dassert_dir_exists(tgz_dst_dir)
     # Return `{dst_dir}/experiment.RH1E`.
     return tgz_dst_dir

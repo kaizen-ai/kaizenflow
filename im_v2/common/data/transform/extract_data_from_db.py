@@ -22,7 +22,7 @@ import pandas as pd
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hsql as hsql
-import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
+import im_v2.ccxt.data.client as icdcl
 import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.im_lib_tasks as imvimlita
@@ -91,7 +91,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
     # Initiate DB client.
-    ccxt_db_client = imvcdccccl.CcxtDbClient(connection)
+    # Not sure what vendor is calling below, passing `CCXT` by default.
+    vendor = "ccxt"
+    ccxt_db_client = icdcl.CcxtCddDbClient(vendor, connection)
     # Get universe of symbols.
     symbols = imvccunun.get_vendor_universe()
     for date_index in range(len(timespan) - 1):

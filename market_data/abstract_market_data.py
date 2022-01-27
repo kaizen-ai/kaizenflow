@@ -160,7 +160,7 @@ class AbstractMarketData(abc.ABC):
 
     def get_data_for_last_period(
         self,
-        period: str,
+        timedelta: pd.Timedelta,
         *,
         normalize_data: bool = True,
         # TODO(gp): Not sure limit is really needed. We could move it to the DB
@@ -168,16 +168,16 @@ class AbstractMarketData(abc.ABC):
         limit: Optional[int] = None,
     ) -> pd.DataFrame:
         """
-        Get an amount of data `period` in the past before the current
+        Get an amount of data `timedelta` in the past before the current
         timestamp.
 
         This is used during real-time execution to evaluate a model.
         """
         # TODO(gp): If the DB supports asyncio this should become async.
-        # Handle `period`.
-        _LOG.verb_debug(hprint.to_str("period"))
+        # Handle `timedelta`.
+        _LOG.verb_debug(hprint.to_str("timedelta"))
         wall_clock_time = self.get_wall_clock_time()
-        start_ts = self._process_period(period, wall_clock_time)
+        start_ts = self._process_period(timedelta, wall_clock_time)
         end_ts = None
         # By convention to get the last chunk of data we use the start_time column.
         ts_col_name = self._start_time_col_name
@@ -193,7 +193,7 @@ class AbstractMarketData(abc.ABC):
         )
         # We don't need to remap columns since `get_data_for_interval()` has already
         # done it.
-        _LOG.verb_debug("-> df=\n%s", hprint.dataframe_to_str(df))
+        _LOG.verb_debug("-> df=\n%s", hpandas.dataframe_to_str(df))
         return df
 
     def get_data_at_timestamp(
@@ -224,7 +224,7 @@ class AbstractMarketData(abc.ABC):
         )
         # We don't need to remap columns since `get_data_for_interval()` has already
         # done it.
-        _LOG.verb_debug("-> df=\n%s", hprint.dataframe_to_str(df))
+        _LOG.verb_debug("-> df=\n%s", hpandas.dataframe_to_str(df))
         return df
 
     def get_data_for_interval(
@@ -284,18 +284,18 @@ class AbstractMarketData(abc.ABC):
             df = self._convert_timestamps_to_timezone(df)
         # Remap column names.
         df = self._remap_columns(df)
-        _LOG.verb_debug("-> df=\n%s", hprint.dataframe_to_str(df))
+        _LOG.verb_debug("-> df=\n%s", hpandas.dataframe_to_str(df))
+        hdbg.dassert_isinstance(df, pd.DataFrame)
         return df
 
-    # TODO(gp): To make the interface symmetric this method should accept `asset_ids`.
     def get_twap_price(
         self,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         ts_col_name: str,
-        asset_id: int,
+        asset_ids: List[int],
         column: str,
-    ) -> float:
+    ) -> pd.Series:
         """
         Compute TWAP of the column `column` in (ts_start, ts_end].
 
@@ -311,7 +311,7 @@ class AbstractMarketData(abc.ABC):
             start_ts,
             end_ts,
             ts_col_name,
-            [asset_id],
+            asset_ids,
             left_close=left_close,
             right_close=right_close,
             normalize_data=True,
@@ -320,18 +320,39 @@ class AbstractMarketData(abc.ABC):
         # We don't need to remap columns since `get_data_for_interval()` has already
         # done it.
         hdbg.dassert_in(column, prices.columns)
-        prices = prices[column]
         # Compute the mean value.
         _LOG.verb_debug("prices=\n%s", prices)
-        price: float = prices.mean()
-        hdbg.dassert(
-            np.isfinite(price),
-            "price=%s in interval `start_ts=%s`, `end_ts=%s`",
-            price,
-            start_ts,
-            end_ts,
+        twap = prices.groupby(self._asset_id_col)[column].mean()
+        hpandas.dassert_series_type_in(twap, [np.float64, np.int64])
+        return twap
+
+    def get_last_twap_price(
+        self,
+        bar_duration: str,
+        ts_col_name: str,
+        asset_ids: List[int],
+        column: str,
+    ) -> pd.Series:
+        """
+        Compute TWAP of the column `column` over last `bar_duration`.
+
+        E.g., if the last end time is 9:35 and `bar_duration=5T`, then
+        we compute TWAP for (9:30, 9:35].
+        """
+        last_end_time = self.get_last_end_time()
+        _LOG.info("last_end_time=%s", last_end_time)
+        offset = pd.Timedelta(bar_duration)
+        first_end_time = last_end_time - offset
+        # We rely on the assumption that we are reading 1-minute bars.
+        start_time = first_end_time - pd.Timedelta(minutes=1)
+        twap = self.get_twap_price(
+            start_time,
+            last_end_time,
+            ts_col_name,
+            asset_ids,
+            column,
         )
-        return price
+        return twap
 
     # Methods for handling real-time behaviors.
 
@@ -346,6 +367,7 @@ class AbstractMarketData(abc.ABC):
         ret = self._get_last_end_time()
         if ret is not None:
             # Convert to ET.
+            # TODO(Dan): Pass timezone from ctor in CmTask1000.
             ret = ret.tz_convert("America/New_York")
         _LOG.verb_debug("-> ret=%s", ret)
         return ret
@@ -364,7 +386,7 @@ class AbstractMarketData(abc.ABC):
         # TODO(gp): This is not super robust.
         if False:
             # For debugging.
-            df = self.get_data_for_last_period(period="last_5mins")
+            df = self.get_data_for_last_period(timedelta="last_5mins")
             _LOG.info("df=\n%s", hprintin.dataframe_to_str(df))
         # Get the data.
         # TODO(*): Remove the hard-coded 1-minute.
@@ -382,6 +404,7 @@ class AbstractMarketData(abc.ABC):
         hdbg.dassert_isinstance(last_price_srs, pd.Series)
         last_price_srs.index.name = self._asset_id_col
         last_price_srs.name = col_name
+        hpandas.dassert_series_type_in(last_price_srs, [np.float64, np.int64])
         # TODO(gp): Print if there are nans.
         return last_price_srs
 
@@ -508,7 +531,7 @@ class AbstractMarketData(abc.ABC):
         #     wall_clock_time = self.get_wall_clock_time()
         #     _LOG.debug(hprint.to_str("wall_clock_time df.index.max()"))
         #     hdbg.dassert_lte(df.index.max(), wall_clock_time)
-        # _LOG.debug(hprint.df_to_short_str("after process_data", df))
+        # _LOG.debug(hpandas.df_to_short_str("after process_data", df))
         return df
 
     # /////////////////////////////////////////////////////////////////////////////
@@ -580,11 +603,11 @@ class AbstractMarketData(abc.ABC):
 
     @staticmethod
     def _process_period(
-        period: str, wall_clock_time: pd.Timestamp
+        timedelta: pd.Timedelta, wall_clock_time: pd.Timestamp
     ) -> Optional[pd.Timestamp]:
         """
-        Return the start time corresponding to returning the desired `period`
-        of time.
+        Return the start time corresponding to returning the desired
+        `timedelta` of time before the current wall clock time.
 
         E.g., if the df looks like:
         ```
@@ -597,7 +620,7 @@ class AbstractMarketData(abc.ABC):
         3  09:33     09:34    09:34   0.655907  1000
         4  09:34     09:35    09:35   0.311925  1000
         ```
-        and `wall_clock_time=09:34` the last minute should be:
+        and `wall_clock_time=09:34` the last minute `1T` should be:
         ```
            start_datetime           last_price    id
                      end_datetime
@@ -605,55 +628,11 @@ class AbstractMarketData(abc.ABC):
         4  09:34     09:35    09:35   0.311925  1000
         ```
 
-        :param period: what period the df to extract (e.g., `last_1mins`, ...,
-            `last_10mins`)
-        :return:
+        :param timedelta: a `pd.Timedelta` like `1D`, `5T`
         """
-        _LOG.verb_debug(hprint.to_str("period wall_clock_time"))
-        # Period of time.
-        if period == "last_day":
-            # Get the data for the last day.
-            last_start_time = wall_clock_time.replace(hour=0, minute=0, second=0)
-        elif period == "last_2days":
-            # Get the data for the last 2 days.
-            last_start_time = (
-                wall_clock_time.replace(hour=0, minute=0, second=0)
-            ) - pd.Timedelta(days=1)
-        elif period == "last_week":
-            # Get the data for the last week.
-            last_start_time = wall_clock_time.replace(
-                hour=0, minute=0, second=0
-            ) - pd.Timedelta(days=16)
-        elif period in ("last_10mins", "last_5mins", "last_1min"):
-            # Get the data for the last N minutes.
-            if period == "last_10mins":
-                mins = 10
-            elif period == "last_5mins":
-                mins = 5
-            elif period == "last_1min":
-                mins = 1
-            else:
-                raise ValueError("Invalid period='%s'" % period)
-            # We condition on `start_time` since it's an index.
-            last_start_time = wall_clock_time - pd.Timedelta(minutes=mins)
-        elif period == "all":
-            last_start_time = None
-        else:
-            raise ValueError("Invalid period='%s'" % period)
+        _LOG.verb_debug(hprint.to_str("timedelta wall_clock_time"))
+        hdbg.dassert_isinstance(timedelta, pd.Timedelta)
+        hdbg.dassert_lt(pd.Timedelta(seconds=0), timedelta)
+        last_start_time = wall_clock_time - timedelta
         _LOG.verb_debug("last_start_time=%s", last_start_time)
         return last_start_time
-
-
-# TODO(gp): This could go in a market_data_utils.py
-def skip_test_since_not_online(market_data: AbstractMarketData) -> bool:
-    """
-    Return true if a test should be skipped since `market_data` is not on-line.
-    """
-    ret = False
-    if not market_data.is_online():
-        current_time = hdateti.get_current_time(tz="ET")
-        _LOG.warning(
-            "Skipping this test since DB is not on-line at %s", current_time
-        )
-        ret = True
-    return ret

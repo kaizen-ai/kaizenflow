@@ -31,30 +31,41 @@ result_bundles=
     source_node_name: RealTimeDataSource
     source_node_kwargs:
       market_data: <market_data.replayed_market_data.ReplayedMarketData object>
-      period: last_5mins
+      timedelta: 0 days 00:05:00
       asset_id_col: asset_id
       multiindex_output: True
   process_forecasts:
     prediction_col: close
     volatility_col: close
     portfolio: # historical holdings=
-    asset_id                            101            -1  
-    2000-01-03 09:30:00-05:00           0.0  1000000.000000
-    2000-01-03 09:30:01-05:00           NaN  1000000.000000
-    2000-01-03 09:35:01-05:00           NaN  1000000.000000
-    2000-01-03 09:40:01-05:00  99934.443264   900020.904093
+    asset_id                        101       -1  
+    2000-01-03 09:30:00-05:00      0.00  1000000.0
+    2000-01-03 09:30:01-05:00      0.00  1000000.0
+    2000-01-03 09:35:01-05:00      0.00  1000000.0
+    2000-01-03 09:40:01-05:00  99934.44   900020.9
     # historical holdings marked to market=
-                                        101            -1  
-    2000-01-03 09:30:00-05:00           0.0  1000000.000000
-    2000-01-03 09:30:01-05:00           NaN  1000000.000000
-    2000-01-03 09:35:01-05:00           NaN  1000000.000000
-    2000-01-03 09:40:01-05:00  99946.633308   900020.904093
+    asset_id                        101       -1  
+    2000-01-03 09:30:00-05:00      0.00  1000000.0
+    2000-01-03 09:30:01-05:00      0.00  1000000.0
+    2000-01-03 09:35:01-05:00      0.00  1000000.0
+    2000-01-03 09:40:01-05:00  99946.63   900020.9
+    # historical flows=
+    asset_id                       101
+    2000-01-03 09:30:01-05:00      NaN
+    2000-01-03 09:35:01-05:00      NaN
+    2000-01-03 09:40:01-05:00 -99979.1
+    # historical pnl=
+    asset_id                     101
+    2000-01-03 09:30:00-05:00    NaN
+    2000-01-03 09:30:01-05:00   0.00
+    2000-01-03 09:35:01-05:00   0.00
+    2000-01-03 09:40:01-05:00 -32.46
     # historical statistics=
-                               net_asset_holdings            cash      net_wealth  gross_exposure  leverage        pnl  realized_pnl  unrealized_pnl
-    2000-01-03 09:30:00-05:00            0.000000  1000000.000000  1000000.000000        0.000000   0.00000        NaN           NaN             NaN
-    2000-01-03 09:30:01-05:00            0.000000  1000000.000000  1000000.000000        0.000000   0.00000   0.000000      0.000000        0.000000
-    2000-01-03 09:35:01-05:00            0.000000  1000000.000000  1000000.000000        0.000000   0.00000   0.000000      0.000000        0.000000
-    2000-01-03 09:40:01-05:00        99946.633308   900020.904093   999967.537402    99946.633308   0.09995 -32.462598 -99979.095907    99946.633308
+                               net_asset_holdings       cash  net_wealth  gross_exposure  leverage    pnl  realized_pnl  unrealized_pnl
+    2000-01-03 09:30:00-05:00                0.00  1000000.0  1000000.00            0.00       0.0    NaN           NaN             NaN
+    2000-01-03 09:30:01-05:00                0.00  1000000.0  1000000.00            0.00       0.0   0.00           0.0            0.00
+    2000-01-03 09:35:01-05:00                0.00  1000000.0  1000000.00            0.00       0.0   0.00           0.0            0.00
+    2000-01-03 09:40:01-05:00            99946.63   900020.9   999967.54        99946.63       0.1 -32.46      -99979.1        99946.63
     process_forecasts_config:
       market_data: <market_data.replayed_market_data.ReplayedMarketData object>
       order_type: price@twap
@@ -65,6 +76,7 @@ result_bundles=
       trading_end_time: 16:40:00
       execution_mode: real_time
       log_dir: None
+    evaluate_forecasts_config: None
 result_nid: process_forecasts
 method: predict
 result_df:                           close.ret_0 twap.ret_0 vwap.ret_0 close twap volume  \
@@ -190,30 +202,41 @@ class: ResultBundle, config:
     source_node_name: RealTimeDataSource
     source_node_kwargs:
       market_data: <market_data.replayed_market_data.ReplayedMarketData object>
-      period: last_5mins
+      timedelta: 0 days 00:05:00
       asset_id_col: asset_id
       multiindex_output: True
   process_forecasts:
     prediction_col: close
     volatility_col: close
     portfolio: # historical holdings=
-    asset_id                            101            -1  
-    2000-01-03 09:30:00-05:00           0.0  1000000.000000
-    2000-01-03 09:30:01-05:00           NaN  1000000.000000
-    2000-01-03 09:35:01-05:00           NaN  1000000.000000
-    2000-01-03 09:40:01-05:00  99934.443264   900020.904093
+    asset_id                        101       -1  
+    2000-01-03 09:30:00-05:00      0.00  1000000.0
+    2000-01-03 09:30:01-05:00      0.00  1000000.0
+    2000-01-03 09:35:01-05:00      0.00  1000000.0
+    2000-01-03 09:40:01-05:00  99934.44   900020.9
     # historical holdings marked to market=
-                                        101            -1  
-    2000-01-03 09:30:00-05:00           0.0  1000000.000000
-    2000-01-03 09:30:01-05:00           NaN  1000000.000000
-    2000-01-03 09:35:01-05:00           NaN  1000000.000000
-    2000-01-03 09:40:01-05:00  99946.633308   900020.904093
+    asset_id                        101       -1  
+    2000-01-03 09:30:00-05:00      0.00  1000000.0
+    2000-01-03 09:30:01-05:00      0.00  1000000.0
+    2000-01-03 09:35:01-05:00      0.00  1000000.0
+    2000-01-03 09:40:01-05:00  99946.63   900020.9
+    # historical flows=
+    asset_id                       101
+    2000-01-03 09:30:01-05:00      NaN
+    2000-01-03 09:35:01-05:00      NaN
+    2000-01-03 09:40:01-05:00 -99979.1
+    # historical pnl=
+    asset_id                     101
+    2000-01-03 09:30:00-05:00    NaN
+    2000-01-03 09:30:01-05:00   0.00
+    2000-01-03 09:35:01-05:00   0.00
+    2000-01-03 09:40:01-05:00 -32.46
     # historical statistics=
-                               net_asset_holdings            cash      net_wealth  gross_exposure  leverage        pnl  realized_pnl  unrealized_pnl
-    2000-01-03 09:30:00-05:00            0.000000  1000000.000000  1000000.000000        0.000000   0.00000        NaN           NaN             NaN
-    2000-01-03 09:30:01-05:00            0.000000  1000000.000000  1000000.000000        0.000000   0.00000   0.000000      0.000000        0.000000
-    2000-01-03 09:35:01-05:00            0.000000  1000000.000000  1000000.000000        0.000000   0.00000   0.000000      0.000000        0.000000
-    2000-01-03 09:40:01-05:00        99946.633308   900020.904093   999967.537402    99946.633308   0.09995 -32.462598 -99979.095907    99946.633308
+                               net_asset_holdings       cash  net_wealth  gross_exposure  leverage    pnl  realized_pnl  unrealized_pnl
+    2000-01-03 09:30:00-05:00                0.00  1000000.0  1000000.00            0.00       0.0    NaN           NaN             NaN
+    2000-01-03 09:30:01-05:00                0.00  1000000.0  1000000.00            0.00       0.0   0.00           0.0            0.00
+    2000-01-03 09:35:01-05:00                0.00  1000000.0  1000000.00            0.00       0.0   0.00           0.0            0.00
+    2000-01-03 09:40:01-05:00            99946.63   900020.9   999967.54        99946.63       0.1 -32.46      -99979.1        99946.63
     process_forecasts_config:
       market_data: <market_data.replayed_market_data.ReplayedMarketData object>
       order_type: price@twap
@@ -224,6 +247,7 @@ class: ResultBundle, config:
       trading_end_time: 16:40:00
       execution_mode: real_time
       log_dir: None
+    evaluate_forecasts_config: None
 result_nid: process_forecasts
 method: predict
 result_df:                           close.ret_0 twap.ret_0 vwap.ret_0     close  \
@@ -349,30 +373,41 @@ class: ResultBundle, config:
     source_node_name: RealTimeDataSource
     source_node_kwargs:
       market_data: <market_data.replayed_market_data.ReplayedMarketData object>
-      period: last_5mins
+      timedelta: 0 days 00:05:00
       asset_id_col: asset_id
       multiindex_output: True
   process_forecasts:
     prediction_col: close
     volatility_col: close
     portfolio: # historical holdings=
-    asset_id                            101            -1  
-    2000-01-03 09:30:00-05:00           0.0  1000000.000000
-    2000-01-03 09:30:01-05:00           NaN  1000000.000000
-    2000-01-03 09:35:01-05:00           NaN  1000000.000000
-    2000-01-03 09:40:01-05:00  99934.443264   900020.904093
+    asset_id                        101       -1  
+    2000-01-03 09:30:00-05:00      0.00  1000000.0
+    2000-01-03 09:30:01-05:00      0.00  1000000.0
+    2000-01-03 09:35:01-05:00      0.00  1000000.0
+    2000-01-03 09:40:01-05:00  99934.44   900020.9
     # historical holdings marked to market=
-                                        101            -1  
-    2000-01-03 09:30:00-05:00           0.0  1000000.000000
-    2000-01-03 09:30:01-05:00           NaN  1000000.000000
-    2000-01-03 09:35:01-05:00           NaN  1000000.000000
-    2000-01-03 09:40:01-05:00  99946.633308   900020.904093
+    asset_id                        101       -1  
+    2000-01-03 09:30:00-05:00      0.00  1000000.0
+    2000-01-03 09:30:01-05:00      0.00  1000000.0
+    2000-01-03 09:35:01-05:00      0.00  1000000.0
+    2000-01-03 09:40:01-05:00  99946.63   900020.9
+    # historical flows=
+    asset_id                       101
+    2000-01-03 09:30:01-05:00      NaN
+    2000-01-03 09:35:01-05:00      NaN
+    2000-01-03 09:40:01-05:00 -99979.1
+    # historical pnl=
+    asset_id                     101
+    2000-01-03 09:30:00-05:00    NaN
+    2000-01-03 09:30:01-05:00   0.00
+    2000-01-03 09:35:01-05:00   0.00
+    2000-01-03 09:40:01-05:00 -32.46
     # historical statistics=
-                               net_asset_holdings            cash      net_wealth  gross_exposure  leverage        pnl  realized_pnl  unrealized_pnl
-    2000-01-03 09:30:00-05:00            0.000000  1000000.000000  1000000.000000        0.000000   0.00000        NaN           NaN             NaN
-    2000-01-03 09:30:01-05:00            0.000000  1000000.000000  1000000.000000        0.000000   0.00000   0.000000      0.000000        0.000000
-    2000-01-03 09:35:01-05:00            0.000000  1000000.000000  1000000.000000        0.000000   0.00000   0.000000      0.000000        0.000000
-    2000-01-03 09:40:01-05:00        99946.633308   900020.904093   999967.537402    99946.633308   0.09995 -32.462598 -99979.095907    99946.633308
+                               net_asset_holdings       cash  net_wealth  gross_exposure  leverage    pnl  realized_pnl  unrealized_pnl
+    2000-01-03 09:30:00-05:00                0.00  1000000.0  1000000.00            0.00       0.0    NaN           NaN             NaN
+    2000-01-03 09:30:01-05:00                0.00  1000000.0  1000000.00            0.00       0.0   0.00           0.0            0.00
+    2000-01-03 09:35:01-05:00                0.00  1000000.0  1000000.00            0.00       0.0   0.00           0.0            0.00
+    2000-01-03 09:40:01-05:00            99946.63   900020.9   999967.54        99946.63       0.1 -32.46      -99979.1        99946.63
     process_forecasts_config:
       market_data: <market_data.replayed_market_data.ReplayedMarketData object>
       order_type: price@twap
@@ -383,6 +418,7 @@ class: ResultBundle, config:
       trading_end_time: 16:40:00
       execution_mode: real_time
       log_dir: None
+    evaluate_forecasts_config: None
 result_nid: process_forecasts
 method: predict
 result_df:                           close.ret_0 twap.ret_0 vwap.ret_0     close  \
@@ -484,20 +520,31 @@ class: ResultBundle]
 None
 portfolio=
 # historical holdings=
-asset_id                            101            -1  
-2000-01-03 09:30:00-05:00           0.0  1000000.000000
-2000-01-03 09:30:01-05:00           NaN  1000000.000000
-2000-01-03 09:35:01-05:00           NaN  1000000.000000
-2000-01-03 09:40:01-05:00  99934.443264   900020.904093
+asset_id                        101       -1  
+2000-01-03 09:30:00-05:00      0.00  1000000.0
+2000-01-03 09:30:01-05:00      0.00  1000000.0
+2000-01-03 09:35:01-05:00      0.00  1000000.0
+2000-01-03 09:40:01-05:00  99934.44   900020.9
 # historical holdings marked to market=
-                                    101            -1  
-2000-01-03 09:30:00-05:00           0.0  1000000.000000
-2000-01-03 09:30:01-05:00           NaN  1000000.000000
-2000-01-03 09:35:01-05:00           NaN  1000000.000000
-2000-01-03 09:40:01-05:00  99946.633308   900020.904093
+asset_id                        101       -1  
+2000-01-03 09:30:00-05:00      0.00  1000000.0
+2000-01-03 09:30:01-05:00      0.00  1000000.0
+2000-01-03 09:35:01-05:00      0.00  1000000.0
+2000-01-03 09:40:01-05:00  99946.63   900020.9
+# historical flows=
+asset_id                       101
+2000-01-03 09:30:01-05:00      NaN
+2000-01-03 09:35:01-05:00      NaN
+2000-01-03 09:40:01-05:00 -99979.1
+# historical pnl=
+asset_id                     101
+2000-01-03 09:30:00-05:00    NaN
+2000-01-03 09:30:01-05:00   0.00
+2000-01-03 09:35:01-05:00   0.00
+2000-01-03 09:40:01-05:00 -32.46
 # historical statistics=
-                           net_asset_holdings            cash      net_wealth  gross_exposure  leverage        pnl  realized_pnl  unrealized_pnl
-2000-01-03 09:30:00-05:00            0.000000  1000000.000000  1000000.000000        0.000000   0.00000        NaN           NaN             NaN
-2000-01-03 09:30:01-05:00            0.000000  1000000.000000  1000000.000000        0.000000   0.00000   0.000000      0.000000        0.000000
-2000-01-03 09:35:01-05:00            0.000000  1000000.000000  1000000.000000        0.000000   0.00000   0.000000      0.000000        0.000000
-2000-01-03 09:40:01-05:00        99946.633308   900020.904093   999967.537402    99946.633308   0.09995 -32.462598 -99979.095907    99946.633308
+                           net_asset_holdings       cash  net_wealth  gross_exposure  leverage    pnl  realized_pnl  unrealized_pnl
+2000-01-03 09:30:00-05:00                0.00  1000000.0  1000000.00            0.00       0.0    NaN           NaN             NaN
+2000-01-03 09:30:01-05:00                0.00  1000000.0  1000000.00            0.00       0.0   0.00           0.0            0.00
+2000-01-03 09:35:01-05:00                0.00  1000000.0  1000000.00            0.00       0.0   0.00           0.0            0.00
+2000-01-03 09:40:01-05:00            99946.63   900020.9   999967.54        99946.63       0.1 -32.46      -99979.1        99946.63

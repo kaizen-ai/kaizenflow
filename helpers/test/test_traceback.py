@@ -263,14 +263,14 @@ class Test_Traceback1(hunitest.TestCase):
     #   File "/Users/saggese/src/lem1/amp/helpers/lib_tasks.py", line 23, in <module>
     #     import helpers.hgit as hgit
     #   File "/Users/saggese/src/lem1/amp/helpers/git.py", line 16, in <module>
-    #     import helpers.hsystem as hsysinte
+    #     import helpers.hsystem as hsystem
     #   File "/Users/saggese/src/lem1/amp/helpers/system_interaction.py", line 529
     #     signature2 = _compute_file_signature(file_name, dir_depth)
     #     ^
     # SyntaxError: invalid syntax
     # Traceback (most recent call last):
     #   File "/Users/saggese/src/lem1/amp/dev_scripts/tg.py", line 21, in <module>
-    #     import helpers.hsystem as hsysinte
+    #     import helpers.hsystem as hsystem
     #   File "/Users/saggese/src/lem1/amp/helpers/system_interaction.py", line 529
     #     signature2 = _compute_file_signature(file_name, dir_depth)
     #     ^

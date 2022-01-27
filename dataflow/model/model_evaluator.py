@@ -23,6 +23,7 @@ import dataflow.model.stats_computer as dtfmostcom
 import dataflow.model.utils as dtfmodutil
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
+import helpers.hlogging as hloggin
 
 _LOG = logging.getLogger(__name__)
 
@@ -100,14 +101,16 @@ class StrategyEvaluator:
         """
         _LOG.info(
             "Before building StrategyEvaluator: memory_usage=%s",
-            hdbg.get_memory_usage_as_str(None),
+            hloggin.get_memory_usage_as_str(None),
         )
         data_dict: Dict[Key, pd.DataFrame] = {}
         # Convert each `ResultBundle` dict into a `ResultBundle` class object.
         for key, result_bundle in result_bundle_dict.items():
             _LOG.debug("Loading key=%s", key)
             try:
-                _LOG.debug("memory_usage=%s", hdbg.get_memory_usage_as_str(None))
+                _LOG.debug(
+                    "memory_usage=%s", hloggin.get_memory_usage_as_str(None)
+                )
                 df = result_bundle.result_df
                 hdbg.dassert_is_not(df, None)
                 _LOG.debug(
@@ -140,7 +143,7 @@ class StrategyEvaluator:
         )
         _LOG.info(
             "After building StrategyEvaluator: memory_usage=%s",
-            hdbg.get_memory_usage_as_str(None),
+            hloggin.get_memory_usage_as_str(None),
         )
         return evaluator
 
@@ -182,7 +185,7 @@ class StrategyEvaluator:
         # TODO(gp): Add some logic to cache this data and not recompute.
         _LOG.info(
             "Before StrategyEvaluator.compute_pnl: memory_usage=%s",
-            hdbg.get_memory_usage_as_str(None),
+            hloggin.get_memory_usage_as_str(None),
         )
         keys = keys or self.valid_keys
         hdbg.dassert_is_subset(keys, self.valid_keys)
@@ -261,7 +264,7 @@ class StrategyEvaluator:
             pnl_dict = pnl_dict_pivoted
         else:
             raise ValueError("Invalid key_type='%s'" % key_type)
-        _LOG.info("memory_usage=%s", hdbg.get_memory_usage_as_str(None))
+        _LOG.info("memory_usage=%s", hloggin.get_memory_usage_as_str(None))
         return pnl_dict
 
     def calculate_stats(
@@ -301,13 +304,11 @@ class StrategyEvaluator:
         stats_df = pd.concat(stats_dict, axis=1)
         # Calculate BH adjustment of pvals.
         adj_pvals = costatis.multipletests(
-            stats_df.loc["signal_quality"].loc["sr.pval"], nan_mode="drop"
+            stats_df.loc["ratios"].loc["sr.pval"], nan_mode="drop"
         ).rename("sr.adj_pval")
-        adj_pvals = pd.concat(
-            [adj_pvals.to_frame().transpose()], keys=["signal_quality"]
-        )
+        adj_pvals = pd.concat([adj_pvals.to_frame().transpose()], keys=["ratios"])
         stats_df = pd.concat([stats_df, adj_pvals], axis=0)
-        _LOG.info("memory_usage=%s", hdbg.get_memory_usage_as_str(None))
+        _LOG.info("memory_usage=%s", hloggin.get_memory_usage_as_str(None))
         return stats_df
 
 
@@ -394,14 +395,16 @@ class ModelEvaluator:
         """
         _LOG.info(
             "Before building ModelEvaluator: memory_usage=%s",
-            hdbg.get_memory_usage_as_str(None),
+            hloggin.get_memory_usage_as_str(None),
         )
         data_dict: Dict[Key, pd.DataFrame] = {}
         # Convert each `ResultBundle` dict into a `ResultBundle` class object.
         for key, result_bundle in result_bundle_dict.items():
             _LOG.debug("Loading key=%s", key)
             try:
-                _LOG.debug("memory_usage=%s", hdbg.get_memory_usage_as_str(None))
+                _LOG.debug(
+                    "memory_usage=%s", hloggin.get_memory_usage_as_str(None)
+                )
                 df = result_bundle.result_df
                 hdbg.dassert_is_not(df, None)
                 _LOG.debug(
@@ -433,7 +436,7 @@ class ModelEvaluator:
         )
         _LOG.info(
             "After building ModelEvaluator: memory_usage=%s",
-            hdbg.get_memory_usage_as_str(None),
+            hloggin.get_memory_usage_as_str(None),
         )
         return evaluator
 
@@ -541,10 +544,10 @@ class ModelEvaluator:
         portfolio_dict = {"positions": pos_srs, "pnl": pnl_srs}
         aggregate_stats = self._stats_computer.compute_finance_stats(
             pd.DataFrame.from_dict(portfolio_dict),
-            positions_col="positions",
+            position_col="positions",
             pnl_col="pnl",
         )
-        _LOG.info("memory_usage=%s", hdbg.get_memory_usage_as_str(None))
+        _LOG.info("memory_usage=%s", hloggin.get_memory_usage_as_str(None))
         return pnl_srs, pos_srs, aggregate_stats
 
     # TODO(gp): This is second.
@@ -589,20 +592,18 @@ class ModelEvaluator:
             stats_dict[key] = self._stats_computer.compute_finance_stats(
                 pnl_dict[key],
                 returns_col="returns",
-                predictions_col="predictions",
-                positions_col="positions",
+                prediction_col="predictions",
+                position_col="positions",
                 pnl_col="pnl",
             )
         stats_df = pd.concat(stats_dict, axis=1)
         # Calculate BH adjustment of pvals.
         adj_pvals = costatis.multipletests(
-            stats_df.loc["signal_quality"].loc["sr.pval"], nan_mode="drop"
+            stats_df.loc["ratios"].loc["sr.pval"], nan_mode="drop"
         ).rename("sr.adj_pval")
-        adj_pvals = pd.concat(
-            [adj_pvals.to_frame().transpose()], keys=["signal_quality"]
-        )
+        adj_pvals = pd.concat([adj_pvals.to_frame().transpose()], keys=["ratios"])
         stats_df = pd.concat([stats_df, adj_pvals], axis=0)
-        _LOG.info("memory_usage=%s", hdbg.get_memory_usage_as_str(None))
+        _LOG.info("memory_usage=%s", hloggin.get_memory_usage_as_str(None))
         return stats_df
 
     # TODO(gp): This is first.
@@ -686,7 +687,7 @@ class ModelEvaluator:
             )
         _LOG.debug("Trim pnl_dict")
         pnl_dict = self._trim_time_range(pnl_dict, mode=mode)
-        _LOG.info("memory_usage=%s", hdbg.get_memory_usage_as_str(None))
+        _LOG.info("memory_usage=%s", hloggin.get_memory_usage_as_str(None))
         return pnl_dict
 
     # TODO(gp): Maybe trim when they are generated so we can discard.

@@ -21,4 +21,4 @@ volumes:
 
 networks:
   default:
-    name: im_postgres_network
+    name: main_network

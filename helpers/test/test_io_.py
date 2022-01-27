@@ -6,6 +6,7 @@ import pandas as pd
 
 import helpers.hgit as hgit
 import helpers.hio as hio
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
@@ -54,6 +55,6 @@ class Test_load_df_from_json(hunitest.TestCase):
                 "col3": ["a", "b", "c", np.nan],
             }
         )
-        actual_result = hprint.dataframe_to_str(actual_result)
-        expected_result = hprint.dataframe_to_str(expected_result)
+        actual_result = hpandas.dataframe_to_str(actual_result)
+        expected_result = hpandas.dataframe_to_str(expected_result)
         self.assertEqual(actual_result, expected_result)

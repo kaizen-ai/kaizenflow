@@ -7,7 +7,7 @@ import abc
 import collections
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -15,6 +15,7 @@ import pandas as pd
 import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
 import helpers.hio as hio
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hsql as hsql
 import oms.broker as ombroker
@@ -62,6 +63,7 @@ class AbstractPortfolio(abc.ABC):
         broker: ombroker.AbstractBroker,
         asset_id_col: str,
         mark_to_market_col: str,
+        pricing_method: str,
         timestamp_col: str,
         initial_holdings: pd.Series,
     ):
@@ -74,6 +76,9 @@ class AbstractPortfolio(abc.ABC):
             storing the asset id
         :param mark_to_market_col: column name used as price to mark holdings to
             market
+        :param pricing_method: pricing methodology to use for valuing assets.
+            If e.g. "twap", then we also include the bar duration as a
+            pandas-style suffix: "twap.5T"
         :param timestamp_col: column to use when accessing price data
         """
         _LOG.debug(
@@ -92,6 +97,23 @@ class AbstractPortfolio(abc.ABC):
         self._get_wall_clock_time = broker.market_data.get_wall_clock_time
         self._asset_id_col = asset_id_col
         self._mark_to_market_col = mark_to_market_col
+        # Parse `pricing_method`.
+        hdbg.dassert_isinstance(pricing_method, str)
+        if pricing_method == "last":
+            self._pricing_type = "last"
+        else:
+            split_str = pricing_method.split(".")
+            hdbg.dassert_eq(len(split_str), 2)
+            pricing_type = split_str[0]
+            hdbg.dassert_in(pricing_type, ["twap", "vwap"])
+            self._pricing_type = pricing_type
+            bar_duration = split_str[1]
+            hdbg.dassert(
+                pd.Timedelta(bar_duration),
+                "Cannot convert %s to `pd.Timedelta`" % bar_duration,
+            )
+            self._bar_duration = bar_duration
+        # Timestamp column.
         self._timestamp_col = timestamp_col
         # Initialize universe and holdings.
         self._validate_initial_holdings(initial_holdings)
@@ -134,6 +156,8 @@ class AbstractPortfolio(abc.ABC):
         # Compute the initial portfolio statistics.
         self._compute_statistics()
         _LOG.debug("statistics initialized.")
+        # Set up asset flows dict. No initialization.
+        self._flows = collections.OrderedDict()
         #
         self._initial_universe = asset_holdings.index
 
@@ -142,19 +166,39 @@ class AbstractPortfolio(abc.ABC):
         Return the state of the Portfolio in terms of the holdings as a string.
         """
         act = []
+        precision = 2
         act.append(
             "# historical holdings=\n%s"
-            % hprint.dataframe_to_str(self.get_historical_holdings())
+            % hpandas.dataframe_to_str(
+                self.get_historical_holdings(), precision=precision
+            )
         )
         act.append(
             "# historical holdings marked to market=\n%s"
-            % hprint.dataframe_to_str(
-                self.get_historical_holdings_marked_to_market()
+            % hpandas.dataframe_to_str(
+                self.get_historical_holdings_marked_to_market(),
+                precision=precision,
+            )
+        )
+        act.append(
+            "# historical flows=\n%s"
+            % hpandas.dataframe_to_str(
+                self.get_historical_flows(),
+                precision=precision,
+            )
+        )
+        act.append(
+            "# historical pnl=\n%s"
+            % hpandas.dataframe_to_str(
+                self.get_historical_pnl(),
+                precision=precision,
             )
         )
         act.append(
             "# historical statistics=\n%s"
-            % hprint.dataframe_to_str(self.get_historical_statistics())
+            % hpandas.dataframe_to_str(
+                self.get_historical_statistics(), precision=precision
+            )
         )
         act = "\n".join(act)
         return act
@@ -254,7 +298,7 @@ class AbstractPortfolio(abc.ABC):
         hdbg.dassert_eq(len(self._asset_holdings), len(self._statistics))
         #
         df = self.get_cached_mark_to_market()
-        _LOG.debug("mark_to_market_df=\n%s", hprint.dataframe_to_str(df))
+        _LOG.debug("mark_to_market_df=\n%s", hpandas.dataframe_to_str(df))
         return df
 
     def get_cached_mark_to_market(self) -> pd.DataFrame:
@@ -313,6 +357,10 @@ class AbstractPortfolio(abc.ABC):
         asset_holdings = pd.DataFrame(self._asset_holdings).transpose()
         cash = pd.Series(self._cash)
         asset_holdings[AbstractPortfolio.CASH_ID] = cash
+        asset_holdings.columns.name = self._asset_id_col
+        # Explicitly cast to float. This makes the string representation of
+        # the dataframe more uniform and better.
+        asset_holdings = asset_holdings.astype("float")
         return asset_holdings
 
     def get_historical_holdings_marked_to_market(self) -> pd.DataFrame:
@@ -325,31 +373,90 @@ class AbstractPortfolio(abc.ABC):
         asset_values = pd.DataFrame(asset_values).transpose()
         cash = pd.Series(self._cash)
         asset_values[AbstractPortfolio.CASH_ID] = cash
+        asset_values.columns.name = self._asset_id_col
+        # Explicitly cast to float. This makes the string representation of
+        # the dataframe more uniform and better.
+        asset_values = asset_values.astype("float")
         return asset_values
 
-    def log_state(self, log_dir: str) -> None:
+    def get_historical_flows(self) -> pd.DataFrame:
+        """
+        Return a dataframe of asset cash flows over time.
+        """
+        flows = pd.DataFrame(self._flows).transpose()
+        flows.columns.name = self._asset_id_col
+        # Explicitly cast to float. This makes the string representation of
+        # the dataframe more uniform and better.
+        flows = flows.astype("float")
+        return flows
+
+    def get_historical_pnl(self) -> pd.DataFrame:
+        """
+        Return a dataframe of per-asset PnL over time.
+        """
+        # Get snapshots of assets marked to market.
+        mtm = self.get_historical_holdings_marked_to_market()
+        flows = self.get_historical_flows()
+        # Compute PnL.
+        pnl = self._compute_pnl(mtm, flows)
+        #
+        pnl.columns.name = self._asset_id_col
+        pnl = pnl.astype("float")
+        return pnl
+
+    def log_state(self, log_dir: str) -> str:
         hdbg.dassert(log_dir, "Must specify `log_dir` to log state.")
         #
         wall_clock_time = self._get_wall_clock_time()
         wall_clock_time_str = wall_clock_time.strftime("%Y%m%d_%H%M%S")
-        filename = f"{wall_clock_time_str}.csv"
+        file_name = f"{wall_clock_time_str}.csv"
         #
         holdings_df = self.get_historical_holdings()
-        holdings_filename = os.path.join(log_dir, "holdings", filename)
-        hio.create_enclosing_dir(holdings_filename, incremental=True)
-        holdings_df.to_csv(holdings_filename)
+        AbstractPortfolio._write_df(holdings_df, log_dir, "holdings", file_name)
         #
-        holdings_mtm = self.get_historical_holdings_marked_to_market()
-        holdings_mtm_filename = os.path.join(
-            log_dir, "holdings_marked_to_market", filename
+        holdings_mtm_df = self.get_historical_holdings_marked_to_market()
+        AbstractPortfolio._write_df(
+            holdings_mtm_df, log_dir, "holdings_marked_to_market", file_name
         )
-        hio.create_enclosing_dir(holdings_mtm_filename, incremental=True)
-        holdings_mtm.to_csv(holdings_mtm_filename)
         #
-        stats = self.get_historical_statistics()
-        stats_filename = os.path.join(log_dir, "statistics", filename)
-        hio.create_enclosing_dir(stats_filename, incremental=True)
-        stats.to_csv(stats_filename)
+        flows_df = self.get_historical_flows()
+        AbstractPortfolio._write_df(flows_df, log_dir, "flows", file_name)
+        #
+        stats_df = self.get_historical_statistics()
+        AbstractPortfolio._write_df(stats_df, log_dir, "statistics", file_name)
+        return file_name
+
+    @staticmethod
+    def read_state(
+        log_dir: str,
+        file_name: str,
+        *,
+        tz: str = "America/New_York",
+        cast_asset_ids_to_int: bool = True,
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        holdings_df = AbstractPortfolio._read_df(
+            log_dir, "holdings", file_name, tz
+        )
+        holdings_mtm_df = AbstractPortfolio._read_df(
+            log_dir, "holdings_marked_to_market", file_name, tz
+        )
+        flows_df = AbstractPortfolio._read_df(log_dir, "flows", file_name, tz)
+        stats_df = AbstractPortfolio._read_df(
+            log_dir, "statistics", file_name, tz
+        )
+        if cast_asset_ids_to_int:
+            holdings_df.columns = holdings_df.columns.astype("int64")
+            holdings_mtm_df.columns = holdings_mtm_df.columns.astype("int64")
+            flows_df.columns = flows_df.columns.astype("int64")
+        pnl_df = AbstractPortfolio._compute_pnl(holdings_mtm_df, flows_df)
+        dfs = {
+            "holdings": holdings_df,
+            "holdings_marked_to_market": holdings_mtm_df,
+            "flows": flows_df,
+            "pnl": pnl_df,
+        }
+        portfolio_df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
+        return portfolio_df, stats_df
 
     def price_assets(
         self,
@@ -361,14 +468,60 @@ class AbstractPortfolio(abc.ABC):
         :param asset_ids: as in `market_data.get_data_at_timestamp()`
         :return: series of prices at `as_of_timestamp` indexed by asset_id
         """
-        prices = self.market_data.get_last_price(
-            self._mark_to_market_col, asset_ids
-        )
+        if self._pricing_type == "last":
+            prices = self.market_data.get_last_price(
+                self._mark_to_market_col, asset_ids
+            )
+        elif self._pricing_type == "twap":
+            prices = self.market_data.get_last_twap_price(
+                self._bar_duration,
+                self._timestamp_col,
+                asset_ids,
+                self._mark_to_market_col,
+            )
+        else:
+            raise NotImplementedError
         hdbg.dassert_eq(self._mark_to_market_col, prices.name)
         prices.index.name = "asset_id"
         prices.name = "price"
         hdbg.dassert(not prices.index.has_duplicates)
         return prices
+
+    @staticmethod
+    def _compute_pnl(
+        holdings_marked_to_market: pd.DataFrame,
+        flows: pd.DataFrame,
+    ) -> pd.DataFrame:
+        # Drop the cash balance.
+        holdings_marked_to_market = holdings_marked_to_market.drop(
+            columns=AbstractPortfolio.CASH_ID
+        )
+        # Get per-bar flows and compute PnL.
+        pnl = holdings_marked_to_market.diff().add(flows, fill_value=0.0)
+        return pnl
+
+    @staticmethod
+    def _write_df(
+        df: pd.DataFrame,
+        log_dir: str,
+        name: str,
+        file_name: str,
+    ) -> None:
+        path = os.path.join(log_dir, name, file_name)
+        hio.create_enclosing_dir(path, incremental=True)
+        df.to_csv(path)
+
+    @staticmethod
+    def _read_df(
+        log_dir: str,
+        name: str,
+        file_name: str,
+        tz: str,
+    ) -> pd.DataFrame:
+        path = os.path.join(log_dir, name, file_name)
+        df = pd.read_csv(path, index_col=0, parse_dates=True)
+        df.index = df.index.tz_convert(tz)
+        return df
 
     @abc.abstractmethod
     def _observe_holdings(
@@ -487,13 +640,13 @@ class AbstractPortfolio(abc.ABC):
         # The columns should be of the correct types. Skip if the dataframe is
         # empty (since the correct types are not inferred in that case).
         if not df.empty:
-            hdbg.dassert_eq(
-                df["asset_id"].dtype.type,
+            hpandas.dassert_series_type_is(
+                df["asset_id"],
                 np.int64,
                 "The column `asset_id` should only contain integer ids.",
             )
-            hdbg.dassert_in(
-                df["curr_num_shares"].dtype.type,
+            hpandas.dassert_series_type_in(
+                df["curr_num_shares"],
                 [np.float64, np.int64],
                 "The column `curr_num_shares` should be a float column.",
             )
@@ -600,18 +753,22 @@ class SimulatedPortfolio(AbstractPortfolio):
         new_cash = prev_cash
         # Update holdings using the `fills_df`.
         new_asset_holdings_srs = prev_asset_holdings.copy()
+        flows = pd.Series([], dtype="float64")
         if fills_df is not None:
             SimulatedPortfolio._validate_fills_df(fills_df)
             # last_timestamp <= fills_df.index <= timestamp
             hdbg.dassert_lte(prev_asset_holdings_ts, fills_df["timestamp"].min())
             hdbg.dassert_lte(fills_df["timestamp"].max(), wall_clock_timestamp)
             holdings_diff = fills_df.set_index("asset_id")["num_shares"]
-            cash_diff = -1 * (fills_df["price"] * fills_df["num_shares"]).sum()
+            transaction_price = fills_df.set_index("asset_id")["price"]
+            flows = -1 * transaction_price * holdings_diff
+            cash_diff = flows.sum()
             hdbg.dassert(np.isfinite(cash_diff))
             new_asset_holdings_srs = new_asset_holdings_srs.add(
                 holdings_diff, fill_value=0
             )
             new_cash += cash_diff
+        self._sequential_insert(wall_clock_timestamp, flows, self._flows)
         hdbg.dassert(not new_asset_holdings_srs.index.has_duplicates)
         self._sequential_insert(
             wall_clock_timestamp, new_asset_holdings_srs, self._asset_holdings
@@ -643,7 +800,9 @@ class SimulatedPortfolio(AbstractPortfolio):
             fills_df = fills_df.convert_dtypes()
         else:
             fills_df = None
-        _LOG.debug("fills_df=\n%s", hprint.dataframe_to_str(fills_df))
+        _LOG.debug(
+            "fills_df=\n%s", hpandas.dataframe_to_str(fills_df, precision=2)
+        )
         return fills_df
 
     @staticmethod
@@ -743,7 +902,7 @@ class MockedPortfolio(AbstractPortfolio):
         self._timestamp_to_snapshot_df = collections.OrderedDict()
         # wall clock timestamp -> total net cost of transactions since the BOD.
         self._net_cost = collections.OrderedDict()
-        self._net_cost[self._initial_timestamp] = 0.0
+        self._net_cost[self._initial_timestamp] = pd.Series([], dtype="float64")
 
     def _observe_holdings(self) -> None:
         # The current positions table has the following fields:
@@ -813,7 +972,9 @@ class MockedPortfolio(AbstractPortfolio):
         # 2021-12-09    10006 2021-12-09 11:54:28  0.0              0
         # 2021-12-09    10009 1970-01-01 00:00:00  0.0              0
         # ```
-        _LOG.debug("snapshot_df=\n%s", hprint.dataframe_to_str(snapshot_df))
+        _LOG.debug(
+            "snapshot_df=\n%s", hpandas.dataframe_to_str(snapshot_df, precision=2)
+        )
         if not snapshot_df.empty:
             hdbg.dassert_no_duplicates(
                 snapshot_df["asset_id"],
@@ -831,7 +992,18 @@ class MockedPortfolio(AbstractPortfolio):
             "asset_id"
         )["current_position"]
         hdbg.dassert_isinstance(asset_holdings, pd.Series)
+        _LOG.debug("asset_holdings=%s" % asset_holdings)
+        asset_holdings = asset_holdings.reindex(
+            index=self._initial_universe, copy=False
+        )
         asset_holdings.name = wall_clock_timestamp
+        # If the database does not have an entry for an asset (e.g., as in
+        # a mock database without universe initialization), then a NaN is
+        # returned.
+        _LOG.debug(
+            "Number of NaN asset_holdings=%d" % asset_holdings.isna().sum()
+        )
+        asset_holdings.fillna(0, inplace=True)
         self._sequential_insert(
             wall_clock_timestamp, asset_holdings, self._asset_holdings
         )
@@ -846,24 +1018,23 @@ class MockedPortfolio(AbstractPortfolio):
         """
         Convert a snapshot_df from SQL query into a `holdings_df`.
         """
-        holdings_df = snapshot_df[[self._asset_id_col, "current_position"]]
+        holdings_df = snapshot_df[["asset_id", "current_position"]]
         holdings_df.columns = AbstractPortfolio.HOLDINGS_COLS
         holdings_df.index = [as_of_timestamp] * snapshot_df.shape[0]
         holdings_df = holdings_df.convert_dtypes()
         return holdings_df
 
-    @staticmethod
-    def _get_net_cost(snapshot_df: pd.DataFrame) -> float:
+    def _get_net_cost(self, snapshot_df: pd.DataFrame) -> pd.Series:
         """
         Return the `net_cost` of assets stored in a `snapshot_df`.
 
         This is a helper for `_update_cash()`.
         """
         if snapshot_df.empty:
-            return 0.0
+            return pd.Series([], dtype="float64")
         hdbg.dassert_in("net_cost", snapshot_df.columns)
-        net_cost = snapshot_df["net_cost"].sum()
-        _LOG.debug("net_cost=%f", net_cost)
+        net_cost = snapshot_df.set_index("asset_id")["net_cost"]
+        _LOG.debug("net_cost (cumulative)=%f", net_cost.sum())
         return net_cost
 
     def _update_cash(
@@ -887,20 +1058,27 @@ class MockedPortfolio(AbstractPortfolio):
         hdbg.dassert(np.isfinite(prev_cash), "prev_cash=%s", prev_cash)
         # Get the net cost at the previous timestamp.
         prev_net_cost_ts = next(reversed(self._net_cost))
-        prev_net_cost = self._net_cost[prev_net_cost_ts]
+        prev_net_costs = self._net_cost[prev_net_cost_ts]
+        prev_net_cost = prev_net_costs.sum()
         hdbg.dassert_eq(prev_net_cost_ts, prev_cash_ts)
         # Get the current net cost.
-        current_net_cost = self._get_net_cost(snapshot_df)
+        current_net_costs = self._get_net_cost(snapshot_df)
+        current_net_cost = current_net_costs.sum()
         hdbg.dassert(
-            np.isfinite(current_net_cost), "current_net_cost=%s", current_net_cost
+            np.isfinite(current_net_cost),
+            "current_net_cost (cumulative)=%f",
+            current_net_cost,
         )
         # The cost of the previous transactions is the difference of net cost.
         cost = current_net_cost - prev_net_cost
-        hdbg.dassert(np.isfinite(cost), "cost=%s", cost)
+        _LOG.debug("cost (net_cost diff)=%f" % cost)
+        hdbg.dassert(np.isfinite(cost))
         # The current cash is given by the previous cash and the cash spent in the
         # previous transactions.
         updated_cash = prev_cash - cost
         _LOG.debug("updated_cash=%s", updated_cash)
         # Update the cash and net cost.
         self._cash[wall_clock_timestamp] = updated_cash
-        self._net_cost[wall_clock_timestamp] = current_net_cost
+        self._net_cost[wall_clock_timestamp] = current_net_costs
+        flows = -1 * current_net_costs.subtract(prev_net_costs, fill_value=0.0)
+        self._sequential_insert(wall_clock_timestamp, flows, self._flows)

@@ -11,6 +11,79 @@ import helpers.hunit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
+class Test_dassert_is_unique1(hunitest.TestCase):
+    def get_df1(self) -> pd.DataFrame:
+        """
+        Return a df without duplicated index.
+        """
+        num_rows = 5
+        idx = [
+            pd.Timestamp("2000-01-01 9:00") + pd.Timedelta(minutes=i)
+            for i in range(num_rows)
+        ]
+        values = [[i] for i in range(len(idx))]
+        df = pd.DataFrame(values, index=idx)
+        _LOG.debug("df=\n%s", df)
+        #
+        act = hpandas.dataframe_to_str(df)
+        exp = r"""
+                             0
+        2000-01-01 09:00:00  0
+        2000-01-01 09:01:00  1
+        2000-01-01 09:02:00  2
+        2000-01-01 09:03:00  3
+        2000-01-01 09:04:00  4"""
+        self.assert_equal(act, exp, fuzzy_match=True)
+        return df
+
+    def test_dassert_is_unique1(self) -> None:
+        df = self.get_df1()
+        hpandas.dassert_unique_index(df)
+
+    def get_df2(self) -> pd.DataFrame:
+        """
+        Return a df with duplicated index.
+        """
+        num_rows = 4
+        idx = [
+            pd.Timestamp("2000-01-01 9:00") + pd.Timedelta(minutes=i)
+            for i in range(num_rows)
+        ]
+        idx.append(idx[0])
+        values = [[i] for i in range(len(idx))]
+        df = pd.DataFrame(values, index=idx)
+        _LOG.debug("df=\n%s", df)
+        #
+        act = hpandas.dataframe_to_str(df)
+        exp = r"""
+                             0
+        2000-01-01 09:00:00  0
+        2000-01-01 09:01:00  1
+        2000-01-01 09:02:00  2
+        2000-01-01 09:03:00  3
+        2000-01-01 09:00:00  4"""
+        self.assert_equal(act, exp, fuzzy_match=True)
+        return df
+
+    def test_dassert_is_unique2(self) -> None:
+        df = self.get_df2()
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_unique_index(df)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        cond=False
+        Duplicated rows are:
+                             0
+        2000-01-01 09:00:00  0
+        2000-01-01 09:00:00  4
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+
+# #############################################################################
+
+
 class Test_to_series1(hunitest.TestCase):
     def helper(self, n: int, exp: str) -> None:
         vals = list(range(n))
@@ -84,7 +157,7 @@ class Test_trim_df1(hunitest.TestCase):
         """
         df = self.get_df()
         #
-        act = hprint.df_to_short_str("df", df, print_dtypes=True)
+        act = hpandas.df_to_short_str("df", df, print_dtypes=True)
         exp = r"""# df=
         df.index in [4, 44]
         df.columns=start_time,egid,close
@@ -121,7 +194,7 @@ class Test_trim_df1(hunitest.TestCase):
         """
         df = self.get_df_with_parse_dates()
         # Check.
-        act = hprint.df_to_short_str("df", df, print_dtypes=True)
+        act = hpandas.df_to_short_str("df", df, print_dtypes=True)
         exp = r"""# df=
         df.index in [4, 44]
         df.columns=start_time,egid,close
@@ -163,7 +236,7 @@ class Test_trim_df1(hunitest.TestCase):
         """
         df = self.get_df_with_tz_timestamp()
         # Check.
-        act = hprint.df_to_short_str("df", df, print_dtypes=True)
+        act = hpandas.df_to_short_str("df", df, print_dtypes=True)
         exp = r"""# df=
         df.index in [4, 44]
         df.columns=start_time,egid,close
@@ -203,7 +276,7 @@ class Test_trim_df1(hunitest.TestCase):
             df, ts_col_name, start_ts, end_ts, left_close, right_close
         )
         # Check.
-        act = hprint.df_to_short_str("df_trim", df_trim, print_dtypes=True)
+        act = hpandas.df_to_short_str("df_trim", df_trim, print_dtypes=True)
         exp = r"""# df_trim=
         df.index in [4, 38]
         df.columns=start_time,egid,close
@@ -241,7 +314,7 @@ class Test_trim_df1(hunitest.TestCase):
             df, ts_col_name, start_ts, end_ts, left_close, right_close
         )
         # Check.
-        act = hprint.df_to_short_str("df_trim", df_trim, print_dtypes=True)
+        act = hpandas.df_to_short_str("df_trim", df_trim, print_dtypes=True)
         exp = r"""# df_trim=
         df.index in [4, 38]
         df.columns=start_time,egid,close
@@ -279,7 +352,7 @@ class Test_trim_df1(hunitest.TestCase):
             df, ts_col_name, start_ts, end_ts, left_close, right_close
         )
         # Check.
-        act = hprint.df_to_short_str("df_trim", df_trim, print_dtypes=True)
+        act = hpandas.df_to_short_str("df_trim", df_trim, print_dtypes=True)
         exp = r"""# df_trim=
         df.index in [4, 38]
         df.columns=start_time,egid,close

@@ -16,7 +16,7 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hparser as hparser
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def _system(cmd, *args, **kwargs):
-    hsysinte.system(cmd, log_level=logging.INFO, *args, **kwargs)
+    hsystem.system(cmd, log_level=logging.INFO, *args, **kwargs)
 
 
 def _print(msg):

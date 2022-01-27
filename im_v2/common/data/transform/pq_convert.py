@@ -1,14 +1,18 @@
 #!/usr/bin/env python
 
 """
-Read daily data from S3 in Parquet format and transform it into a different Parquet
-representation.
+Read daily data from S3 in Parquet format and transform it into a different
+Parquet representation.
 
 # Example:
 > pq_convert.py \
     --start_date 2021-11-16 \
     --end_date 2021-11-17 \
     --dst_dir im/transform/test_data_by_date
+
+Import as:
+
+import im_v2.common.data.transform.pq_convert as imvcdtpqco
 """
 
 import argparse
@@ -26,8 +30,8 @@ from tqdm.autonotebook import tqdm
 
 import helpers.hdbg as hdbg
 import helpers.hio as hio
+import helpers.hpandas as hpandas
 import helpers.hparser as hparser
-import helpers.hprint as hprint
 import helpers.htimer as htimer
 
 _LOG = logging.getLogger(__name__)
@@ -66,11 +70,11 @@ def _get_df(date) -> pd.DataFrame:
             },
             index=df_idx,
         )
-        _LOG.debug(hprint.df_to_short_str("df_tmp", df_tmp))
+        _LOG.debug(hpandas.df_to_short_str("df_tmp", df_tmp))
         df.append(df_tmp)
     # Create a single df for all the assets.
     df = pd.concat(df)
-    _LOG.debug(hprint.df_to_short_str("df", df))
+    _LOG.debug(hpandas.df_to_short_str("df", df))
     return df
 
 

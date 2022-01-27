@@ -13,8 +13,8 @@ import pandas as pd
 from tqdm.autonotebook import tqdm
 
 import helpers.hdbg as hdbg
-import helpers.htqdm as htqdm
 import helpers.hprint as hprint
+import helpers.htqdm as htqdm
 
 _LOG = logging.getLogger(__name__)
 

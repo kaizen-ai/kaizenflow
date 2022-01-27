@@ -1,8 +1,8 @@
 import pandas as pd
 
 import helpers.hsql as hsql
-import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
-import im_v2.ccxt.data.client.ccxt_clients_example as ivcdcccex
+import im_v2.ccxt.data.client as icdcl
+import im_v2.ccxt.data.client.test.ccxt_clients_example as ivcdctcce
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.client.test.test_clients_helper as ivcdcttch
 import im_v2.common.db.db_utils as imvcddbut
@@ -17,7 +17,7 @@ class TestCcxtCsvClient1(ivcdcttch.ImClientTestCase):
         """
         See description of corresponding private method in parent class.
         """
-        im_client = ivcdcccex.get_CcxtCsvClient_example2()
+        im_client = ivcdctcce.get_CcxtCsvClient_example2()
         full_symbol = "binance::BTC_USDT"
         #
         expected_length = 100
@@ -54,7 +54,7 @@ class TestCcxtCsvClient1(ivcdcttch.ImClientTestCase):
         """
         See description of corresponding private method in parent class.
         """
-        im_client = ivcdcccex.get_CcxtCsvClient_example1()
+        im_client = ivcdctcce.get_CcxtCsvClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         #
         expected_length = 199
@@ -91,7 +91,7 @@ class TestCcxtCsvClient1(ivcdcttch.ImClientTestCase):
         """
         See description of corresponding private method in parent class.
         """
-        im_client = ivcdcccex.get_CcxtCsvClient_example1()
+        im_client = ivcdctcce.get_CcxtCsvClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         start_ts = pd.Timestamp("2018-08-17T00:02:00-00:00")
         #
@@ -129,7 +129,7 @@ class TestCcxtCsvClient1(ivcdcttch.ImClientTestCase):
         """
         See description of corresponding private method in parent class.
         """
-        im_client = ivcdcccex.get_CcxtCsvClient_example1()
+        im_client = ivcdctcce.get_CcxtCsvClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         end_ts = pd.Timestamp("2018-08-17T00:05:00-00:00")
         #
@@ -167,7 +167,7 @@ class TestCcxtCsvClient1(ivcdcttch.ImClientTestCase):
         """
         See description of corresponding private method in parent class.
         """
-        im_client = ivcdcccex.get_CcxtCsvClient_example1()
+        im_client = ivcdctcce.get_CcxtCsvClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         start_ts = pd.Timestamp("2018-08-17T00:01:00-00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00-00:00")
@@ -207,7 +207,7 @@ class TestCcxtCsvClient1(ivcdcttch.ImClientTestCase):
         """
         See description of corresponding private method in parent class.
         """
-        im_client = ivcdcccex.get_CcxtCsvClient_example1()
+        im_client = ivcdctcce.get_CcxtCsvClient_example1()
         full_symbol = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
 
@@ -215,7 +215,7 @@ class TestCcxtCsvClient1(ivcdcttch.ImClientTestCase):
         """
         See description of corresponding private method in parent class.
         """
-        im_client = ivcdcccex.get_CcxtCsvClient_example2()
+        im_client = ivcdctcce.get_CcxtCsvClient_example2()
         full_symbol = "binance::BTC_USDT"
         expected_start_ts = pd.to_datetime("2018-08-17 00:00:00", utc=True)
         self._test_get_start_ts_for_symbol1(
@@ -226,7 +226,7 @@ class TestCcxtCsvClient1(ivcdcttch.ImClientTestCase):
         """
         See description of corresponding private method in parent class.
         """
-        im_client = ivcdcccex.get_CcxtCsvClient_example2()
+        im_client = ivcdctcce.get_CcxtCsvClient_example2()
         full_symbol = "binance::BTC_USDT"
         expected_end_ts = pd.to_datetime("2018-08-17 01:39:00", utc=True)
         self._test_get_end_ts_for_symbol1(im_client, full_symbol, expected_end_ts)
@@ -235,7 +235,7 @@ class TestCcxtCsvClient1(ivcdcttch.ImClientTestCase):
         """
         See description of corresponding private method in parent class.
         """
-        im_client = ivcdcccex.get_CcxtCsvClient_example2()
+        im_client = ivcdctcce.get_CcxtCsvClient_example2()
         expected_length = 38
         expected_first_elements = [
             "binance::ADA_USDT",
@@ -265,7 +265,7 @@ class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
         """
         See description of corresponding private method in parent class.
         """
-        im_client = ivcdcccex.get_CcxtParquetByAssetClient_example1()
+        im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
         full_symbol = "binance::BTC_USDT"
         #
         expected_length = 100
@@ -302,7 +302,7 @@ class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
         """
         See description of corresponding private method in parent class.
         """
-        im_client = ivcdcccex.get_CcxtParquetByAssetClient_example1()
+        im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         #
         expected_length = 199
@@ -339,7 +339,7 @@ class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
         """
         See description of corresponding private method in parent class.
         """
-        im_client = ivcdcccex.get_CcxtParquetByAssetClient_example1()
+        im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         start_ts = pd.Timestamp("2018-08-17T00:02:00-00:00")
         #
@@ -377,7 +377,7 @@ class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
         """
         See description of corresponding private method in parent class.
         """
-        im_client = ivcdcccex.get_CcxtParquetByAssetClient_example1()
+        im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         end_ts = pd.Timestamp("2018-08-17T00:05:00-00:00")
         #
@@ -415,7 +415,7 @@ class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
         """
         See description of corresponding private method in parent class.
         """
-        im_client = ivcdcccex.get_CcxtParquetByAssetClient_example1()
+        im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         start_ts = pd.Timestamp("2018-08-17T00:01:00-00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00-00:00")
@@ -455,7 +455,7 @@ class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
         """
         See description of corresponding private method in parent class.
         """
-        im_client = ivcdcccex.get_CcxtParquetByAssetClient_example1()
+        im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
         full_symbol = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
 
@@ -463,7 +463,7 @@ class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
         """
         See description of corresponding private method in parent class.
         """
-        im_client = ivcdcccex.get_CcxtParquetByAssetClient_example1()
+        im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
         full_symbol = "binance::BTC_USDT"
         expected_start_ts = pd.to_datetime("2018-08-17 00:00:00", utc=True)
         self._test_get_start_ts_for_symbol1(
@@ -474,7 +474,7 @@ class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
         """
         See description of corresponding private method in parent class.
         """
-        im_client = ivcdcccex.get_CcxtParquetByAssetClient_example1()
+        im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
         full_symbol = "binance::BTC_USDT"
         expected_end_ts = pd.to_datetime("2018-08-17 01:39:00", utc=True)
         self._test_get_end_ts_for_symbol1(im_client, full_symbol, expected_end_ts)
@@ -483,7 +483,7 @@ class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
         """
         See description of corresponding private method in parent class.
         """
-        im_client = ivcdcccex.get_CcxtParquetByAssetClient_example1()
+        im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
         expected_length = 38
         expected_first_elements = [
             "binance::ADA_USDT",
@@ -503,7 +503,7 @@ class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
         )
 
 
-class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
+class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
     def test_read_data1(self) -> None:
         """
         See description of corresponding private method in parent class.
@@ -513,9 +513,10 @@ class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
+        vendor = "CCXT"
         im_client = (
-            imvcdccccl.CcxtDbClient(  # pylint: disable=no-value-for-parameter
-                self.connection
+            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
+                vendor, self.connection
             )
         )
         full_symbol = "binance::BTC_USDT"
@@ -532,10 +533,10 @@ class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         timestamp
         2021-09-09 00:00:00+00:00   60.0      BTC_USDT     binance  binance::BTC_USDT  40.0  50.0  30.0    70.0
         2021-09-09 00:01:00+00:00   61.0      BTC_USDT     binance  binance::BTC_USDT  41.0  51.0  31.0    71.0
-        2021-09-09 00:02:00+00:00    NaN           NaN         NaN                NaN   NaN   NaN   NaN     NaN
+        2021-09-09 00:02:00+00:00    NaN           NaN         NaN  binance::BTC_USDT   NaN   NaN   NaN     NaN
         ...
-        2021-09-09 00:02:00+00:00    NaN           NaN         NaN                NaN   NaN   NaN   NaN     NaN
-        2021-09-09 00:03:00+00:00    NaN           NaN         NaN                NaN   NaN   NaN   NaN     NaN
+        2021-09-09 00:02:00+00:00    NaN           NaN         NaN  binance::BTC_USDT   NaN   NaN   NaN     NaN
+        2021-09-09 00:03:00+00:00    NaN           NaN         NaN  binance::BTC_USDT   NaN   NaN   NaN     NaN
         2021-09-09 00:04:00+00:00   64.0      BTC_USDT     binance  binance::BTC_USDT  44.0  54.0  34.0    74.0
         exchange_ids=binance
         currency_pairs=BTC_USDT"""
@@ -560,9 +561,10 @@ class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
+        vendor = "CCXT"
         im_client = (
-            imvcdccccl.CcxtDbClient(  # pylint: disable=no-value-for-parameter
-                self.connection
+            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
+                vendor, self.connection
             )
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
@@ -578,13 +580,13 @@ class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         df.shape=(8, 8)
                                    close currency_pair  exchange_id    full_symbol  high   low  open  volume
         timestamp
-        2021-09-09 00:00:00+00:00   60.0      BTC_USDT  binance  binance::BTC_USDT  40.0  50.0  30.0    70.0
-        2021-09-09 00:01:00+00:00   61.0      BTC_USDT  binance  binance::BTC_USDT  41.0  51.0  31.0    71.0
-        2021-09-09 00:02:00+00:00   62.0      ETH_USDT  binance  binance::ETH_USDT  42.0  52.0  32.0    72.0
+        2021-09-09 00:00:00+00:00   60.0      BTC_USDT     binance  binance::BTC_USDT  40.0  50.0  30.0    70.0
+        2021-09-09 00:01:00+00:00   61.0      BTC_USDT     binance  binance::BTC_USDT  41.0  51.0  31.0    71.0
+        2021-09-09 00:02:00+00:00    NaN           NaN         NaN  binance::BTC_USDT   NaN   NaN   NaN     NaN
         ...
-        2021-09-09 00:03:00+00:00    NaN           NaN      NaN                NaN   NaN   NaN   NaN     NaN
-        2021-09-09 00:04:00+00:00   64.0      BTC_USDT  binance  binance::BTC_USDT  44.0  54.0  34.0    74.0
-        2021-09-09 00:04:00+00:00   64.0      ETH_USDT  binance  binance::ETH_USDT  44.0  54.0  34.0    74.0
+        2021-09-09 00:03:00+00:00    NaN           NaN         NaN  binance::ETH_USDT   NaN   NaN   NaN     NaN
+        2021-09-09 00:04:00+00:00   64.0      BTC_USDT     binance  binance::BTC_USDT  44.0  54.0  34.0    74.0
+        2021-09-09 00:04:00+00:00   64.0      ETH_USDT     binance  binance::ETH_USDT  44.0  54.0  34.0    74.0
         exchange_ids=binance
         currency_pairs=BTC_USDT,ETH_USDT"""
         # pylint: enable=line-too-long
@@ -608,9 +610,10 @@ class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
+        vendor = "CCXT"
         im_client = (
-            imvcdccccl.CcxtDbClient(  # pylint: disable=no-value-for-parameter
-                self.connection
+            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
+                vendor, self.connection
             )
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
@@ -627,10 +630,10 @@ class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
                                    close currency_pair exchange_id        full_symbol  high   low  open  volume
         timestamp
         2021-09-09 00:02:00+00:00   62.0      ETH_USDT     binance  binance::ETH_USDT  42.0  52.0  32.0    72.0
-        2021-09-09 00:03:00+00:00    NaN           NaN         NaN                NaN   NaN   NaN   NaN     NaN
+        2021-09-09 00:03:00+00:00    NaN           NaN         NaN  binance::ETH_USDT   NaN   NaN   NaN     NaN
         2021-09-09 00:04:00+00:00   64.0      BTC_USDT     binance  binance::BTC_USDT  44.0  54.0  34.0    74.0
         ...
-        2021-09-09 00:03:00+00:00    NaN           NaN         NaN                NaN   NaN   NaN   NaN     NaN
+        2021-09-09 00:03:00+00:00    NaN           NaN         NaN  binance::ETH_USDT   NaN   NaN   NaN     NaN
         2021-09-09 00:04:00+00:00   64.0      BTC_USDT     binance  binance::BTC_USDT  44.0  54.0  34.0    74.0
         2021-09-09 00:04:00+00:00   64.0      ETH_USDT     binance  binance::ETH_USDT  44.0  54.0  34.0    74.0
         exchange_ids=binance
@@ -657,9 +660,10 @@ class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
+        vendor = "CCXT"
         im_client = (
-            imvcdccccl.CcxtDbClient(  # pylint: disable=no-value-for-parameter
-                self.connection
+            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
+                vendor, self.connection
             )
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
@@ -702,9 +706,10 @@ class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
+        vendor = "CCXT"
         im_client = (
-            imvcdccccl.CcxtDbClient(  # pylint: disable=no-value-for-parameter
-                self.connection
+            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
+                vendor, self.connection
             )
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
@@ -743,9 +748,10 @@ class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         """
         See description of corresponding private method in parent class.
         """
+        vendor = "CCXT"
         im_client = (
-            imvcdccccl.CcxtDbClient(  # pylint: disable=no-value-for-parameter
-                self.connection
+            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
+                vendor, self.connection
             )
         )
         full_symbol = "unsupported_exchange::unsupported_currency"
@@ -760,9 +766,10 @@ class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
+        vendor = "CCXT"
         im_client = (
-            imvcdccccl.CcxtDbClient(  # pylint: disable=no-value-for-parameter
-                self.connection
+            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
+                vendor, self.connection
             )
         )
         full_symbol = "binance::BTC_USDT"
@@ -782,9 +789,10 @@ class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
+        vendor = "CCXT"
         im_client = (
-            imvcdccccl.CcxtDbClient(  # pylint: disable=no-value-for-parameter
-                self.connection
+            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
+                vendor, self.connection
             )
         )
         full_symbol = "binance::BTC_USDT"
@@ -797,9 +805,10 @@ class TestCcxtDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
         """
         See description of corresponding private method in parent class.
         """
+        vendor = "CCXT"
         im_client = (
-            imvcdccccl.CcxtDbClient(  # pylint: disable=no-value-for-parameter
-                self.connection
+            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
+                vendor, self.connection
             )
         )
         expected_length = 38
