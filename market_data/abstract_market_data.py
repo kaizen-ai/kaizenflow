@@ -342,9 +342,7 @@ class AbstractMarketData(abc.ABC):
         last_end_time = self.get_last_end_time()
         _LOG.info("last_end_time=%s", last_end_time)
         offset = pd.Timedelta(bar_duration)
-        first_end_time = last_end_time - offset
-        # We rely on the assumption that we are reading 1-minute bars.
-        start_time = first_end_time - pd.Timedelta(minutes=1)
+        start_time = last_end_time - offset
         twap = self.get_twap_price(
             start_time,
             last_end_time,

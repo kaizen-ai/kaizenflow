@@ -363,7 +363,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         exp_srs_as_str = r"""
                       close
         asset_id
-        1467591036  6344.93
+        1467591036  6342.96
         3187272957   292.93
         """
         # Run.
