@@ -41,7 +41,7 @@ import tqdm
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hs3 as hs3
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import im.kibot.base.command as imkibacom
 import im.kibot.data.config as imkidacon
 
@@ -194,7 +194,7 @@ class DatasetExtractor:
         assert 0, "Very dangerous: are you sure?"
         _LOG.warning("Deleting s3 file %s", self.aws_dir)
         cmd = "aws s3 rm --recursive %s" % self.aws_dir
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
 
     def download_payload_page(
         self,
@@ -232,12 +232,12 @@ class DatasetExtractor:
         # Copy to S3.
         hs3.dassert_is_s3_path(aws_file)
         cmd = "aws s3 cp %s %s" % (dst_file, aws_file)
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
         #
         if clean_up_artifacts:
             # Delete local file.
             cmd = "rm -f %s" % dst_file
-            hsysinte.system(cmd)
+            hsystem.system(cmd)
         return True
 
     def get_dataset_payloads_to_download(
@@ -300,7 +300,7 @@ class DatasetExtractor:
         # Copy to S3.
         hs3.dassert_is_s3_path(dataset_csv_s3_file)
         cmd = "aws s3 cp %s %s" % (dataset_csv_file, dataset_csv_s3_file)
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
 
     @staticmethod
     def _extract_payload_links(src_file: str) -> pd.DataFrame:
@@ -342,10 +342,10 @@ class DatasetExtractor:
         if not download_compressed:
             # Compress.
             cmd = "gzip %s -c >%s" % (local_file, dst_file)
-            hsysinte.system(cmd)
+            hsystem.system(cmd)
             # Delete csv file.
             cmd = "rm -f %s" % local_file
-            hsysinte.system(cmd)
+            hsystem.system(cmd)
 
 
 # #############################################################################

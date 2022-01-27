@@ -5,19 +5,24 @@ import helpers.hintrospection as hintros
 """
 
 import collections.abc as cabc
+import importlib
 import inspect
+import logging
+import re
 import sys
-from typing import Any, List, Optional
+from typing import Any, Callable, List, Optional, cast
 
 import helpers.hdbg as hdbg
+
+_LOG = logging.getLogger(__name__)
 
 
 def is_iterable(obj: object) -> bool:
     """
     Return whether obj can be iterated upon or not.
 
-    Note that a string is iterable in python, but typically we refer to
-    iterables as lists, tuples, so we exclude it.
+    Note that a string is iterable in Python, but typically we refer to
+    iterables as lists, tuples, so we exclude strings.
     """
     # From https://stackoverflow.com/questions/1952464
     return not isinstance(obj, str) and isinstance(obj, cabc.Iterable)
@@ -129,3 +134,30 @@ def print_stacktrace():
     import traceback
 
     traceback.print_stack()
+
+
+# #############################################################################
+
+
+def get_function_from_string(func_as_str: str) -> Callable:
+    """
+    Return the function from its name including the import.
+
+    E.g., `import im.scripts.AmpTask317_convert_pq_by_date_to_by_asset`
+    """
+    # Split txt in an import and function name.
+    m = re.match(r"^(\S+)\.(\S+)$", func_as_str)
+    hdbg.dassert(m, "txt='%s'", func_as_str)
+    m = cast(re.Match, m)
+    import_, function = m.groups()
+    _LOG.debug("import=%s", import_)
+    _LOG.debug("function=%s", function)
+    # Import the needed module.
+    imp = importlib.import_module(import_)
+    # Force the linter not to remove this import which is needed in the following
+    # eval.
+    _ = imp
+    python_code = f"imp.{function}"
+    func = eval(python_code)
+    _LOG.debug("{txt} -> func=%s", func)
+    return func

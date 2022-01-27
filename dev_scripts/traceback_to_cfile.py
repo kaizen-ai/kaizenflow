@@ -26,7 +26,7 @@ import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hparser as hparser
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.htraceback as htraceb
 
 _LOG = logging.getLogger(__name__)
@@ -70,7 +70,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # ./experiments/RH1E/result_0/run_notebook.0.log
         dir_name = None
         remove_files_non_present = False
-        files = hsysinte.system_to_files(cmd, dir_name, remove_files_non_present)
+        files = hsystem.system_to_files(cmd, dir_name, remove_files_non_present)
         # Pick the newest file.
         in_file_name = files[0]
     _LOG.info("in_file_name=%s", in_file_name)

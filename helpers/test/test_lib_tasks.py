@@ -11,10 +11,10 @@ import pytest
 
 import helpers.hgit as hgit
 import helpers.hio as hio
-import helpers.lib_tasks as hlibtask
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
+import helpers.lib_tasks as hlibtask
 
 _LOG = logging.getLogger(__name__)
 
@@ -107,7 +107,7 @@ def _gh_login() -> None:
         if False:
 
             def _cmd(cmd):
-                hsysinte.system(
+                hsystem.system(
                     cmd,
                     suppress_output=False,
                     log_level="echo",
@@ -123,10 +123,10 @@ def _gh_login() -> None:
             ]:
                 _cmd(cmd)
         cmd = "echo $GH_ACTION_ACCESS_TOKEN | gh auth login --with-token"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
     # Check that we are logged in.
     cmd = "gh auth status"
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
 
 
 class TestGhLogin1(hunitest.TestCase):
@@ -171,7 +171,7 @@ class TestDryRunTasks1(hunitest.TestCase):
     # TODO(gp): -> TestDockerCommands1
 
     @pytest.mark.skipif(
-        hsysinte.is_inside_ci(), reason="In CI the output is different"
+        hsystem.is_inside_ci(), reason="In CI the output is different"
     )
     def test_docker_images_ls_repo(self) -> None:
         target = "docker_images_ls_repo"
@@ -219,7 +219,7 @@ class TestDryRunTasks1(hunitest.TestCase):
         # we disable the check in the unit tests. Remove `SKIP_VERSION_CHECK=1`
         # after CmampTask570 is fixed.
         cmd = f"SKIP_VERSION_CHECK=1 invoke {opts} {target} | grep -v INFO | grep -v '>>ENV<<:'"
-        _, act = hsysinte.system_to_string(cmd)
+        _, act = hsystem.system_to_string(cmd)
         act = hprint.remove_non_printable_chars(act)
         self.check_string(act)
 
@@ -419,7 +419,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     # #########################################################################
 
     @pytest.mark.skipif(
-        hsysinte.is_inside_ci(), reason="In CI the output is different"
+        hsystem.is_inside_ci(), reason="In CI the output is different"
     )
     def test_docker_login(self) -> None:
         """

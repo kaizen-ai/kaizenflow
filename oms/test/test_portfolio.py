@@ -2,6 +2,7 @@ import asyncio
 import io
 import logging
 
+import numpy as np
 import pandas as pd
 
 import core.real_time as creatime
@@ -393,6 +394,13 @@ asset_id                    101       -1
 asset_id                        101       -1
 2000-01-01 09:35:00-05:00      0.00  1000000.0
 2000-01-01 09:40:00-05:00  20004.03  1000000.0
+# historical flows=
+asset_id                    101
+2000-01-01 09:40:00-05:00  -0.0
+# historical pnl=
+asset_id                        101
+2000-01-01 09:35:00-05:00       NaN
+2000-01-01 09:40:00-05:00  20004.03
 # historical statistics=
                            net_asset_holdings       cash  net_wealth  gross_exposure  leverage       pnl  realized_pnl  unrealized_pnl
 2000-01-01 09:35:00-05:00                0.00  1000000.0    1.00e+06            0.00      0.00       NaN           NaN             NaN
@@ -415,8 +423,81 @@ asset_id                    101        -1
 asset_id                        101        -1
 2000-01-01 09:35:00-05:00      0.00  1000000.00
 2000-01-01 09:40:00-05:00  20004.03   998096.88
+# historical flows=
+asset_id                        101
+2000-01-01 09:40:00-05:00  -1903.12
+# historical pnl=
+asset_id                        101
+2000-01-01 09:35:00-05:00       NaN
+2000-01-01 09:40:00-05:00  18100.91
 # historical statistics=
                            net_asset_holdings        cash  net_wealth  gross_exposure  leverage       pnl  realized_pnl  unrealized_pnl
 2000-01-01 09:35:00-05:00                0.00  1000000.00    1.00e+06            0.00      0.00       NaN           NaN             NaN
 2000-01-01 09:40:00-05:00            20004.03   998096.88    1.02e+06        20004.03      0.02  18100.91      -1903.12        20004.03"""
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+class TestMockedPortfolio2(omtodh.TestOmsDbHelper):
+    def test1(self) -> None:
+        """
+        Test the `log_state()`/`read_state()` round trip.
+        """
+        with hasynci.solipsism_context() as event_loop:
+            # Create current positions in the table.
+            row = _get_row1()
+            table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
+            oomsdb.create_current_positions_table(
+                self.connection, incremental=False, table_name=table_name
+            )
+            hsql.execute_insert_query(self.connection, row, table_name)
+            if False:
+                # Print the DB status.
+                query = """SELECT * FROM current_positions"""
+                df = hsql.execute_query_to_df(self.connection, query)
+                print(hpandas.dataframe_to_str(df))
+                assert 0
+            #
+            # Create MockedPortfolio with some initial cash.
+            portfolio = oporexam.get_mocked_portfolio_example1(
+                event_loop,
+                self.connection,
+                table_name,
+                asset_ids=[101],
+            )
+            coroutines = [self._coroutine1(portfolio)]
+            hasynci.run(asyncio.gather(*coroutines), event_loop=event_loop)
+
+    async def _coroutine1(
+        self,
+        portfolio,
+    ):
+        await asyncio.sleep(60 * 5)
+        portfolio.mark_to_market()
+        log_dir = self.get_scratch_space()
+        file_name = portfolio.log_state(log_dir)
+        #
+        portfolio_df, stats_df = portfolio.read_state(log_dir, file_name)
+        # Ensure that the `int` asset id type is recovered.
+        asset_id_idx = portfolio_df.columns.levels[1]
+        self.assertEqual(asset_id_idx.dtype.type, np.int64)
+        #
+        precision = 2
+        #
+        portfolio_df_str = hpandas.dataframe_to_str(
+            portfolio_df, precision=precision
+        )
+        expected_portfolio_df_str = r"""
+                          holdings            holdings_marked_to_market            flows       pnl
+                               101       -1                         101       -1     101       101
+2000-01-01 09:35:00-05:00      0.0  1000000.0                      0.00  1000000.0   NaN       NaN
+2000-01-01 09:40:00-05:00     20.0  1000000.0                  20004.03  1000000.0  -0.0  20004.03"""
+        self.assert_equal(
+            portfolio_df_str, expected_portfolio_df_str, fuzzy_match=True
+        )
+        #
+        stats_df_str = hpandas.dataframe_to_str(stats_df, precision=precision)
+        expected_stats_df_str = r"""
+                           net_asset_holdings       cash  net_wealth  gross_exposure  leverage       pnl  realized_pnl  unrealized_pnl
+2000-01-01 09:35:00-05:00                0.00  1000000.0    1.00e+06            0.00      0.00       NaN           NaN             NaN
+2000-01-01 09:40:00-05:00            20004.03  1000000.0    1.02e+06        20004.03      0.02  20004.03           0.0        20004.03"""
+        self.assert_equal(stats_df_str, expected_stats_df_str, fuzzy_match=True)

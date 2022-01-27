@@ -41,7 +41,7 @@ import helpers.hopen as hopen
 import helpers.hparser as hparser
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -87,7 +87,7 @@ def _get_file_from_git_branch(git_branch: str, git_path: str) -> str:
         tempfile.gettempdir(), os.path.basename(git_path)
     )
     _LOG.debug("Check out '%s/%s' to '%s'.", git_branch, git_path, dst_file_name)
-    hsysinte.system(f"git show {git_branch}:{git_path} > {dst_file_name}")
+    hsystem.system(f"git show {git_branch}:{git_path} > {dst_file_name}")
     return dst_file_name
 
 
@@ -106,13 +106,13 @@ def _export_notebook_to_html(ipynb_file_name: str, tag: str) -> str:
     file_name = os.path.splitext(os.path.basename(ipynb_file_name))[0]
     # Create dst file name including timestamp.
     html_file_name = file_name + ".html"
-    html_file_name = hsysinte.append_timestamp_tag(html_file_name, tag)
+    html_file_name = hsystem.append_timestamp_tag(html_file_name, tag)
     dst_file_name = os.path.join(dir_path, html_file_name)
     # Export notebook file to HTML format.
     cmd = (
         f"jupyter nbconvert {ipynb_file_name} --to html --output {dst_file_name}"
     )
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
     _LOG.debug("Export notebook '%s' to HTML '%s'", file_name, dst_file_name)
     return dst_file_name
 
@@ -140,7 +140,7 @@ def _export_notebook_to_dir(ipynb_file_name: str, tag: str, dst_dir: str) -> str
         _LOG.debug("Export '%s' to '%s'", norm_html_src_path, norm_html_dst_path)
         hio.create_dir(dst_dir, incremental=True)
         cmd = f"mv {norm_html_src_path} {norm_html_dst_path}"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
     # Print info.
     _LOG.info("Generated HTML file '%s'", norm_html_dst_path)
     cmd = f"""
@@ -267,11 +267,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
             aws_profile = hs3.get_aws_profile(args.aws_profile)
             # Check that the file exists.
             cmd = f"aws s3 ls --profile {aws_profile} {src_file_name}"
-            hsysinte.system(cmd)
+            hsystem.system(cmd)
             # Copy.
             local_file_name = os.path.basename(src_file_name)
             cmd = f"aws s3 cp --profile {aws_profile} {src_file_name} {local_file_name}"
-            hsysinte.system(cmd)
+            hsystem.system(cmd)
             _LOG.info("Copied remote url to '%s'", local_file_name)
         else:
             local_file_name = src_file_name

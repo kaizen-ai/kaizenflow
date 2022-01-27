@@ -9,7 +9,7 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -230,7 +230,7 @@ class TestRunExperimentArchiveOnS3(hunitest.TestCase):
             _LOG.info("Retrieved to %s", tgz_dst_dir)
             # Check the content.
             cmd = f"ls -1 {tgz_dst_dir}"
-            files = hsysinte.system_to_files(cmd)
+            files = hsystem.system_to_files(cmd)
             _LOG.debug("Files are:\n%s", files)
             # TODO(gp): We should check that the output looks like:
             # EXPECTED_OUTCOME = r"""# Dir structure

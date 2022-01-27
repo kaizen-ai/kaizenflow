@@ -28,7 +28,7 @@ import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hparser as hparser
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -51,13 +51,13 @@ def _convert(dir_name: str, ipynb_file: str, py_file: str) -> str:
         ipynb_file,
         py_file,
     )
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
     # Purify output removing the [\d+].
     dir_name = os.path.dirname(ipynb_file)
     dst_py_file = dir_name + "/" + py_file
     hdbg.dassert_exists(dst_py_file)
     cmd = r"perl -p -i -e 's/# In\s*\[.*]/# In[]/g' %s" % dst_py_file
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
     return dst_py_file
 
 
@@ -85,7 +85,7 @@ def _diff_notebook(
     git_file_name = abs_file_name.replace(git_client_root, "")[1:]
     _LOG.info("git_file_name=%s", git_file_name)
     cmd = "git show HEAD:%s >%s" % (git_file_name, old_ipynb)
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
     hdbg.dassert_exists(old_ipynb)
     #
     old_py = "notebook_old.py"
@@ -100,7 +100,7 @@ def _diff_notebook(
     if brief:
         cmd = "diff --brief %s %s" % (old_py, new_py)
         # Do not break on error, but return the error code.
-        rc = hsysinte.system(cmd, abort_on_error=False)
+        rc = hsystem.system(cmd, abort_on_error=False)
         is_ipynb_diff = rc != 0
         if is_ipynb_diff:
             _LOG.warning("Notebooks %s are different", abs_file_name)
@@ -113,7 +113,7 @@ def _diff_notebook(
         os.system(cmd)
     # Clean up.
     cmd = "rm %s %s" % (old_py, new_py)
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
     return is_ipynb_diff
 
 

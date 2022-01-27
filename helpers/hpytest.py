@@ -11,7 +11,7 @@ from typing import List, Optional
 
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -25,19 +25,19 @@ def _pytest_show_artifacts(dir_name: str, tag: Optional[str] = None) -> List[str
     file_names: List[str] = []
     # Find pytest artifacts.
     cmd = 'find . -name ".pytest_cache" -type d'
-    _, output_tmp = hsysinte.system_to_string(
+    _, output_tmp = hsystem.system_to_string(
         cd_cmd + cmd, abort_on_error=abort_on_error
     )
     file_names.extend(output_tmp.split())
     #
     cmd = 'find . -name "__pycache__" -type d'
-    _, output_tmp = hsysinte.system_to_string(
+    _, output_tmp = hsystem.system_to_string(
         cd_cmd + cmd, abort_on_error=abort_on_error
     )
     file_names.extend(output_tmp.split())
     # Find .pyc artifacts.
     cmd = 'find . -name "*.pyc" -type f'
-    _, output_tmp = hsysinte.system_to_string(
+    _, output_tmp = hsystem.system_to_string(
         cd_cmd + cmd, abort_on_error=abort_on_error
     )
     file_names.extend(output_tmp.split())

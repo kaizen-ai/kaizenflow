@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 """
-Read daily data from S3 in Parquet format and transform it into a different Parquet
-representation.
+Read daily data from S3 in Parquet format and transform it into a different
+Parquet representation.
 
 # Example:
 > pq_convert.py \
@@ -32,7 +32,6 @@ import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hpandas as hpandas
 import helpers.hparser as hparser
-import helpers.hprint as hprint
 import helpers.htimer as htimer
 
 _LOG = logging.getLogger(__name__)

@@ -147,12 +147,11 @@ class ReplayedMarketData(mdabmada.AbstractMarketData):
 
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
         # We need to find the last timestamp before the current time. We use
-        # `last_week` but could also use all the data since we don't call the
-        # DB.
+        # `7W` but could also use all the data since we don't call the DB.
         # TODO(gp): SELECT MAX(start_time) instead of getting all the data
         #  and then find the max and use `start_time`
-        period = "last_week"
-        df = self.get_data_for_last_period(period)
+        timedelta = pd.Timedelta("7D")
+        df = self.get_data_for_last_period(timedelta)
         _LOG.debug(hpandas.df_to_short_str("after get_data", df))
         if df.empty:
             ret = None
@@ -170,7 +169,7 @@ class ReplayedMarketData(mdabmada.AbstractMarketData):
 def save_market_data(
     market_data: mdabmada.AbstractMarketData,
     file_name: str,
-    period: str,
+    timedelta: pd.Timedelta,
     limit: Optional[int],
 ) -> None:
     """
@@ -192,7 +191,7 @@ def save_market_data(
     normalize_data = False
     with htimer.TimedScope(logging.DEBUG, "market_data.get_data"):
         rt_df = market_data.get_data_for_last_period(
-            period, normalize_data=normalize_data, limit=limit
+            timedelta, normalize_data=normalize_data, limit=limit
         )
     _LOG.debug(hpandas.df_to_short_str("rt_df", rt_df, print_dtypes=True))
     #

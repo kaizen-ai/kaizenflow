@@ -30,7 +30,7 @@ import re
 import dev_scripts.linter as lin
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -58,24 +58,24 @@ def _pair(file_name: str) -> None:
     cmd.append("""'{"jupytext":{"formats":"ipynb,py:percent"}}'""")
     cmd.append(file_name)
     cmd = " ".join(cmd)
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
     # Test the ipynb -> py:percent -> ipynb round trip conversion.
     cmd = _EXECUTABLE + " --test --stop --to py:percent %s" % file_name
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
     # Add the .py file.
     cmd = _EXECUTABLE + " --to py:percent %s" % file_name
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
     # Add to git.
     py_file_name = lin.from_ipynb_to_python_file(file_name)
     cmd = "git add %s" % py_file_name
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
 
 
 def _sync(file_name: str) -> None:
     if lin.is_paired_jupytext_file(file_name):
         # cmd = _EXECUTABLE + " --sync --update --to py:percent %s" % file_name
         cmd = _EXECUTABLE + " --sync --to py:percent %s" % file_name
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
     else:
         _LOG.warning("The file '%s' is not paired: run --pair", file_name)
 
@@ -125,7 +125,7 @@ def _test(file_name: str, action: str) -> None:
         raise ValueError("Invalid action='%s'" % action)
     cmd = [_EXECUTABLE, opts, "--stop --to py:percent %s" % file_name]
     cmd = " ".join(cmd)
-    rc, txt = hsysinte.system_to_string(cmd, abort_on_error=False)
+    rc, txt = hsystem.system_to_string(cmd, abort_on_error=False)
     if rc != 0:
         # Here we handle special cases that must be escaped.
         _LOG.debug("rc=%s, txt=\n'%s'", rc, txt)

@@ -4,7 +4,7 @@ import pandas as pd
 
 import helpers.hgit as hgit
 import helpers.hio as hio
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
 
@@ -18,7 +18,8 @@ class TestCsvToPq(hunitest.TestCase):
         pq_dir_path = os.path.join(self.get_scratch_space(), "pq_dir")
         # Run command.
         exec_path = os.path.join(
-            hgit.get_amp_abs_path(), "im_v2/common/data/transform/convert_csv_to_pq.py"
+            hgit.get_amp_abs_path(),
+            "im_v2/common/data/transform/convert_csv_to_pq.py",
         )
         cmd = [
             exec_path,
@@ -28,7 +29,7 @@ class TestCsvToPq(hunitest.TestCase):
             "--asset_col currency_pair",
         ]
         cmd = " ".join(cmd)
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
         include_file_content = True
         dir_signature = hunitest.get_dir_signature(
             pq_dir_path, include_file_content
