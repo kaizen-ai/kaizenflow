@@ -197,8 +197,6 @@ class RealTimeMarketData(mdabmada.AbstractMarketData):
         :param columns: columns to select from `table_name`
             - `None` means all columns.
         :param asset_ids: asset ids to select
-        :param period: what period to retrieve
-            - E.g., `all`, `last_day`, `last_5mins`, `last_1min`
         :param sort_time: whether to sort by end_time
         :param limit: how many rows to return
         """
@@ -221,7 +219,7 @@ class RealTimeMarketData(mdabmada.AbstractMarketData):
             ids_as_str = ",".join(map(str, asset_ids))
             ids_as_str = f"{self._asset_id_col} in ({ids_as_str})"
         query.append("AND " + ids_as_str)
-        # Handle `period`.
+        # Handle `start_ts`.
         if start_ts is not None:
             if left_close:
                 operator = ">="
@@ -231,6 +229,7 @@ class RealTimeMarketData(mdabmada.AbstractMarketData):
                 f"AND {ts_col_name} {operator} "
                 + "'%s'" % self._to_sql_datetime_string(start_ts)
             )
+        # Handle `end_ts`.
         if end_ts is not None:
             if right_close:
                 operator = "<="

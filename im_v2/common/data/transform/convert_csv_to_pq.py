@@ -2,7 +2,7 @@
 """
 Convert data from CSV to Parquet files and partition dataset by asset.
 
-A parquet file partitioned by assets looks like:
+A Parquet file partitioned by assets looks like:
 ```
 dst_dir/
     year=2021/
@@ -44,29 +44,31 @@ def _get_csv_to_pq_file_names(
     src_dir: str, dst_dir: str, incremental: bool
 ) -> List[Tuple[str, str]]:
     """
-    Find all the CSV files in `src_dir` to transform and prepare the
-    corresponding destination Parquet files.
+    Find all the CSV files in `src_dir` to transform and prepare the corresponding
+    destination Parquet files.
 
     :param incremental: if True, skip CSV files for which the corresponding Parquet
         file already exists
     :return: list of tuples (csv_file, pq_file)
     """
     # Find all the CSV files to convert.
-    csv_files = []
-    for f in os.listdir(src_dir):
+    csv_filenames = []
+    for filename in os.listdir(src_dir):
         # Find the CSV files.
         csv_ext = ".csv"
         csv_gz_ext = ".csv.gz"
-        if f.endswith(csv_ext):
-            csv_filename = f[: -len(csv_ext)]
-        elif f.endswith(csv_gz_ext):
-            csv_filename = f[: -len(csv_gz_ext)]
+        csv_filename = filename
+        if filename.endswith(csv_ext):
+            csv_filename = filename[: -len(csv_ext)]
+        elif filename.endswith(csv_gz_ext):
+            csv_filename = filename[: -len(csv_gz_ext)]
         else:
-            _LOG.warning(f"Found non CSV file '{f}'")
+            _LOG.warning(f"Found non CSV file '{filename}'")
         # Build corresponding Parquet file.
         pq_path = os.path.join(dst_dir, f"{csv_filename}.parquet")
-        csv_path = os.path.join(src_dir, f)
+        csv_path = os.path.join(src_dir, filename)
         # Skip CSV files that do not need to be converted.
+        # TODO(gp): Try to use hjoblib.apply_incremental_mode
         if incremental and os.path.exists(pq_path):
             _LOG.warning(
                 "Skipping conversion of CSV file '%s' since '%s' already exists",
@@ -74,12 +76,12 @@ def _get_csv_to_pq_file_names(
                 pq_path,
             )
         else:
-            csv_files.append((csv_path, pq_path))
-    return csv_files
+            csv_filenames.append((csv_path, pq_path))
+    return csv_filenames
 
 
 def _run(args: argparse.Namespace) -> None:
-    # TODO(gp): @danya use our usual incremental idiom.
+    # TODO(gp): @danya use hparser.create_incremental_dir(args.dst_dir, args).
     hio.create_dir(args.dst_dir, args.incremental)
     # Find all CSV and Parquet files.
     files = _get_csv_to_pq_file_names(
@@ -104,7 +106,6 @@ def _run(args: argparse.Namespace) -> None:
     imvcdttrut.partition_dataset(reindexed_df, partition_cols, args.dst_dir)
 
 
-# TODO(Nikola): CMTask926
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter

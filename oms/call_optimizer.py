@@ -19,7 +19,7 @@ def compute_target_positions_in_cash(
     cash_asset_id: int,
     *,
     target_gmv: float = 100000,
-    dollar_neutral: bool = False,
+    dollar_neutrality: str = "no_constraint",
     volatility_lower_bound: float = 1e-5,
 ) -> pd.DataFrame:
     """
@@ -65,13 +65,44 @@ def compute_target_positions_in_cash(
     # We do not want the cash balance to be used in target GMV or dollar
     #  neutrality calculations; set it to NaN in intermediate calculations.
     unscaled_target_positions[cash_asset_id] = np.nan
-    if dollar_neutral:
+    if dollar_neutrality == "no_constraint":
+        pass
+    elif dollar_neutrality == "linear":
+        hdbg.dassert_lt(
+            1,
+            unscaled_target_positions.count(),
+            "More than one asset required to enforce dollar neutrality.",
+        )
         net_target_position = unscaled_target_positions.mean()
         _LOG.debug(
             "Target net asset value prior to dollar neutrality constaint=%f"
             % net_target_position
         )
         unscaled_target_positions -= net_target_position
+    elif dollar_neutrality == "nonlinear":
+        hdbg.dassert_lt(
+            1,
+            unscaled_target_positions.count(),
+            "More than one asset required to enforce dollar neutrality.",
+        )
+        positive_asset_value = unscaled_target_positions.clip(lower=0).sum()
+        hdbg.dassert_lt(0, positive_asset_value, "No long predictions provided.")
+        negative_asset_value = -1 * unscaled_target_positions.clip(upper=0).sum()
+        hdbg.dassert_lt(0, negative_asset_value, "No short predictions provided.")
+        min_sided_asset_value = min(positive_asset_value, negative_asset_value)
+        positive_scale_factor = min_sided_asset_value / positive_asset_value
+        negative_scale_factor = min_sided_asset_value / negative_asset_value
+        positive_positions = (
+            positive_scale_factor * unscaled_target_positions.clip(lower=0)
+        )
+        negative_positions = (
+            negative_scale_factor * unscaled_target_positions.clip(upper=0)
+        )
+        unscaled_target_positions = positive_positions.add(negative_positions)
+    else:
+        raise ValueError(
+            "Unrecognized option `dollar_neutrality`=%s" % dollar_neutrality
+        )
     unscaled_target_positions_l1 = unscaled_target_positions.abs().sum()
     _LOG.debug("unscaled_target_positions_l1 =%s", unscaled_target_positions_l1)
     hdbg.dassert_lte(0, unscaled_target_positions_l1)
