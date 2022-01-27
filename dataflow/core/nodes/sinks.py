@@ -143,12 +143,12 @@ def read_dfs(dir_name: str) -> Iterable[Tuple[str, pd.DataFrame]]:
     """
     Yield `(file_name, df)` from `dir_name`.
 
-    :param dir_name: directory containing dataframes in parquet format
+    :param dir_name: directory containing dataframes in Parquet format
     :return: iterable of tuples of the form `(file_name, df)`
     """
     # Glob the `.pq` files.
     file_names = sorted(hio.find_files(dir_name, "*.pq"))
-    _LOG.info("Number of parquet files found=%s", len(file_names))
+    _LOG.info("Number of Parquet files found=%s", len(file_names))
     for file_name in file_names:
         # Load the dataframe.
         df = hparque.from_parquet(file_name)

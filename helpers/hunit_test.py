@@ -62,8 +62,7 @@ except ImportError as e:
 
 _LOG = logging.getLogger(__name__)
 # Mute this module unless we want to debug it.
-# _LOG.setLevel(logging.INFO)
-_LOG.setLevel(logging.DEBUG)
+_LOG.setLevel(logging.INFO)
 
 # #############################################################################
 
@@ -362,39 +361,83 @@ def create_test_dir(
 
 
 def get_dir_signature(
-    dir_name: str, include_file_content: bool, num_lines: Optional[int] = None
+    dir_name: str,
+    include_file_content: bool,
+    *,
+    remove_dir_name: bool = False,
+    num_lines: Optional[int] = None,
 ) -> str:
     """
     Compute a string with the content of the files in `dir_name`.
 
     :param include_file_content: include the content of the files, besides the
         name of files and directories
-    :param num_lines: number of lines to print for each file
+    :param remove_dir_name: use paths relative to `dir_name`
+    :param num_lines: number of lines to include for each file
+
+    The output looks like:
+    ```
+    # Dir structure
+    $GIT_ROOT/.../tmp.scratch
+    $GIT_ROOT/.../tmp.scratch/dummy_value_1=1
+    $GIT_ROOT/.../tmp.scratch/dummy_value_1=1/dummy_value_2=A
+    $GIT_ROOT/.../tmp.scratch/dummy_value_1=1/dummy_value_2=A/data.parquet
+    ...
+
+    # File signatures
+    len(file_names)=3
+    file_names=$GIT_ROOT/.../tmp.scratch/dummy_value_1=1/dummy_value_2=A/data.parquet,
+    $GIT_ROOT/.../tmp.scratch/dummy_value_1=2/dummy_value_2=B/data.parquet, ...
+    # $GIT_ROOT/.../tmp.scratch/dummy_value_1=1/dummy_value_2=A/data.parquet
+    num_lines=13
+    '''
+    original shape=(1, 1)
+    Head:
+    {
+        "0":{
+            "dummy_value_3":0
+        }
+    }
+    Tail:
+    {
+        "0":{
+            "dummy_value_3":0
+        }
+    }
+    '''
+    # $GIT_ROOT/.../tmp.scratch/dummy_value_1=2/dummy_value_2=B/data.parquet
+    ```
     """
+
+    def _remove_dir_name(file_name: str) -> str:
+        if remove_dir_name:
+            res = os.path.relpath(file_name, dir_name)
+        else:
+            res = file_name
+        return res
+
+    txt: List[str] = []
     # Find all the files under `dir_name`.
     _LOG.debug("dir_name=%s", dir_name)
     hdbg.dassert_exists(dir_name)
-    # file_names = glob.glob(os.path.join(dir_name, "*"), recursive=True)
     cmd = f'find {dir_name} -name "*"'
     remove_files_non_present = False
     file_names = hsystem.system_to_files(cmd, dir_name, remove_files_non_present)
     file_names = sorted(file_names)
-    #
-    txt: List[str] = []
     # Save the directory / file structure.
     txt.append("# Dir structure")
-    txt.append("\n".join(file_names))
+    txt.append("\n".join(map(_remove_dir_name, file_names)))
     #
     if include_file_content:
         txt.append("# File signatures")
-        # Remove the dirs.
+        # Remove the directories.
         file_names = hsystem.remove_dirs(file_names)
         # Scan the files.
         txt.append("len(file_names)=%s" % len(file_names))
-        txt.append("file_names=%s" % ", ".join(file_names))
+        txt.append("file_names=%s" % ", ".join(map(_remove_dir_name, file_names)))
         for file_name in file_names:
             _LOG.debug("file_name=%s", file_name)
-            txt.append("# " + file_name)
+            txt.append("# " + _remove_dir_name(file_name))
             # Read file.
             txt_tmp = hio.from_file(file_name)
             # This seems unstable on different systems.
@@ -497,6 +540,7 @@ def purify_amp_references(txt: str) -> str:
     txt = re.sub(r"\s+amp\/", " ", txt, flags=re.MULTILINE)
     txt = re.sub(r"\/amp:", ":", txt, flags=re.MULTILINE)
     txt = re.sub(r"^\./", "", txt, flags=re.MULTILINE)
+    txt = re.sub(r"amp\.helpers", "helpers", txt, flags=re.MULTILINE)
     _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt
 
@@ -506,6 +550,8 @@ def purify_app_references(txt: str) -> str:
     Remove references to `/app`.
     """
     txt = re.sub("/app/", "", txt, flags=re.MULTILINE)
+    txt = re.sub("app\.helpers", "helpers", txt, flags=re.MULTILINE)
+    txt = re.sub("app\.amp\.helpers", "amp.helpers", txt, flags=re.MULTILINE)
     _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt
 
@@ -532,6 +578,7 @@ def purify_from_env_vars(txt: str) -> str:
     return txt
 
 
+# TODO(gp): -> purify_object_references
 def purify_object_reference(txt: str) -> str:
     """
     Remove references like `at 0x7f43493442e0`.
@@ -867,11 +914,21 @@ def _assert_equal(
         # We always return the variable exactly as this should be, even if we could
         # make it look better through indentation in case of fuzzy match.
         if actual_orig.startswith('"'):
+            # TODO(gp): Switch to expected or expected_result.
             # txt.append(f"expected = r'''{actual_orig}'''")
-            txt.append(f"exp = r'''{actual_orig}'''")
+            exp_var = f"exp = r'''{actual_orig}'''"
         else:
             # txt.append(f"expected = r'''{actual_orig}'''")
-            txt.append(f'exp = r"""{actual_orig}"""')
+            exp_var = f'exp = r"""{actual_orig}"""'
+        # Save the expected variable to files.
+        exp_var_file_name = "%s/tmp.exp_var.txt" % test_dir
+        hio.to_file(exp_var_file_name, exp_var)
+        #
+        exp_var_file_name = "tmp.exp_var.txt"
+        hio.to_file(exp_var_file_name, exp_var)
+        _LOG.info("Saved exp_var in %s", exp_var_file_name)
+        #
+        txt.append(exp_var)
         txt = "\n".join(txt)
         error_msg += txt
         # Select what to save.
@@ -1123,6 +1180,8 @@ class TestCase(unittest.TestCase):
         s3_bucket = hs3.get_path()
         scratch_dir = f"{s3_bucket}/tmp/cache.unit_test/{dir_name}.{test_path}"
         return scratch_dir
+
+    # ///////////////////////////////////////////////////////////////////////
 
     def assert_equal(
         self,
@@ -1401,7 +1460,7 @@ class TestCase(unittest.TestCase):
         _LOG.debug(hprint.to_str("outcome_updated file_exists is_equal"))
         return outcome_updated, file_exists, is_equal
 
-    # #########################################################################
+    # ///////////////////////////////////////////////////////////////////////
 
     # TODO(gp): This needs to be moved to `helper.git` and generalized.
     def _git_add_file(self, file_name: str) -> None:
@@ -1442,7 +1501,7 @@ class TestCase(unittest.TestCase):
         # Add to git repo.
         self._git_add_file(file_name)
 
-    # #########################################################################
+    # ///////////////////////////////////////////////////////////////////////
 
     def _check_df_update_outcome(
         self,
@@ -1521,7 +1580,7 @@ class TestCase(unittest.TestCase):
         _LOG.debug("ret=%s", ret)
         return ret, expected
 
-    # #########################################################################
+    # ///////////////////////////////////////////////////////////////////////
 
     def _get_golden_outcome_file_name(self, tag: str) -> Tuple[str, str]:
         # Get the current dir name.
@@ -1582,6 +1641,9 @@ class TestCase(unittest.TestCase):
     def _to_error(self, msg: str) -> None:
         self._error_msg += msg + "\n"
         _LOG.error(msg)
+
+
+# #############################################################################
 
 
 @pytest.mark.qa
