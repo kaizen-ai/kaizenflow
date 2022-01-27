@@ -8,7 +8,7 @@ Use as:
 > im_v2/ccxt/data/extract/download_realtime_data.py \
     --to_datetime '20211110-101100' \
     --from_datetime '20211110-101200' \
-    --exchange 'binance' \
+    --exchange_id 'binance' \
     --universe 'v03' \
     --db_stage 'dev' \
     --v DEBUG
@@ -21,7 +21,14 @@ import im_v2.ccxt.data.extract.download_realtime_data_v2 as imvcdedrdv
 import argparse
 import logging
 
+import pandas as pd
+
+import helpers.hdbg as hdbg
 import helpers.hparser as hparser
+import helpers.hsql as hsql
+import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
+import im_v2.ccxt.universe.universe as imvccunun
+import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
 
@@ -46,7 +53,7 @@ def _parse() -> argparse.ArgumentParser:
         help="Beginning of the downloaded period",
     )
     parser.add_argument(
-        "--exchange",
+        "--exchange_id",
         action="store",
         required=True,
         type=str,
@@ -69,3 +76,29 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument("--incremental", action="store_true")
     parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
+
+
+def _main(parser: argparse.ArgumentParser) -> None:
+    args = parser.parse_args()
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    # Connect to database.
+    env_file = imvimlita.get_db_env_path(args.db_stage)
+    connection_params = hsql.get_connection_info_from_env_file(env_file)
+    hsql.get_connection(*connection_params)
+    # Initialize exchange class.
+    imvcdeexcl.CcxtExchange(args.exchange_id)
+    # Load currency pairs.
+    universe = imvccunun.get_trade_universe(args.universe)
+    universe[args.exchange_id]
+    dup_query = hsql.get_remove_duplicates_query(
+        table_name="ccxt_ohlcv",
+        id_col_name="id",
+        column_names=["timestamp", "exchange_id", "currency_pair"],
+    )
+    # Convert timestamps.
+    end = pd.Timestamp(args.to_datetime)
+    start = pd.Timestamp(args.from_datetime)
+
+
+if __name__ == "__main__":
+    _main(_parse())
