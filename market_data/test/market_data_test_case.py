@@ -8,6 +8,7 @@ import logging
 from typing import List, Optional
 
 import pandas as pd
+import pytest
 
 import helpers.hdatetime as hdateti
 import helpers.hpandas as hpandas
@@ -385,7 +386,9 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
     # //////////////////////////////////////////////////////////////////////////////
 
     def _test_get_last_end_time1(
-        self, market_data: mdata.AbstractMarketData, exp_last_end_time: pd.Timestamp
+        self,
+        market_data: mdata.AbstractMarketData,
+        exp_last_end_time: pd.Timestamp,
     ) -> None:
         """
         Test that last end time is computed correctly.
@@ -412,8 +415,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         col_name = "close"
         hprint.log_frame(
             _LOG,
-            "get_last_price:"
-            + hprint.to_str("col_name asset_ids"),
+            "get_last_price:" + hprint.to_str("col_name asset_ids"),
         )
         # Run.
         srs = market_data.get_last_price(col_name, asset_ids).round(2)

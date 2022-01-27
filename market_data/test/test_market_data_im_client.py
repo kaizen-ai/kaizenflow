@@ -402,9 +402,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         3187272957   293.01
         """
         # Run.
-        self._test_get_last_price1(
-            market_data, asset_ids, exp_srs_as_str
-        )
+        self._test_get_last_price1(market_data, asset_ids, exp_srs_as_str)
 
     # //////////////////////////////////////////////////////////////////////////////
 
