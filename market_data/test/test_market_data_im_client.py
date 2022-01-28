@@ -379,6 +379,24 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         # Run.
         self._test_get_last_end_time1(market_data, exp_last_end_time)
 
+    def test_get_last_price1(self) -> None:
+        """
+        See description of corresponding private method in parent class.
+        """
+        # Prepare inputs.
+        asset_ids = [3187272957, 1467591036]
+        columns: List[str] = []
+        columns_remap = None
+        market_data = self._build_client(asset_ids, columns, columns_remap)
+        exp_srs_as_str = r"""
+                      close
+        asset_id
+        1467591036  6342.95
+        3187272957   292.16
+        """
+        # Run.
+        self._test_get_last_price1(market_data, asset_ids, exp_srs_as_str)
+
     # //////////////////////////////////////////////////////////////////////////////
 
     def test_should_be_online1(self) -> None:

@@ -387,6 +387,29 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         # Check output.
         self.assertEqual(act_last_end_time, exp_last_end_time)
 
+    def _test_get_last_price1(
+        self,
+        market_data: mdata.AbstractMarketData,
+        asset_ids: Optional[List[int]],
+        exp_srs_as_str: str,
+    ) -> None:
+        """
+        Call `get_last_price()` for specified parameters.
+        """
+        # TODO(Dan): Uncomment in CmTask908.
+        # if skip_test_since_not_online(market_data):
+        #     pytest.skip("Market not on-line")
+        # Prepare inputs.
+        col_name = "close"
+        hprint.log_frame(
+            _LOG,
+            "get_last_price:" + hprint.to_str("col_name asset_ids"),
+        )
+        # Run.
+        srs = market_data.get_last_price(col_name, asset_ids).round(2)
+        # Check output.
+        _check_output(self, srs, exp_srs_as_str)
+
     # //////////////////////////////////////////////////////////////////////////////
 
     def _test_should_be_online1(
