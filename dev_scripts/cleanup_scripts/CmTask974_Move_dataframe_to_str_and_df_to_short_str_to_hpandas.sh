@@ -6,7 +6,8 @@ if [[ 0 == 1 ]]; then
 #    a) the code that needs to be changed manually
 #       - E.g., in this case move the code from hprint to hpandas
 #    b) more contextual changes (e.g., adding unit tests)
-#    c) the script for the replacement of the caller `replace_text.py`
+#    c) the script for the replacement of the caller (e.g., `replace_text.py or
+#       a custom one like this one), like this one
 #       - Conceptually the script
 #         - prepares the target Git client
 #         - merge this branch with the manual changes
