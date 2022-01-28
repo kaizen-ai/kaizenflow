@@ -372,6 +372,33 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         # Check output.
         _check_output(self, srs, exp_srs_as_str)
 
+    def _test_get_last_twap_price1(
+        self,
+        market_data: mdata.AbstractMarketData,
+        bar_duration: str,
+        asset_ids: Optional[List[int]],
+        exp_srs_as_str: str,
+    ) -> None:
+        """
+        Call `get_last_twap_price()` for specified parameters.
+        """
+        # if skip_test_since_not_online(market_data):
+        #     pytest.skip("Market not on-line")
+        # Prepare inputs.
+        ts_col_name = "end_ts"
+        column = "close"
+        hprint.log_frame(
+            _LOG,
+            "get_last_twap_price:"
+            + hprint.to_str("bar_duration ts_col_name asset_ids column"),
+        )
+        # Run.
+        srs = market_data.get_last_twap_price(
+            bar_duration, ts_col_name, asset_ids, column
+        ).round(2)
+        # Check output.
+        _check_output(self, srs, exp_srs_as_str)
+
     # //////////////////////////////////////////////////////////////////////////////
 
     def _test_get_last_end_time1(
