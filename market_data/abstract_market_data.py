@@ -258,7 +258,11 @@ class AbstractMarketData(abc.ABC):
         :param left_close, right_close: represent the type of interval
             - E.g., [start_ts, end_ts), or (start_ts, end_ts]
         """
-        _LOG.debug(hprint.to_str("start_ts end_ts ts_col_name asset_ids left_close right_close normalize_data limit"))
+        _LOG.debug(
+            hprint.to_str(
+                "start_ts end_ts ts_col_name asset_ids left_close right_close normalize_data limit"
+            )
+        )
         # Resolve the asset ids.
         if asset_ids is None:
             asset_ids = self._asset_ids
@@ -388,11 +392,11 @@ class AbstractMarketData(abc.ABC):
         """
         # TODO(*): Use a to-be-written `get_last_start_time()` instead.
         last_end_time = self.get_last_end_time()
-        _LOG.info("start_time=%s", start_time)
+        _LOG.info("last_end_time=%s", last_end_time)
         # TODO(gp): This is not super robust.
         if False:
             # For debugging.
-            df = self.get_data_for_last_period(timedelta="last_5mins")
+            df = self.get_data_for_last_period(timedelta="5T")
             _LOG.info("df=\n%s", hpandas.dataframe_to_str(df))
         # Get the data.
         df = self.get_data_at_timestamp(
