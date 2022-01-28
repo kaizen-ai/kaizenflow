@@ -32,7 +32,7 @@ if [[ $(whoami) == "saggese" ]]; then
     # .ssh/id_rsa.gpsaggese.github
     GIT_REMOTE=$(git remote -v)
     if [[ $GIT_REMOTE =~ "/cmamp" || $GIT_REMOTE =~ "/dev_tools" ]]; then
-        export GIT_SSH_COMMAND="ssh -i ~/.ssh/id_rsa.cryptomtc.github"
+        export GIT_SSH_COMMAND="ssh -i ~/.ssh/ck/id_rsa.ck.github"
     elif [[ $GIT_REMOTE =~ "/amp" || $GIT_REMOTE =~ "/lemonade" ]]; then
         export GIT_SSH_COMMAND="ssh -i ~/.ssh/id_rsa.gpsaggese.github"
     else
