@@ -16,7 +16,6 @@ import core.finance as cofinanc
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hpandas as hpandas
-import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -76,21 +75,26 @@ class ForecastEvaluator:
             df, target_gmv=target_gmv, dollar_neutrality=dollar_neutrality
         )
         act = []
+        round_precision = 6
         precision = 2
         act.append(
             "# holdings marked to market=\n%s"
-            % hpandas.dataframe_to_str(target_positions, precision=precision)
+            % hpandas.dataframe_to_str(
+                target_positions.round(round_precision), precision=precision
+            )
         )
         act.append(
             "# pnl=\n%s"
             % hpandas.dataframe_to_str(
-                pnl,
+                pnl.round(round_precision),
                 precision=precision,
             )
         )
         act.append(
             "# statistics=\n%s"
-            % hpandas.dataframe_to_str(stats, precision=precision)
+            % hpandas.dataframe_to_str(
+                stats.round(round_precision), precision=precision
+            )
         )
         act = "\n".join(act)
         return act

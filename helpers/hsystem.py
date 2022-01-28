@@ -662,7 +662,8 @@ def du(path_name: str, human_format: bool = False) -> Union[int, str]:
     """
     Return the size in bytes of a file or a directory (recursively).
 
-    :param human_format: represent the size in KB, MB instead of bytes.
+    :param human_format: represent the size in KB, MB, ... instead of bytes
+        using `hintrospection.format_size()`
     """
     if not os.path.exists(path_name):
         _LOG.warning("Path '%s' doesn't exist", path_name)

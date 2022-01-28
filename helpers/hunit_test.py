@@ -360,6 +360,7 @@ def create_test_dir(
         hio.to_file(dst_file_name, file_content)
 
 
+# TODO(gp): Make remove_dir_name=True default.
 def get_dir_signature(
     dir_name: str,
     include_file_content: bool,

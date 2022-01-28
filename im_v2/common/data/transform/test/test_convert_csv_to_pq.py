@@ -9,34 +9,11 @@ import helpers.hunit_test as hunitest
 
 
 class TestCsvToPq(hunitest.TestCase):
-    def test_csv_to_pq_script(self) -> None:
-        """
-        Test that generated parquet dataset is correct.
-        """
-        # Generate the files.
-        self._generate_example_csv_files()
-        pq_dir_path = os.path.join(self.get_scratch_space(), "pq_dir")
-        # Run command.
-        exec_path = os.path.join(
-            hgit.get_amp_abs_path(),
-            "im_v2/common/data/transform/convert_csv_to_pq.py",
-        )
-        cmd = [
-            exec_path,
-            f"--src_dir {self.csv_dir_path}",
-            f"--dst_dir {pq_dir_path}",
-            "--datetime_col timestamp",
-            "--asset_col currency_pair",
-        ]
-        cmd = " ".join(cmd)
-        hsystem.system(cmd)
-        include_file_content = True
-        dir_signature = hunitest.get_dir_signature(
-            pq_dir_path, include_file_content
-        )
-        self.check_string(dir_signature, purify_text=True)
+    """
+    Generate some CSV files and run the CSV to Parquet conversion using command line.
+    """
 
-    def _generate_example_csv_files(self) -> None:
+    def generate_example_csv_files(self) -> None:
         """
         Create CSV files in scratch directory.
         """
@@ -77,3 +54,30 @@ class TestCsvToPq(hunitest.TestCase):
         df1.to_csv(os.path.join(self.csv_dir_path, "test1.csv"), index=False)
         df2 = pd.DataFrame(data=d2)
         df2.to_csv(os.path.join(self.csv_dir_path, "test2.csv"), index=False)
+
+    def test_csv_to_pq_script(self) -> None:
+        # Generate the files.
+        self.generate_example_csv_files()
+        pq_dir_path = os.path.join(self.get_scratch_space(), "pq_dir")
+        # Run command.
+        exec_path = os.path.join(
+            hgit.get_amp_abs_path(),
+            "im_v2/common/data/transform/convert_csv_to_pq.py",
+        )
+        cmd = [
+            exec_path,
+            f"--src_dir {self.csv_dir_path}",
+            f"--dst_dir {pq_dir_path}",
+            "--datetime_col timestamp",
+            "--asset_col currency_pair",
+        ]
+        cmd = " ".join(cmd)
+        hsystem.system(cmd)
+        # Check.
+        include_file_content = True
+        dir_signature = hunitest.get_dir_signature(
+            pq_dir_path,
+            include_file_content,
+            remove_dir_name=True,
+        )
+        self.check_string(dir_signature, purify_text=True)

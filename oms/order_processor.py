@@ -243,7 +243,8 @@ class OrderProcessor:
                 row["tradedate"] = trade_date
                 row["timestamp_db"] = wall_clock_time
                 row["current_position"] += num_shares
-                row["net_cost"] += cost
+                # A negative net cost for financing a long position.
+                row["net_cost"] -= cost
                 row["asset_id"] = int(row["asset_id"])
             else:
                 txt = f"""
@@ -256,7 +257,7 @@ class OrderProcessor:
                 target_position,0
                 current_position,{num_shares}
                 open_quantity,0
-                net_cost,{cost}
+                net_cost,{-1 * cost}
                 bod_position,0
                 bod_price,0
                 """
