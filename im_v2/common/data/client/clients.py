@@ -19,7 +19,7 @@ import im_v2.common.universe.universe_utils as imvcuunut
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): -> base_clients.py
+# TODO(gp): @Grisha -> base_clients.py
 
 # #############################################################################
 # ImClient
@@ -28,6 +28,12 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Consider splitting in one file per class. Not sure about the trade-off
 #  between file proliferation and more organization.
 
+
+# TODO(gp): @Grisha Rename AbstractImClient -> ImClient
+
+# TODO(gp): Proposal: the output of ImClient should be in the form of
+#   `start_timestamp`, `end_timestamp`, and `knowledge_timestamp` since these
+#   depend on the specific data source
 
 class ImClient(abc.ABC):
     """

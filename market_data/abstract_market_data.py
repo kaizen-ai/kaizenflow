@@ -28,75 +28,58 @@ _LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
 # #############################################################################
 
 
-# TODO(gp): -> MarketData
+# TODO(gp): @Grisha -> MarketData. We need a script (replace_text.py) to do it
+#  since we need to update multiple repos.
 class AbstractMarketData(abc.ABC):
     """
     Implement an interface to an historical / real-time source of price data.
 
+    For a discussion on the design principles see
+    `market_data/data_pipeline_architecture.md`
+
     # Responsibilities:
-    - Delegate to a data backend in `AbstractImClient` to retrieve historical
-      and real-time data
+    - Delegate to a data backend in `ImClient` to retrieve historical and real-time
+      data
     - Model data in terms of interval `start_timestamp`, `end_timestamp`
-        - `AbstractImClient` models data in terms of end timestamp of the interval
+        - `ImClient` models data in terms of end timestamp of the interval
     - Implement RT behaviors (e.g, `is_last_bar_available`, wall_clock, ...)
     - Implement knowledge time and delay
-        - `AbstractImClient` doesn't have this view of the data
+        - `ImClient` doesn't have this view of the data
     - Stitch together different data representations (e.g., historical / RT)
       using multiple IM backends
     - Remap columns to connect data backends to consumers
-    - Implement some market related transformations (e.g., `get_twap_price()`,
-      `get_last_price()`)
+    - Implement some common market-related data transformations
+        - E.g., `get_twap_price()`, `get_last_price()`
 
     # Non-responsibilities:
-    - In general do not access data directly but rely on `AbstractImClient`
-      objects to retrieve the data from different backends
-
-    # Handling of `asset_ids`
-    - Different implementation backing an `MarketData` are possible, e.g.,
-      - stateless, i.e., the caller needs to specify the requested `asset_ids`
-        - In this case the universe is provided by `MarketData`
-      - stateful, i.e., the back end is initialized with the desired universe of
-        assets and then `MarketData` just propagates or subsets the universe
-
-    - For these reasons, assets are selected at 3 different points:
-    1) `AbstractMarketData` allows to specify or subset the assets through
-        `asset_ids` through the constructor
-    1) Derived classes / backends specify the assets returned
-       - E.g., a concrete implementation backed by a DB can stream the data for
-         its entire available universe
-    3) Certain class methods allow to query data for a specific asset or subset of
-       assets
-    - For each stage, a value of `None` means no filtering
-
-    # Handling of filtering by time
-    - Clients might want to query data using different interval types (namely [a, b),
-      [a, b], (a, b], (a, b)) and by filtering on either the `start_ts` or `end_ts`
-    - For this reason, this class supports all these different ways of providing data
+    - In general do not access data directly but rely on `ImClient` objects to
+      retrieve the data from different backends
 
     # Data format
-    The data from this class is available in two formats:
+    - The data from this class is available in two formats:
+        1) Native data
+            - delivered by classes derived from `MarketData`
+            - indexed with a progressive index
+            - with asset, start_time, end_time, knowledge_time
+        ```
+          asset_id           start_time             end_time     close   volume
+        idx
+          0  17085  2021-07-26 13:41:00  2021-07-26 13:42:00  148.8600   400176
+          1  17085  2021-07-26 13:30:00  2021-07-26 13:31:00  148.5300  1407725
+          2  17085  2021-07-26 13:31:00  2021-07-26 13:32:00  148.0999   473869
+        ```
 
-    1) Native data (as delivered by the derived class):
-        - indexed with a progressive index
-        - with asset, start_time, end_time, knowledge_time
-    ```
-      asset_id           start_time             end_time     close   volume
-    idx
-      0  17085  2021-07-26 13:41:00  2021-07-26 13:42:00  148.8600   400176
-      1  17085  2021-07-26 13:30:00  2021-07-26 13:31:00  148.5300  1407725
-      2  17085  2021-07-26 13:31:00  2021-07-26 13:32:00  148.0999   473869
-    ```
-
-    2) Normalized data:
-        - indexed by the column that corresponds to `end_time`
-        - suitable to DataFlow computation
-    ```
-                            asset_id                start_time    close   volume
-    end_time
-    2021-07-20 09:31:00-04:00  17085 2021-07-20 09:30:00-04:00  143.990  1524506
-    2021-07-20 09:32:00-04:00  17085 2021-07-20 09:31:00-04:00  143.310   586654
-    2021-07-20 09:33:00-04:00  17085 2021-07-20 09:32:00-04:00  143.535   667639
-    ```
+        2) Normalized data:
+            - transformed by the base `MarketData` class
+            - indexed by the column that corresponds to `end_time`
+            - suitable to DataFlow computation
+        ```
+                                asset_id                start_time    close   volume
+        end_time
+        2021-07-20 09:31:00-04:00  17085 2021-07-20 09:30:00-04:00  143.990  1524506
+        2021-07-20 09:32:00-04:00  17085 2021-07-20 09:31:00-04:00  143.310   586654
+        2021-07-20 09:33:00-04:00  17085 2021-07-20 09:32:00-04:00  143.535   667639
+        ```
     """
 
     def __init__(
