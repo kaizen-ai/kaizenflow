@@ -76,11 +76,6 @@ def data_source_node_factory(
         ret = dtfcore.DiskDataSource(nid, **source_node_kwargs)
     elif source_node_name == "DataLoader":
         ret = dtfcore.DataLoader(nid, **source_node_kwargs)
-    elif source_node_name == "crypto_data_download":
-        # TODO(gp): This should go through RealTimeDataSource.
-        import core_lem.dataflow.nodes.sources as cldns
-
-        ret = cldns.CryptoDataDownload_DataReader(nid, **source_node_kwargs)
     elif source_node_name == "kibot":
         # TODO(gp): This should go through RealTimeDataSource.
         ret = KibotDataReader(nid, **source_node_kwargs)

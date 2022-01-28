@@ -80,7 +80,8 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
             config,
         )
         actual = str(portfolio)
-        expected = r"""# historical holdings=
+        expected = r"""
+# historical holdings=
 asset_id                     101    202        -1
 2000-01-01 09:35:00-05:00   0.00   0.00  1000000.00
 2000-01-01 09:35:01-05:00   0.00   0.00  1000000.00
@@ -104,11 +105,11 @@ asset_id                    101    202
 2000-01-01 09:40:01-05:00  9.50  19.01
 2000-01-01 09:45:01-05:00  2.25 -20.52
 # historical statistics=
-                           net_asset_holdings        cash  net_wealth  gross_exposure  leverage    pnl  realized_pnl  unrealized_pnl
-2000-01-01 09:35:00-05:00                0.00  1000000.00    1.00e+06            0.00       0.0    NaN           NaN             NaN
-2000-01-01 09:35:01-05:00                0.00  1000000.00    1.00e+06            0.00       0.0   0.00          0.00            0.00
-2000-01-01 09:40:01-05:00            99988.95   900039.56    1.00e+06        99988.95       0.1  28.51     -99960.44        99988.95
-2000-01-01 09:45:01-05:00            49985.86   950024.38    1.00e+06        99971.72       0.1 -18.28      49984.81       -50003.09"""
+                             pnl  gross_volume  net_volume       gmv       nmv        cash  net_wealth  leverage
+2000-01-01 09:35:00-05:00    NaN          0.00        0.00      0.00      0.00  1000000.00    1.00e+06       0.0
+2000-01-01 09:35:01-05:00   0.00          0.00        0.00      0.00      0.00  1000000.00    1.00e+06       0.0
+2000-01-01 09:40:01-05:00  28.51      99960.44    99960.44  99988.95  99988.95   900039.56    1.00e+06       0.1
+2000-01-01 09:45:01-05:00 -18.28      66664.84   -49984.81  99971.72  49985.86   950024.38    1.00e+06       0.1"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
@@ -196,7 +197,8 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
         )
         # TODO(Paul): Factor out a test that compares simulation and mock.
         actual = str(portfolio)
-        expected = r"""# historical holdings=
+        expected = r"""
+# historical holdings=
 asset_id                     101    202        -1
 2000-01-01 09:35:00-05:00   0.00   0.00  1000000.00
 2000-01-01 09:35:01-05:00   0.00   0.00  1000000.00
@@ -220,11 +222,11 @@ asset_id                    101    202
 2000-01-01 09:40:01-05:00  9.50  19.01
 2000-01-01 09:45:01-05:00  2.25 -20.52
 # historical statistics=
-                           net_asset_holdings        cash  net_wealth  gross_exposure  leverage    pnl  realized_pnl  unrealized_pnl
-2000-01-01 09:35:00-05:00                0.00  1000000.00    1.00e+06            0.00       0.0    NaN           NaN             NaN
-2000-01-01 09:35:01-05:00                0.00  1000000.00    1.00e+06            0.00       0.0   0.00          0.00            0.00
-2000-01-01 09:40:01-05:00            99988.95   900039.56    1.00e+06        99988.95       0.1  28.51     -99960.44        99988.95
-2000-01-01 09:45:01-05:00            49985.86   950024.38    1.00e+06        99971.72       0.1 -18.28      49984.81       -50003.09"""
+                             pnl  gross_volume  net_volume       gmv       nmv        cash  net_wealth  leverage
+2000-01-01 09:35:00-05:00    NaN          0.00        0.00      0.00      0.00  1000000.00    1.00e+06       0.0
+2000-01-01 09:35:01-05:00   0.00          0.00        0.00      0.00      0.00  1000000.00    1.00e+06       0.0
+2000-01-01 09:40:01-05:00  28.51      99960.44    99960.44  99988.95  99988.95   900039.56    1.00e+06       0.1
+2000-01-01 09:45:01-05:00 -18.28      66664.84   -49984.81  99971.72  49985.86   950024.38    1.00e+06       0.1"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 

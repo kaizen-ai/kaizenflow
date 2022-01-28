@@ -20,7 +20,7 @@ FullSymbol = str
 
 def dassert_is_full_symbol_valid(full_symbol: FullSymbol) -> None:
     """
-    Check that full symbol has valid format, i.e. `exchange::symbol`.
+    Check that a full symbol has valid format, i.e. `exchange::symbol`.
 
     Note: digits and special symbols (except underscore) are not allowed.
     """
@@ -31,11 +31,12 @@ def dassert_is_full_symbol_valid(full_symbol: FullSymbol) -> None:
     letter_underscore_pattern = "[a-zA-Z_]"
     # Exchanges and symbols must be separated by `::`.
     regex_pattern = fr"{letter_underscore_pattern}*::{letter_underscore_pattern}*"
-    # Input full symbol must exactly match the pattern.
+    # A valid full symbol must match the pattern.
     full_match = re.fullmatch(regex_pattern, full_symbol, re.IGNORECASE)
     hdbg.dassert(
         full_match,
-        msg=f"Incorrect full_symbol format {full_symbol}, must be `exchange::symbol`",
+        "Incorrect full_symbol '%s', it must be `exchange::symbol`",
+        full_symbol,
     )
 
 
