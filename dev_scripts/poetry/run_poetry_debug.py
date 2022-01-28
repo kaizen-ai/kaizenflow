@@ -1,5 +1,5 @@
-# TODO(Grisha): @Nikola it should become executable script.
-
+import argparse
+import logging
 import os
 from typing import List
 
@@ -8,6 +8,10 @@ import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
+import helpers.hparser as hparser
+
+
+_LOG = logging.getLogger(__name__)
 
 
 def get_necessary_packages() -> List[str]:
@@ -72,13 +76,16 @@ def write_pyproject_toml(packages: List[str], dir_name: str) -> None:
     """
     packages = "\n".join(packages)
     file_content = "".join([hprint.dedent(beginning_of_file), hprint.dedent(packages), "\n", hprint.dedent(end_of_file)])
-    file_path = os.path.join(dir_name, "pyproject.toml")
+    poetry_debug_dir = get_debug_poetry_dir()
+    file_path = os.path.join(poetry_debug_dir, dir_name, "pyproject.toml")
+    _LOG.info("Writing `pyproject.toml` to file=`%s`", file_path)
     hio.to_file(file_path, file_content)
 
-def get_run_poetry_cmd() -> str:
-    # TODO(Grisha): @Nikola make sure you are in `dev_scripts/poetry` dir.
+
+def run_poetry_cmd() -> None:
     cmd = "poetry lock -vv"
-    return cmd
+    _LOG.info("Resolving poetry dependencies cdm=`%s`", cmd)
+    hsystem.system(cmd)
 
 
 def get_debug_poetry_dir() -> str:
@@ -88,54 +95,30 @@ def get_debug_poetry_dir() -> str:
     return poetry_debug_dir
 
 
-def load_python_packages(packages_type: str) -> List[str]:
-    file_name = ""
-    if packages_type == "necessary":
-        file_name = "necessary_packages"
-    elif packages_type == "optional":
-        file_name = "optional_packages"
-    else:
-        raise ValueError(f"unsupported packages type {packages_type}")
-    poetry_debug_dir = get_debug_poetry_dir()
-    packages_file_path = os.path.join(poetry_debug_dir, file_name)
-    packages = hio.from_file(packages_file_path)
-    hdbg.dassert_file_exists(packages_file_path)
-    return packages
-
-
-def get_python_packages(include_optional_packages: bool) -> List[str]:
-    packages = load_python_packages("necessary")
-    if include_optional_packages:
-        optional_packages = load_python_packages("optional")
-        packages.extend(optional_packages)
-    return packages
-
-
-def poetry_add_python_packages(python_packages: List[str]) -> None:
-    for python_package in python_packages:
-        poetry_add_package_cmd = get_add_package_poetry_cmd(python_package)
-        # Add every package in a provided list.
-        hsystem.system(poetry_add_package_cmd)
-
-
-def run_poetry_debug(include_optional_packages: bool) -> None:
+def run_poetry_debug() -> None:
     # Get Python packages to debug.
-    python_packages = get_python_packages(include_optional_packages)
-    poetry_run_cmd = get_run_poetry_cmd()
-    for idx, _ in enumerate(python_packages):
-        # We want to incrementally add one package and see if it works.
-        current_packages = python_packages[:idx]
-        poetry_add_python_packages(current_packages)
-        # TODO(Grisha): @Nikola we should also measure how much time it takes.
-        # TODO(Grisha): @Nikola let's abort the script if running time > 30 minutes (should be a parameter).
-        # TODO(Grisha): @Nikola capture output and compute length.
-        hsystem.system(poetry_run_cmd)
-        # TODO(Grisha): @Nikola write stats in a file:
-        #   - what are the packages
-        #   - did it converge? (run successfully)
-        #   - how much time did it take?
-        #   - how large is the output? i.e. length of string.
+    python_packages = get_necessary_packages()
+    dir_name = "."
+    write_pyproject_toml(python_packages, dir_name)
+    run_poetry_cmd()
 
 
+def _parse() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    hparser.add_input_output_args(parser)
+    hparser.add_verbosity_arg(parser)
+    return parser
+
+
+def _main(parser: argparse.ArgumentParser) -> None:
+    args = parser.parse_args()
+    print("cmd line: %s" % hdbg.get_command_line())
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    run_poetry_debug()
+
+if __name__ == "__main__":
+    _main(_parse())
 
 
