@@ -17,10 +17,12 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
-        period = "last_day"
+        timedelta = pd.Timedelta("1D")
         normalize_data = True
         # Run.
-        self._test_get_data_for_last_period(market_data, period, normalize_data)
+        self._test_get_data_for_last_period(
+            market_data, timedelta, normalize_data
+        )
 
     def test_get_data_for_last_period2(self) -> None:
         """
@@ -31,10 +33,12 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
-        period = "last_2days"
+        timedelta = pd.Timedelta("2D")
         normalize_data = True
         # Run.
-        self._test_get_data_for_last_period(market_data, period, normalize_data)
+        self._test_get_data_for_last_period(
+            market_data, timedelta, normalize_data
+        )
 
     def test_get_data_for_last_period3(self) -> None:
         """
@@ -45,10 +49,12 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
-        period = "last_week"
+        timedelta = pd.Timedelta("1W")
         normalize_data = True
         # Run.
-        self._test_get_data_for_last_period(market_data, period, normalize_data)
+        self._test_get_data_for_last_period(
+            market_data, timedelta, normalize_data
+        )
 
     def test_get_data_for_last_period4(self) -> None:
         """
@@ -59,10 +65,12 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
-        period = "last_10mins"
+        timedelta = pd.Timedelta("10T")
         normalize_data = True
         # Run.
-        self._test_get_data_for_last_period(market_data, period, normalize_data)
+        self._test_get_data_for_last_period(
+            market_data, timedelta, normalize_data
+        )
 
     def test_get_data_for_last_period5(self) -> None:
         """
@@ -73,10 +81,12 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
-        period = "last_5mins"
+        timedelta = pd.Timedelta("5T")
         normalize_data = True
         # Run.
-        self._test_get_data_for_last_period(market_data, period, normalize_data)
+        self._test_get_data_for_last_period(
+            market_data, timedelta, normalize_data
+        )
 
     def test_get_data_for_last_period6(self) -> None:
         """
@@ -87,10 +97,12 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
-        period = "last_1min"
+        timedelta = pd.Timedelta("1T")
         normalize_data = True
         # Run.
-        self._test_get_data_for_last_period(market_data, period, normalize_data)
+        self._test_get_data_for_last_period(
+            market_data, timedelta, normalize_data
+        )
 
     def test_get_data_for_last_period7(self) -> None:
         """
@@ -101,10 +113,12 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
-        period = "all"
+        timedelta = pd.Timedelta("365D")
         normalize_data = True
         # Run.
-        self._test_get_data_for_last_period(market_data, period, normalize_data)
+        self._test_get_data_for_last_period(
+            market_data, timedelta, normalize_data
+        )
 
     def test_get_data_at_timestamp1(self) -> None:
         """
@@ -348,6 +362,21 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         self._test_get_twap_price1(
             market_data, start_ts, end_ts, asset_ids, exp_srs_as_str
         )
+
+    # //////////////////////////////////////////////////////////////////////////////
+
+    def test_get_last_end_time1(self) -> None:
+        """
+        See description of corresponding private method in parent class.
+        """
+        # Prepare inputs.
+        asset_ids = [1467591036]
+        columns: List[str] = []
+        columns_remap = None
+        market_data = self._build_client(asset_ids, columns, columns_remap)
+        exp_last_end_time = pd.Timestamp("2018-08-17T01:39:00+00:00")
+        # Run.
+        self._test_get_last_end_time1(market_data, exp_last_end_time)
 
     # //////////////////////////////////////////////////////////////////////////////
 

@@ -42,6 +42,18 @@ def to_series(df: pd.DataFrame) -> pd.Series:
     return srs
 
 
+def dassert_is_days(
+    timedelta: pd.Timedelta, *, min_num_days: Optional[int] = None
+) -> None:
+    hdbg.dassert(
+        (timedelta / pd.Timedelta(days=1)).is_integer(),
+        "timedelta='%s' is not an integer number of days",
+        timedelta,
+    )
+    if min_num_days is not None:
+          hdbg.dassert_lte(1, timedelta.days)
+
+
 # #############################################################################
 
 
@@ -57,6 +69,8 @@ def _get_index(obj: Union[pd.Index, pd.DataFrame, pd.Series]) -> pd.Index:
     return index
 
 
+# TODO(gp): Maybe for symmetry with the other functions, rename to
+#  dassert_datetime_index
 def dassert_index_is_datetime(
     obj: Union[pd.Index, pd.DataFrame, pd.Series],
     msg: Optional[str] = None,
@@ -69,6 +83,27 @@ def dassert_index_is_datetime(
     hdbg.dassert_isinstance(index, pd.DatetimeIndex, msg, *args)
 
 
+def dassert_unique_index(
+    obj: Union[pd.Index, pd.DataFrame, pd.Series],
+    msg: Optional[str] = None,
+    *args: Any,
+) -> None:
+    """
+    Ensure that a Pandas object has a unique index.
+    """
+    index = _get_index(obj)
+    if not index.is_unique:
+        dup_indices = index.duplicated(keep=False)
+        df_dup = obj[dup_indices]
+        dup_msg = "Duplicated rows are:\n%s\n" % hpandas.dataframe_to_str(df_dup)
+        if msg is None:
+            msg = dup_msg
+        else:
+            msg = dup_msg + msg
+        hdbg.dassert(index.is_unique, msg=msg, *args)
+
+
+# TODO(gp): Add more info in case of failures and unit tests.
 def dassert_strictly_increasing_index(
     obj: Union[pd.Index, pd.DataFrame, pd.Series],
     msg: Optional[str] = None,
@@ -77,11 +112,11 @@ def dassert_strictly_increasing_index(
     """
     Ensure that a Pandas object has a strictly increasing index.
     """
-    index = _get_index(obj)
+    dassert_unique_index(obj, msg=msg, *args)
     # TODO(gp): Understand why mypy reports:
     #   error: "dassert" gets multiple values for keyword argument "msg"
+    index = _get_index(obj)
     hdbg.dassert(index.is_monotonic_increasing, msg=msg, *args)
-    hdbg.dassert(index.is_unique, msg=msg, *args)
 
 
 # TODO(gp): Factor out common code related to extracting the index from several
@@ -96,12 +131,12 @@ def dassert_monotonic_index(
     Ensure that a Pandas object has a monotonic (i.e., strictly increasing or
     decreasing index).
     """
-    index = _get_index(obj)
+    dassert_unique_index(obj, msg=msg, *args)
     # TODO(gp): Understand why mypy reports:
     #   error: "dassert" gets multiple values for keyword argument "msg"
+    index = _get_index(obj)
     cond = index.is_monotonic_increasing or index.is_monotonic_decreasing
     hdbg.dassert(cond, msg=msg, *args)
-    hdbg.dassert(index.is_unique, msg=msg, *args)
 
 
 def dassert_valid_remap(to_remap: List[str], remap_dict: Dict[str, str]) -> None:
@@ -167,10 +202,12 @@ def resample_index(index: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
     :param frequency: frequency from `pd.date_range()` to resample to
     :return: resampled `DatetimeIndex`
     """
+    _LOG.debug(hprint.to_str("index frequency"))
     hdbg.dassert_isinstance(index, pd.DatetimeIndex)
-    hdbg.dassert(index.is_unique, msg="Index must have only unique values")
+    dassert_unique_index(index, msg="Index must have only unique values")
     min_date = index.min()
     max_date = index.max()
+    _LOG.debug("min_date=%s max_date=%s", min_date, max_date)
     # TODO(gp): Preserve the index name.
     # index_name = index.name
     resampled_index = pd.date_range(
@@ -233,10 +270,12 @@ def drop_duplicates(
     """
     _LOG.debug("args=%s, kwargs=%s", str(args), str(kwargs))
     num_rows_before = data.shape[0]
+    # Drop duplicates.
     data_no_dups = data.drop_duplicates(*args, **kwargs)
+    # Report change.
     num_rows_after = data_no_dups.shape[0]
     if num_rows_before != num_rows_after:
-        _LOG.warning(
+        _LOG.debug(
             "Removed %s rows",
             hprint.perc(num_rows_before - num_rows_after, num_rows_before),
         )
@@ -315,6 +354,7 @@ def trim_df(
     if df.empty:
         # If the df is empty there is nothing to trim.
         return df
+    num_rows_before = df.shape[0]
     if start_ts is not None and end_ts is not None:
         hdateti.dassert_tz_compatible(start_ts, end_ts)
         hdbg.dassert_lte(start_ts, end_ts)
@@ -370,7 +410,17 @@ def trim_df(
         pass
     if use_index:
         df = df.set_index(ts_col_name, drop=True)
+    # Report the changes.
+    num_rows_after = df.shape[0]
+    if num_rows_before != num_rows_after:
+        _LOG.debug(
+            "Removed %s rows",
+            hprint.perc(num_rows_before - num_rows_after, num_rows_before),
+        )
     return df
+
+
+# #############################################################################
 
 
 # TODO(gp): This seems redundant with hut.convert_df_to_string.

@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Tuple
 import helpers.hdbg as hdbg  # isort:skip # noqa: E402
 import helpers.hio as hio  # isort:skip # noqa: E402
 import helpers.hparser as hparser  # isort:skip # noqa: E402
-import helpers.hsystem as hsysinte  # isort:skip # noqa: E402
+import helpers.hsystem as hsystem  # isort:skip # noqa: E402
 
 
 _LOG = logging.getLogger(__name__)
@@ -136,9 +136,9 @@ def report_info(txt: str) -> Tuple[str, str]:
     curr_path = os.getcwd()
     _log_var("curr_path", curr_path, txt)
     # Get name.
-    user_name = hsysinte.get_user_name()
+    user_name = hsystem.get_user_name()
     _log_var("user_name", user_name, txt)
-    server_name = hsysinte.get_server_name()
+    server_name = hsystem.get_server_name()
     _log_var("server_name", server_name, txt)
     return client_root_path, user_name
 

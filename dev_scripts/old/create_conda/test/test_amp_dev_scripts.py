@@ -7,9 +7,9 @@ import pytest
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
-import helpers.old.conda as holdcond
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
+import helpers.old.conda as holdcond
 
 _LOG = logging.getLogger(__name__)
 
@@ -34,11 +34,11 @@ class Test_set_env_amp(hunitest.TestCase):
         executable = os.path.abspath(executable)
         _LOG.debug("executable=%s", executable)
         hdbg.dassert_exists(executable)
-        hsysinte.system(executable)
+        hsystem.system(executable)
 
     # Since there are dependency from the user environment, we freeze a
     # particular run of _setenv_amp.py.
-    @pytest.mark.skipif('hsysinte.get_user_name() != "saggese"')
+    @pytest.mark.skipif('hsystem.get_user_name() != "saggese"')
     def test_setenv_py2(self) -> None:
         """
         Find _setenv_amp.py executable, run it, and freeze the output.
@@ -50,7 +50,7 @@ class Test_set_env_amp(hunitest.TestCase):
         _LOG.debug("executable=%s", executable)
         hdbg.dassert_exists(executable)
         # Run _setup.py and get its output.
-        _, txt = hsysinte.system_to_string(executable)
+        _, txt = hsystem.system_to_string(executable)
         # There is a difference between running the same test from different
         # repos, so we remove this line.
         txt = hunitest.filter_text("curr_path=", txt)
@@ -68,7 +68,7 @@ class Test_set_env_amp(hunitest.TestCase):
         _LOG.debug("executable=%s", executable)
         hdbg.dassert_exists(executable)
         cmd = "source %s amp_develop" % executable
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
 
 
 # #############################################################################
@@ -174,7 +174,7 @@ dependencies:
             cmd.append("--skip_pip_install")
             cmd.append("--skip_test_env")
         cmd_tmp = " ".join(cmd)
-        hsysinte.system(cmd_tmp)
+        hsystem.system(cmd_tmp)
 
     def _helper(self, env_name: str, cmd_opts: List[str]) -> None:
         """
@@ -216,7 +216,7 @@ dependencies:
 #            # We need to ignore the errors reported by the script, since it
 #            # represents how many lints were found.
 #            suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
-#            hsysinte.system(
+#            hsystem.system(
 #                cmd_as_str, abort_on_error=False, suppress_output=suppress_output
 #            )
 #        else:
@@ -288,7 +288,7 @@ dependencies:
 #
 #    @pytest.mark.skip(reason="Disable because of PTask3409")
 #    @pytest.mark.skipif(
-#        'hsysinte.get_server_name() == "docker-instance"', reason="Issue #1522, #1831"
+#        'hsystem.get_server_name() == "docker-instance"', reason="Issue #1522, #1831"
 #    )
 #    def test_linter1(self) -> None:
 #        """Run linter.py as executable on some text."""
@@ -302,7 +302,7 @@ dependencies:
 #
 #    @pytest.mark.skip(reason="Disable because of PTask3409")
 #    @pytest.mark.skipif(
-#        'hsysinte.get_server_name() == "docker-instance"', reason="Issue #1522, #1831"
+#        'hsystem.get_server_name() == "docker-instance"', reason="Issue #1522, #1831"
 #    )
 #    def test_linter2(self) -> None:
 #        """Run linter.py as library on some text."""
@@ -618,7 +618,7 @@ dependencies:
 #        file_name = "test_notebook.py"
 #        file_path = os.path.join(self.get_input_dir(), file_name)
 #        cmd = f"process_jupytext.py -f {file_path} --action test 2>&1"
-#        _, txt = hsysinte.system_to_string(cmd, abort_on_error=False)
+#        _, txt = hsystem.system_to_string(cmd, abort_on_error=False)
 #        _LOG.debug("txt=\n%s", txt)
 #        # There is a date in output, so we remove date using split.
 #        # Output example:

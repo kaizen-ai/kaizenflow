@@ -16,7 +16,7 @@ from typing import List, Optional, Tuple
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hparser as hparser
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ _LOG = logging.getLogger(__name__)
 def _perform_linter_for_test_branch(base_commit_sha: str) -> Tuple[int, int, str]:
     cmd = "git reset --hard"
     # Clean up the client from all linter artifacts.
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
     cmd = f"linter.py -t {base_commit_sha} --post_check"
     # We run the same comment twice since we need to get 2 different information
     # from the linter.
@@ -32,15 +32,15 @@ def _perform_linter_for_test_branch(base_commit_sha: str) -> Tuple[int, int, str
     # linted. Without we receive the number of lints.
     # TODO(Sergey): Pass both values with one execution of the linter and stop
     #  this insanity.
-    branch_dirty = hsysinte.system(cmd, abort_on_error=False)
+    branch_dirty = hsystem.system(cmd, abort_on_error=False)
     _LOG.info("Branch dirty: %s", branch_dirty)
     #
     cmd = "git reset --hard"
     # Clean up the client from all linter artifacts.
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
     #
     cmd = f"linter.py -t {base_commit_sha}"
-    branch_lints = hsysinte.system(cmd, abort_on_error=False)
+    branch_lints = hsystem.system(cmd, abort_on_error=False)
     _LOG.info("Branch lints: %s", branch_lints)
     # Read the lints reported from the linter.
     linter_output_filename = "./linter_warnings.txt"
@@ -48,7 +48,7 @@ def _perform_linter_for_test_branch(base_commit_sha: str) -> Tuple[int, int, str
     linter_message = "```\n" + linter_message + "\n```\n"
     cmd = "git reset --hard"
     # Clean up the client from all linter artifacts.
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
     return branch_lints, branch_dirty, linter_message
 
 
@@ -57,10 +57,10 @@ def _perform_linter_for_reference_branch(
 ) -> Tuple[int, int]:
     # # Calculate "Before*" stats
     cmd = "git reset --hard"
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
     cmd = f"git checkout {base_commit_sha} --recurse-submodules"
     # Check out master at the requested hash.
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
     mod_files_as_str = " ".join(mod_files)
     cmd = f"linter.py --files {mod_files_as_str} --post_check"
     # We run the same comment twice since we need to get 2 different information
@@ -70,17 +70,17 @@ def _perform_linter_for_reference_branch(
     # TODO(Sergey): Pass both values with one execution of the linter and stop
     #  this insanity.
     # Lint the files that are modified.
-    master_dirty = hsysinte.system(cmd, abort_on_error=False)
+    master_dirty = hsystem.system(cmd, abort_on_error=False)
     _LOG.info("Master dirty: %s", master_dirty)
     # Clean up the client.
     cmd = "git reset --hard"
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
     cmd = f"linter.py --files {mod_files_as_str}"
-    master_lints = hsysinte.system(cmd, abort_on_error=False)
+    master_lints = hsystem.system(cmd, abort_on_error=False)
     _LOG.info("Master lints: %s", master_lints)
     # Clean up the client.
     cmd = "git reset --hard"
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
     return master_lints, master_dirty
 
 
@@ -228,10 +228,10 @@ def _main(args: argparse.Namespace) -> int:
     else:
         print(message)
     cmd = "git reset --hard"
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
     cmd = f"git checkout {head_branch_name} --recurse-submodules"
     # Clean up the branch bringing to the original status.
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
     return rc
 
 

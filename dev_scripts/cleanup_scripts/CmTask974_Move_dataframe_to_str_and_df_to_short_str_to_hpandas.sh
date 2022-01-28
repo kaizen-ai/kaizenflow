@@ -1,5 +1,6 @@
 #!/bin/bash -xe
 
+if [[ 0 == 1 ]]; then
 # We want to apply changes to the code base 99% automatically
 # 1) Prepare one PR with
 #    a) the code that needs to be changed manually
@@ -43,6 +44,7 @@ git reset --hard origin/$TARGET_BRANCH
 
 # Apply manual changes.
 git merge --no-commit origin/$SOURCE_REPO
+fi;
 
 # Move dataframe_to_str from hprint to hpandas.
 ./dev_scripts/replace_text.py \

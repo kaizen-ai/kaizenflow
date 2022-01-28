@@ -19,6 +19,7 @@ import im_v2.common.universe.universe_utils as imvcuunut
 
 _LOG = logging.getLogger(__name__)
 
+# TODO(gp): -> base_clients.py
 
 # #############################################################################
 # ImClient
@@ -30,12 +31,14 @@ _LOG = logging.getLogger(__name__)
 
 class ImClient(abc.ABC):
     """
-    Retrieve market data for different vendors from different backends.
+    Retrieve market data for different vendors and backends.
 
-    Invariants:
-    - data is normalized so that the index is a UTC timestamp
-    - data is resampled on a 1min grid
-    - data is guaranteed to have no duplicates
+    Invariants: the propagated data is:
+    - normalized so that the index is a UTC timestamp (index is called `timestamp`)
+    - resampled on a 1 min grid and filled with NaN values
+    - sorted by index and `full_symbol`
+    - guaranteed to have no duplicates
+    - considered to belong to intervals like [a, b]
     """
 
     def read_data(
@@ -50,12 +53,13 @@ class ImClient(abc.ABC):
         """
         Read data in `[start_ts, end_ts)` for `imvcdcfusy.FullSymbol` symbols.
 
+        E.g.,
         ```
-                                  full_symbol     close     volume
-                  timestamp
-        2021-07-26 13:42:00  binance:BTC_USDT  47063.51  29.403690
-        2021-07-26 13:43:00  binance:BTC_USDT  46946.30  58.246946
-        2021-07-26 13:44:00  binance:BTC_USDT  46895.39  81.264098
+                                        full_symbol     close     volume
+                        timestamp
+        2021-07-26 13:42:00+00:00  binance:BTC_USDT  47063.51  29.403690
+        2021-07-26 13:43:00+00:00  binance:BTC_USDT  46946.30  58.246946
+        2021-07-26 13:44:00+00:00  binance:BTC_USDT  46895.39  81.264098
         ```
 
         :param full_symbols: list of full symbols, e.g.
@@ -74,6 +78,7 @@ class ImClient(abc.ABC):
             )
         )
         self._check_full_symbols(full_symbols)
+        #
         df = self._read_data(
             full_symbols,
             start_ts,
@@ -81,12 +86,16 @@ class ImClient(abc.ABC):
             full_symbol_col_name=full_symbol_col_name,
             **kwargs,
         )
+        # Rename index.
         hdbg.dassert_in(full_symbol_col_name, df.columns)
         df.index.name = "timestamp"
-        _LOG.debug("After _read_data: df=\n%s", hpandas.dataframe_to_str(df))
+        #
+        _LOG.debug("After read_data: df=\n%s", hpandas.dataframe_to_str(df))
         # Normalize data for each symbol.
         dfs = []
-        for _, df_tmp in df.groupby(full_symbol_col_name):
+        _LOG.debug("full_symbols=%s", df[full_symbol_col_name].unique())
+        for full_symbol, df_tmp in df.groupby(full_symbol_col_name):
+            _LOG.debug("apply_im_normalization: full_symbol=%s", full_symbol)
             df_tmp = self._apply_im_normalizations(
                 df_tmp, full_symbol_col_name, start_ts, end_ts
             )
@@ -98,7 +107,7 @@ class ImClient(abc.ABC):
         )
         # Sort by index and `full_symbol_col_name`.
         # There is not a simple way to sort by index and columns in Pandas,
-        # so we convert the index into a column, sort.
+        # so we convert the index into a column, sort, and convert back.
         df = df.reset_index()
         df = df.sort_values(by=["timestamp", full_symbol_col_name])
         df = df.set_index("timestamp", drop=True)
@@ -180,7 +189,8 @@ class ImClient(abc.ABC):
         :param asset_ids: assets as numeric ids
         :return: assets as full symbols
         """
-        # Get universe as full symbols to construct numeric ids to full symbols mapping.
+        # Get universe as full symbols to construct numeric ids to full symbols
+        # mapping.
         full_symbol_universe = self.get_universe(as_asset_ids=False)
         ids_to_symbols_mapping = imvcuunut.build_num_to_string_id_mapping(
             tuple(full_symbol_universe)
@@ -227,6 +237,7 @@ class ImClient(abc.ABC):
         - drop duplicates
         - trim the data with index in specified date interval
         - resample data to 1 min frequency
+        - convert to UTC
 
         Data trimming is done because:
         - some data sources can be only queried at day resolution so we get
@@ -234,7 +245,8 @@ class ImClient(abc.ABC):
         - we want to guarantee that nobody returns data outside the requested
           interval
         """
-        _LOG.debug(hprint.to_str("start_ts end_ts"))
+        _LOG.debug(hprint.to_str("full_symbol_col_name start_ts end_ts"))
+        hdbg.dassert(not df.empty, "Empty df=\n%s", df)
         # Drop duplicates.
         df = hpandas.drop_duplicates(df)
         # Trim the data with index in [start_ts, end_ts].
@@ -250,8 +262,12 @@ class ImClient(abc.ABC):
         # Combination of full symbol and timestamp is a unique identifier,
         # so full symbol cannot be NaN.
         df[full_symbol_col_name] = df[full_symbol_col_name].fillna(method="bfill")
+        # Convert to UTC.
+        df.index = df.index.tz_convert("UTC")
         return df
 
+    # TODO(gp): Is this really needed or should we just assume that all the
+    #  transformation is done in the `_read_data` method?
     @staticmethod
     @abc.abstractmethod
     def _apply_vendor_normalization(df: pd.DataFrame) -> pd.DataFrame:
@@ -302,7 +318,9 @@ class ImClient(abc.ABC):
 
 class ImClientReadingOneSymbol(ImClient, abc.ABC):
     """
-    Abstract IM client for a backend that can read one symbol at a time.
+    IM client for a backend that can read one symbol at a time.
+
+    E.g., CSV with data organized by-asset.
     """
 
     def _read_data(
@@ -331,15 +349,16 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
                 end_ts,
                 **kwargs,
             )
-            # Normalize data.
+            # Normalize data, according to the specific vendor.
             df = self._apply_vendor_normalization(df)
-            # Insert column with full symbol to the dataframe.
+            # Insert column with full symbol into the result dataframe.
             hdbg.dassert_is_not(full_symbol_col_name, df.columns)
             df.insert(0, full_symbol_col_name, full_symbol)
             # Add full symbol data to the results dict.
             full_symbol_to_df[full_symbol] = df
         # Combine results dict in a dataframe.
         df = pd.concat(full_symbol_to_df.values())
+        # We rely on the parent class to sort.
         return df
 
     @abc.abstractmethod
@@ -351,10 +370,9 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
-        Read data for a single `imvcdcfusy.FullSymbol` in [start_ts, end_ts).
+        Read data for a single symbol in [start_ts, end_ts).
 
-        Parameters have the same meaning as parameters in `read_data()`
-        with the same name.
+        Parameters have the same meaning as in `read_data()`.
         """
         ...
 
@@ -366,12 +384,10 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
 
 class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
     """
-    Abstract IM client for backend that can read multiple symbols at the same
-    time.
+    IM client for backend that can read multiple symbols at the same time.
 
-    This is used for reading data from Parquet by-date files, where
-    multiple assets are stored in the same file and can be accessed
-    together.
+    E.g., Parquet by-date or by-asset files allow to read data for multiple assets
+    stored in the same file.
     """
 
     def _read_data(
@@ -384,7 +400,7 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
-        Same as the abstract class.
+        Same as the parent class.
         """
         _LOG.debug(
             hprint.to_str(
@@ -406,7 +422,4 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         full_symbol_col_name: str,
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
-        """
-        Derived classes need to implement this.
-        """
         ...

@@ -8,7 +8,7 @@ import core.config as cconfig
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -276,9 +276,7 @@ def run_cmd_line(
     _LOG.debug(
         "expected_pass=%s abort_on_error=%s", expected_pass, abort_on_error
     )
-    rc = hsysinte.system(
-        cmd, abort_on_error=abort_on_error, suppress_output=False
-    )
+    rc = hsystem.system(cmd, abort_on_error=abort_on_error, suppress_output=False)
     if expected_pass:
         self.assertEqual(rc, 0)
     else:

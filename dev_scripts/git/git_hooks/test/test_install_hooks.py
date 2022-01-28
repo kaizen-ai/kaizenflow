@@ -4,14 +4,14 @@ import pytest
 
 import dev_scripts.git.git_hooks.utils as dsgghout  # pylint: disable=no-name-in-module
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.skipif(
-    hsysinte.is_inside_ci(), reason="CI is not set up for committing code in GH"
+    hsystem.is_inside_ci(), reason="CI is not set up for committing code in GH"
 )
 class Test_git_hooks_utils1(hunitest.TestCase):
     def test_check_master1(self) -> None:
@@ -19,7 +19,7 @@ class Test_git_hooks_utils1(hunitest.TestCase):
         dsgghout.check_master(abort_on_error)
 
     @pytest.mark.skipif(
-        hsysinte.is_inside_docker(),
+        hsystem.is_inside_docker(),
         reason="There are no Git credentials inside Docker",
     )
     def test_check_author1(self) -> None:

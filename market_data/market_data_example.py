@@ -444,6 +444,7 @@ def get_MarketDataImClient_example1(
     return market_data_client
 
 
+# TODO(gp): We can also use a real wall clock.
 def get_MarketDataImClient_wall_clock_time() -> pd.Timestamp:
     """
     Get a wall clock time to build `MarketDataImClient` for tests.

@@ -28,6 +28,7 @@ _LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
 # #############################################################################
 
 
+# TODO(gp): -> MarketData
 class AbstractMarketData(abc.ABC):
     """
     Implement an interface to an historical / real-time source of price data.
@@ -160,7 +161,7 @@ class AbstractMarketData(abc.ABC):
 
     def get_data_for_last_period(
         self,
-        period: str,
+        timedelta: pd.Timedelta,
         *,
         normalize_data: bool = True,
         # TODO(gp): Not sure limit is really needed. We could move it to the DB
@@ -168,16 +169,20 @@ class AbstractMarketData(abc.ABC):
         limit: Optional[int] = None,
     ) -> pd.DataFrame:
         """
-        Get an amount of data `period` in the past before the current
+        Get an amount of data `timedelta` in the past before the current
         timestamp.
 
         This is used during real-time execution to evaluate a model.
+
+        Note that we use `asset_ids` from the constructor instead of passing it
+        since the use case is for clients to just ask data that has been
+        configured upstream when this object was built.
         """
         # TODO(gp): If the DB supports asyncio this should become async.
-        # Handle `period`.
-        _LOG.verb_debug(hprint.to_str("period"))
+        # Handle `timedelta`.
+        _LOG.verb_debug(hprint.to_str("timedelta"))
         wall_clock_time = self.get_wall_clock_time()
-        start_ts = self._process_period(period, wall_clock_time)
+        start_ts = self._process_period(timedelta, wall_clock_time)
         end_ts = None
         # By convention to get the last chunk of data we use the start_time column.
         ts_col_name = self._start_time_col_name
@@ -213,8 +218,8 @@ class AbstractMarketData(abc.ABC):
         :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
         :param normalize_data: normalize the data
         """
-        start_ts = ts - pd.Timedelta(1, unit="s")
-        end_ts = ts + pd.Timedelta(1, unit="s")
+        start_ts = ts - pd.Timedelta("1S")
+        end_ts = ts + pd.Timedelta("1S")
         df = self.get_data_for_interval(
             start_ts,
             end_ts,
@@ -253,6 +258,7 @@ class AbstractMarketData(abc.ABC):
         :param left_close, right_close: represent the type of interval
             - E.g., [start_ts, end_ts), or (start_ts, end_ts]
         """
+        _LOG.debug(hprint.to_str("start_ts end_ts ts_col_name asset_ids left_close right_close normalize_data limit"))
         # Resolve the asset ids.
         if asset_ids is None:
             asset_ids = self._asset_ids
@@ -386,11 +392,11 @@ class AbstractMarketData(abc.ABC):
         # TODO(gp): This is not super robust.
         if False:
             # For debugging.
-            df = self.get_data_for_last_period(period="last_5mins")
+            df = self.get_data_for_last_period(timedelta="5T")
             _LOG.info("df=\n%s", hpandas.df_to_str(df, tag="df"))
         # Get the data.
         # TODO(*): Remove the hard-coded 1-minute.
-        start_time = last_end_time - pd.Timedelta(minutes=1)
+        start_time = last_end_time - pd.Timedelta("1M")
         df = self.get_data_at_timestamp(
             start_time,
             self._start_time_col_name,
@@ -441,7 +447,7 @@ class AbstractMarketData(abc.ABC):
                 wall_clock_time.floor("Min"),
             )
             ret = last_db_end_time.floor("Min") >= (
-                wall_clock_time.floor("Min") - pd.Timedelta(minutes=1)
+                wall_clock_time.floor("Min") - pd.Timedelta("1M")
             )
         _LOG.verb_debug("-> ret=%s", ret)
         return ret
@@ -565,7 +571,8 @@ class AbstractMarketData(abc.ABC):
         :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
         :param left_close, right_close: represent the type of interval
             - E.g., [start_ts, end_ts), or (start_ts, end_ts]
-        :param normalize_data: whether to normalize data or not, see `self.process_data()`
+        :param normalize_data: whether to normalize data or not, see
+            `self.process_data()`
         :param limit: keep only top N records
         """
         ...
@@ -603,11 +610,11 @@ class AbstractMarketData(abc.ABC):
 
     @staticmethod
     def _process_period(
-        period: str, wall_clock_time: pd.Timestamp
+        timedelta: pd.Timedelta, wall_clock_time: pd.Timestamp
     ) -> Optional[pd.Timestamp]:
         """
-        Return the start time corresponding to returning the desired `period`
-        of time.
+        Return the start time corresponding to returning the desired
+        `timedelta` of time before the current wall clock time.
 
         E.g., if the df looks like:
         ```
@@ -620,7 +627,7 @@ class AbstractMarketData(abc.ABC):
         3  09:33     09:34    09:34   0.655907  1000
         4  09:34     09:35    09:35   0.311925  1000
         ```
-        and `wall_clock_time=09:34` the last minute should be:
+        and `wall_clock_time=09:34` the last minute `1T` should be:
         ```
            start_datetime           last_price    id
                      end_datetime
@@ -628,40 +635,11 @@ class AbstractMarketData(abc.ABC):
         4  09:34     09:35    09:35   0.311925  1000
         ```
 
-        :param period: what period the df to extract (e.g., `last_1mins`, ...,
-            `last_10mins`)
-        :return:
+        :param timedelta: a `pd.Timedelta` like `1D`, `5T`
         """
-        _LOG.verb_debug(hprint.to_str("period wall_clock_time"))
-        # Period of time.
-        if period == "last_day":
-            # Get the data for the last day.
-            last_start_time = wall_clock_time.replace(hour=0, minute=0, second=0)
-        elif period == "last_2days":
-            # Get the data for the last 2 days.
-            last_start_time = (
-                wall_clock_time.replace(hour=0, minute=0, second=0)
-            ) - pd.Timedelta(days=1)
-        elif period == "last_week":
-            # Get the data for the last week.
-            last_start_time = wall_clock_time.replace(
-                hour=0, minute=0, second=0
-            ) - pd.Timedelta(days=16)
-        elif period in ("last_10mins", "last_5mins", "last_1min"):
-            # Get the data for the last N minutes.
-            if period == "last_10mins":
-                mins = 10
-            elif period == "last_5mins":
-                mins = 5
-            elif period == "last_1min":
-                mins = 1
-            else:
-                raise ValueError("Invalid period='%s'" % period)
-            # We condition on `start_time` since it's an index.
-            last_start_time = wall_clock_time - pd.Timedelta(minutes=mins)
-        elif period == "all":
-            last_start_time = None
-        else:
-            raise ValueError("Invalid period='%s'" % period)
+        _LOG.verb_debug(hprint.to_str("timedelta wall_clock_time"))
+        hdbg.dassert_isinstance(timedelta, pd.Timedelta)
+        hdbg.dassert_lt(pd.Timedelta("0S"), timedelta)
+        last_start_time = wall_clock_time - timedelta
         _LOG.verb_debug("last_start_time=%s", last_start_time)
         return last_start_time

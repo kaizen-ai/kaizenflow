@@ -20,7 +20,7 @@ import re
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hparser as hparser
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -112,15 +112,15 @@ def _main(parser: argparse.ArgumentParser) -> None:
         actions = list(actions)
     if "checkout" in actions:
         cmd = "git checkout -- %s" % args.file
-        _ = hsysinte.system(cmd)
+        _ = hsystem.system(cmd)
     if "pandoc_before" in actions:
         cmd = "pandoc.py -a pdf --no_toc --no_open_pdf --input %s" % args.file
-        _ = hsysinte.system(cmd)
+        _ = hsystem.system(cmd)
     if "replace" in actions:
         _standard_cleanup(args.file, args.aggressive)
     if "pandoc_after" in actions:
         cmd = "pandoc.py -a pdf --no_toc --no_open_pdf --input %s" % args.file
-        _ = hsysinte.system(cmd)
+        _ = hsystem.system(cmd)
 
 
 if __name__ == "__main__":

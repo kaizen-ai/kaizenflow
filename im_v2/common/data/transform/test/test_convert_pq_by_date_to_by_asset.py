@@ -1,5 +1,6 @@
 import argparse
 import os
+import pprint
 from typing import Any, Dict, Tuple
 
 import helpers.hgit as hgit
@@ -115,19 +116,21 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         cmd.extend(["--num_threads", "1"])
         cmd.extend(["--asset_col_name", "ticker"])
         args = parser.parse_args(cmd)
-        actual = vars(args)
-        expected = {
-            "src_dir": "dummy_by_date_dir",
-            "dst_dir": "dummy_by_asset_dir",
-            "asset_col_name": "ticker",
-            "num_threads": "1",
-            "dry_run": False,
-            "no_incremental": False,
-            "skip_on_error": False,
-            "num_attempts": 1,
-            "log_level": "INFO",
-        }
-        self.assertDictEqual(actual, expected)
+        actual = pprint.pformat(vars(args))
+        expected = r"""
+        {'asset_col_name': 'ticker',
+         'dry_run': False,
+         'dst_dir': 'dummy_by_asset_dir',
+         'force': False,
+         'log_level': 'INFO',
+         'no_incremental': False,
+         'no_keep_order': False,
+         'num_attempts': 1,
+         'num_func_per_task': None,
+         'num_threads': '1',
+         'skip_on_error': False,
+         'src_dir': 'dummy_by_date_dir'}"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
     def _test_command_line(self, verbose: bool) -> None:
         """
