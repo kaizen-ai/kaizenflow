@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import argparse
 import logging
 import os
@@ -17,13 +19,13 @@ _LOG = logging.getLogger(__name__)
 def get_necessary_packages() -> List[str]:
     necessary_packages = [
         "python = \"^3.8\"",
-        "awscli = \"1.22.17\"",
+        "pandas = \"*\"",
         "jupyter = \"*\"",
+        "awscli = \"1.22.17\"",
         "jupyter_contrib_nbextensions = \"*\"",
         "jupyter_nbextensions_configurator = \"*\"",
         "matplotlib = \"*\"",
         "networkx = \"*\"",
-        "pandas = \"*\"",
         "psycopg2-binary = \"*\"",
         "pyarrow = \"*\"",
         "pytest = \"*\"",
@@ -82,10 +84,27 @@ def write_pyproject_toml(packages: List[str], dir_name: str) -> None:
     hio.to_file(file_path, file_content)
 
 
+def write_poetry_toml_file(dir_name: str) -> None:
+    file_content = """
+    cache-dir = "tmp.pypoetry"
+    experimental.new-installer = true
+    installer.parallel = true
+    # We don't want poetry to automatically create / manage virtual environment.
+    virtualenvs.create = false
+    virtualenvs.in-project = true
+    """
+    file_content = hprint.dedent(file_content)
+    poetry_debug_dir = get_debug_poetry_dir()
+    file_path = os.path.join(poetry_debug_dir, dir_name, "poetry.toml")
+    _LOG.info("Writing `poetry.toml` to file=`%s`", file_path)
+    hio.to_file(file_path, file_content)
+
+
 def run_poetry_cmd() -> None:
-    cmd = "poetry lock -vv"
+    dir_name = os.path.join(get_debug_poetry_dir(), "test")
+    cmd = f"cd {dir_name}; poetry lock -vv"
     _LOG.info("Resolving poetry dependencies cdm=`%s`", cmd)
-    hsystem.system(cmd)
+    hsystem.system(cmd, suppress_output=False)
 
 
 def get_debug_poetry_dir() -> str:
@@ -97,8 +116,10 @@ def get_debug_poetry_dir() -> str:
 
 def run_poetry_debug() -> None:
     # Get Python packages to debug.
-    python_packages = get_necessary_packages()
-    dir_name = "."
+    python_packages = get_necessary_packages()[:2]
+    _LOG.info("Adding packages=`%s`", python_packages)
+    dir_name = "test"
+    write_poetry_toml_file(dir_name)
     write_pyproject_toml(python_packages, dir_name)
     run_poetry_cmd()
 
@@ -107,14 +128,12 @@ def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    hparser.add_input_output_args(parser)
     hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    print("cmd line: %s" % hdbg.get_command_line())
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     run_poetry_debug()
 
