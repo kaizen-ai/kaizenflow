@@ -29,7 +29,7 @@ _LOG = logging.getLogger(__name__)
 #  between file proliferation and more organization.
 
 
-# TODO(gp): @Grisha Rename AbstractImClient -> ImClient
+# TODO(gp): @Grisha Rename AbstractImClient -> ImClient everywhere
 
 # TODO(gp): Proposal: the output of ImClient should be in the form of
 #   `start_timestamp`, `end_timestamp`, and `knowledge_timestamp` since these
