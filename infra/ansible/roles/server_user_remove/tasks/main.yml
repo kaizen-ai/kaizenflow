@@ -1,0 +1,12 @@
+---
+- name: OS | Remove user from OS
+  user:
+    name: "{{ username }}"
+    state: absent
+    
+- name: OS | Remove user from OS with his home folder
+  user:
+    name: "{{ username }}"
+    state: absent
+    remove: yes
+  when: os_include_user_home_directory|bool
