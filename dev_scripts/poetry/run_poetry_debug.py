@@ -6,6 +6,7 @@ from typing import List
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
+import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 
 
@@ -70,7 +71,7 @@ def write_pyproject_toml(packages: List[str], dir_name: str) -> None:
     build-backend = "poetry.core.masonry.api"
     """
     packages = "\n".join(packages)
-    file_content = "".join([beginning_of_file, packages, end_of_file])
+    file_content = "".join([hprint.dedent(beginning_of_file), hprint.dedent(packages), "\n", hprint.dedent(end_of_file)])
     file_path = os.path.join(dir_name, "pyproject.toml")
     hio.to_file(file_path, file_content)
 

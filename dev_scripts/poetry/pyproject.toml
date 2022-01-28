@@ -1,4 +1,3 @@
-
 [tool.poetry]
 name = "amp"
 version = "1.0.0"
