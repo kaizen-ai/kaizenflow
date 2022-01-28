@@ -104,6 +104,8 @@ def run_poetry_cmd() -> None:
     dir_name = os.path.join(get_debug_poetry_dir(), "test")
     cmd = f"cd {dir_name}; poetry lock -vv"
     _LOG.info("Resolving poetry dependencies cdm=`%s`", cmd)
+    # TODO(Grisha): @Nikola here we want to save the output in a log file to post-process it,
+    # it should be done by `hsystem.system`, but we should check.
     hsystem.system(cmd, suppress_output=False)
 
 
@@ -113,14 +115,26 @@ def get_debug_poetry_dir() -> str:
     hdbg.dassert_dir_exists(poetry_debug_dir)
     return poetry_debug_dir
 
-
+# TODO(Grisha): @Nikola here we should pass a debug type:
+# - "necessary" - run poetry for a list of necessary packages in one shot
+# - "necessary_incremental" - run poetry for a list of necessary packages one by one
+#     - i.e. add 1 package, run poetry, save the output, add another one, run poetry, etc
+# - "optional" - run poetry for a list of necessary packages in one shot and for optional
+# packages incrementally.
 def run_poetry_debug() -> None:
     # Get Python packages to debug.
+    # TODO(Grisha): @Nikola depending on the option we should either
+    # necessary or necessary + optional packages.
     python_packages = get_necessary_packages()[:2]
+    # TODO(Grisha): @Nikola we should also want to be able to resolve dependencies
+    # incrementally, i.e. add packages one by one.
     _LOG.info("Adding packages=`%s`", python_packages)
+    # TODO(Grisha): @Nikola dir should depend on debug type, for each
+    # poetry run we should create a separate dir in `dev_scripts/poetry`.
     dir_name = "test"
     write_poetry_toml_file(dir_name)
     write_pyproject_toml(python_packages, dir_name)
+    # TODO(Grisha): @Nikola we should terminate a script if it is not finished within 30 minutes (could be a param).
     run_poetry_cmd()
 
 
