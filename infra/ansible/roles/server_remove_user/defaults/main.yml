@@ -1,4 +1,3 @@
+---
 username:
-password:
-home_dir: /data/{{ username }}
-pub_key_path:
+remove_user_home_directory: false
