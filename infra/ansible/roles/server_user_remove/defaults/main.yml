@@ -1,3 +1,4 @@
 ---
 os_username:
+home_dir: "/data/{{ os_username }}"
 os_include_user_home_directory: false
