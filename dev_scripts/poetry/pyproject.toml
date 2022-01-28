@@ -1,3 +1,4 @@
+
 [tool.poetry]
 name = "amp"
 version = "1.0.0"
@@ -5,6 +6,29 @@ description = ""
 authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
+python = "^3.8"
+awscli = "1.22.17"
+jupyter = "*"
+jupyter_contrib_nbextensions = "*"
+jupyter_nbextensions_configurator = "*"
+matplotlib = "*"
+networkx = "*"
+pandas = "*"
+psycopg2-binary = "*"
+pyarrow = "*"
+pytest = "*"
+pytest-cov = "*"
+pytest-instafail = "*"
+pytest-rerunfailures = "*"
+pytest-timeout = "*"
+pytest-xdist = "*"
+python-dotenv = "*"
+pywavelets = "*"
+s3fs = "*"
+seaborn = "*"
+sklearn = "*"
+statsmodels = "*"
+tqdm = "*"
 
 [tool.poetry.dev-dependencies]
 

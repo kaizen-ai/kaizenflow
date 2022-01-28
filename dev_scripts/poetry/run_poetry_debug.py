@@ -9,10 +9,70 @@ import helpers.hio as hio
 import helpers.hsystem as hsystem
 
 
-def get_add_package_poetry_cmd(package: str) -> str:
-    cmd = f"poetry add {package}"
-    return cmd
+def get_necessary_packages() -> List[str]:
+    necessary_packages = [
+        "python = \"^3.8\"",
+        "awscli = \"1.22.17\"",
+        "jupyter = \"*\"",
+        "jupyter_contrib_nbextensions = \"*\"",
+        "jupyter_nbextensions_configurator = \"*\"",
+        "matplotlib = \"*\"",
+        "networkx = \"*\"",
+        "pandas = \"*\"",
+        "psycopg2-binary = \"*\"",
+        "pyarrow = \"*\"",
+        "pytest = \"*\"",
+        "pytest-cov = \"*\"",
+        "pytest-instafail = \"*\"",
+        "pytest-rerunfailures = \"*\"",
+        "pytest-timeout = \"*\"",
+        "pytest-xdist = \"*\"",
+        "python-dotenv = \"*\"",
+        "pywavelets = \"*\"",
+        "s3fs = \"*\"",
+        "seaborn = \"*\"",
+        "sklearn = \"*\"",
+        "statsmodels = \"*\"",
+        "tqdm = \"*\"",
+    ]
+    return necessary_packages
 
+
+def get_optional_packages() -> List[str]:
+    optional_packages = [
+        "boto3 = \"*\"",
+        "invoke = \"*\"",
+        "jsonpickle = \"*\"",
+        "moto = \"*\"",
+        "psutil = \"*\"",
+        "pygraphviz = \"*\"",
+        "requests = \"*\"",
+    ]
+    return optional_packages
+
+
+def write_pyproject_toml(packages: List[str], dir_name: str) -> None:
+    beginning_of_file = """
+    [tool.poetry]
+    name = "amp"
+    version = "1.0.0"
+    description = ""
+    authors = ["Your Name <you@example.com>"]
+
+    [tool.poetry.dependencies]
+    """
+    end_of_file = """
+    
+    [tool.poetry.dev-dependencies]
+
+    [build-system]
+    requires = ["poetry-core>=1.0.0"]
+    build-backend = "poetry.core.masonry.api"
+    """
+    packages = "\n".join(packages)
+    file_content = "".join([beginning_of_file, packages, end_of_file])
+    file_path = os.path.join(dir_name, "pyproject.toml")
+    hio.to_file(file_path, file_content)
 
 def get_run_poetry_cmd() -> str:
     # TODO(Grisha): @Nikola make sure you are in `dev_scripts/poetry` dir.

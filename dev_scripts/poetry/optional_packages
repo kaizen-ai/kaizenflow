@@ -1,7 +1,0 @@
-boto3 = "*"
-invoke = "*"
-jsonpickle = "*"
-moto = "*"
-psutil = "*"
-pygraphviz = "*"
-requests = "*"
