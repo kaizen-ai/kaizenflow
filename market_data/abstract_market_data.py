@@ -28,6 +28,7 @@ _LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
 # #############################################################################
 
 
+# TODO(gp): -> MarketData
 class AbstractMarketData(abc.ABC):
     """
     Implement an interface to an historical / real-time source of price data.
@@ -172,6 +173,10 @@ class AbstractMarketData(abc.ABC):
         timestamp.
 
         This is used during real-time execution to evaluate a model.
+
+        Note that we use `asset_ids` from the constructor instead of passing it
+        since the use case is for clients to just ask data that has been
+        configured upstream when this object was built.
         """
         # TODO(gp): If the DB supports asyncio this should become async.
         # Handle `timedelta`.
@@ -253,6 +258,7 @@ class AbstractMarketData(abc.ABC):
         :param left_close, right_close: represent the type of interval
             - E.g., [start_ts, end_ts), or (start_ts, end_ts]
         """
+        _LOG.debug(hprint.to_str("start_ts end_ts ts_col_name asset_ids left_close right_close normalize_data limit"))
         # Resolve the asset ids.
         if asset_ids is None:
             asset_ids = self._asset_ids
@@ -293,7 +299,7 @@ class AbstractMarketData(abc.ABC):
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         ts_col_name: str,
-        asset_ids: Optional[List[int]],
+        asset_ids: List[int],
         column: str,
     ) -> pd.Series:
         """
@@ -330,7 +336,7 @@ class AbstractMarketData(abc.ABC):
         self,
         bar_duration: str,
         ts_col_name: str,
-        asset_ids: Optional[List[int]],
+        asset_ids: List[int],
         column: str,
     ) -> pd.Series:
         """
@@ -375,17 +381,22 @@ class AbstractMarketData(abc.ABC):
     def get_last_price(
         self,
         col_name: str,
-        asset_ids: Optional[List[int]],
+        asset_ids: List[int],
     ) -> pd.Series:
         """
         Get last price for `asset_ids` using column `col_name` (e.g., "close")
         """
         # TODO(*): Use a to-be-written `get_last_start_time()` instead.
-        start_time = self.get_last_end_time()
+        last_end_time = self.get_last_end_time()
         _LOG.info("start_time=%s", start_time)
+        # TODO(gp): This is not super robust.
+        if False:
+            # For debugging.
+            df = self.get_data_for_last_period(timedelta="last_5mins")
+            _LOG.info("df=\n%s", hpandas.dataframe_to_str(df))
         # Get the data.
         df = self.get_data_at_timestamp(
-            start_time,
+            last_end_time,
             self._start_time_col_name,
             asset_ids,
         )
@@ -558,7 +569,8 @@ class AbstractMarketData(abc.ABC):
         :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
         :param left_close, right_close: represent the type of interval
             - E.g., [start_ts, end_ts), or (start_ts, end_ts]
-        :param normalize_data: whether to normalize data or not, see `self.process_data()`
+        :param normalize_data: whether to normalize data or not, see
+            `self.process_data()`
         :param limit: keep only top N records
         """
         ...

@@ -45,7 +45,7 @@ class TestForecastEvaluator1(hunitest.TestCase):
 2022-01-03 09:45:00-05:00  2.73e-04
 2022-01-03 09:50:00-05:00  2.30e-04
 2022-01-03 09:55:00-05:00 -1.32e-04
-2022-01-03 10:00:00-05:00  4.81e-05
+2022-01-03 10:00:00-05:00  4.80e-05
 # statistics=
                                 pnl  gross_volume  net_volume   gmv   nmv
 2022-01-03 09:30:00-05:00       NaN           NaN         NaN   NaN   NaN
@@ -54,7 +54,7 @@ class TestForecastEvaluator1(hunitest.TestCase):
 2022-01-03 09:45:00-05:00  2.73e-04          1.95       -1.95  0.92 -0.92
 2022-01-03 09:50:00-05:00  2.30e-04          0.12       -0.12  1.04 -1.04
 2022-01-03 09:55:00-05:00 -1.32e-04          1.10        1.10  0.06  0.06
-2022-01-03 10:00:00-05:00  4.81e-05           NaN         NaN   NaN   NaN"""
+2022-01-03 10:00:00-05:00  4.80e-05           NaN         NaN   NaN   NaN"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_to_str_intraday_1_asset_targeted_gmv(self) -> None:
@@ -128,8 +128,8 @@ class TestForecastEvaluator1(hunitest.TestCase):
 2022-01-03 09:40:00-05:00       NaN       NaN       NaN
 2022-01-03 09:45:00-05:00  2.73e-04  4.26e-03  4.85e-03
 2022-01-03 09:50:00-05:00  2.30e-04 -1.06e-04  1.67e-04
-2022-01-03 09:55:00-05:00 -1.32e-04  9.42e-05 -6.08e-05
-2022-01-03 10:00:00-05:00  4.81e-05  2.59e-03 -1.37e-05
+2022-01-03 09:55:00-05:00 -1.32e-04  9.40e-05 -6.10e-05
+2022-01-03 10:00:00-05:00  4.80e-05  2.59e-03 -1.40e-05
 # statistics=
                                 pnl  gross_volume  net_volume   gmv   nmv
 2022-01-03 09:30:00-05:00       NaN           NaN         NaN   NaN   NaN
@@ -137,7 +137,7 @@ class TestForecastEvaluator1(hunitest.TestCase):
 2022-01-03 09:40:00-05:00       NaN           NaN         NaN  5.96 -3.91
 2022-01-03 09:45:00-05:00  9.39e-03          8.47        4.57  2.51  0.66
 2022-01-03 09:50:00-05:00  2.90e-04          1.14       -1.14  1.61 -0.48
-2022-01-03 09:55:00-05:00 -9.85e-05          4.48       -2.28  2.87 -2.75
+2022-01-03 09:55:00-05:00 -9.90e-05          4.48       -2.28  2.87 -2.75
 2022-01-03 10:00:00-05:00  2.63e-03           NaN         NaN   NaN   NaN"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
