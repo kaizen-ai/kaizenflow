@@ -824,16 +824,27 @@ def git_rename_branch(ctx, new_branch_name):  # type: ignore
         f"'{new_branch_name}'"
     )
     hsystem.query_yes_no(msg, abort_on_no=True)
-    # https://stackoverflow.com/questions/6591213/how-do-i-rename-a-local-git-branch
-    # To rename a local branch:
-    # git branch -m <oldname> <newname>
+    # https://stackoverflow.com/questions/30590083
+    # Rename the local branch to the new name.
+    # > git branch -m <old_name> <new_name>
     cmd = f"git branch -m {new_branch_name}"
     _run(ctx, cmd)
-    # git push origin -u <newname>
+    # Delete the old branch on remote.
+    # > git push <remote> --delete <old_name>
+    cmd = f"git push origin --delete {old_branch_name}"
+    _run(ctx, cmd)
+    # Prevent Git from using the old name when pushing in the next step.
+    # Otherwise, Git will use the old upstream name instead of <new_name>.
+    # > git branch --unset-upstream <new_name>
+    cmd = f"git branch --unset-upstream {new_branch_name}"
+    _run(ctx, cmd)
+    # Push the new branch to remote.
+    # > git push <remote> <new_name>
     cmd = f"git push origin {new_branch_name}"
     _run(ctx, cmd)
-    # git push origin --delete <oldname>
-    cmd = f"git push origin --delete {old_branch_name}"
+    # Reset the upstream branch for the new_name local branch.
+    # > git push <remote> -u <new_name>
+    cmd = f"git push origin u {new_branch_name}"
     _run(ctx, cmd)
     print("Done")
 
