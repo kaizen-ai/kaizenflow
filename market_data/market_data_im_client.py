@@ -17,6 +17,7 @@ import market_data.abstract_market_data as mdabmada
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): ImClientMarketData for symmetry? And so also rename the files.
 class MarketDataImClient(mdabmada.AbstractMarketData):
     """
     Implement a `MarketData` that uses a `ImClient` as backend.
@@ -44,8 +45,8 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
 
     def _get_data(
         self,
-        start_ts: pd.Timestamp,
-        end_ts: pd.Timestamp,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
         ts_col_name: str,
         asset_ids: Optional[List[int]],
         left_close: bool,
@@ -57,12 +58,16 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
         See the parent class.
         """
         # `ImClient` uses the convention [start_ts, end_ts).
+        # TODO(gp): Check this invariant.
         if not left_close:
-            # Add one millisecond to not include the left boundary.
-            start_ts = start_ts + pd.Timedelta(1, "ms")
+            if start_ts is not None:
+                # Add one millisecond to not include the left boundary.
+                start_ts += pd.Timedelta(1, "ms")
         if right_close:
-            # Add one millisecond to include the right boundary.
-            end_ts = end_ts + pd.Timedelta(1, "ms")
+            if end_ts is not None:
+                # Add one millisecond to include the right boundary.
+                end_ts += pd.Timedelta(1, "ms")
+        # TODO(gp): call dassert_is_valid_start_end_timestamp
         if not asset_ids:
             # If `asset_ids` is None, get all assets from the universe.
             as_asset_ids = True

@@ -72,6 +72,8 @@ def data_source_node_factory(
         ret = dtfcore.MultivariateNormalGenerator(nid, **source_node_kwargs)
     elif source_node_name == "RealTimeDataSource":
         ret = RealTimeDataSource(nid, **source_node_kwargs)
+    elif source_node_name == "HistoricalDataSource":
+        ret = HistoricalDataSource(nid, **source_node_kwargs)
     elif source_node_name == "disk":
         ret = dtfcore.DiskDataSource(nid, **source_node_kwargs)
     elif source_node_name == "DataLoader":
@@ -472,6 +474,7 @@ class HistoricalDataSource(dtfcore.DataSource):
         ts_col_name: str,
         multiindex_output: bool,
         *,
+        # TODO(gp): Pass the columns to keep, instead of the columns to remove.
         col_names_to_remove: Optional[List[str]] = None,
     ) -> None:
         """

@@ -77,6 +77,14 @@ class ImClient(abc.ABC):
                 "full_symbols start_ts end_ts full_symbol_col_name kwargs"
             )
         )
+        # Check the requested interval.
+        # TODO(gp): Use dassert_is_valid_interval.
+        if start_ts is not None:
+            hdbg.dassert_isinstance(start_ts, pd.Timestamp)
+        if end_ts is not None:
+            hdbg.dassert_isinstance(end_ts, pd.Timestamp)
+        if start_ts is not None and end_ts is not None:
+            hdbg.dassert_lte(start_ts, end_ts)
         self._check_full_symbols(full_symbols)
         #
         df = self._read_data(
@@ -118,41 +126,23 @@ class ImClient(abc.ABC):
         self, full_symbol: imvcdcfusy.FullSymbol
     ) -> pd.Timestamp:
         """
-        Return the earliest timestamp available for a given
-        `imvcdcfusy.FullSymbol`.
+        Return the earliest timestamp available for a given `full_symbol`.
 
-        This implementation relies on reading all the data and then
-        finding the min. Derived classes can override this method if
-        there is a more efficient way to get this information.
+        This implementation relies on reading all the data and then finding the
+        min. Derived classes can override this method if there is a more efficient
+        way to get this information.
         """
-        _LOG.debug(hprint.to_str("full_symbol"))
-        # Read data for the entire period of time available.
-        start_timestamp = None
-        end_timestamp = None
-        data = self.read_data([full_symbol], start_timestamp, end_timestamp)
-        # Assume that the timestamp is always stored as index.
-        start_ts = data.index.min()
-        hdbg.dassert_isinstance(start_ts, pd.Timestamp)
-        hdateti.dassert_has_specified_tz(start_ts, ["UTC"])
-        return start_ts
+        mode = "start"
+        return self._get_start_end_ts_for_symbol(full_symbol, mode)
 
     def get_end_ts_for_symbol(
         self, full_symbol: imvcdcfusy.FullSymbol
     ) -> pd.Timestamp:
         """
-        Return the latest timestamp available for a given
-        `imvcdcfusy.FullSymbol`.
+        Same as `get_start_ts_for_symbol()`.
         """
-        _LOG.debug(hprint.to_str("full_symbol"))
-        # Read data for the entire period of time available.
-        start_timestamp = None
-        end_timestamp = None
-        data = self.read_data([full_symbol], start_timestamp, end_timestamp)
-        # Assume that the timestamp is always stored as index.
-        end_ts = data.index.max()
-        hdbg.dassert_isinstance(end_ts, pd.Timestamp)
-        hdateti.dassert_has_specified_tz(end_ts, ["UTC"])
-        return end_ts
+        mode = "end"
+        return self._get_start_end_ts_for_symbol(full_symbol, mode)
 
     @staticmethod
     @abc.abstractmethod
@@ -222,6 +212,25 @@ class ImClient(abc.ABC):
         """
         hdbg.dassert_isinstance(full_symbols, list)
         hdbg.dassert_no_duplicates(full_symbols)
+
+    def _get_start_end_ts_for_symbol(
+        self, full_symbol: imvcdcfusy.FullSymbol, mode: str
+    ) -> pd.Timestamp:
+        _LOG.debug(hprint.to_str("full_symbol"))
+        # Read data for the entire period of time available.
+        start_timestamp = None
+        end_timestamp = None
+        data = self.read_data([full_symbol], start_timestamp, end_timestamp)
+        # Assume that the timestamp is always stored as index.
+        if mode == "start":
+            timestamp = data.index.min()
+        elif mode == "end":
+            timestamp = data.index.max()
+        else:
+            raise ValueError("Invalid mode='%s'" % mode)
+        hdbg.dassert_isinstance(timestamp, pd.Timestamp)
+        hdateti.dassert_has_specified_tz(timestamp, ["UTC"])
+        return timestamp
 
     @staticmethod
     def _apply_im_normalizations(
