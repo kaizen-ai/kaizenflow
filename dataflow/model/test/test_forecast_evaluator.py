@@ -291,7 +291,9 @@ class TestForecastEvaluator1(hunitest.TestCase):
             portfolio_df_str, expected_portfolio_df_str, fuzzy_match=True
         )
         #
-        stats_df_str = hpandas.df_to_str(stats_df, num_rows=None, precision=precision)
+        stats_df_str = hpandas.df_to_str(
+            stats_df, num_rows=None, precision=precision
+        )
         expected_stats_df_str = r"""
                                pnl  gross_volume  net_volume        gmv        nmv
 2022-01-03 09:30:00-05:00      NaN           NaN         NaN        NaN        NaN
