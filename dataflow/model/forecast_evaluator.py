@@ -79,13 +79,13 @@ class ForecastEvaluator:
         precision = 2
         act.append(
             "# holdings marked to market=\n%s"
-            % hpandas.dataframe_to_str(
+            % hpandas.df_to_str(
                 target_positions.round(round_precision), precision=precision
             )
         )
         act.append(
             "# pnl=\n%s"
-            % hpandas.dataframe_to_str(
+            % hpandas.df_to_str(
                 pnl.round(round_precision),
                 precision=precision,
             )
@@ -204,9 +204,7 @@ class ForecastEvaluator:
         volatility = ForecastEvaluator._get_df(df, self._volatility_col)
         # The values of`target_positions` represent cash values.
         target_positions = returns_predictions.divide(volatility)
-        _LOG.debug(
-            "target_positions=\n%s" % hpandas.dataframe_to_str(target_positions)
-        )
+        _LOG.debug("target_positions=\n%s" % hpandas.df_to_str(target_positions))
         target_positions = ForecastEvaluator._apply_dollar_neutrality(
             target_positions, dollar_neutrality
         )
@@ -323,12 +321,12 @@ class ForecastEvaluator:
             )
             net_asset_value = target_positions.mean(axis=1)
             _LOG.debug(
-                "net asset value=\n%s" % hpandas.dataframe_to_str(net_asset_value)
+                "net asset value=\n%s" % hpandas.df_to_str(net_asset_value)
             )
             target_positions = target_positions.subtract(net_asset_value, axis=0)
             _LOG.debug(
                 "dollar neutral target_positions=\n%s"
-                % hpandas.dataframe_to_str(target_positions)
+                % hpandas.df_to_str(target_positions)
             )
         elif dollar_neutrality == "nonlinear":
             hdbg.dassert_lt(
@@ -376,13 +374,11 @@ class ForecastEvaluator:
             hdbg.dassert_lt(0, target_gmv)
             l1_norm = target_positions.abs().sum(axis=1, min_count=1)
             scale_factor = l1_norm / target_gmv
-            _LOG.debug(
-                "scale factor=\n%s" % hpandas.dataframe_to_str(scale_factor)
-            )
+            _LOG.debug("scale factor=\n%s" % hpandas.df_to_str(scale_factor))
             target_positions = target_positions.divide(scale_factor, axis=0)
             _LOG.debug(
                 "gmv scaled target_positions=\n%s"
-                % hpandas.dataframe_to_str(target_positions)
+                % hpandas.df_to_str(target_positions)
             )
         return target_positions
 
