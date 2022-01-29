@@ -170,9 +170,7 @@ class AbstractPortfolio(abc.ABC):
         act.append(
             "# historical holdings=\n%s"
             % hpandas.df_to_str(
-                self.get_historical_holdings(), 
-                num_rows=None,
-                precision=precision
+                self.get_historical_holdings(), num_rows=None, precision=precision
             )
         )
         act.append(
@@ -202,9 +200,9 @@ class AbstractPortfolio(abc.ABC):
         act.append(
             "# historical statistics=\n%s"
             % hpandas.df_to_str(
-                self.get_historical_statistics(), 
+                self.get_historical_statistics(),
                 num_rows=None,
-                precision=precision
+                precision=precision,
             )
         )
         act = "\n".join(act)
@@ -816,7 +814,10 @@ class SimulatedPortfolio(AbstractPortfolio):
             fills_df = fills_df.convert_dtypes()
         else:
             fills_df = None
-        _LOG.debug("fills_df=\n%s", hpandas.df_to_str(fills_df, num_rows=None, precision=2))
+        _LOG.debug(
+            "fills_df=\n%s",
+            hpandas.df_to_str(fills_df, num_rows=None, precision=2),
+        )
         return fills_df
 
     @staticmethod
@@ -987,7 +988,8 @@ class MockedPortfolio(AbstractPortfolio):
         # 2021-12-09    10009 1970-01-01 00:00:00  0.0              0
         # ```
         _LOG.debug(
-            "snapshot_df=\n%s", hpandas.df_to_str(snapshot_df, num_rows=None, precision=2)
+            "snapshot_df=\n%s",
+            hpandas.df_to_str(snapshot_df, num_rows=None, precision=2),
         )
         if not snapshot_df.empty:
             hdbg.dassert_no_duplicates(
