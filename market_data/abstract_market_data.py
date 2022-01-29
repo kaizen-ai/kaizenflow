@@ -28,6 +28,24 @@ _LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
 # #############################################################################
 
 
+# TODO(gp): Generalize and move close to Interval or helpers.hdatetime.
+def dassert_is_valid_start_end_timestamp(
+    start_ts: Optional[pd.Timestamp],
+    end_ts: Optional[pd.Timestamp],
+    left_close: bool = True,
+    right_close: bool = False,
+) -> None:
+    _LOG.debug(hprint.to_str("start_ts end_ts"))
+    if start_ts is not None:
+        hdbg.dassert_isinstance(start_ts, pd.Timestamp)
+    if end_ts is not None:
+        hdbg.dassert_isinstance(end_ts, pd.Timestamp)
+    # Check the requested interval.
+    if start_ts is not None and end_ts is not None:
+        # TODO(gp): This should be function of right_close and left_close.
+        hdbg.dassert_lt(start_ts, end_ts)
+
+
 # TODO(gp): -> MarketData
 class AbstractMarketData(abc.ABC):
     """
@@ -188,6 +206,7 @@ class AbstractMarketData(abc.ABC):
         ts_col_name = self._start_time_col_name
         asset_ids = self._asset_ids
         # Get the data.
+        dassert_is_valid_start_end_timestamp(start_ts, end_ts)
         df = self.get_data_for_interval(
             start_ts,
             end_ts,
@@ -234,8 +253,8 @@ class AbstractMarketData(abc.ABC):
 
     def get_data_for_interval(
         self,
-        start_ts: pd.Timestamp,
-        end_ts: pd.Timestamp,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
         ts_col_name: str,
         asset_ids: Optional[List[int]],
         *,
@@ -267,9 +286,9 @@ class AbstractMarketData(abc.ABC):
         if asset_ids is None:
             asset_ids = self._asset_ids
         # Check the requested interval.
-        if start_ts is not None and end_ts is not None:
-            # TODO(gp): This should be function of right_close and left_close.
-            hdbg.dassert_lt(start_ts, end_ts)
+        dassert_is_valid_start_end_timestamp(
+            start_ts, end_ts, left_close=left_close, right_close=right_close
+        )
         # Delegate to the derived classes to retrieve the data.
         df = self._get_data(
             start_ts,
@@ -317,6 +336,9 @@ class AbstractMarketData(abc.ABC):
         # Get the slice (start_ts, end_ts] of prices.
         left_close = False
         right_close = True
+        dassert_is_valid_start_end_timestamp(
+            start_ts, end_ts, left_close=left_close, right_close=right_close
+        )
         prices = self.get_data_for_interval(
             start_ts,
             end_ts,
@@ -553,8 +575,8 @@ class AbstractMarketData(abc.ABC):
     @abc.abstractmethod
     def _get_data(
         self,
-        start_ts: pd.Timestamp,
-        end_ts: pd.Timestamp,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
         ts_col_name: str,
         asset_ids: Optional[List[int]],
         left_close: bool,

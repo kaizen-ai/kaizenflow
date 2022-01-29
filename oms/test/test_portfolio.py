@@ -459,9 +459,7 @@ class TestMockedPortfolio2(omtodh.TestOmsDbHelper):
         #
         precision = 2
         #
-        portfolio_df_str = hpandas.df_to_str(
-            portfolio_df, precision=precision
-        )
+        portfolio_df_str = hpandas.df_to_str(portfolio_df, precision=precision)
         expected_portfolio_df_str = r"""
                           holdings            holdings_marked_to_market            flows       pnl
                                101       -1                         101       -1     101       101

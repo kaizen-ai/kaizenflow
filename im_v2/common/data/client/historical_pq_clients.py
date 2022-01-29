@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_lime.eg.eg_historical_pq_by_asset_taq_bar_client as ileehpbatbc
+import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
 """
 
 import logging
@@ -9,19 +9,19 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-import helpers.hdatetime as hdatetime
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
-import im_v2.common.data.client.clients as imvcdcli
+import im_v2.common.data.client.clients as imvcdclcl
 import im_v2.common.data.client.full_symbol as imvcdcfusy
 
 _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): Add tests.
-class HistoricalPqByAssetClient(imvcdcli.ImClientReadingMultipleSymbols):
+class HistoricalPqByAssetClient(imvcdclcl.ImClientReadingMultipleSymbols):
     """
     Provide historical data stored as Parquet by-asset.
     """
@@ -44,7 +44,7 @@ class HistoricalPqByAssetClient(imvcdcli.ImClientReadingMultipleSymbols):
 
     def _dassert_is_valid_timestamp(self, timestamp: pd.Timestamp) -> None:
         hdbg.dassert_isinstance(timestamp, pd.Timestamp)
-        hdatetime.dassert_has_tz(timestamp)
+        hdateti.dassert_has_tz(timestamp)
 
     def _read_data_for_multiple_symbols(
         self,
@@ -66,8 +66,9 @@ class HistoricalPqByAssetClient(imvcdcli.ImClientReadingMultipleSymbols):
         asset_ids = list(map(int, full_symbols))
         filters = []
         # TODO(gp): Is this efficient? Is there a better way to do it, e.g., `in`?
+        # Select the OR of conditions like `asset_col_name == asset_id`.
         for asset_id in asset_ids:
-            filters.append((self._asset_col_name, "=", asset_id))
+            filters.append([(self._asset_col_name, "=", asset_id)])
         # The data is stored by week so we need to convert the timestamps into
         # weeks and then trim the excess.
         # Compute the start_date.
@@ -132,7 +133,7 @@ class HistoricalPqByAssetClient(imvcdcli.ImClientReadingMultipleSymbols):
 # #############################################################################
 
 
-class HistoricalPqByDateClient(imvcdcli.ImClientReadingMultipleSymbols):
+class HistoricalPqByDateClient(imvcdclcl.ImClientReadingMultipleSymbols):
     """
     Read historical data stored as Parquet by-date.
     """
