@@ -375,7 +375,7 @@ class ForecastEvaluator:
             hdbg.dassert_lt(0, target_gmv)
             l1_norm = target_positions.abs().sum(axis=1, min_count=1)
             scale_factor = l1_norm / target_gmv
-            _LOG.debug("scale factor=\n%s", hpandas.df_to_str(scale_factor), num_rows=None)
+            _LOG.debug("scale factor=\n%s", hpandas.df_to_str(scale_factor, num_rows=None))
             target_positions = target_positions.divide(scale_factor, axis=0)
             _LOG.debug(
                 "gmv scaled target_positions=\n%s",
