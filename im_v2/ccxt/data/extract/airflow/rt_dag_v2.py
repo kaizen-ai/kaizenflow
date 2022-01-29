@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import im_v2.ccxt.data.extract.airflow.rt_dag_v2 as imvcdeardv
+"""
+
 import datetime
 
 import airflow
@@ -69,7 +75,7 @@ downloading_task = ECSOperator(
                     {
                         "name": "ENABLE_DIND",
                         "value": "0",
-                    }
+                    },
                 ],
             }
         ]

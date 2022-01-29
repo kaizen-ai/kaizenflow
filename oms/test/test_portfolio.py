@@ -309,7 +309,7 @@ class TestMockedPortfolio1(omtodh.TestOmsDbHelper):
                 # Print the DB status.
                 query = """SELECT * FROM current_positions"""
                 df = hsql.execute_query_to_df(self.connection, query)
-                print(hpandas.dataframe_to_str(df))
+                print(hpandas.df_to_str(df))
                 assert 0
             #
             # Create MockedPortfolio with some initial cash.
@@ -338,7 +338,7 @@ class TestMockedPortfolio1(omtodh.TestOmsDbHelper):
                 # Print the DB status.
                 query = """SELECT * FROM current_positions"""
                 df = hsql.execute_query_to_df(self.connection, query)
-                print(hpandas.dataframe_to_str(df))
+                print(hpandas.df_to_str(df))
                 assert 0
             #
             # Create MockedPortfolio with some initial cash.
@@ -430,7 +430,7 @@ class TestMockedPortfolio2(omtodh.TestOmsDbHelper):
                 # Print the DB status.
                 query = """SELECT * FROM current_positions"""
                 df = hsql.execute_query_to_df(self.connection, query)
-                print(hpandas.dataframe_to_str(df))
+                print(hpandas.df_to_str(df))
                 assert 0
             #
             # Create MockedPortfolio with some initial cash.
@@ -459,9 +459,7 @@ class TestMockedPortfolio2(omtodh.TestOmsDbHelper):
         #
         precision = 2
         #
-        portfolio_df_str = hpandas.dataframe_to_str(
-            portfolio_df, precision=precision
-        )
+        portfolio_df_str = hpandas.df_to_str(portfolio_df, precision=precision)
         expected_portfolio_df_str = r"""
                           holdings            holdings_marked_to_market            flows       pnl
                                101       -1                         101       -1     101       101
@@ -471,7 +469,7 @@ class TestMockedPortfolio2(omtodh.TestOmsDbHelper):
             portfolio_df_str, expected_portfolio_df_str, fuzzy_match=True
         )
         #
-        stats_df_str = hpandas.dataframe_to_str(stats_df, precision=precision)
+        stats_df_str = hpandas.df_to_str(stats_df, precision=precision)
         expected_stats_df_str = r"""
                                 pnl  gross_volume  net_volume       gmv       nmv       cash  net_wealth  leverage
 2000-01-01 09:35:00-05:00       NaN           0.0         0.0      0.00      0.00  1000000.0    1.00e+06      0.00

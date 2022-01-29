@@ -8,7 +8,6 @@ import core.artificial_signal_generators as carsigen
 import core.signal_processing as csigproc
 import dataflow.model.forecast_evaluator as dtfmofoeva
 import helpers.hpandas as hpandas
-import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -197,16 +196,16 @@ class TestForecastEvaluator1(hunitest.TestCase):
         )
         actual = forecast_evaluator.to_str(data, target_gmv=100000)
         expected = r"""
-# holdings marked to market=                                                                                                                                                                         
-                                101                                                                                                                                                                            
-2022-01-03 09:30:00-05:00       NaN                                                                                                                                                                            
-2022-01-03 10:30:00-05:00       NaN                                                                                                                                                                            
-2022-01-03 11:30:00-05:00  100000.0                                                                                                                                                                            
-2022-01-03 12:30:00-05:00 -100000.0                                                                                                                                                                            
-2022-01-03 13:30:00-05:00 -100000.0                                                                                                                                                                            
-2022-01-03 14:30:00-05:00  100000.0                                                                                                                                                                            
-2022-01-03 15:30:00-05:00 -100000.0                                                                                                                                                                            
-2022-01-04 09:30:00-05:00 -100000.0                                                                                                                                                                            
+# holdings marked to market=
+                                101
+2022-01-03 09:30:00-05:00       NaN
+2022-01-03 10:30:00-05:00       NaN
+2022-01-03 11:30:00-05:00  100000.0
+2022-01-03 12:30:00-05:00 -100000.0
+2022-01-03 13:30:00-05:00 -100000.0
+2022-01-03 14:30:00-05:00  100000.0
+2022-01-03 15:30:00-05:00 -100000.0
+2022-01-04 09:30:00-05:00 -100000.0
 2022-01-04 10:30:00-05:00 -100000.0
 2022-01-04 11:30:00-05:00 -100000.0
 2022-01-04 12:30:00-05:00 -100000.0
@@ -275,8 +274,8 @@ class TestForecastEvaluator1(hunitest.TestCase):
         self.assertEqual(asset_id_idx.dtype.type, np.int64)
         #
         precision = 2
-        portfolio_df_str = hpandas.dataframe_to_str(
-            portfolio_df, precision=precision
+        portfolio_df_str = hpandas.df_to_str(
+            portfolio_df, num_rows=None, precision=precision
         )
         expected_portfolio_df_str = r"""
                                       returns                     volatility                     prediction                       position                          pnl
@@ -292,8 +291,10 @@ class TestForecastEvaluator1(hunitest.TestCase):
             portfolio_df_str, expected_portfolio_df_str, fuzzy_match=True
         )
         #
-        stats_df_str = hpandas.dataframe_to_str(stats_df, precision=precision)
-        expected_stats_df_str = r"""                              
+        stats_df_str = hpandas.df_to_str(
+            stats_df, num_rows=None, precision=precision
+        )
+        expected_stats_df_str = r"""
                                pnl  gross_volume  net_volume        gmv        nmv
 2022-01-03 09:30:00-05:00      NaN           NaN         NaN        NaN        NaN
 2022-01-03 09:35:00-05:00      NaN           NaN         NaN        NaN        NaN

@@ -367,7 +367,7 @@ def get_ReplayedTimeMarketData_example3(
     df = generate_random_price_data(
         start_datetime, end_datetime, columns_, asset_ids
     )
-    _LOG.debug("df=%s", hpandas.dataframe_to_str(df))
+    _LOG.debug("df=%s", hpandas.df_to_str(df))
     # Build a `ReplayedMarketData`.
     initial_replayed_delay = 5
     delay_in_secs = 0
@@ -398,7 +398,7 @@ def get_ReplayedTimeMarketData_example4(
     """
     # Generate random price data.
     df = generate_random_bars(start_datetime, end_datetime, asset_ids)
-    _LOG.debug("df=%s", hpandas.dataframe_to_str(df))
+    _LOG.debug("df=%s", hpandas.df_to_str(df))
     # Build a `ReplayedMarketData`.
     delay_in_secs = 0
     sleep_in_secs = 30

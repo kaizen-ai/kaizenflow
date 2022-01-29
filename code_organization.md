@@ -15,33 +15,17 @@
 
 
 <!--te-->
-# Code org of amp
-
-## Top level dirs
-```
-(cd amp; tree -L 1 -d --charset=ascii -I "*test*|*notebooks*" 2>&1 | tee /tmp/tmp)
-.
-|-- core
-|-- dataflow
-|-- helpers
-|-- im
-|-- im_v2
-|-- infra
-|-- market_data
-|-- oms
-|-- optimizer
-`-- research_amp
-```
+# Code org of `amp`
 
 ## Component dirs
+- In the following we indicate:
+  - comments with """foobar is ..."""
+  - dirs and subdirs with `/foobar`
+  - files with `foobar.py`
+  - objects with `FooBar`
+  - markdown files with `foobar.md`
 
 - The directories, subdirectory, objects are listed in order of dependency
-  - We indicate:
-    - comments with """foobar is ..."""
-    - dirs and subdirs with `/foobar`
-    - files with `foobar.py`
-    - objects with `FooBar`
-    - markdown files with `foobar.md`
 
 - `/helpers`
   - """Low-level helpers that are not specific of this project"""
@@ -56,6 +40,7 @@
 - `/im_v2`
   - """Instrument Master"""
   - `ImClient`
+  - """Vendor specific `ImClient`s"""
 - `/market_data`
   - """Interface to read price data"""
   - `AbstractMarketData`
@@ -108,15 +93,16 @@
       - `dataflow_example.py`
         - `NaivePipeline`
   - `/system`
-      - """DataFlow pipelines with anything that depends on outside DataFlow"""
+      - """DataFlow pipelines with anything that depends on code outside of
+        DataFlow"""
       - `source_nodes.py`
         - `DataSource`
         - `HistoricalDataSource`
         - `RealTimeDataSource`
       - `sink_nodes.py`
         - `ProcessForecasts`
-      - `RealTimeDagAdapter`
       - `RealTimeDagRunner`
+      - `RealTimeDagAdapter`
       - `ResearchDagAdapter`
   - `/model`
       - """Code for evaluating a DataFlow model"""
@@ -130,6 +116,22 @@
   - `ForecastProcessor`
 - `/optimizer`
 - `/research_amp`
+- 
+## Top level dirs
+```
+(cd amp; tree -L 1 -d --charset=ascii -I "*test*|*notebooks*" 2>&1 | tee /tmp/tmp)
+.
+|-- core
+|-- dataflow
+|-- helpers
+|-- im
+|-- im_v2
+|-- infra
+|-- market_data
+|-- oms
+|-- optimizer
+`-- research_amp
+```
 
 ### helpers
 
@@ -922,9 +924,9 @@ research_amp
 
 # Invariants
 
-- We assume that there is no file with the same name in the same repo and across
-  different repos
-  - In case of name collision, we prepend as many dirs necessary to make the
+- We assume that there is no file with the same name either in the same repo or
+  across different repos
+  - In case of name collision, we prepend as many dirs as necessary to make the
     filename unique
   - E.g., the files below should be renamed:
     ```
