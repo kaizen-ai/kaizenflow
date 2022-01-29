@@ -1,34 +1,36 @@
-# Data processing pipeline
-- We use a layered approach to split the complexity / responsibilities of
-  processing data from original sources to DataFlow nodes in multiple stages
+# Data pipeline
+- The data pipeline processes data from the vendor format into a common format that 
+  can be used by DataFlow nodes
 
-- Empirically it seems that 2 layers are enough
-- In brief:
-    - `ImClient` adapts from the vendor to a standard format
-    - `MarketData` adds "behaviors" that are orthogonal to vendors, e.g.,
+- We use a layered approach to split the complexity / responsibilities of
+  processing the data
+
+- Empirically it seems that 2 layers are enough, in brief:
+    - `ImClient` adapts from the vendor data to a standard internal "MarketData"
+      format
+    - `MarketData` implements "behaviors" that are orthogonal to vendors, e.g.,
         - RealTime or Historical
         - Stitched
           - = "overlap" multiple data sources giving a single view of the data
-          - E.g., the data from the last day comes from a RT source and the data
-            before that comes from an historical source
+          - E.g., the data from the last day comes from a real-time source while
+            the data before that comes from an historical source
       - Replayed
           - = serialize the data to disk and read it back, implementing also
-            knowledge time as-of semantic
+            knowledge time as-of-time semantic
           - This behavior is orthogonal to RealTime, Historical, Stitched, i.e.,
-            one can replay any MarketData, including an already replayed one
+            one can replay any `MarketData`, including an already replayed one
 
 # Data format for `ImClient` / `MarketData` pipeline
-
 - Both `ImClient` and `MarketData` have an output format that is enforced by the
   base and the derived classes together
 - `ImClient` and `MarketData` have 3 interfaces each:
-    1) an external "input" format for a `MarketData` / `ImClient` class
+    1) an external "input" format for a class
         - format of the data as input to a class derived from `MarketData` /
           `ImClient`
-    2) an internal "input" format of `MarketData` / `ImClient`
+    2) an internal "input" format
         - format that derived classes need to follow so that the corresponding base
-          class can do its job, applying common transformations to all `MarketData`
-          / `ImClient` classes
+          class can do its job, i.e., apply common transformations to all
+          `MarketData` / `ImClient` classes
     3) an external "output" format
         - format of the data outputted by any derived class from `MarketData` /
           `ImClient`
@@ -37,28 +39,61 @@
     - Class derived from `ImClient`
       - The transformations are vendor-specific
     - `ImClient`
-      - This is fixed
+      - The transformations are fixed
     - Class derived from `MarketData`
       - The transformations are specific to the `MarketData` concrete class
     - `MarketData`
+        - The transformations are fixed
 
-## Transformations by classes derived from `ImClient`
+```plantuml
+[Vendor] -> [DerivedImClient]
+[DerivedImClient] -> [AbstractImClient]
+[AbstractImClient] -> [DerivedMarketData] 
+[DerivedMarketData] -> [AbstractMarketData]
+```
+
+## Transformations performed by classes derived from `ImClient`
 - Whatever is needed to transform the vendor data into the internal format accepted
-  by base `MarketData`
-- Only the vendor-specific part of `ImClient`
-- 
-    - normalized so that the index is a UTC timestamp (index is called `timestamp`)
-    - resampled on a 1 min grid and filled with NaN values
-    - sorted by index and `full_symbol`
-    - guaranteed to have no duplicates
-    - considered to belong to intervals like [a, b]
+  by base `ImClient`
+- Only derived classes `ImClient` knows what is exact semantic of the vendor-data
+ 
+## Transformations performed by abstract class `ImClient`
+- Implemented by `ImClient._apply_im_normalization()`
 
-- Transformations
-Classes derived from `MarketData`
+## Output format of `ImClient`
+- TODO(*): Check the code in `ImClient` since that might be more up to date than
+  this document and, if needed, update this doc
+ 
+- The data in output of a class derived from `ImClient` is normalized so that:
+    - the index:
+      - represents the knowledge time
+      - is the end of the sampling interval
+      - is called `timestamp`
+      - is a tz-aware timestamp in UTC
+    - the data:
+      - is resampled on a 1 minute grid and filled with NaN values
+      - is sorted by index and `full_symbol`
+      - is guaranteed to have no duplicates
+      - belongs to intervals like [a, b]
+      - has a `full_symbol` column with a string representing the canonical name
+        of the instrument
+
+## Transformations performed by classes derived from `MarketData`
+
+## Transformations performed by abstract class `MarketData`
+
+## Output format of `MarketData`
 
 # Asset ids format
-- Everything after MarketData uses ints
-- Everything before MarketData uses strings and there is a vendor-specific mapping
+- `ImClient` uses assets encoded as full_symbols strings
+  - There is a vendor-specific mapping:
+    - from full_symbols to corresponding data
+    - from asset_ids (ints) to full_symbols (strings)
+  - If the asset_ids -> full_symbols mapping is provided by the vendor, then we
+    reuse it
+    - Otherwise we build a mapping hashing full_symbols into numbers
+- `MarketData` and everything downstream uses `asset_ids` that are encoded as ints
+  - This is because we want to use `asset_ids` in dataframe
 
 # Handling of `asset_ids`
 - Different implementations of `ImClient` backing a `MarketData` are possible,

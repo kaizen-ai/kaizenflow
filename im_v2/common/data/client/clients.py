@@ -28,24 +28,45 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Consider splitting in one file per class. Not sure about the trade-off
 #  between file proliferation and more organization.
 
+# TODO(gp): @Grisha Replace AbstractImClient -> ImClient everywhere
 
-# TODO(gp): @Grisha Rename AbstractImClient -> ImClient everywhere
-
-# TODO(gp): Proposal: the output of ImClient should be in the form of
-#   `start_timestamp`, `end_timestamp`, and `knowledge_timestamp` since these
-#   depend on the specific data source
+# TODO(gp): The output of ImClient should be in the form of `start_timestamp`,
+#  `end_timestamp`, and `knowledge_timestamp` since these depend on the specific
+#  data source
+# @Grisha let's do this, but let's schedule a clean up later and not right now
 
 class ImClient(abc.ABC):
     """
     Retrieve market data for different vendors and backends.
 
-    Invariants: the propagated data is:
-    - normalized so that the index is a UTC timestamp (index is called `timestamp`)
-    - resampled on a 1 min grid and filled with NaN values
-    - sorted by index and `full_symbol`
-    - guaranteed to have no duplicates
-    - considered to belong to intervals like [a, b]
+    The data in output of a class derived from `ImClient` is normalized so that:
+    - the index:
+      - represents the knowledge time
+      - is the end of the sampling interval
+      - is called `timestamp`
+      - is a tz-aware timestamp in UTC
+    - the data:
+      - is resampled on a 1 minute grid and filled with NaN values
+      - is sorted by index and `full_symbol`
+      - is guaranteed to have no duplicates
+      - belongs to intervals like [a, b]
+      - has a `full_symbol` column with a string representing the canonical name
+        of the instrument
+
+    E.g.,
+    ```
+                                    full_symbol     close     volume
+                    timestamp
+    2021-07-26 13:42:00+00:00  binance:BTC_USDT  47063.51  29.403690
+    2021-07-26 13:43:00+00:00  binance:BTC_USDT  46946.30  58.246946
+    2021-07-26 13:44:00+00:00  binance:BTC_USDT  46895.39  81.264098
+    ```
     """
+
+    # TODO(gp): @Grisha: cache the mapping here.
+    # def __init__(self):
+    #     # Cache the mapping.
+    #     self._asset_id_to_full_symbol_mapping = None
 
     def read_data(
         self,
@@ -58,15 +79,6 @@ class ImClient(abc.ABC):
     ) -> pd.DataFrame:
         """
         Read data in `[start_ts, end_ts)` for `imvcdcfusy.FullSymbol` symbols.
-
-        E.g.,
-        ```
-                                        full_symbol     close     volume
-                        timestamp
-        2021-07-26 13:42:00+00:00  binance:BTC_USDT  47063.51  29.403690
-        2021-07-26 13:43:00+00:00  binance:BTC_USDT  46946.30  58.246946
-        2021-07-26 13:44:00+00:00  binance:BTC_USDT  46895.39  81.264098
-        ```
 
         :param full_symbols: list of full symbols, e.g.
             `['binance::BTC_USDT', 'kucoin::ETH_USDT']`
@@ -83,15 +95,15 @@ class ImClient(abc.ABC):
                 "full_symbols start_ts end_ts full_symbol_col_name kwargs"
             )
         )
+        self._check_full_symbols(full_symbols)
         # Check the requested interval.
-        # TODO(gp): Use dassert_is_valid_interval.
+        # TODO(gp): @Grisha use dassert_is_valid_interval.
         if start_ts is not None:
             hdbg.dassert_isinstance(start_ts, pd.Timestamp)
         if end_ts is not None:
             hdbg.dassert_isinstance(end_ts, pd.Timestamp)
         if start_ts is not None and end_ts is not None:
             hdbg.dassert_lte(start_ts, end_ts)
-        self._check_full_symbols(full_symbols)
         #
         df = self._read_data(
             full_symbols,
@@ -101,13 +113,13 @@ class ImClient(abc.ABC):
             **kwargs,
         )
         # Rename index.
-        hdbg.dassert_in(full_symbol_col_name, df.columns)
         df.index.name = "timestamp"
         #
         _LOG.debug("After read_data: df=\n%s", hpandas.df_to_str(df))
         # Normalize data for each symbol.
-        dfs = []
+        hdbg.dassert_in(full_symbol_col_name, df.columns)
         _LOG.debug("full_symbols=%s", df[full_symbol_col_name].unique())
+        dfs = []
         for full_symbol, df_tmp in df.groupby(full_symbol_col_name):
             _LOG.debug("apply_im_normalization: full_symbol=%s", full_symbol)
             df_tmp = self._apply_im_normalizations(
@@ -125,6 +137,8 @@ class ImClient(abc.ABC):
         df = df.set_index("timestamp", drop=True)
         _LOG.debug("After sorting: df=\n%s", hpandas.df_to_str(df))
         return df
+
+    # /////////////////////////////////////////////////////////////////////////
 
     def get_start_ts_for_symbol(
         self, full_symbol: imvcdcfusy.FullSymbol
@@ -148,25 +162,33 @@ class ImClient(abc.ABC):
         mode = "end"
         return self._get_start_end_ts_for_symbol(full_symbol, mode)
 
+    # /////////////////////////////////////////////////////////////////////////
+
+    # TODO(gp): @Grisha if as_asset_ids=True is the output type correct? Maybe
+    #  we should just have a separate function for FullSymbol -> asset_ids
+    #  conversion.
     @staticmethod
     @abc.abstractmethod
     def get_universe(as_asset_ids: bool) -> List[imvcdcfusy.FullSymbol]:
         """
-        Get universe as full symbols.
+        Return the entire universe of valid full symbols.
 
         :param as_asset_ids: if True return universe as numeric ids,
             otherwise universe as full symbols
         """
 
+    # TODO(gp): @Grisha we are mixing string vs int and asset_ids vs full_symbols.
+    #  One is the type, the other is the semantic.
+    # This should be called -> get_asset_ids_from_full_symbols
     @staticmethod
     def get_numerical_ids_from_full_symbols(
         full_symbols: List[imvcdcfusy.FullSymbol],
     ) -> List[int]:
         """
-        Convert assets as full symbols to assets as numeric ids.
+        Convert full symbols into asset ids.
 
         :param full_symbols: assets as full symbols
-        :return: assets as numeric ids
+        :return: assets as numerical ids
         """
         numeric_asset_id = [
             imvcuunut.string_to_numeric_id(full_symbol)
@@ -174,19 +196,22 @@ class ImClient(abc.ABC):
         ]
         return numeric_asset_id
 
+    # TODO(gp): @Grisha -> get_full_symbols_from_asset_ids
     def get_full_symbols_from_numerical_ids(
         self, asset_ids: List[int]
     ) -> List[imvcdcfusy.FullSymbol]:
         """
-        Convert assets as numeric ids to assets as full symbols.
+        Convert asset ids into full symbols.
 
-        :param asset_ids: assets as numeric ids
+        :param asset_ids: assets ids
         :return: assets as full symbols
         """
-        # Get universe as full symbols to construct numeric ids to full symbols
+        # Get universe as full symbols to construct asset ids to full symbols
         # mapping.
+        # TODO(gp): Cache.
+        # if self._ids_to_symbols_mapping is None:
         full_symbol_universe = self.get_universe(as_asset_ids=False)
-        ids_to_symbols_mapping = imvcuunut.build_num_to_string_id_mapping(
+        self._ids_to_symbols_mapping = imvcuunut.build_num_to_string_id_mapping(
             tuple(full_symbol_universe)
         )
         # Check that provided ids are part of universe.
@@ -196,6 +221,8 @@ class ImClient(abc.ABC):
             ids_to_symbols_mapping[asset_id] for asset_id in asset_ids
         ]
         return full_symbols
+
+    # //////////////////////////////////////////////////////////////////////////
 
     @abc.abstractmethod
     def _read_data(
@@ -209,6 +236,7 @@ class ImClient(abc.ABC):
     ) -> pd.DataFrame:
         ...
 
+    # TODO(gp): @Grisha move to full_symbol.py
     @staticmethod
     def _check_full_symbols(full_symbols: List[imvcdcfusy.FullSymbol]) -> None:
         """
@@ -232,6 +260,7 @@ class ImClient(abc.ABC):
             timestamp = data.index.max()
         else:
             raise ValueError("Invalid mode='%s'" % mode)
+        #
         hdbg.dassert_isinstance(timestamp, pd.Timestamp)
         hdateti.dassert_has_specified_tz(timestamp, ["UTC"])
         return timestamp
@@ -245,42 +274,35 @@ class ImClient(abc.ABC):
     ) -> pd.DataFrame:
         """
         Apply normalizations to IM data.
-
-        Normalizations include:
-        - drop duplicates
-        - trim the data with index in specified date interval
-        - resample data to 1 min frequency
-        - convert to UTC
-
-        Data trimming is done because:
-        - some data sources can be only queried at day resolution so we get
-          the date range and then we trim
-        - we want to guarantee that nobody returns data outside the requested
-          interval
         """
         _LOG.debug(hprint.to_str("full_symbol_col_name start_ts end_ts"))
         hdbg.dassert(not df.empty, "Empty df=\n%s", df)
-        # Drop duplicates.
+        # 1) Drop duplicates.
         df = hpandas.drop_duplicates(df)
-        # Trim the data with index in [start_ts, end_ts].
+        # 2) Trim the data keeping only the data with index in [start_ts, end_ts].
+        # Trimming of the data is done because:
+        # - some data sources can be only queried at day resolution so we get
+        #   a date range and then we trim
+        # - we want to guarantee that no derived class returns data outside the
+        #   requested #   interval
         ts_col_name = None
         left_close = True
         right_close = True
         df = hpandas.trim_df(
             df, ts_col_name, start_ts, end_ts, left_close, right_close
         )
-        # Resample index.
+        # 3) Resample index to 1 min frequency
         df = hpandas.resample_df(df, "T")
         # Fill NaN values appeared after resampling in full symbol column.
         # Combination of full symbol and timestamp is a unique identifier,
         # so full symbol cannot be NaN.
         df[full_symbol_col_name] = df[full_symbol_col_name].fillna(method="bfill")
-        # Convert to UTC.
+        # 4) Convert to UTC.
         df.index = df.index.tz_convert("UTC")
         return df
 
-    # TODO(gp): Is this really needed or should we just assume that all the
-    #  transformation is done in the `_read_data` method?
+    # TODO(gp): @Grisha Can we remove this and do all the transformation in the
+    #  `_read_data` method?
     @staticmethod
     @abc.abstractmethod
     def _apply_vendor_normalization(df: pd.DataFrame) -> pd.DataFrame:
@@ -293,6 +315,7 @@ class ImClient(abc.ABC):
         """
         ...
 
+    # TODO(gp): @Grisha -> _dassert_output_data_is_valid
     @staticmethod
     def _dassert_is_valid(df: pd.DataFrame, full_symbol_col_name: str) -> None:
         """
@@ -302,7 +325,7 @@ class ImClient(abc.ABC):
         hpandas.dassert_index_is_datetime(df)
         # Check that index is monotonic increasing.
         hpandas.dassert_strictly_increasing_index(df)
-        # Verify that index frequency is "T" (1 minute).
+        # Verify that index frequency is 1 minute.
         hdbg.dassert_eq(df.index.freq, "T")
         # Check that timezone info is correct.
         expected_tz = ["UTC"]
@@ -322,6 +345,10 @@ class ImClient(abc.ABC):
         hdbg.dassert_eq(
             n_duplicated_rows, 0, msg="There are duplicated rows in the data"
         )
+        # TODO(gp): @Grisha pass start_ts and end_ts and have a check
+        # # Ensure that all the data is in [start_ts, end_ts].
+        #  dassert_lte(start_ts, index.min)
+        #  dassert_lte(index.max, end_ts)
 
 
 # #############################################################################
@@ -331,7 +358,7 @@ class ImClient(abc.ABC):
 
 class ImClientReadingOneSymbol(ImClient, abc.ABC):
     """
-    IM client for a backend that can read one symbol at a time.
+    IM client for a backend that can only read one symbol at a time.
 
     E.g., CSV with data organized by-asset.
     """
@@ -362,12 +389,12 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
                 end_ts,
                 **kwargs,
             )
-            # Normalize data, according to the specific vendor.
+            # Normalize data according to the specific vendor.
             df = self._apply_vendor_normalization(df)
             # Insert column with full symbol into the result dataframe.
             hdbg.dassert_is_not(full_symbol_col_name, df.columns)
             df.insert(0, full_symbol_col_name, full_symbol)
-            # Add full symbol data to the results dict.
+            # Add data to the result dict.
             full_symbol_to_df[full_symbol] = df
         # Combine results dict in a dataframe.
         df = pd.concat(full_symbol_to_df.values())
