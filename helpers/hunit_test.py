@@ -150,7 +150,7 @@ def pytest_warning(txt: str, prefix: str = "") -> None:
 # #############################################################################
 
 
-# TODO(gp): -> pandas.helpers?
+# TODO(gp): -> Deprecated: use hpandas.df_to_str
 def convert_df_to_string(
     df: Union["pd.DataFrame", "pd.Series"],
     n_rows: Optional[int] = None,
