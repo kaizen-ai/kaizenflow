@@ -132,12 +132,12 @@ class ReplayedMarketData(mdabmada.AbstractMarketData):
             df_tmp, ts_col_name, start_ts, end_ts, left_close, right_close
         )
         # Handle `asset_ids`
-        _LOG.verb_debug("before df_tmp=\n%s", hpandas.dataframe_to_str(df_tmp))
+        _LOG.verb_debug("before df_tmp=\n%s", hpandas.df_to_str(df_tmp))
         if asset_ids is not None:
             hdbg.dassert_in(self._asset_id_col, df_tmp.columns)
             mask = df_tmp[self._asset_id_col].isin(set(asset_ids))
             df_tmp = df_tmp[mask]
-        _LOG.verb_debug("after df_tmp=\n%s", hpandas.dataframe_to_str(df_tmp))
+        _LOG.verb_debug("after df_tmp=\n%s", hpandas.df_to_str(df_tmp))
         # Handle `limit`.
         if limit:
             hdbg.dassert_lte(1, limit)
@@ -145,7 +145,7 @@ class ReplayedMarketData(mdabmada.AbstractMarketData):
         # Normalize data.
         if normalize_data:
             df_tmp = self._normalize_data(df_tmp)
-        _LOG.verb_debug("-> df_tmp=\n%s", hpandas.dataframe_to_str(df_tmp))
+        _LOG.verb_debug("-> df_tmp=\n%s", hpandas.df_to_str(df_tmp))
         return df_tmp
 
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
@@ -155,7 +155,9 @@ class ReplayedMarketData(mdabmada.AbstractMarketData):
         #  and then find the max and use `start_time`
         timedelta = pd.Timedelta("7D")
         df = self.get_data_for_last_period(timedelta)
-        _LOG.debug(hpandas.df_to_short_str("after get_data", df))
+        _LOG.debug(
+            hpandas.df_to_str(df, print_shape_info=True, tag="after get_data")
+        )
         if df.empty:
             ret = None
         else:
@@ -196,7 +198,11 @@ def save_market_data(
         rt_df = market_data.get_data_for_last_period(
             timedelta, normalize_data=normalize_data, limit=limit
         )
-    _LOG.debug(hpandas.df_to_short_str("rt_df", rt_df, print_dtypes=True))
+    _LOG.debug(
+        hpandas.df_to_str(
+            rt_df, print_dtypes=True, print_shape_info=True, tag="rt_df"
+        )
+    )
     #
     _LOG.info("Saving ...")
     compression = None
@@ -235,7 +241,9 @@ def load_market_data(
     # TODO(gp): The data needs to be saved after the normalization so that
     #  it's in the right format to be replayed.
     df.reset_index(inplace=True)
-    _LOG.debug(hpandas.df_to_short_str("df", df, print_dtypes=True))
+    _LOG.debug(
+        hpandas.df_to_str(df, print_dtypes=True, print_shape_info=True, tag="df")
+    )
     return df
 
 

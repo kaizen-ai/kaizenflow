@@ -110,7 +110,7 @@ async def process_forecasts(
     _LOG.debug(
         "predictions_df=%s\n%s",
         str(prediction_df.shape),
-        hpandas.dataframe_to_str(prediction_df),
+        hpandas.df_to_str(prediction_df),
     )
     _LOG.debug("predictions_df.index=%s", str(prediction_df.index))
     num_rows = len(prediction_df)
@@ -213,7 +213,7 @@ class ForecastProcessor:
         if self._target_positions:
             last_key = next(reversed(self._target_positions))
             target_positions = self._target_positions[last_key]
-            target_positions_str = hpandas.dataframe_to_str(target_positions)
+            target_positions_str = hpandas.df_to_str(target_positions)
         else:
             target_positions_str = "None"
         act.append("# last target positions=\n%s" % target_positions_str)
@@ -406,7 +406,7 @@ class ForecastProcessor:
         marked_to_market.reset_index(inplace=True)
         _LOG.debug(
             "marked_to_market dataframe=\n%s"
-            % hpandas.dataframe_to_str(marked_to_market)
+            % hpandas.df_to_str(marked_to_market)
         )
         return marked_to_market
 
@@ -440,7 +440,7 @@ class ForecastProcessor:
         predictions.columns = ["prediction"]
         predictions.index.name = "asset_id"
         predictions = predictions.reset_index()
-        _LOG.debug("predictions=\n%s", hpandas.dataframe_to_str(predictions))
+        _LOG.debug("predictions=\n%s", hpandas.df_to_str(predictions))
         return predictions
 
     def _normalize_volatility_srs(
@@ -481,7 +481,7 @@ class ForecastProcessor:
         volatility.columns = ["volatility"]
         volatility.index.name = "asset_id"
         volatility = volatility.reset_index()
-        _LOG.debug("volatility=\n%s", hpandas.dataframe_to_str(volatility))
+        _LOG.debug("volatility=\n%s", hpandas.df_to_str(volatility))
         return volatility
 
     def _merge_predictions(
@@ -522,9 +522,7 @@ class ForecastProcessor:
         )
         merged_df = merged_df.convert_dtypes()
         merged_df = merged_df.fillna(0.0)
-        _LOG.debug(
-            "After merge: merged_df=\n%s", hpandas.dataframe_to_str(merged_df)
-        )
+        _LOG.debug("After merge: merged_df=\n%s", hpandas.df_to_str(merged_df))
         return merged_df
 
     @staticmethod
