@@ -275,7 +275,7 @@ class TestForecastEvaluator1(hunitest.TestCase):
         self.assertEqual(asset_id_idx.dtype.type, np.int64)
         #
         precision = 2
-        portfolio_df_str = hpandas.dataframe_to_str(
+        portfolio_df_str = hpandas.df_to_str(
             portfolio_df, precision=precision
         )
         expected_portfolio_df_str = r"""

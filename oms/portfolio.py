@@ -182,14 +182,14 @@ class AbstractPortfolio(abc.ABC):
         )
         act.append(
             "# historical flows=\n%s"
-            % hpandas.dataframe_to_str(
+            % hpandas.df_to_str(
                 self.get_historical_flows(),
                 precision=precision,
             )
         )
         act.append(
             "# historical pnl=\n%s"
-            % hpandas.dataframe_to_str(
+            % hpandas.df_to_str(
                 self.get_historical_pnl(),
                 precision=precision,
             )

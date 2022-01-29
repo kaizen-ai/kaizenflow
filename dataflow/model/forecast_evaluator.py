@@ -92,7 +92,7 @@ class ForecastEvaluator:
         )
         act.append(
             "# statistics=\n%s"
-            % hpandas.dataframe_to_str(
+            % hpandas.df_to_str(
                 stats.round(round_precision), precision=precision
             )
         )

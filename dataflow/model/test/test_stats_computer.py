@@ -15,7 +15,7 @@ class TestStatsComputer1(hunitest.TestCase):
     def test_compute_pnl_stats1(self) -> None:
         srs = self._get_pnl_srs()
         sc = dtfmostcom.StatsComputer()
-        actual = hpandas.dataframe_to_str(sc.compute_pnl_stats(srs), precision=5)
+        actual = hpandas.df_to_str(sc.compute_pnl_stats(srs), precision=5)
         expected = r"""
 ratios       sharpe_ratio                                              -18.62702
              sharpe_ratio_standard_error                                 7.08762
@@ -88,7 +88,7 @@ Name: 100, dtype: object
     def test_compute_pnl_stats2(self) -> None:
         df = self._get_pnl_df()
         sc = dtfmostcom.StatsComputer()
-        actual = hpandas.dataframe_to_str(sc.compute_pnl_stats(df), precision=5)
+        actual = hpandas.df_to_str(sc.compute_pnl_stats(df), precision=5)
         expected = r"""                                                      100                        200
 ratios       sharpe_ratio                                              -18.62702                  -21.70168
              sharpe_ratio_standard_error                                 7.08762                    7.08804

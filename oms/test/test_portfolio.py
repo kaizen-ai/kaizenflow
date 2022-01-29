@@ -459,7 +459,7 @@ class TestMockedPortfolio2(omtodh.TestOmsDbHelper):
         #
         precision = 2
         #
-        portfolio_df_str = hpandas.dataframe_to_str(
+        portfolio_df_str = hpandas.df_to_str(
             portfolio_df, precision=precision
         )
         expected_portfolio_df_str = r"""
