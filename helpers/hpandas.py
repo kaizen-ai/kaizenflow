@@ -95,7 +95,7 @@ def dassert_unique_index(
     if not index.is_unique:
         dup_indices = index.duplicated(keep=False)
         df_dup = obj[dup_indices]
-        dup_msg = "Duplicated rows are:\n%s\n" % hpandas.df_to_str(df_dup)
+        dup_msg = "Duplicated rows are:\n%s\n" % df_to_str(df_dup)
         if msg is None:
             msg = dup_msg
         else:
@@ -427,7 +427,7 @@ def trim_df(
 def df_to_str(
     df: pd.DataFrame,
     *,
-    num_rows: int = 6,
+    num_rows: Optional[int] = 6,
     print_dtypes: bool = False,
     print_shape_info: bool = False,
     tag: Optional[str] = None,
@@ -440,8 +440,10 @@ def df_to_str(
 ) -> str:
     """
     Print a dataframe to string reporting all the columns without trimming.
+
     :param: num_rows: max number of rows to print (half from the top and half from
         the bottom of the dataframe)
+        - `None` to print the entire dataframe
     :param print_dtypes: reports dataframe types and information about the type of each
         column by looking at the first value
     :param print_shape_info: reports dataframe shape, index and columns
@@ -500,8 +502,8 @@ def df_to_str(
             import tabulate
 
             out.append(tabulate.tabulate(df, headers="keys", tablefmt="psql"))
-        # Print the data frame.
-        if df.shape[0] <= num_rows:
+        if num_rows is None or df.shape[0] <= num_rows:
+            # Print the entire data frame.
             out.append(str(df))
         else:
             # Print top and bottom of df.
