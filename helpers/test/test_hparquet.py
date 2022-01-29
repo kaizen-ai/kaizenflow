@@ -349,7 +349,7 @@ class TestPartitionedParquet1(hunitest.TestCase):
         df_as_str = self.write_and_read_helper(
             df, partition_cols, exp_dir_signature, columns_to_read
         )
-        exp = r"""# df=
+        exp = r"""# =
         df.index in [2020-01-01 09:30:00-05:00, 2020-01-01 16:00:00-05:00]
         df.columns=idx,instr
         df.shape=(395, 2)
@@ -464,7 +464,7 @@ class TestPartitionedParquet1(hunitest.TestCase):
         df2 = df2[df.columns]
         df_as_str = _compare_dfs(self, df, df2)
         exp = r"""
-        # df=
+        # =
         df.index in [2020-01-01 09:30:00-05:00, 2020-01-01 16:00:00-05:00]
         df.columns=idx,instr,val1,val2
         df.shape=(395, 4)
