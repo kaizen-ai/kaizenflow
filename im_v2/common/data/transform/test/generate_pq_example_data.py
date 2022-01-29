@@ -64,11 +64,11 @@ def _get_generic_daily_df(
         # Drop last midnight.
         # TODO(Nikola): end_date - pd.DateOffset(days=1)
         df_tmp.drop(df_tmp.tail(1).index, inplace=True)
-        _LOG.debug(hpandas.df_to_short_str("df_tmp", df_tmp))
+        _LOG.debug(hpandas.df_to_str(df_tmp, print_shape_info=True, tag="df_tmp"))
         df.append(df_tmp)
     # Create a single df for all the assets.
     df = pd.concat(df)
-    _LOG.debug(hpandas.df_to_short_str("df", df))
+    _LOG.debug(hpandas.df_to_str(df, print_shape_info=True, tag="df"))
     return df
 
 
@@ -114,7 +114,7 @@ def _get_verbose_daily_df(
         # Drop last midnight.
         # TODO(Nikola): end_date - pd.DateOffset(days=1)
         df_tmp.drop(df_tmp.tail(1).index, inplace=True)
-        _LOG.debug(hpandas.df_to_short_str("df_tmp", df_tmp))
+        _LOG.debug(hpandas.df_to_str(df_tmp, print_shape_info=True, tag="df_tmp"))
         df.append(df_tmp)
     # Create a single df for all the assets.
     df = pd.concat(df)
@@ -123,7 +123,7 @@ def _get_verbose_daily_df(
     df["vendor_date"] = df.index.date.astype(str)
     df["start_time"] = start_time
     df["end_time"] = end_time
-    _LOG.debug(hpandas.df_to_short_str("df", df))
+    _LOG.debug(hpandas.df_to_str(df, print_shape_info=True, tag="df"))
     return df
 
 

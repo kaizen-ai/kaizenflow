@@ -39,10 +39,12 @@ def _check_output(
     act = []
     #
     actual_df = actual_df[sorted(actual_df.columns)]
-    act.append(hpandas.df_to_short_str("df", actual_df))
+    act.append(hpandas.df_to_str(actual_df, print_shape_info=True, tag="df"))
     #
     if expected_exchange_ids is not None:
-        actual_exchange_ids = sorted(list(actual_df["exchange_id"].dropna().unique()))
+        actual_exchange_ids = sorted(
+            list(actual_df["exchange_id"].dropna().unique())
+        )
         act.append("exchange_ids=%s" % ",".join(actual_exchange_ids))
     #
     if expected_currency_pairs is not None:
@@ -66,7 +68,9 @@ def _check_output(
         self_.assert_equal(str(actual_exchange_ids), str(expected_exchange_ids))
     if expected_currency_pairs is not None:
         # Check unique currency pairs in the output df.
-        self_.assert_equal(str(actual_currency_pairs), str(expected_currency_pairs))
+        self_.assert_equal(
+            str(actual_currency_pairs), str(expected_currency_pairs)
+        )
 
 
 # #############################################################################

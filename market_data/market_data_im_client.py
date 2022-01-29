@@ -145,7 +145,9 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
         #  and then find the max and use `start_time`
         timedelta = pd.Timedelta("7D")
         df = self.get_data_for_last_period(timedelta)
-        _LOG.debug(hpandas.df_to_short_str("after get_data", df))
+        _LOG.debug(
+            hpandas.df_to_str(df, print_shape_info=True, tag="after get_data")
+        )
         if df.empty:
             ret = None
         else:
