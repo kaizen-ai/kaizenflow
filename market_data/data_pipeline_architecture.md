@@ -78,7 +78,25 @@
       - has a `full_symbol` column with a string representing the canonical name
         of the instrument
 
+- TODO(gp): We are planning to use an `ImClient` data format closer to `MarketData`
+  by using `start_time`, `end_time`, and `knowledge_time` since these can be
+  inferred only from the vendor data semantic
+
 ## Transformations performed by classes derived from `MarketData`
+
+    - The data from this class is available in two formats:
+        1) Native data
+            - delivered by classes derived from `MarketData`
+            - indexed with a progressive index
+            - with asset, start_time, end_time, knowledge_time
+        ```
+          asset_id           start_time             end_time     close   volume
+        idx
+          0  17085  2021-07-26 13:41:00  2021-07-26 13:42:00  148.8600   400176
+          1  17085  2021-07-26 13:30:00  2021-07-26 13:31:00  148.5300  1407725
+          2  17085  2021-07-26 13:31:00  2021-07-26 13:32:00  148.0999   473869
+        ```
+
 
 ## Transformations performed by abstract class `MarketData`
 

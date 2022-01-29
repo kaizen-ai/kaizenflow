@@ -19,7 +19,7 @@ import im_v2.common.universe.universe_utils as imvcuunut
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): @Grisha -> base_clients.py
+# TODO(gp): @Grisha -> base_im_clients.py
 
 # #############################################################################
 # ImClient

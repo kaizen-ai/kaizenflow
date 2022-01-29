@@ -28,14 +28,14 @@ _LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
 # #############################################################################
 
 
-# TODO(gp): Generalize and move close to Interval or helpers.hdatetime.
+# TODO(gp): Generalize and move helpers/hdatetime.py
 def dassert_is_valid_start_end_timestamp(
     start_ts: Optional[pd.Timestamp],
     end_ts: Optional[pd.Timestamp],
     left_close: bool = True,
     right_close: bool = False,
 ) -> None:
-    _LOG.debug(hprint.to_str("start_ts end_ts"))
+    _LOG.debug(hprint.to_str("start_ts end_ts left_close right_close"))
     if start_ts is not None:
         hdbg.dassert_isinstance(start_ts, pd.Timestamp)
     if end_ts is not None:
@@ -46,14 +46,13 @@ def dassert_is_valid_start_end_timestamp(
         hdbg.dassert_lt(start_ts, end_ts)
 
 
-# TODO(gp): @Grisha -> MarketData. We need a script (replace_text.py) to do it
+# TODO(gp): @Grisha -> MarketData. We need a script (see replace_text.py) to do it
 #  since we need to update multiple repos.
 class AbstractMarketData(abc.ABC):
     """
     Implement an interface to an historical / real-time source of price data.
 
-    For a discussion on the design principles see
-    `market_data/data_pipeline_architecture.md`
+    `market_data/data_pipeline_architecture.md` discusses the design principles.
 
     # Responsibilities:
     - Delegate to a data backend in `ImClient` to retrieve historical and real-time
@@ -351,8 +350,8 @@ class AbstractMarketData(abc.ABC):
         """
         Compute TWAP of the column `column` over last `bar_duration`.
 
-        E.g., if the last end time is 9:35 and `bar_duration=5T`, then
-        we compute TWAP for (9:30, 9:35].
+        E.g., if the last end time is 9:35 and `bar_duration=5T`, then we compute
+        TWAP for (9:30, 9:35].
         """
         last_end_time = self.get_last_end_time()
         _LOG.info("last_end_time=%s", last_end_time)
@@ -398,13 +397,9 @@ class AbstractMarketData(abc.ABC):
         # TODO(*): Use a to-be-written `get_last_start_time()` instead.
         last_end_time = self.get_last_end_time()
         _LOG.info("last_end_time=%s", last_end_time)
-        # TODO(gp): This is not super robust.
-        if False:
-            # For debugging.
-            df = self.get_data_for_last_period(timedelta="5T")
-            _LOG.info("df=\n%s", hpandas.df_to_str(df, tag="df"))
         # Get the data.
         # TODO(*): Remove the hard-coded 1-minute.
+        # TODO(gp): @Grisha why 1M and not 1T?
         start_time = last_end_time - pd.Timedelta("1M")
         df = self.get_data_at_timestamp(
             start_time,
