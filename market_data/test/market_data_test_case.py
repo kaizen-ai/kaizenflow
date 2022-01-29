@@ -31,7 +31,9 @@ def _check_output(
     """
     # Build signature.
     if isinstance(actual, pd.DataFrame):
-        actual_signature = hpandas.df_to_short_str("df", actual)
+        actual_signature = hpandas.df_to_str(
+            actual, print_shape_info=True, tag="df"
+        )
     elif isinstance(actual, pd.Series):
         actual_signature = hunitest.convert_df_to_string(
             actual, index=True, decimals=2
@@ -41,7 +43,7 @@ def _check_output(
             f"Unsupported input type {type(actual)}. "
             f"Supported types are: `pd.DataFrame`, `pd.Series`"
         )
-    _LOG.debug("\n%s", hpandas.dataframe_to_str(actual))
+    _LOG.debug("\n%s", hpandas.df_to_str(actual))
     # Check.
     self_.assert_equal(
         actual_signature, expected_signature, dedent=True, fuzzy_match=True
@@ -452,7 +454,7 @@ def skip_test_since_not_online(market_data: mdata.AbstractMarketData) -> bool:
 #        df = market_data.get_data_for_last_period(
 #            period, normalize_data=normalize_data
 #        )
-#        act = hpandas.df_to_short_str(tag, df)
+#        act = hpandas.df_to_str(df, print_shape_info=True, tag=tag)
 #        self.assert_equal(
 #            act, exp_get_data_normalize_false, dedent=True, fuzzy_match=True
 #        )
@@ -465,7 +467,7 @@ def skip_test_since_not_online(market_data: mdata.AbstractMarketData) -> bool:
 #        df = market_data.get_data_for_last_period(
 #            period, normalize_data=normalize_data
 #        )
-#        act = hpandas.df_to_short_str(tag, df)
+#        act = hpandas.df_to_str(df, print_shape_info=True, tag=tag)
 #        self.assert_equal(
 #            act, exp_get_data_normalize_true, dedent=True, fuzzy_match=True
 #        )
@@ -545,7 +547,7 @@ def skip_test_since_not_online(market_data: mdata.AbstractMarketData) -> bool:
 #        # tag = "get_data:" + hprint.to_str("period normalize_data")
 #        # hprint.log_frame(_LOG, tag)
 #        # df = market_data.get_data(period, normalize_data=normalize_data)
-#        # act = hpandas.df_to_short_str(tag, df)
+#        # act = hpandas.df_to_str(df, print_shape_info=True, tag=tag)
 #        # exp = ""
 #        # self.assert_equal(act, exp)
 #        # #
@@ -553,23 +555,23 @@ def skip_test_since_not_online(market_data: mdata.AbstractMarketData) -> bool:
 #        # normalize_data = False
 #        # hprint.log_frame(_LOG, "get_data_at_timestamp:" + hprint.to_str("ts normalize_data"))
 #        # df = market_data.get_data_at_timestamp(ts, normalize_data=normalize_data)
-#        # _LOG.debug("\n%s", hpandas.dataframe_to_str(df))
+#        # _LOG.debug("\n%s", hpandas.df_to_str(df))
 #        # #
 #        # normalize_data = True
 #        # hprint.log_frame(_LOG, "get_data_at_timestamp:" + hprint.to_str("ts normalize_data"))
 #        # df = market_data.get_data_at_timestamp(ts, normalize_data=normalize_data)
-#        # _LOG.debug("\n%s", hpandas.dataframe_to_str(df))
+#        # _LOG.debug("\n%s", hpandas.df_to_str(df))
 #        # #
 #        # ts = data["end_time"].min()
 #        # normalize_data = False
 #        # hprint.log_frame(_LOG, "get_data_at_timestamp:" + hprint.to_str("ts normalize_data"))
 #        # df = market_data.get_data_at_timestamp(ts, normalize_data=normalize_data)
-#        # _LOG.debug("\n%s", hpandas.dataframe_to_str(df))
+#        # _LOG.debug("\n%s", hpandas.df_to_str(df))
 #        # #
 #        # normalize_data = True
 #        # hprint.log_frame(_LOG, "get_data_at_timestamp:" + hprint.to_str("ts normalize_data"))
 #        # df = market_data.get_data_at_timestamp(ts, normalize_data=normalize_data)
-#        # _LOG.debug("\n%s", hpandas.dataframe_to_str(df))
+#        # _LOG.debug("\n%s", hpandas.df_to_str(df))
 #        # #
 #        # end_ts = data["end_time"].min()
 #        # start_ts = end_ts - pd.DateOffset(minutes=5)
@@ -577,13 +579,13 @@ def skip_test_since_not_online(market_data: mdata.AbstractMarketData) -> bool:
 #        # normalize_data = False
 #        # hprint.log_frame(_LOG, "get_data_for_timestamp:" + hprint.to_str("start_ts end_ts normalize_data"))
 #        # df = market_data.get_data_at_timestamp(ts, start_ts, end_ts, ts_col_name, normalize_data=normalize_data)
-#        # _LOG.debug("\n%s", hpandas.dataframe_to_str(df))
+#        # _LOG.debug("\n%s", hpandas.df_to_str(df))
 #        # #
 #        # normalize_data = True
 #        # hprint.log_frame(_LOG, "get_data_for_timestamp:" + hprint.to_str("start_ts end_ts normalize_data"))
 #        # df = market_data.get_data_at_timestamp(ts, start_ts, end_ts, ts_col_name,
 #        #                                                  normalize_data=normalize_data)
-#        # _LOG.debug("\n%s", hpandas.dataframe_to_str(df))
+#        # _LOG.debug("\n%s", hpandas.df_to_str(df))
 #
 #    def test_get_data1(self) -> None:
 #        with hasynci.solipsism_context() as event_loop:

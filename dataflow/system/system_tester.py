@@ -10,6 +10,7 @@ from typing import List, Tuple, Union
 import pandas as pd
 
 import dataflow.model as dtfmod
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -118,5 +119,5 @@ class SystemTester:
     def _append(
         list_: List[str], label: str, data: Union[pd.Series, pd.DataFrame]
     ) -> None:
-        data_str = hunitest.convert_df_to_string(data, index=True, decimals=3)
+        data_str = hpandas.df_to_str(data, index=True, num_rows=None, decimals=3)
         list_.append(f"{label}=\n{data_str}")
