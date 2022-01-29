@@ -3,7 +3,7 @@
 # This script should be invoked on a different repo so that we don't annihilate
 # this file.
 SOURCE_REPO=CMTask972_merge_df_to_str_functions
-TARGET_REPO=/Users/saggese/src/cmamp2
+TARGET_REPO=/Users/saggese/src/cmamp3
 cd $TARGET_REPO
 
 # Make sure that the source and target branch are at master.
