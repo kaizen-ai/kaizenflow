@@ -32,8 +32,12 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): The output of ImClient should be in the form of `start_timestamp`,
 #  `end_timestamp`, and `knowledge_timestamp` since these depend on the specific
-#  data source
-# @Grisha let's do this, but let's schedule a clean up later and not right now
+#  data source. @Grisha let's do this, but let's schedule a clean up later and
+#  not right now
+
+# TODO(gp): @Grisha ensure that the intervals returned by all ImClient are like
+#  [a, b] and all the descriptions are consistent. Let's do it after porting more
+#  vendors (e.g., Kibot, EODData)
 
 class ImClient(abc.ABC):
     """

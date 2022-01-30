@@ -28,9 +28,6 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
     ) -> None:
         """
         Constructor.
-
-        :param args: see `AbstractMarketData`
-        :param im_client: IM client
         """
         super().__init__(*args, **kwargs)
         hdbg.dassert_isinstance(im_client, icdc.ImClient)

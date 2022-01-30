@@ -83,35 +83,52 @@
   inferred only from the vendor data semantic
 
 ## Transformations performed by classes derived from `MarketData`
-
-    - The data from this class is available in two formats:
-        1) Native data
-            - delivered by classes derived from `MarketData`
-            - indexed with a progressive index
-            - with asset, start_time, end_time, knowledge_time
-        ```
-          asset_id           start_time             end_time     close   volume
-        idx
-          0  17085  2021-07-26 13:41:00  2021-07-26 13:42:00  148.8600   400176
-          1  17085  2021-07-26 13:30:00  2021-07-26 13:31:00  148.5300  1407725
-          2  17085  2021-07-26 13:31:00  2021-07-26 13:32:00  148.0999   473869
-        ```
-
+- Classes derived from `MarketData` do whatever they need to do in `_get_data()` to
+  get the data, but always pass back data that:
+    - is indexed with a progressive index
+    - has asset, start_time, end_time, knowledge_time
+    - start_time, end_time, knowledge_time are timezone aware
+- E.g.,
+  ```
+    asset_id                 start_time                   end_time     close   volume
+  idx
+    0  17085  2021-07-26 13:41:00+00:00  2021-07-26 13:42:00+00:00  148.8600   400176
+    1  17085  2021-07-26 13:30:00+00:00  2021-07-26 13:31:00+00:00  148.5300  1407725
+    2  17085  2021-07-26 13:31:00+00:00  2021-07-26 13:32:00+00:00  148.0999   473869
+  ```
 
 ## Transformations performed by abstract class `MarketData`
+- The transformations are done inside `get_data_for_interval()`, during normalization,
+  and are:
+  - indexing by `end_time`
+  - converting `end_time`, `start_time`, `knowledge_time` to the desired timezone
+  - sorting by `end_time` and `asset_id`
+  - applying column remaps
 
 ## Output format of `MarketData`
+- The base `MarketData` normalizes the data by:
+    - transforming by the base `MarketData` class
+    - indexing by the column that corresponds to `end_time`, so that it is suitable
+      to DataFlow computation
+- E.g.,
+  ```
+                          asset_id                start_time    close   volume
+  end_time
+  2021-07-20 09:31:00-04:00  17085 2021-07-20 09:30:00-04:00  143.990  1524506
+  2021-07-20 09:32:00-04:00  17085 2021-07-20 09:31:00-04:00  143.310   586654
+  2021-07-20 09:33:00-04:00  17085 2021-07-20 09:32:00-04:00  143.535   667639
+  ```
 
 # Asset ids format
-- `ImClient` uses assets encoded as full_symbols strings
+- `ImClient` uses assets encoded as `full_symbols` strings (e.g., `binance::BTC_UTC`)
   - There is a vendor-specific mapping:
-    - from full_symbols to corresponding data
-    - from asset_ids (ints) to full_symbols (strings)
-  - If the asset_ids -> full_symbols mapping is provided by the vendor, then we
+    - from `full_symbols` to corresponding data
+    - from `asset_ids` (ints) to `full_symbols` (strings)
+  - If the `asset_ids` -> `full_symbols` mapping is provided by the vendor, then we
     reuse it
-    - Otherwise we build a mapping hashing full_symbols into numbers
+    - Otherwise, we build a mapping hashing `full_symbols` strings into numbers
 - `MarketData` and everything downstream uses `asset_ids` that are encoded as ints
-  - This is because we want to use `asset_ids` in dataframe
+  - This is because we want to use ints and not strings in dataframe
 
 # Handling of `asset_ids`
 - Different implementations of `ImClient` backing a `MarketData` are possible,
@@ -141,10 +158,9 @@
 - For this reason, this class supports all these different ways of providing
   data
 
-- IM Client has a fixed semantic of the interval (I believe [a, b])
-- MarketData adapts
+- `ImClient` has a fixed semantic of the interval (I believe [a, b])
+- `MarketData` adapts the fixed semantic to multiple ones
 
 # Handling timezone
-
-- you specify what timezone you want in MarketData and MarketData guarantees 
-  that all timestamps are in the right TZ
+- `ImClient` always uses UTC as output
+- `MarketData` adapts to the desired timezone

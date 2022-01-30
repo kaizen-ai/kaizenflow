@@ -74,29 +74,32 @@ class AbstractMarketData(abc.ABC):
 
     # Data format
     - The data from this class is available in two formats:
-        1) Native data
-            - delivered by classes derived from `MarketData`
-            - indexed with a progressive index
-            - with asset, start_time, end_time, knowledge_time
-        ```
-          asset_id           start_time             end_time     close   volume
-        idx
-          0  17085  2021-07-26 13:41:00  2021-07-26 13:42:00  148.8600   400176
-          1  17085  2021-07-26 13:30:00  2021-07-26 13:31:00  148.5300  1407725
-          2  17085  2021-07-26 13:31:00  2021-07-26 13:32:00  148.0999   473869
-        ```
 
-        2) Normalized data:
-            - transformed by the base `MarketData` class
-            - indexed by the column that corresponds to `end_time`
-            - suitable to DataFlow computation
-        ```
-                                asset_id                start_time    close   volume
-        end_time
-        2021-07-20 09:31:00-04:00  17085 2021-07-20 09:30:00-04:00  143.990  1524506
-        2021-07-20 09:32:00-04:00  17085 2021-07-20 09:31:00-04:00  143.310   586654
-        2021-07-20 09:33:00-04:00  17085 2021-07-20 09:32:00-04:00  143.535   667639
-        ```
+    1) Non-normalized data:
+        - delivered by classes derived from `MarketData`
+        - indexed with a progressive index
+        - with asset, start_time, end_time, knowledge_time
+    - E.g.,
+    ```
+      asset_id                 start_time                   end_time     close   volume
+    idx
+      0  17085  2021-07-26 13:41:00+00:00  2021-07-26 13:42:00+00:00  148.8600   400176
+      1  17085  2021-07-26 13:30:00+00:00  2021-07-26 13:31:00+00:00  148.5300  1407725
+      2  17085  2021-07-26 13:31:00+00:00  2021-07-26 13:32:00+00:00  148.0999   473869
+    ```
+
+    2) Normalized data:
+        - transforming by the base `MarketData` class
+        - indexing by the column that corresponds to `end_time`, so that it is suitable
+          to DataFlow computation
+    - E.g.,
+    ```
+                            asset_id                start_time    close   volume
+    end_time
+    2021-07-20 09:31:00-04:00  17085 2021-07-20 09:30:00-04:00  143.990  1524506
+    2021-07-20 09:32:00-04:00  17085 2021-07-20 09:31:00-04:00  143.310   586654
+    2021-07-20 09:33:00-04:00  17085 2021-07-20 09:32:00-04:00  143.535   667639
+    ```
     """
 
     def __init__(
@@ -104,7 +107,6 @@ class AbstractMarketData(abc.ABC):
         asset_id_col: str,
         # TODO(gp): This should be first and also potentially be None.
         asset_ids: List[Any],
-        # TODO(gp): These are before the remapping.
         # TODO(gp): -> start_timestamp_col
         start_time_col_name: str,
         end_time_col_name: str,
@@ -125,6 +127,9 @@ class AbstractMarketData(abc.ABC):
         through `asset_id_col`, `start_time_col_name`, `end_time_col_name`.
         The (output) name of the columns after the normalization can be changed
         through `column_remap`.
+
+        All the column names in the interface (e.g., `start_time_col_name`) are
+        before the remapping.
 
         :param asset_id_col: the name of the column used to select the asset ids
         :param asset_ids: as described in the class docstring
@@ -159,6 +164,8 @@ class AbstractMarketData(abc.ABC):
         hdbg.dassert_lte(1, max_iterations)
         self._max_iterations = max_iterations
 
+    # /////////////////////////////////////////////////////////////////////////////
+
     def get_data_for_last_period(
         self,
         timedelta: pd.Timedelta,
@@ -178,7 +185,6 @@ class AbstractMarketData(abc.ABC):
         since the use case is for clients to just ask data that has been
         configured upstream when this object was built.
         """
-        # TODO(gp): If the DB supports asyncio this should become async.
         # Handle `timedelta`.
         _LOG.verb_debug(hprint.to_str("timedelta"))
         wall_clock_time = self.get_wall_clock_time()
@@ -299,6 +305,8 @@ class AbstractMarketData(abc.ABC):
         hdbg.dassert_isinstance(df, pd.DataFrame)
         return df
 
+    # /////////////////////////////////////////////////////////////////////////////
+
     def get_twap_price(
         self,
         start_ts: pd.Timestamp,
@@ -368,7 +376,9 @@ class AbstractMarketData(abc.ABC):
         )
         return twap
 
+    # /////////////////////////////////////////////////////////////////////////////
     # Methods for handling real-time behaviors.
+    # /////////////////////////////////////////////////////////////////////////////
 
     def get_last_end_time(self) -> Optional[pd.Timestamp]:
         """
@@ -504,6 +514,89 @@ class AbstractMarketData(abc.ABC):
         )
         return start_sampling_time, end_sampling_time, num_iter
 
+    # /////////////////////////////////////////////////////////////////////////////
+
+    @staticmethod
+    def _process_period(
+            timedelta: pd.Timedelta, wall_clock_time: pd.Timestamp
+    ) -> Optional[pd.Timestamp]:
+        """
+        Return the start time corresponding to returning the desired
+        `timedelta` of time before the current wall clock time.
+
+        E.g., if the df looks like:
+        ```
+           start_datetime           last_price    id
+                     end_datetime
+                              timestamp_db
+        0  09:30     09:31    09:31  -0.125460  1000
+        1  09:31     09:32    09:32   0.325254  1000
+        2  09:32     09:33    09:33   0.557248  1000
+        3  09:33     09:34    09:34   0.655907  1000
+        4  09:34     09:35    09:35   0.311925  1000
+        ```
+        and `wall_clock_time=09:34` the last minute `1T` should be:
+        ```
+           start_datetime           last_price    id
+                     end_datetime
+                              timestamp_db
+        4  09:34     09:35    09:35   0.311925  1000
+        ```
+
+        :param timedelta: a `pd.Timedelta` like `1D`, `5T`
+        """
+        _LOG.verb_debug(hprint.to_str("timedelta wall_clock_time"))
+        hdbg.dassert_isinstance(timedelta, pd.Timedelta)
+        hdbg.dassert_lt(pd.Timedelta("0S"), timedelta)
+        last_start_time = wall_clock_time - timedelta
+        _LOG.verb_debug("last_start_time=%s", last_start_time)
+        return last_start_time
+
+    # /////////////////////////////////////////////////////////////////////////////
+    # Derived class interface.
+    # /////////////////////////////////////////////////////////////////////////////
+
+    @abc.abstractmethod
+    def _get_last_end_time(self) -> Optional[pd.Timestamp]:
+        ...
+
+    @abc.abstractmethod
+    def _get_data(
+        self,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+        ts_col_name: str,
+        asset_ids: Optional[List[int]],
+        left_close: bool,
+        right_close: bool,
+        normalize_data: bool,
+        limit: Optional[int],
+    ) -> pd.DataFrame:
+        """
+        Return data in the interval start_ts, end_ts for certain assets.
+
+        This should be the only entrypoint to get data from the derived
+        classes.
+
+        :param start_ts: beginning of the time interval to select data for
+        :param end_ts: end of the time interval to select data for
+        :param ts_col_name: the name of the column (before the remapping) to filter
+            on
+        :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
+        :param left_close, right_close: represent the type of interval
+            - E.g., [start_ts, end_ts), or (start_ts, end_ts]
+        :param normalize_data: whether to normalize data or not, see
+            `self.process_data()`
+        :param limit: keep only top N records
+        """
+        ...
+
+    # /////////////////////////////////////////////////////////////////////////////
+    # Data normalization.
+    # /////////////////////////////////////////////////////////////////////////////
+
+    # TODO(gp): @Grisha this should be called by get_data_for_interval and not
+    #  by derived classes.
     def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Transform df from real-time DB into data similar to the historical TAQ
@@ -544,43 +637,6 @@ class AbstractMarketData(abc.ABC):
         # _LOG.debug(hpandas.df_to_str(df, print_shape_info=True, tag="after process_data"))
         return df
 
-    # /////////////////////////////////////////////////////////////////////////////
-
-    @abc.abstractmethod
-    def _get_last_end_time(self) -> Optional[pd.Timestamp]:
-        ...
-
-    @abc.abstractmethod
-    def _get_data(
-        self,
-        start_ts: Optional[pd.Timestamp],
-        end_ts: Optional[pd.Timestamp],
-        ts_col_name: str,
-        asset_ids: Optional[List[int]],
-        left_close: bool,
-        right_close: bool,
-        normalize_data: bool,
-        limit: Optional[int],
-    ) -> pd.DataFrame:
-        """
-        Return data in [start_ts, end_ts) for certain assets.
-
-        This should be the only entrypoint to get data from the derived
-        classes.
-
-        :param start_ts: beginning of the time interval to select data for
-        :param end_ts: end of the time interval to select data for
-        :param ts_col_name: the name of the column (before the remapping) to filter
-            on
-        :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
-        :param left_close, right_close: represent the type of interval
-            - E.g., [start_ts, end_ts), or (start_ts, end_ts]
-        :param normalize_data: whether to normalize data or not, see
-            `self.process_data()`
-        :param limit: keep only top N records
-        """
-        ...
-
     def _remap_columns(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Remap column names with provided mapping.
@@ -611,39 +667,3 @@ class AbstractMarketData(abc.ABC):
             self._start_time_col_name
         ].dt.tz_convert(self._timezone)
         return df
-
-    @staticmethod
-    def _process_period(
-        timedelta: pd.Timedelta, wall_clock_time: pd.Timestamp
-    ) -> Optional[pd.Timestamp]:
-        """
-        Return the start time corresponding to returning the desired
-        `timedelta` of time before the current wall clock time.
-
-        E.g., if the df looks like:
-        ```
-           start_datetime           last_price    id
-                     end_datetime
-                              timestamp_db
-        0  09:30     09:31    09:31  -0.125460  1000
-        1  09:31     09:32    09:32   0.325254  1000
-        2  09:32     09:33    09:33   0.557248  1000
-        3  09:33     09:34    09:34   0.655907  1000
-        4  09:34     09:35    09:35   0.311925  1000
-        ```
-        and `wall_clock_time=09:34` the last minute `1T` should be:
-        ```
-           start_datetime           last_price    id
-                     end_datetime
-                              timestamp_db
-        4  09:34     09:35    09:35   0.311925  1000
-        ```
-
-        :param timedelta: a `pd.Timedelta` like `1D`, `5T`
-        """
-        _LOG.verb_debug(hprint.to_str("timedelta wall_clock_time"))
-        hdbg.dassert_isinstance(timedelta, pd.Timedelta)
-        hdbg.dassert_lt(pd.Timedelta("0S"), timedelta)
-        last_start_time = wall_clock_time - timedelta
-        _LOG.verb_debug("last_start_time=%s", last_start_time)
-        return last_start_time
