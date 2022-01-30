@@ -133,34 +133,32 @@
 # Handling of `asset_ids`
 - Different implementations of `ImClient` backing a `MarketData` are possible,
   e.g.:
-  - stateless
-    - = the caller needs to specify the requested `asset_ids`
-    - In this case the universe is provided by `MarketData` when calling the
-      data access methods
-  - stateful
-    - = the backend is initialized with the desired universe of assets and
-      then `MarketData` just propagates or subsets the universe
+    - The caller needs to specify the requested `asset_ids`
+        - In this case the universe is provided by `MarketData` when calling the
+          data access methods
+    - The reading backend is initialized with the desired universe of assets and
+      then `MarketData` just uses or subsets that universe
 
 - For these reasons, assets are selected at 3 different points:
-    1) `MarketData` allows to specify or subset the assets through
-        `asset_ids` through the constructor
+    1) `MarketData` allows to specify or subset the assets through `asset_ids`
+       through the constructor
     2) `ImClient` backends specify the assets returned
        - E.g., a concrete implementation backed by a DB can stream the data for
          its entire available universe
-    3) Certain class methods allow to query data for a specific asset or subset
+    3) Certain class methods allow querying data for a specific asset or subset
        of assets
-    - For each stage, a value of `None` means no filtering
+     - For each stage, a value of `None` means no filtering
 
 # Handling of filtering by time
 - Clients of `MarketData` might want to query data by:
-    - using different interval types, namely [a, b), [a, b], (a, b], (a, b)
+    - using different interval types, namely `[a, b), [a, b], (a, b], (a, b)`
     - filtering on either the `start_ts` or `end_ts`
 - For this reason, this class supports all these different ways of providing
   data
 
-- `ImClient` has a fixed semantic of the interval (I believe [a, b])
+- `ImClient` has a fixed semantic of the interval `[a, b]`
 - `MarketData` adapts the fixed semantic to multiple ones
 
 # Handling timezone
 - `ImClient` always uses UTC as output
-- `MarketData` adapts to the desired timezone
+- `MarketData` adapts UTC to the desired timezone, as requested by the client
