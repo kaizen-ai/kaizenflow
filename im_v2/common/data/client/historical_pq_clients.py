@@ -58,11 +58,13 @@ class HistoricalPqByAssetClient(imvcdclcl.ImClientReadingMultipleSymbols):
         )
         # TODO(gp): This should be done by the derived class.
         asset_ids = list(map(int, full_symbols))
-        filters = []
+        # The filter is an OR of AND conditions:
+        # See https://arrow.apache.org/docs/python/generated/pyarrow.parquet.ParquetDataset.html
+        and_filters = []
         # TODO(gp): Is this efficient? Is there a better way to do it, e.g., `in`?
         # Select the OR of conditions like `asset_col_name == asset_id`.
-        for asset_id in asset_ids:
-            filters.append([(self._asset_col_name, "=", asset_id)])
+        and_condition = (self._asset_col_name, "in", asset_ids)
+        and_filters.append(and_condition)
         # The data is stored by week so we need to convert the timestamps into
         # weeks and then trim the excess.
         # Compute the start_date.
@@ -70,16 +72,15 @@ class HistoricalPqByAssetClient(imvcdclcl.ImClientReadingMultipleSymbols):
             self._dassert_is_valid_timestamp(start_ts)
             # TODO(gp): Use weekofyear = start_ts.isocalendar().week
             weekofyear = start_ts.week
-            filters.append(
-                ("weekofyear", ">=", weekofyear),
-            )
+            and_condition = ("weekofyear", ">=", weekofyear)
+            and_filters.append(and_condition)
         # Compute the end_date.
         if end_ts is not None:
             self._dassert_is_valid_timestamp(end_ts)
             weekofyear = end_ts.week
-            filters.append(
-                ("weekofyear", "<=", weekofyear),
-            )
+            and_condition = ("weekofyear", "<=", weekofyear)
+            and_filters.append(and_condition)
+        filters = [and_filters]
         _LOG.debug("filters=%s", str(filters))
         # Read the data.
         # TODO(gp): Add support for S3 passing aws_profile.
