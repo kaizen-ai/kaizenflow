@@ -23,14 +23,13 @@ default_args = {
 # Create a command.
 bash_command = [
     "/app/im_v2/ccxt/data/extract/download_realtime_data_v2.py",
-    "--to_datetime {{ next_execution_date }}",
-    "--from_datetime {{ execution_date - macros.timedelta(5) }}",
+    "--to_datetime {{ execution_date }}",
+    "--from_datetime {{ execution_date - macros.timedelta(minutes=5) }}",
     "--exchange_id 'binance'",
     "--universe 'v03'",
     "--db_stage 'dev'",
-    "--v DEBUG",
+    "--v DEBUG"
 ]
-
 
 # Create a DAG.
 dag = airflow.DAG(
@@ -58,14 +57,6 @@ downloading_task = ECSOperator(
                 "name": "cmamp",
                 "command": bash_command,
                 "environment": [
-                    {
-                        "name": "DATA_INTERVAL_START",
-                        "value": "{{ execution_date }}",
-                    },
-                    {
-                        "name": "DATA_INTERVAL_END",
-                        "value": "{{ execution_date - macros.timedelta(5) }}",
-                    },
                     {
                         "name": "ENABLE_DIND",
                         "value": "0",
