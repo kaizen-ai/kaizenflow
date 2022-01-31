@@ -24,6 +24,13 @@ _LOG = logging.getLogger(__name__)
 # Latest historical data snapshot.
 _LATEST_DATA_SNAPSHOT = "20210924"
 
+# TODO(gp): These classes should return a `full_symbol` and not two columns
+#  `exchange_id` and `currency_pair`.
+
+# #############################################################################
+# CcxtCddClient
+# #############################################################################
+
 
 class CcxtCddClient(icdc.ImClient, abc.ABC):
     """
@@ -53,10 +60,9 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         )
         return universe  # type: ignore[no-any-return]
 
+    # TODO(gp): This is ok for this class, but not needed for the ancestor classes.
     def _apply_vendor_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
         """
-        See description in the parent class.
-
         Input data is indexed with numbers and looks like:
         ```
              timestamp      open     high     low      close    volume    currency_pair exchange_id
@@ -83,7 +89,7 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
 
     def _apply_ccxt_cdd_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
         """
-        Apply transformations common for `CCXT` and `CDD` data.
+        Apply transformations common to `CCXT` and `CDD` data.
         """
         if self._vendor == "CDD":
             # Rename columns for consistency with other crypto vendors.
@@ -128,10 +134,11 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
 # CcxtCddDbClient
 # #############################################################################
 
+
 # TODO(Grisha): it should descend from `ImClientReadingMultipleSymbols`.
 class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
     """
-    `CCXT` client for data from the database.
+    `CCXT` client for data stored in an SQL database.
     """
 
     def __init__(
@@ -142,7 +149,7 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
         """
         Load `CCXT` and `CDD` price data from the database.
 
-        This code path is used for the real-time data.
+        This code path is typically used for the real-time data.
 
         :param vendor: price data provider, i.e. `CCXT` or `CDD`
         :param connection: connection for a SQL database
@@ -195,8 +202,7 @@ class CcxtCddCsvParquetByAssetClient(
     CcxtCddClient, icdc.ImClientReadingOneSymbol
 ):
     """
-    Client for `CCXT` and `CDD` that reads CSV or Parquet file storing data for
-    a single asset.
+    Read data from a CSV or Parquet file storing data for a single `CCXT` or `CDD` asset.
 
     It can read data from local or S3 filesystem as backend.
 
@@ -209,6 +215,7 @@ class CcxtCddCsvParquetByAssetClient(
         self,
         vendor: str,
         root_dir: str,
+        # TODO(gp): -> file_extension
         extension: str,
         *,
         aws_profile: Optional[str] = None,
@@ -230,7 +237,7 @@ class CcxtCddCsvParquetByAssetClient(
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
             not extension.startswith("."),
-            "The extension %s should not start with '.'" % extension,
+            "The extension %s should not start with '.'", extension
         )
         self._extension = extension
         self._data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT

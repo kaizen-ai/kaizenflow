@@ -18,6 +18,8 @@ Import as:
 import im_v2.ccxt.data.extract.download_realtime_data_v2 as imvcdedrdv
 """
 
+# TODO(gp): -> download_realtime_for_one_exchange.py
+
 import argparse
 import logging
 

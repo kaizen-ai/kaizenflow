@@ -17,7 +17,7 @@ import market_data.abstract_market_data as mdabmada
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): ImClientMarketData for symmetry? And so also rename the files.
+# TODO(gp): @Grisha -> ImClientMarketData and rename all the classes and files.
 class MarketDataImClient(mdabmada.AbstractMarketData):
     """
     Implement a `MarketData` that uses a `ImClient` as backend.
@@ -28,9 +28,6 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
     ) -> None:
         """
         Constructor.
-
-        :param args: see `AbstractMarketData`
-        :param im_client: IM client
         """
         super().__init__(*args, **kwargs)
         hdbg.dassert_isinstance(im_client, icdc.ImClient)
