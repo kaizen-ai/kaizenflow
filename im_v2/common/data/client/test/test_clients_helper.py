@@ -11,17 +11,36 @@ import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 import im_v2.common.data.client as icdc
 
-# TODO(gp): -> im_client_test_case.py
+# TODO(gp): @Grisha -> im_client_test_case.py
 
 
-# TODO(gp): This is a common pattern to check a df, that we might want to
+# TODO(gp): @Grisha This is a common pattern to check a df, that we want to
 #  generalize and move to `unit_test.py`
+# def _check_df_output(
+#    self_: Any,
+#    actual_df: pd.DataFrame,
+#    expected_length: Optional[int],
+#    expected_column_names: Optional[List[str]],
+#    expected_column_values: Optional[Dict[str, List[str]],
+#    expected_signature: str,
+# """
+# Verify that actual outcome dataframe matches the expected one.
+#
+# :param actual_df: actual outcome dataframe
+# :param expected_length: expected outcome dataframe length
+#    - If `None` skip the check
+# :param expected_column_names: expected columns as a set
+#    - If `None` skip the check
+# :param expected_column_values: dict of column names and values that they should
+#      contain. If `None` skip the check
+# :param expected_signature: expected outcome as string
+# """
 def _check_output(
-    self_: Any,
+        self_: Any,
     actual_df: pd.DataFrame,
     expected_length: int,
-    # TODO(gp): exchange_ids and currency_pairs seem specific of a type of assets.
-    #  Consider how to generalize: maybe `exchange_ids::assert_id`.
+    # TODO(gp): @Grisha exchange_ids and currency_pairs are specific of a type of
+    #  assets. Classes should return `full_symbol = exchange_ids::assert_id`.
     expected_exchange_ids: Optional[List[str]],
     expected_currency_pairs: Optional[List[str]],
     expected_signature: str,
@@ -39,10 +58,12 @@ def _check_output(
     act = []
     #
     actual_df = actual_df[sorted(actual_df.columns)]
-    act.append(hpandas.df_to_short_str("df", actual_df))
+    act.append(hpandas.df_to_str(actual_df, print_shape_info=True, tag="df"))
     #
     if expected_exchange_ids is not None:
-        actual_exchange_ids = sorted(list(actual_df["exchange_id"].dropna().unique()))
+        actual_exchange_ids = sorted(
+            list(actual_df["exchange_id"].dropna().unique())
+        )
         act.append("exchange_ids=%s" % ",".join(actual_exchange_ids))
     #
     if expected_currency_pairs is not None:
@@ -66,7 +87,9 @@ def _check_output(
         self_.assert_equal(str(actual_exchange_ids), str(expected_exchange_ids))
     if expected_currency_pairs is not None:
         # Check unique currency pairs in the output df.
-        self_.assert_equal(str(actual_currency_pairs), str(expected_currency_pairs))
+        self_.assert_equal(
+            str(actual_currency_pairs), str(expected_currency_pairs)
+        )
 
 
 # #############################################################################
@@ -76,8 +99,8 @@ def _check_output(
 
 class ImClientTestCase(hunitest.TestCase):
     """
-    A class that helps test classes derived from `ImClient` by implementing
-    test methods for the interface methods in any `ImClient`.
+    Help test classes for classes derived from `ImClient` by implementing
+    template test methods for the interface methods in any `ImClient`.
     """
 
     # TODO(gp): To enforce that all methods are called we could add corresponding
@@ -87,9 +110,10 @@ class ImClientTestCase(hunitest.TestCase):
         self,
         im_client: icdc.ImClient,
         full_symbol: icdc.FullSymbol,
-        # TODO(gp): Use this everywhere.
-        *args,
-        **kwargs,
+        # TODO(gp): @Grisha Use everywhere this approach of passing args, kwargs
+        #  instead of all the vars.
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
         """
         Test:

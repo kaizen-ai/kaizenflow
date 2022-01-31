@@ -60,8 +60,8 @@ normality    omnibus_null_normal.stat                          1312.893177
              centered_gaussian.log_likelihood                  9235.091145
              centered_gaussian.centered_var                       0.000049
 spectral     forecastability                                      0.006354
-portfolio    annualized_mean_return_(%)                          87.035456
-             annualized_volatility_(%)                                10.0
+portfolio    annualized_mean_return                               0.870355
+             annualized_volatility                                     0.1
              max_drawdown                                         0.019595
              hit_rate_point_est_(%)                              69.808429
              hit_rate_97.50%CI_lower_bound_(%)                   68.025947

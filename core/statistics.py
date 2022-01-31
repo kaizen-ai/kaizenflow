@@ -1662,18 +1662,17 @@ def compute_annualized_return_and_volatility(
     prefix: Optional[str] = None,
 ) -> pd.Series:
     """
-    Annualized mean return and sample volatility in %.
+    Annualized mean return and sample volatility in units of `srs`.
 
     :param srs: series with datetimeindex with `freq`
     :param prefix: optional prefix for metrics' outcome
-    :return: annualized pd.Series with return and volatility in %; pct rets
-        if `srs` consists of pct rets, log rets if `srs` consists of log rets.
+    :return: annualized pd.Series with return and volatility
     """
     hdbg.dassert_isinstance(srs, pd.Series)
     prefix = prefix or ""
     result_index = [
-        prefix + "annualized_mean_return_(%)",
-        prefix + "annualized_volatility_(%)",
+        prefix + "annualized_mean_return",
+        prefix + "annualized_volatility",
     ]
     nan_result = pd.Series(
         np.nan, index=result_index, name=srs.name, dtype="float64"
@@ -1681,8 +1680,8 @@ def compute_annualized_return_and_volatility(
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
-    annualized_mean_return = 100 * cofinanc.compute_annualized_return(srs)
-    annualized_volatility = 100 * cofinanc.compute_annualized_volatility(srs)
+    annualized_mean_return = cofinanc.compute_annualized_return(srs)
+    annualized_volatility = cofinanc.compute_annualized_volatility(srs)
     result = pd.Series(
         data=[annualized_mean_return, annualized_volatility],
         index=result_index,
@@ -1698,60 +1697,53 @@ def compute_annualized_return_and_volatility(
 
 def compute_bet_stats(
     positions: pd.Series,
-    log_rets: pd.Series,
+    returns: pd.Series,
     prefix: Optional[str] = None,
 ) -> pd.Series:
     """
     Calculate average returns for grouped bets.
 
     :param positions: series of long/short positions
-    :param log_rets: log returns
+    :param returns: returns
     :param prefix: optional prefix for metrics' outcome
     :return: series of average returns for winning/losing and long/short bets,
         number of positions and bets. In `average_num_bets_per_year`, "year" is
         not the calendar year, but an approximate number of data points in a
         year
     """
+    # TODO(Paul): Consider requiring `freq` on the index.
     prefix = prefix or ""
-    bet_lengths = cofinanc.compute_signed_bet_lengths(positions)
-    log_rets_per_bet = cofinanc.compute_returns_per_bet(positions, log_rets)
+    bet_lengths = cofinanc.compute_signed_run_lengths(positions)
+    returns_per_bet = cofinanc.compute_returns_per_bet(positions, returns)
     #
     stats = dict()
     stats["num_positions"] = int(bet_lengths.abs().sum())
     stats["num_bets"] = bet_lengths.size
-    stats["long_bets_(%)"] = 100 * (bet_lengths > 0).sum() / bet_lengths.size
+    stats["long_bets_frac"] = (bet_lengths > 0).sum() / bet_lengths.size
     if positions.index.freq is not None:
         n_years = positions.size / hdatafr.infer_sampling_points_per_year(
             positions
         )
-        stats["avg_num_bets_per_year"] = bet_lengths.size / n_years
+        stats["mean_num_bets_per_year"] = bet_lengths.size / n_years
     # Format index.freq outcome to the word that represents its frequency.
     #    E.g. if `srs.index.freq` is equal to `<MonthEnd>` then
     #    this line will convert it to the string "Month".
     freq = str(positions.index.freq)[1:-1].split("End")[0]
-    stats["avg_bet_length"] = bet_lengths.abs().mean()
+    stats["mean_bet_length"] = bet_lengths.abs().mean()
     stats["bet_length_units"] = freq
-    bet_hit_rate = calculate_hit_rate(log_rets_per_bet, prefix="bet_")
+    bet_hit_rate = calculate_hit_rate(returns_per_bet, prefix="bet_")
     stats.update(bet_hit_rate)
     #
-    avg_ret_winning_bets = log_rets_per_bet.loc[log_rets_per_bet > 0].mean()
-    stats[
-        "avg_return_winning_bets_(%)"
-    ] = 100 * cofinanc.convert_log_rets_to_pct_rets(avg_ret_winning_bets)
-    avg_ret_losing_bets = log_rets_per_bet.loc[log_rets_per_bet < 0].mean()
-    stats[
-        "avg_return_losing_bets_(%)"
-    ] = 100 * cofinanc.convert_log_rets_to_pct_rets(avg_ret_losing_bets)
-    avg_ret_long_bet = log_rets_per_bet.loc[bet_lengths > 0].mean()
-    stats[
-        "avg_return_long_bet_(%)"
-    ] = 100 * cofinanc.convert_log_rets_to_pct_rets(avg_ret_long_bet)
-    avg_ret_short_bet = log_rets_per_bet.loc[bet_lengths < 0].mean()
-    stats[
-        "avg_return_short_bet_(%)"
-    ] = 100 * cofinanc.convert_log_rets_to_pct_rets(avg_ret_short_bet)
+    mean_returns_winning_bets = returns_per_bet.loc[returns_per_bet > 0].mean()
+    stats["mean_return_winning_bets"] = mean_returns_winning_bets
+    mean_returns_losing_bets = returns_per_bet.loc[returns_per_bet < 0].mean()
+    stats["mean_return_losing_bets"] = mean_returns_losing_bets
+    mean_returns_long_bet = returns_per_bet.loc[bet_lengths > 0].mean()
+    stats["mean_return_long_bet"] = mean_returns_long_bet
+    mean_returns_short_bet = returns_per_bet.loc[bet_lengths < 0].mean()
+    stats["mean_return_short_bet"] = mean_returns_short_bet
     #
-    srs = pd.Series(stats, name=log_rets.name)
+    srs = pd.Series(stats, name=returns.name)
     srs.index = prefix + srs.index
     return srs
 
