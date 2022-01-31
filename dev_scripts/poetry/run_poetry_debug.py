@@ -220,7 +220,7 @@ def _parse() -> argparse.ArgumentParser:
         "--debug_mode",
         action="store",
         type=str,
-        default="necessary",
+        required=True,
         help="Run poetry with desired list of packages",
     )
     hparser.add_verbosity_arg(parser)
