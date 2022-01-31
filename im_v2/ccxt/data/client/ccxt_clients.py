@@ -24,8 +24,8 @@ _LOG = logging.getLogger(__name__)
 # Latest historical data snapshot.
 _LATEST_DATA_SNAPSHOT = "20210924"
 
-# TODO(gp): These classes should return a `full_symbol` and not two columns
-#  `exchange_id` and `currency_pair`.
+# TODO(gp): @Grisha These classes should return a `full_symbol` and not two
+# columns `exchange_id` and `currency_pair`.
 
 # #############################################################################
 # CcxtCddClient
