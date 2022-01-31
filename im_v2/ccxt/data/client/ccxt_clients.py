@@ -24,13 +24,21 @@ _LOG = logging.getLogger(__name__)
 # Latest historical data snapshot.
 _LATEST_DATA_SNAPSHOT = "20210924"
 
+# TODO(gp): These classes should return a `full_symbol` and not two columns
+#  `exchange_id` and `currency_pair`.
+
+# #############################################################################
+# CcxtCddClient
+# #############################################################################
+
 
 class CcxtCddClient(icdc.ImClient, abc.ABC):
     """
     Contain common code for all the `CCXT` and `CDD` clients, e.g.,
-        - getting `CCXT` and `CDD` universe
-        - applying common transformation for all the data from `CCXT` and `CDD`
-            - E.g., `_apply_olhlcv_transformations()`, `_apply_vendor_normalization()`
+
+    - getting `CCXT` and `CDD` universe
+    - applying common transformation for all the data from `CCXT` and `CDD`
+        - E.g., `_apply_olhlcv_transformations()`, `_apply_vendor_normalization()`
     """
 
     def __init__(self, vendor: str) -> None:
@@ -43,10 +51,18 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         hdbg.dassert_in(vendor, _vendors)
         self._vendor = vendor
 
-    def _apply_vendor_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
+    def get_universe(self, as_asset_ids: bool) -> List[icdc.FullSymbol]:
         """
         See description in the parent class.
+        """
+        universe = imvccunun.get_vendor_universe(
+            vendor=self._vendor, as_asset_ids=as_asset_ids
+        )
+        return universe  # type: ignore[no-any-return]
 
+    # TODO(gp): This is ok for this class, but not needed for the ancestor classes.
+    def _apply_vendor_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
+        """
         Input data is indexed with numbers and looks like:
         ```
              timestamp      open     high     low      close    volume    currency_pair exchange_id
@@ -71,16 +87,9 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         data = data.sort_values(by=["exchange_id", "currency_pair"])
         return data
 
-    def get_universe(self, as_asset_ids: bool) -> List[icdc.FullSymbol]:
-        """
-        See description in the parent class.
-        """
-        universe = imvccunun.get_vendor_universe(vendor=self._vendor, as_asset_ids=as_asset_ids)
-        return universe  # type: ignore[no-any-return]
-
     def _apply_ccxt_cdd_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
         """
-        Apply transformations common for `CCXT` and `CDD` data.
+        Apply transformations common to `CCXT` and `CDD` data.
         """
         if self._vendor == "CDD":
             # Rename columns for consistency with other crypto vendors.
@@ -125,10 +134,11 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
 # CcxtCddDbClient
 # #############################################################################
 
+
 # TODO(Grisha): it should descend from `ImClientReadingMultipleSymbols`.
 class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
     """
-    `CCXT` client for data from the database.
+    `CCXT` client for data stored in an SQL database.
     """
 
     def __init__(
@@ -139,7 +149,7 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
         """
         Load `CCXT` and `CDD` price data from the database.
 
-        This code path is used for the real-time data.
+        This code path is typically used for the real-time data.
 
         :param vendor: price data provider, i.e. `CCXT` or `CDD`
         :param connection: connection for a SQL database
@@ -188,9 +198,11 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
 # #############################################################################
 
 
-class CcxtCddCsvParquetByAssetClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
+class CcxtCddCsvParquetByAssetClient(
+    CcxtCddClient, icdc.ImClientReadingOneSymbol
+):
     """
-    Client for `CCXT` and `CDD` that reads CSV or Parquet file storing data for a single asset.
+    Read data from a CSV or Parquet file storing data for a single `CCXT` or `CDD` asset.
 
     It can read data from local or S3 filesystem as backend.
 
@@ -203,6 +215,7 @@ class CcxtCddCsvParquetByAssetClient(CcxtCddClient, icdc.ImClientReadingOneSymbo
         self,
         vendor: str,
         root_dir: str,
+        # TODO(gp): -> file_extension
         extension: str,
         *,
         aws_profile: Optional[str] = None,
@@ -224,7 +237,7 @@ class CcxtCddCsvParquetByAssetClient(CcxtCddClient, icdc.ImClientReadingOneSymbo
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
             not extension.startswith("."),
-            "The extension %s should not start with '.'" % extension,
+            "The extension %s should not start with '.'", extension
         )
         self._extension = extension
         self._data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
@@ -322,7 +335,11 @@ class CcxtCddCsvParquetByAssetClient(CcxtCddClient, icdc.ImClientReadingOneSymbo
         # Get absolute file path.
         file_name = ".".join([currency_pair, self._extension])
         file_path = os.path.join(
-            self._root_dir, self._vendor.lower(), data_snapshot, exchange_id, file_name
+            self._root_dir,
+            self._vendor.lower(),
+            data_snapshot,
+            exchange_id,
+            file_name,
         )
         # TODO(Dan): Remove asserts below after CMTask108 is resolved.
         # Verify that the file exists.

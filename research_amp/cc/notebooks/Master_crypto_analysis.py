@@ -73,6 +73,8 @@ def get_eda_config() -> cconconf.Config:
     config.add_subconfig("data")
     config["data"]["close_price_col_name"] = "close"
     config["data"]["frequency"] = "T"
+    config["data"]["vendor"] = "CCXT"
+    config["data"]["extension"] = "csv.gz"
     # TODO(Grisha): use `hdateti.get_ET_tz()` once it is fixed.
     config["data"]["timezone"] = pytz.timezone("US/Eastern")
     # Statistics parameters.
@@ -89,10 +91,12 @@ print(config)
 # # Load data
 
 # %%
+vendor = config["data"]["vendor"]
 root_dir = config["load"]["data_dir"]
-extension = "csv.gz"
+extension = config["data"]["extension"]
 aws_profile = config["load"]["aws_profile"]
-ccxt_csv_client = icdcl.CcxtCsvParquetByAssetClient(
+ccxt_csv_client = icdcl.CcxtCddCsvParquetByAssetClient(
+    vendor,
     root_dir,
     extension,
     aws_profile=aws_profile,

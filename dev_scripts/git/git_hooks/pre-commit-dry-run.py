@@ -16,7 +16,7 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hparser as hparser
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     _LOG.warning("\n%s", hprint.frame("This is a dry run!"))
     git_root = hgit.get_client_root(super_module=False)
     cmd = fr'''cd {git_root} && find . -type f -name "*" -not -path "*/\.git/*"'''
-    _, file_list = hsysinte.system_to_string(cmd)
+    _, file_list = hsystem.system_to_string(cmd)
     file_list = file_list.split("\n")
     #
     abort_on_error = False

@@ -17,6 +17,7 @@ def get_simulated_broker_example1(
     event_loop: Optional[asyncio.AbstractEventLoop],
     *,
     market_data: Optional[mdata.AbstractMarketData] = None,
+    timestamp_col: str = "end_datetime",
 ) -> ombroker.SimulatedBroker:
     """
     Build an example of `SimulatedBroker` using an example `MarketData`, unless
@@ -31,7 +32,9 @@ def get_simulated_broker_example1(
     # Build SimulatedBroker.
     strategy_id = "SAU1"
     account = "candidate"
-    broker = ombroker.SimulatedBroker(strategy_id, account, market_data)
+    broker = ombroker.SimulatedBroker(
+        strategy_id, account, market_data, timestamp_col=timestamp_col
+    )
     return broker
 
 
@@ -39,8 +42,8 @@ def get_mocked_broker_example1(
     event_loop: Optional[asyncio.AbstractEventLoop],
     db_connection: hsql.DbConnection,
     *,
-    timestamp_col: str = "end_datetime",
     market_data: Optional[mdata.AbstractMarketData] = None,
+    timestamp_col: str = "end_datetime",
     submitted_orders_table_name: str = oomsdb.SUBMITTED_ORDERS_TABLE_NAME,
     accepted_orders_table_name: str = oomsdb.ACCEPTED_ORDERS_TABLE_NAME,
 ) -> ombroker.SimulatedBroker:

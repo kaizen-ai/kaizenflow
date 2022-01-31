@@ -86,7 +86,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         not builder.endswith("()"), "Invalid experiment_builder='%s'", builder
     )
     builder = f"{builder}(config)"
-    # E.g., ``.
+    # TODO(gp): Use hintrospection.get_function_from_string().
     m = re.match(r"^(\S+)\.(\S+)\((.*)\)$", builder)
     hdbg.dassert(m, "builder='%s'", builder)
     m = cast(re.Match, m)

@@ -9,9 +9,9 @@ import os
 from typing import Tuple
 
 import helpers.hio as hio
-import helpers.old.conda as holdcond
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
+import helpers.old.conda as holdcond
 
 _LOG = logging.getLogger(__name__)
 
@@ -23,9 +23,9 @@ def get_system_info(add_frame: bool) -> str:
     msg = ""
     if add_frame:
         msg += hprint.frame("System info") + "\n"
-    msg += "user name=%s\n" % hsysinte.get_user_name()
-    msg += "server name=%s\n" % hsysinte.get_server_name()
-    msg += "os name=%s\n" % hsysinte.get_os_name()
+    msg += "user name=%s\n" % hsystem.get_user_name()
+    msg += "server name=%s\n" % hsystem.get_server_name()
+    msg += "os name=%s\n" % hsystem.get_os_name()
     msg += "conda path=%s\n" % holdcond.get_conda_path()
     msg += "conda env root=%s\n" % str(holdcond.get_conda_envs_dirs())
     return msg
@@ -66,9 +66,9 @@ def save_env_file(conda_env_name: str, dir_name: str) -> Tuple[str, str]:
     if dir_name is not None:
         file_name = "%s.%s.%s.%s.txt" % (
             conda_env_name,
-            hsysinte.get_user_name(),
-            hsysinte.get_os_name(),
-            hsysinte.get_server_name(),
+            hsystem.get_user_name(),
+            hsystem.get_os_name(),
+            hsystem.get_server_name(),
         )
         dst_file = os.path.join(dir_name, file_name)
         dst_file = os.path.abspath(dst_file)

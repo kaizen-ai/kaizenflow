@@ -14,7 +14,7 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hjupyter as hjupyte
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -145,4 +145,4 @@ def _run_model(
     cmd.append(f"--dst_dir {dst_dir}")
     cmd.append(opts)
     cmd = " ".join(cmd)
-    hsysinte.system(cmd)
+    hsystem.system(cmd)

@@ -5,7 +5,7 @@ import tempfile
 from typing import List
 
 import helpers.hdbg as hdbg
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -15,10 +15,10 @@ _LOG = logging.getLogger(__name__)
 
 class Test_system1(hunitest.TestCase):
     def test1(self) -> None:
-        hsysinte.system("ls")
+        hsystem.system("ls")
 
     def test2(self) -> None:
-        hsysinte.system("ls /dev/null", suppress_output=False)
+        hsystem.system("ls /dev/null", suppress_output=False)
 
     def test3(self) -> None:
         """
@@ -27,7 +27,7 @@ class Test_system1(hunitest.TestCase):
         with tempfile.NamedTemporaryFile() as fp:
             temp_file_name = fp.name
             _LOG.debug("temp_file_name=%s", temp_file_name)
-            hsysinte.system("ls", output_file=temp_file_name)
+            hsystem.system("ls", output_file=temp_file_name)
             hdbg.dassert_exists(temp_file_name)
 
     def test4(self) -> None:
@@ -37,7 +37,7 @@ class Test_system1(hunitest.TestCase):
         with tempfile.NamedTemporaryFile() as fp:
             temp_file_name = fp.name
             _LOG.debug("temp_file_name=%s", temp_file_name)
-            hsysinte.system("ls", output_file=temp_file_name, tee=True)
+            hsystem.system("ls", output_file=temp_file_name, tee=True)
             hdbg.dassert_exists(temp_file_name)
 
     def test5(self) -> None:
@@ -48,21 +48,21 @@ class Test_system1(hunitest.TestCase):
         candidate_name = tempfile._get_candidate_names()  # type: ignore
         temp_file_name += "/" + next(candidate_name)
         _LOG.debug("temp_file_name=%s", temp_file_name)
-        hsysinte.system("ls", output_file=temp_file_name, dry_run=True)
+        hsystem.system("ls", output_file=temp_file_name, dry_run=True)
         hdbg.dassert_not_exists(temp_file_name)
 
     def test6(self) -> None:
         """
         Test abort_on_error=True.
         """
-        hsysinte.system("ls this_file_doesnt_exist", abort_on_error=False)
+        hsystem.system("ls this_file_doesnt_exist", abort_on_error=False)
 
     def test7(self) -> None:
         """
         Test abort_on_error=False.
         """
         with self.assertRaises(RuntimeError) as cm:
-            hsysinte.system("ls this_file_doesnt_exist")
+            hsystem.system("ls this_file_doesnt_exist")
         act = str(cm.exception)
         # Different systems return different rc.
         # cmd='(ls this_file_doesnt_exist) 2>&1' failed with rc='2'
@@ -75,30 +75,30 @@ class Test_system1(hunitest.TestCase):
 
 class Test_system2(hunitest.TestCase):
     def test_get_user_name(self) -> None:
-        act = hsysinte.get_user_name()
+        act = hsystem.get_user_name()
         _LOG.debug("act=%s", act)
         #
-        exp = hsysinte.system_to_string("whoami")[1]
+        exp = hsystem.system_to_string("whoami")[1]
         _LOG.debug("exp=%s", exp)
         self.assertEqual(act, exp)
         #
-        exp = hsysinte.system_to_one_line("whoami")[1]
+        exp = hsystem.system_to_one_line("whoami")[1]
         _LOG.debug("exp=%s", exp)
         self.assertEqual(act, exp)
 
     def test_get_server_name(self) -> None:
-        act = hsysinte.get_server_name()
+        act = hsystem.get_server_name()
         _LOG.debug("act=%s", act)
         #
-        exp = hsysinte.system_to_string("uname -n")[1]
+        exp = hsystem.system_to_string("uname -n")[1]
         _LOG.debug("exp=%s", exp)
         self.assertEqual(act, exp)
 
     def test_get_os_name(self) -> None:
-        act = hsysinte.get_os_name()
+        act = hsystem.get_os_name()
         _LOG.debug("act=%s", act)
         #
-        exp = hsysinte.system_to_string("uname -s")[1]
+        exp = hsystem.system_to_string("uname -s")[1]
         _LOG.debug("exp=%s", exp)
         self.assertEqual(act, exp)
 
@@ -116,7 +116,7 @@ class Test_compute_file_signature1(hunitest.TestCase):
             + "test_check_same_configs_error/output/test.txt"
         )
         dir_depth = 1
-        act = hsysinte._compute_file_signature(file_name, dir_depth=dir_depth)
+        act = hsystem._compute_file_signature(file_name, dir_depth=dir_depth)
         exp = ["output", "test.txt"]
         self.assert_equal(str(act), str(exp))
 
@@ -129,7 +129,7 @@ class Test_compute_file_signature1(hunitest.TestCase):
             + "test_check_same_configs_error/output/test.txt"
         )
         dir_depth = 2
-        act = hsysinte._compute_file_signature(file_name, dir_depth=dir_depth)
+        act = hsystem._compute_file_signature(file_name, dir_depth=dir_depth)
         exp = [
             "TestCheckSameConfigs.test_check_same_configs_error",
             "output",
@@ -143,7 +143,7 @@ class Test_compute_file_signature1(hunitest.TestCase):
         """
         file_name = "/app/amp/core/test/TestApplyAdfTest.test1/output/test.txt"
         dir_depth = 4
-        act = hsysinte._compute_file_signature(file_name, dir_depth=dir_depth)
+        act = hsystem._compute_file_signature(file_name, dir_depth=dir_depth)
         exp = [
             "core",
             "test",
@@ -165,7 +165,7 @@ class Test_find_file_with_dir1(hunitest.TestCase):
         # Use this file.
         file_name = "helpers/test/test_system_interaction.py"
         dir_depth = 1
-        act = hsysinte.find_file_with_dir(file_name, dir_depth=dir_depth)
+        act = hsystem.find_file_with_dir(file_name, dir_depth=dir_depth)
         exp = r"""['helpers/test/test_system_interaction.py']"""
         self.assert_equal(str(act), str(exp), purify_text=True)
 
@@ -238,7 +238,7 @@ class Test_find_file_with_dir1(hunitest.TestCase):
         # E.g., helpers/test/test_system_interaction.py::Test_find_file_with_dir1::test2/test.txt
         file_name = os.path.join(self.get_output_dir(), "test.txt")
         _LOG.debug("file_name=%s", file_name)
-        act: List[str] = hsysinte.find_file_with_dir(
+        act: List[str] = hsystem.find_file_with_dir(
             file_name, dir_depth=dir_depth, mode=mode
         )
         _LOG.debug("Found %d matching files", len(act))
@@ -250,7 +250,7 @@ class Test_find_file_with_dir1(hunitest.TestCase):
 
 class Test_Linux_commands1(hunitest.TestCase):
     def test_du1(self) -> None:
-        hsysinte.du(".")
+        hsystem.du(".")
 
 
 # #############################################################################
@@ -262,7 +262,7 @@ class Test_has_timestamp1(hunitest.TestCase):
         No timestamp.
         """
         file_name = "patch.amp.8c5a2da9.tgz"
-        act = hsysinte.has_timestamp(file_name)
+        act = hsystem.has_timestamp(file_name)
         exp = False
         self.assertEqual(act, exp)
 
@@ -271,7 +271,7 @@ class Test_has_timestamp1(hunitest.TestCase):
         Valid timestamp.
         """
         file_name = "patch.amp.8c5a2da9.20210725_225857.tgz"
-        act = hsysinte.has_timestamp(file_name)
+        act = hsystem.has_timestamp(file_name)
         exp = True
         self.assertEqual(act, exp)
 
@@ -280,7 +280,7 @@ class Test_has_timestamp1(hunitest.TestCase):
         Valid timestamp.
         """
         file_name = "/foo/bar/patch.amp.8c5a2da9.20210725-22_58_57.tgz"
-        act = hsysinte.has_timestamp(file_name)
+        act = hsystem.has_timestamp(file_name)
         exp = True
         self.assertEqual(act, exp)
 
@@ -289,7 +289,7 @@ class Test_has_timestamp1(hunitest.TestCase):
         Valid timestamp.
         """
         file_name = "/foo/bar/patch.amp.8c5a2da9.20210725225857.tgz"
-        act = hsysinte.has_timestamp(file_name)
+        act = hsystem.has_timestamp(file_name)
         exp = True
         self.assertEqual(act, exp)
 
@@ -298,7 +298,7 @@ class Test_has_timestamp1(hunitest.TestCase):
         Valid timestamp.
         """
         file_name = "/foo/bar/patch.amp.8c5a2da9.20210725_22_58_57.tgz"
-        act = hsysinte.has_timestamp(file_name)
+        act = hsystem.has_timestamp(file_name)
         exp = True
         self.assertEqual(act, exp)
 
@@ -307,7 +307,7 @@ class Test_has_timestamp1(hunitest.TestCase):
         Valid timestamp.
         """
         file_name = "/foo/bar/patch.amp.8c5a2da9.20210725225857.tgz"
-        act = hsysinte.has_timestamp(file_name)
+        act = hsystem.has_timestamp(file_name)
         exp = True
         self.assertEqual(act, exp)
 
@@ -319,7 +319,7 @@ class Test_append_timestamp_tag1(hunitest.TestCase):
         """
         file_name = "/foo/bar/patch.amp.8c5a2da9.tgz"
         tag = ""
-        act = hsysinte.append_timestamp_tag(file_name, tag)
+        act = hsystem.append_timestamp_tag(file_name, tag)
         # /foo/bar/patch.amp.8c5a2da9.20210726-15_11_25.tgz
         exp = r"/foo/bar/patch.amp.8c5a2da9.\S+.tgz"
         self.assertRegex(act, exp)
@@ -330,7 +330,7 @@ class Test_append_timestamp_tag1(hunitest.TestCase):
         """
         file_name = "/foo/bar/patch.amp.8c5a2da9.tgz"
         tag = "hello"
-        act = hsysinte.append_timestamp_tag(file_name, tag)
+        act = hsystem.append_timestamp_tag(file_name, tag)
         # /foo/bar/patch.amp.8c5a2da9.20210726-15_11_25.hello.tgz
         exp = r"/foo/bar/patch.amp.8c5a2da9.\S+.hello.tgz"
         self.assertRegex(act, exp)
@@ -341,7 +341,7 @@ class Test_append_timestamp_tag1(hunitest.TestCase):
         """
         file_name = "/foo/bar/patch.amp.8c5a2da9.20210725_225857.tgz"
         tag = ""
-        act = hsysinte.append_timestamp_tag(file_name, tag)
+        act = hsystem.append_timestamp_tag(file_name, tag)
         # /foo/bar/patch.amp.8c5a2da9.20210725_225857.20210726-15_11_25.tgz
         exp = "/foo/bar/patch.amp.8c5a2da9.20210725_225857.tgz"
         self.assertEqual(act, exp)
@@ -352,6 +352,6 @@ class Test_append_timestamp_tag1(hunitest.TestCase):
         """
         file_name = "/foo/bar/patch.amp.8c5a2da9.20210725_225857.tgz"
         tag = "hello"
-        act = hsysinte.append_timestamp_tag(file_name, tag)
+        act = hsystem.append_timestamp_tag(file_name, tag)
         exp = "/foo/bar/patch.amp.8c5a2da9.20210725_225857.hello.tgz"
         self.assertEqual(act, exp)

@@ -1,19 +1,48 @@
-from typing import Any, List
+"""
+Import as:
+
+import im_v2.common.data.client.test.test_clients_helpers as icdcttch
+"""
+from typing import Any, List, Optional
 
 import pandas as pd
 
 import helpers.hpandas as hpandas
-import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 import im_v2.common.data.client as icdc
 
+# TODO(gp): @Grisha -> im_client_test_case.py
 
+
+# TODO(gp): @Grisha This is a common pattern to check a df, that we want to
+#  generalize and move to `unit_test.py`
+# def _check_df_output(
+#    self_: Any,
+#    actual_df: pd.DataFrame,
+#    expected_length: Optional[int],
+#    expected_column_names: Optional[List[str]],
+#    expected_column_values: Optional[Dict[str, List[str]],
+#    expected_signature: str,
+# """
+# Verify that actual outcome dataframe matches the expected one.
+#
+# :param actual_df: actual outcome dataframe
+# :param expected_length: expected outcome dataframe length
+#    - If `None` skip the check
+# :param expected_column_names: expected columns as a set
+#    - If `None` skip the check
+# :param expected_column_values: dict of column names and values that they should
+#      contain. If `None` skip the check
+# :param expected_signature: expected outcome as string
+# """
 def _check_output(
-    self_: Any,
+        self_: Any,
     actual_df: pd.DataFrame,
     expected_length: int,
-    expected_exchange_ids: List[str],
-    expected_currency_pairs: List[str],
+    # TODO(gp): @Grisha exchange_ids and currency_pairs are specific of a type of
+    #  assets. Classes should return `full_symbol = exchange_ids::assert_id`.
+    expected_exchange_ids: Optional[List[str]],
+    expected_currency_pairs: Optional[List[str]],
     expected_signature: str,
 ) -> None:
     """
@@ -29,15 +58,20 @@ def _check_output(
     act = []
     #
     actual_df = actual_df[sorted(actual_df.columns)]
-    act.append(hpandas.df_to_short_str("df", actual_df))
+    act.append(hpandas.df_to_str(actual_df, print_shape_info=True, tag="df"))
     #
-    actual_exchange_ids = sorted(list(actual_df["exchange_id"].dropna().unique()))
-    act.append("exchange_ids=%s" % ",".join(actual_exchange_ids))
+    if expected_exchange_ids is not None:
+        actual_exchange_ids = sorted(
+            list(actual_df["exchange_id"].dropna().unique())
+        )
+        act.append("exchange_ids=%s" % ",".join(actual_exchange_ids))
     #
-    actual_currency_pairs = sorted(
-        list(actual_df["currency_pair"].dropna().unique())
-    )
-    act.append("currency_pairs=%s" % ",".join(actual_currency_pairs))
+    if expected_currency_pairs is not None:
+        actual_currency_pairs = sorted(
+            list(actual_df["currency_pair"].dropna().unique())
+        )
+        act.append("currency_pairs=%s" % ",".join(actual_currency_pairs))
+    #
     actual_signature = "\n".join(act)
     # Check.
     self_.assert_equal(
@@ -48,10 +82,14 @@ def _check_output(
     )
     # Check output df length.
     self_.assert_equal(str(expected_length), str(actual_df.shape[0]))
-    # Check unique exchange ids in the output df.
-    self_.assert_equal(str(actual_exchange_ids), str(expected_exchange_ids))
-    # Check unique currency pairs in the output df.
-    self_.assert_equal(str(actual_currency_pairs), str(expected_currency_pairs))
+    if expected_exchange_ids is not None:
+        # Check unique exchange ids in the output df.
+        self_.assert_equal(str(actual_exchange_ids), str(expected_exchange_ids))
+    if expected_currency_pairs is not None:
+        # Check unique currency pairs in the output df.
+        self_.assert_equal(
+            str(actual_currency_pairs), str(expected_currency_pairs)
+        )
 
 
 # #############################################################################
@@ -60,31 +98,37 @@ def _check_output(
 
 
 class ImClientTestCase(hunitest.TestCase):
+    """
+    Help test classes for classes derived from `ImClient` by implementing
+    template test methods for the interface methods in any `ImClient`.
+    """
+
+    # TODO(gp): To enforce that all methods are called we could add corresponding
+    #  abstract methods to the test methods.
+
     def _test_read_data1(
         self,
         im_client: icdc.ImClient,
         full_symbol: icdc.FullSymbol,
-        expected_length: int,
-        expected_exchange_ids: List[str],
-        expected_currency_pairs: List[str],
-        expected_signature: str,
+        # TODO(gp): @Grisha Use everywhere this approach of passing args, kwargs
+        #  instead of all the vars.
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
         """
         Test:
-        - reading data for one symbol
+        - reading data for one full symbol
         - start_ts = end_ts = None
         """
         full_symbols = [full_symbol]
         start_ts = None
         end_ts = None
-        actual = im_client.read_data(full_symbols, start_ts, end_ts)
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts)
         _check_output(
             self,
-            actual,
-            expected_length,
-            expected_exchange_ids,
-            expected_currency_pairs,
-            expected_signature,
+            actual_df,
+            *args,
+            **kwargs,
         )
 
     def _test_read_data2(
@@ -98,15 +142,15 @@ class ImClientTestCase(hunitest.TestCase):
     ) -> None:
         """
         Test:
-        - reading data for two symbols
+        - reading data for two or more full symbols
         - start_ts = end_ts = None
         """
         start_ts = None
         end_ts = None
-        actual = im_client.read_data(full_symbols, start_ts, end_ts)
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts)
         _check_output(
             self,
-            actual,
+            actual_df,
             expected_length,
             expected_exchange_ids,
             expected_currency_pairs,
@@ -125,15 +169,15 @@ class ImClientTestCase(hunitest.TestCase):
     ) -> None:
         """
         Test:
-        - reading data for two symbols
+        - reading data for two or more symbols
         - specified start_ts
         - end_ts = None
         """
         end_ts = None
-        actual = im_client.read_data(full_symbols, start_ts, end_ts)
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts)
         _check_output(
             self,
-            actual,
+            actual_df,
             expected_length,
             expected_exchange_ids,
             expected_currency_pairs,
@@ -152,15 +196,15 @@ class ImClientTestCase(hunitest.TestCase):
     ) -> None:
         """
         Test:
-        - reading data for two symbols
+        - reading data for two or more symbols
         - start_ts = None
         - specified end_ts
         """
         start_ts = None
-        actual = im_client.read_data(full_symbols, start_ts, end_ts)
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts)
         _check_output(
             self,
-            actual,
+            actual_df,
             expected_length,
             expected_exchange_ids,
             expected_currency_pairs,
@@ -180,13 +224,13 @@ class ImClientTestCase(hunitest.TestCase):
     ) -> None:
         """
         Test:
-        - reading data for two symbols
+        - reading data for two or more symbols
         - specified start_ts and end_ts
         """
-        actual = im_client.read_data(full_symbols, start_ts, end_ts)
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts)
         _check_output(
             self,
-            actual,
+            actual_df,
             expected_length,
             expected_exchange_ids,
             expected_currency_pairs,
@@ -204,8 +248,12 @@ class ImClientTestCase(hunitest.TestCase):
         full_symbols = [full_symbol]
         start_ts = None
         end_ts = None
+        # TODO(gp): We should raise a more specific assertion and / or
+        #  check part of the exception as a string.
         with self.assertRaises(AssertionError):
             im_client.read_data(full_symbols, start_ts, end_ts)
+
+    # ////////////////////////////////////////////////////////////////////////
 
     def _test_get_start_ts_for_symbol1(
         self,
@@ -232,6 +280,8 @@ class ImClientTestCase(hunitest.TestCase):
         # TODO(Grisha): use `assertGreater` when start downloading more data.
         self.assertEqual(actual_end_ts, expected_end_ts)
 
+    # ////////////////////////////////////////////////////////////////////////
+
     def _test_get_universe1(
         self,
         # TODO(Grisha): pass vendor when we start testing `CDD`.
@@ -243,6 +293,8 @@ class ImClientTestCase(hunitest.TestCase):
         """
         Test that universe is computed correctly.
         """
+        # TODO(gp): We might want to sort actual and expected universe for
+        #  stability.
         # TODO(Grisha): add unit tests for `as_asset_ids=True` CMTask #822.
         universe = im_client.get_universe(as_asset_ids=False)
         actual_length = len(universe)

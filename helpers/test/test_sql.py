@@ -8,17 +8,18 @@ import pytest
 import helpers.hgit as hgit
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
+
 # TODO(gp): This is a problematic dependency, since helpers should not depende
 #  from im_v2. For tests we could be more forgiving, but it would be better to
 #  avoid. We should have and use a `TestDbHelper` that doesn't depend on IM
 #  in helpers.
-import im_v2.common.db.db_utils as imvcodbut
+import im_v2.common.db.db_utils as imvcddbut
 
 _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): helpers can't depend from im.
-class TestSql1(imvcodbut.TestImDbHelper):
+class TestSql1(imvcddbut.TestImDbHelper):
     @pytest.mark.slow("10 seconds.")
     def test_db_connection_to_tuple(self) -> None:
         """

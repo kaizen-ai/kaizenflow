@@ -8,15 +8,17 @@ import im_v2.common.data.client.test.test_clients_helper as ivcdcttch
 import im_v2.common.db.db_utils as imvcddbut
 
 # #############################################################################
-# TestCcxtCsvClient
+# TestCcxtCsvClient1
 # #############################################################################
 
 
 class TestCcxtCsvClient1(ivcdcttch.ImClientTestCase):
+    """
+    For all the test methods see description of corresponding private method in
+    the parent class.
+    """
+
     def test_read_data1(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         im_client = ivcdctcce.get_CcxtCsvClient_example2()
         full_symbol = "binance::BTC_USDT"
         #
@@ -51,9 +53,6 @@ class TestCcxtCsvClient1(ivcdcttch.ImClientTestCase):
         )
 
     def test_read_data2(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         im_client = ivcdctcce.get_CcxtCsvClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         #
@@ -88,9 +87,6 @@ class TestCcxtCsvClient1(ivcdcttch.ImClientTestCase):
         )
 
     def test_read_data3(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         im_client = ivcdctcce.get_CcxtCsvClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         start_ts = pd.Timestamp("2018-08-17T00:02:00-00:00")
@@ -126,9 +122,6 @@ class TestCcxtCsvClient1(ivcdcttch.ImClientTestCase):
         )
 
     def test_read_data4(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         im_client = ivcdctcce.get_CcxtCsvClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         end_ts = pd.Timestamp("2018-08-17T00:05:00-00:00")
@@ -164,9 +157,6 @@ class TestCcxtCsvClient1(ivcdcttch.ImClientTestCase):
         )
 
     def test_read_data5(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         im_client = ivcdctcce.get_CcxtCsvClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         start_ts = pd.Timestamp("2018-08-17T00:01:00-00:00")
@@ -204,17 +194,13 @@ class TestCcxtCsvClient1(ivcdcttch.ImClientTestCase):
         )
 
     def test_read_data6(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         im_client = ivcdctcce.get_CcxtCsvClient_example1()
         full_symbol = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
 
+    # ////////////////////////////////////////////////////////////////////////
+
     def test_get_start_ts_for_symbol1(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         im_client = ivcdctcce.get_CcxtCsvClient_example2()
         full_symbol = "binance::BTC_USDT"
         expected_start_ts = pd.to_datetime("2018-08-17 00:00:00", utc=True)
@@ -223,18 +209,14 @@ class TestCcxtCsvClient1(ivcdcttch.ImClientTestCase):
         )
 
     def test_get_end_ts_for_symbol1(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         im_client = ivcdctcce.get_CcxtCsvClient_example2()
         full_symbol = "binance::BTC_USDT"
         expected_end_ts = pd.to_datetime("2018-08-17 01:39:00", utc=True)
         self._test_get_end_ts_for_symbol1(im_client, full_symbol, expected_end_ts)
 
+    # ////////////////////////////////////////////////////////////////////////
+
     def test_get_universe1(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         im_client = ivcdctcce.get_CcxtCsvClient_example2()
         expected_length = 38
         expected_first_elements = [
@@ -256,15 +238,17 @@ class TestCcxtCsvClient1(ivcdcttch.ImClientTestCase):
 
 
 # #############################################################################
-# TestCcxtPqByAssetClient
+# TestCcxtPqByAssetClient1
 # #############################################################################
 
 
 class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
+    """
+    For all the test methods see description of corresponding private method in
+    the parent class.
+    """
+
     def test_read_data1(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
         full_symbol = "binance::BTC_USDT"
         #
@@ -299,9 +283,6 @@ class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
         )
 
     def test_read_data2(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         #
@@ -336,9 +317,6 @@ class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
         )
 
     def test_read_data3(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         start_ts = pd.Timestamp("2018-08-17T00:02:00-00:00")
@@ -374,9 +352,6 @@ class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
         )
 
     def test_read_data4(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         end_ts = pd.Timestamp("2018-08-17T00:05:00-00:00")
@@ -412,9 +387,6 @@ class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
         )
 
     def test_read_data5(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         start_ts = pd.Timestamp("2018-08-17T00:01:00-00:00")
@@ -452,17 +424,13 @@ class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
         )
 
     def test_read_data6(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
         full_symbol = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
 
+    # ////////////////////////////////////////////////////////////////////////
+
     def test_get_start_ts_for_symbol1(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
         full_symbol = "binance::BTC_USDT"
         expected_start_ts = pd.to_datetime("2018-08-17 00:00:00", utc=True)
@@ -471,18 +439,14 @@ class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
         )
 
     def test_get_end_ts_for_symbol1(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
         full_symbol = "binance::BTC_USDT"
         expected_end_ts = pd.to_datetime("2018-08-17 01:39:00", utc=True)
         self._test_get_end_ts_for_symbol1(im_client, full_symbol, expected_end_ts)
 
+    # ////////////////////////////////////////////////////////////////////////
+
     def test_get_universe1(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
         expected_length = 38
         expected_first_elements = [
@@ -502,11 +466,19 @@ class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
             expected_last_elements,
         )
 
+
+# #############################################################################
+# TestCcxtDbClient1
+# #############################################################################
+
+
 class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
+    """
+    For all the test methods see description of corresponding private method in
+    the parent class.
+    """
+
     def test_read_data1(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Load test data.
         self._create_test_table()
         test_data = self._get_test_data()
@@ -533,8 +505,6 @@ class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper)
         2021-09-09 00:00:00+00:00   60.0      BTC_USDT     binance  binance::BTC_USDT  40.0  50.0  30.0    70.0
         2021-09-09 00:01:00+00:00   61.0      BTC_USDT     binance  binance::BTC_USDT  41.0  51.0  31.0    71.0
         2021-09-09 00:02:00+00:00    NaN           NaN         NaN  binance::BTC_USDT   NaN   NaN   NaN     NaN
-        ...
-        2021-09-09 00:02:00+00:00    NaN           NaN         NaN  binance::BTC_USDT   NaN   NaN   NaN     NaN
         2021-09-09 00:03:00+00:00    NaN           NaN         NaN  binance::BTC_USDT   NaN   NaN   NaN     NaN
         2021-09-09 00:04:00+00:00   64.0      BTC_USDT     binance  binance::BTC_USDT  44.0  54.0  34.0    74.0
         exchange_ids=binance
@@ -552,9 +522,6 @@ class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     def test_read_data2(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Load test data.
         self._create_test_table()
         test_data = self._get_test_data()
@@ -601,9 +568,6 @@ class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     def test_read_data3(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Load test data.
         self._create_test_table()
         test_data = self._get_test_data()
@@ -631,9 +595,6 @@ class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper)
         2021-09-09 00:02:00+00:00   62.0      ETH_USDT     binance  binance::ETH_USDT  42.0  52.0  32.0    72.0
         2021-09-09 00:03:00+00:00    NaN           NaN         NaN  binance::ETH_USDT   NaN   NaN   NaN     NaN
         2021-09-09 00:04:00+00:00   64.0      BTC_USDT     binance  binance::BTC_USDT  44.0  54.0  34.0    74.0
-        ...
-        2021-09-09 00:03:00+00:00    NaN           NaN         NaN  binance::ETH_USDT   NaN   NaN   NaN     NaN
-        2021-09-09 00:04:00+00:00   64.0      BTC_USDT     binance  binance::BTC_USDT  44.0  54.0  34.0    74.0
         2021-09-09 00:04:00+00:00   64.0      ETH_USDT     binance  binance::ETH_USDT  44.0  54.0  34.0    74.0
         exchange_ids=binance
         currency_pairs=BTC_USDT,ETH_USDT"""
@@ -651,9 +612,6 @@ class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     def test_read_data4(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Load test data.
         self._create_test_table()
         test_data = self._get_test_data()
@@ -697,9 +655,6 @@ class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     def test_read_data5(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Load test data.
         self._create_test_table()
         test_data = self._get_test_data()
@@ -744,9 +699,6 @@ class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     def test_read_data6(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         vendor = "CCXT"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
@@ -756,10 +708,9 @@ class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper)
         full_symbol = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
 
+    # ///////////////////////////////////////////////////////////////////////
+
     def test_get_start_ts_for_symbol1(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Load test data.
         self._create_test_table()
         test_data = self._get_test_data()
@@ -780,9 +731,6 @@ class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     def test_get_end_ts_for_symbol1(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Load test data.
         self._create_test_table()
         test_data = self._get_test_data()
@@ -800,10 +748,9 @@ class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper)
         # Delete the table.
         hsql.remove_table(self.connection, "ccxt_ohlcv")
 
+    # ///////////////////////////////////////////////////////////////////////
+
     def test_get_universe1(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         vendor = "CCXT"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
@@ -827,6 +774,8 @@ class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper)
             expected_first_elements,
             expected_last_elements,
         )
+
+    # ///////////////////////////////////////////////////////////////////////
 
     def _create_test_table(self) -> None:
         """

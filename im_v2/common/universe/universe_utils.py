@@ -10,7 +10,10 @@ from typing import Dict, Tuple
 
 import helpers.hdbg as hdbg
 
+# TODO(gp): This file is more generic than `asset_ids` vs `full_symbols` and could
+#  go in helpers.
 
+# TODO(gp): @Grisha -> numerical_id
 def string_to_numeric_id(string_id: str) -> int:
     """
     Convert string id into a numeric one.
@@ -30,18 +33,20 @@ def string_to_numeric_id(string_id: str) -> int:
     return num_id
 
 
+# TODO(gp): @Grisha the client should cache this function and -> `universe: List[str]`
+# TODO(gp): @Grisha -> build_numerical_to_string_id_mapping
 @functools.lru_cache()
 def build_num_to_string_id_mapping(universe: Tuple[str, ...]) -> Dict[int, str]:
     """
     Build a mapping from numeric ids to string ones.
 
-    :param universe: universe of string ids to convert
-    :return: numeric to string ids mapping
+    :param universe: universe of string ids
+    :return: numerical to string ids mapping
     """
     hdbg.dassert_no_duplicates(universe)
     mapping: Dict[int, str] = {}
     for string_id in universe:
-        # Convert string id to a numeric one.
+        # Convert string to a numerical id.
         numeric_id = string_to_numeric_id(string_id)
         hdbg.dassert_not_in(
             numeric_id,

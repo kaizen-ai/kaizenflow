@@ -72,15 +72,12 @@ def data_source_node_factory(
         ret = dtfcore.MultivariateNormalGenerator(nid, **source_node_kwargs)
     elif source_node_name == "RealTimeDataSource":
         ret = RealTimeDataSource(nid, **source_node_kwargs)
+    elif source_node_name == "HistoricalDataSource":
+        ret = HistoricalDataSource(nid, **source_node_kwargs)
     elif source_node_name == "disk":
         ret = dtfcore.DiskDataSource(nid, **source_node_kwargs)
     elif source_node_name == "DataLoader":
         ret = dtfcore.DataLoader(nid, **source_node_kwargs)
-    elif source_node_name == "crypto_data_download":
-        # TODO(gp): This should go through RealTimeDataSource.
-        import core_lem.dataflow.nodes.sources as cldns
-
-        ret = cldns.CryptoDataDownload_DataReader(nid, **source_node_kwargs)
     elif source_node_name == "kibot":
         # TODO(gp): This should go through RealTimeDataSource.
         ret = KibotDataReader(nid, **source_node_kwargs)
@@ -332,7 +329,7 @@ class KibotEquityReader(dtfcore.DataSource):
             # Rename column for volume so that it adheres with our conventions.
             data = data.rename(columns={"vol": "volume"})
             # Print some info about the data.
-            _LOG.debug(hpandas.df_to_short_str("data", data))
+            _LOG.debug(hpandas.df_to_str(data, print_shape_info=True, tag="data"))
             # Ensure data is on a uniform frequency grid.
             data = cofinanc.resample_ohlcv_bars(data, rule=self._frequency.value)
             dfs[symbol] = data
@@ -379,7 +376,7 @@ def _convert_to_multiindex(df: pd.DataFrame, asset_id_col: str) -> pd.DataFrame:
     # Copied from `_load_multiple_instrument_data()`.
     _LOG.debug(
         "Before multiindex conversion\n:%s",
-        hpandas.dataframe_to_str(df.head()),
+        hpandas.df_to_str(df.head()),
     )
     dfs = {}
     # TODO(Paul): Pass the column name through the constructor, so we can make it
@@ -395,7 +392,7 @@ def _convert_to_multiindex(df: pd.DataFrame, asset_id_col: str) -> pd.DataFrame:
     del df[asset_id_col]
     _LOG.debug(
         "After multiindex conversion\n:%s",
-        hpandas.dataframe_to_str(df.head()),
+        hpandas.df_to_str(df.head()),
     )
     return df
 
@@ -416,14 +413,14 @@ class RealTimeDataSource(dtfcore.DataSource):
         self,
         nid: dtfcore.NodeId,
         market_data: mdata.AbstractMarketData,
-        period: str,
+        timedelta: pd.Timedelta,
         asset_id_col: Union[int, str],
         multiindex_output: bool,
     ) -> None:
         """
         Constructor.
 
-        :param period: how much history is needed from the real-time node. See
+        :param timedelta: how much history is needed from the real-time node. See
             `AbstractMarketData.get_data()` for details.
         :param asset_id_col: the name of the column from `market_data`
             containing the asset ids
@@ -431,7 +428,8 @@ class RealTimeDataSource(dtfcore.DataSource):
         super().__init__(nid)
         hdbg.dassert_isinstance(market_data, mdata.AbstractMarketData)
         self._market_data = market_data
-        self._period = period
+        hdbg.dassert_isinstance(timedelta, pd.Timedelta)
+        self._timedelta = timedelta
         self._asset_id_col = asset_id_col
         self._multiindex_output = multiindex_output
 
@@ -453,7 +451,7 @@ class RealTimeDataSource(dtfcore.DataSource):
     def _get_data(self) -> None:
         # TODO(gp): This approach of communicating params through the state
         #  makes the code difficult to understand.
-        self.df = self._market_data.get_data_for_last_period(self._period)
+        self.df = self._market_data.get_data_for_last_period(self._timedelta)
         if self._multiindex_output:
             self.df = _convert_to_multiindex(self.df, self._asset_id_col)
 
@@ -476,6 +474,7 @@ class HistoricalDataSource(dtfcore.DataSource):
         ts_col_name: str,
         multiindex_output: bool,
         *,
+        # TODO(gp): Pass the columns to keep, instead of the columns to remove.
         col_names_to_remove: Optional[List[str]] = None,
     ) -> None:
         """
@@ -549,7 +548,7 @@ class HistoricalDataSource(dtfcore.DataSource):
         if self._col_names_to_remove is not None:
             _LOG.debug(
                 "Before column removal\n:%s",
-                hpandas.dataframe_to_str(df.head()),
+                hpandas.df_to_str(df.head()),
             )
             _LOG.debug(
                 "Removing %s from %s", self._col_names_to_remove, df.columns
@@ -559,7 +558,7 @@ class HistoricalDataSource(dtfcore.DataSource):
                 del df[col_name]
             _LOG.debug(
                 "After column removal\n:%s",
-                hpandas.dataframe_to_str(df.head()),
+                hpandas.df_to_str(df.head()),
             )
         if self._multiindex_output:
             df = _convert_to_multiindex(df, self._asset_id_col)

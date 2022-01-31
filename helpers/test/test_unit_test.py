@@ -19,7 +19,7 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ def _git_add(file_name: str) -> None:
     # pylint: disable=unreachable
     cmd = "git add -u %s" % file_name
     _LOG.debug("> %s", cmd)
-    rc = hsysinte.system(cmd, abort_on_error=False)
+    rc = hsystem.system(cmd, abort_on_error=False)
     if rc:
         _LOG.warning(
             "Can't run '%s': you need to add the file manually",
@@ -1134,4 +1134,31 @@ class Test_purify_object_reference1(hunitest.TestCase):
         datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30),
         'ath_end_time': datetime.time(16, 40), 'trading_end_time':
         datetime.time(16, 4  0)}}"""
+        self.helper(txt, exp)
+
+
+# #############################################################################
+
+
+class Test_purify_amp_reference1(hunitest.TestCase):
+    def helper(self, txt: str, exp: str) -> None:
+        txt = hprint.dedent(txt)
+        act = hunitest.purify_amp_references(txt)
+        exp = hprint.dedent(exp)
+        self.assert_equal(act, exp)
+
+    def test1(self) -> None:
+        """
+        Remove the reference to `amp.`.
+        """
+        txt = """
+        * Failed assertion *
+        Instance '<amp.helpers.test.test_dbg._Man object at 0x123456>'
+            of class '_Man' is not a subclass of '<class 'int'>'
+        """
+        exp = r"""
+        * Failed assertion *
+        Instance '<helpers.test.test_dbg._Man object at 0x123456>'
+            of class '_Man' is not a subclass of '<class 'int'>'
+        """
         self.helper(txt, exp)

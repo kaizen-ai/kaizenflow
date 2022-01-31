@@ -2,8 +2,7 @@ import logging
 
 import pytest
 
-import helpers.lib_tasks as hlibtask
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 import im_v2.im_lib_tasks as imvimlita  # pylint: disable=no-name-in-module
 
@@ -236,11 +235,11 @@ class TestGetRemoveDbCmd(hunitest.TestCase):
 
 
 # TODO(Grisha): add more tests and enable this one having `dind`.
-@pytest.mark.skipif(hsysinte.is_inside_docker(), reason="amp #1189")
+@pytest.mark.skipif(hsystem.is_inside_docker(), reason="amp #1189")
 class TestImDockerCmd(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test running a simple command inside `im` container.
         """
         cmd = "invoke im_docker_cmd -c ls"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)

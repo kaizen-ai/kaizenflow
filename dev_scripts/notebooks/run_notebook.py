@@ -27,7 +27,7 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hjoblib as hjoblib
 import helpers.hparser as hparser
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -100,7 +100,7 @@ def _run_notebook(
                 num_attempts,
             )
         _LOG.info("cmd='%s'", cmd)
-        rc = hsysinte.system(cmd, output_file=log_file, abort_on_error=False)
+        rc = hsystem.system(cmd, output_file=log_file, abort_on_error=False)
         if rc == 0:
             _LOG.info("Running notebook was successful")
             break
@@ -124,7 +124,7 @@ def _run_notebook(
                 + " --action publish"
             )
             log_file = log_file.replace(".log", ".html.log")
-            hsysinte.system(cmd, output_file=log_file)
+            hsystem.system(cmd, output_file=log_file)
         # Mark as success.
         dtfmodutil.mark_config_as_success(experiment_result_dir)
     return rc

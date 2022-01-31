@@ -18,7 +18,7 @@ import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hparser as hparser
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hdbg.init_logger(verbosity=args.log_level)
     # Get the files.
     cmd = "find %s -perm +111 -type f" % args.src_dir
-    _, output = hsysinte.system_to_string(cmd)
+    _, output = hsystem.system_to_string(cmd)
     file_names = output.split("\n")
     file_names = sorted(file_names)
     file_names = [
@@ -115,7 +115,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Format the md.
     _LOG.info("Formatting")
     cmd = "linter.py -f %s" % args.dst_file
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
 
 
 if __name__ == "__main__":

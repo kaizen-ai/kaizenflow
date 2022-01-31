@@ -36,7 +36,7 @@ import helpers.hio as hio
 import helpers.hopen as hopen
 import helpers.hparser as hparser
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ _SCRIPT = None
 def _system(cmd: str, log_level: int = logging.INFO, **kwargs: Any) -> int:
     if _SCRIPT is not None:
         _SCRIPT.append(cmd)
-    rc = hsysinte.system(cmd, log_level=log_level, **kwargs)
+    rc = hsystem.system(cmd, log_level=log_level, **kwargs)
     return rc  # type: ignore
 
 
@@ -59,7 +59,7 @@ def _system_to_string(
 ) -> Tuple[int, str]:
     if _SCRIPT is not None:
         _SCRIPT.append(cmd)
-    rc, txt = hsysinte.system_to_string(cmd, log_level=log_level, **kwargs)
+    rc, txt = hsystem.system_to_string(cmd, log_level=log_level, **kwargs)
     return rc, txt
 
 

@@ -420,15 +420,6 @@ def git_merge_master(ctx, ff_only=False, abort_if_not_clean=True):  # type: igno
     _run(ctx, cmd)
 
 
-# TODO(gp): Add git_co(ctx)
-# Reuse hgit.git_stash_push() and hgit.stash_apply()
-# git stash save your-file-name
-# git checkout master
-# # do whatever you had to do with master
-# git checkout staging
-# git stash pop
-
-
 @task
 def git_clean(ctx, fix_perms=False, dry_run=False):  # type: ignore
     """
@@ -695,7 +686,8 @@ def git_create_branch(  # type: ignore
         `LemTask169_Get_GH_actions`)
     :param issue_id: use the canonical name for the branch corresponding to that
         issue
-    :param repo_short_name: name of the GitHub repo_short_name that the `issue_id` belongs to
+    :param repo_short_name: name of the GitHub repo_short_name that the `issue_id`
+        belongs to
         - "current" (default): the current repo_short_name
         - short name (e.g., "amp", "lm") of the branch
     :param suffix: suffix (e.g., "02") to add to the branch name when using issue_id
@@ -732,7 +724,7 @@ def git_create_branch(  # type: ignore
     # Check that the branch is not just a number.
     m = re.match("^\d+$", branch_name)
     hdbg.dassert(not m, "Branch names with only numbers are invalid")
-    # The valid format of a branch name is `AmpTask1903_Implemented_system_Portfolio`.
+    # The valid format of a branch name is `AmpTask1903_Implemented_system_...`.
     m = re.match("^\S+Task\d+_\S+$", branch_name)
     hdbg.dassert(m, "Branch name should be '{Amp,...}TaskXYZ_...'")
     hdbg.dassert(
@@ -832,16 +824,27 @@ def git_rename_branch(ctx, new_branch_name):  # type: ignore
         f"'{new_branch_name}'"
     )
     hsystem.query_yes_no(msg, abort_on_no=True)
-    # https://stackoverflow.com/questions/6591213/how-do-i-rename-a-local-git-branch
-    # To rename a local branch:
-    # git branch -m <oldname> <newname>
+    # https://stackoverflow.com/questions/30590083
+    # Rename the local branch to the new name.
+    # > git branch -m <old_name> <new_name>
     cmd = f"git branch -m {new_branch_name}"
     _run(ctx, cmd)
-    # git push origin -u <newname>
+    # Delete the old branch on remote.
+    # > git push <remote> --delete <old_name>
+    cmd = f"git push origin --delete {old_branch_name}"
+    _run(ctx, cmd)
+    # Prevent Git from using the old name when pushing in the next step.
+    # Otherwise, Git will use the old upstream name instead of <new_name>.
+    # > git branch --unset-upstream <new_name>
+    cmd = f"git branch --unset-upstream {new_branch_name}"
+    _run(ctx, cmd)
+    # Push the new branch to remote.
+    # > git push <remote> <new_name>
     cmd = f"git push origin {new_branch_name}"
     _run(ctx, cmd)
-    # git push origin --delete <oldname>
-    cmd = f"git push origin --delete {old_branch_name}"
+    # Reset the upstream branch for the new_name local branch.
+    # > git push <remote> -u <new_name>
+    cmd = f"git push origin u {new_branch_name}"
     _run(ctx, cmd)
     print("Done")
 
@@ -1048,6 +1051,12 @@ def git_branch_diff_with_master(  # type: ignore
 #   > i lint --dir-name . --only-format
 #   > cd cmamp1
 #   > i lint --dir-name . --only-format
+#   ```
+#
+# - Remove end-spaces
+#   ```
+#   # Remove
+#   > find . -name "*.txt" | xargs perl -pi -e 'chomp if eof'
 #   ```
 #
 # - Align `lib_tasks.py`
@@ -1624,7 +1633,7 @@ def _get_last_container_id(sudo: bool) -> str:
     # Get the last started container.
     cmd = f"{docker_exec} ps -l | grep -v 'CONTAINER ID'"
     # CONTAINER ID   IMAGE          COMMAND                  CREATED
-    # 90897241b31a   eeb33fe1880a   "/bin/sh -c '/bin/bash'" 34 hours ago ...
+    # 90897241b31a   eeb33fe1880a   "/bin/sh -c '/bin/bash ...
     _, txt = hsystem.system_to_one_line(cmd)
     # Parse the output: there should be at least one line.
     hdbg.dassert_lte(1, len(txt.split(" ")), "Invalid output='%s'", txt)
@@ -1696,7 +1705,6 @@ def docker_kill(  # type: ignore
     :param sudo: use sudo for the Docker commands
     """
     _report_task(hprint.to_str("all"))
-
     docker_exec = _get_docker_exec(sudo)
     # Last container.
     opts = "-l"
@@ -3385,6 +3393,7 @@ def _run_tests(
     coverage: bool,
     collect_only: bool,
     tee_to_file: bool,
+    git_clean: bool,
     *,
     start_coverage_script: bool = False,
     **ctx_run_kwargs: Any,
@@ -3392,6 +3401,9 @@ def _run_tests(
     """
     Same params as `run_fast_tests()`.
     """
+    if git_clean:
+        cmd = "invoke git_clean --fix-perms"
+        _run(ctx, cmd)
     # Build the command line.
     cmd = _build_run_command_line(
         test_list_name,
@@ -3417,7 +3429,7 @@ def _run_tests(
 
 # TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code.
 @task
-def run_fast_tests(  # type: ignore # due to https://github.com/pyinvoke/invoke/issues/357.
+def run_fast_tests(  # type: ignore
     ctx,
     stage="dev",
     version="",
@@ -3426,6 +3438,7 @@ def run_fast_tests(  # type: ignore # due to https://github.com/pyinvoke/invoke/
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    git_clean=False,
     **kwargs,
 ):
     """
@@ -3437,19 +3450,22 @@ def run_fast_tests(  # type: ignore # due to https://github.com/pyinvoke/invoke/
     :param coverage: enable coverage computation
     :param collect_only: do not run tests but show what will be executed
     :param tee_to_file: save output of pytest in `tmp.pytest.log`
+    :param git_clean: run `invoke git_clean --fix-perms` before running the tests
     :param kwargs: kwargs for `ctx.run`
     """
     _report_task()
+    test_list_name = "fast_tests"
     rc = _run_tests(
         ctx,
         stage,
-        "fast_tests",
+        test_list_name,
         version,
         pytest_opts,
         skip_submodules,
         coverage,
         collect_only,
         tee_to_file,
+        git_clean,
         **kwargs,
     )
     return rc
@@ -3465,6 +3481,7 @@ def run_slow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    git_clean=False,
 ):
     """
     Run slow tests.
@@ -3472,16 +3489,18 @@ def run_slow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
+    test_list_name = "slow_tests"
     rc = _run_tests(
         ctx,
         stage,
-        "slow_tests",
+        test_list_name,
         version,
         pytest_opts,
         skip_submodules,
         coverage,
         collect_only,
         tee_to_file,
+        git_clean,
     )
     return rc
 
@@ -3496,6 +3515,7 @@ def run_superslow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    git_clean=False,
 ):
     """
     Run superslow tests.
@@ -3503,16 +3523,18 @@ def run_superslow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
+    test_list_name = "superslow_tests"
     rc = _run_tests(
         ctx,
         stage,
-        "superslow_tests",
+        test_list_name,
         version,
         pytest_opts,
         skip_submodules,
         coverage,
         collect_only,
         tee_to_file,
+        git_clean,
     )
     return rc
 
@@ -3527,9 +3549,10 @@ def run_fast_slow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    git_clean=False,
 ):
     """
-    Run fast and slow tests independently.
+    Run fast and slow tests back-to-back.
 
     Same params as `invoke run_fast_tests`.
     """
@@ -3544,11 +3567,13 @@ def run_fast_slow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
+        git_clean,
         warn=True,
     )
     if fast_test_rc != 0:
         _LOG.error("Fast tests failed")
     # Run slow tests.
+    git_clean = False
     slow_test_rc = run_slow_tests(
         ctx,
         stage,
@@ -3558,11 +3583,12 @@ def run_fast_slow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
+        git_clean,
     )
     if slow_test_rc != 0:
         _LOG.error("Slow tests failed")
+    # Report error, if needed.
     if fast_test_rc != 0 or slow_test_rc != 0:
-        _LOG.error("Fast / slow tests failed")
         raise RuntimeError("Fast / slow tests failed")
     return fast_test_rc, slow_test_rc
 
@@ -3996,6 +4022,8 @@ def _get_lint_docker_cmd(
         docker_cmd_.append(r"--user $(id -u):$(id -g)")
     docker_cmd_.extend(
         [
+            # Pass MYPYPATH for `mypy` to find the packages from PYTHONPATH.
+            "-e MYPYPATH",
             f"-v '{repo_root}':/src",
             f"--workdir={work_dir}",
             f"{image}",
@@ -4334,7 +4362,10 @@ def gh_workflow_list(
         # Find the first success.
         num_rows = table.size()[0]
         for i in range(num_rows):
-            status = table_tmp.get_column("status")[i]
+            status_column = table_tmp.get_column("status")
+            _LOG.debug("status_column=%s", str(status_column))
+            hdbg.dassert_lt(i, len(status_column))
+            status = status_column[i]
             if status == "success":
                 print(f"Workflow '{workflow}' for '{branch_name}' is ok")
                 break
@@ -4841,6 +4872,7 @@ def _fix_group_permissions(dir_name: str, abort_on_error: bool) -> None:
         if is_dir:
             # pylint: disable=line-too-long
             # From https://www.gnu.org/software/coreutils/manual/html_node/Directory-Setuid-and-Setgid.html
+            # If a directory
             # inherit the same group as the directory,
             # pylint: enable=line-too-long
             has_set_group_id = st_mode & stat.S_ISGID

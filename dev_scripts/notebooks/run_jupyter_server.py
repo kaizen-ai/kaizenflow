@@ -19,7 +19,7 @@ import logging
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.user_credentials as usc
 
 _LOG = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ def _get_port_process(port):
         return keep
 
     keep_line = lambda line: _keep_line(port, line)
-    pids, txt = hsysinte.get_process_pids(keep_line)
+    pids, txt = hsystem.get_process_pids(keep_line)
     _LOG.debug("pids=%s", pids)
     return pids, txt
 
@@ -54,7 +54,7 @@ def _check(port):
 
 def _kill(port):
     get_pids = lambda: _get_port_process(port)
-    hsysinte.kill_process(get_pids)
+    hsystem.kill_process(get_pids)
 
 
 def _start(port, action):
@@ -77,7 +77,7 @@ def _start(port, action):
     print("You can connect to: %s:%s" % (ip_name, port))
     cmd = "jupyter notebook '--ip=*' --browser chrome . --port %s" % port
     if action != "only_print_cmd":
-        hsysinte.system(cmd, suppress_output=False, log_level="echo")
+        hsystem.system(cmd, suppress_output=False, log_level="echo")
     else:
         print(cmd)
 

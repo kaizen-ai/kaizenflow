@@ -20,7 +20,7 @@ from typing import List
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hparser as hparser
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ def _pull(dir_names: List[str], short_hash: bool) -> None:
     _LOG.info("status=\n%s", hgit.report_submodule_status(dir_names, short_hash))
     for dir_name in dir_names:
         cmd = f"cd {dir_name} && git pull --autostash"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
     _LOG.info("status=\n%s", hgit.report_submodule_status(dir_names, short_hash))
 
 
@@ -40,7 +40,7 @@ def _show(dir_names: List[str], short_hash: bool) -> None:
 def _clean(dir_names: List[str]) -> None:
     for dir_name in dir_names:
         cmd = f"cd {dir_name} && git clean -fd"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
 
 
 def _roll_fwd(dir_names: List[str], auto_commit: bool, short_hash: bool) -> None:
@@ -49,14 +49,14 @@ def _roll_fwd(dir_names: List[str], auto_commit: bool, short_hash: bool) -> None
     # Add changes.
     for dir_name in dir_names:
         cmd = f"git add {dir_name}"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
     # Commit.
     cmd = 'git commit -am "Move forward git submodules" && git push'
     if auto_commit:
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
     else:
         script_name = "./tmp_push.sh"
-        hsysinte.create_executable_script(script_name, cmd)
+        hsystem.create_executable_script(script_name, cmd)
         msg: List[str] = []
         msg.append("Run:")
         msg.append(f"> {cmd}")

@@ -8,7 +8,7 @@ import os
 
 import helpers.hdbg as hdbg
 import helpers.hio as hio
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 
 def run_notebook(
@@ -53,4 +53,4 @@ def run_notebook(
     cmd.append("--ExecutePreprocessor.timeout=-1")
     # Execute.
     cmd_as_str = " ".join(cmd)
-    hsysinte.system(cmd_as_str, abort_on_error=True, suppress_output=False)
+    hsystem.system(cmd_as_str, abort_on_error=True, suppress_output=False)
