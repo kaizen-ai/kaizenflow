@@ -106,25 +106,19 @@ def write_poetry_toml_file(dir_name: str) -> None:
     hio.to_file(file_path, file_content)
 
 
-def run_poetry_cmd(dir_name: str, last_package: str = "") -> None:
+def run_poetry_cmd(dir_path: str) -> None:
     """
     Poetry run with verbose lock command.
 
-    :param dir_name: name of directory where command is run
-    :param last_package: last package in `pyproject.toml` that is useful for
-        creating different log files in incremental run
+    :param dir_path: path of directory where command is run
     :return:
     """
     # Prepare poetry lock command.
-    dir_path = os.path.join(get_debug_poetry_dir(), dir_name)
     cmd = f"cd {dir_path}; poetry lock -vv"
     _LOG.info("Resolving poetry dependencies cdm=`%s`", cmd)
-    # Remove spaces so package name can be used in log file name.
-    last_package = last_package.replace(" ", "")
-    base_name = "poetry.log"
-    log_file_name = f"{last_package}_{base_name}" if last_package else base_name
-    # Create log file.
-    log_file_path = os.path.join(dir_path, "logs", log_file_name)
+    # Prepare log file.
+    log_file_name = "poetry.log"
+    log_file_path = os.path.join(dir_path, log_file_name)
     # Run poetry lock command.
     hsystem.system(cmd, suppress_output=False, output_file=log_file_path)
 
@@ -134,12 +128,26 @@ def _run_poetry_cmd_wrapper(
 ) -> None:
     """
     Simple poetry command wrapper that can be called multiple times.
+
+    :param dir_name: directory name based on debug mode
+    :param python_packages: list of packages to be written in .toml file
+    :param last_package: last package in `pyproject.toml` that is useful for
+        creating different log files in incremental run
+    :return:
     """
-    write_poetry_toml_file(dir_name)
-    write_pyproject_toml(python_packages, dir_name)
+    # Prepare base dir depending on debug mode.
+    dir_path = os.path.join(get_debug_poetry_dir(), dir_name)
+    # Use clean package name, if package name is provided.
+    if last_package:
+        last_package = last_package.split(" ")[0]
+        dir_path = os.path.join(dir_path, last_package)
+    # Write .toml files.
+    write_poetry_toml_file(dir_path)
+    write_pyproject_toml(python_packages, dir_path)
     # TODO(Grisha): @Nikola we should terminate a script if it is not finished
     #  within 30 minutes (could be a param).
-    run_poetry_cmd(dir_name, last_package=last_package)
+    # Run.
+    run_poetry_cmd(dir_path)
 
 
 def get_debug_poetry_dir() -> str:
@@ -149,11 +157,11 @@ def get_debug_poetry_dir() -> str:
     return poetry_debug_dir
 
 
-def run_poetry_debug(debug_type="necessary") -> None:
+def run_poetry_debug(debug_mode: str) -> None:
     """
     Run poetry debug with various options.
 
-    :param debug_type:
+    :param debug_mode:
         - `necessary` - list of necessary packages in one shot
         - `necessary_incremental` - list of necessary packages one by one
             - i.e. add 1 package, run poetry, save the output, add another one, run poetry, etc.
@@ -165,12 +173,12 @@ def run_poetry_debug(debug_type="necessary") -> None:
     # Get Python packages to debug.
     necessary_packages = get_necessary_packages()
     optional_packages = []
-    if debug_type in ("optional", "optional_incremental"):
+    if debug_mode in ("optional", "optional_incremental"):
         optional_packages.extend(get_optional_packages())
     all_packages = necessary_packages + optional_packages
     # Pick desired debug option.
-    dir_name = debug_type
-    if debug_type == "necessary_incremental":
+    dir_name = debug_mode
+    if debug_mode == "necessary_incremental":
         # Add necessary packages one by one.
         current_necessary_packages = []
         for necessary_package in necessary_packages:
@@ -184,7 +192,7 @@ def run_poetry_debug(debug_type="necessary") -> None:
                 current_necessary_packages,
                 last_package=necessary_package,
             )
-    elif debug_type == "optional_incremental":
+    elif debug_mode == "optional_incremental":
         # Add optional packages one by one, after necessary ones in one shot.
         current_optional_packages = []
         for optional_package in optional_packages:
@@ -209,7 +217,7 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        "--debug_type",
+        "--debug_mode",
         action="store",
         type=str,
         default="necessary",
@@ -222,15 +230,15 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    debug_type = args.debug_type
-    valid_debug_types = (
+    debug_mode = args.debug_mode
+    valid_debug_modes = (
         "necessary",
         "necessary_incremental",
         "optional",
         "optional_incremental",
     )
-    hdbg.dassert_in(debug_type, valid_debug_types)
-    run_poetry_debug(debug_type=debug_type)
+    hdbg.dassert_in(debug_mode, valid_debug_modes)
+    run_poetry_debug(debug_mode)
 
 
 if __name__ == "__main__":
