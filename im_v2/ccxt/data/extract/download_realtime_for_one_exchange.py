@@ -5,20 +5,13 @@ Script to download OHLCV data for a single exchange from CCXT.
 Use as:
 
 # Download OHLCV data for binance 'v03', saving dev_stage:
-> im_v2/ccxt/data/extract/download_realtime_data.py \
+> im_v2/ccxt/data/extract/download_realtime_for_one_exchange.py \
     --to_datetime '20211110-101100' \
     --from_datetime '20211110-101200' \
     --exchange_id 'binance' \
     --universe 'v03' \
     --db_stage 'dev' \
-    --v DEBUG
-
-Import as:
-
-import im_v2.ccxt.data.extract.download_realtime_data_v2 as imvcdedrdv
 """
-
-# TODO(gp): -> download_realtime_for_one_exchange.py
 
 import argparse
 import logging
@@ -111,6 +104,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # Assign pair and exchange columns.
         data["currency_pair"] = currency_pair
         data["exchange_id"] = args.exchange_id
+        # Insert data into the DB.
         hsql.execute_insert_query(
             connection=connection,
             obj=data,
