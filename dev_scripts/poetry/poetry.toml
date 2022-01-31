@@ -1,6 +1,0 @@
-cache-dir = "tmp.pypoetry"
-experimental.new-installer = true
-installer.parallel = true
-# We don't want poetry to automatically create / manage virtual environment.
-virtualenvs.create = false
-virtualenvs.in-project = true
