@@ -1,9 +1,3 @@
-"""
-Import as:
-
-import im_v2.ccxt.data.extract.airflow.rt_dag_v2 as imvcdeardv
-"""
-
 import datetime
 
 import airflow
@@ -28,19 +22,18 @@ default_args = {
 
 # Create a command.
 bash_command = [
-    "/app/im_v2/ccxt/data/extract/download_realtime_data_v2.py",
-    "--to_datetime {{ next_execution_date }}",
-    "--from_datetime {{ execution_date - macros.timedelta(5) }}",
+    "/app/im_v2/ccxt/data/extract/download_realtime_for_one_exchange.py",
+    "--to_datetime {{ execution_date }}",
+    "--from_datetime {{ execution_date - macros.timedelta(minutes=5) }}",
     "--exchange_id 'binance'",
     "--universe 'v03'",
     "--db_stage 'dev'",
-    "--v DEBUG",
+    "--v DEBUG"
 ]
-
 
 # Create a DAG.
 dag = airflow.DAG(
-    dag_id="realtime_ccxt_v2",
+    dag_id="realtime_ccxt_binance",
     description="Realtime download of CCXT OHLCV data",
     max_active_runs=1,
     default_args=default_args,
@@ -52,7 +45,7 @@ dag = airflow.DAG(
 
 # Run the script with ECS operator.
 downloading_task = ECSOperator(
-    task_id="realtime_ccxt_v2",
+    task_id="realtime_ccxt_binance",
     dag=dag,
     aws_conn_id=None,
     cluster=ecs_cluster,
@@ -64,14 +57,6 @@ downloading_task = ECSOperator(
                 "name": "cmamp",
                 "command": bash_command,
                 "environment": [
-                    {
-                        "name": "DATA_INTERVAL_START",
-                        "value": "{{ execution_date }}",
-                    },
-                    {
-                        "name": "DATA_INTERVAL_END",
-                        "value": "{{ execution_date - macros.timedelta(5) }}",
-                    },
                     {
                         "name": "ENABLE_DIND",
                         "value": "0",
