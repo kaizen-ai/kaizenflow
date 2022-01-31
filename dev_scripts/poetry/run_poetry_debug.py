@@ -2,7 +2,9 @@
 
 import argparse
 import logging
+import multiprocessing
 import os
+import time
 from typing import List
 
 import helpers.hdbg as hdbg
@@ -11,6 +13,7 @@ import helpers.hio as hio
 import helpers.hparser as hparser
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
+import helpers.htimer as htimer
 
 _LOG = logging.getLogger(__name__)
 
@@ -124,13 +127,18 @@ def run_poetry_cmd(dir_path: str) -> None:
 
 
 def _run_poetry_cmd_wrapper(
-    dir_name: str, python_packages: list, last_package: str = ""
+    dir_name: str,
+    python_packages: list,
+    max_runtime: int,
+    *,
+    last_package: str = "",
 ) -> None:
     """
     Simple poetry command wrapper that can be called multiple times.
 
     :param dir_name: directory name based on debug mode
     :param python_packages: list of packages to be written in .toml file
+    :param max_runtime: error out after breach of the allowed runtime
     :param last_package: last package in `pyproject.toml` that is useful for
         creating different log files in incremental run
     :return:
@@ -144,10 +152,22 @@ def _run_poetry_cmd_wrapper(
     # Write .toml files.
     write_poetry_toml_file(dir_path)
     write_pyproject_toml(python_packages, dir_path)
-    # TODO(Grisha): @Nikola we should terminate a script if it is not finished
-    #  within 30 minutes (could be a param).
-    # Run.
-    run_poetry_cmd(dir_path)
+    # Run as a separate process.
+    poetry_lock = multiprocessing.Process(target=run_poetry_cmd, args=(dir_path,))
+    poetry_lock.start()
+    # Apply time constraint.
+    timer = htimer.Timer()
+    while poetry_lock.is_alive():
+        if timer.get_total_elapsed() > max_runtime * 60:
+            poetry_lock.kill()
+            raise RuntimeError(
+                f"Constraint of {max_runtime} minutes is breached!"
+            )
+        timer.resume()
+        time.sleep(1)
+    # Cleanup
+    poetry_lock.join()
+    poetry_lock.close()
 
 
 def get_debug_poetry_dir() -> str:
@@ -157,7 +177,7 @@ def get_debug_poetry_dir() -> str:
     return poetry_debug_dir
 
 
-def run_poetry_debug(debug_mode: str) -> None:
+def run_poetry_debug(debug_mode: str, max_runtime: int) -> None:
     """
     Run poetry debug with various options.
 
@@ -168,6 +188,7 @@ def run_poetry_debug(debug_mode: str) -> None:
         - `optional` - list of necessary and optional packages in one shot
         - `optional_incremental` - list of necessary packages in one shot,
             while optional are run one by one
+    :param max_runtime: error out after breach of the allowed runtime
     :return
     """
     # Get Python packages to debug.
@@ -190,6 +211,7 @@ def run_poetry_debug(debug_mode: str) -> None:
             _run_poetry_cmd_wrapper(
                 dir_name,
                 current_necessary_packages,
+                max_runtime,
                 last_package=necessary_package,
             )
     elif debug_mode == "optional_incremental":
@@ -204,12 +226,13 @@ def run_poetry_debug(debug_mode: str) -> None:
             _run_poetry_cmd_wrapper(
                 dir_name,
                 necessary_packages + current_optional_packages,
+                max_runtime,
                 last_package=optional_package,
             )
     else:
         # Add packages in one shot.
         _LOG.info("Adding packages in one shot=`%s`", all_packages)
-        _run_poetry_cmd_wrapper(dir_name, all_packages)
+        _run_poetry_cmd_wrapper(dir_name, all_packages, max_runtime)
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -223,6 +246,13 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         help="Run poetry with desired list of packages",
     )
+    parser.add_argument(
+        "--max_runtime",
+        action="store",
+        type=int,
+        default=10,
+        help="Error out after breach of the allowed runtime",
+    )
     hparser.add_verbosity_arg(parser)
     return parser
 
@@ -231,6 +261,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     debug_mode = args.debug_mode
+    max_runtime = args.max_runtime
     valid_debug_modes = (
         "necessary",
         "necessary_incremental",
@@ -238,7 +269,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         "optional_incremental",
     )
     hdbg.dassert_in(debug_mode, valid_debug_modes)
-    run_poetry_debug(debug_mode)
+    run_poetry_debug(debug_mode, max_runtime)
 
 
 if __name__ == "__main__":
