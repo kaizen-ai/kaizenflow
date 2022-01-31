@@ -215,7 +215,7 @@ class ImClient(abc.ABC):
         # TODO(gp): Cache.
         # if self._ids_to_symbols_mapping is None:
         full_symbol_universe = self.get_universe(as_asset_ids=False)
-        self._ids_to_symbols_mapping = imvcuunut.build_num_to_string_id_mapping(
+        ids_to_symbols_mapping = imvcuunut.build_num_to_string_id_mapping(
             tuple(full_symbol_universe)
         )
         # Check that provided ids are part of universe.
