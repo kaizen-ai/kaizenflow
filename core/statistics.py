@@ -165,7 +165,7 @@ def compute_frac_zero(
     """
     Calculate fraction of zeros in a numerical series or dataframe.
 
-    :param data: numeric series or dataframe
+    :param data: numerical series or dataframe
     :param atol: absolute tolerance, as in `np.isclose`
     :param axis: numpy axis for summation
     """
@@ -183,7 +183,7 @@ def compute_frac_nan(
     """
     Calculate fraction of nans in `data`.
 
-    :param data: numeric series or dataframe
+    :param data: numerical series or dataframe
     :param axis: numpy axis for summation
     """
     num_nans = data.isna().values.sum(axis=axis)
@@ -196,7 +196,7 @@ def compute_frac_inf(
     """
     Count fraction of infs in a numerical series or dataframe.
 
-    :param data: numeric series or dataframe
+    :param data: numerical series or dataframe
     :param axis: numpy axis for summation
     """
     num_infs = np.isinf(data.values).sum(axis=axis)
@@ -209,7 +209,7 @@ def count_num_finite_samples(data: pd.Series) -> Union[int, float]:
     """
     Count number of finite data points in a given time series.
 
-    :param data: numeric series or dataframe
+    :param data: numerical series or dataframe
     """
     if data.empty:
         _LOG.warning("Empty input series `%s`", data.name)
@@ -2484,7 +2484,7 @@ def _compute_denominator_and_package(
       appropriate
 
     :param reduction: contains a reduction of `data` along `axis`
-    :param data: numeric series or dataframe
+    :param data: numerical series or dataframe
     :param axis: indicates row or column or else `None` for ignoring 2d
         structure
     """

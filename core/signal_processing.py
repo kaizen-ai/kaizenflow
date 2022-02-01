@@ -29,7 +29,7 @@ def correlate_with_lag(
     """
     Combine cols of `df` with their lags and compute the correlation matrix.
 
-    :param df: dataframe of numeric values
+    :param df: dataframe of numerical values
     :param lag: number of lags to apply or list of number of lags
     :return: correlation matrix with `(1 + len(lag)) * df.columns` columns
     """
@@ -67,7 +67,7 @@ def correlate_with_lagged_cumsum(
     This function can be applied to compute correlations between predictors and
     cumulative log returns.
 
-    :param df: dataframe of numeric values
+    :param df: dataframe of numerical values
     :param lag: number of time points to shift the data by. Number of steps to
         compute rolling sum is `lag` too.
     :param y_vars: names of columns for which to compute cumulative sum
@@ -102,7 +102,7 @@ def _compute_lagged_cumsum(
 
     Align `x_t` with `y_{t+1} + ... + y{t+lag}`.
 
-    :param df: dataframe of numeric values
+    :param df: dataframe of numerical values
     :param lag: number of time points to shift the data by. Number of steps to
         compute rolling sum is `lag`
     :param y_vars: names of columns for which to compute cumulative sum. If
@@ -146,7 +146,7 @@ def compute_inverse(
         df.apply(lambda s: pd.to_numeric(s, errors="coerce").notnull()).all(
             axis=None
         ),
-        "The matrix is not numeric.",
+        "The matrix is not numerical.",
     )
     hdbg.dassert_ne(np.linalg.det(df), 0, "The matrix is non-invertible.")
     if info is not None:
@@ -175,7 +175,7 @@ def compute_pseudoinverse(
         df.apply(lambda s: pd.to_numeric(s, errors="coerce").notnull()).all(
             axis=None
         ),
-        "The matrix is not numeric.",
+        "The matrix is not numerical.",
     )
     if info is not None:
         info["condition_number"] = np.linalg.cond(df, p_moment)
@@ -194,7 +194,7 @@ def reduce_rank(
     """
     Reduce the rank of a matrix using the SVD.
 
-    :param df: numeric matrix as a dataframe
+    :param df: numerical matrix as a dataframe
     :param reduced_rank: desired rank
     :param invert: invert the rank-reduced matrix (using SVD)
     :param conserve_shatten_norm: preserve the Schatten p-norm in the rank

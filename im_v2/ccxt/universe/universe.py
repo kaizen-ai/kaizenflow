@@ -40,11 +40,11 @@ def get_vendor_universe(
     as_asset_ids: bool = False,
 ) -> Union[List[icdc.FullSymbol], List[int]]:
     """
-    Load vendor universe as full symbols or numeric ids.
+    Load vendor universe as full symbols or numerical ids.
 
     :param version: release version
     :param vendor: vendor to load data for (e.g., CCXT, CDD)
-    :param as_asset_ids: if True return universe as numeric ids, otherwise universe as full symbols
+    :param as_asset_ids: if True return universe as numerical ids, otherwise universe as full symbols
     :return: vendor universe as full symbols (e.g., gateio::XRP_USDT)
     """
     # Get vendor universe.
@@ -56,10 +56,10 @@ def get_vendor_universe(
         for currency_pair in currency_pairs
     ]
     if as_asset_ids:
-        # Convert universe symbols to numeric ids.
+        # Convert universe symbols to numerical ids.
         universe_tuple = tuple(universe)
         universe = list(
-            imvcuunut.build_num_to_string_id_mapping(universe_tuple).keys()
+            imvcuunut.build_numerical_to_string_id_mapping(universe_tuple).keys()
         )
     # Sort list of symbols in the universe.
     universe = sorted(universe)

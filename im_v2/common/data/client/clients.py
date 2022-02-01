@@ -175,7 +175,7 @@ class ImClient(abc.ABC):
         """
         Return the entire universe of valid full symbols.
 
-        :param as_asset_ids: if True return universe as numeric ids,
+        :param as_asset_ids: if True return universe as numerical ids,
             otherwise universe as full symbols
         """
 
@@ -192,11 +192,11 @@ class ImClient(abc.ABC):
         :param full_symbols: assets as full symbols
         :return: assets as numerical ids
         """
-        numeric_asset_id = [
-            imvcuunut.string_to_numeric_id(full_symbol)
+        numerical_asset_id = [
+            imvcuunut.string_to_numerical_id(full_symbol)
             for full_symbol in full_symbols
         ]
-        return numeric_asset_id
+        return numerical_asset_id
 
     # TODO(gp): @Grisha -> get_full_symbols_from_asset_ids
     def get_full_symbols_from_numerical_ids(
@@ -213,7 +213,7 @@ class ImClient(abc.ABC):
         # TODO(gp): Cache.
         # if self._ids_to_symbols_mapping is None:
         full_symbol_universe = self.get_universe(as_asset_ids=False)
-        ids_to_symbols_mapping = imvcuunut.build_num_to_string_id_mapping(
+        ids_to_symbols_mapping = imvcuunut.build_numerical_to_string_id_mapping(
             tuple(full_symbol_universe)
         )
         # Check that provided ids are part of universe.
