@@ -35,7 +35,7 @@ class HistoricalPqByAssetClient(imvcdclcl.ImClientReadingMultipleSymbols):
         self._root_dir_name = root_dir_name
         self._asset_col_name = asset_col_name
 
-    def _dassert_is_valid_timestamp(self, timestamp: pd.Timestamp) -> None:
+    def _dassert_output_data_is_valid_timestamp(self, timestamp: pd.Timestamp) -> None:
         hdbg.dassert_isinstance(timestamp, pd.Timestamp)
         hdateti.dassert_has_tz(timestamp)
 
@@ -69,14 +69,14 @@ class HistoricalPqByAssetClient(imvcdclcl.ImClientReadingMultipleSymbols):
         # weeks and then trim the excess.
         # Compute the start_date.
         if start_ts is not None:
-            self._dassert_is_valid_timestamp(start_ts)
+            self._dassert_output_data_is_valid_timestamp(start_ts)
             # TODO(gp): Use weekofyear = start_ts.isocalendar().week
             weekofyear = start_ts.week
             and_condition = ("weekofyear", ">=", weekofyear)
             and_filters.append(and_condition)
         # Compute the end_date.
         if end_ts is not None:
-            self._dassert_is_valid_timestamp(end_ts)
+            self._dassert_output_data_is_valid_timestamp(end_ts)
             weekofyear = end_ts.week
             and_condition = ("weekofyear", "<=", weekofyear)
             and_filters.append(and_condition)
