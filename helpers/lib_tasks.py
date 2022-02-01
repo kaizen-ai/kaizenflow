@@ -327,7 +327,7 @@ def _filter_existing_paths(files_from_user: List[str]) -> List[str]:
         elif os.path.exists(user_file):
             files.append(user_file)
         else:
-            _LOG.warning("File '%s' does not exist", user_file)
+            _LOG.warning("'%s' does not exist", user_file)
     return files
 
 
