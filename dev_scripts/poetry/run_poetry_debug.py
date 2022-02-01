@@ -274,43 +274,5 @@ def _main(parser: argparse.ArgumentParser) -> None:
     run_poetry_debug(debug_mode, max_runtime)
 
 
-# TODO(Nikola): Simple draft for feedback for now
-def log_analyzer():
-    """
-    Analysys sample.
-    {'necessary_incremental': {'pandas': '0.159', 'python': '0.003'},
- 'necessary': '36.802'}
-
-    """
-    analysis = {}
-    # Collect all logs.
-    log_paths = hio.find_regex_files(get_debug_poetry_dir(), "poetry.log")
-    for log_path in log_paths:
-        # Parse log path to extract debug modes.
-        debug_mode_path = log_path.split("poetry" + os.sep)[-1]
-        debug_modes = debug_mode_path.split(os.sep)[:-1]
-        log_file = hio.from_file(log_path)
-        # Check validity of log content.
-        seconds = "Not finished"
-        locked = re.search(r"Writing lock file", log_file)
-        if locked:
-            # Get total seconds.
-            seconds = re.search(r"Complete version solving took (.*?) seconds", log_file)
-            if not seconds:
-                # If run is too fast there will be infor oly for one iteration.
-                seconds = re.search(r"Version solving took (.*?) seconds", log_file)
-                if not seconds:
-                    # New check must be added.
-                    raise NotImplementedError
-            seconds = seconds.group(1)
-        # TODO(Nikola): Simpler init, default dict?
-        if len(debug_modes) > 1:
-            if analysis.get(debug_modes[0], None) is None:
-                analysis[debug_modes[0]] = {}
-            analysis[debug_modes[0]].update({debug_modes[1]: seconds})
-        else:
-            analysis[debug_modes[0]] = seconds
-
-
 if __name__ == "__main__":
     _main(_parse())
