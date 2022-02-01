@@ -24,11 +24,11 @@ def get_ccxt_ohlcv_create_table_query() -> str:
     CREATE TABLE IF NOT EXISTS ccxt_ohlcv(
             id SERIAL PRIMARY KEY,
             timestamp BIGINT NOT NULL,
-            open NUMERICAL,
-            high NUMERICAL,
-            low NUMERICAL,
-            close NUMERICAL,
-            volume NUMERICAL,
+            open NUMERIC,
+            high NUMERIC,
+            low NUMERIC,
+            close NUMERIC,
+            volume NUMERIC,
             currency_pair VARCHAR(255) NOT NULL,
             exchange_id VARCHAR(255) NOT NULL,
             created_at TIMESTAMP
