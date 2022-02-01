@@ -308,12 +308,12 @@ class AbstractMarketData(abc.ABC):
 
     def get_wall_clock_time(self) -> pd.Timestamp:
         """
-        Convert wall clock time to the timezone specified in the ctor.
+        Return wall clock time in the timezone specified in the ctor.
 
-        Initially wall clock time can be in any timezone (or even
-        timezone-naive).
+        Initially wall clock time can be in any timezone, but cannot be timezone-naive.
         """
         wall_clock_time = self._get_wall_clock_time()
+        hdateti.dassert_has_tz(wall_clock_time)
         wall_clock_time_correct_timezone = wall_clock_time.tz_convert(
             self._timezone
         )
