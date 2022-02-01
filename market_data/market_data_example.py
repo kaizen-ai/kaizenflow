@@ -449,4 +449,4 @@ def get_MarketDataImClient_wall_clock_time() -> pd.Timestamp:
     """
     Get a wall clock time to build `MarketDataImClient` for tests.
     """
-    return pd.Timestamp("2018-08-16T21:30:00")
+    return pd.Timestamp("2018-08-17T01:30:00+00:00")

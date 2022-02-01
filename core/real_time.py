@@ -70,7 +70,6 @@ class ReplayedTime:
         self,
         initial_replayed_dt: pd.Timestamp,
         get_wall_clock_time: hdateti.GetWallClockTime,
-        timezone: str,
         *,
         speed_up_factor: float = 1.0,
     ):
@@ -93,9 +92,8 @@ class ReplayedTime:
         self._get_wall_clock_time = get_wall_clock_time
         hdbg.dassert_lt(0, speed_up_factor)
         self._speed_up_factor = speed_up_factor
-        self._timezone = timezone
         # This is when the experiment starts.
-        self._initial_wall_clock_dt = self._get_wall_clock_time(self._timezone)
+        self._initial_wall_clock_dt = self._get_wall_clock_time()
         _LOG.debug(
             hprint.to_str("self._initial_replayed_dt self._initial_wall_clock_dt")
         )
@@ -114,7 +112,7 @@ class ReplayedTime:
         Transform the current time into the time corresponding to the real-time
         experiment starting at `initial_simulated_dt`.
         """
-        now = self._get_wall_clock_time(self._timezone)
+        now = self._get_wall_clock_time()
         hdbg.dassert_lte(self._initial_wall_clock_dt, now)
         elapsed_time = now - self._initial_wall_clock_dt
         current_replayed_dt = (
