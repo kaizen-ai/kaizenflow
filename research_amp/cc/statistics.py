@@ -210,11 +210,11 @@ def get_loader_for_vendor(
     root_dir = config["load"]["data_dir"]
     extension = "csv.gz"
     loader = icdcl.CcxtCddCsvParquetByAssetClient(
-            vendor,
-            root_dir,
-            extension,
-            aws_profile=config["load"]["aws_profile"],
-        )
+        vendor,
+        root_dir,
+        extension,
+        aws_profile=config["load"]["aws_profile"],
+    )
     return loader
 
 

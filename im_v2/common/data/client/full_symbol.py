@@ -15,6 +15,8 @@ _LOG = logging.getLogger(__name__)
 # Store information about an exchange and a symbol (e.g., `binance::BTC_USDT`).
 # Note that information about the vendor is carried in the `ImClient` itself,
 # i.e. using `CcxtImClient` serves data from CCXT.
+# Full symbols are transformed in `asset_ids` encoded by ints, by `ImClient` and
+# used by `MarketData`.
 FullSymbol = str
 
 
@@ -51,6 +53,7 @@ def parse_full_symbol(full_symbol: FullSymbol) -> Tuple[str, str]:
     return exchange, symbol
 
 
+# TODO(gp): @Grisha -> build_full_symbol
 def construct_full_symbol(exchange: str, symbol: str) -> FullSymbol:
     """
     Combine exchange and symbol in `FullSymbol`.

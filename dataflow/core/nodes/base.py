@@ -176,7 +176,7 @@ class DataSource(FitPredictNode, abc.ABC):
         # Filter.
         if self._fit_intervals is not None:
             # TODO(gp): Factor out this code in utils.py and make it support `None`
-            # endpoints.
+            #  endpoints.
             idx_slices = [
                 self.df.loc[interval[0] : interval[1]].index
                 for interval in self._fit_intervals

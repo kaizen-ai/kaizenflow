@@ -28,7 +28,6 @@ import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import im_v2.ccxt.data.client as icdcl
 import im_v2.ccxt.universe.universe as imvccunun
-import im_v2.common.data.client as icdc
 import research_amp.cc.statistics as ramccsta
 
 # %%
@@ -59,7 +58,6 @@ def get_cmtask324_config_ccxt() -> cconconf.Config:
     config["load"]["data_dir"] = os.path.join(hs3.get_path(), "data")
     # Data parameters.
     config.add_subconfig("data")
-    config["data"]["data_type"] = "OHLCV"
     config["data"]["target_frequency"] = "T"
     config["data"]["universe_version"] = "v03"
     config["data"]["vendor"] = "CCXT"
@@ -89,7 +87,6 @@ def get_cmtask324_config_cdd() -> cconconf.Config:
     config["load"]["data_dir"] = os.path.join(hs3.get_path(), "data")
     # Data parameters.
     config.add_subconfig("data")
-    config["data"]["data_type"] = "OHLCV"
     config["data"]["target_frequency"] = "T"
     config["data"]["universe_version"] = "v01"
     config["data"]["vendor"] = "CDD"
@@ -161,7 +158,7 @@ display(cdd_and_not_ccxt)
 # ## Load the data
 
 # %% [markdown]
-# The code below can be used to load all the existing data from two vendors 'CDD' and 'CCXT'. Current version is specified to Binance only, however, even for one exchange there's too many data to operate, that's why the output is the intersection of currency pairs between to universe, since one can compare only the intersection of currency pairs for two vendors.
+# The code below can be used to load all the existing data from two vendors `CDD` and `CCXT`. Current version is specified to Binance only, however, even for one exchange there's too many data to operate, that's why the output is the intersection of currency pairs between to universe, since one can compare only the intersection of currency pairs for two vendors.
 
 # %%
 # Load Binance-specific universe for `CCXT`.
@@ -186,8 +183,8 @@ currency_pair_intersection_binance = set(ccxt_binance_universe).intersection(
 
 # %%
 vendor_cdd = config_cdd["data"]["vendor"]
-root_dir_cdd=config_cdd["load"]["data_dir"]
-extension_cdd = config_cdd["data"]["extension"]
+root_dir_cdd = config_cdd["load"]["data_dir"]
+extension_cdd = config["data"]["extension"]
 aws_profile_cdd = config_cdd["load"]["aws_profile"]
 cdd_csv_client = icdcl.CcxtCddCsvParquetByAssetClient(
     vendor_cdd, root_dir_cdd, extension_cdd, aws_profile=aws_profile_cdd
@@ -210,8 +207,8 @@ display(cdd_binance_df.shape)
 
 # %%
 vendor_ccxt = config_ccxt["data"]["vendor"]
-root_dir_ccxt=config_ccxt["load"]["data_dir"]
-extension_ccxt = config_ccxt["data"]["extension"]
+root_dir_ccxt = config_ccxt["load"]["data_dir"]
+extension_ccxt = config["data"]["extension"]
 aws_profile_ccxt = config_ccxt["load"]["aws_profile"]
 ccxt_csv_client = icdcl.CcxtCddCsvParquetByAssetClient(
     vendor_ccxt, root_dir_ccxt, extension_ccxt, aws_profile=aws_profile_ccxt
@@ -289,18 +286,23 @@ def calculate_correlations(
 
 # %%
 # Corresponding resampled Series.
-ccxt_binance_series_1d = resample_close_price(ccxt_binance_df, "1D")
-cdd_binance_series_1d = resample_close_price(cdd_binance_df, "1D")
+daily_frequency = "1D"
+ccxt_binance_series_1d = resample_close_price(ccxt_binance_df, daily_frequency)
+cdd_binance_series_1d = resample_close_price(cdd_binance_df, daily_frequency)
 
-ccxt_binance_series_5min = resample_close_price(ccxt_binance_df, "5min")
-cdd_binance_series_5min = resample_close_price(cdd_binance_df, "5min")
+five_min_frequency = "5min"
+ccxt_binance_series_5min = resample_close_price(
+    ccxt_binance_df, five_min_frequency
+)
+cdd_binance_series_5min = resample_close_price(cdd_binance_df, five_min_frequency)
 
 # %% [markdown]
 # ### 1-day returns
 
 # %%
+compute_returns = True
 returns_corr_1day = calculate_correlations(
-    ccxt_binance_series_1d, cdd_binance_series_1d, compute_returns=True
+    ccxt_binance_series_1d, cdd_binance_series_1d, compute_returns
 )
 display(returns_corr_1day)
 
@@ -308,8 +310,9 @@ display(returns_corr_1day)
 # ### 5-min returns
 
 # %%
+compute_returns = True
 returns_corr_5min = calculate_correlations(
-    ccxt_binance_series_5min, cdd_binance_series_5min, compute_returns=True
+    ccxt_binance_series_5min, cdd_binance_series_5min, compute_returns
 )
 display(returns_corr_5min)
 
@@ -320,8 +323,9 @@ display(returns_corr_5min)
 # ### 1-day close prices
 
 # %%
+compute_returns = False
 close_corr_1day = calculate_correlations(
-    ccxt_binance_series_1d, cdd_binance_series_1d, compute_returns=False
+    ccxt_binance_series_1d, cdd_binance_series_1d, compute_returns
 )
 display(close_corr_1day)
 
@@ -329,8 +333,9 @@ display(close_corr_1day)
 # ### 5-min close prices
 
 # %%
+compute_returns = False
 close_corr_5min = calculate_correlations(
-    ccxt_binance_series_5min, cdd_binance_series_5min, compute_returns=False
+    ccxt_binance_series_5min, cdd_binance_series_5min, compute_returns
 )
 display(close_corr_5min)
 
@@ -374,9 +379,6 @@ len(cdd_and_ccxt_cleaned)
 # #### CDD
 
 # %%
-# After fixing `CCXT` loader below, the structural mistake appears with `CDD` loader.
-# TODO(Max): Fix the code, once the vendor universe will be unified.
-# see CMTask985 - Fix compute_start_end_stats in CCXT-CDD comparison notebook.
 compute_start_end_stats = lambda data: ramccsta.compute_start_end_stats(
     data, config_cdd
 )

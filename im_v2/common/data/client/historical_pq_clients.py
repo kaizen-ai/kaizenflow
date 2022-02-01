@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_lime.eg.eg_historical_pq_by_asset_taq_bar_client as ileehpbatbc
+import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
 """
 
 import logging
@@ -9,42 +9,35 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-import helpers.hdatetime as hdatetime
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
-import im_v2.common.data.client.clients as imvcdcli
+import im_v2.common.data.client.clients as imvcdclcl
 import im_v2.common.data.client.full_symbol as imvcdcfusy
 
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): Add tests.
-class HistoricalPqByAssetClient(imvcdcli.ImClientReadingMultipleSymbols):
+# TODO(gp): @Grisha Add tests. GP to provide an example of files or we can generate
+#  them from CSV.
+# TODO(gp): ByAsset -> ByTile
+class HistoricalPqByAssetClient(imvcdclcl.ImClientReadingMultipleSymbols):
     """
     Provide historical data stored as Parquet by-asset.
     """
 
     def __init__(
-        self, asset_col_name: str, *, root_dir_name: Optional[str] = None
+        self, asset_col_name: str, root_dir_name: str
     ):
-        # TODO(gp): Use central location.
-        hdbg.dassert_is_not(root_dir_name, None)
         # TODO(gp): Check that the dir exists, handling the S3 case.
         self._root_dir_name = root_dir_name
         self._asset_col_name = asset_col_name
 
-    @staticmethod
-    def get_universe(as_assets_ids: bool) -> List[imvcdcfusy.FullSymbol]:
-        """
-        Same as abstract method.
-        """
-        raise NotImplementedError
-
     def _dassert_is_valid_timestamp(self, timestamp: pd.Timestamp) -> None:
         hdbg.dassert_isinstance(timestamp, pd.Timestamp)
-        hdatetime.dassert_has_tz(timestamp)
+        hdateti.dassert_has_tz(timestamp)
 
     def _read_data_for_multiple_symbols(
         self,
@@ -63,11 +56,15 @@ class HistoricalPqByAssetClient(imvcdcli.ImClientReadingMultipleSymbols):
                 "full_symbols start_ts end_ts full_symbol_col_name columns"
             )
         )
+        # TODO(gp): This should be done by the derived class.
         asset_ids = list(map(int, full_symbols))
-        filters = []
+        # The filter is an OR of AND conditions:
+        # See https://arrow.apache.org/docs/python/generated/pyarrow.parquet.ParquetDataset.html
+        and_filters = []
         # TODO(gp): Is this efficient? Is there a better way to do it, e.g., `in`?
-        for asset_id in asset_ids:
-            filters.append((self._asset_col_name, "=", asset_id))
+        # Select the OR of conditions like `asset_col_name == asset_id`.
+        and_condition = (self._asset_col_name, "in", asset_ids)
+        and_filters.append(and_condition)
         # The data is stored by week so we need to convert the timestamps into
         # weeks and then trim the excess.
         # Compute the start_date.
@@ -75,18 +72,18 @@ class HistoricalPqByAssetClient(imvcdcli.ImClientReadingMultipleSymbols):
             self._dassert_is_valid_timestamp(start_ts)
             # TODO(gp): Use weekofyear = start_ts.isocalendar().week
             weekofyear = start_ts.week
-            filters.append(
-                ("weekofyear", ">=", weekofyear),
-            )
+            and_condition = ("weekofyear", ">=", weekofyear)
+            and_filters.append(and_condition)
         # Compute the end_date.
         if end_ts is not None:
             self._dassert_is_valid_timestamp(end_ts)
             weekofyear = end_ts.week
-            filters.append(
-                ("weekofyear", "<=", weekofyear),
-            )
+            and_condition = ("weekofyear", "<=", weekofyear)
+            and_filters.append(and_condition)
+        filters = [and_filters]
         _LOG.debug("filters=%s", str(filters))
         # Read the data.
+        # TODO(gp): Add support for S3 passing aws_profile.
         df = hparque.from_parquet(
             self._root_dir_name,
             columns=columns,
@@ -96,12 +93,13 @@ class HistoricalPqByAssetClient(imvcdcli.ImClientReadingMultipleSymbols):
         hdbg.dassert(not df.empty)
         # Convert to datetime.
         df.index = pd.to_datetime(df.index)
-        # The EG id data comes back from Parquet as
+        # The asset data can come back from Parquet as:
         # ```
         # Categories(540, int64): [10025, 10036, 10040, 10045, ..., 82711, 82939,
         #                         83317, 89970]
         # ```
         # which confuses `df.groupby()`. So we convert that column to int.
+        # TODO(gp): Move this to the derived class.
         df[self._asset_col_name] = df[self._asset_col_name].astype(int)
         # Rename column storing asset_ids, if needed.
         hdbg.dassert_in(self._asset_col_name, df.columns)
@@ -121,6 +119,7 @@ class HistoricalPqByAssetClient(imvcdcli.ImClientReadingMultipleSymbols):
         )
         return df
 
+    # TODO(gp): Remove, if possible.
     @staticmethod
     def _apply_vendor_normalization(df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -132,21 +131,17 @@ class HistoricalPqByAssetClient(imvcdcli.ImClientReadingMultipleSymbols):
 # #############################################################################
 
 
-class HistoricalPqByDateClient(imvcdcli.ImClientReadingMultipleSymbols):
+# TODO(gp): @Grisha Add tests. GP to provide an example of files or we can generate
+#  them from CSV.
+class HistoricalPqByDateClient(imvcdclcl.ImClientReadingMultipleSymbols):
     """
     Read historical data stored as Parquet by-date.
     """
 
+    # TODO(gp): Do not pass a read_func but use an abstract method.
     def __init__(self, asset_col_name: str, read_func):
         self._asset_col_name = asset_col_name
         self._read_func = read_func
-
-    @staticmethod
-    def get_universe() -> List[imvcdcfusy.FullSymbol]:
-        """
-        Same as abstract method.
-        """
-        raise NotImplementedError
 
     def _read_data_for_multiple_symbols(
         self,
@@ -201,6 +196,7 @@ class HistoricalPqByDateClient(imvcdcli.ImClientReadingMultipleSymbols):
         )
         return df
 
+    # TODO(gp): Remove, if possible.
     @staticmethod
     def _apply_vendor_normalization(df: pd.DataFrame) -> pd.DataFrame:
         """
