@@ -400,7 +400,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         asset_ids: Optional[List[int]],
         columns: Optional[List[str]],
         column_remap: Optional[Dict[str, str]],
-    ) -> mdata.AbstractMarketData:
+    ) -> mdata.MarketData:
         """
         Build `MarketDataImClient` client.
         """
