@@ -8,10 +8,12 @@ import market_data.test.market_data_test_case as mdtmdtca
 
 
 class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
+    """
+    For all the test methods see description of corresponding private method in
+    the parent class.
+    """
+
     def test_get_data_for_last_period1(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
         columns: List[str] = []
@@ -25,9 +27,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         )
 
     def test_get_data_for_last_period2(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
         columns: List[str] = []
@@ -41,9 +40,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         )
 
     def test_get_data_for_last_period3(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
         columns: List[str] = []
@@ -57,9 +53,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         )
 
     def test_get_data_for_last_period4(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
         columns: List[str] = []
@@ -73,9 +66,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         )
 
     def test_get_data_for_last_period5(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
         columns: List[str] = []
@@ -89,9 +79,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         )
 
     def test_get_data_for_last_period6(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
         columns: List[str] = []
@@ -105,9 +92,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         )
 
     def test_get_data_for_last_period7(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
         columns: List[str] = []
@@ -121,9 +105,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         )
 
     def test_get_data_at_timestamp1(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
         columns: List[str] = []
@@ -149,9 +130,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
 
     @pytest.mark.skip(reason="CmTask882.")
     def test_get_data_for_interval1(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Prepare inputs.
         asset_ids = None
         columns: List[str] = []
@@ -181,9 +159,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         )
 
     def test_get_data_for_interval2(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
         columns: List[str] = []
@@ -213,9 +188,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         )
 
     def test_get_data_for_interval3(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
         columns: List[str] = []
@@ -245,9 +217,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         )
 
     def test_get_data_for_interval4(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
         columns: List[str] = []
@@ -277,9 +246,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         )
 
     def test_get_data_for_interval5(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
         columns: List[str] = []
@@ -309,9 +275,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         )
 
     def test_get_data_for_interval6(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
         columns: List[str] = []
@@ -342,9 +305,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
     # //////////////////////////////////////////////////////////////////////////////
 
     def test_get_twap_price1(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
         columns: List[str] = []
@@ -366,9 +326,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
     # //////////////////////////////////////////////////////////////////////////////
 
     def test_get_last_end_time1(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Prepare inputs.
         asset_ids = [1467591036]
         columns: List[str] = []
@@ -379,9 +336,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         self._test_get_last_end_time1(market_data, exp_last_end_time)
 
     def test_get_last_price1(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
         columns: List[str] = []
@@ -399,9 +353,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
     # //////////////////////////////////////////////////////////////////////////////
 
     def test_should_be_online1(self) -> None:
-        """
-        See description of corresponding private method in parent class.
-        """
         # Prepare inputs.
         asset_ids = [1467591036]
         columns: List[str] = []
