@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.common.data.client.clients as imvcdclcl
+import im_v2.common.data.client.base_im_clients as imvcdcbimcl
 """
 
 import abc
@@ -18,8 +18,6 @@ import im_v2.common.data.client.full_symbol as imvcdcfusy
 import im_v2.common.universe.universe_utils as imvcuunut
 
 _LOG = logging.getLogger(__name__)
-
-# TODO(gp): @Grisha -> base_im_clients.py
 
 # #############################################################################
 # ImClient
@@ -38,6 +36,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): @Grisha ensure that the intervals returned by all ImClient are like
 #  [a, b] and all the descriptions are consistent. Let's do it after porting more
 #  vendors (e.g., Kibot, EODData)
+
 
 class ImClient(abc.ABC):
     """
@@ -150,9 +149,9 @@ class ImClient(abc.ABC):
         """
         Return the earliest timestamp available for a given `full_symbol`.
 
-        This implementation relies on reading all the data and then finding the
-        min. Derived classes can override this method if there is a more efficient
-        way to get this information.
+        This implementation relies on reading all the data and then
+        finding the min. Derived classes can override this method if
+        there is a more efficient way to get this information.
         """
         mode = "start"
         return self._get_start_end_ts_for_symbol(full_symbol, mode)
@@ -430,8 +429,8 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
     """
     IM client for backend that can read multiple symbols at the same time.
 
-    E.g., Parquet by-date or by-asset files allow to read data for multiple assets
-    stored in the same file.
+    E.g., Parquet by-date or by-asset files allow to read data for
+    multiple assets stored in the same file.
     """
 
     def _read_data(
