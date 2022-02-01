@@ -310,7 +310,8 @@ class AbstractMarketData(abc.ABC):
         """
         Return wall clock time in the timezone specified in the ctor.
 
-        Initially wall clock time can be in any timezone, but cannot be timezone-naive.
+        Initially wall clock time can be in any timezone, but cannot be
+        timezone-naive.
         """
         wall_clock_time = self._get_wall_clock_time()
         hdateti.dassert_has_tz(wall_clock_time)
