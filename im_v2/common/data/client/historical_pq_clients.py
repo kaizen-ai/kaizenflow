@@ -14,7 +14,7 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
-import im_v2.common.data.client.clients as imvcdclcl
+import im_v2.common.data.client.base_im_clients as imvcdcbimcl
 import im_v2.common.data.client.full_symbol as imvcdcfusy
 
 _LOG = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): @Grisha Add tests. GP to provide an example of files or we can generate
 #  them from CSV.
 # TODO(gp): ByAsset -> ByTile
-class HistoricalPqByAssetClient(imvcdclcl.ImClientReadingMultipleSymbols):
+class HistoricalPqByAssetClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
     """
     Provide historical data stored as Parquet by-asset.
     """
@@ -133,7 +133,7 @@ class HistoricalPqByAssetClient(imvcdclcl.ImClientReadingMultipleSymbols):
 
 # TODO(gp): @Grisha Add tests. GP to provide an example of files or we can generate
 #  them from CSV.
-class HistoricalPqByDateClient(imvcdclcl.ImClientReadingMultipleSymbols):
+class HistoricalPqByDateClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
     """
     Read historical data stored as Parquet by-date.
     """
