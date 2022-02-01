@@ -769,7 +769,7 @@ class _Cached:
         """
         if _TRACE_FUNCS:
             _LOG.debug("")
-        _dassert_output_data_is_valid_cache_type(cache_type)
+        _dassert_is_valid_cache_type(cache_type)
         if cache_type == "mem":
             memorized_result = self._memory_cached_func
         elif cache_type == "disk":
