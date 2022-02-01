@@ -1,7 +1,23 @@
 #!/usr/bin/env python
+"""
+Poetry sometimes can't solve the package specification because one package
+requires dependencies that are not satisfiable with others.
 
+This tool allows us to run Poetry incrementally for different configurations of
+packages to help debug what package creates convergence problem of Poetry solver.
 
-import re
+We separate packages in:
+- necessary: our code heavily depends on those packages (e.g., pandas)
+- optional: we could find a workaround and not use those packages
+
+The use cases are:
+- run all the necessary packages as basic sanity (necessary, optional)
+- run all the necessary packages adding one by one, in order of importance
+    (which is encoded in the order of the packages in the list)
+    to see if there is one that makes poetry not converge (necessary_incremental)
+- run all the necessary packages, adding one by one the optional ones (optional_incremental)
+"""
+
 import argparse
 import logging
 import multiprocessing
@@ -21,6 +37,11 @@ _LOG = logging.getLogger(__name__)
 
 
 def get_necessary_packages() -> List[str]:
+    """
+    Necessary packages from which codebase is heavily dependant.
+
+    :return: list of necessary packages
+    """
     necessary_packages = [
         'python = "^3.8"',
         'pandas = "*"',
@@ -50,6 +71,11 @@ def get_necessary_packages() -> List[str]:
 
 
 def get_optional_packages() -> List[str]:
+    """
+    Optional packages that can be replaced.
+
+    :return: list of optional packages
+    """
     optional_packages = [
         'boto3 = "*"',
         'invoke = "*"',
@@ -63,6 +89,14 @@ def get_optional_packages() -> List[str]:
 
 
 def write_pyproject_toml(packages: List[str], dir_name: str) -> None:
+    """
+    Write a `pyproject.toml` that orchestrate project metadata and its
+    dependencies.
+
+    :param packages: list of packages
+    :param dir_name: name of directory where `pyproject.toml` is saved
+    :return:
+    """
     beginning_of_file = """
     [tool.poetry]
     name = "amp"
@@ -96,6 +130,12 @@ def write_pyproject_toml(packages: List[str], dir_name: str) -> None:
 
 
 def write_poetry_toml_file(dir_name: str) -> None:
+    """
+    Write a `poetry.toml` that contains specific configuration for Poetry run.
+
+    :param dir_name: name of directory where `poetry.toml` is saved
+    :return:
+    """
     file_content = """
     cache-dir = "tmp.pypoetry"
     experimental.new-installer = true
@@ -173,6 +213,11 @@ def _run_poetry_cmd_wrapper(
 
 
 def get_debug_poetry_dir() -> str:
+    """
+    Gets working directory of Poetry tool.
+
+    :return: working directory
+    """
     amp_path = hgit.get_amp_abs_path()
     poetry_debug_dir = os.path.join(amp_path, "dev_scripts/poetry")
     hdbg.dassert_dir_exists(poetry_debug_dir)
@@ -231,7 +276,7 @@ def run_poetry_debug(debug_mode: str, max_runtime: int) -> None:
                 max_runtime,
                 last_package=optional_package,
             )
-    elif debug_mode in ("incremental", "optional"):
+    elif debug_mode in ("necessary", "optional"):
         # Add packages in one shot.
         _LOG.info("Adding packages in one shot=`%s`", all_packages)
         _run_poetry_cmd_wrapper(dir_name, all_packages, max_runtime)
