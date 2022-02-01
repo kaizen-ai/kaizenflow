@@ -21,12 +21,12 @@ def get_create_table_query() -> str:
         id integer PRIMARY KEY DEFAULT nextval('serial'),
         trade_symbol_id integer REFERENCES TRADE_SYMBOL,
         date date,
-        open numerical,
-        high numerical,
-        low numerical,
-        close numerical,
+        open numeric,
+        high numeric,
+        low numeric,
+        close numeric,
         volume bigint,
-        average numerical,
+        average numeric,
         barCount integer,
         UNIQUE (trade_symbol_id, date)
     );
@@ -35,12 +35,12 @@ def get_create_table_query() -> str:
         id integer PRIMARY KEY DEFAULT nextval('serial'),
         trade_symbol_id integer REFERENCES TRADE_SYMBOL,
         datetime timestamptz,
-        open numerical,
-        high numerical,
-        low numerical,
-        close numerical,
+        open numeric,
+        high numeric,
+        low numeric,
+        close numeric,
         volume bigint,
-        average numerical,
+        average numeric,
         barCount integer,
         UNIQUE (trade_symbol_id, datetime)
     );
@@ -49,8 +49,8 @@ def get_create_table_query() -> str:
         id integer PRIMARY KEY DEFAULT nextval('serial'),
         trade_symbol_id integer REFERENCES TRADE_SYMBOL,
         datetime timestamp,
-        bid numerical,
-        ask numerical,
+        bid numeric,
+        ask numeric,
         volume bigint
     );
 
@@ -58,7 +58,7 @@ def get_create_table_query() -> str:
         id integer PRIMARY KEY DEFAULT nextval('serial'),
         trade_symbol_id integer REFERENCES TRADE_SYMBOL,
         datetime timestamp,
-        price numerical,
+        price numeric,
         size bigint
     );
     """
