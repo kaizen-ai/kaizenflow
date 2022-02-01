@@ -27,6 +27,37 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(gp): Consider adding a `SystemRunner` that has the absolute minimum
+#  common behavior.
+#
+# class SystemRunner(abc.ABC):
+#     """
+#     Create the simplest possible end-to-end DataFlow-based system comprised
+#     of a `MarketData` and a `Dag`.
+#     """
+#
+#     @abc.abstractmethod
+#     def get_market_data(
+#             self, event_loop: asyncio.AbstractEventLoop
+#     ) -> mdata.AbstractMarketData:
+#         ...
+#
+#     @abc.abstractmethod
+#     def get_dag(
+#             self, portfolio: oms.AbstractPortfolio
+#     ) -> Tuple[cconfig.Config, dtfcorbuil.DagBuilder]:
+#         ...
+#
+#
+# class ResearchSystemRunner(SystemRunner):
+#     """
+#     Create an end-to-end DataFlow-based system that can run a `Dag` in
+#     research mode, i.e., running a `Dag` in batch mode and generating the
+#     research pnl.
+#     """
+
+
+# TODO(gp): This is really a -> RealTimeSystemRunner
 class SystemRunner(abc.ABC):
     """
     Create an end-to-end DataFlow-based system composed of:

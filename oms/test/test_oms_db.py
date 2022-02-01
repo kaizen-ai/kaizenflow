@@ -155,7 +155,7 @@ class TestOmsDbAcceptedOrdersTable1(omtodh.TestOmsDbHelper):
         # Check the content of the table.
         query = f"SELECT * FROM {table_name}"
         df = hsql.execute_query_to_df(self.connection, query)
-        act = hpandas.dataframe_to_str(df)
+        act = hpandas.df_to_str(df)
         # pylint: disable=line-too-long
         exp = r"""  strategyid  targetlistid   tradedate  instanceid                                                                filename        timestamp_processed               timestamp_db  target_count  changed_count  unchanged_count  cancel_count  success                                                     reason
 0       SAU1             1  2021-11-12        3504                                                         hello_world.txt 2021-11-12 19:59:23.710677 2021-11-12 19:59:23.716732             1              0                0             0    False   "There were a total of 1 malformed requests in the file.
@@ -279,7 +279,7 @@ class TestOmsDbTableInteraction1(omtodh.TestOmsDbHelper):
         # Show the state of the DB.
         query = f"SELECT * FROM {table_name}"
         df = hsql.execute_query_to_df(self.connection, query)
-        _LOG.debug("df=\n%s", hpandas.dataframe_to_str(df, use_tabulate=False))
+        _LOG.debug("df=\n%s", hpandas.df_to_str(df, use_tabulate=False))
 
 
 # #############################################################################

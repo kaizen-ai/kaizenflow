@@ -131,13 +131,13 @@ class OrderProcessor:
                 FROM {self._submitted_orders_table_name}
                 ORDER BY timestamp_db"""
         df = hsql.execute_query_to_df(self._db_connection, query)
-        _LOG.debug("df=\n%s", hpandas.dataframe_to_str(df))
+        _LOG.debug("df=\n%s", hpandas.df_to_str(df))
         hdbg.dassert_lte(
             diff_num_rows,
             len(df),
             1,
             "There are not enough new rows in df=\n%s",
-            hpandas.dataframe_to_str(df),
+            hpandas.df_to_str(df),
         )
         # TODO(gp): For now we accept only one order list.
         hdbg.dassert_eq(diff_num_rows, 1)
@@ -179,7 +179,7 @@ class OrderProcessor:
                 FROM {self._submitted_orders_table_name}
                 ORDER BY timestamp_db"""
         df = hsql.execute_query_to_df(self._db_connection, query)
-        _LOG.debug("df=\n%s", hpandas.dataframe_to_str(df))
+        _LOG.debug("df=\n%s", hpandas.df_to_str(df))
         hdbg.dassert_eq(file_name, df.tail(1).squeeze()["filename"])
         orders_as_txt = df.tail(1).squeeze()["orders_as_txt"]
         orders = omorder.orders_from_string(orders_as_txt)
@@ -220,7 +220,7 @@ class OrderProcessor:
             _LOG.debug("query=%s", query)
             positions_df = hsql.execute_query_to_df(self._db_connection, query)
             hdbg.dassert_lte(positions_df.shape[0], 1)
-            _LOG.debug("positions_df=%s", hpandas.dataframe_to_str(positions_df))
+            _LOG.debug("positions_df=%s", hpandas.df_to_str(positions_df))
             # #################################################################
             # Delete the row from the positions table.
             query = []
@@ -263,7 +263,7 @@ class OrderProcessor:
                 """
                 row = hsql.csv_to_series(txt, sep=",")
             row = row.convert_dtypes()
-            _LOG.debug("Insert row is=%s", hpandas.dataframe_to_str(row))
+            _LOG.debug("Insert row is=%s", hpandas.df_to_str(row))
             hsql.execute_insert_query(
                 self._db_connection, row, self._current_positions_table_name
             )

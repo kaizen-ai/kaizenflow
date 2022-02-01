@@ -75,6 +75,6 @@ echo $PYTHONPATH | perl -e 'print join("\n", grep { not $seen{$_}++ } split(/:/,
 # Configure environment
 # #############################################################################
 
-source $AMP/dev_scripts/configure_env.sh
+source $AMP/dev_scripts/setenv_amp.configure_env.sh
 
 echo "==> SUCCESS <=="

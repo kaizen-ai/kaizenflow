@@ -1504,7 +1504,7 @@ class Test_compute_average_holding_period(hunitest.TestCase):
 class Test_compute_bet_starts(hunitest.TestCase):
     def test1(self) -> None:
         positions = Test_compute_bet_starts._get_series(42)
-        actual = cofinanc.compute_bet_starts(positions)
+        actual = cofinanc.compute_signed_run_starts(positions)
         output_str = (
             f"{hprint.frame('positions')}\n"
             f"{hunitest.convert_df_to_string(positions, index=True)}\n"
@@ -1518,7 +1518,7 @@ class Test_compute_bet_starts(hunitest.TestCase):
         positions.iloc[:4] = np.nan
         positions.iloc[10:15] = np.nan
         positions.iloc[-4:] = np.nan
-        actual = cofinanc.compute_bet_starts(positions)
+        actual = cofinanc.compute_signed_run_starts(positions)
         output_str = (
             f"{hprint.frame('positions')}\n"
             f"{hunitest.convert_df_to_string(positions, index=True)}\n"
@@ -1548,7 +1548,7 @@ class Test_compute_bet_starts(hunitest.TestCase):
             },
             dtype=float,
         )
-        actual = cofinanc.compute_bet_starts(positions)
+        actual = cofinanc.compute_signed_run_starts(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test4(self) -> None:
@@ -1572,7 +1572,7 @@ class Test_compute_bet_starts(hunitest.TestCase):
             },
             dtype=float,
         )
-        actual = cofinanc.compute_bet_starts(positions)
+        actual = cofinanc.compute_signed_run_starts(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test5(self) -> None:
@@ -1596,7 +1596,7 @@ class Test_compute_bet_starts(hunitest.TestCase):
             },
             dtype=float,
         )
-        actual = cofinanc.compute_bet_starts(positions)
+        actual = cofinanc.compute_signed_run_starts(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     @staticmethod
@@ -1611,28 +1611,28 @@ class Test_compute_bet_starts(hunitest.TestCase):
         return series
 
 
-class Test_compute_bet_ends(hunitest.TestCase):
+class Test_compute_run_ends(hunitest.TestCase):
     def test1(self) -> None:
-        positions = Test_compute_bet_ends._get_series(42)
-        actual = cofinanc.compute_bet_ends(positions)
+        positions = Test_compute_run_ends._get_series(42)
+        actual = cofinanc.compute_signed_run_ends(positions)
         output_str = (
             f"{hprint.frame('positions')}\n"
             f"{hunitest.convert_df_to_string(positions, index=True)}\n"
-            f"{hprint.frame('bet_lengths')}\n"
+            f"{hprint.frame('run_lengths')}\n"
             f"{hunitest.convert_df_to_string(actual, index=True)}"
         )
         self.check_string(output_str)
 
     def test2(self) -> None:
-        positions = Test_compute_bet_ends._get_series(42)
+        positions = Test_compute_run_ends._get_series(42)
         positions.iloc[:4] = np.nan
         positions.iloc[10:15] = np.nan
         positions.iloc[-4:] = np.nan
-        actual = cofinanc.compute_bet_ends(positions)
+        actual = cofinanc.compute_signed_run_ends(positions)
         output_str = (
             f"{hprint.frame('positions')}\n"
             f"{hunitest.convert_df_to_string(positions, index=True)}\n"
-            f"{hprint.frame('bet_lengths')}\n"
+            f"{hprint.frame('run_lengths')}\n"
             f"{hunitest.convert_df_to_string(actual, index=True)}"
         )
         self.check_string(output_str)
@@ -1659,7 +1659,7 @@ class Test_compute_bet_ends(hunitest.TestCase):
             dtype=float,
         )
         # TODO(*): This is testing the wrong function!
-        actual = cofinanc.compute_bet_starts(positions)
+        actual = cofinanc.compute_signed_run_starts(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test4(self) -> None:
@@ -1684,7 +1684,7 @@ class Test_compute_bet_ends(hunitest.TestCase):
             dtype=float,
         )
         # TODO(*): This is testing the wrong function!
-        actual = cofinanc.compute_bet_starts(positions)
+        actual = cofinanc.compute_signed_run_starts(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test5(self) -> None:
@@ -1709,7 +1709,7 @@ class Test_compute_bet_ends(hunitest.TestCase):
             dtype=float,
         )
         # TODO(*): This is testing the wrong function!
-        actual = cofinanc.compute_bet_starts(positions)
+        actual = cofinanc.compute_signed_run_starts(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     @staticmethod
@@ -1724,10 +1724,10 @@ class Test_compute_bet_ends(hunitest.TestCase):
         return series
 
 
-class Test_compute_signed_bet_lengths(hunitest.TestCase):
+class Test_compute_signed_run_lengths(hunitest.TestCase):
     def test1(self) -> None:
-        positions = Test_compute_signed_bet_lengths._get_series(42)
-        actual = cofinanc.compute_signed_bet_lengths(positions)
+        positions = Test_compute_signed_run_lengths._get_series(42)
+        actual = cofinanc.compute_signed_run_lengths(positions)
         output_str = (
             f"{hprint.frame('positions')}\n"
             f"{hunitest.convert_df_to_string(positions, index=True)}\n"
@@ -1737,11 +1737,11 @@ class Test_compute_signed_bet_lengths(hunitest.TestCase):
         self.check_string(output_str)
 
     def test2(self) -> None:
-        positions = Test_compute_signed_bet_lengths._get_series(42)
+        positions = Test_compute_signed_run_lengths._get_series(42)
         positions.iloc[:4] = np.nan
         positions.iloc[10:15] = np.nan
         positions.iloc[-4:] = np.nan
-        actual = cofinanc.compute_signed_bet_lengths(positions)
+        actual = cofinanc.compute_signed_run_lengths(positions)
         output_str = (
             f"{hprint.frame('positions')}\n"
             f"{hunitest.convert_df_to_string(positions, index=True)}\n"
@@ -1759,7 +1759,7 @@ class Test_compute_signed_bet_lengths(hunitest.TestCase):
             ["2010-01-04", "2010-01-07", "2010-01-10", "2010-01-12"]
         )
         expected = pd.Series([4, -3, -1, 1], index=expected_bet_ends, dtype=float)
-        actual = cofinanc.compute_signed_bet_lengths(positions)
+        actual = cofinanc.compute_signed_run_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test4(self) -> None:
@@ -1769,7 +1769,7 @@ class Test_compute_signed_bet_lengths(hunitest.TestCase):
         positions = pd.Series([1], index=[pd.Timestamp("2010-01-01")])
         # Notice the int to float data type change.
         expected = pd.Series([1], index=[pd.Timestamp("2010-01-01")], dtype=float)
-        actual = cofinanc.compute_signed_bet_lengths(positions)
+        actual = cofinanc.compute_signed_run_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test5(self) -> None:
@@ -1779,7 +1779,7 @@ class Test_compute_signed_bet_lengths(hunitest.TestCase):
         idx = pd.to_datetime(["2010-01-01", "2010-01-02"])
         positions = pd.Series([np.nan, np.nan], index=idx)
         expected = pd.Series(index=idx).dropna()
-        actual = cofinanc.compute_signed_bet_lengths(positions)
+        actual = cofinanc.compute_signed_run_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test6(self) -> None:
@@ -1791,7 +1791,7 @@ class Test_compute_signed_bet_lengths(hunitest.TestCase):
         expected = pd.Series(
             [1], index=pd.to_datetime(["2010-01-01"]), dtype=float
         )
-        actual = cofinanc.compute_signed_bet_lengths(positions)
+        actual = cofinanc.compute_signed_run_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test7(self) -> None:
@@ -1803,7 +1803,7 @@ class Test_compute_signed_bet_lengths(hunitest.TestCase):
         expected = pd.Series(
             [1], index=pd.to_datetime(["2010-01-01"]), dtype=float
         )
-        actual = cofinanc.compute_signed_bet_lengths(positions)
+        actual = cofinanc.compute_signed_run_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test8(self) -> None:
@@ -1813,7 +1813,7 @@ class Test_compute_signed_bet_lengths(hunitest.TestCase):
         idx = pd.to_datetime(["2010-01-01", "2010-01-02"])
         positions = pd.Series([0, 0], index=idx)
         expected = pd.Series(index=idx).dropna()
-        actual = cofinanc.compute_signed_bet_lengths(positions)
+        actual = cofinanc.compute_signed_run_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test9(self) -> None:
@@ -1823,7 +1823,7 @@ class Test_compute_signed_bet_lengths(hunitest.TestCase):
         idx = pd.to_datetime(["2010-01-01", "2010-01-02", "2010-01-03"])
         positions = pd.Series([0, 1, 0], index=idx)
         expected = pd.Series([1.0], index=[pd.Timestamp("2010-01-02")])
-        actual = cofinanc.compute_signed_bet_lengths(positions)
+        actual = cofinanc.compute_signed_run_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test10(self) -> None:
@@ -1833,15 +1833,15 @@ class Test_compute_signed_bet_lengths(hunitest.TestCase):
         idx = pd.to_datetime(["2010-01-01", "2010-01-02", "2010-01-03"])
         positions = pd.Series([1, 0, 0], index=idx)
         expected = pd.Series([1.0], index=[pd.Timestamp("2010-01-01")])
-        actual = cofinanc.compute_signed_bet_lengths(positions)
+        actual = cofinanc.compute_signed_run_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test11(self) -> None:
-        positions = Test_compute_signed_bet_lengths._get_series(42)
+        positions = Test_compute_signed_run_lengths._get_series(42)
         positions.iloc[:4] = 0
         positions.iloc[10:15] = 0
         positions.iloc[-4:] = 0
-        actual = cofinanc.compute_signed_bet_lengths(positions)
+        actual = cofinanc.compute_signed_run_lengths(positions)
         output_str = (
             f"{hprint.frame('positions')}\n"
             f"{hunitest.convert_df_to_string(positions, index=True)}\n"
@@ -1851,11 +1851,11 @@ class Test_compute_signed_bet_lengths(hunitest.TestCase):
         self.check_string(output_str)
 
     def test12(self) -> None:
-        positions = Test_compute_signed_bet_lengths._get_series(42)
+        positions = Test_compute_signed_run_lengths._get_series(42)
         positions.iloc[:4] = 0
         positions.iloc[10:15] = 0
         positions.iloc[-4:] = 0
-        actual = cofinanc.compute_signed_bet_lengths(positions)
+        actual = cofinanc.compute_signed_run_lengths(positions)
         output_str = (
             f"{hprint.frame('positions')}\n"
             f"{hunitest.convert_df_to_string(positions, index=True)}\n"
