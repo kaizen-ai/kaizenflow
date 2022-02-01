@@ -288,7 +288,7 @@ def _get_files_to_process(
     elif all_:
         files = hio.find_all_files(dir_name)
     if files_from_user:
-        # If files were passed, filter out non existing paths.
+        # If files were passed, filter out non-existent paths.
         files = _filter_existing_paths(files_from_user.split(" "))
     # Convert into a list.
     hdbg.dassert_isinstance(files, list)
