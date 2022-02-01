@@ -185,7 +185,7 @@ class ImClient(abc.ABC):
     #  One is the type, the other is the semantic.
     # This should be called -> get_asset_ids_from_full_symbols
     @staticmethod
-    def get_numerical_ids_from_full_symbols(
+    def get_asset_ids_from_full_symbols(
         full_symbols: List[imvcdcfusy.FullSymbol],
     ) -> List[int]:
         """
