@@ -231,10 +231,12 @@ def run_poetry_debug(debug_mode: str, max_runtime: int) -> None:
                 max_runtime,
                 last_package=optional_package,
             )
-    else:
+    elif debug_mode in ("incremental", "optional"):
         # Add packages in one shot.
         _LOG.info("Adding packages in one shot=`%s`", all_packages)
         _run_poetry_cmd_wrapper(dir_name, all_packages, max_runtime)
+    else:
+        raise ValueError(f"Unsupported debug mode `{debug_mode}`!")
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -264,13 +266,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     debug_mode = args.debug_mode
     max_runtime = args.max_runtime
-    valid_debug_modes = (
-        "necessary",
-        "necessary_incremental",
-        "optional",
-        "optional_incremental",
-    )
-    hdbg.dassert_in(debug_mode, valid_debug_modes)
     run_poetry_debug(debug_mode, max_runtime)
 
 
