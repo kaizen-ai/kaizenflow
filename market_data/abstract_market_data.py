@@ -151,7 +151,7 @@ class AbstractMarketData(abc.ABC):
         self._columns = columns
         #
         hdbg.dassert_isinstance(get_wall_clock_time, Callable)
-        self.get_wall_clock_time = get_wall_clock_time
+        self._get_wall_clock_time = get_wall_clock_time
         #
         hdbg.dassert_lt(0, sleep_in_secs)
         self._sleep_in_secs = sleep_in_secs
@@ -187,7 +187,7 @@ class AbstractMarketData(abc.ABC):
         """
         # Handle `timedelta`.
         _LOG.verb_debug(hprint.to_str("timedelta"))
-        wall_clock_time = self.get_wall_clock_time(self._timezone)
+        wall_clock_time = self.get_wall_clock_time()
         start_ts = self._process_period(timedelta, wall_clock_time)
         end_ts = None
         # By convention to get the last chunk of data we use the start_time column.
@@ -304,6 +304,17 @@ class AbstractMarketData(abc.ABC):
         _LOG.verb_debug("-> df=\n%s", hpandas.df_to_str(df))
         hdbg.dassert_isinstance(df, pd.DataFrame)
         return df
+
+    def get_wall_clock_time(self) -> pd.Timestamp:
+        """
+        Convert wall clock time to the timezone specified in the ctor.
+
+        Initially wall clock time can be in any timezone (or even timezone-naive)
+        but then `MarketData` unifies timezone for all timestamps.
+        """
+        wall_clock_time = self._get_wall_clock_time()
+        wall_clock_time_correct_timezone = wall_clock_time.tz_convert(self._timezone)
+        return wall_clock_time_correct_timezone
 
     # /////////////////////////////////////////////////////////////////////////////
 
@@ -454,7 +465,7 @@ class AbstractMarketData(abc.ABC):
                 last_db_end_time,
                 last_db_end_time.floor("Min"),
             )
-            wall_clock_time = self.get_wall_clock_time(self._timezone)
+            wall_clock_time = self.get_wall_clock_time()
             _LOG.verb_debug(
                 "wall_clock_time=%s -> %s",
                 wall_clock_time,
@@ -479,13 +490,13 @@ class AbstractMarketData(abc.ABC):
               was ready
             - num_iter: number of iterations before the last bar was ready
         """
-        start_sampling_time = self.get_wall_clock_time(self._timezone)
+        start_sampling_time = self.get_wall_clock_time()
         _LOG.verb_debug("DB on-line: %s", self.is_online())
         #
         hprint.log_frame(_LOG, "Waiting on last bar ...")
         num_iter = 0
         while True:
-            wall_clock_time = self.get_wall_clock_time(self._timezone)
+            wall_clock_time = self.get_wall_clock_time()
             last_db_end_time = self.get_last_end_time()
             # TODO(gp): We should use the new hasynci.poll().
             _LOG.debug(
