@@ -181,7 +181,6 @@ class ImClient(abc.ABC):
 
     # TODO(gp): @Grisha we are mixing string vs int and asset_ids vs full_symbols.
     #  One is the type, the other is the semantic.
-    # This should be called -> get_asset_ids_from_full_symbols
     @staticmethod
     def get_asset_ids_from_full_symbols(
         full_symbols: List[imvcdcfusy.FullSymbol],
@@ -192,14 +191,13 @@ class ImClient(abc.ABC):
         :param full_symbols: assets as full symbols
         :return: assets as numerical ids
         """
-        numerical_asset_id = [
+        asset_id = [
             imvcuunut.string_to_numerical_id(full_symbol)
             for full_symbol in full_symbols
         ]
-        return numerical_asset_id
+        return asset_id
 
-    # TODO(gp): @Grisha -> get_full_symbols_from_asset_ids
-    def get_full_symbols_from_numerical_ids(
+    def get_full_symbols_from_asset_ids(
         self, asset_ids: List[int]
     ) -> List[imvcdcfusy.FullSymbol]:
         """
