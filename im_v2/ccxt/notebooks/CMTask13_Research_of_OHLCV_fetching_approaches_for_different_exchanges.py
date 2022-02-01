@@ -18,13 +18,10 @@
 # %autoreload 2
 # %matplotlib inline
 
-import json
 import logging
 import time
-from typing import Any
 
 import ccxt
-import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.henv as henv

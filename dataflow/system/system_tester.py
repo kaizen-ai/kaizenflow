@@ -10,6 +10,7 @@ from typing import List, Tuple, Union
 import pandas as pd
 
 import dataflow.model as dtfmod
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -53,7 +54,7 @@ class SystemTester:
         volatility_col: str,
         prediction_col: str,
         target_gmv: float = 100000,
-        dollar_neutral: bool = False,
+        dollar_neutrality: str = "no_constraint",
     ) -> Tuple[str, pd.Series]:
         actual = ["\n# forecast_evaluator signature=\n"]
         forecast_evaluator = dtfmod.ForecastEvaluator(
@@ -65,13 +66,14 @@ class SystemTester:
         signature = forecast_evaluator.to_str(
             result_df,
             target_gmv=target_gmv,
-            dollar_neutral=dollar_neutral,
+            dollar_neutrality=dollar_neutrality,
         )
         actual.append(signature)
         _, _, stats = forecast_evaluator.compute_portfolio(
             result_df,
             target_gmv=target_gmv,
-            dollar_neutral=dollar_neutral,
+            dollar_neutrality=dollar_neutrality,
+            reindex_like_input=True,
         )
         research_pnl = stats["pnl"]
         actual = "\n".join(map(str, actual))
@@ -117,5 +119,5 @@ class SystemTester:
     def _append(
         list_: List[str], label: str, data: Union[pd.Series, pd.DataFrame]
     ) -> None:
-        data_str = hunitest.convert_df_to_string(data, index=True, decimals=3)
+        data_str = hpandas.df_to_str(data, index=True, num_rows=None, decimals=3)
         list_.append(f"{label}=\n{data_str}")

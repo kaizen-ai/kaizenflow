@@ -27,9 +27,9 @@ import logging
 
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
-import helpers.old.tunnels as holdtunn
 import helpers.hparser as hparser
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
+import helpers.old.tunnels as holdtunn
 
 _LOG = logging.getLogger(__name__)
 
@@ -75,7 +75,7 @@ def _main() -> None:
     if args.user:
         user_name = args.user
     else:
-        user_name = hsysinte.get_user_name()
+        user_name = hsystem.get_user_name()
     #
     action = args.positional[0]
     _LOG.debug("action=%s", action)

@@ -156,9 +156,11 @@ def get_initial_df_with_volumes(coins, exchange, is_notional_volume):
     Parameters: list of coins, exchange name
     """
     result = []
-    root_dir = os.path.join(hs3.get_path(), "data")
+    vendor = config["data"]["vendor"]
+    root_dir = config["load"]["data_dir"]
     extension = "csv.gz"
-    ccxt_csv_client = icdcl.CcxtCsvParquetByAssetClient(
+    ccxt_csv_client = icdcl.CcxtCddCsvParquetByAssetClient(
+        vendor,
         root_dir,
         extension,
         aws_profile=config["load"]["aws_profile"],

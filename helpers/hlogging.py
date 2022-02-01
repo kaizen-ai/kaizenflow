@@ -335,7 +335,7 @@ def _get_logging_format(
     :param force_verbose_format: force to use the verbose format
     """
     if _is_running_in_ipynb() and not force_no_warning:
-        print(WARNING + ": Running in Jupyter")
+        print("WARNING: Running in Jupyter")
     verbose_format = not _is_running_in_ipynb()
     #
     assert not (force_verbose_format and force_print_format), (
@@ -454,12 +454,14 @@ class CustomFormatter(logging.Formatter):
     ```
     """
 
-    def __init__(self,
-                 *args: Any,
-                 date_format_mode: str = "time",
-                 report_memory_usage: bool = False,
-                 report_cpu_usage: bool = False,
-                 **kwargs: Any):
+    def __init__(
+        self,
+        *args: Any,
+        date_format_mode: str = "time",
+        report_memory_usage: bool = False,
+        report_cpu_usage: bool = False,
+        **kwargs: Any,
+    ):
         super().__init__(*args, **kwargs)  # type: ignore[call-arg]
         self._date_fmt = self._get_date_format(date_format_mode)
         #
@@ -618,7 +620,6 @@ class CustomFormatter(logging.Formatter):
         return colored_level_name
 
 
-
 def set_v2_formatter(
     ch: Any,
     root_logger: Any,
@@ -632,14 +633,15 @@ def set_v2_formatter(
     Same params as `init_logger()`.
     """
     assert not (force_verbose_format and force_print_format), (
-          f"Can't use both force_verbose_format={force_verbose_format} "
-          + f"and force_print_format={force_print_format}")
+        f"Can't use both force_verbose_format={force_verbose_format} "
+        + f"and force_print_format={force_print_format}"
+    )
     # When running in a notebook make logging behave like a `print`.
     verbose_format = True
     if _is_running_in_ipynb():
         verbose_format = False
         if not force_no_warning:
-            print(WARNING + ": Running in Jupyter")
+            print("WARNING: Running in Jupyter")
     #
     if force_verbose_format:
         verbose_format = True
@@ -651,7 +653,8 @@ def set_v2_formatter(
         # report_memory_usage = report_cpu_usage = True
         formatter = CustomFormatter(
             report_memory_usage=report_memory_usage,
-            report_cpu_usage=report_cpu_usage)
+            report_cpu_usage=report_cpu_usage,
+        )
     else:
         # Make logging look like a normal `print()`.
         log_format = "%(levelname)-5s %(message)s"

@@ -21,7 +21,7 @@ import os
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hparser as hparser
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -140,7 +140,7 @@ def _get_list_files_cmd(
         "tmp.local_all.txt" if not local_to_remote else "tmp.remote_all.txt"
     )
     cmd += " >%s" % dst_file
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
     #
     if not verbose:
         src_file = dst_file
@@ -211,7 +211,7 @@ def _main():
     #
     if not args.no_check:
         cmd = 'ssh %s@%s "ls %s"' % (remote_user_name, remote_ip, dst_dir)
-        rc = hsysinte.system(cmd, abort_on_error=False)
+        rc = hsystem.system(cmd, abort_on_error=False)
         if rc != 0:
             msg = "Can't find remote dir '%s' on '%s@%s'" % (
                 dst_dir,
@@ -236,7 +236,7 @@ def _main():
             execute,
             local_to_remote,
         )
-        hsysinte.system(cmd, suppress_output=False)
+        hsystem.system(cmd, suppress_output=False)
     elif args.action == "rsync_both_ways":
         raise RuntimeError("Not implemented yet")
         force = False
@@ -254,7 +254,7 @@ def _main():
                 execute,
                 local_to_remote,
             )
-            hsysinte.system(cmd, suppress_output=False)
+            hsystem.system(cmd, suppress_output=False)
         #
     elif args.action in ("diff", "diff_verb"):
         files = []
@@ -274,7 +274,7 @@ def _main():
         diff_script = "./tmp_diff.sh"
         hio.to_file(diff_script, vimdiff_cmd)
         cmd = "chmod +x " + diff_script
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
         msg = (
             "Diff with:",
             "> " + vimdiff_cmd,

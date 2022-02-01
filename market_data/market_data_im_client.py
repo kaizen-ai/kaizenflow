@@ -4,17 +4,21 @@ Import as:
 import market_data.market_data_im_client as mdmdimcl
 """
 
+import logging
 from typing import Any, List, Optional
 
 import pandas as pd
 
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import im_v2.common.data.client as icdc
 import market_data.abstract_market_data as mdabmada
 
+_LOG = logging.getLogger(__name__)
 
-# TODO(gp): -> MarketDataImClient?
-class MarketDataInterface(mdabmada.AbstractMarketData):
+
+# TODO(gp): @Grisha -> ImClientMarketData and rename all the classes and files.
+class MarketDataImClient(mdabmada.AbstractMarketData):
     """
     Implement a `MarketData` that uses a `ImClient` as backend.
     """
@@ -24,9 +28,6 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
     ) -> None:
         """
         Constructor.
-
-        :param args: see `AbstractMarketData`
-        :param im_client: IM client
         """
         super().__init__(*args, **kwargs)
         hdbg.dassert_isinstance(im_client, icdc.ImClient)
@@ -41,8 +42,8 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
 
     def _get_data(
         self,
-        start_ts: pd.Timestamp,
-        end_ts: pd.Timestamp,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
         ts_col_name: str,
         asset_ids: Optional[List[int]],
         left_close: bool,
@@ -54,12 +55,16 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
         See the parent class.
         """
         # `ImClient` uses the convention [start_ts, end_ts).
+        # TODO(gp): Check this invariant.
         if not left_close:
-            # Add one millisecond to not include the left boundary.
-            start_ts = start_ts + pd.Timedelta(1, "ms")
+            if start_ts is not None:
+                # Add one millisecond to not include the left boundary.
+                start_ts += pd.Timedelta(1, "ms")
         if right_close:
-            # Add one millisecond to include the right boundary.
-            end_ts = end_ts + pd.Timedelta(1, "ms")
+            if end_ts is not None:
+                # Add one millisecond to include the right boundary.
+                end_ts += pd.Timedelta(1, "ms")
+        # TODO(gp): call dassert_is_valid_start_end_timestamp
         if not asset_ids:
             # If `asset_ids` is None, get all assets from the universe.
             as_asset_ids = True
@@ -130,6 +135,19 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
         ] - pd.Timedelta(minutes=1)
         return df
 
-    # TODO(Dan): Implement in CmTask999.
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
-        return NotImplementedError
+        # We need to find the last timestamp before the current time. We use
+        # `7D` but could also use all the data since we don't call the DB.
+        # TODO(gp): SELECT MAX(start_time) instead of getting all the data
+        #  and then find the max and use `start_time`
+        timedelta = pd.Timedelta("7D")
+        df = self.get_data_for_last_period(timedelta)
+        _LOG.debug(
+            hpandas.df_to_str(df, print_shape_info=True, tag="after get_data")
+        )
+        if df.empty:
+            ret = None
+        else:
+            ret = df.index.max()
+        _LOG.debug("-> ret=%s", ret)
+        return ret
