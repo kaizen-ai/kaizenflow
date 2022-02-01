@@ -40,7 +40,11 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
         asset_ids: List[int],
     ) -> pd.Series:
         """
-        Get last price for `asset_ids` using column `col_name` (e.g., "close")
+        This method overrides parent method in `MarketData`.
+
+        In contract with specific `MarketData` backends,
+        `ImClientMarketData` is using end timestamp instead of start
+        timestamp for date filtering.
         """
         last_end_time = self.get_last_end_time()
         _LOG.info("last_end_time=%s", last_end_time)
