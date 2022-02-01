@@ -9,6 +9,7 @@ from typing import Dict, List
 import invoke
 import pytest
 
+
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hprint as hprint
@@ -1375,6 +1376,33 @@ class Test_get_files_to_process1(hunitest.TestCase):
             remove_dirs,
         )
         self.assertEqual(files, [__file__])
+
+    def test_files2(self) -> None:
+        """
+        Pass through files from user.
+
+        Use three types of paths we don't want to process:
+          - non-existent python file
+          - pattern "/*" that matches no files
+          - existing directory
+        """
+        modified = False
+        branch = False
+        last_commit = False
+        all_ = False
+        files_from_user = "testfile1.py testfiles1/* testfiles2/"
+        mutually_exclusive = True
+        remove_dirs = True
+        files = hlibtask._get_files_to_process(
+            modified,
+            branch,
+            last_commit,
+            all_,
+            files_from_user,
+            mutually_exclusive,
+            remove_dirs,
+        )
+        self.assertEqual(files, [])
 
     def test_assert1(self) -> None:
         """
