@@ -18,9 +18,6 @@ import stat
 import sys
 from typing import Any, Dict, List, Match, Optional, Set, Tuple, Union
 
-import tqdm
-from invoke import task
-
 # We want to minimize the dependencies from non-standard Python packages since
 # this code needs to run with minimal dependencies and without Docker.
 import helpers.hdbg as hdbg
@@ -32,6 +29,8 @@ import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.htable as htable
 import helpers.hversion as hversio
+import tqdm
+from invoke import task
 
 _LOG = logging.getLogger(__name__)
 
@@ -309,7 +308,7 @@ def _get_files_to_process(
 
 def _filter_existing_paths(files_from_user: List[str]) -> List[str]:
     """
-    Filter out the paths to non-existent files. 
+    Filter out the paths to non-existent files.
 
     :param files_from_user: paths passed by user
     :return: existing paths
@@ -323,11 +322,14 @@ def _filter_existing_paths(files_from_user: List[str]) -> List[str]:
                 # Check whether the pattern match files.
                 files.extend(dir_files)
             else:
-                _LOG.warning("'%s' pattern doesn't match any files: the directory is empty or path does not exist", user_file)
+                _LOG.warning(
+                    "'%s' pattern doesn't match any files: the directory is empty or path does not exist",
+                    user_file,
+                )
         elif os.path.exists(user_file):
             files.append(user_file)
         else:
-            _LOG.warning("'%s' does not exist", user_file)
+            _LOG.warning("File '%s' does not exist", user_file)
     return files
 
 
@@ -1513,7 +1515,8 @@ def integrate_find_files(  # type: ignore
     subdir="",
 ):
     """
-    Find the files that are touched in the current branch since last integration.
+    Find the files that are touched in the current branch since last
+    integration.
     """
     _report_task()
     _ = ctx
@@ -2961,10 +2964,8 @@ def _find_short_import(iterator: List, short_import: str) -> _FindResults:
     """
     Find imports in the Python files with the given short import.
 
-    E.g., for dtfcorrunn
-    dataflow/core/test/test_builders.py:9:import dataflow.core.runners as dtfcorrunn
-    returns
-
+    E.g., for dtfcorrunn dataflow/core/test/test_builders.py:9:import
+    dataflow.core.runners as dtfcorrunn returns
     """
     # E.g.,
     # `import dataflow.core.runners as dtfcorrunn`
