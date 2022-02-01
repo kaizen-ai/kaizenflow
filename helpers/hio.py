@@ -317,7 +317,7 @@ def create_dir(
             raise e
 
 
-def _dassert_output_data_is_valid_file_name(file_name: str) -> None:
+def _dassert_is_valid_file_name(file_name: str) -> None:
     # hdbg.dassert_in(type(file_name), (str, unicode))
     hdbg.dassert_in(type(file_name), [str])
     hdbg.dassert_is_not(file_name, None)
@@ -332,7 +332,7 @@ def create_enclosing_dir(file_name: str, incremental: bool = False) -> str:
     :param incremental: same meaning as in `create_dir()`
     """
     _LOG.debug(hprint.to_str("file_name incremental"))
-    _dassert_output_data_is_valid_file_name(file_name)
+    _dassert_is_valid_file_name(file_name)
     # hs3.dassert_is_not_s3_path(file_name)
     #
     dir_name = os.path.dirname(file_name)
@@ -370,7 +370,7 @@ def to_file(
     :param force_flush: whether to forcibly clear the file buffer
     """
     _LOG.debug(hprint.to_str("file_name use_gzip mode force_flush"))
-    _dassert_output_data_is_valid_file_name(file_name)
+    _dassert_is_valid_file_name(file_name)
     # Choose default writing mode based on compression.
     if mode is None:
         if use_gzip:
@@ -428,7 +428,7 @@ def from_file(
     :return: contents of file as string
     """
     hdbg.dassert_ne(file_name, "")
-    _dassert_output_data_is_valid_file_name(file_name)
+    _dassert_is_valid_file_name(file_name)
     hdbg.dassert_exists(file_name)
     data: str = ""
     if file_name.endswith((".gz", ".gzip")):

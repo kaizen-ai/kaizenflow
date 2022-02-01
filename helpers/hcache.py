@@ -117,7 +117,7 @@ def _get_cache_types() -> List[str]:
     return ["mem", "disk"]
 
 
-def _dassert_output_data_is_valid_cache_type(cache_type: str) -> None:
+def _dassert_is_valid_cache_type(cache_type: str) -> None:
     """
     Assert that `cache_type` is a valid cache type.
     """
@@ -135,7 +135,7 @@ def _get_global_cache_name(cache_type: str, tag: Optional[str] = None) -> str:
     :param tag: optional unique tag of the cache
     :return: name of the folder for a cache
     """
-    _dassert_output_data_is_valid_cache_type(cache_type)
+    _dassert_is_valid_cache_type(cache_type)
     cache_name = f"tmp.cache.{cache_type}"
     if tag is not None:
         cache_name += f".{tag}"
@@ -153,7 +153,7 @@ def _get_global_cache_path(cache_type: str, tag: Optional[str] = None) -> str:
     """
     if _TRACE_FUNCS:
         _LOG.debug("")
-    _dassert_output_data_is_valid_cache_type(cache_type)
+    _dassert_is_valid_cache_type(cache_type)
     # Get the cache name.
     cache_name = _get_global_cache_name(cache_type, tag)
     # Get the enclosing directory path.
@@ -208,7 +208,7 @@ def _create_global_cache_backend(
     """
     if _TRACE_FUNCS:
         _LOG.debug("")
-    _dassert_output_data_is_valid_cache_type(cache_type)
+    _dassert_is_valid_cache_type(cache_type)
     dir_name = _get_global_cache_path(cache_type, tag)
     _LOG.debug(
         "Creating cache for cache_type='%s' and tag='%s' at '%s'",
@@ -229,7 +229,7 @@ def get_global_cache(cache_type: str, tag: Optional[str] = None) -> joblib.Memor
     """
     if _TRACE_FUNCS:
         _LOG.debug("")
-    _dassert_output_data_is_valid_cache_type(cache_type)
+    _dassert_is_valid_cache_type(cache_type)
     global _MEMORY_CACHE
     global _DISK_CACHE
     if tag is None:
@@ -258,7 +258,7 @@ def set_global_cache(cache_type: str, cache_backend: joblib.Memory) -> None:
     """
     if _TRACE_FUNCS:
         _LOG.debug("")
-    _dassert_output_data_is_valid_cache_type(cache_type)
+    _dassert_is_valid_cache_type(cache_type)
     global _MEMORY_CACHE
     global _DISK_CACHE
     if cache_type == "mem":
@@ -283,7 +283,7 @@ def clear_global_cache(
         for cache_type_tmp in _get_cache_types():
             clear_global_cache(cache_type_tmp, tag=tag, destroy=destroy)
         return
-    _dassert_output_data_is_valid_cache_type(cache_type)
+    _dassert_is_valid_cache_type(cache_type)
     # Clear and / or destroy the cache `cache_type` with the given `tag`.
     cache_path = _get_global_cache_path(cache_type, tag)
     if not _IS_CLEAR_CACHE_ENABLED:

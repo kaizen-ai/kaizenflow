@@ -1469,7 +1469,7 @@ def to_qgrid(df: pd.DataFrame) -> Any:
         # TODO(gp): Make this general.
         # qgrid can only either add a predefined row (list of tuples) or copy
         # the last row of the df. Adding a single empty row is only possible in
-        # this way - dataframe must a have numerical index. But since now the
+        # this way - dataframe must a have numeric index. But since now the
         # last row is empty we can create new rows by duplicating it with qgrid
         # built-in functionality.
         empty_row = [("source_number", df.shape[0])] + [
