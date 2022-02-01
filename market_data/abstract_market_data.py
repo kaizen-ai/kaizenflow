@@ -67,6 +67,7 @@ class AbstractMarketData(abc.ABC):
     - Remap columns to connect data backends to consumers
     - Implement some common market-related data transformations
         - E.g., `get_twap_price()`, `get_last_price()`
+    - Handle timezones, i.e. convert all timestamp to the provided timezone
 
     # Non-responsibilities:
     - In general do not access data directly but rely on `ImClient` objects to
@@ -307,10 +308,8 @@ class AbstractMarketData(abc.ABC):
 
     def get_wall_clock_time(self) -> pd.Timestamp:
         """
-        Convert wall clock time to the timezone specified in the ctor.
-
-        Initially wall clock time can be in any timezone (or even timezone-naive)
-        but then `MarketData` unifies timezone for all timestamps.
+        Convert wall clock time to the timezone specified in the ctor. Initially wall clock time
+        can be in any timezone (or even timezone-naive).
         """
         wall_clock_time = self._get_wall_clock_time()
         wall_clock_time_correct_timezone = wall_clock_time.tz_convert(self._timezone)
