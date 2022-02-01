@@ -5,17 +5,12 @@ Script to download OHLCV data for a single exchange from CCXT.
 Use as:
 
 # Download OHLCV data for binance 'v03', saving dev_stage:
-> im_v2/ccxt/data/extract/download_realtime_data.py \
+> im_v2/ccxt/data/extract/download_realtime_for_one_exchange.py \
     --to_datetime '20211110-101100' \
     --from_datetime '20211110-101200' \
     --exchange_id 'binance' \
     --universe 'v03' \
     --db_stage 'dev' \
-    --v DEBUG
-
-Import as:
-
-import im_v2.ccxt.data.extract.download_realtime_data_v2 as imvcdedrdv
 """
 
 import argparse
@@ -89,7 +84,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     exchange = imvcdeexcl.CcxtExchange(args.exchange_id)
     # Load currency pairs.
     universe = imvccunun.get_trade_universe(args.universe)
-    currency_pairs = universe[args.exchange_id]
+    currency_pairs = universe["CCXT"][args.exchange_id]
     # Generate a query to remove duplicates.
     dup_query = hsql.get_remove_duplicates_query(
         table_name="ccxt_ohlcv",
@@ -109,6 +104,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # Assign pair and exchange columns.
         data["currency_pair"] = currency_pair
         data["exchange_id"] = args.exchange_id
+        # Insert data into the DB.
+        hsql.execute_insert_query(
+            connection=connection,
+            obj=data,
+            table_name="ccxt_ohlcv",
+        )
         # Remove duplicated entries.
         connection.cursor().execute(dup_query)
 

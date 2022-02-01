@@ -65,8 +65,8 @@ def _get_df_example1() -> pd.DataFrame:
 
 
 def _compare_dfs(self: Any, df1: pd.DataFrame, df2: pd.DataFrame) -> str:
-    df1_as_str = hpandas.df_to_short_str("", df1)
-    df2_as_str = hpandas.df_to_short_str("", df2)
+    df1_as_str = hpandas.df_to_str(df1, print_shape_info=True, tag="")
+    df2_as_str = hpandas.df_to_str(df2, print_shape_info=True, tag="")
     self.assert_equal(df1_as_str, df2_as_str, fuzzy_match=True)
     # When Parquet reads partitioned dataset can convert partitioning columns into
     # categorical variables that can create false positives.
@@ -87,7 +87,7 @@ class TestParquet1(hunitest.TestCase):
         # Prepare data.
         df = _get_df_example1()
         # Check.
-        act = hpandas.df_to_short_str("df", df)
+        act = hpandas.df_to_str(df, print_shape_info=True, tag="df")
         exp = r"""# df=
         df.index in [2020-01-01 09:30:00-05:00, 2020-01-01 16:00:00-05:00]
         df.columns=idx,instr,val1,val2
@@ -186,7 +186,7 @@ class TestParquet1(hunitest.TestCase):
         filters.append([("idx", "=", 0)])
         df2 = self.read_filtered_parquet(file_name, filters)
         # Check.
-        act = hpandas.df_to_short_str("df", df2)
+        act = hpandas.df_to_str(df2, print_shape_info=True, tag="df")
         exp = r"""# df=
         df.index in [2020-01-01 09:30:00-05:00, 2020-01-01 16:00:00-05:00]
         df.columns=idx,instr,val1,val2
@@ -349,7 +349,7 @@ class TestPartitionedParquet1(hunitest.TestCase):
         df_as_str = self.write_and_read_helper(
             df, partition_cols, exp_dir_signature, columns_to_read
         )
-        exp = r"""# df=
+        exp = r"""# =
         df.index in [2020-01-01 09:30:00-05:00, 2020-01-01 16:00:00-05:00]
         df.columns=idx,instr
         df.shape=(395, 2)
@@ -396,7 +396,7 @@ class TestPartitionedParquet1(hunitest.TestCase):
         table = dataset.read(columns=columns_to_read)
         df2 = table.to_pandas()
         # Compare.
-        df_as_str = hpandas.df_to_short_str("df", df2)
+        df_as_str = hpandas.df_to_str(df2, print_shape_info=True, tag="df")
         exp = r"""# df=
         df.index in [0, 78]
         df.columns=idx,instr
@@ -464,7 +464,7 @@ class TestPartitionedParquet1(hunitest.TestCase):
         df2 = df2[df.columns]
         df_as_str = _compare_dfs(self, df, df2)
         exp = r"""
-        # df=
+        # =
         df.index in [2020-01-01 09:30:00-05:00, 2020-01-01 16:00:00-05:00]
         df.columns=idx,instr,val1,val2
         df.shape=(395, 4)

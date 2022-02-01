@@ -15,6 +15,7 @@ import pyarrow.parquet as pq
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
 import helpers.hio as hio
+import helpers.hsystem as hsystem
 import helpers.htimer as htimer
 
 _LOG = logging.getLogger(__name__)
@@ -53,7 +54,7 @@ def from_parquet(
         table = dataset.read_pandas(columns=columns)
         df = table.to_pandas()
     # Report stats.
-    file_size = hintros.format_size(os.path.getsize(file_name))
+    file_size = hsystem.du(file_name, human_format=True)
     _LOG.log(
         log_level,
         "Loaded '%s' (size=%s, time=%.1fs)",
@@ -94,7 +95,7 @@ def to_parquet(
         table = pa.Table.from_pandas(df)
         pq.write_table(table, file_name)
     # Report stats.
-    file_size = hintros.format_size(os.path.getsize(file_name))
+    file_size = hsystem.du(file_name, human_format=True)
     _LOG.log(
         log_level,
         "Saved '%s' (size=%s, time=%.1fs)",

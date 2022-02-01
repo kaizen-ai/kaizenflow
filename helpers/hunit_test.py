@@ -150,7 +150,7 @@ def pytest_warning(txt: str, prefix: str = "") -> None:
 # #############################################################################
 
 
-# TODO(gp): -> pandas.helpers?
+# TODO(gp): -> Deprecated: use hpandas.df_to_str
 def convert_df_to_string(
     df: Union["pd.DataFrame", "pd.Series"],
     n_rows: Optional[int] = None,
@@ -360,6 +360,7 @@ def create_test_dir(
         hio.to_file(dst_file_name, file_content)
 
 
+# TODO(gp): Make remove_dir_name=True default.
 def get_dir_signature(
     dir_name: str,
     include_file_content: bool,

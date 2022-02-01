@@ -70,11 +70,11 @@ def _get_df(date) -> pd.DataFrame:
             },
             index=df_idx,
         )
-        _LOG.debug(hpandas.df_to_short_str("df_tmp", df_tmp))
+        _LOG.debug(hpandas.df_to_str(df_tmp, print_shape_info=True, tag="df_tmp"))
         df.append(df_tmp)
     # Create a single df for all the assets.
     df = pd.concat(df)
-    _LOG.debug(hpandas.df_to_short_str("df", df))
+    _LOG.debug(hpandas.df_to_str(df, print_shape_info=True, tag="df"))
     return df
 
 

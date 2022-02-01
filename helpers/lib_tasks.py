@@ -824,16 +824,27 @@ def git_rename_branch(ctx, new_branch_name):  # type: ignore
         f"'{new_branch_name}'"
     )
     hsystem.query_yes_no(msg, abort_on_no=True)
-    # https://stackoverflow.com/questions/6591213/how-do-i-rename-a-local-git-branch
-    # To rename a local branch:
-    # git branch -m <oldname> <newname>
+    # https://stackoverflow.com/questions/30590083
+    # Rename the local branch to the new name.
+    # > git branch -m <old_name> <new_name>
     cmd = f"git branch -m {new_branch_name}"
     _run(ctx, cmd)
-    # git push origin -u <newname>
+    # Delete the old branch on remote.
+    # > git push <remote> --delete <old_name>
+    cmd = f"git push origin --delete {old_branch_name}"
+    _run(ctx, cmd)
+    # Prevent Git from using the old name when pushing in the next step.
+    # Otherwise, Git will use the old upstream name instead of <new_name>.
+    # > git branch --unset-upstream <new_name>
+    cmd = f"git branch --unset-upstream {new_branch_name}"
+    _run(ctx, cmd)
+    # Push the new branch to remote.
+    # > git push <remote> <new_name>
     cmd = f"git push origin {new_branch_name}"
     _run(ctx, cmd)
-    # git push origin --delete <oldname>
-    cmd = f"git push origin --delete {old_branch_name}"
+    # Reset the upstream branch for the new_name local branch.
+    # > git push <remote> -u <new_name>
+    cmd = f"git push origin u {new_branch_name}"
     _run(ctx, cmd)
     print("Done")
 
@@ -1040,6 +1051,12 @@ def git_branch_diff_with_master(  # type: ignore
 #   > i lint --dir-name . --only-format
 #   > cd cmamp1
 #   > i lint --dir-name . --only-format
+#   ```
+#
+# - Remove end-spaces
+#   ```
+#   # Remove
+#   > find . -name "*.txt" | xargs perl -pi -e 'chomp if eof'
 #   ```
 #
 # - Align `lib_tasks.py`
@@ -4345,7 +4362,10 @@ def gh_workflow_list(
         # Find the first success.
         num_rows = table.size()[0]
         for i in range(num_rows):
-            status = table_tmp.get_column("status")[i]
+            status_column = table_tmp.get_column("status")
+            _LOG.debug("status_column=%s", str(status_column))
+            hdbg.dassert_lt(i, len(status_column))
+            status = status_column[i]
             if status == "success":
                 print(f"Workflow '{workflow}' for '{branch_name}' is ok")
                 break

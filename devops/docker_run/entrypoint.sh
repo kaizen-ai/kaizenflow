@@ -16,7 +16,7 @@ source devops/docker_run/setenv.sh
 # Allow working with files outside a container.
 #umask 000
 
-# Enable dind unless the user specifies otherwise (needed for prod image)
+# Enable dind unless the user specifies otherwise (needed for prod image).
 if [ -z "$ENABLE_DIND" ]; then
     ENABLE_DIND=1
     echo "ENABLE_DIND=$ENABLE_DIND"

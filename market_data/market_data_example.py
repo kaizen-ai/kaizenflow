@@ -367,7 +367,7 @@ def get_ReplayedTimeMarketData_example3(
     df = generate_random_price_data(
         start_datetime, end_datetime, columns_, asset_ids
     )
-    _LOG.debug("df=%s", hpandas.dataframe_to_str(df))
+    _LOG.debug("df=%s", hpandas.df_to_str(df))
     # Build a `ReplayedMarketData`.
     initial_replayed_delay = 5
     delay_in_secs = 0
@@ -398,7 +398,7 @@ def get_ReplayedTimeMarketData_example4(
     """
     # Generate random price data.
     df = generate_random_bars(start_datetime, end_datetime, asset_ids)
-    _LOG.debug("df=%s", hpandas.dataframe_to_str(df))
+    _LOG.debug("df=%s", hpandas.df_to_str(df))
     # Build a `ReplayedMarketData`.
     delay_in_secs = 0
     sleep_in_secs = 30
@@ -444,10 +444,9 @@ def get_MarketDataImClient_example1(
     return market_data_client
 
 
-def get_MarketDataImClient_wall_clock_time(timezone: str) -> pd.Timestamp:
+# TODO(gp): We can also use a real wall clock.
+def get_MarketDataImClient_wall_clock_time() -> pd.Timestamp:
     """
     Get a wall clock time to build `MarketDataImClient` for tests.
-
-    :param timezone: timezone for wall clock time
     """
-    return pd.Timestamp("2018-08-16T21:30:00", tz=timezone)
+    return pd.Timestamp("2018-08-16T21:30:00")

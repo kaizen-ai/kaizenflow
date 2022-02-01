@@ -151,13 +151,13 @@ class AbstractPortfolio(abc.ABC):
         self._price_assets(asset_holdings)
         _LOG.debug("assets_marked_to_market initialized.")
         _LOG.debug("Initializing statistics...")
+        # Set up asset flows dict. No initialization.
+        self._flows = collections.OrderedDict()
         # - timestamp to pd.Series of statistics.
         self._statistics = collections.OrderedDict()
         # Compute the initial portfolio statistics.
         self._compute_statistics()
         _LOG.debug("statistics initialized.")
-        # Set up asset flows dict. No initialization.
-        self._flows = collections.OrderedDict()
         #
         self._initial_universe = asset_holdings.index
 
@@ -169,35 +169,40 @@ class AbstractPortfolio(abc.ABC):
         precision = 2
         act.append(
             "# historical holdings=\n%s"
-            % hpandas.dataframe_to_str(
-                self.get_historical_holdings(), precision=precision
+            % hpandas.df_to_str(
+                self.get_historical_holdings(), num_rows=None, precision=precision
             )
         )
         act.append(
             "# historical holdings marked to market=\n%s"
-            % hpandas.dataframe_to_str(
+            % hpandas.df_to_str(
                 self.get_historical_holdings_marked_to_market(),
+                num_rows=None,
                 precision=precision,
             )
         )
         act.append(
             "# historical flows=\n%s"
-            % hpandas.dataframe_to_str(
+            % hpandas.df_to_str(
                 self.get_historical_flows(),
+                num_rows=None,
                 precision=precision,
             )
         )
         act.append(
             "# historical pnl=\n%s"
-            % hpandas.dataframe_to_str(
+            % hpandas.df_to_str(
                 self.get_historical_pnl(),
+                num_rows=None,
                 precision=precision,
             )
         )
         act.append(
             "# historical statistics=\n%s"
-            % hpandas.dataframe_to_str(
-                self.get_historical_statistics(), precision=precision
+            % hpandas.df_to_str(
+                self.get_historical_statistics(),
+                num_rows=None,
+                precision=precision,
             )
         )
         act = "\n".join(act)
@@ -298,7 +303,7 @@ class AbstractPortfolio(abc.ABC):
         hdbg.dassert_eq(len(self._asset_holdings), len(self._statistics))
         #
         df = self.get_cached_mark_to_market()
-        _LOG.debug("mark_to_market_df=\n%s", hpandas.dataframe_to_str(df))
+        _LOG.debug("mark_to_market_df=\n%s", hpandas.df_to_str(df, num_rows=None))
         return df
 
     def get_cached_mark_to_market(self) -> pd.DataFrame:
@@ -345,9 +350,8 @@ class AbstractPortfolio(abc.ABC):
         """
         df = pd.DataFrame(self._statistics).transpose()
         # Add `pnl` by diffing the snapshots of `net_wealth`.
-        df["pnl"] = df["net_wealth"].diff()
-        df["realized_pnl"] = df["cash"].diff()
-        df["unrealized_pnl"] = df["net_asset_holdings"].diff()
+        pnl = df["net_wealth"].diff().rename("pnl").to_frame()
+        df = pnl.merge(df, how="outer", left_index=True, right_index=True)
         return df
 
     def get_historical_holdings(self) -> pd.DataFrame:
@@ -601,11 +605,21 @@ class AbstractPortfolio(abc.ABC):
         gross_exposure = asset_holdings.abs().sum()
         # Compute the portfolio leverage.
         leverage = gross_exposure / net_wealth
+        # Compute the gross and net volume.
+        if assets_ts in self._flows:
+            traded_volume = -1 * self._flows[assets_ts]
+            gross_volume = traded_volume.abs().sum()
+            net_volume = traded_volume.sum()
+        else:
+            gross_volume = 0
+            net_volume = 0
         dict_ = {
-            "net_asset_holdings": holdings_net_value,
+            "gross_volume": gross_volume,
+            "net_volume": net_volume,
+            "gmv": gross_exposure,
+            "nmv": holdings_net_value,
             "cash": cash,
             "net_wealth": net_wealth,
-            "gross_exposure": gross_exposure,
             "leverage": leverage,
         }
         statistics = pd.Series(dict_, name=cash_ts)
@@ -801,7 +815,8 @@ class SimulatedPortfolio(AbstractPortfolio):
         else:
             fills_df = None
         _LOG.debug(
-            "fills_df=\n%s", hpandas.dataframe_to_str(fills_df, precision=2)
+            "fills_df=\n%s",
+            hpandas.df_to_str(fills_df, num_rows=None, precision=2),
         )
         return fills_df
 
@@ -973,7 +988,8 @@ class MockedPortfolio(AbstractPortfolio):
         # 2021-12-09    10009 1970-01-01 00:00:00  0.0              0
         # ```
         _LOG.debug(
-            "snapshot_df=\n%s", hpandas.dataframe_to_str(snapshot_df, precision=2)
+            "snapshot_df=\n%s",
+            hpandas.df_to_str(snapshot_df, num_rows=None, precision=2),
         )
         if not snapshot_df.empty:
             hdbg.dassert_no_duplicates(
@@ -1033,7 +1049,8 @@ class MockedPortfolio(AbstractPortfolio):
         if snapshot_df.empty:
             return pd.Series([], dtype="float64")
         hdbg.dassert_in("net_cost", snapshot_df.columns)
-        net_cost = snapshot_df.set_index("asset_id")["net_cost"]
+        # A long position has negative net cost.
+        net_cost = -1 * snapshot_df.set_index("asset_id")["net_cost"]
         _LOG.debug("net_cost (cumulative)=%f", net_cost.sum())
         return net_cost
 

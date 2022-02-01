@@ -7,8 +7,8 @@ except ImportError:
     import helpers.hgit as hgit
 
     assert (
-        hgit.is_amp() or hgit.is_dev_tools()
-    ), "Only `amp` or `dev_tools` can skip these tests."
+        not hgit.is_cmamp()
+    ), "`cmamp` should have moto, while other repos (e.g., `amp` or `dev_tools`) are allowed to not have it)"
     _HAS_MOTO = False
 
 if _HAS_MOTO:
