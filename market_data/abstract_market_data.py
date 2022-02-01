@@ -308,11 +308,15 @@ class AbstractMarketData(abc.ABC):
 
     def get_wall_clock_time(self) -> pd.Timestamp:
         """
-        Convert wall clock time to the timezone specified in the ctor. Initially wall clock time
-        can be in any timezone (or even timezone-naive).
+        Convert wall clock time to the timezone specified in the ctor.
+
+        Initially wall clock time can be in any timezone (or even
+        timezone-naive).
         """
         wall_clock_time = self._get_wall_clock_time()
-        wall_clock_time_correct_timezone = wall_clock_time.tz_convert(self._timezone)
+        wall_clock_time_correct_timezone = wall_clock_time.tz_convert(
+            self._timezone
+        )
         return wall_clock_time_correct_timezone
 
     # /////////////////////////////////////////////////////////////////////////////
@@ -368,8 +372,8 @@ class AbstractMarketData(abc.ABC):
         """
         Compute TWAP of the column `column` over last `bar_duration`.
 
-        E.g., if the last end time is 9:35 and `bar_duration=5T`, then we compute
-        TWAP for (9:30, 9:35].
+        E.g., if the last end time is 9:35 and `bar_duration=5T`, then
+        we compute TWAP for (9:30, 9:35].
         """
         last_end_time = self.get_last_end_time()
         _LOG.info("last_end_time=%s", last_end_time)
@@ -528,7 +532,7 @@ class AbstractMarketData(abc.ABC):
 
     @staticmethod
     def _process_period(
-            timedelta: pd.Timedelta, wall_clock_time: pd.Timestamp
+        timedelta: pd.Timedelta, wall_clock_time: pd.Timestamp
     ) -> Optional[pd.Timestamp]:
         """
         Return the start time corresponding to returning the desired
