@@ -7,7 +7,7 @@ This tool allows us to run Poetry incrementally for different configurations of
 packages to help debug what package creates convergence problem of Poetry solver.
 
 We separate packages in:
-- necessary: our code heavily depends on those packages (e.g., pandas)
+- necessary: our code heavily depends on those packages (e.g., `pandas`)
 - optional: we could find a workaround and not use those packages
 
 The use cases are:
@@ -16,6 +16,9 @@ The use cases are:
     (which is encoded in the order of the packages in the list)
     to see if there is one that makes poetry not converge (necessary_incremental)
 - run all the necessary packages, adding one by one the optional ones (optional_incremental)
+
+By default, script is terminated if `poetry lock` exceeds 10 minutes of runtime.
+Runtime can be controlled by `max_runtime_minutes` argument.
 """
 
 import argparse
@@ -38,9 +41,7 @@ _LOG = logging.getLogger(__name__)
 
 def get_necessary_packages() -> List[str]:
     """
-    Necessary packages from which codebase is heavily dependant.
-
-    :return: list of necessary packages
+    Get necessary Python packages.
     """
     necessary_packages = [
         'python = "^3.8"',
@@ -72,9 +73,7 @@ def get_necessary_packages() -> List[str]:
 
 def get_optional_packages() -> List[str]:
     """
-    Optional packages that can be replaced.
-
-    :return: list of optional packages
+    Get optional Python packages.
     """
     optional_packages = [
         'boto3 = "*"',
@@ -93,9 +92,8 @@ def write_pyproject_toml(packages: List[str], dir_name: str) -> None:
     Write a `pyproject.toml` that orchestrate project metadata and its
     dependencies.
 
-    :param packages: list of packages
+    :param packages: list of Python packages
     :param dir_name: name of directory where `pyproject.toml` is saved
-    :return:
     """
     beginning_of_file = """
     [tool.poetry]
@@ -134,7 +132,6 @@ def write_poetry_toml_file(dir_name: str) -> None:
     Write a `poetry.toml` that contains specific configuration for Poetry run.
 
     :param dir_name: name of directory where `poetry.toml` is saved
-    :return:
     """
     file_content = """
     cache-dir = "tmp.pypoetry"
@@ -153,34 +150,35 @@ def write_poetry_toml_file(dir_name: str) -> None:
 
 def run_poetry_cmd(dir_path: str) -> None:
     """
-    Poetry run with verbose lock command.
+    Run `poetry lock` in verbose mode.
 
     :param dir_path: path of directory where command is run
     :return:
     """
-    # Prepare poetry lock command.
-    cmd = f"cd {dir_path}; poetry lock -vv"
-    _LOG.info("Resolving poetry dependencies cdm=`%s`", cmd)
     # Prepare log file.
     log_file_name = "poetry.log"
     log_file_path = os.path.join(dir_path, log_file_name)
-    # Run poetry lock command.
+    # Prepare `poetry lock` command that is run in the same directory
+    # where `pyproject.toml` and `poetry.toml` are stored.
+    cmd = f"cd {dir_path}; poetry lock -vv"
+    _LOG.info("Resolving poetry dependencies cdm=`%s`", cmd)
+    # Run `poetry lock` command.
     hsystem.system(cmd, suppress_output=False, output_file=log_file_path)
 
 
 def _run_poetry_cmd_wrapper(
     dir_name: str,
-    python_packages: list,
-    max_runtime: int,
+    python_packages: List[str],
+    max_runtime_minutes: int,
     *,
     last_package: str = "",
 ) -> None:
     """
-    Simple poetry command wrapper that can be called multiple times.
+    Wrapper around `poetry lock`.
 
     :param dir_name: directory name based on debug mode
-    :param python_packages: list of packages to be written in .toml file
-    :param max_runtime: error out after breach of the allowed runtime
+    :param python_packages: list of packages to be written in `pyproject.toml` file
+    :param max_runtime_minutes: error out after breach of the allowed runtime
     :param last_package: last package in `pyproject.toml` that is useful for
         creating different log files in incremental run
     :return:
@@ -189,9 +187,10 @@ def _run_poetry_cmd_wrapper(
     dir_path = os.path.join(get_debug_poetry_dir(), dir_name)
     # Use clean package name, if package name is provided.
     if last_package:
+        # `pandas = "*"` will become `pandas`.
         last_package = last_package.split(" ")[0]
         dir_path = os.path.join(dir_path, last_package)
-    # Write .toml files.
+    # Write `*.toml` files.
     write_poetry_toml_file(dir_path)
     write_pyproject_toml(python_packages, dir_path)
     # Run as a separate process.
@@ -200,23 +199,21 @@ def _run_poetry_cmd_wrapper(
     # Apply time constraint.
     timer = htimer.Timer()
     while poetry_lock.is_alive():
-        if timer.get_total_elapsed() > max_runtime * 60:
+        if timer.get_total_elapsed() > max_runtime_minutes * 60:
             poetry_lock.kill()
             raise RuntimeError(
-                f"Constraint of {max_runtime} minutes is breached!"
+                f"Constraint of {max_runtime_minutes} minutes is breached!"
             )
         timer.resume()
         time.sleep(1)
-    # Cleanup
+    # Cleanup.
     poetry_lock.join()
     poetry_lock.close()
 
 
 def get_debug_poetry_dir() -> str:
     """
-    Gets working directory of Poetry tool.
-
-    :return: working directory
+    Get working directory of Poetry tool.
     """
     amp_path = hgit.get_amp_abs_path()
     poetry_debug_dir = os.path.join(amp_path, "dev_scripts/poetry")
@@ -224,7 +221,7 @@ def get_debug_poetry_dir() -> str:
     return poetry_debug_dir
 
 
-def run_poetry_debug(debug_mode: str, max_runtime: int) -> None:
+def run_poetry_debug(debug_mode: str, max_runtime_minutes: int) -> None:
     """
     Run poetry debug with various options.
 
@@ -235,7 +232,7 @@ def run_poetry_debug(debug_mode: str, max_runtime: int) -> None:
         - `optional` - list of necessary and optional packages in one shot
         - `optional_incremental` - list of necessary packages in one shot,
             while optional are run one by one
-    :param max_runtime: error out after breach of the allowed runtime
+    :param max_runtime_minutes: error out after breach of the allowed runtime
     :return
     """
     # Get Python packages to debug.
@@ -258,7 +255,7 @@ def run_poetry_debug(debug_mode: str, max_runtime: int) -> None:
             _run_poetry_cmd_wrapper(
                 dir_name,
                 current_necessary_packages,
-                max_runtime,
+                max_runtime_minutes,
                 last_package=necessary_package,
             )
     elif debug_mode == "optional_incremental":
@@ -273,13 +270,13 @@ def run_poetry_debug(debug_mode: str, max_runtime: int) -> None:
             _run_poetry_cmd_wrapper(
                 dir_name,
                 necessary_packages + current_optional_packages,
-                max_runtime,
+                max_runtime_minutes,
                 last_package=optional_package,
             )
     elif debug_mode in ("necessary", "optional"):
         # Add packages in one shot.
         _LOG.info("Adding packages in one shot=`%s`", all_packages)
-        _run_poetry_cmd_wrapper(dir_name, all_packages, max_runtime)
+        _run_poetry_cmd_wrapper(dir_name, all_packages, max_runtime_minutes)
     else:
         raise ValueError(f"Unsupported debug mode `{debug_mode}`!")
 
@@ -296,7 +293,7 @@ def _parse() -> argparse.ArgumentParser:
         help="Run poetry with desired list of packages",
     )
     parser.add_argument(
-        "--max_runtime",
+        "--max_runtime_minutes",
         action="store",
         type=int,
         default=10,
@@ -310,8 +307,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     debug_mode = args.debug_mode
-    max_runtime = args.max_runtime
-    run_poetry_debug(debug_mode, max_runtime)
+    max_runtime_minutes = args.max_runtime_minutes
+    run_poetry_debug(debug_mode, max_runtime_minutes)
 
 
 if __name__ == "__main__":
