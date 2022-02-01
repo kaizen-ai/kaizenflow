@@ -7,6 +7,7 @@ import market_data.market_data_im_client as mdmdimcl
 import logging
 from typing import Any, List, Optional
 
+import numpy as np
 import pandas as pd
 
 import helpers.hdbg as hdbg
@@ -32,6 +33,34 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
         super().__init__(*args, **kwargs)
         hdbg.dassert_isinstance(im_client, icdc.ImClient)
         self._im_client = im_client
+
+    def get_last_price(
+        self,
+        col_name: str,
+        asset_ids: List[int],
+    ) -> pd.Series:
+        """
+        Get last price for `asset_ids` using column `col_name` (e.g., "close")
+        """
+        last_end_time = self.get_last_end_time()
+        _LOG.info("last_end_time=%s", last_end_time)
+        # Get the data.
+        df = self.get_data_at_timestamp(
+            last_end_time,
+            self._end_time_col_name,
+            asset_ids,
+        )
+        # Convert the df of data into a series.
+        hdbg.dassert_in(col_name, df.columns)
+        last_price = df[[col_name, self._asset_id_col]]
+        last_price.set_index(self._asset_id_col, inplace=True)
+        last_price_srs = hpandas.to_series(last_price)
+        hdbg.dassert_isinstance(last_price_srs, pd.Series)
+        last_price_srs.index.name = self._asset_id_col
+        last_price_srs.name = col_name
+        hpandas.dassert_series_type_in(last_price_srs, [np.float64, np.int64])
+        # TODO(gp): Print if there are nans.
+        return last_price_srs
 
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
         """
