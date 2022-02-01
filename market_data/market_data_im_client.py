@@ -18,7 +18,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): @Grisha -> ImClientMarketData and rename all the classes and files.
-class MarketDataImClient(mdabmada.MarketData):
+class ImClientMarketData(mdabmada.MarketData):
     """
     Implement a `MarketData` that uses a `ImClient` as backend.
     """
