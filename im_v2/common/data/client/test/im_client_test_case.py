@@ -1,8 +1,9 @@
 """
 Import as:
 
-import im_v2.common.data.client.test.test_clients_helpers as icdcttch
+import im_v2.common.data.client.test.im_client_test_case as icdcttch
 """
+
 from typing import Any, List, Optional
 
 import pandas as pd
@@ -10,8 +11,6 @@ import pandas as pd
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 import im_v2.common.data.client as icdc
-
-# TODO(gp): @Grisha -> im_client_test_case.py
 
 
 # TODO(gp): @Grisha This is a common pattern to check a df, that we want to
@@ -36,7 +35,7 @@ import im_v2.common.data.client as icdc
 # :param expected_signature: expected outcome as string
 # """
 def _check_output(
-        self_: Any,
+    self_: Any,
     actual_df: pd.DataFrame,
     expected_length: int,
     # TODO(gp): @Grisha exchange_ids and currency_pairs are specific of a type of
