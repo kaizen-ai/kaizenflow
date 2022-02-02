@@ -22,9 +22,6 @@ _LOG = logging.getLogger(__name__)
 class MarketDataImClient(mdabmada.AbstractMarketData):
     """
     Implement a `MarketData` that uses a `ImClient` as backend.
-
-    In contrast with specific `MarketData` backends, this class uses the
-    end of interval for date filtering.
     """
 
     def __init__(
@@ -44,6 +41,10 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
     ) -> pd.Series:
         """
         This method overrides parent method in `MarketData`.
+
+        In contrast with specific `MarketData` backends,
+        `MarketDataImClient` uses the end of interval for date
+        filtering.
         """
         last_end_time = self.get_last_end_time()
         _LOG.info("last_end_time=%s", last_end_time)
