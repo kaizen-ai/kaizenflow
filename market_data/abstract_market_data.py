@@ -424,8 +424,7 @@ class AbstractMarketData(abc.ABC):
         _LOG.info("last_end_time=%s", last_end_time)
         # Get the data.
         # TODO(*): Remove the hard-coded 1-minute.
-        # TODO(gp): @Grisha why 1M and not 1T?
-        start_time = last_end_time - pd.Timedelta("1M")
+        start_time = last_end_time - pd.Timedelta("1T")
         df = self.get_data_at_timestamp(
             start_time,
             self._start_time_col_name,
@@ -476,7 +475,7 @@ class AbstractMarketData(abc.ABC):
                 wall_clock_time.floor("Min"),
             )
             ret = last_db_end_time.floor("Min") >= (
-                wall_clock_time.floor("Min") - pd.Timedelta("1M")
+                wall_clock_time.floor("Min") - pd.Timedelta("1T")
             )
         _LOG.verb_debug("-> ret=%s", ret)
         return ret
