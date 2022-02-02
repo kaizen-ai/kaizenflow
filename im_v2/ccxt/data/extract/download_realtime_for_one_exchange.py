@@ -11,6 +11,10 @@ Use as:
     --exchange_id 'binance' \
     --universe 'v03' \
     --db_stage 'dev' \
+
+Import as:
+
+import im_v2.ccxt.data.extract.download_realtime_for_one_exchange as imvcdedrfoe
 """
 
 import argparse
