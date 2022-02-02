@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.0
+#       jupytext_version: 1.13.5
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -54,8 +54,10 @@ eval_config = cconfig.Config.from_env_var("AM_CONFIG_CODE")
 
 # Override config.
 if eval_config is None:
-    experiment_dir = "/cache/experiments/oos_experiment.RH1E.v2_0-top100.5T"
+    #experiment_dir = "/cache/experiments/oos_experiment.RH1E.v2_0-top100.5T"
     # experiment_dir = "/app/rc_experiment.RH8Ec.v2_0-top2.5T.2009.run1"
+    experiment_dir = "/app/experiment.RH1E.kibot_v2-top2.5T"
+    #experiment_dir = "/app/experiment.RH1E.kibot_v2-top20.5T"
     aws_profile = None
     selected_idxs = None
 
@@ -69,8 +71,10 @@ if eval_config is None:
                 "aws_profile": aws_profile,
             },
             "model_evaluator_kwargs": {
-                "predictions_col": "mid_ret_0_vol_adj_clipped_2_hat",
-                "target_col": "mid_ret_0_vol_adj_clipped_2",
+                #"predictions_col": "mid_ret_0_vol_adj_clipped_2_hat",
+                #"target_col": "mid_ret_0_vol_adj_clipped_2",
+                "predictions_col": "ret_0_vol_adj_2_hat",
+                "target_col": "ret_0_vol_adj_2",
                 # "oos_start": "2017-01-01",
                 "oos_start": None,
                 "abort_on_error": True,
@@ -112,9 +116,13 @@ plotter.plot_multiple_tests_adjustment(
 )
 
 # %%
+import helpers.hpandas as hpandas
+print(hpandas.df_to_str(pnl_stats, num_rows=None))
+
+# %%
 # TODO(gp): Move this chunk of code in a function.
 col_mask = (
-    pnl_stats.loc["signal_quality"].loc["sr.adj_pval"]
+    pnl_stats.loc["ratios"].loc["sr.adj_pval"]
     < eval_config["bh_adj_threshold"]
 )
 selected = pnl_stats.loc[:, col_mask].columns.to_list()
