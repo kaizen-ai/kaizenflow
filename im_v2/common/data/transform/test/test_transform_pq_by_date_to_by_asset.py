@@ -7,7 +7,7 @@ import pytest
 import helpers.hgit as hgit
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
-import im_v2.common.data.transform.transform_pq_by_date_to_by_asset as imvcdtcpbdtba
+import im_v2.common.data.transform.transform_pq_by_date_to_by_asset as imvcdttpbdtba
 
 
 @pytest.mark.skip("TODO(gp): Need to update this tests after transform v1.3")
@@ -156,7 +156,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
             kwargs.update({"asset_col_name": "ticker"})
         # Run.
         args = argparse.Namespace(**kwargs)
-        imvcdtcpbdtba._run(args)
+        imvcdttpbdtba._run(args)
         # Check output.
         self.check_directory_structure_with_file_contents(
             by_date_dir, by_asset_dir
@@ -188,7 +188,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         if config_update:
             config.update(config_update)
         # Run.
-        imvcdtcpbdtba._process_chunk(**config)
+        imvcdttpbdtba._process_chunk(**config)
         # Check output.
         self.check_directory_structure_with_file_contents(
             by_date_dir, by_asset_dir

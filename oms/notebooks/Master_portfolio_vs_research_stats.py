@@ -74,7 +74,9 @@ research_stats_df = research_stats_df.loc[start_timestamp:end_timestamp]
 
 
 # %%
-def per_asset_pnl_corr(research_df: pd.DataFrame, paper_df: pd.DataFrame, freq: str) -> pd.Series:
+def per_asset_pnl_corr(
+    research_df: pd.DataFrame, paper_df: pd.DataFrame, freq: str
+) -> pd.Series:
     research_pnl = research_df["pnl"]
     paper_pnl = paper_df["pnl"]
     corrs = {}
@@ -86,7 +88,10 @@ def per_asset_pnl_corr(research_df: pd.DataFrame, paper_df: pd.DataFrame, freq: 
     corr_srs = pd.Series(corrs).rename("pnl_correlation")
     return corr_srs
 
-def compare_stats(research_stats_df: pd.DataFrame, paper_stats_df: pd.DataFrame, freq: str) -> pd.DataFrame:
+
+def compare_stats(
+    research_stats_df: pd.DataFrame, paper_stats_df: pd.DataFrame, freq: str
+) -> pd.DataFrame:
     sc = dtfmod.StatsComputer()
     research_stats = sc.compute_portfolio_stats(research_stats_df, freq)
     research_stats.name = "research"
@@ -94,6 +99,7 @@ def compare_stats(research_stats_df: pd.DataFrame, paper_stats_df: pd.DataFrame,
     paper_stats.name = "paper"
     df = pd.concat([research_stats, paper_stats], axis=1)
     return df
+
 
 def compute_delay(df: pd.DataFrame, freq: str) -> pd.Series:
     diff = df.index - df.index.round(freq)
@@ -110,16 +116,36 @@ def compute_delay(df: pd.DataFrame, freq: str) -> pd.Series:
     )
     return srs
 
-def plot_pnl(research_stats_df: pd.DataFrame, paper_stats_df: pd.DataFrame, freq: str) -> pd.DataFrame:
-    research_pnl = research_stats_df["pnl"].resample(freq).sum(min_count=1).rename("research")
-    paper_pnl = paper_stats_df["pnl"].resample(freq).sum(min_count=1).rename("paper")
+
+def plot_pnl(
+    research_stats_df: pd.DataFrame, paper_stats_df: pd.DataFrame, freq: str
+) -> pd.DataFrame:
+    research_pnl = (
+        research_stats_df["pnl"]
+        .resample(freq)
+        .sum(min_count=1)
+        .rename("research")
+    )
+    paper_pnl = (
+        paper_stats_df["pnl"].resample(freq).sum(min_count=1).rename("paper")
+    )
     df = pd.concat([research_pnl, paper_pnl], axis=1)
     df.plot()
     return df
 
-def plot_cumulative_pnl(research_stats_df: pd.DataFrame, paper_stats_df: pd.DataFrame, freq: str) -> pd.DataFrame:
-    research_pnl = research_stats_df["pnl"].resample(freq).sum(min_count=1).rename("research")
-    paper_pnl = paper_stats_df["pnl"].resample(freq).sum(min_count=1).rename("paper")
+
+def plot_cumulative_pnl(
+    research_stats_df: pd.DataFrame, paper_stats_df: pd.DataFrame, freq: str
+) -> pd.DataFrame:
+    research_pnl = (
+        research_stats_df["pnl"]
+        .resample(freq)
+        .sum(min_count=1)
+        .rename("research")
+    )
+    paper_pnl = (
+        paper_stats_df["pnl"].resample(freq).sum(min_count=1).rename("paper")
+    )
     df = pd.concat([research_pnl, paper_pnl], axis=1).cumsum()
     df.plot()
     return df
@@ -149,4 +175,6 @@ pnl = plot_pnl(research_stats_df, paper_stats_df, config["freq"])
 
 # %%
 # Plot cumulative PnL
-cumulative_pnl = plot_cumulative_pnl(research_stats_df, paper_stats_df, config["freq"])
+cumulative_pnl = plot_cumulative_pnl(
+    research_stats_df, paper_stats_df, config["freq"]
+)

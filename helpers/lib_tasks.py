@@ -3989,8 +3989,11 @@ def lint_check_python_files_in_docker(  # type: ignore
                 msg = "'%s' doesn't execute correctly" % file_name
                 _LOG.error(msg)
                 failed_filenames.append(file_name)
-    hprint.log_frame(_LOG, "failed_filenames=%s" % len(failed_filenames),
-                     verbosity=logging.INFO)
+    hprint.log_frame(
+        _LOG,
+        "failed_filenames=%s" % len(failed_filenames),
+        verbosity=logging.INFO,
+    )
     _LOG.info("\n".join(failed_filenames))
     error = len(failed_filenames) > 0
     return error
@@ -4018,7 +4021,9 @@ def lint_check_python_files(  # type: ignore
     cmd_line = hdbg.get_command_line()
     # Replace the full path of invoke with just `invoke`.
     cmd_line = cmd_line.split()
-    cmd_line = ["/venv/bin/invoke lint_check_python_files_in_docker"] + cmd_line[2:]
+    cmd_line = ["/venv/bin/invoke lint_check_python_files_in_docker"] + cmd_line[
+        2:
+    ]
     docker_cmd_ = " ".join(cmd_line)
     cmd = f'invoke docker_cmd --cmd="{docker_cmd_}"'
     _run(ctx, cmd)

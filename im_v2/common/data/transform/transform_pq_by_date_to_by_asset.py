@@ -49,7 +49,7 @@ dst_dir/
 
 Import as:
 
-import im_v2.common.data.transform.transform_pq_by_date_to_by_asset as imvcdtcpbdtba
+import im_v2.common.data.transform.transform_pq_by_date_to_by_asset as imvcdttpbdtba
 """
 
 import argparse

@@ -188,7 +188,8 @@ class AbstractBroker(abc.ABC):
         else:
             _LOG.warning(
                 "Skipping waiting for the accepted orders because of dry_run=%s",
-                dry_run)
+                dry_run,
+            )
         return file_name
 
     @abc.abstractmethod
