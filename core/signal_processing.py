@@ -292,7 +292,7 @@ def digitize(signal: pd.Series, bins: np.array, right: bool = False) -> pd.Serie
     - The bin-referencing convention is optimized for studying signals centered
       at zero (e.g., returns, z-scored features, etc.)
     - For bins of equal size, the bin-referencing convention makes it easy to
-      map back from the digitized signal to numeric ranges given
+      map back from the digitized signal to numerical ranges given
         - the bin number
         - the bin size
 
