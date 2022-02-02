@@ -67,6 +67,7 @@ class MarketData(abc.ABC):
     - Remap columns to connect data backends to consumers
     - Implement some common market-related data transformations
         - E.g., `get_twap_price()`, `get_last_price()`
+    - Handle timezones, i.e. convert all timestamp to the provided timezone
 
     # Non-responsibilities:
     - In general do not access data directly but rely on `ImClient` objects to
@@ -151,7 +152,7 @@ class MarketData(abc.ABC):
         self._columns = columns
         #
         hdbg.dassert_isinstance(get_wall_clock_time, Callable)
-        self.get_wall_clock_time = get_wall_clock_time
+        self._get_wall_clock_time = get_wall_clock_time
         #
         hdbg.dassert_lt(0, sleep_in_secs)
         self._sleep_in_secs = sleep_in_secs
@@ -305,6 +306,20 @@ class MarketData(abc.ABC):
         hdbg.dassert_isinstance(df, pd.DataFrame)
         return df
 
+    def get_wall_clock_time(self) -> pd.Timestamp:
+        """
+        Return wall clock time in the timezone specified in the ctor.
+
+        Initially wall clock time can be in any timezone, but cannot be
+        timezone-naive.
+        """
+        wall_clock_time = self._get_wall_clock_time()
+        hdateti.dassert_has_tz(wall_clock_time)
+        wall_clock_time_correct_timezone = wall_clock_time.tz_convert(
+            self._timezone
+        )
+        return wall_clock_time_correct_timezone
+
     # /////////////////////////////////////////////////////////////////////////////
 
     def get_twap_price(
@@ -358,8 +373,8 @@ class MarketData(abc.ABC):
         """
         Compute TWAP of the column `column` over last `bar_duration`.
 
-        E.g., if the last end time is 9:35 and `bar_duration=5T`, then we compute
-        TWAP for (9:30, 9:35].
+        E.g., if the last end time is 9:35 and `bar_duration=5T`, then
+        we compute TWAP for (9:30, 9:35].
         """
         last_end_time = self.get_last_end_time()
         _LOG.info("last_end_time=%s", last_end_time)
@@ -518,7 +533,7 @@ class MarketData(abc.ABC):
 
     @staticmethod
     def _process_period(
-            timedelta: pd.Timedelta, wall_clock_time: pd.Timestamp
+        timedelta: pd.Timedelta, wall_clock_time: pd.Timestamp
     ) -> Optional[pd.Timestamp]:
         """
         Return the start time corresponding to returning the desired
