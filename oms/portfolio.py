@@ -350,8 +350,17 @@ class AbstractPortfolio(abc.ABC):
         """
         df = pd.DataFrame(self._statistics).transpose()
         # Add `pnl` by diffing the snapshots of `net_wealth`.
-        pnl = df["net_wealth"].diff().rename("pnl").to_frame()
+        # pnl = df["net_wealth"].diff().rename("pnl").to_frame()
+        # In principle, thw two PnL calculations should agree. However, if
+        # a price for a bar is missing, this second method is more stable.
+        pnl = (
+            self.get_historical_pnl()
+            .sum(axis=1, min_count=1)
+            .rename("pnl")
+            .to_frame()
+        )
         df = pnl.merge(df, how="outer", left_index=True, right_index=True)
+        df = df.astype("float")
         return df
 
     def get_historical_holdings(self) -> pd.DataFrame:
@@ -433,11 +442,21 @@ class AbstractPortfolio(abc.ABC):
     @staticmethod
     def read_state(
         log_dir: str,
-        file_name: str,
         *,
+        file_name: Optional[str] = None,
         tz: str = "America/New_York",
         cast_asset_ids_to_int: bool = True,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        Read and process logged portfolio state.
+
+        :param file_name: if `None`, find and use the latest
+        """
+        if file_name is None:
+            dir_name = os.path.join(log_dir, "holdings")
+            files = hio.find_all_files(dir_name)
+            files.sort()
+            file_name = files[-1]
         holdings_df = AbstractPortfolio._read_df(
             log_dir, "holdings", file_name, tz
         )
@@ -501,7 +520,7 @@ class AbstractPortfolio(abc.ABC):
             columns=AbstractPortfolio.CASH_ID
         )
         # Get per-bar flows and compute PnL.
-        pnl = holdings_marked_to_market.diff().add(flows, fill_value=0.0)
+        pnl = holdings_marked_to_market.diff().add(flows)
         return pnl
 
     @staticmethod

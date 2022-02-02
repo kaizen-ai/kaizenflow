@@ -238,6 +238,9 @@ def load_market_data(
         kwargs_tmp["s3fs"] = s3fs_
     kwargs.update(kwargs_tmp)  # type: ignore[arg-type]
     df = cpanh.read_csv(file_name, **kwargs)
+    for col_name in ("start_time", "end_time", "timestamp_db"):
+        if col_name in df.columns:
+            df[col_name] = pd.to_datetime(df[col_name], utc=True)
     # TODO(gp): The data needs to be saved after the normalization so that
     #  it's in the right format to be replayed.
     df.reset_index(inplace=True)

@@ -423,7 +423,6 @@ def trim_df(
 # #############################################################################
 
 
-# TODO(gp): This seems redundant with hut.convert_df_to_string.
 def df_to_str(
     df: pd.DataFrame,
     *,
@@ -444,13 +443,10 @@ def df_to_str(
     :param: num_rows: max number of rows to print (half from the top and half from
         the bottom of the dataframe)
         - `None` to print the entire dataframe
-    :param print_dtypes: reports dataframe types and information about the type of each
-        column by looking at the first value
+    :param print_dtypes: reports dataframe types and information about the type of
+        each column by looking at the first value
     :param print_shape_info: reports dataframe shape, index and columns
     """
-    # TODO(Nikola): Couple of test are failing with
-    #  AttributeError: 'NoneType' object has no attribute 'empty'
-    #  or with totally misleading messages in form of duplicate keys in db, etc.
     if df is None:
         return ""
     out = []
