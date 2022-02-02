@@ -15,6 +15,8 @@ Import as:
 import im_v2.common.data.transform.pq_convert as imvcdtpqco
 """
 
+# TODO(gp): Obsolete: delete.
+
 import argparse
 import datetime
 import glob
