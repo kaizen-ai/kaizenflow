@@ -206,14 +206,14 @@ def _main(parser: argparse.ArgumentParser) -> None:
     get_daily_df = (
         _get_verbose_daily_df if args.verbose else _get_generic_daily_df
     )
-    dummy_df = get_daily_df(start_date, end_date, assets, freq)
+    df = get_daily_df(start_date, end_date, assets, freq)
     # Add date partition columns to the dataframe.
-    imvcdttrut.add_date_partition_cols(dummy_df)
+    partition_mode = "by_date"
+    df, partition_cols = imvcdttrut.add_date_partition_cols(df, partition_mode)
     # Partition and write dataset.
     if args.reset_index:
-        dummy_df = dummy_df.reset_index(drop=True)
-    partition_cols = ["date"]
-    imvcdttrut.partition_dataset(dummy_df, partition_cols, dst_dir)
+        df = df.reset_index(drop=True)
+    imvcdttrut.partition_dataset(df, partition_cols, dst_dir)
 
 
 if __name__ == "__main__":
