@@ -4,6 +4,7 @@ Import as:
 import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
 """
 
+import abc
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -23,7 +24,8 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): @Grisha Add tests. GP to provide an example of files or we can generate
 #  them from CSV.
 # TODO(gp): ByAsset -> ByTile
-class HistoricalPqByAssetClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
+class HistoricalPqByAssetClient(imvcdclcl.ImClientReadingMultipleSymbols,
+                                abc.ABC):
     """
     Provide historical data stored as Parquet by-asset.
     """
@@ -133,7 +135,8 @@ class HistoricalPqByAssetClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
 
 # TODO(gp): @Grisha Add tests. GP to provide an example of files or we can generate
 #  them from CSV.
-class HistoricalPqByDateClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
+class HistoricalPqByDateClient(imvcdclcl.ImClientReadingMultipleSymbols,
+    abc.ABC):
     """
     Read historical data stored as Parquet by-date.
     """

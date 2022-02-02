@@ -1097,6 +1097,11 @@ def git_branch_diff_with_master(  # type: ignore
 #   ```
 #   > i integrate_diff_dirs --subdir market_data -c
 #   ```
+#
+# - Remove the empty files
+#   ```
+#   > find . -type f -empty -print | grep -v __init__
+#   ```
 
 # ## Double check the integration
 #
