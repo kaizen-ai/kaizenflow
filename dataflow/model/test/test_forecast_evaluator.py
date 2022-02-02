@@ -262,13 +262,9 @@ class TestForecastEvaluator1(hunitest.TestCase):
         )
         #
         log_dir = self.get_scratch_space()
-        file_name = forecast_evaluator.log_portfolio(
-            data, log_dir, target_gmv=1e6
-        )
+        _ = forecast_evaluator.log_portfolio(data, log_dir, target_gmv=1e6)
         #
-        portfolio_df, stats_df = forecast_evaluator.read_portfolio(
-            log_dir, file_name
-        )
+        portfolio_df, stats_df = forecast_evaluator.read_portfolio(log_dir)
         # Ensure that the `int` asset id type is recovered.
         asset_id_idx = portfolio_df.columns.levels[1]
         self.assertEqual(asset_id_idx.dtype.type, np.int64)

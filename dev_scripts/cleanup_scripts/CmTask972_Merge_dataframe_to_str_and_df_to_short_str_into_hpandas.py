@@ -44,7 +44,8 @@ def _run() -> None:
     ]
     all_files = dscretex._get_all_files(["."], ["py"])
     # Remove current script from the result.
-    all_files.remove(__file__)
+    if __file__ in all_files:
+        all_files.remove(__file__)
     for file_name in all_files:
         file_string = hio.from_file(file_name, encoding=dscretex._ENCODING)
         # Skip non relevant files.
