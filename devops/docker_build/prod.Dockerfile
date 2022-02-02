@@ -6,5 +6,7 @@ ARG VERSION
 # the code use the value from repo_config.py to control the name of the image.
 FROM 665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:dev-${VERSION}
 
+COPY ./aws /home/.aws/
+
 RUN ls .
 COPY . /app
