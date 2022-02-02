@@ -24,7 +24,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): @Grisha Add tests. GP to provide an example of files or we can generate
 #  them from CSV.
 # TODO(gp): ByAsset -> ByTile
-class HistoricalPqByAssetClient(imvcdclcl.ImClientReadingMultipleSymbols,
+class HistoricalPqByAssetClient(imvcdcbimcl.ImClientReadingMultipleSymbols,
                                 abc.ABC):
     """
     Provide historical data stored as Parquet by-asset.
@@ -135,8 +135,8 @@ class HistoricalPqByAssetClient(imvcdclcl.ImClientReadingMultipleSymbols,
 
 # TODO(gp): @Grisha Add tests. GP to provide an example of files or we can generate
 #  them from CSV.
-class HistoricalPqByDateClient(imvcdclcl.ImClientReadingMultipleSymbols,
-    abc.ABC):
+class HistoricalPqByDateClient(imvcdcbimcl.ImClientReadingMultipleSymbols,
+        abc.ABC):
     """
     Read historical data stored as Parquet by-date.
     """

@@ -366,6 +366,11 @@ def log(logger: logging.Logger, verbosity: int, *vals: Any) -> None:
 
 
 # TODO(gp): Replace calls to `_LOG.debug("\n%s", hprint.frame(...)` with this.
+# TODO(gp): Consider changing the signature from
+#  _log_frame(_LOG, "hello", verbosity=logger.INFO))
+# to
+#  _log_frame(_LOG.info, "hello", ...)
+# by using the first element as a Callable
 def log_frame(
     logger: logging.Logger,
     fstring: str,
@@ -379,6 +384,7 @@ def log_frame(
     `char`) to organize the log visually.
 
     The logging output looks like:
+    _log_frame(_LOG, "hello", verbosity=logger.INFO))
     ```
     07:44:51       printing            : log_frame                     : 390 :
     # #########################################################################
