@@ -32,19 +32,5 @@
   --new "MarketData" \
   --ext "py"
 
-# Move df_to_short_str from hprint to hpandas.
-#./dev_scripts/replace_text.py \
-#  --old "hprint.df_to_short_str" \
-#  --new "hpandas.df_to_short_str" \
-#  --ext "py"
-
-# Add imports to affected files.
-FILES=$(git diff --name-only HEAD)
-./dev_scripts/replace_text.py \
-  --old "AbstractMarketData" \
-  --new "MarketData" \
-  --ext "py" \
-  --only_files "${FILES//$'\n'/ }" # Replace new lines with space.
-
 # Remove unused imports from affected files.
-#invoke lint -m --only-format
+invoke lint -m --only-format
