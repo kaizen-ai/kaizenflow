@@ -86,7 +86,7 @@ class TestConstructFullSymbol(hunitest.TestCase):
         """
         exchange = "bitfinex"
         symbol = "SOL_USDT"
-        full_symbol = imvcdcfusy.construct_full_symbol(exchange, symbol)
+        full_symbol = imvcdcfusy.build_full_symbol(exchange, symbol)
         self.assert_equal(full_symbol, "bitfinex::SOL_USDT")
 
     def test2(self) -> None:
@@ -95,5 +95,5 @@ class TestConstructFullSymbol(hunitest.TestCase):
         """
         exchange = "exchange"
         symbol = "symbol"
-        full_symbol = imvcdcfusy.construct_full_symbol(exchange, symbol)
+        full_symbol = imvcdcfusy.build_full_symbol(exchange, symbol)
         self.assert_equal(full_symbol, "exchange::symbol")
