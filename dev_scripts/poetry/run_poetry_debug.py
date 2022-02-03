@@ -242,7 +242,7 @@ class PoetryDebugger:
         # Run `poetry lock` command.
         hsystem.system(cmd, suppress_output=False, output_file=log_file_path)
 
-    def _run_with_time_constraint(self, dir_path: str):
+    def _run_with_time_constraint(self, dir_path: str) -> None:
         """
         Command `poetry lock` is started as a separate process so runtime can
         be measured and stopped if needed.
