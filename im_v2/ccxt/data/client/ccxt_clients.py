@@ -47,10 +47,10 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
 
         :param vendor: price data provider, i.e. `CCXT` or `CDD`
         """
-        super().__init__()
         _vendors = ["CCXT", "CDD"]
         hdbg.dassert_in(vendor, _vendors)
         self._vendor = vendor
+        super().__init__()
 
     def get_universe(self, as_asset_ids: bool) -> List[icdc.FullSymbol]:
         """
