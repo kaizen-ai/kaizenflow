@@ -1,5 +1,6 @@
 import pandas as pd
 
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 
@@ -18,6 +19,9 @@ def _get_dummy_df_with_timestamp(
     return pd.DataFrame(data=test_data)
 
 
+# #############################################################################
+
+
 class TestPartitionDataset(hunitest.TestCase):
     @staticmethod
     def get_test_data1() -> pd.DataFrame:
@@ -29,9 +33,19 @@ class TestPartitionDataset(hunitest.TestCase):
         df = pd.DataFrame(data=test_data)
         return df
 
+    def test_get_test_data1(self) -> None:
+        test_data = self.get_test_data1()
+        act = hpandas.df_to_str(test_data)
+        exp = r"""   
+           dummy_value_1 dummy_value_2  dummy_value_3
+        0              1             A              0
+        1              2             B              0
+        2              3             C              0"""
+        self.assert_equal(act, exp, fuzzy_match=True)
+
     def test_partition_dataset(self) -> None:
         """
-        Verify regular creation of partition datasets with existing columns.
+        Test partitioned Parquet datasets with existing columns.
         """
         # Prepare inputs.
         test_dir = self.get_scratch_space()
@@ -40,13 +54,34 @@ class TestPartitionDataset(hunitest.TestCase):
         partition_cols = ["dummy_value_1", "dummy_value_2"]
         imvcdttrut.partition_dataset(df, partition_cols, test_dir)
         # Check output.
+        include_file_content = False
+        remove_dir_name = True
+        dir_signature = hunitest.get_dir_signature(
+            test_dir, include_file_content, remove_dir_name=remove_dir_name
+        )
+        exp = r"""
+        # Dir structure
+        .
+        dummy_value_1=1
+        dummy_value_1=1/dummy_value_2=A
+        dummy_value_1=1/dummy_value_2=A/data.parquet
+        dummy_value_1=2
+        dummy_value_1=2/dummy_value_2=B
+        dummy_value_1=2/dummy_value_2=B/data.parquet
+        dummy_value_1=3
+        dummy_value_1=3/dummy_value_2=C
+        dummy_value_1=3/dummy_value_2=C/data.parquet"""
+        self.assert_equal(dir_signature, exp, purify_text=True, fuzzy_match=True)
+        #
         include_file_content = True
-        dir_signature = hunitest.get_dir_signature(test_dir, include_file_content)
-        self.check_string(dir_signature, purify_text=True)
+        dir_signature = hunitest.get_dir_signature(
+            test_dir, include_file_content, remove_dir_name=remove_dir_name
+        )
+        self.check_string(dir_signature, purify_text=True, fuzzy_match=True)
 
     def test_partition_dataset_wrong_column(self) -> None:
         """
-        Assert that wrong columns are detected on before partitioning.
+        Assert that wrong columns are detected before partitioning.
         """
         # Prepare inputs.
         test_dir = self.get_scratch_space()
@@ -67,6 +102,9 @@ class TestPartitionDataset(hunitest.TestCase):
         self.assert_equal(act, exp, fuzzy_match=True)
 
 
+# #############################################################################
+
+
 class TestConvertTimestampColumn(hunitest.TestCase):
     def test_integer_datetime(self) -> None:
         """
@@ -78,15 +116,13 @@ class TestConvertTimestampColumn(hunitest.TestCase):
         actual = imvcdttrut.convert_timestamp_column(test_data)
         # Check output.
         actual = str(actual)
-        expected = "\n".join(
-            [
-                "0   2021-12-06 02:13:20+00:00",
-                "1   2021-12-16 12:13:20+00:00",
-                "2   2022-03-30 16:13:20+00:00",
-                "dtype: datetime64[ns, UTC]",
-            ]
-        )
-        self.assert_equal(actual, expected)
+        expected = """
+        0   2021-12-06 02:13:20+00:00
+        1   2021-12-16 12:13:20+00:00
+        2   2022-03-30 16:13:20+00:00
+        dtype: datetime64[ns, UTC]
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_string_datetime(self) -> None:
         """
@@ -98,15 +134,13 @@ class TestConvertTimestampColumn(hunitest.TestCase):
         actual = imvcdttrut.convert_timestamp_column(test_data)
         # Check output.
         actual = str(actual)
-        expected = "\n".join(
-            [
-                "0   2021-01-12",
-                "1   2021-02-14",
-                "2   2010-12-11",
-                "dtype: datetime64[ns]",
-            ]
-        )
-        self.assert_equal(actual, expected)
+        expected = """
+        0   2021-01-12
+        1   2021-02-14
+        2   2010-12-11
+        dtype: datetime64[ns]
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_incorrect_datetime(self) -> None:
         """
@@ -116,8 +150,13 @@ class TestConvertTimestampColumn(hunitest.TestCase):
         with self.assertRaises(ValueError) as fail:
             imvcdttrut.convert_timestamp_column(test_data)
         actual = str(fail.exception)
-        expected = "Incorrect data format. Datetime column should be of integer or string dtype."
+        expected = (
+            "Incorrect data format. Datetime column should be of int or str dtype"
+        )
         self.assert_equal(actual, expected)
+
+
+# #############################################################################
 
 
 class TestReindexOnDatetime(hunitest.TestCase):
@@ -173,7 +212,6 @@ class TestReindexOnDatetime(hunitest.TestCase):
         expected = """
         * Failed assertion *
         'void_column' in 'Index(['dummy_value', 'dummy_timestamp'], dtype='object')'
-        Not valid column name
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
@@ -191,114 +229,62 @@ class TestReindexOnDatetime(hunitest.TestCase):
         expected = """
         * Failed assertion *
         'dummy' in 'Index(['dummy_value', 'dummy_timestamp'], dtype='object')'
-        Not valid column name
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+# #############################################################################
 
 
 class TestAddDatePartitionCols(hunitest.TestCase):
-    def test_add_date_partition_cols(self) -> None:
-        """
-        Verify that generic date column is present in dataframe.
-        """
+    def add_date_partition_columns_helper(
+        self, partition_mode: str, expected: str
+    ) -> None:
         # Prepare inputs.
-        dummy_df = _get_dummy_df_with_timestamp()
-        reindexed_dummy_df = imvcdttrut.reindex_on_datetime(
-            dummy_df, "dummy_timestamp"
-        )
+        df = _get_dummy_df_with_timestamp()
+        reindexed_df = imvcdttrut.reindex_on_datetime(df, "dummy_timestamp")
         # Run.
-        imvcdttrut.add_date_partition_cols(reindexed_dummy_df)
+        imvcdttrut.add_date_partition_cols(reindexed_df, partition_mode)
         # Check output.
-        actual = str(reindexed_dummy_df)
-        expected = (
-            "                           dummy_value  dummy_timestamp      date\n"
-            "dummy_timestamp                                                  \n"
-            "2021-12-04 19:40:00+00:00            1    1638646800000  20211204\n"
-            "2021-12-04 19:41:00+00:00            2    1638646860000  20211204\n"
-            "2021-12-04 19:42:40+00:00            3    1638646960000  20211204"
-        )
-        self.assert_equal(actual, expected)
-
-    def test_add_date_partition_cols_year(self) -> None:
-        """
-        Verify that year column is present in dataframe.
-        """
-        # Prepare inputs.
-        dummy_df = _get_dummy_df_with_timestamp()
-        reindexed_dummy_df = imvcdttrut.reindex_on_datetime(
-            dummy_df, "dummy_timestamp"
-        )
-        # Run.
-        imvcdttrut.add_date_partition_cols(reindexed_dummy_df, "year")
-        # Check output.
-        actual = str(reindexed_dummy_df)
-        expected = (
-            "                           dummy_value  dummy_timestamp  year\n"
-            "dummy_timestamp                                              \n"
-            "2021-12-04 19:40:00+00:00            1    1638646800000  2021\n"
-            "2021-12-04 19:41:00+00:00            2    1638646860000  2021\n"
-            "2021-12-04 19:42:40+00:00            3    1638646960000  2021"
-        )
-        self.assert_equal(actual, expected)
-
-    def test_add_date_partition_cols_month(self) -> None:
-        """
-        Verify that year and month columns are present in dataframe.
-        """
-        # Prepare inputs.
-        dummy_df = _get_dummy_df_with_timestamp()
-        reindexed_dummy_df = imvcdttrut.reindex_on_datetime(
-            dummy_df, "dummy_timestamp"
-        )
-        # Run.
-        imvcdttrut.add_date_partition_cols(reindexed_dummy_df, "month")
-        # Check output.
-        actual = str(reindexed_dummy_df)
-        expected = (
-            "                           dummy_value  dummy_timestamp  year  month\n"
-            "dummy_timestamp                                                     \n"
-            "2021-12-04 19:40:00+00:00            1    1638646800000  2021     12\n"
-            "2021-12-04 19:41:00+00:00            2    1638646860000  2021     12\n"
-            "2021-12-04 19:42:40+00:00            3    1638646960000  2021     12"
-        )
-        self.assert_equal(actual, expected)
-
-    def test_add_date_partition_cols_day(self) -> None:
-        """
-        Verify that year, month and day columns are present in dataframe.
-        """
-        # Prepare inputs.
-        dummy_df = _get_dummy_df_with_timestamp()
-        reindexed_dummy_df = imvcdttrut.reindex_on_datetime(
-            dummy_df, "dummy_timestamp"
-        )
-        # Run.
-        imvcdttrut.add_date_partition_cols(reindexed_dummy_df, "day")
-        # Check output.
-        actual = str(reindexed_dummy_df)
-        expected = (
-            "                           dummy_value  dummy_timestamp  year  month  day\n"
-            "dummy_timestamp                                                          \n"
-            "2021-12-04 19:40:00+00:00            1    1638646800000  2021     12    4\n"
-            "2021-12-04 19:41:00+00:00            2    1638646860000  2021     12    4\n"
-            "2021-12-04 19:42:40+00:00            3    1638646960000  2021     12    4"
-        )
-        self.assert_equal(actual, expected)
-
-    def test_add_date_partition_cols_wrong_partition_mode(self) -> None:
-        """
-        Assert that proper partition mode is used.
-        """
-        dummy_df = _get_dummy_df_with_timestamp()
-        reindexed_dummy_df = imvcdttrut.reindex_on_datetime(
-            dummy_df, "dummy_timestamp"
-        )
-        with self.assertRaises(AssertionError) as fail:
-            imvcdttrut.add_date_partition_cols(reindexed_dummy_df, "void_mode")
-        actual = str(fail.exception)
-        expected = """
-        * Failed assertion *
-        'void_mode' in '['year', 'month', 'day', 'no_partition']'
-        Invalid partition mode `void_mode`!
-        """
+        actual = hpandas.df_to_str(reindexed_df)
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_add_date_partition_cols1(self) -> None:
+        partition_mode = "by_date"
+        expected = r"""
+                                   dummy_value  dummy_timestamp      date
+        dummy_timestamp
+        2021-12-04 19:40:00+00:00            1    1638646800000  20211204
+        2021-12-04 19:41:00+00:00            2    1638646860000  20211204
+        2021-12-04 19:42:40+00:00            3    1638646960000  20211204"""
+        self.add_date_partition_columns_helper(partition_mode, expected)
+
+    def test_add_date_partition_cols2(self) -> None:
+        partition_mode = "by_year"
+        expected = r"""
+                                   dummy_value  dummy_timestamp  year
+        dummy_timestamp
+        2021-12-04 19:40:00+00:00            1    1638646800000  2021
+        2021-12-04 19:41:00+00:00            2    1638646860000  2021
+        2021-12-04 19:42:40+00:00            3    1638646960000  2021"""
+        self.add_date_partition_columns_helper(partition_mode, expected)
+
+    def test_add_date_partition_cols3(self) -> None:
+        partition_mode = "by_year_month_day"
+        expected = r"""
+                           dummy_value  dummy_timestamp  year  month        date
+dummy_timestamp
+2021-12-04 19:40:00+00:00            1    1638646800000  2021     12  2021-12-04
+2021-12-04 19:41:00+00:00            2    1638646860000  2021     12  2021-12-04
+2021-12-04 19:42:40+00:00            3    1638646960000  2021     12  2021-12-04"""
+        self.add_date_partition_columns_helper(partition_mode, expected)
+
+    def test_add_date_partition_cols4(self) -> None:
+        partition_mode = "by_year_week"
+        expected = r"""
+                                   dummy_value  dummy_timestamp  year  weekofyear
+        dummy_timestamp
+        2021-12-04 19:40:00+00:00            1    1638646800000  2021          48
+        2021-12-04 19:41:00+00:00            2    1638646860000  2021          48
+        2021-12-04 19:42:40+00:00            3    1638646960000  2021          48"""
+        self.add_date_partition_columns_helper(partition_mode, expected)

@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.common.data.client.clients as imvcdclcl
+import im_v2.common.data.client.base_im_clients as imvcdcbimcl
 """
 
 import abc
@@ -18,8 +18,6 @@ import im_v2.common.data.client.full_symbol as imvcdcfusy
 import im_v2.common.universe.universe_utils as imvcuunut
 
 _LOG = logging.getLogger(__name__)
-
-# TODO(gp): @Grisha -> base_im_clients.py
 
 # #############################################################################
 # ImClient
@@ -38,6 +36,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): @Grisha ensure that the intervals returned by all ImClient are like
 #  [a, b] and all the descriptions are consistent. Let's do it after porting more
 #  vendors (e.g., Kibot, EODData)
+
 
 class ImClient(abc.ABC):
     """
@@ -150,9 +149,9 @@ class ImClient(abc.ABC):
         """
         Return the earliest timestamp available for a given `full_symbol`.
 
-        This implementation relies on reading all the data and then finding the
-        min. Derived classes can override this method if there is a more efficient
-        way to get this information.
+        This implementation relies on reading all the data and then
+        finding the min. Derived classes can override this method if
+        there is a more efficient way to get this information.
         """
         mode = "start"
         return self._get_start_end_ts_for_symbol(full_symbol, mode)
@@ -305,20 +304,6 @@ class ImClient(abc.ABC):
         df.index = df.index.tz_convert("UTC")
         return df
 
-    # TODO(gp): @Grisha Can we remove this and do all the transformation in the
-    #  `_read_data` method?
-    @staticmethod
-    @abc.abstractmethod
-    def _apply_vendor_normalization(df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Apply transformation specific of the vendor, e.g. rename columns,
-        convert data types.
-
-        :param df: raw data
-        :return: normalized data
-        """
-        ...
-
     # TODO(gp): @Grisha -> _dassert_output_data_is_valid
     @staticmethod
     def _dassert_is_valid(df: pd.DataFrame, full_symbol_col_name: str) -> None:
@@ -393,8 +378,6 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
                 end_ts,
                 **kwargs,
             )
-            # Normalize data according to the specific vendor.
-            df = self._apply_vendor_normalization(df)
             # Insert column with full symbol into the result dataframe.
             hdbg.dassert_is_not(full_symbol_col_name, df.columns)
             df.insert(0, full_symbol_col_name, full_symbol)
@@ -430,8 +413,8 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
     """
     IM client for backend that can read multiple symbols at the same time.
 
-    E.g., Parquet by-date or by-asset files allow to read data for multiple assets
-    stored in the same file.
+    E.g., Parquet by-date or by-asset files allow to read data for
+    multiple assets stored in the same file.
     """
 
     def _read_data(
@@ -454,7 +437,6 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         df = self._read_data_for_multiple_symbols(
             full_symbols, start_ts, end_ts, full_symbol_col_name, **kwargs
         )
-        df = self._apply_vendor_normalization(df)
         return df
 
     @abc.abstractmethod

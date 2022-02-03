@@ -140,11 +140,21 @@ class ForecastEvaluator:
     @staticmethod
     def read_portfolio(
         log_dir: str,
-        file_name: str,
         *,
+        file_name: Optional[str] = None,
         tz: str = "America/New_York",
         cast_asset_ids_to_int: bool = True,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        Read and process logged portfolio.
+
+        :param file_name: if `None`, find and use the latest
+        """
+        if file_name is None:
+            dir_name = os.path.join(log_dir, "returns")
+            files = hio.find_all_files(dir_name)
+            files.sort()
+            file_name = files[-1]
         returns = ForecastEvaluator._read_df(log_dir, "returns", file_name, tz)
         volatility = ForecastEvaluator._read_df(
             log_dir, "volatility", file_name, tz

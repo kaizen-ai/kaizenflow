@@ -4,7 +4,7 @@ import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
 import im_v2.ccxt.data.client.test.ccxt_clients_example as ivcdctcce
 import im_v2.ccxt.db.utils as imvccdbut
-import im_v2.common.data.client.test.test_clients_helper as ivcdcttch
+import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.common.db.db_utils as imvcddbut
 
 # #############################################################################
@@ -12,7 +12,7 @@ import im_v2.common.db.db_utils as imvcddbut
 # #############################################################################
 
 
-class TestCcxtCsvClient1(ivcdcttch.ImClientTestCase):
+class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
     """
     For all the test methods see description of corresponding private method in
     the parent class.
@@ -242,7 +242,7 @@ class TestCcxtCsvClient1(ivcdcttch.ImClientTestCase):
 # #############################################################################
 
 
-class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
+class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
     """
     For all the test methods see description of corresponding private method in
     the parent class.
@@ -472,7 +472,7 @@ class TestCcxtPqByAssetClient1(ivcdcttch.ImClientTestCase):
 # #############################################################################
 
 
-class TestCcxtCddDbClient1(ivcdcttch.ImClientTestCase, imvcddbut.TestImDbHelper):
+class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper):
     """
     For all the test methods see description of corresponding private method in
     the parent class.
