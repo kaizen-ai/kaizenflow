@@ -311,6 +311,7 @@ def _get_files_to_process(
 def _filter_existing_paths(paths_from_user: List[str]) -> List[str]:
     """
     Filter out the paths to non-existent files.
+
     :param files_from_user: paths passed by user
     :return: existing paths
     """
@@ -1525,7 +1526,8 @@ def integrate_find_files(  # type: ignore
     subdir="",
 ):
     """
-    Find the files that are touched in the current branch since last integration.
+    Find the files that are touched in the current branch since last
+    integration.
     """
     _report_task()
     _ = ctx
@@ -2972,10 +2974,8 @@ def _find_short_import(iterator: List, short_import: str) -> _FindResults:
     """
     Find imports in the Python files with the given short import.
 
-    E.g., for dtfcorrunn
-    dataflow/core/test/test_builders.py:9:import dataflow.core.runners as dtfcorrunn
-    returns
-
+    E.g., for dtfcorrunn dataflow/core/test/test_builders.py:9:import
+    dataflow.core.runners as dtfcorrunn returns
     """
     # E.g.,
     # `import dataflow.core.runners as dtfcorrunn`
