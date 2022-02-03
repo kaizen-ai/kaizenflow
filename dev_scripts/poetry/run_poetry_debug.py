@@ -321,6 +321,7 @@ class PoetryDebuggerAnalyzer:
             # ["necessary_incremental", "pandas"]
             # Analyze log.
             log_file = hio.from_file(log_path)
+            # TODO(Nikola): Ensure that `poetry.lock` does not exist.
             time_info = self._get_execution_time_from_log(log_file)
             # Update stats.
             self._update_poetry_run_stats(debug_mode_dirs, time_info)
