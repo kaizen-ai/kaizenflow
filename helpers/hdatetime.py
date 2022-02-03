@@ -209,6 +209,25 @@ def dassert_tz_compatible_timestamp_with_df(
         df_datetime = df[col_name].iloc[0]
     dassert_tz_compatible(df_datetime, datetime_)
 
+#
+
+def dassert_is_valid_timestamp(timestamp: Optional[pd.Timestamp]) -> None:
+    """
+    A valid timestamp is `None` or a pd.Timestamp with timezone.
+    """
+    if timestamp is not None:
+        hdbg.dassert_isinstance(timestamp, pd.Timestamp)
+        dassert_has_tz(timestamp)
+
+
+# TODO(gp): Should we extend it to left_close, right_close?
+def dassert_is_valid_interval(start_timestamp: Optional[pd.Timestamp],
+                              end_timestamp: Optional[pd.Timestamp]) -> None:
+    dassert_is_valid_timestamp(start_timestamp)
+    dassert_is_valid_timestamp(end_timestamp)
+    if start_timestamp is not None and end_timestamp is not None:
+        hdbg.dassert_lte(start_timestamp, end_timestamp)
+
 
 # #############################################################################
 

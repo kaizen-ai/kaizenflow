@@ -5,7 +5,6 @@ import helpers.hparquet as hparque
 """
 
 import logging
-import os
 from typing import Any, List, Optional
 
 import pandas as pd
@@ -103,3 +102,55 @@ def to_parquet(
         file_size,
         ts.elapsed_time,
     )
+
+
+# ###########################
+
+ParquetFilter = List[Tuple[Tuple[str, str, str]]]
+
+#def dassert_is_valid_parquet_filter(filters: ParquetFilter) -> None:
+
+
+# TODO(gp): Should we extend it to left_close, right_close?
+def get_parquet_filters_from_timestamp_interval(
+        partitioning_mode: str,
+        start_timestamp: Optional[pd.Timestamp],
+        end_timestamp: Optional[pd.Timestamp]):
+    """
+    Convert a constraint on a timestamp [start_timestamp, end_timestamp]
+    into a Parquet filters expression, based on the passed partitioning / tiling
+    criteria.
+    """
+    hdateti.dassert_is_valid_interval(start_timestamp, end_timestamp)
+    # Parquet `filters` is an OR of AND conditions. See
+    # https://arrow.apache.org/docs/python/generated/pyarrow.parquet.ParquetDataset.html
+    # The data is stored by week so we need to convert the timestamps into
+    # weeks and then trim the excess.
+    # Compute the start_date.
+    if start_ts is not None:
+        # TODO(gp): Use weekofyear = start_ts.isocalendar().week
+        # weekofyear = start_ts.week
+        # and_condition = ("weekofyear", ">=", weekofyear)
+        month = start_ts.month
+        and_condition = ("month", ">=", month)
+        and_filters.append(and_condition)
+        #
+        year = start_ts.year
+        and_condition = ("year", ">=", year)
+        and_filters.append(and_condition)
+    # Compute the end_date.
+    hdateti.dassert_is_valid_timestamp(end_ts)
+    if end_ts is not None:
+        self._dassert_is_valid_timestamp(end_ts)
+        # weekofyear = end_ts.week
+        # and_condition = ("weekofyear", "<=", weekofyear)
+        # and_filters.append(and_condition)
+        month = end_ts.month
+        and_condition = ("month", "<=", month)
+        and_filters.append(and_condition)
+        #
+        year = end_ts.year
+        and_condition = ("year", "<=", year)
+        and_filters.append(and_condition)
+    filters = [and_filters]
+    _LOG.debug("filters=%s", str(filters))
