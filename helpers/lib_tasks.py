@@ -227,7 +227,7 @@ def _get_files_to_process(
     modified: bool,
     branch: bool,
     last_commit: bool,
-    # TODO(gp): Pass abs_dir, instead of all_ and remove the calls from the
+    # TODO(gp): Pass abs_dir, instead of `all_` and remove the calls from the
     # outer clients.
     all_: bool,
     files_from_user: str,
@@ -238,11 +238,11 @@ def _get_files_to_process(
     Get a list of files to process.
 
     The files are selected based on the switches:
-    - branch: changed in the branch
-    - modified: changed in the client (both staged and modified)
-    - last_commit: part of the previous commit
-    - all: all the files in the repo
-    - files_from_user: passed by the user
+    - `branch`: changed in the branch
+    - `modified`: changed in the client (both staged and modified)
+    - `last_commit`: part of the previous commit
+    - `all`: all the files in the repo
+    - `files_from_user`: passed by the user
 
     :param modified: return files modified in the client (i.e., changed with
         respect to HEAD)
