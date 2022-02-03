@@ -61,7 +61,6 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         )
         return universe  # type: ignore[no-any-return]
 
-    # TODO(gp): This is ok for this class, but not needed for the ancestor classes.
     def _apply_vendor_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
         """
         Input data is indexed with numbers and looks like:
@@ -191,6 +190,8 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
         sql_query = " WHERE ".join([sql_query, sql_conditions])
         # Execute SQL query.
         data = pd.read_sql(sql_query, self._connection, **read_sql_kwargs)
+        # Normalize data according to the vendor.
+        data = self._apply_vendor_normalization(data)
         return data
 
 
@@ -312,6 +313,8 @@ class CcxtCddCsvParquetByAssetClient(
         # Add required columns.
         data["exchange_id"] = exchange_id
         data["currency_pair"] = currency_pair
+        # Normalize data according to the vendor.
+        data = self._apply_vendor_normalization(data)
         return data
 
     def _get_file_path(

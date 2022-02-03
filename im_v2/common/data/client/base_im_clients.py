@@ -308,20 +308,6 @@ class ImClient(abc.ABC):
         df.index = df.index.tz_convert("UTC")
         return df
 
-    # TODO(gp): @Grisha Can we remove this and do all the transformation in the
-    #  `_read_data` method?
-    @staticmethod
-    @abc.abstractmethod
-    def _apply_vendor_normalization(df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Apply transformation specific of the vendor, e.g. rename columns,
-        convert data types.
-
-        :param df: raw data
-        :return: normalized data
-        """
-        ...
-
     # TODO(gp): @Grisha -> _dassert_output_data_is_valid
     @staticmethod
     def _dassert_is_valid(df: pd.DataFrame, full_symbol_col_name: str) -> None:
@@ -396,8 +382,6 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
                 end_ts,
                 **kwargs,
             )
-            # Normalize data according to the specific vendor.
-            df = self._apply_vendor_normalization(df)
             # Insert column with full symbol into the result dataframe.
             hdbg.dassert_is_not(full_symbol_col_name, df.columns)
             df.insert(0, full_symbol_col_name, full_symbol)
@@ -457,7 +441,6 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         df = self._read_data_for_multiple_symbols(
             full_symbols, start_ts, end_ts, full_symbol_col_name, **kwargs
         )
-        df = self._apply_vendor_normalization(df)
         return df
 
     @abc.abstractmethod

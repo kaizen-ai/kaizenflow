@@ -120,14 +120,6 @@ class HistoricalPqByAssetClient(
         )
         return df
 
-    # TODO(gp): Remove, if possible.
-    @staticmethod
-    def _apply_vendor_normalization(df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Same as abstract method.
-        """
-        return df
-
 
 # #############################################################################
 
@@ -197,13 +189,4 @@ class HistoricalPqByDateClient(
         df = hpandas.trim_df(
             df, ts_col_name, start_ts, end_ts, left_close, right_close
         )
-        return df
-
-    # TODO(gp): Remove, if possible.
-    @staticmethod
-    def _apply_vendor_normalization(df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Same as abstract method.
-        """
-        # Nothing to do.
         return df
