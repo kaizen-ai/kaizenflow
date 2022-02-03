@@ -229,7 +229,7 @@ class PoetryDebugger:
         hio.to_file(file_path, file_content)
 
     @staticmethod
-    def _run_poetry_cmd(dir_path: str) -> None:
+    def _run_lock_cmd(dir_path: str) -> None:
         """
         Run `poetry lock` in verbose mode.
 
@@ -254,7 +254,7 @@ class PoetryDebugger:
         """
         # Run as a separate process.
         poetry_lock = multiprocessing.Process(
-            target=self._run_poetry_cmd, args=(dir_path,)
+            target=self._run_lock_cmd, args=(dir_path,)
         )
         poetry_lock.start()
         # Apply time constraint.
@@ -299,12 +299,12 @@ class PoetryDebugger:
         self._run_with_time_constraint(dir_path)
 
 
-class PoetryDebuggerAnalyzer:
+class PoetryDebuggerStatsComputer:
     def __init__(self) -> None:
         """
         Initialize stats that will be used in analyzer run.
         """
-        self.stats: Dict[str, Any] = {}
+        self._stats: Dict[str, Any] = {}
 
     def run(self) -> None:
         """
@@ -317,11 +317,10 @@ class PoetryDebuggerAnalyzer:
         log_paths = hio.find_regex_files(working_directory, "poetry.log")
         for log_path in log_paths:
             # Parse log path to extract debug mode directories.
-            # .../poetry/necessary_incremental/pandas/poetry.log
+            # `.../poetry/necessary_incremental/pandas/poetry.log`.
             debug_mode_path = log_path.split(f"poetry{os.sep}")[-1]
-            # necessary_incremental/pandas/poetry.log
+            # `necessary_incremental/pandas/poetry.log` -> ["necessary_incremental", "pandas"].
             debug_mode_dirs = debug_mode_path.split(os.sep)[:-1]
-            # ["necessary_incremental", "pandas"]
             # Analyze log.
             log_file = hio.from_file(log_path)
             time_info = self._get_execution_time_from_log(log_file)
@@ -329,7 +328,7 @@ class PoetryDebuggerAnalyzer:
             self._update_poetry_run_stats(debug_mode_dirs, time_info)
         # Save stats.
         filename = "poetry_debugger_stats.json"
-        hio.to_json(os.path.join(working_directory, filename), self.stats)
+        hio.to_json(os.path.join(working_directory, filename), self._stats)
 
     def _update_poetry_run_stats(
         self, debug_mode_dirs: List[str], time_info: str
@@ -340,27 +339,27 @@ class PoetryDebuggerAnalyzer:
         :param debug_mode_dirs: specific per each debug mode
         :param time_info: time information in seconds as string or message
         """
-        if len(debug_mode_dirs) == 2:
-            # If we have two dirs that is incremental.
-            # First dir is debug_mode, second is last package name from incremental run.
+        if "incremental" in debug_mode_dirs[0]:
+            # If we are in incremental run,first dir is debug_mode, second is
+            # last package name from incremental run.
             # {
             #     "necessary_incremental": {
             #         "pandas": "0.123",
             #         "jupyter": "0.345",
             #     }
             # }
-            if self.stats.get(debug_mode_dirs[0], None) is None:
+            if self._stats.get(debug_mode_dirs[0], None) is None:
                 # TODO(Nikola): Simpler init, default dict?
-                self.stats[debug_mode_dirs[0]] = {}
-            self.stats[debug_mode_dirs[0]].update({debug_mode_dirs[1]: time_info})
-        elif len(debug_mode_dirs) == 1:
-            # If we only have one dir, tool is run in non-incremental mode.
+                self._stats[debug_mode_dirs[0]] = {}
+            self._stats[debug_mode_dirs[0]].update(
+                {debug_mode_dirs[1]: time_info}
+            )
+        else:
+            # If we are in regular non-incremental run, there is only one dir.
             # {
             #     "necessary": "35.57"
             # }
-            self.stats[debug_mode_dirs[0]] = time_info
-        else:
-            raise ValueError(f"Faulty directory structure `{debug_mode_dirs}`!")
+            self._stats[debug_mode_dirs[0]] = time_info
 
     @staticmethod
     def _get_execution_time_from_log(log_file: str) -> str:
@@ -412,7 +411,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         poetry_debugger.run()
     finally:
         # Initialize and start debugger analyzer.
-        poetry_debugger_analyzer = PoetryDebuggerAnalyzer()
+        poetry_debugger_analyzer = PoetryDebuggerStatsComputer()
         poetry_debugger_analyzer.run()
 
 
