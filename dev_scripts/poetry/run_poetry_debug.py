@@ -88,6 +88,7 @@ class PoetryDebugger:
         all_packages = necessary_packages + optional_packages
         # Pick desired debug option.
         if self._debug_mode == "necessary_incremental":
+            # TODO(Grisha): can we factor out this part?
             # Add necessary packages one by one.
             current_necessary_packages = []
             for necessary_package in necessary_packages:
@@ -350,6 +351,9 @@ class PoetryDebugStatsComputer:
             if stats.get(debug_mode_dirs[0], None) is None:
                 # TODO(Nikola): Simpler init, default dict?
                 stats[debug_mode_dirs[0]] = {}
+            # TODO(Grisha): once this part is simplified make sure that lint
+            #  has gone away `[amp_mypy] error: Unsupported target for indexed
+            #  assignment ("Union[str, Dict[str, str]]")  [index]`.
             stats[debug_mode_dirs[0]].update({debug_mode_dirs[1]: time_info})
         else:
             # If we are in regular non-incremental run, there is only one dir.
@@ -402,6 +406,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     debug_mode = args.debug_mode
     max_runtime_minutes = args.max_runtime_minutes
+    # TODO(Grisha): get rid of `try - finally` if possible.
     try:
         # Initialize and start debugger.
         poetry_debugger = PoetryDebugger(debug_mode, max_runtime_minutes)
