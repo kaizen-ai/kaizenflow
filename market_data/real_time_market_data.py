@@ -26,7 +26,7 @@ _LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
 # #############################################################################
 
 # TODO(gp): This should be pushed to the IM
-class RealTimeMarketData(mdabmada.AbstractMarketData):
+class RealTimeMarketData(mdabmada.MarketData):
     """
     Implement an interface to a real-time SQL database with 1-minute bar data.
     """
@@ -37,7 +37,7 @@ class RealTimeMarketData(mdabmada.AbstractMarketData):
         table_name: str,
         where_clause: Optional[str],
         valid_id: Any,
-        # Params from `AbstractMarketData`.
+        # Params from `MarketData`.
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):

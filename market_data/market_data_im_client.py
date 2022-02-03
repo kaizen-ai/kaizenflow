@@ -19,7 +19,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): @Grisha -> ImClientMarketData and rename all the classes and files.
-class MarketDataImClient(mdabmada.AbstractMarketData):
+class MarketDataImClient(mdabmada.MarketData):
     """
     Implement a `MarketData` that uses a `ImClient` as backend.
     """
@@ -136,7 +136,7 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
 
     def _convert_im_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Convert IM data to the format required by `AbstractMarketData`.
+        Convert IM data to the format required by `MarketData`.
 
         :param df: IM data to transform
         ```

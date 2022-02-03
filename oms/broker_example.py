@@ -16,7 +16,7 @@ import oms.oms_db as oomsdb
 def get_simulated_broker_example1(
     event_loop: Optional[asyncio.AbstractEventLoop],
     *,
-    market_data: Optional[mdata.AbstractMarketData] = None,
+    market_data: Optional[mdata.MarketData] = None,
     timestamp_col: str = "end_datetime",
 ) -> ombroker.SimulatedBroker:
     """
@@ -42,7 +42,7 @@ def get_mocked_broker_example1(
     event_loop: Optional[asyncio.AbstractEventLoop],
     db_connection: hsql.DbConnection,
     *,
-    market_data: Optional[mdata.AbstractMarketData] = None,
+    market_data: Optional[mdata.MarketData] = None,
     timestamp_col: str = "end_datetime",
     submitted_orders_table_name: str = oomsdb.SUBMITTED_ORDERS_TABLE_NAME,
     accepted_orders_table_name: str = oomsdb.ACCEPTED_ORDERS_TABLE_NAME,
