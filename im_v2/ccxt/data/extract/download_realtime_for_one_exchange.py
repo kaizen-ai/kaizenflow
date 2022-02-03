@@ -19,11 +19,14 @@ import im_v2.ccxt.data.extract.download_realtime_for_one_exchange as imvcdedrfoe
 
 import argparse
 import logging
+import os
 
 import pandas as pd
 
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
+import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import im_v2.ccxt.universe.universe as imvccunun
@@ -80,6 +83,14 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="(Optional) DB table to use, default: 'ccxt_ohlcv'",
     )
+    parser.add_argument(
+        "s3_bucket",
+        action="store",
+        required=False,
+        default=None,
+        type=str,
+        help="Name of S3 bucket to save copy of the data to",
+    )
     parser.add_argument("--incremental", action="store_true")
     parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
@@ -92,6 +103,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     env_file = imvimlita.get_db_env_path(args.db_stage)
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
+    # Connect to bucket, if provided.
+    if args.s3_bucket:
+        hs3.get_s3fs("ck")
+        s3_path = f"s3://{args.s3_bucket}/{args.exchange_id}/"
     # Initialize exchange class.
     exchange = imvcdeexcl.CcxtExchange(args.exchange_id)
     # Load currency pairs.
@@ -124,6 +139,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
             obj=data,
             table_name=db_table,
         )
+        # Save data to S3 bucket.
+        if args.s3_bucket:
+            # bytes_to_write = data.to_csv(None).encode()
+            file_name = hdateti.get_current_time("UTC") + ".csv.gz"
+            path_to_file = os.path.join(s3_path, file_name)
+            data.to_csv(path_to_file, index=False, compression="gzip")
         # Remove duplicated entries.
         connection.cursor().execute(dup_query)
 
