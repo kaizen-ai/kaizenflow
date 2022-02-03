@@ -375,7 +375,7 @@ class PoetryDebuggerAnalyzer:
         # Get total seconds.
         time_info_list = re.findall(r"solving took (.*?) seconds", log_file)
         if time_info_list:
-            time_info = time_info[-1]
+            time_info = time_info_list[-1]
         return time_info
 
 
