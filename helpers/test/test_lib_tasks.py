@@ -1380,7 +1380,7 @@ class Test_get_files_to_process1(hunitest.TestCase):
         """
         Pass through files from user.
 
-        Use three types of paths we don't want to process:
+        Use two types of paths we don't want to process:
           - non-existent python file
           - pattern "/*" that matches no files
         """

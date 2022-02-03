@@ -312,7 +312,7 @@ def _filter_existing_paths(paths_from_user: List[str]) -> List[str]:
     """
     Filter out the paths to non-existent files.
 
-    :param files_from_user: paths passed by user
+    :param paths_from_user: paths passed by user
     :return: existing paths
     """
     paths = []
