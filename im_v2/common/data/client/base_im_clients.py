@@ -67,8 +67,10 @@ class ImClient(abc.ABC):
     ```
     """
 
-    def __init__(self):
-        self._asset_id_to_full_symbol_mapping = None
+    def __init__(self) -> None:
+        self._asset_id_to_full_symbol_mapping = (
+            self._build_asset_id_to_full_symbol_mapping()
+        )
 
     def read_data(
         self,
@@ -208,23 +210,22 @@ class ImClient(abc.ABC):
         :param asset_ids: assets ids
         :return: assets as full symbols
         """
-        if self._asset_id_to_full_symbol_mapping is None:
-            # Build a mapping if it is not provided.
-            self._asset_id_to_full_symbol_mapping = self._build_asset_id_to_full_symbol_mapping()
         # Check that provided ids are part of universe.
         hdbg.dassert_is_subset(asset_ids, self._asset_id_to_full_symbol_mapping)
         # Convert ids to full symbols.
         full_symbols = [
-            self._asset_id_to_full_symbol_mapping[asset_id] for asset_id in asset_ids
+            self._asset_id_to_full_symbol_mapping[asset_id]
+            for asset_id in asset_ids
         ]
         return full_symbols
 
     @functools.lru_cache()
-    def _build_asset_id_to_full_symbol_mapping(self):
-        # Get universe to construct asset ids to full symbols mapping.
+    def _build_asset_id_to_full_symbol_mapping(self) -> Dict[int, str]:
+        # Get universe to build asset ids to full symbols mapping.
         full_symbol_universe = self.get_universe(as_asset_ids=False)
-        asset_id_to_full_symbol_mapping = imvcuunut.build_num_to_string_id_mapping(
-            tuple(full_symbol_universe)
+        # Build the mapping.
+        asset_id_to_full_symbol_mapping = (
+            imvcuunut.build_num_to_string_id_mapping(full_symbol_universe)
         )
         return asset_id_to_full_symbol_mapping
 
