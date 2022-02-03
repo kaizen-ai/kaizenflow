@@ -3,6 +3,7 @@
 #if [[ 0 == 1 ]]; then
     # This script should be invoked on a different repo so that we don't annihilate
     # this file.
+    # Should we also consider changing the parameters below?
     #SOURCE_REPO=CMTask974_run_script
     #TARGET_REPO=/Users/saggese/src/cmamp2
     #cd $TARGET_REPO
@@ -15,7 +16,7 @@
     #fi
 
     # Create the branch with the changes.
-    #TARGET_BRANCH=CmTask972_Merge_dataframe_to_str_and_df_to_short_str_into_hpandas_2
+    #TARGET_BRANCH=CmTask1072_Rename_AbstractMarketData_to_MarketData_1
     #i git_create_branch -b $TARGET_BRANCH
     #git checkout -B $TARGET_BRANCH
 
@@ -26,7 +27,7 @@
     #git merge --no-commit origin/$SOURCE_REPO
 #fi;
 
-# Move dataframe_to_str from hprint to hpandas.
+# Rename method "AbstractMarketData" to "MarketData".
 ./dev_scripts/replace_text.py \
   --old "AbstractMarketData" \
   --new "MarketData" \
