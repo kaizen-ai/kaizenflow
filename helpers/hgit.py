@@ -627,7 +627,6 @@ def get_repo_name(
         `name`
     """
     repo_map = get_complete_repo_map(in_mode, include_host_name)
-    print(repo_map)
     hdbg.dassert_in(
         name, repo_map, "Invalid name='%s' for in_mode='%s'", name, in_mode
     )

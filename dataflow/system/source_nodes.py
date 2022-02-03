@@ -76,54 +76,75 @@ def data_source_node_factory(
         pass
 
     elif source_node_name == "disk":
-        #ret = dtfcore.DiskDataSource(nid, **source_node_kwargs)
-        #ret = HistoricalDataSource(nid, **source_node_kwargs)
-        # HistoricalPqByAsset(ImClient) -> MarketDataImClient -> ReadNode
-        import im_v2.ccxt.data.client.test.ccxt_clients_example as ivcdctcce
-        #im_client = ivcdctcce.get_CcxtCsvClient_example2()
-        im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
+        if False:
+            ret = dtfcore.DiskDataSource(nid, **source_node_kwargs)
+        else:
+            # HistoricalPqByAsset(ImClient) -> MarketDataImClient -> ReadNode
+            import im_v2.ccxt.data.client.test.ccxt_clients_example as ivcdctcce
+            import os
+            #im_client = ivcdctcce.get_CcxtCsvClient_example2()
+            #im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
 
-        full_symbols = ["binance::BTC_USDT"]
-        start_ts = pd.Timestamp("2018-08-17T00:02:00-00:00")
-        end_ts = pd.Timestamp("2018-09-17T00:02:00-00:00")
-        im_client.read_data(full_symbols, start_ts, end_ts)
+            #config["load"]["aws_profile"] = "am"
+            import helpers.hs3 as hs3
+            root_dir = os.path.join(hs3.get_path(), "data")
+            # # Data parameters.
+            # config.add_subconfig("data")
+            # config["data"]["close_price_col_name"] = "close"
+            # config["data"]["frequency"] = "T"
+            # config["data"]["vendor"] = "CCXT"
+            # config["data"]["extension"] = "csv.gz"
 
-        # MarketDataImClient
-        import market_data.market_data_im_client as mdmdimcl
-        asset_id_col = "asset_id"
-        asset_ids = [3187272957, 1467591036]
-        start_time_col_name = "start_ts"
-        end_time_col_name = "end_ts"
-        columns = None
+            vendor = "CCXT"
+            #root_dir = get_test_data_dir()
+            extension = "csv.gz"
+            import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
+            im_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
+                vendor, root_dir, extension, aws_profile="am"
+            )
+            full_symbols = ["binance::BTC_USDT"]
+            #start_ts = pd.Timestamp("2018-08-17T00:02:00-00:00")
+            #end_ts = pd.Timestamp("2018-09-17T00:02:00-00:00")
+            #im_client.read_data(full_symbols, start_ts, end_ts)
 
-        def get_MarketDataImClient_wall_clock_time() -> pd.Timestamp:
-            """
-            Get a wall clock time to build `MarketDataImClient` for tests.
-            """
-            return pd.Timestamp("2018-08-17T01:30:00+00:00")
+            # MarketDataImClient
+            import market_data.market_data_im_client as mdmdimcl
+            asset_id_col = "asset_id"
+            #asset_ids = [3187272957, 1467591036]
+            asset_ids = [3187272957]
+            start_time_col_name = "start_ts"
+            end_time_col_name = "end_ts"
+            columns = None
 
-        get_wall_clock_time = get_MarketDataImClient_wall_clock_time
-        column_remap = None
-        market_data_client = mdmdimcl.MarketDataImClient(
-            asset_id_col,
-            asset_ids,
-            start_time_col_name,
-            end_time_col_name,
-            columns,
-            get_wall_clock_time,
-            im_client=im_client,
-            column_remap=column_remap,
-        )
-        ts_col_name = "end_ts"
-        market_data_client.get_data_for_interval(start_ts, end_ts, ts_col_name, asset_ids=asset_ids)
+            def get_MarketDataImClient_wall_clock_time() -> pd.Timestamp:
+                """
+                Get a wall clock time to build `MarketDataImClient` for tests.
+                """
+                return pd.Timestamp("2021-08-17T01:30:00+00:00")
 
-        #
-        import dataflow.system.source_nodes as dtfsysonod
-        nid = "rets/read_data"
-        asset_id = "asset_id"
-        ts_col_name = None
-        multiindex_output = True
-        ret = dtfsysonod.HistoricalDataSource(nid, market_data_client, asset_id, ts_col_name, multiindex_output)
+            get_wall_clock_time = get_MarketDataImClient_wall_clock_time
+            column_remap = None
+            market_data_client = mdmdimcl.MarketDataImClient(
+                asset_id_col,
+                asset_ids,
+                start_time_col_name,
+                end_time_col_name,
+                columns,
+                get_wall_clock_time,
+                im_client=im_client,
+                column_remap=column_remap,
+            )
+            ts_col_name = "end_ts"
+            #market_data_client.get_data_for_interval(start_ts, end_ts, ts_col_name, asset_ids=asset_ids)
+
+            #
+            import dataflow.system.source_nodes as dtfsysonod
+            nid = "rets/read_data"
+            asset_id = "asset_id"
+            ts_col_name = None
+            #multiindex_output = True
+            multiindex_output = False
+            ret = dtfsysonod.HistoricalDataSource(nid, market_data_client, asset_id, ts_col_name, multiindex_output)
 
     elif source_node_name == "DataLoader":
         ret = dtfcore.DataLoader(nid, **source_node_kwargs)

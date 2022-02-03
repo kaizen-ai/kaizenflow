@@ -391,6 +391,11 @@ class DAG:
                 # Retrieve output from store.
                 kwargs[k] = pre_node.get_output(method, v)
         _LOG.debug("kwargs are %s", kwargs)
+        if False and "df_in" in kwargs:
+            import helpers.hio as hio
+            hio.create_dir("node_data", incremental=True)
+            file_name = "node_data/" + nid.replace("/", "_") + ".csv"
+            kwargs["df_in"].to_csv(file_name)
         node = self.get_node(nid)
         try:
             output = getattr(node, method)(**kwargs)
