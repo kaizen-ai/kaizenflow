@@ -120,53 +120,58 @@ class PoetryDebugger:
         else:
             raise ValueError(f"Unsupported debug mode `{self._debug_mode}`!")
 
-    @staticmethod
-    def _get_necessary_packages() -> List[str]:
+    def _run_with_time_constraint(self, dir_path: str) -> None:
         """
-        Get necessary Python packages.
-        """
-        necessary_packages = [
-            'python = "^3.8"',
-            'pandas = "*"',
-            'jupyter = "*"',
-            'awscli = "1.22.17"',
-            'jupyter_contrib_nbextensions = "*"',
-            'jupyter_nbextensions_configurator = "*"',
-            'matplotlib = "*"',
-            'networkx = "*"',
-            'psycopg2-binary = "*"',
-            'pyarrow = "*"',
-            'pytest = "*"',
-            'pytest-cov = "*"',
-            'pytest-instafail = "*"',
-            'pytest-rerunfailures = "*"',
-            'pytest-timeout = "*"',
-            'pytest-xdist = "*"',
-            'python-dotenv = "*"',
-            'pywavelets = "*"',
-            's3fs = "*"',
-            'seaborn = "*"',
-            'sklearn = "*"',
-            'statsmodels = "*"',
-            'tqdm = "*"',
-        ]
-        return necessary_packages
+        Command `poetry lock` is started as a separate process so runtime can
+        be measured and stopped if needed.
 
-    @staticmethod
-    def _get_optional_packages() -> List[str]:
+        :param dir_path: path of directory where command is run
         """
-        Get optional Python packages.
+        # Run as a separate process.
+        poetry_lock = multiprocessing.Process(
+            target=self._run_lock_cmd, args=(dir_path,)
+        )
+        poetry_lock.start()
+        # Apply time constraint.
+        timer = htimer.Timer()
+        while poetry_lock.is_alive():
+            if timer.get_total_elapsed() > self._max_runtime_minutes * 60:
+                poetry_lock.kill()
+                raise RuntimeError(
+                    f"Constraint of {self._max_runtime_minutes} minutes is breached!"
+                )
+            timer.resume()
+            time.sleep(1)
+        # Cleanup.
+        poetry_lock.join()
+        poetry_lock.close()
+
+    def _run_wrapper(
+        self,
+        python_packages: List[str],
+        *,
+        last_package: str = "",
+    ) -> None:
         """
-        optional_packages = [
-            'boto3 = "*"',
-            'invoke = "*"',
-            'jsonpickle = "*"',
-            'moto = "*"',
-            'psutil = "*"',
-            'pygraphviz = "*"',
-            'requests = "*"',
-        ]
-        return optional_packages
+        Wrapper around `poetry lock`.
+
+        :param python_packages: list of packages to be written in `pyproject.toml` file
+        :param last_package: last package in `pyproject.toml` that is useful for
+            creating different log files in incremental run
+        """
+        # Base directory path without subdirectories.
+        dir_path = self._debug_mode_dir
+        # Use clean package name, if package name is provided.
+        if last_package:
+            # `pandas = "*"` will become `pandas`.
+            last_package = last_package.split(" ")[0]
+            # Add last package as subdirectory.
+            dir_path = os.path.join(dir_path, last_package)
+        # Write `*.toml` files.
+        self._write_poetry_toml_file(dir_path)
+        self._write_pyproject_toml(python_packages, dir_path)
+        # Start as a separate process.
+        self._run_with_time_constraint(dir_path)
 
     def _write_pyproject_toml(self, packages: List[str], dir_name: str) -> None:
         """
@@ -245,64 +250,59 @@ class PoetryDebugger:
         # Run `poetry lock` command.
         hsystem.system(cmd, suppress_output=False, output_file=log_file_path)
 
-    def _run_with_time_constraint(self, dir_path: str) -> None:
+    @staticmethod
+    def _get_necessary_packages() -> List[str]:
         """
-        Command `poetry lock` is started as a separate process so runtime can
-        be measured and stopped if needed.
+        Get necessary Python packages.
+        """
+        necessary_packages = [
+            'python = "^3.8"',
+            'pandas = "*"',
+            'jupyter = "*"',
+            'awscli = "1.22.17"',
+            'jupyter_contrib_nbextensions = "*"',
+            'jupyter_nbextensions_configurator = "*"',
+            'matplotlib = "*"',
+            'networkx = "*"',
+            'psycopg2-binary = "*"',
+            'pyarrow = "*"',
+            'pytest = "*"',
+            'pytest-cov = "*"',
+            'pytest-instafail = "*"',
+            'pytest-rerunfailures = "*"',
+            'pytest-timeout = "*"',
+            'pytest-xdist = "*"',
+            'python-dotenv = "*"',
+            'pywavelets = "*"',
+            's3fs = "*"',
+            'seaborn = "*"',
+            'sklearn = "*"',
+            'statsmodels = "*"',
+            'tqdm = "*"',
+        ]
+        return necessary_packages
 
-        :param dir_path: path of directory where command is run
+    @staticmethod
+    def _get_optional_packages() -> List[str]:
         """
-        # Run as a separate process.
-        poetry_lock = multiprocessing.Process(
-            target=self._run_lock_cmd, args=(dir_path,)
-        )
-        poetry_lock.start()
-        # Apply time constraint.
-        timer = htimer.Timer()
-        while poetry_lock.is_alive():
-            if timer.get_total_elapsed() > self._max_runtime_minutes * 60:
-                poetry_lock.kill()
-                raise RuntimeError(
-                    f"Constraint of {self._max_runtime_minutes} minutes is breached!"
-                )
-            timer.resume()
-            time.sleep(1)
-        # Cleanup.
-        poetry_lock.join()
-        poetry_lock.close()
-
-    def _run_wrapper(
-        self,
-        python_packages: List[str],
-        *,
-        last_package: str = "",
-    ) -> None:
+        Get optional Python packages.
         """
-        Wrapper around `poetry lock`.
-
-        :param python_packages: list of packages to be written in `pyproject.toml` file
-        :param last_package: last package in `pyproject.toml` that is useful for
-            creating different log files in incremental run
-        """
-        # Base directory path without subdirectories.
-        dir_path = self._debug_mode_dir
-        # Use clean package name, if package name is provided.
-        if last_package:
-            # `pandas = "*"` will become `pandas`.
-            last_package = last_package.split(" ")[0]
-            # Add last package as subdirectory.
-            dir_path = os.path.join(dir_path, last_package)
-        # Write `*.toml` files.
-        self._write_poetry_toml_file(dir_path)
-        self._write_pyproject_toml(python_packages, dir_path)
-        # Start as a separate process.
-        self._run_with_time_constraint(dir_path)
+        optional_packages = [
+            'boto3 = "*"',
+            'invoke = "*"',
+            'jsonpickle = "*"',
+            'moto = "*"',
+            'psutil = "*"',
+            'pygraphviz = "*"',
+            'requests = "*"',
+        ]
+        return optional_packages
 
 
 POETRY_STATS = Dict[str, Union[str, Dict[str, str]]]
 
 
-class PoetryDebuggerStatsComputer:
+class PoetryDebugStatsComputer:
     def run(self) -> None:
         """
         Inspect all logs generated by `poetry lock` one by one.
@@ -339,7 +339,7 @@ class PoetryDebuggerStatsComputer:
         :param time_info: time information in seconds as string or message
         """
         if "incremental" in debug_mode_dirs[0]:
-            # If we are in incremental run,first dir is debug_mode, second is
+            # If we are in incremental run, first dir is debug_mode, second is
             # last package name from incremental run.
             # {
             #     "necessary_incremental": {
@@ -408,7 +408,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         poetry_debugger.run()
     finally:
         # Initialize and start debugger analyzer.
-        poetry_debugger_analyzer = PoetryDebuggerStatsComputer()
+        poetry_debugger_analyzer = PoetryDebugStatsComputer()
         poetry_debugger_analyzer.run()
 
 
