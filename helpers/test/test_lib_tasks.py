@@ -1384,13 +1384,12 @@ class Test_get_files_to_process1(hunitest.TestCase):
         Use three types of paths we don't want to process:
           - non-existent python file
           - pattern "/*" that matches no files
-          - existing directory
         """
         modified = False
         branch = False
         last_commit = False
         all_ = False
-        files_from_user = "testfile1.py testfiles1/* testfiles2/"
+        files_from_user = "testfile1.py testfiles1/*"
         mutually_exclusive = True
         remove_dirs = True
         files = hlibtask._get_files_to_process(
