@@ -1,6 +1,8 @@
 import logging
 import os
 
+import pandas as pd
+
 import dataflow.core as dtfcobuexa
 import dataflow.system.real_time_dag_adapter as dtfsrtdaad
 import helpers.hprint as hprint
@@ -30,13 +32,19 @@ class TestRealtimeDagAdapter1(hunitest.TestCase):
         event_loop = None
         portfolio = oporexam.get_simulated_portfolio_example1(event_loop)
         # Build a DagAdapter.
+        prediction_col = "close"
+        volatility_col = "close"
+        returns_col = "close"
+        timedelta = pd.Timedelta("5T")
+        asset_id_col = "asset_id"
         dag_adapter = dtfsrtdaad.RealTimeDagAdapter(
             dag_builder,
             portfolio,
-            "close",
-            "close",
-            "last_5mins",
-            "asset_id",
+            prediction_col,
+            volatility_col,
+            returns_col,
+            timedelta,
+            asset_id_col,
         )
         txt.append(hprint.frame("dag_adapter"))
         txt.append(hprint.indent(str(dag_adapter)))

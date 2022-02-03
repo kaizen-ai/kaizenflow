@@ -420,15 +420,6 @@ def git_merge_master(ctx, ff_only=False, abort_if_not_clean=True):  # type: igno
     _run(ctx, cmd)
 
 
-# TODO(gp): Add git_co(ctx)
-# Reuse hgit.git_stash_push() and hgit.stash_apply()
-# git stash save your-file-name
-# git checkout master
-# # do whatever you had to do with master
-# git checkout staging
-# git stash pop
-
-
 @task
 def git_clean(ctx, fix_perms=False, dry_run=False):  # type: ignore
     """
@@ -695,7 +686,8 @@ def git_create_branch(  # type: ignore
         `LemTask169_Get_GH_actions`)
     :param issue_id: use the canonical name for the branch corresponding to that
         issue
-    :param repo_short_name: name of the GitHub repo_short_name that the `issue_id` belongs to
+    :param repo_short_name: name of the GitHub repo_short_name that the `issue_id`
+        belongs to
         - "current" (default): the current repo_short_name
         - short name (e.g., "amp", "lm") of the branch
     :param suffix: suffix (e.g., "02") to add to the branch name when using issue_id
@@ -732,7 +724,7 @@ def git_create_branch(  # type: ignore
     # Check that the branch is not just a number.
     m = re.match("^\d+$", branch_name)
     hdbg.dassert(not m, "Branch names with only numbers are invalid")
-    # The valid format of a branch name is `AmpTask1903_Implemented_system_Portfolio`.
+    # The valid format of a branch name is `AmpTask1903_Implemented_system_...`.
     m = re.match("^\S+Task\d+_\S+$", branch_name)
     hdbg.dassert(m, "Branch name should be '{Amp,...}TaskXYZ_...'")
     hdbg.dassert(
@@ -832,16 +824,27 @@ def git_rename_branch(ctx, new_branch_name):  # type: ignore
         f"'{new_branch_name}'"
     )
     hsystem.query_yes_no(msg, abort_on_no=True)
-    # https://stackoverflow.com/questions/6591213/how-do-i-rename-a-local-git-branch
-    # To rename a local branch:
-    # git branch -m <oldname> <newname>
+    # https://stackoverflow.com/questions/30590083
+    # Rename the local branch to the new name.
+    # > git branch -m <old_name> <new_name>
     cmd = f"git branch -m {new_branch_name}"
     _run(ctx, cmd)
-    # git push origin -u <newname>
+    # Delete the old branch on remote.
+    # > git push <remote> --delete <old_name>
+    cmd = f"git push origin --delete {old_branch_name}"
+    _run(ctx, cmd)
+    # Prevent Git from using the old name when pushing in the next step.
+    # Otherwise, Git will use the old upstream name instead of <new_name>.
+    # > git branch --unset-upstream <new_name>
+    cmd = f"git branch --unset-upstream {new_branch_name}"
+    _run(ctx, cmd)
+    # Push the new branch to remote.
+    # > git push <remote> <new_name>
     cmd = f"git push origin {new_branch_name}"
     _run(ctx, cmd)
-    # git push origin --delete <oldname>
-    cmd = f"git push origin --delete {old_branch_name}"
+    # Reset the upstream branch for the new_name local branch.
+    # > git push <remote> -u <new_name>
+    cmd = f"git push origin u {new_branch_name}"
     _run(ctx, cmd)
     print("Done")
 
@@ -1050,6 +1053,12 @@ def git_branch_diff_with_master(  # type: ignore
 #   > i lint --dir-name . --only-format
 #   ```
 #
+# - Remove end-spaces
+#   ```
+#   # Remove
+#   > find . -name "*.txt" | xargs perl -pi -e 'chomp if eof'
+#   ```
+#
 # - Align `lib_tasks.py`
 #   ```
 #   > vimdiff ~/src/{amp1,cmamp1}/tasks.py; vimdiff ~/src/{amp1,cmamp1}/helpers/lib_tasks.py
@@ -1087,6 +1096,11 @@ def git_branch_diff_with_master(  # type: ignore
 # - Copy by dir
 #   ```
 #   > i integrate_diff_dirs --subdir market_data -c
+#   ```
+#
+# - Remove the empty files
+#   ```
+#   > find . -type f -empty -print | grep -v .git | grep -v __init__ | grep -v ".log$" | grep -v ".txt$" | xargs git rm
 #   ```
 
 # ## Double check the integration
@@ -1624,7 +1638,7 @@ def _get_last_container_id(sudo: bool) -> str:
     # Get the last started container.
     cmd = f"{docker_exec} ps -l | grep -v 'CONTAINER ID'"
     # CONTAINER ID   IMAGE          COMMAND                  CREATED
-    # 90897241b31a   eeb33fe1880a   "/bin/sh -c '/bin/baÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¦"   34 hours ago ...
+    # 90897241b31a   eeb33fe1880a   "/bin/sh -c '/bin/bash ...
     _, txt = hsystem.system_to_one_line(cmd)
     # Parse the output: there should be at least one line.
     hdbg.dassert_lte(1, len(txt.split(" ")), "Invalid output='%s'", txt)
@@ -1696,7 +1710,6 @@ def docker_kill(  # type: ignore
     :param sudo: use sudo for the Docker commands
     """
     _report_task(hprint.to_str("all"))
-
     docker_exec = _get_docker_exec(sudo)
     # Last container.
     opts = "-l"
@@ -3030,7 +3043,7 @@ def find(ctx, regex, mode="all", how="remove_dups", subdir="."):  # type: ignore
 
     :param regex: function or class use to search for
     :param mode: what to look for
-        - `func_class_uses`: look for uses of function or classes
+        - `symbol_import`: look for uses of function or classes
           E.g., `DagRunner`
           returns
           ```
@@ -3385,6 +3398,7 @@ def _run_tests(
     coverage: bool,
     collect_only: bool,
     tee_to_file: bool,
+    git_clean: bool,
     *,
     start_coverage_script: bool = False,
     **ctx_run_kwargs: Any,
@@ -3392,6 +3406,9 @@ def _run_tests(
     """
     Same params as `run_fast_tests()`.
     """
+    if git_clean:
+        cmd = "invoke git_clean --fix-perms"
+        _run(ctx, cmd)
     # Build the command line.
     cmd = _build_run_command_line(
         test_list_name,
@@ -3417,7 +3434,7 @@ def _run_tests(
 
 # TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code.
 @task
-def run_fast_tests(  # type: ignore # due to https://github.com/pyinvoke/invoke/issues/357.
+def run_fast_tests(  # type: ignore
     ctx,
     stage="dev",
     version="",
@@ -3426,6 +3443,7 @@ def run_fast_tests(  # type: ignore # due to https://github.com/pyinvoke/invoke/
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    git_clean=False,
     **kwargs,
 ):
     """
@@ -3437,19 +3455,22 @@ def run_fast_tests(  # type: ignore # due to https://github.com/pyinvoke/invoke/
     :param coverage: enable coverage computation
     :param collect_only: do not run tests but show what will be executed
     :param tee_to_file: save output of pytest in `tmp.pytest.log`
+    :param git_clean: run `invoke git_clean --fix-perms` before running the tests
     :param kwargs: kwargs for `ctx.run`
     """
     _report_task()
+    test_list_name = "fast_tests"
     rc = _run_tests(
         ctx,
         stage,
-        "fast_tests",
+        test_list_name,
         version,
         pytest_opts,
         skip_submodules,
         coverage,
         collect_only,
         tee_to_file,
+        git_clean,
         **kwargs,
     )
     return rc
@@ -3465,6 +3486,7 @@ def run_slow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    git_clean=False,
 ):
     """
     Run slow tests.
@@ -3472,16 +3494,18 @@ def run_slow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
+    test_list_name = "slow_tests"
     rc = _run_tests(
         ctx,
         stage,
-        "slow_tests",
+        test_list_name,
         version,
         pytest_opts,
         skip_submodules,
         coverage,
         collect_only,
         tee_to_file,
+        git_clean,
     )
     return rc
 
@@ -3496,6 +3520,7 @@ def run_superslow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    git_clean=False,
 ):
     """
     Run superslow tests.
@@ -3503,16 +3528,18 @@ def run_superslow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
+    test_list_name = "superslow_tests"
     rc = _run_tests(
         ctx,
         stage,
-        "superslow_tests",
+        test_list_name,
         version,
         pytest_opts,
         skip_submodules,
         coverage,
         collect_only,
         tee_to_file,
+        git_clean,
     )
     return rc
 
@@ -3527,9 +3554,10 @@ def run_fast_slow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    git_clean=False,
 ):
     """
-    Run fast and slow tests independently.
+    Run fast and slow tests back-to-back.
 
     Same params as `invoke run_fast_tests`.
     """
@@ -3544,11 +3572,13 @@ def run_fast_slow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
+        git_clean,
         warn=True,
     )
     if fast_test_rc != 0:
         _LOG.error("Fast tests failed")
     # Run slow tests.
+    git_clean = False
     slow_test_rc = run_slow_tests(
         ctx,
         stage,
@@ -3558,11 +3588,12 @@ def run_fast_slow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
+        git_clean,
     )
     if slow_test_rc != 0:
         _LOG.error("Slow tests failed")
+    # Report error, if needed.
     if fast_test_rc != 0 or slow_test_rc != 0:
-        _LOG.error("Fast / slow tests failed")
         raise RuntimeError("Fast / slow tests failed")
     return fast_test_rc, slow_test_rc
 
@@ -3895,13 +3926,11 @@ def pytest_compare(ctx, file_name1, file_name2):  # type: ignore
 # #############################################################################
 
 
-# TODO(gp): When running `python_execute` we could launch it inside a
-# container.
 @task
-def check_python_files(  # type: ignore
+def lint_check_python_files_in_docker(  # type: ignore
     ctx,
     python_compile=True,
-    python_execute=False,
+    python_execute=True,
     modified=False,
     branch=False,
     last_commit=False,
@@ -3910,6 +3939,8 @@ def check_python_files(  # type: ignore
 ):
     """
     Compile and execute Python files checking for errors.
+
+    This is supposed to be run inside Docker.
 
     The params have the same meaning as in `_get_files_to_process()`.
     """
@@ -3958,13 +3989,44 @@ def check_python_files(  # type: ignore
                 msg = "'%s' doesn't execute correctly" % file_name
                 _LOG.error(msg)
                 failed_filenames.append(file_name)
-    _LOG.info(
-        "failed_filenames=%s\n%s",
-        len(failed_filenames),
-        "\n".join(failed_filenames),
+    hprint.log_frame(
+        _LOG,
+        "failed_filenames=%s" % len(failed_filenames),
+        verbosity=logging.INFO,
     )
+    _LOG.info("\n".join(failed_filenames))
     error = len(failed_filenames) > 0
     return error
+
+
+@task
+def lint_check_python_files(  # type: ignore
+    ctx,
+    python_compile=True,
+    python_execute=True,
+    modified=False,
+    branch=False,
+    last_commit=False,
+    all_=False,
+    files="",
+):
+    """
+    Compile and execute Python files checking for errors.
+
+    The params have the same meaning as in `_get_files_to_process()`.
+    """
+    _ = python_compile, python_execute, modified, branch, last_commit, all_, files
+    # Execute the same command line but inside the container. E.g.,
+    # /Users/saggese/src/venv/amp.client_venv/bin/invoke lint_docker_check_python_files --branch
+    cmd_line = hdbg.get_command_line()
+    # Replace the full path of invoke with just `invoke`.
+    cmd_line = cmd_line.split()
+    cmd_line = ["/venv/bin/invoke lint_check_python_files_in_docker"] + cmd_line[
+        2:
+    ]
+    docker_cmd_ = " ".join(cmd_line)
+    cmd = f'invoke docker_cmd --cmd="{docker_cmd_}"'
+    _run(ctx, cmd)
 
 
 def _get_lint_docker_cmd(
@@ -3996,6 +4058,8 @@ def _get_lint_docker_cmd(
         docker_cmd_.append(r"--user $(id -u):$(id -g)")
     docker_cmd_.extend(
         [
+            # Pass MYPYPATH for `mypy` to find the packages from PYTHONPATH.
+            "-e MYPYPATH",
             f"-v '{repo_root}':/src",
             f"--workdir={work_dir}",
             f"{image}",
@@ -4258,7 +4322,6 @@ def _get_workflow_table() -> htable.TableType:
     # > gh run list
     # STATUS  NAME                                                        WORKFLOW    BRANCH                                                EVENT              ID          ELAPSED  AGE
     # X       Amp task1786 integrate 2021118 (#1857)                    Fast tests  master                                                push               1477484584  5m40s    23m
-    # ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ       Amp task1786 integrate 2021118 (#1857)                    Slow tests  master                                                push               1477484582  6m38s    23m
     # X       Merge branch 'master' into AmpTask1786_Integrate_2021118  Fast tests  AmpTask1786_Integrate_2021118                         pull_request       1477445218  5m52s    34m
     # pylint: enable=line-too-long
     # The output is tab separated, so convert it into CSV.
@@ -4335,7 +4398,10 @@ def gh_workflow_list(
         # Find the first success.
         num_rows = table.size()[0]
         for i in range(num_rows):
-            status = table_tmp.get_column("status")[i]
+            status_column = table_tmp.get_column("status")
+            _LOG.debug("status_column=%s", str(status_column))
+            hdbg.dassert_lt(i, len(status_column))
+            status = status_column[i]
             if status == "success":
                 print(f"Workflow '{workflow}' for '{branch_name}' is ok")
                 break
@@ -4842,7 +4908,7 @@ def _fix_group_permissions(dir_name: str, abort_on_error: bool) -> None:
         if is_dir:
             # pylint: disable=line-too-long
             # From https://www.gnu.org/software/coreutils/manual/html_node/Directory-Setuid-and-Setgid.html
-            # If a directoryÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂs set-group-ID bit is set, newly created subfiles
+            # If a directory
             # inherit the same group as the directory,
             # pylint: enable=line-too-long
             has_set_group_id = st_mode & stat.S_ISGID
@@ -4912,3 +4978,9 @@ def fix_perms(  # type: ignore
 # 25163 /compose_app_run_ab27e17f2c47
 # 18721 /compose_app_run_de23819a6bc2
 # pylint: enable=line-too-long
+
+# TODO(gp): Based on:
+# > git remote get-url origin
+# git@github.com:alphamatic/amp.git
+# Run
+# gh auth login --with-token <~/github_pat.gpsaggese.txt

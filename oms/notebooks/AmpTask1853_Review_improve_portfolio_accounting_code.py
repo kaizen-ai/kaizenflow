@@ -41,9 +41,7 @@ hprint.config_notebook()
 
 # %%
 event_loop = None
-market_data = mdata.get_ReplayedTimeMarketData_example3(
-    event_loop
-)
+market_data = mdata.get_ReplayedTimeMarketData_example3(event_loop)
 
 # %%
 initial_timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")

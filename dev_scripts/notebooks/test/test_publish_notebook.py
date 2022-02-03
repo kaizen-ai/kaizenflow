@@ -2,7 +2,7 @@ import logging
 import os
 
 import helpers.hgit as hgit
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ class Test_publish_notebook1(hunitest.TestCase):
         dst_dir = self.get_scratch_space()
         cmd.append(f"--publish_notebook_dir {dst_dir}")
         cmd = " ".join(cmd)
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
 
 
 # TODO(gp): Test different actions

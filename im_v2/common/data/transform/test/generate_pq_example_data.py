@@ -21,8 +21,8 @@ from typing import List
 import pandas as pd
 
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hparser as hparser
-import helpers.hprint as hprint
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 _LOG = logging.getLogger(__name__)
@@ -64,11 +64,11 @@ def _get_generic_daily_df(
         # Drop last midnight.
         # TODO(Nikola): end_date - pd.DateOffset(days=1)
         df_tmp.drop(df_tmp.tail(1).index, inplace=True)
-        _LOG.debug(hprint.df_to_short_str("df_tmp", df_tmp))
+        _LOG.debug(hpandas.df_to_str(df_tmp, print_shape_info=True, tag="df_tmp"))
         df.append(df_tmp)
     # Create a single df for all the assets.
     df = pd.concat(df)
-    _LOG.debug(hprint.df_to_short_str("df", df))
+    _LOG.debug(hpandas.df_to_str(df, print_shape_info=True, tag="df"))
     return df
 
 
@@ -114,7 +114,7 @@ def _get_verbose_daily_df(
         # Drop last midnight.
         # TODO(Nikola): end_date - pd.DateOffset(days=1)
         df_tmp.drop(df_tmp.tail(1).index, inplace=True)
-        _LOG.debug(hprint.df_to_short_str("df_tmp", df_tmp))
+        _LOG.debug(hpandas.df_to_str(df_tmp, print_shape_info=True, tag="df_tmp"))
         df.append(df_tmp)
     # Create a single df for all the assets.
     df = pd.concat(df)
@@ -123,7 +123,7 @@ def _get_verbose_daily_df(
     df["vendor_date"] = df.index.date.astype(str)
     df["start_time"] = start_time
     df["end_time"] = end_time
-    _LOG.debug(hprint.df_to_short_str("df", df))
+    _LOG.debug(hpandas.df_to_str(df, print_shape_info=True, tag="df"))
     return df
 
 
@@ -206,14 +206,14 @@ def _main(parser: argparse.ArgumentParser) -> None:
     get_daily_df = (
         _get_verbose_daily_df if args.verbose else _get_generic_daily_df
     )
-    dummy_df = get_daily_df(start_date, end_date, assets, freq)
+    df = get_daily_df(start_date, end_date, assets, freq)
     # Add date partition columns to the dataframe.
-    imvcdttrut.add_date_partition_cols(dummy_df)
+    partition_mode = "by_date"
+    df, partition_cols = imvcdttrut.add_date_partition_cols(df, partition_mode)
     # Partition and write dataset.
     if args.reset_index:
-        dummy_df = dummy_df.reset_index(drop=True)
-    partition_cols = ["date"]
-    imvcdttrut.partition_dataset(dummy_df, partition_cols, dst_dir)
+        df = df.reset_index(drop=True)
+    imvcdttrut.partition_dataset(df, partition_cols, dst_dir)
 
 
 if __name__ == "__main__":

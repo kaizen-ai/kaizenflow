@@ -24,37 +24,81 @@ _LOG = logging.getLogger(__name__)
 # Latest historical data snapshot.
 _LATEST_DATA_SNAPSHOT = "20210924"
 
+# TODO(gp): @Grisha These classes should return a `full_symbol` and not two
+# columns `exchange_id` and `currency_pair`.
 
 # #############################################################################
-# CcxtClient
+# CcxtCddClient
 # #############################################################################
 
 
-# TODO(gp): Consider splitting this file into chunks
-
-
-class CcxtClient(icdc.ImClient, abc.ABC):
+class CcxtCddClient(icdc.ImClient, abc.ABC):
     """
-    Abstract interface for CCXT client.
+    Contain common code for all the `CCXT` and `CDD` clients, e.g.,
 
-    Contain common code for all the CCXT clients, e.g.,
-    - getting CCXT universe
-    - applying common transformation for all the data from CCXT
+    - getting `CCXT` and `CDD` universe
+    - applying common transformation for all the data from `CCXT` and `CDD`
         - E.g., `_apply_olhlcv_transformations()`, `_apply_vendor_normalization()`
     """
-    @staticmethod
-    def get_universe() -> List[icdc.FullSymbol]:
+
+    def __init__(self, vendor: str) -> None:
         """
-        Return CCXT universe as full symbols.
+        Constructor.
+
+        :param vendor: price data provider, i.e. `CCXT` or `CDD`
         """
-        universe = imvccunun.get_vendor_universe(vendor="CCXT")
+        _vendors = ["CCXT", "CDD"]
+        hdbg.dassert_in(vendor, _vendors)
+        self._vendor = vendor
+
+    def get_universe(self, as_asset_ids: bool) -> List[icdc.FullSymbol]:
+        """
+        See description in the parent class.
+        """
+        universe = imvccunun.get_vendor_universe(
+            vendor=self._vendor, as_asset_ids=as_asset_ids
+        )
         return universe  # type: ignore[no-any-return]
 
-    @staticmethod
-    def _apply_ccxt_transformations(data: pd.DataFrame) -> pd.DataFrame:
+    # TODO(gp): This is ok for this class, but not needed for the ancestor classes.
+    def _apply_vendor_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
         """
-        Apply transformations common to all CCXT data.
+        Input data is indexed with numbers and looks like:
+        ```
+             timestamp      open     high     low      close    volume    currency_pair exchange_id
+        0    1631145600000  3499.01  3499.49  3496.17  3496.36  346.4812  ETH_USDT      binance
+        1    1631145660000  3496.36  3501.59  3495.69  3501.59  401.9576  ETH_USDT      binance
+        2    1631145720000  3501.59  3513.10  3499.89  3513.09  579.5656  ETH_USDT      binance
+        ```
+
+        Output data is indexed by timestamp and looks like:
+        ```
+                                   open        currency_pair exchange_id
+        2021-09-08 20:00:00-04:00  3499.01 ... ETH_USDT      binance
+        2021-09-08 20:01:00-04:00  3496.36     ETH_USDT      binance
+        2021-09-08 20:02:00-04:00  3501.59     ETH_USDT      binance
+        ```
         """
+        # Apply vendor-specific transformations.
+        data = self._apply_ccxt_cdd_normalization(data)
+        # Apply transformations specific of the type of data.
+        data = self._apply_ohlcv_transformations(data)
+        # Sort transformed data by exchange id and currency pair columns.
+        data = data.sort_values(by=["exchange_id", "currency_pair"])
+        return data
+
+    def _apply_ccxt_cdd_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Apply transformations common to `CCXT` and `CDD` data.
+        """
+        if self._vendor == "CDD":
+            # Rename columns for consistency with other crypto vendors.
+            # Column name for `volume` depends on the `currency_pair`, e.g., there are 2 columns
+            # `Volume BTC` and `Volume USDT` for `currency pair `BTC_USDT. And there is no easy
+            # way to select the right `Volume` column without passing `currency_pair` that will
+            # complicate the interface. To get rid of this dependency the column's index is used.
+            data.columns.values[7] = "volume"
+            data = data.rename({"unix": "timestamp"}, axis=1)
         # Verify that the timestamp data is provided in ms.
         hdbg.dassert_container_type(
             data["timestamp"], container_type=None, elem_type=int
@@ -85,56 +129,32 @@ class CcxtClient(icdc.ImClient, abc.ABC):
         data = data[ohlcv_columns]
         return data
 
-    def _apply_vendor_normalization(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        See description in the parent class.
-
-        Input data is indexed with numbers and looks like:
-        ```
-             timestamp      open     high     low      close    volume    currency_pair exchange_id
-        0    1631145600000  3499.01  3499.49  3496.17  3496.36  346.4812  ETH_USDT      binance
-        1    1631145660000  3496.36  3501.59  3495.69  3501.59  401.9576  ETH_USDT      binance
-        2    1631145720000  3501.59  3513.10  3499.89  3513.09  579.5656  ETH_USDT      binance
-        ```
-
-        Output data is indexed by timestamp and looks like:
-        ```
-                                   open        currency_pair exchange_id
-        2021-09-08 20:00:00-04:00  3499.01 ... ETH_USDT      binance
-        2021-09-08 20:01:00-04:00  3496.36     ETH_USDT      binance
-        2021-09-08 20:02:00-04:00  3501.59     ETH_USDT      binance
-        ```
-        """
-        # Apply common transformations.
-        data = self._apply_ccxt_transformations(df)
-        # Apply transformations specific of the type of data.
-        data = self._apply_ohlcv_transformations(data)
-        # Sort transformed data by exchange id and currency pair columns.
-        data = data.sort_values(by=["exchange_id", "currency_pair"])
-        return data
-
 
 # #############################################################################
-# CcxtDbClient
+# CcxtCddDbClient
 # #############################################################################
+
 
 # TODO(Grisha): it should descend from `ImClientReadingMultipleSymbols`.
-class CcxtDbClient(CcxtClient, icdc.ImClientReadingOneSymbol):
+class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
     """
-    CCXT client for data from the database.
+    `CCXT` client for data stored in an SQL database.
     """
 
     def __init__(
         self,
+        vendor: str,
         connection: hsql.DbConnection,
     ) -> None:
         """
-        Load CCXT data from the database.
+        Load `CCXT` and `CDD` price data from the database.
 
-        This code path is used for the real-time data.
+        This code path is typically used for the real-time data.
 
+        :param vendor: price data provider, i.e. `CCXT` or `CDD`
         :param connection: connection for a SQL database
         """
+        super().__init__(vendor)
         self._connection = connection
 
     def _read_data_for_one_symbol(
@@ -147,7 +167,7 @@ class CcxtDbClient(CcxtClient, icdc.ImClientReadingOneSymbol):
         """
         Same as parent class.
         """
-        table_name = "ccxt_ohlcv"
+        table_name = self._vendor.lower() + "_ohlcv"
         # Verify that table with specified name exists.
         hdbg.dassert_in(table_name, hsql.get_table_names(self._connection))
         # Initialize SQL query.
@@ -178,40 +198,46 @@ class CcxtDbClient(CcxtClient, icdc.ImClientReadingOneSymbol):
 # #############################################################################
 
 
-class CcxtCsvParquetByAssetClient(CcxtClient, icdc.ImClientReadingOneSymbol):
+class CcxtCddCsvParquetByAssetClient(
+    CcxtCddClient, icdc.ImClientReadingOneSymbol
+):
     """
-    CCXT client that reads CSV or Parquet file storing data for a single asset.
+    Read data from a CSV or Parquet file storing data for a single `CCXT` or `CDD` asset.
 
     It can read data from local or S3 filesystem as backend.
 
     Using our naming convention this class implements the two classes:
-    - CcxtCsvClient
-    - CcxtPqByAssetClient
+    - CcxtCddCsvClient
+    - CcxtCddPqByAssetClient
     """
 
     def __init__(
         self,
+        vendor: str,
         root_dir: str,
+        # TODO(gp): -> file_extension
         extension: str,
         *,
         aws_profile: Optional[str] = None,
         data_snapshot: Optional[str] = None,
     ) -> None:
         """
-        Load CCXT data from local or S3 filesystem.
+        Load `CCXT` data from local or S3 filesystem.
 
+        :param vendor: price data provider, i.e. `CCXT` or `CDD`
         :param root_dir: either a local root path (e.g., "/app/im") or
-            an S3 root path (e.g., "s3://alphamatic-data/data") to CCXT data
+            an S3 root path (e.g., "s3://alphamatic-data/data") to `CCXT` data
         :param extension: file extension, e.g., `.csv`, `.csv.gz` or `.parquet`
         :param aws_profile: AWS profile name (e.g., "am")
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
         """
+        super().__init__(vendor)
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
             not extension.startswith("."),
-            "The extension %s should not start with '.'" % extension,
+            "The extension %s should not start with '.'", extension
         )
         self._extension = extension
         self._data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
@@ -231,13 +257,14 @@ class CcxtCsvParquetByAssetClient(CcxtClient, icdc.ImClientReadingOneSymbol):
         """
         # Split full symbol into exchange and currency pair.
         exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)
-        # Get absolute file path for a CCXT file.
+        # Get absolute file path for a file with crypto price data.
         file_path = self._get_file_path(
             self._data_snapshot, exchange_id, currency_pair
         )
-        # Read raw CCXT data.
+        # Read raw crypto price data.
         _LOG.info(
-            "Reading CCXT data for exchange id='%s', currencies='%s' from file='%s'...",
+            "Reading data for vendor=`%s`, exchange id='%s', currencies='%s' from file='%s'...",
+            self._vendor,
             exchange_id,
             currency_pair,
             file_path,
@@ -245,6 +272,9 @@ class CcxtCsvParquetByAssetClient(CcxtClient, icdc.ImClientReadingOneSymbol):
         if hs3.is_s3_path(file_path):
             # Add s3fs argument to kwargs.
             kwargs["s3fs"] = self._s3fs
+        if self._vendor == "CDD":
+            # For `CDD` column names are in the 1st row.
+            kwargs["skiprows"] = 1
         if self._extension == "pq":
             # Initialize list of filters.
             filters = []
@@ -271,7 +301,6 @@ class CcxtCsvParquetByAssetClient(CcxtClient, icdc.ImClientReadingOneSymbol):
                 end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
                 data = data[data["timestamp"] < end_ts]
         else:
-            # TODO(Grisha): raise `UnsupportedExtension`.
             raise ValueError(
                 f"Unsupported extension {self._extension}. "
                 f"Supported extensions are: `pq`, `csv`, `csv.gz`"
@@ -284,8 +313,6 @@ class CcxtCsvParquetByAssetClient(CcxtClient, icdc.ImClientReadingOneSymbol):
         data["currency_pair"] = currency_pair
         return data
 
-    # TODO(Grisha): factor out common code from `CddClient._get_file_path` and
-    #  `CcxtLoader._get_file_path`.
     def _get_file_path(
         self,
         data_snapshot: str,
@@ -293,22 +320,26 @@ class CcxtCsvParquetByAssetClient(CcxtClient, icdc.ImClientReadingOneSymbol):
         currency_pair: str,
     ) -> str:
         """
-        Get the absolute path to a file with CCXT data.
+        Get the absolute path to a file with `CCXT` or `CDD` price data.
 
         The file path is constructed in the following way:
-        `<root_dir>/ccxt/<snapshot>/<exchange_id>/<currency_pair>.<self._extension>`
+        `<root_dir>/<vendor>/<snapshot>/<exchange_id>/<currency_pair>.<self._extension>`
 
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
-        :param exchange_id: CCXT exchange id, e.g. "binance"
+        :param exchange_id: exchange id, e.g. "binance"
         :param currency_pair: currency pair `<currency1>_<currency2>`,
             e.g. "BTC_USDT"
-        :return: absolute path to a file with CCXT data
+        :return: absolute path to a file with `CCXT` or `CDD` price data
         """
         # Get absolute file path.
         file_name = ".".join([currency_pair, self._extension])
         file_path = os.path.join(
-            self._root_dir, "ccxt", data_snapshot, exchange_id, file_name
+            self._root_dir,
+            self._vendor.lower(),
+            data_snapshot,
+            exchange_id,
+            file_name,
         )
         # TODO(Dan): Remove asserts below after CMTask108 is resolved.
         # Verify that the file exists.

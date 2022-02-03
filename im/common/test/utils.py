@@ -5,7 +5,7 @@ import pandas as pd
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
 import im.common.sql_writer as imcosqwri
-import im_v2.common.db.db_utils as imvcodbut
+import im_v2.common.db.db_utils as imvcddbut
 
 _LOG = logging.getLogger(__name__)
 

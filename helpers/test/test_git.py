@@ -173,7 +173,9 @@ class Test_git_repo_name1(hunitest.TestCase):
 
     def test_get_all_repo_names1(self) -> None:
         if not hgit.is_in_amp_as_supermodule():
-            _LOG.warning("Skipping this test, since it can run only in amp as super-module")
+            _LOG.warning(
+                "Skipping this test, since it can run only in amp as super-module"
+            )
             return
         mode = "short_name"
         act = hgit.get_all_repo_names(mode)
@@ -182,7 +184,9 @@ class Test_git_repo_name1(hunitest.TestCase):
 
     def test_get_all_repo_names2(self) -> None:
         if not hgit.is_in_amp_as_supermodule():
-            _LOG.warning("Skipping this test, since it can run only in amp as super-module")
+            _LOG.warning(
+                "Skipping this test, since it can run only in amp as super-module"
+            )
             return
         mode = "full_name"
         act = hgit.get_all_repo_names(mode)

@@ -26,7 +26,7 @@ import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
-import im_v2.ccxt.data.client as imvcdcli
+import im_v2.ccxt.data.client as icdcl
 import im_v2.ccxt.universe.universe as imvccunun
 import research_amp.cc.statistics as ramccsta
 import research_amp.cc.volume as ramccvol
@@ -156,9 +156,11 @@ def get_initial_df_with_volumes(coins, exchange, is_notional_volume):
     Parameters: list of coins, exchange name
     """
     result = []
-    root_dir = os.path.join(hs3.get_path(), "data")
+    vendor = config["data"]["vendor"]
+    root_dir = config["load"]["data_dir"]
     extension = "csv.gz"
-    ccxt_csv_client = imvcdcli.CcxtCsvParquetByAssetClient(
+    ccxt_csv_client = icdcl.CcxtCddCsvParquetByAssetClient(
+        vendor,
         root_dir,
         extension,
         aws_profile=config["load"]["aws_profile"],

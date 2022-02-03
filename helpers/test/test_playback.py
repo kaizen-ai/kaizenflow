@@ -8,7 +8,7 @@ import pandas as pd
 import core.config as cconfig
 import helpers.hio as hio
 import helpers.hplayback as hplayba
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -458,7 +458,7 @@ class TestPlaybackFileMode1(hunitest.TestCase):
         # Save the code to the file.
         hio.to_file(tmp_py_file, self._code(max_tests))
         # Executes the code.
-        hsysinte.system("python %s" % tmp_py_file)
+        hsystem.system("python %s" % tmp_py_file)
         playback_code = hio.from_file(tmp_test_file)
         return playback_code
 

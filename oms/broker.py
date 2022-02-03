@@ -182,8 +182,14 @@ class AbstractBroker(abc.ABC):
         )
         _LOG.debug("The receipt is '%s'", file_name)
         #
-        _LOG.debug("Waiting for the accepted orders")
-        await self._wait_for_accepted_orders(file_name)
+        if not dry_run:
+            _LOG.debug("Waiting for the accepted orders")
+            await self._wait_for_accepted_orders(file_name)
+        else:
+            _LOG.warning(
+                "Skipping waiting for the accepted orders because of dry_run=%s",
+                dry_run,
+            )
         return file_name
 
     @abc.abstractmethod
@@ -319,8 +325,9 @@ class SimulatedBroker(AbstractBroker):
     def __init__(
         self,
         *args: Any,
+        **kwargs: Any,
     ) -> None:
-        super().__init__(*args)
+        super().__init__(*args, **kwargs)
 
     def get_fills(self) -> List[Fill]:
         return self._get_fills_helper()

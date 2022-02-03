@@ -8,7 +8,7 @@ import helpers.hunit_test as hunitest
 import im.common.data.types as imcodatyp
 import im.kibot.data.load.kibot_sql_data_loader as ikdlksdlo
 import im.kibot.sql_writer as imkisqwri
-import im_v2.common.db.db_utils as imvcodbut
+import im_v2.common.db.db_utils as imvcddbut
 
 
 @pytest.mark.skip(reason="CmTask666")
@@ -23,7 +23,7 @@ class TestSqlDataLoader1(hunitest.TestCase):
         self._connection = hsql.get_connection_from_env_vars()
         self._new_db = self._get_test_name().replace("/", "").replace(".", "")
         # Create database for test.
-        imvcodbut.create_im_database(
+        imvcddbut.create_im_database(
             connection=self._connection,
             new_db=self._new_db,
             overwrite=True,

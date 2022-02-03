@@ -23,7 +23,7 @@ import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 # %%
 hprint.config_notebook()
@@ -37,7 +37,7 @@ hdbg.init_logger(verbosity=logging.INFO)
 
 # %%
 cmd = "aws ec2 describe-instances"
-_, txt = hsysinte.system_to_string(cmd)
+_, txt = hsystem.system_to_string(cmd)
 
 # %%
 data = json.loads(txt)
