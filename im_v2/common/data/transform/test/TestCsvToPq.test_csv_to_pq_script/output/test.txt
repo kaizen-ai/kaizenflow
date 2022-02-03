@@ -1,26 +1,18 @@
 # Dir structure
 .
-currency_pair=BTC_USDT
-currency_pair=BTC_USDT/year=2021
-currency_pair=BTC_USDT/year=2021/month=12
-currency_pair=BTC_USDT/year=2021/month=12/day=4
-currency_pair=BTC_USDT/year=2021/month=12/day=4/data.parquet
-currency_pair=ETH_USDT
-currency_pair=ETH_USDT/year=2021
-currency_pair=ETH_USDT/year=2021/month=12
-currency_pair=ETH_USDT/year=2021/month=12/day=4
-currency_pair=ETH_USDT/year=2021/month=12/day=4/data.parquet
-currency_pair=ETH_USDT/year=2021/month=12/day=5
-currency_pair=ETH_USDT/year=2021/month=12/day=5/data.parquet
+date=20211204
+date=20211204/data.parquet
+date=20211205
+date=20211205/data.parquet
 test1.parquet
 test2.parquet
 # File signatures
-len(file_names)=5
-file_names=currency_pair=BTC_USDT/year=2021/month=12/day=4/data.parquet, currency_pair=ETH_USDT/year=2021/month=12/day=4/data.parquet, currency_pair=ETH_USDT/year=2021/month=12/day=5/data.parquet, test1.parquet, test2.parquet
-# currency_pair=BTC_USDT/year=2021/month=12/day=4/data.parquet
-num_lines=67
+len(file_names)=4
+file_names=date=20211204/data.parquet, date=20211205/data.parquet, test1.parquet, test2.parquet
+# date=20211204/data.parquet
+num_lines=73
 '''
-original shape=(4, 8)
+original shape=(5, 9)
 Head:
 {
     "2021-12-04T19:40:00Z":{
@@ -30,6 +22,18 @@ Head:
         "volume":23.13681,
         "low":49315.45,
         "close":49330.63,
+        "currency_pair":"BTC_USDT",
+        "created_at":"2021-12-07 13:01:20.183463+00:00",
+        "exchange_id":"binance"
+    },
+    "2021-12-04T19:41:00Z":{
+        "timestamp":1638646860000,
+        "open":49330.63,
+        "high":49400.98,
+        "volume":61.99752,
+        "low":49322.78,
+        "close":49325.23,
+        "currency_pair":"ETH_USDT",
         "created_at":"2021-12-07 13:01:20.183463+00:00",
         "exchange_id":"binance"
     },
@@ -40,16 +44,7 @@ Head:
         "volume":79.92761,
         "low":49325.23,
         "close":49328.23,
-        "created_at":"2021-12-07 13:01:20.183463+00:00",
-        "exchange_id":"binance"
-    },
-    "2021-12-04T22:26:40Z":{
-        "timestamp":1638656800000,
-        "open":49318.68,
-        "high":49446.95,
-        "volume":24.13681,
-        "low":49325.45,
-        "close":49340.63,
+        "currency_pair":"BTC_USDT",
         "created_at":"2021-12-07 13:01:20.183463+00:00",
         "exchange_id":"binance"
     }
@@ -63,6 +58,7 @@ Tail:
         "volume":79.92761,
         "low":49325.23,
         "close":49328.23,
+        "currency_pair":"BTC_USDT",
         "created_at":"2021-12-07 13:01:20.183463+00:00",
         "exchange_id":"binance"
     },
@@ -73,6 +69,7 @@ Tail:
         "volume":24.13681,
         "low":49325.45,
         "close":49340.63,
+        "currency_pair":"BTC_USDT",
         "created_at":"2021-12-07 13:01:20.183463+00:00",
         "exchange_id":"binance"
     },
@@ -83,46 +80,16 @@ Tail:
         "volume":80.92761,
         "low":49326.23,
         "close":49428.23,
+        "currency_pair":"BTC_USDT",
         "created_at":"2021-12-07 13:01:20.183463+00:00",
         "exchange_id":"binance"
     }
 }
 '''
-# currency_pair=ETH_USDT/year=2021/month=12/day=4/data.parquet
-num_lines=27
+# date=20211205/data.parquet
+num_lines=29
 '''
-original shape=(1, 8)
-Head:
-{
-    "2021-12-04T19:41:00Z":{
-        "timestamp":1638646860000,
-        "open":49330.63,
-        "high":49400.98,
-        "volume":61.99752,
-        "low":49322.78,
-        "close":49325.23,
-        "created_at":"2021-12-07 13:01:20.183463+00:00",
-        "exchange_id":"binance"
-    }
-}
-Tail:
-{
-    "2021-12-04T19:41:00Z":{
-        "timestamp":1638646860000,
-        "open":49330.63,
-        "high":49400.98,
-        "volume":61.99752,
-        "low":49322.78,
-        "close":49325.23,
-        "created_at":"2021-12-07 13:01:20.183463+00:00",
-        "exchange_id":"binance"
-    }
-}
-'''
-# currency_pair=ETH_USDT/year=2021/month=12/day=5/data.parquet
-num_lines=27
-'''
-original shape=(1, 8)
+original shape=(1, 9)
 Head:
 {
     "2021-12-05T04:01:00Z":{
@@ -132,6 +99,7 @@ Head:
         "volume":62.99752,
         "low":49323.78,
         "close":49335.23,
+        "currency_pair":"ETH_USDT",
         "created_at":"2021-12-07 13:01:20.183463+00:00",
         "exchange_id":"binance"
     }
@@ -145,6 +113,7 @@ Tail:
         "volume":62.99752,
         "low":49323.78,
         "close":49335.23,
+        "currency_pair":"ETH_USDT",
         "created_at":"2021-12-07 13:01:20.183463+00:00",
         "exchange_id":"binance"
     }

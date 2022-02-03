@@ -143,7 +143,7 @@ def get_function_from_string(func_as_str: str) -> Callable:
     """
     Return the function from its name including the import.
 
-    E.g., `import im.scripts.AmpTask317_convert_pq_by_date_to_by_asset`
+    E.g., `import im.scripts.AmpTask317_transform_pq_by_date_to_by_asset`
     """
     # Split txt in an import and function name.
     m = re.match(r"^(\S+)\.(\S+)$", func_as_str)

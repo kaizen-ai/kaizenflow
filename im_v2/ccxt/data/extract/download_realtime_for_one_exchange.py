@@ -11,6 +11,10 @@ Use as:
     --exchange_id 'binance' \
     --universe 'v03' \
     --db_stage 'dev' \
+
+Import as:
+
+import im_v2.ccxt.data.extract.download_realtime_for_one_exchange as imvcdedrfoe
 """
 
 import argparse
@@ -68,6 +72,14 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="DB stage to use",
     )
+    parser.add_argument(
+        "--db_table",
+        action="store",
+        required=False,
+        default="ccxt_ohlcv",
+        type=str,
+        help="(Optional) DB table to use, default: 'ccxt_ohlcv'",
+    )
     parser.add_argument("--incremental", action="store_true")
     parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
@@ -85,9 +97,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Load currency pairs.
     universe = imvccunun.get_trade_universe(args.universe)
     currency_pairs = universe["CCXT"][args.exchange_id]
+    # Load DB table to work with
+    db_table = args.db_table
     # Generate a query to remove duplicates.
     dup_query = hsql.get_remove_duplicates_query(
-        table_name="ccxt_ohlcv",
+        table_name=db_table,
         id_col_name="id",
         column_names=["timestamp", "exchange_id", "currency_pair"],
     )
@@ -108,7 +122,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         hsql.execute_insert_query(
             connection=connection,
             obj=data,
-            table_name="ccxt_ohlcv",
+            table_name=db_table,
         )
         # Remove duplicated entries.
         connection.cursor().execute(dup_query)
