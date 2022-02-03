@@ -1497,7 +1497,8 @@ def integrate_find_files(  # type: ignore
     subdir="",
 ):
     """
-    Find the files that are touched in the current branch since last integration.
+    Find the files that are touched in the current branch since last
+    integration.
     """
     _report_task()
     _ = ctx
@@ -2944,10 +2945,8 @@ def _find_short_import(iterator: List, short_import: str) -> _FindResults:
     """
     Find imports in the Python files with the given short import.
 
-    E.g., for dtfcorrunn
-    dataflow/core/test/test_builders.py:9:import dataflow.core.runners as dtfcorrunn
-    returns
-
+    E.g., for dtfcorrunn dataflow/core/test/test_builders.py:9:import
+    dataflow.core.runners as dtfcorrunn returns
     """
     # E.g.,
     # `import dataflow.core.runners as dtfcorrunn`
@@ -3993,9 +3992,12 @@ def check_python_files(  # type: ignore
     return error
 
 
-# TODO(gp): Pass the cmd
 def _get_lint_docker_cmd(
-    precommit_opts: str, run_bash: bool, stage: str, as_user: bool
+    cmd_command: str,
+    precommit_opts: str,
+    run_bash: bool,
+    stage: str,
+    as_user: bool,
 ) -> str:
     superproject_path, submodule_path = hgit.get_path_from_supermodule()
     if superproject_path:
@@ -4031,8 +4033,7 @@ def _get_lint_docker_cmd(
         ]
     )
     # Build the command inside Docker.
-    #cmd = f"'pre-commit {precommit_opts}'"
-    cmd = f"import_check/detect_import_cycles.py '{precommit_opts}'"
+    cmd = f"'{cmd_command} {precommit_opts}'"
     if run_bash:
         _LOG.warning("Run bash instead of:\n  > %s", cmd)
         cmd = "bash"
@@ -4082,28 +4083,38 @@ def _parse_linter_output(txt: str) -> str:
 
 @task
 def lint_detect_cycles(  # type: ignore
-        ctx,
-        dir_name="",
-        run_bash=False,
-        # TODO(gp): This is the backdoor.
-        stage="prod",
-        as_user=True,
+    ctx,
+    dir_name=".",
+    run_bash=False,
+    # TODO(gp): This is the backdoor.
+    stage="prod",
+    as_user=True,
 ):
     """
+    Detect cyclic imports in the directory files.
+
+    For param descriptions, see `lint()`.
+
+    :param dir_name: the name of the dir to detect cyclic imports in
+        - by default, the check will be carried out in the dir from where
+          the task is run
     """
     _report_task()
-    lint_file_name = "lint_detect_cycles.output.txt"
-    # Remove the file.
-    if os.path.exists(lint_file_name):
-        cmd = f"rm {lint_file_name}"
+    lint_cycles_file_name = "lint_detect_cycles.output.txt"
+    # Remove the log file.
+    if os.path.exists(lint_cycles_file_name):
+        cmd = f"rm {lint_cycles_file_name}"
         _run(ctx, cmd)
     as_user = _run_docker_as_user(as_user)
     # Prepare the command line.
     precommit_opts = [dir_name]
     precommit_opts = _to_single_line_cmd(precommit_opts)
     # Execute command line.
-    cmd = _get_lint_docker_cmd(precommit_opts, run_bash, stage, as_user)
-    cmd = f"({cmd}) 2>&1 | tee -a {lint_file_name}"
+    cmd_command = "import_check/detect_import_cycles.py"
+    cmd = _get_lint_docker_cmd(
+        cmd_command, precommit_opts, run_bash, stage, as_user
+    )
+    cmd = f"({cmd}) 2>&1 | tee -a {lint_cycles_file_name}"
     if run_bash:
         # We don't execute this command since pty=True corrupts the terminal
         # session.
@@ -4249,7 +4260,10 @@ def lint(  # type: ignore
             ]
             precommit_opts = _to_single_line_cmd(precommit_opts)
             # Execute command line.
-            cmd = _get_lint_docker_cmd(precommit_opts, run_bash, stage, as_user)
+            cmd_command = "pre-commit"
+            cmd = _get_lint_docker_cmd(
+                cmd_command, precommit_opts, run_bash, stage, as_user
+            )
             cmd = f"({cmd}) 2>&1 | tee -a {lint_file_name}"
             if run_bash:
                 # We don't execute this command since pty=True corrupts the terminal
