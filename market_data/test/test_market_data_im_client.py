@@ -7,7 +7,7 @@ import market_data as mdata
 import market_data.test.market_data_test_case as mdtmdtca
 
 
-class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
+class TestImClientMarketData(mdtmdtca.MarketData_get_data_TestCase):
     """
     For all the test methods see description of corresponding private method in
     the parent class.
@@ -371,9 +371,9 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         column_remap: Optional[Dict[str, str]],
     ) -> mdata.MarketData:
         """
-        Build `MarketDataImClient` client.
+        Build `ImClientMarketData` client.
         """
-        market_data = mdata.get_MarketDataImClient_example1(
+        market_data = mdata.get_ImClientMarketData_example1(
             asset_ids, columns=columns, column_remap=column_remap
         )
         return market_data

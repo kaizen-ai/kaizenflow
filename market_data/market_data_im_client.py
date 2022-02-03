@@ -19,7 +19,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): @Grisha -> ImClientMarketData and rename all the classes and files.
-class MarketDataImClient(mdabmada.MarketData):
+class ImClientMarketData(mdabmada.MarketData):
     """
     Implement a `MarketData` that uses a `ImClient` as backend.
     """
@@ -43,7 +43,7 @@ class MarketDataImClient(mdabmada.MarketData):
         This method overrides parent method in `MarketData`.
 
         In contrast with specific `MarketData` backends,
-        `MarketDataImClient` uses the end of interval for date
+        `ImClientMarketData` uses the end of interval for date
         filtering.
         """
         last_end_time = self.get_last_end_time()
