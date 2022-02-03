@@ -84,7 +84,7 @@ def _parse() -> argparse.ArgumentParser:
         help="(Optional) DB table to use, default: 'ccxt_ohlcv'",
     )
     parser.add_argument(
-        "s3_bucket",
+        "--s3_bucket",
         action="store",
         required=False,
         default=None,
@@ -105,7 +105,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     connection = hsql.get_connection(*connection_params)
     # Connect to bucket, if provided.
     if args.s3_bucket:
-        hs3.get_s3fs("ck")
+        fs = hs3.get_s3fs("ck")
         s3_path = f"s3://{args.s3_bucket}/{args.exchange_id}/"
     # Initialize exchange class.
     exchange = imvcdeexcl.CcxtExchange(args.exchange_id)
@@ -141,10 +141,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
         )
         # Save data to S3 bucket.
         if args.s3_bucket:
-            # bytes_to_write = data.to_csv(None).encode()
-            file_name = hdateti.get_current_time("UTC") + ".csv.gz"
+            file_name = hdateti.get_current_timestamp_as_string("UTC") + ".csv.gz"
             path_to_file = os.path.join(s3_path, file_name)
-            data.to_csv(path_to_file, index=False, compression="gzip")
+            # Save data to S3 filesystem.
+            with fs.open(path_to_file, "w") as f:
+                data.to_csv(f, index=False)
         # Remove duplicated entries.
         connection.cursor().execute(dup_query)
 
