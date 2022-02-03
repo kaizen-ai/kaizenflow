@@ -295,7 +295,7 @@ def _get_files_to_process(
     # Convert into a list.
     hdbg.dassert_isinstance(files, list)
     files_to_process = [f for f in files if f != ""]
-    # We need to remove amp to avoid copying the entire tree.
+    # We need to remove `amp` to avoid copying the entire tree.
     files_to_process = [f for f in files_to_process if f != "amp"]
     _LOG.debug("files_to_process='%s'", str(files_to_process))
     # Remove dirs, if needed.
