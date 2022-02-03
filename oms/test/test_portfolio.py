@@ -8,7 +8,6 @@ import pandas as pd
 import core.real_time as creatime
 import helpers.hasyncio as hasynci
 import helpers.hpandas as hpandas
-import helpers.hprint as hprint
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
 import market_data as mdata
@@ -361,11 +360,11 @@ class TestMockedPortfolio1(omtodh.TestOmsDbHelper):
         actual = str(portfolio)
         expected = r"""
 # historical holdings=
-asset_id                    101       -1  
+asset_id                    101       -1
 2000-01-01 09:35:00-05:00   0.0  1000000.0
 2000-01-01 09:40:00-05:00  20.0  1000000.0
 # historical holdings marked to market=
-asset_id                        101       -1  
+asset_id                        101       -1
 2000-01-01 09:35:00-05:00      0.00  1000000.0
 2000-01-01 09:40:00-05:00  20004.03  1000000.0
 # historical flows=
@@ -392,11 +391,11 @@ asset_id                        101
         actual = str(portfolio)
         expected = r"""
 # historical holdings=
-asset_id                    101      -1  
+asset_id                    101      -1
 2000-01-01 09:35:00-05:00   0.0  1.00e+06
 2000-01-01 09:40:00-05:00  20.0  1.00e+06
 # historical holdings marked to market=
-asset_id                        101      -1  
+asset_id                        101      -1
 2000-01-01 09:35:00-05:00      0.00  1.00e+06
 2000-01-01 09:40:00-05:00  20004.03  1.00e+06
 # historical flows=
@@ -450,9 +449,9 @@ class TestMockedPortfolio2(omtodh.TestOmsDbHelper):
         await asyncio.sleep(60 * 5)
         portfolio.mark_to_market()
         log_dir = self.get_scratch_space()
-        file_name = portfolio.log_state(log_dir)
+        _ = portfolio.log_state(log_dir)
         #
-        portfolio_df, stats_df = portfolio.read_state(log_dir, file_name)
+        portfolio_df, stats_df = portfolio.read_state(log_dir)
         # Ensure that the `int` asset id type is recovered.
         asset_id_idx = portfolio_df.columns.levels[1]
         self.assertEqual(asset_id_idx.dtype.type, np.int64)

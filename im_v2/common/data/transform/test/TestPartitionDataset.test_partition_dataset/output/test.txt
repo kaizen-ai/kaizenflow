@@ -1,18 +1,18 @@
 # Dir structure
-$GIT_ROOT/im_v2/common/data/transform/test/TestPartitionDataset.test_partition_dataset/tmp.scratch
-$GIT_ROOT/im_v2/common/data/transform/test/TestPartitionDataset.test_partition_dataset/tmp.scratch/dummy_value_1=1
-$GIT_ROOT/im_v2/common/data/transform/test/TestPartitionDataset.test_partition_dataset/tmp.scratch/dummy_value_1=1/dummy_value_2=A
-$GIT_ROOT/im_v2/common/data/transform/test/TestPartitionDataset.test_partition_dataset/tmp.scratch/dummy_value_1=1/dummy_value_2=A/data.parquet
-$GIT_ROOT/im_v2/common/data/transform/test/TestPartitionDataset.test_partition_dataset/tmp.scratch/dummy_value_1=2
-$GIT_ROOT/im_v2/common/data/transform/test/TestPartitionDataset.test_partition_dataset/tmp.scratch/dummy_value_1=2/dummy_value_2=B
-$GIT_ROOT/im_v2/common/data/transform/test/TestPartitionDataset.test_partition_dataset/tmp.scratch/dummy_value_1=2/dummy_value_2=B/data.parquet
-$GIT_ROOT/im_v2/common/data/transform/test/TestPartitionDataset.test_partition_dataset/tmp.scratch/dummy_value_1=3
-$GIT_ROOT/im_v2/common/data/transform/test/TestPartitionDataset.test_partition_dataset/tmp.scratch/dummy_value_1=3/dummy_value_2=C
-$GIT_ROOT/im_v2/common/data/transform/test/TestPartitionDataset.test_partition_dataset/tmp.scratch/dummy_value_1=3/dummy_value_2=C/data.parquet
+.
+dummy_value_1=1
+dummy_value_1=1/dummy_value_2=A
+dummy_value_1=1/dummy_value_2=A/data.parquet
+dummy_value_1=2
+dummy_value_1=2/dummy_value_2=B
+dummy_value_1=2/dummy_value_2=B/data.parquet
+dummy_value_1=3
+dummy_value_1=3/dummy_value_2=C
+dummy_value_1=3/dummy_value_2=C/data.parquet
 # File signatures
 len(file_names)=3
-file_names=$GIT_ROOT/im_v2/common/data/transform/test/TestPartitionDataset.test_partition_dataset/tmp.scratch/dummy_value_1=1/dummy_value_2=A/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPartitionDataset.test_partition_dataset/tmp.scratch/dummy_value_1=2/dummy_value_2=B/data.parquet, $GIT_ROOT/im_v2/common/data/transform/test/TestPartitionDataset.test_partition_dataset/tmp.scratch/dummy_value_1=3/dummy_value_2=C/data.parquet
-# $GIT_ROOT/im_v2/common/data/transform/test/TestPartitionDataset.test_partition_dataset/tmp.scratch/dummy_value_1=1/dummy_value_2=A/data.parquet
+file_names=dummy_value_1=1/dummy_value_2=A/data.parquet, dummy_value_1=2/dummy_value_2=B/data.parquet, dummy_value_1=3/dummy_value_2=C/data.parquet
+# dummy_value_1=1/dummy_value_2=A/data.parquet
 num_lines=13
 '''
 original shape=(1, 1)
@@ -29,7 +29,7 @@ Tail:
     }
 }
 '''
-# $GIT_ROOT/im_v2/common/data/transform/test/TestPartitionDataset.test_partition_dataset/tmp.scratch/dummy_value_1=2/dummy_value_2=B/data.parquet
+# dummy_value_1=2/dummy_value_2=B/data.parquet
 num_lines=13
 '''
 original shape=(1, 1)
@@ -46,7 +46,7 @@ Tail:
     }
 }
 '''
-# $GIT_ROOT/im_v2/common/data/transform/test/TestPartitionDataset.test_partition_dataset/tmp.scratch/dummy_value_1=3/dummy_value_2=C/data.parquet
+# dummy_value_1=3/dummy_value_2=C/data.parquet
 num_lines=13
 '''
 original shape=(1, 1)

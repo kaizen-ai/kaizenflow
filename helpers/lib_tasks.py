@@ -1126,6 +1126,11 @@ def git_branch_diff_with_master(  # type: ignore
 #   ```
 #   > i integrate_diff_dirs --subdir market_data -c
 #   ```
+#
+# - Remove the empty files
+#   ```
+#   > find . -type f -empty -print | grep -v .git | grep -v __init__ | grep -v ".log$" | grep -v ".txt$" | xargs git rm
+#   ```
 
 # ## Double check the integration
 #
@@ -3066,7 +3071,7 @@ def find(ctx, regex, mode="all", how="remove_dups", subdir="."):  # type: ignore
 
     :param regex: function or class use to search for
     :param mode: what to look for
-        - `func_class_uses`: look for uses of function or classes
+        - `symbol_import`: look for uses of function or classes
           E.g., `DagRunner`
           returns
           ```
@@ -3949,13 +3954,11 @@ def pytest_compare(ctx, file_name1, file_name2):  # type: ignore
 # #############################################################################
 
 
-# TODO(gp): When running `python_execute` we could launch it inside a
-# container.
 @task
-def check_python_files(  # type: ignore
+def lint_check_python_files_in_docker(  # type: ignore
     ctx,
     python_compile=True,
-    python_execute=False,
+    python_execute=True,
     modified=False,
     branch=False,
     last_commit=False,
@@ -3964,6 +3967,8 @@ def check_python_files(  # type: ignore
 ):
     """
     Compile and execute Python files checking for errors.
+
+    This is supposed to be run inside Docker.
 
     The params have the same meaning as in `_get_files_to_process()`.
     """
@@ -4012,13 +4017,44 @@ def check_python_files(  # type: ignore
                 msg = "'%s' doesn't execute correctly" % file_name
                 _LOG.error(msg)
                 failed_filenames.append(file_name)
-    _LOG.info(
-        "failed_filenames=%s\n%s",
-        len(failed_filenames),
-        "\n".join(failed_filenames),
+    hprint.log_frame(
+        _LOG,
+        "failed_filenames=%s" % len(failed_filenames),
+        verbosity=logging.INFO,
     )
+    _LOG.info("\n".join(failed_filenames))
     error = len(failed_filenames) > 0
     return error
+
+
+@task
+def lint_check_python_files(  # type: ignore
+    ctx,
+    python_compile=True,
+    python_execute=True,
+    modified=False,
+    branch=False,
+    last_commit=False,
+    all_=False,
+    files="",
+):
+    """
+    Compile and execute Python files checking for errors.
+
+    The params have the same meaning as in `_get_files_to_process()`.
+    """
+    _ = python_compile, python_execute, modified, branch, last_commit, all_, files
+    # Execute the same command line but inside the container. E.g.,
+    # /Users/saggese/src/venv/amp.client_venv/bin/invoke lint_docker_check_python_files --branch
+    cmd_line = hdbg.get_command_line()
+    # Replace the full path of invoke with just `invoke`.
+    cmd_line = cmd_line.split()
+    cmd_line = ["/venv/bin/invoke lint_check_python_files_in_docker"] + cmd_line[
+        2:
+    ]
+    docker_cmd_ = " ".join(cmd_line)
+    cmd = f'invoke docker_cmd --cmd="{docker_cmd_}"'
+    _run(ctx, cmd)
 
 
 def _get_lint_docker_cmd(
@@ -4970,3 +5006,9 @@ def fix_perms(  # type: ignore
 # 25163 /compose_app_run_ab27e17f2c47
 # 18721 /compose_app_run_de23819a6bc2
 # pylint: enable=line-too-long
+
+# TODO(gp): Based on:
+# > git remote get-url origin
+# git@github.com:alphamatic/amp.git
+# Run
+# gh auth login --with-token <~/github_pat.gpsaggese.txt
