@@ -24,6 +24,8 @@ Import as:
 import im_v2.common.data.transform.convert_csv_to_pq as imvcdtcctp
 """
 
+# TODO(gp): -> transform_csv_to_pq
+
 import argparse
 import logging
 import os
@@ -99,11 +101,10 @@ def _run(args: argparse.Namespace) -> None:
     # Set datetime index.
     reindexed_df = imvcdttrut.reindex_on_datetime(df, args.datetime_col)
     # Add date partition columns to the dataframe.
-    imvcdttrut.add_date_partition_cols(reindexed_df, "day")
-    # Save partitioned Parquet dataset.
-    # TODO(gp): Allow to specify different partitions.
-    partition_cols = [args.asset_col, "year", "month", "day"]
-    imvcdttrut.partition_dataset(reindexed_df, partition_cols, args.dst_dir)
+    df, partition_cols = imvcdttrut.add_date_partition_cols(
+        reindexed_df, "by_date"
+    )
+    imvcdttrut.partition_dataset(df, partition_cols, args.dst_dir)
 
 
 def _parse() -> argparse.ArgumentParser:
