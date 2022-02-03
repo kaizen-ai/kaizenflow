@@ -66,10 +66,10 @@ class ImClient(abc.ABC):
     ```
     """
 
-    # TODO(gp): @Grisha: cache the mapping here.
-    # def __init__(self):
-    #     # Cache the mapping.
-    #     self._asset_id_to_full_symbol_mapping = None
+    def __init__(self) -> None:
+        self._asset_id_to_full_symbol_mapping = (
+            self._build_asset_id_to_full_symbol_mapping()
+        )
 
     def read_data(
         self,
@@ -209,19 +209,12 @@ class ImClient(abc.ABC):
         :param asset_ids: assets ids
         :return: assets as full symbols
         """
-        # Get universe as full symbols to construct asset ids to full symbols
-        # mapping.
-        # TODO(gp): Cache.
-        # if self._ids_to_symbols_mapping is None:
-        full_symbol_universe = self.get_universe(as_asset_ids=False)
-        ids_to_symbols_mapping = imvcuunut.build_num_to_string_id_mapping(
-            tuple(full_symbol_universe)
-        )
         # Check that provided ids are part of universe.
-        hdbg.dassert_is_subset(asset_ids, ids_to_symbols_mapping)
+        hdbg.dassert_is_subset(asset_ids, self._asset_id_to_full_symbol_mapping)
         # Convert ids to full symbols.
         full_symbols = [
-            ids_to_symbols_mapping[asset_id] for asset_id in asset_ids
+            self._asset_id_to_full_symbol_mapping[asset_id]
+            for asset_id in asset_ids
         ]
         return full_symbols
 
@@ -247,6 +240,18 @@ class ImClient(abc.ABC):
         """
         hdbg.dassert_isinstance(full_symbols, list)
         hdbg.dassert_no_duplicates(full_symbols)
+
+    def _build_asset_id_to_full_symbol_mapping(self) -> Dict[int, str]:
+        """
+        Build asset id to full symbol mapping.
+        """
+        # Get full symbol universe.
+        full_symbol_universe = self.get_universe(as_asset_ids=False)
+        # Build the mapping.
+        asset_id_to_full_symbol_mapping = (
+            imvcuunut.build_num_to_string_id_mapping(full_symbol_universe)
+        )
+        return asset_id_to_full_symbol_mapping
 
     def _get_start_end_ts_for_symbol(
         self, full_symbol: imvcdcfusy.FullSymbol, mode: str

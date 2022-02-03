@@ -50,6 +50,7 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         _vendors = ["CCXT", "CDD"]
         hdbg.dassert_in(vendor, _vendors)
         self._vendor = vendor
+        super().__init__()
 
     def get_universe(self, as_asset_ids: bool) -> List[icdc.FullSymbol]:
         """
