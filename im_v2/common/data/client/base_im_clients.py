@@ -5,7 +5,6 @@ import im_v2.common.data.client.base_im_clients as imvcdcbimcl
 """
 
 import abc
-import functools
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -219,16 +218,6 @@ class ImClient(abc.ABC):
         ]
         return full_symbols
 
-    @functools.lru_cache()
-    def _build_asset_id_to_full_symbol_mapping(self) -> Dict[int, str]:
-        # Get universe to build asset ids to full symbols mapping.
-        full_symbol_universe = self.get_universe(as_asset_ids=False)
-        # Build the mapping.
-        asset_id_to_full_symbol_mapping = (
-            imvcuunut.build_num_to_string_id_mapping(full_symbol_universe)
-        )
-        return asset_id_to_full_symbol_mapping
-
     # //////////////////////////////////////////////////////////////////////////
 
     @abc.abstractmethod
@@ -251,6 +240,18 @@ class ImClient(abc.ABC):
         """
         hdbg.dassert_isinstance(full_symbols, list)
         hdbg.dassert_no_duplicates(full_symbols)
+
+    def _build_asset_id_to_full_symbol_mapping(self) -> Dict[int, str]:
+        """
+        Build asset id to full symbol mapping.
+        """
+        # Get full symbol universe.
+        full_symbol_universe = self.get_universe(as_asset_ids=False)
+        # Build the mapping.
+        asset_id_to_full_symbol_mapping = (
+            imvcuunut.build_num_to_string_id_mapping(full_symbol_universe)
+        )
+        return asset_id_to_full_symbol_mapping
 
     def _get_start_end_ts_for_symbol(
         self, full_symbol: imvcdcfusy.FullSymbol, mode: str
