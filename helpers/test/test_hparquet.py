@@ -17,7 +17,8 @@ import helpers.hunit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
-# Examples from `amp/helpers/notebooks/gallery_parquet.ipynb`
+# Most of these unit tests are taken from
+# `amp/helpers/notebooks/gallery_parquet.ipynb`
 
 
 def _get_df(date: datetime.date, seed: int = 42) -> pd.DataFrame:
@@ -478,3 +479,108 @@ class TestPartitionedParquet1(hunitest.TestCase):
         2020-01-01 16:00:00-05:00    4     E    96    75"""
         self.assert_equal(df_as_str, exp, fuzzy_match=True)
         self.assert_equal(df_as_str, exp, fuzzy_match=True)
+
+
+# #############################################################################
+
+
+class Test_get_parquet_filters_from_timestamp_interval1(hunitest.TestCase):
+
+    def test_by_month_full1(self) -> None:
+        """
+        Test no interval [None, None].
+        """
+        start_ts = None
+        end_ts = None
+
+    def test_by_month_half1(self) -> None:
+        """
+        Test a left-bound interval [..., None].
+        """
+        start_ts = pd.Timestamp("2020-01-02 09:31:00+00:00")
+        end_ts = None
+
+    def test_by_month_half2(self) -> None:
+        """
+        Test a right-bound interval [None, ...].
+        """
+        start_ts = None
+        end_ts = pd.Timestamp("2020-01-02 09:31:00+00:00")
+
+    def test_by_month_oneyear1(self) -> None:
+        """
+        Test an interval contained in a whole year.
+        """
+        start_ts = pd.Timestamp("2020-01-02 09:31:00+00:00")
+        end_ts = pd.Timestamp("2020-12-02 09:31:00+00:00")
+        #
+        expected = [(("month", ">=", 1),
+                    ("year", ">=", 2020),
+                    ("month", "<=", 12),
+                    ("year", "<=", 2020))]
+
+    def test_by_month_oneyear2(self) -> None:
+        """
+        Test an interval contained in a whole year.
+        """
+        start_ts = pd.Timestamp("2020-01-02 09:31:00+00:00")
+        end_ts = pd.Timestamp("2020-01-02 09:32:00+00:00")
+        #
+        expected = [(("month", ">=", 1),
+                     ("year", ">=", 2020),
+                     ("month", "<=", 12),
+                     ("year", "<=", 2020))]
+
+    def test_by_month_invalid1(self) -> None:
+        """
+        Test an invalid interval.
+        """
+        start_ts = pd.Timestamp("2020-01-02 09:31:00+00:00")
+        end_ts = pd.Timestamp("2020-01-02 09:30:00+00:00")
+        #
+
+    def test_by_month_two_years1(self) -> None:
+        """
+        Test an interval spanning two years.
+        """
+        start_ts = pd.Timestamp("2020-06-02 09:31:00+00:00")
+        end_ts = pd.Timestamp("2021-12-02 09:31:00+00:00")
+        #
+        expected = [(
+            ("month", ">=", 1),
+            ("year", ">=", 2020),
+            ("month", "<=", 12),
+            ("year", "<=", 2020))]
+
+            (("month", ">=", 6), ("year", ">=", 2020)),
+            (("month", ">=", 6), ("year", ">=", 2020)),
+            ("month", "<=", 12),
+                    ("year", "<=", 2021)]
+
+    def test_by_month_6(self) -> None:
+        """
+        Test an interval spanning two years.
+        """
+        start_ts = pd.Timestamp("2020-01-01 00:00:00+00:00")
+        end_ts = pd.Timestamp("2020-12-31 11:59:59+00:00")
+
+    def test_by_month_7(self) -> None:
+        """
+        Test an interval spanning two years.
+        """
+        start_ts = pd.Timestamp("2019-12-31 11:59:59+00:00")
+        end_ts = pd.Timestamp("2021-12-31 11:59:59+00:00")
+
+    def test_by_month_8(self) -> None:
+        """
+        Test an interval spanning two years.
+        """
+        start_ts = pd.Timestamp("2019-12-31 11:59:59+00:00")
+        end_ts = pd.Timestamp("2022-01-01 00:00:01+00:00")
+
+    def test_by_month_9(self) -> None:
+        """
+        Test an interval spanning two years.
+        """
+        start_ts = pd.Timestamp("2019-12-31 11:59:59+00:00")
+        end_ts = pd.Timestamp("2022-01-01 00:00:01+00:00")

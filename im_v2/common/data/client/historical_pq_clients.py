@@ -31,10 +31,22 @@ class HistoricalPqByAssetClient(
     Provide historical data stored as Parquet by-asset.
     """
 
-    def __init__(self, asset_col_name: str, root_dir_name: str):
-        # TODO(gp): Check that the dir exists, handling the S3 case.
-        self._root_dir_name = root_dir_name
+    def __init__(
+        self,
+        asset_col_name: str,
+        root_dir_name: str,
+        partitioning_mode: str,
+    ):
+        """
+        Constructor.
+
+        :param asset_col_name: column name storing the asset
+        :param root_dir_name: directory storing the tiled Parquet data
+        :param partitioning_mode: how the data is partitioned, e.g., "by_year_month"
+        """
         self._asset_col_name = asset_col_name
+        self._root_dir_name = root_dir_name
+        self._partitioning_mode = partitioning_mode
 
     def _dassert_is_valid_timestamp(self, timestamp: pd.Timestamp) -> None:
         hdbg.dassert_isinstance(timestamp, pd.Timestamp)
@@ -69,17 +81,31 @@ class HistoricalPqByAssetClient(
         # The data is stored by week so we need to convert the timestamps into
         # weeks and then trim the excess.
         # Compute the start_date.
+        # TODO(gp): Use get_parquet_filters_from_timestamp_interval
         if start_ts is not None:
             self._dassert_is_valid_timestamp(start_ts)
             # TODO(gp): Use weekofyear = start_ts.isocalendar().week
-            weekofyear = start_ts.week
-            and_condition = ("weekofyear", ">=", weekofyear)
+            #weekofyear = start_ts.week
+            #and_condition = ("weekofyear", ">=", weekofyear)
+            month = start_ts.month
+            and_condition = ("month", ">=", month)
+            and_filters.append(and_condition)
+            #
+            year = start_ts.year
+            and_condition = ("year", ">=", year)
             and_filters.append(and_condition)
         # Compute the end_date.
         if end_ts is not None:
             self._dassert_is_valid_timestamp(end_ts)
-            weekofyear = end_ts.week
-            and_condition = ("weekofyear", "<=", weekofyear)
+            # weekofyear = end_ts.week
+            # and_condition = ("weekofyear", "<=", weekofyear)
+            # and_filters.append(and_condition)
+            month = end_ts.month
+            and_condition = ("month", "<=", month)
+            and_filters.append(and_condition)
+            #
+            year = end_ts.year
+            and_condition = ("year", "<=", year)
             and_filters.append(and_condition)
         filters = [and_filters]
         _LOG.debug("filters=%s", str(filters))
