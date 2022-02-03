@@ -2947,7 +2947,7 @@ def _find_short_import(iterator: List, short_import: str) -> _FindResults:
     E.g., for dtfcorrunn
     dataflow/core/test/test_builders.py:9:import dataflow.core.runners as dtfcorrunn
     returns
-    
+
     """
     # E.g.,
     # `import dataflow.core.runners as dtfcorrunn`
