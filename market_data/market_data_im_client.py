@@ -117,7 +117,7 @@ class ImClientMarketData(mdabmada.MarketData):
         market_data.insert(
             0,
             self._asset_id_col,
-            self._im_client.get_numerical_ids_from_full_symbols(
+            self._im_client.get_asset_ids_from_full_symbols(
                 market_data["full_symbol"]
             ),
         )
