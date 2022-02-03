@@ -4,9 +4,8 @@ Import as:
 import im_v2.common.universe.universe_utils as imvcuunut
 """
 
-import functools
 import hashlib
-from typing import Dict, Tuple
+from typing import Dict, List
 
 import helpers.hdbg as hdbg
 
@@ -33,10 +32,8 @@ def string_to_numeric_id(string_id: str) -> int:
     return num_id
 
 
-# TODO(gp): @Grisha the client should cache this function and -> `universe: List[str]`
 # TODO(gp): @Grisha -> build_numerical_to_string_id_mapping
-@functools.lru_cache()
-def build_num_to_string_id_mapping(universe: Tuple[str, ...]) -> Dict[int, str]:
+def build_num_to_string_id_mapping(universe: List[str]) -> Dict[int, str]:
     """
     Build a mapping from numeric ids to string ones.
 
