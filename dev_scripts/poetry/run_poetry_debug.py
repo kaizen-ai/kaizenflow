@@ -67,10 +67,10 @@ class PoetryDebugger:
                 while optional are run one by one
         :param max_runtime_minutes: error out after breach of the allowed runtime
         """
-        self._debug_mode: str = debug_mode
-        self._max_runtime_minutes: int = max_runtime_minutes
-        self._poetry_debug_dir: str = get_debug_poetry_dir()
-        self._debug_mode_dir: str = os.path.join(
+        self._debug_mode = debug_mode
+        self._max_runtime_minutes = max_runtime_minutes
+        self._poetry_debug_dir = get_debug_poetry_dir()
+        self._debug_mode_dir = os.path.join(
             self._poetry_debug_dir, self._debug_mode
         )
 
@@ -120,7 +120,8 @@ class PoetryDebugger:
         else:
             raise ValueError(f"Unsupported debug mode `{self._debug_mode}`!")
 
-    def _get_necessary_packages(self) -> List[str]:
+    @staticmethod
+    def _get_necessary_packages() -> List[str]:
         """
         Get necessary Python packages.
         """
@@ -151,7 +152,8 @@ class PoetryDebugger:
         ]
         return necessary_packages
 
-    def _get_optional_packages(self) -> List[str]:
+    @staticmethod
+    def _get_optional_packages() -> List[str]:
         """
         Get optional Python packages.
         """
@@ -226,7 +228,8 @@ class PoetryDebugger:
         _LOG.info("Writing `poetry.toml` to file=`%s`", file_path)
         hio.to_file(file_path, file_content)
 
-    def _run_poetry_cmd(self, dir_path: str) -> None:
+    @staticmethod
+    def _run_poetry_cmd(dir_path: str) -> None:
         """
         Run `poetry lock` in verbose mode.
 
@@ -321,7 +324,6 @@ class PoetryDebuggerAnalyzer:
             # ["necessary_incremental", "pandas"]
             # Analyze log.
             log_file = hio.from_file(log_path)
-            # TODO(Nikola): Ensure that `poetry.lock` does not exist.
             time_info = self._get_execution_time_from_log(log_file)
             # Update stats.
             self._update_poetry_run_stats(debug_mode_dirs, time_info)
@@ -360,7 +362,8 @@ class PoetryDebuggerAnalyzer:
         else:
             raise ValueError(f"Faulty directory structure `{debug_mode_dirs}`!")
 
-    def _get_execution_time_from_log(self, log_file: str) -> str:
+    @staticmethod
+    def _get_execution_time_from_log(log_file: str) -> str:
         """
         Log file is checked for certain patterns that will provide valuable
         info for stats file.
@@ -368,18 +371,11 @@ class PoetryDebuggerAnalyzer:
         :param log_file: content of log file in string format
         :return: execution time information
         """
-        time_info = "Not finished"
-        locked = re.search(r"Writing lock file", log_file)
-        # If `poetry lock` executed successfully, last entry in log
-        # will be confirmation about writing to lock file.
-        if locked:
-            # Get total seconds.
-            time_info = re.findall(r"ersion solving took (.*?) seconds", log_file)
-            if time_info:
-                time_info = time_info[-1]
-            else:
-                # New check must be added.
-                raise NotImplementedError("New log type discovered!")
+        time_info = "No time information!"
+        # Get total seconds.
+        time_info_list = re.findall(r"solving took (.*?) seconds", log_file)
+        if time_info_list:
+            time_info = time_info[-1]
         return time_info
 
 
