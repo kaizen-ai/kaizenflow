@@ -52,12 +52,12 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         self._vendor = vendor
         super().__init__()
 
-    def get_universe(self, as_asset_ids: bool) -> List[icdc.FullSymbol]:
+    def get_universe(self) -> List[icdc.FullSymbol]:
         """
         See description in the parent class.
         """
         universe = imvccunun.get_vendor_universe(
-            vendor=self._vendor, as_asset_ids=as_asset_ids
+            vendor=self._vendor, as_asset_ids=False
         )
         return universe  # type: ignore[no-any-return]
 
@@ -204,7 +204,8 @@ class CcxtCddCsvParquetByAssetClient(
     CcxtCddClient, icdc.ImClientReadingOneSymbol
 ):
     """
-    Read data from a CSV or Parquet file storing data for a single `CCXT` or `CDD` asset.
+    Read data from a CSV or Parquet file storing data for a single `CCXT` or
+    `CDD` asset.
 
     It can read data from local or S3 filesystem as backend.
 
@@ -239,7 +240,8 @@ class CcxtCddCsvParquetByAssetClient(
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
             not extension.startswith("."),
-            "The extension %s should not start with '.'", extension
+            "The extension %s should not start with '.'",
+            extension,
         )
         self._extension = extension
         self._data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT

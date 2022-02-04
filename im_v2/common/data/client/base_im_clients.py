@@ -167,17 +167,11 @@ class ImClient(abc.ABC):
 
     # /////////////////////////////////////////////////////////////////////////
 
-    # TODO(gp): @Grisha if as_asset_ids=True is the output type correct? Maybe
-    #  we should just have a separate function for FullSymbol -> asset_ids
-    #  conversion.
     @staticmethod
     @abc.abstractmethod
-    def get_universe(as_asset_ids: bool) -> List[imvcdcfusy.FullSymbol]:
+    def get_universe() -> List[imvcdcfusy.FullSymbol]:
         """
         Return the entire universe of valid full symbols.
-
-        :param as_asset_ids: if True return universe as numeric ids,
-            otherwise universe as full symbols
         """
 
     # TODO(gp): @Grisha we are mixing string vs int and asset_ids vs full_symbols.
@@ -246,12 +240,12 @@ class ImClient(abc.ABC):
         Build asset id to full symbol mapping.
         """
         # Get full symbol universe.
-        full_symbol_universe = self.get_universe(as_asset_ids=False)
+        full_symbol_universe = self.get_universe()
         # Build the mapping.
         asset_id_to_full_symbol_mapping = (
             imvcuunut.build_num_to_string_id_mapping(full_symbol_universe)
         )
-        return asset_id_to_full_symbol_mapping
+        return asset_id_to_full_symbol_mapping  # type: ignore[no-any-return]
 
     def _get_start_end_ts_for_symbol(
         self, full_symbol: imvcdcfusy.FullSymbol, mode: str
