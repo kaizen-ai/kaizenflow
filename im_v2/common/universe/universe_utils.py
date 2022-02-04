@@ -14,7 +14,7 @@ import helpers.hdbg as hdbg
 #  go in helpers.
 
 # TODO(gp): @Grisha -> numerical_id
-def string_to_numeric_id(string_id: str) -> int:
+def string_to_numerical_id(string_id: str) -> int:
     """
     Convert string id into a numeric one.
 
@@ -47,13 +47,13 @@ def build_num_to_string_id_mapping(universe: Tuple[str, ...]) -> Dict[int, str]:
     mapping: Dict[int, str] = {}
     for string_id in universe:
         # Convert string to a numerical id.
-        numeric_id = string_to_numeric_id(string_id)
+        numerical_id = string_to_numerical_id(string_id)
         hdbg.dassert_not_in(
-            numeric_id,
+            numerical_id,
             mapping,
             "Collision: id %s for string `%s` already exists",
-            numeric_id,
+            numerical_id,
             string_id,
         )
-        mapping[numeric_id] = string_id
+        mapping[numerical_id] = string_id
     return mapping

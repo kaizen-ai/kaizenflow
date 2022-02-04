@@ -7,7 +7,7 @@ class TestStringToNumId(hunitest.TestCase):
         """
         Test that string id is converted to numeric correctly.
         """
-        num_id = imvcuunut.string_to_numeric_id("binance::BTC_USDT")
+        num_id = imvcuunut.string_to_numerical_id("binance::BTC_USDT")
         self.assertEqual(num_id, 1467591036)
 
 

@@ -193,11 +193,11 @@ class ImClient(abc.ABC):
         :param full_symbols: assets as full symbols
         :return: assets as numerical ids
         """
-        numeric_asset_id = [
-            imvcuunut.string_to_numeric_id(full_symbol)
+        numerical_asset_id = [
+            imvcuunut.string_to_numerical_id(full_symbol)
             for full_symbol in full_symbols
         ]
-        return numeric_asset_id
+        return numerical_asset_id
 
     # TODO(gp): @Grisha -> get_full_symbols_from_asset_ids
     def get_full_symbols_from_numerical_ids(

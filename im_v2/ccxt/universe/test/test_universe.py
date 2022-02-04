@@ -31,9 +31,9 @@ class TestGetVendorUniverse(hunitest.TestCase):
         """
         Test that universe as numeric ids is received correctly.
         """
-        universe_as_numeric_ids = imvccunun.get_vendor_universe(
+        universe_as_numerical_ids = imvccunun.get_vendor_universe(
             version="small", vendor="CCXT", as_asset_ids=True
         )
-        self.assertEqual(len(universe_as_numeric_ids), 2)
-        self.assertEqual(universe_as_numeric_ids[0], 2002879833)
-        self.assertEqual(universe_as_numeric_ids[1], 2568064341)
+        self.assertEqual(len(universe_as_numerical_ids), 2)
+        self.assertEqual(universe_as_numerical_ids[0], 2002879833)
+        self.assertEqual(universe_as_numerical_ids[1], 2568064341)

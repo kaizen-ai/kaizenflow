@@ -29,14 +29,14 @@
 
 # Rename method "numeric" to "numerical".
 ./dev_scripts/replace_text.py \
-  --old "numeric\s" \
-  --new "numerical\s" \
+  --old 'numeric\\s' \
+  --new 'numerical\\s' \
   --dirs "im_v2" \
   --ext "py"
 
 ./dev_scripts/replace_text.py \
-  --old "numeric\s" \
-  --new "numerical\s" \
+  --old 'numeric\\s' \
+  --new 'numerical\\s' \
   --dirs "market_data" \
   --ext "py"
 
