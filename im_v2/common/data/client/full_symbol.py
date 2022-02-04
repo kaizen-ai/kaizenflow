@@ -6,8 +6,7 @@ import im_v2.common.data.client.full_symbol as imvcdcfusy
 
 import logging
 import re
-from typing import Tuple
-from typing import List
+from typing import List, Tuple
 
 import helpers.hdbg as hdbg
 
