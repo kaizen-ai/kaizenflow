@@ -70,7 +70,6 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         1    1631145660000  3496.36  3501.59  3495.69  3501.59  401.9576  ETH_USDT      binance
         2    1631145720000  3501.59  3513.10  3499.89  3513.09  579.5656  ETH_USDT      binance
         ```
-
         Output data is indexed by timestamp and looks like:
         ```
                                    open        currency_pair exchange_id
