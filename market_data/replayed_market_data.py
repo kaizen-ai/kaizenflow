@@ -81,13 +81,6 @@ class ReplayedMarketData(mdabmada.AbstractMarketData):
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
         return True
 
-    # TODO(gp): Remove this.
-    def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        _LOG.verb_debug("")
-        # Sort in increasing time order and reindex.
-        df = super()._normalize_data(df)
-        return df
-
     def _get_data(
         self,
         start_ts: pd.Timestamp,
@@ -142,9 +135,6 @@ class ReplayedMarketData(mdabmada.AbstractMarketData):
         if limit:
             hdbg.dassert_lte(1, limit)
             df_tmp = df_tmp.head(limit)
-        # Normalize data.
-        if normalize_data:
-            df_tmp = self._normalize_data(df_tmp)
         _LOG.verb_debug("-> df_tmp=\n%s", hpandas.df_to_str(df_tmp))
         return df_tmp
 

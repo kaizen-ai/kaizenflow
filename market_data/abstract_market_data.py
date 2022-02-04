@@ -297,8 +297,8 @@ class AbstractMarketData(abc.ABC):
         #  specified already, we might need to apply a filter by asset_ids.
         # TODO(gp): Check data with respect to start_ts, end_ts.
         if normalize_data:
-            # Convert start and end timestamps to `self._timezone` if data is
-            # normalized.
+            df = self._normalize_data(df)
+            # Convert start and end timestamps to `self._timezone`.
             df = self._convert_timestamps_to_timezone(df)
         # Remap column names.
         df = self._remap_columns(df)
@@ -609,8 +609,6 @@ class AbstractMarketData(abc.ABC):
     # Data normalization.
     # /////////////////////////////////////////////////////////////////////////////
 
-    # TODO(gp): @Grisha this should be called by get_data_for_interval and not
-    #  by derived classes.
     def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Transform df from real-time DB into data similar to the historical TAQ
