@@ -800,7 +800,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
                 "volume",
                 "currency_pair",
                 "exchange_id",
-                "created_at",
+                "ended_downloaded_at",
             ],
             # fmt: off
             # pylint: disable=line-too-long
