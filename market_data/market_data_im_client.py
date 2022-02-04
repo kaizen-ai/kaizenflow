@@ -130,13 +130,13 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
             hdbg.dassert_lte(1, limit)
             market_data = market_data.head(limit)
         if normalize_data:
-            market_data = self._convert_im_data(market_data)
-            market_data = self._normalize_data(market_data)
+            # Prepare data for normalization.
+            market_data = self._convert_data_for_normalization(market_data)
         return market_data
 
-    def _convert_im_data(self, df: pd.DataFrame) -> pd.DataFrame:
+    def _convert_data_for_normalization(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Convert IM data to the format required by `AbstractMarketData`.
+        Convert data to format required by normalization in parent class.
 
         :param df: IM data to transform
         ```
