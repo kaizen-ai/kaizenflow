@@ -66,10 +66,10 @@ class ImClient(abc.ABC):
     ```
     """
 
-    # TODO(gp): @Grisha: cache the mapping here.
-    # def __init__(self):
-    #     # Cache the mapping.
-    #     self._asset_id_to_full_symbol_mapping = None
+    def __init__(self) -> None:
+        self._asset_id_to_full_symbol_mapping = (
+            self._build_asset_id_to_full_symbol_mapping()
+        )
 
     def read_data(
         self,
@@ -209,19 +209,12 @@ class ImClient(abc.ABC):
         :param asset_ids: assets ids
         :return: assets as full symbols
         """
-        # Get universe as full symbols to construct asset ids to full symbols
-        # mapping.
-        # TODO(gp): Cache.
-        # if self._ids_to_symbols_mapping is None:
-        full_symbol_universe = self.get_universe(as_asset_ids=False)
-        ids_to_symbols_mapping = imvcuunut.build_num_to_string_id_mapping(
-            tuple(full_symbol_universe)
-        )
         # Check that provided ids are part of universe.
-        hdbg.dassert_is_subset(asset_ids, ids_to_symbols_mapping)
+        hdbg.dassert_is_subset(asset_ids, self._asset_id_to_full_symbol_mapping)
         # Convert ids to full symbols.
         full_symbols = [
-            ids_to_symbols_mapping[asset_id] for asset_id in asset_ids
+            self._asset_id_to_full_symbol_mapping[asset_id]
+            for asset_id in asset_ids
         ]
         return full_symbols
 
@@ -247,6 +240,18 @@ class ImClient(abc.ABC):
         """
         hdbg.dassert_isinstance(full_symbols, list)
         hdbg.dassert_no_duplicates(full_symbols)
+
+    def _build_asset_id_to_full_symbol_mapping(self) -> Dict[int, str]:
+        """
+        Build asset id to full symbol mapping.
+        """
+        # Get full symbol universe.
+        full_symbol_universe = self.get_universe(as_asset_ids=False)
+        # Build the mapping.
+        asset_id_to_full_symbol_mapping = (
+            imvcuunut.build_num_to_string_id_mapping(full_symbol_universe)
+        )
+        return asset_id_to_full_symbol_mapping
 
     def _get_start_end_ts_for_symbol(
         self, full_symbol: imvcdcfusy.FullSymbol, mode: str
@@ -303,20 +308,6 @@ class ImClient(abc.ABC):
         # 4) Convert to UTC.
         df.index = df.index.tz_convert("UTC")
         return df
-
-    # TODO(gp): @Grisha Can we remove this and do all the transformation in the
-    #  `_read_data` method?
-    @staticmethod
-    @abc.abstractmethod
-    def _apply_vendor_normalization(df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Apply transformation specific of the vendor, e.g. rename columns,
-        convert data types.
-
-        :param df: raw data
-        :return: normalized data
-        """
-        ...
 
     # TODO(gp): @Grisha -> _dassert_output_data_is_valid
     @staticmethod
@@ -392,8 +383,6 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
                 end_ts,
                 **kwargs,
             )
-            # Normalize data according to the specific vendor.
-            df = self._apply_vendor_normalization(df)
             # Insert column with full symbol into the result dataframe.
             hdbg.dassert_is_not(full_symbol_col_name, df.columns)
             df.insert(0, full_symbol_col_name, full_symbol)
@@ -453,7 +442,6 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         df = self._read_data_for_multiple_symbols(
             full_symbols, start_ts, end_ts, full_symbol_col_name, **kwargs
         )
-        df = self._apply_vendor_normalization(df)
         return df
 
     @abc.abstractmethod
