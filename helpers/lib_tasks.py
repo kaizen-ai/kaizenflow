@@ -4030,8 +4030,19 @@ def lint_check_python_files(  # type: ignore
 
 
 def _get_lint_docker_cmd(
-    precommit_opts: str, run_bash: bool, stage: str, as_user: bool
+    docker_cmd_: str,
+    run_bash: bool,
+    stage: str,
+    as_user: bool,
 ) -> str:
+    """
+    Create a command to run in Docker.
+
+    For parameter descriptions, see `lint()`.
+
+    :param docker_cmd_: command to run inside the container
+    :return: the full command to run in Docker
+    """
     superproject_path, submodule_path = hgit.get_path_from_supermodule()
     if superproject_path:
         # We are running in a Git submodule.
@@ -4046,17 +4057,19 @@ def _get_lint_docker_cmd(
     # image="*****.dkr.ecr.us-east-1.amazonaws.com/dev_tools:local"
     ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
     image = f"{ecr_base_path}/dev_tools:{stage}"
-    docker_cmd_ = ["docker run", "--rm"]
-    if stage == "local":
-        # For local stage also map repository root to /app.
-        docker_cmd_.append(f"-v '{repo_root}':/app")
+    docker_wrapper_cmd = ["docker run", "--rm"]
+    if stage in ("local", "dev"):
+        # Map repository root to /app in the container, so that we can
+        # reuse the current code being developed inside Docker before
+        # releasing the prod image.
+        docker_wrapper_cmd.append(f"-v '{repo_root}':/app")
     if run_bash:
-        docker_cmd_.append("-it")
+        docker_wrapper_cmd.append("-it")
     else:
-        docker_cmd_.append("-t")
+        docker_wrapper_cmd.append("-t")
     if as_user:
-        docker_cmd_.append(r"--user $(id -u):$(id -g)")
-    docker_cmd_.extend(
+        docker_wrapper_cmd.append(r"--user $(id -u):$(id -g)")
+    docker_wrapper_cmd.extend(
         [
             # Pass MYPYPATH for `mypy` to find the packages from PYTHONPATH.
             "-e MYPYPATH",
@@ -4066,14 +4079,19 @@ def _get_lint_docker_cmd(
         ]
     )
     # Build the command inside Docker.
-    cmd = f"'pre-commit {precommit_opts}'"
+    cmd = f"'{docker_cmd_}'"
     if run_bash:
         _LOG.warning("Run bash instead of:\n  > %s", cmd)
         cmd = "bash"
-    docker_cmd_.append(cmd)
-    #
-    docker_cmd_ = _to_single_line_cmd(docker_cmd_)
-    return docker_cmd_
+    docker_wrapper_cmd.append(cmd)
+    docker_wrapper_cmd = _to_single_line_cmd(docker_wrapper_cmd)
+    if run_bash:
+        # We don't execute this command since pty=True corrupts the terminal
+        # session.
+        print("# To get a bash session inside Docker run:")
+        print(docker_wrapper_cmd)
+        sys.exit(0)
+    return docker_wrapper_cmd
 
 
 def _parse_linter_output(txt: str) -> str:
@@ -4115,6 +4133,43 @@ def _parse_linter_output(txt: str) -> str:
 
 
 @task
+def lint_detect_cycles(  # type: ignore
+    ctx,
+    dir_name=".",
+    run_bash=False,
+    # TODO(gp): This is the backdoor.
+    stage="prod",
+    as_user=True,
+    out_file_name="lint_detect_cycles.output.txt",
+):
+    """
+    Detect cyclic imports in the directory files.
+
+    For param descriptions, see `lint()`.
+
+    :param dir_name: the name of the dir to detect cyclic imports in
+        - By default, the check will be carried out in the dir from where
+          the task is run
+    """
+    _report_task()
+    # Remove the log file.
+    if os.path.exists(out_file_name):
+        cmd = f"rm {out_file_name}"
+        _run(ctx, cmd)
+    as_user = _run_docker_as_user(as_user)
+    # Prepare the command line.
+    docker_cmd_opts = [dir_name]
+    docker_cmd_ = "import_check/detect_import_cycles.py " + _to_single_line_cmd(
+        docker_cmd_opts
+    )
+    # Execute command line.
+    cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
+    cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
+    # Run.
+    _run(ctx, cmd)
+
+
+@task
 def lint(  # type: ignore
     ctx,
     modified=False,
@@ -4131,6 +4186,7 @@ def lint(  # type: ignore
     parse_linter_output=True,
     stage="prod",
     as_user=True,
+    out_file_name="linter_output.txt",
 ):
     """
     Lint files.
@@ -4157,12 +4213,12 @@ def lint(  # type: ignore
     :param parse_linter_output: parse linter output and generate vim cfile
     :param stage: the image stage to use
     :param as_user: pass the user / group id or not
+    :param out_file_name: name of the file to save the log output in
     """
     _report_task()
-    lint_file_name = "linter_output.txt"
     # Remove the file.
-    if os.path.exists(lint_file_name):
-        cmd = f"rm {lint_file_name}"
+    if os.path.exists(out_file_name):
+        cmd = f"rm {out_file_name}"
         _run(ctx, cmd)
     # The available phases are:
     # ```
@@ -4247,16 +4303,10 @@ def lint(  # type: ignore
                 "-c /app/.pre-commit-config.yaml",
                 f"--files {files_as_str}",
             ]
-            precommit_opts = _to_single_line_cmd(precommit_opts)
+            docker_cmd_ = "pre-commit " + _to_single_line_cmd(precommit_opts)
             # Execute command line.
-            cmd = _get_lint_docker_cmd(precommit_opts, run_bash, stage, as_user)
-            cmd = f"({cmd}) 2>&1 | tee -a {lint_file_name}"
-            if run_bash:
-                # We don't execute this command since pty=True corrupts the terminal
-                # session.
-                print("# To get a bash session inside Docker run:")
-                print(cmd)
-                return
+            cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
+            cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
             # Run.
             _run(ctx, cmd)
     else:
@@ -4264,8 +4314,8 @@ def lint(  # type: ignore
     #
     if parse_linter_output:
         # Parse the linter output into a cfile.
-        _LOG.info("Parsing '%s'", lint_file_name)
-        txt = hio.from_file(lint_file_name)
+        _LOG.info("Parsing '%s'", out_file_name)
+        txt = hio.from_file(out_file_name)
         cfile = _parse_linter_output(txt)
         cfile_name = "./linter_warnings.txt"
         hio.to_file(cfile_name, cfile)
