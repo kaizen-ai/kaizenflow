@@ -30,7 +30,7 @@
 # Rename method "dassert_is_valid" to "dassert_output_data_is_valid".
 ./dev_scripts/replace_text.py \
   --old 'dassert_is_valid\(' \
-  --new 'dassert_output_data_is_valid\(' \
+  --new 'dassert_output_data_is_valid(' \
   --dirs "im_v2" \
   --ext "py"
 
