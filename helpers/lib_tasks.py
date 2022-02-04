@@ -251,6 +251,8 @@ def _get_files_to_process(
     :param all: return all repo files
     :param files_from_user: return files passed to this function
     :param mutually_exclusive: ensure that all options are mutually exclusive
+    :param remove_dirs: whether directories should be processed
+    :return: paths to process
     """
     _LOG.debug(
         hprint.to_str(
@@ -288,8 +290,8 @@ def _get_files_to_process(
     elif all_:
         files = hio.find_all_files(dir_name)
     if files_from_user:
-        # If files were passed, overwrite the previous decision.
-        files = files_from_user.split(" ")
+        # If files were passed, filter out non-existent paths.
+        files = _filter_existing_paths(files_from_user.split(" "))
     # Convert into a list.
     hdbg.dassert_isinstance(files, list)
     files_to_process = [f for f in files if f != ""]
@@ -304,6 +306,33 @@ def _get_files_to_process(
     if not files_to_process:
         _LOG.warning("No files were selected")
     return files_to_process
+
+
+def _filter_existing_paths(paths_from_user: List[str]) -> List[str]:
+    """
+    Filter out the paths to non-existent files.
+
+    :param paths_from_user: paths passed by user
+    :return: existing paths
+    """
+    paths = []
+    for user_path in paths_from_user:
+        if user_path.endswith("/*"):
+            # Get the files according to the "*" pattern.
+            dir_files = glob.glob(user_path)
+            if dir_files:
+                # Check whether the pattern matches files.
+                paths.extend(dir_files)
+            else:
+                _LOG.error(
+                    "'%s' pattern doesn't match any files: the directory is empty or path does not exist",
+                    user_path,
+                )
+        elif os.path.exists(user_path):
+            paths.append(user_path)
+        else:
+            _LOG.error("'%s' does not exist", user_path)
+    return paths
 
 
 # Copied from helpers.datetime_ to avoid dependency from pandas.
@@ -1502,7 +1531,8 @@ def integrate_find_files(  # type: ignore
     subdir="",
 ):
     """
-    Find the files that are touched in the current branch since last integration.
+    Find the files that are touched in the current branch since last
+    integration.
     """
     _report_task()
     _ = ctx
@@ -2949,10 +2979,8 @@ def _find_short_import(iterator: List, short_import: str) -> _FindResults:
     """
     Find imports in the Python files with the given short import.
 
-    E.g., for dtfcorrunn
-    dataflow/core/test/test_builders.py:9:import dataflow.core.runners as dtfcorrunn
-    returns
-
+    E.g., for dtfcorrunn dataflow/core/test/test_builders.py:9:import
+    dataflow.core.runners as dtfcorrunn returns
     """
     # E.g.,
     # `import dataflow.core.runners as dtfcorrunn`
