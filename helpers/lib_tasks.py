@@ -3622,23 +3622,36 @@ def run_qa_tests(  # type: ignore
 
 
 @task
-def run_coverage_report(ctx):
-    target_dir = "oms"
+def run_coverage_report(ctx, target_dir, publish_on_s3=True):
     cmd = f"invoke run_fast_tests --coverage -p {target_dir}; cp .coverage .coverage_fast_tests"
     _run(ctx, cmd)
-    cmd = f"invoke run_slow_tests --coverage -p {target_dir}; cp .coverage .coverage_slow_tests"
-    _run(ctx, cmd)
+    # cmd = f"invoke run_slow_tests --coverage -p {target_dir}; cp .coverage .coverage_slow_tests"
+    # _run(ctx, cmd)
     cmd = []
+    include_in_report = f"/app/{target_dir}/*"
+    exclude_from_report = "'*/test/*', '*/__init__.py'"
+    #cmd.append("coverage combine --keep .coverage_fast_tests .coverage_slow_tests")
+    cmd.append(f'coverage report --include={include_in_report} --omit={exclude_from_report} --sort=Cover')
     cmd.append(
-        "coverage combine --keep .coverage_fast_tests .coverage_slow_tests"
+        f'coverage html --include={include_in_report} --omit={exclude_from_report}'
     )
-    cmd.append(
-        'coverage report --include="${target_dir}/*" --omit="*/test_*.py" --sort=Cover'
-    )
-    cmd.append('coverage html --include="${target_dir}/*" --omit="*/test_*.py"')
     cmd = " && ".join(cmd)
-    cmd = "invoke docker_bash --cmd '%s'" % cmd
+    cmd = f"invoke docker_cmd --cmd '{cmd}'"
     _run(ctx, cmd)
+    if publish_on_s3:
+        _publish_html_coverage_report_on_s3()
+
+
+def _publish_html_coverage_report_on_s3() -> None:
+    user = hsystem.get_user_name()
+    branch_name = hgit.get_branch_name()
+    _LOG.debug("User='%s', branch_name='%s'", user, branch_name)
+    s3_html_coverage_dir = f"{user}_{branch_name}"
+    s3_html_coverage_bucket_path = "s3://cryptokaizen-html"
+    s3_html_coverage_path = os.path.join(s3_html_coverage_bucket_path, s3_html_coverage_dir)
+    local_coverage_path = "./htmlcov"
+    cp_cmd = f"aws s3 cp {local_coverage_path} {s3_html_coverage_path} --recursive --profile ck"
+    hsystem.system(cp_cmd)
 
 
 # #############################################################################
