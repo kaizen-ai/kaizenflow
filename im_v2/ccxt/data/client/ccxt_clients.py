@@ -56,9 +56,7 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         """
         See description in the parent class.
         """
-        universe = imvccunun.get_vendor_universe(
-            vendor=self._vendor, as_asset_ids=False
-        )
+        universe = imvccunun.get_vendor_universe(vendor=self._vendor)
         return universe  # type: ignore[no-any-return]
 
     def _apply_vendor_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
