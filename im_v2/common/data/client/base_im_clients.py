@@ -98,7 +98,7 @@ class ImClient(abc.ABC):
                 "full_symbols start_ts end_ts full_symbol_col_name kwargs"
             )
         )
-        self._check_full_symbols(full_symbols)
+        imvcdcfusy.check_full_symbols(full_symbols)
         # Check the requested interval.
         # TODO(gp): @Grisha use dassert_is_valid_interval.
         if start_ts is not None:
@@ -231,15 +231,6 @@ class ImClient(abc.ABC):
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         ...
-
-    # TODO(gp): @Grisha move to full_symbol.py
-    @staticmethod
-    def _check_full_symbols(full_symbols: List[imvcdcfusy.FullSymbol]) -> None:
-        """
-        Verify that full symbols are passed in a list that has no duplicates.
-        """
-        hdbg.dassert_isinstance(full_symbols, list)
-        hdbg.dassert_no_duplicates(full_symbols)
 
     def _build_asset_id_to_full_symbol_mapping(self) -> Dict[int, str]:
         """
