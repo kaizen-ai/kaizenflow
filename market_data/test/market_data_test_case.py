@@ -77,13 +77,10 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         #     pytest.skip("Market not on-line")
         hprint.log_frame(
             _LOG,
-            "get_data_for_last_period:"
-            + hprint.to_str("timedelta"),
+            "get_data_for_last_period:" + hprint.to_str("timedelta"),
         )
         # Run.
-        _ = market_data.get_data_for_last_period(
-            timedelta
-        )
+        _ = market_data.get_data_for_last_period(timedelta)
 
     # //////////////////////////////////////////////////////////////////////////////
 
@@ -104,13 +101,10 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         ts_col_name = "end_ts"
         hprint.log_frame(
             _LOG,
-            "get_data_at_timestamp:"
-            + hprint.to_str("ts ts_col_name asset_ids"),
+            "get_data_at_timestamp:" + hprint.to_str("ts ts_col_name asset_ids"),
         )
         # Run.
-        df = market_data.get_data_at_timestamp(
-            ts, ts_col_name, asset_ids
-        )
+        df = market_data.get_data_at_timestamp(ts, ts_col_name, asset_ids)
         # Check output.
         _check_output(self, df, exp_df_as_str)
 
