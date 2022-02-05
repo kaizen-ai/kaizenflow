@@ -15,27 +15,40 @@
 
 
 <!--te-->
-# Code org of `amp`
+# Code organization of `amp`
+
+## Conventions
+- In this file we use the following conventions:
+  - comments: `"""foobar is ..."""`
+  - dirs and subdirs: `/foobar`
+  - files: `foobar.py`
+  - objects: `FooBar`
+  - markdown files: `foobar.md`
 
 ## Component dirs
-- In the following we indicate:
-  - comments with """foobar is ..."""
-  - dirs and subdirs with `/foobar`
-  - files with `foobar.py`
-  - objects with `FooBar`
-  - markdown files with `foobar.md`
 
-- The directories, subdirectory, objects are listed in order of dependency
+- The directories, subdirectory, objects are listed in order of their dependencies
+  (from innermost to outermost)
 
 - `/helpers`
-  - """Low-level helpers that are not specific of this project"""
+  - """Low-level helpers that are general and not specific of this project"""
+   
 - `/core`
   - """Low-level helpers that are specific of this project"""
   - `/config`
     - `Config`
+      - """An dict-like object that allows to configure workflows"""
+  - `/event_study`
+  - `artificial_signal_generators.py`
+  - `features.py`
+  - `finance.py`
+  - `signal_processing.py`
+  - `statitstics.py`
+  
 - `/devops`
 - `/dev_scripts`
 - `/documentation`
+
 - `/im`
 - `/im_v2`
   - """Instrument Master"""
@@ -47,10 +60,9 @@
   - `MarketDataImClient`
   - `RealTimeMarketData`
   - `ReplayedMarketData`
+
 - `/dataflow`
   - """DataFlow module"""
-  - `dataflow_design.md`
-    - """Design notes for DataFlow"""
   - `/core`
     - `/nodes`
       - """Implementation of DataFlow nodes that don't depend on anything
@@ -116,7 +128,7 @@
   - `ForecastProcessor`
 - `/optimizer`
 - `/research_amp`
-- 
+ 
 ## Top level dirs
 ```
 (cd amp; tree -L 1 -d --charset=ascii -I "*test*|*notebooks*" 2>&1 | tee /tmp/tmp)

@@ -21,30 +21,21 @@ _LOG = logging.getLogger(__name__)
 # instead of `Dict[str, ...]`).
 NodeId = str
 
-# Name of a Node's method, e.g., `fit` or `predict`.
-Method = str
 
-# Mapping between the name of an output of a node and the corresponding stored value.
-NodeOutput = Dict[str, Any]
-
-
-# TODO(gp): This seems private -> _AbstractNode.
+# TODO(gp): This seems private -> _Node.
 class NodeInterface(abc.ABC):
     """
     Abstract node class for creating DAGs of functions.
 
-    Common use case: `Node`s wrap functions with a common method, e.g., `fit()`.
-
-    This class provides some convenient introspection (input/output names)
-    accessors and, importantly, a unique identifier (`nid`) for building
-    graphs of nodes. The `nid` is also useful for config purposes.
-
-    For nodes requiring fit/transform, we can subclass/provide a mixin with
-    the desired methods.
+    This class provides:
+    - a unique identifier (`nid`) for building graphs of nodes. The `nid` is also
+      useful for config purposes.
+    - some convenient introspection (input/output names) accessors and
     """
 
     # TODO(gp): Are inputs / output without names useful? If not we can simplify the
     #   interface.
+    # TODO(gp): inputs -> input_names, outputs -> output_names
     def __init__(
         self,
         nid: NodeId,
@@ -93,7 +84,17 @@ class NodeInterface(abc.ABC):
         return items
 
 
-# TODO(gp): Should we merge this with _AbstractNode? There is lots of class
+# ############################
+
+
+# Name of a Node's method, e.g., `fit` or `predict`.
+Method = str
+
+# Mapping between the name of an output of a node and the corresponding stored value.
+NodeOutput = Dict[str, Any]
+
+
+# TODO(gp): Should we merge this with _Node? There is lots of class
 #  hierarchy (NodeInterface -> Node -> FitPredictNode) that doesn't seem really
 #  used / useful any more.
 class Node(NodeInterface):
@@ -101,10 +102,11 @@ class Node(NodeInterface):
     A node class that stores and retrieves its output values on a "per-method"
     basis.
 
-    E.g., for each method (e.g., "fit" and "predict") returns a value
-    for each output.
+    E.g., for each method (e.g., "fit" and "predict") returns a value for each
+    output.
     """
 
+    # TODO(gp): inputs -> input_names, outputs -> output_names
     def __init__(
         self,
         nid: NodeId,
@@ -118,8 +120,7 @@ class Node(NodeInterface):
         # Dictionary method name -> output node name -> output.
         self._output_vals: Dict[Method, NodeOutput] = {}
 
-    # TODO(gp): name -> output_name
-    def get_output(self, method: Method, name: str) -> Any:
+    def get_output(self, method: Method, output_name: str) -> Any:
         """
         Return the value of output `name` for the requested `method`.
         """
@@ -131,13 +132,13 @@ class Node(NodeInterface):
             self.nid,
         )
         hdbg.dassert_in(
-            name,
+            output_name,
             self.output_names,
             "%s is not an output of node %s!",
-            name,
+            output_name,
             self.nid,
         )
-        return self._output_vals[method][name]
+        return self._output_vals[method][output_name]
 
     def get_outputs(self, method: Method) -> NodeOutput:
         """
@@ -148,20 +149,19 @@ class Node(NodeInterface):
         hdbg.dassert_in(method, self._output_vals.keys())
         return self._output_vals[method]
 
-    # TODO(gp): name -> output_name
-    def _store_output(self, method: Method, name: str, value: Any) -> None:
+    def _store_output(self, method: Method, output_name: str, value: Any) -> None:
         """
         Store the output for `name` and the specific `method`.
         """
         hdbg.dassert_in(
-            name,
+            output_name,
             self.output_names,
             "%s is not an output of node %s!",
-            name,
+            output_name,
             self.nid,
         )
         # Create a dictionary of values for `method` if it doesn't exist.
         if method not in self._output_vals:
             self._output_vals[method] = {}
         # Assign the requested value.
-        self._output_vals[method][name] = value
+        self._output_vals[method][output_name] = value

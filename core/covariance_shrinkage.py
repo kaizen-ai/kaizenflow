@@ -15,6 +15,7 @@ import helpers.hdbg as hdbg
 _LOG = logging.getLogger(__name__)
 COL = Union[str, int]
 
+# TODO(gp): Move to optimizer/
 
 # TODO(Paul): The same check is also found in "optimizer/utils.py". Unify.
 def is_symmetric(matrix: pd.DataFrame, **kwargs) -> bool:

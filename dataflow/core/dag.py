@@ -398,7 +398,7 @@ class DAG:
             raise AttributeError(
                 f"An exception occurred in node '{nid}'.\n{str(e)}"
             ) from e
-        for out in node.output_names:
+        for output_name in node.output_names:
             node._store_output(  # pylint: disable=protected-access
-                method, out, output[out]
+                method, output_name, output[out]
             )

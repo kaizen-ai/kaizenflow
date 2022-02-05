@@ -19,6 +19,9 @@ _LOG = logging.getLogger(__name__)
 COL = Union[str, int]
 
 
+# TODO(gp): Where is it used?
+
+
 def get_lagged_feature_names(
     y_var: str, delay_lag: int, num_lags: int
 ) -> Tuple[List[int], List[str]]:
