@@ -99,10 +99,10 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
                 end_ts += pd.Timedelta(1, "ms")
         # TODO(gp): call dassert_is_valid_start_end_timestamp
         if not asset_ids:
-            # If `asset_ids` is None, get all full symbols from the universe.
+            # If asset ids are not provided, get universe as full symbols.
             full_symbols = self._im_client.get_universe()
         else:
-            # Convert numeric ids to full symbols to read `im` data.
+            # Convert asset ids to full symbols to read `im` data.
             full_symbols = self._im_client.get_full_symbols_from_numerical_ids(
                 asset_ids
             )
