@@ -81,7 +81,6 @@ class RealTimeMarketData(mdabmada.AbstractMarketData):
         asset_ids: Optional[List[int]],
         left_close: bool,
         right_close: bool,
-        normalize_data: bool,
         limit: Optional[int],
     ) -> pd.DataFrame:
         sort_time = True
@@ -98,9 +97,8 @@ class RealTimeMarketData(mdabmada.AbstractMarketData):
         )
         _LOG.info("query=%s", query)
         df = hsql.execute_query_to_df(self.connection, query)
-        if normalize_data:
-            # Prepare data for normalization.
-            df = self._convert_data_for_normalization(df)
+        # Prepare data for normalization by the parent class.
+        df = self._convert_data_for_normalization(df)
         return df
 
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:

@@ -64,7 +64,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
     def _test_get_data_for_last_period(
         market_data: mdata.AbstractMarketData,
         timedelta: pd.Timestamp,
-        normalize_data: bool,
     ) -> None:
         """
         Call `get_data_for_last_period()` all conditional periods.
@@ -79,11 +78,11 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         hprint.log_frame(
             _LOG,
             "get_data_for_last_period:"
-            + hprint.to_str("timedelta normalize_data"),
+            + hprint.to_str("timedelta"),
         )
         # Run.
         _ = market_data.get_data_for_last_period(
-            timedelta, normalize_data=normalize_data
+            timedelta
         )
 
     # //////////////////////////////////////////////////////////////////////////////
@@ -93,7 +92,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         market_data: mdata.AbstractMarketData,
         ts: pd.Timestamp,
         asset_ids: Optional[List[int]],
-        normalize_data: bool,
         exp_df_as_str: str,
     ) -> None:
         """
@@ -107,11 +105,11 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         hprint.log_frame(
             _LOG,
             "get_data_at_timestamp:"
-            + hprint.to_str("ts ts_col_name asset_ids normalize_data"),
+            + hprint.to_str("ts ts_col_name asset_ids"),
         )
         # Run.
         df = market_data.get_data_at_timestamp(
-            ts, ts_col_name, asset_ids, normalize_data=normalize_data
+            ts, ts_col_name, asset_ids
         )
         # Check output.
         _check_output(self, df, exp_df_as_str)
@@ -126,7 +124,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         asset_ids: Optional[List[int]],
         left_close: bool,
         right_close: bool,
-        normalize_data: bool,
         exp_df_as_str: str,
     ) -> None:
         """
@@ -141,7 +138,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
             _LOG,
             "get_data_for_interval:"
             + hprint.to_str(
-                "start_ts end_ts ts_col_name asset_ids left_close right_close normalize_data"
+                "start_ts end_ts ts_col_name asset_ids left_close right_close"
             ),
         )
         # Run.
@@ -152,7 +149,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
             asset_ids,
             left_close=left_close,
             right_close=right_close,
-            normalize_data=normalize_data,
         )
         # Check output.
         _check_output(self, df, exp_df_as_str)
@@ -169,13 +165,11 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
 
         - asset_ids = None
         - interval type is default [a, b)
-        - data is normalized
         """
         # Prepare inputs.
         asset_ids = None
         left_close = True
         right_close = False
-        normalize_data = True
         # Run.
         self._get_data_for_interval_helper(
             market_data,
@@ -184,7 +178,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
             asset_ids,
             left_close,
             right_close,
-            normalize_data,
             exp_df_as_str,
         )
 
@@ -201,12 +194,10 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
 
         - `asset_ids` is a list
         - interval type is default [a, b)
-        - data is normalized
         """
         # Prepare inputs.
         left_close = True
         right_close = False
-        normalize_data = True
         # Run.
         self._get_data_for_interval_helper(
             market_data,
@@ -215,7 +206,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
             asset_ids,
             left_close,
             right_close,
-            normalize_data,
             exp_df_as_str,
         )
 
@@ -231,13 +221,11 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         Call `get_data_for_interval()` with:
 
         - `asset_ids` is a list
-        - interval type is default [a, b)
-        - data is not normalized
+        - interval type is [a, b]
         """
         # Prepare inputs.
         left_close = True
-        right_close = False
-        normalize_data = False
+        right_close = True
         # Run.
         self._get_data_for_interval_helper(
             market_data,
@@ -246,7 +234,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
             asset_ids,
             left_close,
             right_close,
-            normalize_data,
             exp_df_as_str,
         )
 
@@ -262,13 +249,11 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         Call `get_data_for_interval()` with:
 
         - `asset_ids` is a list
-        - interval type is [a, b]
-        - data is normalized
+        - interval type is (a, b]
         """
         # Prepare inputs.
-        left_close = True
+        left_close = False
         right_close = True
-        normalize_data = True
         # Run.
         self._get_data_for_interval_helper(
             market_data,
@@ -277,7 +262,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
             asset_ids,
             left_close,
             right_close,
-            normalize_data,
             exp_df_as_str,
         )
 
@@ -293,44 +277,11 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         Call `get_data_for_interval()` with:
 
         - `asset_ids` is a list
-        - interval type is (a, b]
-        - data is normalized
-        """
-        # Prepare inputs.
-        left_close = False
-        right_close = True
-        normalize_data = True
-        # Run.
-        self._get_data_for_interval_helper(
-            market_data,
-            start_ts,
-            end_ts,
-            asset_ids,
-            left_close,
-            right_close,
-            normalize_data,
-            exp_df_as_str,
-        )
-
-    def _test_get_data_for_interval6(
-        self,
-        market_data: mdata.AbstractMarketData,
-        start_ts: pd.Timestamp,
-        end_ts: pd.Timestamp,
-        asset_ids: List[int],
-        exp_df_as_str: str,
-    ) -> None:
-        """
-        Call `get_data_for_interval()` with:
-
-        - `asset_ids` is a list
         - interval type is (a, b)
-        - data is normalized
         """
         # Prepare inputs.
         left_close = False
         right_close = False
-        normalize_data = True
         # Run.
         self._get_data_for_interval_helper(
             market_data,
@@ -339,7 +290,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
             asset_ids,
             left_close,
             right_close,
-            normalize_data,
             exp_df_as_str,
         )
 
