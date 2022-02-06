@@ -113,9 +113,6 @@ class Node(NodeInterface):
         inputs: Optional[List[str]] = None,
         outputs: Optional[List[str]] = None,
     ) -> None:
-        """
-        Implement the same interface as `NodeInterface`.
-        """
         super().__init__(nid, inputs, outputs)
         # Dictionary method name -> output node name -> output.
         self._output_vals: Dict[Method, NodeOutput] = {}
