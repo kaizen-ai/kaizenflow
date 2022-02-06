@@ -1503,7 +1503,8 @@ def integrate_find_files(  # type: ignore
     subdir="",
 ):
     """
-    Find the files that are touched in the current branch since last integration.
+    Find the files that are touched in the current branch since last
+    integration.
     """
     _report_task()
     _ = ctx
@@ -2950,10 +2951,8 @@ def _find_short_import(iterator: List, short_import: str) -> _FindResults:
     """
     Find imports in the Python files with the given short import.
 
-    E.g., for dtfcorrunn
-    dataflow/core/test/test_builders.py:9:import dataflow.core.runners as dtfcorrunn
-    returns
-
+    E.g., for dtfcorrunn dataflow/core/test/test_builders.py:9:import
+    dataflow.core.runners as dtfcorrunn returns
     """
     # E.g.,
     # `import dataflow.core.runners as dtfcorrunn`
@@ -3644,7 +3643,9 @@ def run_coverage_report(ctx, target_dir, publish_html_on_s3=True):  # type: igno
     cmd = f"invoke run_slow_tests --coverage -p {target_dir}; cp .coverage .coverage_slow_tests"
     _run(ctx, cmd)
     # Merge stats for fast and slow tests into single dir.
-    stats_merge_cmd = "coverage combine --keep .coverage_fast_tests .coverage_slow_tests"
+    stats_merge_cmd = (
+        "coverage combine --keep .coverage_fast_tests .coverage_slow_tests"
+    )
     # Only target dir is included in the reports.
     include_in_report = f"*/{target_dir}/*"
     # Test files are excluded from the reports.
@@ -3680,12 +3681,17 @@ def _publish_html_coverage_report_on_s3() -> None:
     # Get the full path to the dir.
     s3_html_base_dir = "html_coverage"
     s3_html_bucket_path = hs3.get_html_bucket_path()
-    s3_html_coverage_path = os.path.join(s3_html_bucket_path, s3_html_base_dir, s3_html_coverage_dir)
+    s3_html_coverage_path = os.path.join(
+        s3_html_bucket_path, s3_html_base_dir, s3_html_coverage_dir
+    )
     # Copy HTML coverage data from the local dir to S3.
     local_coverage_path = "./htmlcov"
     # TODO(Grisha): do not hard-wire ck profile?
     cp_cmd = f"aws s3 cp {local_coverage_path} {s3_html_coverage_path} --recursive --profile ck"
-    _LOG.info("HTML coverage report is published on S3: path=`%s`", s3_html_coverage_path)
+    _LOG.info(
+        "HTML coverage report is published on S3: path=`%s`",
+        s3_html_coverage_path,
+    )
     hsystem.system(cp_cmd)
 
 
