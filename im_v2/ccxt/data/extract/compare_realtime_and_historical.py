@@ -8,3 +8,13 @@
 
 # Comparison 2: take timestamps present in both, compare row-by-row
 
+import pandas as pd
+import logging
+import helpers.hsql as hsql
+import argparse
+
+def _main(parser: argparse.ArgumentParser) -> None:
+    # Read for the latest 24 hours.
+    query = "SELECT * FROM ccxt_ohlcv"
+    db_data =
+    # Read for the latest 24 hours.
