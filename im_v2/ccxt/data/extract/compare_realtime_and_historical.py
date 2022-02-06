@@ -34,6 +34,22 @@ def find_gaps(rt_data, daily_data) -> pd.DataFrame:
     return rt_missing_data, daily_missing_data
 
 
+def compare_rows(rt_data, daily_data) -> pd.DataFrame:
+    """
+
+    """
+    #
+    rt_data_reindex = rt_data.drop(["ended_downloaded_at", "knowledge_time"], axis=1)
+    rt_data_reindex = rt_data_reindex.set_index(["timestamp", "currency_pair"])
+    daily_data_reindex = daily_data.drop(["ended_downloaded_at", "knowledge_time"], axis=1)
+    daily_data_reindex = daily_data_reindex.set_index(["timestamp", "currency_pair"])
+    #
+    idx_intersection = rt_data.index.intersection(daily_data.intersection)
+    # Get difference between daily data and rt data.
+    data_difference = daily_data_reindex.loc[idx_intersection].compare(rt_data_reindex.loc[idx_intersection])
+    return data_difference
+
+
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
@@ -49,7 +65,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     rt_data = hsql.execute_query_to_df(connection, query)
     # Read for the latest 24 hours.
     # TODO(Danya): read S3 data from bucket.
+    # TODO(Danya): Reindex dataframes before comparison, outside of functions.
     daily_data = pd.DataFrame()
-    # Compare indices.
+    # Get missing data.
     rt_missing_data, daily_missing_data = find_gaps(rt_data, daily_data)
+    # Compare dataframe contents.
+    data_difference = compare_rows(rt_data, daily_data)
 
