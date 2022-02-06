@@ -98,7 +98,7 @@ class ImClient(abc.ABC):
                 "full_symbols start_ts end_ts full_symbol_col_name kwargs"
             )
         )
-        imvcdcfusy.check_full_symbols(full_symbols)
+        imvcdcfusy.dassert_valid_full_symbols(full_symbols)
         # Check the requested interval.
         # TODO(gp): @Grisha use dassert_is_valid_interval.
         if start_ts is not None:
