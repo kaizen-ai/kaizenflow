@@ -29,6 +29,7 @@ import helpers.hintrospection as hintros
 import helpers.hio as hio
 import helpers.hlist as hlist
 import helpers.hprint as hprint
+import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
 import helpers.htable as htable
 import helpers.hversion as hversio
@@ -3622,34 +3623,51 @@ def run_qa_tests(  # type: ignore
 
 
 @task
-def run_coverage_report(ctx, target_dir, publish_on_s3=True):
+def run_coverage_report(ctx, target_dir, publish_on_s3=True):  # type: ignore
+    # Run tests for the target dir and collect coverage stats.
     cmd = f"invoke run_fast_tests --coverage -p {target_dir}; cp .coverage .coverage_fast_tests"
     _run(ctx, cmd)
-    # cmd = f"invoke run_slow_tests --coverage -p {target_dir}; cp .coverage .coverage_slow_tests"
-    # _run(ctx, cmd)
-    cmd = []
-    include_in_report = f"/app/{target_dir}/*"
-    exclude_from_report = "'*/test/*', '*/__init__.py'"
-    #cmd.append("coverage combine --keep .coverage_fast_tests .coverage_slow_tests")
-    cmd.append(f'coverage report --include={include_in_report} --omit={exclude_from_report} --sort=Cover')
-    cmd.append(
-        f'coverage html --include={include_in_report} --omit={exclude_from_report}'
-    )
-    cmd = " && ".join(cmd)
+    cmd = f"invoke run_slow_tests --coverage -p {target_dir}; cp .coverage .coverage_slow_tests"
+    _run(ctx, cmd)
+    # Merge stats for fast and slow tests into single dir.
+    stats_merge_cmd = ["coverage combine --keep .coverage_fast_tests .coverage_slow_tests"]
+    # Only target dir is included in the reports.
+    include_in_report = f"*/{target_dir}/*"
+    # Test files are excluded from the reports.
+    exclude_from_report = "*/test/*"
+    # Generate text report with the coverage stats.
+    text_report_cmd = f"coverage report --include={include_in_report} --omit={exclude_from_report} --sort=Cover"
+    # Generate HTML report with the coverage stats.
+    html_report_cmd = f"coverage html --include={include_in_report} --omit={exclude_from_report}"
+    # Execute commands above one-by-one inside docker. Coverage tool is not
+    # installed outside docker.
+    cmd = " && ".join([stats_merge_cmd, text_report_cmd, html_report_cmd])
     cmd = f"invoke docker_cmd --cmd '{cmd}'"
     _run(ctx, cmd)
     if publish_on_s3:
+        # Publish HTML report on S3.
         _publish_html_coverage_report_on_s3()
 
 
 def _publish_html_coverage_report_on_s3() -> None:
+    """
+    Publish HTML coverage report on S3 so that it can be accessed via browser.
+
+    Target S3 dir is constructed from linux user and Git branch name, e.g.
+    `s3://cryptokaizen-html/html_coverage/grisha_CmTask1047_fix_tests`.
+    """
+    # Build the dir name from user and branch name.
     user = hsystem.get_user_name()
     branch_name = hgit.get_branch_name()
     _LOG.debug("User='%s', branch_name='%s'", user, branch_name)
     s3_html_coverage_dir = f"{user}_{branch_name}"
-    s3_html_coverage_bucket_path = "s3://cryptokaizen-html"
-    s3_html_coverage_path = os.path.join(s3_html_coverage_bucket_path, s3_html_coverage_dir)
+    # Get the full path to the dir.
+    s3_html_base_dir = "html_coverage"
+    s3_html_bucket_path = hs3.get_html_bucket_path()
+    s3_html_coverage_path = os.path.join(s3_html_bucket_path, s3_html_base_dir, s3_html_coverage_dir)
+    # Copy HTML coverage data from the local dir to S3.
     local_coverage_path = "./htmlcov"
+    # TODO(Grisha): do not hard-wire ck profile?
     cp_cmd = f"aws s3 cp {local_coverage_path} {s3_html_coverage_path} --recursive --profile ck"
     hsystem.system(cp_cmd)
 

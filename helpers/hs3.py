@@ -136,12 +136,34 @@ def get_bucket() -> str:
 
 
 # TODO(gp): -> get_bucket_path() ?
+# TODO(Grisha): generalize for other buckets.
 def get_path() -> str:
     """
     Return the path to the default S3 bucket (e.g., `s3://alphamatic-data`).
     """
-    path = "s3://" + get_bucket()
+    base_path = get_s3_base_path()
+    bucket = get_bucket()
+    path = base_path + bucket
     return path
+
+
+def get_s3_base_path() -> str:
+    """
+    Return the S3 base path.
+    """
+    path = "s3://"
+    return path
+
+
+def get_html_bucket_path() -> str:
+    """
+    Return the path to the bucket where published HTMLs are stored.
+    """
+    base_path = get_s3_base_path()
+    html_bucket = "cryptokaizen-html"
+    # We do not use `os.path.join` since it converts `s3://` to `s3:/`.
+    html_bucket_path = base_path + html_bucket
+    return html_bucket_path
 
 
 # #############################################################################
