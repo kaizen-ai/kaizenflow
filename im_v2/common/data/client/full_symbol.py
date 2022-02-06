@@ -69,7 +69,7 @@ def construct_full_symbol(exchange: str, symbol: str) -> FullSymbol:
     return full_symbol
 
 
-def check_full_symbols(full_symbols: List[FullSymbol]) -> None:
+def dassert_valid_full_symbols(full_symbols: List[FullSymbol]) -> None:
     """
     Verify that full symbols are passed in a list that has no duplicates.
     """
