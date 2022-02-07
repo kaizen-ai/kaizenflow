@@ -1461,6 +1461,56 @@ class TestCase(unittest.TestCase):
         _LOG.debug(hprint.to_str("outcome_updated file_exists is_equal"))
         return outcome_updated, file_exists, is_equal
 
+    def _check_df_output(
+        self,
+        actual_df: pd.DataFrame,
+        expected_length: Optional[int],
+        expected_column_names: Optional[List[str]],
+        expected_column_unique_values: Optional[Dict[str, List[Any]]],
+        expected_signature: str,
+    ) -> None:
+        """
+        Verify that actual outcome dataframe matches the expected one.
+
+        :param actual_df: actual outcome dataframe
+        :param expected_length: expected outcome dataframe length
+            - If `None`, skip the check
+        :param expected_column_names: expected outcome dataframe column names
+            - If `None`, skip the check
+        :param expected_column_unique_values: dict of column names and unique values
+            that they should contain
+            - If `None`, skip the check
+        :param expected_signature: expected outcome dataframe as string
+        """
+        if expected_length:
+            # Verify that output length is correct.
+            self.assertEqual(expected_length, actual_df.shape[0])
+        if expected_column_names:
+            # Verify that column names are correct.
+            self.assertEqual(sorted(expected_column_names), sorted(actual_df.columns))
+        if expected_column_unique_values:
+            hdbg.dassert_is_subset(
+                list(expected_column_unique_values.keys()), actual_df.columns
+            )
+            # Verify that unique values in specified columns are correct.
+            for column in expected_column_values:
+                actual_one_column_unique_values = sorted(
+                    list(actual_df[column].dropna().unique())
+                )
+                self.assertEqual(
+                    sorted(expected_column_unique_values[column]),
+                    actual_one_column_unique_values,
+                )
+        # Build signature.
+        actual_signature = hpandas.df_to_str(
+            actual, print_shape_info=True, tag="df",
+        )
+        _LOG.debug("\n%s", hpandas.df_to_str(actual))
+        # Check signature.
+        self.assert_equal(
+            actual_signature, expected_signature, dedent=True, fuzzy_match=True
+        )
+
     # ///////////////////////////////////////////////////////////////////////
 
     # TODO(gp): This needs to be moved to `helper.git` and generalized.
