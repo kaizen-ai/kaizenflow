@@ -13,6 +13,18 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
     the parent class.
     """
 
+    def test_is_online1(self) -> None:
+        # Prepare inputs.
+        asset_ids = [1467591036]
+        columns: List[str] = []
+        columns_remap = None
+        market_data = self._build_client(asset_ids, columns, columns_remap)
+        # Run.
+        actual = market_data.is_online()
+        self.assertTrue(actual)
+
+    # //////////////////////////////////////////////////////////////////////////////
+
     def test_get_data_for_last_period1(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
@@ -310,15 +322,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         wall_clock_time = pd.Timestamp("2018-08-17T00:01:00")
         # Run.
         self._test_should_be_online1(market_data, wall_clock_time)
-
-    def test_is_online1(self) -> None:
-        # Prepare inputs.
-        asset_ids = [1467591036]
-        columns: List[str] = []
-        columns_remap = None
-        market_data = self._build_client(asset_ids, columns, columns_remap)
-        # Run.
-        self._test_is_online1(market_data)
 
     # //////////////////////////////////////////////////////////////////////////////
 

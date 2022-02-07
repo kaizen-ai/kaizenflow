@@ -4,6 +4,7 @@ Import as:
 import market_data.test.market_data_test_case as mdtmdtca
 """
 
+import abc
 import logging
 from typing import Any, List, Optional, Union
 
@@ -60,6 +61,15 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
     """
     Test `get_data*()` methods for a class derived from `AbstractMarketData`.
     """
+
+    @abc.abstractmethod
+    def test_is_online1(self) -> None:
+        """
+        Test whether the DB is on-line at the current time.
+        """
+        ...
+
+    # //////////////////////////////////////////////////////////////////////////////
 
     @staticmethod
     def _test_get_data_for_last_period(
@@ -362,15 +372,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         """
         # Run.
         actual = market_data.should_be_online(wall_clock_time)
-        # Check output.
-        self.assertTrue(actual)
-
-    def _test_is_online1(self, market_data: mdata.AbstractMarketData) -> None:
-        """
-        Test whether the DB is on-line at the current time.
-        """
-        # Run.
-        actual = market_data.is_online()
         # Check output.
         self.assertTrue(actual)
 
