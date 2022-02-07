@@ -50,17 +50,15 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         _vendors = ["CCXT", "CDD"]
         hdbg.dassert_in(vendor, _vendors)
         self._vendor = vendor
+        super().__init__()
 
-    def get_universe(self, as_asset_ids: bool) -> List[icdc.FullSymbol]:
+    def get_universe(self) -> List[icdc.FullSymbol]:
         """
         See description in the parent class.
         """
-        universe = imvccunun.get_vendor_universe(
-            vendor=self._vendor, as_asset_ids=as_asset_ids
-        )
+        universe = imvccunun.get_vendor_universe(vendor=self._vendor)
         return universe  # type: ignore[no-any-return]
 
-    # TODO(gp): This is ok for this class, but not needed for the ancestor classes.
     def _apply_vendor_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
         """
         Input data is indexed with numbers and looks like:
@@ -70,7 +68,6 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         1    1631145660000  3496.36  3501.59  3495.69  3501.59  401.9576  ETH_USDT      binance
         2    1631145720000  3501.59  3513.10  3499.89  3513.09  579.5656  ETH_USDT      binance
         ```
-
         Output data is indexed by timestamp and looks like:
         ```
                                    open        currency_pair exchange_id
@@ -190,6 +187,8 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
         sql_query = " WHERE ".join([sql_query, sql_conditions])
         # Execute SQL query.
         data = pd.read_sql(sql_query, self._connection, **read_sql_kwargs)
+        # Normalize data according to the vendor.
+        data = self._apply_vendor_normalization(data)
         return data
 
 
@@ -202,7 +201,8 @@ class CcxtCddCsvParquetByAssetClient(
     CcxtCddClient, icdc.ImClientReadingOneSymbol
 ):
     """
-    Read data from a CSV or Parquet file storing data for a single `CCXT` or `CDD` asset.
+    Read data from a CSV or Parquet file storing data for a single `CCXT` or
+    `CDD` asset.
 
     It can read data from local or S3 filesystem as backend.
 
@@ -237,7 +237,8 @@ class CcxtCddCsvParquetByAssetClient(
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
             not extension.startswith("."),
-            "The extension %s should not start with '.'", extension
+            "The extension %s should not start with '.'",
+            extension,
         )
         self._extension = extension
         self._data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
@@ -311,6 +312,8 @@ class CcxtCddCsvParquetByAssetClient(
         # Add required columns.
         data["exchange_id"] = exchange_id
         data["currency_pair"] = currency_pair
+        # Normalize data according to the vendor.
+        data = self._apply_vendor_normalization(data)
         return data
 
     def _get_file_path(

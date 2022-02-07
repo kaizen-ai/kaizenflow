@@ -107,7 +107,7 @@
 
 ## Output format of `MarketData`
 - The base `MarketData` normalizes the data by:
-    - transforming by the base `MarketData` class
+    - sorting by the columns that correspond to `end_time` and `asset_id`
     - indexing by the column that corresponds to `end_time`, so that it is suitable
       to DataFlow computation
 - E.g.,
