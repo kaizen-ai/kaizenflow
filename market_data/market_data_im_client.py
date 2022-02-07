@@ -102,7 +102,7 @@ class ImClientMarketData(mdabmada.MarketData):
             # If `asset_ids` is None, get all assets from the universe.
             as_asset_ids = True
             asset_ids = self._im_client.get_universe(as_asset_ids)
-        # Convert numeric ids to full symbols to read `im` data.
+        # Convert numerical ids to full symbols to read `im` data.
         full_symbols = self._im_client.get_full_symbols_from_numerical_ids(
             asset_ids
         )

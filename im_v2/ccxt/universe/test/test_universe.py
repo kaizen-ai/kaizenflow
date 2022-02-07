@@ -29,7 +29,7 @@ class TestGetVendorUniverse(hunitest.TestCase):
 
     def test2(self) -> None:
         """
-        Test that universe as numeric ids is received correctly.
+        Test that universe as numerical ids is received correctly.
         """
         universe_as_numerical_ids = imvccunun.get_vendor_universe(
             version="small", vendor="CCXT", as_asset_ids=True

@@ -176,7 +176,7 @@ class ImClient(abc.ABC):
         """
         Return the entire universe of valid full symbols.
 
-        :param as_asset_ids: if True return universe as numeric ids,
+        :param as_asset_ids: if True return universe as numerical ids,
             otherwise universe as full symbols
         """
 
