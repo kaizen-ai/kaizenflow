@@ -81,7 +81,6 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
         asset_ids: Optional[List[int]],
         left_close: bool,
         right_close: bool,
-        normalize_data: bool,
         limit: Optional[int],
     ) -> pd.DataFrame:
         """
@@ -129,9 +128,8 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
             # Keep only top N records.
             hdbg.dassert_lte(1, limit)
             market_data = market_data.head(limit)
-        if normalize_data:
-            # Prepare data for normalization.
-            market_data = self._convert_data_for_normalization(market_data)
+        # Prepare data for normalization by the parent class.
+        market_data = self._convert_data_for_normalization(market_data)
         return market_data
 
     def _convert_data_for_normalization(self, df: pd.DataFrame) -> pd.DataFrame:
