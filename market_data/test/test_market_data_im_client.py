@@ -20,11 +20,8 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         timedelta = pd.Timedelta("1D")
-        normalize_data = True
         # Run.
-        self._test_get_data_for_last_period(
-            market_data, timedelta, normalize_data
-        )
+        self._test_get_data_for_last_period(market_data, timedelta)
 
     def test_get_data_for_last_period2(self) -> None:
         # Prepare inputs.
@@ -33,11 +30,8 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         timedelta = pd.Timedelta("2D")
-        normalize_data = True
         # Run.
-        self._test_get_data_for_last_period(
-            market_data, timedelta, normalize_data
-        )
+        self._test_get_data_for_last_period(market_data, timedelta)
 
     def test_get_data_for_last_period3(self) -> None:
         # Prepare inputs.
@@ -46,11 +40,8 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         timedelta = pd.Timedelta("1W")
-        normalize_data = True
         # Run.
-        self._test_get_data_for_last_period(
-            market_data, timedelta, normalize_data
-        )
+        self._test_get_data_for_last_period(market_data, timedelta)
 
     def test_get_data_for_last_period4(self) -> None:
         # Prepare inputs.
@@ -59,11 +50,8 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         timedelta = pd.Timedelta("10T")
-        normalize_data = True
         # Run.
-        self._test_get_data_for_last_period(
-            market_data, timedelta, normalize_data
-        )
+        self._test_get_data_for_last_period(market_data, timedelta)
 
     def test_get_data_for_last_period5(self) -> None:
         # Prepare inputs.
@@ -72,11 +60,8 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         timedelta = pd.Timedelta("5T")
-        normalize_data = True
         # Run.
-        self._test_get_data_for_last_period(
-            market_data, timedelta, normalize_data
-        )
+        self._test_get_data_for_last_period(market_data, timedelta)
 
     def test_get_data_for_last_period6(self) -> None:
         # Prepare inputs.
@@ -85,11 +70,8 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         timedelta = pd.Timedelta("1T")
-        normalize_data = True
         # Run.
-        self._test_get_data_for_last_period(
-            market_data, timedelta, normalize_data
-        )
+        self._test_get_data_for_last_period(market_data, timedelta)
 
     def test_get_data_for_last_period7(self) -> None:
         # Prepare inputs.
@@ -98,11 +80,8 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         timedelta = pd.Timedelta("365D")
-        normalize_data = True
         # Run.
-        self._test_get_data_for_last_period(
-            market_data, timedelta, normalize_data
-        )
+        self._test_get_data_for_last_period(market_data, timedelta)
 
     def test_get_data_at_timestamp1(self) -> None:
         # Prepare inputs.
@@ -111,7 +90,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
-        normalize_data = True
         # pylint: disable=line-too-long
         exp_df_as_str = r"""# df=
         df.index in [2018-08-16 20:05:00-04:00, 2018-08-16 20:05:00-04:00]
@@ -125,7 +103,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         # pylint: enable=line-too-long
         # Run.
         self._test_get_data_at_timestamp1(
-            market_data, ts, asset_ids, normalize_data, exp_df_as_str
+            market_data, ts, asset_ids, exp_df_as_str
         )
 
     @pytest.mark.skip(reason="CmTask882.")
@@ -197,35 +175,6 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         # pylint: disable=line-too-long
         exp_df_as_str = r"""# df=
-        df.index in [2018-08-17 00:01:00+00:00, 2018-08-17 00:04:00+00:00]
-        df.columns=asset_id,full_symbol,open,high,low,close,volume,currency_pair,exchange_id
-        df.shape=(8, 9)
-                                     asset_id        full_symbol         open         high          low        close     volume currency_pair exchange_id
-        timestamp
-        2018-08-17 00:01:00+00:00  1467591036  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206      BTC_USDT     binance
-        2018-08-17 00:01:00+00:00  3187272957   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500      ETH_USDT      kucoin
-        2018-08-17 00:02:00+00:00  1467591036  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226      BTC_USDT     binance
-        ...
-        2018-08-17 00:03:00+00:00  3187272957   kucoin::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260      ETH_USDT      kucoin
-        2018-08-17 00:04:00+00:00  1467591036  binance::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586      BTC_USDT     binance
-        2018-08-17 00:04:00+00:00  3187272957   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655      ETH_USDT      kucoin
-        """
-        # pylint: enable=line-too-long
-        # Run.
-        self._test_get_data_for_interval3(
-            market_data, start_ts, end_ts, asset_ids, exp_df_as_str
-        )
-
-    def test_get_data_for_interval4(self) -> None:
-        # Prepare inputs.
-        asset_ids = [3187272957, 1467591036]
-        columns: List[str] = []
-        columns_remap = None
-        market_data = self._build_client(asset_ids, columns, columns_remap)
-        start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
-        end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
-        # pylint: disable=line-too-long
-        exp_df_as_str = r"""# df=
         df.index in [2018-08-16 20:01:00-04:00, 2018-08-16 20:05:00-04:00]
         df.columns=asset_id,full_symbol,open,high,low,close,volume,currency_pair,exchange_id,start_ts
         df.shape=(10, 10)
@@ -241,11 +190,11 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # pylint: enable=line-too-long
         # Run.
-        self._test_get_data_for_interval4(
+        self._test_get_data_for_interval3(
             market_data, start_ts, end_ts, asset_ids, exp_df_as_str
         )
 
-    def test_get_data_for_interval5(self) -> None:
+    def test_get_data_for_interval4(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
         columns: List[str] = []
@@ -270,11 +219,11 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # pylint: enable=line-too-long
         # Run.
-        self._test_get_data_for_interval5(
+        self._test_get_data_for_interval4(
             market_data, start_ts, end_ts, asset_ids, exp_df_as_str
         )
 
-    def test_get_data_for_interval6(self) -> None:
+    def test_get_data_for_interval5(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
         columns: List[str] = []
@@ -298,7 +247,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # pylint: enable=line-too-long
         # Run.
-        self._test_get_data_for_interval6(
+        self._test_get_data_for_interval5(
             market_data, start_ts, end_ts, asset_ids, exp_df_as_str
         )
 
