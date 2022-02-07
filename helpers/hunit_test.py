@@ -22,6 +22,7 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hintrospection as hintros
 import helpers.hio as hio
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
@@ -1482,30 +1483,76 @@ class TestCase(unittest.TestCase):
             - If `None`, skip the check
         :param expected_signature: expected outcome dataframe as string
         """
+        hdbg.dassert_isinstance(actual_df, pd.DataFrame)
+        hdbg.dassert_lt(0, actual_df.shape[0])
         if expected_length:
             # Verify that output length is correct.
-            self.assertEqual(expected_length, actual_df.shape[0])
+            self.assert_equal(str(expected_length), str(actual_df.shape[0]))
         if expected_column_names:
             # Verify that column names are correct.
-            self.assertEqual(sorted(expected_column_names), sorted(actual_df.columns))
+            self.assert_equal(
+                str(sorted(expected_column_names)), str(sorted(actual_df.columns))
+            )
         if expected_column_unique_values:
             hdbg.dassert_is_subset(
                 list(expected_column_unique_values.keys()), actual_df.columns
             )
             # Verify that unique values in specified columns are correct.
-            for column in expected_column_values:
+            for column in expected_column_unique_values:
                 actual_one_column_unique_values = sorted(
-                    list(actual_df[column].dropna().unique())
+                    list(actual_df[column].unique())
                 )
-                self.assertEqual(
-                    sorted(expected_column_unique_values[column]),
-                    actual_one_column_unique_values,
+                self.assert_equal(
+                    str(sorted(expected_column_unique_values[column])),
+                    str(actual_one_column_unique_values),
                 )
         # Build signature.
         actual_signature = hpandas.df_to_str(
-            actual, print_shape_info=True, tag="df",
+            actual_df,
+            print_shape_info=True,
+            tag="df",
         )
-        _LOG.debug("\n%s", hpandas.df_to_str(actual))
+        _LOG.debug("\n%s", actual_signature)
+        # Check signature.
+        self.assert_equal(
+            actual_signature, expected_signature, dedent=True, fuzzy_match=True
+        )
+
+    def check_srs_output(
+        self,
+        actual_srs: pd.Series,
+        expected_length: Optional[int],
+        expected_unique_values: Optional[List[Any]],
+        expected_signature: str,
+    ) -> None:
+        """
+        Verify that actual outcome series matches the expected one.
+
+        :param actual_srs: actual outcome series
+        :param expected_length: expected outcome series length
+            - If `None`, skip the check
+        :param expected_unique_values: list of expected unique values in series
+            - If `None`, skip the check
+        :param expected_signature: expected outcome series as string
+        """
+        hdbg.dassert_isinstance(actual_srs, pd.Series)
+        hdbg.dassert_lt(0, actual_srs.shape[0])
+        if expected_length:
+            # Verify that output length is correct.
+            self.assert_equal(str(expected_length), str(actual_srs.shape[0]))
+        if expected_unique_values:
+            # Verify that unique values in series are correct.
+            self.assert_equal(
+                str(sorted(expected_unique_values)),
+                str(sorted(list(actual_srs.unique()))),
+            )
+        # Build signature.
+        actual_signature = hpandas.df_to_str(
+            actual_srs,
+            print_shape_info=True,
+            tag="srs",
+        )
+        _LOG.debug("\n%s", actual_signature)
         # Check signature.
         self.assert_equal(
             actual_signature, expected_signature, dedent=True, fuzzy_match=True
@@ -1706,5 +1753,3 @@ class QaTestCase(TestCase, abc.ABC):
     This unit test is used for QA to test functionalities (e.g., invoke tasks)
     that run the dev / prod container.
     """
-
-    pass
