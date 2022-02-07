@@ -29,7 +29,6 @@ import helpers.hintrospection as hintros
 import helpers.hio as hio
 import helpers.hlist as hlist
 import helpers.hprint as hprint
-import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
 import helpers.htable as htable
 import helpers.hversion as hversio
@@ -2261,7 +2260,9 @@ def docker_cmd(  # type: ignore
     _report_task()
     hdbg.dassert_ne(cmd, "")
     # TODO(gp): Do we need to overwrite the entrypoint?
-    docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd, use_bash=use_bash)
+    docker_cmd_ = _get_docker_cmd(
+        base_image, stage, version, cmd, use_bash=use_bash
+    )
     _docker_cmd(ctx, docker_cmd_)
 
 
@@ -3693,10 +3694,14 @@ def run_coverage_report(  # type: ignore
     # Test files are excluded from the reports.
     exclude_from_report = "*/test/*"
     # Generate text report with the coverage stats.
-    report_cmd.append(f"coverage report --include={include_in_report} --omit={exclude_from_report} --sort=Cover")
+    report_cmd.append(
+        f"coverage report --include={include_in_report} --omit={exclude_from_report} --sort=Cover"
+    )
     if generate_html_report:
         # Generate HTML report with the coverage stats.
-        report_cmd.append(f"coverage html --include={include_in_report} --omit={exclude_from_report}")
+        report_cmd.append(
+            f"coverage html --include={include_in_report} --omit={exclude_from_report}"
+        )
     # Execute commands above one-by-one inside docker. Coverage tool is not
     # installed outside docker.
     full_report_cmd = " && ".join(report_cmd)
