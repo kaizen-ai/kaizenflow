@@ -2,6 +2,14 @@
 """
 Compare daily data on DB and S3, raising when difference was found.
 
+Use as:
+# Compare daily S3 and realtime data for binance.
+> im_v2/ccxt/data/extract/compare_realtime_and_historical.py \
+   --db_stage 'dev' \
+   --db_table 'ccxt_ohlcv' \
+    --aws_profile 'ck' \
+    --s3_path 's3://cryptokaizen-historical-data/binance_daily/'
+
 Import as:
 
 import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
