@@ -688,7 +688,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             run \
             --rm \
             app \
-            bash -c 'ls && cd .'
+            bash -c 'ls && cd ..'
         """
         self._check(act, exp)
 
