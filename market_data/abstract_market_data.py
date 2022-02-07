@@ -73,10 +73,10 @@ class AbstractMarketData(abc.ABC):
     - In general do not access data directly but rely on `ImClient` objects to
       retrieve the data from different backends
 
-    # Data format
-    - The data from this class has the following format:
-        - transformed by the base `MarketData` class
-        - indexed by the column that corresponds to `end_time`, so that it is suitable
+    # Output format
+    - The class normalizes the data by:
+        - sorting by the columns that correspond to `end_time` and `asset_id`
+        - indexing by the column that corresponds to `end_time`, so that it is suitable
           to DataFlow computation
     - E.g.,
     ```
@@ -274,7 +274,7 @@ class AbstractMarketData(abc.ABC):
         # TODO(gp): Check data with respect to start_ts, end_ts.
         # Normalize data.
         df = self._normalize_data(df)
-        # Convert start and end timestamps to `self._timezone`.
+        # Convert start and end timestamps to the timezone specified in the ctor.
         df = self._convert_timestamps_to_timezone(df)
         # Remap column names.
         df = self._remap_columns(df)
