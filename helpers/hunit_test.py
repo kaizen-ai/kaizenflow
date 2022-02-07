@@ -1461,7 +1461,7 @@ class TestCase(unittest.TestCase):
         _LOG.debug(hprint.to_str("outcome_updated file_exists is_equal"))
         return outcome_updated, file_exists, is_equal
 
-    def _check_df_output(
+    def check_df_output(
         self,
         actual_df: pd.DataFrame,
         expected_length: Optional[int],
