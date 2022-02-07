@@ -660,6 +660,38 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         """
         self._check(act, exp)
 
+    def test_docker_bash5(self) -> None:
+        """
+        Command for running through a shell.
+        """
+        base_image = ""
+        stage = "dev"
+        version = "1.0.0"
+        cmd = "ls && cd .."
+        entrypoint = True
+        print_docker_config = False
+        use_bash = True
+        act = hlibtask._get_docker_cmd(
+            base_image,
+            stage,
+            version,
+            cmd,
+            entrypoint=entrypoint,
+            print_docker_config=print_docker_config,
+            use_bash=use_bash,
+        )
+        exp = r"""
+        IMAGE=$AM_ECR_BASE_PATH/amp_test:dev-1.0.0 \
+            docker-compose \
+            --file $GIT_ROOT/devops/compose/docker-compose.yml \
+            --env-file devops/env/default.env \
+            run \
+            --rm \
+            app \
+            bash -c 'ls && cd .'
+        """
+        self._check(act, exp)
+
     @pytest.mark.skipif(
         not hgit.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
     )

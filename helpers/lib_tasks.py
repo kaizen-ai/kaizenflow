@@ -2086,7 +2086,7 @@ def _get_docker_cmd(
     :param as_user: pass the user / group id or not
     :param extra_env_vars: represent vars to add, e.g., `["PORT=9999", "DRY_RUN=1"]`
     :param print_docker_config: print the docker config for debugging purposes
-    :param use_bash: use `bash` instead of the default `sh`
+    :param use_bash: run command through a shell
     """
     hprint.log(
         _LOG,
@@ -2195,7 +2195,7 @@ def _get_docker_cmd(
                 cmd = f"bash -c '{cmd}'"
             docker_cmd_.append(
                 rf"""
-                {cmd}"""
+        {cmd}"""
             )
     else:
         docker_cmd_.append(
