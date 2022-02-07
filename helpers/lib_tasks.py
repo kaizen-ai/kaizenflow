@@ -2078,13 +2078,15 @@ def _get_docker_cmd(
     entrypoint: bool = True,
     as_user: bool = True,
     print_docker_config: bool = False,
+    use_bash: bool = False,
 ) -> str:
     """
     :param base_image, stage, version: like in `get_image()`
     :param cmd: command to run inside Docker container
     :param as_user: pass the user / group id or not
     :param extra_env_vars: represent vars to add, e.g., `["PORT=9999", "DRY_RUN=1"]`
-    :param print_config: print the docker config for debugging purposes
+    :param print_docker_config: print the docker config for debugging purposes
+    :param use_bash: use `bash` instead of the default `sh`
     """
     hprint.log(
         _LOG,
@@ -2189,9 +2191,11 @@ def _get_docker_cmd(
         {service_name}"""
         )
         if cmd:
+            if use_bash:
+                cmd = f"bash -c '{cmd}'"
             docker_cmd_.append(
                 rf"""
-        {cmd}"""
+                {cmd}"""
             )
     else:
         docker_cmd_.append(
@@ -2249,7 +2253,7 @@ def docker_bash(  # type: ignore
 
 @task
 def docker_cmd(  # type: ignore
-    ctx, base_image="", stage="dev", version="", cmd=""
+    ctx, base_image="", stage="dev", version="", cmd="", use_bash=False
 ):
     """
     Execute the command `cmd` inside a container corresponding to a stage.
@@ -2257,7 +2261,7 @@ def docker_cmd(  # type: ignore
     _report_task()
     hdbg.dassert_ne(cmd, "")
     # TODO(gp): Do we need to overwrite the entrypoint?
-    docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd)
+    docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd, use_bash=use_bash)
     _docker_cmd(ctx, docker_cmd_)
 
 
@@ -3696,7 +3700,7 @@ def run_coverage_report(  # type: ignore
     # Execute commands above one-by-one inside docker. Coverage tool is not
     # installed outside docker.
     full_report_cmd = " && ".join(report_cmd)
-    docker_cmd_ = f"invoke docker_cmd --cmd '{full_report_cmd}'"
+    docker_cmd_ = f"invoke docker_cmd --use-bash --cmd '{full_report_cmd}'"
     _run(ctx, docker_cmd_)
     if publish_html_on_s3:
         # Publish HTML report on S3.
