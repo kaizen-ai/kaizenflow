@@ -128,7 +128,7 @@ class ImClient(abc.ABC):
             df_tmp = self._apply_im_normalizations(
                 df_tmp, full_symbol_col_name, start_ts, end_ts
             )
-            self._dassert_is_valid(df_tmp, full_symbol_col_name)
+            self._dassert_is_valid(df_tmp, full_symbol_col_name, start_ts, end_ts)
             dfs.append(df_tmp)
         df = pd.concat(dfs, axis=0)
         _LOG.debug("After im_normalization: df=\n%s", hpandas.df_to_str(df))
@@ -296,7 +296,12 @@ class ImClient(abc.ABC):
 
     # TODO(gp): @Grisha -> _dassert_output_data_is_valid
     @staticmethod
-    def _dassert_is_valid(df: pd.DataFrame, full_symbol_col_name: str) -> None:
+    def _dassert_is_valid(
+        df: pd.DataFrame,
+        full_symbol_col_name: str,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+    ) -> None:
         """
         Verify that the normalized data is valid.
         """
@@ -324,10 +329,11 @@ class ImClient(abc.ABC):
         hdbg.dassert_eq(
             n_duplicated_rows, 0, msg="There are duplicated rows in the data"
         )
-        # TODO(gp): @Grisha pass start_ts and end_ts and have a check
-        # # Ensure that all the data is in [start_ts, end_ts].
-        #  dassert_lte(start_ts, index.min)
-        #  dassert_lte(index.max, end_ts)
+        # Ensure that all the data is in [start_ts, end_ts].
+        if start_ts:
+            hdbg.dassert_lte(start_ts, df.index.min())
+        if end_ts:
+            hdbg.dassert_lte(df.index.max(), end_ts)
 
 
 # #############################################################################
