@@ -57,7 +57,7 @@ def _check_output(
 # #############################################################################
 
 
-class MarketData_get_data_TestCase(hunitest.TestCase):
+class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
     """
     Test `get_data*()` methods for a class derived from `AbstractMarketData`.
     """
