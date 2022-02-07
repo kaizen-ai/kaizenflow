@@ -3,17 +3,6 @@ Import as:
 
 import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
 """
-
-# DF1 = reading from S3 bucket for 24 hours
-# DF2 = SELECT FROM over 24 hours
-
-# Remove "ended_downloaded_at" and "knowledge_time"
-# Make timestamp an index
-
-# Comparison 1: compare TIMESTAMP column, which ones are missing; print.
-
-# Comparison 2: take timestamps present in both, compare row-by-row.
-
 import argparse
 
 import pandas as pd
@@ -26,53 +15,53 @@ import helpers.hsql as hsql
 import im_v2.im_lib_tasks as imvimlita
 
 
+def reindex_on_asset_and_ts(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Reindex data on currency pair and timestamp.
+
+    Drops timestamps for downloading and saving.
+    """
+    # Drop download data timestamps.
+    data_reindex = data.drop(
+        ["ended_downloaded_at", "knowledge_time"], axis=1
+    )
+    # Reindex on ts and asset.
+    data_reindex = data_reindex.set_index(["timestamp", "currency_pair"])
+    return data_reindex
+
+
 def find_gaps(rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> pd.DataFrame:
     """
-    
+    Find data present in one dataframe and missing in other.
+
+    :param rt_data: data downloaded in real time
+    :param daily_data: data saved to S3, downloaded once daily
+    :return: two dataframes with data missing in respective downloads
     """
-    rt_data_reindex = rt_data.drop(
-        ["ended_downloaded_at", "knowledge_time"], axis=1
-    )
-    rt_data_reindex = rt_data_reindex.set_index(["timestamp", "currency_pair"])
-    daily_data_reindex = daily_data.drop(
-        ["ended_downloaded_at", "knowledge_time"], axis=1
-    )
-    daily_data_reindex = daily_data_reindex.set_index(
-        ["timestamp", "currency_pair"]
-    )
     # Get data present in daily, but not present in rt.
-    rt_missing_indices = daily_data_reindex.index.difference(
-        rt_data_reindex.index
+    rt_missing_indices = rt_data.index.difference(
+        rt_data.index
     )
-    rt_missing_data = daily_data_reindex.loc[rt_missing_indices]
+    rt_missing_data = rt_data.loc[rt_missing_indices]
     # Get data present in rt, but not present in daily.
-    daily_missing_indices = rt_data_reindex.index.difference(
-        rt_data_reindex.index
+    daily_missing_indices = daily_data.index.difference(
+        rt_data.index
     )
-    daily_missing_data = rt_data_reindex.loc[daily_missing_indices]
+    daily_missing_data = rt_data.loc[daily_missing_indices]
     return rt_missing_data, daily_missing_data
 
 
 def compare_rows(rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> pd.DataFrame:
     """
-    
+    Compare contents of rows with same indices.
+
+
     """
-    #
-    rt_data_reindex = rt_data.drop(
-        ["ended_downloaded_at", "knowledge_time"], axis=1
-    )
-    rt_data_reindex = rt_data_reindex.set_index(["timestamp", "currency_pair"])
-    daily_data_reindex = daily_data.drop(
-        ["ended_downloaded_at", "knowledge_time"], axis=1
-    )
-    daily_data_reindex = daily_data_reindex.set_index(
-        ["timestamp", "currency_pair"]
-    )
     #
     idx_intersection = rt_data.index.intersection(daily_data.intersection)
     # Get difference between daily data and rt data.
-    data_difference = daily_data_reindex.loc[idx_intersection].compare(
-        rt_data_reindex.loc[idx_intersection]
+    data_difference = daily_data.loc[idx_intersection].compare(
+        rt_data.loc[idx_intersection]
     )
     return data_difference
 
@@ -81,6 +70,13 @@ def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
+    )
+    parser.add_argument(
+        "--db_stage",
+        action="store",
+        required=True,
+        type=str,
+        help="DB stage to use",
     )
     parser.add_argument(
         "--db_table",
@@ -92,6 +88,7 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser = hparser.add_verbosity_arg(parser)
     parser = hs3.add_s3_args(parser)
+    return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
@@ -132,3 +129,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     rt_missing_data, daily_missing_data = find_gaps(rt_data, daily_data)
     # Compare dataframe contents.
     compare_rows(rt_data, daily_data)
+
+
+if __name__ == "__main__":
+    _main(_parse())
