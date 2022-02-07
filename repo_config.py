@@ -68,3 +68,13 @@ def has_dind_support() -> bool:
     Return whether this repo image supports Docker-in-Docker.
     """
     return True
+
+
+def get_html_bucket_path() -> str:
+    """
+    Return the path to the bucket where published HTMLs are stored.
+    """
+    html_bucket = "cryptokaizen-html"
+    # We do not use `os.path.join` since it converts `s3://` to `s3:/`.
+    html_bucket_path = "s3://" + html_bucket
+    return html_bucket_path

@@ -3621,57 +3621,12 @@ def run_qa_tests(  # type: ignore
         raise RuntimeError(msg)
 
 
-@task
-def run_coverage_report(ctx, target_dir, publish_html_on_s3=True):  # type: ignore
-    """
-    Compute test coverage stats.
-
-    The flow is:
-       - Run tests and compute coverage stats for each test type
-       - Combine coverage stats in a single file
-       - Generate a text report
-       - Generate a HTML report
-          - Post it on S3 if specified
-
-    :param target_dir: directory to compute coverage stats for
-    :param publish_html_on_s3: whether to publish HTML coverage report or no
-    """
-    # TODO(Grisha): allow user to specify which tests to run.
-    # Run tests for the target dir and collect coverage stats.
-    cmd = f"invoke run_fast_tests --coverage -p {target_dir}; cp .coverage .coverage_fast_tests"
-    _run(ctx, cmd)
-    cmd = f"invoke run_slow_tests --coverage -p {target_dir}; cp .coverage .coverage_slow_tests"
-    _run(ctx, cmd)
-    # Merge stats for fast and slow tests into single dir.
-    stats_merge_cmd = (
-        "coverage combine --keep .coverage_fast_tests .coverage_slow_tests"
-    )
-    # Only target dir is included in the reports.
-    include_in_report = f"*/{target_dir}/*"
-    # Test files are excluded from the reports.
-    exclude_from_report = "*/test/*"
-    # Generate text report with the coverage stats.
-    text_report_cmd = f"coverage report --include={include_in_report} --omit={exclude_from_report} --sort=Cover"
-    # TODO(Grisha): make HTML report optional.
-    # Generate HTML report with the coverage stats.
-    html_report_cmd = f"coverage html --include={include_in_report} --omit={exclude_from_report}"
-    # Execute commands above one-by-one inside docker. Coverage tool is not
-    # installed outside docker.
-    cmds_to_run = [stats_merge_cmd, text_report_cmd, html_report_cmd]
-    cmd = " && ".join(map(str, cmds_to_run))
-    docker_cmd_ = f"invoke docker_cmd --cmd '{cmd}'"
-    _run(ctx, docker_cmd_)
-    if publish_html_on_s3:
-        # Publish HTML report on S3.
-        _publish_html_coverage_report_on_s3()
-
-
-def _publish_html_coverage_report_on_s3() -> None:
+def _publish_html_coverage_report_on_s3(aws_profile: str) -> None:
     """
     Publish HTML coverage report on S3 so that it can be accessed via browser.
 
     Target S3 dir is constructed from linux user and Git branch name, e.g.
-    `s3://cryptokaizen-html/html_coverage/grisha_CmTask1047_fix_tests`.
+    `s3://...-html/html_coverage/grisha_CmTask1047_fix_tests`.
     """
     # Build the dir name from user and branch name.
     user = hsystem.get_user_name()
@@ -3680,19 +3635,72 @@ def _publish_html_coverage_report_on_s3() -> None:
     s3_html_coverage_dir = f"{user}_{branch_name}"
     # Get the full path to the dir.
     s3_html_base_dir = "html_coverage"
-    s3_html_bucket_path = hs3.get_html_bucket_path()
+    s3_html_bucket_path = hgit.execute_repo_config_code("get_html_bucket_path()")
     s3_html_coverage_path = os.path.join(
         s3_html_bucket_path, s3_html_base_dir, s3_html_coverage_dir
     )
     # Copy HTML coverage data from the local dir to S3.
     local_coverage_path = "./htmlcov"
-    # TODO(Grisha): do not hard-wire ck profile?
-    cp_cmd = f"aws s3 cp {local_coverage_path} {s3_html_coverage_path} --recursive --profile ck"
+    cp_cmd = f"aws s3 cp {local_coverage_path} {s3_html_coverage_path} --recursive --profile {aws_profile}"
     _LOG.info(
         "HTML coverage report is published on S3: path=`%s`",
         s3_html_coverage_path,
     )
     hsystem.system(cp_cmd)
+
+
+@task
+def run_coverage_report(  # type: ignore
+    ctx,
+    target_dir,
+    generate_html_report,
+    publish_html_on_s3,
+    aws_profile,
+):
+    """
+    Compute test coverage stats.
+
+    The flow is:
+       - Run tests and compute coverage stats for each test type
+       - Combine coverage stats in a single file
+       - Generate a text report
+       - Generate a HTML report (optional)
+          - Post it on S3 (optional)
+
+    :param target_dir: directory to compute coverage stats for
+    :param generate_html_report: whether to generate HTML coverage report or not
+    :param publish_html_on_s3: whether to publish HTML coverage report or not
+    :param aws_profile: the AWS profile to use for publishing HTML report
+    """
+    # TODO(Grisha): allow user to specify which tests to run.
+    # Run tests for the target dir and collect coverage stats.
+    fast_tests_cmd = f"invoke run_fast_tests --coverage -p {target_dir}; cp .coverage .coverage_fast_tests"
+    _run(ctx, fast_tests_cmd)
+    slow_tests_cmd = f"invoke run_slow_tests --coverage -p {target_dir}; cp .coverage .coverage_slow_tests"
+    _run(ctx, slow_tests_cmd)
+    #
+    report_cmd: List[str] = []
+    # Merge stats for fast and slow tests into single dir.
+    report_cmd.append(
+        "coverage combine --keep .coverage_fast_tests .coverage_slow_tests"
+    )
+    # Only target dir is included in the reports.
+    include_in_report = f"*/{target_dir}/*"
+    # Test files are excluded from the reports.
+    exclude_from_report = "*/test/*"
+    # Generate text report with the coverage stats.
+    report_cmd.append(f"coverage report --include={include_in_report} --omit={exclude_from_report} --sort=Cover")
+    if generate_html_report:
+        # Generate HTML report with the coverage stats.
+        report_cmd.append(f"coverage html --include={include_in_report} --omit={exclude_from_report}")
+    # Execute commands above one-by-one inside docker. Coverage tool is not
+    # installed outside docker.
+    full_report_cmd = " && ".join(report_cmd)
+    docker_cmd_ = f"invoke docker_cmd --cmd '{full_report_cmd}'"
+    _run(ctx, docker_cmd_)
+    if publish_html_on_s3:
+        # Publish HTML report on S3.
+        _publish_html_coverage_report_on_s3(aws_profile)
 
 
 # #############################################################################
