@@ -26,7 +26,7 @@ import helpers.hsql as hsql
 import im_v2.im_lib_tasks as imvimlita
 
 
-def find_gaps(rt_data, daily_data) -> pd.DataFrame:
+def find_gaps(rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> pd.DataFrame:
     """
     
     """
@@ -53,7 +53,7 @@ def find_gaps(rt_data, daily_data) -> pd.DataFrame:
     return rt_missing_data, daily_missing_data
 
 
-def compare_rows(rt_data, daily_data) -> pd.DataFrame:
+def compare_rows(rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> pd.DataFrame:
     """
     
     """
@@ -114,13 +114,20 @@ def _main(parser: argparse.ArgumentParser) -> None:
     end_datetime_str = end_datetime.strftime("%Y%m%d-%H%M%S")
     start_datetime_str = start_datetime.strftime("%Y%m%d-%H%M%S")
     daily_files = [
-        f for f in list_of_files if f.rstrip(".csv") <= end_datetime_str
+        f
+        for f in list_of_files
+        if f.split("/")[-1].rstrip(".csv") <= end_datetime_str
     ]
     daily_files = [
-        f for f in list_of_files if f.rstrip(".csv") >= start_datetime_str
+        f
+        for f in daily_files
+        if f.split("/")[-1].rstrip(".csv") >= start_datetime_str
     ]
-    # TODO(Danya): Reindex dataframes before comparison, outside of functions.
-    daily_data = pd.DataFrame()
+    daily_data = []
+    for file in daily_files:
+        with s3fs_.open(file) as f:
+            daily_data.append(pd.read_csv(f))
+    daily_data = pd.concat(daily_data)
     # Get missing data.
     rt_missing_data, daily_missing_data = find_gaps(rt_data, daily_data)
     # Compare dataframe contents.
