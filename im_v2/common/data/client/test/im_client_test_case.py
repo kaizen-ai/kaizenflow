@@ -294,8 +294,7 @@ class ImClientTestCase(hunitest.TestCase):
         """
         # TODO(gp): We might want to sort actual and expected universe for
         #  stability.
-        # TODO(Grisha): add unit tests for `as_asset_ids=True` CMTask #822.
-        universe = im_client.get_universe(as_asset_ids=False)
+        universe = im_client.get_universe()
         actual_length = len(universe)
         actual_first_elements = universe[:3]
         actual_last_elements = universe[-3:]
