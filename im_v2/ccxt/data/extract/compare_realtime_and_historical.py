@@ -104,14 +104,21 @@ def _main(parser: argparse.ArgumentParser) -> None:
     env_file = imvimlita.get_db_env_path(args.db_stage)
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
-    # Connect to S3 filesystem, if provided.
-    hs3.get_s3fs(args.aws_profile)
-
     # Read DB realtime data.
     query = f"SELECT * FROM ccxt_ohlcv WHERE created_at >='{start_datetime}' and created_at <= {end_datetime}"
     rt_data = hsql.execute_query_to_df(connection, query)
-    # Read for the latest 24 hours.
-    # TODO(Danya): read S3 data from bucket.
+    # Connect to S3 filesystem, if provided.
+    s3fs_ = hs3.get_s3fs(args.aws_profile)
+    list_of_files = s3fs_.ls(args.s3_path)
+    # Filter files by timestamps in names.
+    end_datetime_str = end_datetime.strftime("%Y%m%d-%H%M%S")
+    start_datetime_str = start_datetime.strftime("%Y%m%d-%H%M%S")
+    daily_files = [
+        f for f in list_of_files if f.rstrip(".csv") <= end_datetime_str
+    ]
+    daily_files = [
+        f for f in list_of_files if f.rstrip(".csv") >= start_datetime_str
+    ]
     # TODO(Danya): Reindex dataframes before comparison, outside of functions.
     daily_data = pd.DataFrame()
     # Get missing data.
