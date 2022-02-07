@@ -1,4 +1,7 @@
+#!/usr/bin/env python
 """
+Compare daily data on DB and S3, raising when difference was found.
+
 Import as:
 
 import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
@@ -9,6 +12,7 @@ import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
@@ -22,9 +26,7 @@ def reindex_on_asset_and_ts(data: pd.DataFrame) -> pd.DataFrame:
     Drops timestamps for downloading and saving.
     """
     # Drop download data timestamps.
-    data_reindex = data.drop(
-        ["ended_downloaded_at", "knowledge_time"], axis=1
-    )
+    data_reindex = data.drop(["ended_downloaded_at", "knowledge_time"], axis=1)
     # Reindex on ts and asset.
     data_reindex = data_reindex.set_index(["timestamp", "currency_pair"])
     return data_reindex
@@ -39,14 +41,10 @@ def find_gaps(rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> pd.DataFrame:
     :return: two dataframes with data missing in respective downloads
     """
     # Get data present in daily, but not present in rt.
-    rt_missing_indices = rt_data.index.difference(
-        rt_data.index
-    )
+    rt_missing_indices = rt_data.index.difference(rt_data.index)
     rt_missing_data = rt_data.loc[rt_missing_indices]
     # Get data present in rt, but not present in daily.
-    daily_missing_indices = daily_data.index.difference(
-        rt_data.index
-    )
+    daily_missing_indices = daily_data.index.difference(rt_data.index)
     daily_missing_data = rt_data.loc[daily_missing_indices]
     return rt_missing_data, daily_missing_data
 
@@ -55,7 +53,9 @@ def compare_rows(rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> pd.DataFram
     """
     Compare contents of rows with same indices.
 
-
+    :param rt_data: data downloaded to DB in real time
+    :param daily_data: data downloaded to S3 once daily
+    :return: dataframe with data with same indices and different contents
     """
     #
     idx_intersection = rt_data.index.intersection(daily_data.intersection)
@@ -102,18 +102,19 @@ def _main(parser: argparse.ArgumentParser) -> None:
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
     # Read DB realtime data.
-    query = f"SELECT * FROM ccxt_ohlcv WHERE created_at >='{start_datetime}' and created_at <= {end_datetime}"
+    query = f"SELECT * FROM ccxt_ohlcv WHERE knowledge_time >='{start_datetime}'" \
+            f" AND knowledge_time <= {end_datetime}"
     rt_data = hsql.execute_query_to_df(connection, query)
+    rt_data_reindex = reindex_on_asset_and_ts(rt_data)
     # Connect to S3 filesystem, if provided.
     s3fs_ = hs3.get_s3fs(args.aws_profile)
-    list_of_files = s3fs_.ls(args.s3_path)
+    s3_files = s3fs_.ls(args.s3_path)
     # Filter files by timestamps in names.
+    #  Example of downloaded file name: '20210207-164012.csv'
     end_datetime_str = end_datetime.strftime("%Y%m%d-%H%M%S")
     start_datetime_str = start_datetime.strftime("%Y%m%d-%H%M%S")
     daily_files = [
-        f
-        for f in list_of_files
-        if f.split("/")[-1].rstrip(".csv") <= end_datetime_str
+        f for f in s3_files if f.split("/")[-1].rstrip(".csv") <= end_datetime_str
     ]
     daily_files = [
         f
@@ -125,10 +126,38 @@ def _main(parser: argparse.ArgumentParser) -> None:
         with s3fs_.open(file) as f:
             daily_data.append(pd.read_csv(f))
     daily_data = pd.concat(daily_data)
+    daily_data_reindex = reindex_on_asset_and_ts(daily_data)
     # Get missing data.
-    rt_missing_data, daily_missing_data = find_gaps(rt_data, daily_data)
+    rt_missing_data, daily_missing_data = find_gaps(
+        rt_data_reindex, daily_data_reindex
+    )
     # Compare dataframe contents.
-    compare_rows(rt_data, daily_data)
+    data_difference = compare_rows(rt_data_reindex, daily_data_reindex)
+    # Show difference and raise if one is found.
+    error_message = []
+    if not rt_missing_data.empty:
+        error_message.append("Missing real time data:")
+        error_message.append(
+            hpandas.get_df_signature(
+                rt_missing_data, num_rows=len(rt_missing_data)
+            )
+        )
+    if not daily_missing_data.empty:
+        error_message.append("Missing daily data:")
+        error_message.append(
+            hpandas.get_df_signature(
+                daily_missing_data, num_rows=len(daily_missing_data)
+            )
+        )
+    if not data_difference.empty:
+        error_message.append("Differing table contents:")
+        error_message.append(
+            hpandas.get_df_signature(
+                data_difference, num_rows=len(daily_missing_data)
+            )
+        )
+    if error_message:
+        hdbg.dfatal(message="\n".join(error_message))
 
 
 if __name__ == "__main__":
