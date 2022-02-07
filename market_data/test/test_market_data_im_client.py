@@ -311,6 +311,15 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         # Run.
         self._test_should_be_online1(market_data, wall_clock_time)
 
+    def test_is_online1(self) -> None:
+        # Prepare inputs.
+        asset_ids = [1467591036]
+        columns: List[str] = []
+        columns_remap = None
+        market_data = self._build_client(asset_ids, columns, columns_remap)
+        # Run.
+        self._test_is_online1(market_data)
+
     # //////////////////////////////////////////////////////////////////////////////
 
     @staticmethod
