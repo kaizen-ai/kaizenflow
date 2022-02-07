@@ -3653,9 +3653,9 @@ def _publish_html_coverage_report_on_s3(aws_profile: str) -> None:
 def run_coverage_report(  # type: ignore
     ctx,
     target_dir,
-    generate_html_report,
-    publish_html_on_s3,
-    aws_profile,
+    generate_html_report=True,
+    publish_html_on_s3=True,
+    aws_profile="ck",
 ):
     """
     Compute test coverage stats.
