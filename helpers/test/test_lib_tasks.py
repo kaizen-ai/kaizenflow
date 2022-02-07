@@ -1408,6 +1408,32 @@ class Test_get_files_to_process1(hunitest.TestCase):
         )
         self.assertEqual(files, [__file__])
 
+    def test_files2(self) -> None:
+        """
+        Pass through files from user.
+
+        Use two types of paths we don't want to process:
+          - non-existent python file
+          - pattern "/*" that matches no files
+        """
+        modified = False
+        branch = False
+        last_commit = False
+        all_ = False
+        files_from_user = "testfile1.py testfiles1/*"
+        mutually_exclusive = True
+        remove_dirs = True
+        files = hlibtask._get_files_to_process(
+            modified,
+            branch,
+            last_commit,
+            all_,
+            files_from_user,
+            mutually_exclusive,
+            remove_dirs,
+        )
+        self.assertEqual(files, [])
+
     def test_assert1(self) -> None:
         """
         Test that --modified and --branch together cause an assertion.

@@ -81,7 +81,6 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
         asset_ids: Optional[List[int]],
         left_close: bool,
         right_close: bool,
-        normalize_data: bool,
         limit: Optional[int],
     ) -> pd.DataFrame:
         """
@@ -99,13 +98,13 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
                 end_ts += pd.Timedelta(1, "ms")
         # TODO(gp): call dassert_is_valid_start_end_timestamp
         if not asset_ids:
-            # If `asset_ids` is None, get all assets from the universe.
-            as_asset_ids = True
-            asset_ids = self._im_client.get_universe(as_asset_ids)
-        # Convert numeric ids to full symbols to read `im` data.
-        full_symbols = self._im_client.get_full_symbols_from_numerical_ids(
-            asset_ids
-        )
+            # If asset ids are not provided, get universe as full symbols.
+            full_symbols = self._im_client.get_universe()
+        else:
+            # Convert asset ids to full symbols to read `im` data.
+            full_symbols = self._im_client.get_full_symbols_from_numerical_ids(
+                asset_ids
+            )
         # Load the data using `im_client`.
         market_data = self._im_client.read_data(
             full_symbols,
@@ -129,9 +128,8 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
             # Keep only top N records.
             hdbg.dassert_lte(1, limit)
             market_data = market_data.head(limit)
-        if normalize_data:
-            # Prepare data for normalization.
-            market_data = self._convert_data_for_normalization(market_data)
+        # Prepare data for normalization by the parent class.
+        market_data = self._convert_data_for_normalization(market_data)
         return market_data
 
     def _convert_data_for_normalization(self, df: pd.DataFrame) -> pd.DataFrame:
