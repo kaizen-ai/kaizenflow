@@ -234,7 +234,9 @@ def dassert_is_valid_interval(
     dassert_is_valid_timestamp(end_timestamp)
     # Check the requested interval.
     if start_timestamp is not None and end_timestamp is not None:
-        if left_close & right_close:
+        if left_close and right_close:
+            # If they are both closed, an interval like [a, a] makes sense,
+            # otherwise it doesn't.
             hdbg.dassert_lte(start_timestamp, end_timestamp)
         else:
             hdbg.dassert_lt(start_timestamp, end_timestamp)
