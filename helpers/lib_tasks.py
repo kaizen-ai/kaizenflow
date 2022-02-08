@@ -4259,7 +4259,7 @@ def lint_detect_cycles(  # type: ignore
     as_user = _run_docker_as_user(as_user)
     # Prepare the command line.
     docker_cmd_opts = [dir_name]
-    docker_cmd_ = "import_check/detect_import_cycles.py " + _to_single_line_cmd(
+    docker_cmd_ = "/app/import_check/detect_import_cycles.py " + _to_single_line_cmd(
         docker_cmd_opts
     )
     # Execute command line.
