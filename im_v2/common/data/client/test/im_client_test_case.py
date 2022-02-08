@@ -4,14 +4,12 @@ Import as:
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 """
 
-from typing import Any, List, Optional
+from typing import Any, List
 
 import pandas as pd
 
-import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 import im_v2.common.data.client as icdc
-
 
 # #############################################################################
 # ImClientTestCase
