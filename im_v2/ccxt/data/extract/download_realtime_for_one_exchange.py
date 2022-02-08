@@ -128,7 +128,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         data["currency_pair"] = currency_pair
         data["exchange_id"] = args.exchange_id
         # Get datetime of insertion in UTC.
-        data["knowledge_time"] = hdateti.get_current_time("UTC")
+        data["knowledge_timestamp"] = hdateti.get_current_time("UTC")
         # Insert data into the DB.
         hsql.execute_insert_query(
             connection=connection,
