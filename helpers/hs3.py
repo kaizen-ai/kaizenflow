@@ -136,11 +136,13 @@ def get_bucket() -> str:
 
 
 # TODO(gp): -> get_bucket_path() ?
+# TODO(Grisha): generalize for other buckets.
 def get_path() -> str:
     """
     Return the path to the default S3 bucket (e.g., `s3://alphamatic-data`).
     """
-    path = "s3://" + get_bucket()
+    bucket = get_bucket()
+    path = "s3://" + bucket
     return path
 
 
