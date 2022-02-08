@@ -2710,7 +2710,7 @@ def docker_push_prod_candidate_image(  # type: ignore
     _report_task()
     #
     docker_login(ctx)
-    # Push tag hash
+    # Push image with tagged with a hash ID.
     image_versioned_prod = get_image(base_image, "prod", None)
     cmd = f"docker push {image_versioned_prod}-{candidate}"
     _run(ctx, cmd, pty=True)
