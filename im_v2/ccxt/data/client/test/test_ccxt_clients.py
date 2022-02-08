@@ -24,7 +24,14 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         #
         expected_length = 100
         expected_column_names = [
-            "full_symbol", "open", "high", "low", "close", "volume", "currency_pair", "exchange_id"
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "currency_pair",
+            "exchange_id",
         ]
         expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT"]}
         # pylint: disable=line-too-long
@@ -34,7 +41,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         df.columns=full_symbol,open,high,low,close,volume,currency_pair,exchange_id
         df.shape=(100, 8)
                                          full_symbol     open     high      low    close     volume currency_pair exchange_id
-        timestamp                                                                                                            
+        timestamp
         2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.00  6319.04  6310.32  6311.64   9.967395      BTC_USDT     binance
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.64  6311.77  6302.81  6302.81  16.781206      BTC_USDT     binance
         2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.81  6306.00  6292.79  6297.26  55.373226      BTC_USDT     binance
@@ -59,9 +66,18 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         #
         expected_length = 199
         expected_column_names = [
-            "full_symbol", "open", "high", "low", "close", "volume", "currency_pair", "exchange_id"
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "currency_pair",
+            "exchange_id",
         ]
-        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]}
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+        }
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -69,7 +85,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         df.columns=full_symbol,open,high,low,close,volume,currency_pair,exchange_id
         df.shape=(199, 8)
                                          full_symbol         open         high          low        close     volume currency_pair exchange_id
-        timestamp                                                                                                                            
+        timestamp
         2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395      BTC_USDT     binance
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206      BTC_USDT     binance
         2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500      ETH_USDT      kucoin
@@ -95,9 +111,18 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         #
         expected_length = 196
         expected_column_names = [
-            "full_symbol", "open", "high", "low", "close", "volume", "currency_pair", "exchange_id"
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "currency_pair",
+            "exchange_id",
         ]
-        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]}
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+        }
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -105,7 +130,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         df.columns=full_symbol,open,high,low,close,volume,currency_pair,exchange_id
         df.shape=(196, 8)
                                          full_symbol         open         high          low        close     volume currency_pair exchange_id
-        timestamp                                                                                                                            
+        timestamp
         2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226      BTC_USDT     binance
         2018-08-17 00:02:00+00:00   kucoin::ETH_USDT   286.405988   286.405988   285.400193   285.400197   0.162255      ETH_USDT      kucoin
         2018-08-17 00:03:00+00:00  binance::BTC_USDT  6299.970000  6299.970000  6286.930000  6294.520000  34.611797      BTC_USDT     binance
@@ -132,9 +157,18 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         #
         expected_length = 9
         expected_column_names = [
-            "full_symbol", "open", "high", "low", "close", "volume", "currency_pair", "exchange_id"
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "currency_pair",
+            "exchange_id",
         ]
-        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]}
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+        }
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -142,7 +176,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         df.columns=full_symbol,open,high,low,close,volume,currency_pair,exchange_id
         df.shape=(9, 8)
                                          full_symbol         open         high          low        close     volume currency_pair exchange_id
-        timestamp                                                                                                                            
+        timestamp
         2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395      BTC_USDT     binance
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206      BTC_USDT     binance
         2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500      ETH_USDT      kucoin
@@ -170,9 +204,18 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         #
         expected_length = 8
         expected_column_names = [
-            "full_symbol", "open", "high", "low", "close", "volume", "currency_pair", "exchange_id"
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "currency_pair",
+            "exchange_id",
         ]
-        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]}
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+        }
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -180,7 +223,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         df.columns=full_symbol,open,high,low,close,volume,currency_pair,exchange_id
         df.shape=(8, 8)
                                          full_symbol         open         high          low        close     volume currency_pair exchange_id
-        timestamp                                                                                                                            
+        timestamp
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206      BTC_USDT     binance
         2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500      ETH_USDT      kucoin
         2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226      BTC_USDT     binance
@@ -262,7 +305,14 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         #
         expected_length = 100
         expected_column_names = [
-            "full_symbol", "open", "high", "low", "close", "volume", "currency_pair", "exchange_id"
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "currency_pair",
+            "exchange_id",
         ]
         expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT"]}
         # pylint: disable=line-too-long
@@ -272,7 +322,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         df.columns=full_symbol,open,high,low,close,volume,currency_pair,exchange_id
         df.shape=(100, 8)
                                          full_symbol     open     high      low    close     volume currency_pair exchange_id
-        timestamp                                                                                                            
+        timestamp
         2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.00  6319.04  6310.32  6311.64   9.967395      BTC_USDT     binance
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.64  6311.77  6302.81  6302.81  16.781206      BTC_USDT     binance
         2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.81  6306.00  6292.79  6297.26  55.373226      BTC_USDT     binance
@@ -297,9 +347,18 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         #
         expected_length = 199
         expected_column_names = [
-            "full_symbol", "open", "high", "low", "close", "volume", "currency_pair", "exchange_id"
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "currency_pair",
+            "exchange_id",
         ]
-        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]}
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+        }
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -307,7 +366,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         df.columns=full_symbol,open,high,low,close,volume,currency_pair,exchange_id
         df.shape=(199, 8)
                                          full_symbol         open         high          low        close     volume currency_pair exchange_id
-        timestamp                                                                                                                            
+        timestamp
         2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395      BTC_USDT     binance
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206      BTC_USDT     binance
         2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500      ETH_USDT      kucoin
@@ -333,9 +392,18 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         #
         expected_length = 196
         expected_column_names = [
-            "full_symbol", "open", "high", "low", "close", "volume", "currency_pair", "exchange_id"
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "currency_pair",
+            "exchange_id",
         ]
-        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]}
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+        }
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -343,7 +411,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         df.columns=full_symbol,open,high,low,close,volume,currency_pair,exchange_id
         df.shape=(196, 8)
                                          full_symbol         open         high          low        close     volume currency_pair exchange_id
-        timestamp                                                                                                                            
+        timestamp
         2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226      BTC_USDT     binance
         2018-08-17 00:02:00+00:00   kucoin::ETH_USDT   286.405988   286.405988   285.400193   285.400197   0.162255      ETH_USDT      kucoin
         2018-08-17 00:03:00+00:00  binance::BTC_USDT  6299.970000  6299.970000  6286.930000  6294.520000  34.611797      BTC_USDT     binance
@@ -370,9 +438,18 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         #
         expected_length = 9
         expected_column_names = [
-            "full_symbol", "open", "high", "low", "close", "volume", "currency_pair", "exchange_id"
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "currency_pair",
+            "exchange_id",
         ]
-        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]}
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+        }
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -380,7 +457,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         df.columns=full_symbol,open,high,low,close,volume,currency_pair,exchange_id
         df.shape=(9, 8)
                                          full_symbol         open         high          low        close     volume currency_pair exchange_id
-        timestamp                                                                                                                            
+        timestamp
         2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395      BTC_USDT     binance
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206      BTC_USDT     binance
         2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500      ETH_USDT      kucoin
@@ -408,9 +485,18 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         #
         expected_length = 8
         expected_column_names = [
-            "full_symbol", "open", "high", "low", "close", "volume", "currency_pair", "exchange_id"
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "currency_pair",
+            "exchange_id",
         ]
-        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]}
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+        }
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -418,7 +504,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         df.columns=full_symbol,open,high,low,close,volume,currency_pair,exchange_id
         df.shape=(8, 8)
                                          full_symbol         open         high          low        close     volume currency_pair exchange_id
-        timestamp                                                                                                                            
+        timestamp
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206      BTC_USDT     binance
         2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500      ETH_USDT      kucoin
         2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226      BTC_USDT     binance
@@ -510,7 +596,14 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         #
         expected_length = 5
         expected_column_names = [
-            "full_symbol", "open", "high", "low", "close", "volume", "currency_pair", "exchange_id"
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "currency_pair",
+            "exchange_id",
         ]
         expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT"]}
         # pylint: disable=line-too-long
@@ -520,7 +613,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         df.columns=full_symbol,open,high,low,close,volume,currency_pair,exchange_id
         df.shape=(5, 8)
                                          full_symbol  open  high   low  close  volume currency_pair exchange_id
-        timestamp                                                                                              
+        timestamp
         2021-09-09 00:00:00+00:00  binance::BTC_USDT  30.0  40.0  50.0   60.0    70.0      BTC_USDT     binance
         2021-09-09 00:01:00+00:00  binance::BTC_USDT  31.0  41.0  51.0   61.0    71.0      BTC_USDT     binance
         2021-09-09 00:02:00+00:00  binance::BTC_USDT   NaN   NaN   NaN    NaN     NaN           NaN         NaN
@@ -555,9 +648,18 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         #
         expected_length = 8
         expected_column_names = [
-            "full_symbol", "open", "high", "low", "close", "volume", "currency_pair", "exchange_id"
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "currency_pair",
+            "exchange_id",
         ]
-        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]}
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
+        }
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -565,7 +667,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         df.columns=full_symbol,open,high,low,close,volume,currency_pair,exchange_id
         df.shape=(8, 8)
                                          full_symbol  open  high   low  close  volume currency_pair exchange_id
-        timestamp                                                                                              
+        timestamp
         2021-09-09 00:00:00+00:00  binance::BTC_USDT  30.0  40.0  50.0   60.0    70.0      BTC_USDT     binance
         2021-09-09 00:01:00+00:00  binance::BTC_USDT  31.0  41.0  51.0   61.0    71.0      BTC_USDT     binance
         2021-09-09 00:02:00+00:00  binance::BTC_USDT   NaN   NaN   NaN    NaN     NaN           NaN         NaN
@@ -603,9 +705,18 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         #
         expected_length = 4
         expected_column_names = [
-            "full_symbol", "open", "high", "low", "close", "volume", "currency_pair", "exchange_id"
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "currency_pair",
+            "exchange_id",
         ]
-        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]}
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
+        }
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -613,7 +724,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         df.columns=full_symbol,open,high,low,close,volume,currency_pair,exchange_id
         df.shape=(4, 8)
                                          full_symbol  open  high   low  close  volume currency_pair exchange_id
-        timestamp                                                                                              
+        timestamp
         2021-09-09 00:02:00+00:00  binance::ETH_USDT  32.0  42.0  52.0   62.0    72.0      ETH_USDT     binance
         2021-09-09 00:03:00+00:00  binance::ETH_USDT   NaN   NaN   NaN    NaN     NaN           NaN         NaN
         2021-09-09 00:04:00+00:00  binance::BTC_USDT  34.0  44.0  54.0   64.0    74.0      BTC_USDT     binance
@@ -649,9 +760,18 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         #
         expected_length = 3
         expected_column_names = [
-            "full_symbol", "open", "high", "low", "close", "volume", "currency_pair", "exchange_id"
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "currency_pair",
+            "exchange_id",
         ]
-        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]}
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
+        }
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -659,7 +779,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         df.columns=full_symbol,open,high,low,close,volume,currency_pair,exchange_id
         df.shape=(3, 8)
                                          full_symbol  open  high   low  close  volume currency_pair exchange_id
-        timestamp                                                                                              
+        timestamp
         2021-09-09 00:00:00+00:00  binance::BTC_USDT  30.0  40.0  50.0   60.0    70.0      BTC_USDT     binance
         2021-09-09 00:01:00+00:00  binance::BTC_USDT  31.0  41.0  51.0   61.0    71.0      BTC_USDT     binance
         2021-09-09 00:02:00+00:00  binance::ETH_USDT  32.0  42.0  52.0   62.0    72.0      ETH_USDT     binance
@@ -695,9 +815,18 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         #
         expected_length = 2
         expected_column_names = [
-            "full_symbol", "open", "high", "low", "close", "volume", "currency_pair", "exchange_id"
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "currency_pair",
+            "exchange_id",
         ]
-        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]}
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
+        }
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -705,7 +834,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         df.columns=full_symbol,open,high,low,close,volume,currency_pair,exchange_id
         df.shape=(2, 8)
                                          full_symbol  open  high   low  close  volume currency_pair exchange_id
-        timestamp                                                                                              
+        timestamp
         2021-09-09 00:01:00+00:00  binance::BTC_USDT  31.0  41.0  51.0   61.0    71.0      BTC_USDT     binance
         2021-09-09 00:02:00+00:00  binance::ETH_USDT  32.0  42.0  52.0   62.0    72.0      ETH_USDT     binance
         """
@@ -826,7 +955,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
                 "currency_pair",
                 "exchange_id",
                 "end_download_timestamp",
-                "knowledge_timestamp"
+                "knowledge_timestamp",
             ],
             # fmt: off
             # pylint: disable=line-too-long
