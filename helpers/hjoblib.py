@@ -181,12 +181,16 @@ def validate_task(task: Task) -> bool:
     return True
 
 
-def task_to_string(task: Task) -> str:
+def task_to_string(task: Task, *, use_pprint: bool = True) -> str:
     hdbg.dassert(validate_task(task))
     args, kwargs = task
     txt = []
-    txt.append("args=%s" % pprint.pformat(args))
-    txt.append("kwargs=%s" % pprint.pformat(kwargs))
+    if use_pprint:
+        txt.append("args=%s" % pprint.pformat(args))
+        txt.append("kwargs=%s" % pprint.pformat(kwargs))
+    else:
+        txt.append("args=%s" % str(args))
+        txt.append("kwargs=%s" % str(kwargs))
     txt = "\n".join(txt)
     return txt
 
@@ -253,7 +257,50 @@ def randomize_workload(
     return workload
 
 
-def workload_to_string(workload: Workload) -> str:
+def reverse_workload(
+    workload: Workload, *, seed: Optional[int] = None
+) -> Workload:
+    """
+    Reverse the workload.
+
+    Typically we generate workload in chronological order, but sometimes we want to
+    run from most recent data to least recent, so that we have the results about the
+    most recent periods first, which is what we care most about.
+    """
+    validate_workload(workload)
+    # Parse the workload.
+    workload_func, func_name, tasks = workload
+    # Reverse.
+    _LOG.warning("Reversing the workload as per user request")
+    tasks = list(reversed(tasks))
+    # Build a new workload.
+    workload = (workload_func, func_name, tasks)
+    validate_workload(workload)
+    return workload
+
+
+def truncate_workload(
+    workload: Workload,
+    max_num: int,
+) -> Workload:
+    """
+    Limit the workload to the first `max_num` tasks.
+    """
+    validate_workload(workload)
+    # Parse the workload.
+    workload_func, func_name, tasks = workload
+    # Truncate the workload.
+    _LOG.warning("Considering only the first %d / %d tasks", max_num, len(tasks))
+    hdbg.dassert_lte(1, max_num)
+    hdbg.dassert_lte(max_num, len(tasks))
+    tasks = tasks[:max_num]
+    # Build a new workload.
+    workload = (workload_func, func_name, tasks)
+    validate_workload(workload)
+    return workload
+
+
+def workload_to_string(workload: Workload, *, use_pprint: bool = True) -> str:
     """
     Print the workload.
 
@@ -282,7 +329,7 @@ def workload_to_string(workload: Workload) -> str:
     txt.append("func_name=%s" % func_name)
     for i, task in enumerate(tasks):
         txt.append("# task %s / %s" % (i + 1, len(tasks)))
-        txt.append(task_to_string(task))
+        txt.append(task_to_string(task, use_pprint=use_pprint))
     txt = "\n".join(txt)
     return txt
 
@@ -490,7 +537,7 @@ def parallel_execute(
     """
     # Print the parameters.
     print(hprint.frame("Workload"))
-    print(workload_to_string(workload))
+    print(workload_to_string(workload, use_pprint=False))
     _LOG.info(
         hprint.to_str(
             "dry_run num_threads incremental num_attempts abort_on_error"
@@ -508,7 +555,11 @@ def parallel_execute(
     _LOG.info("Number of tasks=%s", len(tasks))
     #
     if dry_run:
-        _LOG.warning("Exiting without executing, as per user request")
+        file_name = "./tmp.parallel_execute.workload.txt"
+        workload_as_str = workload_to_string(workload, use_pprint=False)
+        hio.to_file(file_name, workload_as_str)
+        _LOG.warning("Workload saved at '%s'", file_name)
+        _LOG.warning("Exiting without executing workload, as per user request")
         return None
     # Run.
     task_len = len(tasks)

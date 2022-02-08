@@ -4,9 +4,10 @@ Import as:
 import dataflow.model.stats_computer as dtfmostcom
 """
 
+import collections
 import functools
 import logging
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -139,83 +140,45 @@ class StatsComputer:
         net_volume_col: str = "net_volume",
         gmv_col: str = "gmv",
         nmv_col: str = "nmv",
-    ) -> pd.Series:
+    ) -> Tuple[Union[pd.Series, pd.DataFrame], pd.DataFrame]:
         """
         Compute standard portfolio metrics.
+
+        If `df` has multiple column levels, treat the outermost level as
+        a portfolio name then compute stats for each portfolio name.
         """
-        df = cofinanc.resample_bars(
-            df,
-            freq,
-            resampling_groups=[
-                (
-                    {
-                        pnl_col: "pnl",
-                        gross_volume_col: "gross_volume",
-                        net_volume_col: "net_volume",
-                    },
-                    "sum",
-                    {"min_count": 1},
-                ),
-                (
-                    {
-                        gmv_col: "gmv",
-                        nmv_col: "nmv",
-                    },
-                    "mean",
-                    {},
-                ),
-            ],
-            vwap_groups=[],
+        hdbg.dassert_isinstance(df, pd.DataFrame)
+        if df.columns.nlevels == 1:
+            return self._compute_portfolio_stats(
+                df,
+                freq,
+                pnl_col=pnl_col,
+                gross_volume_col=gross_volume_col,
+                net_volume_col=net_volume_col,
+                gmv_col=gmv_col,
+                nmv_col=nmv_col,
+            )
+        hdbg.dassert_eq(df.columns.nlevels, 2)
+        keys = df.columns.levels[0].to_list()
+        stats = collections.OrderedDict()
+        resampled_dfs = collections.OrderedDict()
+        for key in keys:
+            stat, resampled_df = self._compute_portfolio_stats(
+                df[key],
+                freq,
+                pnl_col=pnl_col,
+                gross_volume_col=gross_volume_col,
+                net_volume_col=net_volume_col,
+                gmv_col=gmv_col,
+                nmv_col=nmv_col,
+            )
+            stats[key] = stat
+            resampled_dfs[key] = resampled_df
+        stats_df = pd.DataFrame(stats)
+        resampled_df = pd.concat(
+            resampled_dfs.values(), axis=1, keys=resampled_dfs.keys()
         )
-        results = []
-        #
-        srs = df["pnl"]
-        # Add Sharpe ratio, K-ratio.
-        ratios = self.compute_ratios(srs)
-        ratios = ratios.round(2)
-        results.append(pd.concat([ratios], keys=["ratios"]))
-        # Add GMV stats.
-        gmv_stats = pd.Series(
-            {
-                "gmv_mean": df["gmv"].mean(),
-                "gmv_stdev": df["gmv"].std(),
-            },
-        )
-        results.append(pd.concat([gmv_stats], keys=["dollar"]))
-        # Add dollar return, volatility, drawdown.
-        name = "dollar"
-        functions = [
-            costatis.compute_annualized_return_and_volatility,
-            costatis.compute_max_drawdown,
-        ]
-        stats = self._compute_stat_functions(srs, name, functions)
-        results.append(pd.concat([stats], keys=["dollar"]))
-        # Add dollar turnover, bias.
-        dollar_turnover_and_bias = cofinanc.compute_turnover_and_bias(
-            df["gross_volume"],
-            df["nmv"],
-        )
-        results.append(pd.concat([dollar_turnover_and_bias], keys=["dollar"]))
-        # Add percentage return, volatility, drawdown.
-        srs = df["pnl"] / df["gmv"]
-        name = "percentage"
-        functions = [
-            costatis.compute_annualized_return_and_volatility,
-            costatis.compute_max_drawdown,
-        ]
-        stats = self._compute_stat_functions(srs, name, functions)
-        results.append(pd.concat([stats], keys=["percentage"]))
-        # Add dollar turnover, bias.
-        percentage_turnover_and_bias = cofinanc.compute_turnover_and_bias(
-            df["gross_volume"] / df["gmv"],
-            df["nmv"] / df["gmv"],
-        )
-        results.append(
-            pd.concat([percentage_turnover_and_bias], keys=["percentage"])
-        )
-        result = pd.concat(results, axis=0).astype("float").round(2)
-        hdbg.dassert_isinstance(result, pd.Series)
-        return result
+        return stats_df, resampled_df
 
     def compute_per_asset_stats(
         self,
@@ -358,6 +321,87 @@ class StatsComputer:
         result = pd.concat(results, axis=0)
         hdbg.dassert_isinstance(result, pd.Series)
         return result
+
+    def _compute_portfolio_stats(
+        self,
+        df: pd.DataFrame,
+        freq: str,
+        *,
+        pnl_col: str = "pnl",
+        gross_volume_col: str = "gross_volume",
+        net_volume_col: str = "net_volume",
+        gmv_col: str = "gmv",
+        nmv_col: str = "nmv",
+    ) -> Tuple[pd.Series, pd.DataFrame]:
+        """
+        Compute standard portfolio metrics.
+
+        :return: (stats series, `df` resampled at `freq`)
+        """
+        hdbg.dassert_isinstance(df, pd.DataFrame)
+        hdbg.dassert(not isinstance(df.columns, pd.MultiIndex))
+        hdbg.dassert_is_subset(
+            [pnl_col, gross_volume_col, net_volume_col, gmv_col, nmv_col],
+            df.columns.to_list(),
+        )
+        df = cofinanc.resample_portfolio_metrics_bars(
+            df,
+            freq,
+            pnl_col=pnl_col,
+            gross_volume_col=gross_volume_col,
+            net_volume_col=net_volume_col,
+            gmv_col=gmv_col,
+            nmv_col=nmv_col,
+        )
+        results = []
+        #
+        srs = df["pnl"]
+        # Add Sharpe ratio, K-ratio.
+        ratios = self.compute_ratios(srs)
+        ratios = ratios.round(2)
+        results.append(pd.concat([ratios], keys=["ratios"]))
+        # Add GMV stats.
+        gmv_stats = pd.Series(
+            {
+                "gmv_mean": df["gmv"].mean(),
+                "gmv_stdev": df["gmv"].std(),
+            },
+        )
+        results.append(pd.concat([gmv_stats], keys=["dollar"]))
+        # Add dollar return, volatility, drawdown.
+        name = "dollar"
+        functions = [
+            costatis.compute_annualized_return_and_volatility,
+            costatis.compute_max_drawdown,
+        ]
+        stats = self._compute_stat_functions(srs, name, functions)
+        results.append(pd.concat([stats], keys=["dollar"]))
+        # Add dollar turnover, bias.
+        dollar_turnover_and_bias = cofinanc.compute_turnover_and_bias(
+            df["gross_volume"],
+            df["nmv"],
+        )
+        results.append(pd.concat([dollar_turnover_and_bias], keys=["dollar"]))
+        # Add percentage return, volatility, drawdown.
+        srs = df["pnl"] / df["gmv"]
+        name = "percentage"
+        functions = [
+            costatis.compute_annualized_return_and_volatility,
+            costatis.compute_max_drawdown,
+        ]
+        stats = 100 * self._compute_stat_functions(srs, name, functions)
+        results.append(pd.concat([stats], keys=["percentage"]))
+        # Add dollar turnover, bias.
+        percentage_turnover_and_bias = 100 * cofinanc.compute_turnover_and_bias(
+            df["gross_volume"] / df["gmv"],
+            df["nmv"] / df["gmv"],
+        )
+        results.append(
+            pd.concat([percentage_turnover_and_bias], keys=["percentage"])
+        )
+        result = pd.concat(results, axis=0).astype("float").round(2)
+        hdbg.dassert_isinstance(result, pd.Series)
+        return result, df
 
     def _compute_pnl_stats(self, srs: pd.Series) -> pd.Series:
         """

@@ -14,6 +14,7 @@ import pandas as pd
 
 import core.config as cconfig
 import dataflow.core.builders as dtfcorbuil
+import dataflow.core.dag as dtfcordag
 import dataflow.core.node as dtfcornode
 import dataflow.core.result_bundle as dtfcorebun
 import dataflow.core.utils as dtfcorutil
@@ -49,22 +50,27 @@ class AbstractDagRunner(abc.ABC):
         """
         # Save input parameters.
         self.config = config
-        self._dag_builder = dag_builder
         # Build DAG using DAG builder.
         # TODO(gp): Now a DagRunner builds and runs a DAG. This creates some coupling.
         #  Consider having a DagRunner accept a DAG however built and run it.
-        self.dag = self._dag_builder.get_dag(self.config)
-        _LOG.debug("dag=%s", self.dag)
-        # Check that the DAG has the required methods.
-        methods = self._dag_builder.methods
-        _LOG.debug("methods=%s", methods)
-        hdbg.dassert_in("fit", methods)
-        hdbg.dassert_in("predict", methods)
-        # Get the mapping from columns to tags.
-        self._column_to_tags_mapping = (
-            self._dag_builder.get_column_to_tags_mapping(self.config)
-        )
-        _LOG.debug("_column_to_tags_mapping=%s", self._column_to_tags_mapping)
+        if isinstance(dag_builder, dtfcorbuil.DagBuilder):
+            self._dag_builder = dag_builder
+            self.dag = self._dag_builder.get_dag(self.config)
+            _LOG.debug("dag=%s", self.dag)
+            # Check that the DAG has the required methods.
+            methods = self._dag_builder.methods
+            _LOG.debug("methods=%s", methods)
+            hdbg.dassert_in("fit", methods)
+            hdbg.dassert_in("predict", methods)
+            # Get the mapping from columns to tags.
+            self._column_to_tags_mapping = (
+                self._dag_builder.get_column_to_tags_mapping(self.config)
+            )
+            _LOG.debug("_column_to_tags_mapping=%s", self._column_to_tags_mapping)
+        elif isinstance(dag_builder, dtfcordag.DAG):
+            self.dag = dag_builder
+        else:
+            raise ValueError("Invalid dag_builder=%s" % dag_builder)
         # Extract the sink node.
         self._result_nid = self.dag.get_unique_sink()
         _LOG.debug("_result_nid=%s", self._result_nid)

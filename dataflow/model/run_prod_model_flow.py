@@ -76,26 +76,7 @@ def run_prod_model_flow(
     actual_outcome.append(hprint.frame("ModelEvaluator stats"))
     actual_outcome.append(hunitest.convert_df_to_string(pnl_stats, index=True))
     # 4) Run the StrategyEvaluator notebook.
-    if strategy_eval_config is not None:
-        _LOG.debug(
-            "\n%s", hprint.frame("Run strategy analyzer notebook", char1="<")
-        )
-        amp_dir = hgit.get_amp_abs_path()
-        # TODO(gp): Rename -> Master_strategy_evaluator
-        file_name = os.path.join(
-            amp_dir,
-            "dataflow/model/notebooks/Master_strategy_analyzer.ipynb",
-        )
-        #
-        run_notebook_dir_tmp = os.path.join(
-            run_notebook_dir, "run_strategy_analyzer"
-        )
-        #
-        python_code = strategy_eval_config.to_python(check=True)
-        env_var = "AM_CONFIG_CODE"
-        pre_cmd = f'export {env_var}="{python_code}"'
-        #
-        hjupyte.run_notebook(file_name, run_notebook_dir_tmp, pre_cmd=pre_cmd)
+    # TODO(Paul): Remove all references to this step.
     # 5) Freeze statistics from the `StrategyEvaluator` flow.
     # TODO(gp): Add some info from Strategy PnL.
     actual_outcome = "\n".join(actual_outcome)

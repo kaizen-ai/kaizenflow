@@ -15,7 +15,6 @@ import dataflow.pipelines.returns.pipeline as dtfpirepip
 import dataflow.system as dtfsys
 import helpers.hasyncio as hasynci
 import helpers.hpandas as hpandas
-import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 import market_data as mdata
 import oms.oms_db as oomsdb
@@ -206,6 +205,8 @@ class TestRealTimePipelineWithOms1(hunitest.TestCase):
                     "2000-01-01 15:55:00-05:00", tz="America/New_York"
                 ).time(),
                 "execution_mode": "real_time",
+                "target_gmv": 1e5,
+                "dollar_neutrality": "no_constraint",
             }
             # Set up the event loop.
             sleep_interval_in_secs = 60 * 5
