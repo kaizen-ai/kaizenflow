@@ -18,7 +18,6 @@ import market_data.abstract_market_data as mdabmada
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): @Grisha -> ImClientMarketData and rename all the classes and files.
 class ImClientMarketData(mdabmada.MarketData):
     """
     Implement a `MarketData` that uses a `ImClient` as backend.

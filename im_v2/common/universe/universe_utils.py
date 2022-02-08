@@ -13,7 +13,7 @@ import helpers.hdbg as hdbg
 # TODO(gp): This file is more generic than `asset_ids` vs `full_symbols` and could
 #  go in helpers.
 
-# TODO(gp): @Grisha -> numerical_id
+
 def string_to_numerical_id(string_id: str) -> int:
     """
     Convert string id into a numerical one.
@@ -34,9 +34,8 @@ def string_to_numerical_id(string_id: str) -> int:
 
 
 # TODO(gp): @Grisha the client should cache this function and -> `universe: List[str]`
-# TODO(gp): @Grisha -> build_numerical_to_string_id_mapping
 @functools.lru_cache()
-def build_num_to_string_id_mapping(universe: Tuple[str, ...]) -> Dict[int, str]:
+def build_numerical_to_string_id_mapping(universe: Tuple[str, ...]) -> Dict[int, str]:
     """
     Build a mapping from numerical ids to string ones.
 

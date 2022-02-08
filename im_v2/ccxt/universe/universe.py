@@ -59,7 +59,7 @@ def get_vendor_universe(
         # Convert universe symbols to numerical ids.
         universe_tuple = tuple(universe)
         universe = list(
-            imvcuunut.build_num_to_string_id_mapping(universe_tuple).keys()
+            imvcuunut.build_numerical_to_string_id_mapping(universe_tuple).keys()
         )
     # Sort list of symbols in the universe.
     universe = sorted(universe)

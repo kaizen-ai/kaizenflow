@@ -180,9 +180,6 @@ class ImClient(abc.ABC):
             otherwise universe as full symbols
         """
 
-    # TODO(gp): @Grisha we are mixing string vs int and asset_ids vs full_symbols.
-    #  One is the type, the other is the semantic.
-    # This should be called -> get_asset_ids_from_full_symbols
     @staticmethod
     def get_asset_ids_from_full_symbols(
         full_symbols: List[imvcdcfusy.FullSymbol],
@@ -214,7 +211,7 @@ class ImClient(abc.ABC):
         # TODO(gp): Cache.
         # if self._ids_to_symbols_mapping is None:
         full_symbol_universe = self.get_universe(as_asset_ids=False)
-        ids_to_symbols_mapping = imvcuunut.build_num_to_string_id_mapping(
+        ids_to_symbols_mapping = imvcuunut.build_numerical_to_string_id_mapping(
             tuple(full_symbol_universe)
         )
         # Check that provided ids are part of universe.

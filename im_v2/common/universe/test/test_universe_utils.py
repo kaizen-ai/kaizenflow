@@ -16,7 +16,7 @@ class TestBuildNumericToStringIdMapping(hunitest.TestCase):
         """
         Test that numerical to string ids mapping is being built correctly.
         """
-        mapping = imvcuunut.build_num_to_string_id_mapping(
+        mapping = imvcuunut.build_numerical_to_string_id_mapping(
             ("gateio::XRP_USDT", "kucoin::SOL_USDT")
         )
         self.assertEqual(len(mapping), 2)

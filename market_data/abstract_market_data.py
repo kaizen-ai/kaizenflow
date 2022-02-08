@@ -46,8 +46,6 @@ def dassert_is_valid_start_end_timestamp(
         hdbg.dassert_lt(start_ts, end_ts)
 
 
-# TODO(gp): @Grisha -> MarketData. We need a script (see replace_text.py) to do it
-#  since we need to update multiple repos.
 class MarketData(abc.ABC):
     """
     Implement an interface to an historical / real-time source of price data.
