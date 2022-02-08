@@ -38,11 +38,18 @@ def get_vendor_universe(
     version: str = _LATEST_UNIVERSE_VERSION, vendor: str = "CCXT"
 ) -> Union[List[icdc.FullSymbol], List[int]]:
     """
+<<<<<<< HEAD
     Load vendor universe as full symbols or numerical ids.
 
     :param version: release version
     :param vendor: vendor to load data for (e.g., CCXT, CDD)
     :param as_asset_ids: if True return universe as numerical ids, otherwise universe as full symbols
+=======
+    Load vendor universe as full symbols.
+
+    :param version: release version
+    :param vendor: vendor to load data for (e.g., CCXT, CDD)
+>>>>>>> 06992d9b2b8c1de0e3c00a1ad3a6fc03e6e66929
     :return: vendor universe as full symbols (e.g., gateio::XRP_USDT)
     """
     # Get vendor universe.
@@ -61,7 +68,11 @@ def get_vendor_universe(
             imvcuunut.build_numerical_to_string_id_mapping(universe_tuple).keys()
         )
 =======
+<<<<<<< HEAD
 >>>>>>> master
+=======
+>>>>>>> 8b50dc45745d85cc64827368c95143fe05d339ae
+>>>>>>> 06992d9b2b8c1de0e3c00a1ad3a6fc03e6e66929
     # Sort list of symbols in the universe.
     universe = sorted(universe)
     return universe

@@ -98,6 +98,7 @@ class ImClientMarketData(mdabmada.MarketData):
         # TODO(gp): call dassert_is_valid_start_end_timestamp
         if not asset_ids:
 <<<<<<< HEAD
+<<<<<<< HEAD
             # If `asset_ids` is None, get all assets from the universe.
             as_asset_ids = True
             asset_ids = self._im_client.get_universe(as_asset_ids)
@@ -106,6 +107,8 @@ class ImClientMarketData(mdabmada.MarketData):
             asset_ids
         )
 =======
+=======
+>>>>>>> 06992d9b2b8c1de0e3c00a1ad3a6fc03e6e66929
             # If asset ids are not provided, get universe as full symbols.
             full_symbols = self._im_client.get_universe()
         else:
@@ -113,7 +116,10 @@ class ImClientMarketData(mdabmada.MarketData):
             full_symbols = self._im_client.get_full_symbols_from_numerical_ids(
                 asset_ids
             )
+<<<<<<< HEAD
 >>>>>>> master
+=======
+>>>>>>> 06992d9b2b8c1de0e3c00a1ad3a6fc03e6e66929
         # Load the data using `im_client`.
         market_data = self._im_client.read_data(
             full_symbols,
@@ -144,10 +150,14 @@ class ImClientMarketData(mdabmada.MarketData):
     def _convert_data_for_normalization(self, df: pd.DataFrame) -> pd.DataFrame:
         """
 <<<<<<< HEAD
+<<<<<<< HEAD
         Convert IM data to the format required by `MarketData`.
 =======
         Convert data to format required by normalization in parent class.
 >>>>>>> master
+=======
+        Convert data to format required by normalization in parent class.
+>>>>>>> 06992d9b2b8c1de0e3c00a1ad3a6fc03e6e66929
 
         :param df: IM data to transform
         ```

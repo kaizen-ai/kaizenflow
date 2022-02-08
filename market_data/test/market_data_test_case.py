@@ -215,6 +215,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         Call `get_data_for_interval()` with:
 
         - `asset_ids` is a list
+<<<<<<< HEAD
         - interval type is default [a, b)
         - data is not normalized
         """
@@ -246,6 +247,8 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         Call `get_data_for_interval()` with:
 
         - `asset_ids` is a list
+=======
+>>>>>>> 06992d9b2b8c1de0e3c00a1ad3a6fc03e6e66929
         - interval type is [a, b]
         """
         # Prepare inputs.

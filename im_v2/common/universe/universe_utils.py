@@ -32,9 +32,20 @@ def string_to_numerical_id(string_id: str) -> int:
     return num_id
 
 
+<<<<<<< HEAD
 # TODO(gp): @Grisha the client should cache this function and -> `universe: List[str]`
 @functools.lru_cache()
 def build_numerical_to_string_id_mapping(universe: Tuple[str, ...]) -> Dict[int, str]:
+=======
+<<<<<<< HEAD
+# TODO(gp): @Grisha the client should cache this function and -> `universe: List[str]`
+@functools.lru_cache()
+def build_numerical_to_string_id_mapping(universe: Tuple[str, ...]) -> Dict[int, str]:
+=======
+# TODO(gp): @Grisha -> build_numerical_to_string_id_mapping
+def build_num_to_string_id_mapping(universe: List[str]) -> Dict[int, str]:
+>>>>>>> 8b50dc45745d85cc64827368c95143fe05d339ae
+>>>>>>> 06992d9b2b8c1de0e3c00a1ad3a6fc03e6e66929
     """
     Build a mapping from numerical ids to string ones.
 

@@ -128,7 +128,11 @@ class ImClient(abc.ABC):
             df_tmp = self._apply_im_normalizations(
                 df_tmp, full_symbol_col_name, start_ts, end_ts
             )
+<<<<<<< HEAD
             self._dassert_output_data_is_valid(df_tmp, full_symbol_col_name)
+=======
+            self._dassert_is_valid(df_tmp, full_symbol_col_name, start_ts, end_ts)
+>>>>>>> 06992d9b2b8c1de0e3c00a1ad3a6fc03e6e66929
             dfs.append(df_tmp)
         df = pd.concat(dfs, axis=0)
         _LOG.debug("After im_normalization: df=\n%s", hpandas.df_to_str(df))
@@ -172,9 +176,12 @@ class ImClient(abc.ABC):
     def get_universe() -> List[imvcdcfusy.FullSymbol]:
         """
         Return the entire universe of valid full symbols.
+<<<<<<< HEAD
 
         :param as_asset_ids: if True return universe as numerical ids,
             otherwise universe as full symbols
+=======
+>>>>>>> 06992d9b2b8c1de0e3c00a1ad3a6fc03e6e66929
         """
 
     @staticmethod
@@ -203,6 +210,10 @@ class ImClient(abc.ABC):
         :param asset_ids: assets ids
         :return: assets as full symbols
         """
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 06992d9b2b8c1de0e3c00a1ad3a6fc03e6e66929
         # Get universe as full symbols to construct asset ids to full symbols
         # mapping.
         # TODO(gp): Cache.
@@ -211,6 +222,11 @@ class ImClient(abc.ABC):
         ids_to_symbols_mapping = imvcuunut.build_numerical_to_string_id_mapping(
             tuple(full_symbol_universe)
         )
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> 8b50dc45745d85cc64827368c95143fe05d339ae
+>>>>>>> 06992d9b2b8c1de0e3c00a1ad3a6fc03e6e66929
         # Check that provided ids are part of universe.
         hdbg.dassert_is_subset(asset_ids, self._asset_id_to_full_symbol_mapping)
         # Convert ids to full symbols.
@@ -304,7 +320,11 @@ class ImClient(abc.ABC):
 
 
     @staticmethod
+<<<<<<< HEAD
     def _dassert_output_data_is_valid(
+=======
+    def _dassert_is_valid(
+>>>>>>> 06992d9b2b8c1de0e3c00a1ad3a6fc03e6e66929
         df: pd.DataFrame,
         full_symbol_col_name: str,
         start_ts: Optional[pd.Timestamp],
