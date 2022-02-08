@@ -124,7 +124,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
     def test_read_data4(self) -> None:
         im_client = ivcdctcce.get_CcxtCsvClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        end_ts = pd.Timestamp("2018-08-17T00:05:00-00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:04:00-00:00")
         #
         expected_length = 9
         expected_exchange_ids = ["binance", "kucoin"]
@@ -160,7 +160,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         im_client = ivcdctcce.get_CcxtCsvClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         start_ts = pd.Timestamp("2018-08-17T00:01:00-00:00")
-        end_ts = pd.Timestamp("2018-08-17T00:05:00-00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:04:00-00:00")
         #
         expected_length = 8
         expected_exchange_ids = ["binance", "kucoin"]
@@ -354,7 +354,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
     def test_read_data4(self) -> None:
         im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        end_ts = pd.Timestamp("2018-08-17T00:05:00-00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:04:00-00:00")
         #
         expected_length = 9
         expected_exchange_ids = ["binance", "kucoin"]
@@ -390,7 +390,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         start_ts = pd.Timestamp("2018-08-17T00:01:00-00:00")
-        end_ts = pd.Timestamp("2018-08-17T00:05:00-00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:04:00-00:00")
         #
         expected_length = 8
         expected_exchange_ids = ["binance", "kucoin"]
@@ -624,7 +624,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
             )
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
-        end_ts = pd.Timestamp("2021-09-09T00:04:00-00:00")
+        end_ts = pd.Timestamp("2021-09-09T00:02:00-00:00")
         #
         expected_length = 3
         expected_exchange_ids = ["binance"]
@@ -668,7 +668,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         start_ts = pd.Timestamp("2021-09-09T00:01:00-00:00")
-        end_ts = pd.Timestamp("2021-09-09T00:04:00-00:00")
+        end_ts = pd.Timestamp("2021-09-09T00:02:00-00:00")
         #
         expected_length = 2
         expected_exchange_ids = ["binance"]
