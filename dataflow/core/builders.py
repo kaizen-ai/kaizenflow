@@ -16,7 +16,7 @@ import helpers.hprint as hprint
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): -> dag_builders.py or dag_builder.py
+# TODO(gp): -> dag_builder.py
 
 
 class DagBuilder(abc.ABC):
@@ -113,10 +113,12 @@ class DagBuilder(abc.ABC):
         """
         Methods supported by the DAG.
         """
-        # TODO(*): Consider make this an abstractmethod.
+        # TODO(gp): Consider make this an abstractmethod. This should be a property
+        #  of the DAG and not of the builder.
         return ["fit", "predict"]
 
     # TODO(gp): -> tighten types along the lines of `Dict[Column, ...]`.
+    # TODO(gp): Is this needed?
     def get_column_to_tags_mapping(  # pylint: disable=useless-return
         self, config: cconfig.Config
     ) -> Optional[Dict[Any, List[str]]]:
@@ -128,6 +130,8 @@ class DagBuilder(abc.ABC):
         """
         _ = self, config
         return None
+
+    # ////////////////////////////////////////////////////////////////////////////
 
     @staticmethod
     def _validate_config_and_dag(
