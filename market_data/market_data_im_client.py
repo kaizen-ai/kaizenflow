@@ -95,7 +95,6 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
         if right_close:
             if end_ts is not None:
                 # Add one millisecond to include the right boundary.
-                #end_ts += pd.Timedelta(1, "ms")
                 end_ts -= pd.Timedelta(1, "ms")
         # TODO(gp): call dassert_is_valid_start_end_timestamp
         if not asset_ids:
