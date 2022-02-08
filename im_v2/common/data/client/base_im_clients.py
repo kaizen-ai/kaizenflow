@@ -174,9 +174,6 @@ class ImClient(abc.ABC):
         Return the entire universe of valid full symbols.
         """
 
-    # TODO(gp): @Grisha we are mixing string vs int and asset_ids vs full_symbols.
-    #  One is the type, the other is the semantic.
-    # This should be called -> get_asset_ids_from_full_symbols
     @staticmethod
     def get_asset_ids_from_full_symbols(
         full_symbols: List[imvcdcfusy.FullSymbol],
