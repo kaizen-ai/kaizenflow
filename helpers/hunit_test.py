@@ -1486,7 +1486,7 @@ class TestCase(unittest.TestCase):
         hdbg.dassert_isinstance(actual_df, pd.DataFrame)
         if expected_length:
             # Verify that output length is correct.
-            self.assertEqual(expected_length, actual_df.shape[0])
+            self.assert_equal(str(expected_length), str(actual_df.shape[0]))
         if expected_column_names:
             # Verify that column names are correct.
             self.assert_equal(
@@ -1537,7 +1537,7 @@ class TestCase(unittest.TestCase):
         hdbg.dassert_isinstance(actual_srs, pd.Series)
         if expected_length:
             # Verify that output length is correct.
-            self.assertEqual(expected_length, actual_srs.shape[0])
+            self.assert_equal(str(expected_length), str(actual_srs.shape[0]))
         if expected_unique_values:
             # Verify that unique values in series are correct.
             self.assert_equal(
@@ -1545,11 +1545,7 @@ class TestCase(unittest.TestCase):
                 str(sorted(list(actual_srs.unique()))),
             )
         # Build signature.
-        actual_signature = hpandas.df_to_str(
-            actual_srs,
-            print_shape_info=True,
-            tag="srs",
-        )
+        actual_signature = convert_df_to_string(actual_srs, index=True)
         _LOG.debug("\n%s", actual_signature)
         # Check signature.
         self.assert_equal(

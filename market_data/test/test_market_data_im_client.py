@@ -115,7 +115,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         # pylint: enable=line-too-long
         # Run.
         self._test_get_data_at_timestamp1(
-            market_data, ts, asset_ids, exp_df_as_str
+            market_data, ts, asset_ids, None, None, None, exp_df_as_str
         )
 
     @pytest.mark.skip(reason="CmTask882.")
@@ -145,7 +145,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         # pylint: enable=line-too-long
         # Run.
         self._test_get_data_for_interval1(
-            market_data, start_ts, end_ts, exp_df_as_str
+            market_data, start_ts, end_ts, None, None, None, exp_df_as_str
         )
 
     def test_get_data_for_interval2(self) -> None:
@@ -174,7 +174,14 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         # pylint: enable=line-too-long
         # Run.
         self._test_get_data_for_interval2(
-            market_data, start_ts, end_ts, asset_ids, exp_df_as_str
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            None,
+            None,
+            None,
+            exp_df_as_str,
         )
 
     def test_get_data_for_interval3(self) -> None:
@@ -203,7 +210,14 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         # pylint: enable=line-too-long
         # Run.
         self._test_get_data_for_interval3(
-            market_data, start_ts, end_ts, asset_ids, exp_df_as_str
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            None,
+            None,
+            None,
+            exp_df_as_str,
         )
 
     def test_get_data_for_interval4(self) -> None:
@@ -232,7 +246,14 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         # pylint: enable=line-too-long
         # Run.
         self._test_get_data_for_interval4(
-            market_data, start_ts, end_ts, asset_ids, exp_df_as_str
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            None,
+            None,
+            None,
+            exp_df_as_str,
         )
 
     def test_get_data_for_interval5(self) -> None:
@@ -260,7 +281,14 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         # pylint: enable=line-too-long
         # Run.
         self._test_get_data_for_interval5(
-            market_data, start_ts, end_ts, asset_ids, exp_df_as_str
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            None,
+            None,
+            None,
+            exp_df_as_str,
         )
 
     # //////////////////////////////////////////////////////////////////////////////
@@ -281,7 +309,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Run.
         self._test_get_twap_price1(
-            market_data, start_ts, end_ts, asset_ids, exp_srs_as_str
+            market_data, start_ts, end_ts, asset_ids, None, None, exp_srs_as_str
         )
 
     # //////////////////////////////////////////////////////////////////////////////
@@ -309,7 +337,9 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         3187272957   292.16
         """
         # Run.
-        self._test_get_last_price1(market_data, asset_ids, exp_srs_as_str)
+        self._test_get_last_price1(
+            market_data, asset_ids, None, None, exp_srs_as_str
+        )
 
     # //////////////////////////////////////////////////////////////////////////////
 
