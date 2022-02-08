@@ -34,6 +34,7 @@ except ModuleNotFoundError:
 
 
 import helpers.hdbg as hdbg  # noqa: E402 # pylint: disable=wrong-import-position
+import helpers.hprint as hprint  # noqa: E402 # pylint: disable=wrong-import-position
 
 _LOG = logging.getLogger(__name__)
 
@@ -209,7 +210,6 @@ def dassert_tz_compatible_timestamp_with_df(
         df_datetime = df[col_name].iloc[0]
     dassert_tz_compatible(df_datetime, datetime_)
 
-#
 
 def dassert_is_valid_timestamp(timestamp: Optional[pd.Timestamp]) -> None:
     """
@@ -220,13 +220,26 @@ def dassert_is_valid_timestamp(timestamp: Optional[pd.Timestamp]) -> None:
         dassert_has_tz(timestamp)
 
 
-# TODO(gp): Should we extend it to left_close, right_close?
-def dassert_is_valid_interval(start_timestamp: Optional[pd.Timestamp],
-                              end_timestamp: Optional[pd.Timestamp]) -> None:
+def dassert_is_valid_interval(
+    start_timestamp: Optional[pd.Timestamp],
+    end_timestamp: Optional[pd.Timestamp],
+    left_close: bool,
+    right_close: bool,
+) -> None:
+    """
+    Assert that an interval has valid start and end timestamps.
+    """
+    _LOG.debug(hprint.to_str("start_timestamp end_timestamp"))
     dassert_is_valid_timestamp(start_timestamp)
     dassert_is_valid_timestamp(end_timestamp)
+    # Check the requested interval.
     if start_timestamp is not None and end_timestamp is not None:
-        hdbg.dassert_lte(start_timestamp, end_timestamp)
+        if left_close and right_close:
+            # If they are both closed, an interval like [a, a] makes sense,
+            # otherwise it doesn't.
+            hdbg.dassert_lte(start_timestamp, end_timestamp)
+        else:
+            hdbg.dassert_lt(start_timestamp, end_timestamp)
 
 
 # #############################################################################

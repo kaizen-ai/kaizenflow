@@ -94,6 +94,7 @@ def add_date_partition_cols(
         - list of partitioning columns
     """
     with htimer.TimedScope(logging.DEBUG, "# add_date_partition_cols"):
+        # TODO(Nikola): Use get_partition_columns from `hparque`.
         if partition_mode == "by_date":
             df["date"] = df.index.strftime("%Y%m%d")
             partition_columns = ["date"]
@@ -122,7 +123,8 @@ def partition_dataset(
     df: pd.DataFrame, partition_columns: List[str], dst_dir: str
 ) -> None:
     """
-    Save the given dataframe as Parquet file partitioned along the given columns.
+    Save the given dataframe as Parquet file partitioned along the given
+    columns.
 
     :param df: dataframe
     :param partition_columns: partitioning columns
@@ -157,7 +159,6 @@ def partition_dataset(
                 asset=B/
                     data.parquet
     ```
-
     """
     with htimer.TimedScope(logging.DEBUG, "# partition_dataset"):
         # Read.

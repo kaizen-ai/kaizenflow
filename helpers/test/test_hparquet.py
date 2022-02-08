@@ -484,7 +484,7 @@ class TestPartitionedParquet1(hunitest.TestCase):
 # #############################################################################
 
 
-class Test_get_parquet_filters_from_timestamp_interval1(hunitest.TestCase):
+class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
 
     def test_by_month_full1(self) -> None:
         """
@@ -507,29 +507,29 @@ class Test_get_parquet_filters_from_timestamp_interval1(hunitest.TestCase):
         start_ts = None
         end_ts = pd.Timestamp("2020-01-02 09:31:00+00:00")
 
-    def test_by_month_oneyear1(self) -> None:
+    def test_by_month_one_year1(self) -> None:
         """
         Test an interval contained in a whole year.
         """
         start_ts = pd.Timestamp("2020-01-02 09:31:00+00:00")
         end_ts = pd.Timestamp("2020-12-02 09:31:00+00:00")
         #
-        expected = [(("month", ">=", 1),
+        expected = [[("month", ">=", 1),
                     ("year", ">=", 2020),
                     ("month", "<=", 12),
-                    ("year", "<=", 2020))]
+                    ("year", "<=", 2020)]]
 
-    def test_by_month_oneyear2(self) -> None:
+    def test_by_month_one_year2(self) -> None:
         """
         Test an interval contained in a whole year.
         """
         start_ts = pd.Timestamp("2020-01-02 09:31:00+00:00")
         end_ts = pd.Timestamp("2020-01-02 09:32:00+00:00")
         #
-        expected = [(("month", ">=", 1),
+        expected = [[("month", ">=", 1),
                      ("year", ">=", 2020),
                      ("month", "<=", 12),
-                     ("year", "<=", 2020))]
+                     ("year", "<=", 2020)]]
 
     def test_by_month_invalid1(self) -> None:
         """
@@ -546,16 +546,6 @@ class Test_get_parquet_filters_from_timestamp_interval1(hunitest.TestCase):
         start_ts = pd.Timestamp("2020-06-02 09:31:00+00:00")
         end_ts = pd.Timestamp("2021-12-02 09:31:00+00:00")
         #
-        expected = [(
-            ("month", ">=", 1),
-            ("year", ">=", 2020),
-            ("month", "<=", 12),
-            ("year", "<=", 2020))]
-
-            (("month", ">=", 6), ("year", ">=", 2020)),
-            (("month", ">=", 6), ("year", ">=", 2020)),
-            ("month", "<=", 12),
-                    ("year", "<=", 2021)]
 
     def test_by_month_6(self) -> None:
         """
