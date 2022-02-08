@@ -8,7 +8,7 @@ import core.finance as cofinanc
 
 import datetime
 import logging
-from typing import Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -216,6 +216,7 @@ def _resample_with_aggregate_function(
     cols: List[str],
     agg_func: str,
     agg_func_kwargs: htypes.Kwargs,
+    resample_kwargs: Optional[Dict[str, Any]] = None,
 ) -> pd.DataFrame:
     """
     Resample columns `cols` of `df` using the passed parameters.
@@ -224,7 +225,9 @@ def _resample_with_aggregate_function(
     hdbg.dassert_isinstance(cols, list)
     hdbg.dassert(cols, msg="`cols` must be nonempty.")
     hdbg.dassert_is_subset(cols, df.columns)
-    resampler = csigproc.resample(df[cols], rule=rule)
+    if resample_kwargs is None:
+        resample_kwargs = {}
+    resampler = csigproc.resample(df[cols], rule=rule, **resample_kwargs)
     resampled = resampler.agg(agg_func, **agg_func_kwargs)
     return resampled
 
@@ -234,6 +237,7 @@ def resample_bars(
     rule: str,
     resampling_groups: List[Tuple[Dict[str, str], str, htypes.Kwargs]],
     vwap_groups: List[Tuple[str, str, str]],
+    resample_kwargs: Optional[Dict[str, Any]] = None,
 ) -> pd.DataFrame:
     """
     Resampling with optional VWAP.
@@ -253,6 +257,7 @@ def resample_bars(
             cols=list(col_dict.keys()),
             agg_func=agg_func,
             agg_func_kwargs=agg_func_kwargs,
+            resample_kwargs=resample_kwargs,
         )
         resampled = resampled.rename(columns=col_dict)
         hdbg.dassert(not resampled.columns.has_duplicates)
@@ -267,6 +272,51 @@ def resample_bars(
     hdbg.dassert(not out_df.columns.has_duplicates)
     hdbg.dassert(out_df.index.freq)
     return out_df
+
+
+# TODO(Paul): Rename `resample_portfolio_bar_metrics()`.
+def resample_portfolio_metrics_bars(
+    df: pd.DataFrame,
+    freq: str,
+    *,
+    pnl_col: str = "pnl",
+    gross_volume_col: str = "gross_volume",
+    net_volume_col: str = "net_volume",
+    gmv_col: str = "gmv",
+    nmv_col: str = "nmv",
+) -> pd.DataFrame:
+    # TODO(Paul): For this type of resampling, we generally want to
+    # annotate with the left side of the interval. Plumb this through
+    # the call stack.
+    resampled_df = resample_bars(
+        df,
+        freq,
+        resampling_groups=[
+            (
+                {
+                    pnl_col: "pnl",
+                    gross_volume_col: "gross_volume",
+                    net_volume_col: "net_volume",
+                },
+                "sum",
+                {"min_count": 1},
+            ),
+            (
+                {
+                    gmv_col: "gmv",
+                    nmv_col: "nmv",
+                },
+                "mean",
+                {},
+            ),
+        ],
+        vwap_groups=[],
+        resample_kwargs={
+            "closed": None,
+            "label": None,
+        },
+    )
+    return resampled_df
 
 
 # TODO(Paul): Consider deprecating.
@@ -688,6 +738,7 @@ def compute_spread_cost(
     return out_df
 
 
+# TODO(Paul): Deprecate and delete.
 def compute_pnl(
     df: pd.DataFrame,
     position_intent_col: str,
@@ -811,6 +862,7 @@ def convert_pct_rets_to_log_rets(
     return np.log(pct_rets + 1)
 
 
+# TODO(Paul): Deprecate and delete.
 def rescale_to_target_annual_volatility(
     srs: pd.Series, volatility: float
 ) -> pd.Series:
@@ -858,6 +910,7 @@ def compute_inverse_volatility_weights(df: pd.DataFrame) -> pd.Series:
     return weights
 
 
+# TODO(Paul): Deprecate and delete.
 def aggregate_log_rets(df: pd.DataFrame, weights: pd.Series) -> pd.Series:
     """
     Compute aggregate log returns.
