@@ -13,6 +13,18 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
     the parent class.
     """
 
+    def test_is_online1(self) -> None:
+        # Prepare inputs.
+        asset_ids = [1467591036]
+        columns: List[str] = []
+        columns_remap = None
+        market_data = self._build_client(asset_ids, columns, columns_remap)
+        # Run.
+        actual = market_data.is_online()
+        self.assertTrue(actual)
+
+    # //////////////////////////////////////////////////////////////////////////////
+
     def test_get_data_for_last_period1(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
