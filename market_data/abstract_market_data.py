@@ -160,7 +160,7 @@ class AbstractMarketData(abc.ABC):
         ts_col_name = self._start_time_col_name
         asset_ids = self._asset_ids
         # Get the data.
-        hdateti.dassert_is_valid_interval(start_ts, end_ts)
+        hdateti.dassert_is_valid_interval(start_ts, end_ts, True, True)
         df = self.get_data_for_interval(
             start_ts,
             end_ts,
@@ -234,7 +234,9 @@ class AbstractMarketData(abc.ABC):
         if asset_ids is None:
             asset_ids = self._asset_ids
         # Check the requested interval.
-        hdateti.dassert_is_valid_interval(start_ts, end_ts)
+        hdateti.dassert_is_valid_interval(
+            start_ts, end_ts, left_close, right_close
+        )
         # Delegate to the derived classes to retrieve the data.
         df = self._get_data(
             start_ts,
@@ -297,7 +299,9 @@ class AbstractMarketData(abc.ABC):
         # Get the slice (start_ts, end_ts] of prices.
         left_close = False
         right_close = True
-        hdateti.dassert_is_valid_interval(start_ts, end_ts)
+        hdateti.dassert_is_valid_interval(
+            start_ts, end_ts, left_close, right_close
+        )
         prices = self.get_data_for_interval(
             start_ts,
             end_ts,

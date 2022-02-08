@@ -220,10 +220,11 @@ def dassert_is_valid_timestamp(timestamp: Optional[pd.Timestamp]) -> None:
         dassert_has_tz(timestamp)
 
 
-# TODO(gp): Should we extend it to left_close, right_close?
 def dassert_is_valid_interval(
     start_timestamp: Optional[pd.Timestamp],
     end_timestamp: Optional[pd.Timestamp],
+    left_close: bool,
+    right_close: bool,
 ) -> None:
     """
     Assert that an interval has valid start and end timestamps.
@@ -233,7 +234,10 @@ def dassert_is_valid_interval(
     dassert_is_valid_timestamp(end_timestamp)
     # Check the requested interval.
     if start_timestamp is not None and end_timestamp is not None:
-        hdbg.dassert_lte(start_timestamp, end_timestamp)
+        if left_close & right_close:
+            hdbg.dassert_lte(start_timestamp, end_timestamp)
+        else:
+            hdbg.dassert_lt(start_timestamp, end_timestamp)
 
 
 # #############################################################################
