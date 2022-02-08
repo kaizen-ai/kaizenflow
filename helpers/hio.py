@@ -29,6 +29,22 @@ _LOG = logging.getLogger(__name__)
 # Set logging level of this file.
 # _LOG.setLevel(logging.INFO)
 
+# #############################################################################
+
+
+def purify_file_name(file_name: str) -> str:
+    """
+    Remove non-Linux friendly characters from the basename.
+    """
+    basename = os.path.basename(file_name)
+    for char in (" ", "_", "'", '"', "`", "/"):
+        basename = basename.replace(char, "_")
+    #
+    dir_name = os.path.dirname(file_name)
+    file_name_out = os.path(dir_name, basename)
+    file_name_out = os.path.normpath(file_name_out)
+    return file_name_out
+
 
 # #############################################################################
 # Glob.

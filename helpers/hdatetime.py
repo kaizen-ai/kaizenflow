@@ -84,19 +84,33 @@ def dassert_is_strict_datetime(datetime_: StrictDatetime) -> None:
     )
 
 
+# TODO(Grisha): also pass timezone.
 def to_datetime(datetime_: Datetime) -> datetime.datetime:
     """
-    Assert that datetime_ is a possible datetime.
+    Convert a `Datetime` into a `datetime.datetime`.
 
     :return: tz-aware or naive datetime.datetime
     """
-    # TODO(Grisha): also pass timezone.
     dassert_is_datetime(datetime_)
     if isinstance(datetime_, str):
         datetime_ = pd.Timestamp(datetime_)
     if isinstance(datetime_, pd.Timestamp):
         datetime_ = datetime_.to_pydatetime()
     return datetime_  # type: ignore
+
+
+def to_timestamp(datetime_: Datetime) -> pd.Timestamp:
+    """
+    Convert a `Datetime` into a `pd.Timestamp`.
+
+    :return: tz-aware or naive datetime.datetime
+    """
+    dassert_is_datetime(datetime_)
+    timestamp = pd.Timestamp(datetime_)
+    return timestamp  # type: ignore
+
+
+# //////////////////////////////////////////////////////////////////////////////////O
 
 
 def dassert_is_tz_naive(datetime_: StrictDatetime) -> None:
