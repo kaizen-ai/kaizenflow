@@ -109,8 +109,6 @@ class ImClientTestCase(hunitest.TestCase):
         self,
         im_client: icdc.ImClient,
         full_symbol: icdc.FullSymbol,
-        # TODO(gp): @Grisha Use everywhere this approach of passing args, kwargs
-        #  instead of all the vars.
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -123,21 +121,14 @@ class ImClientTestCase(hunitest.TestCase):
         start_ts = None
         end_ts = None
         actual_df = im_client.read_data(full_symbols, start_ts, end_ts)
-        _check_output(
-            self,
-            actual_df,
-            *args,
-            **kwargs,
-        )
+        _check_output(self, actual_df, *args, **kwargs)
 
     def _test_read_data2(
         self,
         im_client: icdc.ImClient,
         full_symbols: List[icdc.FullSymbol],
-        expected_length: int,
-        expected_exchange_ids: List[str],
-        expected_currency_pairs: List[str],
-        expected_signature: str,
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
         """
         Test:
@@ -147,24 +138,15 @@ class ImClientTestCase(hunitest.TestCase):
         start_ts = None
         end_ts = None
         actual_df = im_client.read_data(full_symbols, start_ts, end_ts)
-        _check_output(
-            self,
-            actual_df,
-            expected_length,
-            expected_exchange_ids,
-            expected_currency_pairs,
-            expected_signature,
-        )
+        _check_output(self, actual_df, *args, **kwargs)
 
     def _test_read_data3(
         self,
         im_client: icdc.ImClient,
         full_symbols: List[icdc.FullSymbol],
         start_ts: pd.Timestamp,
-        expected_length: int,
-        expected_exchange_ids: List[str],
-        expected_currency_pairs: List[str],
-        expected_signature: str,
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
         """
         Test:
@@ -174,24 +156,15 @@ class ImClientTestCase(hunitest.TestCase):
         """
         end_ts = None
         actual_df = im_client.read_data(full_symbols, start_ts, end_ts)
-        _check_output(
-            self,
-            actual_df,
-            expected_length,
-            expected_exchange_ids,
-            expected_currency_pairs,
-            expected_signature,
-        )
+        _check_output(self, actual_df, *args, **kwargs)
 
     def _test_read_data4(
         self,
         im_client: icdc.ImClient,
         full_symbols: List[icdc.FullSymbol],
         end_ts: pd.Timestamp,
-        expected_length: int,
-        expected_exchange_ids: List[str],
-        expected_currency_pairs: List[str],
-        expected_signature: str,
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
         """
         Test:
@@ -201,14 +174,7 @@ class ImClientTestCase(hunitest.TestCase):
         """
         start_ts = None
         actual_df = im_client.read_data(full_symbols, start_ts, end_ts)
-        _check_output(
-            self,
-            actual_df,
-            expected_length,
-            expected_exchange_ids,
-            expected_currency_pairs,
-            expected_signature,
-        )
+        _check_output(self, actual_df, *args, **kwargs)
 
     def _test_read_data5(
         self,
@@ -216,10 +182,8 @@ class ImClientTestCase(hunitest.TestCase):
         full_symbols: List[icdc.FullSymbol],
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
-        expected_length: int,
-        expected_exchange_ids: List[str],
-        expected_currency_pairs: List[str],
-        expected_signature: str,
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
         """
         Test:
@@ -227,14 +191,7 @@ class ImClientTestCase(hunitest.TestCase):
         - specified start_ts and end_ts
         """
         actual_df = im_client.read_data(full_symbols, start_ts, end_ts)
-        _check_output(
-            self,
-            actual_df,
-            expected_length,
-            expected_exchange_ids,
-            expected_currency_pairs,
-            expected_signature,
-        )
+        _check_output(self, actual_df, *args, **kwargs)
 
     def _test_read_data6(
         self, im_client: icdc.ImClient, full_symbol: icdc.FullSymbol
@@ -294,8 +251,7 @@ class ImClientTestCase(hunitest.TestCase):
         """
         # TODO(gp): We might want to sort actual and expected universe for
         #  stability.
-        # TODO(Grisha): add unit tests for `as_asset_ids=True` CMTask #822.
-        universe = im_client.get_universe(as_asset_ids=False)
+        universe = im_client.get_universe()
         actual_length = len(universe)
         actual_first_elements = universe[:3]
         actual_last_elements = universe[-3:]

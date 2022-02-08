@@ -72,6 +72,7 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     lint_check_python_files,
     lint_check_python_files_in_docker,
     lint_create_branch,
+    lint_detect_cycles,
     print_setup,
     print_tasks,
     pytest_clean,

@@ -6,7 +6,7 @@ import im_v2.common.data.client.full_symbol as imvcdcfusy
 
 import logging
 import re
-from typing import Tuple
+from typing import List, Tuple
 
 import helpers.hdbg as hdbg
 
@@ -66,3 +66,11 @@ def build_full_symbol(exchange: str, symbol: str) -> FullSymbol:
     full_symbol = f"{exchange}::{symbol}"
     dassert_is_full_symbol_valid(full_symbol)
     return full_symbol
+
+
+def dassert_valid_full_symbols(full_symbols: List[FullSymbol]) -> None:
+    """
+    Verify that full symbols are passed in a list that has no duplicates.
+    """
+    hdbg.dassert_isinstance(full_symbols, list)
+    hdbg.dassert_no_duplicates(full_symbols)
