@@ -1484,10 +1484,9 @@ class TestCase(unittest.TestCase):
         :param expected_signature: expected outcome dataframe as string
         """
         hdbg.dassert_isinstance(actual_df, pd.DataFrame)
-        hdbg.dassert_lt(0, actual_df.shape[0])
         if expected_length:
             # Verify that output length is correct.
-            self.assert_equal(str(expected_length), str(actual_df.shape[0]))
+            self.assertEqual(expected_length, actual_df.shape[0])
         if expected_column_names:
             # Verify that column names are correct.
             self.assert_equal(
@@ -1536,10 +1535,9 @@ class TestCase(unittest.TestCase):
         :param expected_signature: expected outcome series as string
         """
         hdbg.dassert_isinstance(actual_srs, pd.Series)
-        hdbg.dassert_lt(0, actual_srs.shape[0])
         if expected_length:
             # Verify that output length is correct.
-            self.assert_equal(str(expected_length), str(actual_srs.shape[0]))
+            self.assertEqual(expected_length, actual_srs.shape[0])
         if expected_unique_values:
             # Verify that unique values in series are correct.
             self.assert_equal(
