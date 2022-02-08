@@ -37,3 +37,4 @@ class TestGetVendorUniverse(hunitest.TestCase):
         self.assertEqual(len(universe_as_numerical_ids), 2)
         self.assertEqual(universe_as_numerical_ids[0], 2002879833)
         self.assertEqual(universe_as_numerical_ids[1], 2568064341)
+

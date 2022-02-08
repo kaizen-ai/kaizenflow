@@ -4,9 +4,8 @@ Import as:
 import im_v2.common.universe.universe_utils as imvcuunut
 """
 
-import functools
 import hashlib
-from typing import Dict, Tuple
+from typing import Dict, List
 
 import helpers.hdbg as hdbg
 

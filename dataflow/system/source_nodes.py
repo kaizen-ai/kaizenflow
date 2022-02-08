@@ -542,7 +542,6 @@ class HistoricalDataSource(dtfcore.DataSource):
             asset_ids,
             left_close=left_close,
             right_close=right_close,
-            normalize_data=True,
         )
         # Remove the columns that are not needed.
         if self._col_names_to_remove is not None:
