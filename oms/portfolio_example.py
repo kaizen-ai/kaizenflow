@@ -20,7 +20,7 @@ _LOG = logging.getLogger(__name__)
 def get_simulated_portfolio_example1(
     event_loop: Optional[asyncio.AbstractEventLoop],
     *,
-    market_data: Optional[mdata.AbstractMarketData] = None,
+    market_data: Optional[mdata.MarketData] = None,
     mark_to_market_col: str = "price",
     pricing_method: str = "last",
     timestamp_col: str = "end_datetime",
@@ -61,7 +61,7 @@ def get_mocked_portfolio_example1(
     #  default value.
     table_name: str,
     *,
-    market_data: Optional[mdata.AbstractMarketData] = None,
+    market_data: Optional[mdata.MarketData] = None,
     mark_to_market_col: str = "price",
     pricing_method: str = "last",
     timestamp_col: str = "end_datetime",

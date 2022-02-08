@@ -39,7 +39,7 @@ _LOG = logging.getLogger(__name__)
 #     @abc.abstractmethod
 #     def get_market_data(
 #             self, event_loop: asyncio.AbstractEventLoop
-#     ) -> mdata.AbstractMarketData:
+#     ) -> mdata.MarketData:
 #         ...
 #
 #     @abc.abstractmethod
@@ -70,14 +70,14 @@ class SystemRunner(abc.ABC):
     @abc.abstractmethod
     def get_market_data(
         self, event_loop: asyncio.AbstractEventLoop
-    ) -> mdata.AbstractMarketData:
+    ) -> mdata.MarketData:
         ...
 
     @abc.abstractmethod
     def get_portfolio(
         self,
         event_loop: asyncio.AbstractEventLoop,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
     ) -> oms.AbstractPortfolio:
         ...
 

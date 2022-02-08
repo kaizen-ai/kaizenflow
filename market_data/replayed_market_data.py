@@ -29,7 +29,7 @@ _LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
 
 
 # TODO(gp): This should have a delay and / or we should use timestamp_db.
-class ReplayedMarketData(mdabmada.AbstractMarketData):
+class ReplayedMarketData(mdabmada.MarketData):
     """
     Implement an interface to a replayed time historical / RT database.
 
@@ -42,7 +42,7 @@ class ReplayedMarketData(mdabmada.AbstractMarketData):
         df: pd.DataFrame,
         knowledge_datetime_col_name: str,
         delay_in_secs: int,
-        # Params from `AbstractMarketData`.
+        # Params from `MarketData`.
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
@@ -161,7 +161,7 @@ class ReplayedMarketData(mdabmada.AbstractMarketData):
 
 
 def save_market_data(
-    market_data: mdabmada.AbstractMarketData,
+    market_data: mdabmada.MarketData,
     file_name: str,
     timedelta: pd.Timedelta,
     limit: Optional[int],

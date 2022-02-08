@@ -24,7 +24,7 @@ _LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
 
 
 # #############################################################################
-# AbstractMarketData
+# MarketData
 # #############################################################################
 
 
@@ -48,7 +48,7 @@ def dassert_is_valid_start_end_timestamp(
 
 # TODO(gp): @Grisha -> MarketData. We need a script (see replace_text.py) to do it
 #  since we need to update multiple repos.
-class AbstractMarketData(abc.ABC):
+class MarketData(abc.ABC):
     """
     Implement an interface to an historical / real-time source of price data.
 

@@ -48,7 +48,7 @@ def get_vendor_universe(
     vendor_universe = get_trade_universe(version)[vendor]
     # Convert vendor universe dict to a sorted list of full symbols.
     universe = [
-        icdc.construct_full_symbol(exchange_id, currency_pair)
+        icdc.build_full_symbol(exchange_id, currency_pair)
         for exchange_id, currency_pairs in vendor_universe.items()
         for currency_pair in currency_pairs
     ]

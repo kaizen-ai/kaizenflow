@@ -128,7 +128,7 @@ class ImClient(abc.ABC):
             df_tmp = self._apply_im_normalizations(
                 df_tmp, full_symbol_col_name, start_ts, end_ts
             )
-            self._dassert_is_valid(df_tmp, full_symbol_col_name, start_ts, end_ts)
+            self._dassert_output_data_is_valid(df_tmp, full_symbol_col_name, start_ts, end_ts)
             dfs.append(df_tmp)
         df = pd.concat(dfs, axis=0)
         _LOG.debug("After im_normalization: df=\n%s", hpandas.df_to_str(df))
@@ -178,7 +178,7 @@ class ImClient(abc.ABC):
     #  One is the type, the other is the semantic.
     # This should be called -> get_asset_ids_from_full_symbols
     @staticmethod
-    def get_numerical_ids_from_full_symbols(
+    def get_asset_ids_from_full_symbols(
         full_symbols: List[imvcdcfusy.FullSymbol],
     ) -> List[int]:
         """
@@ -187,11 +187,11 @@ class ImClient(abc.ABC):
         :param full_symbols: assets as full symbols
         :return: assets as numerical ids
         """
-        numeric_asset_id = [
-            imvcuunut.string_to_numeric_id(full_symbol)
+        numerical_asset_id = [
+            imvcuunut.string_to_numerical_id(full_symbol)
             for full_symbol in full_symbols
         ]
-        return numeric_asset_id
+        return numerical_asset_id
 
     # TODO(gp): @Grisha -> get_full_symbols_from_asset_ids
     def get_full_symbols_from_numerical_ids(
@@ -234,7 +234,7 @@ class ImClient(abc.ABC):
         full_symbol_universe = self.get_universe()
         # Build the mapping.
         asset_id_to_full_symbol_mapping = (
-            imvcuunut.build_num_to_string_id_mapping(full_symbol_universe)
+            imvcuunut.build_numerical_to_string_id_mapping(full_symbol_universe)
         )
         return asset_id_to_full_symbol_mapping  # type: ignore[no-any-return]
 
@@ -296,7 +296,7 @@ class ImClient(abc.ABC):
 
     # TODO(gp): @Grisha -> _dassert_output_data_is_valid
     @staticmethod
-    def _dassert_is_valid(
+    def _dassert_output_data_is_valid(
         df: pd.DataFrame,
         full_symbol_col_name: str,
         start_ts: Optional[pd.Timestamp],

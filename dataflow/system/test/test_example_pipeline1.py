@@ -34,7 +34,7 @@ class TestExamplePipeline1(otodh.TestOmsDbHelper):
     def get_database_portfolio(
         self,
         event_loop: asyncio.AbstractEventLoop,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
     ) -> omportfo.MockedPortfolio:
         db_connection = self.connection
         table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
@@ -60,7 +60,7 @@ class TestExamplePipeline1(otodh.TestOmsDbHelper):
     def get_dataframe_portfolio(
         self,
         event_loop: asyncio.AbstractEventLoop,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
     ) -> omportfo.SimulatedPortfolio:
         # Neither the fake data nor the pipeline is filtering out weekends, and
         # so this is treated as a valid trading day.
