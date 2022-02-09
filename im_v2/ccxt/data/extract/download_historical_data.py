@@ -91,6 +91,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Connect to S3 filesystem, if provided.
     if args.aws_profile:
         fs = hs3.get_s3fs(args.aws_profile)
+    exchange = imvcdeexcl.CcxtExchange(args.exchange_id)
     # Load trading universe.
     universe = imvccunun.get_trade_universe(args.universe)
     # Load a list of currency pars.
@@ -98,7 +99,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Convert timestamps.
     end_datetime = pd.Timestamp(args.to_datetime)
     start_datetime = pd.Timestamp(args.from_datetime)
-    exchange = imvcdeexcl.CcxtExchange(args.exchange_id)
     for currency_pair in currency_pairs:
         # Download OHLCV data.
         data = exchange.download_ohlcv_data(
@@ -107,6 +107,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             end_datetime=end_datetime,
             bar_per_iteration=args.step,
         )
+        # Get file name.
         file_name = (
             currency_pair
             + "_"
