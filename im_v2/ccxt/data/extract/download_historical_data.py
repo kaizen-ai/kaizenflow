@@ -66,13 +66,6 @@ def _parse() -> argparse.ArgumentParser:
         help="Trade universe to download data for",
     )
     parser.add_argument(
-        "--step",
-        action="store",
-        type=int,
-        default=None,
-        help="Size of each API request per iteration",
-    )
-    parser.add_argument(
         "--sleep_time",
         action="store",
         type=int,
