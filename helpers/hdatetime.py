@@ -227,7 +227,7 @@ def dassert_tz_compatible_timestamp_with_df(
 
 def dassert_is_valid_timestamp(timestamp: Optional[pd.Timestamp]) -> None:
     """
-    A valid timestamp is `None` or a pd.Timestamp with timezone.
+    Assert that a timestamp is `None` or a `pd.Timestamp` with timezone.
     """
     if timestamp is not None:
         hdbg.dassert_isinstance(timestamp, pd.Timestamp)
@@ -243,7 +243,9 @@ def dassert_is_valid_interval(
     """
     Assert that an interval has valid start and end timestamps.
     """
-    _LOG.debug(hprint.to_str("start_timestamp end_timestamp"))
+    _LOG.debug(
+        hprint.to_str("start_timestamp end_timestamp left_close right_close")
+    )
     dassert_is_valid_timestamp(start_timestamp)
     dassert_is_valid_timestamp(end_timestamp)
     # Check the requested interval.
