@@ -100,7 +100,11 @@ class ImClient(abc.ABC):
         )
         imvcdcfusy.dassert_valid_full_symbols(full_symbols)
         # Check the requested interval.
-        hdateti.dassert_is_valid_interval(start_ts, end_ts, True, True)
+        left_close = True
+        right_close = True
+        hdateti.dassert_is_valid_interval(
+            start_ts, end_ts, left_close, right_close
+        )
         # Delegate to the derived classes to retrieve the data.
         df = self._read_data(
             full_symbols,

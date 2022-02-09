@@ -160,7 +160,6 @@ class AbstractMarketData(abc.ABC):
         ts_col_name = self._start_time_col_name
         asset_ids = self._asset_ids
         # Get the data.
-        hdateti.dassert_is_valid_interval(start_ts, end_ts, True, True)
         df = self.get_data_for_interval(
             start_ts,
             end_ts,

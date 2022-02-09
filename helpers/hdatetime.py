@@ -243,7 +243,9 @@ def dassert_is_valid_interval(
     """
     Assert that an interval has valid start and end timestamps.
     """
-    _LOG.debug(hprint.to_str("start_timestamp end_timestamp"))
+    _LOG.debug(
+        hprint.to_str("start_timestamp end_timestamp left_close right_close")
+    )
     dassert_is_valid_timestamp(start_timestamp)
     dassert_is_valid_timestamp(end_timestamp)
     # Check the requested interval.
