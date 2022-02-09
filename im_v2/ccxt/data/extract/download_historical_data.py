@@ -36,6 +36,7 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
     )
+    # TODO(Danya): Remove, replase with AWS arguments.
     parser.add_argument(
         "--dst_dir",
         action="store",
@@ -43,6 +44,7 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="Folder to download files to",
     )
+    # TODO(Danya): Add `exchange` argument, so it downloads only for 1 exchange.
     parser.add_argument(
         "--universe",
         action="store",
@@ -76,7 +78,7 @@ def _parse() -> argparse.ArgumentParser:
         "--sleep_time",
         action="store",
         type=int,
-        default=60,
+        default=10,
         help="Sleep time between currency pair downloads (in seconds).",
     )
     parser.add_argument("--incremental", action="store_true")
@@ -87,21 +89,25 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    # TODO(Danya): Remove.
     # Create the directory.
     hio.create_dir(args.dst_dir, incremental=args.incremental)
     # Handle start and end datetime.
     start_datetime = pd.Timestamp(args.start_datetime)
+    # TODO(Danya): end datetime is compulsory.
     if not args.end_datetime:
         # If end datetime is not provided, use the current time.
         end_datetime = pd.Timestamp.now()
     else:
         end_datetime = pd.Timestamp(args.end_datetime)
     # Load trading universe.
+    # TODO(Danya): universe must be provided.
     if args.universe == "latest":
         trade_universe = imvccunun.get_trade_universe()["CCXT"]
     else:
         trade_universe = imvccunun.get_trade_universe(args.universe)["CCXT"]
     _LOG.info("Getting data for exchanges %s", ", ".join(trade_universe.keys()))
+    # TODO(Danya): Only 1 exchange id.
     for exchange_id in trade_universe:
         # Initialize the exchange class.
         exchange = imvcdeexcl.CcxtExchange(exchange_id)
@@ -118,6 +124,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             time.sleep(args.sleep_time)
             # Create file name based on exchange and currency pair.
             # E.g. 'binance_BTC_USDT.csv.gz'
+            # TODO(Danya): Filename = currency_pair_timestamp.
             file_name = f"{exchange_id}-{currency_pair}.csv.gz"
             full_path = os.path.join(args.dst_dir, file_name)
             # Save file.
