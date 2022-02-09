@@ -95,7 +95,8 @@ class ParquetDataFrameGenerator:
 
     def generate(self) -> pd.DataFrame:
         """
-        Generate specific dataframe based on inputs provided in instance creation.
+        Generate specific dataframe based on inputs provided in instance
+        creation.
         """
         if self._output_type not in self.OUTPUT_TYPES:
             raise ValueError(f"Unsupported data type `{self._output_type}`!")
@@ -242,7 +243,9 @@ def _run(parser: argparse.ArgumentParser) -> None:
     assets = assets.split(",")
     dst_dir = args.dst_dir
     # Run dataframe generation.
-    pdg = ParquetDataFrameGenerator(start_date, end_date, output_type, assets, freq)
+    pdg = ParquetDataFrameGenerator(
+        start_date, end_date, output_type, assets, freq
+    )
     parquet_df = pdg.generate()
     # Add partition columns to the dataframe.
     df, partition_cols = imvcdttrut.add_date_partition_cols(
