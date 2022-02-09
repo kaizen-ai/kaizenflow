@@ -39,7 +39,7 @@
 # CmTask1072 - Rename method "dassert_is_valid()" to "dassert_output_data_is_valid()".
 ./dev_scripts/replace_text.py \
   --old 'dassert_is_valid\(' \
-  --new 'dassert_output_data_is_valid(' \
+  --new 'dassert_output_data_is_valid\(' \
   --dirs "im_v2" \
   
 # CmTask1072 - Rename method "get_numerical_ids_from_full_symbols()" to "get_asset_ids_from_full_symbols()".
@@ -68,6 +68,11 @@
    --old 'build_num_to_string_id_mapping' \
    --new 'build_numerical_to_string_id_mapping' \
    --dirs "im_v2" \
+   
+# CmTask1072 - Rename method "get_full_symbols_from_numerical_ids()" to "get_full_symbols_from_asset_ids()".
+./dev_scripts/replace_text.py \
+   --old 'get_full_symbols_from_numerical_ids' \
+   --new 'get_full_symbols_from_asset_ids' \
 
 # Remove unused imports from affected files.
 invoke lint -m --only-format

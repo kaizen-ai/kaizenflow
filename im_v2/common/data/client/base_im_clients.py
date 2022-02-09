@@ -190,8 +190,7 @@ class ImClient(abc.ABC):
         ]
         return numerical_asset_id
 
-    # TODO(gp): @Grisha -> get_full_symbols_from_asset_ids
-    def get_full_symbols_from_numerical_ids(
+    def get_full_symbols_from_asset_ids(
         self, asset_ids: List[int]
     ) -> List[imvcdcfusy.FullSymbol]:
         """
@@ -291,7 +290,6 @@ class ImClient(abc.ABC):
         df.index = df.index.tz_convert("UTC")
         return df
 
-    # TODO(gp): @Grisha -> _dassert_output_data_is_valid
     @staticmethod
     def _dassert_output_data_is_valid(
         df: pd.DataFrame,

@@ -101,7 +101,7 @@ class ImClientMarketData(mdabmada.MarketData):
             full_symbols = self._im_client.get_universe()
         else:
             # Convert asset ids to full symbols to read `im` data.
-            full_symbols = self._im_client.get_full_symbols_from_numerical_ids(
+            full_symbols = self._im_client.get_full_symbols_from_asset_ids(
                 asset_ids
             )
         # Load the data using `im_client`.
