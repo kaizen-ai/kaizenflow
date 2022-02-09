@@ -126,7 +126,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
-        end_ts = pd.Timestamp("2018-08-17T00:06:00+00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         # pylint: disable=line-too-long
         exp_df_as_str = """
         # df=
@@ -155,7 +155,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
-        end_ts = pd.Timestamp("2018-08-17T00:04:00+00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         # pylint: disable=line-too-long
         exp_df_as_str = r"""# df=
         df.index in [2018-08-16 20:01:00-04:00, 2018-08-16 20:04:00-04:00]
@@ -184,7 +184,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
-        end_ts = pd.Timestamp("2018-08-17T00:06:00+00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         # pylint: disable=line-too-long
         exp_df_as_str = r"""# df=
         df.index in [2018-08-16 20:01:00-04:00, 2018-08-16 20:05:00-04:00]
@@ -213,7 +213,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
-        end_ts = pd.Timestamp("2018-08-17T00:06:00+00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         # pylint: disable=line-too-long
         exp_df_as_str = r"""# df=
         df.index in [2018-08-16 20:02:00-04:00, 2018-08-16 20:05:00-04:00]
@@ -242,7 +242,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
-        end_ts = pd.Timestamp("2018-08-17T00:04:00+00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         # pylint: disable=line-too-long
         exp_df_as_str = r"""# df=
         df.index in [2018-08-16 20:02:00-04:00, 2018-08-16 20:04:00-04:00]
@@ -272,7 +272,7 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
-        end_ts = pd.Timestamp("2018-08-17T00:06:00+00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         exp_srs_as_str = r"""
                       close
         asset_id

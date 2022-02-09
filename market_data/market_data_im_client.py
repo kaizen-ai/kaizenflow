@@ -92,7 +92,7 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
             if start_ts is not None:
                 # Add one millisecond to not include the left boundary.
                 start_ts += pd.Timedelta(1, "ms")
-        if right_close:
+        if not right_close:
             if end_ts is not None:
                 # Add one millisecond to include the right boundary.
                 end_ts -= pd.Timedelta(1, "ms")
