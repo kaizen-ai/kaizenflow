@@ -23,7 +23,7 @@ import time
 import pandas as pd
 
 import helpers.hdbg as hdbg
-import helpers.hio as hio
+import helpers.datetime as hdateti
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
@@ -38,18 +38,18 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--start_datetime",
+        "--to_datetime",
         action="store",
         required=True,
         type=str,
-        help="Start date of download to parse with pd.Timestamp",
+        help="End of the downloaded period",
     )
     parser.add_argument(
-        "--end_datetime",
+        "--from_datetime",
         action="store",
         required=True,
         type=str,
-        help="End date of download to parse with pd.Timestamp. "
+        help="Beginning of the downloaded period",
     )
     parser.add_argument(
         "--exchange_id",
@@ -100,14 +100,18 @@ def _main(parser: argparse.ArgumentParser) -> None:
     start_datetime = pd.Timestamp(args.from_datetime)
     exchange = imvcdeexcl.CcxtExchange(args.exchange_id)
     for currency_pair in currency_pairs:
-        _LOG.info("Downloading currency pair '%s'", currency_pair)
         # Download OHLCV data.
-        currency_pair_data = exchange.download_ohlcv_data(
+        data = exchange.download_ohlcv_data(
             currency_pair,
             start_datetime=start_datetime,
             end_datetime=end_datetime,
             bar_per_iteration=args.step,
         )
+        file_name = currency_pair + "_" + hdateti.get_current_timestamp_as_string("UTC") + ".csv"
+        path_to_file = os.path.join(args.s3_path, file_name)
+        # Save data to S3 filesystem.
+        with fs.open(path_to_file, "w") as f:
+            data.to_csv(f, index=False)
         # Sleep between iterations.
         time.sleep(args.sleep_time)
 
