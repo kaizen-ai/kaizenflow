@@ -25,6 +25,7 @@ import pandas as pd
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hparser as hparser
+import helpers.hs3 as hs3
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import im_v2.ccxt.universe.universe as imvccunun
 
@@ -36,22 +37,6 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
     )
-    # TODO(Danya): Remove, replase with AWS arguments.
-    parser.add_argument(
-        "--dst_dir",
-        action="store",
-        required=True,
-        type=str,
-        help="Folder to download files to",
-    )
-    # TODO(Danya): Add `exchange` argument, so it downloads only for 1 exchange.
-    parser.add_argument(
-        "--universe",
-        action="store",
-        required=True,
-        type=str,
-        help="Trade universe to download data for, e.g. 'latest', '01'",
-    )
     parser.add_argument(
         "--start_datetime",
         action="store",
@@ -62,10 +47,16 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--end_datetime",
         action="store",
+        required=True,
         type=str,
-        default=None,
         help="End date of download to parse with pd.Timestamp. "
-        "None means datetime.now())",
+    )
+    parser.add_argument(
+        "--universe",
+        action="store",
+        required=True,
+        type=str,
+        help="Trade universe to download data for"
     )
     parser.add_argument(
         "--step",
@@ -82,6 +73,7 @@ def _parse() -> argparse.ArgumentParser:
         help="Sleep time between currency pair downloads (in seconds).",
     )
     parser.add_argument("--incremental", action="store_true")
+    parser = hs3.add_s3_args(parser)
     parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
 
