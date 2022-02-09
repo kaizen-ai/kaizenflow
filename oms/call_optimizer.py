@@ -67,7 +67,7 @@ def compute_target_positions_in_cash(
     unscaled_target_positions[cash_asset_id] = np.nan
     if dollar_neutrality == "no_constraint":
         pass
-    elif dollar_neutrality == "linear":
+    elif dollar_neutrality == "demean":
         hdbg.dassert_lt(
             1,
             unscaled_target_positions.count(),
@@ -79,7 +79,7 @@ def compute_target_positions_in_cash(
             % net_target_position
         )
         unscaled_target_positions -= net_target_position
-    elif dollar_neutrality == "nonlinear":
+    elif dollar_neutrality == "side_preserving":
         hdbg.dassert_lt(
             1,
             unscaled_target_positions.count(),

@@ -34,7 +34,7 @@ def reindex_on_asset_and_ts(data: pd.DataFrame) -> pd.DataFrame:
     Drops timestamps for downloading and saving.
     """
     # Drop download data timestamps.
-    data_reindex = data.drop(["ended_downloaded_at", "knowledge_time"], axis=1)
+    data_reindex = data.drop(["end_download_timestamp", "knowledge_timestamp"], axis=1)
     # Reindex on ts and asset.
     data_reindex = data_reindex.set_index(["timestamp", "currency_pair"])
     return data_reindex
@@ -110,8 +110,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
     # Read DB realtime data.
-    query = f"SELECT * FROM ccxt_ohlcv WHERE knowledge_time >='{start_datetime}'" \
-            f" AND knowledge_time <= {end_datetime}"
+    query = f"SELECT * FROM ccxt_ohlcv WHERE knowledge_timestamp >='{start_datetime}'" \
+            f" AND knowledge_timestamp <= {end_datetime}"
     rt_data = hsql.execute_query_to_df(connection, query)
     rt_data_reindex = reindex_on_asset_and_ts(rt_data)
     # Connect to S3 filesystem, if provided.
