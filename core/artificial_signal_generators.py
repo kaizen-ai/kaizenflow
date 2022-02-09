@@ -152,6 +152,7 @@ if True:
         return recipe_dataset.generate()
 
 
+# TODO(Paul): Remove the statsmodels dependency.
 class ArmaProcess:
     """
     A thin wrapper around statsmodels `ArmaProcess`, with Pandas support.
@@ -328,6 +329,34 @@ class PriceProcess:
         """
         self._rng = np.random.default_rng(seed=seed)
 
+    def generate_log_normal_series(
+        self,
+        start_datetime: pd.Timestamp,
+        end_datetime: pd.Timestamp,
+        asset_id: int,
+        *,
+        bar_duration: str = "1T",
+        bar_volatility_in_bps: float = 5,
+        start_time: datetime.time = datetime.time(9, 30),
+        end_time: datetime.time = datetime.time(16, 00),
+    ) -> pd.Series:
+        # Generate the datetime index.
+        index = PriceProcess._get_index(
+            start_datetime,
+            end_datetime,
+            bar_duration,
+            start_time,
+            end_time,
+        )
+        #
+        n_samples = index.size
+        # Generate random normal returns.
+        z_scored = self._rng.normal(size=n_samples)
+        series = 0.0001 * bar_volatility_in_bps * z_scored
+        # Convert to a series.
+        series = pd.Series(data=series, index=index, name=asset_id)
+        return series
+
     def generate_price_series_from_normal_log_returns(
         self,
         start_datetime: pd.Timestamp,
@@ -335,7 +364,8 @@ class PriceProcess:
         asset_id: int,
         *,
         bar_duration: str = "1T",
-        bar_volatility_in_bps: int = 10,
+        # TODO(Paul): Change the default to 5.
+        bar_volatility_in_bps: float = 10,
         last_price: float = 1000,
         start_time: datetime.time = datetime.time(9, 30),
         end_time: datetime.time = datetime.time(16, 00),
@@ -356,21 +386,15 @@ class PriceProcess:
             omitted
           - the series can safely be resampled to `bar_duration` without loss
         """
-        # Generate the datetime index.
-        index = PriceProcess._get_index(
-            start_datetime,
-            end_datetime,
-            bar_duration,
-            start_time,
-            end_time,
+        rets = self.generate_log_normal_series(
+            start_datetime=start_datetime,
+            end_datetime=end_datetime,
+            asset_id=asset_id,
+            bar_duration=bar_duration,
+            bar_volatility_in_bps=bar_volatility_in_bps,
+            start_time=start_time,
+            end_time=end_time,
         )
-        #
-        n_samples = index.size
-        # Generate random normal returns.
-        z_rets = self._rng.normal(size=n_samples)
-        rets = 0.0001 * bar_volatility_in_bps * z_rets
-        # Convert to a series.
-        rets = pd.Series(data=rets, index=index, name=asset_id)
         # Generate prices.
         price = last_price * np.exp(rets.cumsum())
         return price

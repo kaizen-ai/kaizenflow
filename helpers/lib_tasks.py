@@ -1082,13 +1082,13 @@ def git_branch_diff_with_master(  # type: ignore
 #   > i lint --dir-name . --only-format
 #   ```
 #
-# - Remove end-spaces
+# - Remove end-of-line spaces:
 #   ```
 #   # Remove
 #   > find . -name "*.txt" | xargs perl -pi -e 'chomp if eof'
 #   ```
 #
-# - Align `lib_tasks.py`
+# - Align `lib_tasks.py`:
 #   ```
 #   > vimdiff ~/src/{amp1,cmamp1}/tasks.py; vimdiff ~/src/{amp1,cmamp1}/helpers/lib_tasks.py
 #   ```
@@ -4259,7 +4259,7 @@ def lint_detect_cycles(  # type: ignore
     as_user = _run_docker_as_user(as_user)
     # Prepare the command line.
     docker_cmd_opts = [dir_name]
-    docker_cmd_ = "import_check/detect_import_cycles.py " + _to_single_line_cmd(
+    docker_cmd_ = "/app/import_check/detect_import_cycles.py " + _to_single_line_cmd(
         docker_cmd_opts
     )
     # Execute command line.
