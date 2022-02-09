@@ -69,7 +69,6 @@ class HistoricalPqByAssetClient(
         filters = hparque.get_parquet_filters_from_timestamp_interval(
             self._partitioning_mode, start_ts, end_ts
         )
-        # TODO(Nikola): Do we want OR or AND for assets?
         asset_and_condition = (self._asset_col_name, "in", asset_ids)
         if not filters:
             filters = [[asset_and_condition]]

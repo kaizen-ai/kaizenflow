@@ -94,7 +94,6 @@ def add_date_partition_cols(
         - list of partitioning columns
     """
     with htimer.TimedScope(logging.DEBUG, "# add_date_partition_cols"):
-        # TODO(Nikola): Use get_partition_columns from `hparque`.
         if partition_mode == "by_date":
             df["date"] = df.index.strftime("%Y%m%d")
             partition_columns = ["date"]

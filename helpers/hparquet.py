@@ -5,7 +5,7 @@ import helpers.hparquet as hparque
 """
 
 import logging
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple
 
 import pandas as pd
 import pyarrow as pa
@@ -108,48 +108,15 @@ def to_parquet(
 
 # #############################################################################
 
-
-def get_partition_columns(partition_mode: str) -> List[str]:
-    """
-    Get partition columns like year, month, day depending on partition mode.
-
-    :param partition_mode:
-        - "by_date": extract the date from the index
-            - E.g., an index like `2022-01-10 14:00:00+00:00` is transform to a
-              column `20220110`
-        - "by_year_month_day": split the index in year, month, day columns
-        - "by_year_month": split by year and month
-        - "by_year_week": split by year and week of the year
-        - "by_year": split by year
-    :return: list of partitioning columns
-    """
-    if partition_mode == "by_date":
-        partition_columns = ["date"]
-    elif partition_mode == "by_year_month_day":
-        # TODO(Nikola): Previously it was `["year", "month", "date"]`...
-        #   Mistake or intention?
-        partition_columns = ["year", "month", "day"]
-    elif partition_mode == "by_year_month":
-        partition_columns = ["year", "month"]
-    elif partition_mode == "by_year_week":
-        partition_columns = ["year", "weekofyear"]
-    elif partition_mode == "by_year":
-        partition_columns = ["year"]
-    elif partition_mode == "by_month":
-        partition_columns = ["month"]
-    else:
-        raise ValueError(f"Invalid partition_mode '{partition_mode}'!")
-    return partition_columns
-
-
-PARQUET_AND_FILTER = List[List[Tuple[str, str, Union[int, List[int]]]]]
+ParquetAndFilter = List[Tuple[str, str, Any]]
+ParquetOrAndFilter = List[ParquetAndFilter]
 
 
 def get_parquet_filters_from_timestamp_interval(
     partition_mode: str,
-    start_ts: Optional[pd.Timestamp],
-    end_ts: Optional[pd.Timestamp],
-) -> PARQUET_AND_FILTER:
+    start_timestamp: Optional[pd.Timestamp],
+    end_timestamp: Optional[pd.Timestamp],
+) -> ParquetOrAndFilter:
     """
     Convert a constraint on a timestamp [start_timestamp, end_timestamp] into a
     Parquet filters expression, based on the passed partitioning/tiling
@@ -157,8 +124,8 @@ def get_parquet_filters_from_timestamp_interval(
 
     :param partition_mode: mode to control filtering of parquet datasets
         that were previously saved in the same mode
-    :param start_ts: start of the interval
-    :param end_ts: end of the interval
+    :param start_timestamp: start of the interval
+    :param end_timestamp: end of the interval
     :return: list of AND(conjunction) predicates that are expressed
         in DNF(disjunctive normal form)
     """
@@ -166,25 +133,34 @@ def get_parquet_filters_from_timestamp_interval(
     left_close = True
     right_close = True
     hdateti.dassert_is_valid_interval(
-        start_ts, end_ts, left_close=left_close, right_close=right_close
+        start_timestamp,
+        end_timestamp,
+        left_close=left_close,
+        right_close=right_close,
     )
-    # Obtain partition columns.
-    partition_columns = get_partition_columns(partition_mode)
-    # The data is stored by week, so we need to convert the timestamps into
-    # weeks and then trim the excess.
-    and_filters = []
-    for timestamp, condition in [(start_ts, ">="), (end_ts, "<=")]:
-        if timestamp is not None:
-            # Add filter for each partition column.
-            for column_name in partition_columns:
-                time_part = getattr(timestamp, column_name)
-                # Only week is having different representation in Parquet file.
-                column_name = (
-                    "weekofyear" if column_name == "weekofyear" else column_name
-                )
-                and_condition = (column_name, condition, time_part)
-                and_filters.append(and_condition)
-                _LOG.debug("added condition %s", str(and_condition))
-    filters = [and_filters]
+    # Use hardwired start and end date to represent the start_timestamp / end_timestamp = None.
+    # This is not very elegant, but it simplifies the code
+    min_date = pd.Timestamp("2001-01-01 00:00:00+00:00")
+    max_date = pd.Timestamp("2100-01-01 00:00:00+00:00")
+    if start_timestamp is None:
+        start_timestamp = min_date
+    if end_timestamp is None:
+        end_timestamp = max_date
+    filters = []
+    # Partition by year and month.
+    if partition_mode == "by_year_month":
+        # Include last month in interval.
+        end_timestamp = end_timestamp + pd.DateOffset(months=1)
+        # Get all months in interval.
+        dates = pd.date_range(start_timestamp, end_timestamp, freq="M")
+        for date in dates:
+            year = date.year
+            month = date.month
+            and_filter = [("year", "=", year), ("month", "=", month)]
+            filters.append(and_filter)
+            _LOG.debug("Adding AND filter %s", str(and_filter))
+    # TODO(Nikola): Partition by week.
+    #   week = start_ts.isocalendar()[1]
+    #   https://docs.python.org/3/library/datetime.html#datetime.date.isocalendar
     _LOG.debug("filters=%s", str(filters))
     return filters
