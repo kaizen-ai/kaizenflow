@@ -22,6 +22,7 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hintrospection as hintros
 import helpers.hio as hio
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
@@ -1461,6 +1462,96 @@ class TestCase(unittest.TestCase):
         _LOG.debug(hprint.to_str("outcome_updated file_exists is_equal"))
         return outcome_updated, file_exists, is_equal
 
+    def check_df_output(
+        self,
+        actual_df: pd.DataFrame,
+        expected_length: Optional[int],
+        expected_column_names: Optional[List[str]],
+        expected_column_unique_values: Optional[Dict[str, List[Any]]],
+        expected_signature: str,
+    ) -> None:
+        """
+        Verify that actual outcome dataframe matches the expected one.
+
+        :param actual_df: actual outcome dataframe
+        :param expected_length: expected outcome dataframe length
+            - If `None`, skip the check
+        :param expected_column_names: expected outcome dataframe column names
+            - If `None`, skip the check
+        :param expected_column_unique_values: dict of column names and unique values
+            that they should contain
+            - If `None`, skip the check
+        :param expected_signature: expected outcome dataframe as string
+        """
+        hdbg.dassert_isinstance(actual_df, pd.DataFrame)
+        if expected_length:
+            # Verify that output length is correct.
+            self.assert_equal(str(expected_length), str(actual_df.shape[0]))
+        if expected_column_names:
+            # Verify that column names are correct.
+            self.assert_equal(
+                str(sorted(expected_column_names)), str(sorted(actual_df.columns))
+            )
+        if expected_column_unique_values:
+            hdbg.dassert_is_subset(
+                list(expected_column_unique_values.keys()), actual_df.columns
+            )
+            # Verify that unique values in specified columns are correct.
+            for column in expected_column_unique_values:
+                actual_one_column_unique_values = sorted(
+                    list(actual_df[column].unique())
+                )
+                self.assert_equal(
+                    str(sorted(expected_column_unique_values[column])),
+                    str(actual_one_column_unique_values),
+                )
+        # Build signature.
+        actual_signature = hpandas.df_to_str(
+            actual_df,
+            print_shape_info=True,
+            tag="df",
+        )
+        _LOG.debug("\n%s", actual_signature)
+        # Check signature.
+        self.assert_equal(
+            actual_signature, expected_signature, dedent=True, fuzzy_match=True
+        )
+
+    def check_srs_output(
+        self,
+        actual_srs: pd.Series,
+        expected_length: Optional[int],
+        expected_unique_values: Optional[List[Any]],
+        expected_signature: str,
+    ) -> None:
+        """
+        Verify that actual outcome series matches the expected one.
+
+        :param actual_srs: actual outcome series
+        :param expected_length: expected outcome series length
+            - If `None`, skip the check
+        :param expected_unique_values: list of expected unique values in series
+            - If `None`, skip the check
+        :param expected_signature: expected outcome series as string
+        """
+        hdbg.dassert_isinstance(actual_srs, pd.Series)
+        if expected_length:
+            # Verify that output length is correct.
+            self.assert_equal(str(expected_length), str(actual_srs.shape[0]))
+        if expected_unique_values:
+            # Verify that unique values in series are correct.
+            self.assert_equal(
+                str(sorted(expected_unique_values)),
+                str(sorted(list(actual_srs.unique()))),
+            )
+        # Build signature.
+        actual_signature = convert_df_to_string(actual_srs, index=True)
+        _LOG.debug("\n%s", actual_signature)
+        # Check signature.
+        self.assert_equal(
+            actual_signature, expected_signature, dedent=True, fuzzy_match=True
+        )
+
     # ///////////////////////////////////////////////////////////////////////
 
     # TODO(gp): This needs to be moved to `helper.git` and generalized.
@@ -1656,5 +1747,3 @@ class QaTestCase(TestCase, abc.ABC):
     This unit test is used for QA to test functionalities (e.g., invoke tasks)
     that run the dev / prod container.
     """
-
-    pass
