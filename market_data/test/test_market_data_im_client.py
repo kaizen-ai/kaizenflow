@@ -102,8 +102,15 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
         ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
+        #
+        expected_length = 2
+        expected_column_names = self._get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+        }
         # pylint: disable=line-too-long
-        exp_df_as_str = r"""# df=
+        exp_df_as_str = r"""
+        # df=
         df.index in [2018-08-16 20:05:00-04:00, 2018-08-16 20:05:00-04:00]
         df.columns=asset_id,full_symbol,open,high,low,close,volume,currency_pair,exchange_id,start_ts
         df.shape=(2, 10)
@@ -115,7 +122,13 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         # pylint: enable=line-too-long
         # Run.
         self._test_get_data_at_timestamp1(
-            market_data, ts, asset_ids, None, None, None, exp_df_as_str
+            market_data,
+            ts,
+            asset_ids,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            exp_df_as_str,
         )
 
     @pytest.mark.skip(reason="CmTask882.")
@@ -127,6 +140,12 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         market_data = self._build_client(asset_ids, columns, columns_remap)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
+        #
+        expected_length = 8
+        expected_column_names = self._get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+        }
         # pylint: disable=line-too-long
         exp_df_as_str = """
         # df=
@@ -141,11 +160,18 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         ...
         2018-08-16 20:03:00-04:00   kucoin::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260      ETH_USDT      kucoin 2018-08-16 20:02:00-04:00
         2018-08-16 20:04:00-04:00  binance::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586      BTC_USDT     binance 2018-08-16 20:03:00-04:00
-        2018-08-16 20:04:00-04:00   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655      ETH_USDT      kucoin 2018-08-16 20:03:00-04:00"""
+        2018-08-16 20:04:00-04:00   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655      ETH_USDT      kucoin 2018-08-16 20:03:00-04:00
+        """
         # pylint: enable=line-too-long
         # Run.
         self._test_get_data_for_interval1(
-            market_data, start_ts, end_ts, None, None, None, exp_df_as_str
+            market_data,
+            start_ts,
+            end_ts,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            exp_df_as_str,
         )
 
     def test_get_data_for_interval2(self) -> None:
@@ -156,8 +182,15 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         market_data = self._build_client(asset_ids, columns, columns_remap)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
+        #
+        expected_length = 8
+        expected_column_names = self._get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+        }
         # pylint: disable=line-too-long
-        exp_df_as_str = r"""# df=
+        exp_df_as_str = r"""
+        # df=
         df.index in [2018-08-16 20:01:00-04:00, 2018-08-16 20:04:00-04:00]
         df.columns=asset_id,full_symbol,open,high,low,close,volume,currency_pair,exchange_id,start_ts
         df.shape=(8, 10)
@@ -178,9 +211,9 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
             start_ts,
             end_ts,
             asset_ids,
-            None,
-            None,
-            None,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
             exp_df_as_str,
         )
 
@@ -192,8 +225,15 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         market_data = self._build_client(asset_ids, columns, columns_remap)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
+        #
+        expected_length = 10
+        expected_column_names = self._get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+        }
         # pylint: disable=line-too-long
-        exp_df_as_str = r"""# df=
+        exp_df_as_str = r"""
+        # df=
         df.index in [2018-08-16 20:01:00-04:00, 2018-08-16 20:05:00-04:00]
         df.columns=asset_id,full_symbol,open,high,low,close,volume,currency_pair,exchange_id,start_ts
         df.shape=(10, 10)
@@ -214,9 +254,9 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
             start_ts,
             end_ts,
             asset_ids,
-            None,
-            None,
-            None,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
             exp_df_as_str,
         )
 
@@ -228,8 +268,15 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         market_data = self._build_client(asset_ids, columns, columns_remap)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
+        #
+        expected_length = 8
+        expected_column_names = self._get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+        }
         # pylint: disable=line-too-long
-        exp_df_as_str = r"""# df=
+        exp_df_as_str = r"""
+        # df=
         df.index in [2018-08-16 20:02:00-04:00, 2018-08-16 20:05:00-04:00]
         df.columns=asset_id,full_symbol,open,high,low,close,volume,currency_pair,exchange_id,start_ts
         df.shape=(8, 10)
@@ -250,9 +297,9 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
             start_ts,
             end_ts,
             asset_ids,
-            None,
-            None,
-            None,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
             exp_df_as_str,
         )
 
@@ -264,8 +311,15 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         market_data = self._build_client(asset_ids, columns, columns_remap)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
+        #
+        expected_length = 6
+        expected_column_names = self._get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+        }
         # pylint: disable=line-too-long
-        exp_df_as_str = r"""# df=
+        exp_df_as_str = r"""
+        # df=
         df.index in [2018-08-16 20:02:00-04:00, 2018-08-16 20:04:00-04:00]
         df.columns=asset_id,full_symbol,open,high,low,close,volume,currency_pair,exchange_id,start_ts
         df.shape=(6, 10)
@@ -285,9 +339,9 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
             start_ts,
             end_ts,
             asset_ids,
-            None,
-            None,
-            None,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
             exp_df_as_str,
         )
 
@@ -301,6 +355,9 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         market_data = self._build_client(asset_ids, columns, columns_remap)
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
+        #
+        expected_length = 2
+        expected_unique_values = None
         exp_srs_as_str = r"""
                       close
         asset_id
@@ -309,7 +366,13 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Run.
         self._test_get_twap_price1(
-            market_data, start_ts, end_ts, asset_ids, None, None, exp_srs_as_str
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            expected_length,
+            expected_unique_values,
+            exp_srs_as_str,
         )
 
     # //////////////////////////////////////////////////////////////////////////////
@@ -330,6 +393,9 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         columns: List[str] = []
         columns_remap = None
         market_data = self._build_client(asset_ids, columns, columns_remap)
+        #
+        expected_length = 2
+        expected_unique_values = None
         exp_srs_as_str = r"""
                       close
         asset_id
@@ -338,7 +404,11 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Run.
         self._test_get_last_price1(
-            market_data, asset_ids, None, None, exp_srs_as_str
+            market_data,
+            asset_ids,
+            expected_length,
+            expected_unique_values,
+            exp_srs_as_str,
         )
 
     # //////////////////////////////////////////////////////////////////////////////
@@ -368,3 +438,22 @@ class TestMarketDataImClient(mdtmdtca.MarketData_get_data_TestCase):
             asset_ids, columns=columns, column_remap=column_remap
         )
         return market_data
+
+    @staticmethod
+    def _get_expected_column_names() -> List[str]:
+        """
+        Return a list of expected column names.
+        """
+        expected_column_names = [
+            "asset_id",
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "currency_pair",
+            "exchange_id",
+            "start_ts",
+        ]
+        return expected_column_names
