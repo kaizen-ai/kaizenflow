@@ -8,7 +8,9 @@ import pandas as pd
 
 import core.artificial_signal_generators as carsigen
 import core.finance as cofinanc
+import core.finance_data_example as cfidaexa
 import core.signal_processing as csigproc
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
@@ -181,6 +183,11 @@ datetime,close,volume
 """
         df = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
         return df
+
+
+# #############################################################################
+# Resampling.
+# #############################################################################
 
 
 class Test_resample_time_bars1(hunitest.TestCase):
@@ -820,6 +827,101 @@ datetime,close,vol
         return act
 
 
+class TestResamplePortfolioMetricsBars1(hunitest.TestCase):
+    def test_resampling_invariance(self) -> None:
+        """
+        Preserve data when resampling at the same frequency.
+        """
+        freq = "5T"
+        data = self.get_data(
+            pd.Timestamp("2022-01-03 09:30:00", tz="America/New_York"),
+            pd.Timestamp("2022-01-03 10:00:00", tz="America/New_York"),
+            bar_duration=freq,
+            seed=27,
+        )
+        precision = 2
+        data_str = hpandas.df_to_str(data, num_rows=None, precision=precision)
+        resampled_data = cofinanc.resample_portfolio_metrics_bars(
+            data,
+            freq,
+        )
+        resampled_data_str = hpandas.df_to_str(
+            resampled_data, num_rows=None, precision=precision
+        )
+        self.assert_equal(data_str, resampled_data_str, fuzzy_match=True)
+
+    def test_resampling_endpoints_intraday(self) -> None:
+        """
+        Assign data to bar labeled by left point.
+
+        This convention differs from that used for casual signal resampling.
+        """
+        freq = "5T"
+        data = self.get_data(
+            pd.Timestamp("2022-01-03 09:30:00", tz="America/New_York"),
+            pd.Timestamp("2022-01-03 10:00:00", tz="America/New_York"),
+            bar_duration=freq,
+            seed=27,
+        )
+        resampling_freq = "10T"
+        resampled_data = cofinanc.resample_portfolio_metrics_bars(
+            data,
+            resampling_freq,
+        )
+        precision = 2
+        actual = hpandas.df_to_str(
+            resampled_data, num_rows=None, precision=precision
+        )
+        expected = r"""
+                              pnl  gross_volume  net_volume        gmv     nmv
+2022-01-03 09:30:00-05:00  125.44         49863      -31.10  1000000.0     NaN
+2022-01-03 09:40:00-05:00  174.18        100215       24.68  1000000.0   12.47
+2022-01-03 09:50:00-05:00  -21.52        100041      -90.39  1000000.0  -55.06
+2022-01-03 10:00:00-05:00  -16.82         50202       99.19  1000000.0  167.08"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_resampling_endpoints_daily(self) -> None:
+        freq = "30T"
+        data = self.get_data(
+            pd.Timestamp("2022-01-03 09:30:00", tz="America/New_York"),
+            pd.Timestamp("2022-01-04 16:00:00", tz="America/New_York"),
+            bar_duration=freq,
+            seed=27,
+        )
+        resampling_freq = "B"
+        resampled_data = cofinanc.resample_portfolio_metrics_bars(
+            data,
+            resampling_freq,
+        )
+        precision = 2
+        actual = hpandas.df_to_str(
+            resampled_data, num_rows=None, precision=precision
+        )
+        expected = r"""
+                              pnl  gross_volume  net_volume        gmv    nmv
+2022-01-03 00:00:00-05:00 -167.88        650519      256.55  1000000.0  11.12
+2022-01-04 00:00:00-05:00 -271.28        650884       -8.48  1000000.0 -14.92"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    @staticmethod
+    def get_data(
+        start_datetime: pd.Timestamp,
+        end_datetime: pd.Timestamp,
+        *,
+        bar_duration: str = "5T",
+        seed: int = 10,
+    ) -> pd.DataFrame:
+        df = cfidaexa.get_portfolio_bar_metrics_dataframe(
+            start_datetime, end_datetime, bar_duration=bar_duration, seed=seed
+        )
+        return df
+
+
+# #############################################################################
+# Bid-ask processing.
+# #############################################################################
+
+
 class Test_process_bid_ask(hunitest.TestCase):
     def test_mid(self) -> None:
         df = self._get_df()
@@ -1105,6 +1207,11 @@ datetime,ret_0,position_intent_1
         return df
 
 
+# #############################################################################
+# Returns calculation and helpers.
+# #############################################################################
+
+
 class Test_compute_inverse_volatility_weights(hunitest.TestCase):
     def test1(self) -> None:
         """
@@ -1255,6 +1362,7 @@ class Test_compute_prices_from_rets(hunitest.TestCase):
         return sample
 
 
+# TODO(Paul): Delete.
 class Test_aggregate_log_rets(hunitest.TestCase):
     def test1(self) -> None:
         """
@@ -1325,6 +1433,11 @@ class Test_aggregate_log_rets(hunitest.TestCase):
             f"Output aggregate log returns:\n{aggregate_log_rets_string}\n"
         )
         return txt
+
+
+# #############################################################################
+# Returns stats.
+# #############################################################################
 
 
 class Test_compute_kratio(hunitest.TestCase):

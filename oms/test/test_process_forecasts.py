@@ -72,6 +72,8 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
         config["ath_end_time"] = datetime.time(16, 00)
         config["trading_end_time"] = datetime.time(15, 55)
         config["execution_mode"] = "batch"
+        config["target_gmv"] = 1e5
+        config["dollar_neutrality"] = "no_constraint"
         # Run.
         await oprofore.process_forecasts(
             predictions,
@@ -188,6 +190,8 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
         config["ath_end_time"] = datetime.time(16, 00)
         config["trading_end_time"] = datetime.time(15, 55)
         config["execution_mode"] = "batch"
+        config["target_gmv"] = 1e5
+        config["dollar_neutrality"] = "no_constraint"
         # Run.
         await oprofore.process_forecasts(
             predictions,
@@ -422,6 +426,8 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
         config["ath_end_time"] = datetime.time(16, 00)
         config["trading_end_time"] = datetime.time(15, 55)
         config["execution_mode"] = "batch"
+        config["target_gmv"] = 1e5
+        config["dollar_neutrality"] = "no_constraint"
         # Run.
         await oprofore.process_forecasts(
             predictions,

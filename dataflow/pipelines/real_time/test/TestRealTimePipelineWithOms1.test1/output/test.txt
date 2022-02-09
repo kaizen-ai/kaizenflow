@@ -16,7 +16,7 @@ config:
   process_forecasts:
     prediction_col: price
     volatility_col: price
-    process_forecasts_config: {'order_type': 'price@twap', 'order_duration': 1, 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 35), 'ath_end_time': datetime.time(16, 0), 'trading_end_time': datetime.time(15, 55), 'execution_mode': 'real_time'}
+    process_forecasts_config: {'order_type': 'price@twap', 'order_duration': 1, 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 35), 'ath_end_time': datetime.time(16, 0), 'trading_end_time': datetime.time(15, 55), 'execution_mode': 'real_time', 'target_gmv': 100000.0, 'dollar_neutrality': 'no_constraint'}
     portfolio: # historical holdings=
     asset_id                    1000       -1   
     2000-01-01 09:35:00-05:00   0.00  1000000.00
@@ -118,7 +118,7 @@ config:
   process_forecasts:
     prediction_col: price
     volatility_col: price
-    process_forecasts_config: {'order_type': 'price@twap', 'order_duration': 1, 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 35), 'ath_end_time': datetime.time(16, 0), 'trading_end_time': datetime.time(15, 55), 'execution_mode': 'real_time'}
+    process_forecasts_config: {'order_type': 'price@twap', 'order_duration': 1, 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 35), 'ath_end_time': datetime.time(16, 0), 'trading_end_time': datetime.time(15, 55), 'execution_mode': 'real_time', 'target_gmv': 100000.0, 'dollar_neutrality': 'no_constraint'}
     portfolio: # historical holdings=
     asset_id                    1000       -1   
     2000-01-01 09:35:00-05:00   0.00  1000000.00
@@ -220,7 +220,7 @@ config:
   process_forecasts:
     prediction_col: price
     volatility_col: price
-    process_forecasts_config: {'order_type': 'price@twap', 'order_duration': 1, 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 35), 'ath_end_time': datetime.time(16, 0), 'trading_end_time': datetime.time(15, 55), 'execution_mode': 'real_time'}
+    process_forecasts_config: {'order_type': 'price@twap', 'order_duration': 1, 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 35), 'ath_end_time': datetime.time(16, 0), 'trading_end_time': datetime.time(15, 55), 'execution_mode': 'real_time', 'target_gmv': 100000.0, 'dollar_neutrality': 'no_constraint'}
     portfolio: # historical holdings=
     asset_id                    1000       -1   
     2000-01-01 09:35:00-05:00   0.00  1000000.00

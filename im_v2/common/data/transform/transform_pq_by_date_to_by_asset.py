@@ -55,15 +55,20 @@ import im_v2.common.data.transform.transform_pq_by_date_to_by_asset as imvcdttpb
 import argparse
 import logging
 import os
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
+import pandas as pd
+from tqdm.autonotebook import tqdm
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
 import helpers.hio as hio
 import helpers.hjoblib as hjoblib
+import helpers.hpandas as hpandas
 import helpers.hparser as hparser
 import helpers.hprint as hprint
+import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 _LOG = logging.getLogger(__name__)
 
@@ -71,6 +76,229 @@ _LOG = logging.getLogger(__name__)
 # Since different Parquet files require different transformations, we package all
 # the specifics in custom functions to prepare the tasks and do perform the tasks
 # See example for LimeTask317.
+
+
+# #############################################################################
+# LimeTask317
+# #############################################################################
+
+# The input Parquet files are organized by-date:
+# ```
+# src_dir
+#   /20220110
+#       /data.parquet
+#   /20220111
+#       /data.parquet
+#   /20220112
+#       /data.parquet
+#   ...
+# ```
+#
+# Each Parquet file looks like:
+# ```
+# df.shape=(5500357, 50)
+# df.memory_usage=2.0 GB
+#    vendor_date interval  start_time    end_time asset_id ticker open  close ...
+# 0  2022-01-10        60  1641823200  1641823260      123      A  NaN    NaN
+# 1  2022-01-10        60  1641823200  1641823260      234     AA  NaN    NaN
+# 2  2022-01-10        60  1641823200  1641823260      345    AAA  NaN    NaN
+# ...
+# ```
+#
+# Our use case is to read:
+# - only a subset of assets (e.g., a set of fixed asset universes)
+# - a subset of the period (e.g., mostly 5-10 years of consecutive data)
+
+# The original by-date organization of the data:
+# - allows to read a subset of period effectively
+# - is ineffective at reading a (fixed) subset of assets, since the assets are
+#   aligned along rows instead of columns which is the direction that Parquet
+#   subsets the data.
+
+# A solution is to pre-process the data and organize it by-asset so that we can
+# read the fixed universe efficiently.
+# The problem is that the amount of data to process is very large (in order of
+# 4 TBs) so we can't read all the data at once, reorganize it, and save it.
+
+# Instead we can use the hive partitioning of Parquet data.
+# We want to create Parquet partition aggregating consecutive days so that:
+# - Each partition should be computed by a single thread fitting the data in memory
+# - We can use 7-30 days so that each executor needs ~ 2 * 5 = 10GB
+# Each thread:
+# - Runs in parallel
+# - Saves the data in the same directories but in different partitions
+
+
+def lime317_prepare_tasks(
+    src_file_names: List[str],
+    asset_ids: List[int],
+    asset_id_col_name: str,
+    columns: Optional[List[str]],
+    read_parquet_data_func: Callable,
+    chunk_mode: str,
+    args_num_threads: str,
+    dst_dir: str,
+) -> List[hjoblib.Task]:
+    """
+    Each task processes a consecutive chunk of data (e.g., week or month).
+
+    :param src_file_names: list of all Parquet files to process, with the name
+        encoding the date
+    :param asset_ids: assets to process
+    :param columns: columns to process. `None` means all
+    :param chunk_mode: how to aggregate data, e.g., by week or by month
+    :param args_num_threads: string from command line representing how many threads
+        to employ
+    :param dst_dir: directory where to save the data
+    :return: list of joblib tasks
+    """
+    hdbg.dassert_container_type(src_file_names, list, str)
+    num_executing_threads = hjoblib.get_num_executing_threads(args_num_threads)
+    _LOG.info(
+        "Number of executing threads=%s (%s)",
+        num_executing_threads,
+        args_num_threads,
+    )
+    # `src_file_names` looks like:
+    #  ['./tmp.s3/20220103/data.parquet',
+    #   './tmp.s3/20220104/data.parquet',
+    #   './tmp.s3/20220110/data.parquet',
+    #   './tmp.s3/20220111/data.parquet']
+    # Build a map from key (e.g., `(week, year)` or `(month, year)`) to the list of
+    # dates corresponding to that period of time.
+    key_to_dates: Dict[Tuple[str, ...], List[str]] = {}
+    for src_file_name in tqdm(src_file_names):
+        # Extract "20220111" from "./tmp.s3/20220111/data.parquet".
+        suffix = "/data.parquet"
+        hdbg.dassert(
+            src_file_name.endswith(suffix),
+            "Invalid file_name='%s'",
+            src_file_name,
+        )
+        path = src_file_name[: -len(suffix)]
+        # path = './tmp.s3/20220111'
+        dir_name = os.path.basename(path)
+        # dir_name = '20220111'
+        _LOG.debug(hprint.to_str("src_file_name path dir_name"))
+        date = pd.Timestamp(dir_name)
+        # Build the (week, year) key.
+        if chunk_mode == "by_year_week":
+            week_number = date.strftime("%U")
+            key = (date.year, week_number)
+        elif chunk_mode == "by_year_month":
+            key = (date.year, date.month)
+        else:
+            raise ValueError("Invalid chunk_mode='%s'" % chunk_mode)
+        _LOG.debug(hprint.to_str("key"))
+        # Insert in the map.
+        if key not in key_to_dates:
+            key_to_dates[key] = []
+        key_to_dates[key].append(src_file_name)
+    # Sort by dates.
+    _LOG.debug(hprint.to_str("key_to_dates"))
+    filenames_for_tasks = [key_to_dates[k] for k in sorted(key_to_dates.keys())]
+    # Each element of `filenames_for_tasks` represents the dates to be processed by
+    # a single task.
+    # filenames_for_tasks=[
+    #   ['./tmp.s3/20220103/data.parquet', './tmp.s3/20220104/data.parquet'],
+    #   ['./tmp.s3/20220110/data.parquet', './tmp.s3/20220111/data.parquet']]
+    _LOG.debug(hprint.to_str("filenames_for_tasks"))
+    # Build a task for each list of tasks.
+    tasks = []
+    for filenames in filenames_for_tasks:
+        # Build the `Task`, i.e., the parameters for the function call below:
+        #   lime317_execute_task(
+        #       src_file_names: List[str],
+        #       asset_ids: List[int],
+        #       read_parquet_data_func: Callable,
+        #   ...
+        filenames = sorted(filenames)
+        task: hjoblib.Task = (
+            # args.
+            (
+                filenames,
+                asset_ids,
+                asset_id_col_name,
+                columns,
+                read_parquet_data_func,
+                chunk_mode,
+                dst_dir,
+            ),
+            # kwargs.
+            {},
+        )
+        tasks.append(task)
+    # # Split the chunks by thread.
+    # chunked_dates_per_thread = hjoblib.split_list_in_tasks(
+    #     dates_tasks,
+    #     num_threads,
+    #     keep_order=True,
+    # )
+    # _LOG.debug(hprint.to_str("chunked_dates_per_thread"))
+    # _LOG.info("Prepared %s tasks", len(chunked_dates_per_thread))
+    return tasks
+
+
+def lime317_execute_task(
+    src_file_names: List[str],
+    asset_ids: List[int],
+    asset_id_col_name: str,
+    columns: Optional[List[str]],
+    read_parquet_data_func: Callable,
+    chunk_mode: str,
+    dst_dir: str,
+    incremental: bool,
+    num_attempts: int,
+) -> None:
+    """
+    Process a task by:
+    - transforming df (e.g., converting epoch "start_time" into a timestamp)
+    - merging multiple Parquet files corresponding to a date interval
+    - writing it into `dst_dir` (partitioning by assets using Parquet datasets)
+
+    :param src_file_names: a list of files to merge together
+    """
+    # This function only supports non-incremental mode and no re-try.
+    hdbg.dassert(not incremental)
+    hdbg.dassert_eq(num_attempts, 1)
+    # Process the list of files.
+    hdbg.dassert_container_type(src_file_names, list, str)
+    dfs = []
+    for src_file_name in sorted(src_file_names):
+        # Read Parquet df.
+        df = read_parquet_data_func(src_file_name, asset_ids, columns)
+        # Append.
+        dfs.append(df)
+    # Concat.
+    df = pd.concat(dfs, axis=0)
+    if chunk_mode == "by_year_week":
+        # Add year and week partition columns.
+        df, partition_columns = imvcdttrut.add_date_partition_cols(
+            df, "by_year_week"
+        )
+        # Check that all data is for the same year and week.
+        years = df["year"].unique()
+        hdbg.dassert_eq(len(years), 1, "years=%s", str(years))
+        weeks = df["weekofyear"].unique()
+        hdbg.dassert_eq(len(weeks), 1, "weeks=%s", str(weeks))
+    elif chunk_mode == "by_year_month":
+        # Add year and month partition columns.
+        df, partition_columns = imvcdttrut.add_date_partition_cols(
+            df, "by_year_month"
+        )
+        # Check that all data is for the same year and week.
+        years = df["year"].unique()
+        hdbg.dassert_eq(len(years), 1, "years=%s", str(years))
+        months = df["month"].unique()
+        hdbg.dassert_eq(len(months), 1, "months=%s", str(months))
+    else:
+        raise ValueError("Invalid chunk_mode='%s'" % chunk_mode)
+    _LOG.debug("after df=\n%s", hpandas.df_to_str(df.head(3)))
+    # Partition also over the asset column.
+    partition_columns.insert(0, asset_id_col_name)
+    # Write.
+    imvcdttrut.partition_dataset(df, partition_columns, dst_dir)
+
 
 # #############################################################################
 # Generic processing of files.
