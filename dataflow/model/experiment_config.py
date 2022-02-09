@@ -146,6 +146,7 @@ def set_asset_id(
         if assume_dummy:
             hdbg.dassert_eq(config.get(asset_id_key), cconfig.DUMMY)
     config[asset_id_key] = asset_id
+    return config
 
 
 def build_configs_varying_asset_id(
@@ -161,8 +162,8 @@ def build_configs_varying_asset_id(
     configs = []
     for asset_id in asset_ids:
         config_tmp = config.copy()
-        set_asset_id(config_tmp, asset_id_key, asset_id)
-        _LOG.debug("config_tmp=%s\n", config_tmp)
+        config_tmp = set_asset_id(config_tmp, asset_id_key, asset_id)
+        _LOG.info("config_tmp=%s\n", config_tmp)
         #
         configs.append(config_tmp)
     return configs
@@ -181,7 +182,7 @@ def build_configs_varying_universe_tiles(
     configs = []
     for universe_tile in universe_tiles:
         config_tmp = config.copy()
-        set_asset_id(config_tmp, universe_tile_id, universe_tile)
+        config_tmp = set_asset_id(config_tmp, universe_tile_id, universe_tile)
         _LOG.debug("config_tmp=%s\n", config_tmp)
         #
         configs.append(config_tmp)
