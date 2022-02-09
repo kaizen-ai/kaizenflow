@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 """
-Script to download historical data from CCXT.
+Download historical data from CCXT and save to S3. The script is meant to run
+daily for reconciliation with realtime data.
 
 Use as:
 
-# Download data for CCXT for trading universe `v03` from 2019-01-01 to now:
+# Download data for CCXT for binance from 2022-02-08 to 2022-02-09:
 > download_historical_data.py \
-     --dst_dir 'test' \
+     --to_datetime '2022-02-09' \
+     --from_datetime '2022-02-08' \
+     --exchange_id 'binance' \
      --universe 'v03' \
-     --start_datetime '2019-01-01'
-
-Import as:
-
-import im_v2.ccxt.data.extract.download_historical_data as imvcdedhda
+     --aws_profile 'ck' \
+     --s3_path 's3://cryptokaizen-historical-data/daily_data/binance/'
 """
 
 import argparse
@@ -22,8 +22,8 @@ import time
 
 import pandas as pd
 
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import helpers.datetime as hdateti
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
@@ -63,7 +63,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="Trade universe to download data for"
+        help="Trade universe to download data for",
     )
     parser.add_argument(
         "--step",
@@ -107,7 +107,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
             end_datetime=end_datetime,
             bar_per_iteration=args.step,
         )
-        file_name = currency_pair + "_" + hdateti.get_current_timestamp_as_string("UTC") + ".csv"
+        file_name = (
+            currency_pair
+            + "_"
+            + hdateti.get_current_timestamp_as_string("UTC")
+            + ".csv"
+        )
         path_to_file = os.path.join(args.s3_path, file_name)
         # Save data to S3 filesystem.
         with fs.open(path_to_file, "w") as f:
