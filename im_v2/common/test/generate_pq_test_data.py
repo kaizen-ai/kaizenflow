@@ -2,13 +2,13 @@
 """
 Generate Parquet files for testing.
 
-# Example:
+# Use example:
 > im_v2/common/test/generate_pq_test_data.py \
     --start_date 2021-11-23 \
     --end_date 2021-11-25 \
     --freq 1T \
     --partition_mode by_year_month \
-    --data_type verbose2 \
+    --output_type verbose_close \
     --assets 10689,10690 \
     --dst_dir im_v2/common/test/tiled.bar_data
 """
@@ -28,18 +28,21 @@ _LOG = logging.getLogger(__name__)
 
 
 class ParquetDataFrameGenerator:
-    DATA_TYPES = ("basic", "verbose1", "verbose2")
+    # Allowed types.
+    OUTPUT_TYPES = ("basic", "verbose_open", "verbose_close")
+    # Depending on output type, asset column varies. This mapping is always
+    # resolving to expected asset column name.
     ASSET_COLUMN_NAME_MAP = {
         "basic": "asset",
-        "verbose1": "ticker",
-        "verbose2": "asset_id",
+        "verbose_open": "ticker",
+        "verbose_close": "asset_id",
     }
 
     def __init__(
         self,
         start_date: str,
         end_date: str,
-        data_type: str,
+        output_type: str,
         assets: List[Union[str, int]],
         freq: str,
     ) -> None:
@@ -48,41 +51,50 @@ class ParquetDataFrameGenerator:
 
         :param start_date: start of date range including start_date
         :param end_date: end of date range excluding end_date
-        :param data_type: type of data that is generated
+        :param output_type: type of data that is generated
         :param assets: list of desired assets that can be names or ids
         :param freq: frequency of steps between start and end date
         """
         self._start_date = start_date
         self._end_date = end_date
-        self._data_type = data_type
+        self._output_type = output_type
         self._assets = assets
         self._freq = freq
         # TODO(Nikola): Use `inclusive` instead `closed` after 1.4.0
         self._dataframe_index = pd.date_range(
             self._start_date, self._end_date, freq=self._freq, closed="left"
         )
-        self._DATA_TYPE_FUNCTION_MAP = {
+        self._OUTPUT_TYPE_FUNCTION_MAP = {
             "basic": self._get_daily_basic_dataframe,
-            "verbose1": self._get_verbose1_dataframe,
-            "verbose2": self._get_verbose2_dataframe,
+            "verbose_open": self._get_verbose_open_dataframe,
+            "verbose_close": self._get_verbose_close_dataframe,
         }
 
     @property
     def asset_column_name(self) -> str:
-        return self.ASSET_COLUMN_NAME_MAP[self._data_type]
+        """
+        Obtain proper asset column name from map depending on output type.
+        """
+        return self.ASSET_COLUMN_NAME_MAP[self._output_type]
 
     @property
-    def data_type_function(self) -> Callable:
-        return self._DATA_TYPE_FUNCTION_MAP[self._data_type]
+    def output_type_function(self) -> Callable:
+        """
+        Obtain proper function for data generation depending on output type.
+        """
+        return self._OUTPUT_TYPE_FUNCTION_MAP[self._output_type]
 
     def generate(self) -> pd.DataFrame:
-        if self._data_type not in self.DATA_TYPES:
-            raise ValueError(f"Unsupported data type `{self._data_type}`!")
-        return self.data_type_function()
+        """
+        Generate specific dataframe based on inputs provided in instance creation.
+        """
+        if self._output_type not in self.OUTPUT_TYPES:
+            raise ValueError(f"Unsupported data type `{self._output_type}`!")
+        return self.output_type_function()
 
     def _get_core_dataframes(self) -> List[pd.DataFrame]:
         """
-        Create core dataframes that are updated according to the data type.
+        Create core dataframes that are updated according to the output type.
 
         :return: list of core dataframes as presented below with asset column name
             as `asset` with string values
@@ -93,7 +105,7 @@ class ParquetDataFrameGenerator:
         2000-01-03       A
         ```
         """
-        # For each asset generate core data.
+        # Generate core dataframe for each asset.
         df = []
         for asset in self._assets:
             asset_df = pd.DataFrame(
@@ -120,9 +132,9 @@ class ParquetDataFrameGenerator:
         """
         asset_dataframes = self._get_core_dataframes()
         for idx, asset_dataframe in enumerate(asset_dataframes):
-            # Before asset.
+            # Before asset column.
             asset_dataframe.insert(loc=0, column="idx", value=idx)
-            # After asset.
+            # After asset column.
             asset_dataframe.insert(
                 loc=2,
                 column="val1",
@@ -135,7 +147,7 @@ class ParquetDataFrameGenerator:
             )
         return self._wrap_all_assets_df(asset_dataframes)
 
-    def _get_verbose1_dataframe(self) -> pd.DataFrame:
+    def _get_verbose_open_dataframe(self) -> pd.DataFrame:
         """
         Update core dataframes with additional columns.
 
@@ -154,7 +166,7 @@ class ParquetDataFrameGenerator:
                 asset_dataframe.index - pd.Timestamp("1970-01-01")
             ) // pd.Timedelta("1s")
             end_time = start_time + interval
-            # Before ticker.
+            # Before ticker column.
             asset_dataframe.insert(
                 loc=0,
                 column="vendor_date",
@@ -163,7 +175,7 @@ class ParquetDataFrameGenerator:
             asset_dataframe.insert(loc=1, column="interval", value=interval)
             asset_dataframe.insert(loc=2, column="start_time", value=start_time)
             asset_dataframe.insert(loc=3, column="end_time", value=end_time)
-            # After ticker.
+            # After ticker column.
             asset_dataframe.insert(loc=5, column="currency", value="USD")
             asset_dataframe.insert(
                 loc=6,
@@ -173,7 +185,7 @@ class ParquetDataFrameGenerator:
             asset_dataframe.insert(loc=7, column="id", value=id_)
         return self._wrap_all_assets_df(asset_dataframes)
 
-    def _get_verbose2_dataframe(self) -> pd.DataFrame:
+    def _get_verbose_close_dataframe(self) -> pd.DataFrame:
         """
         Update core dataframes with additional columns.
 
@@ -187,7 +199,7 @@ class ParquetDataFrameGenerator:
         """
         asset_dataframes = self._get_core_dataframes()
         for asset_dataframe in asset_dataframes:
-            # After asset_id.
+            # After asset_id column.
             asset_dataframe.insert(
                 loc=1,
                 column="close",
@@ -203,7 +215,10 @@ class ParquetDataFrameGenerator:
         return df
 
 
-def _run(args: argparse.Namespace) -> None:
+def _run(parser: argparse.ArgumentParser) -> None:
+    # Parse args.
+    args = parser.parse_args()
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Generate timespan.
     start_date = args.start_date
     end_date = args.end_date
@@ -212,13 +227,13 @@ def _run(args: argparse.Namespace) -> None:
     hdbg.dassert_lt(2, len(timespan))
     # Obtain remaining args.
     freq = args.freq
-    data_type = args.data_type
+    output_type = args.output_type
     partition_mode = args.partition_mode
     assets = args.assets
     assets = assets.split(",")
     dst_dir = args.dst_dir
     # Run dataframe generation.
-    pdg = ParquetDataFrameGenerator(start_date, end_date, data_type, assets, freq)
+    pdg = ParquetDataFrameGenerator(start_date, end_date, output_type, assets, freq)
     parquet_df = pdg.generate()
     # Add partition columns to the dataframe.
     df, partition_cols = imvcdttrut.add_date_partition_cols(
@@ -246,14 +261,14 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         type=str,
         required=True,
-        help="From when is data going to be created, including start date",
+        help="From when is data going to be created, value included",
     )
     parser.add_argument(
         "--end_date",
         action="store",
         type=str,
         required=True,
-        help="Until when is data going to be created, excluding end date",
+        help="Until when is data going to be created, value excluded",
     )
     parser.add_argument(
         "--freq",
@@ -270,7 +285,7 @@ def _parse() -> argparse.ArgumentParser:
         help="Comma separated string of assets that can be either names or ids",
     )
     parser.add_argument(
-        "--data_type",
+        "--output_type",
         action="store",
         type=str,
         default="basic",
@@ -284,27 +299,13 @@ def _parse() -> argparse.ArgumentParser:
         help="Partition Parquet dataframe by time",
     )
     parser.add_argument(
-        "--no_partition",
-        action="store_true",
-        help="Whether to partition the resulting parquet",
-    )
-    parser.add_argument(
         "--reset_index",
         action="store_true",
-        help="Resets dataframe index to default value",
+        help="Resets dataframe index to default sequential integer values",
     )
     hparser.add_verbosity_arg(parser)
     return parser
 
 
-def _main(parser: argparse.ArgumentParser) -> None:
-    """
-    Standard main part of the script that is parsing provided arguments.
-    """
-    args = parser.parse_args()
-    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    _run(args)
-
-
 if __name__ == "__main__":
-    _main(_parse())
+    _run(_parse())
