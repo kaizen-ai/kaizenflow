@@ -78,6 +78,16 @@ async def process_forecasts(
             "order_duration": order_duration,
         }
     )
+    #
+    target_gmv = _get_object_from_config(config, "target_gmv", float)
+    dollar_neutrality = _get_object_from_config(config, "dollar_neutrality", str)
+    #
+    optimizer_config = cconfig.get_config_from_nested_dict(
+        {
+            "target_gmv": target_gmv,
+            "dollar_neutrality": dollar_neutrality,
+        }
+    )
     # Extract ATH and trading start times from config.
     # TODO(Paul): Add a check for ATH start/end.
     ath_start_time = _get_object_from_config(
@@ -121,7 +131,9 @@ async def process_forecasts(
     iter_ = enumerate(prediction_df.iterrows())
     offset_min = pd.DateOffset(minutes=order_duration)
     # Initialize a `ForecastProcessor` object to perform the heavy lifting.
-    forecast_processor = ForecastProcessor(portfolio, order_config, log_dir)
+    forecast_processor = ForecastProcessor(
+        portfolio, order_config, optimizer_config, log_dir
+    )
     # `timestamp` is the time when the forecast is available and in the current
     #  setup is also when the order should begin.
     for idx, (timestamp, predictions) in tqdm(
@@ -190,15 +202,20 @@ class ForecastProcessor:
         self,
         portfolio: omportfo.AbstractPortfolio,
         order_config: cconfig.Config,
+        optimizer_config: cconfig.Config,
         log_dir: Optional[str] = None,
     ) -> None:
         self._portfolio = portfolio
         self._get_wall_clock_time = portfolio.market_data.get_wall_clock_time
-        self._order_config = order_config
         # TODO(Paul): process config with checks.
+        self._order_config = order_config
         self._order_type = self._order_config["order_type"]
         self._order_duration = self._order_config["order_duration"]
         self._offset_min = pd.DateOffset(minutes=self._order_duration)
+        # Process optimizer config.
+        self._optimizer_config = optimizer_config
+        self._target_gmv = self._optimizer_config["target_gmv"]
+        self._dollar_neutrality = self._optimizer_config["dollar_neutrality"]
         #
         self._log_dir = log_dir
         #
@@ -337,7 +354,10 @@ class ForecastProcessor:
         )
         # Compute the target positions in cash (call the optimizer).
         df = ocalopti.compute_target_positions_in_cash(
-            assets_and_predictions, self._portfolio.CASH_ID
+            assets_and_predictions,
+            self._portfolio.CASH_ID,
+            target_gmv=self._target_gmv,
+            dollar_neutrality=self._dollar_neutrality,
         )
         # Convert the target positions from cash values to target share counts.
         # Round to nearest integer towards zero.
