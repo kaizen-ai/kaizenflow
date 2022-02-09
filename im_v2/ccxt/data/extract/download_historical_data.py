@@ -88,24 +88,16 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # TODO(Danya): Remove.
-    # Create the directory.
-    hio.create_dir(args.dst_dir, incremental=args.incremental)
-    # Handle start and end datetime.
-    start_datetime = pd.Timestamp(args.start_datetime)
-    # TODO(Danya): end datetime is compulsory.
-    if not args.end_datetime:
-        # If end datetime is not provided, use the current time.
-        end_datetime = pd.Timestamp.now()
-    else:
-        end_datetime = pd.Timestamp(args.end_datetime)
+    # Connect to S3 filesystem, if provided.
+    if args.aws_profile:
+        fs = hs3.get_s3fs(args.aws_profile)
     # Load trading universe.
-    # TODO(Danya): universe must be provided.
-    if args.universe == "latest":
-        trade_universe = imvccunun.get_trade_universe()["CCXT"]
-    else:
-        trade_universe = imvccunun.get_trade_universe(args.universe)["CCXT"]
-    _LOG.info("Getting data for exchanges %s", ", ".join(trade_universe.keys()))
+    universe = imvccunun.get_trade_universe(args.universe)
+    # Load a list of currency pars.
+    currency_pairs = universe["CCXT"][args.exchange_id]
+    # Convert timestamps.
+    end = pd.Timestamp(args.to_datetime)
+    start = pd.Timestamp(args.from_datetime)
     # TODO(Danya): Only 1 exchange id.
     for exchange_id in trade_universe:
         # Initialize the exchange class.
