@@ -96,35 +96,20 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Load a list of currency pars.
     currency_pairs = universe["CCXT"][args.exchange_id]
     # Convert timestamps.
-    end = pd.Timestamp(args.to_datetime)
-    start = pd.Timestamp(args.from_datetime)
-    # TODO(Danya): Only 1 exchange id.
-    for exchange_id in trade_universe:
-        # Initialize the exchange class.
-        exchange = imvcdeexcl.CcxtExchange(exchange_id)
-        for currency_pair in trade_universe[exchange_id]:
-            _LOG.info("Downloading currency pair '%s'", currency_pair)
-            # Download OHLCV data.
-            currency_pair_data = exchange.download_ohlcv_data(
-                currency_pair,
-                start_datetime=start_datetime,
-                end_datetime=end_datetime,
-                bar_per_iteration=args.step,
-            )
-            # Sleep between iterations.
-            time.sleep(args.sleep_time)
-            # Create file name based on exchange and currency pair.
-            # E.g. 'binance_BTC_USDT.csv.gz'
-            # TODO(Danya): Filename = currency_pair_timestamp.
-            file_name = f"{exchange_id}-{currency_pair}.csv.gz"
-            full_path = os.path.join(args.dst_dir, file_name)
-            # Save file.
-            currency_pair_data.to_csv(
-                full_path,
-                index=False,
-                compression="gzip",
-            )
-            _LOG.debug("Saved data to %s", file_name)
+    end_datetime = pd.Timestamp(args.to_datetime)
+    start_datetime = pd.Timestamp(args.from_datetime)
+    exchange = imvcdeexcl.CcxtExchange(args.exchange_id)
+    for currency_pair in currency_pairs:
+        _LOG.info("Downloading currency pair '%s'", currency_pair)
+        # Download OHLCV data.
+        currency_pair_data = exchange.download_ohlcv_data(
+            currency_pair,
+            start_datetime=start_datetime,
+            end_datetime=end_datetime,
+            bar_per_iteration=args.step,
+        )
+        # Sleep between iterations.
+        time.sleep(args.sleep_time)
 
 
 if __name__ == "__main__":
