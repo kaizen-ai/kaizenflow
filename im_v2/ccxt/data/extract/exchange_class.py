@@ -200,5 +200,5 @@ class CcxtExchange:
         # Package the data.
         columns = ["timestamp", "open", "high", "low", "close", "volume"]
         bars = pd.DataFrame(bars, columns=columns)
-        bars["created_at"] = str(hdateti.get_current_time("UTC"))
+        bars["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
         return bars

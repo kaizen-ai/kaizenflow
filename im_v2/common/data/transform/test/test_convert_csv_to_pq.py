@@ -28,7 +28,7 @@ class TestCsvToPq(hunitest.TestCase):
             "low": [49315.45, 49322.78, 49325.23],
             "close": [49330.63, 49325.23, 49328.23],
             "currency_pair": ["BTC_USDT", "ETH_USDT", "BTC_USDT"],
-            "created_at": [
+            "end_download_timestamp": [
                 "2021-12-07 13:01:20.183463+00:00",
                 "2021-12-07 13:01:20.183463+00:00",
                 "2021-12-07 13:01:20.183463+00:00",
@@ -43,7 +43,7 @@ class TestCsvToPq(hunitest.TestCase):
             "low": [49325.45, 49323.78, 49326.23],
             "close": [49340.63, 49335.23, 49428.23],
             "currency_pair": ["BTC_USDT", "ETH_USDT", "BTC_USDT"],
-            "created_at": [
+            "end_download_timestamp": [
                 "2021-12-07 13:01:20.183463+00:00",
                 "2021-12-07 13:01:20.183463+00:00",
                 "2021-12-07 13:01:20.183463+00:00",

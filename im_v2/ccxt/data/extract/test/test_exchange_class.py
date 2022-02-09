@@ -57,7 +57,7 @@ class Test_CcxtExchange(hunitest.TestCase):
             "low",
             "close",
             "volume",
-            "created_at",
+            "end_download_timestamp",
         ]
         self.assertEqual(exp_col_names, actual.columns.to_list())
         # Verify types inside each column.

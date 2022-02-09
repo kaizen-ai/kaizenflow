@@ -251,6 +251,8 @@ def _get_files_to_process(
     :param all: return all repo files
     :param files_from_user: return files passed to this function
     :param mutually_exclusive: ensure that all options are mutually exclusive
+    :param remove_dirs: whether directories should be processed
+    :return: paths to process
     """
     _LOG.debug(
         hprint.to_str(
@@ -288,8 +290,8 @@ def _get_files_to_process(
     elif all_:
         files = hio.find_all_files(dir_name)
     if files_from_user:
-        # If files were passed, overwrite the previous decision.
-        files = files_from_user.split(" ")
+        # If files were passed, filter out non-existent paths.
+        files = _filter_existing_paths(files_from_user.split(" "))
     # Convert into a list.
     hdbg.dassert_isinstance(files, list)
     files_to_process = [f for f in files if f != ""]
@@ -304,6 +306,33 @@ def _get_files_to_process(
     if not files_to_process:
         _LOG.warning("No files were selected")
     return files_to_process
+
+
+def _filter_existing_paths(paths_from_user: List[str]) -> List[str]:
+    """
+    Filter out the paths to non-existent files.
+
+    :param paths_from_user: paths passed by user
+    :return: existing paths
+    """
+    paths = []
+    for user_path in paths_from_user:
+        if user_path.endswith("/*"):
+            # Get the files according to the "*" pattern.
+            dir_files = glob.glob(user_path)
+            if dir_files:
+                # Check whether the pattern matches files.
+                paths.extend(dir_files)
+            else:
+                _LOG.error(
+                    "'%s' pattern doesn't match any files: the directory is empty or path does not exist",
+                    user_path,
+                )
+        elif os.path.exists(user_path):
+            paths.append(user_path)
+        else:
+            _LOG.error("'%s' does not exist", user_path)
+    return paths
 
 
 # Copied from helpers.datetime_ to avoid dependency from pandas.
@@ -1053,13 +1082,13 @@ def git_branch_diff_with_master(  # type: ignore
 #   > i lint --dir-name . --only-format
 #   ```
 #
-# - Remove end-spaces
+# - Remove end-of-line spaces:
 #   ```
 #   # Remove
 #   > find . -name "*.txt" | xargs perl -pi -e 'chomp if eof'
 #   ```
 #
-# - Align `lib_tasks.py`
+# - Align `lib_tasks.py`:
 #   ```
 #   > vimdiff ~/src/{amp1,cmamp1}/tasks.py; vimdiff ~/src/{amp1,cmamp1}/helpers/lib_tasks.py
 #   ```
@@ -1502,7 +1531,8 @@ def integrate_find_files(  # type: ignore
     subdir="",
 ):
     """
-    Find the files that are touched in the current branch since last integration.
+    Find the files that are touched in the current branch since last
+    integration.
     """
     _report_task()
     _ = ctx
@@ -2076,13 +2106,15 @@ def _get_docker_cmd(
     entrypoint: bool = True,
     as_user: bool = True,
     print_docker_config: bool = False,
+    use_bash: bool = False,
 ) -> str:
     """
     :param base_image, stage, version: like in `get_image()`
     :param cmd: command to run inside Docker container
     :param as_user: pass the user / group id or not
     :param extra_env_vars: represent vars to add, e.g., `["PORT=9999", "DRY_RUN=1"]`
-    :param print_config: print the docker config for debugging purposes
+    :param print_docker_config: print the docker config for debugging purposes
+    :param use_bash: run command through a shell
     """
     hprint.log(
         _LOG,
@@ -2187,6 +2219,8 @@ def _get_docker_cmd(
         {service_name}"""
         )
         if cmd:
+            if use_bash:
+                cmd = f"bash -c '{cmd}'"
             docker_cmd_.append(
                 rf"""
         {cmd}"""
@@ -2247,7 +2281,7 @@ def docker_bash(  # type: ignore
 
 @task
 def docker_cmd(  # type: ignore
-    ctx, base_image="", stage="dev", version="", cmd=""
+    ctx, base_image="", stage="dev", version="", cmd="", use_bash=False
 ):
     """
     Execute the command `cmd` inside a container corresponding to a stage.
@@ -2255,7 +2289,9 @@ def docker_cmd(  # type: ignore
     _report_task()
     hdbg.dassert_ne(cmd, "")
     # TODO(gp): Do we need to overwrite the entrypoint?
-    docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd)
+    docker_cmd_ = _get_docker_cmd(
+        base_image, stage, version, cmd, use_bash=use_bash
+    )
     _docker_cmd(ctx, docker_cmd_)
 
 
@@ -2949,10 +2985,8 @@ def _find_short_import(iterator: List, short_import: str) -> _FindResults:
     """
     Find imports in the Python files with the given short import.
 
-    E.g., for dtfcorrunn
-    dataflow/core/test/test_builders.py:9:import dataflow.core.runners as dtfcorrunn
-    returns
-
+    E.g., for dtfcorrunn dataflow/core/test/test_builders.py:9:import
+    dataflow.core.runners as dtfcorrunn returns
     """
     # E.g.,
     # `import dataflow.core.runners as dtfcorrunn`
@@ -3621,24 +3655,90 @@ def run_qa_tests(  # type: ignore
         raise RuntimeError(msg)
 
 
+def _publish_html_coverage_report_on_s3(aws_profile: str) -> None:
+    """
+    Publish HTML coverage report on S3 so that it can be accessed via browser.
+
+    Target S3 dir is constructed from linux user and Git branch name, e.g.
+    `s3://...-html/html_coverage/grisha_CmTask1047_fix_tests`.
+    """
+    # Build the dir name from user and branch name.
+    user = hsystem.get_user_name()
+    branch_name = hgit.get_branch_name()
+    _LOG.debug("User='%s', branch_name='%s'", user, branch_name)
+    s3_html_coverage_dir = f"{user}_{branch_name}"
+    # Get the full path to the dir.
+    s3_html_base_dir = "html_coverage"
+    s3_html_bucket_path = hgit.execute_repo_config_code("get_html_bucket_path()")
+    s3_html_coverage_path = os.path.join(
+        s3_html_bucket_path, s3_html_base_dir, s3_html_coverage_dir
+    )
+    # Copy HTML coverage data from the local dir to S3.
+    local_coverage_path = "./htmlcov"
+    cp_cmd = f"aws s3 cp {local_coverage_path} {s3_html_coverage_path} --recursive --profile {aws_profile}"
+    _LOG.info(
+        "HTML coverage report is published on S3: path=`%s`",
+        s3_html_coverage_path,
+    )
+    hsystem.system(cp_cmd)
+
+
 @task
-def run_coverage_report(ctx):
-    target_dir = "oms"
-    cmd = f"invoke run_fast_tests --coverage -p {target_dir}; cp .coverage .coverage_fast_tests"
-    _run(ctx, cmd)
-    cmd = f"invoke run_slow_tests --coverage -p {target_dir}; cp .coverage .coverage_slow_tests"
-    _run(ctx, cmd)
-    cmd = []
-    cmd.append(
+def run_coverage_report(  # type: ignore
+    ctx,
+    target_dir,
+    generate_html_report=True,
+    publish_html_on_s3=True,
+    aws_profile="ck",
+):
+    """
+    Compute test coverage stats.
+
+    The flow is:
+       - Run tests and compute coverage stats for each test type
+       - Combine coverage stats in a single file
+       - Generate a text report
+       - Generate a HTML report (optional)
+          - Post it on S3 (optional)
+
+    :param target_dir: directory to compute coverage stats for
+    :param generate_html_report: whether to generate HTML coverage report or not
+    :param publish_html_on_s3: whether to publish HTML coverage report or not
+    :param aws_profile: the AWS profile to use for publishing HTML report
+    """
+    # TODO(Grisha): allow user to specify which tests to run.
+    # Run tests for the target dir and collect coverage stats.
+    fast_tests_cmd = f"invoke run_fast_tests --coverage -p {target_dir}; cp .coverage .coverage_fast_tests"
+    _run(ctx, fast_tests_cmd)
+    slow_tests_cmd = f"invoke run_slow_tests --coverage -p {target_dir}; cp .coverage .coverage_slow_tests"
+    _run(ctx, slow_tests_cmd)
+    #
+    report_cmd: List[str] = []
+    # Merge stats for fast and slow tests into single dir.
+    report_cmd.append(
         "coverage combine --keep .coverage_fast_tests .coverage_slow_tests"
     )
-    cmd.append(
-        'coverage report --include="${target_dir}/*" --omit="*/test_*.py" --sort=Cover'
+    # Only target dir is included in the reports.
+    include_in_report = f"*/{target_dir}/*"
+    # Test files are excluded from the reports.
+    exclude_from_report = "*/test/*"
+    # Generate text report with the coverage stats.
+    report_cmd.append(
+        f"coverage report --include={include_in_report} --omit={exclude_from_report} --sort=Cover"
     )
-    cmd.append('coverage html --include="${target_dir}/*" --omit="*/test_*.py"')
-    cmd = " && ".join(cmd)
-    cmd = "invoke docker_bash --cmd '%s'" % cmd
-    _run(ctx, cmd)
+    if generate_html_report:
+        # Generate HTML report with the coverage stats.
+        report_cmd.append(
+            f"coverage html --include={include_in_report} --omit={exclude_from_report}"
+        )
+    # Execute commands above one-by-one inside docker. Coverage tool is not
+    # installed outside docker.
+    full_report_cmd = " && ".join(report_cmd)
+    docker_cmd_ = f"invoke docker_cmd --use-bash --cmd '{full_report_cmd}'"
+    _run(ctx, docker_cmd_)
+    if publish_html_on_s3:
+        # Publish HTML report on S3.
+        _publish_html_coverage_report_on_s3(aws_profile)
 
 
 # #############################################################################
@@ -4030,8 +4130,19 @@ def lint_check_python_files(  # type: ignore
 
 
 def _get_lint_docker_cmd(
-    precommit_opts: str, run_bash: bool, stage: str, as_user: bool
+    docker_cmd_: str,
+    run_bash: bool,
+    stage: str,
+    as_user: bool,
 ) -> str:
+    """
+    Create a command to run in Docker.
+
+    For parameter descriptions, see `lint()`.
+
+    :param docker_cmd_: command to run inside the container
+    :return: the full command to run in Docker
+    """
     superproject_path, submodule_path = hgit.get_path_from_supermodule()
     if superproject_path:
         # We are running in a Git submodule.
@@ -4046,17 +4157,19 @@ def _get_lint_docker_cmd(
     # image="*****.dkr.ecr.us-east-1.amazonaws.com/dev_tools:local"
     ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
     image = f"{ecr_base_path}/dev_tools:{stage}"
-    docker_cmd_ = ["docker run", "--rm"]
-    if stage == "local":
-        # For local stage also map repository root to /app.
-        docker_cmd_.append(f"-v '{repo_root}':/app")
+    docker_wrapper_cmd = ["docker run", "--rm"]
+    if stage in ("local", "dev"):
+        # Map repository root to /app in the container, so that we can
+        # reuse the current code being developed inside Docker before
+        # releasing the prod image.
+        docker_wrapper_cmd.append(f"-v '{repo_root}':/app")
     if run_bash:
-        docker_cmd_.append("-it")
+        docker_wrapper_cmd.append("-it")
     else:
-        docker_cmd_.append("-t")
+        docker_wrapper_cmd.append("-t")
     if as_user:
-        docker_cmd_.append(r"--user $(id -u):$(id -g)")
-    docker_cmd_.extend(
+        docker_wrapper_cmd.append(r"--user $(id -u):$(id -g)")
+    docker_wrapper_cmd.extend(
         [
             # Pass MYPYPATH for `mypy` to find the packages from PYTHONPATH.
             "-e MYPYPATH",
@@ -4066,14 +4179,19 @@ def _get_lint_docker_cmd(
         ]
     )
     # Build the command inside Docker.
-    cmd = f"'pre-commit {precommit_opts}'"
+    cmd = f"'{docker_cmd_}'"
     if run_bash:
         _LOG.warning("Run bash instead of:\n  > %s", cmd)
         cmd = "bash"
-    docker_cmd_.append(cmd)
-    #
-    docker_cmd_ = _to_single_line_cmd(docker_cmd_)
-    return docker_cmd_
+    docker_wrapper_cmd.append(cmd)
+    docker_wrapper_cmd = _to_single_line_cmd(docker_wrapper_cmd)
+    if run_bash:
+        # We don't execute this command since pty=True corrupts the terminal
+        # session.
+        print("# To get a bash session inside Docker run:")
+        print(docker_wrapper_cmd)
+        sys.exit(0)
+    return docker_wrapper_cmd
 
 
 def _parse_linter_output(txt: str) -> str:
@@ -4115,6 +4233,43 @@ def _parse_linter_output(txt: str) -> str:
 
 
 @task
+def lint_detect_cycles(  # type: ignore
+    ctx,
+    dir_name=".",
+    run_bash=False,
+    # TODO(gp): This is the backdoor.
+    stage="prod",
+    as_user=True,
+    out_file_name="lint_detect_cycles.output.txt",
+):
+    """
+    Detect cyclic imports in the directory files.
+
+    For param descriptions, see `lint()`.
+
+    :param dir_name: the name of the dir to detect cyclic imports in
+        - By default, the check will be carried out in the dir from where
+          the task is run
+    """
+    _report_task()
+    # Remove the log file.
+    if os.path.exists(out_file_name):
+        cmd = f"rm {out_file_name}"
+        _run(ctx, cmd)
+    as_user = _run_docker_as_user(as_user)
+    # Prepare the command line.
+    docker_cmd_opts = [dir_name]
+    docker_cmd_ = "/app/import_check/detect_import_cycles.py " + _to_single_line_cmd(
+        docker_cmd_opts
+    )
+    # Execute command line.
+    cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
+    cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
+    # Run.
+    _run(ctx, cmd)
+
+
+@task
 def lint(  # type: ignore
     ctx,
     modified=False,
@@ -4131,6 +4286,7 @@ def lint(  # type: ignore
     parse_linter_output=True,
     stage="prod",
     as_user=True,
+    out_file_name="linter_output.txt",
 ):
     """
     Lint files.
@@ -4157,12 +4313,12 @@ def lint(  # type: ignore
     :param parse_linter_output: parse linter output and generate vim cfile
     :param stage: the image stage to use
     :param as_user: pass the user / group id or not
+    :param out_file_name: name of the file to save the log output in
     """
     _report_task()
-    lint_file_name = "linter_output.txt"
     # Remove the file.
-    if os.path.exists(lint_file_name):
-        cmd = f"rm {lint_file_name}"
+    if os.path.exists(out_file_name):
+        cmd = f"rm {out_file_name}"
         _run(ctx, cmd)
     # The available phases are:
     # ```
@@ -4247,16 +4403,10 @@ def lint(  # type: ignore
                 "-c /app/.pre-commit-config.yaml",
                 f"--files {files_as_str}",
             ]
-            precommit_opts = _to_single_line_cmd(precommit_opts)
+            docker_cmd_ = "pre-commit " + _to_single_line_cmd(precommit_opts)
             # Execute command line.
-            cmd = _get_lint_docker_cmd(precommit_opts, run_bash, stage, as_user)
-            cmd = f"({cmd}) 2>&1 | tee -a {lint_file_name}"
-            if run_bash:
-                # We don't execute this command since pty=True corrupts the terminal
-                # session.
-                print("# To get a bash session inside Docker run:")
-                print(cmd)
-                return
+            cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
+            cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
             # Run.
             _run(ctx, cmd)
     else:
@@ -4264,8 +4414,8 @@ def lint(  # type: ignore
     #
     if parse_linter_output:
         # Parse the linter output into a cfile.
-        _LOG.info("Parsing '%s'", lint_file_name)
-        txt = hio.from_file(lint_file_name)
+        _LOG.info("Parsing '%s'", out_file_name)
+        txt = hio.from_file(out_file_name)
         cfile = _parse_linter_output(txt)
         cfile_name = "./linter_warnings.txt"
         hio.to_file(cfile_name, cfile)

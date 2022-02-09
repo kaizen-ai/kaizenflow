@@ -81,13 +81,6 @@ class ReplayedMarketData(mdabmada.AbstractMarketData):
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
         return True
 
-    # TODO(gp): Remove this.
-    def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        _LOG.verb_debug("")
-        # Sort in increasing time order and reindex.
-        df = super()._normalize_data(df)
-        return df
-
     def _get_data(
         self,
         start_ts: pd.Timestamp,
@@ -96,13 +89,12 @@ class ReplayedMarketData(mdabmada.AbstractMarketData):
         asset_ids: Optional[List[int]],
         left_close: bool,
         right_close: bool,
-        normalize_data: bool,
         limit: Optional[int],
     ) -> pd.DataFrame:
         _LOG.verb_debug(
             hprint.to_str(
                 "start_ts end_ts ts_col_name asset_ids left_close "
-                "right_close normalize_data limit"
+                "right_close limit"
             )
         )
         if asset_ids is not None:
@@ -142,9 +134,6 @@ class ReplayedMarketData(mdabmada.AbstractMarketData):
         if limit:
             hdbg.dassert_lte(1, limit)
             df_tmp = df_tmp.head(limit)
-        # Normalize data.
-        if normalize_data:
-            df_tmp = self._normalize_data(df_tmp)
         _LOG.verb_debug("-> df_tmp=\n%s", hpandas.df_to_str(df_tmp))
         return df_tmp
 
@@ -178,26 +167,11 @@ def save_market_data(
     limit: Optional[int],
 ) -> None:
     """
-    Save data without normalization from a `MarketData` to a CSV file.
-
-    Data is saved without normalization since we want to save it in the same format
-    that a derived class is delivering it to the
-
-    E.g.,
-    ```
-                start_time             end_time   egid   close   volume          timestamp_db
-    0  2021-12-31 20:41:00  2021-12-31 20:42:00  16878  294.81   70273    2021-12-31 20:42:06
-    1  2021-12-31 20:41:00  2021-12-31 20:42:00  16187  398.89   115650   2021-12-31 20:42:06
-    2  2021-12-31 20:41:00  2021-12-31 20:42:00  15794  3345.04  6331     2021-12-31 20:42:06
-    3  2021-12-31 20:41:00  2021-12-31 20:42:00  14592  337.75   26750    2021-12-31 20:42:06
-    ```
+    Save data from a `MarketData` to a CSV file.
     """
     hdbg.dassert(market_data.is_online())
-    normalize_data = False
     with htimer.TimedScope(logging.DEBUG, "market_data.get_data"):
-        rt_df = market_data.get_data_for_last_period(
-            timedelta, normalize_data=normalize_data, limit=limit
-        )
+        rt_df = market_data.get_data_for_last_period(timedelta, limit=limit)
     _LOG.debug(
         hpandas.df_to_str(
             rt_df, print_dtypes=True, print_shape_info=True, tag="rt_df"
@@ -219,18 +193,6 @@ def load_market_data(
 ) -> pd.DataFrame:
     """
     Load some example data from the RT DB.
-
-    Same interface as `get_real_time_bar_data()`.
-
-    ```
-          start_time          end_time asset_id   close    volume         timestamp_db
-    2021-10-05 20:00  2021-10-05 20:01    17085  141.11   5792204  2021-10-05 20:01:03
-    2021-10-05 19:59  2021-10-05 20:00    17085  141.09   1354151  2021-10-05 20:00:05
-    2021-10-05 19:58  2021-10-05 19:59    17085  141.12    620395  2021-10-05 19:59:04
-    2021-10-05 19:57  2021-10-05 19:58    17085  141.2644  341584  2021-10-05 19:58:03
-    2021-10-05 19:56  2021-10-05 19:57    17085  141.185   300822  2021-10-05 19:57:04
-    2021-10-05 19:55  2021-10-05 19:56    17085  141.1551  351527  2021-10-05 19:56:04
-    ```
     """
     kwargs_tmp = {}
     if aws_profile:
@@ -241,8 +203,6 @@ def load_market_data(
     for col_name in ("start_time", "end_time", "timestamp_db"):
         if col_name in df.columns:
             df[col_name] = pd.to_datetime(df[col_name], utc=True)
-    # TODO(gp): The data needs to be saved after the normalization so that
-    #  it's in the right format to be replayed.
     df.reset_index(inplace=True)
     _LOG.debug(
         hpandas.df_to_str(df, print_dtypes=True, print_shape_info=True, tag="df")

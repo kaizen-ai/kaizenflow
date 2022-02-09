@@ -66,10 +66,10 @@ class ImClient(abc.ABC):
     ```
     """
 
-    # TODO(gp): @Grisha: cache the mapping here.
-    # def __init__(self):
-    #     # Cache the mapping.
-    #     self._asset_id_to_full_symbol_mapping = None
+    def __init__(self) -> None:
+        self._asset_id_to_full_symbol_mapping = (
+            self._build_asset_id_to_full_symbol_mapping()
+        )
 
     def read_data(
         self,
@@ -98,7 +98,7 @@ class ImClient(abc.ABC):
                 "full_symbols start_ts end_ts full_symbol_col_name kwargs"
             )
         )
-        self._check_full_symbols(full_symbols)
+        imvcdcfusy.dassert_valid_full_symbols(full_symbols)
         # Check the requested interval.
         # TODO(gp): @Grisha use dassert_is_valid_interval.
         if start_ts is not None:
@@ -128,7 +128,7 @@ class ImClient(abc.ABC):
             df_tmp = self._apply_im_normalizations(
                 df_tmp, full_symbol_col_name, start_ts, end_ts
             )
-            self._dassert_is_valid(df_tmp, full_symbol_col_name)
+            self._dassert_is_valid(df_tmp, full_symbol_col_name, start_ts, end_ts)
             dfs.append(df_tmp)
         df = pd.concat(dfs, axis=0)
         _LOG.debug("After im_normalization: df=\n%s", hpandas.df_to_str(df))
@@ -167,17 +167,11 @@ class ImClient(abc.ABC):
 
     # /////////////////////////////////////////////////////////////////////////
 
-    # TODO(gp): @Grisha if as_asset_ids=True is the output type correct? Maybe
-    #  we should just have a separate function for FullSymbol -> asset_ids
-    #  conversion.
     @staticmethod
     @abc.abstractmethod
-    def get_universe(as_asset_ids: bool) -> List[imvcdcfusy.FullSymbol]:
+    def get_universe() -> List[imvcdcfusy.FullSymbol]:
         """
         Return the entire universe of valid full symbols.
-
-        :param as_asset_ids: if True return universe as numeric ids,
-            otherwise universe as full symbols
         """
 
     # TODO(gp): @Grisha we are mixing string vs int and asset_ids vs full_symbols.
@@ -209,19 +203,12 @@ class ImClient(abc.ABC):
         :param asset_ids: assets ids
         :return: assets as full symbols
         """
-        # Get universe as full symbols to construct asset ids to full symbols
-        # mapping.
-        # TODO(gp): Cache.
-        # if self._ids_to_symbols_mapping is None:
-        full_symbol_universe = self.get_universe(as_asset_ids=False)
-        ids_to_symbols_mapping = imvcuunut.build_num_to_string_id_mapping(
-            tuple(full_symbol_universe)
-        )
         # Check that provided ids are part of universe.
-        hdbg.dassert_is_subset(asset_ids, ids_to_symbols_mapping)
+        hdbg.dassert_is_subset(asset_ids, self._asset_id_to_full_symbol_mapping)
         # Convert ids to full symbols.
         full_symbols = [
-            ids_to_symbols_mapping[asset_id] for asset_id in asset_ids
+            self._asset_id_to_full_symbol_mapping[asset_id]
+            for asset_id in asset_ids
         ]
         return full_symbols
 
@@ -239,14 +226,17 @@ class ImClient(abc.ABC):
     ) -> pd.DataFrame:
         ...
 
-    # TODO(gp): @Grisha move to full_symbol.py
-    @staticmethod
-    def _check_full_symbols(full_symbols: List[imvcdcfusy.FullSymbol]) -> None:
+    def _build_asset_id_to_full_symbol_mapping(self) -> Dict[int, str]:
         """
-        Verify that full symbols are passed in a list that has no duplicates.
+        Build asset id to full symbol mapping.
         """
-        hdbg.dassert_isinstance(full_symbols, list)
-        hdbg.dassert_no_duplicates(full_symbols)
+        # Get full symbol universe.
+        full_symbol_universe = self.get_universe()
+        # Build the mapping.
+        asset_id_to_full_symbol_mapping = (
+            imvcuunut.build_num_to_string_id_mapping(full_symbol_universe)
+        )
+        return asset_id_to_full_symbol_mapping  # type: ignore[no-any-return]
 
     def _get_start_end_ts_for_symbol(
         self, full_symbol: imvcdcfusy.FullSymbol, mode: str
@@ -304,23 +294,14 @@ class ImClient(abc.ABC):
         df.index = df.index.tz_convert("UTC")
         return df
 
-    # TODO(gp): @Grisha Can we remove this and do all the transformation in the
-    #  `_read_data` method?
-    @staticmethod
-    @abc.abstractmethod
-    def _apply_vendor_normalization(df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Apply transformation specific of the vendor, e.g. rename columns,
-        convert data types.
-
-        :param df: raw data
-        :return: normalized data
-        """
-        ...
-
     # TODO(gp): @Grisha -> _dassert_output_data_is_valid
     @staticmethod
-    def _dassert_is_valid(df: pd.DataFrame, full_symbol_col_name: str) -> None:
+    def _dassert_is_valid(
+        df: pd.DataFrame,
+        full_symbol_col_name: str,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+    ) -> None:
         """
         Verify that the normalized data is valid.
         """
@@ -348,10 +329,11 @@ class ImClient(abc.ABC):
         hdbg.dassert_eq(
             n_duplicated_rows, 0, msg="There are duplicated rows in the data"
         )
-        # TODO(gp): @Grisha pass start_ts and end_ts and have a check
-        # # Ensure that all the data is in [start_ts, end_ts].
-        #  dassert_lte(start_ts, index.min)
-        #  dassert_lte(index.max, end_ts)
+        # Ensure that all the data is in [start_ts, end_ts].
+        if start_ts:
+            hdbg.dassert_lte(start_ts, df.index.min())
+        if end_ts:
+            hdbg.dassert_lte(df.index.max(), end_ts)
 
 
 # #############################################################################
@@ -392,8 +374,6 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
                 end_ts,
                 **kwargs,
             )
-            # Normalize data according to the specific vendor.
-            df = self._apply_vendor_normalization(df)
             # Insert column with full symbol into the result dataframe.
             hdbg.dassert_is_not(full_symbol_col_name, df.columns)
             df.insert(0, full_symbol_col_name, full_symbol)
@@ -453,7 +433,6 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         df = self._read_data_for_multiple_symbols(
             full_symbols, start_ts, end_ts, full_symbol_col_name, **kwargs
         )
-        df = self._apply_vendor_normalization(df)
         return df
 
     @abc.abstractmethod

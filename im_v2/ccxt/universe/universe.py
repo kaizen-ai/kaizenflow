@@ -33,18 +33,15 @@ def get_trade_universe(
     return universe  # type: ignore[no-any-return]
 
 
-# TODO(Dan): remove default values for `vendor` and `as_ids` param #832.
+# TODO(Dan): remove default values for `vendor` param #832.
 def get_vendor_universe(
-    version: str = _LATEST_UNIVERSE_VERSION,
-    vendor: str = "CCXT",
-    as_asset_ids: bool = False,
+    version: str = _LATEST_UNIVERSE_VERSION, vendor: str = "CCXT"
 ) -> Union[List[icdc.FullSymbol], List[int]]:
     """
-    Load vendor universe as full symbols or numeric ids.
+    Load vendor universe as full symbols.
 
     :param version: release version
     :param vendor: vendor to load data for (e.g., CCXT, CDD)
-    :param as_asset_ids: if True return universe as numeric ids, otherwise universe as full symbols
     :return: vendor universe as full symbols (e.g., gateio::XRP_USDT)
     """
     # Get vendor universe.
@@ -55,12 +52,6 @@ def get_vendor_universe(
         for exchange_id, currency_pairs in vendor_universe.items()
         for currency_pair in currency_pairs
     ]
-    if as_asset_ids:
-        # Convert universe symbols to numeric ids.
-        universe_tuple = tuple(universe)
-        universe = list(
-            imvcuunut.build_num_to_string_id_mapping(universe_tuple).keys()
-        )
     # Sort list of symbols in the universe.
     universe = sorted(universe)
     return universe

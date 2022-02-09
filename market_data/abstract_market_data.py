@@ -73,24 +73,9 @@ class AbstractMarketData(abc.ABC):
     - In general do not access data directly but rely on `ImClient` objects to
       retrieve the data from different backends
 
-    # Data format
-    - The data from this class is available in two formats:
-
-    1) Non-normalized data:
-        - delivered by classes derived from `MarketData`
-        - indexed with a progressive index
-        - with asset, start_time, end_time, knowledge_time
-    - E.g.,
-    ```
-      asset_id                 start_time                   end_time     close   volume
-    idx
-      0  17085  2021-07-26 13:41:00+00:00  2021-07-26 13:42:00+00:00  148.8600   400176
-      1  17085  2021-07-26 13:30:00+00:00  2021-07-26 13:31:00+00:00  148.5300  1407725
-      2  17085  2021-07-26 13:31:00+00:00  2021-07-26 13:32:00+00:00  148.0999   473869
-    ```
-
-    2) Normalized data:
-        - transforming by the base `MarketData` class
+    # Output format
+    - The class normalizes the data by:
+        - sorting by the columns that correspond to `end_time` and `asset_id`
         - indexing by the column that corresponds to `end_time`, so that it is suitable
           to DataFlow computation
     - E.g.,
@@ -126,8 +111,7 @@ class AbstractMarketData(abc.ABC):
 
         The (input) name of the columns delivered by the derived classes is set
         through `asset_id_col`, `start_time_col_name`, `end_time_col_name`.
-        The (output) name of the columns after the normalization can be changed
-        through `column_remap`.
+        The (output) name of the columns can be changed through `column_remap`.
 
         All the column names in the interface (e.g., `start_time_col_name`) are
         before the remapping.
@@ -171,7 +155,6 @@ class AbstractMarketData(abc.ABC):
         self,
         timedelta: pd.Timedelta,
         *,
-        normalize_data: bool = True,
         # TODO(gp): Not sure limit is really needed. We could move it to the DB
         #  implementation.
         limit: Optional[int] = None,
@@ -201,7 +184,6 @@ class AbstractMarketData(abc.ABC):
             end_ts,
             ts_col_name,
             asset_ids,
-            normalize_data=normalize_data,
             limit=limit,
         )
         # We don't need to remap columns since `get_data_for_interval()` has already
@@ -214,8 +196,6 @@ class AbstractMarketData(abc.ABC):
         ts: pd.Timestamp,
         ts_col_name: str,
         asset_ids: Optional[List[int]],
-        *,
-        normalize_data: bool = True,
     ) -> pd.DataFrame:
         """
         Return price data at a specific timestamp.
@@ -224,7 +204,6 @@ class AbstractMarketData(abc.ABC):
             on and use as index
         :param ts: the timestamp to filter on
         :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
-        :param normalize_data: normalize the data
         """
         start_ts = ts - pd.Timedelta("1S")
         end_ts = ts + pd.Timedelta("1S")
@@ -233,7 +212,6 @@ class AbstractMarketData(abc.ABC):
             end_ts,
             ts_col_name,
             asset_ids,
-            normalize_data=normalize_data,
         )
         # We don't need to remap columns since `get_data_for_interval()` has already
         # done it.
@@ -249,7 +227,6 @@ class AbstractMarketData(abc.ABC):
         *,
         left_close: bool = True,
         right_close: bool = False,
-        normalize_data: bool = True,
         limit: Optional[int] = None,
     ) -> pd.DataFrame:
         """
@@ -268,7 +245,7 @@ class AbstractMarketData(abc.ABC):
         """
         _LOG.debug(
             hprint.to_str(
-                "start_ts end_ts ts_col_name asset_ids left_close right_close normalize_data limit"
+                "start_ts end_ts ts_col_name asset_ids left_close right_close limit"
             )
         )
         # Resolve the asset ids.
@@ -286,7 +263,6 @@ class AbstractMarketData(abc.ABC):
             asset_ids,
             left_close,
             right_close,
-            normalize_data,
             limit,
         )
         # If the assets were specified, check that the returned data doesn't contain
@@ -296,10 +272,10 @@ class AbstractMarketData(abc.ABC):
         # TODO(gp): If asset_ids was specified but the backend has a universe
         #  specified already, we might need to apply a filter by asset_ids.
         # TODO(gp): Check data with respect to start_ts, end_ts.
-        if normalize_data:
-            # Convert start and end timestamps to `self._timezone` if data is
-            # normalized.
-            df = self._convert_timestamps_to_timezone(df)
+        # Normalize data.
+        df = self._normalize_data(df)
+        # Convert start and end timestamps to the timezone specified in the ctor.
+        df = self._convert_timestamps_to_timezone(df)
         # Remap column names.
         df = self._remap_columns(df)
         _LOG.verb_debug("-> df=\n%s", hpandas.df_to_str(df))
@@ -351,7 +327,6 @@ class AbstractMarketData(abc.ABC):
             asset_ids,
             left_close=left_close,
             right_close=right_close,
-            normalize_data=True,
             limit=None,
         )
         # We don't need to remap columns since `get_data_for_interval()` has already
@@ -424,8 +399,7 @@ class AbstractMarketData(abc.ABC):
         _LOG.info("last_end_time=%s", last_end_time)
         # Get the data.
         # TODO(*): Remove the hard-coded 1-minute.
-        # TODO(gp): @Grisha why 1M and not 1T?
-        start_time = last_end_time - pd.Timedelta("1M")
+        start_time = last_end_time - pd.Timedelta("1T")
         df = self.get_data_at_timestamp(
             start_time,
             self._start_time_col_name,
@@ -476,7 +450,7 @@ class AbstractMarketData(abc.ABC):
                 wall_clock_time.floor("Min"),
             )
             ret = last_db_end_time.floor("Min") >= (
-                wall_clock_time.floor("Min") - pd.Timedelta("1M")
+                wall_clock_time.floor("Min") - pd.Timedelta("1T")
             )
         _LOG.verb_debug("-> ret=%s", ret)
         return ret
@@ -584,7 +558,6 @@ class AbstractMarketData(abc.ABC):
         asset_ids: Optional[List[int]],
         left_close: bool,
         right_close: bool,
-        normalize_data: bool,
         limit: Optional[int],
     ) -> pd.DataFrame:
         """
@@ -600,8 +573,6 @@ class AbstractMarketData(abc.ABC):
         :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
         :param left_close, right_close: represent the type of interval
             - E.g., [start_ts, end_ts), or (start_ts, end_ts]
-        :param normalize_data: whether to normalize data or not, see
-            `self.process_data()`
         :param limit: keep only top N records
         """
         ...
@@ -610,8 +581,6 @@ class AbstractMarketData(abc.ABC):
     # Data normalization.
     # /////////////////////////////////////////////////////////////////////////////
 
-    # TODO(gp): @Grisha this should be called by get_data_for_interval and not
-    #  by derived classes.
     def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Transform df from real-time DB into data similar to the historical TAQ

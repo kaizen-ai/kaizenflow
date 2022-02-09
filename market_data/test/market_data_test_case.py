@@ -4,10 +4,12 @@ Import as:
 import market_data.test.market_data_test_case as mdtmdtca
 """
 
+import abc
 import logging
 from typing import Any, List, Optional, Union
 
 import pandas as pd
+import pytest
 
 import helpers.hdatetime as hdateti
 import helpers.hpandas as hpandas
@@ -55,16 +57,24 @@ def _check_output(
 # #############################################################################
 
 
-class MarketData_get_data_TestCase(hunitest.TestCase):
+class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
     """
     Test `get_data*()` methods for a class derived from `AbstractMarketData`.
     """
+
+    @abc.abstractmethod
+    def test_is_online1(self) -> None:
+        """
+        Test whether the DB is on-line at the current time.
+        """
+        ...
+
+    # //////////////////////////////////////////////////////////////////////////////
 
     @staticmethod
     def _test_get_data_for_last_period(
         market_data: mdata.AbstractMarketData,
         timedelta: pd.Timestamp,
-        normalize_data: bool,
     ) -> None:
         """
         Call `get_data_for_last_period()` all conditional periods.
@@ -73,18 +83,14 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         real-time method and we can't easily check the content of its
         output.
         """
-        # TODO(Dan): Uncomment in CmTask908.
-        # if skip_test_since_not_online(market_data):
-        #     pytest.skip("Market not on-line")
+        if skip_test_since_not_online(market_data):
+            pytest.skip("Market not on-line")
         hprint.log_frame(
             _LOG,
-            "get_data_for_last_period:"
-            + hprint.to_str("timedelta normalize_data"),
+            "get_data_for_last_period:" + hprint.to_str("timedelta"),
         )
         # Run.
-        _ = market_data.get_data_for_last_period(
-            timedelta, normalize_data=normalize_data
-        )
+        _ = market_data.get_data_for_last_period(timedelta)
 
     # //////////////////////////////////////////////////////////////////////////////
 
@@ -93,26 +99,21 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         market_data: mdata.AbstractMarketData,
         ts: pd.Timestamp,
         asset_ids: Optional[List[int]],
-        normalize_data: bool,
         exp_df_as_str: str,
     ) -> None:
         """
         Call `get_data_at_timestamp()` for specified parameters.
         """
-        # TODO(Dan): Uncomment in CmTask908.
-        # if skip_test_since_not_online(market_data):
-        #    pytest.skip("Market not on-line")
+        if skip_test_since_not_online(market_data):
+            pytest.skip("Market not on-line")
         # Prepare inputs.
         ts_col_name = "end_ts"
         hprint.log_frame(
             _LOG,
-            "get_data_at_timestamp:"
-            + hprint.to_str("ts ts_col_name asset_ids normalize_data"),
+            "get_data_at_timestamp:" + hprint.to_str("ts ts_col_name asset_ids"),
         )
         # Run.
-        df = market_data.get_data_at_timestamp(
-            ts, ts_col_name, asset_ids, normalize_data=normalize_data
-        )
+        df = market_data.get_data_at_timestamp(ts, ts_col_name, asset_ids)
         # Check output.
         _check_output(self, df, exp_df_as_str)
 
@@ -126,22 +127,20 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         asset_ids: Optional[List[int]],
         left_close: bool,
         right_close: bool,
-        normalize_data: bool,
         exp_df_as_str: str,
     ) -> None:
         """
         Call `get_data_for_interval()` for specified parameters.
         """
-        # TODO(Dan): Uncomment in CmTask908.
-        # if skip_test_since_not_online(market_data):
-        #     pytest.skip("Market not on-line")
+        if skip_test_since_not_online(market_data):
+            pytest.skip("Market not on-line")
         # Prepare inputs.
         ts_col_name = "end_ts"
         hprint.log_frame(
             _LOG,
             "get_data_for_interval:"
             + hprint.to_str(
-                "start_ts end_ts ts_col_name asset_ids left_close right_close normalize_data"
+                "start_ts end_ts ts_col_name asset_ids left_close right_close"
             ),
         )
         # Run.
@@ -152,7 +151,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
             asset_ids,
             left_close=left_close,
             right_close=right_close,
-            normalize_data=normalize_data,
         )
         # Check output.
         _check_output(self, df, exp_df_as_str)
@@ -169,13 +167,11 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
 
         - asset_ids = None
         - interval type is default [a, b)
-        - data is normalized
         """
         # Prepare inputs.
         asset_ids = None
         left_close = True
         right_close = False
-        normalize_data = True
         # Run.
         self._get_data_for_interval_helper(
             market_data,
@@ -184,7 +180,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
             asset_ids,
             left_close,
             right_close,
-            normalize_data,
             exp_df_as_str,
         )
 
@@ -201,12 +196,10 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
 
         - `asset_ids` is a list
         - interval type is default [a, b)
-        - data is normalized
         """
         # Prepare inputs.
         left_close = True
         right_close = False
-        normalize_data = True
         # Run.
         self._get_data_for_interval_helper(
             market_data,
@@ -215,7 +208,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
             asset_ids,
             left_close,
             right_close,
-            normalize_data,
             exp_df_as_str,
         )
 
@@ -231,13 +223,11 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         Call `get_data_for_interval()` with:
 
         - `asset_ids` is a list
-        - interval type is default [a, b)
-        - data is not normalized
+        - interval type is [a, b]
         """
         # Prepare inputs.
         left_close = True
-        right_close = False
-        normalize_data = False
+        right_close = True
         # Run.
         self._get_data_for_interval_helper(
             market_data,
@@ -246,7 +236,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
             asset_ids,
             left_close,
             right_close,
-            normalize_data,
             exp_df_as_str,
         )
 
@@ -262,13 +251,11 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         Call `get_data_for_interval()` with:
 
         - `asset_ids` is a list
-        - interval type is [a, b]
-        - data is normalized
+        - interval type is (a, b]
         """
         # Prepare inputs.
-        left_close = True
+        left_close = False
         right_close = True
-        normalize_data = True
         # Run.
         self._get_data_for_interval_helper(
             market_data,
@@ -277,7 +264,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
             asset_ids,
             left_close,
             right_close,
-            normalize_data,
             exp_df_as_str,
         )
 
@@ -293,44 +279,11 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         Call `get_data_for_interval()` with:
 
         - `asset_ids` is a list
-        - interval type is (a, b]
-        - data is normalized
-        """
-        # Prepare inputs.
-        left_close = False
-        right_close = True
-        normalize_data = True
-        # Run.
-        self._get_data_for_interval_helper(
-            market_data,
-            start_ts,
-            end_ts,
-            asset_ids,
-            left_close,
-            right_close,
-            normalize_data,
-            exp_df_as_str,
-        )
-
-    def _test_get_data_for_interval6(
-        self,
-        market_data: mdata.AbstractMarketData,
-        start_ts: pd.Timestamp,
-        end_ts: pd.Timestamp,
-        asset_ids: List[int],
-        exp_df_as_str: str,
-    ) -> None:
-        """
-        Call `get_data_for_interval()` with:
-
-        - `asset_ids` is a list
         - interval type is (a, b)
-        - data is normalized
         """
         # Prepare inputs.
         left_close = False
         right_close = False
-        normalize_data = True
         # Run.
         self._get_data_for_interval_helper(
             market_data,
@@ -339,7 +292,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
             asset_ids,
             left_close,
             right_close,
-            normalize_data,
             exp_df_as_str,
         )
 
@@ -356,9 +308,8 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         """
         Call `get_twap_price()` for specified parameters.
         """
-        # TODO(Dan): Uncomment in CmTask908.
-        # if skip_test_since_not_online(market_data):
-        #     pytest.skip("Market not on-line")
+        if skip_test_since_not_online(market_data):
+            pytest.skip("Market not on-line")
         # Prepare inputs.
         ts_col_name = "end_ts"
         column = "close"
@@ -389,6 +340,28 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         # Check output.
         self.assertEqual(act_last_end_time, exp_last_end_time)
 
+    def _test_get_last_price1(
+        self,
+        market_data: mdata.AbstractMarketData,
+        asset_ids: Optional[List[int]],
+        exp_srs_as_str: str,
+    ) -> None:
+        """
+        Call `get_last_price()` for specified parameters.
+        """
+        if skip_test_since_not_online(market_data):
+            pytest.skip("Market not on-line")
+        # Prepare inputs.
+        col_name = "close"
+        hprint.log_frame(
+            _LOG,
+            "get_last_price:" + hprint.to_str("col_name asset_ids"),
+        )
+        # Run.
+        srs = market_data.get_last_price(col_name, asset_ids).round(2)
+        # Check output.
+        _check_output(self, srs, exp_srs_as_str)
+
     # //////////////////////////////////////////////////////////////////////////////
 
     def _test_should_be_online1(
@@ -401,6 +374,8 @@ class MarketData_get_data_TestCase(hunitest.TestCase):
         actual = market_data.should_be_online(wall_clock_time)
         # Check output.
         self.assertTrue(actual)
+
+    # TODO(GP): Implement test for `wait_for_latest_data()`.
 
 
 def skip_test_since_not_online(market_data: mdata.AbstractMarketData) -> bool:

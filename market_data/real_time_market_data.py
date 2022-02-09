@@ -57,7 +57,10 @@ class RealTimeMarketData(mdabmada.AbstractMarketData):
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
         return True
 
-    def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
+    def _convert_data_for_normalization(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Convert data to format required by normalization in parent class.
+        """
         # Add new TZ-localized datetime columns for research and readability.
         for col_name in [self._start_time_col_name, self._end_time_col_name]:
             if col_name in df.columns:
@@ -68,8 +71,6 @@ class RealTimeMarketData(mdabmada.AbstractMarketData):
                     srs = srs.dt.tz_localize("UTC")
                     srs = srs.dt.tz_convert("America/New_York")
                     df[col_name] = srs
-        # Sort in increasing time order and reindex.
-        df = super()._normalize_data(df)
         return df
 
     def _get_data(
@@ -80,7 +81,6 @@ class RealTimeMarketData(mdabmada.AbstractMarketData):
         asset_ids: Optional[List[int]],
         left_close: bool,
         right_close: bool,
-        normalize_data: bool,
         limit: Optional[int],
     ) -> pd.DataFrame:
         sort_time = True
@@ -97,8 +97,8 @@ class RealTimeMarketData(mdabmada.AbstractMarketData):
         )
         _LOG.info("query=%s", query)
         df = hsql.execute_query_to_df(self.connection, query)
-        if normalize_data:
-            df = self._normalize_data(df)
+        # Prepare data for normalization by the parent class.
+        df = self._convert_data_for_normalization(df)
         return df
 
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:

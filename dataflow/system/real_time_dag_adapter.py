@@ -31,6 +31,8 @@ class RealTimeDagAdapter(dtfcore.DagAdapter):
         timedelta: pd.Timedelta,
         asset_id_col: str,
         *,
+        target_gmv: float = 1e5,
+        dollar_neutrality: str = "no_constraint",
         log_dir: Optional[str] = None,
     ):
         market_data = portfolio.market_data
@@ -53,7 +55,8 @@ class RealTimeDagAdapter(dtfcore.DagAdapter):
             evaluate_forecasts_config = cconfig.get_config_from_nested_dict(
                 {
                     "log_dir": os.path.join(log_dir, "evaluate_forecasts"),
-                    "target_gmv": 1e5,
+                    "target_gmv": target_gmv,
+                    "dollar_neutrality": dollar_neutrality,
                     "returns_col": returns_col,
                 }
             )
@@ -85,6 +88,8 @@ class RealTimeDagAdapter(dtfcore.DagAdapter):
                 "2000-01-01 16:40:00-05:00", tz="America/New_York"
             ).time(),
             "execution_mode": "real_time",
+            "target_gmv": target_gmv,
+            "dollar_neutrality": dollar_neutrality,
             "log_dir": log_dir,
         }
         # Insert a node.

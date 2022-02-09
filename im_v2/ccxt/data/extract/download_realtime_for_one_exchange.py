@@ -11,6 +11,8 @@ Use as:
     --exchange_id 'binance' \
     --universe 'v03' \
     --db_stage 'dev' \
+    --aws_profile 'ck' \
+    --s3_path 's3://cryptokaizen-historical-data/binance/'
 
 Import as:
 
@@ -19,11 +21,14 @@ import im_v2.ccxt.data.extract.download_realtime_for_one_exchange as imvcdedrfoe
 
 import argparse
 import logging
+import os
 
 import pandas as pd
 
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
+import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import im_v2.ccxt.universe.universe as imvccunun
@@ -82,6 +87,7 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument("--incremental", action="store_true")
     parser = hparser.add_verbosity_arg(parser)
+    parser = hs3.add_s3_args(parser)
     return parser  # type: ignore[no-any-return]
 
 
@@ -92,6 +98,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     env_file = imvimlita.get_db_env_path(args.db_stage)
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
+    # Connect to S3 filesystem, if provided.
+    if args.aws_profile:
+        fs = hs3.get_s3fs(args.aws_profile)
     # Initialize exchange class.
     exchange = imvcdeexcl.CcxtExchange(args.exchange_id)
     # Load currency pairs.
@@ -118,12 +127,21 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # Assign pair and exchange columns.
         data["currency_pair"] = currency_pair
         data["exchange_id"] = args.exchange_id
+        # Get datetime of insertion in UTC.
+        data["knowledge_timestamp"] = hdateti.get_current_time("UTC")
         # Insert data into the DB.
         hsql.execute_insert_query(
             connection=connection,
             obj=data,
             table_name=db_table,
         )
+        # Save data to S3 bucket.
+        if args.s3_path:
+            file_name = hdateti.get_current_timestamp_as_string("UTC") + ".csv"
+            path_to_file = os.path.join(args.s3_path, file_name)
+            # Save data to S3 filesystem.
+            with fs.open(path_to_file, "w") as f:
+                data.to_csv(f, index=False)
         # Remove duplicated entries.
         connection.cursor().execute(dup_query)
 

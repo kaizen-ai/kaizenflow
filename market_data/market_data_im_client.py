@@ -7,6 +7,7 @@ import market_data.market_data_im_client as mdmdimcl
 import logging
 from typing import Any, List, Optional
 
+import numpy as np
 import pandas as pd
 
 import helpers.hdbg as hdbg
@@ -33,6 +34,38 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
         hdbg.dassert_isinstance(im_client, icdc.ImClient)
         self._im_client = im_client
 
+    def get_last_price(
+        self,
+        col_name: str,
+        asset_ids: List[int],
+    ) -> pd.Series:
+        """
+        This method overrides parent method in `MarketData`.
+
+        In contrast with specific `MarketData` backends,
+        `MarketDataImClient` uses the end of interval for date
+        filtering.
+        """
+        last_end_time = self.get_last_end_time()
+        _LOG.info("last_end_time=%s", last_end_time)
+        # Get the data.
+        df = self.get_data_at_timestamp(
+            last_end_time,
+            self._end_time_col_name,
+            asset_ids,
+        )
+        # Convert the df of data into a series.
+        hdbg.dassert_in(col_name, df.columns)
+        last_price = df[[col_name, self._asset_id_col]]
+        last_price.set_index(self._asset_id_col, inplace=True)
+        last_price_srs = hpandas.to_series(last_price)
+        hdbg.dassert_isinstance(last_price_srs, pd.Series)
+        last_price_srs.index.name = self._asset_id_col
+        last_price_srs.name = col_name
+        hpandas.dassert_series_type_in(last_price_srs, [np.float64, np.int64])
+        # TODO(gp): Print if there are nans.
+        return last_price_srs
+
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
         """
         See the parent class.
@@ -48,7 +81,6 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
         asset_ids: Optional[List[int]],
         left_close: bool,
         right_close: bool,
-        normalize_data: bool,
         limit: Optional[int],
     ) -> pd.DataFrame:
         """
@@ -66,13 +98,13 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
                 end_ts += pd.Timedelta(1, "ms")
         # TODO(gp): call dassert_is_valid_start_end_timestamp
         if not asset_ids:
-            # If `asset_ids` is None, get all assets from the universe.
-            as_asset_ids = True
-            asset_ids = self._im_client.get_universe(as_asset_ids)
-        # Convert numeric ids to full symbols to read `im` data.
-        full_symbols = self._im_client.get_full_symbols_from_numerical_ids(
-            asset_ids
-        )
+            # If asset ids are not provided, get universe as full symbols.
+            full_symbols = self._im_client.get_universe()
+        else:
+            # Convert asset ids to full symbols to read `im` data.
+            full_symbols = self._im_client.get_full_symbols_from_numerical_ids(
+                asset_ids
+            )
         # Load the data using `im_client`.
         market_data = self._im_client.read_data(
             full_symbols,
@@ -96,14 +128,13 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
             # Keep only top N records.
             hdbg.dassert_lte(1, limit)
             market_data = market_data.head(limit)
-        if normalize_data:
-            market_data = self._convert_im_data(market_data)
-            market_data = self._normalize_data(market_data)
+        # Prepare data for normalization by the parent class.
+        market_data = self._convert_data_for_normalization(market_data)
         return market_data
 
-    def _convert_im_data(self, df: pd.DataFrame) -> pd.DataFrame:
+    def _convert_data_for_normalization(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Convert IM data to the format required by `AbstractMarketData`.
+        Convert data to format required by normalization in parent class.
 
         :param df: IM data to transform
         ```
