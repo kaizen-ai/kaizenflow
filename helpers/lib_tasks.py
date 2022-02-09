@@ -1974,7 +1974,8 @@ def _dassert_is_image_name_valid(image: str) -> None:
       to indicate the latest
       - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev-1.0.0`
         and `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev`
-    - `prod` candidate image has a 9 character hash identificator
+    - `prod` candidate image has a 9 character hash identifier from the 
+        corresponding Git commit
         - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:prod-1.0.0-4rf74b83a`
 
     An image should look like:
@@ -2624,7 +2625,8 @@ def docker_build_prod_image(  # type: ignore
     :param cache: note that often the prod image is just a copy of the dev
         image so caching makes no difference
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
-    :param candidate: builds a prod image with a tag format: prod-{hash} where hash is the output of hgit.get_head_hash 
+    :param candidate: build a prod image with a tag format: prod-{hash}
+        where hash is the output of hgit.get_head_hash 
     """
     _report_task()
     version = _resolve_version_value(version)
@@ -2635,8 +2637,10 @@ def docker_build_prod_image(  # type: ignore
     #  the client is clean so that we don't release from a dirty client.
     # Build prod image.
     if candidate:
-        # For candidate prod images which need to be tested on the AWS infra add a hash identificator.
-        image_versioned_prod = get_image(base_image, "prod", None)
+        # For candidate prod images which need to be tested on 
+        # the AWS infra add a hash identifier.
+        latest_version = None
+        image_versioned_prod = get_image(base_image, "prod", latest_version)
         head_hash = hgit.get_head_hash(short_hash=True)
         image_versioned_prod += f"-{head_hash}"
     else:
@@ -2660,7 +2664,10 @@ def docker_build_prod_image(  # type: ignore
         .
     """
     _run(ctx, cmd)
-    if not candidate:
+    if candidate:
+        _LOG.info(f"Head hash: {head_hash}")
+        cmd = f"docker image ls {image_versioned_prod}"
+    else:
         # Tag versioned image as latest prod image.
         latest_version = None
         image_prod = get_image(base_image, "prod", latest_version)
@@ -2668,9 +2675,6 @@ def docker_build_prod_image(  # type: ignore
         _run(ctx, cmd)
         #
         cmd = f"docker image ls {image_prod}"
-    else:
-        _LOG.info(f"Head hash: {head_hash}")
-        cmd = f"docker image ls {image_versioned_prod}"
 
     _run(ctx, cmd)
 
