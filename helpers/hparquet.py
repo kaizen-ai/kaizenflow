@@ -159,6 +159,8 @@ def get_parquet_filters_from_timestamp_interval(
             and_filter = [("year", "=", year), ("month", "=", month)]
             filters.append(and_filter)
             _LOG.debug("Adding AND filter %s", str(and_filter))
+    else:
+        raise ValueError(f"Unknown partition mode `{partition_mode}`!")
     # TODO(Nikola): Partition by week.
     #   week = start_ts.isocalendar()[1]
     #   https://docs.python.org/3/library/datetime.html#datetime.date.isocalendar

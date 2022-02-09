@@ -591,10 +591,25 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
             )
         actual = str(fail.value)
         expected = r"""
-        # #####################################################################
+        ################################################################################
         * Failed assertion *
         2020-01-02 09:31:00+00:00 <= 2020-01-02 09:30:00+00:00
         ################################################################################"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_by_month_invalid2(self) -> None:
+        """
+        Test an invalid partition mode..
+        """
+        partition_mode = "new_mode"
+        start_ts = pd.Timestamp("2020-01-02 09:31:00+00:00")
+        end_ts = pd.Timestamp("2020-01-02 09:32:00+00:00")
+        with pytest.raises(ValueError) as fail:
+            hparque.get_parquet_filters_from_timestamp_interval(
+                partition_mode, start_ts, end_ts
+            )
+        actual = str(fail.value)
+        expected = r"Unknown partition mode `new_mode`!"
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_by_month_two_years1(self) -> None:
