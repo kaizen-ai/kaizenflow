@@ -11,6 +11,15 @@ Generate Parquet files for testing.
     --output_type verbose_close \
     --assets 10689,10690 \
     --dst_dir im_v2/common/test/tiled.bar_data
+
+# In command sample above, data is created for certain interval with minutely frequency
+# that is further partitioned by Parquet dataset for year and month.
+```
+.../tiled.bar_data/asset_id=10689/year=2021/month=11
+.../tiled.bar_data/asset_id=10689/year=2021/month=11/data.parquet
+.../tiled.bar_data/asset_id=10690/year=2021/month=11
+.../tiled.bar_data/asset_id=10690/year=2021/month=11/data.parquet
+```
 """
 
 import argparse
@@ -132,9 +141,9 @@ class ParquetDataFrameGenerator:
         """
         asset_dataframes = self._get_core_dataframes()
         for idx, asset_dataframe in enumerate(asset_dataframes):
-            # Before asset column.
+            # Positioned left from `asset` column.
             asset_dataframe.insert(loc=0, column="idx", value=idx)
-            # After asset column.
+            # Positioned right from `asset` column.
             asset_dataframe.insert(
                 loc=2,
                 column="val1",
@@ -166,7 +175,7 @@ class ParquetDataFrameGenerator:
                 asset_dataframe.index - pd.Timestamp("1970-01-01")
             ) // pd.Timedelta("1s")
             end_time = start_time + interval
-            # Before ticker column.
+            # Positioned left from `ticker` column.
             asset_dataframe.insert(
                 loc=0,
                 column="vendor_date",
@@ -175,7 +184,7 @@ class ParquetDataFrameGenerator:
             asset_dataframe.insert(loc=1, column="interval", value=interval)
             asset_dataframe.insert(loc=2, column="start_time", value=start_time)
             asset_dataframe.insert(loc=3, column="end_time", value=end_time)
-            # After ticker column.
+            # Positioned right from `ticker` column.
             asset_dataframe.insert(loc=5, column="currency", value="USD")
             asset_dataframe.insert(
                 loc=6,
@@ -199,7 +208,7 @@ class ParquetDataFrameGenerator:
         """
         asset_dataframes = self._get_core_dataframes()
         for asset_dataframe in asset_dataframes:
-            # After asset_id column.
+            # Positioned right from `asset_id` column.
             asset_dataframe.insert(
                 loc=1,
                 column="close",
@@ -209,7 +218,7 @@ class ParquetDataFrameGenerator:
 
     @staticmethod
     def _wrap_all_assets_df(df: List[pd.DataFrame]) -> pd.DataFrame:
-        # Create a single df for all the assets.
+        # Create a single dataframe for all the assets.
         df = pd.concat(df)
         _LOG.debug(hpandas.df_to_str(df, print_shape_info=True, tag="df"))
         return df
