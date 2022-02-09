@@ -22,6 +22,7 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     docker_pull_dev_tools,
     docker_push_dev_image,
     docker_push_prod_image,
+    docker_push_prod_candidate_image,
     docker_release_all,
     docker_release_dev_image,
     docker_release_prod_image,

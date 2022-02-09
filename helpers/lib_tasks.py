@@ -1957,7 +1957,10 @@ def _dassert_is_subsequent_version(version: str) -> None:
 _INTERNET_ADDRESS_RE = r"([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
 _IMAGE_BASE_NAME_RE = r"[a-z0-9_-]+"
 _IMAGE_USER_RE = r"[a-z0-9_-]+"
-_IMAGE_STAGE_RE = rf"(local(?:-{_IMAGE_USER_RE})?|dev|prod)"
+# For candidate prod images which have added hash for easy identification.
+_IMAGE_HASH_RE = r"[a-z0-9]{9}"
+_IMAGE_STAGE_RE = rf"(local(?:-{_IMAGE_USER_RE})?|dev|prod|prod(?:-{_IMAGE_HASH_RE})?)"
+
 
 
 def _dassert_is_image_name_valid(image: str) -> None:
@@ -1971,6 +1974,9 @@ def _dassert_is_image_name_valid(image: str) -> None:
       to indicate the latest
       - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev-1.0.0`
         and `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev`
+    - `prod` candidate image has a 9 character hash identifier from the 
+        corresponding Git commit
+        - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:prod-1.0.0-4rf74b83a`
 
     An image should look like:
 
@@ -2607,6 +2613,7 @@ def docker_build_prod_image(  # type: ignore
     version,
     cache=True,
     base_image="",
+    candidate=False
 ):
     """
     (ONLY CI/CD) Build a prod image.
@@ -2618,6 +2625,8 @@ def docker_build_prod_image(  # type: ignore
     :param cache: note that often the prod image is just a copy of the dev
         image so caching makes no difference
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
+    :param candidate: build a prod image with a tag format: prod-{hash}
+        where hash is the output of hgit.get_head_hash 
     """
     _report_task()
     version = _resolve_version_value(version)
@@ -2627,7 +2636,15 @@ def docker_build_prod_image(  # type: ignore
     # TODO(gp): We should do a `i git_clean` to remove artifacts and check that
     #  the client is clean so that we don't release from a dirty client.
     # Build prod image.
-    image_versioned_prod = get_image(base_image, "prod", version)
+    if candidate:
+        # For candidate prod images which need to be tested on 
+        # the AWS infra add a hash identifier.
+        latest_version = None
+        image_versioned_prod = get_image(base_image, "prod", latest_version)
+        head_hash = hgit.get_head_hash(short_hash=True)
+        image_versioned_prod += f"-{head_hash}"
+    else:
+        image_versioned_prod = get_image(base_image, "prod", version)
     _dassert_is_image_name_valid(image_versioned_prod)
     #
     dockerfile = "devops/docker_build/prod.Dockerfile"
@@ -2647,13 +2664,18 @@ def docker_build_prod_image(  # type: ignore
         .
     """
     _run(ctx, cmd)
-    # Tag versioned image as latest prod image.
-    latest_version = None
-    image_prod = get_image(base_image, "prod", latest_version)
-    cmd = f"docker tag {image_versioned_prod} {image_prod}"
-    _run(ctx, cmd)
-    #
-    cmd = f"docker image ls {image_prod}"
+    if candidate:
+        _LOG.info(f"Head hash: {head_hash}")
+        cmd = f"docker image ls {image_versioned_prod}"
+    else:
+        # Tag versioned image as latest prod image.
+        latest_version = None
+        image_prod = get_image(base_image, "prod", latest_version)
+        cmd = f"docker tag {image_versioned_prod} {image_prod}"
+        _run(ctx, cmd)
+        #
+        cmd = f"docker image ls {image_prod}"
+
     _run(ctx, cmd)
 
 
@@ -2683,6 +2705,25 @@ def docker_push_prod_image(  # type: ignore
     cmd = f"docker push {image_prod}"
     _run(ctx, cmd, pty=True)
 
+@task
+def docker_push_prod_candidate_image(  # type: ignore
+    ctx,
+    candidate,
+    base_image="",
+):
+    """
+    (ONLY CI/CD) Push the "prod" candidate image to ECR.
+
+    :param candidate: hash tag of the candidate prod image to push
+    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
+    """
+    _report_task()
+    #
+    docker_login(ctx)
+    # Push image with tagged with a hash ID.
+    image_versioned_prod = get_image(base_image, "prod", None)
+    cmd = f"docker push {image_versioned_prod}-{candidate}"
+    _run(ctx, cmd, pty=True)
 
 @task
 def docker_release_prod_image(  # type: ignore

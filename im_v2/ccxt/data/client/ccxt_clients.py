@@ -181,7 +181,7 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
             sql_conditions.append(f"timestamp >= {start_ts}")
         if end_ts:
             end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
-            sql_conditions.append(f"timestamp < {end_ts}")
+            sql_conditions.append(f"timestamp <= {end_ts}")
         # Append all the provided SQL conditions to the main SQL query.
         sql_conditions = " AND ".join(sql_conditions)
         sql_query = " WHERE ".join([sql_query, sql_conditions])
@@ -286,7 +286,7 @@ class CcxtCddCsvParquetByAssetClient(
             if end_ts:
                 # Add filtering by end timestamp if specified.
                 end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
-                filters.append(("timestamp", "<", end_ts))
+                filters.append(("timestamp", "<=", end_ts))
             if filters:
                 # Add filters to kwargs if any were set.
                 kwargs["filters"] = filters
@@ -300,7 +300,7 @@ class CcxtCddCsvParquetByAssetClient(
                 data = data[data["timestamp"] >= start_ts]
             if end_ts:
                 end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
-                data = data[data["timestamp"] < end_ts]
+                data = data[data["timestamp"] <= end_ts]
         else:
             raise ValueError(
                 f"Unsupported extension {self._extension}. "
