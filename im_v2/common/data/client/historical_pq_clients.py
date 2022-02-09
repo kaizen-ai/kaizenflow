@@ -69,13 +69,13 @@ class HistoricalPqByAssetClient(
         filters = hparque.get_parquet_filters_from_timestamp_interval(
             self._partitioning_mode, start_ts, end_ts
         )
-        asset_and_condition = (self._asset_col_name, "in", asset_ids)
+        asset_and_condition = [(self._asset_col_name, "in", asset_ids)]
         if not filters:
-            filters = [[asset_and_condition]]
+            filters = asset_and_condition
         else:
             # It is important to put assets first because of the performance.
             # Intervals will be checked only for desired assets instead whole dataset.
-            filters[0].insert(0, asset_and_condition)
+            filters.insert(0, asset_and_condition)
         # Read the data.
         # TODO(gp): Add support for S3 passing aws_profile.
         df = hparque.from_parquet(
