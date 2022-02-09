@@ -152,7 +152,13 @@ def _parse() -> argparse.ArgumentParser:
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    # TODO(gp): Pass this param through command line and / or propagate it to
+    #  run_experiment_stub.
+    hdbg.init_logger(
+        verbosity=args.log_level,
+        use_exec_path=True,
+        # report_memory_usage=True
+    )
     # Create the dst dir.
     dst_dir, clean_dst_dir = hparser.parse_dst_dir_arg(args)
     _ = clean_dst_dir
