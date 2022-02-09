@@ -52,6 +52,13 @@ def _parse() -> argparse.ArgumentParser:
         help="End date of download to parse with pd.Timestamp. "
     )
     parser.add_argument(
+        "--exchange_id",
+        action="store",
+        required=True,
+        type=str,
+        help="Name of exchange to download data from",
+    )
+    parser.add_argument(
         "--universe",
         action="store",
         required=True,
