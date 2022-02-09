@@ -579,7 +579,7 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         * Failed assertion *
         2020-01-02 09:31:00+00:00 <= 2020-01-02 09:30:00+00:00
         ################################################################################"""
-        self.assert_equal(actual, expected)
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_by_month_two_years1(self) -> None:
         """
