@@ -6,7 +6,7 @@ daily for reconciliation with realtime data.
 Use as:
 
 # Download data for CCXT for binance from 2022-02-08 to 2022-02-09:
-> download_historical_data.py \
+> im_v2/ccxt/data/extract/download_historical_data.py \
      --to_datetime '2022-02-09' \
      --from_datetime '2022-02-08' \
      --exchange_id 'binance' \
@@ -102,7 +102,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     for currency_pair in currency_pairs:
         # Download OHLCV data.
         data = exchange.download_ohlcv_data(
-            currency_pair,
+            currency_pair.replace("_", "/"),
             start_datetime=start_datetime,
             end_datetime=end_datetime,
             bar_per_iteration=args.step,
