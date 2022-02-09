@@ -126,7 +126,9 @@ def get_partition_columns(partition_mode: str) -> List[str]:
     if partition_mode == "by_date":
         partition_columns = ["date"]
     elif partition_mode == "by_year_month_day":
-        partition_columns = ["year", "month", "date"]
+        # TODO(Nikola): Previously it was `["year", "month", "date"]`...
+        #   Mistake or intention?
+        partition_columns = ["year", "month", "day"]
     elif partition_mode == "by_year_month":
         partition_columns = ["year", "month"]
     elif partition_mode == "by_year_week":
@@ -136,7 +138,7 @@ def get_partition_columns(partition_mode: str) -> List[str]:
     elif partition_mode == "by_month":
         partition_columns = ["month"]
     else:
-        raise ValueError(f"Invalid partition_mode='{partition_mode}'")
+        raise ValueError(f"Invalid partition_mode '{partition_mode}'!")
     return partition_columns
 
 
@@ -175,10 +177,11 @@ def get_parquet_filters_from_timestamp_interval(
         if timestamp is not None:
             # Add filter for each partition column.
             for column_name in partition_columns:
-                # TODO(gp): Use weekofyear = start_ts.isocalendar().week
-                # weekofyear = timestamp.week
-                # and_condition = ("weekofyear", condition, weekofyear)
                 time_part = getattr(timestamp, column_name)
+                # Only week is having different representation in Parquet file.
+                column_name = (
+                    "weekofyear" if column_name == "weekofyear" else column_name
+                )
                 and_condition = (column_name, condition, time_part)
                 and_filters.append(and_condition)
                 _LOG.debug("added condition %s", str(and_condition))
