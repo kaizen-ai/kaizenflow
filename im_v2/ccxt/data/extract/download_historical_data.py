@@ -69,7 +69,7 @@ def _parse() -> argparse.ArgumentParser:
         "--sleep_time",
         action="store",
         type=int,
-        default=10,
+        default=5,
         help="Sleep time between currency pair downloads (in seconds).",
     )
     parser.add_argument("--incremental", action="store_true")
@@ -98,7 +98,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
             currency_pair.replace("_", "/"),
             start_datetime=start_datetime,
             end_datetime=end_datetime,
-            bar_per_iteration=args.step,
         )
         # Get file name.
         file_name = (
