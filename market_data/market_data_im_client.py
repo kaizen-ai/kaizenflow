@@ -18,8 +18,7 @@ import market_data.abstract_market_data as mdabmada
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): @Grisha -> ImClientMarketData and rename all the classes and files.
-class MarketDataImClient(mdabmada.AbstractMarketData):
+class ImClientMarketData(mdabmada.MarketData):
     """
     Implement a `MarketData` that uses a `ImClient` as backend.
     """
@@ -43,7 +42,7 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
         This method overrides parent method in `MarketData`.
 
         In contrast with specific `MarketData` backends,
-        `MarketDataImClient` uses the end of interval for date
+        `ImClientMarketData` uses the end of interval for date
         filtering.
         """
         last_end_time = self.get_last_end_time()
@@ -100,7 +99,7 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
             full_symbols = self._im_client.get_universe()
         else:
             # Convert asset ids to full symbols to read `im` data.
-            full_symbols = self._im_client.get_full_symbols_from_numerical_ids(
+            full_symbols = self._im_client.get_full_symbols_from_asset_ids(
                 asset_ids
             )
         # Load the data using `im_client`.
@@ -114,7 +113,7 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
         market_data.insert(
             0,
             self._asset_id_col,
-            self._im_client.get_numerical_ids_from_full_symbols(
+            self._im_client.get_asset_ids_from_full_symbols(
                 market_data["full_symbol"]
             ),
         )

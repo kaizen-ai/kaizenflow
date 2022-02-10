@@ -25,7 +25,7 @@ _LOG = logging.getLogger(__name__)
 
 class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
     """
-    Test `get_data*()` methods for a class derived from `AbstractMarketData`.
+    Test `get_data*()` methods for a class derived from `MarketData`.
     """
 
     @abc.abstractmethod
@@ -39,7 +39,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     @staticmethod
     def _test_get_data_for_last_period(
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         timedelta: pd.Timestamp,
     ) -> None:
         """
@@ -62,7 +62,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     def _test_get_data_at_timestamp1(
         self,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         ts: pd.Timestamp,
         asset_ids: Optional[List[int]],
         *args: Any,
@@ -88,7 +88,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     def _get_data_for_interval_helper(
         self,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         asset_ids: Optional[List[int]],
@@ -125,7 +125,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     def _test_get_data_for_interval1(
         self,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         *args: Any,
@@ -155,7 +155,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     def _test_get_data_for_interval2(
         self,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         asset_ids: List[int],
@@ -185,7 +185,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     def _test_get_data_for_interval3(
         self,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         asset_ids: List[int],
@@ -215,7 +215,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     def _test_get_data_for_interval4(
         self,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         asset_ids: List[int],
@@ -245,7 +245,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     def _test_get_data_for_interval5(
         self,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         asset_ids: List[int],
@@ -277,7 +277,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     def _test_get_twap_price1(
         self,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         asset_ids: Optional[List[int]],
@@ -308,7 +308,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     def _test_get_last_end_time1(
         self,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         exp_last_end_time: pd.Timestamp,
     ) -> None:
         """
@@ -321,7 +321,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     def _test_get_last_price1(
         self,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         asset_ids: Optional[List[int]],
         *args: Any,
         **kwargs: Any,
@@ -345,7 +345,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
     # //////////////////////////////////////////////////////////////////////////////
 
     def _test_should_be_online1(
-        self, market_data: mdata.AbstractMarketData, wall_clock_time: pd.Timestamp
+        self, market_data: mdata.MarketData, wall_clock_time: pd.Timestamp
     ) -> None:
         """
         Test that the interface is available at the given time.
@@ -358,7 +358,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
     # TODO(GP): Implement test for `wait_for_latest_data()`.
 
 
-def skip_test_since_not_online(market_data: mdata.AbstractMarketData) -> bool:
+def skip_test_since_not_online(market_data: mdata.MarketData) -> bool:
     """
     Return true if a test should be skipped since `market_data` is not on-line.
     """
@@ -377,7 +377,7 @@ def skip_test_since_not_online(market_data: mdata.AbstractMarketData) -> bool:
 #
 # class MarketData_get_data_for_last_period_asyncio_TestCase1(hunitest.TestCase):
 #    """
-#    Test `AbstractMarketData.get_data_for_last_period()` methods in an asyncio
+#    Test `MarketData.get_data_for_last_period()` methods in an asyncio
 #    set-up where time is moving forward.
 #
 #    This can only be tested with
@@ -385,7 +385,7 @@ def skip_test_since_not_online(market_data: mdata.AbstractMarketData) -> bool:
 #
 #    def get_data_helper(
 #        self,
-#        market_data: mdata.AbstractMarketData,
+#        market_data: mdata.MarketData,
 #        get_wall_clock_time: hdatetime.GetWall,
 #        exp_wall_clock_time: str,
 #        exp_get_data_normalize_false: str,
