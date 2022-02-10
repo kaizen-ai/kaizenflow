@@ -3755,6 +3755,13 @@ def run_coverage_report(  # type: ignore
     _run(ctx, slow_tests_cmd)
     #
     report_cmd: List[str] = []
+    # Clean the previous coverage results. For some docker-specific reasons
+    # command which combines stats does not work when being run first in
+    # the chain `bash -c "cmd1 && cmd2 && cmd3"`. So `erase` command which
+    # does not affect the coverage results was added as a workaround.
+    report_cmd.append(
+        "coverage erase"
+    )
     # Merge stats for fast and slow tests into single dir.
     report_cmd.append(
         "coverage combine --keep .coverage_fast_tests .coverage_slow_tests"
