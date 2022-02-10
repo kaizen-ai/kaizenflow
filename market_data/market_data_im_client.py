@@ -93,7 +93,6 @@ class ImClientMarketData(mdabmada.MarketData):
             if end_ts is not None:
                 # Subtract one millisecond not to include the right boundary.
                 end_ts -= pd.Timedelta(1, "ms")
-        # TODO(gp): call dassert_is_valid_start_end_timestamp
         if not asset_ids:
             # If asset ids are not provided, get universe as full symbols.
             full_symbols = self._im_client.get_universe()

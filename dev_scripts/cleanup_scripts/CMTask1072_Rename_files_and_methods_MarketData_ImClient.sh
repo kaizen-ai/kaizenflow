@@ -74,6 +74,17 @@
    --old 'get_full_symbols_from_numerical_ids' \
    --new 'get_full_symbols_from_asset_ids' \
 
+# CmTask1072 - Rename class "TestBuildNumericToStringIdMapping" to
+# "TestBuildNumericalToStringIdMapping".
+./dev_scripts/replace_text.py \
+  --old "TestBuildNumericToStringIdMapping" \
+  --new "TestBuildNumericalToStringIdMapping" \
+
+# CmTask1072 - Rename class "TestStringToNumId" to "TestStringToNumericalId".
+./dev_scripts/replace_text.py \
+  --old "TestStringToNumId" \
+  --new "TestStringToNumericalId" \
+
 # Remove unused imports from affected files.
 invoke lint -m --only-format
 
