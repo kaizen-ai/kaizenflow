@@ -17,7 +17,7 @@ _LOG = logging.getLogger(__name__)
 
 def run_experiment(config: cconfig.Config) -> None:
     """
-    Implement the master experiment to:
+    Implement an experiment to:
 
     - create a DAG from the passed config
     - run the DAG
@@ -52,6 +52,9 @@ def run_experiment(config: cconfig.Config) -> None:
     # TODO(gp): We could return a `ResultBundle` and have
     # `run_experiment_stub.py` save it.
     dtfmodutil.save_experiment_result_bundle(config, result_bundle)
+
+
+# #############################################################################
 
 
 def run_rolling_experiment(config: cconfig.Config) -> None:

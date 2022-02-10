@@ -42,6 +42,18 @@ def to_series(df: pd.DataFrame) -> pd.Series:
     return srs
 
 
+def dassert_is_days(
+    timedelta: pd.Timedelta, *, min_num_days: Optional[int] = None
+) -> None:
+    hdbg.dassert(
+        (timedelta / pd.Timedelta(days=1)).is_integer(),
+        "timedelta='%s' is not an integer number of days",
+        timedelta,
+    )
+    if min_num_days is not None:
+        hdbg.dassert_lte(1, timedelta.days)
+
+
 # #############################################################################
 
 
@@ -57,6 +69,8 @@ def _get_index(obj: Union[pd.Index, pd.DataFrame, pd.Series]) -> pd.Index:
     return index
 
 
+# TODO(gp): Maybe for symmetry with the other functions, rename to
+#  dassert_datetime_index
 def dassert_index_is_datetime(
     obj: Union[pd.Index, pd.DataFrame, pd.Series],
     msg: Optional[str] = None,
@@ -69,6 +83,27 @@ def dassert_index_is_datetime(
     hdbg.dassert_isinstance(index, pd.DatetimeIndex, msg, *args)
 
 
+def dassert_unique_index(
+    obj: Union[pd.Index, pd.DataFrame, pd.Series],
+    msg: Optional[str] = None,
+    *args: Any,
+) -> None:
+    """
+    Ensure that a Pandas object has a unique index.
+    """
+    index = _get_index(obj)
+    if not index.is_unique:
+        dup_indices = index.duplicated(keep=False)
+        df_dup = obj[dup_indices]
+        dup_msg = "Duplicated rows are:\n%s\n" % df_to_str(df_dup)
+        if msg is None:
+            msg = dup_msg
+        else:
+            msg = dup_msg + msg
+        hdbg.dassert(index.is_unique, msg=msg, *args)
+
+
+# TODO(gp): Add more info in case of failures and unit tests.
 def dassert_strictly_increasing_index(
     obj: Union[pd.Index, pd.DataFrame, pd.Series],
     msg: Optional[str] = None,
@@ -77,11 +112,11 @@ def dassert_strictly_increasing_index(
     """
     Ensure that a Pandas object has a strictly increasing index.
     """
-    index = _get_index(obj)
+    dassert_unique_index(obj, msg=msg, *args)
     # TODO(gp): Understand why mypy reports:
     #   error: "dassert" gets multiple values for keyword argument "msg"
+    index = _get_index(obj)
     hdbg.dassert(index.is_monotonic_increasing, msg=msg, *args)
-    hdbg.dassert(index.is_unique, msg=msg, *args)
 
 
 # TODO(gp): Factor out common code related to extracting the index from several
@@ -96,12 +131,12 @@ def dassert_monotonic_index(
     Ensure that a Pandas object has a monotonic (i.e., strictly increasing or
     decreasing index).
     """
-    index = _get_index(obj)
+    dassert_unique_index(obj, msg=msg, *args)
     # TODO(gp): Understand why mypy reports:
     #   error: "dassert" gets multiple values for keyword argument "msg"
+    index = _get_index(obj)
     cond = index.is_monotonic_increasing or index.is_monotonic_decreasing
     hdbg.dassert(cond, msg=msg, *args)
-    hdbg.dassert(index.is_unique, msg=msg, *args)
 
 
 def dassert_valid_remap(to_remap: List[str], remap_dict: Dict[str, str]) -> None:
@@ -123,6 +158,39 @@ def dassert_valid_remap(to_remap: List[str], remap_dict: Dict[str, str]) -> None
     hdbg.dassert_not_intersection(remap_dict.values(), to_remap)
 
 
+def dassert_series_type_is(
+    srs: pd.Series,
+    type_: type,
+    msg: Optional[str] = None,
+    *args: Any,
+) -> None:
+    """
+    Ensure that the data type of `srs` is `type_`.
+
+    Examples of valid series types are
+      - np.float64
+      - np.int64
+      - pd.Timestamp
+    """
+    hdbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_isinstance(type_, type)
+    hdbg.dassert_eq(srs.dtype.type, type_, msg, *args)
+
+
+def dassert_series_type_in(
+    srs: pd.Series,
+    types: List[type],
+    msg: Optional[str] = None,
+    *args: Any,
+) -> None:
+    """
+    Ensure that the data type of `srs` is one of the types in `types`.
+    """
+    hdbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_container_type(types, list, type)
+    hdbg.dassert_in(srs.dtype.type, types, msg, *args)
+
+
 # #############################################################################
 
 
@@ -134,10 +202,12 @@ def resample_index(index: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
     :param frequency: frequency from `pd.date_range()` to resample to
     :return: resampled `DatetimeIndex`
     """
+    _LOG.debug(hprint.to_str("index frequency"))
     hdbg.dassert_isinstance(index, pd.DatetimeIndex)
-    hdbg.dassert(index.is_unique, msg="Index must have only unique values")
+    dassert_unique_index(index, msg="Index must have only unique values")
     min_date = index.min()
     max_date = index.max()
+    _LOG.debug("min_date=%s max_date=%s", min_date, max_date)
     # TODO(gp): Preserve the index name.
     # index_name = index.name
     resampled_index = pd.date_range(
@@ -147,7 +217,7 @@ def resample_index(index: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
     )
     if len(resampled_index) > len(index):
         # Downsample.
-        _LOG.info(
+        _LOG.debug(
             "Index length increased by %s = %s - %s",
             len(resampled_index) - len(index),
             len(resampled_index),
@@ -155,14 +225,14 @@ def resample_index(index: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
         )
     elif len(resampled_index) < len(index):
         # Upsample.
-        _LOG.info(
+        _LOG.debug(
             "Index length decreased by %s = %s - %s",
             len(index) - len(resampled_index),
             len(index),
             len(resampled_index),
         )
     else:
-        _LOG.info("Index length=%s has not changed", len(index))
+        _LOG.debug("Index length=%s has not changed", len(index))
     # resampled_index.name = index_name
     return resampled_index
 
@@ -200,10 +270,12 @@ def drop_duplicates(
     """
     _LOG.debug("args=%s, kwargs=%s", str(args), str(kwargs))
     num_rows_before = data.shape[0]
+    # Drop duplicates.
     data_no_dups = data.drop_duplicates(*args, **kwargs)
+    # Report change.
     num_rows_after = data_no_dups.shape[0]
     if num_rows_before != num_rows_after:
-        _LOG.warning(
+        _LOG.debug(
             "Removed %s rows",
             hprint.perc(num_rows_before - num_rows_after, num_rows_before),
         )
@@ -273,13 +345,16 @@ def trim_df(
         interval
         - E.g., [start_ts, end_ts), or (start_ts, end_ts]
     """
-    _LOG.debug(hprint.df_to_short_str("df", df, print_dtypes=True))
+    _LOG.verb_debug(
+        df_to_str(df, print_dtypes=True, print_shape_info=True, tag="df")
+    )
     _LOG.debug(
         hprint.to_str("ts_col_name start_ts end_ts left_close right_close")
     )
     if df.empty:
         # If the df is empty there is nothing to trim.
         return df
+    num_rows_before = df.shape[0]
     if start_ts is not None and end_ts is not None:
         hdateti.dassert_tz_compatible(start_ts, end_ts)
         hdbg.dassert_lte(start_ts, end_ts)
@@ -290,7 +365,8 @@ def trim_df(
         # TODO(gp): Use binary search if there is an index.
         if df.index.name is None:
             _LOG.debug(
-                "The df has no index\n%s", hprint.dataframe_to_str(df.head())
+                "The df has no index\n%s",
+                df_to_str(df.head()),
             )
             df.index.name = "index"
         ts_col_name = df.index.name
@@ -307,12 +383,12 @@ def trim_df(
         # vs Pandas objects.
         tss = pd.to_datetime(df[ts_col_name])
         hdateti.dassert_tz_compatible(tss.iloc[0], start_ts)
-        _LOG.verb_debug("tss=\n%s", hprint.dataframe_to_str(tss))
+        _LOG.verb_debug("tss=\n%s", df_to_str(tss))
         if left_close:
             mask = tss >= start_ts
         else:
             mask = tss > start_ts
-        _LOG.verb_debug("mask=\n%s", hprint.dataframe_to_str(mask))
+        _LOG.verb_debug("mask=\n%s", df_to_str(mask))
         df = df[mask]
     # Filter based on end_ts.
     _LOG.debug("Filtering by end_ts=%s", end_ts)
@@ -322,16 +398,121 @@ def trim_df(
             _LOG.verb_debug("end_ts=%s", end_ts)
             tss = pd.to_datetime(df[ts_col_name])
             hdateti.dassert_tz_compatible(tss.iloc[0], end_ts)
-            _LOG.verb_debug("tss=\n%s", hprint.dataframe_to_str(tss))
+            _LOG.verb_debug("tss=\n%s", df_to_str(tss))
             if right_close:
                 mask = tss <= end_ts
             else:
                 mask = tss < end_ts
-            _LOG.verb_debug("mask=\n%s", hprint.dataframe_to_str(mask))
+            _LOG.verb_debug("mask=\n%s", df_to_str(mask))
             df = df[mask]
     else:
         # If the df is empty there is nothing to trim.
         pass
     if use_index:
         df = df.set_index(ts_col_name, drop=True)
+    # Report the changes.
+    num_rows_after = df.shape[0]
+    if num_rows_before != num_rows_after:
+        _LOG.debug(
+            "Removed %s rows",
+            hprint.perc(num_rows_before - num_rows_after, num_rows_before),
+        )
     return df
+
+
+# #############################################################################
+
+
+def df_to_str(
+    df: pd.DataFrame,
+    *,
+    num_rows: Optional[int] = 6,
+    print_dtypes: bool = False,
+    print_shape_info: bool = False,
+    tag: Optional[str] = None,
+    max_columns: int = 10000,
+    max_colwidth: int = 2000,
+    max_rows: int = 500,
+    precision: int = 6,
+    display_width: int = 10000,
+    use_tabulate: bool = False,
+) -> str:
+    """
+    Print a dataframe to string reporting all the columns without trimming.
+
+    :param: num_rows: max number of rows to print (half from the top and half from
+        the bottom of the dataframe)
+        - `None` to print the entire dataframe
+    :param print_dtypes: reports dataframe types and information about the type of
+        each column by looking at the first value
+    :param print_shape_info: reports dataframe shape, index and columns
+    """
+    if df is None:
+        return ""
+    out = []
+    # Print the tag.
+    if tag is not None:
+        out.append(f"# {tag}=")
+    # Print information about the shape and index.
+    if print_shape_info:
+        if not df.empty:
+            out.append("df.index in [%s, %s]" % (df.index.min(), df.index.max()))
+            out.append("df.columns=%s" % ",".join(map(str, df.columns)))
+            # TODO(Nikola): Revisit and rename print_shape_info to print_axes_info
+            out.append("df.shape=%s" % str(df.shape))
+    # Print information about the types.
+    if not df.empty:
+        if print_dtypes:
+            out.append("df.type=")
+
+            def _report_type_of_first_element(srs: "pd.Series") -> str:
+                """
+                Report dtype, the first element, and its type of series.
+                """
+                elem = srs.values[0]
+                val = "%10s %25s %s" % (srs.dtype, type(elem), elem)
+                return val
+
+            col_name = "index"
+            fmt = "  %20s: %s"
+            out.append(fmt % (col_name, _report_type_of_first_element(df.index)))
+            for col_name in df.columns:
+                out.append(
+                    fmt % (col_name, _report_type_of_first_element(df[col_name]))
+                )
+    # Set dataframe print options.
+    with pd.option_context(
+        "display.max_colwidth",
+        max_colwidth,
+        # "display.height", 1000,
+        "display.max_rows",
+        max_rows,
+        "display.precision",
+        precision,
+        "display.max_columns",
+        max_columns,
+        "display.width",
+        display_width,
+    ):
+        if use_tabulate:
+            import tabulate
+
+            out.append(tabulate.tabulate(df, headers="keys", tablefmt="psql"))
+        if num_rows is None or df.shape[0] <= num_rows:
+            # Print the entire data frame.
+            out.append(str(df))
+        else:
+            # Print top and bottom of df.
+            out.append(str(df.head(num_rows // 2)))
+            out.append("...")
+            tail_str = str(df.tail(num_rows // 2))
+            # Remove index and columns.
+            skipped_rows = 1
+            if df.index.name:
+                skipped_rows += 1
+            tail_str = "\n".join(tail_str.split("\n")[skipped_rows:])
+            out.append(tail_str)
+    txt = "\n".join(out)
+    # TODO(Nikola): Temporary strip
+    txt.rstrip("\n")
+    return txt

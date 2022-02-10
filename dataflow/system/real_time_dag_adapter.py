@@ -3,7 +3,7 @@ Import as:
 
 import dataflow.system.real_time_dag_adapter as dtfsrtdaad
 """
-
+import os
 from typing import Optional
 
 import pandas as pd
@@ -27,8 +27,12 @@ class RealTimeDagAdapter(dtfcore.DagAdapter):
         portfolio: omportfo.AbstractPortfolio,
         prediction_col: str,
         volatility_col: str,
-        period: str,
+        returns_col: str,
+        timedelta: pd.Timedelta,
         asset_id_col: str,
+        *,
+        target_gmv: float = 1e5,
+        dollar_neutrality: str = "no_constraint",
         log_dir: Optional[str] = None,
     ):
         market_data = portfolio.market_data
@@ -37,7 +41,7 @@ class RealTimeDagAdapter(dtfcore.DagAdapter):
         # Configure a DataSourceNode.
         source_node_kwargs = {
             "market_data": market_data,
-            "period": period,
+            "timedelta": timedelta,
             "asset_id_col": asset_id_col,
             "multiindex_output": True,
         }
@@ -47,11 +51,23 @@ class RealTimeDagAdapter(dtfcore.DagAdapter):
         }
         # Configure a ProcessForecast node.
         order_type = "price@twap"
+        if log_dir is not None:
+            evaluate_forecasts_config = cconfig.get_config_from_nested_dict(
+                {
+                    "log_dir": os.path.join(log_dir, "evaluate_forecasts"),
+                    "target_gmv": target_gmv,
+                    "dollar_neutrality": dollar_neutrality,
+                    "returns_col": returns_col,
+                }
+            )
+        else:
+            evaluate_forecasts_config = None
         overriding_config["process_forecasts"] = {
             "prediction_col": prediction_col,
             "volatility_col": volatility_col,
             "portfolio": portfolio,
             "process_forecasts_config": {},
+            "evaluate_forecasts_config": evaluate_forecasts_config,
         }
         # We could also write the `process_forecasts_config` key directly but we
         # want to show a `Config` created with multiple pieces.
@@ -72,6 +88,8 @@ class RealTimeDagAdapter(dtfcore.DagAdapter):
                 "2000-01-01 16:40:00-05:00", tz="America/New_York"
             ).time(),
             "execution_mode": "real_time",
+            "target_gmv": target_gmv,
+            "dollar_neutrality": dollar_neutrality,
             "log_dir": log_dir,
         }
         # Insert a node.

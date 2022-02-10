@@ -13,8 +13,8 @@ from tqdm.autonotebook import tqdm
 
 import core.data_adapters as cdatadap
 import helpers.hdbg as hdbg
-import helpers.hpandas as hpandas
 import helpers.hlist as hlist
+import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 

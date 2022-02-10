@@ -4,8 +4,6 @@ Import as:
 import helpers.hdatetime as hdateti
 """
 
-# TODO(gp): -> hdatetime
-
 import asyncio
 import calendar
 import datetime
@@ -13,6 +11,7 @@ import logging
 import re
 from typing import Callable, Iterable, Optional, Tuple, Union, cast
 
+# TODO(gp): Use hdbg.WARNING
 _WARNING = "\033[33mWARNING\033[0m"
 
 
@@ -25,8 +24,8 @@ except ModuleNotFoundError:
 
 import pandas as pd  # noqa: E402 # pylint: disable=wrong-import-position
 
-# TODO(gp): Check if dateutils is equivalent or better so we can simplify the
-#  dependencies.
+# TODO(gp): Check if dateutils is equivalent to `pytz` or better so we can simplify
+#  the dependencies.
 try:
     import pytz
 except ModuleNotFoundError:
@@ -35,6 +34,7 @@ except ModuleNotFoundError:
 
 
 import helpers.hdbg as hdbg  # noqa: E402 # pylint: disable=wrong-import-position
+import helpers.hprint as hprint  # noqa: E402 # pylint: disable=wrong-import-position
 
 _LOG = logging.getLogger(__name__)
 
@@ -43,6 +43,7 @@ _LOG = logging.getLogger(__name__)
 # - we call `to_datetime()`, as soon as we enter functions exposed to users,
 #   to convert the user-provided datetime into a `datetime.datetime`
 # - we use only `datetime.datetime` in the private interfaces
+# TODO(gp): In practice we are using `pd.Timestamp`
 #
 # It's often worth to import this file even for just the type `Datetime`,
 # since typically as soon as the caller uses this type, they also want to use
@@ -84,19 +85,33 @@ def dassert_is_strict_datetime(datetime_: StrictDatetime) -> None:
     )
 
 
+# TODO(Grisha): also pass timezone.
 def to_datetime(datetime_: Datetime) -> datetime.datetime:
     """
-    Assert that datetime_ is a possible datetime.
+    Convert a `Datetime` into a `datetime.datetime`.
 
     :return: tz-aware or naive datetime.datetime
     """
-    # TODO(Grisha): also pass timezone.
     dassert_is_datetime(datetime_)
     if isinstance(datetime_, str):
         datetime_ = pd.Timestamp(datetime_)
     if isinstance(datetime_, pd.Timestamp):
         datetime_ = datetime_.to_pydatetime()
     return datetime_  # type: ignore
+
+
+def to_timestamp(datetime_: Datetime) -> pd.Timestamp:
+    """
+    Convert a `Datetime` into a `pd.Timestamp`.
+
+    :return: tz-aware or naive datetime.datetime
+    """
+    dassert_is_datetime(datetime_)
+    timestamp = pd.Timestamp(datetime_)
+    return timestamp  # type: ignore
+
+
+# //////////////////////////////////////////////////////////////////////////////////O
 
 
 def dassert_is_tz_naive(datetime_: StrictDatetime) -> None:
@@ -210,6 +225,39 @@ def dassert_tz_compatible_timestamp_with_df(
     dassert_tz_compatible(df_datetime, datetime_)
 
 
+def dassert_is_valid_timestamp(timestamp: Optional[pd.Timestamp]) -> None:
+    """
+    Assert that a timestamp is `None` or a `pd.Timestamp` with timezone.
+    """
+    if timestamp is not None:
+        hdbg.dassert_isinstance(timestamp, pd.Timestamp)
+        dassert_has_tz(timestamp)
+
+
+def dassert_is_valid_interval(
+    start_timestamp: Optional[pd.Timestamp],
+    end_timestamp: Optional[pd.Timestamp],
+    left_close: bool,
+    right_close: bool,
+) -> None:
+    """
+    Assert that an interval has valid start and end timestamps.
+    """
+    _LOG.debug(
+        hprint.to_str("start_timestamp end_timestamp left_close right_close")
+    )
+    dassert_is_valid_timestamp(start_timestamp)
+    dassert_is_valid_timestamp(end_timestamp)
+    # Check the requested interval.
+    if start_timestamp is not None and end_timestamp is not None:
+        if left_close and right_close:
+            # If they are both closed, an interval like [a, a] makes sense,
+            # otherwise it doesn't.
+            hdbg.dassert_lte(start_timestamp, end_timestamp)
+        else:
+            hdbg.dassert_lt(start_timestamp, end_timestamp)
+
+
 # #############################################################################
 
 
@@ -233,10 +281,14 @@ def get_ET_tz() -> datetime.tzinfo:
 
 # Function returning the current (true, replayed, simulated) wall-clock time as a
 # timestamp.
+# TODO(gp): maybe GetWallClockTimeFunc is better to clarify that this is a function
+#  and not time. We often pass
 GetWallClockTime = Callable[[], pd.Timestamp]
 
 
 # TODO(gp): -> get_wall_clock_time
+# TODO(gp): tz -> tz_mode since we are not passing neither a timezone or a
+#  timezone_as_str.
 def get_current_time(
     tz: str, event_loop: Optional[asyncio.AbstractEventLoop] = None
 ) -> pd.Timestamp:

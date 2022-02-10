@@ -57,7 +57,10 @@ class RealTimeMarketData(mdabmada.AbstractMarketData):
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
         return True
 
-    def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
+    def _convert_data_for_normalization(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Convert data to format required by normalization in parent class.
+        """
         # Add new TZ-localized datetime columns for research and readability.
         for col_name in [self._start_time_col_name, self._end_time_col_name]:
             if col_name in df.columns:
@@ -68,8 +71,6 @@ class RealTimeMarketData(mdabmada.AbstractMarketData):
                     srs = srs.dt.tz_localize("UTC")
                     srs = srs.dt.tz_convert("America/New_York")
                     df[col_name] = srs
-        # Sort in increasing time order and reindex.
-        df = super()._normalize_data(df)
         return df
 
     def _get_data(
@@ -80,7 +81,6 @@ class RealTimeMarketData(mdabmada.AbstractMarketData):
         asset_ids: Optional[List[int]],
         left_close: bool,
         right_close: bool,
-        normalize_data: bool,
         limit: Optional[int],
     ) -> pd.DataFrame:
         sort_time = True
@@ -97,8 +97,8 @@ class RealTimeMarketData(mdabmada.AbstractMarketData):
         )
         _LOG.info("query=%s", query)
         df = hsql.execute_query_to_df(self.connection, query)
-        if normalize_data:
-            df = self._normalize_data(df)
+        # Prepare data for normalization by the parent class.
+        df = self._convert_data_for_normalization(df)
         return df
 
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
@@ -197,8 +197,6 @@ class RealTimeMarketData(mdabmada.AbstractMarketData):
         :param columns: columns to select from `table_name`
             - `None` means all columns.
         :param asset_ids: asset ids to select
-        :param period: what period to retrieve
-            - E.g., `all`, `last_day`, `last_5mins`, `last_1min`
         :param sort_time: whether to sort by end_time
         :param limit: how many rows to return
         """
@@ -221,7 +219,7 @@ class RealTimeMarketData(mdabmada.AbstractMarketData):
             ids_as_str = ",".join(map(str, asset_ids))
             ids_as_str = f"{self._asset_id_col} in ({ids_as_str})"
         query.append("AND " + ids_as_str)
-        # Handle `period`.
+        # Handle `start_ts`.
         if start_ts is not None:
             if left_close:
                 operator = ">="
@@ -231,6 +229,7 @@ class RealTimeMarketData(mdabmada.AbstractMarketData):
                 f"AND {ts_col_name} {operator} "
                 + "'%s'" % self._to_sql_datetime_string(start_ts)
             )
+        # Handle `end_ts`.
         if end_ts is not None:
             if right_close:
                 operator = "<="

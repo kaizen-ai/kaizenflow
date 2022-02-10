@@ -61,29 +61,25 @@ class ReplayedMarketData(mdabmada.AbstractMarketData):
         self._knowledge_datetime_col_name = knowledge_datetime_col_name
         hdbg.dassert_lte(0, delay_in_secs)
         self._delay_in_secs = delay_in_secs
-        #
-        hdbg.dassert_is_subset(
-            [
-                self._asset_id_col,
-                self._start_time_col_name,
-                self._end_time_col_name,
-                self._knowledge_datetime_col_name,
-            ],
-            df.columns,
-        )
-        self._df.sort_values(
-            [self._end_time_col_name, self._asset_id_col], inplace=True
-        )
+        # TODO(gp): We should use the better invariant that the data is already
+        #  formatted before it's saved instead of reapplying the transformation
+        #  to make it palatable to downstream.
+        if self._end_time_col_name in df.columns:
+            hdbg.dassert_is_subset(
+                [
+                    self._asset_id_col,
+                    self._start_time_col_name,
+                    self._end_time_col_name,
+                    self._knowledge_datetime_col_name,
+                ],
+                df.columns,
+            )
+            self._df.sort_values(
+                [self._end_time_col_name, self._asset_id_col], inplace=True
+            )
 
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
         return True
-
-    # TODO(gp): Remove this.
-    def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        _LOG.verb_debug("")
-        # Sort in increasing time order and reindex.
-        df = super()._normalize_data(df)
-        return df
 
     def _get_data(
         self,
@@ -93,13 +89,12 @@ class ReplayedMarketData(mdabmada.AbstractMarketData):
         asset_ids: Optional[List[int]],
         left_close: bool,
         right_close: bool,
-        normalize_data: bool,
         limit: Optional[int],
     ) -> pd.DataFrame:
         _LOG.verb_debug(
             hprint.to_str(
                 "start_ts end_ts ts_col_name asset_ids left_close "
-                "right_close normalize_data limit"
+                "right_close limit"
             )
         )
         if asset_ids is not None:
@@ -129,31 +124,29 @@ class ReplayedMarketData(mdabmada.AbstractMarketData):
             df_tmp, ts_col_name, start_ts, end_ts, left_close, right_close
         )
         # Handle `asset_ids`
-        _LOG.verb_debug("before df_tmp=\n%s", hprint.dataframe_to_str(df_tmp))
+        _LOG.verb_debug("before df_tmp=\n%s", hpandas.df_to_str(df_tmp))
         if asset_ids is not None:
             hdbg.dassert_in(self._asset_id_col, df_tmp.columns)
             mask = df_tmp[self._asset_id_col].isin(set(asset_ids))
             df_tmp = df_tmp[mask]
-        _LOG.verb_debug("after df_tmp=\n%s", hprint.dataframe_to_str(df_tmp))
+        _LOG.verb_debug("after df_tmp=\n%s", hpandas.df_to_str(df_tmp))
         # Handle `limit`.
         if limit:
             hdbg.dassert_lte(1, limit)
             df_tmp = df_tmp.head(limit)
-        # Normalize data.
-        if normalize_data:
-            df_tmp = self._normalize_data(df_tmp)
-        _LOG.verb_debug("-> df_tmp=\n%s", hprint.dataframe_to_str(df_tmp))
+        _LOG.verb_debug("-> df_tmp=\n%s", hpandas.df_to_str(df_tmp))
         return df_tmp
 
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
         # We need to find the last timestamp before the current time. We use
-        # `last_week` but could also use all the data since we don't call the
-        # DB.
+        # `7W` but could also use all the data since we don't call the DB.
         # TODO(gp): SELECT MAX(start_time) instead of getting all the data
         #  and then find the max and use `start_time`
-        period = "last_week"
-        df = self.get_data_for_last_period(period)
-        _LOG.debug(hprint.df_to_short_str("after get_data", df))
+        timedelta = pd.Timedelta("7D")
+        df = self.get_data_for_last_period(timedelta)
+        _LOG.debug(
+            hpandas.df_to_str(df, print_shape_info=True, tag="after get_data")
+        )
         if df.empty:
             ret = None
         else:
@@ -170,31 +163,20 @@ class ReplayedMarketData(mdabmada.AbstractMarketData):
 def save_market_data(
     market_data: mdabmada.AbstractMarketData,
     file_name: str,
-    period: str,
+    timedelta: pd.Timedelta,
     limit: Optional[int],
 ) -> None:
     """
-    Save data without normalization from a `MarketData` to a CSV file.
-
-    Data is saved without normalization since we want to save it in the same format
-    that a derived class is delivering it to the
-
-    E.g.,
-    ```
-                start_time             end_time   egid   close   volume          timestamp_db
-    0  2021-12-31 20:41:00  2021-12-31 20:42:00  16878  294.81   70273    2021-12-31 20:42:06
-    1  2021-12-31 20:41:00  2021-12-31 20:42:00  16187  398.89   115650   2021-12-31 20:42:06
-    2  2021-12-31 20:41:00  2021-12-31 20:42:00  15794  3345.04  6331     2021-12-31 20:42:06
-    3  2021-12-31 20:41:00  2021-12-31 20:42:00  14592  337.75   26750    2021-12-31 20:42:06
-    ```
+    Save data from a `MarketData` to a CSV file.
     """
     hdbg.dassert(market_data.is_online())
-    normalize_data = False
     with htimer.TimedScope(logging.DEBUG, "market_data.get_data"):
-        rt_df = market_data.get_data_for_last_period(
-            period, normalize_data=normalize_data, limit=limit
+        rt_df = market_data.get_data_for_last_period(timedelta, limit=limit)
+    _LOG.debug(
+        hpandas.df_to_str(
+            rt_df, print_dtypes=True, print_shape_info=True, tag="rt_df"
         )
-    _LOG.debug(hprint.df_to_short_str("rt_df", rt_df, print_dtypes=True))
+    )
     #
     _LOG.info("Saving ...")
     compression = None
@@ -211,29 +193,20 @@ def load_market_data(
 ) -> pd.DataFrame:
     """
     Load some example data from the RT DB.
-
-    Same interface as `get_real_time_bar_data()`.
-
-    ```
-          start_time          end_time asset_id   close    volume         timestamp_db
-    2021-10-05 20:00  2021-10-05 20:01    17085  141.11   5792204  2021-10-05 20:01:03
-    2021-10-05 19:59  2021-10-05 20:00    17085  141.09   1354151  2021-10-05 20:00:05
-    2021-10-05 19:58  2021-10-05 19:59    17085  141.12    620395  2021-10-05 19:59:04
-    2021-10-05 19:57  2021-10-05 19:58    17085  141.2644  341584  2021-10-05 19:58:03
-    2021-10-05 19:56  2021-10-05 19:57    17085  141.185   300822  2021-10-05 19:57:04
-    2021-10-05 19:55  2021-10-05 19:56    17085  141.1551  351527  2021-10-05 19:56:04
-    ```
     """
-    kwargs_tmp = {
-        "index_col": 0,
-        "parse_dates": ["start_time", "end_time", "timestamp_db"],
-    }
+    kwargs_tmp = {}
     if aws_profile:
         s3fs_ = hs3.get_s3fs(aws_profile)
         kwargs_tmp["s3fs"] = s3fs_
     kwargs.update(kwargs_tmp)  # type: ignore[arg-type]
     df = cpanh.read_csv(file_name, **kwargs)
-    _LOG.debug(hprint.df_to_short_str("df", df, print_dtypes=True))
+    for col_name in ("start_time", "end_time", "timestamp_db"):
+        if col_name in df.columns:
+            df[col_name] = pd.to_datetime(df[col_name], utc=True)
+    df.reset_index(inplace=True)
+    _LOG.debug(
+        hpandas.df_to_str(df, print_dtypes=True, print_shape_info=True, tag="df")
+    )
     return df
 
 
@@ -299,5 +272,6 @@ def describe_rt_df(df: pd.DataFrame, *, include_delay_stats: bool) -> None:
         describe_rt_delay(df)
     #
     from IPython.display import display
+
     display(df.head(3))
     display(df.tail(3))

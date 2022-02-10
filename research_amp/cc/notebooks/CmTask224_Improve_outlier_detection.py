@@ -32,7 +32,7 @@ import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
-import im_v2.ccxt.data.client as imvcdcli
+import im_v2.ccxt.data.client as icdcl
 import research_amp.cc.detect_outliers as raccdeou
 
 # %%
@@ -48,12 +48,12 @@ hprint.config_notebook()
 # # Load test data
 
 # %%
+vendor = "CCXT"
 root_dir = os.path.join(hs3.get_path(), "data")
 extension = "csv.gz"
-ccxt_csv_client = imvcdcli.CcxtCsvParquetByAssetClient(
-    root_dir,
-    extension,
-    aws_profile="am",
+aws_profile = "am"
+ccxt_csv_client = icdcl.CcxtCddCsvParquetByAssetClient(
+    vendor, root_dir, extension, aws_profile=aws_profile
 )
 start_ts = None
 end_ts = None

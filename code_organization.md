@@ -14,23 +14,116 @@
    * [Misc](#misc)
 
 
-
 <!--te-->
-# Code org of amp
+# Code org of `amp`
 
+## Component dirs
+- In the following we indicate:
+  - comments with """foobar is ..."""
+  - dirs and subdirs with `/foobar`
+  - files with `foobar.py`
+  - objects with `FooBar`
+  - markdown files with `foobar.md`
+
+- The directories, subdirectory, objects are listed in order of dependency
+
+- `/helpers`
+  - """Low-level helpers that are not specific of this project"""
+- `/core`
+  - """Low-level helpers that are specific of this project"""
+  - `/config`
+    - `Config`
+- `/devops`
+- `/dev_scripts`
+- `/documentation`
+- `/im`
+- `/im_v2`
+  - """Instrument Master"""
+  - `ImClient`
+  - """Vendor specific `ImClient`s"""
+- `/market_data`
+  - """Interface to read price data"""
+  - `AbstractMarketData`
+  - `MarketDataImClient`
+  - `RealTimeMarketData`
+  - `ReplayedMarketData`
+- `/dataflow`
+  - """DataFlow module"""
+  - `dataflow_design.md`
+    - """Design notes for DataFlow"""
+  - `/core`
+    - `/nodes`
+      - """Implementation of DataFlow nodes that don't depend on anything
+        outside of this directory"""
+      - `base.py`
+          - `FitPredictNode`
+          - `DataSource`
+      - `sources`
+        - `DataLoader`
+        - `ReadDataFromDf`
+        - `ArmaGenerator`
+      - `sinks.py`
+          - `WriteCols`
+          - `WriteDf`
+      - `transformers.py`
+      - `volatility_models.py`
+      - `sklearn_models.py`
+      - `unsupervided_sklearn_models.py`
+      - `supervided_sklearn_models.py`
+      - `regression_models.py`
+      - `sarimax_models.py`
+      - `gluonts_models.py`
+      - `local_level_models.py`
+      - `Dag`
+      - `DagBuilders`
+      - `DagAdapters`
+      - `DagRunners`
+      - `ResultBundle`
+  - `/pipelines`
+      - """DataFlow pipelines that use only `core` nodes"""
+      - `/event_study`
+      - `/features`
+        - """General feature pipelines"""
+      - `/price`
+        - """Pipelines computing prices"""
+      - `/real_times`
+        - TODO(gp): -> dataflow/system
+      - `/returns`
+        - """Pipelines computing returns"""
+      - `dataflow_example.py`
+        - `NaivePipeline`
+  - `/system`
+      - """DataFlow pipelines with anything that depends on code outside of
+        DataFlow"""
+      - `source_nodes.py`
+        - `DataSource`
+        - `HistoricalDataSource`
+        - `RealTimeDataSource`
+      - `sink_nodes.py`
+        - `ProcessForecasts`
+      - `RealTimeDagRunner`
+      - `RealTimeDagAdapter`
+      - `ResearchDagAdapter`
+  - `/model`
+      - """Code for evaluating a DataFlow model"""
+- `/oms`
+  - """Order management system"""
+  - `architecture.md`
+  - `Broker`
+  - `Order`
+  - `OrderProcessor`
+  - `Portfolio`
+  - `ForecastProcessor`
+- `/optimizer`
+- `/research_amp`
+- 
 ## Top level dirs
 ```
 (cd amp; tree -L 1 -d --charset=ascii -I "*test*|*notebooks*" 2>&1 | tee /tmp/tmp)
 .
 |-- core
-                                - Low-level helpers that are specific of this project
 |-- dataflow
-                                - DataFlow module
-|-- devops
-|-- dev_scripts
-|-- documentation
 |-- helpers
-                                - Low-level helpers that are not specific of this project
 |-- im
 |-- im_v2
 |-- infra
@@ -40,18 +133,8 @@
 `-- research_amp
 ```
 
-## Component dirs
-
-- The directories are listed in order of dependency
-  - `helpers`
-  - `core`
-  - `im`
-  - `market_data`
-  - `dataflow`
-  - `oms`
-  - `research_amp`
-
 ### helpers
+
 ```
 (cd amp; tree -v --charset=ascii -I "*test*|*notebooks*" helpers 2>&1 | tee /tmp/tmp)
 
@@ -160,7 +243,6 @@ core
 dataflow
 |-- __init__.py
 |-- core
-                                - DataFlow core data structures
 |   |-- __init__.py
 |   |-- builders.py
 |   |-- builders_example.py
@@ -168,7 +250,6 @@ dataflow
 |   |-- dag_adapter.py
 |   |-- node.py
 |   |-- nodes
-                                - Implementation of DataFlow nodes
 |   |   |-- __init__.py
 |   |   |-- base.py
 |   |   |-- gluonts_models.py
@@ -189,7 +270,6 @@ dataflow
 |   `-- visualization.py
 |-- dataflow_design.md
 |-- model
-                                - Code for evaluating a DataFlow model
 |   |-- __init__.py
 |   |-- architecture.md
 |   |-- dataframe_modeler.py
@@ -204,7 +284,6 @@ dataflow
 |   |-- stats_computer.py
 |   `-- utils.py
 |-- pipelines
-                                - DataFlow pipelines that use only core nodes
 |   |-- __init__.py
 |   |-- dataflow_example.py
 |   |-- event_study
@@ -230,7 +309,6 @@ dataflow
     |-- research_dag_adapter.py
     |-- sink_nodes.py
     `-- source_nodes.py
-                                - Anything that depends on outside DataFlow
 ```
 
 ### im
@@ -263,7 +341,7 @@ im
 |   |   |-- load
 |   |   |   |-- __init__.py
 |   |   |   |-- abstract_data_loader.py
-|   |   |   `-- file_path_generator.py
+|   |   |   `-- file_path_generator.pyj
 |   |   |-- transform
 |   |   |   |-- __init__.py
 |   |   |   |-- s3_to_sql_transformer.py
@@ -846,9 +924,9 @@ research_amp
 
 # Invariants
 
-- We assume that there is no file with the same name in the same repo and across
-  different repos
-  - In case of name collision, we prepend as many dirs necessary to make the
+- We assume that there is no file with the same name either in the same repo or
+  across different repos
+  - In case of name collision, we prepend as many dirs as necessary to make the
     filename unique
   - E.g., the files below should be renamed:
     ```

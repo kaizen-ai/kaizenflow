@@ -16,12 +16,12 @@ import pandas as pd
 from tqdm.autonotebook import tqdm
 
 import core.config as cconfig
-import helpers.hdbg as hdbg
 import helpers.hasyncio as hasynci
-import helpers.hpandas as hpandas
-import helpers.htqdm as htqdm
+import helpers.hdbg as hdbg
 import helpers.hio as hio
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import helpers.htqdm as htqdm
 import oms.call_optimizer as ocalopti
 import oms.order as omorder
 import oms.portfolio as omportfo
@@ -78,6 +78,16 @@ async def process_forecasts(
             "order_duration": order_duration,
         }
     )
+    #
+    target_gmv = _get_object_from_config(config, "target_gmv", float)
+    dollar_neutrality = _get_object_from_config(config, "dollar_neutrality", str)
+    #
+    optimizer_config = cconfig.get_config_from_nested_dict(
+        {
+            "target_gmv": target_gmv,
+            "dollar_neutrality": dollar_neutrality,
+        }
+    )
     # Extract ATH and trading start times from config.
     # TODO(Paul): Add a check for ATH start/end.
     ath_start_time = _get_object_from_config(
@@ -110,7 +120,7 @@ async def process_forecasts(
     _LOG.debug(
         "predictions_df=%s\n%s",
         str(prediction_df.shape),
-        hprint.dataframe_to_str(prediction_df),
+        hpandas.df_to_str(prediction_df),
     )
     _LOG.debug("predictions_df.index=%s", str(prediction_df.index))
     num_rows = len(prediction_df)
@@ -121,7 +131,9 @@ async def process_forecasts(
     iter_ = enumerate(prediction_df.iterrows())
     offset_min = pd.DateOffset(minutes=order_duration)
     # Initialize a `ForecastProcessor` object to perform the heavy lifting.
-    forecast_processor = ForecastProcessor(portfolio, order_config, log_dir)
+    forecast_processor = ForecastProcessor(
+        portfolio, order_config, optimizer_config, log_dir
+    )
     # `timestamp` is the time when the forecast is available and in the current
     #  setup is also when the order should begin.
     for idx, (timestamp, predictions) in tqdm(
@@ -190,17 +202,20 @@ class ForecastProcessor:
         self,
         portfolio: omportfo.AbstractPortfolio,
         order_config: cconfig.Config,
+        optimizer_config: cconfig.Config,
         log_dir: Optional[str] = None,
     ) -> None:
         self._portfolio = portfolio
-        self._get_wall_clock_time = (
-            portfolio.market_data.get_wall_clock_time
-        )
-        self._order_config = order_config
+        self._get_wall_clock_time = portfolio.market_data.get_wall_clock_time
         # TODO(Paul): process config with checks.
+        self._order_config = order_config
         self._order_type = self._order_config["order_type"]
         self._order_duration = self._order_config["order_duration"]
         self._offset_min = pd.DateOffset(minutes=self._order_duration)
+        # Process optimizer config.
+        self._optimizer_config = optimizer_config
+        self._target_gmv = self._optimizer_config["target_gmv"]
+        self._dollar_neutrality = self._optimizer_config["dollar_neutrality"]
         #
         self._log_dir = log_dir
         #
@@ -215,7 +230,7 @@ class ForecastProcessor:
         if self._target_positions:
             last_key = next(reversed(self._target_positions))
             target_positions = self._target_positions[last_key]
-            target_positions_str = hprint.dataframe_to_str(target_positions)
+            target_positions_str = hpandas.df_to_str(target_positions)
         else:
             target_positions_str = "None"
         act.append("# last target positions=\n%s" % target_positions_str)
@@ -339,7 +354,10 @@ class ForecastProcessor:
         )
         # Compute the target positions in cash (call the optimizer).
         df = ocalopti.compute_target_positions_in_cash(
-            assets_and_predictions, self._portfolio.CASH_ID
+            assets_and_predictions,
+            self._portfolio.CASH_ID,
+            target_gmv=self._target_gmv,
+            dollar_neutrality=self._dollar_neutrality,
         )
         # Convert the target positions from cash values to target share counts.
         # Round to nearest integer towards zero.
@@ -408,7 +426,7 @@ class ForecastProcessor:
         marked_to_market.reset_index(inplace=True)
         _LOG.debug(
             "marked_to_market dataframe=\n%s"
-            % hprint.dataframe_to_str(marked_to_market)
+            % hpandas.df_to_str(marked_to_market)
         )
         return marked_to_market
 
@@ -442,7 +460,7 @@ class ForecastProcessor:
         predictions.columns = ["prediction"]
         predictions.index.name = "asset_id"
         predictions = predictions.reset_index()
-        _LOG.debug("predictions=\n%s", hprint.dataframe_to_str(predictions))
+        _LOG.debug("predictions=\n%s", hpandas.df_to_str(predictions))
         return predictions
 
     def _normalize_volatility_srs(
@@ -483,7 +501,7 @@ class ForecastProcessor:
         volatility.columns = ["volatility"]
         volatility.index.name = "asset_id"
         volatility = volatility.reset_index()
-        _LOG.debug("volatility=\n%s", hprint.dataframe_to_str(volatility))
+        _LOG.debug("volatility=\n%s", hpandas.df_to_str(volatility))
         return volatility
 
     def _merge_predictions(
@@ -524,9 +542,7 @@ class ForecastProcessor:
         )
         merged_df = merged_df.convert_dtypes()
         merged_df = merged_df.fillna(0.0)
-        _LOG.debug(
-            "After merge: merged_df=\n%s", hprint.dataframe_to_str(merged_df)
-        )
+        _LOG.debug("After merge: merged_df=\n%s", hpandas.df_to_str(merged_df))
         return merged_df
 
     @staticmethod

@@ -13,13 +13,16 @@ from typing import Any, AsyncGenerator, Callable, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
+import helpers.hasyncio as hasynci
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import helpers.hasyncio as hasynci
 import helpers.hnumpy as hnumpy
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
+
+_LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
 
 # There are different ways of reproducing real-time behaviors:
 # 1) True real-time
@@ -37,7 +40,6 @@ _LOG = logging.getLogger(__name__)
 #      - The data can be frozen from a real-time system or synthetic
 # 4) Simulated replayed time
 #    - The time is simulated in terms of events and replayed in the past
-
 
 # #############################################################################
 # ReplayedTime.
@@ -190,11 +192,10 @@ def get_data_as_of_datetime(
     takes 4 seconds to respond, all and only data before `2021-07-13 13:00:56` is
     returned.
     """
-    _LOG.debug("datetime_=%s" % datetime_)
-    _LOG.debug(hprint.df_to_short_str("Before get_data_as_of_datetime", df))
     _LOG.debug(
         hprint.to_str("knowledge_datetime_col_name datetime_ delay_in_secs")
     )
+    # _LOG.verb_debug(hpandas.df_to_str(df, print_shape_info=True, tag="Before get_data_as_of_datetime"))
     hdbg.dassert_lte(0, delay_in_secs)
     datetime_eff = datetime_ - datetime.timedelta(seconds=delay_in_secs)
     # TODO(gp): We could / should use binary search.
@@ -215,7 +216,7 @@ def get_data_as_of_datetime(
         # execution price of an order that will terminate in the future.
         raise ValueError("Future peeking")
         # pass
-    _LOG.debug(hprint.df_to_short_str("After get_data_as_of_datetime", df))
+    # _LOG.verb_debug(hpandas.df_to_str(df, print_shape_info=True, tag="After get_data_as_of_datetime"))
     return df
 
 

@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -132,7 +132,7 @@ def parse_dst_dir_arg(args: argparse.Namespace) -> Tuple[str, bool]:
         if os.path.exists(dst_dir):
             _LOG.warning("Dir '%s' already exists", dst_dir)
             if not args.no_confirm:
-                hsysinte.query_yes_no(
+                hsystem.query_yes_no(
                     "Do you want to delete the dir '%s'" % dst_dir,
                     abort_on_no=True,
                 )
@@ -330,28 +330,60 @@ def write_file(txt: List[str], file_name: str) -> None:
 # #############################################################################
 
 
+# TODO(gp): These should go in hjoblib.py
 def add_parallel_processing_arg(
     parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
+    """
+    The "incremental idiom" means skipping processing computation that has
+    already been performed. E.g., if we need to transform files from one dir to
+    another we skip the files already processed (assuming that a file present
+    in the destination dir is an indication that it has already been processed).
+
+    The default behavior should always be incremental since "incremental mode"
+    is not destructive like the non-incremental, i.e., delete and restart
+
+    The incremental behavior  is disabled with `--no_incremental`. This implies
+    performing the computation in any case
+    - It is often implemented by deleting the destination dir and then running
+      again, even in incremental mode
+    - If the destination dir already exists, then we require the user to
+      explicitly use `--force` to confirm that the user knows what is doing
+    """
+    parser.add_argument(
+        "--dry_run",
+        action="store_true",
+        help="Print the workload and exit without running it",
+    )
+    parser.add_argument(
+        "--no_incremental",
+        action="store_true",
+        help="Skip workload already performed",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Confirm that one wants to remove the previous results. It works only together with --no_incremental",
+    )
+    #
     parser.add_argument(
         "--num_threads",
         action="store",
         help="""
 Number of threads to use:
 - '-1' to use all CPUs;
-- '1' to use one-thread at the time but using the parallel execution;
+- '1' to use one-thread at the time but using the parallel execution (mainly used
+  for debugging)
 - 'serial' to serialize the execution without using parallel execution""",
         required=True,
     )
+    parser.add_argument("--no_keep_order", action="store_true", help="")
     parser.add_argument(
-        "--dry_run",
-        action="store_true",
-        help="Print workload and exit without running",
-    )
-    parser.add_argument(
-        "--no_incremental",
-        action="store_true",
-        help="Skip workload already performed",
+        "--num_func_per_task",
+        action="store",
+        type=int,
+        default=None,
+        help="Number of function execute in a (parallel) task of the workload. `None` means automatically decided by the function",
     )
     parser.add_argument(
         "--skip_on_error",
@@ -366,6 +398,37 @@ Number of threads to use:
         required=False,
     )
     return parser
+
+
+def create_incremental_dir(dst_dir: str, args: argparse.Namespace) -> None:
+    """
+    Create a dir using the "incremental idiom".
+
+    If the dir already exists and the user requested the not incremental, we
+    require `--force` to confirm deleting the dir.
+    """
+    if args.force:
+        hdbg.dassert(
+            args.no_incremental, "--force only works with --no_incremental"
+        )
+    _LOG.debug(hprint.to_str("dst_dir args"))
+    if args.no_incremental:
+        # Create the dir from scratch.
+        _LOG.debug("No incremental mode")
+        if os.path.exists(dst_dir):
+            _LOG.debug("Dir '%s' already exists", dst_dir)
+            hdbg.dassert_dir_exists(dst_dir, "'%s' must be a directory")
+            if not args.force:
+                _LOG.warning(
+                    "The directory '%s' already exists. To confirm deleting it use --force",
+                    dst_dir,
+                )
+                sys.exit(-1)
+            _LOG.warning("Deleting %s", dst_dir)
+        hio.create_dir(dst_dir, incremental=False)
+    else:
+        _LOG.debug("Incremental mode")
+        hio.create_dir(dst_dir, incremental=True)
 
 
 # #############################################################################

@@ -11,10 +11,10 @@ import pytest
 
 import helpers.hgit as hgit
 import helpers.hio as hio
-import helpers.lib_tasks as hlibtask
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
+import helpers.lib_tasks as hlibtask
 
 _LOG = logging.getLogger(__name__)
 
@@ -107,7 +107,7 @@ def _gh_login() -> None:
         if False:
 
             def _cmd(cmd):
-                hsysinte.system(
+                hsystem.system(
                     cmd,
                     suppress_output=False,
                     log_level="echo",
@@ -123,10 +123,10 @@ def _gh_login() -> None:
             ]:
                 _cmd(cmd)
         cmd = "echo $GH_ACTION_ACCESS_TOKEN | gh auth login --with-token"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
     # Check that we are logged in.
     cmd = "gh auth status"
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
 
 
 class TestGhLogin1(hunitest.TestCase):
@@ -171,7 +171,7 @@ class TestDryRunTasks1(hunitest.TestCase):
     # TODO(gp): -> TestDockerCommands1
 
     @pytest.mark.skipif(
-        hsysinte.is_inside_ci(), reason="In CI the output is different"
+        hsystem.is_inside_ci(), reason="In CI the output is different"
     )
     def test_docker_images_ls_repo(self) -> None:
         target = "docker_images_ls_repo"
@@ -219,7 +219,7 @@ class TestDryRunTasks1(hunitest.TestCase):
         # we disable the check in the unit tests. Remove `SKIP_VERSION_CHECK=1`
         # after CmampTask570 is fixed.
         cmd = f"SKIP_VERSION_CHECK=1 invoke {opts} {target} | grep -v INFO | grep -v '>>ENV<<:'"
-        _, act = hsysinte.system_to_string(cmd)
+        _, act = hsystem.system_to_string(cmd)
         act = hprint.remove_non_printable_chars(act)
         self.check_string(act)
 
@@ -419,7 +419,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     # #########################################################################
 
     @pytest.mark.skipif(
-        hsysinte.is_inside_ci(), reason="In CI the output is different"
+        hsystem.is_inside_ci(), reason="In CI the output is different"
     )
     def test_docker_login(self) -> None:
         """
@@ -657,6 +657,38 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --rm \
             --entrypoint bash \
             app
+        """
+        self._check(act, exp)
+
+    def test_docker_bash5(self) -> None:
+        """
+        Command for running through a shell.
+        """
+        base_image = ""
+        stage = "dev"
+        version = "1.0.0"
+        cmd = "ls && cd .."
+        entrypoint = True
+        print_docker_config = False
+        use_bash = True
+        act = hlibtask._get_docker_cmd(
+            base_image,
+            stage,
+            version,
+            cmd,
+            entrypoint=entrypoint,
+            print_docker_config=print_docker_config,
+            use_bash=use_bash,
+        )
+        exp = r"""
+        IMAGE=$AM_ECR_BASE_PATH/amp_test:dev-1.0.0 \
+            docker-compose \
+            --file $GIT_ROOT/devops/compose/docker-compose.yml \
+            --env-file devops/env/default.env \
+            run \
+            --rm \
+            app \
+            bash -c 'ls && cd ..'
         """
         self._check(act, exp)
 
@@ -1375,6 +1407,32 @@ class Test_get_files_to_process1(hunitest.TestCase):
             remove_dirs,
         )
         self.assertEqual(files, [__file__])
+
+    def test_files2(self) -> None:
+        """
+        Pass through files from user.
+
+        Use two types of paths we don't want to process:
+          - non-existent python file
+          - pattern "/*" that matches no files
+        """
+        modified = False
+        branch = False
+        last_commit = False
+        all_ = False
+        files_from_user = "testfile1.py testfiles1/*"
+        mutually_exclusive = True
+        remove_dirs = True
+        files = hlibtask._get_files_to_process(
+            modified,
+            branch,
+            last_commit,
+            all_,
+            files_from_user,
+            mutually_exclusive,
+            remove_dirs,
+        )
+        self.assertEqual(files, [])
 
     def test_assert1(self) -> None:
         """

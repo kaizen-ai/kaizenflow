@@ -63,10 +63,10 @@ def _parse() -> argparse.ArgumentParser:
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    report_resource_usage = False
-    # report_resource_usage = True
+    report_memory_usage = False
+    # report_memory_usage = True
     hdbg.init_logger(
-        verbosity=args.log_level, report_resource_usage=report_resource_usage
+        verbosity=args.log_level, report_memory_usage=report_memory_usage
     )
     #
     params = {
@@ -86,7 +86,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         not builder.endswith("()"), "Invalid experiment_builder='%s'", builder
     )
     builder = f"{builder}(config)"
-    # E.g., ``.
+    # TODO(gp): Use hintrospection.get_function_from_string().
     m = re.match(r"^(\S+)\.(\S+)\((.*)\)$", builder)
     hdbg.dassert(m, "builder='%s'", builder)
     m = cast(re.Match, m)

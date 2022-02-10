@@ -1,6 +1,7 @@
 name: Superslow tests
 
 on:
+  workflow_dispatch:
   schedule:
     # Run this once a week even if there are no commits.
     - cron:  '0 0 * * 0'
@@ -51,6 +52,17 @@ jobs:
           AM_S3_BUCKET: ${{ secrets.AM_S3_BUCKET }}
           AM_TELEGRAM_TOKEN: ${{ secrets.AM_TELEGRAM_TOKEN }}
         run: invoke run_superslow_tests
+
+      - name: Post status if was triggered manually
+        if: ${{ always() && github.event_name == 'workflow_dispatch' }}
+        uses: Sibz/github-status-action@v1
+        with:
+          authToken: ${{ secrets.GITHUB_TOKEN }}
+          context: "Run_superslow_tests"
+          description: 'Job is done (manual run)'
+          state: ${{ job.status }}
+          sha: ${{ github.sha }}
+          target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
       # TODO(vr): Bring back in #340.
       # - name: Send Telegram notification for success

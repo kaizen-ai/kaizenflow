@@ -4,17 +4,22 @@ Import as:
 import market_data.market_data_im_client as mdmdimcl
 """
 
+import logging
 from typing import Any, List, Optional
 
+import numpy as np
 import pandas as pd
 
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import im_v2.common.data.client as icdc
 import market_data.abstract_market_data as mdabmada
 
+_LOG = logging.getLogger(__name__)
 
-# TODO(gp): -> MarketDataImClient?
-class MarketDataInterface(mdabmada.AbstractMarketData):
+
+# TODO(gp): @Grisha -> ImClientMarketData and rename all the classes and files.
+class MarketDataImClient(mdabmada.AbstractMarketData):
     """
     Implement a `MarketData` that uses a `ImClient` as backend.
     """
@@ -24,13 +29,42 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
     ) -> None:
         """
         Constructor.
-
-        :param args: see `AbstractMarketData`
-        :param im_client: IM client
         """
         super().__init__(*args, **kwargs)
-        # TODO(gp): Add hdbg.dassert_is_instance(im_client, )
+        hdbg.dassert_isinstance(im_client, icdc.ImClient)
         self._im_client = im_client
+
+    def get_last_price(
+        self,
+        col_name: str,
+        asset_ids: List[int],
+    ) -> pd.Series:
+        """
+        This method overrides parent method in `MarketData`.
+
+        In contrast with specific `MarketData` backends,
+        `MarketDataImClient` uses the end of interval for date
+        filtering.
+        """
+        last_end_time = self.get_last_end_time()
+        _LOG.info("last_end_time=%s", last_end_time)
+        # Get the data.
+        df = self.get_data_at_timestamp(
+            last_end_time,
+            self._end_time_col_name,
+            asset_ids,
+        )
+        # Convert the df of data into a series.
+        hdbg.dassert_in(col_name, df.columns)
+        last_price = df[[col_name, self._asset_id_col]]
+        last_price.set_index(self._asset_id_col, inplace=True)
+        last_price_srs = hpandas.to_series(last_price)
+        hdbg.dassert_isinstance(last_price_srs, pd.Series)
+        last_price_srs.index.name = self._asset_id_col
+        last_price_srs.name = col_name
+        hpandas.dassert_series_type_in(last_price_srs, [np.float64, np.int64])
+        # TODO(gp): Print if there are nans.
+        return last_price_srs
 
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
         """
@@ -41,34 +75,48 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
 
     def _get_data(
         self,
-        start_ts: pd.Timestamp,
-        end_ts: pd.Timestamp,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
         ts_col_name: str,
-        asset_ids: Optional[List[str]],
+        asset_ids: Optional[List[int]],
         left_close: bool,
         right_close: bool,
-        normalize_data: bool,
         limit: Optional[int],
     ) -> pd.DataFrame:
         """
         See the parent class.
         """
-        # `ImClient` uses the convention [start_ts, end_ts).
         if not left_close:
-            # Add one millisecond to not include the left boundary.
-            start_ts = start_ts + pd.Timedelta(1, "ms")
-        if right_close:
-            # Add one millisecond to include the right boundary.
-            end_ts = end_ts + pd.Timedelta(1, "ms")
+            if start_ts is not None:
+                # Add one millisecond to not include the left boundary.
+                start_ts += pd.Timedelta(1, "ms")
+        if not right_close:
+            if end_ts is not None:
+                # Subtract one millisecond not to include the right boundary.
+                end_ts -= pd.Timedelta(1, "ms")
+        # TODO(gp): call dassert_is_valid_start_end_timestamp
         if not asset_ids:
-            # If `asset_ids` is None, get all symbols from the universe.
-            asset_ids = self._im_client.get_universe()
+            # If asset ids are not provided, get universe as full symbols.
+            full_symbols = self._im_client.get_universe()
+        else:
+            # Convert asset ids to full symbols to read `im` data.
+            full_symbols = self._im_client.get_full_symbols_from_numerical_ids(
+                asset_ids
+            )
         # Load the data using `im_client`.
-        full_symbols = asset_ids
         market_data = self._im_client.read_data(
             full_symbols,
             start_ts,
             end_ts,
+        )
+        # TODO(Grisha): we should pass `full_symbol_column_name` here CMTask #822.
+        # Add `asset_id` column.
+        market_data.insert(
+            0,
+            self._asset_id_col,
+            self._im_client.get_numerical_ids_from_full_symbols(
+                market_data["full_symbol"]
+            ),
         )
         if self._columns:
             # Select only specified columns.
@@ -78,14 +126,13 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
             # Keep only top N records.
             hdbg.dassert_lte(1, limit)
             market_data = market_data.head(limit)
-        if normalize_data:
-            market_data = self._convert_im_data(market_data)
-            market_data = self._normalize_data(market_data)
+        # Prepare data for normalization by the parent class.
+        market_data = self._convert_data_for_normalization(market_data)
         return market_data
 
-    def _convert_im_data(self, df: pd.DataFrame) -> pd.DataFrame:
+    def _convert_data_for_normalization(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Convert IM data to the format required by `AbstractMarketData`.
+        Convert data to format required by normalization in parent class.
 
         :param df: IM data to transform
         ```
@@ -117,6 +164,19 @@ class MarketDataInterface(mdabmada.AbstractMarketData):
         ] - pd.Timedelta(minutes=1)
         return df
 
-    # TODO(Grisha): implement the method.
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
-        return NotImplementedError
+        # We need to find the last timestamp before the current time. We use
+        # `7D` but could also use all the data since we don't call the DB.
+        # TODO(gp): SELECT MAX(start_time) instead of getting all the data
+        #  and then find the max and use `start_time`
+        timedelta = pd.Timedelta("7D")
+        df = self.get_data_for_last_period(timedelta)
+        _LOG.debug(
+            hpandas.df_to_str(df, print_shape_info=True, tag="after get_data")
+        )
+        if df.empty:
+            ret = None
+        else:
+            ret = df.index.max()
+        _LOG.debug("-> ret=%s", ret)
+        return ret

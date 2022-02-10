@@ -8,7 +8,7 @@ config:
     source_node_name: RealTimeDataSource
     source_node_kwargs:
       market_data: <market_data.replayed_market_data.ReplayedMarketData object>
-      period: last_5mins
+      timedelta: 0 days 00:05:00
       asset_id_col: asset_id
       multiindex_output: True
   process_data:
@@ -16,25 +16,36 @@ config:
   process_forecasts:
     prediction_col: price
     volatility_col: price
-    process_forecasts_config: {'order_type': 'price@twap', 'order_duration': 1, 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 35), 'ath_end_time': datetime.time(16, 0), 'trading_end_time': datetime.time(15, 55), 'execution_mode': 'real_time'}
+    process_forecasts_config: {'order_type': 'price@twap', 'order_duration': 1, 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 35), 'ath_end_time': datetime.time(16, 0), 'trading_end_time': datetime.time(15, 55), 'execution_mode': 'real_time', 'target_gmv': 100000.0, 'dollar_neutrality': 'no_constraint'}
     portfolio: # historical holdings=
-    asset_id                        1000           -1   
-    2000-01-01 09:35:00-05:00        0.0  1000000.000000
-    2000-01-01 09:35:01-05:00        0.0  1000000.000000
-    2000-01-01 09:40:01-05:00  99.968817   900034.389821
-    2000-01-01 09:45:01-05:00  99.979867   900023.342753
+    asset_id                    1000       -1   
+    2000-01-01 09:35:00-05:00   0.00  1000000.00
+    2000-01-01 09:35:01-05:00   0.00  1000000.00
+    2000-01-01 09:40:01-05:00  99.97   900034.39
+    2000-01-01 09:45:01-05:00  99.98   900023.34
     # historical holdings marked to market=
-    asset_id                           1000           -1   
-    2000-01-01 09:35:00-05:00           0.0  1000000.000000
-    2000-01-01 09:35:01-05:00           0.0  1000000.000000
-    2000-01-01 09:40:01-05:00  99988.947634   900034.389821
-    2000-01-01 09:45:01-05:00  99971.715802   900023.342753
+    asset_id                       1000       -1   
+    2000-01-01 09:35:00-05:00      0.00  1000000.00
+    2000-01-01 09:35:01-05:00      0.00  1000000.00
+    2000-01-01 09:40:01-05:00  99988.95   900034.39
+    2000-01-01 09:45:01-05:00  99971.72   900023.34
+    # historical flows=
+    asset_id                       1000
+    2000-01-01 09:35:01-05:00       NaN
+    2000-01-01 09:40:01-05:00 -99965.61
+    2000-01-01 09:45:01-05:00    -11.05
+    # historical pnl=
+    asset_id                    1000
+    2000-01-01 09:35:00-05:00    NaN
+    2000-01-01 09:35:01-05:00    NaN
+    2000-01-01 09:40:01-05:00  23.34
+    2000-01-01 09:45:01-05:00 -28.28
     # historical statistics=
-                               net_asset_holdings            cash    net_wealth  gross_exposure  leverage        pnl  realized_pnl  unrealized_pnl
-    2000-01-01 09:35:00-05:00            0.000000  1000000.000000  1.000000e+06        0.000000  0.000000        NaN           NaN             NaN
-    2000-01-01 09:35:01-05:00            0.000000  1000000.000000  1.000000e+06        0.000000  0.000000   0.000000      0.000000        0.000000
-    2000-01-01 09:40:01-05:00        99988.947634   900034.389821  1.000023e+06    99988.947634  0.099987  23.337455 -99965.610179    99988.947634
-    2000-01-01 09:45:01-05:00        99971.715802   900023.342753  9.999951e+05    99971.715802  0.099972 -28.278900    -11.047068      -17.231832
+                                 pnl  gross_volume  net_volume       gmv       nmv        cash  net_wealth  leverage
+    2000-01-01 09:35:00-05:00    NaN          0.00        0.00      0.00      0.00  1000000.00    1.00e+06       0.0
+    2000-01-01 09:35:01-05:00    NaN          0.00        0.00      0.00      0.00  1000000.00    1.00e+06       0.0
+    2000-01-01 09:40:01-05:00  23.34      99965.61    99965.61  99988.95  99988.95   900034.39    1.00e+06       0.1
+    2000-01-01 09:45:01-05:00 -28.28         11.05       11.05  99971.72  99971.72   900023.34    1.00e+06       0.1
 result_nid: process_forecasts
 method: predict
 result_df:                                  price            start_datetime  \
@@ -99,7 +110,7 @@ config:
     source_node_name: RealTimeDataSource
     source_node_kwargs:
       market_data: <market_data.replayed_market_data.ReplayedMarketData object>
-      period: last_5mins
+      timedelta: 0 days 00:05:00
       asset_id_col: asset_id
       multiindex_output: True
   process_data:
@@ -107,25 +118,36 @@ config:
   process_forecasts:
     prediction_col: price
     volatility_col: price
-    process_forecasts_config: {'order_type': 'price@twap', 'order_duration': 1, 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 35), 'ath_end_time': datetime.time(16, 0), 'trading_end_time': datetime.time(15, 55), 'execution_mode': 'real_time'}
+    process_forecasts_config: {'order_type': 'price@twap', 'order_duration': 1, 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 35), 'ath_end_time': datetime.time(16, 0), 'trading_end_time': datetime.time(15, 55), 'execution_mode': 'real_time', 'target_gmv': 100000.0, 'dollar_neutrality': 'no_constraint'}
     portfolio: # historical holdings=
-    asset_id                        1000           -1   
-    2000-01-01 09:35:00-05:00        0.0  1000000.000000
-    2000-01-01 09:35:01-05:00        0.0  1000000.000000
-    2000-01-01 09:40:01-05:00  99.968817   900034.389821
-    2000-01-01 09:45:01-05:00  99.979867   900023.342753
+    asset_id                    1000       -1   
+    2000-01-01 09:35:00-05:00   0.00  1000000.00
+    2000-01-01 09:35:01-05:00   0.00  1000000.00
+    2000-01-01 09:40:01-05:00  99.97   900034.39
+    2000-01-01 09:45:01-05:00  99.98   900023.34
     # historical holdings marked to market=
-    asset_id                           1000           -1   
-    2000-01-01 09:35:00-05:00           0.0  1000000.000000
-    2000-01-01 09:35:01-05:00           0.0  1000000.000000
-    2000-01-01 09:40:01-05:00  99988.947634   900034.389821
-    2000-01-01 09:45:01-05:00  99971.715802   900023.342753
+    asset_id                       1000       -1   
+    2000-01-01 09:35:00-05:00      0.00  1000000.00
+    2000-01-01 09:35:01-05:00      0.00  1000000.00
+    2000-01-01 09:40:01-05:00  99988.95   900034.39
+    2000-01-01 09:45:01-05:00  99971.72   900023.34
+    # historical flows=
+    asset_id                       1000
+    2000-01-01 09:35:01-05:00       NaN
+    2000-01-01 09:40:01-05:00 -99965.61
+    2000-01-01 09:45:01-05:00    -11.05
+    # historical pnl=
+    asset_id                    1000
+    2000-01-01 09:35:00-05:00    NaN
+    2000-01-01 09:35:01-05:00    NaN
+    2000-01-01 09:40:01-05:00  23.34
+    2000-01-01 09:45:01-05:00 -28.28
     # historical statistics=
-                               net_asset_holdings            cash    net_wealth  gross_exposure  leverage        pnl  realized_pnl  unrealized_pnl
-    2000-01-01 09:35:00-05:00            0.000000  1000000.000000  1.000000e+06        0.000000  0.000000        NaN           NaN             NaN
-    2000-01-01 09:35:01-05:00            0.000000  1000000.000000  1.000000e+06        0.000000  0.000000   0.000000      0.000000        0.000000
-    2000-01-01 09:40:01-05:00        99988.947634   900034.389821  1.000023e+06    99988.947634  0.099987  23.337455 -99965.610179    99988.947634
-    2000-01-01 09:45:01-05:00        99971.715802   900023.342753  9.999951e+05    99971.715802  0.099972 -28.278900    -11.047068      -17.231832
+                                 pnl  gross_volume  net_volume       gmv       nmv        cash  net_wealth  leverage
+    2000-01-01 09:35:00-05:00    NaN          0.00        0.00      0.00      0.00  1000000.00    1.00e+06       0.0
+    2000-01-01 09:35:01-05:00    NaN          0.00        0.00      0.00      0.00  1000000.00    1.00e+06       0.0
+    2000-01-01 09:40:01-05:00  23.34      99965.61    99965.61  99988.95  99988.95   900034.39    1.00e+06       0.1
+    2000-01-01 09:45:01-05:00 -28.28         11.05       11.05  99971.72  99971.72   900023.34    1.00e+06       0.1
 result_nid: process_forecasts
 method: predict
 result_df:                                  price            start_datetime  \
@@ -190,7 +212,7 @@ config:
     source_node_name: RealTimeDataSource
     source_node_kwargs:
       market_data: <market_data.replayed_market_data.ReplayedMarketData object>
-      period: last_5mins
+      timedelta: 0 days 00:05:00
       asset_id_col: asset_id
       multiindex_output: True
   process_data:
@@ -198,25 +220,36 @@ config:
   process_forecasts:
     prediction_col: price
     volatility_col: price
-    process_forecasts_config: {'order_type': 'price@twap', 'order_duration': 1, 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 35), 'ath_end_time': datetime.time(16, 0), 'trading_end_time': datetime.time(15, 55), 'execution_mode': 'real_time'}
+    process_forecasts_config: {'order_type': 'price@twap', 'order_duration': 1, 'ath_start_time': datetime.time(9, 30), 'trading_start_time': datetime.time(9, 35), 'ath_end_time': datetime.time(16, 0), 'trading_end_time': datetime.time(15, 55), 'execution_mode': 'real_time', 'target_gmv': 100000.0, 'dollar_neutrality': 'no_constraint'}
     portfolio: # historical holdings=
-    asset_id                        1000           -1   
-    2000-01-01 09:35:00-05:00        0.0  1000000.000000
-    2000-01-01 09:35:01-05:00        0.0  1000000.000000
-    2000-01-01 09:40:01-05:00  99.968817   900034.389821
-    2000-01-01 09:45:01-05:00  99.979867   900023.342753
+    asset_id                    1000       -1   
+    2000-01-01 09:35:00-05:00   0.00  1000000.00
+    2000-01-01 09:35:01-05:00   0.00  1000000.00
+    2000-01-01 09:40:01-05:00  99.97   900034.39
+    2000-01-01 09:45:01-05:00  99.98   900023.34
     # historical holdings marked to market=
-    asset_id                           1000           -1   
-    2000-01-01 09:35:00-05:00           0.0  1000000.000000
-    2000-01-01 09:35:01-05:00           0.0  1000000.000000
-    2000-01-01 09:40:01-05:00  99988.947634   900034.389821
-    2000-01-01 09:45:01-05:00  99971.715802   900023.342753
+    asset_id                       1000       -1   
+    2000-01-01 09:35:00-05:00      0.00  1000000.00
+    2000-01-01 09:35:01-05:00      0.00  1000000.00
+    2000-01-01 09:40:01-05:00  99988.95   900034.39
+    2000-01-01 09:45:01-05:00  99971.72   900023.34
+    # historical flows=
+    asset_id                       1000
+    2000-01-01 09:35:01-05:00       NaN
+    2000-01-01 09:40:01-05:00 -99965.61
+    2000-01-01 09:45:01-05:00    -11.05
+    # historical pnl=
+    asset_id                    1000
+    2000-01-01 09:35:00-05:00    NaN
+    2000-01-01 09:35:01-05:00    NaN
+    2000-01-01 09:40:01-05:00  23.34
+    2000-01-01 09:45:01-05:00 -28.28
     # historical statistics=
-                               net_asset_holdings            cash    net_wealth  gross_exposure  leverage        pnl  realized_pnl  unrealized_pnl
-    2000-01-01 09:35:00-05:00            0.000000  1000000.000000  1.000000e+06        0.000000  0.000000        NaN           NaN             NaN
-    2000-01-01 09:35:01-05:00            0.000000  1000000.000000  1.000000e+06        0.000000  0.000000   0.000000      0.000000        0.000000
-    2000-01-01 09:40:01-05:00        99988.947634   900034.389821  1.000023e+06    99988.947634  0.099987  23.337455 -99965.610179    99988.947634
-    2000-01-01 09:45:01-05:00        99971.715802   900023.342753  9.999951e+05    99971.715802  0.099972 -28.278900    -11.047068      -17.231832
+                                 pnl  gross_volume  net_volume       gmv       nmv        cash  net_wealth  leverage
+    2000-01-01 09:35:00-05:00    NaN          0.00        0.00      0.00      0.00  1000000.00    1.00e+06       0.0
+    2000-01-01 09:35:01-05:00    NaN          0.00        0.00      0.00      0.00  1000000.00    1.00e+06       0.0
+    2000-01-01 09:40:01-05:00  23.34      99965.61    99965.61  99988.95  99988.95   900034.39    1.00e+06       0.1
+    2000-01-01 09:45:01-05:00 -28.28         11.05       11.05  99971.72  99971.72   900023.34    1.00e+06       0.1
 result_nid: process_forecasts
 method: predict
 result_df:                                  price            start_datetime  \

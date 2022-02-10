@@ -41,8 +41,8 @@ import tqdm.autonotebook as tauton
 import core.plotting as coplotti
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import helpers.hpandas as hpandas
 import helpers.hlist as hlist
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)

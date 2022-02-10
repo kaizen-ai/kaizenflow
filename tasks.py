@@ -9,8 +9,6 @@ import repo_config as rconf
 # > i print_tasks --as-code
 from helpers.lib_tasks import set_default_params  # This is not an invoke target.
 from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
-    # TODO(gp): -> lint_check_python_files
-    check_python_files,
     docker_bash,
     docker_build_local_image,
     docker_build_prod_image,
@@ -24,6 +22,7 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     docker_pull_dev_tools,
     docker_push_dev_image,
     docker_push_prod_image,
+    docker_push_prod_candidate_image,
     docker_release_all,
     docker_release_dev_image,
     docker_release_prod_image,
@@ -33,6 +32,7 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     docker_stats,
     # TODO(gp): -> docker_release_...
     docker_tag_local_image_as_dev,
+    find,
     find_check_string_output,
     find_test_class,
     find_test_decorator,
@@ -70,7 +70,10 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     integrate_files,
     integrate_find_files,
     lint,
+    lint_check_python_files,
+    lint_check_python_files_in_docker,
     lint_create_branch,
+    lint_detect_cycles,
     print_setup,
     print_tasks,
     pytest_clean,

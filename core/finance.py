@@ -8,7 +8,7 @@ import core.finance as cofinanc
 
 import datetime
 import logging
-from typing import Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -18,8 +18,8 @@ import core.signal_processing as csigproc
 import helpers.hdataframe as hdatafr
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import helpers.htypes as htypes
 import helpers.hprint as hprint
+import helpers.htypes as htypes
 
 _LOG = logging.getLogger(__name__)
 
@@ -216,6 +216,7 @@ def _resample_with_aggregate_function(
     cols: List[str],
     agg_func: str,
     agg_func_kwargs: htypes.Kwargs,
+    resample_kwargs: Optional[Dict[str, Any]] = None,
 ) -> pd.DataFrame:
     """
     Resample columns `cols` of `df` using the passed parameters.
@@ -224,7 +225,9 @@ def _resample_with_aggregate_function(
     hdbg.dassert_isinstance(cols, list)
     hdbg.dassert(cols, msg="`cols` must be nonempty.")
     hdbg.dassert_is_subset(cols, df.columns)
-    resampler = csigproc.resample(df[cols], rule=rule)
+    if resample_kwargs is None:
+        resample_kwargs = {}
+    resampler = csigproc.resample(df[cols], rule=rule, **resample_kwargs)
     resampled = resampler.agg(agg_func, **agg_func_kwargs)
     return resampled
 
@@ -234,6 +237,7 @@ def resample_bars(
     rule: str,
     resampling_groups: List[Tuple[Dict[str, str], str, htypes.Kwargs]],
     vwap_groups: List[Tuple[str, str, str]],
+    resample_kwargs: Optional[Dict[str, Any]] = None,
 ) -> pd.DataFrame:
     """
     Resampling with optional VWAP.
@@ -253,6 +257,7 @@ def resample_bars(
             cols=list(col_dict.keys()),
             agg_func=agg_func,
             agg_func_kwargs=agg_func_kwargs,
+            resample_kwargs=resample_kwargs,
         )
         resampled = resampled.rename(columns=col_dict)
         hdbg.dassert(not resampled.columns.has_duplicates)
@@ -267,6 +272,51 @@ def resample_bars(
     hdbg.dassert(not out_df.columns.has_duplicates)
     hdbg.dassert(out_df.index.freq)
     return out_df
+
+
+# TODO(Paul): Rename `resample_portfolio_bar_metrics()`.
+def resample_portfolio_metrics_bars(
+    df: pd.DataFrame,
+    freq: str,
+    *,
+    pnl_col: str = "pnl",
+    gross_volume_col: str = "gross_volume",
+    net_volume_col: str = "net_volume",
+    gmv_col: str = "gmv",
+    nmv_col: str = "nmv",
+) -> pd.DataFrame:
+    # TODO(Paul): For this type of resampling, we generally want to
+    # annotate with the left side of the interval. Plumb this through
+    # the call stack.
+    resampled_df = resample_bars(
+        df,
+        freq,
+        resampling_groups=[
+            (
+                {
+                    pnl_col: "pnl",
+                    gross_volume_col: "gross_volume",
+                    net_volume_col: "net_volume",
+                },
+                "sum",
+                {"min_count": 1},
+            ),
+            (
+                {
+                    gmv_col: "gmv",
+                    nmv_col: "nmv",
+                },
+                "mean",
+                {},
+            ),
+        ],
+        vwap_groups=[],
+        resample_kwargs={
+            "closed": None,
+            "label": None,
+        },
+    )
+    return resampled_df
 
 
 # TODO(Paul): Consider deprecating.
@@ -688,6 +738,7 @@ def compute_spread_cost(
     return out_df
 
 
+# TODO(Paul): Deprecate and delete.
 def compute_pnl(
     df: pd.DataFrame,
     position_intent_col: str,
@@ -811,6 +862,7 @@ def convert_pct_rets_to_log_rets(
     return np.log(pct_rets + 1)
 
 
+# TODO(Paul): Deprecate and delete.
 def rescale_to_target_annual_volatility(
     srs: pd.Series, volatility: float
 ) -> pd.Series:
@@ -858,6 +910,7 @@ def compute_inverse_volatility_weights(df: pd.DataFrame) -> pd.Series:
     return weights
 
 
+# TODO(Paul): Deprecate and delete.
 def aggregate_log_rets(df: pd.DataFrame, weights: pd.Series) -> pd.Series:
     """
     Compute aggregate log returns.
@@ -1045,103 +1098,102 @@ def compute_average_holding_period(
     return average_holding_period
 
 
-# TODO(*): Rename `compute_signed_run_starts()`.
-def compute_bet_starts(positions: pd.Series) -> pd.Series:
+def compute_signed_run_starts(srs: pd.Series) -> pd.Series:
     """
-    Calculate the start of each new bet.
+    Compute the start of each signed run.
 
-    :param positions: series of long/short positions
-    :return: a series with a +1 at the start of each new long bet and a -1 at
-        the start of each new short bet; NaNs are ignored
+    :param srs: series of floats
+    :return: a series with a +1 at the start of each new positive run and a -1
+        at the start of each new negative run; NaNs are ignored
     """
-    # Drop NaNs before determining bet starts.
-    bet_runs = csigproc.sign_normalize(positions).dropna()
-    # Determine start of bets.
-    # A new bet starts at position j if and only if
+    # Drop NaNs before determining run starts.
+    signed_runs = csigproc.sign_normalize(srs).dropna()
+    # Determine start of runs.
+    # A new run starts at position j if and only if
     # - the signed value at `j` is +1 or -1 and
     # - the value at `j - 1` is different from the value at `j`
-    is_nonzero = bet_runs != 0
-    is_diff = bet_runs.diff() != 0
-    bet_starts = bet_runs[is_nonzero & is_diff]
-    return bet_starts.reindex(positions.index)
+    is_nonzero = signed_runs != 0
+    is_diff = signed_runs.diff() != 0
+    run_starts = signed_runs[is_nonzero & is_diff]
+    return run_starts.reindex(srs.index)
 
 
-def compute_bet_ends(positions: pd.Series) -> pd.Series:
+def compute_signed_run_ends(srs: pd.Series) -> pd.Series:
     """
-    Calculate the end of each bet.
+    Calculate the end of each signed run.
 
     NOTE: This function is not casual (because of our choice of indexing).
 
-    :param positions: as in `compute_bet_starts()`
-    :return: as in `compute_bet_starts()`, but with long/short bet indicator at
-        the last time of the bet. Note that this is not casual.
+    :param srs: as in `compute_signed_run_starts()`
+    :return: as in `compute_signed_run_starts()`, but with positive/negative
+        run indicator at the last time of the run. Note that this is not casual.
     """
-    # Calculate bet ends by calculating the bet starts of the reversed series.
-    reversed_positions = positions.iloc[::-1]
-    reversed_bet_starts = compute_bet_starts(reversed_positions)
-    bet_ends = reversed_bet_starts.iloc[::-1]
-    return bet_ends
+    # Calculate run ends by calculating the run starts of the reversed series.
+    reversed_srs = srs.iloc[::-1]
+    reversed_run_starts = compute_signed_run_starts(reversed_srs)
+    run_ends = reversed_run_starts.iloc[::-1]
+    return run_ends
 
 
-def compute_signed_bet_lengths(
-    positions: pd.Series,
+def compute_signed_run_lengths(
+    srs: pd.Series,
 ) -> pd.Series:
     """
-    Calculate lengths of bets (in sampling freq).
+    Calculate lengths of signed runs (in sampling freq).
 
-    :param positions: series of long/short positions
-    :return: signed lengths of bets, i.e., the sign indicates whether the
-        length corresponds to a long bet or a short bet. Index corresponds to
-        end of bet (not causal).
+    :param srs: series of floats
+    :return: signed lengths of run, i.e., the sign indicates whether the
+        length corresponds to a positive run or a negative run. Index
+        corresponds to end of run (not causal).
     """
-    bet_runs = csigproc.sign_normalize(positions)
-    bet_starts = compute_bet_starts(positions)
-    bet_ends = compute_bet_ends(positions)
+    signed_runs = csigproc.sign_normalize(srs)
+    run_starts = compute_signed_run_starts(srs)
+    run_ends = compute_signed_run_ends(srs)
     # Sanity check indices.
-    hdbg.dassert(bet_runs.index.equals(bet_starts.index))
-    hdbg.dassert(bet_starts.index.equals(bet_ends.index))
-    # Get starts of bets or zero positions runs (zero positions are filled with
-    # `NaN`s in `compute_bet_runs`).
-    bet_starts_idx = bet_starts.loc[bet_starts != 0].dropna().index
-    bet_ends_idx = bet_ends.loc[bet_ends != 0].dropna().index
-    # To calculate lengths of bets, we take a running cumulative sum of
-    # absolute values so that bet lengths can be calculated by subtracting
-    # the value at the beginning of each bet from its value at the end.
-    bet_runs_abs_cumsum = bet_runs.abs().cumsum()
-    # Align bet starts and ends for vectorized subtraction.
-    t0s = bet_runs_abs_cumsum.loc[bet_starts_idx].reset_index(drop=True)
-    t1s = bet_runs_abs_cumsum.loc[bet_ends_idx].reset_index(drop=True)
+    hdbg.dassert(signed_runs.index.equals(run_starts.index))
+    hdbg.dassert(run_starts.index.equals(run_ends.index))
+    # Get starts of runs or zero position runs (zero positions are filled with
+    # `NaN`s in `compute_signed_runs_*`).
+    run_starts_idx = run_starts.loc[run_starts != 0].dropna().index
+    run_ends_idx = run_ends.loc[run_ends != 0].dropna().index
+    # To calculate lengths of runs, we take a running cumulative sum of
+    # absolute values so that run lengths can be calculated by subtracting
+    # the value at the beginning of each run from its value at the end.
+    signed_runs_abs_cumsum = signed_runs.abs().cumsum()
+    # Align run starts and ends for vectorized subtraction.
+    t0s = signed_runs_abs_cumsum.loc[run_starts_idx].reset_index(drop=True)
+    t1s = signed_runs_abs_cumsum.loc[run_ends_idx].reset_index(drop=True)
     # Subtract and correct for off-by-one.
-    bet_lengths = t1s - t0s + 1
-    # Recover bet signs (positive for long, negative for short).
-    bet_lengths = bet_lengths * bet_starts.loc[bet_starts_idx].reset_index(
+    run_lengths = t1s - t0s + 1
+    # Recover run signs.
+    run_lengths = run_lengths * run_starts.loc[run_starts_idx].reset_index(
         drop=True
     )
-    # Reindex according to the bet ends index.
-    bet_length_srs = pd.Series(
-        index=bet_ends_idx, data=bet_lengths.values, name=positions.name
+    # Reindex according to the run ends index.
+    run_length_srs = pd.Series(
+        index=run_ends_idx, data=run_lengths.values, name=srs.name
     )
-    return bet_length_srs
+    return run_length_srs
 
 
 # TODO(Paul): Revisit this function and add more test coverage.
 def compute_returns_per_bet(
-    positions: pd.Series, log_rets: pd.Series
+    positions: pd.Series, returns: pd.Series
 ) -> pd.Series:
     """
     Calculate returns for each bet.
 
     :param positions: series of long/short positions
-    :param log_rets: log returns
-    :return: signed returns for each bet, index corresponds to the last date of
-        bet
+    :param returns: percentage returns
+    :return: signed returns for each bet (in units of `positions`), index
+        corresponds to the last date of bet
     """
-    hdbg.dassert(positions.index.equals(log_rets.index))
-    hpandas.dassert_strictly_increasing_index(log_rets)
-    bet_ends = compute_bet_ends(positions)
+    hdbg.dassert(positions.index.equals(returns.index))
+    hpandas.dassert_strictly_increasing_index(returns)
+    bet_ends = compute_signed_run_ends(positions)
     # Retrieve locations of bet starts and bet ends.
     bet_ends_idx = bet_ends.loc[bet_ends != 0].dropna().index
-    pnl_bets = log_rets * positions
+    pnl_bets = returns * positions
     bet_rets_cumsum = pnl_bets.cumsum().ffill()
     # Select rets cumsum for periods when bets end.
     bet_rets_cumsum_ends = bet_rets_cumsum.loc[bet_ends_idx].reset_index(
@@ -1149,14 +1201,14 @@ def compute_returns_per_bet(
     )
     # Difference between rets cumsum of bet ends is equal to the rets cumsum
     # for the time between these bet ends i.e. rets cumsum per bet.
-    rets_per_bet = bet_rets_cumsum_ends.diff()
-    # The 1st element of rets_per_bet equals the 1st one of bet_rets_cumsum_ends
+    returns_per_bet = bet_rets_cumsum_ends.diff()
+    # The 1st element of returns_per_bet equals the 1st one of bet_rets_cumsum_ends
     # because it is the first bet so nothing to subtract from it.
-    rets_per_bet[0] = bet_rets_cumsum_ends[0]
-    rets_per_bet = pd.Series(
-        data=rets_per_bet.values, index=bet_ends_idx, name=log_rets.name
+    returns_per_bet[0] = bet_rets_cumsum_ends[0]
+    returns_per_bet = pd.Series(
+        data=returns_per_bet.values, index=bet_ends_idx, name=returns.name
     )
-    return rets_per_bet
+    return returns_per_bet
 
 
 def compute_annualized_return(srs: pd.Series) -> float:
@@ -1190,6 +1242,33 @@ def compute_annualized_volatility(srs: pd.Series) -> float:
     annualized_volatility = np.sqrt(ppy) * std
     annualized_volatility = cast(float, annualized_volatility)
     return annualized_volatility
+
+
+def compute_turnover_and_bias(
+    volume: pd.Series,
+    bias: pd.Series,
+) -> pd.Series:
+    """
+    Computes turnover and bias in units of input.
+
+    :param volume:
+    :param bias:
+    :return:
+    """
+    hdbg.dassert_isinstance(volume, pd.Series)
+    hdbg.dassert_lte(0, volume.min())
+    hdbg.dassert_isinstance(bias, pd.Series)
+    hdbg.dassert(volume.index.equals(bias.index))
+    srs = pd.Series(
+        {
+            "turnover_mean": volume.mean(),
+            "turnover_stdev": volume.std(),
+            "market_bias_mean": bias.mean(),
+            "market_bias_stdev": bias.std(),
+        }
+    )
+    srs.name = "turnover_and_bias"
+    return srs
 
 
 def maybe_resample(srs: pd.Series) -> pd.Series:

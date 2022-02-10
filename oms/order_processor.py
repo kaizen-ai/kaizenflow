@@ -11,8 +11,9 @@ from typing import Any, Dict, Optional, Union
 
 import pandas as pd
 
-import helpers.hdbg as hdbg
 import helpers.hasyncio as hasynci
+import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hsql as hsql
 import oms.broker as ombroker
@@ -62,9 +63,7 @@ class OrderProcessor:
         self._accepted_orders_table_name = accepted_orders_table_name
         self._current_positions_table_name = current_positions_table_name
         #
-        self._get_wall_clock_time = (
-            broker.market_data.get_wall_clock_time
-        )
+        self._get_wall_clock_time = broker.market_data.get_wall_clock_time
         #
         self._poll_kwargs = poll_kwargs or hasynci.get_poll_kwargs(
             self._get_wall_clock_time
@@ -132,13 +131,13 @@ class OrderProcessor:
                 FROM {self._submitted_orders_table_name}
                 ORDER BY timestamp_db"""
         df = hsql.execute_query_to_df(self._db_connection, query)
-        _LOG.debug("df=\n%s", hprint.dataframe_to_str(df))
+        _LOG.debug("df=\n%s", hpandas.df_to_str(df))
         hdbg.dassert_lte(
             diff_num_rows,
             len(df),
             1,
             "There are not enough new rows in df=\n%s",
-            hprint.dataframe_to_str(df),
+            hpandas.df_to_str(df),
         )
         # TODO(gp): For now we accept only one order list.
         hdbg.dassert_eq(diff_num_rows, 1)
@@ -180,7 +179,7 @@ class OrderProcessor:
                 FROM {self._submitted_orders_table_name}
                 ORDER BY timestamp_db"""
         df = hsql.execute_query_to_df(self._db_connection, query)
-        _LOG.debug("df=\n%s", hprint.dataframe_to_str(df))
+        _LOG.debug("df=\n%s", hpandas.df_to_str(df))
         hdbg.dassert_eq(file_name, df.tail(1).squeeze()["filename"])
         orders_as_txt = df.tail(1).squeeze()["orders_as_txt"]
         orders = omorder.orders_from_string(orders_as_txt)
@@ -191,9 +190,7 @@ class OrderProcessor:
         Dequeue orders and fill.
         """
         orders = await self._orders.get()
-        get_wall_clock_time = (
-            self._broker.market_data.get_wall_clock_time
-        )
+        get_wall_clock_time = self._broker.market_data.get_wall_clock_time
         fulfillment_deadline = max([order.end_timestamp for order in orders])
         _LOG.debug("Order fulfillment deadline=%s", fulfillment_deadline)
         # Wait until the order fulfillment deadline to return fill.
@@ -204,12 +201,14 @@ class OrderProcessor:
         _LOG.debug("Received %i fills", len(fills))
         # Update current positions based on fills.
         for fill in fills:
+            _LOG.debug("fill=\n%s" % str(fill))
             id_ = fill.order.order_id
             trade_date = fill.timestamp.date()
             wall_clock_time = get_wall_clock_time()
             asset_id = fill.order.asset_id
             num_shares = fill.num_shares
             cost = fill.price * fill.num_shares
+            _LOG.debug("cost=%f" % cost)
             # #################################################################
             # Get the current positions for `asset_id`.
             query = []
@@ -221,7 +220,7 @@ class OrderProcessor:
             _LOG.debug("query=%s", query)
             positions_df = hsql.execute_query_to_df(self._db_connection, query)
             hdbg.dassert_lte(positions_df.shape[0], 1)
-            _LOG.debug("positions_df=%s", hprint.dataframe_to_str(positions_df))
+            _LOG.debug("positions_df=%s", hpandas.df_to_str(positions_df))
             # #################################################################
             # Delete the row from the positions table.
             query = []
@@ -244,7 +243,8 @@ class OrderProcessor:
                 row["tradedate"] = trade_date
                 row["timestamp_db"] = wall_clock_time
                 row["current_position"] += num_shares
-                row["net_cost"] += cost
+                # A negative net cost for financing a long position.
+                row["net_cost"] -= cost
                 row["asset_id"] = int(row["asset_id"])
             else:
                 txt = f"""
@@ -257,13 +257,13 @@ class OrderProcessor:
                 target_position,0
                 current_position,{num_shares}
                 open_quantity,0
-                net_cost,{cost}
+                net_cost,{-1 * cost}
                 bod_position,0
                 bod_price,0
                 """
                 row = hsql.csv_to_series(txt, sep=",")
             row = row.convert_dtypes()
-            _LOG.debug("Insert row is=%s", hprint.dataframe_to_str(row))
+            _LOG.debug("Insert row is=%s", hpandas.df_to_str(row))
             hsql.execute_insert_query(
                 self._db_connection, row, self._current_positions_table_name
             )

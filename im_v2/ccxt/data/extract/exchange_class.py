@@ -8,10 +8,10 @@ import logging
 import time
 from typing import Any, Dict, List, Optional
 
+import ccxt
 import pandas as pd
 import tqdm
 
-import ccxt
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hsecrets as hsecret
@@ -30,9 +30,7 @@ class CcxtExchange:
     - retrieves data in multiple chunks to avoid throttling
     """
 
-    def __init__(
-        self, exchange_id: str
-    ) -> None:
+    def __init__(self, exchange_id: str) -> None:
         """
         Constructor.
 
@@ -202,5 +200,5 @@ class CcxtExchange:
         # Package the data.
         columns = ["timestamp", "open", "high", "low", "close", "volume"]
         bars = pd.DataFrame(bars, columns=columns)
-        bars["created_at"] = str(hdateti.get_current_time("UTC"))
+        bars["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
         return bars

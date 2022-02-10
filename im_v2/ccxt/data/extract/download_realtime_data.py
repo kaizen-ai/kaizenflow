@@ -4,15 +4,15 @@ Script to download OHLCV data from CCXT in real-time.
 
 Use as:
 
-# Download OHLCV data for universe 'v03', saving only on disk:
-> download_realtime_data.py \
-    --to_datetime '20211204-194432' \
-    --from_datetime '20211204-193932' \
-    --dst_dir 'test/ccxt_test' \
+# Download OHLCV data for universe 'v03', saving dev_stage:
+> im_v2/ccxt/data/extract/download_realtime_data.py \
+    --to_datetime '20211110-101100' \
+    --from_datetime '20211110-101200' \
+    --dst_dir 'ccxt/ohlcv/' \
     --data_type 'ohlcv' \
-    --api_keys 'API_keys.json' \
     --universe 'v03' \
-    --db_stage 'dev'
+    --db_stage 'dev' \
+    --v DEBUG
 
 Import as:
 
@@ -24,7 +24,7 @@ import collections
 import logging
 import os
 import time
-from typing import Any, Dict, List, NamedTuple, Optional, Union
+from typing import Any, Dict, List, NamedTuple, Union
 
 import pandas as pd
 
@@ -38,7 +38,6 @@ import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
-
 
 # TODO(Danya): Move instantiation outside.
 def instantiate_exchange(
@@ -204,9 +203,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Build mappings from exchange ids to classes and currencies.
     exchanges = []
     for exchange_id in exchange_ids:
-        exchanges.append(
-            instantiate_exchange(exchange_id, universe["CCXT"])
-        )
+        exchanges.append(instantiate_exchange(exchange_id, universe["CCXT"]))
     # Construct table name.
     table_name = f"ccxt_{args.data_type}"
     # Generate a query to remove duplicates.

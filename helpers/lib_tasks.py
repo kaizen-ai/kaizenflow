@@ -29,7 +29,7 @@ import helpers.hintrospection as hintros
 import helpers.hio as hio
 import helpers.hlist as hlist
 import helpers.hprint as hprint
-import helpers.hsystem as hsysinte
+import helpers.hsystem as hsystem
 import helpers.htable as htable
 import helpers.hversion as hversio
 
@@ -251,6 +251,8 @@ def _get_files_to_process(
     :param all: return all repo files
     :param files_from_user: return files passed to this function
     :param mutually_exclusive: ensure that all options are mutually exclusive
+    :param remove_dirs: whether directories should be processed
+    :return: paths to process
     """
     _LOG.debug(
         hprint.to_str(
@@ -288,8 +290,8 @@ def _get_files_to_process(
     elif all_:
         files = hio.find_all_files(dir_name)
     if files_from_user:
-        # If files were passed, overwrite the previous decision.
-        files = files_from_user.split(" ")
+        # If files were passed, filter out non-existent paths.
+        files = _filter_existing_paths(files_from_user.split(" "))
     # Convert into a list.
     hdbg.dassert_isinstance(files, list)
     files_to_process = [f for f in files if f != ""]
@@ -298,12 +300,39 @@ def _get_files_to_process(
     _LOG.debug("files_to_process='%s'", str(files_to_process))
     # Remove dirs, if needed.
     if remove_dirs:
-        files_to_process = hsysinte.remove_dirs(files_to_process)
+        files_to_process = hsystem.remove_dirs(files_to_process)
     _LOG.debug("files_to_process='%s'", str(files_to_process))
     # Ensure that there are files to process.
     if not files_to_process:
         _LOG.warning("No files were selected")
     return files_to_process
+
+
+def _filter_existing_paths(paths_from_user: List[str]) -> List[str]:
+    """
+    Filter out the paths to non-existent files.
+
+    :param paths_from_user: paths passed by user
+    :return: existing paths
+    """
+    paths = []
+    for user_path in paths_from_user:
+        if user_path.endswith("/*"):
+            # Get the files according to the "*" pattern.
+            dir_files = glob.glob(user_path)
+            if dir_files:
+                # Check whether the pattern matches files.
+                paths.extend(dir_files)
+            else:
+                _LOG.error(
+                    "'%s' pattern doesn't match any files: the directory is empty or path does not exist",
+                    user_path,
+                )
+        elif os.path.exists(user_path):
+            paths.append(user_path)
+        else:
+            _LOG.error("'%s' does not exist", user_path)
+    return paths
 
 
 # Copied from helpers.datetime_ to avoid dependency from pandas.
@@ -356,7 +385,7 @@ def print_tasks(ctx, as_code=False):  # type: ignore
     # def print_setup(ctx):  # type: ignore
     # def git_pull(ctx):  # type: ignore
     # def git_fetch_master(ctx):  # type: ignore
-    _, txt = hsysinte.system_to_string(cmd)
+    _, txt = hsystem.system_to_string(cmd)
     for line in txt.split("\n"):
         _LOG.debug("line=%s", line)
         m = re.match(r"^def\s+(\S+)\(", line)
@@ -418,15 +447,6 @@ def git_merge_master(ctx, ff_only=False, abort_if_not_clean=True):  # type: igno
     if ff_only:
         cmd += " --ff-only"
     _run(ctx, cmd)
-
-
-# TODO(gp): Add git_co(ctx)
-# Reuse hgit.git_stash_push() and hgit.stash_apply()
-# git stash save your-file-name
-# git checkout master
-# # do whatever you had to do with master
-# git checkout staging
-# git stash pop
 
 
 @task
@@ -569,7 +589,7 @@ def git_create_patch(  # type: ignore
     _LOG.info("Creating the patch into %s", dst_file)
     hdbg.dassert_ne(cmd, "")
     _LOG.debug("cmd=%s", cmd)
-    rc = hsysinte.system(cmd, abort_on_error=False)
+    rc = hsystem.system(cmd, abort_on_error=False)
     if not rc:
         _LOG.warning("Command failed with rc=%d", rc)
     # Print message to apply the patch.
@@ -695,7 +715,8 @@ def git_create_branch(  # type: ignore
         `LemTask169_Get_GH_actions`)
     :param issue_id: use the canonical name for the branch corresponding to that
         issue
-    :param repo_short_name: name of the GitHub repo_short_name that the `issue_id` belongs to
+    :param repo_short_name: name of the GitHub repo_short_name that the `issue_id`
+        belongs to
         - "current" (default): the current repo_short_name
         - short name (e.g., "amp", "lm") of the branch
     :param suffix: suffix (e.g., "02") to add to the branch name when using issue_id
@@ -732,7 +753,7 @@ def git_create_branch(  # type: ignore
     # Check that the branch is not just a number.
     m = re.match("^\d+$", branch_name)
     hdbg.dassert(not m, "Branch names with only numbers are invalid")
-    # The valid format of a branch name is `AmpTask1903_Implemented_system_Portfolio`.
+    # The valid format of a branch name is `AmpTask1903_Implemented_system_...`.
     m = re.match("^\S+Task\d+_\S+$", branch_name)
     hdbg.dassert(m, "Branch name should be '{Amp,...}TaskXYZ_...'")
     hdbg.dassert(
@@ -774,8 +795,8 @@ def _delete_branches(ctx: Any, tag: str, confirm_delete: bool) -> None:
     else:
         raise ValueError(f"Invalid tag='{tag}'")
     # TODO(gp): Use system_to_lines
-    _, txt = hsysinte.system_to_string(find_cmd, abort_on_error=False)
-    branches = hsysinte.text_to_list(txt)
+    _, txt = hsystem.system_to_string(find_cmd, abort_on_error=False)
+    branches = hsystem.text_to_list(txt)
     # Print info.
     _LOG.info(
         "There are %d %s branches to delete:\n%s",
@@ -788,7 +809,7 @@ def _delete_branches(ctx: Any, tag: str, confirm_delete: bool) -> None:
         return
     # Ask whether to continue.
     if confirm_delete:
-        hsysinte.query_yes_no(
+        hsystem.query_yes_no(
             hdbg.WARNING + f": Delete these {tag} branches?", abort_on_no=True
         )
     for branch in branches:
@@ -831,17 +852,28 @@ def git_rename_branch(ctx, new_branch_name):  # type: ignore
         f"Do you want to rename the current branch '{old_branch_name}' to "
         f"'{new_branch_name}'"
     )
-    hsysinte.query_yes_no(msg, abort_on_no=True)
-    # https://stackoverflow.com/questions/6591213/how-do-i-rename-a-local-git-branch
-    # To rename a local branch:
-    # git branch -m <oldname> <newname>
+    hsystem.query_yes_no(msg, abort_on_no=True)
+    # https://stackoverflow.com/questions/30590083
+    # Rename the local branch to the new name.
+    # > git branch -m <old_name> <new_name>
     cmd = f"git branch -m {new_branch_name}"
     _run(ctx, cmd)
-    # git push origin -u <newname>
+    # Delete the old branch on remote.
+    # > git push <remote> --delete <old_name>
+    cmd = f"git push origin --delete {old_branch_name}"
+    _run(ctx, cmd)
+    # Prevent Git from using the old name when pushing in the next step.
+    # Otherwise, Git will use the old upstream name instead of <new_name>.
+    # > git branch --unset-upstream <new_name>
+    cmd = f"git branch --unset-upstream {new_branch_name}"
+    _run(ctx, cmd)
+    # Push the new branch to remote.
+    # > git push <remote> <new_name>
     cmd = f"git push origin {new_branch_name}"
     _run(ctx, cmd)
-    # git push origin --delete <oldname>
-    cmd = f"git push origin --delete {old_branch_name}"
+    # Reset the upstream branch for the new_name local branch.
+    # > git push <remote> -u <new_name>
+    cmd = f"git push origin u {new_branch_name}"
     _run(ctx, cmd)
     print("Done")
 
@@ -914,9 +946,7 @@ def _git_diff_with_branch(
         cmd.append(f"--diff-filter={diff_type}")
     cmd.append(f"--name-only HEAD {hash_}")
     cmd = " ".join(cmd)
-    files = hsysinte.system_to_files(
-        cmd, dir_name, remove_files_non_present=False
-    )
+    files = hsystem.system_to_files(cmd, dir_name, remove_files_non_present=False)
     files = sorted(files)
     print("files=%s\n%s" % (len(files), "\n".join(files)))
     if len(files) == 0:
@@ -955,7 +985,7 @@ def _git_diff_with_branch(
         )
         # Save the base file.
         cmd = f"git show {hash_}:{branch_file} >{tmp_file}"
-        rc = hsysinte.system(cmd, abort_on_error=False)
+        rc = hsystem.system(cmd, abort_on_error=False)
         if rc != 0:
             # For new files we get the error:
             # fatal: path 'dev_scripts/configure_env.sh' exists on disk, but
@@ -974,7 +1004,7 @@ def _git_diff_with_branch(
     print(script_txt)
     # Save the script to compare.
     script_file_name = f"./tmp.vimdiff_branch_with_{tag}.sh"
-    hsysinte.create_executable_script(script_file_name, script_txt)
+    hsystem.create_executable_script(script_file_name, script_txt)
     print(f"# To diff against {tag} run:\n> {script_file_name}")
     _run(ctx, script_file_name, dry_run=dry_run, pty=True)
 
@@ -1052,7 +1082,13 @@ def git_branch_diff_with_master(  # type: ignore
 #   > i lint --dir-name . --only-format
 #   ```
 #
-# - Align `lib_tasks.py`
+# - Remove end-of-line spaces:
+#   ```
+#   # Remove
+#   > find . -name "*.txt" | xargs perl -pi -e 'chomp if eof'
+#   ```
+#
+# - Align `lib_tasks.py`:
 #   ```
 #   > vimdiff ~/src/{amp1,cmamp1}/tasks.py; vimdiff ~/src/{amp1,cmamp1}/helpers/lib_tasks.py
 #   ```
@@ -1089,6 +1125,11 @@ def git_branch_diff_with_master(  # type: ignore
 # - Copy by dir
 #   ```
 #   > i integrate_diff_dirs --subdir market_data -c
+#   ```
+#
+# - Remove the empty files
+#   ```
+#   > find . -type f -empty -print | grep -v .git | grep -v __init__ | grep -v ".log$" | grep -v ".txt$" | xargs git rm
 #   ```
 
 # ## Double check the integration
@@ -1156,9 +1197,9 @@ def _dassert_is_integration_branch(abs_dir: str) -> None:
 def _clean_both_integration_dirs(abs_dir1: str, abs_dir2: str) -> None:
     _LOG.debug(hprint.to_str("abs_dir1 abs_dir2"))
     cmd = f"cd {abs_dir1} && invoke git_clean"
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
     cmd = f"cd {abs_dir2} && invoke git_clean"
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
 
 
 @task
@@ -1282,7 +1323,7 @@ def _find_files_touched_since_last_integration(
         cmd = "git log --date=local --oneline --date-order | grep AmpTask1786_Integrate"
         # Remove integrations like "'... Merge branch 'master' into AmpTask1786_Integrate_20220113'"
         cmd += " | grep -v \"Merge branch 'master' into \""
-        _, txt = hsysinte.system_to_string(cmd)
+        _, txt = hsystem.system_to_string(cmd)
         _LOG.debug("integration commits=\n%s", txt)
         txt = txt.split("\n")
         # > git log --date=local --oneline --date-order | grep AmpTask1786_Integrate
@@ -1295,7 +1336,7 @@ def _find_files_touched_since_last_integration(
         print("* " + hprint.to_str("last_integration_hash"))
         # Find the first commit after the commit with the last integration.
         cmd = f"git log --oneline --reverse --ancestry-path {last_integration_hash}^..master"
-        _, txt = hsysinte.system_to_string(cmd)
+        _, txt = hsystem.system_to_string(cmd)
         print(f"* commits after last integration=\n{txt}")
         txt = txt.split("\n")
         # > git log --oneline --reverse --ancestry-path 72a1a101^..master
@@ -1308,7 +1349,7 @@ def _find_files_touched_since_last_integration(
         _LOG.debug(hprint.to_str("first_commit_hash"))
         # Find all the files touched in each branch.
         cmd = f"git diff --name-only {first_commit_hash}..HEAD"
-        _, txt = hsysinte.system_to_string(cmd)
+        _, txt = hsystem.system_to_string(cmd)
         _LOG.debug("files modified since the integration=\n%s", txt)
         files = txt.split("\n")
     finally:
@@ -1400,11 +1441,11 @@ def _integrate_files(
     # Execute / save the script.
     if copy:
         for cmd in script_txt:
-            hsysinte.system(cmd)
+            hsystem.system(cmd)
     else:
         # Save the diff script.
         script_file_name = f"./tmp.vimdiff.{tag}.sh"
-        hsysinte.create_executable_script(script_file_name, script_txt)
+        hsystem.create_executable_script(script_file_name, script_txt)
         print(f"# To diff run:\n> {script_file_name}")
 
 
@@ -1490,7 +1531,8 @@ def integrate_find_files(  # type: ignore
     subdir="",
 ):
     """
-    Find the files that are touched in the current branch since last integration.
+    Find the files that are touched in the current branch since last
+    integration.
     """
     _report_task()
     _ = ctx
@@ -1533,12 +1575,12 @@ def integrate_diff_overlapping_files(  # type: ignore
     diff_files1 = os.path.abspath("./tmp.files_modified1.txt")
     diff_files2 = os.path.abspath("./tmp.files_modified2.txt")
     cmd = f"cd {src_dir} && git diff --name-only {src_hash} HEAD >{diff_files1}"
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
     cmd = f"cd {dst_dir} && git diff --name-only {dst_hash} HEAD >{diff_files2}"
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
     common_files = "./tmp.common_files.txt"
     cmd = f"comm -12 {diff_files1} {diff_files2} >{common_files}"
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
     # Get the base files to diff.
     files = hio.from_file(common_files).split("\n")
     files = [f for f in files if f != ""]
@@ -1552,7 +1594,7 @@ def integrate_diff_overlapping_files(  # type: ignore
         dst_file = src_file.replace(".py", ".base.py")
         # Save the base file.
         cmd = f"git show {src_hash}:{src_file} >{dst_file}"
-        rc = hsysinte.system(cmd, abort_on_error=False)
+        rc = hsystem.system(cmd, abort_on_error=False)
         if rc == 0:
             # The file was created: nothing to do.
             pass
@@ -1568,7 +1610,7 @@ def integrate_diff_overlapping_files(  # type: ignore
     # Save the script to compare.
     script_file_name = "./tmp.vimdiff_overlapping_files.sh"
     script_txt = "\n".join(script_txt)
-    hsysinte.create_executable_script(script_file_name, script_txt)
+    hsystem.create_executable_script(script_file_name, script_txt)
     print(f"# To diff against the base run:\n> {script_file_name}")
 
 
@@ -1626,8 +1668,8 @@ def _get_last_container_id(sudo: bool) -> str:
     # Get the last started container.
     cmd = f"{docker_exec} ps -l | grep -v 'CONTAINER ID'"
     # CONTAINER ID   IMAGE          COMMAND                  CREATED
-    # 90897241b31a   eeb33fe1880a   "/bin/sh -c '/bin/baÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¦"   34 hours ago ...
-    _, txt = hsysinte.system_to_one_line(cmd)
+    # 90897241b31a   eeb33fe1880a   "/bin/sh -c '/bin/bash ...
+    _, txt = hsystem.system_to_one_line(cmd)
     # Parse the output: there should be at least one line.
     hdbg.dassert_lte(1, len(txt.split(" ")), "Invalid output='%s'", txt)
     container_id: str = txt.split(" ")[0]
@@ -1661,7 +1703,7 @@ def docker_stats(  # type: ignore
     )
     docker_exec = _get_docker_exec(sudo)
     cmd = f"{docker_exec} stats --no-stream --format='{fmt}'"
-    _, txt = hsysinte.system_to_string(cmd)
+    _, txt = hsystem.system_to_string(cmd)
     if all:
         output = txt
     else:
@@ -1698,7 +1740,6 @@ def docker_kill(  # type: ignore
     :param sudo: use sudo for the Docker commands
     """
     _report_task(hprint.to_str("all"))
-
     docker_exec = _get_docker_exec(sudo)
     # Last container.
     opts = "-l"
@@ -1797,7 +1838,7 @@ def _get_aws_cli_version() -> int:
     # aws-cli/1.19.49 Python/3.7.6 Darwin/19.6.0 botocore/1.20.49
     # aws-cli/1.20.1 Python/3.9.5 Darwin/19.6.0 botocore/1.20.106
     cmd = "aws --version"
-    res = hsysinte.system_to_one_line(cmd)[1]
+    res = hsystem.system_to_one_line(cmd)[1]
     # Parse the output.
     m = re.match(r"aws-cli/((\d+)\.\d+\.\d+)\s", res)
     hdbg.dassert(m, "Can't parse '%s'", res)
@@ -1815,7 +1856,7 @@ def docker_login(ctx):  # type: ignore
     Log in the AM Docker repo_short_name on AWS.
     """
     _report_task()
-    if hsysinte.is_inside_ci():
+    if hsystem.is_inside_ci():
         _LOG.warning("Running inside GitHub Action: skipping `docker_login`")
         return
     major_version = _get_aws_cli_version()
@@ -1916,7 +1957,10 @@ def _dassert_is_subsequent_version(version: str) -> None:
 _INTERNET_ADDRESS_RE = r"([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
 _IMAGE_BASE_NAME_RE = r"[a-z0-9_-]+"
 _IMAGE_USER_RE = r"[a-z0-9_-]+"
-_IMAGE_STAGE_RE = rf"(local(?:-{_IMAGE_USER_RE})?|dev|prod)"
+# For candidate prod images which have added hash for easy identification.
+_IMAGE_HASH_RE = r"[a-z0-9]{9}"
+_IMAGE_STAGE_RE = rf"(local(?:-{_IMAGE_USER_RE})?|dev|prod|prod(?:-{_IMAGE_HASH_RE})?)"
+
 
 
 def _dassert_is_image_name_valid(image: str) -> None:
@@ -1930,6 +1974,9 @@ def _dassert_is_image_name_valid(image: str) -> None:
       to indicate the latest
       - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev-1.0.0`
         and `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev`
+    - `prod` candidate image has a 9 character hash identifier from the 
+        corresponding Git commit
+        - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:prod-1.0.0-4rf74b83a`
 
     An image should look like:
 
@@ -2026,7 +2073,7 @@ def get_image(
     image.append(f":{stage}")
     # User the user name.
     if stage == "local":
-        user = hsysinte.get_user_name()
+        user = hsystem.get_user_name()
         image.append(f"-{user}")
     # Handle the version.
     if version is not None and version != "":
@@ -2065,13 +2112,15 @@ def _get_docker_cmd(
     entrypoint: bool = True,
     as_user: bool = True,
     print_docker_config: bool = False,
+    use_bash: bool = False,
 ) -> str:
     """
     :param base_image, stage, version: like in `get_image()`
     :param cmd: command to run inside Docker container
     :param as_user: pass the user / group id or not
     :param extra_env_vars: represent vars to add, e.g., `["PORT=9999", "DRY_RUN=1"]`
-    :param print_config: print the docker config for debugging purposes
+    :param print_docker_config: print the docker config for debugging purposes
+    :param use_bash: run command through a shell
     """
     hprint.log(
         _LOG,
@@ -2176,6 +2225,8 @@ def _get_docker_cmd(
         {service_name}"""
         )
         if cmd:
+            if use_bash:
+                cmd = f"bash -c '{cmd}'"
             docker_cmd_.append(
                 rf"""
         {cmd}"""
@@ -2192,7 +2243,7 @@ def _get_docker_cmd(
         _LOG.debug("docker_config_cmd=\n%s", docker_config_cmd_as_str)
         _LOG.debug(
             "docker_config=\n%s",
-            hsysinte.system_to_string(docker_config_cmd_as_str)[1],
+            hsystem.system_to_string(docker_config_cmd_as_str)[1],
         )
     # Print the config for debugging purpose.
     docker_cmd_ = _to_multi_line_cmd(docker_cmd_)
@@ -2236,7 +2287,7 @@ def docker_bash(  # type: ignore
 
 @task
 def docker_cmd(  # type: ignore
-    ctx, base_image="", stage="dev", version="", cmd=""
+    ctx, base_image="", stage="dev", version="", cmd="", use_bash=False
 ):
     """
     Execute the command `cmd` inside a container corresponding to a stage.
@@ -2244,7 +2295,9 @@ def docker_cmd(  # type: ignore
     _report_task()
     hdbg.dassert_ne(cmd, "")
     # TODO(gp): Do we need to overwrite the entrypoint?
-    docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd)
+    docker_cmd_ = _get_docker_cmd(
+        base_image, stage, version, cmd, use_bash=use_bash
+    )
     _docker_cmd(ctx, docker_cmd_)
 
 
@@ -2560,6 +2613,7 @@ def docker_build_prod_image(  # type: ignore
     version,
     cache=True,
     base_image="",
+    candidate=False
 ):
     """
     (ONLY CI/CD) Build a prod image.
@@ -2571,6 +2625,8 @@ def docker_build_prod_image(  # type: ignore
     :param cache: note that often the prod image is just a copy of the dev
         image so caching makes no difference
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
+    :param candidate: build a prod image with a tag format: prod-{hash}
+        where hash is the output of hgit.get_head_hash 
     """
     _report_task()
     version = _resolve_version_value(version)
@@ -2580,7 +2636,15 @@ def docker_build_prod_image(  # type: ignore
     # TODO(gp): We should do a `i git_clean` to remove artifacts and check that
     #  the client is clean so that we don't release from a dirty client.
     # Build prod image.
-    image_versioned_prod = get_image(base_image, "prod", version)
+    if candidate:
+        # For candidate prod images which need to be tested on 
+        # the AWS infra add a hash identifier.
+        latest_version = None
+        image_versioned_prod = get_image(base_image, "prod", latest_version)
+        head_hash = hgit.get_head_hash(short_hash=True)
+        image_versioned_prod += f"-{head_hash}"
+    else:
+        image_versioned_prod = get_image(base_image, "prod", version)
     _dassert_is_image_name_valid(image_versioned_prod)
     #
     dockerfile = "devops/docker_build/prod.Dockerfile"
@@ -2600,13 +2664,18 @@ def docker_build_prod_image(  # type: ignore
         .
     """
     _run(ctx, cmd)
-    # Tag versioned image as latest prod image.
-    latest_version = None
-    image_prod = get_image(base_image, "prod", latest_version)
-    cmd = f"docker tag {image_versioned_prod} {image_prod}"
-    _run(ctx, cmd)
-    #
-    cmd = f"docker image ls {image_prod}"
+    if candidate:
+        _LOG.info(f"Head hash: {head_hash}")
+        cmd = f"docker image ls {image_versioned_prod}"
+    else:
+        # Tag versioned image as latest prod image.
+        latest_version = None
+        image_prod = get_image(base_image, "prod", latest_version)
+        cmd = f"docker tag {image_versioned_prod} {image_prod}"
+        _run(ctx, cmd)
+        #
+        cmd = f"docker image ls {image_prod}"
+
     _run(ctx, cmd)
 
 
@@ -2636,6 +2705,25 @@ def docker_push_prod_image(  # type: ignore
     cmd = f"docker push {image_prod}"
     _run(ctx, cmd, pty=True)
 
+@task
+def docker_push_prod_candidate_image(  # type: ignore
+    ctx,
+    candidate,
+    base_image="",
+):
+    """
+    (ONLY CI/CD) Push the "prod" candidate image to ECR.
+
+    :param candidate: hash tag of the candidate prod image to push
+    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
+    """
+    _report_task()
+    #
+    docker_login(ctx)
+    # Push image with tagged with a hash ID.
+    image_versioned_prod = get_image(base_image, "prod", None)
+    cmd = f"docker push {image_versioned_prod}-{candidate}"
+    _run(ctx, cmd, pty=True)
 
 @task
 def docker_release_prod_image(  # type: ignore
@@ -2875,10 +2963,10 @@ def _to_pbcopy(txt: str, pbcopy: bool) -> None:
     if not txt:
         print("Nothing to copy")
         return
-    if hsysinte.is_running_on_macos():
+    if hsystem.is_running_on_macos():
         # -n = no new line
         cmd = f"echo -n '{txt}' | pbcopy"
-        hsysinte.system(cmd)
+        hsystem.system(cmd)
         print(f"\n# Copied to system clipboard:\n{txt}")
     else:
         _LOG.warning("pbcopy works only on macOS")
@@ -2906,6 +2994,175 @@ def find_test_class(ctx, class_name, dir_name=".", pbcopy=True, exact_match=Fals
     res = " ".join(res)
     # Print or copy to clipboard.
     _to_pbcopy(res, pbcopy)
+
+
+# //////////////////////////////////////////////////////////////////////////////////
+
+
+@functools.lru_cache()
+def _get_python_files(subdir: str) -> List[str]:
+    python_files = hio.find_regex_files(subdir, "*.py", only_files=True)
+    # Remove tmp files.
+    python_files = [f for f in python_files if not f.startswith("tmp")]
+    return python_files
+
+
+# File, line number, line, info1, info2
+_FindResult = Tuple[str, int, str, str, str]
+_FindResults = List[_FindResult]
+
+
+def _scan_files(python_files: List[str]) -> Tuple[str, int, str]:
+    for file in python_files:
+        _LOG.debug("file=%s", file)
+        txt = hio.from_file(file)
+        for line_num, line in enumerate(txt.split("\n")):
+            # TODO(gp): Skip commented lines.
+            # _LOG.debug("%s:%s line='%s'", file, line_num, line)
+            yield file, line_num, line
+
+
+def _find_short_import(iterator: List, short_import: str) -> _FindResults:
+    """
+    Find imports in the Python files with the given short import.
+
+    E.g., for dtfcorrunn dataflow/core/test/test_builders.py:9:import
+    dataflow.core.runners as dtfcorrunn returns
+    """
+    # E.g.,
+    # `import dataflow.core.runners as dtfcorrunn`
+    regex = fr"import\s+(\S+)\s+as\s+({short_import})"
+    regex = re.compile(regex)
+    #
+    results: _FindResults = []
+    for file, line_num, line in iterator:
+        m = regex.search(line)
+        if m:
+            # E.g.,
+            # dataflow/core/test/test_builders.py:9:import dataflow.core.runners as dtfcorrunn
+            _LOG.debug("  --> line:%s=%s", line_num, line)
+            long_import_txt = m.group(1)
+            short_import_txt = m.group(2)
+            full_import_txt = f"import {long_import_txt} as {short_import_txt}"
+            res = (file, line_num, line, short_import_txt, full_import_txt)
+            # E.g.,
+            _LOG.debug("  => %s", str(res))
+            results.append(res)
+    return results
+
+
+def _find_func_class_uses(iterator: List, regex: str) -> _FindResults:
+    regexs = []
+    # E.g.,
+    # `dag_runner = dtfsys.RealTimeDagRunner(**dag_runner_kwargs)`
+    regexs.append(fr"\s+(\w+)\.(\w*{regex})\(")
+    # `dag_builder: dtfcorbuil.DagBuilder`
+    regexs.append(fr":\s*(\w+)\.(\w*{regex})")
+    #
+    _LOG.debug("regexs=%s", str(regexs))
+    regexs = [re.compile(regex) for regex in regexs]
+    #
+    results: _FindResults = []
+    for file, line_num, line in iterator:
+        _LOG.debug("line='%s'", line)
+        m = None
+        for regex in regexs:
+            m = regex.search(line)
+            if m:
+                # _LOG.debug("--> regex matched")
+                break
+        if m:
+            _LOG.debug("  --> line:%s=%s", line_num, line)
+            short_import_txt = m.group(1)
+            obj_txt = m.group(2)
+            res = (file, line_num, line, short_import_txt, obj_txt)
+            # E.g.,
+            # ('./helpers/lib_tasks.py', 10226, 'dtfsys', 'RealTimeDagRunner')
+            # ('./dataflow/core/test/test_builders.py', 70, 'dtfcorrunn', 'FitPredictDagRunner')
+            # ('./dataflow/core/test/test_builders.py', 157, 'dtfcorrunn', 'FitPredictDagRunner')
+            # ('./dataflow/core/test/test_runners.py', 50, 'dtfcorrunn', 'RollingFitPredictDagRunner')
+            _LOG.debug("  => %s", str(res))
+            results.append(res)
+    return results
+
+
+def _process_find_results(results: _FindResults, how: str) -> List[Tuple]:
+    filtered_results = []
+    if how == "remove_dups":
+        # Remove duplicates.
+        for result in results:
+            (file, line_num, line, info1, info2) = result
+            filtered_results.append((info1, info2))
+        filtered_results = hlist.remove_duplicates(filtered_results)
+        filtered_results = sorted(filtered_results)
+    elif how == "all":
+        filtered_results = sorted(results)
+    else:
+        raise ValueError(f"Invalid how='{how}'")
+    return filtered_results
+
+
+@task
+def find(ctx, regex, mode="all", how="remove_dups", subdir="."):  # type: ignore
+    """
+    Find symbols, imports, test classes and so on.
+
+    Example:
+    ```
+    > i find DagBuilder
+    ('dtfcorbuil', 'DagBuilder')
+    ('dtfcore', 'DagBuilder')
+    ('dtfcorbuil', 'import dataflow.core.builders as dtfcorbuil')
+    ('dtfcore', 'import dataflow.core as dtfcore')
+    ```
+
+    :param regex: function or class use to search for
+    :param mode: what to look for
+        - `symbol_import`: look for uses of function or classes
+          E.g., `DagRunner`
+          returns
+          ```
+          ('cdataf', 'PredictionDagRunner')
+          ('cdataf', 'RollingFitPredictDagRunner')
+          ```
+        - `short_import`: look for the short import
+          E.g., `'dtfcorbuil'
+          returns
+          ```
+          ('dtfcorbuil', 'import dataflow.core.builders as dtfcorbuil')
+          ```
+    :param how: how to report the results
+        - `remove_dups`: report only imports and calls that are the same
+    """
+    _report_task(hprint.to_str("regex mode how subdir"))
+    _ = ctx
+    # Process the `where`.
+    python_files = _get_python_files(subdir)
+    iter_ = _scan_files(python_files)
+    # Process the `what`.
+    if mode == "all":
+        for mode in ("symbol_import", "short_import"):
+            find(ctx, regex, mode=mode, how=how, subdir=subdir)
+        return
+    elif mode == "symbol_import":
+        results = _find_func_class_uses(iter_, regex)
+        filtered_results = _process_find_results(results, "remove_dups")
+        print("\n".join(map(str, filtered_results)))
+        # E.g.,
+        # ('cdataf', 'PredictionDagRunner')
+        # ('cdataf', 'RollingFitPredictDagRunner')
+        # Look for each short import.
+        results = []
+        for short_import, _ in filtered_results:
+            iter_ = _scan_files(python_files)
+            results.extend(_find_short_import(iter_, short_import))
+    elif mode == "short_import":
+        results = _find_short_import(iter_, regex)
+    else:
+        raise ValueError(f"Invalid mode='{mode}'")
+    # Process the `how`.
+    filtered_results = _process_find_results(results, how)
+    print("\n".join(map(str, filtered_results)))
 
 
 # #############################################################################
@@ -2995,7 +3252,7 @@ def find_check_string_output(  # type: ignore
     cmd = f"find . -name '{class_name}.{method_name}' -type d"
     # > find . -name "TestResultBundle.test_from_config1" -type d
     # ./core/dataflow/test/TestResultBundle.test_from_config1
-    _, txt = hsysinte.system_to_string(cmd, abort_on_error=False)
+    _, txt = hsystem.system_to_string(cmd, abort_on_error=False)
     file_names = txt.split("\n")
     if not txt:
         hdbg.dfatal(f"Can't find the requested dir with '{cmd}'")
@@ -3005,7 +3262,7 @@ def find_check_string_output(  # type: ignore
     # Find the only file underneath that dir.
     hdbg.dassert_dir_exists(dir_name)
     cmd = f"find {dir_name} -name 'test.txt' -type f"
-    _, file_name = hsysinte.system_to_one_line(cmd)
+    _, file_name = hsystem.system_to_one_line(cmd)
     hdbg.dassert_file_exists(file_name)
     # Read the content of the file.
     _LOG.info("Found file '%s' for %s::%s", file_name, class_name, method_name)
@@ -3074,7 +3331,7 @@ def run_blank_tests(ctx, stage="dev", version=""):  # type: ignore
     base_image = ""
     cmd = '"pytest -h >/dev/null"'
     docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd)
-    hsysinte.system(docker_cmd_, abort_on_error=False, suppress_output=False)
+    hsystem.system(docker_cmd_, abort_on_error=False, suppress_output=False)
 
 
 def _select_tests_to_skip(test_list_name: str) -> str:
@@ -3176,7 +3433,7 @@ def _run_test_cmd(
     cmd = f"'{cmd}'"
     docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd)
     _LOG.info("cmd=%s", docker_cmd_)
-    # We can't use `hsysinte.system()` because of buffering of the output,
+    # We can't use `hsystem.system()` because of buffering of the output,
     # losing formatting and so on, so we stick to executing through `ctx`.
     rc = _docker_cmd(ctx, docker_cmd_, **ctx_run_kwargs)
     # Print message about coverage.
@@ -3196,8 +3453,8 @@ def _run_test_cmd(
             script_txt = """(sleep 2; open http://localhost:33333) &
 (cd ./htmlcov; python -m http.server 33333)"""
             script_name = "./tmp.coverage.sh"
-            hsysinte.create_executable_script(script_name, script_txt)
-            coverage_rc = hsysinte.system(script_name)
+            hsystem.create_executable_script(script_name, script_txt)
+            coverage_rc = hsystem.system(script_name)
             if coverage_rc != 0:
                 _LOG.warning(
                     "Setting `rc` to `0` even though the coverage script fails."
@@ -3216,6 +3473,7 @@ def _run_tests(
     coverage: bool,
     collect_only: bool,
     tee_to_file: bool,
+    git_clean: bool,
     *,
     start_coverage_script: bool = False,
     **ctx_run_kwargs: Any,
@@ -3223,6 +3481,9 @@ def _run_tests(
     """
     Same params as `run_fast_tests()`.
     """
+    if git_clean:
+        cmd = "invoke git_clean --fix-perms"
+        _run(ctx, cmd)
     # Build the command line.
     cmd = _build_run_command_line(
         test_list_name,
@@ -3248,7 +3509,7 @@ def _run_tests(
 
 # TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code.
 @task
-def run_fast_tests(  # type: ignore # due to https://github.com/pyinvoke/invoke/issues/357.
+def run_fast_tests(  # type: ignore
     ctx,
     stage="dev",
     version="",
@@ -3257,6 +3518,7 @@ def run_fast_tests(  # type: ignore # due to https://github.com/pyinvoke/invoke/
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    git_clean=False,
     **kwargs,
 ):
     """
@@ -3268,19 +3530,22 @@ def run_fast_tests(  # type: ignore # due to https://github.com/pyinvoke/invoke/
     :param coverage: enable coverage computation
     :param collect_only: do not run tests but show what will be executed
     :param tee_to_file: save output of pytest in `tmp.pytest.log`
+    :param git_clean: run `invoke git_clean --fix-perms` before running the tests
     :param kwargs: kwargs for `ctx.run`
     """
     _report_task()
+    test_list_name = "fast_tests"
     rc = _run_tests(
         ctx,
         stage,
-        "fast_tests",
+        test_list_name,
         version,
         pytest_opts,
         skip_submodules,
         coverage,
         collect_only,
         tee_to_file,
+        git_clean,
         **kwargs,
     )
     return rc
@@ -3296,6 +3561,7 @@ def run_slow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    git_clean=False,
 ):
     """
     Run slow tests.
@@ -3303,16 +3569,18 @@ def run_slow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
+    test_list_name = "slow_tests"
     rc = _run_tests(
         ctx,
         stage,
-        "slow_tests",
+        test_list_name,
         version,
         pytest_opts,
         skip_submodules,
         coverage,
         collect_only,
         tee_to_file,
+        git_clean,
     )
     return rc
 
@@ -3327,6 +3595,7 @@ def run_superslow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    git_clean=False,
 ):
     """
     Run superslow tests.
@@ -3334,16 +3603,18 @@ def run_superslow_tests(  # type: ignore
     Same params as `invoke run_fast_tests`.
     """
     _report_task()
+    test_list_name = "superslow_tests"
     rc = _run_tests(
         ctx,
         stage,
-        "superslow_tests",
+        test_list_name,
         version,
         pytest_opts,
         skip_submodules,
         coverage,
         collect_only,
         tee_to_file,
+        git_clean,
     )
     return rc
 
@@ -3358,9 +3629,10 @@ def run_fast_slow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    git_clean=False,
 ):
     """
-    Run fast and slow tests independently.
+    Run fast and slow tests back-to-back.
 
     Same params as `invoke run_fast_tests`.
     """
@@ -3375,11 +3647,13 @@ def run_fast_slow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
+        git_clean,
         warn=True,
     )
     if fast_test_rc != 0:
         _LOG.error("Fast tests failed")
     # Run slow tests.
+    git_clean = False
     slow_test_rc = run_slow_tests(
         ctx,
         stage,
@@ -3389,11 +3663,12 @@ def run_fast_slow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
+        git_clean,
     )
     if slow_test_rc != 0:
         _LOG.error("Slow tests failed")
+    # Report error, if needed.
     if fast_test_rc != 0 or slow_test_rc != 0:
-        _LOG.error("Fast / slow tests failed")
         raise RuntimeError("Fast / slow tests failed")
     return fast_test_rc, slow_test_rc
 
@@ -3421,24 +3696,97 @@ def run_qa_tests(  # type: ignore
         raise RuntimeError(msg)
 
 
+def _publish_html_coverage_report_on_s3(aws_profile: str) -> None:
+    """
+    Publish HTML coverage report on S3 so that it can be accessed via browser.
+
+    Target S3 dir is constructed from linux user and Git branch name, e.g.
+    `s3://...-html/html_coverage/grisha_CmTask1047_fix_tests`.
+    """
+    # Build the dir name from user and branch name.
+    user = hsystem.get_user_name()
+    branch_name = hgit.get_branch_name()
+    _LOG.debug("User='%s', branch_name='%s'", user, branch_name)
+    s3_html_coverage_dir = f"{user}_{branch_name}"
+    # Get the full path to the dir.
+    s3_html_base_dir = "html_coverage"
+    s3_html_bucket_path = hgit.execute_repo_config_code("get_html_bucket_path()")
+    s3_html_coverage_path = os.path.join(
+        s3_html_bucket_path, s3_html_base_dir, s3_html_coverage_dir
+    )
+    # Copy HTML coverage data from the local dir to S3.
+    local_coverage_path = "./htmlcov"
+    cp_cmd = f"aws s3 cp {local_coverage_path} {s3_html_coverage_path} --recursive --profile {aws_profile}"
+    _LOG.info(
+        "HTML coverage report is published on S3: path=`%s`",
+        s3_html_coverage_path,
+    )
+    hsystem.system(cp_cmd)
+
+
 @task
-def run_coverage_report(ctx):
-    target_dir = "oms"
-    cmd = f"invoke run_fast_tests --coverage -p {target_dir}; cp .coverage .coverage_fast_tests"
-    _run(ctx, cmd)
-    cmd = f"invoke run_slow_tests --coverage -p {target_dir}; cp .coverage .coverage_slow_tests"
-    _run(ctx, cmd)
-    cmd = []
-    cmd.append(
+def run_coverage_report(  # type: ignore
+    ctx,
+    target_dir,
+    generate_html_report=True,
+    publish_html_on_s3=True,
+    aws_profile="ck",
+):
+    """
+    Compute test coverage stats.
+
+    The flow is:
+       - Run tests and compute coverage stats for each test type
+       - Combine coverage stats in a single file
+       - Generate a text report
+       - Generate a HTML report (optional)
+          - Post it on S3 (optional)
+
+    :param target_dir: directory to compute coverage stats for
+    :param generate_html_report: whether to generate HTML coverage report or not
+    :param publish_html_on_s3: whether to publish HTML coverage report or not
+    :param aws_profile: the AWS profile to use for publishing HTML report
+    """
+    # TODO(Grisha): allow user to specify which tests to run.
+    # Run tests for the target dir and collect coverage stats.
+    fast_tests_cmd = f"invoke run_fast_tests --coverage -p {target_dir}; cp .coverage .coverage_fast_tests"
+    _run(ctx, fast_tests_cmd)
+    slow_tests_cmd = f"invoke run_slow_tests --coverage -p {target_dir}; cp .coverage .coverage_slow_tests"
+    _run(ctx, slow_tests_cmd)
+    #
+    report_cmd: List[str] = []
+    # Clean the previous coverage results. For some docker-specific reasons
+    # command which combines stats does not work when being run first in
+    # the chain `bash -c "cmd1 && cmd2 && cmd3"`. So `erase` command which
+    # does not affect the coverage results was added as a workaround.
+    report_cmd.append(
+        "coverage erase"
+    )
+    # Merge stats for fast and slow tests into single dir.
+    report_cmd.append(
         "coverage combine --keep .coverage_fast_tests .coverage_slow_tests"
     )
-    cmd.append(
-        'coverage report --include="${target_dir}/*" --omit="*/test_*.py" --sort=Cover'
+    # Only target dir is included in the reports.
+    include_in_report = f"*/{target_dir}/*"
+    # Test files are excluded from the reports.
+    exclude_from_report = "*/test/*"
+    # Generate text report with the coverage stats.
+    report_cmd.append(
+        f"coverage report --include={include_in_report} --omit={exclude_from_report} --sort=Cover"
     )
-    cmd.append('coverage html --include="${target_dir}/*" --omit="*/test_*.py"')
-    cmd = " && ".join(cmd)
-    cmd = "invoke docker_bash --cmd '%s'" % cmd
-    _run(ctx, cmd)
+    if generate_html_report:
+        # Generate HTML report with the coverage stats.
+        report_cmd.append(
+            f"coverage html --include={include_in_report} --omit={exclude_from_report}"
+        )
+    # Execute commands above one-by-one inside docker. Coverage tool is not
+    # installed outside docker.
+    full_report_cmd = " && ".join(report_cmd)
+    docker_cmd_ = f"invoke docker_cmd --use-bash --cmd '{full_report_cmd}'"
+    _run(ctx, docker_cmd_)
+    if publish_html_on_s3:
+        # Publish HTML report on S3.
+        _publish_html_coverage_report_on_s3(aws_profile)
 
 
 # #############################################################################
@@ -3501,6 +3849,19 @@ def pytest_clean(ctx):  # type: ignore
 
     hpytest.pytest_clean(".")
 
+    
+def _get_failed_tests_from_file(file_name: str) -> List[str]:
+    hdbg.dassert_file_exists(file_name)
+    # {
+    # "vendors/test/test_vendors.py::Test_gp::test1": true,
+    # "vendors/test/test_vendors.py::Test_kibot_utils1::...": true,
+    # }
+    txt = hio.from_file(file_name)
+    vals = json.loads(txt)
+    hdbg.dassert_isinstance(vals, dict)
+    tests = [k for k, v in vals.items() if v]
+    return tests
+
 
 @task
 def pytest_parse_output(  # type: ignore
@@ -3557,10 +3918,10 @@ def pytest_parse_output(  # type: ignore
     = 1 failed, 1446 passed, 148 skipped, 53 deselected, 2 xfailed, 1 rerun in 195.03s (0:03:15) =
     ```
 
-    This task parses the output of `pytest` and extract various informations:
-    - From the first part the number of tests run, skipped, x-failed
-    - From the second part the stack traces of the failing tests
-    - From the summary the summary line
+    This task parses the output of `pytest` and extract various information:
+    - From the first part - the number of tests run, skipped, x-failed
+    - From the second part - the stack traces of the failing tests
+    - From the summary  - the summary line
     ```
 
     Then process the data depending on the 
@@ -3583,10 +3944,12 @@ def pytest_parse_output(  # type: ignore
     _report_task()
     _ = ctx
     # Read file.
+    if not file_name:
+        file_name = "./.pytest_cache/v/cache/lastfailed"
     _LOG.info("Reading file_name='%s'", file_name)
     hdbg.dassert_file_exists(file_name)
-    # E.g., vendors/test/test_vendors.py::Test_gp::test1
     _LOG.info("Reading failed tests from file '%s'", file_name)
+    # E.g., vendors/test/test_vendors.py::Test_gp::test1
     tests = _get_failed_tests_from_file(file_name)
     _LOG.debug("tests=%s", str(tests))
     # Process the tests.
@@ -3643,7 +4006,7 @@ def pytest_parse_output(  # type: ignore
     res = " ".join(targets)
     _LOG.debug("res=%s", str(res))
     #
-    _to_pbcopy(res, pbcopy)
+    _to_pbcopy(res, True)
     return res
 
 
@@ -3696,13 +4059,11 @@ def pytest_compare(ctx, file_name1, file_name2):  # type: ignore
 # #############################################################################
 
 
-# TODO(gp): When running `python_execute` we could launch it inside a
-# container.
 @task
-def check_python_files(  # type: ignore
+def lint_check_python_files_in_docker(  # type: ignore
     ctx,
     python_compile=True,
-    python_execute=False,
+    python_execute=True,
     modified=False,
     branch=False,
     last_commit=False,
@@ -3711,6 +4072,8 @@ def check_python_files(  # type: ignore
 ):
     """
     Compile and execute Python files checking for errors.
+
+    This is supposed to be run inside Docker.
 
     The params have the same meaning as in `_get_files_to_process()`.
     """
@@ -3753,24 +4116,66 @@ def check_python_files(  # type: ignore
         # TODO(gp): Add also `python -c "import ..."`, if not equivalent to `compileall`.
         if python_execute:
             cmd = f"python {file_name}"
-            rc = hsysinte.system(cmd, abort_on_error=False, suppress_output=False)
+            rc = hsystem.system(cmd, abort_on_error=False, suppress_output=False)
             _LOG.debug("file_name='%s' -> python_compile=%s", file_name, rc)
             if rc != 0:
                 msg = "'%s' doesn't execute correctly" % file_name
                 _LOG.error(msg)
                 failed_filenames.append(file_name)
-    _LOG.info(
-        "failed_filenames=%s\n%s",
-        len(failed_filenames),
-        "\n".join(failed_filenames),
+    hprint.log_frame(
+        _LOG,
+        "failed_filenames=%s" % len(failed_filenames),
+        verbosity=logging.INFO,
     )
+    _LOG.info("\n".join(failed_filenames))
     error = len(failed_filenames) > 0
     return error
 
 
+@task
+def lint_check_python_files(  # type: ignore
+    ctx,
+    python_compile=True,
+    python_execute=True,
+    modified=False,
+    branch=False,
+    last_commit=False,
+    all_=False,
+    files="",
+):
+    """
+    Compile and execute Python files checking for errors.
+
+    The params have the same meaning as in `_get_files_to_process()`.
+    """
+    _ = python_compile, python_execute, modified, branch, last_commit, all_, files
+    # Execute the same command line but inside the container. E.g.,
+    # /Users/saggese/src/venv/amp.client_venv/bin/invoke lint_docker_check_python_files --branch
+    cmd_line = hdbg.get_command_line()
+    # Replace the full path of invoke with just `invoke`.
+    cmd_line = cmd_line.split()
+    cmd_line = ["/venv/bin/invoke lint_check_python_files_in_docker"] + cmd_line[
+        2:
+    ]
+    docker_cmd_ = " ".join(cmd_line)
+    cmd = f'invoke docker_cmd --cmd="{docker_cmd_}"'
+    _run(ctx, cmd)
+
+
 def _get_lint_docker_cmd(
-    precommit_opts: str, run_bash: bool, stage: str, as_user: bool
+    docker_cmd_: str,
+    run_bash: bool,
+    stage: str,
+    as_user: bool,
 ) -> str:
+    """
+    Create a command to run in Docker.
+
+    For parameter descriptions, see `lint()`.
+
+    :param docker_cmd_: command to run inside the container
+    :return: the full command to run in Docker
+    """
     superproject_path, submodule_path = hgit.get_path_from_supermodule()
     if superproject_path:
         # We are running in a Git submodule.
@@ -3785,32 +4190,41 @@ def _get_lint_docker_cmd(
     # image="*****.dkr.ecr.us-east-1.amazonaws.com/dev_tools:local"
     ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
     image = f"{ecr_base_path}/dev_tools:{stage}"
-    docker_cmd_ = ["docker run", "--rm"]
-    if stage == "local":
-        # For local stage also map repository root to /app.
-        docker_cmd_.append(f"-v '{repo_root}':/app")
+    docker_wrapper_cmd = ["docker run", "--rm"]
+    if stage in ("local", "dev"):
+        # Map repository root to /app in the container, so that we can
+        # reuse the current code being developed inside Docker before
+        # releasing the prod image.
+        docker_wrapper_cmd.append(f"-v '{repo_root}':/app")
     if run_bash:
-        docker_cmd_.append("-it")
+        docker_wrapper_cmd.append("-it")
     else:
-        docker_cmd_.append("-t")
+        docker_wrapper_cmd.append("-t")
     if as_user:
-        docker_cmd_.append(r"--user $(id -u):$(id -g)")
-    docker_cmd_.extend(
+        docker_wrapper_cmd.append(r"--user $(id -u):$(id -g)")
+    docker_wrapper_cmd.extend(
         [
+            # Pass MYPYPATH for `mypy` to find the packages from PYTHONPATH.
+            "-e MYPYPATH",
             f"-v '{repo_root}':/src",
             f"--workdir={work_dir}",
             f"{image}",
         ]
     )
     # Build the command inside Docker.
-    cmd = f"'pre-commit {precommit_opts}'"
+    cmd = f"'{docker_cmd_}'"
     if run_bash:
         _LOG.warning("Run bash instead of:\n  > %s", cmd)
         cmd = "bash"
-    docker_cmd_.append(cmd)
-    #
-    docker_cmd_ = _to_single_line_cmd(docker_cmd_)
-    return docker_cmd_
+    docker_wrapper_cmd.append(cmd)
+    docker_wrapper_cmd = _to_single_line_cmd(docker_wrapper_cmd)
+    if run_bash:
+        # We don't execute this command since pty=True corrupts the terminal
+        # session.
+        print("# To get a bash session inside Docker run:")
+        print(docker_wrapper_cmd)
+        sys.exit(0)
+    return docker_wrapper_cmd
 
 
 def _parse_linter_output(txt: str) -> str:
@@ -3852,6 +4266,43 @@ def _parse_linter_output(txt: str) -> str:
 
 
 @task
+def lint_detect_cycles(  # type: ignore
+    ctx,
+    dir_name=".",
+    run_bash=False,
+    # TODO(gp): This is the backdoor.
+    stage="prod",
+    as_user=True,
+    out_file_name="lint_detect_cycles.output.txt",
+):
+    """
+    Detect cyclic imports in the directory files.
+
+    For param descriptions, see `lint()`.
+
+    :param dir_name: the name of the dir to detect cyclic imports in
+        - By default, the check will be carried out in the dir from where
+          the task is run
+    """
+    _report_task()
+    # Remove the log file.
+    if os.path.exists(out_file_name):
+        cmd = f"rm {out_file_name}"
+        _run(ctx, cmd)
+    as_user = _run_docker_as_user(as_user)
+    # Prepare the command line.
+    docker_cmd_opts = [dir_name]
+    docker_cmd_ = "/app/import_check/detect_import_cycles.py " + _to_single_line_cmd(
+        docker_cmd_opts
+    )
+    # Execute command line.
+    cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
+    cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
+    # Run.
+    _run(ctx, cmd)
+
+
+@task
 def lint(  # type: ignore
     ctx,
     modified=False,
@@ -3868,6 +4319,7 @@ def lint(  # type: ignore
     parse_linter_output=True,
     stage="prod",
     as_user=True,
+    out_file_name="linter_output.txt",
 ):
     """
     Lint files.
@@ -3894,12 +4346,12 @@ def lint(  # type: ignore
     :param parse_linter_output: parse linter output and generate vim cfile
     :param stage: the image stage to use
     :param as_user: pass the user / group id or not
+    :param out_file_name: name of the file to save the log output in
     """
     _report_task()
-    lint_file_name = "linter_output.txt"
     # Remove the file.
-    if os.path.exists(lint_file_name):
-        cmd = f"rm {lint_file_name}"
+    if os.path.exists(out_file_name):
+        cmd = f"rm {out_file_name}"
         _run(ctx, cmd)
     # The available phases are:
     # ```
@@ -3984,16 +4436,10 @@ def lint(  # type: ignore
                 "-c /app/.pre-commit-config.yaml",
                 f"--files {files_as_str}",
             ]
-            precommit_opts = _to_single_line_cmd(precommit_opts)
+            docker_cmd_ = "pre-commit " + _to_single_line_cmd(precommit_opts)
             # Execute command line.
-            cmd = _get_lint_docker_cmd(precommit_opts, run_bash, stage, as_user)
-            cmd = f"({cmd}) 2>&1 | tee -a {lint_file_name}"
-            if run_bash:
-                # We don't execute this command since pty=True corrupts the terminal
-                # session.
-                print("# To get a bash session inside Docker run:")
-                print(cmd)
-                return
+            cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
+            cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
             # Run.
             _run(ctx, cmd)
     else:
@@ -4001,8 +4447,8 @@ def lint(  # type: ignore
     #
     if parse_linter_output:
         # Parse the linter output into a cfile.
-        _LOG.info("Parsing '%s'", lint_file_name)
-        txt = hio.from_file(lint_file_name)
+        _LOG.info("Parsing '%s'", out_file_name)
+        txt = hio.from_file(out_file_name)
         cfile = _parse_linter_output(txt)
         cfile_name = "./linter_warnings.txt"
         hio.to_file(cfile_name, cfile)
@@ -4053,13 +4499,12 @@ def _get_workflow_table() -> htable.TableType:
     """
     # Get the workflow status from GH.
     cmd = "export NO_COLOR=1; gh run list"
-    _, txt = hsysinte.system_to_string(cmd)
+    _, txt = hsystem.system_to_string(cmd)
     _LOG.debug(hprint.to_str("txt"))
     # pylint: disable=line-too-long
     # > gh run list
     # STATUS  NAME                                                        WORKFLOW    BRANCH                                                EVENT              ID          ELAPSED  AGE
     # X       Amp task1786 integrate 2021118 (#1857)                    Fast tests  master                                                push               1477484584  5m40s    23m
-    # ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ       Amp task1786 integrate 2021118 (#1857)                    Slow tests  master                                                push               1477484582  6m38s    23m
     # X       Merge branch 'master' into AmpTask1786_Integrate_2021118  Fast tests  AmpTask1786_Integrate_2021118                         pull_request       1477445218  5m52s    34m
     # pylint: enable=line-too-long
     # The output is tab separated, so convert it into CSV.
@@ -4136,7 +4581,10 @@ def gh_workflow_list(
         # Find the first success.
         num_rows = table.size()[0]
         for i in range(num_rows):
-            status = table_tmp.get_column("status")[i]
+            status_column = table_tmp.get_column("status")
+            _LOG.debug("status_column=%s", str(status_column))
+            hdbg.dassert_lt(i, len(status_column))
+            status = status_column[i]
             if status == "success":
                 print(f"Workflow '{workflow}' for '{branch_name}' is ok")
                 break
@@ -4150,11 +4598,11 @@ def gh_workflow_list(
                 log_file_name = f"tmp.failure.{workflow}.{branch_name}.txt"
                 log_file_name = log_file_name.replace(" ", "_").lower()
                 cmd = f"gh run view {workload_id} --log-failed >{log_file_name}"
-                hsysinte.system(cmd)
+                hsystem.system(cmd)
                 print(f"# Log is in '{log_file_name}'")
                 # Run_fast_tests  Run fast tests  2021-12-19T00:19:38.3394316Z FAILED data
                 cmd = rf"grep 'Z FAILED ' {log_file_name}"
-                hsysinte.system(cmd, suppress_output=False, abort_on_error=False)
+                hsystem.system(cmd, suppress_output=False, abort_on_error=False)
                 break
             elif status == "":
                 # It's in progress.
@@ -4242,7 +4690,7 @@ def _get_gh_issue_title(issue_id: int, repo_short_name: str) -> Tuple[str, str]:
     # {"title":"Update GH actions for amp"}
     hdbg.dassert_lte(1, issue_id)
     cmd = f"gh issue view {issue_id} --repo {repo_full_name_with_host} --json title,url"
-    _, txt = hsysinte.system_to_string(cmd)
+    _, txt = hsystem.system_to_string(cmd)
     _LOG.debug("txt=\n%s", txt)
     # Parse json.
     dict_ = json.loads(txt)
@@ -4291,7 +4739,7 @@ def _check_if_pr_exists(title: str) -> bool:
     # > gh pr diff AmpTask1955_Lint_20211219
     # no pull requests found for branch "AmpTask1955_Lint_20211219"
     cmd = f"gh pr diff {title}"
-    rc = hsysinte.system(cmd, abort_on_error=False)
+    rc = hsystem.system(cmd, abort_on_error=False)
     pr_exists = rc == 0
     return pr_exists
 
@@ -4385,7 +4833,7 @@ def gh_create_pr(  # type: ignore
 
 def _save_dir_status(dir_name: str, filename: str) -> None:
     cmd = f'find {dir_name} -name "*" | sort | xargs ls -ld >{filename}'
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
     _LOG.info("Saved dir status in %s", filename)
 
 
@@ -4418,7 +4866,7 @@ def _find_files_for_user(dir_name: str, user: str, is_equal: bool) -> List[str]:
     _LOG.debug("")
     mode = "\\!" if not is_equal else ""
     cmd = f'find {dir_name} -name "*" {mode} -user "{user}"'
-    _, txt = hsysinte.system_to_string(cmd)
+    _, txt = hsystem.system_to_string(cmd)
     files: List[str] = txt.split("\n")
     return files
 
@@ -4430,7 +4878,7 @@ def _find_files_for_group(dir_name: str, group: str, is_equal: bool) -> List[str
     _LOG.debug("")
     mode = "\\!" if not is_equal else ""
     cmd = f'find {dir_name} -name "*" {mode} -group "{group}"'
-    _, txt = hsysinte.system_to_string(cmd)
+    _, txt = hsystem.system_to_string(cmd)
     files: List[str] = txt.split("\n")
     return files
 
@@ -4444,7 +4892,7 @@ def _compute_stats_by_user_and_group(dir_name: str) -> Tuple[Dict, Dict, Dict]:
     _LOG.debug("")
     # Find all files.
     cmd = f'find {dir_name} -name "*"'
-    _, txt = hsysinte.system_to_string(cmd)
+    _, txt = hsystem.system_to_string(cmd)
     files = txt.split("\n")
     # Get the user of each file.
     user_to_files: Dict[str, List[str]] = {}
@@ -4485,7 +4933,7 @@ def _ls_l(files: List[str], size: int = 100) -> str:
         files_tmp = files[pos : pos + size]
         files_tmp = [f"'{f}'" for f in files_tmp]
         cmd = "ls -ld %s" % " ".join(files_tmp)
-        _, txt_tmp = hsysinte.system_to_string(cmd)
+        _, txt_tmp = hsystem.system_to_string(cmd)
         txt.append(txt_tmp)
     return "\n".join(txt)
 
@@ -4500,7 +4948,7 @@ def _exec_cmd_by_chunks(
         files_tmp = files[pos : pos + size]
         files_tmp = [f"'{f}'" for f in files_tmp]
         cmd = "%s %s" % (cmd, " ".join(files_tmp))
-        hsysinte.system(cmd, abort_on_error=abort_on_error)
+        hsystem.system(cmd, abort_on_error=abort_on_error)
 
 
 def _print_problems(dir_name: str = ".") -> None:
@@ -4510,7 +4958,7 @@ def _print_problems(dir_name: str = ".") -> None:
     This function is used for debugging.
     """
     _, _, file_to_user_group = _compute_stats_by_user_and_group(dir_name)
-    user = hsysinte.get_user_name()
+    user = hsystem.get_user_name()
     docker_user = get_default_param("DOCKER_USER")
     # user_group = f"{user}_g"
     # shared_group = get_default_param("SHARED_GROUP")
@@ -4552,13 +5000,13 @@ def _change_file_ownership(file: str, abort_on_error: bool) -> None:
     tmp_file = file + ".OLD"
     #
     cmd = f"mv {file} {tmp_file}"
-    hsysinte.system(cmd, abort_on_error=abort_on_error)
+    hsystem.system(cmd, abort_on_error=abort_on_error)
     #
     cmd = f"cp {tmp_file} {file}"
-    hsysinte.system(cmd, abort_on_error=abort_on_error)
+    hsystem.system(cmd, abort_on_error=abort_on_error)
     #
     cmd = f"rm -rf {tmp_file}"
-    hsysinte.system(cmd, abort_on_error=abort_on_error)
+    hsystem.system(cmd, abort_on_error=abort_on_error)
 
 
 def _fix_invalid_owner(dir_name: str, fix: bool, abort_on_error: bool) -> None:
@@ -4571,14 +5019,14 @@ def _fix_invalid_owner(dir_name: str, fix: bool, abort_on_error: bool) -> None:
     _LOG.info("Before fix")
     _, _, file_to_user_group = _compute_stats_by_user_and_group(dir_name)
     #
-    user = hsysinte.get_user_name()
+    user = hsystem.get_user_name()
     docker_user = get_default_param("DOCKER_USER")
     for file, (curr_user, _) in tqdm.tqdm(file_to_user_group.items()):
         if curr_user not in (user, docker_user):
             _LOG.info("Fixing file '%s'", file)
             hdbg.dassert_file_exists(file)
             cmd = f"ls -l {file}"
-            hsysinte.system(
+            hsystem.system(
                 cmd, abort_on_error=abort_on_error, suppress_output=False
             )
             if fix:
@@ -4597,7 +5045,7 @@ def _fix_group(dir_name: str, fix: bool, abort_on_error: bool) -> None:
     _, _, file_to_user_group = _compute_stats_by_user_and_group(dir_name)
     if fix:
         # Get the user and the group.
-        user = hsysinte.get_user_name()
+        user = hsystem.get_user_name()
         user_group = f"{user}_g"
         shared_group = get_default_param("SHARED_GROUP")
         #
@@ -4612,7 +5060,7 @@ def _fix_group(dir_name: str, fix: bool, abort_on_error: bool) -> None:
             else:
                 # For files not owned by the current user, we need to `sudo`.
                 cmd = f"sudo -u {curr_user} {cmd}"
-            hsysinte.system(cmd, abort_on_error=abort_on_error)
+            hsystem.system(cmd, abort_on_error=abort_on_error)
         _LOG.info("After fix")
         _, _, file_to_user_group = _compute_stats_by_user_and_group(dir_name)
     else:
@@ -4625,7 +5073,7 @@ def _fix_group_permissions(dir_name: str, abort_on_error: bool) -> None:
     """
     _LOG.info("\n%s", hprint.frame(hintros.get_function_name()))
     _, _, file_to_user_group = _compute_stats_by_user_and_group(dir_name)
-    user = hsysinte.get_user_name()
+    user = hsystem.get_user_name()
     # docker_user = get_default_param("DOCKER_USER")
     for file, (curr_user, curr_group) in tqdm.tqdm(file_to_user_group.items()):
         _ = curr_group
@@ -4638,12 +5086,12 @@ def _fix_group_permissions(dir_name: str, abort_on_error: bool) -> None:
             if curr_user != user:
                 # For files not owned by the current user, we need to `sudo`.
                 cmd = f"sudo -u {curr_user} {cmd}"
-            hsysinte.system(cmd, abort_on_error=abort_on_error)
+            hsystem.system(cmd, abort_on_error=abort_on_error)
         is_dir = os.path.isdir(file)
         if is_dir:
             # pylint: disable=line-too-long
             # From https://www.gnu.org/software/coreutils/manual/html_node/Directory-Setuid-and-Setgid.html
-            # If a directoryÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂs set-group-ID bit is set, newly created subfiles
+            # If a directory
             # inherit the same group as the directory,
             # pylint: enable=line-too-long
             has_set_group_id = st_mode & stat.S_ISGID
@@ -4652,7 +5100,7 @@ def _fix_group_permissions(dir_name: str, abort_on_error: bool) -> None:
                 if curr_user != user:
                     # For files not owned by the current user, we need to `sudo`.
                     cmd = f"sudo -u {curr_user} {cmd}"
-                hsysinte.system(cmd, abort_on_error=abort_on_error)
+                hsystem.system(cmd, abort_on_error=abort_on_error)
 
 
 @task
@@ -4713,3 +5161,9 @@ def fix_perms(  # type: ignore
 # 25163 /compose_app_run_ab27e17f2c47
 # 18721 /compose_app_run_de23819a6bc2
 # pylint: enable=line-too-long
+
+# TODO(gp): Based on:
+# > git remote get-url origin
+# git@github.com:alphamatic/amp.git
+# Run
+# gh auth login --with-token <~/github_pat.gpsaggese.txt

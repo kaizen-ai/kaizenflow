@@ -5,7 +5,7 @@ import helpers.hsecrets as hsecret
 """
 
 import json
-from typing import Optional, Any, Dict
+from typing import Any, Dict, Optional
 
 import boto3
 from botocore.client import BaseClient
@@ -14,15 +14,13 @@ from botocore.exceptions import ClientError
 import helpers.hdbg as hdbg
 
 
-def get_secrets_client(*, aws_profile: str = 'ck') -> BaseClient:
+def get_secrets_client(*, aws_profile: str = "ck") -> BaseClient:
     """
     Return client to work with AWS Secrets Manager in the specified region.
     """
     hdbg.dassert_isinstance(aws_profile, str)
     session = boto3.session.Session(profile_name=aws_profile)
-    client = session.client(
-        service_name="secretsmanager"
-    )
+    client = session.client(service_name="secretsmanager")
     return client
 
 
@@ -62,36 +60,33 @@ def store_secret(
     """
     Store secret values(s) into AWS secrets manager, specify secret as a dict
     of key-value pairs.
-    
+
     :return: bool representing whether writing was successful or not
     """
     hdbg.dassert_isinstance(secret_name, str)
-
     # Create a AWS Secrets Manager client.
     client = get_secrets_client()
-
-    # See https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_CreateSecret.html
-    # for the full list of exceptions
+    # See
+    # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_CreateSecret.html
+    # for the full list of exceptions.
     try:
         create_secret_value_response = client.create_secret(
             Name=secret_name,
             Description=description,
             SecretString=json.dumps(secret_value),
         )
-
-        # If no exception was thrown and we get back the name we passed in the response
-        # then the secret was stored successfully
+        # If no exception was thrown and we get back the name we passed in the
+        # response then the secret was stored successfully.
         return_name = create_secret_value_response["Name"]
         hdbg.dassert_isinstance(return_name, str)
         return create_secret_value_response["Name"] == secret_name
     except ClientError as e:
         if e.response["Error"]["Code"] == "ResourceExistsException":
-            # Let user know the secret with this name already exists
+            # Let user know the secret with this name already exists.
             raise ValueError(
                 "Secret with this name already exists:", secret_name
             ) from e
         # If not yet implemented handler then just re-raise.
         raise e
-
-    # If we did not return inside try block then something went wrong
+    # If we did not return inside try block then something went wrong.
     return False

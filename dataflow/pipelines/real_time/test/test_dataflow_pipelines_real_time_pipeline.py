@@ -1,3 +1,6 @@
+"""
+Test pipelines using MarketData.
+"""
 import asyncio
 import logging
 
@@ -11,7 +14,7 @@ import dataflow.pipelines.dataflow_example as dtfpidtfexa
 import dataflow.pipelines.returns.pipeline as dtfpirepip
 import dataflow.system as dtfsys
 import helpers.hasyncio as hasynci
-import helpers.hprint as hprint
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 import market_data as mdata
 import oms.oms_db as oomsdb
@@ -22,9 +25,12 @@ import oms.test.oms_db_helper as otodh
 
 _LOG = logging.getLogger(__name__)
 
+# TODO(gp): -> dataflow/system/test_real_time_pipeline.py
+
+# TODO(gp): Split the class in methods like TestReplayedRH8EdWithMockedOms1
 
 # TODO(gp): use dag_builder = dtfsrtdaad.RealTimeDagAdapter(base_dag_builder,
-# portfolio)
+#  portfolio)
 class TestRealTimeReturnPipeline1(hunitest.TestCase):
     """
     This test is similar to `TestRealTimeDagRunner1`. It uses:
@@ -59,10 +65,10 @@ class TestRealTimeReturnPipeline1(hunitest.TestCase):
                 initial_replayed_delay,
                 df,
             )
-            period = "last_5mins"
+            timedelta = pd.Timedelta("5T")
             source_node_kwargs = {
                 "market_data": market_data,
-                "period": period,
+                "timedelta": timedelta,
                 "asset_id_col": "asset_id",
                 "multiindex_output": False,
             }
@@ -159,10 +165,10 @@ class TestRealTimePipelineWithOms1(hunitest.TestCase):
                 initial_replayed_delay,
                 df,
             )
-            period = "last_5mins"
+            timedelta = pd.Timedelta("5T")
             source_node_kwargs = {
                 "market_data": market_data,
-                "period": period,
+                "timedelta": timedelta,
                 "asset_id_col": "asset_id",
                 "multiindex_output": True,
             }
@@ -199,6 +205,8 @@ class TestRealTimePipelineWithOms1(hunitest.TestCase):
                     "2000-01-01 15:55:00-05:00", tz="America/New_York"
                 ).time(),
                 "execution_mode": "real_time",
+                "target_gmv": 1e5,
+                "dollar_neutrality": "no_constraint",
             }
             # Set up the event loop.
             sleep_interval_in_secs = 60 * 5
@@ -272,6 +280,7 @@ class TestRealTimePipelineWithOms1(hunitest.TestCase):
 # #############################################################################
 
 
+# TODO(gp): Use SystemRunner.
 class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
     """
     Run `MvnReturns` pipeline in real-time with mocked OMS objects.
@@ -301,13 +310,13 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
         df = node.fit()["df_out"]
         df = df.swaplevel(i=0, j=1, axis=1)
         df = df["MN0"]
-        _LOG.debug("df=%s", hprint.dataframe_to_str(df))
+        _LOG.debug("df=%s", hpandas.df_to_str(df))
         # Transform a DataFlow df into a MarketData df.
         df["end_datetime"] = df.index
         df["start_datetime"] = df.index - pd.DateOffset(minutes=1)
         df["timestamp_db"] = df["end_datetime"]
         df["asset_id"] = 101
-        _LOG.debug("df=%s", hprint.dataframe_to_str(df))
+        _LOG.debug("df=%s", hpandas.df_to_str(df))
         return df
 
     def get_market_data(
@@ -380,13 +389,19 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
             portfolio = self.get_portfolio(event_loop, market_data)
             # Create the real-time DAG.
             base_dag_builder = dtfcore.MvnReturnsBuilder()
+            prediction_col = "close"
+            volatility_col = "close"
+            returns_col = "close"
+            timedelta = pd.Timedelta("5T")
+            asset_id_col = "asset_id"
             dag_builder = dtfsys.RealTimeDagAdapter(
                 base_dag_builder,
                 portfolio,
-                "close",
-                "close",
-                "last_5mins",
-                "asset_id",
+                prediction_col,
+                volatility_col,
+                returns_col,
+                timedelta,
+                asset_id_col,
             )
             _LOG.debug("dag_builder=\n%s", dag_builder)
             config = dag_builder.get_config_template()
@@ -526,13 +541,19 @@ class TestRealTimeMvnReturnsWithOms2(otodh.TestOmsDbHelper):
             portfolio = self.get_portfolio(event_loop, market_data)
             # Create the real-time DAG.
             base_dag_builder = dtfcore.MvnReturnsBuilder()
+            prediction_col = "close.ret_0"
+            volatility_col = "close.ret_0"
+            returns_col = "close.ret_0"
+            timedelta = pd.Timedelta("5T")
+            asset_id_col = "asset_id"
             dag_builder = dtfsys.RealTimeDagAdapter(
                 base_dag_builder,
                 portfolio,
-                "close.ret_0",
-                "close.ret_0",
-                "last_5mins",
-                "asset_id",
+                prediction_col,
+                volatility_col,
+                returns_col,
+                timedelta,
+                asset_id_col,
             )
             _LOG.debug("dag_builder=\n%s", dag_builder)
             config = dag_builder.get_config_template()
