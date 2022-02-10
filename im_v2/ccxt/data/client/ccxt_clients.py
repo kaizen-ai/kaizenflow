@@ -24,8 +24,6 @@ _LOG = logging.getLogger(__name__)
 # Latest historical data snapshot.
 _LATEST_DATA_SNAPSHOT = "20210924"
 
-# TODO(gp): @Grisha These classes should return a `full_symbol` and not two
-# columns `exchange_id` and `currency_pair`.
 
 # #############################################################################
 # CcxtCddClient
@@ -80,8 +78,6 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         data = self._apply_ccxt_cdd_normalization(data)
         # Apply transformations specific of the type of data.
         data = self._apply_ohlcv_transformations(data)
-        # Sort transformed data by exchange id and currency pair columns.
-        # data = data.sort_values(by=["exchange_id", "currency_pair"])
         return data
 
     def _apply_ccxt_cdd_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
