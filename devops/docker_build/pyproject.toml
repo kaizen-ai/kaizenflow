@@ -45,6 +45,7 @@ s3fs = "*"
 seaborn = "*"
 sklearn = "*"
 statsmodels = "*"
+SQLAlchemy = "*"
 tqdm = "*"
 
 [tool.poetry.dev-dependencies]
