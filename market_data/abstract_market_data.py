@@ -24,13 +24,29 @@ _LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
 
 
 # #############################################################################
-# AbstractMarketData
+# MarketData
 # #############################################################################
 
 
-# TODO(gp): @Grisha -> MarketData. We need a script (see replace_text.py) to do it
-#  since we need to update multiple repos.
-class AbstractMarketData(abc.ABC):
+# TODO(gp): @Grisha Generalize and move helpers/hdatetime.py
+def dassert_is_valid_start_end_timestamp(
+    start_ts: Optional[pd.Timestamp],
+    end_ts: Optional[pd.Timestamp],
+    left_close: bool = True,
+    right_close: bool = False,
+) -> None:
+    _LOG.debug(hprint.to_str("start_ts end_ts left_close right_close"))
+    if start_ts is not None:
+        hdbg.dassert_isinstance(start_ts, pd.Timestamp)
+    if end_ts is not None:
+        hdbg.dassert_isinstance(end_ts, pd.Timestamp)
+    # Check the requested interval.
+    if start_ts is not None and end_ts is not None:
+        # TODO(gp): This should be function of right_close and left_close.
+        hdbg.dassert_lt(start_ts, end_ts)
+
+
+class MarketData(abc.ABC):
     """
     Implement an interface to an historical / real-time source of price data.
 
