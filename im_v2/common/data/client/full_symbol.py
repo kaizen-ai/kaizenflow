@@ -53,8 +53,7 @@ def parse_full_symbol(full_symbol: FullSymbol) -> Tuple[str, str]:
     return exchange, symbol
 
 
-# TODO(gp): @Grisha -> build_full_symbol
-def construct_full_symbol(exchange: str, symbol: str) -> FullSymbol:
+def build_full_symbol(exchange: str, symbol: str) -> FullSymbol:
     """
     Combine exchange and symbol in `FullSymbol`.
     """

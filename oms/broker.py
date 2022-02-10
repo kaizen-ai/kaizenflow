@@ -118,7 +118,7 @@ class AbstractBroker(abc.ABC):
         self,
         strategy_id: str,
         account: str,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         *,
         timestamp_col: str = "end_datetime",
         column_remap: Optional[Dict[str, str]] = None,
@@ -132,7 +132,7 @@ class AbstractBroker(abc.ABC):
         self._strategy_id = strategy_id
         self._account = account
         #
-        hdbg.dassert_issubclass(market_data, mdata.AbstractMarketData)
+        hdbg.dassert_issubclass(market_data, mdata.MarketData)
         self.market_data = market_data
         self._get_wall_clock_time = market_data.get_wall_clock_time
         self._timestamp_col = timestamp_col
@@ -456,7 +456,7 @@ class MockedBroker(AbstractBroker):
 
 
 def get_execution_price(
-    market_data: mdata.AbstractMarketData,
+    market_data: mdata.MarketData,
     order: omorder.Order,
     *,
     timestamp_col: str = "end_datetime",
@@ -552,7 +552,7 @@ def get_execution_price(
 
 
 def _get_price_per_share(
-    mi: mdata.AbstractMarketData,
+    mi: mdata.MarketData,
     start_timestamp: pd.Timestamp,
     end_timestamp: pd.Timestamp,
     timestamp_col_name: str,
