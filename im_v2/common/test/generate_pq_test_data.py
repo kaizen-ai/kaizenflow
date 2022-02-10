@@ -82,14 +82,14 @@ class ParquetDataFrameGenerator:
     @property
     def asset_column_name(self) -> str:
         """
-        Obtain proper asset column name from map depending on output type.
+        Return proper asset column name from map depending on output type.
         """
         return self.ASSET_COLUMN_NAME_MAP[self._output_type]
 
     @property
     def output_type_function(self) -> Callable:
         """
-        Obtain proper function for data generation depending on output type.
+        Return proper function for data generation depending on output type.
         """
         return self._OUTPUT_TYPE_FUNCTION_MAP[self._output_type]
 
@@ -225,38 +225,6 @@ class ParquetDataFrameGenerator:
         return df
 
 
-def _run(parser: argparse.ArgumentParser) -> None:
-    # Parse args.
-    args = parser.parse_args()
-    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Generate timespan.
-    start_date = args.start_date
-    end_date = args.end_date
-    hdbg.dassert_lt(start_date, end_date)
-    timespan = pd.date_range(start_date, end_date)
-    hdbg.dassert_lt(2, len(timespan))
-    # Obtain remaining args.
-    freq = args.freq
-    output_type = args.output_type
-    partition_mode = args.partition_mode
-    assets = args.assets
-    assets = assets.split(",")
-    dst_dir = args.dst_dir
-    # Run dataframe generation.
-    pdg = ParquetDataFrameGenerator(
-        start_date, end_date, output_type, assets, freq
-    )
-    parquet_df = pdg.generate()
-    # Add partition columns to the dataframe.
-    df, partition_cols = imvcdttrut.add_date_partition_cols(
-        parquet_df, partition_mode
-    )
-    # Partition and write dataset.
-    if args.reset_index:
-        df = df.reset_index(drop=True)
-    imvcdttrut.partition_dataset(df, partition_cols, dst_dir)
-
-
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -317,6 +285,38 @@ def _parse() -> argparse.ArgumentParser:
     )
     hparser.add_verbosity_arg(parser)
     return parser
+
+
+def _run(parser: argparse.ArgumentParser) -> None:
+    # Parse args.
+    args = parser.parse_args()
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    # Generate timespan.
+    start_date = args.start_date
+    end_date = args.end_date
+    hdbg.dassert_lt(start_date, end_date)
+    timespan = pd.date_range(start_date, end_date)
+    hdbg.dassert_lt(2, len(timespan))
+    # Obtain remaining args.
+    freq = args.freq
+    output_type = args.output_type
+    partition_mode = args.partition_mode
+    assets = args.assets
+    assets = assets.split(",")
+    dst_dir = args.dst_dir
+    # Run dataframe generation.
+    pdg = ParquetDataFrameGenerator(
+        start_date, end_date, output_type, assets, freq
+    )
+    parquet_df = pdg.generate()
+    # Add partition columns to the dataframe.
+    df, partition_cols = imvcdttrut.add_date_partition_cols(
+        parquet_df, partition_mode
+    )
+    # Partition and write dataset.
+    if args.reset_index:
+        df = df.reset_index(drop=True)
+    imvcdttrut.partition_dataset(df, partition_cols, dst_dir)
 
 
 if __name__ == "__main__":
