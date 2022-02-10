@@ -3867,8 +3867,8 @@ def _get_failed_tests_from_file(file_name: str) -> List[str]:
 def pytest_parse_output(  # type: ignore
     ctx,
     target_type="tests",
-    file_name="",
-):
+    file_name="./.pytest_cache/v/cache/lastfailed",
+) -> List[str]:
     """
     Process the list of failed tests from a `pytest` run.
 
@@ -3918,7 +3918,7 @@ def pytest_parse_output(  # type: ignore
     = 1 failed, 1446 passed, 148 skipped, 53 deselected, 2 xfailed, 1 rerun in 195.03s (0:03:15) =
     ```
 
-    This task parses the output of `pytest` and extract various information:
+    This task parses the output of `pytest` and extracts various information:
     - From the first part - the number of tests run, skipped, x-failed
     - From the second part - the stack traces of the failing tests
     - From the summary  - the summary line
@@ -3926,26 +3926,28 @@ def pytest_parse_output(  # type: ignore
 
     Then process the data depending on the 
 
-    :param target_type: specify what to print about the tests
-        - tests (default): print the failing tests in a single line, e.g.,
+    :param target_type: specify what to print about the failed tests
+        - "tests" (default): full into on the failed tests, e.g.,
             ```
-            > pytest helpers/test/test_cache.py::TestCachingOnS3::test_with_caching1 ...
+            helpers/test/test_cache.py::TestCachingOnS3::test_with_caching1
+            helpers/test/test_cache.py::TestCachingOnS3::test_with_caching2
             ```
-        - classes: print the name of all classes
+        - "classes": classes of the failed tests, e.g.,
             ```
-            > pytest helpers/test/test_cache.py::TestCachingOnS3 ...
+            helpers/test/test_cache.py::TestCachingOnS3
+            helpers/test/test_cache.py::TestCachingOnS3_2
             ```
-        - files: print the name of the files containing files
+        - "files": names of the files with the failed tests, e.g.,
             ```
-            > pytest helpers/test/test_cache.py ...
+            helpers/test/test_cache.py
+            helpers/test/test_lib_tasks.py
             ```
-    :param file_name: specify the file name containing the pytest file to parse
+    :param file_name: the name of the file containing the pytest file to parse
+    :return: pytest failures in the requested format
     """
     _report_task()
     _ = ctx
     # Read file.
-    if not file_name:
-        file_name = "./.pytest_cache/v/cache/lastfailed"
     _LOG.info("Reading file_name='%s'", file_name)
     hdbg.dassert_file_exists(file_name)
     _LOG.info("Reading failed tests from file '%s'", file_name)
@@ -3960,35 +3962,35 @@ def pytest_parse_output(  # type: ignore
         # E.g., dev_scripts/testing/test/test_run_tests.py
         # E.g., helpers/test/helpers/test/test_list.py::Test_list_1
         # E.g., core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test5
-        file_name = test_class = test_method = ""
+        test_file_name = test_class = test_method = ""
         if len(data) >= 1:
-            file_name = data[0]
+            test_file_name = data[0]
         if len(data) >= 2:
             test_class = data[1]
         if len(data) >= 3:
             test_method = data[2]
         _LOG.debug(
-            "test=%s -> (%s, %s, %s)", test, file_name, test_class, test_method
+            "test=%s -> (%s, %s, %s)", test, test_file_name, test_class, test_method
         )
-        if not os.path.exists(file_name):
-            _LOG.warning("Can't find file '%s'", file_name)
+        if not os.path.exists(test_file_name):
+            _LOG.warning("Can't find test file '%s'", test_file_name)
         if target_type == "tests":
             targets.append(test)
         elif target_type == "files":
-            if file_name != "":
-                targets.append(file_name)
+            if test_file_name != "":
+                targets.append(test_file_name)
             else:
                 _LOG.warning(
-                    "Skipping test='%s' since file_name='%s'", test, file_name
+                    "Skipping test='%s' since test_file_name='%s'", test, test_file_name
                 )
         elif target_type == "classes":
-            if file_name != "" and test_class != "":
-                targets.append(f"{file_name}::{test_class}")
+            if test_file_name != "" and test_class != "":
+                targets.append(f"{test_file_name}::{test_class}")
             else:
                 _LOG.warning(
-                    "Skipping test='%s' since file_name='%s', test_class='%s'",
+                    "Skipping test='%s' since test_file_name='%s', test_class='%s'",
                     test,
-                    file_name,
+                    test_file_name,
                     test_class,
                 )
         else:
@@ -4005,8 +4007,6 @@ def pytest_parse_output(  # type: ignore
     hdbg.dassert_isinstance(targets, list)
     res = " ".join(targets)
     _LOG.debug("res=%s", str(res))
-    #
-    _to_pbcopy(res, True)
     return res
 
 
