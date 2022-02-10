@@ -133,16 +133,16 @@ def _main(parser: argparse.ArgumentParser) -> None:
     exchange_path = os.path.join(args.s3_path, args.exchange_id)
     s3_files = s3fs_.ls(exchange_path)
     # Filter files by timestamps in names.
-    #  Example of downloaded file name: '20210207-164012.csv'
+    #  Example of downloaded file name: 'ADA_USDT_20210207-164012.csv'
     end_datetime_str = end_datetime.strftime("%Y%m%d-%H%M%S")
     start_datetime_str = start_datetime.strftime("%Y%m%d-%H%M%S")
     daily_files = [
-        f for f in s3_files if f.split("/")[-1].rstrip(".csv") <= end_datetime_str
+        f for f in s3_files if f.split("_")[-1].rstrip(".csv") <= end_datetime_str
     ]
     daily_files = [
         f
         for f in daily_files
-        if f.split("/")[-1].rstrip(".csv") >= start_datetime_str
+        if f.split("_")[-1].rstrip(".csv") >= start_datetime_str
     ]
     daily_data = []
     for file in daily_files:
