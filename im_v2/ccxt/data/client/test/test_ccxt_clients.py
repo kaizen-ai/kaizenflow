@@ -883,6 +883,6 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
             "high",
             "low",
             "close",
-            "volume"
+            "volume",
         ]
         return expected_column_names
