@@ -123,7 +123,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Read DB realtime data.
     query = (
         f"SELECT * FROM ccxt_ohlcv WHERE knowledge_timestamp >='{start_datetime}'"
-        f" AND knowledge_timestamp <= '{end_datetime}' AND exchange_id={args.exchange_id}"
+        f" AND knowledge_timestamp <= '{end_datetime}' AND exchange_id='{args.exchange_id}'"
     )
     rt_data = hsql.execute_query_to_df(connection, query)
     rt_data_reindex = reindex_on_asset_and_ts(rt_data)
