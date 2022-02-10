@@ -122,7 +122,8 @@ def partition_dataset(
     df: pd.DataFrame, partition_columns: List[str], dst_dir: str
 ) -> None:
     """
-    Save the given dataframe as Parquet file partitioned along the given columns.
+    Save the given dataframe as Parquet file partitioned along the given
+    columns.
 
     :param df: dataframe
     :param partition_columns: partitioning columns
@@ -157,7 +158,6 @@ def partition_dataset(
                 asset=B/
                     data.parquet
     ```
-
     """
     with htimer.TimedScope(logging.DEBUG, "# partition_dataset"):
         # Read.

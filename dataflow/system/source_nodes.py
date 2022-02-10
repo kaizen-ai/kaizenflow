@@ -42,7 +42,7 @@ def data_source_node_factory(
         - `ArmaGenerator`
         - `MultivariateNormalGenerator`
     - real-time data sources e.g.,
-        - `RealTimeDataSource` (which uses a full-fledged `AbstractMarketData`)
+        - `RealTimeDataSource` (which uses a full-fledged `MarketData`)
     - data generators using data from disk
         - `DiskDataSource` (which reads CSV and PQ files)
     - data generators using pluggable functions
@@ -412,7 +412,7 @@ class RealTimeDataSource(dtfcore.DataSource):
     def __init__(
         self,
         nid: dtfcore.NodeId,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         timedelta: pd.Timedelta,
         asset_id_col: Union[int, str],
         multiindex_output: bool,
@@ -421,12 +421,12 @@ class RealTimeDataSource(dtfcore.DataSource):
         Constructor.
 
         :param timedelta: how much history is needed from the real-time node. See
-            `AbstractMarketData.get_data()` for details.
+            `MarketData.get_data()` for details.
         :param asset_id_col: the name of the column from `market_data`
             containing the asset ids
         """
         super().__init__(nid)
-        hdbg.dassert_isinstance(market_data, mdata.AbstractMarketData)
+        hdbg.dassert_isinstance(market_data, mdata.MarketData)
         self._market_data = market_data
         hdbg.dassert_isinstance(timedelta, pd.Timedelta)
         self._timedelta = timedelta
@@ -469,7 +469,7 @@ class HistoricalDataSource(dtfcore.DataSource):
     def __init__(
         self,
         nid: dtfcore.NodeId,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         asset_id_col: Union[int, str],
         ts_col_name: str,
         multiindex_output: bool,
@@ -487,7 +487,7 @@ class HistoricalDataSource(dtfcore.DataSource):
         :param col_names_to_remove: name of the columns to remove from the df
         """
         super().__init__(nid)
-        hdbg.dassert_isinstance(market_data, mdata.AbstractMarketData)
+        hdbg.dassert_isinstance(market_data, mdata.MarketData)
         self._market_data = market_data
         self._asset_id_col = asset_id_col
         self._ts_col_name = ts_col_name

@@ -321,7 +321,7 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
 
     def get_market_data(
         self, event_loop: asyncio.AbstractEventLoop
-    ) -> mdata.AbstractMarketData:
+    ) -> mdata.MarketData:
         df = self.get_market_data_df()
         initial_replayed_delay = 1
         (
@@ -337,7 +337,7 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
     def get_portfolio(
         self,
         event_loop: asyncio.AbstractEventLoop,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
     ) -> omportfo.MockedPortfolio:
         db_connection = self.connection
         table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
@@ -463,7 +463,7 @@ class TestRealTimeMvnReturnsWithOms2(otodh.TestOmsDbHelper):
 
     def get_market_data(
         self, event_loop: asyncio.AbstractEventLoop
-    ) -> mdata.AbstractMarketData:
+    ) -> mdata.MarketData:
         (
             market_data,
             get_wall_clock_time,
@@ -483,7 +483,7 @@ class TestRealTimeMvnReturnsWithOms2(otodh.TestOmsDbHelper):
     def get_portfolio(
         self,
         event_loop: asyncio.AbstractEventLoop,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
     ) -> omportfo.MockedPortfolio:
         db_connection = self.connection
         table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
