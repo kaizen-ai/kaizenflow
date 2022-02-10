@@ -10,7 +10,6 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
@@ -31,14 +30,22 @@ class HistoricalPqByAssetClient(
     Provide historical data stored as Parquet by-asset.
     """
 
-    def __init__(self, asset_col_name: str, root_dir_name: str):
-        # TODO(gp): Check that the dir exists, handling the S3 case.
-        self._root_dir_name = root_dir_name
-        self._asset_col_name = asset_col_name
+    def __init__(
+        self,
+        asset_col_name: str,
+        root_dir_name: str,
+        partitioning_mode: str,
+    ):
+        """
+        Constructor.
 
-    def _dassert_is_valid_timestamp(self, timestamp: pd.Timestamp) -> None:
-        hdbg.dassert_isinstance(timestamp, pd.Timestamp)
-        hdateti.dassert_has_tz(timestamp)
+        :param asset_col_name: column name storing the asset
+        :param root_dir_name: directory storing the tiled Parquet data
+        :param partitioning_mode: how the data is partitioned, e.g., "by_year_month"
+        """
+        self._asset_col_name = asset_col_name
+        self._root_dir_name = root_dir_name
+        self._partitioning_mode = partitioning_mode
 
     def _read_data_for_multiple_symbols(
         self,
@@ -59,30 +66,16 @@ class HistoricalPqByAssetClient(
         )
         # TODO(gp): This should be done by the derived class.
         asset_ids = list(map(int, full_symbols))
-        # The filter is an OR of AND conditions:
-        # See https://arrow.apache.org/docs/python/generated/pyarrow.parquet.ParquetDataset.html
-        and_filters = []
-        # TODO(gp): Is this efficient? Is there a better way to do it, e.g., `in`?
-        # Select the OR of conditions like `asset_col_name == asset_id`.
-        and_condition = (self._asset_col_name, "in", asset_ids)
-        and_filters.append(and_condition)
-        # The data is stored by week so we need to convert the timestamps into
-        # weeks and then trim the excess.
-        # Compute the start_date.
-        if start_ts is not None:
-            self._dassert_is_valid_timestamp(start_ts)
-            # TODO(gp): Use weekofyear = start_ts.isocalendar().week
-            weekofyear = start_ts.week
-            and_condition = ("weekofyear", ">=", weekofyear)
-            and_filters.append(and_condition)
-        # Compute the end_date.
-        if end_ts is not None:
-            self._dassert_is_valid_timestamp(end_ts)
-            weekofyear = end_ts.week
-            and_condition = ("weekofyear", "<=", weekofyear)
-            and_filters.append(and_condition)
-        filters = [and_filters]
-        _LOG.debug("filters=%s", str(filters))
+        filters = hparque.get_parquet_filters_from_timestamp_interval(
+            self._partitioning_mode, start_ts, end_ts
+        )
+        asset_and_condition = [(self._asset_col_name, "in", asset_ids)]
+        if not filters:
+            filters = asset_and_condition
+        else:
+            # It is important to put assets first because of the performance.
+            # Intervals will be checked only for desired assets instead whole dataset.
+            filters.insert(0, asset_and_condition)
         # Read the data.
         # TODO(gp): Add support for S3 passing aws_profile.
         df = hparque.from_parquet(
