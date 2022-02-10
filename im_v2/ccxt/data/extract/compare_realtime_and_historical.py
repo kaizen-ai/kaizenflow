@@ -6,15 +6,17 @@ Use as:
 # Compare daily S3 and realtime data for binance.
 > im_v2/ccxt/data/extract/compare_realtime_and_historical.py \
    --db_stage 'dev' \
+   --exchange_id 'binance' \
    --db_table 'ccxt_ohlcv' \
     --aws_profile 'ck' \
-    --s3_path 's3://cryptokaizen-historical-data/binance_daily/'
+    --s3_path 's3://cryptokaizen-data/'
 
 Import as:
 
 import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
 """
 import argparse
+import os
 
 import pandas as pd
 
@@ -34,7 +36,9 @@ def reindex_on_asset_and_ts(data: pd.DataFrame) -> pd.DataFrame:
     Drops timestamps for downloading and saving.
     """
     # Drop download data timestamps.
-    data_reindex = data.drop(["end_download_timestamp", "knowledge_timestamp"], axis=1)
+    data_reindex = data.drop(
+        ["end_download_timestamp", "knowledge_timestamp"], axis=1
+    )
     # Reindex on ts and asset.
     data_reindex = data_reindex.set_index(["timestamp", "currency_pair"])
     return data_reindex
@@ -87,6 +91,13 @@ def _parse() -> argparse.ArgumentParser:
         help="DB stage to use",
     )
     parser.add_argument(
+        "--exchange_id",
+        action="store",
+        required=True,
+        type=str,
+        help="Exchange for which the comparison should be done",
+    )
+    parser.add_argument(
         "--db_table",
         action="store",
         required=False,
@@ -110,24 +121,28 @@ def _main(parser: argparse.ArgumentParser) -> None:
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
     # Read DB realtime data.
-    query = f"SELECT * FROM ccxt_ohlcv WHERE knowledge_timestamp >='{start_datetime}'" \
-            f" AND knowledge_timestamp <= {end_datetime}"
+    query = (
+        f"SELECT * FROM ccxt_ohlcv WHERE knowledge_timestamp >='{start_datetime}'"
+        f" AND knowledge_timestamp <= '{end_datetime}' AND exchange_id={args.exchange_id}"
+    )
     rt_data = hsql.execute_query_to_df(connection, query)
     rt_data_reindex = reindex_on_asset_and_ts(rt_data)
     # Connect to S3 filesystem, if provided.
     s3fs_ = hs3.get_s3fs(args.aws_profile)
-    s3_files = s3fs_.ls(args.s3_path)
+    # List files for given exchange.
+    exchange_path = os.path.join(args.s3_path, args.exchange_id)
+    s3_files = s3fs_.ls(exchange_path)
     # Filter files by timestamps in names.
-    #  Example of downloaded file name: '20210207-164012.csv'
+    #  Example of downloaded file name: 'ADA_USDT_20210207-164012.csv'
     end_datetime_str = end_datetime.strftime("%Y%m%d-%H%M%S")
     start_datetime_str = start_datetime.strftime("%Y%m%d-%H%M%S")
     daily_files = [
-        f for f in s3_files if f.split("/")[-1].rstrip(".csv") <= end_datetime_str
+        f for f in s3_files if f.split("_")[-1].rstrip(".csv") <= end_datetime_str
     ]
     daily_files = [
         f
         for f in daily_files
-        if f.split("/")[-1].rstrip(".csv") >= start_datetime_str
+        if f.split("_")[-1].rstrip(".csv") >= start_datetime_str
     ]
     daily_data = []
     for file in daily_files:
