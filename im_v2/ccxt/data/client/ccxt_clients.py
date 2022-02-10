@@ -63,17 +63,17 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         """
         Input data is indexed with numbers and looks like:
         ```
-             timestamp      open     high     low      close    volume    currency_pair exchange_id
-        0    1631145600000  3499.01  3499.49  3496.17  3496.36  346.4812  ETH_USDT      binance
-        1    1631145660000  3496.36  3501.59  3495.69  3501.59  401.9576  ETH_USDT      binance
-        2    1631145720000  3501.59  3513.10  3499.89  3513.09  579.5656  ETH_USDT      binance
+             timestamp      open     high     low      close    volume
+        0    1631145600000  3499.01  3499.49  3496.17  3496.36  346.4812
+        1    1631145660000  3496.36  3501.59  3495.69  3501.59  401.9576
+        2    1631145720000  3501.59  3513.10  3499.89  3513.09  579.5656
         ```
         Output data is indexed by timestamp and looks like:
         ```
-                                   open        currency_pair exchange_id
-        2021-09-08 20:00:00-04:00  3499.01 ... ETH_USDT      binance
-        2021-09-08 20:01:00-04:00  3496.36     ETH_USDT      binance
-        2021-09-08 20:02:00-04:00  3501.59     ETH_USDT      binance
+                                   open        close    volume
+        2021-09-08 20:00:00-04:00  3499.01 ... 3496.36  346.4812
+        2021-09-08 20:01:00-04:00  3496.36     3501.59  401.9576
+        2021-09-08 20:02:00-04:00  3501.59     3513.09  579.5656
         ```
         """
         # Apply vendor-specific transformations.
@@ -81,7 +81,7 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         # Apply transformations specific of the type of data.
         data = self._apply_ohlcv_transformations(data)
         # Sort transformed data by exchange id and currency pair columns.
-        data = data.sort_values(by=["exchange_id", "currency_pair"])
+        # data = data.sort_values(by=["exchange_id", "currency_pair"])
         return data
 
     def _apply_ccxt_cdd_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
@@ -117,8 +117,6 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
             "low",
             "close",
             "volume",
-            "currency_pair",
-            "exchange_id",
         ]
         # Verify that dataframe contains OHLCV columns.
         hdbg.dassert_is_subset(ohlcv_columns, data.columns)
@@ -306,12 +304,6 @@ class CcxtCddCsvParquetByAssetClient(
                 f"Unsupported extension {self._extension}. "
                 f"Supported extensions are: `pq`, `csv`, `csv.gz`"
             )
-        # Verify that required columns are not already in the dataframe.
-        for col in ["exchange_id", "currency_pair"]:
-            hdbg.dassert_not_in(col, data.columns)
-        # Add required columns.
-        data["exchange_id"] = exchange_id
-        data["currency_pair"] = currency_pair
         # Normalize data according to the vendor.
         data = self._apply_vendor_normalization(data)
         return data
