@@ -12,7 +12,7 @@ Use as:
      --exchange_id 'binance' \
      --universe 'v03' \
      --aws_profile 'ck' \
-     --s3_path 's3://cryptokaizen-historical-data/daily_data/binance/'
+     --s3_path 's3://cryptokaizen-data/historical/'
 """
 
 import argparse
@@ -106,7 +106,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             + hdateti.get_current_timestamp_as_string("UTC")
             + ".csv"
         )
-        path_to_file = os.path.join(args.s3_path, file_name)
+        path_to_file = os.path.join(args.s3_path, args.exchange_id, file_name)
         # Save data to S3 filesystem.
         with fs.open(path_to_file, "w") as f:
             data.to_csv(f, index=False)
