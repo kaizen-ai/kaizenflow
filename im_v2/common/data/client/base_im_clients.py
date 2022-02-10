@@ -60,7 +60,13 @@ class ImClient(abc.ABC):
     ```
     """
 
-    def __init__(self) -> None:
+    def __init__(self, vendor: str) -> None:
+        """
+        Constructor.
+
+        :param vendor: price data provider
+        """
+        self._vendor = vendor
         self._asset_id_to_full_symbol_mapping = (
             self._build_asset_id_to_full_symbol_mapping()
         )
@@ -120,7 +126,9 @@ class ImClient(abc.ABC):
             df_tmp = self._apply_im_normalizations(
                 df_tmp, full_symbol_col_name, start_ts, end_ts
             )
-            self._dassert_output_data_is_valid(df_tmp, full_symbol_col_name, start_ts, end_ts)
+            self._dassert_output_data_is_valid(
+                df_tmp, full_symbol_col_name, start_ts, end_ts
+            )
             dfs.append(df_tmp)
         df = pd.concat(dfs, axis=0)
         _LOG.debug("After im_normalization: df=\n%s", hpandas.df_to_str(df))
