@@ -86,16 +86,14 @@ class MarketDataImClient(mdabmada.AbstractMarketData):
         """
         See the parent class.
         """
-        # `ImClient` uses the convention [start_ts, end_ts).
-        # TODO(gp): Check this invariant.
         if not left_close:
             if start_ts is not None:
                 # Add one millisecond to not include the left boundary.
                 start_ts += pd.Timedelta(1, "ms")
-        if right_close:
+        if not right_close:
             if end_ts is not None:
-                # Add one millisecond to include the right boundary.
-                end_ts += pd.Timedelta(1, "ms")
+                # Subtract one millisecond not to include the right boundary.
+                end_ts -= pd.Timedelta(1, "ms")
         # TODO(gp): call dassert_is_valid_start_end_timestamp
         if not asset_ids:
             # If asset ids are not provided, get universe as full symbols.
