@@ -66,7 +66,15 @@ class ImClient(abc.ABC):
     ```
     """
 
-    def __init__(self) -> None:
+    def __init__(self, vendor: str) -> None:
+        """
+        Constructor.
+
+        :param vendor: price data provider, i.e. `CCXT` or `CDD`
+        """
+        _vendors = ["CCXT", "CDD"]
+        hdbg.dassert_in(vendor, _vendors)
+        self._vendor = vendor
         self._asset_id_to_full_symbol_mapping = (
             self._build_asset_id_to_full_symbol_mapping()
         )

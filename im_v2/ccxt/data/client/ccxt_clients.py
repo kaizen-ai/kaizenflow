@@ -41,17 +41,6 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         - E.g., `_apply_olhlcv_transformations()`, `_apply_vendor_normalization()`
     """
 
-    def __init__(self, vendor: str) -> None:
-        """
-        Constructor.
-
-        :param vendor: price data provider, i.e. `CCXT` or `CDD`
-        """
-        _vendors = ["CCXT", "CDD"]
-        hdbg.dassert_in(vendor, _vendors)
-        self._vendor = vendor
-        super().__init__()
-
     def get_universe(self) -> List[icdc.FullSymbol]:
         """
         See description in the parent class.
