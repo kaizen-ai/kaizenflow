@@ -53,10 +53,10 @@ def find_gaps(rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> pd.DataFrame:
     :return: two dataframes with data missing in respective downloads
     """
     # Get data present in daily, but not present in rt.
-    rt_missing_indices = rt_data.index.difference(rt_data.index)
-    rt_missing_data = rt_data.loc[rt_missing_indices]
+    rt_missing_indices = daily_data.index.difference(rt_data.index)
+    rt_missing_data = daily_data.loc[rt_missing_indices]
     # Get data present in rt, but not present in daily.
-    daily_missing_indices = daily_data.index.difference(rt_data.index)
+    daily_missing_indices = rt_data.index.difference(daily_data.index)
     daily_missing_data = rt_data.loc[daily_missing_indices]
     return rt_missing_data, daily_missing_data
 
@@ -69,11 +69,12 @@ def compare_rows(rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> pd.DataFram
     :param daily_data: data downloaded to S3 once daily
     :return: dataframe with data with same indices and different contents
     """
-    #
-    idx_intersection = rt_data.index.intersection(daily_data.intersection)
+    # Get rows on which on which the two dataframe indices match.
+    idx_intersection = rt_data.index.intersection(daily_data.index)
     # Get difference between daily data and rt data.
     data_difference = daily_data.loc[idx_intersection].compare(
-        rt_data.loc[idx_intersection]
+        # Remove columns not present in daily_data.
+        rt_data.drop(["id", "exchange_id"], axis=1).loc[idx_intersection]
     )
     return data_difference
 
