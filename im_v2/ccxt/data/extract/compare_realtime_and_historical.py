@@ -70,7 +70,7 @@ def compare_rows(rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> pd.DataFram
     :return: dataframe with data with same indices and different contents
     """
     #
-    idx_intersection = rt_data.index.intersection(daily_data.intersection)
+    idx_intersection = rt_data.index.intersection(daily_data.index)
     # Get difference between daily data and rt data.
     data_difference = daily_data.loc[idx_intersection].compare(
         rt_data.loc[idx_intersection]
