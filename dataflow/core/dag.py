@@ -63,13 +63,8 @@ class DAG:
         """
         Return a short representation of the DAG.
 
-        E.g.,
-        ```
-        name=None
-        mode=strict
-        nodes=[('n1', {'stage': <dataflow.core.node.Node object at 0x>})]
-        edges=[]
-        ```
+        E.g., ``` name=None mode=strict nodes=[('n1', {'stage':
+        <dataflow.core.node.Node object at 0x>})] edges=[] ```
         """
         txt = []
         txt.append(f"name={self._name}")
@@ -408,5 +403,5 @@ class DAG:
         for output_name in node.output_names:
             # TODO(gp): make it public.
             node._store_output(  # pylint: disable=protected-access
-                method, output_name, output[out]
+                method, output_name, output[output_name]
             )

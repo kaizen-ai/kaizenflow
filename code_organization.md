@@ -134,7 +134,8 @@
 - `/research_amp`
 
 ## Top level dirs
-```
+
+```text
 (cd amp; tree -L 1 -d --charset=ascii -I "*test*|*notebooks*" 2>&1 | tee /tmp/tmp)
 .
 |-- core
@@ -150,7 +151,8 @@
 ```
 
 ### helpers
-```
+
+```text
 (cd amp; tree -v --charset=ascii -I "*test*|*notebooks*" helpers 2>&1 | tee /tmp/tmp)
 
 helpers
@@ -213,7 +215,8 @@ helpers
 ```
 
 ### core
-```
+
+```test
 (cd amp; tree -v --charset=ascii -I "*test*|*notebooks*" core 2>&1 | tee /tmp/tmp)
 
 core
@@ -252,7 +255,8 @@ core
 ```
 
 ### dataflow
-```
+
+```text
 (cd amp; tree -v --charset=ascii -I "*test*|*notebooks*" dataflow 2>&1 | tee /tmp/tmp)
 
 dataflow
@@ -327,7 +331,8 @@ dataflow
 ```
 
 ### im
-```
+
+```text
 (cd amp; tree -v --charset=ascii -I "*test*|*notebooks*" im 2>&1 | tee /tmp/tmp)
 
 im
@@ -392,7 +397,8 @@ im
 ```
 
 ### market_data
-```
+
+```text
 (cd amp; tree -v --charset=ascii -I "*test*|*notebooks*" market_data 2>&1 | tee /tmp/tmp)
 
 market_data
@@ -404,7 +410,8 @@ market_data
 ```
 
 ### oms
-```
+
+```text
 (cd amp; tree -v --charset=ascii -I "*test*|*notebooks*" oms 2>&1 | tee /tmp/tmp)
 
 oms
@@ -434,7 +441,8 @@ oms
 ```
 
 ### research_amp
-```
+
+```text
 (cd amp; tree -v --charset=ascii -I "*test*|*notebooks*" research_amp 2>&1 | tee /tmp/tmp)
 
 research_amp
@@ -446,7 +454,8 @@ research_amp
 ```
 
 # All Python files
-```
+
+```text
 (cd amp; tree -v --prune --charset=ascii -P "*.py" -I "*test*|*notebooks*" 2>&1 | tee /tmp/tmp)
 
 .
@@ -944,7 +953,8 @@ research_amp
   - In case of name collision, we prepend as many dirs as necessary to make the
     filename unique
   - E.g., the files below should be renamed:
-    ```
+
+    ```bash
     > ffind.py utils.py | grep -v test
     ./amp/core/config/utils.py
       -> amp/core/config/config_utils.py
@@ -961,34 +971,36 @@ research_amp
 # Misc
 
 - To execute a vim command, go on the line
-  ```
+
+  ```bash
   :exec '!'.getline('.')
   :read /tmp/tmp
   ```
 
 - To inline in vim
-  ```
+
+  ```bash
   !(cd amp; tree -v --charset=ascii -I "*test*|*notebooks*" market_data 2>&1 | tee /tmp/tmp)
   :read /tmp/tmp
   ```
 
 - Print only dirs
-  ```
+  ```bash
   > tree -d
   ```
 
 - Print only dirs up to a certain level
-  ```
+  ```bash
   > tree -L 1 -d
   ```
 
 - Sort alphanumerically
-  ```
+  ```bash
   > tree -v
   ```
 
 - Print full name so that one can also grep
-  ```
+  ```bash
   > tree -v -f --charset=ascii -I "*test*|*notebooks*" | grep amp | grep -v dev_scripts
 
   `-- dataflow/system

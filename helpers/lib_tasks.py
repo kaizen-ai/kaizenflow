@@ -4328,6 +4328,7 @@ def lint(  # type: ignore
     phases="",
     only_format=False,
     only_check=False,
+    fast=False,
     # stage="prod",
     run_bash=False,
     run_linter_step=True,
@@ -4356,6 +4357,8 @@ def lint(  # type: ignore
     :param only_format: run only the formatting phases (e.g., black)
     :param only_check: run only the checking phases (e.g., pylint, mypy) that
         don't change the code
+    :param fast: run everything but skip pylint, which is often very picky and
+        slow
     :param run_bash: instead of running pre-commit, run bash to debug
     :param run_linter_step: run linter step
     :param parse_linter_output: parse linter output and generate vim cfile
@@ -4446,12 +4449,15 @@ def lint(  # type: ignore
         as_user = _run_docker_as_user(as_user)
         for phase in phases:
             # Prepare the command line.
-            precommit_opts = [
+            precommit_opts = []
+            precommit_opts.extend([
                 f"run {phase}",
                 "-c /app/.pre-commit-config.yaml",
                 f"--files {files_as_str}",
-            ]
+            ])
             docker_cmd_ = "pre-commit " + _to_single_line_cmd(precommit_opts)
+            if fast:
+                docker_cmd_ = "SKIP=amp_pylint " + docker_cmd_
             # Execute command line.
             cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
             cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"

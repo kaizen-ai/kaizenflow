@@ -396,18 +396,18 @@ def cross_feature_pair(
 
 
 def _log_opposite_sign_warning(
-    feature1_col,
-    feature2_col,
-    feature_cross,
+        feature1_col: str,
+        feature2_col: str,
+        feature_cross: str,
 ) -> None:
     msg = "Calculating feature cross `%s`: features `%s` and `%s` have entries with opposite signs."
     _LOG.warning(msg, feature_cross, feature1_col, feature2_col)
 
 
 def _log_negative_value_warning(
-    feature1_col,
-    feature2_col,
-    feature_cross,
+        feature1_col: str,
+        feature2_col: str,
+        feature_cross: str,
 ) -> None:
     msg = "Calculating feature cross `%s`: negative values detected in at least one of feature `%s` and `%s`."
     _LOG.warning(msg, feature_cross, feature1_col, feature2_col)
