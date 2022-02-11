@@ -99,6 +99,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             start_datetime=start_datetime,
             end_datetime=end_datetime,
         )
+        data["currency_pair"] = currency_pair
         # Get datetime of push to s3 in UTC.
         knowledge_timestamp = hdateti.get_current_timestamp_as_string("UTC")
         data["knowledge_timestamp"] = knowledge_timestamp
