@@ -22,7 +22,8 @@ import im_v2.common.data.client as icdc
 _LOG = logging.getLogger(__name__)
 
 # Latest historical data snapshot.
-_LATEST_DATA_SNAPSHOT = "20210924"
+#_LATEST_DATA_SNAPSHOT = "20210924"
+_LATEST_DATA_SNAPSHOT = "20220210"
 
 # TODO(gp): @Grisha These classes should return a `full_symbol` and not two
 # columns `exchange_id` and `currency_pair`.

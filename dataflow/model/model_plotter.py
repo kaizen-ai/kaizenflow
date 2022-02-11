@@ -196,6 +196,11 @@ class ModelPlotter:
             cumrets = cofinanc.convert_log_rets_to_pct_rets(cumrets)
         else:
             raise ValueError("Invalid cumulative returns mode `{cumrets_mode}`")
+        cumrets = cumrets["2021-10-18":].dropna()
+        #print(cumrets)
+        #assert 0
+        #cumrets = cumrets - cumrets[-1]
+        rets = rets["2021-10-01":]
         coplotti.plot_cumulative_returns(
             cumrets,
             benchmark_series=benchmark,
