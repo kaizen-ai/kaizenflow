@@ -45,7 +45,7 @@ class DummyDataSource(dtfconobas.DataSource):
 # #############################################################################
 
 
-# TODO(gp): -> DfDataSource
+# TODO(gp): @Grisha -> DfDataSource
 class ReadDataFromDf(dtfconobas.DataSource):
     """
     Accept data as a DataFrame passed through the constructor and output the
@@ -61,7 +61,7 @@ class ReadDataFromDf(dtfconobas.DataSource):
 # #############################################################################
 
 
-# TODO(gp): -> FunctionDataSource
+# TODO(gp): @Grisha -> FunctionDataSource
 class DataLoader(dtfconobas.DataSource):
     """
     Use the passed function and arguments to generate the data outputted by the
@@ -215,7 +215,7 @@ class DiskDataSource(dtfconobas.DataSource):
 # #############################################################################
 
 
-# TODO(gp): -> ArmaDataSource
+# TODO(gp): @Grisha -> ArmaDataSource
 class ArmaGenerator(dtfconobas.DataSource):
     """
     Generate price data from ARMA process returns.
@@ -304,7 +304,7 @@ class ArmaGenerator(dtfconobas.DataSource):
 # #############################################################################
 
 
-# TODO(gp): -> MultivariateNormalDataSource
+# TODO(gp): @Grisha -> MultivariateNormalDataSource
 class MultivariateNormalGenerator(dtfconobas.DataSource):
     """
     Generate price data from multivariate normal returns.

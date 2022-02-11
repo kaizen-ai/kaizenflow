@@ -30,7 +30,7 @@ import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): -> _ResamplingRule
+# TODO(gp): @Grisha -> _ResamplingRule
 _RESAMPLING_RULE_TYPE = Union[pd.DateOffset, pd.Timedelta, str]
 
 

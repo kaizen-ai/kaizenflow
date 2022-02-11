@@ -119,7 +119,7 @@ class DAG:
     def mode(self) -> str:
         return self._mode
 
-    # ////////////////
+    # /////////////////////////////////////////////////////////////////////////////
 
     def add_node(self, node: dtfcornode.Node) -> None:
         """
@@ -252,7 +252,7 @@ class DAG:
                 f"Creating edge {parent_nid} -> {child_nid} introduces a cycle!"
             )
 
-    # ////////////////
+    # /////////////////////////////////////////////////////////////////////////////
 
     def get_sources(self) -> List[dtfcornode.NodeId]:
         """
@@ -300,7 +300,7 @@ class DAG:
         )
         return sinks[0]
 
-    # ////////////////
+    # /////////////////////////////////////////////////////////////////////////////
 
     def run_dag(self, method: dtfcornode.Method) -> DagOutput:
         """
@@ -349,7 +349,7 @@ class DAG:
         node = self.get_node(nid)
         return node.get_outputs(method)
 
-    # /////////////////
+    # /////////////////////////////////////////////////////////////////////////////
 
     def _to_json(self) -> str:
         # Get internal networkx representation of the DAG.
