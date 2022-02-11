@@ -99,11 +99,14 @@ def _main(parser: argparse.ArgumentParser) -> None:
             start_datetime=start_datetime,
             end_datetime=end_datetime,
         )
+        # Get datetime of push to s3 in UTC.
+        knowledge_timestamp = hdateti.get_current_timestamp_as_string("UTC")
+        data["knowledge_timestamp"] = knowledge_timestamp
         # Get file name.
         file_name = (
             currency_pair
             + "_"
-            + hdateti.get_current_timestamp_as_string("UTC")
+            + knowledge_timestamp
             + ".csv"
         )
         path_to_file = os.path.join(args.s3_path, args.exchange_id, file_name)
