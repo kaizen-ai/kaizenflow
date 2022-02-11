@@ -56,7 +56,8 @@ eval_config = cconfig.Config.from_env_var("AM_CONFIG_CODE")
 if eval_config is None:
     #experiment_dir = "/cache/experiments/oos_experiment.RH1E.v2_0-top100.5T"
     # experiment_dir = "/app/rc_experiment.RH8Ec.v2_0-top2.5T.2009.run1"
-    experiment_dir = "/app/experiment.RH1E.kibot_v2-top2.5T"
+    #experiment_dir = "/app/experiment.RH1E.kibot_v2-top2.5T"
+    experiment_dir = "/app/experiment.RH1E.ccxt_v1-top30.5T.2018_2022"
     #experiment_dir = "/app/experiment.RH1E.kibot_v2-top20.5T"
     aws_profile = None
     selected_idxs = None
