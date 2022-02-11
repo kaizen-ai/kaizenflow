@@ -22,8 +22,7 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): @Grisha Add tests. GP to provide an example of files or we can generate
 #  them from CSV.
-# TODO(gp): ByAsset -> ByTile
-class HistoricalPqByAssetClient(
+class HistoricalPqByTileClient(
     imvcdcbimcl.ImClientReadingMultipleSymbols, abc.ABC
 ):
     """
@@ -32,6 +31,7 @@ class HistoricalPqByAssetClient(
 
     def __init__(
         self,
+        vendor: str,
         asset_col_name: str,
         root_dir_name: str,
         partitioning_mode: str,
@@ -43,9 +43,17 @@ class HistoricalPqByAssetClient(
         :param root_dir_name: directory storing the tiled Parquet data
         :param partitioning_mode: how the data is partitioned, e.g., "by_year_month"
         """
+        super().__init__(vendor)
         self._asset_col_name = asset_col_name
         self._root_dir_name = root_dir_name
         self._partitioning_mode = partitioning_mode
+
+    def get_universe(self) -> List[icdc.FullSymbol]:
+        """
+        See description in the parent class.
+        """
+        universe = imvccunun.get_vendor_universe(vendor=self._vendor)
+        return universe  # type: ignore[no-any-return]
 
     def _read_data_for_multiple_symbols(
         self,
@@ -64,8 +72,7 @@ class HistoricalPqByAssetClient(
                 "full_symbols start_ts end_ts full_symbol_col_name columns"
             )
         )
-        # TODO(gp): This should be done by the derived class.
-        asset_ids = list(map(int, full_symbols))
+        asset_ids = self.get_asset_ids_from_full_symbols(full_symbols)
         filters = hparque.get_parquet_filters_from_timestamp_interval(
             self._partitioning_mode, start_ts, end_ts
         )
@@ -127,9 +134,24 @@ class HistoricalPqByDateClient(
     """
 
     # TODO(gp): Do not pass a read_func but use an abstract method.
-    def __init__(self, asset_col_name: str, read_func):
+    def __init__(self, vendor: str, asset_col_name: str, read_func):
+        """
+        Constructor.
+
+        :param asset_col_name: column name storing the asset
+        :param root_dir_name: directory storing the tiled Parquet data
+        :param partitioning_mode: how the data is partitioned, e.g., "by_year_month"
+        """
+        super().__init__(vendor)
         self._asset_col_name = asset_col_name
         self._read_func = read_func
+
+    def get_universe(self) -> List[icdc.FullSymbol]:
+        """
+        See description in the parent class.
+        """
+        universe = imvccunun.get_vendor_universe(vendor=self._vendor)
+        return universe  # type: ignore[no-any-return]
 
     def _read_data_for_multiple_symbols(
         self,
