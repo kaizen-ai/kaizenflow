@@ -73,11 +73,15 @@ def compare_rows(rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> pd.DataFram
     idx_intersection = rt_data.index.intersection(daily_data.index)
     # Sort index and columns to allow comparison.
     daily_data_sorted = daily_data.sort_index().sort_index(axis=1)
-    # Remove columns not present in dailt_data.
-    rt_data_sorted = rt_data.loc[idx_intersection].drop(['id', 'exchange_id'], axis=1).sort_index().sort_index(axis=1)
+    # Remove columns not present in daily_data.
+    rt_data_sorted = (
+        rt_data.drop(["id", "exchange_id"], axis=1)
+        .sort_index()
+        .sort_index(axis=1)
+    )
     # Get difference between daily data and rt data.
     data_difference = daily_data_sorted.loc[idx_intersection].compare(
-        rt_data_sorted
+        rt_data_sorted.loc[idx_intersection]
     )
     return data_difference
 
