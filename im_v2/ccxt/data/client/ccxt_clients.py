@@ -24,8 +24,6 @@ _LOG = logging.getLogger(__name__)
 # Latest historical data snapshot.
 _LATEST_DATA_SNAPSHOT = "20210924"
 
-# TODO(gp): @Grisha These classes should return a `full_symbol` and not two
-# columns `exchange_id` and `currency_pair`.
 
 # #############################################################################
 # CcxtCddClient
@@ -44,47 +42,39 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
     def __init__(self, vendor: str) -> None:
         """
         Constructor.
-
-        :param vendor: price data provider, i.e. `CCXT` or `CDD`
         """
+        super().__init__(vendor)
         _vendors = ["CCXT", "CDD"]
-        hdbg.dassert_in(vendor, _vendors)
-        self._vendor = vendor
-        super().__init__()
+        hdbg.dassert_in(self._vendor, _vendors)
 
-    def get_universe(self, as_asset_ids: bool) -> List[icdc.FullSymbol]:
+    def get_universe(self) -> List[icdc.FullSymbol]:
         """
         See description in the parent class.
         """
-        universe = imvccunun.get_vendor_universe(
-            vendor=self._vendor, as_asset_ids=as_asset_ids
-        )
+        universe = imvccunun.get_vendor_universe(vendor=self._vendor)
         return universe  # type: ignore[no-any-return]
 
     def _apply_vendor_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
         """
         Input data is indexed with numbers and looks like:
         ```
-             timestamp      open     high     low      close    volume    currency_pair exchange_id
-        0    1631145600000  3499.01  3499.49  3496.17  3496.36  346.4812  ETH_USDT      binance
-        1    1631145660000  3496.36  3501.59  3495.69  3501.59  401.9576  ETH_USDT      binance
-        2    1631145720000  3501.59  3513.10  3499.89  3513.09  579.5656  ETH_USDT      binance
+             timestamp      open        close    volume
+        0    1631145600000  3499.01 ... 3496.36  346.4812
+        1    1631145660000  3496.36     3501.59  401.9576
+        2    1631145720000  3501.59     3513.09  579.5656
         ```
-
         Output data is indexed by timestamp and looks like:
         ```
-                                   open        currency_pair exchange_id
-        2021-09-08 20:00:00-04:00  3499.01 ... ETH_USDT      binance
-        2021-09-08 20:01:00-04:00  3496.36     ETH_USDT      binance
-        2021-09-08 20:02:00-04:00  3501.59     ETH_USDT      binance
+                                   open        close    volume
+        2021-09-08 20:00:00-04:00  3499.01 ... 3496.36  346.4812
+        2021-09-08 20:01:00-04:00  3496.36     3501.59  401.9576
+        2021-09-08 20:02:00-04:00  3501.59     3513.09  579.5656
         ```
         """
         # Apply vendor-specific transformations.
         data = self._apply_ccxt_cdd_normalization(data)
         # Apply transformations specific of the type of data.
         data = self._apply_ohlcv_transformations(data)
-        # Sort transformed data by exchange id and currency pair columns.
-        data = data.sort_values(by=["exchange_id", "currency_pair"])
         return data
 
     def _apply_ccxt_cdd_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
@@ -120,8 +110,6 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
             "low",
             "close",
             "volume",
-            "currency_pair",
-            "exchange_id",
         ]
         # Verify that dataframe contains OHLCV columns.
         hdbg.dassert_is_subset(ohlcv_columns, data.columns)
@@ -184,7 +172,7 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
             sql_conditions.append(f"timestamp >= {start_ts}")
         if end_ts:
             end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
-            sql_conditions.append(f"timestamp < {end_ts}")
+            sql_conditions.append(f"timestamp <= {end_ts}")
         # Append all the provided SQL conditions to the main SQL query.
         sql_conditions = " AND ".join(sql_conditions)
         sql_query = " WHERE ".join([sql_query, sql_conditions])
@@ -204,7 +192,8 @@ class CcxtCddCsvParquetByAssetClient(
     CcxtCddClient, icdc.ImClientReadingOneSymbol
 ):
     """
-    Read data from a CSV or Parquet file storing data for a single `CCXT` or `CDD` asset.
+    Read data from a CSV or Parquet file storing data for a single `CCXT` or
+    `CDD` asset.
 
     It can read data from local or S3 filesystem as backend.
 
@@ -239,7 +228,8 @@ class CcxtCddCsvParquetByAssetClient(
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
             not extension.startswith("."),
-            "The extension %s should not start with '.'", extension
+            "The extension %s should not start with '.'",
+            extension,
         )
         self._extension = extension
         self._data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
@@ -287,7 +277,7 @@ class CcxtCddCsvParquetByAssetClient(
             if end_ts:
                 # Add filtering by end timestamp if specified.
                 end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
-                filters.append(("timestamp", "<", end_ts))
+                filters.append(("timestamp", "<=", end_ts))
             if filters:
                 # Add filters to kwargs if any were set.
                 kwargs["filters"] = filters
@@ -301,18 +291,12 @@ class CcxtCddCsvParquetByAssetClient(
                 data = data[data["timestamp"] >= start_ts]
             if end_ts:
                 end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
-                data = data[data["timestamp"] < end_ts]
+                data = data[data["timestamp"] <= end_ts]
         else:
             raise ValueError(
                 f"Unsupported extension {self._extension}. "
                 f"Supported extensions are: `pq`, `csv`, `csv.gz`"
             )
-        # Verify that required columns are not already in the dataframe.
-        for col in ["exchange_id", "currency_pair"]:
-            hdbg.dassert_not_in(col, data.columns)
-        # Add required columns.
-        data["exchange_id"] = exchange_id
-        data["currency_pair"] = currency_pair
         # Normalize data according to the vendor.
         data = self._apply_vendor_normalization(data)
         return data

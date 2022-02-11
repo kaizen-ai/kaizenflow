@@ -4,7 +4,8 @@ Import as:
 import helpers.hwall_clock_time as hwacltim
 """
 
-# This should have no dependencies besides Python standard libraries.
+# This should have no dependencies besides Python standard libraries since it's used
+# in `helpers/hlogging.py`.
 
 from typing import Callable, Optional
 

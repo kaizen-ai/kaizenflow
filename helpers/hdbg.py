@@ -682,7 +682,7 @@ def init_logger(
     :param log_filename: log to that file
     :param force_verbose_format: use the verbose format for the logging
     :param force_print_format: use the print format for the logging
-    :param force_write: use white color for printing. This can pollute the
+    :param force_white: use white color for printing. This can pollute the
         output of a script when redirected to file with echo characters
     :param in_pytest: True when we are running through pytest, so that we
         can overwrite the default logger from pytest

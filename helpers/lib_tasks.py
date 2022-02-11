@@ -1082,13 +1082,13 @@ def git_branch_diff_with_master(  # type: ignore
 #   > i lint --dir-name . --only-format
 #   ```
 #
-# - Remove end-spaces
+# - Remove end-of-line spaces:
 #   ```
 #   # Remove
 #   > find . -name "*.txt" | xargs perl -pi -e 'chomp if eof'
 #   ```
 #
-# - Align `lib_tasks.py`
+# - Align `lib_tasks.py`:
 #   ```
 #   > vimdiff ~/src/{amp1,cmamp1}/tasks.py; vimdiff ~/src/{amp1,cmamp1}/helpers/lib_tasks.py
 #   ```
@@ -1957,7 +1957,10 @@ def _dassert_is_subsequent_version(version: str) -> None:
 _INTERNET_ADDRESS_RE = r"([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
 _IMAGE_BASE_NAME_RE = r"[a-z0-9_-]+"
 _IMAGE_USER_RE = r"[a-z0-9_-]+"
-_IMAGE_STAGE_RE = rf"(local(?:-{_IMAGE_USER_RE})?|dev|prod)"
+# For candidate prod images which have added hash for easy identification.
+_IMAGE_HASH_RE = r"[a-z0-9]{9}"
+_IMAGE_STAGE_RE = rf"(local(?:-{_IMAGE_USER_RE})?|dev|prod|prod(?:-{_IMAGE_HASH_RE})?)"
+
 
 
 def _dassert_is_image_name_valid(image: str) -> None:
@@ -1971,6 +1974,9 @@ def _dassert_is_image_name_valid(image: str) -> None:
       to indicate the latest
       - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev-1.0.0`
         and `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev`
+    - `prod` candidate image has a 9 character hash identifier from the 
+        corresponding Git commit
+        - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:prod-1.0.0-4rf74b83a`
 
     An image should look like:
 
@@ -2106,13 +2112,15 @@ def _get_docker_cmd(
     entrypoint: bool = True,
     as_user: bool = True,
     print_docker_config: bool = False,
+    use_bash: bool = False,
 ) -> str:
     """
     :param base_image, stage, version: like in `get_image()`
     :param cmd: command to run inside Docker container
     :param as_user: pass the user / group id or not
     :param extra_env_vars: represent vars to add, e.g., `["PORT=9999", "DRY_RUN=1"]`
-    :param print_config: print the docker config for debugging purposes
+    :param print_docker_config: print the docker config for debugging purposes
+    :param use_bash: run command through a shell
     """
     hprint.log(
         _LOG,
@@ -2217,6 +2225,8 @@ def _get_docker_cmd(
         {service_name}"""
         )
         if cmd:
+            if use_bash:
+                cmd = f"bash -c '{cmd}'"
             docker_cmd_.append(
                 rf"""
         {cmd}"""
@@ -2277,7 +2287,7 @@ def docker_bash(  # type: ignore
 
 @task
 def docker_cmd(  # type: ignore
-    ctx, base_image="", stage="dev", version="", cmd=""
+    ctx, base_image="", stage="dev", version="", cmd="", use_bash=False
 ):
     """
     Execute the command `cmd` inside a container corresponding to a stage.
@@ -2285,7 +2295,9 @@ def docker_cmd(  # type: ignore
     _report_task()
     hdbg.dassert_ne(cmd, "")
     # TODO(gp): Do we need to overwrite the entrypoint?
-    docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd)
+    docker_cmd_ = _get_docker_cmd(
+        base_image, stage, version, cmd, use_bash=use_bash
+    )
     _docker_cmd(ctx, docker_cmd_)
 
 
@@ -2601,6 +2613,7 @@ def docker_build_prod_image(  # type: ignore
     version,
     cache=True,
     base_image="",
+    candidate=False
 ):
     """
     (ONLY CI/CD) Build a prod image.
@@ -2612,6 +2625,8 @@ def docker_build_prod_image(  # type: ignore
     :param cache: note that often the prod image is just a copy of the dev
         image so caching makes no difference
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
+    :param candidate: build a prod image with a tag format: prod-{hash}
+        where hash is the output of hgit.get_head_hash 
     """
     _report_task()
     version = _resolve_version_value(version)
@@ -2621,7 +2636,15 @@ def docker_build_prod_image(  # type: ignore
     # TODO(gp): We should do a `i git_clean` to remove artifacts and check that
     #  the client is clean so that we don't release from a dirty client.
     # Build prod image.
-    image_versioned_prod = get_image(base_image, "prod", version)
+    if candidate:
+        # For candidate prod images which need to be tested on 
+        # the AWS infra add a hash identifier.
+        latest_version = None
+        image_versioned_prod = get_image(base_image, "prod", latest_version)
+        head_hash = hgit.get_head_hash(short_hash=True)
+        image_versioned_prod += f"-{head_hash}"
+    else:
+        image_versioned_prod = get_image(base_image, "prod", version)
     _dassert_is_image_name_valid(image_versioned_prod)
     #
     dockerfile = "devops/docker_build/prod.Dockerfile"
@@ -2641,13 +2664,18 @@ def docker_build_prod_image(  # type: ignore
         .
     """
     _run(ctx, cmd)
-    # Tag versioned image as latest prod image.
-    latest_version = None
-    image_prod = get_image(base_image, "prod", latest_version)
-    cmd = f"docker tag {image_versioned_prod} {image_prod}"
-    _run(ctx, cmd)
-    #
-    cmd = f"docker image ls {image_prod}"
+    if candidate:
+        _LOG.info(f"Head hash: {head_hash}")
+        cmd = f"docker image ls {image_versioned_prod}"
+    else:
+        # Tag versioned image as latest prod image.
+        latest_version = None
+        image_prod = get_image(base_image, "prod", latest_version)
+        cmd = f"docker tag {image_versioned_prod} {image_prod}"
+        _run(ctx, cmd)
+        #
+        cmd = f"docker image ls {image_prod}"
+
     _run(ctx, cmd)
 
 
@@ -2677,6 +2705,25 @@ def docker_push_prod_image(  # type: ignore
     cmd = f"docker push {image_prod}"
     _run(ctx, cmd, pty=True)
 
+@task
+def docker_push_prod_candidate_image(  # type: ignore
+    ctx,
+    candidate,
+    base_image="",
+):
+    """
+    (ONLY CI/CD) Push the "prod" candidate image to ECR.
+
+    :param candidate: hash tag of the candidate prod image to push
+    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
+    """
+    _report_task()
+    #
+    docker_login(ctx)
+    # Push image with tagged with a hash ID.
+    image_versioned_prod = get_image(base_image, "prod", None)
+    cmd = f"docker push {image_versioned_prod}-{candidate}"
+    _run(ctx, cmd, pty=True)
 
 @task
 def docker_release_prod_image(  # type: ignore
@@ -3649,24 +3696,97 @@ def run_qa_tests(  # type: ignore
         raise RuntimeError(msg)
 
 
+def _publish_html_coverage_report_on_s3(aws_profile: str) -> None:
+    """
+    Publish HTML coverage report on S3 so that it can be accessed via browser.
+
+    Target S3 dir is constructed from linux user and Git branch name, e.g.
+    `s3://...-html/html_coverage/grisha_CmTask1047_fix_tests`.
+    """
+    # Build the dir name from user and branch name.
+    user = hsystem.get_user_name()
+    branch_name = hgit.get_branch_name()
+    _LOG.debug("User='%s', branch_name='%s'", user, branch_name)
+    s3_html_coverage_dir = f"{user}_{branch_name}"
+    # Get the full path to the dir.
+    s3_html_base_dir = "html_coverage"
+    s3_html_bucket_path = hgit.execute_repo_config_code("get_html_bucket_path()")
+    s3_html_coverage_path = os.path.join(
+        s3_html_bucket_path, s3_html_base_dir, s3_html_coverage_dir
+    )
+    # Copy HTML coverage data from the local dir to S3.
+    local_coverage_path = "./htmlcov"
+    cp_cmd = f"aws s3 cp {local_coverage_path} {s3_html_coverage_path} --recursive --profile {aws_profile}"
+    _LOG.info(
+        "HTML coverage report is published on S3: path=`%s`",
+        s3_html_coverage_path,
+    )
+    hsystem.system(cp_cmd)
+
+
 @task
-def run_coverage_report(ctx):
-    target_dir = "oms"
-    cmd = f"invoke run_fast_tests --coverage -p {target_dir}; cp .coverage .coverage_fast_tests"
-    _run(ctx, cmd)
-    cmd = f"invoke run_slow_tests --coverage -p {target_dir}; cp .coverage .coverage_slow_tests"
-    _run(ctx, cmd)
-    cmd = []
-    cmd.append(
+def run_coverage_report(  # type: ignore
+    ctx,
+    target_dir,
+    generate_html_report=True,
+    publish_html_on_s3=True,
+    aws_profile="ck",
+):
+    """
+    Compute test coverage stats.
+
+    The flow is:
+       - Run tests and compute coverage stats for each test type
+       - Combine coverage stats in a single file
+       - Generate a text report
+       - Generate a HTML report (optional)
+          - Post it on S3 (optional)
+
+    :param target_dir: directory to compute coverage stats for
+    :param generate_html_report: whether to generate HTML coverage report or not
+    :param publish_html_on_s3: whether to publish HTML coverage report or not
+    :param aws_profile: the AWS profile to use for publishing HTML report
+    """
+    # TODO(Grisha): allow user to specify which tests to run.
+    # Run tests for the target dir and collect coverage stats.
+    fast_tests_cmd = f"invoke run_fast_tests --coverage -p {target_dir}; cp .coverage .coverage_fast_tests"
+    _run(ctx, fast_tests_cmd)
+    slow_tests_cmd = f"invoke run_slow_tests --coverage -p {target_dir}; cp .coverage .coverage_slow_tests"
+    _run(ctx, slow_tests_cmd)
+    #
+    report_cmd: List[str] = []
+    # Clean the previous coverage results. For some docker-specific reasons
+    # command which combines stats does not work when being run first in
+    # the chain `bash -c "cmd1 && cmd2 && cmd3"`. So `erase` command which
+    # does not affect the coverage results was added as a workaround.
+    report_cmd.append(
+        "coverage erase"
+    )
+    # Merge stats for fast and slow tests into single dir.
+    report_cmd.append(
         "coverage combine --keep .coverage_fast_tests .coverage_slow_tests"
     )
-    cmd.append(
-        'coverage report --include="${target_dir}/*" --omit="*/test_*.py" --sort=Cover'
+    # Only target dir is included in the reports.
+    include_in_report = f"*/{target_dir}/*"
+    # Test files are excluded from the reports.
+    exclude_from_report = "*/test/*"
+    # Generate text report with the coverage stats.
+    report_cmd.append(
+        f"coverage report --include={include_in_report} --omit={exclude_from_report} --sort=Cover"
     )
-    cmd.append('coverage html --include="${target_dir}/*" --omit="*/test_*.py"')
-    cmd = " && ".join(cmd)
-    cmd = "invoke docker_bash --cmd '%s'" % cmd
-    _run(ctx, cmd)
+    if generate_html_report:
+        # Generate HTML report with the coverage stats.
+        report_cmd.append(
+            f"coverage html --include={include_in_report} --omit={exclude_from_report}"
+        )
+    # Execute commands above one-by-one inside docker. Coverage tool is not
+    # installed outside docker.
+    full_report_cmd = " && ".join(report_cmd)
+    docker_cmd_ = f"invoke docker_cmd --use-bash --cmd '{full_report_cmd}'"
+    _run(ctx, docker_cmd_)
+    if publish_html_on_s3:
+        # Publish HTML report on S3.
+        _publish_html_coverage_report_on_s3(aws_profile)
 
 
 # #############################################################################
@@ -4187,7 +4307,7 @@ def lint_detect_cycles(  # type: ignore
     as_user = _run_docker_as_user(as_user)
     # Prepare the command line.
     docker_cmd_opts = [dir_name]
-    docker_cmd_ = "import_check/detect_import_cycles.py " + _to_single_line_cmd(
+    docker_cmd_ = "/app/import_check/detect_import_cycles.py " + _to_single_line_cmd(
         docker_cmd_opts
     )
     # Execute command line.

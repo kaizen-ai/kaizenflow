@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 """
-Script to download historical data from CCXT.
+Download historical data from CCXT and save to S3. The script is meant to run
+daily for reconciliation with realtime data.
 
 Use as:
 
-# Download data for CCXT for trading universe `v03` from 2019-01-01 to now:
-> download_historical_data.py \
-     --dst_dir 'test' \
+# Download data for CCXT for binance from 2022-02-08 to 2022-02-09:
+> im_v2/ccxt/data/extract/download_historical_data.py \
+     --to_datetime '2022-02-09' \
+     --from_datetime '2022-02-08' \
+     --exchange_id 'binance' \
      --universe 'v03' \
-     --start_datetime '2019-01-01'
-
-Import as:
-
-import im_v2.ccxt.data.extract.download_historical_data as imvcdedhda
+     --aws_profile 'ck' \
+     --s3_path 's3://cryptokaizen-data/historical/'
 """
 
 import argparse
@@ -22,9 +22,10 @@ import time
 
 import pandas as pd
 
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import helpers.hio as hio
 import helpers.hparser as hparser
+import helpers.hs3 as hs3
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import im_v2.ccxt.universe.universe as imvccunun
 
@@ -37,49 +38,42 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--dst_dir",
+        "--to_datetime",
         action="store",
         required=True,
         type=str,
-        help="Folder to download files to",
+        help="End of the downloaded period",
+    )
+    parser.add_argument(
+        "--from_datetime",
+        action="store",
+        required=True,
+        type=str,
+        help="Beginning of the downloaded period",
+    )
+    parser.add_argument(
+        "--exchange_id",
+        action="store",
+        required=True,
+        type=str,
+        help="Name of exchange to download data from",
     )
     parser.add_argument(
         "--universe",
         action="store",
         required=True,
         type=str,
-        help="Trade universe to download data for, e.g. 'latest', '01'",
-    )
-    parser.add_argument(
-        "--start_datetime",
-        action="store",
-        required=True,
-        type=str,
-        help="Start date of download to parse with pd.Timestamp",
-    )
-    parser.add_argument(
-        "--end_datetime",
-        action="store",
-        type=str,
-        default=None,
-        help="End date of download to parse with pd.Timestamp. "
-        "None means datetime.now())",
-    )
-    parser.add_argument(
-        "--step",
-        action="store",
-        type=int,
-        default=None,
-        help="Size of each API request per iteration",
+        help="Trade universe to download data for",
     )
     parser.add_argument(
         "--sleep_time",
         action="store",
         type=int,
-        default=60,
+        default=5,
         help="Sleep time between currency pair downloads (in seconds).",
     )
     parser.add_argument("--incremental", action="store_true")
+    parser = hs3.add_s3_args(parser)
     parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
 
@@ -87,46 +81,41 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Create the directory.
-    hio.create_dir(args.dst_dir, incremental=args.incremental)
-    # Handle start and end datetime.
-    start_datetime = pd.Timestamp(args.start_datetime)
-    if not args.end_datetime:
-        # If end datetime is not provided, use the current time.
-        end_datetime = pd.Timestamp.now()
-    else:
-        end_datetime = pd.Timestamp(args.end_datetime)
+    # Connect to S3 filesystem, if provided.
+    if args.aws_profile:
+        fs = hs3.get_s3fs(args.aws_profile)
+    exchange = imvcdeexcl.CcxtExchange(args.exchange_id)
     # Load trading universe.
-    if args.universe == "latest":
-        trade_universe = imvccunun.get_trade_universe()["CCXT"]
-    else:
-        trade_universe = imvccunun.get_trade_universe(args.universe)["CCXT"]
-    _LOG.info("Getting data for exchanges %s", ", ".join(trade_universe.keys()))
-    for exchange_id in trade_universe:
-        # Initialize the exchange class.
-        exchange = imvcdeexcl.CcxtExchange(exchange_id)
-        for currency_pair in trade_universe[exchange_id]:
-            _LOG.info("Downloading currency pair '%s'", currency_pair)
-            # Download OHLCV data.
-            currency_pair_data = exchange.download_ohlcv_data(
-                currency_pair,
-                start_datetime=start_datetime,
-                end_datetime=end_datetime,
-                bar_per_iteration=args.step,
-            )
-            # Sleep between iterations.
-            time.sleep(args.sleep_time)
-            # Create file name based on exchange and currency pair.
-            # E.g. 'binance_BTC_USDT.csv.gz'
-            file_name = f"{exchange_id}-{currency_pair}.csv.gz"
-            full_path = os.path.join(args.dst_dir, file_name)
-            # Save file.
-            currency_pair_data.to_csv(
-                full_path,
-                index=False,
-                compression="gzip",
-            )
-            _LOG.debug("Saved data to %s", file_name)
+    universe = imvccunun.get_trade_universe(args.universe)
+    # Load a list of currency pars.
+    currency_pairs = universe["CCXT"][args.exchange_id]
+    # Convert timestamps.
+    end_datetime = pd.Timestamp(args.to_datetime)
+    start_datetime = pd.Timestamp(args.from_datetime)
+    for currency_pair in currency_pairs:
+        # Download OHLCV data.
+        data = exchange.download_ohlcv_data(
+            currency_pair.replace("_", "/"),
+            start_datetime=start_datetime,
+            end_datetime=end_datetime,
+        )
+        data["currency_pair"] = currency_pair
+        # Get datetime of push to s3 in UTC.
+        knowledge_timestamp = hdateti.get_current_timestamp_as_string("UTC")
+        data["knowledge_timestamp"] = knowledge_timestamp
+        # Get file name.
+        file_name = (
+            currency_pair
+            + "_"
+            + knowledge_timestamp
+            + ".csv"
+        )
+        path_to_file = os.path.join(args.s3_path, args.exchange_id, file_name)
+        # Save data to S3 filesystem.
+        with fs.open(path_to_file, "w") as f:
+            data.to_csv(f, index=False)
+        # Sleep between iterations.
+        time.sleep(args.sleep_time)
 
 
 if __name__ == "__main__":

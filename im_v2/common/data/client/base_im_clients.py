@@ -26,16 +26,10 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Consider splitting in one file per class. Not sure about the trade-off
 #  between file proliferation and more organization.
 
-# TODO(gp): @Grisha Replace AbstractImClient -> ImClient everywhere
-
 # TODO(gp): The output of ImClient should be in the form of `start_timestamp`,
 #  `end_timestamp`, and `knowledge_timestamp` since these depend on the specific
 #  data source. @Grisha let's do this, but let's schedule a clean up later and
 #  not right now
-
-# TODO(gp): @Grisha ensure that the intervals returned by all ImClient are like
-#  [a, b] and all the descriptions are consistent. Let's do it after porting more
-#  vendors (e.g., Kibot, EODData)
 
 
 class ImClient(abc.ABC):
@@ -66,7 +60,13 @@ class ImClient(abc.ABC):
     ```
     """
 
-    def __init__(self) -> None:
+    def __init__(self, vendor: str) -> None:
+        """
+        Constructor.
+
+        :param vendor: price data provider
+        """
+        self._vendor = vendor
         self._asset_id_to_full_symbol_mapping = (
             self._build_asset_id_to_full_symbol_mapping()
         )
@@ -98,16 +98,14 @@ class ImClient(abc.ABC):
                 "full_symbols start_ts end_ts full_symbol_col_name kwargs"
             )
         )
-        imvcdcfusy.check_full_symbols(full_symbols)
+        imvcdcfusy.dassert_valid_full_symbols(full_symbols)
         # Check the requested interval.
-        # TODO(gp): @Grisha use dassert_is_valid_interval.
-        if start_ts is not None:
-            hdbg.dassert_isinstance(start_ts, pd.Timestamp)
-        if end_ts is not None:
-            hdbg.dassert_isinstance(end_ts, pd.Timestamp)
-        if start_ts is not None and end_ts is not None:
-            hdbg.dassert_lte(start_ts, end_ts)
-        #
+        left_close = True
+        right_close = True
+        hdateti.dassert_is_valid_interval(
+            start_ts, end_ts, left_close, right_close
+        )
+        # Delegate to the derived classes to retrieve the data.
         df = self._read_data(
             full_symbols,
             start_ts,
@@ -128,7 +126,9 @@ class ImClient(abc.ABC):
             df_tmp = self._apply_im_normalizations(
                 df_tmp, full_symbol_col_name, start_ts, end_ts
             )
-            self._dassert_is_valid(df_tmp, full_symbol_col_name)
+            self._dassert_output_data_is_valid(
+                df_tmp, full_symbol_col_name, start_ts, end_ts
+            )
             dfs.append(df_tmp)
         df = pd.concat(dfs, axis=0)
         _LOG.debug("After im_normalization: df=\n%s", hpandas.df_to_str(df))
@@ -167,24 +167,15 @@ class ImClient(abc.ABC):
 
     # /////////////////////////////////////////////////////////////////////////
 
-    # TODO(gp): @Grisha if as_asset_ids=True is the output type correct? Maybe
-    #  we should just have a separate function for FullSymbol -> asset_ids
-    #  conversion.
     @staticmethod
     @abc.abstractmethod
-    def get_universe(as_asset_ids: bool) -> List[imvcdcfusy.FullSymbol]:
+    def get_universe() -> List[imvcdcfusy.FullSymbol]:
         """
         Return the entire universe of valid full symbols.
-
-        :param as_asset_ids: if True return universe as numeric ids,
-            otherwise universe as full symbols
         """
 
-    # TODO(gp): @Grisha we are mixing string vs int and asset_ids vs full_symbols.
-    #  One is the type, the other is the semantic.
-    # This should be called -> get_asset_ids_from_full_symbols
     @staticmethod
-    def get_numerical_ids_from_full_symbols(
+    def get_asset_ids_from_full_symbols(
         full_symbols: List[imvcdcfusy.FullSymbol],
     ) -> List[int]:
         """
@@ -193,14 +184,13 @@ class ImClient(abc.ABC):
         :param full_symbols: assets as full symbols
         :return: assets as numerical ids
         """
-        numeric_asset_id = [
-            imvcuunut.string_to_numeric_id(full_symbol)
+        numerical_asset_id = [
+            imvcuunut.string_to_numerical_id(full_symbol)
             for full_symbol in full_symbols
         ]
-        return numeric_asset_id
+        return numerical_asset_id
 
-    # TODO(gp): @Grisha -> get_full_symbols_from_asset_ids
-    def get_full_symbols_from_numerical_ids(
+    def get_full_symbols_from_asset_ids(
         self, asset_ids: List[int]
     ) -> List[imvcdcfusy.FullSymbol]:
         """
@@ -237,12 +227,12 @@ class ImClient(abc.ABC):
         Build asset id to full symbol mapping.
         """
         # Get full symbol universe.
-        full_symbol_universe = self.get_universe(as_asset_ids=False)
+        full_symbol_universe = self.get_universe()
         # Build the mapping.
         asset_id_to_full_symbol_mapping = (
-            imvcuunut.build_num_to_string_id_mapping(full_symbol_universe)
+            imvcuunut.build_numerical_to_string_id_mapping(full_symbol_universe)
         )
-        return asset_id_to_full_symbol_mapping
+        return asset_id_to_full_symbol_mapping  # type: ignore[no-any-return]
 
     def _get_start_end_ts_for_symbol(
         self, full_symbol: imvcdcfusy.FullSymbol, mode: str
@@ -300,9 +290,13 @@ class ImClient(abc.ABC):
         df.index = df.index.tz_convert("UTC")
         return df
 
-    # TODO(gp): @Grisha -> _dassert_output_data_is_valid
     @staticmethod
-    def _dassert_is_valid(df: pd.DataFrame, full_symbol_col_name: str) -> None:
+    def _dassert_output_data_is_valid(
+        df: pd.DataFrame,
+        full_symbol_col_name: str,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+    ) -> None:
         """
         Verify that the normalized data is valid.
         """
@@ -330,10 +324,11 @@ class ImClient(abc.ABC):
         hdbg.dassert_eq(
             n_duplicated_rows, 0, msg="There are duplicated rows in the data"
         )
-        # TODO(gp): @Grisha pass start_ts and end_ts and have a check
-        # # Ensure that all the data is in [start_ts, end_ts].
-        #  dassert_lte(start_ts, index.min)
-        #  dassert_lte(index.max, end_ts)
+        # Ensure that all the data is in [start_ts, end_ts].
+        if start_ts:
+            hdbg.dassert_lte(start_ts, df.index.min())
+        if end_ts:
+            hdbg.dassert_lte(df.index.max(), end_ts)
 
 
 # #############################################################################

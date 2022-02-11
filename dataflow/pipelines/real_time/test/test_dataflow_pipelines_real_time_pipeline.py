@@ -15,7 +15,6 @@ import dataflow.pipelines.returns.pipeline as dtfpirepip
 import dataflow.system as dtfsys
 import helpers.hasyncio as hasynci
 import helpers.hpandas as hpandas
-import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 import market_data as mdata
 import oms.oms_db as oomsdb
@@ -206,6 +205,8 @@ class TestRealTimePipelineWithOms1(hunitest.TestCase):
                     "2000-01-01 15:55:00-05:00", tz="America/New_York"
                 ).time(),
                 "execution_mode": "real_time",
+                "target_gmv": 1e5,
+                "dollar_neutrality": "no_constraint",
             }
             # Set up the event loop.
             sleep_interval_in_secs = 60 * 5
@@ -320,7 +321,7 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
 
     def get_market_data(
         self, event_loop: asyncio.AbstractEventLoop
-    ) -> mdata.AbstractMarketData:
+    ) -> mdata.MarketData:
         df = self.get_market_data_df()
         initial_replayed_delay = 1
         (
@@ -336,7 +337,7 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
     def get_portfolio(
         self,
         event_loop: asyncio.AbstractEventLoop,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
     ) -> omportfo.MockedPortfolio:
         db_connection = self.connection
         table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
@@ -462,7 +463,7 @@ class TestRealTimeMvnReturnsWithOms2(otodh.TestOmsDbHelper):
 
     def get_market_data(
         self, event_loop: asyncio.AbstractEventLoop
-    ) -> mdata.AbstractMarketData:
+    ) -> mdata.MarketData:
         (
             market_data,
             get_wall_clock_time,
@@ -482,7 +483,7 @@ class TestRealTimeMvnReturnsWithOms2(otodh.TestOmsDbHelper):
     def get_portfolio(
         self,
         event_loop: asyncio.AbstractEventLoop,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
     ) -> omportfo.MockedPortfolio:
         db_connection = self.connection
         table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME

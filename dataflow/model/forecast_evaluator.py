@@ -329,7 +329,9 @@ class ForecastEvaluator:
         hdbg.dassert_isinstance(dollar_neutrality, str)
         if dollar_neutrality == "no_constraint":
             pass
-        elif dollar_neutrality == "linear":
+        elif dollar_neutrality == "demean":
+            # Cross-sectionally demean signals on a per-bar basis.
+            # This is equivalent to a dollar neutralizing linear projection.
             hdbg.dassert_lt(
                 1,
                 target_positions.shape[1],
@@ -345,12 +347,16 @@ class ForecastEvaluator:
                 "dollar neutral target_positions=\n%s"
                 % hpandas.df_to_str(target_positions, num_rows=None)
             )
-        elif dollar_neutrality == "nonlinear":
+        elif dollar_neutrality == "side_preserving":
+            # This method will not flip the sign of a prediction.
+            # Note that in the event that all input signals are on the same
+            #  side, this method will raise.
             hdbg.dassert_lt(
                 1,
                 target_positions.shape[1],
                 "Unable to enforce dollar neutrality with a single asset.",
             )
+            # Track long and short market exposures separately.
             positive_asset_value = target_positions.clip(lower=0).sum(axis=1)
             negative_asset_value = -1 * target_positions.clip(upper=0).sum(axis=1)
             min_sided_asset_value = np.minimum(
@@ -359,23 +365,22 @@ class ForecastEvaluator:
             hdbg.dassert_isinstance(positive_asset_value, pd.Series)
             hdbg.dassert_isinstance(negative_asset_value, pd.Series)
             hdbg.dassert_isinstance(min_sided_asset_value, pd.Series)
-            #
+            # Downscale the side with more exposure to the same amount as the
+            # side with less.
             positive_scale_factor = min_sided_asset_value.divide(
                 positive_asset_value
             )
             negative_scale_factor = min_sided_asset_value.divide(
                 negative_asset_value
             )
-            #
             positive_positions = target_positions.clip(lower=0).multiply(
                 positive_scale_factor, axis=0
             )
             negative_positions = target_positions.clip(upper=0).multiply(
                 negative_scale_factor, axis=0
             )
+            # Reassemble the rescaled long and short positions.
             target_positions = positive_positions.add(negative_positions)
-            #
-            raise NotImplementedError("Implementation incomplete.")
         else:
             raise ValueError(
                 "Unrecognized option `dollar_neutrality`=%s" % dollar_neutrality

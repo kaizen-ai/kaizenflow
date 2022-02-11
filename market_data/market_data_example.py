@@ -417,21 +417,21 @@ def get_ReplayedTimeMarketData_example4(
 # #############################################################################
 
 
-def get_MarketDataImClient_example1(
+def get_ImClientMarketData_example1(
     asset_ids: List[int],
     columns: List[str],
     column_remap: Optional[Dict[str, str]],
-) -> mdmdimcl.MarketDataImClient:
+) -> mdmdimcl.ImClientMarketData:
     """
-    Build a `MarketDataImClient` backed with loaded test data.
+    Build a `ImClientMarketData` backed with loaded test data.
     """
     ccxt_client = ivcdctcce.get_CcxtCsvClient_example1()
     #
     asset_id_col = "asset_id"
     start_time_col_name = "start_ts"
     end_time_col_name = "end_ts"
-    get_wall_clock_time = get_MarketDataImClient_wall_clock_time
-    market_data_client = mdmdimcl.MarketDataImClient(
+    get_wall_clock_time = get_ImClientMarketData_wall_clock_time
+    market_data_client = mdmdimcl.ImClientMarketData(
         asset_id_col,
         asset_ids,
         start_time_col_name,
@@ -445,8 +445,8 @@ def get_MarketDataImClient_example1(
 
 
 # TODO(gp): We can also use a real wall clock.
-def get_MarketDataImClient_wall_clock_time() -> pd.Timestamp:
+def get_ImClientMarketData_wall_clock_time() -> pd.Timestamp:
     """
-    Get a wall clock time to build `MarketDataImClient` for tests.
+    Get a wall clock time to build `ImClientMarketData` for tests.
     """
     return pd.Timestamp("2018-08-17T01:30:00+00:00")
