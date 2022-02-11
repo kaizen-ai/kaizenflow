@@ -53,10 +53,10 @@ def find_gaps(rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> pd.DataFrame:
     :return: two dataframes with data missing in respective downloads
     """
     # Get data present in daily, but not present in rt.
-    rt_missing_indices = rt_data.index.difference(rt_data.index)
-    rt_missing_data = rt_data.loc[rt_missing_indices]
+    rt_missing_indices = daily_data.index.difference(rt_data.index)
+    rt_missing_data = daily_data.loc[rt_missing_indices]
     # Get data present in rt, but not present in daily.
-    daily_missing_indices = daily_data.index.difference(rt_data.index)
+    daily_missing_indices = rt_data.index.difference(daily_data.index)
     daily_missing_data = rt_data.loc[daily_missing_indices]
     return rt_missing_data, daily_missing_data
 
@@ -131,6 +131,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     s3fs_ = hs3.get_s3fs(args.aws_profile)
     # List files for given exchange.
     exchange_path = os.path.join(args.s3_path, args.exchange_id)
+    print(exchange_path)
     s3_files = s3fs_.ls(exchange_path)
     # Filter files by timestamps in names.
     #  Example of downloaded file name: 'ADA_USDT_20210207-164012.csv'
