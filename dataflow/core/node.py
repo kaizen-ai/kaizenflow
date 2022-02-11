@@ -84,7 +84,7 @@ class NodeInterface(abc.ABC):
         return items
 
 
-# ############################
+# #############################################################################
 
 
 # Name of a Node's method, e.g., `fit` or `predict`.
@@ -102,8 +102,8 @@ class Node(NodeInterface):
     A node class that stores and retrieves its output values on a "per-method"
     basis.
 
-    E.g., for each method (e.g., "fit" and "predict") returns a value for each
-    output.
+    E.g., for each method (e.g., "fit" and "predict") returns a value
+    for each output.
     """
 
     # TODO(gp): inputs -> input_names, outputs -> output_names

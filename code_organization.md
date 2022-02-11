@@ -1,7 +1,8 @@
 <!--ts-->
-   * [Code org of amp](#code-org-of-amp)
-      * [Top level dirs](#top-level-dirs)
+   * [Code organization of amp](#code-organization-of-amp)
+      * [Conventions](#conventions)
       * [Component dirs](#component-dirs)
+      * [Top level dirs](#top-level-dirs)
          * [helpers](#helpers)
          * [core](#core)
          * [dataflow](#dataflow)
@@ -14,25 +15,28 @@
    * [Misc](#misc)
 
 
+
 <!--te-->
+
 # Code organization of `amp`
 
 ## Conventions
+
 - In this file we use the following conventions:
-  - comments: `"""foobar is ..."""`
-  - dirs and subdirs: `/foobar`
-  - files: `foobar.py`
-  - objects: `FooBar`
-  - markdown files: `foobar.md`
+  - Comments: `"""foobar is ..."""`
+  - Dirs and subdirs: `/foobar`
+  - Files: `foobar.py`
+  - Objects: `FooBar`
+  - Markdown files: `foobar.md`
 
 ## Component dirs
 
-- The directories, subdirectory, objects are listed in order of their dependencies
-  (from innermost to outermost)
+- The directories, subdirectory, objects are listed in order of their
+  dependencies (from innermost to outermost)
 
 - `/helpers`
   - """Low-level helpers that are general and not specific of this project"""
-   
+
 - `/core`
   - """Low-level helpers that are specific of this project"""
   - `/config`
@@ -44,7 +48,7 @@
   - `finance.py`
   - `signal_processing.py`
   - `statitstics.py`
-  
+
 - `/devops`
 - `/dev_scripts`
 - `/documentation`
@@ -68,15 +72,15 @@
       - """Implementation of DataFlow nodes that don't depend on anything
         outside of this directory"""
       - `base.py`
-          - `FitPredictNode`
-          - `DataSource`
+        - `FitPredictNode`
+        - `DataSource`
       - `sources`
         - `DataLoader`
         - `ReadDataFromDf`
         - `ArmaGenerator`
       - `sinks.py`
-          - `WriteCols`
-          - `WriteDf`
+        - `WriteCols`
+        - `WriteDf`
       - `transformers.py`
       - `volatility_models.py`
       - `sklearn_models.py`
@@ -92,32 +96,32 @@
       - `DagRunners`
       - `ResultBundle`
   - `/pipelines`
-      - """DataFlow pipelines that use only `core` nodes"""
-      - `/event_study`
-      - `/features`
-        - """General feature pipelines"""
-      - `/price`
-        - """Pipelines computing prices"""
-      - `/real_times`
-        - TODO(gp): -> dataflow/system
-      - `/returns`
-        - """Pipelines computing returns"""
-      - `dataflow_example.py`
-        - `NaivePipeline`
+    - """DataFlow pipelines that use only `core` nodes"""
+    - `/event_study`
+    - `/features`
+      - """General feature pipelines"""
+    - `/price`
+      - """Pipelines computing prices"""
+    - `/real_times`
+      - TODO(gp): -> dataflow/system
+    - `/returns`
+      - """Pipelines computing returns"""
+    - `dataflow_example.py`
+      - `NaivePipeline`
   - `/system`
-      - """DataFlow pipelines with anything that depends on code outside of
-        DataFlow"""
-      - `source_nodes.py`
-        - `DataSource`
-        - `HistoricalDataSource`
-        - `RealTimeDataSource`
-      - `sink_nodes.py`
-        - `ProcessForecasts`
-      - `RealTimeDagRunner`
-      - `RealTimeDagAdapter`
-      - `ResearchDagAdapter`
+    - """DataFlow pipelines with anything that depends on code outside of
+      DataFlow"""
+    - `source_nodes.py`
+      - `DataSource`
+      - `HistoricalDataSource`
+      - `RealTimeDataSource`
+    - `sink_nodes.py`
+      - `ProcessForecasts`
+    - `RealTimeDagRunner`
+    - `RealTimeDagAdapter`
+    - `ResearchDagAdapter`
   - `/model`
-      - """Code for evaluating a DataFlow model"""
+    - """Code for evaluating a DataFlow model"""
 - `/oms`
   - """Order management system"""
   - `architecture.md`
@@ -128,7 +132,7 @@
   - `ForecastProcessor`
 - `/optimizer`
 - `/research_amp`
- 
+
 ## Top level dirs
 ```
 (cd amp; tree -L 1 -d --charset=ascii -I "*test*|*notebooks*" 2>&1 | tee /tmp/tmp)
@@ -146,7 +150,6 @@
 ```
 
 ### helpers
-
 ```
 (cd amp; tree -v --charset=ascii -I "*test*|*notebooks*" helpers 2>&1 | tee /tmp/tmp)
 

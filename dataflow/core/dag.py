@@ -7,7 +7,7 @@ import dataflow.core.dag as dtfcordag
 import itertools
 import json
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import networkx as networ
 from tqdm.autonotebook import tqdm
@@ -35,7 +35,9 @@ class DAG:
 
     # TODO(gp): -> name: str to simplify the interface
     def __init__(
-        self, name: Optional[str] = None, mode: Optional[str] = None,
+        self,
+        name: Optional[str] = None,
+        mode: Optional[str] = None,
     ) -> None:
         """
         Create a DAG.
@@ -54,9 +56,7 @@ class DAG:
         self._name = name
         # Store mode.
         mode = mode or "strict"
-        hdbg.dassert_in(
-            mode, ["strict", "loose"], "Unsupported mode requested"
-        )
+        hdbg.dassert_in(mode, ["strict", "loose"], "Unsupported mode requested")
         self._mode = mode
 
     def __str__(self) -> str:
