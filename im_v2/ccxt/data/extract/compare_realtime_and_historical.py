@@ -139,7 +139,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
     s3fs_ = hs3.get_s3fs(args.aws_profile)
     # List files for given exchange.
     exchange_path = os.path.join(args.s3_path, args.exchange_id)
-    print(exchange_path)
     s3_files = s3fs_.ls(exchange_path)
     # Filter files by timestamps in names.
     #  Example of downloaded file name: 'ADA_USDT_20210207-164012.csv'
