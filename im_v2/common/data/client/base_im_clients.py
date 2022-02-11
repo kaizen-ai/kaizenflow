@@ -26,16 +26,10 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Consider splitting in one file per class. Not sure about the trade-off
 #  between file proliferation and more organization.
 
-# TODO(gp): @Grisha Replace AbstractImClient -> ImClient everywhere
-
 # TODO(gp): The output of ImClient should be in the form of `start_timestamp`,
 #  `end_timestamp`, and `knowledge_timestamp` since these depend on the specific
 #  data source. @Grisha let's do this, but let's schedule a clean up later and
 #  not right now
-
-# TODO(gp): @Grisha ensure that the intervals returned by all ImClient are like
-#  [a, b] and all the descriptions are consistent. Let's do it after porting more
-#  vendors (e.g., Kibot, EODData)
 
 
 class ImClient(abc.ABC):
@@ -66,7 +60,13 @@ class ImClient(abc.ABC):
     ```
     """
 
-    def __init__(self) -> None:
+    def __init__(self, vendor: str) -> None:
+        """
+        Constructor.
+
+        :param vendor: price data provider
+        """
+        self._vendor = vendor
         self._asset_id_to_full_symbol_mapping = (
             self._build_asset_id_to_full_symbol_mapping()
         )
@@ -126,7 +126,9 @@ class ImClient(abc.ABC):
             df_tmp = self._apply_im_normalizations(
                 df_tmp, full_symbol_col_name, start_ts, end_ts
             )
-            self._dassert_output_data_is_valid(df_tmp, full_symbol_col_name, start_ts, end_ts)
+            self._dassert_output_data_is_valid(
+                df_tmp, full_symbol_col_name, start_ts, end_ts
+            )
             dfs.append(df_tmp)
         df = pd.concat(dfs, axis=0)
         _LOG.debug("After im_normalization: df=\n%s", hpandas.df_to_str(df))
