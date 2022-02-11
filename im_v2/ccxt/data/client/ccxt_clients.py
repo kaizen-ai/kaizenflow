@@ -61,17 +61,17 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         """
         Input data is indexed with numbers and looks like:
         ```
-             timestamp      open     high     low      close    volume
-        0    1631145600000  3499.01  3499.49  3496.17  3496.36  346.4812
-        1    1631145660000  3496.36  3501.59  3495.69  3501.59  401.9576
-        2    1631145720000  3501.59  3513.10  3499.89  3513.09  579.5656
+             timestamp            full_symbol   open        close    volume
+        0    1631145600000  binance::ETH_USDT  3499.01 ... 3496.36  346.4812
+        1    1631145660000  binance::ETH_USDT  3496.36     3501.59  401.9576
+        2    1631145720000  binance::ETH_USDT  3501.59     3513.09  579.5656
         ```
         Output data is indexed by timestamp and looks like:
         ```
-                                   open        close    volume
-        2021-09-08 20:00:00-04:00  3499.01 ... 3496.36  346.4812
-        2021-09-08 20:01:00-04:00  3496.36     3501.59  401.9576
-        2021-09-08 20:02:00-04:00  3501.59     3513.09  579.5656
+                                         full_symbol  open        close    volume
+        2021-09-08 20:00:00-04:00  binance::ETH_USDT  3499.01 ... 3496.36  346.4812
+        2021-09-08 20:01:00-04:00  binance::ETH_USDT  3496.36     3501.59  401.9576
+        2021-09-08 20:02:00-04:00  binance::ETH_USDT  3501.59     3513.09  579.5656
         ```
         """
         # Apply vendor-specific transformations.
