@@ -65,7 +65,12 @@ class HistoricalPqByAssetClient(
             )
         )
         # TODO(gp): This should be done by the derived class.
-        asset_ids = list(map(int, full_symbols))
+        # TODO(Nikola): Temporary testing.
+        import im_v2.common.universe.universe_utils as imvcuunut
+        asset_ids = [
+            imvcuunut.string_to_numerical_id(full_symbol)
+            for full_symbol in full_symbols
+        ]
         filters = hparque.get_parquet_filters_from_timestamp_interval(
             self._partitioning_mode, start_ts, end_ts
         )

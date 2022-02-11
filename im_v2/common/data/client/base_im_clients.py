@@ -287,7 +287,12 @@ class ImClient(abc.ABC):
         # so full symbol cannot be NaN.
         df[full_symbol_col_name] = df[full_symbol_col_name].fillna(method="bfill")
         # 4) Convert to UTC.
-        df.index = df.index.tz_convert("UTC")
+        # TODO(Nikola): Is this possible outside test cases?
+        #   Should we raise an error on naive?
+        if not df.index.tz:
+            df.index = df.index.tz_localize("UTC")
+        else:
+            df.index = df.index.tz_convert("UTC")
         return df
 
     @staticmethod
