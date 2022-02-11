@@ -69,7 +69,7 @@ def compare_rows(rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> pd.DataFram
     :param daily_data: data downloaded to S3 once daily
     :return: dataframe with data with same indices and different contents
     """
-    #
+    # Get rows on which on which the two dataframe indices match.
     idx_intersection = rt_data.index.intersection(daily_data.index)
     # Get difference between daily data and rt data.
     data_difference = daily_data.loc[idx_intersection].compare(
