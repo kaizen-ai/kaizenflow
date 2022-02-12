@@ -423,13 +423,10 @@ def trim_df(
 # #############################################################################
 
 
-def df_to_str(
+def _df_to_str(
     df: pd.DataFrame,
     *,
     num_rows: Optional[int] = 6,
-    print_dtypes: bool = False,
-    print_shape_info: bool = False,
-    tag: Optional[str] = None,
     max_columns: int = 10000,
     max_colwidth: int = 2000,
     max_rows: int = 500,
@@ -437,62 +434,20 @@ def df_to_str(
     display_width: int = 10000,
     use_tabulate: bool = False,
 ) -> str:
-    """
-    Print a dataframe to string reporting all the columns without trimming.
-
-    :param: num_rows: max number of rows to print (half from the top and half from
-        the bottom of the dataframe)
-        - `None` to print the entire dataframe
-    :param print_dtypes: reports dataframe types and information about the type of
-        each column by looking at the first value
-    :param print_shape_info: reports dataframe shape, index and columns
-    """
-    if df is None:
-        return ""
     out = []
-    # Print the tag.
-    if tag is not None:
-        out.append(f"# {tag}=")
-    # Print information about the shape and index.
-    if print_shape_info:
-        if not df.empty:
-            out.append("df.index in [%s, %s]" % (df.index.min(), df.index.max()))
-            out.append("df.columns=%s" % ",".join(map(str, df.columns)))
-            # TODO(Nikola): Revisit and rename print_shape_info to print_axes_info
-            out.append("df.shape=%s" % str(df.shape))
-    # Print information about the types.
-    if not df.empty:
-        if print_dtypes:
-            out.append("df.type=")
-
-            def _report_type_of_first_element(srs: "pd.Series") -> str:
-                """
-                Report dtype, the first element, and its type of series.
-                """
-                elem = srs.values[0]
-                val = "%10s %25s %s" % (srs.dtype, type(elem), elem)
-                return val
-
-            col_name = "index"
-            fmt = "  %20s: %s"
-            out.append(fmt % (col_name, _report_type_of_first_element(df.index)))
-            for col_name in df.columns:
-                out.append(
-                    fmt % (col_name, _report_type_of_first_element(df[col_name]))
-                )
     # Set dataframe print options.
     with pd.option_context(
-        "display.max_colwidth",
-        max_colwidth,
-        # "display.height", 1000,
-        "display.max_rows",
-        max_rows,
-        "display.precision",
-        precision,
-        "display.max_columns",
-        max_columns,
-        "display.width",
-        display_width,
+            "display.max_colwidth",
+            max_colwidth,
+            # "display.height", 1000,
+            "display.max_rows",
+            max_rows,
+            "display.precision",
+            precision,
+            "display.max_columns",
+            max_columns,
+            "display.width",
+            display_width,
     ):
         if use_tabulate:
             import tabulate
@@ -513,6 +468,147 @@ def df_to_str(
             tail_str = "\n".join(tail_str.split("\n")[skipped_rows:])
             out.append(tail_str)
     txt = "\n".join(out)
-    # TODO(Nikola): Temporary strip
-    txt.rstrip("\n")
+    return txt
+
+
+def df_to_str(
+    df: Union[pd.DataFrame, pd.Series],
+    *,
+    num_rows: Optional[int] = 6,
+    print_dtypes: bool = False,
+    print_shape_info: bool = False,
+    print_nan_info: bool = False,
+    print_memory_usage: bool = False,
+    memory_usage_mode: str = "human_readable",
+    tag: Optional[str] = None,
+    max_columns: int = 10000,
+    max_colwidth: int = 2000,
+    max_rows: int = 500,
+    precision: int = 6,
+    display_width: int = 10000,
+    use_tabulate: bool = False,
+) -> str:
+    """
+    Print a dataframe to string reporting all the columns without trimming.
+
+    :param: num_rows: max number of rows to print (half from the top and half from
+        the bottom of the dataframe)
+        - `None` to print the entire dataframe
+    :param print_dtypes: report dataframe types and information about the type of
+        each column by looking at the first value
+    :param print_shape_info: report dataframe shape, index and columns
+    :param print_memory_usage: report memory use for each
+    """
+    if df is None:
+        return ""
+    if isinstance(df, pd.Series):
+        df = pd.DataFrame(df)
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    out = []
+    # Print the tag.
+    if tag is not None:
+        out.append(f"# {tag}=")
+    if not df.empty:
+        # Print information about the shape and index.
+        # TODO(Nikola): Revisit and rename print_shape_info to print_axes_info
+        if print_shape_info:
+            # TODO(gp): Unfortunately we can't improve this part of the output
+            # since there are many golden inside the code that would need to be
+            # updated. Consider automating updating the expected values in the code.
+            txt = "index=[%s, %s]" % (df.index.min(), df.index.max())
+            out.append(txt)
+            txt = "columns=%s" % ",".join(map(str, df.columns))
+            out.append(txt)
+            txt = "shape=%s" % str(df.shape)
+            out.append(txt)
+        # Print information about the types.
+        if print_dtypes:
+            out.append("* type=")
+
+            table = []
+
+            def _report_srs_stats(srs: pd.Series) -> str:
+                """
+                Report dtype, the first element, and its type of series.
+                """
+                row = []
+                first_elem = srs.values[0]
+                num_unique = srs.nunique()
+                num_nans = srs.isna().sum()
+                row.extend([srs.dtype, hprint.perc(num_unique, len(srs)), hprint.perc(num_nans, len(srs)), first_elem, type(first_elem)])
+                return row
+
+            row = []
+            col_name = "index"
+            row.append(col_name)
+            row.extend(_report_srs_stats(df.index))
+            row = map(str, row)
+            table.append(row)
+            for col_name in df.columns:
+                row = []
+                row.append(col_name)
+                row.extend(_report_srs_stats(df[col_name]))
+                row = map(str, row)
+                table.append(row)
+            #
+            columns = ["col_name", "dtype", "num_unique", "num_nans", "first_elem", "type(first_elem)"]
+            df_stats = pd.DataFrame(table, columns=columns)
+            df_stats_as_str = _df_to_str(df_stats, num_rows=None)
+            out.append(df_stats_as_str)
+        # Print info about memory usage.
+        if print_memory_usage:
+            out.append("* memory=")
+            mem_use_df = pd.concat([
+                df.memory_usage(deep=False),
+                df.memory_usage(deep=True)], axis=1)
+            mem_use_df.columns = ["shallow", "deep"]
+            # Add total row.
+            mem_use_df_total = mem_use_df.sum(axis=0)
+            mem_use_df_total.name = "Total"
+            mem_use_df = mem_use_df.append(mem_use_df_total.T)
+            # Convert into the desired format.
+            if memory_usage_mode == "bytes":
+                pass
+            elif memory_usage_mode == "human_readable":
+                import helpers.hintrospection as hintros
+
+                mem_use_df = mem_use_df.applymap(hintros.format_size)
+            else:
+                raise ValueError("Invalid memory_usage_mode='%s'" % memory_usage_mode)
+            memory_usage_as_txt = _df_to_str(mem_use_df, num_rows=None)
+            out.append(memory_usage_as_txt)
+        # Print info about nans.
+        if print_nan_info:
+            num_elems = df.shape[0] * df.shape[1]
+            num_nans = df.isna().sum().sum()
+            txt = "num_nans=%s" % hprint.perc(num_nans, num_elems)
+            out.append(txt)
+            #
+            num_zeros = df.isnull().sum().sum()
+            txt = "num_zeros=%s" % hprint.perc(num_zeros, num_elems)
+            out.append(txt)
+            # TODO(gp): np can't do isinf on objects like strings.
+            #num_infinite = np.isinf(df).sum().sum()
+            #txt = "num_infinite=%s" % hprint.perc(num_infinite, num_elems)
+            #out.append(txt)
+            #
+            num_nan_rows = df.dropna().shape[0]
+            txt = "num_nan_rows=%s" % hprint.perc(num_nan_rows, num_elems)
+            out.append(txt)
+            #
+            num_nan_cols = df.dropna(axis=1).shape[1]
+            txt = "num_nan_cols=%s" % hprint.perc(num_nan_cols, num_elems)
+            out.append(txt)
+    # Print the df.
+    df_as_str = _df_to_str(
+            df,
+            num_rows=num_rows,
+            max_columns=max_columns,
+            max_colwidth=max_colwidth,
+            max_rows=max_rows,
+            precision=precision,
+            display_width=display_width,
+            use_tabulate=use_tabulate)
+    out.append(df_as_str)
+    txt = "\n".join(out)
     return txt

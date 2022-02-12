@@ -38,7 +38,15 @@ def get_user_name() -> str:
     return res
 
 
-def get_memory_usage(process: Optional[Any] = None) -> Tuple[float, float, float]:
+# #############################################################################
+
+# TODO(gp): Consider moving to hmemory.py
+
+
+MemoryUsage = Tuple[float, float, float]
+
+
+def get_memory_usage(process: Optional[Any] = None) -> MemoryUsage:
     """
     Return the memory usage in terms of resident, virtual, and percent of total
     used memory.
@@ -53,17 +61,26 @@ def get_memory_usage(process: Optional[Any] = None) -> Tuple[float, float, float
     return (rss_in_GB, vms_in_GB, mem_pct)
 
 
+def memory_to_str(resource_use: MemoryUsage, *, verbose: bool =True) -> str:
+    (rss_in_GB, vms_in_GB, mem_pct) = resource_use
+    if verbose:
+        txt = "rss=%.3fGB vms=%.3fGB mem_pct=%.0f%%" % (
+            rss_in_GB,
+            vms_in_GB,
+            mem_pct,
+        )
+    else:
+        txt = "%.3fGB %.3fGB %.0f%%" % (rss_in_GB, vms_in_GB, mem_pct)
+    return txt
+
+
 def get_memory_usage_as_str(process: Optional[Any] = None) -> str:
     """
     Like `get_memory_usage()` but returning a formatted string.
     """
-    (rss_in_GB, vms_in_GB, mem_pct) = get_memory_usage(process)
-    resource_use = "rss=%.3fGB vms=%.3fGB mem_pct=%.0f%%" % (
-        rss_in_GB,
-        vms_in_GB,
-        mem_pct,
-    )
-    return resource_use
+    resource_use = get_memory_usage(process)
+    txt = memory_to_str(resource_use)
+    return txt
 
 
 # #############################################################################

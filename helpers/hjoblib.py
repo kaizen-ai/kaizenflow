@@ -537,7 +537,8 @@ def parallel_execute(
     """
     # Print the parameters.
     print(hprint.frame("Workload"))
-    print(workload_to_string(workload, use_pprint=False))
+    # It's too verbose to print all the workload.
+    # print(workload_to_string(workload, use_pprint=False))
     _LOG.info(
         hprint.to_str(
             "dry_run num_threads incremental num_attempts abort_on_error"

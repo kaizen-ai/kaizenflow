@@ -7,6 +7,8 @@ import dataflow.model as dtfmod
 from dataflow.model.experiment_config import *  # pylint: disable=unused-import # NOQA
 from dataflow.model.forecast_evaluator import *  # pylint: disable=unused-import # NOQA
 from dataflow.model.forecast_mixer import *  # pylint: disable=unused-import # NOQA
+from dataflow.model.parquet_tile_analyzer import *  # pylint: disable=unused-import # NOQA
+from dataflow.model.parquet_utils import *  # pylint: disable=unused-import # NOQA
 from dataflow.model.regression_analyzer import *  # pylint: disable=unused-import # NOQA
 from dataflow.model.stats_computer import *  # pylint: disable=unused-import # NOQA
 from dataflow.model.utils import *  # pylint: disable=unused-import # NOQA

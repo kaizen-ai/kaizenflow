@@ -9,6 +9,7 @@ import time
 from typing import Any, Callable, Optional, Tuple, cast
 
 import helpers.hdbg as hdbg
+import helpers.hlogging as hloggin
 
 _LOG = logging.getLogger(__name__)
 
@@ -122,6 +123,8 @@ _TimerMemento = Tuple[int, str, Timer]
 
 def dtimer_start(log_level: int, message: str) -> _TimerMemento:
     """
+    Start measuring time.
+
     :return: memento of the timer.
     """
     _LOG.log(log_level, "%s ...", message)
@@ -131,6 +134,8 @@ def dtimer_start(log_level: int, message: str) -> _TimerMemento:
 
 def dtimer_stop(memento: _TimerMemento) -> Tuple[str, float]:
     """
+    End measuring time.
+
     :return:
       - message as as string
       - time in seconds (int)
@@ -166,9 +171,13 @@ class TimedScope:
     ```
     """
 
-    def __init__(self, log_level: int, message: str):
+    def __init__(self, log_level: int, message: str,
+                 *,
+                 profile_memory: bool = False):
         self._log_level = log_level
         self._message = message
+        # TODO(gp): Implement profiling also memory using dmemory_start/end.
+        # State.
         self._memento: Optional[_TimerMemento] = None
         self.elapsed_time = None
 
@@ -180,6 +189,10 @@ class TimedScope:
         if self._memento is not None:
             msg, self.elapsed_time = dtimer_stop(self._memento)
             _ = msg
+
+    def get_result(self) -> str:
+        msg = "%s done (%.3f s)" % (self._message, self.elapsed_time)
+        return msg
 
 
 # #############################################################################
@@ -203,7 +216,51 @@ def timed(f: Callable) -> Callable:
     return wrapper
 
 
-# #############################################################################
-
 # TODO(gp): Add an object that accumulates the times from multiple timers.
 #  E.g., use a dict for message -> time
+
+
+# #############################################################################
+
+
+_MemoryMemento = Tuple[int, str, hloggin.MemoryUsage]
+
+def dmemory_start(log_level: int, message: str) -> _MemoryMemento:
+    """
+    Start measuring memory.
+
+    :return: memento of the memory profile
+    """
+    _LOG.log(log_level, "%s ...", message)
+    memory_usage = hloggin.get_memory_usage()
+    memento = (log_level, message, memory_usage)
+    return memento
+
+
+def dmemory_stop(memento: _MemoryMemento, *, mode: str = "all") -> str:
+    """
+    Stop measuring memory.
+
+    :return: message as as string
+    """
+    log_level, message, start_memory_usage = memento
+    end_memory_usage = hloggin.get_memory_usage()
+    verbose = False
+    start_mem = hloggin.memory_to_str(start_memory_usage, verbose=verbose)
+    end_mem = hloggin.memory_to_str(end_memory_usage, verbose=verbose)
+    diff_mem = tuple([x - y for x, y in zip(end_memory_usage, start_memory_usage)])
+    diff_mem = hloggin.memory_to_str(diff_mem, verbose=verbose)
+    # Package the output.
+    msg = []
+    msg.append("%s done:" % message)
+    if mode == "all":
+        msg.append(f"start=({start_mem})")
+        msg.append(f"end=({end_mem})")
+        msg.append(f"diff=({diff_mem})")
+    elif mode == "only_diff":
+        msg.append(f"diff=({diff_mem})")
+    else:
+        raise ValueError("Invalid mode='%s'" % mode)
+    msg = " ".join(msg)
+    _LOG.log(log_level, msg)
+    return msg
