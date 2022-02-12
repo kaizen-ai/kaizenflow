@@ -149,6 +149,10 @@ def get_parquet_filters_from_timestamp_interval(
     filters = []
     # Partition by year and month.
     if partition_mode == "by_year_month":
+        # Ensure that there is only year and month data to avoid problems with
+        # close date ranges such as `2021/12/30 - 2022/01/02`
+        start_timestamp = start_timestamp.replace(day=1, hour=0, minute=0)
+        end_timestamp = end_timestamp.replace(day=1, hour=0, minute=0)
         # Include last month in interval.
         end_timestamp = end_timestamp + pd.DateOffset(months=1)
         # Get all months in interval.

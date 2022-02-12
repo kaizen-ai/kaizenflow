@@ -6,7 +6,7 @@ import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
 
 import abc
 import logging
-from typing import Any, Dict, List, Optional, Callable
+from typing import Any, Callable, Dict, List, Optional
 
 import pandas as pd
 
@@ -28,6 +28,7 @@ class HistoricalPqByTileClient(
     """
     Provide historical data stored as Parquet by-asset.
     """
+
     def __init__(
         self,
         asset_col_name: str,
@@ -63,16 +64,19 @@ class HistoricalPqByTileClient(
             )
         )
         asset_ids = self.get_asset_ids_from_full_symbols(full_symbols)
+        # TODO(Nikola): Are ids string or int in dataframe?
+        asset_ids = list(map(str, asset_ids))
         filters = hparque.get_parquet_filters_from_timestamp_interval(
             self._partitioning_mode, start_ts, end_ts
         )
-        asset_and_condition = [(self._asset_col_name, "in", asset_ids)]
+        asset_and_condition = (self._asset_col_name, "in", asset_ids)
         if not filters:
-            filters = asset_and_condition
+            filters = [asset_and_condition]
         else:
-            # It is important to put assets first because of the performance.
+            # It is important to put assets first in each AND filter because of the performance.
             # Intervals will be checked only for desired assets instead whole dataset.
-            filters.insert(0, asset_and_condition)
+            for filter_ in filters:
+                filter_.insert(0, asset_and_condition)
         # Read the data.
         # TODO(gp): Add support for S3 passing aws_profile.
         df = hparque.from_parquet(
