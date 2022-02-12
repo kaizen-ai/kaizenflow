@@ -88,9 +88,9 @@ class TestReplayedMarketData1(hunitest.TestCase):
         # pylint: disable=line-too-long
         expected_df_as_str = """
         # df=
-        df.index in [2000-01-01 09:31:00-05:00, 2000-01-01 09:35:00-05:00]
-        df.columns=asset_id,last_price,start_datetime,timestamp_db
-        df.shape=(5, 4)
+        index=[2000-01-01 09:31:00-05:00, 2000-01-01 09:35:00-05:00]
+        columns=asset_id,last_price,start_datetime,timestamp_db
+        shape=(5, 4)
                                    asset_id     last_price             start_datetime              timestamp_db
         end_datetime
         2000-01-01 09:31:00-05:00      1000    999.874540   2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00
@@ -122,9 +122,9 @@ class TestReplayedMarketData1(hunitest.TestCase):
         # pylint: disable=line-too-long
         expected_df_as_str = """
         # df=
-        df.index in [2000-01-01 09:35:00-05:00, 2000-01-01 09:35:00-05:00]
-        df.columns=asset_id,last_price,start_datetime,timestamp_db
-        df.shape=(1, 4)
+        index=[2000-01-01 09:35:00-05:00, 2000-01-01 09:35:00-05:00]
+        columns=asset_id,last_price,start_datetime,timestamp_db
+        shape=(1, 4)
                                    asset_id   last_price            start_datetime              timestamp_db
         end_datetime
         2000-01-01 09:35:00-05:00      1000  1000.311925 2000-01-01 09:34:00-05:00 2000-01-01 09:35:00-05:00"""
@@ -152,9 +152,9 @@ class TestReplayedMarketData1(hunitest.TestCase):
         # pylint: disable=line-too-long
         expected_df_as_str = """
         # df=
-        df.index in [2000-01-01 09:41:00-05:00, 2000-01-01 09:50:00-05:00]
-        df.columns=asset_id,last_price,start_datetime,timestamp_db
-        df.shape=(10, 4)
+        index=[2000-01-01 09:41:00-05:00, 2000-01-01 09:50:00-05:00]
+        columns=asset_id,last_price,start_datetime,timestamp_db
+        shape=(10, 4)
                                    asset_id   last_price            start_datetime              timestamp_db
         end_datetime
         2000-01-01 09:41:00-05:00      1000   999.721952 2000-01-01 09:40:00-05:00 2000-01-01 09:41:00-05:00
@@ -188,9 +188,9 @@ class TestReplayedMarketData1(hunitest.TestCase):
         # pylint: disable=line-too-long
         expected_df_as_str = """
         # df=
-        df.index in [2000-01-01 09:31:00-05:00, 2000-01-01 10:00:00-05:00]
-        df.columns=asset_id,last_price,start_datetime,timestamp_db
-        df.shape=(30, 4)
+        index=[2000-01-01 09:31:00-05:00, 2000-01-01 10:00:00-05:00]
+        columns=asset_id,last_price,start_datetime,timestamp_db
+        shape=(30, 4)
                                    asset_id   last_price            start_datetime              timestamp_db
         end_datetime
         2000-01-01 09:31:00-05:00      1000   999.874540 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00
@@ -224,9 +224,9 @@ class TestReplayedMarketData1(hunitest.TestCase):
         # pylint: disable=line-too-long
         expected_df_as_str = """
         # df=
-        df.index in [2000-01-01 09:31:00-05:00, 2000-01-01 10:00:00-05:00]
-        df.columns=asset_id,last_price,start_datetime,timestamp_db
-        df.shape=(30, 4)
+        index=[2000-01-01 09:31:00-05:00, 2000-01-01 10:00:00-05:00]
+        columns=asset_id,last_price,start_datetime,timestamp_db
+        shape=(30, 4)
                                    asset_id   last_price            start_datetime              timestamp_db
         end_datetime
         2000-01-01 09:31:00-05:00      1000   999.874540 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00
@@ -285,9 +285,9 @@ class TestReplayedMarketData1(hunitest.TestCase):
         # pylint: disable=line-too-long
         expected_df_as_str = """
         # df=
-        df.index in [2000-01-01 09:31:00-05:00, 2000-01-01 09:31:00-05:00]
-        df.columns=asset_id,last_price,start_datetime,timestamp_db
-        df.shape=(1, 4)
+        index=[2000-01-01 09:31:00-05:00, 2000-01-01 09:31:00-05:00]
+        columns=asset_id,last_price,start_datetime,timestamp_db
+        shape=(1, 4)
                                    asset_id  last_price            start_datetime              timestamp_db
         end_datetime
         2000-01-01 09:31:00-05:00      1000   999.87454 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00"""
@@ -315,9 +315,9 @@ class TestReplayedMarketData1(hunitest.TestCase):
         # pylint: disable=line-too-long
         expected_df_as_str = """
         # df=
-        df.index in [2000-01-01 09:31:00-05:00, 2000-01-01 09:33:00-05:00]
-        df.columns=asset_id,last_price,start_datetime,timestamp_db
-        df.shape=(3, 4)
+        index=[2000-01-01 09:31:00-05:00, 2000-01-01 09:33:00-05:00]
+        columns=asset_id,last_price,start_datetime,timestamp_db
+        shape=(3, 4)
                                    asset_id  last_price            start_datetime              timestamp_db
         end_datetime
         2000-01-01 09:31:00-05:00      1000    999.874540  2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00
@@ -346,9 +346,9 @@ class TestReplayedMarketData1(hunitest.TestCase):
         # Check.
         # pylint: disable=line-too-long
         expected_df_as_str = """# df=
-        df.index in [2000-01-01 09:32:00-05:00, 2000-01-01 09:36:00-05:00]
-        df.columns=asset_id,last_price,start_datetime,timestamp_db
-        df.shape=(5, 4)
+        index=[2000-01-01 09:32:00-05:00, 2000-01-01 09:36:00-05:00]
+        columns=asset_id,last_price,start_datetime,timestamp_db
+        shape=(5, 4)
                                    asset_id  last_price            start_datetime              timestamp_db
         end_datetime
         2000-01-01 09:32:00-05:00      1000    1000.325254  2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00
@@ -379,9 +379,9 @@ class TestReplayedMarketData1(hunitest.TestCase):
         # Check.
         # pylint: disable=line-too-long
         expected_df_as_str = """# df=
-        df.index in [2000-01-01 10:29:00-05:00, 2000-01-01 10:30:00-05:00]
-        df.columns=asset_id,last_price,start_datetime,timestamp_db
-        df.shape=(2, 4)
+        index=[2000-01-01 10:29:00-05:00, 2000-01-01 10:30:00-05:00]
+        columns=asset_id,last_price,start_datetime,timestamp_db
+        shape=(2, 4)
                                    asset_id  last_price            start_datetime              timestamp_db
         end_datetime
         2000-01-01 10:29:00-05:00      1000   998.224716  2000-01-01 10:28:00-05:00 2000-01-01 10:29:00-05:00
@@ -425,9 +425,9 @@ class TestReplayedMarketData2(hunitest.TestCase):
         # pylint: disable=line-too-long
         expected_df_as_str = """
         # df=
-        df.index in [2000-01-01 09:31:00-05:00, 2000-01-01 09:35:00-05:00]
-        df.columns=asset_id,last_price,start_datetime,timestamp_db
-        df.shape=(5, 4)
+        index=[2000-01-01 09:31:00-05:00, 2000-01-01 09:35:00-05:00]
+        columns=asset_id,last_price,start_datetime,timestamp_db
+        shape=(5, 4)
                                    asset_id  last_price            start_datetime              timestamp_db
         end_datetime
         2000-01-01 09:31:00-05:00      1000    999.874540  2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00
@@ -455,9 +455,9 @@ class TestReplayedMarketData2(hunitest.TestCase):
         # pylint: disable=line-too-long
         expected_df_as_str = r"""
         # df=
-        df.index in [2000-01-01 09:36:00-05:00, 2000-01-01 09:40:00-05:00]
-        df.columns=asset_id,last_price,start_datetime,timestamp_db
-        df.shape=(5, 4)
+        index=[2000-01-01 09:36:00-05:00, 2000-01-01 09:40:00-05:00]
+        columns=asset_id,last_price,start_datetime,timestamp_db
+        shape=(5, 4)
                                    asset_id  last_price            start_datetime              timestamp_db
         end_datetime
         2000-01-01 09:36:00-05:00      1000   999.967920  2000-01-01 09:35:00-05:00 2000-01-01 09:36:00-05:00
@@ -484,9 +484,9 @@ class TestReplayedMarketData2(hunitest.TestCase):
         # pylint: disable=line-too-long
         expected_df_as_str = r"""
         # df=
-        df.index in [2000-01-01 09:36:00-05:00, 2000-01-01 09:36:00-05:00]
-        df.columns=asset_id,last_price,start_datetime,timestamp_db
-        df.shape=(1, 4)
+        index=[2000-01-01 09:36:00-05:00, 2000-01-01 09:36:00-05:00]
+        columns=asset_id,last_price,start_datetime,timestamp_db
+        shape=(1, 4)
                                    asset_id  last_price            start_datetime              timestamp_db
         end_datetime
         2000-01-01 09:36:00-05:00      1000   999.96792  2000-01-01 09:35:00-05:00 2000-01-01 09:36:00-05:00"""

@@ -1959,8 +1959,9 @@ _IMAGE_BASE_NAME_RE = r"[a-z0-9_-]+"
 _IMAGE_USER_RE = r"[a-z0-9_-]+"
 # For candidate prod images which have added hash for easy identification.
 _IMAGE_HASH_RE = r"[a-z0-9]{9}"
-_IMAGE_STAGE_RE = rf"(local(?:-{_IMAGE_USER_RE})?|dev|prod|prod(?:-{_IMAGE_HASH_RE})?)"
-
+_IMAGE_STAGE_RE = (
+    rf"(local(?:-{_IMAGE_USER_RE})?|dev|prod|prod(?:-{_IMAGE_HASH_RE})?)"
+)
 
 
 def _dassert_is_image_name_valid(image: str) -> None:
@@ -1974,7 +1975,7 @@ def _dassert_is_image_name_valid(image: str) -> None:
       to indicate the latest
       - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev-1.0.0`
         and `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev`
-    - `prod` candidate image has a 9 character hash identifier from the 
+    - `prod` candidate image has a 9 character hash identifier from the
         corresponding Git commit
         - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:prod-1.0.0-4rf74b83a`
 
@@ -2609,11 +2610,7 @@ def docker_release_dev_image(  # type: ignore
 # TODO(gp): Remove redundancy with docker_build_local_image(), if possible.
 @task
 def docker_build_prod_image(  # type: ignore
-    ctx,
-    version,
-    cache=True,
-    base_image="",
-    candidate=False
+    ctx, version, cache=True, base_image="", candidate=False
 ):
     """
     (ONLY CI/CD) Build a prod image.
@@ -2626,7 +2623,7 @@ def docker_build_prod_image(  # type: ignore
         image so caching makes no difference
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     :param candidate: build a prod image with a tag format: prod-{hash}
-        where hash is the output of hgit.get_head_hash 
+        where hash is the output of hgit.get_head_hash
     """
     _report_task()
     version = _resolve_version_value(version)
@@ -2637,7 +2634,7 @@ def docker_build_prod_image(  # type: ignore
     #  the client is clean so that we don't release from a dirty client.
     # Build prod image.
     if candidate:
-        # For candidate prod images which need to be tested on 
+        # For candidate prod images which need to be tested on
         # the AWS infra add a hash identifier.
         latest_version = None
         image_versioned_prod = get_image(base_image, "prod", latest_version)
@@ -2705,6 +2702,7 @@ def docker_push_prod_image(  # type: ignore
     cmd = f"docker push {image_prod}"
     _run(ctx, cmd, pty=True)
 
+
 @task
 def docker_push_prod_candidate_image(  # type: ignore
     ctx,
@@ -2724,6 +2722,7 @@ def docker_push_prod_candidate_image(  # type: ignore
     image_versioned_prod = get_image(base_image, "prod", None)
     cmd = f"docker push {image_versioned_prod}-{candidate}"
     _run(ctx, cmd, pty=True)
+
 
 @task
 def docker_release_prod_image(  # type: ignore
@@ -3759,9 +3758,7 @@ def run_coverage_report(  # type: ignore
     # command which combines stats does not work when being run first in
     # the chain `bash -c "cmd1 && cmd2 && cmd3"`. So `erase` command which
     # does not affect the coverage results was added as a workaround.
-    report_cmd.append(
-        "coverage erase"
-    )
+    report_cmd.append("coverage erase")
     # Merge stats for fast and slow tests into single dir.
     report_cmd.append(
         "coverage combine --keep .coverage_fast_tests .coverage_slow_tests"
@@ -4307,8 +4304,9 @@ def lint_detect_cycles(  # type: ignore
     as_user = _run_docker_as_user(as_user)
     # Prepare the command line.
     docker_cmd_opts = [dir_name]
-    docker_cmd_ = "/app/import_check/detect_import_cycles.py " + _to_single_line_cmd(
-        docker_cmd_opts
+    docker_cmd_ = (
+        "/app/import_check/detect_import_cycles.py "
+        + _to_single_line_cmd(docker_cmd_opts)
     )
     # Execute command line.
     cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
@@ -4494,6 +4492,42 @@ def lint_create_branch(ctx, dry_run=False):  # type: ignore
 # #############################################################################
 # GitHub CLI.
 # #############################################################################
+
+
+@task
+def gh_login(
+    ctx,
+    account="",
+):  # type: ignore
+    if not account:
+        # Retrieve the name of the repo, e.g., "alphamatic/amp".
+        full_repo_name = hgit.get_repo_full_name_from_dirname(
+            ".", include_host_name=False
+        )
+        _LOG.debug(hprint.to_str("full_repo_name"))
+        account = full_repo_name.split("/")[0]
+    _LOG.info(hprint.to_str("account"))
+    #
+    ssh_filename = os.path.expanduser(f"~/.ssh/id_rsa.{account}.github")
+    _LOG.debug(hprint.to_str("ssh_filename"))
+    if os.path.exists(ssh_filename):
+        cmd = f"export GIT_SSH_COMMAND='ssh -i {ssh_filename}'"
+        print(cmd)
+    else:
+        _LOG.warning("Can't find file '%s'" % ssh_filename)
+    #
+    cmd = "gh auth status"
+    _run(ctx, cmd)
+    #
+    github_pat_filename = os.path.expanduser(f"~/.ssh/github_pat.{account}.txt")
+    if os.path.exists(github_pat_filename):
+        cmd = f"gh auth login --with-token <{github_pat_filename}"
+        _run(ctx, cmd)
+    else:
+        _LOG.warning("Can't find file '%s'" % github_pat_filename)
+    #
+    cmd = "gh auth status"
+    _run(ctx, cmd)
 
 
 def _get_branch_name(branch_mode: str) -> Optional[str]:
@@ -5176,9 +5210,3 @@ def fix_perms(  # type: ignore
 # 25163 /compose_app_run_ab27e17f2c47
 # 18721 /compose_app_run_de23819a6bc2
 # pylint: enable=line-too-long
-
-# TODO(gp): Based on:
-# > git remote get-url origin
-# git@github.com:alphamatic/amp.git
-# Run
-# gh auth login --with-token <~/github_pat.gpsaggese.txt

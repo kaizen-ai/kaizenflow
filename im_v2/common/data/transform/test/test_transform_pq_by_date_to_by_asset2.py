@@ -123,9 +123,9 @@
 #        # Check.
 #        func_name = hintros.get_function_name()
 #        exp_str = r"""# check_parquet1=
-#        df.index in [2022-01-03 09:01:00-05:00, 2022-01-10 16:59:00-05:00]
-#        df.columns=start_time,close,asset_id,year,weekofyear
-#        df.shape=(2874, 5)
+#        index=[2022-01-03 09:01:00-05:00, 2022-01-10 16:59:00-05:00]
+#        columns=start_time,close,asset_id,year,weekofyear
+#        shape=(2874, 5)
 #                                                 start_time  close   asset_id  year weekofyear
 #        end_time
 #        2022-01-03 09:01:00-05:00 2022-01-03 09:00:00-05:00    NaN  10253  2022          1
@@ -172,9 +172,9 @@
 #        # Check.
 #        func_name = hintros.get_function_name()
 #        exp_str = r"""# check_parquet2=
-#        df.index in [2022-01-03 09:01:00-05:00, 2022-01-10 16:59:00-05:00]
-#        df.columns=asset_id,weekofyear
-#        df.shape=(2874, 2)
+#        index=[2022-01-03 09:01:00-05:00, 2022-01-10 16:59:00-05:00]
+#        columns=asset_id,weekofyear
+#        shape=(2874, 2)
 #                                    asset_id weekofyear
 #        end_time
 #        2022-01-03 09:01:00-05:00  10253          1
@@ -224,9 +224,9 @@
 #        # Check.
 #        func_name = hintros.get_function_name()
 #        exp_str = r"""# check_parquet3=
-#        df.index in [2022-01-03 09:01:00-05:00, 2022-01-10 16:59:00-05:00]
-#        df.columns=start_time,close,asset_id,year,weekofyear
-#        df.shape=(1916, 5)
+#        index=[2022-01-03 09:01:00-05:00, 2022-01-10 16:59:00-05:00]
+#        columns=start_time,close,asset_id,year,weekofyear
+#        shape=(1916, 5)
 #                                                 start_time  close   asset_id  year weekofyear
 #        end_time
 #        2022-01-03 09:01:00-05:00 2022-01-03 09:00:00-05:00    NaN  10971  2022          1
@@ -280,9 +280,9 @@
 #        # Check.
 #        func_name = hintros.get_function_name()
 #        exp_str = r"""# check_parquet4=
-#        df.index in [2022-01-10 09:02:00-05:00, 2022-01-10 16:59:00-05:00]
-#        df.columns=asset_id,year,weekofyear
-#        df.shape=(478, 3)
+#        index=[2022-01-10 09:02:00-05:00, 2022-01-10 16:59:00-05:00]
+#        columns=asset_id,year,weekofyear
+#        shape=(478, 3)
 #                                    asset_id  year weekofyear
 #        end_time
 #        2022-01-10 09:02:00-05:00  13684  2022          2
