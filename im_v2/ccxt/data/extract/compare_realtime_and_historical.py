@@ -8,8 +8,8 @@ Use as:
    --db_stage 'dev' \
    --exchange_id 'binance' \
    --db_table 'ccxt_ohlcv' \
-    --aws_profile 'ck' \
-    --s3_path 's3://cryptokaizen-data/'
+   --aws_profile 'ck' \
+   --s3_path 's3://cryptokaizen-data/'
 
 Import as:
 
