@@ -63,8 +63,13 @@ class DAG:
         """
         Return a short representation of the DAG.
 
-        E.g., ``` name=None mode=strict nodes=[('n1', {'stage':
-        <dataflow.core.node.Node object at 0x>})] edges=[] ```
+        E.g.,
+        ```
+        name=None
+        mode=strict
+        nodes=[('n1', {'stage': <dataflow.core.node.Node object at 0x>})]
+        edges=[]
+        ```
         """
         txt = []
         txt.append(f"name={self._name}")
@@ -104,17 +109,19 @@ class DAG:
     # TODO(gp): A bit confusing since other classes have `dag / get_dag` method that
     #  returns a DAG. Also the code does `dag.dag`. Maybe -> `nx_dag()` to say that
     #  we are extracting the networkx data structures.
+    # TODO(gp): @Grisha use a getter only.
     @property
     def dag(self) -> networ.DiGraph:
         return self._dag
 
     # TODO(*): Should we force to always have a name? So mypy can perform more
     #  checks.
+    # TODO(gp): @Grisha use a getter only.
     @property
     def name(self) -> Optional[str]:
         return self._name
 
-    # TODO(gp): Use a setter only.
+    # TODO(gp): @Grisha use a getter only.
     @property
     def mode(self) -> str:
         return self._mode
