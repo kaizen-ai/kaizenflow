@@ -47,10 +47,6 @@ def _generate_test_data(
 
 
 class HistoricalByTileMock(imvcdchpcl.HistoricalPqByTileClient):
-    """
-    Only here to allow usage of `HistoricalPqByAssetClient`.
-    """
-
     def get_universe(self) -> List[str]:
         return ["binance::BTC_USDT", "kucoin::FIL_USDT"]
 
