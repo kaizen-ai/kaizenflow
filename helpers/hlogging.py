@@ -61,7 +61,7 @@ def get_memory_usage(process: Optional[Any] = None) -> MemoryUsage:
     return (rss_in_GB, vms_in_GB, mem_pct)
 
 
-def memory_to_str(resource_use: MemoryUsage, *, verbose: bool =True) -> str:
+def memory_to_str(resource_use: MemoryUsage, *, verbose: bool = True) -> str:
     (rss_in_GB, vms_in_GB, mem_pct) = resource_use
     if verbose:
         txt = "rss=%.3fGB vms=%.3fGB mem_pct=%.0f%%" % (

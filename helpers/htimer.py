@@ -171,9 +171,9 @@ class TimedScope:
     ```
     """
 
-    def __init__(self, log_level: int, message: str,
-                 *,
-                 profile_memory: bool = False):
+    def __init__(
+        self, log_level: int, message: str, *, profile_memory: bool = False
+    ):
         self._log_level = log_level
         self._message = message
         # TODO(gp): Implement profiling also memory using dmemory_start/end.
@@ -225,6 +225,7 @@ def timed(f: Callable) -> Callable:
 
 _MemoryMemento = Tuple[int, str, hloggin.MemoryUsage]
 
+
 def dmemory_start(log_level: int, message: str) -> _MemoryMemento:
     """
     Start measuring memory.
@@ -248,7 +249,9 @@ def dmemory_stop(memento: _MemoryMemento, *, mode: str = "all") -> str:
     verbose = False
     start_mem = hloggin.memory_to_str(start_memory_usage, verbose=verbose)
     end_mem = hloggin.memory_to_str(end_memory_usage, verbose=verbose)
-    diff_mem = tuple([x - y for x, y in zip(end_memory_usage, start_memory_usage)])
+    diff_mem = tuple(
+        [x - y for x, y in zip(end_memory_usage, start_memory_usage)]
+    )
     diff_mem = hloggin.memory_to_str(diff_mem, verbose=verbose)
     # Package the output.
     msg = []

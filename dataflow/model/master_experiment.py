@@ -54,7 +54,7 @@ def run_experiment(config: cconfig.Config) -> None:
     dtfmodutil.save_experiment_result_bundle(config, result_bundle)
 
 
-# #################################################################################
+# #############################################################################
 
 
 def run_rolling_experiment(config: cconfig.Config) -> None:
@@ -83,13 +83,14 @@ def run_rolling_experiment(config: cconfig.Config) -> None:
             file_name="predict_result_bundle_" + training_datetime_str + ".pkl",
         )
 
-# #################################################################################
+
+# #############################################################################
 
 
 def _save_tiled_output(config, result_bundle):
     result_df = result_bundle.result_df.loc[
-                config["meta", "start_timestamp"]:
-                config["meta", "end_timestamp"]]
+        config["meta", "start_timestamp"] : config["meta", "end_timestamp"]
+    ]
     df = result_df.stack()
     asset_id_col_name = config["meta", "asset_id_col_name"]
     df.index.names = ["end_ts", asset_id_col_name]
@@ -97,7 +98,10 @@ def _save_tiled_output(config, result_bundle):
     df["year"] = df.index.year
     df["month"] = df.index.month
     import im_v2.common.data.transform.transform_utils as imvcdttrut
-    imvcdttrut.partition_dataset(df, [asset_id_col_name, "year", "month"], dst_dir="test")
+
+    imvcdttrut.partition_dataset(
+        df, [asset_id_col_name, "year", "month"], dst_dir="test"
+    )
 
 
 def run_tiled_experiment(config: cconfig.Config) -> None:
@@ -114,8 +118,12 @@ def run_tiled_experiment(config: cconfig.Config) -> None:
     dag_runner = config["meta", "dag_runner"](config)
     # TODO(gp): Even this should go in the DAG creation in the builder.
     dag_runner.set_fit_intervals(
-        [(config["meta", "start_timestamp_with_lookback"],
-          config["meta", "end_timestamp"])],
+        [
+            (
+                config["meta", "start_timestamp_with_lookback"],
+                config["meta", "end_timestamp"],
+            )
+        ],
     )
     fit_result_bundle = dag_runner.fit()
     _save_tiled_output(config, fit_result_bundle)

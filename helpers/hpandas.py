@@ -437,17 +437,17 @@ def _df_to_str(
     out = []
     # Set dataframe print options.
     with pd.option_context(
-            "display.max_colwidth",
-            max_colwidth,
-            # "display.height", 1000,
-            "display.max_rows",
-            max_rows,
-            "display.precision",
-            precision,
-            "display.max_columns",
-            max_columns,
-            "display.width",
-            display_width,
+        "display.max_colwidth",
+        max_colwidth,
+        # "display.height", 1000,
+        "display.max_rows",
+        max_rows,
+        "display.precision",
+        precision,
+        "display.max_columns",
+        max_columns,
+        "display.width",
+        display_width,
     ):
         if use_tabulate:
             import tabulate
@@ -535,7 +535,15 @@ def df_to_str(
                 first_elem = srs.values[0]
                 num_unique = srs.nunique()
                 num_nans = srs.isna().sum()
-                row.extend([srs.dtype, hprint.perc(num_unique, len(srs)), hprint.perc(num_nans, len(srs)), first_elem, type(first_elem)])
+                row.extend(
+                    [
+                        srs.dtype,
+                        hprint.perc(num_unique, len(srs)),
+                        hprint.perc(num_nans, len(srs)),
+                        first_elem,
+                        type(first_elem),
+                    ]
+                )
                 return row
 
             row = []
@@ -551,16 +559,23 @@ def df_to_str(
                 row = map(str, row)
                 table.append(row)
             #
-            columns = ["col_name", "dtype", "num_unique", "num_nans", "first_elem", "type(first_elem)"]
+            columns = [
+                "col_name",
+                "dtype",
+                "num_unique",
+                "num_nans",
+                "first_elem",
+                "type(first_elem)",
+            ]
             df_stats = pd.DataFrame(table, columns=columns)
             df_stats_as_str = _df_to_str(df_stats, num_rows=None)
             out.append(df_stats_as_str)
         # Print info about memory usage.
         if print_memory_usage:
             out.append("* memory=")
-            mem_use_df = pd.concat([
-                df.memory_usage(deep=False),
-                df.memory_usage(deep=True)], axis=1)
+            mem_use_df = pd.concat(
+                [df.memory_usage(deep=False), df.memory_usage(deep=True)], axis=1
+            )
             mem_use_df.columns = ["shallow", "deep"]
             # Add total row.
             mem_use_df_total = mem_use_df.sum(axis=0)
@@ -574,7 +589,9 @@ def df_to_str(
 
                 mem_use_df = mem_use_df.applymap(hintros.format_size)
             else:
-                raise ValueError("Invalid memory_usage_mode='%s'" % memory_usage_mode)
+                raise ValueError(
+                    "Invalid memory_usage_mode='%s'" % memory_usage_mode
+                )
             memory_usage_as_txt = _df_to_str(mem_use_df, num_rows=None)
             out.append(memory_usage_as_txt)
         # Print info about nans.
@@ -588,9 +605,9 @@ def df_to_str(
             txt = "num_zeros=%s" % hprint.perc(num_zeros, num_elems)
             out.append(txt)
             # TODO(gp): np can't do isinf on objects like strings.
-            #num_infinite = np.isinf(df).sum().sum()
-            #txt = "num_infinite=%s" % hprint.perc(num_infinite, num_elems)
-            #out.append(txt)
+            # num_infinite = np.isinf(df).sum().sum()
+            # txt = "num_infinite=%s" % hprint.perc(num_infinite, num_elems)
+            # out.append(txt)
             #
             num_nan_rows = df.dropna().shape[0]
             txt = "num_nan_rows=%s" % hprint.perc(num_nan_rows, num_elems)
@@ -601,14 +618,15 @@ def df_to_str(
             out.append(txt)
     # Print the df.
     df_as_str = _df_to_str(
-            df,
-            num_rows=num_rows,
-            max_columns=max_columns,
-            max_colwidth=max_colwidth,
-            max_rows=max_rows,
-            precision=precision,
-            display_width=display_width,
-            use_tabulate=use_tabulate)
+        df,
+        num_rows=num_rows,
+        max_columns=max_columns,
+        max_colwidth=max_colwidth,
+        max_rows=max_rows,
+        precision=precision,
+        display_width=display_width,
+        use_tabulate=use_tabulate,
+    )
     out.append(df_as_str)
     txt = "\n".join(out)
     return txt
