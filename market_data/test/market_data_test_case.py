@@ -441,7 +441,7 @@ def skip_test_since_not_online(market_data: mdata.MarketData) -> bool:
 #        # Since the clock is at the beginning of the day there is no data.
 #        exp_get_data_normalize_false = r"""
 #        # get_data: wall_clock_time=Timestamp('2022-01-04 09:00:00-0500', tz='America/New_York'), period='last_10mins', normalize_data=False=
-#        df.shape=(0, 6)
+#        shape=(0, 6)
 #        Empty DataFrame
 #        Columns: [egid, close, start_time, end_time, timestamp_db, volume]
 #        Index: []"""
