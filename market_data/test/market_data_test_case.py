@@ -441,13 +441,13 @@ def skip_test_since_not_online(market_data: mdata.MarketData) -> bool:
 #        # Since the clock is at the beginning of the day there is no data.
 #        exp_get_data_normalize_false = r"""
 #        # get_data: wall_clock_time=Timestamp('2022-01-04 09:00:00-0500', tz='America/New_York'), period='last_10mins', normalize_data=False=
-#        df.shape=(0, 6)
+#        shape=(0, 6)
 #        Empty DataFrame
 #        Columns: [egid, close, start_time, end_time, timestamp_db, volume]
 #        Index: []"""
 #        exp_get_data_normalize_true = r"""
 #        # get_data: wall_clock_time=Timestamp('2022-01-04 09:00:00-0500', tz='America/New_York'), period='last_10mins', normalize_data=True=
-#        df.shape=(0, 5)
+#        shape=(0, 5)
 #        Empty DataFrame
 #        Columns: [egid, close, start_time, timestamp_db, volume]
 #        Index: []"""
@@ -463,9 +463,9 @@ def skip_test_since_not_online(market_data: mdata.MarketData) -> bool:
 #        exp_wall_clock_time = "2022-01-04 09:05:00-05:00"
 #        exp_get_data_normalize_false = r"""
 #        # get_data: wall_clock_time=Timestamp('2022-01-04 09:05:00-0500', tz='America/New_York'), period='last_10mins', normalize_data=False=
-#        df.index in [4554, 4586]
-#        df.columns=egid,close,start_time,end_time,timestamp_db,volume
-#        df.shape=(8, 6)
+#        index=[4554, 4586]
+#        columns=egid,close,start_time,end_time,timestamp_db,volume
+#        shape=(8, 6)
 #               egid  close                start_time                  end_time                     timestamp_db  volume
 #        4586  13684    NaN 2022-01-04 09:00:00-05:00 2022-01-04 09:01:00-05:00 2022-01-04 09:01:05.142177-05:00       0
 #        4582  17085    NaN 2022-01-04 09:00:00-05:00 2022-01-04 09:01:00-05:00 2022-01-04 09:01:05.142177-05:00       0
@@ -476,9 +476,9 @@ def skip_test_since_not_online(market_data: mdata.MarketData) -> bool:
 #        4557  17085    NaN 2022-01-04 09:03:00-05:00 2022-01-04 09:04:00-05:00 2022-01-04 09:04:02.892229-05:00       0"""
 #        exp_get_data_normalize_true = r"""
 #        # get_data: wall_clock_time=Timestamp('2022-01-04 09:05:00-0500', tz='America/New_York'), period='last_10mins', normalize_data=True=
-#        df.index in [2022-01-04 09:01:00-05:00, 2022-01-04 09:04:00-05:00]
-#        df.columns=egid,close,start_time,timestamp_db,volume
-#        df.shape=(8, 5)
+#        index=[2022-01-04 09:01:00-05:00, 2022-01-04 09:04:00-05:00]
+#        columns=egid,close,start_time,timestamp_db,volume
+#        shape=(8, 5)
 #                                    egid  close                start_time                     timestamp_db  volume
 #        end_time
 #        2022-01-04 09:01:00-05:00  13684    NaN 2022-01-04 09:00:00-05:00 2022-01-04 09:01:05.142177-05:00       0

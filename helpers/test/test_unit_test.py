@@ -254,7 +254,7 @@ completed       success Lint    Slow_tests
 """
         test_name = self._get_test_name()
         test_dir = self.get_scratch_space()
-        is_equal = hunitest._assert_equal(act, exp, test_name, test_dir)
+        is_equal = hunitest.assert_equal(act, exp, test_name, test_dir)
         _LOG.debug(hprint.to_str("is_equal"))
         self.assertTrue(is_equal)
 
@@ -275,7 +275,7 @@ completed       success Lint    Slow_tests
         test_name = self._get_test_name()
         test_dir = self.get_scratch_space()
         fuzzy_match = True
-        is_equal = hunitest._assert_equal(
+        is_equal = hunitest.assert_equal(
             act, exp, test_name, test_dir, fuzzy_match=fuzzy_match
         )
         _LOG.debug(hprint.to_str("is_equal"))
@@ -299,7 +299,7 @@ completed       success Lint    Slow_tests
         test_dir = self.get_scratch_space()
         fuzzy_match = False
         with self.assertRaises(RuntimeError) as cm:
-            hunitest._assert_equal(
+            hunitest.assert_equal(
                 act, exp, test_name, test_dir, fuzzy_match=fuzzy_match
             )
         # Check that the assertion is what expected.

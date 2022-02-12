@@ -96,7 +96,7 @@ _LOG = logging.getLogger(__name__)
 #
 # Each Parquet file looks like:
 # ```
-# df.shape=(5500357, 50)
+# shape=(5500357, 50)
 # df.memory_usage=2.0 GB
 #    vendor_date interval  start_time    end_time asset_id ticker open  close ...
 # 0  2022-01-10        60  1641823200  1641823260      123      A  NaN    NaN

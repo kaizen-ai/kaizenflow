@@ -161,14 +161,15 @@ class Test_trim_df1(hunitest.TestCase):
             df, print_dtypes=True, print_shape_info=True, tag="df"
         )
         exp = r"""# df=
-        df.index in [4, 44]
-        df.columns=start_time,egid,close
-        df.shape=(10, 3)
-        df.type=
-                         index:      int64     <class 'numpy.int64'> 4
-                    start_time:     object             <class 'str'> 2022-01-04 21:38:00.000000
-                          egid:      int64     <class 'numpy.int64'> 13684
-                         close:    float64   <class 'numpy.float64'> 1146.48
+        index=[4, 44]
+        columns=start_time,egid,close
+        shape=(10, 3)
+        * type=
+             col_name    dtype         num_unique        num_nans                  first_elem         type(first_elem)
+        0       index    int64  10 / 10 = 100.00%  0 / 10 = 0.00%                           4    <class 'numpy.int64'>
+        1  start_time   object    5 / 10 = 50.00%  0 / 10 = 0.00%  2022-01-04 21:38:00.000000            <class 'str'>
+        2        egid    int64    2 / 10 = 20.00%  0 / 10 = 0.00%                       13684    <class 'numpy.int64'>
+        3       close  float64    6 / 10 = 60.00%  0 / 10 = 0.00%                     1146.48  <class 'numpy.float64'>
                             start_time   egid    close
         4   2022-01-04 21:38:00.000000  13684  1146.48
         8   2022-01-04 21:38:00.000000  17085   179.45
@@ -200,14 +201,15 @@ class Test_trim_df1(hunitest.TestCase):
             df, print_dtypes=True, print_shape_info=True, tag="df"
         )
         exp = r"""# df=
-        df.index in [4, 44]
-        df.columns=start_time,egid,close
-        df.shape=(10, 3)
-        df.type=
-                         index:      int64     <class 'numpy.int64'> 4
-                    start_time: datetime64[ns] <class 'numpy.datetime64'> 2022-01-04T21:38:00.000000000
-                          egid:      int64     <class 'numpy.int64'> 13684
-                         close:    float64   <class 'numpy.float64'> 1146.48
+        index=[4, 44]
+        columns=start_time,egid,close
+        shape=(10, 3)
+        * type=
+             col_name           dtype         num_unique        num_nans                     first_elem            type(first_elem)
+        0       index           int64  10 / 10 = 100.00%  0 / 10 = 0.00%                              4       <class 'numpy.int64'>
+        1  start_time  datetime64[ns]    5 / 10 = 50.00%  0 / 10 = 0.00%  2022-01-04T21:38:00.000000000  <class 'numpy.datetime64'>
+        2        egid           int64    2 / 10 = 20.00%  0 / 10 = 0.00%                          13684       <class 'numpy.int64'>
+        3       close         float64    6 / 10 = 60.00%  0 / 10 = 0.00%                        1146.48     <class 'numpy.float64'>
                     start_time   egid    close
         4  2022-01-04 21:38:00  13684  1146.48
         8  2022-01-04 21:38:00  17085   179.45
@@ -244,14 +246,15 @@ class Test_trim_df1(hunitest.TestCase):
             df, print_dtypes=True, print_shape_info=True, tag="df"
         )
         exp = r"""# df=
-        df.index in [4, 44]
-        df.columns=start_time,egid,close
-        df.shape=(10, 3)
-        df.type=
-                         index:      int64     <class 'numpy.int64'> 4
-                    start_time: datetime64[ns, America/New_York] <class 'numpy.datetime64'> 2022-01-04T21:38:00.000000000
-                          egid:      int64     <class 'numpy.int64'> 13684
-                         close:    float64   <class 'numpy.float64'> 1146.48
+        index=[4, 44]
+        columns=start_time,egid,close
+        shape=(10, 3)
+        * type=
+             col_name                             dtype         num_unique        num_nans                     first_elem            type(first_elem)
+        0       index                             int64  10 / 10 = 100.00%  0 / 10 = 0.00%                              4       <class 'numpy.int64'>
+        1  start_time  datetime64[ns, America/New_York]    5 / 10 = 50.00%  0 / 10 = 0.00%  2022-01-04T21:38:00.000000000  <class 'numpy.datetime64'>
+        2        egid                             int64    2 / 10 = 20.00%  0 / 10 = 0.00%                          13684       <class 'numpy.int64'>
+        3       close                           float64    6 / 10 = 60.00%  0 / 10 = 0.00%                        1146.48     <class 'numpy.float64'>
                           start_time   egid    close
         4  2022-01-04 16:38:00-05:00  13684  1146.48
         8  2022-01-04 16:38:00-05:00  17085   179.45
@@ -261,6 +264,8 @@ class Test_trim_df1(hunitest.TestCase):
         40 2022-01-04 16:34:00-05:00  17085   179.42
         44 2022-01-04 16:34:00-05:00  13684  1146.00"""
         self.assert_equal(act, exp, fuzzy_match=True)
+
+    # //////////////////////////////////////////////////////////////////////////////
 
     def test_trim_df1(self):
         """
@@ -286,14 +291,15 @@ class Test_trim_df1(hunitest.TestCase):
             df_trim, print_dtypes=True, print_shape_info=True, tag="df_trim"
         )
         exp = r"""# df_trim=
-        df.index in [4, 38]
-        df.columns=start_time,egid,close
-        df.shape=(8, 3)
-        df.type=
-                         index:      int64     <class 'numpy.int64'> 4
-                    start_time:     object             <class 'str'> 2022-01-04 21:38:00.000000
-                          egid:      int64     <class 'numpy.int64'> 13684
-                         close:    float64   <class 'numpy.float64'> 1146.48
+        index=[4, 38]
+        columns=start_time,egid,close
+        shape=(8, 3)
+        * type=
+             col_name    dtype       num_unique       num_nans                  first_elem         type(first_elem)
+        0       index    int64  8 / 8 = 100.00%  0 / 8 = 0.00%                           4    <class 'numpy.int64'>
+        1  start_time   object   4 / 8 = 50.00%  0 / 8 = 0.00%  2022-01-04 21:38:00.000000            <class 'str'>
+        2        egid    int64   2 / 8 = 25.00%  0 / 8 = 0.00%                       13684    <class 'numpy.int64'>
+        3       close  float64   6 / 8 = 75.00%  0 / 8 = 0.00%                     1146.48  <class 'numpy.float64'>
                             start_time   egid    close
         4   2022-01-04 21:38:00.000000  13684  1146.48
         8   2022-01-04 21:38:00.000000  17085   179.45
@@ -326,14 +332,15 @@ class Test_trim_df1(hunitest.TestCase):
             df_trim, print_dtypes=True, print_shape_info=True, tag="df_trim"
         )
         exp = r"""# df_trim=
-        df.index in [4, 38]
-        df.columns=start_time,egid,close
-        df.shape=(8, 3)
-        df.type=
-                         index:      int64     <class 'numpy.int64'> 4
-                    start_time: datetime64[ns] <class 'numpy.datetime64'> 2022-01-04T21:38:00.000000000
-                          egid:      int64     <class 'numpy.int64'> 13684
-                         close:    float64   <class 'numpy.float64'> 1146.48
+        index=[4, 38]
+        columns=start_time,egid,close
+        shape=(8, 3)
+        * type=
+             col_name           dtype       num_unique       num_nans                     first_elem            type(first_elem)
+        0       index           int64  8 / 8 = 100.00%  0 / 8 = 0.00%                              4       <class 'numpy.int64'>
+        1  start_time  datetime64[ns]   4 / 8 = 50.00%  0 / 8 = 0.00%  2022-01-04T21:38:00.000000000  <class 'numpy.datetime64'>
+        2        egid           int64   2 / 8 = 25.00%  0 / 8 = 0.00%                          13684       <class 'numpy.int64'>
+        3       close         float64   6 / 8 = 75.00%  0 / 8 = 0.00%                        1146.48     <class 'numpy.float64'>
                     start_time   egid    close
         4  2022-01-04 21:38:00  13684  1146.48
         8  2022-01-04 21:38:00  17085   179.45
@@ -366,14 +373,15 @@ class Test_trim_df1(hunitest.TestCase):
             df_trim, print_dtypes=True, print_shape_info=True, tag="df_trim"
         )
         exp = r"""# df_trim=
-        df.index in [4, 38]
-        df.columns=start_time,egid,close
-        df.shape=(8, 3)
-        df.type=
-                         index:      int64     <class 'numpy.int64'> 4
-                    start_time: datetime64[ns, America/New_York] <class 'numpy.datetime64'> 2022-01-04T21:38:00.000000000
-                          egid:      int64     <class 'numpy.int64'> 13684
-                         close:    float64   <class 'numpy.float64'> 1146.48
+        index=[4, 38]
+        columns=start_time,egid,close
+        shape=(8, 3)
+        * type=
+             col_name                             dtype       num_unique       num_nans                     first_elem            type(first_elem)
+        0       index                             int64  8 / 8 = 100.00%  0 / 8 = 0.00%                              4       <class 'numpy.int64'>
+        1  start_time  datetime64[ns, America/New_York]   4 / 8 = 50.00%  0 / 8 = 0.00%  2022-01-04T21:38:00.000000000  <class 'numpy.datetime64'>
+        2        egid                             int64   2 / 8 = 25.00%  0 / 8 = 0.00%                          13684       <class 'numpy.int64'>
+        3       close                           float64   6 / 8 = 75.00%  0 / 8 = 0.00%                        1146.48     <class 'numpy.float64'>
                           start_time   egid    close
         4  2022-01-04 16:38:00-05:00  13684  1146.48
         8  2022-01-04 16:38:00-05:00  17085   179.45
@@ -458,9 +466,10 @@ class TestDfToStr(hunitest.TestCase):
         """
         df = self.get_test_data()
         actual = hpandas.df_to_str(df, print_shape_info=True)
-        expected = r"""df.index in [0, 2]
-        df.columns=dummy_value_1,dummy_value_2,dummy_value_3
-        df.shape=(3, 3)
+        expected = r"""
+        index=[0, 2]
+        columns=dummy_value_1,dummy_value_2,dummy_value_3
+        shape=(3, 3)
            dummy_value_1 dummy_value_2  dummy_value_3
         0              1             A              0
         1              2             B              0
@@ -473,11 +482,13 @@ class TestDfToStr(hunitest.TestCase):
         """
         df = self.get_test_data()
         actual = hpandas.df_to_str(df, print_dtypes=True)
-        expected = r"""df.type=
-                         index:      int64     <class 'numpy.int64'> 0
-                 dummy_value_1:      int64     <class 'numpy.int64'> 1
-                 dummy_value_2:     object             <class 'str'> A
-                 dummy_value_3:      int64     <class 'numpy.int64'> 0
+        expected = r"""
+        * type=
+                col_name   dtype       num_unique       num_nans first_elem       type(first_elem)
+        0          index   int64  3 / 3 = 100.00%  0 / 3 = 0.00%          0  <class 'numpy.int64'>
+        1  dummy_value_1   int64  3 / 3 = 100.00%  0 / 3 = 0.00%          1  <class 'numpy.int64'>
+        2  dummy_value_2  object  3 / 3 = 100.00%  0 / 3 = 0.00%          A          <class 'str'>
+        3  dummy_value_3   int64   1 / 3 = 33.33%  0 / 3 = 0.00%          0  <class 'numpy.int64'>
            dummy_value_1 dummy_value_2  dummy_value_3
         0              1             A              0
         1              2             B              0
@@ -492,15 +503,17 @@ class TestDfToStr(hunitest.TestCase):
         actual = hpandas.df_to_str(
             df, print_shape_info=True, print_dtypes=True, tag="df"
         )
-        expected = r"""# df=
-        df.index in [0, 2]
-        df.columns=dummy_value_1,dummy_value_2,dummy_value_3
-        df.shape=(3, 3)
-        df.type=
-                         index:      int64     <class 'numpy.int64'> 0
-                 dummy_value_1:      int64     <class 'numpy.int64'> 1
-                 dummy_value_2:     object             <class 'str'> A
-                 dummy_value_3:      int64     <class 'numpy.int64'> 0
+        expected = r"""
+        # df=
+        index=[0, 2]
+        columns=dummy_value_1,dummy_value_2,dummy_value_3
+        shape=(3, 3)
+        * type=
+                col_name   dtype       num_unique       num_nans first_elem       type(first_elem)
+        0          index   int64  3 / 3 = 100.00%  0 / 3 = 0.00%          0  <class 'numpy.int64'>
+        1  dummy_value_1   int64  3 / 3 = 100.00%  0 / 3 = 0.00%          1  <class 'numpy.int64'>
+        2  dummy_value_2  object  3 / 3 = 100.00%  0 / 3 = 0.00%          A          <class 'str'>
+        3  dummy_value_3   int64   1 / 3 = 33.33%  0 / 3 = 0.00%          0  <class 'numpy.int64'>
            dummy_value_1 dummy_value_2  dummy_value_3
         0              1             A              0
         1              2             B              0
