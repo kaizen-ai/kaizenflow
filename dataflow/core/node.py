@@ -22,7 +22,7 @@ _LOG = logging.getLogger(__name__)
 NodeId = str
 
 
-# TODO(gp): This seems private -> _Node.
+# TODO(gp): @Grisha This is private -> _Node.
 class NodeInterface(abc.ABC):
     """
     Abstract node class for creating DAGs of functions.
@@ -59,11 +59,12 @@ class NodeInterface(abc.ABC):
     def nid(self) -> NodeId:
         return self._nid
 
-    # TODO(gp): We might want to do getter only.
+    # TODO(gp): @Grisha make it getter only.
     @property
     def input_names(self) -> List[str]:
         return self._input_names
 
+    # TODO(gp): @Grisha make it getter only.
     @property
     def output_names(self) -> List[str]:
         return self._output_names

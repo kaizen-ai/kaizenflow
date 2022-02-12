@@ -33,16 +33,19 @@ NodeColumnList = Union[List[NodeColumn], Callable[[], List[NodeColumn]]]
 # Intervals.
 # #############################################################################
 
+# TODO(gp): Consolidate all the code about Interval in helpers/hinterval.py
+#  (including code in hdatetime.py).
 
-# TODO(gp): Always use pd.Timestamp since we care about timezone. This will need
-#  to update lots of unit tests.
+# TODO(gp): Always use pd.Timestamp with tz. This will require to update many
+#  unit tests.
 IntervalEndpoint = Union[datetime.datetime, pd.Timestamp, None]
-# Intervals are considered as closed, i.e., [a, b]. An endpoint equal to `None` means
-# unbounded interval on that direction.
+# Intervals are considered as closed, i.e., [a, b]. An endpoint equal to `None`
+# means unbounded interval on that direction.
 Interval = Tuple[IntervalEndpoint, IntervalEndpoint]
 Intervals = List[Interval]
 
 
+# TODO(gp): Unify with -> dassert_is_valid_interval
 def dassert_valid_interval(interval: Interval) -> None:
     hdbg.dassert_isinstance(interval, tuple)
     # Intervals are [a, b] with a <= b.
@@ -67,7 +70,12 @@ def dassert_valid_intervals(intervals: Intervals) -> None:
 # TODO(gp): Unit test.
 def find_min_max_timestamps_from_intervals(
     intervals: Intervals,
-) -> Tuple[pd.Timestamp, pd.Timestamp]:
+) -> Interval:
+    """
+    Return the extremes of the interval including all the given `intervals`.
+
+    The interval can be unbounded (i.e., having `None` endpoints) or not.
+    """
     if intervals is not None:
         dassert_valid_intervals(intervals)
         interval = intervals[0]
@@ -113,7 +121,7 @@ def get_df_info_as_string(
     return info
 
 
-# TODO(gp): Maybe move to helpers.pandas_helpers since it's general.
+# TODO(gp): Maybe move to helpers.hpandas since it's general.
 def merge_dataframes(
     df1: pd.DataFrame,
     df2: pd.DataFrame,
