@@ -12,6 +12,7 @@ import helpers.hdbg as hdbg
 # TODO(gp): This file is more generic than `asset_ids` vs `full_symbols` and could
 #  go in helpers.
 
+
 def string_to_numerical_id(string_id: str) -> int:
     """
     Convert string id into a numerical one.

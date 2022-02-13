@@ -19,6 +19,7 @@ import helpers.hdataframe as hdatafr
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import helpers.hsql as hsql
 import helpers.htypes as htypes
 
 _LOG = logging.getLogger(__name__)
@@ -78,7 +79,7 @@ def remove_dates_with_no_data(
 # TODO(gp): Active trading hours and days are specific of different futures.
 #  Consider explicitly passing this information instead of using defaults.
 def set_non_ath_to_nan(
-    df: pd.DataFrame,
+    obj: Union[pd.Series, pd.DataFrame],
     start_time: Optional[datetime.time] = None,
     end_time: Optional[datetime.time] = None,
 ) -> pd.DataFrame:
@@ -93,20 +94,30 @@ def set_non_ath_to_nan(
       - `start_time < time`, and
       - `time <= end_time`
     """
-    hdbg.dassert_isinstance(df.index, pd.DatetimeIndex)
-    hpandas.dassert_strictly_increasing_index(df)
+    hdbg.dassert_isinstance(obj.index, pd.DatetimeIndex)
+    hpandas.dassert_strictly_increasing_index(obj)
     if start_time is None:
         start_time = datetime.time(9, 30)
     if end_time is None:
         end_time = datetime.time(16, 0)
     hdbg.dassert_lte(start_time, end_time)
     # Compute the indices to remove.
-    times = df.index.time
+    times = obj.index.time
     to_remove_mask = (times <= start_time) | (end_time < times)
     # Make a copy and filter.
-    df = df.copy()
-    df[to_remove_mask] = np.nan
-    return df
+    obj = obj.copy()
+    # As part of LimeTask2163 we have found out that the naive Pandas approach
+    # to add nan for data outside trading hours, as below:
+    #   obj[to_remove_mask] = np.nan
+    # is 100x slower than the following approach.
+    obj_index = obj.index
+    if isinstance(obj, pd.Series):
+        obj = obj.loc[~to_remove_mask].reindex(obj_index)
+    elif isinstance(obj, pd.DataFrame):
+        obj = obj.loc[~to_remove_mask, :].reindex(obj_index)
+    else:
+        raise ValueError("Invalid obj='%s' of type '%s'" % (obj, type(obj)))
+    return obj
 
 
 def remove_times_outside_window(
@@ -767,6 +778,122 @@ def compute_pnl(
 # #############################################################################
 # Returns calculation and helpers.
 # #############################################################################
+
+
+def compute_overnight_returns(
+    df: pd.DataFrame,
+    asset_id_col: str,
+    *,
+    date_col: str = "date",
+    open_col: str = "open_",
+    close_col: str = "close",
+    total_return_col: str = "total_return",
+    previous_total_return_col: str = "prev_total_return",
+    market_open: pd.Timedelta = pd.Timedelta("9H30T"),
+    timezone: str = "America/New_York",
+) -> pd.DataFrame:
+    """
+    Compute overnight returns.
+
+    :param df: dataframe with the following columns:
+        ["asset_id_col", "date", "open", "close", "total_return",
+         "previous_total_return"]
+      - the "date" column represents the given day (and so the data in the
+        row is available at the end of the day rather than the beginning)
+      - the total return columns must be combined to calculate a percentage
+        return; these reflect adjusted values (at the close).
+      - "open" and "close" are unadjusted
+    :param asset_id_col: str,
+    :param market_open: the time of the market open
+    :param timezone: the timezone of the market open
+    :return: a dataframe of overnight returns timestamped at the market open;
+        columns are asset ids
+    """
+    # Ensure that the dataframe has the necessary columns.
+    hdbg.dassert_is_subset(
+        [
+            asset_id_col,
+            date_col,
+            close_col,
+            total_return_col,
+            previous_total_return_col,
+        ],
+        df.columns.to_list(),
+    )
+    # Ensure that asset ids are ints.
+    hpandas.dassert_series_type_is(
+        df[asset_id_col],
+        np.int64,
+    )
+    # Compute the close-to-close adjusted percentage return.
+    total_returns = (df[total_return_col] - df[previous_total_return_col]) / df[
+        previous_total_return_col
+    ]
+    # Compute intraday percentage returns.
+    intraday_returns = (df[close_col] - df[open_col]) / df[open_col]
+    # Compute overnight returns from total and intraday returns.
+    overnight_returns = (total_returns - intraday_returns) / (
+        1 + intraday_returns
+    )
+    # TODO(Paul): Consider moving this step outside of this function.
+    # Localize to timestamps.
+    datetime = pd.to_datetime(df[date_col]) + market_open
+    overnight_returns_df = pd.DataFrame(
+        {
+            "datetime": datetime,
+            asset_id_col: df[asset_id_col],
+            "overnight_returns": overnight_returns,
+        }
+    )
+    overnight_returns_df.set_index("datetime", inplace=True)
+    overnight_returns_df.index = overnight_returns_df.index.tz_localize(timezone)
+    # Convert from a long to a wide format.
+    overnight_returns_df = overnight_returns_df.pivot(columns=[asset_id_col])
+    return overnight_returns_df
+
+
+def query_by_assets_and_dates(
+    db_connection: hsql.DbConnection,
+    table_name: str,
+    asset_ids: List[int],
+    asset_id_col: str,
+    start_date: datetime.date,
+    end_date: datetime.date,
+    date_col: str,
+    select_cols: List[str],
+) -> pd.DataFrame:
+    """
+    Query `table_name` for `select_cols` for assets and in date range.
+    """
+    query = []
+    # Ensure that `asset_id_col` and `date_col` are selected exactly once.
+    hdbg.dassert_isinstance(asset_id_col, str)
+    hdbg.dassert_isinstance(date_col, str)
+    select_cols = list(set(select_cols + [asset_id_col, date_col]))
+    select_col_str = ", ".join(select_cols)
+    query.append(f"SELECT {select_col_str} FROM {table_name}")
+    # Add date range restriction to WHERE clause.
+    hdbg.dassert_isinstance(start_date, datetime.date)
+    hdbg.dassert_isinstance(end_date, datetime.date)
+    WHERE = f"{date_col} BETWEEN '{start_date}' AND '{end_date}'"
+    # Add asset id membership to WHERE caluse.
+    hdbg.dassert_isinstance(asset_ids, list)
+    asset_ids = tuple(asset_ids)
+    asset_id_str = str(asset_ids)[:-2] + ")"
+    WHERE += f" AND {asset_id_col} IN {asset_id_str}"
+    query.append(f"WHERE {WHERE}")
+    # Order by `date_col`.
+    query.append(f"ORDER BY {date_col}")
+    # Create the full query.
+    query = "\n".join(query)
+    _LOG.debug("query=%s", query)
+    # Execute the query.
+    df = hsql.execute_query_to_df(db_connection, query)
+    # Enforce `int` types on asset ids (dropping NaN asset ids first).
+    df = df.dropna(subset=[asset_id_col])
+    df = df.convert_dtypes()
+    hpandas.dassert_series_type_is(df[asset_id_col], np.int64)
+    return df
 
 
 def compute_ret_0(
