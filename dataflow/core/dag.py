@@ -593,29 +593,3 @@ class DAG:
                 file_tag,
                 extra_txt=txt,
             )
-            if self._save_node_interface:
-                # Save info for the output of the node.
-                self._write_node_interface_to_dst_dir(
-                    topological_id, nid, method, output_name, value
-                )
-        # Save system info after execution the node.
-        if self._profile_execution:
-            file_tag = "after_execution"
-            txt = []
-            txt.append(ts.get_result())
-            txt.append(htimer.dtimer_stop(run_node_dtimer)[0])
-            txt.append(htimer.dmemory_stop(run_node_dmemory))
-            txt = "\n".join(txt)
-            self._write_system_stats_to_dst_dir(
-                topological_id, nid, method, file_tag, extra_txt=txt,
-            )
-
-
-# #############################################################################
-
-
-def insert_at_head(stage, node, dag):
-    source_nid = dag.get_unique_source()
-    dag.add_node(node)
-    dag.connect(stage, source_nid)
-    return dag

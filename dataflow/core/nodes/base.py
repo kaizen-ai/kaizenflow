@@ -16,7 +16,6 @@ import pandas as pd
 import dataflow.core.node as dtfcornode
 import dataflow.core.utils as dtfcorutil
 import helpers.hdbg as hdbg
-import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 
@@ -402,9 +401,6 @@ class ColModeMixin:
             - `None` defaults to identity transform
         :return: dataframe with columns selected by `col_mode`
         """
-        print("# before")
-        print("## df_in\n", hpandas.df_to_str(df_in))
-        print("## df_out\n", hpandas.df_to_str(df_out))
         hdbg.dassert_isinstance(df_in, pd.DataFrame)
         hdbg.dassert_isinstance(df_out, pd.DataFrame)
         hdbg.dassert(cols is None or isinstance(cols, list))
@@ -446,9 +442,6 @@ class ColModeMixin:
             pass
         else:
             hdbg.dfatal("Unsupported column mode `%s`", col_mode)
-        print("# after")
-        print("## df_in\n", hpandas.df_to_str(df_in))
-        print("## df_out\n", hpandas.df_to_str(df_out))
         hdbg.dassert_no_duplicates(df_out.columns.tolist())
         return df_out
 
