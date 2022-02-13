@@ -288,7 +288,7 @@ class ArmaGenerator(dtfconobas.DataSource):
         # Cumulatively sum to generate a price series (implicitly assumes the
         # returns are log returns; at small enough scales and short enough
         # times this is practically interchangeable with percentage returns).
-        # TODO(*): Allow specification of annualized target volatility.
+        # TODO(Paul): Allow specification of annualized target volatility.
         prices = np.exp(0.1 * rets.cumsum())
         prices.name = "close"
         df = prices.to_frame()

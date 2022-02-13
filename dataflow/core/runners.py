@@ -435,7 +435,7 @@ class IncrementalDagRunner(AbstractDagRunner):
             result_bundle = self.predict_at_datetime(end_dt)
             yield result_bundle
 
-    # TODO(gp): dt -> datetime_ as used elsewhere.
+    # TODO(gp): dt -> timestamp as used elsewhere.
     def predict_at_datetime(
         self, dt: hdateti.Datetime
     ) -> dtfcorebun.ResultBundle:

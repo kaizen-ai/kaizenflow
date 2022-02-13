@@ -101,7 +101,8 @@ def find_min_max_timestamps_from_intervals(
 # #############################################################################
 
 
-# TODO(gp): Move to helpers/printing.py since it's general.
+# TODO(gp): Move to helpers/hprint.py since it's general, although not very
+#  useful.
 def get_df_info_as_string(
     df: pd.DataFrame, exclude_memory_usage: bool = True
 ) -> str:
@@ -172,7 +173,7 @@ def validate_df_indices(df: pd.DataFrame) -> None:
     """
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_no_duplicates(df.columns.tolist())
-    # TODO(*): assert if the datetime index has dups.
+    # TODO(Paul): assert if the datetime index has dups.
 
 
 def convert_to_list(to_list: NodeColumnList) -> List[NodeColumn]:
@@ -249,9 +250,9 @@ def get_x_and_forward_y_fit_df(
     or in the forward values of `y_cols`), which makes the resulting
     dataframe ready for use in sklearn.
 
-    TODO(*): Consider not dropping NaNs in this function but rather
-        leaving that to the caller.
     """
+    # TODO(Paul): Consider not dropping NaNs in this function but rather
+    #  leaving that to the caller.
     validate_df_indices(df)
     # Obtain index slice for which forward targets exist.
     hdbg.dassert_lt(steps_ahead, df.index.size)
@@ -286,9 +287,9 @@ def get_x_and_forward_y_predict_df(
     Differs from `fit` version in that there is no requirement here that the
     forward y values be non-NaN.
 
-    TODO(Paul): Consider combining with `get_x_and_forward_y_fit_df()` and
-        parametrizing instead.
     """
+    # TODO(Paul): Consider combining with `get_x_and_forward_y_fit_df()` and
+    #  parametrizing instead.
     validate_df_indices(df)
     # Determine index where no x_vars are NaN.
     x_df = df[x_cols].dropna()

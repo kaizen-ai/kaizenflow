@@ -157,7 +157,7 @@ class SeriesTransformer(dtfconobas.Transformer, dtfconobas.ColModeMixin):
     """
     Perform non-index modifying changes of columns.
 
-    TODO(*): Factor out code common with `SeriesToSeriesTransformer`.
+    TODO(Paul): Factor out code common with `SeriesToSeriesTransformer`.
     """
 
     def __init__(
