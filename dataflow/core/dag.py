@@ -77,46 +77,6 @@ class DAG:
         #
         self.set_debug_mode(save_node_interface, profile_execution, dst_dir)
 
-    def set_debug_mode(self,
-        save_node_interface: str,
-        profile_execution: bool,
-        dst_dir: Optional[str],
-    ) -> None:
-        """
-        Set the debug parameters see
-
-        Sometimes it's difficult to pass these parameters (e.g., through a
-        `DagBuilder`) so we allow to set them after construction.
-
-        :param save_node_interface: store the values at the interface of the nodes
-            into a directory `dst_dir`. Disclaimer: the amount of data generate can
-            be huge
-            - ``: save no information
-            - `stats`: save high level information about the node interface
-            - `df_as_csv`: save the full content of the node interface, using CSV for
-              dataframes
-            - `df_as_parquet`: like `df_as_csv` but using Parquet for dataframes
-        :param profile_execution: if not `None`, store information about the
-            execution of the nodes
-        :param dst_dir: directory to save node interface and execution profiling info
-        """
-        hdbg.dassert_in(save_node_interface, ("", "stats", "df_as_csv", "df_as_parquet"))
-        self._save_node_interface = save_node_interface
-        # To process the profiling info in a human consumable form:
-        # ```
-        # ls -tr -1 tmp.dag_profile/*after* | xargs -n 1 -i sh -c 'echo; echo; echo "# {}"; cat {}'
-        # ```
-        self._profile_execution = profile_execution
-        self._dst_dir = dst_dir
-        if self._dst_dir:
-            hio.create_dir(self._dst_dir, incremental=False)
-        if self._save_node_interface or self._profile_execution:
-            _LOG.warning("Setting up debug mode: " +
-                hprint.to_str("save_node_interface profile_execution dst_dir"))
-            hdbg.dassert_is_not(
-                dst_dir, None, "Need to specify a directory to save the data"
-            )
-
     def __str__(self) -> str:
         """
         Return a short representation for user.
@@ -163,6 +123,51 @@ class DAG:
         txt.append("json=")
         txt.append(hprint.indent(self._to_json(), 2))
         return "\n".join(txt)
+
+    def set_debug_mode(
+        self,
+        save_node_interface: str,
+        profile_execution: bool,
+        dst_dir: Optional[str],
+    ) -> None:
+        """
+        Set the debug parameters see
+
+        Sometimes it's difficult to pass these parameters (e.g., through a
+        `DagBuilder`) so we allow to set them after construction.
+
+        :param save_node_interface: store the values at the interface of the nodes
+            into a directory `dst_dir`. Disclaimer: the amount of data generate can
+            be huge
+            - ``: save no information
+            - `stats`: save high level information about the node interface
+            - `df_as_csv`: save the full content of the node interface, using CSV for
+              dataframes
+            - `df_as_parquet`: like `df_as_csv` but using Parquet for dataframes
+        :param profile_execution: if not `None`, store information about the
+            execution of the nodes
+        :param dst_dir: directory to save node interface and execution profiling info
+        """
+        hdbg.dassert_in(
+            save_node_interface, ("", "stats", "df_as_csv", "df_as_parquet")
+        )
+        self._save_node_interface = save_node_interface
+        # To process the profiling info in a human consumable form:
+        # ```
+        # ls -tr -1 tmp.dag_profile/*after* | xargs -n 1 -i sh -c 'echo; echo; echo "# {}"; cat {}'
+        # ```
+        self._profile_execution = profile_execution
+        self._dst_dir = dst_dir
+        if self._dst_dir:
+            hio.create_dir(self._dst_dir, incremental=False)
+        if self._save_node_interface or self._profile_execution:
+            _LOG.warning(
+                "Setting up debug mode: "
+                + hprint.to_str("save_node_interface profile_execution dst_dir")
+            )
+            hdbg.dassert_is_not(
+                dst_dir, None, "Need to specify a directory to save the data"
+            )
 
     # TODO(gp): A bit confusing since other classes have `dag / get_dag` method that
     #  returns a DAG. Also the code does `dag.dag`. Maybe -> `nx_dag()` to say that
@@ -435,7 +440,7 @@ class DAG:
         method: dtfcornode.Method,
         file_tag: str,
         *,
-        extra_txt: str = ""
+        extra_txt: str = "",
     ) -> None:
         """
         Write information about the system (e.g., time and memory) before running a
@@ -458,9 +463,12 @@ class DAG:
             txt.append(extra_txt)
         txt = "\n".join(txt)
         # Report the information on the screen.
-        _LOG.info("\n%s\n%s",
-            hprint.frame("%s: method '%s' for node topological_id=%s nid='%s'"
-                         % (file_tag, method, topological_id, nid)),
+        _LOG.info(
+            "\n%s\n%s",
+            hprint.frame(
+                "%s: method '%s' for node topological_id=%s nid='%s'"
+                % (file_tag, method, topological_id, nid)
+            ),
             txt,
         )
         # Save information to file.
@@ -491,19 +499,21 @@ class DAG:
         if isinstance(obj, pd.DataFrame):
             df = obj
             # Save high level description about the df.
-            txt = hpandas.df_to_str(df, print_dtypes=True, print_shape_info=True)
+            txt = hpandas.df_to_str(
+                df,
+                print_dtypes=True,
+                print_shape_info=True,
+                print_memory_usage=True,
+                print_nan_info=True,
+            )
             hio.to_file(file_name + ".txt", txt)
             # Save content of the df.
-            if self._save_node_interface == "csv":
+            if self._save_node_interface == "df_as_csv":
                 df.to_csv(file_name + ".csv")
-            elif self._save_node_interface == "parquet":
+            elif self._save_node_interface == "df_as_parquet":
                 import helpers.hparquet as hparque
 
                 hparque.to_parquet(df, file_name + ".parquet")
-            else:
-                raise ValueError(
-                    "Invalid save_node_interface='%s'", self._save_node_interface
-                )
         else:
             _LOG.warning(
                 "Can't save node input / output of type '%s': %s",
@@ -546,7 +556,6 @@ class DAG:
             for input_name, value in kvs.items():
                 # Retrieve output from store.
                 kwargs[input_name] = pred_node.get_output(method, value)
-                _LOG.debug("input_name=%s", input_name)
             # TODO(gp): Save info for inputs, if needed.
         _LOG.debug("kwargs are %s", kwargs)
         # Execute `node.method()`.
@@ -563,6 +572,26 @@ class DAG:
             value = output[output_name]
             node._store_output(  # pylint: disable=protected-access
                 method, output_name, value
+            )
+            if self._save_node_interface:
+                # Save info for the output of the node.
+                self._write_node_interface_to_dst_dir(
+                    topological_id, nid, method, output_name, value
+                )
+        # Save system info after execution the node.
+        if self._profile_execution:
+            file_tag = "after_execution"
+            txt = []
+            txt.append(ts.get_result())
+            txt.append(htimer.dtimer_stop(run_node_dtimer)[0])
+            txt.append(htimer.dmemory_stop(run_node_dmemory))
+            txt = "\n".join(txt)
+            self._write_system_stats_to_dst_dir(
+                topological_id,
+                nid,
+                method,
+                file_tag,
+                extra_txt=txt,
             )
             if self._save_node_interface:
                 # Save info for the output of the node.

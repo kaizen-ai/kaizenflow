@@ -16,7 +16,7 @@ class TestStatsComputer1(hunitest.TestCase):
         portfolio_df = self._get_portfolio()
         df, _ = sc.compute_portfolio_stats(portfolio_df, "1T")
         actual = hpandas.df_to_str(df, num_rows=None, precision=2)
-        expected = """
+        expected = """0
 ratios      sharpe_ratio                         5.68
             sharpe_ratio_standard_error          7.09
             sr.tval                              0.80
@@ -37,8 +37,7 @@ percentage  annualized_mean_return              22.94
             turnover_mean                       10.00
             turnover_stdev                       0.03
             market_bias_mean                    -0.00
-            market_bias_stdev                    0.01
-dtype: float64"""
+            market_bias_stdev                    0.01"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     @staticmethod

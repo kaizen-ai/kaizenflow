@@ -58,7 +58,7 @@ def get_universe_top_n(universe: List[Any], n: Optional[int]) -> List[Any]:
 
 
 # TODO(gp): -> get_time_interval
-def get_period(period: str) -> Tuple[datetime.datetime, datetime.datetime]:
+def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
     if period == "2days":
         start_datetime = datetime.datetime(2020, 1, 6)
         end_datetime = datetime.datetime(2020, 1, 7)
@@ -87,7 +87,9 @@ def get_period(period: str) -> Tuple[datetime.datetime, datetime.datetime]:
         hdbg.dfatal("Invalid period='%s'" % period)
     _LOG.info("start_datetime=%s end_datetime=%s", start_datetime, end_datetime)
     hdbg.dassert_lte(start_datetime, end_datetime)
-    return start_datetime, end_datetime
+    start_timestamp = pd.Timestamp(start_datetime, tz="UTC")
+    end_timestamp = pd.Timestamp(end_datetime, tz="UTC")
+    return start_timestamp, end_timestamp
 
 
 # #############################################################################
@@ -101,21 +103,21 @@ def get_period(period: str) -> Tuple[datetime.datetime, datetime.datetime]:
 def parse_experiment_config(experiment_config: str) -> Tuple[str, str, str]:
     """
     Parse a string representing an experiment in the format:
-    `<universe>.<date_period>.<time_interval>`, e.g., "top100.15T.all".
+    `<universe>.<trading_period>.<time_interval>`, e.g., "top100.15T.all".
 
     Each token can be composed of multiple chunks separated by `-`. E.g.,
     `universe_str = "eg_v1_0-top100"`
 
-    :return: universe_str, date_period_str, time_interval_str
+    :return: universe_str, trading_period_str, time_interval_str
     """
     _LOG.info(hprint.to_str("experiment_config"))
     #
     data = experiment_config.split(".")
     hdbg.dassert_eq(len(data), 3)
-    universe_str, date_period_str, time_interval_str = data
+    universe_str, trading_period_str, time_interval_str = data
     #
-    _LOG.info(hprint.to_str("universe_str date_period_str time_interval_str"))
-    return universe_str, date_period_str, time_interval_str
+    _LOG.info(hprint.to_str("universe_str trading_period_str time_interval_str"))
+    return universe_str, trading_period_str, time_interval_str
 
 
 # #############################################################################
@@ -142,7 +144,6 @@ def set_asset_id(
         overwrite DUMMY values only once".
     """
     hdbg.dassert_isinstance(config, cconfig.Config)
-    config = config.copy()
     _LOG.debug("Creating config for egid=`%s`", asset_id)
     if not allow_new_key:
         hdbg.dassert_in(asset_id_key, config)
@@ -172,16 +173,20 @@ def build_configs_varying_asset_id(
     return configs
 
 
+# TODO(gp): -> asset_tiles
 def build_configs_varying_universe_tiles(
     config: cconfig.Config,
     universe_tile_id: cconfig.Config.Key,
     universe_tiles: Iterable[List[int]],
 ) -> List[cconfig.Config]:
     """
-    Create a list of `Config`s based on `config` using different `asset_ids`.
+    Create a list of `Config`s based on `config` using different universe tiles.
+
+    Note that the code is the same as `build_configs_varying_asset_id()` but the
+    interface is different.
     """
     hdbg.dassert_isinstance(config, cconfig.Config)
-    _LOG.debug("Universe has %d tiles", len(universe_tiles))
+    _LOG.debug("Universe has %d tiles: %s", len(universe_tiles), universe_tiles)
     configs = []
     for universe_tile in universe_tiles:
         config_tmp = config.copy()
@@ -192,10 +197,10 @@ def build_configs_varying_universe_tiles(
     return configs
 
 
-def build_configs_with_tiled_periods(
+def build_configs_varying_tiled_periods(
     config: cconfig.Config,
-    start_timestamp: hdateti.Datetime,
-    end_timestamp: hdateti.Datetime,
+    start_timestamp: pd.Timestamp,
+    end_timestamp: pd.Timestamp,
     freq_as_pd_str: str,
     lookback_as_pd_str: str,
 ) -> List[cconfig.Config]:
@@ -211,16 +216,14 @@ def build_configs_with_tiled_periods(
         features)
     """
     hdbg.dassert_isinstance(config, cconfig.Config)
-    start_timestamp = hdateti.to_timestamp(start_timestamp)
-    end_timestamp = hdateti.to_timestamp(end_timestamp)
+    hdateti.dassert_has_tz(start_timestamp)
+    hdateti.dassert_has_tz(end_timestamp)
     hdbg.dassert_lte(start_timestamp, end_timestamp)
     # TODO(gp): Check that the lookback is > 0.
     lookback = pd.Timedelta(lookback_as_pd_str)
     #
     configs = []
-    dates = pd.date_range(
-        start_timestamp.date(), end_timestamp.date(), freq=freq_as_pd_str
-    )
+    dates = pd.date_range(start_timestamp, end_timestamp, freq=freq_as_pd_str)
     hdbg.dassert_lte(1, len(dates))
     date_tuples = zip(dates[:-1], dates[1:])
     for start_ts, end_ts in date_tuples:

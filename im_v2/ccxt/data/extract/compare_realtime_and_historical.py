@@ -6,15 +6,17 @@ Use as:
 # Compare daily S3 and realtime data for binance.
 > im_v2/ccxt/data/extract/compare_realtime_and_historical.py \
    --db_stage 'dev' \
+   --exchange_id 'binance' \
    --db_table 'ccxt_ohlcv' \
-    --aws_profile 'ck' \
-    --s3_path 's3://cryptokaizen-historical-data/binance_daily/'
+   --aws_profile 'ck' \
+   --s3_path 's3://cryptokaizen-data/'
 
 Import as:
 
 import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
 """
 import argparse
+import os
 
 import pandas as pd
 
@@ -34,7 +36,9 @@ def reindex_on_asset_and_ts(data: pd.DataFrame) -> pd.DataFrame:
     Drops timestamps for downloading and saving.
     """
     # Drop download data timestamps.
-    data_reindex = data.drop(["end_download_timestamp", "knowledge_timestamp"], axis=1)
+    data_reindex = data.drop(
+        ["end_download_timestamp", "knowledge_timestamp"], axis=1
+    )
     # Reindex on ts and asset.
     data_reindex = data_reindex.set_index(["timestamp", "currency_pair"])
     return data_reindex
@@ -49,10 +53,10 @@ def find_gaps(rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> pd.DataFrame:
     :return: two dataframes with data missing in respective downloads
     """
     # Get data present in daily, but not present in rt.
-    rt_missing_indices = rt_data.index.difference(rt_data.index)
-    rt_missing_data = rt_data.loc[rt_missing_indices]
+    rt_missing_indices = daily_data.index.difference(rt_data.index)
+    rt_missing_data = daily_data.loc[rt_missing_indices]
     # Get data present in rt, but not present in daily.
-    daily_missing_indices = daily_data.index.difference(rt_data.index)
+    daily_missing_indices = rt_data.index.difference(daily_data.index)
     daily_missing_data = rt_data.loc[daily_missing_indices]
     return rt_missing_data, daily_missing_data
 
@@ -65,11 +69,12 @@ def compare_rows(rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> pd.DataFram
     :param daily_data: data downloaded to S3 once daily
     :return: dataframe with data with same indices and different contents
     """
-    #
-    idx_intersection = rt_data.index.intersection(daily_data.intersection)
+    # Get rows on which on which the two dataframe indices match.
+    idx_intersection = rt_data.index.intersection(daily_data.index)
     # Get difference between daily data and rt data.
     data_difference = daily_data.loc[idx_intersection].compare(
-        rt_data.loc[idx_intersection]
+        # Remove columns not present in daily_data.
+        rt_data.drop(["id", "exchange_id"], axis=1).loc[idx_intersection]
     )
     return data_difference
 
@@ -85,6 +90,13 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         type=str,
         help="DB stage to use",
+    )
+    parser.add_argument(
+        "--exchange_id",
+        action="store",
+        required=True,
+        type=str,
+        help="Exchange for which the comparison should be done",
     )
     parser.add_argument(
         "--db_table",
@@ -110,24 +122,28 @@ def _main(parser: argparse.ArgumentParser) -> None:
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
     # Read DB realtime data.
-    query = f"SELECT * FROM ccxt_ohlcv WHERE knowledge_timestamp >='{start_datetime}'" \
-            f" AND knowledge_timestamp <= {end_datetime}"
+    query = (
+        f"SELECT * FROM ccxt_ohlcv WHERE knowledge_timestamp >='{start_datetime}'"
+        f" AND knowledge_timestamp <= '{end_datetime}' AND exchange_id='{args.exchange_id}'"
+    )
     rt_data = hsql.execute_query_to_df(connection, query)
     rt_data_reindex = reindex_on_asset_and_ts(rt_data)
     # Connect to S3 filesystem, if provided.
     s3fs_ = hs3.get_s3fs(args.aws_profile)
-    s3_files = s3fs_.ls(args.s3_path)
+    # List files for given exchange.
+    exchange_path = os.path.join(args.s3_path, args.exchange_id)
+    s3_files = s3fs_.ls(exchange_path)
     # Filter files by timestamps in names.
-    #  Example of downloaded file name: '20210207-164012.csv'
+    #  Example of downloaded file name: 'ADA_USDT_20210207-164012.csv'
     end_datetime_str = end_datetime.strftime("%Y%m%d-%H%M%S")
     start_datetime_str = start_datetime.strftime("%Y%m%d-%H%M%S")
     daily_files = [
-        f for f in s3_files if f.split("/")[-1].rstrip(".csv") <= end_datetime_str
+        f for f in s3_files if f.split("_")[-1].rstrip(".csv") <= end_datetime_str
     ]
     daily_files = [
         f
         for f in daily_files
-        if f.split("/")[-1].rstrip(".csv") >= start_datetime_str
+        if f.split("_")[-1].rstrip(".csv") >= start_datetime_str
     ]
     daily_data = []
     for file in daily_files:

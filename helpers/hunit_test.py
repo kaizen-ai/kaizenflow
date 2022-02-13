@@ -331,7 +331,7 @@ def compare_df(df1: pd.DataFrame, df2: pd.DataFrame) -> None:
 
     full_test_name = "dummy"
     test_dir = "."
-    _assert_equal(
+    assert_equal(
         _compute_df_signature(df1),
         _compute_df_signature(df2),
         full_test_name,
@@ -843,7 +843,7 @@ def _to_pretty_string(obj: str) -> str:
     return ret
 
 
-def _assert_equal(
+def assert_equal(
     actual: str,
     expected: str,
     full_test_name: str,
@@ -857,7 +857,7 @@ def _assert_equal(
     error_msg: str = "",
 ) -> bool:
     """
-    Same interface as in `assert_equal()`.
+    Same interface as in `TestCase.assert_equal()`.
 
     :param full_test_name: e.g., `TestRunNotebook1.test2`
     """
@@ -1227,7 +1227,7 @@ class TestCase(unittest.TestCase):
         hdbg.dassert_exists(dir_name)
         #
         test_name = self._get_test_name()
-        is_equal = _assert_equal(
+        is_equal = assert_equal(
             actual,
             expected,
             test_name,
@@ -1330,7 +1330,7 @@ class TestCase(unittest.TestCase):
                 # the golden outcome.
                 expected = hio.from_file(file_name)
                 test_name = self._get_test_name()
-                is_equal = _assert_equal(
+                is_equal = assert_equal(
                     actual,
                     expected,
                     test_name,
@@ -1421,7 +1421,7 @@ class TestCase(unittest.TestCase):
                 # If not equal, report debug information.
                 if not is_equal:
                     test_name = self._get_test_name()
-                    _assert_equal(
+                    assert_equal(
                         str(actual),
                         str(expected),
                         test_name,
@@ -1747,3 +1747,5 @@ class QaTestCase(TestCase, abc.ABC):
     This unit test is used for QA to test functionalities (e.g., invoke tasks)
     that run the dev / prod container.
     """
+
+    pass

@@ -231,6 +231,7 @@ def thousand_separator(v: float) -> str:
     return v
 
 
+# TODO(gp): -> to_percentage
 def perc(
     a: float,
     b: float,
