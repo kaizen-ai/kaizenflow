@@ -4355,8 +4355,8 @@ def lint(  # type: ignore
     :param only_format: run only the formatting phases (e.g., black)
     :param only_check: run only the checking phases (e.g., pylint, mypy) that
         don't change the code
-    :param fast: run everything but skip pylint, which is often very picky and
-        slow
+    :param fast: run everything but skip `pylint`, since it is often very picky
+        and slow
     :param run_bash: instead of running pre-commit, run bash to debug
     :param run_linter_step: run linter step
     :param parse_linter_output: parse linter output and generate vim cfile

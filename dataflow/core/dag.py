@@ -53,7 +53,7 @@ class DAG:
         """
         Create a DAG.
 
-        :param name: optional str identifier of the dag
+        :param name: optional str identifier of the DAG
         :param mode: determine how to handle an attempt to add a node that already
             belongs to the DAG:
             - "strict": asserts
