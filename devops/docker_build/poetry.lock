@@ -253,7 +253,7 @@ beautifulsoup4 = "*"
 
 [[package]]
 name = "ccxt"
-version = "1.72.72"
+version = "1.72.97"
 description = "A JavaScript / Python / PHP cryptocurrency trading library with support for 130+ exchanges"
 category = "main"
 optional = false
@@ -292,7 +292,7 @@ pycparser = "*"
 
 [[package]]
 name = "charset-normalizer"
-version = "2.0.11"
+version = "2.0.12"
 description = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
 category = "main"
 optional = false
@@ -546,7 +546,7 @@ docs = ["sphinx"]
 
 [[package]]
 name = "hijri-converter"
-version = "2.2.2"
+version = "2.2.3"
 description = "Accurate Hijri-Gregorian dates converter based on the Umm al-Qura calendar"
 category = "main"
 optional = false
@@ -1274,7 +1274,7 @@ pyparsing = ">=2.0.2,<3.0.5 || >3.0.5"
 
 [[package]]
 name = "pandas"
-version = "1.4.0"
+version = "1.4.1"
 description = "Powerful data structures for data analysis, time series, and statistics"
 category = "main"
 optional = false
@@ -1400,7 +1400,7 @@ twisted = ["twisted"]
 
 [[package]]
 name = "prompt-toolkit"
-version = "3.0.27"
+version = "3.0.28"
 description = "Library for building powerful interactive command lines in Python"
 category = "main"
 optional = false
@@ -2099,7 +2099,7 @@ test = ["pytest"]
 
 [[package]]
 name = "typing-extensions"
-version = "4.0.1"
+version = "4.1.0"
 description = "Backported and Experimental Type Hints for Python 3.6+"
 category = "main"
 optional = false
@@ -2387,8 +2387,8 @@ bs4 = [
     {file = "bs4-0.0.1.tar.gz", hash = "sha256:36ecea1fd7cc5c0c6e4a1ff075df26d50da647b75376626cc186e2212886dd3a"},
 ]
 ccxt = [
-    {file = "ccxt-1.72.72-py2.py3-none-any.whl", hash = "sha256:cd26c159b71b7825bfb310ee6c8a66cfa1839e09c982d5c857a976aa1da38183"},
-    {file = "ccxt-1.72.72.tar.gz", hash = "sha256:33add23dd067446a549dbae8dc615ff08db7fbc0322e29d22f3a6fc634b9802c"},
+    {file = "ccxt-1.72.97-py2.py3-none-any.whl", hash = "sha256:49b6386877fff5496969f078f5004a9c2bbd7794601d0b88be18483077ba0228"},
+    {file = "ccxt-1.72.97.tar.gz", hash = "sha256:8ae97a9c6f2efd3db577c3f0056d315f4172fb7a176de0f6ed0fbfa43188f62e"},
 ]
 certifi = [
     {file = "certifi-2021.10.8-py2.py3-none-any.whl", hash = "sha256:d62a0163eb4c2344ac042ab2bdf75399a71a2d8c7d47eac2e2ee91b9d6339569"},
@@ -2447,8 +2447,8 @@ cffi = [
     {file = "cffi-1.15.0.tar.gz", hash = "sha256:920f0d66a896c2d99f0adbb391f990a84091179542c205fa53ce5787aff87954"},
 ]
 charset-normalizer = [
-    {file = "charset-normalizer-2.0.11.tar.gz", hash = "sha256:98398a9d69ee80548c762ba991a4728bfc3836768ed226b3945908d1a688371c"},
-    {file = "charset_normalizer-2.0.11-py3-none-any.whl", hash = "sha256:2842d8f5e82a1f6aa437380934d5e1cd4fcf2003b06fed6940769c164a480a45"},
+    {file = "charset-normalizer-2.0.12.tar.gz", hash = "sha256:2857e29ff0d34db842cd7ca3230549d1a697f96ee6d3fb071cfa6c7393832597"},
+    {file = "charset_normalizer-2.0.12-py3-none-any.whl", hash = "sha256:6881edbebdb17b39b4eaaa821b438bf6eddffb4468cf344f09f89def34a8b1df"},
 ]
 click = [
     {file = "click-8.0.3-py3-none-any.whl", hash = "sha256:353f466495adaeb40b6b5f592f9f91cb22372351c84caeb068132442a4518ef3"},
@@ -2708,8 +2708,8 @@ greenlet = [
     {file = "greenlet-1.1.2.tar.gz", hash = "sha256:e30f5ea4ae2346e62cedde8794a56858a67b878dd79f7df76a0767e356b1744a"},
 ]
 hijri-converter = [
-    {file = "hijri-converter-2.2.2.tar.gz", hash = "sha256:d4a10db009c1417592bbfb3debecadfa04d8d8d5d51b64a971e969d761a9f3e1"},
-    {file = "hijri_converter-2.2.2-py3-none-any.whl", hash = "sha256:3ae23b31cbde303873acf96ce07022320d711547bc148d57b96dfc3f076b3c2f"},
+    {file = "hijri-converter-2.2.3.tar.gz", hash = "sha256:e7149cececca647bf40689ec89bf593c7252b31d699ea587ad0bce91ba42d382"},
+    {file = "hijri_converter-2.2.3-py3-none-any.whl", hash = "sha256:50648d45a0b850c6d4a3aa7cf88ec4c03ee44740c339ee2bb021c7bb69791dcc"},
 ]
 holidays = [
     {file = "holidays-0.12-py3-none-any.whl", hash = "sha256:3520a9fe6f4487872d54ac83b9464fff8fce89547faa458419940f94b3f53d13"},
@@ -3178,27 +3178,27 @@ packaging = [
     {file = "packaging-21.3.tar.gz", hash = "sha256:dd47c42927d89ab911e606518907cc2d3a1f38bbd026385970643f9c5b8ecfeb"},
 ]
 pandas = [
-    {file = "pandas-1.4.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:de62cf699122dcef175988f0714678e59c453dc234c5b47b7136bfd7641e3c8c"},
-    {file = "pandas-1.4.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:46a18572f3e1cb75db59d9461940e9ba7ee38967fa48dd58f4139197f6e32280"},
-    {file = "pandas-1.4.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:73f7da2ccc38cc988b74e5400b430b7905db5f2c413ff215506bea034eaf832d"},
-    {file = "pandas-1.4.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5229c95db3a907451dacebc551492db6f7d01743e49bbc862f4a6010c227d187"},
-    {file = "pandas-1.4.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fe454180ad31bbbe1e5d111b44443258730467f035e26b4e354655ab59405871"},
-    {file = "pandas-1.4.0-cp310-cp310-win_amd64.whl", hash = "sha256:784cca3f69cfd7f6bd7c7fdb44f2bbab17e6de55725e9ff36d6f382510dfefb5"},
-    {file = "pandas-1.4.0-cp38-cp38-macosx_10_9_universal2.whl", hash = "sha256:de8f8999864399529e8514a2e6bfe00fd161f0a667903655552ed12e583ae3cb"},
-    {file = "pandas-1.4.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:0f19504f2783526fb5b4de675ea69d68974e21c1624f4b92295d057a31d5ec5f"},
-    {file = "pandas-1.4.0-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:f045bb5c6bfaba536089573bf97d6b8ccc7159d951fe63904c395a5e486fbe14"},
-    {file = "pandas-1.4.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5280d057ddae06fe4a3cd6aa79040b8c205cd6dd21743004cf8635f39ed01712"},
-    {file = "pandas-1.4.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1f3b74335390dda49f5d5089fab71958812bf56f42aa27663ee4c16d19f4f1c5"},
-    {file = "pandas-1.4.0-cp38-cp38-win32.whl", hash = "sha256:51e5da3802aaee1aa4254108ffaf1129a15fb3810b7ce8da1ec217c655b418f5"},
-    {file = "pandas-1.4.0-cp38-cp38-win_amd64.whl", hash = "sha256:f103a5cdcd66cb18882ccdc18a130c31c3cfe3529732e7f10a8ab3559164819c"},
-    {file = "pandas-1.4.0-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:4a8d5a200f8685e7ea562b2f022c77ab7cb82c1ca5b240e6965faa6f84e5c1e9"},
-    {file = "pandas-1.4.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:b5af258c7b090cca7b742cf2bd67ad1919aa9e4e681007366c9edad2d6a3d42b"},
-    {file = "pandas-1.4.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:156aac90dd7b303bf0b91bae96c0503212777f86c731e41929c571125d26c8e9"},
-    {file = "pandas-1.4.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:2dad075089e17a72391de33021ad93720aff258c3c4b68c78e1cafce7e447045"},
-    {file = "pandas-1.4.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1d59c958d6b8f96fdf850c7821571782168d5acfe75ccf78cd8d1ac15fb921df"},
-    {file = "pandas-1.4.0-cp39-cp39-win32.whl", hash = "sha256:55ec0e192eefa26d823fc25a1f213d6c304a3592915f368e360652994cdb8d9a"},
-    {file = "pandas-1.4.0-cp39-cp39-win_amd64.whl", hash = "sha256:23c04dab11f3c6359cfa7afa83d3d054a8f8c283d773451184d98119ef54da97"},
-    {file = "pandas-1.4.0.tar.gz", hash = "sha256:cdd76254c7f0a1583bd4e4781fb450d0ebf392e10d3f12e92c95575942e37df5"},
+    {file = "pandas-1.4.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:3dfb32ed50122fe8c5e7f2b8d97387edd742cc78f9ec36f007ee126cd3720907"},
+    {file = "pandas-1.4.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:0259cd11e7e6125aaea3af823b80444f3adad6149ff4c97fef760093598b3e34"},
+    {file = "pandas-1.4.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:96e9ece5759f9b47ae43794b6359bbc54805d76e573b161ae770c1ea59393106"},
+    {file = "pandas-1.4.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:508c99debccd15790d526ce6b1624b97a5e1e4ca5b871319fb0ebfd46b8f4dad"},
+    {file = "pandas-1.4.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e6a7bbbb7950063bfc942f8794bc3e31697c020a14f1cd8905fc1d28ec674a01"},
+    {file = "pandas-1.4.1-cp310-cp310-win_amd64.whl", hash = "sha256:c614001129b2a5add5e3677c3a213a9e6fd376204cb8d17c04e84ff7dfc02a73"},
+    {file = "pandas-1.4.1-cp38-cp38-macosx_10_9_universal2.whl", hash = "sha256:4e1176f45981c8ccc8161bc036916c004ca51037a7ed73f2d2a9857e6dbe654f"},
+    {file = "pandas-1.4.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:bbb15ad79050e8b8d39ec40dd96a30cd09b886a2ae8848d0df1abba4d5502a67"},
+    {file = "pandas-1.4.1-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:6d6ad1da00c7cc7d8dd1559a6ba59ba3973be6b15722d49738b2be0977eb8a0c"},
+    {file = "pandas-1.4.1-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:358b0bc98a5ff067132d23bf7a2242ee95db9ea5b7bbc401cf79205f11502fd3"},
+    {file = "pandas-1.4.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6105af6533f8b63a43ea9f08a2ede04e8f43e49daef0209ab0d30352bcf08bee"},
+    {file = "pandas-1.4.1-cp38-cp38-win32.whl", hash = "sha256:04dd15d9db538470900c851498e532ef28d4e56bfe72c9523acb32042de43dfb"},
+    {file = "pandas-1.4.1-cp38-cp38-win_amd64.whl", hash = "sha256:1b384516dbb4e6aae30e3464c2e77c563da5980440fbdfbd0968e3942f8f9d70"},
+    {file = "pandas-1.4.1-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:f02e85e6d832be37d7f16cf6ac8bb26b519ace3e5f3235564a91c7f658ab2a43"},
+    {file = "pandas-1.4.1-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:0b1a13f647e4209ed7dbb5da3497891d0045da9785327530ab696417ef478f84"},
+    {file = "pandas-1.4.1-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:19f7c632436b1b4f84615c3b127bbd7bc603db95e3d4332ed259dc815c9aaa26"},
+    {file = "pandas-1.4.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:7ea47ba1d6f359680130bd29af497333be6110de8f4c35b9211eec5a5a9630fa"},
+    {file = "pandas-1.4.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2e5a7a1e0ecaac652326af627a3eca84886da9e667d68286866d4e33f6547caf"},
+    {file = "pandas-1.4.1-cp39-cp39-win32.whl", hash = "sha256:1d85d5f6be66dfd6d1d8d13b9535e342a2214260f1852654b19fa4d7b8d1218b"},
+    {file = "pandas-1.4.1-cp39-cp39-win_amd64.whl", hash = "sha256:3129a35d9dad1d80c234dd78f8f03141b914395d23f97cf92a366dcd19f8f8bf"},
+    {file = "pandas-1.4.1.tar.gz", hash = "sha256:8db93ec98ac7cb5f8ac1420c10f5e3c43533153f253fe7fb6d891cf5aa2b80d2"},
 ]
 pandocfilters = [
     {file = "pandocfilters-1.5.0-py2.py3-none-any.whl", hash = "sha256:33aae3f25fd1a026079f5d27bdd52496f0e0803b3469282162bafdcbdf6ef14f"},
@@ -3274,8 +3274,8 @@ prometheus-client = [
     {file = "prometheus_client-0.13.1.tar.gz", hash = "sha256:ada41b891b79fca5638bd5cfe149efa86512eaa55987893becd2c6d8d0a5dfc5"},
 ]
 prompt-toolkit = [
-    {file = "prompt_toolkit-3.0.27-py3-none-any.whl", hash = "sha256:cb7dae7d2c59188c85a1d6c944fad19aded6a26bd9c8ae115a4e1c20eb90b713"},
-    {file = "prompt_toolkit-3.0.27.tar.gz", hash = "sha256:f2b6a8067a4fb959d3677d1ed764cc4e63e0f6f565b9a4fc7edc2b18bf80217b"},
+    {file = "prompt_toolkit-3.0.28-py3-none-any.whl", hash = "sha256:30129d870dcb0b3b6a53efdc9d0a83ea96162ffd28ffe077e94215b233dc670c"},
+    {file = "prompt_toolkit-3.0.28.tar.gz", hash = "sha256:9f1cd16b1e86c2968f2519d7fb31dd9d669916f515612c269d14e9ed52b51650"},
 ]
 psutil = [
     {file = "psutil-5.9.0-cp27-cp27m-manylinux2010_i686.whl", hash = "sha256:55ce319452e3d139e25d6c3f85a1acf12d1607ddedea5e35fb47a552c051161b"},
@@ -3951,8 +3951,8 @@ traitlets = [
     {file = "traitlets-5.1.1.tar.gz", hash = "sha256:059f456c5a7c1c82b98c2e8c799f39c9b8128f6d0d46941ee118daace9eb70c7"},
 ]
 typing-extensions = [
-    {file = "typing_extensions-4.0.1-py3-none-any.whl", hash = "sha256:7f001e5ac290a0c0401508864c7ec868be4e701886d5b573a9528ed3973d9d3b"},
-    {file = "typing_extensions-4.0.1.tar.gz", hash = "sha256:4ca091dea149f945ec56afb48dae714f21e8692ef22a395223bcd328961b6a0e"},
+    {file = "typing_extensions-4.1.0-py3-none-any.whl", hash = "sha256:c13180fbaa7cd97065a4915ceba012bdb31dc34743e63ddee16360161d358414"},
+    {file = "typing_extensions-4.1.0.tar.gz", hash = "sha256:ba97c5143e5bb067b57793c726dd857b1671d4b02ced273ca0538e71ff009095"},
 ]
 ujson = [
     {file = "ujson-1.35.tar.gz", hash = "sha256:f66073e5506e91d204ab0c614a148d5aa938bdbf104751be66f8ad7a222f5f86"},
