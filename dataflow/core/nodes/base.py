@@ -372,8 +372,8 @@ class YConnector(FitPredictNode):
 class ColModeMixin:
     """
     Select columns to propagate in output dataframe.
-
     """
+
     # TODO(Paul): Refactor this so that it has clear pre and post processing stages.
 
     def _apply_col_mode(

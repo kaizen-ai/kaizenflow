@@ -8,7 +8,7 @@ import itertools
 import json
 import logging
 import os
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import networkx as networ
 import pandas as pd
@@ -77,13 +77,8 @@ class DAG:
         """
         Return a short representation of the DAG.
 
-        E.g.,
-        ```
-        name=None
-        mode=strict
-        nodes=[('n1', {'stage': <dataflow.core.node.Node object at 0x>})]
-        edges=[]
-        ```
+        E.g., ``` name=None mode=strict nodes=[('n1', {'stage':
+        <dataflow.core.node.Node object at 0x>})] edges=[] ```
         """
         txt = []
         txt.append(f"name={self._name}")
@@ -127,7 +122,7 @@ class DAG:
         dst_dir: Optional[str],
     ) -> None:
         """
-        Set the debug parameters see
+        Set the debug parameters see.
 
         Sometimes it's difficult to pass these parameters (e.g., through a
         `DagBuilder`) so we allow to set them after construction.
@@ -450,8 +445,8 @@ class DAG:
         extra_txt: str = "",
     ) -> None:
         """
-        Write information about the system (e.g., time and memory) before running a
-        node.
+        Write information about the system (e.g., time and memory) before
+        running a node.
 
         The file has a format like
         `{dst_dir}/{method}.{topological_id}.{nid}.{file_tag}.txt`
@@ -492,8 +487,8 @@ class DAG:
         obj: Any,
     ) -> None:
         """
-        Write information about the system (e.g., time and memory) before running a
-        node.
+        Write information about the system (e.g., time and memory) before
+        running a node.
 
         The file has a format like:
         `{dst_dir}/{method}.{topological_id}.{nid}.{file_tag}.txt`

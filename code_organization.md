@@ -985,21 +985,25 @@ research_amp
   ```
 
 - Print only dirs
+
   ```bash
   > tree -d
   ```
 
 - Print only dirs up to a certain level
+
   ```bash
   > tree -L 1 -d
   ```
 
 - Sort alphanumerically
+
   ```bash
   > tree -v
   ```
 
 - Print full name so that one can also grep
+
   ```bash
   > tree -v -f --charset=ascii -I "*test*|*notebooks*" | grep amp | grep -v dev_scripts
 

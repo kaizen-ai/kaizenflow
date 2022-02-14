@@ -4450,11 +4450,13 @@ def lint(  # type: ignore
         for phase in phases:
             # Prepare the command line.
             precommit_opts = []
-            precommit_opts.extend([
-                f"run {phase}",
-                "-c /app/.pre-commit-config.yaml",
-                f"--files {files_as_str}",
-            ])
+            precommit_opts.extend(
+                [
+                    f"run {phase}",
+                    "-c /app/.pre-commit-config.yaml",
+                    f"--files {files_as_str}",
+                ]
+            )
             docker_cmd_ = "pre-commit " + _to_single_line_cmd(precommit_opts)
             if fast:
                 docker_cmd_ = "SKIP=amp_pylint " + docker_cmd_

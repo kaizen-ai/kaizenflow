@@ -74,7 +74,8 @@ def find_min_max_timestamps_from_intervals(
     """
     Return the extremes of the interval including all the given `intervals`.
 
-    The interval can be unbounded (i.e., having `None` endpoints) or not.
+    The interval can be unbounded (i.e., having `None` endpoints) or
+    not.
     """
     if intervals is not None:
         dassert_valid_intervals(intervals)
@@ -249,7 +250,6 @@ def get_x_and_forward_y_fit_df(
     This function eliminates rows that contains NaNs (either in `x_cols`
     or in the forward values of `y_cols`), which makes the resulting
     dataframe ready for use in sklearn.
-
     """
     # TODO(Paul): Consider not dropping NaNs in this function but rather
     #  leaving that to the caller.
@@ -284,9 +284,8 @@ def get_x_and_forward_y_predict_df(
     """
     Return a dataframe consisting of `x_cols` and forward `y_cols`.
 
-    Differs from `fit` version in that there is no requirement here that the
-    forward y values be non-NaN.
-
+    Differs from `fit` version in that there is no requirement here that
+    the forward y values be non-NaN.
     """
     # TODO(Paul): Consider combining with `get_x_and_forward_y_fit_df()` and
     #  parametrizing instead.
