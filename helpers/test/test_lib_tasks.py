@@ -1753,8 +1753,22 @@ class Test_pytest_repro1(hunitest.TestCase):
         self.assert_equal(act, exp)
 
 
-# TODO(gp): @julia Add an end-to-end test for "invoke pytest_parse_output"
-#  using a fixed file and checking the output.
+class Test_pytest_repro_end_to_end(hunitest.TestCase):
+    """
+    - Run the `pytest_repro` invoke from command line
+      - A fixed file imitating the pytest output file is used
+    - Compare the output to the golden outcome
+    """
+
+    def test1(self) -> None:
+        cmd = (
+            f"invoke pytest_repro --file-name='{self.get_input_dir()}/lastfailed'"
+        )
+        _, act = hsystem.system_to_string(cmd)
+        act = hprint.remove_non_printable_chars(act)
+        # Replace time indications in logs for reproducibility.
+        act = re.sub(r"[0-9]{2}:[0-9]{2}:[0-9]{2} - ", r"00:00:00 - ", act)
+        self.check_string(act)
 
 
 # #############################################################################
