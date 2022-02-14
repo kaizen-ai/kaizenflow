@@ -4401,6 +4401,7 @@ def lint(  # type: ignore
                 "amp_format_separating_line",
                 "amp_black",
                 "amp_processjupytext",
+                "amp_remove_eof_newlines",
             ]
         )
     if only_check:
