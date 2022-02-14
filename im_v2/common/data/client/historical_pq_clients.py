@@ -20,8 +20,7 @@ import im_v2.common.data.client.full_symbol as imvcdcfusy
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): ByAsset -> ByTile
-class HistoricalPqByAssetClient(
+class HistoricalPqByTileClient(
     imvcdcbimcl.ImClientReadingMultipleSymbols, abc.ABC
 ):
     """
@@ -111,7 +110,7 @@ class HistoricalPqByAssetClient(
 # #############################################################################
 
 
-# TODO(gp): This is very similar to HistoricalPqByAsset. Can we unify?
+# TODO(gp): This is very similar to HistoricalPqByTile. Can we unify?
 class HistoricalPqByDateClient(
     imvcdcbimcl.ImClientReadingMultipleSymbols, abc.ABC
 ):
