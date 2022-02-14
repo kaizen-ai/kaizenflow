@@ -286,7 +286,7 @@ def lime317_execute_task(
         df, partition_columns = imvcdttrut.add_date_partition_cols(
             df, "by_year_month"
         )
-        # Check that all data is for the same year and week.
+        # Check that all data is for the same year and month.
         years = df["year"].unique()
         hdbg.dassert_eq(len(years), 1, "years=%s", str(years))
         months = df["month"].unique()
