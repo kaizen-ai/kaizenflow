@@ -69,6 +69,8 @@ class AbstractDagRunner(abc.ABC):
             _LOG.debug("_column_to_tags_mapping=%s", self._column_to_tags_mapping)
         elif isinstance(dag_builder, dtfcordag.DAG):
             self.dag = dag_builder
+            # TODO(gp): Not sure what to do here.
+            self._column_to_tags_mapping = []
         else:
             raise ValueError("Invalid dag_builder=%s" % dag_builder)
         # Extract the sink node.

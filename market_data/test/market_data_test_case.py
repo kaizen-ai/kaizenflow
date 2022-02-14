@@ -25,7 +25,7 @@ _LOG = logging.getLogger(__name__)
 
 class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
     """
-    Test `get_data*()` methods for a class derived from `AbstractMarketData`.
+    Test `get_data*()` methods for a class derived from `MarketData`.
     """
 
     @abc.abstractmethod
@@ -39,7 +39,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     @staticmethod
     def _test_get_data_for_last_period(
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         timedelta: pd.Timestamp,
     ) -> None:
         """
@@ -62,7 +62,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     def _test_get_data_at_timestamp1(
         self,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         ts: pd.Timestamp,
         asset_ids: Optional[List[int]],
         *args: Any,
@@ -88,7 +88,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     def _get_data_for_interval_helper(
         self,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         asset_ids: Optional[List[int]],
@@ -125,7 +125,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     def _test_get_data_for_interval1(
         self,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         *args: Any,
@@ -155,7 +155,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     def _test_get_data_for_interval2(
         self,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         asset_ids: List[int],
@@ -185,7 +185,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     def _test_get_data_for_interval3(
         self,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         asset_ids: List[int],
@@ -215,7 +215,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     def _test_get_data_for_interval4(
         self,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         asset_ids: List[int],
@@ -245,7 +245,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     def _test_get_data_for_interval5(
         self,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         asset_ids: List[int],
@@ -277,7 +277,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     def _test_get_twap_price1(
         self,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         asset_ids: Optional[List[int]],
@@ -308,7 +308,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     def _test_get_last_end_time1(
         self,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         exp_last_end_time: pd.Timestamp,
     ) -> None:
         """
@@ -321,7 +321,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     def _test_get_last_price1(
         self,
-        market_data: mdata.AbstractMarketData,
+        market_data: mdata.MarketData,
         asset_ids: Optional[List[int]],
         *args: Any,
         **kwargs: Any,
@@ -345,7 +345,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
     # //////////////////////////////////////////////////////////////////////////////
 
     def _test_should_be_online1(
-        self, market_data: mdata.AbstractMarketData, wall_clock_time: pd.Timestamp
+        self, market_data: mdata.MarketData, wall_clock_time: pd.Timestamp
     ) -> None:
         """
         Test that the interface is available at the given time.
@@ -358,7 +358,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
     # TODO(GP): Implement test for `wait_for_latest_data()`.
 
 
-def skip_test_since_not_online(market_data: mdata.AbstractMarketData) -> bool:
+def skip_test_since_not_online(market_data: mdata.MarketData) -> bool:
     """
     Return true if a test should be skipped since `market_data` is not on-line.
     """
@@ -377,7 +377,7 @@ def skip_test_since_not_online(market_data: mdata.AbstractMarketData) -> bool:
 #
 # class MarketData_get_data_for_last_period_asyncio_TestCase1(hunitest.TestCase):
 #    """
-#    Test `AbstractMarketData.get_data_for_last_period()` methods in an asyncio
+#    Test `MarketData.get_data_for_last_period()` methods in an asyncio
 #    set-up where time is moving forward.
 #
 #    This can only be tested with
@@ -385,7 +385,7 @@ def skip_test_since_not_online(market_data: mdata.AbstractMarketData) -> bool:
 #
 #    def get_data_helper(
 #        self,
-#        market_data: mdata.AbstractMarketData,
+#        market_data: mdata.MarketData,
 #        get_wall_clock_time: hdatetime.GetWall,
 #        exp_wall_clock_time: str,
 #        exp_get_data_normalize_false: str,
@@ -441,13 +441,13 @@ def skip_test_since_not_online(market_data: mdata.AbstractMarketData) -> bool:
 #        # Since the clock is at the beginning of the day there is no data.
 #        exp_get_data_normalize_false = r"""
 #        # get_data: wall_clock_time=Timestamp('2022-01-04 09:00:00-0500', tz='America/New_York'), period='last_10mins', normalize_data=False=
-#        df.shape=(0, 6)
+#        shape=(0, 6)
 #        Empty DataFrame
 #        Columns: [egid, close, start_time, end_time, timestamp_db, volume]
 #        Index: []"""
 #        exp_get_data_normalize_true = r"""
 #        # get_data: wall_clock_time=Timestamp('2022-01-04 09:00:00-0500', tz='America/New_York'), period='last_10mins', normalize_data=True=
-#        df.shape=(0, 5)
+#        shape=(0, 5)
 #        Empty DataFrame
 #        Columns: [egid, close, start_time, timestamp_db, volume]
 #        Index: []"""
@@ -463,9 +463,9 @@ def skip_test_since_not_online(market_data: mdata.AbstractMarketData) -> bool:
 #        exp_wall_clock_time = "2022-01-04 09:05:00-05:00"
 #        exp_get_data_normalize_false = r"""
 #        # get_data: wall_clock_time=Timestamp('2022-01-04 09:05:00-0500', tz='America/New_York'), period='last_10mins', normalize_data=False=
-#        df.index in [4554, 4586]
-#        df.columns=egid,close,start_time,end_time,timestamp_db,volume
-#        df.shape=(8, 6)
+#        index=[4554, 4586]
+#        columns=egid,close,start_time,end_time,timestamp_db,volume
+#        shape=(8, 6)
 #               egid  close                start_time                  end_time                     timestamp_db  volume
 #        4586  13684    NaN 2022-01-04 09:00:00-05:00 2022-01-04 09:01:00-05:00 2022-01-04 09:01:05.142177-05:00       0
 #        4582  17085    NaN 2022-01-04 09:00:00-05:00 2022-01-04 09:01:00-05:00 2022-01-04 09:01:05.142177-05:00       0
@@ -476,9 +476,9 @@ def skip_test_since_not_online(market_data: mdata.AbstractMarketData) -> bool:
 #        4557  17085    NaN 2022-01-04 09:03:00-05:00 2022-01-04 09:04:00-05:00 2022-01-04 09:04:02.892229-05:00       0"""
 #        exp_get_data_normalize_true = r"""
 #        # get_data: wall_clock_time=Timestamp('2022-01-04 09:05:00-0500', tz='America/New_York'), period='last_10mins', normalize_data=True=
-#        df.index in [2022-01-04 09:01:00-05:00, 2022-01-04 09:04:00-05:00]
-#        df.columns=egid,close,start_time,timestamp_db,volume
-#        df.shape=(8, 5)
+#        index=[2022-01-04 09:01:00-05:00, 2022-01-04 09:04:00-05:00]
+#        columns=egid,close,start_time,timestamp_db,volume
+#        shape=(8, 5)
 #                                    egid  close                start_time                     timestamp_db  volume
 #        end_time
 #        2022-01-04 09:01:00-05:00  13684    NaN 2022-01-04 09:00:00-05:00 2022-01-04 09:01:05.142177-05:00       0

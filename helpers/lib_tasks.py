@@ -4442,6 +4442,42 @@ def lint_create_branch(ctx, dry_run=False):  # type: ignore
 # #############################################################################
 
 
+@task
+def gh_login(
+    ctx,
+    account="",
+):  # type: ignore
+    if not account:
+        # Retrieve the name of the repo, e.g., "alphamatic/amp".
+        full_repo_name = hgit.get_repo_full_name_from_dirname(
+            ".", include_host_name=False
+        )
+        _LOG.debug(hprint.to_str("full_repo_name"))
+        account = full_repo_name.split("/")[0]
+    _LOG.info(hprint.to_str("account"))
+    #
+    ssh_filename = os.path.expanduser(f"~/.ssh/id_rsa.{account}.github")
+    _LOG.debug(hprint.to_str("ssh_filename"))
+    if os.path.exists(ssh_filename):
+        cmd = f"export GIT_SSH_COMMAND='ssh -i {ssh_filename}'"
+        print(cmd)
+    else:
+        _LOG.warning("Can't find file '%s'" % ssh_filename)
+    #
+    cmd = "gh auth status"
+    _run(ctx, cmd)
+    #
+    github_pat_filename = os.path.expanduser(f"~/.ssh/github_pat.{account}.txt")
+    if os.path.exists(github_pat_filename):
+        cmd = f"gh auth login --with-token <{github_pat_filename}"
+        _run(ctx, cmd)
+    else:
+        _LOG.warning("Can't find file '%s'" % github_pat_filename)
+    #
+    cmd = "gh auth status"
+    _run(ctx, cmd)
+
+
 def _get_branch_name(branch_mode: str) -> Optional[str]:
     if branch_mode == "current_branch":
         branch_name = hgit.get_branch_name()
@@ -5122,9 +5158,3 @@ def fix_perms(  # type: ignore
 # 25163 /compose_app_run_ab27e17f2c47
 # 18721 /compose_app_run_de23819a6bc2
 # pylint: enable=line-too-long
-
-# TODO(gp): Based on:
-# > git remote get-url origin
-# git@github.com:alphamatic/amp.git
-# Run
-# gh auth login --with-token <~/github_pat.gpsaggese.txt

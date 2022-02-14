@@ -176,6 +176,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     _LOG.info("log_file='%s'", log_file)
     # Execute.
     # backend = "loky"
+    # TODO(gp): Is this the correct backend?
     backend = "asyncio_threading"
     hjoblib.parallel_execute(
         workload,

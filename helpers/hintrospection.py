@@ -94,7 +94,7 @@ def format_size(num: float) -> str:
     Return a human-readable string for a filesize (e.g., "3.5 MB").
     """
     # From http://stackoverflow.com/questions/1094841
-    for x in ["bytes", "KB", "MB", "GB", "TB"]:
+    for x in ["b", "KB", "MB", "GB", "TB"]:
         if num < 1024.0:
             return "%3.1f %s" % (num, x)
         num /= 1024.0
