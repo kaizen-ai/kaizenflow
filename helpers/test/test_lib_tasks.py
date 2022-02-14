@@ -1538,7 +1538,6 @@ class Test_pytest_repro1(hunitest.TestCase):
         ]
         self._helper(file_name, target_type, exp)
 
-    @pytest.mark.slow
     def test_files1(self) -> None:
         file_name = self._build_pytest_file1()
         target_type = "files"
