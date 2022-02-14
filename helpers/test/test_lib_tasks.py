@@ -1773,6 +1773,17 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
         )
         self.check_string(act)
 
+    def test2(self) -> None:
+        cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt'"
+        _, act = hsystem.system_to_string(cmd)
+        act = hprint.remove_non_printable_chars(act)
+        # Modify the outcome for reproducibility.
+        act = re.sub(r"[0-9]{2}:[0-9]{2}:[0-9]{2} - ", r"00:00:00 - ", act)
+        act = "\n".join(
+            [x for x in act.split("\n") if not x.startswith(">>ENV<<")]
+        )
+        self.check_string(act)
+
 
 # #############################################################################
 

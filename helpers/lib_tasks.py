@@ -3849,14 +3849,19 @@ def pytest_clean(ctx):  # type: ignore
 
 def _get_failed_tests_from_file(file_name: str) -> List[str]:
     hdbg.dassert_file_exists(file_name)
-    # {
-    # "vendors/test/test_vendors.py::Test_gp::test1": true,
-    # "vendors/test/test_vendors.py::Test_kibot_utils1::...": true,
-    # }
     txt = hio.from_file(file_name)
-    vals = json.loads(txt)
-    hdbg.dassert_isinstance(vals, dict)
-    tests = [k for k, v in vals.items() if v]
+    try:
+        # Decode the json-style string.
+        # {
+        # "vendors/test/test_vendors.py::Test_gp::test1": true,
+        # "vendors/test/test_vendors.py::Test_kibot_utils1::...": true,
+        # }
+        vals = json.loads(txt)
+        hdbg.dassert_isinstance(vals, dict)
+        tests = [k for k, v in vals.items() if v]
+    except json.JSONDecodeError:
+        # Extract failed tests from the regular text output.
+        tests = re.findall(r"FAILED (.+\.py::.+::.+)\n", txt)
     return tests
 
 
