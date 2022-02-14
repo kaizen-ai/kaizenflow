@@ -1433,6 +1433,48 @@ class Test_get_files_to_process1(hunitest.TestCase):
         )
         self.assertEqual(files, [])
 
+    def test_files3(self) -> None:
+        """
+        Pass through files from user.
+
+        Use the sequence of paths separated by newlines.
+        """
+        modified = False
+        branch = False
+        last_commit = False
+        all_ = False
+        # Specify the number of toy files.
+        n_toy_files = 4
+        files_from_user = []
+        # Get root directory.
+        root_dir = hgit.get_client_root(super_module=False)
+        # Generate toy files and store their paths.
+        for file_num in range(n_toy_files):
+            # Build the name of the test file.
+            file_name = f"test_toy{str(file_num)}.tmp.py"
+            # Build the path to the test file.
+            test_path = os.path.join(root_dir, file_name)
+            # Create the empty toy file.
+            hio.to_file(test_path, "")
+            files_from_user.append(test_path)
+        mutually_exclusive = True
+        remove_dirs = True
+        # Join the names with `\n` separator.
+        joined_files_from_user = "\n".join(files_from_user)
+        files = hlibtask._get_files_to_process(
+            modified,
+            branch,
+            last_commit,
+            all_,
+            joined_files_from_user,
+            mutually_exclusive,
+            remove_dirs,
+        )
+        # Remove the toy files.
+        for path in files_from_user:
+            hio.delete_file(path)
+        self.assertEqual(files, files_from_user)
+
     def test_assert1(self) -> None:
         """
         Test that --modified and --branch together cause an assertion.
