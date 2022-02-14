@@ -1,6 +1,4 @@
 INFO: > cmd='/venv/bin/invoke pytest_repro --file-name=/app/helpers/test/Test_pytest_repro_end_to_end.test1/input/lastfailed'
->>ENV<<: is_inside_container=True: code_version=1.0.6, container_version=1.0.6, is_inside_docker=True, is_inside_ci=False, CI_defined=True, CI=''
->>ENV<<: AM_AWS_PROFILE=True AM_ECR_BASE_PATH=True AM_S3_BUCKET=True AM_TELEGRAM_TOKEN=True AWS_ACCESS_KEY_ID=False AWS_DEFAULT_REGION=False AWS_SECRET_ACCESS_KEY=False GH_ACTION_ACCESS_TOKEN=True
 ## pytest_repro: 
 00:00:00 - INFO  lib_tasks.py pytest_repro:3905                         Reading file_name='/app/helpers/test/Test_pytest_repro_end_to_end.test1/input/lastfailed'
 00:00:00 - INFO  lib_tasks.py pytest_repro:3907                         Reading failed tests from file '/app/helpers/test/Test_pytest_repro_end_to_end.test1/input/lastfailed'

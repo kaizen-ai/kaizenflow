@@ -1766,8 +1766,11 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
         )
         _, act = hsystem.system_to_string(cmd)
         act = hprint.remove_non_printable_chars(act)
-        # Replace time indications in logs for reproducibility.
+        # Modify the outcome for reproducibility.
         act = re.sub(r"[0-9]{2}:[0-9]{2}:[0-9]{2} - ", r"00:00:00 - ", act)
+        act = "\n".join(
+            [x for x in act.split("\n") if not x.startswith(">>ENV<<")]
+        )
         self.check_string(act)
 
 
