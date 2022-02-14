@@ -42,7 +42,7 @@ def _generate_test_data(
 
 
 # #############################################################################
-# TestHistoricalPqByAssetClient1
+# TestHistoricalPqByTileClient1
 # #############################################################################
 
 
@@ -74,9 +74,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         expected_column_names = ["close", "full_symbol", "month", "year"]
         expected_column_unique_values = {"full_symbol": [1467591036]}
         expected_signature = r"""# df=
-        df.index in [2021-12-30 00:00:00+00:00, 2022-01-01 23:59:00+00:00]
-        df.columns=full_symbol,close,year,month
-        df.shape=(4320, 4)
+        index=[2021-12-30 00:00:00+00:00, 2022-01-01 23:59:00+00:00]
+        columns=full_symbol,close,year,month
+        shape=(4320, 4)
                                    full_symbol  close  year month
         timestamp
         2021-12-30 00:00:00+00:00   1467591036      0  2021    12
@@ -117,9 +117,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         expected_column_names = ["close", "full_symbol", "month", "year"]
         expected_column_unique_values = {"full_symbol": [1467591036, 1508924190]}
         expected_signature = r"""# df=
-        df.index in [2021-12-30 00:00:00+00:00, 2022-01-01 23:59:00+00:00]
-        df.columns=full_symbol,close,year,month
-        df.shape=(8640, 4)
+        index=[2021-12-30 00:00:00+00:00, 2022-01-01 23:59:00+00:00]
+        columns=full_symbol,close,year,month
+        shape=(8640, 4)
                                    full_symbol  close  year month
         timestamp
         2021-12-30 00:00:00+00:00   1467591036      0  2021    12
@@ -160,9 +160,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         expected_column_names = ["close", "full_symbol", "month", "year"]
         expected_column_unique_values = {"full_symbol": [1467591036, 1508924190]}
         expected_signature = r"""# df=
-        df.index in [2022-01-01 02:00:00+00:00, 2022-01-01 23:59:00+00:00]
-        df.columns=full_symbol,close,year,month
-        df.shape=(2640, 4)
+        index=[2022-01-01 02:00:00+00:00, 2022-01-01 23:59:00+00:00]
+        columns=full_symbol,close,year,month
+        shape=(2640, 4)
                                    full_symbol  close  year month
         timestamp
         2022-01-01 02:00:00+00:00   1467591036   3000  2022     1
@@ -205,9 +205,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         expected_column_names = ["close", "full_symbol", "month", "year"]
         expected_column_unique_values = {"full_symbol": [1467591036, 1508924190]}
         expected_signature = r"""# df=
-        df.index in [2021-12-30 00:00:00+00:00, 2022-01-01 02:00:00+00:00]
-        df.columns=full_symbol,close,year,month
-        df.shape=(6002, 4)
+        index=[2021-12-30 00:00:00+00:00, 2022-01-01 02:00:00+00:00]
+        columns=full_symbol,close,year,month
+        shape=(6002, 4)
                                    full_symbol  close  year month
         timestamp
         2021-12-30 00:00:00+00:00   1467591036      0  2021    12
@@ -250,9 +250,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         expected_column_names = ["close", "full_symbol", "month", "year"]
         expected_column_unique_values = {"full_symbol": [1467591036, 1508924190]}
         expected_signature = r"""# df=
-        df.index in [2021-12-31 23:00:00+00:00, 2022-01-01 01:00:00+00:00]
-        df.columns=full_symbol,close,year,month
-        df.shape=(242, 4)
+        index=[2021-12-31 23:00:00+00:00, 2022-01-01 01:00:00+00:00]
+        columns=full_symbol,close,year,month
+        shape=(242, 4)
                                    full_symbol  close  year month
         timestamp
         2021-12-31 23:00:00+00:00   1467591036   2820  2021    12
