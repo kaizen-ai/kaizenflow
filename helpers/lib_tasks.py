@@ -291,7 +291,7 @@ def _get_files_to_process(
         files = hio.find_all_files(dir_name)
     if files_from_user:
         # If files were passed, filter out non-existent paths.
-        files = _filter_existing_paths(files_from_user.split(" "))
+        files = _filter_existing_paths(files_from_user.split())
     # Convert into a list.
     hdbg.dassert_isinstance(files, list)
     files_to_process = [f for f in files if f != ""]
@@ -4390,6 +4390,7 @@ def lint(  # type: ignore
     # amp_format_separating_line.......................(no files to check)Skipped
     # amp_warn_incorrectly_formatted_todo..............(no files to check)Skipped
     # amp_processjupytext..............................(no files to check)Skipped
+    # amp_remove_eof_newlines..........................(no files to check)Skipped
     # ```
     if only_format:
         hdbg.dassert_eq(phases, "")
@@ -4401,6 +4402,7 @@ def lint(  # type: ignore
                 "amp_format_separating_line",
                 "amp_black",
                 "amp_processjupytext",
+                "amp_remove_eof_newlines",
             ]
         )
     if only_check:
