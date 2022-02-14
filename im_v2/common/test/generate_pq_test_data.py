@@ -71,7 +71,11 @@ class ParquetDataFrameGenerator:
         self._freq = freq
         # TODO(Nikola): Use `inclusive` instead `closed` after 1.4.0
         self._dataframe_index = pd.date_range(
-            self._start_date, self._end_date, freq=self._freq, closed="left"
+            self._start_date,
+            self._end_date,
+            freq=self._freq,
+            closed="left",
+            tz="UTC",
         )
         self._OUTPUT_TYPE_FUNCTION_MAP = {
             "basic": self._get_daily_basic_dataframe,
