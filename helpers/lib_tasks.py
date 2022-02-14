@@ -3864,86 +3864,43 @@ def _get_failed_tests_from_file(file_name: str) -> List[str]:
 
 
 @task
-def pytest_parse_output(  # type: ignore
+def pytest_repro(  # type: ignore
     ctx,
     target_type="tests",
     file_name="./.pytest_cache/v/cache/lastfailed",
-) -> List[str]:
+):
     """
-    Process the list of failed tests from a `pytest` run.
+    Generate commands to reproduce the failed tests after a `pytest` run.
 
     The workflow is:
     ```
-    # Run a lot of tests, e.g., the entire regression suite
-    server> invoke run_fast_slow_tests 2>&1 | log pytest.txt
+    # Run a lot of tests, e.g., the entire regression suite.
+    server> i run_fast_slow_tests 2>&1 | log pytest.txt
     docker> pytest ... 2>&1 | log pytest.txt
+    
+    # Run the `pytest_repro` to summarize test failures and to generate
+    # commands to reproduce them.
+    server> i pytest_repro
     ```
 
-    Some tests fail and `pytest` reports the failure and the stack trace in different chunks
-    1) the list of tests as they are executed
-    ```
-    ...
-    helpers/test/test_dbg.py::Test_dassert_misc1::test_eq_all1 (0.00 s) PASSED       [  4%]
-    helpers/test/test_dbg.py::Test_dassert_misc1::test_eq_all2 (0.01 s) PASSED       [  8%]
-    ...
-    helpers/test/test_cache.py::TestCachingOnS3::test_with_caching1 (6.67 s) FAILED   [ 21%]
-    ...
-    ```
-
-    2) the failures
-    ```
-    =================================== FAILURES ===================================
-    ______________________ TestCachingOnS3.test_with_caching1 ______________________
-    Traceback (most recent call last):
-      File "/app/helpers/test/test_cache.py", line 769, in test_with_caching1
-        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="disk")
-      File "/app/helpers/test/test_cache.py", line 154, in _execute_and_check_state
-        self.assertEqual(f.executed, exp_f_state)  # type: ignore[attr-defined]
-      File "/usr/lib/python3.8/unittest/case.py", line 912, in assertEqual
-        assertion_func(first, second, msg=msg)
-      File "/usr/lib/python3.8/unittest/case.py", line 905, in _baseAssertEqual
-        raise self.failureException(msg)
-    AssertionError: True != False
-    ```
-
-    3) a summary
-    ```
-    SKIPPED [1] test/test_tasks.py:68: Test needs to be run outside Docker
-    SKIPPED [1] test/test_tasks.py:60: Test needs to be run outside Docker
-    SKIPPED [1] test/test_tasks.py:44: Test needs to be run outside Docker
-    ...
-    XFAIL core/test/test_statistics.py::TestMultipleTests::test2
-    XFAIL core/test/test_statistics.py::TestMultiTTest::test7
-    FAILED helpers/test/test_cache.py::TestCachingOnS3::test_with_caching1 - Asse...
-    = 1 failed, 1446 passed, 148 skipped, 53 deselected, 2 xfailed, 1 rerun in 195.03s (0:03:15) =
-    ```
-
-    This task parses the output of `pytest` and extracts various information:
-    - From the first part - the number of tests run, skipped, x-failed
-    - From the second part - the stack traces of the failing tests
-    - From the summary  - the summary line
-    ```
-
-    Then process the data depending on the 
-
-    :param target_type: specify what to print about the failed tests
-        - "tests" (default): full into on the failed tests, e.g.,
+    :param target_type: the granularity level for generating the commands
+        - "tests" (default): failed test methods, e.g.,
             ```
-            helpers/test/test_cache.py::TestCachingOnS3::test_with_caching1
-            helpers/test/test_cache.py::TestCachingOnS3::test_with_caching2
+            pytest helpers/test/test_cache.py::TestCachingOnS3::test_with_caching1
+            pytest helpers/test/test_cache.py::TestCachingOnS3::test_with_caching2
             ```
         - "classes": classes of the failed tests, e.g.,
             ```
-            helpers/test/test_cache.py::TestCachingOnS3
-            helpers/test/test_cache.py::TestCachingOnS3_2
+            pytest helpers/test/test_cache.py::TestCachingOnS3
+            pytest helpers/test/test_cache.py::TestCachingOnS3_2
             ```
-        - "files": names of the files with the failed tests, e.g.,
+        - "files": files with the failed tests, e.g.,
             ```
-            helpers/test/test_cache.py
-            helpers/test/test_lib_tasks.py
+            pytest helpers/test/test_cache.py
+            pytest helpers/test/test_lib_tasks.py
             ```
-    :param file_name: the name of the file containing the pytest file to parse
-    :return: pytest failures in the requested format
+    :param file_name: the name of the file containing the pytest output file to parse
+    :return: commands to reproduce pytest failures at the requested granularity level
     """
     _report_task()
     _ = ctx
@@ -3975,17 +3932,17 @@ def pytest_parse_output(  # type: ignore
         if not os.path.exists(test_file_name):
             _LOG.warning("Can't find test file '%s'", test_file_name)
         if target_type == "tests":
-            targets.append(test)
+            targets.append("pytest " + test)
         elif target_type == "files":
             if test_file_name != "":
-                targets.append(test_file_name)
+                targets.append("pytest " + test_file_name)
             else:
                 _LOG.warning(
                     "Skipping test='%s' since test_file_name='%s'", test, test_file_name
                 )
         elif target_type == "classes":
             if test_file_name != "" and test_class != "":
-                targets.append(f"{test_file_name}::{test_class}")
+                targets.append(f"pytest {test_file_name}::{test_class}")
             else:
                 _LOG.warning(
                     "Skipping test='%s' since test_file_name='%s', test_class='%s'",
@@ -3999,7 +3956,7 @@ def pytest_parse_output(  # type: ignore
     _LOG.debug("res=%s", str(targets))
     targets = hlist.remove_duplicates(targets)
     _LOG.info(
-        "Found %d failed pytest '%s' targets:\n%s",
+        "Found %d failed pytest '%s' target(s); to reproduce run:\n%s",
         len(targets),
         target_type,
         "\n".join(targets),

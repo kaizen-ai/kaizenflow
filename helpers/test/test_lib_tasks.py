@@ -453,7 +453,6 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
 # - check_python_files
 # - docker_stats
 # - traceback (with checked in file)
-# - pytest_failed (with checked in file)
 # - lint
 
 # #############################################################################
@@ -1524,33 +1523,33 @@ class Test_get_files_to_process1(hunitest.TestCase):
 # #############################################################################
 
 
-# TODO(gp): @julia Update these tests, if needed.
-class Test_pytest_failed1(hunitest.TestCase):
+class Test_pytest_repro1(hunitest.TestCase):
     def test_tests1(self) -> None:
         file_name = self._build_pytest_file1()
         target_type = "tests"
         exp = [
-            "dev_scripts/testing/test/test_run_tests.py",
-            "dev_scripts/testing/test/test_run_tests2.py",
-            "helpers/test/test_printing.py::Test_dedent1::test2",
-            "documentation/scripts/test/test_all.py",
-            "documentation/scripts/test/test_render_md.py",
-            "helpers/test/helpers/test/test_list.py::Test_list_1",
-            "helpers/test/test_cache.py::TestAmpTask1407",
+            "pytest dev_scripts/testing/test/test_run_tests.py",
+            "pytest dev_scripts/testing/test/test_run_tests2.py",
+            "pytest helpers/test/test_printing.py::Test_dedent1::test2",
+            "pytest documentation/scripts/test/test_all.py",
+            "pytest documentation/scripts/test/test_render_md.py",
+            "pytest helpers/test/helpers/test/test_list.py::Test_list_1",
+            "pytest helpers/test/test_cache.py::TestAmpTask1407",
         ]
         self._helper(file_name, target_type, exp)
 
+    @pytest.mark.slow
     def test_files1(self) -> None:
         file_name = self._build_pytest_file1()
         target_type = "files"
         exp = [
-            "dev_scripts/testing/test/test_run_tests.py",
-            "dev_scripts/testing/test/test_run_tests2.py",
-            "helpers/test/test_printing.py",
-            "documentation/scripts/test/test_all.py",
-            "documentation/scripts/test/test_render_md.py",
-            "helpers/test/helpers/test/test_list.py",
-            "helpers/test/test_cache.py",
+            "pytest dev_scripts/testing/test/test_run_tests.py",
+            "pytest dev_scripts/testing/test/test_run_tests2.py",
+            "pytest helpers/test/test_printing.py",
+            "pytest documentation/scripts/test/test_all.py",
+            "pytest documentation/scripts/test/test_render_md.py",
+            "pytest helpers/test/helpers/test/test_list.py",
+            "pytest helpers/test/test_cache.py",
         ]
         self._helper(file_name, target_type, exp)
 
@@ -1558,9 +1557,9 @@ class Test_pytest_failed1(hunitest.TestCase):
         file_name = self._build_pytest_file1()
         target_type = "classes"
         exp = [
-            "helpers/test/test_printing.py::Test_dedent1",
-            "helpers/test/helpers/test/test_list.py::Test_list_1",
-            "helpers/test/test_cache.py::TestAmpTask1407",
+            "pytest helpers/test/test_printing.py::Test_dedent1",
+            "pytest helpers/test/helpers/test/test_list.py::Test_list_1",
+            "pytest helpers/test/test_cache.py::TestAmpTask1407",
         ]
         self._helper(file_name, target_type, exp)
 
@@ -1569,54 +1568,54 @@ class Test_pytest_failed1(hunitest.TestCase):
         target_type = "tests"
         # pylint: disable=line-too-long
         exp = [
-            "core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel::test_compare_to_linear_regression1",
-            "core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel::test_compare_to_linear_regression2",
-            "core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel::test_fit1",
-            "core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel::test_fit_no_x1",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestMultiindexVolatilityModel::test1",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestMultiindexVolatilityModel::test2",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestMultiindexVolatilityModel::test3",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestSingleColumnVolatilityModel::test1",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestSingleColumnVolatilityModel::test2",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestSingleColumnVolatilityModel::test3",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test1",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test2",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test3",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test4",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test5",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test01",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test02",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test03",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test04",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test05",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test06",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test07",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test09",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test10",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test11",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test12",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test13",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModulator::test_col_mode1",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModulator::test_col_mode2",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModulator::test_demodulate1",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModulator::test_modulate1",
-            "core/dataflow/test/test_builders.py::TestArmaReturnsBuilder::test1",
-            "core/dataflow/test/test_runners.py::TestIncrementalDagRunner::test1",
-            "core/dataflow_model/test/test_model_evaluator.py::TestModelEvaluator::test_dump_json1",
-            "core/dataflow_model/test/test_model_evaluator.py::TestModelEvaluator::test_load_json1",
-            "core/dataflow_model/test/test_run_experiment.py::TestRunExperiment1::test1",
-            "core/dataflow_model/test/test_run_experiment.py::TestRunExperiment1::test2",
-            "core/dataflow_model/test/test_run_experiment.py::TestRunExperiment1::test3",
-            "core/test/test_config.py::Test_subtract_config1::test_test1",
-            "core/test/test_config.py::Test_subtract_config1::test_test2",
-            "core/test/test_dataframe_modeler.py::TestDataFrameModeler::test_dump_json1",
-            "core/test/test_dataframe_modeler.py::TestDataFrameModeler::test_load_json1",
-            "core/test/test_dataframe_modeler.py::TestDataFrameModeler::test_load_json2",
-            "dev_scripts/test/test_run_notebook.py::TestRunNotebook1::test1",
-            "dev_scripts/test/test_run_notebook.py::TestRunNotebook1::test2",
-            "dev_scripts/test/test_run_notebook.py::TestRunNotebook1::test3",
-            "helpers/test/test_lib_tasks.py::Test_find_check_string_output1::test2",
-            "helpers/test/test_printing.py::Test_dedent1::test2",
+            "pytest core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel::test_compare_to_linear_regression1",
+            "pytest core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel::test_compare_to_linear_regression2",
+            "pytest core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel::test_fit1",
+            "pytest core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel::test_fit_no_x1",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestMultiindexVolatilityModel::test1",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestMultiindexVolatilityModel::test2",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestMultiindexVolatilityModel::test3",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestSingleColumnVolatilityModel::test1",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestSingleColumnVolatilityModel::test2",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestSingleColumnVolatilityModel::test3",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test1",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test2",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test3",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test4",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test5",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test01",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test02",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test03",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test04",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test05",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test06",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test07",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test09",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test10",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test11",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test12",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test13",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModulator::test_col_mode1",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModulator::test_col_mode2",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModulator::test_demodulate1",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModulator::test_modulate1",
+            "pytest core/dataflow/test/test_builders.py::TestArmaReturnsBuilder::test1",
+            "pytest core/dataflow/test/test_runners.py::TestIncrementalDagRunner::test1",
+            "pytest core/dataflow_model/test/test_model_evaluator.py::TestModelEvaluator::test_dump_json1",
+            "pytest core/dataflow_model/test/test_model_evaluator.py::TestModelEvaluator::test_load_json1",
+            "pytest core/dataflow_model/test/test_run_experiment.py::TestRunExperiment1::test1",
+            "pytest core/dataflow_model/test/test_run_experiment.py::TestRunExperiment1::test2",
+            "pytest core/dataflow_model/test/test_run_experiment.py::TestRunExperiment1::test3",
+            "pytest core/test/test_config.py::Test_subtract_config1::test_test1",
+            "pytest core/test/test_config.py::Test_subtract_config1::test_test2",
+            "pytest core/test/test_dataframe_modeler.py::TestDataFrameModeler::test_dump_json1",
+            "pytest core/test/test_dataframe_modeler.py::TestDataFrameModeler::test_load_json1",
+            "pytest core/test/test_dataframe_modeler.py::TestDataFrameModeler::test_load_json2",
+            "pytest dev_scripts/test/test_run_notebook.py::TestRunNotebook1::test1",
+            "pytest dev_scripts/test/test_run_notebook.py::TestRunNotebook1::test2",
+            "pytest dev_scripts/test/test_run_notebook.py::TestRunNotebook1::test3",
+            "pytest helpers/test/test_lib_tasks.py::Test_find_check_string_output1::test2",
+            "pytest helpers/test/test_printing.py::Test_dedent1::test2",
         ]
         # pylint: enable=line-too-long
         self._helper(file_name, target_type, exp)
@@ -1626,17 +1625,17 @@ class Test_pytest_failed1(hunitest.TestCase):
         target_type = "files"
         # pylint: disable=line-too-long
         exp = [
-            "core/dataflow/nodes/test/test_sarimax_models.py",
-            "core/dataflow/nodes/test/test_volatility_models.py",
-            "core/dataflow/test/test_builders.py",
-            "core/dataflow/test/test_runners.py",
-            "core/dataflow_model/test/test_model_evaluator.py",
-            "core/dataflow_model/test/test_run_experiment.py",
-            "core/test/test_config.py",
-            "core/test/test_dataframe_modeler.py",
-            "dev_scripts/test/test_run_notebook.py",
-            "helpers/test/test_lib_tasks.py",
-            "helpers/test/test_printing.py",
+            "pytest core/dataflow/nodes/test/test_sarimax_models.py",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py",
+            "pytest core/dataflow/test/test_builders.py",
+            "pytest core/dataflow/test/test_runners.py",
+            "pytest core/dataflow_model/test/test_model_evaluator.py",
+            "pytest core/dataflow_model/test/test_run_experiment.py",
+            "pytest core/test/test_config.py",
+            "pytest core/test/test_dataframe_modeler.py",
+            "pytest dev_scripts/test/test_run_notebook.py",
+            "pytest helpers/test/test_lib_tasks.py",
+            "pytest helpers/test/test_printing.py",
         ]
         # pylint: enable=line-too-long
         self._helper(file_name, target_type, exp)
@@ -1646,21 +1645,21 @@ class Test_pytest_failed1(hunitest.TestCase):
         target_type = "classes"
         # pylint: disable=line-too-long
         exp = [
-            "core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestMultiindexVolatilityModel",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestSingleColumnVolatilityModel",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel",
-            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModulator",
-            "core/dataflow/test/test_builders.py::TestArmaReturnsBuilder",
-            "core/dataflow/test/test_runners.py::TestIncrementalDagRunner",
-            "core/dataflow_model/test/test_model_evaluator.py::TestModelEvaluator",
-            "core/dataflow_model/test/test_run_experiment.py::TestRunExperiment1",
-            "core/test/test_config.py::Test_subtract_config1",
-            "core/test/test_dataframe_modeler.py::TestDataFrameModeler",
-            "dev_scripts/test/test_run_notebook.py::TestRunNotebook1",
-            "helpers/test/test_lib_tasks.py::Test_find_check_string_output1",
-            "helpers/test/test_printing.py::Test_dedent1",
+            "pytest core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestMultiindexVolatilityModel",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestSingleColumnVolatilityModel",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel",
+            "pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModulator",
+            "pytest core/dataflow/test/test_builders.py::TestArmaReturnsBuilder",
+            "pytest core/dataflow/test/test_runners.py::TestIncrementalDagRunner",
+            "pytest core/dataflow_model/test/test_model_evaluator.py::TestModelEvaluator",
+            "pytest core/dataflow_model/test/test_run_experiment.py::TestRunExperiment1",
+            "pytest core/test/test_config.py::Test_subtract_config1",
+            "pytest core/test/test_dataframe_modeler.py::TestDataFrameModeler",
+            "pytest dev_scripts/test/test_run_notebook.py::TestRunNotebook1",
+            "pytest helpers/test/test_lib_tasks.py::Test_find_check_string_output1",
+            "pytest helpers/test/test_printing.py::Test_dedent1",
         ]
         # pylint: enable=line-too-long
         self._helper(file_name, target_type, exp)
@@ -1746,14 +1745,10 @@ class Test_pytest_failed1(hunitest.TestCase):
 
     def _helper(self, file_name: str, target_type: str, exp: List[str]) -> None:
         ctx = _build_mock_context_returning_ok()
-        # It is a dummy parameter when `file_name` is specified.
-        use_frozen_list = True
-        act = hlibtask.pytest_failed(
+        act = hlibtask.pytest_repro(
             ctx,
-            use_frozen_list=use_frozen_list,
             target_type=target_type,
             file_name=file_name,
-            pbcopy=False,
         )
         exp = " ".join(exp)
         self.assert_equal(act, exp)
