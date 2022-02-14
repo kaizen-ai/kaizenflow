@@ -4390,6 +4390,7 @@ def lint(  # type: ignore
     # amp_format_separating_line.......................(no files to check)Skipped
     # amp_warn_incorrectly_formatted_todo..............(no files to check)Skipped
     # amp_processjupytext..............................(no files to check)Skipped
+    # amp_remove_eof_newlines..........................(no files to check)Skipped
     # ```
     if only_format:
         hdbg.dassert_eq(phases, "")
