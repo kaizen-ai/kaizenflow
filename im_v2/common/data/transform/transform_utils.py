@@ -73,7 +73,8 @@ def reindex_on_datetime(
     return df
 
 
-# TODO(gp): -> add_date_partition_columns
+# TODO(gp): @Nikola move this to hparquet
+# TODO(gp): @Nikola -> add_date_partition_columns
 def add_date_partition_cols(
     df: pd.DataFrame, partition_mode: str
 ) -> Tuple[pd.DataFrame, List[str]]:
@@ -118,6 +119,8 @@ def add_date_partition_cols(
     return df, partition_columns
 
 
+# TODO(gp): @Nikola move this to hparquet
+# TODO(gp): @Nikola -> to_partitioned_parquet
 def partition_dataset(
     df: pd.DataFrame, partition_columns: List[str], dst_dir: str
 ) -> None:
@@ -163,8 +166,7 @@ def partition_dataset(
         # Read.
         table = pa.Table.from_pandas(df)
         # Write using partition.
-        # TODO(gp): @Nikola add this logic to hparquet.to_parquet as a possible
-        #  option.
+        # TODO(gp): add this logic to hparquet.to_parquet as a possible option.
         _LOG.debug(hprint.to_str("partition_columns dst_dir"))
         hdbg.dassert_is_subset(partition_columns, df.columns)
         pq.write_to_dataset(
