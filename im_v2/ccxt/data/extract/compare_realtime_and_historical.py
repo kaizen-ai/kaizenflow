@@ -47,7 +47,7 @@ def reindex_on_asset_and_ts(data: pd.DataFrame) -> pd.DataFrame:
         "volume",
     ]
     hdbg.dassert_is_subset(expected_col_names, data.columns)
-    data_reindex = data.loc[expected_col_names]
+    data_reindex = data.loc[:, expected_col_names]
     # Reindex on ts and asset.
     data_reindex = data_reindex.set_index(["timestamp", "currency_pair"])
     return data_reindex
