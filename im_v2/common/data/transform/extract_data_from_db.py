@@ -80,9 +80,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     start_date = args.start_date
     end_date = args.end_date
     hdbg.dassert_lt(start_date, end_date)
-    timespan = pd.date_range(start_date, end_date)
+    timespan = pd.date_range(start_date, end_date, tz="UTC")
     hdbg.dassert_lt(2, len(timespan))
-    # Create location of daily PQ files.
+    # Check if location for daily parquet files exists.
     dst_dir = args.dst_dir
     hdbg.dassert_exists(dst_dir)
     # Connect to database.
@@ -92,7 +92,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     connection = hsql.get_connection(*connection_params)
     # Initiate DB client.
     # Not sure what vendor is calling below, passing `CCXT` by default.
-    vendor = "ccxt"
+    vendor = "CCXT"
     ccxt_db_client = icdcl.CcxtCddDbClient(vendor, connection)
     # Get universe of symbols.
     symbols = imvccunun.get_vendor_universe()
@@ -102,25 +102,19 @@ def _main(parser: argparse.ArgumentParser) -> None:
         df = ccxt_db_client.read_data(
             symbols,
             start_ts=timespan[date_index],
-            end_ts=timespan[date_index + 1],
-            normalize=False,
+            end_ts=timespan[date_index + 1]
         )
-        if df.empty:
-            _LOG.info("No RT date in db for %s.", timespan[date_index])
-            continue
         try:
             # Check if directory already exists in specified path.
             date_directory = f"date={timespan[date_index].strftime('%Y%m%d')}"
             full_path = os.path.join(dst_dir, date_directory)
             hdbg.dassert_not_exists(full_path)
-            # Set datetime index.
-            datetime_col_name = "start_time"
-            reindexed_df = imvcdttrut.reindex_on_datetime(df, datetime_col_name)
             # Add date partition columns to the dataframe.
-            imvcdttrut.add_date_partition_cols(reindexed_df)
+            partition_mode = "by_date"
+            imvcdttrut.add_date_partition_cols(df, partition_mode)
             # Partition and write dataset.
             partition_cols = ["date"]
-            imvcdttrut.partition_dataset(reindexed_df, partition_cols, dst_dir)
+            imvcdttrut.partition_dataset(df, partition_cols, dst_dir)
         except AssertionError as ex:
             _LOG.info("Skipping. PQ file already present: %s.", ex)
             continue
