@@ -47,8 +47,7 @@ def _generate_test_data(
 # #############################################################################
 
 
-# TODO(gp): @Nikola -> MockHistoricalByTileClient
-class HistoricalByTileMock(imvcdchpcl.HistoricalPqByTileClient):
+class MockHistoricalByTile(imvcdchpcl.HistoricalPqByTileClient):
     def get_universe(self) -> List[str]:
         return ["binance::BTC_USDT", "kucoin::FIL_USDT"]
 
@@ -73,7 +72,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Init client for testing.
         vendor = "mock"
         asset_column_name = "asset_id"
-        im_client = HistoricalByTileMock(
+        im_client = MockHistoricalByTile(
             vendor, asset_column_name, test_dir, partition_mode
         )
         # Compare the expected values.
@@ -117,7 +116,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Init client for testing.
         vendor = "mock"
         asset_column_name = "asset_id"
-        im_client = HistoricalByTileMock(
+        im_client = MockHistoricalByTile(
             vendor, asset_column_name, test_dir, partition_mode
         )
         # Compare the expected values.
@@ -161,7 +160,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Init client for testing.
         vendor = "mock"
         asset_column_name = "asset_id"
-        im_client = HistoricalByTileMock(
+        im_client = MockHistoricalByTile(
             vendor, asset_column_name, test_dir, partition_mode
         )
         # Compare the expected values.
@@ -207,7 +206,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Init client for testing.
         vendor = "mock"
         asset_column_name = "asset_id"
-        im_client = HistoricalByTileMock(
+        im_client = MockHistoricalByTile(
             vendor, asset_column_name, test_dir, partition_mode
         )
         # Compare the expected values.
@@ -253,7 +252,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Init client for testing.
         vendor = "mock"
         asset_column_name = "asset_id"
-        im_client = HistoricalByTileMock(
+        im_client = MockHistoricalByTile(
             vendor, asset_column_name, test_dir, partition_mode
         )
         # Compare the expected values.
@@ -301,7 +300,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Init client for testing.
         vendor = "mock"
         asset_column_name = "asset_id"
-        im_client = HistoricalByTileMock(
+        im_client = MockHistoricalByTile(
             vendor, asset_column_name, test_dir, partition_mode
         )
         full_symbol = "kucoin::MOCK"
@@ -323,7 +322,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Init client for testing.
         vendor = "mock"
         asset_column_name = "asset_id"
-        im_client = HistoricalByTileMock(
+        im_client = MockHistoricalByTile(
             vendor, asset_column_name, test_dir, partition_mode
         )
         # Compare the expected values.
@@ -347,7 +346,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Init client for testing.
         vendor = "mock"
         asset_column_name = "asset_id"
-        im_client = HistoricalByTileMock(
+        im_client = MockHistoricalByTile(
             vendor, asset_column_name, test_dir, partition_mode
         )
         # Compare the expected values.
@@ -365,7 +364,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         asset_column_name = "asset_id"
         test_dir = "dummy"
         partition_mode = "by_year_month"
-        im_client = HistoricalByTileMock(
+        im_client = MockHistoricalByTile(
             vendor, asset_column_name, test_dir, partition_mode
         )
         # Compare the expected values.
