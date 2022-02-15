@@ -16,12 +16,12 @@
 # ## Imports
 
 # %%
-import im.kibot.metadata.load.s3_backend as imkmls3ba
-import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
-import im.common.data.types as imcodatyp
-
 import numpy as np
 import pandas as pd
+
+import im.common.data.types as imcodatyp
+import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
+import im.kibot.metadata.load.s3_backend as imkmls3ba
 
 # %% [markdown]
 # # Explore the universe
@@ -61,7 +61,7 @@ display(kibot_exchange_mapping.head(3))
 # ## Stocks
 
 # %%
-stocks_symbols = s3_backend.get_symbols_for_dataset('all_stocks_1min')
+stocks_symbols = s3_backend.get_symbols_for_dataset("all_stocks_1min")
 stocks_symbols[:5]
 
 # %%
@@ -80,21 +80,21 @@ kibot_loader = imkdlksdlo.KibotS3DataLoader()
 # example for CME Ethanol Daily Continuous Futures.
 # Data is presented in OHLCV type.
 kibot_loader.read_data(
-exchange = "Unknown",
-symbol = "AC",
-asset_class = imcodatyp.AssetClass.Futures,
-frequency = imcodatyp.Frequency.Daily,
-contract_type = imcodatyp.ContractType.Continuous
+    exchange="Unknown",
+    symbol="AC",
+    asset_class=imcodatyp.AssetClass.Futures,
+    frequency=imcodatyp.Frequency.Daily,
+    contract_type=imcodatyp.ContractType.Continuous,
 )
 
 # %%
 # example for Minutely Expiry Futures (JAPANESE YEN JANUARY 2018)
 kibot_loader.read_data(
-exchange = "Unknown",
-symbol = "JYF18",
-asset_class = imcodatyp.AssetClass.Futures,
-frequency = imcodatyp.Frequency.Minutely,
-contract_type = imcodatyp.ContractType.Expiry
+    exchange="Unknown",
+    symbol="JYF18",
+    asset_class=imcodatyp.AssetClass.Futures,
+    frequency=imcodatyp.Frequency.Minutely,
+    contract_type=imcodatyp.ContractType.Expiry,
 )
 
 # %% [markdown]
@@ -103,21 +103,21 @@ contract_type = imcodatyp.ContractType.Expiry
 # %%
 # example for Apple stock.
 kibot_loader.read_data(
-exchange = "Q",
-symbol = "AAPL",
-asset_class = imcodatyp.AssetClass.Stocks,
-frequency = imcodatyp.Frequency.Minutely,
-unadjusted=False
+    exchange="Q",
+    symbol="AAPL",
+    asset_class=imcodatyp.AssetClass.Stocks,
+    frequency=imcodatyp.Frequency.Minutely,
+    unadjusted=False,
 )
 
 # %%
 # Interesting note: the necessary param 'exchange' can be any value.
 kibot_loader.read_data(
-exchange = "Any Exchange",
-symbol = "AAPL",
-asset_class = imcodatyp.AssetClass.Stocks,
-frequency = imcodatyp.Frequency.Minutely,
-unadjusted=False
+    exchange="Any Exchange",
+    symbol="AAPL",
+    asset_class=imcodatyp.AssetClass.Stocks,
+    frequency=imcodatyp.Frequency.Minutely,
+    unadjusted=False,
 )
 
 # %% [markdown]
@@ -132,11 +132,11 @@ stocks_symbols_sample = stocks_symbols[:20]
 
 # %%
 # The tickers below has no data.
-#stocks_symbols_sample.remove("AACC")
-#stocks_symbols_sample.remove("AACOU")
-#stocks_symbols_sample.remove("AACOW")
-#stocks_symbols_sample.remove("AAI")
-#stocks_symbols_sample.remove("AAMRQ")
+# stocks_symbols_sample.remove("AACC")
+# stocks_symbols_sample.remove("AACOU")
+# stocks_symbols_sample.remove("AACOW")
+# stocks_symbols_sample.remove("AAI")
+# stocks_symbols_sample.remove("AAMRQ")
 
 # %% run_control={"marked": false}
 # %%time
@@ -144,19 +144,19 @@ result = []
 
 for ticker in stocks_symbols_sample:
     stock_df = kibot_loader.read_data(
-    exchange = "Any Exchange",
-    symbol = ticker,
-    asset_class = imcodatyp.AssetClass.Stocks,
-    frequency = imcodatyp.Frequency.Minutely,
-    unadjusted=False
+        exchange="Any Exchange",
+        symbol=ticker,
+        asset_class=imcodatyp.AssetClass.Stocks,
+        frequency=imcodatyp.Frequency.Minutely,
+        unadjusted=False,
     )
-    if stock_df.iloc[0][0] == '405 Data Not Found.':
+    if stock_df.iloc[0][0] == "405 Data Not Found.":
         datetime_stats = pd.DataFrame()
         datetime_stats.index = [ticker]
         datetime_stats["start_date"] = np.nan
         datetime_stats["end_date"] = np.nan
         datetime_stats["data_points_count"] = np.nan
-        #datetime_stats["number_of_nans"] = len(stock_df[stock_df["close"].isna()])
+        # datetime_stats["number_of_nans"] = len(stock_df[stock_df["close"].isna()])
         result.append(datetime_stats)
     else:
         # Reseting index to unleash 'timestamp' column.
@@ -177,7 +177,7 @@ for ticker in stocks_symbols_sample:
         datetime_stats["start_date"] = min_date
         datetime_stats["end_date"] = max_date
         datetime_stats["data_points_count"] = data_points
-        #datetime_stats["number_of_nans"] = len(stock_df[stock_df["close"].isna()])
+        # datetime_stats["number_of_nans"] = len(stock_df[stock_df["close"].isna()])
         datetime_stats.index = [ticker]
         result.append(datetime_stats)
 result = pd.concat(result)
@@ -192,13 +192,16 @@ result
 # ### Continuous contracts 1min
 
 # %%
-futures_continuous_contracts_1min_symbols = s3_backend.get_symbols_for_dataset('all_futures_continuous_contracts_1min')
-futures_continuous_contracts_1min_symbols[:5]
+futures_continuous_contracts_1min_symbols = s3_backend.get_symbols_for_dataset(
+    "all_futures_continuous_contracts_1min"
+)
 len(futures_continuous_contracts_1min_symbols)
 
 # %%
 # Getting a sample of 10 contracts.
-futures_continuous_contracts_1min_symbols_sample = futures_continuous_contracts_1min_symbols[:10]
+futures_continuous_contracts_1min_symbols_sample = (
+    futures_continuous_contracts_1min_symbols[:10]
+)
 
 # %%
 # %%time
@@ -206,19 +209,19 @@ result = []
 
 for ticker in futures_continuous_contracts_1min_symbols_sample:
     futures_df = kibot_loader.read_data(
-    exchange = "Any Exchange",
-    symbol = ticker,
-    asset_class = imcodatyp.AssetClass.Futures,
-    contract_type = imcodatyp.ContractType.Continuous,
-    frequency = imcodatyp.Frequency.Minutely,
+        exchange="Any Exchange",
+        symbol=ticker,
+        asset_class=imcodatyp.AssetClass.Futures,
+        contract_type=imcodatyp.ContractType.Continuous,
+        frequency=imcodatyp.Frequency.Minutely,
     )
-    if futures_df.iloc[0][0] == '405 Data Not Found.':
+    if futures_df.iloc[0][0] == "405 Data Not Found.":
         datetime_stats = pd.DataFrame()
         datetime_stats.index = [ticker]
         datetime_stats["start_date"] = np.nan
         datetime_stats["end_date"] = np.nan
         datetime_stats["data_points_count"] = np.nan
-        #datetime_stats["number_of_nans"] = len(futures_df[futures_df["close"].isna()])
+        # datetime_stats["number_of_nans"] = len(futures_df[futures_df["close"].isna()])
         result.append(datetime_stats)
     else:
         # Reseting index to unleash 'timestamp' column.
@@ -239,7 +242,7 @@ for ticker in futures_continuous_contracts_1min_symbols_sample:
         datetime_stats["start_date"] = min_date
         datetime_stats["end_date"] = max_date
         datetime_stats["data_points_count"] = data_points
-        #datetime_stats["number_of_nans"] = len(futures_df[futures_df["close"].isna()])
+        # datetime_stats["number_of_nans"] = len(futures_df[futures_df["close"].isna()])
         datetime_stats.index = [ticker]
         result.append(datetime_stats)
 result = pd.concat(result)
@@ -251,8 +254,9 @@ result
 # ### Continuous contracts Daily
 
 # %%
-futures_continuous_contracts_daily_symbols = s3_backend.get_symbols_for_dataset('all_futures_continuous_contracts_daily')
-futures_continuous_contracts_daily_symbols[:5]
+futures_continuous_contracts_daily_symbols = s3_backend.get_symbols_for_dataset(
+    "all_futures_continuous_contracts_daily"
+)
 len(futures_continuous_contracts_daily_symbols)
 
 # %%
@@ -261,19 +265,19 @@ result = []
 
 for ticker in futures_continuous_contracts_daily_symbols:
     futures_df = kibot_loader.read_data(
-    exchange = "Any Exchange",
-    symbol = ticker,
-    asset_class = imcodatyp.AssetClass.Futures,
-    contract_type = imcodatyp.ContractType.Continuous,
-    frequency = imcodatyp.Frequency.Daily,
+        exchange="Any Exchange",
+        symbol=ticker,
+        asset_class=imcodatyp.AssetClass.Futures,
+        contract_type=imcodatyp.ContractType.Continuous,
+        frequency=imcodatyp.Frequency.Daily,
     )
-    if futures_df.iloc[0][0] == '405 Data Not Found.':
+    if futures_df.iloc[0][0] == "405 Data Not Found.":
         datetime_stats = pd.DataFrame()
         datetime_stats.index = [ticker]
         datetime_stats["start_date"] = np.nan
         datetime_stats["end_date"] = np.nan
         datetime_stats["data_points_count"] = np.nan
-        #datetime_stats["number_of_nans"] = len(futures_df[futures_df["close"].isna()])
+        # datetime_stats["number_of_nans"] = len(futures_df[futures_df["close"].isna()])
         result.append(datetime_stats)
     else:
         # Reseting index to unleash 'timestamp' column.
@@ -294,7 +298,7 @@ for ticker in futures_continuous_contracts_daily_symbols:
         datetime_stats["start_date"] = min_date
         datetime_stats["end_date"] = max_date
         datetime_stats["data_points_count"] = data_points
-        #datetime_stats["number_of_nans"] = len(futures_df[futures_df["close"].isna()])
+        # datetime_stats["number_of_nans"] = len(futures_df[futures_df["close"].isna()])
         datetime_stats.index = [ticker]
         result.append(datetime_stats)
 result = pd.concat(result)
