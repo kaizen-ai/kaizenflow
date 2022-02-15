@@ -6,6 +6,7 @@ import helpers.hpandas as hpandas
 import logging
 from typing import Any, Dict, List, Optional, Union
 
+import numpy as np
 import pandas as pd
 
 import helpers.hdatetime as hdateti
@@ -103,7 +104,47 @@ def dassert_unique_index(
         hdbg.dassert(index.is_unique, msg=msg, *args)
 
 
-# TODO(gp): Add more info in case of failures and unit tests.
+# TODO(gp): @Grisha Add unit tests.
+def dassert_increasing_index(
+    obj: Union[pd.Index, pd.DataFrame, pd.Series],
+    msg: Optional[str] = None,
+    *args: Any,
+) -> None:
+    """
+    Ensure that a Pandas object has an increasing index.
+    """
+    index = _get_index(obj)
+    if not index.is_monotonic_increasing:
+        # Print information about the problematic indices like:
+        # ```
+        # Not increasing indices are:
+        #                                  full_symbol         open         high
+        # timestamp
+        # 2018-08-17 01:39:00+00:00  binance::BTC_USDT  6339.250000  6348.910000
+        # 2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987
+        # ```
+        # Find the problematic indices.
+        mask = np.diff(index) <= pd.Timedelta(seconds=0)
+        mask = np.insert(mask, 0, False)
+        # TODO(gp): We might want to specify an integer with how many rows before
+        #  after we want to show.
+        # Shift back to get the previous index that was creating the issue.
+        mask_shift = np.empty_like(mask)
+        mask_shift[:len(mask) - 1] = mask[1:len(mask)]
+        mask_shift[len(mask) - 1] = False
+        #
+        mask = mask | mask_shift
+        dup_msg = "Not increasing indices are:\n%s\n" % df_to_str(obj[mask])
+        if msg is None:
+            msg = dup_msg
+        else:
+            msg = dup_msg + msg
+        # Dump the data to file for further inspection.
+        # obj.to_csv("index.csv")
+        hdbg.dassert(index.is_monotonic_increasing, msg=msg, *args)
+
+
+# TODO(gp): @Grisha Add more info in case of failures and unit tests.
 def dassert_strictly_increasing_index(
     obj: Union[pd.Index, pd.DataFrame, pd.Series],
     msg: Optional[str] = None,
@@ -113,14 +154,10 @@ def dassert_strictly_increasing_index(
     Ensure that a Pandas object has a strictly increasing index.
     """
     dassert_unique_index(obj, msg=msg, *args)
-    # TODO(gp): Understand why mypy reports:
-    #   error: "dassert" gets multiple values for keyword argument "msg"
-    index = _get_index(obj)
-    hdbg.dassert(index.is_monotonic_increasing, msg=msg, *args)
+    dassert_increasing_index(obj, msg=msg, *args)
 
 
-# TODO(gp): Factor out common code related to extracting the index from several
-#  pandas data structures.
+
 # TODO(gp): Not sure it's used or useful?
 def dassert_monotonic_index(
     obj: Union[pd.Index, pd.DataFrame, pd.Series],
@@ -132,8 +169,6 @@ def dassert_monotonic_index(
     decreasing index).
     """
     dassert_unique_index(obj, msg=msg, *args)
-    # TODO(gp): Understand why mypy reports:
-    #   error: "dassert" gets multiple values for keyword argument "msg"
     index = _get_index(obj)
     cond = index.is_monotonic_increasing or index.is_monotonic_decreasing
     hdbg.dassert(cond, msg=msg, *args)
