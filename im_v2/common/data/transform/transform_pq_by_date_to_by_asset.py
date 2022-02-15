@@ -384,7 +384,6 @@ def _run(args: argparse.Namespace) -> None:
     hjoblib.validate_workload(workload)
     # Prepare the log file.
     timestamp = hdateti.get_current_timestamp_as_string("ET")
-    # TODO(Nikola): Change directory.
     log_dir = os.getcwd()
     log_file = os.path.join(log_dir, f"log.{timestamp}.txt")
     _LOG.info("log_file='%s'", log_file)
