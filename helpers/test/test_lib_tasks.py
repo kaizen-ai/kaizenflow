@@ -453,7 +453,6 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
 # - check_python_files
 # - docker_stats
 # - traceback (with checked in file)
-# - pytest_failed (with checked in file)
 # - lint
 
 # #############################################################################
@@ -1566,7 +1565,7 @@ class Test_get_files_to_process1(hunitest.TestCase):
 # #############################################################################
 
 
-class Test_pytest_failed1(hunitest.TestCase):
+class Test_pytest_repro1(hunitest.TestCase):
     def test_tests1(self) -> None:
         file_name = self._build_pytest_file1()
         target_type = "tests"
@@ -1710,7 +1709,7 @@ class Test_pytest_failed1(hunitest.TestCase):
 
     def _build_pytest_file_helper(self, txt: str) -> str:
         txt = hprint.dedent(txt)
-        file_name = os.path.join(self.get_scratch_space(), "input.txt")
+        file_name = os.path.join(self.get_scratch_space(), "cache/lastfailed")
         hio.to_file(file_name, txt)
         return file_name
 
@@ -1787,17 +1786,43 @@ class Test_pytest_failed1(hunitest.TestCase):
 
     def _helper(self, file_name: str, target_type: str, exp: List[str]) -> None:
         ctx = _build_mock_context_returning_ok()
-        # It is a dummy parameter when `file_name` is specified.
-        use_frozen_list = True
-        act = hlibtask.pytest_failed(
+        act = hlibtask.pytest_repro(
             ctx,
-            use_frozen_list=use_frozen_list,
             target_type=target_type,
             file_name=file_name,
-            pbcopy=False,
         )
-        exp = " ".join(exp)
+        exp = " ".join(["pytest " + x for x in exp])
         self.assert_equal(act, exp)
+
+
+class Test_pytest_repro_end_to_end(hunitest.TestCase):
+    """
+    - Run the `pytest_repro` invoke from command line
+      - A fixed file imitating the pytest output file is used
+    - Compare the output to the golden outcome
+    """
+
+    def test1(self) -> None:
+        cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/cache/lastfailed'"
+        _, act = hsystem.system_to_string(cmd)
+        act = hprint.remove_non_printable_chars(act)
+        # Modify the outcome for reproducibility.
+        act = re.sub(r"[0-9]{2}:[0-9]{2}:[0-9]{2} - ", r"00:00:00 - ", act)
+        act = "\n".join(
+            [x for x in act.split("\n") if not x.startswith(">>ENV<<")]
+        )
+        self.check_string(act)
+
+    def test2(self) -> None:
+        cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt'"
+        _, act = hsystem.system_to_string(cmd)
+        act = hprint.remove_non_printable_chars(act)
+        # Modify the outcome for reproducibility.
+        act = re.sub(r"[0-9]{2}:[0-9]{2}:[0-9]{2} - ", r"00:00:00 - ", act)
+        act = "\n".join(
+            [x for x in act.split("\n") if not x.startswith(">>ENV<<")]
+        )
+        self.check_string(act)
 
 
 # #############################################################################
