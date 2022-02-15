@@ -4,8 +4,6 @@ Import as:
 import dataflow.system.source_nodes as dtfsysonod
 """
 
-# TODO(gp): -> source_nodes.py
-
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
 

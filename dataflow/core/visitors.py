@@ -43,7 +43,8 @@ def extract_info(
         for method in methods:
             method_info = node.get_info(method)
             node_info[method] = copy.copy(method_info)
-        # TODO(gp): Not sure about the double copy. Maybe a single deepcopy is enough.
+        # TODO(gp): Not sure about the double copy. Maybe a single deepcopy is
+        # enough.
         info[nid] = copy.copy(node_info)
     return info
 

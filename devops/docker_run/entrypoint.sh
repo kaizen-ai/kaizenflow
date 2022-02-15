@@ -34,7 +34,6 @@ if [[ $ENABLE_DIND == 1 ]]; then
     # Start Docker Engine.
     sudo /etc/init.d/docker start
     sudo /etc/init.d/docker status
-
 fi;
 
 # Mount other file systems.
@@ -72,8 +71,10 @@ echo "which python: $VAL"
 VAL=$(python -V)
 echo "python -V: $VAL"
 #echo "check pandas package: "$(python -c "import pandas; print(pandas)")
-#echo "docker -v: "$(docker -v)
-#echo "docker-compose -v: "$(docker-compose -v)
+if [[ $ENABLE_DIND == 1 ]]; then
+    echo "docker -v: "$(docker -v)
+    echo "docker-compose -v: "$(docker-compose -v)
+fi;
 VAL=$(python -c "import helpers; print(helpers)")
 echo "helpers: $VAL"
 

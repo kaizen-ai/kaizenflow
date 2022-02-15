@@ -18,6 +18,9 @@ import dataflow.core.nodes.volatility_models as dtfcnovomo
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): @Grisha -> dag_builder_example.py
+
+
 class DagBuilderExample1(dtfcorbuil.DagBuilder):
     """
     Pipeline contain a single node with a data source node factory.

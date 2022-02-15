@@ -91,9 +91,9 @@ class TestParquet1(hunitest.TestCase):
         # Check.
         act = hpandas.df_to_str(df, print_shape_info=True, tag="df")
         exp = r"""# df=
-        df.index in [2020-01-01 09:30:00-05:00, 2020-01-01 16:00:00-05:00]
-        df.columns=idx,instr,val1,val2
-        df.shape=(395, 4)
+        index=[2020-01-01 09:30:00-05:00, 2020-01-01 16:00:00-05:00]
+        columns=idx,instr,val1,val2
+        shape=(395, 4)
                                    idx instr  val1  val2
         2020-01-01 09:30:00-05:00    0     A    81    35
         2020-01-01 09:35:00-05:00    0     A    14    58
@@ -190,9 +190,9 @@ class TestParquet1(hunitest.TestCase):
         # Check.
         act = hpandas.df_to_str(df2, print_shape_info=True, tag="df")
         exp = r"""# df=
-        df.index in [2020-01-01 09:30:00-05:00, 2020-01-01 16:00:00-05:00]
-        df.columns=idx,instr,val1,val2
-        df.shape=(79, 4)
+        index=[2020-01-01 09:30:00-05:00, 2020-01-01 16:00:00-05:00]
+        columns=idx,instr,val1,val2
+        shape=(79, 4)
                                    idx instr  val1  val2
         2020-01-01 09:30:00-05:00    0     A    81    35
         2020-01-01 09:35:00-05:00    0     A    14    58
@@ -352,9 +352,9 @@ class TestPartitionedParquet1(hunitest.TestCase):
             df, partition_cols, exp_dir_signature, columns_to_read
         )
         exp = r"""# =
-        df.index in [2020-01-01 09:30:00-05:00, 2020-01-01 16:00:00-05:00]
-        df.columns=idx,instr
-        df.shape=(395, 2)
+        index=[2020-01-01 09:30:00-05:00, 2020-01-01 16:00:00-05:00]
+        columns=idx,instr
+        shape=(395, 2)
                                    idx instr
         2020-01-01 09:30:00-05:00    0     A
         2020-01-01 09:35:00-05:00    0     A
@@ -400,9 +400,9 @@ class TestPartitionedParquet1(hunitest.TestCase):
         # Compare.
         df_as_str = hpandas.df_to_str(df2, print_shape_info=True, tag="df")
         exp = r"""# df=
-        df.index in [0, 78]
-        df.columns=idx,instr
-        df.shape=(79, 2)
+        index=[0, 78]
+        columns=idx,instr
+        shape=(79, 2)
           idx instr
         0   0     A
         1   0     A
@@ -467,9 +467,9 @@ class TestPartitionedParquet1(hunitest.TestCase):
         df_as_str = _compare_dfs(self, df, df2)
         exp = r"""
         # =
-        df.index in [2020-01-01 09:30:00-05:00, 2020-01-01 16:00:00-05:00]
-        df.columns=idx,instr,val1,val2
-        df.shape=(395, 4)
+        index=[2020-01-01 09:30:00-05:00, 2020-01-01 16:00:00-05:00]
+        columns=idx,instr,val1,val2
+        shape=(395, 4)
                                    idx instr  val1  val2
         2020-01-01 09:30:00-05:00    0     A    81    35
         2020-01-01 09:35:00-05:00    0     A    14    58
@@ -499,7 +499,7 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         actual = str([filters[0], filters[-1]])
         expected = (
             r"[[('year', '=', 2001), ('month', '=', 1)], "
-            r"[('year', '=', 2100), ('month', '=', 1)]]"
+            r"[('year', '=', 2030), ('month', '=', 1)]]"
         )
         self.assert_equal(actual, expected)
 
@@ -516,7 +516,7 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         actual = str([filters[0], filters[-1]])
         expected = (
             r"[[('year', '=', 2020), ('month', '=', 1)], "
-            r"[('year', '=', 2100), ('month', '=', 1)]]"
+            r"[('year', '=', 2030), ('month', '=', 1)]]"
         )
         self.assert_equal(actual, expected)
 

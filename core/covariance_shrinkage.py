@@ -15,6 +15,8 @@ import helpers.hdbg as hdbg
 _LOG = logging.getLogger(__name__)
 COL = Union[str, int]
 
+# TODO(gp): Move to optimizer/
+
 
 # TODO(Paul): The same check is also found in "optimizer/utils.py". Unify.
 def is_symmetric(matrix: pd.DataFrame, **kwargs) -> bool:
@@ -93,7 +95,7 @@ def compute_analytical_nonlinear_shrinkage_estimator(
     # Construct the covariance matrix estimator.
     covariance_estimator = (u * d_n) @ v_transpose
     df = pd.DataFrame(covariance_estimator, index=scm.index, columns=scm.columns)
-    # TODO: Perform some sanity checks and return.
+    # TODO(Paul): Perform some sanity checks and return.
     return df
 
 
