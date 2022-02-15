@@ -16,7 +16,7 @@ import helpers.hprint as hprint
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): -> dag_builder.py
+# TODO(gp): @Grisha -> dag_builder.py
 
 
 class DagBuilder(abc.ABC):

@@ -252,6 +252,7 @@ def lime317_execute_task(
 ) -> None:
     """
     Process a task by:
+
     - transforming df (e.g., converting epoch "start_time" into a timestamp)
     - merging multiple Parquet files corresponding to a date interval
     - writing it into `dst_dir` (partitioning by assets using Parquet datasets)
@@ -286,7 +287,7 @@ def lime317_execute_task(
         df, partition_columns = imvcdttrut.add_date_partition_cols(
             df, "by_year_month"
         )
-        # Check that all data is for the same year and week.
+        # Check that all data is for the same year and month.
         years = df["year"].unique()
         hdbg.dassert_eq(len(years), 1, "years=%s", str(years))
         months = df["month"].unique()

@@ -3,6 +3,7 @@ Import as:
 
 import dataflow.core.dag as dtfcordag
 """
+
 import itertools
 import json
 import logging
@@ -25,20 +26,18 @@ import helpers.hwall_clock_time as hwacltim
 
 _LOG = logging.getLogger(__name__)
 
-# #############################################################################
-# Class for creating and executing a DAG of nodes.
-# #############################################################################
-
 
 DagOutput = Dict[dtfcornode.NodeId, dtfcornode.NodeOutput]
 
 
 class DAG:
     """
-    Class for building DAGs using Nodes.
+    Class for creating and executing a DAG of `Node`s.
 
-    The DAG manages node execution and storage of outputs (within
-    executed nodes).
+    This class:
+    - builds a DAG in terms of adding and connecting nodes
+    - queries a DAG in terms of nodes, sources, and sinks
+    - manages node execution and storage of outputs within executed nodes
     """
 
     # TODO(gp): -> name: str to simplify the interface
@@ -54,8 +53,8 @@ class DAG:
         """
         Create a DAG.
 
-        :param name: optional str identifier
-        :param mode: determines how to handle an attempt to add a node that already
+        :param name: optional str identifier of the DAG
+        :param mode: determine how to handle an attempt to add a node that already
             belongs to the DAG:
             - "strict": asserts
             - "loose": deletes old node (also removes edges) and adds new node. This
@@ -63,31 +62,23 @@ class DAG:
         :param save_node_interface, profile_execution, dst_dir: see `set_debug_mode()`
         """
         self._dag = networ.DiGraph()
-        #
+        # Store the DAG name.
         if name is not None:
             hdbg.dassert_isinstance(name, str)
         self._name = name
-        #
-        if mode is None:
-            mode = "strict"
-        hdbg.dassert_in(
-            mode, ["strict", "loose"], "Unsupported mode %s requested!", mode
-        )
+        # Store mode.
+        mode = mode or "strict"
+        hdbg.dassert_in(mode, ["strict", "loose"], "Unsupported mode requested")
         self._mode = mode
         #
         self.set_debug_mode(save_node_interface, profile_execution, dst_dir)
 
     def __str__(self) -> str:
         """
-        Return a short representation for user.
+        Return a short representation of the DAG.
 
-        E.g.,
-        ```
-        name=None
-        mode=strict
-        nodes=[('n1', {'stage': <dataflow.core.node.Node object at 0x>})]
-        edges=[]
-        ```
+        E.g., ``` name=None mode=strict nodes=[('n1', {'stage':
+        <dataflow.core.node.Node object at 0x>})] edges=[] ```
         """
         txt = []
         txt.append(f"name={self._name}")
@@ -131,7 +122,7 @@ class DAG:
         dst_dir: Optional[str],
     ) -> None:
         """
-        Set the debug parameters see
+        Set the debug parameters see.
 
         Sometimes it's difficult to pass these parameters (e.g., through a
         `DagBuilder`) so we allow to set them after construction.
@@ -172,19 +163,24 @@ class DAG:
     # TODO(gp): A bit confusing since other classes have `dag / get_dag` method that
     #  returns a DAG. Also the code does `dag.dag`. Maybe -> `nx_dag()` to say that
     #  we are extracting the networkx data structures.
+    # TODO(gp): @Grisha use a getter only.
     @property
     def dag(self) -> networ.DiGraph:
         return self._dag
 
     # TODO(*): Should we force to always have a name? So mypy can perform more
     #  checks.
+    # TODO(gp): @Grisha use a getter only.
     @property
     def name(self) -> Optional[str]:
         return self._name
 
+    # TODO(gp): @Grisha use a getter only.
     @property
     def mode(self) -> str:
         return self._mode
+
+    # /////////////////////////////////////////////////////////////////////////////
 
     def add_node(self, node: dtfcornode.Node) -> None:
         """
@@ -195,33 +191,33 @@ class DAG:
         # In principle, `NodeInterface` could be supported; however, to do so,
         # the `run` methods below would need to be suitably modified.
         hdbg.dassert_issubclass(
-            node, dtfcornode.Node, "Only DAGs of class `Node` are supported!"
+            node, dtfcornode.Node, "Only DAGs of class `Node` are supported"
         )
         # NetworkX requires that nodes be hashable and uses hashes for
-        # identifying nodes. Because our Nodes are objects whose hashes can
+        # identifying nodes. Because our `Node`s are objects whose hashes can
         # change as operations are performed, we use the `Node.nid` as the
         # NetworkX node and the `Node` instance as a `node attribute`, which we
         # identifying internally with the keyword `stage`.
         #
-        # Note that this usage requires that nid's be unique within a given
+        # Note that this usage requires that `nid`'s be unique within a given
         # DAG.
         if self.mode == "strict":
             hdbg.dassert(
                 not self._dag.has_node(node.nid),
-                "A node with nid=%s already belongs to the DAG!",
+                "A node with nid=%s already belongs to the DAG",
                 node.nid,
             )
         elif self.mode == "loose":
             # If a node with the same id already belongs to the DAG:
-            #   - Remove the node and all of its successors (and their incident
-            #     edges)
+            #   - Remove the node and all of its successors, and their incident
+            #     edges
             #   - Add the new node to the graph.
             # This is useful for notebook research flows, e.g., rerunning
             # blocks that build the DAG incrementally.
             if self._dag.has_node(node.nid):
                 _LOG.warning(
                     "Node `%s` is already in DAG. Removing existing node, "
-                    "successors, and all incident edges of such nodes. ",
+                    "successors, and all incident edges of such nodes",
                     node.nid,
                 )
                 # Remove node successors.
@@ -243,14 +239,14 @@ class DAG:
         :param nid: unique node id
         """
         hdbg.dassert_isinstance(nid, dtfcornode.NodeId)
-        hdbg.dassert(self._dag.has_node(nid), "Node `%s` is not in DAG!", nid)
+        hdbg.dassert(self._dag.has_node(nid), "Node `%s` is not in DAG", nid)
         return self._dag.nodes[nid]["stage"]  # type: ignore
 
     def remove_node(self, nid: dtfcornode.NodeId) -> None:
         """
         Remove node from DAG and clear any connected edges.
         """
-        hdbg.dassert(self._dag.has_node(nid), "Node `%s` is not in DAG!", nid)
+        hdbg.dassert(self._dag.has_node(nid), "Node `%s` is not in DAG", nid)
         self._dag.remove_node(nid)
 
     def connect(
@@ -317,6 +313,8 @@ class DAG:
                 f"Creating edge {parent_nid} -> {child_nid} introduces a cycle!"
             )
 
+    # /////////////////////////////////////////////////////////////////////////////
+
     def get_sources(self) -> List[dtfcornode.NodeId]:
         """
         :return: list of nid's of source nodes
@@ -362,6 +360,8 @@ class DAG:
             str(sinks),
         )
         return sinks[0]
+
+    # /////////////////////////////////////////////////////////////////////////////
 
     def run_dag(self, method: dtfcornode.Method) -> DagOutput:
         """
@@ -413,25 +413,27 @@ class DAG:
         node_output = node.get_outputs(method)
         return node_output
 
+    # /////////////////////////////////////////////////////////////////////////////
+
     def _to_json(self) -> str:
         # Get internal networkx representation of the DAG.
         graph: networ.classes.digraph.DiGraph = self.dag
-        nld = networ.readwrite.json_graph.node_link_data(graph)
+        node_link_data = networ.readwrite.json_graph.node_link_data(graph)
         # Remove stages names from `node_link_data` dictionary since they refer to
         # `Node` objects, which are not JSON serializable.
-        # E.g., `nld` looks like:
+        # E.g., `node_link_data` looks like:
         #   {'directed': True,
         #    'graph': {},
         #    'links': [],
         #    'multigraph': False,
         #    'nodes': [{'id': 'n1',
         #               'stage': <dataflow.core.Node object at 0x...>}]}
-        nld = nld.copy()
-        for data in nld["nodes"]:
+        node_link_data = node_link_data.copy()
+        for data in node_link_data["nodes"]:
             data["stage"] = data["stage"].__class__.__name__
         # Print as JSON.
-        json_nld = json.dumps(nld, indent=4, sort_keys=True)
-        return json_nld
+        json_node_link_data = json.dumps(node_link_data, indent=4, sort_keys=True)
+        return json_node_link_data
 
     def _write_system_stats_to_dst_dir(
         self,
@@ -443,8 +445,8 @@ class DAG:
         extra_txt: str = "",
     ) -> None:
         """
-        Write information about the system (e.g., time and memory) before running a
-        node.
+        Write information about the system (e.g., time and memory) before
+        running a node.
 
         The file has a format like
         `{dst_dir}/{method}.{topological_id}.{nid}.{file_tag}.txt`
@@ -485,8 +487,8 @@ class DAG:
         obj: Any,
     ) -> None:
         """
-        Write information about the system (e.g., time and memory) before running a
-        node.
+        Write information about the system (e.g., time and memory) before
+        running a node.
 
         The file has a format like:
         `{dst_dir}/{method}.{topological_id}.{nid}.{file_tag}.txt`
@@ -528,7 +530,7 @@ class DAG:
         method: dtfcornode.Method,
     ) -> None:
         """
-        Run the requested `method` on a single node.
+        Run the requested `method` on a method of a single node.
 
         This method DOES NOT run (or re-run) ancestors of `nid`.
         """

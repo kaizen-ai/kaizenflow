@@ -214,7 +214,7 @@ class Test_dataflow_core_DAG2(_TestDataflowHelper):
         exp = r"""
         * Failed assertion *
         cond=False
-        Node `n2` is not in DAG!
+        Node `n2` is not in DAG
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 

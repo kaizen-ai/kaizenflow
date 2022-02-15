@@ -18,7 +18,9 @@ import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): Remove after PTask2335.
+# TODO(gp): @Grisha -> gluonts/backtest.py
+
+# TODO(gp): @Grisha Remove after PTask2335.
 if True:
     import gluonts
     import gluonts.evaluation.backtest
