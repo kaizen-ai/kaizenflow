@@ -77,6 +77,8 @@ downloading_task = ECSOperator(
 compare_command = [
     "/app/im_v2/ccxt/data/extract/compare_realtime_and_historical.py",
     "--db_stage 'dev'",
+    "--to_datetime {{ execution_date - macros.timedelta(minutes=15) }}",
+    "--from_datetime {{ execution_date - macros.timedelta(1) - macros.timedelta(minutes=15) }}",
     f"--exchange_id '{_EXCHANGE}'",
     f"--db_table 'ccxt_ohlcv'",
     "--aws_profile 'ck'",
