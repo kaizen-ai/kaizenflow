@@ -225,6 +225,9 @@ def dassert_tz_compatible_timestamp_with_df(
     dassert_tz_compatible(df_datetime, datetime_)
 
 
+# //////////////////////////////////////////////////////////////////////////////////O
+
+
 def dassert_is_valid_timestamp(timestamp: Optional[pd.Timestamp]) -> None:
     """
     Assert that a timestamp is `None` or a `pd.Timestamp` with timezone.
@@ -232,6 +235,26 @@ def dassert_is_valid_timestamp(timestamp: Optional[pd.Timestamp]) -> None:
     if timestamp is not None:
         hdbg.dassert_isinstance(timestamp, pd.Timestamp)
         dassert_has_tz(timestamp)
+
+
+def dassert_timestamp_lte(
+    start_timestamp: Optional[pd.Timestamp],
+    end_timestamp: Optional[pd.Timestamp]
+) -> None:
+    dassert_is_valid_timestamp(start_timestamp)
+    dassert_is_valid_timestamp(end_timestamp)
+    if start_timestamp is not None and end_timestamp is not None:
+        hdbg.dassert_lte(start_timestamp, end_timestamp)
+
+
+def dassert_timestamp_lt(
+    start_timestamp: Optional[pd.Timestamp],
+    end_timestamp: Optional[pd.Timestamp]
+) -> None:
+    dassert_is_valid_timestamp(start_timestamp)
+    dassert_is_valid_timestamp(end_timestamp)
+    if start_timestamp is not None and end_timestamp is not None:
+        hdbg.dassert_lt(start_timestamp, end_timestamp)
 
 
 def dassert_is_valid_interval(

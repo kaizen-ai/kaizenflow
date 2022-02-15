@@ -18,6 +18,7 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
 import helpers.hio as hio
+import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.htimer as htimer
 
@@ -30,6 +31,7 @@ def from_parquet(
     columns: Optional[List[str]] = None,
     filters: Optional[List[Any]] = None,
     log_level: int = logging.DEBUG,
+    report_stats: bool = False,
 ) -> pd.DataFrame:
     """
     Load a dataframe from a Parquet file.
@@ -37,8 +39,8 @@ def from_parquet(
     The difference with `pd.read_pq` is that here we use Parquet
     Dataset.
     """
+    _LOG.debug(hprint.to_str("file_name columns filters"))
     hdbg.dassert_isinstance(file_name, str)
-    # hdbg.dassert_file_extension(file_name, ["pq", "parquet"])
     # Load data.
     with htimer.TimedScope(
         logging.DEBUG, f"# Reading Parquet file '{file_name}'"
@@ -57,19 +59,20 @@ def from_parquet(
         # See https://arrow.apache.org/docs/python/parquet.html#reading-and-writing-single-files.
         table = dataset.read_pandas(columns=columns)
         df = table.to_pandas()
-    # Report stats.
-    file_size = hsystem.du(file_name, human_format=True)
-    _LOG.log(
-        log_level,
-        "Loaded '%s' (size=%s, time=%.1fs)",
-        file_name,
-        file_size,
-        ts.elapsed_time,
-    )
     # Report stats about the df.
     _LOG.debug("df.shape=%s", str(df.shape))
     mem = df.memory_usage().sum()
     _LOG.debug("df.memory_usage=%s", hintros.format_size(mem))
+    # Report stats about the Parquet file size.
+    if report_stats:
+        file_size = hsystem.du(file_name, human_format=True)
+        _LOG.log(
+            log_level,
+            "Loaded '%s' (size=%s, time=%.1fs)",
+            file_name,
+            file_size,
+            ts.elapsed_time,
+        )
     return df
 
 
@@ -80,6 +83,7 @@ def to_parquet(
     file_name: str,
     *,
     log_level: int = logging.DEBUG,
+    report_stats: bool = False,
 ) -> None:
     """
     Save a dataframe as Parquet.
@@ -89,6 +93,7 @@ def to_parquet(
     hdbg.dassert_file_extension(file_name, ["pq", "parquet"])
     #
     hio.create_enclosing_dir(file_name, incremental=True)
+    # Report stats about the df.
     _LOG.debug("df.shape=%s", str(df.shape))
     mem = df.memory_usage().sum()
     _LOG.debug("df.memory_usage=%s", hintros.format_size(mem))
@@ -98,15 +103,16 @@ def to_parquet(
     ) as ts:
         table = pa.Table.from_pandas(df)
         pq.write_table(table, file_name)
-    # Report stats.
-    file_size = hsystem.du(file_name, human_format=True)
-    _LOG.log(
-        log_level,
-        "Saved '%s' (size=%s, time=%.1fs)",
-        file_name,
-        file_size,
-        ts.elapsed_time,
-    )
+    # Report stats about the Parquet file size.
+    if report_stats:
+        file_size = hsystem.du(file_name, human_format=True)
+        _LOG.log(
+            log_level,
+            "Saved '%s' (size=%s, time=%.1fs)",
+            file_name,
+            file_size,
+            ts.elapsed_time,
+        )
 
 
 # #############################################################################
@@ -290,26 +296,41 @@ def _process_walk_triple(
 
 # #############################################################################
 
-ParquetAndFilter = List[Tuple[str, str, Any]]
+# A Parquet filtering condition. e.g., `("year", "=", year)`
+ParquetFilter = Tuple[str, str, Any]
+# The AND of Parquet filtering conditions, e.g.,
+#   `[("year", "=", year), ("month", "=", month)]`
+ParquetAndFilter = List[ParquetFilter]
+# A OR-AND Parquet filtering condition, e.g.,
+#   ```
+#   [[('year', '=', 2020), ('month', '=', 1)],
+#    [('year', '=', 2020), ('month', '=', 2)],
+#    [('year', '=', 2020), ('month', '=', 3)]]
+#   ```
 ParquetOrAndFilter = List[ParquetAndFilter]
 
 
+# TODO(gp): @Nikola add light unit tests for `by_year_week` and for additional_filter.
 def get_parquet_filters_from_timestamp_interval(
     partition_mode: str,
     start_timestamp: Optional[pd.Timestamp],
     end_timestamp: Optional[pd.Timestamp],
+    *,
+    additional_filter: Optional[ParquetFilter] = None,
 ) -> ParquetOrAndFilter:
     """
     Convert a constraint on a timestamp [start_timestamp, end_timestamp] into a
-    Parquet filters expression, based on the passed partitioning/tiling
+    Parquet filters expression, based on the passed partitioning / tiling
     criteria.
 
-    :param partition_mode: mode to control filtering of parquet datasets
-        that were previously saved in the same mode
-    :param start_timestamp: start of the interval
-    :param end_timestamp: end of the interval
-    :return: list of AND(conjunction) predicates that are expressed
-        in DNF(disjunctive normal form)
+    :param partition_mode: control filtering of Parquet datasets. It needs to be
+        in sync with the way the data was saved
+    :param start_timestamp: start of the interval. `None` means no bound
+    :param end_timestamp: end of the interval. `None` means no bound
+    :param additional_filter: an AND condition to add to the final filter.
+        E.g., if we want to constraint also on `asset_ids`, we can specify
+        `("asset_id", "in", (...))`
+    :return: list of OR-AND predicates
     """
     # Check timestamp interval.
     left_close = True
@@ -320,35 +341,46 @@ def get_parquet_filters_from_timestamp_interval(
         left_close=left_close,
         right_close=right_close,
     )
-    # Use hardwired start and end date to represent the start_timestamp / end_timestamp = None.
-    # This is not very elegant, but it simplifies the code
-    min_date = pd.Timestamp("2001-01-01 00:00:00+00:00")
-    max_date = pd.Timestamp("2100-01-01 00:00:00+00:00")
+    # Use hardwired start and end date to represent start_timestamp /
+    # end_timestamp = None. This is not very elegant, but it simplifies the code.
+    # TODO(gp): This approach of enumerating seems slow when Parquet reads the data.
+    #  Verify it is and then use a smarter approach like year <= ...
     if start_timestamp is None:
-        start_timestamp = min_date
+        start_timestamp = pd.Timestamp("2001-01-01 00:00:00+00:00")
     if end_timestamp is None:
-        end_timestamp = max_date
-    filters = []
-    # Partition by year and month.
+        end_timestamp = pd.Timestamp("2030-01-01 00:00:00+00:00")
+    # TODO(gp): @Nikola, if there is an entire year then don't constraint on each
+    #  month, since this slows down things a lot.
+    or_and_filter = []
     if partition_mode == "by_year_month":
-        # Ensure that there is only year and month data to avoid problems with
-        # close date ranges such as `2021/12/30 - 2022/01/02`.
-        start_timestamp = start_timestamp.replace(day=1, hour=0, minute=0)
-        end_timestamp = end_timestamp.replace(day=1, hour=0, minute=0)
-        # Include last month in interval.
-        end_timestamp = end_timestamp + pd.DateOffset(months=1)
+        # Partition by year and month.
+        # Include last month in the interval.
+        end_timestamp += pd.DateOffset(months=1)
         # Get all months in interval.
         dates = pd.date_range(start_timestamp, end_timestamp, freq="M")
         for date in dates:
             year = date.year
             month = date.month
             and_filter = [("year", "=", year), ("month", "=", month)]
-            filters.append(and_filter)
-            _LOG.debug("Adding AND filter %s", str(and_filter))
+            or_and_filter.append(and_filter)
+    elif partition_mode == "by_year_week":
+        # Partition by year and week.
+        # Include last week in the interval.
+        end_timestamp += pd.DateOffset(weeks=1)
+        # Get all weeks in the interval.
+        dates = pd.date_range(start_timestamp, end_timestamp, freq="W")
+        for date in dates:
+            year = date.year
+            # https://docs.python.org/3/library/datetime.html#datetime.date.isocalendar
+            weekofyear = date.isocalendar()[1]
+            and_filter = [("year", "=", year), ("weekofyear", "=", weekofyear)]
+            or_and_filter.append(and_filter)
     else:
         raise ValueError(f"Unknown partition mode `{partition_mode}`!")
     # TODO(Nikola): Partition by week.
     #   week = start_ts.isocalendar()[1]
-    #   https://docs.python.org/3/library/datetime.html#datetime.date.isocalendar
-    _LOG.debug("filters=%s", str(filters))
-    return filters
+    if additional_filter:
+        hdbg.dassert_isinstance(additional_filter, tuple)
+        or_and_filter = [[additional_filter] + and_filter for and_filter in or_and_filter]
+    _LOG.debug("or_and_filter=%s", str(or_and_filter))
+    return or_and_filter

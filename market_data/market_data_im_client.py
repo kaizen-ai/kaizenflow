@@ -93,7 +93,7 @@ class ImClientMarketData(mdabmada.MarketData):
             if end_ts is not None:
                 # Subtract one millisecond not to include the right boundary.
                 end_ts -= pd.Timedelta(1, "ms")
-        if not asset_ids:
+        if asset_ids is None:
             # If asset ids are not provided, get universe as full symbols.
             full_symbols = self._im_client.get_universe()
         else:
@@ -102,6 +102,7 @@ class ImClientMarketData(mdabmada.MarketData):
                 asset_ids
             )
         # Load the data using `im_client`.
+        icdc.dassert_valid_full_symbols(full_symbols)
         market_data = self._im_client.read_data(
             full_symbols,
             start_ts,

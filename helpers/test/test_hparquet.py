@@ -499,7 +499,7 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         actual = str([filters[0], filters[-1]])
         expected = (
             r"[[('year', '=', 2001), ('month', '=', 1)], "
-            r"[('year', '=', 2100), ('month', '=', 1)]]"
+            r"[('year', '=', 2030), ('month', '=', 1)]]"
         )
         self.assert_equal(actual, expected)
 
@@ -516,7 +516,7 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         actual = str([filters[0], filters[-1]])
         expected = (
             r"[[('year', '=', 2020), ('month', '=', 1)], "
-            r"[('year', '=', 2100), ('month', '=', 1)]]"
+            r"[('year', '=', 2030), ('month', '=', 1)]]"
         )
         self.assert_equal(actual, expected)
 

@@ -72,7 +72,7 @@ class MarketData(abc.ABC):
         self,
         asset_id_col: str,
         # TODO(gp): This should be first and also potentially be None.
-        asset_ids: List[Any],
+        asset_ids: List[int],
         # TODO(gp): -> start_timestamp_col
         start_time_col_name: str,
         end_time_col_name: str,
@@ -110,6 +110,8 @@ class MarketData(abc.ABC):
         """
         _LOG.debug("")
         self._asset_id_col = asset_id_col
+        if asset_ids is not None:
+            hdbg.dassert_container_type(asset_ids, list, int)
         self._asset_ids = asset_ids
         self._start_time_col_name = start_time_col_name
         self._end_time_col_name = end_time_col_name
@@ -135,8 +137,8 @@ class MarketData(abc.ABC):
         self,
         timedelta: pd.Timedelta,
         *,
-        # TODO(gp): Not sure limit is really needed. We could move it to the DB
-        #  implementation.
+        # TODO(gp): @Grisha not sure limit is really needed. We could move it
+        # to the DB implementation.
         limit: Optional[int] = None,
     ) -> pd.DataFrame:
         """
@@ -184,6 +186,8 @@ class MarketData(abc.ABC):
         :param ts: the timestamp to filter on
         :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
         """
+        if asset_ids is not None:
+            hdbg.dassert_container_type(asset_ids, list, int)
         start_ts = ts - pd.Timedelta("1S")
         end_ts = ts + pd.Timedelta("1S")
         df = self.get_data_for_interval(
@@ -230,6 +234,7 @@ class MarketData(abc.ABC):
         # Resolve the asset ids.
         if asset_ids is None:
             asset_ids = self._asset_ids
+        hdbg.dassert_container_type(asset_ids, list, int)
         # Check the requested interval.
         hdateti.dassert_is_valid_interval(
             start_ts, end_ts, left_close, right_close
@@ -246,8 +251,7 @@ class MarketData(abc.ABC):
         )
         # If the assets were specified, check that the returned data doesn't contain
         # data that we didn't request.
-        if asset_ids is not None:
-            hdbg.dassert_is_subset(df[self._asset_id_col].unique(), asset_ids)
+        hdbg.dassert_is_subset(df[self._asset_id_col].unique(), asset_ids)
         # TODO(gp): If asset_ids was specified but the backend has a universe
         #  specified already, we might need to apply a filter by asset_ids.
         # TODO(gp): Check data with respect to start_ts, end_ts.
@@ -293,6 +297,7 @@ class MarketData(abc.ABC):
         This function should be called `get_twa_price()` or `get_twap()`, but alas
         TWAP is often used as an adjective for price.
         """
+        hdbg.dassert_container_type(asset_ids, list, int)
         # Get the slice (start_ts, end_ts] of prices.
         left_close = False
         right_close = True
@@ -330,6 +335,7 @@ class MarketData(abc.ABC):
         E.g., if the last end time is 9:35 and `bar_duration=5T`, then
         we compute TWAP for (9:30, 9:35].
         """
+        hdbg.dassert_container_type(asset_ids, list, int)
         last_end_time = self.get_last_end_time()
         _LOG.info("last_end_time=%s", last_end_time)
         offset = pd.Timedelta(bar_duration)
@@ -373,11 +379,12 @@ class MarketData(abc.ABC):
         """
         Get last price for `asset_ids` using column `col_name` (e.g., "close")
         """
-        # TODO(*): Use a to-be-written `get_last_start_time()` instead.
+        hdbg.dassert_container_type(asset_ids, list, int)
+        # TODO(Paul): Use a to-be-written `get_last_start_time()` instead.
         last_end_time = self.get_last_end_time()
         _LOG.info("last_end_time=%s", last_end_time)
         # Get the data.
-        # TODO(*): Remove the hard-coded 1-minute.
+        # TODO(Paul): Remove the hard-coded 1-minute.
         start_time = last_end_time - pd.Timedelta("1T")
         df = self.get_data_at_timestamp(
             start_time,
