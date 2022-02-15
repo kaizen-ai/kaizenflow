@@ -3936,8 +3936,6 @@ def pytest_repro(  # type: ignore
             test_class,
             test_method,
         )
-        if not os.path.exists(test_file_name):
-            _LOG.warning("Can't find test file '%s'", test_file_name)
         if target_type == "tests":
             targets.append("pytest " + test)
         elif target_type == "files":
