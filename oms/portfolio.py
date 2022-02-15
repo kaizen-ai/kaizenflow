@@ -520,7 +520,22 @@ class AbstractPortfolio(abc.ABC):
             columns=AbstractPortfolio.CASH_ID
         )
         # Get per-bar flows and compute PnL.
-        pnl = holdings_marked_to_market.diff().add(flows)
+        diff = holdings_marked_to_market.diff()
+        index = diff.index.union(flows.index)
+        print("\n\nbefore reindex, diff=\n", diff)
+        print("\n\nbefore reindx, flows=\n", flows)
+        flows = flows.reindex(index)
+        print("\n\nafter reindex, flows=\n", flows)
+        if len(diff.columns) > 0:
+            print(type(diff.columns[0]))
+        if len(flows.columns) > 0:
+            print(type(flows.columns[0]))
+        diff.columns = map(str, diff.columns)
+        flows.columns = map(str, flows.columns)
+        #assert (diff.columns == flows.columns).all()
+        #pnl = holdings_marked_to_market.diff().add(flows)
+        pnl = diff  + flows
+        pnl.columns = map(int, pnl.columns)
         return pnl
 
     @staticmethod
