@@ -29,8 +29,8 @@ default_args = {
 # Create a command.
 bash_command = [
     "im_v2/ccxt/data/extract/download_realtime_data.py",
-    "--to_datetime {{ next_execution_date }}",
-    "--from_datetime {{ execution_date - macros.timedelta(5) }}"
+    "--start_timestamp {{ execution_date - macros.timedelta(5) }}",
+    "--end_timestamp {{ next_execution_date }}",
     # TODO(Danya): Set a shared directory for the DAG (CMTask675).
     "--dst_dir 'ccxt/ohlcv/'",
     "--data_type 'ohlcv'",
