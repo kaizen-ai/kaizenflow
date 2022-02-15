@@ -20,7 +20,6 @@ import os
 
 import pandas as pd
 
-import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hparser as hparser
@@ -35,10 +34,18 @@ def reindex_on_asset_and_ts(data: pd.DataFrame) -> pd.DataFrame:
 
     Drops timestamps for downloading and saving.
     """
-    # Drop download data timestamps.
-    data_reindex = data.drop(
-        ["end_download_timestamp", "knowledge_timestamp"], axis=1
-    )
+    # Select only index and OHLCV columns
+    expected_col_names = [
+        "timestamp",
+        "currency_pair",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+    ]
+    hdbg.dassert_is_subset(expected_col_names, data.columns)
+    data_reindex = data.loc[expected_col_names]
     # Reindex on ts and asset.
     data_reindex = data_reindex.set_index(["timestamp", "currency_pair"])
     return data_reindex
@@ -74,7 +81,7 @@ def compare_rows(rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> pd.DataFram
     # Get difference between daily data and rt data.
     data_difference = daily_data.loc[idx_intersection].compare(
         # Remove columns not present in daily_data.
-        rt_data.drop(["id", "exchange_id"], axis=1).loc[idx_intersection]
+        rt_data.loc[idx_intersection]
     )
     return data_difference
 
@@ -83,6 +90,20 @@ def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
+    )
+    parser.add_argument(
+        "--to_datetime",
+        action="store",
+        required=True,
+        type=str,
+        help="End of the compared period",
+    )
+    parser.add_argument(
+        "--from_datetime",
+        action="store",
+        required=True,
+        type=str,
+        help="Beginning of the compared period",
     )
     parser.add_argument(
         "--db_stage",
@@ -115,8 +136,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Get time range for last 24 hours.
-    end_datetime = hdateti.get_current_time("UTC")
-    start_datetime = end_datetime - pd.Timedelta(days=1)
+    end_datetime = pd.Timestamp(args.to_datetime)
+    start_datetime = pd.Timestamp(args.from_datetime)
     # Connect to database.
     env_file = imvimlita.get_db_env_path(args.db_stage)
     connection_params = hsql.get_connection_info_from_env_file(env_file)
