@@ -3430,7 +3430,8 @@ def _run_test_cmd(
     base_image = ""
     # We need to add some " to pass the string as it is to the container.
     cmd = f"'{cmd}'"
-    docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd)
+    extra_env_vars = ["NETWORK_MODE=bridge"]
+    docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd, extra_env_vars=extra_env_vars)
     _LOG.info("cmd=%s", docker_cmd_)
     # We can't use `hsystem.system()` because of buffering of the output,
     # losing formatting and so on, so we stick to executing through `ctx`.
