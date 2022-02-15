@@ -8,7 +8,7 @@ Generate Parquet files for testing.
     --end_date 2021-11-25 \
     --freq 1T \
     --partition_mode by_year_month \
-    --output_type verbose_close \
+    --output_type cm_task_1103 \
     --assets 10689,10690 \
     --dst_dir im_v2/common/test/tiled.bar_data
 
@@ -38,13 +38,13 @@ _LOG = logging.getLogger(__name__)
 
 class ParquetDataFrameGenerator:
     # Allowed types.
-    OUTPUT_TYPES = ("basic", "verbose_open", "verbose_close")
+    OUTPUT_TYPES = ("basic", "verbose_open", "cm_task_1103")
     # Depending on output type, asset column varies. This mapping is always
     # resolving to expected asset column name.
     ASSET_COLUMN_NAME_MAP = {
         "basic": "asset",
         "verbose_open": "ticker",
-        "verbose_close": "asset_id",
+        "cm_task_1103": "asset_id",
     }
 
     def __init__(
@@ -80,7 +80,7 @@ class ParquetDataFrameGenerator:
         self._OUTPUT_TYPE_FUNCTION_MAP = {
             "basic": self._get_daily_basic_dataframe,
             "verbose_open": self._get_verbose_open_dataframe,
-            "verbose_close": self._get_verbose_close_dataframe,
+            "cm_task_1103": self._get_cm_task_1103_dataframe,
         }
 
     @property
@@ -199,7 +199,7 @@ class ParquetDataFrameGenerator:
             asset_dataframe.insert(loc=7, column="id", value=id_)
         return self._wrap_all_assets_df(asset_dataframes)
 
-    def _get_verbose_close_dataframe(self) -> pd.DataFrame:
+    def _get_cm_task_1103_dataframe(self) -> pd.DataFrame:
         """
         Update core dataframes with additional columns.
 

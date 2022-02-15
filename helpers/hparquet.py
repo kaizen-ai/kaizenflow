@@ -349,15 +349,25 @@ def get_parquet_filters_from_timestamp_interval(
         start_timestamp = pd.Timestamp("2001-01-01 00:00:00+00:00")
     if end_timestamp is None:
         end_timestamp = pd.Timestamp("2030-01-01 00:00:00+00:00")
+    # Convert to date so excess info is removed (hours, minutes, etc.).
+    start_date = start_timestamp.date()
+    end_date = end_timestamp.date()
     # TODO(gp): @Nikola, if there is an entire year then don't constraint on each
     #  month, since this slows down things a lot.
     or_and_filter = []
-    if partition_mode == "by_year_month":
+    if partition_mode == "by_date":
+        # Partition by date.
+        date_format = "%Y%m%d"
+        start_date = start_date.strftime(date_format)
+        end_date = end_date.strftime(date_format)
+        and_filter = [("date", ">=", start_date), ("date", "<=", end_date)]
+        or_and_filter.append(and_filter)
+    elif partition_mode == "by_year_month":
         # Partition by year and month.
         # Include last month in the interval.
-        end_timestamp += pd.DateOffset(months=1)
+        end_date += pd.DateOffset(months=1)
         # Get all months in interval.
-        dates = pd.date_range(start_timestamp, end_timestamp, freq="M")
+        dates = pd.date_range(start_date, end_date, freq="M")
         for date in dates:
             year = date.year
             month = date.month
@@ -366,9 +376,9 @@ def get_parquet_filters_from_timestamp_interval(
     elif partition_mode == "by_year_week":
         # Partition by year and week.
         # Include last week in the interval.
-        end_timestamp += pd.DateOffset(weeks=1)
+        end_date += pd.DateOffset(weeks=1)
         # Get all weeks in the interval.
-        dates = pd.date_range(start_timestamp, end_timestamp, freq="W")
+        dates = pd.date_range(start_date, end_date, freq="W")
         for date in dates:
             year = date.year
             # https://docs.python.org/3/library/datetime.html#datetime.date.isocalendar
@@ -377,10 +387,10 @@ def get_parquet_filters_from_timestamp_interval(
             or_and_filter.append(and_filter)
     else:
         raise ValueError(f"Unknown partition mode `{partition_mode}`!")
-    # TODO(Nikola): Partition by week.
-    #   week = start_ts.isocalendar()[1]
     if additional_filter:
         hdbg.dassert_isinstance(additional_filter, tuple)
-        or_and_filter = [[additional_filter] + and_filter for and_filter in or_and_filter]
+        or_and_filter = [
+            [additional_filter] + and_filter for and_filter in or_and_filter
+        ]
     _LOG.debug("or_and_filter=%s", str(or_and_filter))
     return or_and_filter

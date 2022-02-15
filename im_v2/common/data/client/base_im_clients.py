@@ -119,6 +119,14 @@ class ImClient(abc.ABC):
         hdbg.dassert_in(full_symbol_col_name, df.columns)
         loaded_full_symbols = df[full_symbol_col_name].unique().tolist()
         imvcdcfusy.dassert_valid_full_symbols(loaded_full_symbols)
+        # TODO(Nikola): Currently only way to distinguish `asset_id` from regular symbol.
+        #   `full_symbol_col_name` is `full_symbol` even for `asset_id`.
+        if loaded_full_symbols and loaded_full_symbols[0].isdigit():
+            # Ensure ids are converted to full symbols.
+            loaded_full_symbols = list(map(int, loaded_full_symbols))
+            loaded_full_symbols = self.get_full_symbols_from_asset_ids(
+                loaded_full_symbols
+            )
         hdbg.dassert_set_eq(full_symbols, loaded_full_symbols)
         #
         hdateti.dassert_timestamp_lte(start_ts, df.index.min())
