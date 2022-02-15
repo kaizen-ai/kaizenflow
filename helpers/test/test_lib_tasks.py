@@ -1709,7 +1709,7 @@ class Test_pytest_repro1(hunitest.TestCase):
 
     def _build_pytest_file_helper(self, txt: str) -> str:
         txt = hprint.dedent(txt)
-        file_name = os.path.join(self.get_scratch_space(), "input.txt")
+        file_name = os.path.join(self.get_scratch_space(), "cache/lastfailed")
         hio.to_file(file_name, txt)
         return file_name
 
@@ -1803,9 +1803,7 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
     """
 
     def test1(self) -> None:
-        cmd = (
-            f"invoke pytest_repro --file-name='{self.get_input_dir()}/lastfailed'"
-        )
+        cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/cache/lastfailed'"
         _, act = hsystem.system_to_string(cmd)
         act = hprint.remove_non_printable_chars(act)
         # Modify the outcome for reproducibility.
