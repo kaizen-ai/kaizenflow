@@ -45,7 +45,7 @@ services:
   app:
     extends:
       base_app
-    network_mode: $(NETWORK_MODE:-host)
+    network_mode: ${NETWORK_MODE:-host}
     volumes:
       - ../../:/app
 
