@@ -198,8 +198,8 @@ class DataSource(FitPredictNode, abc.ABC):
         """
         Same as `set_fit_intervals()`, but for the predict stage.
         """
-        # TODO(*): Warn if intervals overlap with `fit` intervals.
-        # TODO(*): Maybe enforce that the intervals be ordered.
+        # TODO(Paul): Warn if intervals overlap with `fit` intervals.
+        # TODO(Paul): Maybe enforce that the intervals be ordered.
         if intervals is not None:
             dtfcorutil.dassert_valid_intervals(intervals)
         self._predict_intervals = intervals
@@ -372,9 +372,9 @@ class YConnector(FitPredictNode):
 class ColModeMixin:
     """
     Select columns to propagate in output dataframe.
-
-    TODO(*): Refactor this so that it has clear pre and post processing stages.
     """
+
+    # TODO(Paul): Refactor this so that it has clear pre and post processing stages.
 
     def _apply_col_mode(
         self,
