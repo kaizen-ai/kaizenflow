@@ -1,9 +1,16 @@
+"""
+Import as:
+
+import im_v2.ccxt.data.extract.airflow.prod_daily_data_reconciliation_dag as imvcdeapddrd
+"""
+
 import datetime
+
 import airflow
 from airflow.contrib.operators.ecs_operator import ECSOperator
 from airflow.models import Variable
 
-# This variable will be propagated throughout DAG definition as a prefix to 
+# This variable will be propagated throughout DAG definition as a prefix to
 # names of Airflow configuration variables, allow to switch from test to prod
 # in one line (in best case scenario)
 _STAGE = "prod"
@@ -12,11 +19,11 @@ _EXCHANGE = "binance"
 # but production is ccxt_ohlcv.
 _TABLE_SUFFIX = "_" + _STAGE if _STAGE == "test" else ""
 
-ecs_cluster = Variable.get(f'{_STAGE}_ecs_cluster')
-# The naming convention is set such that this value is then reused 
-# in log groups, stream prefixes and container names to minimize 
+ecs_cluster = Variable.get(f"{_STAGE}_ecs_cluster")
+# The naming convention is set such that this value is then reused
+# in log groups, stream prefixes and container names to minimize
 # convolution and maximize simplicity.
-ecs_task_definition = Variable.get(f'{_STAGE}_ecs_task_definiton')
+ecs_task_definition = Variable.get(f"{_STAGE}_ecs_task_definiton")
 ecs_subnets = [Variable.get("ecs_subnet1"), Variable.get("ecs_subnet2")]
 ecs_security_group = [Variable.get("ecs_security_group")]
 ecs_awslogs_group = f"/ecs/{ecs_task_definition}"
@@ -26,9 +33,9 @@ s3_historical_data_path = f"s3://{Variable.get(f'{_STAGE}_s3_data_bucket')}/{Var
 # Pass default parameters for the DAG.
 default_args = {
     "retries": 0,
-    "email": [Variable.get('notification_email')],
+    "email": [Variable.get("notification_email")],
     "email_on_failure": True,
-    'email_on_retry': True,
+    "email_on_retry": True,
     "owner": "airflow",
 }
 # Create a DAG.
@@ -43,12 +50,12 @@ dag = airflow.DAG(
 )
 download_command = [
     "/app/im_v2/ccxt/data/extract/download_historical_data.py",
-     "--to_datetime '{{ execution_date - macros.timedelta(minutes=15) }}'",
-     "--from_datetime '{{ execution_date - macros.timedelta(1) - macros.timedelta(minutes=15) }}'",
-     f"--exchange_id '{_EXCHANGE}'",
-     "--universe 'v03'",
-     "--aws_profile 'ck'",
-     f"--s3_path '{s3_historical_data_path}'"
+    "--start_timestamp '{{ execution_date - macros.timedelta(1) - macros.timedelta(minutes=15) }}'",
+    "--end_timestamp '{{ execution_date - macros.timedelta(minutes=15) }}'",
+    f"--exchange_id '{_EXCHANGE}'",
+    "--universe 'v03'",
+    "--aws_profile 'ck'",
+    f"--s3_path '{s3_historical_data_path}'",
 ]
 downloading_task = ECSOperator(
     task_id=f"daily_data_download",
@@ -77,12 +84,12 @@ downloading_task = ECSOperator(
 compare_command = [
     "/app/im_v2/ccxt/data/extract/compare_realtime_and_historical.py",
     "--db_stage 'dev'",
-    "--to_datetime {{ execution_date - macros.timedelta(minutes=15) }}",
-    "--from_datetime {{ execution_date - macros.timedelta(1) - macros.timedelta(minutes=15) }}",
+    "--start_timestamp {{ execution_date - macros.timedelta(1) - macros.timedelta(minutes=15) }}",
+    "--end_timestamp {{ execution_date - macros.timedelta(minutes=15) }}",
     f"--exchange_id '{_EXCHANGE}'",
     f"--db_table 'ccxt_ohlcv'",
     "--aws_profile 'ck'",
-    f"--s3_path '{s3_historical_data_path}'"
+    f"--s3_path '{s3_historical_data_path}'",
 ]
 comparing_task = ECSOperator(
     task_id=f"compare_realtime_historical",
