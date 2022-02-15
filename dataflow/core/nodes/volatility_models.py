@@ -213,7 +213,7 @@ class SmaModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
 
     def _predict(self, x: np.array) -> np.array:
         x_srs = pd.DataFrame(x.flatten())
-        # TODO(*): Make `min_periods` configurable.
+        # TODO(Paul): Make `min_periods` configurable.
         min_periods = int(np.rint(self._min_tau_periods * self._tau))
         _LOG.debug("min_periods=%f", min_periods)
         x_sma = csigproc.compute_smooth_moving_average(

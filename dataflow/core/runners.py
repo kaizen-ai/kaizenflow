@@ -4,7 +4,7 @@ Import as:
 import dataflow.core.runners as dtfcorrunn
 """
 
-# TODO(gp): -> dag_runner.py
+# TODO(gp): @Grisha -> dag_runner.py
 
 import abc
 import logging
@@ -25,7 +25,7 @@ import helpers.hdbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): Should we call the `start` params -> `start_timestamp`
+# TODO(gp): @Grisha `start` / `end` -> `start_timestamp` / `end_timestamp`
 
 # #############################################################################
 
@@ -435,7 +435,7 @@ class IncrementalDagRunner(AbstractDagRunner):
             result_bundle = self.predict_at_datetime(end_dt)
             yield result_bundle
 
-    # TODO(gp): dt -> datetime_ as used elsewhere.
+    # TODO(gp): dt -> timestamp as used elsewhere.
     def predict_at_datetime(
         self, dt: hdateti.Datetime
     ) -> dtfcorebun.ResultBundle:

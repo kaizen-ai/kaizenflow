@@ -318,9 +318,9 @@ class TestVolatilityModel(hunitest.TestCase):
         )
         node = VolatilityModel("vol_model", **config.to_dict())
         node.fit(data.loc["2000-01-01":"2000-02-10"])
-        # TODO(*): Update the `predict()` interval.
+        # TODO(Paul): Update the `predict()` interval.
         df_out = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]
-        # TODO(*): Propagate `fit()` and `predict()` info.
+        # TODO(Paul): Propagate `fit()` and `predict()` info.
         info = node.get_info("fit")
         # Package results.
         act = self._package_results1(config, info, df_out)
@@ -348,7 +348,7 @@ class TestVolatilityModel(hunitest.TestCase):
         )
         # Compare results.
         df_out = vol_adj_df.join(inverted_rets)
-        # TODO(*): Propagate `fit()` and `predict()` info.
+        # TODO(Paul): Propagate `fit()` and `predict()` info.
         info = node.get_info("fit")
         # Package results.
         act = self._package_results1(config, info, df_out)
@@ -402,7 +402,7 @@ class TestVolatilityModel(hunitest.TestCase):
         """
         # Load test data.
         data = self._get_data()
-        # TODO(*): Rename this column
+        # TODO(Paul): Rename this column.
         data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
         # Specify config and create modeling node.
         config = cconfig.get_config_from_nested_dict(
@@ -468,7 +468,7 @@ class TestVolatilityModel(hunitest.TestCase):
         )
         node2 = VolatilityModel("vol_model", **config2.to_dict())
         df_out2 = node2.fit(data)["df_out"]
-        # TODO(*): Improve the string conversion.
+        # TODO(Paul): Improve the string conversion.
         np.testing.assert_equal(
             df_out1.to_string(),
             df_out2.to_string(),

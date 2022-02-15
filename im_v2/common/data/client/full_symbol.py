@@ -72,5 +72,5 @@ def dassert_valid_full_symbols(full_symbols: List[FullSymbol]) -> None:
     """
     Verify that full symbols are passed in a list that has no duplicates.
     """
-    hdbg.dassert_isinstance(full_symbols, list)
+    hdbg.dassert_container_type(full_symbols, list, FullSymbol)
     hdbg.dassert_no_duplicates(full_symbols)
