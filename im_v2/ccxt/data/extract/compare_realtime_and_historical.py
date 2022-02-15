@@ -11,7 +11,7 @@ Use as:
    --exchange_id 'binance' \
    --db_table 'ccxt_ohlcv' \
    --aws_profile 'ck' \
-   --s3_path 's3://cryptokaizen-data/'
+   --s3_path 's3://cryptokaizen-data/historical/'
 
 Import as:
 
