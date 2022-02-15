@@ -127,22 +127,10 @@ kibot_loader.read_data(
 # ## Stocks
 
 # %%
-# Getting the sample of 20 stocks, as the total number of stocks is >11K.
-stocks_symbols_sample = stocks_symbols[:20]
-
-# %%
-# The tickers below has no data.
-# stocks_symbols_sample.remove("AACC")
-# stocks_symbols_sample.remove("AACOU")
-# stocks_symbols_sample.remove("AACOW")
-# stocks_symbols_sample.remove("AAI")
-# stocks_symbols_sample.remove("AAMRQ")
-
-# %% run_control={"marked": false}
 # %%time
 result = []
 
-for ticker in stocks_symbols_sample:
+for ticker in stocks_symbols:
     stock_df = kibot_loader.read_data(
         exchange="Any Exchange",
         symbol=ticker,
@@ -150,7 +138,15 @@ for ticker in stocks_symbols_sample:
         frequency=imcodatyp.Frequency.Minutely,
         unadjusted=False,
     )
-    if stock_df.iloc[0][0] == "405 Data Not Found.":
+    if stock_df.shape[0] == 2:
+        datetime_stats = pd.DataFrame()
+        datetime_stats.index = [ticker]
+        datetime_stats["start_date"] = np.nan
+        datetime_stats["end_date"] = np.nan
+        datetime_stats["data_points_count"] = np.nan
+        # datetime_stats["number_of_nans"] = len(stock_df[stock_df["close"].isna()])
+        result.append(datetime_stats)
+    elif stock_df.shape[0] == 1:
         datetime_stats = pd.DataFrame()
         datetime_stats.index = [ticker]
         datetime_stats["start_date"] = np.nan
@@ -180,10 +176,36 @@ for ticker in stocks_symbols_sample:
         # datetime_stats["number_of_nans"] = len(stock_df[stock_df["close"].isna()])
         datetime_stats.index = [ticker]
         result.append(datetime_stats)
-result = pd.concat(result)
+all_stocks_stats = pd.concat(result)
 
 # %%
-result
+#final_stats = all_stocks_stats.copy()
+
+# %%
+display(final_stats.shape)
+display(final_stats)
+
+# %%
+general_stats_all_stocks = pd.DataFrame()
+general_stats_all_stocks.loc["median_start_date","value"] = final_stats["start_date"].median()
+general_stats_all_stocks.loc["median_end_date","value"] = final_stats["end_date"].median()
+general_stats_all_stocks.loc["min_start_date","value"] = final_stats["start_date"].min()
+general_stats_all_stocks.loc["max_end_date","value"] = final_stats["end_date"].max()
+general_stats_all_stocks.loc["median_data_points","value"] = final_stats["data_points_count"].median()
+general_stats_all_stocks
+
+# %%
+# DataFrame with empty stock data files.
+empty_dataframes = final_stats[final_stats["data_points_count"].isna()]
+# Number of empty stock data files.
+len(empty_dataframes)
+
+# %%
+print(round(100*len(empty_dataframes)/len(final_stats),2),"% of files in stock universe are empty.")
+
+# %%
+# Tickers with empty dataframes.
+for ticker in list(empty_dataframes.index): print(ticker)
 
 # %% [markdown]
 # ## Futures
@@ -301,13 +323,54 @@ for ticker in futures_continuous_contracts_daily_symbols:
         # datetime_stats["number_of_nans"] = len(futures_df[futures_df["close"].isna()])
         datetime_stats.index = [ticker]
         result.append(datetime_stats)
-result = pd.concat(result)
+continuous_contracts_daily_stats = pd.concat(result)
 
 # %%
-result
+continuous_contracts_daily_stats
 
 # %%
-result["start_date"].min()
+general_stats = pd.DataFrame()
+general_stats.loc["median_start_date","value"] = continuous_contracts_daily_stats["start_date"].median()
+general_stats.loc["median_end_date","value"] = continuous_contracts_daily_stats["end_date"].median()
+general_stats.loc["min_start_date","value"] = continuous_contracts_daily_stats["start_date"].min()
+general_stats.loc["max_end_date","value"] = continuous_contracts_daily_stats["end_date"].max()
+general_stats.loc["median_data_points","value"] = continuous_contracts_daily_stats["data_points_count"].median()
+general_stats
+
+# %% [markdown]
+# # Read raw data
 
 # %%
-result["end_date"].max()
+import helpers.hs3 as hs3
+import core.pandas_helpers as cpanh
+
+
+# %%
+def raw_file_reader(path, s3_file, **kwargs):
+    kwargs["s3fs"] = s3_file
+    df = cpanh.read_csv(file_path, **kwargs)
+    return df
+
+
+# %%
+s3fs = hs3.get_s3fs("am")
+
+# %% [markdown]
+# ## Example of raw data for Stocks
+
+# %%
+file_path_stock = "s3://alphamatic-data/data/kibot/all_stocks_1min/AAPL.csv.gz"
+hs3.is_s3_path(file_path_stock)
+
+# %%
+file_reader(file_path_stock, s3fs)
+
+# %% [markdown]
+# ## Example of raw data for Futures
+
+# %%
+file_path_futures = "s3://alphamatic-data/data/kibot/all_futures_continuous_contracts_daily/AE.csv.gz"
+hs3.is_s3_path(file_path_futures)
+
+# %%
+file_reader(file_path_futures, s3fs)
