@@ -54,6 +54,7 @@ class TestRunExperimentSuccess1(hunitest.TestCase):
         _run_experiment_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
 
     @pytest.mark.slow
+    @pytest.mark.flaky(reruns=3)
     def test_parallel1(self) -> None:
         """
         Execute:

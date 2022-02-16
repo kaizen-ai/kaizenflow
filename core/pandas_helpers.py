@@ -39,7 +39,7 @@ def resample_index(
 
     :param index: The daily-frequency index to resample as pd.DatetimeIndex
     :param time: (hour, time) tuple to align the sampling
-    :param **kwargs: parameters (e.g., freq) passed to pd.date_range()
+    :param kwargs: parameters (e.g., freq) passed to pd.date_range()
 
     :return: The resampled index. Use df.loc[resampled_index] to sample.
     """
@@ -50,7 +50,7 @@ def resample_index(
         start_date = start_date.replace(hour=time[0], minute=time[1])
     end_date = index.max() + pd.DateOffset(nanoseconds=1)
     _LOG.debug("start_date=%s end_date=%s", start_date, end_date)
-    resampled_index = pd.date_range(start_date, end_date, **kwargs)[:-1]
+    resampled_index = pd.date_range(start_date, end_date, **kwargs)
     _LOG.debug("resampled_index=%s", resampled_index)
     index = resampled_index.intersection(index)
     return index

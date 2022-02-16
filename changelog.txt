@@ -1,3 +1,9 @@
+# cmamp-1.0.7
+- 2022-02-16
+- Remove useless Python packages
+- Update `pandas`
+- See CMTask #1028 for details
+
 # cmamp-1.0.6
 - 2022-01-13
 - Add more docker users
