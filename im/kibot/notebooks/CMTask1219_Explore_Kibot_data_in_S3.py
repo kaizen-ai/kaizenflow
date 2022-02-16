@@ -348,7 +348,7 @@ import core.pandas_helpers as cpanh
 # %%
 def raw_file_reader(path, s3_file, **kwargs):
     kwargs["s3fs"] = s3_file
-    df = cpanh.read_csv(file_path, **kwargs)
+    df = cpanh.read_csv(path, **kwargs)
     return df
 
 
@@ -374,3 +374,45 @@ hs3.is_s3_path(file_path_futures)
 
 # %%
 file_reader(file_path_futures, s3fs)
+
+# %% [markdown]
+# ## Difference of raw Parquet stock data vs. CSV stock data
+
+# %% [markdown]
+# ### CSV example of QCOM
+
+# %%
+file_path_stock = "s3://alphamatic-data/data/kibot/all_stocks_1min/QCOM.csv.gz"
+hs3.is_s3_path(file_path_stock)
+
+# %%
+raw_file_reader(file_path_stock, s3fs)
+
+
+# %% [markdown]
+# ### PQ example of QCOM
+
+# %%
+def raw_file_reader_parquet(path, s3_file, **kwargs):
+    kwargs["s3fs"] = s3_file
+    df = cpanh.read_parquet(path, **kwargs)
+    return df
+
+
+# %%
+file_path_stock_parquet = "s3://alphamatic-data/data/kibot/pq/all_stocks_1min/QCOM.pq"
+hs3.is_s3_path(file_path_stock_parquet)
+
+# %%
+raw_file_reader_parquet(file_path_stock_parquet, s3fs)
+
+# %% [markdown]
+# ### Summary
+
+# %% [markdown]
+# - The OHLCV data inside those files are identical (by values and time range)
+# - PQ data is already transformed to the desired format:
+#    - The heading is in place
+#    - Datetime is converted to index and presented in a complete data-time format
+
+# %%
