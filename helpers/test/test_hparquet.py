@@ -498,8 +498,8 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         )
         actual = str(filters)
         expected = (
-            r"[[('year', '>=', 2001), ('month', '>=', 1), "
-            r"('year', '<=', 2001), ('month', '<=', 12)], "
+            r"[[('year', '==', 2001), ('month', '>=', 1), "
+            r"('year', '==', 2001), ('month', '<=', 12)], "
             r"[('year', '==', 2002)], [('year', '==', 2003)], [('year', '==', 2004)], "
             r"[('year', '==', 2005)], [('year', '==', 2006)], [('year', '==', 2007)], "
             r"[('year', '==', 2008)], [('year', '==', 2009)], [('year', '==', 2010)], "
@@ -510,8 +510,8 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
             r"[('year', '==', 2023)], [('year', '==', 2024)], [('year', '==', 2025)], "
             r"[('year', '==', 2026)], [('year', '==', 2027)], [('year', '==', 2028)], "
             r"[('year', '==', 2029)], "
-            r"[('year', '>=', 2030), ('month', '>=', 1), "
-            r"('year', '<=', 2030), ('month', '<=', 1)]]"
+            r"[('year', '==', 2030), ('month', '>=', 1), "
+            r"('year', '==', 2030), ('month', '<=', 1)]]"
         )
         self.assert_equal(actual, expected)
 
@@ -527,13 +527,13 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         )
         actual = str(filters)
         expected = (
-            r"[[('year', '>=', 2020), ('month', '>=', 1), "
-            r"('year', '<=', 2020), ('month', '<=', 12)], "
+            r"[[('year', '==', 2020), ('month', '>=', 1), "
+            r"('year', '==', 2020), ('month', '<=', 12)], "
             r"[('year', '==', 2021)], [('year', '==', 2022)], [('year', '==', 2023)], "
             r"[('year', '==', 2024)], [('year', '==', 2025)], [('year', '==', 2026)], "
             r"[('year', '==', 2027)], [('year', '==', 2028)], [('year', '==', 2029)], "
-            r"[('year', '>=', 2030), ('month', '>=', 1), "
-            r"('year', '<=', 2030), ('month', '<=', 1)]]"
+            r"[('year', '==', 2030), ('month', '>=', 1), "
+            r"('year', '==', 2030), ('month', '<=', 1)]]"
         )
         self.assert_equal(actual, expected)
 
@@ -549,16 +549,16 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         )
         actual = str(filters)
         expected = (
-            r"[[('year', '>=', 2001), ('month', '>=', 1), "
-            r"('year', '<=', 2001), ('month', '<=', 12)], "
+            r"[[('year', '==', 2001), ('month', '>=', 1), "
+            r"('year', '==', 2001), ('month', '<=', 12)], "
             r"[('year', '==', 2002)], [('year', '==', 2003)], [('year', '==', 2004)], "
             r"[('year', '==', 2005)], [('year', '==', 2006)], [('year', '==', 2007)], "
             r"[('year', '==', 2008)], [('year', '==', 2009)], [('year', '==', 2010)], "
             r"[('year', '==', 2011)], [('year', '==', 2012)], [('year', '==', 2013)], "
             r"[('year', '==', 2014)], [('year', '==', 2015)], [('year', '==', 2016)], "
             r"[('year', '==', 2017)], [('year', '==', 2018)], [('year', '==', 2019)], "
-            r"[('year', '>=', 2020), ('month', '>=', 1), "
-            r"('year', '<=', 2020), ('month', '<=', 1)]]"
+            r"[('year', '==', 2020), ('month', '>=', 1), "
+            r"('year', '==', 2020), ('month', '<=', 1)]]"
         )
         self.assert_equal(actual, expected)
 
@@ -659,10 +659,10 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         )
         actual = str(filters)
         expected = (
-            r"[[('year', '>=', 2020), ('month', '>=', 6), "
-            r"('year', '<=', 2020), ('month', '<=', 12)], "
+            r"[[('year', '==', 2020), ('month', '>=', 6), "
+            r"('year', '==', 2020), ('month', '<=', 12)], "
             r"[('year', '==', 2021)], "
-            r"[('year', '>=', 2022), ('month', '>=', 1), "
-            r"('year', '<=', 2022), ('month', '<=', 12)]]"
+            r"[('year', '==', 2022), ('month', '>=', 1), "
+            r"('year', '==', 2022), ('month', '<=', 12)]]"
         )
         self.assert_equal(actual, expected)

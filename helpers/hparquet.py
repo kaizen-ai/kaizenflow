@@ -373,9 +373,9 @@ def get_parquet_filters_from_timestamp_interval(
             # between first and last AND statement.
             # First AND filter.
             first_and_filter = [
-                ("year", ">=", dates[0].year),
+                ("year", "==", dates[0].year),
                 ("month", ">=", dates[0].month),
-                ("year", "<=", dates[0].year),
+                ("year", "==", dates[0].year),
                 ("month", "<=", 12),
             ]
             or_and_filter.append(first_and_filter)
@@ -385,9 +385,9 @@ def get_parquet_filters_from_timestamp_interval(
                 or_and_filter.append(bridge_and_filter)
             # Last AND filter.
             last_and_filter = [
-                ("year", ">=", dates[-1].year),
+                ("year", "==", dates[-1].year),
                 ("month", ">=", 1),
-                ("year", "<=", dates[-1].year),
+                ("year", "==", dates[-1].year),
                 ("month", "<=", dates[-1].month),
             ]
             or_and_filter.append(last_and_filter)
