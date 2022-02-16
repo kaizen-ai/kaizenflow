@@ -38,7 +38,7 @@ def data_source_node_factory(
     There are several types of nodes:
     - synthetic data generators, e.g.,
         - `ArmaDataSource`
-        - `MultivariateNormalGenerator`
+        - `MultivariateNormalDataSource`
     - real-time data sources e.g.,
         - `RealTimeDataSource` (which uses a full-fledged `MarketData`)
     - data generators using data from disk
@@ -67,7 +67,7 @@ def data_source_node_factory(
     if source_node_name == "arma":
         ret = dtfcore.ArmaDataSource(nid, **source_node_kwargs)
     elif source_node_name == "multivariate_normal":
-        ret = dtfcore.MultivariateNormalGenerator(nid, **source_node_kwargs)
+        ret = dtfcore.MultivariateNormalDataSource(nid, **source_node_kwargs)
     elif source_node_name == "RealTimeDataSource":
         ret = RealTimeDataSource(nid, **source_node_kwargs)
     elif source_node_name == "HistoricalDataSource":

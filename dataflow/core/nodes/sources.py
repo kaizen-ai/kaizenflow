@@ -301,8 +301,7 @@ class ArmaDataSource(dtfconobas.DataSource):
 # #############################################################################
 
 
-# TODO(gp): @Grisha -> MultivariateNormalDataSource
-class MultivariateNormalGenerator(dtfconobas.DataSource):
+class MultivariateNormalDataSource(dtfconobas.DataSource):
     """
     Generate price data from multivariate normal returns.
     """
