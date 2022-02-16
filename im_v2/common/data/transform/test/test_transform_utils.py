@@ -1,6 +1,7 @@
 import pandas as pd
 
 import helpers.hpandas as hpandas
+import helpers.hparquet
 import helpers.hunit_test as hunitest
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 
@@ -36,7 +37,7 @@ class TestPartitionDataset(hunitest.TestCase):
     def test_get_test_data1(self) -> None:
         test_data = self.get_test_data1()
         act = hpandas.df_to_str(test_data)
-        exp = r"""   
+        exp = r"""
            dummy_value_1 dummy_value_2  dummy_value_3
         0              1             A              0
         1              2             B              0
@@ -52,7 +53,7 @@ class TestPartitionDataset(hunitest.TestCase):
         df = self.get_test_data1()
         # Run.
         partition_cols = ["dummy_value_1", "dummy_value_2"]
-        imvcdttrut.partition_dataset(df, partition_cols, test_dir)
+        helpers.hparquet.to_partitioned_parquet(df, partition_cols, test_dir)
         # Check output.
         include_file_content = False
         remove_dir_name = True
@@ -90,7 +91,7 @@ class TestPartitionDataset(hunitest.TestCase):
         partition_cols = ["void_column", "dummy_value_2"]
         # Check output.
         with self.assertRaises(AssertionError) as cm:
-            imvcdttrut.partition_dataset(df, partition_cols, test_dir)
+            helpers.hparquet.to_partitioned_parquet(df, partition_cols, test_dir)
         act = str(cm.exception)
         exp = r"""
         * Failed assertion *
@@ -244,7 +245,7 @@ class TestAddDatePartitionCols(hunitest.TestCase):
         df = _get_dummy_df_with_timestamp()
         reindexed_df = imvcdttrut.reindex_on_datetime(df, "dummy_timestamp")
         # Run.
-        imvcdttrut.add_date_partition_cols(reindexed_df, partition_mode)
+        helpers.hparquet.add_date_partition_columns(reindexed_df, partition_mode)
         # Check output.
         actual = hpandas.df_to_str(reindexed_df)
         self.assert_equal(actual, expected, fuzzy_match=True)

@@ -11,6 +11,7 @@ import logging
 import core.config as cconfig
 import dataflow.core as cdataf
 import dataflow.model.utils as dtfmodutil
+import helpers.hparquet
 
 _LOG = logging.getLogger(__name__)
 
@@ -97,9 +98,8 @@ def _save_tiled_output(config, result_bundle):
     df = df.reset_index(level=1)
     df["year"] = df.index.year
     df["month"] = df.index.month
-    import im_v2.common.data.transform.transform_utils as imvcdttrut
 
-    imvcdttrut.partition_dataset(
+    helpers.hparquet.to_partitioned_parquet(
         df, [asset_id_col_name, "year", "month"], dst_dir="test"
     )
 

@@ -66,9 +66,9 @@ import helpers.hintrospection as hintros
 import helpers.hio as hio
 import helpers.hjoblib as hjoblib
 import helpers.hpandas as hpandas
+import helpers.hparquet
 import helpers.hparser as hparser
 import helpers.hprint as hprint
-import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 _LOG = logging.getLogger(__name__)
 
@@ -274,7 +274,7 @@ def lime317_execute_task(
     df = pd.concat(dfs, axis=0)
     if chunk_mode == "by_year_week":
         # Add year and week partition columns.
-        df, partition_columns = imvcdttrut.add_date_partition_cols(
+        df, partition_columns = helpers.hparquet.add_date_partition_columns(
             df, "by_year_week"
         )
         # Check that all data is for the same year and week.
@@ -284,7 +284,7 @@ def lime317_execute_task(
         hdbg.dassert_eq(len(weeks), 1, "weeks=%s", str(weeks))
     elif chunk_mode == "by_year_month":
         # Add year and month partition columns.
-        df, partition_columns = imvcdttrut.add_date_partition_cols(
+        df, partition_columns = helpers.hparquet.add_date_partition_columns(
             df, "by_year_month"
         )
         # Check that all data is for the same year and month.
@@ -298,7 +298,7 @@ def lime317_execute_task(
     # Partition also over the asset column.
     partition_columns.insert(0, asset_id_col_name)
     # Write.
-    imvcdttrut.partition_dataset(df, partition_columns, dst_dir)
+    helpers.hparquet.to_partitioned_parquet(df, partition_columns, dst_dir)
 
 
 # #############################################################################

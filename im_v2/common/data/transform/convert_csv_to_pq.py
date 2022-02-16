@@ -36,6 +36,7 @@ import pyarrow.dataset as ds
 import helpers.hcsv as hcsv
 import helpers.hdbg as hdbg
 import helpers.hio as hio
+import helpers.hparquet
 import helpers.hparser as hparser
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 
@@ -46,8 +47,8 @@ def _get_csv_to_pq_file_names(
     src_dir: str, dst_dir: str, incremental: bool
 ) -> List[Tuple[str, str]]:
     """
-    Find all the CSV files in `src_dir` to transform and prepare the corresponding
-    destination Parquet files.
+    Find all the CSV files in `src_dir` to transform and prepare the
+    corresponding destination Parquet files.
 
     :param incremental: if True, skip CSV files for which the corresponding Parquet
         file already exists
@@ -101,10 +102,10 @@ def _run(args: argparse.Namespace) -> None:
     # Set datetime index.
     reindexed_df = imvcdttrut.reindex_on_datetime(df, args.datetime_col)
     # Add date partition columns to the dataframe.
-    df, partition_cols = imvcdttrut.add_date_partition_cols(
+    df, partition_cols = helpers.hparquet.add_date_partition_columns(
         reindexed_df, "by_date"
     )
-    imvcdttrut.partition_dataset(df, partition_cols, args.dst_dir)
+    helpers.hparquet.to_partitioned_parquet(df, partition_cols, args.dst_dir)
 
 
 def _parse() -> argparse.ArgumentParser:
