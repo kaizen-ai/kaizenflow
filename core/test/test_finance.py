@@ -1212,6 +1212,37 @@ datetime,ret_0,position_intent_1
 # #############################################################################
 
 
+class TestComputeOvernightReturns(hunitest.TestCase):
+    def test1(self) -> None:
+        data = (
+            pd.Series(
+                {
+                    "date": datetime.date(2022, 1, 3),
+                    "asset_id": 100,
+                    "open_": 1000.0,
+                    "close": 1010.0,
+                    "total_return": 500,
+                    "prev_total_return": 495,
+                }
+            )
+            .to_frame()
+            .T
+        )
+        data = data.convert_dtypes()
+        actual = cofinanc.compute_overnight_returns(
+            data,
+            "asset_id",
+        )
+        precision = 5
+        actual_str = hpandas.df_to_str(actual, precision=precision)
+        expected_str = r"""
+                          overnight_returns
+asset_id                                100
+datetime
+2022-01-03 09:30:00-05:00            0.0001"""
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+
+
 class Test_compute_inverse_volatility_weights(hunitest.TestCase):
     def test1(self) -> None:
         """

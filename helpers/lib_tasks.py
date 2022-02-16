@@ -291,7 +291,7 @@ def _get_files_to_process(
         files = hio.find_all_files(dir_name)
     if files_from_user:
         # If files were passed, filter out non-existent paths.
-        files = _filter_existing_paths(files_from_user.split(" "))
+        files = _filter_existing_paths(files_from_user.split())
     # Convert into a list.
     hdbg.dassert_isinstance(files, list)
     files_to_process = [f for f in files if f != ""]
@@ -1959,8 +1959,9 @@ _IMAGE_BASE_NAME_RE = r"[a-z0-9_-]+"
 _IMAGE_USER_RE = r"[a-z0-9_-]+"
 # For candidate prod images which have added hash for easy identification.
 _IMAGE_HASH_RE = r"[a-z0-9]{9}"
-_IMAGE_STAGE_RE = rf"(local(?:-{_IMAGE_USER_RE})?|dev|prod|prod(?:-{_IMAGE_HASH_RE})?)"
-
+_IMAGE_STAGE_RE = (
+    rf"(local(?:-{_IMAGE_USER_RE})?|dev|prod|prod(?:-{_IMAGE_HASH_RE})?)"
+)
 
 
 def _dassert_is_image_name_valid(image: str) -> None:
@@ -1974,7 +1975,7 @@ def _dassert_is_image_name_valid(image: str) -> None:
       to indicate the latest
       - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev-1.0.0`
         and `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev`
-    - `prod` candidate image has a 9 character hash identifier from the 
+    - `prod` candidate image has a 9 character hash identifier from the
         corresponding Git commit
         - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:prod-1.0.0-4rf74b83a`
 
@@ -2609,11 +2610,7 @@ def docker_release_dev_image(  # type: ignore
 # TODO(gp): Remove redundancy with docker_build_local_image(), if possible.
 @task
 def docker_build_prod_image(  # type: ignore
-    ctx,
-    version,
-    cache=True,
-    base_image="",
-    candidate=False
+    ctx, version, cache=True, base_image="", candidate=False
 ):
     """
     (ONLY CI/CD) Build a prod image.
@@ -2626,7 +2623,7 @@ def docker_build_prod_image(  # type: ignore
         image so caching makes no difference
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     :param candidate: build a prod image with a tag format: prod-{hash}
-        where hash is the output of hgit.get_head_hash 
+        where hash is the output of hgit.get_head_hash
     """
     _report_task()
     version = _resolve_version_value(version)
@@ -2637,7 +2634,7 @@ def docker_build_prod_image(  # type: ignore
     #  the client is clean so that we don't release from a dirty client.
     # Build prod image.
     if candidate:
-        # For candidate prod images which need to be tested on 
+        # For candidate prod images which need to be tested on
         # the AWS infra add a hash identifier.
         latest_version = None
         image_versioned_prod = get_image(base_image, "prod", latest_version)
@@ -2705,6 +2702,7 @@ def docker_push_prod_image(  # type: ignore
     cmd = f"docker push {image_prod}"
     _run(ctx, cmd, pty=True)
 
+
 @task
 def docker_push_prod_candidate_image(  # type: ignore
     ctx,
@@ -2724,6 +2722,7 @@ def docker_push_prod_candidate_image(  # type: ignore
     image_versioned_prod = get_image(base_image, "prod", None)
     cmd = f"docker push {image_versioned_prod}-{candidate}"
     _run(ctx, cmd, pty=True)
+
 
 @task
 def docker_release_prod_image(  # type: ignore
@@ -3759,9 +3758,7 @@ def run_coverage_report(  # type: ignore
     # command which combines stats does not work when being run first in
     # the chain `bash -c "cmd1 && cmd2 && cmd3"`. So `erase` command which
     # does not affect the coverage results was added as a workaround.
-    report_cmd.append(
-        "coverage erase"
-    )
+    report_cmd.append("coverage erase")
     # Merge stats for fast and slow tests into single dir.
     report_cmd.append(
         "coverage combine --keep .coverage_fast_tests .coverage_slow_tests"
@@ -3850,121 +3847,70 @@ def pytest_clean(ctx):  # type: ignore
     hpytest.pytest_clean(".")
 
 
-@task
-def pytest_failed_freeze_test_list(ctx, confirm=False):  # type: ignore
-    """
-    Copy last list of failed tests to not overwrite with successive pytest
-    runs.
-    """
-    _report_task()
-    dir_name = "."
-    pytest_failed_tests_file = os.path.join(
-        dir_name, ".pytest_cache/v/cache/lastfailed"
-    )
-    frozen_failed_tests_file = "tmp.pytest_cache.lastfailed"
-    if os.path.exists(frozen_failed_tests_file) and not confirm:
-        hdbg.dfatal(
-            "File {frozen_failed_tests_file} already exists. Re-run with --confirm to overwrite"
-        )
-    _LOG.info(
-        "Copying '%s' to '%s'", pytest_failed_tests_file, frozen_failed_tests_file
-    )
-    # Make a copy of the pytest file.
-    hdbg.dassert_file_exists(pytest_failed_tests_file)
-    cmd = f"cp {pytest_failed_tests_file} {frozen_failed_tests_file}"
-    _run(ctx, cmd)
-
-
 def _get_failed_tests_from_file(file_name: str) -> List[str]:
     hdbg.dassert_file_exists(file_name)
-    # {
-    # "vendors/test/test_vendors.py::Test_gp::test1": true,
-    # "vendors/test/test_vendors.py::Test_kibot_utils1::...": true,
-    # }
     txt = hio.from_file(file_name)
-    vals = json.loads(txt)
-    hdbg.dassert_isinstance(vals, dict)
-    tests = [k for k, v in vals.items() if v]
+    if file_name.endswith("/cache/lastfailed"):
+        # Decode the json-style string.
+        # {
+        # "vendors/test/test_vendors.py::Test_gp::test1": true,
+        # "vendors/test/test_vendors.py::Test_kibot_utils1::...": true,
+        # }
+        vals = json.loads(txt)
+        hdbg.dassert_isinstance(vals, dict)
+        tests = [k for k, v in vals.items() if v]
+    else:
+        # Extract failed tests from the regular text output.
+        tests = re.findall(r"FAILED (.+\.py::.+::.+)\n", txt)
     return tests
 
 
-def _get_failed_tests_from_clipboard() -> List[str]:
-    # pylint: disable=line-too-long
-    """
-    ```
-
-    FAILED core/dataflow/nodes/test/test_sources.py::TestRealTimeDataSource1::test_replayed_real_time1 - TypeError: __init__() got an unexpected keyword argument 'speed_up_factor'
-    FAILED helpers/test/test_lib_tasks.py::Test_find_check_string_output1::test1 - TypeError: check_string() takes 2 positional arguments but 3 were given
-    FAILED helpers/test/test_lib_tasks.py::Test_find_check_string_output1::test2 - TypeError: check_string() takes 2 positional arguments but 3 were given
-    FAILED core/dataflow/test/test_runners.py::TestRealTimeDagRunner1::test1 - TypeError: execute_with_real_time_loop() got an unexpected keyword argument 'num_iterations'
-    FAILED helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal1 - NameError: name 'dedent' is not defined
-    FAILED helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal2 - NameError: name 'dedent' is not defined
-    FAILED helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal4 - NameError: name 'dedent' is not defined
-    ```
-    """
-    # pylint: enable=line-too-long
-    hsystem.system_to_string("pbpaste")
-    # TODO(gp): Finish this.
-    return []
-
-
 @task
-def pytest_failed(  # type: ignore
+def pytest_repro(  # type: ignore
     ctx,
-    use_frozen_list=True,
     target_type="tests",
-    file_name="",
-    refresh=False,
-    pbcopy=True,
+    file_name="./.pytest_cache/v/cache/lastfailed",
 ):
     """
-    Process the list of failed tests from a pytest run.
+    Generate commands to reproduce the failed tests after a `pytest` run.
 
     The workflow is:
     ```
     # Run a lot of tests, e.g., the entire regression suite.
-    > pytest ...
-    # Some tests fail.
+    server> i run_fast_slow_tests 2>&1 | log pytest.txt
+    docker> pytest ... 2>&1 | log pytest.txt
 
-    # Freeze the output of pytest so we can re-run only some of them.
-    > invoke pytest_failed_freeze_test_list
-    #
-    > invoke pytest_failed
+    # Run the `pytest_repro` to summarize test failures and to generate
+    # commands to reproduce them.
+    server> i pytest_repro
     ```
 
-    :param use_frozen_list: use the frozen list (default) or the one generated by
-        pytest
-    :param target_type: specify what to print about the tests
-        - tests (default): print the tests in a single line
-        - files: print the name of the files containing files
-        - classes: print the name of all classes
-    :param file_name: specify the file name containing the pytest file to parse
-    :param refresh: force to update the frozen file from the current pytest file
+    :param target_type: the granularity level for generating the commands
+        - "tests" (default): failed test methods, e.g.,
+            ```
+            pytest helpers/test/test_cache.py::TestCachingOnS3::test_with_caching1
+            pytest helpers/test/test_cache.py::TestCachingOnS3::test_with_caching2
+            ```
+        - "classes": classes of the failed tests, e.g.,
+            ```
+            pytest helpers/test/test_cache.py::TestCachingOnS3
+            pytest helpers/test/test_cache.py::TestCachingOnS3_2
+            ```
+        - "files": files with the failed tests, e.g.,
+            ```
+            pytest helpers/test/test_cache.py
+            pytest helpers/test/test_lib_tasks.py
+            ```
+    :param file_name: the name of the file containing the pytest output file to parse
+    :return: commands to reproduce pytest failures at the requested granularity level
     """
     _report_task()
     _ = ctx
-    if refresh:
-        pytest_failed_freeze_test_list(ctx, confirm=True)
     # Read file.
-    if not file_name:
-        dir_name = "."
-        pytest_failed_tests_file = os.path.join(
-            dir_name, ".pytest_cache/v/cache/lastfailed"
-        )
-        frozen_failed_tests_file = "tmp.pytest_cache.lastfailed"
-        if use_frozen_list:
-            if os.path.exists(pytest_failed_tests_file) and not os.path.exists(
-                frozen_failed_tests_file
-            ):
-                _LOG.warning("Freezing the pytest outcomes")
-                pytest_failed_freeze_test_list(ctx)
-            file_name = frozen_failed_tests_file
-        else:
-            file_name = pytest_failed_tests_file
     _LOG.info("Reading file_name='%s'", file_name)
     hdbg.dassert_file_exists(file_name)
-    # E.g., vendors/test/test_vendors.py::Test_gp::test1
     _LOG.info("Reading failed tests from file '%s'", file_name)
+    # E.g., vendors/test/test_vendors.py::Test_gp::test1
     tests = _get_failed_tests_from_file(file_name)
     _LOG.debug("tests=%s", str(tests))
     # Process the tests.
@@ -3975,35 +3921,39 @@ def pytest_failed(  # type: ignore
         # E.g., dev_scripts/testing/test/test_run_tests.py
         # E.g., helpers/test/helpers/test/test_list.py::Test_list_1
         # E.g., core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test5
-        file_name = test_class = test_method = ""
+        test_file_name = test_class = test_method = ""
         if len(data) >= 1:
-            file_name = data[0]
+            test_file_name = data[0]
         if len(data) >= 2:
             test_class = data[1]
         if len(data) >= 3:
             test_method = data[2]
         _LOG.debug(
-            "test=%s -> (%s, %s, %s)", test, file_name, test_class, test_method
+            "test=%s -> (%s, %s, %s)",
+            test,
+            test_file_name,
+            test_class,
+            test_method,
         )
-        if not os.path.exists(file_name):
-            _LOG.warning("Can't find file '%s'", file_name)
         if target_type == "tests":
-            targets.append(test)
+            targets.append("pytest " + test)
         elif target_type == "files":
-            if file_name != "":
-                targets.append(file_name)
+            if test_file_name != "":
+                targets.append("pytest " + test_file_name)
             else:
                 _LOG.warning(
-                    "Skipping test='%s' since file_name='%s'", test, file_name
+                    "Skipping test='%s' since test_file_name='%s'",
+                    test,
+                    test_file_name,
                 )
         elif target_type == "classes":
-            if file_name != "" and test_class != "":
-                targets.append(f"{file_name}::{test_class}")
+            if test_file_name != "" and test_class != "":
+                targets.append(f"pytest {test_file_name}::{test_class}")
             else:
                 _LOG.warning(
-                    "Skipping test='%s' since file_name='%s', test_class='%s'",
+                    "Skipping test='%s' since test_file_name='%s', test_class='%s'",
                     test,
-                    file_name,
+                    test_file_name,
                     test_class,
                 )
         else:
@@ -4012,7 +3962,7 @@ def pytest_failed(  # type: ignore
     _LOG.debug("res=%s", str(targets))
     targets = hlist.remove_duplicates(targets)
     _LOG.info(
-        "Found %d failed pytest '%s' targets:\n%s",
+        "Found %d failed pytest '%s' target(s); to reproduce run:\n%s",
         len(targets),
         target_type,
         "\n".join(targets),
@@ -4020,8 +3970,6 @@ def pytest_failed(  # type: ignore
     hdbg.dassert_isinstance(targets, list)
     res = " ".join(targets)
     _LOG.debug("res=%s", str(res))
-    #
-    _to_pbcopy(res, pbcopy)
     return res
 
 
@@ -4307,8 +4255,9 @@ def lint_detect_cycles(  # type: ignore
     as_user = _run_docker_as_user(as_user)
     # Prepare the command line.
     docker_cmd_opts = [dir_name]
-    docker_cmd_ = "/app/import_check/detect_import_cycles.py " + _to_single_line_cmd(
-        docker_cmd_opts
+    docker_cmd_ = (
+        "/app/import_check/detect_import_cycles.py "
+        + _to_single_line_cmd(docker_cmd_opts)
     )
     # Execute command line.
     cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
@@ -4328,6 +4277,7 @@ def lint(  # type: ignore
     phases="",
     only_format=False,
     only_check=False,
+    fast=False,
     # stage="prod",
     run_bash=False,
     run_linter_step=True,
@@ -4356,6 +4306,8 @@ def lint(  # type: ignore
     :param only_format: run only the formatting phases (e.g., black)
     :param only_check: run only the checking phases (e.g., pylint, mypy) that
         don't change the code
+    :param fast: run everything but skip `pylint`, since it is often very picky
+        and slow
     :param run_bash: instead of running pre-commit, run bash to debug
     :param run_linter_step: run linter step
     :param parse_linter_output: parse linter output and generate vim cfile
@@ -4392,6 +4344,7 @@ def lint(  # type: ignore
     # amp_format_separating_line.......................(no files to check)Skipped
     # amp_warn_incorrectly_formatted_todo..............(no files to check)Skipped
     # amp_processjupytext..............................(no files to check)Skipped
+    # amp_remove_eof_newlines..........................(no files to check)Skipped
     # ```
     if only_format:
         hdbg.dassert_eq(phases, "")
@@ -4403,6 +4356,7 @@ def lint(  # type: ignore
                 "amp_format_separating_line",
                 "amp_black",
                 "amp_processjupytext",
+                "amp_remove_eof_newlines",
             ]
         )
     if only_check:
@@ -4446,12 +4400,17 @@ def lint(  # type: ignore
         as_user = _run_docker_as_user(as_user)
         for phase in phases:
             # Prepare the command line.
-            precommit_opts = [
-                f"run {phase}",
-                "-c /app/.pre-commit-config.yaml",
-                f"--files {files_as_str}",
-            ]
+            precommit_opts = []
+            precommit_opts.extend(
+                [
+                    f"run {phase}",
+                    "-c /app/.pre-commit-config.yaml",
+                    f"--files {files_as_str}",
+                ]
+            )
             docker_cmd_ = "pre-commit " + _to_single_line_cmd(precommit_opts)
+            if fast:
+                docker_cmd_ = "SKIP=amp_pylint " + docker_cmd_
             # Execute command line.
             cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
             cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
@@ -4494,6 +4453,42 @@ def lint_create_branch(ctx, dry_run=False):  # type: ignore
 # #############################################################################
 # GitHub CLI.
 # #############################################################################
+
+
+@task
+def gh_login(
+    ctx,
+    account="",
+):  # type: ignore
+    if not account:
+        # Retrieve the name of the repo, e.g., "alphamatic/amp".
+        full_repo_name = hgit.get_repo_full_name_from_dirname(
+            ".", include_host_name=False
+        )
+        _LOG.debug(hprint.to_str("full_repo_name"))
+        account = full_repo_name.split("/")[0]
+    _LOG.info(hprint.to_str("account"))
+    #
+    ssh_filename = os.path.expanduser(f"~/.ssh/id_rsa.{account}.github")
+    _LOG.debug(hprint.to_str("ssh_filename"))
+    if os.path.exists(ssh_filename):
+        cmd = f"export GIT_SSH_COMMAND='ssh -i {ssh_filename}'"
+        print(cmd)
+    else:
+        _LOG.warning("Can't find file '%s'" % ssh_filename)
+    #
+    cmd = "gh auth status"
+    _run(ctx, cmd)
+    #
+    github_pat_filename = os.path.expanduser(f"~/.ssh/github_pat.{account}.txt")
+    if os.path.exists(github_pat_filename):
+        cmd = f"gh auth login --with-token <{github_pat_filename}"
+        _run(ctx, cmd)
+    else:
+        _LOG.warning("Can't find file '%s'" % github_pat_filename)
+    #
+    cmd = "gh auth status"
+    _run(ctx, cmd)
 
 
 def _get_branch_name(branch_mode: str) -> Optional[str]:
@@ -5176,9 +5171,3 @@ def fix_perms(  # type: ignore
 # 25163 /compose_app_run_ab27e17f2c47
 # 18721 /compose_app_run_de23819a6bc2
 # pylint: enable=line-too-long
-
-# TODO(gp): Based on:
-# > git remote get-url origin
-# git@github.com:alphamatic/amp.git
-# Run
-# gh auth login --with-token <~/github_pat.gpsaggese.txt

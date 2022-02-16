@@ -453,7 +453,6 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
 # - check_python_files
 # - docker_stats
 # - traceback (with checked in file)
-# - pytest_failed (with checked in file)
 # - lint
 
 # #############################################################################
@@ -1434,6 +1433,48 @@ class Test_get_files_to_process1(hunitest.TestCase):
         )
         self.assertEqual(files, [])
 
+    def test_files3(self) -> None:
+        """
+        Pass through files from user.
+
+        Use the sequence of paths separated by newlines.
+        """
+        modified = False
+        branch = False
+        last_commit = False
+        all_ = False
+        # Specify the number of toy files.
+        n_toy_files = 4
+        files_from_user = []
+        # Get root directory.
+        root_dir = hgit.get_client_root(super_module=False)
+        # Generate toy files and store their paths.
+        for file_num in range(n_toy_files):
+            # Build the name of the test file.
+            file_name = f"test_toy{str(file_num)}.tmp.py"
+            # Build the path to the test file.
+            test_path = os.path.join(root_dir, file_name)
+            # Create the empty toy file.
+            hio.to_file(test_path, "")
+            files_from_user.append(test_path)
+        mutually_exclusive = True
+        remove_dirs = True
+        # Join the names with `\n` separator.
+        joined_files_from_user = "\n".join(files_from_user)
+        files = hlibtask._get_files_to_process(
+            modified,
+            branch,
+            last_commit,
+            all_,
+            joined_files_from_user,
+            mutually_exclusive,
+            remove_dirs,
+        )
+        # Remove the toy files.
+        for path in files_from_user:
+            hio.delete_file(path)
+        self.assertEqual(files, files_from_user)
+
     def test_assert1(self) -> None:
         """
         Test that --modified and --branch together cause an assertion.
@@ -1524,7 +1565,7 @@ class Test_get_files_to_process1(hunitest.TestCase):
 # #############################################################################
 
 
-class Test_pytest_failed1(hunitest.TestCase):
+class Test_pytest_repro1(hunitest.TestCase):
     def test_tests1(self) -> None:
         file_name = self._build_pytest_file1()
         target_type = "tests"
@@ -1668,7 +1709,7 @@ class Test_pytest_failed1(hunitest.TestCase):
 
     def _build_pytest_file_helper(self, txt: str) -> str:
         txt = hprint.dedent(txt)
-        file_name = os.path.join(self.get_scratch_space(), "input.txt")
+        file_name = os.path.join(self.get_scratch_space(), "cache/lastfailed")
         hio.to_file(file_name, txt)
         return file_name
 
@@ -1745,17 +1786,47 @@ class Test_pytest_failed1(hunitest.TestCase):
 
     def _helper(self, file_name: str, target_type: str, exp: List[str]) -> None:
         ctx = _build_mock_context_returning_ok()
-        # It is a dummy parameter when `file_name` is specified.
-        use_frozen_list = True
-        act = hlibtask.pytest_failed(
+        act = hlibtask.pytest_repro(
             ctx,
-            use_frozen_list=use_frozen_list,
             target_type=target_type,
             file_name=file_name,
-            pbcopy=False,
         )
-        exp = " ".join(exp)
+        exp = " ".join(["pytest " + x for x in exp])
         self.assert_equal(act, exp)
+
+
+class Test_pytest_repro_end_to_end(hunitest.TestCase):
+    """
+    - Run the `pytest_repro` invoke from command line
+      - A fixed file imitating the pytest output file is used
+    - Compare the output to the golden outcome
+    """
+
+    def helper(self, cmd: str) -> None:
+        # Run the command.
+        _, act = hsystem.system_to_string(cmd)
+        # Modify the outcome for reproducibility.
+        act = hprint.remove_non_printable_chars(act)
+        act = re.sub(r"[0-9]{2}:[0-9]{2}:[0-9]{2} - ", r"00:00:00 - ", act)
+        act = "\n".join(
+            [x for x in act.split("\n") if not x.startswith(">>ENV<<")]
+        )
+        act = act.replace("/app/amp/", "/app/")
+        act = re.sub(
+            r"lib_tasks.py pytest_repro:[0-9]+",
+            r"lib_tasks.py pytest_repro:0000",
+            act,
+        )
+        # Check the outcome.
+        self.check_string(act)
+
+    def test1(self) -> None:
+        cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/cache/lastfailed'"
+        self.helper(cmd)
+
+    def test2(self) -> None:
+        cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt'"
+        self.helper(cmd)
 
 
 # #############################################################################

@@ -20,6 +20,9 @@ import helpers.hpandas as hpandas
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): Obsolete or clean up / reuse.
+
+
 class _TimeSeriesAnalyzer:
     """
     Perform basic study of time series, such as:

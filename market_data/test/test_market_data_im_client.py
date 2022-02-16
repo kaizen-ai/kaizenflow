@@ -111,13 +111,13 @@ class TestImClientMarketData(mdtmdtca.MarketData_get_data_TestCase):
         # pylint: disable=line-too-long
         exp_df_as_str = r"""
         # df=
-        df.index in [2018-08-16 20:05:00-04:00, 2018-08-16 20:05:00-04:00]
-        df.columns=asset_id,full_symbol,open,high,low,close,volume,currency_pair,exchange_id,start_ts
-        df.shape=(2, 10)
-                                     asset_id        full_symbol         open         high          low        close     volume currency_pair exchange_id                  start_ts
+        index=[2018-08-16 20:05:00-04:00, 2018-08-16 20:05:00-04:00]
+        columns=asset_id,full_symbol,open,high,low,close,volume,start_ts
+        shape=(2, 8)
+                                     asset_id        full_symbol         open         high          low        close     volume                  start_ts
         end_ts
-        2018-08-16 20:05:00-04:00  1467591036  binance::BTC_USDT  6291.970000  6299.320000  6285.400000  6294.990000  18.986206      BTC_USDT     binance 2018-08-16 20:04:00-04:00
-        2018-08-16 20:05:00-04:00  3187272957   kucoin::ETH_USDT   285.400196   285.884637   285.400196   285.884637   0.006141      ETH_USDT      kucoin 2018-08-16 20:04:00-04:00
+        2018-08-16 20:05:00-04:00  1467591036  binance::BTC_USDT  6291.970000  6299.320000  6285.400000  6294.990000  18.986206 2018-08-16 20:04:00-04:00
+        2018-08-16 20:05:00-04:00  3187272957   kucoin::ETH_USDT   285.400196   285.884637   285.400196   285.884637   0.006141 2018-08-16 20:04:00-04:00
         """
         # pylint: enable=line-too-long
         # Run.
@@ -149,9 +149,9 @@ class TestImClientMarketData(mdtmdtca.MarketData_get_data_TestCase):
         # pylint: disable=line-too-long
         exp_df_as_str = """
         # df=
-        df.index in [2018-08-16 20:01:00-04:00, 2018-08-16 20:04:00-04:00]
-        df.columns=asset_id,open,high,low,close,volume,currency_pair,exchange_id,start_ts
-        df.shape=(8, 9)
+        index=[2018-08-16 20:01:00-04:00, 2018-08-16 20:04:00-04:00]
+        columns=asset_id,open,high,low,close,volume,currency_pair,exchange_id,start_ts
+        shape=(8, 9)
                                             asset_id         open         high          low        close     volume currency_pair exchange_id                  start_ts
         end_ts
         2018-08-16 20:01:00-04:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206      BTC_USDT     binance 2018-08-16 20:00:00-04:00
@@ -191,18 +191,18 @@ class TestImClientMarketData(mdtmdtca.MarketData_get_data_TestCase):
         # pylint: disable=line-too-long
         exp_df_as_str = r"""
         # df=
-        df.index in [2018-08-16 20:01:00-04:00, 2018-08-16 20:04:00-04:00]
-        df.columns=asset_id,full_symbol,open,high,low,close,volume,currency_pair,exchange_id,start_ts
-        df.shape=(8, 10)
-                                     asset_id        full_symbol         open         high          low        close     volume currency_pair exchange_id                  start_ts
+        index=[2018-08-16 20:01:00-04:00, 2018-08-16 20:04:00-04:00]
+        columns=asset_id,full_symbol,open,high,low,close,volume,start_ts
+        shape=(8, 8)
+                                     asset_id        full_symbol         open         high          low        close     volume                  start_ts
         end_ts
-        2018-08-16 20:01:00-04:00  1467591036  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206      BTC_USDT     binance 2018-08-16 20:00:00-04:00
-        2018-08-16 20:01:00-04:00  3187272957   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500      ETH_USDT      kucoin 2018-08-16 20:00:00-04:00
-        2018-08-16 20:02:00-04:00  1467591036  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226      BTC_USDT     binance 2018-08-16 20:01:00-04:00
+        2018-08-16 20:01:00-04:00  1467591036  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206 2018-08-16 20:00:00-04:00
+        2018-08-16 20:01:00-04:00  3187272957   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500 2018-08-16 20:00:00-04:00
+        2018-08-16 20:02:00-04:00  1467591036  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226 2018-08-16 20:01:00-04:00
         ...
-        2018-08-16 20:03:00-04:00  3187272957   kucoin::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260      ETH_USDT      kucoin 2018-08-16 20:02:00-04:00
-        2018-08-16 20:04:00-04:00  1467591036  binance::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586      BTC_USDT     binance 2018-08-16 20:03:00-04:00
-        2018-08-16 20:04:00-04:00  3187272957   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655      ETH_USDT      kucoin 2018-08-16 20:03:00-04:00
+        2018-08-16 20:03:00-04:00  3187272957   kucoin::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260 2018-08-16 20:02:00-04:00
+        2018-08-16 20:04:00-04:00  1467591036  binance::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586 2018-08-16 20:03:00-04:00
+        2018-08-16 20:04:00-04:00  3187272957   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655 2018-08-16 20:03:00-04:00
         """
         # pylint: enable=line-too-long
         # Run.
@@ -234,18 +234,18 @@ class TestImClientMarketData(mdtmdtca.MarketData_get_data_TestCase):
         # pylint: disable=line-too-long
         exp_df_as_str = r"""
         # df=
-        df.index in [2018-08-16 20:01:00-04:00, 2018-08-16 20:05:00-04:00]
-        df.columns=asset_id,full_symbol,open,high,low,close,volume,currency_pair,exchange_id,start_ts
-        df.shape=(10, 10)
-                                     asset_id        full_symbol         open         high          low        close     volume currency_pair exchange_id                  start_ts
+        index=[2018-08-16 20:01:00-04:00, 2018-08-16 20:05:00-04:00]
+        columns=asset_id,full_symbol,open,high,low,close,volume,start_ts
+        shape=(10, 8)
+                                     asset_id        full_symbol         open         high          low        close     volume                  start_ts
         end_ts
-        2018-08-16 20:01:00-04:00  1467591036  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206      BTC_USDT     binance 2018-08-16 20:00:00-04:00
-        2018-08-16 20:01:00-04:00  3187272957   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500      ETH_USDT      kucoin 2018-08-16 20:00:00-04:00
-        2018-08-16 20:02:00-04:00  1467591036  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226      BTC_USDT     binance 2018-08-16 20:01:00-04:00
+        2018-08-16 20:01:00-04:00  1467591036  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206 2018-08-16 20:00:00-04:00
+        2018-08-16 20:01:00-04:00  3187272957   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500 2018-08-16 20:00:00-04:00
+        2018-08-16 20:02:00-04:00  1467591036  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226 2018-08-16 20:01:00-04:00
         ...
-        2018-08-16 20:04:00-04:00  3187272957   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655      ETH_USDT      kucoin 2018-08-16 20:03:00-04:00
-        2018-08-16 20:05:00-04:00  1467591036  binance::BTC_USDT  6291.970000  6299.320000  6285.400000  6294.990000  18.986206      BTC_USDT     binance 2018-08-16 20:04:00-04:00
-        2018-08-16 20:05:00-04:00  3187272957   kucoin::ETH_USDT   285.400196   285.884637   285.400196   285.884637   0.006141      ETH_USDT      kucoin 2018-08-16 20:04:00-04:00
+        2018-08-16 20:04:00-04:00  3187272957   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655 2018-08-16 20:03:00-04:00
+        2018-08-16 20:05:00-04:00  1467591036  binance::BTC_USDT  6291.970000  6299.320000  6285.400000  6294.990000  18.986206 2018-08-16 20:04:00-04:00
+        2018-08-16 20:05:00-04:00  3187272957   kucoin::ETH_USDT   285.400196   285.884637   285.400196   285.884637   0.006141 2018-08-16 20:04:00-04:00
         """
         # pylint: enable=line-too-long
         # Run.
@@ -277,18 +277,18 @@ class TestImClientMarketData(mdtmdtca.MarketData_get_data_TestCase):
         # pylint: disable=line-too-long
         exp_df_as_str = r"""
         # df=
-        df.index in [2018-08-16 20:02:00-04:00, 2018-08-16 20:05:00-04:00]
-        df.columns=asset_id,full_symbol,open,high,low,close,volume,currency_pair,exchange_id,start_ts
-        df.shape=(8, 10)
-                                     asset_id        full_symbol         open         high          low        close     volume currency_pair exchange_id                  start_ts
+        index=[2018-08-16 20:02:00-04:00, 2018-08-16 20:05:00-04:00]
+        columns=asset_id,full_symbol,open,high,low,close,volume,start_ts
+        shape=(8, 8)
+                                     asset_id        full_symbol         open         high          low        close     volume                  start_ts
         end_ts
-        2018-08-16 20:02:00-04:00  1467591036  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226      BTC_USDT     binance 2018-08-16 20:01:00-04:00
-        2018-08-16 20:02:00-04:00  3187272957   kucoin::ETH_USDT   286.405988   286.405988   285.400193   285.400197   0.162255      ETH_USDT      kucoin 2018-08-16 20:01:00-04:00
-        2018-08-16 20:03:00-04:00  1467591036  binance::BTC_USDT  6299.970000  6299.970000  6286.930000  6294.520000  34.611797      BTC_USDT     binance 2018-08-16 20:02:00-04:00
+        2018-08-16 20:02:00-04:00  1467591036  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226 2018-08-16 20:01:00-04:00
+        2018-08-16 20:02:00-04:00  3187272957   kucoin::ETH_USDT   286.405988   286.405988   285.400193   285.400197   0.162255 2018-08-16 20:01:00-04:00
+        2018-08-16 20:03:00-04:00  1467591036  binance::BTC_USDT  6299.970000  6299.970000  6286.930000  6294.520000  34.611797 2018-08-16 20:02:00-04:00
         ...
-        2018-08-16 20:04:00-04:00  3187272957   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655      ETH_USDT      kucoin 2018-08-16 20:03:00-04:00
-        2018-08-16 20:05:00-04:00  1467591036  binance::BTC_USDT  6291.970000  6299.320000  6285.400000  6294.990000  18.986206      BTC_USDT     binance 2018-08-16 20:04:00-04:00
-        2018-08-16 20:05:00-04:00  3187272957   kucoin::ETH_USDT   285.400196   285.884637   285.400196   285.884637   0.006141      ETH_USDT      kucoin 2018-08-16 20:04:00-04:00
+        2018-08-16 20:04:00-04:00  3187272957   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655 2018-08-16 20:03:00-04:00
+        2018-08-16 20:05:00-04:00  1467591036  binance::BTC_USDT  6291.970000  6299.320000  6285.400000  6294.990000  18.986206 2018-08-16 20:04:00-04:00
+        2018-08-16 20:05:00-04:00  3187272957   kucoin::ETH_USDT   285.400196   285.884637   285.400196   285.884637   0.006141 2018-08-16 20:04:00-04:00
         """
         # pylint: enable=line-too-long
         # Run.
@@ -320,17 +320,17 @@ class TestImClientMarketData(mdtmdtca.MarketData_get_data_TestCase):
         # pylint: disable=line-too-long
         exp_df_as_str = r"""
         # df=
-        df.index in [2018-08-16 20:02:00-04:00, 2018-08-16 20:04:00-04:00]
-        df.columns=asset_id,full_symbol,open,high,low,close,volume,currency_pair,exchange_id,start_ts
-        df.shape=(6, 10)
-                                     asset_id        full_symbol         open         high          low        close     volume currency_pair exchange_id                  start_ts
+        index=[2018-08-16 20:02:00-04:00, 2018-08-16 20:04:00-04:00]
+        columns=asset_id,full_symbol,open,high,low,close,volume,start_ts
+        shape=(6, 8)
+                                     asset_id        full_symbol         open         high          low        close     volume                  start_ts
         end_ts
-        2018-08-16 20:02:00-04:00  1467591036  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226      BTC_USDT     binance 2018-08-16 20:01:00-04:00
-        2018-08-16 20:02:00-04:00  3187272957   kucoin::ETH_USDT   286.405988   286.405988   285.400193   285.400197   0.162255      ETH_USDT      kucoin 2018-08-16 20:01:00-04:00
-        2018-08-16 20:03:00-04:00  1467591036  binance::BTC_USDT  6299.970000  6299.970000  6286.930000  6294.520000  34.611797      BTC_USDT     binance 2018-08-16 20:02:00-04:00
-        2018-08-16 20:03:00-04:00  3187272957   kucoin::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260      ETH_USDT      kucoin 2018-08-16 20:02:00-04:00
-        2018-08-16 20:04:00-04:00  1467591036  binance::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586      BTC_USDT     binance 2018-08-16 20:03:00-04:00
-        2018-08-16 20:04:00-04:00  3187272957   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655      ETH_USDT      kucoin 2018-08-16 20:03:00-04:00
+        2018-08-16 20:02:00-04:00  1467591036  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226 2018-08-16 20:01:00-04:00
+        2018-08-16 20:02:00-04:00  3187272957   kucoin::ETH_USDT   286.405988   286.405988   285.400193   285.400197   0.162255 2018-08-16 20:01:00-04:00
+        2018-08-16 20:03:00-04:00  1467591036  binance::BTC_USDT  6299.970000  6299.970000  6286.930000  6294.520000  34.611797 2018-08-16 20:02:00-04:00
+        2018-08-16 20:03:00-04:00  3187272957   kucoin::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260 2018-08-16 20:02:00-04:00
+        2018-08-16 20:04:00-04:00  1467591036  binance::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586 2018-08-16 20:03:00-04:00
+        2018-08-16 20:04:00-04:00  3187272957   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655 2018-08-16 20:03:00-04:00
         """
         # pylint: enable=line-too-long
         # Run.
@@ -452,8 +452,6 @@ class TestImClientMarketData(mdtmdtca.MarketData_get_data_TestCase):
             "low",
             "close",
             "volume",
-            "currency_pair",
-            "exchange_id",
             "start_ts",
         ]
         return expected_column_names

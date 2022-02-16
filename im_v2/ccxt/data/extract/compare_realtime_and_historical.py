@@ -6,10 +6,12 @@ Use as:
 # Compare daily S3 and realtime data for binance.
 > im_v2/ccxt/data/extract/compare_realtime_and_historical.py \
    --db_stage 'dev' \
+   --start_timestamp 20220216-000000 \
+   --end_timestamp 20220217-000000 \
    --exchange_id 'binance' \
    --db_table 'ccxt_ohlcv' \
-    --aws_profile 'ck' \
-    --s3_path 's3://cryptokaizen-data/'
+   --aws_profile 'ck' \
+   --s3_path 's3://cryptokaizen-data/historical/'
 
 Import as:
 
@@ -20,7 +22,6 @@ import os
 
 import pandas as pd
 
-import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hparser as hparser
@@ -35,10 +36,18 @@ def reindex_on_asset_and_ts(data: pd.DataFrame) -> pd.DataFrame:
 
     Drops timestamps for downloading and saving.
     """
-    # Drop download data timestamps.
-    data_reindex = data.drop(
-        ["end_download_timestamp", "knowledge_timestamp"], axis=1
-    )
+    # Select only index and OHLCV columns
+    expected_col_names = [
+        "timestamp",
+        "currency_pair",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+    ]
+    hdbg.dassert_is_subset(expected_col_names, data.columns)
+    data_reindex = data.loc[:, expected_col_names]
     # Reindex on ts and asset.
     data_reindex = data_reindex.set_index(["timestamp", "currency_pair"])
     return data_reindex
@@ -53,10 +62,10 @@ def find_gaps(rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> pd.DataFrame:
     :return: two dataframes with data missing in respective downloads
     """
     # Get data present in daily, but not present in rt.
-    rt_missing_indices = rt_data.index.difference(rt_data.index)
-    rt_missing_data = rt_data.loc[rt_missing_indices]
+    rt_missing_indices = daily_data.index.difference(rt_data.index)
+    rt_missing_data = daily_data.loc[rt_missing_indices]
     # Get data present in rt, but not present in daily.
-    daily_missing_indices = daily_data.index.difference(rt_data.index)
+    daily_missing_indices = rt_data.index.difference(daily_data.index)
     daily_missing_data = rt_data.loc[daily_missing_indices]
     return rt_missing_data, daily_missing_data
 
@@ -69,10 +78,11 @@ def compare_rows(rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> pd.DataFram
     :param daily_data: data downloaded to S3 once daily
     :return: dataframe with data with same indices and different contents
     """
-    #
-    idx_intersection = rt_data.index.intersection(daily_data.intersection)
+    # Get rows on which on which the two dataframe indices match.
+    idx_intersection = rt_data.index.intersection(daily_data.index)
     # Get difference between daily data and rt data.
     data_difference = daily_data.loc[idx_intersection].compare(
+        # Remove columns not present in daily_data.
         rt_data.loc[idx_intersection]
     )
     return data_difference
@@ -82,6 +92,20 @@ def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
+    )
+    parser.add_argument(
+        "--start_timestamp",
+        action="store",
+        required=True,
+        type=str,
+        help="Beginning of the compared period",
+    )
+    parser.add_argument(
+        "--end_timestamp",
+        action="store",
+        required=True,
+        type=str,
+        help="End of the compared period",
     )
     parser.add_argument(
         "--db_stage",
@@ -114,16 +138,16 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Get time range for last 24 hours.
-    end_datetime = hdateti.get_current_time("UTC")
-    start_datetime = end_datetime - pd.Timedelta(days=1)
+    start_timestamp = pd.Timestamp(args.start_timestamp)
+    end_timestamp = pd.Timestamp(args.end_timestamp)
     # Connect to database.
     env_file = imvimlita.get_db_env_path(args.db_stage)
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
     # Read DB realtime data.
     query = (
-        f"SELECT * FROM ccxt_ohlcv WHERE knowledge_timestamp >='{start_datetime}'"
-        f" AND knowledge_timestamp <= '{end_datetime}' AND exchange_id='{args.exchange_id}'"
+        f"SELECT * FROM ccxt_ohlcv WHERE knowledge_timestamp >='{start_timestamp}'"
+        f" AND knowledge_timestamp <= '{end_timestamp}' AND exchange_id='{args.exchange_id}'"
     )
     rt_data = hsql.execute_query_to_df(connection, query)
     rt_data_reindex = reindex_on_asset_and_ts(rt_data)
@@ -134,15 +158,15 @@ def _main(parser: argparse.ArgumentParser) -> None:
     s3_files = s3fs_.ls(exchange_path)
     # Filter files by timestamps in names.
     #  Example of downloaded file name: 'ADA_USDT_20210207-164012.csv'
-    end_datetime_str = end_datetime.strftime("%Y%m%d-%H%M%S")
-    start_datetime_str = start_datetime.strftime("%Y%m%d-%H%M%S")
+    start_timestamp_str = start_timestamp.strftime("%Y%m%d-%H%M%S")
+    end_timestamp_str = end_timestamp.strftime("%Y%m%d-%H%M%S")
     daily_files = [
-        f for f in s3_files if f.split("_")[-1].rstrip(".csv") <= end_datetime_str
+        f for f in s3_files if f.split("_")[-1].rstrip(".csv") <= end_timestamp_str
     ]
     daily_files = [
         f
         for f in daily_files
-        if f.split("_")[-1].rstrip(".csv") >= start_datetime_str
+        if f.split("_")[-1].rstrip(".csv") >= start_timestamp_str
     ]
     daily_data = []
     for file in daily_files:

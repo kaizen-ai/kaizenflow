@@ -66,6 +66,7 @@ class ForecastMixer:
         # Ensure `weights` is a dataframe with index equivalent to
         # the prediction cols.
         hdbg.dassert_isinstance(weights, pd.DataFrame)
+        hdbg.dassert_eq(weights.columns.nlevels, 1)
         hdbg.dassert_set_eq(weights.index.to_list(), self._predictions_cols)
         # Create one bar metric df per column in `weights`.
         bar_metrics_dfs = collections.OrderedDict()

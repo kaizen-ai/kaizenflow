@@ -20,10 +20,7 @@ import im_v2.common.data.client.full_symbol as imvcdcfusy
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): @Grisha Add tests. GP to provide an example of files or we can generate
-#  them from CSV.
-# TODO(gp): ByAsset -> ByTile
-class HistoricalPqByAssetClient(
+class HistoricalPqByTileClient(
     imvcdcbimcl.ImClientReadingMultipleSymbols, abc.ABC
 ):
     """
@@ -32,20 +29,22 @@ class HistoricalPqByAssetClient(
 
     def __init__(
         self,
-        asset_col_name: str,
+        vendor: str,
+        full_symbol_col_name: str,
         root_dir_name: str,
-        partitioning_mode: str,
+        partition_mode: str,
     ):
         """
         Constructor.
 
-        :param asset_col_name: column name storing the asset
+        :param full_symbol_col_name: column name storing the `full_symbol`
         :param root_dir_name: directory storing the tiled Parquet data
-        :param partitioning_mode: how the data is partitioned, e.g., "by_year_month"
+        :param partition_mode: how the data is partitioned, e.g., "by_year_month"
         """
-        self._asset_col_name = asset_col_name
+        super().__init__(vendor)
+        self._full_symbol_col_name = full_symbol_col_name
         self._root_dir_name = root_dir_name
-        self._partitioning_mode = partitioning_mode
+        self._partition_mode = partition_mode
 
     def _read_data_for_multiple_symbols(
         self,
@@ -64,18 +63,13 @@ class HistoricalPqByAssetClient(
                 "full_symbols start_ts end_ts full_symbol_col_name columns"
             )
         )
-        # TODO(gp): This should be done by the derived class.
-        asset_ids = list(map(int, full_symbols))
+        # Build the Parquet filtering condition.
+        hdbg.dassert_container_type(full_symbols, list, str)
+        asset_and_filter = (self._full_symbol_col_name, "in", full_symbols)
         filters = hparque.get_parquet_filters_from_timestamp_interval(
-            self._partitioning_mode, start_ts, end_ts
+            self._partition_mode, start_ts, end_ts,
+            additional_filter=asset_and_filter,
         )
-        asset_and_condition = [(self._asset_col_name, "in", asset_ids)]
-        if not filters:
-            filters = asset_and_condition
-        else:
-            # It is important to put assets first because of the performance.
-            # Intervals will be checked only for desired assets instead whole dataset.
-            filters.insert(0, asset_and_condition)
         # Read the data.
         # TODO(gp): Add support for S3 passing aws_profile.
         df = hparque.from_parquet(
@@ -92,15 +86,14 @@ class HistoricalPqByAssetClient(
         # Categories(540, int64): [10025, 10036, 10040, 10045, ..., 82711, 82939,
         #                         83317, 89970]
         # ```
-        # which confuses `df.groupby()`. So we convert that column to int.
-        # TODO(gp): Move this to the derived class.
-        df[self._asset_col_name] = df[self._asset_col_name].astype(int)
-        # Rename column storing asset_ids, if needed.
-        hdbg.dassert_in(self._asset_col_name, df.columns)
-        if full_symbol_col_name != self._asset_col_name:
+        # which confuses `df.groupby()`, so we force that column to str.
+        df[self._full_symbol_col_name] = df[self._full_symbol_col_name].astype(str)
+        # Rename column storing `full_symbols`, if needed.
+        hdbg.dassert_in(self._full_symbol_col_name, df.columns)
+        if full_symbol_col_name != self._full_symbol_col_name:
             hdbg.dassert_not_in(full_symbol_col_name, df.columns)
             df.rename(
-                columns={self._asset_col_name: full_symbol_col_name}, inplace=True
+                columns={self._full_symbol_col_name: full_symbol_col_name}, inplace=True
             )
         # Since we have normalized the data, the index is a timestamp and we can
         # trim the data with index in [start_ts, end_ts] to remove the excess
@@ -117,8 +110,7 @@ class HistoricalPqByAssetClient(
 # #############################################################################
 
 
-# TODO(gp): @Grisha Add tests. GP to provide an example of files or we can generate
-#  them from CSV.
+# TODO(gp): This is very similar to HistoricalPqByTile. Can we unify?
 class HistoricalPqByDateClient(
     imvcdcbimcl.ImClientReadingMultipleSymbols, abc.ABC
 ):
@@ -127,8 +119,8 @@ class HistoricalPqByDateClient(
     """
 
     # TODO(gp): Do not pass a read_func but use an abstract method.
-    def __init__(self, asset_col_name: str, read_func):
-        self._asset_col_name = asset_col_name
+    def __init__(self, full_symbol_col_name: str, read_func):
+        self._full_symbol_col_name = full_symbol_col_name
         self._read_func = read_func
 
     def _read_data_for_multiple_symbols(
@@ -168,11 +160,13 @@ class HistoricalPqByDateClient(
         # Convert to datetime.
         df.index = pd.to_datetime(df.index)
         # Rename column storing the asset ids.
-        hdbg.dassert_in(self._asset_col_name, df.columns)
-        hdbg.dassert_not_in(full_symbol_col_name, df.columns)
-        df.rename(
-            columns={self._asset_col_name: full_symbol_col_name}, inplace=True
-        )
+        hdbg.dassert_in(self._full_symbol_col_name, df.columns)
+        df[self._full_symbol_col_name] = df[self._full_symbol_col_name].astype(str)
+        if full_symbol_col_name != self._full_symbol_col_name:
+            hdbg.dassert_not_in(full_symbol_col_name, df.columns)
+            df.rename(
+                columns={self._full_symbol_col_name: full_symbol_col_name}, inplace=True
+            )
         # Since we have normalized the data, the index is a timestamp and we can
         # trim the data with index in [start_ts, end_ts] to remove the excess
         # from filtering in terms of days.

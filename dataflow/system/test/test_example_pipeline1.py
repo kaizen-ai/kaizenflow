@@ -21,7 +21,7 @@ import oms.test.oms_db_helper as otodh
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(Paul, gp): Factor this out.
+# TODO(gp): Factor this out.
 
 
 class TestExamplePipeline1(otodh.TestOmsDbHelper):
