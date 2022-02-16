@@ -7,8 +7,8 @@ Use as:
 
 # Download data for CCXT for binance from 2022-02-08 to 2022-02-09:
 > im_v2/ccxt/data/extract/download_historical_data.py \
-     --end_timestamp '2022-02-09' \
      --start_timestamp '2022-02-08' \
+     --end_timestamp '2022-02-09' \
      --exchange_id 'binance' \
      --universe 'v03' \
      --aws_profile 'ck' \
@@ -91,7 +91,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     currency_pairs = universe["CCXT"][args.exchange_id]
     # Convert timestamps.
     end_timestamp = pd.Timestamp(args.end_timestamp)
-    start_timestamp = pd.Timestamp(args.end_timestamp)
+    start_timestamp = pd.Timestamp(args.start_timestamp)
     for currency_pair in currency_pairs:
         # Download OHLCV data.
         data = exchange.download_ohlcv_data(
