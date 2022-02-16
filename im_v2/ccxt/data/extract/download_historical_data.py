@@ -110,6 +110,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
             + knowledge_timestamp
             + ".csv"
         )
+        # Get path to file, e.g.
+        #  s3://cryptokaizen-data/historical/binance/ADA_USDT_20220216-001600.csv
         path_to_file = os.path.join(args.s3_path, args.exchange_id, file_name)
         # Save data to S3 filesystem.
         with fs.open(path_to_file, "w") as f:
