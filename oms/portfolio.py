@@ -398,6 +398,11 @@ class AbstractPortfolio(abc.ABC):
         """
         flows = pd.DataFrame(self._flows).transpose()
         flows.columns.name = self._asset_id_col
+        # TODO(Grisha): fix it properly if needed. w/o explicit conversion to `int64`
+        #  columns type could be `Int64` which broke the code, e.g., `_compute_pnl()`,
+        #  it was not possible to add `flows` to `mtm` due to different columns
+        #  types: `int64` vs `Int64`.
+        flows.columns = flows.columns.astype("int64")
         # Explicitly cast to float. This makes the string representation of
         # the dataframe more uniform and better.
         flows = flows.astype("float")
@@ -521,21 +526,7 @@ class AbstractPortfolio(abc.ABC):
         )
         # Get per-bar flows and compute PnL.
         diff = holdings_marked_to_market.diff()
-        index = diff.index.union(flows.index)
-        print("\n\nbefore reindex, diff=\n", diff)
-        print("\n\nbefore reindx, flows=\n", flows)
-        flows = flows.reindex(index)
-        print("\n\nafter reindex, flows=\n", flows)
-        if len(diff.columns) > 0:
-            print(type(diff.columns[0]))
-        if len(flows.columns) > 0:
-            print(type(flows.columns[0]))
-        diff.columns = map(str, diff.columns)
-        flows.columns = map(str, flows.columns)
-        #assert (diff.columns == flows.columns).all()
-        #pnl = holdings_marked_to_market.diff().add(flows)
-        pnl = diff  + flows
-        pnl.columns = map(int, pnl.columns)
+        pnl = diff.add(flows)
         return pnl
 
     @staticmethod
