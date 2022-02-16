@@ -2,7 +2,7 @@ import logging
 
 import numpy as np
 
-import dataflow.core.builders_example as dtfcobuexa
+import dataflow.core.dag_builder_example as dtfcdabuex
 import dataflow.core.runners as dtfcorrunn
 import dataflow.core.visitors as dtfcorvisi
 import helpers.hunit_test as hunitest
@@ -18,7 +18,7 @@ class TestRollingFitPredictDagRunner1(hunitest.TestCase):
         """
         Test the DagRunner using `ArmaReturnsBuilder`
         """
-        dag_builder = dtfcobuexa.ArmaReturnsBuilder()
+        dag_builder = dtfcdabuex.ArmaReturnsBuilder()
         config = dag_builder.get_config_template()
         dag_builder.get_dag(config)
         #
@@ -42,7 +42,7 @@ class TestIncrementalDagRunner1(hunitest.TestCase):
         """
         Test the DagRunner using `ArmaReturnsBuilder`.
         """
-        dag_builder = dtfcobuexa.ArmaReturnsBuilder()
+        dag_builder = dtfcdabuex.ArmaReturnsBuilder()
         config = dag_builder.get_config_template()
         # Create DAG and generate fit state.
         dag = dag_builder.get_dag(config)
