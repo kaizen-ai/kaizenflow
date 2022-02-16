@@ -36,7 +36,7 @@ import pyarrow.dataset as ds
 import helpers.hcsv as hcsv
 import helpers.hdbg as hdbg
 import helpers.hio as hio
-import helpers.hparquet
+import helpers.hparquet as hparque
 import helpers.hparser as hparser
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 
@@ -66,7 +66,7 @@ def _get_csv_to_pq_file_names(
         elif filename.endswith(csv_gz_ext):
             csv_filename = filename[: -len(csv_gz_ext)]
         else:
-            _LOG.warning(f"Found non CSV file '{filename}'")
+            _LOG.warning("Found non CSV file '%s'", filename)
         # Build corresponding Parquet file.
         pq_path = os.path.join(dst_dir, f"{csv_filename}.parquet")
         csv_path = os.path.join(src_dir, filename)
@@ -102,10 +102,10 @@ def _run(args: argparse.Namespace) -> None:
     # Set datetime index.
     reindexed_df = imvcdttrut.reindex_on_datetime(df, args.datetime_col)
     # Add date partition columns to the dataframe.
-    df, partition_cols = helpers.hparquet.add_date_partition_columns(
+    df, partition_cols = hparque.add_date_partition_columns(
         reindexed_df, "by_date"
     )
-    helpers.hparquet.to_partitioned_parquet(df, partition_cols, args.dst_dir)
+    hparque.to_partitioned_parquet(df, partition_cols, args.dst_dir)
 
 
 def _parse() -> argparse.ArgumentParser:
