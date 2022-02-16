@@ -14,7 +14,6 @@ import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
-import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 _LOG = logging.getLogger(__name__)
 
@@ -706,52 +705,46 @@ class TestAddDatePartitionColumns(hunitest.TestCase):
             "dummy_value": [1, 2, 3],
             "dummy_timestamp": [1638646800000, 1638646860000, 1638646960000],
         }
-        df = pd.DataFrame(data=test_data)
-        reindexed_df = imvcdttrut.reindex_on_datetime(df, "dummy_timestamp")
+        start_timestamp = "2021-12-04 19:40:00+00:00"
+        end_timestamp = "2021-12-04 19:42:00+00:00"
+        index = pd.date_range(start_timestamp, end_timestamp, freq="1T")
+        df = pd.DataFrame(index=index, data=test_data)
         # Run.
-        hparque.add_date_partition_columns(reindexed_df, partition_mode)
+        hparque.add_date_partition_columns(df, partition_mode)
         # Check output.
-        actual = hpandas.df_to_str(reindexed_df)
+        actual = hpandas.df_to_str(df)
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_add_date_partition_columns1(self) -> None:
         partition_mode = "by_date"
-        expected = r"""
-                                   dummy_value  dummy_timestamp      date
-        dummy_timestamp
+        expected = r"""                           dummy_value  dummy_timestamp      date
         2021-12-04 19:40:00+00:00            1    1638646800000  20211204
         2021-12-04 19:41:00+00:00            2    1638646860000  20211204
-        2021-12-04 19:42:40+00:00            3    1638646960000  20211204"""
+        2021-12-04 19:42:00+00:00            3    1638646960000  20211204"""
         self.add_date_partition_columns_helper(partition_mode, expected)
 
     def test_add_date_partition_columns2(self) -> None:
         partition_mode = "by_year"
-        expected = r"""
-                                   dummy_value  dummy_timestamp  year
-        dummy_timestamp
+        expected = r"""                           dummy_value  dummy_timestamp  year
         2021-12-04 19:40:00+00:00            1    1638646800000  2021
         2021-12-04 19:41:00+00:00            2    1638646860000  2021
-        2021-12-04 19:42:40+00:00            3    1638646960000  2021"""
+        2021-12-04 19:42:00+00:00            3    1638646960000  2021"""
         self.add_date_partition_columns_helper(partition_mode, expected)
 
     def test_add_date_partition_columns3(self) -> None:
         partition_mode = "by_year_month_day"
-        expected = r"""
-                           dummy_value  dummy_timestamp  year  month        date
-dummy_timestamp
-2021-12-04 19:40:00+00:00            1    1638646800000  2021     12  2021-12-04
-2021-12-04 19:41:00+00:00            2    1638646860000  2021     12  2021-12-04
-2021-12-04 19:42:40+00:00            3    1638646960000  2021     12  2021-12-04"""
+        expected = r"""                           dummy_value  dummy_timestamp  year  month        date
+        2021-12-04 19:40:00+00:00            1    1638646800000  2021     12  2021-12-04
+        2021-12-04 19:41:00+00:00            2    1638646860000  2021     12  2021-12-04
+        2021-12-04 19:42:00+00:00            3    1638646960000  2021     12  2021-12-04"""
         self.add_date_partition_columns_helper(partition_mode, expected)
 
     def test_add_date_partition_columns4(self) -> None:
         partition_mode = "by_year_week"
-        expected = r"""
-                                   dummy_value  dummy_timestamp  year  weekofyear
-        dummy_timestamp
+        expected = r"""                           dummy_value  dummy_timestamp  year  weekofyear
         2021-12-04 19:40:00+00:00            1    1638646800000  2021          48
         2021-12-04 19:41:00+00:00            2    1638646860000  2021          48
-        2021-12-04 19:42:40+00:00            3    1638646960000  2021          48"""
+        2021-12-04 19:42:00+00:00            3    1638646960000  2021          48"""
         self.add_date_partition_columns_helper(partition_mode, expected)
 
 
