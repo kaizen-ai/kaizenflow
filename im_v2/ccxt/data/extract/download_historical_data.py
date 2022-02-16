@@ -28,6 +28,7 @@ import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import im_v2.ccxt.universe.universe as imvccunun
+import im_v2.common.data.transform.transform_utils as imvctrtrul
 
 _LOG = logging.getLogger(__name__)
 
@@ -100,20 +101,21 @@ def _main(parser: argparse.ArgumentParser) -> None:
             end_timestamp=end_timestamp,
         )
         data["currency_pair"] = currency_pair
+        # Change index to allow calling add_date_partition_cols function on the dataframe.
+        data = imvctrtrul.reindex_on_datetime(data, "timestamp")
+        print(data.head())
+        data, partition_cols =  imvctrtrul.add_date_partition_cols(data, "by_year_month")
+        path_to_file = os.path.join(args.s3_path, args.exchange_id)
         # Get timestamp of push to s3 in UTC.
         knowledge_timestamp = hdateti.get_current_timestamp_as_string("UTC")
         data["knowledge_timestamp"] = knowledge_timestamp
-        # Get file name.
-        file_name = (
-            currency_pair
-            + "_"
-            + knowledge_timestamp
-            + ".csv"
-        )
-        path_to_file = os.path.join(args.s3_path, args.exchange_id, file_name)
         # Save data to S3 filesystem.
-        with fs.open(path_to_file, "w") as f:
-            data.to_csv(f, index=False)
+        #if hs3.dassert_s3_exists(path_to_file, fs):
+            # Merge
+        #    pass
+        #else:
+            # Default file_name is data.parquet.
+        imvctrtrul.partition_dataset(data, ["currency_pair"] + partition_cols, path_to_file, filesystem=fs)
         # Sleep between iterations.
         time.sleep(args.sleep_time)
 
