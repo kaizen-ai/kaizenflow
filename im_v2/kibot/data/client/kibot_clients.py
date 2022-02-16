@@ -34,7 +34,8 @@ class KibotClient(icdc.ImClient, abc.ABC):
         """
         Constructor.
         """
-        super().__init__("kibot")
+        vendor = "kibot"
+        super().__init__(vendor)
 
     def get_universe(self) -> List[icdc.FullSymbol]:
         """
@@ -45,7 +46,7 @@ class KibotClient(icdc.ImClient, abc.ABC):
         return []
 
     @staticmethod
-    def _apply_kibot_normalization(data: pd.DataFrame) -> pd.DataFrame:
+    def _apply_kibot_csv_normalization(data: pd.DataFrame) -> pd.DataFrame:
         """
         Apply transformations common to `Kibot` data.
         """
@@ -57,7 +58,7 @@ class KibotClient(icdc.ImClient, abc.ABC):
         return data
 
 
-class KibotEquitiesClient(KibotClient, icdc.ImClientReadingOneSymbol):
+class KibotEquitiesCsvPaqruetClient(KibotClient, icdc.ImClientReadingOneSymbol):
     def __init__(
         self,
         root_dir: str,
@@ -193,7 +194,7 @@ class KibotEquitiesClient(KibotClient, icdc.ImClientReadingOneSymbol):
         return subdir_name
 
 
-class KibotFuturesClient(KibotClient, icdc.ImClientReadingOneSymbol):
+class KibotFuturesCsvParquetClient(KibotClient, icdc.ImClientReadingOneSymbol):
     def __init__(
         self,
         root_dir: str,
