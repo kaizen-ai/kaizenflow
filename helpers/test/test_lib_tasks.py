@@ -1812,6 +1812,11 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
             [x for x in act.split("\n") if not x.startswith(">>ENV<<")]
         )
         act = act.replace("/app/amp/", "/app/")
+        act = re.sub(
+            r"lib_tasks.py pytest_repro:[0-9]+",
+            r"lib_tasks.py pytest_repro:0000",
+            act,
+        )
         # Check the outcome.
         self.check_string(act)
 
