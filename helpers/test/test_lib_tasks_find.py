@@ -19,12 +19,12 @@ _LOG = logging.getLogger(__name__)
 class Test_find_short_import1(hunitest.TestCase):
     def test1(self) -> None:
         iterator = [
-            ("file1.py", 10, "import dataflow.core.runners as dtfcorrunn"),
+            ("file1.py", 10, "import dataflow.core.dag_runner as dtfcodarun"),
             ("file1.py", 11, "import helpers.hpandas as hpandas"),
         ]
-        results = hlibtask._find_short_import(iterator, "dtfcorrunn")
+        results = hlibtask._find_short_import(iterator, "dtfcodarun")
         act = "\n".join(map(str, results))
-        exp = r"""('file1.py', 10, 'import dataflow.core.runners as dtfcorrunn', 'dtfcorrunn', 'import dataflow.core.runners as dtfcorrunn')"""
+        exp = r"""('file1.py', 10, 'import dataflow.core.dag_runner as dtfcodarun', 'dtfcodarun', 'import dataflow.core.dag_runner as dtfcodarun')"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
 

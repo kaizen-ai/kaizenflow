@@ -6,7 +6,7 @@ import core.config as cconfig
 import dataflow.core.dag_builder_example as dtfcdabuex
 import dataflow.core.dag_adapter as dtfcodaada
 import dataflow.core.nodes.sources as dtfconosou
-import dataflow.core.runners as dtfcorrunn
+import dataflow.core.dag_runner as dtfcodarun
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
@@ -26,7 +26,7 @@ class TestArmaReturnsBuilder(hunitest.TestCase):
         dag_builder = dtfcdabuex.ArmaReturnsBuilder()
         config = dag_builder.get_config_template()
         #
-        dag_runner = dtfcorrunn.FitPredictDagRunner(config, dag_builder)
+        dag_runner = dtfcodarun.FitPredictDagRunner(config, dag_builder)
         result_bundle = dag_runner.fit()
         #
         df_out = result_bundle.result_df
@@ -70,7 +70,7 @@ class TestMvnReturnsBuilder(hunitest.TestCase):
         #
         config = dag_builder.get_config_template()
         #
-        dag_runner = dtfcorrunn.FitPredictDagRunner(config, dag_builder)
+        dag_runner = dtfcodarun.FitPredictDagRunner(config, dag_builder)
         result_bundle = dag_runner.fit()
         #
         df_out = result_bundle.result_df

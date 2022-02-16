@@ -1,10 +1,8 @@
 """
 Import as:
 
-import dataflow.core.runners as dtfcorrunn
+import dataflow.core.dag_runner as dtfcodarun
 """
-
-# TODO(gp): @Grisha -> dag_runner.py
 
 import abc
 import logging
@@ -13,8 +11,8 @@ from typing import Generator, Optional, Tuple
 import pandas as pd
 
 import core.config as cconfig
-import dataflow.core.dag_builder as dtfcodabui
 import dataflow.core.dag as dtfcordag
+import dataflow.core.dag_builder as dtfcodabui
 import dataflow.core.node as dtfcornode
 import dataflow.core.result_bundle as dtfcorebun
 import dataflow.core.utils as dtfcorutil
