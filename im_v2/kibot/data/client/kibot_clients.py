@@ -18,47 +18,13 @@ import im_v2.common.data.client as icdc
 
 _LOG = logging.getLogger(__name__)
 
-# Make issue for PR
-# Add simple test
+
+# #############################################################################
+# KibotEquitiesCsvParquetByAssetClient
+# #############################################################################
 
 
-class KibotClient(icdc.ImClient, abc.ABC):
-    """
-    Contain common code for all the Kibot clients, e.g.,
-
-    - getting Kibot trade symbol universe
-    - applying common transformation for all the data from Kibot
-    """
-
-    def __init__(self) -> None:
-        """
-        Constructor.
-        """
-        vendor = "kibot"
-        super().__init__(vendor)
-
-    def get_universe(self) -> List[icdc.FullSymbol]:
-        """
-        See description in the parent class.
-        """
-        # TODO(Dan): Find a way to get all Kibot equities universe.
-        #  May be dependent on asset class. Return `[]` to prevent code from break.
-        return []
-
-    @staticmethod
-    def _apply_kibot_csv_normalization(data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Apply transformations common to `Kibot` data.
-        """
-        data[0] = pd.Timestamp(data[0] + " " + data[1], format="%m/%d/%Y %H:%M")
-        data.drop(columns=[1], inplace=True)
-        # Rename columns.
-        data.columns = ["timestamp", "open", "high", "low", "close", "volume"]
-        data = data.set_index("timestamp")
-        return data
-
-
-class KibotEquitiesCsvPaqruetClient(KibotClient, icdc.ImClientReadingOneSymbol):
+class KibotEquitiesCsvParquetByAssetClient(icdc.ImClient, icdc.ImClientReadingOneSymbol):
     def __init__(
         self,
         root_dir: str,
@@ -71,7 +37,8 @@ class KibotEquitiesCsvPaqruetClient(KibotClient, icdc.ImClientReadingOneSymbol):
         """
         Constructor.
         """
-        super().__init__()
+        vendor = "kibot"
+        super().__init__(vendor)
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
@@ -99,6 +66,14 @@ class KibotEquitiesCsvPaqruetClient(KibotClient, icdc.ImClientReadingOneSymbol):
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
 
+    def get_universe(self) -> List[icdc.FullSymbol]:
+        """
+        See description in the parent class.
+        """
+        # TODO(Dan): Find a way to get all Kibot equities universe.
+        #  Return `[]` to prevent code from break.
+        return []
+
     def _read_data_for_one_symbol(
         self,
         full_symbol: icdc.FullSymbol,
@@ -110,7 +85,6 @@ class KibotEquitiesCsvPaqruetClient(KibotClient, icdc.ImClientReadingOneSymbol):
         Read Kibot data.
         """
         # TODO(Dan): Do we need `exchange` param here? If so, how to use it?
-        # TODO(Dan): Should we use `currency_pair` instead of `trade_symbol`?
         # Split full symbol into exchange and trade symbol.
         exchange_id, trade_symbol = icdc.parse_full_symbol(full_symbol)
         # Get absolute file path for a file with equities data.
@@ -129,25 +103,39 @@ class KibotEquitiesCsvPaqruetClient(KibotClient, icdc.ImClientReadingOneSymbol):
             # Add s3fs argument to kwargs.
             kwargs["s3fs"] = self._s3fs
         # Read data.
-        # TODO(Dan): How to implement data filtering for Parquet data?
         if self._extension == "pq":
+            # Initialize list of filters.
+            filters = []
+            if start_ts:
+                # Add filtering by start timestamp if specified.
+                start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
+                filters.append(("datetime", ">=", start_ts))
+            if end_ts:
+                # Add filtering by end timestamp if specified.
+                end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
+                filters.append(("datetime", "<=", end_ts))
+            if filters:
+                # Add filters to kwargs if any were set.
+                kwargs["filters"] = filters
+            # Load and normalize data.
             data = cpanh.read_parquet(file_path, **kwargs)
+            data = self._apply_kibot_parquet_normalization(data)
         elif self._extension in ["csv", "csv.gz"]:
             kwargs["header"] = None
+            kwargs["names"] = ["date", "time", "open", "high", "low", "close", "volume"]
+            # Load and normalize data.
             data = cpanh.read_csv(file_path, **kwargs)
+            data = self._apply_kibot_csv_normalization(data)
+            # Filter by dates if specified.
+            if start_ts:
+                data = data[data.index >= start_ts]
+            if end_ts:
+                data = data[data.index <= end_ts]
         else:
             raise ValueError(
                 f"Unsupported extension {self._extension}. "
                 f"Supported extensions are: `pq`, `csv`, `csv.gz`"
             )
-        # TODO(Dan): Refactor normalization and data filtering.
-        # Normalize data.
-        # data = self._apply_kibot_normalization(data)
-        # Filter by dates if specified.
-        # if start_ts:
-        #     data = data[data["timestamp"] >= start_ts]
-        # if end_ts:
-        #     data = data[data["timestamp"] <= end_ts]
         return data
 
     def _get_file_path(
@@ -193,8 +181,33 @@ class KibotEquitiesCsvPaqruetClient(KibotClient, icdc.ImClientReadingOneSymbol):
         subdir_name = "_".join([subdir_name, "1min"])
         return subdir_name
 
+    @staticmethod
+    def _apply_kibot_csv_normalization(data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Apply transformations to Kibot data in CSV format.
+        """
+        timestamp_column = pd.to_datetime(data_t["date"] + " " + data_t["time"], utc=True)
+        data = data.set_index(timestamp_column)
+        data = data.drop(["time", "date"])
+        return data
 
-class KibotFuturesCsvParquetClient(KibotClient, icdc.ImClientReadingOneSymbol):
+    @staticmethod
+    def _apply_kibot_parquet_normalization(data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Apply transformations to Kibot data in Parquet format.
+        """
+        data.index.name = None
+        data.index = data.index.tz_localize("utc")
+        data = data.rename(columns={"vol": "volume"})
+        return data
+
+
+# #############################################################################
+# KibotFuturesCsvParquetByAssetClient
+# #############################################################################
+
+
+class KibotFuturesCsvParquetByAssetClient(icdc.ImClient, icdc.ImClientReadingOneSymbol):
     def __init__(
         self,
         root_dir: str,
@@ -206,7 +219,8 @@ class KibotFuturesCsvParquetClient(KibotClient, icdc.ImClientReadingOneSymbol):
         """
         Constructor.
         """
-        super().__init__()
+        vendor = "kibot"
+        super().__init__(vendor)
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
@@ -224,6 +238,14 @@ class KibotFuturesCsvParquetClient(KibotClient, icdc.ImClientReadingOneSymbol):
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
 
+    def get_universe(self) -> List[icdc.FullSymbol]:
+        """
+        See description in the parent class.
+        """
+        # TODO(Dan): Find a way to get all Kibot futures universe.
+        #  Return `[]` to prevent code from break.
+        return []
+
     def _read_data_for_one_symbol(
         self,
         full_symbol: icdc.FullSymbol,
@@ -235,7 +257,6 @@ class KibotFuturesCsvParquetClient(KibotClient, icdc.ImClientReadingOneSymbol):
         Read Kibot data.
         """
         # TODO(Dan): Do we need `exchange` param here? If so, how to use it?
-        # TODO(Dan): Should we use `currency_pair` instead of `trade_symbol`?
         # Split full symbol into exchange and trade symbol.
         exchange_id, trade_symbol = icdc.parse_full_symbol(full_symbol)
         # Get absolute file path for a file with futures data.
@@ -253,24 +274,39 @@ class KibotFuturesCsvParquetClient(KibotClient, icdc.ImClientReadingOneSymbol):
             # Add s3fs argument to kwargs.
             kwargs["s3fs"] = self._s3fs
         # Read data.
-        # TODO(Dan): How to implement data filtering for Parquet data?
         if self._extension == "pq":
+            # Initialize list of filters.
+            filters = []
+            if start_ts:
+                # Add filtering by start timestamp if specified.
+                start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
+                filters.append(("datetime", ">=", start_ts))
+            if end_ts:
+                # Add filtering by end timestamp if specified.
+                end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
+                filters.append(("datetime", "<=", end_ts))
+            if filters:
+                # Add filters to kwargs if any were set.
+                kwargs["filters"] = filters
+            # Load and normalize data.
             data = cpanh.read_parquet(file_path, **kwargs)
+            data = self._apply_kibot_parquet_normalization(data)
         elif self._extension in ["csv", "csv.gz"]:
             kwargs["header"] = None
+            kwargs["names"] = ["date", "time", "open", "high", "low", "close", "volume"]
+            # Load and normalize data.
             data = cpanh.read_csv(file_path, **kwargs)
+            data = self._apply_kibot_csv_normalization(data)
+            # Filter by dates if specified.
+            if start_ts:
+                data = data[data.index >= start_ts]
+            if end_ts:
+                data = data[data.index <= end_ts]
         else:
             raise ValueError(
                 f"Unsupported extension {self._extension}. "
                 f"Supported extensions are: `pq`, `csv`, `csv.gz`"
             )
-        # Normalize data.
-        # data = self._apply_kibot_normalization(data)
-        # Filter by dates if specified.
-        # if start_ts:
-        #     data = data[data["timestamp"] >= start_ts]
-        # if end_ts:
-        #     data = data[data["timestamp"] <= end_ts]
         return data
 
     def _get_file_path(self, trade_symbol: str) -> str:
@@ -308,3 +344,23 @@ class KibotFuturesCsvParquetClient(KibotClient, icdc.ImClientReadingOneSymbol):
             subdir_name = "_".join([subdir_name, "continuous", "contracts"])
         subdir_name = "_".join([subdir_name, "1min"])
         return subdir_name
+
+    @staticmethod
+    def _apply_kibot_csv_normalization(data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Apply transformations to Kibot data in CSV format.
+        """
+        timestamp_column = pd.to_datetime(data_t["date"] + " " + data_t["time"], utc=True)
+        data = data.set_index(timestamp_column)
+        data = data.drop(["time", "date"])
+        return data
+
+    @staticmethod
+    def _apply_kibot_parquet_normalization(data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Apply transformations to Kibot data in Parquet format.
+        """
+        data.index.name = None
+        data.index = data.index.tz_localize("utc")
+        data = data.rename(columns={"vol": "volume"})
+        return data
