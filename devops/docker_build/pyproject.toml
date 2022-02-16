@@ -15,12 +15,15 @@ ccxt = "*"
 cryptography = "<= 3.4.7"
 gluonts = "== 0.6.7"
 #ib_insync = "*"
+# This is needed for `jupyter` extensions.
 importlib-resources = "*"
 invoke = "*"
 jsonpickle = "*"
 jupyter = "*"
 jupyter_contrib_nbextensions = "*"
 jupyter_nbextensions_configurator = "*"
+# By default we install and enable `Jupytext` plugin in `Jupyter` notebook
+# to get automatically `.py` paired with `.ipynb`.
 jupytext = "*"
 matplotlib = "*"
 moto = "*"
@@ -45,6 +48,7 @@ s3fs = "*"
 seaborn = "*"
 sklearn = "*"
 statsmodels = "*"
+# This is needed for `pandas.read_sql()`.
 SQLAlchemy = "*"
 tqdm = "*"
 
