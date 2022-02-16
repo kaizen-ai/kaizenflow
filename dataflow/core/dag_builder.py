@@ -1,7 +1,7 @@
 """
 Import as:
 
-import dataflow.core.builders as dtfcorbuil
+import dataflow.core.dag_builder as dtfcodabui
 """
 import abc
 import logging
@@ -16,15 +16,11 @@ import helpers.hprint as hprint
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): @Grisha -> dag_builder.py
-
-
 class DagBuilder(abc.ABC):
     """
-    Abstract class for creating DAGs.
+    Abstract class for creating DAGs. Concrete classes must specify: 1)
+    `get_config_template()`
 
-    Concrete classes must specify:
-    1) `get_config_template()`
        - It returns a `Config` object that represents the parameters used to build
          the DAG
        - The config can depend upon variables used in class initialization
@@ -166,7 +162,6 @@ class DagBuilder(abc.ABC):
     ) -> str:
         """
         Append `node` to the DAG after the node `tail_nid`.
-
         A typical use of this function is like:
         ```
         tail_nid = None
@@ -175,7 +170,6 @@ class DagBuilder(abc.ABC):
         tail_nid = dag.append(tail_nid, node_n)
         _ = tail_nid
         ```
-
         :param tail_nid: the nid of the node to append to. If `None` add only
             without appending. This allows a pattern like:
         """
