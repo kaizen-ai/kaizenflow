@@ -258,7 +258,7 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
         # Read data.
         stage = "rets/read_data"
         nid = self._get_nid(stage)
-        node = dtfconosou.ArmaGenerator(nid, **config[nid].to_dict())
+        node = dtfconosou.ArmaDataSource(nid, **config[nid].to_dict())
         tail_nid = self._append(dag, None, node)
         # Set weekends to Nan.
         stage = "rets/filter_weekends"

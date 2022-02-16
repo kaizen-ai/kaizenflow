@@ -213,8 +213,7 @@ class DiskDataSource(dtfconobas.DataSource):
 # #############################################################################
 
 
-# TODO(gp): @Grisha -> ArmaDataSource
-class ArmaGenerator(dtfconobas.DataSource):
+class ArmaDataSource(dtfconobas.DataSource):
     """
     Generate price data from ARMA process returns.
     """

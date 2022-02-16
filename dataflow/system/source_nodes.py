@@ -37,7 +37,7 @@ def data_source_node_factory(
 
     There are several types of nodes:
     - synthetic data generators, e.g.,
-        - `ArmaGenerator`
+        - `ArmaDataSource`
         - `MultivariateNormalGenerator`
     - real-time data sources e.g.,
         - `RealTimeDataSource` (which uses a full-fledged `MarketData`)
@@ -62,10 +62,10 @@ def data_source_node_factory(
     :return: data source node of appropriate type instantiated with kwargs
     """
     hdbg.dassert_ne(source_node_name, "")
-    # TODO(gp): To simplify we can use the name of the class (e.g., "ArmaGenerator"
+    # TODO(gp): To simplify we can use the name of the class (e.g., "ArmaDataSource"
     #  instead of "arma"), so we don't have to use another level of mnemonics.
     if source_node_name == "arma":
-        ret = dtfcore.ArmaGenerator(nid, **source_node_kwargs)
+        ret = dtfcore.ArmaDataSource(nid, **source_node_kwargs)
     elif source_node_name == "multivariate_normal":
         ret = dtfcore.MultivariateNormalGenerator(nid, **source_node_kwargs)
     elif source_node_name == "RealTimeDataSource":
@@ -523,7 +523,7 @@ class HistoricalDataSource(dtfcore.DataSource):
             max_timestamp,
         ) = dtfcore.find_min_max_timestamps_from_intervals(intervals)
         _LOG.debug(hprint.to_str("min_timestamp max_timestamp"))
-        # From ArmaGenerator._lazy_load():
+        # From ArmaDataSource._lazy_load():
         #   ```
         #   self.df = df.loc[self._start_date : self._end_date]
         #   ```

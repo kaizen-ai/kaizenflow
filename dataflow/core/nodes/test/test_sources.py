@@ -138,9 +138,9 @@ class TestDiskDataSource(hunitest.TestCase):
 # #############################################################################
 
 
-class TestArmaGenerator(hunitest.TestCase):
+class TestArmaDataSource(hunitest.TestCase):
     def test1(self) -> None:
-        node = dtfconosou.ArmaGenerator(  # pylint: disable=no-member
+        node = dtfconosou.ArmaDataSource(  # pylint: disable=no-member
             nid="source",
             frequency="30T",
             start_date="2010-01-04 09:00",
