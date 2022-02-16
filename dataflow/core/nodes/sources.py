@@ -45,8 +45,7 @@ class DummyDataSource(dtfconobas.DataSource):
 # #############################################################################
 
 
-# TODO(gp): @Grisha -> DfDataSource
-class ReadDataFromDf(dtfconobas.DataSource):
+class DfDataSource(dtfconobas.DataSource):
     """
     Accept data as a DataFrame passed through the constructor and output the
     data.
