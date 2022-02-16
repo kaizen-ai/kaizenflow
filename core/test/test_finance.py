@@ -1912,7 +1912,7 @@ class Test_compute_signed_run_lengths(hunitest.TestCase):
         """
         positions = pd.Series([1], index=[pd.Timestamp("2010-01-01")])
         # Notice the int to float data type change.
-        expected = pd.Series([1], index=[pd.Timestamp("2010-01-01")], dtype=int)
+        expected = pd.Series([1], index=[pd.Timestamp("2010-01-01")], dtype=float)
         actual = cofinanc.compute_signed_run_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
