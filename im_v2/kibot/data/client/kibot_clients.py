@@ -4,7 +4,6 @@ Import as:
 import im_v2.kibot.data.client.kibot_clients as imvkdckicl
 """
 
-import abc
 import logging
 import os
 from typing import Any, Dict, List, Optional
@@ -120,7 +119,15 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
             data = self._apply_kibot_parquet_normalization(data)
         elif self._extension in ["csv", "csv.gz"]:
             kwargs["header"] = None
-            kwargs["names"] = ["date", "time", "open", "high", "low", "close", "volume"]
+            kwargs["names"] = [
+                "date",
+                "time",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+            ]
             # Load and normalize data.
             data = cpanh.read_csv(file_path, **kwargs)
             data = self._apply_kibot_csv_normalization(data)
@@ -184,9 +191,11 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
         """
         Apply transformations to Kibot data in CSV format.
         """
-        timestamp_column = pd.to_datetime(data_t["date"] + " " + data_t["time"], utc=True)
+        timestamp_column = pd.to_datetime(
+            data["date"] + " " + data["time"], utc=True
+        )
         data = data.set_index(timestamp_column)
-        data = data.drop(["time", "date"])
+        data = data.drop(["time", "date"], axis=1)
         return data
 
     @staticmethod
@@ -289,7 +298,15 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
             data = self._apply_kibot_parquet_normalization(data)
         elif self._extension in ["csv", "csv.gz"]:
             kwargs["header"] = None
-            kwargs["names"] = ["date", "time", "open", "high", "low", "close", "volume"]
+            kwargs["names"] = [
+                "date",
+                "time",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+            ]
             # Load and normalize data.
             data = cpanh.read_csv(file_path, **kwargs)
             data = self._apply_kibot_csv_normalization(data)
@@ -346,9 +363,11 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
         """
         Apply transformations to Kibot data in CSV format.
         """
-        timestamp_column = pd.to_datetime(data_t["date"] + " " + data_t["time"], utc=True)
+        timestamp_column = pd.to_datetime(
+            data["date"] + " " + data["time"], utc=True
+        )
         data = data.set_index(timestamp_column)
-        data = data.drop(["time", "date"])
+        data = data.drop(["time", "date"], axis=1)
         return data
 
     @staticmethod
