@@ -1297,8 +1297,11 @@ def compute_signed_run_lengths(
         drop=True
     )
     # Reindex according to the run ends index.
+    # TODO(Grisha): fix properly if needed, converted to `float` explicitly as
+    #  in some cases it returns `int` which is not desired, e.g.,
+    #  `Test_compute_signed_run_lengths::test4`.
     run_length_srs = pd.Series(
-        index=run_ends_idx, data=run_lengths.values, name=srs.name
+        index=run_ends_idx, data=run_lengths.values, name=srs.name, dtype=float
     )
     return run_length_srs
 

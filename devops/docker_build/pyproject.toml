@@ -13,19 +13,18 @@ bs4 = "*"
 ccxt = "*"
 # This constraint is needed because 3.4.8 seems to fail.
 cryptography = "<= 3.4.7"
-flaky = "*"
-fsspec = "*"
 gluonts = "== 0.6.7"
 #ib_insync = "*"
+# This is needed for `jupyter` extensions.
 importlib-resources = "*"
 invoke = "*"
 jsonpickle = "*"
-jsonschema = "*"
 jupyter = "*"
 jupyter_contrib_nbextensions = "*"
 jupyter_nbextensions_configurator = "*"
+# By default we install and enable `Jupytext` plugin in `Jupyter` notebook
+# to get automatically `.py` paired with `.ipynb`.
 jupytext = "*"
-lxml = "*"
 matplotlib = "*"
 moto = "*"
 mxnet = ">= 1.6"
@@ -49,6 +48,8 @@ s3fs = "*"
 seaborn = "*"
 sklearn = "*"
 statsmodels = "*"
+# This is needed for `pandas.read_sql()`.
+SQLAlchemy = "*"
 tqdm = "*"
 
 [tool.poetry.dev-dependencies]
