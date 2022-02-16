@@ -13,7 +13,7 @@ from typing import Generator, Optional, Tuple
 import pandas as pd
 
 import core.config as cconfig
-import dataflow.core.builders as dtfcorbuil
+import dataflow.core.dag_builder as dtfcodabui
 import dataflow.core.dag as dtfcordag
 import dataflow.core.node as dtfcornode
 import dataflow.core.result_bundle as dtfcorebun
@@ -40,7 +40,7 @@ class AbstractDagRunner(abc.ABC):
     """
 
     def __init__(
-        self, config: cconfig.Config, dag_builder: dtfcorbuil.DagBuilder
+        self, config: cconfig.Config, dag_builder: dtfcodabui.DagBuilder
     ) -> None:
         """
         Constructor.
@@ -53,7 +53,7 @@ class AbstractDagRunner(abc.ABC):
         # Build DAG using DAG builder.
         # TODO(gp): Now a DagRunner builds and runs a DAG. This creates some coupling.
         #  Consider having a DagRunner accept a DAG however built and run it.
-        if isinstance(dag_builder, dtfcorbuil.DagBuilder):
+        if isinstance(dag_builder, dtfcodabui.DagBuilder):
             self._dag_builder = dag_builder
             self.dag = self._dag_builder.get_dag(self.config)
             _LOG.debug("dag=%s", self.dag)
@@ -223,7 +223,7 @@ class RollingFitPredictDagRunner(AbstractDagRunner):
     def __init__(
         self,
         config: cconfig.Config,
-        dag_builder: dtfcorbuil.DagBuilder,
+        dag_builder: dtfcodabui.DagBuilder,
         start: hdateti.Datetime,
         end: hdateti.Datetime,
         retraining_freq: str,
@@ -389,7 +389,7 @@ class IncrementalDagRunner(AbstractDagRunner):
     def __init__(
         self,
         config: cconfig.Config,
-        dag_builder: dtfcorbuil.DagBuilder,
+        dag_builder: dtfcodabui.DagBuilder,
         start: hdateti.Datetime,
         end: hdateti.Datetime,
         freq: str,

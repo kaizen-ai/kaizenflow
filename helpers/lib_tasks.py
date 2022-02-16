@@ -3055,7 +3055,7 @@ def _find_func_class_uses(iterator: List, regex: str) -> _FindResults:
     # E.g.,
     # `dag_runner = dtfsys.RealTimeDagRunner(**dag_runner_kwargs)`
     regexs.append(fr"\s+(\w+)\.(\w*{regex})\(")
-    # `dag_builder: dtfcorbuil.DagBuilder`
+    # `dag_builder: dtfcodabui.DagBuilder`
     regexs.append(fr":\s*(\w+)\.(\w*{regex})")
     #
     _LOG.debug("regexs=%s", str(regexs))
@@ -3109,9 +3109,9 @@ def find(ctx, regex, mode="all", how="remove_dups", subdir="."):  # type: ignore
     Example:
     ```
     > i find DagBuilder
-    ('dtfcorbuil', 'DagBuilder')
+    ('dtfcodabui', 'DagBuilder')
     ('dtfcore', 'DagBuilder')
-    ('dtfcorbuil', 'import dataflow.core.builders as dtfcorbuil')
+    ('dtfcodabui', 'import dataflow.core.dag_builder as dtfcodabui')
     ('dtfcore', 'import dataflow.core as dtfcore')
     ```
 
@@ -3125,10 +3125,10 @@ def find(ctx, regex, mode="all", how="remove_dups", subdir="."):  # type: ignore
           ('cdataf', 'RollingFitPredictDagRunner')
           ```
         - `short_import`: look for the short import
-          E.g., `'dtfcorbuil'
+          E.g., `'dtfcodabui'
           returns
           ```
-          ('dtfcorbuil', 'import dataflow.core.builders as dtfcorbuil')
+          ('dtfcodabui', 'import dataflow.core.dag_builder as dtfcodabui')
           ```
     :param how: how to report the results
         - `remove_dups`: report only imports and calls that are the same

@@ -4,7 +4,7 @@ from typing import Any, Dict, List
 import pandas as pd
 
 import core.config as cconfig
-import dataflow.core.builders as dtfcorbuil
+import dataflow.core.dag_builder as dtfcodabui
 import dataflow.core.builders_example as dtfcobuexa
 import dataflow.core.dag_adapter as dtfcodaada
 import dataflow.core.node as dtfcornode
@@ -39,7 +39,7 @@ def _get_data() -> pd.DataFrame:
 class TestDagAdapter1(hunitest.TestCase):
     def helper(
         self,
-        dag_builder: dtfcorbuil.DagBuilder,
+        dag_builder: dtfcodabui.DagBuilder,
         overriding_config: Dict[str, Any],
         nodes_to_insert: List[dtfcornode.Node],
         nodes_to_append: List[dtfcornode.Node],

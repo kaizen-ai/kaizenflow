@@ -41,12 +41,12 @@ class Test_find_func_class_uses1(hunitest.TestCase):
                 11,
                 "This test is similar to `TestRealTimeDagRunner1`. It uses:",
             ),
-            ("file1.py", 12, "dag_builder: dtfcorbuil.DagRunner,"),
+            ("file1.py", 12, "dag_builder: dtfcodabui.DagRunner,"),
             ("file1.py", 13, ":param dag_builder: `DagRunner` instance"),
         ]
         results = hlibtask._find_func_class_uses(iterator, "DagRunner")
         act = "\n".join(map(str, results))
         exp = r"""
         ('file1.py', 10, 'dag_runner = dtfsys.RealTimeDagRunner(**dag_runner_kwargs)', 'dtfsys', 'RealTimeDagRunner')
-        ('file1.py', 12, 'dag_builder: dtfcorbuil.DagRunner,', 'dtfcorbuil', 'DagRunner')"""
+        ('file1.py', 12, 'dag_builder: dtfcodabui.DagRunner,', 'dtfcodabui', 'DagRunner')"""
         self.assert_equal(act, exp, fuzzy_match=True)

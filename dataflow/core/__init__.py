@@ -4,7 +4,7 @@ Import as:
 import dataflow.core as dtfcore
 """
 
-from dataflow.core.builders import *  # pylint: disable=unused-import # NOQA
+from dataflow.core.dag_builder import *  # pylint: disable=unused-import # NOQA
 from dataflow.core.builders_example import *  # pylint: disable=unused-import # NOQA
 from dataflow.core.dag import *  # pylint: disable=unused-import # NOQA
 from dataflow.core.dag_adapter import *  # pylint: disable=unused-import # NOQA
