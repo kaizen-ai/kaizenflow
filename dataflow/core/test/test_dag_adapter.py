@@ -4,8 +4,8 @@ from typing import Any, Dict, List
 import pandas as pd
 
 import core.config as cconfig
-import dataflow.core.builders as dtfcorbuil
-import dataflow.core.builders_example as dtfcobuexa
+import dataflow.core.dag_builder as dtfcodabui
+import dataflow.core.dag_builder_example as dtfcdabuex
 import dataflow.core.dag_adapter as dtfcodaada
 import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.sinks as dtfconosin
@@ -39,7 +39,7 @@ def _get_data() -> pd.DataFrame:
 class TestDagAdapter1(hunitest.TestCase):
     def helper(
         self,
-        dag_builder: dtfcorbuil.DagBuilder,
+        dag_builder: dtfcodabui.DagBuilder,
         overriding_config: Dict[str, Any],
         nodes_to_insert: List[dtfcornode.Node],
         nodes_to_append: List[dtfcornode.Node],
@@ -84,7 +84,7 @@ class TestDagAdapter1(hunitest.TestCase):
         node_ctor = dtfconosin.WriteDf
         nodes_to_append.append((stage, node_ctor))
         #
-        dag_builder = dtfcobuexa.DagBuilderExample1()
+        dag_builder = dtfcdabuex.DagBuilderExample1()
         # Check.
         self.helper(
             dag_builder, overriding_config, nodes_to_insert, nodes_to_append
@@ -107,7 +107,7 @@ class TestDagAdapter1(hunitest.TestCase):
         # Do not append any node.
         nodes_to_append = []
         #
-        dag_builder = dtfcobuexa.ReturnsBuilder()
+        dag_builder = dtfcdabuex.ReturnsBuilder()
         # Check.
         self.helper(
             dag_builder, overriding_config, nodes_to_insert, nodes_to_append
