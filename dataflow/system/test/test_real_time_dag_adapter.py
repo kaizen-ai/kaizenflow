@@ -3,8 +3,7 @@ import os
 
 import pandas as pd
 
-#import dataflow.core as dtfcobuexa
-import dataflow.core.dag_builder_example as dtfcdabuex
+import dataflow.core as dtfcobuexa
 import dataflow.system.real_time_dag_adapter as dtfsrtdaad
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
@@ -25,7 +24,7 @@ class TestRealtimeDagAdapter1(hunitest.TestCase):
         txt = []
         # Build a DagBuilder.
         # TODO(Paul): Replace this with `MvnReturnsBuilder()`.
-        dag_builder = dtfcdabuex.ReturnsBuilder()
+        dag_builder = dtfcobuexa.ReturnsBuilder()
         txt.append(hprint.frame("dag_builder"))
         txt.append(hprint.indent(str(dag_builder)))
         # Build a Portfolio.
@@ -55,7 +54,7 @@ class TestRealtimeDagAdapter1(hunitest.TestCase):
         dag = dag_adapter.get_dag(config)
         #
         file_name = os.path.join(self.get_scratch_space(), "dag.png")
-        dtfcdabuex.draw_to_file(dag, file_name)
+        dtfcobuexa.draw_to_file(dag, file_name)
         txt.append(hprint.frame("final dag"))
         txt.append(str(dag))
         # Check.
