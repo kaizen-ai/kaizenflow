@@ -122,7 +122,7 @@ def add_date_partition_cols(
 # TODO(gp): @Nikola move this to hparquet
 # TODO(gp): @Nikola -> to_partitioned_parquet
 def partition_dataset(
-    df: pd.DataFrame, partition_columns: List[str], dst_dir: str
+    df: pd.DataFrame, partition_columns: List[str], dst_dir: str, *, filesystem=None
 ) -> None:
     """
     Save the given dataframe as Parquet file partitioned along the given columns.
@@ -130,6 +130,8 @@ def partition_dataset(
     :param df: dataframe
     :param partition_columns: partitioning columns
     :param dst_dir: location of partitioned dataset
+    :param filesystem: filesystem to use (i.e. s3 fs), if None, local on-disk 
+    fs is assumed
 
     E.g., in case of partition using `date`, the file layout looks like:
     ```
@@ -174,4 +176,5 @@ def partition_dataset(
             dst_dir,
             partition_cols=partition_columns,
             partition_filename_cb=lambda x: "data.parquet",
+            filesystem=filesystem
         )
