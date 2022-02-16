@@ -21,7 +21,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         cmd = []
         file_path = os.path.join(
             hgit.get_amp_abs_path(),
-            "im_v2/common/data/transform/test/generate_pq_example_data.py",
+            "im_v2/common/test/generate_pq_test_data.py",
         )
         cmd.append(file_path)
         cmd.append("--start_date 2021-12-30")
@@ -29,7 +29,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         cmd.append("--assets A,B,C")
         cmd.append(f"--dst_dir {by_date_dir}")
         if verbose:
-            cmd.append("--verbose")
+            cmd.append("--output_type verbose_open")
             cmd.append("--reset_index")
         cmd = " ".join(cmd)
         hsystem.system(cmd)
