@@ -48,7 +48,7 @@ class DagBuilderExample1(dtfcodabui.DagBuilder):
         stage = "load_prices"
         nid = self._get_nid(stage)
         # TDOO: Do not use this node in `core`.
-        node = dtfconosou.DataLoader(nid, **config[nid].to_dict())
+        node = dtfconosou.FunctionDataSource(nid, **config[nid].to_dict())
         tail_nid = self._append(dag, tail_nid, node)
         #
         _ = tail_nid

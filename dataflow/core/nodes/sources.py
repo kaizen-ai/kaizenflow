@@ -60,8 +60,7 @@ class DfDataSource(dtfconobas.DataSource):
 # #############################################################################
 
 
-# TODO(gp): @Grisha -> FunctionDataSource
-class DataLoader(dtfconobas.DataSource):
+class FunctionDataSource(dtfconobas.DataSource):
     """
     Use the passed function and arguments to generate the data outputted by the
     node.

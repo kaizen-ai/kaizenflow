@@ -44,12 +44,12 @@ def data_source_node_factory(
     - data generators using data from disk
         - `DiskDataSource` (which reads CSV and PQ files)
     - data generators using pluggable functions
-        - `DataLoader` (which uses a passed function to create data)
+        - `FunctionDataSource` (which uses a passed function to create data)
 
     - Note that the same goal can be achieved using different nodes in multiple
       ways, e.g.,
       - Synthetic data or data from disk can be generated using the specialized
-        node or passing a function to `DataLoader`
+        node or passing a function to `FunctionDataSource`
       - One could inject synthetic data in the IM and go through the
         high-fidelity data pipeline or mock a later interface
 
@@ -74,8 +74,8 @@ def data_source_node_factory(
         ret = HistoricalDataSource(nid, **source_node_kwargs)
     elif source_node_name == "disk":
         ret = dtfcore.DiskDataSource(nid, **source_node_kwargs)
-    elif source_node_name == "DataLoader":
-        ret = dtfcore.DataLoader(nid, **source_node_kwargs)
+    elif source_node_name == "FunctionDataSource":
+        ret = dtfcore.FunctionDataSource(nid, **source_node_kwargs)
     elif source_node_name == "kibot":
         # TODO(gp): This should go through RealTimeDataSource.
         ret = KibotDataReader(nid, **source_node_kwargs)
