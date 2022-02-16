@@ -1984,7 +1984,6 @@ def _dassert_is_image_name_valid(image: str) -> None:
     *****.dkr.ecr.us-east-1.amazonaws.com/amp:local-saggese-1.0.0
     *****.dkr.ecr.us-east-1.amazonaws.com/amp:dev-1.0.0
     """
-    return
     regex = "".join(
         [
             # E.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
@@ -2006,7 +2005,6 @@ def _dassert_is_base_image_name_valid(base_image: str) -> None:
 
     *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
-    return
     regex = rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_BASE_NAME_RE}$"
     _LOG.debug("regex=%s", regex)
     m = re.match(regex, base_image)
