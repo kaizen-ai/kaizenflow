@@ -19,12 +19,12 @@ _LOG = logging.getLogger(__name__)
 class Test_find_short_import1(hunitest.TestCase):
     def test1(self) -> None:
         iterator = [
-            ("file1.py", 10, "import dataflow.core.runners as dtfcorrunn"),
+            ("file1.py", 10, "import dataflow.core.dag_runner as dtfcodarun"),
             ("file1.py", 11, "import helpers.hpandas as hpandas"),
         ]
-        results = hlibtask._find_short_import(iterator, "dtfcorrunn")
+        results = hlibtask._find_short_import(iterator, "dtfcodarun")
         act = "\n".join(map(str, results))
-        exp = r"""('file1.py', 10, 'import dataflow.core.runners as dtfcorrunn', 'dtfcorrunn', 'import dataflow.core.runners as dtfcorrunn')"""
+        exp = r"""('file1.py', 10, 'import dataflow.core.dag_runner as dtfcodarun', 'dtfcodarun', 'import dataflow.core.dag_runner as dtfcodarun')"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
 
@@ -41,12 +41,12 @@ class Test_find_func_class_uses1(hunitest.TestCase):
                 11,
                 "This test is similar to `TestRealTimeDagRunner1`. It uses:",
             ),
-            ("file1.py", 12, "dag_builder: dtfcorbuil.DagRunner,"),
+            ("file1.py", 12, "dag_builder: dtfcodabui.DagRunner,"),
             ("file1.py", 13, ":param dag_builder: `DagRunner` instance"),
         ]
         results = hlibtask._find_func_class_uses(iterator, "DagRunner")
         act = "\n".join(map(str, results))
         exp = r"""
         ('file1.py', 10, 'dag_runner = dtfsys.RealTimeDagRunner(**dag_runner_kwargs)', 'dtfsys', 'RealTimeDagRunner')
-        ('file1.py', 12, 'dag_builder: dtfcorbuil.DagRunner,', 'dtfcorbuil', 'DagRunner')"""
+        ('file1.py', 12, 'dag_builder: dtfcodabui.DagRunner,', 'dtfcodabui', 'DagRunner')"""
         self.assert_equal(act, exp, fuzzy_match=True)

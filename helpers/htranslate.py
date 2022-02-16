@@ -20,7 +20,6 @@ import sys
 from typing import Optional, Tuple
 
 import boto3
-import lxml.html as lhtml
 
 _LOG = logging.getLogger(__name__)
 
@@ -95,20 +94,6 @@ class TranslateAPI:
             Text=text, SourceLanguageCode=lang_code, TargetLanguageCode="en"
         )
         return str(tr.get("TranslatedText"))
-
-    # TODO(Kostya): temporary unused.
-    def __translate_file_html(
-        self, lang_code: str, source_path: str, result_path: str
-    ) -> bool:
-        if not pathlib.Path(source_path).exists():
-            return False
-        page = lhtml.parse(source_path)
-        for elm in page.getiterator():
-            if elm.text and re.search(r"[^0-9.,|\-\s]", elm.text):
-                tr = self.translate_text(elm.text, lang_code)
-                elm.text = tr
-        page.write(result_path)
-        return True
 
 
 if __name__ == "__main__":

@@ -2,8 +2,8 @@ import logging
 
 import numpy as np
 
-import dataflow.core.builders_example as dtfcobuexa
-import dataflow.core.runners as dtfcorrunn
+import dataflow.core.dag_builder_example as dtfcdabuex
+import dataflow.core.dag_runner as dtfcodarun
 import dataflow.core.visitors as dtfcorvisi
 import helpers.hunit_test as hunitest
 
@@ -18,11 +18,11 @@ class TestRollingFitPredictDagRunner1(hunitest.TestCase):
         """
         Test the DagRunner using `ArmaReturnsBuilder`
         """
-        dag_builder = dtfcobuexa.ArmaReturnsBuilder()
+        dag_builder = dtfcdabuex.ArmaReturnsBuilder()
         config = dag_builder.get_config_template()
         dag_builder.get_dag(config)
         #
-        dag_runner = dtfcorrunn.RollingFitPredictDagRunner(
+        dag_runner = dtfcodarun.RollingFitPredictDagRunner(
             config=config,
             dag_builder=dag_builder,
             start="2010-01-04 09:30",
@@ -42,7 +42,7 @@ class TestIncrementalDagRunner1(hunitest.TestCase):
         """
         Test the DagRunner using `ArmaReturnsBuilder`.
         """
-        dag_builder = dtfcobuexa.ArmaReturnsBuilder()
+        dag_builder = dtfcdabuex.ArmaReturnsBuilder()
         config = dag_builder.get_config_template()
         # Create DAG and generate fit state.
         dag = dag_builder.get_dag(config)
@@ -50,7 +50,7 @@ class TestIncrementalDagRunner1(hunitest.TestCase):
         dag.run_leq_node(nid, "fit")
         fit_state = dtfcorvisi.get_fit_state(dag)
         #
-        dag_runner = dtfcorrunn.IncrementalDagRunner(
+        dag_runner = dtfcodarun.IncrementalDagRunner(
             config=config,
             dag_builder=dag_builder,
             start="2010-01-04 15:30",
