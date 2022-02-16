@@ -24,7 +24,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class KibotEquitiesCsvParquetByAssetClient(icdc.ImClient, icdc.ImClientReadingOneSymbol):
+class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
     def __init__(
         self,
         root_dir: str,
@@ -108,12 +108,10 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClient, icdc.ImClientReadingOn
             filters = []
             if start_ts:
                 # Add filtering by start timestamp if specified.
-                start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
-                filters.append(("datetime", ">=", start_ts))
+                filters.append(("datetime", ">=", start_ts.tz_localize(None)))
             if end_ts:
                 # Add filtering by end timestamp if specified.
-                end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
-                filters.append(("datetime", "<=", end_ts))
+                filters.append(("datetime", "<=", end_ts.tz_localize(None)))
             if filters:
                 # Add filters to kwargs if any were set.
                 kwargs["filters"] = filters
@@ -207,7 +205,7 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClient, icdc.ImClientReadingOn
 # #############################################################################
 
 
-class KibotFuturesCsvParquetByAssetClient(icdc.ImClient, icdc.ImClientReadingOneSymbol):
+class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
     def __init__(
         self,
         root_dir: str,
@@ -279,12 +277,10 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClient, icdc.ImClientReadingOne
             filters = []
             if start_ts:
                 # Add filtering by start timestamp if specified.
-                start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
-                filters.append(("datetime", ">=", start_ts))
+                filters.append(("datetime", ">=", start_ts.tz_localize(None)))
             if end_ts:
                 # Add filtering by end timestamp if specified.
-                end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
-                filters.append(("datetime", "<=", end_ts))
+                filters.append(("datetime", "<=", end_ts.tz_localize(None)))
             if filters:
                 # Add filters to kwargs if any were set.
                 kwargs["filters"] = filters
