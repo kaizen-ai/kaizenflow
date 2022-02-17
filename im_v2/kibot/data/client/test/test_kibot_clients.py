@@ -4,7 +4,7 @@ import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
-import helpers.hunit_test as hunitest
+import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.kibot.data.client.kibot_clients as imvkdckicl
 
 
@@ -24,8 +24,8 @@ def get_test_data_dir() -> str:
     return test_data_dir
 
 
-class TestKibotEquitiesCsvParquetByAssetClient(hunitest.TestCase):
-    def test_read_data1(self) -> None:
+class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
+    def test_read_csv_data5(self) -> None:
         root_dir = get_test_data_dir()
         extension = "csv.gz"
         asset_class = "stocks"
@@ -40,7 +40,6 @@ class TestKibotEquitiesCsvParquetByAssetClient(hunitest.TestCase):
             asset_class,
             unadjusted,
         )
-        actual_df = client.read_data(full_symbols, start_ts, end_ts)
         #
         expected_length = 13
         expected_column_names = [
@@ -69,15 +68,18 @@ class TestKibotEquitiesCsvParquetByAssetClient(hunitest.TestCase):
         2015-09-29 09:35:00+00:00  Kibot::HD  102.39  102.49  102.12  102.15  19620.0
         """
         # pylint: enable=line-too-long
-        self.check_df_output(
-            actual_df,
+        self._test_read_data5(
+            client,
+            full_symbols,
+            start_ts,
+            end_ts,
             expected_length,
             expected_column_names,
             expected_column_unique_values,
             expected_signature,
         )
 
-    def test_read_data2(self) -> None:
+    def test_read_parquet_data5(self) -> None:
         root_dir = get_test_data_dir()
         extension = "pq"
         asset_class = "stocks"
@@ -92,7 +94,6 @@ class TestKibotEquitiesCsvParquetByAssetClient(hunitest.TestCase):
             asset_class,
             unadjusted,
         )
-        actual_df = client.read_data(full_symbols, start_ts, end_ts)
         #
         expected_length = 13
         expected_column_names = [
@@ -121,8 +122,11 @@ class TestKibotEquitiesCsvParquetByAssetClient(hunitest.TestCase):
         2015-09-29 09:35:00+00:00  Kibot::HD  102.39  102.49  102.12  102.15  19620.0
         """
         # pylint: enable=line-too-long
-        self.check_df_output(
-            actual_df,
+        self._test_read_data5(
+            client,
+            full_symbols,
+            start_ts,
+            end_ts,
             expected_length,
             expected_column_names,
             expected_column_unique_values,
@@ -130,8 +134,8 @@ class TestKibotEquitiesCsvParquetByAssetClient(hunitest.TestCase):
         )
 
 
-class TestKibotFuturesCsvParquetByAssetClient(hunitest.TestCase):
-    def test_read_data1(self) -> None:
+class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
+    def test_read_csv_data5(self) -> None:
         root_dir = get_test_data_dir()
         extension = "csv.gz"
         contract_type = "continuous"
@@ -144,7 +148,6 @@ class TestKibotFuturesCsvParquetByAssetClient(hunitest.TestCase):
             extension,
             contract_type,
         )
-        actual_df = client.read_data(full_symbols, start_ts, end_ts)
         #
         expected_length = 18
         expected_column_names = [
@@ -173,15 +176,18 @@ class TestKibotFuturesCsvParquetByAssetClient(hunitest.TestCase):
         2009-09-29 03:55:00+00:00  Kibot::ZI  16.134  16.134  16.134  16.134     1.0
         """
         # pylint: enable=line-too-long
-        self.check_df_output(
-            actual_df,
+        self._test_read_data5(
+            client,
+            full_symbols,
+            start_ts,
+            end_ts,
             expected_length,
             expected_column_names,
             expected_column_unique_values,
             expected_signature,
         )
 
-    def test_read_data2(self) -> None:
+    def test_read_parquet_data5(self) -> None:
         root_dir = get_test_data_dir()
         extension = "pq"
         contract_type = "continuous"
@@ -194,7 +200,6 @@ class TestKibotFuturesCsvParquetByAssetClient(hunitest.TestCase):
             extension,
             contract_type,
         )
-        actual_df = client.read_data(full_symbols, start_ts, end_ts)
         #
         expected_length = 18
         expected_column_names = [
@@ -223,8 +228,11 @@ class TestKibotFuturesCsvParquetByAssetClient(hunitest.TestCase):
         2009-09-29 03:55:00+00:00  Kibot::ZI  16.134  16.134  16.134  16.134     1.0
         """
         # pylint: enable=line-too-long
-        self.check_df_output(
-            actual_df,
+        self._test_read_data5(
+            client,
+            full_symbols,
+            start_ts,
+            end_ts,
             expected_length,
             expected_column_names,
             expected_column_unique_values,
