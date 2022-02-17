@@ -66,7 +66,7 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
             "target_volatility": 0.25,
             "seed": 247,
         }
-        node = dtfcore.MultivariateNormalGenerator
+        node = dtfcore.MultivariateNormalDataSource
         nodes_to_insert = [("load_prices", node)]
         dag_builder = dtfcore.DagAdapter(
             dag_builder,

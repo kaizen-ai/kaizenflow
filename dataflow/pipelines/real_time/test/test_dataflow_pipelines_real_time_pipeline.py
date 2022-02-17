@@ -306,7 +306,7 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
             "target_volatility": 0.25,
             "seed": 247,
         }
-        node = dtfcore.MultivariateNormalGenerator("fake", **node_config)
+        node = dtfcore.MultivariateNormalDataSource("fake", **node_config)
         df = node.fit()["df_out"]
         df = df.swaplevel(i=0, j=1, axis=1)
         df = df["MN0"]
