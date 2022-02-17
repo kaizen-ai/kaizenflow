@@ -102,7 +102,7 @@ class TestDagAdapter1(hunitest.TestCase):
         # Insert one node.
         nodes_to_insert = []
         stage = "load_prices"
-        node_ctor = dtfconosou.DataLoader
+        node_ctor = dtfconosou.FunctionDataSource
         nodes_to_insert.append((stage, node_ctor))
         # Do not append any node.
         nodes_to_append = []

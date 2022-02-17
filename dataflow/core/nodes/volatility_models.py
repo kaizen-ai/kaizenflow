@@ -365,7 +365,7 @@ class SingleColumnVolatilityModel(dtfconobas.FitPredictNode):
         _LOG.debug("%s", config)
         # Load `df_in`.
         nid = "load_data"
-        node = dtfconosou.ReadDataFromDf(nid, df_in)
+        node = dtfconosou.DfDataSource(nid, df_in)
         tail_nid = self._append(dag, None, node)
         # Raise volatility columns to pth power.
         nid = "calculate_vol_pth_power"
