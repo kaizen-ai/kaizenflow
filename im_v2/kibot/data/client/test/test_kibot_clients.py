@@ -44,7 +44,12 @@ class TestKibotEquitiesCsvParquetByAssetClient(hunitest.TestCase):
         #
         expected_length = 13
         expected_column_names = [
-            "full_symbol", "open", "high", "low", "close", "volume"
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
         ]
         expected_column_unique_values = {"full_symbol": ["Unknown::HD"]}
         # pylint: disable=line-too-long
@@ -54,7 +59,7 @@ class TestKibotEquitiesCsvParquetByAssetClient(hunitest.TestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(13, 6)
                                    full_symbol    open    high     low   close  volume
-        timestamp                                                                     
+        timestamp
         2015-09-29 09:23:00+00:00  Unknown::HD  102.36  102.36  102.36  102.36   447.0
         2015-09-29 09:24:00+00:00  Unknown::HD     NaN     NaN     NaN     NaN     NaN
         2015-09-29 09:25:00+00:00  Unknown::HD     NaN     NaN     NaN     NaN     NaN
@@ -69,7 +74,7 @@ class TestKibotEquitiesCsvParquetByAssetClient(hunitest.TestCase):
             expected_length,
             expected_column_names,
             expected_column_unique_values,
-            expected_signature
+            expected_signature,
         )
 
     def test_read_data2(self) -> None:
@@ -91,7 +96,12 @@ class TestKibotEquitiesCsvParquetByAssetClient(hunitest.TestCase):
         #
         expected_length = 13
         expected_column_names = [
-            "full_symbol", "open", "high", "low", "close", "volume"
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
         ]
         expected_column_unique_values = {"full_symbol": ["Unknown::HD"]}
         # pylint: disable=line-too-long
@@ -101,7 +111,7 @@ class TestKibotEquitiesCsvParquetByAssetClient(hunitest.TestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(13, 6)
                                    full_symbol    open    high     low   close  volume
-        timestamp                                                                     
+        timestamp
         2015-09-29 09:23:00+00:00  Unknown::HD  102.36  102.36  102.36  102.36   447.0
         2015-09-29 09:24:00+00:00  Unknown::HD     NaN     NaN     NaN     NaN     NaN
         2015-09-29 09:25:00+00:00  Unknown::HD     NaN     NaN     NaN     NaN     NaN
@@ -116,7 +126,7 @@ class TestKibotEquitiesCsvParquetByAssetClient(hunitest.TestCase):
             expected_length,
             expected_column_names,
             expected_column_unique_values,
-            expected_signature
+            expected_signature,
         )
 
 
@@ -138,7 +148,12 @@ class TestKibotFuturesCsvParquetByAssetClient(hunitest.TestCase):
         #
         expected_length = 18
         expected_column_names = [
-            "full_symbol", "open", "high", "low", "close", "volume"
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
         ]
         expected_column_unique_values = {"full_symbol": ["Unknown::ZI"]}
         # pylint: disable=line-too-long
@@ -148,7 +163,7 @@ class TestKibotFuturesCsvParquetByAssetClient(hunitest.TestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(18, 6)
                                    full_symbol    open    high     low   close  volume
-        timestamp                                                                     
+        timestamp
         2009-09-29 03:38:00+00:00  Unknown::ZI  16.224  16.224  16.204  16.204     4.0
         2009-09-29 03:39:00+00:00  Unknown::ZI     NaN     NaN     NaN     NaN     NaN
         2009-09-29 03:40:00+00:00  Unknown::ZI  16.210   16.21   16.21   16.21     1.0
@@ -163,7 +178,7 @@ class TestKibotFuturesCsvParquetByAssetClient(hunitest.TestCase):
             expected_length,
             expected_column_names,
             expected_column_unique_values,
-            expected_signature
+            expected_signature,
         )
 
     def test_read_data2(self) -> None:
@@ -183,7 +198,12 @@ class TestKibotFuturesCsvParquetByAssetClient(hunitest.TestCase):
         #
         expected_length = 18
         expected_column_names = [
-            "full_symbol", "open", "high", "low", "close", "volume"
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
         ]
         expected_column_unique_values = {"full_symbol": ["Unknown::ZI"]}
         # pylint: disable=line-too-long
@@ -193,7 +213,7 @@ class TestKibotFuturesCsvParquetByAssetClient(hunitest.TestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(18, 6)
                                    full_symbol    open    high     low   close  volume
-        timestamp                                                                     
+        timestamp
         2009-09-29 03:38:00+00:00  Unknown::ZI  16.224  16.224  16.204  16.204     4.0
         2009-09-29 03:39:00+00:00  Unknown::ZI     NaN     NaN     NaN     NaN     NaN
         2009-09-29 03:40:00+00:00  Unknown::ZI  16.210  16.210  16.210  16.210     1.0
@@ -208,5 +228,5 @@ class TestKibotFuturesCsvParquetByAssetClient(hunitest.TestCase):
             expected_length,
             expected_column_names,
             expected_column_unique_values,
-            expected_signature
+            expected_signature,
         )

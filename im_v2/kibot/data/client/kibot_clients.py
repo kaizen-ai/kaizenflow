@@ -136,7 +136,13 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
             # Avoid using the 1st data row as columns and set column names.
             kwargs["header"] = None
             kwargs["names"] = [
-                "date", "time", "open", "high", "low", "close", "volume"
+                "date",
+                "time",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
             ]
             # Load and normalize data.
             data = cpanh.read_csv(file_path, **kwargs)
@@ -333,7 +339,13 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
             # Avoid using the 1st data row as columns and set column names.
             kwargs["header"] = None
             kwargs["names"] = [
-                "date", "time", "open", "high", "low", "close", "volume"
+                "date",
+                "time",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
             ]
             # Load and normalize data.
             data = cpanh.read_csv(file_path, **kwargs)
