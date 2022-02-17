@@ -24,6 +24,12 @@ _LOG = logging.getLogger(__name__)
 
 
 class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
+    """
+    Read a CSV or Parquet file storing data for a single Kibot equities asset.
+
+    It can read data from local or S3 filesystem as backend.
+    """
+
     def __init__(
         self,
         root_dir: str,
@@ -34,7 +40,15 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
         aws_profile: Optional[str] = None,
     ) -> None:
         """
-        Constructor.
+        Load Kibot equities data from local or S3 filesystem.
+
+        :param root_dir: either a local root path (e.g., "/app/im") or an S3
+            root path (e.g., "s3://alphamatic-data/data") to Kibot equities data
+        :param extension: file extension, e.g., `.csv`, `.csv.gz` or `.parquet`
+        :param asset_class: asset class
+        :param unadjusted: whether asset class prices are unadjusted
+            required for asset classes of type "stocks", "etfs", and "sp_500"
+        :param aws_profile: AWS profile name (e.g., "am")
         """
         vendor = "kibot"
         super().__init__(vendor)
@@ -52,9 +66,9 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
         hdbg.dassert_in(self._asset_class, _asset_classes)
         #
         if unadjusted is None:
-            hdbg.dassert_is(
+            hdbg.dassert_not_in(
                 self._asset_class,
-                "forex",
+                ["stocks", "etfs", "sp_500"],
                 msg="`unadjusted` is a required arg for asset "
                 "classes: 'stocks' & 'etfs' & 'sp_500'",
             )
@@ -81,14 +95,13 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
-        Read Kibot data.
+        See description in the parent class.
         """
         # TODO(Dan): Do we need `exchange` param here? If so, how to use it?
         # Split full symbol into exchange and trade symbol.
         exchange_id, trade_symbol = icdc.parse_full_symbol(full_symbol)
         # Get absolute file path for a file with equities data.
         file_path = self._get_file_path(trade_symbol)
-        # Read raw equities data.
         # TODO(Dan): Should we add `unadjusted` to this log somehow?
         _LOG.info(
             "Reading data for Kibot, exchange id='%s', asset class='%s', "
@@ -105,11 +118,11 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
         if self._extension == "pq":
             # Initialize list of filters.
             filters = []
+            # Add filtering by start and/or end timestamp if specified.
+            # Timezone info is dropped since input data does not have it.
             if start_ts:
-                # Add filtering by start timestamp if specified.
                 filters.append(("datetime", ">=", start_ts.tz_localize(None)))
             if end_ts:
-                # Add filtering by end timestamp if specified.
                 filters.append(("datetime", "<=", end_ts.tz_localize(None)))
             if filters:
                 # Add filters to kwargs if any were set.
@@ -118,6 +131,7 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
             data = cpanh.read_parquet(file_path, **kwargs)
             data = self._apply_kibot_parquet_normalization(data)
         elif self._extension in ["csv", "csv.gz"]:
+            # Avoid using the 1st data row as columns and set column names.
             kwargs["header"] = None
             kwargs["names"] = [
                 "date",
@@ -190,6 +204,11 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
     def _apply_kibot_csv_normalization(data: pd.DataFrame) -> pd.DataFrame:
         """
         Apply transformations to Kibot data in CSV format.
+
+        The data from CSV is normalized to fit parent class output format:
+            - full timestamp information is extracted from calendar date and
+            clock time columns and set as index
+            - calendar date and clock time columns are dropped.
         """
         timestamp_column = pd.to_datetime(
             data["date"] + " " + data["time"], utc=True
@@ -202,6 +221,11 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
     def _apply_kibot_parquet_normalization(data: pd.DataFrame) -> pd.DataFrame:
         """
         Apply transformations to Kibot data in Parquet format.
+
+        The data from Parquet is normalized to fit parent class output format:
+            - UTC timezone is added to the index
+            - index name is dropped
+            - columns are named accordingly
         """
         data.index.name = None
         data.index = data.index.tz_localize("utc")
@@ -215,6 +239,12 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
 
 
 class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
+    """
+    Read a CSV or Parquet file storing data for a single Kibot futures asset.
+
+    It can read data from local or S3 filesystem as backend.
+    """
+
     def __init__(
         self,
         root_dir: str,
@@ -224,7 +254,13 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
         aws_profile: Optional[str] = None,
     ) -> None:
         """
-        Constructor.
+        Load Kibot futures data from local or S3 filesystem.
+
+        :param root_dir: either a local root path (e.g., "/app/im") or an S3
+            root path (e.g., "s3://alphamatic-data/data") to Kibot futures data
+        :param extension: file extension, e.g., `.csv`, `.csv.gz` or `.parquet`
+        :param contract_type: futures contract type
+        :param aws_profile: AWS profile name (e.g., "am")
         """
         vendor = "kibot"
         super().__init__(vendor)
@@ -261,14 +297,13 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
-        Read Kibot data.
+        See description in the parent class.
         """
         # TODO(Dan): Do we need `exchange` param here? If so, how to use it?
         # Split full symbol into exchange and trade symbol.
         exchange_id, trade_symbol = icdc.parse_full_symbol(full_symbol)
         # Get absolute file path for a file with futures data.
         file_path = self._get_file_path(trade_symbol)
-        # Read raw futures data.
         # TODO(Dan): Should we add `contract_type` to this log somehow?
         _LOG.info(
             "Reading data for Kibot futures, exchange id='%s', trade symbol='%s' "
@@ -284,11 +319,11 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
         if self._extension == "pq":
             # Initialize list of filters.
             filters = []
+            # Add filtering by start and/or end timestamp if specified.
+            # Timezone info is dropped since input data does not have it.
             if start_ts:
-                # Add filtering by start timestamp if specified.
                 filters.append(("datetime", ">=", start_ts.tz_localize(None)))
             if end_ts:
-                # Add filtering by end timestamp if specified.
                 filters.append(("datetime", "<=", end_ts.tz_localize(None)))
             if filters:
                 # Add filters to kwargs if any were set.
@@ -297,6 +332,7 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
             data = cpanh.read_parquet(file_path, **kwargs)
             data = self._apply_kibot_parquet_normalization(data)
         elif self._extension in ["csv", "csv.gz"]:
+            # Avoid using the 1st data row as columns and set column names.
             kwargs["header"] = None
             kwargs["names"] = [
                 "date",
@@ -332,6 +368,7 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
         pq_subdir = ""
         if self._extension == "pq":
             pq_subdir = "pq"
+            # Capitalize parts of subdir name for Parquet files for futures.
             subdir = "_".join([e.capitalize() for e in subdir.split("_")])
         file_path = os.path.join(
             self._root_dir,
@@ -362,6 +399,11 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
     def _apply_kibot_csv_normalization(data: pd.DataFrame) -> pd.DataFrame:
         """
         Apply transformations to Kibot data in CSV format.
+
+        The data from CSV is normalized to fit parent class output format:
+            - full timestamp information is extracted from calendar date and
+            clock time columns and set as index
+            - calendar date and clock time columns are dropped.
         """
         timestamp_column = pd.to_datetime(
             data["date"] + " " + data["time"], utc=True
@@ -374,6 +416,11 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
     def _apply_kibot_parquet_normalization(data: pd.DataFrame) -> pd.DataFrame:
         """
         Apply transformations to Kibot data in Parquet format.
+
+        The data from Parquet is normalized to fit parent class output format:
+            - UTC timezone is added to the index
+            - index name is dropped
+            - columns are named accordingly
         """
         data.index.name = None
         data.index = data.index.tz_localize("utc")
