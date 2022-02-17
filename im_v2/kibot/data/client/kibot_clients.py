@@ -19,13 +19,104 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
+# KibotClient
+# #############################################################################
+
+
+class KibotClient(icdc.ImClient):
+    """
+    Read data for `Kibot` asset.
+    """
+
+    def __init__(self) -> None:
+        """
+        Constructor.
+        """
+        vendor = "kibot"
+        super().__init__(vendor)
+
+    def get_universe(self) -> List[icdc.FullSymbol]:
+        """
+        See description in the parent class.
+        """
+        # TODO(Dan): Find a way to get `Kibot` universe for equities and futures.
+        #  Return `[]` to prevent code from break.
+        return []
+
+    @staticmethod
+    def _apply_kibot_csv_normalization(data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Apply transformations to `Kibot` data in CSV format.
+
+        CSV data is normalized to fit parent class output format:
+            - full timestamp information is extracted from calendar date and
+            clock time columns and set as index
+            - calendar date and clock time columns are dropped.
+
+        Input data:
+        ```
+        0    09/29/2015  08:24  102.99 ... 102.99  112
+        1    09/29/2015  08:27  102.99 ... 102.99  112
+        2    09/29/2015  09:04  103.18 ... 103.18  781
+        ```
+        Output data:
+        ```
+                                   open       close   volume
+        2015-09-29 08:24:00+00:00  102.99 ... 102.99  112
+        2015-09-29 08:27:00+00:00  102.99     102.99  112
+        2015-09-29 09:24:00+00:00  103.18     103.18  781
+        ```
+        """
+        timestamp_column = pd.to_datetime(
+            data["date"] + " " + data["time"], utc=True
+        )
+        data = data.set_index(timestamp_column)
+        data = data.drop(["time", "date"], axis=1)
+        return data
+
+    @staticmethod
+    def _apply_kibot_parquet_normalization(data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Apply transformations to `Kibot` data in Parquet by asset format.
+
+        Parquet by asset data is normalized to fit parent class output format:
+            - UTC timezone is added to the index
+            - index name is dropped
+            - columns are named accordingly
+
+        Input data:
+        ```
+                               open      close  vol
+        datetime
+        2015-09-29 08:24:00  102.99 ... 102.99  112
+        2015-09-29 08:27:00  102.99     102.99  112
+        2015-09-29 09:24:00  103.18     103.18  781
+        ```
+        Output data:
+        ```
+                                   open       close   volume
+        2015-09-29 08:24:00+00:00  102.99 ... 102.99  112
+        2015-09-29 08:27:00+00:00  102.99     102.99  112
+        2015-09-29 09:24:00+00:00  103.18     103.18  781
+        ```
+        """
+        data.index.name = None
+        data.index = data.index.tz_localize("utc")
+        data = data.rename(columns={"vol": "volume"})
+        return data
+
+
+# #############################################################################
 # KibotEquitiesCsvParquetByAssetClient
 # #############################################################################
 
 
-class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
+class KibotEquitiesCsvParquetByAssetClient(
+    KibotClient, icdc.ImClientReadingOneSymbol
+):
     """
-    Read a CSV or Parquet by asset file storing data for a single `Kibot` equity asset.
+    Read a CSV or Parquet by asset file storing data for a single `Kibot`
+    equity asset.
 
     It can read data from local or S3 filesystem as backend.
     """
@@ -50,8 +141,7 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
             required for all asset classes except for "forex"
         :param aws_profile: AWS profile name (e.g., `am`)
         """
-        vendor = "kibot"
-        super().__init__(vendor)
+        super().__init__()
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
@@ -78,14 +168,6 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
         # Set s3fs parameter value if aws profile parameter is specified.
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
-
-    def get_universe(self) -> List[icdc.FullSymbol]:
-        """
-        See description in the parent class.
-        """
-        # TODO(Dan): Find a way to get all `Kibot` equities universe.
-        #  Return `[]` to prevent code from break.
-        return []
 
     def _read_data_for_one_symbol(
         self,
@@ -202,75 +284,15 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
         subdir_name = "_".join([subdir_name, "1min"])
         return subdir_name
 
-    @staticmethod
-    def _apply_kibot_csv_normalization(data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Apply transformations to `Kibot` data in CSV format.
-
-        CSV data is normalized to fit parent class output format:
-            - full timestamp information is extracted from calendar date and
-            clock time columns and set as index
-            - calendar date and clock time columns are dropped.
-
-        Input data:
-        ```
-        0    09/29/2015  08:24  102.99 ... 102.99  112
-        1    09/29/2015  08:27  102.99 ... 102.99  112
-        2    09/29/2015  09:04  103.18 ... 103.18  781
-        ```
-        Output data:
-        ```
-                                   open       close   volume
-        2015-09-29 08:24:00+00:00  102.99 ... 102.99  112
-        2015-09-29 08:27:00+00:00  102.99     102.99  112
-        2015-09-29 09:24:00+00:00  103.18     103.18  781
-        ```
-        """
-        timestamp_column = pd.to_datetime(
-            data["date"] + " " + data["time"], utc=True
-        )
-        data = data.set_index(timestamp_column)
-        data = data.drop(["time", "date"], axis=1)
-        return data
-
-    @staticmethod
-    def _apply_kibot_parquet_normalization(data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Apply transformations to `Kibot` data in Parquet by asset format.
-
-        Parquet by asset data is normalized to fit parent class output format:
-            - UTC timezone is added to the index
-            - index name is dropped
-            - columns are named accordingly
-
-        Input data:
-        ```
-                               open      close  vol
-        datetime
-        2015-09-29 08:24:00  102.99 ... 102.99  112
-        2015-09-29 08:27:00  102.99     102.99  112
-        2015-09-29 09:24:00  103.18     103.18  781
-        ```
-        Output data:
-        ```
-                                   open       close   volume
-        2015-09-29 08:24:00+00:00  102.99 ... 102.99  112
-        2015-09-29 08:27:00+00:00  102.99     102.99  112
-        2015-09-29 09:24:00+00:00  103.18     103.18  781
-        ```
-        """
-        data.index.name = None
-        data.index = data.index.tz_localize("utc")
-        data = data.rename(columns={"vol": "volume"})
-        return data
-
 
 # #############################################################################
 # KibotFuturesCsvParquetByAssetClient
 # #############################################################################
 
 
-class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
+class KibotFuturesCsvParquetByAssetClient(
+    KibotClient, icdc.ImClientReadingOneSymbol
+):
     """
     Read a CSV or Parquet file storing data for a single `Kibot` futures asset.
 
@@ -294,8 +316,7 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
         :param contract_type: futures contract type
         :param aws_profile: AWS profile name (e.g., `am`)
         """
-        vendor = "kibot"
-        super().__init__(vendor)
+        super().__init__()
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
@@ -312,14 +333,6 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
         # Set s3fs parameter value if aws profile parameter is specified.
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
-
-    def get_universe(self) -> List[icdc.FullSymbol]:
-        """
-        See description in the parent class.
-        """
-        # TODO(Dan): Find a way to get all `Kibot` futures universe.
-        #  Return `[]` to prevent code from break.
-        return []
 
     def _read_data_for_one_symbol(
         self,
@@ -427,65 +440,3 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
             subdir_name = "_".join([subdir_name, "continuous", "contracts"])
         subdir_name = "_".join([subdir_name, "1min"])
         return subdir_name
-
-    @staticmethod
-    def _apply_kibot_csv_normalization(data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Apply transformations to `Kibot` data in CSV format.
-
-        CSV data is normalized to fit parent class output format:
-            - full timestamp information is extracted from calendar date and
-            clock time columns and set as index
-            - calendar date and clock time columns are dropped.
-
-        Input data:
-        ```
-        0    09/29/2015  08:24  102.99 ... 102.99  112
-        1    09/29/2015  08:27  102.99 ... 102.99  112
-        2    09/29/2015  09:04  103.18 ... 103.18  781
-        ```
-        Output data:
-        ```
-                                   open       close   volume
-        2015-09-29 08:24:00+00:00  102.99 ... 102.99  112
-        2015-09-29 08:27:00+00:00  102.99     102.99  112
-        2015-09-29 09:24:00+00:00  103.18     103.18  781
-        ```
-        """
-        timestamp_column = pd.to_datetime(
-            data["date"] + " " + data["time"], utc=True
-        )
-        data = data.set_index(timestamp_column)
-        data = data.drop(["time", "date"], axis=1)
-        return data
-
-    @staticmethod
-    def _apply_kibot_parquet_normalization(data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Apply transformations to `Kibot` data in Parquet by asset format.
-
-        Parquet by asset data is normalized to fit parent class output format:
-            - UTC timezone is added to the index
-            - index name is dropped
-            - columns are named accordingly
-
-        Input data:
-        ```
-                               open      close  vol
-        datetime
-        2015-09-29 08:24:00  102.99 ... 102.99  112
-        2015-09-29 08:27:00  102.99     102.99  112
-        2015-09-29 09:24:00  103.18     103.18  781
-        ```
-        Output data:
-        ```
-                                   open       close   volume
-        2015-09-29 08:24:00+00:00  102.99 ... 102.99  112
-        2015-09-29 08:27:00+00:00  102.99     102.99  112
-        2015-09-29 09:24:00+00:00  103.18     103.18  781
-        ```
-        """
-        data.index.name = None
-        data.index = data.index.tz_localize("utc")
-        data = data.rename(columns={"vol": "volume"})
-        return data
