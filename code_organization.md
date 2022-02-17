@@ -60,8 +60,8 @@
   - """Vendor specific `ImClient`s"""
 - `/market_data`
   - """Interface to read price data"""
-  - `AbstractMarketData`
-  - `MarketDataImClient`
+  - `MarketData`
+  - `ImClientMarketData`
   - `RealTimeMarketData`
   - `ReplayedMarketData`
 
@@ -75,9 +75,9 @@
         - `FitPredictNode`
         - `DataSource`
       - `sources`
-        - `DataLoader`
-        - `ReadDataFromDf`
-        - `ArmaGenerator`
+        - `FunctionDataSource`
+        - `DfDataSource`
+        - `ArmaDataSource`
       - `sinks.py`
         - `WriteCols`
         - `WriteDf`
@@ -263,8 +263,8 @@ dataflow
 |-- __init__.py
 |-- core
 |   |-- __init__.py
-|   |-- builders.py
-|   |-- builders_example.py
+|   |-- dag_builder.py
+|   |-- dag_builder_example.py
 |   |-- dag.py
 |   |-- dag_adapter.py
 |   |-- node.py
@@ -283,7 +283,7 @@ dataflow
 |   |   |-- unsupervised_sklearn_models.py
 |   |   `-- volatility_models.py
 |   |-- result_bundle.py
-|   |-- runners.py
+|   |-- dag_runner.py
 |   |-- utils.py
 |   |-- visitors.py
 |   `-- visualization.py
