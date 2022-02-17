@@ -26,6 +26,8 @@ import im.kibot.metadata.load.s3_backend as imkmls3ba
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
+import helpers.hs3 as hs3
+import core.pandas_helpers as cpanh
 import logging
 
 # %%
@@ -52,6 +54,7 @@ def calculate_datetime_statistics_for_kibot_data(list_of_symbols, contract_type,
     start_date = {}
     end_date = {}
     data_count = {}
+    # Create a loop that loads data for a single asset and proccess it to extract datetime statistics.
     for ticker in list_of_symbols:
         # The code below loads the data.
         if contract_type == "Futures":
@@ -119,6 +122,16 @@ def calculate_general_datetime_stats(df):
                  columns = ["value"])
     return result
 
+def raw_file_reader(path, s3_file, **kwargs):
+    kwargs["s3fs"] = s3_file
+    df = cpanh.read_csv(path, **kwargs)
+    return df
+
+def raw_file_reader_parquet(path, s3_file, **kwargs):
+    kwargs["s3fs"] = s3_file
+    df = cpanh.read_parquet(path, **kwargs)
+    return df
+
 
 # %% [markdown]
 # # Explore the universe
@@ -176,46 +189,50 @@ kibot_loader = imkdlksdlo.KibotS3DataLoader()
 # %%
 # Example for CME Ethanol Daily Continuous Futures.
 # Data is presented in OHLCV type.
-kibot_loader.read_data(
+ethanol_futures = kibot_loader.read_data(
     exchange="Unknown",
     symbol="AC",
     asset_class=imcodatyp.AssetClass.Futures,
     frequency=imcodatyp.Frequency.Daily,
     contract_type=imcodatyp.ContractType.Continuous,
 )
+ethanol_futures.head()
 
 # %%
 # Example for Minutely Expiry Futures (JAPANESE YEN JANUARY 2018).
-kibot_loader.read_data(
+japan_yen = kibot_loader.read_data(
     exchange="Unknown",
     symbol="JYF18",
     asset_class=imcodatyp.AssetClass.Futures,
     frequency=imcodatyp.Frequency.Minutely,
     contract_type=imcodatyp.ContractType.Expiry,
 )
+japan_yen.head()
 
 # %% [markdown]
 # ## Stocks
 
 # %%
 # Example for Apple stock.
-kibot_loader.read_data(
+aapl = kibot_loader.read_data(
     exchange="Q",
     symbol="AAPL",
     asset_class=imcodatyp.AssetClass.Stocks,
     frequency=imcodatyp.Frequency.Minutely,
     unadjusted=False,
 )
+aapl.head()
 
 # %%
 # Interesting note: the necessary param 'exchange' can be any value.
-kibot_loader.read_data(
+aapl_any_exchange = kibot_loader.read_data(
     exchange="Any Exchange",
     symbol="AAPL",
     asset_class=imcodatyp.AssetClass.Stocks,
     frequency=imcodatyp.Frequency.Minutely,
     unadjusted=False,
 )
+aapl_any_exchange.head()
 
 # %% [markdown]
 # # Period of time availability
@@ -224,93 +241,22 @@ kibot_loader.read_data(
 # ## Stocks
 
 # %%
-stocks_symbols[:7]
+final_stats_stocks = calculate_datetime_statistics_for_kibot_data(stocks_symbols, "Stocks", "stock_datasets")
+display(final_stats_stocks.shape)
+display(final_stats_stocks)
 
 # %%
-stocks = calculate_datetime_statistics_for_kibot_data(stocks_symbols[:7], "Stocks", "stock_datasets")
-stocks
-
-# %%
-stocks = calculate_datetime_statistics_for_kibot_data(stocks_symbols[:50], "Stocks", "stock_datasets")
-stocks
-
-# %%
-# %%time
-result = []
-
-for ticker in stocks_symbols:
-    stock_df = kibot_loader.read_data(
-        exchange="Any Exchange",
-        symbol=ticker,
-        asset_class=imcodatyp.AssetClass.Stocks,
-        frequency=imcodatyp.Frequency.Minutely,
-        unadjusted=False,
-    )
-    if stock_df.shape[0] == 2:
-        datetime_stats = pd.DataFrame()
-        datetime_stats.index = [ticker]
-        datetime_stats["start_date"] = np.nan
-        datetime_stats["end_date"] = np.nan
-        datetime_stats["data_points_count"] = np.nan
-        result.append(datetime_stats)
-    elif stock_df.shape[0] == 1:
-        datetime_stats = pd.DataFrame()
-        datetime_stats.index = [ticker]
-        datetime_stats["start_date"] = np.nan
-        datetime_stats["end_date"] = np.nan
-        datetime_stats["data_points_count"] = np.nan
-        result.append(datetime_stats)
-    else:
-        # Reseting index to unleash 'timestamp' column.
-        stock_df.reset_index(inplace=True)
-        # Start-end date.
-        max_date = pd.Series(
-            stock_df["datetime"].describe(datetime_is_numeric=True).loc["max"]
-        )
-        min_date = pd.Series(
-            stock_df["datetime"].describe(datetime_is_numeric=True).loc["min"]
-        )
-        # Number of timestamps for each coin.
-        data_points = pd.Series(
-            stock_df["datetime"].describe(datetime_is_numeric=True).loc["count"]
-        )
-        # Attach calculations to the DataFrame.
-        datetime_stats = pd.DataFrame()
-        datetime_stats["start_date"] = min_date
-        datetime_stats["end_date"] = max_date
-        datetime_stats["data_points_count"] = data_points
-        datetime_stats.index = [ticker]
-        result.append(datetime_stats)
-all_stocks_stats = pd.concat(result)
-
-# %%
-#final_stats = all_stocks_stats.copy()
-
-# %%
-display(final_stats.shape)
-display(final_stats)
-
-# %%
-general_stats_all_stocks = pd.DataFrame()
-general_stats_all_stocks.loc["median_start_date","value"] = final_stats["start_date"].median()
-general_stats_all_stocks.loc["median_end_date","value"] = final_stats["end_date"].median()
-general_stats_all_stocks.loc["min_start_date","value"] = final_stats["start_date"].min()
-general_stats_all_stocks.loc["max_end_date","value"] = final_stats["end_date"].max()
-general_stats_all_stocks.loc["median_data_points","value"] = final_stats["data_points_count"].median()
+general_stats_all_stocks = calculate_general_datetime_stats(final_stats_stocks)
 general_stats_all_stocks
 
 # %%
 # DataFrame with empty stock data files.
-empty_dataframes = final_stats[final_stats["data_points_count"].isna()]
+empty_dataframes = final_stats_stocks[final_stats_stocks["data_points_count"].isna()]
 # Number of empty stock data files.
-len(empty_dataframes)
+len(final_stats_stocks)
 
 # %%
-print(round(100*len(empty_dataframes)/len(final_stats),2),"% of files in stock universe are empty.")
-
-# %%
-# Tickers with empty dataframes.
-for ticker in list(empty_dataframes.index): print(ticker)
+print(hprint.perc(len(empty_dataframes),len(final_stats)),"of files in stock universe are empty.")
 
 # %% [markdown]
 # ## Futures
@@ -325,7 +271,7 @@ futures_continuous_contracts_1min_symbols = s3_backend.get_symbols_for_dataset(
 len(futures_continuous_contracts_1min_symbols)
 
 # %%
-# Getting a sample of 10 contracts.
+# Getting a sample of 5 contracts.
 futures_continuous_contracts_1min_symbols_sample = (
     futures_continuous_contracts_1min_symbols[:10]
 )
@@ -355,78 +301,64 @@ general_stats_all_futures
 # # Read raw data
 
 # %%
-import helpers.hs3 as hs3
-import core.pandas_helpers as cpanh
-
-
-# %%
-def raw_file_reader(path, s3_file, **kwargs):
-    kwargs["s3fs"] = s3_file
-    df = cpanh.read_csv(path, **kwargs)
-    return df
-
-
-# %%
 s3fs = hs3.get_s3fs("am")
 
-# %% [markdown] heading_collapsed=true
+# %% [markdown]
 # ## Example of raw data for Stocks
 
-# %% hidden=true
+# %%
 file_path_stock = "s3://alphamatic-data/data/kibot/all_stocks_1min/AAPL.csv.gz"
-hs3.is_s3_path(file_path_stock)
 
-# %% hidden=true
-file_reader(file_path_stock, s3fs)
+# %%
+aapl_raw = raw_file_reader(file_path_stock, s3fs)
+aapl_raw.head()
 
-# %% [markdown] heading_collapsed=true
+# %% [markdown]
 # ## Example of raw data for Futures
 
-# %% hidden=true
+# %%
 file_path_futures = "s3://alphamatic-data/data/kibot/all_futures_continuous_contracts_daily/AE.csv.gz"
-hs3.is_s3_path(file_path_futures)
 
-# %% hidden=true
-file_reader(file_path_futures, s3fs)
+# %%
+ae_futures_raw = raw_file_reader(file_path_futures, s3fs)
+ae_futures_raw.head()
 
-# %% [markdown] heading_collapsed=true
+# %% [markdown]
 # ## Difference of raw Parquet stock data vs. CSV stock data
 
-# %% [markdown] hidden=true
+# %% [markdown]
 # ### CSV example of QCOM
 
-# %% hidden=true
+# %%
 file_path_stock = "s3://alphamatic-data/data/kibot/all_stocks_1min/QCOM.csv.gz"
-hs3.is_s3_path(file_path_stock)
 
-# %% hidden=true
-raw_file_reader(file_path_stock, s3fs)
+# %%
+csv_qcom = raw_file_reader(file_path_stock, s3fs)
+csv_qcom.head()
 
-
-# %% [markdown] hidden=true
+# %% [markdown]
 # ### PQ example of QCOM
 
-# %% hidden=true
-def raw_file_reader_parquet(path, s3_file, **kwargs):
-    kwargs["s3fs"] = s3_file
-    df = cpanh.read_parquet(path, **kwargs)
-    return df
-
-
-# %% hidden=true
+# %%
 file_path_stock_parquet = "s3://alphamatic-data/data/kibot/pq/all_stocks_1min/QCOM.pq"
-hs3.is_s3_path(file_path_stock_parquet)
 
-# %% hidden=true
-raw_file_reader_parquet(file_path_stock_parquet, s3fs)
+# %%
+pq_qcom = raw_file_reader_parquet(file_path_stock_parquet, s3fs)
+pq_qcom.head()
 
-# %% [markdown] hidden=true
-# ### Summary
+# %% [markdown]
+# # Summary
 
-# %% [markdown] hidden=true
-# - The OHLCV data inside those files are identical (by values and time range)
-# - PQ data is already transformed to the desired format:
-#    - The heading is in place
-#    - Datetime is converted to index and presented in a complete data-time format
-
-# %% hidden=true
+# %% [markdown]
+# - The Kibot universe that is extracted using general methods is not consistent with the actual downloaded data and most likely is being parsed from the website at some period of time.
+#    - In order to observe the actual universe that is available in the database one need to run get_symbols_for_dataset().
+# - Data is presented in OHLCV format.
+# - The necessary param 'exchange' from read_data() is not specific at all: it can be any value.
+# - The stocks data in the database is huge and consists of >11.000 tickers.
+#    - However, 17.62 % of files in stock universe consists no data.
+# - The average available time period for stocks is ~5 years, up to 2020.
+# - The futures availability in database is much less: 252 continuous contracts for both daily and minutely frequencies.
+# - The OHLCV data inside raw files is identical by values and time range.
+# - PQ data is already transformed to the desired format (unlike CSV data):
+#    - The heading is in place.
+#    - Datetime is converted to index and presented in a complete data-time format.
