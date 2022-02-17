@@ -26,6 +26,10 @@ _LOG = logging.getLogger(__name__)
 class KibotClient(icdc.ImClient):
     """
     Read data for `Kibot` asset.
+
+    `Kibot` does not provide any information about the exchange so we
+    use `kibot` as exchange for parallelism with other vendors so that
+    we do not forget about it.
     """
 
     def __init__(self) -> None:
