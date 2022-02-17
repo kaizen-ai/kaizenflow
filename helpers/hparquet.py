@@ -349,26 +349,59 @@ def get_parquet_filters_from_timestamp_interval(
         start_timestamp = pd.Timestamp("2001-01-01 00:00:00+00:00")
     if end_timestamp is None:
         end_timestamp = pd.Timestamp("2030-01-01 00:00:00+00:00")
-    # TODO(gp): @Nikola, if there is an entire year then don't constraint on each
-    #  month, since this slows down things a lot.
     or_and_filter = []
     if partition_mode == "by_year_month":
         # Partition by year and month.
         # Include last month in the interval.
         end_timestamp += pd.DateOffset(months=1)
         # Get all months in interval.
-        dates = pd.date_range(start_timestamp, end_timestamp, freq="M")
-        for date in dates:
-            year = date.year
-            month = date.month
-            and_filter = [("year", "=", year), ("month", "=", month)]
+        dates = pd.date_range(
+            start_timestamp.date(), end_timestamp.date(), freq="M"
+        )
+        years = list(set(dates.year))
+        if len(years) <= 2:
+            # For ranges up to two years, simple AND statement is enough.
+            # `[[('year', '>=', 2020), ('month', '>=', 6),
+            # ('year', '<=', 2021), ('month', '<=', 12)]]`
+            and_filter = [
+                ("year", ">=", dates[0].year),
+                ("month", ">=", dates[0].month),
+                ("year", "<=", dates[-1].year),
+                ("month", "<=", dates[-1].month),
+            ]
             or_and_filter.append(and_filter)
+        else:
+            # For ranges over two years, OR statements are necessary to bridge the gap
+            # between first and last AND statement.
+            # First AND filter.
+            first_and_filter = [
+                ("year", "==", dates[0].year),
+                ("month", ">=", dates[0].month),
+                ("year", "==", dates[0].year),
+                ("month", "<=", 12),
+            ]
+            or_and_filter.append(first_and_filter)
+            # OR statements to bridge the gap.
+            # `[('year', '==', 2021)]`
+            for year in years[1:-1]:
+                bridge_and_filter = [("year", "==", year)]
+                or_and_filter.append(bridge_and_filter)
+            # Last AND filter.
+            last_and_filter = [
+                ("year", "==", dates[-1].year),
+                ("month", ">=", 1),
+                ("year", "==", dates[-1].year),
+                ("month", "<=", dates[-1].month),
+            ]
+            or_and_filter.append(last_and_filter)
     elif partition_mode == "by_year_week":
         # Partition by year and week.
         # Include last week in the interval.
         end_timestamp += pd.DateOffset(weeks=1)
         # Get all weeks in the interval.
-        dates = pd.date_range(start_timestamp, end_timestamp, freq="W")
+        dates = pd.date_range(
+            start_timestamp.date(), end_timestamp.date(), freq="W"
+        )
         for date in dates:
             year = date.year
             # https://docs.python.org/3/library/datetime.html#datetime.date.isocalendar
@@ -377,10 +410,10 @@ def get_parquet_filters_from_timestamp_interval(
             or_and_filter.append(and_filter)
     else:
         raise ValueError(f"Unknown partition mode `{partition_mode}`!")
-    # TODO(Nikola): Partition by week.
-    #   week = start_ts.isocalendar()[1]
     if additional_filter:
         hdbg.dassert_isinstance(additional_filter, tuple)
-        or_and_filter = [[additional_filter] + and_filter for and_filter in or_and_filter]
+        or_and_filter = [
+            [additional_filter] + and_filter for and_filter in or_and_filter
+        ]
     _LOG.debug("or_and_filter=%s", str(or_and_filter))
     return or_and_filter
