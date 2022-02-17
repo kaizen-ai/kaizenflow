@@ -25,7 +25,7 @@ _LOG = logging.getLogger(__name__)
 
 class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
     """
-    Read a CSV or Parquet file storing data for a single Kibot equities asset.
+    Read a CSV or Parquet by asset file storing data for a single `Kibot` equity asset.
 
     It can read data from local or S3 filesystem as backend.
     """
@@ -40,15 +40,15 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
         aws_profile: Optional[str] = None,
     ) -> None:
         """
-        Load Kibot equities data from local or S3 filesystem.
+        Constructor.
 
         :param root_dir: either a local root path (e.g., "/app/im") or an S3
-            root path (e.g., "s3://alphamatic-data/data") to Kibot equities data
-        :param extension: file extension, e.g., `.csv`, `.csv.gz` or `.parquet`
-        :param asset_class: asset class
+            root path (e.g., "s3://alphamatic-data/data") to `Kibot` equities data
+        :param extension: file extension, e.g., `csv`, `csv.gz` or `parquet`
+        :param asset_class: asset class, e.g "stocks", "etfs", "forex" or "sp_500"
         :param unadjusted: whether asset class prices are unadjusted,
-            required for asset classes of type "stocks", "etfs", and "sp_500"
-        :param aws_profile: AWS profile name (e.g., "am")
+            required for all asset classes except for "forex"
+        :param aws_profile: AWS profile name (e.g., `am`)
         """
         vendor = "kibot"
         super().__init__(vendor)
@@ -83,7 +83,7 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
         """
         See description in the parent class.
         """
-        # TODO(Dan): Find a way to get all Kibot equities universe.
+        # TODO(Dan): Find a way to get all `Kibot` equities universe.
         #  Return `[]` to prevent code from break.
         return []
 
@@ -97,18 +97,17 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
         """
         See description in the parent class.
         """
-        # TODO(Dan): Do we need `exchange` param here? If so, how to use it?
         # Split full symbol into exchange and trade symbol.
         exchange_id, trade_symbol = icdc.parse_full_symbol(full_symbol)
+        hdbg.dassert_eq(exchange_id, "Kibot")
         # Get absolute file path for a file with equities data.
         file_path = self._get_file_path(trade_symbol)
-        # TODO(Dan): Should we add `unadjusted` to this log somehow?
         _LOG.info(
-            "Reading data for Kibot, exchange id='%s', asset class='%s', "
-            "trade symbol='%s' from file='%s'...",
-            exchange_id,
+            "Reading data for `Kibot`, asset class='%s', trade symbol='%s'"
+            "unadjusted='%s' from file='%s'...",
             self._asset_class,
             trade_symbol,
+            self._unadjusted,
             file_path,
         )
         if hs3.is_s3_path(file_path):
@@ -164,10 +163,11 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
         trade_symbol: str,
     ) -> str:
         """
-        Get the absolute path to a file with Kibot equities data.
+        Get the absolute path to a file with `Kibot` equities data.
         """
         # Get absolute file path.
         file_name = ".".join([trade_symbol, self._extension])
+        subdir = self._get_subdir_name()
         pq_subdir = ""
         if self._extension == "pq":
             pq_subdir = "pq"
@@ -175,7 +175,7 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
             self._root_dir,
             self._vendor,
             pq_subdir,
-            self._get_subdir_name(),
+            subdir,
             file_name,
         )
         # TODO(Dan): Remove asserts below after CMTask108 is resolved.
@@ -188,7 +188,7 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
 
     def _get_subdir_name(self) -> str:
         """
-        Get subdir name where Kibot data is stored.
+        Get subdir name where `Kibot` data is stored.
         """
         _asset_class_prefix_mapping = {
             "etfs": "all_etfs",
@@ -205,9 +205,9 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
     @staticmethod
     def _apply_kibot_csv_normalization(data: pd.DataFrame) -> pd.DataFrame:
         """
-        Apply transformations to Kibot data in CSV format.
+        Apply transformations to `Kibot` data in CSV format.
 
-        The data from CSV is normalized to fit parent class output format:
+        CSV data is normalized to fit parent class output format:
             - full timestamp information is extracted from calendar date and
             clock time columns and set as index
             - calendar date and clock time columns are dropped.
@@ -236,9 +236,9 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
     @staticmethod
     def _apply_kibot_parquet_normalization(data: pd.DataFrame) -> pd.DataFrame:
         """
-        Apply transformations to Kibot data in Parquet format.
+        Apply transformations to `Kibot` data in Parquet by asset format.
 
-        The data from Parquet is normalized to fit parent class output format:
+        Parquet by asset data is normalized to fit parent class output format:
             - UTC timezone is added to the index
             - index name is dropped
             - columns are named accordingly
@@ -272,7 +272,7 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
 
 class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
     """
-    Read a CSV or Parquet file storing data for a single Kibot futures asset.
+    Read a CSV or Parquet file storing data for a single `Kibot` futures asset.
 
     It can read data from local or S3 filesystem as backend.
     """
@@ -286,13 +286,13 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
         aws_profile: Optional[str] = None,
     ) -> None:
         """
-        Load Kibot futures data from local or S3 filesystem.
+        Constructor.
 
         :param root_dir: either a local root path (e.g., "/app/im") or an S3
-            root path (e.g., "s3://alphamatic-data/data") to Kibot futures data
-        :param extension: file extension, e.g., `.csv`, `.csv.gz` or `.parquet`
+            root path (e.g., "s3://alphamatic-data/data") to `Kibot` futures data
+        :param extension: file extension, e.g., `csv`, `csv.gz` or `parquet`
         :param contract_type: futures contract type
-        :param aws_profile: AWS profile name (e.g., "am")
+        :param aws_profile: AWS profile name (e.g., `am`)
         """
         vendor = "kibot"
         super().__init__(vendor)
@@ -317,7 +317,7 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
         """
         See description in the parent class.
         """
-        # TODO(Dan): Find a way to get all Kibot futures universe.
+        # TODO(Dan): Find a way to get all `Kibot` futures universe.
         #  Return `[]` to prevent code from break.
         return []
 
@@ -331,17 +331,16 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
         """
         See description in the parent class.
         """
-        # TODO(Dan): Do we need `exchange` param here? If so, how to use it?
         # Split full symbol into exchange and trade symbol.
         exchange_id, trade_symbol = icdc.parse_full_symbol(full_symbol)
+        hdbg.dassert_eq(exchange_id, "Kibot")
         # Get absolute file path for a file with futures data.
         file_path = self._get_file_path(trade_symbol)
-        # TODO(Dan): Should we add `contract_type` to this log somehow?
         _LOG.info(
-            "Reading data for Kibot futures, exchange id='%s', trade symbol='%s' "
-            "from file='%s'...",
-            exchange_id,
+            "Reading data for `Kibot` futures, trade symbol='%s', "
+            "contract type='%s' from file='%s'...",
             trade_symbol,
+            self._contract_type,
             file_path,
         )
         if hs3.is_s3_path(file_path):
@@ -394,7 +393,7 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
 
     def _get_file_path(self, trade_symbol: str) -> str:
         """
-        Get the absolute path to a file with Kibot futures data.
+        Get the absolute path to a file with `Kibot` futures data.
         """
         # Get absolute file path.
         file_name = ".".join([trade_symbol, self._extension])
@@ -421,7 +420,7 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
 
     def _get_subdir_name(self) -> str:
         """
-        Get subdir name where Kibot data is stored.
+        Get subdir name where `Kibot` data is stored.
         """
         subdir_name = "all_futures"
         if self._contract_type == "continuous":
@@ -432,9 +431,9 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
     @staticmethod
     def _apply_kibot_csv_normalization(data: pd.DataFrame) -> pd.DataFrame:
         """
-        Apply transformations to Kibot data in CSV format.
+        Apply transformations to `Kibot` data in CSV format.
 
-        The data from CSV is normalized to fit parent class output format:
+        CSV data is normalized to fit parent class output format:
             - full timestamp information is extracted from calendar date and
             clock time columns and set as index
             - calendar date and clock time columns are dropped.
@@ -463,9 +462,9 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
     @staticmethod
     def _apply_kibot_parquet_normalization(data: pd.DataFrame) -> pd.DataFrame:
         """
-        Apply transformations to Kibot data in Parquet format.
+        Apply transformations to `Kibot` data in Parquet by asset format.
 
-        The data from Parquet is normalized to fit parent class output format:
+        Parquet by asset data is normalized to fit parent class output format:
             - UTC timezone is added to the index
             - index name is dropped
             - columns are named accordingly
