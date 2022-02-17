@@ -220,8 +220,8 @@ class RollingFitPredictDagRunner(AbstractDagRunner):
         self,
         config: cconfig.Config,
         dag_builder: dtfcodabui.DagBuilder,
-        start_timestamp: hdateti.Datetime,
-        end_timestamp: hdateti.Datetime,
+        start_timestamp: pd.Timestamp,
+        end_timestamp: pd.Timestamp,
         retraining_freq: str,
         retraining_lookback: int,
     ) -> None:
@@ -326,8 +326,8 @@ class RollingFitPredictDagRunner(AbstractDagRunner):
 
     @staticmethod
     def _generate_retraining_datetimes(
-        start_timestamp: hdateti.Datetime,
-        end_timestamp: hdateti.Datetime,
+        start_timestamp: pd.Timestamp,
+        end_timestamp: pd.Timestamp,
         retraining_freq: str,
         retraining_lookback: int,
     ) -> pd.DatetimeIndex:
@@ -386,8 +386,8 @@ class IncrementalDagRunner(AbstractDagRunner):
         self,
         config: cconfig.Config,
         dag_builder: dtfcodabui.DagBuilder,
-        start_timestamp: hdateti.Datetime,
-        end_timestamp: hdateti.Datetime,
+        start_timestamp: pd.Timestamp,
+        end_timestamp: pd.Timestamp,
         freq: str,
         fit_state: cconfig.Config,
     ) -> None:
