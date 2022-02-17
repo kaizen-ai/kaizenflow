@@ -23,8 +23,6 @@ import helpers.hdbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): @Grisha `start` / `end` -> `start_timestamp` / `end_timestamp`
-
 # #############################################################################
 
 

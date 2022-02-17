@@ -30,7 +30,7 @@ import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
-_ResamplingRule = Union[pd.DateOffset, pd.Timedelta, str]
+_RESAMPLING_RULE = Union[pd.DateOffset, pd.Timedelta, str]
 
 
 # #############################################################################
@@ -779,7 +779,7 @@ class TwapVwapComputer(dtfconobas.Transformer):
     def __init__(
         self,
         nid: dtfcornode.NodeId,
-        rule: _ResamplingRule,
+        rule: _RESAMPLING_RULE,
         price_col: dtfcorutil.NodeColumn,
         volume_col: dtfcorutil.NodeColumn,
         offset: Optional[str] = None,
@@ -819,7 +819,7 @@ class MultiindexTwapVwapComputer(dtfconobas.Transformer):
     def __init__(
         self,
         nid: dtfcornode.NodeId,
-        rule: _ResamplingRule,
+        rule: _RESAMPLING_RULE,
         price_col_group: Tuple[dtfcorutil.NodeColumn],
         volume_col_group: Tuple[dtfcorutil.NodeColumn],
         out_col_group: Tuple[dtfcorutil.NodeColumn],
