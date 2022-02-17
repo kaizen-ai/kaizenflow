@@ -1,6 +1,7 @@
 from typing import List
 
 import pandas as pd
+import pytest
 
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
