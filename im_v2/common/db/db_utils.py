@@ -92,6 +92,7 @@ def create_all_tables(db_connection: hsql.DbConnection) -> None:
 def create_im_database(
     db_connection: hsql.DbConnection,
     new_db: str,
+    *,
     overwrite: Optional[bool] = None,
 ) -> None:
     """
@@ -112,7 +113,7 @@ def create_im_database(
         user=conn_details.user,
         password=conn_details.password,
     )
-    # Create table..
+    # Create table.
     create_all_tables(new_db_connection)
     new_db_connection.close()
 
