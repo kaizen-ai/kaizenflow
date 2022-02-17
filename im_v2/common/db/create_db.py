@@ -57,8 +57,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     #
     db_connection = hsql.get_connection(*connection_params)
     # Create DB with all tables.
+    db_name = args.db_name
+    overwrite = args.overwrite
     imvcddbut.create_im_database(
-        connection=db_connection, new_db=args.db_name, overwrite=args.overwrite
+        db_connection, db_name, overwrite=overwrite
     )
 
 
