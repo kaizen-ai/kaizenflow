@@ -46,7 +46,7 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
             root path (e.g., "s3://alphamatic-data/data") to Kibot equities data
         :param extension: file extension, e.g., `.csv`, `.csv.gz` or `.parquet`
         :param asset_class: asset class
-        :param unadjusted: whether asset class prices are unadjusted
+        :param unadjusted: whether asset class prices are unadjusted,
             required for asset classes of type "stocks", "etfs", and "sp_500"
         :param aws_profile: AWS profile name (e.g., "am")
         """
@@ -211,6 +211,20 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
             - full timestamp information is extracted from calendar date and
             clock time columns and set as index
             - calendar date and clock time columns are dropped.
+
+        Input data:
+        ```
+        0    09/29/2015  08:24  102.99 ... 102.99  112
+        1    09/29/2015  08:27  102.99 ... 102.99  112
+        2    09/29/2015  09:04  103.18 ... 103.18  781
+        ```
+        Output data:
+        ```
+                                   open       close   volume
+        2015-09-29 08:24:00+00:00  102.99 ... 102.99  112
+        2015-09-29 08:27:00+00:00  102.99     102.99  112
+        2015-09-29 09:24:00+00:00  103.18     103.18  781
+        ```
         """
         timestamp_column = pd.to_datetime(
             data["date"] + " " + data["time"], utc=True
@@ -228,6 +242,22 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
             - UTC timezone is added to the index
             - index name is dropped
             - columns are named accordingly
+
+        Input data:
+        ```
+                               open      close  vol
+        datetime
+        2015-09-29 08:24:00  102.99 ... 102.99  112
+        2015-09-29 08:27:00  102.99     102.99  112
+        2015-09-29 09:24:00  103.18     103.18  781
+        ```
+        Output data:
+        ```
+                                   open       close   volume
+        2015-09-29 08:24:00+00:00  102.99 ... 102.99  112
+        2015-09-29 08:27:00+00:00  102.99     102.99  112
+        2015-09-29 09:24:00+00:00  103.18     103.18  781
+        ```
         """
         data.index.name = None
         data.index = data.index.tz_localize("utc")
@@ -408,6 +438,20 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
             - full timestamp information is extracted from calendar date and
             clock time columns and set as index
             - calendar date and clock time columns are dropped.
+
+        Input data:
+        ```
+        0    09/29/2015  08:24  102.99 ... 102.99  112
+        1    09/29/2015  08:27  102.99 ... 102.99  112
+        2    09/29/2015  09:04  103.18 ... 103.18  781
+        ```
+        Output data:
+        ```
+                                   open       close   volume
+        2015-09-29 08:24:00+00:00  102.99 ... 102.99  112
+        2015-09-29 08:27:00+00:00  102.99     102.99  112
+        2015-09-29 09:24:00+00:00  103.18     103.18  781
+        ```
         """
         timestamp_column = pd.to_datetime(
             data["date"] + " " + data["time"], utc=True
@@ -425,6 +469,22 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
             - UTC timezone is added to the index
             - index name is dropped
             - columns are named accordingly
+
+        Input data:
+        ```
+                               open      close  vol
+        datetime
+        2015-09-29 08:24:00  102.99 ... 102.99  112
+        2015-09-29 08:27:00  102.99     102.99  112
+        2015-09-29 09:24:00  103.18     103.18  781
+        ```
+        Output data:
+        ```
+                                   open       close   volume
+        2015-09-29 08:24:00+00:00  102.99 ... 102.99  112
+        2015-09-29 08:27:00+00:00  102.99     102.99  112
+        2015-09-29 09:24:00+00:00  103.18     103.18  781
+        ```
         """
         data.index.name = None
         data.index = data.index.tz_localize("utc")
