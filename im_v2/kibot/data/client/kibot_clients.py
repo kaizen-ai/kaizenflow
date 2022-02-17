@@ -127,6 +127,8 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
             if filters:
                 # Add filters to kwargs if any were set.
                 kwargs["filters"] = filters
+            # Add columns to read to kwargs.
+            kwargs["columns"] = ["open", "high", "low", "close", "vol"]
             # Load and normalize data.
             data = cpanh.read_parquet(file_path, **kwargs)
             data = self._apply_kibot_parquet_normalization(data)
@@ -134,13 +136,7 @@ class KibotEquitiesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
             # Avoid using the 1st data row as columns and set column names.
             kwargs["header"] = None
             kwargs["names"] = [
-                "date",
-                "time",
-                "open",
-                "high",
-                "low",
-                "close",
-                "volume",
+                "date", "time", "open", "high", "low", "close", "volume"
             ]
             # Load and normalize data.
             data = cpanh.read_csv(file_path, **kwargs)
@@ -328,6 +324,8 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
             if filters:
                 # Add filters to kwargs if any were set.
                 kwargs["filters"] = filters
+            # Add columns to read to kwargs.
+            kwargs["columns"] = ["open", "high", "low", "close", "vol"]
             # Load and normalize data.
             data = cpanh.read_parquet(file_path, **kwargs)
             data = self._apply_kibot_parquet_normalization(data)
@@ -335,13 +333,7 @@ class KibotFuturesCsvParquetByAssetClient(icdc.ImClientReadingOneSymbol):
             # Avoid using the 1st data row as columns and set column names.
             kwargs["header"] = None
             kwargs["names"] = [
-                "date",
-                "time",
-                "open",
-                "high",
-                "low",
-                "close",
-                "volume",
+                "date", "time", "open", "high", "low", "close", "volume"
             ]
             # Load and normalize data.
             data = cpanh.read_csv(file_path, **kwargs)
