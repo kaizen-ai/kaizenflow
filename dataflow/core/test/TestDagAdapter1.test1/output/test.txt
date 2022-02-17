@@ -17,7 +17,7 @@ dag=
         "nodes": [
             {
                 "id": "load_prices",
-                "stage": "DataLoader"
+                "stage": "FunctionDataSource"
             }
         ]
     }
@@ -41,7 +41,7 @@ dag_builder=
           "nodes": [
               {
                   "id": "load_prices",
-                  "stage": "DataLoader"
+                  "stage": "FunctionDataSource"
               }
           ]
       }
@@ -57,5 +57,5 @@ final dag
 ################################################################################
 name=None
 mode=strict
-nodes=[('load_prices', {'stage': <dataflow.core.nodes.sources.DataLoader object at 0x>}), ('write_df', {'stage': <dataflow.core.nodes.sinks.WriteDf object at 0x>})]
+nodes=[('load_prices', {'stage': <dataflow.core.nodes.sources.FunctionDataSource object at 0x>}), ('write_df', {'stage': <dataflow.core.nodes.sinks.WriteDf object at 0x>})]
 edges=[('load_prices', 'write_df', {'df_in': 'df_out'})]
