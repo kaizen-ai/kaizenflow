@@ -68,8 +68,8 @@ class CcxtExchange:
         self,
         currency_pair: str,
         *,
-        start_datetime: Optional[pd.Timestamp] = None,
-        end_datetime: Optional[pd.Timestamp] = None,
+        start_timestamp: Optional[pd.Timestamp] = None,
+        end_timestamp: Optional[pd.Timestamp] = None,
         bar_per_iteration: Optional[int] = 500,
         sleep_time_in_secs: int = 1,
     ) -> pd.DataFrame:
@@ -77,8 +77,8 @@ class CcxtExchange:
         Download minute OHLCV bars.
 
         :param currency_pair: a currency pair, e.g. "BTC_USDT"
-        :param start_datetime: starting point for data
-        :param end_datetime: end point for data (included)
+        :param start_timestamp: starting point for data
+        :param end_timestamp: end point for data (included)
         :param bar_per_iteration: number of bars per iteration
         :param sleep_time_in_secs: time in seconds between iterations
         :return: OHLCV data from CCXT
@@ -93,27 +93,27 @@ class CcxtExchange:
             self.currency_pairs,
             "Currency pair is not present in exchange",
         )
-        # Get latest bars if no datetime is provided.
-        if end_datetime is None and start_datetime is None:
+        # Get latest bars if no timestamp is provided.
+        if end_timestamp is None and start_timestamp is None:
             return self._fetch_ohlcv(
                 currency_pair, bar_per_iteration=bar_per_iteration
             )
         # Verify that date parameters are of correct format.
         hdbg.dassert_isinstance(
-            end_datetime,
+            end_timestamp,
             pd.Timestamp,
         )
         hdbg.dassert_isinstance(
-            start_datetime,
+            start_timestamp,
             pd.Timestamp,
         )
         hdbg.dassert_lte(
-            start_datetime,
-            end_datetime,
+            start_timestamp,
+            end_timestamp,
         )
         # Convert datetime into ms.
-        start_datetime = start_datetime.asm8.astype(int) // 1000000
-        end_datetime = end_datetime.asm8.astype(int) // 1000000
+        start_timestamp = start_timestamp.asm8.astype(int) // 1000000
+        end_timestamp = end_timestamp.asm8.astype(int) // 1000000
         duration = self._exchange.parse_timeframe("1m") * 1000
         all_bars = []
         # Iterate over the time period.
@@ -122,8 +122,8 @@ class CcxtExchange:
         # Because of this, the output can go slightly over the end date.
         for t in tqdm.tqdm(
             range(
-                start_datetime,
-                end_datetime + duration,
+                start_timestamp,
+                end_timestamp + duration,
                 duration * bar_per_iteration,
             )
         ):

@@ -284,6 +284,7 @@ def get_db_names(connection: DbConnection) -> List[str]:
 def create_database(
     connection: DbConnection,
     dbname: str,
+    *,
     overwrite: Optional[bool] = None,
 ) -> None:
     """

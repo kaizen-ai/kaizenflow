@@ -1,16 +1,20 @@
 import datetime
-
 import airflow
 from airflow.contrib.operators.ecs_operator import ECSOperator
+from airflow.models import Variable
 
-# Set ECS configuration.
-ecs_cluster = "Crypto1"
-ecs_task_definition = "cmamp"
-ecs_subnets = ["subnet-0d7a4957ff09e7cc5", "subnet-015eee0c93f916f23"]
-ecs_security_group = ["sg-0c605e9a7bb0df2aa"]
-ecs_awslogs_group = "/ecs/cmamp"
-ecs_awslogs_stream_prefix = "ecs/cmamp"
+_STAGE = 'prod'
+_EXCHANGE = 'binance'
 
+ecs_cluster = Variable.get(f'{_STAGE}_ecs_cluster')
+# The naming convention is set such that this value is then reused 
+# in log groups, stream prefixes and container names to minimize 
+# convolution and maximize simplicity.
+ecs_task_definition = Variable.get(f'{_STAGE}_ecs_task_definiton')
+ecs_subnets = [Variable.get("ecs_subnet1"), Variable.get("ecs_subnet2")]
+ecs_security_group = [Variable.get("ecs_security_group")]
+ecs_awslogs_group = f"/ecs/{ecs_task_definition}"
+ecs_awslogs_stream_prefix = f"ecs/{ecs_task_definition}"
 
 # Pass default parameters for the DAG.
 default_args = {
@@ -25,37 +29,37 @@ bash_command = [
     "/app/im_v2/ccxt/data/extract/download_realtime_for_one_exchange.py",
     "--start_timestamp {{ execution_date - macros.timedelta(minutes=5) }}",
     "--end_timestamp {{ execution_date }}",
-    "--exchange_id 'binance'",
+    f"--exchange_id '{_EXCHANGE}'",
     "--universe 'v03'",
     "--db_stage 'dev'",
-    "--aws_profile 'ck",
-    "--s3_path s3://cryptokaizen-historical-data/binance/'"
+    "--db_table 'ccxt_ohlcv'",
+    "--aws_profile 'ck'",
+    f"--s3_path 's3://{Variable.get(f'{_STAGE}_s3_data_bucket')}/{Variable.get('s3_realtime_data_folder')}/'"
 ]
 
 # Create a DAG.
 dag = airflow.DAG(
-    dag_id="realtime_ccxt_binance",
-    description="Realtime download of CCXT OHLCV data",
+    dag_id=f"{_STAGE}_realtime_ccxt_{_EXCHANGE}",
+    description="Realtime download of CCXT OHLCV data from {_EXCHANGE}",
     max_active_runs=1,
     default_args=default_args,
     schedule_interval="*/1 * * * *",
     catchup=False,
-    start_date=datetime.datetime(2022, 1, 14, 14, 30, 0),
+    start_date=datetime.datetime(2022, 1, 31, 0, 0, 0),
 )
-
 
 # Run the script with ECS operator.
 downloading_task = ECSOperator(
-    task_id="realtime_ccxt_binance",
+    task_id=F"realtime_ccxt_{_EXCHANGE}",
     dag=dag,
     aws_conn_id=None,
     cluster=ecs_cluster,
     task_definition=ecs_task_definition,
-    launch_type="FARGATE",
+    launch_type="EC2",
     overrides={
         "containerOverrides": [
             {
-                "name": "cmamp",
+                "name": f"{ecs_task_definition}",
                 "command": bash_command,
                 "environment": [
                     {
@@ -65,12 +69,6 @@ downloading_task = ECSOperator(
                 ],
             }
         ]
-    },
-    network_configuration={
-        "awsvpcConfiguration": {
-            "securityGroups": ecs_security_group,
-            "subnets": ecs_subnets,
-        },
     },
     awslogs_group=ecs_awslogs_group,
     awslogs_stream_prefix=ecs_awslogs_stream_prefix,

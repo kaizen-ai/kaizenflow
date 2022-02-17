@@ -2,11 +2,7 @@ INFO: > cmd='/venv/bin/invoke pytest_repro --file-name=/app/helpers/test/Test_py
 ## pytest_repro: 
 00:00:00 - INFO  lib_tasks.py pytest_repro:3910                         Reading file_name='/app/helpers/test/Test_pytest_repro_end_to_end.test1/input/cache/lastfailed'
 00:00:00 - INFO  lib_tasks.py pytest_repro:3912                         Reading failed tests from file '/app/helpers/test/Test_pytest_repro_end_to_end.test1/input/cache/lastfailed'
-00:00:00 - WARN  lib_tasks.py pytest_repro:3939                         Can't find test file 'dev_scripts/testing/test/test_run_tests.py'
-00:00:00 - WARN  lib_tasks.py pytest_repro:3939                         Can't find test file 'dev_scripts/testing/test/test_run_tests2.py'
-00:00:00 - WARN  lib_tasks.py pytest_repro:3939                         Can't find test file 'helpers/test/helpers/test/test_list.py'
-00:00:00 - WARN  lib_tasks.py pytest_repro:3939                         Can't find test file 'helpers/test/helpers/test/test_list.py'
-00:00:00 - INFO  lib_tasks.py pytest_repro:3966                         Found 10 failed pytest 'tests' target(s); to reproduce run:
+00:00:00 - INFO  lib_tasks.py pytest_repro:3964                         Found 10 failed pytest 'tests' target(s); to reproduce run:
 pytest dev_scripts/testing/test/test_run_tests.py
 pytest dev_scripts/testing/test/test_run_tests2.py
 pytest helpers/test/test_printing.py::Test_dedent1::test1
