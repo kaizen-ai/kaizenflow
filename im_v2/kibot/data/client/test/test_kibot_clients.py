@@ -24,13 +24,14 @@ def get_test_data_dir() -> str:
     return test_data_dir
 
 
+# TODO(Dan): @Max CmTask1245.
 class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
     def test_read_csv_data5(self) -> None:
         root_dir = get_test_data_dir()
         extension = "csv.gz"
         asset_class = "stocks"
         unadjusted = False
-        full_symbols = ["Kibot::HD"]
+        full_symbols = ["kibot::HD"]
         start_ts = pd.Timestamp("2015-09-29T09:23:00+00:00")
         end_ts = pd.Timestamp("2015-09-29T09:35:00+00:00")
         #
@@ -50,7 +51,7 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
             "close",
             "volume",
         ]
-        expected_column_unique_values = {"full_symbol": ["Kibot::HD"]}
+        expected_column_unique_values = {"full_symbol": ["kibot::HD"]}
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -59,13 +60,13 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         shape=(13, 6)
                                    full_symbol    open    high     low   close  volume
         timestamp
-        2015-09-29 09:23:00+00:00  Kibot::HD  102.36  102.36  102.36  102.36   447.0
-        2015-09-29 09:24:00+00:00  Kibot::HD     NaN     NaN     NaN     NaN     NaN
-        2015-09-29 09:25:00+00:00  Kibot::HD     NaN     NaN     NaN     NaN     NaN
+        2015-09-29 09:23:00+00:00  kibot::HD  102.36  102.36  102.36  102.36   447.0
+        2015-09-29 09:24:00+00:00  kibot::HD     NaN     NaN     NaN     NaN     NaN
+        2015-09-29 09:25:00+00:00  kibot::HD     NaN     NaN     NaN     NaN     NaN
         ...
-        2015-09-29 09:33:00+00:00  Kibot::HD  102.17  102.21  102.08  102.17  15277.0
-        2015-09-29 09:34:00+00:00  Kibot::HD  102.17  102.33  102.16  102.33   6145.0
-        2015-09-29 09:35:00+00:00  Kibot::HD  102.39  102.49  102.12  102.15  19620.0
+        2015-09-29 09:33:00+00:00  kibot::HD  102.17  102.21  102.08  102.17  15277.0
+        2015-09-29 09:34:00+00:00  kibot::HD  102.17  102.33  102.16  102.33   6145.0
+        2015-09-29 09:35:00+00:00  kibot::HD  102.39  102.49  102.12  102.15  19620.0
         """
         # pylint: enable=line-too-long
         self._test_read_data5(
@@ -84,7 +85,7 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         extension = "pq"
         asset_class = "stocks"
         unadjusted = False
-        full_symbols = ["Kibot::HD"]
+        full_symbols = ["kibot::HD"]
         start_ts = pd.Timestamp("2015-09-29T09:23:00+00:00")
         end_ts = pd.Timestamp("2015-09-29T09:35:00+00:00")
         #
@@ -104,7 +105,7 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
             "close",
             "volume",
         ]
-        expected_column_unique_values = {"full_symbol": ["Kibot::HD"]}
+        expected_column_unique_values = {"full_symbol": ["kibot::HD"]}
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -113,13 +114,13 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         shape=(13, 6)
                                    full_symbol    open    high     low   close  volume
         timestamp
-        2015-09-29 09:23:00+00:00  Kibot::HD  102.36  102.36  102.36  102.36   447.0
-        2015-09-29 09:24:00+00:00  Kibot::HD     NaN     NaN     NaN     NaN     NaN
-        2015-09-29 09:25:00+00:00  Kibot::HD     NaN     NaN     NaN     NaN     NaN
+        2015-09-29 09:23:00+00:00  kibot::HD  102.36  102.36  102.36  102.36   447.0
+        2015-09-29 09:24:00+00:00  kibot::HD     NaN     NaN     NaN     NaN     NaN
+        2015-09-29 09:25:00+00:00  kibot::HD     NaN     NaN     NaN     NaN     NaN
         ...
-        2015-09-29 09:33:00+00:00  Kibot::HD  102.17  102.21  102.08  102.17  15277.0
-        2015-09-29 09:34:00+00:00  Kibot::HD  102.17  102.33  102.16  102.33   6145.0
-        2015-09-29 09:35:00+00:00  Kibot::HD  102.39  102.49  102.12  102.15  19620.0
+        2015-09-29 09:33:00+00:00  kibot::HD  102.17  102.21  102.08  102.17  15277.0
+        2015-09-29 09:34:00+00:00  kibot::HD  102.17  102.33  102.16  102.33   6145.0
+        2015-09-29 09:35:00+00:00  kibot::HD  102.39  102.49  102.12  102.15  19620.0
         """
         # pylint: enable=line-too-long
         self._test_read_data5(
@@ -139,7 +140,7 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         root_dir = get_test_data_dir()
         extension = "csv.gz"
         contract_type = "continuous"
-        full_symbols = ["Kibot::ZI"]
+        full_symbols = ["kibot::ZI"]
         start_ts = pd.Timestamp("2009-09-29T03:38:00+00:00")
         end_ts = pd.Timestamp("2009-09-29T03:55:00+00:00")
         #
@@ -158,7 +159,7 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
             "close",
             "volume",
         ]
-        expected_column_unique_values = {"full_symbol": ["Kibot::ZI"]}
+        expected_column_unique_values = {"full_symbol": ["kibot::ZI"]}
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -167,13 +168,13 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         shape=(18, 6)
                                    full_symbol    open    high     low   close  volume
         timestamp
-        2009-09-29 03:38:00+00:00  Kibot::ZI  16.224  16.224  16.204  16.204     4.0
-        2009-09-29 03:39:00+00:00  Kibot::ZI     NaN     NaN     NaN     NaN     NaN
-        2009-09-29 03:40:00+00:00  Kibot::ZI  16.210   16.21   16.21   16.21     1.0
+        2009-09-29 03:38:00+00:00  kibot::ZI  16.224  16.224  16.204  16.204     4.0
+        2009-09-29 03:39:00+00:00  kibot::ZI     NaN     NaN     NaN     NaN     NaN
+        2009-09-29 03:40:00+00:00  kibot::ZI  16.210   16.21   16.21   16.21     1.0
         ...
-        2009-09-29 03:53:00+00:00  Kibot::ZI     NaN     NaN     NaN     NaN     NaN
-        2009-09-29 03:54:00+00:00  Kibot::ZI     NaN     NaN     NaN     NaN     NaN
-        2009-09-29 03:55:00+00:00  Kibot::ZI  16.134  16.134  16.134  16.134     1.0
+        2009-09-29 03:53:00+00:00  kibot::ZI     NaN     NaN     NaN     NaN     NaN
+        2009-09-29 03:54:00+00:00  kibot::ZI     NaN     NaN     NaN     NaN     NaN
+        2009-09-29 03:55:00+00:00  kibot::ZI  16.134  16.134  16.134  16.134     1.0
         """
         # pylint: enable=line-too-long
         self._test_read_data5(
@@ -191,7 +192,7 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         root_dir = get_test_data_dir()
         extension = "pq"
         contract_type = "continuous"
-        full_symbols = ["Kibot::ZI"]
+        full_symbols = ["kibot::ZI"]
         start_ts = pd.Timestamp("2009-09-29T03:38:00+00:00")
         end_ts = pd.Timestamp("2009-09-29T03:55:00+00:00")
         #
@@ -210,7 +211,7 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
             "close",
             "volume",
         ]
-        expected_column_unique_values = {"full_symbol": ["Kibot::ZI"]}
+        expected_column_unique_values = {"full_symbol": ["kibot::ZI"]}
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -219,13 +220,13 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         shape=(18, 6)
                                    full_symbol    open    high     low   close  volume
         timestamp
-        2009-09-29 03:38:00+00:00  Kibot::ZI  16.224  16.224  16.204  16.204     4.0
-        2009-09-29 03:39:00+00:00  Kibot::ZI     NaN     NaN     NaN     NaN     NaN
-        2009-09-29 03:40:00+00:00  Kibot::ZI  16.210  16.210  16.210  16.210     1.0
+        2009-09-29 03:38:00+00:00  kibot::ZI  16.224  16.224  16.204  16.204     4.0
+        2009-09-29 03:39:00+00:00  kibot::ZI     NaN     NaN     NaN     NaN     NaN
+        2009-09-29 03:40:00+00:00  kibot::ZI  16.210  16.210  16.210  16.210     1.0
         ...
-        2009-09-29 03:53:00+00:00  Kibot::ZI     NaN     NaN     NaN     NaN     NaN
-        2009-09-29 03:54:00+00:00  Kibot::ZI     NaN     NaN     NaN     NaN     NaN
-        2009-09-29 03:55:00+00:00  Kibot::ZI  16.134  16.134  16.134  16.134     1.0
+        2009-09-29 03:53:00+00:00  kibot::ZI     NaN     NaN     NaN     NaN     NaN
+        2009-09-29 03:54:00+00:00  kibot::ZI     NaN     NaN     NaN     NaN     NaN
+        2009-09-29 03:55:00+00:00  kibot::ZI  16.134  16.134  16.134  16.134     1.0
         """
         # pylint: enable=line-too-long
         self._test_read_data5(

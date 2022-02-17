@@ -39,8 +39,7 @@ class KibotClient(icdc.ImClient):
         """
         See description in the parent class.
         """
-        # TODO(Dan): Find a way to get `Kibot` universe for equities and futures.
-        #  Return `[]` to prevent code from break.
+        # TODO(Dan): CmTask1246.
         return []
 
     @staticmethod
@@ -134,7 +133,7 @@ class KibotEquitiesCsvParquetByAssetClient(
         Constructor.
 
         :param root_dir: either a local root path (e.g., "/app/im") or an S3
-            root path (e.g., "s3://alphamatic-data/data") to `Kibot` equities data
+            root path (e.g., "s3://alphamatic-data/data") to `Kibot` equity data
         :param extension: file extension, e.g., `csv`, `csv.gz` or `parquet`
         :param asset_class: asset class, e.g "stocks", "etfs", "forex" or "sp_500"
         :param unadjusted: whether asset class prices are unadjusted,
@@ -181,8 +180,8 @@ class KibotEquitiesCsvParquetByAssetClient(
         """
         # Split full symbol into exchange and trade symbol.
         exchange_id, trade_symbol = icdc.parse_full_symbol(full_symbol)
-        hdbg.dassert_eq(exchange_id, "Kibot")
-        # Get absolute file path for a file with equities data.
+        hdbg.dassert_eq(exchange_id, "kibot")
+        # Get absolute file path for a file with equity data.
         file_path = self._get_file_path(trade_symbol)
         _LOG.info(
             "Reading data for `Kibot`, asset class='%s', trade symbol='%s'"
@@ -245,7 +244,7 @@ class KibotEquitiesCsvParquetByAssetClient(
         trade_symbol: str,
     ) -> str:
         """
-        Get the absolute path to a file with `Kibot` equities data.
+        Get the absolute path to a file with `Kibot` equity data.
         """
         # Get absolute file path.
         file_name = ".".join([trade_symbol, self._extension])
@@ -346,7 +345,7 @@ class KibotFuturesCsvParquetByAssetClient(
         """
         # Split full symbol into exchange and trade symbol.
         exchange_id, trade_symbol = icdc.parse_full_symbol(full_symbol)
-        hdbg.dassert_eq(exchange_id, "Kibot")
+        hdbg.dassert_eq(exchange_id, "kibot")
         # Get absolute file path for a file with futures data.
         file_path = self._get_file_path(trade_symbol)
         _LOG.info(
