@@ -11,6 +11,7 @@ import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.db.db_utils as imvcddbut
 
 
+@pytest.mark.slow(reason="CmTask #1242.")
 class TestExtractDataFromDb1(imvcddbut.TestImDbHelper):
     def setUp(self) -> None:
         super().setUp()
@@ -33,7 +34,6 @@ class TestExtractDataFromDb1(imvcddbut.TestImDbHelper):
         """
         hsql.execute_query(self.connection, ccxt_ohlcv_drop_query)
 
-    # @pytest.mark.slow
     @pytest.mark.skip("Enable when timestamp issue is resolved CMTask849")
     def test_extract_data_from_db(self) -> None:
         test_dir = self.get_scratch_space()

@@ -115,6 +115,7 @@ asset_id                    101    202
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
+@pytest.mark.slow(reason="CmTask #1242.")
 class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
     def test_mocked_system1(self) -> None:
         with hasynci.solipsism_context() as event_loop:
@@ -234,6 +235,7 @@ asset_id                    101    202
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
+@pytest.mark.slow(reason="CmTask #1242.")
 class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
     def test_mocked_system1(self) -> None:
         data = self._get_market_data_df1()

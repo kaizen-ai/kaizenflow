@@ -291,6 +291,7 @@ def _get_row2() -> pd.Series:
     return srs
 
 
+@pytest.mark.slow(reason="CmTask #1242.")
 class TestMockedPortfolio1(omtodh.TestOmsDbHelper):
     def test1(self) -> None:
         """
@@ -412,6 +413,7 @@ asset_id                        101
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
+@pytest.mark.slow(reason="CmTask #1242.")
 class TestMockedPortfolio2(omtodh.TestOmsDbHelper):
     def test1(self) -> None:
         """

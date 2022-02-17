@@ -8,8 +8,8 @@ import im_v2.common.db.db_utils as imvcddbut
 _LOG = logging.getLogger(__name__)
 
 
+@pytest.mark.slow(reason="CmTask #1242.")
 class TestCreateDb1(imvcddbut.TestImDbHelper):
-    @pytest.mark.slow("11 seconds.")
     def test_up1(self) -> None:
         """
         Verify that the DB is up.
@@ -17,7 +17,6 @@ class TestCreateDb1(imvcddbut.TestImDbHelper):
         db_list = hsql.get_db_names(self.connection)
         _LOG.info("db_list=%s", db_list)
 
-    @pytest.mark.slow("9 seconds.")
     def test_create_all_tables1(self) -> None:
         """
         Verify that all necessary tables are created inside the DB.
@@ -46,7 +45,6 @@ class TestCreateDb1(imvcddbut.TestImDbHelper):
         # Delete all the tables.
         hsql.remove_all_tables(connection=self.connection, cascade=True)
 
-    @pytest.mark.slow("18 seconds.")
     def test_create_im_database(self) -> None:
         imvcddbut.create_im_database(
             db_connection=self.connection, new_db="test_db"

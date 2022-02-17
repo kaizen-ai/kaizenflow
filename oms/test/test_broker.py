@@ -41,6 +41,7 @@ class TestSimulatedBroker1(hunitest.TestCase):
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
+@pytest.mark.slow(reason="CmTask #1242.")
 class TestMockedBroker1(omtodh.TestOmsDbHelper):
     def setUp(self) -> None:
         super().setUp()

@@ -24,6 +24,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Factor this out.
 
 
+@pytest.mark.slow(reason="CmTask #1242.")
 class TestExamplePipeline1(otodh.TestOmsDbHelper):
     """
     Test pipeline end-to-end with fake data, features.
@@ -101,7 +102,6 @@ class TestExamplePipeline1(otodh.TestOmsDbHelper):
         )
         return order_processor
 
-    @pytest.mark.slow
     def test_market_data1_database_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = self._get_market_data_df1()
         actual = self._run_coroutines(
@@ -109,7 +109,6 @@ class TestExamplePipeline1(otodh.TestOmsDbHelper):
         )
         self.check_string(actual)
 
-    @pytest.mark.slow
     def test_market_data2_database_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = self._get_market_data_df2()
         actual = self._run_coroutines(
@@ -117,7 +116,6 @@ class TestExamplePipeline1(otodh.TestOmsDbHelper):
         )
         self.check_string(actual)
 
-    @pytest.mark.slow
     def test_market_data3_database_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = self._get_market_data_df3()
         actual = self._run_coroutines(
@@ -125,7 +123,6 @@ class TestExamplePipeline1(otodh.TestOmsDbHelper):
         )
         self.check_string(actual)
 
-    @pytest.mark.slow
     def test_market_data1_database_vs_dataframe_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = self._get_market_data_df1()
         expected = self._run_coroutines(data, real_time_loop_time_out_in_secs)
@@ -134,7 +131,6 @@ class TestExamplePipeline1(otodh.TestOmsDbHelper):
         )
         self.assert_equal(actual, expected)
 
-    @pytest.mark.slow
     def test_market_data2_database_vs_dataframe_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = self._get_market_data_df2()
         expected = self._run_coroutines(data, real_time_loop_time_out_in_secs)

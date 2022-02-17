@@ -38,13 +38,12 @@ class TestOmsDbRemoveAllTables1(omtodh.TestOmsDbHelper):
 
 # #############################################################################
 
-
+@pytest.mark.slow(reason="CmTask #1242.")
 class TestOmsDbSubmittedOrdersTable1(omtodh.TestOmsDbHelper):
     """
     Test operations on the submitted orders table.
     """
 
-    @pytest.mark.slow("9 seconds.")
     def test_create_table1(self) -> None:
         """
         Test creating the table.
@@ -119,13 +118,12 @@ def _get_row3() -> pd.Series:
 
 # #############################################################################
 
-
+@pytest.mark.slow(reason="CmTask #1242.")
 class TestOmsDbAcceptedOrdersTable1(omtodh.TestOmsDbHelper):
     """
     Test operations on the accepted orders table.
     """
 
-    @pytest.mark.slow("8 seconds.")
     def test_create_table1(self) -> None:
         """
         Test creating the table.
@@ -134,7 +132,6 @@ class TestOmsDbAcceptedOrdersTable1(omtodh.TestOmsDbHelper):
         create_table_func = oomsdb.create_accepted_orders_table
         self._test_create_table_helper(table_name, create_table_func)
 
-    @pytest.mark.slow("8 seconds.")
     def test_insert1(self) -> None:
         """
         Test inserting in the table.
@@ -169,7 +166,7 @@ class TestOmsDbAcceptedOrdersTable1(omtodh.TestOmsDbHelper):
 
 # #############################################################################
 
-
+@pytest.mark.slow(reason="CmTask #1242.")
 class TestOmsDbTableInteraction1(omtodh.TestOmsDbHelper):
     """
     Test interactions through the DB.
@@ -190,7 +187,6 @@ class TestOmsDbTableInteraction1(omtodh.TestOmsDbHelper):
         hsql.remove_table(self.connection, oomsdb.ACCEPTED_ORDERS_TABLE_NAME)
         return res
 
-    @pytest.mark.slow("9 seconds.")
     def test_wait_for_table1(self) -> None:
         """
         Show that if the value doesn't show up in the DB there is a timeout.
@@ -201,7 +197,6 @@ class TestOmsDbTableInteraction1(omtodh.TestOmsDbHelper):
         with self.assertRaises(TimeoutError):
             self.wait_for_table_helper(coroutines)
 
-    @pytest.mark.slow("9 seconds.")
     def test_wait_for_table2(self) -> None:
         """
         Show that waiting on a value on the table works.
@@ -221,7 +216,6 @@ class TestOmsDbTableInteraction1(omtodh.TestOmsDbHelper):
         exp = r"""[[(3, None)], None]"""
         self.assert_equal(act, exp)
 
-    @pytest.mark.slow("9 seconds.")
     def test_wait_for_table3(self) -> None:
         """
         The data is written too late triggering a timeout.
@@ -284,13 +278,12 @@ class TestOmsDbTableInteraction1(omtodh.TestOmsDbHelper):
 
 # #############################################################################
 
-
+@pytest.mark.slow(reason="CmTask #1242.")
 class TestOmsDbCurrentPositionsTable1(omtodh.TestOmsDbHelper):
     """
     Test operations on the submitted orders table.
     """
 
-    @pytest.mark.slow("9 seconds.")
     def test_create_table1(self) -> None:
         """
         Test creating the table.

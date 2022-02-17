@@ -13,6 +13,7 @@ import oms.order_processor as oordproc
 import oms.test.oms_db_helper as omtodh
 
 
+@pytest.mark.slow(reason="CmTask #1242.")
 class TestOrderProcessor1(omtodh.TestOmsDbHelper):
     def setUp(self) -> None:
         super().setUp()

@@ -25,6 +25,7 @@ import oms.test.oms_db_helper as otodh
 
 _LOG = logging.getLogger(__name__)
 
+
 # TODO(gp): -> dataflow/system/test_real_time_pipeline.py
 
 # TODO(gp): Split the class in methods like TestReplayedRH8EdWithMockedOms1
@@ -281,6 +282,7 @@ class TestRealTimePipelineWithOms1(hunitest.TestCase):
 
 
 # TODO(gp): Use SystemRunner.
+@pytest.mark.slow(reason="CmTask #1242.")
 class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
     """
     Run `MvnReturns` pipeline in real-time with mocked OMS objects.
@@ -456,6 +458,7 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
             self.check_string(actual)
 
 
+@pytest.mark.slow(reason="CmTask #1242.")
 class TestRealTimeMvnReturnsWithOms2(otodh.TestOmsDbHelper):
     """
     Run `MvnReturns` pipeline in real-time with mocked OMS objects.

@@ -520,7 +520,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
 # TestCcxtDbClient1
 # #############################################################################
 
-
+@pytest.mark.slow(reason="CmTask #1242.")
 class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper):
     """
     For all the test methods see description of corresponding private method in
