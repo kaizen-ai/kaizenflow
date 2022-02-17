@@ -24,6 +24,102 @@ def get_test_data_dir() -> str:
     return test_data_dir
 
 
+class TestKibotEquitiesCsvParquetByAssetClient(hunitest.TestCase):
+    def test_read_data1(self) -> None:
+        root_dir = get_test_data_dir()
+        extension = "csv.gz"
+        asset_class = "stocks"
+        unadjusted = False
+        full_symbols = ["Unknown::HD"]
+        start_ts = pd.Timestamp("2015-09-29T09:23:00+00:00")
+        end_ts = pd.Timestamp("2015-09-29T09:35:00+00:00")
+        #
+        client = imvkdckicl.KibotEquitiesCsvParquetByAssetClient(
+            root_dir,
+            extension,
+            asset_class,
+            unadjusted,
+        )
+        actual_df = client.read_data(full_symbols, start_ts, end_ts)
+        #
+        expected_length = 13
+        expected_column_names = [
+            "full_symbol", "open", "high", "low", "close", "volume"
+        ]
+        expected_column_unique_values = {"full_symbol": ["Unknown::HD"]}
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2015-09-29 09:23:00+00:00, 2015-09-29 09:35:00+00:00]
+        columns=full_symbol,open,high,low,close,volume
+        shape=(13, 6)
+                                   full_symbol    open    high     low   close  volume
+        timestamp                                                                     
+        2015-09-29 09:23:00+00:00  Unknown::HD  102.36  102.36  102.36  102.36   447.0
+        2015-09-29 09:24:00+00:00  Unknown::HD     NaN     NaN     NaN     NaN     NaN
+        2015-09-29 09:25:00+00:00  Unknown::HD     NaN     NaN     NaN     NaN     NaN
+        ...
+        2015-09-29 09:33:00+00:00  Unknown::HD  102.17  102.21  102.08  102.17  15277.0
+        2015-09-29 09:34:00+00:00  Unknown::HD  102.17  102.33  102.16  102.33   6145.0
+        2015-09-29 09:35:00+00:00  Unknown::HD  102.39  102.49  102.12  102.15  19620.0
+        """
+        # pylint: enable=line-too-long
+        self.check_df_output(
+            actual_df,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature
+        )
+
+    def test_read_data2(self) -> None:
+        root_dir = get_test_data_dir()
+        extension = "pq"
+        asset_class = "stocks"
+        unadjusted = False
+        full_symbols = ["Unknown::HD"]
+        start_ts = pd.Timestamp("2015-09-29T09:23:00+00:00")
+        end_ts = pd.Timestamp("2015-09-29T09:35:00+00:00")
+        #
+        client = imvkdckicl.KibotEquitiesCsvParquetByAssetClient(
+            root_dir,
+            extension,
+            asset_class,
+            unadjusted,
+        )
+        actual_df = client.read_data(full_symbols, start_ts, end_ts)
+        #
+        expected_length = 13
+        expected_column_names = [
+            "full_symbol", "open", "high", "low", "close", "volume"
+        ]
+        expected_column_unique_values = {"full_symbol": ["Unknown::HD"]}
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2015-09-29 09:23:00+00:00, 2015-09-29 09:35:00+00:00]
+        columns=full_symbol,open,high,low,close,volume
+        shape=(13, 6)
+                                   full_symbol    open    high     low   close  volume
+        timestamp                                                                     
+        2015-09-29 09:23:00+00:00  Unknown::HD  102.36  102.36  102.36  102.36   447.0
+        2015-09-29 09:24:00+00:00  Unknown::HD     NaN     NaN     NaN     NaN     NaN
+        2015-09-29 09:25:00+00:00  Unknown::HD     NaN     NaN     NaN     NaN     NaN
+        ...
+        2015-09-29 09:33:00+00:00  Unknown::HD  102.17  102.21  102.08  102.17  15277.0
+        2015-09-29 09:34:00+00:00  Unknown::HD  102.17  102.33  102.16  102.33   6145.0
+        2015-09-29 09:35:00+00:00  Unknown::HD  102.39  102.49  102.12  102.15  19620.0
+        """
+        # pylint: enable=line-too-long
+        self.check_df_output(
+            actual_df,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature
+        )
+
+
 class TestKibotFuturesCsvParquetByAssetClient(hunitest.TestCase):
     def test_read_data1(self) -> None:
         root_dir = get_test_data_dir()
@@ -41,7 +137,9 @@ class TestKibotFuturesCsvParquetByAssetClient(hunitest.TestCase):
         actual_df = client.read_data(full_symbols, start_ts, end_ts)
         #
         expected_length = 18
-        expected_column_names = ["full_symbol", "open", "high", "low", "close", "volume"]
+        expected_column_names = [
+            "full_symbol", "open", "high", "low", "close", "volume"
+        ]
         expected_column_unique_values = {"full_symbol": ["Unknown::ZI"]}
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -84,7 +182,9 @@ class TestKibotFuturesCsvParquetByAssetClient(hunitest.TestCase):
         actual_df = client.read_data(full_symbols, start_ts, end_ts)
         #
         expected_length = 18
-        expected_column_names = ["full_symbol", "open", "high", "low", "close", "volume"]
+        expected_column_names = [
+            "full_symbol", "open", "high", "low", "close", "volume"
+        ]
         expected_column_unique_values = {"full_symbol": ["Unknown::ZI"]}
         # pylint: disable=line-too-long
         expected_signature = r"""
