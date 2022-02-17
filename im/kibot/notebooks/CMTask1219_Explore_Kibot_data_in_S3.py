@@ -13,22 +13,22 @@
 # ---
 
 # %% [markdown]
-# ## Imports
+# # Imports
 
 # %%
+import logging
+
 import numpy as np
 import pandas as pd
 
-import im.common.data.types as imcodatyp
-import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
-import im.kibot.metadata.load.s3_backend as imkmls3ba
-
+import core.pandas_helpers as cpanh
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
-import core.pandas_helpers as cpanh
-import logging
+import im.common.data.types as imcodatyp
+import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
+import im.kibot.metadata.load.s3_backend as imkmls3ba
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -49,7 +49,9 @@ logger.setLevel(logging.CRITICAL)
 # # Functions
 
 # %%
-def calculate_datetime_statistics_for_kibot_data(list_of_symbols, contract_type, futures_frequency):
+def calculate_datetime_statistics_for_kibot_data(
+    list_of_symbols, contract_type, futures_frequency
+):
     # Create dictionaries that will store the datetime statistics.
     start_date = {}
     end_date = {}
@@ -104,12 +106,21 @@ def calculate_datetime_statistics_for_kibot_data(list_of_symbols, contract_type,
             data_count_ind = {ticker: data_points}
             data_count = data_count | data_count_ind.items()
         # Once all the dictionaries are filled with data - turn them to DataFrames.
-        final_start_date = pd.DataFrame(start_date,columns=["","start_date"]).set_index("")
-        final_end_date = pd.DataFrame(end_date,columns=["","end_date"]).set_index("")
-        final_data_count = pd.DataFrame(data_count,columns=["","data_points_count"]).set_index("")
+        final_start_date = pd.DataFrame(
+            start_date, columns=["", "start_date"]
+        ).set_index("")
+        final_end_date = pd.DataFrame(
+            end_date, columns=["", "end_date"]
+        ).set_index("")
+        final_data_count = pd.DataFrame(
+            data_count, columns=["", "data_points_count"]
+        ).set_index("")
         # Combune all three statistics into one single DataFrame.
-        result = pd.concat([final_start_date,final_end_date,final_data_count],axis=1)
+        result = pd.concat(
+            [final_start_date, final_end_date, final_data_count], axis=1
+        )
     return result.sort_index(ascending=True)
+
 
 def calculate_general_datetime_stats(df):
     median_start_date = df["start_date"].median()
@@ -117,15 +128,31 @@ def calculate_general_datetime_stats(df):
     min_start_date = df["start_date"].min()
     max_end_date = df["end_date"].max()
     median_data_points = df["data_points_count"].median()
-    result = pd.DataFrame([median_start_date,median_end_date,min_start_date,max_end_date,median_data_points],
-                 index = ["median_start_date","median_end_date","min_start_date","max_end_date","median_data_points"],
-                 columns = ["value"])
+    result = pd.DataFrame(
+        [
+            median_start_date,
+            median_end_date,
+            min_start_date,
+            max_end_date,
+            median_data_points,
+        ],
+        index=[
+            "median_start_date",
+            "median_end_date",
+            "min_start_date",
+            "max_end_date",
+            "median_data_points",
+        ],
+        columns=["value"],
+    )
     return result
+
 
 def raw_file_reader(path, s3_file, **kwargs):
     kwargs["s3fs"] = s3_file
     df = cpanh.read_csv(path, **kwargs)
     return df
+
 
 def raw_file_reader_parquet(path, s3_file, **kwargs):
     kwargs["s3fs"] = s3_file
@@ -241,7 +268,9 @@ aapl_any_exchange.head()
 # ## Stocks
 
 # %%
-final_stats_stocks = calculate_datetime_statistics_for_kibot_data(stocks_symbols, "Stocks", "stock_datasets")
+final_stats_stocks = calculate_datetime_statistics_for_kibot_data(
+    stocks_symbols, "Stocks", "stock_datasets"
+)
 display(final_stats_stocks.shape)
 display(final_stats_stocks)
 
@@ -251,12 +280,17 @@ general_stats_all_stocks
 
 # %%
 # DataFrame with empty stock data files.
-empty_dataframes = final_stats_stocks[final_stats_stocks["data_points_count"].isna()]
+empty_dataframes = final_stats_stocks[
+    final_stats_stocks["data_points_count"].isna()
+]
 # Number of empty stock data files.
 len(final_stats_stocks)
 
 # %%
-print(hprint.perc(len(empty_dataframes),len(final_stats)),"of files in stock universe are empty.")
+print(
+    hprint.perc(len(empty_dataframes), len(final_stats)),
+    "of files in stock universe are empty.",
+)
 
 # %% [markdown]
 # ## Futures
@@ -277,7 +311,13 @@ futures_continuous_contracts_1min_symbols_sample = (
 )
 
 # %%
-continuous_contracts_minutely_stats = calculate_datetime_statistics_for_kibot_data(futures_continuous_contracts_1min_symbols_sample, "Futures", imcodatyp.Frequency.Minutely)
+continuous_contracts_minutely_stats = (
+    calculate_datetime_statistics_for_kibot_data(
+        futures_continuous_contracts_1min_symbols_sample,
+        "Futures",
+        imcodatyp.Frequency.Minutely,
+    )
+)
 continuous_contracts_minutely_stats
 
 # %% [markdown]
@@ -290,11 +330,17 @@ futures_continuous_contracts_daily_symbols = s3_backend.get_symbols_for_dataset(
 len(futures_continuous_contracts_daily_symbols)
 
 # %%
-continuous_contracts_daily_stats = calculate_datetime_statistics_for_kibot_data(futures_continuous_contracts_daily_symbols, "Futures", imcodatyp.Frequency.Daily)
+continuous_contracts_daily_stats = calculate_datetime_statistics_for_kibot_data(
+    futures_continuous_contracts_daily_symbols,
+    "Futures",
+    imcodatyp.Frequency.Daily,
+)
 continuous_contracts_daily_stats.head(3)
 
 # %%
-general_stats_all_futures = calculate_general_datetime_stats(continuous_contracts_daily_stats)
+general_stats_all_futures = calculate_general_datetime_stats(
+    continuous_contracts_daily_stats
+)
 general_stats_all_futures
 
 # %% [markdown]
@@ -340,7 +386,9 @@ csv_qcom.head()
 # ### PQ example of QCOM
 
 # %%
-file_path_stock_parquet = "s3://alphamatic-data/data/kibot/pq/all_stocks_1min/QCOM.pq"
+file_path_stock_parquet = (
+    "s3://alphamatic-data/data/kibot/pq/all_stocks_1min/QCOM.pq"
+)
 
 # %%
 pq_qcom = raw_file_reader_parquet(file_path_stock_parquet, s3fs)
