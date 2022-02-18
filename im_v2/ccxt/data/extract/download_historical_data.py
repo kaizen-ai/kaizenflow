@@ -19,7 +19,7 @@ import argparse
 import logging
 import os
 import time
-import re
+import pyarrow.parquet as pq
 
 import pandas as pd
 
@@ -36,22 +36,26 @@ from typing import List
 _LOG = logging.getLogger(__name__)
 
 
-def list_pq_files(root_dir: str, partition_columns: List[str], start_timestamp: pd.Timestamp,
-                   end_timestamp: pd.Timestamp, fs,
-                   *, file_name: str = "data.pq"):
+def list_pq_files(root_dir: str, partition_columns: List[str],
+                  start_timestamp: pd.Timestamp,
+                   end_timestamp: pd.Timestamp,
+                  fs,
+                   *,
+                  file_name: str = "data.pq"):
     """
     Go through Parquet Dataset folders and merge multiple files in one.
     :param root_dir: root directory of PQ dataset
     :param partition_columns: columns on which the dataset is partitioned
     :param file_name: name of the single resulting file
     """
-    all_contents = fs.glob(f"{root_dir}/**.parquet")
-    print(all_contents)
-    #dataset_folders = [c for c in dataset_folders if not c.endswith(".parquet")]
-    #for folder in dataset_folders:
-    #    contents = fs.ls(folder)
-    #    if len(contents) > 1:
-
+    parquet_files = fs.glob(f"{root_dir}/**.parquet")
+    dataset_folders = list(set([f.rsplit("/", 1)[0] for f in parquet_files]))
+    for folder in dataset_folders:
+        folder_files = fs.ls(folder)
+        if len(folder_files)>1:
+            data = pq.ParquetDataset(folder_files, filesystem=fs).read()
+            fs.rm(folder, recursive=True)
+            pq.write_table(data, folder+"/"+file_name, filesystem=fs)
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -139,7 +143,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         hparque.to_partitioned_parquet(data, ["currency_pair"] + partition_cols, path_to_file, filesystem=fs)
         # Sleep between iterations.
         time.sleep(args.sleep_time)
-    merge_pq_files(path_to_file, ["currency_pair"] + partition_cols, start_timestamp, end_timestamp, fs=fs)
+    list_pq_files(path_to_file, ["currency_pair"] + partition_cols, start_timestamp, end_timestamp, fs=fs)
 
 
 if __name__ == "__main__":
