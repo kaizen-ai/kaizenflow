@@ -6,7 +6,7 @@ import im_v2.kibot.data.client.kibot_clients as imvkdckicl
 
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import pandas as pd
 
@@ -181,7 +181,7 @@ class KibotEquitiesCsvParquetByAssetClient(
         full_symbol: icdc.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        **kwargs: Dict[str, Any],
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
         See description in the parent class.
@@ -353,7 +353,7 @@ class KibotFuturesCsvParquetByAssetClient(
         full_symbol: icdc.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        **kwargs: Dict[str, Any],
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
         See description in the parent class.
