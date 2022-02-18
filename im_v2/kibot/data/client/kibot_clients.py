@@ -6,7 +6,7 @@ import im_v2.kibot.data.client.kibot_clients as imvkdckicl
 
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import pandas as pd
 
@@ -25,7 +25,11 @@ _LOG = logging.getLogger(__name__)
 
 class KibotClient(icdc.ImClient):
     """
-    Read data for `Kibot` asset.
+    Contain common code for all the `Kibot` clients, e.g.,
+
+    - getting `Kibot` universe
+    - applying common transformation for all the data from `Kibot`
+        - E.g., `_apply_kibot_csv_normalization()`, `_apply_kibot_parquet_normalization()`
 
     `Kibot` does not provide any information about the exchange so we
     use `kibot` as exchange for parallelism with other vendors so that
@@ -54,7 +58,7 @@ class KibotClient(icdc.ImClient):
         CSV data is normalized to fit parent class output format:
             - full timestamp information is extracted from calendar date and
             clock time columns and set as index
-            - calendar date and clock time columns are dropped.
+            - calendar date and clock time columns are dropped
 
         Input data:
         ```
@@ -177,7 +181,7 @@ class KibotEquitiesCsvParquetByAssetClient(
         full_symbol: icdc.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        **kwargs: Dict[str, Any],
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
         See description in the parent class.
@@ -249,6 +253,11 @@ class KibotEquitiesCsvParquetByAssetClient(
     ) -> str:
         """
         Get the absolute path to a file with `Kibot` equity data.
+
+        The file path is constructed in the following way:
+        `<root_dir>/kibot/<pq_subdir>/<subdir>/<trade_symbol>.<extension>`
+
+        E.g., "s3://alphamatic-data/data/kibot/all_stocks_1min/HD.csv.gz"
         """
         # Get absolute file path.
         file_name = ".".join([trade_symbol, self._extension])
@@ -274,6 +283,8 @@ class KibotEquitiesCsvParquetByAssetClient(
     def _get_subdir_name(self) -> str:
         """
         Get subdir name where `Kibot` data is stored.
+
+        E.g., "all_stocks_unadjusted_1min"
         """
         _asset_class_prefix_mapping = {
             "etfs": "all_etfs",
@@ -342,7 +353,7 @@ class KibotFuturesCsvParquetByAssetClient(
         full_symbol: icdc.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        **kwargs: Dict[str, Any],
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
         See description in the parent class.
@@ -410,6 +421,11 @@ class KibotFuturesCsvParquetByAssetClient(
     def _get_file_path(self, trade_symbol: str) -> str:
         """
         Get the absolute path to a file with `Kibot` futures data.
+
+        The file path is constructed in the following way:
+        `<root_dir>/kibot/<pq_subdir>/<subdir>/<trade_symbol>.<extension>`
+
+        E.g., "s3://alphamatic-data/data/kibot/pq/All_Futures_Contracts_1min/ZI.pq"
         """
         # Get absolute file path.
         file_name = ".".join([trade_symbol, self._extension])
@@ -437,9 +453,11 @@ class KibotFuturesCsvParquetByAssetClient(
     def _get_subdir_name(self) -> str:
         """
         Get subdir name where `Kibot` data is stored.
+
+        E.g., "all_futures_continuous_contracts_1min"
         """
         subdir_name = "all_futures"
         if self._contract_type == "continuous":
-            subdir_name = "_".join([subdir_name, "continuous", "contracts"])
-        subdir_name = "_".join([subdir_name, "1min"])
+            subdir_name = "_".join([subdir_name, "continuous"])
+        subdir_name = "_".join([subdir_name, "contracts", "1min"])
         return subdir_name
