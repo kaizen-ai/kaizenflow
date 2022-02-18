@@ -19,6 +19,7 @@ import argparse
 import logging
 import os
 import time
+import re
 
 import pandas as pd
 
@@ -26,11 +27,31 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
+import helpers.hparquet as hparque
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.common.data.transform.transform_utils as imvctrtrul
+from typing import List
 
 _LOG = logging.getLogger(__name__)
+
+
+def list_pq_files(root_dir: str, partition_columns: List[str], start_timestamp: pd.Timestamp,
+                   end_timestamp: pd.Timestamp, fs,
+                   *, file_name: str = "data.pq"):
+    """
+    Go through Parquet Dataset folders and merge multiple files in one.
+    :param root_dir: root directory of PQ dataset
+    :param partition_columns: columns on which the dataset is partitioned
+    :param file_name: name of the single resulting file
+    """
+    all_contents = fs.glob(f"{root_dir}/**.parquet")
+    print(all_contents)
+    #dataset_folders = [c for c in dataset_folders if not c.endswith(".parquet")]
+    #for folder in dataset_folders:
+    #    contents = fs.ls(folder)
+    #    if len(contents) > 1:
+
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -92,8 +113,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     currency_pairs = universe["CCXT"][args.exchange_id]
     # Convert timestamps.
     end_timestamp = pd.Timestamp(args.end_timestamp)
-    start_timestamp = pd.Timestamp(args.end_timestamp)
-    for currency_pair in currency_pairs:
+    start_timestamp = pd.Timestamp(args.start_timestamp)
+    for currency_pair in currency_pairs[0:1]:
         # Download OHLCV data.
         data = exchange.download_ohlcv_data(
             currency_pair.replace("_", "/"),
@@ -103,8 +124,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
         data["currency_pair"] = currency_pair
         # Change index to allow calling add_date_partition_cols function on the dataframe.
         data = imvctrtrul.reindex_on_datetime(data, "timestamp")
-        print(data.head())
-        data, partition_cols =  imvctrtrul.add_date_partition_columnss(data, "by_year_month")
+        #print(data.head())
+        data, partition_cols = hparque.add_date_partition_columns(data, "by_year_month")
         path_to_file = os.path.join(args.s3_path, args.exchange_id)
         # Get timestamp of push to s3 in UTC.
         knowledge_timestamp = hdateti.get_current_timestamp_as_string("UTC")
@@ -115,9 +136,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
         #    pass
         #else:
             # Default file_name is data.parquet.
-        imvctrtrul.to_partitioned_parquet(data, ["currency_pair"] + partition_cols, path_to_file, filesystem=fs)
+        hparque.to_partitioned_parquet(data, ["currency_pair"] + partition_cols, path_to_file, filesystem=fs)
         # Sleep between iterations.
         time.sleep(args.sleep_time)
+    merge_pq_files(path_to_file, ["currency_pair"] + partition_cols, start_timestamp, end_timestamp, fs=fs)
 
 
 if __name__ == "__main__":

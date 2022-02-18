@@ -516,6 +516,6 @@ def to_partitioned_parquet(
             table,
             dst_dir,
             partition_cols=partition_columns,
-            partition_filename_cb=lambda x: "data.parquet",
+            #partition_filename_cb=lambda x: "data.parquet",
             filesystem=filesystem
         )
