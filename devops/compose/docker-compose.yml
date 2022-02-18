@@ -45,6 +45,11 @@ services:
   app:
     extends:
       base_app
+    # Default network mode set to host so we can reach e.g.
+    # a database container pointing to localhost:5432.
+    # In tests we use dind so we need set back to the default "bridge".
+    # See CmTask988 and https://stackoverflow.com/questions/24319662/from-inside-of-a-docker-container-how-do-i-connect-to-the-localhost-of-the-mach
+    network_mode: ${NETWORK_MODE:-host}
     volumes:
       - ../../:/app
 

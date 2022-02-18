@@ -104,7 +104,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # Change index to allow calling add_date_partition_cols function on the dataframe.
         data = imvctrtrul.reindex_on_datetime(data, "timestamp")
         print(data.head())
-        data, partition_cols =  imvctrtrul.add_date_partition_cols(data, "by_year_month")
+        data, partition_cols =  imvctrtrul.add_date_partition_columnss(data, "by_year_month")
         path_to_file = os.path.join(args.s3_path, args.exchange_id)
         # Get timestamp of push to s3 in UTC.
         knowledge_timestamp = hdateti.get_current_timestamp_as_string("UTC")
@@ -115,7 +115,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         #    pass
         #else:
             # Default file_name is data.parquet.
-        imvctrtrul.partition_dataset(data, ["currency_pair"] + partition_cols, path_to_file, filesystem=fs)
+        imvctrtrul.to_partitioned_parquet(data, ["currency_pair"] + partition_cols, path_to_file, filesystem=fs)
         # Sleep between iterations.
         time.sleep(args.sleep_time)
 

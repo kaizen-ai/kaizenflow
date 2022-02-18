@@ -25,8 +25,8 @@ class TestRollingFitPredictDagRunner1(hunitest.TestCase):
         dag_runner = dtfcodarun.RollingFitPredictDagRunner(
             config=config,
             dag_builder=dag_builder,
-            start="2010-01-04 09:30",
-            end="2010-01-04 15:30",
+            start_timestamp="2010-01-04 09:30",
+            end_timestamp="2010-01-04 15:30",
             retraining_freq="H",
             retraining_lookback=4,
         )
@@ -53,8 +53,8 @@ class TestIncrementalDagRunner1(hunitest.TestCase):
         dag_runner = dtfcodarun.IncrementalDagRunner(
             config=config,
             dag_builder=dag_builder,
-            start="2010-01-04 15:30",
-            end="2010-01-04 15:45",
+            start_timestamp="2010-01-04 15:30",
+            end_timestamp="2010-01-04 15:45",
             freq="5T",
             fit_state=fit_state,
         )

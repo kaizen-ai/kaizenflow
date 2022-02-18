@@ -30,8 +30,8 @@ import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import helpers.hparquet as hparque
 import helpers.hparser as hparser
-import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 _LOG = logging.getLogger(__name__)
 
@@ -314,13 +314,13 @@ def _run(parser: argparse.ArgumentParser) -> None:
     )
     parquet_df = pdg.generate()
     # Add partition columns to the dataframe.
-    df, partition_cols = imvcdttrut.add_date_partition_cols(
+    df, partition_cols = hparque.add_date_partition_columns(
         parquet_df, partition_mode
     )
     # Partition and write dataset.
     if args.reset_index:
         df = df.reset_index(drop=True)
-    imvcdttrut.partition_dataset(df, partition_cols, dst_dir)
+    hparque.to_partitioned_parquet(df, partition_cols, dst_dir)
 
 
 if __name__ == "__main__":

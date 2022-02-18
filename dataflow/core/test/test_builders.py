@@ -59,7 +59,7 @@ class TestMvnReturnsBuilder(hunitest.TestCase):
             "target_volatility": 0.25,
             "seed": 247,
         }
-        node = dtfconosou.MultivariateNormalGenerator
+        node = dtfconosou.MultivariateNormalDataSource
         nodes_to_insert = [("load_prices", node)]
         dag_builder = dtfcodaada.DagAdapter(
             dag_builder,

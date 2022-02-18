@@ -20,6 +20,7 @@ import os.path
 import pandas as pd
 
 import helpers.hdbg as hdbg
+import helpers.hparquet as hparque
 import helpers.hparser as hparser
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
@@ -117,10 +118,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
             datetime_col_name = "start_time"
             reindexed_df = imvcdttrut.reindex_on_datetime(df, datetime_col_name)
             # Add date partition columns to the dataframe.
-            imvcdttrut.add_date_partition_cols(reindexed_df)
+            hparque.add_date_partition_columns(reindexed_df)
             # Partition and write dataset.
             partition_cols = ["date"]
-            imvcdttrut.partition_dataset(reindexed_df, partition_cols, dst_dir)
+            hparque.to_partitioned_parquet(reindexed_df, partition_cols, dst_dir)
         except AssertionError as ex:
             _LOG.info("Skipping. PQ file already present: %s.", ex)
             continue
