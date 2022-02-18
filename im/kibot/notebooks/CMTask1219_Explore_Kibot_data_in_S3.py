@@ -42,16 +42,31 @@ hprint.config_notebook()
 # %%
 # Disabling INFO messages from data downloads.
 logger = logging.getLogger()
-logger.setLevel(logging.CRITICAL)
+logger.setLevel(logging.WARNING)
 
 
 # %% [markdown]
 # # Functions
 
 # %%
+# TODO: Merge this function into `compute_start_end_table` in `research_amp/cc/statistics.py`
 def calculate_datetime_statistics_for_kibot_data(
-    list_of_symbols, contract_type, futures_frequency
-):
+    list_of_symbols: list, 
+    contract_type: str, 
+    futures_frequency: str
+) -> pd.DataFrame:
+    """
+    Load the data for each asset through the loop and proccess it to obtain 
+    datetime statistics:
+    - start date
+    - end date
+    - data points count
+    
+    :param list_of_symbols: tickers for asset in desired universe
+    :param contract_type: either 'Futures' or 'Stocks'
+    :param futures_frequency: only for Futures; Daily or Minutely
+    :return: Datetime statistics for every asset in the given universe
+    """
     # Create dictionaries that will store the datetime statistics.
     start_date = {}
     end_date = {}
@@ -76,8 +91,13 @@ def calculate_datetime_statistics_for_kibot_data(
                 unadjusted=False,
             )
         # Here is a condition that cuts out empty dataframes.
+        # See section 'Example of an empty stock data' for reference.
         if asset_df.shape[0] == 2:
+            # The logic here and below: mapping the value of start date to the 
+            # specific company ticker.
             start_ind = {ticker: np.nan}
+            # The logic here and below: attach this dictionary ({ticker: start_date})
+            # to the general file where all {ticker: values} will be stored.
             start_date = start_date | start_ind.items()
             end_ind = {ticker: np.nan}
             end_date = end_date | end_ind.items()
@@ -106,6 +126,9 @@ def calculate_datetime_statistics_for_kibot_data(
             data_count_ind = {ticker: data_points}
             data_count = data_count | data_count_ind.items()
         # Once all the dictionaries are filled with data - turn them to DataFrames.
+        # The logic here and below: when transforming dictionary into pd.DataFrame
+        # it has two columns: tickers and statistics value. The code below sets tickers
+        # as an index during this transformation.
         final_start_date = pd.DataFrame(
             start_date, columns=["", "start_date"]
         ).set_index("")
@@ -115,14 +138,26 @@ def calculate_datetime_statistics_for_kibot_data(
         final_data_count = pd.DataFrame(
             data_count, columns=["", "data_points_count"]
         ).set_index("")
-        # Combune all three statistics into one single DataFrame.
+        # Combine all statistics into a single table.
         result = pd.concat(
             [final_start_date, final_end_date, final_data_count], axis=1
         )
     return result.sort_index(ascending=True)
 
 
-def calculate_general_datetime_stats(df):
+def calculate_general_datetime_stats(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Take the table with datetime stats for individual assets and
+    compute generalized stats for all universe:
+    - median start date
+    - median end date
+    - min start date
+    - max start date
+    - median data points
+    
+    :param df: Table with datetime statistics for every asset in the given universe
+    :return: Table with general datetime statistics for all assets in given universe
+    """
     median_start_date = df["start_date"].median()
     median_end_date = df["end_date"].median()
     min_start_date = df["start_date"].min()
@@ -146,18 +181,6 @@ def calculate_general_datetime_stats(df):
         columns=["value"],
     )
     return result
-
-
-def raw_file_reader(path, s3_file, **kwargs):
-    kwargs["s3fs"] = s3_file
-    df = cpanh.read_csv(path, **kwargs)
-    return df
-
-
-def raw_file_reader_parquet(path, s3_file, **kwargs):
-    kwargs["s3fs"] = s3_file
-    df = cpanh.read_parquet(path, **kwargs)
-    return df
 
 
 # %% [markdown]
@@ -262,6 +285,29 @@ aapl_any_exchange = kibot_loader.read_data(
 aapl_any_exchange.head()
 
 # %% [markdown]
+# ### Example of an empty stock data
+
+# %%
+# Some files in stock universe contain no data and consider empty.
+# There are different types of these empty files.
+empty_stock_file_1 = kibot_loader.read_data(
+    exchange="Any Exchange",
+    symbol="AACC",
+    asset_class=imcodatyp.AssetClass.Stocks,
+    frequency=imcodatyp.Frequency.Minutely,
+    unadjusted=False,
+)
+empty_stock_file_2 = kibot_loader.read_data(
+    exchange="Any Exchange",
+    symbol="ACND.U",
+    asset_class=imcodatyp.AssetClass.Stocks,
+    frequency=imcodatyp.Frequency.Minutely,
+    unadjusted=False,
+)
+display(empty_stock_file_1)
+display(empty_stock_file_2)
+
+# %% [markdown]
 # # Period of time availability
 
 # %% [markdown]
@@ -356,7 +402,7 @@ s3fs = hs3.get_s3fs("am")
 file_path_stock = "s3://alphamatic-data/data/kibot/all_stocks_1min/AAPL.csv.gz"
 
 # %%
-aapl_raw = raw_file_reader(file_path_stock, s3fs)
+aapl_raw = cpanh.read_csv(file_path_stock, s3fs=s3fs)
 aapl_raw.head()
 
 # %% [markdown]
@@ -366,7 +412,7 @@ aapl_raw.head()
 file_path_futures = "s3://alphamatic-data/data/kibot/all_futures_continuous_contracts_daily/AE.csv.gz"
 
 # %%
-ae_futures_raw = raw_file_reader(file_path_futures, s3fs)
+ae_futures_raw = cpanh.read_csv(file_path_futures, s3fs=s3fs)
 ae_futures_raw.head()
 
 # %% [markdown]
@@ -378,8 +424,8 @@ ae_futures_raw.head()
 # %%
 file_path_stock = "s3://alphamatic-data/data/kibot/all_stocks_1min/QCOM.csv.gz"
 
-# %%
-csv_qcom = raw_file_reader(file_path_stock, s3fs)
+# %% run_control={"marked": false}
+csv_qcom = cpanh.read_csv(file_path_futures, s3fs=s3fs)
 csv_qcom.head()
 
 # %% [markdown]
@@ -391,7 +437,7 @@ file_path_stock_parquet = (
 )
 
 # %%
-pq_qcom = raw_file_reader_parquet(file_path_stock_parquet, s3fs)
+pq_qcom = cpanh.read_parquet(file_path_stock_parquet, s3fs=s3fs)
 pq_qcom.head()
 
 # %% [markdown]
