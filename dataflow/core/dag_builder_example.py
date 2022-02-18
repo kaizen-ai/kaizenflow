@@ -1,7 +1,7 @@
 """
 Import as:
 
-import dataflow.core.builders_example as dtfcobuexa
+import dataflow.core.dag_builder_example as dtfcdabuex
 """
 
 import datetime
@@ -9,8 +9,8 @@ import logging
 
 import core.config as cconfig
 import core.finance as cofinanc
-import dataflow.core.builders as dtfcorbuil
 import dataflow.core.dag as dtfcordag
+import dataflow.core.dag_builder as dtfcodabui
 import dataflow.core.nodes.sources as dtfconosou
 import dataflow.core.nodes.transformers as dtfconotra
 import dataflow.core.nodes.volatility_models as dtfcnovomo
@@ -18,10 +18,7 @@ import dataflow.core.nodes.volatility_models as dtfcnovomo
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): @Grisha -> dag_builder_example.py
-
-
-class DagBuilderExample1(dtfcorbuil.DagBuilder):
+class DagBuilderExample1(dtfcodabui.DagBuilder):
     """
     Pipeline contain a single node with a data source node factory.
     """
@@ -51,14 +48,14 @@ class DagBuilderExample1(dtfcorbuil.DagBuilder):
         stage = "load_prices"
         nid = self._get_nid(stage)
         # TDOO: Do not use this node in `core`.
-        node = dtfconosou.DataLoader(nid, **config[nid].to_dict())
+        node = dtfconosou.FunctionDataSource(nid, **config[nid].to_dict())
         tail_nid = self._append(dag, tail_nid, node)
         #
         _ = tail_nid
         return dag
 
 
-class ReturnsBuilder(dtfcorbuil.DagBuilder):
+class ReturnsBuilder(dtfcodabui.DagBuilder):
     """
     Pipeline for generating filtered returns from a given `DataSource` node.
     """
@@ -181,7 +178,7 @@ class ReturnsBuilder(dtfcorbuil.DagBuilder):
 
 # TODO(gp): Remove the first node from these DAG and express ArmaReturnsBuilder and
 #  MvnReturnsBuilder in terms of a DagAdapter and ReturnsBuilder.
-class ArmaReturnsBuilder(dtfcorbuil.DagBuilder):
+class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
     """
     Pipeline for generating filtered returns from an ARMA process.
     """
@@ -261,7 +258,7 @@ class ArmaReturnsBuilder(dtfcorbuil.DagBuilder):
         # Read data.
         stage = "rets/read_data"
         nid = self._get_nid(stage)
-        node = dtfconosou.ArmaGenerator(nid, **config[nid].to_dict())
+        node = dtfconosou.ArmaDataSource(nid, **config[nid].to_dict())
         tail_nid = self._append(dag, None, node)
         # Set weekends to Nan.
         stage = "rets/filter_weekends"
@@ -318,7 +315,7 @@ class ArmaReturnsBuilder(dtfcorbuil.DagBuilder):
         return dag
 
 
-class MvnReturnsBuilder(dtfcorbuil.DagBuilder):
+class MvnReturnsBuilder(dtfcodabui.DagBuilder):
     """
     Pipeline for generating filtered returns from an Multivariate Normal
     process.

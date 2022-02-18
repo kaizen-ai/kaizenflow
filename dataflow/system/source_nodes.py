@@ -37,19 +37,19 @@ def data_source_node_factory(
 
     There are several types of nodes:
     - synthetic data generators, e.g.,
-        - `ArmaGenerator`
-        - `MultivariateNormalGenerator`
+        - `ArmaDataSource`
+        - `MultivariateNormalDataSource`
     - real-time data sources e.g.,
         - `RealTimeDataSource` (which uses a full-fledged `MarketData`)
     - data generators using data from disk
         - `DiskDataSource` (which reads CSV and PQ files)
     - data generators using pluggable functions
-        - `DataLoader` (which uses a passed function to create data)
+        - `FunctionDataSource` (which uses a passed function to create data)
 
     - Note that the same goal can be achieved using different nodes in multiple
       ways, e.g.,
       - Synthetic data or data from disk can be generated using the specialized
-        node or passing a function to `DataLoader`
+        node or passing a function to `FunctionDataSource`
       - One could inject synthetic data in the IM and go through the
         high-fidelity data pipeline or mock a later interface
 
@@ -62,12 +62,12 @@ def data_source_node_factory(
     :return: data source node of appropriate type instantiated with kwargs
     """
     hdbg.dassert_ne(source_node_name, "")
-    # TODO(gp): To simplify we can use the name of the class (e.g., "ArmaGenerator"
+    # TODO(gp): To simplify we can use the name of the class (e.g., "ArmaDataSource"
     #  instead of "arma"), so we don't have to use another level of mnemonics.
     if source_node_name == "arma":
-        ret = dtfcore.ArmaGenerator(nid, **source_node_kwargs)
+        ret = dtfcore.ArmaDataSource(nid, **source_node_kwargs)
     elif source_node_name == "multivariate_normal":
-        ret = dtfcore.MultivariateNormalGenerator(nid, **source_node_kwargs)
+        ret = dtfcore.MultivariateNormalDataSource(nid, **source_node_kwargs)
     elif source_node_name == "RealTimeDataSource":
         ret = RealTimeDataSource(nid, **source_node_kwargs)
     elif source_node_name == "HistoricalDataSource":
@@ -75,7 +75,7 @@ def data_source_node_factory(
     elif source_node_name == "disk":
         ret = dtfcore.DiskDataSource(nid, **source_node_kwargs)
     elif source_node_name == "DataLoader":
-        ret = dtfcore.DataLoader(nid, **source_node_kwargs)
+        ret = dtfcore.FunctionDataSource(nid, **source_node_kwargs)
     elif source_node_name == "kibot":
         # TODO(gp): This should go through RealTimeDataSource.
         ret = KibotDataReader(nid, **source_node_kwargs)
@@ -523,7 +523,7 @@ class HistoricalDataSource(dtfcore.DataSource):
             max_timestamp,
         ) = dtfcore.find_min_max_timestamps_from_intervals(intervals)
         _LOG.debug(hprint.to_str("min_timestamp max_timestamp"))
-        # From ArmaGenerator._lazy_load():
+        # From ArmaDataSource._lazy_load():
         #   ```
         #   self.df = df.loc[self._start_date : self._end_date]
         #   ```

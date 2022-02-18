@@ -81,7 +81,7 @@ class ImClient(abc.ABC):
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
-        Read data in `[start_ts, end_ts)` for `imvcdcfusy.FullSymbol` symbols.
+        Read data in `[start_ts, end_ts]` for `imvcdcfusy.FullSymbol` symbols.
 
         :param full_symbols: list of full symbols, e.g.
             `['binance::BTC_USDT', 'kucoin::ETH_USDT']`
@@ -405,7 +405,7 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
-        Read data for a single symbol in [start_ts, end_ts).
+        Read data for a single symbol in [start_ts, end_ts].
 
         Parameters have the same meaning as in `read_data()`.
         """

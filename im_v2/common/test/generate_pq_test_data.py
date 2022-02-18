@@ -30,21 +30,21 @@ import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import helpers.hparquet as hparque
 import helpers.hparser as hparser
-import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 _LOG = logging.getLogger(__name__)
 
 
 class ParquetDataFrameGenerator:
     # Allowed types.
-    OUTPUT_TYPES = ("basic", "verbose_open", "verbose_close")
+    OUTPUT_TYPES = ("basic", "verbose_open", "cm_task_1103")
     # Depending on output type, asset column varies. This mapping is always
     # resolving to expected asset column name.
     ASSET_COLUMN_NAME_MAP = {
         "basic": "asset",
         "verbose_open": "ticker",
-        "verbose_close": "asset_id",
+        "cm_task_1103": "asset_id",
     }
 
     def __init__(
@@ -80,7 +80,7 @@ class ParquetDataFrameGenerator:
         self._OUTPUT_TYPE_FUNCTION_MAP = {
             "basic": self._get_daily_basic_dataframe,
             "verbose_open": self._get_verbose_open_dataframe,
-            "verbose_close": self._get_verbose_close_dataframe,
+            "cm_task_1103": self._get_cm_task_1103_dataframe,
         }
 
     @property
@@ -199,7 +199,7 @@ class ParquetDataFrameGenerator:
             asset_dataframe.insert(loc=7, column="id", value=id_)
         return self._wrap_all_assets_df(asset_dataframes)
 
-    def _get_verbose_close_dataframe(self) -> pd.DataFrame:
+    def _get_cm_task_1103_dataframe(self) -> pd.DataFrame:
         """
         Update core dataframes with additional columns.
 
@@ -314,13 +314,13 @@ def _run(parser: argparse.ArgumentParser) -> None:
     )
     parquet_df = pdg.generate()
     # Add partition columns to the dataframe.
-    df, partition_cols = imvcdttrut.add_date_partition_cols(
+    df, partition_cols = hparque.add_date_partition_columns(
         parquet_df, partition_mode
     )
     # Partition and write dataset.
     if args.reset_index:
         df = df.reset_index(drop=True)
-    imvcdttrut.partition_dataset(df, partition_cols, dst_dir)
+    hparque.to_partitioned_parquet(df, partition_cols, dst_dir)
 
 
 if __name__ == "__main__":

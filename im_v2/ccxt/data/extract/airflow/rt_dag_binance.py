@@ -23,8 +23,8 @@ default_args = {
 # Create a command.
 bash_command = [
     "/app/im_v2/ccxt/data/extract/download_realtime_for_one_exchange.py",
-    "--to_datetime {{ execution_date }}",
-    "--from_datetime {{ execution_date - macros.timedelta(minutes=5) }}",
+    "--start_timestamp {{ execution_date - macros.timedelta(minutes=5) }}",
+    "--end_timestamp {{ execution_date }}",
     "--exchange_id 'binance'",
     "--universe 'v03'",
     "--db_stage 'dev'",

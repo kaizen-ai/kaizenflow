@@ -43,8 +43,8 @@ class Test_CcxtExchange(hunitest.TestCase):
         # Extract data.
         actual = exchange_class.download_ohlcv_data(
             currency_pair="BTC/USDT",
-            start_datetime=pd.Timestamp(start_date),
-            end_datetime=pd.Timestamp(end_date),
+            start_timestamp=pd.Timestamp(start_date),
+            end_timestamp=pd.Timestamp(end_date),
         )
         # Verify that the output is a dataframe and verify its length.
         hdbg.dassert_isinstance(actual, pd.DataFrame)

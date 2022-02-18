@@ -1,0 +1,10 @@
+INFO: > cmd='/venv/bin/invoke pytest_repro --file-name=/app/helpers/test/Test_pytest_repro_end_to_end.test2/input/log.txt'
+## pytest_repro: 
+00:00:00 - INFO  lib_tasks.py pytest_repro:0000                         Reading file_name='/app/helpers/test/Test_pytest_repro_end_to_end.test2/input/log.txt'
+00:00:00 - INFO  lib_tasks.py pytest_repro:0000                         Reading failed tests from file '/app/helpers/test/Test_pytest_repro_end_to_end.test2/input/log.txt'
+00:00:00 - INFO  lib_tasks.py pytest_repro:0000                         Found 5 failed pytest 'tests' target(s); to reproduce run:
+pytest im_v2/common/data/client/test/test_historical_pq_clients.py::TestHistoricalPqByTileClient1::test_read_data1
+pytest im_v2/common/data/client/test/test_historical_pq_clients.py::TestHistoricalPqByTileClient1::test_read_data2
+pytest im_v2/common/data/client/test/test_historical_pq_clients.py::TestHistoricalPqByTileClient1::test_read_data3
+pytest im_v2/common/data/client/test/test_historical_pq_clients.py::TestHistoricalPqByTileClient1::test_read_data4
+pytest im_v2/common/data/client/test/test_historical_pq_clients.py::TestHistoricalPqByTileClient1::test_read_data5

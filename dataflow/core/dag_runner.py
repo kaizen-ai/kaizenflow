@@ -1,10 +1,8 @@
 """
 Import as:
 
-import dataflow.core.runners as dtfcorrunn
+import dataflow.core.dag_runner as dtfcodarun
 """
-
-# TODO(gp): @Grisha -> dag_runner.py
 
 import abc
 import logging
@@ -13,8 +11,8 @@ from typing import Generator, Optional, Tuple
 import pandas as pd
 
 import core.config as cconfig
-import dataflow.core.builders as dtfcorbuil
 import dataflow.core.dag as dtfcordag
+import dataflow.core.dag_builder as dtfcodabui
 import dataflow.core.node as dtfcornode
 import dataflow.core.result_bundle as dtfcorebun
 import dataflow.core.utils as dtfcorutil
@@ -24,8 +22,6 @@ import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
-
-# TODO(gp): @Grisha `start` / `end` -> `start_timestamp` / `end_timestamp`
 
 # #############################################################################
 
@@ -40,7 +36,7 @@ class AbstractDagRunner(abc.ABC):
     """
 
     def __init__(
-        self, config: cconfig.Config, dag_builder: dtfcorbuil.DagBuilder
+        self, config: cconfig.Config, dag_builder: dtfcodabui.DagBuilder
     ) -> None:
         """
         Constructor.
@@ -53,7 +49,7 @@ class AbstractDagRunner(abc.ABC):
         # Build DAG using DAG builder.
         # TODO(gp): Now a DagRunner builds and runs a DAG. This creates some coupling.
         #  Consider having a DagRunner accept a DAG however built and run it.
-        if isinstance(dag_builder, dtfcorbuil.DagBuilder):
+        if isinstance(dag_builder, dtfcodabui.DagBuilder):
             self._dag_builder = dag_builder
             self.dag = self._dag_builder.get_dag(self.config)
             _LOG.debug("dag=%s", self.dag)
@@ -223,17 +219,17 @@ class RollingFitPredictDagRunner(AbstractDagRunner):
     def __init__(
         self,
         config: cconfig.Config,
-        dag_builder: dtfcorbuil.DagBuilder,
-        start: hdateti.Datetime,
-        end: hdateti.Datetime,
+        dag_builder: dtfcodabui.DagBuilder,
+        start_timestamp: pd.Timestamp,
+        end_timestamp: pd.Timestamp,
         retraining_freq: str,
         retraining_lookback: int,
     ) -> None:
         """
         Constructor.
 
-        :param start: start of available data for use in training
-        :param end: end of available data for use in training
+        :param start_timestamp: start of available data for use in training
+        :param end_timestamp: end of available data for use in training
         :param retraining_freq: how often to retrain using Pandas frequency
             convention (e.g., `2B`)
         :param retraining_lookback: number of periods of past data to include
@@ -241,14 +237,14 @@ class RollingFitPredictDagRunner(AbstractDagRunner):
         """
         super().__init__(config, dag_builder)
         # Save input parameters.
-        self._start = start
-        self._end = end
+        self._start_timestamp = start_timestamp
+        self._end_timestamp = end_timestamp
         self._retraining_freq = retraining_freq
         self._retraining_lookback = retraining_lookback
         # Generate retraining dates.
         self._retraining_datetimes = self._generate_retraining_datetimes(
-            start=self._start,
-            end=self._end,
+            start_timestamp=self._start_timestamp,
+            end_timestamp=self._end_timestamp,
             retraining_freq=self._retraining_freq,
             retraining_lookback=self._retraining_lookback,
         )
@@ -330,8 +326,8 @@ class RollingFitPredictDagRunner(AbstractDagRunner):
 
     @staticmethod
     def _generate_retraining_datetimes(
-        start: hdateti.Datetime,
-        end: hdateti.Datetime,
+        start_timestamp: pd.Timestamp,
+        end_timestamp: pd.Timestamp,
         retraining_freq: str,
         retraining_lookback: int,
     ) -> pd.DatetimeIndex:
@@ -343,7 +339,7 @@ class RollingFitPredictDagRunner(AbstractDagRunner):
         :return: (re)training dates
         """
         # Populate an initial index of candidate retraining dates.
-        grid = pd.date_range(start=start, end=end, freq=retraining_freq)
+        grid = pd.date_range(start=start_timestamp, end=end_timestamp, freq=retraining_freq)
         # The ability to compute a nonempty `idx` is the first sanity-check.
         hdbg.dassert(
             not grid.empty, msg="Not enough data for requested training schedule!"
@@ -363,7 +359,7 @@ class RollingFitPredictDagRunner(AbstractDagRunner):
         # Trim end of date range back to `end`. This is needed because the
         # previous `shift()` also moves the end of the index.
         # TODO(Paul): Add back `end` for a fit-only step.
-        idx = idx[idx < end]
+        idx = idx[idx < end_timestamp]
         #
         hdbg.dassert(not idx.empty)
         return idx
@@ -389,9 +385,9 @@ class IncrementalDagRunner(AbstractDagRunner):
     def __init__(
         self,
         config: cconfig.Config,
-        dag_builder: dtfcorbuil.DagBuilder,
-        start: hdateti.Datetime,
-        end: hdateti.Datetime,
+        dag_builder: dtfcodabui.DagBuilder,
+        start_timestamp: pd.Timestamp,
+        end_timestamp: pd.Timestamp,
         freq: str,
         fit_state: cconfig.Config,
     ) -> None:
@@ -400,24 +396,24 @@ class IncrementalDagRunner(AbstractDagRunner):
 
         :param config: config for DAG
         :param dag_builder: `DagBuilder` instance
-        :param start: first prediction datetime_ (e.g., first time at which we
+        :param start_timestamp: first prediction datetime_ (e.g., first time at which we
             generate a prediction in `predict` mode, using all available data
             up to and including `start`)
-        :param end: last prediction datetime_
+        :param end_timestamp: last prediction datetime_
         :param freq: prediction frequency (typically the same as the frequency
             of the underlying DAG)
         :param fit_state: Config containing any learned state required for
             initializing the DAG
         """
         super().__init__(config, dag_builder)
-        self._start = start
-        self._end = end
+        self._start_timestamp = start_timestamp
+        self._end_timestamp = end_timestamp
         self._freq = freq
         self._fit_state = fit_state
         dtfcorvisi.set_fit_state(self.dag, self._fit_state)
         # Create predict range.
         self._date_range = pd.date_range(
-            start=self._start, end=self._end, freq=self._freq
+            start=self._start_timestamp, end=self._end_timestamp, freq=self._freq
         )
 
     def predict(self) -> Generator:
