@@ -50,6 +50,66 @@ class KibotClient(icdc.ImClient):
         # TODO(Dan): CmTask1246.
         return []
 
+    def _read_data_from_file(
+        self,
+        file_path: str,
+        extension: str,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+        s3fs: Optional[str],
+        **kwargs: Any,
+    ) -> pd.DataFrame:
+        """
+        Read `Kibot` data from specified file path.
+        """
+        if hs3.is_s3_path(file_path):
+            # Add s3fs argument to kwargs.
+            kwargs["s3fs"] = s3fs
+        # Read data.
+        if extension == "pq":
+            # Initialize list of filters.
+            filters = []
+            # Add filtering by start and/or end timestamp if specified.
+            # Timezone info is dropped since input data does not have it.
+            if start_ts:
+                filters.append(("datetime", ">=", start_ts.tz_localize(None)))
+            if end_ts:
+                filters.append(("datetime", "<=", end_ts.tz_localize(None)))
+            if filters:
+                # Add filters to kwargs if any were set.
+                kwargs["filters"] = filters
+            # Add columns to read to kwargs.
+            kwargs["columns"] = ["open", "high", "low", "close", "vol"]
+            # Load and normalize data.
+            data = cpanh.read_parquet(file_path, **kwargs)
+            data = self._apply_kibot_parquet_normalization(data)
+        elif extension in ["csv", "csv.gz"]:
+            # Avoid using the 1st data row as columns and set column names.
+            kwargs["header"] = None
+            kwargs["names"] = [
+                "date",
+                "time",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+            ]
+            # Load and normalize data.
+            data = cpanh.read_csv(file_path, **kwargs)
+            data = self._apply_kibot_csv_normalization(data)
+            # Filter by dates if specified.
+            if start_ts:
+                data = data[data.index >= start_ts]
+            if end_ts:
+                data = data[data.index <= end_ts]
+        else:
+            raise ValueError(
+                f"Unsupported extension {extension}. "
+                f"Supported extensions are: `pq`, `csv`, `csv.gz`"
+            )
+        return data
+
     @staticmethod
     def _apply_kibot_csv_normalization(data: pd.DataFrame) -> pd.DataFrame:
         """
@@ -172,9 +232,11 @@ class KibotEquitiesCsvParquetByAssetClient(
             self._unadjusted = False
         else:
             self._unadjusted = unadjusted
-        # Set s3fs parameter value if aws profile parameter is specified.
+        # Set s3fs parameter value based on aws profile parameter.
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
+        else:
+            self._s3fs = None
 
     def _read_data_for_one_symbol(
         self,
@@ -199,52 +261,10 @@ class KibotEquitiesCsvParquetByAssetClient(
             self._unadjusted,
             file_path,
         )
-        if hs3.is_s3_path(file_path):
-            # Add s3fs argument to kwargs.
-            kwargs["s3fs"] = self._s3fs
-        # Read data.
-        if self._extension == "pq":
-            # Initialize list of filters.
-            filters = []
-            # Add filtering by start and/or end timestamp if specified.
-            # Timezone info is dropped since input data does not have it.
-            if start_ts:
-                filters.append(("datetime", ">=", start_ts.tz_localize(None)))
-            if end_ts:
-                filters.append(("datetime", "<=", end_ts.tz_localize(None)))
-            if filters:
-                # Add filters to kwargs if any were set.
-                kwargs["filters"] = filters
-            # Add columns to read to kwargs.
-            kwargs["columns"] = ["open", "high", "low", "close", "vol"]
-            # Load and normalize data.
-            data = cpanh.read_parquet(file_path, **kwargs)
-            data = self._apply_kibot_parquet_normalization(data)
-        elif self._extension in ["csv", "csv.gz"]:
-            # Avoid using the 1st data row as columns and set column names.
-            kwargs["header"] = None
-            kwargs["names"] = [
-                "date",
-                "time",
-                "open",
-                "high",
-                "low",
-                "close",
-                "volume",
-            ]
-            # Load and normalize data.
-            data = cpanh.read_csv(file_path, **kwargs)
-            data = self._apply_kibot_csv_normalization(data)
-            # Filter by dates if specified.
-            if start_ts:
-                data = data[data.index >= start_ts]
-            if end_ts:
-                data = data[data.index <= end_ts]
-        else:
-            raise ValueError(
-                f"Unsupported extension {self._extension}. "
-                f"Supported extensions are: `pq`, `csv`, `csv.gz`"
-            )
+        # Read data from the file path.
+        data = self._read_data_from_file(
+            file_path, self._extension, start_ts, end_ts, self._s3fs, **kwargs
+        )
         return data
 
     def _get_file_path(
@@ -344,9 +364,11 @@ class KibotFuturesCsvParquetByAssetClient(
         _contract_types = ["continuous", "expiry"]
         hdbg.dassert_in(self._contract_type, _contract_types)
         #
-        # Set s3fs parameter value if aws profile parameter is specified.
+        # Set s3fs parameter value based on aws profile parameter.
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
+        else:
+            self._s3fs = None
 
     def _read_data_for_one_symbol(
         self,
@@ -370,52 +392,10 @@ class KibotFuturesCsvParquetByAssetClient(
             self._contract_type,
             file_path,
         )
-        if hs3.is_s3_path(file_path):
-            # Add s3fs argument to kwargs.
-            kwargs["s3fs"] = self._s3fs
-        # Read data.
-        if self._extension == "pq":
-            # Initialize list of filters.
-            filters = []
-            # Add filtering by start and/or end timestamp if specified.
-            # Timezone info is dropped since input data does not have it.
-            if start_ts:
-                filters.append(("datetime", ">=", start_ts.tz_localize(None)))
-            if end_ts:
-                filters.append(("datetime", "<=", end_ts.tz_localize(None)))
-            if filters:
-                # Add filters to kwargs if any were set.
-                kwargs["filters"] = filters
-            # Add columns to read to kwargs.
-            kwargs["columns"] = ["open", "high", "low", "close", "vol"]
-            # Load and normalize data.
-            data = cpanh.read_parquet(file_path, **kwargs)
-            data = self._apply_kibot_parquet_normalization(data)
-        elif self._extension in ["csv", "csv.gz"]:
-            # Avoid using the 1st data row as columns and set column names.
-            kwargs["header"] = None
-            kwargs["names"] = [
-                "date",
-                "time",
-                "open",
-                "high",
-                "low",
-                "close",
-                "volume",
-            ]
-            # Load and normalize data.
-            data = cpanh.read_csv(file_path, **kwargs)
-            data = self._apply_kibot_csv_normalization(data)
-            # Filter by dates if specified.
-            if start_ts:
-                data = data[data.index >= start_ts]
-            if end_ts:
-                data = data[data.index <= end_ts]
-        else:
-            raise ValueError(
-                f"Unsupported extension {self._extension}. "
-                f"Supported extensions are: `pq`, `csv`, `csv.gz`"
-            )
+        # Read data from the file path.
+        data = self._read_data_from_file(
+            file_path, self._extension, start_ts, end_ts, self._s3fs, **kwargs
+        )
         return data
 
     def _get_file_path(self, trade_symbol: str) -> str:
