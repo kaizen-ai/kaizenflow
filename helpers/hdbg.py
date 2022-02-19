@@ -73,10 +73,13 @@ def dfatal(message: str, assertion_type: Optional[Any] = None) -> None:
 #   defined as `lambda x: 0`.
 
 
-# INVARIANT:
+# INVARIANTS:
 # - `dassert_COND()` checks that COND is true, and raises if COND is False
 # - For this reason the condition inside the `dassert` is typically in the form
 #   `if not (...):`, even this might annoy the linter or look weird
+# - The parameter `only_warning` is to report a problem but keep going.
+#   This can be used (sparingly) for production when we want to be aware of
+#   certain conditions without aborting.
 
 
 def _to_msg(msg: Optional[str], *args: Any) -> str:
@@ -101,8 +104,16 @@ def _to_msg(msg: Optional[str], *args: Any) -> str:
 
 
 def _dfatal(
-    txt: Union[str, Iterable[str]], msg: Optional[str], *args: Any
+    txt: Union[str, Iterable[str]],
+    msg: Optional[str],
+    *args: Any,
+    only_warning: bool = False,
 ) -> None:
+    """
+    Abort execution.
+
+    :param only_warning: issue a warning instead of aborting
+    """
     dfatal_txt = "* Failed assertion *\n"
     # TODO(gp): This should be an iterable.
     if isinstance(txt, list):
@@ -114,10 +125,21 @@ def _dfatal(
         if not dfatal_txt.endswith("\n"):
             dfatal_txt += "\n"
         dfatal_txt += msg
-    dfatal(dfatal_txt)
+    if only_warning:
+        # Only warn.
+        dfatal_txt += "\nContinuing as per user request with only_warning=True"
+        _LOG.warning(dfatal_txt)
+    else:
+        # Abort.
+        dfatal(dfatal_txt)
 
 
-def dassert(cond: Any, msg: Optional[str] = None, *args: Any) -> None:
+def dassert(
+    cond: Any,
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
+) -> None:
     # Handle the somehow frequent case of using `dassert` instead of another
     # one, e.g., `dassert(y, list)`
     if msg is not None:
@@ -126,55 +148,75 @@ def dassert(cond: Any, msg: Optional[str] = None, *args: Any) -> None:
         ), f"You passed '{msg}' or type '{type(msg)}' instead of str"
     if not cond:
         txt = "cond=%s" % cond
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 def dassert_eq(
-    val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
+    val1: Any,
+    val2: Any,
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
 ) -> None:
     cond = val1 == val2
     if not cond:
         txt = "'%s'\n==\n'%s'" % (val1, val2)
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 def dassert_ne(
-    val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
+    val1: Any,
+    val2: Any,
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
 ) -> None:
     cond = val1 != val2
     if not cond:
         txt = "'%s'\n!=\n'%s'" % (val1, val2)
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 def dassert_imply(
-    val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
+    val1: Any,
+    val2: Any,
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
 ) -> None:
     cond = not val1 or val2
     if not cond:
         txt = "'%s' implies '%s'" % (val1, val2)
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 # Comparison related.
 
 
 def dassert_lt(
-    val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
+    val1: Any,
+    val2: Any,
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
 ) -> None:
     cond = val1 < val2
     if not cond:
         txt = "%s < %s" % (val1, val2)
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 def dassert_lte(
-    val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
+    val1: Any,
+    val2: Any,
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
 ) -> None:
     cond = val1 <= val2
     if not cond:
         txt = "%s <= %s" % (val1, val2)
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 def dassert_lgt(
@@ -185,6 +227,7 @@ def dassert_lgt(
     upper_bound_closed: bool,
     msg: Optional[str] = None,
     *args: Any,
+    only_warning: bool = False,
 ) -> None:
     """
     Assert that `lower_bound <= x <= upper_bound`.
@@ -194,46 +237,63 @@ def dassert_lgt(
     """
     # `lower_bound <= or < x`.
     if lower_bound_closed:
-        dassert_lte(lower_bound, x, msg, *args)
+        dassert_lte(lower_bound, x, msg, *args, only_warning=only_warning)
     else:
-        dassert_lt(lower_bound, x, msg, *args)
+        dassert_lt(lower_bound, x, msg, *args, only_warning=only_warning)
     # `x <= or < upper_bound`.
     if upper_bound_closed:
-        dassert_lte(x, upper_bound, msg, *args)
+        dassert_lte(x, upper_bound, msg, *args, only_warning=only_warning)
     else:
-        dassert_lt(x, upper_bound, msg, *args)
+        dassert_lt(x, upper_bound, msg, *args, only_warning=only_warning)
 
 
 def dassert_is_proportion(
-    x: float, msg: Optional[str] = None, *args: Any
+    x: float, msg: Optional[str] = None, *args: Any, only_warning: bool = False
 ) -> None:
     """
     Assert that `0 <= x <= 1`.
     """
     lower_bound_closed = True
     upper_bound_closed = True
-    dassert_lgt(0, x, 1, lower_bound_closed, upper_bound_closed, msg, *args)
+    dassert_lgt(
+        0,
+        x,
+        1,
+        lower_bound_closed,
+        upper_bound_closed,
+        msg,
+        *args,
+        only_warning=only_warning,
+    )
 
 
 # Membership.
 
 
 def dassert_in(
-    value: Any, valid_values: Any, msg: Optional[str] = None, *args: Any
+    value: Any,
+    valid_values: Any,
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
 ) -> None:
     cond = value in valid_values
     if not cond:
         txt = "'%s' in '%s'" % (value, valid_values)
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 def dassert_not_in(
-    value: Any, valid_values: Iterable[Any], msg: Optional[str] = None, *args: Any
+    value: Any,
+    valid_values: Iterable[Any],
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
 ) -> None:
     cond = value not in valid_values
     if not cond:
         txt = "'%s' not in '%s'" % (value, valid_values)
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 # Type related.
@@ -244,41 +304,54 @@ def dassert_is(
     val2: Optional[Any],
     msg: Optional[str] = None,
     *args: Any,
+    only_warning: bool = False,
 ) -> None:
     cond = val1 is val2
     if not cond:
         txt = "'%s' is '%s'" % (val1, val2)
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 def dassert_is_not(
-    val1: Any, val2: Optional[Any], msg: Optional[str] = None, *args: Any
+    val1: Any,
+    val2: Optional[Any],
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
 ) -> None:
     cond = val1 is not val2
     if not cond:
         txt = "'%s' is not '%s'" % (val1, val2)
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 def dassert_type_is(
-    val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
+    val1: Any,
+    val2: Any,
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
 ) -> None:
     # pylint: disable=unidiomatic-typecheck
     cond = type(val1) is val2
     if not cond:
         txt = "Type of '%s' is '%s' instead of '%s'" % (val1, type(val1), val2)
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 # TODO(gp): This is redundant with dassert_isinstance(..., (str, float)).
 def dassert_type_in(
-    val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
+    val1: Any,
+    val2: Any,
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
 ) -> None:
     # pylint: disable=unidiomatic-typecheck
     cond = type(val1) in val2
     if not cond:
         txt = "Type of '%s' is '%s' not in '%s'" % (val1, type(val1), val2)
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 def dassert_isinstance(
@@ -286,6 +359,7 @@ def dassert_isinstance(
     val2: Union[type, Iterable[type]],
     msg: Optional[str] = None,
     *args: Any,
+    only_warning: bool = False,
 ) -> None:
     cond = isinstance(val1, val2)  # type: ignore[arg-type]
     if not cond:
@@ -294,7 +368,7 @@ def dassert_isinstance(
             type(val1),
             val2,
         )
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 def dassert_issubclass(
@@ -302,6 +376,7 @@ def dassert_issubclass(
     val2: Union[type, Iterable[type]],
     msg: Optional[str] = None,
     *args: Any,
+    only_warning: bool = False,
 ) -> None:
     """
     Assert that an object `val1` is a subclass of `val2`.
@@ -313,13 +388,14 @@ def dassert_issubclass(
             val1.__class__.__name__,
             val2,
         )
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 def dassert_callable(
     func: Any,
     msg: Optional[str] = None,
     *args: Any,
+    only_warning: bool = False,
 ) -> None:
     """
     Assert that an object `val1` is callable.
@@ -330,7 +406,7 @@ def dassert_callable(
             str(func),
             str(type(func)),
         )
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 # Set related.
@@ -339,7 +415,7 @@ def dassert_callable(
 # TODO(gp): A more general solution is to have a function that traverses an obj
 #  and creates a corresponding obj only with deterministic data structures (e.g.,
 #  converting sets and dicts to sorted lists). Then we can print with `pprint`.
-def _set_to_str(set_: Set[Any]) -> str:
+def _set_to_str(set_: Set[Any], thr: Optional[int] = 20) -> str:
     """
     Return a string with the ordered content of a set.
 
@@ -356,14 +432,26 @@ def _set_to_str(set_: Set[Any]) -> str:
     ```
     """
     list_ = sorted(list(set_))
-    return str(list_)
+    # If sets have less than `thr` elements print them as well, otherwise
+    # print the beginning / end.
+    if thr is not None and len(list_) > thr:
+        txt = "%s [%s, ... %s]" % (len(list_), min(list_), max(list_))
+    else:
+        txt = str(list_)
+    return txt
 
 
 def dassert_set_eq(
-    val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
+    val1: Any,
+    val2: Any,
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
 ) -> None:
     """
     Check that `val1` has the same elements as `val2`, raise otherwise.
+
+    :param only_warning: issue a warning instead of aborting
     """
     val1 = set(val1)
     val2 = set(val2)
@@ -372,18 +460,19 @@ def dassert_set_eq(
         txt = []
         txt.append("val1 - val2=" + _set_to_str(val1.difference(val2)))
         txt.append("val2 - val1=" + _set_to_str(val2.difference(val1)))
-        # If both sets have less than `thr` elements print them as well.
-        thr = 20
-        if max(len(val1), len(val2)) < thr:
-            txt.append("val1=" + _set_to_str(val1))
-            txt.append("set eq")
-            txt.append("val2=" + _set_to_str(val2))
-        _dfatal(txt, msg, *args)
+        txt.append("val1=" + _set_to_str(val1))
+        txt.append("set eq")
+        txt.append("val2=" + _set_to_str(val2))
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 # TODO(gp): -> dassert_issubset to match Python set function.
 def dassert_is_subset(
-    val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
+    val1: Any,
+    val2: Any,
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
 ) -> None:
     """
     Check that `val1` is a subset of `val2`, raise otherwise.
@@ -396,12 +485,16 @@ def dassert_is_subset(
         txt.append("issubset")
         txt.append("val2=" + _set_to_str(val2))
         txt.append("val1 - val2=" + _set_to_str(val1.difference(val2)))
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 # TODO(gp): -> dassert_no_intersection to match other functions.
 def dassert_not_intersection(
-    val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
+    val1: Any,
+    val2: Any,
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
 ) -> None:
     """
     Check that `val1` has no intersection `val2`, raise otherwise.
@@ -414,14 +507,14 @@ def dassert_not_intersection(
         txt.append("has no intersection")
         txt.append("val2=" + _set_to_str(val2))
         txt.append("val1 - val2=" + _set_to_str(val1.difference(val2)))
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 # Array related.
 
 
 def dassert_no_duplicates(
-    val1: Any, msg: Optional[str] = None, *args: Any
+    val1: Any, msg: Optional[str] = None, *args: Any, only_warning: bool = False
 ) -> None:
     cond = len(set(val1)) == len(val1)
     if not cond:
@@ -433,7 +526,7 @@ def dassert_no_duplicates(
         txt.append("val1=\n" + pprint.pformat(val1))
         txt.append("has duplicates")
         txt.append(",".join(map(str, dups)))
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 def dassert_is_sorted(
@@ -441,6 +534,7 @@ def dassert_is_sorted(
     sort_kwargs: Optional[Dict[Any, Any]] = None,
     msg: Optional[str] = None,
     *args: Any,
+    only_warning: bool = False,
 ) -> None:
     # TODO(gp): Extend for pd.Series using the proper method.
     dassert_isinstance(val1, (list, tuple))
@@ -452,11 +546,15 @@ def dassert_is_sorted(
         txt.append("val1=\n" + pprint.pformat(val1))
         txt.append("is not sorted")
         txt.append("sorted(val1)=\n" + pprint.pformat(sorted_val1))
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 def dassert_eq_all(
-    val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
+    val1: Any,
+    val2: Any,
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
 ) -> None:
     val1 = list(val1)
     val2 = list(val2)
@@ -469,7 +567,7 @@ def dassert_eq_all(
         # txt += "\ndiff=%s" % mask.sum()
         # txt += "\n%s" % val1[mask]
         # txt += "\n%s" % val2[mask]
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 def _get_first_type(obj: Iterable, tag: str) -> Type:
@@ -490,6 +588,7 @@ def dassert_array_has_same_type_element(
     only_first_elem: bool,
     msg: Optional[str] = None,
     *args: Any,
+    only_warning: bool = False,
 ) -> None:
     """
     Check that two objects iterables like arrays (e.g., pd.Index) have elements
@@ -515,7 +614,7 @@ def dassert_array_has_same_type_element(
             "type(obj1)='%s' is different from "
             "type(obj2)='%s'" % (obj1_first_type, obj2_first_type)
         )
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 def dassert_container_type(
@@ -524,6 +623,7 @@ def dassert_container_type(
     elem_type: Optional[Any],
     msg: Optional[str] = None,
     *args: Any,
+    only_warning: bool = False,
 ) -> None:
     """
     Assert `obj` is a certain type of container containing certain type of
@@ -537,37 +637,52 @@ def dassert_container_type(
     msg = msg.rstrip("\n") + "\nobj='%s'" % str(obj)
     # Check container.
     if container_type is not None:
-        dassert_isinstance(obj, container_type, msg, *args)
+        dassert_isinstance(
+            obj, container_type, msg, *args, only_warning=only_warning
+        )
     # Check the elements of the container.
     if elem_type is not None:
         for elem in obj:
-            dassert_isinstance(elem, elem_type, msg, *args)
+            dassert_isinstance(
+                elem, elem_type, msg, *args, only_warning=only_warning
+            )
 
 
-# TODO(gp): Replace calls to this with calls to `dassert_container_type()`.
+# TODO(gp): @all Replace calls to this with calls to `dassert_container_type()`.
 def dassert_list_of_strings(
-    list_: List[str], msg: Optional[str] = None, *args: Any
+    list_: List[str],
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
 ) -> None:
     # TODO(gp): Allow iterable?
-    dassert_isinstance(list_, list, msg, *args)
+    dassert_isinstance(list_, list, msg, *args, only_warning=only_warning)
     for elem in list_:
-        dassert_isinstance(elem, str, msg, *args)
+        dassert_isinstance(elem, str, msg, *args, only_warning=only_warning)
 
 
 # File related.
 
 
 # TODO(*): Deprecate this and use only `dassert_{file,dir}_exists()`.
-def dassert_exists(file_name: str, msg: Optional[str] = None, *args: Any) -> None:
+def dassert_exists(
+    file_name: str,
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
+) -> None:
     file_name = os.path.abspath(file_name)
     if not os.path.exists(file_name):
         txt = []
         txt.append("File '%s' doesn't exist" % file_name)
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 def dassert_file_exists(
-    file_name: str, msg: Optional[str] = None, *args: Any
+    file_name: str,
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
 ) -> None:
     """
     Assert unless `file_name` exists and it's a file and not a directory.
@@ -577,16 +692,19 @@ def dassert_file_exists(
     exists = os.path.exists(file_name)
     if not exists:
         txt = f"File '{file_name}' doesn't exist"
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
     # `file_name` is a file.
     is_file = os.path.isfile(file_name)
     if not is_file:
         txt = f"'{file_name}' is not a file"
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 def dassert_dir_exists(
-    dir_name: str, msg: Optional[str] = None, *args: Any
+    dir_name: str,
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
 ) -> None:
     """
     Assert unless `dir_name` exists and it's a directory.
@@ -596,16 +714,19 @@ def dassert_dir_exists(
     exists = os.path.exists(dir_name)
     if not exists:
         txt = f"Dir '{dir_name}' doesn't exist"
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
     # `dir_name` is a directory.
     is_dir = os.path.isdir(dir_name)
     if not is_dir:
         txt = f"'{dir_name}' is not a dir"
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 def dassert_not_exists(
-    file_name: str, msg: Optional[str] = None, *args: Any
+    file_name: str,
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
 ) -> None:
     """
     Ensure that a file or a dir `file_name` doesn't exist, raise otherwise.
@@ -620,12 +741,12 @@ def dassert_not_exists(
     if not (not os.path.exists(file_name)):
         txt = []
         txt.append("file='%s' already exists" % file_name)
-        _dfatal(txt, msg, *args)
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 # TODO(gp): Does it work for a file ending in ".pkl.gz"? Add unit test.
 def dassert_file_extension(
-    file_name: str, extensions: Union[str, List[str]]
+    file_name: str, extensions: Union[str, List[str]], only_warning: bool = False
 ) -> None:
     """
     Ensure that file has one of the given extensions.
@@ -646,6 +767,7 @@ def dassert_file_extension(
         "Invalid extension '%s' for file '%s'",
         act_ext,
         file_name,
+        only_warning=only_warning,
     )
 
 
