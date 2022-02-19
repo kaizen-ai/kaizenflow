@@ -28,6 +28,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(gp): -> Portfolio?
 class AbstractPortfolio(abc.ABC):
     """
     Store holdings over time, e.g., many shares of each asset are owned at any

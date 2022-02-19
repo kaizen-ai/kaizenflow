@@ -7,8 +7,7 @@ import market_data.abstract_market_data as mdabmada
 import abc
 import asyncio
 import logging
-import numbers
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -22,6 +21,17 @@ _LOG = logging.getLogger(__name__)
 
 
 _LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
+
+
+# #############################################################################
+
+
+AssetId = int
+
+
+def dassert_valid_asset_ids(asset_ids: Optional[Iterable[AssetId]]) -> None:
+    if asset_ids is not None:
+        hdbg.dassert_container_type(asset_ids, (np.ndarray, list), (int, np.int64))
 
 
 # #############################################################################
@@ -111,12 +121,7 @@ class MarketData(abc.ABC):
         """
         _LOG.debug("")
         self._asset_id_col = asset_id_col
-        if asset_ids is not None:
-            # `asset_ids` should be integers, we use `numbers.Integral` here
-            # instead of native `int` since it is more general and for example
-            # `numpy.int64` is not `int` and the check fails. Same for `asset_ids`
-            # type assertions below.
-            hdbg.dassert_container_type(asset_ids, list, numbers.Integral)
+        dassert_valid_asset_ids(asset_ids)
         self._asset_ids = asset_ids
         self._start_time_col_name = start_time_col_name
         self._end_time_col_name = end_time_col_name
@@ -191,8 +196,7 @@ class MarketData(abc.ABC):
         :param ts: the timestamp to filter on
         :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
         """
-        if asset_ids is not None:
-            hdbg.dassert_container_type(asset_ids, list, numbers.Integral)
+        dassert_valid_asset_ids(asset_ids)
         start_ts = ts - pd.Timedelta("1S")
         end_ts = ts + pd.Timedelta("1S")
         df = self.get_data_for_interval(
@@ -239,7 +243,7 @@ class MarketData(abc.ABC):
         # Resolve the asset ids.
         if asset_ids is None:
             asset_ids = self._asset_ids
-        hdbg.dassert_container_type(asset_ids, list, numbers.Integral)
+        dassert_valid_asset_ids(asset_ids)
         # Check the requested interval.
         hdateti.dassert_is_valid_interval(
             start_ts, end_ts, left_close, right_close
@@ -302,7 +306,7 @@ class MarketData(abc.ABC):
         This function should be called `get_twa_price()` or `get_twap()`, but alas
         TWAP is often used as an adjective for price.
         """
-        hdbg.dassert_container_type(asset_ids, list, numbers.Integral)
+        dassert_valid_asset_ids(asset_ids)
         # Get the slice (start_ts, end_ts] of prices.
         left_close = False
         right_close = True
@@ -340,7 +344,7 @@ class MarketData(abc.ABC):
         E.g., if the last end time is 9:35 and `bar_duration=5T`, then
         we compute TWAP for (9:30, 9:35].
         """
-        hdbg.dassert_container_type(asset_ids, list, numbers.Integral)
+        dassert_valid_asset_ids(asset_ids)
         last_end_time = self.get_last_end_time()
         _LOG.info("last_end_time=%s", last_end_time)
         offset = pd.Timedelta(bar_duration)
@@ -384,7 +388,7 @@ class MarketData(abc.ABC):
         """
         Get last price for `asset_ids` using column `col_name` (e.g., "close")
         """
-        hdbg.dassert_container_type(asset_ids, list, numbers.Integral)
+        dassert_valid_asset_ids(asset_ids)
         # TODO(Paul): Use a to-be-written `get_last_start_time()` instead.
         last_end_time = self.get_last_end_time()
         _LOG.info("last_end_time=%s", last_end_time)

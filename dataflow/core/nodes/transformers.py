@@ -22,7 +22,6 @@ import numpy as np
 import pandas as pd
 
 import core.finance as cofinanc
-import core.signal_processing as csigproc
 import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.base as dtfconobas
 import dataflow.core.utils as dtfcorutil
@@ -763,7 +762,7 @@ class Resample(dtfconobas.Transformer):
         self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
-        resampler = csigproc.resample(
+        resampler = cofinanc.resample(
             df, rule=self._rule, **self._resample_kwargs
         )
         func = getattr(resampler, self._agg_func)

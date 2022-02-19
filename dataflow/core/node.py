@@ -110,10 +110,14 @@ class Node(NodeInterface):
     # TODO(gp): inputs -> input_names, outputs -> output_names
     def __init__(
         self,
+        # TODO(gp): Use *args, **args since the interface is the same.
         nid: NodeId,
         inputs: Optional[List[str]] = None,
         outputs: Optional[List[str]] = None,
     ) -> None:
+        """
+        Implement the same interface as `NodeInterface`.
+        """
         super().__init__(nid, inputs, outputs)
         # Dictionary method name -> output node name -> output.
         self._output_vals: Dict[Method, NodeOutput] = {}
@@ -146,6 +150,77 @@ class Node(NodeInterface):
         """
         hdbg.dassert_in(method, self._output_vals.keys())
         return self._output_vals[method]
+
+    def free(self, *, only_warning: bool = True) -> None:
+        """
+        Deallocate all the data stored inside the node.
+
+        Note that this should be called only after the node is not needed anymore.
+
+        :param only_warning=True: raise an assertion or a warning if
+            the memory is not actually reported as deallocated.
+        """
+        # Minimize the dependencies by importing locally since this is a method
+        # called rarely, for now.
+        import gc
+
+        import helpers.hintrospection as hintros
+        import helpers.hlogging as hloggin
+
+        txt = []
+
+        def _log(msg: str) -> None:
+            txt.append(msg)
+            # _LOG.debug("%s", msg)
+            _LOG.info("%s", msg)
+
+        # Report the status before.
+        rss_mem_before_in_gb = hloggin.get_memory_usage(process=None)[0]
+        memory_as_str = str(hloggin.get_memory_usage_as_str(process=None))
+        msg = "nid='%s', before free: memory=%s" % (self._nid, memory_as_str)
+        _log(msg)
+        # Traverse the data structure accumulating used memory.
+        rss_used_mem_in_gb = 0.0
+        for method in self._output_vals.keys():
+            for name in self._output_vals[method].keys():
+                obj = self._output_vals[method][name]
+                used_mem_tmp = obj.memory_usage(deep=True).sum()
+                _LOG.debug(
+                    "Removing %s:%s -> type=%s, mem=%s refs=%s"
+                    % (
+                        method,
+                        name,
+                        type(obj),
+                        hintros.format_size(used_mem_tmp),
+                        gc.get_referrers(obj),
+                    )
+                )
+                rss_used_mem_in_gb += used_mem_tmp / (1024 ** 3)
+        # Remove all the outstanding references to the objects.
+        del obj
+        del self._output_vals
+        # Force garbage collection.
+        gc.collect()
+        #
+        rss_mem_after_in_gb = hloggin.get_memory_usage(process=None)[0]
+        memory_as_str = str(hloggin.get_memory_usage_as_str(process=None))
+        msg = "nid='%s', after free: memory=%s" % (self._nid, memory_as_str)
+        _log(msg)
+        # We should have deallocated at least 90 of the used memory by the node.
+        rss_mem_diff_in_gb = rss_mem_before_in_gb - rss_mem_after_in_gb
+        hdbg.dassert_lte(0, rss_used_mem_in_gb)
+        msg = (
+            "nid='%s' successfully deallocated releasing %.1f GB out of %.1f GB"
+            % (self._nid, rss_mem_diff_in_gb, rss_used_mem_in_gb)
+        )
+        _log(msg)
+        txt = "\n".join(txt)
+        hdbg.dassert_lte(
+            0.9 * rss_used_mem_in_gb,
+            rss_mem_diff_in_gb,
+            msg=txt,
+            only_warning=only_warning,
+        )
 
     def _store_output(self, method: Method, output_name: str, value: Any) -> None:
         """

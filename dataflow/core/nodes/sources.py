@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 import core.artificial_signal_generators as carsigen
-import core.finance as cofinanc
+import core.statistics as costatis
 import core.pandas_helpers as cpanh
 import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.base as dtfconobas
