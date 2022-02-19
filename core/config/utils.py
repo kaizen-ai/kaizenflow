@@ -23,7 +23,10 @@ def check_no_dummy_values(config: cconconf.Config) -> bool:
     Assert if there are no `cconconf.DUMMY` values.
     """
     for key, val in hdict.get_nested_dict_iterator(config.to_dict()):
-        # (k, v) looks like `(('load_prices', 'source_node_name'), 'kibot_equities')`.
+        # (k, v) looks like:
+        # ```
+        # (('load_prices', 'source_node_name'), 'kibot_equities')
+        # ```
         _LOG.debug(hprint.to_str("key val"))
         hdbg.dassert_ne(
             val,
@@ -57,6 +60,7 @@ def configs_to_str(configs: List[cconconf.Config]) -> str:
     return res
 
 
+# TODO(gp): This should be a private method of the method below.
 def get_config_from_flattened_dict(
     flattened: Dict[Tuple[str], Any]
 ) -> cconconf.Config:
@@ -74,6 +78,7 @@ def get_config_from_flattened_dict(
     return config
 
 
+# TODO(gp): This method belongs should be Config.from_dict()
 def get_config_from_nested_dict(nested: Dict[str, Any]) -> cconconf.Config:
     """
     Build a `Config` from a nested dict.

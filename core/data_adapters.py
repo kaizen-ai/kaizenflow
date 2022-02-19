@@ -18,8 +18,8 @@ _LOG = logging.getLogger(__name__)
 
 
 if True:
-    # TODO(gp): @Grisha -> gluonts/data_adapters.py
-    # TODO(gp): @Grisha Remove this `if True`
+    # TODO(gp): @all -> gluonts/data_adapters.py
+    # TODO(gp): @all Remove this `if True`
     import gluonts
 
     #
@@ -307,7 +307,7 @@ if True:
 # #############################################################################
 
 
-# TODO(gp): @Grisha -> sklearn/data_adapters.py
+# TODO(gp): @all -> sklearn/data_adapters.py
 
 
 def transform_to_sklearn(df: pd.DataFrame, cols: List[Any]) -> np.array:

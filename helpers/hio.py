@@ -27,7 +27,7 @@ import helpers.hsystem as hsystem
 _LOG = logging.getLogger(__name__)
 
 # Set logging level of this file.
-# _LOG.setLevel(logging.INFO)
+_LOG.setLevel(logging.INFO)
 
 # #############################################################################
 # Glob.

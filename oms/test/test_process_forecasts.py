@@ -6,7 +6,7 @@ from typing import List, Tuple, Union
 import pandas as pd
 import pytest
 
-import core.signal_processing as csigproc
+import core.finance as cofinanc
 import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
 import helpers.hunit_test as hunitest
@@ -448,7 +448,7 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
             right_close=True,
         )["price"]
         #
-        twap = csigproc.resample(price, rule="5T").mean().rename("twap")
+        twap = cofinanc.resample(price, rule="5T").mean().rename("twap")
         rets = twap.pct_change().rename("rets")
         predictions_srs = predictions[asset_id].rename("prediction")
         research_pnl = (

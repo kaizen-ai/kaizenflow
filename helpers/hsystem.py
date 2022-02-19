@@ -23,6 +23,8 @@ import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
+# Set logging level of this file.
+_LOG.setLevel(logging.INFO)
 
 # #############################################################################
 
