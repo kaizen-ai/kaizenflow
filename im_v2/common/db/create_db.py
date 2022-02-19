@@ -59,9 +59,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Create DB with all tables.
     db_name = args.db_name
     overwrite = args.overwrite
-    imvcddbut.create_im_database(
-        db_connection, db_name, overwrite=overwrite
-    )
+    imvcddbut.create_im_database(db_connection, db_name, overwrite=overwrite)
 
 
 if __name__ == "__main__":

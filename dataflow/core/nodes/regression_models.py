@@ -11,8 +11,8 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 
-import core.statistics as costatis
 import core.signal_processing as csigproc
+import core.statistics as costatis
 import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.base as dtfconobas
 import dataflow.core.utils as dtfcorutil

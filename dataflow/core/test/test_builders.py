@@ -3,10 +3,10 @@ import logging
 import numpy as np
 
 import core.config as cconfig
-import dataflow.core.dag_builder_example as dtfcdabuex
 import dataflow.core.dag_adapter as dtfcodaada
-import dataflow.core.nodes.sources as dtfconosou
+import dataflow.core.dag_builder_example as dtfcdabuex
 import dataflow.core.dag_runner as dtfcodarun
+import dataflow.core.nodes.sources as dtfconosou
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 

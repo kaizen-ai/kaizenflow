@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.finance.prediction_processing as cfstprdf
+import core.finance.prediction_processing as cfiprpro
 """
 import datetime
 import logging

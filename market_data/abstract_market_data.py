@@ -31,7 +31,9 @@ AssetId = int
 
 def dassert_valid_asset_ids(asset_ids: Optional[Iterable[AssetId]]) -> None:
     if asset_ids is not None:
-        hdbg.dassert_container_type(asset_ids, (np.ndarray, list), (int, np.int64))
+        hdbg.dassert_container_type(
+            asset_ids, (np.ndarray, list), (int, np.int64)
+        )
 
 
 # #############################################################################

@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union, cast
 import numpy as np
 import pandas as pd
 
-import core.finance.prediction_processing as cfstprdf
+import core.finance.prediction_processing as cfiprpro
 import helpers.hdbg as hdbg
 import helpers.htypes as htypes
 
@@ -415,10 +415,10 @@ def compute_twap_vwap(
         bar_volume.name = "volume"
         dfs.append(bar_volume)
     if add_bar_start_timestamps:
-        bar_start_timestamps = cfstprdf.compute_bar_start_timestamps(vwap)
+        bar_start_timestamps = cfiprpro.compute_bar_start_timestamps(vwap)
         dfs.append(bar_start_timestamps)
     if add_epoch:
-        epoch = cfstprdf.compute_epoch(vwap)
+        epoch = cfiprpro.compute_epoch(vwap)
         dfs.append(epoch)
     df_out = pd.concat(dfs, axis=1)
     return df_out

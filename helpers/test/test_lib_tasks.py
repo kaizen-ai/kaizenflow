@@ -1812,9 +1812,7 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
         #  contain `pytest` are included. This is done to remove `This
         #  code is not in sync with the container ...` that typically
         #  appear while running tests as a part of an image release.
-        act = "\n".join(
-            [x for x in act.split("\n") if "pytest" in x]
-        )
+        act = "\n".join([x for x in act.split("\n") if "pytest" in x])
         act = act.replace("/app/amp/", "/app/")
         act = re.sub(
             r"lib_tasks.py pytest_repro:[0-9]+",

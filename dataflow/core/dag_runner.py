@@ -342,7 +342,9 @@ class RollingFitPredictDagRunner(AbstractDagRunner):
         :return: (re)training dates
         """
         # Populate an initial index of candidate retraining dates.
-        grid = pd.date_range(start=start_timestamp, end=end_timestamp, freq=retraining_freq)
+        grid = pd.date_range(
+            start=start_timestamp, end=end_timestamp, freq=retraining_freq
+        )
         # The ability to compute a nonempty `idx` is the first sanity-check.
         hdbg.dassert(
             not grid.empty, msg="Not enough data for requested training schedule!"
