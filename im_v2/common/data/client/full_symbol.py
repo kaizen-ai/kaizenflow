@@ -20,6 +20,7 @@ _LOG = logging.getLogger(__name__)
 FullSymbol = str
 
 
+# TODO(gp): -> dassert_valid_full_symbol
 def dassert_is_full_symbol_valid(full_symbol: FullSymbol) -> None:
     """
     Check that a full symbol has valid format, i.e. `exchange::symbol`.
