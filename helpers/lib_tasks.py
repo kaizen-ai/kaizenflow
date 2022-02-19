@@ -889,6 +889,9 @@ def git_branch_next_name(ctx):  # type: ignore
     _report_task()
     _ = ctx
     branch_next_name = hgit.get_branch_next_name()
+    # TODO(gp): We should also check on GH
+    # > gh pr list -s all --limit 10000 | grep AmpTask2163_Implement_tiled_backtesting_1
+    # 347     AmpTask2163_Implement_tiled_backtesting_1       AmpTask2163_Implement_tiled_backtesting_1       MERGED
     print(f"branch_next_name='{branch_next_name}'")
 
 
@@ -3431,8 +3434,8 @@ def _run_test_cmd(
     # We need to add some " to pass the string as it is to the container.
     cmd = f"'{cmd}'"
     # We use "host" for the app container to allow access to the database
-    # exposing port 5432 on localhost (of the server), when running dind
-    # we need to switch back to bridge. See CmTask988
+    # exposing port 5432 on localhost (of the server), when running dind we
+    # need to switch back to bridge. See CmTask988.
     extra_env_vars = ["NETWORK_MODE=bridge"]
     docker_cmd_ = _get_docker_cmd(
         base_image, stage, version, cmd, extra_env_vars=extra_env_vars
@@ -3567,6 +3570,7 @@ def run_slow_tests(  # type: ignore
     collect_only=False,
     tee_to_file=False,
     git_clean=False,
+    **kwargs,
 ):
     """
     Run slow tests.
@@ -3586,6 +3590,7 @@ def run_slow_tests(  # type: ignore
         collect_only,
         tee_to_file,
         git_clean,
+        **kwargs,
     )
     return rc
 
@@ -3601,6 +3606,7 @@ def run_superslow_tests(  # type: ignore
     collect_only=False,
     tee_to_file=False,
     git_clean=False,
+    **kwargs,
 ):
     """
     Run superslow tests.
@@ -3620,6 +3626,7 @@ def run_superslow_tests(  # type: ignore
         collect_only,
         tee_to_file,
         git_clean,
+        **kwargs,
     )
     return rc
 
@@ -3675,6 +3682,95 @@ def run_fast_slow_tests(  # type: ignore
     # Report error, if needed.
     if fast_test_rc != 0 or slow_test_rc != 0:
         raise RuntimeError("Fast / slow tests failed")
+    return fast_test_rc, slow_test_rc
+
+
+@task
+def run_fast_slow_superslow_tests(  # type: ignore
+    ctx,
+    stage="dev",
+    version="",
+    pytest_opts="",
+    skip_submodules=False,
+    coverage=False,
+    collect_only=False,
+    tee_to_file=False,
+    git_clean=False,
+):
+    """
+    Run fast, slow, superslow tests back-to-back.
+
+    Same params as `invoke run_fast_tests`.
+    """
+    _report_task()
+    # Run fast tests but do not fail on error.
+    fast_test_rc = run_fast_tests(
+        ctx,
+        stage,
+        version,
+        pytest_opts,
+        skip_submodules,
+        coverage,
+        collect_only,
+        tee_to_file,
+        git_clean,
+        #
+        warn=True,
+    )
+    if fast_test_rc != 0:
+        _LOG.error("Fast tests failed")
+    # Run slow tests.
+    git_clean = False
+    slow_test_rc = run_slow_tests(
+        ctx,
+        stage,
+        version,
+        pytest_opts,
+        skip_submodules,
+        coverage,
+        collect_only,
+        tee_to_file,
+        git_clean,
+        #
+        warn=True,
+    )
+    if slow_test_rc != 0:
+        _LOG.error("Slow tests failed")
+    # Run superslow tests.
+    git_clean = False
+    superslow_test_rc = run_superslow_tests(
+        ctx,
+        stage,
+        version,
+        pytest_opts,
+        skip_submodules,
+        coverage,
+        collect_only,
+        tee_to_file,
+        git_clean,
+        #
+        warn=True,
+    )
+    if superslow_test_rc != 0:
+        _LOG.error("Super slow tests failed")
+    # Report error, if needed.
+    if fast_test_rc != 0 or slow_test_rc != 0 or superslow_test_rc != 0:
+        if fast_test_rc != 0:
+            _LOG.error("Fast tests failed")
+        else:
+            _LOG.info("Fast tests passed")
+        #
+        if slow_test_rc != 0:
+            _LOG.error("Slow tests failed")
+        else:
+            _LOG.info("Slow tests passed")
+        #
+        if superslow_test_rc != 0:
+            _LOG.error("Superslow tests failed")
+        else:
+            _LOG.info("Superslow tests passed")
+        #
+        raise RuntimeError("Some tests failed")
     return fast_test_rc, slow_test_rc
 
 
