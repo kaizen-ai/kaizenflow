@@ -351,7 +351,7 @@ class MultivariateNormalDataSource(dtfconobas.DataSource):
             return rets
         if fit:
             avg_rets = rets.mean(axis=1)
-            vol = cofinanc.compute_annualized_volatility(avg_rets)
+            vol = costatis.compute_annualized_volatility(avg_rets)
             self._volatility_scale_factor = self._target_volatility / vol
         return rets * self._volatility_scale_factor
 
