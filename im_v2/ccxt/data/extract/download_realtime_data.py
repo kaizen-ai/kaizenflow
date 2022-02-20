@@ -6,8 +6,8 @@ Use as:
 
 # Download OHLCV data for universe 'v03', saving dev_stage:
 > im_v2/ccxt/data/extract/download_realtime_data.py \
-    --to_datetime '20211110-101100' \
-    --from_datetime '20211110-101200' \
+    --end_timestamp '20211110-101100' \
+    --start_timestamp '20211110-101200' \
     --dst_dir 'ccxt/ohlcv/' \
     --data_type 'ohlcv' \
     --universe 'v03' \
@@ -82,8 +82,8 @@ def _download_data(
     if data_type == "ohlcv":
         data = exchange.instance.download_ohlcv_data(
             currency_pair.replace("_", "/"),
-            start_datetime=start_timestamp,
-            end_datetime=end_timestamp,
+            start_timestamp=start_timestamp,
+            end_timestamp=end_timestamp,
         )
         # Assign pair and exchange columns.
         data["currency_pair"] = currency_pair
@@ -115,9 +115,9 @@ def _save_data_on_disk(
     :param exchange: exchange instance
     :param currency_pair: currency pair, e.g. 'BTC_USDT'
     """
-    current_datetime = hdateti.get_current_time("ET")
+    current_timestamp = hdateti.get_current_time("ET")
     if data_type == "ohlcv":
-        file_name = f"{exchange.id}_{currency_pair}_{current_datetime}.csv.gz"
+        file_name = f"{exchange.id}_{currency_pair}_{current_timestamp}.csv.gz"
         full_path = os.path.join(dst_dir, file_name)
         data.to_csv(full_path, index=False, compression="gzip")
     elif data_type == "orderbook":
@@ -141,18 +141,18 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--to_datetime",
-        action="store",
-        required=True,
-        type=str,
-        help="End of the downloaded period",
-    )
-    parser.add_argument(
-        "--from_datetime",
+        "--start_timestamp",
         action="store",
         required=True,
         type=str,
         help="Beginning of the downloaded period",
+    )
+    parser.add_argument(
+        "--end_timestamp",
+        action="store",
+        required=True,
+        type=str,
+        help="End of the downloaded period",
     )
     parser.add_argument(
         "--dst_dir",
@@ -213,13 +213,17 @@ def _main(parser: argparse.ArgumentParser) -> None:
         column_names=["timestamp", "exchange_id", "currency_pair"],
     )
     # Convert timestamps.
-    end = pd.Timestamp(args.to_datetime)
-    start = pd.Timestamp(args.from_datetime)
+    start_timestamp = pd.Timestamp(args.start_timestamp)
+    end_timestamp = pd.Timestamp(args.end_timestamp)
     # Download data for specified time period.
     for exchange in exchanges:
         for currency_pair in exchange.currency_pairs:
             pair_data = _download_data(
-                start, end, args.data_type, exchange, currency_pair
+                start_timestamp,
+                end_timestamp,
+                args.data_type,
+                exchange,
+                currency_pair,
             )
             # Save to disk.
             _save_data_on_disk(

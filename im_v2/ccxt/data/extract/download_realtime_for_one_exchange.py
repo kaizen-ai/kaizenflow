@@ -6,8 +6,8 @@ Use as:
 
 # Download OHLCV data for binance 'v03', saving dev_stage:
 > im_v2/ccxt/data/extract/download_realtime_for_one_exchange.py \
-    --to_datetime '20211110-101100' \
-    --from_datetime '20211110-101200' \
+    --end_timestamp '20211110-101100' \
+    --start_timestamp '20211110-101200' \
     --exchange_id 'binance' \
     --universe 'v03' \
     --db_stage 'dev' \
@@ -43,18 +43,18 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--to_datetime",
-        action="store",
-        required=True,
-        type=str,
-        help="End of the downloaded period",
-    )
-    parser.add_argument(
-        "--from_datetime",
+        "--start_timestamp",
         action="store",
         required=True,
         type=str,
         help="Beginning of the downloaded period",
+    )
+    parser.add_argument(
+        "--end_timestamp",
+        action="store",
+        required=True,
+        type=str,
+        help="End of the downloaded period",
     )
     parser.add_argument(
         "--exchange_id",
@@ -115,19 +115,19 @@ def _main(parser: argparse.ArgumentParser) -> None:
         column_names=["timestamp", "exchange_id", "currency_pair"],
     )
     # Convert timestamps.
-    end = pd.Timestamp(args.to_datetime)
-    start = pd.Timestamp(args.from_datetime)
+    start_timestamp = pd.Timestamp(args.start_timestamp)
+    end_timestamp = pd.Timestamp(args.end_timestamp)
     # Download data for specified time period.
     for currency_pair in currency_pairs:
         data = exchange.download_ohlcv_data(
             currency_pair.replace("_", "/"),
-            start_datetime=start,
-            end_datetime=end,
+            start_timestamp=start_timestamp,
+            end_timestamp=end_timestamp,
         )
         # Assign pair and exchange columns.
         data["currency_pair"] = currency_pair
         data["exchange_id"] = args.exchange_id
-        # Get datetime of insertion in UTC.
+        # Get timestamp of insertion in UTC.
         data["knowledge_timestamp"] = hdateti.get_current_time("UTC")
         # Insert data into the DB.
         hsql.execute_insert_query(
@@ -139,10 +139,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
         if args.s3_path:
             # Get file name.
             file_name = (
-                    currency_pair
-                    + "_"
-                    + hdateti.get_current_timestamp_as_string("UTC")
-                    + ".csv"
+                currency_pair
+                + "_"
+                + hdateti.get_current_timestamp_as_string("UTC")
+                + ".csv"
             )
             path_to_file = os.path.join(args.s3_path, args.exchange_id, file_name)
             # Save data to S3 filesystem.

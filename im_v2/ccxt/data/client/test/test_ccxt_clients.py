@@ -246,7 +246,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
 
     # ////////////////////////////////////////////////////////////////////////
 
-    # TODO(gp): @Grisha if this is common, move it outside the classes.
+    # TODO(gp): @all if this is common, move it outside the classes.
     @staticmethod
     def _get_expected_column_names() -> List[str]:
         """

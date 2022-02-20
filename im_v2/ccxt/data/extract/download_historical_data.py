@@ -7,8 +7,8 @@ Use as:
 
 # Download data for CCXT for binance from 2022-02-08 to 2022-02-09:
 > im_v2/ccxt/data/extract/download_historical_data.py \
-     --to_datetime '2022-02-09' \
-     --from_datetime '2022-02-08' \
+     --end_timestamp '2022-02-09' \
+     --start_timestamp '2022-02-08' \
      --exchange_id 'binance' \
      --universe 'v03' \
      --aws_profile 'ck' \
@@ -38,18 +38,18 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--to_datetime",
-        action="store",
-        required=True,
-        type=str,
-        help="End of the downloaded period",
-    )
-    parser.add_argument(
-        "--from_datetime",
+        "--start_timestamp",
         action="store",
         required=True,
         type=str,
         help="Beginning of the downloaded period",
+    )
+    parser.add_argument(
+        "--end_timestamp",
+        action="store",
+        required=True,
+        type=str,
+        help="End of the downloaded period",
     )
     parser.add_argument(
         "--exchange_id",
@@ -90,26 +90,21 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Load a list of currency pars.
     currency_pairs = universe["CCXT"][args.exchange_id]
     # Convert timestamps.
-    end_datetime = pd.Timestamp(args.to_datetime)
-    start_datetime = pd.Timestamp(args.from_datetime)
+    end_timestamp = pd.Timestamp(args.end_timestamp)
+    start_timestamp = pd.Timestamp(args.end_timestamp)
     for currency_pair in currency_pairs:
         # Download OHLCV data.
         data = exchange.download_ohlcv_data(
             currency_pair.replace("_", "/"),
-            start_datetime=start_datetime,
-            end_datetime=end_datetime,
+            start_timestamp=start_timestamp,
+            end_timestamp=end_timestamp,
         )
         data["currency_pair"] = currency_pair
-        # Get datetime of push to s3 in UTC.
+        # Get timestamp of push to s3 in UTC.
         knowledge_timestamp = hdateti.get_current_timestamp_as_string("UTC")
         data["knowledge_timestamp"] = knowledge_timestamp
         # Get file name.
-        file_name = (
-            currency_pair
-            + "_"
-            + knowledge_timestamp
-            + ".csv"
-        )
+        file_name = currency_pair + "_" + knowledge_timestamp + ".csv"
         path_to_file = os.path.join(args.s3_path, args.exchange_id, file_name)
         # Save data to S3 filesystem.
         with fs.open(path_to_file, "w") as f:

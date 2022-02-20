@@ -20,6 +20,7 @@ import os.path
 import pandas as pd
 
 import helpers.hdbg as hdbg
+import helpers.hparquet as hparque
 import helpers.hparser as hparser
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
@@ -111,10 +112,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
             hdbg.dassert_not_exists(full_path)
             # Add date partition columns to the dataframe.
             partition_mode = "by_date"
-            imvcdttrut.add_date_partition_cols(df, partition_mode)
+            hparque.add_date_partition_columns(df, partition_mode)
             # Partition and write dataset.
             partition_cols = ["date"]
-            imvcdttrut.partition_dataset(df, partition_cols, dst_dir)
+            hparque.to_partitioned_parquet(df, partition_cols, dst_dir)
         except AssertionError as ex:
             _LOG.info("Skipping. PQ file already present: %s.", ex)
             continue

@@ -28,6 +28,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(gp): -> Portfolio?
 class AbstractPortfolio(abc.ABC):
     """
     Store holdings over time, e.g., many shares of each asset are owned at any
@@ -398,6 +399,11 @@ class AbstractPortfolio(abc.ABC):
         """
         flows = pd.DataFrame(self._flows).transpose()
         flows.columns.name = self._asset_id_col
+        # TODO(Grisha): fix it properly if needed. w/o explicit conversion to `int64`
+        #  columns type could be `Int64` which broke the code, e.g., `_compute_pnl()`,
+        #  it was not possible to add `flows` to `mtm` due to different columns
+        #  types: `int64` vs `Int64`.
+        flows.columns = flows.columns.astype("int64")
         # Explicitly cast to float. This makes the string representation of
         # the dataframe more uniform and better.
         flows = flows.astype("float")
@@ -520,7 +526,8 @@ class AbstractPortfolio(abc.ABC):
             columns=AbstractPortfolio.CASH_ID
         )
         # Get per-bar flows and compute PnL.
-        pnl = holdings_marked_to_market.diff().add(flows)
+        diff = holdings_marked_to_market.diff()
+        pnl = diff.add(flows)
         return pnl
 
     @staticmethod

@@ -171,6 +171,8 @@ def build_configs_varying_asset_id(
 
 
 # TODO(gp): -> asset_tiles
+
+
 def build_configs_varying_universe_tiles(
     config: cconfig.Config,
     universe_tile_id: cconfig.Config.Key,
@@ -202,9 +204,8 @@ def build_configs_varying_tiled_periods(
     lookback_as_pd_str: str,
 ) -> List[cconfig.Config]:
     """
-    Create a list of `Config`s based on `config` using different a partition
-    of the interval of time [`start_timestamp`, `end_timestamp`] using intervals like
-    `(a, b]`
+    Create a list of `Config`s based on `config` using a partition of the interval
+    of time [`start_timestamp`, `end_timestamp`] using intervals like `[a, b]`
 
     :param start_timestamp, end_timestamp: the interval of time to partition
     :param freq_as_pd_str: the frequency of partitioning (e.g., `M`, `W`)
@@ -212,6 +213,11 @@ def build_configs_varying_tiled_periods(
         start of the interval, needed to warm up the period (e.g., compute
         features)
     """
+    _LOG.debug(
+        hprint.to_str(
+            "start_timestamp end_timestamp freq_as_pd_str lookback_as_pd_str"
+        )
+    )
     hdbg.dassert_isinstance(config, cconfig.Config)
     hdateti.dassert_has_tz(start_timestamp)
     hdateti.dassert_has_tz(end_timestamp)
@@ -220,12 +226,31 @@ def build_configs_varying_tiled_periods(
     lookback = pd.Timedelta(lookback_as_pd_str)
     #
     configs = []
-    dates = pd.date_range(start_timestamp, end_timestamp, freq=freq_as_pd_str)
+    # We want to cover the interval [start_timestamp, end_timestamp] with
+    # `freq_as_pd_str` intervals (e.g., monthly).
+    # `pd.date_range()` samples with a given frequency (e.g., `M` for end of the
+    # month) a closed interval like [a, b]. E.g.,
+    # `pd.date_range("2020-01-01", "2020-02-01", "M")` returns ["2020-01-31"]
+    # `pd.date_range("2020-01-01", "2020-01-31", "M")` returns ["2020-01-31"]
+    # `pd.date_range("2020-01-01", "2020-01-30", "M")` returns ["2020-01-31"]
+    # Thus we need to add an extra interval at the end.
+    end_timestamp_tmp = end_timestamp
+    end_timestamp_tmp -= pd.Timedelta("1D")
+    offset = pd.tseries.frequencies.to_offset(freq_as_pd_str)
+    end_timestamp_tmp += offset
+    _LOG.debug(hprint.to_str("start_timestamp end_timestamp_tmp"))
+    dates = pd.date_range(start_timestamp, end_timestamp_tmp, freq=freq_as_pd_str)
+    dates = dates.to_list()
     hdbg.dassert_lte(1, len(dates))
-    date_tuples = zip(dates[:-1], dates[1:])
-    for start_ts, end_ts in date_tuples:
-        # Add one day to make the interval `(a, b]`.
-        start_ts += pd.Timedelta("1D")
+    _LOG.debug(hprint.to_str("dates"))
+    for end_ts in dates:
+        # For an end_ts of "2020-01-31", start_ts needs to be "2020-01-01".
+        start_ts = (
+            end_ts
+            - pd.tseries.frequencies.to_offset(freq_as_pd_str)
+            + pd.Timedelta("1D")
+        )
+        _LOG.debug(hprint.to_str("start_ts end_ts"))
         #
         config_tmp = config.copy()
         config_tmp[("meta", "start_timestamp_with_lookback")] = (

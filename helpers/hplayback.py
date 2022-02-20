@@ -26,13 +26,14 @@ jepand.register_handlers()
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(\*): Add more types.
+# TODO(gp): Add more types.
+# TODO(gp): -> _to_python_code
 def to_python_code(obj: Any) -> str:
     """
-    Serialize an object into a string of python code.
+    Serialize an object into a string of Python code.
 
     :param obj: an object to serialize
-    :return: a string of python code building the object
+    :return: a string of Python code building the object
     """
     output = []
     if isinstance(obj, (int, float)):
@@ -59,8 +60,8 @@ def to_python_code(obj: Any) -> str:
         output_tmp = output_tmp.rstrip(", ") + "}"
         output.append(output_tmp)
     elif isinstance(obj, pd.DataFrame):
-        # Dataframe with a column "a" and row values 1, 2 -> "pd.DataFrame.from_dict({'a':
-        # [1, 2]})".
+        # Dataframe with a column "a" and row values 1, 2 ->
+        # "pd.DataFrame.from_dict({'a': [1, 2]})".
         vals = obj.to_dict(orient="list")
         output.append("pd.DataFrame.from_dict(%s)" % vals)
     elif isinstance(obj, pd.Series):
@@ -95,9 +96,11 @@ class Playback:
         Initialize the class variables.
 
         :param mode: the type of unit test to be generated (e.g. "assert_equal")
-        :param to_file: save playback output to the file test/test_by_playback_<orig_filename>.py
-        :param max_tests: limit a number of generated tests for the testing function.
-            Can be useful if the function is called a lot of times during the execution.
+        :param to_file: save playback output to the file
+            test/test_by_playback_<orig_filename>.py
+        :param max_tests: limit a number of generated tests for the testing
+            function. Can be useful if the function is called a lot of times
+            during the execution.
         """
         hdbg.dassert_in(mode, ("check_string", "assert_equal"))
         self.mode = mode
@@ -105,8 +108,9 @@ class Playback:
         self._func_name = cur_frame.f_back.f_code.co_name  # type: ignore
         # We can use kw arguments for all args. Python supports this.
         self._kwargs = cur_frame.f_back.f_locals.copy()  # type: ignore
-        # It treats all arguments defined before itself as arguments. If this is done, it
-        # will mess up the function call that will be created in `Playback.run`.
+        # It treats all arguments defined before itself as arguments. If this
+        # is done, it will mess up the function call that will be created in
+        # `Playback.run`.
         expected_arg_count = cur_frame.f_back.f_code.co_argcount  # type: ignore
         if "kwargs" in self._kwargs:
             expected_arg_count += 1
@@ -114,10 +118,11 @@ class Playback:
         # hdbg.dassert_eq(
         #    expected_arg_count,
         #    len(cur_frame.f_back.f_locals),  # type: ignore
-        #    msg="the Playback class should be the first thing instantiated in a function.",
+        #    msg="the Playback class should be the first thing instantiated in"
+        #       " a function.",
         # )
-        # If the function is a method, store the parent class so we can also create that
-        # in the test
+        # If the function is a method, store the parent class so we can also
+        # create that in the test
         if "self" in self._kwargs:
             x = self._kwargs.pop("self")
             self._parent_class = x
@@ -398,3 +403,20 @@ def round_trip_convert(obj1: Any, log_level: int) -> Any:
         else:
             hdbg.dassert_eq(obj1, obj2)
     return obj2
+
+
+# TODO(gp): Implement decorator like:
+# import helpers.hplayback as hpk
+#
+# def playback(func: Callable) -> Callable:
+#
+#     def wrapper(*args: Any, **kwargs: Any) -> Any:
+#         import helpers.hplayback as hplayb
+#         playback = hplayb.Playback("assert_equal")
+#         res = func(*args, **kwargs)
+#         code = playback.run(res)
+#         print(code)
+#         assert 0
+#         return res
+#
+#     return wrapper(func)

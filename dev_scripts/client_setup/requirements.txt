@@ -1,6 +1,5 @@
 awscli >= 1.19  # For aws CLI.
 docker-compose >= 1.29.0
-flaky
 invoke >= 1.5.0
 poetry
 pytest >= "6.0.0"

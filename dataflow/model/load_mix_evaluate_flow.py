@@ -15,8 +15,8 @@ import helpers.hparquet as hparque
 
 def load_mix_evaluate(
     file_name: str,
-    start_date: datetime.time,
-    end_date: datetime.time,
+    start_date: datetime.date,
+    end_date: datetime.date,
     asset_id_col: str,
     returns_col: str,
     volatility_col: str,
@@ -71,7 +71,9 @@ def load_mix_evaluate(
             dollar_neutrality,
         )
         results.append(bar_metrics)
-    return pd.concat(results)
+    df = pd.concat(results)
+    df.sort_index(inplace=True)
+    return df
 
 
 def mix_and_evaluate(

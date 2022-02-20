@@ -8,8 +8,8 @@ import logging
 from typing import Any, Dict, List
 
 import core.config as cconfig
-import dataflow.core.builders as dtfcorbuil
 import dataflow.core.dag as dtfcordag
+import dataflow.core.dag_builder as dtfcodabui
 import dataflow.core.node as dtfcornode
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
@@ -17,14 +17,14 @@ import helpers.hprint as hprint
 _LOG = logging.getLogger(__name__)
 
 
-class DagAdapter(dtfcorbuil.DagBuilder):
+class DagAdapter(dtfcodabui.DagBuilder):
     """
     Adapt a DAG builder by overriding part of the config and appending nodes.
     """
 
     def __init__(
         self,
-        dag_builder: dtfcorbuil.DagBuilder,
+        dag_builder: dtfcodabui.DagBuilder,
         overriding_config: Dict[str, Any],
         nodes_to_insert: List[dtfcornode.Node],
         nodes_to_append: List[dtfcornode.Node],
@@ -44,7 +44,7 @@ class DagAdapter(dtfcorbuil.DagBuilder):
             specified.
         """
         super().__init__()
-        hdbg.dassert_isinstance(dag_builder, dtfcorbuil.DagBuilder)
+        hdbg.dassert_isinstance(dag_builder, dtfcodabui.DagBuilder)
         self._dag_builder = dag_builder
         hdbg.dassert_isinstance(overriding_config, cconfig.Config)
         self._overriding_config = overriding_config

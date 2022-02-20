@@ -138,9 +138,9 @@ class TestDiskDataSource(hunitest.TestCase):
 # #############################################################################
 
 
-class TestArmaGenerator(hunitest.TestCase):
+class TestArmaDataSource(hunitest.TestCase):
     def test1(self) -> None:
-        node = dtfconosou.ArmaGenerator(  # pylint: disable=no-member
+        node = dtfconosou.ArmaDataSource(  # pylint: disable=no-member
             nid="source",
             frequency="30T",
             start_date="2010-01-04 09:00",
@@ -159,10 +159,10 @@ class TestArmaGenerator(hunitest.TestCase):
 # #############################################################################
 
 
-class TestMultivariateNormalGenerator(hunitest.TestCase):
+class TestMultivariateNormalDataSource(hunitest.TestCase):
     def test1(self) -> None:
         node = (
-            dtfconosou.MultivariateNormalGenerator(  # pylint: disable=no-member
+            dtfconosou.MultivariateNormalDataSource(  # pylint: disable=no-member
                 nid="source",
                 frequency="30T",
                 start_date="2010-01-04 09:00",

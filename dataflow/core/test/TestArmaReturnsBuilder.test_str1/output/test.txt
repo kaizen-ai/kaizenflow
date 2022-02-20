@@ -74,7 +74,7 @@ dag=
         "nodes": [
             {
                 "id": "rets/read_data",
-                "stage": "ArmaGenerator"
+                "stage": "ArmaDataSource"
             },
             {
                 "id": "rets/filter_weekends",

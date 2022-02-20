@@ -13,8 +13,8 @@ import numpy as np
 import pandas as pd
 
 import core.artificial_signal_generators as carsigen
-import core.finance as cofinanc
 import core.pandas_helpers as cpanh
+import core.statistics as costatis
 import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.base as dtfconobas
 import helpers.hdatetime as hdateti
@@ -45,8 +45,7 @@ class DummyDataSource(dtfconobas.DataSource):
 # #############################################################################
 
 
-# TODO(gp): @Grisha -> DfDataSource
-class ReadDataFromDf(dtfconobas.DataSource):
+class DfDataSource(dtfconobas.DataSource):
     """
     Accept data as a DataFrame passed through the constructor and output the
     data.
@@ -61,8 +60,7 @@ class ReadDataFromDf(dtfconobas.DataSource):
 # #############################################################################
 
 
-# TODO(gp): @Grisha -> FunctionDataSource
-class DataLoader(dtfconobas.DataSource):
+class FunctionDataSource(dtfconobas.DataSource):
     """
     Use the passed function and arguments to generate the data outputted by the
     node.
@@ -215,8 +213,7 @@ class DiskDataSource(dtfconobas.DataSource):
 # #############################################################################
 
 
-# TODO(gp): @Grisha -> ArmaDataSource
-class ArmaGenerator(dtfconobas.DataSource):
+class ArmaDataSource(dtfconobas.DataSource):
     """
     Generate price data from ARMA process returns.
     """
@@ -304,8 +301,7 @@ class ArmaGenerator(dtfconobas.DataSource):
 # #############################################################################
 
 
-# TODO(gp): @Grisha -> MultivariateNormalDataSource
-class MultivariateNormalGenerator(dtfconobas.DataSource):
+class MultivariateNormalDataSource(dtfconobas.DataSource):
     """
     Generate price data from multivariate normal returns.
     """
@@ -355,7 +351,7 @@ class MultivariateNormalGenerator(dtfconobas.DataSource):
             return rets
         if fit:
             avg_rets = rets.mean(axis=1)
-            vol = cofinanc.compute_annualized_volatility(avg_rets)
+            vol = costatis.compute_annualized_volatility(avg_rets)
             self._volatility_scale_factor = self._target_volatility / vol
         return rets * self._volatility_scale_factor
 

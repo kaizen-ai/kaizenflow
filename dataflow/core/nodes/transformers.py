@@ -22,7 +22,6 @@ import numpy as np
 import pandas as pd
 
 import core.finance as cofinanc
-import core.signal_processing as csigproc
 import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.base as dtfconobas
 import dataflow.core.utils as dtfcorutil
@@ -30,8 +29,7 @@ import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): @Grisha -> _ResamplingRule
-_RESAMPLING_RULE_TYPE = Union[pd.DateOffset, pd.Timedelta, str]
+_ResamplingRule = Union[pd.DateOffset, pd.Timedelta, str]
 
 
 # #############################################################################
@@ -764,7 +762,7 @@ class Resample(dtfconobas.Transformer):
         self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
-        resampler = csigproc.resample(
+        resampler = cofinanc.resample(
             df, rule=self._rule, **self._resample_kwargs
         )
         func = getattr(resampler, self._agg_func)
@@ -780,7 +778,7 @@ class TwapVwapComputer(dtfconobas.Transformer):
     def __init__(
         self,
         nid: dtfcornode.NodeId,
-        rule: _RESAMPLING_RULE_TYPE,
+        rule: _ResamplingRule,
         price_col: dtfcorutil.NodeColumn,
         volume_col: dtfcorutil.NodeColumn,
         offset: Optional[str] = None,
@@ -820,7 +818,7 @@ class MultiindexTwapVwapComputer(dtfconobas.Transformer):
     def __init__(
         self,
         nid: dtfcornode.NodeId,
-        rule: _RESAMPLING_RULE_TYPE,
+        rule: _ResamplingRule,
         price_col_group: Tuple[dtfcorutil.NodeColumn],
         volume_col_group: Tuple[dtfcorutil.NodeColumn],
         out_col_group: Tuple[dtfcorutil.NodeColumn],
