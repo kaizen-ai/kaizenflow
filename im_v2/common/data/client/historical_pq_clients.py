@@ -67,7 +67,9 @@ class HistoricalPqByTileClient(
         hdbg.dassert_container_type(full_symbols, list, str)
         asset_and_filter = (self._full_symbol_col_name, "in", full_symbols)
         filters = hparque.get_parquet_filters_from_timestamp_interval(
-            self._partition_mode, start_ts, end_ts,
+            self._partition_mode,
+            start_ts,
+            end_ts,
             additional_filter=asset_and_filter,
         )
         # Read the data.
@@ -87,13 +89,16 @@ class HistoricalPqByTileClient(
         #                         83317, 89970]
         # ```
         # which confuses `df.groupby()`, so we force that column to str.
-        df[self._full_symbol_col_name] = df[self._full_symbol_col_name].astype(str)
+        df[self._full_symbol_col_name] = df[self._full_symbol_col_name].astype(
+            str
+        )
         # Rename column storing `full_symbols`, if needed.
         hdbg.dassert_in(self._full_symbol_col_name, df.columns)
         if full_symbol_col_name != self._full_symbol_col_name:
             hdbg.dassert_not_in(full_symbol_col_name, df.columns)
             df.rename(
-                columns={self._full_symbol_col_name: full_symbol_col_name}, inplace=True
+                columns={self._full_symbol_col_name: full_symbol_col_name},
+                inplace=True,
             )
         # Since we have normalized the data, the index is a timestamp and we can
         # trim the data with index in [start_ts, end_ts] to remove the excess
@@ -161,11 +166,14 @@ class HistoricalPqByDateClient(
         df.index = pd.to_datetime(df.index)
         # Rename column storing the asset ids.
         hdbg.dassert_in(self._full_symbol_col_name, df.columns)
-        df[self._full_symbol_col_name] = df[self._full_symbol_col_name].astype(str)
+        df[self._full_symbol_col_name] = df[self._full_symbol_col_name].astype(
+            str
+        )
         if full_symbol_col_name != self._full_symbol_col_name:
             hdbg.dassert_not_in(full_symbol_col_name, df.columns)
             df.rename(
-                columns={self._full_symbol_col_name: full_symbol_col_name}, inplace=True
+                columns={self._full_symbol_col_name: full_symbol_col_name},
+                inplace=True,
             )
         # Since we have normalized the data, the index is a timestamp and we can
         # trim the data with index in [start_ts, end_ts] to remove the excess

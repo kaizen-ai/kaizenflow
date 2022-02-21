@@ -194,8 +194,8 @@ def convert_df_to_string(
     return output_str
 
 
-# TODO(gp): Move this to helpers/hpandas.py since unit_test.py should not
-# depend on pandas.
+# TODO(gp): @all Move this to helpers/hpandas.py since unit_test.py should not
+#  depend on pandas.
 def subset_df(df: "pd.DataFrame", nrows: int, seed: int = 42) -> "pd.DataFrame":
     hdbg.dassert_lte(1, nrows)
     hdbg.dassert_lte(nrows, df.shape[0])
@@ -233,6 +233,8 @@ def convert_info_to_string(info: Mapping) -> str:
     return output_str
 
 
+# TODO(gp): @all Move this to helpers/hpandas.py since unit_test.py should not
+#  depend on pandas.
 def convert_df_to_json_string(
     df: "pd.DataFrame",
     n_head: Optional[int] = 10,
@@ -295,8 +297,8 @@ def to_string(var: str) -> str:
     return """f"%s={%s}""" % (var, var)
 
 
-# TODO(gp): Maybe we should move it to hpandas.py so we can limit the dependencies
-#  from pandas.
+# TODO(gp): @all Maybe we should move it to hpandas.py so we can limit the
+#  dependencies from pandas.
 def get_random_df(
     num_cols: int,
     seed: Optional[int] = None,
@@ -985,7 +987,7 @@ class TestCase(unittest.TestCase):
         """
         # Print banner to signal the start of a new test.
         func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
-        _LOG.debug("\n%s", hprint.frame(func_name))
+        _LOG.info("\n%s", hprint.frame(func_name))
         # Set the random seed.
         random_seed = 20000101
         _LOG.debug("Resetting random.seed to %s", random_seed)

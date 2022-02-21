@@ -18,9 +18,10 @@ _LOG = logging.getLogger(__name__)
 
 class DagBuilder(abc.ABC):
     """
-    Abstract class for creating DAGs. Concrete classes must specify: 1)
-    `get_config_template()`
+    Abstract class for creating DAGs.
 
+    Concrete classes must specify:
+    1) `get_config_template()`
        - It returns a `Config` object that represents the parameters used to build
          the DAG
        - The config can depend upon variables used in class initialization
@@ -104,6 +105,14 @@ class DagBuilder(abc.ABC):
             self._validate_config_and_dag(config, dag)
         return dag
 
+    def get_fully_built_dag(self) -> dtfcordag.DAG:
+        """
+        Return the DAG for a fully specified (i.e., not template) config.
+        """
+        config = self.get_config_template()
+        dag = self.get_dag(config)
+        return dag
+
     @property
     def methods(self) -> List[str]:
         """
@@ -162,6 +171,7 @@ class DagBuilder(abc.ABC):
     ) -> str:
         """
         Append `node` to the DAG after the node `tail_nid`.
+
         A typical use of this function is like:
         ```
         tail_nid = None
@@ -170,6 +180,7 @@ class DagBuilder(abc.ABC):
         tail_nid = dag.append(tail_nid, node_n)
         _ = tail_nid
         ```
+
         :param tail_nid: the nid of the node to append to. If `None` add only
             without appending. This allows a pattern like:
         """

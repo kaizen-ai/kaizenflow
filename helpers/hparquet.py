@@ -260,7 +260,7 @@ def collate_parquet_tile_metadata(
 
 
 # TODO(Paul): The `int` assumption is baked in. We can generalize to strings
-# if needed, but if we do, then we should continue to handles string ints as
+# if needed, but if we do, then we should continue to handle string ints as
 # ints as we do here (e.g., there are sorting advantages, among others).
 def _process_walk_triple(
     triple: tuple, start_depth
