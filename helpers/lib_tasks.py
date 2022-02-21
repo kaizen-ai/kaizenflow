@@ -751,10 +751,10 @@ def git_create_branch(  # type: ignore
     _LOG.info("branch_name='%s'", branch_name)
     hdbg.dassert_ne(branch_name, "")
     # Check that the branch is not just a number.
-    m = re.match("^\d+$", branch_name)
+    m = re.match(r"^\d+$", branch_name)
     hdbg.dassert(not m, "Branch names with only numbers are invalid")
     # The valid format of a branch name is `AmpTask1903_Implemented_system_...`.
-    m = re.match("^\S+Task\d+_\S+$", branch_name)
+    m = re.match(r"^\S+Task\d+_\S+$", branch_name)
     hdbg.dassert(m, "Branch name should be '{Amp,...}TaskXYZ_...'")
     hdbg.dassert(
         not hgit.does_branch_exist(branch_name),
@@ -3873,9 +3873,7 @@ def run_coverage_report(  # type: ignore
     )
     if generate_html_report:
         # Generate HTML report with the coverage stats.
-        report_cmd.append(
-            f"coverage html --include={include_in_report}"
-        )
+        report_cmd.append(f"coverage html --include={include_in_report}")
     # Execute commands above one-by-one inside docker. Coverage tool is not
     # installed outside docker.
     full_report_cmd = " && ".join(report_cmd)
@@ -4326,6 +4324,45 @@ def _parse_linter_output(txt: str) -> str:
     output = sorted(output)
     output_as_str = "\n".join(output)
     return output_as_str
+
+
+@task
+def lint_add_init_files(  # type: ignore
+    ctx,
+    dir_name=".",
+    dry_run=True,
+    run_bash=False,
+    stage="prod",
+    as_user=True,
+    out_file_name="lint_add_init_files.output.txt",
+):
+    """
+    Add the missing `__init__.py` in dirs with Python files.
+
+    For param descriptions, see `lint()`.
+
+    :param dir_name: path to the head directory to start the check from
+    :param dry_run:
+      - True: output a warning pointing to the dirs where `__init__.py`
+        files are missing
+      - False: create the required `__init__.py` files
+    """
+    _report_task()
+    # Remove the log file.
+    if os.path.exists(out_file_name):
+        cmd = f"rm {out_file_name}"
+        _run(ctx, cmd)
+    as_user = _run_docker_as_user(as_user)
+    # Prepare the command line.
+    docker_cmd_opts = [dir_name, f"--dry-run={dry_run}"]
+    docker_cmd_ = "/app/linters/add_module_init.py " + _to_single_line_cmd(
+        docker_cmd_opts
+    )
+    # Execute command line.
+    cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
+    cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
+    # Run.
+    _run(ctx, cmd)
 
 
 @task
