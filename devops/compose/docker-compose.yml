@@ -59,6 +59,7 @@ services:
       - PORT=${PORT}
     extends:
       app
+    network_mode: ${NETWORK_MODE:-bridge}
     ports:
       # TODO(gp): Rename `AM_PORT`.
       - "${PORT}:${PORT}"
@@ -75,5 +76,6 @@ services:
       - PORT=${PORT}
     extends:
       app
+    network_mode: ${NETWORK_MODE:-bridge}
     ports:
       - "${PORT}:${PORT}"
