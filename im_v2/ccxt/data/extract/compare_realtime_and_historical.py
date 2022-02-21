@@ -22,6 +22,7 @@ import os
 
 import pandas as pd
 
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hparser as hparser
@@ -138,18 +139,20 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Get time range for last 24 hours.
-    # TODO (Danya): to unix epoch
-    start_timestamp = pd.Timestamp(args.start_timestamp)
-    end_timestamp = pd.Timestamp(args.end_timestamp)
+    start_timestamp = pd.Timestamp(args.start_timestamp, tz="UTC")
+    end_timestamp = pd.Timestamp(args.end_timestamp, tz="UTC")
     # Connect to database.
     env_file = imvimlita.get_db_env_path(args.db_stage)
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
     # Read DB realtime data.
-    # TODO(Danya): knowledge_timestamp -> timestamp
+    unix_start_timestamp = hdateti.convert_timestamp_to_unix_epoch(
+        start_timestamp
+    )
+    unix_end_timestamp = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
     query = (
-        f"SELECT * FROM ccxt_ohlcv WHERE knowledge_timestamp >='{start_timestamp}'"
-        f" AND knowledge_timestamp <= '{end_timestamp}' AND exchange_id='{args.exchange_id}'"
+        f"SELECT * FROM ccxt_ohlcv WHERE timestamp >='{unix_start_timestamp}'"
+        f" AND timestamp <= '{unix_end_timestamp}' AND exchange_id='{args.exchange_id}'"
     )
     rt_data = hsql.execute_query_to_df(connection, query)
     rt_data_reindex = reindex_on_asset_and_ts(rt_data)
