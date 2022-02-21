@@ -25,6 +25,7 @@ import pandas as pd
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import helpers.hparquet as hparque
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
@@ -161,28 +162,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     s3fs_ = hs3.get_s3fs(args.aws_profile)
     # List files for given exchange.
     exchange_path = os.path.join(args.s3_path, args.exchange_id)
-    s3_files = s3fs_.ls(exchange_path)
-    # TODO(Danya): Remove the CSV reading and replace with parquet.
-    # Filter files by timestamps in names.
-    #  Example of downloaded file name: 'ADA_USDT_20210207-164012.csv'
-    start_timestamp_str = start_timestamp.strftime("%Y%m%d-%H%M%S")
-    end_timestamp_str = end_timestamp.strftime("%Y%m%d-%H%M%S")
-    daily_files = [
-        f
-        for f in s3_files
-        if f.split("_")[-1].rstrip(".csv") <= end_timestamp_str
-    ]
-    daily_files = [
-        f
-        for f in daily_files
-        if f.split("_")[-1].rstrip(".csv") >= start_timestamp_str
-    ]
-    daily_data = []
-    for file in daily_files:
-        with s3fs_.open(file) as f:
-            daily_data.append(pd.read_csv(f))
-    # TODO(Danya): Replace with pq reading.
-    daily_data = pd.concat(daily_data)
+    s3fs_.ls(exchange_path)
+    timestamp_filters = hparque.get_parquet_filters_from_timestamp_interval(
+        "by_year_month", start_timestamp, end_timestamp
+    )
+    # TODO(Danya): Plug in the S3 filesystem into `from_parquet`.
+    #  Currently will not work due to expecting the local FS.
+    daily_data = hparque.from_parquet(exchange_path, filters=timestamp_filters)
     daily_data_reindex = reindex_on_asset_and_ts(daily_data)
     # Get missing data.
     rt_missing_data, daily_missing_data = find_gaps(
