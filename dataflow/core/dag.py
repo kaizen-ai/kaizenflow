@@ -282,9 +282,11 @@ class DAG:
         else:
             parent_nid = parent
             parent_out = hlist.assert_single_element_and_return(
-                self.get_node(parent_nid).output_names
+                self.get_node(parent_nid).get_output_names()
             )
-        hdbg.dassert_in(parent_out, self.get_node(parent_nid).output_names)
+        parent_node = self.get_node(parent_nid)
+        output_names = parent_node.get_output_names()
+        hdbg.dassert_in(parent_out, output_names)
         # Automatically infer input name when the child has only one input.
         # Ensure that child node belongs to DAG (through `get_node` call).
         if isinstance(child, tuple):
@@ -292,9 +294,11 @@ class DAG:
         else:
             child_nid = child
             child_in = hlist.assert_single_element_and_return(
-                self.get_node(child_nid).input_names
+                self.get_node(child_nid).get_input_names()
             )
-        hdbg.dassert_in(child_in, self.get_node(child_nid).input_names)
+        child_node = self.get_node(child_nid)
+        input_names = child_node.get_output_names()
+        hdbg.dassert_in(child_in, input_names)
         # Ensure that `child_in` is not already hooked up to an output.
         for nid in self._dag.predecessors(child_nid):
             hdbg.dassert_not_in(
@@ -588,7 +592,8 @@ class DAG:
                     f"An exception occurred in node '{nid}'\n{str(e)}"
                 ) from e
         # Update the node.
-        for output_name in node.output_names:
+        output_names = node.get_output_names()
+        for output_name in output_names:
             value = output[output_name]
             node._store_output(  # pylint: disable=protected-access
                 method, output_name, value
