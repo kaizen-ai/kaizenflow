@@ -22,6 +22,7 @@ _LOG = logging.getLogger(__name__)
 NodeId = str
 
 
+# TODO(gp): @all This is private -> _Node.
 class NodeInterface(abc.ABC):
     """
     Abstract node class for creating DAGs of functions.
