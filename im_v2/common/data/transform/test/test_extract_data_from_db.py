@@ -19,9 +19,11 @@ class TestExtractDataFromDb1(imvcddbut.TestImDbHelper):
         INSERT INTO ccxt_ohlcv
         VALUES
             (66, 1637690340000, 1.04549, 1.04549, 1.04527, 1.04527,
-            5898.0427797325265, 'XRP_USDT', 'gateio', '2021-11-23 18:03:54.318763'),
+            5898.0427797325265, 'XRP_USDT', 'gateio',
+            '2021-11-23 18:03:54.318763', '2021-11-23 18:03:54.318763'),
             (71, 1637777340000, 221.391, 221.493, 221.297, 221.431,
-            81.31775837, 'SOL_USDT', 'kucoin', '2021-11-23 18:03:54.676947')
+            81.31775837, 'SOL_USDT', 'kucoin',
+            '2021-11-23 18:03:54.676947', '2021-11-23 18:03:54.676947')
         """
         hsql.execute_query(self.connection, ccxt_ohlcv_table_query)
         hsql.execute_query(self.connection, ccxt_ohlcv_insert_query)
@@ -33,8 +35,7 @@ class TestExtractDataFromDb1(imvcddbut.TestImDbHelper):
         """
         hsql.execute_query(self.connection, ccxt_ohlcv_drop_query)
 
-    # @pytest.mark.slow
-    @pytest.mark.skip("Enable when timestamp issue is resolved CMTask849")
+    @pytest.mark.slow
     def test_extract_data_from_db(self) -> None:
         test_dir = self.get_scratch_space()
         dst_dir = os.path.join(test_dir, "by_date")

@@ -144,6 +144,7 @@ class ImClient(abc.ABC):
                 df_tmp, full_symbol_col_name, start_ts, end_ts
             )
             dfs.append(df_tmp)
+        # TODO(Nikola): raise error on empty df?
         df = pd.concat(dfs, axis=0)
         _LOG.debug("After im_normalization: df=\n%s", hpandas.df_to_str(df))
         # Sort by index and `full_symbol_col_name`.
