@@ -8,7 +8,7 @@ import collections
 import datetime
 import logging
 import os
-from typing import Any, Iterator, List, Optional, Tuple, Union
+from typing import Any, Callable, Iterator, List, Optional, Tuple, Union
 
 import pandas as pd
 import pyarrow as pa
@@ -464,7 +464,12 @@ def add_date_partition_columns(
 
 
 def to_partitioned_parquet(
-    df: pd.DataFrame, partition_columns: List[str], dst_dir: str
+    df: pd.DataFrame,
+    partition_columns: List[str],
+    dst_dir: str,
+    *,
+    filesystem=None,
+    partition_filename: Union[Callable, None] = lambda x: "data.parquet",
 ) -> None:
     """
     Save the given dataframe as Parquet file partitioned along the given
@@ -473,6 +478,8 @@ def to_partitioned_parquet(
     :param df: dataframe
     :param partition_columns: partitioning columns
     :param dst_dir: location of partitioned dataset
+    :param filesystem: filesystem to use (e.g. S3FS), if None, local FS is assumed
+    :param partition_filename: a callable to override standard partition names. None for `uuid`.
 
     E.g., in case of partition using `date`, the file layout looks like:
     ```
@@ -515,5 +522,6 @@ def to_partitioned_parquet(
             table,
             dst_dir,
             partition_cols=partition_columns,
-            partition_filename_cb=lambda x: "data.parquet",
+            partition_filename_cb=partition_filename,
+            filesystem=filesystem,
         )
