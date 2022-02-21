@@ -38,12 +38,6 @@
     creates: "{{ user_home }}/.vnc/passwd"
     executable: /bin/bash
 
-- name: Copy systemd service template
-  template:
-    src: vncserver.service.j2
-    dest: "/etc/systemd/system/{{ vnc_user }}_vncserver@.service"
-    mode: 755 
-
 - name: Copy VNC configuration file
   become_user: "{{ vnc_user }}"
   copy:
@@ -62,15 +56,23 @@
 - set_fact:
     vnc_desktop_number: "{{ user_uid.stdout | int - 999 }}"
 
+- name: Copy systemd service template
+  template:
+    src: vncserver.service.j2
+    dest: "/etc/systemd/system/{{ vnc_user }}_vncserver.service"
+    mode: 0644 
+    owner: root
+    group: root
+    
 - name: Enable VNC service
   systemd:
-    name: "{{ vnc_user }}_vncserver@{{ vnc_desktop_number }}"
+    name: "{{ vnc_user }}_vncserver"
     enabled: yes
     daemon-reload: yes
 
 - name: Start VNC service
   service:
-    name: "{{ vnc_user }}_vncserver@{{ vnc_desktop_number }}"
+    name: "{{ vnc_user }}_vncserver"
     state: restarted
 
 - debug:

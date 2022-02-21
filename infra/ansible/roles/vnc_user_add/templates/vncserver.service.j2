@@ -5,10 +5,10 @@ After=syslog.target network.target
 [Service]
 Type=simple
 User={{ vnc_user }}
-ExecStartPre=/usr/bin/vncserver -kill :%i &> /dev/null
-ExecStart=/usr/bin/vncserver -SecurityTypes None -depth 24 --I-KNOW-THIS-IS-INSECURE -geometry {{ vnc_desktop_x }}x{{ vnc_desktop_y }} -localhost no -fg :%i
-PIDFile=/home/ubuntu/.vnc/%H:%i.pid
-ExecStop=/usr/bin/vncserver -kill :%i
+ExecStartPre=/usr/bin/vncserver -kill :{{ vnc_desktop_number }} &> /dev/null
+ExecStart=/usr/bin/vncserver -SecurityTypes None -depth 24 --I-KNOW-THIS-IS-INSECURE -geometry {{ vnc_desktop_x }}x{{ vnc_desktop_y }} -localhost no -fg :{{ vnc_desktop_number }}
+PIDFile=/home/{{ vnc_user }}/.vnc/%H_{{ vnc_desktop_number }}.pid
+ExecStop=/usr/bin/vncserver -kill :{{ vnc_desktop_number }}
 
 [Install]
 WantedBy=multi-user.target
