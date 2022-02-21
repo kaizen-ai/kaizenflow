@@ -81,10 +81,11 @@
 
 - debug:
     msg: "VNC_desktop_number is: {{ vnc_desktop_number }}"
-
+   
 - name: Save VNC URL info 
+  run_once: true
   local_action:
-    module: copy
+    module: lineinfile
     dest: "{{ vnc_url_file_path }}"
-    content: "{{ ansible_default_ipv4.address }}:{{ vnc_desktop_number|int + 5900 }}"
-    force: yes
+    content: "{{ groups['all'] | map('extract', hostvars, ['ansible_default_ipv4', 'address']):{{ vnc_desktop_number|int + 5900 }} | join('\n') }}"
+    create: yes
