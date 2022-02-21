@@ -94,8 +94,8 @@ class DAG:
         txt = []
         txt.append(f"name={self._name}")
         txt.append(f"mode={self._mode}")
-        txt.append("nodes=" + str(self.dag.nodes(data=True)))
-        txt.append("edges=" + str(self.dag.edges(data=True)))
+        txt.append("nodes=" + str(self._dag.nodes(data=True)))
+        txt.append("edges=" + str(self._dag.edges(data=True)))
         return "\n".join(txt)
 
     def __repr__(self) -> str:
@@ -171,7 +171,7 @@ class DAG:
                 dst_dir, None, "Need to specify a directory to save the data"
             )
 
-    def get_dag(self) -> networ.DiGraph:
+    def get_nx_dag(self) -> networ.DiGraph:
         return self._dag
 
     # TODO(*): Should we force to always have a name? So mypy can perform more
@@ -203,11 +203,12 @@ class DAG:
         #
         # Note that this usage requires that `nid`'s be unique within a given
         # DAG.
+        nid = node.get_nid()
         if self._mode == "strict":
             hdbg.dassert(
-                not self._dag.has_node(node.nid),
+                not self._dag.has_node(nid),
                 "A node with nid=%s already belongs to the DAG",
-                node.nid,
+                nid,
             )
         elif self._mode == "loose":
             # If a node with the same id already belongs to the DAG:
@@ -216,23 +217,23 @@ class DAG:
             #   - Add the new node to the graph.
             # This is useful for notebook research flows, e.g., rerunning
             # blocks that build the DAG incrementally.
-            if self._dag.has_node(node.nid):
+            if self._dag.has_node(nid):
                 _LOG.warning(
                     "Node `%s` is already in DAG. Removing existing node, "
                     "successors, and all incident edges of such nodes",
-                    node.nid,
+                    nid,
                 )
                 # Remove node successors.
-                for nid in networ.descendants(self._dag, node.nid):
-                    _LOG.warning("Removing nid=%s", nid)
-                    self.remove_node(nid)
+                for cur_nid in networ.descendants(self._dag, nid):
+                    _LOG.warning("Removing nid=%s", cur_nid)
+                    self.remove_node(cur_nid)
                 # Remove node.
-                _LOG.warning("Removing nid=%s", node.nid)
-                self.remove_node(node.nid)
+                _LOG.warning("Removing nid=%s", nid)
+                self.remove_node(nid)
         else:
             hdbg.dfatal("Invalid mode='%s'", self._mode)
         # Add node.
-        self._dag.add_node(node.nid, stage=node)
+        self._dag.add_node(nid, stage=node)
 
     def get_node(self, nid: dtfcornode.NodeId) -> dtfcornode.Node:
         """

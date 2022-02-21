@@ -125,14 +125,14 @@ class Node(NodeInterface):
             self._output_vals.keys(),
             "%s of node %s has no output!",
             method,
-            self.nid,
+            self._nid,
         )
         hdbg.dassert_in(
             output_name,
-            self.output_names,
+            self._output_names,
             "%s is not an output of node %s!",
             output_name,
-            self.nid,
+            self._nid,
         )
         return self._output_vals[method][output_name]
 
@@ -222,10 +222,10 @@ class Node(NodeInterface):
         """
         hdbg.dassert_in(
             output_name,
-            self.output_names,
+            self._output_names,
             "%s is not an output of node %s!",
             output_name,
-            self.nid,
+            self._nid,
         )
         # Create a dictionary of values for `method` if it doesn't exist.
         if method not in self._output_vals:
