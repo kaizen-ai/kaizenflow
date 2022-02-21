@@ -12,6 +12,8 @@
   file:
     path: "{{ home_dir }}"
     state: directory
+    owner: "{{ os_username }}"
+    group: "{{ os_username }}"
     mode: 0700
     
 - name: Create user account
