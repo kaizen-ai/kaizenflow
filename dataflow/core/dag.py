@@ -203,13 +203,13 @@ class DAG:
         #
         # Note that this usage requires that `nid`'s be unique within a given
         # DAG.
-        if self.mode == "strict":
+        if self._mode == "strict":
             hdbg.dassert(
                 not self._dag.has_node(node.nid),
                 "A node with nid=%s already belongs to the DAG",
                 node.nid,
             )
-        elif self.mode == "loose":
+        elif self._mode == "loose":
             # If a node with the same id already belongs to the DAG:
             #   - Remove the node and all of its successors, and their incident
             #     edges
@@ -230,7 +230,7 @@ class DAG:
                 _LOG.warning("Removing nid=%s", node.nid)
                 self.remove_node(node.nid)
         else:
-            hdbg.dfatal("Invalid mode='%s'", self.mode)
+            hdbg.dfatal("Invalid mode='%s'", self._mode)
         # Add node.
         self._dag.add_node(node.nid, stage=node)
 
@@ -426,7 +426,7 @@ class DAG:
 
     def _to_json(self) -> str:
         # Get internal networkx representation of the DAG.
-        graph: networ.classes.digraph.DiGraph = self.dag
+        graph: networ.classes.digraph.DiGraph = self._dag
         node_link_data = networ.readwrite.json_graph.node_link_data(graph)
         # Remove stages names from `node_link_data` dictionary since they refer to
         # `Node` objects, which are not JSON serializable.
