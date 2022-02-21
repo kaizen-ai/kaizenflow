@@ -21,10 +21,12 @@
     - disable_window_animations|bool  
 
 - name: "Ensures path {{ user_home }}/.vnc/ exists"
-  become_user: "{{ vnc_user }}"
   file: 
     path: "{{ user_home }}/.vnc/"
     state: directory
+    owner: "{{ vnc_user }}"
+    group: "{{ vnc_user }}"
+    mode: 0700
 
 - name: "Add read/write permissions to /tmp to other (prevents errors in vncserver)"
   file: 
@@ -33,23 +35,19 @@
 
 - name: Set VNC password (password is mandatory but vncserver might be later started without it)
   become_user: "{{ vnc_user }}"
+  become: false
   shell:
     cmd: set -o pipefail ; printf "{{ lookup('password', password_terms) }}\n{{ lookup('password', password_terms) }}\n" | vncpasswd
     creates: "{{ user_home }}/.vnc/passwd"
     executable: /bin/bash
 
-- name: Copy systemd service template
-  template:
-    src: vncserver.service.j2
-    dest: "/etc/systemd/system/{{ vnc_user }}_vncserver@.service"
-    mode: 755 
-
 - name: Copy VNC configuration file
-  become_user: "{{ vnc_user }}"
   copy:
     src: xstartup
     dest: "{{ user_home }}/.vnc/xstartup"
-    mode: a+x
+    mode: 0770
+    owner: "{{ vnc_user }}"
+    group: "{{ vnc_user }}"
 
 - name: Get UID of user to calculate dektop number to assign
   shell: id -u "{{ vnc_user }}"
@@ -62,23 +60,41 @@
 - set_fact:
     vnc_desktop_number: "{{ user_uid.stdout | int - 999 }}"
 
+- name: Copy systemd service template
+  template:
+    src: vncserver.service.j2
+    dest: "/etc/systemd/system/{{ vnc_user }}_vncserver.service"
+    mode: 0644 
+    owner: root
+    group: root
+    
 - name: Enable VNC service
   systemd:
-    name: "{{ vnc_user }}_vncserver@{{ vnc_desktop_number }}"
+    name: "{{ vnc_user }}_vncserver"
     enabled: yes
     daemon-reload: yes
 
 - name: Start VNC service
-  service:
-    name: "{{ vnc_user }}_vncserver@{{ vnc_desktop_number }}"
+  systemd:
+    name: "{{ vnc_user }}_vncserver"
     state: restarted
 
 - debug:
     msg: "VNC_desktop_number is: {{ vnc_desktop_number }}"
 
-- name: Save VNC URL info 
+- name: Save server IPs to a file
+  run_once: true
   local_action:
-    module: copy
-    dest: "{{ vnc_url_file_path }}"
-    content: "{{ ansible_default_ipv4.address }}:{{ vnc_desktop_number|int + 5900 }}"
-    force: yes
+    module: lineinfile
+    path: "{{ vnc_url_file_path }}"
+    line: "{{ groups['all'] | map('extract', hostvars, ['ansible_default_ipv4', 'address']) | join('\n') }}"
+    create: yes
+
+- name: Append VNC port to server IPs
+  run_once: true
+  local_action:
+    module: replace
+    path: "{{ vnc_url_file_path }}"
+    regexp: '^(172.*)$'
+    replace: '\1:{{ vnc_desktop_number|int + 5900 }}'
+

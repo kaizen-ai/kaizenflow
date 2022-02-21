@@ -12,13 +12,13 @@
 
 - name: Disable and stop VNC service
   systemd:
-    name: "{{ vnc_user }}_vncserver@{{ vnc_desktop_number }}"
+    name: "{{ vnc_user }}_vncserver"
     state: stopped
     enabled: false
 
 - name: Remove systemd entry for user's vnc service
   file:
-    path: "/etc/systemd/system/{{ vnc_user }}_vncserver@.service"
+    path: "/etc/systemd/system/{{ vnc_user }}_vncserver.service"
     state: absent
     
 - name: Systemd to reread configs
