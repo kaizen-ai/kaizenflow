@@ -104,7 +104,7 @@ def dassert_unique_index(
         hdbg.dassert(index.is_unique, msg=msg, *args)
 
 
-# TODO(gp): @Grisha Add unit tests.
+# TODO(gp): @all Add unit tests.
 def dassert_increasing_index(
     obj: Union[pd.Index, pd.DataFrame, pd.Series],
     msg: Optional[str] = None,
@@ -130,7 +130,7 @@ def dassert_increasing_index(
         #  after we want to show.
         # Shift back to get the previous index that was creating the issue.
         mask_shift = np.empty_like(mask)
-        mask_shift[:len(mask) - 1] = mask[1:len(mask)]
+        mask_shift[: len(mask) - 1] = mask[1 : len(mask)]
         mask_shift[len(mask) - 1] = False
         #
         mask = mask | mask_shift
@@ -144,7 +144,7 @@ def dassert_increasing_index(
         hdbg.dassert(index.is_monotonic_increasing, msg=msg, *args)
 
 
-# TODO(gp): @Grisha Add more info in case of failures and unit tests.
+# TODO(gp): @all Add more info in case of failures and unit tests.
 def dassert_strictly_increasing_index(
     obj: Union[pd.Index, pd.DataFrame, pd.Series],
     msg: Optional[str] = None,
@@ -155,7 +155,6 @@ def dassert_strictly_increasing_index(
     """
     dassert_unique_index(obj, msg=msg, *args)
     dassert_increasing_index(obj, msg=msg, *args)
-
 
 
 # TODO(gp): Not sure it's used or useful?

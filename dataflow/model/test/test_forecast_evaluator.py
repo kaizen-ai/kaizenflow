@@ -361,6 +361,57 @@ class TestForecastEvaluator1(hunitest.TestCase):
 2022-01-03 10:00:00-05:00  16.19      40458.55         0.0  100000.0  0.0"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
+    def test_multiday_overnight_returns_injected(self) -> None:
+        data = self.get_data(
+            pd.Timestamp("2022-01-03 15:15:00", tz="America/New_York"),
+            pd.Timestamp("2022-01-04 10:00:00", tz="America/New_York"),
+            asset_ids=[101],
+            bar_duration="15T",
+        )
+        overnight_returns = pd.DataFrame(
+            [-0.001],
+            [
+                pd.Timestamp("2022-01-04 09:30:00", tz="America/New_York"),
+            ],
+            [101],
+        )
+        forecast_evaluator = dtfmofoeva.ForecastEvaluator(
+            returns_col="returns",
+            volatility_col="volatility",
+            prediction_col="prediction",
+        )
+        pnl, stats = forecast_evaluator.compute_overnight_pnl(
+            data, overnight_returns, target_gmv=1e5
+        )
+        round_precision = 6
+        precision = 2
+        actual = []
+        actual.append(
+            "# pnl=\n%s"
+            % hpandas.df_to_str(
+                pnl.round(round_precision),
+                num_rows=None,
+                precision=precision,
+            )
+        )
+        actual.append(
+            "# statistics=\n%s"
+            % hpandas.df_to_str(
+                stats.round(round_precision),
+                num_rows=None,
+                precision=precision,
+            )
+        )
+        actual = "\n".join(actual)
+        expected = r"""
+# pnl=
+                             101
+2022-01-04 09:30:00-05:00 -100.0
+# statistics=
+                             pnl  gross_volume  net_volume       gmv       nmv
+2022-01-04 09:30:00-05:00 -100.0             0           0  100000.0  100000.0"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
     @staticmethod
     def get_data(
         start_datetime: pd.Timestamp,

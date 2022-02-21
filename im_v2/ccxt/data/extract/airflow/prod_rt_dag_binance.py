@@ -1,16 +1,17 @@
 import datetime
+
 import airflow
 from airflow.contrib.operators.ecs_operator import ECSOperator
 from airflow.models import Variable
 
-_STAGE = 'prod'
-_EXCHANGE = 'binance'
+_STAGE = "prod"
+_EXCHANGE = "binance"
 
-ecs_cluster = Variable.get(f'{_STAGE}_ecs_cluster')
-# The naming convention is set such that this value is then reused 
-# in log groups, stream prefixes and container names to minimize 
+ecs_cluster = Variable.get(f"{_STAGE}_ecs_cluster")
+# The naming convention is set such that this value is then reused
+# in log groups, stream prefixes and container names to minimize
 # convolution and maximize simplicity.
-ecs_task_definition = Variable.get(f'{_STAGE}_ecs_task_definiton')
+ecs_task_definition = Variable.get(f"{_STAGE}_ecs_task_definiton")
 ecs_subnets = [Variable.get("ecs_subnet1"), Variable.get("ecs_subnet2")]
 ecs_security_group = [Variable.get("ecs_security_group")]
 ecs_awslogs_group = f"/ecs/{ecs_task_definition}"
@@ -34,7 +35,7 @@ bash_command = [
     "--db_stage 'dev'",
     "--db_table 'ccxt_ohlcv'",
     "--aws_profile 'ck'",
-    f"--s3_path 's3://{Variable.get(f'{_STAGE}_s3_data_bucket')}/{Variable.get('s3_realtime_data_folder')}/'"
+    f"--s3_path 's3://{Variable.get(f'{_STAGE}_s3_data_bucket')}/{Variable.get('s3_realtime_data_folder')}/'",
 ]
 
 # Create a DAG.
@@ -50,7 +51,7 @@ dag = airflow.DAG(
 
 # Run the script with ECS operator.
 downloading_task = ECSOperator(
-    task_id=F"realtime_ccxt_{_EXCHANGE}",
+    task_id=f"realtime_ccxt_{_EXCHANGE}",
     dag=dag,
     aws_conn_id=None,
     cluster=ecs_cluster,

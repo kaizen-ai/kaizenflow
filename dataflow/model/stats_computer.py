@@ -126,7 +126,7 @@ class StatsComputer:
             functools.partial(costatis.ttest_1samp, prefix="sr."),
         ]
         result = self._compute_stat_functions(srs, name, functions)
-        kratio = pd.Series(cofinanc.compute_kratio(srs), index=["kratio"])
+        kratio = pd.Series(costatis.compute_kratio(srs), index=["kratio"])
         kratio.name = name
         return pd.concat([result, kratio])
 
@@ -344,7 +344,7 @@ class StatsComputer:
             [pnl_col, gross_volume_col, net_volume_col, gmv_col, nmv_col],
             df.columns.to_list(),
         )
-        df = cofinanc.resample_portfolio_metrics_bars(
+        df = cofinanc.resample_portfolio_bar_metrics(
             df,
             freq,
             pnl_col=pnl_col,
@@ -377,7 +377,7 @@ class StatsComputer:
         stats = self._compute_stat_functions(srs, name, functions)
         results.append(pd.concat([stats], keys=["dollar"]))
         # Add dollar turnover, bias.
-        dollar_turnover_and_bias = cofinanc.compute_turnover_and_bias(
+        dollar_turnover_and_bias = costatis.compute_turnover_and_bias(
             df["gross_volume"],
             df["nmv"],
         )
@@ -392,7 +392,7 @@ class StatsComputer:
         stats = 100 * self._compute_stat_functions(srs, name, functions)
         results.append(pd.concat([stats], keys=["percentage"]))
         # Add dollar turnover, bias.
-        percentage_turnover_and_bias = 100 * cofinanc.compute_turnover_and_bias(
+        percentage_turnover_and_bias = 100 * costatis.compute_turnover_and_bias(
             df["gross_volume"] / df["gmv"],
             df["nmv"] / df["gmv"],
         )

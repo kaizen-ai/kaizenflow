@@ -29,7 +29,7 @@ bash_command = [
     "--universe 'v03'",
     "--db_stage 'dev'",
     "--aws_profile 'ck",
-    "--s3_path s3://cryptokaizen-historical-data/binance/'"
+    "--s3_path s3://cryptokaizen-historical-data/binance/'",
 ]
 
 # Create a DAG.

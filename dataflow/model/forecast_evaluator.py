@@ -72,7 +72,9 @@ class ForecastEvaluator:
         :param dollar_neutrality: as in `compute_portfolio`
         """
         target_positions, pnl, stats = self.compute_portfolio(
-            df, target_gmv=target_gmv, dollar_neutrality=dollar_neutrality
+            df,
+            target_gmv=target_gmv,
+            dollar_neutrality=dollar_neutrality,
         )
         act = []
         round_precision = 6
@@ -198,7 +200,7 @@ class ForecastEvaluator:
             `start_time`-`end_time` range)
         :return: (positions, pnl, stats)
         """
-        ForecastEvaluator._validate_df(df)
+        self._validate_df(df)
         # Record index in case we reindex the results.
         if reindex_like_input:
             idx = df.index
@@ -271,6 +273,54 @@ class ForecastEvaluator:
             pnl,
         )
         return portfolio_df, statistics_df
+
+    def compute_overnight_pnl(
+        self,
+        df: pd.DataFrame,
+        overnight_returns: pd.DataFrame,
+        *,
+        target_gmv: Optional[float] = None,
+        dollar_neutrality: str = "no_constraint",
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """"""
+        positions, _, _ = self.compute_portfolio(
+            df, target_gmv=target_gmv, dollar_neutrality=dollar_neutrality
+        )
+        start_loc = positions.index.min()
+        end_loc = positions.index.max()
+        # TODO(Paul): Take into account half days.
+        positions = positions.between_time(self._end_time, self._end_time)
+        hdbg.dassert(not positions.empty)
+        #
+        hdbg.dassert_isinstance(overnight_returns, pd.DataFrame)
+        hdbg.dassert_isinstance(overnight_returns.index, pd.DatetimeIndex)
+        hdbg.dassert_eq(overnight_returns.columns.nlevels, 1)
+        # TODO(Paul): Check that the only time is `start_time`.
+        max_num_dates = (
+            overnight_returns.groupby(lambda x: x.date).count().max().max()
+        )
+        hdbg.dassert_eq(max_num_dates, 1)
+        num_times = overnight_returns.groupby(lambda x: x.time()).ngroups
+        hdbg.dassert_eq(num_times, 1)
+        # Restrict overnight returns to index range of `df`.
+        overnight_returns = overnight_returns.loc[start_loc:end_loc]
+        idx = positions.index.union(overnight_returns.index)
+        _LOG.info("positions=\n%s", positions)
+        positions = positions.reindex(index=idx)
+        _LOG.info("positions=\n%s", positions)
+        positions = positions.shift().dropna(how="all")
+        _LOG.info("positions=\n%s", positions)
+        pnl = positions.multiply(overnight_returns)
+        stats = pd.DataFrame(
+            {
+                "pnl": pnl.sum(axis=1, min_count=1),
+                "gross_volume": 0,
+                "net_volume": 0,
+                "gmv": positions.abs().sum(axis=1, min_count=1),
+                "nmv": positions.sum(axis=1, min_count=1),
+            }
+        )
+        return pnl, stats
 
     @staticmethod
     def _build_multiindex_df(
@@ -407,8 +457,8 @@ class ForecastEvaluator:
             )
         return target_positions
 
+    @staticmethod
     def _compute_statistics(
-        self,
         target_positions: pd.DataFrame,
         pnl: pd.DataFrame,
     ) -> pd.DataFrame:
@@ -436,10 +486,15 @@ class ForecastEvaluator:
         )
         return stats
 
-    @staticmethod
-    def _validate_df(df: pd.DataFrame) -> None:
+    def _validate_df(self, df: pd.DataFrame) -> None:
         hdbg.dassert_isinstance(df, pd.DataFrame)
         hdbg.dassert_isinstance(df.index, pd.DatetimeIndex)
+        hpandas.dassert_strictly_increasing_index(df)
+        hdbg.dassert_eq(df.columns.nlevels, 2)
+        hdbg.dassert_is_subset(
+            [self._returns_col, self._volatility_col, self._prediction_col],
+            df.columns.levels[0].to_list(),
+        )
 
     @staticmethod
     def _get_df(df: pd.DataFrame, col: str) -> pd.DataFrame:
