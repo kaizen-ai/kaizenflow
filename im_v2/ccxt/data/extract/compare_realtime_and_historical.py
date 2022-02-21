@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Compare daily data on DB and S3, raising when difference was found.
+Compare data on DB and S3, raising when difference was found.
 
 Use as:
 # Compare daily S3 and realtime data for binance.
@@ -145,11 +145,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
     env_file = imvimlita.get_db_env_path(args.db_stage)
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
-    # Read DB realtime data.
+    # Convert timestamps to unix ms format used in OHLCV data.
     unix_start_timestamp = hdateti.convert_timestamp_to_unix_epoch(
         start_timestamp
     )
     unix_end_timestamp = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
+    # Read data from DB.
     query = (
         f"SELECT * FROM ccxt_ohlcv WHERE timestamp >='{unix_start_timestamp}'"
         f" AND timestamp <= '{unix_end_timestamp}' AND exchange_id='{args.exchange_id}'"
@@ -161,7 +162,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # List files for given exchange.
     exchange_path = os.path.join(args.s3_path, args.exchange_id)
     s3_files = s3fs_.ls(exchange_path)
-    # TODO(Danya): Remove.
+    # TODO(Danya): Remove the CSV reading and replace with parquet.
     # Filter files by timestamps in names.
     #  Example of downloaded file name: 'ADA_USDT_20210207-164012.csv'
     start_timestamp_str = start_timestamp.strftime("%Y%m%d-%H%M%S")
