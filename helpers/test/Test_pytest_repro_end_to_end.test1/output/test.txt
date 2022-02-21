@@ -1,8 +1,8 @@
 INFO: > cmd='/venv/bin/invoke pytest_repro --file-name=/app/helpers/test/Test_pytest_repro_end_to_end.test1/input/cache/lastfailed'
 ## pytest_repro: 
-00:00:00 - INFO  lib_tasks.py pytest_repro:0000                         Reading file_name='/app/helpers/test/Test_pytest_repro_end_to_end.test1/input/cache/lastfailed'
-00:00:00 - INFO  lib_tasks.py pytest_repro:0000                         Reading failed tests from file '/app/helpers/test/Test_pytest_repro_end_to_end.test1/input/cache/lastfailed'
-00:00:00 - INFO  lib_tasks.py pytest_repro:0000                         Found 10 failed pytest 'tests' target(s); to reproduce run:
+HH:MM:SS - INFO  lib_tasks.py pytest_repro:{LINE_NUM}                         Reading file_name='/app/helpers/test/Test_pytest_repro_end_to_end.test1/input/cache/lastfailed'
+HH:MM:SS - INFO  lib_tasks.py pytest_repro:{LINE_NUM}                         Reading failed tests from file '/app/helpers/test/Test_pytest_repro_end_to_end.test1/input/cache/lastfailed'
+HH:MM:SS - INFO  lib_tasks.py pytest_repro:{LINE_NUM}                         Found 10 failed pytest 'tests' target(s); to reproduce run:
 pytest dev_scripts/testing/test/test_run_tests.py
 pytest dev_scripts/testing/test/test_run_tests2.py
 pytest helpers/test/test_printing.py::Test_dedent1::test1
