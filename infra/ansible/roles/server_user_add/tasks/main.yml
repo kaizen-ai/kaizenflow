@@ -30,9 +30,9 @@
     key: "{{ lookup('file', pub_key_path) }}"
     state: present
 
-- name: Save server IP to a file
+- name: Save server IPs to a file
   local_action:
     module: lineinfile
     path: "{{ server_ip_file_path }}"
-    line: "{{ ansible_default_ipv4.address }}"
+    line: "{{ groups['ALL'] | map('extract', hostvars, ['ansible_host']) | join('\n') }}"
     create: yes
