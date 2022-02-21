@@ -14,6 +14,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+import helpers.hs3 as hs3
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
@@ -32,6 +33,7 @@ def from_parquet(
     filters: Optional[List[Any]] = None,
     log_level: int = logging.DEBUG,
     report_stats: bool = False,
+    aws_profile: Optional[str] = None
 ) -> pd.DataFrame:
     """
     Load a dataframe from a Parquet file.
@@ -41,18 +43,25 @@ def from_parquet(
     """
     _LOG.debug(hprint.to_str("file_name columns filters"))
     hdbg.dassert_isinstance(file_name, str)
+    if aws_profile is not None:
+        # Load S3 filesystem.
+        hdbg.dassert(hs3.is_s3_path(file_name))
+        fs = hs3.get_s3fs(aws_profile)
+    else:
+        # Keep default filesystem.
+        fs = None
     # Load data.
     with htimer.TimedScope(
         logging.DEBUG, f"# Reading Parquet file '{file_name}'"
     ) as ts:
-        filesystem = None
         # TODO(gp): Generalize for S3.
         hdbg.dassert_exists(file_name)
         dataset = pq.ParquetDataset(
             file_name,
-            filesystem=filesystem,
+            filesystem=fs,
             filters=filters,
             use_legacy_dataset=False,
+
         )
         # To read also the index we need to use `read_pandas()`, instead of
         # `read_table()`.
