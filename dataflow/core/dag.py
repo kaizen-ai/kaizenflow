@@ -281,9 +281,8 @@ class DAG:
             parent_nid, parent_out = parent
         else:
             parent_nid = parent
-            parent_out = hlist.assert_single_element_and_return(
-                self.get_node(parent_nid).get_output_names()
-            )
+            parent_output = self.get_node(parent_nid).get_output_names()
+            parent_out = hlist.assert_single_element_and_return(parent_output)
         parent_node = self.get_node(parent_nid)
         output_names = parent_node.get_output_names()
         hdbg.dassert_in(parent_out, output_names)
@@ -293,11 +292,10 @@ class DAG:
             child_nid, child_in = child
         else:
             child_nid = child
-            child_in = hlist.assert_single_element_and_return(
-                self.get_node(child_nid).get_input_names()
-            )
+            child_input = self.get_node(child_nid).get_input_names()
+            child_in = hlist.assert_single_element_and_return(child_input)
         child_node = self.get_node(child_nid)
-        input_names = child_node.get_output_names()
+        input_names = child_node.get_input_names()
         hdbg.dassert_in(child_in, input_names)
         # Ensure that `child_in` is not already hooked up to an output.
         for nid in self._dag.predecessors(child_nid):
