@@ -31,8 +31,9 @@
     state: present
 
 - name: Save server IPs to a file
+  run_once: true
   local_action:
     module: lineinfile
     path: "{{ server_ip_file_path }}"
-    line: "{{ groups['ALL'] | map('extract', hostvars, ['ansible_host']) | join('\n') }}"
+    line: "{{ groups['all'] | map('extract', hostvars, ['ansible_default_ipv4', 'address']) | join('\n') }}"
     create: yes

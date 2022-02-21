@@ -21,10 +21,12 @@
     - disable_window_animations|bool  
 
 - name: "Ensures path {{ user_home }}/.vnc/ exists"
-  become_user: "{{ vnc_user }}"
   file: 
     path: "{{ user_home }}/.vnc/"
     state: directory
+    owner: "{{ vnc_user }}"
+    group: "{{ vnc_user }}"
+    mode: 0700
 
 - name: "Add read/write permissions to /tmp to other (prevents errors in vncserver)"
   file: 
@@ -33,17 +35,19 @@
 
 - name: Set VNC password (password is mandatory but vncserver might be later started without it)
   become_user: "{{ vnc_user }}"
+  become: false
   shell:
     cmd: set -o pipefail ; printf "{{ lookup('password', password_terms) }}\n{{ lookup('password', password_terms) }}\n" | vncpasswd
     creates: "{{ user_home }}/.vnc/passwd"
     executable: /bin/bash
 
 - name: Copy VNC configuration file
-  become_user: "{{ vnc_user }}"
   copy:
     src: xstartup
     dest: "{{ user_home }}/.vnc/xstartup"
     mode: a+x
+    owner: "{{ vnc_user }}"
+    group: "{{ vnc_user }}"
 
 - name: Get UID of user to calculate dektop number to assign
   shell: id -u "{{ vnc_user }}"
