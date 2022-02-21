@@ -42,7 +42,7 @@ hprint.config_notebook()
 # %%
 # Disabling INFO messages from data downloads.
 logger = logging.getLogger()
-logger.setLevel(logging.WARNING)
+logger.setLevel(logging.CRITICAL)
 
 
 # %% [markdown]
@@ -64,13 +64,13 @@ def calculate_datetime_statistics_for_kibot_data(
     
     :param list_of_symbols: tickers for asset in desired universe
     :param contract_type: either 'Futures' or 'Stocks'
-    :param futures_frequency: only for Futures; Daily or Minutely
-    :return: Datetime statistics for every asset in the given universe
+    :param futures_frequency: only for Futures; "daily" or "minutely"
+    :return: datetime statistics for every asset in the given universe
     """
     # Create dictionaries that will store the datetime statistics.
-    start_date = {}
-    end_date = {}
-    data_count = {}
+    start_date_dict = {}
+    end_date_dict = {}
+    data_count_dict = {}
     # Create a loop that loads data for a single asset and proccess it to extract datetime statistics.
     for ticker in list_of_symbols:
         # The code below loads the data.
@@ -92,27 +92,20 @@ def calculate_datetime_statistics_for_kibot_data(
             )
         # Here is a condition that cuts out empty dataframes.
         # See section 'Example of an empty stock data' for reference.
-        if asset_df.shape[0] == 2:
+        if asset_df.shape[0] in [1, 2]:
             # The logic here and below: mapping the value of start date to the 
             # specific company ticker.
-            start_ind = {ticker: np.nan}
-            # The logic here and below: attach this dictionary ({ticker: start_date})
-            # to the general file where all {ticker: values} will be stored.
-            start_date = start_date | start_ind.items()
-            end_ind = {ticker: np.nan}
-            end_date = end_date | end_ind.items()
-            data_count_ind = {ticker: np.nan}
-            data_count = data_count | data_count_ind.items()
-        elif asset_df.shape[0] == 1:
-            start_ind = {ticker: np.nan}
-            start_date = start_date | start_ind.items()
-            end_ind = {ticker: np.nan}
-            end_date = end_date | end_ind.items()
-            data_count_ind = {ticker: np.nan}
-            data_count = data_count | data_count_ind.items()
-        # The non-empty DataFrames are proccessed to extract datetime statistics.
+            start_ind[ticker] = np.nan
+            # The logic here and below: add a particular ticket related data
+            # to the dictionaries with data for all tickers.
+            start_date_dict = start_date_dict | start_ind.items()
+            end_ind[ticker] = np.nan
+            end_date_dict = end_date_dict | end_ind.items()
+            data_count_ind[ticker] = np.nan
+            data_count_dict = data_count_dict | data_count_ind.items()
+        # The non-empty dataframes are proccessed to extract datetime statistics.
         else:
-            # Reseting index to unleash 'timestamp' column.
+            # Reseting index to unleash the column with datetime data.
             asset_df.reset_index(inplace=True)
             # Collecting datetime statistics.
             max_date = asset_df["datetime"].max()
@@ -120,23 +113,23 @@ def calculate_datetime_statistics_for_kibot_data(
             data_points = asset_df["datetime"].count()
             # Writing these values into the dictionaries.
             start_ind = {ticker: min_date}
-            start_date = start_date | start_ind.items()
+            start_date_dict = start_date_dict | start_ind.items()
             end_ind = {ticker: max_date}
-            end_date = end_date | end_ind.items()
+            end_date_dict = end_date_dict | end_ind.items()
             data_count_ind = {ticker: data_points}
-            data_count = data_count | data_count_ind.items()
-        # Once all the dictionaries are filled with data - turn them to DataFrames.
-        # The logic here and below: when transforming dictionary into pd.DataFrame
-        # it has two columns: tickers and statistics value. The code below sets tickers
+            data_count_dict = data_count_dict | data_count_ind.items()
+        # Once all the dictionaries are filled with data - turn them to dataframes.
+        # The logic here and below: transform dictionary into `pd.DataFrame`.
+        # It has two columns: tickers and statistics value. The code below sets tickers
         # as an index during this transformation.
         final_start_date = pd.DataFrame(
-            start_date, columns=["", "start_date"]
+            start_date_dict, columns=["", "start_date"]
         ).set_index("")
         final_end_date = pd.DataFrame(
-            end_date, columns=["", "end_date"]
+            end_date_dict, columns=["", "end_date"]
         ).set_index("")
         final_data_count = pd.DataFrame(
-            data_count, columns=["", "data_points_count"]
+            data_count_dict, columns=["", "data_points_count"]
         ).set_index("")
         # Combine all statistics into a single table.
         result = pd.concat(
@@ -325,7 +318,7 @@ general_stats_all_stocks = calculate_general_datetime_stats(final_stats_stocks)
 general_stats_all_stocks
 
 # %%
-# DataFrame with empty stock data files.
+# Dataframe with empty stock data files.
 empty_dataframes = final_stats_stocks[
     final_stats_stocks["data_points_count"].isna()
 ]
