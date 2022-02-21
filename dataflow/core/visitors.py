@@ -90,7 +90,7 @@ def set_fit_state(dag: dtfcordag.DAG, fit_state: NodeState) -> None:
     hdbg.dassert_isinstance(fit_state, collections.OrderedDict)
     nx_dag = dag.get_nx_dag()
     nodes = nx_dag.nodes()
-    hdbg.dassert_eq(nodes, len(fit_state.keys()))
+    hdbg.dassert_eq(len(nodes), len(fit_state.keys()))
     # Scan the nodes.
     for nid in nodes:
         node = dag.get_node(nid)
