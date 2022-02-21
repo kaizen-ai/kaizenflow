@@ -45,7 +45,7 @@
   copy:
     src: xstartup
     dest: "{{ user_home }}/.vnc/xstartup"
-    mode: a+x
+    mode: 0770
     owner: "{{ vnc_user }}"
     group: "{{ vnc_user }}"
 
