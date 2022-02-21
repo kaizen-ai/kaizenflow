@@ -219,7 +219,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     for exchange in exchanges:
         for currency_pair in exchange.currency_pairs:
             pair_data = _download_data(
-                start_timestamp, end_timestamp, args.data_type, exchange, currency_pair
+                start_timestamp,
+                end_timestamp,
+                args.data_type,
+                exchange,
+                currency_pair,
             )
             # Save to disk.
             _save_data_on_disk(

@@ -15,23 +15,18 @@ import pandas as pd
 from tqdm.auto import tqdm
 
 import core.config as cconfig
-import core.finance as cofinanc
 import core.signal_processing as csigproc
 import core.statistics as costatis
 import dataflow as cdataf
 import dataflow.model.stats_computer as dtfmostcom
 import dataflow.model.utils as dtfmodutil
+import helpers.hdataframe as hdatafr
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
 import helpers.hlogging as hloggin
 
 _LOG = logging.getLogger(__name__)
 
-# _LOG.debug = _LOG.info
-
-# #############################################################################
-# StrategyEvaluator
-# #############################################################################
 
 # Each model / experiment is represented by a key, encoded as an int.
 Key = int
@@ -261,7 +256,7 @@ class ModelEvaluator:
                 )
             else:
                 ins_pnl_srs = pnl_srs
-            scale_factor = cofinanc.compute_volatility_normalization_factor(
+            scale_factor = compute_volatility_normalization_factor(
                 srs=ins_pnl_srs, target_volatility=target_volatility
             )
             pnl_srs *= scale_factor
@@ -628,7 +623,7 @@ class PositionComputer:
         # Rescale in-sample.
         ins_pnl = pnl[: self.oos_start]  # type: ignore[misc]
         if volatility_strategy == "rescale":
-            scale_factor = cofinanc.compute_volatility_normalization_factor(
+            scale_factor = compute_volatility_normalization_factor(
                 srs=ins_pnl, target_volatility=target_volatility
             )
             positions = scale_factor * predictions
@@ -661,3 +656,23 @@ class PositionComputer:
         else:
             raise ValueError(f"Invalid mode `{mode}`")
         return ret
+
+
+def compute_volatility_normalization_factor(
+    srs: pd.Series, target_volatility: float
+) -> float:
+    """
+    Compute scale factor of a series according to a target volatility.
+
+    :param srs: returns series. Index must have `freq`.
+    :param target_volatility: target volatility as a proportion (e.g., `0.1`
+        corresponds to 10% annual volatility)
+    :return: scale factor
+    """
+    hdbg.dassert_isinstance(srs, pd.Series)
+    # TODO(Paul): Determine how to deal with no `freq`.
+    ppy = hdatafr.infer_sampling_points_per_year(srs)
+    srs = hdatafr.apply_nan_mode(srs, mode="fill_with_zero")
+    scale_factor: float = target_volatility / (np.sqrt(ppy) * srs.std())
+    _LOG.debug("scale_factor=%f", scale_factor)
+    return scale_factor
