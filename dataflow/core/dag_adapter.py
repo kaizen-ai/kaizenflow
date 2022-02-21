@@ -8,8 +8,8 @@ import logging
 from typing import Any, Dict, List
 
 import core.config as cconfig
-import dataflow.core.dag_builder as dtfcodabui
 import dataflow.core.dag as dtfcordag
+import dataflow.core.dag_builder as dtfcodabui
 import dataflow.core.node as dtfcornode
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint

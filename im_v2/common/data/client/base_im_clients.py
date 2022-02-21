@@ -116,10 +116,17 @@ class ImClient(abc.ABC):
         )
         _LOG.debug("After read_data: df=\n%s", hpandas.df_to_str(df, num_rows=3))
         # Check that we got what we asked for.
+        # hpandas.dassert_increasing_index(df)
+        #
         hdbg.dassert_in(full_symbol_col_name, df.columns)
         loaded_full_symbols = df[full_symbol_col_name].unique().tolist()
         imvcdcfusy.dassert_valid_full_symbols(loaded_full_symbols)
-        hdbg.dassert_set_eq(full_symbols, loaded_full_symbols)
+        hdbg.dassert_set_eq(
+            full_symbols,
+            loaded_full_symbols,
+            msg="Not all the requested symbols were retrieved",
+            only_warning=True,
+        )
         #
         hdateti.dassert_timestamp_lte(start_ts, df.index.min())
         hdateti.dassert_timestamp_lte(df.index.max(), end_ts)
@@ -137,6 +144,7 @@ class ImClient(abc.ABC):
                 df_tmp, full_symbol_col_name, start_ts, end_ts
             )
             dfs.append(df_tmp)
+        # TODO(Nikola): raise error on empty df?
         df = pd.concat(dfs, axis=0)
         _LOG.debug("After im_normalization: df=\n%s", hpandas.df_to_str(df))
         # Sort by index and `full_symbol_col_name`.

@@ -161,7 +161,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     start_timestamp_str = start_timestamp.strftime("%Y%m%d-%H%M%S")
     end_timestamp_str = end_timestamp.strftime("%Y%m%d-%H%M%S")
     daily_files = [
-        f for f in s3_files if f.split("_")[-1].rstrip(".csv") <= end_timestamp_str
+        f
+        for f in s3_files
+        if f.split("_")[-1].rstrip(".csv") <= end_timestamp_str
     ]
     daily_files = [
         f

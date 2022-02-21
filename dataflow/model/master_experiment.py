@@ -98,7 +98,6 @@ def _save_tiled_output(config, result_bundle):
     df = df.reset_index(level=1)
     df["year"] = df.index.year
     df["month"] = df.index.month
-
     hparque.to_partitioned_parquet(
         df, [asset_id_col_name, "year", "month"], dst_dir="test"
     )

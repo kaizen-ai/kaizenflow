@@ -15,6 +15,8 @@ import dataflow.system.source_nodes as dtfsysonod
 import oms.portfolio as omportfo
 
 
+# TODO(gp): Replace DagAdapter and build the Dag in a single place.
+#  We want to create the config below in one place with a _example().
 class RealTimeDagAdapter(dtfcore.DagAdapter):
     """
     Adapt a DAG builder to RT execution by injecting real-time nodes.
@@ -38,7 +40,7 @@ class RealTimeDagAdapter(dtfcore.DagAdapter):
         market_data = portfolio.market_data
         #
         overriding_config = cconfig.Config()
-        # Configure a DataSourceNode.
+        # Configure a `DataSourceNode`.
         source_node_kwargs = {
             "market_data": market_data,
             "timedelta": timedelta,
@@ -97,7 +99,7 @@ class RealTimeDagAdapter(dtfcore.DagAdapter):
         stage = "load_prices"
         node_ctor = dtfsysonod.data_source_node_factory
         nodes_to_insert.append((stage, node_ctor))
-        # Append a ProcessForecastNode node.
+        # Append a `ProcessForecastNode` node.
         nodes_to_append = []
         stage = "process_forecasts"
         node_ctor = dtfsysinod.ProcessForecasts
