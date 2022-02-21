@@ -15,7 +15,9 @@ from dataflow.core.nodes.gluonts_models import (
     ContinuousDeepArModel,
     DeepARGlobalModel,
 )
-from dataflow.core.nodes.sources import ReadDataFromDf
+
+# TODO(gp): use our import style instead of from ... import
+from dataflow.core.nodes.sources import DfDataSource
 
 _LOG = logging.getLogger(__name__)
 
@@ -59,7 +61,7 @@ if True:
                 )
             ]
             predict_intervals = [(pd.Timestamp("1750-01-03 21:00:00"), None)]
-            data_source_node = ReadDataFromDf("data", data)
+            data_source_node = DfDataSource("data", data)
             data_source_node.set_fit_intervals(fit_intervals)
             data_source_node.set_predict_intervals(predict_intervals)
             # Create DAG and test data node.
@@ -109,7 +111,7 @@ if True:
             mxnet.random.seed(0)
             dag = dtfcordag.DAG(mode="strict")
             local_ts = self._get_local_ts()
-            data_source_node = ReadDataFromDf("local_ts", local_ts)
+            data_source_node = DfDataSource("local_ts", local_ts)
             dag.add_node(data_source_node)
             config = self._get_config()
             deepar = DeepARGlobalModel(**config.to_dict())

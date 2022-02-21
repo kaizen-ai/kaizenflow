@@ -3,10 +3,10 @@ import logging
 import numpy as np
 
 import core.config as cconfig
-import dataflow.core.builders_example as dtfcobuexa
 import dataflow.core.dag_adapter as dtfcodaada
+import dataflow.core.dag_builder_example as dtfcdabuex
+import dataflow.core.dag_runner as dtfcodarun
 import dataflow.core.nodes.sources as dtfconosou
-import dataflow.core.runners as dtfcorrunn
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
@@ -23,10 +23,10 @@ class TestArmaReturnsBuilder(hunitest.TestCase):
     """
 
     def test1(self) -> None:
-        dag_builder = dtfcobuexa.ArmaReturnsBuilder()
+        dag_builder = dtfcdabuex.ArmaReturnsBuilder()
         config = dag_builder.get_config_template()
         #
-        dag_runner = dtfcorrunn.FitPredictDagRunner(config, dag_builder)
+        dag_runner = dtfcodarun.FitPredictDagRunner(config, dag_builder)
         result_bundle = dag_runner.fit()
         #
         df_out = result_bundle.result_df
@@ -37,7 +37,7 @@ class TestArmaReturnsBuilder(hunitest.TestCase):
         self.check_string(str_output)
 
     def test_str1(self) -> None:
-        dag_builder = dtfcobuexa.ArmaReturnsBuilder()
+        dag_builder = dtfcdabuex.ArmaReturnsBuilder()
         act = str(dag_builder)
         self.check_string(act)
 
@@ -48,7 +48,7 @@ class TestMvnReturnsBuilder(hunitest.TestCase):
     """
 
     def test1(self) -> None:
-        dag_builder = dtfcobuexa.MvnReturnsBuilder()
+        dag_builder = dtfcdabuex.MvnReturnsBuilder()
         #
         overriding_config = cconfig.Config()
         overriding_config["load_prices"] = {
@@ -59,7 +59,7 @@ class TestMvnReturnsBuilder(hunitest.TestCase):
             "target_volatility": 0.25,
             "seed": 247,
         }
-        node = dtfconosou.MultivariateNormalGenerator
+        node = dtfconosou.MultivariateNormalDataSource
         nodes_to_insert = [("load_prices", node)]
         dag_builder = dtfcodaada.DagAdapter(
             dag_builder,
@@ -70,7 +70,7 @@ class TestMvnReturnsBuilder(hunitest.TestCase):
         #
         config = dag_builder.get_config_template()
         #
-        dag_runner = dtfcorrunn.FitPredictDagRunner(config, dag_builder)
+        dag_runner = dtfcodarun.FitPredictDagRunner(config, dag_builder)
         result_bundle = dag_runner.fit()
         #
         df_out = result_bundle.result_df
@@ -109,6 +109,6 @@ class TestMvnReturnsBuilder(hunitest.TestCase):
         np.testing.assert_equal(df_out.dropna(how="all").shape, (702, 28))
 
     def test_str1(self) -> None:
-        dag_builder = dtfcobuexa.MvnReturnsBuilder()
+        dag_builder = dtfcdabuex.MvnReturnsBuilder()
         act = str(dag_builder)
         self.check_string(act)

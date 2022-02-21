@@ -8,7 +8,7 @@ import collections
 import datetime
 import logging
 import os
-from typing import Any, Iterator, List, Optional, Tuple, Union
+from typing import Any, Callable, Iterator, List, Optional, Tuple, Union
 
 import pandas as pd
 import pyarrow as pa
@@ -18,6 +18,7 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
 import helpers.hio as hio
+import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.htimer as htimer
 
@@ -30,6 +31,7 @@ def from_parquet(
     columns: Optional[List[str]] = None,
     filters: Optional[List[Any]] = None,
     log_level: int = logging.DEBUG,
+    report_stats: bool = False,
 ) -> pd.DataFrame:
     """
     Load a dataframe from a Parquet file.
@@ -37,8 +39,8 @@ def from_parquet(
     The difference with `pd.read_pq` is that here we use Parquet
     Dataset.
     """
+    _LOG.debug(hprint.to_str("file_name columns filters"))
     hdbg.dassert_isinstance(file_name, str)
-    # hdbg.dassert_file_extension(file_name, ["pq", "parquet"])
     # Load data.
     with htimer.TimedScope(
         logging.DEBUG, f"# Reading Parquet file '{file_name}'"
@@ -57,19 +59,20 @@ def from_parquet(
         # See https://arrow.apache.org/docs/python/parquet.html#reading-and-writing-single-files.
         table = dataset.read_pandas(columns=columns)
         df = table.to_pandas()
-    # Report stats.
-    file_size = hsystem.du(file_name, human_format=True)
-    _LOG.log(
-        log_level,
-        "Loaded '%s' (size=%s, time=%.1fs)",
-        file_name,
-        file_size,
-        ts.elapsed_time,
-    )
     # Report stats about the df.
     _LOG.debug("df.shape=%s", str(df.shape))
     mem = df.memory_usage().sum()
     _LOG.debug("df.memory_usage=%s", hintros.format_size(mem))
+    # Report stats about the Parquet file size.
+    if report_stats:
+        file_size = hsystem.du(file_name, human_format=True)
+        _LOG.log(
+            log_level,
+            "Loaded '%s' (size=%s, time=%.1fs)",
+            file_name,
+            file_size,
+            ts.elapsed_time,
+        )
     return df
 
 
@@ -80,6 +83,7 @@ def to_parquet(
     file_name: str,
     *,
     log_level: int = logging.DEBUG,
+    report_stats: bool = False,
 ) -> None:
     """
     Save a dataframe as Parquet.
@@ -89,6 +93,7 @@ def to_parquet(
     hdbg.dassert_file_extension(file_name, ["pq", "parquet"])
     #
     hio.create_enclosing_dir(file_name, incremental=True)
+    # Report stats about the df.
     _LOG.debug("df.shape=%s", str(df.shape))
     mem = df.memory_usage().sum()
     _LOG.debug("df.memory_usage=%s", hintros.format_size(mem))
@@ -98,15 +103,16 @@ def to_parquet(
     ) as ts:
         table = pa.Table.from_pandas(df)
         pq.write_table(table, file_name)
-    # Report stats.
-    file_size = hsystem.du(file_name, human_format=True)
-    _LOG.log(
-        log_level,
-        "Saved '%s' (size=%s, time=%.1fs)",
-        file_name,
-        file_size,
-        ts.elapsed_time,
-    )
+    # Report stats about the Parquet file size.
+    if report_stats:
+        file_size = hsystem.du(file_name, human_format=True)
+        _LOG.log(
+            log_level,
+            "Saved '%s' (size=%s, time=%.1fs)",
+            file_name,
+            file_size,
+            ts.elapsed_time,
+        )
 
 
 # #############################################################################
@@ -254,7 +260,7 @@ def collate_parquet_tile_metadata(
 
 
 # TODO(Paul): The `int` assumption is baked in. We can generalize to strings
-# if needed, but if we do, then we should continue to handles string ints as
+# if needed, but if we do, then we should continue to handle string ints as
 # ints as we do here (e.g., there are sorting advantages, among others).
 def _process_walk_triple(
     triple: tuple, start_depth
@@ -290,26 +296,41 @@ def _process_walk_triple(
 
 # #############################################################################
 
-ParquetAndFilter = List[Tuple[str, str, Any]]
+# A Parquet filtering condition. e.g., `("year", "=", year)`
+ParquetFilter = Tuple[str, str, Any]
+# The AND of Parquet filtering conditions, e.g.,
+#   `[("year", "=", year), ("month", "=", month)]`
+ParquetAndFilter = List[ParquetFilter]
+# A OR-AND Parquet filtering condition, e.g.,
+#   ```
+#   [[('year', '=', 2020), ('month', '=', 1)],
+#    [('year', '=', 2020), ('month', '=', 2)],
+#    [('year', '=', 2020), ('month', '=', 3)]]
+#   ```
 ParquetOrAndFilter = List[ParquetAndFilter]
 
 
+# TODO(gp): @Nikola add light unit tests for `by_year_week` and for additional_filter.
 def get_parquet_filters_from_timestamp_interval(
     partition_mode: str,
     start_timestamp: Optional[pd.Timestamp],
     end_timestamp: Optional[pd.Timestamp],
+    *,
+    additional_filter: Optional[ParquetFilter] = None,
 ) -> ParquetOrAndFilter:
     """
     Convert a constraint on a timestamp [start_timestamp, end_timestamp] into a
-    Parquet filters expression, based on the passed partitioning/tiling
+    Parquet filters expression, based on the passed partitioning / tiling
     criteria.
 
-    :param partition_mode: mode to control filtering of parquet datasets
-        that were previously saved in the same mode
-    :param start_timestamp: start of the interval
-    :param end_timestamp: end of the interval
-    :return: list of AND(conjunction) predicates that are expressed
-        in DNF(disjunctive normal form)
+    :param partition_mode: control filtering of Parquet datasets. It needs to be
+        in sync with the way the data was saved
+    :param start_timestamp: start of the interval. `None` means no bound
+    :param end_timestamp: end of the interval. `None` means no bound
+    :param additional_filter: an AND condition to add to the final filter.
+        E.g., if we want to constraint also on `asset_ids`, we can specify
+        `("asset_id", "in", (...))`
+    :return: list of OR-AND predicates
     """
     # Check timestamp interval.
     left_close = True
@@ -320,31 +341,187 @@ def get_parquet_filters_from_timestamp_interval(
         left_close=left_close,
         right_close=right_close,
     )
-    # Use hardwired start and end date to represent the start_timestamp / end_timestamp = None.
-    # This is not very elegant, but it simplifies the code
-    min_date = pd.Timestamp("2001-01-01 00:00:00+00:00")
-    max_date = pd.Timestamp("2100-01-01 00:00:00+00:00")
+    # Use hardwired start and end date to represent start_timestamp /
+    # end_timestamp = None. This is not very elegant, but it simplifies the code.
+    # TODO(gp): This approach of enumerating seems slow when Parquet reads the data.
+    #  Verify it is and then use a smarter approach like year <= ...
     if start_timestamp is None:
-        start_timestamp = min_date
+        start_timestamp = pd.Timestamp("2001-01-01 00:00:00+00:00")
     if end_timestamp is None:
-        end_timestamp = max_date
-    filters = []
-    # Partition by year and month.
+        end_timestamp = pd.Timestamp("2030-01-01 00:00:00+00:00")
+    or_and_filter = []
     if partition_mode == "by_year_month":
-        # Include last month in interval.
-        end_timestamp = end_timestamp + pd.DateOffset(months=1)
+        # Partition by year and month.
+        # Include last month in the interval.
+        end_timestamp += pd.DateOffset(months=1)
         # Get all months in interval.
-        dates = pd.date_range(start_timestamp, end_timestamp, freq="M")
+        dates = pd.date_range(
+            start_timestamp.date(), end_timestamp.date(), freq="M"
+        )
+        years = list(set(dates.year))
+        if len(years) <= 2:
+            # For ranges up to two years, simple AND statement is enough.
+            # `[[('year', '>=', 2020), ('month', '>=', 6),
+            # ('year', '<=', 2021), ('month', '<=', 12)]]`
+            and_filter = [
+                ("year", ">=", dates[0].year),
+                ("month", ">=", dates[0].month),
+                ("year", "<=", dates[-1].year),
+                ("month", "<=", dates[-1].month),
+            ]
+            or_and_filter.append(and_filter)
+        else:
+            # For ranges over two years, OR statements are necessary to bridge the gap
+            # between first and last AND statement.
+            # First AND filter.
+            first_and_filter = [
+                ("year", "==", dates[0].year),
+                ("month", ">=", dates[0].month),
+                ("year", "==", dates[0].year),
+                ("month", "<=", 12),
+            ]
+            or_and_filter.append(first_and_filter)
+            # OR statements to bridge the gap.
+            # `[('year', '==', 2021)]`
+            for year in years[1:-1]:
+                bridge_and_filter = [("year", "==", year)]
+                or_and_filter.append(bridge_and_filter)
+            # Last AND filter.
+            last_and_filter = [
+                ("year", "==", dates[-1].year),
+                ("month", ">=", 1),
+                ("year", "==", dates[-1].year),
+                ("month", "<=", dates[-1].month),
+            ]
+            or_and_filter.append(last_and_filter)
+    elif partition_mode == "by_year_week":
+        # Partition by year and week.
+        # Include last week in the interval.
+        end_timestamp += pd.DateOffset(weeks=1)
+        # Get all weeks in the interval.
+        dates = pd.date_range(
+            start_timestamp.date(), end_timestamp.date(), freq="W"
+        )
         for date in dates:
             year = date.year
-            month = date.month
-            and_filter = [("year", "=", year), ("month", "=", month)]
-            filters.append(and_filter)
-            _LOG.debug("Adding AND filter %s", str(and_filter))
+            # https://docs.python.org/3/library/datetime.html#datetime.date.isocalendar
+            weekofyear = date.isocalendar()[1]
+            and_filter = [("year", "=", year), ("weekofyear", "=", weekofyear)]
+            or_and_filter.append(and_filter)
     else:
         raise ValueError(f"Unknown partition mode `{partition_mode}`!")
-    # TODO(Nikola): Partition by week.
-    #   week = start_ts.isocalendar()[1]
-    #   https://docs.python.org/3/library/datetime.html#datetime.date.isocalendar
-    _LOG.debug("filters=%s", str(filters))
-    return filters
+    if additional_filter:
+        hdbg.dassert_isinstance(additional_filter, tuple)
+        or_and_filter = [
+            [additional_filter] + and_filter for and_filter in or_and_filter
+        ]
+    _LOG.debug("or_and_filter=%s", str(or_and_filter))
+    return or_and_filter
+
+
+def add_date_partition_columns(
+    df: pd.DataFrame, partition_mode: str
+) -> Tuple[pd.DataFrame, List[str]]:
+    """
+    Add partition columns like year, month, day from datetime index.
+
+    :param df: dataframe indexed by timestamp
+    :param partition_mode:
+        - "by_date": extract the date from the index
+            - E.g., an index like `2022-01-10 14:00:00+00:00` is transform to a
+              column `20220110`
+        - "by_year_month_day": split the index in year, month, day columns
+        - "by_year_month": split by year and month
+        - "by_year_week": split by year and week of the year
+        - "by_year": split by year
+    :return:
+        - df with additional partitioning columns
+        - list of partitioning columns
+    """
+    with htimer.TimedScope(logging.DEBUG, "# add_date_partition_cols"):
+        if partition_mode == "by_date":
+            df["date"] = df.index.strftime("%Y%m%d")
+            partition_columns = ["date"]
+        else:
+            if partition_mode == "by_year_month_day":
+                partition_columns = ["year", "month", "date"]
+            elif partition_mode == "by_year_month":
+                partition_columns = ["year", "month"]
+            elif partition_mode == "by_year_week":
+                partition_columns = ["year", "weekofyear"]
+            elif partition_mode == "by_year":
+                partition_columns = ["year"]
+            elif partition_mode == "by_month":
+                partition_columns = ["month"]
+            else:
+                raise ValueError(f"Invalid partition_mode='{partition_mode}'")
+            # Add date columns chosen by partition mode.
+            for column_name in partition_columns:
+                # Extract data corresponding to `column_name` (e.g.,
+                # `df.index.year`).
+                df[column_name] = getattr(df.index, column_name)
+    return df, partition_columns
+
+
+def to_partitioned_parquet(
+    df: pd.DataFrame,
+    partition_columns: List[str],
+    dst_dir: str,
+    *,
+    filesystem=None,
+    partition_filename: Union[Callable, None] = lambda x: "data.parquet",
+) -> None:
+    """
+    Save the given dataframe as Parquet file partitioned along the given
+    columns.
+
+    :param df: dataframe
+    :param partition_columns: partitioning columns
+    :param dst_dir: location of partitioned dataset
+    :param filesystem: filesystem to use (e.g. S3FS), if None, local FS is assumed
+    :param partition_filename: a callable to override standard partition names. None for `uuid`.
+
+    E.g., in case of partition using `date`, the file layout looks like:
+    ```
+    dst_dir/
+        date=20211230/
+            data.parquet
+        date=20211231/
+            data.parquet
+        date=20220101/
+            data.parquet
+    ```
+
+    In case of multiple columns like `year`, `month`, `asset`, the file layout
+    looks like:
+    ```
+    dst_dir/
+        year=2021/
+            month=12/
+                asset=A/
+                    data.parquet
+                asset=B/
+                    data.parquet
+        ...
+        year=2022/
+            month=01/
+                asset=A/
+                    data.parquet
+                asset=B/
+                    data.parquet
+    ```
+    """
+    with htimer.TimedScope(logging.DEBUG, "# partition_dataset"):
+        # Read.
+        table = pa.Table.from_pandas(df)
+        # Write using partition.
+        # TODO(gp): add this logic to hparquet.to_parquet as a possible option.
+        _LOG.debug(hprint.to_str("partition_columns dst_dir"))
+        hdbg.dassert_is_subset(partition_columns, df.columns)
+        pq.write_to_dataset(
+            table,
+            dst_dir,
+            partition_cols=partition_columns,
+            partition_filename_cb=partition_filename,
+            filesystem=filesystem,
+        )

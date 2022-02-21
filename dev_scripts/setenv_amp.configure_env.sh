@@ -25,20 +25,3 @@ alias il="invoke --list"
 
 # Print the aliases.
 alias
-
-if [[ $(whoami) == "saggese" ]]; then
-    # > ls -l ~/.ssh/*.github
-    # .ssh/id_rsa.cryptomtc.github
-    # .ssh/id_rsa.gpsaggese.github
-    GIT_REMOTE=$(git remote -v)
-    if [[ $GIT_REMOTE =~ "/cmamp" || $GIT_REMOTE =~ "/dev_tools" ]]; then
-        export GIT_SSH_COMMAND="ssh -i ~/.ssh/ck/id_rsa.ck.github"
-    elif [[ $GIT_REMOTE =~ "/amp" || $GIT_REMOTE =~ "/lemonade" ]]; then
-        export GIT_SSH_COMMAND="ssh -i ~/.ssh/id_rsa.gpsaggese.github"
-    else
-        echo "Can't parse GIT_REMOTE='$GIT_REMOTE'"
-        return -1
-    fi;
-    echo "GIT_SSH_COMMAND=$GIT_SSH_COMMAND"
-fi;
-

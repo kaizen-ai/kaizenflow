@@ -1,7 +1,8 @@
 <!--ts-->
-   * [Code org of amp](#code-org-of-amp)
-      * [Top level dirs](#top-level-dirs)
+   * [Code organization of amp](#code-organization-of-amp)
+      * [Conventions](#conventions)
       * [Component dirs](#component-dirs)
+      * [Top level dirs](#top-level-dirs)
          * [helpers](#helpers)
          * [core](#core)
          * [dataflow](#dataflow)
@@ -14,28 +15,44 @@
    * [Misc](#misc)
 
 
+
 <!--te-->
-# Code org of `amp`
+
+# Code organization of `amp`
+
+## Conventions
+
+- In this file we use the following conventions:
+  - Comments: `"""foobar is ..."""`
+  - Dirs and subdirs: `/foobar`
+  - Files: `foobar.py`
+  - Objects: `FooBar`
+  - Markdown files: `foobar.md`
 
 ## Component dirs
-- In the following we indicate:
-  - comments with """foobar is ..."""
-  - dirs and subdirs with `/foobar`
-  - files with `foobar.py`
-  - objects with `FooBar`
-  - markdown files with `foobar.md`
 
-- The directories, subdirectory, objects are listed in order of dependency
+- The directories, subdirectory, objects are listed in order of their
+  dependencies (from innermost to outermost)
 
 - `/helpers`
-  - """Low-level helpers that are not specific of this project"""
+  - """Low-level helpers that are general and not specific of this project"""
+
 - `/core`
   - """Low-level helpers that are specific of this project"""
   - `/config`
     - `Config`
+      - """An dict-like object that allows to configure workflows"""
+  - `/event_study`
+  - `artificial_signal_generators.py`
+  - `features.py`
+  - `finance.py`
+  - `signal_processing.py`
+  - `statitstics.py`
+
 - `/devops`
 - `/dev_scripts`
 - `/documentation`
+
 - `/im`
 - `/im_v2`
   - """Instrument Master"""
@@ -43,28 +60,27 @@
   - """Vendor specific `ImClient`s"""
 - `/market_data`
   - """Interface to read price data"""
-  - `AbstractMarketData`
-  - `MarketDataImClient`
+  - `MarketData`
+  - `ImClientMarketData`
   - `RealTimeMarketData`
   - `ReplayedMarketData`
+
 - `/dataflow`
   - """DataFlow module"""
-  - `dataflow_design.md`
-    - """Design notes for DataFlow"""
   - `/core`
     - `/nodes`
       - """Implementation of DataFlow nodes that don't depend on anything
         outside of this directory"""
       - `base.py`
-          - `FitPredictNode`
-          - `DataSource`
+        - `FitPredictNode`
+        - `DataSource`
       - `sources`
-        - `DataLoader`
-        - `ReadDataFromDf`
-        - `ArmaGenerator`
+        - `FunctionDataSource`
+        - `DfDataSource`
+        - `ArmaDataSource`
       - `sinks.py`
-          - `WriteCols`
-          - `WriteDf`
+        - `WriteCols`
+        - `WriteDf`
       - `transformers.py`
       - `volatility_models.py`
       - `sklearn_models.py`
@@ -80,32 +96,32 @@
       - `DagRunners`
       - `ResultBundle`
   - `/pipelines`
-      - """DataFlow pipelines that use only `core` nodes"""
-      - `/event_study`
-      - `/features`
-        - """General feature pipelines"""
-      - `/price`
-        - """Pipelines computing prices"""
-      - `/real_times`
-        - TODO(gp): -> dataflow/system
-      - `/returns`
-        - """Pipelines computing returns"""
-      - `dataflow_example.py`
-        - `NaivePipeline`
+    - """DataFlow pipelines that use only `core` nodes"""
+    - `/event_study`
+    - `/features`
+      - """General feature pipelines"""
+    - `/price`
+      - """Pipelines computing prices"""
+    - `/real_times`
+      - TODO(gp): -> dataflow/system
+    - `/returns`
+      - """Pipelines computing returns"""
+    - `dataflow_example.py`
+      - `NaivePipeline`
   - `/system`
-      - """DataFlow pipelines with anything that depends on code outside of
-        DataFlow"""
-      - `source_nodes.py`
-        - `DataSource`
-        - `HistoricalDataSource`
-        - `RealTimeDataSource`
-      - `sink_nodes.py`
-        - `ProcessForecasts`
-      - `RealTimeDagRunner`
-      - `RealTimeDagAdapter`
-      - `ResearchDagAdapter`
+    - """DataFlow pipelines with anything that depends on code outside of
+      DataFlow"""
+    - `source_nodes.py`
+      - `DataSource`
+      - `HistoricalDataSource`
+      - `RealTimeDataSource`
+    - `sink_nodes.py`
+      - `ProcessForecasts`
+    - `RealTimeDagRunner`
+    - `RealTimeDagAdapter`
+    - `ResearchDagAdapter`
   - `/model`
-      - """Code for evaluating a DataFlow model"""
+    - """Code for evaluating a DataFlow model"""
 - `/oms`
   - """Order management system"""
   - `architecture.md`
@@ -116,9 +132,10 @@
   - `ForecastProcessor`
 - `/optimizer`
 - `/research_amp`
-- 
+
 ## Top level dirs
-```
+
+```text
 (cd amp; tree -L 1 -d --charset=ascii -I "*test*|*notebooks*" 2>&1 | tee /tmp/tmp)
 .
 |-- core
@@ -135,7 +152,7 @@
 
 ### helpers
 
-```
+```text
 (cd amp; tree -v --charset=ascii -I "*test*|*notebooks*" helpers 2>&1 | tee /tmp/tmp)
 
 helpers
@@ -198,7 +215,8 @@ helpers
 ```
 
 ### core
-```
+
+```test
 (cd amp; tree -v --charset=ascii -I "*test*|*notebooks*" core 2>&1 | tee /tmp/tmp)
 
 core
@@ -237,15 +255,16 @@ core
 ```
 
 ### dataflow
-```
+
+```text
 (cd amp; tree -v --charset=ascii -I "*test*|*notebooks*" dataflow 2>&1 | tee /tmp/tmp)
 
 dataflow
 |-- __init__.py
 |-- core
 |   |-- __init__.py
-|   |-- builders.py
-|   |-- builders_example.py
+|   |-- dag_builder.py
+|   |-- dag_builder_example.py
 |   |-- dag.py
 |   |-- dag_adapter.py
 |   |-- node.py
@@ -264,7 +283,7 @@ dataflow
 |   |   |-- unsupervised_sklearn_models.py
 |   |   `-- volatility_models.py
 |   |-- result_bundle.py
-|   |-- runners.py
+|   |-- dag_runner.py
 |   |-- utils.py
 |   |-- visitors.py
 |   `-- visualization.py
@@ -312,7 +331,8 @@ dataflow
 ```
 
 ### im
-```
+
+```text
 (cd amp; tree -v --charset=ascii -I "*test*|*notebooks*" im 2>&1 | tee /tmp/tmp)
 
 im
@@ -377,7 +397,8 @@ im
 ```
 
 ### market_data
-```
+
+```text
 (cd amp; tree -v --charset=ascii -I "*test*|*notebooks*" market_data 2>&1 | tee /tmp/tmp)
 
 market_data
@@ -389,7 +410,8 @@ market_data
 ```
 
 ### oms
-```
+
+```text
 (cd amp; tree -v --charset=ascii -I "*test*|*notebooks*" oms 2>&1 | tee /tmp/tmp)
 
 oms
@@ -419,7 +441,8 @@ oms
 ```
 
 ### research_amp
-```
+
+```text
 (cd amp; tree -v --charset=ascii -I "*test*|*notebooks*" research_amp 2>&1 | tee /tmp/tmp)
 
 research_amp
@@ -431,7 +454,8 @@ research_amp
 ```
 
 # All Python files
-```
+
+```text
 (cd amp; tree -v --prune --charset=ascii -P "*.py" -I "*test*|*notebooks*" 2>&1 | tee /tmp/tmp)
 
 .
@@ -929,7 +953,8 @@ research_amp
   - In case of name collision, we prepend as many dirs as necessary to make the
     filename unique
   - E.g., the files below should be renamed:
-    ```
+
+    ```bash
     > ffind.py utils.py | grep -v test
     ./amp/core/config/utils.py
       -> amp/core/config/config_utils.py
@@ -946,34 +971,40 @@ research_amp
 # Misc
 
 - To execute a vim command, go on the line
-  ```
+
+  ```bash
   :exec '!'.getline('.')
   :read /tmp/tmp
   ```
 
 - To inline in vim
-  ```
+
+  ```bash
   !(cd amp; tree -v --charset=ascii -I "*test*|*notebooks*" market_data 2>&1 | tee /tmp/tmp)
   :read /tmp/tmp
   ```
 
 - Print only dirs
-  ```
+
+  ```bash
   > tree -d
   ```
 
 - Print only dirs up to a certain level
-  ```
+
+  ```bash
   > tree -L 1 -d
   ```
 
 - Sort alphanumerically
-  ```
+
+  ```bash
   > tree -v
   ```
 
 - Print full name so that one can also grep
-  ```
+
+  ```bash
   > tree -v -f --charset=ascii -I "*test*|*notebooks*" | grep amp | grep -v dev_scripts
 
   `-- dataflow/system

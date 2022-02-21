@@ -81,7 +81,7 @@ class ImClient(abc.ABC):
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
-        Read data in `[start_ts, end_ts)` for `imvcdcfusy.FullSymbol` symbols.
+        Read data in `[start_ts, end_ts]` for `imvcdcfusy.FullSymbol` symbols.
 
         :param full_symbols: list of full symbols, e.g.
             `['binance::BTC_USDT', 'kucoin::ETH_USDT']`
@@ -98,8 +98,9 @@ class ImClient(abc.ABC):
                 "full_symbols start_ts end_ts full_symbol_col_name kwargs"
             )
         )
+        # Verify the requested parameters.
         imvcdcfusy.dassert_valid_full_symbols(full_symbols)
-        # Check the requested interval.
+        #
         left_close = True
         right_close = True
         hdateti.dassert_is_valid_interval(
@@ -113,12 +114,25 @@ class ImClient(abc.ABC):
             full_symbol_col_name=full_symbol_col_name,
             **kwargs,
         )
+        _LOG.debug("After read_data: df=\n%s", hpandas.df_to_str(df, num_rows=3))
+        # Check that we got what we asked for.
+        # hpandas.dassert_increasing_index(df)
+        #
+        hdbg.dassert_in(full_symbol_col_name, df.columns)
+        loaded_full_symbols = df[full_symbol_col_name].unique().tolist()
+        imvcdcfusy.dassert_valid_full_symbols(loaded_full_symbols)
+        hdbg.dassert_set_eq(
+            full_symbols,
+            loaded_full_symbols,
+            msg="Not all the requested symbols were retrieved",
+            only_warning=True,
+        )
+        #
+        hdateti.dassert_timestamp_lte(start_ts, df.index.min())
+        hdateti.dassert_timestamp_lte(df.index.max(), end_ts)
         # Rename index.
         df.index.name = "timestamp"
-        #
-        _LOG.debug("After read_data: df=\n%s", hpandas.df_to_str(df))
         # Normalize data for each symbol.
-        hdbg.dassert_in(full_symbol_col_name, df.columns)
         _LOG.debug("full_symbols=%s", df[full_symbol_col_name].unique())
         dfs = []
         for full_symbol, df_tmp in df.groupby(full_symbol_col_name):
@@ -130,6 +144,7 @@ class ImClient(abc.ABC):
                 df_tmp, full_symbol_col_name, start_ts, end_ts
             )
             dfs.append(df_tmp)
+        # TODO(Nikola): raise error on empty df?
         df = pd.concat(dfs, axis=0)
         _LOG.debug("After im_normalization: df=\n%s", hpandas.df_to_str(df))
         # Sort by index and `full_symbol_col_name`.
@@ -199,7 +214,7 @@ class ImClient(abc.ABC):
         :param asset_ids: assets ids
         :return: assets as full symbols
         """
-        # Check that provided ids are part of universe.
+        # Check that provided ids are part of the universe.
         hdbg.dassert_is_subset(asset_ids, self._asset_id_to_full_symbol_mapping)
         # Convert ids to full symbols.
         full_symbols = [
@@ -360,6 +375,16 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
                 "full_symbols start_ts end_ts full_symbol_col_name kwargs"
             )
         )
+        hdbg.dassert_container_type(full_symbols, list, str)
+        # Check timestamp interval.
+        left_close = True
+        right_close = True
+        hdateti.dassert_is_valid_interval(
+            start_ts,
+            end_ts,
+            left_close=left_close,
+            right_close=right_close,
+        )
         # Load the data for each symbol.
         full_symbol_to_df = {}
         for full_symbol in sorted(full_symbols):
@@ -388,7 +413,7 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
-        Read data for a single symbol in [start_ts, end_ts).
+        Read data for a single symbol in [start_ts, end_ts].
 
         Parameters have the same meaning as in `read_data()`.
         """

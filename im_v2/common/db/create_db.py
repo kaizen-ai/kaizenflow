@@ -3,7 +3,7 @@
 Script to create IM (Instrument Master) database using the given connection.
 
 # Create a DB named 'test_db' using environment variables:
-> im/common/db/create_db.py --db_name 'test_db'
+> im_v2/common/db/create_db.py --db_name 'test_db'
 
 Import as:
 
@@ -57,9 +57,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     #
     db_connection = hsql.get_connection(*connection_params)
     # Create DB with all tables.
-    imvcddbut.create_im_database(
-        connection=db_connection, new_db=args.db_name, overwrite=args.overwrite
-    )
+    db_name = args.db_name
+    overwrite = args.overwrite
+    imvcddbut.create_im_database(db_connection, db_name, overwrite=overwrite)
 
 
 if __name__ == "__main__":

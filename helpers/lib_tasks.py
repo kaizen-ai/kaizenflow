@@ -291,7 +291,7 @@ def _get_files_to_process(
         files = hio.find_all_files(dir_name)
     if files_from_user:
         # If files were passed, filter out non-existent paths.
-        files = _filter_existing_paths(files_from_user.split(" "))
+        files = _filter_existing_paths(files_from_user.split())
     # Convert into a list.
     hdbg.dassert_isinstance(files, list)
     files_to_process = [f for f in files if f != ""]
@@ -751,10 +751,10 @@ def git_create_branch(  # type: ignore
     _LOG.info("branch_name='%s'", branch_name)
     hdbg.dassert_ne(branch_name, "")
     # Check that the branch is not just a number.
-    m = re.match("^\d+$", branch_name)
+    m = re.match(r"^\d+$", branch_name)
     hdbg.dassert(not m, "Branch names with only numbers are invalid")
     # The valid format of a branch name is `AmpTask1903_Implemented_system_...`.
-    m = re.match("^\S+Task\d+_\S+$", branch_name)
+    m = re.match(r"^\S+Task\d+_\S+$", branch_name)
     hdbg.dassert(m, "Branch name should be '{Amp,...}TaskXYZ_...'")
     hdbg.dassert(
         not hgit.does_branch_exist(branch_name),
@@ -889,6 +889,9 @@ def git_branch_next_name(ctx):  # type: ignore
     _report_task()
     _ = ctx
     branch_next_name = hgit.get_branch_next_name()
+    # TODO(gp): We should also check on GH
+    # > gh pr list -s all --limit 10000 | grep AmpTask2163_Implement_tiled_backtesting_1
+    # 347     AmpTask2163_Implement_tiled_backtesting_1       AmpTask2163_Implement_tiled_backtesting_1       MERGED
     print(f"branch_next_name='{branch_next_name}'")
 
 
@@ -3025,11 +3028,11 @@ def _find_short_import(iterator: List, short_import: str) -> _FindResults:
     """
     Find imports in the Python files with the given short import.
 
-    E.g., for dtfcorrunn dataflow/core/test/test_builders.py:9:import
-    dataflow.core.runners as dtfcorrunn returns
+    E.g., for dtfcodarun dataflow/core/test/test_builders.py:9:import
+    dataflow.core.dag_runner as dtfcodarun returns
     """
     # E.g.,
-    # `import dataflow.core.runners as dtfcorrunn`
+    # `import dataflow.core.dag_runner as dtfcodarun`
     regex = fr"import\s+(\S+)\s+as\s+({short_import})"
     regex = re.compile(regex)
     #
@@ -3038,7 +3041,7 @@ def _find_short_import(iterator: List, short_import: str) -> _FindResults:
         m = regex.search(line)
         if m:
             # E.g.,
-            # dataflow/core/test/test_builders.py:9:import dataflow.core.runners as dtfcorrunn
+            # dataflow/core/test/test_builders.py:9:import dataflow.core.dag_runner as dtfcodarun
             _LOG.debug("  --> line:%s=%s", line_num, line)
             long_import_txt = m.group(1)
             short_import_txt = m.group(2)
@@ -3055,7 +3058,7 @@ def _find_func_class_uses(iterator: List, regex: str) -> _FindResults:
     # E.g.,
     # `dag_runner = dtfsys.RealTimeDagRunner(**dag_runner_kwargs)`
     regexs.append(fr"\s+(\w+)\.(\w*{regex})\(")
-    # `dag_builder: dtfcorbuil.DagBuilder`
+    # `dag_builder: dtfcodabui.DagBuilder`
     regexs.append(fr":\s*(\w+)\.(\w*{regex})")
     #
     _LOG.debug("regexs=%s", str(regexs))
@@ -3077,9 +3080,9 @@ def _find_func_class_uses(iterator: List, regex: str) -> _FindResults:
             res = (file, line_num, line, short_import_txt, obj_txt)
             # E.g.,
             # ('./helpers/lib_tasks.py', 10226, 'dtfsys', 'RealTimeDagRunner')
-            # ('./dataflow/core/test/test_builders.py', 70, 'dtfcorrunn', 'FitPredictDagRunner')
-            # ('./dataflow/core/test/test_builders.py', 157, 'dtfcorrunn', 'FitPredictDagRunner')
-            # ('./dataflow/core/test/test_runners.py', 50, 'dtfcorrunn', 'RollingFitPredictDagRunner')
+            # ('./dataflow/core/test/test_builders.py', 70, 'dtfcodarun', 'FitPredictDagRunner')
+            # ('./dataflow/core/test/test_builders.py', 157, 'dtfcodarun', 'FitPredictDagRunner')
+            # ('./dataflow/core/test/test_runners.py', 50, 'dtfcodarun', 'RollingFitPredictDagRunner')
             _LOG.debug("  => %s", str(res))
             results.append(res)
     return results
@@ -3109,9 +3112,9 @@ def find(ctx, regex, mode="all", how="remove_dups", subdir="."):  # type: ignore
     Example:
     ```
     > i find DagBuilder
-    ('dtfcorbuil', 'DagBuilder')
+    ('dtfcodabui', 'DagBuilder')
     ('dtfcore', 'DagBuilder')
-    ('dtfcorbuil', 'import dataflow.core.builders as dtfcorbuil')
+    ('dtfcodabui', 'import dataflow.core.dag_builder as dtfcodabui')
     ('dtfcore', 'import dataflow.core as dtfcore')
     ```
 
@@ -3125,10 +3128,10 @@ def find(ctx, regex, mode="all", how="remove_dups", subdir="."):  # type: ignore
           ('cdataf', 'RollingFitPredictDagRunner')
           ```
         - `short_import`: look for the short import
-          E.g., `'dtfcorbuil'
+          E.g., `'dtfcodabui'
           returns
           ```
-          ('dtfcorbuil', 'import dataflow.core.builders as dtfcorbuil')
+          ('dtfcodabui', 'import dataflow.core.dag_builder as dtfcodabui')
           ```
     :param how: how to report the results
         - `remove_dups`: report only imports and calls that are the same
@@ -3430,7 +3433,13 @@ def _run_test_cmd(
     base_image = ""
     # We need to add some " to pass the string as it is to the container.
     cmd = f"'{cmd}'"
-    docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd)
+    # We use "host" for the app container to allow access to the database
+    # exposing port 5432 on localhost (of the server), when running dind we
+    # need to switch back to bridge. See CmTask988.
+    extra_env_vars = ["NETWORK_MODE=bridge"]
+    docker_cmd_ = _get_docker_cmd(
+        base_image, stage, version, cmd, extra_env_vars=extra_env_vars
+    )
     _LOG.info("cmd=%s", docker_cmd_)
     # We can't use `hsystem.system()` because of buffering of the output,
     # losing formatting and so on, so we stick to executing through `ctx`.
@@ -3561,6 +3570,7 @@ def run_slow_tests(  # type: ignore
     collect_only=False,
     tee_to_file=False,
     git_clean=False,
+    **kwargs,
 ):
     """
     Run slow tests.
@@ -3580,6 +3590,7 @@ def run_slow_tests(  # type: ignore
         collect_only,
         tee_to_file,
         git_clean,
+        **kwargs,
     )
     return rc
 
@@ -3595,6 +3606,7 @@ def run_superslow_tests(  # type: ignore
     collect_only=False,
     tee_to_file=False,
     git_clean=False,
+    **kwargs,
 ):
     """
     Run superslow tests.
@@ -3614,6 +3626,7 @@ def run_superslow_tests(  # type: ignore
         collect_only,
         tee_to_file,
         git_clean,
+        **kwargs,
     )
     return rc
 
@@ -3669,6 +3682,95 @@ def run_fast_slow_tests(  # type: ignore
     # Report error, if needed.
     if fast_test_rc != 0 or slow_test_rc != 0:
         raise RuntimeError("Fast / slow tests failed")
+    return fast_test_rc, slow_test_rc
+
+
+@task
+def run_fast_slow_superslow_tests(  # type: ignore
+    ctx,
+    stage="dev",
+    version="",
+    pytest_opts="",
+    skip_submodules=False,
+    coverage=False,
+    collect_only=False,
+    tee_to_file=False,
+    git_clean=False,
+):
+    """
+    Run fast, slow, superslow tests back-to-back.
+
+    Same params as `invoke run_fast_tests`.
+    """
+    _report_task()
+    # Run fast tests but do not fail on error.
+    fast_test_rc = run_fast_tests(
+        ctx,
+        stage,
+        version,
+        pytest_opts,
+        skip_submodules,
+        coverage,
+        collect_only,
+        tee_to_file,
+        git_clean,
+        #
+        warn=True,
+    )
+    if fast_test_rc != 0:
+        _LOG.error("Fast tests failed")
+    # Run slow tests.
+    git_clean = False
+    slow_test_rc = run_slow_tests(
+        ctx,
+        stage,
+        version,
+        pytest_opts,
+        skip_submodules,
+        coverage,
+        collect_only,
+        tee_to_file,
+        git_clean,
+        #
+        warn=True,
+    )
+    if slow_test_rc != 0:
+        _LOG.error("Slow tests failed")
+    # Run superslow tests.
+    git_clean = False
+    superslow_test_rc = run_superslow_tests(
+        ctx,
+        stage,
+        version,
+        pytest_opts,
+        skip_submodules,
+        coverage,
+        collect_only,
+        tee_to_file,
+        git_clean,
+        #
+        warn=True,
+    )
+    if superslow_test_rc != 0:
+        _LOG.error("Super slow tests failed")
+    # Report error, if needed.
+    if fast_test_rc != 0 or slow_test_rc != 0 or superslow_test_rc != 0:
+        if fast_test_rc != 0:
+            _LOG.error("Fast tests failed")
+        else:
+            _LOG.info("Fast tests passed")
+        #
+        if slow_test_rc != 0:
+            _LOG.error("Slow tests failed")
+        else:
+            _LOG.info("Slow tests passed")
+        #
+        if superslow_test_rc != 0:
+            _LOG.error("Superslow tests failed")
+        else:
+            _LOG.info("Superslow tests passed")
+        #
+        raise RuntimeError("Some tests failed")
     return fast_test_rc, slow_test_rc
 
 
@@ -3765,17 +3867,13 @@ def run_coverage_report(  # type: ignore
     )
     # Only target dir is included in the reports.
     include_in_report = f"*/{target_dir}/*"
-    # Test files are excluded from the reports.
-    exclude_from_report = "*/test/*"
     # Generate text report with the coverage stats.
     report_cmd.append(
-        f"coverage report --include={include_in_report} --omit={exclude_from_report} --sort=Cover"
+        f"coverage report --include={include_in_report} --sort=Cover"
     )
     if generate_html_report:
         # Generate HTML report with the coverage stats.
-        report_cmd.append(
-            f"coverage html --include={include_in_report} --omit={exclude_from_report}"
-        )
+        report_cmd.append(f"coverage html --include={include_in_report}")
     # Execute commands above one-by-one inside docker. Coverage tool is not
     # installed outside docker.
     full_report_cmd = " && ".join(report_cmd)
@@ -3847,121 +3945,70 @@ def pytest_clean(ctx):  # type: ignore
     hpytest.pytest_clean(".")
 
 
-@task
-def pytest_failed_freeze_test_list(ctx, confirm=False):  # type: ignore
-    """
-    Copy last list of failed tests to not overwrite with successive pytest
-    runs.
-    """
-    _report_task()
-    dir_name = "."
-    pytest_failed_tests_file = os.path.join(
-        dir_name, ".pytest_cache/v/cache/lastfailed"
-    )
-    frozen_failed_tests_file = "tmp.pytest_cache.lastfailed"
-    if os.path.exists(frozen_failed_tests_file) and not confirm:
-        hdbg.dfatal(
-            "File {frozen_failed_tests_file} already exists. Re-run with --confirm to overwrite"
-        )
-    _LOG.info(
-        "Copying '%s' to '%s'", pytest_failed_tests_file, frozen_failed_tests_file
-    )
-    # Make a copy of the pytest file.
-    hdbg.dassert_file_exists(pytest_failed_tests_file)
-    cmd = f"cp {pytest_failed_tests_file} {frozen_failed_tests_file}"
-    _run(ctx, cmd)
-
-
 def _get_failed_tests_from_file(file_name: str) -> List[str]:
     hdbg.dassert_file_exists(file_name)
-    # {
-    # "vendors/test/test_vendors.py::Test_gp::test1": true,
-    # "vendors/test/test_vendors.py::Test_kibot_utils1::...": true,
-    # }
     txt = hio.from_file(file_name)
-    vals = json.loads(txt)
-    hdbg.dassert_isinstance(vals, dict)
-    tests = [k for k, v in vals.items() if v]
+    if file_name.endswith("/cache/lastfailed"):
+        # Decode the json-style string.
+        # {
+        # "vendors/test/test_vendors.py::Test_gp::test1": true,
+        # "vendors/test/test_vendors.py::Test_kibot_utils1::...": true,
+        # }
+        vals = json.loads(txt)
+        hdbg.dassert_isinstance(vals, dict)
+        tests = [k for k, v in vals.items() if v]
+    else:
+        # Extract failed tests from the regular text output.
+        tests = re.findall(r"FAILED (\S+\.py::\S+::\S+)[\s|\n]", txt)
     return tests
 
 
-def _get_failed_tests_from_clipboard() -> List[str]:
-    # pylint: disable=line-too-long
-    """
-    ```
-
-    FAILED core/dataflow/nodes/test/test_sources.py::TestRealTimeDataSource1::test_replayed_real_time1 - TypeError: __init__() got an unexpected keyword argument 'speed_up_factor'
-    FAILED helpers/test/test_lib_tasks.py::Test_find_check_string_output1::test1 - TypeError: check_string() takes 2 positional arguments but 3 were given
-    FAILED helpers/test/test_lib_tasks.py::Test_find_check_string_output1::test2 - TypeError: check_string() takes 2 positional arguments but 3 were given
-    FAILED core/dataflow/test/test_runners.py::TestRealTimeDagRunner1::test1 - TypeError: execute_with_real_time_loop() got an unexpected keyword argument 'num_iterations'
-    FAILED helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal1 - NameError: name 'dedent' is not defined
-    FAILED helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal2 - NameError: name 'dedent' is not defined
-    FAILED helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal4 - NameError: name 'dedent' is not defined
-    ```
-    """
-    # pylint: enable=line-too-long
-    hsystem.system_to_string("pbpaste")
-    # TODO(gp): Finish this.
-    return []
-
-
 @task
-def pytest_failed(  # type: ignore
+def pytest_repro(  # type: ignore
     ctx,
-    use_frozen_list=True,
     target_type="tests",
-    file_name="",
-    refresh=False,
-    pbcopy=True,
+    file_name="./.pytest_cache/v/cache/lastfailed",
 ):
     """
-    Process the list of failed tests from a pytest run.
+    Generate commands to reproduce the failed tests after a `pytest` run.
 
     The workflow is:
     ```
     # Run a lot of tests, e.g., the entire regression suite.
-    > pytest ...
-    # Some tests fail.
+    server> i run_fast_slow_tests 2>&1 | log pytest.txt
+    docker> pytest ... 2>&1 | log pytest.txt
 
-    # Freeze the output of pytest so we can re-run only some of them.
-    > invoke pytest_failed_freeze_test_list
-    #
-    > invoke pytest_failed
+    # Run the `pytest_repro` to summarize test failures and to generate
+    # commands to reproduce them.
+    server> i pytest_repro
     ```
 
-    :param use_frozen_list: use the frozen list (default) or the one generated by
-        pytest
-    :param target_type: specify what to print about the tests
-        - tests (default): print the tests in a single line
-        - files: print the name of the files containing files
-        - classes: print the name of all classes
-    :param file_name: specify the file name containing the pytest file to parse
-    :param refresh: force to update the frozen file from the current pytest file
+    :param target_type: the granularity level for generating the commands
+        - "tests" (default): failed test methods, e.g.,
+            ```
+            pytest helpers/test/test_cache.py::TestCachingOnS3::test_with_caching1
+            pytest helpers/test/test_cache.py::TestCachingOnS3::test_with_caching2
+            ```
+        - "classes": classes of the failed tests, e.g.,
+            ```
+            pytest helpers/test/test_cache.py::TestCachingOnS3
+            pytest helpers/test/test_cache.py::TestCachingOnS3_2
+            ```
+        - "files": files with the failed tests, e.g.,
+            ```
+            pytest helpers/test/test_cache.py
+            pytest helpers/test/test_lib_tasks.py
+            ```
+    :param file_name: the name of the file containing the pytest output file to parse
+    :return: commands to reproduce pytest failures at the requested granularity level
     """
     _report_task()
     _ = ctx
-    if refresh:
-        pytest_failed_freeze_test_list(ctx, confirm=True)
     # Read file.
-    if not file_name:
-        dir_name = "."
-        pytest_failed_tests_file = os.path.join(
-            dir_name, ".pytest_cache/v/cache/lastfailed"
-        )
-        frozen_failed_tests_file = "tmp.pytest_cache.lastfailed"
-        if use_frozen_list:
-            if os.path.exists(pytest_failed_tests_file) and not os.path.exists(
-                frozen_failed_tests_file
-            ):
-                _LOG.warning("Freezing the pytest outcomes")
-                pytest_failed_freeze_test_list(ctx)
-            file_name = frozen_failed_tests_file
-        else:
-            file_name = pytest_failed_tests_file
     _LOG.info("Reading file_name='%s'", file_name)
     hdbg.dassert_file_exists(file_name)
-    # E.g., vendors/test/test_vendors.py::Test_gp::test1
     _LOG.info("Reading failed tests from file '%s'", file_name)
+    # E.g., vendors/test/test_vendors.py::Test_gp::test1
     tests = _get_failed_tests_from_file(file_name)
     _LOG.debug("tests=%s", str(tests))
     # Process the tests.
@@ -3972,35 +4019,39 @@ def pytest_failed(  # type: ignore
         # E.g., dev_scripts/testing/test/test_run_tests.py
         # E.g., helpers/test/helpers/test/test_list.py::Test_list_1
         # E.g., core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test5
-        file_name = test_class = test_method = ""
+        test_file_name = test_class = test_method = ""
         if len(data) >= 1:
-            file_name = data[0]
+            test_file_name = data[0]
         if len(data) >= 2:
             test_class = data[1]
         if len(data) >= 3:
             test_method = data[2]
         _LOG.debug(
-            "test=%s -> (%s, %s, %s)", test, file_name, test_class, test_method
+            "test=%s -> (%s, %s, %s)",
+            test,
+            test_file_name,
+            test_class,
+            test_method,
         )
-        if not os.path.exists(file_name):
-            _LOG.warning("Can't find file '%s'", file_name)
         if target_type == "tests":
-            targets.append(test)
+            targets.append("pytest " + test)
         elif target_type == "files":
-            if file_name != "":
-                targets.append(file_name)
+            if test_file_name != "":
+                targets.append("pytest " + test_file_name)
             else:
                 _LOG.warning(
-                    "Skipping test='%s' since file_name='%s'", test, file_name
+                    "Skipping test='%s' since test_file_name='%s'",
+                    test,
+                    test_file_name,
                 )
         elif target_type == "classes":
-            if file_name != "" and test_class != "":
-                targets.append(f"{file_name}::{test_class}")
+            if test_file_name != "" and test_class != "":
+                targets.append(f"pytest {test_file_name}::{test_class}")
             else:
                 _LOG.warning(
-                    "Skipping test='%s' since file_name='%s', test_class='%s'",
+                    "Skipping test='%s' since test_file_name='%s', test_class='%s'",
                     test,
-                    file_name,
+                    test_file_name,
                     test_class,
                 )
         else:
@@ -4009,7 +4060,7 @@ def pytest_failed(  # type: ignore
     _LOG.debug("res=%s", str(targets))
     targets = hlist.remove_duplicates(targets)
     _LOG.info(
-        "Found %d failed pytest '%s' targets:\n%s",
+        "Found %d failed pytest '%s' target(s); to reproduce run:\n%s",
         len(targets),
         target_type,
         "\n".join(targets),
@@ -4017,8 +4068,6 @@ def pytest_failed(  # type: ignore
     hdbg.dassert_isinstance(targets, list)
     res = " ".join(targets)
     _LOG.debug("res=%s", str(res))
-    #
-    _to_pbcopy(res, pbcopy)
     return res
 
 
@@ -4278,6 +4327,45 @@ def _parse_linter_output(txt: str) -> str:
 
 
 @task
+def lint_add_init_files(  # type: ignore
+    ctx,
+    dir_name=".",
+    dry_run=True,
+    run_bash=False,
+    stage="prod",
+    as_user=True,
+    out_file_name="lint_add_init_files.output.txt",
+):
+    """
+    Add the missing `__init__.py` in dirs with Python files.
+
+    For param descriptions, see `lint()`.
+
+    :param dir_name: path to the head directory to start the check from
+    :param dry_run:
+      - True: output a warning pointing to the dirs where `__init__.py`
+        files are missing
+      - False: create the required `__init__.py` files
+    """
+    _report_task()
+    # Remove the log file.
+    if os.path.exists(out_file_name):
+        cmd = f"rm {out_file_name}"
+        _run(ctx, cmd)
+    as_user = _run_docker_as_user(as_user)
+    # Prepare the command line.
+    docker_cmd_opts = [dir_name, f"--dry-run={dry_run}"]
+    docker_cmd_ = "/app/linters/add_module_init.py " + _to_single_line_cmd(
+        docker_cmd_opts
+    )
+    # Execute command line.
+    cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
+    cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
+    # Run.
+    _run(ctx, cmd)
+
+
+@task
 def lint_detect_cycles(  # type: ignore
     ctx,
     dir_name=".",
@@ -4326,6 +4414,7 @@ def lint(  # type: ignore
     phases="",
     only_format=False,
     only_check=False,
+    fast=False,
     # stage="prod",
     run_bash=False,
     run_linter_step=True,
@@ -4354,6 +4443,8 @@ def lint(  # type: ignore
     :param only_format: run only the formatting phases (e.g., black)
     :param only_check: run only the checking phases (e.g., pylint, mypy) that
         don't change the code
+    :param fast: run everything but skip `pylint`, since it is often very picky
+        and slow
     :param run_bash: instead of running pre-commit, run bash to debug
     :param run_linter_step: run linter step
     :param parse_linter_output: parse linter output and generate vim cfile
@@ -4390,6 +4481,7 @@ def lint(  # type: ignore
     # amp_format_separating_line.......................(no files to check)Skipped
     # amp_warn_incorrectly_formatted_todo..............(no files to check)Skipped
     # amp_processjupytext..............................(no files to check)Skipped
+    # amp_remove_eof_newlines..........................(no files to check)Skipped
     # ```
     if only_format:
         hdbg.dassert_eq(phases, "")
@@ -4401,6 +4493,7 @@ def lint(  # type: ignore
                 "amp_format_separating_line",
                 "amp_black",
                 "amp_processjupytext",
+                "amp_remove_eof_newlines",
             ]
         )
     if only_check:
@@ -4444,12 +4537,17 @@ def lint(  # type: ignore
         as_user = _run_docker_as_user(as_user)
         for phase in phases:
             # Prepare the command line.
-            precommit_opts = [
-                f"run {phase}",
-                "-c /app/.pre-commit-config.yaml",
-                f"--files {files_as_str}",
-            ]
+            precommit_opts = []
+            precommit_opts.extend(
+                [
+                    f"run {phase}",
+                    "-c /app/.pre-commit-config.yaml",
+                    f"--files {files_as_str}",
+                ]
+            )
             docker_cmd_ = "pre-commit " + _to_single_line_cmd(precommit_opts)
+            if fast:
+                docker_cmd_ = "SKIP=amp_pylint " + docker_cmd_
             # Execute command line.
             cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
             cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"

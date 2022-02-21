@@ -66,9 +66,9 @@ import helpers.hintrospection as hintros
 import helpers.hio as hio
 import helpers.hjoblib as hjoblib
 import helpers.hpandas as hpandas
+import helpers.hparquet as hparque
 import helpers.hparser as hparser
 import helpers.hprint as hprint
-import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 _LOG = logging.getLogger(__name__)
 
@@ -252,6 +252,7 @@ def lime317_execute_task(
 ) -> None:
     """
     Process a task by:
+
     - transforming df (e.g., converting epoch "start_time" into a timestamp)
     - merging multiple Parquet files corresponding to a date interval
     - writing it into `dst_dir` (partitioning by assets using Parquet datasets)
@@ -273,7 +274,7 @@ def lime317_execute_task(
     df = pd.concat(dfs, axis=0)
     if chunk_mode == "by_year_week":
         # Add year and week partition columns.
-        df, partition_columns = imvcdttrut.add_date_partition_cols(
+        df, partition_columns = hparque.add_date_partition_columns(
             df, "by_year_week"
         )
         # Check that all data is for the same year and week.
@@ -283,10 +284,10 @@ def lime317_execute_task(
         hdbg.dassert_eq(len(weeks), 1, "weeks=%s", str(weeks))
     elif chunk_mode == "by_year_month":
         # Add year and month partition columns.
-        df, partition_columns = imvcdttrut.add_date_partition_cols(
+        df, partition_columns = hparque.add_date_partition_columns(
             df, "by_year_month"
         )
-        # Check that all data is for the same year and week.
+        # Check that all data is for the same year and month.
         years = df["year"].unique()
         hdbg.dassert_eq(len(years), 1, "years=%s", str(years))
         months = df["month"].unique()
@@ -297,7 +298,7 @@ def lime317_execute_task(
     # Partition also over the asset column.
     partition_columns.insert(0, asset_id_col_name)
     # Write.
-    imvcdttrut.partition_dataset(df, partition_columns, dst_dir)
+    hparque.to_partitioned_parquet(df, partition_columns, dst_dir)
 
 
 # #############################################################################
@@ -384,7 +385,6 @@ def _run(args: argparse.Namespace) -> None:
     hjoblib.validate_workload(workload)
     # Prepare the log file.
     timestamp = hdateti.get_current_timestamp_as_string("ET")
-    # TODO(Nikola): Change directory.
     log_dir = os.getcwd()
     log_file = os.path.join(log_dir, f"log.{timestamp}.txt")
     _LOG.info("log_file='%s'", log_file)

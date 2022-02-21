@@ -139,6 +139,7 @@ class WriteCols(dtfconobas.FitPredictNode):
         return {"df_out": df}
 
 
+# TODO(gp): -> hparquet.py or split into a generator and a reading part.
 def read_dfs(dir_name: str) -> Iterable[Tuple[str, pd.DataFrame]]:
     """
     Yield `(file_name, df)` from `dir_name`.
@@ -159,6 +160,7 @@ def read_dfs(dir_name: str) -> Iterable[Tuple[str, pd.DataFrame]]:
         yield key, df
 
 
+# TODO(gp): -> hpandas.py?
 def consolidate_dfs(df_iter: Iterable[Tuple[str, pd.DataFrame]]) -> pd.DataFrame:
     """
     Consolidate dataframes in `df_iter` into a single dataframe.

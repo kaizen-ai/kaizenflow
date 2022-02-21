@@ -33,16 +33,19 @@ NodeColumnList = Union[List[NodeColumn], Callable[[], List[NodeColumn]]]
 # Intervals.
 # #############################################################################
 
+# TODO(gp): Consolidate all the code about Interval in helpers/hinterval.py
+#  (including code in hdatetime.py).
 
-# TODO(gp): Always use pd.Timestamp since we care about timezone. This will need
-#  to update lots of unit tests.
+# TODO(gp): Always use pd.Timestamp with tz. This will require to update many
+#  unit tests.
 IntervalEndpoint = Union[datetime.datetime, pd.Timestamp, None]
-# Intervals are considered as closed, i.e., [a, b]. An endpoint equal to `None` means
-# unbounded interval on that direction.
+# Intervals are considered as closed, i.e., [a, b]. An endpoint equal to `None`
+# means unbounded interval on that direction.
 Interval = Tuple[IntervalEndpoint, IntervalEndpoint]
 Intervals = List[Interval]
 
 
+# TODO(gp): Unify with -> dassert_is_valid_interval
 def dassert_valid_interval(interval: Interval) -> None:
     hdbg.dassert_isinstance(interval, tuple)
     # Intervals are [a, b] with a <= b.
@@ -67,7 +70,13 @@ def dassert_valid_intervals(intervals: Intervals) -> None:
 # TODO(gp): Unit test.
 def find_min_max_timestamps_from_intervals(
     intervals: Intervals,
-) -> Tuple[pd.Timestamp, pd.Timestamp]:
+) -> Interval:
+    """
+    Return the extremes of the interval including all the given `intervals`.
+
+    The interval can be unbounded (i.e., having `None` endpoints) or
+    not.
+    """
     if intervals is not None:
         dassert_valid_intervals(intervals)
         interval = intervals[0]
@@ -93,7 +102,8 @@ def find_min_max_timestamps_from_intervals(
 # #############################################################################
 
 
-# TODO(gp): Move to helpers/printing.py since it's general.
+# TODO(gp): Move to helpers/hprint.py since it's general, although not very
+#  useful.
 def get_df_info_as_string(
     df: pd.DataFrame, exclude_memory_usage: bool = True
 ) -> str:
@@ -113,7 +123,7 @@ def get_df_info_as_string(
     return info
 
 
-# TODO(gp): Maybe move to helpers.pandas_helpers since it's general.
+# TODO(gp): Maybe move to helpers.hpandas since it's general.
 def merge_dataframes(
     df1: pd.DataFrame,
     df2: pd.DataFrame,
@@ -164,7 +174,7 @@ def validate_df_indices(df: pd.DataFrame) -> None:
     """
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_no_duplicates(df.columns.tolist())
-    # TODO(*): assert if the datetime index has dups.
+    # TODO(Paul): assert if the datetime index has dups.
 
 
 def convert_to_list(to_list: NodeColumnList) -> List[NodeColumn]:
@@ -240,10 +250,9 @@ def get_x_and_forward_y_fit_df(
     This function eliminates rows that contains NaNs (either in `x_cols`
     or in the forward values of `y_cols`), which makes the resulting
     dataframe ready for use in sklearn.
-
-    TODO(*): Consider not dropping NaNs in this function but rather
-        leaving that to the caller.
     """
+    # TODO(Paul): Consider not dropping NaNs in this function but rather
+    #  leaving that to the caller.
     validate_df_indices(df)
     # Obtain index slice for which forward targets exist.
     hdbg.dassert_lt(steps_ahead, df.index.size)
@@ -275,12 +284,11 @@ def get_x_and_forward_y_predict_df(
     """
     Return a dataframe consisting of `x_cols` and forward `y_cols`.
 
-    Differs from `fit` version in that there is no requirement here that the
-    forward y values be non-NaN.
-
-    TODO(Paul): Consider combining with `get_x_and_forward_y_fit_df()` and
-        parametrizing instead.
+    Differs from `fit` version in that there is no requirement here that
+    the forward y values be non-NaN.
     """
+    # TODO(Paul): Consider combining with `get_x_and_forward_y_fit_df()` and
+    #  parametrizing instead.
     validate_df_indices(df)
     # Determine index where no x_vars are NaN.
     x_df = df[x_cols].dropna()

@@ -292,7 +292,7 @@ class MultiindexPooledSkLearnModel(dtfconobas.FitPredictNode):
         results = {}
         info = collections.OrderedDict()
         if fit:
-            # TODO: compute the shifts first, then stack.
+            # TODO(Paul): compute the shifts first, then stack.
             for key, value in dfs.items():
                 dfs[key] = dtfcorutil.get_x_and_forward_y_fit_df(
                     value, self._x_vars, self._y_vars, self._steps_ahead
@@ -549,7 +549,7 @@ class SkLearnModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
         pnl_rets = y.multiply(y_hat.rename(columns=lambda x: x.strip("_hat")))
         info["pnl_rets"] = pnl_rets
         info["sr"] = costatis.compute_sharpe_ratio(
-            csigproc.resample(pnl_rets, rule="1B").sum(), time_scaling=252
+            cofinanc.resample(pnl_rets, rule="1B").sum(), time_scaling=252
         )
         return info
 

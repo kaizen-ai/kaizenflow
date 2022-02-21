@@ -213,7 +213,7 @@ class SmaModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
 
     def _predict(self, x: np.array) -> np.array:
         x_srs = pd.DataFrame(x.flatten())
-        # TODO(*): Make `min_periods` configurable.
+        # TODO(Paul): Make `min_periods` configurable.
         min_periods = int(np.rint(self._min_tau_periods * self._tau))
         _LOG.debug("min_periods=%f", min_periods)
         x_sma = csigproc.compute_smooth_moving_average(
@@ -365,7 +365,7 @@ class SingleColumnVolatilityModel(dtfconobas.FitPredictNode):
         _LOG.debug("%s", config)
         # Load `df_in`.
         nid = "load_data"
-        node = dtfconosou.ReadDataFromDf(nid, df_in)
+        node = dtfconosou.DfDataSource(nid, df_in)
         tail_nid = self._append(dag, None, node)
         # Raise volatility columns to pth power.
         nid = "calculate_vol_pth_power"

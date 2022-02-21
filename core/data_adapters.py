@@ -16,8 +16,10 @@ import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): Remove after PTask2335.
+
 if True:
+    # TODO(gp): @all -> gluonts/data_adapters.py
+    # TODO(gp): @all Remove this `if True`
     import gluonts
 
     #
@@ -303,6 +305,9 @@ if True:
 # #############################################################################
 # SkLearn
 # #############################################################################
+
+
+# TODO(gp): @all -> sklearn/data_adapters.py
 
 
 def transform_to_sklearn(df: pd.DataFrame, cols: List[Any]) -> np.array:

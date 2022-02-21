@@ -21,30 +21,21 @@ _LOG = logging.getLogger(__name__)
 # instead of `Dict[str, ...]`).
 NodeId = str
 
-# Name of a Node's method, e.g., `fit` or `predict`.
-Method = str
 
-# Mapping between the name of an output of a node and the corresponding stored value.
-NodeOutput = Dict[str, Any]
-
-
-# TODO(gp): This seems private -> _AbstractNode.
+# TODO(gp): @all This is private -> _Node.
 class NodeInterface(abc.ABC):
     """
     Abstract node class for creating DAGs of functions.
 
-    Common use case: `Node`s wrap functions with a common method, e.g., `fit()`.
-
-    This class provides some convenient introspection (input/output names)
-    accessors and, importantly, a unique identifier (`nid`) for building
-    graphs of nodes. The `nid` is also useful for config purposes.
-
-    For nodes requiring fit/transform, we can subclass/provide a mixin with
-    the desired methods.
+    This class provides:
+    - a unique identifier (`nid`) for building graphs of nodes. The `nid` is also
+      useful for config purposes.
+    - some convenient introspection (input/output names) accessors and
     """
 
     # TODO(gp): Are inputs / output without names useful? If not we can simplify the
     #   interface.
+    # TODO(gp): inputs -> input_names, outputs -> output_names
     def __init__(
         self,
         nid: NodeId,
@@ -68,11 +59,12 @@ class NodeInterface(abc.ABC):
     def nid(self) -> NodeId:
         return self._nid
 
-    # TODO(gp): We might want to do getter only.
+    # TODO(gp): @all make it getter only.
     @property
     def input_names(self) -> List[str]:
         return self._input_names
 
+    # TODO(gp): @all make it getter only.
     @property
     def output_names(self) -> List[str]:
         return self._output_names
@@ -93,7 +85,17 @@ class NodeInterface(abc.ABC):
         return items
 
 
-# TODO(gp): Should we merge this with _AbstractNode? There is lots of class
+# #############################################################################
+
+
+# Name of a Node's method, e.g., `fit` or `predict`.
+Method = str
+
+# Mapping between the name of an output of a node and the corresponding stored value.
+NodeOutput = Dict[str, Any]
+
+
+# TODO(gp): Should we merge this with _Node? There is lots of class
 #  hierarchy (NodeInterface -> Node -> FitPredictNode) that doesn't seem really
 #  used / useful any more.
 class Node(NodeInterface):
@@ -105,8 +107,10 @@ class Node(NodeInterface):
     for each output.
     """
 
+    # TODO(gp): inputs -> input_names, outputs -> output_names
     def __init__(
         self,
+        # TODO(gp): Use *args, **args since the interface is the same.
         nid: NodeId,
         inputs: Optional[List[str]] = None,
         outputs: Optional[List[str]] = None,
@@ -118,8 +122,7 @@ class Node(NodeInterface):
         # Dictionary method name -> output node name -> output.
         self._output_vals: Dict[Method, NodeOutput] = {}
 
-    # TODO(gp): name -> output_name
-    def get_output(self, method: Method, name: str) -> Any:
+    def get_output(self, method: Method, output_name: str) -> Any:
         """
         Return the value of output `name` for the requested `method`.
         """
@@ -131,13 +134,13 @@ class Node(NodeInterface):
             self.nid,
         )
         hdbg.dassert_in(
-            name,
+            output_name,
             self.output_names,
             "%s is not an output of node %s!",
-            name,
+            output_name,
             self.nid,
         )
-        return self._output_vals[method][name]
+        return self._output_vals[method][output_name]
 
     def get_outputs(self, method: Method) -> NodeOutput:
         """
@@ -148,20 +151,90 @@ class Node(NodeInterface):
         hdbg.dassert_in(method, self._output_vals.keys())
         return self._output_vals[method]
 
-    # TODO(gp): name -> output_name
-    def _store_output(self, method: Method, name: str, value: Any) -> None:
+    def free(self, *, only_warning: bool = True) -> None:
+        """
+        Deallocate all the data stored inside the node.
+
+        Note that this should be called only after the node is not needed anymore.
+
+        :param only_warning=True: raise an assertion or a warning if
+            the memory is not actually reported as deallocated.
+        """
+        # Minimize the dependencies by importing locally since this is a method
+        # called rarely, for now.
+        import gc
+
+        import helpers.hintrospection as hintros
+        import helpers.hlogging as hloggin
+
+        txt = []
+
+        def _log(msg: str) -> None:
+            txt.append(msg)
+            # _LOG.debug("%s", msg)
+            _LOG.info("%s", msg)
+
+        # Report the status before.
+        rss_mem_before_in_gb = hloggin.get_memory_usage(process=None)[0]
+        memory_as_str = str(hloggin.get_memory_usage_as_str(process=None))
+        msg = "nid='%s', before free: memory=%s" % (self._nid, memory_as_str)
+        _log(msg)
+        # Traverse the data structure accumulating used memory.
+        rss_used_mem_in_gb = 0.0
+        for method in self._output_vals.keys():
+            for name in self._output_vals[method].keys():
+                obj = self._output_vals[method][name]
+                used_mem_tmp = obj.memory_usage(deep=True).sum()
+                _LOG.debug(
+                    "Removing %s:%s -> type=%s, mem=%s refs=%s"
+                    % (
+                        method,
+                        name,
+                        type(obj),
+                        hintros.format_size(used_mem_tmp),
+                        gc.get_referrers(obj),
+                    )
+                )
+                rss_used_mem_in_gb += used_mem_tmp / (1024 ** 3)
+        # Remove all the outstanding references to the objects.
+        del obj
+        del self._output_vals
+        # Force garbage collection.
+        gc.collect()
+        #
+        rss_mem_after_in_gb = hloggin.get_memory_usage(process=None)[0]
+        memory_as_str = str(hloggin.get_memory_usage_as_str(process=None))
+        msg = "nid='%s', after free: memory=%s" % (self._nid, memory_as_str)
+        _log(msg)
+        # We should have deallocated at least 90 of the used memory by the node.
+        rss_mem_diff_in_gb = rss_mem_before_in_gb - rss_mem_after_in_gb
+        hdbg.dassert_lte(0, rss_used_mem_in_gb)
+        msg = (
+            "nid='%s' successfully deallocated releasing %.1f GB out of %.1f GB"
+            % (self._nid, rss_mem_diff_in_gb, rss_used_mem_in_gb)
+        )
+        _log(msg)
+        txt = "\n".join(txt)
+        hdbg.dassert_lte(
+            0.9 * rss_used_mem_in_gb,
+            rss_mem_diff_in_gb,
+            msg=txt,
+            only_warning=only_warning,
+        )
+
+    def _store_output(self, method: Method, output_name: str, value: Any) -> None:
         """
         Store the output for `name` and the specific `method`.
         """
         hdbg.dassert_in(
-            name,
+            output_name,
             self.output_names,
             "%s is not an output of node %s!",
-            name,
+            output_name,
             self.nid,
         )
         # Create a dictionary of values for `method` if it doesn't exist.
         if method not in self._output_vals:
             self._output_vals[method] = {}
         # Assign the requested value.
-        self._output_vals[method][name] = value
+        self._output_vals[method][output_name] = value
