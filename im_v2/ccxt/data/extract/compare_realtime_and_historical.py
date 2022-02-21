@@ -138,6 +138,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Get time range for last 24 hours.
+    # TODO (Danya): to unix epoch
     start_timestamp = pd.Timestamp(args.start_timestamp)
     end_timestamp = pd.Timestamp(args.end_timestamp)
     # Connect to database.
@@ -145,6 +146,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
     # Read DB realtime data.
+    # TODO(Danya): knowledge_timestamp -> timestamp
     query = (
         f"SELECT * FROM ccxt_ohlcv WHERE knowledge_timestamp >='{start_timestamp}'"
         f" AND knowledge_timestamp <= '{end_timestamp}' AND exchange_id='{args.exchange_id}'"
@@ -156,6 +158,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # List files for given exchange.
     exchange_path = os.path.join(args.s3_path, args.exchange_id)
     s3_files = s3fs_.ls(exchange_path)
+    # TODO(Danya): Remove.
     # Filter files by timestamps in names.
     #  Example of downloaded file name: 'ADA_USDT_20210207-164012.csv'
     start_timestamp_str = start_timestamp.strftime("%Y%m%d-%H%M%S")
@@ -174,6 +177,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     for file in daily_files:
         with s3fs_.open(file) as f:
             daily_data.append(pd.read_csv(f))
+    # TODO(Danya): Replace with pq reading.
     daily_data = pd.concat(daily_data)
     daily_data_reindex = reindex_on_asset_and_ts(daily_data)
     # Get missing data.
