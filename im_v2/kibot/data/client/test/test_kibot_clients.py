@@ -9,39 +9,13 @@ import im_v2.kibot.data.client.kibot_clients as imvkdckicl
 import im_v2.kibot.data.client.test.kibot_clients_example as ikidctkce
 
 
-#def get_test_data_dir() -> str:
-#    """
-#    Get dir with data files for the tests.
-#
-#    The files in the dir are copies of some Kibot data files from S3
-#    that were loaded for our research purposes. These copies are checked
-#    out locally in order to test functions without dependencies on S3.
-#    """
-#    test_data_dir = os.path.join(
-#        hgit.get_amp_abs_path(),
-#        "im_v2/kibot/data/client/test/test_data",
-#    )
-#    hdbg.dassert_dir_exists(test_data_dir)
-#    return test_data_dir
-
-
 # TODO(Dan): @Max CmTask1245.
 class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
     def test_read_csv_data5(self) -> None:
-        root_dir = ikidctkce.get_test_data_dir()
-        extension = "csv.gz"
-        asset_class = "stocks"
-        unadjusted = False
         full_symbols = ["kibot::HD"]
         start_ts = pd.Timestamp("2015-09-29T09:23:00+00:00")
         end_ts = pd.Timestamp("2015-09-29T09:35:00+00:00")
-        #
-        client = imvkdckicl.KibotEquitiesCsvParquetByAssetClient(
-            root_dir,
-            extension,
-            asset_class,
-            unadjusted,
-        )
+        client = ikidctkce.get_TestKibotEquitiesCsvParquetByAssetClient_example1()
         #
         expected_length = 13
         expected_column_names = [
@@ -82,20 +56,11 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         )
 
     def test_read_parquet_data5(self) -> None:
-        root_dir = get_test_data_dir()
-        extension = "pq"
-        asset_class = "stocks"
-        unadjusted = False
         full_symbols = ["kibot::HD"]
         start_ts = pd.Timestamp("2015-09-29T09:23:00+00:00")
         end_ts = pd.Timestamp("2015-09-29T09:35:00+00:00")
         #
-        client = imvkdckicl.KibotEquitiesCsvParquetByAssetClient(
-            root_dir,
-            extension,
-            asset_class,
-            unadjusted,
-        )
+        client = ikidctkce.get_TestKibotEquitiesCsvParquetByAssetClient_example2()
         #
         expected_length = 13
         expected_column_names = [
@@ -138,18 +103,11 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
 
 class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
     def test_read_csv_data5(self) -> None:
-        root_dir = get_test_data_dir()
-        extension = "csv.gz"
-        contract_type = "continuous"
         full_symbols = ["kibot::ZI"]
         start_ts = pd.Timestamp("2009-09-29T03:38:00+00:00")
         end_ts = pd.Timestamp("2009-09-29T03:55:00+00:00")
         #
-        client = imvkdckicl.KibotFuturesCsvParquetByAssetClient(
-            root_dir,
-            extension,
-            contract_type,
-        )
+        client = ikidctkce.get_TestKibotFuturesCsvParquetByAssetClient_example1()
         #
         expected_length = 18
         expected_column_names = [
@@ -190,18 +148,11 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         )
 
     def test_read_parquet_data5(self) -> None:
-        root_dir = get_test_data_dir()
-        extension = "pq"
-        contract_type = "continuous"
         full_symbols = ["kibot::ZI"]
         start_ts = pd.Timestamp("2009-09-29T03:38:00+00:00")
         end_ts = pd.Timestamp("2009-09-29T03:55:00+00:00")
         #
-        client = imvkdckicl.KibotFuturesCsvParquetByAssetClient(
-            root_dir,
-            extension,
-            contract_type,
-        )
+        client = ikidctkce.get_TestKibotFuturesCsvParquetByAssetClient_example2()
         #
         expected_length = 18
         expected_column_names = [

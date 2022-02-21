@@ -317,7 +317,7 @@ class KibotFuturesCsvParquetByAssetClient(
         self,
         root_dir: str,
         extension: str,
-        contract_type: bool,
+        contract_type: str,
         *,
         aws_profile: Optional[str] = None,
     ) -> None:

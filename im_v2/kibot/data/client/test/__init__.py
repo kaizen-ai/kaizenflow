@@ -1,1 +1,0 @@
-from im_v2.kibot.data.client.client.kibot_clients_example import *  # pylint: disable=unused-import # NOQA
