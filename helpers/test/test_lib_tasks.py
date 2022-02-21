@@ -1807,7 +1807,7 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
         _, act = hsystem.system_to_string(cmd)
         # Modify the outcome for reproducibility.
         act = hprint.remove_non_printable_chars(act)
-        act = re.sub(r"[0-9]{2}:[0-9]{2}:[0-9]{2} - ", r"00:00:00 - ", act)
+        act = re.sub(r"[0-9]{2}:[0-9]{2}:[0-9]{2} - ", r"HH:MM:SS - ", act)
         # TODO(Grisha): fix properly if needed, for now only lines that
         #  contain `pytest` are included. This is done to remove `This
         #  code is not in sync with the container ...` that typically
@@ -1816,7 +1816,7 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
         act = act.replace("/app/amp/", "/app/")
         act = re.sub(
             r"lib_tasks.py pytest_repro:[0-9]+",
-            r"lib_tasks.py pytest_repro:0000",
+            r"lib_tasks.py pytest_repro:{LINE_NUM}",
             act,
         )
         # Check the outcome.
@@ -1827,6 +1827,10 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
         self.helper(cmd)
 
     def test2(self) -> None:
+        cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt'"
+        self.helper(cmd)
+
+    def test3(self) -> None:
         cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt'"
         self.helper(cmd)
 
