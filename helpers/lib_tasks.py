@@ -3867,16 +3867,14 @@ def run_coverage_report(  # type: ignore
     )
     # Only target dir is included in the reports.
     include_in_report = f"*/{target_dir}/*"
-    # Test files are excluded from the reports.
-    exclude_from_report = "*/test/*"
     # Generate text report with the coverage stats.
     report_cmd.append(
-        f"coverage report --include={include_in_report} --omit={exclude_from_report} --sort=Cover"
+        f"coverage report --include={include_in_report} --sort=Cover"
     )
     if generate_html_report:
         # Generate HTML report with the coverage stats.
         report_cmd.append(
-            f"coverage html --include={include_in_report} --omit={exclude_from_report}"
+            f"coverage html --include={include_in_report}"
         )
     # Execute commands above one-by-one inside docker. Coverage tool is not
     # installed outside docker.
