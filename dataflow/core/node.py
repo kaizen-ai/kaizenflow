@@ -22,7 +22,6 @@ _LOG = logging.getLogger(__name__)
 NodeId = str
 
 
-# TODO(gp): @all This is private -> _Node.
 class NodeInterface(abc.ABC):
     """
     Abstract node class for creating DAGs of functions.
@@ -55,18 +54,13 @@ class NodeInterface(abc.ABC):
         self._input_names = self._init_validation_helper(inputs)
         self._output_names = self._init_validation_helper(outputs)
 
-    @property
-    def nid(self) -> NodeId:
+    def get_nid(self) -> NodeId:
         return self._nid
 
-    # TODO(gp): @all make it getter only.
-    @property
-    def input_names(self) -> List[str]:
+    def get_input_names(self) -> List[str]:
         return self._input_names
 
-    # TODO(gp): @all make it getter only.
-    @property
-    def output_names(self) -> List[str]:
+    def get_output_names(self) -> List[str]:
         return self._output_names
 
     # TODO(gp): Consider using the more common approach with `_check_validity()`.
