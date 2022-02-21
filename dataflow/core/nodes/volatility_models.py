@@ -401,9 +401,10 @@ class SingleColumnVolatilityModel(dtfconobas.FitPredictNode):
         dag: dtfcordag.DAG, tail_nid: Optional[str], node: dtfcornode.Node
     ) -> str:
         dag.add_node(node)
+        nid = node.get_nid()
         if tail_nid is not None:
-            dag.connect(tail_nid, node.nid)
-        return node.nid
+            dag.connect(tail_nid, nid)
+        return nid
 
 
 class _MultiColVolatilityModelMixin:

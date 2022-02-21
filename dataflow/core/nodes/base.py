@@ -192,7 +192,8 @@ class DataSource(FitPredictNode, abc.ABC):
         info = collections.OrderedDict()
         info["fit_df_info"] = dtfcorutil.get_df_info_as_string(fit_df)
         self._set_info("fit", info)
-        return {self.output_names[0]: fit_df}
+        training_set = {self._output_names[0]: fit_df}
+        return training_set
 
     def set_predict_intervals(self, intervals: dtfcorutil.Intervals) -> None:
         """
@@ -227,7 +228,8 @@ class DataSource(FitPredictNode, abc.ABC):
         info = collections.OrderedDict()
         info["predict_df_info"] = dtfcorutil.get_df_info_as_string(predict_df)
         self._set_info("predict", info)
-        return {self.output_names[0]: predict_df}
+        training_set = {self._output_names[0]: predict_df}
+        return training_set
 
     def get_df(self) -> pd.DataFrame:
         hdbg.dassert_is_not(self.df, None, "No DataFrame found!")

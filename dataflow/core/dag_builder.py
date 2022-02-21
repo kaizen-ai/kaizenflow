@@ -186,9 +186,9 @@ class DagBuilder(abc.ABC):
         """
         # _LOG.debug("dag before appending=\n%s", str(dag))
         dag.add_node(node)
+        nid = node.get_nid()
         if tail_nid is not None:
-            dag.connect(tail_nid, node.nid)
+            dag.connect(tail_nid, nid)
         # _LOG.debug("dag after appending=\n%s", str(dag))
-        nid = node.nid
-        nid = cast(str, nid)
-        return nid
+        nid_str = cast(str, nid)
+        return nid_str
