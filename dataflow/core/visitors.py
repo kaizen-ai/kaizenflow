@@ -35,8 +35,10 @@ def extract_info(
     hdbg.dassert_isinstance(dag, dtfcordag.DAG)
     hdbg.dassert_isinstance(methods, list)
     info = collections.OrderedDict()
+    nx_dag = dag.get_nx_dag()
+    nodes = nx_dag.nodes()
     # Scan the nodes.
-    for nid in dag.dag.nodes():
+    for nid in nodes:
         node_info = collections.OrderedDict()
         node = dag.get_node(nid)
         # Extract the info for each method.
@@ -65,7 +67,10 @@ def get_fit_state(dag: dtfcordag.DAG) -> NodeState:
     """
     hdbg.dassert_isinstance(dag, dtfcordag.DAG)
     fit_state = collections.OrderedDict()
-    for nid in dag.dag.nodes():
+    nx_dag = dag.get_nx_dag()
+    nodes = nx_dag.nodes()
+    # Scan the nodes.
+    for nid in nodes:
         node = dag.get_node(nid)
         # Save the info for the fit state.
         hdbg.dassert_isinstance(node, dtfconobas.FitPredictNode)
@@ -83,9 +88,11 @@ def set_fit_state(dag: dtfcordag.DAG, fit_state: NodeState) -> None:
     """
     hdbg.dassert_isinstance(dag, dtfcordag.DAG)
     hdbg.dassert_isinstance(fit_state, collections.OrderedDict)
-    hdbg.dassert_eq(len(dag.dag.nodes()), len(fit_state.keys()))
+    nx_dag = dag.get_nx_dag()
+    nodes = nx_dag.nodes()
+    hdbg.dassert_eq(nodes, len(fit_state.keys()))
     # Scan the nodes.
-    for nid in dag.dag.nodes():
+    for nid in nodes:
         node = dag.get_node(nid)
         # Set the info for the fit state.
         hdbg.dassert_isinstance(node, dtfconobas.FitPredictNode)
