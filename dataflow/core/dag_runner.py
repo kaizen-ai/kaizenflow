@@ -327,6 +327,13 @@ class RollingFitPredictDagRunner(AbstractDagRunner):
         df_out = df_out.loc[oos_start:]
         return self._to_result_bundle(method, df_out, info)
 
+    def _run_dag(self, method: dtfcornode.Method) -> dtfcorebun.ResultBundle:
+        """
+        Run DAG and return a ResultBundle.
+        """
+        df_out, info = self._run_dag_helper(method)
+        return self._to_result_bundle(method, df_out, info)
+
     @staticmethod
     def _generate_retraining_datetimes(
         start_timestamp: pd.Timestamp,
@@ -368,13 +375,6 @@ class RollingFitPredictDagRunner(AbstractDagRunner):
         #
         hdbg.dassert(not idx.empty)
         return idx
-
-    def _run_dag(self, method: dtfcornode.Method) -> dtfcorebun.ResultBundle:
-        """
-        Run DAG and return a ResultBundle.
-        """
-        df_out, info = self._run_dag_helper(method)
-        return self._to_result_bundle(method, df_out, info)
 
 
 # #############################################################################
