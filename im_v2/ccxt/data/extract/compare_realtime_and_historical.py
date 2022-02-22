@@ -168,7 +168,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     )
     # TODO(Danya): Plug in the S3 filesystem into `from_parquet`.
     #  Currently will not work due to expecting the local FS.
-    daily_data = hparque.from_parquet(exchange_path, filters=timestamp_filters)
+    daily_data = hparque.from_parquet(exchange_path, filters=timestamp_filters, aws_profile=args.aws_profile)
     daily_data_reindex = reindex_on_asset_and_ts(daily_data)
     # Get missing data.
     rt_missing_data, daily_missing_data = find_gaps(
