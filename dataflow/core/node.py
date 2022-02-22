@@ -186,14 +186,12 @@ class Node(NodeInterface):
                 obj = self._output_vals[method][name]
                 used_mem_tmp = obj.memory_usage(deep=True).sum()
                 _LOG.debug(
-                    "Removing %s:%s -> type=%s, mem=%s refs=%s"
-                    % (
-                        method,
-                        name,
-                        type(obj),
-                        hintros.format_size(used_mem_tmp),
-                        gc.get_referrers(obj),
-                    )
+                    "Removing %s:%s -> type=%s, mem=%s refs=%s",
+                    method,
+                    name,
+                    type(obj),
+                    hintros.format_size(used_mem_tmp),
+                    gc.get_referrers(obj),
                 )
                 rss_used_mem_in_gb += used_mem_tmp / (1024 ** 3)
         # Remove all the outstanding references to the objects.
