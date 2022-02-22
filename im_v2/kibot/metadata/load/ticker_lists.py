@@ -1,17 +1,15 @@
 """
 Import as:
 
-import im.kibot.metadata.load.ticker_lists as imkmltili
+import im_v2.kibot.metadata.load.ticker_lists as imvkmltili
 """
 
 import enum
 import os
 from typing import List, Tuple
 
-import pandas as pd
-
-import im_v2.kibot.metadata.config as imkimecon
-import im_v2.kibot.metadata.types as imkimetyp
+import im_v2.kibot.metadata.config as imvkimeco
+import im_v2.kibot.metadata.types as imvkimety
 
 
 class ParsingState(enum.Enum):
@@ -48,34 +46,24 @@ class TickerListsLoader:
 
     def get(
         self, ticker_list: str, listed: bool = True
-    ) -> List[imkimetyp.Ticker]:
+    ) -> List[imvkimety.Ticker]:
         s3_path = os.path.join(
-            imkimecon.S3_PREFIX,
-            imkimecon.TICKER_LISTS_SUB_DIR,
+            imvkimeco.S3_PREFIX,
+            imvkimeco.TICKER_LISTS_SUB_DIR,
             f"{ticker_list}.txt",
         )
         lines = self._get_lines(s3_path=s3_path)
         listed_tickers, delisted_tickers = self._parse_lines(lines=lines)
         return listed_tickers if listed else delisted_tickers
 
-    @staticmethod
-    def _get_lines(s3_path: str) -> List[str]:
-        aws_profile = "am"
-        # TODO(gp): Is it \t?
-        sep = "/t"
-        s3fs = hs3.get_s3fs("am")
-        lines = pdhelp.read_csv(s3_path, s3fs=s3fs, sep=sep).values.tolist()
-        res = [line[0] for line in lines]
-        return res
-
     def _parse_lines(
         self, lines: List[str]
-    ) -> Tuple[List[imkimetyp.Ticker], List[imkimetyp.Ticker]]:
+    ) -> Tuple[List[imvkimety.Ticker], List[imvkimety.Ticker]]:
         """
         Get a list of listed & delisted tickers from lines.
         """
-        listed_tickers: List[imkimetyp.Ticker] = []
-        delisted_tickers: List[imkimetyp.Ticker] = []
+        listed_tickers: List[imvkimety.Ticker] = []
+        delisted_tickers: List[imvkimety.Ticker] = []
         state = ParsingState.Started
         for line in lines:
             if not line.strip():
@@ -97,7 +85,17 @@ class TickerListsLoader:
         return listed_tickers, delisted_tickers
 
     @staticmethod
-    def _get_ticker_from_line(line: str) -> imkimetyp.Ticker:
+    def _get_lines(s3_path: str) -> List[str]:
+        pass
+        # TODO(gp): Is it \t?
+        sep = "/t"
+        s3fs = hs3.get_s3fs("am")
+        lines = pdhelp.read_csv(s3_path, s3fs=s3fs, sep=sep).values.tolist()
+        res = [line[0] for line in lines]
+        return res
+
+    @staticmethod
+    def _get_ticker_from_line(line: str) -> imvkimety.Ticker:
         # pylint: disable=line-too-long
         """
         Get a ticker from a line.
@@ -112,5 +110,5 @@ class TickerListsLoader:
         args[-1] = args[-1].strip()
         # Skip index col.
         args = args[1:]
-        ret = imkimetyp.Ticker(*args)
+        ret = imvkimety.Ticker(*args)
         return ret

@@ -1,13 +1,14 @@
 import helpers.hunit_test as hunitest
-import im_v2.kibot.metadata.load.expiry_contract_mapper as imkmlecoma
+import im_v2.kibot.metadata.load.expiry_contract_mapper as imvkmlecma
 
 
 class TestExpiryContractMapper(hunitest.TestCase):
+
     def test_parse_expiry_contract1(self) -> None:
         """
         Valid input returns valid output.
         """
-        cls = imkmlecoma.ExpiryContractMapper()
+        cls = imvkmlecma.ExpiryContractMapper()
         inp = "TTH10"
         exp = ("TT", "H", "10")
         act = cls.parse_expiry_contract(inp)
@@ -17,7 +18,7 @@ class TestExpiryContractMapper(hunitest.TestCase):
         """
         Valid input with 1 letter contract returns valid input.
         """
-        cls = imkmlecoma.ExpiryContractMapper()
+        cls = imvkmlecma.ExpiryContractMapper()
         inp = "TU10"
         exp = ("T", "U", "10")
         act = cls.parse_expiry_contract(inp)
@@ -27,7 +28,7 @@ class TestExpiryContractMapper(hunitest.TestCase):
         """
         Incorrect input returns an error.
         """
-        cls = imkmlecoma.ExpiryContractMapper()
+        cls = imvkmlecma.ExpiryContractMapper()
         inp = "TTH1"
         with self.assertRaises(AssertionError):
             cls.parse_expiry_contract(inp)
@@ -36,7 +37,7 @@ class TestExpiryContractMapper(hunitest.TestCase):
         """
         Valid input with x > y based on months returns valid output.
         """
-        cls = imkmlecoma.ExpiryContractMapper()
+        cls = imvkmlecma.ExpiryContractMapper()
         inp = ("TUG10", "TUF10")
         exp = 1
         act = cls.compare_expiry_contract(*inp)
@@ -46,7 +47,7 @@ class TestExpiryContractMapper(hunitest.TestCase):
         """
         Valid input with x < y based on months returns valid output.
         """
-        cls = imkmlecoma.ExpiryContractMapper()
+        cls = imvkmlecma.ExpiryContractMapper()
         inp = ("TUF10", "TUG10")
         exp = -1
         act = cls.compare_expiry_contract(*inp)
@@ -56,7 +57,7 @@ class TestExpiryContractMapper(hunitest.TestCase):
         """
         Valid input with x == y returns valid output.
         """
-        cls = imkmlecoma.ExpiryContractMapper()
+        cls = imvkmlecma.ExpiryContractMapper()
         inp = ("TUF10", "TUF10")
         exp = 0
         act = cls.compare_expiry_contract(*inp)
@@ -66,7 +67,7 @@ class TestExpiryContractMapper(hunitest.TestCase):
         """
         Valid input with x > y based on months returns valid output.
         """
-        cls = imkmlecoma.ExpiryContractMapper()
+        cls = imvkmlecma.ExpiryContractMapper()
         inp = ("TUF11", "TUF10")
         exp = 1
         act = cls.compare_expiry_contract(*inp)
@@ -76,7 +77,7 @@ class TestExpiryContractMapper(hunitest.TestCase):
         """
         Valid input with x < y based on months returns valid output.
         """
-        cls = imkmlecoma.ExpiryContractMapper()
+        cls = imvkmlecma.ExpiryContractMapper()
         inp = ("TUF10", "TUF11")
         exp = -1
         act = cls.compare_expiry_contract(*inp)
@@ -86,7 +87,7 @@ class TestExpiryContractMapper(hunitest.TestCase):
         """
         Invalid input raises an error.
         """
-        cls = imkmlecoma.ExpiryContractMapper()
+        cls = imvkmlecma.ExpiryContractMapper()
         inp = ("TU10", "TTU10")
         with self.assertRaises(AssertionError):
             cls.compare_expiry_contract(*inp)
@@ -95,7 +96,7 @@ class TestExpiryContractMapper(hunitest.TestCase):
         """
         Empty input raises an error.
         """
-        cls = imkmlecoma.ExpiryContractMapper()
+        cls = imvkmlecma.ExpiryContractMapper()
         inp = ("", "")
         with self.assertRaises(AssertionError):
             cls.compare_expiry_contract(*inp)
@@ -104,7 +105,7 @@ class TestExpiryContractMapper(hunitest.TestCase):
         """
         Valid input with differing months returns valid output.
         """
-        cls = imkmlecoma.ExpiryContractMapper()
+        cls = imvkmlecma.ExpiryContractMapper()
         inp = ["TTZ10", "TTV10", "TTX10", "TTN10", "TTQ10"]
         exp = ["TTN10", "TTQ10", "TTV10", "TTX10", "TTZ10"]
         act = cls.sort_expiry_contract(inp)
@@ -114,7 +115,7 @@ class TestExpiryContractMapper(hunitest.TestCase):
         """
         Valid input with differing years returns valid output.
         """
-        cls = imkmlecoma.ExpiryContractMapper()
+        cls = imvkmlecma.ExpiryContractMapper()
         inp = ["TTF15", "TTF13", "TTF14", "TTF17", "TTF11"]
         exp = ["TTF11", "TTF13", "TTF14", "TTF15", "TTF17"]
         act = cls.sort_expiry_contract(inp)
@@ -124,7 +125,7 @@ class TestExpiryContractMapper(hunitest.TestCase):
         """
         Valid input with differing months & years returns valid output.
         """
-        cls = imkmlecoma.ExpiryContractMapper()
+        cls = imvkmlecma.ExpiryContractMapper()
         inp = ["TTK15", "TTG13", "TTJ14", "TTK17", "TTF11"]
         exp = ["TTF11", "TTG13", "TTJ14", "TTK15", "TTK17"]
         act = cls.sort_expiry_contract(inp)
@@ -134,7 +135,7 @@ class TestExpiryContractMapper(hunitest.TestCase):
         """
         Valid input with duplicate dates returns valid output.
         """
-        cls = imkmlecoma.ExpiryContractMapper()
+        cls = imvkmlecma.ExpiryContractMapper()
         inp = ["TTK15", "TTG13", "TTG15", "TTG17", "TTF11"]
         exp = ["TTF11", "TTG13", "TTG15", "TTK15", "TTG17"]
         act = cls.sort_expiry_contract(inp)

@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.kibot.metadata.load.contract_symbol_mapping as imkmlcsyma
+import im_v2.kibot.metadata.load.contract_symbol_mapping as imvkmlcsma
 """
 
 import logging
@@ -15,6 +15,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class ContractSymbolMapping:
+
     def __init__(self) -> None:
         km = KibotMetadata()
         # Minutely and daily dataframes are identical except for the `Link`

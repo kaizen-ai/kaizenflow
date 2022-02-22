@@ -24,8 +24,8 @@ import tqdm
 import helpers.hio as hio
 import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
-import im_v2.kibot.base.command as imkibacom
-import im_v2.kibot.metadata.config as imkimecon
+import im_v2.kibot.base.command as imvkibaco
+import im_v2.kibot.metadata.config as imvkimeco
 
 # #############################################################################
 
@@ -66,7 +66,7 @@ def _get_symbols_list() -> List[str]:
     Get a list of symbols that have adjustments from Kibot.
     """
     response = requests.get(
-        url=imkimecon.API_ENDPOINT,
+        url=imvkimeco.API_ENDPOINT,
         params=dict(action="adjustments", symbolsonly="1"),
     )
 
@@ -81,17 +81,17 @@ def _download_adjustments_data_for_symbol(symbol: str, tmp_dir: str) -> None:
     Download adjustments file for a symbol and save to s3.
     """
     response = requests.get(
-        url=imkimecon.API_ENDPOINT,
+        url=imvkimeco.API_ENDPOINT,
         params=dict(action="adjustments", symbol=symbol),
     )
 
     file_name = f"{symbol}.txt"
-    file_path = os.path.join(tmp_dir, imkimecon.ADJUSTMENTS_SUB_DIR, file_name)
+    file_path = os.path.join(tmp_dir, imvkimeco.ADJUSTMENTS_SUB_DIR, file_name)
     hio.to_file(file_name=file_path, lines=str(response.content, "utf-8"))
 
     # Save to S3.
     aws_path = os.path.join(
-        imkimecon.S3_PREFIX, imkimecon.ADJUSTMENTS_SUB_DIR, file_name
+        imvkimeco.S3_PREFIX, imvkimeco.ADJUSTMENTS_SUB_DIR, file_name
     )
     hs3.dassert_is_s3_path(aws_path)
 
@@ -103,19 +103,14 @@ def _download_adjustments_data_for_symbol(symbol: str, tmp_dir: str) -> None:
 # #############################################################################
 
 
-class DownloadAdjustmentsCommand(imkibacom.KibotCommand):
+class DownloadAdjustmentsCommand(imvkibaco.KibotCommand):
+
     def __init__(self) -> None:
         super().__init__(
             docstring=__doc__,
             supports_tmp_dir=True,
             requires_auth=True,
             requires_api_login=True,
-        )
-
-    @staticmethod
-    def customize_parser(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
-            "--serial", action="store_true", help="Download data serially"
         )
 
     def customize_run(self) -> int:
@@ -132,6 +127,12 @@ class DownloadAdjustmentsCommand(imkibacom.KibotCommand):
         )
 
         return 0
+
+    @staticmethod
+    def customize_parser(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "--serial", action="store_true", help="Download data serially"
+        )
 
 
 if __name__ == "__main__":

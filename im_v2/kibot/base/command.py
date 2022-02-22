@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.kibot.base.command as imkibacom
+import im_v2.kibot.base.command as imvkibaco
 """
 
 # TODO(*): Move it one level up and call it kibot_command.py
@@ -14,10 +14,11 @@ import requests
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hparser as hparser
-import im_v2.kibot.metadata.config as imkimecon
+import im_v2.kibot.metadata.config as imvkimeco
 
 
 class KibotCommand:
+
     def __init__(
         self,
         docstring: str,
@@ -44,17 +45,17 @@ class KibotCommand:
     def run(self) -> None:
         sys.exit(self._main())
 
-    @staticmethod
-    def customize_parser(parser: argparse.ArgumentParser) -> None:
-        """
-        Allow child classes to customize the parser further.
-        """
-
     def customize_run(self) -> int:  # pylint: disable=no-self-use
         """
         Allow child classes to customize the run further.
         """
         return 0
+
+    @staticmethod
+    def customize_parser(parser: argparse.ArgumentParser) -> None:
+        """
+        Allow child classes to customize the parser further.
+        """
 
     def _setup_parser(self) -> None:
         self.parser = argparse.ArgumentParser(
@@ -118,7 +119,7 @@ class KibotCommand:
         """
 
         response = requests.get(
-            url=imkimecon.API_ENDPOINT,
+            url=imvkimeco.API_ENDPOINT,
             params=dict(
                 action="login",
                 user=self.args.username,

@@ -21,8 +21,8 @@ import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
-import im_v2.kibot.base.command as imkibacom
-import im_v2.kibot.metadata.config as imkimecon
+import im_v2.kibot.base.command as imvkibaco
+import im_v2.kibot.metadata.config as imvkimeco
 
 _LOG = logging.getLogger(__name__)
 
@@ -52,17 +52,18 @@ def _extract_ticker_page_urls() -> List[str]:
     :return: list of ticker page links, for example:
         ['http://www.kibot.com/Historical_Data/Top_50_Stocks_Historical_Intraday_Data.aspx', ...]
     """
-    response = requests.get(url=imkimecon.ENDPOINT + "buy.aspx")
+    response = requests.get(url=imvkimeco.ENDPOINT + "buy.aspx")
     soup = bs4.BeautifulSoup(response.content, "html.parser")
 
     available_data_sets = soup.select("strong a")
-    return [imkimecon.ENDPOINT + s.attrs["href"] for s in available_data_sets]
+    return [imvkimeco.ENDPOINT + s.attrs["href"] for s in available_data_sets]
 
 
 # #############################################################################
 
 
-class DownloadTickerListsCommand(imkibacom.KibotCommand):
+class DownloadTickerListsCommand(imvkibaco.KibotCommand):
+
     def __init__(self) -> None:
         super().__init__(docstring=__doc__, supports_tmp_dir=True)
 
@@ -88,14 +89,14 @@ class DownloadTickerListsCommand(imkibacom.KibotCommand):
             response = requests.get(file_url)
             hdbg.dassert_eq(response.status_code, 200)
             file_path = os.path.join(
-                self.args.tmp_dir, imkimecon.TICKER_LISTS_SUB_DIR, file_name
+                self.args.tmp_dir, imvkimeco.TICKER_LISTS_SUB_DIR, file_name
             )
             hio.to_file(file_name=file_path, lines=str(response.content, "utf-8"))
             _LOG.info("Downloaded file to: %s", file_path)
 
             # Save to S3.
             aws_path = os.path.join(
-                imkimecon.S3_PREFIX, imkimecon.TICKER_LISTS_SUB_DIR, file_name
+                imvkimeco.S3_PREFIX, imvkimeco.TICKER_LISTS_SUB_DIR, file_name
             )
             hs3.dassert_is_s3_path(aws_path)
 

@@ -3,12 +3,13 @@ import os
 
 import pandas as pd
 
-import im_v2.kibot.metadata.load.kibot_metadata as imkmlkime
+import im_v2.kibot.metadata.load.kibot_metadata as imvkmlkime
 
 FILE_DIR = os.path.dirname(inspect.getfile(inspect.currentframe()))
 
 
-class MockKibotMetadata(imkmlkime.KibotMetadata):
+class MockKibotMetadata(imvkmlkime.KibotMetadata):
+
     @classmethod
     def read_tickbidask_contract_metadata(cls) -> pd.DataFrame:
         return pd.read_csv(f"{FILE_DIR}/tickbidask_contract_metadata.txt")

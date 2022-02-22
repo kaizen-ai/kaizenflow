@@ -5,7 +5,7 @@ import pytest
 import helpers.hio as hio
 import helpers.hunit_test as hunitest
 import im_v2.kibot.metadata.load as vkmloa
-import im_v2.kibot.metadata.types as imkimetyp
+import im_v2.kibot.metadata.types as imvkimety
 
 
 class TestTickerListLoader(hunitest.TestCase):
@@ -18,7 +18,7 @@ class TestTickerListLoader(hunitest.TestCase):
         self.assertEqual(
             listed_tickers,
             [
-                imkimetyp.Ticker(
+                imvkimety.Ticker(
                     Symbol="AA",
                     StartDate="4/27/2007",
                     Size="68",
@@ -32,7 +32,7 @@ class TestTickerListLoader(hunitest.TestCase):
         self.assertEqual(
             delisted_tickers,
             [
-                imkimetyp.Ticker(
+                imvkimety.Ticker(
                     Symbol="XOM",
                     StartDate="12/1/1999",
                     Size="102",
@@ -50,7 +50,7 @@ class TestTickerListLoader(hunitest.TestCase):
         self.assertEqual(len(tickers), 43)
         self.assertEqual(
             tickers[0],
-            imkimetyp.Ticker(
+            imvkimety.Ticker(
                 Symbol="AA",
                 StartDate="4/27/2007",
                 Size="68",
@@ -69,7 +69,7 @@ class TestAdjustmentsLoader(hunitest.TestCase):
         self.assertEqual(len(adjustments), 58)
         self.assertEqual(
             adjustments[0],
-            imkimetyp.Adjustment(
+            imvkimety.Adjustment(
                 Date="2/27/2006",
                 Symbol="SPTN",
                 Company="SpartanNash Company",

@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.kibot.metadata.types as imkimetyp
+import im_v2.kibot.metadata.types as imvkimety
 """
 
 import dataclasses

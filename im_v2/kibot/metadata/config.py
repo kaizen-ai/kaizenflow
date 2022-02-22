@@ -1,10 +1,9 @@
 """
 Import as:
 
-import im.kibot.metadata.config as imkimecon
+import im_v2.kibot.metadata.config as imvkimeco
 """
 
-import os
 
 import helpers.hs3 as hs3
 
