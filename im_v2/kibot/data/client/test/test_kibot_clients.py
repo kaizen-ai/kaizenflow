@@ -9,13 +9,12 @@ import im_v2.kibot.data.client.kibot_clients as imvkdckicl
 import im_v2.kibot.data.client.test.kibot_clients_example as ikidctkce
 
 
-# TODO(Dan): @Max CmTask1245.
 class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
     def test_read_csv_data5(self) -> None:
         full_symbols = ["kibot::HD"]
         start_ts = pd.Timestamp("2015-09-29T09:23:00+00:00")
         end_ts = pd.Timestamp("2015-09-29T09:35:00+00:00")
-        client = ikidctkce.get_TestKibotEquitiesCsvParquetByAssetClient_example1()
+        client = ikidctkce.get_KibotEquitiesCsvParquetByAssetClient_example1(False)
         #
         expected_length = 13
         expected_column_names = [
@@ -60,7 +59,7 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         start_ts = pd.Timestamp("2015-09-29T09:23:00+00:00")
         end_ts = pd.Timestamp("2015-09-29T09:35:00+00:00")
         #
-        client = ikidctkce.get_TestKibotEquitiesCsvParquetByAssetClient_example2()
+        client = ikidctkce.get_KibotEquitiesCsvParquetByAssetClient_example2(False)
         #
         expected_length = 13
         expected_column_names = [
@@ -107,7 +106,7 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         start_ts = pd.Timestamp("2009-09-29T03:38:00+00:00")
         end_ts = pd.Timestamp("2009-09-29T03:55:00+00:00")
         #
-        client = ikidctkce.get_TestKibotFuturesCsvParquetByAssetClient_example1()
+        client = ikidctkce.get_KibotFuturesCsvParquetByAssetClient_example1("continuous")
         #
         expected_length = 18
         expected_column_names = [
@@ -152,7 +151,7 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         start_ts = pd.Timestamp("2009-09-29T03:38:00+00:00")
         end_ts = pd.Timestamp("2009-09-29T03:55:00+00:00")
         #
-        client = ikidctkce.get_TestKibotFuturesCsvParquetByAssetClient_example2()
+        client = ikidctkce.get_KibotFuturesCsvParquetByAssetClient_example2("continuous")
         #
         expected_length = 18
         expected_column_names = [

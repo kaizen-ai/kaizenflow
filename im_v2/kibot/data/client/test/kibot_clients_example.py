@@ -27,11 +27,13 @@ def get_test_data_dir() -> str:
     return test_data_dir
 
 
-def get_TestKibotEquitiesCsvParquetByAssetClient_example1() -> imvkdckicl.KibotEquitiesCsvParquetByAssetClient:
+def get_KibotEquitiesCsvParquetByAssetClient_example1(unadjusted: bool) -> imvkdckicl.KibotEquitiesCsvParquetByAssetClient:
     """
-    Get `KibotEquitiesCsvParquetByAssetClient` object for the tests.
+    Return a Kibot object with:
+       - local (non-S3) `csv.gz` data
+       - using equity data
 
-    Extension is `csv.gz`.
+    :param unadjusted: whether asset class prices are unadjusted (i.e., True or False)
     """
     # Get path to the dir with the test data.
     #
@@ -47,7 +49,6 @@ def get_TestKibotEquitiesCsvParquetByAssetClient_example1() -> imvkdckicl.KibotE
     root_dir = get_test_data_dir()
     extension = "csv.gz"
     asset_class = "stocks"
-    unadjusted = False
     kibot_file_client = imvkdckicl.KibotEquitiesCsvParquetByAssetClient(
         root_dir,
         extension,
@@ -57,16 +58,17 @@ def get_TestKibotEquitiesCsvParquetByAssetClient_example1() -> imvkdckicl.KibotE
     return kibot_file_client
 
 
-def get_TestKibotEquitiesCsvParquetByAssetClient_example2() -> imvkdckicl.KibotEquitiesCsvParquetByAssetClient:
+def get_KibotEquitiesCsvParquetByAssetClient_example2(unadjusted: bool) -> imvkdckicl.KibotEquitiesCsvParquetByAssetClient:
     """
-    Get `KibotEquitiesCsvParquetByAssetClient` object for the tests.
+    Return a Kibot object with:
+       - local (non-S3) `pq` data
+       - using equity data
 
-    Extension is `pq`.
+    :param unadjusted: whether asset class prices are unadjusted (i.e., True or False)
     """
     root_dir = get_test_data_dir()
     extension = "pq"
     asset_class = "stocks"
-    unadjusted = False
     kibot_file_client = imvkdckicl.KibotEquitiesCsvParquetByAssetClient(
         root_dir,
         extension,
@@ -76,15 +78,16 @@ def get_TestKibotEquitiesCsvParquetByAssetClient_example2() -> imvkdckicl.KibotE
     return kibot_file_client
 
 
-def get_TestKibotFuturesCsvParquetByAssetClient_example1() -> imvkdckicl.KibotFuturesCsvParquetByAssetClient:
+def get_KibotFuturesCsvParquetByAssetClient_example1(contract_type: str) -> imvkdckicl.KibotFuturesCsvParquetByAssetClient:
     """
-    Get `KibotFuturesCsvParquetByAssetClient` object for the tests.
+    Return a Kibot object with:
+       - local (non-S3) `csv.gz` data
+       - using futures data
 
-    Extension is `csv.gz`.
+    :param contract_type: futures contract type (e.g., "continuous", "expiry")
     """
     root_dir = get_test_data_dir()
     extension = "csv.gz"
-    contract_type = "continuous"
     kibot_file_client = imvkdckicl.KibotFuturesCsvParquetByAssetClient(
         root_dir,
         extension,
@@ -93,15 +96,16 @@ def get_TestKibotFuturesCsvParquetByAssetClient_example1() -> imvkdckicl.KibotFu
     return kibot_file_client
 
 
-def get_TestKibotFuturesCsvParquetByAssetClient_example2() -> imvkdckicl.KibotFuturesCsvParquetByAssetClient:
+def get_KibotFuturesCsvParquetByAssetClient_example2(contract_type: str) -> imvkdckicl.KibotFuturesCsvParquetByAssetClient:
     """
-    Get `KibotFuturesCsvParquetByAssetClient` object for the tests.
+    Return a Kibot object with:
+       - local (non-S3) `pq` data
+       - using futures data
 
-    Extension is `pq`.
+    :param contract_type: futures contract type (e.g., "continuous", "expiry")
     """
     root_dir = get_test_data_dir()
     extension = "pq"
-    contract_type = "continuous"
     kibot_file_client = imvkdckicl.KibotFuturesCsvParquetByAssetClient(
         root_dir,
         extension,
