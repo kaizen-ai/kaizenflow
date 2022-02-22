@@ -1,0 +1,44 @@
+---
+- name: Zabbix server | Download zabbix repo package
+  get_url:
+    url: "{{ zabbix_repo_baseurl }}"
+    dest: /tmp/zabbix.deb
+
+- name: Zabbix server | Add zabbix repository
+  apt:
+    deb: /tmp/zabbix.deb
+    state: present
+
+- name: Zabbix server | Install zabbix server
+  package:
+    name: 
+      - zabbix-agent2
+      - zabbix-server-mysql 
+      - zabbix-frontend-php 
+      - zabbix-apache-conf 
+      - zabbix-sql-scripts
+    state: latest #This is updated by adding new version of repository
+    update_cache: yes
+  register: installation_result
+  retries: 5
+  until: installation_result is not failed
+
+- name: Zabbix server | Install zabbix mariadb database
+  include_tasks: install_mariadb.yml
+
+- name: Zabbix server | Configure db password in zabbix server configuration file
+  lineinfile:
+    path: /etc/zabbix/zabbix_server.conf
+    regexp: 'DBPassword='
+    line: "DBPassword={{ zabbix_db_pass }}"
+    owner: root
+    group: zabbix
+    mode: 0600
+  notify: restart zabbix-server
+ 
+- name: Zabbix server | Start zabbix server components
+  systemd: 
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop: "{{ zabbix_services }}"

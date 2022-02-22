@@ -1,0 +1,18 @@
+# {{ ansible_managed }}
+# This is a configuration file for Zabbix agent daemon (Unix)
+# To get more information about Zabbix, visit http://www.zabbix.com
+
+PidFile=/var/run/zabbix/zabbix_agent2.pid 
+LogFile=/var/log/zabbix/zabbix_agent2.log 
+LogFileSize=0 
+Timeout=20
+TLSConnect=unencrypted 
+Server={{ zabbix_servers | join(',')}}
+ServerActive={{ zabbix_servers_active | join(',')}}
+Hostname={{ ansible_fqdn }}
+Include=/etc/zabbix/zabbix_agent2.d/*.conf 
+ControlSocket=/tmp/agent.sock 
+{% if 'docker.service' in services %}
+Plugins.Docker.Endpoint=unix:///var/run/docker.sock 
+{% endif %}
+

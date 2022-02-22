@@ -1,0 +1,10 @@
+---
+# defaults file for zabbix-agent
+zabbix_version: "6.0"
+zabbix_repo_baseurl: "https://repo.zabbix.com/zabbix/{{ zabbix_version }}/ubuntu/pool/main/z/zabbix-release/zabbix-release_{{ zabbix_version }}-1+ubuntu{{ ansible_distribution_version }}_all.deb"
+
+zabbix_servers:
+  - 172.30.3.65
+  - 172.16.0.0/12 #docker network
+zabbix_servers_active:
+  - "172.30.3.65:10051"
