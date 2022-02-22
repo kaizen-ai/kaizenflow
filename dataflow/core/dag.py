@@ -88,7 +88,8 @@ class DAG:
         ```
         name=None
         mode=strict
-        nodes=[('n1', {'stage': <dataflow.core.node.Node object at 0x>})] edges=[]
+        nodes=[('n1', {'stage': <dataflow.core.node.Node object at 0x>})]
+        edges=[]
         ```
         """
         txt = []
