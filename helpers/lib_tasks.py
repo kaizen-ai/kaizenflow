@@ -3966,7 +3966,7 @@ def _get_failed_tests_from_file(file_name: str) -> List[str]:
 @task
 def pytest_repro(  # type: ignore
     ctx,
-    target_type="tests",
+    mode="tests",
     file_name="./.pytest_cache/v/cache/lastfailed",
 ):
     """
@@ -3983,7 +3983,7 @@ def pytest_repro(  # type: ignore
     server> i pytest_repro
     ```
 
-    :param target_type: the granularity level for generating the commands
+    :param mode: the granularity level for generating the commands
         - "tests" (default): failed test methods, e.g.,
             ```
             pytest helpers/test/test_cache.py::TestCachingOnS3::test_with_caching1
@@ -4033,9 +4033,9 @@ def pytest_repro(  # type: ignore
             test_class,
             test_method,
         )
-        if target_type == "tests":
+        if mode == "tests":
             targets.append("pytest " + test)
-        elif target_type == "files":
+        elif mode == "files":
             if test_file_name != "":
                 targets.append("pytest " + test_file_name)
             else:
@@ -4044,7 +4044,7 @@ def pytest_repro(  # type: ignore
                     test,
                     test_file_name,
                 )
-        elif target_type == "classes":
+        elif mode == "classes":
             if test_file_name != "" and test_class != "":
                 targets.append(f"pytest {test_file_name}::{test_class}")
             else:
@@ -4055,14 +4055,14 @@ def pytest_repro(  # type: ignore
                     test_class,
                 )
         else:
-            hdbg.dfatal(f"Invalid target_type='{target_type}'")
+            hdbg.dfatal(f"Invalid mode='{mode}'")
     # Package the output.
     _LOG.debug("res=%s", str(targets))
     targets = hlist.remove_duplicates(targets)
     _LOG.info(
         "Found %d failed pytest '%s' target(s); to reproduce run:\n%s",
         len(targets),
-        target_type,
+        mode,
         "\n".join(targets),
     )
     hdbg.dassert_isinstance(targets, list)
