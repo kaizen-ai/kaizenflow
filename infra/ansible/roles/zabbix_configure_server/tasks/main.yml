@@ -35,7 +35,17 @@
     group: zabbix
     mode: 0600
   notify: restart zabbix-server
- 
+
+- name: Zabbix server | Configure php timezone
+  lineinfile:
+    path: /etc/zabbix/apache.conf
+    regexp: 'php_value date.timezone'
+    line: "php_value date.timezone {{ zabbix_timezone }}"
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart apache
+    
 - name: Zabbix server | Start zabbix server components
   systemd: 
     name: "{{ item }}"
