@@ -157,9 +157,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # Get timestamp of push to s3 in UTC.
         knowledge_timestamp = hdateti.get_current_timestamp_as_string("UTC")
         data["knowledge_timestamp"] = knowledge_timestamp
-        # Get file name.
-        file_name = currency_pair + "_" + knowledge_timestamp + ".csv"
-        path_to_exchange = os.path.join(args.s3_path, args.exchange_id, file_name)
         # Save data to S3 filesystem.
         # Saves filename as `uuid`.
         hparque.to_partitioned_parquet(
