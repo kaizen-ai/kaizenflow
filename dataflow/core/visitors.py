@@ -35,8 +35,8 @@ def extract_info(
     hdbg.dassert_isinstance(dag, dtfcordag.DAG)
     hdbg.dassert_isinstance(methods, list)
     info = collections.OrderedDict()
-    # Scan the nodes.
     graph = dag.nx_dag
+    # Scan the nodes.
     for nid in graph.nodes():
         node_info = collections.OrderedDict()
         node = dag.get_node(nid)
@@ -66,8 +66,8 @@ def get_fit_state(dag: dtfcordag.DAG) -> NodeState:
     """
     hdbg.dassert_isinstance(dag, dtfcordag.DAG)
     fit_state = collections.OrderedDict()
-    # Scan the nodes.
     graph = dag.nx_dag
+    # Scan the nodes.
     for nid in graph.nodes():
         node = dag.get_node(nid)
         # Save the info for the fit state.
@@ -86,9 +86,10 @@ def set_fit_state(dag: dtfcordag.DAG, fit_state: NodeState) -> None:
     """
     hdbg.dassert_isinstance(dag, dtfcordag.DAG)
     hdbg.dassert_isinstance(fit_state, collections.OrderedDict)
-    hdbg.dassert_eq(len(dag.dag.nodes()), len(fit_state.keys()))
-    # Scan the nodes.
+    #
     graph = dag.nx_dag
+    hdbg.dassert_eq(len(graph.nodes()), len(fit_state.keys()))
+    # Scan the nodes.
     for nid in graph.nodes():
         node = dag.get_node(nid)
         # Set the info for the fit state.
