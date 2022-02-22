@@ -151,7 +151,8 @@ def wait_db_connection(
     port: int,
     user: str,
     password: str,
-    timeout_in_secs: int = 15,
+    *,
+    timeout_in_secs: int = 30,
 ) -> None:
     """
     Wait until the database is available.
@@ -169,7 +170,8 @@ def wait_db_connection(
             break
         if elapsed_secs > timeout_in_secs:
             raise psycop.OperationalError(
-                f"Cannot connect to db host={host} dbname={dbname} port={port}"
+                f"Cannot connect to db host={host} dbname={dbname} port={port} "
+                f"due to timeout={timeout_in_secs} seconds"
                 f"\n{conn_exists[1]}"
             )
         elapsed_secs += 1
