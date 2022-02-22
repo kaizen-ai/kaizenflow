@@ -18,7 +18,7 @@ import im_v2.kibot.metadata.config as imvkimeco
 _LOG = logging.getLogger("amp" + __name__)
 
 S3_BUCKET = hs3.get_bucket()
-S3_PREFIX = f"s3://{S3_BUCKET}/data/kibot"
+S3_PREFIX_DATA = f"s3://{S3_BUCKET}/data/kibot"
 
 # TODO(Amr): Extract the 2 distinct functions here
 # TODO(Amr): Map the functions onto `KibotContractType`, so you provide a type,
@@ -231,7 +231,7 @@ class S3Backend:
             filename = filename.replace(".csv.gz", "")
             return filename
 
-        aws_csv_gz_dir = os.path.join(S3_PREFIX, data_type)
+        aws_csv_gz_dir = os.path.join(S3_PREFIX_DATA, data_type)
         # List all existing csv gz files on S3.
         s3fs = hs3.get_s3fs("am")
         csv_gz_s3_file_paths = [
