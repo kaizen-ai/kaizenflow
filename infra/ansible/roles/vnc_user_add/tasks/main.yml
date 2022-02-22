@@ -95,6 +95,6 @@
   local_action:
     module: replace
     path: "{{ vnc_url_file_path }}"
-    regexp: "^(.*)$"
-    replace: "\1:{{ vnc_desktop_number|int + 5900 }}"
+    regexp: '^(.*)$'
+    replace: '\1:{{ vnc_desktop_number|int + 5900 }}'
 
