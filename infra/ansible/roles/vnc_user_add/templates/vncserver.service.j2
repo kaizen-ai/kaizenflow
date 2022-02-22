@@ -1,8 +1,13 @@
 [Unit]
 Description=Systemd VNC server startup script for user {{ vnc_user }}
-After=syslog.target network.target data.mount
+Requires=network.target pcsd.service data.mount corosync.service
+After=syslog.target network.target pcsd.service data.mount corosync.service
+StartLimitInterval=200
+StartLimitBurst=5
 
 [Service]
+Restart=always
+RestartSec=30
 Type=simple
 User={{ vnc_user }}
 ExecStartPre=/usr/bin/vncserver -kill :{{ vnc_desktop_number }} &> /dev/null
