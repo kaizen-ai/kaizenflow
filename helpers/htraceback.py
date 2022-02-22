@@ -63,6 +63,7 @@ def parse_traceback(
       - A `None` value means that no traceback was found.
     """
     lines = txt.split("\n")
+    # Remove the artifacts of a GH run.
     lines = [
         re.split(
             r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]+Z ",
@@ -146,6 +147,7 @@ def parse_traceback(
             and "Error:" not in lines[end_idx - 1]
             and "Error:" in lines[end_idx]
         ):
+            # Extend the traceback to the line with the error name.
             end_idx = end_idx + 1
         hdbg.dassert_lte(0, start_idx)
         hdbg.dassert_lte(start_idx, end_idx)
