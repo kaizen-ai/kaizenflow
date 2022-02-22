@@ -4081,7 +4081,8 @@ def pytest_repro(  # type: ignore
             "====== FAILURES ======" not in txt
             or "====== slowest 3 durations ======" not in txt
         ):
-            pass
+            _LOG.info(failed_test_output_str)
+            return res
         txt = txt.split("====== FAILURES ======")[-1].split(
             "====== slowest 3 durations ======"
         )[0]
