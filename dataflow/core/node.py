@@ -167,7 +167,7 @@ class Node(NodeInterface):
         import helpers.hintrospection as hintros
         import helpers.hlogging as hloggin
 
-        txt = []
+        txt: List = []
 
         def _log(msg: str) -> None:
             txt.append(msg)
@@ -181,9 +181,9 @@ class Node(NodeInterface):
         _log(msg)
         # Traverse the data structure accumulating used memory.
         rss_used_mem_in_gb = 0.0
-        for method in self._output_vals.keys():
-            for name in self._output_vals[method].keys():
-                obj = self._output_vals[method][name]
+        for method, node_output in self._output_vals.items():
+            for name in node_output:
+                obj = node_output[name]
                 used_mem_tmp = obj.memory_usage(deep=True).sum()
                 _LOG.debug(
                     "Removing %s:%s -> type=%s, mem=%s refs=%s",
@@ -212,11 +212,11 @@ class Node(NodeInterface):
             % (self._nid, rss_mem_diff_in_gb, rss_used_mem_in_gb)
         )
         _log(msg)
-        txt = "\n".join(txt)
+        txt_msg = "\n".join(txt)
         hdbg.dassert_lte(
             0.9 * rss_used_mem_in_gb,
             rss_mem_diff_in_gb,
-            msg=txt,
+            msg=txt_msg,
             only_warning=only_warning,
         )
 
