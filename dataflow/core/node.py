@@ -59,12 +59,10 @@ class NodeInterface(abc.ABC):
     def nid(self) -> NodeId:
         return self._nid
 
-    # TODO(gp): @all make it getter only.
     @property
     def input_names(self) -> List[str]:
         return self._input_names
 
-    # TODO(gp): @all make it getter only.
     @property
     def output_names(self) -> List[str]:
         return self._output_names

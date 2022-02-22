@@ -172,22 +172,16 @@ class DAG:
                 dst_dir, None, "Need to specify a directory to save the data"
             )
 
-    # TODO(gp): A bit confusing since other classes have `dag / get_dag` method that
-    #  returns a DAG. Also the code does `dag.dag`. Maybe -> `nx_dag()` to say that
-    #  we are extracting the networkx data structures.
-    # TODO(gp): @all use a getter only.
     @property
     def nx_dag(self) -> networ.DiGraph:
         return self._nx_dag
 
     # TODO(*): Should we force to always have a name? So mypy can perform more
     #  checks.
-    # TODO(gp): @all use a getter only.
     @property
     def name(self) -> Optional[str]:
         return self._name
 
-    # TODO(gp): @all use a getter only.
     @property
     def mode(self) -> str:
         return self._mode
