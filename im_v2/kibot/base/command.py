@@ -14,7 +14,7 @@ import requests
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hparser as hparser
-import im.kibot.metadata.config as imkimecon
+import im_v2.kibot.metadata.config as imkimecon
 
 
 class KibotCommand:

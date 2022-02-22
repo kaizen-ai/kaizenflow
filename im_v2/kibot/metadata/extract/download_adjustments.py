@@ -24,8 +24,8 @@ import tqdm
 import helpers.hio as hio
 import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
-import im.kibot.base.command as imkibacom
-import im.kibot.metadata.config as imkimecon
+import im_v2.kibot.base.command as imkibacom
+import im_v2.kibot.metadata.config as imkimecon
 
 # #############################################################################
 

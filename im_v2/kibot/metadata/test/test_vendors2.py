@@ -14,7 +14,7 @@
 # import vendors.csi.reader as csir
 # import vendors.etfs.utils as etfut
 # import vendors.first_rate.reader as frr  # type: ignore
-# import im.kibot.utils as kut
+# import im_v2.kibot.utils as kut
 # import vendors.pandas_datareader.utils as pdut  # type: ignore
 #
 ## #############################################################################

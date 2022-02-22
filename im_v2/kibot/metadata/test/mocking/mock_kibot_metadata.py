@@ -3,7 +3,7 @@ import os
 
 import pandas as pd
 
-import im.kibot.metadata.load.kibot_metadata as imkmlkime
+import im_v2.kibot.metadata.load.kibot_metadata as imkmlkime
 
 FILE_DIR = os.path.dirname(inspect.getfile(inspect.currentframe()))
 

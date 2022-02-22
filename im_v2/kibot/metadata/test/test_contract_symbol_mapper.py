@@ -3,7 +3,7 @@ from unittest.mock import patch
 import pandas as pd
 
 import helpers.hunit_test as hunitest
-import im.kibot.metadata.load.contract_symbol_mapping as imkmlcsyma
+import im_v2.kibot.metadata.load.contract_symbol_mapping as imkmlcsyma
 
 
 class TestContractSymbolMapper(hunitest.TestCase):

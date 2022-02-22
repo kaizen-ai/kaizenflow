@@ -4,8 +4,8 @@ import pytest
 
 import helpers.hio as hio
 import helpers.hunit_test as hunitest
-import im.kibot.metadata.load as vkmloa
-import im.kibot.metadata.types as imkimetyp
+import im_v2.kibot.metadata.load as vkmloa
+import im_v2.kibot.metadata.types as imkimetyp
 
 
 class TestTickerListLoader(hunitest.TestCase):

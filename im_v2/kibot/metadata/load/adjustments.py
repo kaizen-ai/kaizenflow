@@ -9,8 +9,8 @@ from typing import List
 
 import core.pandas_helpers as cpanh
 import helpers.hs3 as hs3
-import im.kibot.metadata.config as imkimecon
-import im.kibot.metadata.types as imkimetyp
+import im_v2.kibot.metadata.config as imkimecon
+import im_v2.kibot.metadata.types as imkimetyp
 
 
 class AdjustmentsLoader:

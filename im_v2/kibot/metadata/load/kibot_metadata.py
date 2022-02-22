@@ -20,11 +20,11 @@ import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
-import im.common.data.types as imcodatyp
-import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
-import im.kibot.metadata.load.expiry_contract_mapper as imkmlecoma
-import im.kibot.metadata.load.s3_backend as imkmls3ba
-import im.kibot.metadata.types as imkimetyp
+import im_v2.common.data.client as icdc
+import im_v2.kibot.data.client.kibot_clients as imvkdckicl
+import im_v2.kibot.metadata.load.expiry_contract_mapper as imkmlecoma
+import im_v2.kibot.metadata.load.s3_backend as imkmls3ba
+import im_v2.kibot.metadata.types as imkimetyp
 
 _LOG = logging.getLogger(__name__)
 
@@ -410,13 +410,15 @@ class KibotTradingActivityContractLifetimeComputer(ContractLifetimeComputer):
         hdbg.dassert_lte(0, end_timedelta_days)
         self.end_timedelta_days = end_timedelta_days
 
-    def compute_lifetime(self, contract_name: str) -> imkimetyp.ContractLifetime:
-        df = imkdlksdlo.KibotS3DataLoader().read_data(
-            "Kibot",
-            contract_name,
-            imcodatyp.AssetClass.Futures,
-            imcodatyp.Frequency.Daily,
-            imcodatyp.ContractType.Expiry,
+    def compute_lifetime(self, contract_name: icdc.FullSymbol) -> imkimetyp.ContractLifetime:
+        kibot_client = imvkdckicl.KibotFuturesCsvParquetByAssetClient(
+            "s3://alphamatic-data/data",
+            "csv.gz",
+            "expiry",
+            aws_profile="am",
+        )
+        df = kibot_client.read_data(
+            contract_name, None, None
         )
         start_date = pd.Timestamp(df.first_valid_index())
         end_date = pd.Timestamp(df.last_valid_index())

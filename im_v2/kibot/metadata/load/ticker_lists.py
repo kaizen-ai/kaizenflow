@@ -10,8 +10,8 @@ from typing import List, Tuple
 
 import pandas as pd
 
-import im.kibot.metadata.config as imkimecon
-import im.kibot.metadata.types as imkimetyp
+import im_v2.kibot.metadata.config as imkimecon
+import im_v2.kibot.metadata.types as imkimetyp
 
 
 class ParsingState(enum.Enum):

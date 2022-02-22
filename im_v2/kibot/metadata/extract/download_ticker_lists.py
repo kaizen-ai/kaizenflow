@@ -21,9 +21,8 @@ import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
-import im.kibot.base.command as imkibacom
-import im.kibot.data.extract.download as imkdaexdo
-import im.kibot.metadata.config as imkimecon
+import im_v2.kibot.base.command as imkibacom
+import im_v2.kibot.metadata.config as imkimecon
 
 _LOG = logging.getLogger(__name__)
 
@@ -82,9 +81,7 @@ class DownloadTickerListsCommand(imkibacom.KibotCommand):
             file_name = os.path.basename(uparse.urlparse(file_url).path)
             # TODO(amr): is cleaning the file name necessary? if so, let's move this
             # function to a more common place.
-            file_name = imkdaexdo.DatasetListExtractor._clean_dataset_name(  # pylint: disable=protected-access
-                file_name
-            )
+            file_name = self._clean_dataset_name(file_name)
             _LOG.info("Cleaned up file name: %s", file_name)
 
             # Download file.
@@ -108,6 +105,25 @@ class DownloadTickerListsCommand(imkibacom.KibotCommand):
             _LOG.info("Uploaded file to s3: %s", aws_path)
 
         return 0
+
+    @staticmethod
+    def _clean_dataset_name(dataset: str) -> str:
+        """
+        Clean up a dataset name for ease future reference.
+
+        E.g., the dataset `1. All Stocks 1min on 9/29/2019` becomes `all_stocks_1min`.
+
+        :param dataset: input dataset name to process
+        :return: cleaned dataset name
+        """
+        clean_dataset = dataset.lower()
+        clean_dataset = re.sub(r"^\d+.", "", clean_dataset)
+        clean_dataset = re.sub(r"\s+on.*$", "", clean_dataset)
+        clean_dataset = re.sub(r"\s+", "_", clean_dataset)
+        clean_dataset = re.sub(r"&", "", clean_dataset)
+        clean_dataset = clean_dataset.strip("_")
+        # TODO(amr): should we assert the result matches an element in `imkidacon.DATASETS`?
+        return clean_dataset
 
 
 if __name__ == "__main__":
