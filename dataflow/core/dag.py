@@ -83,13 +83,8 @@ class DAG:
         """
         Return a short representation of the DAG for user.
 
-        E.g.,
-        ```
-        name=None
-        mode=strict
-        nodes=[('n1', {'stage': <dataflow.core.node.Node object at 0x>})]
-        edges=[]
-        ```
+        E.g., ``` name=None mode=strict nodes=[('n1', {'stage':
+        <dataflow.core.node.Node object at 0x>})] edges=[] ```
         """
         txt = []
         txt.append(f"name={self._name}")
@@ -159,13 +154,15 @@ class DAG:
         # ls -tr -1 tmp.dag_profile/*after* | xargs -n 1 -i sh -c 'echo; echo; echo "# {}"; cat {}'
         # ```
         self._profile_execution = profile_execution
-        self._dst_dir = dst_dir
-        if self._dst_dir:
+        if dst_dir:
+            self._dst_dir = dst_dir
             hio.create_dir(self._dst_dir, incremental=False)
+        else:
+            self._dst_dir = ""
         if self._save_node_interface or self._profile_execution:
             _LOG.warning(
-                "Setting up debug mode: "
-                + hprint.to_str("save_node_interface profile_execution dst_dir")
+                "Setting up debug mode: %s",
+                hprint.to_str("save_node_interface profile_execution dst_dir"),
             )
             hdbg.dassert_is_not(
                 dst_dir, None, "Need to specify a directory to save the data"
@@ -251,7 +248,7 @@ class DAG:
         """
         hdbg.dassert_isinstance(nid, dtfcornode.NodeId)
         hdbg.dassert(self._dag.has_node(nid), "Node `%s` is not in DAG", nid)
-        return self._dag.nodes[nid]["stage"]  # type: ignore
+        return self._dag.nodes[nid]["stage"]
 
     def remove_node(self, nid: dtfcornode.NodeId) -> None:
         """
@@ -391,8 +388,8 @@ class DAG:
             `get_outputs(method)`
         """
         sinks = self.get_sinks()
-        for nid in networ.topological_sort(self._dag):
-            self._run_node(nid, method)
+        for id_, nid in enumerate(networ.topological_sort(self._dag)):
+            self._run_node(id_, nid, method)
         return {sink: self.get_node(sink).get_outputs(method) for sink in sinks}
 
     def run_leq_node(
