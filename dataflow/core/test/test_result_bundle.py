@@ -14,6 +14,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestResultBundle(hunitest.TestCase):
+
     def test_to_config1(self) -> None:
         """
         Convert a `ResultBundle` to a config.
@@ -83,6 +84,14 @@ class TestResultBundle(hunitest.TestCase):
         expected = ["col2", "col4"]
         self.assert_equal(str(actual), str(expected))
 
+    def _get_result_bundle(self) -> dtfcorebun.ResultBundle:
+        """
+        Initialize a `ResultBundle` from a config.
+        """
+        init_config = self._get_init_config()
+        rb = dtfcorebun.ResultBundle.from_config(init_config)
+        return rb
+
     @staticmethod
     def _get_init_config() -> cconfig.Config:
         # TODO(gp): Factor out common part.
@@ -108,19 +117,12 @@ class TestResultBundle(hunitest.TestCase):
         )
         return init_config
 
-    def _get_result_bundle(self) -> dtfcorebun.ResultBundle:
-        """
-        Initialize a `ResultBundle` from a config.
-        """
-        init_config = self._get_init_config()
-        rb = dtfcorebun.ResultBundle.from_config(init_config)
-        return rb
-
 
 # #############################################################################
 
 
 class TestPredictionResultBundle(hunitest.TestCase):
+
     def test_to_config1(self) -> None:
         init_config = self._get_init_config()
         prb = dtfcorebun.PredictionResultBundle(**init_config.to_dict())

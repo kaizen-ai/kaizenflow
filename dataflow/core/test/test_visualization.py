@@ -10,6 +10,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_dataflow_core_visualization1(hunitest.TestCase):
+
     def test_draw1(self) -> None:
         """
         Build a DAG and draw it in IPython.
