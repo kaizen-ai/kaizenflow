@@ -84,7 +84,7 @@ class DAG:
         Return a short representation of the DAG for user.
 
         E.g.,
-        
+
         ```
         name=None
         mode=strict
