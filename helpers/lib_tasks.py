@@ -4354,7 +4354,9 @@ def lint_add_init_files(  # type: ignore
         _run(ctx, cmd)
     as_user = _run_docker_as_user(as_user)
     # Prepare the command line.
-    docker_cmd_opts = [dir_name, f"--dry-run={dry_run}"]
+    docker_cmd_opts = [dir_name]
+    if dry_run:
+        docker_cmd_opts.append("--dry_run")
     docker_cmd_ = "/app/linters/add_module_init.py " + _to_single_line_cmd(
         docker_cmd_opts
     )
