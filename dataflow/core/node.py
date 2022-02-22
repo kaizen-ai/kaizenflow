@@ -23,7 +23,7 @@ NodeId = str
 
 
 # TODO(gp): @all This is private -> _Node.
-class NodeInterface(abc.ABC):
+class _Node(abc.ABC):
     """
     Abstract node class for creating DAGs of functions.
 
@@ -96,9 +96,9 @@ NodeOutput = Dict[str, Any]
 
 
 # TODO(gp): Should we merge this with _Node? There is lots of class
-#  hierarchy (NodeInterface -> Node -> FitPredictNode) that doesn't seem really
+#  hierarchy (_Node -> Node -> FitPredictNode) that doesn't seem really
 #  used / useful any more.
-class Node(NodeInterface):
+class Node(_Node):
     """
     A node class that stores and retrieves its output values on a "per-method"
     basis.
@@ -116,7 +116,7 @@ class Node(NodeInterface):
         outputs: Optional[List[str]] = None,
     ) -> None:
         """
-        Implement the same interface as `NodeInterface`.
+        Implement the same interface as `_Node`.
         """
         super().__init__(nid, inputs, outputs)
         # Dictionary method name -> output node name -> output.
