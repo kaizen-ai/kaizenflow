@@ -63,6 +63,13 @@ def parse_traceback(
       - A `None` value means that no traceback was found.
     """
     lines = txt.split("\n")
+    lines = [
+        re.split(
+            r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]+Z ",
+            line,
+        )[-1]
+        for line in lines
+    ]
     state = "look_for"
     cfile: List[CfileRow] = []
     i = 0
@@ -134,6 +141,12 @@ def parse_traceback(
         cfile = []
         traceback = None
     elif state == "end":
+        if (
+            end_idx < len(lines) - 1
+            and "Error:" not in lines[end_idx - 1]
+            and "Error:" in lines[end_idx]
+        ):
+            end_idx = end_idx + 1
         hdbg.dassert_lte(0, start_idx)
         hdbg.dassert_lte(start_idx, end_idx)
         hdbg.dassert_lt(end_idx, len(lines))

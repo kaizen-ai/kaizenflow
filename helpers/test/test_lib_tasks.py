@@ -1808,17 +1808,18 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
         # Modify the outcome for reproducibility.
         act = hprint.remove_non_printable_chars(act)
         act = re.sub(r"[0-9]{2}:[0-9]{2}:[0-9]{2} - ", r"HH:MM:SS - ", act)
-        # TODO(Grisha): fix properly if needed, for now only lines that
-        #  contain `pytest` are included. This is done to remove `This
-        #  code is not in sync with the container ...` that typically
-        #  appear while running tests as a part of an image release.
-        act = "\n".join([x for x in act.split("\n") if "pytest" in x])
         act = act.replace("/app/amp/", "/app/")
         act = re.sub(
             r"lib_tasks.py pytest_repro:[0-9]+",
             r"lib_tasks.py pytest_repro:{LINE_NUM}",
             act,
         )
+        # Remove unstable content.
+        lines = act.split("\n")
+        line_cmd = lines[0]
+        test_output_start = lines.index("## pytest_repro: ")
+        lines_test_output = lines[test_output_start:]
+        act = "\n".join([line_cmd] + lines_test_output)
         # Check the outcome.
         self.check_string(act)
 
@@ -1832,6 +1833,10 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
 
     def test3(self) -> None:
         cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt'"
+        self.helper(cmd)
+
+    def test4(self) -> None:
+        cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt' --show-stacktrace"
         self.helper(cmd)
 
 

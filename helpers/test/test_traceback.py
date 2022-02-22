@@ -10,6 +10,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_Traceback1(hunitest.TestCase):
+
     def test_parse1(self) -> None:
         """
         Parse traceback with all files from Docker that actually exist in the
@@ -59,6 +60,7 @@ class Test_Traceback1(hunitest.TestCase):
             task_prefix = hgit.get_task_prefix_from_repo_short_name(repo_short_name)
           File "$GIT_ROOT/helpers/git.py", line 397, in get_task_prefix_from_repo_short_name
             if repo_short_name == "amp":
+        NameError: name 'repo_short_name' is not defined
         """
         self._parse_traceback_helper(
             txt, purify_from_client, exp_cfile, exp_traceback
@@ -178,7 +180,9 @@ class Test_Traceback1(hunitest.TestCase):
           File "$GIT_ROOT/helpers/dbg.py", line 117, in _dfatal
             dfatal(dfatal_txt)
           File "$GIT_ROOT/helpers/dbg.py", line 63, in dfatal
-            raise assertion_type(ret)"""
+            raise assertion_type(ret)
+        kAssertionError:
+        """
         self._parse_traceback_helper(
             txt, purify_from_client, exp_cfile, exp_traceback
         )

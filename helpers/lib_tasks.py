@@ -31,6 +31,7 @@ import helpers.hlist as hlist
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.htable as htable
+import helpers.htraceback as htraceb
 import helpers.hversion as hversio
 
 _LOG = logging.getLogger(__name__)
@@ -3968,6 +3969,7 @@ def pytest_repro(  # type: ignore
     ctx,
     mode="tests",
     file_name="./.pytest_cache/v/cache/lastfailed",
+    show_stacktrace=False,
 ):
     """
     Generate commands to reproduce the failed tests after a `pytest` run.
@@ -4000,6 +4002,8 @@ def pytest_repro(  # type: ignore
             pytest helpers/test/test_lib_tasks.py
             ```
     :param file_name: the name of the file containing the pytest output file to parse
+    :param show_stacktrace: whether to show the stacktrace of the failed tests
+      - only if it is available in the pytest output file
     :return: commands to reproduce pytest failures at the requested granularity level
     """
     _report_task()
@@ -4010,6 +4014,9 @@ def pytest_repro(  # type: ignore
     _LOG.info("Reading failed tests from file '%s'", file_name)
     # E.g., vendors/test/test_vendors.py::Test_gp::test1
     tests = _get_failed_tests_from_file(file_name)
+    if len(tests) == 0:
+        _LOG.info("Found 0 failed tests")
+        return ""
     _LOG.debug("tests=%s", str(tests))
     # Process the tests.
     targets = []
@@ -4059,15 +4066,46 @@ def pytest_repro(  # type: ignore
     # Package the output.
     _LOG.debug("res=%s", str(targets))
     targets = hlist.remove_duplicates(targets)
-    _LOG.info(
-        "Found %d failed pytest '%s' target(s); to reproduce run:\n%s",
-        len(targets),
-        mode,
-        "\n".join(targets),
+    failed_test_output_str = (
+        f"Found {len(targets)} failed pytest '{mode}' target(s); "
+        "to reproduce run:\n" + "\n".join(targets)
     )
     hdbg.dassert_isinstance(targets, list)
     res = " ".join(targets)
     _LOG.debug("res=%s", str(res))
+    #
+    if show_stacktrace:
+        # Get the stacktrace block from the pytest output.
+        txt = hio.from_file(file_name)
+        if (
+            "====== FAILURES ======" not in txt
+            or "====== slowest 3 durations ======" not in txt
+        ):
+            pass
+        txt = txt.split("====== FAILURES ======")[-1].split(
+            "====== slowest 3 durations ======"
+        )[0]
+        # Get the classes and names of the failed tests, e.g. "TestSmaModel.test5".
+        failed_test_names = [
+            test.split("::")[1] + "." + test.split("::")[2] for test in tests
+        ]
+        tracebacks = []
+        for i, name in enumerate(failed_test_names):
+            # Get the stacktrace for the individual test failure.
+            start_block = "________ " + name + " ________"
+            traceback_block = txt.split(start_block)[-1]
+            if i != len(failed_test_names) - 1:
+                end_block = "________ " + failed_test_names[i + 1] + " ________"
+                traceback_block = traceback_block.split(end_block)[0]
+            _, traceback = htraceb.parse_traceback(
+                traceback_block, purify_from_client=False
+            )
+            tracebacks.append("\n".join(["# " + name, traceback, ""]))
+        # Combine the stacktraces for all the failures.
+        full_traceback = "\n\n" + "\n".join(tracebacks)
+        failed_test_output_str += full_traceback
+        res += full_traceback
+    _LOG.info(failed_test_output_str)
     return res
 
 
