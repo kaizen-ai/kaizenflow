@@ -86,16 +86,15 @@
   run_once: true
   local_action:
     module: lineinfile
-    path: "{{ server_ip_file_path }}"
+    path: "{{ vnc_url_file_path }}"
     line: "{{ groups['all'] | map('extract', hostvars, ['ansible_default_ipv4', 'address']) | join('\n') }}"
     create: yes
 
 - name: Append VNC port to server IPs
   run_once: true
   local_action:
-    module: lineinfile
+    module: replace
     path: "{{ vnc_url_file_path }}"
-    backrefs: yes
     regexp: "^(.*)$"
-    line: "\1,:{{ vnc_desktop_number|int + 5900 }}"
-    create: yes
+    replace: "\1:{{ vnc_desktop_number|int + 5900 }}"
+
