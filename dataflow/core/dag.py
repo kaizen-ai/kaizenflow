@@ -83,13 +83,8 @@ class DAG:
         """
         Return a short representation of the DAG for user.
 
-        E.g.,
-        ```
-        name=None
-        mode=strict
-        nodes=[('n1', {'stage': <dataflow.core.node.Node object at 0x>})]
-        edges=[]
-        ```
+        E.g., ``` name=None mode=strict nodes=[('n1', {'stage':
+        <dataflow.core.node.Node object at 0x>})] edges=[] ```
         """
         txt = []
         txt.append(f"name={self._name}")
