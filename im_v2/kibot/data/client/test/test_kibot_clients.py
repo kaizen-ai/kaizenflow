@@ -24,8 +24,13 @@ def get_test_data_dir() -> str:
     return test_data_dir
 
 
+# #############################################################################
+# TestKibotEquitiesCsvParquetByAssetClient
+# #############################################################################
+
 # TODO(Dan): @Max CmTask1245.
 class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
+
     def test_read_csv_data5(self) -> None:
         root_dir = get_test_data_dir()
         extension = "csv.gz"
@@ -134,8 +139,69 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    # ////////////////////////////////////////////////////////////////////////
+
+    def test_get_metadata1(self) -> None:
+        root_dir = get_test_data_dir()
+        extension = "csv.gz"
+        asset_class = "stocks"
+        unadjusted = False
+        #
+        client = imvkdckicl.KibotEquitiesCsvParquetByAssetClient(
+            root_dir,
+            extension,
+            asset_class,
+            unadjusted,
+        )
+        #
+        expected_length = 252
+        expected_column_names = [
+            "Kibot_symbol",
+            "Description",
+            "StartDate",
+            "Exchange",
+            "Exchange_group",
+            "Exchange_abbreviation",
+            "Exchange_symbol",
+            "num_contracts",
+            "min_contract",
+            "max_contract",
+            "num_expiries",
+            "expiries",
+        ]
+        expected_column_unique_values = None
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[0, 251]
+        columns=Kibot_symbol,Description,StartDate,Exchange,Exchange_group,Exchange_abbreviation,Exchange_symbol,num_contracts,min_contract,max_contract,num_expiries,expiries
+        shape=(252, 12)
+          Kibot_symbol                                    Description  StartDate                                  Exchange Exchange_group Exchange_abbreviation Exchange_symbol  num_contracts min_contract max_contract  num_expiries                                 expiries
+        0           AC                    CONTINUOUS ETHANOL CONTRACT 2009-09-28      Chicago Board Of Trade (CBOT GLOBEX)            CME                  CBOT              EH            122   2009-10-01   2019-12-01            12  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        1           AD          CONTINUOUS AUSTRALIAN DOLLAR CONTRACT 2009-09-27  Chicago Mercantile Exchange (CME GLOBEX)            NaN                   NaN             NaN             65   2009-12-01   2020-12-01            12  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        2           AE  CONTINUOUS BLOOMBERG COMMODITY INDEX CONTRACT        NaT                                       NaN            CME                  CBOT              AW             38   2010-06-01   2019-09-01             4                            [3, 6, 9, 12]
+        ...
+        249          ZLT   CONTINUOUS SOYBEAN OIL TAS CONTRACT       NaT      NaN            CME                  CBOT             ZLT             36   2015-07-01   2019-12-01             8  [1, 3, 5, 7, 8, 9, 10, 12]
+        250          ZMT  CONTINUOUS SOYBEAN MEAL TAS CONTRACT       NaT      NaN            CME                  CBOT             ZMT             37   2015-07-01   2019-12-01             8  [1, 3, 5, 7, 8, 9, 10, 12]
+        251          ZWT         CONTINUOUS WHEAT TAS CONTRACT       NaT      NaN            CME                  CBOT             ZWT             25   2015-07-01   2020-07-01             5            [3, 5, 7, 9, 12]
+        """
+        # pylint: enable=line-too-long
+        self._test_get_metadata1(
+            client,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+
+# #############################################################################
+# TestKibotEquitiesCsvParquetByAssetClient
+# #############################################################################
+
 
 class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
+
     def test_read_csv_data5(self) -> None:
         root_dir = get_test_data_dir()
         extension = "csv.gz"

@@ -14,6 +14,7 @@ import core.pandas_helpers as cpanh
 import helpers.hdbg as hdbg
 import helpers.hs3 as hs3
 import im_v2.common.data.client as icdc
+import im_v2.kibot.metadata.load.kibot_metadata as imvkmlkime
 
 _LOG = logging.getLogger(__name__)
 
@@ -49,6 +50,15 @@ class KibotClient(icdc.ImClient):
         """
         # TODO(Dan): CmTask1246.
         return []
+
+    @staticmethod
+    def get_metadata() -> pd.DataFrame:
+        """
+        See description in the parent class.
+        """
+        metadata_client = imvkmlkime.KibotMetadata()
+        metadata = metadata_client.get_metadata()
+        return metadata
 
     @staticmethod
     def _apply_kibot_csv_normalization(data: pd.DataFrame) -> pd.DataFrame:

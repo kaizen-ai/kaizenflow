@@ -158,6 +158,17 @@ class ImClientTestCase(hunitest.TestCase):
 
     # ////////////////////////////////////////////////////////////////////////
 
+    def _test_get_metadata1(
+        self, im_client: icdc.ImClient, *args: Any, **kwargs: Any
+    ) -> None:
+        """
+        Test that metadata is computed correctly.
+        """
+        actual_df = im_client.get_metadata()
+        self.check_df_output(actual_df, *args, **kwargs)
+
+    # ////////////////////////////////////////////////////////////////////////
+
     def _test_get_universe1(
         self,
         # TODO(Grisha): pass vendor when we start testing `CDD`.

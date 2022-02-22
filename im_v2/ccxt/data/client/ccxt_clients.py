@@ -47,6 +47,12 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         _vendors = ["CCXT", "CDD"]
         hdbg.dassert_in(self._vendor, _vendors)
 
+    def get_metadata(self) -> pd.DataFrame:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
     def get_universe(self) -> List[icdc.FullSymbol]:
         """
         See description in the parent class.
