@@ -1,0 +1,59 @@
+---
+- name: Zabbix server | Install a list of necessary packages for mariadb-server
+  become: yes
+  package:
+    name:
+      - python3-pymysql
+      - mariadb-server
+      - mariadb-server-10.3
+      - mariadb-client-10.3
+    state: latest
+  register: installation_db_result
+  retries: 5
+  until: installation_db_result is not failed
+  
+- name: Zabbix server | Ensure MariaDB is always running
+  become: yes
+  systemd:
+    name: mariadb
+    state: started
+    enabled: true 
+
+- name: Zabbix server | Set MySQL root Password
+  become: yes
+  mysql_user:
+    name: "{{ root_db_user }}"
+    password: "{{ root_db_pass }}"
+    login_unix_socket: "/var/run/mysqld/mysqld.sock"
+    state: present
+  no_log: true  
+
+- name: Zabbix server | Create .my.cnf file with root password credentials
+  become: yes
+  template: 
+    src: ./templates/my.cnf.j2 
+    dest: /root/.my.cnf 
+    owner: root 
+    group: root 
+    mode: 0600
+  notify: restart mariadb
+  
+- name: Zabbix server | Create a new zabbix database
+  mysql_db:
+    name: "{{ zabbix_db_name }}"
+    encoding: utf8
+    collation: utf8_bin    
+    state: present
+  notify: import db schema  
+    
+- name: Zabbix server | Create zabbix db user
+  mysql_user:
+    name: "{{ zabbix_db_user }}"
+    password: "{{ zabbix_db_pass }}"
+    priv: "{{ zabbix_db_name }}.*:ALL"
+    host: "{{ zabbix_db_host }}"
+    state: present  
+  no_log: true
+
+- name: Flush handlers
+  meta: flush_handlers  

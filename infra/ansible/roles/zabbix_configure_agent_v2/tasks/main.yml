@@ -1,0 +1,52 @@
+---
+- name: Zabbix agent | Download zabbix repo package
+  get_url:
+    url: "{{ zabbix_repo_baseurl }}"
+    dest: /tmp/zabbix.deb
+            
+- name: Zabbix agent | Add zabbix repository
+  apt:
+    deb: /tmp/zabbix.deb
+    state: present
+
+- name: Zabbix agent | Remove old zabbix-agent
+  package:
+    name: zabbix-agent
+    state: absent
+
+- name: Zabbix agent | Remove old zabbix-agent configuration file
+  file:
+    path: /etc/zabbix/zabbix_agentd.conf
+    state: absent
+    
+- name: Zabbix agent | Install zabbix-agent version 2
+  package:
+    name: zabbix-agent2
+    state: latest
+    update_cache: yes
+
+- name: Zabbix agent | Populate service facts
+  service_facts:
+    
+- debug:
+    msg: Docker installed!
+  when: "'docker.service' in services"
+
+- name: Zabbix agent | Append the docker group with zabbix user
+  user:
+    name: zabbix
+    groups: docker
+    append: yes
+  when: "'docker.service' in services"
+  
+- name: Zabbix agent | Copy over the client zabbix-agent configuration
+  template:
+    src: ./templates/zabbix-agent.conf.j2
+    dest: /etc/zabbix/zabbix_agent2.conf
+  notify: restart zabbix-agent2
+
+- name: Zabbix agent | Start and enable zabbix-agent2
+  systemd: 
+    name: zabbix-agent2
+    state: started
+    enabled: true   

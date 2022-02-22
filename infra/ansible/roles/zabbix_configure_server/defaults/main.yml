@@ -1,0 +1,25 @@
+---    
+# defaults file for zabbix
+zabbix_version: "6.0"
+zabbix_repo_baseurl: "https://repo.zabbix.com/zabbix/{{ zabbix_version }}/ubuntu/pool/main/z/zabbix-release/zabbix-release_{{ zabbix_version }}-1+ubuntu{{ ansible_distribution_version }}_all.deb"
+
+zabbix_services:
+  - zabbix-server
+  - zabbix-agent2
+  - apache2
+
+zabbix_use_certs: false
+zabbix_certificate_dir: "/etc/zabbix/certificates/"
+zabbix_certificate_crt_file: "{{ ansible_fqdn }}.crt.pem"
+zabbix_certificate_key_file: "{{ ansible_fqdn }}.key.pem"
+
+zabbix_db_name: zabbix 
+
+zabbix_db_user: zabbix
+zabbix_db_pass:  #Filled during run
+zabbix_db_host: localhost
+root_db_user: root
+root_db_pass:  #Filled during run
+zabbix_db_host_port: 3306
+zabbix_timezone: Europe/Stockholm
+zabbix_db_template_path: "/usr/share/doc/zabbix-sql-scripts/mysql/server.sql.gz"

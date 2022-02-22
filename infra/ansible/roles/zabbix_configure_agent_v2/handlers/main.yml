@@ -1,0 +1,9 @@
+- name: restart zabbix-agent2
+  systemd: 
+    name: zabbix-agent2 
+    state: restarted
+
+- name: reload zabbix-agent2
+  systemd: 
+    name: zabbix-agent2
+    state: reloaded

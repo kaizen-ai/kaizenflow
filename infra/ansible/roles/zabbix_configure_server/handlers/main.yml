@@ -1,0 +1,34 @@
+---
+- name: restart zabbix-server
+  systemd: 
+    name: "zabbix-server" 
+    state: restarted
+    enabled: yes
+
+- name: restart zabbix-agent2
+  systemd: 
+    name: "zabbix-agent2" 
+    state: restarted
+    enabled: yes
+
+- name: restart mariadb
+  systemd: 
+    name: "mariadb" 
+    state: restarted
+    enabled: yes
+
+- name: restart apache
+  systemd: 
+    name: "apache2" 
+    state: restarted
+    enabled: yes
+    
+- name: import db schema
+  mysql_db: 
+    name: zabbix 
+    state: import
+    #use_shell: yes
+    login_user: "{{ zabbix_db_user }}"
+    login_password: "{{ zabbix_db_pass }}"
+    encoding: utf-8    
+    target: "{{ zabbix_db_template_path }}"

@@ -1,0 +1,6 @@
+---
+- name: Zabbix configure agent version 2 on server
+  hosts: "{{ play_target_host | default('all') }}"
+  roles:
+    - { role: roles/zabbix_configure_agent_v2 }
+#ansible-playbook plays/zabbix_configure_agent_v2.yml --user tfrkan --private-key=/home/tfrkan/id_rsa -i 172.30.3.185,
