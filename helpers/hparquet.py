@@ -45,9 +45,10 @@ def from_parquet(
     hdbg.dassert_isinstance(file_name, str)
     if aws_profile is not None:
         # Load S3 filesystem.
+        print(file_name)
         hdbg.dassert(hs3.is_s3_path(file_name))
-        hdbg.dassert(hs3.dassert_s3_exists(file_name))
         fs = hs3.get_s3fs(aws_profile)
+        hs3.dassert_s3_exists(file_name, fs)
     else:
         # Keep default filesystem.
         fs = None
@@ -62,8 +63,7 @@ def from_parquet(
             file_name,
             filesystem=fs,
             filters=filters,
-            use_legacy_dataset=False,
-
+            #use_legacy_dataset=False,
         )
         # To read also the index we need to use `read_pandas()`, instead of
         # `read_table()`.

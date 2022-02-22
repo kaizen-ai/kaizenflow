@@ -50,6 +50,7 @@ def reindex_on_asset_and_ts(data: pd.DataFrame) -> pd.DataFrame:
     ]
     hdbg.dassert_is_subset(expected_col_names, data.columns)
     data_reindex = data.loc[:, expected_col_names]
+    data_reindex = data_reindex.drop_duplicates()
     # Reindex on ts and asset.
     data_reindex = data_reindex.set_index(["timestamp", "currency_pair"])
     return data_reindex
@@ -162,13 +163,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     s3fs_ = hs3.get_s3fs(args.aws_profile)
     # List files for given exchange.
     exchange_path = os.path.join(args.s3_path, args.exchange_id)
-    s3fs_.ls(exchange_path)
     timestamp_filters = hparque.get_parquet_filters_from_timestamp_interval(
         "by_year_month", start_timestamp, end_timestamp
     )
-    # TODO(Danya): Plug in the S3 filesystem into `from_parquet`.
-    #  Currently will not work due to expecting the local FS.
+    # Read data corresponding to given time range.
     daily_data = hparque.from_parquet(exchange_path, filters=timestamp_filters, aws_profile=args.aws_profile)
+    daily_data = daily_data.loc[daily_data["timestamp"] >= unix_start_timestamp]
+    daily_data = daily_data.loc[daily_data["timestamp"] <= unix_end_timestamp]
     daily_data_reindex = reindex_on_asset_and_ts(daily_data)
     # Get missing data.
     rt_missing_data, daily_missing_data = find_gaps(
