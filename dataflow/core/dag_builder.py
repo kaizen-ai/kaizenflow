@@ -136,7 +136,7 @@ class DagBuilder(abc.ABC):
         _ = self, config
         return None
 
-    def get_nid(self, stage_name: str) -> str:
+    def _get_nid(self, stage_name: str) -> str:
         hdbg.dassert_isinstance(stage_name, str)
         nid = self._nid_prefix + stage_name
         return nid

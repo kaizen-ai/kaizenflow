@@ -97,7 +97,7 @@ class DagAdapter(dtfcodabui.DagBuilder):
             hdbg.dassert_eq(len(self._nodes_to_insert), 1)
             stage, node_ctor = self._nodes_to_insert[0]
             _LOG.debug(hprint.to_str("stage node_ctor"))
-            head_nid = self._dag_builder.get_nid(stage)
+            head_nid = self._dag_builder._get_nid(stage)
             node = node_ctor(
                 head_nid,
                 **config[head_nid].to_dict(),
@@ -112,7 +112,7 @@ class DagAdapter(dtfcodabui.DagBuilder):
             hdbg.dassert_eq(len(self._nodes_to_append), 1)
             stage, node_ctor = self._nodes_to_append[0]
             _LOG.debug(hprint.to_str("stage node_ctor"))
-            tail_nid = self._dag_builder.get_nid(stage)
+            tail_nid = self._dag_builder._get_nid(stage)
             node = node_ctor(
                 tail_nid,
                 **config[tail_nid].to_dict(),
