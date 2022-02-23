@@ -22,8 +22,7 @@ _LOG = logging.getLogger(__name__)
 NodeId = str
 
 
-# TODO(gp): @all This is private -> _Node.
-class NodeInterface(abc.ABC):
+class _Node(abc.ABC):
     """
     Abstract node class for creating DAGs of functions.
 
@@ -59,12 +58,10 @@ class NodeInterface(abc.ABC):
     def nid(self) -> NodeId:
         return self._nid
 
-    # TODO(gp): @all make it getter only.
     @property
     def input_names(self) -> List[str]:
         return self._input_names
 
-    # TODO(gp): @all make it getter only.
     @property
     def output_names(self) -> List[str]:
         return self._output_names
@@ -96,9 +93,9 @@ NodeOutput = Dict[str, Any]
 
 
 # TODO(gp): Should we merge this with _Node? There is lots of class
-#  hierarchy (NodeInterface -> Node -> FitPredictNode) that doesn't seem really
+#  hierarchy (_Node -> Node -> FitPredictNode) that doesn't seem really
 #  used / useful any more.
-class Node(NodeInterface):
+class Node(_Node):
     """
     A node class that stores and retrieves its output values on a "per-method"
     basis.
@@ -116,7 +113,7 @@ class Node(NodeInterface):
         outputs: Optional[List[str]] = None,
     ) -> None:
         """
-        Implement the same interface as `NodeInterface`.
+        Implement the same interface as `_Node`.
         """
         super().__init__(nid, inputs, outputs)
         # Dictionary method name -> output node name -> output.
