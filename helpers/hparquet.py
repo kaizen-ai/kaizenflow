@@ -64,7 +64,8 @@ def from_parquet(
     if aws_profile is not None:
         hdbg.dassert(hs3.is_s3_path(file_name))
         fs = get_pyarrow_s3fs(aws_profile)
-        # TODO(*): pyarrow S3FileSystem does not have `exists` method
+        file_name = file_name.lstrip("s3://")
+        # TODO(Danya): pyarrow S3FileSystem does not have `exists` method
         #  for assertion.
     else:
         fs = None
@@ -73,10 +74,9 @@ def from_parquet(
     with htimer.TimedScope(
         logging.DEBUG, f"# Reading Parquet file '{file_name}'"
     ) as ts:
-        # TODO(gp): Generalize for S3.
         dataset = pq.ParquetDataset(
             # Replace URI with path.
-            file_name.lstrip("s3://"),
+            file_name,
             filesystem=fs,
             filters=filters,
             use_legacy_dataset=False,
