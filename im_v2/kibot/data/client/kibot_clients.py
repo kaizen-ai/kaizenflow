@@ -14,7 +14,7 @@ import core.pandas_helpers as cpanh
 import helpers.hdbg as hdbg
 import helpers.hs3 as hs3
 import im_v2.common.data.client as icdc
-import im_v2.kibot.metadata.load.kibot_metadata as imvkmlkime
+import im_v2.kibot.metadata.client.kibot_metadata as imvkmlkime
 
 _LOG = logging.getLogger(__name__)
 

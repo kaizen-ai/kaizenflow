@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.kibot.metadata.load.s3_backend as imvkmls3ba
+import im_v2.kibot.metadata.client.s3_backend as imvkmcs3ba
 """
 
 import logging
@@ -13,12 +13,12 @@ import pandas as pd
 import core.pandas_helpers as cpanh
 import helpers.hdbg as hdbg
 import helpers.hs3 as hs3
-import im_v2.kibot.metadata.config as imvkimeco
 
 _LOG = logging.getLogger("amp" + __name__)
 
 S3_BUCKET = hs3.get_bucket()
 S3_PREFIX_DATA = f"s3://{S3_BUCKET}/data/kibot"
+S3_PREFIX_METADATA = f"s3://{S3_BUCKET}/data/kibot/metadata"
 
 # TODO(Amr): Extract the 2 distinct functions here
 # TODO(Amr): Map the functions onto `KibotContractType`, so you provide a type,
@@ -55,7 +55,7 @@ class S3Backend:
         """
         # pylint: enable=line-too-long
         file_name = os.path.join(
-            imvkimeco.S3_PREFIX, "All_Futures_Contracts_1min.csv.gz"
+            S3_PREFIX_METADATA, "All_Futures_Contracts_1min.csv.gz"
         )
         _LOG.debug("file_name=%s", file_name)
         s3fs = hs3.get_s3fs("am")
@@ -89,7 +89,7 @@ class S3Backend:
         """
         # pylint: enable=line-too-long
         file_name = os.path.join(
-            imvkimeco.S3_PREFIX, "All_Futures_Contracts_daily.csv.gz"
+            S3_PREFIX_METADATA, "All_Futures_Contracts_daily.csv.gz"
         )
         hs3.dassert_is_s3_path(file_name)
         _LOG.debug("file_name=%s", file_name)
@@ -123,7 +123,7 @@ class S3Backend:
         ES            ESH11     4/6/2010     891.0       E-MINI S&P 500 MARCH 2011             Chicago Mercantile Exchange Mini Sized Contrac...
         """
         # pylint: enable=line-too-long
-        file_name = os.path.join(imvkimeco.S3_PREFIX, "Futures_tickbidask.txt.gz")
+        file_name = os.path.join(S3_PREFIX_METADATA, "Futures_tickbidask.txt.gz")
         _LOG.debug("file_name=%s", file_name)
         hs3.dassert_is_s3_path(file_name)
         s3fs = hs3.get_s3fs("am")
@@ -171,7 +171,7 @@ class S3Backend:
         """
         # pylint: enable=line-too-long
         file_name = os.path.join(
-            imvkimeco.S3_PREFIX, "FuturesContinuous_intraday.txt.gz"
+            S3_PREFIX_METADATA, "FuturesContinuous_intraday.txt.gz"
         )
         _LOG.debug("file_name=%s", file_name)
         hs3.dassert_is_s3_path(file_name)
@@ -201,7 +201,7 @@ class S3Backend:
 
     @staticmethod
     def read_kibot_exchange_mapping() -> pd.DataFrame:
-        file_name = os.path.join(imvkimeco.S3_PREFIX, "kibot_to_exchange.csv")
+        file_name = os.path.join(S3_PREFIX_METADATA, "kibot_to_exchange.csv")
         hs3.dassert_is_s3_path(file_name)
         s3fs = hs3.get_s3fs("am")
         kibot_to_cme_mapping = cpanh.read_csv(

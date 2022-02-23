@@ -1,8 +1,8 @@
 import unittest.mock as mock
 
 import helpers.hunit_test as hunitest
-import im_v2.kibot.metadata.load.kibot_metadata as imvkmlkime
-import im_v2.kibot.metadata.load.s3_backend as imvkmls3ba
+import im_v2.kibot.metadata.client.kibot_metadata as imvkmckime
+import im_v2.kibot.metadata.client.s3_backend as imvkmcs3ba
 import im_v2.kibot.metadata.test.mocking.mock_kibot_metadata as mkmd
 
 MAX_ROWS = 500
@@ -15,7 +15,7 @@ class TestKibotMetadata(hunitest.TestCase):
         Output contains all expected columns.
         """
         with self._mock_s3backend_max_rows():
-            cls = imvkmlkime.KibotMetadata()
+            cls = imvkmckime.KibotMetadata()
             exp_columns = [
                 "Kibot_symbol",
                 "Description",
@@ -39,7 +39,7 @@ class TestKibotMetadata(hunitest.TestCase):
         Output contains an reasonable amount of rows.
         """
         with self._mock_s3backend_max_rows():
-            cls = imvkmlkime.KibotMetadata()
+            cls = imvkmckime.KibotMetadata()
             exp = 25
             act = len(cls.get_metadata().index)
             self.assertLessEqual(exp, act)
@@ -49,7 +49,7 @@ class TestKibotMetadata(hunitest.TestCase):
         Output contains an reasonable amount of rows.
         """
         with self._mock_s3backend_max_rows():
-            cls = imvkmlkime.KibotMetadata()
+            cls = imvkmckime.KibotMetadata()
             exp = 25
             act = len(cls.get_metadata("tick-bid-ask").index)
             self.assertLessEqual(exp, act)
@@ -59,7 +59,7 @@ class TestKibotMetadata(hunitest.TestCase):
         Output contains an reasonable amount of rows.
         """
         with self._mock_s3backend_max_rows():
-            cls = imvkmlkime.KibotMetadata()
+            cls = imvkmckime.KibotMetadata()
             exp = 25
             act = len(cls.get_futures())
             self.assertLessEqual(exp, act)
@@ -69,7 +69,7 @@ class TestKibotMetadata(hunitest.TestCase):
         Output contains an reasonable amount of rows.
         """
         with self._mock_s3backend_max_rows():
-            cls = imvkmlkime.KibotMetadata()
+            cls = imvkmckime.KibotMetadata()
             exp = 25
             act = len(cls.get_futures("tick-bid-ask"))
             self.assertLess(exp, act)
@@ -79,7 +79,7 @@ class TestKibotMetadata(hunitest.TestCase):
         Output contains an reasonable amount of rows.
         """
         with self._mock_s3backend_max_rows():
-            cls = imvkmlkime.KibotMetadata()
+            cls = imvkmckime.KibotMetadata()
             exp = 25
             act = len(cls.get_expiry_contracts("ES"))
             self.assertLessEqual(exp, act)
@@ -247,33 +247,20 @@ class TestKibotMetadata(hunitest.TestCase):
         act = len(cls.get_expiry_contracts(inp))
         self.assertEqual(exp, act)
 
-    def test_kibot_hardcoded_contract_lifetime_computer1(self) -> None:
-        cls = imvkmlkime.KibotHardcodedContractLifetimeComputer(260, 5)
-        exp = ("2016-03-23", "2017-03-15")
-        act = cls.compute_lifetime("CLJ17")
-        self.assertEqual(exp[0], str(act.start_date.date()))
-        self.assertEqual(exp[1], str(act.end_date.date()))
-
-    def test_kibot_hardcoded_contract_lifetime_computer2(self) -> None:
-        cls = imvkmlkime.KibotHardcodedContractLifetimeComputer(260, 5)
-        exp = ("2016-12-21", "2017-12-13")
-        act = cls.compute_lifetime("CLF18")
-        self.assertEqual(exp[0], str(act.start_date.date()))
-        self.assertEqual(exp[1], str(act.end_date.date()))
-
-    def _mock_s3backend_max_rows(self):
+    @staticmethod
+    def _mock_s3backend_max_rows():
         return mock.patch.multiple(
-            imvkmlkime.KibotMetadata,
-            read_kibot_exchange_mapping=imvkmls3ba.S3Backend(
+            imvkmckime.KibotMetadata,
+            read_kibot_exchange_mapping=imvkmcs3ba.S3Backend(
                 MAX_ROWS
             ).read_kibot_exchange_mapping,
-            read_tickbidask_contract_metadata=imvkmls3ba.S3Backend(
+            read_tickbidask_contract_metadata=imvkmcs3ba.S3Backend(
                 MAX_ROWS
             ).read_tickbidask_contract_metadata,
-            read_1min_contract_metadata=imvkmls3ba.S3Backend(
+            read_1min_contract_metadata=imvkmcs3ba.S3Backend(
                 MAX_ROWS
             ).read_1min_contract_metadata,
-            read_continuous_contract_metadata=imvkmls3ba.S3Backend(
+            read_continuous_contract_metadata=imvkmcs3ba.S3Backend(
                 MAX_ROWS
             ).read_continuous_contract_metadata,
         )
