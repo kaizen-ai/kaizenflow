@@ -28,7 +28,7 @@ import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import im.common.data.types as imcodatyp
 import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
-import im.kibot.metadata.load.s3_backend as imkmls3ba
+import im_v2.kibot.metadata.client.s3_backend as imvkmcs3ba
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -180,7 +180,7 @@ def calculate_general_datetime_stats(df: pd.DataFrame) -> pd.DataFrame:
 # # Explore the universe
 
 # %%
-s3_backend = imkmls3ba.S3Backend()
+s3_backend = imvkmcs3ba.S3Backend()
 
 # %% [markdown]
 # ## Futures

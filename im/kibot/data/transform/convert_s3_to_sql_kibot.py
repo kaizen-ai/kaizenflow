@@ -43,8 +43,8 @@ import im.kibot.data.load as ikdloa
 import im.kibot.data.load.dataset_name_parser as imkdldnapa
 import im.kibot.data.load.kibot_sql_data_loader as ikdlksdlo
 import im.kibot.data.transform.kibot_s3_to_sql_transformer as imkdtkstst
-import im.kibot.metadata.load.s3_backend as imkmls3ba
 import im.kibot.sql_writer as imkisqwri
+import im_v2.kibot.metadata.client.s3_backend as imvkmcs3ba
 
 _LOG = logging.getLogger(__name__)
 
@@ -140,7 +140,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     #
     kibot_data_loader = ikdloa.KibotS3DataLoader()
     #
-    s3_backend = imkmls3ba.S3Backend()
+    s3_backend = imvkmcs3ba.S3Backend()
     #
     dataset_name_parser = imkdldnapa.DatasetNameParser()
     #

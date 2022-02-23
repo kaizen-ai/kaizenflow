@@ -9,14 +9,14 @@ from typing import List, Optional, Union
 
 import helpers.hdbg as hdbg
 
-from .kibot_metadata import KibotMetadata
+import im_v2.kibot.metadata.client.kibot_metadata as imvkmckime
 
 _LOG = logging.getLogger(__name__)
 
 
 class ContractSymbolMapping:
     def __init__(self) -> None:
-        km = KibotMetadata()
+        km = imvkmckime.KibotMetadata()
         # Minutely and daily dataframes are identical except for the `Link`
         # column, so it does not matter, which one we load.
         self._metadata = km.get_metadata("1min")
