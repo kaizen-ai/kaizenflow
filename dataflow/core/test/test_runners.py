@@ -14,6 +14,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestRollingFitPredictDagRunner1(hunitest.TestCase):
+
     def test1(self) -> None:
         """
         Test the DagRunner using `ArmaReturnsBuilder`
@@ -38,6 +39,7 @@ class TestRollingFitPredictDagRunner1(hunitest.TestCase):
 
 
 class TestIncrementalDagRunner1(hunitest.TestCase):
+
     def test1(self) -> None:
         """
         Test the DagRunner using `ArmaReturnsBuilder`.

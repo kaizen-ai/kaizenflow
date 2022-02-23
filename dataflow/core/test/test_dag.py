@@ -1,9 +1,5 @@
-import json
 import logging
 import os
-from typing import Any, Dict
-
-import networkx as networ
 
 import dataflow.core.dag as dtfcordag
 import dataflow.core.node as dtfcornode
@@ -15,6 +11,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class _TestDataflowHelper(hunitest.TestCase):
+
     def _check(self, dag: dtfcordag.DAG) -> None:
         """
         Compute and freeze with `check_string` the signature of a graph.
@@ -37,6 +34,7 @@ class _TestDataflowHelper(hunitest.TestCase):
 
 
 class Test_dataflow_core_DAG1(_TestDataflowHelper):
+
     def test_add_nodes1(self) -> None:
         """
         Create a node and add it to a DAG.
@@ -111,6 +109,7 @@ class Test_dataflow_core_DAG1(_TestDataflowHelper):
 
 
 class Test_dataflow_core_DAG2(_TestDataflowHelper):
+
     def test_connect_nodes1(self) -> None:
         """
         Simplest case of connecting two nodes.
@@ -285,6 +284,7 @@ class Test_dataflow_core_DAG2(_TestDataflowHelper):
 
 
 class Test_dataflow_core_DAG3(_TestDataflowHelper):
+
     def test_sources_sinks1(self) -> None:
         """
         Check sources and sinks of a single node linear DAG.
