@@ -52,6 +52,7 @@ def reindex_on_asset_and_ts(data: pd.DataFrame) -> pd.DataFrame:
     data_reindex = data.loc[:, expected_col_names]
     data_reindex = data_reindex.drop_duplicates()
     # Reindex on ts and asset.
+    data_reindex = data_reindex.sort_values(by=["timestamp", "currency_pair"])
     data_reindex = data_reindex.set_index(["timestamp", "currency_pair"])
     return data_reindex
 
@@ -165,7 +166,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
         "by_year_month", start_timestamp, end_timestamp
     )
     # Read data corresponding to given time range.
-    daily_data = hparque.from_parquet(exchange_path, filters=timestamp_filters, aws_profile=args.aws_profile)
+    daily_data = hparque.from_parquet(
+        exchange_path, filters=timestamp_filters, aws_profile=args.aws_profile
+    )
     daily_data = daily_data.loc[daily_data["timestamp"] >= unix_start_timestamp]
     daily_data = daily_data.loc[daily_data["timestamp"] <= unix_end_timestamp]
     daily_data_reindex = reindex_on_asset_and_ts(daily_data)

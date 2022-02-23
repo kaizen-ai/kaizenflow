@@ -74,8 +74,6 @@ def from_parquet(
     with htimer.TimedScope(
         logging.DEBUG, f"# Reading Parquet file '{file_name}'"
     ) as ts:
-        # TODO(gp): Generalize for S3.
-        print(fs)
         dataset = pq.ParquetDataset(
             # Replace URI with path.
             file_name,
