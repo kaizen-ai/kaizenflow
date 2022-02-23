@@ -20,35 +20,35 @@ _LOG = logging.getLogger(__name__)
 class FeaturePipeline(dtfcore.DagBuilder):
     def get_config_template(self) -> cconfig.Config:
         dict_ = {
-            self.get_nid("load_data"): {
+            self._get_nid("load_data"): {
                 cconfig.DUMMY: None,
             },
-            self.get_nid("filter_weekends"): {
+            self._get_nid("filter_weekends"): {
                 "col_mode": "replace_all",
             },
-            self.get_nid("filter_ath"): {
+            self._get_nid("filter_ath"): {
                 "col_mode": "replace_all",
                 "transformer_kwargs": {
                     "start_time": datetime.time(9, 30),
                     "end_time": datetime.time(16, 00),
                 },
             },
-            self.get_nid("perform_col_arithmetic"): {
+            self._get_nid("perform_col_arithmetic"): {
                 "func_kwargs": {
                     cconfig.DUMMY: None,
                 }
             },
-            self.get_nid("add_diffs"): {
+            self._get_nid("add_diffs"): {
                 "col_mode": "merge_all",
             },
-            self.get_nid("zscore"): {
+            self._get_nid("zscore"): {
                 "col_mode": "replace_all",
                 "nan_mode": "drop",
             },
-            self.get_nid("compress_tails"): {
+            self._get_nid("compress_tails"): {
                 "col_mode": "replace_all",
             },
-            self.get_nid("cross_feature_pairs"): {
+            self._get_nid("cross_feature_pairs"): {
                 "func_kwargs": {
                     cconfig.DUMMY: None,
                 },
@@ -65,12 +65,12 @@ class FeaturePipeline(dtfcore.DagBuilder):
         tail_nid = None
         #
         stage = "load_data"
-        nid = self.get_nid(stage)
+        nid = self._get_nid(stage)
         node = dtfsys.data_source_node_factory(nid, **config[nid].to_dict())
         tail_nid = self._append(dag, tail_nid, node)
         #
         stage = "filter_weekends"
-        nid = self.get_nid(stage)
+        nid = self._get_nid(stage)
         node = dtfcore.ColumnTransformer(
             nid,
             transformer_func=cofinanc.set_weekends_to_nan,
@@ -79,7 +79,7 @@ class FeaturePipeline(dtfcore.DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         #
         stage = "filter_ath"
-        nid = self.get_nid(stage)
+        nid = self._get_nid(stage)
         node = dtfcore.ColumnTransformer(
             nid,
             transformer_func=cofinanc.set_non_ath_to_nan,
@@ -88,7 +88,7 @@ class FeaturePipeline(dtfcore.DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         #
         stage = "perform_col_arithmetic"
-        nid = self.get_nid(stage)
+        nid = self._get_nid(stage)
         node = dtfcore.FunctionWrapper(
             nid,
             func=cofeatur.perform_col_arithmetic,
@@ -97,7 +97,7 @@ class FeaturePipeline(dtfcore.DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         #
         stage = "add_diffs"
-        nid = self.get_nid(stage)
+        nid = self._get_nid(stage)
         node = dtfcore.ColumnTransformer(
             nid,
             transformer_func=lambda x: x.diff(),
@@ -107,7 +107,7 @@ class FeaturePipeline(dtfcore.DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         #
         stage = "zscore"
-        nid = self.get_nid(stage)
+        nid = self._get_nid(stage)
         node = dtfcore.SeriesTransformer(
             nid,
             transformer_func=csigproc.compute_fir_zscore,
@@ -116,7 +116,7 @@ class FeaturePipeline(dtfcore.DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         #
         stage = "compress_tails"
-        nid = self.get_nid(stage)
+        nid = self._get_nid(stage)
         node = dtfcore.SeriesTransformer(
             nid,
             transformer_func=csigproc.compress_tails,
@@ -125,7 +125,7 @@ class FeaturePipeline(dtfcore.DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         #
         stage = "cross_feature_pairs"
-        nid = self.get_nid(stage)
+        nid = self._get_nid(stage)
         node = dtfcore.FunctionWrapper(
             nid,
             func=cofeatur.cross_feature_pairs,

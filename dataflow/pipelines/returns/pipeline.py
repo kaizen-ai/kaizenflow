@@ -35,15 +35,15 @@ class ReturnsPipeline(dtfcore.DagBuilder):
             # NOTE: The caller needs to inject config values to control the
             # `data_source_node_factory` node in order to create the proper data
             # node.
-            self.get_nid("load_prices"): {
+            self._get_nid("load_prices"): {
                 cconfig.DUMMY: None,
             },
             # Filter weekends.
-            self.get_nid("filter_weekends"): {
+            self._get_nid("filter_weekends"): {
                 "col_mode": "replace_all",
             },
             # Filter ATH.
-            self.get_nid("filter_ath"): {
+            self._get_nid("filter_ath"): {
                 "col_mode": "replace_all",
                 "transformer_kwargs": {
                     "start_time": datetime.time(9, 30),
@@ -51,7 +51,7 @@ class ReturnsPipeline(dtfcore.DagBuilder):
                 },
             },
             # Resample prices to a 1 min grid.
-            self.get_nid("resample_prices_to_1min"): {
+            self._get_nid("resample_prices_to_1min"): {
                 "func_kwargs": {
                     "rule": "1T",
                     "price_cols": ["close"],
@@ -62,7 +62,7 @@ class ReturnsPipeline(dtfcore.DagBuilder):
                 },
             },
             # Compute VWAP.
-            self.get_nid("compute_vwap"): {
+            self._get_nid("compute_vwap"): {
                 "func_kwargs": {
                     "rule": "5T",
                     "price_col": "close",
@@ -74,7 +74,7 @@ class ReturnsPipeline(dtfcore.DagBuilder):
                 },
             },
             # Calculate returns.
-            self.get_nid("compute_ret_0"): {
+            self._get_nid("compute_ret_0"): {
                 "cols": ["twap", "vwap"],
                 "col_mode": "merge_all",
                 "transformer_kwargs": {
@@ -109,12 +109,12 @@ class ReturnsPipeline(dtfcore.DagBuilder):
         tail_nid = None
         # Read data.
         stage = "load_prices"
-        nid = self.get_nid(stage)
+        nid = self._get_nid(stage)
         node = dtfsys.data_source_node_factory(nid, **config[nid].to_dict())
         tail_nid = self._append(dag, tail_nid, node)
         # Set weekends to NaN.
         stage = "filter_weekends"
-        nid = self.get_nid(stage)
+        nid = self._get_nid(stage)
         node = dtfcore.ColumnTransformer(
             nid,
             transformer_func=cofinanc.set_weekends_to_nan,
@@ -123,7 +123,7 @@ class ReturnsPipeline(dtfcore.DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         # Set non-ATH to NaN.
         stage = "filter_ath"
-        nid = self.get_nid(stage)
+        nid = self._get_nid(stage)
         node = dtfcore.ColumnTransformer(
             nid,
             transformer_func=cofinanc.set_non_ath_to_nan,
@@ -132,14 +132,14 @@ class ReturnsPipeline(dtfcore.DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         # Resample.
         stage = "resample_prices_to_1min"
-        nid = self.get_nid(stage)
+        nid = self._get_nid(stage)
         node = dtfcore.FunctionWrapper(
             nid, func=cofinanc.resample_time_bars, **config[nid].to_dict()
         )
         tail_nid = self._append(dag, tail_nid, node)
         # Compute TWAP and VWAP.
         stage = "compute_vwap"
-        nid = self.get_nid(stage)
+        nid = self._get_nid(stage)
         node = dtfcore.FunctionWrapper(
             nid,
             func=cofinanc.compute_twap_vwap,
@@ -148,7 +148,7 @@ class ReturnsPipeline(dtfcore.DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         # Compute returns.
         stage = "compute_ret_0"
-        nid = self.get_nid(stage)
+        nid = self._get_nid(stage)
         node = dtfcore.ColumnTransformer(
             nid,
             transformer_func=cofinanc.compute_ret_0,

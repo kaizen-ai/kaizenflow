@@ -21,14 +21,14 @@ _LOG = logging.getLogger(__name__)
 class ExamplePipeline1_ModelBuilder(dtfcore.DagBuilder):
     def get_config_template(self) -> cconfig.Config:
         dict_ = {
-            self.get_nid("filter_ath"): {
+            self._get_nid("filter_ath"): {
                 "col_mode": "replace_all",
                 "transformer_kwargs": {
                     "start_time": datetime.time(9, 30),
                     "end_time": datetime.time(16, 00),
                 },
             },
-            self.get_nid("resample"): {
+            self._get_nid("resample"): {
                 "in_col_groups": [
                     ("close",),
                     ("volume",),
@@ -55,7 +55,7 @@ class ExamplePipeline1_ModelBuilder(dtfcore.DagBuilder):
                 "reindex_like_input": False,
                 "join_output_with_input": False,
             },
-            self.get_nid("compute_ret_0"): {
+            self._get_nid("compute_ret_0"): {
                 "in_col_groups": [
                     ("close",),
                     ("vwap",),
@@ -71,13 +71,13 @@ class ExamplePipeline1_ModelBuilder(dtfcore.DagBuilder):
                     "twap": "twap.ret_0",
                 },
             },
-            self.get_nid("compute_vol"): {
+            self._get_nid("compute_vol"): {
                 "in_col_group": ("vwap.ret_0",),
                 "out_col_group": ("vwap.ret_0.vol",),
                 "drop_nans": True,
                 "permitted_exceptions": (ValueError,),
             },
-            self.get_nid("adjust_rets"): {
+            self._get_nid("adjust_rets"): {
                 "in_col_groups": [
                     ("vwap.ret_0",),
                     ("vwap.ret_0.vol",),
@@ -92,7 +92,7 @@ class ExamplePipeline1_ModelBuilder(dtfcore.DagBuilder):
                 },
                 "drop_nans": True,
             },
-            self.get_nid("compress_rets"): {
+            self._get_nid("compress_rets"): {
                 "in_col_groups": [
                     ("vwap.ret_0.vol_adj",),
                 ],
@@ -115,7 +115,7 @@ class ExamplePipeline1_ModelBuilder(dtfcore.DagBuilder):
         tail_nid = None
         #
         stage = "filter_ath"
-        nid = self.get_nid(stage)
+        nid = self._get_nid(stage)
         node = dtfcore.ColumnTransformer(
             nid,
             transformer_func=cofinanc.set_non_ath_to_nan,
@@ -124,7 +124,7 @@ class ExamplePipeline1_ModelBuilder(dtfcore.DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         #
         stage = "resample"
-        nid = self.get_nid(stage)
+        nid = self._get_nid(stage)
         node = dtfcore.GroupedColDfToDfTransformer(
             nid,
             transformer_func=cofinanc.resample_bars,
@@ -133,7 +133,7 @@ class ExamplePipeline1_ModelBuilder(dtfcore.DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         #
         stage = "compute_ret_0"
-        nid = self.get_nid(stage)
+        nid = self._get_nid(stage)
         node = dtfcore.GroupedColDfToDfTransformer(
             nid,
             transformer_func=cofinanc.compute_ret_0,
@@ -142,7 +142,7 @@ class ExamplePipeline1_ModelBuilder(dtfcore.DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         #
         stage = "compute_vol"
-        nid = self.get_nid(stage)
+        nid = self._get_nid(stage)
         node = dtfcore.SeriesToSeriesTransformer(
             nid,
             transformer_func=lambda x: np.sqrt(
@@ -153,7 +153,7 @@ class ExamplePipeline1_ModelBuilder(dtfcore.DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         #
         stage = "adjust_rets"
-        nid = self.get_nid(stage)
+        nid = self._get_nid(stage)
         node = dtfcore.GroupedColDfToDfTransformer(
             nid,
             transformer_func=cofeatur.combine_columns,
@@ -162,7 +162,7 @@ class ExamplePipeline1_ModelBuilder(dtfcore.DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         #
         stage = "compress_rets"
-        nid = self.get_nid(stage)
+        nid = self._get_nid(stage)
         node = dtfcore.GroupedColDfToDfTransformer(
             nid,
             transformer_func=lambda x: csigproc.compress_tails(x, 4),
