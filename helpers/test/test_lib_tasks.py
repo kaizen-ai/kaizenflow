@@ -1568,7 +1568,7 @@ class Test_get_files_to_process1(hunitest.TestCase):
 class Test_pytest_repro1(hunitest.TestCase):
     def test_tests1(self) -> None:
         file_name = self._build_pytest_file1()
-        target_type = "tests"
+        mode = "tests"
         exp = [
             "dev_scripts/testing/test/test_run_tests.py",
             "dev_scripts/testing/test/test_run_tests2.py",
@@ -1578,11 +1578,11 @@ class Test_pytest_repro1(hunitest.TestCase):
             "helpers/test/helpers/test/test_list.py::Test_list_1",
             "helpers/test/test_cache.py::TestAmpTask1407",
         ]
-        self._helper(file_name, target_type, exp)
+        self._helper(file_name, mode, exp)
 
     def test_files1(self) -> None:
         file_name = self._build_pytest_file1()
-        target_type = "files"
+        mode = "files"
         exp = [
             "dev_scripts/testing/test/test_run_tests.py",
             "dev_scripts/testing/test/test_run_tests2.py",
@@ -1592,21 +1592,21 @@ class Test_pytest_repro1(hunitest.TestCase):
             "helpers/test/helpers/test/test_list.py",
             "helpers/test/test_cache.py",
         ]
-        self._helper(file_name, target_type, exp)
+        self._helper(file_name, mode, exp)
 
     def test_classes1(self) -> None:
         file_name = self._build_pytest_file1()
-        target_type = "classes"
+        mode = "classes"
         exp = [
             "helpers/test/test_printing.py::Test_dedent1",
             "helpers/test/helpers/test/test_list.py::Test_list_1",
             "helpers/test/test_cache.py::TestAmpTask1407",
         ]
-        self._helper(file_name, target_type, exp)
+        self._helper(file_name, mode, exp)
 
     def test_tests2(self) -> None:
         file_name = self._build_pytest_file2()
-        target_type = "tests"
+        mode = "tests"
         # pylint: disable=line-too-long
         exp = [
             "core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel::test_compare_to_linear_regression1",
@@ -1659,11 +1659,11 @@ class Test_pytest_repro1(hunitest.TestCase):
             "helpers/test/test_printing.py::Test_dedent1::test2",
         ]
         # pylint: enable=line-too-long
-        self._helper(file_name, target_type, exp)
+        self._helper(file_name, mode, exp)
 
     def test_files2(self) -> None:
         file_name = self._build_pytest_file2()
-        target_type = "files"
+        mode = "files"
         # pylint: disable=line-too-long
         exp = [
             "core/dataflow/nodes/test/test_sarimax_models.py",
@@ -1679,11 +1679,11 @@ class Test_pytest_repro1(hunitest.TestCase):
             "helpers/test/test_printing.py",
         ]
         # pylint: enable=line-too-long
-        self._helper(file_name, target_type, exp)
+        self._helper(file_name, mode, exp)
 
     def test_classes2(self) -> None:
         file_name = self._build_pytest_file2()
-        target_type = "classes"
+        mode = "classes"
         # pylint: disable=line-too-long
         exp = [
             "core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel",
@@ -1703,7 +1703,7 @@ class Test_pytest_repro1(hunitest.TestCase):
             "helpers/test/test_printing.py::Test_dedent1",
         ]
         # pylint: enable=line-too-long
-        self._helper(file_name, target_type, exp)
+        self._helper(file_name, mode, exp)
 
     # #########################################################################
 
@@ -1784,11 +1784,11 @@ class Test_pytest_repro1(hunitest.TestCase):
         # pylint: enable=line-too-long
         return self._build_pytest_file_helper(txt)
 
-    def _helper(self, file_name: str, target_type: str, exp: List[str]) -> None:
+    def _helper(self, file_name: str, mode: str, exp: List[str]) -> None:
         ctx = _build_mock_context_returning_ok()
         act = hlibtask.pytest_repro(
             ctx,
-            target_type=target_type,
+            mode=mode,
             file_name=file_name,
         )
         exp = " ".join(["pytest " + x for x in exp])
@@ -1808,17 +1808,18 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
         # Modify the outcome for reproducibility.
         act = hprint.remove_non_printable_chars(act)
         act = re.sub(r"[0-9]{2}:[0-9]{2}:[0-9]{2} - ", r"HH:MM:SS - ", act)
-        # TODO(Grisha): fix properly if needed, for now only lines that
-        #  contain `pytest` are included. This is done to remove `This
-        #  code is not in sync with the container ...` that typically
-        #  appear while running tests as a part of an image release.
-        act = "\n".join([x for x in act.split("\n") if "pytest" in x])
         act = act.replace("/app/amp/", "/app/")
         act = re.sub(
             r"lib_tasks.py pytest_repro:[0-9]+",
             r"lib_tasks.py pytest_repro:{LINE_NUM}",
             act,
         )
+        # Remove unstable content.
+        lines = act.split("\n")
+        line_cmd = lines[0]
+        test_output_start = lines.index("## pytest_repro: ")
+        lines_test_output = lines[test_output_start:]
+        act = "\n".join([line_cmd] + lines_test_output)
         # Check the outcome.
         self.check_string(act)
 
@@ -1832,6 +1833,10 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
 
     def test3(self) -> None:
         cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt'"
+        self.helper(cmd)
+
+    def test4(self) -> None:
+        cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt' --show-stacktrace"
         self.helper(cmd)
 
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Compare daily data on DB and S3, raising when difference was found.
+Compare data on DB and S3, raising when difference was found.
 
 Use as:
 # Compare daily S3 and realtime data for binance.
@@ -22,8 +22,10 @@ import os
 
 import pandas as pd
 
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import helpers.hparquet as hparque
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
@@ -48,7 +50,9 @@ def reindex_on_asset_and_ts(data: pd.DataFrame) -> pd.DataFrame:
     ]
     hdbg.dassert_is_subset(expected_col_names, data.columns)
     data_reindex = data.loc[:, expected_col_names]
+    data_reindex = data_reindex.drop_duplicates()
     # Reindex on ts and asset.
+    data_reindex = data_reindex.sort_values(by=["timestamp", "currency_pair"])
     data_reindex = data_reindex.set_index(["timestamp", "currency_pair"])
     return data_reindex
 
@@ -138,43 +142,35 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Get time range for last 24 hours.
-    start_timestamp = pd.Timestamp(args.start_timestamp)
-    end_timestamp = pd.Timestamp(args.end_timestamp)
+    start_timestamp = pd.Timestamp(args.start_timestamp, tz="UTC")
+    end_timestamp = pd.Timestamp(args.end_timestamp, tz="UTC")
     # Connect to database.
     env_file = imvimlita.get_db_env_path(args.db_stage)
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
-    # Read DB realtime data.
+    # Convert timestamps to unix ms format used in OHLCV data.
+    unix_start_timestamp = hdateti.convert_timestamp_to_unix_epoch(
+        start_timestamp
+    )
+    unix_end_timestamp = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
+    # Read data from DB.
     query = (
-        f"SELECT * FROM ccxt_ohlcv WHERE knowledge_timestamp >='{start_timestamp}'"
-        f" AND knowledge_timestamp <= '{end_timestamp}' AND exchange_id='{args.exchange_id}'"
+        f"SELECT * FROM ccxt_ohlcv WHERE timestamp >='{unix_start_timestamp}'"
+        f" AND timestamp <= '{unix_end_timestamp}' AND exchange_id='{args.exchange_id}'"
     )
     rt_data = hsql.execute_query_to_df(connection, query)
     rt_data_reindex = reindex_on_asset_and_ts(rt_data)
-    # Connect to S3 filesystem, if provided.
-    s3fs_ = hs3.get_s3fs(args.aws_profile)
     # List files for given exchange.
-    exchange_path = os.path.join(args.s3_path, args.exchange_id)
-    s3_files = s3fs_.ls(exchange_path)
-    # Filter files by timestamps in names.
-    #  Example of downloaded file name: 'ADA_USDT_20210207-164012.csv'
-    start_timestamp_str = start_timestamp.strftime("%Y%m%d-%H%M%S")
-    end_timestamp_str = end_timestamp.strftime("%Y%m%d-%H%M%S")
-    daily_files = [
-        f
-        for f in s3_files
-        if f.split("_")[-1].rstrip(".csv") <= end_timestamp_str
-    ]
-    daily_files = [
-        f
-        for f in daily_files
-        if f.split("_")[-1].rstrip(".csv") >= start_timestamp_str
-    ]
-    daily_data = []
-    for file in daily_files:
-        with s3fs_.open(file) as f:
-            daily_data.append(pd.read_csv(f))
-    daily_data = pd.concat(daily_data)
+    exchange_path = os.path.join(args.s3_path, args.exchange_id) + "/"
+    timestamp_filters = hparque.get_parquet_filters_from_timestamp_interval(
+        "by_year_month", start_timestamp, end_timestamp
+    )
+    # Read data corresponding to given time range.
+    daily_data = hparque.from_parquet(
+        exchange_path, filters=timestamp_filters, aws_profile=args.aws_profile
+    )
+    daily_data = daily_data.loc[daily_data["timestamp"] >= unix_start_timestamp]
+    daily_data = daily_data.loc[daily_data["timestamp"] <= unix_end_timestamp]
     daily_data_reindex = reindex_on_asset_and_ts(daily_data)
     # Get missing data.
     rt_missing_data, daily_missing_data = find_gaps(

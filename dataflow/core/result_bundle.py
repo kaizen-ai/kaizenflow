@@ -133,11 +133,11 @@ class ResultBundle(abc.ABC):
 
     # Setters.
 
-    @result_df.setter
+    @result_df.setter  # type: ignore
     def result_df(self, value: pd.DataFrame) -> None:
         self._result_df = value
 
-    @payload.setter
+    @payload.setter  # type: ignore
     def payload(self, value: Optional[cconfig.Config]) -> None:
         self._payload = value
 
@@ -199,21 +199,6 @@ class ResultBundle(abc.ABC):
         dict_ = cast(collections.OrderedDict, dict_)
         return dict_
 
-    # TODO(gp): Use classmethod.
-    @staticmethod
-    def from_dict(result_bundle_dict: collections.OrderedDict) -> "ResultBundle":
-        """
-        Initialize `ResultBundle` from a nested dict.
-        """
-        result_bundle_config = cconfig.get_config_from_nested_dict(
-            result_bundle_dict
-        )
-        result_bundle_class = eval(result_bundle_config["class"])
-        result_bundle: ResultBundle = result_bundle_class.from_config(
-            result_bundle_config
-        )
-        return result_bundle
-
     # Methods to serialize to / from disk.
 
     def to_pickle(self, file_name: str, use_pq: bool = True) -> List[str]:
@@ -232,7 +217,7 @@ class ResultBundle(abc.ABC):
         if use_pq:
             # Split the object in two pieces.
             result_df = obj.result_df
-            obj.result_df = None
+            obj.result_df = None  # type: ignore
             # Save the config as pickle.
             file_name_rb = hio.change_filename_extension(
                 file_name, "pkl", "v2_0.pkl"
@@ -260,6 +245,21 @@ class ResultBundle(abc.ABC):
             hpickle.to_pickle(obj, file_name, log_level=logging.DEBUG)
             res = [file_name]
         return res
+
+    # TODO(gp): Use classmethod.
+    @staticmethod
+    def from_dict(result_bundle_dict: collections.OrderedDict) -> "ResultBundle":
+        """
+        Initialize `ResultBundle` from a nested dict.
+        """
+        result_bundle_config = cconfig.get_config_from_nested_dict(
+            result_bundle_dict
+        )
+        result_bundle_class = eval(result_bundle_config["class"])
+        result_bundle: ResultBundle = result_bundle_class.from_config(
+            result_bundle_config
+        )
+        return result_bundle
 
     # TODO(gp): Use classmethod.
     @staticmethod
@@ -332,7 +332,7 @@ class ResultBundle(abc.ABC):
                 file_name, "pkl", "v1_0.pkl"
             )
             obj = hpickle.from_pickle(file_name, log_level=logging.DEBUG)
-        return obj
+        return obj  # type: ignore
 
     @staticmethod
     def _search_mapping(
@@ -487,7 +487,7 @@ class PredictionResultBundle(ResultBundle):
 
 # TODO(gp): This is probably more general than here. Probably we want to trim
 #  the data also inside the pipeline.
-def _trim_df_trading_hours(df) -> pd.DataFrame:
+def _trim_df_trading_hours(df: pd.DataFrame) -> pd.DataFrame:
     """
     Remove data outside trading hours.
     """
