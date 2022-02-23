@@ -4081,21 +4081,27 @@ def pytest_repro(  # type: ignore
             "====== FAILURES ======" not in txt
             or "====== slowest 3 durations ======" not in txt
         ):
-            _LOG.info(failed_test_output_str)
+            _LOG.info("%s", failed_test_output_str)
             return res
         txt = txt.split("====== FAILURES ======")[-1].split(
             "====== slowest 3 durations ======"
         )[0]
-        # Get the classes and names of the failed tests, e.g. "TestSmaModel.test5".
+        # Get the classes and names of the failed tests, e.g.
+        # "core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test5" ->
+        # -> "TestSmaModel.test5".
         failed_test_names = [
             test.split("::")[1] + "." + test.split("::")[2] for test in tests
         ]
         tracebacks = []
         for i, name in enumerate(failed_test_names):
             # Get the stacktrace for the individual test failure.
+            # Its start is marked with the name of the test, e.g.
+            # "___________________ TestSmaModel.test5 ___________________".
             start_block = "________ " + name + " ________"
             traceback_block = txt.split(start_block)[-1]
             if i != len(failed_test_names) - 1:
+                # The end of the traceback for the current failed test is the
+                # start of the traceback for the next failed test.
                 end_block = "________ " + failed_test_names[i + 1] + " ________"
                 traceback_block = traceback_block.split(end_block)[0]
             _, traceback = htraceb.parse_traceback(
@@ -4106,7 +4112,7 @@ def pytest_repro(  # type: ignore
         full_traceback = "\n\n" + "\n".join(tracebacks)
         failed_test_output_str += full_traceback
         res += full_traceback
-    _LOG.info(failed_test_output_str)
+    _LOG.info("%s", failed_test_output_str)
     return res
 
 
