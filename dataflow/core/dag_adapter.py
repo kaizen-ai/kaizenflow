@@ -28,6 +28,7 @@ class DagAdapter(dtfcodabui.DagBuilder):
         overriding_config: Dict[str, Any],
         nodes_to_insert: List[dtfcornode.Node],
         nodes_to_append: List[dtfcornode.Node],
+        **kwargs: Any,
     ):
         """
         Constructor.
