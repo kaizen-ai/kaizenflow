@@ -86,6 +86,48 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    def test_read_csv_unadjusted_data5(self) -> None:
+        """
+        Note: for current test we use `unadjusted=False` data since the actual unadjusted data is unreachable for now.
+        """
+        full_symbols = ["kibot::HD", "kibot::AMP"]
+        start_ts = pd.Timestamp("2015-09-29T09:23:00+00:00")
+        end_ts = pd.Timestamp("2015-09-29T09:35:00+00:00")
+        client = ikidctkce.get_KibotEquitiesCsvParquetByAssetClient_example1(
+            True
+        )
+        #
+        expected_length = 19
+        expected_column_names = self._get_expected_column_names()
+        expected_column_unique_values = {"full_symbol": ["kibot::HD", "kibot::AMP"]}
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2015-09-29 09:23:00+00:00, 2015-09-29 09:35:00+00:00]
+        columns=full_symbol,open,high,low,close,volume
+        shape=(19, 6)
+                                  full_symbol    open    high     low   close  volume
+        timestamp                                                                    
+        2015-09-29 09:23:00+00:00   kibot::HD  102.36  102.36  102.36  102.36   447.0
+        2015-09-29 09:24:00+00:00   kibot::HD     NaN     NaN     NaN     NaN     NaN
+        2015-09-29 09:25:00+00:00   kibot::HD     NaN     NaN     NaN     NaN     NaN
+        ...
+        2015-09-29 09:34:00+00:00   kibot::HD  102.17  102.33  102.16  102.33   6145.0
+        2015-09-29 09:35:00+00:00  kibot::AMP   90.61   90.62    90.5   90.52   2635.0
+        2015-09-29 09:35:00+00:00   kibot::HD  102.39  102.49  102.12  102.15  19620.0
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data5(
+            client,
+            full_symbols,
+            start_ts,
+            end_ts,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
     def test_read_parquet_data5(self) -> None:
         full_symbols = ["kibot::HD", "kibot::QCOM"]
         start_ts = pd.Timestamp("2015-09-29T09:23:00+00:00")
