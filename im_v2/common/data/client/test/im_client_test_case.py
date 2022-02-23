@@ -187,5 +187,4 @@ class ImClientTestCase(hunitest.TestCase):
         Test that metadata is computed correctly.
         """
         actual_df = im_client.get_metadata()
-        print("ACTUAL", actual_df)
         self.check_df_output(actual_df, *args, **kwargs)

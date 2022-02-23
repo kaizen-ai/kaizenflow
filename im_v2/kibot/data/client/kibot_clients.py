@@ -367,9 +367,6 @@ class KibotFuturesCsvParquetByAssetClient(
             header=None,
             encoding="utf-8",
         )
-        df = df.reset_index()
-        print("COLUMNS", df.columns)
-        print("INDEX", df.index)
         return df
 
     def _read_data_for_one_symbol(
