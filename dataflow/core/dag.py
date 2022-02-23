@@ -246,7 +246,7 @@ class DAG:
         """
         hdbg.dassert_isinstance(nid, dtfcornode.NodeId)
         hdbg.dassert(self._nx_dag.has_node(nid), "Node `%s` is not in DAG", nid)
-        return self._nx_dag.nodes[nid]["stage"]  # type: ignore
+        return self._nx_dag.nodes[nid]["stage"]
 
     def remove_node(self, nid: dtfcornode.NodeId) -> None:
         """
