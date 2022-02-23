@@ -159,10 +159,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     )
     rt_data = hsql.execute_query_to_df(connection, query)
     rt_data_reindex = reindex_on_asset_and_ts(rt_data)
-    # Connect to S3 filesystem, if provided.
-    s3fs_ = hs3.get_s3fs(args.aws_profile)
     # List files for given exchange.
-    exchange_path = os.path.join(args.s3_path, args.exchange_id)
+    exchange_path = os.path.join(args.s3_path, args.exchange_id) + "/"
     timestamp_filters = hparque.get_parquet_filters_from_timestamp_interval(
         "by_year_month", start_timestamp, end_timestamp
     )

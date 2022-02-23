@@ -45,10 +45,9 @@ def from_parquet(
     hdbg.dassert_isinstance(file_name, str)
     if aws_profile is not None:
         # Load S3 filesystem.
-        print(file_name)
-        hdbg.dassert(hs3.is_s3_path(file_name))
+        #hdbg.dassert(hs3.is_s3_path(file_name))
         fs = hs3.get_s3fs(aws_profile)
-        hs3.dassert_s3_exists(file_name, fs)
+        #hs3.dassert_s3_exists(file_name, fs)
     else:
         # Keep default filesystem.
         fs = None
@@ -58,6 +57,7 @@ def from_parquet(
         logging.DEBUG, f"# Reading Parquet file '{file_name}'"
     ) as ts:
         # TODO(gp): Generalize for S3.
+        print(fs)
         dataset = pq.ParquetDataset(
             file_name,
             filesystem=fs,
