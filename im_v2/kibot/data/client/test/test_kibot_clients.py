@@ -241,16 +241,18 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         )
 
     def test_get_metadata1(self) -> None:
-        root_dir = get_test_data_dir()
+        # TODO(Grisha): @Dan use local filesystem instead of S3.
+        root_dir = "s3://alphamatic-data/data/"
         extension = "csv.gz"
         contract_type = "continuous"
-        #
+        aws_profile = "am"
         client = imvkdckicl.KibotFuturesCsvParquetByAssetClient(
             root_dir,
             extension,
             contract_type,
+            aws_profile=aws_profile,
         )
-        #
+        # TODO(Grisha): @Dan clean up and make it pass.
         expected_length = 252
         expected_column_names = [
             "Kibot_symbol",

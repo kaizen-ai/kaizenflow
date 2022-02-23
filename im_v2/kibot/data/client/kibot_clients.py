@@ -355,13 +355,21 @@ class KibotFuturesCsvParquetByAssetClient(
         """
         metadata_dir = "kibot/metadata"
         file_name = "All_Futures_Contracts_1min.csv.gz"
-        file_path = os.path.join(metadata_dir, file_name)
+        file_path = os.path.join(self._root_dir, metadata_dir, file_name)
+        # TODO(Grisha): @Dan experiment with the `read_csv` params so that we have
+        #  correct output, i.e. w/o `All_Futures_Contracts_1min.csv` and `#` in
+        #  column names.
+        columns = ["Symbol", "Link", "Description"]
         df = cpanh.read_csv(
             file_path,
             s3fs=self._s3fs,
-            index_col=0,
+            names=columns,
+            header=None,
             encoding="utf-8",
         )
+        df = df.reset_index()
+        print("COLUMNS", df.columns)
+        print("INDEX", df.index)
         return df
 
     def _read_data_for_one_symbol(
