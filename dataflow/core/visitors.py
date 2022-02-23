@@ -47,7 +47,7 @@ def extract_info(
         # TODO(gp): Not sure about the double copy. Maybe a single deepcopy is
         # enough.
         info[nid] = copy.copy(node_info)
-    return info
+    return info  # type: ignore
 
 
 # #############################################################################
