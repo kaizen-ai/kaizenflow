@@ -136,6 +136,11 @@ class DagBuilder(abc.ABC):
         _ = self, config
         return None
 
+    def get_nid(self, stage_name: str) -> str:
+        hdbg.dassert_isinstance(stage_name, str)
+        nid = self._nid_prefix + stage_name
+        return nid
+
     @abc.abstractmethod
     def _get_dag(
         self, config: cconfig.Config, mode: str = "strict"
@@ -144,11 +149,6 @@ class DagBuilder(abc.ABC):
         Implement the DAG.
         """
         ...
-
-    def get_nid(self, stage_name: str) -> str:
-        hdbg.dassert_isinstance(stage_name, str)
-        nid = self._nid_prefix + stage_name
-        return nid
 
     # ////////////////////////////////////////////////////////////////////////////
 
