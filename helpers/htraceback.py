@@ -63,6 +63,17 @@ def parse_traceback(
       - A `None` value means that no traceback was found.
     """
     lines = txt.split("\n")
+    # pylint: disable=line-too-long
+    # Remove the artifacts of a GH run. E.g.,
+    # "Run_fast_tests  Run fast tests  2022-02-19T16:53:07.0945561Z NameError: name 'cofinanc' is not defined" ->
+    # -> "NameError: name 'cofinanc' is not defined".
+    lines = [
+        re.split(
+            r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]+Z ",
+            line,
+        )[-1]
+        for line in lines
+    ]
     state = "look_for"
     cfile: List[CfileRow] = []
     i = 0
@@ -134,6 +145,27 @@ def parse_traceback(
         cfile = []
         traceback = None
     elif state == "end":
+        if (
+            end_idx < len(lines) - 1
+            and "Error:" not in lines[end_idx - 1]
+            and "Error:" in lines[end_idx]
+        ):
+            # Extend the traceback to the line with the error name.
+            # E.g., for the snippet below:
+            # '''
+            #    if repo_short_name == "amp":
+            # NameError: name 'repo_short_name' is not defined
+            # '''
+            # If the parsed traceback stops at 'if repo_short_name == "amp":', and thus,
+            # its last line does not include the error definition ("NameError:..."),
+            # and the following line does include the error definition,
+            # then the traceback will be extended to include the following line,
+            # making the parsed traceback end with the following two lines:
+            # '''
+            #    if repo_short_name == "amp":
+            # NameError: name 'repo_short_name' is not defined
+            # '''
+            end_idx = end_idx + 1
         hdbg.dassert_lte(0, start_idx)
         hdbg.dassert_lte(start_idx, end_idx)
         hdbg.dassert_lt(end_idx, len(lines))

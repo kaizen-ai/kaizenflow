@@ -12,6 +12,7 @@ from typing import Any, Callable, Iterator, List, Optional, Tuple, Union
 
 import pandas as pd
 import pyarrow as pa
+import pyarrow.fs as pafs
 import pyarrow.parquet as pq
 
 import helpers.hdatetime as hdateti
@@ -19,10 +20,28 @@ import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
 import helpers.hio as hio
 import helpers.hprint as hprint
+import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
 import helpers.htimer as htimer
 
 _LOG = logging.getLogger(__name__)
+
+
+def get_pyarrow_s3fs(*args: Any, **kwargs: Any) -> pafs.S3FileSystem:
+    """
+    Return an Pyarrow S3Fs object from a given AWS profile.
+
+    Same as `hs3.get_s3fs`, used specifically for accessing Parquet
+    datasets.
+    """
+    aws_credentials = hs3.get_aws_credentials(*args, **kwargs)
+    s3fs_ = pafs.S3FileSystem(
+        access_key=aws_credentials["aws_access_key_id"],
+        secret_key=aws_credentials["aws_secret_access_key"],
+        session_token=aws_credentials["aws_session_token"],
+        region=aws_credentials["aws_region"],
+    )
+    return s3fs_
 
 
 def from_parquet(
@@ -32,6 +51,7 @@ def from_parquet(
     filters: Optional[List[Any]] = None,
     log_level: int = logging.DEBUG,
     report_stats: bool = False,
+    aws_profile: Optional[str] = None,
 ) -> pd.DataFrame:
     """
     Load a dataframe from a Parquet file.
@@ -41,16 +61,23 @@ def from_parquet(
     """
     _LOG.debug(hprint.to_str("file_name columns filters"))
     hdbg.dassert_isinstance(file_name, str)
+    if aws_profile is not None:
+        hdbg.dassert(hs3.is_s3_path(file_name))
+        fs = get_pyarrow_s3fs(aws_profile)
+        file_name = file_name.lstrip("s3://")
+        # TODO(Danya): pyarrow S3FileSystem does not have `exists` method
+        #  for assertion.
+    else:
+        fs = None
+        hdbg.dassert_exists(file_name)
     # Load data.
     with htimer.TimedScope(
         logging.DEBUG, f"# Reading Parquet file '{file_name}'"
     ) as ts:
-        filesystem = None
-        # TODO(gp): Generalize for S3.
-        hdbg.dassert_exists(file_name)
         dataset = pq.ParquetDataset(
+            # Replace URI with path.
             file_name,
-            filesystem=filesystem,
+            filesystem=fs,
             filters=filters,
             use_legacy_dataset=False,
         )
