@@ -194,7 +194,7 @@ class DAG:
 
         Rely upon the unique nid for identifying the node.
         """
-        # In principle, `NodeInterface` could be supported; however, to do so,
+        # In principle, `_Node` could be supported; however, to do so,
         # the `run` methods below would need to be suitably modified.
         hdbg.dassert_issubclass(
             node, dtfcornode.Node, "Only DAGs of class `Node` are supported"
