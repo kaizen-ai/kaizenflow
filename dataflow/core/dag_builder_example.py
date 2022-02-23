@@ -28,7 +28,7 @@ class DagBuilderExample1(dtfcodabui.DagBuilder):
         Same as abstract method.
         """
         dict_ = {
-            self._get_nid("load_prices"): {
+            self.get_nid("load_prices"): {
                 "func": lambda x: x,
             },
         }
@@ -46,7 +46,7 @@ class DagBuilderExample1(dtfcodabui.DagBuilder):
         tail_nid = None
         # # Read data.
         stage = "load_prices"
-        nid = self._get_nid(stage)
+        nid = self.get_nid(stage)
         # TDOO: Do not use this node in `core`.
         node = dtfconosou.FunctionDataSource(nid, **config[nid].to_dict())
         tail_nid = self._append(dag, tail_nid, node)
@@ -67,7 +67,7 @@ class ReturnsBuilder(dtfcodabui.DagBuilder):
         config = cconfig.get_config_from_nested_dict(
             {
                 # Filter ATH.
-                self._get_nid("rets/filter_ath"): {
+                self.get_nid("rets/filter_ath"): {
                     "col_mode": "replace_all",
                     "transformer_kwargs": {
                         "start_time": datetime.time(9, 30),
@@ -75,7 +75,7 @@ class ReturnsBuilder(dtfcodabui.DagBuilder):
                     },
                 },
                 # Compute TWAP and VWAP.
-                self._get_nid("rets/resample"): {
+                self.get_nid("rets/resample"): {
                     "func_kwargs": {
                         "rule": "5T",
                         "resampling_groups": [
@@ -91,7 +91,7 @@ class ReturnsBuilder(dtfcodabui.DagBuilder):
                     },
                 },
                 # Calculate rets.
-                self._get_nid("rets/compute_ret_0"): {
+                self.get_nid("rets/compute_ret_0"): {
                     "cols": ["twap", "vwap"],
                     "col_mode": "merge_all",
                     "transformer_kwargs": {
@@ -99,13 +99,13 @@ class ReturnsBuilder(dtfcodabui.DagBuilder):
                     },
                 },
                 # Model volatility.
-                self._get_nid("rets/model_volatility"): {
+                self.get_nid("rets/model_volatility"): {
                     "cols": ["vwap_ret_0"],
                     "steps_ahead": 2,
                     "nan_mode": "leave_unchanged",
                 },
                 # Clip rets.
-                self._get_nid("rets/clip"): {
+                self.get_nid("rets/clip"): {
                     "cols": ["vwap_ret_0_vol_adj"],
                     "col_mode": "replace_selected",
                 },
@@ -123,7 +123,7 @@ class ReturnsBuilder(dtfcodabui.DagBuilder):
         _LOG.debug("%s", config)
         # Set weekends to Nan.
         stage = "rets/filter_weekends"
-        nid = self._get_nid(stage)
+        nid = self.get_nid(stage)
         node = dtfconotra.ColumnTransformer(
             nid,
             transformer_func=cofinanc.set_weekends_to_nan,
@@ -132,7 +132,7 @@ class ReturnsBuilder(dtfcodabui.DagBuilder):
         tail_nid = self._append(dag, None, node)
         # Set non-ATH to NaN.
         stage = "rets/filter_ath"
-        nid = self._get_nid(stage)
+        nid = self.get_nid(stage)
         node = dtfconotra.ColumnTransformer(
             nid,
             transformer_func=cofinanc.set_non_ath_to_nan,
@@ -141,7 +141,7 @@ class ReturnsBuilder(dtfcodabui.DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         # Resample.
         stage = "rets/resample"
-        nid = self._get_nid(stage)
+        nid = self.get_nid(stage)
         node = dtfconotra.FunctionWrapper(
             nid,
             func=cofinanc.resample_bars,
@@ -150,7 +150,7 @@ class ReturnsBuilder(dtfcodabui.DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         # Compute returns.
         stage = "rets/compute_ret_0"
-        nid = self._get_nid(stage)
+        nid = self.get_nid(stage)
         node = dtfconotra.ColumnTransformer(
             nid,
             transformer_func=cofinanc.compute_ret_0,
@@ -160,12 +160,12 @@ class ReturnsBuilder(dtfcodabui.DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         # Model volatility.
         stage = "rets/model_volatility"
-        nid = self._get_nid(stage)
+        nid = self.get_nid(stage)
         node = dtfcnovomo.VolatilityModel(nid, **config[nid].to_dict())
         tail_nid = self._append(dag, tail_nid, node)
         # Clip rets.
         stage = "rets/clip"
-        nid = self._get_nid(stage)
+        nid = self.get_nid(stage)
         node = dtfconotra.ColumnTransformer(
             nid,
             transformer_func=lambda x: x.clip(lower=-3, upper=3),
@@ -190,7 +190,7 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
         config = cconfig.get_config_from_nested_dict(
             {
                 # Load prices.
-                self._get_nid("rets/read_data"): {
+                self.get_nid("rets/read_data"): {
                     "frequency": "T",
                     "start_date": "2010-01-04 09:00:00",
                     "end_date": "2010-01-04 16:30:00",
@@ -201,7 +201,7 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
                     "seed": 0,
                 },
                 # Filter ATH.
-                self._get_nid("rets/filter_ath"): {
+                self.get_nid("rets/filter_ath"): {
                     "col_mode": "replace_all",
                     "transformer_kwargs": {
                         "start_time": datetime.time(9, 30),
@@ -209,7 +209,7 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
                     },
                 },
                 # Compute TWAP and VWAP.
-                self._get_nid("rets/resample"): {
+                self.get_nid("rets/resample"): {
                     "func_kwargs": {
                         "rule": "5T",
                         "resampling_groups": [
@@ -225,7 +225,7 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
                     },
                 },
                 # Calculate rets.
-                self._get_nid("rets/compute_ret_0"): {
+                self.get_nid("rets/compute_ret_0"): {
                     "cols": ["twap", "vwap"],
                     "col_mode": "merge_all",
                     "transformer_kwargs": {
@@ -233,13 +233,13 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
                     },
                 },
                 # Model volatility.
-                self._get_nid("rets/model_volatility"): {
+                self.get_nid("rets/model_volatility"): {
                     "cols": ["vwap_ret_0"],
                     "steps_ahead": 2,
                     "nan_mode": "leave_unchanged",
                 },
                 # Clip rets.
-                self._get_nid("rets/clip"): {
+                self.get_nid("rets/clip"): {
                     "cols": ["vwap_ret_0_vol_adj"],
                     "col_mode": "replace_selected",
                 },
@@ -257,12 +257,12 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
         _LOG.debug("%s", config)
         # Read data.
         stage = "rets/read_data"
-        nid = self._get_nid(stage)
+        nid = self.get_nid(stage)
         node = dtfconosou.ArmaDataSource(nid, **config[nid].to_dict())
         tail_nid = self._append(dag, None, node)
         # Set weekends to Nan.
         stage = "rets/filter_weekends"
-        nid = self._get_nid(stage)
+        nid = self.get_nid(stage)
         node = dtfconotra.ColumnTransformer(
             nid,
             transformer_func=cofinanc.set_weekends_to_nan,
@@ -271,7 +271,7 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         # Set non-ATH to NaN.
         stage = "rets/filter_ath"
-        nid = self._get_nid(stage)
+        nid = self.get_nid(stage)
         node = dtfconotra.ColumnTransformer(
             nid,
             transformer_func=cofinanc.set_non_ath_to_nan,
@@ -280,7 +280,7 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         # Resample.
         stage = "rets/resample"
-        nid = self._get_nid(stage)
+        nid = self.get_nid(stage)
         node = dtfconotra.FunctionWrapper(
             nid,
             func=cofinanc.resample_bars,
@@ -289,7 +289,7 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         # Compute returns.
         stage = "rets/compute_ret_0"
-        nid = self._get_nid(stage)
+        nid = self.get_nid(stage)
         node = dtfconotra.ColumnTransformer(
             nid,
             transformer_func=cofinanc.compute_ret_0,
@@ -299,12 +299,12 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         # Model volatility.
         stage = "rets/model_volatility"
-        nid = self._get_nid(stage)
+        nid = self.get_nid(stage)
         node = dtfcnovomo.VolatilityModel(nid, **config[nid].to_dict())
         tail_nid = self._append(dag, tail_nid, node)
         # Clip rets.
         stage = "rets/clip"
-        nid = self._get_nid(stage)
+        nid = self.get_nid(stage)
         node = dtfconotra.ColumnTransformer(
             nid,
             transformer_func=lambda x: x.clip(lower=-3, upper=3),
@@ -324,14 +324,14 @@ class MvnReturnsBuilder(dtfcodabui.DagBuilder):
     def get_config_template(self) -> cconfig.Config:
         config = cconfig.get_config_from_nested_dict(
             {
-                self._get_nid("filter_ath"): {
+                self.get_nid("filter_ath"): {
                     "col_mode": "replace_all",
                     "transformer_kwargs": {
                         "start_time": datetime.time(9, 30),
                         "end_time": datetime.time(16, 00),
                     },
                 },
-                self._get_nid("resample"): {
+                self.get_nid("resample"): {
                     "in_col_groups": [
                         ("close",),
                         ("volume",),
@@ -365,7 +365,7 @@ class MvnReturnsBuilder(dtfcodabui.DagBuilder):
                     "reindex_like_input": False,
                     "join_output_with_input": False,
                 },
-                self._get_nid("compute_ret_0"): {
+                self.get_nid("compute_ret_0"): {
                     "in_col_groups": [
                         ("close",),
                         ("vwap",),
@@ -395,7 +395,7 @@ class MvnReturnsBuilder(dtfcodabui.DagBuilder):
         _LOG.debug("%s", config)
         #
         stage = "filter_weekends"
-        nid = self._get_nid(stage)
+        nid = self.get_nid(stage)
         node = dtfconotra.ColumnTransformer(
             nid,
             transformer_func=cofinanc.set_weekends_to_nan,
@@ -404,7 +404,7 @@ class MvnReturnsBuilder(dtfcodabui.DagBuilder):
         tail_nid = self._append(dag, None, node)
         #
         stage = "filter_ath"
-        nid = self._get_nid(stage)
+        nid = self.get_nid(stage)
         node = dtfconotra.ColumnTransformer(
             nid,
             transformer_func=cofinanc.set_non_ath_to_nan,
@@ -413,7 +413,7 @@ class MvnReturnsBuilder(dtfcodabui.DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         #
         stage = "resample"
-        nid = self._get_nid(stage)
+        nid = self.get_nid(stage)
         node = dtfconotra.GroupedColDfToDfTransformer(
             nid,
             transformer_func=cofinanc.resample_bars,
@@ -422,7 +422,7 @@ class MvnReturnsBuilder(dtfcodabui.DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         #
         stage = "compute_ret_0"
-        nid = self._get_nid(stage)
+        nid = self.get_nid(stage)
         node = dtfconotra.GroupedColDfToDfTransformer(
             nid,
             transformer_func=cofinanc.compute_ret_0,

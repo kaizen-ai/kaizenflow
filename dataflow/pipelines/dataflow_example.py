@@ -61,18 +61,18 @@ class _NaivePipeline(dtfcore.DagBuilder):
 
         dict_ = {
             # Get data.
-            self._get_nid("get_data"): {
+            self.get_nid("get_data"): {
                 "source_node_name": "DataLoader",
                 "source_node_kwargs": {
                     "func": _get_data,
                 },
             },
             # Process data.
-            self._get_nid("process_data"): {
+            self.get_nid("process_data"): {
                 "func": _process_data,
             },
             # Place trades.
-            self._get_nid("process_forecasts"): {
+            self.get_nid("process_forecasts"): {
                 "prediction_col": "price",
                 "volatility_col": "price",
                 "process_forecasts_config": {},
@@ -96,12 +96,12 @@ class _NaivePipeline(dtfcore.DagBuilder):
         tail_nid = None
         # Get data.
         stage = "get_data"
-        nid = self._get_nid(stage)
+        nid = self.get_nid(stage)
         node = dtfsys.data_source_node_factory(nid, **config[nid].to_dict())
         tail_nid = self._append(dag, tail_nid, node)
         # Process data.
         stage = "process_data"
-        nid = self._get_nid(stage)
+        nid = self.get_nid(stage)
         node = dtfcore.FunctionWrapper(
             nid,
             **config[nid].to_dict(),
@@ -109,7 +109,7 @@ class _NaivePipeline(dtfcore.DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         # Process forecasts.
         stage = "process_forecasts"
-        nid = self._get_nid(stage)
+        nid = self.get_nid(stage)
         node = dtfsys.ProcessForecasts(
             nid,
             **config[nid].to_dict(),
