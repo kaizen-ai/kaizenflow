@@ -58,12 +58,11 @@ def from_parquet(
         logging.DEBUG, f"# Reading Parquet file '{file_name}'"
     ) as ts:
         # TODO(gp): Generalize for S3.
-        #hdbg.dassert_exists(file_name)
         dataset = pq.ParquetDataset(
             file_name,
             filesystem=fs,
             filters=filters,
-            #use_legacy_dataset=False,
+            use_legacy_dataset=False,
         )
         # To read also the index we need to use `read_pandas()`, instead of
         # `read_table()`.
