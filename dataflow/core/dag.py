@@ -160,11 +160,9 @@ class DAG:
         # ls -tr -1 tmp.dag_profile/*after* | xargs -n 1 -i sh -c 'echo; echo; echo "# {}"; cat {}'
         # ```
         self._profile_execution = profile_execution
-        if dst_dir:
-            self._dst_dir = dst_dir
+        self._dst_dir = dst_dir
+        if self._dst_dir:
             hio.create_dir(self._dst_dir, incremental=False)
-        else:
-            self._dst_dir = ""
         if self._save_node_interface or self._profile_execution:
             _LOG.warning(
                 "Setting up debug mode: %s",
@@ -388,8 +386,8 @@ class DAG:
             `get_outputs(method)`
         """
         sinks = self.get_sinks()
-        for nid in networ.topological_sort(self._nx_dag):
-            self._run_node(nid, method)
+        for id_, nid in enumerate(networ.topological_sort(self._nx_dag)):
+            self._run_node(id_, nid, method)
         return {sink: self.get_node(sink).get_outputs(method) for sink in sinks}
 
     def run_leq_node(
