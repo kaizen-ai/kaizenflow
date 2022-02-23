@@ -65,7 +65,7 @@ class DAG:
         :param force_freeing_nodes: force freeing DAG nodes after they are not
             needed any more
         """
-        self._dag = networ.DiGraph()
+        self._nx_dag = networ.DiGraph()
         # Store the DAG name.
         if name is not None:
             hdbg.dassert_isinstance(name, str)
@@ -95,8 +95,8 @@ class DAG:
         txt = []
         txt.append(f"name={self._name}")
         txt.append(f"mode={self._mode}")
-        txt.append("nodes=" + str(self.dag.nodes(data=True)))
-        txt.append("edges=" + str(self.dag.edges(data=True)))
+        txt.append("nodes=" + str(self.nx_dag.nodes(data=True)))
+        txt.append("edges=" + str(self.nx_dag.edges(data=True)))
         return "\n".join(txt)
 
     def __repr__(self) -> str:
@@ -174,22 +174,16 @@ class DAG:
                 dst_dir, None, "Need to specify a directory to save the data"
             )
 
-    # TODO(gp): A bit confusing since other classes have `dag / get_dag` method that
-    #  returns a DAG. Also the code does `dag.dag`. Maybe -> `nx_dag()` to say that
-    #  we are extracting the networkx data structures.
-    # TODO(gp): @all use a getter only.
     @property
-    def dag(self) -> networ.DiGraph:
-        return self._dag
+    def nx_dag(self) -> networ.DiGraph:
+        return self._nx_dag
 
     # TODO(*): Should we force to always have a name? So mypy can perform more
     #  checks.
-    # TODO(gp): @all use a getter only.
     @property
     def name(self) -> Optional[str]:
         return self._name
 
-    # TODO(gp): @all use a getter only.
     @property
     def mode(self) -> str:
         return self._mode
@@ -202,7 +196,7 @@ class DAG:
 
         Rely upon the unique nid for identifying the node.
         """
-        # In principle, `NodeInterface` could be supported; however, to do so,
+        # In principle, `_Node` could be supported; however, to do so,
         # the `run` methods below would need to be suitably modified.
         hdbg.dassert_issubclass(
             node, dtfcornode.Node, "Only DAGs of class `Node` are supported"
@@ -217,7 +211,7 @@ class DAG:
         # DAG.
         if self.mode == "strict":
             hdbg.dassert(
-                not self._dag.has_node(node.nid),
+                not self._nx_dag.has_node(node.nid),
                 "A node with nid=%s already belongs to the DAG",
                 node.nid,
             )
@@ -228,14 +222,14 @@ class DAG:
             #   - Add the new node to the graph.
             # This is useful for notebook research flows, e.g., rerunning
             # blocks that build the DAG incrementally.
-            if self._dag.has_node(node.nid):
+            if self._nx_dag.has_node(node.nid):
                 _LOG.warning(
                     "Node `%s` is already in DAG. Removing existing node, "
                     "successors, and all incident edges of such nodes",
                     node.nid,
                 )
                 # Remove node successors.
-                for nid in networ.descendants(self._dag, node.nid):
+                for nid in networ.descendants(self._nx_dag, node.nid):
                     _LOG.warning("Removing nid=%s", nid)
                     self.remove_node(nid)
                 # Remove node.
@@ -244,7 +238,7 @@ class DAG:
         else:
             hdbg.dfatal("Invalid mode='%s'", self.mode)
         # Add node.
-        self._dag.add_node(node.nid, stage=node)
+        self._nx_dag.add_node(node.nid, stage=node)
 
     def get_node(self, nid: dtfcornode.NodeId) -> dtfcornode.Node:
         """
@@ -253,15 +247,15 @@ class DAG:
         :param nid: unique node id
         """
         hdbg.dassert_isinstance(nid, dtfcornode.NodeId)
-        hdbg.dassert(self._dag.has_node(nid), "Node `%s` is not in DAG", nid)
-        return self._dag.nodes[nid]["stage"]
+        hdbg.dassert(self._nx_dag.has_node(nid), "Node `%s` is not in DAG", nid)
+        return self._nx_dag.nodes[nid]["stage"]  # type: ignore
 
     def remove_node(self, nid: dtfcornode.NodeId) -> None:
         """
         Remove node from DAG and clear any connected edges.
         """
-        hdbg.dassert(self._dag.has_node(nid), "Node `%s` is not in DAG", nid)
-        self._dag.remove_node(nid)
+        hdbg.dassert(self._nx_dag.has_node(nid), "Node `%s` is not in DAG", nid)
+        self._nx_dag.remove_node(nid)
 
     def connect(
         self,
@@ -307,10 +301,10 @@ class DAG:
             )
         hdbg.dassert_in(child_in, self.get_node(child_nid).input_names)
         # Ensure that `child_in` is not already hooked up to an output.
-        for nid in self._dag.predecessors(child_nid):
+        for nid in self._nx_dag.predecessors(child_nid):
             hdbg.dassert_not_in(
                 child_in,
-                self._dag.get_edge_data(nid, child_nid),
+                self._nx_dag.get_edge_data(nid, child_nid),
                 "`%s` already receiving input from node %s",
                 child_in,
                 nid,
@@ -318,11 +312,11 @@ class DAG:
         # Add the edge along with an `edge attribute` indicating the parent
         # output to connect to the child input.
         kwargs = {child_in: parent_out}
-        self._dag.add_edge(parent_nid, child_nid, **kwargs)
+        self._nx_dag.add_edge(parent_nid, child_nid, **kwargs)
         # If adding the edge causes the DAG property to be violated, remove the
         # edge and raise an error.
-        if not networ.is_directed_acyclic_graph(self._dag):
-            self._dag.remove_edge(parent_nid, child_nid)
+        if not networ.is_directed_acyclic_graph(self._nx_dag):
+            self._nx_dag.remove_edge(parent_nid, child_nid)
             hdbg.dfatal(
                 f"Creating edge {parent_nid} -> {child_nid} introduces a cycle!"
             )
@@ -341,8 +335,8 @@ class DAG:
         :return: list of nid's of source nodes
         """
         sources = []
-        for nid in networ.topological_sort(self._dag):
-            if not any(True for _ in self._dag.predecessors(nid)):
+        for nid in networ.topological_sort(self._nx_dag):
+            if not any(True for _ in self._nx_dag.predecessors(nid)):
                 sources.append(nid)
         return sources
 
@@ -364,8 +358,8 @@ class DAG:
         :return: list of nid's of sink nodes
         """
         sinks = []
-        for nid in networ.topological_sort(self._dag):
-            if not any(True for _ in self._dag.successors(nid)):
+        for nid in networ.topological_sort(self._nx_dag):
+            if not any(True for _ in self._nx_dag.successors(nid)):
                 sinks.append(nid)
         return sinks
 
@@ -394,8 +388,8 @@ class DAG:
             `get_outputs(method)`
         """
         sinks = self.get_sinks()
-        for id_, nid in enumerate(networ.topological_sort(self._dag)):
-            self._run_node(id_, nid, method)
+        for nid in networ.topological_sort(self._nx_dag):
+            self._run_node(nid, method)
         return {sink: self.get_node(sink).get_outputs(method) for sink in sinks}
 
     def run_leq_node(
@@ -417,8 +411,8 @@ class DAG:
             result of node `nid`'s `get_outputs(method)`
         """
         ancestors = filter(
-            lambda x: x in networ.ancestors(self._dag, nid),
-            networ.topological_sort(self._dag),
+            lambda x: x in networ.ancestors(self._nx_dag, nid),
+            networ.topological_sort(self._nx_dag),
         )
         # The `ancestors` filter only returns nodes strictly less than `nid`,
         # and so we need to add `nid` back.
@@ -438,7 +432,7 @@ class DAG:
 
     def _to_json(self) -> str:
         # Get internal networkx representation of the DAG.
-        graph: networ.classes.digraph.DiGraph = self.dag
+        graph: networ.classes.digraph.DiGraph = self.nx_dag
         node_link_data = networ.readwrite.json_graph.node_link_data(graph)
         # Remove stages names from `node_link_data` dictionary since they refer to
         # `Node` objects, which are not JSON serializable.
@@ -572,8 +566,8 @@ class DAG:
             run_node_dmemory = htimer.dmemory_start(logging.DEBUG, "run_node")
         # Retrieve the arguments needed to execute the `method` on the node.
         kwargs = {}
-        for pred_nid in self._dag.predecessors(nid):
-            kvs = self._dag.edges[[pred_nid, nid]]
+        for pred_nid in self._nx_dag.predecessors(nid):
+            kvs = self._nx_dag.edges[[pred_nid, nid]]
             _LOG.debug("pred_nid=%s, nid=%s", pred_nid, nid)
             pred_node = self.get_node(pred_nid)
             for input_name, value in kvs.items():
