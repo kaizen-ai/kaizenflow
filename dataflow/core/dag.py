@@ -165,8 +165,8 @@ class DAG:
             hio.create_dir(self._dst_dir, incremental=False)
         if self._save_node_interface or self._profile_execution:
             _LOG.warning(
-                "Setting up debug mode: "
-                + hprint.to_str("save_node_interface profile_execution dst_dir")
+                "Setting up debug mode: %s",
+                hprint.to_str("save_node_interface profile_execution dst_dir"),
             )
             hdbg.dassert_is_not(
                 dst_dir, None, "Need to specify a directory to save the data"
@@ -246,7 +246,7 @@ class DAG:
         """
         hdbg.dassert_isinstance(nid, dtfcornode.NodeId)
         hdbg.dassert(self._nx_dag.has_node(nid), "Node `%s` is not in DAG", nid)
-        return self._nx_dag.nodes[nid]["stage"]  # type: ignore
+        return self._nx_dag.nodes[nid]["stage"]
 
     def remove_node(self, nid: dtfcornode.NodeId) -> None:
         """
@@ -386,8 +386,8 @@ class DAG:
             `get_outputs(method)`
         """
         sinks = self.get_sinks()
-        for nid in networ.topological_sort(self._nx_dag):
-            self._run_node(nid, method)
+        for id_, nid in enumerate(networ.topological_sort(self._nx_dag)):
+            self._run_node(id_, nid, method)
         return {sink: self.get_node(sink).get_outputs(method) for sink in sinks}
 
     def run_leq_node(
