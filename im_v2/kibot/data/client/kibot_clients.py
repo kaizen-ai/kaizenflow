@@ -348,6 +348,22 @@ class KibotFuturesCsvParquetByAssetClient(
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
 
+    def get_metadata(self) -> pd.DataFrame:
+        """
+        ...
+        :return:
+        """
+        metadata_dir = "kibot/metadata"
+        file_name = "All_Futures_Contracts_1min.csv.gz"
+        file_path = os.path.join(metadata_dir, file_name)
+        df = cpanh.read_csv(
+            file_path,
+            s3fs=self._s3fs,
+            index_col=0,
+            encoding="utf-8",
+        )
+        return df
+
     def _read_data_for_one_symbol(
         self,
         full_symbol: icdc.FullSymbol,

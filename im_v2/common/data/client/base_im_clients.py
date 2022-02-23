@@ -190,6 +190,13 @@ class ImClient(abc.ABC):
         """
 
     @staticmethod
+    @abc.abstractmethod
+    def get_metadata() -> pd.DataFrame:
+        """
+        Return metadata.
+        """
+
+    @staticmethod
     def get_asset_ids_from_full_symbols(
         full_symbols: List[imvcdcfusy.FullSymbol],
     ) -> List[int]:
