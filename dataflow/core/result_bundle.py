@@ -133,11 +133,11 @@ class ResultBundle(abc.ABC):
 
     # Setters.
 
-    @result_df.setter
+    @result_df.setter  # type: ignore
     def result_df(self, value: pd.DataFrame) -> None:
         self._result_df = value
 
-    @payload.setter
+    @payload.setter  # type: ignore
     def payload(self, value: Optional[cconfig.Config]) -> None:
         self._payload = value
 
@@ -217,7 +217,7 @@ class ResultBundle(abc.ABC):
         if use_pq:
             # Split the object in two pieces.
             result_df = obj.result_df
-            obj.result_df = None
+            obj.result_df = None  # type: ignore
             # Save the config as pickle.
             file_name_rb = hio.change_filename_extension(
                 file_name, "pkl", "v2_0.pkl"
@@ -332,7 +332,7 @@ class ResultBundle(abc.ABC):
                 file_name, "pkl", "v1_0.pkl"
             )
             obj = hpickle.from_pickle(file_name, log_level=logging.DEBUG)
-        return obj
+        return obj  # type: ignore
 
     @staticmethod
     def _search_mapping(
