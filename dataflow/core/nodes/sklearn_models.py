@@ -13,7 +13,7 @@ import pandas as pd
 import sklearn as sklear
 
 import core.data_adapters as cdatadap
-import core.signal_processing as csigproc
+import core.finance.resampling as cfinresa
 import core.statistics as costatis
 import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.base as dtfconobas
@@ -98,12 +98,12 @@ class ContinuousSkLearnModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin)
         fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
         return fit_state
 
-    def set_fit_state(self, fit_state: Dict[str, Any]):
+    def set_fit_state(self, fit_state: Dict[str, Any]) -> None:
         self._model = fit_state["_model"]
         self._info["fit"] = fit_state["_info['fit']"]
 
     def _fit_predict_helper(
-        self, df_in: pd.DataFrame, fit: True
+        self, df_in: pd.DataFrame, fit: bool
     ) -> Dict[str, pd.DataFrame]:
         # Materialize names of x and y vars.
         x_vars = dtfcorutil.convert_to_list(self._x_vars)
@@ -263,7 +263,7 @@ class MultiindexPooledSkLearnModel(dtfconobas.FitPredictNode):
         self._model_kwargs = model_kwargs
         self._nan_mode = nan_mode
         #
-        self._key_fit_state = {}
+        self._key_fit_state: Dict = {}
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         return self._fit_predict_helper(df_in, fit=True)
@@ -381,7 +381,7 @@ class MultiindexSkLearnModel(dtfconobas.FitPredictNode):
         self._model_kwargs = model_kwargs
         self._nan_mode = nan_mode
         #
-        self._key_fit_state = {}
+        self._key_fit_state: Dict = {}
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         return self._fit_predict_helper(df_in, fit=True)
@@ -396,11 +396,13 @@ class MultiindexSkLearnModel(dtfconobas.FitPredictNode):
         }
         return fit_state
 
-    def set_fit_state(self, fit_state: Dict[str, Any]):
+    def set_fit_state(self, fit_state: Dict[str, Any]) -> None:
         self._key_fit_state = fit_state["_key_fit_state"]
         self._info["fit"] = fit_state["_info['fit']"]
 
-    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
+    def _fit_predict_helper(
+        self, df_in: pd.DataFrame, fit: bool
+    ) -> Dict[str, pd.DataFrame]:
         dtfcorutil.validate_df_indices(df_in)
         dfs = dtfconobas.GroupedColDfToDfColProcessor.preprocess(
             df_in, self._in_col_groups
@@ -526,9 +528,22 @@ class SkLearnModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
         fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
         return fit_state
 
-    def set_fit_state(self, fit_state: Dict[str, Any]):
+    def set_fit_state(self, fit_state: Dict[str, Any]) -> None:
         self._model = fit_state["_model"]
         self._info["fit"] = fit_state["_info['fit']"]
+
+    def _to_sklearn_format(
+        self, df: pd.DataFrame
+    ) -> Tuple[
+        List[dtfcorutil.NodeColumn],
+        np.array,
+        List[dtfcorutil.NodeColumn],
+        np.array,
+    ]:
+        x_vars = dtfcorutil.convert_to_list(self._x_vars)
+        y_vars = dtfcorutil.convert_to_list(self._y_vars)
+        x_vals, y_vals = cdatadap.transform_to_sklearn_old(df, x_vars, y_vars)
+        return x_vars, x_vals, y_vars, y_vals
 
     @staticmethod
     def _validate_input_df(df: pd.DataFrame) -> None:
@@ -549,22 +564,9 @@ class SkLearnModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
         pnl_rets = y.multiply(y_hat.rename(columns=lambda x: x.strip("_hat")))
         info["pnl_rets"] = pnl_rets
         info["sr"] = costatis.compute_sharpe_ratio(
-            cofinanc.resample(pnl_rets, rule="1B").sum(), time_scaling=252
+            cfinresa.resample(pnl_rets, rule="1B").sum(), time_scaling=252
         )
         return info
-
-    def _to_sklearn_format(
-        self, df: pd.DataFrame
-    ) -> Tuple[
-        List[dtfcorutil.NodeColumn],
-        np.array,
-        List[dtfcorutil.NodeColumn],
-        np.array,
-    ]:
-        x_vars = dtfcorutil.convert_to_list(self._x_vars)
-        y_vars = dtfcorutil.convert_to_list(self._y_vars)
-        x_vals, y_vals = cdatadap.transform_to_sklearn_old(df, x_vars, y_vars)
-        return x_vars, x_vals, y_vars, y_vals
 
     @staticmethod
     def _from_sklearn_format(
