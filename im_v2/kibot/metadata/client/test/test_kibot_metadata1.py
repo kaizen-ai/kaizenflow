@@ -3,7 +3,7 @@ import unittest.mock as mock
 import helpers.hunit_test as hunitest
 import im_v2.kibot.metadata.client.kibot_metadata as imvkmckime
 import im_v2.kibot.metadata.client.s3_backend as imvkmcs3ba
-import im_v2.kibot.metadata.test.mocking.mock_kibot_metadata as mkmd
+import im_v2.kibot.metadata.client.test.mocking.mock_kibot_metadata as mkmd
 
 MAX_ROWS = 500
 
