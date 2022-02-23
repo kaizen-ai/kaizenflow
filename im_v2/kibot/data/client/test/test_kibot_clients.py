@@ -1,4 +1,5 @@
 import os
+import pytest
 
 import pandas as pd
 
@@ -141,6 +142,7 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
 
     # ////////////////////////////////////////////////////////////////////////
 
+    @pytest.mark.slow("7 seconds.")
     def test_get_metadata1(self) -> None:
         root_dir = get_test_data_dir()
         extension = "csv.gz"
