@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.kibot.data.client.test.kibot_clients_example as ikidctkce
+import im_v2.kibot.data.client.kibot_clients_example as imvkdckcex
 """
 
 import os
@@ -27,9 +27,12 @@ def get_test_data_dir() -> str:
     return test_data_dir
 
 
-def get_KibotEquitiesCsvParquetByAssetClient_example1(unadjusted: bool) -> imvkdckicl.KibotEquitiesCsvParquetByAssetClient:
+def get_KibotEquitiesCsvParquetByAssetClient_example1(
+    unadjusted: bool,
+) -> imvkdckicl.KibotEquitiesCsvParquetByAssetClient:
     """
     Return a Kibot object with:
+
        - local `csv.gz` data
        - using equity data
 
@@ -59,9 +62,12 @@ def get_KibotEquitiesCsvParquetByAssetClient_example1(unadjusted: bool) -> imvkd
     return kibot_file_client
 
 
-def get_KibotEquitiesCsvParquetByAssetClient_example2(unadjusted: bool) -> imvkdckicl.KibotEquitiesCsvParquetByAssetClient:
+def get_KibotEquitiesCsvParquetByAssetClient_example2(
+    unadjusted: bool,
+) -> imvkdckicl.KibotEquitiesCsvParquetByAssetClient:
     """
     Return a Kibot object with:
+
        - local `pq` data
        - using equity data
 
@@ -79,9 +85,12 @@ def get_KibotEquitiesCsvParquetByAssetClient_example2(unadjusted: bool) -> imvkd
     return kibot_file_client
 
 
-def get_KibotFuturesCsvParquetByAssetClient_example1(contract_type: str) -> imvkdckicl.KibotFuturesCsvParquetByAssetClient:
+def get_KibotFuturesCsvParquetByAssetClient_example1(
+    contract_type: str,
+) -> imvkdckicl.KibotFuturesCsvParquetByAssetClient:
     """
     Return a Kibot object with:
+
        - local `csv.gz` data
        - using futures data
 
@@ -97,9 +106,12 @@ def get_KibotFuturesCsvParquetByAssetClient_example1(contract_type: str) -> imvk
     return kibot_file_client
 
 
-def get_KibotFuturesCsvParquetByAssetClient_example2(contract_type: str) -> imvkdckicl.KibotFuturesCsvParquetByAssetClient:
+def get_KibotFuturesCsvParquetByAssetClient_example2(
+    contract_type: str,
+) -> imvkdckicl.KibotFuturesCsvParquetByAssetClient:
     """
     Return a Kibot object with:
+
        - local `pq` data
        - using futures data
 
@@ -113,6 +125,3 @@ def get_KibotFuturesCsvParquetByAssetClient_example2(contract_type: str) -> imvk
         contract_type,
     )
     return kibot_file_client
-
-
-
