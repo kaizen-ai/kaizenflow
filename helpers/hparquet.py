@@ -75,7 +75,8 @@ def from_parquet(
     ) as ts:
         # TODO(gp): Generalize for S3.
         dataset = pq.ParquetDataset(
-            file_name,
+            # Replace URI with path.
+            file_name.lstrip("s3://"),
             filesystem=fs,
             filters=filters,
             use_legacy_dataset=False,
