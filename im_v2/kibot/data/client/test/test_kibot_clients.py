@@ -3,7 +3,7 @@ from typing import List
 import pandas as pd
 
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
-import im_v2.kibot.data.client.test.kibot_clients_example as ikidctkce
+import im_v2.kibot.data.client.kibot_clients_example as ikidctkce
 
 # #############################################################################
 # TestKibotEquitiesCsvParquetByAssetClient
