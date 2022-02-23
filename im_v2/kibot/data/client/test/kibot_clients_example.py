@@ -30,7 +30,7 @@ def get_test_data_dir() -> str:
 def get_KibotEquitiesCsvParquetByAssetClient_example1(unadjusted: bool) -> imvkdckicl.KibotEquitiesCsvParquetByAssetClient:
     """
     Return a Kibot object with:
-       - local (non-S3) `csv.gz` data
+       - local `csv.gz` data
        - using equity data
 
     :param unadjusted: whether asset class prices are unadjusted (i.e., True or False)
@@ -61,7 +61,7 @@ def get_KibotEquitiesCsvParquetByAssetClient_example1(unadjusted: bool) -> imvkd
 def get_KibotEquitiesCsvParquetByAssetClient_example2(unadjusted: bool) -> imvkdckicl.KibotEquitiesCsvParquetByAssetClient:
     """
     Return a Kibot object with:
-       - local (non-S3) `pq` data
+       - local `pq` data
        - using equity data
 
     :param unadjusted: whether asset class prices are unadjusted (i.e., True or False)
@@ -81,7 +81,7 @@ def get_KibotEquitiesCsvParquetByAssetClient_example2(unadjusted: bool) -> imvkd
 def get_KibotFuturesCsvParquetByAssetClient_example1(contract_type: str) -> imvkdckicl.KibotFuturesCsvParquetByAssetClient:
     """
     Return a Kibot object with:
-       - local (non-S3) `csv.gz` data
+       - local `csv.gz` data
        - using futures data
 
     :param contract_type: futures contract type (e.g., "continuous", "expiry")
@@ -99,7 +99,7 @@ def get_KibotFuturesCsvParquetByAssetClient_example1(contract_type: str) -> imvk
 def get_KibotFuturesCsvParquetByAssetClient_example2(contract_type: str) -> imvkdckicl.KibotFuturesCsvParquetByAssetClient:
     """
     Return a Kibot object with:
-       - local (non-S3) `pq` data
+       - local `pq` data
        - using futures data
 
     :param contract_type: futures contract type (e.g., "continuous", "expiry")
