@@ -41,7 +41,7 @@ def _extract_agraph_from_dag(dag: dtfcordag.DAG) -> pygraphviz.agraph.AGraph:
     """
     # Extract networkx DAG.
     hdbg.dassert_isinstance(dag, dtfcordag.DAG)
-    graph = dag.dag
+    graph = dag.nx_dag
     hdbg.dassert_isinstance(graph, networ.Graph)
     # Convert the DAG into a pygraphviz graph.
     agraph = networ.nx_agraph.to_agraph(graph)
