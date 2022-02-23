@@ -14,7 +14,7 @@ import core.pandas_helpers as cpanh
 import helpers.hdbg as hdbg
 import helpers.hs3 as hs3
 import im_v2.common.data.client as icdc
-import im_v2.kibot.metadata.client.kibot_metadata as imvkmlkime
+import im_v2.kibot.metadata.client.kibot_metadata as imvkmckime
 
 _LOG = logging.getLogger(__name__)
 
@@ -57,6 +57,7 @@ class KibotClient(icdc.ImClient):
         See description in the parent class.
 
         Output metadata snippet example:
+
         ```
            Kibot_symbol                            Description   StartDate  ...
         0            AC            CONTINUOUS ETHANOL CONTRACT  2009-09-28
@@ -66,7 +67,7 @@ class KibotClient(icdc.ImClient):
         251         ZWT          CONTINUOUS WHEAT TAS CONTRACT         NaT
         ```
         """
-        metadata_client = imvkmlkime.KibotMetadata()
+        metadata_client = imvkmckime.KibotMetadata()
         metadata = metadata_client.get_metadata()
         return metadata
 
