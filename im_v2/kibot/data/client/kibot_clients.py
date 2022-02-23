@@ -55,6 +55,14 @@ class KibotClient(icdc.ImClient):
     def get_metadata() -> pd.DataFrame:
         """
         See description in the parent class.
+
+        Output metadata example:
+        ```
+           Kibot_symbol                                    Description  StartDate                                  Exchange Exchange_group Exchange_abbreviation Exchange_symbol  num_contracts min_contract max_contract  num_expiries                                 expiries
+        0           AC                    CONTINUOUS ETHANOL CONTRACT 2009-09-28      Chicago Board Of Trade (CBOT GLOBEX)            CME                  CBOT              EH            122   2009-10-01   2019-12-01            12  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        1           AD          CONTINUOUS AUSTRALIAN DOLLAR CONTRACT 2009-09-27  Chicago Mercantile Exchange (CME GLOBEX)            NaN                   NaN             NaN             65   2009-12-01   2020-12-01            12  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        2           AE  CONTINUOUS BLOOMBERG COMMODITY INDEX CONTRACT        NaT                                       NaN            CME                  CBOT              AW             38   2010-06-01   2019-09-01             4                            [3, 6, 9, 12]
+        ```
         """
         metadata_client = imvkmlkime.KibotMetadata()
         metadata = metadata_client.get_metadata()
