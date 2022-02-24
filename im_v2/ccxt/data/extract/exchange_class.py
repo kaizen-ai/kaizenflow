@@ -158,7 +158,12 @@ class CcxtExchange:
             "Exchange %s doesn't have fetchOrderBook",
             self._exchange,
         )
-        hdbg.dassert_in(currency_pair, self.currency_pairs)
+
+        hdbg.dassert_in(
+            currency_pair,
+            self.currency_pairs,
+            "Currency pair is not present in exchange",
+        )
         # Download current order book.
         # TODO(Grisha): use `_` instead of `/` as currencies separator in `symbol`.
         order_book = self._exchange.fetch_order_book(currency_pair)

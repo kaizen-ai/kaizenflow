@@ -32,7 +32,9 @@ class TestCcxtExchange1(hunitest.TestCase):
 
     @pytest.mark.slow()
     @umock.patch.object(imvcdeexcl.hdateti, "get_current_time")
-    def test_download_ohlcv_data1(self, mock_get_current_time: umock.MagicMock):
+    def test_download_ohlcv_data1(
+        self, mock_get_current_time: umock.MagicMock
+    ) -> None:
         """
         Test download for historical data.
         """
@@ -54,14 +56,99 @@ class TestCcxtExchange1(hunitest.TestCase):
         actual = hunitest.convert_df_to_json_string(actual, n_tail=None)
         self.check_string(actual)
 
-    @pytest.mark.slow()
-    def test_download_ohlcv_data2(self):
+    def test_download_ohlcv_data2(self) -> None:
         """
         Test download for latest bars when no timestamps are provided.
         """
         actual = self._download_ohlcv_data(None, None)
         # Verify dataframe length. Only one bar is obtained.
         self.assertEqual(500, actual.shape[0])
+
+    def test_download_ohlcv_data_invalid_input1(self) -> None:
+        """
+        Run with invalid start timestamp.
+        """
+        # Initialize class.
+        exchange_class = imvcdeexcl.CcxtExchange("binance")
+        # Run with invalid input.
+        start_timestamp = "invalid"
+        end_timestamp = pd.Timestamp("2021-09-10T00:00:00Z")
+        with pytest.raises(AssertionError) as fail:
+            exchange_class.download_ohlcv_data(
+                currency_pair="BTC/USDT",
+                start_timestamp=start_timestamp,
+                end_timestamp=end_timestamp,
+            )
+        # Check output for error.
+        actual = str(fail.value)
+        expected = (
+            "'invalid' is '<class 'str'>' instead of "
+            "'<class 'pandas._libs.tslibs.timestamps.Timestamp'"
+        )
+        self.assertIn(expected, actual)
+
+    def test_download_ohlcv_data_invalid_input2(self) -> None:
+        """
+        Run with invalid end timestamp.
+        """
+        # Initialize class.
+        exchange_class = imvcdeexcl.CcxtExchange("binance")
+        # Run with invalid input.
+        start_timestamp = pd.Timestamp("2021-09-09T00:00:00Z")
+        end_timestamp = "invalid"
+        with pytest.raises(AssertionError) as fail:
+            exchange_class.download_ohlcv_data(
+                currency_pair="BTC/USDT",
+                start_timestamp=start_timestamp,
+                end_timestamp=end_timestamp,
+            )
+        # Check output for error.
+        actual = str(fail.value)
+        expected = (
+            "'invalid' is '<class 'str'>' instead of "
+            "'<class 'pandas._libs.tslibs.timestamps.Timestamp'"
+        )
+        self.assertIn(expected, actual)
+
+    def test_download_ohlcv_data_invalid_input3(self) -> None:
+        """
+        Run with invalid range.
+
+        Start greater than the end.
+        """
+        # Initialize class.
+        exchange_class = imvcdeexcl.CcxtExchange("binance")
+        # Run with invalid input.
+        start_timestamp = pd.Timestamp("2021-09-10T00:00:00Z")
+        end_timestamp = pd.Timestamp("2021-09-09T00:00:00Z")
+        with pytest.raises(AssertionError) as fail:
+            exchange_class.download_ohlcv_data(
+                currency_pair="BTC/USDT",
+                start_timestamp=start_timestamp,
+                end_timestamp=end_timestamp,
+            )
+        # Check output for error.
+        actual = str(fail.value)
+        expected = "2021-09-10 00:00:00+00:00 <= 2021-09-09 00:00:00+00:00"
+        self.assertIn(expected, actual)
+
+    def test_download_ohlcv_data_invalid_input4(self) -> None:
+        """
+        Run with invalid currency pair.
+        """
+        # Initialize class.
+        exchange_class = imvcdeexcl.CcxtExchange("binance")
+        # Run with invalid input.
+        with pytest.raises(AssertionError) as fail:
+            exchange_class.download_ohlcv_data(
+                currency_pair="invalid_currency_pair",
+                start_timestamp=None,
+                end_timestamp=None,
+            )
+        # Check output for error.
+        actual = str(fail.value)
+        expected = "Currency pair is not present in exchange"
+        self.assertIn(expected, actual)
 
     def _download_ohlcv_data(
         self,
@@ -108,7 +195,7 @@ class TestCcxtExchange1(hunitest.TestCase):
         self.assertListEqual(exp_col_types, col_types)
         return actual
 
-    def test_download_order_book(self):
+    def test_download_order_book(self) -> None:
         """
         Verify that order book is downloaded correctly.
         """
@@ -123,3 +210,17 @@ class TestCcxtExchange1(hunitest.TestCase):
             "nonce",
         ]
         self.assertListEqual(order_book_keys, list(order_book.keys()))
+
+    def test_download_order_book_invalid_input1(self) -> None:
+        """
+        Run with invalid currency pair.
+        """
+        # Initialize class.
+        exchange_class = imvcdeexcl.CcxtExchange("binance")
+        # Run with invalid input.
+        with pytest.raises(AssertionError) as fail:
+            exchange_class.download_order_book("invalid_currency_pair")
+        # Check output for error.
+        actual = str(fail.value)
+        expected = "Currency pair is not present in exchange"
+        self.assertIn(expected, actual)
