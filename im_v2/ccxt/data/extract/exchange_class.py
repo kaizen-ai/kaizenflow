@@ -158,7 +158,6 @@ class CcxtExchange:
             "Exchange %s doesn't have fetchOrderBook",
             self._exchange,
         )
-
         hdbg.dassert_in(
             currency_pair,
             self.currency_pairs,
