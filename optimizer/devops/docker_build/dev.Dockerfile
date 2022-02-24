@@ -3,7 +3,7 @@
 FROM ubuntu:20.04 AS builder
 
 # Specify the `devops` dir.
-ARG DEVOPS_ROOT=optimizer/devops
+ARG DEVOPS_ROOT=/devops
 
 # Name of the virtual environment to create.
 ENV ENV_NAME="venv"
