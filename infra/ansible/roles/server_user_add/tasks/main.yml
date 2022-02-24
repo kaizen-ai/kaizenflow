@@ -7,15 +7,7 @@
   file:
     path: "{{ password_directory }}"
     state: directory
-    
-- name: Setup permissions on user's home directory
-  file:
-    path: "{{ home_dir }}"
-    state: directory
-    owner: "{{ os_username }}"
-    group: "{{ os_username }}"
-    mode: 0700
-    
+
 - name: Create user account
   user:
     group: "{{ os_username }}"
@@ -25,7 +17,15 @@
     append: yes
     home: "{{ home_dir }}"
     password: "{{ lookup('password', password_file_path) | password_hash('sha512') }}"
-
+    
+- name: Setup permissions on user's home directory
+  file:
+    path: "{{ home_dir }}"
+    state: directory
+    owner: "{{ os_username }}"
+    group: "{{ os_username }}"
+    mode: 0700
+    
 - name: Add user's pub key to his authorized_keys
   authorized_key:
     user: "{{ os_username }}"
