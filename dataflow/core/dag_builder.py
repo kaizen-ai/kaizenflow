@@ -56,7 +56,6 @@ class DagBuilder(abc.ABC):
             self._nid_prefix += "/"
 
     def __str__(self) -> str:
-        return ""
         txt = []
         txt.append(f"nid_prefix={self._nid_prefix}")
         #

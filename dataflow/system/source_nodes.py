@@ -71,9 +71,11 @@ def data_source_node_factory(
     elif source_node_name == "RealTimeDataSource":
         ret = RealTimeDataSource(nid, **source_node_kwargs)
     elif source_node_name == "HistoricalDataSource":
+        assert 0
         pass
 
     elif source_node_name == "disk":
+        assert 0
         if False:
             ret = dtfcore.DiskDataSource(nid, **source_node_kwargs)
         else:
