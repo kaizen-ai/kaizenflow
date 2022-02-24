@@ -14,8 +14,9 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
 
     def test_read_csv_data2(self) -> None:
         full_symbols = ["kibot::HD", "kibot::AMP"]
+        unadjusted = False
         client = imvkdckcex.get_KibotEquitiesCsvParquetByAssetClient_example1(
-            False
+            unadjusted
         )
         #
         expected_length = 262
@@ -53,8 +54,9 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         full_symbols = ["kibot::HD", "kibot::AMP"]
         start_ts = pd.Timestamp("2015-09-29T09:23:00+00:00")
         end_ts = pd.Timestamp("2015-09-29T09:35:00+00:00")
+        unadjusted = False
         client = imvkdckcex.get_KibotEquitiesCsvParquetByAssetClient_example1(
-            False
+            unadjusted
         )
         #
         expected_length = 19
@@ -97,7 +99,8 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         full_symbols = ["kibot::HD", "kibot::AMP"]
         start_ts = pd.Timestamp("2015-09-29T09:23:00+00:00")
         end_ts = pd.Timestamp("2015-09-29T09:35:00+00:00")
-        client = imvkdckcex.get_KibotEquitiesCsvParquetByAssetClient_example1(True)
+        unadjusted = True
+        client = imvkdckcex.get_KibotEquitiesCsvParquetByAssetClient_example1(unadjusted)
         #
         expected_length = 19
         expected_column_names = self._get_expected_column_names()
@@ -137,8 +140,9 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         start_ts = pd.Timestamp("2015-09-29T09:23:00+00:00")
         end_ts = pd.Timestamp("2015-09-29T09:35:00+00:00")
         #
+        unadjusted = False
         client = imvkdckcex.get_KibotEquitiesCsvParquetByAssetClient_example2(
-            False
+            unadjusted
         )
         #
         expected_length = 24
@@ -199,8 +203,9 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
 
     def test_read_csv_data2(self) -> None:
         full_symbols = ["kibot::ZI", "kibot::W"]
+        contract_type = "continuous"
         client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example1(
-            "continuous"
+            contract_type
         )
         #
         expected_length = 3951
@@ -237,8 +242,9 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         start_ts = pd.Timestamp("2009-09-29T03:38:00+00:00")
         end_ts = pd.Timestamp("2009-09-29T03:55:00+00:00")
         #
+        contract_type = "continuous"
         client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example1(
-            "continuous"
+            contract_type
         )
         #
         expected_length = 19
@@ -277,8 +283,9 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         start_ts = pd.Timestamp("2009-09-27T19:45:00+00:00")
         end_ts = pd.Timestamp("2009-09-27T20:05:00+00:00")
         #
+        contract_type = "expiry"
         client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example1(
-            "expiry"
+            contract_type
         )
         #
         expected_length = 41
@@ -319,8 +326,9 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         start_ts = pd.Timestamp("2009-09-29T03:38:00+00:00")
         end_ts = pd.Timestamp("2009-09-29T03:55:00+00:00")
         #
+        contract_type = "continuous"
         client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example2(
-            "continuous"
+            contract_type
         )
         #
         expected_length = 36
@@ -361,8 +369,9 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         start_ts = pd.Timestamp("2009-09-27T19:28:00+00:00")
         end_ts = pd.Timestamp("2009-09-27T19:50:00+00:00")
         #
+        contract_type = "expiry"
         client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example2(
-            "expiry"
+            contract_type
         )
         #
         expected_length = 21
