@@ -136,6 +136,20 @@ class DagBuilder(abc.ABC):
         _ = self, config
         return None
 
+    def _get_nid(self, stage_name: str) -> str:
+        hdbg.dassert_isinstance(stage_name, str)
+        nid = self._nid_prefix + stage_name
+        return nid
+
+    @abc.abstractmethod
+    def _get_dag(
+        self, config: cconfig.Config, mode: str = "strict"
+    ) -> dtfcordag.DAG:
+        """
+        Implement the DAG.
+        """
+        ...
+
     # ////////////////////////////////////////////////////////////////////////////
 
     @staticmethod
@@ -152,18 +166,6 @@ class DagBuilder(abc.ABC):
         for key in config.to_dict().keys():
             # This raises if the node does not exist.
             dag.get_node(key)
-
-    @abc.abstractmethod
-    def _get_dag(self, config: cconfig.Config, mode: str = "strict"):
-        """
-        Implement the DAG.
-        """
-        ...
-
-    def _get_nid(self, stage_name: str) -> str:
-        hdbg.dassert_isinstance(stage_name, str)
-        nid = self._nid_prefix + stage_name
-        return nid
 
     @staticmethod
     def _append(
