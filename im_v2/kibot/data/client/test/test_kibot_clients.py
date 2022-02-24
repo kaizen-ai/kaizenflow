@@ -12,6 +12,42 @@ import im_v2.kibot.data.client.kibot_clients_example as imvkdckcex
 
 class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
 
+    def test_read_csv_data1(self) -> None:
+        full_symbol = "kibot::HD"
+        unadjusted = False
+        client = imvkdckcex.get_KibotEquitiesCsvParquetByAssetClient_example1(
+            unadjusted
+        )
+        #
+        expected_length = 161
+        expected_column_names = _get_expected_column_names()
+        expected_column_unique_values = {"full_symbol": ["kibot::HD"]}
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2015-09-29 08:24:00+00:00, 2015-09-29 11:04:00+00:00]
+        columns=full_symbol,open,high,low,close,volume
+        shape=(161, 6)
+                                  full_symbol    open      high       low     close  volume
+        timestamp                                                                          
+        2015-09-29 08:24:00+00:00   kibot::HD  102.99  102.99.1  102.99.2  102.99.3   112.0
+        2015-09-29 08:25:00+00:00   kibot::HD     NaN       NaN       NaN       NaN     NaN
+        2015-09-29 08:26:00+00:00   kibot::HD     NaN       NaN       NaN       NaN     NaN
+        ...
+        2015-09-29 11:02:00+00:00   kibot::HD  102.03  102.03  101.95  101.99   6028.0
+        2015-09-29 11:03:00+00:00   kibot::HD  101.99  102.08  101.99  102.06  13641.0
+        2015-09-29 11:04:00+00:00   kibot::HD  102.06  102.17  102.03  102.17  35040.0
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data1(
+            client,
+            full_symbol,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
     def test_read_csv_data2(self) -> None:
         full_symbols = ["kibot::HD", "kibot::AMP"]
         unadjusted = False
@@ -20,7 +56,7 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         )
         #
         expected_length = 262
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = _get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["kibot::HD", "kibot::AMP"]
         }
@@ -50,6 +86,124 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    def test_read_parquet_data2(self) -> None:
+        full_symbols = ["kibot::HD", "kibot::QCOM"]
+        unadjusted = False
+        client = imvkdckcex.get_KibotEquitiesCsvParquetByAssetClient_example2(
+            unadjusted
+        )
+        #
+        expected_length = 332
+        expected_column_names = _get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["kibot::HD", "kibot::QCOM"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2015-09-29 08:05:00+00:00, 2015-09-29 11:03:00+00:00]
+        columns=full_symbol,open,high,low,close,volume
+        shape=(332, 6)
+                                   full_symbol   open   high    low  close  volume
+        timestamp                                                                 
+        2015-09-29 08:05:00+00:00  kibot::QCOM  44.32  44.32  44.32  44.32   357.0
+        2015-09-29 08:06:00+00:00  kibot::QCOM    NaN    NaN    NaN    NaN     NaN
+        2015-09-29 08:07:00+00:00  kibot::QCOM    NaN    NaN    NaN    NaN     NaN
+        ...
+        2015-09-29 11:01:00+00:00   kibot::HD  101.95  102.05  101.91  102.04   8269.0
+        2015-09-29 11:02:00+00:00   kibot::HD  102.03  102.03  101.95  101.99   6028.0
+        2015-09-29 11:03:00+00:00   kibot::HD  101.99  102.08  101.99  102.06  13641.0
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data2(
+            client,
+            full_symbols,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_read_csv_data3(self) -> None:
+        full_symbols = ["kibot::HD", "kibot::AMP"]
+        start_ts = pd.Timestamp("2015-09-29T09:23:00+00:00")
+        unadjusted = False
+        client = imvkdckcex.get_KibotEquitiesCsvParquetByAssetClient_example1(
+            unadjusted
+        )
+        #
+        expected_length = 203
+        expected_column_names = _get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["kibot::HD", "kibot::AMP"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+         # df=
+         index=[2015-09-29 09:23:00+00:00, 2015-09-29 11:10:00+00:00]
+         columns=full_symbol,open,high,low,close,volume
+         shape=(203, 6)
+                                   full_symbol    open    high     low   close  volume
+         timestamp                                                                    
+         2015-09-29 09:23:00+00:00   kibot::HD  102.36  102.36  102.36  102.36   447.0
+         2015-09-29 09:24:00+00:00   kibot::HD     NaN     NaN     NaN     NaN     NaN
+         2015-09-29 09:25:00+00:00   kibot::HD     NaN     NaN     NaN     NaN     NaN
+         ...
+         2015-09-29 11:08:00+00:00  kibot::AMP  91.68  91.68  91.65  91.67  1374.0
+         2015-09-29 11:09:00+00:00  kibot::AMP  91.62  91.64  91.56  91.56  1494.0
+         2015-09-29 11:10:00+00:00  kibot::AMP  91.53  91.57  91.51  91.53  1374.0
+         """
+        # pylint: enable=line-too-long
+        self._test_read_data3(
+            client,
+            full_symbols,
+            start_ts,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_read_csv_data4(self) -> None:
+        full_symbols = ["kibot::HD", "kibot::AMP"]
+        end_ts = pd.Timestamp("2015-09-29T09:35:00+00:00")
+        unadjusted = False
+        client = imvkdckcex.get_KibotEquitiesCsvParquetByAssetClient_example1(
+            unadjusted
+        )
+        #
+        expected_length = 78
+        expected_column_names = _get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["kibot::HD", "kibot::AMP"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+         # df=
+         index=[2015-09-29 08:24:00+00:00, 2015-09-29 09:35:00+00:00]
+         columns=full_symbol,open,high,low,close,volume
+         shape=(78, 6)
+                                   full_symbol    open      high       low     close  volume
+         timestamp                                                                          
+         2015-09-29 08:24:00+00:00   kibot::HD  102.99  102.99.1  102.99.2  102.99.3   112.0
+         2015-09-29 08:25:00+00:00   kibot::HD     NaN       NaN       NaN       NaN     NaN
+         2015-09-29 08:26:00+00:00   kibot::HD     NaN       NaN       NaN       NaN     NaN
+         ...
+         2015-09-29 09:34:00+00:00   kibot::HD  102.17  102.33  102.16  102.33   6145.0
+         2015-09-29 09:35:00+00:00  kibot::AMP   90.61   90.62    90.5   90.52   2635.0
+         2015-09-29 09:35:00+00:00   kibot::HD  102.39  102.49  102.12  102.15  19620.0
+         """
+        # pylint: enable=line-too-long
+        self._test_read_data4(
+            client,
+            full_symbols,
+            end_ts,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
     def test_read_csv_data5(self) -> None:
         full_symbols = ["kibot::HD", "kibot::AMP"]
         start_ts = pd.Timestamp("2015-09-29T09:23:00+00:00")
@@ -60,7 +214,7 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         )
         #
         expected_length = 19
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = _get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["kibot::HD", "kibot::AMP"]
         }
@@ -103,7 +257,7 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         client = imvkdckcex.get_KibotEquitiesCsvParquetByAssetClient_example1(unadjusted)
         #
         expected_length = 19
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = _get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["kibot::HD", "kibot::AMP"]
         }
@@ -146,7 +300,7 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         )
         #
         expected_length = 24
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = _get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["kibot::HD", "kibot::QCOM"]
         }
@@ -178,21 +332,6 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
-    @staticmethod
-    def _get_expected_column_names() -> List[str]:
-        """
-        Return a list of expected column names.
-        """
-        expected_column_names = [
-            "full_symbol",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-        ]
-        return expected_column_names
-
 
 # #############################################################################
 # TestKibotEquitiesCsvParquetByAssetClient
@@ -200,6 +339,42 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
 
 
 class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
+
+    def test_read_csv_data1(self) -> None:
+        full_symbol = "kibot::ZI"
+        contract_type = "continuous"
+        client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example1(
+            contract_type
+        )
+        #
+        expected_length = 1573
+        expected_column_names = _get_expected_column_names()
+        expected_column_unique_values = {"full_symbol": ["kibot::ZI"]}
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2009-09-28 19:25:00+00:00, 2009-09-29 21:37:00+00:00]
+        columns=full_symbol,open,high,low,close,volume
+        shape=(1573, 6)
+                                  full_symbol   open     high      low    close  volume
+        timestamp                                                                      
+        2009-09-28 19:25:00+00:00   kibot::ZI  16.23  16.23.1  16.23.2  16.23.3     1.0
+        2009-09-28 19:26:00+00:00   kibot::ZI    NaN      NaN      NaN      NaN     NaN
+        2009-09-28 19:27:00+00:00   kibot::ZI    NaN      NaN      NaN      NaN     NaN
+        ...
+        2009-09-29 21:35:00+00:00   kibot::ZI    NaN    NaN    NaN    NaN     NaN
+        2009-09-29 21:36:00+00:00   kibot::ZI    NaN    NaN    NaN    NaN     NaN
+        2009-09-29 21:37:00+00:00   kibot::ZI  16.23  16.23  16.23  16.23     1.0
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data1(
+            client,
+            full_symbol,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
 
     def test_read_csv_data2(self) -> None:
         full_symbols = ["kibot::ZI", "kibot::W"]
@@ -209,7 +384,7 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         )
         #
         expected_length = 3951
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = _get_expected_column_names()
         expected_column_unique_values = {"full_symbol": ["kibot::ZI", "kibot::W"]}
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -237,6 +412,122 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    def test_read_parquet_data2(self) -> None:
+        full_symbols = ["kibot::ZI", "kibot::EZ"]
+        contract_type = "continuous"
+        client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example2(
+            contract_type
+        )
+        #
+        expected_length = 1207
+        expected_column_names = _get_expected_column_names()
+        expected_column_unique_values = {"full_symbol": ["kibot::ZI", "kibot::EZ"]}
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2009-09-28 19:25:00+00:00, 2009-09-29 13:43:00+00:00]
+        columns=full_symbol,open,high,low,close,volume
+        shape=(1207, 6)
+                                  full_symbol   open   high    low  close  volume
+        timestamp                                                                
+        2009-09-28 19:25:00+00:00   kibot::ZI  16.23  16.23  16.23  16.23     1.0
+        2009-09-28 19:26:00+00:00   kibot::ZI    NaN    NaN    NaN    NaN     NaN
+        2009-09-28 19:27:00+00:00   kibot::ZI    NaN    NaN    NaN    NaN     NaN
+        ...
+        2009-09-29 13:41:00+00:00   kibot::ZI     NaN     NaN     NaN     NaN     NaN
+        2009-09-29 13:42:00+00:00   kibot::ZI     NaN     NaN     NaN     NaN     NaN
+        2009-09-29 13:43:00+00:00   kibot::ZI  16.206  16.206  16.206  16.206     1.0
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data2(
+            client,
+            full_symbols,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_read_csv_data3(self) -> None:
+        full_symbols = ["kibot::ZI", "kibot::W"]
+        contract_type = "continuous"
+        client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example1(
+            contract_type
+        )
+        start_ts = pd.Timestamp("2009-09-29T05:38:00+00:00")
+        #
+        expected_length = 1216
+        expected_column_names = _get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["kibot::ZI", "kibot::W"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2009-09-29 05:38:00+00:00, 2009-09-29 21:37:00+00:00]
+        columns=full_symbol,open,high,low,close,volume
+        shape=(1216, 6)
+                                  full_symbol    open    high     low   close  volume
+        timestamp                                                                    
+        2009-09-29 05:38:00+00:00    kibot::W  459.00   459.0   459.0   459.0     1.0
+        2009-09-29 05:39:00+00:00    kibot::W  458.75  458.75  458.75  458.75     8.0
+        2009-09-29 05:40:00+00:00    kibot::W     NaN     NaN     NaN     NaN     NaN
+        ...
+        2009-09-29 21:35:00+00:00   kibot::ZI    NaN    NaN    NaN    NaN     NaN
+        2009-09-29 21:36:00+00:00   kibot::ZI    NaN    NaN    NaN    NaN     NaN
+        2009-09-29 21:37:00+00:00   kibot::ZI  16.23  16.23  16.23  16.23     1.0
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data3(
+            client,
+            full_symbols,
+            start_ts,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_read_csv_data4(self) -> None:
+        full_symbols = ["kibot::ZI", "kibot::W"]
+        contract_type = "continuous"
+        client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example1(
+            contract_type
+        )
+        end_ts = pd.Timestamp("2009-09-29T03:55:00+00:00")
+        #
+        expected_length = 2468
+        expected_column_names = _get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["kibot::ZI", "kibot::W"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2009-09-27 19:00:00+00:00, 2009-09-29 03:55:00+00:00]
+        columns=full_symbol,open,high,low,close,volume
+        shape=(2468, 6)
+                                  full_symbol   open   high    low  close  volume
+        timestamp                                                                
+        2009-09-27 19:00:00+00:00    kibot::W  462.0  462.1  452.0  457.0   762.0
+        2009-09-27 19:01:00+00:00    kibot::W    NaN    NaN    NaN    NaN     NaN
+        2009-09-27 19:02:00+00:00    kibot::W    NaN    NaN    NaN    NaN     NaN
+        ...
+        2009-09-29 03:53:00+00:00   kibot::ZI     NaN     NaN     NaN     NaN     NaN
+        2009-09-29 03:54:00+00:00   kibot::ZI     NaN     NaN     NaN     NaN     NaN
+        2009-09-29 03:55:00+00:00   kibot::ZI  16.134  16.134  16.134  16.134     1.0
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data4(
+            client,
+            full_symbols,
+            end_ts,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
     def test_read_csv_data5(self) -> None:
         full_symbols = ["kibot::ZI", "kibot::W"]
         start_ts = pd.Timestamp("2009-09-29T03:38:00+00:00")
@@ -248,7 +539,7 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         )
         #
         expected_length = 19
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = _get_expected_column_names()
         expected_column_unique_values = {"full_symbol": ["kibot::ZI", "kibot::W"]}
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -289,7 +580,7 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         )
         #
         expected_length = 41
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = _get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["kibot::BB", "kibot::NN"]
         }
@@ -332,7 +623,7 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         )
         #
         expected_length = 36
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = _get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["kibot::ZI", "kibot::EZ"]
         }
@@ -375,7 +666,7 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         )
         #
         expected_length = 21
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = _get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["kibot::CL", "kibot::HO"]
         }
@@ -407,17 +698,17 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
-    @staticmethod
-    def _get_expected_column_names() -> List[str]:
-        """
-        Return a list of expected column names.
-        """
-        expected_column_names = [
-            "full_symbol",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-        ]
-        return expected_column_names
+
+def _get_expected_column_names() -> List[str]:
+    """
+    Return a list of expected column names.
+    """
+    expected_column_names = [
+        "full_symbol",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+    ]
+    return expected_column_names
