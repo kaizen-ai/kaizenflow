@@ -317,7 +317,7 @@ class KibotFuturesCsvParquetByAssetClient(
         self,
         root_dir: str,
         extension: str,
-        contract_type: bool,
+        contract_type: str,
         *,
         aws_profile: Optional[str] = None,
     ) -> None:
@@ -327,7 +327,7 @@ class KibotFuturesCsvParquetByAssetClient(
         :param root_dir: either a local root path (e.g., "/app/im") or an S3
             root path (e.g., "s3://alphamatic-data/data") to `Kibot` futures data
         :param extension: file extension, e.g., `csv`, `csv.gz` or `parquet`
-        :param contract_type: futures contract type
+        :param contract_type: futures contract type (e.g., "continuous", "expiry")
         :param aws_profile: AWS profile name (e.g., `am`)
         """
         super().__init__()
