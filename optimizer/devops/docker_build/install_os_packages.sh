@@ -5,7 +5,7 @@
 
 set -ex
 
-FILE_NAME="devops/docker_build/install_os_packages.sh"
+FILE_NAME="optimzer/devops/docker_build/install_os_packages.sh"
 echo "#############################################################################"
 echo "##> $FILE_NAME"
 echo "#############################################################################"
