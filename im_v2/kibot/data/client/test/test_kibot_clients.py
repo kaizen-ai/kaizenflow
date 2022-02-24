@@ -356,6 +356,23 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         expected_end_ts = pd.to_datetime("2015-09-29 11:10:00", utc=True)
         self._test_get_end_ts_for_symbol1(client, full_symbol, expected_end_ts)
 
+    # ////////////////////////////////////////////////////////////////////////
+
+    def test_get_universe1(self) -> None:
+        unadjusted = False
+        client = imvkdckcex.get_KibotEquitiesCsvParquetByAssetClient_example1(
+            unadjusted
+        )
+        expected_length = 0
+        expected_first_elements = []
+        expected_last_elements = []
+        self._test_get_universe1(
+            client,
+            expected_length,
+            expected_first_elements,
+            expected_last_elements,
+        )
+
 
 # #############################################################################
 # TestKibotEquitiesCsvParquetByAssetClient
@@ -745,6 +762,23 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         )
         expected_end_ts = pd.to_datetime("2009-09-29 13:43:00", utc=True)
         self._test_get_end_ts_for_symbol1(client, full_symbol, expected_end_ts)
+
+    # ////////////////////////////////////////////////////////////////////////
+
+    def test_get_universe1(self) -> None:
+        contract_type = "continuous"
+        client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example1(
+            contract_type
+        )
+        expected_length = 0
+        expected_first_elements = []
+        expected_last_elements = []
+        self._test_get_universe1(
+            client,
+            expected_length,
+            expected_first_elements,
+            expected_last_elements,
+        )
 
 
 def _get_expected_column_names() -> List[str]:
