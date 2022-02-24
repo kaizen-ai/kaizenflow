@@ -53,6 +53,15 @@ source /${ENV_NAME}/bin/activate
 
 pip3 install wheel
 
+
+#PYCMD=$(cat <<EOF
+#import wheel.pep425tags as w
+#
+#print(w.get_supported())
+#EOF
+#)
+#python3 -c "$PYCMD"
+
 poetry install
 
         # Export deps from poetry and install with pip.

@@ -1,6 +1,6 @@
 # syntax = docker/dockerfile:experimental
 
-FROM ubuntu:20.04 AS builder
+FROM ubuntu:21.04 AS builder
 
 # Specify the `devops` dir.
 ARG DEVOPS_ROOT=/devops

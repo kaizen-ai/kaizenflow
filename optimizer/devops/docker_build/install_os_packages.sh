@@ -37,6 +37,7 @@ APT_GET_OPTS="-y --no-install-recommends"
 apt-get install $APT_GET_OPTS python3-venv python3-pip
 echo "PYTHON VERSION="$(python3 --version)
 echo "PIP VERSION="$(pip3 --version)
+python3 -m pip install --upgrade pip
 
 # Install poetry.
 pip3 install poetry
