@@ -8,6 +8,7 @@ authors = [""]
 cvxopt = "*"
 cvxpy = "*"
 pandas = "*"
+python = "^3.9"
 
 [tool.poetry.dev-dependencies]
 

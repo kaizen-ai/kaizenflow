@@ -2,6 +2,9 @@
 
 FROM ubuntu:20.04 AS builder
 
+# Specify the `devops` dir.
+ARG DEVOPS_ROOT=optimizer/devops
+
 # Name of the virtual environment to create.
 ENV ENV_NAME="venv"
 ENV APP_DIR=/app
@@ -17,16 +20,16 @@ WORKDIR $INSTALL_DIR
 #ENV CLEAN_UP_INSTALLATION=True
 
 # - Install OS packages.
-COPY optimizer/devops/docker_build/install_os_packages.sh .
+COPY ${DEVOPS_ROOT}/docker_build/install_os_packages.sh .
 RUN /bin/bash -c "./install_os_packages.sh"
 
 # - Install Python packages.
 # Copy the minimum amount of files needed to call install_requirements.sh so we
 # can cache it effectively.
-COPY optimizer/devops/docker_build/poetry.lock .
-COPY optimizer/devops/docker_build/poetry.toml .
-COPY optimizer/devops/docker_build/pyproject.toml .
-COPY optimizer/devops/docker_build/install_python_packages.sh .
+COPY ${DEVOPS_ROOT}/docker_build/poetry.lock .
+COPY ${DEVOPS_ROOT}/docker_build/poetry.toml .
+COPY ${DEVOPS_ROOT}/docker_build/pyproject.toml .
+COPY ${DEVOPS_ROOT}/docker_build/install_python_packages.sh .
 RUN /bin/bash -c "./install_python_packages.sh"
 
 # # - Install Jupyter extensions.
@@ -48,12 +51,12 @@ RUN /bin/bash -c "./install_python_packages.sh"
 #
 # COPY devops/docker_run/bashrc $HOME/.bashrc
 
-# # Pass the container version (e.g., `1.0.0`) to the environment.
-# ARG AM_CONTAINER_VERSION
-# ENV AM_CONTAINER_VERSION=$AM_CONTAINER_VERSION
-# RUN echo "AM_CONTAINER_VERSION=$AM_CONTAINER_VERSION"
+# Pass the container version (e.g., `1.0.0`) to the environment.
+ARG OPT_CONTAINER_VERSION
+ENV OPT_CONTAINER_VERSION=$OPT_CONTAINER_VERSION
+RUN echo "OPT_CONTAINER_VERSION=$OPT_CONTAINER_VERSION"
 
 # TODO(gp): Is this needed?
 WORKDIR $APP_DIR
 
-ENTRYPOINT ["devops/docker_run/entrypoint.sh"]
+ENTRYPOINT ["${DEVOPS_ROOT}/docker_run/entrypoint.sh"]
