@@ -77,7 +77,7 @@ def data_source_node_factory(
         if False:
             ret = dtfcore.DiskDataSource(nid, **source_node_kwargs)
         else:
-            # HistoricalPqByAsset(ImClient) -> MarketDataImClient -> ReadNode
+            # HistoricalPqByAsset(ImClient) -> ImClientMarketData -> ReadNode
             import im_v2.ccxt.data.client.test.ccxt_clients_example as ivcdctcce
             import os
             #im_client = ivcdctcce.get_CcxtCsvClient_example2()
@@ -105,7 +105,7 @@ def data_source_node_factory(
             #end_ts = pd.Timestamp("2018-09-17T00:02:00-00:00")
             #im_client.read_data(full_symbols, start_ts, end_ts)
 
-            # MarketDataImClient
+            # ImClientMarketData
             import market_data.market_data_im_client as mdmdimcl
             asset_id_col = "asset_id"
             #asset_ids = [3187272957, 1467591036]
@@ -114,15 +114,15 @@ def data_source_node_factory(
             end_time_col_name = "end_ts"
             columns = None
 
-            def get_MarketDataImClient_wall_clock_time() -> pd.Timestamp:
+            def get_ImClientMarketData_wall_clock_time() -> pd.Timestamp:
                 """
-                Get a wall clock time to build `MarketDataImClient` for tests.
+                Get a wall clock time to build `ImClientMarketData` for tests.
                 """
                 return pd.Timestamp("2021-08-17T01:30:00+00:00")
 
-            get_wall_clock_time = get_MarketDataImClient_wall_clock_time
+            get_wall_clock_time = get_ImClientMarketData_wall_clock_time
             column_remap = None
-            market_data_client = mdmdimcl.MarketDataImClient(
+            market_data_client = mdmdimcl.ImClientMarketData(
                 asset_id_col,
                 asset_ids,
                 start_time_col_name,
