@@ -4,9 +4,9 @@ from typing import Any, Dict, List
 import pandas as pd
 
 import core.config as cconfig
+import dataflow.core.dag_adapter as dtfcodaada
 import dataflow.core.dag_builder as dtfcodabui
 import dataflow.core.dag_builder_example as dtfcdabuex
-import dataflow.core.dag_adapter as dtfcodaada
 import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.sinks as dtfconosin
 import dataflow.core.nodes.sources as dtfconosou
@@ -37,6 +37,7 @@ def _get_data() -> pd.DataFrame:
 
 
 class TestDagAdapter1(hunitest.TestCase):
+
     def helper(
         self,
         dag_builder: dtfcodabui.DagBuilder,
@@ -77,7 +78,7 @@ class TestDagAdapter1(hunitest.TestCase):
             "dir_name": "here",
         }
         # Do not insert any node.
-        nodes_to_insert = []
+        nodes_to_insert: List = []
         # Append a `WriteDf` node.
         nodes_to_append = []
         stage = "write_df"
@@ -105,7 +106,7 @@ class TestDagAdapter1(hunitest.TestCase):
         node_ctor = dtfconosou.FunctionDataSource
         nodes_to_insert.append((stage, node_ctor))
         # Do not append any node.
-        nodes_to_append = []
+        nodes_to_append: List = []
         #
         dag_builder = dtfcdabuex.ReturnsBuilder()
         # Check.
