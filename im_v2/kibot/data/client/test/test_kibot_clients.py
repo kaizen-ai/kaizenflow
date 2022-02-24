@@ -332,6 +332,30 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    # ////////////////////////////////////////////////////////////////////////
+
+    def test_get_start_ts_for_symbol1(self) -> None:
+        full_symbol = "kibot::AMP"
+        #
+        unadjusted = False
+        client = imvkdckcex.get_KibotEquitiesCsvParquetByAssetClient_example1(
+            unadjusted
+        )
+        expected_start_ts = pd.to_datetime("2015-09-29 09:30:00", utc=True)
+        self._test_get_start_ts_for_symbol1(
+            client, full_symbol, expected_start_ts
+        )
+
+    def test_get_end_ts_for_symbol1(self) -> None:
+        full_symbol = "kibot::AMP"
+        #
+        unadjusted = False
+        client = imvkdckcex.get_KibotEquitiesCsvParquetByAssetClient_example1(
+            unadjusted
+        )
+        expected_end_ts = pd.to_datetime("2015-09-29 11:10:00", utc=True)
+        self._test_get_end_ts_for_symbol1(client, full_symbol, expected_end_ts)
+
 
 # #############################################################################
 # TestKibotEquitiesCsvParquetByAssetClient
@@ -697,6 +721,30 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
             expected_column_unique_values,
             expected_signature,
         )
+
+    # ////////////////////////////////////////////////////////////////////////
+
+    def test_get_start_ts_for_symbol1(self) -> None:
+        full_symbol = "kibot::ZI"
+        #
+        contract_type = "continuous"
+        client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example2(
+            contract_type
+        )
+        expected_start_ts = pd.to_datetime("2009-09-28 19:25:00", utc=True)
+        self._test_get_start_ts_for_symbol1(
+            client, full_symbol, expected_start_ts
+        )
+
+    def test_get_end_ts_for_symbol1(self) -> None:
+        full_symbol = "kibot::ZI"
+        #
+        contract_type = "continuous"
+        client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example2(
+            contract_type
+        )
+        expected_end_ts = pd.to_datetime("2009-09-29 13:43:00", utc=True)
+        self._test_get_end_ts_for_symbol1(client, full_symbol, expected_end_ts)
 
 
 def _get_expected_column_names() -> List[str]:
