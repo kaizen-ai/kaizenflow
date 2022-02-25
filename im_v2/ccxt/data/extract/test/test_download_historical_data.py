@@ -9,6 +9,7 @@ import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.download_historical_data as imvcdedhda
 
 
+@pytest.mark.skip("Enable after CMTask1292 is resolved.")
 class TestDownloadHistoricalData1(hunitest.TestCase):
     # Mocked bucket.
     mock_s3 = moto.mock_s3()
@@ -63,8 +64,8 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         self.assertIsInstance(expected_args[1], s3fs.core.S3FileSystem)
         # Check keyword arguments. In this case only `file_name`.
         self.assertDictEqual(expected_kwargs, {"file_name": "data.parquet"})
-        # TODO(Nikola): Add additional checks in form are all files named `data.parquet`
-        #   after merge, if there are extra files before merge is list smaller after merge, etc.
+        # TODO(Nikola): Add additional checks in form of: are all files named `data.parquet`
+        #   after merge, if there are extra files before merge, is list smaller after merge, etc.
         # Check bucket content before merge.
         parquet_meta_list_before = self.moto_client.list_objects(
             Bucket=self.bucket_name
