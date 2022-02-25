@@ -92,12 +92,15 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
 
     def test_read_csv_unadjusted_data5(self) -> None:
         """
-        Note: for current test we use `unadjusted=False` data since the actual unadjusted data is unreachable for now.
+        Note: for current test we use `unadjusted=False` data since the actual
+        unadjusted data is unreachable for now.
         """
         full_symbols = ["kibot::HD", "kibot::AMP"]
         start_ts = pd.Timestamp("2015-09-29T09:23:00+00:00")
         end_ts = pd.Timestamp("2015-09-29T09:35:00+00:00")
-        client = imvkdckcex.get_KibotEquitiesCsvParquetByAssetClient_example1(True)
+        client = imvkdckcex.get_KibotEquitiesCsvParquetByAssetClient_example1(
+            True
+        )
         #
         expected_length = 19
         expected_column_names = self._get_expected_column_names()

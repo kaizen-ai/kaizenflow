@@ -180,6 +180,24 @@ class ImClient(abc.ABC):
         mode = "end"
         return self._get_start_end_ts_for_symbol(full_symbol, mode)
 
+    def get_full_symbols_from_asset_ids(
+        self, asset_ids: List[int]
+    ) -> List[imvcdcfusy.FullSymbol]:
+        """
+        Convert asset ids into full symbols.
+
+        :param asset_ids: assets ids
+        :return: assets as full symbols
+        """
+        # Check that provided ids are part of the universe.
+        hdbg.dassert_is_subset(asset_ids, self._asset_id_to_full_symbol_mapping)
+        # Convert ids to full symbols.
+        full_symbols = [
+            self._asset_id_to_full_symbol_mapping[asset_id]
+            for asset_id in asset_ids
+        ]
+        return full_symbols
+
     # /////////////////////////////////////////////////////////////////////////
 
     @staticmethod
@@ -211,24 +229,6 @@ class ImClient(abc.ABC):
             for full_symbol in full_symbols
         ]
         return numerical_asset_id
-
-    def get_full_symbols_from_asset_ids(
-        self, asset_ids: List[int]
-    ) -> List[imvcdcfusy.FullSymbol]:
-        """
-        Convert asset ids into full symbols.
-
-        :param asset_ids: assets ids
-        :return: assets as full symbols
-        """
-        # Check that provided ids are part of the universe.
-        hdbg.dassert_is_subset(asset_ids, self._asset_id_to_full_symbol_mapping)
-        # Convert ids to full symbols.
-        full_symbols = [
-            self._asset_id_to_full_symbol_mapping[asset_id]
-            for asset_id in asset_ids
-        ]
-        return full_symbols
 
     # //////////////////////////////////////////////////////////////////////////
 
