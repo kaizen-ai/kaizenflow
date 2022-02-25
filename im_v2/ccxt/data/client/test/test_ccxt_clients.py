@@ -4,7 +4,7 @@ import pandas as pd
 
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
-import im_v2.ccxt.data.client.test.ccxt_clients_example as ivcdctcce
+import im_v2.ccxt.data.client.ccxt_clients_example as ivcdctcce
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.common.db.db_utils as imvcddbut

@@ -19,7 +19,7 @@ import helpers.hdbg as hdbg
 import helpers.hnumpy as hnumpy
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import im_v2.ccxt.data.client.test.ccxt_clients_example as ivcdctcce
+import im_v2.ccxt.data.client.ccxt_clients_example as ivcdctcce
 import market_data.market_data_im_client as mdmdimcl
 import market_data.replayed_market_data as mdremada
 
