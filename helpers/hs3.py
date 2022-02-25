@@ -420,6 +420,7 @@ def get_s3fs(*args: Any, **kwargs: Any) -> s3fs.core.S3FileSystem:
 
 # TODO(gp): -> helpers/aws_utils.py
 
+
 def archive_data_on_s3(
     src_dir: str, s3_path: str, aws_profile: Optional[str], tag: str = ""
 ) -> str:
