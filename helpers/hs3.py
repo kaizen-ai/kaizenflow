@@ -21,6 +21,7 @@ except ModuleNotFoundError:
     print(_WARNING + f": Can't find {_module}: continuing")
 
 
+# To enforce this order of the imports we use the directive for the linter below.
 import helpers.hdbg as hdbg  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.hio as hio  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.hprint as hprint  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
@@ -29,6 +30,8 @@ import helpers.htimer as htimer  # noqa: E402 module level import not at top of 
 
 _LOG = logging.getLogger(__name__)
 
+# TODO(gp): @all separate S3 code in `helpers/hs3.py` from authentication and
+#  AWS profile code in `helpers/aws_authentication.py`.
 
 # #############################################################################
 # Basic utils.
@@ -36,6 +39,9 @@ _LOG = logging.getLogger(__name__)
 
 
 def is_s3_path(s3_path: str) -> bool:
+    """
+    Return whether a path is on an S3 bucket, i.e., if it starts with `s3://`.
+    """
     hdbg.dassert_isinstance(s3_path, str)
     valid = s3_path.startswith("s3://")
     if s3_path.startswith("s3://s3://"):
@@ -65,6 +71,7 @@ def dassert_is_not_s3_path(s3_path: str) -> None:
     )
 
 
+# TODO(gp): -> dassert_s3_path_exists
 def dassert_s3_exists(s3_path: str, s3fs_: s3fs.core.S3FileSystem) -> None:
     """
     Assert if an S3 file or dir doesn't exist.
@@ -111,8 +118,8 @@ def split_path(s3_path: str) -> Tuple[str, str]:
 # #############################################################################
 
 
-# TODO(gp): Merge with get_path() to create get_s3_am_bucket_path().
-#  Avoid to use alphamatic-data but rather use this.
+# TODO(gp): @all Merge with get_path() below
+# TODO(gp): @all Avoid using s3://alphamatic-data but always use this
 def get_bucket() -> str:
     """
     Return the S3 bucket pointed by AM_S3_BUCKET (e.g., `alphamatic-data`).
@@ -122,7 +129,7 @@ def get_bucket() -> str:
     Make sure your ~/.aws/credentials uses the right key to access this
     bucket as default.
     """
-    # TODO(gp): -> AM_AWS_S3_BUCKET
+    # TODO(gp): @all -> AM_AWS_S3_BUCKET
     env_var = "AM_S3_BUCKET"
     hdbg.dassert_in(env_var, os.environ)
     s3_bucket = os.environ[env_var]
@@ -135,11 +142,10 @@ def get_bucket() -> str:
     return s3_bucket
 
 
-# TODO(gp): -> get_bucket_path() ?
-# TODO(Grisha): generalize for other buckets.
+# TODO(gp): @all use get_s3_path() below.
 def get_path() -> str:
     """
-    Return the path to the default S3 bucket (e.g., `s3://alphamatic-data`).
+    Return the path to the S3 bucket (e.g., `s3://alphamatic-data`) for an account.
     """
     bucket = get_bucket()
     path = "s3://" + bucket
@@ -197,11 +203,13 @@ def get_aws_profile(aws_profile: Optional[str] = None) -> str:
     - command line option (i.e., `args.aws_profile`)
     - env vars (i.e., `AM_AWS_PROFILE`)
     """
+    # TODO(gp): @all This should be function of aws_profile.
     env_var = "AM_AWS_PROFILE"
     aws_profile = _get_variable_value(aws_profile, env_var)
     return aws_profile
 
 
+# TODO(gp): @all this should be function also of `aws_profile`.
 def get_s3_path(s3_path: Optional[str] = None) -> Optional[str]:
     """
     Return the S3 path to use, based on:
@@ -237,28 +245,27 @@ def _get_aws_config(file_name: str) -> configparser.RawConfigParser:
 #
 # - There can be two or more AWS S3 systems with different credentials, paths to
 #   bucket, and other properties
-# - Some code needs to refer always and only to the AM S3 bucket (e.g., for Kibot
-#   data)
-# - Other code needs to work with different AWS S3 systems (e.g., publish_notebooks,
-#   saving / retrieving experiments, caching)
+# - Some code needs to refer always and only to a specific S3 bucket
+#   - E.g., AM S3 bucket for Kibot data
+# - Other code needs to work with different AWS S3 systems
+#   - E.g., `publish_notebooks`, saving / retrieving experiments, caching
 #
-# - The different AWS S3 systems are selected through an `aws_profile` parameter
+# - The desired AWS S3 systems are selected through an `aws_profile` parameter
 #   (e.g., `am`)
-# - The value of AWS profile is obtained:
-#   - from the `--aws_profile` command line option; or
-#   - from the `AM_AWS_PROFILE` env var
+# - The value of AWS profile is obtained from
+#   - the `--aws_profile` command line option; or
+#   - a client specifying the needed `aws_profile`
 #
 # - The AWS profile is then used to access the `~/.aws` files and extract:
 #   - the credentials (e.g., `aws_access_key_id`, `aws_secret_access_key`,
 #     `aws_region`)
 #   - other variables (e.g., `aws_s3_bucket`)
-# - The variables that are extracted from the files can also be passed through
-#   env vars directly (mainly for GitHub Actions CI)
-#   - E.g., `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`,
-#     `AWS_S3_BUCKET`)
-#   - One can specify env vars conditioned to different profiles, using the AWS
-#     profile (e.g., `am` profile for `AWS_ACCESS_KEY_ID` corresponds to
-#     `AM_AWS_ACCESS_KEY_ID`)
+# - The variables that are extracted from the files are passed through env vars
+#   directly for GitHub Actions CI
+#   - One can specify env vars conditioned to different profiles using the AWS
+#     profile
+#   - E.g., `am` profile for `AWS_ACCESS_KEY_ID` corresponds to
+#     `AM_AWS_ACCESS_KEY_ID`
 
 
 @functools.lru_cache()
@@ -266,7 +273,7 @@ def get_aws_credentials(
     aws_profile: str,
 ) -> Dict[str, Optional[str]]:
     """
-    Read the AWS credentials for a given profile.
+    Read the AWS credentials for a given profile from `~/.aws` or from env vars.
 
     :return: a dictionary with `access_key_id`, `aws_secret_access_key`,
         `aws_region` and optionally `aws_session_token`
@@ -275,6 +282,7 @@ def get_aws_credentials(
     hdbg.dassert_ne(aws_profile, "")
     #
     result: Dict[str, Optional[str]] = {}
+    # TODO(gp): @all make this function of `aws_profile`.
     key_to_env_var: Dict[str, str] = {
         "aws_access_key_id": "AWS_ACCESS_KEY_ID",
         "aws_secret_access_key": "AWS_SECRET_ACCESS_KEY",
@@ -309,8 +317,8 @@ def get_aws_credentials(
             result[key] = os.environ[env_var]
         # TODO(gp): We don't pass this through env var for now.
         result["aws_session_token"] = None
-        # TODO(gp): Support also other S3 profiles. We can derive the names of the
-        #  env vars from aws_profile. E.g., "am" -> AM_AWS_ACCESS_KEY.
+        # TODO(gp): @all support also other S3 profiles. We can derive the names
+        #  of the env vars from aws_profile. E.g., "am" -> AM_AWS_ACCESS_KEY.
         hdbg.dassert_eq(aws_profile, "am")
     else:
         _LOG.debug("Using AWS credentials from files")
@@ -383,6 +391,9 @@ def get_key_value(
     return value
 
 
+# ///////////////////////////////////////////////////////////////////////////////
+
+
 def get_s3fs(*args: Any, **kwargs: Any) -> s3fs.core.S3FileSystem:
     """
     Return an s3fs object from a given AWS profile.
@@ -405,6 +416,9 @@ def get_s3fs(*args: Any, **kwargs: Any) -> s3fs.core.S3FileSystem:
 # #############################################################################
 # Archive and retrieve data from S3.
 # #############################################################################
+
+
+# TODO(gp): -> helpers/aws_utils.py
 
 
 def archive_data_on_s3(

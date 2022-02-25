@@ -12,11 +12,6 @@
 - We separate the 3 ETL stages (extract, transform, and load) for both data and
   metadata
 
-- `app/`
-  - User interface to IM
-  - It contains all and only the code that is used to access the production data
-    (SQL, S3, and the conversion)
-
 - `common/`: Code common to all providers
   - `data/`: Code to handle the common data
     - `extract/`
