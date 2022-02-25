@@ -4160,6 +4160,21 @@ def pytest_compare(ctx, file_name1, file_name2):  # type: ignore
     print(f"> {cmd}")
 
 
+@task
+def pytest_rename_test(ctx, file_name1, file_name2):  # type: ignore
+    """
+    Rename the test and move its golden outcome.
+    """
+    _report_task()
+    _ = ctx
+    # Change the name of the test.
+    rename_cmd = f"./dev_scripts/replace_text.py --action rename --old {file_name1} --new {file_name2}"
+    rc = hsystem.system(rename_cmd, abort_on_error=False, suppress_output=False)
+    # Move the golden outcome.
+    move_cmd = ""
+    rc = hsystem.system(move_cmd, abort_on_error=False, suppress_output=False)
+
+
 # #############################################################################
 # Linter.
 # #############################################################################
@@ -5339,6 +5354,7 @@ def fix_perms(  # type: ignore
     #
     cmd = f"To compare run:\n> vimdiff {file_name1} {file_name2}"
     print(cmd)
+
 
 
 # TODO(gp): Add gh_open_pr to jump to the PR from this branch.
