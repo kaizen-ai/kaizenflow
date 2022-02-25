@@ -11,6 +11,7 @@ import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.db.db_utils as imvcddbut
 
 
+@pytest.mark.skip("Enable after CMTask1292 is resolved.")
 class TestDownloadRealtimeForOneExchange1(imvcddbut.TestImDbHelper):
     # Mocked bucket.
     mock_s3 = moto.mock_s3()
@@ -168,9 +169,9 @@ class TestDownloadRealtimeForOneExchange1(imvcddbut.TestImDbHelper):
             client = boto3.client("s3")
             buckets = client.list_buckets()["Buckets"]
             self.assertEqual(len(buckets), 1)
-            self.assertEqual(buckets[0]["Name"], "mock_bucket")
+            self.assertEqual(buckets[0]["Name"], self.bucket_name)
             # Update kwargs.
-            kwargs.update({"aws_profile": "ck", "s3_path": "s3://mock_bucket/"})
+            kwargs.update({"aws_profile": "ck", "s3_path": f"s3://{self.bucket_name}/"})
         # Run.
         args = argparse.Namespace(**kwargs)
         imvcdedrfoe._run(args)
