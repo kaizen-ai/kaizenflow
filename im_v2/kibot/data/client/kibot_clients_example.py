@@ -18,7 +18,18 @@ def get_test_data_dir() -> str:
     The files in the dir are copies of some Kibot data files from S3
     that were loaded for our research purposes. These copies are checked
     out locally in order to test functions without dependencies on S3.
+
+    The data looks like:
+    ```
+    datetime,open,high,low,close,vol,time
+    2009-09-27 18:06:00,1.6945,1.6945,1.6945,1.6945,3,18:06:00
+    2009-09-27 18:07:00,1.6964,1.6964,1.6964,1.6964,4,18:07:00
+    2009-09-27 18:38:00,1.6877,1.6877,1.6877,1.6877,5,18:38:00
+    2009-09-27 18:44:00,1.6893,1.6893,1.6893,1.6893,1,18:44:00
+
+    Raw data for the current extension has no header.
     """
+    # Get path to the dir with the test data.
     test_data_dir = os.path.join(
         hgit.get_amp_abs_path(),
         "im_v2/kibot/data/client/test/test_data",
@@ -38,17 +49,6 @@ def get_KibotEquitiesCsvParquetByAssetClient_example1(
 
     :param unadjusted: whether asset class prices are unadjusted (i.e., True or False)
     """
-    # Get path to the dir with the test data.
-    #
-    # The data looks like:
-    # ```
-    # datetime,open,high,low,close,vol,time
-    # 2009-09-27 18:06:00,1.6945,1.6945,1.6945,1.6945,3,18:06:00
-    # 2009-09-27 18:07:00,1.6964,1.6964,1.6964,1.6964,4,18:07:00
-    # 2009-09-27 18:38:00,1.6877,1.6877,1.6877,1.6877,5,18:38:00
-    # 2009-09-27 18:44:00,1.6893,1.6893,1.6893,1.6893,1,18:44:00
-    # ```
-    # Raw data for the current extension has no header.
     # Initialize client.
     root_dir = get_test_data_dir()
     extension = "csv.gz"
