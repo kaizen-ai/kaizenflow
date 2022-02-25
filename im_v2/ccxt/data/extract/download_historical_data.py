@@ -61,8 +61,8 @@ def _run(args: argparse.Namespace) -> None:
         data, partition_cols = hparque.add_date_partition_columns(
             data, "by_year_month"
         )
-        # Get timestamp of push to s3 in UTC.
-        knowledge_timestamp = hdateti.get_current_timestamp_as_string("UTC")
+        # Get current time of push to s3 in UTC.
+        knowledge_timestamp = hdateti.get_current_time("UTC")
         data["knowledge_timestamp"] = knowledge_timestamp
         # Save data to S3 filesystem.
         # Saves filename as `uuid`.
