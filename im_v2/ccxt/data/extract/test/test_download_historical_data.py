@@ -2,6 +2,7 @@ import argparse
 import unittest.mock as umock
 
 import moto
+import pytest
 import s3fs
 
 import helpers.hunit_test as hunitest
@@ -31,6 +32,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         # Stop boto3 mock.
         self.mock_s3.stop()
 
+    @pytest.mark.slow
     @umock.patch.object(imvcdedhda.hdateti, "get_current_time")
     def test_function_call1(self, mock_get_current_time: umock.MagicMock) -> None:
         """
@@ -74,6 +76,36 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             Bucket=self.bucket_name
         )["Contents"]
         self.assertEqual(len(parquet_meta_list_after), 9)
+
+    def test_parser(self) -> None:
+        """
+        Tests arg parser for predefined args in the script.
+
+        Mostly for coverage.
+        """
+        parser = imvcdedhda._parse()
+        cmd = []
+        cmd.extend(["--start_timestamp", "2022-02-08"])
+        cmd.extend(["--end_timestamp", "2022-02-09"])
+        cmd.extend(["--exchange_id", "binance"])
+        cmd.extend(["--universe", "v03"])
+        cmd.extend(["--sleep_time", "5"])
+        cmd.extend(["--aws_profile", "ck"])
+        cmd.extend(["--s3_path", "s3://cryptokaizen-data/realtime/"])
+        args = parser.parse_args(cmd)
+        actual = vars(args)
+        expected = {
+            "start_timestamp": "2022-02-08",
+            "end_timestamp": "2022-02-09",
+            "exchange_id": "binance",
+            "universe": "v03",
+            "sleep_time": 5,
+            "incremental": False,
+            "aws_profile": "ck",
+            "s3_path": "s3://cryptokaizen-data/realtime/",
+            "log_level": "INFO",
+        }
+        self.assertDictEqual(actual, expected)
 
     def _test_function_call(self) -> None:
         """
