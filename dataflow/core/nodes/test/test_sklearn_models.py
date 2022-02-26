@@ -195,7 +195,7 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
             model_func=slmode.LinearRegression,
             **config.to_dict(),
         )
-        node.fit(data_fit)["df_out"]
+        _ = node.fit(data_fit)["df_out"]
         df_out = node.predict(data_predict)["df_out"]
         df_str = hunitest.convert_df_to_string(
             df_out.round(3), index=True, decimals=3
@@ -225,7 +225,7 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
             model_func=slmode.LinearRegression,
             **config.to_dict(),
         )
-        node.fit(data_fit)["df_out"]
+        _ = node.fit(data_fit)["df_out"]
         df_out = node.predict(data_predict)["df_out"]
         df_str = hunitest.convert_df_to_string(
             df_out.round(3), index=True, decimals=3
