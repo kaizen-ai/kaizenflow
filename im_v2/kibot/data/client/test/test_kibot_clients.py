@@ -367,8 +367,8 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
             unadjusted
         )
         expected_length = 0
-        expected_first_elements = []
-        expected_last_elements = []
+        expected_first_elements: List = []
+        expected_last_elements: List = []
         self._test_get_universe1(
             client,
             expected_length,
@@ -772,8 +772,8 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
             contract_type
         )
         expected_length = 0
-        expected_first_elements = []
-        expected_last_elements = []
+        expected_first_elements: List = []
+        expected_last_elements: List = []
         self._test_get_universe1(
             client,
             expected_length,
