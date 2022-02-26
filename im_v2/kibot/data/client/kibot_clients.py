@@ -355,17 +355,20 @@ class KibotFuturesCsvParquetByAssetClient(
             self._s3fs = hs3.get_s3fs(aws_profile)
 
     def get_metadata(self, **kwargs: Any) -> pd.DataFrame:
+        # pylint: disable=line-too-long
         """
         See description in the parent class.
 
         Metadata snippet example:
+
         ```
-          Symbol                                                 Link                       Description
+               Symbol                                            Link                       Description
         0          JY  http://api.kibot.com/?action=download&link=...  CONTINUOUS JAPANESE YEN CONTRACT
         1       JYF18  http://api.kibot.com/?action=download&link=...         JAPANESE YEN JANUARY 2018
         2       JYF19  http://api.kibot.com/?action=download&link=...         JAPANESE YEN JANUARY 2019
         ```
         """
+        # pylint: disable=line-too-long
         # Set metadata file path and columns to load.
         metadata_dir = "kibot/metadata"
         file_name = "All_Futures_Contracts_1min.csv.gz"
