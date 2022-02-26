@@ -357,6 +357,14 @@ class KibotFuturesCsvParquetByAssetClient(
     def get_metadata(self, **kwargs: Any) -> pd.DataFrame:
         """
         See description in the parent class.
+
+        Metadata snippet example:
+        ```
+          Symbol                                                 Link                       Description
+        0          JY  http://api.kibot.com/?action=download&link=...  CONTINUOUS JAPANESE YEN CONTRACT
+        1       JYF18  http://api.kibot.com/?action=download&link=...         JAPANESE YEN JANUARY 2018
+        2       JYF19  http://api.kibot.com/?action=download&link=...         JAPANESE YEN JANUARY 2019
+        ```
         """
         # Set metadata file path and columns to load.
         metadata_dir = "kibot/metadata"
@@ -365,7 +373,6 @@ class KibotFuturesCsvParquetByAssetClient(
         columns = ["Symbol", "Link", "Description"]
         # Add arguments to kwargs.
         kwargs["usecols"] = columns
-        kwargs["encoding"] = "utf-8"
         if hs3.is_s3_path(file_path):
             kwargs["s3fs"] = self._s3fs
         # Read metadata.
