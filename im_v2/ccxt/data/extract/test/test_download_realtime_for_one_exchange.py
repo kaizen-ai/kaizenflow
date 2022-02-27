@@ -3,7 +3,7 @@ import unittest.mock as umock
 
 try:
     import moto
-    _HAS_MOTO = True:
+    _HAS_MOTO = True
 except ImportError:
     _HAS_MOTO = False
 import pytest
