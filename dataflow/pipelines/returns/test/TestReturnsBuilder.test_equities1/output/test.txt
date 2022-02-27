@@ -2,7 +2,7 @@
 config
 ################################################################################
 load_prices:
-  source_node_name: DataLoader
+  source_node_name: FunctionDataSource
   source_node_kwargs:
     func: <function load_data_from_disk>
     func_kwargs:
