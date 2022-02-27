@@ -1,7 +1,7 @@
 import argparse
 import unittest.mock as umock
 
-import moto
+#import moto
 import pytest
 
 import helpers.hpandas as hpandas
