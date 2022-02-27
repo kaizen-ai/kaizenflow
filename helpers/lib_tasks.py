@@ -4168,11 +4168,17 @@ def pytest_rename_test(ctx, file_name1, file_name2):  # type: ignore
     _report_task()
     _ = ctx
     # Change the name of the test.
-    rename_cmd = f"./dev_scripts/replace_text.py --action rename --old {file_name1} --new {file_name2}"
+    rename_cmd = f"./dev_scripts/replace_text.py --action replace --old {file_name1} --new {file_name2}"
     rc = hsystem.system(rename_cmd, abort_on_error=False, suppress_output=False)
-    # Move the golden outcome.
-    move_cmd = ""
-    rc = hsystem.system(move_cmd, abort_on_error=False, suppress_output=False)
+    # Get all dirs that contain the name of the target unit test.
+    test_paths = glob.glob(f"**/test/{file_name1}.**/", recursive=True)
+    for path in test_paths:
+        # Build the new path.
+        new_path = re.sub(f"/{file_name1}.", f"/{file_name2}.", path)
+        # Move the golden outcome.
+        cmd = f"git mv {path} {new_path}"
+        rc = hsystem.system(cmd, abort_on_error=False, suppress_output=False)
+
 
 
 # #############################################################################
