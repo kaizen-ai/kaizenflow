@@ -70,7 +70,7 @@ class TestReturnsBuilder(hunitest.TestCase):
         # Inject the node.
         config["load_prices"] = cconfig.get_config_from_nested_dict(
             {
-                "source_node_name": "DataLoader",
+                "source_node_name": "FunctionDataSource",
                 "source_node_kwargs": source_node_kwargs,
             }
         )

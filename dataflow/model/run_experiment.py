@@ -15,13 +15,16 @@ Import as:
 
 import dataflow.model.run_experiment as dtfmoruexp
 """
+
+# TODO(gp): -> run_experiment_list.py?
+
 import argparse
 import logging
 import os
 from typing import cast
 
 import core.config as cconfig
-import dataflow.model.utils as dtfmodutil
+import dataflow.model.experiment_utils as dtfmoexuti
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
@@ -37,14 +40,14 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def _run_experiment(
+def _run_experiment_stub(
     config: cconfig.Config,
     #
     incremental: bool,
     num_attempts: int,
 ) -> int:
     """
-    Run a pipeline for a specific `Config`.
+    Run a pipeline for a specific `Config` calling `run_experiment_stub.py`.
 
     :param config: config for the experiment
     :param num_attempts: maximum number of times to attempt running the
@@ -53,24 +56,25 @@ def _run_experiment(
     """
     hdbg.dassert_eq(1, num_attempts, "Multiple attempts not supported yet")
     _ = incremental
-    dtfmodutil.setup_experiment_dir(config)
-    # Execute experiment.
-    # TODO(gp): Rename id -> idx everywhere
-    #  jackpy "meta" | grep id | grep config
+    #
+    dtfmoexuti.setup_experiment_dir(config)
+    # Prepare command line to execute the experiment.
+    file_name = "run_experiment_stub.py"
+    exec_name = hgit.find_file_in_git_tree(file_name, super_module=True)
+    #
+    # TODO(gp): Rename id -> idx everywhere with `jackpy "meta" | grep id | grep config`
     idx = config[("meta", "id")]
     _LOG.info("\n%s", hprint.frame(f"Executing experiment for config {idx}"))
     _LOG.info("config=\n%s", config)
+    #
     dst_dir = config[("meta", "dst_dir")]
     # Prepare the log file.
     # TODO(gp): -> experiment_dst_dir
     experiment_result_dir = config[("meta", "experiment_result_dir")]
     log_file = os.path.join(experiment_result_dir, "run_experiment.%s.log" % idx)
     log_file = os.path.abspath(os.path.abspath(log_file))
-    # Prepare command line.
     experiment_builder = config[("meta", "experiment_builder")]
     config_builder = config[("meta", "config_builder")]
-    file_name = "run_experiment_stub.py"
-    exec_name = hgit.find_file_in_git_tree(file_name, super_module=True)
     cmd = [
         exec_name,
         f"--experiment_builder '{experiment_builder}'",
@@ -94,18 +98,20 @@ def _run_experiment(
         _LOG.error(msg)
         raise RuntimeError(msg)
     # Mark as success.
-    dtfmodutil.mark_config_as_success(experiment_result_dir)
+    # if rc == 0:
+    dtfmoexuti.mark_config_as_success(experiment_result_dir)
     rc = cast(int, rc)
     return rc
 
 
-def _get_workload(args: argparse.Namespace) -> hjoblib.Workload:
+def _get_joblib_workload(args: argparse.Namespace) -> hjoblib.Workload:
     """
-    Prepare the workload using the parameters from command line.
+    Prepare the joblib workload by building all the Configs using the parameters
+    from command line.
     """
     # Get the configs to run.
-    configs = dtfmodutil.get_configs_from_command_line(args)
-    # Prepare the tasks.
+    configs = dtfmoexuti.get_configs_from_command_line(args)
+    # Prepare one task per config to run.
     tasks = []
     for config in configs:
         task: hjoblib.Task = (
@@ -116,8 +122,8 @@ def _get_workload(args: argparse.Namespace) -> hjoblib.Workload:
         )
         tasks.append(task)
     #
-    func_name = "_run_experiment"
-    workload = (_run_experiment, func_name, tasks)
+    func_name = "_run_experiment_stub"
+    workload = (_run_experiment_stub, func_name, tasks)
     hjoblib.validate_workload(workload)
     return workload
 
@@ -129,9 +135,10 @@ def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    # Add common experiment options.
-    parser = dtfmodutil.add_experiment_arg(parser, dst_dir_required=True)
-    # Add pipeline options.
+    # Add common experiment options related to configs to execute (e.g.,
+    # --config_builder, --start_from_index).
+    parser = dtfmoexuti.add_run_experiment_args(parser, dst_dir_required=True)
+    # Add more options to control the set of experiment.
     parser.add_argument(
         "--experiment_builder",
         action="store",
@@ -163,7 +170,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dst_dir, clean_dst_dir = hparser.parse_dst_dir_arg(args)
     _ = clean_dst_dir
     # Prepare the workload.
-    workload = _get_workload(args)
+    workload = _get_joblib_workload(args)
     # Parse command-line options.
     dry_run = args.dry_run
     num_threads = args.num_threads
@@ -176,7 +183,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     _LOG.info("log_file='%s'", log_file)
     # Execute.
     # backend = "loky"
-    # TODO(gp): Is this the correct backend?
+    # TODO(gp): Is this the correct backend? It might not matter since we spawn
+    # a process with system.
     backend = "asyncio_threading"
     hjoblib.parallel_execute(
         workload,

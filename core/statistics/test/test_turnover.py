@@ -5,6 +5,7 @@ import pandas as pd
 
 import core.artificial_signal_generators as carsigen
 import core.statistics.turnover as cstaturn
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -162,20 +163,59 @@ class Test_compute_avg_turnover_and_holding_period(hunitest.TestCase):
         return series
 
 
-class TestComputeTurn(hunitest.TestCase):
+class TestComputeTurn1(hunitest.TestCase):
     def test1(self) -> None:
-        df = pd.DataFrame(
-            [
-                [0.035800, 1.7276, -1],
-                [0.019700, 1.2265, -1],
-                [0.011828, 0.8651, -1],
-                [0.007924, 0.5893, -1],
-                [0.005678, 0.4399, -1],
-                [0.002616, 0.3795, -1],
-                [0.000883, 0.3581, -1],
-            ],
-            [1, 2, 3, 4, 5, 6, 7],
-            ["var", "turn", "weight"],
-        )
+        df = _get_turn_df()
         turn = cstaturn.compute_turn(df)
         np.testing.assert_almost_equal(turn, 1.33146, decimal=3)
+
+
+class TestMaximizeWeightEntropy1(hunitest.TestCase):
+    def test1(self) -> None:
+        df = _get_turn_df()
+        weights = cstaturn.maximize_weight_entropy(df, 1.33146)
+        actual = hpandas.df_to_str(weights, num_rows=7, precision=3)
+        expected = r"""
+    weight
+1   0.142
+2   0.146
+3   0.140
+4   0.140
+5   0.144
+6   0.144
+7   0.142"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+class TestFindNearestAffinePoint1(hunitest.TestCase):
+    def test1(self) -> None:
+        df = _get_turn_df()
+        weights = cstaturn.find_nearest_affine_point(df, 1.33146)
+        actual = hpandas.df_to_str(weights, num_rows=7, precision=6)
+        expected = r"""
+     weight
+1  0.142855
+2  0.142857
+3  0.142858
+4  0.142858
+5  0.142858
+6  0.142857
+7  0.142857"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+def _get_turn_df() -> pd.DataFrame:
+    df = pd.DataFrame(
+        [
+            [0.035800, 1.7276, -1],
+            [0.019700, 1.2265, -1],
+            [0.011828, 0.8651, -1],
+            [0.007924, 0.5893, -1],
+            [0.005678, 0.4399, -1],
+            [0.002616, 0.3795, -1],
+            [0.000883, 0.3581, -1],
+        ],
+        [1, 2, 3, 4, 5, 6, 7],
+        ["var", "turn", "weight"],
+    )
+    return df

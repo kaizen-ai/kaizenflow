@@ -33,9 +33,7 @@ class TestGetConfigsFromBuilder1(hunitest.TestCase):
         """
         Build a config from.
         """
-        config_builder = (
-            "core.config.test.test_config_builders._build_test_configs()"
-        )
+        config_builder = "core.config.test.test_config_builders._build_test_configs()"
         configs = cconfig.get_configs_from_builder(config_builder)
         txt = pprint.pformat(configs)
         self.check_string(txt)
@@ -92,88 +90,3 @@ def _get_test_config_2() -> cconfig.Config:
     tmp_config = config.add_subconfig("meta")
     tmp_config["experiment_result_dir"] = "results.pkl"
     return config
-
-
-# #############################################################################
-
-
-class TestGenerateDefaultConfigVariants1(hunitest.TestCase):
-    def test_add_var_params(self) -> None:
-        """
-        Verify that Cartesian product of configs with varying parameters is
-        what expected.
-        """
-        # Prepare varying parameters.
-        params_variants = {("build_targets", "target_asset"): ["Gasoil", "Soy"]}
-        # Pass test config builder to generating function.
-        actual_configs = cconfig.generate_default_config_variants(
-            _get_test_config_1, params_variants
-        )
-        # Convert configs to string for comparison.
-        actual_configs = [str(config) for config in actual_configs]
-        # Manually add varying params to test configs.
-        expected_config_1 = _get_test_config_1()
-        expected_config_1[("build_targets", "target_asset")] = "Gasoil"
-        expected_config_2 = _get_test_config_1()
-        expected_config_2[("build_targets", "target_asset")] = "Soy"
-        # Convert configs to string for comparison.
-        expected_configs = [str(expected_config_1), str(expected_config_2)]
-        # Compare config lists element-wise.
-        self.assertEqual(expected_configs, actual_configs)
-
-
-# #############################################################################
-
-
-# TODO(gp): Reevaluate the next TODO.
-# TODO(gp): -> Test_build_multiple_configs1
-class TestBuildMultipleConfigs(hunitest.TestCase):
-    def test_existing_path(self) -> None:
-        # Create config template.
-        config_template = cconfig.Config()
-        config_tmp = config_template.add_subconfig("read_data")
-        config_tmp["symbol"] = None
-        config_tmp = config_template.add_subconfig("resample")
-        config_tmp["rule"] = None
-        # Define parameters.
-        params_variants = {
-            ("read_data", "symbol"): ["CL", "QM"],
-            ("resample", "rule"): ["5T", "7T", "10T"],
-        }
-        # Check the results.
-        actual_result = cconfig.build_multiple_configs(
-            config_template, params_variants
-        )
-        self.check_string(str(actual_result))
-
-    def test_non_existent_path(self) -> None:
-        # Create config template.
-        config_template = cconfig.Config()
-        config_tmp = config_template.add_subconfig("read_data")
-        config_tmp["symbol"] = None
-        config_tmp = config_template.add_subconfig("resample")
-        config_tmp["rule"] = None
-        # Define parameters.
-        params_variants = {
-            ("read_data", "symbol_bug"): ["CL", "QM"],
-            ("resample", "rule"): ["5T", "7T", "10T"],
-        }
-        # Check the results.
-        with self.assertRaises(ValueError):
-            _ = cconfig.build_multiple_configs(config_template, params_variants)
-
-    def test_not_nan_parameter(self) -> None:
-        # Create config template.
-        config_template = cconfig.Config()
-        config_tmp = config_template.add_subconfig("read_data")
-        config_tmp["symbol"] = "CL"
-        config_tmp = config_template.add_subconfig("resample")
-        config_tmp["rule"] = None
-        # Define parameters.
-        params_variants = {
-            ("read_data", "symbol"): ["CL", "QM"],
-            ("resample", "rule"): ["5T", "7T", "10T"],
-        }
-        # Check the results.
-        with self.assertRaises(ValueError):
-            _ = cconfig.build_multiple_configs(config_template, params_variants)
