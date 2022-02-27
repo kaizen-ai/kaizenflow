@@ -1,6 +1,7 @@
+import itertools
 import logging
 import os
-from typing import Any, List, Tuple, cast
+from typing import Any, Dict, Iterable, List, Tuple, cast
 
 import pytest
 
@@ -126,7 +127,6 @@ class TestRunNotebook2(hunitest.TestCase):
         _run_notebook_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
 
     @pytest.mark.slow
-    @pytest.mark.flaky(reruns=3)
     def test_parallel1(self) -> None:
         """
         Execute:
@@ -144,7 +144,6 @@ class TestRunNotebook2(hunitest.TestCase):
         _run_notebook_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
 
     @pytest.mark.slow
-    @pytest.mark.flaky(reruns=3)
     def test_parallel2(self) -> None:
         """
         Execute:
@@ -196,11 +195,74 @@ def _run_notebook_helper(
 # These are fake config builders used for testing.
 
 
+def _build_multiple_configs(
+    template_config: cconfig.Config,
+    params_variants: Dict[Tuple[str, ...], Iterable[Any]],
+) -> List[cconfig.Config]:
+    """
+    Build configs from a template and the Cartesian product of given keys/vals.
+
+    Create multiple `cconfig.Config` objects using the given config template and
+    overwriting `None` or `cconfig.DUMMY` parameter specified through a parameter
+    path and several possible elements:
+        param_path: Tuple(str) -> param_values: Iterable[Any]
+    A parameter path is represented by a tuple of nested names.
+
+    Note that we create a config for each element of the Cartesian product of
+    the values to be assigned.
+
+    :param template_config: cconfig.Config object
+    :param params_variants: {(param_name_in_the_config_path):
+        [param_values]}, e.g. {('read_data', 'symbol'): ['CL', 'QM'],
+                                ('resample', 'rule'): ['5T', '10T']}
+    :return: a list of configs
+    """
+    # In the example from above:
+    # ```
+    # list(params_values) = [('CL', '5T'), ('CL', '10T'), ('QM', '5T'), ('QM', '10T')]
+    # ```
+    params_values = itertools.product(*params_variants.values())
+    param_vars = list(
+        dict(zip(params_variants.keys(), values)) for values in params_values
+    )
+    # In the example above:
+    # ```
+    # param_vars = [
+    #    {('read_data', 'symbol'): 'CL', ('resample', 'rule'): '5T'},
+    #    {('read_data', 'symbol'): 'CL', ('resample', 'rule'): '10T'},
+    #    {('read_data', 'symbol'): 'QM', ('resample', 'rule'): '5T'},
+    #    {('read_data', 'symbol'): 'QM', ('resample', 'rule'): '10T'},
+    #  ]
+    # ```
+    param_configs = []
+    for params in param_vars:
+        # Create a config for the chosen parameter values.
+        config_var = template_config.copy()
+        for param_path, param_val in params.items():
+            # Select the path for the parameter and set the parameter.
+            conf_tmp = config_var
+            for pp in param_path[:-1]:
+                conf_tmp.check_params([pp])
+                conf_tmp = conf_tmp[pp]
+            conf_tmp.check_params([param_path[-1]])
+            if not (
+                conf_tmp[param_path[-1]] is None
+                or conf_tmp[param_path[-1]] == cconfig.DUMMY
+            ):
+                raise ValueError(
+                    "Trying to change a parameter that is not `None` or "
+                    "`'cconfig.DUMMY'`. Parameter path is %s" % str(param_path)
+                )
+            conf_tmp[param_path[-1]] = param_val
+        param_configs.append(config_var)
+    return param_configs
+
+
 def _build_config(values: List[bool]) -> List[cconfig.Config]:
     config_template = cconfig.Config()
     # TODO(gp): -> fail_param
     config_template["fail"] = None
-    configs = cconfig.build_multiple_configs(config_template, {("fail",): values})
+    configs = _build_multiple_configs(config_template, {("fail",): values})
     # Duplicated configs are not allowed, so we need to add identifiers to make
     # each config unique.
     for i, config in enumerate(configs):

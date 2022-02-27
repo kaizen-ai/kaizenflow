@@ -15,8 +15,8 @@ import pandas as pd
 import core.finance as cofinanc
 import core.signal_processing as csigproc
 import core.statistics as costatis
+import dataflow.model.experiment_utils as dtfmoexuti
 import dataflow.model.stats_computer as dtfmostcom
-import dataflow.model.utils as dtfmodutil
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hlogging as hloggin
@@ -45,7 +45,7 @@ def compute_stats_for_single_name_artifacts(
     """
     stats = collections.OrderedDict()
     load_rb_kwargs = {"columns": list([prediction_col, target_col])}
-    iterator = dtfmodutil.yield_experiment_artifacts(
+    iterator = dtfmoexuti.yield_experiment_artifacts(
         src_dir,
         file_name,
         load_rb_kwargs=load_rb_kwargs,
@@ -106,7 +106,7 @@ def aggregate_single_name_models(
         target_col,
     ]
     load_rb_kwargs = {"columns": expected_columns}
-    iterator = dtfmodutil.yield_experiment_artifacts(
+    iterator = dtfmoexuti.yield_experiment_artifacts(
         src_dir,
         file_name,
         load_rb_kwargs=load_rb_kwargs,
@@ -157,7 +157,7 @@ def load_result_dfs(
     This function should be used judiciously on large runs due to the memory
     requirements.
     """
-    iterator = dtfmodutil.yield_experiment_artifacts(
+    iterator = dtfmoexuti.yield_experiment_artifacts(
         src_dir,
         file_name,
         load_rb_kwargs=load_rb_kwargs,
@@ -269,7 +269,7 @@ def load_info(
     :return: dict keyed by experiment, with value equal to `info`
         restricted to `info_path`
     """
-    iterator = dtfmodutil.yield_experiment_artifacts(
+    iterator = dtfmoexuti.yield_experiment_artifacts(
         src_dir,
         file_name,
         load_rb_kwargs={"columns": []},

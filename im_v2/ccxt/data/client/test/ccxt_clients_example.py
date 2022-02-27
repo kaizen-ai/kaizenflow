@@ -10,7 +10,8 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 
-# TODO: Move file to the right dir -> im_v2/ccxt/data/client
+
+# TODO(Max): Move file to the right dir -> `im_v2/ccxt/data/client`.
 def get_test_data_dir() -> str:
     """
     Get dir with data files for the tests.
