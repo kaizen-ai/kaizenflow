@@ -1,11 +1,11 @@
 """
 Import as:
 
-import core.statistics as costatis
+import core.statistics.binning as cstabinn
 """
 
 import logging
-from typing import Union
+from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -16,7 +16,7 @@ import helpers.hdbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 
-def get_symmetric_normal_quantiles(bin_width: float) -> list:
+def get_symmetric_normal_quantiles(bin_width: float) -> Tuple[list, list]:
     """
     Get centered quantiles of normal distribution.
 
@@ -31,14 +31,34 @@ def get_symmetric_normal_quantiles(bin_width: float) -> list:
     hdbg.dassert_lt(0, bin_width)
     hdbg.dassert_lt(bin_width, 1)
     half_bin_width = bin_width / 2
+    #
     positive_bin_boundaries = [
         sp.stats.norm.ppf(x + 0.5)
         for x in np.arange(half_bin_width, 0.5, bin_width)
     ]
+    positive_bin_medians = [
+        sp.stats.norm.ppf(x + 0.5) for x in np.arange(bin_width, 0.5, bin_width)
+    ]
+    # Handle the corner case where not enough bin medians are calculated in
+    # the iteration.
+    if len(positive_bin_medians) < len(positive_bin_boundaries):
+        last_bin_cutoff = positive_bin_boundaries[-1]
+        sf = sp.stats.norm.sf(last_bin_cutoff)
+        last_median = sp.stats.norm.ppf(1 - sf / 2)
+        positive_bin_medians.extend([last_median])
+    # Reflect the bin boundaries.
     positive_bin_boundaries.append(np.inf)
     negative_bin_boundaries = [-x for x in reversed(positive_bin_boundaries)]
     bin_boundaries = negative_bin_boundaries + positive_bin_boundaries
-    return bin_boundaries
+    # Reflect the bin medians and include `0`.
+    negative_bin_medians = [-x for x in reversed(positive_bin_medians)]
+    bin_medians = negative_bin_medians + [0] + positive_bin_medians
+    # Ensure that the number of bin boundaries and bins matches.
+    num_bins = len(bin_boundaries) - 1
+    _LOG.info("num_bins=%d", num_bins)
+    hdbg.dassert_eq(num_bins, len(bin_medians))
+    #
+    return bin_boundaries, bin_medians
 
 
 def group_by_bin(
@@ -62,7 +82,7 @@ def group_by_bin(
     # Get bin boundaries assuming a normal distribution. Using theoretical
     # boundaries rather than empirical ones facilities comparisons across
     # different data.
-    bin_boundaries = get_symmetric_normal_quantiles(bin_width)
+    bin_boundaries, _ = get_symmetric_normal_quantiles(bin_width)
     # Standardize the binning column and cut.
     normalized_bin_col = df[bin_col] / df[bin_col].std()
     cuts = pd.cut(normalized_bin_col, bin_boundaries)

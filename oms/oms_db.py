@@ -211,6 +211,46 @@ def create_current_positions_table(
     return table_name
 
 
+# This corresponds to the table "restrictions_candidate_view" of an
+# implemented system.
+RESTRICTIONS_TABLE_NAME = "restrictions"
+
+
+def create_restrictions_table(
+    db_connection: hsql.DbConnection,
+    incremental: bool,
+    *,
+    table_name: str = RESTRICTIONS_TABLE_NAME,
+) -> str:
+    """
+    Create a table holding restrictions.
+    """
+    query = []
+    if not incremental:
+        query.append(f"DROP TABLE IF EXISTS {table_name}")
+    query.append(
+        f"""
+        CREATE TABLE IF NOT EXISTS {table_name} (
+            strategyid VARCHAR(64),
+            account VARCHAR(64),
+            id INT,
+            tradedate DATE NOT NULL,
+            timestamp_db TIMESTAMP NOT NULL,
+            asset_id INT,
+            is_restricted BOOL,
+            is_buy_restricted BOOL,
+            is_buy_cover_restricted BOOL,
+            is_sell_short_restricted BOOL,
+            is_sell_long_restricted BOOL
+            );
+            """
+    )
+    query = "; ".join(query)
+    _LOG.debug("query=%s", query)
+    db_connection.cursor().execute(query)
+    return table_name
+
+
 def create_oms_tables(
     db_connection: hsql.DbConnection, incremental: bool
 ) -> None:

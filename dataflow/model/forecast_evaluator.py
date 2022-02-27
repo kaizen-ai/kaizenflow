@@ -249,6 +249,7 @@ class ForecastEvaluator:
         *,
         target_gmv: Optional[float] = None,
         dollar_neutrality: str = "no_constraint",
+        reindex_like_input: bool = True,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Wraps `compute_portfolio()`, returns a single multiindexed dataframe.
@@ -263,7 +264,7 @@ class ForecastEvaluator:
             df,
             target_gmv=target_gmv,
             dollar_neutrality=dollar_neutrality,
-            reindex_like_input=True,
+            reindex_like_input=reindex_like_input,
         )
         portfolio_df = ForecastEvaluator._build_multiindex_df(
             df[self._returns_col],
@@ -282,7 +283,9 @@ class ForecastEvaluator:
         target_gmv: Optional[float] = None,
         dollar_neutrality: str = "no_constraint",
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """"""
+        """
+        
+        """
         positions, _, _ = self.compute_portfolio(
             df, target_gmv=target_gmv, dollar_neutrality=dollar_neutrality
         )
@@ -305,11 +308,8 @@ class ForecastEvaluator:
         # Restrict overnight returns to index range of `df`.
         overnight_returns = overnight_returns.loc[start_loc:end_loc]
         idx = positions.index.union(overnight_returns.index)
-        _LOG.info("positions=\n%s", positions)
         positions = positions.reindex(index=idx)
-        _LOG.info("positions=\n%s", positions)
         positions = positions.shift().dropna(how="all")
-        _LOG.info("positions=\n%s", positions)
         pnl = positions.multiply(overnight_returns)
         stats = pd.DataFrame(
             {
