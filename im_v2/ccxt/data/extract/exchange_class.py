@@ -18,8 +18,6 @@ import helpers.hsecrets as hsecret
 
 _LOG = logging.getLogger(__name__)
 
-API_KEYS_PATH = "/data/shared/data/API_keys.json"
-
 
 class CcxtExchange:
     """
@@ -93,7 +91,7 @@ class CcxtExchange:
             self.currency_pairs,
             "Currency pair is not present in exchange",
         )
-        # Get latest bars if no timestamp is provided.
+        # Get the latest bars if no timestamp is provided.
         if end_timestamp is None and start_timestamp is None:
             return self._fetch_ohlcv(
                 currency_pair, bar_per_iteration=bar_per_iteration
@@ -160,7 +158,11 @@ class CcxtExchange:
             "Exchange %s doesn't have fetchOrderBook",
             self._exchange,
         )
-        hdbg.dassert_in(currency_pair, self.currency_pairs)
+        hdbg.dassert_in(
+            currency_pair,
+            self.currency_pairs,
+            "Currency pair is not present in exchange",
+        )
         # Download current order book.
         # TODO(Grisha): use `_` instead of `/` as currencies separator in `symbol`.
         order_book = self._exchange.fetch_order_book(currency_pair)
@@ -183,9 +185,10 @@ class CcxtExchange:
         :param bar_per_iteration: number of bars per iteration
 
         :return: OHLCV data from CCXT that looks like:
-            TODO(gp): @danya Add snippet of data
             ```
-            ...
+                 timestamp      open      high       low     close    volume            end_download_timestamp
+        0    1631145600000  46048.31  46050.00  46002.02  46005.10  55.12298  2022-02-22 18:00:06.091652+00:00
+        1    1631145660000  46008.34  46037.70  45975.59  46037.70  70.45695  2022-02-22 18:00:06.091652+00:00
             ```
         """
         # Change currency pair to CCXT format.
