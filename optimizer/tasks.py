@@ -7,7 +7,8 @@ import helpers.hversion as hversi
 # Extract with:
 # > i print_tasks --as-code
 from opt_lib_tasks import (
-    docker_build_local_opt_image
+    docker_build_local_opt_image,
+    opt_docker_bash,
 )
 
 # _LOG = logging.getLogger(__name__)

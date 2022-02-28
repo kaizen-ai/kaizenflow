@@ -73,4 +73,4 @@ def _get_opt_docker_bash_cmd(version):
 @task
 def opt_docker_bash(ctx, version):
     _docker_cmd = _get_opt_docker_bash_cmd(version)
-    hlib._run(ctx, docker_cmd_, pty=True, )
+    hlib._run(ctx, _docker_cmd, pty=True, )
