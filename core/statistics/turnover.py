@@ -217,7 +217,9 @@ def maximize_weight_sr(
     _df_has_var_turn(df)
     vec = np.sqrt(df["var"])
     if "rho" in df.columns:
-        vec = vec * df["rho"]
+        rho = df["rho"]
+        hdbg.dassert_lte(0, rho.min())
+        vec = vec * rho
     return _optimize_weights(
         df,
         turnover,
@@ -274,6 +276,8 @@ def get_isoturnover_affine_space(
     return proj, x0
 
 
+# TODO(Paul): This does not take into account the scale invariance of
+#  the weights (but should).
 def compute_distance_to_isoturnover_plane(
     df: pd.DataFrame,
     turnover: float,
@@ -289,6 +293,8 @@ def compute_distance_to_isoturnover_plane(
     return dist
 
 
+# TODO(Paul): This does not take into account the scale invariance of
+#  the weights (but should).
 def project_onto_isoturnover_plane(
     df: pd.DataFrame,
     turnover: float,
@@ -306,8 +312,7 @@ def project_onto_isoturnover_plane(
     weight_sq = np.square(df["weight"])
     proj_vec = proj.dot(x0 - weight_sq.values) + weight_sq.values
     proj_vec_root = np.sqrt(proj_vec)
-    weight_vals = proj_vec_root / np.linalg.norm(proj_vec_root, 1)
-    weights = pd.Series(weight_vals, df.index, name="weight")
+    weights = pd.Series(proj_vec_root, df.index, name="weight")
     return weights
 
 
@@ -321,14 +326,20 @@ def find_nearest_affine_point(
     hdbg.dassert_in("weight", df.columns)
     weight_sq = np.square(df["weight"])
     proj, x0 = get_isoturnover_affine_space(df, turnover)
+    # Find the scaling factor for `weight_sq` that minimizes its distance to
+    # the affine space.
     lambda_ = (
         proj.dot(weight_sq.values).dot(proj.dot(x0))
         / np.linalg.norm(proj.dot(weight_sq.values)) ** 2
     )
     _LOG.debug("lambda_=%0.2f", lambda_)
+    # Project the rescaled weights.
     df = df.copy()
     df["weight"] = np.sqrt(lambda_) * df["weight"]
-    return project_onto_isoturnover_plane(df, turnover)
+    projection = project_onto_isoturnover_plane(df, turnover)
+    # Normalize the project weights.
+    normalized_weights = projection / np.linalg.norm(projection, 1)
+    return normalized_weights
 
 
 def _df_has_var_turn(df):
