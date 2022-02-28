@@ -42,6 +42,8 @@ def docker_build_local_opt_image(ctx, version):
 
 @task
 def opt_docker_bash(ctx, stage, version):
+    image = hlib._get_base_image("")
+    assert 0, image
     # TODO(Grisha): use `repo_config.py`.
     base_image = "665840871993.dkr.ecr.us-east-1.amazonaws.com/opt"
     cmd = "bash"
