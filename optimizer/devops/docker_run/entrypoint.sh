@@ -64,17 +64,17 @@ else
 fi;
 aws configure --profile am list || true
 
-echo "AM_CONTAINER_VERSION='$AM_CONTAINER_VERSION'"
+echo "OPT_CONTAINER_VERSION='$OPT_CONTAINER_VERSION'"
 
 VAL=$(which python)
 echo "which python: $VAL"
 VAL=$(python -V)
 echo "python -V: $VAL"
 #echo "check pandas package: "$(python -c "import pandas; print(pandas)")
-if [[ $ENABLE_DIND == 1 ]]; then
-    echo "docker -v: "$(docker -v)
-    echo "docker-compose -v: "$(docker-compose -v)
-fi;
+#if [[ $ENABLE_DIND == 1 ]]; then
+#    echo "docker -v: "$(docker -v)
+#    echo "docker-compose -v: "$(docker-compose -v)
+#fi;
 VAL=$(python -c "import helpers; print(helpers)")
 echo "helpers: $VAL"
 
