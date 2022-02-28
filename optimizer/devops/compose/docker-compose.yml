@@ -21,7 +21,7 @@ services:
 #      - GH_ACTION_ACCESS_TOKEN=$GH_ACTION_ACCESS_TOKEN
 #      # This env var is used by GH Action to signal that we are inside the CI.
 #      - CI=$CI
-    image: 665840871993.dkr.ecr.us-east-1.amazonaws.com/opt:local-grisha-0.1.0
+    image: ${IMAGE}
     # This is needed for dind (Docker-in-docker). It is also needed if one
     # wants to mount fstabs.
     privileged: true
