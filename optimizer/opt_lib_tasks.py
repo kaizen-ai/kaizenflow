@@ -71,6 +71,8 @@ def _get_opt_docker_bash_cmd(version):
 
 
 @task
-def opt_docker_bash(ctx, version):
-    _docker_cmd = _get_opt_docker_bash_cmd(version)
-    hlib._run(ctx, _docker_cmd, pty=True, )
+def opt_docker_bash(ctx, stage, version):
+    base_image = "665840871993.dkr.ecr.us-east-1.amazonaws.com/opt"
+    cmd = "bash"
+    _docker_cmd = hlib._get_docker_cmd(base_image, stage, version, cmd, entrypoint=True, as_user=False)
+    hlib._run(ctx, _docker_cmd, pty=True)

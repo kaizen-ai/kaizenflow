@@ -59,4 +59,4 @@ RUN echo "OPT_CONTAINER_VERSION=$OPT_CONTAINER_VERSION"
 # TODO(gp): Is this needed?
 WORKDIR $APP_DIR
 
-ENTRYPOINT ["${DEVOPS_ROOT}/docker_run/entrypoint.sh"]
+ENTRYPOINT ["optimizer/devops/docker_run/entrypoint.sh"]
