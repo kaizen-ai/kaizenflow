@@ -6,8 +6,8 @@ Use as:
 
 # Download OHLCV data for binance 'v03', saving dev_stage:
 > im_v2/ccxt/data/extract/download_realtime_for_one_exchange.py \
-    --end_timestamp '20211110-101100' \
-    --start_timestamp '20211110-101200' \
+    --start_timestamp '20211110-101100' \
+    --end_timestamp '20211110-101200' \
     --exchange_id 'binance' \
     --universe 'v03' \
     --db_stage 'dev' \
@@ -35,6 +35,68 @@ import im_v2.ccxt.universe.universe as imvccunun
 import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
+
+
+def _run(args: argparse.Namespace):
+    # Connect to database.
+    env_file = imvimlita.get_db_env_path(args.db_stage)
+    connection_params = hsql.get_connection_info_from_env_file(env_file)
+    connection = hsql.get_connection(*connection_params)
+    # Connect to S3 filesystem, if provided.
+    if args.aws_profile:
+        fs = hs3.get_s3fs(args.aws_profile)
+    # Initialize exchange class.
+    exchange = imvcdeexcl.CcxtExchange(args.exchange_id)
+    # Load currency pairs.
+    universe = imvccunun.get_trade_universe(args.universe)
+    currency_pairs = universe["CCXT"][args.exchange_id]
+    # Load DB table to work with
+    db_table = args.db_table
+    # Generate a query to remove duplicates.
+    dup_query = hsql.get_remove_duplicates_query(
+        table_name=db_table,
+        id_col_name="id",
+        column_names=["timestamp", "exchange_id", "currency_pair"],
+    )
+    # Convert timestamps.
+    start_timestamp = pd.Timestamp(args.start_timestamp)
+    end_timestamp = pd.Timestamp(args.end_timestamp)
+    # Download data for specified time period.
+    for currency_pair in currency_pairs:
+        data = exchange.download_ohlcv_data(
+            currency_pair.replace("_", "/"),
+            start_timestamp=start_timestamp,
+            end_timestamp=end_timestamp,
+        )
+        # Assign pair and exchange columns.
+        data["currency_pair"] = currency_pair
+        data["exchange_id"] = args.exchange_id
+        # Get timestamp of insertion in UTC.
+        data["knowledge_timestamp"] = hdateti.get_current_time("UTC")
+        # Insert data into the DB.
+        hsql.execute_insert_query(
+            connection=connection,
+            obj=data,
+            table_name=db_table,
+        )
+        # Save data to S3 bucket.
+        if args.s3_path:
+            # Get file name.
+            file_name = (
+                    currency_pair
+                    + "_"
+                    + hdateti.get_current_timestamp_as_string("UTC")
+                    + ".csv"
+            )
+            path_to_file = os.path.join(args.s3_path, args.exchange_id, file_name)
+            # Save data to S3 filesystem.
+            with fs.open(path_to_file, "w") as f:
+                data.to_csv(f, index=False)
+        # Remove duplicated entries.
+        connection.cursor().execute(dup_query)
+
+
+# #############################################################################
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -94,62 +156,7 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Connect to database.
-    env_file = imvimlita.get_db_env_path(args.db_stage)
-    connection_params = hsql.get_connection_info_from_env_file(env_file)
-    connection = hsql.get_connection(*connection_params)
-    # Connect to S3 filesystem, if provided.
-    if args.aws_profile:
-        fs = hs3.get_s3fs(args.aws_profile)
-    # Initialize exchange class.
-    exchange = imvcdeexcl.CcxtExchange(args.exchange_id)
-    # Load currency pairs.
-    universe = imvccunun.get_trade_universe(args.universe)
-    currency_pairs = universe["CCXT"][args.exchange_id]
-    # Load DB table to work with
-    db_table = args.db_table
-    # Generate a query to remove duplicates.
-    dup_query = hsql.get_remove_duplicates_query(
-        table_name=db_table,
-        id_col_name="id",
-        column_names=["timestamp", "exchange_id", "currency_pair"],
-    )
-    # Convert timestamps.
-    start_timestamp = pd.Timestamp(args.start_timestamp)
-    end_timestamp = pd.Timestamp(args.end_timestamp)
-    # Download data for specified time period.
-    for currency_pair in currency_pairs:
-        data = exchange.download_ohlcv_data(
-            currency_pair.replace("_", "/"),
-            start_timestamp=start_timestamp,
-            end_timestamp=end_timestamp,
-        )
-        # Assign pair and exchange columns.
-        data["currency_pair"] = currency_pair
-        data["exchange_id"] = args.exchange_id
-        # Get timestamp of insertion in UTC.
-        data["knowledge_timestamp"] = hdateti.get_current_time("UTC")
-        # Insert data into the DB.
-        hsql.execute_insert_query(
-            connection=connection,
-            obj=data,
-            table_name=db_table,
-        )
-        # Save data to S3 bucket.
-        if args.s3_path:
-            # Get file name.
-            file_name = (
-                currency_pair
-                + "_"
-                + hdateti.get_current_timestamp_as_string("UTC")
-                + ".csv"
-            )
-            path_to_file = os.path.join(args.s3_path, args.exchange_id, file_name)
-            # Save data to S3 filesystem.
-            with fs.open(path_to_file, "w") as f:
-                data.to_csv(f, index=False)
-        # Remove duplicated entries.
-        connection.cursor().execute(dup_query)
+    _run(args)
 
 
 if __name__ == "__main__":

@@ -66,6 +66,10 @@ def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
         # Jan in 2020.
         start_datetime = datetime.datetime(2020, 1, 1)
         end_datetime = datetime.datetime(2020, 2, 1)
+    elif period == "JanFeb2020":
+        # Jan and Feb of 2020.
+        start_datetime = datetime.datetime(2020, 1, 1)
+        end_datetime = datetime.datetime(2020, 3, 1)
     elif period == "2018":
         # 2018.
         start_datetime = datetime.datetime(2018, 1, 1)
@@ -89,6 +93,12 @@ def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
     hdbg.dassert_lte(start_datetime, end_datetime)
     start_timestamp = pd.Timestamp(start_datetime, tz="UTC")
     end_timestamp = pd.Timestamp(end_datetime, tz="UTC")
+    hdbg.dassert_lte(start_timestamp, end_timestamp)
+    # Intervals for the time tiling is [a, b].
+    end_timestamp -= pd.Timedelta(days=1)
+    _LOG.info(
+        "start_timestamp=%s end_timestamp=%s", start_timestamp, end_timestamp
+    )
     return start_timestamp, end_timestamp
 
 

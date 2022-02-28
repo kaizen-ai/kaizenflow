@@ -146,7 +146,7 @@ def data_source_node_factory(
             multiindex_output = False
             ret = dtfsysonod.HistoricalDataSource(nid, market_data_client, asset_id, ts_col_name, multiindex_output)
 
-    elif source_node_name == "DataLoader":
+    elif source_node_name == "FunctionDataSource":
         ret = dtfcore.FunctionDataSource(nid, **source_node_kwargs)
     elif source_node_name == "kibot":
         # TODO(gp): This should go through RealTimeDataSource.

@@ -14,8 +14,7 @@ import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 #  We want to expose this from the package, we don't like exporting stuff from
 #  test.
 
-
-# TODO: Move file to the right dir -> im_v2/ccxt/data/client
+# TODO(Max): Move file to the right dir -> `im_v2/ccxt/data/client`.
 def get_test_data_dir() -> str:
     """
     Get dir with data files for the tests.

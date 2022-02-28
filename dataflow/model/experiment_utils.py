@@ -4,19 +4,8 @@ experiments.
 
 Import as:
 
-import dataflow.model.utils as dtfmodutil
+import dataflow.model.experiment_utils as dtfmoexuti
 """
-
-# TODO(gp): -> experiment_utils.py
-# TODO(gp): All these functions should be tested. The problem is that these functions
-#  rely on results from experiments and the format of the experiment is still in
-#  flux.
-#  One approach is to:
-#  - have unit tests that run short experiments (typically disabled)
-#  - save the results of the experiments on S3 (or on disk)
-#  - use the S3 experiments as mocks for the real unit tests
-#  If the format of the experiment changes, we can just re-run the mock experiments
-#  and refresh them on S3.
 
 import argparse
 import collections
@@ -25,7 +14,6 @@ import json
 import logging
 import os
 import re
-import sys
 from typing import Any, Dict, Iterable, List, Match, Optional, Tuple, cast
 
 import pandas as pd
@@ -39,34 +27,31 @@ import helpers.hio as hio
 import helpers.hlogging as hloggin
 import helpers.hparser as hparser
 import helpers.hpickle as hpickle
-import helpers.hprint as hprint
 import helpers.hs3 as hs3
 
 _LOG = logging.getLogger(__name__)
 
 
-def add_experiment_arg(
+def add_run_experiment_args(
     parser: argparse.ArgumentParser,
     dst_dir_required: bool,
     dst_dir_default: Optional[str] = None,
 ) -> argparse.ArgumentParser:
     """
-    Add common command line options to run experiments and notebooks.
+    Add common command line options for `run_experiments.py` and notebooks.
+    It is not used by `run_experiment_stub.py`
 
     :param dst_dir_required: whether the user must specify a destination directory
         or not. If not, a default value should be passed through `dst_dir_default`
     :param dst_dir_default: a default destination dir
     """
+    # Add options related to destination dir, e.g., `--dst_dir`, `--clean_dst_dir`.
     parser = hparser.add_dst_dir_arg(
         parser, dst_dir_required=dst_dir_required, dst_dir_default=dst_dir_default
     )
+    # Add options related to joblib.
     parser = hparser.add_parallel_processing_arg(parser)
-    parser.add_argument(
-        "--index",
-        action="store",
-        default=None,
-        help="Run a single experiment corresponding to the i-th config",
-    )
+    #
     parser.add_argument(
         "--config_builder",
         action="store",
@@ -75,6 +60,14 @@ def add_experiment_arg(
         Full invocation of Python function to create configs, e.g.,
         `nlp.build_configs.build_Task1297_configs(random_seed_variants=[911,2,0])`
         """,
+    )
+    # TODO(gp): These options should be moved to joblib in
+    #  add_parallel_processing_arg.
+    parser.add_argument(
+        "--index",
+        action="store",
+        default=None,
+        help="Run a single experiment corresponding to the i-th config",
     )
     parser.add_argument(
         "--start_from_index",
@@ -85,37 +78,20 @@ def add_experiment_arg(
     return parser  # type: ignore
 
 
-# TODO(gp): Generalize this logic for `parallel_execute`.
-#  Each task writes in a directory and if it terminates, the success.txt file is
-#  written.
-def skip_configs_already_executed(
-    configs: List[cconfig.Config], incremental: bool
-) -> Tuple[List[cconfig.Config], int]:
-    """
-    Remove from the list the configs that have already been executed.
-    """
-    configs_out = []
-    num_skipped = 0
-    for config in configs:
-        # If there is already a success file in the dir, skip the experiment.
-        experiment_result_dir = config[("meta", "experiment_result_dir")]
-        file_name = os.path.join(experiment_result_dir, "success.txt")
-        if incremental and os.path.exists(file_name):
-            idx = config[("meta", "id")]
-            _LOG.warning("Found file '%s': skipping run %d", file_name, idx)
-            num_skipped += 1
-        else:
-            configs_out.append(config)
-    return configs_out, num_skipped
+# /////////////////////////////////////////////////////////////////////////////////
 
 
-def mark_config_as_success(experiment_result_dir: str) -> None:
-    """
-    Publish an empty file to indicate a successful finish.
-    """
-    file_name = os.path.join(experiment_result_dir, "success.txt")
-    _LOG.info("Creating file_name='%s'", file_name)
-    hio.to_file(file_name, "success")
+# TODO(gp): There is overlap between the concept of hjoblib.workload and experiment
+#  configs here.
+#  We would like to unify but it's not easy.
+# E.g.,
+# - hjoblib has reverse_workload, truncate_workload, etc while here we have the
+#   options but applied to configs.
+# - hjoblib has an incremental mechanism based on the workload function, while this
+#   is based on files representing a successful / failed config.
+# One of the problems is that the experiment configs need to be able to be generated
+# from command line to kick off the experiments and from each run_experiment_stub
+# so that we can keep experiment runner and run experiment in sync.
 
 
 def setup_experiment_dir(config: cconfig.Config) -> None:
@@ -138,6 +114,30 @@ def setup_experiment_dir(config: cconfig.Config) -> None:
     file_name = os.path.join(experiment_result_dir, "config.txt")
     _LOG.debug("Saving '%s'", file_name)
     hio.to_file(file_name, str(config))
+
+
+# TODO(gp): Generalize this logic for hjoblib `parallel_execute`.
+#  Each task writes in a directory and if it terminates, the success.txt file is
+#  written.
+def skip_configs_already_executed(
+    configs: List[cconfig.Config], incremental: bool
+) -> Tuple[List[cconfig.Config], int]:
+    """
+    Remove from the list the configs that have already been executed.
+    """
+    configs_out = []
+    num_skipped = 0
+    for config in configs:
+        # If there is already a success file in the dir, skip the experiment.
+        experiment_result_dir = config[("meta", "experiment_result_dir")]
+        file_name = os.path.join(experiment_result_dir, "success.txt")
+        if incremental and os.path.exists(file_name):
+            idx = config[("meta", "id")]
+            _LOG.warning("Found file '%s': skipping run %d", file_name, idx)
+            num_skipped += 1
+        else:
+            configs_out.append(config)
+    return configs_out, num_skipped
 
 
 def select_config(
@@ -179,24 +179,31 @@ def get_configs_from_command_line(
     args: argparse.Namespace,
 ) -> List[cconfig.Config]:
     """
-    Return all the configs to run given the command line interface.
+    Return all the (complete) `Config`s to run given the command line interface.
+
+    This is used by only `run_experiment.py` and `run_notebook.py` through
+    `add_run_experiment_args()`, but not by `run_experiment_stub.py` which uses
+    `cconfig.get_config_from_experiment_list_params()`.
 
     The configs are patched with all the information from the command
-    line (e.g., `idx`, `config_builder`, `experiment_builder`,
-    `dst_dir`, `experiment_result_dir`).
+    line (namely `config_builder`, `experiment_builder`, `dst_dir`) from the options
+    that are common to both `run_experiment.py` and `run_experiment_stub.py`.
     """
-    # Build the map with the config parameters.
+    # TODO(gp): This part is common to get_configs_from_experiment_list_params.
+    # Build the configs from the `ConfigBuilder`.
     config_builder = args.config_builder
     configs = cconfig.get_configs_from_builder(config_builder)
+    _LOG.info("Generated %d configs from the builder", len(configs))
+    # Patch the configs with the command line parameters.
     params = {
         "config_builder": args.config_builder,
         "dst_dir": args.dst_dir,
     }
     if hasattr(args, "experiment_builder"):
+        # `run_notebook.py` flow doesn't always have this.
+        # TODO(gp): Check if it's true.
         params["experiment_builder"] = args.experiment_builder
-    # Patch the configs with the command line parameters.
     configs = cconfig.patch_configs(configs, params)
-    _LOG.info("Generated %d configs from the builder", len(configs))
     # Select the configs based on command line options.
     index = args.index
     start_from_index = args.start_from_index
@@ -207,16 +214,19 @@ def get_configs_from_command_line(
     configs, num_skipped = skip_configs_already_executed(configs, incremental)
     _LOG.info("Removed %d configs since already executed", num_skipped)
     _LOG.info("Need to execute %d configs", len(configs))
-    # Handle --dry_run, if needed.
-    if args.dry_run:
-        _LOG.warning(
-            "The following configs will not be executed due to passing --dry_run:"
-        )
-        for i, config in enumerate(configs):
-            print(hprint.frame("Config %d/%s" % (i + 1, len(configs))))
-            print(str(config))
-        sys.exit(0)
     return configs
+
+
+# /////////////////////////////////////////////////////////////////////////////////
+
+
+def mark_config_as_success(experiment_result_dir: str) -> None:
+    """
+    Publish an empty file to indicate a successful finish.
+    """
+    file_name = os.path.join(experiment_result_dir, "success.txt")
+    _LOG.info("Creating file_name='%s'", file_name)
+    hio.to_file(file_name, "success")
 
 
 def report_failed_experiments(
@@ -277,7 +287,7 @@ def _retrieve_archived_experiment_artifacts_from_S3(
     Retrieve a package containing experiment artifacts from S3.
 
     :param s3_file_name: S3 file name containing the archive.
-        E.g., s3://alphamatic-data/experiments/experiment.RH1E.v1.20210726-20_09_53.5T.tgz
+        E.g., s3://alphamatic-data/experiments/...RH1E.v1.20210726-20_09_53.5T.tgz
     :param dst_dir: where to save the data
     :param aws_profile: the AWS profile to use it to access the archive
     :return: path to local dir with the content of the decompressed archive

@@ -63,11 +63,16 @@ class ForecastMixer:
         # Ensure `df` is a dataframe with two levels of columns
         hdbg.dassert_isinstance(df, pd.DataFrame)
         hdbg.dassert_eq(df.columns.nlevels, 2)
+        hdbg.dassert_is_subset(
+            self._predictions_cols, df.columns.levels[0].to_list()
+        )
         # Ensure `weights` is a dataframe with index equivalent to
         # the prediction cols.
         hdbg.dassert_isinstance(weights, pd.DataFrame)
         hdbg.dassert_eq(weights.columns.nlevels, 1)
+        hdbg.dassert(not weights.columns.has_duplicates)
         hdbg.dassert_set_eq(weights.index.to_list(), self._predictions_cols)
+        # TODO(Paul): Check uniqueness of weights columns.
         # Create one bar metric df per column in `weights`.
         bar_metrics_dfs = collections.OrderedDict()
         for col in weights.columns:
