@@ -14,7 +14,6 @@ import pytest
 import helpers.hasyncio as hasynci
 import helpers.hdatetime as hdateti
 import helpers.hpandas as hpandas
-import helpers.hprint as hprint
 import helpers.hsql as hsql
 import oms.oms_db as oomsdb
 import oms.test.oms_db_helper as omtodh
@@ -297,4 +296,22 @@ class TestOmsDbCurrentPositionsTable1(omtodh.TestOmsDbHelper):
         """
         table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
         create_table_func = oomsdb.create_current_positions_table
+        self._test_create_table_helper(table_name, create_table_func)
+
+
+# #############################################################################
+
+
+class TestOmsDbRestrictionsTable1(omtodh.TestOmsDbHelper):
+    """
+    Test operations on the restrictions table.
+    """
+
+    @pytest.mark.slow("20 seconds.")
+    def test_create_table1(self) -> None:
+        """
+        Test creating the table.
+        """
+        table_name = oomsdb.RESTRICTIONS_TABLE_NAME
+        create_table_func = oomsdb.create_restrictions_table
         self._test_create_table_helper(table_name, create_table_func)
