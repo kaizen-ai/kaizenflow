@@ -53,16 +53,16 @@ services:
     volumes:
       - ../../../:/app
 
-#  jupyter_server:
-#    command: devops/docker_run/run_jupyter_server.sh
-#    environment:
-#      - PORT=${PORT}
-#    extends:
-#      app
-#    network_mode: ${NETWORK_MODE:-bridge}
-#    ports:
-#      # TODO(gp): Rename `AM_PORT`.
-#      - "${PORT}:${PORT}"
+  jupyter_server:
+    command: devops/docker_run/run_jupyter_server.sh
+    environment:
+      - PORT=${PORT}
+    extends:
+      app
+    network_mode: ${NETWORK_MODE:-bridge}
+    ports:
+      # TODO(gp): Rename `AM_PORT`.
+      - "${PORT}:${PORT}"
 #
 #  # TODO(gp): For some reason the following doesn't work.
 #  #  jupyter_server_test:

@@ -40,16 +40,16 @@ RUN /bin/sh -c "./install_jupyter_extensions.sh"
 # COPY devops/docker_build/install_dind.sh .
 # RUN /bin/bash -c "./install_dind.sh"
 #
-# # - Create users and set permissions.
-# COPY devops/docker_build/create_users.sh .
-# RUN /bin/bash -c "./create_users.sh"
-# COPY devops/docker_build/etc_sudoers /etc/sudoers
+# - Create users and set permissions.
+COPY devops/docker_build/create_users.sh .
+RUN /bin/bash -c "./create_users.sh"
+COPY devops/docker_build/etc_sudoers /etc/sudoers
 
 # Mount external filesystems.
 #RUN mkdir -p /s3/alphamatic-data
 #RUN mkdir -p /fsx/research
 #
-# COPY devops/docker_run/bashrc $HOME/.bashrc
+COPY devops/docker_run/bashrc $HOME/.bashrc
 
 # Pass the container version (e.g., `1.0.0`) to the environment.
 ARG OPT_CONTAINER_VERSION

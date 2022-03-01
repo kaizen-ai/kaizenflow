@@ -10,6 +10,7 @@ import helpers.lib_tasks as hlib
 from opt_lib_tasks import (
     docker_build_local_opt_image,
     opt_docker_bash,
+    opt_docker_jupyter,
 )
 
 _LOG = logging.getLogger(__name__)
