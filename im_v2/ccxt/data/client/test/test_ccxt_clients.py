@@ -4,7 +4,7 @@ import pandas as pd
 
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
-import im_v2.ccxt.data.client.test.ccxt_clients_example as ivcdctcce
+import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.common.db.db_utils as imvcddbut
@@ -21,7 +21,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
     """
 
     def test_read_data1(self) -> None:
-        im_client = ivcdctcce.get_CcxtCsvClient_example2()
+        im_client = imvcdcccex.get_CcxtCsvClient_example2()
         full_symbol = "binance::BTC_USDT"
         #
         expected_length = 100
@@ -54,7 +54,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         )
 
     def test_read_data2(self) -> None:
-        im_client = ivcdctcce.get_CcxtCsvClient_example1()
+        im_client = imvcdcccex.get_CcxtCsvClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         #
         expected_length = 199
@@ -89,7 +89,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         )
 
     def test_read_data3(self) -> None:
-        im_client = ivcdctcce.get_CcxtCsvClient_example1()
+        im_client = imvcdcccex.get_CcxtCsvClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         start_ts = pd.Timestamp("2018-08-17T00:02:00-00:00")
         #
@@ -126,7 +126,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         )
 
     def test_read_data4(self) -> None:
-        im_client = ivcdctcce.get_CcxtCsvClient_example1()
+        im_client = imvcdcccex.get_CcxtCsvClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         end_ts = pd.Timestamp("2018-08-17T00:04:00-00:00")
         #
@@ -163,7 +163,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         )
 
     def test_read_data5(self) -> None:
-        im_client = ivcdctcce.get_CcxtCsvClient_example1()
+        im_client = imvcdcccex.get_CcxtCsvClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         start_ts = pd.Timestamp("2018-08-17T00:01:00-00:00")
         end_ts = pd.Timestamp("2018-08-17T00:04:00-00:00")
@@ -202,14 +202,14 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         )
 
     def test_read_data6(self) -> None:
-        im_client = ivcdctcce.get_CcxtCsvClient_example1()
+        im_client = imvcdcccex.get_CcxtCsvClient_example1()
         full_symbol = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
 
     # ////////////////////////////////////////////////////////////////////////
 
     def test_get_start_ts_for_symbol1(self) -> None:
-        im_client = ivcdctcce.get_CcxtCsvClient_example2()
+        im_client = imvcdcccex.get_CcxtCsvClient_example2()
         full_symbol = "binance::BTC_USDT"
         expected_start_ts = pd.to_datetime("2018-08-17 00:00:00", utc=True)
         self._test_get_start_ts_for_symbol1(
@@ -217,7 +217,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         )
 
     def test_get_end_ts_for_symbol1(self) -> None:
-        im_client = ivcdctcce.get_CcxtCsvClient_example2()
+        im_client = imvcdcccex.get_CcxtCsvClient_example2()
         full_symbol = "binance::BTC_USDT"
         expected_end_ts = pd.to_datetime("2018-08-17 01:39:00", utc=True)
         self._test_get_end_ts_for_symbol1(im_client, full_symbol, expected_end_ts)
@@ -225,7 +225,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
     # ////////////////////////////////////////////////////////////////////////
 
     def test_get_universe1(self) -> None:
-        im_client = ivcdctcce.get_CcxtCsvClient_example2()
+        im_client = imvcdcccex.get_CcxtCsvClient_example2()
         expected_length = 38
         expected_first_elements = [
             "binance::ADA_USDT",
@@ -275,7 +275,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
     """
 
     def test_read_data1(self) -> None:
-        im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
+        im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1()
         full_symbol = "binance::BTC_USDT"
         #
         expected_length = 100
@@ -308,7 +308,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         )
 
     def test_read_data2(self) -> None:
-        im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
+        im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         #
         expected_length = 199
@@ -343,7 +343,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         )
 
     def test_read_data3(self) -> None:
-        im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
+        im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         start_ts = pd.Timestamp("2018-08-17T00:02:00-00:00")
         #
@@ -380,7 +380,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         )
 
     def test_read_data4(self) -> None:
-        im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
+        im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         end_ts = pd.Timestamp("2018-08-17T00:04:00-00:00")
         #
@@ -417,7 +417,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         )
 
     def test_read_data5(self) -> None:
-        im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
+        im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         start_ts = pd.Timestamp("2018-08-17T00:01:00-00:00")
         end_ts = pd.Timestamp("2018-08-17T00:04:00-00:00")
@@ -456,14 +456,14 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         )
 
     def test_read_data6(self) -> None:
-        im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
+        im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1()
         full_symbol = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
 
     # ////////////////////////////////////////////////////////////////////////
 
     def test_get_start_ts_for_symbol1(self) -> None:
-        im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
+        im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1()
         full_symbol = "binance::BTC_USDT"
         expected_start_ts = pd.to_datetime("2018-08-17 00:00:00", utc=True)
         self._test_get_start_ts_for_symbol1(
@@ -471,7 +471,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         )
 
     def test_get_end_ts_for_symbol1(self) -> None:
-        im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
+        im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1()
         full_symbol = "binance::BTC_USDT"
         expected_end_ts = pd.to_datetime("2018-08-17 01:39:00", utc=True)
         self._test_get_end_ts_for_symbol1(im_client, full_symbol, expected_end_ts)
@@ -479,7 +479,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
     # ////////////////////////////////////////////////////////////////////////
 
     def test_get_universe1(self) -> None:
-        im_client = ivcdctcce.get_CcxtParquetByAssetClient_example1()
+        im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1()
         expected_length = 38
         expected_first_elements = [
             "binance::ADA_USDT",

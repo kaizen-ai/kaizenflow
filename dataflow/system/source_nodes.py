@@ -74,7 +74,7 @@ def data_source_node_factory(
         ret = HistoricalDataSource(nid, **source_node_kwargs)
     elif source_node_name == "disk":
         ret = dtfcore.DiskDataSource(nid, **source_node_kwargs)
-    elif source_node_name == "DataLoader":
+    elif source_node_name == "FunctionDataSource":
         ret = dtfcore.FunctionDataSource(nid, **source_node_kwargs)
     elif source_node_name == "kibot":
         # TODO(gp): This should go through RealTimeDataSource.
