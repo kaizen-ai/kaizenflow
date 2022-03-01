@@ -8,9 +8,7 @@ FILE_NAME="devops/docker_run/setenv.sh"
 echo "##> $FILE_NAME"
 
 PWD=$(pwd)
-echo "PWD=$PWD"
-AMP=$(realpath $PWD/..)
-echo "AMP=$AMP"
+AMP=$PWD
 
 # #############################################################################
 # PATH
