@@ -4,9 +4,11 @@
 # variables.
 #
 
+# TODO(gp): This seems useless. If so, delete.
+
 set -e
 
-FILE_NAME="devops/docker_build/entrypoint/aws_credentials.sh"
+FILE_NAME="optimizer/devops/docker_build/entrypoint/aws_credentials.sh"
 echo "##> $FILE_NAME"
 
 echo "HOME=$HOME"
