@@ -31,12 +31,61 @@ import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import im_v2.ccxt.universe.universe as imvccunun
-import im_v2.common.data.transform.transform_utils as imvctrtrul
+import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 _LOG = logging.getLogger(__name__)
 
 
-def list_and_merge_pq_files(root_dir: str, fs: Any, *, file_name: str = "data.pq"):
+def _run(args: argparse.Namespace) -> None:
+    # Connect to S3 filesystem.
+    fs = hs3.get_s3fs(args.aws_profile)
+    exchange = imvcdeexcl.CcxtExchange(args.exchange_id)
+    # Load trading universe.
+    universe = imvccunun.get_trade_universe(args.universe)
+    # Load a list of currency pars.
+    currency_pairs = universe["CCXT"][args.exchange_id]
+    # Convert timestamps.
+    end_timestamp = pd.Timestamp(args.end_timestamp)
+    start_timestamp = pd.Timestamp(args.start_timestamp)
+    path_to_exchange = os.path.join(args.s3_path, args.exchange_id)
+    for currency_pair in currency_pairs:
+        # Download OHLCV data.
+        data = exchange.download_ohlcv_data(
+            currency_pair.replace("_", "/"),
+            start_timestamp=start_timestamp,
+            end_timestamp=end_timestamp,
+        )
+        data["currency_pair"] = currency_pair
+        # Change index to allow calling add_date_partition_cols function on the dataframe.
+        data = imvcdttrut.reindex_on_datetime(data, "timestamp")
+        data, partition_cols = hparque.add_date_partition_columns(
+            data, "by_year_month"
+        )
+        # Get current time of push to s3 in UTC.
+        knowledge_timestamp = hdateti.get_current_time("UTC")
+        data["knowledge_timestamp"] = knowledge_timestamp
+        # Save data to S3 filesystem.
+        # Saves filename as `uuid`.
+        hparque.to_partitioned_parquet(
+            data,
+            ["currency_pair"] + partition_cols,
+            path_to_exchange,
+            filesystem=fs,
+            partition_filename=None,
+        )
+        # Sleep between iterations.
+        time.sleep(args.sleep_time)
+    # Merge all new parquet into a single `data.parquet`.
+    list_and_merge_pq_files(
+        path_to_exchange,
+        fs,
+        file_name="data.parquet",
+    )
+
+
+def list_and_merge_pq_files(
+    root_dir: str, fs: Any, *, file_name: str = "data.parquet"
+) -> None:
     """
     Merge all files of the parquet dataset.
 
@@ -44,20 +93,22 @@ def list_and_merge_pq_files(root_dir: str, fs: Any, *, file_name: str = "data.pq
 
     The standard partition assumed is:
 
-        ```
+    ```
     root_dir/
-        year=2021/
-            month=12/
-                asset=A/
+        currency_pair=ADA_USDT/
+            year=2021/
+                month=12/
                     data.parquet
-                asset=B/
+            year=2022/
+                month=01/
                     data.parquet
         ...
-        year=2022/
-            month=01/
-                asset=A/
+        currency_pair=EOS_USDT/
+            year=2021/
+                month=12/
                     data.parquet
-                asset=B/
+            year=2022/
+                month=01/
                     data.parquet
     ```
 
@@ -68,9 +119,9 @@ def list_and_merge_pq_files(root_dir: str, fs: Any, *, file_name: str = "data.pq
     # TODO(Danya): Expand to local filesystem.
     # Get full paths to each parquet file inside root dir.
     parquet_files = fs.glob(f"{root_dir}/**.parquet")
-    print(parquet_files)
-    # Get paths only to lowest level of dataset folders.
-    dataset_folders = list(set([f.rsplit("/", 1)[0] for f in parquet_files]))
+    _LOG.debug("Parquet files: '%s'", parquet_files)
+    # Get paths only to the lowest level of dataset folders.
+    dataset_folders = set(f.rsplit("/", 1)[0] for f in parquet_files)
     for folder in dataset_folders:
         # Get files per folder and merge if there are multiple ones.
         folder_files = fs.ls(folder)
@@ -80,6 +131,9 @@ def list_and_merge_pq_files(root_dir: str, fs: Any, *, file_name: str = "data.pq
             # Remove all old files and write new, merged one.
             fs.rm(folder, recursive=True)
             pq.write_table(data, folder + "/" + file_name, filesystem=fs)
+
+
+# #############################################################################
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -131,46 +185,7 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Connect to S3 filesystem.
-    fs = hs3.get_s3fs(args.aws_profile)
-    exchange = imvcdeexcl.CcxtExchange(args.exchange_id)
-    # Load trading universe.
-    universe = imvccunun.get_trade_universe(args.universe)
-    # Load a list of currency pars.
-    currency_pairs = universe["CCXT"][args.exchange_id]
-    # Convert timestamps.
-    end_timestamp = pd.Timestamp(args.end_timestamp)
-    start_timestamp = pd.Timestamp(args.start_timestamp)
-    path_to_exchange = os.path.join(args.s3_path, args.exchange_id)
-    for currency_pair in currency_pairs:
-        # Download OHLCV data.
-        data = exchange.download_ohlcv_data(
-            currency_pair.replace("_", "/"),
-            start_timestamp=start_timestamp,
-            end_timestamp=end_timestamp,
-        )
-        data["currency_pair"] = currency_pair
-        # Change index to allow calling add_date_partition_cols function on the dataframe.
-        data = imvctrtrul.reindex_on_datetime(data, "timestamp")
-        data, partition_cols = hparque.add_date_partition_columns(
-            data, "by_year_month"
-        )
-        # Get timestamp of push to s3 in UTC.
-        knowledge_timestamp = hdateti.get_current_timestamp_as_string("UTC")
-        data["knowledge_timestamp"] = knowledge_timestamp
-        # Save data to S3 filesystem.
-        # Saves filename as `uuid`.
-        hparque.to_partitioned_parquet(
-            data, ["currency_pair"] + partition_cols, path_to_exchange, filesystem=fs, partition_filename=None
-        )
-        # Sleep between iterations.
-        time.sleep(args.sleep_time)
-    # Merge all new parquet into a single `data.parquet`.
-    list_and_merge_pq_files(
-        path_to_exchange,
-        fs,
-        file_name="data.parquet",
-    )
+    _run(args)
 
 
 if __name__ == "__main__":
