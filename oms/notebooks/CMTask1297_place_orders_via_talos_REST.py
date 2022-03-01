@@ -65,4 +65,61 @@ def calculate_signature(api_secret, parts):
     signature = base64.urlsafe_b64encode(hash.digest()).decode()
     return signature
 
+def timestamp_to_tz_naive_ISO_8601(timestamp: pd.Timestamp) -> str:
+    """
+    Transform Timestamp into a string in format accepted by Talos API.
+
+    Example:
+    2019-10-20T15:00:00.000000Z
+
+    Note: microseconds must be included.
+    """
+    hdateti.dassert_is_tz_naive(timestamp)
+    timestamp_iso_8601 = timestamp.isoformat(timespec="microseconds") + "Z"
+    return timestamp_iso_8601
+
+def get_orders(host: str, path: str, query: str, signature: str) -> pd.DataFrame:
+    """
+    Load data from given path.
+    """
+    headers = {"TALOS-KEY": key_talos}
+    # Example of full url:
+    #  https://sandbox.talostrading.com/v1/symbols/BTC-USDT/markets/binance/ohlcv/1m?startDate=2022-02-24T19:21:00.000000Z&startDate=2022-02-24T19:25:00.000000Z&limit=100
+    url = f"https://{host}{path}{query}"
+    r = requests.get(url=url, params={}, headers=headers)
+    if r.status_code == 200:
+        data = r.json()["data"]
+
+    return pd.DataFrame(data)
+
+
+# %% [markdown]
+# ### Small Q&A
+#
+# - How to get a list of order IDs?
+# - How to load all orders (not just IDs)?
+# - How to post an order to buy?
+# - How to post an order to sell?
+# - How to find out the status of the order?
+# - ** How to link the API to a wallet?
+
+# %% [markdown]
+# ### How to load orders?
+# https://docs.talostrading.com/#get-an-order-rest
+#
+# See the header for orders - how to pass a signature?
+
 # %%
+def get_orders(host: str, path: str, query: str, signature: str) -> pd.DataFrame:
+    """
+    Load data from given path.
+    """
+    headers = {"TALOS-KEY": key_talos}
+    # Example of full url:
+    #  https://sandbox.talostrading.com/v1/symbols/BTC-USDT/markets/binance/ohlcv/1m?startDate=2022-02-24T19:21:00.000000Z&startDate=2022-02-24T19:25:00.000000Z&limit=100
+    url = f"https://{host}{path}{query}"
+    r = requests.get(url=url, params={}, headers=headers)
+    if r.status_code == 200:
+        data = r.json()["data"]
+
+    return pd.DataFrame(data)
