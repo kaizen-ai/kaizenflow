@@ -1,34 +1,17 @@
 [tool.poetry]
-name = "amp_opt"
-version = "1.0.0"
+name = "optimizer"
+version = "0.1.0"
 description = ""
 authors = [""]
 
 [tool.poetry.dependencies]
-# This doesn't install (see Amp issue 1836).
-#cvxpy = "*"
-flaky = "*"
-invoke = "*"
-jsonpickle = "*"
+cvxopt = "*"
+cvxpy = "*"
 jupyter = "*"
 jupyter_contrib_nbextensions = "*"
-jupyter_nbextensions_configurator = "*"
 jupytext = "*"
-matplotlib = "*"
-pandas = "^1.2.0"
-pyarrow = "*"
-pygraphviz = "*"
-pytest = "^6.0.0"
-pytest-cov = "*"
-pytest-instafail = "*"
-pytest-xdist = "*"
-python = "^3.9"
-requests = "*"
-s3fs = "*"
-seaborn = "*"
-sklearn = "*"
-statsmodels = "*"
-tqdm = "*"
+pandas = "*"
+python = "^3.8"
 
 [tool.poetry.dev-dependencies]
 

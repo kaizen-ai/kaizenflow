@@ -23,12 +23,6 @@ if [[ ! -d $DIR_NAME ]]; then
   mkdir -p $DIR_NAME
 fi;
 
-# To work around the error:
-# pkg_resources.DistributionNotFound: The 'importlib-resources>=1.4.0;
-# python_version < "3.9"' distribution was not found and is required by
-# jsonschema
-pip install importlib-resources
-
 # Install extensions.
 jupyter contrib nbextension install
 
