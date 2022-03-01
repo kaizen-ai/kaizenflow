@@ -32,9 +32,9 @@ COPY ${DEVOPS_ROOT}/docker_build/pyproject.toml .
 COPY ${DEVOPS_ROOT}/docker_build/install_python_packages.sh .
 RUN /bin/bash -c "./install_python_packages.sh"
 
-# # - Install Jupyter extensions.
-# COPY devops/docker_build/install_jupyter_extensions.sh .
-# RUN /bin/sh -c "./install_jupyter_extensions.sh"
+# - Install Jupyter extensions.
+COPY ${DEVOPS_ROOT}/docker_build/install_jupyter_extensions.sh .
+RUN /bin/sh -c "./install_jupyter_extensions.sh"
 #
 # # - Install Docker-in-docker.
 # COPY devops/docker_build/install_dind.sh .

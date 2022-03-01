@@ -10,7 +10,7 @@ echo "##########################################################################
 echo "##> $FILE_NAME"
 echo "#############################################################################"
 
-DEBIAN_FRONTEND=noninteractive
+export DEBIAN_FRONTEND=noninteractive
 
 # Update the package listing, so we know what package exist.
 apt-get update
@@ -22,12 +22,12 @@ APT_GET_OPTS="-y --no-install-recommends"
 
 ## TODO(gp): We can remove lots of this.
 #apt-get install $APT_GET_OPTS cifs-utils
-#apt-get install $APT_GET_OPTS git
+apt-get install $APT_GET_OPTS git
 #apt-get install $APT_GET_OPTS keyutils
 #apt-get install $APT_GET_OPTS make
 
 ## Install vim.
-#apt-get install $APT_GET_OPTS vim
+apt-get install $APT_GET_OPTS vim
 
 ## This is needed to compile ujson.
 ## See https://github.com/alphamatic/lm/issues/155
@@ -44,7 +44,7 @@ pip3 install poetry
 echo "POETRY VERSION="$(poetry --version)
 
 # Install homebrew.
-#apt-get install $APT_GET_OPTS build-essential procps curl file git
+apt-get install $APT_GET_OPTS build-essential procps curl file git
 
 # Install github CLI.
 # From https://github.com/cli/cli/blob/trunk/docs/install_linux.md

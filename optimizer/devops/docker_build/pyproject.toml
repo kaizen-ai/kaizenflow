@@ -7,6 +7,9 @@ authors = [""]
 [tool.poetry.dependencies]
 cvxopt = "*"
 cvxpy = "*"
+jupyter = "*"
+jupyter_contrib_nbextensions = "*"
+jupytext = "*"
 pandas = "*"
 python = "^3.8"
 
