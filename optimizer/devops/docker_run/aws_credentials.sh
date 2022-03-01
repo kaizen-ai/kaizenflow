@@ -8,7 +8,7 @@
 
 set -e
 
-FILE_NAME="devops/docker_build/entrypoint/aws_credentials.sh"
+FILE_NAME="optimizer/devops/docker_build/entrypoint/aws_credentials.sh"
 echo "##> $FILE_NAME"
 
 echo "HOME=$HOME"
