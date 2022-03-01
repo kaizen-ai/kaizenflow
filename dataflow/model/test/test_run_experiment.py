@@ -14,12 +14,39 @@ import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
+# #############################################################################
+
+
+def _run_experiment_helper(
+    self: Any, cmd_opts: List[str], exp_pass: bool, exp: str
+) -> None:
+    """
+    Build, run, and check a `run_experiment` command line.
+    """
+    amp_path = hgit.get_amp_abs_path()
+    # Get the executable.
+    exec_file = os.path.join(amp_path, "dataflow/model/run_experiment.py")
+    hdbg.dassert_file_exists(exec_file)
+    # Build command line.
+    dst_dir = self.get_scratch_space()
+    cmd = [
+        f"{exec_file}",
+        "--experiment_builder dataflow.model.test.simple_experiment.run_experiment",
+        f"--dst_dir {dst_dir}",
+    ]
+    trnot.run_cmd_line(self, cmd, cmd_opts, dst_dir, exp, exp_pass)
+
+
+# #############################################################################
+# TestRunExperimentSuccess1
+# #############################################################################
+
 
 # TODO(gp): We could factor out more common code between here and the corresponding
-#  unit tests in TestRuNotebook*. The difference is only in the command lines.
+#  unit tests in TestRunNotebook*. The difference is only in the command lines.
 class TestRunExperimentSuccess1(hunitest.TestCase):
     """
-    Run experiments that succeed.
+    Run an experiment list of two experiment that both succeed.
 
     These tests are equivalent to `TestRunNotebook1` but using the
     `run_experiment.py` flow instead of `run_notebook.py`.
@@ -54,7 +81,6 @@ class TestRunExperimentSuccess1(hunitest.TestCase):
         _run_experiment_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
 
     @pytest.mark.slow
-    @pytest.mark.flaky(reruns=3)
     def test_parallel1(self) -> None:
         """
         Execute:
@@ -70,6 +96,8 @@ class TestRunExperimentSuccess1(hunitest.TestCase):
         _run_experiment_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
 
 
+# #############################################################################
+# TestRunExperimentFail2
 # #############################################################################
 
 
@@ -169,6 +197,8 @@ class TestRunExperimentFail2(hunitest.TestCase):
 
 
 # #############################################################################
+# TestRunExperimentArchiveOnS3
+# #############################################################################
 
 
 class TestRunExperimentArchiveOnS3(hunitest.TestCase):
@@ -246,26 +276,3 @@ class TestRunExperimentArchiveOnS3(hunitest.TestCase):
             hs3.dassert_s3_exists(s3_path, s3fs_)
             s3fs_.rm(s3_path)
             hs3.dassert_s3_not_exists(s3_path, s3fs_)
-
-
-# #############################################################################
-
-
-def _run_experiment_helper(
-    self: Any, cmd_opts: List[str], exp_pass: bool, exp: str
-) -> None:
-    """
-    Build, run, and check a `run_experiment` command line.
-    """
-    amp_path = hgit.get_amp_abs_path()
-    # Get the executable.
-    exec_file = os.path.join(amp_path, "dataflow/model/run_experiment.py")
-    hdbg.dassert_file_exists(exec_file)
-    # Build command line.
-    dst_dir = self.get_scratch_space()
-    cmd = [
-        f"{exec_file}",
-        "--experiment_builder dataflow.model.test.simple_experiment.run_experiment",
-        f"--dst_dir {dst_dir}",
-    ]
-    trnot.run_cmd_line(self, cmd, cmd_opts, dst_dir, exp, exp_pass)

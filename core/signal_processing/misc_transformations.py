@@ -31,6 +31,27 @@ def compress_tails(
     return scale * np.tanh(signal / scale)
 
 
+def discretize(
+    signal: pd.Series, bin_boundaries: list, bin_values: list
+) -> pd.Series:
+    """
+    Discretize `signal` into bins (`bin_boundaries`) with `bin_values`.
+    """
+    hdbg.dassert_isinstance(signal, pd.Series)
+    hdbg.dassert_eq(len(bin_boundaries) - 1, len(bin_values))
+    idx = signal.index
+    # Drop NaNs to avoid numpy's NaN handling in `np.digitize()`.
+    signal = signal.dropna()
+    binned_signal = np.digitize(signal, bin_boundaries)
+    discretized_signal = [bin_values[x - 1] for x in binned_signal]
+    discretized_signal = pd.Series(
+        discretized_signal, signal.index, name=signal.name
+    )
+    # Add back any NaNs.
+    discretized_signal = discretized_signal.reindex(idx)
+    return discretized_signal
+
+
 def get_symmetric_equisized_bins(
     signal: pd.Series, bin_size: float, zero_in_bin_interior: bool = False
 ) -> np.array:

@@ -33,7 +33,9 @@ def run_prod_model_flow(
     Run end-to-end flow for a model:
 
     - run model
-    - run the analysis flow to make sure that it works
+    - run the analysis flow
+
+    The goal is to make sure that the entire flow works.
 
     :param config_builder: config builder to run the model
     :param experiment_builder: experiment builder to run the model
@@ -87,7 +89,8 @@ def _run_model(
     config_builder: str, experiment_builder: str, extra_opts: str, dst_dir: str
 ) -> None:
     # Execute a command line like:
-    #   /app/amp/core/dataflow_model/run_experiment.py \
+    # ```
+    # > /app/amp/core/dataflow_model/run_experiment.py \
     #       --experiment_builder \
     #           amp.dataflow_model.master_experiment.run_experiment \
     #       --config_builder \
@@ -96,6 +99,7 @@ def _run_model(
     #       --clean_dst_dir \
     #       --no_confirm \
     #       --num_threads serial
+    # ```
     if os.path.exists(dst_dir):
         _LOG.warning("Dir with experiment already exists: skipping...")
         return

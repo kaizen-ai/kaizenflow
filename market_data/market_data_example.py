@@ -19,7 +19,7 @@ import helpers.hdbg as hdbg
 import helpers.hnumpy as hnumpy
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import im_v2.ccxt.data.client.test.ccxt_clients_example as ivcdctcce
+import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
 import market_data.market_data_im_client as mdmdimcl
 import market_data.replayed_market_data as mdremada
 
@@ -425,7 +425,7 @@ def get_ImClientMarketData_example1(
     """
     Build a `ImClientMarketData` backed with loaded test data.
     """
-    ccxt_client = ivcdctcce.get_CcxtCsvClient_example1()
+    ccxt_client = imvcdcccex.get_CcxtCsvClient_example1()
     #
     asset_id_col = "asset_id"
     start_time_col_name = "start_ts"

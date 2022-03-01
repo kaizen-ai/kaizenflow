@@ -149,7 +149,7 @@ class Test_Traceback1(hunitest.TestCase):
             dfatal(dfatal_txt)
           File "/app/amp/helpers/dbg.py", line 63, in dfatal
             raise assertion_type(ret)
-        kAssertionError:
+        AssertionError:
         # #####################################################################
         * Failed assertion *
         cond=None
@@ -181,7 +181,7 @@ class Test_Traceback1(hunitest.TestCase):
             dfatal(dfatal_txt)
           File "$GIT_ROOT/helpers/dbg.py", line 63, in dfatal
             raise assertion_type(ret)
-        kAssertionError:
+        AssertionError:
         """
         self._parse_traceback_helper(
             txt, purify_from_client, exp_cfile, exp_traceback
@@ -316,6 +316,35 @@ class Test_Traceback1(hunitest.TestCase):
     #   File "/venv/lib/python3.8/site-packages/pandas/core/indexes/base.py", line 3363, in get_loc
     #     raise KeyError(key) from err
     # KeyError: 'end_ts'
+
+    # Bug4:
+    # dataflow/model/test/test_experiment_utils.py::Test_get_configs_from_command_line1::test1 (0.01 s) FAILED [100%]
+    #
+    # =================================== FAILURES ===================================
+    # __________________ Test_get_configs_from_command_line1.test1 ___________________
+    # Traceback (most recent call last):
+    #   File "/app/dataflow/model/test/test_experiment_utils.py", line 35, in test1
+    #     configs = dtfmoexuti.get_configs_from_command_line(args)
+    #   File "/app/dataflow/model/experiment_utils.py", line 195, in get_configs_from_command_line
+    #     configs = cconfig.get_configs_from_builder(config_builder)
+    #   File "/app/core/config/builder.py", line 48, in get_configs_from_builder
+    #     imp = importlib.import_module(import_)
+    #   File "/usr/lib/python3.8/importlib/__init__.py", line 127, in import_module
+    #     return _bootstrap._gcd_import(name[level:], package, level)
+    #   File "<frozen importlib._bootstrap>", line 1014, in _gcd_import
+    #   File "<frozen importlib._bootstrap>", line 991, in _find_and_load
+    #   File "<frozen importlib._bootstrap>", line 961, in _find_and_load_unlocked
+    #   File "<frozen importlib._bootstrap>", line 219, in _call_with_frames_removed
+    #   File "<frozen importlib._bootstrap>", line 1014, in _gcd_import
+    #   File "<frozen importlib._bootstrap>", line 991, in _find_and_load
+    #   File "<frozen importlib._bootstrap>", line 961, in _find_and_load_unlocked
+    #   File "<frozen importlib._bootstrap>", line 219, in _call_with_frames_removed
+    #   File "<frozen importlib._bootstrap>", line 1014, in _gcd_import
+    #   File "<frozen importlib._bootstrap>", line 991, in _find_and_load
+    #   File "<frozen importlib._bootstrap>", line 973, in _find_and_load_unlocked
+    # ModuleNotFoundError: No module named 'research'
+    # ============================= slowest 3 durations ==============================
+
 
     # pylint: enable=line-too-long
 

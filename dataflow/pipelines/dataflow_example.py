@@ -62,7 +62,7 @@ class _NaivePipeline(dtfcore.DagBuilder):
         dict_ = {
             # Get data.
             self._get_nid("get_data"): {
-                "source_node_name": "DataLoader",
+                "source_node_name": "FunctionDataSource",
                 "source_node_kwargs": {
                     "func": _get_data,
                 },
