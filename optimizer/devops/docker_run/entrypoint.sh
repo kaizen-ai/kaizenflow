@@ -2,7 +2,7 @@
 
 set -e
 
-FILE_NAME="devops/docker_run/entrypoint.sh"
+FILE_NAME="optimizer/devops/docker_run/entrypoint.sh"
 echo "##> $FILE_NAME"
 
 echo "UID="$(id -u)
@@ -16,25 +16,25 @@ source devops/docker_run/setenv.sh
 # Allow working with files outside a container.
 #umask 000
 
-## Enable dind unless the user specifies otherwise (needed for prod image).
-#if [ -z "$ENABLE_DIND" ]; then
-#    ENABLE_DIND=1
-#    echo "ENABLE_DIND=$ENABLE_DIND"
-#fi;
-#
-#if [[ $ENABLE_DIND == 1 ]]; then
-#    echo "Setting up Docker-in-docker"
-#    if [[ ! -d /etc/docker ]]; then
-#        sudo mkdir /etc/docker
-#    fi;
-#    # This is needed to run the database in dind mode (see CmTask309).
-#    # TODO(gp): For some reason appending to file directly `>>` doesn't work.
-#    sudo echo '{ "storage-driver": "vfs" }' | sudo tee -a /etc/docker/daemon.json
-#
-#    # Start Docker Engine.
-#    sudo /etc/init.d/docker start
-#    sudo /etc/init.d/docker status
-#fi;
+# Enable dind unless the user specifies otherwise (needed for prod image).
+if [ -z "$ENABLE_DIND" ]; then
+    ENABLE_DIND=0
+    echo "ENABLE_DIND=$ENABLE_DIND"
+fi;
+
+if [[ $ENABLE_DIND == 1 ]]; then
+    echo "Setting up Docker-in-docker"
+    if [[ ! -d /etc/docker ]]; then
+        sudo mkdir /etc/docker
+    fi;
+    # This is needed to run the database in dind mode (see CmTask309).
+    # TODO(gp): For some reason appending to file directly `>>` doesn't work.
+    sudo echo '{ "storage-driver": "vfs" }' | sudo tee -a /etc/docker/daemon.json
+
+    # Start Docker Engine.
+    sudo /etc/init.d/docker start
+    sudo /etc/init.d/docker status
+fi;
 
 # Mount other file systems.
 # mount -a || true
@@ -66,11 +66,17 @@ aws configure --profile am list || true
 
 echo "OPT_CONTAINER_VERSION='$OPT_CONTAINER_VERSION'"
 
+# Test the installed packages.
 VAL=$(which python)
 echo "which python: $VAL"
 VAL=$(python -V)
 echo "python -V: $VAL"
-#echo "check pandas package: "$(python -c "import pandas; print(pandas)")
+VAL=$(python -c "import pandas; print(pandas.__version__)")
+echo "pandas: $VAL"
+VAL=$(python -c "import cvxopt; print(cvxopt.__version__)")
+echo "cvxopt: $VAL"
+VAL=$(python -c "import cvxpy; print(cvxpy.__version__)")
+echo "cvxpy: $VAL"
 #if [[ $ENABLE_DIND == 1 ]]; then
 #    echo "docker -v: "$(docker -v)
 #    echo "docker-compose -v: "$(docker-compose -v)
