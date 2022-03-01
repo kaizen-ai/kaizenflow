@@ -5,7 +5,7 @@
 
 set -ex
 
-FILE_NAME="devops/docker_build/install_jupyter_extensions.sh"
+FILE_NAME="optimizer/devops/docker_build/install_jupyter_extensions.sh"
 echo "#############################################################################"
 echo "##> $FILE_NAME"
 echo "#############################################################################"
