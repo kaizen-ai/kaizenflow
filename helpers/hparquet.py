@@ -558,22 +558,24 @@ def to_partitioned_parquet(
             data.parquet
     ```
 
-    In case of multiple columns like `year`, `month`, `asset`, the file layout
+    In case of multiple columns like `asset`, `year`, `month`, the file layout
     looks like:
     ```
     dst_dir/
-        year=2021/
-            month=12/
-                asset=A/
+        asset=A/
+            year=2021/
+                month=12/
                     data.parquet
-                asset=B/
+            year=2022/
+                month=01/
                     data.parquet
         ...
-        year=2022/
-            month=01/
-                asset=A/
+        asset=B/
+            year=2021/
+                month=12/
                     data.parquet
-                asset=B/
+            year=2022/
+                month=01/
                     data.parquet
     ```
     """
