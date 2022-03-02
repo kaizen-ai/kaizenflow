@@ -194,35 +194,19 @@ def _get_variable_value(var_value: Optional[str], env_var: str) -> str:
         _LOG.debug("Using the passed value '%s'", var_value)
     return var_value
 
-
-def get_aws_profile(aws_profile: Optional[str] = None) -> str:
-    """
-    Return the AWS profile to access S3, based on:
-
-    - argument passed
-    - command line option (i.e., `args.aws_profile`)
-    - env vars (i.e., `AM_AWS_PROFILE`)
-    """
-    # TODO(gp): @all This should be function of aws_profile.
-    env_var = "AM_AWS_PROFILE"
-    aws_profile = _get_variable_value(aws_profile, env_var)
-    return aws_profile
-
-
 # TODO(gp): @all this should be function also of `aws_profile`.
-def get_s3_path(s3_path: Optional[str] = None) -> Optional[str]:
+def get_s3_path(aws_profile: str) -> Optional[str]:
     """
-    Return the S3 path to use, based on:
-
-    - argument passed
-    - command line option (i.e., `--s3_path` through `args.s3_path`)
-    - env vars (i.e., `AM_S3_BUCKET`)
+    Return the S3 path to use, based on the profile
     """
-    env_var = "AM_S3_BUCKET"
-    s3_path = _get_variable_value(s3_path, env_var)
+    env_var = None
+    if aws_profile == "ck":
+        env_var = "CK_S3_BUCKET"
+    elif aws_profile == "am":
+        env_var = "AM_S3_BUCKET"
+    path = "s3://" + _get_variable_value(env_var)
     dassert_is_s3_path(s3_path)
     return s3_path
-
 
 def _get_aws_config(file_name: str) -> configparser.RawConfigParser:
     """
