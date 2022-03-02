@@ -15,6 +15,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Factor this out.
 
 
+@pytest.mark.skip("Enable after updating Pandas")
 class TestExamplePipeline1(otodh.TestOmsDbHelper):
     """
     Test pipeline end-to-end with fake data, features.
