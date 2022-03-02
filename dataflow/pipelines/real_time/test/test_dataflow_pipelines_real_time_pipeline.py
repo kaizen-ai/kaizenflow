@@ -131,6 +131,7 @@ class TestRealTimePipelineWithOms1(hunitest.TestCase):
     - a replayed time data source node using synthetic data for prices
     """
 
+    @pytest.mark.skip("Enable after update to Pandas")
     def test1(self) -> None:
         """
         Test `RealTimeReturnPipeline` using synthetic data.

@@ -22,6 +22,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestSimulatedProcessForecasts1(hunitest.TestCase):
+    @pytest.mark.skip("Enable after updating Pandas")
     def test_initialization1(self) -> None:
         with hasynci.solipsism_context() as event_loop:
             hasynci.run(
