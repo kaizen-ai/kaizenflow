@@ -145,7 +145,8 @@ def get_bucket() -> str:
 # TODO(gp): @all use get_s3_path() below.
 def get_path() -> str:
     """
-    Return the path to the S3 bucket (e.g., `s3://alphamatic-data`) for an account.
+    Return the path to the S3 bucket (e.g., `s3://alphamatic-data`) for an
+    account.
     """
     bucket = get_bucket()
     path = "s3://" + bucket
@@ -260,22 +261,24 @@ def get_aws_credentials(
     aws_profile: str,
 ) -> Dict[str, Optional[str]]:
     """
-    Read the AWS credentials for a given profile from `~/.aws` or from env vars.
+    Read the AWS credentials for a given profile from `~/.aws` or from env
+    vars.
 
     :return: a dictionary with `access_key_id`, `aws_secret_access_key`,
         `aws_region` and optionally `aws_session_token`
     """
     _LOG.debug("Getting credentials for aws_profile='%s'", aws_profile)
     hdbg.dassert_ne(aws_profile, "")
+    hdbg.dassert_in(aws_profile, ["am", "ck"])
     #
     result: Dict[str, Optional[str]] = {}
-    # TODO(gp): @all make this function of `aws_profile`.
+    aws_profile_upper = aws_profile.upper()
     key_to_env_var: Dict[str, str] = {
-        "aws_access_key_id": "AWS_ACCESS_KEY_ID",
-        "aws_secret_access_key": "AWS_SECRET_ACCESS_KEY",
+        "aws_access_key_id": f"{aws_profile_upper}_AWS_ACCESS_KEY_ID",
+        "aws_secret_access_key": f"{aws_profile_upper}_AWS_SECRET_ACCESS_KEY",
         # TODO(gp): AWS_DEFAULT_REGION -> AWS_REGION so we can use the invariant
         #  that the var is simply the capitalized version of the key.
-        "aws_region": "AWS_DEFAULT_REGION",
+        "aws_region": f"{aws_profile_upper}_AWS_DEFAULT_REGION",
     }
     # If all the AWS credentials are passed through env vars, they override the
     # config file.
@@ -304,9 +307,6 @@ def get_aws_credentials(
             result[key] = os.environ[env_var]
         # TODO(gp): We don't pass this through env var for now.
         result["aws_session_token"] = None
-        # TODO(gp): @all support also other S3 profiles. We can derive the names
-        #  of the env vars from aws_profile. E.g., "am" -> AM_AWS_ACCESS_KEY.
-        hdbg.dassert_eq(aws_profile, "am")
     else:
         _LOG.debug("Using AWS credentials from files")
         # > more ~/.aws/credentials
