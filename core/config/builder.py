@@ -5,16 +5,14 @@ import core.config.builder as cconbuil
 """
 
 import importlib
-import itertools
 import logging
 import os
 import re
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, cast
+from typing import Dict, List, Optional, cast
 
 import core.config.config_ as cconconf
-import core.config.utils as cconutil
+import core.config.config_utils as ccocouti
 import helpers.hdbg as hdbg
-import helpers.hpickle as hpickle
 
 _LOG = logging.getLogger(__name__)
 
@@ -56,7 +54,7 @@ def get_configs_from_builder(config_builder: str) -> List[cconconf.Config]:
     # Cast to the right type.
     # TODO(gp): Is this needed?
     # configs = cast(List[cconconf.Config], configs)
-    cconutil.validate_configs(configs)
+    ccocouti.validate_configs(configs)
     return configs
 
 
@@ -97,9 +95,9 @@ def get_config_from_experiment_list_params(
     idx: int, experiment_list_params: Dict[str, str]
 ) -> cconconf.Config:
     """
-    Get the `idx`-th config built from the experiment list params, which includes
-    `config_builder` (e.g.,
-    `research.RH8E.RH8Ed_configs.build_rc1_configs("eg_v2_0-all.5T.2015_2022")`)
+    Get the `idx`-th config built from the experiment list params, which
+    includes `config_builder` (e.g., `research.RH8E.RH8Ed_configs.build_rc1_con
+    figs("eg_v2_0-all.5T.2015_2022")`)
 
     This is used by `run_experiment_stub.py` using the params from command line.
 

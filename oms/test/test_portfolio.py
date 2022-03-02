@@ -25,7 +25,7 @@ _5mins = pd.DateOffset(minutes=5)
 # #############################################################################
 
 
-class TestSimulatedPortfolio1(hunitest.TestCase):
+class TestDataFramePortfolio1(hunitest.TestCase):
     # @pytest.mark.skip("This is flaky because of the clock jitter")
     def test_state(self) -> None:
         """
@@ -50,7 +50,7 @@ class TestSimulatedPortfolio1(hunitest.TestCase):
                 _,
             ) = mdata.get_ReplayedTimeMarketData_example3(event_loop)
             # Build a Portfolio.
-            portfolio = oporexam.get_simulated_portfolio_example1(
+            portfolio = oporexam.get_DataFramePortfolio_example1(
                 event_loop,
                 market_data=market_data,
             )
@@ -60,7 +60,7 @@ class TestSimulatedPortfolio1(hunitest.TestCase):
 # #############################################################################
 
 
-class TestSimulatedPortfolio2(hunitest.TestCase):
+class TestDataFramePortfolio2(hunitest.TestCase):
     def test_initialization_with_cash1(self) -> None:
         """
         Initialize a Portfolio with cash.
@@ -71,7 +71,7 @@ class TestSimulatedPortfolio2(hunitest.TestCase):
                 _,
             ) = mdata.get_ReplayedTimeMarketData_example3(event_loop)
             # Build Portfolio.
-            portfolio = oporexam.get_simulated_portfolio_example1(
+            portfolio = oporexam.get_DataFramePortfolio_example1(
                 event_loop,
                 market_data=market_data,
             )
@@ -102,16 +102,14 @@ class TestSimulatedPortfolio2(hunitest.TestCase):
             # Build Portfolio.
             strategy_id = "str1"
             account = "paper"
-            asset_id_col = "asset_id"
             mark_to_market_col = "price"
             pricing_method = "last"
             timestamp_col = "end_datetime"
             holdings_dict = {101: 727.5, 202: 1040.3, -1: 10000}
-            portfolio = omportfo.SimulatedPortfolio.from_dict(
+            portfolio = omportfo.DataFramePortfolio.from_dict(
                 strategy_id,
                 account,
                 broker,
-                asset_id_col,
                 mark_to_market_col,
                 pricing_method,
                 timestamp_col,
@@ -135,7 +133,7 @@ class TestSimulatedPortfolio2(hunitest.TestCase):
                 _,
             ) = mdata.get_ReplayedTimeMarketData_example3(event_loop)
             #
-            portfolio = oporexam.get_simulated_portfolio_example1(
+            portfolio = oporexam.get_DataFramePortfolio_example1(
                 event_loop,
                 market_data=market_data,
             )
@@ -166,16 +164,14 @@ leverage                            0.0"""
             # Build Portfolio.
             strategy_id = "str1"
             account = "paper"
-            asset_id_col = "asset_id"
             mark_to_market_col = "price"
             pricing_method = "last"
             timestamp_col = "end_datetime"
             holdings_dict = {101: 727.5, 202: 1040.3, -1: 10000}
-            portfolio = omportfo.SimulatedPortfolio.from_dict(
+            portfolio = omportfo.DataFramePortfolio.from_dict(
                 strategy_id,
                 account,
                 broker,
-                asset_id_col,
                 mark_to_market_col,
                 pricing_method,
                 timestamp_col,
@@ -217,21 +213,21 @@ start_datetime,end_datetime,asset_id,price
             end_time_col_name = "end_datetime"
             knowledge_datetime_col_name = "end_datetime"
             delay_in_secs = 0
-            asset_id_col_name = "asset_id"
+            asset_id_col = "asset_id"
             asset_ids = None
             columns = []
             market_data = mdata.ReplayedMarketData(
                 price_df,
                 knowledge_datetime_col_name,
                 delay_in_secs,
-                asset_id_col_name,
+                asset_id_col,
                 asset_ids,
                 start_time_col_name,
                 end_time_col_name,
                 columns,
                 get_wall_clock_time,
             )
-            portfolio = oporexam.get_simulated_portfolio_example1(
+            portfolio = oporexam.get_DataFramePortfolio_example1(
                 event_loop,
                 market_data=market_data,
             )
