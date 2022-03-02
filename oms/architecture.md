@@ -5,7 +5,7 @@
       * [AbstractPortfolio](#abstractportfolio)
       * [AbstractBroker](#abstractbroker)
    * [Simulation](#simulation)
-      * [SimulatedPortfolio](#simulatedportfolio)
+      * [DataFramePortfolio](#dataframeportfolio)
       * [SimulatedBroker](#simulatedbroker)
    * [Implemented system](#implemented-system)
       * [ImplementedPortfolio](#implementedportfolio)
@@ -97,10 +97,10 @@
 
 # Simulation
 
-## SimulatedPortfolio
+## DataFramePortfolio
 
 - This is what we call `Portfolio`
-  - In RT we can run `SimulatedPortfolio` and `ImplementedPortfolio` in parallel
+  - In RT we can run `DataFramePortfolio` and `ImplementedPortfolio` in parallel
     to collect real and simulated behavior
 
 - `get_holdings()`
