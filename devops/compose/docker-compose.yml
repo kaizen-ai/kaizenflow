@@ -9,14 +9,22 @@ services:
       - SYS_ADMIN
     environment:
       - AM_AWS_PROFILE=$AM_AWS_PROFILE
+      # TODO(Juraj): do we also want this for ck? 
+      # - CK_AWS_PROFILE=$CK_AWS_PROFILE
       - AM_ECR_BASE_PATH=$AM_ECR_BASE_PATH
       - AM_PUBLISH_NOTEBOOK_LOCAL_PATH=$AM_PUBLISH_NOTEBOOK_LOCAL_PATH
-      - AM_S3_BUCKET=$AM_S3_BUCKET
+      # TODO(Juraj): should become obsolete with introduction of AM_AWS_S3_BUCKET
+      - AM_S3_BUCKET=$AM_S3_BUCKET 
       - AM_TELEGRAM_TOKEN=$AM_TELEGRAM_TOKEN
-      - AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-      - AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
-      - AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+      - AM_AWS_S3_BUCKET=$AM_AWS_S3_BUCKET
+      - AM_AWS_ACCESS_KEY_ID=$AM_AWS_ACCESS_KEY_ID
+      - AM_AWS_DEFAULT_REGION=$AM_AWS_DEFAULT_REGION
+      - AM_AWS_SECRET_ACCESS_KEY=$AM_AWS_SECRET_ACCESS_KEY
       - AM_FORCE_TEST_FAIL=$AM_FORCE_TEST_FAIL
+      - CK_AWS_S3_BUCKET=$CK_AWS_S3_BUCKET
+      - CK_AWS_ACCESS_KEY_ID=$CK_AWS_ACCESS_KEY_ID
+      - CK_AWS_DEFAULT_REGION=$CK_AWS_DEFAULT_REGION
+      - CK_AWS_SECRET_ACCESS_KEY=$CK_AWS_SECRET_ACCESS_KEY
       - ENABLE_DIND=$ENABLE_DIND
       - GH_ACTION_ACCESS_TOKEN=$GH_ACTION_ACCESS_TOKEN
       # This env var is used by GH Action to signal that we are inside the CI.
@@ -49,7 +57,6 @@ services:
     # a database container pointing to localhost:5432.
     # In tests we use dind so we need set back to the default "bridge".
     # See CmTask988 and https://stackoverflow.com/questions/24319662/from-inside-of-a-docker-container-how-do-i-connect-to-the-localhost-of-the-mach
-    network_mode: ${NETWORK_MODE:-host}
     volumes:
       - ../../:/app
 
@@ -59,7 +66,6 @@ services:
       - PORT=${PORT}
     extends:
       app
-    network_mode: ${NETWORK_MODE:-bridge}
     ports:
       # TODO(gp): Rename `AM_PORT`.
       - "${PORT}:${PORT}"
@@ -76,6 +82,9 @@ services:
       - PORT=${PORT}
     extends:
       app
-    network_mode: ${NETWORK_MODE:-bridge}
     ports:
       - "${PORT}:${PORT}"
+
+networks:
+  default:
+    name: cmamp_network
