@@ -194,19 +194,22 @@ def _get_variable_value(var_value: Optional[str], env_var: str) -> str:
         _LOG.debug("Using the passed value '%s'", var_value)
     return var_value
 
-# TODO(gp): @all this should be function also of `aws_profile`.
+
 def get_s3_path(aws_profile: str) -> Optional[str]:
     """
-    Return the S3 path to use, based on the profile
+    Return the S3 path to use, based on the profile.
     """
     env_var = None
     if aws_profile == "ck":
         env_var = "CK_S3_BUCKET"
     elif aws_profile == "am":
         env_var = "AM_S3_BUCKET"
-    path = "s3://" + _get_variable_value(env_var)
+    else:
+        raise ValueError(f"Invalid aws_profile={aws_profile}")
+    s3_path = "s3://" + _get_variable_value(None, env_var)
     dassert_is_s3_path(s3_path)
     return s3_path
+
 
 def _get_aws_config(file_name: str) -> configparser.RawConfigParser:
     """
