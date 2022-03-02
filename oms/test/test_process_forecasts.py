@@ -60,7 +60,7 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
         ]
         volatility = pd.DataFrame(volatility_data, index, columns)
         # Build a Portfolio.
-        portfolio = oporexam.get_simulated_portfolio_example1(
+        portfolio = oporexam.get_DataFramePortfolio_example1(
             event_loop,
             market_data=market_data,
             asset_ids=[101, 202],

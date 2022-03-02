@@ -253,3 +253,27 @@ def split_positive_and_negative_parts(
     negative = ((signal.abs() - signal) / 2).rename("negative")
     df = pd.concat([positive, negative], axis=1)
     return df
+
+
+def compute_weighted_sum(
+    df: pd.DataFrame, weights: pd.Series, *, convert_to_dataframe: bool = False
+) -> pd.Series:
+    """
+    Perform a weighted sum of the columns of `df` using `weights`.
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert_isinstance(weights, pd.Series)
+    hdbg.dassert_eq(
+        df.columns.size,
+        weights.index.size,
+        "Number of columns of `df` must equal index size of `weights`.",
+    )
+    hdbg.dassert(
+        df.columns.equals(weights.index),
+        "Columns of `df` must equal index of `weights`.",
+    )
+    product = df.multiply(weights).sum(axis=1)
+    product.name = weights.name
+    if convert_to_dataframe:
+        product = product.to_frame()
+    return product
