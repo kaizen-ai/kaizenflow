@@ -26,12 +26,12 @@ class Restrictions:
         table_name: str,
         get_wall_clock_time: hdateti.GetWallClockTime,
     ) -> None:
-        self._strategy_id = strategy_id
-        self._account = account
-        self._asset_id_col = asset_id_col
-        self._date_col = date_col
+        self._strategy_id = Restrictions._check_nonempty_str(strategy_id)
+        self._account = Restrictions._check_nonempty_str(account)
+        self._asset_id_col = Restrictions._check_nonempty_str(asset_id_col)
+        self._date_col = Restrictions._check_nonempty_str(date_col)
         self._db_connection = db_connection
-        self._table_name = table_name
+        self._table_name = Restrictions._check_nonempty_str(table_name)
         self._get_wall_clock_time = get_wall_clock_time
         #
         self._restrictions = None
@@ -46,6 +46,12 @@ class Restrictions:
         restrictions = self._get_trading_restrictions()
         self._restrictions = restrictions
         return restrictions
+
+    @staticmethod
+    def _check_nonempty_str(string: str) -> str:
+        hdbg.dassert_isinstance(string, str)
+        hdbg.dassert(string, "String must be nonempty.")
+        return string
 
     def _get_trading_restrictions(self) -> pd.DataFrame:
         query = []
