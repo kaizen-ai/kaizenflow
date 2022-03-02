@@ -201,9 +201,9 @@ def get_s3_path(aws_profile: str) -> Optional[str]:
     """
     env_var = None
     if aws_profile == "ck":
-        env_var = "CK_S3_BUCKET"
+        env_var = "CK_AWS_S3_BUCKET"
     elif aws_profile == "am":
-        env_var = "AM_S3_BUCKET"
+        env_var = "AM_AWS_S3_BUCKET"
     else:
         raise ValueError(f"Invalid aws_profile={aws_profile}")
     s3_path = "s3://" + _get_variable_value(None, env_var)
