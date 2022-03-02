@@ -5,6 +5,7 @@ import pandas as pd
 
 import core.artificial_signal_generators as carsigen
 import core.signal_processing.misc_transformations as csprmitr
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -46,3 +47,26 @@ class Test_digitize1(hunitest.TestCase):
         right = False
         actual = csprmitr.digitize(heaviside, bins, right)
         self.check_string(actual.to_string())
+
+
+class Test_compute_weighted_sum1(hunitest.TestCase):
+    def test1(self) -> None:
+        df = Test_compute_weighted_sum1.get_test_df()
+        weights = pd.Series([1, 1, 0], ["col1", "col2", 3], name="test_weights")
+        actual = csprmitr.compute_weighted_sum(df, weights)
+        actual_str = hpandas.df_to_str(actual)
+        expected_str = r"""
+        test_weights
+0           0.0
+1           1.0
+2          -2.0"""
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+
+    @staticmethod
+    def get_test_df() -> pd.DataFrame:
+        df = pd.DataFrame(
+            [[1, -1, np.nan], [0, 1, 1], [-1, -1, -1]],
+            [0, 1, 2],
+            ["col1", "col2", 3],
+        )
+        return df

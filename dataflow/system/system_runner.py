@@ -7,7 +7,7 @@ import dataflow.system.system_runner as dtfsysyrun
 import abc
 import asyncio
 import logging
-from typing import Coroutine, Optional, Tuple
+from typing import Any, Coroutine, Optional, Tuple
 
 import pandas as pd
 
@@ -16,6 +16,7 @@ import dataflow.core.dag_builder as dtfcodabui
 import dataflow.system as dtfsys
 import helpers.hasyncio as hasynci
 import helpers.hdatetime as hdateti
+import helpers.hsql as hsql
 import market_data as mdata
 import oms as oms
 
@@ -61,6 +62,7 @@ _LOG = logging.getLogger(__name__)
 class SystemRunner(abc.ABC):
     """
     Create an end-to-end DataFlow-based system composed of:
+
     - `MarketData`
     - `Portfolio`
     - `Dag`
@@ -123,21 +125,36 @@ class SystemRunner(abc.ABC):
 class SystemWithSimulatedOmsRunner(SystemRunner, abc.ABC):
     """
     A system with a simulated OMS has always:
-    - a `SimulatedPortfolio` or a `MockedPortfolio`
+
+    - a `DataFramePortfolio` or a `MockedPortfolio`
     - an `OrderProcessor`
     """
 
+    def __init__(
+        self,
+        *args: Any,
+        db_connection: hsql.DbConnection,
+        **kwargs: Any,
+    ):
+        super().__init__(*args, **kwargs)
+        #
+        self._db_connection = db_connection
+        oms.create_oms_tables(self._db_connection, incremental=False)
+
     # TODO(gp): Part of this should become a `get_OrderProcessor_example()`.
     def get_order_processor(
-        self, portfolio: oms.AbstractPortfolio
+        self,
+        portfolio: oms.AbstractPortfolio,
+        *,
+        timeout_in_secs: int = 60 * (5 + 15),
     ) -> oms.OrderProcessor:
-        db_connection = self.connection
+        db_connection = self._db_connection
         get_wall_clock_time = portfolio._get_wall_clock_time
         order_processor_poll_kwargs = hasynci.get_poll_kwargs(get_wall_clock_time)
         # order_processor_poll_kwargs["sleep_in_secs"] = 1
         # Since orders should come every 5 mins we give it a buffer of 15 extra
         # mins.
-        order_processor_poll_kwargs["timeout_in_secs"] = 60 * (5 + 15)
+        order_processor_poll_kwargs["timeout_in_secs"] = timeout_in_secs
         delay_to_accept_in_secs = 3
         delay_to_fill_in_secs = 10
         broker = portfolio.broker

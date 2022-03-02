@@ -290,6 +290,10 @@ class MarketData(abc.ABC):
         )
         return wall_clock_time_correct_timezone
 
+    @property
+    def asset_id_col(self) -> str:
+        return self._asset_id_col
+
     # /////////////////////////////////////////////////////////////////////////////
 
     def get_twap_price(
