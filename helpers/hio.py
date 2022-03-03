@@ -18,6 +18,8 @@ import uuid
 from typing import Any, List, Optional, cast
 
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
+import helpers.hparquet as hparque
 import helpers.hprint as hprint
 
 # TODO(gp): Enable this after the linter has been updated.
@@ -298,7 +300,7 @@ def create_dir(
     # not incremental   rm+mkdir     mkdir
     if exists:
         if incremental and is_dir:
-            # The dir exists and we want to keep it it exists (i.e.,
+            # The dir exists and we want to keep it (i.e.,
             # incremental), so we are done.
             # os.chmod(dir_name, 0755)
             _LOG.debug(
@@ -453,13 +455,9 @@ def from_file(
         # Open gzipped file.
         f = gzip.open(file_name, "rt", encoding=encoding)
     elif file_name.endswith((".pq", ".parquet")):
-        # TODO(Nikola): Temporary workaround. Definitely revisit.
-        import helpers.hparquet as hparque
-        import helpers.hunit_test as hunitest
-
         # Open pq file.
         df = hparque.from_parquet(file_name)
-        data = hunitest.convert_df_to_json_string(df, n_head=3, n_tail=3)
+        data = hpandas.convert_df_to_json_string(df, n_head=3, n_tail=3)
         # Already a proper string.
         return data
     else:
@@ -537,6 +535,15 @@ def change_filename_extension(filename: str, old_ext: str, new_ext: str) -> str:
     return new_filename
 
 
+def create_executable_script(file_name: str, content: str) -> None:
+    # Write to a file.
+    hdbg.dassert_isinstance(content, str)
+    to_file(file_name, content)
+    # Make it executable.
+    cmd = "chmod +x " + file_name
+    hsystem.system(cmd)
+
+    
 # #############################################################################
 # JSON
 # #############################################################################
@@ -628,3 +635,40 @@ def load_df_from_json(path_to_json: str) -> "pd.DataFrame":
     # Package into a dataframe.
     df = pd.DataFrame(data)
     return df
+
+
+# #############################################################################
+# MISC.
+# #############################################################################
+
+
+def diff_strings(
+    txt1: str,
+    txt2: str,
+    txt1_descr: Optional[str] = None,
+    txt2_descr: Optional[str] = None,
+    width: int = 130,
+) -> str:
+    #
+    # Write file.
+    def _to_file(txt: str, txt_descr: Optional[str]) -> str:
+        file_name = tempfile.NamedTemporaryFile().name
+        if txt_descr is not None:
+            txt = "# " + txt_descr + "\n" + txt
+        to_file(file_name, txt)
+        return file_name
+
+    #
+    file_name1 = _to_file(txt1, txt1_descr)
+    file_name2 = _to_file(txt2, txt2_descr)
+    #
+    cmd = f"sdiff --width={width} {file_name1} {file_name2}"
+    _, txt = hsystem.system_to_string(
+        cmd,
+        # We don't care if they are different.
+        abort_on_error=False,
+    )
+    # For some reason, mypy doesn't understand that system_to_string returns a
+    # string.
+    txt = cast(str, txt)
+    return txt
