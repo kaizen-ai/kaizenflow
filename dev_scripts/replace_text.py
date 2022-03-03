@@ -404,20 +404,38 @@ def _prerelease_cleanup(args: argparse.Namespace) -> None:
 
 
 def _get_files_to_rename(
-    file_names: List[str], old_regex: str, new_regex: str
+    file_names: List[str],
+    old_regex: str,
+    new_regex: str,
+    filter_by: str,
+    filter_on: str,
 ) -> Tuple[List[str], Dict[str, str]]:
-    # Look for files containing "old_regex".
+    #
     file_map: Dict[str, str] = {}
     file_names_to_process = []
-    for f in file_names:
-        dirname = os.path.dirname(f)
-        basename = os.path.basename(f)
-        found = old_regex in basename
+    for filename in file_names:
+        dirname = os.path.dirname(filename)
+        basename = os.path.basename(filename)
+        # Check if the file matches the filter.
+        if filter_on == "basename":
+            filter_name_part = basename
+        elif filter_on == "dirname":
+            filter_name_part = dirname
+        else:
+            raise ValueError(f"Unsupported `filter_on`={filter_on}")
+        found = bool(re.findall(filter_by, filter_name_part))
         if found:
-            new_basename = basename.replace(old_regex, new_regex)
-            _LOG.debug("File='%s', found=%s", f, found)
-            file_names_to_process.append(f)
-            file_map[f] = os.path.join(dirname, new_basename)
+            # Update the name.
+            new_filter_name_part = re.sub(old_regex, new_regex, filter_name_part)
+            # Construct the new file name.
+            if filter_on == "basename":
+                new_filename = os.path.join(dirname, new_filter_name_part)
+            else:
+                new_filename = os.path.join(new_filter_name_part, basename)
+            # Store the new file name.
+            _LOG.debug("File='%s', found=%s", filename, found)
+            file_names_to_process.append(filename)
+            file_map[filename] = new_filename
     #
     _LOG.info("Found %s files to process", len(file_names_to_process))
     _LOG.info("%s", pprint.pformat(file_map))
@@ -451,6 +469,20 @@ def _parse() -> argparse.ArgumentParser:
         help="Revert all the files (excluding this one) before processing",
     )
     parser.add_argument("--custom_flow", action="store", type=str)
+    parser.add_argument(
+        "--filter_by",
+        action="store",
+        default=None,
+        type=str,
+        help="Regex to filter file names by",
+    )
+    parser.add_argument(
+        "--filter_on",
+        action="store",
+        default="basename",
+        choices=["basename", "dirname"],
+        help="Which part of the file names to filter on",
+    )
     parser.add_argument(
         "--old",
         action="store",
@@ -563,8 +595,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
             )
         elif args.action == "rename":
             # Rename.
+            if args.filter_by is None:
+                filter_by = args.old
+            else:
+                filter_by = args.filter_by
             file_names_to_process, file_map = _get_files_to_rename(
-                file_names, args.old, args.new
+                file_names, args.old, args.new, filter_by, args.filter_on
             )
             if args.preview:
                 _LOG.warning("Preview only as required.")
