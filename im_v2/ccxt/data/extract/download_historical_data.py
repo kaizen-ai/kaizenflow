@@ -55,7 +55,6 @@ def _run(args: argparse.Namespace) -> None:
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
         )
-
         # Assign pair and exchange columns.
         data["currency_pair"] = currency_pair
         data["exchange_id"] = args.exchange_id
@@ -74,7 +73,7 @@ def _run(args: argparse.Namespace) -> None:
             ["currency_pair"] + partition_cols,
             path_to_exchange,
             filesystem=fs,
-            # partition_filename=None,
+            partition_filename=None,
         )
         # Sleep between iterations.
         time.sleep(args.sleep_time)
