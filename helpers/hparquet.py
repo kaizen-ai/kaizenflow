@@ -425,20 +425,18 @@ def get_parquet_filters_from_timestamp_interval(
             start_timestamp.date(), end_timestamp.date(), freq="M"
         )
         years = list(set(dates.year))
-        if len(years) <= 2:
-            # For ranges up to two years, simple AND statement is enough.
-            # `[[('year', '>=', 2020), ('month', '>=', 6),
-            # ('year', '<=', 2021), ('month', '<=', 12)]]`
+        if len(years) == 1:
+            # For one year range, simple AND statement is enough.
+            # `[[('year', '==', 2020), ('month', '>=', 6), ('month', '<=', 12)]]`
             and_filter = [
-                ("year", ">=", dates[0].year),
+                ("year", "==", dates[0].year),
                 ("month", ">=", dates[0].month),
-                ("year", "<=", dates[-1].year),
-                ("month", "<=", dates[-1].month),
+                ("month", "<=", dates[0].month),
             ]
             or_and_filter.append(and_filter)
         else:
             # For ranges over two years, OR statements are necessary to bridge the gap
-            # between first and last AND statement.
+            # between first and last AND statement, unless range is around two years.
             # First AND filter.
             first_and_filter = [
                 ("year", "==", dates[0].year),
@@ -447,11 +445,12 @@ def get_parquet_filters_from_timestamp_interval(
                 ("month", "<=", 12),
             ]
             or_and_filter.append(first_and_filter)
-            # OR statements to bridge the gap.
-            # `[('year', '==', 2021)]`
-            for year in years[1:-1]:
-                bridge_and_filter = [("year", "==", year)]
-                or_and_filter.append(bridge_and_filter)
+            if len(years) > 2:
+                # OR statements to bridge the gap.
+                # `[('year', '==', 2021)]`
+                for year in years[1:-1]:
+                    bridge_and_filter = [("year", "==", year)]
+                    or_and_filter.append(bridge_and_filter)
             # Last AND filter.
             last_and_filter = [
                 ("year", "==", dates[-1].year),

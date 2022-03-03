@@ -65,7 +65,6 @@ def _run(args: argparse.Namespace) -> None:
     daily_data = daily_data.loc[daily_data["timestamp"] >= unix_start_timestamp]
     daily_data = daily_data.loc[daily_data["timestamp"] <= unix_end_timestamp]
     daily_data_reindex = reindex_on_asset_and_ts(daily_data)
-    from pdb import set_trace; set_trace()
     # Get missing data.
     rt_missing_data, daily_missing_data = find_gaps(
         rt_data_reindex, daily_data_reindex
@@ -92,7 +91,7 @@ def _run(args: argparse.Namespace) -> None:
         error_message.append("Differing table contents:")
         error_message.append(
             hpandas.get_df_signature(
-                data_difference, num_rows=len(daily_missing_data)
+                data_difference, num_rows=len(data_difference)
             )
         )
     if error_message:
@@ -119,6 +118,9 @@ def reindex_on_asset_and_ts(data: pd.DataFrame) -> pd.DataFrame:
     data_reindex = data.loc[:, expected_col_names]
     data_reindex = data_reindex.drop_duplicates()
     # Reindex on ts and asset.
+    # Remove index name, so there is no conflict with column names.
+    # For example if index is named `timestamp`.
+    data_reindex.index.name = None
     data_reindex = data_reindex.sort_values(by=["timestamp", "currency_pair"])
     data_reindex = data_reindex.set_index(["timestamp", "currency_pair"])
     return data_reindex
@@ -154,6 +156,7 @@ def compare_rows(rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> pd.DataFram
     # Get rows on which the two dataframe indices match.
     idx_intersection = rt_data.index.intersection(daily_data.index)
     # Get difference between daily data and rt data.
+    # TODO(Nikola): ValueError?
     data_difference = daily_data.loc[idx_intersection].compare(
         # Remove columns not present in daily_data.
         rt_data.loc[idx_intersection]
