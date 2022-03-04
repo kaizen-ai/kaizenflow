@@ -1,13 +1,11 @@
 import logging
-import os
 
 import pandas as pd
 import psycopg2.errors as perrors
 import pytest
 
-import helpers.hgit as hgit
+import helpers.hpandas as hpandas
 import helpers.hsql as hsql
-import helpers.hunit_test as hunitest
 
 # TODO(gp): This is a problematic dependency, since helpers should not depende
 #  from im_v2. For tests we could be more forgiving, but it would be better to
@@ -89,7 +87,7 @@ class TestSql1(imvcddbut.TestImDbHelper):
         hsql.execute_insert_query(self.connection, test_data, "test_table")
         # Load data.
         df = hsql.execute_query_to_df(self.connection, "SELECT * FROM test_table")
-        actual = hunitest.convert_df_to_json_string(df, n_tail=None)
+        actual = hpandas.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
         # Delete the table.
         hsql.remove_table(self.connection, "test_table")
@@ -105,7 +103,7 @@ class TestSql1(imvcddbut.TestImDbHelper):
         hsql.copy_rows_with_copy_from(self.connection, test_data, "test_table")
         # Load data.
         df = hsql.execute_query_to_df(self.connection, "SELECT * FROM test_table")
-        actual = hunitest.convert_df_to_json_string(df, n_tail=None)
+        actual = hpandas.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
         # Delete the table.
         hsql.remove_table(self.connection, "test_table")
@@ -125,7 +123,7 @@ class TestSql1(imvcddbut.TestImDbHelper):
         )
         self.connection.cursor().execute(dup_query)
         df = hsql.execute_query_to_df(self.connection, "SELECT * FROM test_table")
-        actual = hunitest.convert_df_to_json_string(df, n_tail=None)
+        actual = hpandas.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
         # Delete the table.
         hsql.remove_table(self.connection, "test_table")
@@ -145,7 +143,7 @@ class TestSql1(imvcddbut.TestImDbHelper):
         )
         self.connection.cursor().execute(dup_query)
         df = hsql.execute_query_to_df(self.connection, "SELECT * FROM test_table")
-        actual = hunitest.convert_df_to_json_string(df, n_tail=None)
+        actual = hpandas.convert_df_to_json_string(df, n_tail=None)
         self.check_string(actual)
         # Delete the table.
         hsql.remove_table(self.connection, "test_table")
