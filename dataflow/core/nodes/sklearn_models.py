@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 import sklearn as sklear
 
+import core.finance as cofinanc
 import core.data_adapters as cdatadap
 import core.finance.resampling as cfinresa
 import core.statistics as costatis

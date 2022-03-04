@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.config.utils as cconutil
+import core.config.config_utils as ccocouti
 """
 
 import collections
@@ -22,19 +22,22 @@ def check_no_dummy_values(config: cconconf.Config) -> bool:
     """
     Assert if there are no `cconconf.DUMMY` values.
     """
+    dummy_type = type(cconconf.DUMMY)
+    _LOG.debug("type(DUMMY)=%s", dummy_type)
     for key, val in hdict.get_nested_dict_iterator(config.to_dict()):
         # (k, v) looks like:
         # ```
         # (('load_prices', 'source_node_name'), 'kibot_equities')
         # ```
         _LOG.debug(hprint.to_str("key val"))
-        hdbg.dassert_ne(
-            val,
-            cconconf.DUMMY,
-            "DUMMY value %s detected along %s",
-            str(val),
-            str(key),
-        )
+        if type(val) == dummy_type:
+            hdbg.dassert_ne(
+                val,
+                cconconf.DUMMY,
+                "DUMMY value %s detected along %s",
+                str(val),
+                str(key),
+            )
     return True
 
 

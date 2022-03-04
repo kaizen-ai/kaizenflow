@@ -31,6 +31,27 @@ def compress_tails(
     return scale * np.tanh(signal / scale)
 
 
+def discretize(
+    signal: pd.Series, bin_boundaries: list, bin_values: list
+) -> pd.Series:
+    """
+    Discretize `signal` into bins (`bin_boundaries`) with `bin_values`.
+    """
+    hdbg.dassert_isinstance(signal, pd.Series)
+    hdbg.dassert_eq(len(bin_boundaries) - 1, len(bin_values))
+    idx = signal.index
+    # Drop NaNs to avoid numpy's NaN handling in `np.digitize()`.
+    signal = signal.dropna()
+    binned_signal = np.digitize(signal, bin_boundaries)
+    discretized_signal = [bin_values[x - 1] for x in binned_signal]
+    discretized_signal = pd.Series(
+        discretized_signal, signal.index, name=signal.name
+    )
+    # Add back any NaNs.
+    discretized_signal = discretized_signal.reindex(idx)
+    return discretized_signal
+
+
 def get_symmetric_equisized_bins(
     signal: pd.Series, bin_size: float, zero_in_bin_interior: bool = False
 ) -> np.array:
@@ -232,3 +253,27 @@ def split_positive_and_negative_parts(
     negative = ((signal.abs() - signal) / 2).rename("negative")
     df = pd.concat([positive, negative], axis=1)
     return df
+
+
+def compute_weighted_sum(
+    df: pd.DataFrame, weights: pd.Series, *, convert_to_dataframe: bool = False
+) -> pd.Series:
+    """
+    Perform a weighted sum of the columns of `df` using `weights`.
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert_isinstance(weights, pd.Series)
+    hdbg.dassert_eq(
+        df.columns.size,
+        weights.index.size,
+        "Number of columns of `df` must equal index size of `weights`.",
+    )
+    hdbg.dassert(
+        df.columns.equals(weights.index),
+        "Columns of `df` must equal index of `weights`.",
+    )
+    product = df.multiply(weights).sum(axis=1)
+    product.name = weights.name
+    if convert_to_dataframe:
+        product = product.to_frame()
+    return product

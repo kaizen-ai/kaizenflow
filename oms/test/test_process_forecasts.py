@@ -22,6 +22,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestSimulatedProcessForecasts1(hunitest.TestCase):
+    @pytest.mark.skip("Enable after updating Pandas")
     def test_initialization1(self) -> None:
         with hasynci.solipsism_context() as event_loop:
             hasynci.run(
@@ -60,7 +61,7 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
         ]
         volatility = pd.DataFrame(volatility_data, index, columns)
         # Build a Portfolio.
-        portfolio = oporexam.get_simulated_portfolio_example1(
+        portfolio = oporexam.get_DataFramePortfolio_example1(
             event_loop,
             market_data=market_data,
             asset_ids=[101, 202],

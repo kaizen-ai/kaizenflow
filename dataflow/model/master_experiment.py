@@ -7,10 +7,11 @@ import dataflow.model.master_experiment as dtfmomaexp
 """
 
 import logging
+import os
 
 import core.config as cconfig
 import dataflow.core as cdataf
-import dataflow.model.utils as dtfmodutil
+import dataflow.model.experiment_utils as dtfmoexuti
 import helpers.hparquet as hparque
 
 _LOG = logging.getLogger(__name__)
@@ -52,7 +53,7 @@ def run_experiment(config: cconfig.Config) -> None:
     # Save results.
     # TODO(gp): We could return a `ResultBundle` and have
     #  `run_experiment_stub.py` save it.
-    dtfmodutil.save_experiment_result_bundle(config, result_bundle)
+    dtfmoexuti.save_experiment_result_bundle(config, result_bundle)
 
 
 # #############################################################################
@@ -72,13 +73,13 @@ def run_rolling_experiment(config: cconfig.Config) -> None:
     for training_datetime_str, fit_rb, pred_rb in dag_runner.fit_predict():
         payload = cconfig.get_config_from_nested_dict({"config": config})
         fit_rb.payload = payload
-        dtfmodutil.save_experiment_result_bundle(
+        dtfmoexuti.save_experiment_result_bundle(
             config,
             fit_rb,
             file_name="fit_result_bundle_" + training_datetime_str + ".pkl",
         )
         pred_rb.payload = payload
-        dtfmodutil.save_experiment_result_bundle(
+        dtfmoexuti.save_experiment_result_bundle(
             config,
             pred_rb,
             file_name="predict_result_bundle_" + training_datetime_str + ".pkl",
@@ -88,6 +89,7 @@ def run_rolling_experiment(config: cconfig.Config) -> None:
 # #############################################################################
 
 
+# TODO(gp): move to experiment_utils.py?
 def _save_tiled_output(config, result_bundle):
     result_df = result_bundle.result_df.loc[
         config["meta", "start_timestamp"] : config["meta", "end_timestamp"]
@@ -98,9 +100,12 @@ def _save_tiled_output(config, result_bundle):
     df = df.reset_index(level=1)
     df["year"] = df.index.year
     df["month"] = df.index.month
-    hparque.to_partitioned_parquet(
-        df, [asset_id_col_name, "year", "month"], dst_dir="test"
+    # The results are saved in the subdir `tiled_results` of the experiment list.
+    tiled_dst_dir = os.path.join(config["meta", "dst_dir"], "tiled_results")
+    hparque.partition_dataset(
+        df, [asset_id_col_name, "year", "month"], dst_dir=tiled_dst_dir
     )
+    _LOG.info("Tiled results written in '%s'", tiled_dst_dir)
 
 
 def run_tiled_experiment(config: cconfig.Config) -> None:

@@ -62,7 +62,6 @@ class AbstractPortfolio(abc.ABC):
         strategy_id: str,
         account: str,
         broker: ombroker.AbstractBroker,
-        asset_id_col: str,
         mark_to_market_col: str,
         pricing_method: str,
         timestamp_col: str,
@@ -73,8 +72,6 @@ class AbstractPortfolio(abc.ABC):
 
         :param strategy_id, account: back office information about the strategy
             driving this portfolio
-        :param asset_id_col: column name in the output df of `market_data`
-            storing the asset id
         :param mark_to_market_col: column name used as price to mark holdings to
             market
         :param pricing_method: pricing methodology to use for valuing assets.
@@ -83,9 +80,7 @@ class AbstractPortfolio(abc.ABC):
         :param timestamp_col: column to use when accessing price data
         """
         _LOG.debug(
-            hprint.to_str(
-                "strategy_id account asset_id_col mark_to_market_col timestamp_col"
-            )
+            hprint.to_str("strategy_id account mark_to_market_col timestamp_col")
         )
         self._strategy_id = strategy_id
         self._account = account
@@ -96,7 +91,7 @@ class AbstractPortfolio(abc.ABC):
         self.market_data = broker.market_data
         # Extract `get_wall_clock_time` from `market_data`.
         self._get_wall_clock_time = broker.market_data.get_wall_clock_time
-        self._asset_id_col = asset_id_col
+        self._asset_id_col = broker.market_data.asset_id_col
         self._mark_to_market_col = mark_to_market_col
         # Parse `pricing_method`.
         hdbg.dassert_isinstance(pricing_method, str)
@@ -220,7 +215,8 @@ class AbstractPortfolio(abc.ABC):
         """
         Initialize with no non-cash assets.
         """
-        hdbg.dassert_lt(0, initial_cash)
+        if initial_cash < 0:
+            _LOG.warning("Initial cash=%0.2f", initial_cash)
         if not asset_ids:
             asset_ids = []
         hdbg.dassert_not_in(AbstractPortfolio.CASH_ID, asset_ids)
@@ -399,11 +395,6 @@ class AbstractPortfolio(abc.ABC):
         """
         flows = pd.DataFrame(self._flows).transpose()
         flows.columns.name = self._asset_id_col
-        # TODO(Grisha): fix it properly if needed. w/o explicit conversion to `int64`
-        #  columns type could be `Int64` which broke the code, e.g., `_compute_pnl()`,
-        #  it was not possible to add `flows` to `mtm` due to different columns
-        #  types: `int64` vs `Int64`.
-        flows.columns = flows.columns.astype("int64")
         # Explicitly cast to float. This makes the string representation of
         # the dataframe more uniform and better.
         flows = flows.astype("float")
@@ -526,8 +517,7 @@ class AbstractPortfolio(abc.ABC):
             columns=AbstractPortfolio.CASH_ID
         )
         # Get per-bar flows and compute PnL.
-        diff = holdings_marked_to_market.diff()
-        pnl = diff.add(flows)
+        pnl = holdings_marked_to_market.diff().add(flows)
         return pnl
 
     @staticmethod
@@ -622,8 +612,6 @@ class AbstractPortfolio(abc.ABC):
         # Get the cash available.
         cash = self._cash[cash_ts]
         hdbg.dassert(np.isfinite(cash), "cash=%s", cash)
-        # Cash should always be positive.
-        hdbg.dassert_lte(0.0, cash, "cash should always be positive")
         # Compute the net wealth (AKA "total value" AKA "NAV").
         net_wealth = holdings_net_value + cash
         hdbg.dassert(np.isfinite(net_wealth), "net_value=%s", net_wealth)
@@ -727,7 +715,8 @@ class AbstractPortfolio(abc.ABC):
             "All share values must be finite.",
         )
         initial_cash = initial_holdings.iloc[AbstractPortfolio.CASH_ID]
-        hdbg.dassert_lte(0, initial_cash)
+        if initial_cash < 0:
+            _LOG.warning("Initial cash balance=%0.2f", initial_cash)
 
     @staticmethod
     def _sequential_insert(
@@ -754,12 +743,11 @@ class AbstractPortfolio(abc.ABC):
 
 
 # #############################################################################
-# SimulatedPortfolio
+# DataFramePortfolio
 # #############################################################################
 
 
-# TODO(gp): -> InMemoryPortfolio, DataFramePortfolio?
-class SimulatedPortfolio(AbstractPortfolio):
+class DataFramePortfolio(AbstractPortfolio):
 
     # A `fills_df` represents orders that have been executed (e.g., how many shares,
     # at how much).
@@ -795,7 +783,7 @@ class SimulatedPortfolio(AbstractPortfolio):
         new_asset_holdings_srs = prev_asset_holdings.copy()
         flows = pd.Series([], dtype="float64")
         if fills_df is not None:
-            SimulatedPortfolio._validate_fills_df(fills_df)
+            DataFramePortfolio._validate_fills_df(fills_df)
             # last_timestamp <= fills_df.index <= timestamp
             hdbg.dassert_lte(prev_asset_holdings_ts, fills_df["timestamp"].min())
             hdbg.dassert_lte(fills_df["timestamp"].max(), wall_clock_timestamp)
@@ -858,7 +846,7 @@ class SimulatedPortfolio(AbstractPortfolio):
         hdbg.dassert(not fills_df.empty, "The dataframe must be nonempty.")
         # The dataframe must have the correct columns.
         hdbg.dassert_is_subset(
-            SimulatedPortfolio.FILLS_COLS,
+            DataFramePortfolio.FILLS_COLS,
             fills_df.columns.to_list(),
             "Columns do not conform to requirements.",
         )
@@ -878,7 +866,7 @@ class SimulatedPortfolio(AbstractPortfolio):
         hdbg.dassert(hasattr(fills_df["timestamp"].dtype, "tz"))
         # The dataframe must not contain a row for cash.
         hdbg.dassert_not_in(
-            SimulatedPortfolio.CASH_ID,
+            DataFramePortfolio.CASH_ID,
             fills_df["asset_id"].to_list(),
             "Order for cash detected.",
         )

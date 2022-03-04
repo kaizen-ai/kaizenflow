@@ -7,7 +7,7 @@ import dataflow.core as dtfcobuexa
 import dataflow.system.real_time_dag_adapter as dtfsrtdaad
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
-import oms.portfolio_example as oporexam
+import oms
 
 _LOG = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class TestRealtimeDagAdapter1(hunitest.TestCase):
         # Build a Portfolio.
         # TODO(Paul): Use a nontrivial event loop.
         event_loop = None
-        portfolio = oporexam.get_simulated_portfolio_example1(event_loop)
+        portfolio = oms.get_DataFramePortfolio_example1(event_loop)
         # Build a DagAdapter.
         prediction_col = "close"
         volatility_col = "close"

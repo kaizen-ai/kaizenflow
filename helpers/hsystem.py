@@ -649,17 +649,6 @@ def check_exec(tool: str) -> bool:
     return rc == 0
 
 
-def create_executable_script(file_name: str, content: str) -> None:
-    # To avoid circular dependencies.
-    import helpers.hio as hio
-
-    hdbg.dassert_isinstance(content, str)
-    hio.to_file(file_name, content)
-    # Make it executable.
-    cmd = "chmod +x " + file_name
-    system(cmd)
-
-
 def du(path_name: str, human_format: bool = False) -> Union[int, str]:
     """
     Return the size in bytes of a file or a directory (recursively).

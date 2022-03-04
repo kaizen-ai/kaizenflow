@@ -19,7 +19,7 @@ import core.signal_processing as csigproc
 import core.statistics as costatis
 import dataflow as cdataf
 import dataflow.model.stats_computer as dtfmostcom
-import dataflow.model.utils as dtfmodutil
+import dataflow.model.experiment_utils as dtfmoexuti
 import helpers.hdataframe as hdatafr
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
@@ -176,7 +176,7 @@ class ModelEvaluator:
                 eval_config["model_evaluator_kwargs"]["predictions_col"],
             ]
         }
-        result_bundle_dict = dtfmodutil.load_experiment_artifacts(**load_config)
+        result_bundle_dict = dtfmoexuti.load_experiment_artifacts(**load_config)
         # Build the ModelEvaluator.
         evaluator = ModelEvaluator.from_result_bundle_dict(
             result_bundle_dict,
