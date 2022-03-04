@@ -82,6 +82,7 @@ def _compare_dfs(self: Any, df1: pd.DataFrame, df2: pd.DataFrame) -> str:
 
 
 class TestParquet1(hunitest.TestCase):
+
     def test_get_df1(self) -> None:
         """
         Check the output of `_get_df()`.
@@ -486,6 +487,7 @@ class TestPartitionedParquet1(hunitest.TestCase):
 
 
 class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
+
     def test_by_month_full1(self) -> None:
         """
         Test no interval [None, None].
@@ -574,8 +576,7 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         )
         actual = str(filters)
         expected = (
-            r"[[('year', '>=', 2020), ('month', '>=', 1), "
-            r"('year', '<=', 2020), ('month', '<=', 12)]]"
+            r"[[('year', '==', 2020), ('month', '>=', 1), ('month', '<=', 12)]]"
         )
         self.assert_equal(actual, expected)
 
@@ -591,8 +592,7 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         )
         actual = str(filters)
         expected = (
-            r"[[('year', '>=', 2020), ('month', '>=', 1), "
-            r"('year', '<=', 2020), ('month', '<=', 1)]]"
+            r"[[('year', '==', 2020), ('month', '>=', 1), ('month', '<=', 1)]]"
         )
         self.assert_equal(actual, expected)
 
@@ -642,8 +642,10 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         )
         actual = str(filters)
         expected = (
-            r"[[('year', '>=', 2020), ('month', '>=', 6), "
-            r"('year', '<=', 2021), ('month', '<=', 12)]]"
+            r"[[('year', '==', 2020), ('month', '>=', 6), "
+            r"('year', '==', 2020), ('month', '<=', 12)], "
+            r"[('year', '==', 2021), ('month', '>=', 1), "
+            r"('year', '==', 2021), ('month', '<=', 12)]]"
         )
         self.assert_equal(actual, expected)
 
@@ -672,6 +674,7 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
 
 
 class TestAddDatePartitionColumns(hunitest.TestCase):
+
     def add_date_partition_columns_helper(
         self, partition_mode: str, expected: str
     ) -> None:
@@ -728,15 +731,6 @@ class TestAddDatePartitionColumns(hunitest.TestCase):
 
 
 class TestToPartitionedDataset(hunitest.TestCase):
-    @staticmethod
-    def get_test_data1() -> pd.DataFrame:
-        test_data = {
-            "dummy_value_1": [1, 2, 3],
-            "dummy_value_2": ["A", "B", "C"],
-            "dummy_value_3": [0, 0, 0],
-        }
-        df = pd.DataFrame(data=test_data)
-        return df
 
     def test_get_test_data1(self) -> None:
         test_data = self.get_test_data1()
@@ -805,3 +799,13 @@ class TestToPartitionedDataset(hunitest.TestCase):
         val1 - val2=['void_column']
         """
         self.assert_equal(act, exp, fuzzy_match=True)
+
+    @staticmethod
+    def get_test_data1() -> pd.DataFrame:
+        test_data = {
+            "dummy_value_1": [1, 2, 3],
+            "dummy_value_2": ["A", "B", "C"],
+            "dummy_value_3": [0, 0, 0],
+        }
+        df = pd.DataFrame(data=test_data)
+        return df

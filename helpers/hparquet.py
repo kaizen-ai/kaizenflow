@@ -9,12 +9,12 @@ import datetime
 import logging
 import os
 from typing import Any, Callable, Iterator, List, Optional, Tuple, Union
-from tqdm.autonotebook import tqdm
 
 import pandas as pd
 import pyarrow as pa
 import pyarrow.fs as pafs
 import pyarrow.parquet as pq
+from tqdm.autonotebook import tqdm
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -202,7 +202,10 @@ def yield_parquet_tiles_by_assets(
     :param cols: if an `int` is supplied, it is cast to a string before reading
     :return: a generator of `from_parquet()` dataframes
     """
-    batches = [asset_ids[i: i + asset_batch_size] for i in range(0, len(asset_ids), asset_batch_size)]
+    batches = [
+        asset_ids[i : i + asset_batch_size]
+        for i in range(0, len(asset_ids), asset_batch_size)
+    ]
     columns = [str(col) for col in cols]
     for batch in tqdm(batches):
         _LOG.debug("assets=%s", batch)
@@ -431,7 +434,7 @@ def get_parquet_filters_from_timestamp_interval(
             and_filter = [
                 ("year", "==", dates[0].year),
                 ("month", ">=", dates[0].month),
-                ("month", "<=", dates[0].month),
+                ("month", "<=", dates[-1].month),
             ]
             or_and_filter.append(and_filter)
         else:
@@ -445,12 +448,11 @@ def get_parquet_filters_from_timestamp_interval(
                 ("month", "<=", 12),
             ]
             or_and_filter.append(first_and_filter)
-            if len(years) > 2:
-                # OR statements to bridge the gap.
-                # `[('year', '==', 2021)]`
-                for year in years[1:-1]:
-                    bridge_and_filter = [("year", "==", year)]
-                    or_and_filter.append(bridge_and_filter)
+            # OR statements to bridge the gap, if any.
+            # `[('year', '==', 2021)]`
+            for year in years[1:-1]:
+                bridge_and_filter = [("year", "==", year)]
+                or_and_filter.append(bridge_and_filter)
             # Last AND filter.
             last_and_filter = [
                 ("year", "==", dates[-1].year),
