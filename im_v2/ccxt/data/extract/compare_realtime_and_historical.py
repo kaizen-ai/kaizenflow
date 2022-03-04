@@ -91,11 +91,11 @@ def compare_rows(rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> pd.DataFram
     # Get rows on which the two dataframe indices match.
     idx_intersection = rt_data.index.intersection(daily_data.index)
     # Get difference between daily data and rt data.
-    # TODO(Nikola): ValueError?
-    data_difference = daily_data.loc[idx_intersection].compare(
-        # Remove columns not present in daily_data.
-        rt_data.loc[idx_intersection]
-    )
+    # Index is set to default sequential integer values because compare is
+    # sensitive to multi index. Multi index columns are regular columns now.
+    trimmed_daily_data = daily_data.loc[idx_intersection].reset_index()
+    trimmed_rt_data = rt_data.loc[idx_intersection].reset_index()
+    data_difference = trimmed_daily_data.compare(trimmed_rt_data)
     return data_difference
 
 

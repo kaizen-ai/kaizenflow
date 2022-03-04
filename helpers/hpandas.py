@@ -352,8 +352,8 @@ def get_df_signature(df: pd.DataFrame, num_rows: int = 3) -> str:
     with pd.option_context(
         "display.max_colwidth", int(1e6), "display.max_columns", None
     ):
-        txt.append("df.head=\n%s" % df.head(num_rows))
-        txt.append("df.tail=\n%s" % df.tail(num_rows))
+        txt.append("df.head=\n%s" % df.head(num_rows // 2))
+        txt.append("df.tail=\n%s" % df.tail(num_rows // 2))
     txt = "\n".join(txt)
     return txt
 
