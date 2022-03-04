@@ -667,7 +667,7 @@ def df_to_str(
 
 
 def convert_df_to_json_string(
-    df: "pd.DataFrame",
+    df: pd.DataFrame,
     n_head: Optional[int] = 10,
     n_tail: Optional[int] = 10,
     columns_order: Optional[List[str]] = None,

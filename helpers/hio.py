@@ -13,13 +13,12 @@ import json
 import logging
 import os
 import shutil
+import tempfile
 import time
 import uuid
 from typing import Any, List, Optional, cast
 
 import helpers.hdbg as hdbg
-import helpers.hpandas as hpandas
-import helpers.hparquet as hparque
 import helpers.hprint as hprint
 
 # TODO(gp): Enable this after the linter has been updated.
@@ -300,8 +299,8 @@ def create_dir(
     # not incremental   rm+mkdir     mkdir
     if exists:
         if incremental and is_dir:
-            # The dir exists and we want to keep it (i.e.,
-            # incremental), so we are done.
+            # The dir exists and we want to keep it (i.e., incremental), so we
+            # are done.
             # os.chmod(dir_name, 0755)
             _LOG.debug(
                 "The dir '%s' exists and incremental=True: exiting", dir_name
@@ -454,12 +453,13 @@ def from_file(
     if file_name.endswith((".gz", ".gzip")):
         # Open gzipped file.
         f = gzip.open(file_name, "rt", encoding=encoding)
-    elif file_name.endswith((".pq", ".parquet")):
-        # Open pq file.
-        df = hparque.from_parquet(file_name)
-        data = hpandas.convert_df_to_json_string(df, n_head=3, n_tail=3)
-        # Already a proper string.
-        return data
+    # TODO(Nikola): Re-write without dependencies on hparque and hpandas.
+    # elif file_name.endswith((".pq", ".parquet")):
+    # Open pq file.
+    # df = hparque.from_parquet(file_name)
+    # data = hpandas.convert_df_to_json_string(df, n_head=3, n_tail=3)
+    # Already a proper string.
+    # return data
     else:
         # Open regular text file.
         f = open(  # pylint: disable=consider-using-with
@@ -543,7 +543,7 @@ def create_executable_script(file_name: str, content: str) -> None:
     cmd = "chmod +x " + file_name
     hsystem.system(cmd)
 
-    
+
 # #############################################################################
 # JSON
 # #############################################################################
@@ -649,7 +649,6 @@ def diff_strings(
     txt2_descr: Optional[str] = None,
     width: int = 130,
 ) -> str:
-    #
     # Write file.
     def _to_file(txt: str, txt_descr: Optional[str]) -> str:
         file_name = tempfile.NamedTemporaryFile().name
@@ -658,10 +657,9 @@ def diff_strings(
         to_file(file_name, txt)
         return file_name
 
-    #
     file_name1 = _to_file(txt1, txt1_descr)
     file_name2 = _to_file(txt2, txt2_descr)
-    #
+    # Get the difference between the files.
     cmd = f"sdiff --width={width} {file_name1} {file_name2}"
     _, txt = hsystem.system_to_string(
         cmd,

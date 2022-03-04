@@ -9,12 +9,12 @@ import datetime
 import logging
 import os
 from typing import Any, Callable, Iterator, List, Optional, Tuple, Union
-from tqdm.autonotebook import tqdm
 
 import pandas as pd
 import pyarrow as pa
 import pyarrow.fs as pafs
 import pyarrow.parquet as pq
+from tqdm.autonotebook import tqdm
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -103,6 +103,38 @@ def from_parquet(
     return df
 
 
+def _create_enclosing_dir(file_name: str) -> str:
+    # A mirror of `hio.create_enclosing_dir()`, introduced
+    # here to avoid circular dependencies.
+    dir_name = os.path.dirname(file_name)
+    if dir_name != "":
+        _LOG.debug(
+            "Creating dir_name='%s' for file_name='%s'", dir_name, file_name
+        )
+        hdbg.dassert_is_not(dir_name, None)
+        dir_name = os.path.normpath(dir_name)
+        if os.path.normpath(dir_name) == ".":
+            _LOG.debug("Can't create dir '%s'", dir_name)
+        if os.path.exists(dir_name):
+            # The dir exists and we want to keep it, so we are done.
+            _LOG.debug("The dir '%s' exists: exiting", dir_name)
+            return
+        _LOG.debug("Creating directory '%s'", dir_name)
+        try:
+            os.makedirs(dir_name)
+        except OSError as e:
+            _LOG.error(str(e))
+            # It can happen that we try to create the directory while somebody else
+            # created it, so we neutralize the corresponding exception.
+            if e.errno == 17:
+                # OSError: [Errno 17] File exists.
+                pass
+            else:
+                raise e
+    hdbg.dassert_dir_exists(dir_name, "file_name='%s'", file_name)
+    return dir_name
+
+
 # TODO(gp): @Nikola allow to read / write from S3 passing aws_profile like done
 #  in the rest of the code.
 def to_parquet(
@@ -118,40 +150,6 @@ def to_parquet(
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_isinstance(file_name, str)
     hdbg.dassert_file_extension(file_name, ["pq", "parquet"])
-    #
-    def _create_enclosing_dir(file_name):
-        # A mirror of `hio.create_enclosing_dir()`, introduced
-        # here to avoid circular dependencies.
-        dir_name = os.path.dirname(file_name)
-        if dir_name != "":
-            _LOG.debug(
-                "Creating dir_name='%s' for file_name='%s'", dir_name, file_name
-            )
-            hdbg.dassert_is_not(dir_name, None)
-            dir_name = os.path.normpath(dir_name)
-            if os.path.normpath(dir_name) == ".":
-                _LOG.debug("Can't create dir '%s'", dir_name)
-            if os.path.exists(dir_name):
-                # The dir exists and we want to keep it, so we are done.
-                _LOG.debug(
-                    "The dir '%s' exists: exiting", dir_name
-                )
-                return
-            _LOG.debug("Creating directory '%s'", dir_name)
-            try:
-                os.makedirs(dir_name)
-            except OSError as e:
-                _LOG.error(str(e))
-                # It can happen that we try to create the directory while somebody else
-                # created it, so we neutralize the corresponding exception.
-                if e.errno == 17:
-                    # OSError: [Errno 17] File exists.
-                    pass
-                else:
-                    raise e
-        hdbg.dassert_dir_exists(dir_name, "file_name='%s'", file_name)
-        return dir_name
-    
     _create_enclosing_dir(file_name)
     # Report stats about the df.
     _LOG.debug("df.shape=%s", str(df.shape))
@@ -234,7 +232,10 @@ def yield_parquet_tiles_by_assets(
     :param cols: if an `int` is supplied, it is cast to a string before reading
     :return: a generator of `from_parquet()` dataframes
     """
-    batches = [asset_ids[i: i + asset_batch_size] for i in range(0, len(asset_ids), asset_batch_size)]
+    batches = [
+        asset_ids[i : i + asset_batch_size]
+        for i in range(0, len(asset_ids), asset_batch_size)
+    ]
     columns = [str(col) for col in cols]
     for batch in tqdm(batches):
         _LOG.debug("assets=%s", batch)
