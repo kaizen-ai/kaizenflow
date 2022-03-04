@@ -19,6 +19,7 @@ from typing import List
 
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
+import helpers.hio as hio
 import helpers.hparser as hparser
 import helpers.hsystem as hsystem
 
@@ -56,7 +57,7 @@ def _roll_fwd(dir_names: List[str], auto_commit: bool, short_hash: bool) -> None
         hsystem.system(cmd)
     else:
         script_name = "./tmp_push.sh"
-        hsystem.create_executable_script(script_name, cmd)
+        hio.create_executable_script(script_name, cmd)
         msg: List[str] = []
         msg.append("Run:")
         msg.append(f"> {cmd}")
