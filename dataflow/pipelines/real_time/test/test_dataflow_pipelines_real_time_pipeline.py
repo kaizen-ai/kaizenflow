@@ -17,10 +17,7 @@ import helpers.hasyncio as hasynci
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 import market_data as mdata
-import oms.oms_db as oomsdb
-import oms.order_processor as oordproc
-import oms.portfolio as omportfo
-import oms.portfolio_example as oporexam
+import oms
 import oms.test.oms_db_helper as otodh
 
 _LOG = logging.getLogger(__name__)
@@ -134,6 +131,7 @@ class TestRealTimePipelineWithOms1(hunitest.TestCase):
     - a replayed time data source node using synthetic data for prices
     """
 
+    @pytest.mark.skip("Enable after update to Pandas")
     def test1(self) -> None:
         """
         Test `RealTimeReturnPipeline` using synthetic data.
@@ -181,7 +179,7 @@ class TestRealTimePipelineWithOms1(hunitest.TestCase):
                 }
             )
             # Build Portfolio.
-            portfolio = oporexam.get_simulated_portfolio_example1(
+            portfolio = oms.get_DataFramePortfolio_example1(
                 event_loop,
                 market_data=market_data,
                 asset_ids=[1000],
@@ -338,10 +336,10 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
         self,
         event_loop: asyncio.AbstractEventLoop,
         market_data: mdata.MarketData,
-    ) -> omportfo.MockedPortfolio:
+    ) -> oms.MockedPortfolio:
         db_connection = self.connection
-        table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
-        portfolio = oporexam.get_mocked_portfolio_example1(
+        table_name = oms.CURRENT_POSITIONS_TABLE_NAME
+        portfolio = oms.get_mocked_portfolio_example1(
             event_loop,
             db_connection,
             table_name,
@@ -359,8 +357,8 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
         return portfolio
 
     def get_order_processor(
-        self, portfolio: omportfo.MockedPortfolio
-    ) -> oordproc.OrderProcessor:
+        self, portfolio: oms.MockedPortfolio
+    ) -> oms.OrderProcessor:
         db_connection = self.connection
         get_wall_clock_time = portfolio._get_wall_clock_time
         order_processor_poll_kwargs = hasynci.get_poll_kwargs(get_wall_clock_time)
@@ -371,7 +369,7 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
         delay_to_accept_in_secs = 3
         delay_to_fill_in_secs = 10
         broker = portfolio.broker
-        order_processor = oordproc.OrderProcessor(
+        order_processor = oms.OrderProcessor(
             db_connection,
             delay_to_accept_in_secs,
             delay_to_fill_in_secs,
@@ -382,7 +380,7 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
 
     def test1(self) -> None:
         # Clean the DB tables.
-        oomsdb.create_oms_tables(self.connection, incremental=False)
+        oms.create_oms_tables(self.connection, incremental=False)
         #
         with hasynci.solipsism_context() as event_loop:
             market_data = self.get_market_data(event_loop)
@@ -484,13 +482,13 @@ class TestRealTimeMvnReturnsWithOms2(otodh.TestOmsDbHelper):
         self,
         event_loop: asyncio.AbstractEventLoop,
         market_data: mdata.MarketData,
-    ) -> omportfo.MockedPortfolio:
+    ) -> oms.MockedPortfolio:
         db_connection = self.connection
-        table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
+        table_name = oms.CURRENT_POSITIONS_TABLE_NAME
         initial_timestamp = pd.Timestamp(
             "2000-01-03 09:30:00-05:00", tz="America/New_York"
         )
-        portfolio = oporexam.get_mocked_portfolio_example1(
+        portfolio = oms.get_mocked_portfolio_example1(
             event_loop,
             db_connection,
             table_name,
@@ -509,8 +507,8 @@ class TestRealTimeMvnReturnsWithOms2(otodh.TestOmsDbHelper):
         return portfolio
 
     def get_order_processor(
-        self, portfolio: omportfo.MockedPortfolio
-    ) -> oordproc.OrderProcessor:
+        self, portfolio: oms.MockedPortfolio
+    ) -> oms.OrderProcessor:
         db_connection = self.connection
         get_wall_clock_time = portfolio._get_wall_clock_time
         order_processor_poll_kwargs = hasynci.get_poll_kwargs(get_wall_clock_time)
@@ -521,7 +519,7 @@ class TestRealTimeMvnReturnsWithOms2(otodh.TestOmsDbHelper):
         delay_to_accept_in_secs = 3
         delay_to_fill_in_secs = 10
         broker = portfolio.broker
-        order_processor = oordproc.OrderProcessor(
+        order_processor = oms.OrderProcessor(
             db_connection,
             delay_to_accept_in_secs,
             delay_to_fill_in_secs,
@@ -534,7 +532,7 @@ class TestRealTimeMvnReturnsWithOms2(otodh.TestOmsDbHelper):
     @pytest.mark.skip("Unstable due to floating point rounding.")
     def test1(self) -> None:
         # Clean the DB tables.
-        oomsdb.create_oms_tables(self.connection, incremental=False)
+        oms.create_oms_tables(self.connection, incremental=False)
         #
         with hasynci.solipsism_context() as event_loop:
             market_data = self.get_market_data(event_loop)

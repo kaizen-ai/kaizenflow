@@ -5,11 +5,11 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.4.2
+#       jupytext_version: 1.13.7
 #   kernelspec:
-#     display_name: Python [conda env:.conda-dev]
+#     display_name: Python 3 (ipykernel)
 #     language: python
-#     name: conda-env-.conda-dev-py
+#     name: python3
 # ---
 
 # %% [markdown]
@@ -25,6 +25,7 @@ print(ib_insync.__all__)
 
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
+import helpers.hstring as hstring
 import im.ib.data.extract.gateway.utils as imidegaut
 
 # %% [markdown]
@@ -73,7 +74,7 @@ contract = ib_insync.Forex("EURUSD")
 forex_contract = imidegaut.to_contract_details(ib, contract)
 
 # %%
-print(hprint.diff_strings(eq_contract, forex_contract))
+print(hstring.diff_strings(eq_contract, forex_contract))
 
 # %% [markdown]
 # ## CFD (contract for difference)
@@ -83,7 +84,7 @@ contract = ib_insync.CFD("IBUS30")
 cfd_contract = imidegaut.to_contract_details(ib, contract)
 
 # %%
-print(hprint.diff_strings(eq_contract, cfd_contract))
+print(hstring.diff_strings(eq_contract, cfd_contract))
 
 # %% [markdown]
 # ## Futures
@@ -93,7 +94,7 @@ contract = ib_insync.Future("ES", "202109", "GLOBEX")
 fut_contract = imidegaut.to_contract_details(ib, contract)
 
 # %%
-print(hprint.diff_strings(eq_contract, fut_contract, "eq", "fut"))
+print(hstring.diff_strings(eq_contract, fut_contract, "eq", "fut"))
 
 # %% [markdown]
 # ## Continuous Futures
