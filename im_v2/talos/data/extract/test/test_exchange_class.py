@@ -12,8 +12,8 @@ import im_v2.talos.data.extract.exchange_class as imvtdeexcl
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skip("Enable after CMTask1292 is resolved.")
-class TestCcxtExchange1(hunitest.TestCase):
+# @pytest.mark.skip("Enable after CMTask1292 is resolved.")
+class TestTalosExchange1(hunitest.TestCase):
     def test_initialize_class(self) -> None:
         """
         Smoke test that the class is being initialized correctly.
@@ -21,7 +21,7 @@ class TestCcxtExchange1(hunitest.TestCase):
         _ = imvtdeexcl.TalosExchange("sandbox")
 
     @pytest.mark.slow()
-    @umock.patch.object(imvcdeexcl.hdateti, "get_current_time")
+    @umock.patch.object(imvtdeexcl.hdateti, "get_current_time")
     def test_download_ohlcv_data1(
         self, mock_get_current_time: umock.MagicMock
     ) -> None:
@@ -29,11 +29,12 @@ class TestCcxtExchange1(hunitest.TestCase):
         Test download for historical data.
         """
         mock_get_current_time.return_value = "2021-09-09 00:00:00.000000+00:00"
-        start_timestamp = pd.Timestamp("2021-09-09T00:00:00Z")
-        end_timestamp = pd.Timestamp("2021-09-10T00:00:01Z")
+        start_timestamp = pd.Timestamp("2021-09-09T00:00:00")
+        # Need to add one minute more since Talos consider [a, b) time interval.
+        end_timestamp = pd.Timestamp("2021-09-10T00:00:00")
         actual = self._download_ohlcv_data(start_timestamp, end_timestamp)
         # Verify dataframe length.
-        self.assertEqual(1500, actual.shape[0])
+        self.assertEqual(1440, actual.shape[0])
         # Check number of calls and args for current time.
         self.assertEqual(mock_get_current_time.call_count, 1)
         self.assertEqual(mock_get_current_time.call_args.args, ("UTC",))
@@ -54,7 +55,7 @@ class TestCcxtExchange1(hunitest.TestCase):
         exchange_class = imvtdeexcl.TalosExchange("sandbox")
         # Run with invalid input.
         start_timestamp = "invalid"
-        end_timestamp = pd.Timestamp("2021-09-10T00:00:00Z")
+        end_timestamp = pd.Timestamp("2021-09-10T00:00:00")
         with pytest.raises(AssertionError) as fail:
             exchange_class.download_ohlcv_data(
                 currency_pair="BTC_USDT",
@@ -77,7 +78,7 @@ class TestCcxtExchange1(hunitest.TestCase):
         # Initialize class.
         exchange_class = imvtdeexcl.TalosExchange("sandbox")
         # Run with invalid input.
-        start_timestamp = pd.Timestamp("2021-09-09T00:00:00Z")
+        start_timestamp = pd.Timestamp("2021-09-09T00:00:00")
         end_timestamp = "invalid"
         with pytest.raises(AssertionError) as fail:
             exchange_class.download_ohlcv_data(
@@ -103,8 +104,8 @@ class TestCcxtExchange1(hunitest.TestCase):
         # Initialize class.
         exchange_class = imvtdeexcl.TalosExchange("sandbox")
         # Run with invalid input.
-        start_timestamp = pd.Timestamp("2021-09-10T00:00:00Z")
-        end_timestamp = pd.Timestamp("2021-09-09T00:00:00Z")
+        start_timestamp = pd.Timestamp("2021-09-10T00:00:00")
+        end_timestamp = pd.Timestamp("2021-09-09T00:00:00")
         with pytest.raises(AssertionError) as fail:
             exchange_class.download_ohlcv_data(
                 currency_pair="BTC_USDT",
@@ -114,7 +115,7 @@ class TestCcxtExchange1(hunitest.TestCase):
             )
         # Check output for error.
         actual = str(fail.value)
-        expected = "2021-09-10 00:00:00+00:00 <= 2021-09-09 00:00:00+00:00"
+        expected = "2021-09-10 00:00:00 <= 2021-09-09 00:00:00"
         self.assertIn(expected, actual)
 
     def test_download_ohlcv_data_invalid_input4(self) -> None:
@@ -123,32 +124,36 @@ class TestCcxtExchange1(hunitest.TestCase):
         """
         # Initialize class.
         exchange_class = imvtdeexcl.TalosExchange("sandbox")
+        start_timestamp = pd.Timestamp("2021-09-09T00:00:00")
+        end_timestamp = pd.Timestamp("2021-09-10T00:00:01")
         # Run with invalid input.
         with pytest.raises(ValueError) as fail:
             exchange_class.download_ohlcv_data(
                 currency_pair="invalid_currency_pair",
                 exchange="binance",
-                start_timestamp=None,
-                end_timestamp=None,
+                start_timestamp=start_timestamp,
+                end_timestamp=end_timestamp,
             )
         # Check output for error.
         actual = str(fail.value)
         expected = "Finished with code: 400"
         self.assertIn(expected, actual)
 
-    def test_download_ohlcv_data_invalid_input4(self) -> None:
+    def test_download_ohlcv_data_invalid_input5(self) -> None:
         """
         Run with invalid exchange.
         """
         # Initialize class.
         exchange_class = imvtdeexcl.TalosExchange("sandbox")
         # Run with invalid input.
+        start_timestamp = pd.Timestamp("2021-09-09T00:00:00")
+        end_timestamp = pd.Timestamp("2021-09-10T00:00:01")
         with pytest.raises(ValueError) as fail:
             exchange_class.download_ohlcv_data(
                 currency_pair="invalid_currency_pair",
-                exchange="unknown_exchange"
-                start_timestamp=None,
-                end_timestamp=None,
+                exchange="unknown_exchange",
+                start_timestamp=start_timestamp,
+                end_timestamp=end_timestamp,
             )
         # Check output for error.
         actual = str(fail.value)
@@ -170,24 +175,24 @@ class TestCcxtExchange1(hunitest.TestCase):
         # Extract data.
         actual = exchange_class.download_ohlcv_data(
             currency_pair="BTC_USDT",
-            exchange="binance"
+            exchange="binance",
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
         )
         # Verify that the output is a dataframe.
         hdbg.dassert_isinstance(actual, pd.DataFrame)
         # Verify column names.
-        # exp_col_names = [
-        #     "timestamp",
-        #     "open",
-        #     "high",
-        #     "low",
-        #     "close",
-        #     "volume",
-        #     "ticks"
-        #     "end_download_timestamp",
-        # ]
-        # self.assertEqual(exp_col_names, actual.columns.to_list())
+        exp_col_names = [
+            "timestamp",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "ticks",
+            "end_download_timestamp",
+        ]
+        self.assertEqual(exp_col_names, actual.columns.to_list())
         # Verify types inside each column.
         # col_types = [col_type.name for col_type in actual.dtypes]
         # exp_col_types = [
