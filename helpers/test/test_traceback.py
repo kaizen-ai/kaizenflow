@@ -182,6 +182,10 @@ class Test_Traceback1(hunitest.TestCase):
           File "$GIT_ROOT/helpers/dbg.py", line 63, in dfatal
             raise assertion_type(ret)
         AssertionError:
+        # #####################################################################
+        * Failed assertion *
+        cond=None
+        Invalid test='dev_scripts/testing/test/test_run_tests.py'
         """
         self._parse_traceback_helper(
             txt, purify_from_client, exp_cfile, exp_traceback
@@ -344,7 +348,6 @@ class Test_Traceback1(hunitest.TestCase):
     #   File "<frozen importlib._bootstrap>", line 973, in _find_and_load_unlocked
     # ModuleNotFoundError: No module named 'research'
     # ============================= slowest 3 durations ==============================
-
 
     # pylint: enable=line-too-long
 
