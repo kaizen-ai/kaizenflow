@@ -13,9 +13,8 @@ import im_v2.common.db.db_utils as imvcddbut
 
 @pytest.mark.skip("Enable after CMTask1292 is resolved.")
 class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
-    s3_path = "s3://cryptokaizen-data/unit-test/parquet/historical/"
-    _ohlcv_dataframe_sample = None
-    filters = [
+    S3_PATH = "s3://cryptokaizen-data/unit-test/parquet/historical"
+    FILTERS = [
         [
             ("year", "==", 2021),
             ("month", ">=", 12),
@@ -29,6 +28,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             ("month", "<=", 1),
         ],
     ]
+    _ohlcv_dataframe_sample = None
 
     def setUp(self) -> None:
         super().setUp()
@@ -49,7 +49,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
 
         Both realtime and daily data are the same.
         """
-        sample = self.ohlcv_dataframe_sample
+        sample = self.ohlcv_dataframe_sample()
         self._save_sample_in_db(sample)
         self._test_function_call()
 
@@ -60,7 +60,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
 
         Missing realtime data.
         """
-        sample = self.ohlcv_dataframe_sample.head(90)
+        sample = self.ohlcv_dataframe_sample().head(90)
         self._save_sample_in_db(sample)
         self._test_function_call()
 
@@ -71,26 +71,26 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
 
         Missing daily data.
         """
-        sample = self.ohlcv_dataframe_sample
+        sample = self.ohlcv_dataframe_sample()
         self._save_sample_in_db(sample)
         # Mock `from_parquet` so data is obtained through mock instead of s3.
         mock_from_parquet_patch = umock.patch.object(
             imvcdecrah.hparque, "from_parquet"
         )
         mock_from_parquet = mock_from_parquet_patch.start()
-        mock_from_parquet.return_value = self.ohlcv_dataframe_sample.head(90)
+        mock_from_parquet.return_value = self.ohlcv_dataframe_sample().head(90)
         self._test_function_call()
         # Stop `from_parquet` mock and check calls and arguments.
         mock_from_parquet_patch.stop()
         self.assertEqual(mock_from_parquet.call_count, 1)
         self.assertEqual(
             mock_from_parquet.call_args.args,
-            (f"{self.s3_path}binance/",),
+            (f"{self.S3_PATH}/binance/",),
         )
         self.assertEqual(
             mock_from_parquet.call_args.kwargs,
             {
-                "filters": self.filters,
+                "filters": self.FILTERS,
                 "aws_profile": "ck",
             },
         )
@@ -102,7 +102,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
 
         Mismatch between realtime and daily data.
         """
-        sample = self.ohlcv_dataframe_sample
+        sample = self.ohlcv_dataframe_sample()
         # TODO(Nikola): Edit data.
         self._save_sample_in_db(sample)
         # Mock `from_parquet` so data is obtained through mock instead of s3.
@@ -145,18 +145,18 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         }
         self.assertDictEqual(actual, expected)
 
-    @property
     def ohlcv_dataframe_sample(self) -> pd.DataFrame:
         if self._ohlcv_dataframe_sample is None:
-            file_name = f"{self.s3_path}binance/"
+            file_name = f"{self.S3_PATH}/binance/"
             ohlcv_sample = hparque.from_parquet(
-                file_name, filters=self.filters, aws_profile="ck"
+                file_name, filters=self.FILTERS, aws_profile="ck"
             )
             # Matching exact timespan as in test function call.
             self._ohlcv_dataframe_sample = ohlcv_sample.loc[
                 "2021-12-31 23:55:00":"2022-01-01 00:05:00"
             ]
-        # Deep copy is used to preserve original data for each test.
+        # Deep copy (which is default for `pd.DataFrame.copy()`) is used to
+        # preserve original data for each test.
         return self._ohlcv_dataframe_sample.copy()
 
     def _save_sample_in_db(self, sample: pd.DataFrame) -> None:
@@ -187,7 +187,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             "db_table": "ccxt_ohlcv",
             "log_level": "INFO",
             "aws_profile": "ck",
-            "s3_path": self.s3_path,
+            "s3_path": f"{self.S3_PATH}/",
         }
         # Run.
         args = argparse.Namespace(**kwargs)

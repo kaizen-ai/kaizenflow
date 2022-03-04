@@ -33,71 +33,6 @@ import helpers.hsql as hsql
 import im_v2.im_lib_tasks as imvimlita
 
 
-def _run(args: argparse.Namespace) -> None:
-    # Get time range for last 24 hours.
-    start_timestamp = pd.Timestamp(args.start_timestamp, tz="UTC")
-    end_timestamp = pd.Timestamp(args.end_timestamp, tz="UTC")
-    # Connect to database.
-    env_file = imvimlita.get_db_env_path(args.db_stage)
-    connection_params = hsql.get_connection_info_from_env_file(env_file)
-    connection = hsql.get_connection(*connection_params)
-    # Convert timestamps to unix ms format used in OHLCV data.
-    unix_start_timestamp = hdateti.convert_timestamp_to_unix_epoch(
-        start_timestamp
-    )
-    unix_end_timestamp = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
-    # Read data from DB.
-    query = (
-        f"SELECT * FROM ccxt_ohlcv WHERE timestamp >='{unix_start_timestamp}'"
-        f" AND timestamp <= '{unix_end_timestamp}' AND exchange_id='{args.exchange_id}'"
-    )
-    rt_data = hsql.execute_query_to_df(connection, query)
-    rt_data_reindex = reindex_on_asset_and_ts(rt_data)
-    # List files for given exchange.
-    exchange_path = os.path.join(args.s3_path, args.exchange_id) + "/"
-    timestamp_filters = hparque.get_parquet_filters_from_timestamp_interval(
-        "by_year_month", start_timestamp, end_timestamp
-    )
-    # Read data corresponding to given time range.
-    daily_data = hparque.from_parquet(
-        exchange_path, filters=timestamp_filters, aws_profile=args.aws_profile
-    )
-    daily_data = daily_data.loc[daily_data["timestamp"] >= unix_start_timestamp]
-    daily_data = daily_data.loc[daily_data["timestamp"] <= unix_end_timestamp]
-    daily_data_reindex = reindex_on_asset_and_ts(daily_data)
-    # Get missing data.
-    rt_missing_data, daily_missing_data = find_gaps(
-        rt_data_reindex, daily_data_reindex
-    )
-    # Compare dataframe contents.
-    data_difference = compare_rows(rt_data_reindex, daily_data_reindex)
-    # Show difference and raise if one is found.
-    error_message = []
-    if not rt_missing_data.empty:
-        error_message.append("Missing real time data:")
-        error_message.append(
-            hpandas.get_df_signature(
-                rt_missing_data, num_rows=len(rt_missing_data)
-            )
-        )
-    if not daily_missing_data.empty:
-        error_message.append("Missing daily data:")
-        error_message.append(
-            hpandas.get_df_signature(
-                daily_missing_data, num_rows=len(daily_missing_data)
-            )
-        )
-    if not data_difference.empty:
-        error_message.append("Differing table contents:")
-        error_message.append(
-            hpandas.get_df_signature(
-                data_difference, num_rows=len(data_difference)
-            )
-        )
-    if error_message:
-        hdbg.dfatal(message="\n".join(error_message))
-
-
 def reindex_on_asset_and_ts(data: pd.DataFrame) -> pd.DataFrame:
     """
     Reindex data on currency pair and timestamp.
@@ -208,6 +143,71 @@ def _parse() -> argparse.ArgumentParser:
     parser = hparser.add_verbosity_arg(parser)
     parser = hs3.add_s3_args(parser)
     return parser
+
+
+def _run(args: argparse.Namespace) -> None:
+    # Get time range for last 24 hours.
+    start_timestamp = pd.Timestamp(args.start_timestamp, tz="UTC")
+    end_timestamp = pd.Timestamp(args.end_timestamp, tz="UTC")
+    # Connect to database.
+    env_file = imvimlita.get_db_env_path(args.db_stage)
+    connection_params = hsql.get_connection_info_from_env_file(env_file)
+    connection = hsql.get_connection(*connection_params)
+    # Convert timestamps to unix ms format used in OHLCV data.
+    unix_start_timestamp = hdateti.convert_timestamp_to_unix_epoch(
+        start_timestamp
+    )
+    unix_end_timestamp = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
+    # Read data from DB.
+    query = (
+        f"SELECT * FROM ccxt_ohlcv WHERE timestamp >='{unix_start_timestamp}'"
+        f" AND timestamp <= '{unix_end_timestamp}' AND exchange_id='{args.exchange_id}'"
+    )
+    rt_data = hsql.execute_query_to_df(connection, query)
+    rt_data_reindex = reindex_on_asset_and_ts(rt_data)
+    # List files for given exchange.
+    exchange_path = os.path.join(args.s3_path, args.exchange_id) + "/"
+    timestamp_filters = hparque.get_parquet_filters_from_timestamp_interval(
+        "by_year_month", start_timestamp, end_timestamp
+    )
+    # Read data corresponding to given time range.
+    daily_data = hparque.from_parquet(
+        exchange_path, filters=timestamp_filters, aws_profile=args.aws_profile
+    )
+    daily_data = daily_data.loc[daily_data["timestamp"] >= unix_start_timestamp]
+    daily_data = daily_data.loc[daily_data["timestamp"] <= unix_end_timestamp]
+    daily_data_reindex = reindex_on_asset_and_ts(daily_data)
+    # Get missing data.
+    rt_missing_data, daily_missing_data = find_gaps(
+        rt_data_reindex, daily_data_reindex
+    )
+    # Compare dataframe contents.
+    data_difference = compare_rows(rt_data_reindex, daily_data_reindex)
+    # Show difference and raise if one is found.
+    error_message = []
+    if not rt_missing_data.empty:
+        error_message.append("Missing real time data:")
+        error_message.append(
+            hpandas.get_df_signature(
+                rt_missing_data, num_rows=len(rt_missing_data)
+            )
+        )
+    if not daily_missing_data.empty:
+        error_message.append("Missing daily data:")
+        error_message.append(
+            hpandas.get_df_signature(
+                daily_missing_data, num_rows=len(daily_missing_data)
+            )
+        )
+    if not data_difference.empty:
+        error_message.append("Differing table contents:")
+        error_message.append(
+            hpandas.get_df_signature(
+                data_difference, num_rows=len(data_difference)
+            )
+        )
+    if error_message:
+        hdbg.dfatal(message="\n".join(error_message))
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
