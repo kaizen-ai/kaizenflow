@@ -150,7 +150,7 @@ class Test_Traceback1(hunitest.TestCase):
           File "/app/amp/helpers/dbg.py", line 63, in dfatal
             raise assertion_type(ret)
         AssertionError:
-        # #####################################################################
+        ######################################################################
         * Failed assertion *
         cond=None
         Invalid test='dev_scripts/testing/test/test_run_tests.py'
@@ -182,7 +182,7 @@ class Test_Traceback1(hunitest.TestCase):
           File "$GIT_ROOT/helpers/dbg.py", line 63, in dfatal
             raise assertion_type(ret)
         AssertionError:
-        # #####################################################################
+        ######################################################################
         * Failed assertion *
         cond=None
         Invalid test='dev_scripts/testing/test/test_run_tests.py'
