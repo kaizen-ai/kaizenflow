@@ -209,4 +209,5 @@ class TalosExchange:
         # Change from Talos date format to unix timestamp.
         # The 'value' attribute holds timestamp in ns, we convert to us (microseconds).
         concat_df['timestamp'] = pd.to_datetime(concat_df['timestamp']).apply(lambda x: x.value) / 1000000
+        concat_df['timestamp'] = concat_df['timestamp'].astype(int)
         return concat_df
