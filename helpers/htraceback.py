@@ -169,8 +169,7 @@ def parse_traceback(
             while end_idx < len(lines) - 1 and not to_break:
                 end_idx += 1
                 if (
-                    lines[end_idx].startswith(" ")
-                    or "________ Test" in lines[end_idx]
+                    "________ Test" in lines[end_idx]
                     or "====== slowest 3 durations" in lines[end_idx]
                 ):
                     # Stop if we have reached the next traceback or the end of the
