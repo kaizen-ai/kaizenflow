@@ -3,20 +3,30 @@ import unittest.mock as umock
 
 try:
     import moto
+
     _HAS_MOTO = True
 except ImportError:
     _HAS_MOTO = False
 import pytest
 
 import helpers.hpandas as hpandas
+import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.ccxt.data.extract.download_realtime_for_one_exchange as imvcdedrfoe
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.db.db_utils as imvcddbut
 
-
 if _HAS_MOTO:
+
     @pytest.mark.skip("Enable after CMTask1292 is resolved.")
+    @umock.patch.dict(
+        hs3.os.environ,
+        {
+            "AWS_ACCESS_KEY_ID": "mock_key_id",
+            "AWS_SECRET_ACCESS_KEY": "mock_secret_access_key",
+            "AWS_DEFAULT_REGION": "af-south-1",
+        },
+    )
     class TestDownloadRealtimeForOneExchange1(imvcddbut.TestImDbHelper):
         # Mocked bucket.
         mock_s3 = moto.mock_s3()
@@ -57,12 +67,14 @@ if _HAS_MOTO:
             mock_get_current_timestamp_as_string: umock.MagicMock,
         ) -> None:
             """
-            Test function call with specific arguments that are mimicking command
-            line arguments and checking saved content in database.
+            Test function call with specific arguments that are mimicking
+            command line arguments and checking saved content in database.
 
             Run without saving to s3.
             """
-            mock_get_current_time.return_value = "2021-11-10 00:00:01.000000+00:00"
+            mock_get_current_time.return_value = (
+                "2021-11-10 00:00:01.000000+00:00"
+            )
             mock_get_current_timestamp_as_string.return_value = "20211110-000001"
             use_s3 = False
             self._test_function_call(use_s3)
@@ -83,12 +95,14 @@ if _HAS_MOTO:
             mock_get_current_timestamp_as_string: umock.MagicMock,
         ) -> None:
             """
-            Test function call with specific arguments that are mimicking command
-            line arguments and checking saved content in database.
+            Test function call with specific arguments that are mimicking
+            command line arguments and checking saved content in database.
 
             Run and save to s3.
             """
-            mock_get_current_time.return_value = "2021-11-10 00:00:01.000000+00:00"
+            mock_get_current_time.return_value = (
+                "2021-11-10 00:00:01.000000+00:00"
+            )
             mock_get_current_timestamp_as_string.return_value = "20211110-000001"
             use_s3 = True
             self._test_function_call(use_s3)
@@ -100,10 +114,9 @@ if _HAS_MOTO:
                 mock_get_current_timestamp_as_string.call_args.args, ("UTC",)
             )
             # Check csv files on s3.
-            csv_meta_list = self.moto_client.list_objects(Bucket=self.bucket_name)[
-                "Contents"
-            ]
-            self.assertNotEqual(len(csv_meta_list), 0)
+            csv_meta_list = self.moto_client.list_objects(
+                Bucket=self.bucket_name
+            )["Contents"]
             csv_files = sorted([csv_meta["Key"] for csv_meta in csv_meta_list])
             expected = [
                 "binance/ADA_USDT_20211110-000001.csv",
@@ -122,7 +135,7 @@ if _HAS_MOTO:
             """
             Tests arg parser for predefined args in the script.
 
-            Mostly for coverage.
+            Mostly for coverage and to detect argument changes.
             """
             parser = imvcdedrfoe._parse()
             cmd = []
@@ -176,13 +189,17 @@ if _HAS_MOTO:
                 self.assertEqual(len(buckets), 1)
                 self.assertEqual(buckets[0]["Name"], self.bucket_name)
                 # Update kwargs.
-                kwargs.update({"aws_profile": "ck", "s3_path": f"s3://{self.bucket_name}/"})
+                kwargs.update(
+                    {"aws_profile": "ck", "s3_path": f"s3://{self.bucket_name}/"}
+                )
             # Run.
             args = argparse.Namespace(**kwargs)
             imvcdedrfoe._run(args)
             # Get saved data in db.
             select_all_query = "SELECT * FROM ccxt_ohlcv;"
-            actual_df = hsql.execute_query_to_df(self.connection, select_all_query)
+            actual_df = hsql.execute_query_to_df(
+                self.connection, select_all_query
+            )
             # Check data output.
             actual = hpandas.df_to_str(actual_df, num_rows=5000)
             # pylint: disable=line-too-long
