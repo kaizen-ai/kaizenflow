@@ -179,7 +179,7 @@ class TalosExchange:
             if r.status_code == 200:
                 data = r.json()["data"]
                 # Transform to dataframe and drop unnecessary columns.
-                df = pd.DataFrame(data).drop(["Symbol", "Ticks"], axis=1)
+                df = pd.DataFrame(data).drop(["Symbol"], axis=1)
                 df["end_download_timestamp"] = str(
                     hdateti.get_current_time("UTC")
                 )
@@ -201,6 +201,7 @@ class TalosExchange:
             "low",
             "close",
             "volume",
+            "ticks",
             "end_download_timestamp",
         ]
         concat_df = pd.concat(dfs)
