@@ -18,8 +18,8 @@ import logging
 from typing import List
 
 import helpers.hdbg as hdbg
-import helpers.hio as hio
 import helpers.hgit as hgit
+import helpers.hio as hio
 import helpers.hparser as hparser
 import helpers.hsystem as hsystem
 

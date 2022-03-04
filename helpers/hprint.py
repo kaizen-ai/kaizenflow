@@ -7,7 +7,6 @@ import helpers.hprint as hprint
 import logging
 import re
 import sys
-import tempfile
 from typing import Any, Callable, Dict, Iterable, List, Match, Optional, cast
 
 import helpers.hdbg as hdbg

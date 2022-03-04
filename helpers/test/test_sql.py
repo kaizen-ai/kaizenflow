@@ -1,11 +1,9 @@
 import logging
-import os
 
 import pandas as pd
 import psycopg2.errors as perrors
 import pytest
 
-import helpers.hgit as hgit
 import helpers.hpandas as hpandas
 import helpers.hsql as hsql
 

@@ -522,7 +522,7 @@ class TestDfToStr(hunitest.TestCase):
         2              3             C              0"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
-        
+
 # #############################################################################
 
 
