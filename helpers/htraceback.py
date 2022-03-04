@@ -150,22 +150,31 @@ def parse_traceback(
             and "Error:" not in lines[end_idx - 1]
             and "Error:" in lines[end_idx]
         ):
-            # Extend the traceback to the line with the error name.
+            # Extend the traceback to the lines with the error description.
             # E.g., for the snippet below:
             # '''
             #    if repo_short_name == "amp":
             # NameError: name 'repo_short_name' is not defined
             # '''
             # If the parsed traceback stops at 'if repo_short_name == "amp":', and thus,
-            # its last line does not include the error definition ("NameError:..."),
-            # and the following line does include the error definition,
+            # its last line does not include the error description ("NameError:..."),
+            # and the following line does include the error description,
             # then the traceback will be extended to include the following line,
             # making the parsed traceback end with the following two lines:
             # '''
             #    if repo_short_name == "amp":
             # NameError: name 'repo_short_name' is not defined
             # '''
-            end_idx = end_idx + 1
+            to_break = False
+            while end_idx < len(lines) - 1 and not to_break:
+                end_idx += 1
+                if (
+                    "________ Test" in lines[end_idx]
+                    or "====== slowest 3 durations" in lines[end_idx]
+                ):
+                    # Stop if we have reached the next traceback or the end of the
+                    # pytest report.
+                    to_break = True
         hdbg.dassert_lte(0, start_idx)
         hdbg.dassert_lte(start_idx, end_idx)
         hdbg.dassert_lt(end_idx, len(lines))
