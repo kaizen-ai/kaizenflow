@@ -13,7 +13,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestStackPredictionDf(hunitest.TestCase):
-
     def test1(self) -> None:
         df = self._get_data()
         actual = cfiprpro.stack_prediction_df(
