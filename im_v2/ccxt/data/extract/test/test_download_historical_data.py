@@ -3,18 +3,28 @@ import unittest.mock as umock
 
 try:
     import moto
+
     _HAS_MOTO = True
 except ImportError:
     _HAS_MOTO = False
 import pytest
 import s3fs
 
+import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.download_historical_data as imvcdedhda
 
-
 if _HAS_MOTO:
+
     @pytest.mark.skip("Enable after CMTask1292 is resolved.")
+    @umock.patch.dict(
+        hs3.os.environ,
+        {
+            "AWS_ACCESS_KEY_ID": "mock_key_id",
+            "AWS_SECRET_ACCESS_KEY": "mock_secret_access_key",
+            "AWS_DEFAULT_REGION": "af-south-1",
+        },
+    )
     class TestDownloadHistoricalData1(hunitest.TestCase):
         # Mocked bucket.
         mock_s3 = moto.mock_s3()
@@ -40,13 +50,17 @@ if _HAS_MOTO:
 
         @pytest.mark.slow
         @umock.patch.object(imvcdedhda.hdateti, "get_current_time")
-        def test_function_call1(self, mock_get_current_time: umock.MagicMock) -> None:
+        def test_function_call1(
+            self, mock_get_current_time: umock.MagicMock
+        ) -> None:
             """
-            Test function call with specific arguments that are mimicking command
-            line arguments and comparing function output with predefined directory
-            structure and file contents.
+            Test function call with specific arguments that are mimicking
+            command line arguments and comparing function output with
+            predefined directory structure and file contents.
             """
-            mock_get_current_time.return_value = "2022-02-08 00:00:01.000000+00:00"
+            mock_get_current_time.return_value = (
+                "2022-02-08 00:00:01.000000+00:00"
+            )
             mock_list_and_merge_patch = umock.patch.object(
                 imvcdedhda, "list_and_merge_pq_files"
             )
@@ -87,7 +101,7 @@ if _HAS_MOTO:
             """
             Tests arg parser for predefined args in the script.
 
-            Mostly for coverage.
+            Mostly for coverage and to detect argument changes.
             """
             parser = imvcdedhda._parse()
             cmd = []

@@ -4107,7 +4107,7 @@ def pytest_repro(  # type: ignore
             _, traceback = htraceb.parse_traceback(
                 traceback_block, purify_from_client=False
             )
-            tracebacks.append("\n".join(["# " + name, traceback, ""]))
+            tracebacks.append("\n".join(["# " + name, traceback.strip(), ""]))
         # Combine the stacktraces for all the failures.
         full_traceback = "\n\n" + "\n".join(tracebacks)
         failed_test_output_str += full_traceback

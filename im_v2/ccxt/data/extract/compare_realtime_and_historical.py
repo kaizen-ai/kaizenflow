@@ -19,6 +19,7 @@ import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
 """
 import argparse
 import os
+from typing import Tuple
 
 import pandas as pd
 
@@ -36,7 +37,7 @@ def reindex_on_asset_and_ts(data: pd.DataFrame) -> pd.DataFrame:
     """
     Reindex data on currency pair and timestamp.
 
-    Drops timestamps for downloading and saving.
+    Drop timestamps for downloading and saving.
     """
     # Select only index and OHLCV columns
     expected_col_names = [
@@ -52,12 +53,17 @@ def reindex_on_asset_and_ts(data: pd.DataFrame) -> pd.DataFrame:
     data_reindex = data.loc[:, expected_col_names]
     data_reindex = data_reindex.drop_duplicates()
     # Reindex on ts and asset.
+    # Remove index name, so there is no conflict with column names.
+    # For example if index is named `timestamp`.
+    data_reindex.index.name = None
     data_reindex = data_reindex.sort_values(by=["timestamp", "currency_pair"])
     data_reindex = data_reindex.set_index(["timestamp", "currency_pair"])
     return data_reindex
 
 
-def find_gaps(rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> pd.DataFrame:
+def find_gaps(
+    rt_data: pd.DataFrame, daily_data: pd.DataFrame
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Find data present in one dataframe and missing in other.
 
@@ -82,13 +88,14 @@ def compare_rows(rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> pd.DataFram
     :param daily_data: data downloaded to S3 once daily
     :return: dataframe with data with same indices and different contents
     """
-    # Get rows on which on which the two dataframe indices match.
+    # Get rows on which the two dataframe indices match.
     idx_intersection = rt_data.index.intersection(daily_data.index)
     # Get difference between daily data and rt data.
-    data_difference = daily_data.loc[idx_intersection].compare(
-        # Remove columns not present in daily_data.
-        rt_data.loc[idx_intersection]
-    )
+    # Index is set to default sequential integer values because compare is
+    # sensitive to multi index. Multi index columns are regular columns now.
+    trimmed_daily_data = daily_data.loc[idx_intersection].reset_index()
+    trimmed_rt_data = rt_data.loc[idx_intersection].reset_index()
+    data_difference = trimmed_daily_data.compare(trimmed_rt_data)
     return data_difference
 
 
@@ -138,9 +145,7 @@ def _parse() -> argparse.ArgumentParser:
     return parser
 
 
-def _main(parser: argparse.ArgumentParser) -> None:
-    args = parser.parse_args()
-    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+def _run(args: argparse.Namespace) -> None:
     # Get time range for last 24 hours.
     start_timestamp = pd.Timestamp(args.start_timestamp, tz="UTC")
     end_timestamp = pd.Timestamp(args.end_timestamp, tz="UTC")
@@ -198,11 +203,17 @@ def _main(parser: argparse.ArgumentParser) -> None:
         error_message.append("Differing table contents:")
         error_message.append(
             hpandas.get_df_signature(
-                data_difference, num_rows=len(daily_missing_data)
+                data_difference, num_rows=len(data_difference)
             )
         )
     if error_message:
         hdbg.dfatal(message="\n".join(error_message))
+
+
+def _main(parser: argparse.ArgumentParser) -> None:
+    args = parser.parse_args()
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    _run(args)
 
 
 if __name__ == "__main__":
