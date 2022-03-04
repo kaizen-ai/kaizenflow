@@ -26,22 +26,19 @@
 # %autoreload 2
 
 import base64
+import datetime
 import hashlib
 import hmac
 import logging
+import uuid
+from urllib.parse import urlencode
 
 import pandas as pd
 import requests
 
-import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
-import datetime
-import helpers.hsql as hsql
-import im_v2.im_lib_tasks as imvimlita
-import uuid
 import helpers.hsecrets as hsecret
-from urllib.parse import urlparse, urlencode
 
 # %%
 hdbg.init_logger(verbosity=logging.DEBUG)
@@ -58,7 +55,6 @@ hprint.config_notebook()
 def calculate_signature(api_secret, parts):
     """
     A signature required for some types of GET and POST requests.
-
     """
     payload = "\n".join(parts)
     hash = hmac.new(
@@ -67,6 +63,7 @@ def calculate_signature(api_secret, parts):
     hash.hexdigest()
     signature = base64.urlsafe_b64encode(hash.digest()).decode()
     return signature
+
 
 def timestamp_to_tz_naive_ISO_8601(timestamp: pd.Timestamp) -> str:
     """
@@ -77,17 +74,22 @@ def timestamp_to_tz_naive_ISO_8601(timestamp: pd.Timestamp) -> str:
 
     Note: microseconds must be included.
     """
-    #hdateti.dassert_is_tz_naive(timestamp)
+    # hdateti.dassert_is_tz_naive(timestamp)
     timestamp_iso_8601 = timestamp.isoformat(timespec="microseconds") + "Z"
     return timestamp_iso_8601
 
-def get_orders(endpoint: str, path: str, public_key: str, secret_key: str) -> pd.DataFrame:
+
+def get_orders(
+    endpoint: str, path: str, public_key: str, secret_key: str
+) -> pd.DataFrame:
     """
     Load data from given path.
-    
+
     Loads all orders up to the moment of request
     """
-    utc_datetime = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.000000Z")
+    utc_datetime = datetime.datetime.utcnow().strftime(
+        "%Y-%m-%dT%H:%M:%S.000000Z"
+    )
     # TODO(Danya): Add time query (startDate and endDate)
     # TODO(Danya): Factor out the general form of a GET request (common with OHLCV)
     # TODO(Danya): Factor out the general part of TALOS authorization.
@@ -95,21 +97,15 @@ def get_orders(endpoint: str, path: str, public_key: str, secret_key: str) -> pd
     query = {"EndDate": utc_datetime}
     query_string = urlencode(query)
     print(utc_datetime)
-    get_request_parts = [
-    "GET",
-    utc_datetime,
-    endpoint,
-    path,
-    query_string
-]
+    get_request_parts = ["GET", utc_datetime, endpoint, path, query_string]
     signature = calculate_signature(secret_key, get_request_parts)
     # TODO(*): Get secrets from hsecrets.
     headers = {
-    "TALOS-KEY": public_key,  # API public key
-    "TALOS-SIGN": signature, # an encoded secret key + request
-    "TALOS-TS": utc_datetime, # Time of request UTC.
+        "TALOS-KEY": public_key,  # API public key
+        "TALOS-SIGN": signature,  # an encoded secret key + request
+        "TALOS-TS": utc_datetime,  # Time of request UTC.
     }
-    # TODO(Danya): Factor out 
+    # TODO(Danya): Factor out
     url = f"https://{endpoint}{path}?{query_string}"
     print(url)
     r = requests.get(url=url, headers=headers)
@@ -119,14 +115,19 @@ def get_orders(endpoint: str, path: str, public_key: str, secret_key: str) -> pd
         raise Exception(f"{r.status_code}: {r.text}")
     return data
 
+
 def get_talos_api_keys(mode: str = "sandbox"):
-    if mode=="sandbox":
+    if mode == "sandbox":
         api_keys = hsecret.get_secret("talos_sandbox")
     return api_keys
 
+
 def get_cl_ord_id():
-    """ Create a ClOrdID for the POST request. """
+    """
+    Create a ClOrdID for the POST request.
+    """
     return str(uuid.uuid4())
+
 
 def create_order(timestamp_ISO8601: str):
     # TODO(Danya): Add arguments: quantity, markets (exchanges), order type, etc.
@@ -137,7 +138,7 @@ def create_order(timestamp_ISO8601: str):
         "OrderQty": "1.0000",
         "Symbol": "BTC-USDT",
         "Currency": "BTC",
-        "TransactTime": timestamp_ISO8601, # Should always be the utcnow() with Talos date formatting.
+        "TransactTime": timestamp_ISO8601,  # Should always be the utcnow() with Talos date formatting.
         "OrdType": "Limit",
         "TimeInForce": "GoodTillCancel",
         "Price": "5.81",
@@ -148,7 +149,9 @@ def create_order(timestamp_ISO8601: str):
 
 def post_order(endpoint: str, path: str, public_key: str, secret_key: str):
     # TODO(Danya): Factor out the statement.
-    utc_datetime = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.000000Z")
+    utc_datetime = datetime.datetime.utcnow().strftime(
+        "%Y-%m-%dT%H:%M:%S.000000Z"
+    )
     parts = [
         "POST",
         utc_datetime,
@@ -182,8 +185,8 @@ def post_order(endpoint: str, path: str, public_key: str, secret_key: str):
 # Imitation of script input parameters.
 # Common elements of both GET and POST requests.
 api_keys = get_talos_api_keys()
-endpoint = "tal-87.sandbox.talostrading.com" # our sandbox endpoint
-path = "/v1/orders" # path for all data related to placin orders
+endpoint = "tal-87.sandbox.talostrading.com"  # our sandbox endpoint
+path = "/v1/orders"  # path for all data related to placin orders
 
 # %% [markdown]
 # ### How to load orders?
