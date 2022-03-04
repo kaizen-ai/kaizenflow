@@ -6,7 +6,6 @@ import pandas as pd
 
 import core.finance.prediction_processing as cfiprpro
 
-# import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -40,6 +39,7 @@ class TestStackPredictionDf(hunitest.TestCase):
         )
         # NOTE: If the test fails, converting to json strings may make
         #       debugging easier.
+        # import helpers.hpandas as hpandas
         # actual_str = hpandas.convert_df_to_json_string(actual)
         # expected_str = hpandas.convert_df_to_json_string(expected)
         # self.assert_equal(actual_str, expected_str)

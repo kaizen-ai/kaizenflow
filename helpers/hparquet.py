@@ -103,9 +103,8 @@ def from_parquet(
     return df
 
 
+# Copied from `hio.create_enclosing_dir()` to avoid circular dependencies.
 def _create_enclosing_dir(file_name: str) -> str:
-    # A mirror of `hio.create_enclosing_dir()`, introduced
-    # here to avoid circular dependencies.
     dir_name = os.path.dirname(file_name)
     if dir_name != "":
         _LOG.debug(
