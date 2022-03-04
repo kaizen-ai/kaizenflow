@@ -486,7 +486,7 @@ class SkLearnModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
         )
         # TODO(Paul): Summarize model perf or make configurable.
         # TODO(Paul): Consider separating model eval from fit/predict.
-        info = collections.OrderedDict()
+        info: collections.OrderedDict[str, Any] = collections.OrderedDict()
         info["model_x_vars"] = x_vars
         info["model_params"] = self._model.get_params()
         model_attribute_info = collections.OrderedDict()
