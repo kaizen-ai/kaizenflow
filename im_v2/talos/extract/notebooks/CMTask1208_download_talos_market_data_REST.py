@@ -88,6 +88,7 @@ def timestamp_to_tz_naive_ISO_8601(timestamp: pd.Timestamp) -> str:
 
     Example:
     2019-10-20T15:00:00.000000Z
+    2022-02-28T14:38:53.000000Z
 
     Note: microseconds must be included.
     """
