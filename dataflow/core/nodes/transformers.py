@@ -103,8 +103,7 @@ class ColumnTransformer(dtfconobas.Transformer, dtfconobas.ColModeMixin):
         df = df.copy()
         if self._fit_cols is None:
             self._fit_cols = df.columns.tolist() or self._cols
-        if self._cols is None:
-            hdbg.dassert_set_eq(self._fit_cols, df.columns)
+        hdbg.dassert_is_subset(self._fit_cols, df.columns)
         df = df[self._fit_cols]
         # Handle NaNs.
         idx = df.index
