@@ -147,6 +147,12 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
         super().__init__(vendor)
         self._connection = connection
 
+    def get_metadata(self) -> pd.DataFrame:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
     def _read_data_for_one_symbol(
         self,
         full_symbol: icdc.FullSymbol,
@@ -238,6 +244,12 @@ class CcxtCddCsvParquetByAssetClient(
         # Set s3fs parameter value if aws profile parameter is specified.
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
+
+    def get_metadata(self) -> pd.DataFrame:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
 
     def _read_data_for_one_symbol(
         self,

@@ -6,7 +6,7 @@ import dataflow.core.nodes.sklearn_models as dtfcnoskmo
 
 import collections
 import logging
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -77,7 +77,7 @@ class ContinuousSkLearnModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin)
         self._model_kwargs = model_kwargs or {}
         self._x_vars = x_vars
         self._y_vars = y_vars
-        self._model = None
+        self._model: Optional[sklear.base.BaseEstimator] = None
         self._steps_ahead = steps_ahead
         hdbg.dassert_lte(
             0, self._steps_ahead, "Non-causal prediction attempted! Aborting..."
@@ -98,12 +98,12 @@ class ContinuousSkLearnModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin)
         fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
         return fit_state
 
-    def set_fit_state(self, fit_state: Dict[str, Any]):
+    def set_fit_state(self, fit_state: Dict[str, Any]) -> None:
         self._model = fit_state["_model"]
         self._info["fit"] = fit_state["_info['fit']"]
 
     def _fit_predict_helper(
-        self, df_in: pd.DataFrame, fit: True
+        self, df_in: pd.DataFrame, fit: bool
     ) -> Dict[str, pd.DataFrame]:
         # Materialize names of x and y vars.
         x_vars = dtfcorutil.convert_to_list(self._x_vars)
@@ -158,6 +158,7 @@ class ContinuousSkLearnModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin)
         hdbg.dassert(
             self._model, "Model not found! Check if `fit()` has been run."
         )
+        self._model = cast(sklear.base.BaseEstimator, self._model)
         # Generate predictions.
         forward_y_hat = self._model.predict(x_vals)
         # Generate dataframe from sklearn predictions.
@@ -221,7 +222,8 @@ class ContinuousSkLearnModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin)
         # In `predict()` method, `y_pred` may exist for index where `y_true`
         # is already `NaN`.
         y_true = y_true.loc[: y_true.last_valid_index()]
-        return metric(y_true, y_pred.loc[y_true.index])
+        res = metric(y_true, y_pred.loc[y_true.index])
+        return cast(float, res)
 
 
 class MultiindexPooledSkLearnModel(dtfconobas.FitPredictNode):
@@ -263,7 +265,7 @@ class MultiindexPooledSkLearnModel(dtfconobas.FitPredictNode):
         self._model_kwargs = model_kwargs
         self._nan_mode = nan_mode
         #
-        self._key_fit_state = {}
+        self._key_fit_state: Dict[str, Any] = {}
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         return self._fit_predict_helper(df_in, fit=True)
@@ -381,7 +383,7 @@ class MultiindexSkLearnModel(dtfconobas.FitPredictNode):
         self._model_kwargs = model_kwargs
         self._nan_mode = nan_mode
         #
-        self._key_fit_state = {}
+        self._key_fit_state: Dict[str, Any] = {}
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         return self._fit_predict_helper(df_in, fit=True)
@@ -396,11 +398,13 @@ class MultiindexSkLearnModel(dtfconobas.FitPredictNode):
         }
         return fit_state
 
-    def set_fit_state(self, fit_state: Dict[str, Any]):
+    def set_fit_state(self, fit_state: Dict[str, Any]) -> None:
         self._key_fit_state = fit_state["_key_fit_state"]
         self._info["fit"] = fit_state["_info['fit']"]
 
-    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
+    def _fit_predict_helper(
+        self, df_in: pd.DataFrame, fit: bool
+    ) -> Dict[str, pd.DataFrame]:
         dtfcorutil.validate_df_indices(df_in)
         dfs = dtfconobas.GroupedColDfToDfColProcessor.preprocess(
             df_in, self._in_col_groups
@@ -459,7 +463,7 @@ class SkLearnModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
         self._model_kwargs = model_kwargs or {}
         self._x_vars = x_vars
         self._y_vars = y_vars
-        self._model = None
+        self._model: Optional[sklear.base.BaseEstimator] = None
         self._col_mode = col_mode or "replace_all"
         hdbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
 
@@ -482,7 +486,7 @@ class SkLearnModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
         )
         # TODO(Paul): Summarize model perf or make configurable.
         # TODO(Paul): Consider separating model eval from fit/predict.
-        info = collections.OrderedDict()
+        info: collections.OrderedDict[str, Any] = collections.OrderedDict()
         info["model_x_vars"] = x_vars
         info["model_params"] = self._model.get_params()
         model_attribute_info = collections.OrderedDict()
@@ -506,6 +510,7 @@ class SkLearnModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
         hdbg.dassert_is_not(
             self._model, None, "Model not found! Check if `fit` has been run."
         )
+        self._model = cast(sklear.base.BaseEstimator, self._model)
         y_hat = self._model.predict(x_predict)
         x_predict, y_predict, y_hat = self._from_sklearn_format(
             idx, x_vars, x_predict, y_vars, y_predict, y_hat
@@ -526,9 +531,22 @@ class SkLearnModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
         fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
         return fit_state
 
-    def set_fit_state(self, fit_state: Dict[str, Any]):
+    def set_fit_state(self, fit_state: Dict[str, Any]) -> None:
         self._model = fit_state["_model"]
         self._info["fit"] = fit_state["_info['fit']"]
+
+    def _to_sklearn_format(
+        self, df: pd.DataFrame
+    ) -> Tuple[
+        List[dtfcorutil.NodeColumn],
+        np.ndarray,
+        List[dtfcorutil.NodeColumn],
+        np.ndarray,
+    ]:
+        x_vars = dtfcorutil.convert_to_list(self._x_vars)
+        y_vars = dtfcorutil.convert_to_list(self._y_vars)
+        x_vals, y_vals = cdatadap.transform_to_sklearn_old(df, x_vars, y_vars)
+        return x_vars, x_vals, y_vars, y_vals
 
     @staticmethod
     def _validate_input_df(df: pd.DataFrame) -> None:
@@ -553,27 +571,14 @@ class SkLearnModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
         )
         return info
 
-    def _to_sklearn_format(
-        self, df: pd.DataFrame
-    ) -> Tuple[
-        List[dtfcorutil.NodeColumn],
-        np.array,
-        List[dtfcorutil.NodeColumn],
-        np.array,
-    ]:
-        x_vars = dtfcorutil.convert_to_list(self._x_vars)
-        y_vars = dtfcorutil.convert_to_list(self._y_vars)
-        x_vals, y_vals = cdatadap.transform_to_sklearn_old(df, x_vars, y_vars)
-        return x_vars, x_vals, y_vars, y_vals
-
     @staticmethod
     def _from_sklearn_format(
         idx: pd.Index,
         x_vars: List[dtfcorutil.NodeColumn],
-        x_vals: np.array,
+        x_vals: np.ndarray,
         y_vars: List[dtfcorutil.NodeColumn],
-        y_vals: np.array,
-        y_hat: np.array,
+        y_vals: np.ndarray,
+        y_hat: np.ndarray,
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         x = cdatadap.transform_from_sklearn(idx, x_vars, x_vals)
         y = cdatadap.transform_from_sklearn(idx, y_vars, y_vals)

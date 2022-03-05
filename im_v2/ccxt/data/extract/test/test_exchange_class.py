@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 
@@ -54,7 +55,7 @@ class TestCcxtExchange1(hunitest.TestCase):
         self.assertEqual(1631145600000, first_date)
         self.assertEqual(1631235540000, last_date)
         # Check the output values.
-        actual = hunitest.convert_df_to_json_string(actual, n_tail=None)
+        actual = hpandas.convert_df_to_json_string(actual, n_tail=None)
         self.check_string(actual)
 
     def test_download_ohlcv_data2(self) -> None:
