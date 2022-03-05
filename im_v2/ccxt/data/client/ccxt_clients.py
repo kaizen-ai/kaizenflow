@@ -23,6 +23,8 @@ _LOG = logging.getLogger(__name__)
 
 # Latest historical data snapshot.
 _LATEST_DATA_SNAPSHOT = "20210924"
+# TODO(gp): @all bump up to the new snapshot.
+#_LATEST_DATA_SNAPSHOT = "20220210"
 
 
 # #############################################################################
