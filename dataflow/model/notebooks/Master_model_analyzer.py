@@ -117,13 +117,6 @@ plotter.plot_multiple_tests_adjustment(
 )
 
 # %%
-import helpers.hpandas as hpandas
-print(hpandas.df_to_str(pnl_stats, num_rows=None))
-
-# %%
-eval_config["bh_adj_threshold"] = 0.4
-
-# %%
 # TODO(gp): Move this chunk of code in a function.
 col_mask = (
     pnl_stats.loc["ratios"].loc["sr.adj_pval"]
@@ -155,15 +148,6 @@ plotter.plot_correlation_matrix(
     resample_rule=eval_config["resample_rule"],
     mode=eval_config["mode"],
 )
-
-# %%
-srs = plotter.model_evaluator._data[3]["ret_0_vol_adj_2"].dropna().cumsum()
-#srs = srs / srs.std()
-
-srs["2021-10-01":].dropna().plot()
-
-# %%
-srs["2021-10-01":].resample("1D").mean().dropna().plot()
 
 # %%
 plotter.plot_effective_correlation_rank(
@@ -214,8 +198,7 @@ plotter.plot_rets_signal_analysis(
 # %%
 plotter.plot_performance(
     keys=selected,
-    #resample_rule=eval_config["resample_rule"],
-    resample_rule="1D",
+    resample_rule=eval_config["resample_rule"],
     mode=eval_config["mode"],
     target_volatility=eval_config["target_volatility"],
 )
