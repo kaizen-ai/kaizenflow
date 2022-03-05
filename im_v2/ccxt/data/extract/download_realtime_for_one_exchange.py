@@ -37,6 +37,60 @@ import im_v2.im_lib_tasks as imvimlita
 _LOG = logging.getLogger(__name__)
 
 
+def _parse() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    parser.add_argument(
+        "--start_timestamp",
+        action="store",
+        required=True,
+        type=str,
+        help="Beginning of the downloaded period",
+    )
+    parser.add_argument(
+        "--end_timestamp",
+        action="store",
+        required=True,
+        type=str,
+        help="End of the downloaded period",
+    )
+    parser.add_argument(
+        "--exchange_id",
+        action="store",
+        required=True,
+        type=str,
+        help="Name of exchange to download data from",
+    )
+    parser.add_argument(
+        "--universe",
+        action="store",
+        required=True,
+        type=str,
+        help="Trade universe to download data for",
+    )
+    parser.add_argument(
+        "--db_stage",
+        action="store",
+        required=True,
+        type=str,
+        help="DB stage to use",
+    )
+    parser.add_argument(
+        "--db_table",
+        action="store",
+        required=False,
+        default="ccxt_ohlcv",
+        type=str,
+        help="(Optional) DB table to use, default: 'ccxt_ohlcv'",
+    )
+    parser.add_argument("--incremental", action="store_true")
+    parser = hparser.add_verbosity_arg(parser)
+    parser = hs3.add_s3_args(parser)
+    return parser  # type: ignore[no-any-return]
+
+
 def _run(args: argparse.Namespace):
     # Connect to database.
     env_file = imvimlita.get_db_env_path(args.db_stage)
@@ -94,63 +148,6 @@ def _run(args: argparse.Namespace):
                 data.to_csv(f, index=False)
         # Remove duplicated entries.
         connection.cursor().execute(dup_query)
-
-
-# #############################################################################
-
-
-def _parse() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawTextHelpFormatter,
-    )
-    parser.add_argument(
-        "--start_timestamp",
-        action="store",
-        required=True,
-        type=str,
-        help="Beginning of the downloaded period",
-    )
-    parser.add_argument(
-        "--end_timestamp",
-        action="store",
-        required=True,
-        type=str,
-        help="End of the downloaded period",
-    )
-    parser.add_argument(
-        "--exchange_id",
-        action="store",
-        required=True,
-        type=str,
-        help="Name of exchange to download data from",
-    )
-    parser.add_argument(
-        "--universe",
-        action="store",
-        required=True,
-        type=str,
-        help="Trade universe to download data for",
-    )
-    parser.add_argument(
-        "--db_stage",
-        action="store",
-        required=True,
-        type=str,
-        help="DB stage to use",
-    )
-    parser.add_argument(
-        "--db_table",
-        action="store",
-        required=False,
-        default="ccxt_ohlcv",
-        type=str,
-        help="(Optional) DB table to use, default: 'ccxt_ohlcv'",
-    )
-    parser.add_argument("--incremental", action="store_true")
-    parser = hparser.add_verbosity_arg(parser)
-    parser = hs3.add_s3_args(parser)
-    return parser  # type: ignore[no-any-return]
 
 
 def _main(parser: argparse.ArgumentParser) -> None:

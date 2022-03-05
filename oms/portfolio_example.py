@@ -16,8 +16,7 @@ import oms.portfolio as omportfo
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): -> get_SimulatedPortfolio_example
-def get_simulated_portfolio_example1(
+def get_DataFramePortfolio_example1(
     event_loop: Optional[asyncio.AbstractEventLoop],
     *,
     market_data: Optional[mdata.MarketData] = None,
@@ -25,24 +24,22 @@ def get_simulated_portfolio_example1(
     pricing_method: str = "last",
     timestamp_col: str = "end_datetime",
     asset_ids: Optional[List[int]] = None,
-) -> omportfo.SimulatedPortfolio:
+) -> omportfo.DataFramePortfolio:
     # Build SimulatedBroker.
     broker = obroexam.get_simulated_broker_example1(
         event_loop,
         market_data=market_data,
         timestamp_col=timestamp_col,
     )
-    # Build SimulatedPortfolio.
+    # Build DataFramePortfolio.
     strategy_id = "st1"
     account = "paper"
-    asset_id_column = "asset_id"
     mark_to_market_col = mark_to_market_col
     initial_cash = 1e6
-    portfolio = omportfo.SimulatedPortfolio.from_cash(
+    portfolio = omportfo.DataFramePortfolio.from_cash(
         strategy_id,
         account,
         broker,
-        asset_id_column,
         mark_to_market_col,
         pricing_method,
         timestamp_col,
@@ -77,13 +74,11 @@ def get_mocked_portfolio_example1(
     # Build MockedPortfolio.
     strategy_id = "st1"
     account = "candidate"
-    asset_id_column = "asset_id"
     initial_cash = 1e6
     portfolio = omportfo.MockedPortfolio.from_cash(
         strategy_id,
         account,
         broker,
-        asset_id_column,
         mark_to_market_col,
         pricing_method,
         timestamp_col,
