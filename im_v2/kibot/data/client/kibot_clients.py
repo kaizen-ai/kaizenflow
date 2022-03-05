@@ -354,13 +354,13 @@ class KibotFuturesCsvParquetByAssetClient(
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
 
-    def get_metadata(self, **kwargs: Any) -> pd.DataFrame:
+    # TODO(Grisha): @Dan move to a separate class under `metadata` dir.
+    def get_metadata(self, **read_csv_kwargs: Any) -> pd.DataFrame:
         # pylint: disable=line-too-long
         """
         See description in the parent class.
 
-        Metadata snippet example:
-
+        Metadata snippet
         ```
                Symbol                                            Link                       Description
         0          JY  http://api.kibot.com/?action=download&link=...  CONTINUOUS JAPANESE YEN CONTRACT
@@ -375,11 +375,11 @@ class KibotFuturesCsvParquetByAssetClient(
         file_path = os.path.join(self._root_dir, metadata_dir, file_name)
         columns = ["Symbol", "Link", "Description"]
         # Add arguments to kwargs.
-        kwargs["usecols"] = columns
+        read_csv_kwargs["usecols"] = columns
         if hs3.is_s3_path(file_path):
-            kwargs["s3fs"] = self._s3fs
+            read_csv_kwargs["s3fs"] = self._s3fs
         # Read metadata.
-        df = cpanh.read_csv(file_path, **kwargs)
+        df = cpanh.read_csv(file_path, **read_csv_kwargs)
         return df
 
     def _read_data_for_one_symbol(
