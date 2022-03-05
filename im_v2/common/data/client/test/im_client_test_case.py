@@ -178,3 +178,13 @@ class ImClientTestCase(hunitest.TestCase):
         self.assertEqual(actual_length, expected_length)
         self.assertEqual(actual_first_elements, expected_first_elements)
         self.assertEqual(actual_last_elements, expected_last_elements)
+
+    # TODO(Grisha): @Dan move to `ImClientMetadataTestCase`.
+    def _test_get_metadata1(
+        self, im_client: icdc.ImClient, *args: Any, **kwargs: Any
+    ) -> None:
+        """
+        Test that metadata is computed correctly.
+        """
+        actual_df = im_client.get_metadata()
+        self.check_df_output(actual_df, *args, **kwargs)

@@ -176,6 +176,12 @@ class KibotEquitiesCsvParquetByAssetClient(
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
 
+    def get_metadata(self) -> pd.DataFrame:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
     def _read_data_for_one_symbol(
         self,
         full_symbol: icdc.FullSymbol,
@@ -347,6 +353,35 @@ class KibotFuturesCsvParquetByAssetClient(
         # Set s3fs parameter value if aws profile parameter is specified.
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
+
+    # TODO(Grisha): @Dan move to a separate class under `metadata` dir.
+    def get_metadata(self, **read_csv_kwargs: Any) -> pd.DataFrame:
+        # pylint: disable=line-too-long
+        """
+        See description in the parent class.
+
+        Metadata snippet:
+
+        ```
+               Symbol                                            Link                       Description
+        0          JY  http://api.kibot.com/?action=download&link=...  CONTINUOUS JAPANESE YEN CONTRACT
+        1       JYF18  http://api.kibot.com/?action=download&link=...         JAPANESE YEN JANUARY 2018
+        2       JYF19  http://api.kibot.com/?action=download&link=...         JAPANESE YEN JANUARY 2019
+        ```
+        """
+        # pylint: disable=line-too-long
+        # Set metadata file path and columns to load.
+        metadata_dir = "kibot/metadata"
+        file_name = "All_Futures_Contracts_1min.csv.gz"
+        file_path = os.path.join(self._root_dir, metadata_dir, file_name)
+        columns = ["Symbol", "Link", "Description"]
+        # Add arguments to kwargs.
+        read_csv_kwargs["usecols"] = columns
+        if hs3.is_s3_path(file_path):
+            read_csv_kwargs["s3fs"] = self._s3fs
+        # Read metadata.
+        df = cpanh.read_csv(file_path, **read_csv_kwargs)
+        return df
 
     def _read_data_for_one_symbol(
         self,
