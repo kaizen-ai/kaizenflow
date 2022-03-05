@@ -12,7 +12,7 @@ import im_v2.talos.data.extract.exchange_class as imvtdeexcl
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skip("Enable after CMTask1292 is resolved.")
+# @pytest.mark.skip("Enable after CMTask1292 is resolved.")
 class TestTalosExchange1(hunitest.TestCase):
     def test_initialize_class(self) -> None:
         """
@@ -20,7 +20,7 @@ class TestTalosExchange1(hunitest.TestCase):
         """
         _ = imvtdeexcl.TalosExchange("sandbox")
 
-    @pytest.mark.slow()
+    # @pytest.mark.slow()
     @umock.patch.object(imvtdeexcl.hdateti, "get_current_time")
     def test_download_ohlcv_data1(
         self, mock_get_current_time: umock.MagicMock
@@ -36,7 +36,7 @@ class TestTalosExchange1(hunitest.TestCase):
         # Verify dataframe length.
         self.assertEqual(1440, actual.shape[0])
         # Check number of calls and args for current time.
-        self.assertEqual(mock_get_current_time.call_count, 1)
+        self.assertEqual(mock_get_current_time.call_count, 2)
         self.assertEqual(mock_get_current_time.call_args.args, ("UTC",))
         # Verify corner datetime if output is not empty.
         first_date = int(actual["timestamp"].iloc[0])
@@ -45,6 +45,7 @@ class TestTalosExchange1(hunitest.TestCase):
         # Talos considers [a, b) time interval so last minute is missing.
         self.assertEqual(1631231940000, last_date)
         # Check the output values.
+        actual = actual.reset_index(drop=True)
         actual = hunitest.convert_df_to_json_string(actual)
         self.check_string(actual)
 
@@ -179,6 +180,7 @@ class TestTalosExchange1(hunitest.TestCase):
             exchange="binance",
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
+            bar_per_iteration=1000
         )
         # Verify that the output is a dataframe.
         hdbg.dassert_isinstance(actual, pd.DataFrame)
