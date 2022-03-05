@@ -12,7 +12,7 @@ import im_v2.talos.data.extract.exchange_class as imvtdeexcl
 _LOG = logging.getLogger(__name__)
 
 
-# @pytest.mark.skip("Enable after CMTask1292 is resolved.")
+@pytest.mark.skip("Enable after CMTask1292 is resolved.")
 class TestTalosExchange1(hunitest.TestCase):
     def test_initialize_class(self) -> None:
         """
@@ -20,7 +20,7 @@ class TestTalosExchange1(hunitest.TestCase):
         """
         _ = imvtdeexcl.TalosExchange("sandbox")
 
-    # @pytest.mark.slow()
+    @pytest.mark.slow()
     @umock.patch.object(imvtdeexcl.hdateti, "get_current_time")
     def test_download_ohlcv_data1(
         self, mock_get_current_time: umock.MagicMock
