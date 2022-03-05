@@ -360,14 +360,14 @@ class KibotFuturesCsvParquetByAssetClient(
         """
         See description in the parent class.
 
-        Metadata snippet ```        Symbol
-        Link                       Description 0          JY
-        http://api.kibot.com/?action=download&link=...  CONTINUOUS
-        JAPANESE YEN CONTRACT 1       JYF18
-        http://api.kibot.com/?action=download&link=...         JAPANESE
-        YEN JANUARY 2018 2       JYF19
-        http://api.kibot.com/?action=download&link=...         JAPANESE
-        YEN JANUARY 2019 ```
+        Metadata snippet:
+
+        ```
+               Symbol                                            Link                       Description
+        0          JY  http://api.kibot.com/?action=download&link=...  CONTINUOUS JAPANESE YEN CONTRACT
+        1       JYF18  http://api.kibot.com/?action=download&link=...         JAPANESE YEN JANUARY 2018
+        2       JYF19  http://api.kibot.com/?action=download&link=...         JAPANESE YEN JANUARY 2019
+        ```
         """
         # pylint: disable=line-too-long
         # Set metadata file path and columns to load.
