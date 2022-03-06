@@ -15,6 +15,8 @@ import helpers.hintrospection as hintros
 
 mode = "true"
 
+# TODO(gp): obsolete -> delete
+
 
 def print_message(msg):
     # current_time = get_current_time()

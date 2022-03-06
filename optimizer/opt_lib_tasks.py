@@ -3,57 +3,77 @@ import os
 
 from invoke import task
 
-import helpers.hsystem as hsystem
-import helpers.lib_tasks as hlib
-import helpers.hgit as hgit
 import helpers.hdbg as hdbg
-
+import helpers.hgit as hgit
+import helpers.hsystem as hsystem
+import helpers.lib_tasks as hlibtask
 
 _LOG = logging.getLogger(__name__)
+
 DOCKER_BUILDKIT = 0
 
 
 @task
-def docker_build_local_opt_image(ctx, version):
+def opt_docker_build_local_image(  # type: ignore
+    ctx,
+    version,
+    cache=True,
+    update_poetry=False,
+):
     """
-    ...
+    Build a local image (i.e., a release candidate "dev" image).
 
-    :param version:
-    :return:
+    :param version: version to tag the image and code with
+    :param cache: use the cache
+    :param update_poetry: run poetry lock to update the packages
     """
-    docker_file = "devops/docker_build/dev.Dockerfile"
-    abs_docker_file = os.path.abspath(docker_file)
+    # _report_task()
+    # TODO(gp): Enable the versioning.
+    # _dassert_is_subsequent_version(version)
+    # version = _resolve_version_value(version)
+    # Update poetry, if needed.
+    if update_poetry:
+        cmd = "cd devops/docker_build; poetry lock -v"
+        hlibtask._run(ctx, cmd)
+    # Build the local image.
+    opts = "--no-cache" if not cache else ""
+    dockerfile = "devops/docker_build/dev.Dockerfile"
+    dockerfile = os.path.abspath(dockerfile)
     base_image = ""
     stage = "local"
-    image_local = hlib.get_image(base_image, stage, version)
+    image_local = hlibtask.get_image(base_image, stage, version)
     cmd = rf"""
     DOCKER_BUILDKIT={DOCKER_BUILDKIT} \
     time \
     docker build \
         --progress=plain \
+        {opts} \
         --build-arg OPT_CONTAINER_VERSION={version} \
         --tag {image_local} \
-        --file {abs_docker_file} \
+        --file {dockerfile} \
         .
     """
-    hlib._run(ctx, cmd)
-    #
+    hlibtask._run(ctx, cmd)
+    # Check image and report stats.
     cmd = f"docker image ls {image_local}"
-    hlib._run(ctx, cmd)
+    hlibtask._run(ctx, cmd)
 
 
 @task
-def opt_docker_bash(ctx, stage, version):
+def opt_docker_bash(  # type: ignore
+    ctx, stage, version, entrypoint=True, as_user=True
+):
     base_image = ""
     cmd = "bash"
-    # TODO(Grisha): turn on `as_user`.
-    _docker_cmd = hlib._get_docker_cmd(base_image, stage, version, cmd, entrypoint=True, as_user=False)
-    hlib._run(ctx, _docker_cmd, pty=True)
+    _docker_cmd = hlibtask._get_docker_cmd(
+        base_image, stage, version, cmd, entrypoint=entrypoint, as_user=as_user
+    )
+    hlibtask._run(ctx, _docker_cmd, pty=True)
 
 
 @task
 def opt_docker_jupyter(ctx, stage="local", version="0.1.0"):
-    hlib._report_task()
+    hlibtask._report_task()
     auto_assign_port = True
     if auto_assign_port:
         uid = os.getuid()
@@ -71,7 +91,7 @@ def opt_docker_jupyter(ctx, stage="local", version="0.1.0"):
     base_image = ""
     port = 9999
     self_test = False
-    docker_cmd_ = hlib._get_docker_jupyter_cmd(
+    docker_cmd_ = hlibtask._get_docker_jupyter_cmd(
         base_image,
         stage,
         version,
@@ -79,4 +99,4 @@ def opt_docker_jupyter(ctx, stage="local", version="0.1.0"):
         self_test,
         print_docker_config=print_docker_config,
     )
-    hlib._docker_cmd(ctx, docker_cmd_)
+    hlibtask._docker_cmd(ctx, docker_cmd_)
